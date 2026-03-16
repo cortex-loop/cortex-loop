@@ -6,8 +6,9 @@
 
 This dossier is the canonical validation, fixture, and proof-evidence packet for the frozen v1 Cortex archive point.
 It is a critique-support packet, not active authority.
+It intentionally preserves evidence, provenance, and explicit uncertainty only; it does not prescribe v2 architecture or later Cortex doctrine.
 
-Use this after [CORTEX_STATE_ANALYSIS.md](CORTEX_STATE_ANALYSIS.md) when you need to answer a narrower question:
+This dossier answers a narrower question than [CORTEX_STATE_ANALYSIS.md](CORTEX_STATE_ANALYSIS.md):
 which exact artifacts, tests, and release surfaces back the final v1 runtime and product-proof claims?
 
 ## 0. Final V1 Scope

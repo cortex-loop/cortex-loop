@@ -8,6 +8,7 @@ This dossier is the current implementation map for the Cortex completion-boundar
 It is a critique-support packet, not active authority.
 
 It is also the final v1 kernel implementation packet for the frozen archive point.
+It intentionally preserves implementation evidence and code only; it does not prescribe v2 architecture or later Cortex doctrine.
 
 Active authority remains [../ADAPTERS.md](https://github.com/cortex-loop/cortex-loop-v1-archive/blob/v0.1.0a2/docs/ADAPTERS.md), [../ADAPTER_VALIDATION.md](https://github.com/cortex-loop/cortex-loop-v1-archive/blob/v0.1.0a2/docs/ADAPTER_VALIDATION.md), [../CORTEX_REALIZATION_MODEL.md](https://github.com/cortex-loop/cortex-loop-v1-archive/blob/v0.1.0a2/docs/CORTEX_REALIZATION_MODEL.md), [../KERNEL_MATH_NOTE.md](https://github.com/cortex-loop/cortex-loop-v1-archive/blob/v0.1.0a2/docs/KERNEL_MATH_NOTE.md), and [../KERNEL_MATH_IMPLEMENTATION_DECISION.md](https://github.com/cortex-loop/cortex-loop-v1-archive/blob/v0.1.0a2/docs/KERNEL_MATH_IMPLEMENTATION_DECISION.md).
 Use this packet together with [KERNEL_MATH_STATUS_DOSSIER.md](KERNEL_MATH_STATUS_DOSSIER.md), [ADAPTER_IMPLEMENTATION_DOSSIER.md](ADAPTER_IMPLEMENTATION_DOSSIER.md), and [VALIDATION_EVIDENCE_DOSSIER.md](VALIDATION_EVIDENCE_DOSSIER.md) when you want one current whole-system review set.
@@ -78,7 +79,7 @@ Current product truth in one paragraph:
 - the kernel is strong on structured stop enforcement, truthful failure classification, objective-gap tracking, and runtime-agnostic stop semantics
 - the kernel is not yet strong enough on minimal-task boundedness under proof pressure
 - the newer cross-runtime audit sharpens that diagnosis: the first shared product issue is validation-contract design, because the current shared positive lane is already a proof-hardening lane and destabilizes multiple runtimes differently
-- the main surviving product issue is therefore below the current Claude adapter and above the upcoming executive layer: the current stop contract can still accept a truthful but over-broad completion when proof pressure conflicts with the smallest user task, but the first earned fix is the lane contract before a new kernel law
+- the remaining product defect is localized in the interaction between the current stop contract and the shared validation lane: the stop contract can still accept a truthful but over-broad completion when proof pressure conflicts with the smallest user task
 
 ## 3. Core File Map
 
@@ -224,15 +225,15 @@ What is currently mixed or still inadequate:
 
 - minimal-task boundedness is not an explicit acceptance criterion
 - under proof pressure, the kernel can still accept a truthful but over-broad completion once challenge, requirement, truth, and invariant gates pass
-- the upcoming executive layer will not fix that acceptance-law problem by itself; it can improve approach control, but it does not own completion truth
+- frozen v1 evidence does not establish that executive-side changes alone resolve that acceptance-law problem; the current code keeps completion truth elsewhere
 - current product proof is still asymmetric: Cortex has stronger completion evidence than the raw model, but not yet stronger artifact quality proof
 
-## 8. What Another Researcher Should Critique First
+## 8. Open Questions Left By The Implementation Evidence
 
-1. Should boundedness or scope-overreach become an explicit stop-law term rather than only a post-mortem diagnosis?
-2. Is `StopPathOutcome` still the right flat carrier, or is there now a smaller honest split that would remove live ambiguity without adding abstraction?
-3. Are the current objective-gap signatures rich enough to support boundedness-aware acceptance, or would that add a second control doctrine instead of clarifying the first one?
-4. Are any executive-side support paths still quietly compensating for kernel gaps instead of staying downstream of kernel truth?
+1. Whether boundedness or scope-overreach warrants an explicit stop-law term rather than only a post-mortem diagnosis.
+2. Whether `StopPathOutcome` is still the right flat carrier, or whether a smaller honest split would remove live ambiguity without adding abstraction.
+3. Whether the current objective-gap signatures are rich enough to support boundedness-aware acceptance, or whether that would add a second control doctrine instead of clarifying the first one.
+4. Whether any executive-side support paths in frozen v1 compensated for kernel gaps rather than staying downstream of kernel truth.
 5. Does the current runtime evidence support any stronger product claim than “better proof of completion than raw”?
 
 ## 9. Current Sweep Verdict

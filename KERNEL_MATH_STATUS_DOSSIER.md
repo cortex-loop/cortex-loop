@@ -8,6 +8,7 @@ This dossier is the current math-status and critique packet for the live Cortex 
 It is a critique-support packet, not active authority.
 
 It is the final v1 theorem/status packet for the frozen truthful-withheld endpoint.
+It intentionally preserves evidence-backed mathematical interpretation only; it does not prescribe v2 architecture or later Cortex doctrine.
 
 Active authority remains [../KERNEL_MATH_NOTE.md](https://github.com/cortex-loop/cortex-loop-v1-archive/blob/v0.1.0a2/docs/KERNEL_MATH_NOTE.md), [../KERNEL_MATH_IMPLEMENTATION_DECISION.md](https://github.com/cortex-loop/cortex-loop-v1-archive/blob/v0.1.0a2/docs/KERNEL_MATH_IMPLEMENTATION_DECISION.md), [../ADAPTERS.md](https://github.com/cortex-loop/cortex-loop-v1-archive/blob/v0.1.0a2/docs/ADAPTERS.md), [../ADAPTER_VALIDATION.md](https://github.com/cortex-loop/cortex-loop-v1-archive/blob/v0.1.0a2/docs/ADAPTER_VALIDATION.md), and [../CORTEX_REALIZATION_MODEL.md](https://github.com/cortex-loop/cortex-loop-v1-archive/blob/v0.1.0a2/docs/CORTEX_REALIZATION_MODEL.md).
 Use this packet with [KERNEL_IMPLEMENTATION_DOSSIER.md](KERNEL_IMPLEMENTATION_DOSSIER.md) and [ADAPTER_IMPLEMENTATION_DOSSIER.md](ADAPTER_IMPLEMENTATION_DOSSIER.md) when you want the current whole-system critique set.
@@ -40,15 +41,15 @@ It is:
 - which parts of that description are well supported by tests and runtime evidence
 - which remaining product failures are kernel-law failures rather than adapter or executive failures
 
-Current product mission in math terms:
+Current code/evidence boundary in math terms:
 
-- Cortex must decide whether a completion claim is acceptable with machine-readable, evidence-bearing, runtime-preserving truth
-- humane support and adapters must remain downstream of that same truth
-- no amount of prettier proof formatting counts as success if the system still produces a worse patch than the raw model on the same task
+- the current code decides whether a completion claim is acceptable through machine-readable, evidence-bearing, runtime-preserving truth surfaces
+- humane support and adapters are implemented downstream of that same truth surface in the frozen v1 architecture
+- the frozen v1 evidence does not show that stronger proof formatting alone improved artifact quality relative to the raw model on the same task
 
 ## 2. Current Live Math-To-Code Reconstruction
 
-The current kernel is best read as a distributed bounded state/control system, not a single elegant object.
+On current code and evidence, the kernel is most accurately described as a distributed bounded state/control system, not a single elegant object.
 
 | Mathematical role | Current embodiment | Main code surfaces | Honest status |
 | --- | --- | --- | --- |
@@ -65,7 +66,7 @@ The current kernel is best read as a distributed bounded state/control system, n
 The most important current correction to older kernel-math wording is this:
 
 - the live code no longer has the older typed deficit-entry layer or the decomposed `kernel/state/transition/action/claims` carrier that some earlier critique packets described
-- current math must be honest about the flatter, string-coded, distributed state that actually shipped
+- this evidence packet therefore describes the flatter, string-coded, distributed state that actually shipped
 
 ## 3. What Is Mathematically Explicit And Earned
 
@@ -141,12 +142,11 @@ The current repo evidence does not yet prove that Cortex as a product beats the 
 It proves stronger completion evidence and stronger truthful-stop discipline.
 That is useful, but it is not the same thing.
 
-### 4.4 The executive layer is not the fix for this defect
+### 4.4 What v1 evidence does not establish about executive control
 
-The upcoming executive layer can improve approach control, task legibility, and humane support.
-It does not own completion truth.
-So the current boundedness failure is not something to defer to the executive layer.
-If the kernel or validation contract rewards proof completion more strongly than minimal-task boundedness, a stronger executive would only optimize the wrong objective harder.
+The frozen v1 evidence does not establish that executive-side changes alone resolve the current boundedness defect.
+The same evidence still places completion truth outside the executive surface.
+If the kernel or validation contract rewards proof completion more strongly than minimal-task boundedness, stronger control above that boundary could preserve the same mismatch rather than remove it.
 
 ## 5. Test And Runtime Proof Summary
 
@@ -173,15 +173,15 @@ Current repo truth now supports this allocation:
 - secondary amplifier: the strict proof contract can still make broadening look like the easiest path to valid completion
 - rejected as primary cause on current evidence: a missing Claude-native bounded-correction layer
 
-That is why the next honest product fix is below the adapter and below the upcoming executive layer.
+That localizes the observed defect below the adapter surface and leaves the architectural remedy unresolved by frozen v1 evidence.
 
-## 7. What Another Researcher Should Critique First
+## 7. Open Questions Left By The Evidence
 
-1. Is the next honest kernel change a boundedness-aware stop or acceptance term, or would that create a second soft control doctrine instead of a cleaner hard law?
-2. Can boundedness be derived from existing canonical state, or would it require new kernel-owned evidence?
-3. Is the current flat `StopPathOutcome` the right embodiment, or is there now a smaller honest split?
-4. Are any current runtime-preservation claims stronger in the dossiers than in the actual fixture ledger?
-5. What A/B evidence would be sufficient to claim that Cortex beats the raw model on actual task output rather than only on proof quality?
+1. Whether a boundedness-aware stop or acceptance term is warranted by the frozen v1 evidence, or whether that would create a second soft-control doctrine instead of a cleaner hard law.
+2. Whether boundedness can be derived from existing canonical state, or whether new kernel-owned evidence would be required.
+3. Whether the current flat `StopPathOutcome` is the right embodiment, or whether a smaller honest split would remove ambiguity without adding abstraction.
+4. Whether any runtime-preservation claims in the dossiers are stronger than the underlying fixture ledger.
+5. What A/B evidence would be sufficient to claim that Cortex beats the raw model on actual task output rather than only on proof quality.
 
 ## 8. Current Sweep Verdict
 
@@ -190,6 +190,6 @@ After auditing current code, tests, runtime validation, and the boundedness RCA:
 - the current kernel-math story is no longer the old explicit carrier story; it is a flatter, distributed state/control story
 - the kernel has earned strong local support for structured-stop enforcement, verdict law, and repeated-failure relation tracking
 - the main remaining product defect is not “missing more math” and not “missing more hooks”; it is the absence of minimal-task boundedness as an explicit acceptance concern
-- the broader cross-runtime audit adds one more correction: before introducing new kernel law for boundedness, Cortex should first separate a true minimal-fix lane from the current proof-hardening lane
-- the upcoming executive layer should not be treated as the fix for that defect
+- the broader cross-runtime audit also shows that the current proof-hardening lane and a true minimal-fix lane were not cleanly separated, which limits what frozen v1 can conclude about boundedness remedies
+- frozen v1 evidence does not establish that executive-side changes alone resolve that defect
 - Cortex still does not have repo-backed proof that it outperforms the raw model on artifact quality

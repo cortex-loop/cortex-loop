@@ -8,6 +8,7 @@ This dossier is the implementation map for the current shipped adapter layer.
 It does not replace [ADAPTERS.md](https://github.com/cortex-loop/cortex-loop-v1-archive/blob/v0.1.0a2/docs/ADAPTERS.md), [ADAPTER_VALIDATION.md](https://github.com/cortex-loop/cortex-loop-v1-archive/blob/v0.1.0a2/docs/ADAPTER_VALIDATION.md), or [CORTEX_REALIZATION_MODEL.md](https://github.com/cortex-loop/cortex-loop-v1-archive/blob/v0.1.0a2/docs/CORTEX_REALIZATION_MODEL.md), which remain the active status and realization authority surfaces.
 
 It is also the final v1 adapter implementation packet for the frozen archive point.
+It intentionally preserves implementation evidence and code only; it does not prescribe v2 architecture or later Cortex doctrine.
 
 This repo copy is the active, current replacement for the older critique-support packet. It keeps the useful structure of that packet, adds a full current source appendix, and strips stale branch-specific claims. Live code and active authority docs win if any wording here drifts.
 
@@ -66,7 +67,7 @@ Shared rule:
 - The kernel owns completion meaning, stop stages, challenge coverage, requirement audit, truth claims, and final acceptance.
 - Runtime adapters normalize host payloads into canonical kernel inputs.
 - Runtime hook or bridge layers render kernel-owned meaning natively on each host surface.
-- No shipped adapter should invent planner doctrine, extra approval policy, or a second completion contract.
+- No shipped v1 adapter is presented as owning planner doctrine, extra approval policy, or a second completion contract.
 
 The practical ownership split is:
 
@@ -427,7 +428,7 @@ After checking the current code, runtime docs, validation ledger, realization le
 - the shipped Gemini adapter code required by the current roadmap is present
 - the shipped OpenAI native and assisted bridge code required by the current roadmap is present
 - the missing artifact was the updated implementation dossier itself, not an unlanded Claude or OpenAI code seam
-- future adapter work should reopen only when a current repo-evidenced, kernel-preserving gain appears
+- this evidence packet does not establish an additional adapter seam requiring reopening beyond the frozen v1 code and artifact set
 
 ## 11. Full Source Appendix
 

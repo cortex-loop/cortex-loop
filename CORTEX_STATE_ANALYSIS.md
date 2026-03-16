@@ -9,6 +9,7 @@ It is a critique-support packet, not an authority surface. Active status and rel
 
 This is the final v1 state snapshot for the truthful-withheld endpoint.
 Use this first when a new human or agent needs the shortest faithful read of frozen v1.
+It intentionally preserves evidence, code-backed interpretation, and explicit uncertainty only; it does not prescribe v2 architecture or later Cortex doctrine.
 
 This document is intentionally synthesis-first:
 
@@ -41,7 +42,7 @@ This dossier also includes one fresh committed supplemental live comparison betw
 
 Cortex is currently strong at truthful completion-boundary enforcement, strongest on Claude native, and materially implemented across Claude, Gemini, OpenAI native, and OpenAI assisted. That is real and repo-backed.
 
-Cortex is strong on truthful completion-boundary enforcement and strongest on Claude native, but still lacks repo-backed proof that it improves artifact quality over the raw model. The strongest current repo-backed diagnosis is that the main remaining product defect is below the current Claude adapter and above the future executive layer: the shared validation contract and kernel acceptance shape still overweight proof completion relative to minimal-task boundedness on some tasks ([../MODEL_KERNEL_ADAPTER_AUDIT.md](https://github.com/cortex-loop/cortex-loop-v1-archive/blob/v0.1.0a2/docs/MODEL_KERNEL_ADAPTER_AUDIT.md), [../CLAUDE_BOUNDEDNESS_POSTMORTEM.md](https://github.com/cortex-loop/cortex-loop-v1-archive/blob/v0.1.0a2/docs/CLAUDE_BOUNDEDNESS_POSTMORTEM.md), [../../cortex/stop_policy.py](https://github.com/cortex-loop/cortex-loop-v1-archive/blob/v0.1.0a2/cortex/stop_policy.py#L16-L127)).
+Cortex is strong on truthful completion-boundary enforcement and strongest on Claude native, but still lacks repo-backed proof that it improves artifact quality over the raw model. The strongest current repo-backed diagnosis is that the remaining product defect is localized in the interaction between the shared validation contract and the current kernel acceptance shape: the evidence shows proof completion still outweighing minimal-task boundedness on some tasks ([../MODEL_KERNEL_ADAPTER_AUDIT.md](https://github.com/cortex-loop/cortex-loop-v1-archive/blob/v0.1.0a2/docs/MODEL_KERNEL_ADAPTER_AUDIT.md), [../CLAUDE_BOUNDEDNESS_POSTMORTEM.md](https://github.com/cortex-loop/cortex-loop-v1-archive/blob/v0.1.0a2/docs/CLAUDE_BOUNDEDNESS_POSTMORTEM.md), [../../cortex/stop_policy.py](https://github.com/cortex-loop/cortex-loop-v1-archive/blob/v0.1.0a2/cortex/stop_policy.py#L16-L127)).
 
 The repo has now landed Phase 9 at a truthful-withheld endpoint. Current shared-harness evidence includes current Claude native, Gemini native, and OpenAI-assisted pairs; native OpenAI remains blocked/non-row-capturable; and the product claim remains `withheld_not_yet_earned` rather than silently deferred ([../../tests/fixtures/audits/net_positive_phase9_current_packet.json](https://github.com/cortex-loop/cortex-loop-v1-archive/blob/v0.1.0a2/tests/fixtures/audits/net_positive_phase9_current_packet.json), [../../tests/fixtures/audits/net_positive_phase9_rerun_readiness.json](https://github.com/cortex-loop/cortex-loop-v1-archive/blob/v0.1.0a2/tests/fixtures/audits/net_positive_phase9_rerun_readiness.json), [../MASTER_PLAN.md](https://github.com/cortex-loop/cortex-loop-v1-archive/blob/v0.1.0a2/docs/MASTER_PLAN.md)).
 
@@ -69,10 +70,10 @@ One especially reusable v1 lesson for a fresh v2 agent is that the final evidenc
 - The current shared positive lane is already a proof-hardening lane, not a clean minimal-fix product lane. That is the strongest broad cross-runtime pattern in the repo-backed evidence ([../MODEL_KERNEL_ADAPTER_AUDIT.md](https://github.com/cortex-loop/cortex-loop-v1-archive/blob/v0.1.0a2/docs/MODEL_KERNEL_ADAPTER_AUDIT.md), [../../tests/fixtures/audits/model_kernel_adapter_audit.json](https://github.com/cortex-loop/cortex-loop-v1-archive/blob/v0.1.0a2/tests/fixtures/audits/model_kernel_adapter_audit.json)).
 - That diagnosis remains historically important, but it is no longer the repo’s active next seam. The repo-local campaign has already landed Phase 9 at a truthful-withheld endpoint, so further movement is contingent on a new evidence window or external/runtime change rather than another local campaign slice ([../MODEL_KERNEL_ADAPTER_AUDIT.md](https://github.com/cortex-loop/cortex-loop-v1-archive/blob/v0.1.0a2/docs/MODEL_KERNEL_ADAPTER_AUDIT.md), [../../tests/fixtures/audits/net_positive_phase9_current_packet.json](https://github.com/cortex-loop/cortex-loop-v1-archive/blob/v0.1.0a2/tests/fixtures/audits/net_positive_phase9_current_packet.json), [../MASTER_PLAN.md](https://github.com/cortex-loop/cortex-loop-v1-archive/blob/v0.1.0a2/docs/MASTER_PLAN.md)).
 
-### Executive-layer relevance boundary
+### What v1 evidence does not establish about executive control
 
-- The upcoming executive layer is not the fix for the current boundedness defect.
-- The current repo-backed diagnosis is that if the kernel or validation contract rewards proof completion more strongly than minimal-task boundedness, a stronger executive would optimize the wrong target more effectively rather than correcting the target itself ([KERNEL_MATH_STATUS_DOSSIER.md](KERNEL_MATH_STATUS_DOSSIER.md)).
+- v1 evidence does not establish that executive-side changes alone would resolve the current boundedness defect.
+- The current repo-backed evidence shows that if the kernel or validation contract rewards proof completion more strongly than minimal-task boundedness, stronger control above that boundary could preserve the same mismatch rather than remove it ([KERNEL_MATH_STATUS_DOSSIER.md](KERNEL_MATH_STATUS_DOSSIER.md)).
 
 ## 3. What Is Currently Working
 
@@ -137,8 +138,7 @@ One especially reusable v1 lesson for a fresh v2 agent is that the final evidenc
 
 - Cortex beats the raw model on artifact quality as a product.
 - The latest kernel-math work improved end-product output quality rather than only internal truthfulness structure.
-- The executive layer will solve the current boundedness defect.
-- A new kernel boundedness primitive is the first earned fix.
+- Which architectural change, if any, resolves the current boundedness defect.
 
 ## 6. Evidence and Confidence
 
@@ -157,7 +157,7 @@ One especially reusable v1 lesson for a fresh v2 agent is that the final evidenc
 
 - **Directly observed:** the kernel stop law, the repair-target logic, the runtime bridge surfaces, and the current cross-runtime audit verdict are all directly backed by current code or committed artifacts.
 - **Mixed:** Gemini latest-local positive behavior, OpenAI latest-local behavior, and the fresh current-vs-PyPI comparison all contain real contradictions or limited-scope evidence and are presented that way here.
-- **Still not proven:** current Cortex product superiority over the raw model on artifact quality, and any claim that the upcoming executive layer will fix the present boundedness problem.
+- **Still not proven:** current Cortex product superiority over the raw model on artifact quality, and any architectural remedy for the present boundedness problem.
 
 ## 8. Where To Go Deeper
 
