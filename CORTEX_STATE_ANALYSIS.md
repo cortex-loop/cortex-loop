@@ -47,6 +47,8 @@ The repo has now landed Phase 9 at a truthful-withheld endpoint. Current shared-
 
 The fresh committed current-vs-PyPI comparison does not support a broad regression claim from the latest kernel-math era. It does show one likely regression signal on Gemini boundedness, continued mixed OpenAI behavior, and clear Claude improvement on the minimal positive lane. That comparison is supplemental evidence, not a proof that the current product is broadly better than raw or broadly better than `0.1.0a1`.
 
+One especially reusable v1 lesson for a fresh v2 agent is that the final evidence does not point to “every host needs a different JSON stop schema.” The strongest row-capturable March 16 packet shows one shared machine-readable carrier, `payload.stop_fields`, working across Claude native, Gemini native, and OpenAI assisted; the runtime differences show up later in assurance, closure quality, and terminality rather than in the base carrier shape itself ([VALIDATION_EVIDENCE_DOSSIER.md](VALIDATION_EVIDENCE_DOSSIER.md), [KERNEL_IMPLEMENTATION_DOSSIER.md](KERNEL_IMPLEMENTATION_DOSSIER.md)).
+
 ## 2. Current System State
 
 ### Kernel state

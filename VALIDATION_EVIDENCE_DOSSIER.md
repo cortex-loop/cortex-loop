@@ -111,6 +111,45 @@ These surfaces back the final archival v1 package and release-control story:
 
 Those files define and verify the package version, changelog extraction path, and the GitHub tag-to-PyPI release flow for the frozen v1 line.
 
+### 2.5 Structured stop / JSON-shape findings worth carrying into v2
+
+The most reusable structured-output result from frozen v1 is narrower than “every host needs a different JSON schema.”
+
+The kernel’s accepted machine-readable stop carriers at the frozen tag are:
+
+- native structured stop evidence
+- `payload.stop_fields`
+- `STOP_FIELDS_JSON:` trailer fallback
+
+But the frozen strict-path evidence also says not to overread that fallback:
+
+- strict mode does not treat message-fallback or trailer-only stop text as equivalent to stable native or payload-carried stop fields
+- the repo’s strongest current cross-runtime machine-readable carrier is therefore `payload.stop_fields`, not free-form prose and not per-model custom schemas
+
+Current row-capturable March 16 evidence comes out like this:
+
+| Runtime lane | Current machine-readable carrier | Current observed result | Reusable v1 lesson |
+| --- | --- | --- | --- |
+| Claude native | `payload.stop_fields` in the current Cortex pair | structured stop observed; route-valid `localized_edit/light`; final stop `completed` | the shared carrier works on the strongest current native lane, but the lane still did not realize the shared `strict` intent |
+| Gemini native | `payload.stop_fields` in the current Cortex pair | structured stop observed; route-valid `localized_edit/strict`; final stop `failed_invariants` | the same carrier works, but stricter close quality still depends on host/runtime behavior rather than needing a new JSON shape |
+| OpenAI assisted | `payload.stop_fields` from the assisted bridge | structured stop observed; bounded corrective pass occurred; final stop `failed_challenges` / `bounded_incomplete` | the shared carrier also works through the assisted bridge, but the lane stays supplemental because closure quality and product-proof weight remain mixed |
+| OpenAI native | no current row-capturable terminal stop surface | blocked for current product-proof weight | the repo still cannot isolate shape interaction cleanly on native OpenAI because terminality is the blocker, not an already-proven schema mismatch |
+
+The broad v1 result is therefore:
+
+- one common machine-readable carrier did work across the row-capturable lanes
+- the main runtime differences showed up in closure quality, assurance realization, and terminality
+- the repo did not earn a claim that better per-model JSON shape tuning was the main remaining lever
+
+Primary backing surfaces:
+
+- [KERNEL_IMPLEMENTATION_DOSSIER.md](KERNEL_IMPLEMENTATION_DOSSIER.md)
+- [KERNEL_MATH_STATUS_DOSSIER.md](KERNEL_MATH_STATUS_DOSSIER.md)
+- [../../tests/fixtures/audits/net_positive_phase9_claude_current_pair.json](https://github.com/cortex-loop/cortex-loop-v1-archive/blob/v0.1.0a2/tests/fixtures/audits/net_positive_phase9_claude_current_pair.json)
+- [../../tests/fixtures/audits/net_positive_phase9_gemini_current_pair.json](https://github.com/cortex-loop/cortex-loop-v1-archive/blob/v0.1.0a2/tests/fixtures/audits/net_positive_phase9_gemini_current_pair.json)
+- [../../tests/fixtures/audits/net_positive_phase9_openai_assisted_current_pair.json](https://github.com/cortex-loop/cortex-loop-v1-archive/blob/v0.1.0a2/tests/fixtures/audits/net_positive_phase9_openai_assisted_current_pair.json)
+- [../../tests/fixtures/audits/net_positive_phase1_baseline_blocker.json](https://github.com/cortex-loop/cortex-loop-v1-archive/blob/v0.1.0a2/tests/fixtures/audits/net_positive_phase1_baseline_blocker.json)
+
 ## 3. Runtime Claim To Evidence Map
 
 | Runtime claim | Final v1 status | Primary backing artifacts | Why this is the right evidence class |
