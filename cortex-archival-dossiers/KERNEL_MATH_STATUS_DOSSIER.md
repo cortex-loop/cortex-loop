@@ -1,7 +1,7 @@
 # Kernel Math Status Dossier
 
 > Frozen v1 reference dossier mirrored from [`cortex-loop-v1-archive`](https://github.com/cortex-loop/cortex-loop-v1-archive/tree/v0.1.0a2) at [`v0.1.0a2`](https://github.com/cortex-loop/cortex-loop-v1-archive/releases/tag/v0.1.0a2).
-> This fresh canonical repo intentionally contains only these five v1 reference documents; the full v1 tree, tests, fixtures, and releases live in the archive repo.
+> This fresh canonical repo intentionally contains only the `cortex-archival-dossiers/` v1 reference pack; the full v1 tree, tests, fixtures, and releases live in the archive repo.
 
 
 This dossier is the current math-status and critique packet for the live Cortex kernel.
