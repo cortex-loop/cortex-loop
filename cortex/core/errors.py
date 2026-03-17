@@ -1,3 +1,33 @@
-"""Error and degradation shell reserved for the next core substrate seam."""
+"""Explicit degradation and error carriers for contradiction-preserving core state."""
 
-__all__ = ()
+from __future__ import annotations
+
+from dataclasses import dataclass, field
+
+from .envelopes import MetadataField
+
+
+@dataclass(frozen=True, slots=True)
+class ContradictionRecord:
+    source_tag: str
+    summary: str
+    evidence_tags: frozenset[str] = field(default_factory=frozenset)
+
+
+@dataclass(frozen=True, slots=True)
+class DegradationRecord:
+    reason_code: str
+    capability_tags: frozenset[str] = field(default_factory=frozenset)
+    contradiction_records: tuple[ContradictionRecord, ...] = field(default_factory=tuple)
+    metadata: tuple[MetadataField, ...] = field(default_factory=tuple)
+
+
+@dataclass(frozen=True, slots=True)
+class CoreErrorRecord:
+    reason_code: str
+    capability_tags: frozenset[str] = field(default_factory=frozenset)
+    contradiction_records: tuple[ContradictionRecord, ...] = field(default_factory=tuple)
+    metadata: tuple[MetadataField, ...] = field(default_factory=tuple)
+
+
+__all__ = ["ContradictionRecord", "CoreErrorRecord", "DegradationRecord"]

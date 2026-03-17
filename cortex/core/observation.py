@@ -1,3 +1,45 @@
-"""Observation shell reserved for the next core substrate seam."""
+"""Lightweight observation carriers for the canonical cheap path."""
 
-__all__ = ()
+from __future__ import annotations
+
+from dataclasses import dataclass, field
+
+from .envelopes import EventPayloadHandle, LifecycleEventEnvelope, MetadataField
+
+
+@dataclass(frozen=True, slots=True)
+class PayloadView:
+    payload_handle: EventPayloadHandle | None = None
+    metadata: tuple[MetadataField, ...] = field(default_factory=tuple)
+    summary_tags: frozenset[str] = field(default_factory=frozenset)
+
+
+@dataclass(frozen=True, slots=True)
+class RuntimeRecord:
+    record_type: str
+    record_id: str | None = None
+    tags: frozenset[str] = field(default_factory=frozenset)
+    metadata: tuple[MetadataField, ...] = field(default_factory=tuple)
+
+
+@dataclass(frozen=True, slots=True)
+class StructuredObservation:
+    observation_type: str
+    tags: frozenset[str] = field(default_factory=frozenset)
+    metadata: tuple[MetadataField, ...] = field(default_factory=tuple)
+
+
+@dataclass(frozen=True, slots=True)
+class ObservationBundle:
+    event: LifecycleEventEnvelope
+    payload_view: PayloadView
+    runtime_records: tuple[RuntimeRecord, ...] = field(default_factory=tuple)
+    structured_observations: tuple[StructuredObservation, ...] = field(default_factory=tuple)
+
+
+__all__ = [
+    "ObservationBundle",
+    "PayloadView",
+    "RuntimeRecord",
+    "StructuredObservation",
+]
