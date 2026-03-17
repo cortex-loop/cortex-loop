@@ -126,7 +126,7 @@ Forbidden leaks: contradictions must be preserved, not smoothed. No adapter or A
 
 Forbidden leaks: `classify_dispatch()` consumes `ObservationBundle`, not raw host events. The classifier preserves the no-gauntlet cheap default and may not import executive/SRE same-event policy state as commitment truth. `candidate-present` may justify `candidate-bearing`, but it may not silently upgrade the event to `full-commitment` without a stronger wake marker. No host-driver doctrine, startup doctrine, or adapter loading logic may leak into Core dispatch.
 
-### 1.10 Certification execution, minimal evidence artifacts, and eval harness
+### 1.10 Certification execution, minimal evidence artifacts, eval harness, and packet publication
 
 | Packet math | Is | Code home | Test surface | Status |
 | --- | --- | --- | --- | --- |
@@ -136,8 +136,10 @@ Forbidden leaks: `classify_dispatch()` consumes `ObservationBundle`, not raw hos
 | minimal blocker fragment schema | `BlockerFragment` | `cortex/eval/artifacts.py` | `test_certification_artifacts.py::test_blocker_fragment_preserves_reason_and_contradictions` | landed |
 | contradiction-preserving eval harness result carrier | `EvaluationHarnessResult` | `cortex/eval/harness.py` | `test_eval_harness.py::test_harness_result_carries_current_pair_without_losing_refs` + `test_eval_harness.py::test_harness_result_carries_blocker_without_smoothing_blocker_truth` | landed |
 | eval harness composition entry point | `build_evaluation_harness_result()` | `cortex/eval/harness.py` | `test_eval_harness.py::test_harness_requires_exactly_one_outcome_fragment` + `test_eval_harness.py::test_harness_result_needs_no_publication_packet_surface` | landed |
+| truthful-withheld packet carrier | `EvaluationPacket` | `cortex/eval/packets.py` | `test_eval_packets.py::test_packet_built_from_current_pair_preserves_truth_and_withheld_fields` + `test_eval_packets.py::test_packet_built_from_blocker_preserves_truth_and_withheld_fields` | landed |
+| packet publication entry point | `build_evaluation_packet()` | `cortex/eval/packets.py` | `test_eval_packets.py::test_packet_build_preserves_contradictions_and_degradations` + `test_eval_packets.py::test_packet_build_requires_no_measured_example_or_runtime_wiring` | landed |
 
-Forbidden leaks: no SRE or AUX same-event policy may enter `certify_commitment()` as certification truth. No host-specific driver doctrine may enter the artifact schemas or eval harness. Contradictions and degradations must remain explicit. No full proof packet, withheld logic, publication formatting layer, or audit doctrine may leak into these carriers, and no alternate verdict lattice may be introduced beyond `CERTIFIED`, `UNCERTIFIED`, and `BLOCKED`. Eval may not become a second truth court.
+Forbidden leaks: no SRE or AUX same-event policy may enter `certify_commitment()` as certification truth. No host-specific driver doctrine may enter the artifact schemas, eval harness, or packet publication surface. Contradictions and degradations must remain explicit. No report formatting layer, measured publication example, or audit doctrine may leak into these carriers, and no alternate verdict lattice may be introduced beyond `CERTIFIED`, `UNCERTIFIED`, and `BLOCKED`. Eval may not become a second truth court.
 
 ### 1.11 Reference-host observe/bind realization
 
