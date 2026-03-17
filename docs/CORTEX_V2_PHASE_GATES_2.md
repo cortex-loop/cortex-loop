@@ -28,22 +28,20 @@ It records whether cross-seam closure conditions are actually earned.
 Source of truth:
 - `docs/CORTEX_V2_IMPLEMENTATION_MASTER_PLAN_2.md`, Section 7
 
-Overall status: `drifted`
+Overall status: `landed`
 
-This gate should have been satisfied before the first host slice was considered closed.
-That did not happen, so the miss remains visible here until the missing rows are landed.
+Historical note:
+- this gate previously drifted while only placeholder tests existed,
+- the missing rows are now closed with real reference-host vertical integration coverage.
 
 | Gate row | Current evidence | Owner / next closeout | Status | Notes |
 | --- | --- | --- | --- | --- |
-| cheap-path integration | `tests/integration/test_pipeline_placeholders.py::test_cheap_path_integration_placeholder` | host-integration closeout seam | open | placeholder only |
-| candidate-bearing integration | `tests/integration/test_pipeline_placeholders.py::test_candidate_bearing_integration_placeholder` | host-integration closeout seam | open | placeholder only |
-| full commitment integration | `tests/integration/test_pipeline_placeholders.py::test_full_commitment_integration_placeholder` | host-integration closeout seam | open | placeholder only |
-| degradation roundtrip | `tests/integration/test_pipeline_placeholders.py::test_degradation_roundtrip_placeholder` | host-integration closeout seam | open | placeholder only |
-| firewall integration | `tests/integration/test_pipeline_placeholders.py::test_firewall_integration_placeholder` | host-integration closeout seam | open | placeholder only |
-| driver-to-core-to-sre smoke | `tests/integration/test_pipeline_placeholders.py::test_driver_to_core_to_sre_smoke_placeholder` | host-integration closeout seam | open | placeholder only |
-
-Supporting note:
-- `tests/integration/test_reference_host_neutral.py` is real integration evidence, but it does not retire any of the six named gate rows by itself.
+| cheap-path integration | `tests/integration/test_reference_host_vertical_gate.py::test_cheap_path_integration_stays_cheap_and_neutral_allowed` | closed | landed | reference-host observe/bind -> dispatch -> neutral continuation stays cheap |
+| candidate-bearing integration | `tests/integration/test_reference_host_vertical_gate.py::test_candidate_bearing_integration_binds_candidate_and_returns_no_verdict` | closed | landed | candidate-bearing event binds a candidate and stays out of certification |
+| full commitment integration | `tests/integration/test_reference_host_vertical_gate.py::test_full_commitment_integration_reaches_certified_with_lawful_evidence` | closed | landed | reference-host commitment path reaches a real verdict under lawful evidence |
+| degradation roundtrip | `tests/integration/test_reference_host_vertical_gate.py::test_degradation_roundtrip_preserves_degradation_and_contradictions` | closed | landed | degradation and contradiction refs survive the commitment path without flattening |
+| firewall integration | `tests/integration/test_reference_host_vertical_gate.py::test_firewall_integration_rejects_executive_environment_view` | closed | landed | executive-side environment view is rejected by the certification boundary through the real host path |
+| driver-to-core-to-sre smoke | `tests/integration/test_reference_host_vertical_gate.py::test_driver_to_core_to_sre_smoke_stays_observe_bind_dispatch_and_neutral` | closed | landed | driver event -> core dispatch -> SRE neutral decision smoke over landed carriers |
 
 ---
 

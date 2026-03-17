@@ -1,0 +1,170 @@
+"""Real first-host-vertical integration coverage over landed reference-host behavior."""
+
+from __future__ import annotations
+
+import pytest
+
+from cortex.core.commitments import (
+    CommitmentStatus,
+    ProvenanceEvidenceRef,
+    ProvenanceManifest,
+)
+from cortex.core.dispatch import DispatchLane, classify_dispatch
+from cortex.core.environment import (
+    EXECUTION_TRACE,
+    CommitmentEnvironmentHandle,
+    ExecutiveEnvironmentView,
+)
+from cortex.core.errors import ContradictionRecord, DegradationRecord
+from cortex.drivers.reference_host import observe_reference_host_event
+from cortex.drivers.reference_host_commitment import evaluate_reference_host_commitment
+from cortex.drivers.reference_host_neutral import (
+    NeutralContinuationCode,
+    evaluate_reference_host_neutral,
+)
+from cortex.sre.allocation import AllocationScore, AllocationScorecard
+from cortex.sre.families import SoftControlFamily
+from cortex.sre.policy import neutral_dominance_decision
+
+
+def test_cheap_path_integration_stays_cheap_and_neutral_allowed() -> None:
+    result = evaluate_reference_host_neutral(
+        "ContextLoad",
+        {"session_id": " session-1 "},
+    )
+
+    assert result.dispatch_decision.lane is DispatchLane.CHEAP
+    assert result.neutral_decision.allowed is True
+    assert result.neutral_decision.result_code is NeutralContinuationCode.NEUTRAL_ALLOWED
+
+
+def test_candidate_bearing_integration_binds_candidate_and_returns_no_verdict() -> None:
+    result = evaluate_reference_host_commitment(
+        "ApprovalRequest",
+        {"candidate_id": "candidate-1"},
+        environment_handle=_make_environment_handle(),
+    )
+
+    assert result.dispatch_decision.lane is DispatchLane.CANDIDATE_BEARING
+    assert result.candidate is not None
+    assert result.candidate.candidate_id == "candidate-1"
+    assert result.verdict is None
+
+
+def test_full_commitment_integration_reaches_certified_with_lawful_evidence() -> None:
+    result = evaluate_reference_host_commitment(
+        "ApprovalResult",
+        {
+            "commitment_id": "commit-1",
+            "externally_consequential": True,
+        },
+        environment_handle=_make_environment_handle(),
+        provenance_manifest=ProvenanceManifest(
+            evidence_refs=(
+                ProvenanceEvidenceRef(
+                    source_family="result_artifact",
+                    reference_id="artifact-1",
+                ),
+            ),
+        ),
+    )
+
+    assert result.dispatch_decision.lane is DispatchLane.FULL_COMMITMENT
+    assert result.verdict is not None
+    assert result.verdict.status is CommitmentStatus.CERTIFIED
+
+
+def test_degradation_roundtrip_preserves_degradation_and_contradictions() -> None:
+    contradiction = ContradictionRecord(
+        source_tag="host-check",
+        summary="expected write receipt was absent",
+        evidence_tags=frozenset({"receipt-missing"}),
+    )
+    degradation = DegradationRecord(
+        reason_code="host-surface-degraded",
+        capability_tags=frozenset({"external/write"}),
+        contradiction_records=(contradiction,),
+    )
+
+    result = evaluate_reference_host_commitment(
+        "ApprovalResult",
+        {
+            "commitment_id": "commit-2",
+            "externally_consequential": True,
+        },
+        environment_handle=_make_environment_handle(),
+        provenance_manifest=ProvenanceManifest(
+            evidence_refs=(
+                ProvenanceEvidenceRef(
+                    source_family="result_artifact",
+                    reference_id="artifact-2",
+                ),
+            ),
+        ),
+        degradation_refs=(degradation,),
+    )
+
+    assert result.verdict is not None
+    assert result.verdict.degradation_refs == (degradation,)
+    assert contradiction in result.verdict.contradiction_refs
+
+
+def test_firewall_integration_rejects_executive_environment_view() -> None:
+    with pytest.raises(TypeError, match="CommitmentEnvironmentHandle"):
+        evaluate_reference_host_commitment(
+            "ApprovalResult",
+            {
+                "commitment_id": "commit-3",
+                "externally_consequential": True,
+            },
+            environment_handle=ExecutiveEnvironmentView(
+                available_query_kinds=frozenset({EXECUTION_TRACE}),
+                host_capability_tags=frozenset({"trace/read"}),
+            ),
+            provenance_manifest=ProvenanceManifest(
+                evidence_refs=(
+                    ProvenanceEvidenceRef(
+                        source_family="result_artifact",
+                        reference_id="artifact-3",
+                    ),
+                ),
+            ),
+        )
+
+
+def test_driver_to_core_to_sre_smoke_stays_observe_bind_dispatch_and_neutral() -> None:
+    bound_event = observe_reference_host_event(
+        "ContextLoad",
+        {"session_id": " session-6 "},
+    )
+    dispatch_decision = classify_dispatch(
+        bound_event.observation,
+        payload=bound_event.normalized_payload,
+        native_commitment_fields=bound_event.normalized_payload.get("commitment_fields"),
+    )
+    sre_decision = neutral_dominance_decision(
+        AllocationScorecard(
+            scores=(
+                AllocationScore(SoftControlFamily.NEUTRAL, 1.0),
+                AllocationScore(SoftControlFamily.CHECK, 1.05),
+                AllocationScore(SoftControlFamily.SEEK_CONTEXT, 0.9),
+            ),
+            activation_threshold=0.1,
+        )
+    )
+    metadata = {
+        field.key: field.value
+        for field in bound_event.observation.event.payload_metadata
+    }
+
+    assert dispatch_decision.lane is DispatchLane.CHEAP
+    assert sre_decision.selected_family is SoftControlFamily.NEUTRAL
+    assert metadata["raw_host_event_name"] == "ContextLoad"
+    assert metadata["session_id"] == "session-6"
+
+
+def _make_environment_handle() -> CommitmentEnvironmentHandle:
+    return CommitmentEnvironmentHandle(
+        available_query_kinds=frozenset({EXECUTION_TRACE}),
+        capability_tags=frozenset({"trace/read"}),
+    )
