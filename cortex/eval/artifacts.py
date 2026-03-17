@@ -1,3 +1,47 @@
-"""Placeholder home for contradiction-preserving evaluation artifacts."""
+"""Minimal contradiction-preserving evaluation artifact schemas."""
 
-__all__ = ()
+from __future__ import annotations
+
+from dataclasses import dataclass, field
+
+from cortex.core.commitments import CommitmentStatus
+from cortex.core.envelopes import MetadataField
+from cortex.core.errors import ContradictionRecord, DegradationRecord
+
+
+@dataclass(frozen=True, slots=True)
+class EventTraceArtifact:
+    trace_id: str | None = None
+    event_refs: tuple[str, ...] = field(default_factory=tuple)
+    record_refs: tuple[str, ...] = field(default_factory=tuple)
+    contradiction_refs: tuple[ContradictionRecord, ...] = field(default_factory=tuple)
+    degradation_refs: tuple[DegradationRecord, ...] = field(default_factory=tuple)
+    metadata: tuple[MetadataField, ...] = field(default_factory=tuple)
+
+
+@dataclass(frozen=True, slots=True)
+class CurrentPairFragment:
+    event_trace: EventTraceArtifact
+    verdict_status: CommitmentStatus
+    candidate_id: str | None = None
+    verdict_reason_code: str | None = None
+    contradiction_refs: tuple[ContradictionRecord, ...] = field(default_factory=tuple)
+    degradation_refs: tuple[DegradationRecord, ...] = field(default_factory=tuple)
+    metadata: tuple[MetadataField, ...] = field(default_factory=tuple)
+
+
+@dataclass(frozen=True, slots=True)
+class BlockerFragment:
+    reason_code: str
+    boundary_tags: frozenset[str] = field(default_factory=frozenset)
+    capability_tags: frozenset[str] = field(default_factory=frozenset)
+    contradiction_refs: tuple[ContradictionRecord, ...] = field(default_factory=tuple)
+    degradation_refs: tuple[DegradationRecord, ...] = field(default_factory=tuple)
+    metadata: tuple[MetadataField, ...] = field(default_factory=tuple)
+
+
+__all__ = [
+    "BlockerFragment",
+    "CurrentPairFragment",
+    "EventTraceArtifact",
+]

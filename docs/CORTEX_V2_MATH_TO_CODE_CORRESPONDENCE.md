@@ -126,6 +126,17 @@ Forbidden leaks: contradictions must be preserved, not smoothed. No adapter or A
 
 Forbidden leaks: `classify_dispatch()` consumes `ObservationBundle`, not raw host events. The classifier preserves the no-gauntlet cheap default and may not import executive/SRE same-event policy state as commitment truth. `candidate-present` may justify `candidate-bearing`, but it may not silently upgrade the event to `full-commitment` without a stronger wake marker. No host-driver doctrine, startup doctrine, or adapter loading logic may leak into Core dispatch.
 
+### 1.10 Certification execution and minimal evidence artifacts
+
+| Packet math | Is | Code home | Test surface | Status |
+| --- | --- | --- | --- | --- |
+| `S_t^{commit}(c) = Certify_c(...)` execution | `certify_commitment()` | `cortex/core/certification.py` | `test_certification_artifacts.py::test_certify_commitment_returns_certified_with_concrete_evidence` + `test_certification_artifacts.py::test_certify_commitment_returns_uncertified_without_concrete_evidence` + `test_certification_artifacts.py::test_certify_commitment_returns_blocked_when_boundary_is_blocked` + `test_certification_artifacts.py::test_certify_commitment_preserves_contradictions_and_degradations` | landed |
+| minimal event trace artifact schema | `EventTraceArtifact` | `cortex/eval/artifacts.py` | `test_certification_artifacts.py::test_current_pair_fragment_carries_event_trace_and_verdict_summary` | landed |
+| minimal current-pair fragment schema | `CurrentPairFragment` | `cortex/eval/artifacts.py` | `test_certification_artifacts.py::test_current_pair_fragment_carries_event_trace_and_verdict_summary` | landed |
+| minimal blocker fragment schema | `BlockerFragment` | `cortex/eval/artifacts.py` | `test_certification_artifacts.py::test_blocker_fragment_preserves_reason_and_contradictions` | landed |
+
+Forbidden leaks: no SRE or AUX same-event policy may enter `certify_commitment()` as certification truth. No host-specific driver doctrine may enter the artifact schemas. Contradictions and degradations must remain explicit. No full proof packet, withheld logic, or audit doctrine may leak into these carriers, and no alternate verdict lattice may be introduced beyond `CERTIFIED`, `UNCERTIFIED`, and `BLOCKED`.
+
 ---
 
 ## 2. V1 standard-library port correspondence
