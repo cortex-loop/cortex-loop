@@ -1,6 +1,6 @@
 # CORTEX_V2_SRE_2
 
-Status: canonical **SRE** document for the 3-document Cortex v2 packet (`active`; mediation extension `experimental / off-by-default`)  
+Status: canonical **SRE** document for the 3-document Cortex v2 packet (`active`; mediation extension `experimental / off-by-default`)
 Companion documents: `CORTEX_V2_CORE_2.md`, `CORTEX_V2_AUX_2.md`
 
 ---
@@ -305,7 +305,7 @@ Discrete bounded realization is the primary implementation picture.
 The SRE should maximize task value while minimizing unnecessary executive burden and host mismatch:
 
 \[
-\max \; \mathbb E[V^{task} - C^{ctrl} - C^{host} - C^{vis}] 
+\max \; \mathbb E[V^{task} - C^{ctrl} - C^{host} - C^{vis}]
 \]
 
 subject to the core boundary contract.
