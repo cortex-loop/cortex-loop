@@ -308,15 +308,15 @@ Forbidden leaks: SRE may not certify commitments, redefine blockedness, lower ha
 
 ---
 
-## 4. AUX correspondence (not yet landed — reference mapping)
+## 4. AUX correspondence
 
-| Packet math | Target code object | Target home | Status |
-| --- | --- | --- | --- |
-| `S_t^{aux} = Augment^{aux}(S_t, A_t^{aux})` (snapshot augmentation) | `augment_snapshot()` | `cortex/aux/augmentation.py` | not started |
-| `C_t^{aux}` (cost-visible burden) | `AuxBurdenReport` | `cortex/aux/cost.py` | not started |
-| `Commit_c(Y_t | A_t^{aux}) = Commit_c(Y_t)` (claim-conservative law) | enforcement test | `tests/integration/test_aux_claim_conservative.py` | not started |
+| Packet math | Is | Code home | Test surface | Status |
+| --- | --- | --- | --- | --- |
+| `S_t^{aux} = Augment^{aux}(S_t, A_t^{aux})` (snapshot augmentation) | `augment_snapshot()` | `cortex/aux/augmentation.py` | `test_aux_scaffolds.py::test_augment_snapshot_requires_explicit_support_snapshot_and_preserves_core_view` + `test_aux_scaffolds.py::test_augment_snapshot_appends_auxiliary_support_without_mutating_core_snapshot_semantics` | landed |
+| `C_t^{aux}` (cost-visible burden) | `AuxBurdenReport` | `cortex/aux/cost.py` | `test_aux_scaffolds.py::test_aux_burden_report_enforces_non_negative_values` + `test_aux_scaffolds.py::test_aux_scaffold_types_remain_domain_general_and_removable` | landed |
+| `Commit_c(Y_t | A_t^{aux}) = Commit_c(Y_t)` (claim-conservative law) | enforcement test | `tests/integration/test_aux_claim_conservative.py` | not started | not started |
 
-Forbidden leaks: AUX may not certify commitments, lower hard boundaries, become a second truth court, or learn hidden completion heuristics. Every AUX module must be removable without breaking core or SRE.
+Forbidden leaks: AUX may not certify commitments, lower hard boundaries, become a second truth court, or learn hidden completion heuristics. `augment_snapshot()` may append or derive auxiliary support, but it may not redefine `SupportSnapshot`. `AuxBurdenReport` remains AUX-only burden rather than generic runtime metrics sprawl. Every AUX module must be removable without breaking core or SRE.
 
 ---
 
