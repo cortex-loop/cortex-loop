@@ -158,6 +158,16 @@ Forbidden leaks: no raw host event or payload dict may bypass `LifecycleEventEnv
 
 Forbidden leaks: no driver may become a truth court for blockedness, provenance sufficiency, or certification status. Candidate-bearing events may not silently enter certification without a stronger full-commitment wake marker. No SRE/AUX same-event policy state, startup/retry/adapter-loading doctrine, fake multi-host abstraction, stop-centered worldview, proof doctrine, or alternate commitment-status lattice may leak into this slice.
 
+### 1.13 Reference-host neutral-only realization
+
+| Packet math | Is | Code home | Test surface | Status |
+| --- | --- | --- | --- | --- |
+| reference-host neutral-path result carrier | `ReferenceHostNeutralResult` | `cortex/drivers/reference_host_neutral.py` | `test_reference_host_neutral.py::test_ordinary_context_event_yields_explicit_neutral_continuation_result` + `test_reference_host_neutral.py::test_vertical_slice_stays_observe_bind_driven_and_preserves_raw_host_metadata` | landed |
+| neutral-only continuation decision/result | `NeutralContinuationDecision` + `NeutralContinuationCode` | `cortex/drivers/reference_host_neutral.py` | `test_reference_host_neutral.py::test_ordinary_context_event_yields_explicit_neutral_continuation_result` + `test_reference_host_neutral.py::test_proposal_like_event_is_rejected_from_neutral_only_path` + `test_reference_host_neutral.py::test_full_commitment_event_is_rejected_from_neutral_only_path` | landed |
+| reference-host neutral-path execution | `evaluate_reference_host_neutral()` | `cortex/drivers/reference_host_neutral.py` | `test_reference_host_neutral.py::test_ordinary_context_event_yields_explicit_neutral_continuation_result` + `test_reference_host_neutral.py::test_proposal_like_event_is_rejected_from_neutral_only_path` + `test_reference_host_neutral.py::test_full_commitment_event_is_rejected_from_neutral_only_path` | landed |
+
+Forbidden leaks: no SRE neutral-dominance scoring or soft-control family logic may appear in this seam. No cheap-path event may be silently escalated into certification. No driver may become a truth court for commitments, provenance, or blockedness. No startup, retry, or adapter-loading doctrine, fake multi-host abstraction, or stop-centered worldview may leak into this slice.
+
 ---
 
 ## 2. V1 standard-library port correspondence
