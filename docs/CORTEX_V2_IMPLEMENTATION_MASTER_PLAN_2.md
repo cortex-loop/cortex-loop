@@ -12,6 +12,7 @@ Active packet documents:
 Supporting implementation/port authority:
 - `docs/V1_CODE_PORT_DETERMINATION.md`
 - `docs/CORTEX_V2_MATH_TO_CODE_CORRESPONDENCE.md`
+- `docs/CORTEX_V2_PHASE_GATES_2.md`
 
 Workflow authority:
 - `AGENTS.md`
@@ -54,6 +55,15 @@ That means:
 The v1 archive is a **standard library and evidence source**, not a base architecture.
 
 Subagents are a **workflow optimization**, not a fourth architecture layer.
+
+Archive filename note:
+- `cortex/core/boundaries.py`
+- `cortex/core/realization.py`
+- `cortex/eval/harness.py`
+
+Those archive filenames are **not** active deliverables by default.
+If their responsibilities are re-earned under v2, they may land under different code homes.
+Missing those exact filenames is not, by itself, a phase-gap finding under this plan.
 
 ---
 
@@ -133,9 +143,14 @@ Unless live repo truth forces a blocker seam first, the architect should prefer 
 7. Reference-host neutral-only vertical slice
 8. Active SRE role views + neutral dominance
 9. Uncertainty / brake
-10. Branch / goal / opportunity specialization
-11. Gemini host port
-12. OpenAI host port
+10A. Goal continuity / branch carriers
+10B. Host-native opportunity specialization
+11A. Gemini observe/bind slice
+11B. Gemini commitment-path slice
+11C. Gemini neutral-only slice
+12A. OpenAI observe/bind slice
+12B. OpenAI commitment-path slice
+12C. OpenAI neutral-only slice
 13. Full evidence harness
 14. AUX scaffolds
 15. First implementation proof packet
@@ -241,6 +256,8 @@ Required early integration tests:
 6. driver-to-core-to-sre smoke
 
 Subagents may help generate fixtures or triage failures, but the parent must verify final test truth.
+Live row-by-row gate status is tracked in `docs/CORTEX_V2_PHASE_GATES_2.md`.
+Placeholder tests reserve surfaces, but they do not satisfy this gate.
 
 ---
 
@@ -254,6 +271,8 @@ Targets apply **excluding host network/model latency and excluding external tool
 - neutral SRE scoring overhead: median <= 2 ms; p95 <= 10 ms
 
 Subagent orchestration is never an excuse to ignore these budgets.
+Defined targets are not the same as measured evidence.
+Measurement status is tracked in `docs/CORTEX_V2_PHASE_GATES_2.md`.
 
 ---
 
@@ -263,10 +282,12 @@ Every seam must end with:
 - `git diff --check`
 - smallest relevant `pytest` subset
 - explicit status: `landed`, `blocked`, `partial`, or `drifted`
+- `Phase gate check:` listing rows added, updated, or rechecked in `docs/CORTEX_V2_PHASE_GATES_2.md` (or `none`)
 - `PHILOSOPHY_AUDIT`
 - `Correspondence rows touched:` listing rows added, updated, or confirmed in `docs/CORTEX_V2_MATH_TO_CODE_CORRESPONDENCE.md`
 
 No load-bearing seam may be marked `landed` if it introduces new mathematical objects or implementation homes without updating the correspondence ledger.
+No phase or sub-phase may be marked `landed` if a relevant gate row remains `open`, `partial`, or `drifted` without the handoff explicitly keeping that phase `partial` or `blocked`.
 
 Additional subagent-specific verification:
 - parent confirms which subagent outputs were used

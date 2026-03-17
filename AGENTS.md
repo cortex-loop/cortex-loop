@@ -51,6 +51,7 @@ Packet documents:
 
 Implementation/workflow documents:
 - `docs/CORTEX_V2_IMPLEMENTATION_MASTER_PLAN_2.md`
+- `docs/CORTEX_V2_PHASE_GATES_2.md`
 - `docs/V1_CODE_PORT_DETERMINATION.md`
 
 Supporting implementation authority (audit surface, not architectural authority):
@@ -62,8 +63,9 @@ Authority order:
 2. SRE
 3. AUX
 4. Implementation master plan
-5. V1 code-port determination
-6. Math-to-code correspondence (traceability only; does not override packet meaning or seam order)
+5. Phase gates (closure truth only; does not override packet meaning or seam order)
+6. V1 code-port determination
+7. Math-to-code correspondence (traceability only; does not override packet meaning or seam order)
 
 If those documents disagree, fix the disagreement before widening scope.
 
@@ -109,6 +111,13 @@ If a v1 mechanism is being carried over, re-earn it under the v2 packet instead 
 - If you change the packet, say whether the implementation master plan must change in the same slice.
 - If you change the intended v1 carryover boundary, update `V1_CODE_PORT_DETERMINATION.md` in the same slice.
 
+## Phase gate discipline
+
+- `docs/CORTEX_V2_PHASE_GATES_2.md` is the live gate ledger for cross-seam closure conditions that are broader than one correspondence row.
+- If a handoff claims a phase or sub-phase is `landed`, recheck the relevant gate rows in `docs/CORTEX_V2_PHASE_GATES_2.md` in the same turn.
+- A phase may not be marked `landed` if a relevant gate row remains `open`, `partial`, or `drifted` unless the handoff explicitly keeps the phase `partial` or `blocked`.
+- Correspondence truth and phase-gate truth are distinct. Passing one does not silently satisfy the other.
+
 ## Subagent workflow
 
 - The parent thread owns seam selection, status truth, blocker truth, and final diff acceptance.
@@ -138,6 +147,7 @@ Every final summary from an agent editing this repo should include:
 - ending branch
 - commit hash or `no commit`
 - verification summary
+- `Phase gate check:` rows added, updated, or rechecked in `docs/CORTEX_V2_PHASE_GATES_2.md` (or `none` if no phase gate applied)
 - `Correspondence rows touched:` rows added, updated, or confirmed in `docs/CORTEX_V2_MATH_TO_CODE_CORRESPONDENCE.md` (or `none` for non-load-bearing edits)
 
 `PHILOSOPHY_AUDIT`
