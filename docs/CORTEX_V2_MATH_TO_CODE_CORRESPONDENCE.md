@@ -225,16 +225,17 @@ Rows marked `landed` are code-backed. Remaining rows are still target correspond
 
 | Packet math | Code object | Code home | Test surface | Status |
 | --- | --- | --- | --- | --- |
-| `X_t^{ref} = (x_t^G, x_t^U, x_t^M, x_t^K, x_t^J)` (reference executive state) | `ReferenceExecutiveState` | `cortex/sre/state.py` | `test_sre_neutral_hinge.py::test_reference_executive_state_exposes_minimum_software_facing_views` | landed |
+| `X_t^{ref} = (x_t^G, x_t^U, x_t^M, x_t^K, x_t^J)` (reference executive state) | `ReferenceExecutiveState` | `cortex/sre/state.py` | `test_sre_neutral_hinge.py::test_reference_executive_state_exposes_minimum_software_facing_views` + `test_sre_neutral_hinge.py::test_reference_executive_state_uses_canonical_uncertainty_and_brake_types` + `test_sre_neutral_hinge.py::test_reference_state_surface_does_not_export_duplicate_uncertainty_carrier` | landed |
 | `A^{ref}` (soft-control family set) | `SoftControlFamily` | `cortex/sre/families.py` | `test_sre_neutral_hinge.py::test_exact_soft_control_family_set_matches_the_packet` | landed |
 | `Q_t^{alloc}(a)` (combined allocation score) | `AllocationScore` + `AllocationScorecard` | `cortex/sre/allocation.py` | `test_sre_neutral_hinge.py::test_neutral_dominance_returns_neutral_when_margin_is_below_threshold` + `test_sre_neutral_hinge.py::test_neutral_dominance_returns_strongest_non_neutral_when_threshold_is_met` | landed |
 | `Δ_t*(a)` and `θ_t^{act}` (neutral-dominance law) | `neutral_dominance_decision()` | `cortex/sre/policy.py` | `test_sre_neutral_hinge.py::test_neutral_dominance_returns_neutral_when_margin_is_below_threshold` + `test_sre_neutral_hinge.py::test_neutral_dominance_returns_strongest_non_neutral_when_threshold_is_met` + `test_sre_neutral_hinge.py::test_neutral_path_law_rejects_scorecards_that_omit_neutral` | landed |
-| `u_t(c)` (classwise uncertainty) | `UncertaintyEstimate` | `cortex/sre/uncertainty.py` | not started | not started |
-| `B^{ref} = {quiescent, guarded, latched}` (brake states) | `BrakeState` (Enum) | `cortex/sre/brake.py` | not started | not started |
+| `u_t(c)` (classwise uncertainty) | `UncertaintyEstimate` | `cortex/sre/uncertainty.py` | `test_sre_uncertainty_brake.py::test_uncertainty_estimate_accepts_packet_class_tags_and_rejects_unknown_classes` + `test_sre_uncertainty_brake.py::test_uncertainty_estimate_enforces_bounded_values` | landed |
+| `B^{ref} = {quiescent, guarded, latched}` (brake states) | `BrakeState` | `cortex/sre/brake.py` | `test_sre_uncertainty_brake.py::test_brake_state_set_is_exact` | landed |
+| `J_t = Brake(...)` (compact brake realization) | `evaluate_brake_state()` | `cortex/sre/brake.py` | `test_sre_uncertainty_brake.py::test_brake_evaluation_returns_quiescent_for_low_uncertainty_without_spikes` + `test_sre_uncertainty_brake.py::test_brake_evaluation_returns_guarded_for_elevated_uncertainty_or_mild_spike_pressure` + `test_sre_uncertainty_brake.py::test_brake_evaluation_returns_latched_for_strong_spike_or_failure_pressure` | landed |
 | goal continuity / pending-goal discipline | `GoalContinuityView` | `cortex/sre/goals.py` | not started | not started |
 | branch operations (open/suspend/resume/merge/abandon) | `BranchOperation` | `cortex/sre/branching.py` | not started | not started |
 
-Forbidden leaks: SRE may not certify commitments, redefine blockedness, lower hard boundaries, or fabricate provenance sufficiency. No hidden same-event certifier internals or host-driver realization doctrine may enter these landed rows. `neutral_dominance_decision()` may not select a non-neutral family when the margin is below threshold. Do not pull later uncertainty, brake, or branch specializations into this first hinge.
+Forbidden leaks: SRE may not certify commitments, redefine blockedness, lower hard boundaries, or fabricate provenance sufficiency. No hidden same-event certifier internals or host-driver realization doctrine may enter these landed rows. `neutral_dominance_decision()` may not select a non-neutral family when the margin is below threshold. Uncertainty may increase brake or review pressure, but it may not lower commitment certification standards. `ReferenceExecutiveState` must use `UncertaintyEstimate` and `BrakeState` directly rather than shadow carriers. Do not pull later goal or branch specializations into these seams.
 
 ---
 

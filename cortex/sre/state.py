@@ -5,6 +5,8 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 
 from .families import SoftControlFamily
+from .brake import BrakeState
+from .uncertainty import UncertaintyEstimate
 
 
 @dataclass(frozen=True, slots=True)
@@ -16,16 +18,8 @@ class ReferenceGoalContinuityView:
 
 
 @dataclass(frozen=True, slots=True)
-class ReferenceUncertaintyReading:
-    class_tag: str
-    level: float
-
-
-@dataclass(frozen=True, slots=True)
 class ReferenceUncertaintyMonitoringView:
-    classwise_uncertainty: tuple[ReferenceUncertaintyReading, ...] = field(
-        default_factory=tuple
-    )
+    classwise_uncertainty: tuple[UncertaintyEstimate, ...] = field(default_factory=tuple)
     contradiction_spike_flags: frozenset[str] = field(default_factory=frozenset)
 
 
@@ -44,7 +38,7 @@ class ReferenceControlAllocationView:
 
 @dataclass(frozen=True, slots=True)
 class ReferenceBrakeView:
-    brake_state: str
+    brake_state: BrakeState
     dominant_cause_family: SoftControlFamily | None = None
 
 
@@ -64,5 +58,4 @@ __all__ = [
     "ReferenceGoalContinuityView",
     "ReferenceModeAndGatingView",
     "ReferenceUncertaintyMonitoringView",
-    "ReferenceUncertaintyReading",
 ]

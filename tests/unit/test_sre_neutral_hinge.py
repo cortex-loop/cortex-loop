@@ -1,6 +1,7 @@
 """Focused unit tests for the first active SRE hinge."""
 
 from cortex.sre.allocation import AllocationScore, AllocationScorecard
+from cortex.sre.brake import BrakeState
 from cortex.sre.families import REFERENCE_SOFT_CONTROL_FAMILIES, SoftControlFamily
 from cortex.sre.policy import neutral_dominance_decision
 from cortex.sre.state import (
@@ -10,8 +11,8 @@ from cortex.sre.state import (
     ReferenceGoalContinuityView,
     ReferenceModeAndGatingView,
     ReferenceUncertaintyMonitoringView,
-    ReferenceUncertaintyReading,
 )
+from cortex.sre.uncertainty import UncertaintyEstimate
 
 
 def test_exact_soft_control_family_set_matches_the_packet() -> None:
@@ -36,7 +37,7 @@ def test_reference_executive_state_exposes_minimum_software_facing_views() -> No
             resume_anchor_available=True,
         ),
         uncertainty_monitoring=ReferenceUncertaintyMonitoringView(
-            classwise_uncertainty=(ReferenceUncertaintyReading("evidence", 0.25),),
+            classwise_uncertainty=(UncertaintyEstimate("evidence", 0.25),),
             contradiction_spike_flags=frozenset({"host-spike"}),
         ),
         mode_and_gating=ReferenceModeAndGatingView(
@@ -49,7 +50,7 @@ def test_reference_executive_state_exposes_minimum_software_facing_views() -> No
             host_friction_tags=frozenset({"low-friction"}),
         ),
         brake=ReferenceBrakeView(
-            brake_state="quiescent",
+            brake_state=BrakeState.QUIESCENT,
             dominant_cause_family=None,
         ),
     )
@@ -60,7 +61,38 @@ def test_reference_executive_state_exposes_minimum_software_facing_views() -> No
         {SoftControlFamily.NEUTRAL, SoftControlFamily.CHECK}
     )
     assert state.control_allocation.budget_band == "medium"
-    assert state.brake.brake_state == "quiescent"
+    assert state.brake.brake_state is BrakeState.QUIESCENT
+
+
+def test_reference_executive_state_uses_canonical_uncertainty_and_brake_types() -> None:
+    state = ReferenceExecutiveState(
+        goal_continuity=ReferenceGoalContinuityView(),
+        uncertainty_monitoring=ReferenceUncertaintyMonitoringView(
+            classwise_uncertainty=(
+                UncertaintyEstimate(
+                    class_tag="host-capability",
+                    level=0.6,
+                    spike_tags=frozenset({"environment-inconsistency"}),
+                ),
+            ),
+            contradiction_spike_flags=frozenset({"environment-inconsistency"}),
+        ),
+        mode_and_gating=ReferenceModeAndGatingView(mode_tag="pass_through"),
+        control_allocation=ReferenceControlAllocationView(budget_band="low"),
+        brake=ReferenceBrakeView(brake_state=BrakeState.GUARDED),
+    )
+
+    assert isinstance(
+        state.uncertainty_monitoring.classwise_uncertainty[0],
+        UncertaintyEstimate,
+    )
+    assert isinstance(state.brake.brake_state, BrakeState)
+
+
+def test_reference_state_surface_does_not_export_duplicate_uncertainty_carrier() -> None:
+    from cortex.sre import state as state_module
+
+    assert not hasattr(state_module, "ReferenceUncertaintyReading")
 
 
 def test_neutral_dominance_returns_neutral_when_margin_is_below_threshold() -> None:
