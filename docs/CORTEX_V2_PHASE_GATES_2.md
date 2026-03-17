@@ -72,9 +72,9 @@ The latency targets are now backed by measured in-process evidence over the land
 Source of truth:
 - `docs/CORTEX_V2_IMPLEMENTATION_MASTER_PLAN_2.md`, Phase 13 and Phase 15 intent
 
-Overall status: `partial`
+Overall status: `landed`
 
-Minimal schemas, the first contradiction-preserving harness, and truthful-withheld packet publication logic now exist, but the measured reference-lane publication example is not yet earned.
+Minimal schemas, the first contradiction-preserving harness, truthful-withheld packet publication logic, and a committed measured reference-lane publication example now exist.
 
 | Gate row | Current evidence | Owner / next closeout | Status | Notes |
 | --- | --- | --- | --- | --- |
@@ -83,7 +83,7 @@ Minimal schemas, the first contradiction-preserving harness, and truthful-withhe
 | minimal blocker fragment schema | `cortex/eval/artifacts.py::BlockerFragment` + `tests/unit/test_certification_artifacts.py::test_blocker_fragment_preserves_reason_and_contradictions` | closed | landed | minimal schema is real |
 | contradiction-preserving eval harness | `cortex/eval/harness.py::build_evaluation_harness_result` + `tests/unit/test_eval_harness.py::test_harness_result_carries_current_pair_without_losing_refs` + `tests/unit/test_eval_harness.py::test_harness_result_carries_blocker_without_smoothing_blocker_truth` | closed | landed | minimal side-effect-free harness composes landed artifacts without flattening contradictions or degradations |
 | truthful-withheld / packet publication logic | `cortex/eval/packets.py::build_evaluation_packet` + `tests/unit/test_eval_packets.py::test_packet_built_from_current_pair_preserves_truth_and_withheld_fields` + `tests/unit/test_eval_packets.py::test_packet_built_from_blocker_preserves_truth_and_withheld_fields` | closed | landed | minimal packet surface preserves current-pair versus blocker truth and exposes withheld fields explicitly |
-| measured reference-lane publication example | none | Phase 15 first implementation proof packet | open | requires real packet publication evidence |
+| measured reference-lane publication example | `docs/CORTEX_V2_REFERENCE_LANE_PACKET_EXAMPLE_2.md` + `tests/integration/test_reference_lane_packet_example.py::test_reference_lane_current_pair_packet_example_matches_committed_doc` | closed | landed | committed reference-host full-commitment example preserves packet kind, withheld fields, contradiction refs, and degradation refs without report formatting |
 
 ---
 
