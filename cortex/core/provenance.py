@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import re
+import shlex
 import subprocess
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
@@ -21,6 +23,14 @@ class RepositorySnapshot:
 class ChangedFilesDelta:
     changed_files: tuple[str, ...] | None
     reason: str | None = None
+
+
+@dataclass(frozen=True, slots=True)
+class EvidenceReferenceEvaluation:
+    reference_kind: str
+    check_status: str
+    reason: str
+    normalized_reference: str | None = None
 
 
 def extract_requirement_ids(payload: Mapping[str, Any]) -> tuple[str, ...]:
@@ -160,6 +170,128 @@ def changed_files_since_baseline(
     return ChangedFilesDelta(tuple(sorted(current_files - baseline_files)), None)
 
 
+def evaluate_evidence_reference(
+    reference: str,
+    *,
+    root: Path,
+    observed_commands: Sequence[str] = (),
+    observed_tools: Sequence[str] = (),
+) -> EvidenceReferenceEvaluation:
+    reference_kind, normalized_reference = _classify_evidence_reference(reference, root=root)
+    normalized_commands = tuple(
+        normalized
+        for value in observed_commands
+        if (normalized := normalize_command_claim(value))
+    )
+    normalized_tools = {
+        str(value).strip().lower()
+        for value in observed_tools
+        if str(value).strip()
+    }
+
+    if reference_kind == "path":
+        path = _evidence_reference_path(reference, root=root)
+        if path is not None and path.exists():
+            return EvidenceReferenceEvaluation(
+                reference_kind="path",
+                check_status="verified",
+                reason="path exists",
+                normalized_reference=normalized_reference,
+            )
+        return EvidenceReferenceEvaluation(
+            reference_kind="path",
+            check_status="unverified",
+            reason=f"path does not exist: {normalized_reference}",
+            normalized_reference=normalized_reference,
+        )
+
+    if reference_kind == "tool":
+        if not normalized_tools:
+            return EvidenceReferenceEvaluation(
+                reference_kind="tool",
+                check_status="uncheckable",
+                reason="no observed tool evidence",
+                normalized_reference=normalized_reference,
+            )
+        if normalized_reference in normalized_tools:
+            return EvidenceReferenceEvaluation(
+                reference_kind="tool",
+                check_status="verified",
+                reason=f"tool observed: {normalized_reference}",
+                normalized_reference=normalized_reference,
+            )
+        return EvidenceReferenceEvaluation(
+            reference_kind="tool",
+            check_status="unverified",
+            reason=f"tool not observed: {normalized_reference}",
+            normalized_reference=normalized_reference,
+        )
+
+    if reference_kind == "command":
+        if not normalized_commands:
+            return EvidenceReferenceEvaluation(
+                reference_kind="command",
+                check_status="uncheckable",
+                reason="no observed command evidence",
+                normalized_reference=normalized_reference,
+            )
+        if normalized_reference and any(
+            command_claim_matches(normalized_reference, observed)
+            for observed in normalized_commands
+        ):
+            return EvidenceReferenceEvaluation(
+                reference_kind="command",
+                check_status="verified",
+                reason="command matched observed evidence",
+                normalized_reference=normalized_reference,
+            )
+        return EvidenceReferenceEvaluation(
+            reference_kind="command",
+            check_status="unverified",
+            reason="command not witnessed in observed evidence",
+            normalized_reference=normalized_reference,
+        )
+
+    return EvidenceReferenceEvaluation(
+        reference_kind="note",
+        check_status="uncheckable",
+        reason="reference is non-verifiable note text",
+        normalized_reference=None,
+    )
+
+
+def normalize_command_claim(text: str) -> str:
+    value = str(text).strip().strip("`").lower()
+    value = re.sub(r"[.,;:!?]+$", "", value).strip()
+    value = re.sub(r"\s+", " ", value)
+    value = re.sub(r"[:\-]\s*(ok|pass|passed|success|succeeded)$", "", value).strip()
+    return value
+
+
+def command_claim_matches(claim: str, observed: str) -> bool:
+    claim_tokens = _command_tokens(claim)
+    observed_tokens = _command_tokens(observed)
+    if not claim_tokens or not observed_tokens:
+        return False
+    return claim_tokens == observed_tokens or (
+        len(claim_tokens) <= len(observed_tokens)
+        and observed_tokens[: len(claim_tokens)] == claim_tokens
+    )
+
+
+def normalize_repo_relative_file_claims(value: Any, *, root: Path) -> tuple[str, ...]:
+    root_resolved = root.resolve()
+    normalized: list[str] = []
+    seen: set[str] = set()
+    for raw in _as_string_tuple(value):
+        claim = _normalize_repo_relative_file_claim(raw, root=root_resolved)
+        if claim is None or claim in seen:
+            continue
+        seen.add(claim)
+        normalized.append(claim)
+    return tuple(normalized)
+
+
 def _extract_ids_from_mapping(value: Mapping[str, Any]) -> tuple[str, ...]:
     direct = _as_string_tuple(value.get("required_requirement_ids"))
     if direct:
@@ -202,14 +334,107 @@ def _normalize_repo_relative_path(path_field: str) -> str | None:
     return candidate.replace("\\", "/")
 
 
+def _classify_evidence_reference(reference: str, *, root: Path) -> tuple[str, str | None]:
+    text = str(reference).strip()
+    lower = text.lower()
+    if lower.startswith("tool:"):
+        return "tool", lower.split(":", 1)[1].strip()
+    if lower.startswith("cmd:"):
+        return "command", normalize_command_claim(text.split(":", 1)[1].strip())
+    if _looks_like_command_claim(text):
+        return "command", normalize_command_claim(text)
+    normalized_path = _normalize_repo_relative_file_claim(text, root=root.resolve())
+    if normalized_path is not None:
+        return "path", normalized_path
+    return "note", None
+
+
+def _evidence_reference_path(reference: str, *, root: Path) -> Path | None:
+    normalized_path = _normalize_repo_relative_file_claim(reference, root=root.resolve())
+    if normalized_path is None:
+        return None
+    return (root.resolve() / normalized_path).resolve()
+
+
+def _normalize_repo_relative_file_claim(reference: str, *, root: Path) -> str | None:
+    text = str(reference).strip()
+    if not text or text.startswith(("http://", "https://")):
+        return None
+
+    path_text = text.split("#", 1)[0].strip()
+    if " " in path_text:
+        first_token = path_text.split(None, 1)[0].strip()
+        if first_token and (
+            any(sep in first_token for sep in ("/", "\\"))
+            or first_token.startswith((".", "~"))
+        ):
+            path_text = first_token
+    path_text = re.sub(r":\d+(?::\d+|-\d+)?$", "", path_text).strip()
+    path_text = path_text.rstrip(".,;:")
+    if not path_text:
+        return None
+    if not any(sep in path_text for sep in ("/", "\\")) and not path_text.startswith((".", "~")):
+        return None
+
+    path = Path(path_text).expanduser()
+    if not path.is_absolute():
+        path = root / path
+    resolved = path.resolve()
+    try:
+        return resolved.relative_to(root).as_posix()
+    except ValueError:
+        return None
+
+
+def _looks_like_command_claim(text: str) -> bool:
+    return bool(
+        re.search(
+            r"\b(pytest|npm|pnpm|yarn|npx|ruff|mypy|go test|cargo test|python\s+-m)\b",
+            text.lower(),
+        )
+    )
+
+
+def _command_tokens(command: str) -> tuple[str, ...]:
+    normalized = normalize_command_claim(command)
+    if not normalized:
+        return ()
+    try:
+        raw_tokens = shlex.split(normalized)
+    except ValueError:
+        raw_tokens = normalized.split()
+
+    tokens = [token.strip().lower() for token in raw_tokens if token.strip()]
+    if not tokens:
+        return ()
+
+    while True:
+        if len(tokens) >= 3 and tokens[0] in {"bash", "sh"} and tokens[1] == "-lc":
+            return _command_tokens(" ".join(tokens[2:]))
+        if len(tokens) >= 2 and tuple(tokens[:2]) in {("uv", "run"), ("poetry", "run"), ("pipenv", "run")}:
+            tokens = tokens[2:]
+            continue
+        if len(tokens) >= 3 and tokens[0] in {"python", "python3", "py"} and tokens[1:3] == ["-m", "pytest"]:
+            tokens = ["pytest", *tokens[3:]]
+            continue
+        break
+
+    return tuple(tokens)
+
+
 def _has_enclosing_git_marker(root: Path) -> bool:
     return any((candidate / ".git").exists() for candidate in (root, *root.parents))
 
 
 __all__ = [
     "ChangedFilesDelta",
+    "EvidenceReferenceEvaluation",
     "RepositorySnapshot",
+    "command_claim_matches",
     "changed_files_since_baseline",
+    "evaluate_evidence_reference",
     "extract_requirement_ids",
+    "normalize_command_claim",
+    "normalize_repo_relative_file_claims",
     "repository_snapshot",
 ]
