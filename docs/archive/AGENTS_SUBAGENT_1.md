@@ -24,32 +24,13 @@ If any answer is no, redesign or cut scope.
 - Do not add math that has no operational consequence.
 - Do not add tunable weights unless changing them would plausibly change runtime behavior in a legible way.
 
-## Repo hygiene guard
-
-- Do not commit personal/client project names, domains, or account handles.
-- Do not commit absolute local paths unless the task is explicitly about local machine setup documentation.
-- Keep docs/comments/commit messages in neutral technical language.
-- Avoid persona branding in repo text.
-- Use anonymized labels in evidence artifacts (`project_a`, `workspace_b`) unless a real public runtime name is required.
-- If a claim needs private evidence, summarize it and keep private artifacts out of git.
-
-## Change narration discipline
-
-- Commit and PR titles must describe the resulting state, not the cleanup process.
-- Prefer concise end-state wording.
-- Avoid temporary/meta phrasing (`quick fix`, `scrubbed`, `final polish`).
-- Keep language stable and technical.
-
 ## Active authority
 
 The active v2 authority surfaces in this repository are:
 
-Packet documents:
 - `docs/CORTEX_V2_CORE_2.md`
 - `docs/CORTEX_V2_SRE_2.md`
 - `docs/CORTEX_V2_AUX_2.md`
-
-Implementation/workflow documents:
 - `docs/CORTEX_V2_IMPLEMENTATION_MASTER_PLAN_2.md`
 - `docs/V1_CODE_PORT_DETERMINATION.md`
 
@@ -69,7 +50,6 @@ The v1 archive is evidence and reference only.
 It is not normative authority for what v2 should be.
 
 Use the archive only for:
-
 - battle-proven narrow primitives,
 - historical validation/evidence patterns,
 - host/runtime behavior reference,
@@ -96,27 +76,70 @@ If a v1 mechanism is being carried over, re-earn it under the v2 packet instead 
 - Anything proof-centered, adapter-heavy, or prompt-heavy stays suspect until re-earned.
 - If a v1 primitive must be reshaped to fit Core / SRE / AUX cleanly, prefer rewrite over direct transplant.
 
+## Subagent operating law
+
+### Parent-thread sovereignty
+- The parent thread is the architect/integrator and remains the only final authority for:
+  - seam choice,
+  - diff acceptance,
+  - phase/gate status,
+  - and packet-interpretation disputes.
+- Subagents may propose, explore, summarize, and in one bounded case implement.
+- The parent thread must verify every subagent result before accepting it.
+
+### When to use subagents
+Use subagents only when the work benefits from bounded delegation.
+
+Preferred subagent uses:
+- read-heavy packet/doc consistency checks
+- v1 archive mining
+- host/runtime research
+- test/log triage
+- bounded synthetic-fixture generation
+- one exact write seam when the parent has already selected it
+
+Avoid or heavily restrict subagents for:
+- parallel write-heavy implementation
+- cross-layer refactors
+- packet-authority rewrites
+- multi-host changes in one turn
+
+### Write policy
+- At most **one write-capable subagent** may be active for a seam.
+- Parallel subagents should be **read-only by default**.
+- If two write-capable subtasks appear necessary, the seam is too broad and must be split.
+
+### Depth and concurrency
+- Default subagent depth is `1`.
+- Default concurrent subagent budget is `3`.
+- If more are needed, the parent must justify why the seam is still coherent.
+
+### Required subagent output shape
+Every subagent response should end with:
+- `status:`
+- `files inspected or changed:`
+- `tests run:`
+- `open risks/blockers:`
+- `recommended next step:`
+
+### Built-in project subagents
+Project-scoped custom agents live under `.codex/agents/`.
+Current expected set:
+- `cortex_archivist` — read-only v1/archive and packet miner
+- `cortex_packet_auditor` — read-only layer/boundary checker
+- `cortex_host_researcher` — read-only host/runtime doc researcher
+- `cortex_worker` — one bounded implementation seam, workspace-write
+
+Do not override their responsibilities casually.
+
 ## Working rules
 
 - Default to the smallest slice that preserves packet boundaries.
 - Do not implement around free variables silently; either lock them in the active docs or record the blocker.
 - If you introduce a new concept, say which layer owns it: Core, SRE, AUX, or later implementation-only.
-- If a concept belongs in implementation or evaluation rather than the constitutional packet, keep it out of the packet.
+- If a concept belongs in implementation or evaluation rather than the packet, keep it out of the packet.
 - If you change the packet, say whether the implementation master plan must change in the same slice.
-- If you change the intended v1 carryover boundary, update `V1_CODE_PORT_DETERMINATION.md` in the same slice.
-
-## Subagent workflow
-
-- The parent thread owns seam selection, status truth, blocker truth, and final diff acceptance.
-- Use project-scoped custom agents for bounded roles:
-  - `cortex_archivist` for v1/archive mining and evidence extraction
-  - `cortex_packet_auditor` for packet/layer consistency and seam-scope review
-  - `cortex_host_researcher` for external host/runtime documentation research
-  - `cortex_worker` for one bounded write seam after the parent has fixed the touch surface
-- Prefer read-only subagents for archive mining, packet audit, and host research; use at most one write-capable subagent at once.
-- Keep subagent depth at `1` and total threads at `3` or fewer unless the active implementation plan is updated in the same slice.
-- If a task appears to need multiple concurrent writers, split the seam instead of widening it.
-- Keep phase-specific subagent allowances and restrictions in `docs/CORTEX_V2_IMPLEMENTATION_MASTER_PLAN_2.md`.
+- If you change the intended v1 carryover boundary, update `docs/V1_CODE_PORT_DETERMINATION.md` in the same slice.
 
 ## Git and workflow
 
@@ -126,6 +149,22 @@ If a v1 mechanism is being carried over, re-earn it under the v2 packet instead 
 - Do not develop on `main`; create an explicit branch with the `codex/` prefix.
 - In this maintainer workspace, the expected public identity is `howaeri <32343362+howaeri@users.noreply.github.com>`.
 - Do not bump package versions, create releases, or add publish workflows unless the task explicitly requires it.
+
+## Repo hygiene guard
+
+- Do not commit personal/client project names, domains, or account handles.
+- Do not commit absolute local paths unless the task is explicitly about local machine setup documentation.
+- Keep docs/comments/commit messages in neutral technical language.
+- Avoid persona branding in repo text.
+- Use anonymized labels in evidence artifacts (`project_a`, `workspace_b`) unless a real public runtime name is required.
+- If a claim needs private evidence, summarize it and keep private artifacts out of git.
+
+## Change narration discipline
+
+- Commit and PR titles must describe the resulting state, not the cleanup process.
+- Prefer concise end-state wording.
+- Avoid temporary/meta phrasing (`quick fix`, `scrubbed`, `final polish`).
+- Keep language stable and technical.
 
 ## Required handoff block
 
