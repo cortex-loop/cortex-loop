@@ -189,6 +189,16 @@ Forbidden leaks: no fake parity with reference-host semantics may be introduced 
 
 Forbidden leaks: no driver may become a truth court for blockedness, provenance sufficiency, or certification status. Candidate-bearing Gemini events may not silently enter certification without a stronger full-commitment wake marker. No invented Gemini lifecycle parity or undocumented host markers may leak into this slice. No runtime, startup, retry doctrine, actual Gemini API execution, fake multi-host abstraction, or alternate commitment-status lattice may appear here.
 
+### 1.16 Gemini host neutral-only realization
+
+| Packet math | Is | Code home | Test surface | Status |
+| --- | --- | --- | --- | --- |
+| Gemini neutral-path result carrier | `GeminiHostNeutralResult` | `cortex/drivers/gemini_host_neutral.py` | `test_gemini_host_neutral.py::test_ordinary_gemini_streaming_event_yields_explicit_neutral_continuation_result` + `test_gemini_host_neutral.py::test_slice_stays_observe_bind_driven_and_preserves_raw_gemini_metadata_and_warnings` | landed |
+| Gemini neutral-only continuation decision/result | `GeminiNeutralContinuationDecision` + `GeminiNeutralContinuationCode` | `cortex/drivers/gemini_host_neutral.py` | `test_gemini_host_neutral.py::test_ordinary_gemini_streaming_event_yields_explicit_neutral_continuation_result` + `test_gemini_host_neutral.py::test_candidate_bearing_gemini_event_is_rejected_from_neutral_only_path` + `test_gemini_host_neutral.py::test_full_commitment_gemini_event_is_rejected_from_neutral_only_path` | landed |
+| Gemini neutral-path execution | `evaluate_gemini_host_neutral()` | `cortex/drivers/gemini_host_neutral.py` | `test_gemini_host_neutral.py::test_ordinary_gemini_streaming_event_yields_explicit_neutral_continuation_result` + `test_gemini_host_neutral.py::test_candidate_bearing_gemini_event_is_rejected_from_neutral_only_path` + `test_gemini_host_neutral.py::test_full_commitment_gemini_event_is_rejected_from_neutral_only_path` + `test_gemini_host_neutral.py::test_slice_stays_observe_bind_driven_and_preserves_raw_gemini_metadata_and_warnings` | landed |
+
+Forbidden leaks: no SRE neutral-dominance scoring or soft-control family logic may appear in this seam. No cheap Gemini event may be silently escalated into certification. No driver may become a truth court for commitments, provenance, or blockedness. No invented Gemini lifecycle parity or undocumented wake markers may appear here. No startup, retry, runtime, API doctrine, or fake multi-host abstraction may leak into this slice.
+
 ---
 
 ## 2. V1 standard-library port correspondence
