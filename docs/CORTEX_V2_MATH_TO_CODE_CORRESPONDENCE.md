@@ -219,22 +219,22 @@ Forbidden leaks: drivers normalize; they do not own truth. No driver may become 
 
 ---
 
-## 3. SRE correspondence (not yet landed — reference mapping)
+## 3. SRE correspondence
 
-These rows are the target correspondence for the SRE implementation phases. They are not yet code-backed.
+Rows marked `landed` are code-backed. Remaining rows are still target correspondence for later SRE phases.
 
-| Packet math | Target code object | Target home | Status |
-| --- | --- | --- | --- |
-| `X_t^{ref} = (x_t^G, x_t^U, x_t^M, x_t^K, x_t^J)` (reference executive state) | `ReferenceExecutiveState` | `cortex/sre/state.py` | not started |
-| `A^{ref}` (soft-control family set) | `SoftControlFamily` (Enum or equivalent) | `cortex/sre/families.py` | not started |
-| `Q_t^{alloc}(a)` (combined allocation score) | `AllocationScore` or decision table | `cortex/sre/allocation.py` | not started |
-| `Δ_t*(a)` and `θ_t^{act}` (neutral-dominance law) | neutral-dominance check function | `cortex/sre/policy.py` | not started |
-| `u_t(c)` (classwise uncertainty) | `UncertaintyEstimate` | `cortex/sre/uncertainty.py` | not started |
-| `B^{ref} = {quiescent, guarded, latched}` (brake states) | `BrakeState` (Enum) | `cortex/sre/brake.py` | not started |
-| goal continuity / pending-goal discipline | `GoalContinuityView` | `cortex/sre/goals.py` | not started |
-| branch operations (open/suspend/resume/merge/abandon) | `BranchOperation` | `cortex/sre/branching.py` | not started |
+| Packet math | Code object | Code home | Test surface | Status |
+| --- | --- | --- | --- | --- |
+| `X_t^{ref} = (x_t^G, x_t^U, x_t^M, x_t^K, x_t^J)` (reference executive state) | `ReferenceExecutiveState` | `cortex/sre/state.py` | `test_sre_neutral_hinge.py::test_reference_executive_state_exposes_minimum_software_facing_views` | landed |
+| `A^{ref}` (soft-control family set) | `SoftControlFamily` | `cortex/sre/families.py` | `test_sre_neutral_hinge.py::test_exact_soft_control_family_set_matches_the_packet` | landed |
+| `Q_t^{alloc}(a)` (combined allocation score) | `AllocationScore` + `AllocationScorecard` | `cortex/sre/allocation.py` | `test_sre_neutral_hinge.py::test_neutral_dominance_returns_neutral_when_margin_is_below_threshold` + `test_sre_neutral_hinge.py::test_neutral_dominance_returns_strongest_non_neutral_when_threshold_is_met` | landed |
+| `Δ_t*(a)` and `θ_t^{act}` (neutral-dominance law) | `neutral_dominance_decision()` | `cortex/sre/policy.py` | `test_sre_neutral_hinge.py::test_neutral_dominance_returns_neutral_when_margin_is_below_threshold` + `test_sre_neutral_hinge.py::test_neutral_dominance_returns_strongest_non_neutral_when_threshold_is_met` + `test_sre_neutral_hinge.py::test_neutral_path_law_rejects_scorecards_that_omit_neutral` | landed |
+| `u_t(c)` (classwise uncertainty) | `UncertaintyEstimate` | `cortex/sre/uncertainty.py` | not started | not started |
+| `B^{ref} = {quiescent, guarded, latched}` (brake states) | `BrakeState` (Enum) | `cortex/sre/brake.py` | not started | not started |
+| goal continuity / pending-goal discipline | `GoalContinuityView` | `cortex/sre/goals.py` | not started | not started |
+| branch operations (open/suspend/resume/merge/abandon) | `BranchOperation` | `cortex/sre/branching.py` | not started | not started |
 
-Forbidden leaks: SRE may not certify commitments, redefine blockedness, lower hard boundaries, or fabricate provenance sufficiency.
+Forbidden leaks: SRE may not certify commitments, redefine blockedness, lower hard boundaries, or fabricate provenance sufficiency. No hidden same-event certifier internals or host-driver realization doctrine may enter these landed rows. `neutral_dominance_decision()` may not select a non-neutral family when the margin is below threshold. Do not pull later uncertainty, brake, or branch specializations into this first hinge.
 
 ---
 
