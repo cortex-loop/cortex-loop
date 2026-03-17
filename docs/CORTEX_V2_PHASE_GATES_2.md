@@ -50,16 +50,20 @@ Historical note:
 Source of truth:
 - `docs/CORTEX_V2_IMPLEMENTATION_MASTER_PLAN_2.md`, Section 8
 
-Overall status: `open`
+Overall status: `landed`
 
-Targets exist, but the repo does not yet carry measured evidence for them.
+Evidence location:
+- `docs/CORTEX_V2_LATENCY_EVIDENCE_2.md`
+- `tests/integration/test_reference_lane_latency.py`
+
+The latency targets are now backed by measured in-process evidence over the landed reference-host/Core/SRE path.
 
 | Gate row | Current evidence | Owner / next closeout | Status | Notes |
 | --- | --- | --- | --- | --- |
-| cheap-path latency evidence | none | latency-evidence seam | open | target exists, no measurement recorded |
-| candidate-bearing latency evidence | none | latency-evidence seam | open | target exists, no measurement recorded |
-| full commitment latency evidence | none | latency-evidence seam | open | target exists, no measurement recorded |
-| neutral SRE scoring latency evidence | none | latency-evidence seam | open | target exists, no measurement recorded |
+| cheap-path latency evidence | `docs/CORTEX_V2_LATENCY_EVIDENCE_2.md` + `tests/integration/test_reference_lane_latency.py::test_reference_lane_latency_evidence_is_structurally_produced` | closed | landed | measured median 0.0171 ms; p95 0.0184 ms; target met |
+| candidate-bearing latency evidence | `docs/CORTEX_V2_LATENCY_EVIDENCE_2.md` + `tests/integration/test_reference_lane_latency.py::test_reference_lane_latency_evidence_is_structurally_produced` | closed | landed | measured median 0.0215 ms; p95 0.0241 ms; target met |
+| full commitment latency evidence | `docs/CORTEX_V2_LATENCY_EVIDENCE_2.md` + `tests/integration/test_reference_lane_latency.py::test_reference_lane_latency_evidence_is_structurally_produced` | closed | landed | measured median 0.0257 ms; p95 0.0285 ms; target met |
+| neutral SRE scoring latency evidence | `docs/CORTEX_V2_LATENCY_EVIDENCE_2.md` + `tests/integration/test_reference_lane_latency.py::test_reference_lane_latency_evidence_is_structurally_produced` | closed | landed | measured median 0.0014 ms; p95 0.0015 ms; target met |
 
 ---
 
