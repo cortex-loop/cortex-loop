@@ -114,6 +114,18 @@ Forbidden leaks: `CertificationContext` enforces the firewall at construction ti
 
 Forbidden leaks: contradictions must be preserved, not smoothed. No adapter or AUX module may flatten contradictory host evidence into one unified story.
 
+### 1.9 Dispatch and wake law
+
+| Packet math | Is | Code home | Test surface | Status |
+| --- | --- | --- | --- | --- |
+| dispatch lane over `{cheap, candidate-bearing, full-commitment}` | `DispatchLane` (Enum) | `cortex/core/dispatch.py` | `test_dispatch.py::test_cheap_event_stays_cheap_with_no_evidence_burden` + `test_dispatch.py::test_proposal_like_event_becomes_candidate_bearing` + `test_dispatch.py::test_explicit_full_commitment_wake_becomes_full_commitment` | landed |
+| event-local routing decision for the current event | `DispatchDecision` | `cortex/core/dispatch.py` | `test_dispatch.py::test_candidate_presence_alone_becomes_candidate_bearing` | landed |
+| `Wake_t` (wake decision plus reason set) | `WakeDecision` | `cortex/core/dispatch.py` | `test_dispatch.py::test_boundary_required_marker_forces_full_commitment` + `test_dispatch.py::test_candidate_presence_alone_does_not_overwake_to_full_commitment` | landed |
+| minimal evidence requirement object for the dispatched lane | `EvidencePlan` | `cortex/core/dispatch.py` | `test_dispatch.py::test_evidence_plan_matches_the_dispatched_lane` | landed |
+| runtime dispatch law over the current event using existing extraction helpers | `classify_dispatch()` | `cortex/core/dispatch.py` | `test_dispatch.py::test_cheap_event_stays_cheap_with_no_evidence_burden` + `test_dispatch.py::test_candidate_presence_alone_becomes_candidate_bearing` + `test_dispatch.py::test_candidate_presence_alone_does_not_overwake_to_full_commitment` | landed |
+
+Forbidden leaks: `classify_dispatch()` consumes `ObservationBundle`, not raw host events. The classifier preserves the no-gauntlet cheap default and may not import executive/SRE same-event policy state as commitment truth. `candidate-present` may justify `candidate-bearing`, but it may not silently upgrade the event to `full-commitment` without a stronger wake marker. No host-driver doctrine, startup doctrine, or adapter loading logic may leak into Core dispatch.
+
 ---
 
 ## 2. V1 standard-library port correspondence
