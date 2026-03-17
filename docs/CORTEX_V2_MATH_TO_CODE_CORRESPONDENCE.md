@@ -224,6 +224,16 @@ Forbidden leaks: no fake parity with Gemini or reference-host semantics may be i
 
 Forbidden leaks: no driver may become a truth court for blockedness, provenance sufficiency, or certification status. Candidate-bearing OpenAI events may not silently enter certification without a stronger full-commitment wake marker. No invented OpenAI lifecycle parity or undocumented host markers may leak into this slice. No runtime, startup, retry doctrine, actual OpenAI API execution, fake multi-host abstraction, or alternate commitment-status lattice may appear here.
 
+### 1.19 OpenAI Responses neutral-only realization
+
+| Packet math | Is | Code home | Test surface | Status |
+| --- | --- | --- | --- | --- |
+| OpenAI neutral-path result carrier | `OpenAIHostNeutralResult` | `cortex/drivers/openai_host_neutral.py` | `test_openai_host_neutral.py::test_ordinary_openai_streaming_event_yields_explicit_neutral_continuation_result` + `test_openai_host_neutral.py::test_slice_stays_observe_bind_driven_and_preserves_raw_openai_metadata_and_warnings` | landed |
+| OpenAI neutral-only continuation decision/result | `OpenAINeutralContinuationDecision` + `OpenAINeutralContinuationCode` | `cortex/drivers/openai_host_neutral.py` | `test_openai_host_neutral.py::test_ordinary_openai_streaming_event_yields_explicit_neutral_continuation_result` + `test_openai_host_neutral.py::test_candidate_bearing_openai_event_is_rejected_from_neutral_only_path` + `test_openai_host_neutral.py::test_full_commitment_openai_event_is_rejected_from_neutral_only_path` | landed |
+| OpenAI neutral-path execution | `evaluate_openai_host_neutral()` | `cortex/drivers/openai_host_neutral.py` | `test_openai_host_neutral.py::test_ordinary_openai_streaming_event_yields_explicit_neutral_continuation_result` + `test_openai_host_neutral.py::test_candidate_bearing_openai_event_is_rejected_from_neutral_only_path` + `test_openai_host_neutral.py::test_full_commitment_openai_event_is_rejected_from_neutral_only_path` + `test_openai_host_neutral.py::test_slice_stays_observe_bind_driven_and_preserves_raw_openai_metadata_and_warnings` | landed |
+
+Forbidden leaks: no SRE neutral-dominance scoring or soft-control family logic may appear in this seam. No cheap OpenAI event may be silently escalated into certification. No driver may become a truth court for commitments, provenance, or blockedness. No invented OpenAI lifecycle parity or undocumented wake markers may appear here. No startup, retry, runtime, API doctrine, or fake multi-host abstraction may leak into this slice.
+
 ---
 
 ## 2. V1 standard-library port correspondence
