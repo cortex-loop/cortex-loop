@@ -1,6 +1,14 @@
 """Unit tests for the minimal typed core substrate."""
 
-from cortex.core.commitments import CertificationContext, CommitmentCandidate, CommitmentStatus
+from cortex.core.commitments import (
+    BoundaryAssessment,
+    CertificationContext,
+    CommitmentCandidate,
+    CommitmentStatus,
+    CommitmentVerdict,
+    ProvenanceEvidenceRef,
+    ProvenanceManifest,
+)
 from cortex.core.environment import (
     CAPABILITY_VIEW,
     EXECUTION_TRACE,
@@ -146,6 +154,54 @@ def test_commitment_status_is_the_exact_three_state_lattice() -> None:
     }
 
 
+def test_provenance_manifest_supports_multiple_domain_agnostic_source_families() -> None:
+    manifest = ProvenanceManifest(
+        evidence_refs=(
+            ProvenanceEvidenceRef(
+                source_family="lifecycle_trace",
+                reference_id="trace-1",
+                source_tags=frozenset({"host/runtime"}),
+            ),
+            ProvenanceEvidenceRef(
+                source_family="external_artifact",
+                reference_id="artifact-1",
+                source_tags=frozenset({"approval"}),
+            ),
+            ProvenanceEvidenceRef(
+                source_family="result_artifact",
+                reference_id="result-1",
+                source_tags=frozenset({"artifact"}),
+            ),
+        ),
+        metadata=(MetadataField("ordering", "downward-first"),),
+    )
+
+    assert [ref.source_family for ref in manifest.evidence_refs] == [
+        "lifecycle_trace",
+        "external_artifact",
+        "result_artifact",
+    ]
+    assert manifest.metadata[0].value == "downward-first"
+
+
+def test_boundary_assessment_keeps_blockedness_separate_from_commitment_status() -> None:
+    blocked = BoundaryAssessment(
+        blocked=True,
+        reason_code="boundary-check-failed",
+        boundary_tags=frozenset({"external-boundary"}),
+        capability_tags=frozenset({"approval"}),
+    )
+    allowed = BoundaryAssessment(
+        blocked=False,
+        reason_code=None,
+        boundary_tags=frozenset({"tool/write"}),
+    )
+
+    assert blocked.blocked is True
+    assert allowed.blocked is False
+    assert CommitmentStatus.UNCERTIFIED.value == "uncertified"
+
+
 def test_degradation_and_error_records_preserve_reason_and_capabilities() -> None:
     contradiction = ContradictionRecord(
         source_tag="external/record",
@@ -162,6 +218,47 @@ def test_degradation_and_error_records_preserve_reason_and_capabilities() -> Non
     assert error.reason_code == "boundary-required"
     assert error.capability_tags == frozenset({"approval", "tool"})
     assert error.contradiction_records[0].source_tag == "external/record"
+
+
+def test_commitment_verdict_holds_typed_certification_references() -> None:
+    contradiction = ContradictionRecord(
+        source_tag="runtime-record",
+        summary="runtime record conflicts with approval state",
+        evidence_tags=frozenset({"runtime-record", "approval"}),
+    )
+    degradation = DegradationRecord(
+        reason_code="provenance-unavailable",
+        capability_tags=frozenset({"external-record"}),
+        contradiction_records=(contradiction,),
+    )
+    manifest = ProvenanceManifest(
+        evidence_refs=(
+            ProvenanceEvidenceRef(
+                source_family="lifecycle_trace",
+                reference_id="trace-1",
+            ),
+        ),
+        contradiction_refs=(contradiction,),
+    )
+    boundary = BoundaryAssessment(
+        blocked=False,
+        reason_code=None,
+        boundary_tags=frozenset({"external-boundary"}),
+    )
+    verdict = CommitmentVerdict(
+        status=CommitmentStatus.UNCERTIFIED,
+        candidate=CommitmentCandidate(candidate_id="candidate-1"),
+        provenance_manifest=manifest,
+        boundary_assessment=boundary,
+        degradation_refs=(degradation,),
+        contradiction_refs=(contradiction,),
+        metadata=(MetadataField("wake", "candidate-present"),),
+    )
+
+    assert verdict.provenance_manifest is manifest
+    assert verdict.boundary_assessment is boundary
+    assert verdict.degradation_refs[0].reason_code == "provenance-unavailable"
+    assert verdict.contradiction_refs[0].source_tag == "runtime-record"
 
 
 def test_certification_context_rejects_executive_environment_view() -> None:

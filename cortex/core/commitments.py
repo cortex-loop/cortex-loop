@@ -7,6 +7,7 @@ from enum import Enum
 
 from .environment import CommitmentEnvironmentHandle
 from .envelopes import EventPayloadHandle, MetadataField
+from .errors import ContradictionRecord, DegradationRecord
 from .observation import ObservationBundle
 
 
@@ -21,6 +22,31 @@ class CommitmentCandidate:
     candidate_id: str
     surface_tags: frozenset[str] = field(default_factory=frozenset)
     payload_handle: EventPayloadHandle | None = None
+    metadata: tuple[MetadataField, ...] = field(default_factory=tuple)
+
+
+@dataclass(frozen=True, slots=True)
+class ProvenanceEvidenceRef:
+    source_family: str
+    reference_id: str
+    source_tags: frozenset[str] = field(default_factory=frozenset)
+    metadata: tuple[MetadataField, ...] = field(default_factory=tuple)
+
+
+@dataclass(frozen=True, slots=True)
+class ProvenanceManifest:
+    evidence_refs: tuple[ProvenanceEvidenceRef, ...] = field(default_factory=tuple)
+    contradiction_refs: tuple[ContradictionRecord, ...] = field(default_factory=tuple)
+    metadata: tuple[MetadataField, ...] = field(default_factory=tuple)
+
+
+@dataclass(frozen=True, slots=True)
+class BoundaryAssessment:
+    blocked: bool
+    reason_code: str | None = None
+    boundary_tags: frozenset[str] = field(default_factory=frozenset)
+    capability_tags: frozenset[str] = field(default_factory=frozenset)
+    contradiction_refs: tuple[ContradictionRecord, ...] = field(default_factory=tuple)
     metadata: tuple[MetadataField, ...] = field(default_factory=tuple)
 
 
@@ -45,11 +71,19 @@ class CertificationContext:
 class CommitmentVerdict:
     status: CommitmentStatus
     candidate: CommitmentCandidate
+    provenance_manifest: ProvenanceManifest | None = None
+    boundary_assessment: BoundaryAssessment | None = None
+    degradation_refs: tuple[DegradationRecord, ...] = field(default_factory=tuple)
+    contradiction_refs: tuple[ContradictionRecord, ...] = field(default_factory=tuple)
+    metadata: tuple[MetadataField, ...] = field(default_factory=tuple)
 
 
 __all__ = [
+    "BoundaryAssessment",
     "CertificationContext",
     "CommitmentCandidate",
     "CommitmentStatus",
     "CommitmentVerdict",
+    "ProvenanceEvidenceRef",
+    "ProvenanceManifest",
 ]
