@@ -126,7 +126,7 @@ Forbidden leaks: contradictions must be preserved, not smoothed. No adapter or A
 
 Forbidden leaks: `classify_dispatch()` consumes `ObservationBundle`, not raw host events. The classifier preserves the no-gauntlet cheap default and may not import executive/SRE same-event policy state as commitment truth. `candidate-present` may justify `candidate-bearing`, but it may not silently upgrade the event to `full-commitment` without a stronger wake marker. No host-driver doctrine, startup doctrine, or adapter loading logic may leak into Core dispatch.
 
-### 1.10 Certification execution and minimal evidence artifacts
+### 1.10 Certification execution, minimal evidence artifacts, and eval harness
 
 | Packet math | Is | Code home | Test surface | Status |
 | --- | --- | --- | --- | --- |
@@ -134,8 +134,10 @@ Forbidden leaks: `classify_dispatch()` consumes `ObservationBundle`, not raw hos
 | minimal event trace artifact schema | `EventTraceArtifact` | `cortex/eval/artifacts.py` | `test_certification_artifacts.py::test_current_pair_fragment_carries_event_trace_and_verdict_summary` | landed |
 | minimal current-pair fragment schema | `CurrentPairFragment` | `cortex/eval/artifacts.py` | `test_certification_artifacts.py::test_current_pair_fragment_carries_event_trace_and_verdict_summary` | landed |
 | minimal blocker fragment schema | `BlockerFragment` | `cortex/eval/artifacts.py` | `test_certification_artifacts.py::test_blocker_fragment_preserves_reason_and_contradictions` | landed |
+| contradiction-preserving eval harness result carrier | `EvaluationHarnessResult` | `cortex/eval/harness.py` | `test_eval_harness.py::test_harness_result_carries_current_pair_without_losing_refs` + `test_eval_harness.py::test_harness_result_carries_blocker_without_smoothing_blocker_truth` | landed |
+| eval harness composition entry point | `build_evaluation_harness_result()` | `cortex/eval/harness.py` | `test_eval_harness.py::test_harness_requires_exactly_one_outcome_fragment` + `test_eval_harness.py::test_harness_result_needs_no_publication_packet_surface` | landed |
 
-Forbidden leaks: no SRE or AUX same-event policy may enter `certify_commitment()` as certification truth. No host-specific driver doctrine may enter the artifact schemas. Contradictions and degradations must remain explicit. No full proof packet, withheld logic, or audit doctrine may leak into these carriers, and no alternate verdict lattice may be introduced beyond `CERTIFIED`, `UNCERTIFIED`, and `BLOCKED`.
+Forbidden leaks: no SRE or AUX same-event policy may enter `certify_commitment()` as certification truth. No host-specific driver doctrine may enter the artifact schemas or eval harness. Contradictions and degradations must remain explicit. No full proof packet, withheld logic, publication formatting layer, or audit doctrine may leak into these carriers, and no alternate verdict lattice may be introduced beyond `CERTIFIED`, `UNCERTIFIED`, and `BLOCKED`. Eval may not become a second truth court.
 
 ### 1.11 Reference-host observe/bind realization
 
@@ -198,6 +200,17 @@ Forbidden leaks: no driver may become a truth court for blockedness, provenance 
 | Gemini neutral-path execution | `evaluate_gemini_host_neutral()` | `cortex/drivers/gemini_host_neutral.py` | `test_gemini_host_neutral.py::test_ordinary_gemini_streaming_event_yields_explicit_neutral_continuation_result` + `test_gemini_host_neutral.py::test_candidate_bearing_gemini_event_is_rejected_from_neutral_only_path` + `test_gemini_host_neutral.py::test_full_commitment_gemini_event_is_rejected_from_neutral_only_path` + `test_gemini_host_neutral.py::test_slice_stays_observe_bind_driven_and_preserves_raw_gemini_metadata_and_warnings` | landed |
 
 Forbidden leaks: no SRE neutral-dominance scoring or soft-control family logic may appear in this seam. No cheap Gemini event may be silently escalated into certification. No driver may become a truth court for commitments, provenance, or blockedness. No invented Gemini lifecycle parity or undocumented wake markers may appear here. No startup, retry, runtime, API doctrine, or fake multi-host abstraction may leak into this slice.
+
+### 1.17 OpenAI host observe/bind realization
+
+| Packet math | Is | Code home | Test surface | Status |
+| --- | --- | --- | --- | --- |
+| OpenAI lifecycle surface realization | `OPENAI_HOST_SURFACE` | `cortex/drivers/openai_host.py` | `test_openai_host.py::test_bound_openai_event_contains_surface_observation_and_remains_dispatch_cheap` | landed |
+| bound OpenAI event carrier | `BoundOpenAIHostEvent` | `cortex/drivers/openai_host.py` | `test_openai_host.py::test_bound_openai_event_contains_surface_observation_and_remains_dispatch_cheap` | landed |
+| OpenAI envelope binding | `bind_openai_event_envelope()` | `cortex/drivers/openai_host.py` | `test_openai_host.py::test_documented_openai_event_binds_to_canonical_core_name_and_preserves_raw_name` | landed |
+| `O_{t,openai} = Observe_{openai}(ℓ_t,\omega_t,L_{openai})` realization | `observe_openai_host_event()` | `cortex/drivers/openai_host.py` | `test_openai_host.py::test_documented_openai_event_binds_to_canonical_core_name_and_preserves_raw_name` + `test_openai_host.py::test_normalized_openai_payload_preserves_stable_generic_fields_when_present` + `test_openai_host.py::test_bound_openai_event_contains_surface_observation_and_remains_dispatch_cheap` + `test_openai_host.py::test_openai_surface_gap_emits_explicit_warning_instead_of_fabricated_parity` | landed |
+
+Forbidden leaks: no fake parity with Gemini or reference-host semantics may be introduced where OpenAI differs. No hidden OpenAI doctrine may leak into common modules unless the behavior is truly generic. No raw OpenAI payload or event may bypass `LifecycleEventEnvelope` / `ObservationBundle`. The OpenAI driver may not become a truth court for commitments, provenance sufficiency, or blockedness. Cheap OpenAI streaming events may not regress into heavy-path handling without actual commitment markers. No runtime or channel realization logic may appear in this seam.
 
 ---
 

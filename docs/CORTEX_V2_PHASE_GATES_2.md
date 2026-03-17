@@ -74,14 +74,14 @@ Source of truth:
 
 Overall status: `partial`
 
-Minimal schemas exist, but the harness/publication side is not yet earned.
+Minimal schemas and the first contradiction-preserving harness now exist, but the withheld/publication side is not yet earned.
 
 | Gate row | Current evidence | Owner / next closeout | Status | Notes |
 | --- | --- | --- | --- | --- |
 | minimal event trace artifact schema | `cortex/eval/artifacts.py::EventTraceArtifact` + `tests/unit/test_certification_artifacts.py::test_event_trace_artifact_preserves_contradictions_and_degradations` | closed | landed | minimal schema is real |
 | minimal current-pair fragment schema | `cortex/eval/artifacts.py::CurrentPairFragment` + `tests/unit/test_certification_artifacts.py::test_current_pair_fragment_carries_event_trace_and_verdict_summary` | closed | landed | minimal schema is real |
 | minimal blocker fragment schema | `cortex/eval/artifacts.py::BlockerFragment` + `tests/unit/test_certification_artifacts.py::test_blocker_fragment_preserves_reason_and_contradictions` | closed | landed | minimal schema is real |
-| contradiction-preserving eval harness | none | Phase 13 full evidence harness | open | `cortex/eval/harness.py` is not yet re-earned under the active plan |
+| contradiction-preserving eval harness | `cortex/eval/harness.py::build_evaluation_harness_result` + `tests/unit/test_eval_harness.py::test_harness_result_carries_current_pair_without_losing_refs` + `tests/unit/test_eval_harness.py::test_harness_result_carries_blocker_without_smoothing_blocker_truth` | closed | landed | minimal side-effect-free harness composes landed artifacts without flattening contradictions or degradations |
 | truthful-withheld / packet publication logic | none | Phase 15 first implementation proof packet | open | later proof-packet work |
 | measured reference-lane publication example | none | Phase 15 first implementation proof packet | open | requires real packet publication evidence |
 
