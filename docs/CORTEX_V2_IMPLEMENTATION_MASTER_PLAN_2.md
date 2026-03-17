@@ -11,6 +11,7 @@ Active packet documents:
 
 Supporting implementation/port authority:
 - `docs/V1_CODE_PORT_DETERMINATION.md`
+- `docs/CORTEX_V2_MATH_TO_CODE_CORRESPONDENCE.md`
 
 Workflow authority:
 - `AGENTS.md`
@@ -263,6 +264,9 @@ Every seam must end with:
 - smallest relevant `pytest` subset
 - explicit status: `landed`, `blocked`, `partial`, or `drifted`
 - `PHILOSOPHY_AUDIT`
+- `Correspondence rows touched:` listing rows added, updated, or confirmed in `docs/CORTEX_V2_MATH_TO_CODE_CORRESPONDENCE.md`
+
+No load-bearing seam may be marked `landed` if it introduces new mathematical objects or implementation homes without updating the correspondence ledger.
 
 Additional subagent-specific verification:
 - parent confirms which subagent outputs were used

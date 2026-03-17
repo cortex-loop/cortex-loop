@@ -53,6 +53,9 @@ Implementation/workflow documents:
 - `docs/CORTEX_V2_IMPLEMENTATION_MASTER_PLAN_2.md`
 - `docs/V1_CODE_PORT_DETERMINATION.md`
 
+Supporting implementation authority (audit surface, not architectural authority):
+- `docs/CORTEX_V2_MATH_TO_CODE_CORRESPONDENCE.md`
+
 Authority order:
 
 1. Core
@@ -60,6 +63,7 @@ Authority order:
 3. AUX
 4. Implementation master plan
 5. V1 code-port determination
+6. Math-to-code correspondence (traceability only; does not override packet meaning or seam order)
 
 If those documents disagree, fix the disagreement before widening scope.
 
@@ -134,6 +138,7 @@ Every final summary from an agent editing this repo should include:
 - ending branch
 - commit hash or `no commit`
 - verification summary
+- `Correspondence rows touched:` rows added, updated, or confirmed in `docs/CORTEX_V2_MATH_TO_CODE_CORRESPONDENCE.md` (or `none` for non-load-bearing edits)
 
 `PHILOSOPHY_AUDIT`
 - `PHI_MINIFY`: pass|fail + one-line evidence
