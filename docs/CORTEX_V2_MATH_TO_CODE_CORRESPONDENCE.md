@@ -168,6 +168,17 @@ Forbidden leaks: no driver may become a truth court for blockedness, provenance 
 
 Forbidden leaks: no SRE neutral-dominance scoring or soft-control family logic may appear in this seam. No cheap-path event may be silently escalated into certification. No driver may become a truth court for commitments, provenance, or blockedness. No startup, retry, or adapter-loading doctrine, fake multi-host abstraction, or stop-centered worldview may leak into this slice.
 
+### 1.14 Gemini host observe/bind realization
+
+| Packet math | Is | Code home | Test surface | Status |
+| --- | --- | --- | --- | --- |
+| Gemini lifecycle surface realization | `GEMINI_HOST_SURFACE` | `cortex/drivers/gemini_host.py` | `test_gemini_host.py::test_bound_gemini_event_contains_surface_observation_and_remains_dispatch_cheap` | landed |
+| bound Gemini event carrier | `BoundGeminiHostEvent` | `cortex/drivers/gemini_host.py` | `test_gemini_host.py::test_bound_gemini_event_contains_surface_observation_and_remains_dispatch_cheap` | landed |
+| Gemini envelope binding | `bind_gemini_event_envelope()` | `cortex/drivers/gemini_host.py` | `test_gemini_host.py::test_documented_gemini_event_binds_to_canonical_core_name_and_preserves_raw_name` | landed |
+| `O_{t,gemini} = Observe_{gemini}(ℓ_t,\omega_t,L_{gemini})` realization | `observe_gemini_host_event()` | `cortex/drivers/gemini_host.py` | `test_gemini_host.py::test_documented_gemini_event_binds_to_canonical_core_name_and_preserves_raw_name` + `test_gemini_host.py::test_normalized_gemini_payload_preserves_stable_generic_fields_when_present` + `test_gemini_host.py::test_bound_gemini_event_contains_surface_observation_and_remains_dispatch_cheap` + `test_gemini_host.py::test_gemini_surface_gap_emits_explicit_warning_instead_of_fabricated_parity` | landed |
+
+Forbidden leaks: no fake parity with reference-host semantics may be introduced where Gemini differs. No hidden Gemini doctrine may leak into common modules unless the behavior is truly generic. No raw Gemini payload or event may bypass `LifecycleEventEnvelope` / `ObservationBundle`. The Gemini driver may not become a truth court for commitments, provenance sufficiency, or blockedness. Cheap Gemini callback events may not regress into heavy-path handling without actual commitment markers. No runtime or channel realization logic may appear in this seam.
+
 ---
 
 ## 2. V1 standard-library port correspondence
