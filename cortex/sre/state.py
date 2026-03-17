@@ -6,15 +6,10 @@ from dataclasses import dataclass, field
 
 from .families import SoftControlFamily
 from .brake import BrakeState
+from .goals import GoalContinuityView
 from .uncertainty import UncertaintyEstimate
 
-
-@dataclass(frozen=True, slots=True)
-class ReferenceGoalContinuityView:
-    main_goal_ref: str | None = None
-    active_track_ref: str | None = None
-    pending_goal_refs: tuple[str, ...] = field(default_factory=tuple)
-    resume_anchor_available: bool = False
+ReferenceGoalContinuityView = GoalContinuityView
 
 
 @dataclass(frozen=True, slots=True)
@@ -44,7 +39,7 @@ class ReferenceBrakeView:
 
 @dataclass(frozen=True, slots=True)
 class ReferenceExecutiveState:
-    goal_continuity: ReferenceGoalContinuityView
+    goal_continuity: GoalContinuityView
     uncertainty_monitoring: ReferenceUncertaintyMonitoringView
     mode_and_gating: ReferenceModeAndGatingView
     control_allocation: ReferenceControlAllocationView
