@@ -148,6 +148,16 @@ Forbidden leaks: no SRE or AUX same-event policy may enter `certify_commitment()
 
 Forbidden leaks: no raw host event or payload dict may bypass `LifecycleEventEnvelope` / `ObservationBundle` through ad hoc core paths. The reference host may not become a truth court for commitments, provenance sufficiency, or blockedness. No startup, retry, or adapter-loading doctrine may leak into this seam. No fake multi-host abstraction, SRE/AUX same-event policy state, or stop-centered prompt doctrine may appear here.
 
+### 1.12 Reference-host commitment-path realization
+
+| Packet math | Is | Code home | Test surface | Status |
+| --- | --- | --- | --- | --- |
+| reference-host commitment-path result carrier | `ReferenceHostCommitmentResult` | `cortex/drivers/reference_host_commitment.py` | `test_reference_host_commitment.py::test_full_commitment_reference_host_event_with_concrete_provenance_yields_certified` + `test_reference_host_commitment.py::test_proposal_like_event_stays_out_of_certification_and_returns_no_verdict` | landed |
+| reference-host commitment candidate binding | `bind_reference_host_candidate()` | `cortex/drivers/reference_host_commitment.py` | `test_reference_host_commitment.py::test_candidate_binding_prefers_direct_payload_id_over_extracted_structured_id` + `test_reference_host_commitment.py::test_candidate_binding_falls_back_to_extracted_structured_id` + `test_reference_host_commitment.py::test_candidate_binding_synthesizes_deterministic_local_id_when_none_is_present` | landed |
+| reference-host commitment-path execution | `evaluate_reference_host_commitment()` | `cortex/drivers/reference_host_commitment.py` | `test_reference_host_commitment.py::test_full_commitment_reference_host_event_with_concrete_provenance_yields_certified` + `test_reference_host_commitment.py::test_blocked_boundary_yields_blocked_even_when_provenance_exists` + `test_reference_host_commitment.py::test_missing_evidence_yields_uncertified` | landed |
+
+Forbidden leaks: no driver may become a truth court for blockedness, provenance sufficiency, or certification status. Candidate-bearing events may not silently enter certification without a stronger full-commitment wake marker. No SRE/AUX same-event policy state, startup/retry/adapter-loading doctrine, fake multi-host abstraction, stop-centered worldview, proof doctrine, or alternate commitment-status lattice may leak into this slice.
+
 ---
 
 ## 2. V1 standard-library port correspondence
