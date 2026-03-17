@@ -214,6 +214,16 @@ Forbidden leaks: no SRE neutral-dominance scoring or soft-control family logic m
 
 Forbidden leaks: no fake parity with Gemini or reference-host semantics may be introduced where OpenAI differs. No hidden OpenAI doctrine may leak into common modules unless the behavior is truly generic. No raw OpenAI payload or event may bypass `LifecycleEventEnvelope` / `ObservationBundle`. The OpenAI driver may not become a truth court for commitments, provenance sufficiency, or blockedness. Cheap OpenAI Responses streaming events may not regress into heavy-path handling without actual commitment markers. No runtime or channel realization logic may appear in this seam.
 
+### 1.18 OpenAI Responses commitment-path realization
+
+| Packet math | Is | Code home | Test surface | Status |
+| --- | --- | --- | --- | --- |
+| OpenAI commitment-path result carrier | `OpenAIHostCommitmentResult` | `cortex/drivers/openai_host_commitment.py` | `test_openai_host_commitment.py::test_full_commitment_openai_event_with_concrete_provenance_yields_certified` + `test_openai_host_commitment.py::test_candidate_bearing_openai_event_stays_out_of_certification_and_returns_no_verdict` | landed |
+| OpenAI commitment candidate binding | `bind_openai_host_candidate()` | `cortex/drivers/openai_host_commitment.py` | `test_openai_host_commitment.py::test_candidate_binding_prefers_direct_payload_id_then_extracted_then_synthesized` | landed |
+| OpenAI commitment-path execution | `evaluate_openai_host_commitment()` | `cortex/drivers/openai_host_commitment.py` | `test_openai_host_commitment.py::test_full_commitment_openai_event_with_concrete_provenance_yields_certified` + `test_openai_host_commitment.py::test_blocked_boundary_yields_blocked_even_when_provenance_exists` + `test_openai_host_commitment.py::test_missing_evidence_yields_uncertified` + `test_openai_host_commitment.py::test_candidate_bearing_openai_event_stays_out_of_certification_and_returns_no_verdict` | landed |
+
+Forbidden leaks: no driver may become a truth court for blockedness, provenance sufficiency, or certification status. Candidate-bearing OpenAI events may not silently enter certification without a stronger full-commitment wake marker. No invented OpenAI lifecycle parity or undocumented host markers may leak into this slice. No runtime, startup, retry doctrine, actual OpenAI API execution, fake multi-host abstraction, or alternate commitment-status lattice may appear here.
+
 ---
 
 ## 2. V1 standard-library port correspondence
