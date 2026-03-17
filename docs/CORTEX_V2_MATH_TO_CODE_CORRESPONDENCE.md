@@ -203,16 +203,16 @@ Forbidden leaks: no driver may become a truth court for blockedness, provenance 
 
 Forbidden leaks: no SRE neutral-dominance scoring or soft-control family logic may appear in this seam. No cheap Gemini event may be silently escalated into certification. No driver may become a truth court for commitments, provenance, or blockedness. No invented Gemini lifecycle parity or undocumented wake markers may appear here. No startup, retry, runtime, API doctrine, or fake multi-host abstraction may leak into this slice.
 
-### 1.17 OpenAI host observe/bind realization
+### 1.17 OpenAI Responses host observe/bind realization
 
 | Packet math | Is | Code home | Test surface | Status |
 | --- | --- | --- | --- | --- |
-| OpenAI lifecycle surface realization | `OPENAI_HOST_SURFACE` | `cortex/drivers/openai_host.py` | `test_openai_host.py::test_bound_openai_event_contains_surface_observation_and_remains_dispatch_cheap` | landed |
-| bound OpenAI event carrier | `BoundOpenAIHostEvent` | `cortex/drivers/openai_host.py` | `test_openai_host.py::test_bound_openai_event_contains_surface_observation_and_remains_dispatch_cheap` | landed |
-| OpenAI envelope binding | `bind_openai_event_envelope()` | `cortex/drivers/openai_host.py` | `test_openai_host.py::test_documented_openai_event_binds_to_canonical_core_name_and_preserves_raw_name` | landed |
-| `O_{t,openai} = Observe_{openai}(ℓ_t,\omega_t,L_{openai})` realization | `observe_openai_host_event()` | `cortex/drivers/openai_host.py` | `test_openai_host.py::test_documented_openai_event_binds_to_canonical_core_name_and_preserves_raw_name` + `test_openai_host.py::test_normalized_openai_payload_preserves_stable_generic_fields_when_present` + `test_openai_host.py::test_bound_openai_event_contains_surface_observation_and_remains_dispatch_cheap` + `test_openai_host.py::test_openai_surface_gap_emits_explicit_warning_instead_of_fabricated_parity` | landed |
+| OpenAI Responses lifecycle surface realization | `OPENAI_HOST_SURFACE` | `cortex/drivers/openai_host.py` | `test_openai_host.py::test_bound_openai_event_contains_surface_observation_and_remains_dispatch_cheap` | landed |
+| bound OpenAI Responses event carrier | `BoundOpenAIHostEvent` | `cortex/drivers/openai_host.py` | `test_openai_host.py::test_bound_openai_event_contains_surface_observation_and_remains_dispatch_cheap` | landed |
+| OpenAI Responses envelope binding | `bind_openai_event_envelope()` | `cortex/drivers/openai_host.py` | `test_openai_host.py::test_documented_openai_event_binds_to_canonical_core_name_and_preserves_raw_name` | landed |
+| `O_{t,openai} = Observe_{openai}(ℓ_t,\omega_t,L_{openai})` realization over the documented OpenAI Responses streaming surface | `observe_openai_host_event()` | `cortex/drivers/openai_host.py` | `test_openai_host.py::test_documented_openai_event_binds_to_canonical_core_name_and_preserves_raw_name` + `test_openai_host.py::test_normalized_openai_payload_preserves_stable_generic_fields_when_present` + `test_openai_host.py::test_bound_openai_event_contains_surface_observation_and_remains_dispatch_cheap` + `test_openai_host.py::test_openai_surface_gap_emits_explicit_warning_instead_of_fabricated_parity` | landed |
 
-Forbidden leaks: no fake parity with Gemini or reference-host semantics may be introduced where OpenAI differs. No hidden OpenAI doctrine may leak into common modules unless the behavior is truly generic. No raw OpenAI payload or event may bypass `LifecycleEventEnvelope` / `ObservationBundle`. The OpenAI driver may not become a truth court for commitments, provenance sufficiency, or blockedness. Cheap OpenAI streaming events may not regress into heavy-path handling without actual commitment markers. No runtime or channel realization logic may appear in this seam.
+Forbidden leaks: no fake parity with Gemini or reference-host semantics may be introduced where OpenAI differs. No hidden OpenAI doctrine may leak into common modules unless the behavior is truly generic. No raw OpenAI payload or event may bypass `LifecycleEventEnvelope` / `ObservationBundle`. The OpenAI driver may not become a truth court for commitments, provenance sufficiency, or blockedness. Cheap OpenAI Responses streaming events may not regress into heavy-path handling without actual commitment markers. No runtime or channel realization logic may appear in this seam.
 
 ---
 
