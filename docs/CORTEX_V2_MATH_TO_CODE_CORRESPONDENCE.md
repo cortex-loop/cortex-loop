@@ -137,6 +137,17 @@ Forbidden leaks: `classify_dispatch()` consumes `ObservationBundle`, not raw hos
 
 Forbidden leaks: no SRE or AUX same-event policy may enter `certify_commitment()` as certification truth. No host-specific driver doctrine may enter the artifact schemas. Contradictions and degradations must remain explicit. No full proof packet, withheld logic, or audit doctrine may leak into these carriers, and no alternate verdict lattice may be introduced beyond `CERTIFIED`, `UNCERTIFIED`, and `BLOCKED`.
 
+### 1.11 Reference-host observe/bind realization
+
+| Packet math | Is | Code home | Test surface | Status |
+| --- | --- | --- | --- | --- |
+| reference-host lifecycle surface realization | `REFERENCE_HOST_SURFACE` | `cortex/drivers/reference_host.py` | `test_reference_host.py::test_bound_event_carrier_contains_surface_observation_and_normalized_payload` | landed |
+| bound reference-host event carrier | `BoundReferenceHostEvent` | `cortex/drivers/reference_host.py` | `test_reference_host.py::test_bound_event_carrier_contains_surface_observation_and_normalized_payload` | landed |
+| reference-host envelope binding | `bind_reference_event_envelope()` | `cortex/drivers/reference_host.py` | `test_reference_host.py::test_alias_event_name_binds_to_canonical_core_name_and_preserves_raw_name` | landed |
+| `O_{t,reference} = Observe_{reference}(ℓ_t,\omega_t,L_{reference})` realization | `observe_reference_host_event()` | `cortex/drivers/reference_host.py` | `test_reference_host.py::test_proposal_like_raw_host_event_binds_cleanly_and_is_dispatch_ready` + `test_reference_host.py::test_ordinary_context_event_binds_without_commitment_time_work` | landed |
+
+Forbidden leaks: no raw host event or payload dict may bypass `LifecycleEventEnvelope` / `ObservationBundle` through ad hoc core paths. The reference host may not become a truth court for commitments, provenance sufficiency, or blockedness. No startup, retry, or adapter-loading doctrine may leak into this seam. No fake multi-host abstraction, SRE/AUX same-event policy state, or stop-centered prompt doctrine may appear here.
+
 ---
 
 ## 2. V1 standard-library port correspondence
