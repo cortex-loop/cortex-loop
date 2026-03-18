@@ -29,6 +29,12 @@ class LifecycleEventEnvelope:
     payload_metadata: tuple[MetadataField, ...] = field(default_factory=tuple)
     payload_handle: EventPayloadHandle | None = None
 
+    def __post_init__(self) -> None:
+        if not self.native_event_name.strip():
+            raise ValueError(
+                "LifecycleEventEnvelope.native_event_name must be non-empty after trimming.",
+            )
+
 
 __all__ = [
     "EventPayloadHandle",

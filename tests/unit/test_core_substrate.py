@@ -94,6 +94,18 @@ def test_lifecycle_event_and_observation_carriers_construct_cleanly() -> None:
     assert surface.effect_map[0].action_tag == "bounded_prose"
 
 
+def test_lifecycle_event_envelope_rejects_empty_or_whitespace_only_native_event_name() -> None:
+    valid = LifecycleEventEnvelope(native_event_name="turn/complete")
+
+    assert valid.native_event_name == "turn/complete"
+
+    with pytest.raises(ValueError, match="native_event_name must be non-empty after trimming"):
+        LifecycleEventEnvelope(native_event_name="")
+
+    with pytest.raises(ValueError, match="native_event_name must be non-empty after trimming"):
+        LifecycleEventEnvelope(native_event_name="   ")
+
+
 def test_environment_query_vocabulary_accepts_canonical_query_kinds() -> None:
     constructed = tuple(EnvironmentQuery(kind=kind) for kind in CANONICAL_QUERY_KINDS)
 

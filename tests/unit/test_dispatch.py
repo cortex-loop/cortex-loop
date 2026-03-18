@@ -1,5 +1,7 @@
 """Unit tests for conservative event-local dispatch classification."""
 
+import pytest
+
 from cortex.core.dispatch import DispatchLane, classify_dispatch
 from cortex.core.envelopes import LifecycleEventEnvelope, MetadataField
 from cortex.core.observation import ObservationBundle, PayloadView
@@ -122,6 +124,11 @@ def test_evidence_plan_matches_the_dispatched_lane() -> None:
         full.evidence_plan.requires_provenance,
         full.evidence_plan.requires_boundary_assessment,
     ) == (True, True, True)
+
+
+def test_dispatch_cannot_start_from_empty_native_event_name() -> None:
+    with pytest.raises(ValueError, match="native_event_name must be non-empty after trimming"):
+        _make_observation(native_event_name="")
 
 
 def _make_observation(
