@@ -1,5 +1,7 @@
 """Unit tests for the minimal typed core substrate."""
 
+import pytest
+
 from cortex.core.commitments import (
     BoundaryAssessment,
     CertificationContext,
@@ -10,6 +12,7 @@ from cortex.core.commitments import (
     ProvenanceManifest,
 )
 from cortex.core.environment import (
+    CANONICAL_QUERY_KINDS,
     CAPABILITY_VIEW,
     EXECUTION_TRACE,
     STATE_SNAPSHOT,
@@ -89,6 +92,45 @@ def test_lifecycle_event_and_observation_carriers_construct_cleanly() -> None:
     assert "host/custom" in envelope.extension_tags
     assert observation.runtime_records[0].record_type == "tool-result"
     assert surface.effect_map[0].action_tag == "bounded_prose"
+
+
+def test_environment_query_vocabulary_accepts_canonical_query_kinds() -> None:
+    constructed = tuple(EnvironmentQuery(kind=kind) for kind in CANONICAL_QUERY_KINDS)
+
+    assert {query.kind for query in constructed} == CANONICAL_QUERY_KINDS
+
+
+def test_environment_query_rejects_non_canonical_query_kind() -> None:
+    with pytest.raises(ValueError, match="canonical core query vocabulary"):
+        EnvironmentQuery("NOT_A_KIND")
+
+    with pytest.raises(ValueError, match="canonical core query vocabulary"):
+        EnvironmentQuery("state_snapshot")
+
+    with pytest.raises(ValueError, match="canonical core query vocabulary"):
+        EnvironmentQuery("  execution_trace  ")
+
+
+def test_environment_carriers_reject_non_canonical_available_query_kinds() -> None:
+    with pytest.raises(ValueError, match="canonical core query vocabulary"):
+        ExecutiveEnvironmentView(
+            available_query_kinds=frozenset({"NOT_A_KIND"}),
+        )
+
+    with pytest.raises(ValueError, match="canonical core query vocabulary"):
+        ExecutiveEnvironmentView(
+            available_query_kinds=frozenset({"state_snapshot"}),
+        )
+
+    with pytest.raises(ValueError, match="canonical core query vocabulary"):
+        CommitmentEnvironmentHandle(
+            available_query_kinds=frozenset({"NOT_A_KIND"}),
+        )
+
+    with pytest.raises(ValueError, match="canonical core query vocabulary"):
+        CommitmentEnvironmentHandle(
+            available_query_kinds=frozenset({"execution_trace"}),
+        )
 
 
 def test_support_state_and_snapshot_are_distinct_types() -> None:

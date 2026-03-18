@@ -9,7 +9,7 @@ from cortex.core.commitments import (
     ProvenanceEvidenceRef,
     ProvenanceManifest,
 )
-from cortex.core.environment import CommitmentEnvironmentHandle
+from cortex.core.environment import CommitmentEnvironmentHandle, EXECUTION_TRACE
 from cortex.core.errors import ContradictionRecord, DegradationRecord
 from cortex.core.observation import ObservationBundle, PayloadView
 from cortex.core.envelopes import LifecycleEventEnvelope
@@ -150,7 +150,7 @@ def _make_context() -> CertificationContext:
             payload_view=PayloadView(),
         ),
         environment_handle=CommitmentEnvironmentHandle(
-            available_query_kinds=frozenset({"execution_trace"}),
+            available_query_kinds=frozenset({EXECUTION_TRACE}),
         ),
         wake_reasons=frozenset({"candidate-present"}),
     )
