@@ -103,6 +103,22 @@ Repo-local entry point:
 make test-correspondence-core
 ```
 
+## Ports correspondence drift check
+
+This covers the landed Section 2 ports/provenance/normalization rows that remain outside the Section 1 Core audit.
+
+Direct command:
+
+```sh
+python3 -m pytest tests/unit/test_correspondence_ports.py
+```
+
+Repo-local entry point:
+
+```sh
+make test-correspondence-ports
+```
+
 ## SRE correspondence drift check
 
 This is the SRE-scoped follow-on to the Core drift check.
@@ -122,8 +138,8 @@ make test-correspondence-sre
 
 ## Periphery correspondence drift check
 
-This completes the currently landed E3-scoped correspondence drift checks across SRE, drivers, eval, and AUX after the earlier Core check.
-It does not yet cover every landed correspondence row in the ledger, and it still does not perform full prose-ledger parsing.
+Together with the Core, ports, and SRE checks, this completes the currently landed correspondence drift surface across Core, Section 2 ports, SRE, drivers, eval, and AUX.
+The currently landed correspondence ledger is now mechanically covered short of full prose-ledger parsing.
 
 Direct command:
 
