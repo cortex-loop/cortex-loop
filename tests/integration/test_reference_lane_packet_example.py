@@ -6,14 +6,17 @@ import json
 import re
 from pathlib import Path
 
-from cortex.core.commitments import ProvenanceEvidenceRef, ProvenanceManifest
 from cortex.core.dispatch import DispatchLane
-from cortex.core.environment import EXECUTION_TRACE, CommitmentEnvironmentHandle
 from cortex.core.errors import ContradictionRecord, DegradationRecord
 from cortex.drivers.reference_host_commitment import evaluate_reference_host_commitment
 from cortex.eval.artifacts import CurrentPairFragment, EventTraceArtifact
 from cortex.eval.harness import build_evaluation_harness_result
 from cortex.eval.packets import WithheldField, build_evaluation_packet
+from tests.integration._reference_lane import (
+    full_commitment_event,
+    provenance_manifest_for,
+    reference_environment_handle,
+)
 
 _DOC_PATH = (
     Path(__file__).resolve().parents[2]
@@ -33,25 +36,15 @@ def test_reference_lane_current_pair_packet_example_matches_committed_doc() -> N
         capability_tags=frozenset({"external/write"}),
         contradiction_records=(contradiction,),
     )
+    event_name, payload = full_commitment_event(
+        commitment_id="commit-packet-1",
+        session_id="packet-session-1",
+    )
     result = evaluate_reference_host_commitment(
-        "ApprovalResult",
-        {
-            "commitment_id": "commit-packet-1",
-            "externally_consequential": True,
-            "session_id": "packet-session-1",
-        },
-        environment_handle=CommitmentEnvironmentHandle(
-            available_query_kinds=frozenset({EXECUTION_TRACE}),
-            capability_tags=frozenset({"trace/read"}),
-        ),
-        provenance_manifest=ProvenanceManifest(
-            evidence_refs=(
-                ProvenanceEvidenceRef(
-                    source_family="result_artifact",
-                    reference_id="artifact-packet-1",
-                ),
-            ),
-        ),
+        event_name,
+        payload,
+        environment_handle=reference_environment_handle(),
+        provenance_manifest=provenance_manifest_for("artifact-packet-1"),
         degradation_refs=(degradation,),
         contradiction_refs=(contradiction,),
     )

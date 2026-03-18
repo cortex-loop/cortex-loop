@@ -10,10 +10,7 @@ from dataclasses import dataclass
 
 from cortex.core.commitments import (
     CommitmentStatus,
-    ProvenanceEvidenceRef,
-    ProvenanceManifest,
 )
-from cortex.core.environment import CommitmentEnvironmentHandle, EXECUTION_TRACE
 from cortex.drivers.reference_host_commitment import evaluate_reference_host_commitment
 from cortex.drivers.reference_host_neutral import (
     NeutralContinuationCode,
@@ -22,6 +19,13 @@ from cortex.drivers.reference_host_neutral import (
 from cortex.sre.allocation import AllocationScore, AllocationScorecard
 from cortex.sre.families import SoftControlFamily
 from cortex.sre.policy import neutral_dominance_decision
+from tests.integration._reference_lane import (
+    candidate_bearing_event,
+    cheap_path_event,
+    full_commitment_event,
+    provenance_manifest_for,
+    reference_environment_handle,
+)
 
 ITERATION_COUNT = 400
 WARMUP_COUNT = 40
@@ -55,15 +59,8 @@ class LatencyEvidenceSnapshot:
 
 
 def collect_reference_lane_latency() -> LatencyEvidenceSnapshot:
-    environment_handle = _make_environment_handle()
-    provenance_manifest = ProvenanceManifest(
-        evidence_refs=(
-            ProvenanceEvidenceRef(
-                source_family="result_artifact",
-                reference_id="artifact-1",
-            ),
-        ),
-    )
+    environment_handle = reference_environment_handle()
+    provenance_manifest = provenance_manifest_for("artifact-1")
     scorecard = AllocationScorecard(
         scores=(
             AllocationScore(SoftControlFamily.NEUTRAL, 1.0),
@@ -81,27 +78,19 @@ def collect_reference_lane_latency() -> LatencyEvidenceSnapshot:
     rows = (
         _measure_row(
             "cheap-path latency evidence",
-            lambda: evaluate_reference_host_neutral(
-                "ContextLoad",
-                {"session_id": " session-1 "},
-            ),
+            lambda: evaluate_reference_host_neutral(*cheap_path_event()),
         ),
         _measure_row(
             "candidate-bearing latency evidence",
             lambda: evaluate_reference_host_commitment(
-                "ApprovalRequest",
-                {"candidate_id": "candidate-1"},
+                *candidate_bearing_event(),
                 environment_handle=environment_handle,
             ),
         ),
         _measure_row(
             "full commitment latency evidence",
             lambda: evaluate_reference_host_commitment(
-                "ApprovalResult",
-                {
-                    "commitment_id": "commit-1",
-                    "externally_consequential": True,
-                },
+                *full_commitment_event(commitment_id="commit-1"),
                 environment_handle=environment_handle,
                 provenance_manifest=provenance_manifest,
             ),
@@ -173,20 +162,14 @@ def _percentile(samples: list[float], percentile: float) -> float:
 
 
 def _assert_cheap_path() -> None:
-    result = evaluate_reference_host_neutral(
-        "ContextLoad",
-        {"session_id": " session-1 "},
-    )
+    result = evaluate_reference_host_neutral(*cheap_path_event())
     assert result.neutral_decision.allowed is True
     assert result.neutral_decision.result_code is NeutralContinuationCode.NEUTRAL_ALLOWED
 
 
-def _assert_candidate_bearing_path(
-    environment_handle: CommitmentEnvironmentHandle,
-) -> None:
+def _assert_candidate_bearing_path(environment_handle: object) -> None:
     result = evaluate_reference_host_commitment(
-        "ApprovalRequest",
-        {"candidate_id": "candidate-1"},
+        *candidate_bearing_event(),
         environment_handle=environment_handle,
     )
     assert result.candidate is not None
@@ -194,15 +177,11 @@ def _assert_candidate_bearing_path(
 
 
 def _assert_full_commitment_path(
-    environment_handle: CommitmentEnvironmentHandle,
-    provenance_manifest: ProvenanceManifest,
+    environment_handle: object,
+    provenance_manifest: object,
 ) -> None:
     result = evaluate_reference_host_commitment(
-        "ApprovalResult",
-        {
-            "commitment_id": "commit-1",
-            "externally_consequential": True,
-        },
+        *full_commitment_event(commitment_id="commit-1"),
         environment_handle=environment_handle,
         provenance_manifest=provenance_manifest,
     )
@@ -213,10 +192,3 @@ def _assert_full_commitment_path(
 def _assert_neutral_sre_path(scorecard: AllocationScorecard) -> None:
     decision = neutral_dominance_decision(scorecard)
     assert decision.selected_family is SoftControlFamily.NEUTRAL
-
-
-def _make_environment_handle() -> CommitmentEnvironmentHandle:
-    return CommitmentEnvironmentHandle(
-        available_query_kinds=frozenset({EXECUTION_TRACE}),
-        capability_tags=frozenset({"trace/read"}),
-    )

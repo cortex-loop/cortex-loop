@@ -5,13 +5,16 @@ from cortex.drivers.reference_host_neutral import (
     NeutralContinuationCode,
     evaluate_reference_host_neutral,
 )
+from tests.integration._reference_lane import (
+    candidate_bearing_event,
+    cheap_path_event,
+    full_commitment_event,
+)
 
 
 def test_ordinary_context_event_yields_explicit_neutral_continuation_result() -> None:
-    result = evaluate_reference_host_neutral(
-        "ContextLoad",
-        {"session_id": " session-1 "},
-    )
+    event_name, payload = cheap_path_event()
+    result = evaluate_reference_host_neutral(event_name, payload)
 
     assert result.dispatch_decision.lane is DispatchLane.CHEAP
     assert result.neutral_decision.allowed is True
@@ -19,10 +22,8 @@ def test_ordinary_context_event_yields_explicit_neutral_continuation_result() ->
 
 
 def test_proposal_like_event_is_rejected_from_neutral_only_path() -> None:
-    result = evaluate_reference_host_neutral(
-        "ApprovalRequest",
-        {"candidate_id": "candidate-1"},
-    )
+    event_name, payload = candidate_bearing_event()
+    result = evaluate_reference_host_neutral(event_name, payload)
 
     assert result.dispatch_decision.lane is DispatchLane.CANDIDATE_BEARING
     assert result.neutral_decision.allowed is False
@@ -33,10 +34,10 @@ def test_proposal_like_event_is_rejected_from_neutral_only_path() -> None:
 
 
 def test_full_commitment_event_is_rejected_from_neutral_only_path() -> None:
-    result = evaluate_reference_host_neutral(
-        "ApprovalResult",
-        {"externally_consequential": True},
+    event_name, payload = full_commitment_event(
+        commitment_id="commit-neutral-1",
     )
+    result = evaluate_reference_host_neutral(event_name, payload)
 
     assert result.dispatch_decision.lane is DispatchLane.FULL_COMMITMENT
     assert result.neutral_decision.allowed is False
@@ -47,10 +48,11 @@ def test_full_commitment_event_is_rejected_from_neutral_only_path() -> None:
 
 
 def test_vertical_slice_stays_observe_bind_driven_and_preserves_raw_host_metadata() -> None:
-    result = evaluate_reference_host_neutral(
-        "SessionStart",
-        {"session_id": " session-4 "},
+    event_name, payload = cheap_path_event(
+        event_name="SessionStart",
+        session_id=" session-4 ",
     )
+    result = evaluate_reference_host_neutral(event_name, payload)
     metadata = {
         field.key: field.value
         for field in result.bound_event.observation.event.payload_metadata
