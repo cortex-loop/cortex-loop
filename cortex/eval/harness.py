@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
+from cortex.core.commitments import CommitmentStatus
 from cortex.core.errors import ContradictionRecord, DegradationRecord
 
 from .artifacts import BlockerFragment, CurrentPairFragment, EventTraceArtifact
@@ -28,6 +29,10 @@ class EvaluationHarnessResult:
         if has_current_pair and self.current_pair.event_trace != self.event_trace:
             raise ValueError(
                 "EvaluationHarnessResult current_pair.event_trace must match event_trace",
+            )
+        if has_current_pair and self.current_pair.verdict_status is CommitmentStatus.BLOCKED:
+            raise ValueError(
+                "EvaluationHarnessResult current_pair cannot carry CommitmentStatus.BLOCKED; use blocker",
             )
 
 

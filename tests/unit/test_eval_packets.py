@@ -182,3 +182,21 @@ def test_packet_build_cannot_start_from_mismatched_harness_event_trace() -> None
             event_trace=trace,
             current_pair=current_pair,
         )
+
+
+def test_packet_build_cannot_start_from_blocked_current_pair_harness_result() -> None:
+    trace = EventTraceArtifact(trace_id="trace-blocked", event_refs=("event-blocked",))
+    current_pair = CurrentPairFragment(
+        event_trace=trace,
+        verdict_status=CommitmentStatus.BLOCKED,
+        verdict_reason_code="approval-required",
+    )
+
+    with pytest.raises(
+        ValueError,
+        match="current_pair cannot carry CommitmentStatus\\.BLOCKED; use blocker",
+    ):
+        build_evaluation_harness_result(
+            event_trace=trace,
+            current_pair=current_pair,
+        )
