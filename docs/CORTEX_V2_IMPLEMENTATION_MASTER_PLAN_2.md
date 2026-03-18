@@ -1,7 +1,7 @@
 # CORTEX_V2_IMPLEMENTATION_MASTER_PLAN_2
 
-Status: canonical implementation master plan for blank-repo Cortex v2 build (`active`, subagent-aware)
-Date: 2026-03-17
+Status: canonical implementation master plan for the blank-repo Cortex v2 build (`active authority`, build-complete at current justified boundary, subagent-aware)
+Date: 2026-03-18
 Primary objective: build Cortex v2 as a **lifecycle-first, packet-first internally / host-native externally, executive-first, host-affordance-native system** with a **tiny integrity microkernel**, using only the narrow battle-proven v1 code that fits the new Core / SRE / AUX packet.
 
 Active packet documents:
@@ -13,11 +13,20 @@ Supporting implementation/port authority:
 - `docs/V1_CODE_PORT_DETERMINATION.md`
 - `docs/CORTEX_V2_MATH_TO_CODE_CORRESPONDENCE.md`
 - `docs/CORTEX_V2_PHASE_GATES_2.md`
+- `docs/CORTEX_V2_IMPLEMENTATION_STATUS_NOTE.md`
+- `docs/CORTEX_V2_MEDIATION_JUSTIFICATION_NOTE.md`
 
 Workflow authority:
 - `AGENTS.md`
 
 This plan supersedes the earlier implementation plan wherever they disagree on workflow.
+
+Closeout status:
+- the ordered roadmap is complete at the current justified boundary;
+- the verified end-state snapshot is recorded in `docs/CORTEX_V2_IMPLEMENTATION_STATUS_NOTE.md`;
+- the `_2` packet documents remain the active architectural authority;
+- AUX staging remains unchanged: geometry is evaluation-first / runtime-off-by-default, and offline consolidation remains deferred;
+- mediation remains explicitly unjustified and unstarted unless future measurable lift evidence is earned, as recorded in `docs/CORTEX_V2_MEDIATION_JUSTIFICATION_NOTE.md`.
 
 ---
 
