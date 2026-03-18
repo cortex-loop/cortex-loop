@@ -59,13 +59,12 @@ def evaluate_openai_host_neutral(
     )
 
 
-def _native_commitment_fields(payload: Mapping[str, Any]) -> Mapping[str, Any] | None:
-    commitment_fields = payload.get("commitment_fields")
+def _native_commitment_fields(payload: Mapping[str, Any]) -> Any | None:
     if payload.get("commitment_fields_source") != "native":
         return None
-    if isinstance(commitment_fields, Mapping):
-        return commitment_fields
-    return None
+    if "commitment_fields" not in payload:
+        return None
+    return payload.get("commitment_fields")
 
 
 def _neutral_decision_for_lane(lane: DispatchLane) -> OpenAINeutralContinuationDecision:

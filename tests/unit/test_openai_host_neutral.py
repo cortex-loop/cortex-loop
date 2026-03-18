@@ -50,6 +50,25 @@ def test_full_commitment_openai_event_is_rejected_from_neutral_only_path() -> No
     )
 
 
+def test_malformed_native_commitment_carrier_surfaces_warning_while_staying_full_commitment() -> None:
+    result = evaluate_openai_host_neutral(
+        "response.completed",
+        {
+            "externally_consequential": True,
+            "commitment_fields_source": "native",
+            "commitment_fields": "not-a-mapping",
+        },
+    )
+
+    assert result.dispatch_decision.lane is DispatchLane.FULL_COMMITMENT
+    assert result.neutral_decision.allowed is False
+    assert (
+        result.neutral_decision.result_code
+        is OpenAINeutralContinuationCode.FULL_COMMITMENT_PATH_REQUIRED
+    )
+    assert "Ignoring invalid native commitment carrier; expected an object." in result.warnings
+
+
 def test_slice_stays_observe_bind_driven_and_preserves_raw_openai_metadata_and_warnings() -> None:
     result = evaluate_openai_host_neutral(
         "response.in_progress",

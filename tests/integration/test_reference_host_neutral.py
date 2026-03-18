@@ -47,6 +47,25 @@ def test_full_commitment_event_is_rejected_from_neutral_only_path() -> None:
     )
 
 
+def test_malformed_native_commitment_carrier_surfaces_warning_while_staying_full_commitment() -> None:
+    result = evaluate_reference_host_neutral(
+        "ApprovalResult",
+        {
+            "externally_consequential": True,
+            "commitment_fields_source": "native",
+            "commitment_fields": "not-a-mapping",
+        },
+    )
+
+    assert result.dispatch_decision.lane is DispatchLane.FULL_COMMITMENT
+    assert result.neutral_decision.allowed is False
+    assert (
+        result.neutral_decision.result_code
+        is NeutralContinuationCode.FULL_COMMITMENT_PATH_REQUIRED
+    )
+    assert "Ignoring invalid native commitment carrier; expected an object." in result.warnings
+
+
 def test_vertical_slice_stays_observe_bind_driven_and_preserves_raw_host_metadata() -> None:
     event_name, payload = cheap_path_event(
         event_name="SessionStart",
