@@ -1,5 +1,7 @@
 """Focused tests for the OpenAI Responses observe/bind slice."""
 
+import pytest
+
 from cortex.core.dispatch import DispatchLane, classify_dispatch
 from cortex.drivers.openai_host import OPENAI_HOST_SURFACE, observe_openai_host_event
 
@@ -61,3 +63,8 @@ def test_openai_surface_gap_emits_explicit_warning_instead_of_fabricated_parity(
         "No documented OpenAI lifecycle mapping for 'response.tool_event'; "
         "using conservative external/observation binding.",
     )
+
+
+def test_empty_raw_openai_event_name_is_rejected_before_conservative_fallback() -> None:
+    with pytest.raises(ValueError, match="non-empty raw event name"):
+        observe_openai_host_event("", {})

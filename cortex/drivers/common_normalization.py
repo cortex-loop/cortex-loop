@@ -100,12 +100,16 @@ def normalize_driver_event(
     allow_message_commitment_fallback: bool = False,
     aliases: Mapping[str, str] = CANONICAL_EVENT_ALIASES,
 ) -> NormalizedDriverEvent:
+    raw_event_name = str(event_name or "").strip()
+    if not raw_event_name:
+        raise ValueError("normalize_driver_event requires a non-empty raw event name.")
+
     normalized_payload, warnings = normalize_driver_payload(
         payload,
         allow_message_commitment_fallback=allow_message_commitment_fallback,
     )
     return NormalizedDriverEvent(
-        native_event_name=str(event_name or "").strip(),
+        native_event_name=raw_event_name,
         event_name=normalize_event_name(event_name, aliases=aliases),
         payload=normalized_payload,
         warnings=warnings,

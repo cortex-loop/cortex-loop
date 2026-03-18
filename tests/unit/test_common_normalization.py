@@ -1,5 +1,7 @@
 """Focused tests for common driver normalization."""
 
+import pytest
+
 from cortex.drivers.common_normalization import (
     normalize_driver_event,
     normalize_driver_payload,
@@ -61,3 +63,11 @@ def test_generic_payload_normalization_does_not_impose_host_specific_doctrine() 
     assert "status" not in normalized
     assert "commitment_fields" not in normalized
     assert warnings == ()
+
+
+def test_normalize_driver_event_rejects_empty_or_whitespace_only_raw_event_name() -> None:
+    with pytest.raises(ValueError, match="non-empty raw event name"):
+        normalize_driver_event("")
+
+    with pytest.raises(ValueError, match="non-empty raw event name"):
+        normalize_driver_event("   ")

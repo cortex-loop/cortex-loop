@@ -1,5 +1,7 @@
 """Focused tests for the OpenAI neutral-only slice."""
 
+import pytest
+
 from cortex.core.dispatch import DispatchLane
 from cortex.drivers.openai_host_neutral import (
     OpenAIHostNeutralResult,
@@ -87,3 +89,8 @@ def test_slice_stays_observe_bind_driven_and_preserves_raw_openai_metadata_and_w
         "No documented OpenAI lifecycle mapping for 'response.in_progress'; "
         "using conservative external/observation binding.",
     )
+
+
+def test_empty_raw_openai_event_name_cannot_enter_neutral_slice() -> None:
+    with pytest.raises(ValueError, match="non-empty raw event name"):
+        evaluate_openai_host_neutral("", {})

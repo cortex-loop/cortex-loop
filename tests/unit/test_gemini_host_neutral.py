@@ -1,5 +1,7 @@
 """Focused tests for the Gemini host neutral-only slice."""
 
+import pytest
+
 from cortex.core.dispatch import DispatchLane
 from cortex.drivers.gemini_host_neutral import (
     GeminiNeutralContinuationCode,
@@ -85,3 +87,8 @@ def test_slice_stays_observe_bind_driven_and_preserves_raw_gemini_metadata_and_w
         "No documented Gemini lifecycle mapping for 'response.started'; "
         "using conservative external/observation binding.",
     )
+
+
+def test_empty_raw_gemini_event_name_cannot_enter_neutral_slice() -> None:
+    with pytest.raises(ValueError, match="non-empty raw event name"):
+        evaluate_gemini_host_neutral("", {})

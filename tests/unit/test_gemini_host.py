@@ -1,5 +1,7 @@
 """Focused tests for the Gemini host observe/bind slice."""
 
+import pytest
+
 from cortex.core.dispatch import DispatchLane, classify_dispatch
 from cortex.drivers.gemini_host import GEMINI_HOST_SURFACE, observe_gemini_host_event
 
@@ -62,3 +64,7 @@ def test_gemini_surface_gap_emits_explicit_warning_instead_of_fabricated_parity(
         "using conservative external/observation binding.",
     )
 
+
+def test_empty_raw_gemini_event_name_is_rejected_before_conservative_fallback() -> None:
+    with pytest.raises(ValueError, match="non-empty raw event name"):
+        observe_gemini_host_event("", {})
