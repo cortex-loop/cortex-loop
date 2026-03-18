@@ -34,7 +34,7 @@ def neutral_dominance_decision(scorecard: AllocationScorecard) -> NeutralDominan
         )
 
     margin = best_non_neutral.score - neutral_score.score
-    if margin < scorecard.activation_threshold:
+    if margin <= scorecard.activation_threshold:
         return NeutralDominanceDecision(
             selected_family=SoftControlFamily.NEUTRAL,
             neutral_selected=True,

@@ -72,6 +72,20 @@ def test_brake_evaluation_returns_guarded_for_elevated_uncertainty_or_mild_spike
     assert evaluation.spike_tags == frozenset({"goal-progress-ambiguity"})
 
 
+def test_brake_evaluation_reports_repeated_failure_as_guarded_dominant_cause() -> None:
+    evaluation = evaluate_brake_state((), repeated_failures=1)
+
+    assert evaluation.state is BrakeState.GUARDED
+    assert evaluation.dominant_cause == "repeated-failure"
+
+
+def test_brake_evaluation_reports_repeated_degradation_as_guarded_dominant_cause() -> None:
+    evaluation = evaluate_brake_state((), repeated_degradations=1)
+
+    assert evaluation.state is BrakeState.GUARDED
+    assert evaluation.dominant_cause == "repeated-degradation"
+
+
 def test_brake_evaluation_returns_latched_for_strong_spike_or_failure_pressure() -> None:
     evaluation = evaluate_brake_state(
         (

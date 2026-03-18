@@ -112,6 +112,22 @@ def test_neutral_dominance_returns_neutral_when_margin_is_below_threshold() -> N
     assert abs(decision.margin_over_neutral - 0.19) < 1e-12
 
 
+def test_neutral_dominance_keeps_neutral_on_exact_threshold_tie() -> None:
+    decision = neutral_dominance_decision(
+        AllocationScorecard(
+            scores=(
+                AllocationScore(SoftControlFamily.NEUTRAL, 1.0),
+                AllocationScore(SoftControlFamily.CHECK, 1.0),
+            ),
+            activation_threshold=0.0,
+        )
+    )
+
+    assert decision.selected_family is SoftControlFamily.NEUTRAL
+    assert decision.neutral_selected is True
+    assert decision.margin_over_neutral == 0.0
+
+
 def test_neutral_dominance_returns_strongest_non_neutral_when_threshold_is_met() -> None:
     decision = neutral_dominance_decision(
         AllocationScorecard(

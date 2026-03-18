@@ -126,9 +126,9 @@ def _dominant_cause(
 ) -> str:
     if spike_tags & _LATCHING_SPIKES:
         return sorted(spike_tags & _LATCHING_SPIKES)[0]
-    if repeated_failures >= 2:
+    if repeated_failures >= 1:
         return "repeated-failure"
-    if repeated_degradations >= 2:
+    if repeated_degradations >= 1:
         return "repeated-degradation"
     if missing_resume_anchor:
         return "missing-resume-anchor"
