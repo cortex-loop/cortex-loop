@@ -1,5 +1,7 @@
 """Unit tests for minimal truthful-withheld eval packet publication."""
 
+import pytest
+
 from cortex.core.commitments import CommitmentStatus
 from cortex.core.errors import ContradictionRecord, DegradationRecord
 from cortex.eval.artifacts import BlockerFragment, CurrentPairFragment, EventTraceArtifact
@@ -164,3 +166,19 @@ def test_packet_build_requires_no_measured_example_or_runtime_wiring() -> None:
 
     assert isinstance(packet, EvaluationPacket)
     assert packet.packet_kind is EvaluationPacketKind.CURRENT_PAIR
+
+
+def test_packet_build_cannot_start_from_mismatched_harness_event_trace() -> None:
+    trace = EventTraceArtifact(trace_id="trace-a", event_refs=("event-a",))
+    mismatched_trace = EventTraceArtifact(trace_id="trace-b", event_refs=("event-b",))
+    current_pair = CurrentPairFragment(
+        event_trace=mismatched_trace,
+        verdict_status=CommitmentStatus.CERTIFIED,
+        candidate_id="candidate-mismatch",
+    )
+
+    with pytest.raises(ValueError, match="current_pair\\.event_trace must match event_trace"):
+        build_evaluation_harness_result(
+            event_trace=trace,
+            current_pair=current_pair,
+        )

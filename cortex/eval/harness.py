@@ -25,6 +25,10 @@ class EvaluationHarnessResult:
             raise ValueError(
                 "EvaluationHarnessResult requires exactly one of current_pair or blocker",
             )
+        if has_current_pair and self.current_pair.event_trace != self.event_trace:
+            raise ValueError(
+                "EvaluationHarnessResult current_pair.event_trace must match event_trace",
+            )
 
 
 def build_evaluation_harness_result(
