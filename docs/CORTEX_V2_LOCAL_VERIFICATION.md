@@ -59,6 +59,24 @@ Repo-local entry point:
 make revalidate-reference-packet
 ```
 
+## Latency-evidence revalidation
+
+This revalidates the committed latency evidence doc against the already-landed live latency collector.
+It checks the committed scope, targets, and measurement metadata rather than demanding exact replay of historical micro-latency values.
+It does not produce candidate refreshed evidence and it does not regenerate or overwrite the committed latency doc.
+
+Direct command:
+
+```sh
+python3 -m pytest tests/integration/test_reference_lane_latency.py
+```
+
+Repo-local entry point:
+
+```sh
+make revalidate-latency-evidence
+```
+
 ## Individual entry points
 
 ```sh
@@ -123,6 +141,7 @@ make test-correspondence-periphery
 
 - `pytest.ini` is intentionally minimal and only anchors discovery to `tests`.
 - Packet-example evidence revalidation is limited to the committed reference-lane doc and remains separate from regeneration.
+- Latency evidence revalidation is limited to checking the committed doc against live collection and remains separate from regeneration.
 - `python3 -m pytest` also passes in the current repo, but the canonical local bundle remains the split closeout bundle above.
 
 ## Coverage prerequisite
