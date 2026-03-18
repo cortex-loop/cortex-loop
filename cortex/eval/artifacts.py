@@ -29,6 +29,15 @@ class CurrentPairFragment:
     degradation_refs: tuple[DegradationRecord, ...] = field(default_factory=tuple)
     metadata: tuple[MetadataField, ...] = field(default_factory=tuple)
 
+    def __post_init__(self) -> None:
+        if (
+            self.verdict_status is CommitmentStatus.CERTIFIED
+            and not (isinstance(self.candidate_id, str) and self.candidate_id.strip())
+        ):
+            raise ValueError(
+                "CurrentPairFragment verdict_status=CERTIFIED requires a non-empty candidate_id.",
+            )
+
 
 @dataclass(frozen=True, slots=True)
 class BlockerFragment:

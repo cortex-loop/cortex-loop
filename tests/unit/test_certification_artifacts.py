@@ -175,6 +175,37 @@ def test_current_pair_fragment_carries_event_trace_and_verdict_summary() -> None
     assert fragment.contradiction_refs == (contradiction,)
 
 
+def test_certified_current_pair_fragment_requires_non_empty_candidate_id() -> None:
+    trace = EventTraceArtifact(trace_id="trace-certified")
+    fragment = CurrentPairFragment(
+        event_trace=trace,
+        verdict_status=CommitmentStatus.CERTIFIED,
+        candidate_id="candidate-certified",
+    )
+
+    assert fragment.candidate_id == "candidate-certified"
+
+    with pytest.raises(
+        ValueError,
+        match="verdict_status=CERTIFIED requires a non-empty candidate_id",
+    ):
+        CurrentPairFragment(
+            event_trace=trace,
+            verdict_status=CommitmentStatus.CERTIFIED,
+            candidate_id=None,
+        )
+
+    with pytest.raises(
+        ValueError,
+        match="verdict_status=CERTIFIED requires a non-empty candidate_id",
+    ):
+        CurrentPairFragment(
+            event_trace=trace,
+            verdict_status=CommitmentStatus.CERTIFIED,
+            candidate_id="   ",
+        )
+
+
 def _make_context() -> CertificationContext:
     return CertificationContext(
         candidate=CommitmentCandidate(candidate_id="candidate-1"),

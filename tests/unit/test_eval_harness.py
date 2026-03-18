@@ -90,6 +90,7 @@ def test_harness_requires_exactly_one_outcome_fragment() -> None:
     current_pair = CurrentPairFragment(
         event_trace=trace,
         verdict_status=CommitmentStatus.CERTIFIED,
+        candidate_id="candidate-3",
     )
     blocker = BlockerFragment(reason_code="blocked")
 

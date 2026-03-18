@@ -130,6 +130,7 @@ def test_packet_build_preserves_contradictions_and_degradations() -> None:
     current_pair = CurrentPairFragment(
         event_trace=trace,
         verdict_status=CommitmentStatus.CERTIFIED,
+        candidate_id="candidate-3",
         contradiction_refs=(trace_contradiction,),
         degradation_refs=(degradation,),
     )
@@ -205,3 +206,17 @@ def test_packet_build_cannot_start_from_blocked_current_pair_harness_result() ->
 def test_packet_build_cannot_start_from_empty_blocker_reason_fragment() -> None:
     with pytest.raises(ValueError, match="reason_code must be non-empty after trimming"):
         BlockerFragment(reason_code="")
+
+
+def test_packet_build_cannot_start_from_certified_current_pair_without_candidate_id() -> None:
+    trace = EventTraceArtifact(trace_id="trace-certified")
+
+    with pytest.raises(
+        ValueError,
+        match="verdict_status=CERTIFIED requires a non-empty candidate_id",
+    ):
+        CurrentPairFragment(
+            event_trace=trace,
+            verdict_status=CommitmentStatus.CERTIFIED,
+            candidate_id=None,
+        )
