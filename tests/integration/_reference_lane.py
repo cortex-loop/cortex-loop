@@ -2,8 +2,12 @@
 
 from __future__ import annotations
 
+from cortex.core.errors import ContradictionRecord, DegradationRecord
 from cortex.core.commitments import ProvenanceEvidenceRef, ProvenanceManifest
 from cortex.core.environment import CommitmentEnvironmentHandle, EXECUTION_TRACE
+from cortex.drivers.reference_host_commitment import ReferenceHostCommitmentResult
+from cortex.eval.artifacts import CurrentPairFragment
+from cortex.eval.packets import EvaluationPacket
 
 
 def cheap_path_event(
@@ -58,3 +62,46 @@ def provenance_manifest_for(
             ),
         ),
     )
+
+
+def host_surface_degradation_pair(
+    *,
+    source_tag: str = "host-check",
+    summary: str = "expected write receipt was absent",
+    evidence_tags: frozenset[str] = frozenset({"receipt-missing"}),
+    reason_code: str = "host-surface-degraded",
+    capability_tags: frozenset[str] = frozenset({"external/write"}),
+) -> tuple[ContradictionRecord, DegradationRecord]:
+    contradiction = ContradictionRecord(
+        source_tag=source_tag,
+        summary=summary,
+        evidence_tags=evidence_tags,
+    )
+    degradation = DegradationRecord(
+        reason_code=reason_code,
+        capability_tags=capability_tags,
+        contradiction_records=(contradiction,),
+    )
+    return contradiction, degradation
+
+
+def assert_reference_commitment_result_preserves_degradation_pair(
+    result: ReferenceHostCommitmentResult,
+    contradiction: ContradictionRecord,
+    degradation: DegradationRecord,
+) -> None:
+    assert result.verdict is not None
+    assert result.verdict.degradation_refs == (degradation,)
+    assert contradiction in result.verdict.contradiction_refs
+
+
+def assert_reference_packet_preserves_degradation_pair(
+    current_pair: CurrentPairFragment,
+    packet: EvaluationPacket,
+    contradiction: ContradictionRecord,
+    degradation: DegradationRecord,
+) -> None:
+    assert current_pair.contradiction_refs == (contradiction,)
+    assert current_pair.degradation_refs == (degradation,)
+    assert packet.contradiction_refs == (contradiction,)
+    assert packet.degradation_refs == (degradation,)

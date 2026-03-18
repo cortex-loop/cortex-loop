@@ -7,13 +7,14 @@ import re
 from pathlib import Path
 
 from cortex.core.dispatch import DispatchLane
-from cortex.core.errors import ContradictionRecord, DegradationRecord
 from cortex.drivers.reference_host_commitment import evaluate_reference_host_commitment
 from cortex.eval.artifacts import CurrentPairFragment, EventTraceArtifact
 from cortex.eval.harness import build_evaluation_harness_result
 from cortex.eval.packets import WithheldField, build_evaluation_packet
 from tests.integration._reference_lane import (
+    assert_reference_packet_preserves_degradation_pair,
     full_commitment_event,
+    host_surface_degradation_pair,
     provenance_manifest_for,
     reference_environment_handle,
 )
@@ -26,15 +27,9 @@ _DOC_PATH = (
 
 
 def test_reference_lane_current_pair_packet_example_matches_committed_doc() -> None:
-    contradiction = ContradictionRecord(
-        source_tag="host-check",
+    contradiction, degradation = host_surface_degradation_pair(
         summary="write receipt was incomplete",
         evidence_tags=frozenset({"receipt", "result-artifact"}),
-    )
-    degradation = DegradationRecord(
-        reason_code="host-surface-degraded",
-        capability_tags=frozenset({"external/write"}),
-        contradiction_records=(contradiction,),
     )
     event_name, payload = full_commitment_event(
         commitment_id="commit-packet-1",
@@ -90,6 +85,12 @@ def test_reference_lane_current_pair_packet_example_matches_committed_doc() -> N
     assert packet.current_pair is current_pair
     assert packet.blocker is None
     assert packet.warnings == result.warnings
+    assert_reference_packet_preserves_degradation_pair(
+        current_pair,
+        packet,
+        contradiction,
+        degradation,
+    )
 
     expected_snapshot = _load_committed_snapshot()
     actual_snapshot = {

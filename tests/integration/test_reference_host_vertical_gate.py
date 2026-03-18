@@ -12,7 +12,6 @@ from cortex.core.environment import (
     EXECUTION_TRACE,
     ExecutiveEnvironmentView,
 )
-from cortex.core.errors import ContradictionRecord, DegradationRecord
 from cortex.drivers.reference_host import observe_reference_host_event
 from cortex.drivers.reference_host_commitment import evaluate_reference_host_commitment
 from cortex.drivers.reference_host_neutral import (
@@ -23,9 +22,11 @@ from cortex.sre.allocation import AllocationScore, AllocationScorecard
 from cortex.sre.families import SoftControlFamily
 from cortex.sre.policy import neutral_dominance_decision
 from tests.integration._reference_lane import (
+    assert_reference_commitment_result_preserves_degradation_pair,
     candidate_bearing_event,
     cheap_path_event,
     full_commitment_event,
+    host_surface_degradation_pair,
     provenance_manifest_for,
     reference_environment_handle,
 )
@@ -69,15 +70,9 @@ def test_full_commitment_integration_reaches_certified_with_lawful_evidence() ->
 
 
 def test_degradation_roundtrip_preserves_degradation_and_contradictions() -> None:
-    contradiction = ContradictionRecord(
-        source_tag="host-check",
+    contradiction, degradation = host_surface_degradation_pair(
         summary="expected write receipt was absent",
         evidence_tags=frozenset({"receipt-missing"}),
-    )
-    degradation = DegradationRecord(
-        reason_code="host-surface-degraded",
-        capability_tags=frozenset({"external/write"}),
-        contradiction_records=(contradiction,),
     )
 
     result = evaluate_reference_host_commitment(
@@ -87,9 +82,11 @@ def test_degradation_roundtrip_preserves_degradation_and_contradictions() -> Non
         degradation_refs=(degradation,),
     )
 
-    assert result.verdict is not None
-    assert result.verdict.degradation_refs == (degradation,)
-    assert contradiction in result.verdict.contradiction_refs
+    assert_reference_commitment_result_preserves_degradation_pair(
+        result,
+        contradiction,
+        degradation,
+    )
 
 
 def test_firewall_integration_rejects_executive_environment_view() -> None:
