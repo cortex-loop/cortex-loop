@@ -15,6 +15,7 @@ Supporting implementation/port authority:
 - `docs/CORTEX_V2_PHASE_GATES_2.md`
 - `docs/CORTEX_V2_IMPLEMENTATION_STATUS_NOTE.md`
 - `docs/CORTEX_V2_MEDIATION_JUSTIFICATION_NOTE.md`
+- `docs/CORTEX_V2_VERIFICATION_ERGONOMICS_MASTER_PLAN_0.md`
 
 Workflow authority:
 - `AGENTS.md`
@@ -27,6 +28,7 @@ Closeout status:
 - the `_2` packet documents remain the active architectural authority;
 - AUX staging remains unchanged: geometry is evaluation-first / runtime-off-by-default, and offline consolidation remains deferred;
 - mediation remains explicitly unjustified and unstarted unless future measurable lift evidence is earned, as recorded in `docs/CORTEX_V2_MEDIATION_JUSTIFICATION_NOTE.md`.
+- if post-closeout work continues, `docs/CORTEX_V2_VERIFICATION_ERGONOMICS_MASTER_PLAN_0.md` is the active non-feature follow-on campaign.
 
 ---
 
