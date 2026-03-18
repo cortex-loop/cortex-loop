@@ -28,6 +28,10 @@ class AuxBurdenReport:
             "intervention_burden",
         ):
             value = getattr(self, field_name)
+            if isinstance(value, bool):
+                raise TypeError(
+                    f"AuxBurdenReport.{field_name} must be numeric, got bool.",
+                )
             if not isinstance(value, Real):
                 actual_type = type(value).__name__
                 raise TypeError(

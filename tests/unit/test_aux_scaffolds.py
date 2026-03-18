@@ -60,7 +60,7 @@ def test_augment_snapshot_appends_auxiliary_support_without_mutating_core_snapsh
 def test_aux_burden_report_enforces_non_negative_values() -> None:
     burden = AuxBurdenReport(
         compute_overhead=1.0,
-        memory_overhead=2.5,
+        memory_overhead=2,
         latency_overhead=0.1,
         environment_query_cost=3.0,
         retrieval_cost=0.5,
@@ -68,10 +68,19 @@ def test_aux_burden_report_enforces_non_negative_values() -> None:
     )
 
     assert burden.compute_overhead == 1.0
+    assert burden.memory_overhead == 2
     assert burden.environment_query_cost == 3.0
 
     with pytest.raises(ValueError, match="non-negative"):
         AuxBurdenReport(latency_overhead=-0.1)
+
+
+def test_aux_burden_report_rejects_boolean_values() -> None:
+    with pytest.raises(TypeError, match="compute_overhead must be numeric, got bool"):
+        AuxBurdenReport(compute_overhead=True)
+
+    with pytest.raises(TypeError, match="memory_overhead must be numeric, got bool"):
+        AuxBurdenReport(memory_overhead=False)
 
 
 def test_aux_scaffold_types_remain_domain_general_and_removable() -> None:
