@@ -85,3 +85,45 @@ def test_changed_files_since_baseline_returns_reason_when_snapshot_unavailable()
 
     assert delta.changed_files is None
     assert delta.reason == "baseline repository snapshot unavailable"
+
+
+def test_changed_files_since_baseline_rejects_mismatched_repository_roots() -> None:
+    baseline = RepositorySnapshot(
+        available=True,
+        changed_files=("a.py",),
+        repository_root=Path("/repo-a"),
+    )
+    current = RepositorySnapshot(
+        available=True,
+        changed_files=("a.py", "b.py"),
+        repository_root=Path("/repo-b"),
+    )
+
+    delta = changed_files_since_baseline(
+        baseline_snapshot=baseline,
+        current_snapshot=current,
+    )
+
+    assert delta.changed_files is None
+    assert delta.reason == "repository root mismatch between baseline and current snapshots"
+
+
+def test_changed_files_since_baseline_rejects_missing_repository_root() -> None:
+    baseline = RepositorySnapshot(
+        available=True,
+        changed_files=("a.py",),
+        repository_root=None,
+    )
+    current = RepositorySnapshot(
+        available=True,
+        changed_files=("a.py", "b.py"),
+        repository_root=Path("/repo"),
+    )
+
+    delta = changed_files_since_baseline(
+        baseline_snapshot=baseline,
+        current_snapshot=current,
+    )
+
+    assert delta.changed_files is None
+    assert delta.reason == "baseline repository root unavailable for comparison"

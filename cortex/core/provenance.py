@@ -164,6 +164,15 @@ def changed_files_since_baseline(
             None,
             current_snapshot.error_reason or "current repository snapshot unavailable",
         )
+    if baseline_snapshot.repository_root is None:
+        return ChangedFilesDelta(None, "baseline repository root unavailable for comparison")
+    if current_snapshot.repository_root is None:
+        return ChangedFilesDelta(None, "current repository root unavailable for comparison")
+    if baseline_snapshot.repository_root != current_snapshot.repository_root:
+        return ChangedFilesDelta(
+            None,
+            "repository root mismatch between baseline and current snapshots",
+        )
 
     baseline_files = set(baseline_snapshot.changed_files)
     current_files = set(current_snapshot.changed_files)
