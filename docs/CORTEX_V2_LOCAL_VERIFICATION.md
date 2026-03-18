@@ -85,6 +85,23 @@ Repo-local entry point:
 make test-correspondence-sre
 ```
 
+## Periphery correspondence drift check
+
+This completes the currently landed correspondence drift surface across Core, SRE, drivers, eval, and AUX.
+It still does not perform full prose-ledger parsing.
+
+Direct command:
+
+```sh
+python3 -m pytest tests/unit/test_correspondence_periphery.py
+```
+
+Repo-local entry point:
+
+```sh
+make test-correspondence-periphery
+```
+
 ## Notes
 
 - `pytest.ini` is intentionally minimal and only anchors discovery to `tests`.
