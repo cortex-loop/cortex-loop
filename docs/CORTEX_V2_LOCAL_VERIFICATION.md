@@ -51,6 +51,23 @@ make test-smoke
 make verify
 ```
 
+## Core correspondence drift check
+
+This is the first Core-scoped correspondence drift check only.
+It does not cover drivers, SRE, eval, AUX, or full correspondence parsing yet.
+
+Direct command:
+
+```sh
+python3 -m pytest tests/unit/test_correspondence_core.py
+```
+
+Repo-local entry point:
+
+```sh
+make test-correspondence-core
+```
+
 ## Notes
 
 - `pytest.ini` is intentionally minimal and only anchors discovery to `tests`.
