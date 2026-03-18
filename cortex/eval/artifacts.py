@@ -39,6 +39,10 @@ class BlockerFragment:
     degradation_refs: tuple[DegradationRecord, ...] = field(default_factory=tuple)
     metadata: tuple[MetadataField, ...] = field(default_factory=tuple)
 
+    def __post_init__(self) -> None:
+        if not self.reason_code.strip():
+            raise ValueError("BlockerFragment.reason_code must be non-empty after trimming.")
+
 
 __all__ = [
     "BlockerFragment",

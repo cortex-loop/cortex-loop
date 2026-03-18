@@ -200,3 +200,8 @@ def test_packet_build_cannot_start_from_blocked_current_pair_harness_result() ->
             event_trace=trace,
             current_pair=current_pair,
         )
+
+
+def test_packet_build_cannot_start_from_empty_blocker_reason_fragment() -> None:
+    with pytest.raises(ValueError, match="reason_code must be non-empty after trimming"):
+        BlockerFragment(reason_code="")

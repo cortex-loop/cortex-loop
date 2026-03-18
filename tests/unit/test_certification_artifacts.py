@@ -137,6 +137,18 @@ def test_blocker_fragment_preserves_reason_and_contradictions() -> None:
     assert blocker.contradiction_refs == (contradiction,)
 
 
+def test_blocker_fragment_rejects_empty_or_whitespace_only_reason_code() -> None:
+    blocker = BlockerFragment(reason_code="approval-required")
+
+    assert blocker.reason_code == "approval-required"
+
+    with pytest.raises(ValueError, match="reason_code must be non-empty after trimming"):
+        BlockerFragment(reason_code="")
+
+    with pytest.raises(ValueError, match="reason_code must be non-empty after trimming"):
+        BlockerFragment(reason_code="   ")
+
+
 def test_current_pair_fragment_carries_event_trace_and_verdict_summary() -> None:
     contradiction = ContradictionRecord(
         source_tag="artifact",
