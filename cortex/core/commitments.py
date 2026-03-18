@@ -49,6 +49,12 @@ class BoundaryAssessment:
     contradiction_refs: tuple[ContradictionRecord, ...] = field(default_factory=tuple)
     metadata: tuple[MetadataField, ...] = field(default_factory=tuple)
 
+    def __post_init__(self) -> None:
+        if self.blocked and not (isinstance(self.reason_code, str) and self.reason_code.strip()):
+            raise ValueError(
+                "BoundaryAssessment blocked=True requires a non-empty reason_code.",
+            )
+
 
 @dataclass(frozen=True, slots=True)
 class CertificationContext:

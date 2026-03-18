@@ -268,6 +268,21 @@ def test_boundary_assessment_keeps_blockedness_separate_from_commitment_status()
     assert CommitmentStatus.UNCERTIFIED.value == "uncertified"
 
 
+def test_blocked_boundary_assessment_requires_non_empty_reason_code() -> None:
+    blocked = BoundaryAssessment(
+        blocked=True,
+        reason_code="approval-required",
+    )
+
+    assert blocked.reason_code == "approval-required"
+
+    with pytest.raises(ValueError, match="blocked=True requires a non-empty reason_code"):
+        BoundaryAssessment(blocked=True, reason_code=None)
+
+    with pytest.raises(ValueError, match="blocked=True requires a non-empty reason_code"):
+        BoundaryAssessment(blocked=True, reason_code="   ")
+
+
 def test_degradation_and_error_records_preserve_reason_and_capabilities() -> None:
     contradiction = ContradictionRecord(
         source_tag="external/record",

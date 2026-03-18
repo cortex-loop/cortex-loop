@@ -1,5 +1,7 @@
 """Unit tests for conservative certification execution and minimal artifacts."""
 
+import pytest
+
 from cortex.core.certification import certify_commitment
 from cortex.core.commitments import (
     BoundaryAssessment,
@@ -62,6 +64,25 @@ def test_certify_commitment_returns_blocked_when_boundary_is_blocked() -> None:
     )
 
     assert verdict.status is CommitmentStatus.BLOCKED
+
+
+def test_certify_commitment_cannot_start_from_blocked_boundary_without_reason() -> None:
+    with pytest.raises(ValueError, match="blocked=True requires a non-empty reason_code"):
+        certify_commitment(
+            _make_context(),
+            provenance_manifest=ProvenanceManifest(
+                evidence_refs=(
+                    ProvenanceEvidenceRef(
+                        source_family="external_artifact",
+                        reference_id="artifact-blocked-no-reason",
+                    ),
+                ),
+            ),
+            boundary_assessment=BoundaryAssessment(
+                blocked=True,
+                reason_code="   ",
+            ),
+        )
 
 
 def test_certify_commitment_preserves_contradictions_and_degradations() -> None:
