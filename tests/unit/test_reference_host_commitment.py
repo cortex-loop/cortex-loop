@@ -36,6 +36,33 @@ def test_full_commitment_reference_host_event_with_concrete_provenance_yields_ce
     assert result.verdict.status is CommitmentStatus.CERTIFIED
 
 
+def test_malformed_native_commitment_carrier_surfaces_warning_while_preserving_full_commitment_path() -> None:
+    result = evaluate_reference_host_commitment(
+        "ApprovalResult",
+        {
+            "commitment_fields_source": "native",
+            "commitment_fields": "not-a-mapping",
+            "externally_consequential": True,
+        },
+        environment_handle=_make_environment_handle(),
+        provenance_manifest=ProvenanceManifest(
+            evidence_refs=(
+                ProvenanceEvidenceRef(
+                    source_family="result_artifact",
+                    reference_id="artifact-native-warning-1",
+                ),
+            ),
+        ),
+    )
+
+    assert result.dispatch_decision.lane is DispatchLane.FULL_COMMITMENT
+    assert result.candidate is not None
+    assert result.candidate.candidate_id.startswith("local-candidate-")
+    assert result.verdict is not None
+    assert result.verdict.status is CommitmentStatus.CERTIFIED
+    assert "Ignoring invalid native commitment carrier; expected an object." in result.warnings
+
+
 def test_blocked_boundary_yields_blocked_even_when_provenance_exists() -> None:
     result = evaluate_reference_host_commitment(
         "ApprovalResult",
