@@ -404,6 +404,28 @@ Every seam in this campaign should declare the smallest honest verification set 
 
 No seam should run more than necessary, but any seam that touches shared verification plumbing must re-earn the canonical bundle.
 
+### 9.1 Parent acceptance discipline
+
+The parent thread must independently re-audit every worker seam before accepting it.
+
+Minimum parent acceptance law:
+- classify the seam risk before acceptance
+- read the full touched files, not only the diff hunk, when the seam changes verification logic, evidence interpretation, or repo-local verification entry points
+- rerun the worker's claimed verification independently
+- stress the seam at its most likely failure mode before calling it `landed`
+
+Risk-shape guidance:
+- deterministic code/doc seam:
+  one honest rerun may be enough if the seam has no timing or environment sensitivity
+- parser/doc-sync seam:
+  parent should read the source doc plus the parser/checker code and try at least one adversarial rerun
+- timing or environment-sensitive seam:
+  one clean rerun is not enough; acceptance requires repeat-stability proof through repeated direct reruns and repeated repo-local entry-point reruns
+- shared verification-plumbing seam:
+  re-earn the campaign canonical bundle after the seam-specific checks
+
+No next worker prompt should be issued until the current seam has been either rejected or accepted and committed.
+
 ---
 
 ## 10. Running example requirements

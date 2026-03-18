@@ -118,6 +118,19 @@ If a v1 mechanism is being carried over, re-earn it under the v2 packet instead 
 - A phase may not be marked `landed` if a relevant gate row remains `open`, `partial`, or `drifted` unless the handoff explicitly keeps the phase `partial` or `blocked`.
 - Correspondence truth and phase-gate truth are distinct. Passing one does not silently satisfy the other.
 
+## Parent acceptance discipline
+
+- The parent thread must independently verify worker claims before accepting or committing a seam.
+- Acceptance is adversarial, not ceremonial: the parent should try to break the seam at its most likely failure mode before marking it `landed`.
+- Before acceptance, classify seam risk at minimum as one of:
+  - deterministic code/doc seam,
+  - parser/doc-sync seam,
+  - timing or environment-sensitive seam,
+  - shared verification-plumbing seam.
+- One clean rerun is insufficient for timing-, environment-, or evidence-revalidation seams. Those seams require repeat-stability proof through repeated direct reruns and repeated repo-local entry-point reruns before acceptance.
+- When a seam changes verification logic, evidence interpretation, or repo-local verification entry points, the parent must read the full touched files, not only the diff hunk.
+- Do not issue the next worker prompt until the current seam has been either rejected or accepted and committed, and the worktree is clean except for explicitly acknowledged unrelated noise.
+
 ## Subagent workflow
 
 - The parent thread owns seam selection, status truth, blocker truth, and final diff acceptance.
