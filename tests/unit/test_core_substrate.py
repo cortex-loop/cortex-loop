@@ -188,6 +188,18 @@ def test_support_state_and_snapshot_are_distinct_types() -> None:
     assert snapshot.exec_memory_pub.published_memory_refs[0].reference_id == "memo-1"
 
 
+def test_support_counter_rejects_impossible_counts_and_accepts_zero() -> None:
+    counter = SupportCounter("wake-receipts", 0)
+
+    assert counter.count == 0
+
+    with pytest.raises(TypeError, match="non-negative integer, got bool"):
+        SupportCounter("wake-receipts", True)
+
+    with pytest.raises(ValueError, match="non-negative"):
+        SupportCounter("wake-receipts", -1)
+
+
 def test_commitment_status_is_the_exact_three_state_lattice() -> None:
     assert {status.value for status in CommitmentStatus} == {
         "certified",

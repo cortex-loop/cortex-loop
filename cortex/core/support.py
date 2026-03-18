@@ -20,6 +20,17 @@ class SupportCounter:
     counter_tag: str
     count: int
 
+    def __post_init__(self) -> None:
+        if isinstance(self.count, bool):
+            raise TypeError("SupportCounter.count must be a non-negative integer, got bool.")
+        if not isinstance(self.count, int):
+            actual_type = type(self.count).__name__
+            raise TypeError(
+                f"SupportCounter.count must be a non-negative integer, got {actual_type}.",
+            )
+        if self.count < 0:
+            raise ValueError("SupportCounter.count must be non-negative.")
+
 
 @dataclass(frozen=True, slots=True)
 class SupportReference:
