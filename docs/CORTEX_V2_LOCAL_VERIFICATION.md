@@ -60,13 +60,27 @@ make verify
 ## Coverage prerequisite
 
 This repo now has repo-local coverage configuration in `.coveragerc`.
-This seam lands configuration and prerequisite guidance only.
+This seam adds one local coverage invocation and one matching repo-local entry point.
 
 Coverage is still not part of the canonical local verification bundle.
 Coverage tooling is not installed by default in the current repo environment, so future coverage runs require a local tool that provides `python3 -m coverage`.
 
+Direct command:
+
+```sh
+python3 -m coverage run --rcfile=.coveragerc -m pytest
+python3 -m coverage report --rcfile=.coveragerc
+```
+
+Repo-local entry point:
+
+```sh
+make coverage
+```
+
+If the tool is unavailable, `make coverage` fails with a short actionable message instead of silently succeeding.
+
 Still intentionally not included in this seam:
 
-- no canonical coverage command
-- no `Makefile` coverage target
 - no coverage baseline artifact
+- no coverage threshold or pass/fail gate

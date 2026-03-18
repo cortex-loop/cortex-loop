@@ -1,7 +1,9 @@
 PYTHON ?= python3
 PYTEST ?= $(PYTHON) -m pytest
+COVERAGE ?= $(PYTHON) -m coverage
+COVERAGE_RC ?= .coveragerc
 
-.PHONY: test-unit test-integration test-smoke verify
+.PHONY: test-unit test-integration test-smoke verify coverage
 
 test-unit:
 	$(PYTEST) tests/unit
@@ -17,3 +19,11 @@ verify:
 	$(PYTEST) tests/unit
 	$(PYTEST) tests/integration
 	$(PYTEST) tests/unit/test_import_smoke.py
+
+coverage:
+	$(COVERAGE) --version >/dev/null 2>&1 || { \
+		echo "coverage tool unavailable: install a package that provides 'python3 -m coverage'"; \
+		exit 1; \
+	}
+	$(COVERAGE) run --rcfile=$(COVERAGE_RC) -m pytest
+	$(COVERAGE) report --rcfile=$(COVERAGE_RC)
