@@ -6,7 +6,7 @@ Status: active local verification entry points for the landed v2 boundary
 ## Purpose
 
 This document records the repo-local verification commands for the landed Cortex v2 MVP.
-It does not add coverage, CI, evidence regeneration, or correspondence audit tooling.
+It does not add CI or evidence regeneration.
 
 ## Canonical bundle
 
@@ -40,6 +40,23 @@ Repo-local entry point:
 
 ```sh
 make test-smoke
+```
+
+## Reference-lane packet-example revalidation
+
+This revalidates the committed reference-lane packet example doc against the already-landed live packet path.
+It does not regenerate candidate evidence and it does not overwrite the committed example doc.
+
+Direct command:
+
+```sh
+python3 -m pytest tests/integration/test_reference_lane_packet_example.py
+```
+
+Repo-local entry point:
+
+```sh
+make revalidate-reference-packet
 ```
 
 ## Individual entry points
@@ -105,7 +122,7 @@ make test-correspondence-periphery
 ## Notes
 
 - `pytest.ini` is intentionally minimal and only anchors discovery to `tests`.
-- This seam does not add evidence revalidation or correspondence audit tooling.
+- Packet-example evidence revalidation is limited to the committed reference-lane doc and remains separate from regeneration.
 - `python3 -m pytest` also passes in the current repo, but the canonical local bundle remains the split closeout bundle above.
 
 ## Coverage prerequisite

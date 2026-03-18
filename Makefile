@@ -3,7 +3,7 @@ PYTEST ?= $(PYTHON) -m pytest
 COVERAGE ?= $(PYTHON) -m coverage
 COVERAGE_RC ?= .coveragerc
 
-.PHONY: test-unit test-integration test-smoke verify coverage test-correspondence-core test-correspondence-sre test-correspondence-periphery
+.PHONY: test-unit test-integration test-smoke verify revalidate-reference-packet coverage test-correspondence-core test-correspondence-sre test-correspondence-periphery
 
 test-unit:
 	$(PYTEST) tests/unit
@@ -19,6 +19,9 @@ verify:
 	$(PYTEST) tests/unit
 	$(PYTEST) tests/integration
 	$(PYTEST) tests/unit/test_import_smoke.py
+
+revalidate-reference-packet:
+	$(PYTEST) tests/integration/test_reference_lane_packet_example.py
 
 coverage:
 	$(COVERAGE) --version >/dev/null 2>&1 || { \
