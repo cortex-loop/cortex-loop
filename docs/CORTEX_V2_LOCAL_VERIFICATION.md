@@ -68,6 +68,23 @@ Repo-local entry point:
 make test-correspondence-core
 ```
 
+## SRE correspondence drift check
+
+This is the SRE-scoped follow-on to the Core drift check.
+It still does not cover drivers, eval, AUX, or full correspondence parsing.
+
+Direct command:
+
+```sh
+python3 -m pytest tests/unit/test_correspondence_sre.py
+```
+
+Repo-local entry point:
+
+```sh
+make test-correspondence-sre
+```
+
 ## Notes
 
 - `pytest.ini` is intentionally minimal and only anchors discovery to `tests`.

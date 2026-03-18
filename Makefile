@@ -3,7 +3,7 @@ PYTEST ?= $(PYTHON) -m pytest
 COVERAGE ?= $(PYTHON) -m coverage
 COVERAGE_RC ?= .coveragerc
 
-.PHONY: test-unit test-integration test-smoke verify coverage test-correspondence-core
+.PHONY: test-unit test-integration test-smoke verify coverage test-correspondence-core test-correspondence-sre
 
 test-unit:
 	$(PYTEST) tests/unit
@@ -30,3 +30,6 @@ coverage:
 
 test-correspondence-core:
 	$(PYTEST) tests/unit/test_correspondence_core.py
+
+test-correspondence-sre:
+	$(PYTEST) tests/unit/test_correspondence_sre.py
