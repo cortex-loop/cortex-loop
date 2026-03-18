@@ -23,8 +23,10 @@ from cortex.sre.families import SoftControlFamily
 from cortex.sre.policy import neutral_dominance_decision
 from tests.integration._reference_lane import (
     assert_reference_commitment_result_preserves_degradation_pair,
+    assert_reference_verdict_status,
     candidate_bearing_event,
     cheap_path_event,
+    evaluate_reference_full_commitment_case,
     full_commitment_event,
     host_surface_degradation_pair,
     provenance_manifest_for,
@@ -56,17 +58,13 @@ def test_candidate_bearing_integration_binds_candidate_and_returns_no_verdict() 
 
 
 def test_full_commitment_integration_reaches_certified_with_lawful_evidence() -> None:
-    event_name, payload = full_commitment_event(commitment_id="commit-1")
-    result = evaluate_reference_host_commitment(
-        event_name,
-        payload,
-        environment_handle=reference_environment_handle(),
-        provenance_manifest=provenance_manifest_for("artifact-1"),
+    result = evaluate_reference_full_commitment_case(
+        commitment_id="commit-1",
+        provenance_reference_id="artifact-1",
     )
 
     assert result.dispatch_decision.lane is DispatchLane.FULL_COMMITMENT
-    assert result.verdict is not None
-    assert result.verdict.status is CommitmentStatus.CERTIFIED
+    assert_reference_verdict_status(result, CommitmentStatus.CERTIFIED)
 
 
 def test_degradation_roundtrip_preserves_degradation_and_contradictions() -> None:
@@ -75,10 +73,9 @@ def test_degradation_roundtrip_preserves_degradation_and_contradictions() -> Non
         evidence_tags=frozenset({"receipt-missing"}),
     )
 
-    result = evaluate_reference_host_commitment(
-        *full_commitment_event(commitment_id="commit-2"),
-        environment_handle=reference_environment_handle(),
-        provenance_manifest=provenance_manifest_for("artifact-2"),
+    result = evaluate_reference_full_commitment_case(
+        commitment_id="commit-2",
+        provenance_reference_id="artifact-2",
         degradation_refs=(degradation,),
     )
 

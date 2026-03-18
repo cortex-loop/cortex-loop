@@ -9,10 +9,7 @@ from cortex.aux.cost import AuxBurdenReport
 from cortex.core.commitments import (
     BoundaryAssessment,
     CommitmentStatus,
-    ProvenanceEvidenceRef,
-    ProvenanceManifest,
 )
-from cortex.core.environment import CommitmentEnvironmentHandle, EXECUTION_TRACE
 from cortex.core.support import (
     SupportCounter,
     SupportExecMemoryState,
@@ -27,46 +24,28 @@ from cortex.drivers.reference_host_commitment import (
     ReferenceHostCommitmentResult,
     evaluate_reference_host_commitment,
 )
+from tests.integration._reference_lane import (
+    assert_reference_verdict_status,
+    assert_same_verdict,
+    candidate_bearing_event,
+    evaluate_reference_full_commitment_case,
+    reference_environment_handle,
+)
 
 
 def test_certified_outcome_is_unchanged_by_aux_augmentation_and_burden_presence() -> None:
-    baseline = evaluate_reference_host_commitment(
-        "ApprovalResult",
-        {
-            "commitment_id": "commit-aux-certified",
-            "externally_consequential": True,
-        },
-        environment_handle=_make_environment_handle(),
-        provenance_manifest=ProvenanceManifest(
-            evidence_refs=(
-                ProvenanceEvidenceRef(
-                    source_family="result_artifact",
-                    reference_id="artifact-certified",
-                ),
-            ),
-        ),
+    baseline = evaluate_reference_full_commitment_case(
+        commitment_id="commit-aux-certified",
+        provenance_reference_id="artifact-certified",
     )
     augmented_snapshot, burden = _build_aux_scaffolds(baseline)
-    with_aux_present = evaluate_reference_host_commitment(
-        "ApprovalResult",
-        {
-            "commitment_id": "commit-aux-certified",
-            "externally_consequential": True,
-        },
-        environment_handle=_make_environment_handle(),
-        provenance_manifest=ProvenanceManifest(
-            evidence_refs=(
-                ProvenanceEvidenceRef(
-                    source_family="result_artifact",
-                    reference_id="artifact-certified",
-                ),
-            ),
-        ),
+    with_aux_present = evaluate_reference_full_commitment_case(
+        commitment_id="commit-aux-certified",
+        provenance_reference_id="artifact-certified",
     )
 
-    assert baseline.verdict is not None
-    assert baseline.verdict.status is CommitmentStatus.CERTIFIED
-    assert with_aux_present.verdict == baseline.verdict
+    assert_reference_verdict_status(baseline, CommitmentStatus.CERTIFIED)
+    assert_same_verdict(baseline, with_aux_present)
     assert isinstance(augmented_snapshot, AugmentedSupportSnapshot)
     assert burden.environment_query_cost == 1.0
 
@@ -77,81 +56,48 @@ def test_blocked_outcome_is_unchanged_by_aux_augmentation_and_burden_presence() 
         reason_code="approval-required",
         boundary_tags=frozenset({"external-boundary"}),
     )
-    baseline = evaluate_reference_host_commitment(
-        "ApprovalResult",
-        {
-            "commitment_id": "commit-aux-blocked",
-            "externally_consequential": True,
-        },
-        environment_handle=_make_environment_handle(),
-        provenance_manifest=ProvenanceManifest(
-            evidence_refs=(
-                ProvenanceEvidenceRef(
-                    source_family="result_artifact",
-                    reference_id="artifact-blocked",
-                ),
-            ),
-        ),
+    baseline = evaluate_reference_full_commitment_case(
+        commitment_id="commit-aux-blocked",
+        provenance_reference_id="artifact-blocked",
         boundary_assessment=blocked_boundary,
     )
     augmented_snapshot, burden = _build_aux_scaffolds(baseline)
-    with_aux_present = evaluate_reference_host_commitment(
-        "ApprovalResult",
-        {
-            "commitment_id": "commit-aux-blocked",
-            "externally_consequential": True,
-        },
-        environment_handle=_make_environment_handle(),
-        provenance_manifest=ProvenanceManifest(
-            evidence_refs=(
-                ProvenanceEvidenceRef(
-                    source_family="result_artifact",
-                    reference_id="artifact-blocked",
-                ),
-            ),
-        ),
+    with_aux_present = evaluate_reference_full_commitment_case(
+        commitment_id="commit-aux-blocked",
+        provenance_reference_id="artifact-blocked",
         boundary_assessment=blocked_boundary,
     )
 
-    assert baseline.verdict is not None
-    assert baseline.verdict.status is CommitmentStatus.BLOCKED
-    assert with_aux_present.verdict == baseline.verdict
+    assert_reference_verdict_status(baseline, CommitmentStatus.BLOCKED)
+    assert_same_verdict(baseline, with_aux_present)
     assert augmented_snapshot.auxiliary_support.notes == ("aux scaffold present",)
     assert burden.compute_overhead == 1.0
 
 
 def test_uncertified_outcome_is_unchanged_by_aux_augmentation_and_burden_presence() -> None:
-    baseline = evaluate_reference_host_commitment(
-        "ApprovalResult",
-        {
-            "commitment_id": "commit-aux-uncertified",
-            "externally_consequential": True,
-        },
-        environment_handle=_make_environment_handle(),
+    baseline = evaluate_reference_full_commitment_case(
+        commitment_id="commit-aux-uncertified",
     )
     augmented_snapshot, burden = _build_aux_scaffolds(baseline)
-    with_aux_present = evaluate_reference_host_commitment(
-        "ApprovalResult",
-        {
-            "commitment_id": "commit-aux-uncertified",
-            "externally_consequential": True,
-        },
-        environment_handle=_make_environment_handle(),
+    with_aux_present = evaluate_reference_full_commitment_case(
+        commitment_id="commit-aux-uncertified",
     )
 
-    assert baseline.verdict is not None
-    assert baseline.verdict.status is CommitmentStatus.UNCERTIFIED
-    assert with_aux_present.verdict == baseline.verdict
+    assert_reference_verdict_status(baseline, CommitmentStatus.UNCERTIFIED)
+    assert_same_verdict(baseline, with_aux_present)
     assert augmented_snapshot.core_snapshot.trace.candidate_refs == ("commit-aux-uncertified",)
     assert burden.intervention_burden == 0.5
 
 
 def test_aux_objects_remain_support_side_and_do_not_enter_commitment_apis() -> None:
     parameters = inspect.signature(evaluate_reference_host_commitment).parameters
+    event_name, payload = candidate_bearing_event(
+        candidate_id="candidate-aux-support",
+    )
     result = evaluate_reference_host_commitment(
-        "ApprovalRequest",
-        {"candidate_id": "candidate-aux-support"},
-        environment_handle=_make_environment_handle(),
+        event_name,
+        payload,
+        environment_handle=reference_environment_handle(),
     )
     augmented_snapshot, burden = _build_aux_scaffolds(result)
 
@@ -216,10 +162,3 @@ def _build_aux_scaffolds(
         intervention_burden=0.5,
     )
     return augment_snapshot(snapshot, appendix), burden
-
-
-def _make_environment_handle() -> CommitmentEnvironmentHandle:
-    return CommitmentEnvironmentHandle(
-        available_query_kinds=frozenset({EXECUTION_TRACE}),
-        capability_tags=frozenset({"trace/read"}),
-    )
