@@ -5,6 +5,7 @@ from pathlib import Path
 from cortex.core.provenance import (
     command_claim_matches,
     evaluate_evidence_reference,
+    normalize_command_claim,
     normalize_repo_relative_file_claims,
 )
 
@@ -51,6 +52,25 @@ def test_command_reference_matches_normalized_wrapper_variants(tmp_path: Path) -
 
     assert evaluation.reference_kind == "command"
     assert evaluation.check_status == "verified"
+
+
+def test_normalize_command_claim_cleans_backtick_wrapped_pass_note() -> None:
+    assert (
+        normalize_command_claim("`python3 -m pytest tests/unit` passed")
+        == "python3 -m pytest tests/unit"
+    )
+
+
+def test_backtick_wrapped_pass_note_verifies_against_observed_command(tmp_path: Path) -> None:
+    evaluation = evaluate_evidence_reference(
+        "`python3 -m pytest tests/unit` passed",
+        root=tmp_path,
+        observed_commands=("python3 -m pytest tests/unit -q",),
+    )
+
+    assert evaluation.reference_kind == "command"
+    assert evaluation.check_status == "verified"
+    assert evaluation.normalized_reference == "python3 -m pytest tests/unit"
 
 
 def test_note_text_is_classified_as_uncheckable_note_text(tmp_path: Path) -> None:

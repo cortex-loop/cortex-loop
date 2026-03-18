@@ -270,7 +270,16 @@ def evaluate_evidence_reference(
 
 
 def normalize_command_claim(text: str) -> str:
-    value = str(text).strip().strip("`").lower()
+    raw_value = str(text).strip()
+    wrapped_command_match = re.fullmatch(
+        r"`(?P<command>[^`]+)`(?:\s*[:\-]?\s*(?:ok|pass|passed|success|succeeded))?[.,;:!?]*",
+        raw_value,
+        flags=re.IGNORECASE,
+    )
+    if wrapped_command_match is not None:
+        raw_value = wrapped_command_match.group("command")
+
+    value = raw_value.strip().strip("`").lower()
     value = re.sub(r"[.,;:!?]+$", "", value).strip()
     value = re.sub(r"\s+", " ", value)
     value = re.sub(r"[:\-]\s*(ok|pass|passed|success|succeeded)$", "", value).strip()
