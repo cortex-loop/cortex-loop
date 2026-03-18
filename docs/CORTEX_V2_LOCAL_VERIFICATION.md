@@ -122,8 +122,8 @@ make test-correspondence-sre
 
 ## Periphery correspondence drift check
 
-This completes the currently landed correspondence drift surface across Core, SRE, drivers, eval, and AUX.
-It still does not perform full prose-ledger parsing.
+This completes the currently landed E3-scoped correspondence drift checks across SRE, drivers, eval, and AUX after the earlier Core check.
+It does not yet cover every landed correspondence row in the ledger, and it still does not perform full prose-ledger parsing.
 
 Direct command:
 
