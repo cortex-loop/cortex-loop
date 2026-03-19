@@ -38,6 +38,12 @@ class ProvenanceEvidenceRef:
     source_tags: frozenset[str] = field(default_factory=frozenset)
     metadata: tuple[MetadataField, ...] = field(default_factory=tuple)
 
+    def __post_init__(self) -> None:
+        if not (isinstance(self.source_family, str) and self.source_family.strip()):
+            raise ValueError(
+                "ProvenanceEvidenceRef.source_family must be non-empty after trimming.",
+            )
+
 
 @dataclass(frozen=True, slots=True)
 class ProvenanceManifest:

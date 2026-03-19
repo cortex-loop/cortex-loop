@@ -261,6 +261,18 @@ def test_provenance_manifest_supports_multiple_domain_agnostic_source_families()
     ]
     assert manifest.metadata[0].value == "downward-first"
 
+    with pytest.raises(ValueError, match="source_family must be non-empty after trimming"):
+        ProvenanceEvidenceRef(
+            source_family="",
+            reference_id="artifact-blank-family",
+        )
+
+    with pytest.raises(ValueError, match="source_family must be non-empty after trimming"):
+        ProvenanceEvidenceRef(
+            source_family="   ",
+            reference_id="artifact-blank-family",
+        )
+
 
 def test_boundary_assessment_keeps_blockedness_separate_from_commitment_status() -> None:
     blocked = BoundaryAssessment(
