@@ -113,6 +113,8 @@ def parse_commitment_fields_json(text: str) -> tuple[dict[str, Any] | None, bool
             return None, True, str(exc)
         if not isinstance(parsed, dict):
             return None, True, "expected a JSON object"
+        if text[match.end() :].strip():
+            return None, True, "trailing content after fenced commitment fields block"
         return parsed, True, None
 
     marker_index = text.rfind(COMMITMENT_FIELDS_JSON_MARKER)
@@ -120,14 +122,15 @@ def parse_commitment_fields_json(text: str) -> tuple[dict[str, Any] | None, bool
         return None, False, None
 
     decoder = json.JSONDecoder()
+    marker_payload = text[marker_index + len(COMMITMENT_FIELDS_JSON_MARKER) :].lstrip()
     try:
-        parsed, _ = decoder.raw_decode(
-            text[marker_index + len(COMMITMENT_FIELDS_JSON_MARKER) :].lstrip()
-        )
+        parsed, parsed_end = decoder.raw_decode(marker_payload)
     except json.JSONDecodeError as exc:
         return None, True, str(exc)
     if not isinstance(parsed, dict):
         return None, True, "expected a JSON object"
+    if marker_payload[parsed_end:].strip():
+        return None, True, "trailing content after commitment fields JSON object"
     return parsed, True, None
 
 

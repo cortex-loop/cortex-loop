@@ -6,6 +6,7 @@ from cortex.core.commitment_payload import (
     CommitmentPayloadExtraction,
     extract_commitment_payload,
     normalize_commitment_mapping_keys,
+    parse_commitment_fields_json,
 )
 
 
@@ -239,3 +240,55 @@ def test_extract_commitment_payload_rejects_nested_blank_keys() -> None:
         match="requires non-empty canonical keys after trimming",
     ):
         extract_commitment_payload({"stop_fields": {"outer": {"   ": 1}}})
+
+
+def test_parse_commitment_fields_json_rejects_trailing_junk_after_marker() -> None:
+    parsed, marker_found, error = parse_commitment_fields_json(
+        'COMMITMENT_FIELDS_JSON: {"a": 1} trailing'
+    )
+
+    assert parsed is None
+    assert marker_found is True
+    assert error == "trailing content after commitment fields JSON object"
+
+
+def test_parse_commitment_fields_json_rejects_trailing_junk_after_fenced_block() -> None:
+    parsed, marker_found, error = parse_commitment_fields_json(
+        '```commitment-fields {"a": 1}``` trailing'
+    )
+
+    assert parsed is None
+    assert marker_found is True
+    assert error == "trailing content after fenced commitment fields block"
+
+
+def test_extract_commitment_payload_rejects_mixed_content_fallback_and_keeps_clean_fallbacks() -> None:
+    mixed = extract_commitment_payload(
+        {"message": 'COMMITMENT_FIELDS_JSON: {"a": 1} trailing'}
+    )
+    mixed_fenced = extract_commitment_payload(
+        {"message": '```commitment-fields {"a": 1}``` trailing'}
+    )
+    clean_marker = extract_commitment_payload(
+        {"message": 'COMMITMENT_FIELDS_JSON: {"a": 1}'}
+    )
+    clean_fenced = extract_commitment_payload(
+        {"message": '```commitment-fields {"a": 1}```'}
+    )
+
+    assert mixed.commitment_fields is None
+    assert mixed.source is None
+    assert mixed.warnings == (
+        "Ignoring invalid COMMITMENT_FIELDS_JSON fallback in message: trailing content after commitment fields JSON object",
+    )
+    assert mixed_fenced.commitment_fields is None
+    assert mixed_fenced.source is None
+    assert mixed_fenced.warnings == (
+        "Ignoring invalid COMMITMENT_FIELDS_JSON fallback in message: trailing content after fenced commitment fields block",
+    )
+    assert clean_marker.commitment_fields == {"a": 1}
+    assert clean_marker.source == "message.commitment_fields_json"
+    assert clean_marker.warnings == ()
+    assert clean_fenced.commitment_fields == {"a": 1}
+    assert clean_fenced.source == "message.commitment_fields_json"
+    assert clean_fenced.warnings == ()
