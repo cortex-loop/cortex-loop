@@ -65,6 +65,10 @@ class EvidenceReferenceEvaluation:
             raise ValueError(
                 "EvidenceReferenceEvaluation.reference_kind must be non-empty after trimming.",
             )
+        if not self.check_status.strip():
+            raise ValueError(
+                "EvidenceReferenceEvaluation.check_status must be non-empty after trimming.",
+            )
 
 
 def extract_requirement_ids(payload: Mapping[str, Any]) -> tuple[str, ...]:

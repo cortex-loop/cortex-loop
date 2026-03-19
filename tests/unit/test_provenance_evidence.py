@@ -66,6 +66,28 @@ def test_evidence_reference_evaluation_requires_non_empty_reference_kind() -> No
         )
 
 
+def test_evidence_reference_evaluation_requires_non_empty_check_status() -> None:
+    direct = EvidenceReferenceEvaluation(
+        reference_kind="path",
+        check_status="verified",
+        reason="path exists",
+    )
+    emitted = evaluate_evidence_reference("src/module.py#L10", root=Path("/repo"))
+
+    assert direct.check_status == "verified"
+    assert emitted.check_status == "unverified"
+
+    with pytest.raises(
+        ValueError,
+        match="check_status must be non-empty after trimming",
+    ):
+        EvidenceReferenceEvaluation(
+            reference_kind="path",
+            check_status="   ",
+            reason="ok",
+        )
+
+
 def test_command_reference_matches_normalized_wrapper_variants(tmp_path: Path) -> None:
     assert command_claim_matches("pytest tests/unit/test_x.py", "python3 -m pytest tests/unit/test_x.py")
 
