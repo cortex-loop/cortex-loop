@@ -1307,6 +1307,16 @@ def test_provenance_manifest_supports_multiple_domain_agnostic_source_families()
             source_tags=frozenset({"   "}),
         )
 
+    with pytest.raises(
+        TypeError,
+        match="metadata must contain only MetadataField instances",
+    ):
+        ProvenanceEvidenceRef(
+            source_family="result_artifact",
+            reference_id="result-1",
+            metadata=("not-a-field",),
+        )
+
 
 def test_boundary_assessment_keeps_blockedness_separate_from_commitment_status() -> None:
     blocked = BoundaryAssessment(

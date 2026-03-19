@@ -68,6 +68,10 @@ class ProvenanceEvidenceRef:
             raise ValueError(
                 "ProvenanceEvidenceRef.source_tags must contain only non-empty values after trimming.",
             )
+        if any(not isinstance(field, MetadataField) for field in self.metadata):
+            raise TypeError(
+                "ProvenanceEvidenceRef.metadata must contain only MetadataField instances.",
+            )
 
 
 @dataclass(frozen=True, slots=True)
