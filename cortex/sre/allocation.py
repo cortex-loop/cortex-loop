@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from numbers import Real
 
 from .families import SoftControlFamily
 
@@ -19,6 +20,12 @@ class AllocationScore:
             actual_type = type(self.family).__name__
             raise TypeError(
                 "AllocationScore.family must be SoftControlFamily, "
+                f"got {actual_type}."
+            )
+        if not isinstance(self.score, Real):
+            actual_type = type(self.score).__name__
+            raise TypeError(
+                "AllocationScore.score must be numeric, "
                 f"got {actual_type}."
             )
 

@@ -269,6 +269,18 @@ def test_allocation_score_requires_typed_family() -> None:
         AllocationScore("neutral", 1.0)
 
 
+def test_allocation_score_requires_numeric_score() -> None:
+    score = AllocationScore(SoftControlFamily.NEUTRAL, 1.0)
+
+    assert score.score == 1.0
+
+    with pytest.raises(
+        TypeError,
+        match="AllocationScore.score must be numeric",
+    ):
+        AllocationScore(SoftControlFamily.NEUTRAL, "1.0")
+
+
 def test_neutral_dominance_returns_neutral_when_margin_is_below_threshold() -> None:
     decision = neutral_dominance_decision(
         AllocationScorecard(
