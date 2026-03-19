@@ -23,6 +23,10 @@ class RepositorySnapshot:
             raise ValueError(
                 "RepositorySnapshot.changed_files must contain only non-empty repo-relative paths after trimming.",
             )
+        if self.error_reason is not None and not self.error_reason.strip():
+            raise ValueError(
+                "RepositorySnapshot.error_reason must be non-empty after trimming when provided.",
+            )
 
 
 @dataclass(frozen=True, slots=True)

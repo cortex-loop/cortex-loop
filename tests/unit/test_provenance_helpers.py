@@ -76,6 +76,39 @@ def test_repository_snapshot_requires_non_empty_changed_files() -> None:
         )
 
 
+def test_repository_snapshot_requires_non_empty_error_reason_when_provided() -> None:
+    direct = RepositorySnapshot(
+        available=False,
+        changed_files=(),
+        error_reason="git repository marker not found",
+        repository_root=None,
+    )
+
+    assert direct.error_reason == "git repository marker not found"
+
+    with pytest.raises(
+        ValueError,
+        match="error_reason must be non-empty after trimming when provided",
+    ):
+        RepositorySnapshot(
+            available=False,
+            changed_files=(),
+            error_reason="",
+            repository_root=None,
+        )
+
+    with pytest.raises(
+        ValueError,
+        match="error_reason must be non-empty after trimming when provided",
+    ):
+        RepositorySnapshot(
+            available=False,
+            changed_files=(),
+            error_reason="   ",
+            repository_root=None,
+        )
+
+
 def test_changed_files_since_baseline_returns_delta_when_snapshots_are_available() -> None:
     baseline = RepositorySnapshot(
         available=True,
