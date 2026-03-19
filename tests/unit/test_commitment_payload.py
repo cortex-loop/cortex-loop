@@ -2,7 +2,11 @@
 
 import pytest
 
-from cortex.core.commitment_payload import CommitmentPayloadExtraction, extract_commitment_payload
+from cortex.core.commitment_payload import (
+    CommitmentPayloadExtraction,
+    extract_commitment_payload,
+    normalize_commitment_mapping_keys,
+)
 
 
 def test_native_commitment_carrier_wins_when_present() -> None:
@@ -197,3 +201,41 @@ def test_commitment_payload_extraction_normalization_count_requires_non_negative
             warnings=(),
             normalization_count=-1,
         )
+
+
+def test_normalize_commitment_mapping_keys_rejects_blank_canonical_keys() -> None:
+    with pytest.raises(
+        ValueError,
+        match="requires non-empty canonical keys after trimming",
+    ):
+        normalize_commitment_mapping_keys({"": 1})
+
+    with pytest.raises(
+        ValueError,
+        match="requires non-empty canonical keys after trimming",
+    ):
+        normalize_commitment_mapping_keys({"   ": 1})
+
+
+def test_extract_commitment_payload_rejects_blank_stop_fields_keys() -> None:
+    with pytest.raises(
+        ValueError,
+        match="requires non-empty canonical keys after trimming",
+    ):
+        extract_commitment_payload({"stop_fields": {"   ": 1}})
+
+
+def test_extract_commitment_payload_rejects_blank_native_commitment_keys() -> None:
+    with pytest.raises(
+        ValueError,
+        match="requires non-empty canonical keys after trimming",
+    ):
+        extract_commitment_payload({}, native_commitment_fields={"   ": 1})
+
+
+def test_extract_commitment_payload_rejects_nested_blank_keys() -> None:
+    with pytest.raises(
+        ValueError,
+        match="requires non-empty canonical keys after trimming",
+    ):
+        extract_commitment_payload({"stop_fields": {"outer": {"   ": 1}}})

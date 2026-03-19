@@ -137,6 +137,10 @@ def normalize_commitment_mapping_keys(value: Mapping[str, Any]) -> tuple[dict[st
     for raw_key, raw_value in value.items():
         key = str(raw_key)
         canonical_key = key.strip()
+        if not canonical_key:
+            raise ValueError(
+                "normalize_commitment_mapping_keys requires non-empty canonical keys after trimming.",
+            )
         if canonical_key != key:
             normalization_count += 1
         canonical_value, nested_count = _normalize_commitment_value(raw_value)
