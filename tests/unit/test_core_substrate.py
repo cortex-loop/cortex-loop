@@ -1366,6 +1366,12 @@ def test_boundary_assessment_keeps_blockedness_separate_from_commitment_status()
         BoundaryAssessment(blocked="yes", reason_code="approval-required")
 
     with pytest.raises(
+        TypeError,
+        match=r"reason_code must be str \| None, got int",
+    ):
+        BoundaryAssessment(blocked=False, reason_code=123)
+
+    with pytest.raises(
         ValueError,
         match="boundary_tags must contain only non-empty values after trimming",
     ):

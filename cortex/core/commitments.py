@@ -117,6 +117,12 @@ class BoundaryAssessment:
                 "BoundaryAssessment.blocked must be bool, "
                 f"got {actual_type}.",
             )
+        if self.reason_code is not None and not isinstance(self.reason_code, str):
+            actual_type = type(self.reason_code).__name__
+            raise TypeError(
+                "BoundaryAssessment.reason_code must be str | None, "
+                f"got {actual_type}.",
+            )
         if self.blocked and not (isinstance(self.reason_code, str) and self.reason_code.strip()):
             raise ValueError(
                 "BoundaryAssessment blocked=True requires a non-empty reason_code.",
