@@ -47,6 +47,10 @@ class ChangedFilesDelta:
             raise ValueError(
                 "ChangedFilesDelta.changed_files must contain only non-empty repo-relative paths after trimming.",
             )
+        if self.reason is not None and not self.reason.strip():
+            raise ValueError(
+                "ChangedFilesDelta.reason must be non-empty after trimming when provided.",
+            )
 
 
 @dataclass(frozen=True, slots=True)

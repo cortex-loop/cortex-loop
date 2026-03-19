@@ -150,6 +150,26 @@ def test_changed_files_delta_requires_non_empty_changed_files_when_provided() ->
         ChangedFilesDelta(changed_files=("   ",), reason=None)
 
 
+def test_changed_files_delta_requires_non_empty_reason_when_provided() -> None:
+    direct = ChangedFilesDelta(changed_files=None, reason="baseline unavailable")
+    missing = ChangedFilesDelta(changed_files=None, reason=None)
+
+    assert direct.reason == "baseline unavailable"
+    assert missing.reason is None
+
+    with pytest.raises(
+        ValueError,
+        match="reason must be non-empty after trimming when provided",
+    ):
+        ChangedFilesDelta(changed_files=None, reason="")
+
+    with pytest.raises(
+        ValueError,
+        match="reason must be non-empty after trimming when provided",
+    ):
+        ChangedFilesDelta(changed_files=None, reason="   ")
+
+
 def test_changed_files_since_baseline_returns_delta_when_snapshots_are_available() -> None:
     baseline = RepositorySnapshot(
         available=True,
