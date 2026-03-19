@@ -134,6 +134,12 @@ class ReferenceExecutiveState:
                 "ReferenceExecutiveState.control_allocation must be "
                 f"ReferenceControlAllocationView, got {actual_type}."
             )
+        if not isinstance(self.brake, ReferenceBrakeView):
+            actual_type = type(self.brake).__name__
+            raise TypeError(
+                "ReferenceExecutiveState.brake must be ReferenceBrakeView, "
+                f"got {actual_type}."
+            )
 
 
 __all__ = [
