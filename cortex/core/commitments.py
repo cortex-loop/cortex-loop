@@ -89,6 +89,10 @@ class ProvenanceManifest:
             raise TypeError(
                 "ProvenanceManifest.contradiction_refs must contain only ContradictionRecord instances.",
             )
+        if any(not isinstance(field, MetadataField) for field in self.metadata):
+            raise TypeError(
+                "ProvenanceManifest.metadata must contain only MetadataField instances.",
+            )
 
 
 def _has_concrete_evidence_ref(provenance_manifest: ProvenanceManifest | None) -> bool:
