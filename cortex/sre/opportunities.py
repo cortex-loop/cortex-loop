@@ -38,6 +38,10 @@ class HostNativeOpportunity:
                 "HostNativeOpportunity.supported_families must contain only "
                 "SoftControlFamily instances."
             )
+        if any(not native_surface_tag.strip() for native_surface_tag in self.native_surface_tags):
+            raise ValueError(
+                "HostNativeOpportunity.native_surface_tags must contain only non-empty values after trimming."
+            )
         if not self.supported_families:
             raise ValueError("HostNativeOpportunity.supported_families must not be empty.")
         if self.safer_fallback_family not in _SAFE_FALLBACK_FAMILIES | {None}:

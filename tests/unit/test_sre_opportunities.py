@@ -94,6 +94,29 @@ def test_host_native_opportunity_requires_typed_supported_families() -> None:
         )
 
 
+def test_host_native_opportunity_requires_non_empty_native_surface_tags() -> None:
+    opportunity = HostNativeOpportunity(
+        opportunity_ref="mcp.query",
+        supported_families=frozenset({SoftControlFamily.CHECK}),
+        native_surface_tags=frozenset({"mcp", "structured-query"}),
+    )
+
+    assert opportunity.native_surface_tags == frozenset({"mcp", "structured-query"})
+
+    with pytest.raises(
+        ValueError,
+        match=(
+            "HostNativeOpportunity.native_surface_tags must contain only "
+            "non-empty values after trimming."
+        ),
+    ):
+        HostNativeOpportunity(
+            opportunity_ref="mcp.query",
+            supported_families=frozenset({SoftControlFamily.CHECK}),
+            native_surface_tags=frozenset({"   "}),
+        )
+
+
 def test_family_is_retained_when_no_clearly_superior_opportunity_exists() -> None:
     result = specialize_host_native_opportunity(
         SoftControlFamily.REDIRECT,
