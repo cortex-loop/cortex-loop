@@ -110,6 +110,15 @@ class ReferenceExecutiveState:
                 "ReferenceExecutiveState.goal_continuity must be GoalContinuityView, "
                 f"got {actual_type}."
             )
+        if not isinstance(
+            self.uncertainty_monitoring,
+            ReferenceUncertaintyMonitoringView,
+        ):
+            actual_type = type(self.uncertainty_monitoring).__name__
+            raise TypeError(
+                "ReferenceExecutiveState.uncertainty_monitoring must be "
+                f"ReferenceUncertaintyMonitoringView, got {actual_type}."
+            )
 
 
 __all__ = [

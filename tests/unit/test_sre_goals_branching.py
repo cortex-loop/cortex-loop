@@ -146,5 +146,33 @@ def test_reference_executive_state_requires_typed_goal_continuity() -> None:
         )
 
 
+def test_reference_executive_state_requires_typed_uncertainty_monitoring() -> None:
+    with pytest.raises(
+        TypeError,
+        match=(
+            "ReferenceExecutiveState.uncertainty_monitoring must be "
+            "ReferenceUncertaintyMonitoringView"
+        ),
+    ):
+        ReferenceExecutiveState(
+            goal_continuity=GoalContinuityView(
+                main_goal_ref="goal-main",
+                active_track_ref="track-alpha",
+                pending_goal_refs=("goal-side-a",),
+                resume_anchor_available=True,
+            ),
+            uncertainty_monitoring="nope",
+            mode_and_gating=ReferenceModeAndGatingView(
+                mode_tag="pass_through",
+                family_mask=frozenset({SoftControlFamily.NEUTRAL}),
+            ),
+            control_allocation=ReferenceControlAllocationView(
+                budget_band="low",
+                top_family_set=frozenset({SoftControlFamily.NEUTRAL}),
+            ),
+            brake=ReferenceBrakeView(brake_state=BrakeState.QUIESCENT),
+        )
+
+
 def test_reference_state_surface_keeps_only_a_compatibility_alias_for_goal_view() -> None:
     assert ReferenceGoalContinuityView is GoalContinuityView
