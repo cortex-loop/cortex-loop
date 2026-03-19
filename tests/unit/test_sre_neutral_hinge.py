@@ -218,6 +218,18 @@ def test_reference_control_allocation_view_requires_non_empty_host_friction_tags
         )
 
 
+def test_reference_brake_view_requires_typed_brake_state() -> None:
+    view = ReferenceBrakeView(brake_state=BrakeState.GUARDED)
+
+    assert view.brake_state is BrakeState.GUARDED
+
+    with pytest.raises(
+        TypeError,
+        match="ReferenceBrakeView.brake_state must be BrakeState",
+    ):
+        ReferenceBrakeView(brake_state="guarded")
+
+
 def test_reference_state_surface_does_not_export_duplicate_uncertainty_carrier() -> None:
     from cortex.sre import state as state_module
 
