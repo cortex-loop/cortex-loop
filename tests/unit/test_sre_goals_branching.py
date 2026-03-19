@@ -46,6 +46,21 @@ def test_goal_continuity_view_requires_non_empty_main_goal_ref_when_provided() -
         GoalContinuityView(main_goal_ref="   ")
 
 
+def test_goal_continuity_view_requires_non_empty_active_track_ref_when_provided() -> None:
+    view = GoalContinuityView(active_track_ref="track-alpha")
+
+    assert view.active_track_ref == "track-alpha"
+
+    with pytest.raises(
+        ValueError,
+        match=(
+            "GoalContinuityView.active_track_ref must be non-empty after trimming "
+            "when provided."
+        ),
+    ):
+        GoalContinuityView(active_track_ref="   ")
+
+
 def test_branch_operation_set_is_exact() -> None:
     assert {operation.value for operation in BranchOperation} == {
         "open",
