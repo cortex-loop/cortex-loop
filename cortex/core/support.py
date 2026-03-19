@@ -96,6 +96,13 @@ class SupportSessionState:
 
     def __post_init__(self) -> None:
         if any(
+            not (isinstance(branch_ref, str) and branch_ref.strip())
+            for branch_ref in self.branch_registry
+        ):
+            raise ValueError(
+                "SupportSessionState.branch_registry must contain only non-empty values after trimming.",
+            )
+        if any(
             not (isinstance(goal_ref, str) and goal_ref.strip())
             for goal_ref in self.pending_goal_refs
         ):
