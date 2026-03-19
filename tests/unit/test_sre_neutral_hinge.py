@@ -127,6 +127,20 @@ def test_reference_uncertainty_monitoring_view_requires_non_empty_contradiction_
         )
 
 
+def test_reference_mode_and_gating_view_requires_non_empty_mode_tag() -> None:
+    view = ReferenceModeAndGatingView(mode_tag="pass_through")
+
+    assert view.mode_tag == "pass_through"
+
+    with pytest.raises(
+        ValueError,
+        match=(
+            "ReferenceModeAndGatingView.mode_tag must be non-empty after trimming."
+        ),
+    ):
+        ReferenceModeAndGatingView(mode_tag="   ")
+
+
 def test_reference_state_surface_does_not_export_duplicate_uncertainty_carrier() -> None:
     from cortex.sre import state as state_module
 

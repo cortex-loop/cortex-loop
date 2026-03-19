@@ -38,6 +38,12 @@ class ReferenceModeAndGatingView:
     mode_tag: str
     family_mask: frozenset[SoftControlFamily] = field(default_factory=frozenset)
 
+    def __post_init__(self) -> None:
+        if not self.mode_tag.strip():
+            raise ValueError(
+                "ReferenceModeAndGatingView.mode_tag must be non-empty after trimming."
+            )
+
 
 @dataclass(frozen=True, slots=True)
 class ReferenceControlAllocationView:
