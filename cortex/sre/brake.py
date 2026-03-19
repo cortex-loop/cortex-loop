@@ -36,6 +36,10 @@ class BrakeEvaluation:
                 "BrakeEvaluation.state must be BrakeState, "
                 f"got {actual_type}."
             )
+        if any(not tag.strip() for tag in self.spike_tags):
+            raise ValueError(
+                "BrakeEvaluation.spike_tags must contain only non-empty values after trimming."
+            )
         if self.dominant_cause is not None and not self.dominant_cause.strip():
             raise ValueError(
                 "BrakeEvaluation.dominant_cause must be non-empty after trimming when provided."

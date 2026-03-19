@@ -130,6 +130,25 @@ def test_brake_evaluation_requires_non_empty_dominant_cause_when_provided() -> N
         raise AssertionError("BrakeEvaluation accepted a blank dominant cause.")
 
 
+def test_brake_evaluation_requires_non_empty_spike_tags() -> None:
+    evaluation = BrakeEvaluation(
+        state=BrakeState.GUARDED,
+        spike_tags=frozenset({"environment-inconsistency"}),
+    )
+
+    assert evaluation.spike_tags == frozenset({"environment-inconsistency"})
+
+    try:
+        BrakeEvaluation(
+            state=BrakeState.GUARDED,
+            spike_tags=frozenset({"   "}),
+        )
+    except ValueError as exc:
+        assert "spike_tags must contain only non-empty values after trimming" in str(exc)
+    else:
+        raise AssertionError("BrakeEvaluation accepted a blank spike tag.")
+
+
 def test_brake_evaluation_returns_quiescent_for_low_uncertainty_without_spikes() -> None:
     evaluation = evaluate_brake_state(
         (
