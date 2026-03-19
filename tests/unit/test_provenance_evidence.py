@@ -88,6 +88,28 @@ def test_evidence_reference_evaluation_requires_non_empty_check_status() -> None
         )
 
 
+def test_evidence_reference_evaluation_requires_non_empty_reason() -> None:
+    direct = EvidenceReferenceEvaluation(
+        reference_kind="path",
+        check_status="verified",
+        reason="path exists",
+    )
+    emitted = evaluate_evidence_reference("src/module.py#L10", root=Path("/repo"))
+
+    assert direct.reason == "path exists"
+    assert emitted.reason == "path does not exist: src/module.py"
+
+    with pytest.raises(
+        ValueError,
+        match="reason must be non-empty after trimming",
+    ):
+        EvidenceReferenceEvaluation(
+            reference_kind="path",
+            check_status="verified",
+            reason="   ",
+        )
+
+
 def test_command_reference_matches_normalized_wrapper_variants(tmp_path: Path) -> None:
     assert command_claim_matches("pytest tests/unit/test_x.py", "python3 -m pytest tests/unit/test_x.py")
 
