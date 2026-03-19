@@ -35,6 +35,12 @@ class CommitmentExtractionResult:
     structured_payload_violation: bool
 
     def __post_init__(self) -> None:
+        if self.commitment_fields is not None and not isinstance(self.commitment_fields, dict):
+            actual_type = type(self.commitment_fields).__name__
+            raise TypeError(
+                "CommitmentExtractionResult.commitment_fields must be dict[str, Any] | None, "
+                f"got {actual_type}.",
+            )
         if self.carrier_source not in {
             NATIVE_COMMITMENT_SOURCE,
             PAYLOAD_COMMITMENT_SOURCE,

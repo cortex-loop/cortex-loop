@@ -156,3 +156,31 @@ def test_commitment_extraction_result_requires_canonical_carrier_source() -> Non
             warnings=(),
             structured_payload_violation=False,
         )
+
+
+def test_commitment_extraction_result_requires_dict_commitment_fields() -> None:
+    direct = CommitmentExtractionResult(
+        commitment_fields={"claim_summary": "done"},
+        carrier_source=NO_COMMITMENT_SOURCE,
+        fallback_used=False,
+        normalization_count=0,
+        warnings=(),
+        structured_payload_violation=False,
+    )
+    emitted = resolve_commitment_extract({"stop_fields": {"claim_summary": "done"}})
+
+    assert direct.commitment_fields == {"claim_summary": "done"}
+    assert emitted.commitment_fields == {"claim_summary": "done"}
+
+    with pytest.raises(
+        TypeError,
+        match=r"commitment_fields must be dict\[str, Any\] \| None, got tuple",
+    ):
+        CommitmentExtractionResult(
+            commitment_fields=("not-a-dict",),
+            carrier_source=NO_COMMITMENT_SOURCE,
+            fallback_used=False,
+            normalization_count=0,
+            warnings=(),
+            structured_payload_violation=False,
+        )
