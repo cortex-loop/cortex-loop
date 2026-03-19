@@ -28,6 +28,12 @@ class AllocationScore:
                 "AllocationScore.score must be numeric, "
                 f"got {actual_type}."
             )
+        if not isinstance(self.admissible, bool):
+            actual_type = type(self.admissible).__name__
+            raise TypeError(
+                "AllocationScore.admissible must be bool, "
+                f"got {actual_type}."
+            )
 
 
 @dataclass(frozen=True, slots=True)

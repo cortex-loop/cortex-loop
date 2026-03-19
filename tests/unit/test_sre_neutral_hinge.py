@@ -281,6 +281,18 @@ def test_allocation_score_requires_numeric_score() -> None:
         AllocationScore(SoftControlFamily.NEUTRAL, "1.0")
 
 
+def test_allocation_score_requires_bool_admissible() -> None:
+    score = AllocationScore(SoftControlFamily.NEUTRAL, 1.0, admissible=True)
+
+    assert score.admissible is True
+
+    with pytest.raises(
+        TypeError,
+        match="AllocationScore.admissible must be bool",
+    ):
+        AllocationScore(SoftControlFamily.NEUTRAL, 1.0, admissible="yes")
+
+
 def test_neutral_dominance_returns_neutral_when_margin_is_below_threshold() -> None:
     decision = neutral_dominance_decision(
         AllocationScorecard(
