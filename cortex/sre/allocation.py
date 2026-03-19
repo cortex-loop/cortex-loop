@@ -46,5 +46,11 @@ class AllocationScorecard:
     scores: tuple[AllocationScore, ...]
     activation_threshold: float
 
+    def __post_init__(self) -> None:
+        if any(not isinstance(score, AllocationScore) for score in self.scores):
+            raise TypeError(
+                "AllocationScorecard.scores must contain only AllocationScore instances."
+            )
+
 
 __all__ = ["AllocationScore", "AllocationScorecard"]

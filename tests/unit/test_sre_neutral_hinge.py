@@ -316,6 +316,21 @@ def test_allocation_score_requires_non_empty_reason_tags() -> None:
         )
 
 
+def test_allocation_scorecard_requires_typed_scores() -> None:
+    scorecard = AllocationScorecard(
+        scores=(AllocationScore(SoftControlFamily.NEUTRAL, 1.0),),
+        activation_threshold=0.1,
+    )
+
+    assert len(scorecard.scores) == 1
+
+    with pytest.raises(
+        TypeError,
+        match="AllocationScorecard.scores must contain only AllocationScore instances.",
+    ):
+        AllocationScorecard(scores=("not-score",), activation_threshold=0.1)
+
+
 def test_neutral_dominance_returns_neutral_when_margin_is_below_threshold() -> None:
     decision = neutral_dominance_decision(
         AllocationScorecard(
