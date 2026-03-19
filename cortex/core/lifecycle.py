@@ -20,6 +20,10 @@ class LifecycleEffectBinding:
             raise ValueError(
                 "LifecycleEffectBinding.action_tag must be non-empty after trimming.",
             )
+        if any(not (isinstance(tag, str) and tag.strip()) for tag in self.consequence_tags):
+            raise ValueError(
+                "LifecycleEffectBinding.consequence_tags must contain only non-empty values after trimming.",
+            )
 
 
 @dataclass(frozen=True, slots=True)

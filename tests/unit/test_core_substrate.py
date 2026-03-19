@@ -100,6 +100,24 @@ def test_lifecycle_event_and_observation_carriers_construct_cleanly() -> None:
         LifecycleEffectBinding(action_tag="   ")
 
     with pytest.raises(
+        ValueError,
+        match="consequence_tags must contain only non-empty values after trimming",
+    ):
+        LifecycleEffectBinding(
+            action_tag="bounded_prose",
+            consequence_tags=frozenset({""}),
+        )
+
+    with pytest.raises(
+        ValueError,
+        match="consequence_tags must contain only non-empty values after trimming",
+    ):
+        LifecycleEffectBinding(
+            action_tag="bounded_prose",
+            consequence_tags=frozenset({"   "}),
+        )
+
+    with pytest.raises(
         TypeError,
         match="effect_map must contain only LifecycleEffectBinding instances",
     ):
