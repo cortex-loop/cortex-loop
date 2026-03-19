@@ -29,6 +29,12 @@ class NeutralDominanceDecision:
                 "NeutralDominanceDecision.neutral_selected must be bool, "
                 f"got {actual_type}."
             )
+        if not isinstance(self.margin_over_neutral, Real):
+            actual_type = type(self.margin_over_neutral).__name__
+            raise TypeError(
+                "NeutralDominanceDecision.margin_over_neutral must be numeric, "
+                f"got {actual_type}."
+            )
 
 
 def neutral_dominance_decision(scorecard: AllocationScorecard) -> NeutralDominanceDecision:
