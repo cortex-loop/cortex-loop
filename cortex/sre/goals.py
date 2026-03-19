@@ -25,6 +25,12 @@ class GoalContinuityView:
             raise ValueError(
                 "GoalContinuityView.pending_goal_refs must contain only non-empty values after trimming."
             )
+        if not isinstance(self.resume_anchor_available, bool):
+            actual_type = type(self.resume_anchor_available).__name__
+            raise TypeError(
+                "GoalContinuityView.resume_anchor_available must be bool, "
+                f"got {actual_type}."
+            )
 
 
 __all__ = ["GoalContinuityView"]

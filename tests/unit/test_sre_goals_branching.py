@@ -76,6 +76,18 @@ def test_goal_continuity_view_requires_non_empty_pending_goal_refs() -> None:
         GoalContinuityView(pending_goal_refs=("goal-side-a", "   "))
 
 
+def test_goal_continuity_view_requires_bool_resume_anchor_available() -> None:
+    view = GoalContinuityView(resume_anchor_available=True)
+
+    assert view.resume_anchor_available is True
+
+    with pytest.raises(
+        TypeError,
+        match="GoalContinuityView.resume_anchor_available must be bool",
+    ):
+        GoalContinuityView(resume_anchor_available="yes")
+
+
 def test_branch_operation_set_is_exact() -> None:
     assert {operation.value for operation in BranchOperation} == {
         "open",
