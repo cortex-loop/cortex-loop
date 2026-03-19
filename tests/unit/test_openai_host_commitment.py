@@ -1,14 +1,23 @@
 """Focused tests for the OpenAI commitment-path slice."""
 
+import pytest
+
+from cortex.core.commitment_extract import CommitmentExtractionResult
 from cortex.core.commitments import (
     BoundaryAssessment,
+    CommitmentCandidate,
     CommitmentStatus,
     ProvenanceEvidenceRef,
     ProvenanceManifest,
 )
 from cortex.core.dispatch import DispatchLane
 from cortex.core.environment import CommitmentEnvironmentHandle, EXECUTION_TRACE
-from cortex.drivers.openai_host_commitment import evaluate_openai_host_commitment
+from cortex.drivers.openai_host import observe_openai_host_event
+from cortex.drivers.openai_host_commitment import (
+    OpenAIHostCommitmentResult,
+    bind_openai_host_candidate,
+    evaluate_openai_host_commitment,
+)
 
 
 def test_full_commitment_openai_event_with_concrete_provenance_yields_certified() -> None:
@@ -183,3 +192,155 @@ def _make_environment_handle() -> CommitmentEnvironmentHandle:
         available_query_kinds=frozenset({EXECUTION_TRACE}),
         capability_tags=frozenset({"trace/read"}),
     )
+
+
+def test_openai_host_commitment_result_requires_typed_components_and_clean_warnings() -> None:
+    bound = observe_openai_host_event("response.output_text.delta", {"response_id": "oa-result-1"})
+    result = evaluate_openai_host_commitment(
+        "response.output_text.delta",
+        {},
+        environment_handle=_make_environment_handle(),
+    )
+
+    with pytest.raises(
+        TypeError,
+        match="bound_event must be BoundOpenAIHostEvent, got str",
+    ):
+        OpenAIHostCommitmentResult(
+            bound_event="not-a-bound-event",
+            dispatch_decision=result.dispatch_decision,
+        )
+
+    with pytest.raises(
+        TypeError,
+        match="dispatch_decision must be DispatchDecision, got str",
+    ):
+        OpenAIHostCommitmentResult(
+            bound_event=bound,
+            dispatch_decision="not-a-dispatch",
+        )
+
+    with pytest.raises(
+        TypeError,
+        match="extraction_result must be CommitmentExtractionResult \\| None, got str",
+    ):
+        OpenAIHostCommitmentResult(
+            bound_event=bound,
+            dispatch_decision=result.dispatch_decision,
+            extraction_result="not-an-extraction",
+        )
+
+    with pytest.raises(
+        TypeError,
+        match="candidate must be CommitmentCandidate \\| None, got str",
+    ):
+        OpenAIHostCommitmentResult(
+            bound_event=bound,
+            dispatch_decision=result.dispatch_decision,
+            candidate="not-a-candidate",
+        )
+
+    with pytest.raises(
+        ValueError,
+        match="warnings must contain only non-empty values after trimming",
+    ):
+        OpenAIHostCommitmentResult(
+            bound_event=bound,
+            dispatch_decision=result.dispatch_decision,
+            warnings=("   ",),
+        )
+
+
+def test_openai_commitment_entrypoints_require_typed_inputs() -> None:
+    bound = observe_openai_host_event("response.output_text.delta", {"response_id": "oa-bind-1"})
+    result = evaluate_openai_host_commitment(
+        "response.output_text.delta",
+        {},
+        environment_handle=_make_environment_handle(),
+    )
+    extraction = CommitmentExtractionResult(
+        commitment_fields=None,
+        carrier_source="none",
+        fallback_used=False,
+        normalization_count=0,
+        warnings=(),
+        structured_payload_violation=False,
+    )
+
+    candidate, warnings = bind_openai_host_candidate(
+        bound,
+        result.dispatch_decision,
+        extraction,
+    )
+    assert isinstance(candidate, CommitmentCandidate)
+    assert warnings == (
+        "Synthesized deterministic local candidate id because no direct or extracted identifier was present.",
+    )
+
+    with pytest.raises(
+        TypeError,
+        match="bind_openai_host_candidate\\.bound_event must be BoundOpenAIHostEvent, got str",
+    ):
+        bind_openai_host_candidate("not-a-bound-event", result.dispatch_decision)
+
+    with pytest.raises(
+        TypeError,
+        match="bind_openai_host_candidate\\.dispatch_decision must be DispatchDecision, got str",
+    ):
+        bind_openai_host_candidate(bound, "not-a-dispatch")
+
+    with pytest.raises(
+        TypeError,
+        match="bind_openai_host_candidate\\.extraction_result must be CommitmentExtractionResult \\| None, got str",
+    ):
+        bind_openai_host_candidate(bound, result.dispatch_decision, "not-an-extraction")
+
+    with pytest.raises(
+        TypeError,
+        match="evaluate_openai_host_commitment\\.environment_handle must be CommitmentEnvironmentHandle, got str",
+    ):
+        evaluate_openai_host_commitment("response.output_text.delta", {}, environment_handle="not-an-environment")
+
+    with pytest.raises(
+        TypeError,
+        match="evaluate_openai_host_commitment\\.provenance_manifest must be ProvenanceManifest \\| None, got str",
+    ):
+        evaluate_openai_host_commitment(
+            "response.output_text.delta",
+            {},
+            environment_handle=_make_environment_handle(),
+            provenance_manifest="not-a-manifest",
+        )
+
+    with pytest.raises(
+        TypeError,
+        match="evaluate_openai_host_commitment\\.boundary_assessment must be BoundaryAssessment \\| None, got str",
+    ):
+        evaluate_openai_host_commitment(
+            "response.output_text.delta",
+            {},
+            environment_handle=_make_environment_handle(),
+            boundary_assessment="not-a-boundary",
+        )
+
+    with pytest.raises(
+        TypeError,
+        match="evaluate_openai_host_commitment\\.degradation_refs must contain only DegradationRecord instances",
+    ):
+        evaluate_openai_host_commitment(
+            "response.output_text.delta",
+            {},
+            environment_handle=_make_environment_handle(),
+            degradation_refs=("not-a-degradation",),
+        )
+
+    with pytest.raises(
+        TypeError,
+        match="evaluate_openai_host_commitment\\.contradiction_refs must contain only ContradictionRecord instances",
+    ):
+        evaluate_openai_host_commitment(
+            "response.output_text.delta",
+            {},
+            environment_handle=_make_environment_handle(),
+            contradiction_refs=("not-a-contradiction",),
+        )

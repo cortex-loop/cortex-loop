@@ -41,12 +41,66 @@ class OpenAIHostCommitmentResult:
     verdict: CommitmentVerdict | None = None
     warnings: tuple[str, ...] = field(default_factory=tuple)
 
+    def __post_init__(self) -> None:
+        if not isinstance(self.bound_event, BoundOpenAIHostEvent):
+            actual_type = type(self.bound_event).__name__
+            raise TypeError(
+                "OpenAIHostCommitmentResult.bound_event must be BoundOpenAIHostEvent, "
+                f"got {actual_type}.",
+            )
+        if not isinstance(self.dispatch_decision, DispatchDecision):
+            actual_type = type(self.dispatch_decision).__name__
+            raise TypeError(
+                "OpenAIHostCommitmentResult.dispatch_decision must be DispatchDecision, "
+                f"got {actual_type}.",
+            )
+        if self.extraction_result is not None and not isinstance(
+            self.extraction_result,
+            CommitmentExtractionResult,
+        ):
+            actual_type = type(self.extraction_result).__name__
+            raise TypeError(
+                "OpenAIHostCommitmentResult.extraction_result must be "
+                f"CommitmentExtractionResult | None, got {actual_type}.",
+            )
+        if self.candidate is not None and not isinstance(self.candidate, CommitmentCandidate):
+            actual_type = type(self.candidate).__name__
+            raise TypeError(
+                "OpenAIHostCommitmentResult.candidate must be CommitmentCandidate | None, "
+                f"got {actual_type}.",
+            )
+        if self.verdict is not None and not isinstance(self.verdict, CommitmentVerdict):
+            actual_type = type(self.verdict).__name__
+            raise TypeError(
+                "OpenAIHostCommitmentResult.verdict must be CommitmentVerdict | None, "
+                f"got {actual_type}.",
+            )
+        _validate_warning_tuple(self.warnings, "OpenAIHostCommitmentResult.warnings")
+
 
 def bind_openai_host_candidate(
     bound_event: BoundOpenAIHostEvent,
     dispatch_decision: DispatchDecision,
     extraction_result: CommitmentExtractionResult | None = None,
 ) -> tuple[CommitmentCandidate, tuple[str, ...]]:
+    if not isinstance(bound_event, BoundOpenAIHostEvent):
+        actual_type = type(bound_event).__name__
+        raise TypeError(
+            "bind_openai_host_candidate.bound_event must be BoundOpenAIHostEvent, "
+            f"got {actual_type}.",
+        )
+    if not isinstance(dispatch_decision, DispatchDecision):
+        actual_type = type(dispatch_decision).__name__
+        raise TypeError(
+            "bind_openai_host_candidate.dispatch_decision must be DispatchDecision, "
+            f"got {actual_type}.",
+        )
+    if extraction_result is not None and not isinstance(extraction_result, CommitmentExtractionResult):
+        actual_type = type(extraction_result).__name__
+        raise TypeError(
+            "bind_openai_host_candidate.extraction_result must be "
+            f"CommitmentExtractionResult | None, got {actual_type}.",
+        )
     commitment_fields = extraction_result.commitment_fields if extraction_result is not None else None
     carrier_source = (
         extraction_result.carrier_source if extraction_result is not None else NO_COMMITMENT_SOURCE
@@ -107,6 +161,36 @@ def evaluate_openai_host_commitment(
     contradiction_refs: tuple[ContradictionRecord, ...] = (),
     allow_message_commitment_fallback: bool = False,
 ) -> OpenAIHostCommitmentResult:
+    if not isinstance(environment_handle, CommitmentEnvironmentHandle):
+        actual_type = type(environment_handle).__name__
+        raise TypeError(
+            "evaluate_openai_host_commitment.environment_handle must be "
+            f"CommitmentEnvironmentHandle, got {actual_type}.",
+        )
+    if provenance_manifest is not None and not isinstance(provenance_manifest, ProvenanceManifest):
+        actual_type = type(provenance_manifest).__name__
+        raise TypeError(
+            "evaluate_openai_host_commitment.provenance_manifest must be "
+            f"ProvenanceManifest | None, got {actual_type}.",
+        )
+    if boundary_assessment is not None and not isinstance(boundary_assessment, BoundaryAssessment):
+        actual_type = type(boundary_assessment).__name__
+        raise TypeError(
+            "evaluate_openai_host_commitment.boundary_assessment must be "
+            f"BoundaryAssessment | None, got {actual_type}.",
+        )
+    for degradation in degradation_refs:
+        if not isinstance(degradation, DegradationRecord):
+            raise TypeError(
+                "evaluate_openai_host_commitment.degradation_refs must contain only "
+                "DegradationRecord instances.",
+            )
+    for contradiction in contradiction_refs:
+        if not isinstance(contradiction, ContradictionRecord):
+            raise TypeError(
+                "evaluate_openai_host_commitment.contradiction_refs must contain only "
+                "ContradictionRecord instances.",
+            )
     bound_event = observe_openai_host_event(
         raw_event_name,
         raw_payload,
@@ -241,6 +325,15 @@ def _merge_warnings(*groups: tuple[str, ...]) -> tuple[str, ...]:
             if warning not in warnings:
                 warnings.append(warning)
     return tuple(warnings)
+
+
+def _validate_warning_tuple(warnings: tuple[str, ...], label: str) -> None:
+    for warning in warnings:
+        if not isinstance(warning, str):
+            actual_type = type(warning).__name__
+            raise TypeError(f"{label} must contain only str instances, got {actual_type}.")
+        if not warning.strip():
+            raise ValueError(f"{label} must contain only non-empty values after trimming.")
 
 
 __all__ = [
