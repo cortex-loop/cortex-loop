@@ -78,6 +78,10 @@ class CommitmentEnvironmentHandle:
             raise TypeError(
                 "CommitmentEnvironmentHandle.evidence_requests must contain only EnvironmentQuery instances.",
             )
+        if any(not (isinstance(tag, str) and tag.strip()) for tag in self.capability_tags):
+            raise ValueError(
+                "CommitmentEnvironmentHandle.capability_tags must contain only non-empty values after trimming.",
+            )
 
 
 def _validate_query_kind(kind: str) -> None:
