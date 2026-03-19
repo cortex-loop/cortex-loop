@@ -96,6 +96,12 @@ class ObservationBundle:
                 "ObservationBundle.event must be LifecycleEventEnvelope, "
                 f"got {actual_type}.",
             )
+        if not isinstance(self.payload_view, PayloadView):
+            actual_type = type(self.payload_view).__name__
+            raise TypeError(
+                "ObservationBundle.payload_view must be PayloadView, "
+                f"got {actual_type}.",
+            )
 
 
 __all__ = [
