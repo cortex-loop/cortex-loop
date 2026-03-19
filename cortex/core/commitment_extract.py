@@ -24,6 +24,19 @@ class CommitmentFieldResolution:
     source: str
     warnings: tuple[str, ...]
 
+    def __post_init__(self) -> None:
+        if self.source not in {
+            "payload",
+            NATIVE_COMMITMENT_SOURCE,
+            PAYLOAD_COMMITMENT_SOURCE,
+            FALLBACK_COMMITMENT_SOURCE,
+            NO_COMMITMENT_SOURCE,
+        }:
+            raise ValueError(
+                "CommitmentFieldResolution.source must be one of the canonical source labels: "
+                "payload, native, payload.stop_fields, fallback, none.",
+            )
+
 
 @dataclass(frozen=True, slots=True)
 class CommitmentExtractionResult:

@@ -3,6 +3,7 @@
 import pytest
 
 from cortex.core.commitment_extract import (
+    CommitmentFieldResolution,
     CommitmentExtractionResult,
     FALLBACK_COMMITMENT_SOURCE,
     NATIVE_COMMITMENT_SOURCE,
@@ -98,6 +99,45 @@ def test_reconcile_commitment_field_falls_back_to_extracted_fields_when_missing(
     assert resolution.value == "structured-value"
     assert resolution.source == PAYLOAD_COMMITMENT_SOURCE
     assert resolution.warnings == ("Using claim summary from payload.stop_fields.",)
+
+
+def test_commitment_field_resolution_requires_canonical_source_labels() -> None:
+    for source in (
+        "payload",
+        NATIVE_COMMITMENT_SOURCE,
+        PAYLOAD_COMMITMENT_SOURCE,
+        FALLBACK_COMMITMENT_SOURCE,
+        NO_COMMITMENT_SOURCE,
+    ):
+        resolution = reconcile_commitment_field(
+            key="claim_summary",
+            payload={"claim_summary": "direct-value"} if source == "payload" else {},
+            commitment_fields={"claim_summary": "structured-value"},
+            carrier_source=source,
+        ) if source != "native" else CommitmentFieldResolution(
+            value="structured-value",
+            source=source,
+            warnings=(),
+        )
+
+        assert resolution.source == source
+
+    with pytest.raises(
+        ValueError,
+        match="source must be one of the canonical source labels",
+    ):
+        CommitmentFieldResolution(value=None, source="   ", warnings=())
+
+    with pytest.raises(
+        ValueError,
+        match="source must be one of the canonical source labels",
+    ):
+        reconcile_commitment_field(
+            key="claim",
+            payload={},
+            commitment_fields={"claim": "x"},
+            carrier_source="mystery",
+        )
 
 
 def test_resolution_works_without_v1_specific_stop_bundle_fields() -> None:
