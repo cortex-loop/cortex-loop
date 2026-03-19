@@ -2,7 +2,7 @@
 
 import pytest
 
-from cortex.core.dispatch import DispatchLane, classify_dispatch
+from cortex.core.dispatch import DispatchLane, WakeDecision, classify_dispatch
 from cortex.core.envelopes import LifecycleEventEnvelope, MetadataField
 from cortex.core.observation import ObservationBundle, PayloadView
 
@@ -92,6 +92,40 @@ def test_candidate_presence_alone_does_not_overwake_to_full_commitment() -> None
     assert decision.wake_decision.reason_tags == frozenset(
         {"candidate-present", "proposal-surface"}
     )
+
+
+def test_wake_decision_requires_non_empty_reason_tags() -> None:
+    direct = WakeDecision(
+        full_commitment_required=False,
+        reason_tags=frozenset({"proposal-surface"}),
+    )
+    emitted = classify_dispatch(
+        _make_observation(
+            native_event_name="durable-write",
+            facet_tags=("durable-write",),
+        )
+    )
+
+    assert direct.reason_tags == frozenset({"proposal-surface"})
+    assert emitted.wake_decision.reason_tags == frozenset({"durable-write"})
+
+    with pytest.raises(
+        ValueError,
+        match="reason_tags must contain only non-empty values after trimming",
+    ):
+        WakeDecision(
+            full_commitment_required=False,
+            reason_tags=frozenset({""}),
+        )
+
+    with pytest.raises(
+        ValueError,
+        match="reason_tags must contain only non-empty values after trimming",
+    ):
+        WakeDecision(
+            full_commitment_required=False,
+            reason_tags=frozenset({"   "}),
+        )
 
 
 def test_evidence_plan_matches_the_dispatched_lane() -> None:

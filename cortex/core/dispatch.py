@@ -23,6 +23,12 @@ class WakeDecision:
     full_commitment_required: bool
     reason_tags: frozenset[str] = field(default_factory=frozenset)
 
+    def __post_init__(self) -> None:
+        if any(not reason_tag.strip() for reason_tag in self.reason_tags):
+            raise ValueError(
+                "WakeDecision.reason_tags must contain only non-empty values after trimming.",
+            )
+
 
 @dataclass(frozen=True, slots=True)
 class EvidencePlan:
