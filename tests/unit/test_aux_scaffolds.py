@@ -273,6 +273,30 @@ def test_augment_snapshot_cannot_start_from_blank_core_branch_registry_entry() -
         )
 
 
+def test_augment_snapshot_cannot_start_from_blank_core_budget_history_entry() -> None:
+    snapshot = _make_snapshot()
+
+    with pytest.raises(
+        ValueError,
+        match="budget_history must contain only non-empty values after trimming",
+    ):
+        augment_snapshot(
+            SupportSnapshot(
+                trace=snapshot.trace,
+                session=SupportSessionState(
+                    branch_registry=snapshot.session.branch_registry,
+                    pending_goal_refs=snapshot.session.pending_goal_refs,
+                    role_view_tags=snapshot.session.role_view_tags,
+                    budget_history=("   ",),
+                    wake_counters=snapshot.session.wake_counters,
+                ),
+                host=snapshot.host,
+                exec_memory_pub=snapshot.exec_memory_pub,
+            ),
+            AuxiliarySupportAppendix(),
+        )
+
+
 def test_augment_snapshot_cannot_start_from_blank_core_host_tag() -> None:
     snapshot = _make_snapshot()
 
