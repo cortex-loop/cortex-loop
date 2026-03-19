@@ -9,6 +9,11 @@ from typing import Any
 
 from cortex.core.dispatch import DispatchDecision, DispatchLane, classify_dispatch
 
+from ._neutral_common import (
+    extract_native_commitment_fields,
+    merge_warnings,
+    neutral_outcome_for_lane,
+)
 from .gemini_host import BoundGeminiHostEvent, observe_gemini_host_event
 
 
@@ -79,7 +84,7 @@ def evaluate_gemini_host_neutral(
         allow_message_commitment_fallback=allow_message_commitment_fallback,
     )
     normalized_payload = bound_event.normalized_payload
-    native_commitment_fields = _native_commitment_fields(normalized_payload)
+    native_commitment_fields = extract_native_commitment_fields(normalized_payload)
     dispatch_decision = classify_dispatch(
         bound_event.observation,
         payload=normalized_payload,
@@ -90,42 +95,21 @@ def evaluate_gemini_host_neutral(
         bound_event=bound_event,
         dispatch_decision=dispatch_decision,
         neutral_decision=_neutral_decision_for_lane(dispatch_decision.lane),
-        warnings=_merge_warnings(bound_event.warnings, dispatch_decision.warnings),
+        warnings=merge_warnings(bound_event.warnings, dispatch_decision.warnings),
     )
-
-
-def _native_commitment_fields(payload: Mapping[str, Any]) -> Any | None:
-    if payload.get("commitment_fields_source") != "native":
-        return None
-    if "commitment_fields" not in payload:
-        return None
-    return payload.get("commitment_fields")
 
 
 def _neutral_decision_for_lane(lane: DispatchLane) -> GeminiNeutralContinuationDecision:
-    if lane is DispatchLane.CHEAP:
-        return GeminiNeutralContinuationDecision(
-            allowed=True,
-            result_code=GeminiNeutralContinuationCode.NEUTRAL_ALLOWED,
-        )
-    if lane is DispatchLane.CANDIDATE_BEARING:
-        return GeminiNeutralContinuationDecision(
-            allowed=False,
-            result_code=GeminiNeutralContinuationCode.CANDIDATE_PATH_REQUIRED,
-        )
-    return GeminiNeutralContinuationDecision(
-        allowed=False,
-        result_code=GeminiNeutralContinuationCode.FULL_COMMITMENT_PATH_REQUIRED,
+    allowed, result_code = neutral_outcome_for_lane(
+        lane,
+        cheap_code=GeminiNeutralContinuationCode.NEUTRAL_ALLOWED,
+        candidate_code=GeminiNeutralContinuationCode.CANDIDATE_PATH_REQUIRED,
+        full_commitment_code=GeminiNeutralContinuationCode.FULL_COMMITMENT_PATH_REQUIRED,
     )
-
-
-def _merge_warnings(*groups: tuple[str, ...]) -> tuple[str, ...]:
-    warnings: list[str] = []
-    for group in groups:
-        for warning in group:
-            if warning not in warnings:
-                warnings.append(warning)
-    return tuple(warnings)
+    return GeminiNeutralContinuationDecision(
+        allowed=allowed,
+        result_code=result_code,
+    )
 
 
 def _validate_warning_tuple(warnings: tuple[str, ...], label: str) -> None:
