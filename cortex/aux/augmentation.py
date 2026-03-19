@@ -31,6 +31,10 @@ class AuxiliarySupportAppendix:
             raise ValueError(
                 "AuxiliarySupportAppendix.notes must contain only non-empty values after trimming.",
             )
+        if any(not isinstance(field, MetadataField) for field in self.metadata):
+            raise TypeError(
+                "AuxiliarySupportAppendix.metadata must contain only MetadataField instances.",
+            )
 
 
 @dataclass(frozen=True, slots=True)
