@@ -247,10 +247,11 @@ def test_wake_receipt_requires_non_empty_reason_and_named_event_identity() -> No
 
 
 def test_support_reference_requires_non_empty_kind_and_id() -> None:
-    reference = SupportReference("memory", "memo-1")
+    reference = SupportReference("memory", "memo-1", tags=frozenset({"published"}))
 
     assert reference.reference_kind == "memory"
     assert reference.reference_id == "memo-1"
+    assert reference.tags == frozenset({"published"})
 
     with pytest.raises(ValueError, match="reference_kind must be non-empty after trimming"):
         SupportReference("", "memo-1")
@@ -263,6 +264,18 @@ def test_support_reference_requires_non_empty_kind_and_id() -> None:
 
     with pytest.raises(ValueError, match="reference_id must be non-empty after trimming"):
         SupportReference("memory", "   ")
+
+    with pytest.raises(
+        ValueError,
+        match="tags must contain only non-empty values after trimming",
+    ):
+        SupportReference("memory", "memo-1", tags=frozenset({""}))
+
+    with pytest.raises(
+        ValueError,
+        match="tags must contain only non-empty values after trimming",
+    ):
+        SupportReference("memory", "memo-1", tags=frozenset({"   "}))
 
 
 def test_support_trace_requires_non_empty_candidate_refs() -> None:

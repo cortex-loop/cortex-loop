@@ -132,6 +132,29 @@ def test_augment_snapshot_cannot_start_from_blank_core_support_reference_identit
             AuxiliarySupportAppendix(),
         )
 
+    with pytest.raises(
+        ValueError,
+        match="tags must contain only non-empty values after trimming",
+    ):
+        augment_snapshot(
+            SupportSnapshot(
+                trace=snapshot.trace,
+                session=snapshot.session,
+                host=snapshot.host,
+                exec_memory_pub=SupportExecMemoryState(
+                    published_memory_refs=(
+                        SupportReference(
+                            "memory",
+                            "memo-1",
+                            tags=frozenset({"   "}),
+                        ),
+                    ),
+                    artifact_refs=snapshot.exec_memory_pub.artifact_refs,
+                ),
+            ),
+            AuxiliarySupportAppendix(),
+        )
+
 
 def test_augment_snapshot_cannot_start_from_blank_core_wake_receipt_identity() -> None:
     snapshot = _make_snapshot()

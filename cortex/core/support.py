@@ -64,6 +64,10 @@ class SupportReference:
             raise ValueError(
                 "SupportReference.reference_id must be non-empty after trimming.",
             )
+        if any(not (isinstance(tag, str) and tag.strip()) for tag in self.tags):
+            raise ValueError(
+                "SupportReference.tags must contain only non-empty values after trimming.",
+            )
 
 
 @dataclass(frozen=True, slots=True)
