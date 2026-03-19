@@ -134,6 +134,28 @@ def test_wake_decision_requires_non_empty_reason_tags() -> None:
         )
 
 
+def test_wake_decision_requires_bool_full_commitment_required() -> None:
+    direct = WakeDecision(
+        full_commitment_required=False,
+        reason_tags=frozenset({"proposal-surface"}),
+    )
+    emitted = classify_dispatch(
+        _make_observation(
+            native_event_name="durable-write",
+            facet_tags=("durable-write",),
+        )
+    )
+
+    assert direct.full_commitment_required is False
+    assert emitted.wake_decision.full_commitment_required is True
+
+    with pytest.raises(
+        TypeError,
+        match="full_commitment_required must be bool, got str",
+    ):
+        WakeDecision(full_commitment_required="yes")
+
+
 def test_evidence_plan_requires_bool_fields() -> None:
     direct = EvidencePlan(
         requires_candidate_extraction=True,

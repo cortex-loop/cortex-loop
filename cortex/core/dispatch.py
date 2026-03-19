@@ -30,6 +30,12 @@ class WakeDecision:
     reason_tags: frozenset[str] = field(default_factory=frozenset)
 
     def __post_init__(self) -> None:
+        if not isinstance(self.full_commitment_required, bool):
+            actual_type = type(self.full_commitment_required).__name__
+            raise TypeError(
+                "WakeDecision.full_commitment_required must be bool, "
+                f"got {actual_type}.",
+            )
         if any(not reason_tag.strip() for reason_tag in self.reason_tags):
             raise ValueError(
                 "WakeDecision.reason_tags must contain only non-empty values after trimming.",
