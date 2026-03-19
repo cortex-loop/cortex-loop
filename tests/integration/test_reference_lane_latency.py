@@ -21,6 +21,9 @@ from cortex.drivers.reference_host_neutral import (
 from cortex.sre.allocation import AllocationScore, AllocationScorecard
 from cortex.sre.families import SoftControlFamily
 from cortex.sre.policy import neutral_dominance_decision
+from tests.integration._reference_lane_latency_evidence import (
+    serialize_reference_lane_latency_snapshot,
+)
 from tests.integration._reference_lane import (
     candidate_bearing_event,
     cheap_path_event,
@@ -36,6 +39,10 @@ MEASUREMENT_METHOD = "time.perf_counter_ns over in-process warmup plus fixed ite
 P95_METHOD = "nearest-rank over recorded samples"
 EXCLUSIONS_NOTE = (
     "host network/model latency and external tool runtime cost are excluded"
+)
+SUPPORTING_TEST_SURFACE = (
+    "tests/integration/test_reference_lane_latency.py::"
+    "test_reference_lane_latency_evidence_is_structurally_produced"
 )
 LATENCY_DOC_PATH = (
     Path(__file__).resolve().parents[2]
@@ -172,27 +179,33 @@ def test_reference_lane_latency_evidence_is_structurally_produced() -> None:
 def test_reference_lane_latency_evidence_matches_committed_doc() -> None:
     committed = _load_committed_latency_evidence()
     snapshot = collect_reference_lane_latency()
-    live_rows = {row.gate_row: row for row in snapshot.rows}
-
-    assert committed.measurement_date == snapshot.measurement_date
-    assert committed.method == snapshot.measurement_method
-    assert committed.environment in snapshot.environment_note
-    assert committed.warmup_count == WARMUP_COUNT
-    assert committed.measured_iterations_per_row == ITERATION_COUNT
-    assert committed.p95_method == P95_METHOD
-    assert committed.exclusions == EXCLUSIONS_NOTE
-    assert committed.measured_surfaces == MEASURED_SURFACES
-    assert (
-        committed.supporting_test_surface
-        == "tests/integration/test_reference_lane_latency.py::test_reference_lane_latency_evidence_is_structurally_produced"
+    candidate = serialize_reference_lane_latency_snapshot(
+        snapshot,
+        warmup_count=WARMUP_COUNT,
+        measured_iterations_per_row=ITERATION_COUNT,
+        p95_method=P95_METHOD,
+        exclusions=EXCLUSIONS_NOTE,
+        measured_surfaces=MEASURED_SURFACES,
+        supporting_test_surface=SUPPORTING_TEST_SURFACE,
     )
+    live_rows = {row["gate_row"]: row for row in candidate["rows"]}
+
+    assert committed.measurement_date == candidate["measurement_date"]
+    assert committed.method == candidate["method"]
+    assert committed.environment in str(candidate["environment"])
+    assert committed.warmup_count == candidate["warmup_count"]
+    assert committed.measured_iterations_per_row == candidate["measured_iterations_per_row"]
+    assert committed.p95_method == candidate["p95_method"]
+    assert committed.exclusions == candidate["exclusions"]
+    assert committed.measured_surfaces == tuple(candidate["measured_surfaces"])
+    assert committed.supporting_test_surface == candidate["supporting_test_surface"]
     assert tuple(live_rows) == tuple(row.gate_row for row in committed.rows)
 
     for row in committed.rows:
         live_row = live_rows[row.gate_row]
-        assert row.target_median_ms == live_row.target_median_ms
-        assert row.target_p95_ms == live_row.target_p95_ms
-        assert row.target_met is live_row.target_met
+        assert row.target_median_ms == live_row["target_median_ms"]
+        assert row.target_p95_ms == live_row["target_p95_ms"]
+        assert row.target_met is live_row["target_met"]
         _assert_latency_row_satisfies_committed_targets(
             gate_row=row.gate_row,
             median_ms=row.median_ms,
@@ -201,11 +214,11 @@ def test_reference_lane_latency_evidence_matches_committed_doc() -> None:
             target_p95_ms=row.target_p95_ms,
         )
         _assert_latency_row_satisfies_committed_targets(
-            gate_row=live_row.gate_row,
-            median_ms=live_row.median_ms,
-            p95_ms=live_row.p95_ms,
-            target_median_ms=live_row.target_median_ms,
-            target_p95_ms=live_row.target_p95_ms,
+            gate_row=str(live_row["gate_row"]),
+            median_ms=float(live_row["median_ms"]),
+            p95_ms=float(live_row["p95_ms"]),
+            target_median_ms=float(live_row["target_median_ms"]),
+            target_p95_ms=float(live_row["target_p95_ms"]),
         )
 
 

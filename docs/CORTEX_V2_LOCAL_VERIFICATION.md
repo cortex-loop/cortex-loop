@@ -7,15 +7,16 @@ Status: active local verification entry points for the landed v2 boundary
 
 This document records the repo-local verification commands for the landed Cortex v2 MVP.
 It does not add CI or evidence regeneration.
+For routine repo-local verification, use the two entry points below: `make verify` for the canonical bundle and `make test-smoke` for the smaller smoke bundle.
 
 ## Canonical bundle
 
 Direct commands:
 
 ```sh
-python3 -m pytest tests/unit
-python3 -m pytest tests/integration
-python3 -m pytest tests/unit/test_import_smoke.py
+python3 -m pytest tests/unit -q
+python3 -m pytest tests/integration -q
+python3 -m pytest tests/unit/test_import_smoke.py -q
 ```
 
 Repo-local entry point:
@@ -32,8 +33,15 @@ It is useful for quick local confidence only and must not be treated as full-sui
 Direct command:
 
 ```sh
-python3 -m pytest tests/unit/test_import_smoke.py \
-  tests/integration/test_reference_host_vertical_gate.py::test_driver_to_core_to_sre_smoke_stays_observe_bind_dispatch_and_neutral
+python3 -m pytest tests/unit/test_correspondence_core.py \
+  tests/unit/test_correspondence_ports.py \
+  tests/unit/test_correspondence_sre.py \
+  tests/unit/test_correspondence_periphery.py \
+  tests/integration/test_reference_host_vertical_gate.py \
+  tests/integration/test_reference_lane_latency.py \
+  tests/integration/test_reference_lane_packet_example.py \
+  tests/integration/test_aux_claim_conservative.py \
+  tests/unit/test_import_smoke.py -q
 ```
 
 Repo-local entry point:
@@ -45,7 +53,7 @@ make test-smoke
 ## Reference-lane packet-example revalidation
 
 This revalidates the committed reference-lane packet example doc against the already-landed live packet path.
-It does not regenerate candidate evidence and it does not overwrite the committed example doc.
+It does not emit candidate refreshed evidence and it does not overwrite the committed example doc.
 
 Direct command:
 
@@ -58,6 +66,25 @@ Repo-local entry point:
 ```sh
 make revalidate-reference-packet
 ```
+
+## Reference-lane packet-example candidate refresh
+
+This emits candidate refreshed packet-example evidence from the already-landed live packet path to stdout for manual inspection.
+It is useful context for the proof-packet prerequisite gate recorded in `docs/CORTEX_V2_IMPLEMENTATION_STATUS_NOTE.md`, but it does not update gate truth and it does not overwrite the committed example doc.
+
+Direct command:
+
+```sh
+python3 -m tests.integration._reference_lane_packet_example
+```
+
+Repo-local entry point:
+
+```sh
+make emit-reference-packet-candidate
+```
+
+Exact committed-doc regeneration is still not part of normal verification and remains explicit/manual/out of scope unless separately requested.
 
 ## Latency-evidence revalidation
 
@@ -76,6 +103,25 @@ Repo-local entry point:
 ```sh
 make revalidate-latency-evidence
 ```
+
+## Latency-evidence candidate refresh
+
+This emits candidate refreshed latency evidence from the already-landed live collector to stdout for manual inspection.
+It is useful context for the landed latency evidence gate recorded in `docs/CORTEX_V2_IMPLEMENTATION_STATUS_NOTE.md`, but it does not update gate truth and it does not overwrite the committed latency doc.
+
+Direct command:
+
+```sh
+python3 -m tests.integration._reference_lane_latency_evidence
+```
+
+Repo-local entry point:
+
+```sh
+make emit-latency-evidence-candidate
+```
+
+Exact committed-doc regeneration is still explicit/manual/out of scope unless separately requested.
 
 ## Individual entry points
 
@@ -166,7 +212,19 @@ This repo now has repo-local coverage configuration in `.coveragerc`.
 This seam adds one local coverage invocation and one matching repo-local entry point.
 
 Coverage is still not part of the canonical local verification bundle.
-Coverage tooling is not installed by default in the current repo environment, so future coverage runs require a local tool that provides `python3 -m coverage`.
+Minimal local prerequisite: install a package that provides `python3 -m coverage`.
+Coverage tooling is not installed by default in the current repo environment, so `make coverage` will fail until that prerequisite is present.
+
+Current repo-local coverage scope from `.coveragerc`:
+
+- executed Python under `cortex/`
+- executed test code under `tests/`
+
+This coverage surface does not cover:
+
+- `docs/`, `.claude/`, or other non-Python repo content
+- files outside `cortex/` and `tests/`
+- any threshold, pass/fail gate, or reinterpretation of MVP completeness from first coverage numbers
 
 Direct command:
 
