@@ -40,6 +40,10 @@ class DegradationRecord:
             raise ValueError(
                 "DegradationRecord.reason_code must be non-empty after trimming.",
             )
+        if any(not (isinstance(tag, str) and tag.strip()) for tag in self.capability_tags):
+            raise ValueError(
+                "DegradationRecord.capability_tags must contain only non-empty values after trimming.",
+            )
 
 
 @dataclass(frozen=True, slots=True)

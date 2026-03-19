@@ -1263,6 +1263,24 @@ def test_degradation_and_error_records_preserve_reason_and_capabilities() -> Non
     with pytest.raises(ValueError, match="reason_code must be non-empty after trimming"):
         DegradationRecord(reason_code="   ")
 
+    with pytest.raises(
+        ValueError,
+        match="capability_tags must contain only non-empty values after trimming",
+    ):
+        DegradationRecord(
+            reason_code="provenance-unavailable",
+            capability_tags=frozenset({""}),
+        )
+
+    with pytest.raises(
+        ValueError,
+        match="capability_tags must contain only non-empty values after trimming",
+    ):
+        DegradationRecord(
+            reason_code="provenance-unavailable",
+            capability_tags=frozenset({"   "}),
+        )
+
 
 def test_commitment_verdict_holds_typed_certification_references() -> None:
     contradiction = ContradictionRecord(
