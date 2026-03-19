@@ -51,6 +51,10 @@ class RuntimeRecord:
             raise ValueError(
                 "RuntimeRecord.record_id must be non-empty after trimming when provided.",
             )
+        if any(not (isinstance(tag, str) and tag.strip()) for tag in self.tags):
+            raise ValueError(
+                "RuntimeRecord.tags must contain only non-empty values after trimming.",
+            )
 
 
 @dataclass(frozen=True, slots=True)

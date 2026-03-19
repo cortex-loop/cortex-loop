@@ -135,6 +135,18 @@ def test_lifecycle_event_and_observation_carriers_construct_cleanly() -> None:
     ):
         RuntimeRecord(record_type="tool-result", record_id="   ")
 
+    with pytest.raises(
+        ValueError,
+        match="tags must contain only non-empty values after trimming",
+    ):
+        RuntimeRecord(record_type="tool-result", tags=frozenset({""}))
+
+    with pytest.raises(
+        ValueError,
+        match="tags must contain only non-empty values after trimming",
+    ):
+        RuntimeRecord(record_type="tool-result", tags=frozenset({"   "}))
+
     with pytest.raises(ValueError, match="runtime_name must be non-empty after trimming"):
         LifecycleSurface(runtime_name="")
 
