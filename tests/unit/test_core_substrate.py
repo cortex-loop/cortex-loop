@@ -353,6 +353,55 @@ def test_support_snapshot_requires_typed_components() -> None:
         )
 
 
+def test_support_state_requires_typed_components() -> None:
+    state = SupportState(
+        trace=SupportTraceState(),
+        session=SupportSessionState(),
+        host=SupportHostState(),
+        exec_memory_pub=SupportExecMemoryState(),
+    )
+
+    assert isinstance(state.trace, SupportTraceState)
+    assert isinstance(state.session, SupportSessionState)
+    assert isinstance(state.host, SupportHostState)
+    assert isinstance(state.exec_memory_pub, SupportExecMemoryState)
+
+    with pytest.raises(TypeError, match="trace must be SupportTraceState, got str"):
+        SupportState(
+            trace="not-a-trace",
+            session=SupportSessionState(),
+            host=SupportHostState(),
+            exec_memory_pub=SupportExecMemoryState(),
+        )
+
+    with pytest.raises(TypeError, match="session must be SupportSessionState, got str"):
+        SupportState(
+            trace=SupportTraceState(),
+            session="not-a-session",
+            host=SupportHostState(),
+            exec_memory_pub=SupportExecMemoryState(),
+        )
+
+    with pytest.raises(TypeError, match="host must be SupportHostState, got str"):
+        SupportState(
+            trace=SupportTraceState(),
+            session=SupportSessionState(),
+            host="not-a-host",
+            exec_memory_pub=SupportExecMemoryState(),
+        )
+
+    with pytest.raises(
+        TypeError,
+        match="exec_memory_pub must be SupportExecMemoryState, got str",
+    ):
+        SupportState(
+            trace=SupportTraceState(),
+            session=SupportSessionState(),
+            host=SupportHostState(),
+            exec_memory_pub="not-exec-memory",
+        )
+
+
 def test_support_trace_requires_non_empty_candidate_refs() -> None:
     trace = SupportTraceState(
         candidate_refs=("candidate-1",),
