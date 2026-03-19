@@ -45,6 +45,12 @@ class RuntimeRecord:
             raise ValueError(
                 "RuntimeRecord.record_type must be non-empty after trimming.",
             )
+        if self.record_id is not None and not (
+            isinstance(self.record_id, str) and self.record_id.strip()
+        ):
+            raise ValueError(
+                "RuntimeRecord.record_id must be non-empty after trimming when provided.",
+            )
 
 
 @dataclass(frozen=True, slots=True)
