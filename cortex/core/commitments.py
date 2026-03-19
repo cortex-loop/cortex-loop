@@ -24,6 +24,12 @@ class CommitmentCandidate:
     payload_handle: EventPayloadHandle | None = None
     metadata: tuple[MetadataField, ...] = field(default_factory=tuple)
 
+    def __post_init__(self) -> None:
+        if not (isinstance(self.candidate_id, str) and self.candidate_id.strip()):
+            raise ValueError(
+                "CommitmentCandidate.candidate_id must be non-empty after trimming.",
+            )
+
 
 @dataclass(frozen=True, slots=True)
 class ProvenanceEvidenceRef:

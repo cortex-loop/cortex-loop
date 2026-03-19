@@ -220,6 +220,18 @@ def test_commitment_status_is_the_exact_three_state_lattice() -> None:
     }
 
 
+def test_commitment_candidate_requires_non_empty_identity() -> None:
+    candidate = CommitmentCandidate(candidate_id="candidate-1")
+
+    assert candidate.candidate_id == "candidate-1"
+
+    with pytest.raises(ValueError, match="candidate_id must be non-empty after trimming"):
+        CommitmentCandidate(candidate_id="")
+
+    with pytest.raises(ValueError, match="candidate_id must be non-empty after trimming"):
+        CommitmentCandidate(candidate_id="   ")
+
+
 def test_provenance_manifest_supports_multiple_domain_agnostic_source_families() -> None:
     manifest = ProvenanceManifest(
         evidence_refs=(
