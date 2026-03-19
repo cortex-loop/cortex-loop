@@ -61,6 +61,11 @@ class ReferenceControlAllocationView:
             raise ValueError(
                 "ReferenceControlAllocationView.budget_band must be non-empty after trimming."
             )
+        if any(not isinstance(family, SoftControlFamily) for family in self.top_family_set):
+            raise TypeError(
+                "ReferenceControlAllocationView.top_family_set must contain only "
+                "SoftControlFamily instances."
+            )
 
 
 @dataclass(frozen=True, slots=True)
