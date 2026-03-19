@@ -181,6 +181,12 @@ class CommitmentVerdict:
     metadata: tuple[MetadataField, ...] = field(default_factory=tuple)
 
     def __post_init__(self) -> None:
+        if not isinstance(self.status, CommitmentStatus):
+            actual_type = type(self.status).__name__
+            raise TypeError(
+                "CommitmentVerdict.status must be CommitmentStatus, "
+                f"got {actual_type}.",
+            )
         if not isinstance(self.candidate, CommitmentCandidate):
             actual_type = type(self.candidate).__name__
             raise TypeError(

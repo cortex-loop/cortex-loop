@@ -1594,6 +1594,17 @@ def test_commitment_verdict_holds_typed_certification_references() -> None:
 
     with pytest.raises(
         TypeError,
+        match="status must be CommitmentStatus, got str",
+    ):
+        CommitmentVerdict(
+            status="uncertified",
+            candidate=CommitmentCandidate(candidate_id="candidate-1"),
+            provenance_manifest=manifest,
+            boundary_assessment=boundary,
+        )
+
+    with pytest.raises(
+        TypeError,
         match="candidate must be CommitmentCandidate, got str",
     ):
         CommitmentVerdict(
