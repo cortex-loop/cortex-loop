@@ -24,6 +24,10 @@ class LifecycleEffectBinding:
             raise ValueError(
                 "LifecycleEffectBinding.consequence_tags must contain only non-empty values after trimming.",
             )
+        if any(not isinstance(field, MetadataField) for field in self.metadata):
+            raise TypeError(
+                "LifecycleEffectBinding.metadata must contain only MetadataField instances.",
+            )
 
 
 @dataclass(frozen=True, slots=True)

@@ -119,6 +119,15 @@ def test_lifecycle_event_and_observation_carriers_construct_cleanly() -> None:
 
     with pytest.raises(
         TypeError,
+        match="metadata must contain only MetadataField instances",
+    ):
+        LifecycleEffectBinding(
+            action_tag="bounded_prose",
+            metadata=("not-field",),
+        )
+
+    with pytest.raises(
+        TypeError,
         match="effect_map must contain only LifecycleEffectBinding instances",
     ):
         LifecycleSurface(
