@@ -1263,6 +1263,12 @@ def test_provenance_manifest_supports_multiple_domain_agnostic_source_families()
     ]
     assert manifest.metadata[0].value == "downward-first"
 
+    with pytest.raises(
+        TypeError,
+        match="evidence_refs must contain only ProvenanceEvidenceRef instances",
+    ):
+        ProvenanceManifest(evidence_refs=("not-an-evidence-ref",))
+
     with pytest.raises(ValueError, match="source_family must be non-empty after trimming"):
         ProvenanceEvidenceRef(
             source_family="",

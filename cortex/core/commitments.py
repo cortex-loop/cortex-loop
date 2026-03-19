@@ -80,6 +80,12 @@ class ProvenanceManifest:
     contradiction_refs: tuple[ContradictionRecord, ...] = field(default_factory=tuple)
     metadata: tuple[MetadataField, ...] = field(default_factory=tuple)
 
+    def __post_init__(self) -> None:
+        if any(not isinstance(ref, ProvenanceEvidenceRef) for ref in self.evidence_refs):
+            raise TypeError(
+                "ProvenanceManifest.evidence_refs must contain only ProvenanceEvidenceRef instances.",
+            )
+
 
 def _has_concrete_evidence_ref(provenance_manifest: ProvenanceManifest | None) -> bool:
     if not isinstance(provenance_manifest, ProvenanceManifest):
