@@ -448,6 +448,14 @@ def test_neutral_dominance_decision_requires_numeric_activation_threshold() -> N
         )
 
 
+def test_neutral_dominance_requires_typed_scorecard() -> None:
+    with pytest.raises(
+        TypeError,
+        match="neutral_dominance_decision.scorecard must be AllocationScorecard",
+    ):
+        neutral_dominance_decision("not-scorecard")
+
+
 def test_neutral_dominance_returns_neutral_when_margin_is_below_threshold() -> None:
     decision = neutral_dominance_decision(
         AllocationScorecard(

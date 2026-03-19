@@ -44,6 +44,12 @@ class NeutralDominanceDecision:
 
 
 def neutral_dominance_decision(scorecard: AllocationScorecard) -> NeutralDominanceDecision:
+    if not isinstance(scorecard, AllocationScorecard):
+        actual_type = type(scorecard).__name__
+        raise TypeError(
+            "neutral_dominance_decision.scorecard must be AllocationScorecard, "
+            f"got {actual_type}."
+        )
     scores_by_family = _scores_by_family(scorecard.scores)
     neutral_score = scores_by_family.get(SoftControlFamily.NEUTRAL)
     if neutral_score is None:
