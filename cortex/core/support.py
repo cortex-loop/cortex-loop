@@ -134,6 +134,10 @@ class SupportSessionState:
             raise ValueError(
                 "SupportSessionState.reminders must contain only non-empty values after trimming.",
             )
+        if any(not isinstance(counter, SupportCounter) for counter in self.wake_counters):
+            raise TypeError(
+                "SupportSessionState.wake_counters must contain only SupportCounter instances.",
+            )
         if any(
             not (isinstance(role_view_tag, str) and role_view_tag.strip())
             for role_view_tag in self.role_view_tags

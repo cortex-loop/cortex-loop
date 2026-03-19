@@ -446,6 +446,7 @@ def test_support_session_requires_non_empty_pending_goal_refs() -> None:
     assert session.budget_history == ("budget/neutral",)
     assert session.brake_history == ("quiescent",)
     assert session.reminders == ("review later",)
+    assert session.wake_counters[0].counter_tag == "candidate-bearing"
 
     with pytest.raises(
         ValueError,
@@ -543,6 +544,20 @@ def test_support_session_requires_non_empty_pending_goal_refs() -> None:
             brake_history=("quiescent",),
             wake_counters=(SupportCounter("candidate-bearing", 1),),
             reminders=("   ",),
+        )
+
+    with pytest.raises(
+        TypeError,
+        match="wake_counters must contain only SupportCounter instances",
+    ):
+        SupportSessionState(
+            branch_registry=("main",),
+            pending_goal_refs=("goal-1",),
+            role_view_tags=frozenset({"goal_continuity"}),
+            budget_history=("budget/neutral",),
+            brake_history=("quiescent",),
+            wake_counters=("counter-1",),
+            reminders=("review later",),
         )
 
     with pytest.raises(
