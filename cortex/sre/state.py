@@ -119,6 +119,12 @@ class ReferenceExecutiveState:
                 "ReferenceExecutiveState.uncertainty_monitoring must be "
                 f"ReferenceUncertaintyMonitoringView, got {actual_type}."
             )
+        if not isinstance(self.mode_and_gating, ReferenceModeAndGatingView):
+            actual_type = type(self.mode_and_gating).__name__
+            raise TypeError(
+                "ReferenceExecutiveState.mode_and_gating must be "
+                f"ReferenceModeAndGatingView, got {actual_type}."
+            )
 
 
 __all__ = [
