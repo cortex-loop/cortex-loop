@@ -27,6 +27,10 @@ class UncertaintyEstimate:
                 f"Unknown uncertainty class {self.class_tag!r}; "
                 f"expected one of {sorted(REFERENCE_UNCERTAINTY_CLASSES)!r}."
             )
+        if any(not source_tag.strip() for source_tag in self.source_tags):
+            raise ValueError(
+                "UncertaintyEstimate.source_tags must contain only non-empty values after trimming."
+            )
         if not 0.0 <= self.level <= 1.0:
             raise ValueError("UncertaintyEstimate.level must be between 0.0 and 1.0.")
 

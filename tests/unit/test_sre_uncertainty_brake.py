@@ -35,6 +35,27 @@ def test_uncertainty_estimate_enforces_bounded_values() -> None:
         raise AssertionError("UncertaintyEstimate accepted an out-of-range value.")
 
 
+def test_uncertainty_estimate_requires_non_empty_source_tags() -> None:
+    estimate = UncertaintyEstimate(
+        class_tag="evidence",
+        level=0.25,
+        source_tags=frozenset({"runtime-record"}),
+    )
+
+    assert estimate.source_tags == frozenset({"runtime-record"})
+
+    try:
+        UncertaintyEstimate(
+            class_tag="evidence",
+            level=0.25,
+            source_tags=frozenset({"   "}),
+        )
+    except ValueError as exc:
+        assert "source_tags must contain only non-empty values after trimming" in str(exc)
+    else:
+        raise AssertionError("UncertaintyEstimate accepted a blank source tag.")
+
+
 def test_brake_state_set_is_exact() -> None:
     assert {state.value for state in BrakeState} == {
         "quiescent",
