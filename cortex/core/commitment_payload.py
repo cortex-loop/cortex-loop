@@ -20,6 +20,24 @@ class CommitmentPayloadExtraction:
     normalization_count: int
 
     def __post_init__(self) -> None:
+        if self.commitment_fields is not None:
+            if not isinstance(self.commitment_fields, dict):
+                actual_type = type(self.commitment_fields).__name__
+                raise TypeError(
+                    "CommitmentPayloadExtraction.commitment_fields must be dict[str, Any] | None, "
+                    f"got {actual_type}.",
+                )
+            for key in self.commitment_fields:
+                if not isinstance(key, str):
+                    actual_type = type(key).__name__
+                    raise TypeError(
+                        "CommitmentPayloadExtraction.commitment_fields must contain only string keys, "
+                        f"got {actual_type}.",
+                    )
+                if not key.strip():
+                    raise ValueError(
+                        "CommitmentPayloadExtraction.commitment_fields must contain only non-empty string keys after trimming.",
+                    )
         if self.source is not None and not (
             isinstance(self.source, str) and self.source.strip()
         ):

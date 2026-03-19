@@ -121,6 +121,74 @@ def test_commitment_payload_extraction_source_requires_non_empty_string_when_pre
         )
 
 
+def test_commitment_payload_extraction_commitment_fields_require_valid_dict_keys() -> None:
+    direct = CommitmentPayloadExtraction(
+        commitment_fields={"field": "value"},
+        source=None,
+        warnings=(),
+        normalization_count=0,
+    )
+    extracted = extract_commitment_payload({"stop_fields": {" key ": "value"}})
+
+    assert direct.commitment_fields == {"field": "value"}
+    assert extracted.commitment_fields == {"key": "value"}
+
+    with pytest.raises(
+        TypeError,
+        match=r"commitment_fields must be dict\[str, Any\] \| None, got tuple",
+    ):
+        CommitmentPayloadExtraction(
+            commitment_fields=("not-a-dict",),
+            source=None,
+            warnings=(),
+            normalization_count=0,
+        )
+
+    with pytest.raises(
+        TypeError,
+        match=r"commitment_fields must be dict\[str, Any\] \| None, got list",
+    ):
+        CommitmentPayloadExtraction(
+            commitment_fields=["not-a-dict"],
+            source=None,
+            warnings=(),
+            normalization_count=0,
+        )
+
+    with pytest.raises(
+        TypeError,
+        match="commitment_fields must contain only string keys, got int",
+    ):
+        CommitmentPayloadExtraction(
+            commitment_fields={1: "a"},
+            source=None,
+            warnings=(),
+            normalization_count=0,
+        )
+
+    with pytest.raises(
+        ValueError,
+        match="commitment_fields must contain only non-empty string keys after trimming",
+    ):
+        CommitmentPayloadExtraction(
+            commitment_fields={"": "a"},
+            source=None,
+            warnings=(),
+            normalization_count=0,
+        )
+
+    with pytest.raises(
+        ValueError,
+        match="commitment_fields must contain only non-empty string keys after trimming",
+    ):
+        CommitmentPayloadExtraction(
+            commitment_fields={"   ": "a"},
+            source=None,
+            warnings=(),
+            normalization_count=0,
+        )
+
+
 def test_commitment_payload_extraction_warnings_require_non_empty_strings() -> None:
     direct = CommitmentPayloadExtraction(
         commitment_fields=None,
