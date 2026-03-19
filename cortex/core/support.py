@@ -94,6 +94,15 @@ class SupportSessionState:
     wake_counters: tuple[SupportCounter, ...] = field(default_factory=tuple)
     reminders: tuple[str, ...] = field(default_factory=tuple)
 
+    def __post_init__(self) -> None:
+        if any(
+            not (isinstance(goal_ref, str) and goal_ref.strip())
+            for goal_ref in self.pending_goal_refs
+        ):
+            raise ValueError(
+                "SupportSessionState.pending_goal_refs must contain only non-empty values after trimming.",
+            )
+
 
 @dataclass(frozen=True, slots=True)
 class SupportHostState:
