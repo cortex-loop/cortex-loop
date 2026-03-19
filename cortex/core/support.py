@@ -86,6 +86,10 @@ class SupportTraceState:
             raise ValueError(
                 "SupportTraceState.candidate_refs must contain only non-empty values after trimming.",
             )
+        if any(not isinstance(receipt, WakeReceipt) for receipt in self.wake_receipts):
+            raise TypeError(
+                "SupportTraceState.wake_receipts must contain only WakeReceipt instances.",
+            )
 
 
 @dataclass(frozen=True, slots=True)

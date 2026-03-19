@@ -225,6 +225,23 @@ def test_augment_snapshot_cannot_start_from_blank_core_wake_receipt_identity() -
         )
 
     with pytest.raises(
+        TypeError,
+        match="wake_receipts must contain only WakeReceipt instances",
+    ):
+        augment_snapshot(
+            SupportSnapshot(
+                trace=SupportTraceState(
+                    candidate_refs=snapshot.trace.candidate_refs,
+                    wake_receipts=("receipt-1",),
+                ),
+                session=snapshot.session,
+                host=snapshot.host,
+                exec_memory_pub=snapshot.exec_memory_pub,
+            ),
+            AuxiliarySupportAppendix(),
+        )
+
+    with pytest.raises(
         ValueError,
         match="event_name must be non-empty after trimming when provided",
     ):

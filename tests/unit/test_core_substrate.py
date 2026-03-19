@@ -409,6 +409,7 @@ def test_support_trace_requires_non_empty_candidate_refs() -> None:
     )
 
     assert trace.candidate_refs == ("candidate-1",)
+    assert trace.wake_receipts[0].reason_tag == "candidate-present"
 
     with pytest.raises(
         ValueError,
@@ -426,6 +427,15 @@ def test_support_trace_requires_non_empty_candidate_refs() -> None:
         SupportTraceState(
             candidate_refs=("   ",),
             wake_receipts=(WakeReceipt("candidate-present", "approval/request"),),
+        )
+
+    with pytest.raises(
+        TypeError,
+        match="wake_receipts must contain only WakeReceipt instances",
+    ):
+        SupportTraceState(
+            candidate_refs=("candidate-1",),
+            wake_receipts=("receipt-1",),
         )
 
 
