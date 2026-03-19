@@ -1287,6 +1287,26 @@ def test_provenance_manifest_supports_multiple_domain_agnostic_source_families()
             reference_id="   ",
         )
 
+    with pytest.raises(
+        ValueError,
+        match="source_tags must contain only non-empty values after trimming",
+    ):
+        ProvenanceEvidenceRef(
+            source_family="result_artifact",
+            reference_id="result-1",
+            source_tags=frozenset({""}),
+        )
+
+    with pytest.raises(
+        ValueError,
+        match="source_tags must contain only non-empty values after trimming",
+    ):
+        ProvenanceEvidenceRef(
+            source_family="result_artifact",
+            reference_id="result-1",
+            source_tags=frozenset({"   "}),
+        )
+
 
 def test_boundary_assessment_keeps_blockedness_separate_from_commitment_status() -> None:
     blocked = BoundaryAssessment(

@@ -64,6 +64,10 @@ class ProvenanceEvidenceRef:
             raise ValueError(
                 "ProvenanceEvidenceRef.reference_id must be non-empty after trimming.",
             )
+        if any(not (isinstance(tag, str) and tag.strip()) for tag in self.source_tags):
+            raise ValueError(
+                "ProvenanceEvidenceRef.source_tags must contain only non-empty values after trimming.",
+            )
 
 
 @dataclass(frozen=True, slots=True)
