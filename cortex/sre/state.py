@@ -26,6 +26,11 @@ class ReferenceUncertaintyMonitoringView:
                 "ReferenceUncertaintyMonitoringView.classwise_uncertainty must "
                 "contain only UncertaintyEstimate instances."
             )
+        if any(not flag.strip() for flag in self.contradiction_spike_flags):
+            raise ValueError(
+                "ReferenceUncertaintyMonitoringView.contradiction_spike_flags must "
+                "contain only non-empty values after trimming."
+            )
 
 
 @dataclass(frozen=True, slots=True)

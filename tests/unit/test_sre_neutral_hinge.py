@@ -108,6 +108,25 @@ def test_reference_uncertainty_monitoring_view_requires_typed_classwise_uncertai
         ReferenceUncertaintyMonitoringView(classwise_uncertainty=("not-estimate",))
 
 
+def test_reference_uncertainty_monitoring_view_requires_non_empty_contradiction_spike_flags() -> None:
+    view = ReferenceUncertaintyMonitoringView(
+        contradiction_spike_flags=frozenset({"host-spike"}),
+    )
+
+    assert view.contradiction_spike_flags == frozenset({"host-spike"})
+
+    with pytest.raises(
+        ValueError,
+        match=(
+            "ReferenceUncertaintyMonitoringView.contradiction_spike_flags must "
+            "contain only non-empty values after trimming."
+        ),
+    ):
+        ReferenceUncertaintyMonitoringView(
+            contradiction_spike_flags=frozenset({"   "})
+        )
+
+
 def test_reference_state_surface_does_not_export_duplicate_uncertainty_carrier() -> None:
     from cortex.sre import state as state_module
 
