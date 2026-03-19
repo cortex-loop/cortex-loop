@@ -257,6 +257,18 @@ def test_reference_state_surface_does_not_export_duplicate_uncertainty_carrier()
     assert not hasattr(state_module, "ReferenceUncertaintyReading")
 
 
+def test_allocation_score_requires_typed_family() -> None:
+    score = AllocationScore(SoftControlFamily.NEUTRAL, 1.0)
+
+    assert score.family is SoftControlFamily.NEUTRAL
+
+    with pytest.raises(
+        TypeError,
+        match="AllocationScore.family must be SoftControlFamily",
+    ):
+        AllocationScore("neutral", 1.0)
+
+
 def test_neutral_dominance_returns_neutral_when_margin_is_below_threshold() -> None:
     decision = neutral_dominance_decision(
         AllocationScorecard(

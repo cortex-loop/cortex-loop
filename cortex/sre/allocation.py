@@ -14,6 +14,14 @@ class AllocationScore:
     admissible: bool = True
     reason_tags: frozenset[str] = field(default_factory=frozenset)
 
+    def __post_init__(self) -> None:
+        if not isinstance(self.family, SoftControlFamily):
+            actual_type = type(self.family).__name__
+            raise TypeError(
+                "AllocationScore.family must be SoftControlFamily, "
+                f"got {actual_type}."
+            )
+
 
 @dataclass(frozen=True, slots=True)
 class AllocationScorecard:
