@@ -147,6 +147,15 @@ def test_lifecycle_event_envelope_rejects_empty_or_whitespace_only_native_event_
 
     with pytest.raises(
         TypeError,
+        match="payload_metadata must contain only MetadataField instances",
+    ):
+        LifecycleEventEnvelope(
+            native_event_name="turn/complete",
+            payload_metadata=("not-field",),
+        )
+
+    with pytest.raises(
+        TypeError,
         match="payload_handle must be EventPayloadHandle when provided, got str",
     ):
         LifecycleEventEnvelope(

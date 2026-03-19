@@ -209,6 +209,29 @@ def test_augment_snapshot_cannot_start_from_untyped_payload_handle() -> None:
             AuxiliarySupportAppendix(),
         )
 
+    with pytest.raises(
+        TypeError,
+        match="payload_metadata must contain only MetadataField instances",
+    ):
+        augment_snapshot(
+            SupportSnapshot(
+                trace=SupportTraceState(
+                    recent_events=(
+                        LifecycleEventEnvelope(
+                            native_event_name="turn/complete",
+                            payload_metadata=("not-field",),
+                        ),
+                    ),
+                    candidate_refs=snapshot.trace.candidate_refs,
+                    wake_receipts=snapshot.trace.wake_receipts,
+                ),
+                session=snapshot.session,
+                host=snapshot.host,
+                exec_memory_pub=snapshot.exec_memory_pub,
+            ),
+            AuxiliarySupportAppendix(),
+        )
+
 
 def test_aux_burden_report_enforces_non_negative_values() -> None:
     burden = AuxBurdenReport(
