@@ -227,6 +227,9 @@ def _delta_type(payload: Mapping[str, Any]) -> str | None:
 
 
 def _validate_warning_tuple(warnings: tuple[str, ...], label: str) -> None:
+    if not isinstance(warnings, tuple):
+        actual_type = type(warnings).__name__
+        raise TypeError(f"{label} must be tuple[str, ...], got {actual_type}.")
     for warning in warnings:
         if not isinstance(warning, str):
             actual_type = type(warning).__name__

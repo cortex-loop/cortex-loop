@@ -250,6 +250,12 @@ def test_aux_burden_report_enforces_non_negative_values() -> None:
     with pytest.raises(ValueError, match="non-negative"):
         AuxBurdenReport(latency_overhead=-0.1)
 
+    with pytest.raises(ValueError, match="latency_overhead must be finite"):
+        AuxBurdenReport(latency_overhead=float("nan"))
+
+    with pytest.raises(ValueError, match="latency_overhead must be finite"):
+        AuxBurdenReport(latency_overhead=float("inf"))
+
 
 def test_aux_burden_report_rejects_boolean_values() -> None:
     with pytest.raises(TypeError, match="compute_overhead must be numeric, got bool"):
@@ -263,6 +269,12 @@ def test_aux_burden_report_requires_typed_metadata() -> None:
     burden = AuxBurdenReport(metadata=(MetadataField("source", "aux"),))
 
     assert burden.metadata[0].key == "source"
+
+    with pytest.raises(
+        TypeError,
+        match="AuxBurdenReport\\.metadata must be tuple\\[MetadataField, \\.\\.\\.\\], got list",
+    ):
+        AuxBurdenReport(metadata=[MetadataField("source", "aux")])
 
     with pytest.raises(
         TypeError,

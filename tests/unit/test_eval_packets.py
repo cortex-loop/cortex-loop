@@ -250,6 +250,18 @@ def test_packet_publication_surfaces_require_typed_members_and_clean_fields() ->
 
     with pytest.raises(
         TypeError,
+        match="WithheldField\\.field_ref must be str, got int",
+    ):
+        WithheldField(field_ref=1, reason_code="truthful-withheld")
+
+    with pytest.raises(
+        TypeError,
+        match="WithheldField\\.reason_code must be str, got int",
+    ):
+        WithheldField(field_ref="current_pair.candidate_id", reason_code=1)
+
+    with pytest.raises(
+        TypeError,
         match="build_evaluation_packet\\.harness_result must be EvaluationHarnessResult, got str",
     ):
         build_evaluation_packet(harness_result="not-a-harness")
@@ -270,4 +282,26 @@ def test_packet_publication_surfaces_require_typed_members_and_clean_fields() ->
         build_evaluation_packet(
             harness_result=harness_result,
             warnings=("   ",),
+        )
+
+    with pytest.raises(
+        TypeError,
+        match="EvaluationPacket\\.withheld_fields must be tuple\\[WithheldField, \\.\\.\\.\\], got list",
+    ):
+        EvaluationPacket(
+            harness_result=harness_result,
+            packet_kind=EvaluationPacketKind.CURRENT_PAIR,
+            current_pair=current_pair,
+            withheld_fields=[WithheldField(field_ref="current_pair.candidate_id", reason_code="truthful-withheld")],
+        )
+
+    with pytest.raises(
+        TypeError,
+        match="EvaluationPacket\\.warnings must be tuple\\[str, \\.\\.\\.\\], got list",
+    ):
+        EvaluationPacket(
+            harness_result=harness_result,
+            packet_kind=EvaluationPacketKind.CURRENT_PAIR,
+            current_pair=current_pair,
+            warnings=["p"],
         )

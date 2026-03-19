@@ -250,6 +250,16 @@ def test_openai_host_commitment_result_requires_typed_components_and_clean_warni
             warnings=("   ",),
         )
 
+    with pytest.raises(
+        TypeError,
+        match="warnings must be tuple\\[str, \\.\\.\\.\\], got list",
+    ):
+        OpenAIHostCommitmentResult(
+            bound_event=bound,
+            dispatch_decision=result.dispatch_decision,
+            warnings=["x"],
+        )
+
 
 def test_openai_commitment_entrypoints_require_typed_inputs() -> None:
     bound = observe_openai_host_event("response.output_text.delta", {"response_id": "oa-bind-1"})

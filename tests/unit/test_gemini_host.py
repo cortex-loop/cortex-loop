@@ -131,6 +131,17 @@ def test_bound_gemini_host_event_requires_clean_warnings_and_typed_bind_input() 
 
     with pytest.raises(
         TypeError,
+        match="warnings must be tuple\\[str, \\.\\.\\.\\], got list",
+    ):
+        BoundGeminiHostEvent(
+            lifecycle_surface=bound.lifecycle_surface,
+            observation=bound.observation,
+            normalized_payload=bound.normalized_payload,
+            warnings=["x"],
+        )
+
+    with pytest.raises(
+        TypeError,
         match="warnings must contain only str instances, got int",
     ):
         BoundGeminiHostEvent(

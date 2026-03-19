@@ -126,6 +126,11 @@ class BlockerFragment:
     metadata: tuple[MetadataField, ...] = field(default_factory=tuple)
 
     def __post_init__(self) -> None:
+        if not isinstance(self.reason_code, str):
+            actual_type = type(self.reason_code).__name__
+            raise TypeError(
+                f"BlockerFragment.reason_code must be str, got {actual_type}.",
+            )
         if not self.reason_code.strip():
             raise ValueError("BlockerFragment.reason_code must be non-empty after trimming.")
         _validate_tag_set(self.boundary_tags, "BlockerFragment.boundary_tags")
@@ -148,6 +153,9 @@ class BlockerFragment:
 
 
 def _validate_string_tuple(values: tuple[str, ...], label: str) -> None:
+    if not isinstance(values, tuple):
+        actual_type = type(values).__name__
+        raise TypeError(f"{label} must be tuple[str, ...], got {actual_type}.")
     for value in values:
         if not isinstance(value, str):
             actual_type = type(value).__name__
@@ -157,6 +165,9 @@ def _validate_string_tuple(values: tuple[str, ...], label: str) -> None:
 
 
 def _validate_tag_set(values: frozenset[str], label: str) -> None:
+    if not isinstance(values, frozenset):
+        actual_type = type(values).__name__
+        raise TypeError(f"{label} must be frozenset[str], got {actual_type}.")
     for value in values:
         if not isinstance(value, str):
             actual_type = type(value).__name__
@@ -166,6 +177,11 @@ def _validate_tag_set(values: frozenset[str], label: str) -> None:
 
 
 def _validate_typed_tuple(values: tuple[object, ...], expected_type: type[object], label: str) -> None:
+    if not isinstance(values, tuple):
+        actual_type = type(values).__name__
+        raise TypeError(
+            f"{label} must be tuple[{expected_type.__name__}, ...], got {actual_type}.",
+        )
     for value in values:
         if not isinstance(value, expected_type):
             raise TypeError(

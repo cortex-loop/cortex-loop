@@ -165,3 +165,14 @@ def test_gemini_neutral_carriers_require_typed_components_and_clean_warnings() -
             neutral_decision=decision,
             warnings=("   ",),
         )
+
+    with pytest.raises(
+        TypeError,
+        match="warnings must be tuple\\[str, \\.\\.\\.\\], got list",
+    ):
+        GeminiHostNeutralResult(
+            bound_event=bound,
+            dispatch_decision=result.dispatch_decision,
+            neutral_decision=decision,
+            warnings=["x"],
+        )

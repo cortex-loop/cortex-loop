@@ -250,6 +250,16 @@ def test_gemini_host_commitment_result_requires_typed_components_and_clean_warni
             warnings=("   ",),
         )
 
+    with pytest.raises(
+        TypeError,
+        match="warnings must be tuple\\[str, \\.\\.\\.\\], got list",
+    ):
+        GeminiHostCommitmentResult(
+            bound_event=bound,
+            dispatch_decision=result.dispatch_decision,
+            warnings=["x"],
+        )
+
 
 def test_gemini_commitment_entrypoints_require_typed_inputs() -> None:
     bound = observe_gemini_host_event("content.delta", {"interaction": {"id": "gm-bind-1"}})

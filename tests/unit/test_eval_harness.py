@@ -170,6 +170,27 @@ def test_harness_result_requires_typed_members_and_clean_warnings() -> None:
 
     with pytest.raises(
         TypeError,
+        match="EventTraceArtifact\\.event_refs must be tuple\\[str, \\.\\.\\.\\], got list",
+    ):
+        EventTraceArtifact(trace_id="trace-list", event_refs=["event-typed"])
+
+    with pytest.raises(
+        TypeError,
+        match="BlockerFragment\\.boundary_tags must be frozenset\\[str\\], got set",
+    ):
+        BlockerFragment(
+            reason_code="approval-required",
+            boundary_tags={"boundary"},
+        )
+
+    with pytest.raises(
+        TypeError,
+        match="BlockerFragment\\.reason_code must be str, got int",
+    ):
+        BlockerFragment(reason_code=1)
+
+    with pytest.raises(
+        TypeError,
         match="EvaluationHarnessResult\\.event_trace must be EventTraceArtifact, got str",
     ):
         build_evaluation_harness_result(
@@ -204,4 +225,14 @@ def test_harness_result_requires_typed_members_and_clean_warnings() -> None:
             event_trace=trace,
             blocker=blocker,
             warnings=("   ",),
+        )
+
+    with pytest.raises(
+        TypeError,
+        match="EvaluationHarnessResult\\.warnings must be tuple\\[str, \\.\\.\\.\\], got list",
+    ):
+        EvaluationHarnessResult(
+            event_trace=trace,
+            blocker=blocker,
+            warnings=["warn"],
         )

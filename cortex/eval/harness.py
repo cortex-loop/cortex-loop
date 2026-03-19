@@ -85,6 +85,11 @@ def build_evaluation_harness_result(
 
 
 def _validate_typed_tuple(values: tuple[object, ...], expected_type: type[object], label: str) -> None:
+    if not isinstance(values, tuple):
+        actual_type = type(values).__name__
+        raise TypeError(
+            f"{label} must be tuple[{expected_type.__name__}, ...], got {actual_type}.",
+        )
     for value in values:
         if not isinstance(value, expected_type):
             raise TypeError(
@@ -93,6 +98,9 @@ def _validate_typed_tuple(values: tuple[object, ...], expected_type: type[object
 
 
 def _validate_warning_tuple(warnings: tuple[str, ...], label: str) -> None:
+    if not isinstance(warnings, tuple):
+        actual_type = type(warnings).__name__
+        raise TypeError(f"{label} must be tuple[str, ...], got {actual_type}.")
     for warning in warnings:
         if not isinstance(warning, str):
             actual_type = type(warning).__name__

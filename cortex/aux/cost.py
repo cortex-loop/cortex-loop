@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from math import isfinite
 from numbers import Real
 
 from cortex.core.envelopes import MetadataField
@@ -37,8 +38,15 @@ class AuxBurdenReport:
                 raise TypeError(
                     f"AuxBurdenReport.{field_name} must be numeric, got {actual_type}.",
                 )
+            if not isfinite(value):
+                raise ValueError(f"AuxBurdenReport.{field_name} must be finite.")
             if value < 0:
                 raise ValueError(f"AuxBurdenReport.{field_name} must be non-negative.")
+        if not isinstance(self.metadata, tuple):
+            actual_type = type(self.metadata).__name__
+            raise TypeError(
+                f"AuxBurdenReport.metadata must be tuple[MetadataField, ...], got {actual_type}.",
+            )
         for metadata_field in self.metadata:
             if not isinstance(metadata_field, MetadataField):
                 raise TypeError(

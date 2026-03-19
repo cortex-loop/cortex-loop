@@ -25,6 +25,16 @@ class WithheldField:
     reason_code: str
 
     def __post_init__(self) -> None:
+        if not isinstance(self.field_ref, str):
+            actual_type = type(self.field_ref).__name__
+            raise TypeError(
+                f"WithheldField.field_ref must be str, got {actual_type}.",
+            )
+        if not isinstance(self.reason_code, str):
+            actual_type = type(self.reason_code).__name__
+            raise TypeError(
+                f"WithheldField.reason_code must be str, got {actual_type}.",
+            )
         if not self.field_ref.strip():
             raise ValueError("WithheldField.field_ref must be non-empty after trimming.")
         if not self.reason_code.strip():
@@ -163,6 +173,11 @@ def _merge_unique(*groups: tuple[_T, ...]) -> tuple[_T, ...]:
 
 
 def _validate_typed_tuple(values: tuple[object, ...], expected_type: type[object], label: str) -> None:
+    if not isinstance(values, tuple):
+        actual_type = type(values).__name__
+        raise TypeError(
+            f"{label} must be tuple[{expected_type.__name__}, ...], got {actual_type}.",
+        )
     for value in values:
         if not isinstance(value, expected_type):
             raise TypeError(
@@ -171,6 +186,9 @@ def _validate_typed_tuple(values: tuple[object, ...], expected_type: type[object
 
 
 def _validate_warning_tuple(warnings: tuple[str, ...], label: str) -> None:
+    if not isinstance(warnings, tuple):
+        actual_type = type(warnings).__name__
+        raise TypeError(f"{label} must be tuple[str, ...], got {actual_type}.")
     for warning in warnings:
         if not isinstance(warning, str):
             actual_type = type(warning).__name__
