@@ -142,6 +142,37 @@ def test_host_native_opportunity_requires_non_empty_degradation_reason_when_prov
         )
 
 
+def test_opportunity_specialization_result_requires_typed_preferred_opportunity() -> None:
+    preferred = HostNativeOpportunity(
+        opportunity_ref="mcp.query",
+        supported_families=frozenset({SoftControlFamily.CHECK}),
+    )
+    result = specialize_host_native_opportunity(
+        SoftControlFamily.CHECK,
+        (preferred,),
+    )
+
+    direct = type(result)(
+        selected_family=SoftControlFamily.CHECK,
+        preferred_opportunity=preferred,
+        direct_opportunity_specialization_used=False,
+    )
+
+    assert direct.preferred_opportunity is preferred
+
+    with pytest.raises(
+        TypeError,
+        match=(
+            r"OpportunitySpecializationResult\.preferred_opportunity must be "
+            r"HostNativeOpportunity \| None, got str\."
+        ),
+    ):
+        type(result)(
+            selected_family=SoftControlFamily.CHECK,
+            preferred_opportunity="not-opportunity",
+        )
+
+
 def test_family_is_retained_when_no_clearly_superior_opportunity_exists() -> None:
     result = specialize_host_native_opportunity(
         SoftControlFamily.REDIRECT,
