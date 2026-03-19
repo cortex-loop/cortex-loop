@@ -228,6 +228,30 @@ def test_dispatch_decision_requires_typed_evidence_plan() -> None:
         )
 
 
+def test_dispatch_decision_requires_bool_candidate_present() -> None:
+    direct = DispatchDecision(
+        lane=DispatchLane.CHEAP,
+        wake_decision=WakeDecision(full_commitment_required=False, reason_tags=frozenset()),
+        evidence_plan=EvidencePlan(False, False, False),
+        candidate_present=False,
+    )
+    emitted = classify_dispatch(_make_observation(native_event_name="stream/token"))
+
+    assert direct.candidate_present is False
+    assert emitted.candidate_present is False
+
+    with pytest.raises(
+        TypeError,
+        match="candidate_present must be bool, got str",
+    ):
+        DispatchDecision(
+            lane=DispatchLane.CHEAP,
+            wake_decision=WakeDecision(full_commitment_required=False, reason_tags=frozenset()),
+            evidence_plan=EvidencePlan(False, False, False),
+            candidate_present="yes",
+        )
+
+
 def test_evidence_plan_matches_the_dispatched_lane() -> None:
     cheap = classify_dispatch(_make_observation(native_event_name="stream/token"))
     candidate = classify_dispatch(

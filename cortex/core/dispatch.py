@@ -80,6 +80,12 @@ class DispatchDecision:
                 "DispatchDecision.evidence_plan must be EvidencePlan, "
                 f"got {actual_type}.",
             )
+        if not isinstance(self.candidate_present, bool):
+            actual_type = type(self.candidate_present).__name__
+            raise TypeError(
+                "DispatchDecision.candidate_present must be bool, "
+                f"got {actual_type}.",
+            )
 
 
 FULL_COMMITMENT_REASON_ALIASES = {
