@@ -123,6 +123,16 @@ def test_event_payload_handle_rejects_blank_payload_kinds() -> None:
     with pytest.raises(ValueError, match="payload_kind must be non-empty after trimming"):
         EventPayloadHandle(payload_kind="   ", payload_ref="evt-1")
 
+    with pytest.raises(
+        TypeError,
+        match="metadata must contain only MetadataField instances",
+    ):
+        EventPayloadHandle(
+            payload_kind="host-payload",
+            payload_ref="evt-1",
+            metadata=("not-field",),
+        )
+
 
 def test_lifecycle_event_envelope_rejects_empty_or_whitespace_only_native_event_name() -> None:
     valid = LifecycleEventEnvelope(native_event_name="turn/complete")

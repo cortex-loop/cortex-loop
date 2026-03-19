@@ -30,6 +30,10 @@ class EventPayloadHandle:
             raise ValueError(
                 "EventPayloadHandle.payload_kind must be non-empty after trimming.",
             )
+        if any(not isinstance(field, MetadataField) for field in self.metadata):
+            raise TypeError(
+                "EventPayloadHandle.metadata must contain only MetadataField instances.",
+            )
 
 
 @dataclass(frozen=True, slots=True)
