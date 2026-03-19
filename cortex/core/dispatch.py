@@ -114,6 +114,12 @@ class DispatchDecision:
                 "DispatchDecision.commitment_carrier_source must be one of the canonical source labels: "
                 "native, payload.stop_fields, fallback, none.",
             )
+        if not isinstance(self.structured_payload_violation, bool):
+            actual_type = type(self.structured_payload_violation).__name__
+            raise TypeError(
+                "DispatchDecision.structured_payload_violation must be bool, "
+                f"got {actual_type}.",
+            )
 
 
 FULL_COMMITMENT_REASON_ALIASES = {
