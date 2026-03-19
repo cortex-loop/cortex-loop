@@ -159,6 +159,18 @@ def test_lifecycle_event_and_observation_carriers_construct_cleanly() -> None:
     with pytest.raises(ValueError, match="observation_type must be non-empty after trimming"):
         StructuredObservation(observation_type="   ")
 
+    with pytest.raises(
+        ValueError,
+        match="tags must contain only non-empty values after trimming",
+    ):
+        StructuredObservation(observation_type="runtime-note", tags=frozenset({""}))
+
+    with pytest.raises(
+        ValueError,
+        match="tags must contain only non-empty values after trimming",
+    ):
+        StructuredObservation(observation_type="runtime-note", tags=frozenset({"   "}))
+
     with pytest.raises(ValueError, match="runtime_name must be non-empty after trimming"):
         LifecycleSurface(runtime_name="")
 

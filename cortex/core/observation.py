@@ -72,6 +72,10 @@ class StructuredObservation:
             raise ValueError(
                 "StructuredObservation.observation_type must be non-empty after trimming.",
             )
+        if any(not (isinstance(tag, str) and tag.strip()) for tag in self.tags):
+            raise ValueError(
+                "StructuredObservation.tags must contain only non-empty values after trimming.",
+            )
 
 
 @dataclass(frozen=True, slots=True)
