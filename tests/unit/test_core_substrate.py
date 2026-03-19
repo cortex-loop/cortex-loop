@@ -126,6 +126,16 @@ def test_lifecycle_event_and_observation_carriers_construct_cleanly() -> None:
 
     with pytest.raises(
         TypeError,
+        match="structured_observations must contain only StructuredObservation instances",
+    ):
+        ObservationBundle(
+            event=LifecycleEventEnvelope(native_event_name="turn/complete"),
+            payload_view=PayloadView(),
+            structured_observations=("not-a-structured-observation",),
+        )
+
+    with pytest.raises(
+        TypeError,
         match="metadata must contain only MetadataField instances",
     ):
         PayloadView(metadata=("not-field",))

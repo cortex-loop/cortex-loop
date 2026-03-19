@@ -106,6 +106,13 @@ class ObservationBundle:
             raise TypeError(
                 "ObservationBundle.runtime_records must contain only RuntimeRecord instances.",
             )
+        if any(
+            not isinstance(observation, StructuredObservation)
+            for observation in self.structured_observations
+        ):
+            raise TypeError(
+                "ObservationBundle.structured_observations must contain only StructuredObservation instances.",
+            )
 
 
 __all__ = [
