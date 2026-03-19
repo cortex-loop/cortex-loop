@@ -34,6 +34,18 @@ class CommitmentExtractionResult:
     warnings: tuple[str, ...]
     structured_payload_violation: bool
 
+    def __post_init__(self) -> None:
+        if self.carrier_source not in {
+            NATIVE_COMMITMENT_SOURCE,
+            PAYLOAD_COMMITMENT_SOURCE,
+            FALLBACK_COMMITMENT_SOURCE,
+            NO_COMMITMENT_SOURCE,
+        }:
+            raise ValueError(
+                "CommitmentExtractionResult.carrier_source must be one of the canonical source labels: "
+                "native, payload.stop_fields, fallback, none.",
+            )
+
 
 def resolve_commitment_extract(
     payload: Mapping[str, Any],

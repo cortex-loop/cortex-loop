@@ -3,8 +3,10 @@
 import pytest
 
 from cortex.core.commitment_extract import (
+    CommitmentExtractionResult,
     FALLBACK_COMMITMENT_SOURCE,
     NATIVE_COMMITMENT_SOURCE,
+    NO_COMMITMENT_SOURCE,
     PAYLOAD_COMMITMENT_SOURCE,
     reconcile_commitment_field,
     resolve_commitment_extract,
@@ -113,3 +115,44 @@ def test_resolution_works_without_v1_specific_stop_bundle_fields() -> None:
     assert result.structured_payload_violation is False
     assert scope.value == "external"
     assert scope.source == PAYLOAD_COMMITMENT_SOURCE
+
+
+def test_commitment_extraction_result_requires_canonical_carrier_source() -> None:
+    direct = CommitmentExtractionResult(
+        commitment_fields=None,
+        carrier_source=NO_COMMITMENT_SOURCE,
+        fallback_used=False,
+        normalization_count=0,
+        warnings=(),
+        structured_payload_violation=False,
+    )
+    emitted = resolve_commitment_extract({})
+
+    assert direct.carrier_source == NO_COMMITMENT_SOURCE
+    assert emitted.carrier_source == NO_COMMITMENT_SOURCE
+
+    with pytest.raises(
+        ValueError,
+        match="carrier_source must be one of the canonical source labels",
+    ):
+        CommitmentExtractionResult(
+            commitment_fields=None,
+            carrier_source="   ",
+            fallback_used=False,
+            normalization_count=0,
+            warnings=(),
+            structured_payload_violation=False,
+        )
+
+    with pytest.raises(
+        ValueError,
+        match="carrier_source must be one of the canonical source labels",
+    ):
+        CommitmentExtractionResult(
+            commitment_fields=None,
+            carrier_source="mystery",
+            fallback_used=False,
+            normalization_count=0,
+            warnings=(),
+            structured_payload_violation=False,
+        )
