@@ -184,3 +184,31 @@ def test_commitment_extraction_result_requires_dict_commitment_fields() -> None:
             warnings=(),
             structured_payload_violation=False,
         )
+
+
+def test_commitment_extraction_result_requires_bool_fallback_used() -> None:
+    direct = CommitmentExtractionResult(
+        commitment_fields=None,
+        carrier_source=NO_COMMITMENT_SOURCE,
+        fallback_used=False,
+        normalization_count=0,
+        warnings=(),
+        structured_payload_violation=False,
+    )
+    emitted = resolve_commitment_extract({})
+
+    assert direct.fallback_used is False
+    assert emitted.fallback_used is False
+
+    with pytest.raises(
+        TypeError,
+        match="fallback_used must be bool, got str",
+    ):
+        CommitmentExtractionResult(
+            commitment_fields=None,
+            carrier_source=NO_COMMITMENT_SOURCE,
+            fallback_used="yes",
+            normalization_count=0,
+            warnings=(),
+            structured_payload_violation=False,
+        )

@@ -41,6 +41,12 @@ class CommitmentExtractionResult:
                 "CommitmentExtractionResult.commitment_fields must be dict[str, Any] | None, "
                 f"got {actual_type}.",
             )
+        if not isinstance(self.fallback_used, bool):
+            actual_type = type(self.fallback_used).__name__
+            raise TypeError(
+                "CommitmentExtractionResult.fallback_used must be bool, "
+                f"got {actual_type}.",
+            )
         if self.carrier_source not in {
             NATIVE_COMMITMENT_SOURCE,
             PAYLOAD_COMMITMENT_SOURCE,
