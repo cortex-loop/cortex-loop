@@ -153,6 +153,12 @@ def test_lifecycle_event_and_observation_carriers_construct_cleanly() -> None:
     ):
         RuntimeRecord(record_type="tool-result", metadata=("not-field",))
 
+    with pytest.raises(ValueError, match="observation_type must be non-empty after trimming"):
+        StructuredObservation(observation_type="")
+
+    with pytest.raises(ValueError, match="observation_type must be non-empty after trimming"):
+        StructuredObservation(observation_type="   ")
+
     with pytest.raises(ValueError, match="runtime_name must be non-empty after trimming"):
         LifecycleSurface(runtime_name="")
 

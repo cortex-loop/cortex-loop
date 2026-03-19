@@ -67,6 +67,12 @@ class StructuredObservation:
     tags: frozenset[str] = field(default_factory=frozenset)
     metadata: tuple[MetadataField, ...] = field(default_factory=tuple)
 
+    def __post_init__(self) -> None:
+        if not (isinstance(self.observation_type, str) and self.observation_type.strip()):
+            raise ValueError(
+                "StructuredObservation.observation_type must be non-empty after trimming.",
+            )
+
 
 @dataclass(frozen=True, slots=True)
 class ObservationBundle:
