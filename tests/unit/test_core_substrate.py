@@ -93,6 +93,12 @@ def test_lifecycle_event_and_observation_carriers_construct_cleanly() -> None:
     assert observation.runtime_records[0].record_type == "tool-result"
     assert surface.effect_map[0].action_tag == "bounded_prose"
 
+    with pytest.raises(
+        TypeError,
+        match="payload_handle must be EventPayloadHandle when provided, got str",
+    ):
+        PayloadView(payload_handle="not-a-handle")
+
     with pytest.raises(ValueError, match="runtime_name must be non-empty after trimming"):
         LifecycleSurface(runtime_name="")
 

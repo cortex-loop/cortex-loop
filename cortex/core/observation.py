@@ -13,6 +13,17 @@ class PayloadView:
     metadata: tuple[MetadataField, ...] = field(default_factory=tuple)
     summary_tags: frozenset[str] = field(default_factory=frozenset)
 
+    def __post_init__(self) -> None:
+        if self.payload_handle is not None and not isinstance(
+            self.payload_handle,
+            EventPayloadHandle,
+        ):
+            actual_type = type(self.payload_handle).__name__
+            raise TypeError(
+                "PayloadView.payload_handle must be EventPayloadHandle when provided, "
+                f"got {actual_type}.",
+            )
+
 
 @dataclass(frozen=True, slots=True)
 class RuntimeRecord:
