@@ -36,6 +36,14 @@ class CommitmentFieldResolution:
                 "CommitmentFieldResolution.source must be one of the canonical source labels: "
                 "payload, native, payload.stop_fields, fallback, none.",
             )
+        if any(not isinstance(warning, str) for warning in self.warnings):
+            raise TypeError(
+                "CommitmentFieldResolution.warnings must contain only string entries.",
+            )
+        if any(not warning.strip() for warning in self.warnings):
+            raise ValueError(
+                "CommitmentFieldResolution.warnings must contain only non-empty strings after trimming.",
+            )
 
 
 @dataclass(frozen=True, slots=True)

@@ -140,6 +140,54 @@ def test_commitment_field_resolution_requires_canonical_source_labels() -> None:
         )
 
 
+def test_commitment_field_resolution_requires_non_empty_string_warnings() -> None:
+    direct = CommitmentFieldResolution(
+        value=None,
+        source="payload",
+        warnings=("warning",),
+    )
+    emitted = reconcile_commitment_field(
+        key="claim_summary",
+        payload={},
+        commitment_fields={"claim_summary": "structured-value"},
+        carrier_source=PAYLOAD_COMMITMENT_SOURCE,
+        value_label="claim summary",
+    )
+
+    assert direct.warnings == ("warning",)
+    assert emitted.warnings == ("Using claim summary from payload.stop_fields.",)
+
+    with pytest.raises(
+        TypeError,
+        match="warnings must contain only string entries",
+    ):
+        CommitmentFieldResolution(
+            value=None,
+            source="payload",
+            warnings=("ok", 7),
+        )
+
+    with pytest.raises(
+        ValueError,
+        match="warnings must contain only non-empty strings after trimming",
+    ):
+        CommitmentFieldResolution(
+            value=None,
+            source="payload",
+            warnings=("",),
+        )
+
+    with pytest.raises(
+        ValueError,
+        match="warnings must contain only non-empty strings after trimming",
+    ):
+        CommitmentFieldResolution(
+            value=None,
+            source="payload",
+            warnings=("   ",),
+        )
+
+
 def test_resolution_works_without_v1_specific_stop_bundle_fields() -> None:
     result = resolve_commitment_extract(
         {"stop_fields": {"effect_scope": "external", "claim_summary": "done"}},
