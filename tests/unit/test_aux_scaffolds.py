@@ -228,6 +228,52 @@ def test_augment_snapshot_cannot_start_from_blank_core_pending_goal_ref() -> Non
         )
 
 
+def test_augment_snapshot_cannot_start_from_blank_core_host_tag() -> None:
+    snapshot = _make_snapshot()
+
+    with pytest.raises(
+        ValueError,
+        match="affordance_tags must contain only non-empty values after trimming",
+    ):
+        augment_snapshot(
+            SupportSnapshot(
+                trace=snapshot.trace,
+                session=snapshot.session,
+                host=SupportHostState(affordance_tags=frozenset({"   "})),
+                exec_memory_pub=snapshot.exec_memory_pub,
+            ),
+            AuxiliarySupportAppendix(),
+        )
+
+    with pytest.raises(
+        ValueError,
+        match="approval_boundary_tags must contain only non-empty values after trimming",
+    ):
+        augment_snapshot(
+            SupportSnapshot(
+                trace=snapshot.trace,
+                session=snapshot.session,
+                host=SupportHostState(approval_boundary_tags=frozenset({"   "})),
+                exec_memory_pub=snapshot.exec_memory_pub,
+            ),
+            AuxiliarySupportAppendix(),
+        )
+
+    with pytest.raises(
+        ValueError,
+        match="constraint_tags must contain only non-empty values after trimming",
+    ):
+        augment_snapshot(
+            SupportSnapshot(
+                trace=snapshot.trace,
+                session=snapshot.session,
+                host=SupportHostState(constraint_tags=frozenset({"   "})),
+                exec_memory_pub=snapshot.exec_memory_pub,
+            ),
+            AuxiliarySupportAppendix(),
+        )
+
+
 def _make_snapshot() -> SupportSnapshot:
     trace = SupportTraceState(
         candidate_refs=("candidate-1",),

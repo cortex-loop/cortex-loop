@@ -111,6 +111,23 @@ class SupportHostState:
     constraint_tags: frozenset[str] = field(default_factory=frozenset)
     metadata: tuple[MetadataField, ...] = field(default_factory=tuple)
 
+    def __post_init__(self) -> None:
+        if any(not (isinstance(tag, str) and tag.strip()) for tag in self.affordance_tags):
+            raise ValueError(
+                "SupportHostState.affordance_tags must contain only non-empty values after trimming.",
+            )
+        if any(
+            not (isinstance(tag, str) and tag.strip())
+            for tag in self.approval_boundary_tags
+        ):
+            raise ValueError(
+                "SupportHostState.approval_boundary_tags must contain only non-empty values after trimming.",
+            )
+        if any(not (isinstance(tag, str) and tag.strip()) for tag in self.constraint_tags):
+            raise ValueError(
+                "SupportHostState.constraint_tags must contain only non-empty values after trimming.",
+            )
+
 
 @dataclass(frozen=True, slots=True)
 class SupportExecMemoryState:

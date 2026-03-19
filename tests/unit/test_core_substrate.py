@@ -319,6 +319,36 @@ def test_support_session_requires_non_empty_pending_goal_refs() -> None:
         )
 
 
+def test_support_host_requires_non_empty_identity_tags() -> None:
+    host = SupportHostState(
+        affordance_tags=frozenset({"tool/intercept"}),
+        approval_boundary_tags=frozenset({"approval/request"}),
+        constraint_tags=frozenset({"host/degraded"}),
+    )
+
+    assert host.affordance_tags == frozenset({"tool/intercept"})
+    assert host.approval_boundary_tags == frozenset({"approval/request"})
+    assert host.constraint_tags == frozenset({"host/degraded"})
+
+    with pytest.raises(
+        ValueError,
+        match="affordance_tags must contain only non-empty values after trimming",
+    ):
+        SupportHostState(affordance_tags=frozenset({"   "}))
+
+    with pytest.raises(
+        ValueError,
+        match="approval_boundary_tags must contain only non-empty values after trimming",
+    ):
+        SupportHostState(approval_boundary_tags=frozenset({"   "}))
+
+    with pytest.raises(
+        ValueError,
+        match="constraint_tags must contain only non-empty values after trimming",
+    ):
+        SupportHostState(constraint_tags=frozenset({"   "}))
+
+
 def test_commitment_status_is_the_exact_three_state_lattice() -> None:
     assert {status.value for status in CommitmentStatus} == {
         "certified",
