@@ -293,6 +293,29 @@ def test_allocation_score_requires_bool_admissible() -> None:
         AllocationScore(SoftControlFamily.NEUTRAL, 1.0, admissible="yes")
 
 
+def test_allocation_score_requires_non_empty_reason_tags() -> None:
+    score = AllocationScore(
+        SoftControlFamily.NEUTRAL,
+        1.0,
+        reason_tags=frozenset({"baseline-neutral"}),
+    )
+
+    assert score.reason_tags == frozenset({"baseline-neutral"})
+
+    with pytest.raises(
+        ValueError,
+        match=(
+            "AllocationScore.reason_tags must contain only non-empty values "
+            "after trimming."
+        ),
+    ):
+        AllocationScore(
+            SoftControlFamily.NEUTRAL,
+            1.0,
+            reason_tags=frozenset({"   "}),
+        )
+
+
 def test_neutral_dominance_returns_neutral_when_margin_is_below_threshold() -> None:
     decision = neutral_dominance_decision(
         AllocationScorecard(

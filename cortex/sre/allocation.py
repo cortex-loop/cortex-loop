@@ -34,6 +34,11 @@ class AllocationScore:
                 "AllocationScore.admissible must be bool, "
                 f"got {actual_type}."
             )
+        if any(not tag.strip() for tag in self.reason_tags):
+            raise ValueError(
+                "AllocationScore.reason_tags must contain only non-empty values "
+                "after trimming."
+            )
 
 
 @dataclass(frozen=True, slots=True)
