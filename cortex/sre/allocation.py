@@ -51,6 +51,12 @@ class AllocationScorecard:
             raise TypeError(
                 "AllocationScorecard.scores must contain only AllocationScore instances."
             )
+        if not isinstance(self.activation_threshold, Real):
+            actual_type = type(self.activation_threshold).__name__
+            raise TypeError(
+                "AllocationScorecard.activation_threshold must be numeric, "
+                f"got {actual_type}."
+            )
 
 
 __all__ = ["AllocationScore", "AllocationScorecard"]
