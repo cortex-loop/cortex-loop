@@ -65,6 +65,12 @@ class CommitmentExtractionResult:
             raise ValueError(
                 "CommitmentExtractionResult.warnings must contain only non-empty strings after trimming.",
             )
+        if not isinstance(self.structured_payload_violation, bool):
+            actual_type = type(self.structured_payload_violation).__name__
+            raise TypeError(
+                "CommitmentExtractionResult.structured_payload_violation must be bool, "
+                f"got {actual_type}.",
+            )
         if self.carrier_source not in {
             NATIVE_COMMITMENT_SOURCE,
             PAYLOAD_COMMITMENT_SOURCE,

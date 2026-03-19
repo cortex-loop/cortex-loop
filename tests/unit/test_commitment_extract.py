@@ -307,3 +307,31 @@ def test_commitment_extraction_result_requires_non_empty_string_warnings() -> No
             warnings=("   ",),
             structured_payload_violation=False,
         )
+
+
+def test_commitment_extraction_result_requires_bool_structured_payload_violation() -> None:
+    direct = CommitmentExtractionResult(
+        commitment_fields=None,
+        carrier_source=NO_COMMITMENT_SOURCE,
+        fallback_used=False,
+        normalization_count=0,
+        warnings=(),
+        structured_payload_violation=False,
+    )
+    emitted = resolve_commitment_extract({})
+
+    assert direct.structured_payload_violation is False
+    assert emitted.structured_payload_violation is False
+
+    with pytest.raises(
+        TypeError,
+        match="structured_payload_violation must be bool, got str",
+    ):
+        CommitmentExtractionResult(
+            commitment_fields=None,
+            carrier_source=NO_COMMITMENT_SOURCE,
+            fallback_used=False,
+            normalization_count=0,
+            warnings=(),
+            structured_payload_violation="yes",
+        )
