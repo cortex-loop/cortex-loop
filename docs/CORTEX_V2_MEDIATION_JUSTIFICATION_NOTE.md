@@ -52,3 +52,4 @@ The repo currently has:
 
 Because that evidence is missing, mediation should remain unstarted.
 Do not open a mediation implementation seam until a dedicated comparative evaluation plan and measurable lift evidence exist.
+The required comparative evidence plan is recorded in `docs/CORTEX_V2_MEDIATION_EVALUATION_PLAN_0.md`.
