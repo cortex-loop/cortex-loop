@@ -1775,3 +1775,13 @@ def test_certification_context_accepts_commitment_environment_handle() -> None:
 
     assert context.environment_handle is commitment_handle
     assert context.wake_reasons == frozenset({"approval-gated"})
+
+    with pytest.raises(
+        TypeError,
+        match="candidate must be CommitmentCandidate, got str",
+    ):
+        CertificationContext(
+            candidate="not-a-candidate",
+            observation=observation,
+            environment_handle=commitment_handle,
+        )

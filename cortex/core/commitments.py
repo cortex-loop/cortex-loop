@@ -142,6 +142,12 @@ class CertificationContext:
     boundary_tags: frozenset[str] = field(default_factory=frozenset)
 
     def __post_init__(self) -> None:
+        if not isinstance(self.candidate, CommitmentCandidate):
+            actual_type = type(self.candidate).__name__
+            raise TypeError(
+                "CertificationContext.candidate must be CommitmentCandidate, "
+                f"got {actual_type}.",
+            )
         if not isinstance(self.environment_handle, CommitmentEnvironmentHandle):
             actual_type = type(self.environment_handle).__name__
             raise TypeError(
