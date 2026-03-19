@@ -648,11 +648,13 @@ def test_support_host_requires_non_empty_identity_tags() -> None:
         affordance_tags=frozenset({"tool/intercept"}),
         approval_boundary_tags=frozenset({"approval/request"}),
         constraint_tags=frozenset({"host/degraded"}),
+        metadata=(MetadataField("host_state", "degraded"),),
     )
 
     assert host.affordance_tags == frozenset({"tool/intercept"})
     assert host.approval_boundary_tags == frozenset({"approval/request"})
     assert host.constraint_tags == frozenset({"host/degraded"})
+    assert host.metadata[0].key == "host_state"
 
     with pytest.raises(
         ValueError,
@@ -671,6 +673,12 @@ def test_support_host_requires_non_empty_identity_tags() -> None:
         match="constraint_tags must contain only non-empty values after trimming",
     ):
         SupportHostState(constraint_tags=frozenset({"   "}))
+
+    with pytest.raises(
+        TypeError,
+        match="metadata must contain only MetadataField instances",
+    ):
+        SupportHostState(metadata=("not-field",))
 
 
 def test_commitment_status_is_the_exact_three_state_lattice() -> None:

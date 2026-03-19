@@ -578,6 +578,20 @@ def test_augment_snapshot_cannot_start_from_blank_core_host_tag() -> None:
             AuxiliarySupportAppendix(),
         )
 
+    with pytest.raises(
+        TypeError,
+        match="metadata must contain only MetadataField instances",
+    ):
+        augment_snapshot(
+            SupportSnapshot(
+                trace=snapshot.trace,
+                session=snapshot.session,
+                host=SupportHostState(metadata=("not-field",)),
+                exec_memory_pub=snapshot.exec_memory_pub,
+            ),
+            AuxiliarySupportAppendix(),
+        )
+
 
 def _make_snapshot() -> SupportSnapshot:
     trace = SupportTraceState(

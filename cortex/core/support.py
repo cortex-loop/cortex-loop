@@ -196,6 +196,10 @@ class SupportHostState:
             raise ValueError(
                 "SupportHostState.constraint_tags must contain only non-empty values after trimming.",
             )
+        if any(not isinstance(field, MetadataField) for field in self.metadata):
+            raise TypeError(
+                "SupportHostState.metadata must contain only MetadataField instances.",
+            )
 
 
 @dataclass(frozen=True, slots=True)
