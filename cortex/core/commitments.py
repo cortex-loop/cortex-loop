@@ -33,6 +33,15 @@ class CommitmentCandidate:
             raise ValueError(
                 "CommitmentCandidate.surface_tags must contain only non-empty values after trimming.",
             )
+        if self.payload_handle is not None and not isinstance(
+            self.payload_handle,
+            EventPayloadHandle,
+        ):
+            actual_type = type(self.payload_handle).__name__
+            raise TypeError(
+                "CommitmentCandidate.payload_handle must be EventPayloadHandle when provided, "
+                f"got {actual_type}.",
+            )
 
 
 @dataclass(frozen=True, slots=True)

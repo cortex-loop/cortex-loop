@@ -1221,6 +1221,12 @@ def test_commitment_candidate_requires_non_empty_identity() -> None:
     ):
         CommitmentCandidate(candidate_id="candidate-1", surface_tags=frozenset({"   "}))
 
+    with pytest.raises(
+        TypeError,
+        match="payload_handle must be EventPayloadHandle when provided, got str",
+    ):
+        CommitmentCandidate(candidate_id="candidate-1", payload_handle="not-a-handle")
+
 
 def test_provenance_manifest_supports_multiple_domain_agnostic_source_families() -> None:
     manifest = ProvenanceManifest(
