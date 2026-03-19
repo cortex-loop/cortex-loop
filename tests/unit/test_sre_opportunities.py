@@ -173,6 +173,37 @@ def test_opportunity_specialization_result_requires_typed_preferred_opportunity(
         )
 
 
+def test_opportunity_specialization_result_requires_non_empty_degradation_reason() -> None:
+    result = specialize_host_native_opportunity(
+        SoftControlFamily.BRANCH,
+        (
+            HostNativeOpportunity(
+                opportunity_ref="native-subagent",
+                supported_families=frozenset({SoftControlFamily.BRANCH}),
+                clearly_superior=True,
+                realizable=False,
+                degradation_reason="host-surface-unavailable",
+                safer_fallback_family=SoftControlFamily.ESCALATE,
+            ),
+        ),
+    )
+
+    assert result.degradation_reason == "host-surface-unavailable"
+
+    with pytest.raises(
+        ValueError,
+        match=(
+            "OpportunitySpecializationResult.degradation_reason must be "
+            "non-empty after trimming when provided."
+        ),
+    ):
+        type(result)(
+            selected_family=SoftControlFamily.CHECK,
+            degradation_reason="   ",
+            safer_fallback_family=SoftControlFamily.NEUTRAL,
+        )
+
+
 def test_family_is_retained_when_no_clearly_superior_opportunity_exists() -> None:
     result = specialize_host_native_opportunity(
         SoftControlFamily.REDIRECT,

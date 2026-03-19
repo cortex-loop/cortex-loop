@@ -102,6 +102,10 @@ class OpportunitySpecializationResult:
                 "OpportunitySpecializationResult cannot degrade while using a direct "
                 "opportunity specialization."
             )
+        if self.degradation_reason is not None and not self.degradation_reason.strip():
+            raise ValueError(
+                "OpportunitySpecializationResult.degradation_reason must be non-empty after trimming when provided."
+            )
         if self.degradation_reason is None and self.safer_fallback_family is not None:
             raise ValueError(
                 "OpportunitySpecializationResult.safer_fallback_family requires a "
