@@ -101,6 +101,38 @@ def test_aux_scaffold_types_remain_domain_general_and_removable() -> None:
     assert burden.intervention_burden == 1.0
 
 
+def test_augment_snapshot_cannot_start_from_blank_core_support_reference_identity() -> None:
+    snapshot = _make_snapshot()
+
+    with pytest.raises(ValueError, match="reference_kind must be non-empty after trimming"):
+        augment_snapshot(
+            SupportSnapshot(
+                trace=snapshot.trace,
+                session=snapshot.session,
+                host=snapshot.host,
+                exec_memory_pub=SupportExecMemoryState(
+                    published_memory_refs=(SupportReference("", "memo-blank"),),
+                    artifact_refs=snapshot.exec_memory_pub.artifact_refs,
+                ),
+            ),
+            AuxiliarySupportAppendix(),
+        )
+
+    with pytest.raises(ValueError, match="reference_id must be non-empty after trimming"):
+        augment_snapshot(
+            SupportSnapshot(
+                trace=snapshot.trace,
+                session=snapshot.session,
+                host=snapshot.host,
+                exec_memory_pub=SupportExecMemoryState(
+                    published_memory_refs=(SupportReference("memory", "   "),),
+                    artifact_refs=snapshot.exec_memory_pub.artifact_refs,
+                ),
+            ),
+            AuxiliarySupportAppendix(),
+        )
+
+
 def _make_snapshot() -> SupportSnapshot:
     trace = SupportTraceState(
         candidate_refs=("candidate-1",),

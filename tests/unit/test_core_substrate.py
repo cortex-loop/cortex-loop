@@ -212,6 +212,25 @@ def test_support_counter_rejects_impossible_counts_and_accepts_zero() -> None:
         SupportCounter("wake-receipts", -1)
 
 
+def test_support_reference_requires_non_empty_kind_and_id() -> None:
+    reference = SupportReference("memory", "memo-1")
+
+    assert reference.reference_kind == "memory"
+    assert reference.reference_id == "memo-1"
+
+    with pytest.raises(ValueError, match="reference_kind must be non-empty after trimming"):
+        SupportReference("", "memo-1")
+
+    with pytest.raises(ValueError, match="reference_kind must be non-empty after trimming"):
+        SupportReference("   ", "memo-1")
+
+    with pytest.raises(ValueError, match="reference_id must be non-empty after trimming"):
+        SupportReference("memory", "")
+
+    with pytest.raises(ValueError, match="reference_id must be non-empty after trimming"):
+        SupportReference("memory", "   ")
+
+
 def test_commitment_status_is_the_exact_three_state_lattice() -> None:
     assert {status.value for status in CommitmentStatus} == {
         "certified",

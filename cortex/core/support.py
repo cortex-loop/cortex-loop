@@ -39,6 +39,16 @@ class SupportReference:
     tags: frozenset[str] = field(default_factory=frozenset)
     metadata: tuple[MetadataField, ...] = field(default_factory=tuple)
 
+    def __post_init__(self) -> None:
+        if not (isinstance(self.reference_kind, str) and self.reference_kind.strip()):
+            raise ValueError(
+                "SupportReference.reference_kind must be non-empty after trimming.",
+            )
+        if not (isinstance(self.reference_id, str) and self.reference_id.strip()):
+            raise ValueError(
+                "SupportReference.reference_id must be non-empty after trimming.",
+            )
+
 
 @dataclass(frozen=True, slots=True)
 class SupportTraceState:
