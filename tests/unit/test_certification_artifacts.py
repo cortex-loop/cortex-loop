@@ -163,6 +163,29 @@ def test_certify_commitment_requires_typed_context() -> None:
         )
 
 
+def test_certify_commitment_requires_typed_provenance_manifest() -> None:
+    verdict = certify_commitment(
+        _make_context(),
+        provenance_manifest=None,
+        boundary_assessment=BoundaryAssessment(blocked=False),
+    )
+
+    assert verdict.provenance_manifest is None
+
+    with pytest.raises(
+        TypeError,
+        match=(
+            r"certify_commitment\.provenance_manifest must be "
+            r"ProvenanceManifest \| None, got str\."
+        ),
+    ):
+        certify_commitment(
+            _make_context(),
+            provenance_manifest="not-a-manifest",
+            boundary_assessment=BoundaryAssessment(blocked=False),
+        )
+
+
 def test_certify_commitment_preserves_contradictions_and_degradations() -> None:
     contradiction = ContradictionRecord(
         source_tag="runtime-record",

@@ -26,6 +26,12 @@ def certify_commitment(
             "certify_commitment.context must be CertificationContext, "
             f"got {actual_type}.",
         )
+    if provenance_manifest is not None and not isinstance(provenance_manifest, ProvenanceManifest):
+        actual_type = type(provenance_manifest).__name__
+        raise TypeError(
+            "certify_commitment.provenance_manifest must be ProvenanceManifest | None, "
+            f"got {actual_type}.",
+        )
 
     preserved_contradictions = _merge_contradiction_refs(
         contradiction_refs,
