@@ -1332,6 +1332,15 @@ def test_degradation_and_error_records_preserve_reason_and_capabilities() -> Non
             contradiction_records=("not-a-contradiction",),
         )
 
+    with pytest.raises(
+        TypeError,
+        match="metadata must contain only MetadataField instances",
+    ):
+        CoreErrorRecord(
+            reason_code="boundary-required",
+            metadata=("not-a-field",),
+        )
+
 
 def test_commitment_verdict_holds_typed_certification_references() -> None:
     contradiction = ContradictionRecord(

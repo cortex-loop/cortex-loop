@@ -80,6 +80,10 @@ class CoreErrorRecord:
             raise TypeError(
                 "CoreErrorRecord.contradiction_records must contain only ContradictionRecord instances.",
             )
+        if any(not isinstance(field, MetadataField) for field in self.metadata):
+            raise TypeError(
+                "CoreErrorRecord.metadata must contain only MetadataField instances.",
+            )
 
 
 __all__ = ["ContradictionRecord", "CoreErrorRecord", "DegradationRecord"]
