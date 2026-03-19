@@ -55,6 +55,10 @@ class RuntimeRecord:
             raise ValueError(
                 "RuntimeRecord.tags must contain only non-empty values after trimming.",
             )
+        if any(not isinstance(field, MetadataField) for field in self.metadata):
+            raise TypeError(
+                "RuntimeRecord.metadata must contain only MetadataField instances.",
+            )
 
 
 @dataclass(frozen=True, slots=True)

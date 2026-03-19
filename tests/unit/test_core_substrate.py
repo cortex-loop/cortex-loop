@@ -147,6 +147,12 @@ def test_lifecycle_event_and_observation_carriers_construct_cleanly() -> None:
     ):
         RuntimeRecord(record_type="tool-result", tags=frozenset({"   "}))
 
+    with pytest.raises(
+        TypeError,
+        match="metadata must contain only MetadataField instances",
+    ):
+        RuntimeRecord(record_type="tool-result", metadata=("not-field",))
+
     with pytest.raises(ValueError, match="runtime_name must be non-empty after trimming"):
         LifecycleSurface(runtime_name="")
 
