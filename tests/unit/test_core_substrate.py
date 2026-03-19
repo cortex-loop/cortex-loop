@@ -1592,6 +1592,17 @@ def test_commitment_verdict_holds_typed_certification_references() -> None:
     assert verdict.degradation_refs[0].reason_code == "provenance-unavailable"
     assert verdict.contradiction_refs[0].source_tag == "runtime-record"
 
+    with pytest.raises(
+        TypeError,
+        match="candidate must be CommitmentCandidate, got str",
+    ):
+        CommitmentVerdict(
+            status=CommitmentStatus.UNCERTIFIED,
+            candidate="not-a-candidate",
+            provenance_manifest=manifest,
+            boundary_assessment=boundary,
+        )
+
 
 def test_blocked_commitment_verdict_requires_blocked_boundary_assessment() -> None:
     candidate = CommitmentCandidate(candidate_id="candidate-blocked")

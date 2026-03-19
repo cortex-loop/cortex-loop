@@ -181,6 +181,12 @@ class CommitmentVerdict:
     metadata: tuple[MetadataField, ...] = field(default_factory=tuple)
 
     def __post_init__(self) -> None:
+        if not isinstance(self.candidate, CommitmentCandidate):
+            actual_type = type(self.candidate).__name__
+            raise TypeError(
+                "CommitmentVerdict.candidate must be CommitmentCandidate, "
+                f"got {actual_type}.",
+            )
         boundary_is_blocked = (
             isinstance(self.boundary_assessment, BoundaryAssessment)
             and self.boundary_assessment.blocked
