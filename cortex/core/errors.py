@@ -73,6 +73,13 @@ class CoreErrorRecord:
             raise ValueError(
                 "CoreErrorRecord.capability_tags must contain only non-empty values after trimming.",
             )
+        if any(
+            not isinstance(record, ContradictionRecord)
+            for record in self.contradiction_records
+        ):
+            raise TypeError(
+                "CoreErrorRecord.contradiction_records must contain only ContradictionRecord instances.",
+            )
 
 
 __all__ = ["ContradictionRecord", "CoreErrorRecord", "DegradationRecord"]
