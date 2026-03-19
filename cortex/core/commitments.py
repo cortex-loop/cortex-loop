@@ -40,6 +40,12 @@ class ProvenanceManifest:
     metadata: tuple[MetadataField, ...] = field(default_factory=tuple)
 
 
+def _has_concrete_evidence_ref(provenance_manifest: ProvenanceManifest | None) -> bool:
+    if not isinstance(provenance_manifest, ProvenanceManifest):
+        return False
+    return any(ref.reference_id.strip() for ref in provenance_manifest.evidence_refs)
+
+
 @dataclass(frozen=True, slots=True)
 class BoundaryAssessment:
     blocked: bool
@@ -88,6 +94,7 @@ class CommitmentVerdict:
             isinstance(self.boundary_assessment, BoundaryAssessment)
             and self.boundary_assessment.blocked
         )
+        has_concrete_provenance = _has_concrete_evidence_ref(self.provenance_manifest)
         if self.status is CommitmentStatus.BLOCKED and not boundary_is_blocked:
             raise ValueError(
                 "CommitmentVerdict status=BLOCKED requires boundary_assessment with blocked=True.",
@@ -95,6 +102,10 @@ class CommitmentVerdict:
         if self.status is not CommitmentStatus.BLOCKED and boundary_is_blocked:
             raise ValueError(
                 "CommitmentVerdict boundary_assessment blocked=True requires status=BLOCKED.",
+            )
+        if self.status is CommitmentStatus.CERTIFIED and not has_concrete_provenance:
+            raise ValueError(
+                "CommitmentVerdict status=CERTIFIED requires provenance_manifest with at least one concrete evidence reference.",
             )
 
 

@@ -405,6 +405,68 @@ def test_blocked_commitment_verdict_requires_blocked_boundary_assessment() -> No
         )
 
 
+def test_certified_commitment_verdict_requires_concrete_provenance() -> None:
+    candidate = CommitmentCandidate(candidate_id="candidate-certified")
+    boundary = BoundaryAssessment(blocked=False)
+    concrete_manifest = ProvenanceManifest(
+        evidence_refs=(
+            ProvenanceEvidenceRef(
+                source_family="result_artifact",
+                reference_id="artifact-1",
+            ),
+        ),
+    )
+    verdict = CommitmentVerdict(
+        status=CommitmentStatus.CERTIFIED,
+        candidate=candidate,
+        provenance_manifest=concrete_manifest,
+        boundary_assessment=boundary,
+    )
+
+    assert verdict.provenance_manifest is concrete_manifest
+    assert verdict.provenance_manifest.evidence_refs[0].reference_id == "artifact-1"
+
+    with pytest.raises(
+        ValueError,
+        match="status=CERTIFIED requires provenance_manifest with at least one concrete evidence reference",
+    ):
+        CommitmentVerdict(
+            status=CommitmentStatus.CERTIFIED,
+            candidate=candidate,
+            provenance_manifest=None,
+            boundary_assessment=boundary,
+        )
+
+    with pytest.raises(
+        ValueError,
+        match="status=CERTIFIED requires provenance_manifest with at least one concrete evidence reference",
+    ):
+        CommitmentVerdict(
+            status=CommitmentStatus.CERTIFIED,
+            candidate=candidate,
+            provenance_manifest=ProvenanceManifest(),
+            boundary_assessment=boundary,
+        )
+
+    with pytest.raises(
+        ValueError,
+        match="status=CERTIFIED requires provenance_manifest with at least one concrete evidence reference",
+    ):
+        CommitmentVerdict(
+            status=CommitmentStatus.CERTIFIED,
+            candidate=candidate,
+            provenance_manifest=ProvenanceManifest(
+                evidence_refs=(
+                    ProvenanceEvidenceRef(
+                        source_family="artifact",
+                        reference_id="   ",
+                    ),
+                ),
+            ),
+            boundary_assessment=boundary,
+        )
+
+
 def test_certification_context_rejects_executive_environment_view() -> None:
     observation = ObservationBundle(
         event=LifecycleEventEnvelope(native_event_name="turn/complete"),
