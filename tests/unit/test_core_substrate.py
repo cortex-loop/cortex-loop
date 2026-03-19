@@ -1383,6 +1383,12 @@ def test_boundary_assessment_keeps_blockedness_separate_from_commitment_status()
     ):
         BoundaryAssessment(blocked=False, contradiction_refs=("not-a-contradiction",))
 
+    with pytest.raises(
+        TypeError,
+        match="metadata must contain only MetadataField instances",
+    ):
+        BoundaryAssessment(blocked=False, metadata=("not-a-field",))
+
 
 def test_blocked_boundary_assessment_requires_non_empty_reason_code() -> None:
     blocked = BoundaryAssessment(

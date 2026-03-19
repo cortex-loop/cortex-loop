@@ -127,6 +127,10 @@ class BoundaryAssessment:
             raise TypeError(
                 "BoundaryAssessment.contradiction_refs must contain only ContradictionRecord instances.",
             )
+        if any(not isinstance(field, MetadataField) for field in self.metadata):
+            raise TypeError(
+                "BoundaryAssessment.metadata must contain only MetadataField instances.",
+            )
 
 
 @dataclass(frozen=True, slots=True)
