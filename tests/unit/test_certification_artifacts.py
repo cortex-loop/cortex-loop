@@ -395,6 +395,109 @@ def test_certified_current_pair_fragment_requires_non_empty_candidate_id() -> No
         )
 
 
+def test_event_trace_and_current_pair_fragments_require_typed_members() -> None:
+    contradiction = ContradictionRecord(
+        source_tag="artifact",
+        summary="artifact set is incomplete",
+        evidence_tags=frozenset({"artifact"}),
+    )
+    degradation = DegradationRecord(
+        reason_code="partial-evidence",
+        capability_tags=frozenset({"artifact"}),
+        contradiction_records=(contradiction,),
+    )
+    trace = EventTraceArtifact(
+        trace_id="trace-typed",
+        event_refs=("event-1",),
+        record_refs=("record-1",),
+        contradiction_refs=(contradiction,),
+        degradation_refs=(degradation,),
+    )
+
+    assert trace.trace_id == "trace-typed"
+
+    with pytest.raises(
+        ValueError,
+        match="EventTraceArtifact\\.trace_id must be non-empty after trimming",
+    ):
+        EventTraceArtifact(trace_id="   ")
+
+    with pytest.raises(
+        ValueError,
+        match="EventTraceArtifact\\.event_refs must contain only non-empty values after trimming",
+    ):
+        EventTraceArtifact(event_refs=("   ",))
+
+    with pytest.raises(
+        TypeError,
+        match="EventTraceArtifact\\.contradiction_refs must contain only ContradictionRecord instances",
+    ):
+        EventTraceArtifact(contradiction_refs=("not-a-contradiction",))
+
+    with pytest.raises(
+        TypeError,
+        match="CurrentPairFragment\\.event_trace must be EventTraceArtifact, got str",
+    ):
+        CurrentPairFragment(
+            event_trace="not-a-trace",
+            verdict_status=CommitmentStatus.UNCERTIFIED,
+        )
+
+    with pytest.raises(
+        ValueError,
+        match="CurrentPairFragment\\.candidate_id must be non-empty after trimming",
+    ):
+        CurrentPairFragment(
+            event_trace=trace,
+            verdict_status=CommitmentStatus.UNCERTIFIED,
+            candidate_id="   ",
+        )
+
+    with pytest.raises(
+        TypeError,
+        match="CurrentPairFragment\\.metadata must contain only MetadataField instances",
+    ):
+        CurrentPairFragment(
+            event_trace=trace,
+            verdict_status=CommitmentStatus.UNCERTIFIED,
+            metadata=("not-a-field",),
+        )
+
+
+def test_blocker_fragment_requires_clean_tags_and_typed_members() -> None:
+    contradiction = ContradictionRecord(
+        source_tag="boundary-check",
+        summary="approval boundary was not satisfied",
+        evidence_tags=frozenset({"approval"}),
+    )
+    degradation = DegradationRecord(
+        reason_code="boundary-evidence-partial",
+        capability_tags=frozenset({"approval"}),
+        contradiction_records=(contradiction,),
+    )
+    blocker = BlockerFragment(
+        reason_code="approval-required",
+        boundary_tags=frozenset({"external-boundary"}),
+        capability_tags=frozenset({"approval"}),
+        contradiction_refs=(contradiction,),
+        degradation_refs=(degradation,),
+    )
+
+    assert blocker.reason_code == "approval-required"
+
+    with pytest.raises(
+        ValueError,
+        match="BlockerFragment\\.boundary_tags must contain only non-empty values after trimming",
+    ):
+        BlockerFragment(reason_code="approval-required", boundary_tags=frozenset({"   "}))
+
+    with pytest.raises(
+        TypeError,
+        match="BlockerFragment\\.degradation_refs must contain only DegradationRecord instances",
+    ):
+        BlockerFragment(reason_code="approval-required", degradation_refs=("not-a-degradation",))
+
+
 def _make_context() -> CertificationContext:
     return CertificationContext(
         candidate=CommitmentCandidate(candidate_id="candidate-1"),

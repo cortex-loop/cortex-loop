@@ -154,3 +154,54 @@ def test_harness_result_needs_no_publication_packet_surface() -> None:
 
     assert isinstance(result, EvaluationHarnessResult)
     assert result.current_pair is current_pair
+
+
+def test_harness_result_requires_typed_members_and_clean_warnings() -> None:
+    trace = EventTraceArtifact(trace_id="trace-typed", event_refs=("event-typed",))
+    blocker = BlockerFragment(reason_code="approval-required")
+
+    result = build_evaluation_harness_result(
+        event_trace=trace,
+        blocker=blocker,
+        warnings=("typed warning",),
+    )
+
+    assert result.warnings == ("typed warning",)
+
+    with pytest.raises(
+        TypeError,
+        match="EvaluationHarnessResult\\.event_trace must be EventTraceArtifact, got str",
+    ):
+        build_evaluation_harness_result(
+            event_trace="not-a-trace",
+            blocker=blocker,
+        )
+
+    with pytest.raises(
+        TypeError,
+        match="EvaluationHarnessResult\\.blocker must be BlockerFragment \\| None, got str",
+    ):
+        build_evaluation_harness_result(
+            event_trace=trace,
+            blocker="not-a-blocker",
+        )
+
+    with pytest.raises(
+        TypeError,
+        match="EvaluationHarnessResult\\.contradiction_refs must contain only ContradictionRecord instances",
+    ):
+        build_evaluation_harness_result(
+            event_trace=trace,
+            blocker=blocker,
+            contradiction_refs=("not-a-contradiction",),
+        )
+
+    with pytest.raises(
+        ValueError,
+        match="EvaluationHarnessResult\\.warnings must contain only non-empty values after trimming",
+    ):
+        build_evaluation_harness_result(
+            event_trace=trace,
+            blocker=blocker,
+            warnings=("   ",),
+        )

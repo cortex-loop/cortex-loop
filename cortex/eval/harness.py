@@ -20,6 +20,35 @@ class EvaluationHarnessResult:
     warnings: tuple[str, ...] = field(default_factory=tuple)
 
     def __post_init__(self) -> None:
+        if not isinstance(self.event_trace, EventTraceArtifact):
+            actual_type = type(self.event_trace).__name__
+            raise TypeError(
+                "EvaluationHarnessResult.event_trace must be EventTraceArtifact, "
+                f"got {actual_type}.",
+            )
+        if self.current_pair is not None and not isinstance(self.current_pair, CurrentPairFragment):
+            actual_type = type(self.current_pair).__name__
+            raise TypeError(
+                "EvaluationHarnessResult.current_pair must be CurrentPairFragment | None, "
+                f"got {actual_type}.",
+            )
+        if self.blocker is not None and not isinstance(self.blocker, BlockerFragment):
+            actual_type = type(self.blocker).__name__
+            raise TypeError(
+                "EvaluationHarnessResult.blocker must be BlockerFragment | None, "
+                f"got {actual_type}.",
+            )
+        _validate_typed_tuple(
+            self.contradiction_refs,
+            ContradictionRecord,
+            "EvaluationHarnessResult.contradiction_refs",
+        )
+        _validate_typed_tuple(
+            self.degradation_refs,
+            DegradationRecord,
+            "EvaluationHarnessResult.degradation_refs",
+        )
+        _validate_warning_tuple(self.warnings, "EvaluationHarnessResult.warnings")
         has_current_pair = self.current_pair is not None
         has_blocker = self.blocker is not None
         if has_current_pair == has_blocker:
@@ -53,6 +82,23 @@ def build_evaluation_harness_result(
         degradation_refs=degradation_refs,
         warnings=warnings,
     )
+
+
+def _validate_typed_tuple(values: tuple[object, ...], expected_type: type[object], label: str) -> None:
+    for value in values:
+        if not isinstance(value, expected_type):
+            raise TypeError(
+                f"{label} must contain only {expected_type.__name__} instances.",
+            )
+
+
+def _validate_warning_tuple(warnings: tuple[str, ...], label: str) -> None:
+    for warning in warnings:
+        if not isinstance(warning, str):
+            actual_type = type(warning).__name__
+            raise TypeError(f"{label} must contain only str instances, got {actual_type}.")
+        if not warning.strip():
+            raise ValueError(f"{label} must contain only non-empty values after trimming.")
 
 
 __all__ = [

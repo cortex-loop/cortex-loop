@@ -220,3 +220,54 @@ def test_packet_build_cannot_start_from_certified_current_pair_without_candidate
             verdict_status=CommitmentStatus.CERTIFIED,
             candidate_id=None,
         )
+
+
+def test_packet_publication_surfaces_require_typed_members_and_clean_fields() -> None:
+    trace = EventTraceArtifact(trace_id="trace-typed")
+    current_pair = CurrentPairFragment(
+        event_trace=trace,
+        verdict_status=CommitmentStatus.CERTIFIED,
+        candidate_id="candidate-typed",
+    )
+    harness_result = build_evaluation_harness_result(
+        event_trace=trace,
+        current_pair=current_pair,
+    )
+
+    packet = build_evaluation_packet(
+        harness_result=harness_result,
+        withheld_fields=(WithheldField(field_ref="current_pair.candidate_id", reason_code="truthful-withheld"),),
+        warnings=("packet warning",),
+    )
+
+    assert packet.warnings == ("packet warning",)
+
+    with pytest.raises(
+        ValueError,
+        match="WithheldField\\.field_ref must be non-empty after trimming",
+    ):
+        WithheldField(field_ref="   ", reason_code="truthful-withheld")
+
+    with pytest.raises(
+        TypeError,
+        match="build_evaluation_packet\\.harness_result must be EvaluationHarnessResult, got str",
+    ):
+        build_evaluation_packet(harness_result="not-a-harness")
+
+    with pytest.raises(
+        TypeError,
+        match="EvaluationPacket\\.withheld_fields must contain only WithheldField instances",
+    ):
+        build_evaluation_packet(
+            harness_result=harness_result,
+            withheld_fields=("not-a-withheld-field",),
+        )
+
+    with pytest.raises(
+        ValueError,
+        match="EvaluationPacket\\.warnings must contain only non-empty values after trimming",
+    ):
+        build_evaluation_packet(
+            harness_result=harness_result,
+            warnings=("   ",),
+        )

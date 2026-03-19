@@ -24,6 +24,12 @@ class WithheldField:
     field_ref: str
     reason_code: str
 
+    def __post_init__(self) -> None:
+        if not self.field_ref.strip():
+            raise ValueError("WithheldField.field_ref must be non-empty after trimming.")
+        if not self.reason_code.strip():
+            raise ValueError("WithheldField.reason_code must be non-empty after trimming.")
+
 
 @dataclass(frozen=True, slots=True)
 class EvaluationPacket:
@@ -37,6 +43,46 @@ class EvaluationPacket:
     warnings: tuple[str, ...] = field(default_factory=tuple)
 
     def __post_init__(self) -> None:
+        if not isinstance(self.harness_result, EvaluationHarnessResult):
+            actual_type = type(self.harness_result).__name__
+            raise TypeError(
+                "EvaluationPacket.harness_result must be EvaluationHarnessResult, "
+                f"got {actual_type}.",
+            )
+        if not isinstance(self.packet_kind, EvaluationPacketKind):
+            actual_type = type(self.packet_kind).__name__
+            raise TypeError(
+                "EvaluationPacket.packet_kind must be EvaluationPacketKind, "
+                f"got {actual_type}.",
+            )
+        if self.current_pair is not None and not isinstance(self.current_pair, CurrentPairFragment):
+            actual_type = type(self.current_pair).__name__
+            raise TypeError(
+                "EvaluationPacket.current_pair must be CurrentPairFragment | None, "
+                f"got {actual_type}.",
+            )
+        if self.blocker is not None and not isinstance(self.blocker, BlockerFragment):
+            actual_type = type(self.blocker).__name__
+            raise TypeError(
+                "EvaluationPacket.blocker must be BlockerFragment | None, "
+                f"got {actual_type}.",
+            )
+        _validate_typed_tuple(
+            self.withheld_fields,
+            WithheldField,
+            "EvaluationPacket.withheld_fields",
+        )
+        _validate_typed_tuple(
+            self.contradiction_refs,
+            ContradictionRecord,
+            "EvaluationPacket.contradiction_refs",
+        )
+        _validate_typed_tuple(
+            self.degradation_refs,
+            DegradationRecord,
+            "EvaluationPacket.degradation_refs",
+        )
+        _validate_warning_tuple(self.warnings, "EvaluationPacket.warnings")
         if self.packet_kind is EvaluationPacketKind.CURRENT_PAIR:
             if self.current_pair != self.harness_result.current_pair or self.blocker is not None:
                 raise ValueError(
@@ -62,6 +108,12 @@ def build_evaluation_packet(
     degradation_refs: tuple[DegradationRecord, ...] = (),
     warnings: tuple[str, ...] = (),
 ) -> EvaluationPacket:
+    if not isinstance(harness_result, EvaluationHarnessResult):
+        actual_type = type(harness_result).__name__
+        raise TypeError(
+            "build_evaluation_packet.harness_result must be EvaluationHarnessResult, "
+            f"got {actual_type}.",
+        )
     current_pair = harness_result.current_pair
     blocker = harness_result.blocker
     packet_kind = (
@@ -108,6 +160,23 @@ def _merge_unique(*groups: tuple[_T, ...]) -> tuple[_T, ...]:
             seen.add(item)
             merged.append(item)
     return tuple(merged)
+
+
+def _validate_typed_tuple(values: tuple[object, ...], expected_type: type[object], label: str) -> None:
+    for value in values:
+        if not isinstance(value, expected_type):
+            raise TypeError(
+                f"{label} must contain only {expected_type.__name__} instances.",
+            )
+
+
+def _validate_warning_tuple(warnings: tuple[str, ...], label: str) -> None:
+    for warning in warnings:
+        if not isinstance(warning, str):
+            actual_type = type(warning).__name__
+            raise TypeError(f"{label} must contain only str instances, got {actual_type}.")
+        if not warning.strip():
+            raise ValueError(f"{label} must contain only non-empty values after trimming.")
 
 
 __all__ = [
