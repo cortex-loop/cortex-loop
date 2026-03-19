@@ -1603,6 +1603,17 @@ def test_commitment_verdict_holds_typed_certification_references() -> None:
             boundary_assessment=boundary,
         )
 
+    with pytest.raises(
+        TypeError,
+        match="provenance_manifest must be ProvenanceManifest when provided, got str",
+    ):
+        CommitmentVerdict(
+            status=CommitmentStatus.UNCERTIFIED,
+            candidate=CommitmentCandidate(candidate_id="candidate-1"),
+            provenance_manifest="not-a-manifest",
+            boundary_assessment=boundary,
+        )
+
 
 def test_blocked_commitment_verdict_requires_blocked_boundary_assessment() -> None:
     candidate = CommitmentCandidate(candidate_id="candidate-blocked")

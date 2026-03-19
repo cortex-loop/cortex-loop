@@ -187,6 +187,15 @@ class CommitmentVerdict:
                 "CommitmentVerdict.candidate must be CommitmentCandidate, "
                 f"got {actual_type}.",
             )
+        if self.provenance_manifest is not None and not isinstance(
+            self.provenance_manifest,
+            ProvenanceManifest,
+        ):
+            actual_type = type(self.provenance_manifest).__name__
+            raise TypeError(
+                "CommitmentVerdict.provenance_manifest must be ProvenanceManifest when provided, "
+                f"got {actual_type}.",
+            )
         boundary_is_blocked = (
             isinstance(self.boundary_assessment, BoundaryAssessment)
             and self.boundary_assessment.blocked
