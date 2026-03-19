@@ -2,8 +2,14 @@
 
 import pytest
 
+from cortex.drivers.common_normalization import NormalizedDriverEvent
 from cortex.core.dispatch import DispatchLane, classify_dispatch
-from cortex.drivers.gemini_host import GEMINI_HOST_SURFACE, observe_gemini_host_event
+from cortex.drivers.gemini_host import (
+    GEMINI_HOST_SURFACE,
+    BoundGeminiHostEvent,
+    bind_gemini_event_envelope,
+    observe_gemini_host_event,
+)
 
 
 def test_documented_gemini_event_binds_to_canonical_core_name_and_preserves_raw_name() -> None:
@@ -68,3 +74,77 @@ def test_gemini_surface_gap_emits_explicit_warning_instead_of_fabricated_parity(
 def test_empty_raw_gemini_event_name_is_rejected_before_conservative_fallback() -> None:
     with pytest.raises(ValueError, match="non-empty raw event name"):
         observe_gemini_host_event("", {})
+
+
+def test_bound_gemini_host_event_requires_typed_components() -> None:
+    bound = observe_gemini_host_event("content.delta", {"interaction": {"id": "gm-typed-1"}})
+
+    with pytest.raises(
+        TypeError,
+        match="lifecycle_surface must be LifecycleSurface, got str",
+    ):
+        BoundGeminiHostEvent(
+            lifecycle_surface="not-a-surface",
+            observation=bound.observation,
+            normalized_payload=bound.normalized_payload,
+        )
+
+    with pytest.raises(
+        TypeError,
+        match="observation must be ObservationBundle, got str",
+    ):
+        BoundGeminiHostEvent(
+            lifecycle_surface=bound.lifecycle_surface,
+            observation="not-an-observation",
+            normalized_payload=bound.normalized_payload,
+        )
+
+    with pytest.raises(
+        TypeError,
+        match="normalized_payload must be dict\\[str, Any\\], got tuple",
+    ):
+        BoundGeminiHostEvent(
+            lifecycle_surface=bound.lifecycle_surface,
+            observation=bound.observation,
+            normalized_payload=(),
+        )
+
+
+def test_bound_gemini_host_event_requires_clean_warnings_and_typed_bind_input() -> None:
+    bound = observe_gemini_host_event("content.delta", {"interaction": {"id": "gm-typed-2"}})
+    normalized_event = NormalizedDriverEvent(
+        native_event_name="content.delta",
+        event_name="external/observation",
+        payload={},
+    )
+
+    with pytest.raises(
+        ValueError,
+        match="warnings must contain only non-empty values after trimming",
+    ):
+        BoundGeminiHostEvent(
+            lifecycle_surface=bound.lifecycle_surface,
+            observation=bound.observation,
+            normalized_payload=bound.normalized_payload,
+            warnings=("   ",),
+        )
+
+    with pytest.raises(
+        TypeError,
+        match="warnings must contain only str instances, got int",
+    ):
+        BoundGeminiHostEvent(
+            lifecycle_surface=bound.lifecycle_surface,
+            observation=bound.observation,
+            normalized_payload=bound.normalized_payload,
+            warnings=(1,),
+        )
+
+    envelope = bind_gemini_event_envelope(normalized_event)
+    assert envelope.native_event_name == "external/observation"
+
+    with pytest.raises(
+        TypeError,
+        match="bind_gemini_event_envelope\\.normalized_event must be NormalizedDriverEvent, got str",
+    ):
+        bind_gemini_event_envelope("not-a-normalized-event")
