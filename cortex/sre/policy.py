@@ -23,6 +23,12 @@ class NeutralDominanceDecision:
                 "NeutralDominanceDecision.selected_family must be SoftControlFamily, "
                 f"got {actual_type}."
             )
+        if not isinstance(self.neutral_selected, bool):
+            actual_type = type(self.neutral_selected).__name__
+            raise TypeError(
+                "NeutralDominanceDecision.neutral_selected must be bool, "
+                f"got {actual_type}."
+            )
 
 
 def neutral_dominance_decision(scorecard: AllocationScorecard) -> NeutralDominanceDecision:

@@ -376,6 +376,30 @@ def test_neutral_dominance_decision_requires_typed_selected_family() -> None:
         )
 
 
+def test_neutral_dominance_decision_requires_bool_neutral_selected() -> None:
+    from cortex.sre.policy import NeutralDominanceDecision
+
+    decision = NeutralDominanceDecision(
+        selected_family=SoftControlFamily.NEUTRAL,
+        neutral_selected=True,
+        margin_over_neutral=0.0,
+        activation_threshold=0.1,
+    )
+
+    assert decision.neutral_selected is True
+
+    with pytest.raises(
+        TypeError,
+        match="NeutralDominanceDecision.neutral_selected must be bool",
+    ):
+        NeutralDominanceDecision(
+            selected_family=SoftControlFamily.NEUTRAL,
+            neutral_selected="yes",
+            margin_over_neutral=0.0,
+            activation_threshold=0.1,
+        )
+
+
 def test_neutral_dominance_returns_neutral_when_margin_is_below_threshold() -> None:
     decision = neutral_dominance_decision(
         AllocationScorecard(
