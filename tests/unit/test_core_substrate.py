@@ -382,6 +382,28 @@ def test_blocked_commitment_verdict_requires_blocked_boundary_assessment() -> No
             boundary_assessment=BoundaryAssessment(blocked=False),
         )
 
+    with pytest.raises(
+        ValueError,
+        match="boundary_assessment blocked=True requires status=BLOCKED",
+    ):
+        CommitmentVerdict(
+            status=CommitmentStatus.CERTIFIED,
+            candidate=candidate,
+            provenance_manifest=manifest,
+            boundary_assessment=blocked_boundary,
+        )
+
+    with pytest.raises(
+        ValueError,
+        match="boundary_assessment blocked=True requires status=BLOCKED",
+    ):
+        CommitmentVerdict(
+            status=CommitmentStatus.UNCERTIFIED,
+            candidate=candidate,
+            provenance_manifest=manifest,
+            boundary_assessment=blocked_boundary,
+        )
+
 
 def test_certification_context_rejects_executive_environment_view() -> None:
     observation = ObservationBundle(

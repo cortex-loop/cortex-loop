@@ -84,12 +84,17 @@ class CommitmentVerdict:
     metadata: tuple[MetadataField, ...] = field(default_factory=tuple)
 
     def __post_init__(self) -> None:
-        if self.status is CommitmentStatus.BLOCKED and not (
+        boundary_is_blocked = (
             isinstance(self.boundary_assessment, BoundaryAssessment)
             and self.boundary_assessment.blocked
-        ):
+        )
+        if self.status is CommitmentStatus.BLOCKED and not boundary_is_blocked:
             raise ValueError(
                 "CommitmentVerdict status=BLOCKED requires boundary_assessment with blocked=True.",
+            )
+        if self.status is not CommitmentStatus.BLOCKED and boundary_is_blocked:
+            raise ValueError(
+                "CommitmentVerdict boundary_assessment blocked=True requires status=BLOCKED.",
             )
 
 
