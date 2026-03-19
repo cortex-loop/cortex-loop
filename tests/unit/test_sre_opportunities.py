@@ -204,6 +204,26 @@ def test_opportunity_specialization_result_requires_non_empty_degradation_reason
         )
 
 
+def test_opportunity_specialization_result_requires_typed_selected_family() -> None:
+    result = specialize_host_native_opportunity(
+        SoftControlFamily.NEUTRAL,
+        (),
+    )
+
+    assert result.selected_family is SoftControlFamily.NEUTRAL
+
+    with pytest.raises(
+        TypeError,
+        match=(
+            r"OpportunitySpecializationResult\.selected_family must be "
+            r"SoftControlFamily, got str\."
+        ),
+    ):
+        type(result)(
+            selected_family="check",
+        )
+
+
 def test_family_is_retained_when_no_clearly_superior_opportunity_exists() -> None:
     result = specialize_host_native_opportunity(
         SoftControlFamily.REDIRECT,

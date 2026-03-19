@@ -78,6 +78,12 @@ class OpportunitySpecializationResult:
     safer_fallback_family: SoftControlFamily | None = None
 
     def __post_init__(self) -> None:
+        if not isinstance(self.selected_family, SoftControlFamily):
+            actual_type = type(self.selected_family).__name__
+            raise TypeError(
+                "OpportunitySpecializationResult.selected_family must be "
+                f"SoftControlFamily, got {actual_type}."
+            )
         if self.preferred_opportunity is not None and not isinstance(
             self.preferred_opportunity,
             HostNativeOpportunity,
