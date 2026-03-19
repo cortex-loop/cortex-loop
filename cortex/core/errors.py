@@ -18,6 +18,10 @@ class ContradictionRecord:
             raise ValueError(
                 "ContradictionRecord.source_tag must be non-empty after trimming.",
             )
+        if not (isinstance(self.summary, str) and self.summary.strip()):
+            raise ValueError(
+                "ContradictionRecord.summary must be non-empty after trimming.",
+            )
 
 
 @dataclass(frozen=True, slots=True)

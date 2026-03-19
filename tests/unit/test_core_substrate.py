@@ -1211,6 +1211,7 @@ def test_degradation_and_error_records_preserve_reason_and_capabilities() -> Non
     assert error.reason_code == "boundary-required"
     assert error.capability_tags == frozenset({"approval", "tool"})
     assert error.contradiction_records[0].source_tag == "external/record"
+    assert error.contradiction_records[0].summary == "external record does not match visible claim"
 
     with pytest.raises(ValueError, match="source_tag must be non-empty after trimming"):
         ContradictionRecord(
@@ -1222,6 +1223,18 @@ def test_degradation_and_error_records_preserve_reason_and_capabilities() -> Non
         ContradictionRecord(
             source_tag="   ",
             summary="external record does not match visible claim",
+        )
+
+    with pytest.raises(ValueError, match="summary must be non-empty after trimming"):
+        ContradictionRecord(
+            source_tag="external/record",
+            summary="",
+        )
+
+    with pytest.raises(ValueError, match="summary must be non-empty after trimming"):
+        ContradictionRecord(
+            source_tag="external/record",
+            summary="   ",
         )
 
 
