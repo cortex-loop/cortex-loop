@@ -89,6 +89,14 @@ class ObservationBundle:
     runtime_records: tuple[RuntimeRecord, ...] = field(default_factory=tuple)
     structured_observations: tuple[StructuredObservation, ...] = field(default_factory=tuple)
 
+    def __post_init__(self) -> None:
+        if not isinstance(self.event, LifecycleEventEnvelope):
+            actual_type = type(self.event).__name__
+            raise TypeError(
+                "ObservationBundle.event must be LifecycleEventEnvelope, "
+                f"got {actual_type}.",
+            )
+
 
 __all__ = [
     "ObservationBundle",

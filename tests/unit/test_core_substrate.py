@@ -101,6 +101,12 @@ def test_lifecycle_event_and_observation_carriers_construct_cleanly() -> None:
 
     with pytest.raises(
         TypeError,
+        match="event must be LifecycleEventEnvelope, got str",
+    ):
+        ObservationBundle(event="not-an-envelope", payload_view=PayloadView())
+
+    with pytest.raises(
+        TypeError,
         match="metadata must contain only MetadataField instances",
     ):
         PayloadView(metadata=("not-field",))
