@@ -107,6 +107,23 @@ def test_metadata_field_rejects_blank_keys_and_preserves_lawful_scalar_values() 
         MetadataField("   ", "tool-result")
 
 
+def test_event_payload_handle_rejects_blank_payload_kinds() -> None:
+    handle = EventPayloadHandle(
+        payload_kind="host-payload",
+        payload_ref="evt-1",
+        metadata=(MetadataField("payload_kind", "tool-result"),),
+    )
+
+    assert handle.payload_kind == "host-payload"
+    assert handle.payload_ref == "evt-1"
+
+    with pytest.raises(ValueError, match="payload_kind must be non-empty after trimming"):
+        EventPayloadHandle(payload_kind="", payload_ref="evt-1")
+
+    with pytest.raises(ValueError, match="payload_kind must be non-empty after trimming"):
+        EventPayloadHandle(payload_kind="   ", payload_ref="evt-1")
+
+
 def test_lifecycle_event_envelope_rejects_empty_or_whitespace_only_native_event_name() -> None:
     valid = LifecycleEventEnvelope(native_event_name="turn/complete")
 

@@ -25,6 +25,12 @@ class EventPayloadHandle:
     payload_ref: str | None = None
     metadata: tuple[MetadataField, ...] = field(default_factory=tuple)
 
+    def __post_init__(self) -> None:
+        if not (isinstance(self.payload_kind, str) and self.payload_kind.strip()):
+            raise ValueError(
+                "EventPayloadHandle.payload_kind must be non-empty after trimming.",
+            )
+
 
 @dataclass(frozen=True, slots=True)
 class LifecycleEventEnvelope:

@@ -8,7 +8,7 @@ from cortex.aux.augmentation import (
     augment_snapshot,
 )
 from cortex.aux.cost import AuxBurdenReport
-from cortex.core.envelopes import MetadataField
+from cortex.core.envelopes import EventPayloadHandle, LifecycleEventEnvelope, MetadataField
 from cortex.core.support import (
     SupportCounter,
     SupportExecMemoryState,
@@ -127,6 +127,30 @@ def test_augment_snapshot_cannot_start_from_blank_host_metadata_key_identity() -
                     constraint_tags=snapshot.host.constraint_tags,
                     metadata=(MetadataField("   ", "value"),),
                 ),
+                exec_memory_pub=snapshot.exec_memory_pub,
+            ),
+            AuxiliarySupportAppendix(),
+        )
+
+
+def test_augment_snapshot_cannot_start_from_blank_payload_kind_identity() -> None:
+    snapshot = _make_snapshot()
+
+    with pytest.raises(ValueError, match="payload_kind must be non-empty after trimming"):
+        augment_snapshot(
+            SupportSnapshot(
+                trace=SupportTraceState(
+                    recent_events=(
+                        LifecycleEventEnvelope(
+                            native_event_name="turn/complete",
+                            payload_handle=EventPayloadHandle(payload_kind="   "),
+                        ),
+                    ),
+                    candidate_refs=snapshot.trace.candidate_refs,
+                    wake_receipts=snapshot.trace.wake_receipts,
+                ),
+                session=snapshot.session,
+                host=snapshot.host,
                 exec_memory_pub=snapshot.exec_memory_pub,
             ),
             AuxiliarySupportAppendix(),
