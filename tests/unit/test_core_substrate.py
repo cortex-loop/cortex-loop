@@ -1649,6 +1649,18 @@ def test_commitment_verdict_holds_typed_certification_references() -> None:
             contradiction_refs=("not-a-contradiction",),
         )
 
+    with pytest.raises(
+        TypeError,
+        match="metadata must contain only MetadataField instances",
+    ):
+        CommitmentVerdict(
+            status=CommitmentStatus.UNCERTIFIED,
+            candidate=CommitmentCandidate(candidate_id="candidate-1"),
+            provenance_manifest=manifest,
+            boundary_assessment=boundary,
+            metadata=("not-field",),
+        )
+
 
 def test_blocked_commitment_verdict_requires_blocked_boundary_assessment() -> None:
     candidate = CommitmentCandidate(candidate_id="candidate-blocked")

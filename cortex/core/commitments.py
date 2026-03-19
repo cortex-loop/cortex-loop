@@ -213,6 +213,10 @@ class CommitmentVerdict:
             raise TypeError(
                 "CommitmentVerdict.contradiction_refs must contain only ContradictionRecord instances.",
             )
+        if any(not isinstance(field, MetadataField) for field in self.metadata):
+            raise TypeError(
+                "CommitmentVerdict.metadata must contain only MetadataField instances.",
+            )
         boundary_is_blocked = (
             isinstance(self.boundary_assessment, BoundaryAssessment)
             and self.boundary_assessment.blocked
