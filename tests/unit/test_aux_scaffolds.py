@@ -37,8 +37,31 @@ def test_augment_snapshot_requires_explicit_support_snapshot_and_preserves_core_
     assert augmented.auxiliary_support is appendix
     assert augmented.core_snapshot.trace.candidate_refs == ("candidate-1",)
 
+    direct = AugmentedSupportSnapshot(
+        core_snapshot=snapshot,
+        auxiliary_support=appendix,
+    )
+
+    assert direct.core_snapshot is snapshot
+    assert direct.auxiliary_support is appendix
+
     with pytest.raises(TypeError, match="SupportSnapshot"):
         augment_snapshot(SupportState(), appendix)
+
+    with pytest.raises(TypeError, match="core_snapshot must be SupportSnapshot, got str"):
+        AugmentedSupportSnapshot(
+            core_snapshot="not-a-snapshot",
+            auxiliary_support=appendix,
+        )
+
+    with pytest.raises(
+        TypeError,
+        match="auxiliary_support must be AuxiliarySupportAppendix, got str",
+    ):
+        AugmentedSupportSnapshot(
+            core_snapshot=snapshot,
+            auxiliary_support="not-an-appendix",
+        )
 
     with pytest.raises(
         TypeError,

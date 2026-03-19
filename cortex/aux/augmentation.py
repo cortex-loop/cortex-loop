@@ -42,6 +42,20 @@ class AugmentedSupportSnapshot:
     core_snapshot: SupportSnapshot
     auxiliary_support: AuxiliarySupportAppendix
 
+    def __post_init__(self) -> None:
+        if not isinstance(self.core_snapshot, SupportSnapshot):
+            actual_type = type(self.core_snapshot).__name__
+            raise TypeError(
+                "AugmentedSupportSnapshot.core_snapshot must be SupportSnapshot, "
+                f"got {actual_type}.",
+            )
+        if not isinstance(self.auxiliary_support, AuxiliarySupportAppendix):
+            actual_type = type(self.auxiliary_support).__name__
+            raise TypeError(
+                "AugmentedSupportSnapshot.auxiliary_support must be AuxiliarySupportAppendix, "
+                f"got {actual_type}.",
+            )
+
 
 def augment_snapshot(
     snapshot: SupportSnapshot,
