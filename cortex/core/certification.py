@@ -20,6 +20,13 @@ def certify_commitment(
     degradation_refs: tuple[DegradationRecord, ...] = (),
     contradiction_refs: tuple[ContradictionRecord, ...] = (),
 ) -> CommitmentVerdict:
+    if not isinstance(context, CertificationContext):
+        actual_type = type(context).__name__
+        raise TypeError(
+            "certify_commitment.context must be CertificationContext, "
+            f"got {actual_type}.",
+        )
+
     preserved_contradictions = _merge_contradiction_refs(
         contradiction_refs,
         provenance_manifest.contradiction_refs if provenance_manifest is not None else (),

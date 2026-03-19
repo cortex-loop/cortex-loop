@@ -143,6 +143,26 @@ def test_certify_commitment_cannot_start_from_blank_evidence_reference_id() -> N
         )
 
 
+def test_certify_commitment_requires_typed_context() -> None:
+    verdict = certify_commitment(
+        _make_context(),
+        provenance_manifest=None,
+        boundary_assessment=BoundaryAssessment(blocked=False),
+    )
+
+    assert verdict.status is CommitmentStatus.UNCERTIFIED
+
+    with pytest.raises(
+        TypeError,
+        match=r"certify_commitment\.context must be CertificationContext, got str\.",
+    ):
+        certify_commitment(
+            "not-a-context",
+            provenance_manifest=None,
+            boundary_assessment=BoundaryAssessment(blocked=False),
+        )
+
+
 def test_certify_commitment_preserves_contradictions_and_degradations() -> None:
     contradiction = ContradictionRecord(
         source_tag="runtime-record",
