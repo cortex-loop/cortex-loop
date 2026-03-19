@@ -94,6 +94,13 @@ class SupportTraceState:
             raise TypeError(
                 "SupportTraceState.wake_receipts must contain only WakeReceipt instances.",
             )
+        if any(
+            not isinstance(record, DegradationRecord)
+            for record in self.degradation_records
+        ):
+            raise TypeError(
+                "SupportTraceState.degradation_records must contain only DegradationRecord instances.",
+            )
 
 
 @dataclass(frozen=True, slots=True)

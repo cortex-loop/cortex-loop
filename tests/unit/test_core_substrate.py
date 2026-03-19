@@ -407,11 +407,18 @@ def test_support_trace_requires_non_empty_candidate_refs() -> None:
         recent_events=(LifecycleEventEnvelope(native_event_name="turn/complete"),),
         candidate_refs=("candidate-1",),
         wake_receipts=(WakeReceipt("candidate-present", "approval/request"),),
+        degradation_records=(
+            DegradationRecord(
+                reason_code="missing-capability",
+                capability_tags=frozenset({"approval"}),
+            ),
+        ),
     )
 
     assert trace.recent_events[0].native_event_name == "turn/complete"
     assert trace.candidate_refs == ("candidate-1",)
     assert trace.wake_receipts[0].reason_tag == "candidate-present"
+    assert trace.degradation_records[0].reason_code == "missing-capability"
 
     with pytest.raises(
         TypeError,
@@ -451,6 +458,17 @@ def test_support_trace_requires_non_empty_candidate_refs() -> None:
             recent_events=(LifecycleEventEnvelope(native_event_name="turn/complete"),),
             candidate_refs=("candidate-1",),
             wake_receipts=("receipt-1",),
+        )
+
+    with pytest.raises(
+        TypeError,
+        match="degradation_records must contain only DegradationRecord instances",
+    ):
+        SupportTraceState(
+            recent_events=(LifecycleEventEnvelope(native_event_name="turn/complete"),),
+            candidate_refs=("candidate-1",),
+            wake_receipts=(WakeReceipt("candidate-present", "approval/request"),),
+            degradation_records=("deg-1",),
         )
 
 
