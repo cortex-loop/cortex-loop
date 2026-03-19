@@ -1299,6 +1299,12 @@ def test_degradation_and_error_records_preserve_reason_and_capabilities() -> Non
             metadata=("not-a-field",),
         )
 
+    with pytest.raises(ValueError, match="reason_code must be non-empty after trimming"):
+        CoreErrorRecord(reason_code="")
+
+    with pytest.raises(ValueError, match="reason_code must be non-empty after trimming"):
+        CoreErrorRecord(reason_code="   ")
+
 
 def test_commitment_verdict_holds_typed_certification_references() -> None:
     contradiction = ContradictionRecord(
