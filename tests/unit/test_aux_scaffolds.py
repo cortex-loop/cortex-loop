@@ -168,6 +168,24 @@ def test_augment_snapshot_cannot_start_from_blank_core_wake_receipt_identity() -
         )
 
 
+def test_augment_snapshot_cannot_start_from_blank_core_support_counter_tag() -> None:
+    snapshot = _make_snapshot()
+
+    with pytest.raises(ValueError, match="counter_tag must be non-empty after trimming"):
+        augment_snapshot(
+            SupportSnapshot(
+                trace=snapshot.trace,
+                session=SupportSessionState(
+                    pending_goal_refs=snapshot.session.pending_goal_refs,
+                    wake_counters=(SupportCounter("   ", 1),),
+                ),
+                host=snapshot.host,
+                exec_memory_pub=snapshot.exec_memory_pub,
+            ),
+            AuxiliarySupportAppendix(),
+        )
+
+
 def _make_snapshot() -> SupportSnapshot:
     trace = SupportTraceState(
         candidate_refs=("candidate-1",),

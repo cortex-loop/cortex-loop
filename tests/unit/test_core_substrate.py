@@ -203,7 +203,14 @@ def test_support_state_and_snapshot_are_distinct_types() -> None:
 def test_support_counter_rejects_impossible_counts_and_accepts_zero() -> None:
     counter = SupportCounter("wake-receipts", 0)
 
+    assert counter.counter_tag == "wake-receipts"
     assert counter.count == 0
+
+    with pytest.raises(ValueError, match="counter_tag must be non-empty after trimming"):
+        SupportCounter("", 1)
+
+    with pytest.raises(ValueError, match="counter_tag must be non-empty after trimming"):
+        SupportCounter("   ", 1)
 
     with pytest.raises(TypeError, match="non-negative integer, got bool"):
         SupportCounter("wake-receipts", True)

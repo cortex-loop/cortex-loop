@@ -33,6 +33,10 @@ class SupportCounter:
     count: int
 
     def __post_init__(self) -> None:
+        if not (isinstance(self.counter_tag, str) and self.counter_tag.strip()):
+            raise ValueError(
+                "SupportCounter.counter_tag must be non-empty after trimming.",
+            )
         if isinstance(self.count, bool):
             raise TypeError("SupportCounter.count must be a non-negative integer, got bool.")
         if not isinstance(self.count, int):
