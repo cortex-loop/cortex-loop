@@ -349,6 +349,33 @@ def test_allocation_scorecard_requires_numeric_activation_threshold() -> None:
         )
 
 
+def test_neutral_dominance_decision_requires_typed_selected_family() -> None:
+    decision = neutral_dominance_decision(
+        AllocationScorecard(
+            scores=(
+                AllocationScore(SoftControlFamily.NEUTRAL, 1.0),
+                AllocationScore(SoftControlFamily.CHECK, 1.2),
+            ),
+            activation_threshold=0.1,
+        )
+    )
+
+    assert isinstance(decision.selected_family, SoftControlFamily)
+
+    with pytest.raises(
+        TypeError,
+        match="NeutralDominanceDecision.selected_family must be SoftControlFamily",
+    ):
+        from cortex.sre.policy import NeutralDominanceDecision
+
+        NeutralDominanceDecision(
+            selected_family="neutral",
+            neutral_selected=True,
+            margin_over_neutral=0.0,
+            activation_threshold=0.1,
+        )
+
+
 def test_neutral_dominance_returns_neutral_when_margin_is_below_threshold() -> None:
     decision = neutral_dominance_decision(
         AllocationScorecard(

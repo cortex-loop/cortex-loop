@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from numbers import Real
 
 from .allocation import AllocationScore, AllocationScorecard
 from .families import SoftControlFamily
@@ -14,6 +15,14 @@ class NeutralDominanceDecision:
     neutral_selected: bool
     margin_over_neutral: float
     activation_threshold: float
+
+    def __post_init__(self) -> None:
+        if not isinstance(self.selected_family, SoftControlFamily):
+            actual_type = type(self.selected_family).__name__
+            raise TypeError(
+                "NeutralDominanceDecision.selected_family must be SoftControlFamily, "
+                f"got {actual_type}."
+            )
 
 
 def neutral_dominance_decision(scorecard: AllocationScorecard) -> NeutralDominanceDecision:
