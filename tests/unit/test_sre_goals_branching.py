@@ -124,5 +124,27 @@ def test_reference_executive_state_uses_canonical_goal_carrier_directly() -> Non
     assert state.goal_continuity.main_goal_ref == "goal-main"
 
 
+def test_reference_executive_state_requires_typed_goal_continuity() -> None:
+    with pytest.raises(
+        TypeError,
+        match="ReferenceExecutiveState.goal_continuity must be GoalContinuityView",
+    ):
+        ReferenceExecutiveState(
+            goal_continuity="nope",
+            uncertainty_monitoring=ReferenceUncertaintyMonitoringView(
+                classwise_uncertainty=(UncertaintyEstimate(class_tag="evidence", level=0.2),),
+            ),
+            mode_and_gating=ReferenceModeAndGatingView(
+                mode_tag="pass_through",
+                family_mask=frozenset({SoftControlFamily.NEUTRAL}),
+            ),
+            control_allocation=ReferenceControlAllocationView(
+                budget_band="low",
+                top_family_set=frozenset({SoftControlFamily.NEUTRAL}),
+            ),
+            brake=ReferenceBrakeView(brake_state=BrakeState.QUIESCENT),
+        )
+
+
 def test_reference_state_surface_keeps_only_a_compatibility_alias_for_goal_view() -> None:
     assert ReferenceGoalContinuityView is GoalContinuityView

@@ -103,6 +103,14 @@ class ReferenceExecutiveState:
     control_allocation: ReferenceControlAllocationView
     brake: ReferenceBrakeView
 
+    def __post_init__(self) -> None:
+        if not isinstance(self.goal_continuity, GoalContinuityView):
+            actual_type = type(self.goal_continuity).__name__
+            raise TypeError(
+                "ReferenceExecutiveState.goal_continuity must be GoalContinuityView, "
+                f"got {actual_type}."
+            )
+
 
 __all__ = [
     "ReferenceBrakeView",
