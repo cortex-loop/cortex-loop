@@ -18,6 +18,12 @@ class RepositorySnapshot:
     error_reason: str | None = None
     repository_root: Path | None = None
 
+    def __post_init__(self) -> None:
+        if any(not changed_file.strip() for changed_file in self.changed_files):
+            raise ValueError(
+                "RepositorySnapshot.changed_files must contain only non-empty repo-relative paths after trimming.",
+            )
+
 
 @dataclass(frozen=True, slots=True)
 class ChangedFilesDelta:

@@ -2,6 +2,8 @@
 
 from pathlib import Path
 
+import pytest
+
 from cortex.core.provenance import (
     RepositorySnapshot,
     changed_files_since_baseline,
@@ -42,6 +44,36 @@ def test_repository_snapshot_reports_unavailable_without_git_marker(tmp_path: Pa
     assert snapshot.changed_files == ()
     assert snapshot.error_reason == "git repository marker not found"
     assert snapshot.repository_root is None
+
+
+def test_repository_snapshot_requires_non_empty_changed_files() -> None:
+    direct = RepositorySnapshot(
+        available=True,
+        changed_files=("src/app.py",),
+        repository_root=Path("/repo"),
+    )
+
+    assert direct.changed_files == ("src/app.py",)
+
+    with pytest.raises(
+        ValueError,
+        match="changed_files must contain only non-empty repo-relative paths after trimming",
+    ):
+        RepositorySnapshot(
+            available=True,
+            changed_files=("",),
+            repository_root=Path("/repo"),
+        )
+
+    with pytest.raises(
+        ValueError,
+        match="changed_files must contain only non-empty repo-relative paths after trimming",
+    ):
+        RepositorySnapshot(
+            available=True,
+            changed_files=("   ",),
+            repository_root=Path("/repo"),
+        )
 
 
 def test_changed_files_since_baseline_returns_delta_when_snapshots_are_available() -> None:
