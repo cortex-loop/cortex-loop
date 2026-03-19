@@ -64,6 +64,13 @@ class LifecycleSurface:
             raise ValueError(
                 "LifecycleSurface.turn_affordances must contain only non-empty values after trimming.",
             )
+        if any(
+            not (isinstance(tag, str) and tag.strip())
+            for tag in self.orchestration_affordances
+        ):
+            raise ValueError(
+                "LifecycleSurface.orchestration_affordances must contain only non-empty values after trimming.",
+            )
         if any(not isinstance(binding, LifecycleEffectBinding) for binding in self.effect_map):
             raise TypeError(
                 "LifecycleSurface.effect_map must contain only LifecycleEffectBinding instances.",
