@@ -197,6 +197,27 @@ def test_reference_control_allocation_view_requires_typed_top_family_set() -> No
         )
 
 
+def test_reference_control_allocation_view_requires_non_empty_host_friction_tags() -> None:
+    view = ReferenceControlAllocationView(
+        budget_band="low",
+        host_friction_tags=frozenset({"low-friction"}),
+    )
+
+    assert view.host_friction_tags == frozenset({"low-friction"})
+
+    with pytest.raises(
+        ValueError,
+        match=(
+            "ReferenceControlAllocationView.host_friction_tags must contain only "
+            "non-empty values after trimming."
+        ),
+    ):
+        ReferenceControlAllocationView(
+            budget_band="low",
+            host_friction_tags=frozenset({"   "}),
+        )
+
+
 def test_reference_state_surface_does_not_export_duplicate_uncertainty_carrier() -> None:
     from cortex.sre import state as state_module
 

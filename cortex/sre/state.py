@@ -66,6 +66,11 @@ class ReferenceControlAllocationView:
                 "ReferenceControlAllocationView.top_family_set must contain only "
                 "SoftControlFamily instances."
             )
+        if any(not tag.strip() for tag in self.host_friction_tags):
+            raise ValueError(
+                "ReferenceControlAllocationView.host_friction_tags must contain only "
+                "non-empty values after trimming."
+            )
 
 
 @dataclass(frozen=True, slots=True)
