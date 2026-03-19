@@ -160,3 +160,40 @@ def test_commitment_payload_extraction_warnings_require_non_empty_strings() -> N
             warnings=("   ",),
             normalization_count=0,
         )
+
+
+def test_commitment_payload_extraction_normalization_count_requires_non_negative_int() -> None:
+    direct = CommitmentPayloadExtraction(
+        commitment_fields=None,
+        source=None,
+        warnings=(),
+        normalization_count=0,
+    )
+    extracted = extract_commitment_payload(
+        {"stop_fields": {" key ": "value"}},
+    )
+
+    assert direct.normalization_count == 0
+    assert extracted.normalization_count == 1
+
+    with pytest.raises(
+        TypeError,
+        match="normalization_count must be int, got str",
+    ):
+        CommitmentPayloadExtraction(
+            commitment_fields=None,
+            source=None,
+            warnings=(),
+            normalization_count="1",
+        )
+
+    with pytest.raises(
+        ValueError,
+        match="normalization_count must be non-negative",
+    ):
+        CommitmentPayloadExtraction(
+            commitment_fields=None,
+            source=None,
+            warnings=(),
+            normalization_count=-1,
+        )

@@ -34,6 +34,16 @@ class CommitmentPayloadExtraction:
             raise ValueError(
                 "CommitmentPayloadExtraction.warnings must contain only non-empty strings after trimming.",
             )
+        if not isinstance(self.normalization_count, int):
+            actual_type = type(self.normalization_count).__name__
+            raise TypeError(
+                "CommitmentPayloadExtraction.normalization_count must be int, "
+                f"got {actual_type}.",
+            )
+        if self.normalization_count < 0:
+            raise ValueError(
+                "CommitmentPayloadExtraction.normalization_count must be non-negative.",
+            )
 
 
 def extract_commitment_payload(
