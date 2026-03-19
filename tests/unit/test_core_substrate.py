@@ -298,6 +298,7 @@ def test_support_session_requires_non_empty_pending_goal_refs() -> None:
         pending_goal_refs=("goal-1",),
         role_view_tags=frozenset({"goal_continuity"}),
         budget_history=("budget/neutral",),
+        brake_history=("quiescent",),
         wake_counters=(SupportCounter("candidate-bearing", 1),),
     )
 
@@ -305,6 +306,7 @@ def test_support_session_requires_non_empty_pending_goal_refs() -> None:
     assert session.pending_goal_refs == ("goal-1",)
     assert session.role_view_tags == frozenset({"goal_continuity"})
     assert session.budget_history == ("budget/neutral",)
+    assert session.brake_history == ("quiescent",)
 
     with pytest.raises(
         ValueError,
@@ -315,6 +317,7 @@ def test_support_session_requires_non_empty_pending_goal_refs() -> None:
             pending_goal_refs=("goal-1",),
             role_view_tags=frozenset({"goal_continuity"}),
             budget_history=("budget/neutral",),
+            brake_history=("quiescent",),
             wake_counters=(SupportCounter("candidate-bearing", 1),),
         )
 
@@ -327,6 +330,7 @@ def test_support_session_requires_non_empty_pending_goal_refs() -> None:
             pending_goal_refs=("goal-1",),
             role_view_tags=frozenset({"goal_continuity"}),
             budget_history=("budget/neutral",),
+            brake_history=("quiescent",),
             wake_counters=(SupportCounter("candidate-bearing", 1),),
         )
 
@@ -339,6 +343,7 @@ def test_support_session_requires_non_empty_pending_goal_refs() -> None:
             pending_goal_refs=("",),
             role_view_tags=frozenset({"goal_continuity"}),
             budget_history=("budget/neutral",),
+            brake_history=("quiescent",),
             wake_counters=(SupportCounter("candidate-bearing", 1),),
         )
 
@@ -351,6 +356,7 @@ def test_support_session_requires_non_empty_pending_goal_refs() -> None:
             pending_goal_refs=("   ",),
             role_view_tags=frozenset({"goal_continuity"}),
             budget_history=("budget/neutral",),
+            brake_history=("quiescent",),
             wake_counters=(SupportCounter("candidate-bearing", 1),),
         )
 
@@ -363,6 +369,20 @@ def test_support_session_requires_non_empty_pending_goal_refs() -> None:
             pending_goal_refs=("goal-1",),
             role_view_tags=frozenset({"goal_continuity"}),
             budget_history=("   ",),
+            brake_history=("quiescent",),
+            wake_counters=(SupportCounter("candidate-bearing", 1),),
+        )
+
+    with pytest.raises(
+        ValueError,
+        match="brake_history must contain only non-empty values after trimming",
+    ):
+        SupportSessionState(
+            branch_registry=("main",),
+            pending_goal_refs=("goal-1",),
+            role_view_tags=frozenset({"goal_continuity"}),
+            budget_history=("budget/neutral",),
+            brake_history=("   ",),
             wake_counters=(SupportCounter("candidate-bearing", 1),),
         )
 
@@ -375,6 +395,7 @@ def test_support_session_requires_non_empty_pending_goal_refs() -> None:
             pending_goal_refs=("goal-1",),
             role_view_tags=frozenset({"   "}),
             budget_history=("budget/neutral",),
+            brake_history=("quiescent",),
             wake_counters=(SupportCounter("candidate-bearing", 1),),
         )
 

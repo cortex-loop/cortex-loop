@@ -117,6 +117,13 @@ class SupportSessionState:
                 "SupportSessionState.budget_history must contain only non-empty values after trimming.",
             )
         if any(
+            not (isinstance(brake_entry, str) and brake_entry.strip())
+            for brake_entry in self.brake_history
+        ):
+            raise ValueError(
+                "SupportSessionState.brake_history must contain only non-empty values after trimming.",
+            )
+        if any(
             not (isinstance(role_view_tag, str) and role_view_tag.strip())
             for role_view_tag in self.role_view_tags
         ):
