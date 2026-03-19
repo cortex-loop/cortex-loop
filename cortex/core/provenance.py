@@ -73,6 +73,10 @@ class EvidenceReferenceEvaluation:
             raise ValueError(
                 "EvidenceReferenceEvaluation.reason must be non-empty after trimming.",
             )
+        if self.normalized_reference is not None and not self.normalized_reference.strip():
+            raise ValueError(
+                "EvidenceReferenceEvaluation.normalized_reference must be non-empty after trimming when provided.",
+            )
 
 
 def extract_requirement_ids(payload: Mapping[str, Any]) -> tuple[str, ...]:
