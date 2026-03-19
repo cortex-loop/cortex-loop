@@ -31,6 +31,10 @@ class UncertaintyEstimate:
             raise ValueError(
                 "UncertaintyEstimate.source_tags must contain only non-empty values after trimming."
             )
+        if any(not spike_tag.strip() for spike_tag in self.spike_tags):
+            raise ValueError(
+                "UncertaintyEstimate.spike_tags must contain only non-empty values after trimming."
+            )
         if not 0.0 <= self.level <= 1.0:
             raise ValueError("UncertaintyEstimate.level must be between 0.0 and 1.0.")
 

@@ -56,6 +56,27 @@ def test_uncertainty_estimate_requires_non_empty_source_tags() -> None:
         raise AssertionError("UncertaintyEstimate accepted a blank source tag.")
 
 
+def test_uncertainty_estimate_requires_non_empty_spike_tags() -> None:
+    estimate = UncertaintyEstimate(
+        class_tag="environment",
+        level=0.6,
+        spike_tags=frozenset({"environment-inconsistency"}),
+    )
+
+    assert estimate.spike_tags == frozenset({"environment-inconsistency"})
+
+    try:
+        UncertaintyEstimate(
+            class_tag="environment",
+            level=0.6,
+            spike_tags=frozenset({"   "}),
+        )
+    except ValueError as exc:
+        assert "spike_tags must contain only non-empty values after trimming" in str(exc)
+    else:
+        raise AssertionError("UncertaintyEstimate accepted a blank spike tag.")
+
+
 def test_brake_state_set_is_exact() -> None:
     assert {state.value for state in BrakeState} == {
         "quiescent",
