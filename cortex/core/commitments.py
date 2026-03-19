@@ -43,6 +43,10 @@ class ProvenanceEvidenceRef:
             raise ValueError(
                 "ProvenanceEvidenceRef.source_family must be non-empty after trimming.",
             )
+        if not (isinstance(self.reference_id, str) and self.reference_id.strip()):
+            raise ValueError(
+                "ProvenanceEvidenceRef.reference_id must be non-empty after trimming.",
+            )
 
 
 @dataclass(frozen=True, slots=True)

@@ -273,6 +273,18 @@ def test_provenance_manifest_supports_multiple_domain_agnostic_source_families()
             reference_id="artifact-blank-family",
         )
 
+    with pytest.raises(ValueError, match="reference_id must be non-empty after trimming"):
+        ProvenanceEvidenceRef(
+            source_family="result_artifact",
+            reference_id="",
+        )
+
+    with pytest.raises(ValueError, match="reference_id must be non-empty after trimming"):
+        ProvenanceEvidenceRef(
+            source_family="result_artifact",
+            reference_id="   ",
+        )
+
 
 def test_boundary_assessment_keeps_blockedness_separate_from_commitment_status() -> None:
     blocked = BoundaryAssessment(
@@ -474,7 +486,7 @@ def test_certified_commitment_verdict_requires_concrete_provenance() -> None:
 
     with pytest.raises(
         ValueError,
-        match="status=CERTIFIED requires provenance_manifest with at least one concrete evidence reference",
+        match="reference_id must be non-empty after trimming",
     ):
         CommitmentVerdict(
             status=CommitmentStatus.CERTIFIED,
