@@ -117,6 +117,24 @@ def test_lifecycle_event_and_observation_carriers_construct_cleanly() -> None:
             event_substrate=frozenset({"   "}),
         )
 
+    with pytest.raises(
+        ValueError,
+        match="context_affordances must contain only non-empty values after trimming",
+    ):
+        LifecycleSurface(
+            runtime_name="reference-host",
+            context_affordances=frozenset({""}),
+        )
+
+    with pytest.raises(
+        ValueError,
+        match="context_affordances must contain only non-empty values after trimming",
+    ):
+        LifecycleSurface(
+            runtime_name="reference-host",
+            context_affordances=frozenset({"   "}),
+        )
+
     with pytest.raises(ValueError, match="action_tag must be non-empty after trimming"):
         LifecycleEffectBinding(action_tag="")
 
