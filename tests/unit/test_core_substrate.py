@@ -617,6 +617,24 @@ def test_environment_carriers_reject_non_canonical_available_query_kinds() -> No
             capability_tags=frozenset({"   "}),
         )
 
+    with pytest.raises(
+        ValueError,
+        match="boundary_scope_tags must contain only non-empty values after trimming",
+    ):
+        CommitmentEnvironmentHandle(
+            available_query_kinds=frozenset({EXECUTION_TRACE}),
+            boundary_scope_tags=frozenset({""}),
+        )
+
+    with pytest.raises(
+        ValueError,
+        match="boundary_scope_tags must contain only non-empty values after trimming",
+    ):
+        CommitmentEnvironmentHandle(
+            available_query_kinds=frozenset({EXECUTION_TRACE}),
+            boundary_scope_tags=frozenset({"   "}),
+        )
+
 
 def test_support_state_and_snapshot_are_distinct_types() -> None:
     contradiction = ContradictionRecord(

@@ -82,6 +82,10 @@ class CommitmentEnvironmentHandle:
             raise ValueError(
                 "CommitmentEnvironmentHandle.capability_tags must contain only non-empty values after trimming.",
             )
+        if any(not (isinstance(tag, str) and tag.strip()) for tag in self.boundary_scope_tags):
+            raise ValueError(
+                "CommitmentEnvironmentHandle.boundary_scope_tags must contain only non-empty values after trimming.",
+            )
 
 
 def _validate_query_kind(kind: str) -> None:
