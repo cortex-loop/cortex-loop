@@ -113,6 +113,26 @@ def test_augment_snapshot_appends_auxiliary_support_without_mutating_core_snapsh
     assert augmented.auxiliary_support.metadata[0].key == "derivation_source"
 
 
+def test_augment_snapshot_cannot_start_from_blank_host_metadata_key_identity() -> None:
+    snapshot = _make_snapshot()
+
+    with pytest.raises(ValueError, match="key must be non-empty after trimming"):
+        augment_snapshot(
+            SupportSnapshot(
+                trace=snapshot.trace,
+                session=snapshot.session,
+                host=SupportHostState(
+                    affordance_tags=snapshot.host.affordance_tags,
+                    approval_boundary_tags=snapshot.host.approval_boundary_tags,
+                    constraint_tags=snapshot.host.constraint_tags,
+                    metadata=(MetadataField("   ", "value"),),
+                ),
+                exec_memory_pub=snapshot.exec_memory_pub,
+            ),
+            AuxiliarySupportAppendix(),
+        )
+
+
 def test_aux_burden_report_enforces_non_negative_values() -> None:
     burden = AuxBurdenReport(
         compute_overhead=1.0,

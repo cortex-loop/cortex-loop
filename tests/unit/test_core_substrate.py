@@ -94,6 +94,19 @@ def test_lifecycle_event_and_observation_carriers_construct_cleanly() -> None:
     assert surface.effect_map[0].action_tag == "bounded_prose"
 
 
+def test_metadata_field_rejects_blank_keys_and_preserves_lawful_scalar_values() -> None:
+    field = MetadataField("payload_kind", "tool-result")
+
+    assert field.key == "payload_kind"
+    assert field.value == "tool-result"
+
+    with pytest.raises(ValueError, match="key must be non-empty after trimming"):
+        MetadataField("", "tool-result")
+
+    with pytest.raises(ValueError, match="key must be non-empty after trimming"):
+        MetadataField("   ", "tool-result")
+
+
 def test_lifecycle_event_envelope_rejects_empty_or_whitespace_only_native_event_name() -> None:
     valid = LifecycleEventEnvelope(native_event_name="turn/complete")
 

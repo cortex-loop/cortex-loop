@@ -12,6 +12,12 @@ class MetadataField:
     key: str
     value: MetadataScalar
 
+    def __post_init__(self) -> None:
+        if not (isinstance(self.key, str) and self.key.strip()):
+            raise ValueError(
+                "MetadataField.key must be non-empty after trimming.",
+            )
+
 
 @dataclass(frozen=True, slots=True)
 class EventPayloadHandle:
