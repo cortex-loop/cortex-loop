@@ -135,6 +135,15 @@ def test_lifecycle_event_envelope_rejects_empty_or_whitespace_only_native_event_
     with pytest.raises(ValueError, match="native_event_name must be non-empty after trimming"):
         LifecycleEventEnvelope(native_event_name="   ")
 
+    with pytest.raises(
+        TypeError,
+        match="payload_handle must be EventPayloadHandle when provided, got str",
+    ):
+        LifecycleEventEnvelope(
+            native_event_name="turn/complete",
+            payload_handle="not-a-payload-handle",
+        )
+
 
 def test_environment_query_vocabulary_accepts_canonical_query_kinds() -> None:
     constructed = tuple(EnvironmentQuery(kind=kind) for kind in CANONICAL_QUERY_KINDS)

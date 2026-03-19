@@ -157,6 +157,33 @@ def test_augment_snapshot_cannot_start_from_blank_payload_kind_identity() -> Non
         )
 
 
+def test_augment_snapshot_cannot_start_from_untyped_payload_handle() -> None:
+    snapshot = _make_snapshot()
+
+    with pytest.raises(
+        TypeError,
+        match="payload_handle must be EventPayloadHandle when provided, got str",
+    ):
+        augment_snapshot(
+            SupportSnapshot(
+                trace=SupportTraceState(
+                    recent_events=(
+                        LifecycleEventEnvelope(
+                            native_event_name="turn/complete",
+                            payload_handle="not-a-payload-handle",
+                        ),
+                    ),
+                    candidate_refs=snapshot.trace.candidate_refs,
+                    wake_receipts=snapshot.trace.wake_receipts,
+                ),
+                session=snapshot.session,
+                host=snapshot.host,
+                exec_memory_pub=snapshot.exec_memory_pub,
+            ),
+            AuxiliarySupportAppendix(),
+        )
+
+
 def test_aux_burden_report_enforces_non_negative_values() -> None:
     burden = AuxBurdenReport(
         compute_overhead=1.0,

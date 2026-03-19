@@ -46,6 +46,15 @@ class LifecycleEventEnvelope:
             raise ValueError(
                 "LifecycleEventEnvelope.native_event_name must be non-empty after trimming.",
             )
+        if self.payload_handle is not None and not isinstance(
+            self.payload_handle,
+            EventPayloadHandle,
+        ):
+            actual_type = type(self.payload_handle).__name__
+            raise TypeError(
+                "LifecycleEventEnvelope.payload_handle must be EventPayloadHandle when provided, "
+                f"got {actual_type}.",
+            )
 
 
 __all__ = [
