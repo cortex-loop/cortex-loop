@@ -54,6 +54,10 @@ class HostNativeOpportunity:
                 "HostNativeOpportunity.degradation_reason is only valid when "
                 "realizable is False."
             )
+        if self.degradation_reason is not None and not self.degradation_reason.strip():
+            raise ValueError(
+                "HostNativeOpportunity.degradation_reason must be non-empty after trimming when provided."
+            )
         if self.realizable and self.safer_fallback_family is not None:
             raise ValueError(
                 "HostNativeOpportunity.safer_fallback_family is only valid when "

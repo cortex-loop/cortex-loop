@@ -117,6 +117,31 @@ def test_host_native_opportunity_requires_non_empty_native_surface_tags() -> Non
         )
 
 
+def test_host_native_opportunity_requires_non_empty_degradation_reason_when_provided() -> None:
+    opportunity = HostNativeOpportunity(
+        opportunity_ref="mcp.query",
+        supported_families=frozenset({SoftControlFamily.CHECK}),
+        realizable=False,
+        degradation_reason="host-surface-unavailable",
+    )
+
+    assert opportunity.degradation_reason == "host-surface-unavailable"
+
+    with pytest.raises(
+        ValueError,
+        match=(
+            "HostNativeOpportunity.degradation_reason must be non-empty "
+            "after trimming when provided."
+        ),
+    ):
+        HostNativeOpportunity(
+            opportunity_ref="mcp.query",
+            supported_families=frozenset({SoftControlFamily.CHECK}),
+            realizable=False,
+            degradation_reason="   ",
+        )
+
+
 def test_family_is_retained_when_no_clearly_superior_opportunity_exists() -> None:
     result = specialize_host_native_opportunity(
         SoftControlFamily.REDIRECT,
