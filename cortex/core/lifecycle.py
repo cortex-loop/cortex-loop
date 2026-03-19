@@ -48,6 +48,10 @@ class LifecycleSurface:
             raise ValueError(
                 "LifecycleSurface.runtime_name must be non-empty after trimming.",
             )
+        if any(not (isinstance(tag, str) and tag.strip()) for tag in self.event_substrate):
+            raise ValueError(
+                "LifecycleSurface.event_substrate must contain only non-empty values after trimming.",
+            )
         if any(not isinstance(binding, LifecycleEffectBinding) for binding in self.effect_map):
             raise TypeError(
                 "LifecycleSurface.effect_map must contain only LifecycleEffectBinding instances.",
