@@ -1795,3 +1795,25 @@ def test_certification_context_accepts_commitment_environment_handle() -> None:
             observation="not-an-observation",
             environment_handle=commitment_handle,
         )
+
+    with pytest.raises(
+        ValueError,
+        match="wake_reasons must contain only non-empty values after trimming",
+    ):
+        CertificationContext(
+            candidate=candidate,
+            observation=observation,
+            environment_handle=commitment_handle,
+            wake_reasons=frozenset({""}),
+        )
+
+    with pytest.raises(
+        ValueError,
+        match="wake_reasons must contain only non-empty values after trimming",
+    ):
+        CertificationContext(
+            candidate=candidate,
+            observation=observation,
+            environment_handle=commitment_handle,
+            wake_reasons=frozenset({"   "}),
+        )

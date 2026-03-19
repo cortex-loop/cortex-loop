@@ -160,6 +160,10 @@ class CertificationContext:
                 "CertificationContext requires CommitmentEnvironmentHandle, "
                 f"got {actual_type}."
             )
+        if any(not (isinstance(tag, str) and tag.strip()) for tag in self.wake_reasons):
+            raise ValueError(
+                "CertificationContext.wake_reasons must contain only non-empty values after trimming.",
+            )
 
 
 @dataclass(frozen=True, slots=True)
