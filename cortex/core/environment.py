@@ -59,6 +59,10 @@ class ExecutiveEnvironmentView:
 
     def __post_init__(self) -> None:
         _validate_query_kind_set(self.available_query_kinds)
+        if any(not (isinstance(tag, str) and tag.strip()) for tag in self.host_capability_tags):
+            raise ValueError(
+                "ExecutiveEnvironmentView.host_capability_tags must contain only non-empty values after trimming.",
+            )
         if any(not isinstance(query, EnvironmentQuery) for query in self.bounded_requests):
             raise TypeError(
                 "ExecutiveEnvironmentView.bounded_requests must contain only EnvironmentQuery instances.",

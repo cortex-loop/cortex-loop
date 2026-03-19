@@ -591,6 +591,24 @@ def test_environment_carriers_reject_non_canonical_available_query_kinds() -> No
         )
 
     with pytest.raises(
+        ValueError,
+        match="host_capability_tags must contain only non-empty values after trimming",
+    ):
+        ExecutiveEnvironmentView(
+            available_query_kinds=frozenset({STATE_SNAPSHOT}),
+            host_capability_tags=frozenset({""}),
+        )
+
+    with pytest.raises(
+        ValueError,
+        match="host_capability_tags must contain only non-empty values after trimming",
+    ):
+        ExecutiveEnvironmentView(
+            available_query_kinds=frozenset({STATE_SNAPSHOT}),
+            host_capability_tags=frozenset({"   "}),
+        )
+
+    with pytest.raises(
         TypeError,
         match="evidence_requests must contain only EnvironmentQuery instances",
     ):
