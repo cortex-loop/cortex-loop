@@ -2,7 +2,7 @@
 
 import pytest
 
-from cortex.core.dispatch import DispatchLane, WakeDecision, classify_dispatch
+from cortex.core.dispatch import DispatchLane, EvidencePlan, WakeDecision, classify_dispatch
 from cortex.core.envelopes import LifecycleEventEnvelope, MetadataField
 from cortex.core.observation import ObservationBundle, PayloadView
 
@@ -125,6 +125,50 @@ def test_wake_decision_requires_non_empty_reason_tags() -> None:
         WakeDecision(
             full_commitment_required=False,
             reason_tags=frozenset({"   "}),
+        )
+
+
+def test_evidence_plan_requires_bool_fields() -> None:
+    direct = EvidencePlan(
+        requires_candidate_extraction=True,
+        requires_provenance=False,
+        requires_boundary_assessment=False,
+    )
+    emitted = classify_dispatch(_make_observation(native_event_name="stream/token"))
+
+    assert direct.requires_candidate_extraction is True
+    assert emitted.evidence_plan.requires_candidate_extraction is False
+    assert emitted.evidence_plan.requires_provenance is False
+    assert emitted.evidence_plan.requires_boundary_assessment is False
+
+    with pytest.raises(
+        TypeError,
+        match="requires_candidate_extraction must be bool, got str",
+    ):
+        EvidencePlan(
+            requires_candidate_extraction="yes",
+            requires_provenance=False,
+            requires_boundary_assessment=False,
+        )
+
+    with pytest.raises(
+        TypeError,
+        match="requires_provenance must be bool, got int",
+    ):
+        EvidencePlan(
+            requires_candidate_extraction=False,
+            requires_provenance=1,
+            requires_boundary_assessment=False,
+        )
+
+    with pytest.raises(
+        TypeError,
+        match="requires_boundary_assessment must be bool, got str",
+    ):
+        EvidencePlan(
+            requires_candidate_extraction=False,
+            requires_provenance=False,
+            requires_boundary_assessment="no",
         )
 
 

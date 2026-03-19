@@ -36,6 +36,26 @@ class EvidencePlan:
     requires_provenance: bool
     requires_boundary_assessment: bool
 
+    def __post_init__(self) -> None:
+        if not isinstance(self.requires_candidate_extraction, bool):
+            actual_type = type(self.requires_candidate_extraction).__name__
+            raise TypeError(
+                "EvidencePlan.requires_candidate_extraction must be bool, "
+                f"got {actual_type}.",
+            )
+        if not isinstance(self.requires_provenance, bool):
+            actual_type = type(self.requires_provenance).__name__
+            raise TypeError(
+                "EvidencePlan.requires_provenance must be bool, "
+                f"got {actual_type}.",
+            )
+        if not isinstance(self.requires_boundary_assessment, bool):
+            actual_type = type(self.requires_boundary_assessment).__name__
+            raise TypeError(
+                "EvidencePlan.requires_boundary_assessment must be bool, "
+                f"got {actual_type}.",
+            )
+
 
 @dataclass(frozen=True, slots=True)
 class DispatchDecision:
