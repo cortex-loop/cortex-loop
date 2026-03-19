@@ -123,6 +123,10 @@ class BoundaryAssessment:
             raise ValueError(
                 "BoundaryAssessment.capability_tags must contain only non-empty values after trimming.",
             )
+        if any(not isinstance(ref, ContradictionRecord) for ref in self.contradiction_refs):
+            raise TypeError(
+                "BoundaryAssessment.contradiction_refs must contain only ContradictionRecord instances.",
+            )
 
 
 @dataclass(frozen=True, slots=True)

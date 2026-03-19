@@ -1377,6 +1377,12 @@ def test_boundary_assessment_keeps_blockedness_separate_from_commitment_status()
     ):
         BoundaryAssessment(blocked=False, capability_tags=frozenset({"   "}))
 
+    with pytest.raises(
+        TypeError,
+        match="contradiction_refs must contain only ContradictionRecord instances",
+    ):
+        BoundaryAssessment(blocked=False, contradiction_refs=("not-a-contradiction",))
+
 
 def test_blocked_boundary_assessment_requires_non_empty_reason_code() -> None:
     blocked = BoundaryAssessment(
