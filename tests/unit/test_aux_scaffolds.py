@@ -40,6 +40,12 @@ def test_augment_snapshot_requires_explicit_support_snapshot_and_preserves_core_
     with pytest.raises(TypeError, match="SupportSnapshot"):
         augment_snapshot(SupportState(), appendix)
 
+    with pytest.raises(
+        TypeError,
+        match="derived_support_refs must contain only SupportReference instances",
+    ):
+        augment_snapshot(snapshot, AuxiliarySupportAppendix(derived_support_refs=("aux-1",)))
+
 
 def test_augment_snapshot_appends_auxiliary_support_without_mutating_core_snapshot_semantics() -> None:
     snapshot = _make_snapshot()
@@ -99,6 +105,12 @@ def test_aux_scaffold_types_remain_domain_general_and_removable() -> None:
     assert appendix.notes == ("general-purpose auxiliary support",)
     assert burden.retrieval_cost == 1.5
     assert burden.intervention_burden == 1.0
+
+    with pytest.raises(
+        TypeError,
+        match="derived_support_refs must contain only SupportReference instances",
+    ):
+        AuxiliarySupportAppendix(derived_support_refs=("aux-1",))
 
 
 def test_augment_snapshot_cannot_start_from_blank_core_support_reference_identity() -> None:

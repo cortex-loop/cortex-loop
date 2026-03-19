@@ -15,6 +15,15 @@ class AuxiliarySupportAppendix:
     notes: tuple[str, ...] = field(default_factory=tuple)
     metadata: tuple[MetadataField, ...] = field(default_factory=tuple)
 
+    def __post_init__(self) -> None:
+        if any(
+            not isinstance(reference, SupportReference)
+            for reference in self.derived_support_refs
+        ):
+            raise TypeError(
+                "AuxiliarySupportAppendix.derived_support_refs must contain only SupportReference instances.",
+            )
+
 
 @dataclass(frozen=True, slots=True)
 class AugmentedSupportSnapshot:
