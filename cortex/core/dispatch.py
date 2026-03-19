@@ -120,6 +120,14 @@ class DispatchDecision:
                 "DispatchDecision.structured_payload_violation must be bool, "
                 f"got {actual_type}.",
             )
+        if any(not isinstance(warning, str) for warning in self.warnings):
+            raise TypeError(
+                "DispatchDecision.warnings must contain only string entries.",
+            )
+        if any(not warning.strip() for warning in self.warnings):
+            raise ValueError(
+                "DispatchDecision.warnings must contain only non-empty strings after trimming.",
+            )
 
 
 FULL_COMMITMENT_REASON_ALIASES = {

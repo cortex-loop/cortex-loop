@@ -352,6 +352,44 @@ def test_dispatch_decision_requires_bool_structured_payload_violation() -> None:
         )
 
 
+def test_dispatch_decision_requires_non_empty_string_warnings() -> None:
+    direct = DispatchDecision(
+        lane=DispatchLane.CHEAP,
+        wake_decision=WakeDecision(full_commitment_required=False, reason_tags=frozenset()),
+        evidence_plan=EvidencePlan(False, False, False),
+        candidate_present=False,
+        warnings=("warning",),
+    )
+    emitted = classify_dispatch(_make_observation(native_event_name="stream/token"))
+
+    assert direct.warnings == ("warning",)
+    assert emitted.warnings == ()
+
+    with pytest.raises(
+        TypeError,
+        match="warnings must contain only string entries",
+    ):
+        DispatchDecision(
+            lane=DispatchLane.CHEAP,
+            wake_decision=WakeDecision(full_commitment_required=False, reason_tags=frozenset()),
+            evidence_plan=EvidencePlan(False, False, False),
+            candidate_present=False,
+            warnings=("ok", 7),
+        )
+
+    with pytest.raises(
+        ValueError,
+        match="warnings must contain only non-empty strings after trimming",
+    ):
+        DispatchDecision(
+            lane=DispatchLane.CHEAP,
+            wake_decision=WakeDecision(full_commitment_required=False, reason_tags=frozenset()),
+            evidence_plan=EvidencePlan(False, False, False),
+            candidate_present=False,
+            warnings=("   ",),
+        )
+
+
 def test_evidence_plan_matches_the_dispatched_lane() -> None:
     cheap = classify_dispatch(_make_observation(native_event_name="stream/token"))
     candidate = classify_dispatch(
