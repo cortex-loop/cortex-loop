@@ -1,6 +1,6 @@
 """Focused unit tests for SRE uncertainty and brake."""
 
-from cortex.sre.brake import BrakeState, evaluate_brake_state
+from cortex.sre.brake import BrakeEvaluation, BrakeState, evaluate_brake_state
 from cortex.sre.uncertainty import REFERENCE_UNCERTAINTY_CLASSES, UncertaintyEstimate
 
 
@@ -96,6 +96,19 @@ def test_brake_state_set_is_exact() -> None:
         "guarded",
         "latched",
     }
+
+
+def test_brake_evaluation_requires_typed_state() -> None:
+    evaluation = BrakeEvaluation(state=BrakeState.GUARDED)
+
+    assert evaluation.state is BrakeState.GUARDED
+
+    try:
+        BrakeEvaluation(state="guarded")
+    except TypeError as exc:
+        assert "BrakeEvaluation.state must be BrakeState" in str(exc)
+    else:
+        raise AssertionError("BrakeEvaluation accepted an untyped state.")
 
 
 def test_brake_evaluation_returns_quiescent_for_low_uncertainty_without_spikes() -> None:

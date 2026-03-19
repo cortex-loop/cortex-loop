@@ -29,6 +29,14 @@ class BrakeEvaluation:
     max_uncertainty: float = 0.0
     spike_tags: frozenset[str] = field(default_factory=frozenset)
 
+    def __post_init__(self) -> None:
+        if not isinstance(self.state, BrakeState):
+            actual_type = type(self.state).__name__
+            raise TypeError(
+                "BrakeEvaluation.state must be BrakeState, "
+                f"got {actual_type}."
+            )
+
 
 def evaluate_brake_state(
     uncertainty_estimates: tuple[UncertaintyEstimate, ...],
