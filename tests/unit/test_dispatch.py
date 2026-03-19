@@ -2,7 +2,13 @@
 
 import pytest
 
-from cortex.core.dispatch import DispatchLane, EvidencePlan, WakeDecision, classify_dispatch
+from cortex.core.dispatch import (
+    DispatchDecision,
+    DispatchLane,
+    EvidencePlan,
+    WakeDecision,
+    classify_dispatch,
+)
 from cortex.core.envelopes import LifecycleEventEnvelope, MetadataField
 from cortex.core.observation import ObservationBundle, PayloadView
 
@@ -169,6 +175,30 @@ def test_evidence_plan_requires_bool_fields() -> None:
             requires_candidate_extraction=False,
             requires_provenance=False,
             requires_boundary_assessment="no",
+        )
+
+
+def test_dispatch_decision_requires_typed_wake_decision() -> None:
+    direct = DispatchDecision(
+        lane=DispatchLane.CHEAP,
+        wake_decision=WakeDecision(full_commitment_required=False, reason_tags=frozenset()),
+        evidence_plan=EvidencePlan(False, False, False),
+        candidate_present=False,
+    )
+    emitted = classify_dispatch(_make_observation(native_event_name="stream/token"))
+
+    assert direct.wake_decision.full_commitment_required is False
+    assert emitted.wake_decision.reason_tags == frozenset()
+
+    with pytest.raises(
+        TypeError,
+        match="wake_decision must be WakeDecision, got str",
+    ):
+        DispatchDecision(
+            lane=DispatchLane.CHEAP,
+            wake_decision="not-a-wake",
+            evidence_plan=EvidencePlan(False, False, False),
+            candidate_present=False,
         )
 
 

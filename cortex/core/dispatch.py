@@ -67,6 +67,14 @@ class DispatchDecision:
     structured_payload_violation: bool = False
     warnings: tuple[str, ...] = field(default_factory=tuple)
 
+    def __post_init__(self) -> None:
+        if not isinstance(self.wake_decision, WakeDecision):
+            actual_type = type(self.wake_decision).__name__
+            raise TypeError(
+                "DispatchDecision.wake_decision must be WakeDecision, "
+                f"got {actual_type}.",
+            )
+
 
 FULL_COMMITMENT_REASON_ALIASES = {
     "commitment-subset": "commitment-subset",
