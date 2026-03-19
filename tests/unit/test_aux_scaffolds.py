@@ -259,6 +259,18 @@ def test_aux_burden_report_rejects_boolean_values() -> None:
         AuxBurdenReport(memory_overhead=False)
 
 
+def test_aux_burden_report_requires_typed_metadata() -> None:
+    burden = AuxBurdenReport(metadata=(MetadataField("source", "aux"),))
+
+    assert burden.metadata[0].key == "source"
+
+    with pytest.raises(
+        TypeError,
+        match="AuxBurdenReport\\.metadata must contain only MetadataField instances",
+    ):
+        AuxBurdenReport(metadata=("not-a-field",))
+
+
 def test_aux_scaffold_types_remain_domain_general_and_removable() -> None:
     appendix = AuxiliarySupportAppendix(
         derived_support_refs=(SupportReference("adjunct", "aux-3"),),

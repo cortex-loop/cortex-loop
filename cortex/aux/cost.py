@@ -39,6 +39,11 @@ class AuxBurdenReport:
                 )
             if value < 0:
                 raise ValueError(f"AuxBurdenReport.{field_name} must be non-negative.")
+        for metadata_field in self.metadata:
+            if not isinstance(metadata_field, MetadataField):
+                raise TypeError(
+                    "AuxBurdenReport.metadata must contain only MetadataField instances.",
+                )
 
 
 __all__ = ["AuxBurdenReport"]
