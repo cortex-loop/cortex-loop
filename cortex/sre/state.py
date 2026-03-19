@@ -17,6 +17,16 @@ class ReferenceUncertaintyMonitoringView:
     classwise_uncertainty: tuple[UncertaintyEstimate, ...] = field(default_factory=tuple)
     contradiction_spike_flags: frozenset[str] = field(default_factory=frozenset)
 
+    def __post_init__(self) -> None:
+        if any(
+            not isinstance(estimate, UncertaintyEstimate)
+            for estimate in self.classwise_uncertainty
+        ):
+            raise TypeError(
+                "ReferenceUncertaintyMonitoringView.classwise_uncertainty must "
+                "contain only UncertaintyEstimate instances."
+            )
+
 
 @dataclass(frozen=True, slots=True)
 class ReferenceModeAndGatingView:

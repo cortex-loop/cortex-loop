@@ -1,5 +1,7 @@
 """Focused unit tests for the first active SRE hinge."""
 
+import pytest
+
 from cortex.sre.allocation import AllocationScore, AllocationScorecard
 from cortex.sre.brake import BrakeState
 from cortex.sre.families import REFERENCE_SOFT_CONTROL_FAMILIES, SoftControlFamily
@@ -87,6 +89,23 @@ def test_reference_executive_state_uses_canonical_uncertainty_and_brake_types() 
         UncertaintyEstimate,
     )
     assert isinstance(state.brake.brake_state, BrakeState)
+
+
+def test_reference_uncertainty_monitoring_view_requires_typed_classwise_uncertainty() -> None:
+    view = ReferenceUncertaintyMonitoringView(
+        classwise_uncertainty=(UncertaintyEstimate("evidence", 0.25),),
+    )
+
+    assert isinstance(view.classwise_uncertainty[0], UncertaintyEstimate)
+
+    with pytest.raises(
+        TypeError,
+        match=(
+            "ReferenceUncertaintyMonitoringView.classwise_uncertainty must "
+            "contain only UncertaintyEstimate instances."
+        ),
+    ):
+        ReferenceUncertaintyMonitoringView(classwise_uncertainty=("not-estimate",))
 
 
 def test_reference_state_surface_does_not_export_duplicate_uncertainty_carrier() -> None:
