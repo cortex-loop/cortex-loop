@@ -23,6 +23,10 @@ class PayloadView:
                 "PayloadView.payload_handle must be EventPayloadHandle when provided, "
                 f"got {actual_type}.",
             )
+        if any(not isinstance(field, MetadataField) for field in self.metadata):
+            raise TypeError(
+                "PayloadView.metadata must contain only MetadataField instances.",
+            )
 
 
 @dataclass(frozen=True, slots=True)

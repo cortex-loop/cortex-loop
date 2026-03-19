@@ -99,6 +99,12 @@ def test_lifecycle_event_and_observation_carriers_construct_cleanly() -> None:
     ):
         PayloadView(payload_handle="not-a-handle")
 
+    with pytest.raises(
+        TypeError,
+        match="metadata must contain only MetadataField instances",
+    ):
+        PayloadView(metadata=("not-field",))
+
     with pytest.raises(ValueError, match="runtime_name must be non-empty after trimming"):
         LifecycleSurface(runtime_name="")
 
