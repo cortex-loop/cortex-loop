@@ -73,6 +73,27 @@ def test_host_native_opportunity_requires_non_empty_opportunity_ref() -> None:
         )
 
 
+def test_host_native_opportunity_requires_typed_supported_families() -> None:
+    opportunity = HostNativeOpportunity(
+        opportunity_ref="mcp.query",
+        supported_families=frozenset({SoftControlFamily.CHECK}),
+    )
+
+    assert opportunity.supported_families == frozenset({SoftControlFamily.CHECK})
+
+    with pytest.raises(
+        TypeError,
+        match=(
+            "HostNativeOpportunity.supported_families must contain only "
+            "SoftControlFamily instances."
+        ),
+    ):
+        HostNativeOpportunity(
+            opportunity_ref="mcp.query",
+            supported_families=frozenset({"check"}),
+        )
+
+
 def test_family_is_retained_when_no_clearly_superior_opportunity_exists() -> None:
     result = specialize_host_native_opportunity(
         SoftControlFamily.REDIRECT,

@@ -30,6 +30,14 @@ class HostNativeOpportunity:
             raise ValueError(
                 "HostNativeOpportunity.opportunity_ref must be non-empty after trimming."
             )
+        if any(
+            not isinstance(family, SoftControlFamily)
+            for family in self.supported_families
+        ):
+            raise TypeError(
+                "HostNativeOpportunity.supported_families must contain only "
+                "SoftControlFamily instances."
+            )
         if not self.supported_families:
             raise ValueError("HostNativeOpportunity.supported_families must not be empty.")
         if self.safer_fallback_family not in _SAFE_FALLBACK_FAMILIES | {None}:
