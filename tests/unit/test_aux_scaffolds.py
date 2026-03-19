@@ -194,6 +194,19 @@ def test_augment_snapshot_cannot_start_from_untyped_core_exec_memory_refs() -> N
         )
 
 
+def test_augment_snapshot_cannot_start_from_untyped_core_snapshot_component() -> None:
+    with pytest.raises(TypeError, match="trace must be SupportTraceState, got str"):
+        augment_snapshot(
+            SupportSnapshot(
+                trace="not-a-trace",
+                session=SupportSessionState(),
+                host=SupportHostState(),
+                exec_memory_pub=SupportExecMemoryState(),
+            ),
+            AuxiliarySupportAppendix(),
+        )
+
+
 def test_augment_snapshot_cannot_start_from_blank_core_wake_receipt_identity() -> None:
     snapshot = _make_snapshot()
 

@@ -202,6 +202,32 @@ class SupportSnapshot:
     host: SupportHostState
     exec_memory_pub: SupportExecMemoryState
 
+    def __post_init__(self) -> None:
+        if not isinstance(self.trace, SupportTraceState):
+            actual_type = type(self.trace).__name__
+            raise TypeError(
+                "SupportSnapshot.trace must be SupportTraceState, "
+                f"got {actual_type}.",
+            )
+        if not isinstance(self.session, SupportSessionState):
+            actual_type = type(self.session).__name__
+            raise TypeError(
+                "SupportSnapshot.session must be SupportSessionState, "
+                f"got {actual_type}.",
+            )
+        if not isinstance(self.host, SupportHostState):
+            actual_type = type(self.host).__name__
+            raise TypeError(
+                "SupportSnapshot.host must be SupportHostState, "
+                f"got {actual_type}.",
+            )
+        if not isinstance(self.exec_memory_pub, SupportExecMemoryState):
+            actual_type = type(self.exec_memory_pub).__name__
+            raise TypeError(
+                "SupportSnapshot.exec_memory_pub must be SupportExecMemoryState, "
+                f"got {actual_type}.",
+            )
+
 
 __all__ = [
     "SupportCounter",
