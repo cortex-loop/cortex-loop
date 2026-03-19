@@ -342,6 +342,47 @@ def test_commitment_verdict_holds_typed_certification_references() -> None:
     assert verdict.contradiction_refs[0].source_tag == "runtime-record"
 
 
+def test_blocked_commitment_verdict_requires_blocked_boundary_assessment() -> None:
+    candidate = CommitmentCandidate(candidate_id="candidate-blocked")
+    manifest = ProvenanceManifest()
+    blocked_boundary = BoundaryAssessment(
+        blocked=True,
+        reason_code="approval-required",
+        boundary_tags=frozenset({"external-boundary"}),
+    )
+    verdict = CommitmentVerdict(
+        status=CommitmentStatus.BLOCKED,
+        candidate=candidate,
+        provenance_manifest=manifest,
+        boundary_assessment=blocked_boundary,
+    )
+
+    assert verdict.boundary_assessment is blocked_boundary
+    assert verdict.boundary_assessment.reason_code == "approval-required"
+
+    with pytest.raises(
+        ValueError,
+        match="status=BLOCKED requires boundary_assessment with blocked=True",
+    ):
+        CommitmentVerdict(
+            status=CommitmentStatus.BLOCKED,
+            candidate=candidate,
+            provenance_manifest=manifest,
+            boundary_assessment=None,
+        )
+
+    with pytest.raises(
+        ValueError,
+        match="status=BLOCKED requires boundary_assessment with blocked=True",
+    ):
+        CommitmentVerdict(
+            status=CommitmentStatus.BLOCKED,
+            candidate=candidate,
+            provenance_manifest=manifest,
+            boundary_assessment=BoundaryAssessment(blocked=False),
+        )
+
+
 def test_certification_context_rejects_executive_environment_view() -> None:
     observation = ObservationBundle(
         event=LifecycleEventEnvelope(native_event_name="turn/complete"),
