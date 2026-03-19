@@ -209,6 +209,10 @@ class CommitmentVerdict:
             raise TypeError(
                 "CommitmentVerdict.degradation_refs must contain only DegradationRecord instances.",
             )
+        if any(not isinstance(ref, ContradictionRecord) for ref in self.contradiction_refs):
+            raise TypeError(
+                "CommitmentVerdict.contradiction_refs must contain only ContradictionRecord instances.",
+            )
         boundary_is_blocked = (
             isinstance(self.boundary_assessment, BoundaryAssessment)
             and self.boundary_assessment.blocked

@@ -1637,6 +1637,18 @@ def test_commitment_verdict_holds_typed_certification_references() -> None:
             degradation_refs=("not-a-degradation",),
         )
 
+    with pytest.raises(
+        TypeError,
+        match="contradiction_refs must contain only ContradictionRecord instances",
+    ):
+        CommitmentVerdict(
+            status=CommitmentStatus.UNCERTIFIED,
+            candidate=CommitmentCandidate(candidate_id="candidate-1"),
+            provenance_manifest=manifest,
+            boundary_assessment=boundary,
+            contradiction_refs=("not-a-contradiction",),
+        )
+
 
 def test_blocked_commitment_verdict_requires_blocked_boundary_assessment() -> None:
     candidate = CommitmentCandidate(candidate_id="candidate-blocked")
