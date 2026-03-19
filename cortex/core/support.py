@@ -79,6 +79,10 @@ class SupportTraceState:
     observables: tuple[StructuredObservation, ...] = field(default_factory=tuple)
 
     def __post_init__(self) -> None:
+        if any(not isinstance(event, LifecycleEventEnvelope) for event in self.recent_events):
+            raise TypeError(
+                "SupportTraceState.recent_events must contain only LifecycleEventEnvelope instances.",
+            )
         if any(
             not (isinstance(candidate_ref, str) and candidate_ref.strip())
             for candidate_ref in self.candidate_refs

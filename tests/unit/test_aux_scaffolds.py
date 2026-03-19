@@ -226,6 +226,24 @@ def test_augment_snapshot_cannot_start_from_blank_core_wake_receipt_identity() -
 
     with pytest.raises(
         TypeError,
+        match="recent_events must contain only LifecycleEventEnvelope instances",
+    ):
+        augment_snapshot(
+            SupportSnapshot(
+                trace=SupportTraceState(
+                    recent_events=("event-1",),
+                    candidate_refs=snapshot.trace.candidate_refs,
+                    wake_receipts=snapshot.trace.wake_receipts,
+                ),
+                session=snapshot.session,
+                host=snapshot.host,
+                exec_memory_pub=snapshot.exec_memory_pub,
+            ),
+            AuxiliarySupportAppendix(),
+        )
+
+    with pytest.raises(
+        TypeError,
         match="wake_receipts must contain only WakeReceipt instances",
     ):
         augment_snapshot(

@@ -404,18 +404,31 @@ def test_support_state_requires_typed_components() -> None:
 
 def test_support_trace_requires_non_empty_candidate_refs() -> None:
     trace = SupportTraceState(
+        recent_events=(LifecycleEventEnvelope(native_event_name="turn/complete"),),
         candidate_refs=("candidate-1",),
         wake_receipts=(WakeReceipt("candidate-present", "approval/request"),),
     )
 
+    assert trace.recent_events[0].native_event_name == "turn/complete"
     assert trace.candidate_refs == ("candidate-1",)
     assert trace.wake_receipts[0].reason_tag == "candidate-present"
+
+    with pytest.raises(
+        TypeError,
+        match="recent_events must contain only LifecycleEventEnvelope instances",
+    ):
+        SupportTraceState(
+            recent_events=("event-1",),
+            candidate_refs=("candidate-1",),
+            wake_receipts=(WakeReceipt("candidate-present", "approval/request"),),
+        )
 
     with pytest.raises(
         ValueError,
         match="candidate_refs must contain only non-empty values after trimming",
     ):
         SupportTraceState(
+            recent_events=(LifecycleEventEnvelope(native_event_name="turn/complete"),),
             candidate_refs=("",),
             wake_receipts=(WakeReceipt("candidate-present", "approval/request"),),
         )
@@ -425,6 +438,7 @@ def test_support_trace_requires_non_empty_candidate_refs() -> None:
         match="candidate_refs must contain only non-empty values after trimming",
     ):
         SupportTraceState(
+            recent_events=(LifecycleEventEnvelope(native_event_name="turn/complete"),),
             candidate_refs=("   ",),
             wake_receipts=(WakeReceipt("candidate-present", "approval/request"),),
         )
@@ -434,6 +448,7 @@ def test_support_trace_requires_non_empty_candidate_refs() -> None:
         match="wake_receipts must contain only WakeReceipt instances",
     ):
         SupportTraceState(
+            recent_events=(LifecycleEventEnvelope(native_event_name="turn/complete"),),
             candidate_refs=("candidate-1",),
             wake_receipts=("receipt-1",),
         )
