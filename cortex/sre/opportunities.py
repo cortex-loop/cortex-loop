@@ -26,6 +26,10 @@ class HostNativeOpportunity:
     native_surface_tags: frozenset[str] = field(default_factory=frozenset)
 
     def __post_init__(self) -> None:
+        if not self.opportunity_ref.strip():
+            raise ValueError(
+                "HostNativeOpportunity.opportunity_ref must be non-empty after trimming."
+            )
         if not self.supported_families:
             raise ValueError("HostNativeOpportunity.supported_families must not be empty.")
         if self.safer_fallback_family not in _SAFE_FALLBACK_FAMILIES | {None}:

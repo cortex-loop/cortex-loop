@@ -1,5 +1,7 @@
 """Focused unit tests for SRE host-native opportunity specialization."""
 
+import pytest
+
 from cortex.sre.families import SoftControlFamily
 from cortex.sre.opportunities import (
     HostNativeOpportunity,
@@ -51,6 +53,24 @@ def test_matching_direct_host_native_opportunity_is_nominated_when_clearly_super
     assert result.preferred_opportunity.native_surface_tags == frozenset(
         {"mcp", "structured-query"}
     )
+
+
+def test_host_native_opportunity_requires_non_empty_opportunity_ref() -> None:
+    opportunity = HostNativeOpportunity(
+        opportunity_ref="mcp.query",
+        supported_families=frozenset({SoftControlFamily.CHECK}),
+    )
+
+    assert opportunity.opportunity_ref == "mcp.query"
+
+    with pytest.raises(
+        ValueError,
+        match="HostNativeOpportunity.opportunity_ref must be non-empty after trimming.",
+    ):
+        HostNativeOpportunity(
+            opportunity_ref="   ",
+            supported_families=frozenset({SoftControlFamily.CHECK}),
+        )
 
 
 def test_family_is_retained_when_no_clearly_superior_opportunity_exists() -> None:
