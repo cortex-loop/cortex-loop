@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-import hashlib
-import json
 from collections.abc import Mapping
 from dataclasses import dataclass, field
 from typing import Any
@@ -27,9 +25,17 @@ from cortex.core.envelopes import MetadataField
 from cortex.core.environment import CommitmentEnvironmentHandle
 from cortex.core.errors import ContradictionRecord, DegradationRecord
 
+from ._commitment_common import (
+    CANDIDATE_ID_KEYS as _CANDIDATE_ID_KEYS,
+    candidate_id_from_value,
+    candidate_id_source_label,
+    candidate_surface_tags,
+    extract_native_commitment_fields,
+    merge_warnings,
+    resolve_commitment_extract_for_dispatch,
+    synthesized_candidate_id,
+)
 from .openai_host import BoundOpenAIHostEvent, observe_openai_host_event
-
-_CANDIDATE_ID_KEYS = ("candidate_id", "commitment_id", "claim_id")
 
 
 @dataclass(frozen=True, slots=True)
@@ -115,31 +121,41 @@ def bind_openai_host_candidate(
             carrier_source=carrier_source,
             value_label="candidate id",
         )
-        candidate_id = _candidate_id_from_value(resolution.value)
+        candidate_id = candidate_id_from_value(resolution.value)
         if candidate_id is None:
             continue
         warnings.extend(resolution.warnings)
         return (
             CommitmentCandidate(
                 candidate_id=candidate_id,
-                surface_tags=_candidate_surface_tags(bound_event, dispatch_decision),
+                surface_tags=candidate_surface_tags(
+                    facet_tags=bound_event.observation.event.facet_tags,
+                    wake_reason_tags=dispatch_decision.wake_decision.reason_tags,
+                ),
                 payload_handle=bound_event.observation.payload_view.payload_handle,
                 metadata=(
-                    MetadataField("candidate_id_source", _candidate_id_source_label(key, resolution.source)),
+                    MetadataField("candidate_id_source", candidate_id_source_label(key, resolution.source)),
                     MetadataField("candidate_id_key", key),
                 ),
             ),
             tuple(warnings),
         )
 
-    synthesized_candidate_id = _synthesized_candidate_id(bound_event)
+    synthesized_id = synthesized_candidate_id(
+        native_event_name=bound_event.observation.event.native_event_name,
+        normalized_payload=bound_event.normalized_payload,
+        payload_handle=bound_event.observation.payload_view.payload_handle,
+    )
     warnings.append(
         "Synthesized deterministic local candidate id because no direct or extracted identifier was present."
     )
     return (
         CommitmentCandidate(
-            candidate_id=synthesized_candidate_id,
-            surface_tags=_candidate_surface_tags(bound_event, dispatch_decision),
+            candidate_id=synthesized_id,
+            surface_tags=candidate_surface_tags(
+                facet_tags=bound_event.observation.event.facet_tags,
+                wake_reason_tags=dispatch_decision.wake_decision.reason_tags,
+            ),
             payload_handle=bound_event.observation.payload_view.payload_handle,
             metadata=(
                 MetadataField("candidate_id_source", "synthesized-local"),
@@ -196,15 +212,15 @@ def evaluate_openai_host_commitment(
         raw_payload,
         allow_message_commitment_fallback=allow_message_commitment_fallback,
     )
-    native_commitment_fields = _native_commitment_fields(bound_event.normalized_payload)
+    native_commitment_fields = extract_native_commitment_fields(bound_event.normalized_payload)
     dispatch_decision = classify_dispatch(
         bound_event.observation,
         payload=bound_event.normalized_payload,
         native_commitment_fields=native_commitment_fields,
     )
 
-    extraction_result = _resolve_openai_host_extract(
-        bound_event=bound_event,
+    extraction_result = resolve_commitment_extract_for_dispatch(
+        payload=bound_event.normalized_payload,
         dispatch_decision=dispatch_decision,
         native_commitment_fields=native_commitment_fields,
         allow_message_commitment_fallback=allow_message_commitment_fallback,
@@ -242,89 +258,13 @@ def evaluate_openai_host_commitment(
         extraction_result=extraction_result,
         candidate=candidate,
         verdict=verdict,
-        warnings=_merge_warnings(
+        warnings=merge_warnings(
             bound_event.warnings,
             dispatch_decision.warnings,
             extraction_result.warnings if extraction_result is not None else (),
             candidate_warnings,
         ),
     )
-
-
-def _resolve_openai_host_extract(
-    *,
-    bound_event: BoundOpenAIHostEvent,
-    dispatch_decision: DispatchDecision,
-    native_commitment_fields: Any | None,
-    allow_message_commitment_fallback: bool,
-) -> CommitmentExtractionResult | None:
-    payload = bound_event.normalized_payload
-    has_structured_carrier = (
-        native_commitment_fields is not None
-        or isinstance(payload.get("stop_fields"), Mapping)
-        or "commitment_fields_source" in payload
-    )
-    if dispatch_decision.lane is DispatchLane.CHEAP and not has_structured_carrier:
-        return None
-    return resolve_commitment_extract(
-        payload,
-        native_commitment_fields=native_commitment_fields,
-        allow_message_fallback=allow_message_commitment_fallback,
-    )
-
-
-def _native_commitment_fields(payload: Mapping[str, Any]) -> Any | None:
-    if payload.get("commitment_fields_source") != "native":
-        return None
-    if "commitment_fields" not in payload:
-        return None
-    return payload.get("commitment_fields")
-
-
-def _candidate_surface_tags(
-    bound_event: BoundOpenAIHostEvent,
-    dispatch_decision: DispatchDecision,
-) -> frozenset[str]:
-    return frozenset(
-        set(bound_event.observation.event.facet_tags) | set(dispatch_decision.wake_decision.reason_tags)
-    )
-
-
-def _candidate_id_from_value(value: Any) -> str | None:
-    if value is None:
-        return None
-    candidate_id = str(value).strip()
-    return candidate_id or None
-
-
-def _candidate_id_source_label(key: str, source: str) -> str:
-    return f"{source}:{key}"
-
-
-def _synthesized_candidate_id(bound_event: BoundOpenAIHostEvent) -> str:
-    payload_blob = json.dumps(
-        bound_event.normalized_payload,
-        sort_keys=True,
-        separators=(",", ":"),
-        default=str,
-    )
-    payload_handle = bound_event.observation.payload_view.payload_handle
-    digest_input = (
-        f"{bound_event.observation.event.native_event_name}|"
-        f"{payload_handle.payload_ref if payload_handle is not None else ''}|"
-        f"{payload_blob}"
-    )
-    digest = hashlib.sha1(digest_input.encode("utf-8")).hexdigest()[:12]
-    return f"local-candidate-{digest}"
-
-
-def _merge_warnings(*groups: tuple[str, ...]) -> tuple[str, ...]:
-    warnings: list[str] = []
-    for group in groups:
-        for warning in group:
-            if warning not in warnings:
-                warnings.append(warning)
-    return tuple(warnings)
 
 
 def _validate_warning_tuple(warnings: tuple[str, ...], label: str) -> None:
