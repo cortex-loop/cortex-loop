@@ -581,6 +581,15 @@ def test_environment_carriers_reject_non_canonical_available_query_kinds() -> No
             available_query_kinds=frozenset({"execution_trace"}),
         )
 
+    with pytest.raises(
+        TypeError,
+        match="bounded_requests must contain only EnvironmentQuery instances",
+    ):
+        ExecutiveEnvironmentView(
+            available_query_kinds=frozenset({STATE_SNAPSHOT}),
+            bounded_requests=("not-a-query",),
+        )
+
 
 def test_support_state_and_snapshot_are_distinct_types() -> None:
     contradiction = ContradictionRecord(
