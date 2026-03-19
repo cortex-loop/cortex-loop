@@ -74,6 +74,15 @@ class SupportTraceState:
     degradation_records: tuple[DegradationRecord, ...] = field(default_factory=tuple)
     observables: tuple[StructuredObservation, ...] = field(default_factory=tuple)
 
+    def __post_init__(self) -> None:
+        if any(
+            not (isinstance(candidate_ref, str) and candidate_ref.strip())
+            for candidate_ref in self.candidate_refs
+        ):
+            raise ValueError(
+                "SupportTraceState.candidate_refs must contain only non-empty values after trimming.",
+            )
+
 
 @dataclass(frozen=True, slots=True)
 class SupportSessionState:

@@ -265,6 +265,33 @@ def test_support_reference_requires_non_empty_kind_and_id() -> None:
         SupportReference("memory", "   ")
 
 
+def test_support_trace_requires_non_empty_candidate_refs() -> None:
+    trace = SupportTraceState(
+        candidate_refs=("candidate-1",),
+        wake_receipts=(WakeReceipt("candidate-present", "approval/request"),),
+    )
+
+    assert trace.candidate_refs == ("candidate-1",)
+
+    with pytest.raises(
+        ValueError,
+        match="candidate_refs must contain only non-empty values after trimming",
+    ):
+        SupportTraceState(
+            candidate_refs=("",),
+            wake_receipts=(WakeReceipt("candidate-present", "approval/request"),),
+        )
+
+    with pytest.raises(
+        ValueError,
+        match="candidate_refs must contain only non-empty values after trimming",
+    ):
+        SupportTraceState(
+            candidate_refs=("   ",),
+            wake_receipts=(WakeReceipt("candidate-present", "approval/request"),),
+        )
+
+
 def test_commitment_status_is_the_exact_three_state_lattice() -> None:
     assert {status.value for status in CommitmentStatus} == {
         "certified",

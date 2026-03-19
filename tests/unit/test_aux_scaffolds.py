@@ -186,6 +186,27 @@ def test_augment_snapshot_cannot_start_from_blank_core_support_counter_tag() -> 
         )
 
 
+def test_augment_snapshot_cannot_start_from_blank_core_support_trace_candidate_ref() -> None:
+    snapshot = _make_snapshot()
+
+    with pytest.raises(
+        ValueError,
+        match="candidate_refs must contain only non-empty values after trimming",
+    ):
+        augment_snapshot(
+            SupportSnapshot(
+                trace=SupportTraceState(
+                    candidate_refs=("   ",),
+                    wake_receipts=snapshot.trace.wake_receipts,
+                ),
+                session=snapshot.session,
+                host=snapshot.host,
+                exec_memory_pub=snapshot.exec_memory_pub,
+            ),
+            AuxiliarySupportAppendix(),
+        )
+
+
 def _make_snapshot() -> SupportSnapshot:
     trace = SupportTraceState(
         candidate_refs=("candidate-1",),
