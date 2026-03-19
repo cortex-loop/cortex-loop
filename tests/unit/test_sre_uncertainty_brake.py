@@ -111,6 +111,25 @@ def test_brake_evaluation_requires_typed_state() -> None:
         raise AssertionError("BrakeEvaluation accepted an untyped state.")
 
 
+def test_brake_evaluation_requires_non_empty_dominant_cause_when_provided() -> None:
+    evaluation = BrakeEvaluation(
+        state=BrakeState.GUARDED,
+        dominant_cause="repeated-failure",
+    )
+
+    assert evaluation.dominant_cause == "repeated-failure"
+
+    try:
+        BrakeEvaluation(
+            state=BrakeState.GUARDED,
+            dominant_cause="   ",
+        )
+    except ValueError as exc:
+        assert "dominant_cause must be non-empty after trimming when provided" in str(exc)
+    else:
+        raise AssertionError("BrakeEvaluation accepted a blank dominant cause.")
+
+
 def test_brake_evaluation_returns_quiescent_for_low_uncertainty_without_spikes() -> None:
     evaluation = evaluate_brake_state(
         (

@@ -36,6 +36,10 @@ class BrakeEvaluation:
                 "BrakeEvaluation.state must be BrakeState, "
                 f"got {actual_type}."
             )
+        if self.dominant_cause is not None and not self.dominant_cause.strip():
+            raise ValueError(
+                "BrakeEvaluation.dominant_cause must be non-empty after trimming when provided."
+            )
 
 
 def evaluate_brake_state(
