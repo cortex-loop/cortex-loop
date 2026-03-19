@@ -105,6 +105,18 @@ def test_lifecycle_event_and_observation_carriers_construct_cleanly() -> None:
     ):
         PayloadView(metadata=("not-field",))
 
+    with pytest.raises(
+        ValueError,
+        match="summary_tags must contain only non-empty values after trimming",
+    ):
+        PayloadView(summary_tags=frozenset({""}))
+
+    with pytest.raises(
+        ValueError,
+        match="summary_tags must contain only non-empty values after trimming",
+    ):
+        PayloadView(summary_tags=frozenset({"   "}))
+
     with pytest.raises(ValueError, match="runtime_name must be non-empty after trimming"):
         LifecycleSurface(runtime_name="")
 
