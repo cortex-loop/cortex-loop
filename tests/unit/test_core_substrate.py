@@ -278,6 +278,32 @@ def test_support_reference_requires_non_empty_kind_and_id() -> None:
         SupportReference("memory", "memo-1", tags=frozenset({"   "}))
 
 
+def test_support_exec_memory_requires_typed_references() -> None:
+    exec_memory = SupportExecMemoryState(
+        published_memory_refs=(SupportReference("memory", "memo-1"),),
+        artifact_refs=(SupportReference("artifact", "artifact-1"),),
+    )
+
+    assert exec_memory.published_memory_refs[0].reference_id == "memo-1"
+    assert exec_memory.artifact_refs[0].reference_kind == "artifact"
+
+    with pytest.raises(
+        TypeError,
+        match="published_memory_refs must contain only SupportReference instances",
+    ):
+        SupportExecMemoryState(
+            published_memory_refs=("memo-1",),
+        )
+
+    with pytest.raises(
+        TypeError,
+        match="artifact_refs must contain only SupportReference instances",
+    ):
+        SupportExecMemoryState(
+            artifact_refs=("artifact-1",),
+        )
+
+
 def test_support_trace_requires_non_empty_candidate_refs() -> None:
     trace = SupportTraceState(
         candidate_refs=("candidate-1",),

@@ -156,6 +156,44 @@ def test_augment_snapshot_cannot_start_from_blank_core_support_reference_identit
         )
 
 
+def test_augment_snapshot_cannot_start_from_untyped_core_exec_memory_refs() -> None:
+    snapshot = _make_snapshot()
+
+    with pytest.raises(
+        TypeError,
+        match="published_memory_refs must contain only SupportReference instances",
+    ):
+        augment_snapshot(
+            SupportSnapshot(
+                trace=snapshot.trace,
+                session=snapshot.session,
+                host=snapshot.host,
+                exec_memory_pub=SupportExecMemoryState(
+                    published_memory_refs=("memo-1",),
+                    artifact_refs=snapshot.exec_memory_pub.artifact_refs,
+                ),
+            ),
+            AuxiliarySupportAppendix(),
+        )
+
+    with pytest.raises(
+        TypeError,
+        match="artifact_refs must contain only SupportReference instances",
+    ):
+        augment_snapshot(
+            SupportSnapshot(
+                trace=snapshot.trace,
+                session=snapshot.session,
+                host=snapshot.host,
+                exec_memory_pub=SupportExecMemoryState(
+                    published_memory_refs=snapshot.exec_memory_pub.published_memory_refs,
+                    artifact_refs=("artifact-1",),
+                ),
+            ),
+            AuxiliarySupportAppendix(),
+        )
+
+
 def test_augment_snapshot_cannot_start_from_blank_core_wake_receipt_identity() -> None:
     snapshot = _make_snapshot()
 

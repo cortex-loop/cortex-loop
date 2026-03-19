@@ -173,6 +173,19 @@ class SupportExecMemoryState:
     published_memory_refs: tuple[SupportReference, ...] = field(default_factory=tuple)
     artifact_refs: tuple[SupportReference, ...] = field(default_factory=tuple)
 
+    def __post_init__(self) -> None:
+        if any(
+            not isinstance(reference, SupportReference)
+            for reference in self.published_memory_refs
+        ):
+            raise TypeError(
+                "SupportExecMemoryState.published_memory_refs must contain only SupportReference instances.",
+            )
+        if any(not isinstance(reference, SupportReference) for reference in self.artifact_refs):
+            raise TypeError(
+                "SupportExecMemoryState.artifact_refs must contain only SupportReference instances.",
+            )
+
 
 @dataclass(frozen=True, slots=True)
 class SupportState:
