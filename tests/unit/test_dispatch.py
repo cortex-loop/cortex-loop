@@ -252,6 +252,34 @@ def test_dispatch_decision_requires_bool_candidate_present() -> None:
         )
 
 
+def test_dispatch_decision_requires_canonical_commitment_carrier_source() -> None:
+    direct = DispatchDecision(
+        lane=DispatchLane.CHEAP,
+        wake_decision=WakeDecision(full_commitment_required=False, reason_tags=frozenset()),
+        evidence_plan=EvidencePlan(False, False, False),
+        candidate_present=False,
+    )
+    emitted = classify_dispatch(
+        _make_observation(native_event_name="tool/post"),
+        payload={"stop_fields": {"commitment": "update the repo"}},
+    )
+
+    assert direct.commitment_carrier_source == "none"
+    assert emitted.commitment_carrier_source == "payload.stop_fields"
+
+    with pytest.raises(
+        ValueError,
+        match="commitment_carrier_source must be one of the canonical source labels",
+    ):
+        DispatchDecision(
+            lane=DispatchLane.CHEAP,
+            wake_decision=WakeDecision(full_commitment_required=False, reason_tags=frozenset()),
+            evidence_plan=EvidencePlan(False, False, False),
+            candidate_present=False,
+            commitment_carrier_source="mystery",
+        )
+
+
 def test_evidence_plan_matches_the_dispatched_lane() -> None:
     cheap = classify_dispatch(_make_observation(native_event_name="stream/token"))
     candidate = classify_dispatch(

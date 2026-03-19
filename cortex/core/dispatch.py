@@ -7,7 +7,13 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any
 
-from .commitment_extract import NO_COMMITMENT_SOURCE, resolve_commitment_extract
+from .commitment_extract import (
+    FALLBACK_COMMITMENT_SOURCE,
+    NATIVE_COMMITMENT_SOURCE,
+    NO_COMMITMENT_SOURCE,
+    PAYLOAD_COMMITMENT_SOURCE,
+    resolve_commitment_extract,
+)
 from .envelopes import MetadataField
 from .observation import ObservationBundle
 
@@ -85,6 +91,16 @@ class DispatchDecision:
             raise TypeError(
                 "DispatchDecision.candidate_present must be bool, "
                 f"got {actual_type}.",
+            )
+        if self.commitment_carrier_source not in {
+            NATIVE_COMMITMENT_SOURCE,
+            PAYLOAD_COMMITMENT_SOURCE,
+            FALLBACK_COMMITMENT_SOURCE,
+            NO_COMMITMENT_SOURCE,
+        }:
+            raise ValueError(
+                "DispatchDecision.commitment_carrier_source must be one of the canonical source labels: "
+                "native, payload.stop_fields, fallback, none.",
             )
 
 
