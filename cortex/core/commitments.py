@@ -115,6 +115,10 @@ class BoundaryAssessment:
             raise ValueError(
                 "BoundaryAssessment blocked=True requires a non-empty reason_code.",
             )
+        if any(not (isinstance(tag, str) and tag.strip()) for tag in self.boundary_tags):
+            raise ValueError(
+                "BoundaryAssessment.boundary_tags must contain only non-empty values after trimming.",
+            )
 
 
 @dataclass(frozen=True, slots=True)

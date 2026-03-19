@@ -1353,6 +1353,18 @@ def test_boundary_assessment_keeps_blockedness_separate_from_commitment_status()
     assert allowed.blocked is False
     assert CommitmentStatus.UNCERTIFIED.value == "uncertified"
 
+    with pytest.raises(
+        ValueError,
+        match="boundary_tags must contain only non-empty values after trimming",
+    ):
+        BoundaryAssessment(blocked=False, boundary_tags=frozenset({""}))
+
+    with pytest.raises(
+        ValueError,
+        match="boundary_tags must contain only non-empty values after trimming",
+    ):
+        BoundaryAssessment(blocked=False, boundary_tags=frozenset({"   "}))
+
 
 def test_blocked_boundary_assessment_requires_non_empty_reason_code() -> None:
     blocked = BoundaryAssessment(
