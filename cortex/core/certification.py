@@ -32,6 +32,12 @@ def certify_commitment(
             "certify_commitment.provenance_manifest must be ProvenanceManifest | None, "
             f"got {actual_type}.",
         )
+    if not isinstance(boundary_assessment, BoundaryAssessment):
+        actual_type = type(boundary_assessment).__name__
+        raise TypeError(
+            "certify_commitment.boundary_assessment must be BoundaryAssessment, "
+            f"got {actual_type}.",
+        )
 
     preserved_contradictions = _merge_contradiction_refs(
         contradiction_refs,

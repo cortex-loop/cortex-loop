@@ -186,6 +186,29 @@ def test_certify_commitment_requires_typed_provenance_manifest() -> None:
         )
 
 
+def test_certify_commitment_requires_typed_boundary_assessment() -> None:
+    verdict = certify_commitment(
+        _make_context(),
+        provenance_manifest=None,
+        boundary_assessment=BoundaryAssessment(blocked=False),
+    )
+
+    assert verdict.boundary_assessment == BoundaryAssessment(blocked=False)
+
+    with pytest.raises(
+        TypeError,
+        match=(
+            r"certify_commitment\.boundary_assessment must be "
+            r"BoundaryAssessment, got str\."
+        ),
+    ):
+        certify_commitment(
+            _make_context(),
+            provenance_manifest=None,
+            boundary_assessment="not-a-boundary",
+        )
+
+
 def test_certify_commitment_preserves_contradictions_and_degradations() -> None:
     contradiction = ContradictionRecord(
         source_tag="runtime-record",
