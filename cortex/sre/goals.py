@@ -21,6 +21,10 @@ class GoalContinuityView:
             raise ValueError(
                 "GoalContinuityView.active_track_ref must be non-empty after trimming when provided."
             )
+        if any(not goal_ref.strip() for goal_ref in self.pending_goal_refs):
+            raise ValueError(
+                "GoalContinuityView.pending_goal_refs must contain only non-empty values after trimming."
+            )
 
 
 __all__ = ["GoalContinuityView"]

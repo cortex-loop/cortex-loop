@@ -61,6 +61,21 @@ def test_goal_continuity_view_requires_non_empty_active_track_ref_when_provided(
         GoalContinuityView(active_track_ref="   ")
 
 
+def test_goal_continuity_view_requires_non_empty_pending_goal_refs() -> None:
+    view = GoalContinuityView(pending_goal_refs=("goal-side-a", "goal-side-b"))
+
+    assert view.pending_goal_refs == ("goal-side-a", "goal-side-b")
+
+    with pytest.raises(
+        ValueError,
+        match=(
+            "GoalContinuityView.pending_goal_refs must contain only non-empty values "
+            "after trimming."
+        ),
+    ):
+        GoalContinuityView(pending_goal_refs=("goal-side-a", "   "))
+
+
 def test_branch_operation_set_is_exact() -> None:
     assert {operation.value for operation in BranchOperation} == {
         "open",
