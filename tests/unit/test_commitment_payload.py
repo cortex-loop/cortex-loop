@@ -114,3 +114,49 @@ def test_commitment_payload_extraction_source_requires_non_empty_string_when_pre
             warnings=(),
             normalization_count=0,
         )
+
+
+def test_commitment_payload_extraction_warnings_require_non_empty_strings() -> None:
+    direct = CommitmentPayloadExtraction(
+        commitment_fields=None,
+        source=None,
+        warnings=("warning",),
+        normalization_count=0,
+    )
+    extracted = extract_commitment_payload({"stop_fields": "not-an-object"})
+
+    assert direct.warnings == ("warning",)
+    assert extracted.warnings == ("Ignoring invalid payload.stop_fields field; expected an object.",)
+
+    with pytest.raises(
+        TypeError,
+        match="warnings must contain only string entries",
+    ):
+        CommitmentPayloadExtraction(
+            commitment_fields=None,
+            source=None,
+            warnings=("ok", 7),
+            normalization_count=0,
+        )
+
+    with pytest.raises(
+        ValueError,
+        match="warnings must contain only non-empty strings after trimming",
+    ):
+        CommitmentPayloadExtraction(
+            commitment_fields=None,
+            source=None,
+            warnings=("",),
+            normalization_count=0,
+        )
+
+    with pytest.raises(
+        ValueError,
+        match="warnings must contain only non-empty strings after trimming",
+    ):
+        CommitmentPayloadExtraction(
+            commitment_fields=None,
+            source=None,
+            warnings=("   ",),
+            normalization_count=0,
+        )

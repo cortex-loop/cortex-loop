@@ -26,6 +26,14 @@ class CommitmentPayloadExtraction:
             raise ValueError(
                 "CommitmentPayloadExtraction.source must be None or a non-empty string after trimming.",
             )
+        if any(not isinstance(warning, str) for warning in self.warnings):
+            raise TypeError(
+                "CommitmentPayloadExtraction.warnings must contain only string entries.",
+            )
+        if any(not warning.strip() for warning in self.warnings):
+            raise ValueError(
+                "CommitmentPayloadExtraction.warnings must contain only non-empty strings after trimming.",
+            )
 
 
 def extract_commitment_payload(
