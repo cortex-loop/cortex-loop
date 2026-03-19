@@ -542,6 +542,12 @@ def test_environment_query_vocabulary_accepts_canonical_query_kinds() -> None:
     ):
         EnvironmentQuery(kind=STATE_SNAPSHOT, capability_tags=frozenset({"   "}))
 
+    with pytest.raises(
+        TypeError,
+        match="metadata must contain only MetadataField instances",
+    ):
+        EnvironmentQuery(kind=STATE_SNAPSHOT, metadata=("not-a-field",))
+
 
 def test_environment_query_rejects_non_canonical_query_kind() -> None:
     with pytest.raises(ValueError, match="canonical core query vocabulary"):
