@@ -162,6 +162,24 @@ def test_brake_evaluation_returns_quiescent_for_low_uncertainty_without_spikes()
     assert evaluation.spike_tags == frozenset()
 
 
+def test_brake_evaluation_requires_typed_uncertainty_estimates() -> None:
+    evaluation = evaluate_brake_state(
+        (UncertaintyEstimate(class_tag="evidence", level=0.15),)
+    )
+
+    assert evaluation.state is BrakeState.QUIESCENT
+
+    try:
+        evaluate_brake_state(("not-estimate",))
+    except TypeError as exc:
+        assert (
+            "evaluate_brake_state.uncertainty_estimates must contain only "
+            "UncertaintyEstimate instances"
+        ) in str(exc)
+    else:
+        raise AssertionError("evaluate_brake_state accepted an untyped estimate entry.")
+
+
 def test_brake_evaluation_returns_guarded_for_elevated_uncertainty_or_mild_spike_pressure() -> None:
     evaluation = evaluate_brake_state(
         (

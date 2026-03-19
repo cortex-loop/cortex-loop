@@ -54,6 +54,13 @@ def evaluate_brake_state(
     missing_resume_anchor: bool = False,
     host_friction_level: float = 0.0,
 ) -> BrakeEvaluation:
+    for estimate in uncertainty_estimates:
+        if not isinstance(estimate, UncertaintyEstimate):
+            actual_type = type(estimate).__name__
+            raise TypeError(
+                "evaluate_brake_state.uncertainty_estimates must contain only "
+                f"UncertaintyEstimate instances, got {actual_type}."
+            )
     if repeated_failures < 0:
         raise ValueError("repeated_failures must be non-negative.")
     if repeated_degradations < 0:
