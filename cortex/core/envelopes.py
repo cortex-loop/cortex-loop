@@ -54,6 +54,10 @@ class LifecycleEventEnvelope:
             raise ValueError(
                 "LifecycleEventEnvelope.facet_tags must contain only non-empty values after trimming.",
             )
+        if any(not (isinstance(tag, str) and tag.strip()) for tag in self.channel_tags):
+            raise ValueError(
+                "LifecycleEventEnvelope.channel_tags must contain only non-empty values after trimming.",
+            )
         if any(not isinstance(field, MetadataField) for field in self.payload_metadata):
             raise TypeError(
                 "LifecycleEventEnvelope.payload_metadata must contain only MetadataField instances.",
