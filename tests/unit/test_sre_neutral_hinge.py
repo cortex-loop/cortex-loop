@@ -230,6 +230,27 @@ def test_reference_brake_view_requires_typed_brake_state() -> None:
         ReferenceBrakeView(brake_state="guarded")
 
 
+def test_reference_brake_view_requires_typed_dominant_cause_family() -> None:
+    view = ReferenceBrakeView(
+        brake_state=BrakeState.GUARDED,
+        dominant_cause_family=SoftControlFamily.BRAKE,
+    )
+
+    assert view.dominant_cause_family is SoftControlFamily.BRAKE
+
+    with pytest.raises(
+        TypeError,
+        match=(
+            "ReferenceBrakeView.dominant_cause_family must be SoftControlFamily "
+            "when provided"
+        ),
+    ):
+        ReferenceBrakeView(
+            brake_state=BrakeState.GUARDED,
+            dominant_cause_family="brake",
+        )
+
+
 def test_reference_state_surface_does_not_export_duplicate_uncertainty_carrier() -> None:
     from cortex.sre import state as state_module
 

@@ -85,6 +85,14 @@ class ReferenceBrakeView:
                 "ReferenceBrakeView.brake_state must be BrakeState, "
                 f"got {actual_type}."
             )
+        if self.dominant_cause_family is not None and not isinstance(
+            self.dominant_cause_family, SoftControlFamily
+        ):
+            actual_type = type(self.dominant_cause_family).__name__
+            raise TypeError(
+                "ReferenceBrakeView.dominant_cause_family must be SoftControlFamily "
+                f"when provided, got {actual_type}."
+            )
 
 
 @dataclass(frozen=True, slots=True)
