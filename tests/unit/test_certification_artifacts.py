@@ -244,6 +244,36 @@ def test_certify_commitment_requires_typed_degradation_refs() -> None:
         )
 
 
+def test_certify_commitment_requires_typed_contradiction_refs() -> None:
+    contradiction = ContradictionRecord(
+        source_tag="runtime-record",
+        summary="runtime record conflicts with visible state",
+        evidence_tags=frozenset({"runtime-record"}),
+    )
+    verdict = certify_commitment(
+        _make_context(),
+        provenance_manifest=None,
+        boundary_assessment=BoundaryAssessment(blocked=False),
+        contradiction_refs=(contradiction,),
+    )
+
+    assert verdict.contradiction_refs == (contradiction,)
+
+    with pytest.raises(
+        TypeError,
+        match=(
+            r"certify_commitment\.contradiction_refs must contain only "
+            r"ContradictionRecord instances\."
+        ),
+    ):
+        certify_commitment(
+            _make_context(),
+            provenance_manifest=None,
+            boundary_assessment=BoundaryAssessment(blocked=False),
+            contradiction_refs=("not-a-contradiction",),
+        )
+
+
 def test_certify_commitment_preserves_contradictions_and_degradations() -> None:
     contradiction = ContradictionRecord(
         source_tag="runtime-record",

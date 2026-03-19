@@ -42,6 +42,13 @@ def certify_commitment(
         raise TypeError(
             "certify_commitment.degradation_refs must contain only DegradationRecord instances.",
         )
+    if any(
+        not isinstance(contradiction, ContradictionRecord)
+        for contradiction in contradiction_refs
+    ):
+        raise TypeError(
+            "certify_commitment.contradiction_refs must contain only ContradictionRecord instances.",
+        )
 
     preserved_contradictions = _merge_contradiction_refs(
         contradiction_refs,
