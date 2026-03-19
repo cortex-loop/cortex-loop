@@ -148,6 +148,12 @@ class CertificationContext:
                 "CertificationContext.candidate must be CommitmentCandidate, "
                 f"got {actual_type}.",
             )
+        if not isinstance(self.observation, ObservationBundle):
+            actual_type = type(self.observation).__name__
+            raise TypeError(
+                "CertificationContext.observation must be ObservationBundle, "
+                f"got {actual_type}.",
+            )
         if not isinstance(self.environment_handle, CommitmentEnvironmentHandle):
             actual_type = type(self.environment_handle).__name__
             raise TypeError(

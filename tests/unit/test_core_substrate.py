@@ -1785,3 +1785,13 @@ def test_certification_context_accepts_commitment_environment_handle() -> None:
             observation=observation,
             environment_handle=commitment_handle,
         )
+
+    with pytest.raises(
+        TypeError,
+        match="observation must be ObservationBundle, got str",
+    ):
+        CertificationContext(
+            candidate=candidate,
+            observation="not-an-observation",
+            environment_handle=commitment_handle,
+        )
