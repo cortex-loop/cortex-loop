@@ -101,6 +101,13 @@ class SupportTraceState:
             raise TypeError(
                 "SupportTraceState.degradation_records must contain only DegradationRecord instances.",
             )
+        if any(
+            not isinstance(observable, StructuredObservation)
+            for observable in self.observables
+        ):
+            raise TypeError(
+                "SupportTraceState.observables must contain only StructuredObservation instances.",
+            )
 
 
 @dataclass(frozen=True, slots=True)
