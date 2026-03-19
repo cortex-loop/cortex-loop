@@ -155,6 +155,29 @@ def test_augment_snapshot_cannot_start_from_blank_core_support_reference_identit
             AuxiliarySupportAppendix(),
         )
 
+    with pytest.raises(
+        TypeError,
+        match="metadata must contain only MetadataField instances",
+    ):
+        augment_snapshot(
+            SupportSnapshot(
+                trace=snapshot.trace,
+                session=snapshot.session,
+                host=snapshot.host,
+                exec_memory_pub=SupportExecMemoryState(
+                    published_memory_refs=(
+                        SupportReference(
+                            "memory",
+                            "memo-1",
+                            metadata=("not-field",),
+                        ),
+                    ),
+                    artifact_refs=snapshot.exec_memory_pub.artifact_refs,
+                ),
+            ),
+            AuxiliarySupportAppendix(),
+        )
+
 
 def test_augment_snapshot_cannot_start_from_untyped_core_exec_memory_refs() -> None:
     snapshot = _make_snapshot()

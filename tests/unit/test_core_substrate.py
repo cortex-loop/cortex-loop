@@ -247,11 +247,17 @@ def test_wake_receipt_requires_non_empty_reason_and_named_event_identity() -> No
 
 
 def test_support_reference_requires_non_empty_kind_and_id() -> None:
-    reference = SupportReference("memory", "memo-1", tags=frozenset({"published"}))
+    reference = SupportReference(
+        "memory",
+        "memo-1",
+        tags=frozenset({"published"}),
+        metadata=(MetadataField("visibility", "published"),),
+    )
 
     assert reference.reference_kind == "memory"
     assert reference.reference_id == "memo-1"
     assert reference.tags == frozenset({"published"})
+    assert reference.metadata[0].key == "visibility"
 
     with pytest.raises(ValueError, match="reference_kind must be non-empty after trimming"):
         SupportReference("", "memo-1")
@@ -276,6 +282,12 @@ def test_support_reference_requires_non_empty_kind_and_id() -> None:
         match="tags must contain only non-empty values after trimming",
     ):
         SupportReference("memory", "memo-1", tags=frozenset({"   "}))
+
+    with pytest.raises(
+        TypeError,
+        match="metadata must contain only MetadataField instances",
+    ):
+        SupportReference("memory", "memo-1", metadata=("not-field",))
 
 
 def test_support_exec_memory_requires_typed_references() -> None:
