@@ -202,6 +202,32 @@ def test_dispatch_decision_requires_typed_wake_decision() -> None:
         )
 
 
+def test_dispatch_decision_requires_typed_evidence_plan() -> None:
+    direct = DispatchDecision(
+        lane=DispatchLane.CHEAP,
+        wake_decision=WakeDecision(full_commitment_required=False, reason_tags=frozenset()),
+        evidence_plan=EvidencePlan(False, False, False),
+        candidate_present=False,
+    )
+    emitted = classify_dispatch(_make_observation(native_event_name="stream/token"))
+
+    assert direct.evidence_plan.requires_candidate_extraction is False
+    assert emitted.evidence_plan.requires_candidate_extraction is False
+    assert emitted.evidence_plan.requires_provenance is False
+    assert emitted.evidence_plan.requires_boundary_assessment is False
+
+    with pytest.raises(
+        TypeError,
+        match="evidence_plan must be EvidencePlan, got str",
+    ):
+        DispatchDecision(
+            lane=DispatchLane.CHEAP,
+            wake_decision=WakeDecision(full_commitment_required=False, reason_tags=frozenset()),
+            evidence_plan="not-a-plan",
+            candidate_present=False,
+        )
+
+
 def test_evidence_plan_matches_the_dispatched_lane() -> None:
     cheap = classify_dispatch(_make_observation(native_event_name="stream/token"))
     candidate = classify_dispatch(

@@ -74,6 +74,12 @@ class DispatchDecision:
                 "DispatchDecision.wake_decision must be WakeDecision, "
                 f"got {actual_type}.",
             )
+        if not isinstance(self.evidence_plan, EvidencePlan):
+            actual_type = type(self.evidence_plan).__name__
+            raise TypeError(
+                "DispatchDecision.evidence_plan must be EvidencePlan, "
+                f"got {actual_type}.",
+            )
 
 
 FULL_COMMITMENT_REASON_ALIASES = {
