@@ -111,6 +111,12 @@ class BoundaryAssessment:
     metadata: tuple[MetadataField, ...] = field(default_factory=tuple)
 
     def __post_init__(self) -> None:
+        if not isinstance(self.blocked, bool):
+            actual_type = type(self.blocked).__name__
+            raise TypeError(
+                "BoundaryAssessment.blocked must be bool, "
+                f"got {actual_type}.",
+            )
         if self.blocked and not (isinstance(self.reason_code, str) and self.reason_code.strip()):
             raise ValueError(
                 "BoundaryAssessment blocked=True requires a non-empty reason_code.",
