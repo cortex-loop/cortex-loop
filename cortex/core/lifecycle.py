@@ -44,6 +44,10 @@ class LifecycleSurface:
     effect_map: tuple[LifecycleEffectBinding, ...] = field(default_factory=tuple)
 
     def __post_init__(self) -> None:
+        if not (isinstance(self.runtime_name, str) and self.runtime_name.strip()):
+            raise ValueError(
+                "LifecycleSurface.runtime_name must be non-empty after trimming.",
+            )
         if any(not isinstance(binding, LifecycleEffectBinding) for binding in self.effect_map):
             raise TypeError(
                 "LifecycleSurface.effect_map must contain only LifecycleEffectBinding instances.",
