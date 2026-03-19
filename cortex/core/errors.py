@@ -13,6 +13,12 @@ class ContradictionRecord:
     summary: str
     evidence_tags: frozenset[str] = field(default_factory=frozenset)
 
+    def __post_init__(self) -> None:
+        if not (isinstance(self.source_tag, str) and self.source_tag.strip()):
+            raise ValueError(
+                "ContradictionRecord.source_tag must be non-empty after trimming.",
+            )
+
 
 @dataclass(frozen=True, slots=True)
 class DegradationRecord:

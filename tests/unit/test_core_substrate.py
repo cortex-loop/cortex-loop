@@ -1212,6 +1212,18 @@ def test_degradation_and_error_records_preserve_reason_and_capabilities() -> Non
     assert error.capability_tags == frozenset({"approval", "tool"})
     assert error.contradiction_records[0].source_tag == "external/record"
 
+    with pytest.raises(ValueError, match="source_tag must be non-empty after trimming"):
+        ContradictionRecord(
+            source_tag="",
+            summary="external record does not match visible claim",
+        )
+
+    with pytest.raises(ValueError, match="source_tag must be non-empty after trimming"):
+        ContradictionRecord(
+            source_tag="   ",
+            summary="external record does not match visible claim",
+        )
+
 
 def test_commitment_verdict_holds_typed_certification_references() -> None:
     contradiction = ContradictionRecord(
