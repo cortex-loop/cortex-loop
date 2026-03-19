@@ -1209,6 +1209,18 @@ def test_commitment_candidate_requires_non_empty_identity() -> None:
     with pytest.raises(ValueError, match="candidate_id must be non-empty after trimming"):
         CommitmentCandidate(candidate_id="   ")
 
+    with pytest.raises(
+        ValueError,
+        match="surface_tags must contain only non-empty values after trimming",
+    ):
+        CommitmentCandidate(candidate_id="candidate-1", surface_tags=frozenset({""}))
+
+    with pytest.raises(
+        ValueError,
+        match="surface_tags must contain only non-empty values after trimming",
+    ):
+        CommitmentCandidate(candidate_id="candidate-1", surface_tags=frozenset({"   "}))
+
 
 def test_provenance_manifest_supports_multiple_domain_agnostic_source_families() -> None:
     manifest = ProvenanceManifest(

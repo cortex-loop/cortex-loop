@@ -29,6 +29,10 @@ class CommitmentCandidate:
             raise ValueError(
                 "CommitmentCandidate.candidate_id must be non-empty after trimming.",
             )
+        if any(not (isinstance(tag, str) and tag.strip()) for tag in self.surface_tags):
+            raise ValueError(
+                "CommitmentCandidate.surface_tags must contain only non-empty values after trimming.",
+            )
 
 
 @dataclass(frozen=True, slots=True)
