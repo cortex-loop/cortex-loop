@@ -530,6 +530,18 @@ def test_environment_query_vocabulary_accepts_canonical_query_kinds() -> None:
     ):
         EnvironmentQuery(kind=STATE_SNAPSHOT, target="   ")
 
+    with pytest.raises(
+        ValueError,
+        match="capability_tags must contain only non-empty values after trimming",
+    ):
+        EnvironmentQuery(kind=STATE_SNAPSHOT, capability_tags=frozenset({""}))
+
+    with pytest.raises(
+        ValueError,
+        match="capability_tags must contain only non-empty values after trimming",
+    ):
+        EnvironmentQuery(kind=STATE_SNAPSHOT, capability_tags=frozenset({"   "}))
+
 
 def test_environment_query_rejects_non_canonical_query_kind() -> None:
     with pytest.raises(ValueError, match="canonical core query vocabulary"):

@@ -41,6 +41,10 @@ class EnvironmentQuery:
             raise ValueError(
                 "EnvironmentQuery.target must be non-empty after trimming when provided.",
             )
+        if any(not (isinstance(tag, str) and tag.strip()) for tag in self.capability_tags):
+            raise ValueError(
+                "EnvironmentQuery.capability_tags must contain only non-empty values after trimming.",
+            )
 
 
 @dataclass(frozen=True, slots=True)
