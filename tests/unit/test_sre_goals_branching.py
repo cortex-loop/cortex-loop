@@ -1,5 +1,7 @@
 """Focused unit tests for SRE goal continuity and branch operations."""
 
+import pytest
+
 from cortex.sre.branching import BranchOperation
 from cortex.sre.brake import BrakeState
 from cortex.sre.families import SoftControlFamily
@@ -27,6 +29,21 @@ def test_goal_continuity_view_preserves_goal_and_pending_goal_fields() -> None:
     assert view.active_track_ref == "track-alpha"
     assert view.pending_goal_refs == ("goal-side-a", "goal-side-b")
     assert view.resume_anchor_available is True
+
+
+def test_goal_continuity_view_requires_non_empty_main_goal_ref_when_provided() -> None:
+    view = GoalContinuityView(main_goal_ref="goal-main")
+
+    assert view.main_goal_ref == "goal-main"
+
+    with pytest.raises(
+        ValueError,
+        match=(
+            "GoalContinuityView.main_goal_ref must be non-empty after trimming "
+            "when provided."
+        ),
+    ):
+        GoalContinuityView(main_goal_ref="   ")
 
 
 def test_branch_operation_set_is_exact() -> None:

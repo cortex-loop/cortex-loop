@@ -12,5 +12,11 @@ class GoalContinuityView:
     pending_goal_refs: tuple[str, ...] = field(default_factory=tuple)
     resume_anchor_available: bool = False
 
+    def __post_init__(self) -> None:
+        if self.main_goal_ref is not None and not self.main_goal_ref.strip():
+            raise ValueError(
+                "GoalContinuityView.main_goal_ref must be non-empty after trimming when provided."
+            )
+
 
 __all__ = ["GoalContinuityView"]
