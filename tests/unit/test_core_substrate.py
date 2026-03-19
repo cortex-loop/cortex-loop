@@ -1227,6 +1227,12 @@ def test_commitment_candidate_requires_non_empty_identity() -> None:
     ):
         CommitmentCandidate(candidate_id="candidate-1", payload_handle="not-a-handle")
 
+    with pytest.raises(
+        TypeError,
+        match="metadata must contain only MetadataField instances",
+    ):
+        CommitmentCandidate(candidate_id="candidate-1", metadata=("not-a-field",))
+
 
 def test_provenance_manifest_supports_multiple_domain_agnostic_source_families() -> None:
     manifest = ProvenanceManifest(

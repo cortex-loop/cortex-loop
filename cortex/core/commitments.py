@@ -42,6 +42,10 @@ class CommitmentCandidate:
                 "CommitmentCandidate.payload_handle must be EventPayloadHandle when provided, "
                 f"got {actual_type}.",
             )
+        if any(not isinstance(field, MetadataField) for field in self.metadata):
+            raise TypeError(
+                "CommitmentCandidate.metadata must contain only MetadataField instances.",
+            )
 
 
 @dataclass(frozen=True, slots=True)
