@@ -116,6 +116,16 @@ def test_lifecycle_event_and_observation_carriers_construct_cleanly() -> None:
 
     with pytest.raises(
         TypeError,
+        match="runtime_records must contain only RuntimeRecord instances",
+    ):
+        ObservationBundle(
+            event=LifecycleEventEnvelope(native_event_name="turn/complete"),
+            payload_view=PayloadView(),
+            runtime_records=("not-a-runtime-record",),
+        )
+
+    with pytest.raises(
+        TypeError,
         match="metadata must contain only MetadataField instances",
     ):
         PayloadView(metadata=("not-field",))

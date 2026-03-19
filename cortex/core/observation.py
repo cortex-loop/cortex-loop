@@ -102,6 +102,10 @@ class ObservationBundle:
                 "ObservationBundle.payload_view must be PayloadView, "
                 f"got {actual_type}.",
             )
+        if any(not isinstance(record, RuntimeRecord) for record in self.runtime_records):
+            raise TypeError(
+                "ObservationBundle.runtime_records must contain only RuntimeRecord instances.",
+            )
 
 
 __all__ = [
