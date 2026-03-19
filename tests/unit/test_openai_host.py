@@ -2,8 +2,14 @@
 
 import pytest
 
+from cortex.drivers.common_normalization import NormalizedDriverEvent
 from cortex.core.dispatch import DispatchLane, classify_dispatch
-from cortex.drivers.openai_host import OPENAI_HOST_SURFACE, observe_openai_host_event
+from cortex.drivers.openai_host import (
+    OPENAI_HOST_SURFACE,
+    BoundOpenAIHostEvent,
+    bind_openai_event_envelope,
+    observe_openai_host_event,
+)
 
 
 def test_documented_openai_event_binds_to_canonical_core_name_and_preserves_raw_name() -> None:
@@ -68,3 +74,77 @@ def test_openai_surface_gap_emits_explicit_warning_instead_of_fabricated_parity(
 def test_empty_raw_openai_event_name_is_rejected_before_conservative_fallback() -> None:
     with pytest.raises(ValueError, match="non-empty raw event name"):
         observe_openai_host_event("", {})
+
+
+def test_bound_openai_host_event_requires_typed_components() -> None:
+    bound = observe_openai_host_event("response.output_text.delta", {"response_id": "oa-typed-1"})
+
+    with pytest.raises(
+        TypeError,
+        match="lifecycle_surface must be LifecycleSurface, got str",
+    ):
+        BoundOpenAIHostEvent(
+            lifecycle_surface="not-a-surface",
+            observation=bound.observation,
+            normalized_payload=bound.normalized_payload,
+        )
+
+    with pytest.raises(
+        TypeError,
+        match="observation must be ObservationBundle, got str",
+    ):
+        BoundOpenAIHostEvent(
+            lifecycle_surface=bound.lifecycle_surface,
+            observation="not-an-observation",
+            normalized_payload=bound.normalized_payload,
+        )
+
+    with pytest.raises(
+        TypeError,
+        match="normalized_payload must be dict\\[str, Any\\], got tuple",
+    ):
+        BoundOpenAIHostEvent(
+            lifecycle_surface=bound.lifecycle_surface,
+            observation=bound.observation,
+            normalized_payload=(),
+        )
+
+
+def test_bound_openai_host_event_requires_clean_warnings_and_typed_bind_input() -> None:
+    bound = observe_openai_host_event("response.output_text.delta", {"response_id": "oa-typed-2"})
+    normalized_event = NormalizedDriverEvent(
+        native_event_name="response.output_text.delta",
+        event_name="external/observation",
+        payload={},
+    )
+
+    with pytest.raises(
+        ValueError,
+        match="warnings must contain only non-empty values after trimming",
+    ):
+        BoundOpenAIHostEvent(
+            lifecycle_surface=bound.lifecycle_surface,
+            observation=bound.observation,
+            normalized_payload=bound.normalized_payload,
+            warnings=("   ",),
+        )
+
+    with pytest.raises(
+        TypeError,
+        match="warnings must contain only str instances, got int",
+    ):
+        BoundOpenAIHostEvent(
+            lifecycle_surface=bound.lifecycle_surface,
+            observation=bound.observation,
+            normalized_payload=bound.normalized_payload,
+            warnings=(1,),
+        )
+
+    envelope = bind_openai_event_envelope(normalized_event)
+    assert envelope.native_event_name == "external/observation"
+
+    with pytest.raises(
+        TypeError,
+        match="bind_openai_event_envelope\\.normalized_event must be NormalizedDriverEvent, got str",
+    ):
+        bind_openai_event_envelope("not-a-normalized-event")

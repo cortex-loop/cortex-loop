@@ -49,10 +49,37 @@ class BoundOpenAIHostEvent:
     normalized_payload: dict[str, Any]
     warnings: tuple[str, ...] = ()
 
+    def __post_init__(self) -> None:
+        if not isinstance(self.lifecycle_surface, LifecycleSurface):
+            actual_type = type(self.lifecycle_surface).__name__
+            raise TypeError(
+                "BoundOpenAIHostEvent.lifecycle_surface must be LifecycleSurface, "
+                f"got {actual_type}.",
+            )
+        if not isinstance(self.observation, ObservationBundle):
+            actual_type = type(self.observation).__name__
+            raise TypeError(
+                "BoundOpenAIHostEvent.observation must be ObservationBundle, "
+                f"got {actual_type}.",
+            )
+        if not isinstance(self.normalized_payload, dict):
+            actual_type = type(self.normalized_payload).__name__
+            raise TypeError(
+                "BoundOpenAIHostEvent.normalized_payload must be dict[str, Any], "
+                f"got {actual_type}.",
+            )
+        _validate_warning_tuple(self.warnings, "BoundOpenAIHostEvent.warnings")
+
 
 def bind_openai_event_envelope(
     normalized_event: NormalizedDriverEvent,
 ) -> LifecycleEventEnvelope:
+    if not isinstance(normalized_event, NormalizedDriverEvent):
+        actual_type = type(normalized_event).__name__
+        raise TypeError(
+            "bind_openai_event_envelope.normalized_event must be NormalizedDriverEvent, "
+            f"got {actual_type}.",
+        )
     routing_event_name = _routing_event_name(normalized_event)
     payload_handle = EventPayloadHandle(
         payload_kind="openai-host-payload",
@@ -185,6 +212,15 @@ def _response_id(payload: Mapping[str, Any]) -> str | None:
         if isinstance(nested_id, str) and nested_id:
             return nested_id
     return None
+
+
+def _validate_warning_tuple(warnings: tuple[str, ...], label: str) -> None:
+    for warning in warnings:
+        if not isinstance(warning, str):
+            actual_type = type(warning).__name__
+            raise TypeError(f"{label} must contain only str instances, got {actual_type}.")
+        if not warning.strip():
+            raise ValueError(f"{label} must contain only non-empty values after trimming.")
 
 
 __all__ = [
