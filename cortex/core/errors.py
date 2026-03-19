@@ -44,6 +44,13 @@ class DegradationRecord:
             raise ValueError(
                 "DegradationRecord.capability_tags must contain only non-empty values after trimming.",
             )
+        if any(
+            not isinstance(record, ContradictionRecord)
+            for record in self.contradiction_records
+        ):
+            raise TypeError(
+                "DegradationRecord.contradiction_records must contain only ContradictionRecord instances.",
+            )
 
 
 @dataclass(frozen=True, slots=True)

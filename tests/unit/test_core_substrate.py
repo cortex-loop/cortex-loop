@@ -1281,6 +1281,15 @@ def test_degradation_and_error_records_preserve_reason_and_capabilities() -> Non
             capability_tags=frozenset({"   "}),
         )
 
+    with pytest.raises(
+        TypeError,
+        match="contradiction_records must contain only ContradictionRecord instances",
+    ):
+        DegradationRecord(
+            reason_code="provenance-unavailable",
+            contradiction_records=("not-a-contradiction",),
+        )
+
 
 def test_commitment_verdict_holds_typed_certification_references() -> None:
     contradiction = ContradictionRecord(
