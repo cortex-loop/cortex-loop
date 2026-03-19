@@ -35,6 +35,12 @@ class EnvironmentQuery:
 
     def __post_init__(self) -> None:
         _validate_query_kind(self.kind)
+        if self.target is not None and not (
+            isinstance(self.target, str) and self.target.strip()
+        ):
+            raise ValueError(
+                "EnvironmentQuery.target must be non-empty after trimming when provided.",
+            )
 
 
 @dataclass(frozen=True, slots=True)

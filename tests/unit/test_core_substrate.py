@@ -518,6 +518,18 @@ def test_environment_query_vocabulary_accepts_canonical_query_kinds() -> None:
 
     assert {query.kind for query in constructed} == CANONICAL_QUERY_KINDS
 
+    with pytest.raises(
+        ValueError,
+        match="target must be non-empty after trimming when provided",
+    ):
+        EnvironmentQuery(kind=STATE_SNAPSHOT, target="")
+
+    with pytest.raises(
+        ValueError,
+        match="target must be non-empty after trimming when provided",
+    ):
+        EnvironmentQuery(kind=STATE_SNAPSHOT, target="   ")
+
 
 def test_environment_query_rejects_non_canonical_query_kind() -> None:
     with pytest.raises(ValueError, match="canonical core query vocabulary"):
