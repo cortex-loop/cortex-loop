@@ -47,6 +47,16 @@ class CommitmentExtractionResult:
                 "CommitmentExtractionResult.fallback_used must be bool, "
                 f"got {actual_type}.",
             )
+        if not isinstance(self.normalization_count, int):
+            actual_type = type(self.normalization_count).__name__
+            raise TypeError(
+                "CommitmentExtractionResult.normalization_count must be int, "
+                f"got {actual_type}.",
+            )
+        if self.normalization_count < 0:
+            raise ValueError(
+                "CommitmentExtractionResult.normalization_count must be non-negative.",
+            )
         if self.carrier_source not in {
             NATIVE_COMMITMENT_SOURCE,
             PAYLOAD_COMMITMENT_SOURCE,

@@ -212,3 +212,44 @@ def test_commitment_extraction_result_requires_bool_fallback_used() -> None:
             warnings=(),
             structured_payload_violation=False,
         )
+
+
+def test_commitment_extraction_result_requires_non_negative_int_normalization_count() -> None:
+    direct = CommitmentExtractionResult(
+        commitment_fields=None,
+        carrier_source=NO_COMMITMENT_SOURCE,
+        fallback_used=False,
+        normalization_count=0,
+        warnings=(),
+        structured_payload_violation=False,
+    )
+    emitted = resolve_commitment_extract({})
+
+    assert direct.normalization_count == 0
+    assert emitted.normalization_count == 0
+
+    with pytest.raises(
+        TypeError,
+        match="normalization_count must be int, got str",
+    ):
+        CommitmentExtractionResult(
+            commitment_fields=None,
+            carrier_source=NO_COMMITMENT_SOURCE,
+            fallback_used=False,
+            normalization_count="1",
+            warnings=(),
+            structured_payload_violation=False,
+        )
+
+    with pytest.raises(
+        ValueError,
+        match="normalization_count must be non-negative",
+    ):
+        CommitmentExtractionResult(
+            commitment_fields=None,
+            carrier_source=NO_COMMITMENT_SOURCE,
+            fallback_used=False,
+            normalization_count=-1,
+            warnings=(),
+            structured_payload_violation=False,
+        )
