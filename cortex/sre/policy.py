@@ -35,6 +35,12 @@ class NeutralDominanceDecision:
                 "NeutralDominanceDecision.margin_over_neutral must be numeric, "
                 f"got {actual_type}."
             )
+        if not isinstance(self.activation_threshold, Real):
+            actual_type = type(self.activation_threshold).__name__
+            raise TypeError(
+                "NeutralDominanceDecision.activation_threshold must be numeric, "
+                f"got {actual_type}."
+            )
 
 
 def neutral_dominance_decision(scorecard: AllocationScorecard) -> NeutralDominanceDecision:

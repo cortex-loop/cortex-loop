@@ -424,6 +424,30 @@ def test_neutral_dominance_decision_requires_numeric_margin() -> None:
         )
 
 
+def test_neutral_dominance_decision_requires_numeric_activation_threshold() -> None:
+    from cortex.sre.policy import NeutralDominanceDecision
+
+    decision = NeutralDominanceDecision(
+        selected_family=SoftControlFamily.NEUTRAL,
+        neutral_selected=True,
+        margin_over_neutral=0.0,
+        activation_threshold=0.1,
+    )
+
+    assert decision.activation_threshold == 0.1
+
+    with pytest.raises(
+        TypeError,
+        match="NeutralDominanceDecision.activation_threshold must be numeric",
+    ):
+        NeutralDominanceDecision(
+            selected_family=SoftControlFamily.NEUTRAL,
+            neutral_selected=True,
+            margin_over_neutral=0.0,
+            activation_threshold="0.1",
+        )
+
+
 def test_neutral_dominance_returns_neutral_when_margin_is_below_threshold() -> None:
     decision = neutral_dominance_decision(
         AllocationScorecard(
