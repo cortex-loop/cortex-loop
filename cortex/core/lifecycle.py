@@ -15,6 +15,12 @@ class LifecycleEffectBinding:
     consequence_tags: frozenset[str] = field(default_factory=frozenset)
     metadata: tuple[MetadataField, ...] = field(default_factory=tuple)
 
+    def __post_init__(self) -> None:
+        if not (isinstance(self.action_tag, str) and self.action_tag.strip()):
+            raise ValueError(
+                "LifecycleEffectBinding.action_tag must be non-empty after trimming.",
+            )
+
 
 @dataclass(frozen=True, slots=True)
 class LifecycleSurface:
