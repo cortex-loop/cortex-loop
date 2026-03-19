@@ -280,6 +280,30 @@ def test_dispatch_decision_requires_canonical_commitment_carrier_source() -> Non
         )
 
 
+def test_dispatch_decision_requires_typed_lane() -> None:
+    direct = DispatchDecision(
+        lane=DispatchLane.CHEAP,
+        wake_decision=WakeDecision(full_commitment_required=False, reason_tags=frozenset()),
+        evidence_plan=EvidencePlan(False, False, False),
+        candidate_present=False,
+    )
+    emitted = classify_dispatch(_make_observation(native_event_name="stream/token"))
+
+    assert direct.lane is DispatchLane.CHEAP
+    assert emitted.lane is DispatchLane.CHEAP
+
+    with pytest.raises(
+        TypeError,
+        match="lane must be DispatchLane, got str",
+    ):
+        DispatchDecision(
+            lane="cheap",
+            wake_decision=WakeDecision(full_commitment_required=False, reason_tags=frozenset()),
+            evidence_plan=EvidencePlan(False, False, False),
+            candidate_present=False,
+        )
+
+
 def test_evidence_plan_matches_the_dispatched_lane() -> None:
     cheap = classify_dispatch(_make_observation(native_event_name="stream/token"))
     candidate = classify_dispatch(

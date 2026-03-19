@@ -74,6 +74,12 @@ class DispatchDecision:
     warnings: tuple[str, ...] = field(default_factory=tuple)
 
     def __post_init__(self) -> None:
+        if not isinstance(self.lane, DispatchLane):
+            actual_type = type(self.lane).__name__
+            raise TypeError(
+                "DispatchDecision.lane must be DispatchLane, "
+                f"got {actual_type}.",
+            )
         if not isinstance(self.wake_decision, WakeDecision):
             actual_type = type(self.wake_decision).__name__
             raise TypeError(
