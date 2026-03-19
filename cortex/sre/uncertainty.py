@@ -27,6 +27,12 @@ class UncertaintyEstimate:
                 f"Unknown uncertainty class {self.class_tag!r}; "
                 f"expected one of {sorted(REFERENCE_UNCERTAINTY_CLASSES)!r}."
             )
+        if not isinstance(self.level, (int, float)) or isinstance(self.level, bool):
+            actual_type = type(self.level).__name__
+            raise TypeError(
+                "UncertaintyEstimate.level must be a numeric value between 0.0 and 1.0, "
+                f"got {actual_type}."
+            )
         if any(not source_tag.strip() for source_tag in self.source_tags):
             raise ValueError(
                 "UncertaintyEstimate.source_tags must contain only non-empty values after trimming."

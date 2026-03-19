@@ -35,6 +35,19 @@ def test_uncertainty_estimate_enforces_bounded_values() -> None:
         raise AssertionError("UncertaintyEstimate accepted an out-of-range value.")
 
 
+def test_uncertainty_estimate_requires_numeric_level() -> None:
+    estimate = UncertaintyEstimate(class_tag="evidence", level=0.25)
+
+    assert estimate.level == 0.25
+
+    try:
+        UncertaintyEstimate(class_tag="evidence", level="0.25")
+    except TypeError as exc:
+        assert "level must be a numeric value between 0.0 and 1.0" in str(exc)
+    else:
+        raise AssertionError("UncertaintyEstimate accepted a non-numeric level.")
+
+
 def test_uncertainty_estimate_requires_non_empty_source_tags() -> None:
     estimate = UncertaintyEstimate(
         class_tag="evidence",
