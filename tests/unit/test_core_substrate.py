@@ -1290,6 +1290,15 @@ def test_degradation_and_error_records_preserve_reason_and_capabilities() -> Non
             contradiction_records=("not-a-contradiction",),
         )
 
+    with pytest.raises(
+        TypeError,
+        match="metadata must contain only MetadataField instances",
+    ):
+        DegradationRecord(
+            reason_code="provenance-unavailable",
+            metadata=("not-a-field",),
+        )
+
 
 def test_commitment_verdict_holds_typed_certification_references() -> None:
     contradiction = ContradictionRecord(

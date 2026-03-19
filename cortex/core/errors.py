@@ -51,6 +51,10 @@ class DegradationRecord:
             raise TypeError(
                 "DegradationRecord.contradiction_records must contain only ContradictionRecord instances.",
             )
+        if any(not isinstance(field, MetadataField) for field in self.metadata):
+            raise TypeError(
+                "DegradationRecord.metadata must contain only MetadataField instances.",
+            )
 
 
 @dataclass(frozen=True, slots=True)
