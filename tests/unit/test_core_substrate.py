@@ -93,6 +93,15 @@ def test_lifecycle_event_and_observation_carriers_construct_cleanly() -> None:
     assert observation.runtime_records[0].record_type == "tool-result"
     assert surface.effect_map[0].action_tag == "bounded_prose"
 
+    with pytest.raises(
+        TypeError,
+        match="effect_map must contain only LifecycleEffectBinding instances",
+    ):
+        LifecycleSurface(
+            runtime_name="reference-host",
+            effect_map=("not-a-binding",),
+        )
+
 
 def test_metadata_field_rejects_blank_keys_and_preserves_lawful_scalar_values() -> None:
     field = MetadataField("payload_kind", "tool-result")

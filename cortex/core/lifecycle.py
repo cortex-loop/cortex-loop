@@ -29,5 +29,11 @@ class LifecycleSurface:
     mcp_affordances: frozenset[str] = field(default_factory=frozenset)
     effect_map: tuple[LifecycleEffectBinding, ...] = field(default_factory=tuple)
 
+    def __post_init__(self) -> None:
+        if any(not isinstance(binding, LifecycleEffectBinding) for binding in self.effect_map):
+            raise TypeError(
+                "LifecycleSurface.effect_map must contain only LifecycleEffectBinding instances.",
+            )
+
 
 __all__ = ["LifecycleEffectBinding", "LifecycleSurface"]
