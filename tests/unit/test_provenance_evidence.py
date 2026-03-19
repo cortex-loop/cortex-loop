@@ -2,7 +2,10 @@
 
 from pathlib import Path
 
+import pytest
+
 from cortex.core.provenance import (
+    EvidenceReferenceEvaluation,
     command_claim_matches,
     evaluate_evidence_reference,
     normalize_command_claim,
@@ -39,6 +42,28 @@ def test_tool_reference_verifies_or_becomes_uncheckable_without_tool_evidence(tm
     assert uncheckable.reference_kind == "tool"
     assert uncheckable.check_status == "uncheckable"
     assert uncheckable.reason == "no observed tool evidence"
+
+
+def test_evidence_reference_evaluation_requires_non_empty_reference_kind() -> None:
+    direct = EvidenceReferenceEvaluation(
+        reference_kind="path",
+        check_status="verified",
+        reason="path exists",
+    )
+    emitted = evaluate_evidence_reference("src/module.py#L10", root=Path("/repo"))
+
+    assert direct.reference_kind == "path"
+    assert emitted.reference_kind == "path"
+
+    with pytest.raises(
+        ValueError,
+        match="reference_kind must be non-empty after trimming",
+    ):
+        EvidenceReferenceEvaluation(
+            reference_kind="   ",
+            check_status="verified",
+            reason="ok",
+        )
 
 
 def test_command_reference_matches_normalized_wrapper_variants(tmp_path: Path) -> None:

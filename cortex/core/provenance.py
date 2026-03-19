@@ -60,6 +60,12 @@ class EvidenceReferenceEvaluation:
     reason: str
     normalized_reference: str | None = None
 
+    def __post_init__(self) -> None:
+        if not self.reference_kind.strip():
+            raise ValueError(
+                "EvidenceReferenceEvaluation.reference_kind must be non-empty after trimming.",
+            )
+
 
 def extract_requirement_ids(payload: Mapping[str, Any]) -> tuple[str, ...]:
     direct_ids = _extract_ids_from_mapping(payload)
