@@ -74,6 +74,10 @@ class CommitmentEnvironmentHandle:
 
     def __post_init__(self) -> None:
         _validate_query_kind_set(self.available_query_kinds)
+        if any(not isinstance(query, EnvironmentQuery) for query in self.evidence_requests):
+            raise TypeError(
+                "CommitmentEnvironmentHandle.evidence_requests must contain only EnvironmentQuery instances.",
+            )
 
 
 def _validate_query_kind(kind: str) -> None:

@@ -590,6 +590,15 @@ def test_environment_carriers_reject_non_canonical_available_query_kinds() -> No
             bounded_requests=("not-a-query",),
         )
 
+    with pytest.raises(
+        TypeError,
+        match="evidence_requests must contain only EnvironmentQuery instances",
+    ):
+        CommitmentEnvironmentHandle(
+            available_query_kinds=frozenset({EXECUTION_TRACE}),
+            evidence_requests=("not-a-query",),
+        )
+
 
 def test_support_state_and_snapshot_are_distinct_types() -> None:
     contradiction = ContradictionRecord(
