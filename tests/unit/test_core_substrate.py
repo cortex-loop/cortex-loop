@@ -1625,6 +1625,18 @@ def test_commitment_verdict_holds_typed_certification_references() -> None:
             boundary_assessment="not-a-boundary",
         )
 
+    with pytest.raises(
+        TypeError,
+        match="degradation_refs must contain only DegradationRecord instances",
+    ):
+        CommitmentVerdict(
+            status=CommitmentStatus.UNCERTIFIED,
+            candidate=CommitmentCandidate(candidate_id="candidate-1"),
+            provenance_manifest=manifest,
+            boundary_assessment=boundary,
+            degradation_refs=("not-a-degradation",),
+        )
+
 
 def test_blocked_commitment_verdict_requires_blocked_boundary_assessment() -> None:
     candidate = CommitmentCandidate(candidate_id="candidate-blocked")

@@ -205,6 +205,10 @@ class CommitmentVerdict:
                 "CommitmentVerdict.boundary_assessment must be BoundaryAssessment when provided, "
                 f"got {actual_type}.",
             )
+        if any(not isinstance(ref, DegradationRecord) for ref in self.degradation_refs):
+            raise TypeError(
+                "CommitmentVerdict.degradation_refs must contain only DegradationRecord instances.",
+            )
         boundary_is_blocked = (
             isinstance(self.boundary_assessment, BoundaryAssessment)
             and self.boundary_assessment.blocked
