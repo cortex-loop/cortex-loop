@@ -201,5 +201,32 @@ def test_reference_executive_state_requires_typed_mode_and_gating() -> None:
         )
 
 
+def test_reference_executive_state_requires_typed_control_allocation() -> None:
+    with pytest.raises(
+        TypeError,
+        match=(
+            "ReferenceExecutiveState.control_allocation must be "
+            "ReferenceControlAllocationView"
+        ),
+    ):
+        ReferenceExecutiveState(
+            goal_continuity=GoalContinuityView(
+                main_goal_ref="goal-main",
+                active_track_ref="track-alpha",
+                pending_goal_refs=("goal-side-a",),
+                resume_anchor_available=True,
+            ),
+            uncertainty_monitoring=ReferenceUncertaintyMonitoringView(
+                classwise_uncertainty=(UncertaintyEstimate(class_tag="evidence", level=0.2),),
+            ),
+            mode_and_gating=ReferenceModeAndGatingView(
+                mode_tag="pass_through",
+                family_mask=frozenset({SoftControlFamily.NEUTRAL}),
+            ),
+            control_allocation="nope",
+            brake=ReferenceBrakeView(brake_state=BrakeState.QUIESCENT),
+        )
+
+
 def test_reference_state_surface_keeps_only_a_compatibility_alias_for_goal_view() -> None:
     assert ReferenceGoalContinuityView is GoalContinuityView

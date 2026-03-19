@@ -125,6 +125,15 @@ class ReferenceExecutiveState:
                 "ReferenceExecutiveState.mode_and_gating must be "
                 f"ReferenceModeAndGatingView, got {actual_type}."
             )
+        if not isinstance(
+            self.control_allocation,
+            ReferenceControlAllocationView,
+        ):
+            actual_type = type(self.control_allocation).__name__
+            raise TypeError(
+                "ReferenceExecutiveState.control_allocation must be "
+                f"ReferenceControlAllocationView, got {actual_type}."
+            )
 
 
 __all__ = [
