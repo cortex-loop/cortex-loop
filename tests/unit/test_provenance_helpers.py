@@ -109,6 +109,26 @@ def test_repository_snapshot_requires_non_empty_error_reason_when_provided() -> 
         )
 
 
+def test_repository_snapshot_requires_typed_repository_root_when_provided() -> None:
+    direct = RepositorySnapshot(
+        available=True,
+        changed_files=(),
+        repository_root=Path("/repo"),
+    )
+
+    assert direct.repository_root == Path("/repo")
+
+    with pytest.raises(
+        TypeError,
+        match=r"repository_root must be Path \| None, got str",
+    ):
+        RepositorySnapshot(
+            available=True,
+            changed_files=(),
+            repository_root="not-a-path",
+        )
+
+
 def test_changed_files_since_baseline_returns_delta_when_snapshots_are_available() -> None:
     baseline = RepositorySnapshot(
         available=True,

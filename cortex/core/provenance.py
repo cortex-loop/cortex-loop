@@ -27,6 +27,12 @@ class RepositorySnapshot:
             raise ValueError(
                 "RepositorySnapshot.error_reason must be non-empty after trimming when provided.",
             )
+        if self.repository_root is not None and not isinstance(self.repository_root, Path):
+            actual_type = type(self.repository_root).__name__
+            raise TypeError(
+                "RepositorySnapshot.repository_root must be Path | None, "
+                f"got {actual_type}.",
+            )
 
 
 @dataclass(frozen=True, slots=True)
