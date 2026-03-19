@@ -35,6 +35,12 @@ class DegradationRecord:
     contradiction_records: tuple[ContradictionRecord, ...] = field(default_factory=tuple)
     metadata: tuple[MetadataField, ...] = field(default_factory=tuple)
 
+    def __post_init__(self) -> None:
+        if not (isinstance(self.reason_code, str) and self.reason_code.strip()):
+            raise ValueError(
+                "DegradationRecord.reason_code must be non-empty after trimming.",
+            )
+
 
 @dataclass(frozen=True, slots=True)
 class CoreErrorRecord:
