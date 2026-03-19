@@ -101,6 +101,41 @@ def test_reconcile_commitment_field_falls_back_to_extracted_fields_when_missing(
     assert resolution.warnings == ("Using claim summary from payload.stop_fields.",)
 
 
+def test_reconcile_commitment_field_requires_non_empty_warning_label_inputs() -> None:
+    lawful = reconcile_commitment_field(
+        key="claim_summary",
+        payload={},
+        commitment_fields={"claim_summary": "structured-value"},
+        carrier_source=FALLBACK_COMMITMENT_SOURCE,
+        value_label="claim summary",
+    )
+
+    assert lawful.warnings == ("Using claim summary from extracted fallback commitment fields.",)
+
+    with pytest.raises(
+        ValueError,
+        match=r"reconcile_commitment_field\.key must be non-empty after trimming",
+    ):
+        reconcile_commitment_field(
+            key="   ",
+            payload={},
+            commitment_fields={"   ": "structured-value"},
+            carrier_source=FALLBACK_COMMITMENT_SOURCE,
+        )
+
+    with pytest.raises(
+        ValueError,
+        match=r"reconcile_commitment_field\.value_label must be non-empty after trimming",
+    ):
+        reconcile_commitment_field(
+            key="claim_summary",
+            payload={},
+            commitment_fields={"claim_summary": "structured-value"},
+            carrier_source=FALLBACK_COMMITMENT_SOURCE,
+            value_label="   ",
+        )
+
+
 def test_commitment_field_resolution_requires_canonical_source_labels() -> None:
     for source in (
         "payload",

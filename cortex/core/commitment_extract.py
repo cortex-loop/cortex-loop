@@ -165,6 +165,14 @@ def reconcile_commitment_field(
     carrier_source: str,
     value_label: str | None = None,
 ) -> CommitmentFieldResolution:
+    if not key.strip():
+        raise ValueError(
+            "reconcile_commitment_field.key must be non-empty after trimming.",
+        )
+    if value_label is not None and not value_label.strip():
+        raise ValueError(
+            "reconcile_commitment_field.value_label must be non-empty after trimming.",
+        )
     value = payload.get(key)
     if value is not None:
         return CommitmentFieldResolution(value=value, source="payload", warnings=())
