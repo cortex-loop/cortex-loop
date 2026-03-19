@@ -5,6 +5,7 @@ from pathlib import Path
 import pytest
 
 from cortex.core.provenance import (
+    ChangedFilesDelta,
     RepositorySnapshot,
     changed_files_since_baseline,
     extract_requirement_ids,
@@ -127,6 +128,26 @@ def test_repository_snapshot_requires_typed_repository_root_when_provided() -> N
             changed_files=(),
             repository_root="not-a-path",
         )
+
+
+def test_changed_files_delta_requires_non_empty_changed_files_when_provided() -> None:
+    direct = ChangedFilesDelta(changed_files=("src/app.py",), reason=None)
+    missing = ChangedFilesDelta(changed_files=None, reason="baseline unavailable")
+
+    assert direct.changed_files == ("src/app.py",)
+    assert missing.changed_files is None
+
+    with pytest.raises(
+        ValueError,
+        match="changed_files must contain only non-empty repo-relative paths after trimming",
+    ):
+        ChangedFilesDelta(changed_files=("",), reason=None)
+
+    with pytest.raises(
+        ValueError,
+        match="changed_files must contain only non-empty repo-relative paths after trimming",
+    ):
+        ChangedFilesDelta(changed_files=("   ",), reason=None)
 
 
 def test_changed_files_since_baseline_returns_delta_when_snapshots_are_available() -> None:

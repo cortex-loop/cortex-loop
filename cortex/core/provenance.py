@@ -40,6 +40,14 @@ class ChangedFilesDelta:
     changed_files: tuple[str, ...] | None
     reason: str | None = None
 
+    def __post_init__(self) -> None:
+        if self.changed_files is not None and any(
+            not changed_file.strip() for changed_file in self.changed_files
+        ):
+            raise ValueError(
+                "ChangedFilesDelta.changed_files must contain only non-empty repo-relative paths after trimming.",
+            )
+
 
 @dataclass(frozen=True, slots=True)
 class EvidenceReferenceEvaluation:
