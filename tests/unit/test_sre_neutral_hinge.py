@@ -141,6 +141,27 @@ def test_reference_mode_and_gating_view_requires_non_empty_mode_tag() -> None:
         ReferenceModeAndGatingView(mode_tag="   ")
 
 
+def test_reference_mode_and_gating_view_requires_typed_family_mask() -> None:
+    view = ReferenceModeAndGatingView(
+        mode_tag="pass_through",
+        family_mask=frozenset({SoftControlFamily.NEUTRAL}),
+    )
+
+    assert view.family_mask == frozenset({SoftControlFamily.NEUTRAL})
+
+    with pytest.raises(
+        TypeError,
+        match=(
+            "ReferenceModeAndGatingView.family_mask must contain only "
+            "SoftControlFamily instances."
+        ),
+    ):
+        ReferenceModeAndGatingView(
+            mode_tag="pass_through",
+            family_mask=frozenset({"neutral"}),
+        )
+
+
 def test_reference_state_surface_does_not_export_duplicate_uncertainty_carrier() -> None:
     from cortex.sre import state as state_module
 

@@ -43,6 +43,11 @@ class ReferenceModeAndGatingView:
             raise ValueError(
                 "ReferenceModeAndGatingView.mode_tag must be non-empty after trimming."
             )
+        if any(not isinstance(family, SoftControlFamily) for family in self.family_mask):
+            raise TypeError(
+                "ReferenceModeAndGatingView.family_mask must contain only "
+                "SoftControlFamily instances."
+            )
 
 
 @dataclass(frozen=True, slots=True)
