@@ -124,6 +124,13 @@ class SupportSessionState:
                 "SupportSessionState.brake_history must contain only non-empty values after trimming.",
             )
         if any(
+            not (isinstance(reminder, str) and reminder.strip())
+            for reminder in self.reminders
+        ):
+            raise ValueError(
+                "SupportSessionState.reminders must contain only non-empty values after trimming.",
+            )
+        if any(
             not (isinstance(role_view_tag, str) and role_view_tag.strip())
             for role_view_tag in self.role_view_tags
         ):
