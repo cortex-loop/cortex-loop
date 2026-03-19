@@ -1269,6 +1269,12 @@ def test_provenance_manifest_supports_multiple_domain_agnostic_source_families()
     ):
         ProvenanceManifest(evidence_refs=("not-an-evidence-ref",))
 
+    with pytest.raises(
+        TypeError,
+        match="contradiction_refs must contain only ContradictionRecord instances",
+    ):
+        ProvenanceManifest(contradiction_refs=("not-a-contradiction",))
+
     with pytest.raises(ValueError, match="source_family must be non-empty after trimming"):
         ProvenanceEvidenceRef(
             source_family="",
