@@ -164,6 +164,10 @@ class CertificationContext:
             raise ValueError(
                 "CertificationContext.wake_reasons must contain only non-empty values after trimming.",
             )
+        if any(not (isinstance(tag, str) and tag.strip()) for tag in self.boundary_tags):
+            raise ValueError(
+                "CertificationContext.boundary_tags must contain only non-empty values after trimming.",
+            )
 
 
 @dataclass(frozen=True, slots=True)

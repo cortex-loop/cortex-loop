@@ -1771,10 +1771,12 @@ def test_certification_context_accepts_commitment_environment_handle() -> None:
         observation=observation,
         environment_handle=commitment_handle,
         wake_reasons=frozenset({"approval-gated"}),
+        boundary_tags=frozenset({"external-boundary"}),
     )
 
     assert context.environment_handle is commitment_handle
     assert context.wake_reasons == frozenset({"approval-gated"})
+    assert context.boundary_tags == frozenset({"external-boundary"})
 
     with pytest.raises(
         TypeError,
@@ -1816,4 +1818,26 @@ def test_certification_context_accepts_commitment_environment_handle() -> None:
             observation=observation,
             environment_handle=commitment_handle,
             wake_reasons=frozenset({"   "}),
+        )
+
+    with pytest.raises(
+        ValueError,
+        match="boundary_tags must contain only non-empty values after trimming",
+    ):
+        CertificationContext(
+            candidate=candidate,
+            observation=observation,
+            environment_handle=commitment_handle,
+            boundary_tags=frozenset({""}),
+        )
+
+    with pytest.raises(
+        ValueError,
+        match="boundary_tags must contain only non-empty values after trimming",
+    ):
+        CertificationContext(
+            candidate=candidate,
+            observation=observation,
+            environment_handle=commitment_handle,
+            boundary_tags=frozenset({"   "}),
         )
