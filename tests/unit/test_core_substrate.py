@@ -291,15 +291,37 @@ def test_event_payload_handle_rejects_blank_payload_kinds() -> None:
 
 
 def test_lifecycle_event_envelope_rejects_empty_or_whitespace_only_native_event_name() -> None:
-    valid = LifecycleEventEnvelope(native_event_name="turn/complete")
+    valid = LifecycleEventEnvelope(
+        native_event_name="turn/complete",
+        facet_tags=frozenset({"turn/complete"}),
+    )
 
     assert valid.native_event_name == "turn/complete"
+    assert valid.facet_tags == frozenset({"turn/complete"})
 
     with pytest.raises(ValueError, match="native_event_name must be non-empty after trimming"):
         LifecycleEventEnvelope(native_event_name="")
 
     with pytest.raises(ValueError, match="native_event_name must be non-empty after trimming"):
         LifecycleEventEnvelope(native_event_name="   ")
+
+    with pytest.raises(
+        ValueError,
+        match="facet_tags must contain only non-empty values after trimming",
+    ):
+        LifecycleEventEnvelope(
+            native_event_name="turn/complete",
+            facet_tags=frozenset({""}),
+        )
+
+    with pytest.raises(
+        ValueError,
+        match="facet_tags must contain only non-empty values after trimming",
+    ):
+        LifecycleEventEnvelope(
+            native_event_name="turn/complete",
+            facet_tags=frozenset({"   "}),
+        )
 
     with pytest.raises(
         TypeError,
