@@ -19,6 +19,14 @@ class CommitmentPayloadExtraction:
     warnings: tuple[str, ...]
     normalization_count: int
 
+    def __post_init__(self) -> None:
+        if self.source is not None and not (
+            isinstance(self.source, str) and self.source.strip()
+        ):
+            raise ValueError(
+                "CommitmentPayloadExtraction.source must be None or a non-empty string after trimming.",
+            )
+
 
 def extract_commitment_payload(
     payload: Mapping[str, Any],

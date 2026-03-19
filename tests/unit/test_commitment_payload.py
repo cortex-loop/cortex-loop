@@ -1,6 +1,8 @@
 """Focused tests for commitment payload extraction."""
 
-from cortex.core.commitment_payload import extract_commitment_payload
+import pytest
+
+from cortex.core.commitment_payload import CommitmentPayloadExtraction, extract_commitment_payload
 
 
 def test_native_commitment_carrier_wins_when_present() -> None:
@@ -77,3 +79,38 @@ def test_malformed_fallback_json_is_rejected_cleanly() -> None:
     assert result.source is None
     assert len(result.warnings) == 1
     assert "Ignoring invalid COMMITMENT_FIELDS_JSON fallback" in result.warnings[0]
+
+
+def test_commitment_payload_extraction_source_requires_non_empty_string_when_present() -> None:
+    direct = CommitmentPayloadExtraction(
+        commitment_fields=None,
+        source="native",
+        warnings=(),
+        normalization_count=0,
+    )
+    empty = extract_commitment_payload({})
+
+    assert direct.source == "native"
+    assert empty.source is None
+
+    with pytest.raises(
+        ValueError,
+        match="source must be None or a non-empty string after trimming",
+    ):
+        CommitmentPayloadExtraction(
+            commitment_fields=None,
+            source="",
+            warnings=(),
+            normalization_count=0,
+        )
+
+    with pytest.raises(
+        ValueError,
+        match="source must be None or a non-empty string after trimming",
+    ):
+        CommitmentPayloadExtraction(
+            commitment_fields=None,
+            source="   ",
+            warnings=(),
+            normalization_count=0,
+        )
