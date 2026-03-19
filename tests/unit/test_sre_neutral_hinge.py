@@ -162,6 +162,20 @@ def test_reference_mode_and_gating_view_requires_typed_family_mask() -> None:
         )
 
 
+def test_reference_control_allocation_view_requires_non_empty_budget_band() -> None:
+    view = ReferenceControlAllocationView(budget_band="low")
+
+    assert view.budget_band == "low"
+
+    with pytest.raises(
+        ValueError,
+        match=(
+            "ReferenceControlAllocationView.budget_band must be non-empty after trimming."
+        ),
+    ):
+        ReferenceControlAllocationView(budget_band="   ")
+
+
 def test_reference_state_surface_does_not_export_duplicate_uncertainty_carrier() -> None:
     from cortex.sre import state as state_module
 

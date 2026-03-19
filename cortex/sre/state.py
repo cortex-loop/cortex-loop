@@ -56,6 +56,12 @@ class ReferenceControlAllocationView:
     top_family_set: frozenset[SoftControlFamily] = field(default_factory=frozenset)
     host_friction_tags: frozenset[str] = field(default_factory=frozenset)
 
+    def __post_init__(self) -> None:
+        if not self.budget_band.strip():
+            raise ValueError(
+                "ReferenceControlAllocationView.budget_band must be non-empty after trimming."
+            )
+
 
 @dataclass(frozen=True, slots=True)
 class ReferenceBrakeView:
