@@ -40,6 +40,12 @@ class RuntimeRecord:
     tags: frozenset[str] = field(default_factory=frozenset)
     metadata: tuple[MetadataField, ...] = field(default_factory=tuple)
 
+    def __post_init__(self) -> None:
+        if not (isinstance(self.record_type, str) and self.record_type.strip()):
+            raise ValueError(
+                "RuntimeRecord.record_type must be non-empty after trimming.",
+            )
+
 
 @dataclass(frozen=True, slots=True)
 class StructuredObservation:

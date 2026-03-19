@@ -117,6 +117,12 @@ def test_lifecycle_event_and_observation_carriers_construct_cleanly() -> None:
     ):
         PayloadView(summary_tags=frozenset({"   "}))
 
+    with pytest.raises(ValueError, match="record_type must be non-empty after trimming"):
+        RuntimeRecord(record_type="")
+
+    with pytest.raises(ValueError, match="record_type must be non-empty after trimming"):
+        RuntimeRecord(record_type="   ")
+
     with pytest.raises(ValueError, match="runtime_name must be non-empty after trimming"):
         LifecycleSurface(runtime_name="")
 
