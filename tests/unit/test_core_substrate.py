@@ -263,7 +263,7 @@ def test_metadata_field_rejects_blank_keys_and_preserves_lawful_scalar_values() 
         MetadataField("   ", "tool-result")
 
 
-def test_event_payload_handle_rejects_blank_payload_kinds() -> None:
+def test_event_payload_handle_rejects_blank_payload_kinds_and_refs() -> None:
     handle = EventPayloadHandle(
         payload_kind="host-payload",
         payload_ref="evt-1",
@@ -278,6 +278,18 @@ def test_event_payload_handle_rejects_blank_payload_kinds() -> None:
 
     with pytest.raises(ValueError, match="payload_kind must be non-empty after trimming"):
         EventPayloadHandle(payload_kind="   ", payload_ref="evt-1")
+
+    with pytest.raises(
+        ValueError,
+        match="payload_ref must be non-empty after trimming when provided",
+    ):
+        EventPayloadHandle(payload_kind="host-payload", payload_ref="")
+
+    with pytest.raises(
+        ValueError,
+        match="payload_ref must be non-empty after trimming when provided",
+    ):
+        EventPayloadHandle(payload_kind="host-payload", payload_ref="   ")
 
     with pytest.raises(
         TypeError,

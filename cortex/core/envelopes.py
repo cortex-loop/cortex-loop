@@ -30,6 +30,12 @@ class EventPayloadHandle:
             raise ValueError(
                 "EventPayloadHandle.payload_kind must be non-empty after trimming.",
             )
+        if self.payload_ref is not None and not (
+            isinstance(self.payload_ref, str) and self.payload_ref.strip()
+        ):
+            raise ValueError(
+                "EventPayloadHandle.payload_ref must be non-empty after trimming when provided.",
+            )
         if any(not isinstance(field, MetadataField) for field in self.metadata):
             raise TypeError(
                 "EventPayloadHandle.metadata must contain only MetadataField instances.",
