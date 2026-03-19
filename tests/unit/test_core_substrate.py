@@ -212,6 +212,33 @@ def test_support_counter_rejects_impossible_counts_and_accepts_zero() -> None:
         SupportCounter("wake-receipts", -1)
 
 
+def test_wake_receipt_requires_non_empty_reason_and_named_event_identity() -> None:
+    named = WakeReceipt("candidate-present", "approval/request")
+    unnamed = WakeReceipt("candidate-present", None)
+
+    assert named.reason_tag == "candidate-present"
+    assert named.event_name == "approval/request"
+    assert unnamed.event_name is None
+
+    with pytest.raises(ValueError, match="reason_tag must be non-empty after trimming"):
+        WakeReceipt("   ", "approval/request")
+
+    with pytest.raises(ValueError, match="reason_tag must be non-empty after trimming"):
+        WakeReceipt("", "approval/request")
+
+    with pytest.raises(
+        ValueError,
+        match="event_name must be non-empty after trimming when provided",
+    ):
+        WakeReceipt("candidate-present", "")
+
+    with pytest.raises(
+        ValueError,
+        match="event_name must be non-empty after trimming when provided",
+    ):
+        WakeReceipt("candidate-present", "   ")
+
+
 def test_support_reference_requires_non_empty_kind_and_id() -> None:
     reference = SupportReference("memory", "memo-1")
 

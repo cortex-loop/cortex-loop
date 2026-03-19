@@ -14,6 +14,18 @@ class WakeReceipt:
     reason_tag: str
     event_name: str | None = None
 
+    def __post_init__(self) -> None:
+        if not (isinstance(self.reason_tag, str) and self.reason_tag.strip()):
+            raise ValueError(
+                "WakeReceipt.reason_tag must be non-empty after trimming.",
+            )
+        if self.event_name is not None and not (
+            isinstance(self.event_name, str) and self.event_name.strip()
+        ):
+            raise ValueError(
+                "WakeReceipt.event_name must be non-empty after trimming when provided.",
+            )
+
 
 @dataclass(frozen=True, slots=True)
 class SupportCounter:

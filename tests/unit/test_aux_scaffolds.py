@@ -133,6 +133,41 @@ def test_augment_snapshot_cannot_start_from_blank_core_support_reference_identit
         )
 
 
+def test_augment_snapshot_cannot_start_from_blank_core_wake_receipt_identity() -> None:
+    snapshot = _make_snapshot()
+
+    with pytest.raises(ValueError, match="reason_tag must be non-empty after trimming"):
+        augment_snapshot(
+            SupportSnapshot(
+                trace=SupportTraceState(
+                    candidate_refs=snapshot.trace.candidate_refs,
+                    wake_receipts=(WakeReceipt("   ", event_name="approval/request"),),
+                ),
+                session=snapshot.session,
+                host=snapshot.host,
+                exec_memory_pub=snapshot.exec_memory_pub,
+            ),
+            AuxiliarySupportAppendix(),
+        )
+
+    with pytest.raises(
+        ValueError,
+        match="event_name must be non-empty after trimming when provided",
+    ):
+        augment_snapshot(
+            SupportSnapshot(
+                trace=SupportTraceState(
+                    candidate_refs=snapshot.trace.candidate_refs,
+                    wake_receipts=(WakeReceipt("candidate-present", event_name="   "),),
+                ),
+                session=snapshot.session,
+                host=snapshot.host,
+                exec_memory_pub=snapshot.exec_memory_pub,
+            ),
+            AuxiliarySupportAppendix(),
+        )
+
+
 def _make_snapshot() -> SupportSnapshot:
     trace = SupportTraceState(
         candidate_refs=("candidate-1",),
