@@ -209,6 +209,41 @@ def test_certify_commitment_requires_typed_boundary_assessment() -> None:
         )
 
 
+def test_certify_commitment_requires_typed_degradation_refs() -> None:
+    contradiction = ContradictionRecord(
+        source_tag="runtime-record",
+        summary="runtime record conflicts with visible state",
+        evidence_tags=frozenset({"runtime-record"}),
+    )
+    degradation = DegradationRecord(
+        reason_code="partial-provenance",
+        capability_tags=frozenset({"external-record"}),
+        contradiction_records=(contradiction,),
+    )
+    verdict = certify_commitment(
+        _make_context(),
+        provenance_manifest=None,
+        boundary_assessment=BoundaryAssessment(blocked=False),
+        degradation_refs=(degradation,),
+    )
+
+    assert verdict.degradation_refs == (degradation,)
+
+    with pytest.raises(
+        TypeError,
+        match=(
+            r"certify_commitment\.degradation_refs must contain only "
+            r"DegradationRecord instances\."
+        ),
+    ):
+        certify_commitment(
+            _make_context(),
+            provenance_manifest=None,
+            boundary_assessment=BoundaryAssessment(blocked=False),
+            degradation_refs=("not-a-degradation",),
+        )
+
+
 def test_certify_commitment_preserves_contradictions_and_degradations() -> None:
     contradiction = ContradictionRecord(
         source_tag="runtime-record",

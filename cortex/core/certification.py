@@ -38,6 +38,10 @@ def certify_commitment(
             "certify_commitment.boundary_assessment must be BoundaryAssessment, "
             f"got {actual_type}.",
         )
+    if any(not isinstance(degradation, DegradationRecord) for degradation in degradation_refs):
+        raise TypeError(
+            "certify_commitment.degradation_refs must contain only DegradationRecord instances.",
+        )
 
     preserved_contradictions = _merge_contradiction_refs(
         contradiction_refs,
