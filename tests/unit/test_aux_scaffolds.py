@@ -55,6 +55,15 @@ def test_augment_snapshot_requires_explicit_support_snapshot_and_preserves_core_
             AuxiliarySupportAppendix(derived_tags=frozenset({"   "})),
         )
 
+    with pytest.raises(
+        ValueError,
+        match="notes must contain only non-empty values after trimming",
+    ):
+        augment_snapshot(
+            snapshot,
+            AuxiliarySupportAppendix(notes=("   ",)),
+        )
+
 
 def test_augment_snapshot_appends_auxiliary_support_without_mutating_core_snapshot_semantics() -> None:
     snapshot = _make_snapshot()
@@ -132,6 +141,18 @@ def test_aux_scaffold_types_remain_domain_general_and_removable() -> None:
         match="derived_tags must contain only non-empty values after trimming",
     ):
         AuxiliarySupportAppendix(derived_tags=frozenset({"   "}))
+
+    with pytest.raises(
+        ValueError,
+        match="notes must contain only non-empty values after trimming",
+    ):
+        AuxiliarySupportAppendix(notes=("",))
+
+    with pytest.raises(
+        ValueError,
+        match="notes must contain only non-empty values after trimming",
+    ):
+        AuxiliarySupportAppendix(notes=("   ",))
 
 
 def test_augment_snapshot_cannot_start_from_blank_core_support_reference_identity() -> None:

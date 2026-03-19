@@ -27,6 +27,10 @@ class AuxiliarySupportAppendix:
             raise ValueError(
                 "AuxiliarySupportAppendix.derived_tags must contain only non-empty values after trimming.",
             )
+        if any(not (isinstance(note, str) and note.strip()) for note in self.notes):
+            raise ValueError(
+                "AuxiliarySupportAppendix.notes must contain only non-empty values after trimming.",
+            )
 
 
 @dataclass(frozen=True, slots=True)
