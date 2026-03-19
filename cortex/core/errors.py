@@ -22,6 +22,10 @@ class ContradictionRecord:
             raise ValueError(
                 "ContradictionRecord.summary must be non-empty after trimming.",
             )
+        if any(not (isinstance(tag, str) and tag.strip()) for tag in self.evidence_tags):
+            raise ValueError(
+                "ContradictionRecord.evidence_tags must contain only non-empty values after trimming.",
+            )
 
 
 @dataclass(frozen=True, slots=True)
