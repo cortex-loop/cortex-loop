@@ -23,6 +23,10 @@ class AuxiliarySupportAppendix:
             raise TypeError(
                 "AuxiliarySupportAppendix.derived_support_refs must contain only SupportReference instances.",
             )
+        if any(not (isinstance(tag, str) and tag.strip()) for tag in self.derived_tags):
+            raise ValueError(
+                "AuxiliarySupportAppendix.derived_tags must contain only non-empty values after trimming.",
+            )
 
 
 @dataclass(frozen=True, slots=True)
