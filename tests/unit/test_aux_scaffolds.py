@@ -228,6 +228,28 @@ def test_augment_snapshot_cannot_start_from_blank_core_pending_goal_ref() -> Non
         )
 
 
+def test_augment_snapshot_cannot_start_from_blank_core_role_view_tag() -> None:
+    snapshot = _make_snapshot()
+
+    with pytest.raises(
+        ValueError,
+        match="role_view_tags must contain only non-empty values after trimming",
+    ):
+        augment_snapshot(
+            SupportSnapshot(
+                trace=snapshot.trace,
+                session=SupportSessionState(
+                    pending_goal_refs=snapshot.session.pending_goal_refs,
+                    role_view_tags=frozenset({"   "}),
+                    wake_counters=snapshot.session.wake_counters,
+                ),
+                host=snapshot.host,
+                exec_memory_pub=snapshot.exec_memory_pub,
+            ),
+            AuxiliarySupportAppendix(),
+        )
+
+
 def test_augment_snapshot_cannot_start_from_blank_core_host_tag() -> None:
     snapshot = _make_snapshot()
 

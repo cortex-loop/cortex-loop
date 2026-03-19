@@ -295,10 +295,12 @@ def test_support_trace_requires_non_empty_candidate_refs() -> None:
 def test_support_session_requires_non_empty_pending_goal_refs() -> None:
     session = SupportSessionState(
         pending_goal_refs=("goal-1",),
+        role_view_tags=frozenset({"goal_continuity"}),
         wake_counters=(SupportCounter("candidate-bearing", 1),),
     )
 
     assert session.pending_goal_refs == ("goal-1",)
+    assert session.role_view_tags == frozenset({"goal_continuity"})
 
     with pytest.raises(
         ValueError,
@@ -306,6 +308,7 @@ def test_support_session_requires_non_empty_pending_goal_refs() -> None:
     ):
         SupportSessionState(
             pending_goal_refs=("",),
+            role_view_tags=frozenset({"goal_continuity"}),
             wake_counters=(SupportCounter("candidate-bearing", 1),),
         )
 
@@ -315,6 +318,17 @@ def test_support_session_requires_non_empty_pending_goal_refs() -> None:
     ):
         SupportSessionState(
             pending_goal_refs=("   ",),
+            role_view_tags=frozenset({"goal_continuity"}),
+            wake_counters=(SupportCounter("candidate-bearing", 1),),
+        )
+
+    with pytest.raises(
+        ValueError,
+        match="role_view_tags must contain only non-empty values after trimming",
+    ):
+        SupportSessionState(
+            pending_goal_refs=("goal-1",),
+            role_view_tags=frozenset({"   "}),
             wake_counters=(SupportCounter("candidate-bearing", 1),),
         )
 

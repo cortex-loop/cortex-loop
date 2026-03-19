@@ -102,6 +102,13 @@ class SupportSessionState:
             raise ValueError(
                 "SupportSessionState.pending_goal_refs must contain only non-empty values after trimming.",
             )
+        if any(
+            not (isinstance(role_view_tag, str) and role_view_tag.strip())
+            for role_view_tag in self.role_view_tags
+        ):
+            raise ValueError(
+                "SupportSessionState.role_view_tags must contain only non-empty values after trimming.",
+            )
 
 
 @dataclass(frozen=True, slots=True)
