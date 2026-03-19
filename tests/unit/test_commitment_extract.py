@@ -253,3 +253,57 @@ def test_commitment_extraction_result_requires_non_negative_int_normalization_co
             warnings=(),
             structured_payload_violation=False,
         )
+
+
+def test_commitment_extraction_result_requires_non_empty_string_warnings() -> None:
+    direct = CommitmentExtractionResult(
+        commitment_fields=None,
+        carrier_source=NO_COMMITMENT_SOURCE,
+        fallback_used=False,
+        normalization_count=0,
+        warnings=("warning",),
+        structured_payload_violation=False,
+    )
+    emitted = resolve_commitment_extract({"stop_fields": "not-an-object"})
+
+    assert direct.warnings == ("warning",)
+    assert emitted.warnings == ("Ignoring invalid payload.stop_fields field; expected an object.",)
+
+    with pytest.raises(
+        TypeError,
+        match="warnings must contain only string entries",
+    ):
+        CommitmentExtractionResult(
+            commitment_fields=None,
+            carrier_source=NO_COMMITMENT_SOURCE,
+            fallback_used=False,
+            normalization_count=0,
+            warnings=("ok", 7),
+            structured_payload_violation=False,
+        )
+
+    with pytest.raises(
+        ValueError,
+        match="warnings must contain only non-empty strings after trimming",
+    ):
+        CommitmentExtractionResult(
+            commitment_fields=None,
+            carrier_source=NO_COMMITMENT_SOURCE,
+            fallback_used=False,
+            normalization_count=0,
+            warnings=("",),
+            structured_payload_violation=False,
+        )
+
+    with pytest.raises(
+        ValueError,
+        match="warnings must contain only non-empty strings after trimming",
+    ):
+        CommitmentExtractionResult(
+            commitment_fields=None,
+            carrier_source=NO_COMMITMENT_SOURCE,
+            fallback_used=False,
+            normalization_count=0,
+            warnings=("   ",),
+            structured_payload_violation=False,
+        )

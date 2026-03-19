@@ -57,6 +57,14 @@ class CommitmentExtractionResult:
             raise ValueError(
                 "CommitmentExtractionResult.normalization_count must be non-negative.",
             )
+        if any(not isinstance(warning, str) for warning in self.warnings):
+            raise TypeError(
+                "CommitmentExtractionResult.warnings must contain only string entries.",
+            )
+        if any(not warning.strip() for warning in self.warnings):
+            raise ValueError(
+                "CommitmentExtractionResult.warnings must contain only non-empty strings after trimming.",
+            )
         if self.carrier_source not in {
             NATIVE_COMMITMENT_SOURCE,
             PAYLOAD_COMMITMENT_SOURCE,
