@@ -3,9 +3,11 @@
 import pytest
 
 from cortex.core.dispatch import DispatchLane
+from cortex.drivers.openai_host import observe_openai_host_event
 from cortex.drivers.openai_host_neutral import (
     OpenAIHostNeutralResult,
     OpenAINeutralContinuationCode,
+    OpenAINeutralContinuationDecision,
     evaluate_openai_host_neutral,
 )
 
@@ -94,3 +96,73 @@ def test_slice_stays_observe_bind_driven_and_preserves_raw_openai_metadata_and_w
 def test_empty_raw_openai_event_name_cannot_enter_neutral_slice() -> None:
     with pytest.raises(ValueError, match="non-empty raw event name"):
         evaluate_openai_host_neutral("", {})
+
+
+def test_openai_neutral_carriers_require_typed_components_and_clean_warnings() -> None:
+    bound = observe_openai_host_event("response.output_text.delta", {"response_id": "oa-neutral-1"})
+    result = evaluate_openai_host_neutral("response.output_text.delta", {"response_id": "oa-neutral-2"})
+
+    decision = OpenAINeutralContinuationDecision(
+        allowed=True,
+        result_code=OpenAINeutralContinuationCode.NEUTRAL_ALLOWED,
+    )
+    assert decision.allowed is True
+
+    with pytest.raises(
+        TypeError,
+        match="allowed must be bool, got str",
+    ):
+        OpenAINeutralContinuationDecision(
+            allowed="yes",
+            result_code=OpenAINeutralContinuationCode.NEUTRAL_ALLOWED,
+        )
+
+    with pytest.raises(
+        TypeError,
+        match="result_code must be OpenAINeutralContinuationCode, got str",
+    ):
+        OpenAINeutralContinuationDecision(
+            allowed=True,
+            result_code="neutral-allowed",
+        )
+
+    with pytest.raises(
+        TypeError,
+        match="bound_event must be BoundOpenAIHostEvent, got str",
+    ):
+        OpenAIHostNeutralResult(
+            bound_event="not-a-bound-event",
+            dispatch_decision=result.dispatch_decision,
+            neutral_decision=decision,
+        )
+
+    with pytest.raises(
+        TypeError,
+        match="dispatch_decision must be DispatchDecision, got str",
+    ):
+        OpenAIHostNeutralResult(
+            bound_event=bound,
+            dispatch_decision="not-a-dispatch",
+            neutral_decision=decision,
+        )
+
+    with pytest.raises(
+        TypeError,
+        match="neutral_decision must be OpenAINeutralContinuationDecision, got str",
+    ):
+        OpenAIHostNeutralResult(
+            bound_event=bound,
+            dispatch_decision=result.dispatch_decision,
+            neutral_decision="not-a-decision",
+        )
+
+    with pytest.raises(
+        ValueError,
+        match="warnings must contain only non-empty values after trimming",
+    ):
+        OpenAIHostNeutralResult(
+            bound_event=bound,
+            dispatch_decision=result.dispatch_decision,
+            neutral_decision=decision,
+            warnings=("   ",),
+        )

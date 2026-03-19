@@ -23,6 +23,20 @@ class OpenAINeutralContinuationDecision:
     allowed: bool
     result_code: OpenAINeutralContinuationCode
 
+    def __post_init__(self) -> None:
+        if not isinstance(self.allowed, bool):
+            actual_type = type(self.allowed).__name__
+            raise TypeError(
+                "OpenAINeutralContinuationDecision.allowed must be bool, "
+                f"got {actual_type}.",
+            )
+        if not isinstance(self.result_code, OpenAINeutralContinuationCode):
+            actual_type = type(self.result_code).__name__
+            raise TypeError(
+                "OpenAINeutralContinuationDecision.result_code must be "
+                f"OpenAINeutralContinuationCode, got {actual_type}.",
+            )
+
 
 @dataclass(frozen=True, slots=True)
 class OpenAIHostNeutralResult:
@@ -30,6 +44,27 @@ class OpenAIHostNeutralResult:
     dispatch_decision: DispatchDecision
     neutral_decision: OpenAINeutralContinuationDecision
     warnings: tuple[str, ...] = field(default_factory=tuple)
+
+    def __post_init__(self) -> None:
+        if not isinstance(self.bound_event, BoundOpenAIHostEvent):
+            actual_type = type(self.bound_event).__name__
+            raise TypeError(
+                "OpenAIHostNeutralResult.bound_event must be BoundOpenAIHostEvent, "
+                f"got {actual_type}.",
+            )
+        if not isinstance(self.dispatch_decision, DispatchDecision):
+            actual_type = type(self.dispatch_decision).__name__
+            raise TypeError(
+                "OpenAIHostNeutralResult.dispatch_decision must be DispatchDecision, "
+                f"got {actual_type}.",
+            )
+        if not isinstance(self.neutral_decision, OpenAINeutralContinuationDecision):
+            actual_type = type(self.neutral_decision).__name__
+            raise TypeError(
+                "OpenAIHostNeutralResult.neutral_decision must be "
+                f"OpenAINeutralContinuationDecision, got {actual_type}.",
+            )
+        _validate_warning_tuple(self.warnings, "OpenAIHostNeutralResult.warnings")
 
 
 def evaluate_openai_host_neutral(
@@ -91,6 +126,15 @@ def _merge_warnings(*groups: tuple[str, ...]) -> tuple[str, ...]:
             if warning not in warnings:
                 warnings.append(warning)
     return tuple(warnings)
+
+
+def _validate_warning_tuple(warnings: tuple[str, ...], label: str) -> None:
+    for warning in warnings:
+        if not isinstance(warning, str):
+            actual_type = type(warning).__name__
+            raise TypeError(f"{label} must contain only str instances, got {actual_type}.")
+        if not warning.strip():
+            raise ValueError(f"{label} must contain only non-empty values after trimming.")
 
 
 __all__ = [
