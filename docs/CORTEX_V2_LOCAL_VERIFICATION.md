@@ -160,7 +160,7 @@ make revalidate-mediation-reference-host-realization-basis
 ## Mediation run-packet revalidation
 
 This checks the committed reference-host and Gemini-host baseline run indexes and the committed run-packet instances.
-It validates packet metadata against the scenario catalog, confirms the canonical baseline anchors remain lawful, validates the full seven-packet reference baseline set, validates the Gemini uncertainty baseline anchor, and checks the six committed experimental mediated uncertainty and thrash packets.
+It validates packet metadata against the scenario catalog, confirms the canonical baseline anchors remain lawful, validates the full seven-packet reference baseline set, validates the three-packet Gemini uncertainty baseline set, and checks the nine committed experimental mediated uncertainty and thrash packets.
 
 Direct command:
 
@@ -193,8 +193,8 @@ make revalidate-reference-mediation-baselines
 
 ## Live Gemini mediation-baseline revalidation
 
-This revalidates the committed Gemini-host uncertainty baseline anchor against the landed Gemini commitment-path slice.
-It remains Gemini-only and baseline-only: it does not advance any paired counts and it does not add Gemini mediated packets.
+This revalidates the committed Gemini-host uncertainty baseline series against the landed Gemini commitment-path slice.
+It remains Gemini-only and baseline-only: it does not advance any paired counts by itself and it does not add Gemini mediated packets.
 
 Direct command:
 
@@ -210,8 +210,8 @@ make revalidate-gemini-mediation-baselines
 
 ## Gemini mediation-baseline candidate refresh
 
-This emits the committed Gemini-host baseline mediation packet doc to stdout for manual inspection.
-It prints markdown for the committed Gemini baseline anchor with the committed relative-path header, does not overwrite the committed packet doc, and does not authorize any paired comparison or mediation implementation work.
+This emits the committed Gemini-host baseline mediation packet docs to stdout for manual inspection.
+It prints markdown for all three committed Gemini baseline docs with committed relative-path headers, does not overwrite the committed packet docs, and does not authorize any paired comparison or mediation implementation work.
 
 Direct command:
 
@@ -223,6 +223,40 @@ Repo-local entry point:
 
 ```sh
 make emit-gemini-mediation-baselines-candidate
+```
+
+## Experimental Gemini mediated-uncertainty revalidation
+
+This revalidates the three committed experimental Gemini-only mediated uncertainty comparators against live Gemini commitment-path code.
+It checks that each mediated packet stays Gemini-only, preserves the same completion class and truth boundary as baseline, and removes one redundant uncertified loop without widening package-level verdicts.
+
+Direct command:
+
+```sh
+python3 -m pytest tests/integration/test_gemini_mediated_uncertainty_comparator.py -q
+```
+
+Repo-local entry point:
+
+```sh
+make revalidate-gemini-mediated-uncertainty
+```
+
+## Experimental Gemini mediated-uncertainty candidate refresh
+
+This emits candidate refreshed experimental Gemini-only mediated uncertainty packet docs to stdout for manual inspection.
+It prints markdown for all three committed Gemini mediated uncertainty packet docs with committed relative-path headers, does not overwrite the committed packet docs, and does not authorize mediation implementation work.
+
+Direct command:
+
+```sh
+python3 -m tests.integration._gemini_mediation_uncertainty_experimental
+```
+
+Repo-local entry point:
+
+```sh
+make emit-gemini-mediated-uncertainty-candidate
 ```
 
 ## Reference mediation-baseline candidate refresh
@@ -312,8 +346,8 @@ make emit-reference-mediated-uncertainty-candidate
 
 ## Mediation Gemini uncertainty-basis revalidation
 
-This checks that `scenario_uncertainty_gemini_01` now has one lawful committed non-reference baseline anchor.
-It validates the Gemini baseline index, the Gemini uncertainty basis note, the committed Gemini packet doc, the absence of any Gemini mediated packet, and the package blocker truth. It does not generate any new evidence.
+This checks that `scenario_uncertainty_gemini_01` now has a satisfied committed Gemini uncertainty basis and replication law.
+It validates the Gemini baseline index, the Gemini uncertainty basis note, the Gemini uncertainty replication note, the committed Gemini packet series, the live Gemini builder set, and the repeated paired-run distinctness rules. It does not generate any new evidence.
 
 Direct command:
 
@@ -369,9 +403,10 @@ This runs all current mediation-evidence checks together:
 - run-packet instance validation
 - live reference baseline packet revalidation
 - live Gemini baseline packet revalidation
+- live experimental Gemini mediated-uncertainty revalidation
 - live experimental reference mediated-uncertainty revalidation
 - live experimental reference mediated-thrash revalidation
-- Gemini uncertainty baseline validation
+- Gemini uncertainty basis and replication validation
 - reference uncertainty basis and replication validation
 - reference thrash basis and replication validation
 

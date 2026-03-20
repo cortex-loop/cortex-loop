@@ -35,6 +35,9 @@ REFERENCE_UNCERTAINTY_REPLICATION_NOTE_PATH = (
 GEMINI_UNCERTAINTY_BASIS_NOTE_PATH = (
     DOCS_ROOT / "CORTEX_V2_MEDIATION_GEMINI_UNCERTAINTY_BASIS_NOTE_0.md"
 )
+GEMINI_UNCERTAINTY_REPLICATION_NOTE_PATH = (
+    DOCS_ROOT / "CORTEX_V2_MEDIATION_GEMINI_UNCERTAINTY_REPLICATION_NOTE_0.md"
+)
 REFERENCE_HOST_REALIZATION_ADMISSIBILITY_NOTE_PATH = (
     DOCS_ROOT / "CORTEX_V2_MEDIATION_REFERENCE_HOST_REALIZATION_ADMISSIBILITY_NOTE_0.md"
 )
@@ -69,10 +72,28 @@ REFERENCE_UNCERTAINTY_BASELINE_PACKET_PATHS = {
     )
     for pair_key in ("001", "002", "003")
 }
+GEMINI_UNCERTAINTY_BASELINE_PACKET_PATHS = {
+    pair_key: (
+        MEDIATION_GEMINI_PACKET_ROOT
+        / f"scenario_uncertainty_gemini_01__baseline_non_mediated__run_{pair_key}.md"
+    )
+    for pair_key in ("001", "002", "003")
+}
 REFERENCE_UNCERTAINTY_MEDIATED_PACKET_PATHS = {
     pair_key: (
         MEDIATION_REFERENCE_PACKET_ROOT
         / f"scenario_uncertainty_reference_01__experimental_mediated__run_{pair_key}.md"
+    )
+    for pair_key in ("001", "002", "003")
+}
+GEMINI_UNCERTAINTY_MEDIATED_PACKET_PATH = (
+    MEDIATION_GEMINI_PACKET_ROOT
+    / "scenario_uncertainty_gemini_01__experimental_mediated__run_001.md"
+)
+GEMINI_UNCERTAINTY_MEDIATED_PACKET_PATHS = {
+    pair_key: (
+        MEDIATION_GEMINI_PACKET_ROOT
+        / f"scenario_uncertainty_gemini_01__experimental_mediated__run_{pair_key}.md"
     )
     for pair_key in ("001", "002", "003")
 }

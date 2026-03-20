@@ -1,55 +1,60 @@
 # CORTEX_V2_MEDIATION_GEMINI_UNCERTAINTY_BASIS_NOTE_0
 
 Date: 2026-03-20
-Status: `gemini uncertainty baseline basis satisfied`
+Status: `gemini uncertainty paired-series basis satisfied`
 
 ## Scope
 
-This note records why `scenario_uncertainty_gemini_01` is the first lawful non-reference baseline seam for mediation evidence.
+This note records why `scenario_uncertainty_gemini_01` now has a lawful committed Gemini-only mediation basis.
 It does not justify mediation, activate mediation, or widen the allowed comparison surface.
 
-## Why Gemini Uncertainty First
+## Prior Gap
 
-The mediation package is still too reference-local, but the Gemini host now has landed observe/bind, commitment-path, and neutral-only slices.
-Gemini uncertainty is the strongest non-reference baseline seam because it can preserve contradiction-bearing uncertified truth on a landed commitment path without forcing host-realization claims or inventing a mediated comparator prematurely.
+The old Gemini baseline anchor packet was lawful but too thin for a fair uncertainty comparator.
+It showed only one uncertified Gemini-host commitment outcome and did not provide repeated loop evidence, a matched certified-resolution comparator surface, or a counted paired-run series that would survive adversarial review.
 
-## Supporting Surfaces
+## Satisfied Basis
 
-The current sufficient surfaces for this Gemini baseline anchor are:
+The basis is now satisfied by the committed Gemini-host uncertainty paired-run series.
+The sufficient supporting surfaces are:
 
 - `tests/unit/test_gemini_host.py`
 - `tests/unit/test_gemini_host_commitment.py`
 - `tests/unit/test_gemini_host_neutral.py`
+- `tests/integration/_gemini_mediation_uncertainty_episode.py`
+- `tests/integration/_gemini_mediation_uncertainty_experimental.py`
 - `tests/integration/_gemini_mediation_baseline_packets.py`
 - `tests/integration/test_gemini_mediation_baseline_packets.py`
-- `docs/CORTEX_V2_MEDIATION_GEMINI_BASELINE_INDEX_0.md`
+- `tests/integration/test_gemini_mediated_uncertainty_comparator.py`
 - `docs/mediation_evidence/gemini/scenario_uncertainty_gemini_01__baseline_non_mediated__run_001.md`
+- `docs/mediation_evidence/gemini/scenario_uncertainty_gemini_01__experimental_mediated__run_001.md`
+- `docs/CORTEX_V2_MEDIATION_GEMINI_UNCERTAINTY_REPLICATION_NOTE_0.md`
 
 ## Basis Law
 
-The committed Gemini uncertainty baseline anchor is only lawful because it preserves all of the following:
+The committed Gemini uncertainty series is only countable because it preserves all of the following:
 
 - the same Gemini observe/bind meaning
 - the same commitment truth boundary
-- an explicit uncertified full-commitment outcome
-- explicit contradiction and degradation preservation on the verdict
+- the same contradiction-bearing degradation law
+- the same direct commitment-path evidence surface
+- the same final certified completion class
 - the same `task_value_equal_truth_preservation` rubric
 - the same `env_uncertainty_sensitive` context
 
-This seam records only a Gemini baseline anchor.
-No Gemini mediated comparator is committed yet, no Gemini pair is counted yet, and no Gemini verdict may move off `insufficient` in this slice.
+The counted comparator difference is only the removal of one redundant uncertified retry after the first guarded uncertainty signal.
 
 ## Anti-Patterns
 
-The following remain non-qualifying for this Gemini baseline seam:
+The following remain non-qualifying for this basis:
 
-- any Gemini mediated packet
-- any Gemini paired-ledger row
-- any Gemini verdict change inferred from one baseline packet
-- any host-realization claim inferred from uncertified Gemini commitment evidence alone
-- any OpenAI broadening in the same slice
+- a single uncertified anchor packet with no matched comparator
+- a comparator that changes blockedness or final truth class
+- any run that hides contradiction or degradation evidence
+- any run that changes Gemini host commitment semantics to make mediation look better
+- any run that infers uncertainty improvement without a committed multi-step trace and loop count
 
 ## Outcome
 
-`scenario_uncertainty_gemini_01` now has one lawful committed non-reference baseline anchor.
-Even with that anchor, mediation remains blocked until broader counted non-reference comparative evidence exists.
+`scenario_uncertainty_gemini_01` now has a satisfied Gemini-only basis for comparative evidence review.
+Even with the satisfied basis, mediation remains blocked until the broader evidence package says otherwise.

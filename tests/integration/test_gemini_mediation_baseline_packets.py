@@ -5,23 +5,49 @@ from __future__ import annotations
 from pathlib import Path
 
 from tests._mediation_evidence import (
-    GEMINI_UNCERTAINTY_PACKET_PATH,
-    REPO_ROOT,
+    GEMINI_UNCERTAINTY_BASELINE_PACKET_PATHS,
     packet_without_path,
     parse_run_packet,
 )
 from tests.integration._gemini_mediation_baseline_packets import (
     GEMINI_MEDIATION_BASELINE_PACKET_DOC_BUILDERS,
+    GEMINI_UNCERTAINTY_BASELINE_PACKET_PATHS as EMITTED_GEMINI_BASELINE_PACKET_PATHS,
     build_gemini_uncertainty_baseline_packet,
     emit_gemini_mediation_baseline_packets,
+)
+from tests.integration._gemini_mediation_uncertainty_episode import (
+    EXPECTED_GEMINI_UNCERTAINTY_STEP_SEQUENCE,
+    GEMINI_UNCERTAINTY_PAIR_KEYS,
+    GEMINI_UNCERTAINTY_PAIR_SPECS,
+    build_gemini_uncertainty_episode_snapshot,
 )
 
 
 def test_gemini_uncertainty_baseline_packet_matches_committed_doc() -> None:
-    committed_path = REPO_ROOT / GEMINI_UNCERTAINTY_PACKET_PATH
-    committed_packet = packet_without_path(parse_run_packet(committed_path))
+    for pair_key in GEMINI_UNCERTAINTY_PAIR_KEYS:
+        committed_packet = packet_without_path(
+            parse_run_packet(GEMINI_UNCERTAINTY_BASELINE_PACKET_PATHS[pair_key])
+        )
+        assert build_gemini_uncertainty_baseline_packet(pair_key) == committed_packet
 
-    assert build_gemini_uncertainty_baseline_packet() == committed_packet
+
+def test_gemini_uncertainty_baseline_series_uses_distinct_predeclared_ids() -> None:
+    baseline_paths = {path.name for path in GEMINI_UNCERTAINTY_BASELINE_PACKET_PATHS.values()}
+
+    for pair_key in GEMINI_UNCERTAINTY_PAIR_KEYS:
+        snapshot = build_gemini_uncertainty_episode_snapshot(pair_key)
+        assert snapshot["step_sequence"] == list(EXPECTED_GEMINI_UNCERTAINTY_STEP_SEQUENCE)
+        assert snapshot["uncertified_loop_count"] == 2
+
+    assert len({spec.pair_id for spec in GEMINI_UNCERTAINTY_PAIR_SPECS.values()}) == 3
+    assert len({spec.session_id for spec in GEMINI_UNCERTAINTY_PAIR_SPECS.values()}) == 3
+    assert len({spec.commitment_id for spec in GEMINI_UNCERTAINTY_PAIR_SPECS.values()}) == 3
+    assert len({spec.provenance_artifact_id for spec in GEMINI_UNCERTAINTY_PAIR_SPECS.values()}) == 3
+    assert len({spec.contradiction_source_tag for spec in GEMINI_UNCERTAINTY_PAIR_SPECS.values()}) == 3
+    assert len({spec.contradiction_summary for spec in GEMINI_UNCERTAINTY_PAIR_SPECS.values()}) == 3
+    assert len({spec.degradation_reason_code for spec in GEMINI_UNCERTAINTY_PAIR_SPECS.values()}) == 3
+    assert len({spec.uncertainty_spike_tag for spec in GEMINI_UNCERTAINTY_PAIR_SPECS.values()}) == 3
+    assert len(baseline_paths) == 3
 
 
 def test_candidate_emitter_prints_all_gemini_baseline_packets_as_markdown(
@@ -34,7 +60,7 @@ def test_candidate_emitter_prints_all_gemini_baseline_packets_as_markdown(
         assert f"--- {relative_path}" in captured
 
     emitted_docs = _parse_emitted_docs(captured)
-    assert set(emitted_docs) == set(GEMINI_MEDIATION_BASELINE_PACKET_DOC_BUILDERS)
+    assert set(emitted_docs) == set(EMITTED_GEMINI_BASELINE_PACKET_PATHS.values())
 
     for relative_path, builder in GEMINI_MEDIATION_BASELINE_PACKET_DOC_BUILDERS.items():
         temp_doc = tmp_path / Path(relative_path).name

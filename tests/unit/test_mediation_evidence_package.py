@@ -70,7 +70,7 @@ def test_paired_run_ledger_is_preseeded_from_scenario_catalog() -> None:
         for scenario_id, scenario in scenarios.items()
     }
 
-    assert status(PAIRED_LEDGER_PATH) == "reference_thrash_and_uncertainty_three_pairs_recorded"
+    assert status(PAIRED_LEDGER_PATH) == "reference_series_and_gemini_uncertainty_three_pairs_recorded"
 
     coverage_rows = parse_markdown_table(
         section(read(PAIRED_LEDGER_PATH), "Coverage Commitments")
@@ -226,6 +226,72 @@ def test_paired_run_ledger_is_preseeded_from_scenario_catalog() -> None:
                 "degradation law, and evidence surface are preserved."
             ),
         },
+        {
+            "paired_episode_set_id": "pair_gemini_uncertainty_001",
+            "scenario_id": "scenario_uncertainty_gemini_01",
+            "host_family": "gemini",
+            "baseline_run_id": "gemini_uncertainty_baseline_run_001",
+            "mediated_run_id": "gemini_uncertainty_mediated_run_001",
+            "baseline_packet_ref": (
+                "docs/mediation_evidence/gemini/"
+                "scenario_uncertainty_gemini_01__baseline_non_mediated__run_001.md"
+            ),
+            "mediated_packet_ref": (
+                "docs/mediation_evidence/gemini/"
+                "scenario_uncertainty_gemini_01__experimental_mediated__run_001.md"
+            ),
+            "pair_status": "usable",
+            "failure_tags": "none",
+            "notes": (
+                "First Gemini-only experimental uncertainty pair. The same scenario, "
+                "host, rubric, environment context, commitment boundary, contradiction/"
+                "degradation law, and direct commitment-path evidence surface are preserved."
+            ),
+        },
+        {
+            "paired_episode_set_id": "pair_gemini_uncertainty_002",
+            "scenario_id": "scenario_uncertainty_gemini_01",
+            "host_family": "gemini",
+            "baseline_run_id": "gemini_uncertainty_baseline_run_002",
+            "mediated_run_id": "gemini_uncertainty_mediated_run_002",
+            "baseline_packet_ref": (
+                "docs/mediation_evidence/gemini/"
+                "scenario_uncertainty_gemini_01__baseline_non_mediated__run_002.md"
+            ),
+            "mediated_packet_ref": (
+                "docs/mediation_evidence/gemini/"
+                "scenario_uncertainty_gemini_01__experimental_mediated__run_002.md"
+            ),
+            "pair_status": "usable",
+            "failure_tags": "none",
+            "notes": (
+                "Second Gemini-only experimental uncertainty pair. The same scenario, "
+                "host, rubric, environment context, commitment boundary, contradiction/"
+                "degradation law, and direct commitment-path evidence surface are preserved."
+            ),
+        },
+        {
+            "paired_episode_set_id": "pair_gemini_uncertainty_003",
+            "scenario_id": "scenario_uncertainty_gemini_01",
+            "host_family": "gemini",
+            "baseline_run_id": "gemini_uncertainty_baseline_run_003",
+            "mediated_run_id": "gemini_uncertainty_mediated_run_003",
+            "baseline_packet_ref": (
+                "docs/mediation_evidence/gemini/"
+                "scenario_uncertainty_gemini_01__baseline_non_mediated__run_003.md"
+            ),
+            "mediated_packet_ref": (
+                "docs/mediation_evidence/gemini/"
+                "scenario_uncertainty_gemini_01__experimental_mediated__run_003.md"
+            ),
+            "pair_status": "usable",
+            "failure_tags": "none",
+            "notes": (
+                "Third Gemini-only experimental uncertainty pair. The same scenario, "
+                "host, rubric, environment context, commitment boundary, contradiction/"
+                "degradation law, and direct commitment-path evidence surface are preserved."
+            ),
+        },
     ]
     placeholder_rows = [row for row in recorded_rows if row["paired_episode_set_id"] == "none_recorded_yet"]
     assert len(placeholder_rows) == 1
@@ -262,7 +328,7 @@ def test_results_surfaces_are_preseeded_for_all_catalog_cells_and_follow_fairnes
     assert pair_counts[host_realization_cell]["confidence_downgraded"] == 0
     assert pair_counts[host_realization_cell]["excluded"] == 0
     gemini_uncertainty_cell = ("scenario_uncertainty_gemini_01", "gemini")
-    assert pair_counts[gemini_uncertainty_cell]["usable"] == 0
+    assert pair_counts[gemini_uncertainty_cell]["usable"] == 3
     assert pair_counts[gemini_uncertainty_cell]["confidence_downgraded"] == 0
     assert pair_counts[gemini_uncertainty_cell]["excluded"] == 0
 
@@ -274,11 +340,12 @@ def test_results_surfaces_are_preseeded_for_all_catalog_cells_and_follow_fairnes
     assert {row["approval_or_environment_context_id"] for row in coverage_rows} <= allowed_contexts
 
     axis_text = read(AXIS_TABLE_PATH)
-    assert status(AXIS_TABLE_PATH) == "reference_thrash_and_uncertainty_three_pairs_recorded"
+    assert status(AXIS_TABLE_PATH) == "reference_series_and_gemini_uncertainty_three_pairs_recorded"
     expected_positive = {
         ("Reduced Thrashing", ("scenario_thrash_reference_01", "reference")),
         ("Better Branch Discipline", ("scenario_thrash_reference_01", "reference")),
         ("Better Uncertainty Handling", ("scenario_uncertainty_reference_01", "reference")),
+        ("Better Uncertainty Handling", ("scenario_uncertainty_gemini_01", "gemini")),
     }
     for heading in AXIS_HEADINGS:
         rows = parse_markdown_table(section(axis_text, heading))
@@ -306,11 +373,23 @@ def test_results_surfaces_are_preseeded_for_all_catalog_cells_and_follow_fairnes
                 assert row["current_verdict"] == "insufficient"
                 assert supporting_ids(row["supporting_paired_episode_sets"]) == set()
             if cell == gemini_uncertainty_cell:
-                assert row["current_verdict"] == "insufficient"
-                assert supporting_ids(row["supporting_paired_episode_sets"]) == set()
+                if heading == "Better Uncertainty Handling":
+                    assert row["current_verdict"] == "candidate_positive"
+                    assert supporting_ids(row["supporting_paired_episode_sets"]) == {
+                        "pair_gemini_uncertainty_001",
+                        "pair_gemini_uncertainty_002",
+                        "pair_gemini_uncertainty_003",
+                    }
+                else:
+                    assert row["current_verdict"] == "insufficient"
+                    assert supporting_ids(row["supporting_paired_episode_sets"]) == {
+                        "pair_gemini_uncertainty_001",
+                        "pair_gemini_uncertainty_002",
+                        "pair_gemini_uncertainty_003",
+                    }
 
     burden_rows = parse_markdown_table(section(read(BURDEN_TABLE_PATH), "Comparison Table"))
-    assert status(BURDEN_TABLE_PATH) == "reference_thrash_and_uncertainty_three_pairs_recorded"
+    assert status(BURDEN_TABLE_PATH) == "reference_series_and_gemini_uncertainty_three_pairs_recorded"
     assert {(row["scenario_id"], row["host_family"]) for row in burden_rows} == expected_cells
     for row in burden_rows:
         cell = (row["scenario_id"], row["host_family"])
@@ -326,7 +405,7 @@ def test_results_surfaces_are_preseeded_for_all_catalog_cells_and_follow_fairnes
             assert row["equal_value_gate"] == "passed"
 
     host_split_text = read(HOST_SPLIT_TABLE_PATH)
-    assert status(HOST_SPLIT_TABLE_PATH) == "reference_thrash_and_uncertainty_three_pairs_recorded"
+    assert status(HOST_SPLIT_TABLE_PATH) == "reference_series_and_gemini_uncertainty_three_pairs_recorded"
     assert "all-hosts" not in host_split_text.lower()
     host_sections = {
         "reference": parse_markdown_table(section(host_split_text, "Reference")),
@@ -354,18 +433,15 @@ def test_results_surfaces_are_preseeded_for_all_catalog_cells_and_follow_fairnes
                 assert row["current_verdict"] != "candidate_positive"
 
 
-def test_evidence_note_keeps_mediation_blocked_with_reference_series_and_gemini_anchor() -> None:
+def test_evidence_note_keeps_mediation_blocked_with_reference_and_gemini_uncertainty_series() -> None:
     text = read(EVIDENCE_NOTE_PATH)
 
-    assert status(EVIDENCE_NOTE_PATH) == "reference_series_and_gemini_baseline_anchor_recorded"
+    assert status(EVIDENCE_NOTE_PATH) == "reference_series_and_gemini_uncertainty_three_pairs_recorded"
     assert "All current reference-host scenario families now have committed baseline run packets" in text
-    assert (
-        "A committed Gemini uncertainty baseline anchor is now recorded in "
-        "`docs/CORTEX_V2_MEDIATION_GEMINI_BASELINE_INDEX_0.md` and backed by "
-        "`docs/CORTEX_V2_MEDIATION_GEMINI_UNCERTAINTY_BASIS_NOTE_0.md`."
-    ) in text
+    assert "A committed Gemini uncertainty baseline anchor remains recorded" in text
     assert "Three experimental reference-only baseline-versus-mediated thrash pairs are now recorded" in text
     assert "Three experimental reference-only uncertainty pairs are now recorded" in text
+    assert "Three experimental Gemini-only uncertainty pairs are now recorded" in text
     assert (
         "`scenario_host_reference_01` remains intentionally unpaired pending the comparator "
         "admissibility audit recorded in "
@@ -377,6 +453,10 @@ def test_evidence_note_keeps_mediation_blocked_with_reference_series_and_gemini_
     )
     assert (
         "`scenario_uncertainty_reference_01` / `reference` now has "
+        "`candidate_positive` cell-level signal for better uncertainty handling" in text
+    )
+    assert (
+        "`scenario_uncertainty_gemini_01` / `gemini` now has "
         "`candidate_positive` cell-level signal for better uncertainty handling" in text
     )
     assert "Mediation remains blocked" in text
@@ -399,6 +479,6 @@ def test_evidence_note_keeps_mediation_blocked_with_reference_series_and_gemini_
     )
     assert host_statuses == {
         "reference": "baseline_and_two_paired_series_recorded",
-        "gemini": "baseline_anchor_recorded",
+        "gemini": "baseline_and_one_paired_series_recorded",
         "openai": "planned_only",
     }
