@@ -157,11 +157,46 @@ Repo-local entry point:
 make revalidate-mediation-run-packets
 ```
 
+## Live reference mediation-baseline revalidation
+
+This revalidates the two committed reference-host baseline mediation packets against live reference-host code paths.
+It remains reference-first and baseline-only: it does not advance any paired counts, it does not add Gemini or OpenAI live packets, and it keeps `scenario_thrash_reference_01` as an explicit `artifact_gap`.
+
+Direct command:
+
+```sh
+python3 -m pytest tests/integration/test_reference_mediation_baseline_packets.py -q
+```
+
+Repo-local entry point:
+
+```sh
+make revalidate-reference-mediation-baselines
+```
+
+## Reference mediation-baseline candidate refresh
+
+This emits candidate refreshed reference-host baseline mediation packet docs to stdout for manual inspection.
+It prints markdown with committed relative-path headers, does not overwrite the committed packet docs, and does not authorize any paired comparison or mediation implementation work.
+
+Direct command:
+
+```sh
+python3 -m tests.integration._reference_mediation_baseline_packets
+```
+
+Repo-local entry point:
+
+```sh
+make emit-reference-mediation-baselines-candidate
+```
+
 ## Aggregate mediation-evidence revalidation
 
-This runs both mediation-evidence checks together:
+This runs all current mediation-evidence checks together:
 - package scaffold validation
 - run-packet instance validation
+- live reference baseline packet revalidation
 
 It remains check-only and does not generate evidence or authorize mediation implementation.
 

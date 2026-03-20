@@ -5,9 +5,7 @@ from __future__ import annotations
 from collections import defaultdict
 import re
 from pathlib import Path
-
-
-REPO_ROOT = Path(__file__).resolve().parents[2]
+REPO_ROOT = Path(__file__).resolve().parents[1]
 DOCS_ROOT = REPO_ROOT / "docs"
 MEDIATION_REFERENCE_PACKET_ROOT = DOCS_ROOT / "mediation_evidence" / "reference"
 
@@ -20,6 +18,10 @@ BURDEN_TABLE_PATH = DOCS_ROOT / "CORTEX_V2_MEDIATION_BURDEN_COMPARISON_0.md"
 HOST_SPLIT_TABLE_PATH = DOCS_ROOT / "CORTEX_V2_MEDIATION_HOST_SPLIT_COMPARISON_0.md"
 EVIDENCE_NOTE_PATH = DOCS_ROOT / "CORTEX_V2_MEDIATION_EVIDENCE_NOTE_0.md"
 REFERENCE_BASELINE_INDEX_PATH = DOCS_ROOT / "CORTEX_V2_MEDIATION_REFERENCE_BASELINE_INDEX_0.md"
+REFERENCE_THRASH_PACKET_PATH = (
+    MEDIATION_REFERENCE_PACKET_ROOT
+    / "scenario_thrash_reference_01__baseline_non_mediated__run_001.md"
+)
 
 VERDICTS = {"negative", "neutral", "mixed", "candidate_positive", "insufficient"}
 PAIR_STATUSES = {"not_recorded", "usable", "confidence_downgraded", "excluded"}
@@ -90,7 +92,7 @@ def parse_markdown_table(section_text: str) -> list[dict[str, str]]:
 
 
 def table_cells(line: str) -> list[str]:
-    return [cell.strip().strip("`") for cell in line.strip().strip("|").split("|")]
+    return [_unwrap_code_literal(cell.strip()) for cell in line.strip().strip("|").split("|")]
 
 
 def parse_bullet_fields(section_text: str) -> dict[str, str]:
@@ -100,7 +102,7 @@ def parse_bullet_fields(section_text: str) -> dict[str, str]:
         if not stripped.startswith("- ") or ":" not in stripped:
             continue
         key, value = stripped[2:].split(":", 1)
-        fields[key.strip()] = value.strip().strip("`")
+        fields[key.strip()] = _unwrap_code_literal(value.strip())
     return fields
 
 
@@ -222,3 +224,13 @@ def parse_run_packet(path: Path) -> dict[str, object]:
         "exclusions": parse_bullet_fields(section(text, "Exclusions Or Unusable-Pair Notes")),
         "reviewer_note": parse_bullet_fields(section(text, "Reviewer Note")),
     }
+
+
+def packet_without_path(packet: dict[str, object]) -> dict[str, object]:
+    return {key: value for key, value in packet.items() if key != "path"}
+
+
+def _unwrap_code_literal(value: str) -> str:
+    if value.startswith("`") and value.endswith("`") and value.count("`") == 2:
+        return value[1:-1]
+    return value

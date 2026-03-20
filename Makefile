@@ -3,7 +3,7 @@ PYTEST ?= $(PYTHON) -m pytest
 COVERAGE ?= $(PYTHON) -m coverage
 COVERAGE_RC ?= .coveragerc
 
-.PHONY: test-unit test-integration test-smoke verify revalidate-reference-packet emit-reference-packet-candidate revalidate-latency-evidence emit-latency-evidence-candidate revalidate-mediation-evidence-package revalidate-mediation-run-packets revalidate-mediation-evidence coverage test-correspondence-core test-correspondence-ports test-correspondence-sre test-correspondence-periphery
+.PHONY: test-unit test-integration test-smoke verify revalidate-reference-packet emit-reference-packet-candidate revalidate-latency-evidence emit-latency-evidence-candidate revalidate-mediation-evidence-package revalidate-mediation-run-packets revalidate-reference-mediation-baselines emit-reference-mediation-baselines-candidate revalidate-mediation-evidence coverage test-correspondence-core test-correspondence-ports test-correspondence-sre test-correspondence-periphery
 
 test-unit:
 	$(PYTEST) tests/unit
@@ -45,9 +45,16 @@ revalidate-mediation-evidence-package:
 revalidate-mediation-run-packets:
 	$(PYTEST) tests/unit/test_mediation_run_packets.py -q
 
+revalidate-reference-mediation-baselines:
+	$(PYTEST) tests/integration/test_reference_mediation_baseline_packets.py -q
+
+emit-reference-mediation-baselines-candidate:
+	$(PYTHON) -m tests.integration._reference_mediation_baseline_packets
+
 revalidate-mediation-evidence:
 	$(MAKE) revalidate-mediation-evidence-package
 	$(MAKE) revalidate-mediation-run-packets
+	$(MAKE) revalidate-reference-mediation-baselines
 
 coverage:
 	$(COVERAGE) --version >/dev/null 2>&1 || { \

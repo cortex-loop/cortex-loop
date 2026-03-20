@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from tests.unit._mediation_evidence import (
+from tests._mediation_evidence import (
     MEDIATION_REFERENCE_PACKET_ROOT,
     REFERENCE_BASELINE_INDEX_PATH,
     RUN_PACKET_INVARIANT_FIELDS,

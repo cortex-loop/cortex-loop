@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import re
 
-from tests.unit._mediation_evidence import (
+from tests._mediation_evidence import (
     AXIS_HEADINGS,
     AXIS_TABLE_PATH,
     BURDEN_TABLE_PATH,
