@@ -9,9 +9,7 @@ import sys
 
 from cortex.core.commitments import CommitmentStatus
 from cortex.core.dispatch import DispatchLane
-from cortex.drivers.reference_host_commitment import evaluate_reference_host_commitment
 from tests._mediation_evidence import AXIS_HEADINGS
-from tests.integration._reference_lane import reference_environment_handle
 from tests.integration._reference_lane_packet_example import (
     build_reference_lane_packet_example_snapshot,
 )
@@ -21,14 +19,22 @@ from tests.integration._reference_mediation_thrash_episode import (
     REFERENCE_THRASH_PAIR_SPECS,
     build_reference_thrash_episode_snapshot,
 )
+from tests.integration._reference_mediation_uncertainty_episode import (
+    DEFAULT_REFERENCE_UNCERTAINTY_PAIR_KEY,
+    REFERENCE_UNCERTAINTY_PAIR_KEYS,
+    REFERENCE_UNCERTAINTY_PAIR_SPECS,
+    build_reference_uncertainty_episode_snapshot,
+    reference_uncertainty_scenario_inputs,
+)
 
 
 PacketSnapshot = dict[str, object]
 
 REFERENCE_MEDIATION_BASELINE_PACKET_PATHS = {
     "scenario_uncertainty_reference_01": (
-        "docs/mediation_evidence/reference/"
-        "scenario_uncertainty_reference_01__baseline_non_mediated__run_001.md"
+        REFERENCE_UNCERTAINTY_PAIR_SPECS[
+            DEFAULT_REFERENCE_UNCERTAINTY_PAIR_KEY
+        ].baseline_packet_path
     ),
     "scenario_host_reference_01": (
         "docs/mediation_evidence/reference/"
@@ -38,6 +44,10 @@ REFERENCE_MEDIATION_BASELINE_PACKET_PATHS = {
         REFERENCE_THRASH_PAIR_SPECS[DEFAULT_REFERENCE_THRASH_PAIR_KEY].baseline_packet_path
     ),
 }
+REFERENCE_UNCERTAINTY_BASELINE_PACKET_PATHS = {
+    pair_key: REFERENCE_UNCERTAINTY_PAIR_SPECS[pair_key].baseline_packet_path
+    for pair_key in REFERENCE_UNCERTAINTY_PAIR_KEYS
+}
 REFERENCE_THRASH_BASELINE_PACKET_PATHS = {
     pair_key: REFERENCE_THRASH_PAIR_SPECS[pair_key].baseline_packet_path
     for pair_key in REFERENCE_THRASH_PAIR_KEYS
@@ -45,9 +55,17 @@ REFERENCE_THRASH_BASELINE_PACKET_PATHS = {
 _SCOPE_TEXT = {
     ("scenario_uncertainty_reference_01", "baseline_non_mediated"): (
         "This committed run packet records one reference-host baseline-only uncertainty "
-        "packet for mediation evidence review.\n"
-        "It does not provide comparative mediation evidence, justify mediation, or "
-        "authorize implementation work."
+        "packet within the committed uncertainty paired-run series for mediation "
+        "evidence review.\n"
+        "It does not provide comparative mediation evidence by itself, justify "
+        "mediation, or authorize implementation work."
+    ),
+    ("scenario_uncertainty_reference_01", "experimental_mediated"): (
+        "This committed run packet records one reference-host experimental mediated "
+        "uncertainty comparator within the committed uncertainty paired-run series for "
+        "mediation evidence review.\n"
+        "It does not justify mediation, does not authorize implementation work, and "
+        "package-level evidence notes govern any verdict."
     ),
     ("scenario_host_reference_01", "baseline_non_mediated"): (
         "This committed run packet records one reference-host baseline-only realization "
@@ -81,6 +99,11 @@ _REVIEWER_NOTE = (
     "This is baseline-only committed evidence, not comparative mediation evidence, "
     "and it does not justify mediation or authorize any implementation seam."
 )
+_UNCERTAINTY_BASELINE_REVIEWER_NOTE = (
+    "This is baseline-only committed evidence within the committed reference "
+    "uncertainty paired-run series. It is not comparative mediation evidence by itself "
+    "and does not justify mediation or authorize any implementation seam."
+)
 _THRASH_BASELINE_REVIEWER_NOTE = (
     "This is baseline-only committed evidence within the committed reference thrash "
     "paired-run series. It is not comparative mediation evidence by itself and does "
@@ -88,102 +111,104 @@ _THRASH_BASELINE_REVIEWER_NOTE = (
 )
 
 
-def build_reference_uncertainty_baseline_packet() -> PacketSnapshot:
-    result = evaluate_reference_host_commitment(
-        "ApprovalResult",
-        {
-            "commitment_id": "commit-3",
-            "externally_consequential": True,
-        },
-        environment_handle=reference_environment_handle(),
-    )
+def build_reference_uncertainty_baseline_packet(
+    pair_key: str = DEFAULT_REFERENCE_UNCERTAINTY_PAIR_KEY,
+) -> PacketSnapshot:
+    spec = REFERENCE_UNCERTAINTY_PAIR_SPECS[pair_key]
+    snapshot = build_reference_uncertainty_episode_snapshot(pair_key)
+    steps = snapshot["steps"]
 
-    assert result.dispatch_decision.lane is DispatchLane.FULL_COMMITMENT
-    assert result.verdict is not None
-    assert result.verdict.status is CommitmentStatus.UNCERTIFIED
-    assert result.verdict.provenance_manifest is None
-    assert result.verdict.contradiction_refs == ()
-    assert result.verdict.degradation_refs == ()
+    assert isinstance(steps, list)
+    assert snapshot["step_sequence"] == ["guard", "retry", "resolve"]
+    assert snapshot["uncertified_loop_count"] == 2
+    assert [step["outcome_class"] for step in steps] == [
+        "uncertified-full-commitment",
+        "uncertified-full-commitment",
+        "certified-full-commitment",
+    ]
+    assert steps[0]["brake_state"] == "guarded"
+    assert steps[1]["brake_state"] == "guarded"
+    assert steps[2]["dispatch_lane"] == DispatchLane.FULL_COMMITMENT.value
 
     return build_reference_mediation_packet(
         scenario_id="scenario_uncertainty_reference_01",
-        run_id="reference_uncertainty_baseline_run_001",
-        paired_episode_set_id="pending_pair_reference_uncertainty_001",
+        run_id=spec.baseline_run_id,
+        paired_episode_set_id=spec.pair_id,
         scenario_family="uncertainty_boundary",
         task_value_rubric_id="task_value_equal_truth_preservation",
         approval_or_environment_context_id="env_uncertainty_sensitive",
-        scenario_inputs={
-            "starting_request_or_event": (
-                "`ApprovalResult` with `commitment_id=commit-3` and "
-                "`externally_consequential=True`"
-            ),
-            "host_surface": "reference-host commitment path",
-            "declared_scenario_goal": (
-                "evaluate whether mediation improves uncertainty handling or brake timing "
-                "on a bounded reference-host episode without smoothing contradictions or "
-                "changing commitment truth"
-            ),
-            "bounded_environment_or_approval_context": (
-                "`CommitmentEnvironmentHandle` with "
-                "`available_query_kinds={EXECUTION_TRACE}` and "
-                "`capability_tags={trace/read}`; no provenance manifest provided"
-            ),
-        },
+        scenario_inputs=reference_uncertainty_scenario_inputs(spec),
         run_outputs={
             "outcome_summary": (
-                "Full-commitment reference-host evaluation yields `uncertified` when "
-                "lawful evidence is absent."
+                "The bounded reference-host uncertainty episode reaches certified "
+                f"completion at `{spec.baseline_step_prefix}-3` after two guarded "
+                "uncertified full-commitment turns."
             ),
             "branch_trajectory_summary": (
-                "Single commitment-path evaluation only; no branch-comparison artifact is "
-                "recorded in this baseline packet."
+                "This reference-only uncertainty series stays on a `check`-family path "
+                "and records no branch-control sequence."
             ),
             "uncertainty_or_brake_summary": (
-                "Missing evidence remains explicit as `uncertified` rather than being "
-                "smoothed into certification or blockedness."
+                f"`guarded` brake state is explicit at `{spec.baseline_step_prefix}-1` "
+                f"and `{spec.baseline_step_prefix}-2`, with contradiction and "
+                f"degradation evidence preserved until certified resolution at "
+                f"`{spec.baseline_step_prefix}-3`."
             ),
             "burden_summary": "none",
             "host_realization_summary": (
-                "Reference-host commitment semantics remain host-native, but this packet "
-                "makes no comparative host-lift claim."
+                "Reference-host commitment semantics, contradiction-bearing evidence, "
+                "and the same certified-resolution truth boundary are preserved."
             ),
         },
         artifact_refs={
-            "event_trace_refs": "none",
-            "contradiction_refs": "none",
-            "degradation_refs": "none",
+            "event_trace_refs": (
+                f"{snapshot['event_trace_refs']}; "
+                f"uncertified_loop_count={snapshot['uncertified_loop_count']}"
+            ),
+            "contradiction_refs": str(snapshot["contradiction_ref"]),
+            "degradation_refs": str(snapshot["degradation_ref"]),
             "aux_burden_refs_if_present": "none",
             "evaluation_packet_refs_if_present": "none",
         },
         lift_axis_notes={
             "Reduced Thrashing": (
-                "Baseline-only packet; no matched mediated run is recorded.",
-                "No branch-churn metric is available from this packet alone.",
+                "This packet records a reference-only uncertainty loop without any "
+                "branch-control comparison.",
+                "Package-level evidence notes govern whether repeated paired evidence is "
+                "enough to claim any thrash change.",
             ),
             "Better Branch Discipline": (
-                "Baseline-only packet; no matched mediated run is recorded.",
-                "No comparative branch-state table exists for this scenario-host cell yet.",
+                "This packet stays on the `check` family and does not exercise branch "
+                "control.",
+                "Package-level evidence notes govern whether repeated paired evidence is "
+                "enough to claim any branch-discipline effect.",
             ),
             "Better Uncertainty Handling": (
-                "This packet shows lawful uncertified handling under missing evidence, but "
-                "no mediated comparison exists.",
-                "One baseline-only uncertified outcome is not enough to claim lift.",
+                "This packet preserves guarded uncertified handling with explicit "
+                "contradiction and degradation evidence within the committed uncertainty "
+                "paired-run series.",
+                "Package-level evidence notes govern whether repeated paired evidence is "
+                "enough to claim uncertainty-handling lift.",
             ),
             "Lower Visible Burden At Equal Task Value": (
-                "Baseline-only packet; no equal-value burden comparison is recorded.",
-                "No committed AUX burden artifact exists for this packet.",
+                "Baseline-only packet within the committed uncertainty paired-run series; "
+                "no AUX burden artifact is recorded here.",
+                "Package-level evidence notes govern whether repeated paired evidence is "
+                "enough to claim burden lift.",
             ),
             "Better Host-Specialized Realization": (
-                "This packet stays on the reference-host commitment surface, but no "
-                "mediated comparison exists.",
-                "Host realization remains unscored without a matched paired run.",
+                "This packet stays on the reference-host commitment surface while "
+                "preserving contradiction-bearing evidence.",
+                "Package-level evidence notes govern whether repeated paired evidence is "
+                "enough to claim host-specialized realization lift.",
             ),
         },
         exclusion_notes=(
-            "This packet is intentionally baseline-only and reserves "
-            "`pending_pair_reference_uncertainty_001` for a future honest comparison if "
-            "one is ever earned."
+            "This packet is part of the committed reference uncertainty paired-run "
+            f"series under `{spec.pair_id}`. A single packet does not justify "
+            "mediation; package-level evidence notes govern verdicts."
         ),
+        reviewer_note=_UNCERTAINTY_BASELINE_REVIEWER_NOTE,
     )
 
 
@@ -416,19 +441,18 @@ def build_reference_thrash_baseline_packet(
     )
 
 
-REFERENCE_MEDIATION_BASELINE_PACKET_BUILDERS: Mapping[
-    str, Callable[[], PacketSnapshot]
-] = {
+REFERENCE_MEDIATION_BASELINE_PACKET_BUILDERS: Mapping[str, Callable[[], PacketSnapshot]] = {
     "scenario_uncertainty_reference_01": build_reference_uncertainty_baseline_packet,
     "scenario_host_reference_01": build_reference_host_realization_baseline_packet,
     "scenario_thrash_reference_01": build_reference_thrash_baseline_packet,
 }
-REFERENCE_MEDIATION_BASELINE_PACKET_DOC_BUILDERS: Mapping[
-    str, Callable[[], PacketSnapshot]
-] = {
-    REFERENCE_MEDIATION_BASELINE_PACKET_PATHS["scenario_uncertainty_reference_01"]: (
-        build_reference_uncertainty_baseline_packet
-    ),
+REFERENCE_MEDIATION_BASELINE_PACKET_DOC_BUILDERS: Mapping[str, Callable[[], PacketSnapshot]] = {
+    **{
+        REFERENCE_UNCERTAINTY_BASELINE_PACKET_PATHS[pair_key]: partial(
+            build_reference_uncertainty_baseline_packet, pair_key
+        )
+        for pair_key in REFERENCE_UNCERTAINTY_PAIR_KEYS
+    },
     REFERENCE_MEDIATION_BASELINE_PACKET_PATHS["scenario_host_reference_01"]: (
         build_reference_host_realization_baseline_packet
     ),
@@ -483,46 +507,22 @@ def render_reference_mediation_packet(
     for field_name, value in packet["invariant_lock"].items():
         lines.append(f"- {field_name}: `{value}`")
 
-    lines.extend(
-        [
-            "",
-            "## Scenario Inputs",
-            "",
-        ]
-    )
+    lines.extend(["", "## Scenario Inputs", ""])
     for field_name, value in packet["scenario_inputs"].items():
         lines.append(f"- {field_name}: {value}")
 
-    lines.extend(
-        [
-            "",
-            "## Run Outputs",
-            "",
-        ]
-    )
+    lines.extend(["", "## Run Outputs", ""])
     for field_name, value in packet["run_outputs"].items():
         lines.append(f"- {field_name}: {value}")
 
-    lines.extend(
-        [
-            "",
-            "## Artifact Refs",
-            "",
-        ]
-    )
+    lines.extend(["", "## Artifact Refs", ""])
     for field_name, value in packet["artifact_refs"].items():
         if value == "none":
             lines.append(f"- {field_name}: none")
         else:
             lines.append(f"- {field_name}: `{value}`")
 
-    lines.extend(
-        [
-            "",
-            "## Lift-Axis Observations",
-            "",
-        ]
-    )
+    lines.extend(["", "## Lift-Axis Observations", ""])
     for heading in AXIS_HEADINGS:
         axis_payload = packet["lift_axes"][heading]
         lines.extend(
@@ -560,9 +560,7 @@ def emit_reference_mediation_baseline_packets() -> None:
         REFERENCE_MEDIATION_BASELINE_PACKET_DOC_BUILDERS.items()
     ):
         sys.stdout.write(f"--- {relative_path}\n")
-        sys.stdout.write(
-            render_reference_mediation_packet(relative_path, builder())
-        )
+        sys.stdout.write(render_reference_mediation_packet(relative_path, builder()))
         if index != len(REFERENCE_MEDIATION_BASELINE_PACKET_DOC_BUILDERS) - 1:
             sys.stdout.write("\n")
 

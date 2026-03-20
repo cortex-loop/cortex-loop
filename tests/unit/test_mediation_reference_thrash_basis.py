@@ -120,6 +120,7 @@ def test_evidence_note_keeps_mediation_blocked_with_three_reference_only_pairs()
 
     assert "All current reference-host scenario families now have committed baseline run packets" in text
     assert "Three experimental reference-only baseline-versus-mediated thrash pairs are now recorded" in text
+    assert "Three experimental reference-only uncertainty pairs are now recorded" in text
     assert "candidate_positive" in text
     assert "Mediation remains blocked" in text
     assert "no implementation seam may open" in text

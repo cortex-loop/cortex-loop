@@ -1,4 +1,4 @@
-# scenario_uncertainty_reference_01__baseline_non_mediated__run_001
+# scenario_uncertainty_reference_01__baseline_non_mediated__run_002
 
 Date: 2026-03-20
 Status: `reviewed_evidence`
@@ -13,8 +13,8 @@ It does not provide comparative mediation evidence by itself, justify mediation,
 - date: 2026-03-20
 - status: `reviewed_evidence`
 - scenario_id: `scenario_uncertainty_reference_01`
-- run_id: `reference_uncertainty_baseline_run_001`
-- paired_episode_set_id: `pair_reference_uncertainty_001`
+- run_id: `reference_uncertainty_baseline_run_002`
+- paired_episode_set_id: `pair_reference_uncertainty_002`
 
 ## Variant Metadata
 
@@ -34,24 +34,24 @@ It does not provide comparative mediation evidence by itself, justify mediation,
 
 ## Scenario Inputs
 
-- starting_request_or_event: bounded reference-host approval result flow on `uncertainty-session-1` with guarded uncertainty before certified resolution
+- starting_request_or_event: bounded reference-host approval result flow on `uncertainty-session-2` with guarded uncertainty before certified resolution
 - host_surface: reference-host commitment path with contradiction-bearing degradation preserved across guarded uncertainty and certified resolution
 - declared_scenario_goal: evaluate whether mediation improves uncertainty handling on a bounded reference-host episode without smoothing contradictions, removing degradation evidence, or changing commitment truth
 - bounded_environment_or_approval_context: `CommitmentEnvironmentHandle` with `available_query_kinds={EXECUTION_TRACE}` and `capability_tags={trace/read}` on `env_uncertainty_sensitive`
 
 ## Run Outputs
 
-- outcome_summary: The bounded reference-host uncertainty episode reaches certified completion at `uncertainty-step-3` after two guarded uncertified full-commitment turns.
+- outcome_summary: The bounded reference-host uncertainty episode reaches certified completion at `uncertainty-002-step-3` after two guarded uncertified full-commitment turns.
 - branch_trajectory_summary: This reference-only uncertainty series stays on a `check`-family path and records no branch-control sequence.
-- uncertainty_or_brake_summary: `guarded` brake state is explicit at `uncertainty-step-1` and `uncertainty-step-2`, with contradiction and degradation evidence preserved until certified resolution at `uncertainty-step-3`.
+- uncertainty_or_brake_summary: `guarded` brake state is explicit at `uncertainty-002-step-1` and `uncertainty-002-step-2`, with contradiction and degradation evidence preserved until certified resolution at `uncertainty-002-step-3`.
 - burden_summary: none
 - host_realization_summary: Reference-host commitment semantics, contradiction-bearing evidence, and the same certified-resolution truth boundary are preserved.
 
 ## Artifact Refs
 
-- event_trace_refs: `uncertainty-step-1:ApprovalResult/guard, uncertainty-step-2:ApprovalResult/retry, uncertainty-step-3:ApprovalResult/resolve; uncertified_loop_count=2`
-- contradiction_refs: `trace-check:execution trace omits approval evidence`
-- degradation_refs: `trace-evidence-partial`
+- event_trace_refs: `uncertainty-002-step-1:ApprovalResult/guard, uncertainty-002-step-2:ApprovalResult/retry, uncertainty-002-step-3:ApprovalResult/resolve; uncertified_loop_count=2`
+- contradiction_refs: `receipt-check:provenance receipt remains incomplete`
+- degradation_refs: `receipt-evidence-partial`
 - aux_burden_refs_if_present: none
 - evaluation_packet_refs_if_present: none
 
@@ -91,7 +91,7 @@ It does not provide comparative mediation evidence by itself, justify mediation,
 
 - exclusion_status: `none`
 - failure_tags: `none`
-- notes: This packet is part of the committed reference uncertainty paired-run series under `pair_reference_uncertainty_001`. A single packet does not justify mediation; package-level evidence notes govern verdicts.
+- notes: This packet is part of the committed reference uncertainty paired-run series under `pair_reference_uncertainty_002`. A single packet does not justify mediation; package-level evidence notes govern verdicts.
 
 ## Reviewer Note
 

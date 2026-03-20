@@ -12,6 +12,7 @@ from tests._mediation_evidence import (
 from tests.integration._reference_mediation_baseline_packets import (
     REFERENCE_MEDIATION_BASELINE_PACKET_DOC_BUILDERS,
     REFERENCE_MEDIATION_BASELINE_PACKET_PATHS,
+    REFERENCE_UNCERTAINTY_BASELINE_PACKET_PATHS,
     REFERENCE_THRASH_BASELINE_PACKET_PATHS,
     build_reference_host_realization_baseline_packet,
     build_reference_thrash_baseline_packet,
@@ -23,15 +24,19 @@ from tests.integration._reference_mediation_thrash_episode import (
     REFERENCE_THRASH_PAIR_KEYS,
     build_reference_thrash_episode_snapshot,
 )
+from tests.integration._reference_mediation_uncertainty_episode import (
+    EXPECTED_REFERENCE_UNCERTAINTY_STEP_SEQUENCE,
+    REFERENCE_UNCERTAINTY_PAIR_KEYS,
+    build_reference_uncertainty_episode_snapshot,
+)
 
 
 def test_reference_uncertainty_baseline_packet_matches_committed_doc() -> None:
-    committed_path = REPO_ROOT / REFERENCE_MEDIATION_BASELINE_PACKET_PATHS[
-        "scenario_uncertainty_reference_01"
-    ]
-    committed_packet = packet_without_path(parse_run_packet(committed_path))
+    for pair_key in REFERENCE_UNCERTAINTY_PAIR_KEYS:
+        committed_path = REPO_ROOT / REFERENCE_UNCERTAINTY_BASELINE_PACKET_PATHS[pair_key]
+        committed_packet = packet_without_path(parse_run_packet(committed_path))
 
-    assert build_reference_uncertainty_baseline_packet() == committed_packet
+        assert build_reference_uncertainty_baseline_packet(pair_key) == committed_packet
 
 
 def test_reference_host_realization_baseline_packet_matches_committed_doc() -> None:
@@ -49,6 +54,24 @@ def test_reference_thrash_baseline_packet_matches_committed_doc() -> None:
         committed_packet = packet_without_path(parse_run_packet(committed_path))
 
         assert build_reference_thrash_baseline_packet(pair_key) == committed_packet
+
+
+def test_reference_uncertainty_episode_derives_expected_step_sequence() -> None:
+    for pair_key in REFERENCE_UNCERTAINTY_PAIR_KEYS:
+        snapshot = build_reference_uncertainty_episode_snapshot(pair_key)
+
+        assert snapshot["step_sequence"] == list(EXPECTED_REFERENCE_UNCERTAINTY_STEP_SEQUENCE)
+        assert snapshot["uncertified_loop_count"] == 2
+        assert [step["outcome_class"] for step in snapshot["steps"]] == [
+            "uncertified-full-commitment",
+            "uncertified-full-commitment",
+            "certified-full-commitment",
+        ]
+        assert [step["selected_soft_control_family"] for step in snapshot["steps"]] == [
+            "check",
+            "check",
+            "check",
+        ]
 
 
 def test_reference_thrash_episode_derives_expected_branch_sequence() -> None:

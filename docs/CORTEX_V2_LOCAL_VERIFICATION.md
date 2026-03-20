@@ -143,7 +143,7 @@ make revalidate-mediation-evidence-package
 ## Mediation run-packet revalidation
 
 This checks the committed reference-host baseline run index and the committed run-packet instances.
-It validates packet metadata against the scenario catalog, confirms the canonical baseline anchors remain lawful, validates the full five-packet reference baseline set, and checks the three committed experimental mediated thrash packets.
+It validates packet metadata against the scenario catalog, confirms the canonical baseline anchors remain lawful, validates the full seven-packet reference baseline set, and checks the six committed experimental mediated uncertainty and thrash packets.
 
 Direct command:
 
@@ -159,7 +159,7 @@ make revalidate-mediation-run-packets
 
 ## Live reference mediation-baseline revalidation
 
-This revalidates the five committed reference-host baseline mediation packets against live reference-host code paths.
+This revalidates the seven committed reference-host baseline mediation packets against live reference-host code paths.
 It remains reference-first and baseline-only: it does not advance any paired counts and it does not add Gemini or OpenAI live packets.
 
 Direct command:
@@ -177,7 +177,7 @@ make revalidate-reference-mediation-baselines
 ## Reference mediation-baseline candidate refresh
 
 This emits candidate refreshed reference-host baseline mediation packet docs to stdout for manual inspection.
-It prints markdown for all five committed reference baseline packet docs with committed relative-path headers, does not overwrite the committed packet docs, and does not authorize any paired comparison or mediation implementation work.
+It prints markdown for all seven committed reference baseline packet docs with committed relative-path headers, does not overwrite the committed packet docs, and does not authorize any paired comparison or mediation implementation work.
 
 Direct command:
 
@@ -225,6 +225,57 @@ Repo-local entry point:
 make emit-reference-mediated-thrash-candidate
 ```
 
+## Experimental reference mediated-uncertainty revalidation
+
+This revalidates the three committed experimental reference-only mediated uncertainty comparators against live reference-host code paths.
+It checks that each mediated packet stays reference-only, preserves contradiction/degradation handling and the same certified completion class as baseline, and reduces redundant uncertified loops without widening package-level verdicts.
+
+Direct command:
+
+```sh
+python3 -m pytest tests/integration/test_reference_mediated_uncertainty_comparator.py -q
+```
+
+Repo-local entry point:
+
+```sh
+make revalidate-reference-mediated-uncertainty
+```
+
+## Experimental reference mediated-uncertainty candidate refresh
+
+This emits the committed experimental reference-only mediated uncertainty packet docs to stdout for manual inspection.
+It prints markdown for all three committed uncertainty comparator docs with committed relative-path headers, does not overwrite the committed docs, and does not authorize mediation implementation work.
+
+Direct command:
+
+```sh
+python3 -m tests.integration._reference_mediation_uncertainty_experimental
+```
+
+Repo-local entry point:
+
+```sh
+make emit-reference-mediated-uncertainty-candidate
+```
+
+## Mediation reference-uncertainty basis revalidation
+
+This checks that `scenario_uncertainty_reference_01` now has a satisfied committed basis and replication law.
+It validates the supporting basis note, the replication note, the committed uncertainty packet series, the live uncertainty builder set, and the repeated paired-run distinctness rules. It does not generate any new evidence.
+
+Direct command:
+
+```sh
+python3 -m pytest tests/unit/test_mediation_reference_uncertainty_basis.py -q
+```
+
+Repo-local entry point:
+
+```sh
+make revalidate-mediation-reference-uncertainty-basis
+```
+
 ## Mediation reference-thrash basis revalidation
 
 This checks that `scenario_thrash_reference_01` now has a satisfied committed basis and replication law.
@@ -248,7 +299,9 @@ This runs all current mediation-evidence checks together:
 - package scaffold validation
 - run-packet instance validation
 - live reference baseline packet revalidation
+- live experimental reference mediated-uncertainty revalidation
 - live experimental reference mediated-thrash revalidation
+- reference uncertainty basis and replication validation
 - reference thrash basis and replication validation
 
 It remains check-only and does not generate evidence or authorize mediation implementation.

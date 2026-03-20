@@ -24,14 +24,42 @@ REFERENCE_THRASH_BASIS_NOTE_PATH = (
 REFERENCE_THRASH_REPLICATION_NOTE_PATH = (
     DOCS_ROOT / "CORTEX_V2_MEDIATION_REFERENCE_THRASH_REPLICATION_NOTE_0.md"
 )
+REFERENCE_UNCERTAINTY_BASIS_NOTE_PATH = (
+    DOCS_ROOT / "CORTEX_V2_MEDIATION_REFERENCE_UNCERTAINTY_BASIS_NOTE_0.md"
+)
+REFERENCE_UNCERTAINTY_REPLICATION_NOTE_PATH = (
+    DOCS_ROOT / "CORTEX_V2_MEDIATION_REFERENCE_UNCERTAINTY_REPLICATION_NOTE_0.md"
+)
 REFERENCE_THRASH_PACKET_PATH = (
     MEDIATION_REFERENCE_PACKET_ROOT
     / "scenario_thrash_reference_01__baseline_non_mediated__run_001.md"
+)
+REFERENCE_UNCERTAINTY_PACKET_PATH = (
+    MEDIATION_REFERENCE_PACKET_ROOT
+    / "scenario_uncertainty_reference_01__baseline_non_mediated__run_001.md"
 )
 REFERENCE_THRASH_MEDIATED_PACKET_PATH = (
     MEDIATION_REFERENCE_PACKET_ROOT
     / "scenario_thrash_reference_01__experimental_mediated__run_001.md"
 )
+REFERENCE_UNCERTAINTY_MEDIATED_PACKET_PATH = (
+    MEDIATION_REFERENCE_PACKET_ROOT
+    / "scenario_uncertainty_reference_01__experimental_mediated__run_001.md"
+)
+REFERENCE_UNCERTAINTY_BASELINE_PACKET_PATHS = {
+    pair_key: (
+        MEDIATION_REFERENCE_PACKET_ROOT
+        / f"scenario_uncertainty_reference_01__baseline_non_mediated__run_{pair_key}.md"
+    )
+    for pair_key in ("001", "002", "003")
+}
+REFERENCE_UNCERTAINTY_MEDIATED_PACKET_PATHS = {
+    pair_key: (
+        MEDIATION_REFERENCE_PACKET_ROOT
+        / f"scenario_uncertainty_reference_01__experimental_mediated__run_{pair_key}.md"
+    )
+    for pair_key in ("001", "002", "003")
+}
 REFERENCE_THRASH_BASELINE_PACKET_PATHS = {
     pair_key: (
         MEDIATION_REFERENCE_PACKET_ROOT
