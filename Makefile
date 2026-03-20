@@ -3,7 +3,7 @@ PYTEST ?= $(PYTHON) -m pytest
 COVERAGE ?= $(PYTHON) -m coverage
 COVERAGE_RC ?= .coveragerc
 
-.PHONY: test-unit test-integration test-smoke verify revalidate-reference-packet emit-reference-packet-candidate revalidate-latency-evidence emit-latency-evidence-candidate revalidate-mediation-evidence-package revalidate-mediation-run-packets revalidate-reference-mediation-baselines emit-reference-mediation-baselines-candidate revalidate-gemini-mediation-baselines emit-gemini-mediation-baselines-candidate revalidate-reference-mediated-thrash emit-reference-mediated-thrash-candidate revalidate-reference-mediated-uncertainty emit-reference-mediated-uncertainty-candidate revalidate-gemini-mediated-uncertainty emit-gemini-mediated-uncertainty-candidate revalidate-mediation-reference-host-realization-basis revalidate-mediation-reference-thrash-basis revalidate-mediation-reference-uncertainty-basis revalidate-mediation-gemini-uncertainty-basis revalidate-mediation-evidence coverage test-correspondence-core test-correspondence-ports test-correspondence-sre test-correspondence-periphery
+.PHONY: test-unit test-integration test-smoke verify revalidate-reference-packet emit-reference-packet-candidate revalidate-latency-evidence emit-latency-evidence-candidate revalidate-mediation-evidence-package revalidate-mediation-run-packets revalidate-reference-mediation-baselines emit-reference-mediation-baselines-candidate revalidate-gemini-mediation-baselines emit-gemini-mediation-baselines-candidate revalidate-openai-mediation-baselines emit-openai-mediation-baselines-candidate revalidate-reference-mediated-thrash emit-reference-mediated-thrash-candidate revalidate-reference-mediated-uncertainty emit-reference-mediated-uncertainty-candidate revalidate-gemini-mediated-uncertainty emit-gemini-mediated-uncertainty-candidate revalidate-mediation-reference-host-realization-basis revalidate-mediation-reference-thrash-basis revalidate-mediation-reference-uncertainty-basis revalidate-mediation-gemini-uncertainty-basis revalidate-mediation-openai-uncertainty-basis revalidate-mediation-evidence coverage test-correspondence-core test-correspondence-ports test-correspondence-sre test-correspondence-periphery
 
 test-unit:
 	$(PYTEST) tests/unit
@@ -60,6 +60,12 @@ revalidate-gemini-mediation-baselines:
 emit-gemini-mediation-baselines-candidate:
 	$(PYTHON) -m tests.integration._gemini_mediation_baseline_packets
 
+revalidate-openai-mediation-baselines:
+	$(PYTEST) tests/integration/test_openai_mediation_baseline_packets.py -q
+
+emit-openai-mediation-baselines-candidate:
+	$(PYTHON) -m tests.integration._openai_mediation_baseline_packets
+
 revalidate-gemini-mediated-uncertainty:
 	$(PYTEST) tests/integration/test_gemini_mediated_uncertainty_comparator.py -q
 
@@ -87,16 +93,21 @@ revalidate-mediation-reference-uncertainty-basis:
 revalidate-mediation-gemini-uncertainty-basis:
 	$(PYTEST) tests/unit/test_mediation_gemini_uncertainty_basis.py -q
 
+revalidate-mediation-openai-uncertainty-basis:
+	$(PYTEST) tests/unit/test_mediation_openai_uncertainty_basis.py -q
+
 revalidate-mediation-evidence:
 	$(MAKE) revalidate-mediation-evidence-package
 	$(MAKE) revalidate-mediation-reference-host-realization-basis
 	$(MAKE) revalidate-mediation-run-packets
 	$(MAKE) revalidate-reference-mediation-baselines
 	$(MAKE) revalidate-gemini-mediation-baselines
+	$(MAKE) revalidate-openai-mediation-baselines
 	$(MAKE) revalidate-gemini-mediated-uncertainty
 	$(MAKE) revalidate-reference-mediated-uncertainty
 	$(MAKE) revalidate-reference-mediated-thrash
 	$(MAKE) revalidate-mediation-gemini-uncertainty-basis
+	$(MAKE) revalidate-mediation-openai-uncertainty-basis
 	$(MAKE) revalidate-mediation-reference-uncertainty-basis
 	$(MAKE) revalidate-mediation-reference-thrash-basis
 

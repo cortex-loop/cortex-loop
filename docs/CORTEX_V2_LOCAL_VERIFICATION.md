@@ -159,8 +159,8 @@ make revalidate-mediation-reference-host-realization-basis
 
 ## Mediation run-packet revalidation
 
-This checks the committed reference-host and Gemini-host baseline run indexes and the committed run-packet instances.
-It validates packet metadata against the scenario catalog, confirms the canonical baseline anchors remain lawful, validates the full seven-packet reference baseline set, validates the three-packet Gemini uncertainty baseline set, and checks the nine committed experimental mediated uncertainty and thrash packets.
+This checks the committed reference-host, Gemini-host, and OpenAI-host baseline run indexes and the committed run-packet instances.
+It validates packet metadata against the scenario catalog, confirms the canonical baseline anchors remain lawful, validates the full seven-packet reference baseline set, validates the three-packet Gemini uncertainty baseline set, validates the one-packet OpenAI uncertainty baseline anchor, and checks the nine committed experimental mediated uncertainty and thrash packets.
 
 Direct command:
 
@@ -223,6 +223,40 @@ Repo-local entry point:
 
 ```sh
 make emit-gemini-mediation-baselines-candidate
+```
+
+## Live OpenAI mediation-baseline revalidation
+
+This revalidates the committed OpenAI-host uncertainty baseline anchor against the landed OpenAI commitment-path slice.
+It remains OpenAI-only and baseline-only: it does not advance any paired counts by itself and it does not add OpenAI mediated packets.
+
+Direct command:
+
+```sh
+python3 -m pytest tests/integration/test_openai_mediation_baseline_packets.py -q
+```
+
+Repo-local entry point:
+
+```sh
+make revalidate-openai-mediation-baselines
+```
+
+## OpenAI mediation-baseline candidate refresh
+
+This emits the committed OpenAI-host baseline mediation packet doc to stdout for manual inspection.
+It prints markdown for the committed OpenAI baseline doc with a committed relative-path header, does not overwrite the committed packet doc, and does not authorize any paired comparison or mediation implementation work.
+
+Direct command:
+
+```sh
+python3 -m tests.integration._openai_mediation_baseline_packets
+```
+
+Repo-local entry point:
+
+```sh
+make emit-openai-mediation-baselines-candidate
 ```
 
 ## Experimental Gemini mediated-uncertainty revalidation
@@ -361,6 +395,23 @@ Repo-local entry point:
 make revalidate-mediation-gemini-uncertainty-basis
 ```
 
+## Mediation OpenAI uncertainty-basis revalidation
+
+This checks that `scenario_uncertainty_openai_01` now has a lawful committed OpenAI uncertainty baseline anchor.
+It validates the OpenAI baseline index, the OpenAI uncertainty basis note, the committed OpenAI packet anchor, the live OpenAI builder, and the continued absence of any counted OpenAI comparator evidence. It does not generate any new evidence.
+
+Direct command:
+
+```sh
+python3 -m pytest tests/unit/test_mediation_openai_uncertainty_basis.py -q
+```
+
+Repo-local entry point:
+
+```sh
+make revalidate-mediation-openai-uncertainty-basis
+```
+
 ## Mediation reference-uncertainty basis revalidation
 
 This checks that `scenario_uncertainty_reference_01` now has a satisfied committed basis and replication law.
@@ -403,10 +454,12 @@ This runs all current mediation-evidence checks together:
 - run-packet instance validation
 - live reference baseline packet revalidation
 - live Gemini baseline packet revalidation
+- live OpenAI baseline packet revalidation
 - live experimental Gemini mediated-uncertainty revalidation
 - live experimental reference mediated-uncertainty revalidation
 - live experimental reference mediated-thrash revalidation
 - Gemini uncertainty basis and replication validation
+- OpenAI uncertainty baseline validation
 - reference uncertainty basis and replication validation
 - reference thrash basis and replication validation
 

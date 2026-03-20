@@ -100,7 +100,8 @@ def test_gemini_builder_packet_series_and_replication_note_exist() -> None:
 def test_evidence_note_keeps_mediation_blocked_with_gemini_uncertainty_series() -> None:
     text = read(EVIDENCE_NOTE_PATH)
 
-    assert status(EVIDENCE_NOTE_PATH) == "reference_series_and_gemini_uncertainty_three_pairs_recorded"
+    assert status(EVIDENCE_NOTE_PATH) == "reference_and_gemini_series_with_openai_baseline_anchor_recorded"
+    assert "A committed OpenAI uncertainty baseline anchor is now recorded" in text
     assert "Three experimental Gemini-only uncertainty pairs are now recorded" in text
     assert (
         "`scenario_uncertainty_gemini_01` / `gemini` now has `candidate_positive` "

@@ -433,12 +433,13 @@ def test_results_surfaces_are_preseeded_for_all_catalog_cells_and_follow_fairnes
                 assert row["current_verdict"] != "candidate_positive"
 
 
-def test_evidence_note_keeps_mediation_blocked_with_reference_and_gemini_uncertainty_series() -> None:
+def test_evidence_note_keeps_mediation_blocked_with_reference_gemini_series_and_openai_anchor() -> None:
     text = read(EVIDENCE_NOTE_PATH)
 
-    assert status(EVIDENCE_NOTE_PATH) == "reference_series_and_gemini_uncertainty_three_pairs_recorded"
+    assert status(EVIDENCE_NOTE_PATH) == "reference_and_gemini_series_with_openai_baseline_anchor_recorded"
     assert "All current reference-host scenario families now have committed baseline run packets" in text
     assert "A committed Gemini uncertainty baseline anchor remains recorded" in text
+    assert "A committed OpenAI uncertainty baseline anchor is now recorded" in text
     assert "Three experimental reference-only baseline-versus-mediated thrash pairs are now recorded" in text
     assert "Three experimental reference-only uncertainty pairs are now recorded" in text
     assert "Three experimental Gemini-only uncertainty pairs are now recorded" in text
@@ -480,5 +481,5 @@ def test_evidence_note_keeps_mediation_blocked_with_reference_and_gemini_uncerta
     assert host_statuses == {
         "reference": "baseline_and_two_paired_series_recorded",
         "gemini": "baseline_and_one_paired_series_recorded",
-        "openai": "planned_only",
+        "openai": "baseline_anchor_recorded",
     }

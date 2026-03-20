@@ -1,7 +1,7 @@
 # CORTEX_V2_MEDIATION_EVIDENCE_NOTE_0
 
 Date: 2026-03-20
-Status: `reference_series_and_gemini_uncertainty_three_pairs_recorded`
+Status: `reference_and_gemini_series_with_openai_baseline_anchor_recorded`
 
 ## Scope
 
@@ -12,6 +12,7 @@ Version `0` is a reporting scaffold only; it does not justify mediation, activat
 
 All current reference-host scenario families now have committed baseline run packets in `docs/CORTEX_V2_MEDIATION_REFERENCE_BASELINE_INDEX_0.md`.
 A committed Gemini uncertainty baseline anchor remains recorded in `docs/CORTEX_V2_MEDIATION_GEMINI_BASELINE_INDEX_0.md`.
+A committed OpenAI uncertainty baseline anchor is now recorded in `docs/CORTEX_V2_MEDIATION_OPENAI_BASELINE_INDEX_0.md`.
 Three experimental reference-only baseline-versus-mediated thrash pairs are now recorded in `docs/CORTEX_V2_MEDIATION_PAIRED_RUN_LEDGER_0.md`.
 Three experimental reference-only uncertainty pairs are now recorded in `docs/CORTEX_V2_MEDIATION_PAIRED_RUN_LEDGER_0.md`.
 Three experimental Gemini-only uncertainty pairs are now recorded in `docs/CORTEX_V2_MEDIATION_PAIRED_RUN_LEDGER_0.md`.
@@ -36,7 +37,7 @@ The Gemini uncertainty series is now backed by `docs/CORTEX_V2_MEDIATION_GEMINI_
 
 - `reference`: `baseline_and_two_paired_series_recorded`
 - `gemini`: `baseline_and_one_paired_series_recorded`
-- `openai`: `planned_only`
+- `openai`: `baseline_anchor_recorded`
 
 ## Blocker Statement
 

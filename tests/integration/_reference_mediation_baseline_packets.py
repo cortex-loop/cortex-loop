@@ -53,6 +53,12 @@ REFERENCE_THRASH_BASELINE_PACKET_PATHS = {
     for pair_key in REFERENCE_THRASH_PAIR_KEYS
 }
 _SCOPE_TEXT = {
+    ("scenario_uncertainty_openai_01", "baseline_non_mediated"): (
+        "This committed run packet records one OpenAI-host baseline-only uncertainty "
+        "packet for mediation evidence review.\n"
+        "It does not provide comparative mediation evidence, justify mediation, or "
+        "authorize implementation work."
+    ),
     ("scenario_uncertainty_gemini_01", "baseline_non_mediated"): (
         "This committed run packet records one Gemini-host baseline-only uncertainty "
         "packet within the committed Gemini uncertainty paired-run series for "
