@@ -157,6 +157,23 @@ Repo-local entry point:
 make revalidate-mediation-reference-host-realization-basis
 ```
 
+## Mediation Gemini host-realization admissibility revalidation
+
+This checks that `scenario_host_gemini_01` remains intentionally unpaired and unanchored until a lawful Gemini host-facing publication surface is actually admissible.
+It validates the Gemini admissibility note, the continued absence of committed Gemini host-realization packets, the Gemini baseline-index guardrail, and the package blocker truth. It does not generate evidence.
+
+Direct command:
+
+```sh
+python3 -m pytest tests/unit/test_mediation_gemini_host_realization_basis.py -q
+```
+
+Repo-local entry point:
+
+```sh
+make revalidate-mediation-gemini-host-realization-basis
+```
+
 ## Mediation run-packet revalidation
 
 This checks the committed reference-host, Gemini-host, and OpenAI-host baseline run indexes and the committed run-packet instances.

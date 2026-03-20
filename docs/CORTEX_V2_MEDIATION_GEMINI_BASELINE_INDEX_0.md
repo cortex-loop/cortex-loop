@@ -16,6 +16,7 @@ Version `0` is Gemini-first only: it does not record reference or OpenAI packets
 - additional repeated Gemini baseline packets belong in `docs/CORTEX_V2_MEDIATION_PAIRED_RUN_LEDGER_0.md`, not as extra rows in this anchor index
 - `scenario_uncertainty_gemini_01` is now backed by the satisfied basis note in `docs/CORTEX_V2_MEDIATION_GEMINI_UNCERTAINTY_BASIS_NOTE_0.md`.
 - `scenario_thrash_gemini_01` is now backed by the satisfied basis note in `docs/CORTEX_V2_MEDIATION_GEMINI_THRASH_BASIS_NOTE_0.md` and the replication law in `docs/CORTEX_V2_MEDIATION_GEMINI_THRASH_REPLICATION_NOTE_0.md`.
+- `scenario_host_gemini_01` is intentionally absent pending the admissibility audit in `docs/CORTEX_V2_MEDIATION_GEMINI_HOST_REALIZATION_ADMISSIBILITY_NOTE_0.md`; no Gemini host-realization baseline anchor is committed yet.
 
 ## Index Rows
 
