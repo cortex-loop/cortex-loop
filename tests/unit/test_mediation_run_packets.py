@@ -6,6 +6,7 @@ from pathlib import Path
 
 from tests._mediation_evidence import (
     GEMINI_BASELINE_INDEX_PATH,
+    GEMINI_HOST_REALIZATION_PACKET_PATH,
     GEMINI_THRASH_BASELINE_PACKET_PATHS,
     GEMINI_THRASH_MEDIATED_PACKET_PATH,
     GEMINI_THRASH_MEDIATED_PACKET_PATHS,
@@ -78,8 +79,9 @@ def test_gemini_baseline_index_is_gemini_only_and_commits_one_gemini_anchor() ->
 
     assert GEMINI_BASELINE_INDEX_PATH.is_file()
     assert status(GEMINI_BASELINE_INDEX_PATH) == "gemini mediation baseline run index (`active`, baseline-only)"
-    assert len(rows) == 2
+    assert len(rows) == 3
     assert {row["scenario_id"] for row in rows} == {
+        "scenario_host_gemini_01",
         "scenario_thrash_gemini_01",
         "scenario_uncertainty_gemini_01",
     }
@@ -186,7 +188,7 @@ def test_committed_gemini_baseline_packets_match_catalog_and_stay_baseline_only(
     failure_tags = load_failure_tags()
     baseline_packets = sorted(MEDIATION_GEMINI_PACKET_ROOT.glob("*__baseline_non_mediated__run_*.md"))
 
-    assert len(baseline_packets) == 6
+    assert len(baseline_packets) == 7
 
     for packet_path in baseline_packets:
         packet = parse_run_packet(packet_path)
@@ -201,7 +203,13 @@ def test_committed_gemini_baseline_packets_match_catalog_and_stay_baseline_only(
             packet["variant_metadata"]["approval_or_environment_context_id"]
             == scenario["approval_or_environment_context_id"]
         )
-        if packet["header"]["scenario_id"] == "scenario_uncertainty_gemini_01":
+        if packet["header"]["scenario_id"] == "scenario_host_gemini_01":
+            rows = parse_markdown_table(section(read(GEMINI_BASELINE_INDEX_PATH), "Index Rows"))
+            row = next(row for row in rows if row["scenario_id"] == packet["header"]["scenario_id"])
+            assert packet_path == GEMINI_HOST_REALIZATION_PACKET_PATH
+            assert packet["header"]["run_id"] == row["run_id"]
+            assert packet["header"]["paired_episode_set_id"] == row["paired_episode_set_id"]
+        elif packet["header"]["scenario_id"] == "scenario_uncertainty_gemini_01":
             assert packet_path in GEMINI_UNCERTAINTY_BASELINE_PACKET_PATHS.values()
             assert packet["header"]["run_id"].startswith("gemini_uncertainty_baseline_run_")
             assert packet["header"]["paired_episode_set_id"].startswith("pair_gemini_uncertainty_")
@@ -456,9 +464,10 @@ def test_reference_packet_directory_contains_seven_baselines_and_six_experimenta
     ]
 
 
-def test_gemini_packet_directory_contains_six_baselines_and_six_experimental_packets() -> None:
+def test_gemini_packet_directory_contains_seven_baselines_and_six_experimental_packets() -> None:
     packet_names = sorted(path.name for path in MEDIATION_GEMINI_PACKET_ROOT.glob("*.md"))
     assert packet_names == [
+        "scenario_host_gemini_01__baseline_non_mediated__run_001.md",
         "scenario_thrash_gemini_01__baseline_non_mediated__run_001.md",
         "scenario_thrash_gemini_01__baseline_non_mediated__run_002.md",
         "scenario_thrash_gemini_01__baseline_non_mediated__run_003.md",

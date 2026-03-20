@@ -129,6 +129,12 @@ _SCOPE_TEXT = {
         "It does not provide comparative mediation evidence, justify mediation, or "
         "authorize implementation work."
     ),
+    ("scenario_host_gemini_01", "baseline_non_mediated"): (
+        "This committed run packet records one Gemini-host baseline-only realization "
+        "packet for mediation evidence review.\n"
+        "It does not provide comparative mediation evidence, justify mediation, or "
+        "authorize implementation work."
+    ),
     ("scenario_thrash_reference_01", "baseline_non_mediated"): (
         "This committed run packet records one reference-host baseline-only thrash "
         "control packet within the committed thrash paired-run series for mediation "

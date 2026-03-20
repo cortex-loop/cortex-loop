@@ -3,7 +3,7 @@ PYTEST ?= $(PYTHON) -m pytest
 COVERAGE ?= $(PYTHON) -m coverage
 COVERAGE_RC ?= .coveragerc
 
-.PHONY: test-unit test-integration test-smoke verify revalidate-reference-packet emit-reference-packet-candidate revalidate-latency-evidence emit-latency-evidence-candidate revalidate-mediation-evidence-package revalidate-mediation-run-packets revalidate-reference-mediation-baselines emit-reference-mediation-baselines-candidate revalidate-gemini-mediation-baselines emit-gemini-mediation-baselines-candidate revalidate-openai-mediation-baselines emit-openai-mediation-baselines-candidate revalidate-reference-mediated-thrash emit-reference-mediated-thrash-candidate revalidate-reference-mediated-uncertainty emit-reference-mediated-uncertainty-candidate revalidate-gemini-mediated-uncertainty emit-gemini-mediated-uncertainty-candidate revalidate-gemini-mediated-thrash emit-gemini-mediated-thrash-candidate revalidate-openai-mediated-uncertainty emit-openai-mediated-uncertainty-candidate revalidate-openai-mediated-thrash emit-openai-mediated-thrash-candidate revalidate-mediation-reference-host-realization-basis revalidate-mediation-gemini-host-realization-basis revalidate-mediation-openai-host-realization-basis revalidate-mediation-reference-thrash-basis revalidate-mediation-reference-uncertainty-basis revalidate-mediation-gemini-thrash-basis revalidate-mediation-gemini-uncertainty-basis revalidate-mediation-openai-thrash-basis revalidate-mediation-openai-uncertainty-basis revalidate-mediation-evidence coverage test-correspondence-contract test-correspondence-core test-correspondence-ports test-correspondence-sre test-correspondence-periphery
+.PHONY: test-unit test-integration test-smoke verify revalidate-reference-packet emit-reference-packet-candidate revalidate-gemini-packet emit-gemini-packet-candidate revalidate-latency-evidence emit-latency-evidence-candidate revalidate-mediation-evidence-package revalidate-mediation-run-packets revalidate-reference-mediation-baselines emit-reference-mediation-baselines-candidate revalidate-gemini-mediation-baselines emit-gemini-mediation-baselines-candidate revalidate-openai-mediation-baselines emit-openai-mediation-baselines-candidate revalidate-reference-mediated-thrash emit-reference-mediated-thrash-candidate revalidate-reference-mediated-uncertainty emit-reference-mediated-uncertainty-candidate revalidate-gemini-mediated-uncertainty emit-gemini-mediated-uncertainty-candidate revalidate-gemini-mediated-thrash emit-gemini-mediated-thrash-candidate revalidate-openai-mediated-uncertainty emit-openai-mediated-uncertainty-candidate revalidate-openai-mediated-thrash emit-openai-mediated-thrash-candidate revalidate-mediation-reference-host-realization-basis revalidate-mediation-gemini-host-realization-basis revalidate-mediation-openai-host-realization-basis revalidate-mediation-reference-thrash-basis revalidate-mediation-reference-uncertainty-basis revalidate-mediation-gemini-thrash-basis revalidate-mediation-gemini-uncertainty-basis revalidate-mediation-openai-thrash-basis revalidate-mediation-openai-uncertainty-basis revalidate-mediation-evidence coverage test-correspondence-contract test-correspondence-core test-correspondence-ports test-correspondence-sre test-correspondence-periphery
 
 test-unit:
 	$(PYTEST) tests/unit
@@ -20,6 +20,7 @@ test-smoke:
 		tests/integration/test_reference_host_vertical_gate.py \
 		tests/integration/test_reference_lane_latency.py \
 		tests/integration/test_reference_lane_packet_example.py \
+		tests/integration/test_gemini_lane_packet_example.py \
 		tests/integration/test_aux_claim_conservative.py \
 		tests/unit/test_import_smoke.py -q
 
@@ -33,6 +34,12 @@ revalidate-reference-packet:
 
 emit-reference-packet-candidate:
 	$(PYTHON) -m tests.integration._reference_lane_packet_example
+
+revalidate-gemini-packet:
+	$(PYTEST) tests/integration/test_gemini_lane_packet_example.py
+
+emit-gemini-packet-candidate:
+	$(PYTHON) -m tests.integration._gemini_lane_packet_example
 
 revalidate-latency-evidence:
 	$(PYTEST) tests/integration/test_reference_lane_latency.py
@@ -132,6 +139,7 @@ revalidate-mediation-evidence:
 	$(MAKE) revalidate-mediation-reference-host-realization-basis
 	$(MAKE) revalidate-mediation-gemini-host-realization-basis
 	$(MAKE) revalidate-mediation-openai-host-realization-basis
+	$(MAKE) revalidate-gemini-packet
 	$(MAKE) revalidate-mediation-run-packets
 	$(MAKE) revalidate-reference-mediation-baselines
 	$(MAKE) revalidate-gemini-mediation-baselines

@@ -41,6 +41,7 @@ python3 -m pytest tests/unit/test_correspondence_contract.py \
   tests/integration/test_reference_host_vertical_gate.py \
   tests/integration/test_reference_lane_latency.py \
   tests/integration/test_reference_lane_packet_example.py \
+  tests/integration/test_gemini_lane_packet_example.py \
   tests/integration/test_aux_claim_conservative.py \
   tests/unit/test_import_smoke.py -q
 ```
@@ -86,6 +87,40 @@ make emit-reference-packet-candidate
 ```
 
 Exact committed-doc regeneration is still not part of normal verification and remains explicit/manual/out of scope unless separately requested.
+
+## Gemini-lane packet-example revalidation
+
+This revalidates the committed Gemini-lane packet example doc against the already-landed live Gemini packet/publication path.
+It does not emit candidate refreshed evidence and it does not overwrite the committed example doc.
+
+Direct command:
+
+```sh
+python3 -m pytest tests/integration/test_gemini_lane_packet_example.py
+```
+
+Repo-local entry point:
+
+```sh
+make revalidate-gemini-packet
+```
+
+## Gemini-lane packet-example candidate refresh
+
+This emits candidate refreshed Gemini packet-example evidence from the already-landed live packet/publication path to stdout for manual inspection.
+It does not update blocker truth and it does not overwrite the committed example doc.
+
+Direct command:
+
+```sh
+python3 -m tests.integration._gemini_lane_packet_example
+```
+
+Repo-local entry point:
+
+```sh
+make emit-gemini-packet-candidate
+```
 
 ## Latency-evidence revalidation
 
@@ -160,8 +195,8 @@ make revalidate-mediation-reference-host-realization-basis
 
 ## Mediation Gemini host-realization admissibility revalidation
 
-This checks that `scenario_host_gemini_01` remains intentionally unpaired and unanchored until a lawful Gemini host-facing publication surface is actually admissible.
-It validates the Gemini admissibility note, the continued absence of committed Gemini host-realization packets, the Gemini baseline-index guardrail, and the package blocker truth. It does not generate evidence.
+This checks that `scenario_host_gemini_01` now has a lawful baseline-only Gemini host-facing publication anchor while remaining intentionally unpaired until a lawful comparator is actually admissible.
+It validates the Gemini admissibility note, the committed Gemini packet example, the committed Gemini baseline host packet, the continued absence of committed Gemini mediated host packets, the Gemini baseline-index guardrail, and the package blocker truth. It does not generate evidence.
 
 Direct command:
 
@@ -195,7 +230,7 @@ make revalidate-mediation-openai-host-realization-basis
 ## Mediation run-packet revalidation
 
 This checks the committed reference-host, Gemini-host, and OpenAI-host baseline run indexes and the committed run-packet instances.
-It validates packet metadata against the scenario catalog, confirms the canonical baseline anchors remain lawful, validates the full seven-packet reference baseline set, validates the six-packet Gemini baseline set, validates the six-packet OpenAI baseline set, and checks the eighteen committed experimental mediated uncertainty and thrash packets.
+It validates packet metadata against the scenario catalog, confirms the canonical baseline anchors remain lawful, validates the full seven-packet reference baseline set, validates the seven-packet Gemini baseline set, validates the six-packet OpenAI baseline set, and checks the eighteen committed experimental mediated uncertainty and thrash packets.
 
 Direct command:
 
@@ -229,7 +264,7 @@ make revalidate-reference-mediation-baselines
 ## Live Gemini mediation-baseline revalidation
 
 This revalidates the committed Gemini-host baseline packet series against the landed Gemini commitment-path slice.
-It covers the three Gemini uncertainty baselines and the three Gemini thrash baselines, remains Gemini-only and baseline-only, and does not by itself justify any paired verdict.
+It covers the one Gemini host-realization baseline anchor, the three Gemini uncertainty baselines, and the three Gemini thrash baselines, remains Gemini-only and baseline-only, and does not by itself justify any paired verdict.
 
 Direct command:
 
@@ -246,7 +281,7 @@ make revalidate-gemini-mediation-baselines
 ## Gemini mediation-baseline candidate refresh
 
 This emits the committed Gemini-host baseline mediation packet docs to stdout for manual inspection.
-It prints markdown for all six committed Gemini baseline docs with committed relative-path headers, does not overwrite the committed packet docs, and does not authorize any paired comparison or mediation implementation work.
+It prints markdown for all seven committed Gemini baseline docs with committed relative-path headers, does not overwrite the committed packet docs, and does not authorize any paired comparison or mediation implementation work.
 
 Direct command:
 
@@ -622,6 +657,7 @@ make revalidate-mediation-reference-thrash-basis
 This runs all current mediation-evidence checks together:
 - package scaffold validation
 - host-realization admissibility validation
+- live Gemini packet-example revalidation
 - run-packet instance validation
 - live reference baseline packet revalidation
 - live Gemini baseline packet revalidation

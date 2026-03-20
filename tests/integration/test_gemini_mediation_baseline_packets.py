@@ -5,6 +5,7 @@ from __future__ import annotations
 from pathlib import Path
 
 from tests._mediation_evidence import (
+    GEMINI_HOST_REALIZATION_PACKET_PATH,
     GEMINI_THRASH_BASELINE_PACKET_PATHS,
     GEMINI_UNCERTAINTY_BASELINE_PACKET_PATHS,
     packet_without_path,
@@ -12,8 +13,7 @@ from tests._mediation_evidence import (
 )
 from tests.integration._gemini_mediation_baseline_packets import (
     GEMINI_MEDIATION_BASELINE_PACKET_DOC_BUILDERS,
-    GEMINI_THRASH_BASELINE_PACKET_PATHS as EMITTED_GEMINI_THRASH_BASELINE_PACKET_PATHS,
-    GEMINI_UNCERTAINTY_BASELINE_PACKET_PATHS as EMITTED_GEMINI_BASELINE_PACKET_PATHS,
+    build_gemini_host_realization_baseline_packet,
     build_gemini_thrash_baseline_packet,
     build_gemini_uncertainty_baseline_packet,
     emit_gemini_mediation_baseline_packets,
@@ -38,6 +38,12 @@ def test_gemini_uncertainty_baseline_packet_matches_committed_doc() -> None:
             parse_run_packet(GEMINI_UNCERTAINTY_BASELINE_PACKET_PATHS[pair_key])
         )
         assert build_gemini_uncertainty_baseline_packet(pair_key) == committed_packet
+
+
+def test_gemini_host_realization_baseline_packet_matches_committed_doc() -> None:
+    committed_packet = packet_without_path(parse_run_packet(GEMINI_HOST_REALIZATION_PACKET_PATH))
+
+    assert build_gemini_host_realization_baseline_packet() == committed_packet
 
 
 def test_gemini_thrash_baseline_packet_matches_committed_doc() -> None:
@@ -94,9 +100,7 @@ def test_candidate_emitter_prints_all_gemini_baseline_packets_as_markdown(
         assert f"--- {relative_path}" in captured
 
     emitted_docs = _parse_emitted_docs(captured)
-    assert set(emitted_docs) == set(EMITTED_GEMINI_BASELINE_PACKET_PATHS.values()) | set(
-        EMITTED_GEMINI_THRASH_BASELINE_PACKET_PATHS.values()
-    )
+    assert set(emitted_docs) == set(GEMINI_MEDIATION_BASELINE_PACKET_DOC_BUILDERS)
 
     for relative_path, builder in GEMINI_MEDIATION_BASELINE_PACKET_DOC_BUILDERS.items():
         temp_doc = tmp_path / Path(relative_path).name
