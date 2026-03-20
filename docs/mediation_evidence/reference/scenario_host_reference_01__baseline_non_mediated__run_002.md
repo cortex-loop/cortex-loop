@@ -1,4 +1,4 @@
-# scenario_host_reference_01__baseline_non_mediated__run_001
+# scenario_host_reference_01__baseline_non_mediated__run_002
 
 Date: 2026-03-20
 Status: `reviewed_evidence`
@@ -13,8 +13,8 @@ It does not provide comparative mediation evidence by itself, justify mediation,
 - date: 2026-03-20
 - status: `reviewed_evidence`
 - scenario_id: `scenario_host_reference_01`
-- run_id: `reference_host_realization_baseline_run_001`
-- paired_episode_set_id: `pair_reference_host_001`
+- run_id: `reference_host_realization_baseline_run_002`
+- paired_episode_set_id: `pair_reference_host_002`
 
 ## Variant Metadata
 
@@ -34,7 +34,7 @@ It does not provide comparative mediation evidence by itself, justify mediation,
 
 ## Scenario Inputs
 
-- starting_request_or_event: `ApprovalResult` with `commitment_id=commit-packet-1` and `session_id=packet-session-1`
+- starting_request_or_event: `ApprovalResult` with `commitment_id=commit-packet-2` and `session_id=packet-session-2`
 - host_surface: reference-host opportunity selection plus commitment-to-eval-packet publication path
 - declared_scenario_goal: evaluate whether mediation produces any reference-host realization lift without adding burden or branch churn
 - bounded_environment_or_approval_context: reference-host commitment path with lawful provenance, contradiction-preserving degradation handling, the committed reference-lane packet/publication surface, and a bounded host-opportunity set containing `mcp.query`
@@ -49,9 +49,9 @@ It does not provide comparative mediation evidence by itself, justify mediation,
 
 ## Artifact Refs
 
-- event_trace_refs: `reference-lane:commit-packet-1`
-- contradiction_refs: `host-check:write receipt was incomplete`
-- degradation_refs: `host-surface-degraded`
+- event_trace_refs: `reference-lane:commit-packet-2`
+- contradiction_refs: `receipt-check:structured query result omitted one confirmation field`
+- degradation_refs: `host-surface-degraded-002`
 - aux_burden_refs_if_present: none
 - evaluation_packet_refs_if_present: `docs/CORTEX_V2_REFERENCE_LANE_PACKET_EXAMPLE_2.md`
 
@@ -91,7 +91,7 @@ It does not provide comparative mediation evidence by itself, justify mediation,
 
 - exclusion_status: `none`
 - failure_tags: `none`
-- notes: This packet is the baseline side of `pair_reference_host_001`. A single packet does not justify mediation; package-level evidence notes govern verdicts.
+- notes: This packet is the baseline side of `pair_reference_host_002`. A single packet does not justify mediation; package-level evidence notes govern verdicts.
 
 ## Reviewer Note
 

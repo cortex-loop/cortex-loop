@@ -16,6 +16,11 @@ from tests.integration._reference_lane_packet_example import (
 from tests.integration._reference_mediated_lane_packet_example import (
     build_reference_host_realization_specialization_snapshot,
 )
+from tests.integration._reference_host_realization_pairs import (
+    DEFAULT_REFERENCE_HOST_REALIZATION_PAIR_KEY,
+    REFERENCE_HOST_REALIZATION_PAIR_KEYS,
+    REFERENCE_HOST_REALIZATION_PAIR_SPECS,
+)
 from tests.integration._reference_mediation_thrash_episode import (
     DEFAULT_REFERENCE_THRASH_PAIR_KEY,
     REFERENCE_THRASH_PAIR_KEYS,
@@ -46,6 +51,10 @@ REFERENCE_MEDIATION_BASELINE_PACKET_PATHS = {
     "scenario_thrash_reference_01": (
         REFERENCE_THRASH_PAIR_SPECS[DEFAULT_REFERENCE_THRASH_PAIR_KEY].baseline_packet_path
     ),
+}
+REFERENCE_HOST_REALIZATION_BASELINE_PACKET_PATHS = {
+    pair_key: REFERENCE_HOST_REALIZATION_PAIR_SPECS[pair_key].baseline_packet_path
+    for pair_key in REFERENCE_HOST_REALIZATION_PAIR_KEYS
 }
 REFERENCE_UNCERTAINTY_BASELINE_PACKET_PATHS = {
     pair_key: REFERENCE_UNCERTAINTY_PAIR_SPECS[pair_key].baseline_packet_path
@@ -127,16 +136,16 @@ _SCOPE_TEXT = {
         "package-level evidence notes govern any verdict."
     ),
     ("scenario_host_reference_01", "baseline_non_mediated"): (
-        "This committed run packet records the baseline side of the first recorded "
-        "reference-host host-realization comparator pair for mediation evidence "
-        "review.\n"
-        "It does not justify mediation, and package-level evidence notes govern any "
-        "verdict."
+        "This committed run packet records one reference-host baseline-only "
+        "host-realization packet within the committed reference host-realization "
+        "paired-run series for mediation evidence review.\n"
+        "It does not provide comparative mediation evidence by itself, justify "
+        "mediation, or authorize implementation work."
     ),
     ("scenario_host_reference_01", "experimental_mediated"): (
-        "This committed run packet records the mediated side of the first recorded "
-        "reference-host host-realization comparator pair for mediation evidence "
-        "review.\n"
+        "This committed run packet records one reference-host experimental mediated "
+        "host-realization comparator within the committed reference host-realization "
+        "paired-run series for mediation evidence review.\n"
         "It remains reference-only, does not justify mediation, and package-level "
         "evidence notes govern any verdict."
     ),
@@ -189,9 +198,10 @@ _THRASH_BASELINE_REVIEWER_NOTE = (
     "not justify mediation or authorize any implementation seam."
 )
 _HOST_REALIZATION_BASELINE_REVIEWER_NOTE = (
-    "This is baseline-only committed evidence within the first recorded reference "
-    "host-realization pair. It is not comparative mediation evidence by itself, does "
-    "not justify mediation, and package-level evidence notes govern any verdict."
+    "This is baseline-only committed evidence within the committed reference "
+    "host-realization paired-run series. It is not comparative mediation evidence by "
+    "itself, does not justify mediation, and package-level evidence notes govern any "
+    "verdict."
 )
 
 
@@ -296,14 +306,17 @@ def build_reference_uncertainty_baseline_packet(
     )
 
 
-def build_reference_host_realization_baseline_packet() -> PacketSnapshot:
-    snapshot = build_reference_lane_packet_example_snapshot()
+def build_reference_host_realization_baseline_packet(
+    pair_key: str = DEFAULT_REFERENCE_HOST_REALIZATION_PAIR_KEY,
+) -> PacketSnapshot:
+    spec = REFERENCE_HOST_REALIZATION_PAIR_SPECS[pair_key]
+    snapshot = build_reference_lane_packet_example_snapshot(pair_key)
     specialization = build_reference_host_realization_specialization_snapshot(
         clearly_superior=False,
     )
 
     assert snapshot["dispatch_lane"] == DispatchLane.FULL_COMMITMENT.value
-    assert snapshot["candidate_id"] == "commit-packet-1"
+    assert snapshot["candidate_id"] == spec.commitment_id
     assert snapshot["verdict_status"] == CommitmentStatus.CERTIFIED.value
     assert snapshot["packet_kind"] == "current-pair"
     assert specialization["selected_family"] == "seek-context"
@@ -328,15 +341,15 @@ def build_reference_host_realization_baseline_packet() -> PacketSnapshot:
 
     return build_reference_mediation_packet(
         scenario_id="scenario_host_reference_01",
-        run_id="reference_host_realization_baseline_run_001",
-        paired_episode_set_id="pair_reference_host_001",
+        run_id=spec.baseline_run_id,
+        paired_episode_set_id=spec.pair_id,
         scenario_family="host_realization",
         task_value_rubric_id="task_value_equal_host_realization",
         approval_or_environment_context_id="env_boundary_sensitive",
         scenario_inputs={
             "starting_request_or_event": (
-                "`ApprovalResult` with `commitment_id=commit-packet-1` and "
-                "`session_id=packet-session-1`"
+                f"`ApprovalResult` with `commitment_id={spec.commitment_id}` and "
+                f"`session_id={spec.session_id}`"
             ),
             "host_surface": (
                 "reference-host opportunity selection plus commitment-to-eval-packet "
@@ -391,27 +404,29 @@ def build_reference_host_realization_baseline_packet() -> PacketSnapshot:
         },
         lift_axis_notes={
             "Reduced Thrashing": (
-                "This baseline packet is the baseline side of one recorded "
-                "host-realization pair, but it is not a branch-control comparison.",
-                "One host-realization pair is below the three-pair threshold and does "
-                "not establish any thrash verdict.",
+                "This baseline packet is part of the committed reference "
+                "host-realization paired-run series, but it is not a branch-control "
+                "comparison.",
+                "Package-level evidence notes govern whether repeated paired evidence is "
+                "enough to claim any thrash verdict.",
             ),
             "Better Branch Discipline": (
                 "This baseline packet changes no branch trajectory and records no "
                 "branch-control lift by itself.",
-                "One host-realization pair is below the three-pair threshold and does "
-                "not establish any branch-discipline verdict.",
+                "Package-level evidence notes govern whether repeated paired evidence is "
+                "enough to claim any branch-discipline verdict.",
             ),
             "Better Uncertainty Handling": (
                 "This packet preserves contradiction and degradation explicitly on the "
                 "same certified publication surface used by the comparator.",
-                "One host-realization pair is below the three-pair threshold and does "
-                "not establish any uncertainty-handling verdict.",
+                "Package-level evidence notes govern whether repeated paired evidence is "
+                "enough to claim any uncertainty-handling verdict.",
             ),
             "Lower Visible Burden At Equal Task Value": (
                 "The pair holds the same certified completion class and truth boundary, "
                 "but this packet carries no AUX burden artifact.",
-                "The equal-value gate can pass without producing any lower-burden claim.",
+                "Package-level evidence notes govern whether repeated paired evidence is "
+                "enough to claim any lower-burden verdict.",
             ),
             "Better Host-Specialized Realization": (
                 "This baseline packet keeps the same host-opportunity set containing "
@@ -422,8 +437,8 @@ def build_reference_host_realization_baseline_packet() -> PacketSnapshot:
             ),
         },
         exclusion_notes=(
-            "This packet is the baseline side of `pair_reference_host_001`. One pair "
-            "does not justify mediation; package-level evidence notes govern verdicts."
+            f"This packet is the baseline side of `{spec.pair_id}`. A single packet does "
+            "not justify mediation; package-level evidence notes govern verdicts."
         ),
         reviewer_note=_HOST_REALIZATION_BASELINE_REVIEWER_NOTE,
     )
@@ -556,9 +571,12 @@ REFERENCE_MEDIATION_BASELINE_PACKET_DOC_BUILDERS: Mapping[str, Callable[[], Pack
         )
         for pair_key in REFERENCE_UNCERTAINTY_PAIR_KEYS
     },
-    REFERENCE_MEDIATION_BASELINE_PACKET_PATHS["scenario_host_reference_01"]: (
-        build_reference_host_realization_baseline_packet
-    ),
+    **{
+        REFERENCE_HOST_REALIZATION_BASELINE_PACKET_PATHS[pair_key]: partial(
+            build_reference_host_realization_baseline_packet, pair_key
+        )
+        for pair_key in REFERENCE_HOST_REALIZATION_PAIR_KEYS
+    },
     **{
         REFERENCE_THRASH_BASELINE_PACKET_PATHS[pair_key]: partial(
             build_reference_thrash_baseline_packet, pair_key

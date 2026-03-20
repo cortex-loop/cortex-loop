@@ -17,22 +17,31 @@ from tests.integration._reference_lane import (
     provenance_manifest_for,
     reference_environment_handle,
 )
+from tests.integration._reference_host_realization_pairs import (
+    DEFAULT_REFERENCE_HOST_REALIZATION_PAIR_KEY,
+    REFERENCE_HOST_REALIZATION_PAIR_SPECS,
+)
 
 
-def build_reference_lane_packet_example_snapshot() -> dict[str, object]:
+def build_reference_lane_packet_example_snapshot(
+    pair_key: str = DEFAULT_REFERENCE_HOST_REALIZATION_PAIR_KEY,
+) -> dict[str, object]:
+    spec = REFERENCE_HOST_REALIZATION_PAIR_SPECS[pair_key]
     contradiction, degradation = host_surface_degradation_pair(
-        summary="write receipt was incomplete",
+        source_tag=spec.contradiction_source_tag,
+        summary=spec.contradiction_summary,
         evidence_tags=frozenset({"receipt", "result-artifact"}),
+        reason_code=spec.degradation_reason_code,
     )
     event_name, payload = full_commitment_event(
-        commitment_id="commit-packet-1",
-        session_id="packet-session-1",
+        commitment_id=spec.commitment_id,
+        session_id=spec.session_id,
     )
     result = evaluate_reference_host_commitment(
         event_name,
         payload,
         environment_handle=reference_environment_handle(),
-        provenance_manifest=provenance_manifest_for("artifact-packet-1"),
+        provenance_manifest=provenance_manifest_for(spec.provenance_artifact_id),
         degradation_refs=(degradation,),
         contradiction_refs=(contradiction,),
     )

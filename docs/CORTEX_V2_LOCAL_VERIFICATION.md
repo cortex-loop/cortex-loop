@@ -213,8 +213,8 @@ make revalidate-mediation-evidence-package
 
 ## Mediation reference host-realization admissibility revalidation
 
-This checks that `scenario_host_reference_01` now has one lawful reference-only host-realization comparator pair while remaining below the three-pair threshold.
-It validates the supporting admissibility note, the updated baseline-anchor row, the recorded paired-ledger row, and the package blocker truth. It does not generate evidence.
+This checks that `scenario_host_reference_01` now has three lawful reference-only host-realization comparator pairs, that the cell now has `candidate_positive` signal for better host-specialized realization, and that package-level mediation evidence remains blocked.
+It validates the supporting admissibility note, the updated baseline-anchor row, the recorded paired-ledger rows, and the package blocker truth. It does not generate evidence.
 
 Direct command:
 
@@ -230,7 +230,7 @@ make revalidate-mediation-reference-host-realization-basis
 
 ## Live reference mediated host-realization revalidation
 
-This revalidates the committed mediated reference lane packet example and the first recorded reference host-realization comparator pair against live code.
+This revalidates the committed mediated reference lane packet example and all three recorded reference host-realization comparator pairs against live code.
 It remains reference-only and evidence-only, and it does not justify mediation.
 
 Direct commands:
@@ -248,8 +248,8 @@ make revalidate-reference-mediated-host-realization
 
 ## Reference mediated host-realization candidate refresh
 
-This emits the committed mediated reference host-realization packet doc to stdout for manual inspection.
-It does not overwrite the committed doc and it does not authorize mediation implementation.
+This emits the committed mediated reference host-realization packet docs to stdout for manual inspection.
+It does not overwrite the committed docs and it does not authorize mediation implementation.
 
 Direct command:
 
@@ -300,7 +300,7 @@ make revalidate-mediation-openai-host-realization-basis
 ## Mediation run-packet revalidation
 
 This checks the committed reference-host, Gemini-host, and OpenAI-host baseline run indexes and the committed run-packet instances.
-It validates packet metadata against the scenario catalog, confirms the canonical baseline anchors remain lawful, validates the full seven-packet reference baseline set, validates the seven-packet Gemini baseline set, validates the seven-packet OpenAI baseline set, and checks the nineteen committed experimental mediated uncertainty, thrash, and reference host-realization packets.
+It validates packet metadata against the scenario catalog, confirms the canonical baseline anchors remain lawful, validates the full nine-packet reference baseline set, validates the seven-packet Gemini baseline set, validates the seven-packet OpenAI baseline set, and checks the twenty-one committed experimental mediated uncertainty, thrash, and reference host-realization packets.
 
 Direct command:
 
@@ -316,7 +316,7 @@ make revalidate-mediation-run-packets
 
 ## Live reference mediation-baseline revalidation
 
-This revalidates the seven committed reference-host baseline mediation packets against live reference-host code paths.
+This revalidates the nine committed reference-host baseline mediation packets against live reference-host code paths.
 It remains reference-first and baseline-only: it does not advance any paired counts and it does not add Gemini or OpenAI live packets.
 
 Direct command:
@@ -538,7 +538,7 @@ make emit-gemini-mediated-thrash-candidate
 ## Reference mediation-baseline candidate refresh
 
 This emits candidate refreshed reference-host baseline mediation packet docs to stdout for manual inspection.
-It prints markdown for all seven committed reference baseline packet docs with committed relative-path headers, does not overwrite the committed packet docs, and does not authorize any paired comparison or mediation implementation work.
+It prints markdown for all nine committed reference baseline packet docs with committed relative-path headers, does not overwrite the committed packet docs, and does not authorize any paired comparison or mediation implementation work.
 
 Direct command:
 

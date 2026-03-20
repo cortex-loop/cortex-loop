@@ -7,7 +7,9 @@ from tests._mediation_evidence import (
     PAIRED_LEDGER_PATH,
     REFERENCE_BASELINE_INDEX_PATH,
     REFERENCE_HOST_REALIZATION_ADMISSIBILITY_NOTE_PATH,
+    REFERENCE_HOST_REALIZATION_BASELINE_PACKET_PATHS,
     REFERENCE_HOST_REALIZATION_MEDIATED_PACKET_PATH,
+    REFERENCE_HOST_REALIZATION_MEDIATED_PACKET_PATHS,
     REFERENCE_HOST_REALIZATION_PACKET_PATH,
     REFERENCE_HOST_REALIZATION_REPLICATION_NOTE_PATH,
     REFERENCE_MEDIATED_PACKET_EXAMPLE_DOC_PATH,
@@ -24,7 +26,7 @@ def test_reference_host_realization_admissibility_note_exists_and_records_audit(
     assert REFERENCE_HOST_REALIZATION_ADMISSIBILITY_NOTE_PATH.is_file()
     assert (
         status(REFERENCE_HOST_REALIZATION_ADMISSIBILITY_NOTE_PATH)
-        == "one lawful reference host realization comparator pair recorded"
+        == "three lawful reference host realization comparator pairs recorded"
     )
     assert "tests/integration/_reference_lane_packet_example.py" in text
     assert "tests/integration/test_reference_lane_packet_example.py" in text
@@ -33,7 +35,9 @@ def test_reference_host_realization_admissibility_note_exists_and_records_audit(
     assert "tests/integration/test_reference_mediated_lane_packet_example.py" in text
     assert "docs/CORTEX_V2_REFERENCE_MEDIATED_LANE_PACKET_EXAMPLE_0.md" in text
     assert "docs/mediation_evidence/reference/scenario_host_reference_01__experimental_mediated__run_001.md" in text
-    assert "one lawful reference host-realization comparator pair is now recorded" in text
+    assert "docs/mediation_evidence/reference/scenario_host_reference_01__experimental_mediated__run_002.md" in text
+    assert "docs/mediation_evidence/reference/scenario_host_reference_01__experimental_mediated__run_003.md" in text
+    assert "three lawful reference host-realization comparator pairs are now recorded" in text
     assert "direct host-native opportunity specialization at the selection layer" in text
     assert "contradiction-preserving" in text
     assert "truthful-withheld fields" in text
@@ -60,8 +64,12 @@ def test_reference_host_realization_admissibility_law_is_explicit() -> None:
     assert "changing `current-pair` packet semantics" in text
     assert "using latency-only improvement or smaller artifact shape alone" in text
     assert "claiming host lift from prose-only interpretation with no live code path" in text
-    assert "one lawful reference host-realization comparator pair is recorded" in text
-    assert "still remains `insufficient` because one pair is below the three-pair minimum" in text
+    assert "three lawful reference host-realization comparator pairs are recorded" in text
+    assert (
+        "`scenario_host_reference_01` / `reference` now has `candidate_positive` "
+        "cell-level signal for better host-specialized realization"
+    ) in text
+    assert "package-level host-specialized realization evidence remains `insufficient`" in text
 
 
 def test_reference_host_realization_anchor_is_rebound_to_a_recorded_pair() -> None:
@@ -85,23 +93,41 @@ def test_reference_host_realization_anchor_is_rebound_to_a_recorded_pair() -> No
     assert REFERENCE_HOST_REALIZATION_PACKET_PATH.is_file()
     assert REFERENCE_HOST_REALIZATION_MEDIATED_PACKET_PATH.is_file()
     assert REFERENCE_HOST_REALIZATION_REPLICATION_NOTE_PATH.is_file()
+    assert set(path.name for path in REFERENCE_HOST_REALIZATION_BASELINE_PACKET_PATHS.values()) == {
+        "scenario_host_reference_01__baseline_non_mediated__run_001.md",
+        "scenario_host_reference_01__baseline_non_mediated__run_002.md",
+        "scenario_host_reference_01__baseline_non_mediated__run_003.md",
+    }
+    assert set(path.name for path in REFERENCE_HOST_REALIZATION_MEDIATED_PACKET_PATHS.values()) == {
+        "scenario_host_reference_01__experimental_mediated__run_001.md",
+        "scenario_host_reference_01__experimental_mediated__run_002.md",
+        "scenario_host_reference_01__experimental_mediated__run_003.md",
+    }
 
     recorded_rows = parse_markdown_table(section(read(PAIRED_LEDGER_PATH), "Recorded Paired Runs"))
-    recorded_host_row = next(
+    recorded_host_rows = [
         row for row in recorded_rows if row["scenario_id"] == "scenario_host_reference_01"
-    )
-    assert recorded_host_row["paired_episode_set_id"] == "pair_reference_host_001"
-    assert recorded_host_row["pair_status"] == "usable"
-    assert recorded_host_row["failure_tags"] == "none"
+    ]
+    assert [row["paired_episode_set_id"] for row in recorded_host_rows] == [
+        "pair_reference_host_001",
+        "pair_reference_host_002",
+        "pair_reference_host_003",
+    ]
+    assert {row["pair_status"] for row in recorded_host_rows} == {"usable"}
+    assert {row["failure_tags"] for row in recorded_host_rows} == {"none"}
 
 
-def test_evidence_note_records_one_reference_host_pair_and_keeps_mediation_blocked() -> None:
+def test_evidence_note_records_three_reference_host_pairs_and_keeps_mediation_blocked() -> None:
     text = read(EVIDENCE_NOTE_PATH)
 
     assert (
-        "One reference-only mediation-specific host-realization pair is now recorded for "
-        "`scenario_host_reference_01`, but the cell remains `insufficient` because one "
-        "pair is below the three-pair minimum."
+        "Three reference-only mediation-specific host-realization pairs are now "
+        "recorded for `scenario_host_reference_01`."
     ) in text
+    assert (
+        "`scenario_host_reference_01` / `reference` now has `candidate_positive` "
+        "signal for better host-specialized realization"
+    ) in text
+    assert "package-level host-specialized realization remains `insufficient`." in text
     assert "Mediation remains blocked" in text
     assert "no implementation seam may open" in text

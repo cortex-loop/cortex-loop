@@ -38,8 +38,8 @@ Current repo evidence is insufficient on every required axis:
 | reduced thrashing | Reference, Gemini, and OpenAI thrash comparisons now exist and produce cell-level signal, but package-level evidence remains too narrow. | insufficient evidence |
 | better branch discipline | Reference, Gemini, and OpenAI thrash comparisons now exist and produce cell-level signal, but package-level evidence remains too narrow. | insufficient evidence |
 | better uncertainty handling | Reference, Gemini, and OpenAI uncertainty comparisons now exist and produce cell-level signal, but package-level evidence remains too narrow. | insufficient evidence |
-| lower visible burden at equal task value | Equal-value paired evidence now exists for thrash, uncertainty, and one reference host-realization pair, but no lower-burden lift is committed. | insufficient evidence |
-| better host-specialized realization | One reference-only mediation-specific host-realization pair is now recorded, while Gemini and OpenAI remain baseline-only and the package remains too narrow. | insufficient evidence |
+| lower visible burden at equal task value | Equal-value paired evidence now exists for thrash, uncertainty, and three reference host-realization pairs, but no lower-burden lift is committed. | insufficient evidence |
+| better host-specialized realization | Three reference-only mediation-specific host-realization pairs are now recorded and produce one cell-level signal, while Gemini and OpenAI remain baseline-only and the package remains too narrow. | insufficient evidence |
 
 ## Decision
 

@@ -1,7 +1,7 @@
 # CORTEX_V2_MEDIATION_REFERENCE_HOST_REALIZATION_ADMISSIBILITY_NOTE_0
 
-Date: 2026-03-20
-Status: `one lawful reference host realization comparator pair recorded`
+Date: 2026-03-21
+Status: `three lawful reference host realization comparator pairs recorded`
 
 ## Scope
 
@@ -23,13 +23,17 @@ The current admissibility audit is grounded in these already-landed reference-ho
 - `tests/integration/test_reference_mediated_host_realization_comparator.py`
 - `tests/integration/test_reference_mediation_baseline_packets.py`
 - `docs/mediation_evidence/reference/scenario_host_reference_01__baseline_non_mediated__run_001.md`
+- `docs/mediation_evidence/reference/scenario_host_reference_01__baseline_non_mediated__run_002.md`
+- `docs/mediation_evidence/reference/scenario_host_reference_01__baseline_non_mediated__run_003.md`
 - `docs/mediation_evidence/reference/scenario_host_reference_01__experimental_mediated__run_001.md`
+- `docs/mediation_evidence/reference/scenario_host_reference_01__experimental_mediated__run_002.md`
+- `docs/mediation_evidence/reference/scenario_host_reference_01__experimental_mediated__run_003.md`
 - `docs/CORTEX_V2_MEDIATION_REFERENCE_HOST_REALIZATION_REPLICATION_NOTE_0.md`
 
 ## Recorded Comparator Strength
 
-The current baseline is already a strong host-native, contradiction-preserving reference surface, and one lawful reference host-realization comparator pair is now recorded.
-The recorded pair preserves:
+The current baseline is already a strong host-native, contradiction-preserving reference surface, and three lawful reference host-realization comparator pairs are now recorded.
+The recorded pairs preserve:
 
 - reference-host observe/bind meaning
 - full-commitment dispatch on the current landed path
@@ -39,7 +43,7 @@ The recorded pair preserves:
 - the selected family `seek-context`
 - the same host-opportunity set containing `mcp.query`
 
-The recorded pair is admissible because the only mediated delta is direct host-native opportunity specialization at the selection layer while packet truth and publication meaning remain fixed.
+The recorded pairs are admissible because the only mediated delta is direct host-native opportunity specialization at the selection layer while packet truth and publication meaning remain fixed.
 
 ## Admissibility Law
 
@@ -78,11 +82,11 @@ Latency-only or cosmetic simplification is not host-realization evidence for thi
 
 ## Current Outcome
 
-One lawful reference host-realization comparator pair is recorded for `scenario_host_reference_01`.
-That pair is reference-only, it preserves packet truth/publication meaning, and the host-realization cell still remains `insufficient` because one pair is below the three-pair minimum.
+Three lawful reference host-realization comparator pairs are recorded for `scenario_host_reference_01`.
+Those pairs are reference-only, they preserve packet truth/publication meaning, and `scenario_host_reference_01` / `reference` now has `candidate_positive` cell-level signal for better host-specialized realization.
+Package-level host-specialized realization evidence remains `insufficient` because Gemini and OpenAI host-realization remain baseline-only and intentionally unpaired.
 
 ## Outcome
 
-The current honest result is that one admissible reference-only host-realization comparator pair is now recorded while package-level host-realization evidence remains insufficient.
-In short: one lawful reference host-realization comparator pair is recorded, but that evidence is still below threshold.
-Mediation remains blocked, and this note exists to prevent fake host-lift evidence from being counted by drift or by omission.
+The current honest result is that three admissible reference-only host-realization comparator pairs are now recorded while package-level host-specialized realization evidence remains `insufficient`.
+In short: three lawful reference host-realization comparator pairs are recorded, one exact cell now has `candidate_positive` signal for better host-specialized realization, and mediation remains blocked.

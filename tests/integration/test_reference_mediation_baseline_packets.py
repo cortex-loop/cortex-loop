@@ -10,6 +10,7 @@ from tests._mediation_evidence import (
     parse_run_packet,
 )
 from tests.integration._reference_mediation_baseline_packets import (
+    REFERENCE_HOST_REALIZATION_BASELINE_PACKET_PATHS,
     REFERENCE_MEDIATION_BASELINE_PACKET_DOC_BUILDERS,
     REFERENCE_MEDIATION_BASELINE_PACKET_PATHS,
     REFERENCE_UNCERTAINTY_BASELINE_PACKET_PATHS,
@@ -18,6 +19,9 @@ from tests.integration._reference_mediation_baseline_packets import (
     build_reference_thrash_baseline_packet,
     build_reference_uncertainty_baseline_packet,
     emit_reference_mediation_baseline_packets,
+)
+from tests.integration._reference_host_realization_pairs import (
+    REFERENCE_HOST_REALIZATION_PAIR_KEYS,
 )
 from tests.integration._reference_mediation_thrash_episode import (
     EXPECTED_REFERENCE_THRASH_BRANCH_SEQUENCE,
@@ -40,12 +44,11 @@ def test_reference_uncertainty_baseline_packet_matches_committed_doc() -> None:
 
 
 def test_reference_host_realization_baseline_packet_matches_committed_doc() -> None:
-    committed_path = REPO_ROOT / REFERENCE_MEDIATION_BASELINE_PACKET_PATHS[
-        "scenario_host_reference_01"
-    ]
-    committed_packet = packet_without_path(parse_run_packet(committed_path))
+    for pair_key in REFERENCE_HOST_REALIZATION_PAIR_KEYS:
+        committed_path = REPO_ROOT / REFERENCE_HOST_REALIZATION_BASELINE_PACKET_PATHS[pair_key]
+        committed_packet = packet_without_path(parse_run_packet(committed_path))
 
-    assert build_reference_host_realization_baseline_packet() == committed_packet
+        assert build_reference_host_realization_baseline_packet(pair_key) == committed_packet
 
 
 def test_reference_thrash_baseline_packet_matches_committed_doc() -> None:

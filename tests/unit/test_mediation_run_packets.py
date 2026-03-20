@@ -27,7 +27,10 @@ from tests._mediation_evidence import (
     OPENAI_UNCERTAINTY_MEDIATED_PACKET_PATHS,
     OPENAI_UNCERTAINTY_PACKET_PATH,
     REFERENCE_BASELINE_INDEX_PATH,
+    REFERENCE_HOST_REALIZATION_BASELINE_PACKET_PATHS,
+    REFERENCE_HOST_REALIZATION_PACKET_PATH,
     REFERENCE_HOST_REALIZATION_MEDIATED_PACKET_PATH,
+    REFERENCE_HOST_REALIZATION_MEDIATED_PACKET_PATHS,
     REFERENCE_UNCERTAINTY_BASELINE_PACKET_PATHS,
     REFERENCE_UNCERTAINTY_MEDIATED_PACKET_PATHS,
     REFERENCE_UNCERTAINTY_PACKET_PATH,
@@ -133,7 +136,7 @@ def test_committed_reference_baseline_packets_match_catalog_and_stay_baseline_on
     failure_tags = load_failure_tags()
     baseline_packets = sorted(MEDIATION_REFERENCE_PACKET_ROOT.glob("*__baseline_non_mediated__run_*.md"))
 
-    assert len(baseline_packets) == 7
+    assert len(baseline_packets) == 9
 
     for packet_path in baseline_packets:
         packet = parse_run_packet(packet_path)
@@ -150,10 +153,14 @@ def test_committed_reference_baseline_packets_match_catalog_and_stay_baseline_on
         )
 
         if packet["header"]["scenario_id"] == "scenario_host_reference_01":
-            rows = parse_markdown_table(section(read(REFERENCE_BASELINE_INDEX_PATH), "Index Rows"))
-            row = next(row for row in rows if row["scenario_id"] == packet["header"]["scenario_id"])
-            assert packet["header"]["run_id"] == row["run_id"]
-            assert packet["header"]["paired_episode_set_id"] == row["paired_episode_set_id"]
+            assert packet_path in REFERENCE_HOST_REALIZATION_BASELINE_PACKET_PATHS.values()
+            assert packet["header"]["run_id"].startswith("reference_host_realization_baseline_run_")
+            assert packet["header"]["paired_episode_set_id"].startswith("pair_reference_host_")
+            if packet_path == REFERENCE_HOST_REALIZATION_PACKET_PATH:
+                rows = parse_markdown_table(section(read(REFERENCE_BASELINE_INDEX_PATH), "Index Rows"))
+                row = next(row for row in rows if row["scenario_id"] == packet["header"]["scenario_id"])
+                assert packet["header"]["run_id"] == row["run_id"]
+                assert packet["header"]["paired_episode_set_id"] == row["paired_episode_set_id"]
         elif packet["header"]["scenario_id"] == "scenario_uncertainty_reference_01":
             assert packet_path in REFERENCE_UNCERTAINTY_BASELINE_PACKET_PATHS.values()
             assert packet["header"]["run_id"].startswith("reference_uncertainty_baseline_run_")
@@ -410,7 +417,7 @@ def test_experimental_reference_packets_match_catalog_and_stay_experimental() ->
     scenarios = load_scenarios()
     failure_tags = load_failure_tags()
     mediated_packets = {
-        "host": REFERENCE_HOST_REALIZATION_MEDIATED_PACKET_PATH,
+        **REFERENCE_HOST_REALIZATION_MEDIATED_PACKET_PATHS,
         **REFERENCE_THRASH_MEDIATED_PACKET_PATHS,
         **REFERENCE_UNCERTAINTY_MEDIATED_PACKET_PATHS,
     }
@@ -422,8 +429,9 @@ def test_experimental_reference_packets_match_catalog_and_stay_experimental() ->
         assert packet_path.is_file()
         assert packet["status"] == "reviewed_evidence"
         if packet["header"]["scenario_id"] == "scenario_host_reference_01":
-            assert packet["header"]["run_id"] == "reference_host_realization_mediated_run_001"
-            assert packet["header"]["paired_episode_set_id"] == "pair_reference_host_001"
+            assert packet_path in REFERENCE_HOST_REALIZATION_MEDIATED_PACKET_PATHS.values()
+            assert packet["header"]["run_id"].startswith("reference_host_realization_mediated_run_")
+            assert packet["header"]["paired_episode_set_id"].startswith("pair_reference_host_")
         elif packet["header"]["scenario_id"] == "scenario_thrash_reference_01":
             assert packet["header"]["run_id"].startswith("reference_thrash_mediated_run_")
             assert packet["header"]["paired_episode_set_id"].startswith("pair_reference_thrash_")
@@ -458,11 +466,15 @@ def test_experimental_reference_packets_match_catalog_and_stay_experimental() ->
         assert "package-level evidence notes govern any verdict" in reviewer_note
 
 
-def test_reference_packet_directory_contains_seven_baselines_and_seven_experimental_packets() -> None:
+def test_reference_packet_directory_contains_nine_baselines_and_nine_experimental_packets() -> None:
     packet_names = sorted(path.name for path in MEDIATION_REFERENCE_PACKET_ROOT.glob("*.md"))
     assert packet_names == [
         "scenario_host_reference_01__baseline_non_mediated__run_001.md",
+        "scenario_host_reference_01__baseline_non_mediated__run_002.md",
+        "scenario_host_reference_01__baseline_non_mediated__run_003.md",
         "scenario_host_reference_01__experimental_mediated__run_001.md",
+        "scenario_host_reference_01__experimental_mediated__run_002.md",
+        "scenario_host_reference_01__experimental_mediated__run_003.md",
         "scenario_thrash_reference_01__baseline_non_mediated__run_001.md",
         "scenario_thrash_reference_01__baseline_non_mediated__run_002.md",
         "scenario_thrash_reference_01__baseline_non_mediated__run_003.md",

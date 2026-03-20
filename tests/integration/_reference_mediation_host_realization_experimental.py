@@ -4,6 +4,11 @@ from __future__ import annotations
 
 import sys
 
+from tests.integration._reference_host_realization_pairs import (
+    DEFAULT_REFERENCE_HOST_REALIZATION_PAIR_KEY,
+    REFERENCE_HOST_REALIZATION_PAIR_KEYS,
+    REFERENCE_HOST_REALIZATION_PAIR_SPECS,
+)
 from tests.integration._reference_lane_packet_example import (
     build_reference_lane_packet_example_snapshot,
 )
@@ -17,21 +22,28 @@ from tests.integration._reference_mediation_baseline_packets import (
     render_reference_mediation_packet,
 )
 
-
 REFERENCE_HOST_REALIZATION_MEDIATED_PACKET_PATH = (
-    "docs/mediation_evidence/reference/"
-    "scenario_host_reference_01__experimental_mediated__run_001.md"
+    REFERENCE_HOST_REALIZATION_PAIR_SPECS[
+        DEFAULT_REFERENCE_HOST_REALIZATION_PAIR_KEY
+    ].mediated_packet_path
 )
+REFERENCE_HOST_REALIZATION_MEDIATED_PACKET_PATHS = {
+    pair_key: REFERENCE_HOST_REALIZATION_PAIR_SPECS[pair_key].mediated_packet_path
+    for pair_key in REFERENCE_HOST_REALIZATION_PAIR_KEYS
+}
 _REVIEWER_NOTE = (
-    "This is experimental mediated evidence only within the first recorded reference "
-    "host-realization pair. It remains reference-only, does not justify mediation, "
-    "and package-level evidence notes govern any verdict."
+    "This is experimental mediated evidence only within the committed reference "
+    "host-realization paired-run series. It remains reference-only, does not justify "
+    "mediation, and package-level evidence notes govern any verdict."
 )
 
 
-def build_reference_host_realization_comparator_snapshot() -> dict[str, object]:
-    baseline_snapshot = build_reference_lane_packet_example_snapshot()
-    mediated_snapshot = build_reference_mediated_lane_packet_example_snapshot()
+def build_reference_host_realization_comparator_snapshot(
+    pair_key: str = DEFAULT_REFERENCE_HOST_REALIZATION_PAIR_KEY,
+) -> dict[str, object]:
+    spec = REFERENCE_HOST_REALIZATION_PAIR_SPECS[pair_key]
+    baseline_snapshot = build_reference_lane_packet_example_snapshot(pair_key)
+    mediated_snapshot = build_reference_mediated_lane_packet_example_snapshot(pair_key)
     baseline_specialization = build_reference_host_realization_specialization_snapshot(
         clearly_superior=False,
     )
@@ -55,7 +67,13 @@ def build_reference_host_realization_comparator_snapshot() -> dict[str, object]:
     assert mediated_specialization["direct_opportunity_specialization_used"] is True
 
     return {
-        "paired_episode_set_id": "pair_reference_host_001",
+        "paired_episode_set_id": spec.pair_id,
+        "session_id": spec.session_id,
+        "candidate_id": spec.candidate_id,
+        "commitment_id": spec.commitment_id,
+        "provenance_artifact_id": spec.provenance_artifact_id,
+        "baseline_run_id": spec.baseline_run_id,
+        "mediated_run_id": spec.mediated_run_id,
         "selected_family": "seek-context",
         "host_opportunity_refs": ["mcp.query"],
         "baseline_direct_opportunity_specialization_used": 0,
@@ -64,14 +82,19 @@ def build_reference_host_realization_comparator_snapshot() -> dict[str, object]:
         "mediated_packet_kind": mediated_snapshot["packet_kind"],
         "baseline_verdict_status": baseline_snapshot["verdict_status"],
         "mediated_verdict_status": mediated_snapshot["verdict_status"],
+        "baseline_trace_id": baseline_snapshot["event_trace"]["trace_id"],
+        "mediated_trace_id": mediated_snapshot["event_trace"]["trace_id"],
         "withheld_fields": baseline_snapshot["withheld_fields"],
         "contradiction_refs": baseline_snapshot["contradiction_refs"],
         "degradation_refs": baseline_snapshot["degradation_refs"],
     }
 
 
-def build_reference_host_realization_mediated_packet() -> PacketSnapshot:
-    snapshot = build_reference_mediated_lane_packet_example_snapshot()
+def build_reference_host_realization_mediated_packet(
+    pair_key: str = DEFAULT_REFERENCE_HOST_REALIZATION_PAIR_KEY,
+) -> PacketSnapshot:
+    spec = REFERENCE_HOST_REALIZATION_PAIR_SPECS[pair_key]
+    snapshot = build_reference_mediated_lane_packet_example_snapshot(pair_key)
     specialization = snapshot["opportunity_specialization"]
 
     assert isinstance(specialization, dict)
@@ -96,16 +119,16 @@ def build_reference_host_realization_mediated_packet() -> PacketSnapshot:
 
     return build_reference_mediation_packet(
         scenario_id="scenario_host_reference_01",
-        run_id="reference_host_realization_mediated_run_001",
-        paired_episode_set_id="pair_reference_host_001",
+        run_id=spec.mediated_run_id,
+        paired_episode_set_id=spec.pair_id,
         scenario_family="host_realization",
         task_value_rubric_id="task_value_equal_host_realization",
         approval_or_environment_context_id="env_boundary_sensitive",
         variant="experimental_mediated",
         scenario_inputs={
             "starting_request_or_event": (
-                "`ApprovalResult` with `commitment_id=commit-packet-1` and "
-                "`session_id=packet-session-1`"
+                f"`ApprovalResult` with `commitment_id={spec.commitment_id}` and "
+                f"`session_id={spec.session_id}`"
             ),
             "host_surface": (
                 "reference-host opportunity selection plus commitment-to-eval-packet "
@@ -161,27 +184,29 @@ def build_reference_host_realization_mediated_packet() -> PacketSnapshot:
         },
         lift_axis_notes={
             "Reduced Thrashing": (
-                "This mediated packet is part of one host-realization comparator pair, "
-                "but it is not a branch-control comparison.",
-                "One host-realization pair is below the three-pair threshold and does "
-                "not establish any thrash verdict.",
+                "This mediated packet is part of the committed reference "
+                "host-realization paired-run series, but it is not a branch-control "
+                "comparison.",
+                "Package-level evidence notes govern whether repeated paired evidence is "
+                "enough to claim any thrash verdict.",
             ),
             "Better Branch Discipline": (
                 "This mediated packet changes no branch trajectory and records no "
                 "branch-discipline lift by itself.",
-                "One host-realization pair is below the three-pair threshold and does "
-                "not establish any branch-discipline verdict.",
+                "Package-level evidence notes govern whether repeated paired evidence is "
+                "enough to claim any branch-discipline verdict.",
             ),
             "Better Uncertainty Handling": (
                 "This packet preserves contradiction and degradation explicitly on the "
                 "same certified publication surface used by the baseline.",
-                "One host-realization pair is below the three-pair threshold and does "
-                "not establish any uncertainty-handling verdict.",
+                "Package-level evidence notes govern whether repeated paired evidence is "
+                "enough to claim any uncertainty-handling verdict.",
             ),
             "Lower Visible Burden At Equal Task Value": (
                 "The pair holds the same certified completion class and truth boundary, "
                 "but this packet carries no AUX burden artifact.",
-                "The equal-value gate can pass without producing any lower-burden claim.",
+                "Package-level evidence notes govern whether repeated paired evidence is "
+                "enough to claim any lower-burden verdict.",
             ),
             "Better Host-Specialized Realization": (
                 "This mediated packet directly specializes `mcp.query` for the selected "
@@ -193,24 +218,29 @@ def build_reference_host_realization_mediated_packet() -> PacketSnapshot:
             ),
         },
         exclusion_notes=(
-            "This packet is the mediated side of `pair_reference_host_001`. One pair "
-            "does not justify mediation; package-level evidence notes govern verdicts."
+            f"This packet is the mediated side of `{spec.pair_id}`. A single packet does "
+            "not justify mediation; package-level evidence notes govern verdicts."
         ),
         reviewer_note=_REVIEWER_NOTE,
     )
 
 
 REFERENCE_HOST_REALIZATION_MEDIATED_PACKET_DOC_BUILDERS = {
-    REFERENCE_HOST_REALIZATION_MEDIATED_PACKET_PATH: (
-        build_reference_host_realization_mediated_packet
-    ),
+    REFERENCE_HOST_REALIZATION_MEDIATED_PACKET_PATHS[pair_key]: (
+        lambda pair_key=pair_key: build_reference_host_realization_mediated_packet(pair_key)
+    )
+    for pair_key in REFERENCE_HOST_REALIZATION_PAIR_KEYS
 }
 
 
 def emit_reference_mediated_host_realization_candidate() -> None:
-    for relative_path, builder in REFERENCE_HOST_REALIZATION_MEDIATED_PACKET_DOC_BUILDERS.items():
+    for index, (relative_path, builder) in enumerate(
+        REFERENCE_HOST_REALIZATION_MEDIATED_PACKET_DOC_BUILDERS.items()
+    ):
         sys.stdout.write(f"--- {relative_path}\n")
         sys.stdout.write(render_reference_mediation_packet(relative_path, builder()))
+        if index != len(REFERENCE_HOST_REALIZATION_MEDIATED_PACKET_DOC_BUILDERS) - 1:
+            sys.stdout.write("\n")
 
 
 if __name__ == "__main__":

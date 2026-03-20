@@ -13,12 +13,16 @@ from tests.integration._reference_mediated_lane_packet_example import (
     build_reference_host_realization_specialization_snapshot,
 )
 from tests.integration._reference_mediation_baseline_packets import (
-    REFERENCE_MEDIATION_BASELINE_PACKET_PATHS,
+    REFERENCE_HOST_REALIZATION_BASELINE_PACKET_PATHS,
     build_reference_host_realization_baseline_packet,
+)
+from tests.integration._reference_host_realization_pairs import (
+    REFERENCE_HOST_REALIZATION_PAIR_KEYS,
+    REFERENCE_HOST_REALIZATION_PAIR_SPECS,
 )
 from tests.integration._reference_mediation_host_realization_experimental import (
     REFERENCE_HOST_REALIZATION_MEDIATED_PACKET_DOC_BUILDERS,
-    REFERENCE_HOST_REALIZATION_MEDIATED_PACKET_PATH,
+    REFERENCE_HOST_REALIZATION_MEDIATED_PACKET_PATHS,
     build_reference_host_realization_comparator_snapshot,
     build_reference_host_realization_mediated_packet,
     emit_reference_mediated_host_realization_candidate,
@@ -26,45 +30,85 @@ from tests.integration._reference_mediation_host_realization_experimental import
 
 
 def test_reference_host_realization_mediated_packet_matches_committed_doc() -> None:
-    committed_packet = packet_without_path(
-        parse_run_packet(REPO_ROOT / REFERENCE_HOST_REALIZATION_MEDIATED_PACKET_PATH)
-    )
+    for pair_key in REFERENCE_HOST_REALIZATION_PAIR_KEYS:
+        committed_packet = packet_without_path(
+            parse_run_packet(REPO_ROOT / REFERENCE_HOST_REALIZATION_MEDIATED_PACKET_PATHS[pair_key])
+        )
 
-    assert build_reference_host_realization_mediated_packet() == committed_packet
+        assert build_reference_host_realization_mediated_packet(pair_key) == committed_packet
 
 
 def test_reference_host_realization_pair_remains_fair_and_changes_only_specialization() -> None:
-    baseline_packet = build_reference_host_realization_baseline_packet()
-    mediated_packet = build_reference_host_realization_mediated_packet()
     baseline_specialization = build_reference_host_realization_specialization_snapshot(
         clearly_superior=False,
     )
     mediated_specialization = build_reference_host_realization_specialization_snapshot(
         clearly_superior=True,
     )
-    comparator = build_reference_host_realization_comparator_snapshot()
-
-    assert baseline_packet["header"]["scenario_id"] == mediated_packet["header"]["scenario_id"]
-    assert baseline_packet["header"]["paired_episode_set_id"] == "pair_reference_host_001"
-    assert mediated_packet["header"]["paired_episode_set_id"] == "pair_reference_host_001"
-    assert baseline_packet["variant_metadata"]["host_family"] == "reference"
-    assert baseline_packet["variant_metadata"] == mediated_packet["variant_metadata"] | {
-        "variant": "baseline_non_mediated"
+    seen_ids: dict[str, set[str]] = {
+        "pair_ids": set(),
+        "session_ids": set(),
+        "commitment_ids": set(),
+        "artifact_ids": set(),
+        "baseline_trace_ids": set(),
+        "mediated_trace_ids": set(),
+        "contradiction_tags": set(),
+        "contradiction_summaries": set(),
+        "degradation_codes": set(),
     }
-    assert baseline_packet["scenario_inputs"] == mediated_packet["scenario_inputs"]
-    assert baseline_packet["invariant_lock"] == mediated_packet["invariant_lock"]
-    assert comparator["selected_family"] == "seek-context"
-    assert comparator["host_opportunity_refs"] == ["mcp.query"]
-    assert comparator["baseline_direct_opportunity_specialization_used"] == 0
-    assert comparator["mediated_direct_opportunity_specialization_used"] == 1
-    assert baseline_specialization["preferred_opportunity_ref"] is None
-    assert mediated_specialization["preferred_opportunity_ref"] == "mcp.query"
-    assert baseline_specialization["direct_opportunity_specialization_used"] is False
-    assert mediated_specialization["direct_opportunity_specialization_used"] is True
-    assert comparator["baseline_packet_kind"] == "current-pair"
-    assert comparator["mediated_packet_kind"] == "current-pair"
-    assert comparator["baseline_verdict_status"] == "certified"
-    assert comparator["mediated_verdict_status"] == "certified"
+
+    for pair_key in REFERENCE_HOST_REALIZATION_PAIR_KEYS:
+        spec = REFERENCE_HOST_REALIZATION_PAIR_SPECS[pair_key]
+        baseline_packet = build_reference_host_realization_baseline_packet(pair_key)
+        mediated_packet = build_reference_host_realization_mediated_packet(pair_key)
+        comparator = build_reference_host_realization_comparator_snapshot(pair_key)
+
+        assert baseline_packet["header"]["scenario_id"] == mediated_packet["header"]["scenario_id"]
+        assert baseline_packet["header"]["paired_episode_set_id"] == spec.pair_id
+        assert mediated_packet["header"]["paired_episode_set_id"] == spec.pair_id
+        assert baseline_packet["header"]["run_id"] == spec.baseline_run_id
+        assert mediated_packet["header"]["run_id"] == spec.mediated_run_id
+        assert baseline_packet["variant_metadata"]["host_family"] == "reference"
+        assert baseline_packet["variant_metadata"] == mediated_packet["variant_metadata"] | {
+            "variant": "baseline_non_mediated"
+        }
+        assert baseline_packet["scenario_inputs"] == mediated_packet["scenario_inputs"]
+        assert baseline_packet["invariant_lock"] == mediated_packet["invariant_lock"]
+        assert comparator["selected_family"] == "seek-context"
+        assert comparator["host_opportunity_refs"] == ["mcp.query"]
+        assert comparator["baseline_direct_opportunity_specialization_used"] == 0
+        assert comparator["mediated_direct_opportunity_specialization_used"] == 1
+        assert baseline_specialization["preferred_opportunity_ref"] is None
+        assert mediated_specialization["preferred_opportunity_ref"] == "mcp.query"
+        assert baseline_specialization["direct_opportunity_specialization_used"] is False
+        assert mediated_specialization["direct_opportunity_specialization_used"] is True
+        assert comparator["baseline_packet_kind"] == "current-pair"
+        assert comparator["mediated_packet_kind"] == "current-pair"
+        assert comparator["baseline_verdict_status"] == "certified"
+        assert comparator["mediated_verdict_status"] == "certified"
+
+        contradiction_ref = comparator["contradiction_refs"][0]
+        degradation_ref = comparator["degradation_refs"][0]
+        assert contradiction_ref["source_tag"] == spec.contradiction_source_tag
+        assert contradiction_ref["summary"] == spec.contradiction_summary
+        assert degradation_ref["reason_code"] == spec.degradation_reason_code
+        assert comparator["session_id"] == spec.session_id
+        assert comparator["candidate_id"] == spec.commitment_id
+        assert comparator["commitment_id"] == spec.commitment_id
+        assert comparator["provenance_artifact_id"] == spec.provenance_artifact_id
+
+        seen_ids["pair_ids"].add(spec.pair_id)
+        seen_ids["session_ids"].add(spec.session_id)
+        seen_ids["commitment_ids"].add(spec.commitment_id)
+        seen_ids["artifact_ids"].add(spec.provenance_artifact_id)
+        seen_ids["baseline_trace_ids"].add(comparator["baseline_trace_id"])
+        seen_ids["mediated_trace_ids"].add(comparator["mediated_trace_id"])
+        seen_ids["contradiction_tags"].add(contradiction_ref["source_tag"])
+        seen_ids["contradiction_summaries"].add(contradiction_ref["summary"])
+        seen_ids["degradation_codes"].add(degradation_ref["reason_code"])
+
+    for values in seen_ids.values():
+        assert len(values) == len(REFERENCE_HOST_REALIZATION_PAIR_KEYS)
 
 
 def test_reference_host_realization_mediated_candidate_emitter_prints_markdown(
@@ -73,10 +117,11 @@ def test_reference_host_realization_mediated_candidate_emitter_prints_markdown(
     emit_reference_mediated_host_realization_candidate()
     captured = capsys.readouterr().out
 
-    assert f"--- {REFERENCE_HOST_REALIZATION_MEDIATED_PACKET_PATH}" in captured
+    for relative_path in REFERENCE_HOST_REALIZATION_MEDIATED_PACKET_DOC_BUILDERS:
+        assert f"--- {relative_path}" in captured
 
     emitted_docs = _parse_emitted_docs(captured)
-    assert set(emitted_docs) == {REFERENCE_HOST_REALIZATION_MEDIATED_PACKET_PATH}
+    assert set(emitted_docs) == set(REFERENCE_HOST_REALIZATION_MEDIATED_PACKET_DOC_BUILDERS)
 
     for relative_path, builder in REFERENCE_HOST_REALIZATION_MEDIATED_PACKET_DOC_BUILDERS.items():
         temp_doc = tmp_path / Path(relative_path).name
