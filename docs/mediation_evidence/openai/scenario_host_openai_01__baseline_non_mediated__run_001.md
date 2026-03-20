@@ -14,7 +14,7 @@ It does not provide comparative mediation evidence, justify mediation, or author
 - status: `reviewed_evidence`
 - scenario_id: `scenario_host_openai_01`
 - run_id: `openai_host_realization_baseline_run_001`
-- paired_episode_set_id: `pending_pair_openai_host_001`
+- paired_episode_set_id: `pair_openai_host_001`
 
 ## Variant Metadata
 
@@ -35,17 +35,17 @@ It does not provide comparative mediation evidence, justify mediation, or author
 ## Scenario Inputs
 
 - starting_request_or_event: `response.output_text.delta` candidate-bearing turn on `openai-host-packet-session-1` followed by `response.completed` with `commitment_id=openai-host-packet-commit-1`
-- host_surface: OpenAI-host observe/bind plus candidate-bearing continuation and commitment-to-eval-packet publication path
-- declared_scenario_goal: evaluate whether mediation improves OpenAI-native opportunity use or fallback selection without host flattening
-- bounded_environment_or_approval_context: OpenAI-host candidate-bearing plus commitment/publication path with lawful provenance, contradiction-preserving degradation handling, and the committed OpenAI-lane packet/publication surface
+- host_surface: OpenAI-host opportunity selection plus candidate-bearing continuation and commitment-to-eval-packet publication path
+- declared_scenario_goal: evaluate whether mediation produces any OpenAI-host realization lift without adding burden or branch churn
+- bounded_environment_or_approval_context: OpenAI-host candidate-bearing plus commitment/publication path with lawful provenance, contradiction-preserving degradation handling, the committed OpenAI-lane packet/publication surface, and a bounded host-opportunity set containing `mcp.query`
 
 ## Run Outputs
 
-- outcome_summary: The landed OpenAI-host path produces a certified current-pair evaluation packet with explicit contradiction, degradation, and truthful-withheld fields after an OpenAI-native candidate-bearing prelude.
-- branch_trajectory_summary: One OpenAI-native candidate-bearing turn is followed by one full-commitment publication path only; no matched branch-lift comparison is recorded in this baseline packet.
-- uncertainty_or_brake_summary: Contradiction and degradation remain explicit in the committed OpenAI packet example; no comparative uncertainty claim is made.
+- outcome_summary: The baseline OpenAI-host path preserves the same certified current-pair evaluation packet with explicit contradiction, degradation, and truthful-withheld fields while retaining the generic `seek-context` family without direct host-native specialization.
+- branch_trajectory_summary: One OpenAI-native candidate-bearing turn is followed by one full-commitment publication path only; the comparator delta for this pair is the host-opportunity realization choice, not a branch-sequence change.
+- uncertainty_or_brake_summary: Contradiction and degradation remain explicit in the committed OpenAI packet example, and `direct_opportunity_specialization_used=0` remains explicit for the baseline side of the pair.
 - burden_summary: none
-- host_realization_summary: OpenAI-host observe/bind, candidate-bearing continuation, commitment, and publication surfaces are exercised end to end without any pooled host claim.
+- host_realization_summary: OpenAI-host realization retains the selected family `seek-context` with `direct_opportunity_specialization_used=0` while preserving the same host-opportunity set containing `mcp.query` and the same certified OpenAI `current-pair` publication surface.
 
 ## Artifact Refs
 
@@ -77,22 +77,22 @@ It does not provide comparative mediation evidence, justify mediation, or author
 
 ### Lower Visible Burden At Equal Task Value
 
-- observation: Baseline-only packet; no equal-value burden comparison is recorded.
-- metric_notes: No committed AUX burden artifact exists for this packet.
+- observation: The pair holds the same certified completion class and truth boundary, but this packet carries no AUX burden artifact.
+- metric_notes: Package-level evidence notes govern whether repeated paired evidence is enough to claim any lower-burden verdict.
 - verdict: `insufficient`
 
 ### Better Host-Specialized Realization
 
-- observation: This packet exercises the OpenAI-host candidate-bearing and publication path end to end, but no mediated comparison exists.
-- metric_notes: OpenAI-host realization remains descriptive only until a matched mediated run exists.
+- observation: This baseline packet keeps the same host-opportunity set containing `mcp.query` but does not directly specialize it.
+- metric_notes: The host-realization metric is `direct_opportunity_specialization_used=0` on the baseline side of the pair.
 - verdict: `insufficient`
 
 ## Exclusions Or Unusable-Pair Notes
 
 - exclusion_status: `none`
 - failure_tags: `none`
-- notes: This packet is intentionally baseline-only and reserves `pending_pair_openai_host_001` for a future honest comparison if one is ever earned.
+- notes: This packet is the baseline side of `pair_openai_host_001`. A single packet does not justify mediation; package-level evidence notes govern verdicts.
 
 ## Reviewer Note
 
-- reviewer_note: This is baseline-only committed evidence, not comparative mediation evidence, and it does not justify mediation or authorize any implementation seam.
+- reviewer_note: This is baseline-only committed evidence within the committed OpenAI host-realization paired-run series. It is not comparative mediation evidence by itself, does not justify mediation, and package-level evidence notes govern any verdict.

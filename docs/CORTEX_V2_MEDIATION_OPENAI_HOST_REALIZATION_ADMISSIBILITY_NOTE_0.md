@@ -1,11 +1,11 @@
 # CORTEX_V2_MEDIATION_OPENAI_HOST_REALIZATION_ADMISSIBILITY_NOTE_0
 
 Date: 2026-03-21
-Status: `openai host realization comparator not yet admissible`
+Status: `one lawful openai host realization comparator pair recorded`
 
 ## Scope
 
-This note records the current admissibility result for any future mediated comparator under `scenario_host_openai_01`.
+This note records the current admissibility result for mediated comparison under `scenario_host_openai_01`.
 It does not justify mediation, activate mediation, or authorize a comparative implementation seam.
 
 ## Audited Live Surfaces
@@ -18,21 +18,28 @@ The current admissibility audit is grounded in these already-landed OpenAI-host 
 - `tests/integration/_openai_lane_packet_example.py`
 - `tests/integration/test_openai_lane_packet_example.py`
 - `docs/CORTEX_V2_OPENAI_LANE_PACKET_EXAMPLE_0.md`
+- `tests/integration/_openai_mediated_lane_packet_example.py`
+- `tests/integration/test_openai_mediated_lane_packet_example.py`
+- `docs/CORTEX_V2_OPENAI_MEDIATED_LANE_PACKET_EXAMPLE_0.md`
 - `docs/mediation_evidence/openai/scenario_host_openai_01__baseline_non_mediated__run_001.md`
+- `docs/mediation_evidence/openai/scenario_host_openai_01__experimental_mediated__run_001.md`
+- `docs/CORTEX_V2_MEDIATION_OPENAI_HOST_REALIZATION_REPLICATION_NOTE_0.md`
 
-## Current Blocker
+## Recorded Comparator Strength
 
 OpenAI has landed observe/bind, commitment-path, neutral-only, thrash, and uncertainty carriers.
-Those surfaces are strong enough to audit, and one lawful OpenAI host-facing publication surface is now committed.
-They still do not establish a lawful OpenAI host-realization comparison surface.
+The current baseline is already a strong contradiction-preserving OpenAI host-facing surface, and one lawful OpenAI host-realization comparator pair is recorded.
+The recorded pair preserves:
 
-The current blocker is explicit:
+- OpenAI observe/bind meaning across `response.output_text.delta` and `response.completed`
+- candidate-bearing prelude plus full-commitment dispatch on the current landed path
+- a certified `current-pair` evaluation packet on both sides
+- explicit contradiction and degradation records
+- explicit truthful-withheld fields on the committed packet surface
+- the selected family `seek-context`
+- the same host-opportunity set containing `mcp.query`
 
-- one lawful OpenAI host-facing publication surface is now committed through the OpenAI-lane `current-pair` packet example
-- no matched mediated OpenAI host-realization publication surface exists yet
-- OpenAI thrash and uncertainty evidence may not be reused as proxy host-realization evidence
-
-A baseline-only OpenAI host-realization anchor is now recorded, but it does not by itself earn a lawful comparator.
+The recorded pair is admissible because the only mediated delta is direct host-native opportunity specialization at the selection layer while packet truth and publication meaning remain fixed.
 
 ## Admissibility Law
 
@@ -44,34 +51,36 @@ Any future counted comparator for `scenario_host_openai_01` must preserve all of
 - `approval_or_environment_context_id=env_boundary_sensitive`
 - the same OpenAI observe/bind meaning
 - the same commitment truth boundary
-- the same host-facing evidence/publication surface
+- the same evaluation-packet publication surface
 - the same packet kind: `current-pair`
 - the same final certified completion class
 - the same contradiction/degradation preservation law
 - the same truthful-withheld meaning
-- no host flattening
-- no truth smoothing
+- the same selected family: `seek-context`
+- the same host-opportunity set containing `mcp.query`
 
-No comparator may count until a matched mediated OpenAI host-realization publication surface is first defined from live code.
+The only admissible mediation delta is a live, host-facing realization choice that is visible before or at the host-opportunity selection layer and does not alter packet truth or publication meaning.
 
 ## Forbidden Counted Drift
 
 The following do not qualify as OpenAI host-realization evidence for this scenario:
 
 - claiming host lift from thrash or uncertainty packets
-- claiming host lift from candidate-bearing turns alone
-- adding a mediated comparator before a matched mediated publication surface exists
+- changing selected family
+- changing `opportunity_ref`
 - changing OpenAI host semantics to make mediation look better
+- dropping truthful-withheld fields
+- changing `current-pair` packet semantics
 - using latency-only improvement, shorter artifacts, or cosmetic simplification as host-realization evidence
 - claiming host lift from prose-only interpretation with no live code path
 
 ## Current Outcome
 
-No admissible OpenAI host-realization comparator is recorded yet for `scenario_host_openai_01`.
-A baseline-only OpenAI host-realization anchor is now recorded for `scenario_host_openai_01`.
-The scenario still remains intentionally unpaired, no paired-ledger row is countable for this cell, and the host-realization axis remains `insufficient`.
+One lawful OpenAI host-realization comparator pair is recorded for `scenario_host_openai_01`.
+That pair is OpenAI-only, it preserves packet truth/publication meaning, and `scenario_host_openai_01` / `openai` still remains `insufficient` because one pair is below the three-pair minimum.
+No package-level host-realization verdict is earned, and no mediation implementation seam is justified.
 
 ## Outcome
 
-The current honest result is that OpenAI host realization remains intentionally unpaired pending a future admissible comparator that preserves the same OpenAI host-facing publication surface and satisfies the law above.
-Mediation remains blocked, and this note exists to prevent fake OpenAI host-lift evidence from being counted by drift or by omission.
+The current honest result is that one lawful OpenAI host-realization comparator pair is recorded while package-level host-specialized realization evidence remains `insufficient`.
+In short: one OpenAI-only comparator pair is real host-realization evidence, the OpenAI host-realization cell remains below threshold, and mediation remains blocked.

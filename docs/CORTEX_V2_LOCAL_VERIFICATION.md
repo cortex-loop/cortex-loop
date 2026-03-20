@@ -316,10 +316,45 @@ Repo-local entry point:
 make emit-gemini-mediated-host-realization-candidate
 ```
 
+## Live OpenAI mediated host-realization revalidation
+
+This revalidates the committed mediated OpenAI lane packet example and the first counted OpenAI host-realization comparator pair against live OpenAI code.
+It remains OpenAI-only and evidence-only, and it does not justify mediation.
+
+Direct commands:
+
+```sh
+python3 -m pytest tests/integration/test_openai_mediated_lane_packet_example.py -q
+python3 -m pytest tests/integration/test_openai_mediated_host_realization_comparator.py -q
+```
+
+Repo-local entry point:
+
+```sh
+make revalidate-openai-mediated-host-realization
+```
+
+## OpenAI mediated host-realization candidate refresh
+
+This emits the committed mediated OpenAI host-realization packet doc to stdout for manual inspection.
+It does not overwrite the committed docs and it does not authorize mediation implementation.
+
+Direct command:
+
+```sh
+python3 -m tests.integration._openai_mediation_host_realization_experimental
+```
+
+Repo-local entry point:
+
+```sh
+make emit-openai-mediated-host-realization-candidate
+```
+
 ## Mediation OpenAI host-realization admissibility revalidation
 
-This checks that `scenario_host_openai_01` now has a lawful baseline-only OpenAI host-facing publication anchor while remaining intentionally unpaired until a lawful comparator is actually admissible.
-It validates the OpenAI admissibility note, the committed OpenAI packet example, the committed OpenAI baseline host packet, the continued absence of committed OpenAI mediated host packets, the OpenAI baseline-index guardrail, and the package blocker truth. It does not generate evidence.
+This checks that `scenario_host_openai_01` now has one lawful OpenAI host-realization comparator pair recorded while remaining below the three-pair minimum.
+It validates the OpenAI admissibility note, the committed OpenAI baseline and mediated packet examples, the committed OpenAI baseline and mediated host packets, the OpenAI baseline-index guardrail, the paired-ledger row, and the package blocker truth. It does not generate evidence.
 
 Direct command:
 
@@ -336,7 +371,7 @@ make revalidate-mediation-openai-host-realization-basis
 ## Mediation run-packet revalidation
 
 This checks the committed reference-host, Gemini-host, and OpenAI-host baseline run indexes and the committed run-packet instances.
-It validates packet metadata against the scenario catalog, confirms the canonical baseline anchors remain lawful, validates the full nine-packet reference baseline set, validates the full nine-packet Gemini baseline set, validates the seven-packet OpenAI baseline set, and checks the twenty-four committed experimental mediated uncertainty, thrash, reference host-realization, and Gemini host-realization packets.
+It validates packet metadata against the scenario catalog, confirms the canonical baseline anchors remain lawful, validates the full nine-packet reference baseline set, validates the full nine-packet Gemini baseline set, validates the seven-packet OpenAI baseline set, and checks the twenty-five committed experimental mediated uncertainty, thrash, reference host-realization, Gemini host-realization, and OpenAI host-realization packets.
 
 Direct command:
 

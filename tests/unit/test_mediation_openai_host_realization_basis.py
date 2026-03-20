@@ -4,10 +4,12 @@ from __future__ import annotations
 
 from tests._mediation_evidence import (
     EVIDENCE_NOTE_PATH,
-    MEDIATION_OPENAI_PACKET_ROOT,
     OPENAI_BASELINE_INDEX_PATH,
     OPENAI_HOST_REALIZATION_ADMISSIBILITY_NOTE_PATH,
+    OPENAI_HOST_REALIZATION_MEDIATED_PACKET_PATH,
     OPENAI_HOST_REALIZATION_PACKET_PATH,
+    OPENAI_HOST_REALIZATION_REPLICATION_NOTE_PATH,
+    OPENAI_MEDIATED_PACKET_EXAMPLE_DOC_PATH,
     OPENAI_PACKET_EXAMPLE_DOC_PATH,
     PAIRED_LEDGER_PATH,
     parse_markdown_table,
@@ -23,7 +25,7 @@ def test_openai_host_realization_admissibility_note_exists_and_records_audit() -
     assert OPENAI_HOST_REALIZATION_ADMISSIBILITY_NOTE_PATH.is_file()
     assert (
         status(OPENAI_HOST_REALIZATION_ADMISSIBILITY_NOTE_PATH)
-        == "openai host realization comparator not yet admissible"
+        == "one lawful openai host realization comparator pair recorded"
     )
     assert "tests/unit/test_openai_host.py" in text
     assert "tests/unit/test_openai_host_commitment.py" in text
@@ -31,10 +33,15 @@ def test_openai_host_realization_admissibility_note_exists_and_records_audit() -
     assert "tests/integration/_openai_lane_packet_example.py" in text
     assert "tests/integration/test_openai_lane_packet_example.py" in text
     assert "docs/CORTEX_V2_OPENAI_LANE_PACKET_EXAMPLE_0.md" in text
+    assert "tests/integration/_openai_mediated_lane_packet_example.py" in text
+    assert "tests/integration/test_openai_mediated_lane_packet_example.py" in text
+    assert "docs/CORTEX_V2_OPENAI_MEDIATED_LANE_PACKET_EXAMPLE_0.md" in text
     assert "docs/mediation_evidence/openai/scenario_host_openai_01__baseline_non_mediated__run_001.md" in text
-    assert "one lawful OpenAI host-facing publication surface is now committed" in text
-    assert "no matched mediated OpenAI host-realization publication surface exists yet" in text
-    assert "OpenAI thrash and uncertainty evidence may not be reused as proxy host-realization evidence" in text
+    assert "docs/mediation_evidence/openai/scenario_host_openai_01__experimental_mediated__run_001.md" in text
+    assert "docs/CORTEX_V2_MEDIATION_OPENAI_HOST_REALIZATION_REPLICATION_NOTE_0.md" in text
+    assert "one lawful OpenAI host-realization comparator pair is recorded" in text
+    assert "direct host-native opportunity specialization at the selection layer" in text
+    assert "OpenAI-only" in text
 
 
 def test_openai_host_realization_admissibility_law_is_explicit() -> None:
@@ -46,28 +53,27 @@ def test_openai_host_realization_admissibility_law_is_explicit() -> None:
     assert "`approval_or_environment_context_id=env_boundary_sensitive`" in text
     assert "same OpenAI observe/bind meaning" in text
     assert "same commitment truth boundary" in text
-    assert "same host-facing evidence/publication surface" in text
+    assert "same evaluation-packet publication surface" in text
     assert "same packet kind: `current-pair`" in text
     assert "same final certified completion class" in text
     assert "same contradiction/degradation preservation law" in text
     assert "same truthful-withheld meaning" in text
-    assert "no host flattening" in text
-    assert "no truth smoothing" in text
-    assert (
-        "No comparator may count until a matched mediated OpenAI host-realization "
-        "publication surface is first defined from live code."
-    ) in text
+    assert "same selected family: `seek-context`" in text
+    assert "same host-opportunity set containing `mcp.query`" in text
     assert "claiming host lift from thrash or uncertainty packets" in text
-    assert "claiming host lift from candidate-bearing turns alone" in text
-    assert "adding a mediated comparator before a matched mediated publication surface exists" in text
+    assert "dropping truthful-withheld fields" in text
+    assert "changing `current-pair` packet semantics" in text
     assert "changing OpenAI host semantics to make mediation look better" in text
     assert "using latency-only improvement, shorter artifacts, or cosmetic simplification as host-realization evidence" in text
     assert "claiming host lift from prose-only interpretation with no live code path" in text
-    assert "No admissible OpenAI host-realization comparator is recorded yet" in text
-    assert "A baseline-only OpenAI host-realization anchor is now recorded" in text
+    assert "one lawful OpenAI host-realization comparator pair is recorded" in text
+    assert (
+        "`scenario_host_openai_01` / `openai` still remains `insufficient` because one "
+        "pair is below the three-pair minimum"
+    ) in text
 
 
-def test_openai_host_realization_anchor_is_recorded_but_remains_unpaired() -> None:
+def test_openai_host_realization_anchor_is_rebound_to_a_recorded_pair() -> None:
     rows = parse_markdown_table(section(read(OPENAI_BASELINE_INDEX_PATH), "Index Rows"))
 
     assert {row["scenario_id"] for row in rows} == {
@@ -77,7 +83,7 @@ def test_openai_host_realization_anchor_is_recorded_but_remains_unpaired() -> No
     }
     host_row = next(row for row in rows if row["scenario_id"] == "scenario_host_openai_01")
     assert host_row["run_id"] == "openai_host_realization_baseline_run_001"
-    assert host_row["paired_episode_set_id"] == "pending_pair_openai_host_001"
+    assert host_row["paired_episode_set_id"] == "pair_openai_host_001"
     assert host_row["evidence_status"] == "baseline_packet_committed"
     assert host_row["packet_path"] == (
         "docs/mediation_evidence/openai/"
@@ -88,28 +94,35 @@ def test_openai_host_realization_anchor_is_recorded_but_remains_unpaired() -> No
         == "tests/integration/test_openai_lane_packet_example.py::test_openai_lane_current_pair_packet_example_matches_committed_doc"
     )
     assert "CORTEX_V2_MEDIATION_OPENAI_HOST_REALIZATION_ADMISSIBILITY_NOTE_0.md" in host_row["notes"]
+    assert "CORTEX_V2_MEDIATION_OPENAI_HOST_REALIZATION_REPLICATION_NOTE_0.md" in host_row["notes"]
     assert OPENAI_PACKET_EXAMPLE_DOC_PATH.is_file()
+    assert OPENAI_MEDIATED_PACKET_EXAMPLE_DOC_PATH.is_file()
     assert OPENAI_HOST_REALIZATION_PACKET_PATH.is_file()
-
-    assert not any(
-        path.name.startswith("scenario_host_openai_01__experimental_mediated__")
-        for path in MEDIATION_OPENAI_PACKET_ROOT.glob("*.md")
-    )
+    assert OPENAI_HOST_REALIZATION_MEDIATED_PACKET_PATH.is_file()
+    assert OPENAI_HOST_REALIZATION_REPLICATION_NOTE_PATH.is_file()
 
     recorded_rows = parse_markdown_table(section(read(PAIRED_LEDGER_PATH), "Recorded Paired Runs"))
-    assert not any(row["scenario_id"] == "scenario_host_openai_01" for row in recorded_rows)
+    recorded_host_rows = [
+        row for row in recorded_rows if row["scenario_id"] == "scenario_host_openai_01"
+    ]
+    assert [row["paired_episode_set_id"] for row in recorded_host_rows] == [
+        "pair_openai_host_001"
+    ]
+    assert {row["pair_status"] for row in recorded_host_rows} == {"usable"}
+    assert {row["failure_tags"] for row in recorded_host_rows} == {"none"}
 
 
-def test_evidence_note_keeps_openai_host_realization_unpaired_and_mediation_blocked() -> None:
+def test_evidence_note_records_one_openai_host_pair_and_keeps_mediation_blocked() -> None:
     text = read(EVIDENCE_NOTE_PATH)
 
     assert (
-        "A baseline-only OpenAI host-realization anchor is now recorded through "
-        "`docs/CORTEX_V2_OPENAI_LANE_PACKET_EXAMPLE_0.md` and "
-        "`docs/mediation_evidence/openai/scenario_host_openai_01__baseline_non_mediated__run_001.md`, "
-        "but `scenario_host_openai_01` remains intentionally unpaired pending the OpenAI "
-        "comparator admissibility audit recorded in "
-        "`docs/CORTEX_V2_MEDIATION_OPENAI_HOST_REALIZATION_ADMISSIBILITY_NOTE_0.md`."
+        "One OpenAI-only mediation-specific host-realization pair is now recorded for "
+        "`scenario_host_openai_01`, but it remains insufficient because it is only one "
+        "pair on one host."
     ) in text
+    assert (
+        "reference and Gemini remain the only host-realization `candidate_positive` cells."
+        in text
+    )
     assert "Mediation remains blocked" in text
     assert "no implementation seam may open" in text

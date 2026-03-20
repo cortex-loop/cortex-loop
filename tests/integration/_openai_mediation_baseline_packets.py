@@ -10,6 +10,9 @@ from cortex.core.dispatch import DispatchLane
 from tests.integration._openai_lane_packet_example import (
     build_openai_lane_packet_example_snapshot,
 )
+from tests.integration._openai_mediated_lane_packet_example import (
+    build_openai_host_realization_specialization_snapshot,
+)
 from tests.integration._openai_mediation_thrash_episode import (
     DEFAULT_OPENAI_THRASH_PAIR_KEY,
     OPENAI_THRASH_PAIR_KEYS,
@@ -64,13 +67,18 @@ _OPENAI_THRASH_REVIEWER_NOTE = (
     "does not justify mediation or authorize any implementation seam."
 )
 _OPENAI_HOST_REALIZATION_REVIEWER_NOTE = (
-    "This is baseline-only committed evidence, not comparative mediation evidence, "
-    "and it does not justify mediation or authorize any implementation seam."
+    "This is baseline-only committed evidence within the committed OpenAI "
+    "host-realization paired-run series. It is not comparative mediation evidence by "
+    "itself, does not justify mediation, and package-level evidence notes govern any "
+    "verdict."
 )
 
 
 def build_openai_host_realization_baseline_packet() -> PacketSnapshot:
     snapshot = build_openai_lane_packet_example_snapshot()
+    specialization = build_openai_host_realization_specialization_snapshot(
+        clearly_superior=False,
+    )
 
     assert snapshot["dispatch_lanes"] == {
         "candidate": DispatchLane.CANDIDATE_BEARING.value,
@@ -79,6 +87,11 @@ def build_openai_host_realization_baseline_packet() -> PacketSnapshot:
     assert snapshot["candidate_id"] == "openai-host-packet-candidate-1"
     assert snapshot["verdict_status"] == "certified"
     assert snapshot["packet_kind"] == "current-pair"
+    assert specialization["selected_family"] == "seek-context"
+    assert specialization["preferred_opportunity_ref"] is None
+    assert specialization["direct_opportunity_specialization_used"] is False
+    assert specialization["host_opportunity_refs"] == ["mcp.query"]
+    assert specialization["native_surface_tags"] == ["mcp", "structured-query"]
 
     candidate_event = snapshot["candidate_event"]
     publication_event = snapshot["publication_event"]
@@ -102,7 +115,7 @@ def build_openai_host_realization_baseline_packet() -> PacketSnapshot:
     return build_reference_mediation_packet(
         scenario_id="scenario_host_openai_01",
         run_id="openai_host_realization_baseline_run_001",
-        paired_episode_set_id="pending_pair_openai_host_001",
+        paired_episode_set_id="pair_openai_host_001",
         scenario_family="host_realization",
         task_value_rubric_id="task_value_equal_host_realization",
         approval_or_environment_context_id="env_boundary_sensitive",
@@ -114,39 +127,44 @@ def build_openai_host_realization_baseline_packet() -> PacketSnapshot:
                 "with `commitment_id=openai-host-packet-commit-1`"
             ),
             "host_surface": (
-                "OpenAI-host observe/bind plus candidate-bearing continuation and "
+                "OpenAI-host opportunity selection plus candidate-bearing continuation and "
                 "commitment-to-eval-packet publication path"
             ),
             "declared_scenario_goal": (
-                "evaluate whether mediation improves OpenAI-native opportunity use or "
-                "fallback selection without host flattening"
+                "evaluate whether mediation produces any OpenAI-host realization lift "
+                "without adding burden or branch churn"
             ),
             "bounded_environment_or_approval_context": (
                 "OpenAI-host candidate-bearing plus commitment/publication path with "
-                "lawful provenance, contradiction-preserving degradation handling, and "
-                "the committed OpenAI-lane packet/publication surface"
+                "lawful provenance, contradiction-preserving degradation handling, the "
+                "committed OpenAI-lane packet/publication surface, and a bounded "
+                "host-opportunity set containing `mcp.query`"
             ),
         },
         run_outputs={
             "outcome_summary": (
-                "The landed OpenAI-host path produces a certified current-pair "
+                "The baseline OpenAI-host path preserves the same certified current-pair "
                 "evaluation packet with explicit contradiction, degradation, and "
-                "truthful-withheld fields after an OpenAI-native candidate-bearing prelude."
+                "truthful-withheld fields while retaining the generic `seek-context` "
+                "family without direct host-native specialization."
             ),
             "branch_trajectory_summary": (
                 "One OpenAI-native candidate-bearing turn is followed by one "
-                "full-commitment publication path only; no matched branch-lift "
-                "comparison is recorded in this baseline packet."
+                "full-commitment publication path only; the comparator delta for this "
+                "pair is the host-opportunity realization choice, not a branch-sequence "
+                "change."
             ),
             "uncertainty_or_brake_summary": (
                 "Contradiction and degradation remain explicit in the committed OpenAI "
-                "packet example; no comparative uncertainty claim is made."
+                "packet example, and `direct_opportunity_specialization_used=0` remains "
+                "explicit for the baseline side of the pair."
             ),
             "burden_summary": "none",
             "host_realization_summary": (
-                "OpenAI-host observe/bind, candidate-bearing continuation, "
-                "commitment, and publication surfaces are exercised end to end "
-                "without any pooled host claim."
+                "OpenAI-host realization retains the selected family `seek-context` "
+                "with `direct_opportunity_specialization_used=0` while preserving the "
+                "same host-opportunity set containing `mcp.query` and the same "
+                "certified OpenAI `current-pair` publication surface."
             ),
         },
         artifact_refs={
@@ -175,20 +193,22 @@ def build_openai_host_realization_baseline_packet() -> PacketSnapshot:
                 "uncertainty lift.",
             ),
             "Lower Visible Burden At Equal Task Value": (
-                "Baseline-only packet; no equal-value burden comparison is recorded.",
-                "No committed AUX burden artifact exists for this packet.",
+                "The pair holds the same certified completion class and truth boundary, "
+                "but this packet carries no AUX burden artifact.",
+                "Package-level evidence notes govern whether repeated paired evidence is "
+                "enough to claim any lower-burden verdict.",
             ),
             "Better Host-Specialized Realization": (
-                "This packet exercises the OpenAI-host candidate-bearing and publication "
-                "path end to end, but no mediated comparison exists.",
-                "OpenAI-host realization remains descriptive only until a matched "
-                "mediated run exists.",
+                "This baseline packet keeps the same host-opportunity set containing "
+                "`mcp.query` but does not directly specialize it.",
+                "The host-realization metric is "
+                "`direct_opportunity_specialization_used=0` on the baseline side of the pair.",
             ),
         },
         exclusion_notes=(
-            "This packet is intentionally baseline-only and reserves "
-            "`pending_pair_openai_host_001` for a future honest comparison if one is "
-            "ever earned."
+            "This packet is the baseline side of `pair_openai_host_001`. A single "
+            "packet does not justify mediation; package-level evidence notes govern "
+            "verdicts."
         ),
         reviewer_note=_OPENAI_HOST_REALIZATION_REVIEWER_NOTE,
     )
