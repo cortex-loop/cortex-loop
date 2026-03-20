@@ -55,9 +55,17 @@ REFERENCE_THRASH_BASELINE_PACKET_PATHS = {
 _SCOPE_TEXT = {
     ("scenario_uncertainty_openai_01", "baseline_non_mediated"): (
         "This committed run packet records one OpenAI-host baseline-only uncertainty "
-        "packet for mediation evidence review.\n"
-        "It does not provide comparative mediation evidence, justify mediation, or "
-        "authorize implementation work."
+        "packet within the committed OpenAI uncertainty paired-run series for "
+        "mediation evidence review.\n"
+        "It does not provide comparative mediation evidence by itself, justify "
+        "mediation, or authorize implementation work."
+    ),
+    ("scenario_uncertainty_openai_01", "experimental_mediated"): (
+        "This committed run packet records one OpenAI-host experimental mediated "
+        "uncertainty comparator within the committed OpenAI uncertainty paired-run "
+        "series for mediation evidence review.\n"
+        "It does not justify mediation, does not authorize implementation work, and "
+        "package-level evidence notes govern any verdict."
     ),
     ("scenario_uncertainty_gemini_01", "baseline_non_mediated"): (
         "This committed run packet records one Gemini-host baseline-only uncertainty "

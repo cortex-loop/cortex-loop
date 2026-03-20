@@ -3,13 +3,17 @@
 from __future__ import annotations
 
 from collections.abc import Callable, Mapping
+from functools import partial
 import sys
 
-from cortex.core.commitments import CommitmentStatus
 from cortex.core.dispatch import DispatchLane
-from cortex.core.environment import CommitmentEnvironmentHandle, EXECUTION_TRACE
-from cortex.drivers.openai_host_commitment import evaluate_openai_host_commitment
-from tests.integration._reference_lane import host_surface_degradation_pair
+from tests.integration._openai_mediation_uncertainty_episode import (
+    DEFAULT_OPENAI_UNCERTAINTY_PAIR_KEY,
+    OPENAI_UNCERTAINTY_PAIR_KEYS,
+    OPENAI_UNCERTAINTY_PAIR_SPECS,
+    build_openai_uncertainty_episode_snapshot,
+    openai_uncertainty_scenario_inputs,
+)
 from tests.integration._reference_mediation_baseline_packets import (
     PacketSnapshot,
     build_reference_mediation_packet,
@@ -19,168 +23,140 @@ from tests.integration._reference_mediation_baseline_packets import (
 
 OPENAI_MEDIATION_BASELINE_PACKET_PATHS = {
     "scenario_uncertainty_openai_01": (
-        "docs/mediation_evidence/openai/"
-        "scenario_uncertainty_openai_01__baseline_non_mediated__run_001.md"
+        OPENAI_UNCERTAINTY_PAIR_SPECS[
+            DEFAULT_OPENAI_UNCERTAINTY_PAIR_KEY
+        ].baseline_packet_path
     ),
 }
+OPENAI_UNCERTAINTY_BASELINE_PACKET_PATHS = {
+    pair_key: OPENAI_UNCERTAINTY_PAIR_SPECS[pair_key].baseline_packet_path
+    for pair_key in OPENAI_UNCERTAINTY_PAIR_KEYS
+}
 _OPENAI_UNCERTAINTY_REVIEWER_NOTE = (
-    "This is baseline-only committed evidence, not comparative mediation evidence, "
-    "and it does not justify mediation or authorize any implementation seam."
+    "This is baseline-only committed evidence within the committed OpenAI "
+    "uncertainty paired-run series. It is not comparative mediation evidence by "
+    "itself and does not justify mediation or authorize any implementation seam."
 )
 
 
-def build_openai_uncertainty_baseline_packet() -> PacketSnapshot:
-    contradiction, degradation = openai_uncertainty_anchor_evidence()
-    result = evaluate_openai_host_commitment(
-        "response.completed",
-        {
-            "commitment_id": "openai-uncertainty-commit-1",
-            "session_id": "openai-uncertainty-session-1",
-            "externally_consequential": True,
-        },
-        environment_handle=openai_environment_handle(),
-        contradiction_refs=(contradiction,),
-        degradation_refs=(degradation,),
-    )
+def build_openai_uncertainty_baseline_packet(
+    pair_key: str = DEFAULT_OPENAI_UNCERTAINTY_PAIR_KEY,
+) -> PacketSnapshot:
+    spec = OPENAI_UNCERTAINTY_PAIR_SPECS[pair_key]
+    snapshot = build_openai_uncertainty_episode_snapshot(pair_key)
+    steps = snapshot["steps"]
 
-    assert result.dispatch_decision.lane is DispatchLane.FULL_COMMITMENT
-    assert result.candidate is not None
-    assert result.candidate.candidate_id == "openai-uncertainty-commit-1"
-    assert result.verdict is not None
-    assert result.verdict.status is CommitmentStatus.UNCERTIFIED
-    assert result.verdict.provenance_manifest is None
-    assert result.verdict.degradation_refs == (degradation,)
-    assert contradiction in result.verdict.contradiction_refs
+    assert isinstance(steps, list)
+    assert snapshot["step_sequence"] == ["guard", "retry", "resolve"]
+    assert snapshot["uncertified_loop_count"] == 2
+    assert [step["outcome_class"] for step in steps] == [
+        "uncertified-full-commitment",
+        "uncertified-full-commitment",
+        "certified-full-commitment",
+    ]
+    assert steps[0]["brake_state"] == "guarded"
+    assert steps[1]["brake_state"] == "guarded"
+    assert steps[2]["dispatch_lane"] == DispatchLane.FULL_COMMITMENT.value
 
     return build_reference_mediation_packet(
         scenario_id="scenario_uncertainty_openai_01",
-        run_id="openai_uncertainty_baseline_run_001",
-        paired_episode_set_id="pending_pair_openai_uncertainty_001",
+        run_id=spec.baseline_run_id,
+        paired_episode_set_id=spec.pair_id,
         scenario_family="uncertainty_boundary",
         task_value_rubric_id="task_value_equal_truth_preservation",
         approval_or_environment_context_id="env_uncertainty_sensitive",
         host_family="openai",
-        scenario_inputs=openai_uncertainty_scenario_inputs(),
+        scenario_inputs=openai_uncertainty_scenario_inputs(spec),
         run_outputs={
             "outcome_summary": (
-                "The bounded OpenAI-host uncertainty anchor yields an uncertified full-"
-                "commitment outcome on `openai-uncertainty-anchor-1` because explicit "
-                "contradiction-bearing degraded evidence remains incomplete."
+                "The bounded OpenAI-host uncertainty episode reaches certified "
+                f"completion at `{spec.baseline_step_prefix}-3` after two guarded "
+                "uncertified full-commitment turns."
             ),
             "branch_trajectory_summary": (
-                "This OpenAI-only uncertainty anchor records no branch-control sequence "
-                "and no comparator yet."
+                "This OpenAI-only uncertainty series stays on a `check`-family path "
+                "and records no branch-control sequence."
             ),
             "uncertainty_or_brake_summary": (
-                "Contradiction and degradation remain explicit on the uncertified "
-                "OpenAI-host commitment outcome; no certified-resolution or packet-"
-                "publication comparison is claimed in this baseline anchor."
+                f"`guarded` brake state is explicit at `{spec.baseline_step_prefix}-1` "
+                f"and `{spec.baseline_step_prefix}-2`, with contradiction and "
+                f"degradation evidence preserved until certified resolution at "
+                f"`{spec.baseline_step_prefix}-3`."
             ),
             "burden_summary": "none",
             "host_realization_summary": (
-                "OpenAI commitment semantics and the direct commitment-path evidence "
-                "surface are exercised without any pooled host claim."
+                "OpenAI commitment semantics, contradiction-bearing evidence, and the "
+                "same certified-resolution truth boundary are preserved."
             ),
         },
         artifact_refs={
-            "event_trace_refs": "openai-uncertainty-anchor-1:response.completed/uncertified",
-            "contradiction_refs": f"{contradiction.source_tag}:{contradiction.summary}",
-            "degradation_refs": degradation.reason_code,
+            "event_trace_refs": (
+                f"{snapshot['event_trace_refs']}; "
+                f"uncertified_loop_count={snapshot['uncertified_loop_count']}"
+            ),
+            "contradiction_refs": str(snapshot["contradiction_ref"]),
+            "degradation_refs": str(snapshot["degradation_ref"]),
             "aux_burden_refs_if_present": "none",
             "evaluation_packet_refs_if_present": "none",
         },
         lift_axis_notes={
             "Reduced Thrashing": (
-                "This packet records an OpenAI-only uncertainty anchor without any "
+                "This packet records an OpenAI-only uncertainty loop without any "
                 "branch-control comparison.",
-                "Package-level evidence notes govern whether later repeated paired "
-                "evidence is enough to claim any thrash change.",
+                "Package-level evidence notes govern whether repeated paired evidence is "
+                "enough to claim any thrash change.",
             ),
             "Better Branch Discipline": (
-                "This packet stays on the direct OpenAI commitment path and does not "
-                "exercise branch control.",
-                "Package-level evidence notes govern whether later repeated paired "
-                "evidence is enough to claim any branch-discipline effect.",
+                "This packet stays on the `check` family and does not exercise branch "
+                "control.",
+                "Package-level evidence notes govern whether repeated paired evidence is "
+                "enough to claim any branch-discipline effect.",
             ),
             "Better Uncertainty Handling": (
-                "This packet preserves an uncertified OpenAI-host commitment result "
-                "with explicit contradiction and degradation evidence.",
-                "Package-level evidence notes govern whether later repeated paired "
-                "evidence is enough to claim uncertainty-handling lift.",
+                "This packet preserves guarded uncertified handling with explicit "
+                "contradiction and degradation evidence within the committed OpenAI "
+                "uncertainty paired-run series.",
+                "Package-level evidence notes govern whether repeated paired evidence is "
+                "enough to claim uncertainty-handling lift.",
             ),
             "Lower Visible Burden At Equal Task Value": (
-                "Baseline-only OpenAI uncertainty anchor; no AUX burden artifact is "
-                "recorded here.",
-                "Package-level evidence notes govern whether later repeated paired "
-                "evidence is enough to claim burden lift.",
+                "Baseline-only packet within the committed OpenAI uncertainty paired-run "
+                "series; no AUX burden artifact is recorded here.",
+                "Package-level evidence notes govern whether repeated paired evidence is "
+                "enough to claim burden lift.",
             ),
             "Better Host-Specialized Realization": (
-                "This packet stays on the landed OpenAI commitment surface while "
-                "preserving contradiction-bearing evidence.",
-                "Package-level evidence notes govern whether later repeated paired "
-                "evidence is enough to claim host-specialized realization lift.",
+                "This packet stays on the OpenAI commitment surface while preserving "
+                "contradiction-bearing evidence.",
+                "Package-level evidence notes govern whether repeated paired evidence is "
+                "enough to claim host-specialized realization lift.",
             ),
         },
         exclusion_notes=(
-            "This packet is intentionally baseline-only and reserves "
-            "`pending_pair_openai_uncertainty_001` for a future honest comparison if "
-            "one is ever earned."
+            "This packet is part of the committed OpenAI uncertainty paired-run "
+            f"series under `{spec.pair_id}`. A single packet does not justify "
+            "mediation; package-level evidence notes govern verdicts."
         ),
         reviewer_note=_OPENAI_UNCERTAINTY_REVIEWER_NOTE,
     )
 
 
-def openai_uncertainty_scenario_inputs() -> dict[str, str]:
-    return {
-        "starting_request_or_event": (
-            "bounded OpenAI-host `response.completed` flow on "
-            "`openai-uncertainty-session-1` with an uncertified full-commitment outcome"
-        ),
-        "host_surface": (
-            "OpenAI observe/bind plus commitment-path slice with contradiction-bearing "
-            "degradation preserved on uncertified full commitment"
-        ),
-        "declared_scenario_goal": (
-            "evaluate whether future mediation improves OpenAI-host uncertainty handling "
-            "without smoothing contradiction or degradation evidence or changing "
-            "commitment truth"
-        ),
-        "bounded_environment_or_approval_context": (
-            "`CommitmentEnvironmentHandle` with "
-            "`available_query_kinds={EXECUTION_TRACE}` and "
-            "`capability_tags={trace/read}` on `env_uncertainty_sensitive`"
-        ),
-    }
-
-
-def openai_uncertainty_anchor_evidence():
-    return host_surface_degradation_pair(
-        source_tag="openai-trace-check",
-        summary="OpenAI approval evidence remains incomplete",
-        evidence_tags=frozenset({"openai", "approval-evidence"}),
-        reason_code="openai-evidence-partial",
-        capability_tags=frozenset({"trace/read"}),
-    )
-
-
-def openai_environment_handle() -> CommitmentEnvironmentHandle:
-    return CommitmentEnvironmentHandle(
-        available_query_kinds=frozenset({EXECUTION_TRACE}),
-        capability_tags=frozenset({"trace/read"}),
-    )
-
-
 OPENAI_MEDIATION_BASELINE_PACKET_DOC_BUILDERS: Mapping[str, Callable[[], PacketSnapshot]] = {
-    OPENAI_MEDIATION_BASELINE_PACKET_PATHS["scenario_uncertainty_openai_01"]: (
-        build_openai_uncertainty_baseline_packet
+    OPENAI_UNCERTAINTY_BASELINE_PACKET_PATHS[pair_key]: partial(
+        build_openai_uncertainty_baseline_packet, pair_key
     )
+    for pair_key in OPENAI_UNCERTAINTY_PAIR_KEYS
 }
 
 
 def emit_openai_mediation_baseline_packets() -> None:
-    for relative_path, builder in OPENAI_MEDIATION_BASELINE_PACKET_DOC_BUILDERS.items():
+    for index, (relative_path, builder) in enumerate(
+        OPENAI_MEDIATION_BASELINE_PACKET_DOC_BUILDERS.items()
+    ):
         sys.stdout.write(f"--- {relative_path}\n")
         sys.stdout.write(render_reference_mediation_packet(relative_path, builder()))
+        if index != len(OPENAI_MEDIATION_BASELINE_PACKET_DOC_BUILDERS) - 1:
+            sys.stdout.write("\n")
 
 
 if __name__ == "__main__":

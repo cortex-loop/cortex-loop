@@ -1,4 +1,4 @@
-# scenario_uncertainty_openai_01__baseline_non_mediated__run_001
+# scenario_uncertainty_openai_01__baseline_non_mediated__run_003
 
 Date: 2026-03-20
 Status: `reviewed_evidence`
@@ -13,8 +13,8 @@ It does not provide comparative mediation evidence by itself, justify mediation,
 - date: 2026-03-20
 - status: `reviewed_evidence`
 - scenario_id: `scenario_uncertainty_openai_01`
-- run_id: `openai_uncertainty_baseline_run_001`
-- paired_episode_set_id: `pair_openai_uncertainty_001`
+- run_id: `openai_uncertainty_baseline_run_003`
+- paired_episode_set_id: `pair_openai_uncertainty_003`
 
 ## Variant Metadata
 
@@ -34,24 +34,24 @@ It does not provide comparative mediation evidence by itself, justify mediation,
 
 ## Scenario Inputs
 
-- starting_request_or_event: bounded OpenAI-host `response.completed` flow on `openai-uncertainty-session-1` with guarded uncertainty before certified resolution
+- starting_request_or_event: bounded OpenAI-host `response.completed` flow on `openai-uncertainty-session-3` with guarded uncertainty before certified resolution
 - host_surface: OpenAI observe/bind plus commitment-path slice with contradiction-bearing degradation preserved across guarded uncertainty and certified resolution
 - declared_scenario_goal: evaluate whether mediation improves OpenAI-host uncertainty handling without smoothing contradiction or degradation evidence or changing commitment truth
 - bounded_environment_or_approval_context: `CommitmentEnvironmentHandle` with `available_query_kinds={EXECUTION_TRACE}` and `capability_tags={trace/read}` on `env_uncertainty_sensitive`
 
 ## Run Outputs
 
-- outcome_summary: The bounded OpenAI-host uncertainty episode reaches certified completion at `openai-uncertainty-step-3` after two guarded uncertified full-commitment turns.
+- outcome_summary: The bounded OpenAI-host uncertainty episode reaches certified completion at `openai-uncertainty-003-step-3` after two guarded uncertified full-commitment turns.
 - branch_trajectory_summary: This OpenAI-only uncertainty series stays on a `check`-family path and records no branch-control sequence.
-- uncertainty_or_brake_summary: `guarded` brake state is explicit at `openai-uncertainty-step-1` and `openai-uncertainty-step-2`, with contradiction and degradation evidence preserved until certified resolution at `openai-uncertainty-step-3`.
+- uncertainty_or_brake_summary: `guarded` brake state is explicit at `openai-uncertainty-003-step-1` and `openai-uncertainty-003-step-2`, with contradiction and degradation evidence preserved until certified resolution at `openai-uncertainty-003-step-3`.
 - burden_summary: none
 - host_realization_summary: OpenAI commitment semantics, contradiction-bearing evidence, and the same certified-resolution truth boundary are preserved.
 
 ## Artifact Refs
 
-- event_trace_refs: `openai-uncertainty-step-1:response.completed/guard, openai-uncertainty-step-2:response.completed/retry, openai-uncertainty-step-3:response.completed/resolve; uncertified_loop_count=2`
-- contradiction_refs: `openai-trace-check:OpenAI approval evidence remains incomplete`
-- degradation_refs: `openai-evidence-partial`
+- event_trace_refs: `openai-uncertainty-003-step-1:response.completed/guard, openai-uncertainty-003-step-2:response.completed/retry, openai-uncertainty-003-step-3:response.completed/resolve; uncertified_loop_count=2`
+- contradiction_refs: `openai-artifact-check:OpenAI artifact chain remains unconfirmed`
+- degradation_refs: `openai-artifact-chain-partial`
 - aux_burden_refs_if_present: none
 - evaluation_packet_refs_if_present: none
 
@@ -91,7 +91,7 @@ It does not provide comparative mediation evidence by itself, justify mediation,
 
 - exclusion_status: `none`
 - failure_tags: `none`
-- notes: This packet is part of the committed OpenAI uncertainty paired-run series under `pair_openai_uncertainty_001`. A single packet does not justify mediation; package-level evidence notes govern verdicts.
+- notes: This packet is part of the committed OpenAI uncertainty paired-run series under `pair_openai_uncertainty_003`. A single packet does not justify mediation; package-level evidence notes govern verdicts.
 
 ## Reviewer Note
 

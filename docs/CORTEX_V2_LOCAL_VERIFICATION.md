@@ -227,8 +227,8 @@ make emit-gemini-mediation-baselines-candidate
 
 ## Live OpenAI mediation-baseline revalidation
 
-This revalidates the committed OpenAI-host uncertainty baseline anchor against the landed OpenAI commitment-path slice.
-It remains OpenAI-only and baseline-only: it does not advance any paired counts by itself and it does not add OpenAI mediated packets.
+This revalidates the committed OpenAI-host uncertainty baseline packet series against the landed OpenAI commitment-path slice.
+It remains OpenAI-only and baseline-only: it covers the three committed OpenAI uncertainty baseline docs and does not by itself justify any verdict.
 
 Direct command:
 
@@ -244,8 +244,8 @@ make revalidate-openai-mediation-baselines
 
 ## OpenAI mediation-baseline candidate refresh
 
-This emits the committed OpenAI-host baseline mediation packet doc to stdout for manual inspection.
-It prints markdown for the committed OpenAI baseline doc with a committed relative-path header, does not overwrite the committed packet doc, and does not authorize any paired comparison or mediation implementation work.
+This emits the committed OpenAI-host baseline mediation packet docs to stdout for manual inspection.
+It prints markdown for the three committed OpenAI baseline docs with committed relative-path headers, does not overwrite the committed packet docs, and does not authorize any paired comparison or mediation implementation work.
 
 Direct command:
 
@@ -257,6 +257,40 @@ Repo-local entry point:
 
 ```sh
 make emit-openai-mediation-baselines-candidate
+```
+
+## Experimental OpenAI mediated-uncertainty revalidation
+
+This revalidates the three committed experimental OpenAI-only mediated uncertainty comparators against live OpenAI commitment-path code.
+It checks that each mediated packet stays OpenAI-only, preserves the same completion class and truth boundary as baseline, and removes one redundant uncertified loop without widening package-level verdicts.
+
+Direct command:
+
+```sh
+python3 -m pytest tests/integration/test_openai_mediated_uncertainty_comparator.py -q
+```
+
+Repo-local entry point:
+
+```sh
+make revalidate-openai-mediated-uncertainty
+```
+
+## Experimental OpenAI mediated-uncertainty candidate refresh
+
+This emits the committed experimental OpenAI-only mediated uncertainty packet docs to stdout for manual inspection.
+It prints markdown for the three committed OpenAI mediated docs with committed relative-path headers, does not overwrite the committed packet docs, and does not authorize mediation implementation work.
+
+Direct command:
+
+```sh
+python3 -m tests.integration._openai_mediation_uncertainty_experimental
+```
+
+Repo-local entry point:
+
+```sh
+make emit-openai-mediated-uncertainty-candidate
 ```
 
 ## Experimental Gemini mediated-uncertainty revalidation
@@ -397,8 +431,8 @@ make revalidate-mediation-gemini-uncertainty-basis
 
 ## Mediation OpenAI uncertainty-basis revalidation
 
-This checks that `scenario_uncertainty_openai_01` now has a lawful committed OpenAI uncertainty baseline anchor.
-It validates the OpenAI baseline index, the OpenAI uncertainty basis note, the committed OpenAI packet anchor, the live OpenAI builder, and the continued absence of any counted OpenAI comparator evidence. It does not generate any new evidence.
+This checks that `scenario_uncertainty_openai_01` now has a satisfied committed OpenAI basis and replication law.
+It validates the OpenAI baseline index, the OpenAI uncertainty basis note, the replication note, the committed OpenAI packet series, the live OpenAI builder set, and the repeated paired-run distinctness rules. It does not generate any new evidence.
 
 Direct command:
 
@@ -460,6 +494,8 @@ This runs all current mediation-evidence checks together:
 - live experimental reference mediated-thrash revalidation
 - Gemini uncertainty basis and replication validation
 - OpenAI uncertainty baseline validation
+- live experimental OpenAI mediated-uncertainty revalidation
+- OpenAI uncertainty basis and replication validation
 - reference uncertainty basis and replication validation
 - reference thrash basis and replication validation
 

@@ -6,6 +6,9 @@ from tests._mediation_evidence import (
     EVIDENCE_NOTE_PATH,
     OPENAI_BASELINE_INDEX_PATH,
     OPENAI_UNCERTAINTY_BASIS_NOTE_PATH,
+    OPENAI_UNCERTAINTY_REPLICATION_NOTE_PATH,
+    OPENAI_UNCERTAINTY_BASELINE_PACKET_PATHS,
+    OPENAI_UNCERTAINTY_MEDIATED_PACKET_PATHS,
     OPENAI_UNCERTAINTY_PACKET_PATH,
     PAIRED_LEDGER_PATH,
     parse_markdown_table,
@@ -16,66 +19,98 @@ from tests._mediation_evidence import (
 from tests.integration._openai_mediation_baseline_packets import (
     OPENAI_MEDIATION_BASELINE_PACKET_DOC_BUILDERS,
 )
+from tests.integration._openai_mediation_uncertainty_episode import (
+    EXPECTED_OPENAI_UNCERTAINTY_STEP_SEQUENCE,
+    OPENAI_UNCERTAINTY_PAIR_KEYS,
+    OPENAI_UNCERTAINTY_PAIR_SPECS,
+    build_openai_uncertainty_episode_snapshot,
+)
 
 
-def test_openai_uncertainty_basis_note_exists_and_records_first_openai_baseline_seam() -> None:
+def test_openai_uncertainty_basis_note_exists_and_records_satisfied_basis() -> None:
     text = read(OPENAI_UNCERTAINTY_BASIS_NOTE_PATH)
 
     assert OPENAI_UNCERTAINTY_BASIS_NOTE_PATH.is_file()
-    assert status(OPENAI_UNCERTAINTY_BASIS_NOTE_PATH) == "openai uncertainty baseline anchor recorded"
-    assert "OpenAI uncertainty is the first lawful OpenAI mediation-evidence seam" in text
-    assert "landed OpenAI observe/bind, commitment-path, and neutral-only slices" in text
-    assert "baseline-only and does not earn a comparator yet" in text
-    assert "direct commitment-path evidence, not evaluation-packet publication evidence" in text
-    assert "No host-realization or thrash claim is implied by this anchor" in text
+    assert status(OPENAI_UNCERTAINTY_BASIS_NOTE_PATH) == "openai uncertainty paired-series basis satisfied"
+    assert "old OpenAI baseline anchor packet was lawful but too thin" in text
+    assert "basis is now satisfied by the committed OpenAI-host uncertainty paired-run series" in text
+    assert "tests/integration/_openai_mediation_uncertainty_episode.py" in text
+    assert "tests/integration/test_openai_mediated_uncertainty_comparator.py" in text
+    assert "docs/CORTEX_V2_MEDIATION_OPENAI_UNCERTAINTY_REPLICATION_NOTE_0.md" in text
     assert "tests/integration/_openai_mediation_baseline_packets.py" in text
     assert "tests/integration/test_openai_mediation_baseline_packets.py" in text
 
 
-def test_openai_index_and_baseline_anchor_exist_without_any_mediated_openai_packet() -> None:
-    rows = parse_markdown_table(section(read(OPENAI_BASELINE_INDEX_PATH), "Index Rows"))
-    row = rows[0]
+def test_openai_uncertainty_replication_note_records_fairness_and_distinctness_law() -> None:
+    text = read(OPENAI_UNCERTAINTY_REPLICATION_NOTE_PATH)
 
-    assert OPENAI_BASELINE_INDEX_PATH.is_file()
-    assert status(OPENAI_BASELINE_INDEX_PATH) == "openai mediation baseline run index (`active`, baseline-only)"
-    assert len(rows) == 1
-    assert row["run_id"] == "openai_uncertainty_baseline_run_001"
-    assert row["scenario_id"] == "scenario_uncertainty_openai_01"
-    assert row["host_family"] == "openai"
-    assert row["variant"] == "baseline_non_mediated"
-    assert row["paired_episode_set_id"] == "pending_pair_openai_uncertainty_001"
-    assert row["evidence_status"] == "baseline_packet_committed"
-    assert row["packet_path"] == (
+    assert OPENAI_UNCERTAINTY_REPLICATION_NOTE_PATH.is_file()
+    assert status(OPENAI_UNCERTAINTY_REPLICATION_NOTE_PATH) == "openai uncertainty replication law recorded"
+    assert "pair_openai_uncertainty_001" in text
+    assert "pair_openai_uncertainty_002" in text
+    assert "pair_openai_uncertainty_003" in text
+    assert "same OpenAI commitment-path truth boundary" in text
+    assert "same contradiction/degradation preservation law" in text
+    assert "same direct commitment-path evidence surface" in text
+    assert "unique `paired_episode_set_id`" in text
+    assert "unique `session_id`" in text
+    assert "unique `commitment_id`" in text
+    assert "unique contradiction `source_tag`" in text
+    assert "unique contradiction `summary`" in text
+    assert "unique degradation `reason_code`" in text
+    assert "unique uncertainty `spike_tag`" in text
+    assert "blocked-final comparator" in text
+    assert "claims host-realization lift from this series" in text
+
+
+def test_openai_builder_packet_series_and_replication_note_exist() -> None:
+    rows = parse_markdown_table(section(read(OPENAI_BASELINE_INDEX_PATH), "Index Rows"))
+    openai_row = next(row for row in rows if row["scenario_id"] == "scenario_uncertainty_openai_01")
+
+    assert openai_row["evidence_status"] == "baseline_packet_committed"
+    assert openai_row["paired_episode_set_id"] == "pair_openai_uncertainty_001"
+    assert openai_row["packet_path"] == (
         "docs/mediation_evidence/openai/"
         "scenario_uncertainty_openai_01__baseline_non_mediated__run_001.md"
     )
+    assert openai_row["failure_tags"] == "none"
     assert (
-        row["basis_surface"]
+        openai_row["basis_surface"]
         == "tests/integration/test_openai_mediation_baseline_packets.py::test_openai_uncertainty_baseline_packet_matches_committed_doc"
     )
-    assert row["failure_tags"] == "none"
     assert OPENAI_UNCERTAINTY_PACKET_PATH.is_file()
     assert (
-        "docs/mediation_evidence/openai/"
-        "scenario_uncertainty_openai_01__baseline_non_mediated__run_001.md"
-    ) in OPENAI_MEDIATION_BASELINE_PACKET_DOC_BUILDERS
-    assert not list(OPENAI_UNCERTAINTY_PACKET_PATH.parent.glob("*__experimental_mediated__run_*.md"))
-
-
-def test_openai_paired_evidence_remains_absent_for_uncertainty_anchor() -> None:
-    ledger_rows = parse_markdown_table(section(read(PAIRED_LEDGER_PATH), "Recorded Paired Runs"))
-
-    assert all(
-        row["scenario_id"] != "scenario_uncertainty_openai_01"
-        for row in ledger_rows
-        if row["paired_episode_set_id"] != "none_recorded_yet"
+        "docs/mediation_evidence/openai/scenario_uncertainty_openai_01__baseline_non_mediated__run_001.md"
+        in OPENAI_MEDIATION_BASELINE_PACKET_DOC_BUILDERS
     )
 
+    for pair_key in OPENAI_UNCERTAINTY_PAIR_KEYS:
+        snapshot = build_openai_uncertainty_episode_snapshot(pair_key)
+        assert snapshot["step_sequence"] == list(EXPECTED_OPENAI_UNCERTAINTY_STEP_SEQUENCE)
+        assert snapshot["uncertified_loop_count"] == 2
+        assert OPENAI_UNCERTAINTY_BASELINE_PACKET_PATHS[pair_key].exists()
+        assert OPENAI_UNCERTAINTY_MEDIATED_PACKET_PATHS[pair_key].exists()
 
-def test_evidence_note_keeps_mediation_blocked_with_openai_baseline_anchor_only() -> None:
+    assert len({spec.pair_id for spec in OPENAI_UNCERTAINTY_PAIR_SPECS.values()}) == 3
+    assert len({spec.session_id for spec in OPENAI_UNCERTAINTY_PAIR_SPECS.values()}) == 3
+    assert len({spec.commitment_id for spec in OPENAI_UNCERTAINTY_PAIR_SPECS.values()}) == 3
+    assert len({spec.provenance_artifact_id for spec in OPENAI_UNCERTAINTY_PAIR_SPECS.values()}) == 3
+    assert len({spec.contradiction_source_tag for spec in OPENAI_UNCERTAINTY_PAIR_SPECS.values()}) == 3
+    assert len({spec.contradiction_summary for spec in OPENAI_UNCERTAINTY_PAIR_SPECS.values()}) == 3
+    assert len({spec.degradation_reason_code for spec in OPENAI_UNCERTAINTY_PAIR_SPECS.values()}) == 3
+    assert len({spec.uncertainty_spike_tag for spec in OPENAI_UNCERTAINTY_PAIR_SPECS.values()}) == 3
+
+
+def test_evidence_note_keeps_mediation_blocked_with_openai_uncertainty_series() -> None:
     text = read(EVIDENCE_NOTE_PATH)
+    ledger_rows = parse_markdown_table(section(read(PAIRED_LEDGER_PATH), "Recorded Paired Runs"))
 
-    assert status(EVIDENCE_NOTE_PATH) == "reference_and_gemini_series_with_openai_baseline_anchor_recorded"
-    assert "A committed OpenAI uncertainty baseline anchor is now recorded" in text
+    assert status(EVIDENCE_NOTE_PATH) == "reference_and_gemini_series_with_openai_uncertainty_three_pairs_recorded"
+    assert "Three experimental OpenAI-only uncertainty pairs are now recorded" in text
+    assert (
+        "`scenario_uncertainty_openai_01` / `openai` now has `candidate_positive` "
+        "cell-level signal for better uncertainty handling"
+    ) in text
     assert "Mediation remains blocked" in text
     assert "no implementation seam may open" in text
+    assert any(row["scenario_id"] == "scenario_uncertainty_openai_01" for row in ledger_rows)

@@ -14,6 +14,8 @@ from tests._mediation_evidence import (
     MEDIATION_REFERENCE_PACKET_ROOT,
     MEDIATION_GEMINI_PACKET_ROOT,
     OPENAI_BASELINE_INDEX_PATH,
+    OPENAI_UNCERTAINTY_BASELINE_PACKET_PATHS,
+    OPENAI_UNCERTAINTY_MEDIATED_PACKET_PATHS,
     OPENAI_UNCERTAINTY_PACKET_PATH,
     REFERENCE_BASELINE_INDEX_PATH,
     REFERENCE_UNCERTAINTY_BASELINE_PACKET_PATHS,
@@ -99,7 +101,7 @@ def test_openai_baseline_index_is_openai_only_and_commits_one_openai_anchor() ->
     assert row["scenario_id"] == "scenario_uncertainty_openai_01"
     assert row["host_family"] == "openai"
     assert row["variant"] == "baseline_non_mediated"
-    assert row["paired_episode_set_id"] == "pending_pair_openai_uncertainty_001"
+    assert row["paired_episode_set_id"] == "pair_openai_uncertainty_001"
     assert row["scenario_id"] in scenarios
     assert scenarios[row["scenario_id"]]["host_family"] == "openai"
     assert all_tags_allowed(row["failure_tags"], failure_tags)
@@ -257,42 +259,83 @@ def test_committed_openai_baseline_packets_match_catalog_and_stay_baseline_only(
     failure_tags = load_failure_tags()
     baseline_packets = sorted(MEDIATION_OPENAI_PACKET_ROOT.glob("*__baseline_non_mediated__run_*.md"))
 
-    assert len(baseline_packets) == 1
-    packet_path = baseline_packets[0]
-    packet = parse_run_packet(packet_path)
-    scenario = scenarios[packet["header"]["scenario_id"]]
+    assert len(baseline_packets) == 3
 
-    assert packet["status"] == "reviewed_evidence"
-    assert packet["variant_metadata"]["variant"] == "baseline_non_mediated"
-    assert packet["variant_metadata"]["host_family"] == "openai"
-    assert packet["variant_metadata"]["scenario_family"] == scenario["scenario_family"]
-    assert packet["variant_metadata"]["task_value_rubric_id"] == scenario["task_value_rubric_id"]
-    assert (
-        packet["variant_metadata"]["approval_or_environment_context_id"]
-        == scenario["approval_or_environment_context_id"]
-    )
-    assert packet["header"]["scenario_id"] == "scenario_uncertainty_openai_01"
-    assert packet_path == OPENAI_UNCERTAINTY_PACKET_PATH
+    for packet_path in baseline_packets:
+        packet = parse_run_packet(packet_path)
+        scenario = scenarios[packet["header"]["scenario_id"]]
 
-    rows = parse_markdown_table(section(read(OPENAI_BASELINE_INDEX_PATH), "Index Rows"))
-    row = next(row for row in rows if row["scenario_id"] == packet["header"]["scenario_id"])
-    assert packet["header"]["run_id"] == row["run_id"]
-    assert packet["header"]["paired_episode_set_id"] == row["paired_episode_set_id"]
+        assert packet["status"] == "reviewed_evidence"
+        assert packet["variant_metadata"]["variant"] == "baseline_non_mediated"
+        assert packet["variant_metadata"]["host_family"] == "openai"
+        assert packet["variant_metadata"]["scenario_family"] == scenario["scenario_family"]
+        assert packet["variant_metadata"]["task_value_rubric_id"] == scenario["task_value_rubric_id"]
+        assert (
+            packet["variant_metadata"]["approval_or_environment_context_id"]
+            == scenario["approval_or_environment_context_id"]
+        )
+        assert packet["header"]["scenario_id"] == "scenario_uncertainty_openai_01"
+        assert packet_path in OPENAI_UNCERTAINTY_BASELINE_PACKET_PATHS.values()
+        assert packet["header"]["run_id"].startswith("openai_uncertainty_baseline_run_")
+        assert packet["header"]["paired_episode_set_id"].startswith("pair_openai_uncertainty_")
 
-    for field_name in RUN_PACKET_INVARIANT_FIELDS:
-        assert packet["invariant_lock"][field_name] == "yes"
+        if packet_path == OPENAI_UNCERTAINTY_PACKET_PATH:
+            rows = parse_markdown_table(section(read(OPENAI_BASELINE_INDEX_PATH), "Index Rows"))
+            row = next(row for row in rows if row["scenario_id"] == packet["header"]["scenario_id"])
+            assert packet["header"]["run_id"] == row["run_id"]
+            assert packet["header"]["paired_episode_set_id"] == row["paired_episode_set_id"]
 
-    for axis_payload in packet["lift_axes"].values():
-        assert axis_payload["verdict"] in VERDICTS
-        assert axis_payload["verdict"] == "insufficient"
+        for field_name in RUN_PACKET_INVARIANT_FIELDS:
+            assert packet["invariant_lock"][field_name] == "yes"
 
-    assert packet["exclusions"]["exclusion_status"] == "none"
-    assert all_tags_allowed(packet["exclusions"]["failure_tags"], failure_tags)
-    assert packet["exclusions"]["failure_tags"] == "none"
-    reviewer_note = packet["reviewer_note"]["reviewer_note"]
-    assert "baseline-only committed evidence" in reviewer_note
-    assert "not comparative mediation evidence" in reviewer_note
-    assert "does not justify mediation" in reviewer_note
+        for axis_payload in packet["lift_axes"].values():
+            assert axis_payload["verdict"] in VERDICTS
+            assert axis_payload["verdict"] == "insufficient"
+
+        assert packet["exclusions"]["exclusion_status"] == "none"
+        assert all_tags_allowed(packet["exclusions"]["failure_tags"], failure_tags)
+        assert packet["exclusions"]["failure_tags"] == "none"
+        reviewer_note = packet["reviewer_note"]["reviewer_note"]
+        assert "baseline-only committed evidence" in reviewer_note
+        assert "does not justify mediation" in reviewer_note
+
+
+def test_experimental_openai_packets_match_catalog_and_stay_experimental() -> None:
+    scenarios = load_scenarios()
+    failure_tags = load_failure_tags()
+
+    for packet_path in OPENAI_UNCERTAINTY_MEDIATED_PACKET_PATHS.values():
+        packet = parse_run_packet(packet_path)
+        scenario = scenarios[packet["header"]["scenario_id"]]
+
+        assert packet_path.is_file()
+        assert packet["status"] == "reviewed_evidence"
+        assert packet["header"]["scenario_id"] == "scenario_uncertainty_openai_01"
+        assert packet["header"]["run_id"].startswith("openai_uncertainty_mediated_run_")
+        assert packet["header"]["paired_episode_set_id"].startswith("pair_openai_uncertainty_")
+        assert packet["variant_metadata"]["variant"] == "experimental_mediated"
+        assert packet["variant_metadata"]["host_family"] == "openai"
+        assert packet["variant_metadata"]["scenario_family"] == scenario["scenario_family"]
+        assert packet["variant_metadata"]["task_value_rubric_id"] == scenario["task_value_rubric_id"]
+        assert (
+            packet["variant_metadata"]["approval_or_environment_context_id"]
+            == scenario["approval_or_environment_context_id"]
+        )
+
+        for field_name in RUN_PACKET_INVARIANT_FIELDS:
+            assert packet["invariant_lock"][field_name] == "yes"
+
+        for axis_payload in packet["lift_axes"].values():
+            assert axis_payload["verdict"] in VERDICTS
+            assert axis_payload["verdict"] == "insufficient"
+
+        assert packet["exclusions"]["exclusion_status"] == "none"
+        assert all_tags_allowed(packet["exclusions"]["failure_tags"], failure_tags)
+        assert packet["exclusions"]["failure_tags"] == "none"
+        reviewer_note = packet["reviewer_note"]["reviewer_note"]
+        assert "experimental mediated evidence only" in reviewer_note
+        assert "OpenAI-only" in reviewer_note
+        assert "package-level evidence notes govern any verdict" in reviewer_note
 
 
 def test_experimental_reference_packets_match_catalog_and_stay_experimental() -> None:
@@ -374,8 +417,13 @@ def test_gemini_packet_directory_contains_three_baselines_and_three_experimental
     ]
 
 
-def test_openai_packet_directory_contains_one_baseline_and_no_experimental_packets() -> None:
+def test_openai_packet_directory_contains_three_baselines_and_three_experimental_packets() -> None:
     packet_names = sorted(path.name for path in MEDIATION_OPENAI_PACKET_ROOT.glob("*.md"))
     assert packet_names == [
         "scenario_uncertainty_openai_01__baseline_non_mediated__run_001.md",
+        "scenario_uncertainty_openai_01__baseline_non_mediated__run_002.md",
+        "scenario_uncertainty_openai_01__baseline_non_mediated__run_003.md",
+        "scenario_uncertainty_openai_01__experimental_mediated__run_001.md",
+        "scenario_uncertainty_openai_01__experimental_mediated__run_002.md",
+        "scenario_uncertainty_openai_01__experimental_mediated__run_003.md",
     ]

@@ -1,24 +1,24 @@
-# scenario_uncertainty_openai_01__baseline_non_mediated__run_001
+# scenario_uncertainty_openai_01__experimental_mediated__run_001
 
 Date: 2026-03-20
 Status: `reviewed_evidence`
 
 ## Scope
 
-This committed run packet records one OpenAI-host baseline-only uncertainty packet within the committed OpenAI uncertainty paired-run series for mediation evidence review.
-It does not provide comparative mediation evidence by itself, justify mediation, or authorize implementation work.
+This committed run packet records one OpenAI-host experimental mediated uncertainty comparator within the committed OpenAI uncertainty paired-run series for mediation evidence review.
+It does not justify mediation, does not authorize implementation work, and package-level evidence notes govern any verdict.
 
 ## Header
 
 - date: 2026-03-20
 - status: `reviewed_evidence`
 - scenario_id: `scenario_uncertainty_openai_01`
-- run_id: `openai_uncertainty_baseline_run_001`
+- run_id: `openai_uncertainty_mediated_run_001`
 - paired_episode_set_id: `pair_openai_uncertainty_001`
 
 ## Variant Metadata
 
-- variant: `baseline_non_mediated`
+- variant: `experimental_mediated`
 - host_family: `openai`
 - scenario_family: `uncertainty_boundary`
 - task_value_rubric_id: `task_value_equal_truth_preservation`
@@ -41,15 +41,15 @@ It does not provide comparative mediation evidence by itself, justify mediation,
 
 ## Run Outputs
 
-- outcome_summary: The bounded OpenAI-host uncertainty episode reaches certified completion at `openai-uncertainty-step-3` after two guarded uncertified full-commitment turns.
-- branch_trajectory_summary: This OpenAI-only uncertainty series stays on a `check`-family path and records no branch-control sequence.
-- uncertainty_or_brake_summary: `guarded` brake state is explicit at `openai-uncertainty-step-1` and `openai-uncertainty-step-2`, with contradiction and degradation evidence preserved until certified resolution at `openai-uncertainty-step-3`.
+- outcome_summary: The experimental mediated comparator reaches the same certified OpenAI-host completion class at `openai-uncertainty-mediated-step-2` after one guarded uncertified follow-up.
+- branch_trajectory_summary: This OpenAI-only experimental comparator derives `guard -> resolve`, removing the redundant uncertified retry step present in the baseline while preserving certified resolution.
+- uncertainty_or_brake_summary: The guarded uncertified state remains explicit at `openai-uncertainty-mediated-step-1`, contradiction/degradation evidence remains explicit, and certification still requires lawful provenance at `openai-uncertainty-mediated-step-2`.
 - burden_summary: none
-- host_realization_summary: OpenAI commitment semantics, contradiction-bearing evidence, and the same certified-resolution truth boundary are preserved.
+- host_realization_summary: The comparator remains OpenAI-only and preserves the same OpenAI commitment, contradiction, degradation, and direct commitment-path evidence surface as its matched baseline.
 
 ## Artifact Refs
 
-- event_trace_refs: `openai-uncertainty-step-1:response.completed/guard, openai-uncertainty-step-2:response.completed/retry, openai-uncertainty-step-3:response.completed/resolve; uncertified_loop_count=2`
+- event_trace_refs: `openai-uncertainty-mediated-step-1:response.completed/guard, openai-uncertainty-mediated-step-2:response.completed/resolve`
 - contradiction_refs: `openai-trace-check:OpenAI approval evidence remains incomplete`
 - degradation_refs: `openai-evidence-partial`
 - aux_burden_refs_if_present: none
@@ -59,31 +59,31 @@ It does not provide comparative mediation evidence by itself, justify mediation,
 
 ### Reduced Thrashing
 
-- observation: This packet records an OpenAI-only uncertainty loop without any branch-control comparison.
+- observation: This experimental OpenAI-only uncertainty packet preserves the same OpenAI uncertainty surface without adding branch behavior.
 - metric_notes: Package-level evidence notes govern whether repeated paired evidence is enough to claim any thrash change.
 - verdict: `insufficient`
 
 ### Better Branch Discipline
 
-- observation: This packet stays on the `check` family and does not exercise branch control.
+- observation: This uncertainty comparator keeps the same `check`-family surface and does not add branch-family intervention.
 - metric_notes: Package-level evidence notes govern whether repeated paired evidence is enough to claim any branch-discipline effect.
 - verdict: `insufficient`
 
 ### Better Uncertainty Handling
 
-- observation: This packet preserves guarded uncertified handling with explicit contradiction and degradation evidence within the committed OpenAI uncertainty paired-run series.
+- observation: This experimental OpenAI-only comparator preserves the same guarded uncertified state and contradiction-bearing evidence while removing one redundant uncertified loop before certified resolution.
 - metric_notes: Package-level evidence notes govern whether repeated paired evidence is enough to claim uncertainty-handling lift.
 - verdict: `insufficient`
 
 ### Lower Visible Burden At Equal Task Value
 
-- observation: Baseline-only packet within the committed OpenAI uncertainty paired-run series; no AUX burden artifact is recorded here.
+- observation: Equal certified resolution is preserved and no AUX burden artifact is recorded within this packet.
 - metric_notes: Package-level evidence notes govern whether repeated paired evidence is enough to claim burden lift.
 - verdict: `insufficient`
 
 ### Better Host-Specialized Realization
 
-- observation: This packet stays on the OpenAI commitment surface while preserving contradiction-bearing evidence.
+- observation: The comparator stays OpenAI-only and contradiction-preserving within the committed uncertainty paired-run series.
 - metric_notes: Package-level evidence notes govern whether repeated paired evidence is enough to claim host-specialized realization lift.
 - verdict: `insufficient`
 
@@ -91,8 +91,8 @@ It does not provide comparative mediation evidence by itself, justify mediation,
 
 - exclusion_status: `none`
 - failure_tags: `none`
-- notes: This packet is part of the committed OpenAI uncertainty paired-run series under `pair_openai_uncertainty_001`. A single packet does not justify mediation; package-level evidence notes govern verdicts.
+- notes: This experimental mediated packet is part of the committed OpenAI uncertainty paired-run series under `pair_openai_uncertainty_001`. A single packet does not justify mediation; package-level evidence notes govern verdicts.
 
 ## Reviewer Note
 
-- reviewer_note: This is baseline-only committed evidence within the committed OpenAI uncertainty paired-run series. It is not comparative mediation evidence by itself and does not justify mediation or authorize any implementation seam.
+- reviewer_note: This is experimental mediated evidence only within the committed OpenAI uncertainty paired-run series. It remains OpenAI-only, does not justify mediation, and package-level evidence notes govern any verdict.
