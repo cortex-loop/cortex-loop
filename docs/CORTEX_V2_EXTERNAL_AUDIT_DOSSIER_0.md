@@ -3,37 +3,117 @@
 Date: 2026-03-20
 Status: `external audit dossier generated from current active v2 repo state`
 
-## Purpose
+## Read This First
 
-This dossier is a single-file handoff artifact for an outside deep-research audit agent.
-It is designed to answer three questions without requiring repo access:
+This document is intended to be sufficient for an outside deep-research audit agent without direct repo access.
+It has two jobs:
 
-1. What Cortex v2 set out to build.
-2. What is actually landed now.
-3. What active code, tests, and authority surfaces exist in the current repo.
+1. explain the full current v2 state clearly at the top,
+2. append the full active v2 text corpus below so the auditor can inspect every active code/doc/test surface from one file.
 
-This dossier summarizes the active v2 state and then appends the full active text corpus for the repo in deterministic relative-path order.
+## Completeness Declaration
+
+This dossier includes **every active non-archive, non-cache text file in the repository** at generation time, with these explicit exclusions only:
+
+- `docs/archive/` because the v1 archive is reference-only, not active authority
+- `.git/` because git internals are not v2 code or authority surfaces
+- `.pytest_cache/` because it is local cache noise
+- `.claude/` because it is local workspace noise, not repo authority
+- binary/cache artifacts such as `__pycache__`, `.pyc`, images, wheels, shared libraries
+- this dossier file itself, to avoid recursive self-appending
+
+If a text file is part of the active v2 repo state outside those exclusions, it is appended below.
 
 ## Repository Snapshot
 
 - branch: `codex/e1-verification-substrate-entrypoints`
-- commit: `7135c59ad3effd62488c44ae7cdf3caa4b0cf549`
+- commit at dossier generation: `eb06f81899b9e5e7b3b025615f4afbeee5900dac`
 - `origin/main...main`: `0	1`
-- active text files appended: `197`
-- active text bytes appended before this dossier: `1552538`
+- included active text files: `203`
+- included bytes before dossier generation: `1556283`
 
-Working tree note:
+Category counts:
+
+- runtime code files under `cortex/`: `45`
+- test files under `tests/`: `71`
+- docs under `docs/` excluding archive: `77`
+- workflow/config files under `.codex/`: `5`
+- repo-root contract/config files: `5`
+
+Working tree note at generation time:
 
 ```text
 M AGENTS.md
 ?? .claude/
 ```
 
-Unrelated local noise may still exist in `AGENTS.md` and `.claude/`; this dossier excludes `.claude/` and includes `AGENTS.md` because the repo contract affects audit interpretation.
+## Executive Summary
+
+### What v2 set out to build
+
+The active master plan and packet docs define Cortex v2 as:
+
+- lifecycle-first instead of stop-centered
+- packet-first internally and host-native externally
+- executive-first, with the core as a tiny integrity microkernel
+- contradiction-preserving and truth-preserving
+- reference-host first, then Gemini and OpenAI
+- AUX removable and off the MVP critical path
+- mediation explicitly blocked unless measurable lift evidence is earned
+
+### What is landed now
+
+Per the active authority and gate docs, the following are real and landed:
+
+- Core microkernel substrate
+- SRE reference policy substrate
+- Reference host vertical slices: observe/bind, commitment-path, neutral-only
+- Gemini host vertical slices: observe/bind, commitment-path, neutral-only
+- OpenAI host vertical slices: observe/bind, commitment-path, neutral-only
+- Eval artifact schemas, contradiction-preserving harness, truthful-withheld packet publication
+- Committed reference-lane packet example
+- AUX MVP scaffolds
+- Phase gates for first-host vertical, latency evidence, and proof-packet prerequisites
+
+### What is experimentally built but still blocked
+
+The mediation evidence program is now substantially built out:
+
+- three counted reference thrash pairs
+- three counted Gemini thrash pairs
+- three counted OpenAI thrash pairs
+- three counted reference uncertainty pairs
+- three counted Gemini uncertainty pairs
+- three counted OpenAI uncertainty pairs
+- reference host-realization baseline plus admissibility audit
+- Gemini host-realization admissibility audit
+- OpenAI host-realization still not yet audited/earned
+
+But the package-level result remains conservative:
+
+- mediation is still blocked
+- package-level axis summaries are still `insufficient`
+- host-realization is still intentionally unearned outside the reference baseline/audit path
+
+### What is still missing for a v1-like shipped product
+
+Architecturally, v2 is far along.
+As an installable/distributable product, it is still missing the product shell.
+
+Current packaging/distribution state:
+
+- `pyproject.toml`: absent
+- `setup.py`: absent
+- `setup.cfg`: absent
+- console entry point metadata: absent
+- release/PyPI publication scaffold: absent
+- user-facing CLI command surface: absent in repo metadata
+
+So the engine and evidence substrate are real, but a v1-like `pip install` + CLI + release workflow is mostly not yet built.
 
 ## Active Authority Reading Order
 
-For an external audit, the highest-signal active authority surfaces are:
+For a serious external audit, read these first in order:
 
 1. `docs/CORTEX_V2_CORE_2.md`
 2. `docs/CORTEX_V2_SRE_2.md`
@@ -46,95 +126,27 @@ For an external audit, the highest-signal active authority surfaces are:
 9. `docs/CORTEX_V2_MEDIATION_EVIDENCE_NOTE_0.md`
 10. `docs/CORTEX_V2_LOCAL_VERIFICATION.md`
 
-## ELI5 State Summary
+## Audit Questions To Ask
 
-### Where v2 started after the master plan
+An outside auditor should press on these points:
 
-The master plan started from a blank-repo v2 build. The architecture target was:
-
-- lifecycle-first instead of stop-centered
-- packet-first internally and host-native externally
-- executive-first, with the core as a tiny integrity microkernel
-- one real reference-host vertical before broad rollout
-- contradiction-preserving evidence before broad mediation claims
-- AUX removable and off the critical path
-- mediation explicitly blocked until measurable lift evidence exists
-
-### Where v2 is now
-
-Per the active implementation status and phase-gate docs, the following are landed:
-
-- core microkernel substrate
-- SRE reference policy substrate
-- reference-host observe/bind, commitment-path, and neutral-only slices
-- Gemini observe/bind, commitment-path, and neutral-only slices
-- OpenAI observe/bind, commitment-path, and neutral-only slices
-- contradiction-preserving eval artifacts and truthful-withheld packet publication
-- committed reference-lane packet example
-- AUX MVP scaffolds
-- first-host-vertical, latency-evidence, and proof-packet prerequisite phase gates
-
-The mediation evidence package is also much more complete than the original closeout point:
-
-- three counted reference thrash pairs
-- three counted Gemini thrash pairs
-- three counted OpenAI thrash pairs
-- three counted reference uncertainty pairs
-- three counted Gemini uncertainty pairs
-- three counted OpenAI uncertainty pairs
-- host-realization still intentionally unearned outside the reference baseline/audit path
-
-Important blocker truth:
-
-- mediation is still blocked
-- package-level axis summaries are still `insufficient`
-- host-realization is still intentionally unpaired/unanchored for Gemini and OpenAI
-
-### How far v2 is from a v1-like installable product
-
-Architecturally, v2 is far along.
-Product-shell-wise, it is not yet near a v1-style shipped CLI.
-
-Current packaging/distribution state in this repo:
-
-- `pyproject.toml`: absent
-- `setup.py`: absent
-- `setup.cfg`: absent
-- console entry point metadata: absent
-- release / PyPI publication scaffold: absent
-
-So the engine and evidence substrate are real, but the installable/distributable CLI shell is mostly not yet built.
-
-## Audit Focus Recommendations
-
-An outside audit agent should pay special attention to:
-
-1. Whether the core is actually staying microkernel-limited rather than quietly absorbing SRE policy.
-2. Whether the math-to-code correspondence remains one-object / one-home / one-test in practice.
-3. Whether host-native differences are preserved honestly instead of flattened for fake uniformity.
-4. Whether the mediation evidence package is conservative enough, especially around host-realization.
-5. Whether the current duplication across host drivers is maintainability debt only, or a deeper architecture smell.
-6. Whether the repo is ready for a separate productization program for CLI / packaging / PyPI, rather than mixing that into architectural seams.
-
-## Dossier Scope And Exclusions
-
-Included:
-
-- active code under `cortex/`
-- active tests under `tests/`
-- active docs under `docs/` except `docs/archive/`
-- top-level repo contract and local verification entry points
-
-Excluded:
-
-- `docs/archive/` (v1 archive reference only, not active authority)
-- `.claude/` local noise
-- binary/cache files (`__pycache__`, `.pyc`, images, wheels, etc.)
+1. Is the core still genuinely microkernel-limited, or has SRE policy leaked inward?
+2. Is the code-to-math correspondence still one-object / one-home / one-test in practice?
+3. Are host-native differences preserved honestly rather than flattened for fake uniformity?
+4. Is the mediation evidence package conservative enough, especially around host-realization?
+5. Is the duplication across host drivers only maintainability debt, or is it hiding deeper architecture drift?
+6. Is the repo ready for a separate productization program for CLI / packaging / PyPI instead of mixing product-shell work into architecture seams?
 
 ## Included File Manifest
 
-The appendix below appends the full active text corpus in sorted relative-path order.
+The appendix below appends every included file in sorted relative-path order.
+- `.codex/agents/cortex_archivist.toml`
+- `.codex/agents/cortex_host_researcher.toml`
+- `.codex/agents/cortex_packet_auditor.toml`
+- `.codex/agents/cortex_worker.toml`
+- `.codex/config.toml`
 - `.coveragerc`
+- `.gitignore`
 - `AGENTS.md`
 - `Makefile`
 - `cortex/__init__.py`
@@ -334,6 +346,138 @@ The appendix below appends the full active text corpus in sorted relative-path o
 
 ## Full Appendix
 
+### `.codex/agents/cortex_archivist.toml`
+
+```toml
+name = "cortex_archivist"
+description = "Read-only miner for the v1 archive and current packet docs. Use for extracting battle-proven primitives, citations, examples, and contradiction-preserving evidence."
+developer_instructions = """
+You are the Cortex archivist.
+
+Role:
+- Read-only research/mining subagent.
+- Mine the v1 archive and current packet docs for narrow reusable primitives, evidence patterns, exact references, and contradiction-preserving examples.
+- Return concise summaries with exact file paths and line references when available.
+
+What to optimize for:
+- smallest reusable primitive
+- evidence over theory
+- preserve contradictions
+- do not smuggle v1 architecture back in
+
+Do not:
+- edit files
+- propose broad architecture changes unless explicitly asked
+- collapse mixed evidence into one tidy story
+"""
+model = "gpt-5.4"
+model_reasoning_effort = "xhigh"
+service_tier = "fast"
+sandbox_mode = "read-only"
+nickname_candidates = ["Archive", "Ledger", "Strata"]
+```
+
+### `.codex/agents/cortex_host_researcher.toml`
+
+```toml
+name = "cortex_host_researcher"
+description = "Read-only external host/runtime researcher. Use for Claude, Gemini, OpenAI lifecycle, approvals, tool, MCP, and orchestration surface research."
+developer_instructions = """
+You are the Cortex host researcher.
+
+Role:
+- Read-only external documentation researcher for host/runtime surfaces.
+- Focus on lifecycle events, tool interception, approvals, MCP, orchestration, and subagent/runtime behavior.
+
+What to optimize for:
+- official documentation first
+- concrete host capabilities and limits
+- implications for implementation, not vague summaries
+
+Do not:
+- edit files
+- invent capabilities the host does not document
+- smooth over differences across hosts
+"""
+model = "gpt-5.4"
+model_reasoning_effort = "xhigh"
+service_tier = "fast"
+sandbox_mode = "read-only"
+nickname_candidates = ["Signals", "Orbit", "Pulse"]
+```
+
+### `.codex/agents/cortex_packet_auditor.toml`
+
+```toml
+name = "cortex_packet_auditor"
+description = "Read-only packet and layer-boundary auditor. Use for Core/SRE/AUX consistency checks, authority leaks, and seam-scope review."
+developer_instructions = """
+You are the Cortex packet auditor.
+
+Role:
+- Read-only consistency auditor for the active v2 packet and implementation plan.
+- Check layer ownership, packet-law compliance, authority drift, and seam scope.
+
+What to optimize for:
+- catch boundary leaks early
+- identify the smallest fix
+- distinguish architecture problems from staging problems
+
+Do not:
+- edit files
+- recommend broad redesign unless a direct authority contradiction exists
+- treat experimental or deferred material as active runtime obligation
+"""
+model = "gpt-5.4"
+model_reasoning_effort = "xhigh"
+service_tier = "fast"
+sandbox_mode = "read-only"
+nickname_candidates = ["Axiom", "Lint", "Delta"]
+```
+
+### `.codex/agents/cortex_worker.toml`
+
+```toml
+name = "cortex_worker"
+description = "One bounded workspace-write implementation seam. Use only after the parent has selected an exact seam and touch surface."
+developer_instructions = """
+You are the Cortex implementation worker.
+
+Role:
+- Execute exactly one bounded implementation seam chosen by the parent.
+- Preserve Core / SRE / AUX boundaries.
+- Prefer the smallest diff that honestly lands the seam.
+
+What to optimize for:
+- one seam
+- one touch surface set
+- one verification bundle
+- packet-law preservation
+
+Do not:
+- widen the seam
+- perform multi-host edits unless the seam explicitly requires them
+- reintroduce v1 architecture
+- modify active packet authority docs unless the seam explicitly allows it
+- start a second write-heavy task in parallel
+"""
+model = "gpt-5.4"
+model_reasoning_effort = "xhigh"
+service_tier = "fast"
+sandbox_mode = "workspace-write"
+nickname_candidates = ["Forge", "Vector", "Shard"]
+```
+
+### `.codex/config.toml`
+
+```toml
+service_tier = "fast"
+[agents]
+max_threads = 3
+max_depth = 1
+job_max_runtime_seconds = 1200
+```
+
 ### `.coveragerc`
 
 ```text
@@ -341,6 +485,13 @@ The appendix below appends the full active text corpus in sorted relative-path o
 source =
     cortex
     tests
+```
+
+### `.gitignore`
+
+```text
+.DS_Store
+__pycache__/
 ```
 
 ### `AGENTS.md`
