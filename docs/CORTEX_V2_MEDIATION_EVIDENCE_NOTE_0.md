@@ -1,7 +1,7 @@
 # CORTEX_V2_MEDIATION_EVIDENCE_NOTE_0
 
 Date: 2026-03-20
-Status: `no_live_runs_recorded`
+Status: `reference_baseline_runs_recorded`
 
 ## Scope
 
@@ -10,8 +10,10 @@ Version `0` is a reporting scaffold only; it does not justify mediation, activat
 
 ## Current Evidence State
 
+Committed reference-host baseline run packets are now recorded in `docs/CORTEX_V2_MEDIATION_REFERENCE_BASELINE_INDEX_0.md`.
 No live baseline-versus-mediated paired runs are currently recorded in `docs/CORTEX_V2_MEDIATION_PAIRED_RUN_LEDGER_0.md`.
 The current package is preseeded from the scenario catalog so future evidence cannot cherry-pick only favorable scenario-host cells.
+`scenario_thrash_reference_01` remains an explicit `artifact_gap` because the repo does not yet contain an honest repeated branch-churn reference packet.
 
 ## Per-Axis Status
 
@@ -23,9 +25,9 @@ The current package is preseeded from the scenario catalog so future evidence ca
 
 ## Per-Host Status
 
-- `reference`: `no_live_pairs_recorded`
-- `gemini`: `no_live_pairs_recorded`
-- `openai`: `no_live_pairs_recorded`
+- `reference`: `baseline_only_runs_recorded`
+- `gemini`: `planned_only`
+- `openai`: `planned_only`
 
 ## Blocker Statement
 

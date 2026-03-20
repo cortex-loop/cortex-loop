@@ -98,6 +98,7 @@ It does not record a result by itself, justify mediation, or authorize implement
 ## Exclusions Or Unusable-Pair Notes
 
 - exclusion_status: `none` | `excluded` | `confidence_downgraded`
+- failure_tags:
 - notes:
 
 ## Reviewer Note

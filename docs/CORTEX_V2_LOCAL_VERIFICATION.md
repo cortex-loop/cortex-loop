@@ -140,6 +140,37 @@ Repo-local entry point:
 make revalidate-mediation-evidence-package
 ```
 
+## Mediation run-packet revalidation
+
+This checks the committed reference-host baseline run index and the committed run-packet instances.
+It validates packet metadata against the scenario catalog, confirms the packets stay baseline-only, and keeps the explicit `artifact_gap` for the reference thrash scenario visible.
+
+Direct command:
+
+```sh
+python3 -m pytest tests/unit/test_mediation_run_packets.py -q
+```
+
+Repo-local entry point:
+
+```sh
+make revalidate-mediation-run-packets
+```
+
+## Aggregate mediation-evidence revalidation
+
+This runs both mediation-evidence checks together:
+- package scaffold validation
+- run-packet instance validation
+
+It remains check-only and does not generate evidence or authorize mediation implementation.
+
+Repo-local entry point:
+
+```sh
+make revalidate-mediation-evidence
+```
+
 ## Individual entry points
 
 ```sh
