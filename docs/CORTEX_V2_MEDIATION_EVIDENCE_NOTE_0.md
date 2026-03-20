@@ -1,7 +1,7 @@
 # CORTEX_V2_MEDIATION_EVIDENCE_NOTE_0
 
 Date: 2026-03-20
-Status: `reference_and_gemini_series_with_openai_uncertainty_three_pairs_recorded`
+Status: `reference_and_gemini_two_series_with_openai_uncertainty_three_pairs_recorded`
 
 ## Scope
 
@@ -12,16 +12,19 @@ Version `0` is a reporting scaffold only; it does not justify mediation, activat
 
 All current reference-host scenario families now have committed baseline run packets in `docs/CORTEX_V2_MEDIATION_REFERENCE_BASELINE_INDEX_0.md`.
 Three experimental reference-only baseline-versus-mediated thrash pairs are now recorded in `docs/CORTEX_V2_MEDIATION_PAIRED_RUN_LEDGER_0.md`.
+Three experimental Gemini-only baseline-versus-mediated thrash pairs are now recorded in `docs/CORTEX_V2_MEDIATION_PAIRED_RUN_LEDGER_0.md`.
 Three experimental reference-only uncertainty pairs are now recorded in `docs/CORTEX_V2_MEDIATION_PAIRED_RUN_LEDGER_0.md`.
 Three experimental Gemini-only uncertainty pairs are now recorded in `docs/CORTEX_V2_MEDIATION_PAIRED_RUN_LEDGER_0.md`.
 Three experimental OpenAI-only uncertainty pairs are now recorded in `docs/CORTEX_V2_MEDIATION_PAIRED_RUN_LEDGER_0.md`.
 The current package is preseeded from the scenario catalog so future evidence cannot cherry-pick only favorable scenario-host cells.
 The reference thrash baseline series is now backed by `docs/CORTEX_V2_MEDIATION_REFERENCE_THRASH_BASIS_NOTE_0.md` and `docs/CORTEX_V2_MEDIATION_REFERENCE_THRASH_REPLICATION_NOTE_0.md`, which record the committed baseline series, the live episode builder, the deterministic derivation rules, and the counted three-pair replication law.
 The reference uncertainty baseline series is now backed by `docs/CORTEX_V2_MEDIATION_REFERENCE_UNCERTAINTY_BASIS_NOTE_0.md` and `docs/CORTEX_V2_MEDIATION_REFERENCE_UNCERTAINTY_REPLICATION_NOTE_0.md`, which record the committed baseline series, the live episode builder, and the counted three-pair replication law.
+The Gemini thrash series is now backed by `docs/CORTEX_V2_MEDIATION_GEMINI_THRASH_BASIS_NOTE_0.md` and `docs/CORTEX_V2_MEDIATION_GEMINI_THRASH_REPLICATION_NOTE_0.md`, which record the committed Gemini baseline series, the live episode builder, and the counted three-pair replication law.
 The Gemini uncertainty series is now backed by `docs/CORTEX_V2_MEDIATION_GEMINI_UNCERTAINTY_BASIS_NOTE_0.md` and `docs/CORTEX_V2_MEDIATION_GEMINI_UNCERTAINTY_REPLICATION_NOTE_0.md`, which record the committed Gemini baseline series, the live episode builder, and the counted three-pair replication law.
 The OpenAI uncertainty series is now backed by `docs/CORTEX_V2_MEDIATION_OPENAI_UNCERTAINTY_BASIS_NOTE_0.md` and `docs/CORTEX_V2_MEDIATION_OPENAI_UNCERTAINTY_REPLICATION_NOTE_0.md`, which record the committed OpenAI baseline series, the live episode builder, and the counted three-pair replication law.
 `scenario_host_reference_01` remains intentionally unpaired pending the comparator admissibility audit recorded in `docs/CORTEX_V2_MEDIATION_REFERENCE_HOST_REALIZATION_ADMISSIBILITY_NOTE_0.md`.
 `scenario_thrash_reference_01` / `reference` now has `candidate_positive` cell-level signal for reduced thrashing and better branch discipline, while package-level axis summaries remain globally `insufficient`.
+`scenario_thrash_gemini_01` / `gemini` now has `candidate_positive` cell-level signal for reduced thrashing and better branch discipline, while package-level axis summaries remain globally `insufficient`.
 `scenario_uncertainty_reference_01` / `reference` now has `candidate_positive` cell-level signal for better uncertainty handling, while package-level axis summaries remain globally `insufficient`.
 `scenario_uncertainty_gemini_01` / `gemini` now has `candidate_positive` cell-level signal for better uncertainty handling, while package-level axis summaries remain globally `insufficient`.
 `scenario_uncertainty_openai_01` / `openai` now has `candidate_positive` cell-level signal for better uncertainty handling, while package-level axis summaries remain globally `insufficient`.
@@ -37,7 +40,7 @@ The OpenAI uncertainty series is now backed by `docs/CORTEX_V2_MEDIATION_OPENAI_
 ## Per-Host Status
 
 - `reference`: `baseline_and_two_paired_series_recorded`
-- `gemini`: `baseline_and_one_paired_series_recorded`
+- `gemini`: `baseline_and_two_paired_series_recorded`
 - `openai`: `baseline_and_one_paired_series_recorded`
 
 ## Blocker Statement

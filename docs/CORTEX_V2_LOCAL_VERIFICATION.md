@@ -160,7 +160,7 @@ make revalidate-mediation-reference-host-realization-basis
 ## Mediation run-packet revalidation
 
 This checks the committed reference-host, Gemini-host, and OpenAI-host baseline run indexes and the committed run-packet instances.
-It validates packet metadata against the scenario catalog, confirms the canonical baseline anchors remain lawful, validates the full seven-packet reference baseline set, validates the three-packet Gemini uncertainty baseline set, validates the one-packet OpenAI uncertainty baseline anchor, and checks the nine committed experimental mediated uncertainty and thrash packets.
+It validates packet metadata against the scenario catalog, confirms the canonical baseline anchors remain lawful, validates the full seven-packet reference baseline set, validates the six-packet Gemini baseline set, validates the six-packet OpenAI baseline set, and checks the fifteen committed experimental mediated uncertainty and thrash packets.
 
 Direct command:
 
@@ -193,8 +193,8 @@ make revalidate-reference-mediation-baselines
 
 ## Live Gemini mediation-baseline revalidation
 
-This revalidates the committed Gemini-host uncertainty baseline series against the landed Gemini commitment-path slice.
-It remains Gemini-only and baseline-only: it does not advance any paired counts by itself and it does not add Gemini mediated packets.
+This revalidates the committed Gemini-host baseline packet series against the landed Gemini commitment-path slice.
+It covers the three Gemini uncertainty baselines and the three Gemini thrash baselines, remains Gemini-only and baseline-only, and does not by itself justify any paired verdict.
 
 Direct command:
 
@@ -211,7 +211,7 @@ make revalidate-gemini-mediation-baselines
 ## Gemini mediation-baseline candidate refresh
 
 This emits the committed Gemini-host baseline mediation packet docs to stdout for manual inspection.
-It prints markdown for all three committed Gemini baseline docs with committed relative-path headers, does not overwrite the committed packet docs, and does not authorize any paired comparison or mediation implementation work.
+It prints markdown for all six committed Gemini baseline docs with committed relative-path headers, does not overwrite the committed packet docs, and does not authorize any paired comparison or mediation implementation work.
 
 Direct command:
 
@@ -327,6 +327,40 @@ Repo-local entry point:
 make emit-gemini-mediated-uncertainty-candidate
 ```
 
+## Experimental Gemini mediated-thrash revalidation
+
+This revalidates the three committed experimental Gemini-only mediated thrash comparators against live Gemini lifecycle code.
+It checks that each mediated packet stays Gemini-only, preserves the same certified completion class and commitment boundary as baseline, and removes one redundant `resume` without widening package-level verdicts.
+
+Direct command:
+
+```sh
+python3 -m pytest tests/integration/test_gemini_mediated_thrash_comparator.py -q
+```
+
+Repo-local entry point:
+
+```sh
+make revalidate-gemini-mediated-thrash
+```
+
+## Experimental Gemini mediated-thrash candidate refresh
+
+This emits candidate refreshed experimental Gemini-only mediated thrash packet docs to stdout for manual inspection.
+It prints markdown for all three committed Gemini mediated thrash packet docs with committed relative-path headers, does not overwrite the committed packet docs, and does not authorize mediation implementation work.
+
+Direct command:
+
+```sh
+python3 -m tests.integration._gemini_mediation_thrash_experimental
+```
+
+Repo-local entry point:
+
+```sh
+make emit-gemini-mediated-thrash-candidate
+```
+
 ## Reference mediation-baseline candidate refresh
 
 This emits candidate refreshed reference-host baseline mediation packet docs to stdout for manual inspection.
@@ -429,6 +463,23 @@ Repo-local entry point:
 make revalidate-mediation-gemini-uncertainty-basis
 ```
 
+## Mediation Gemini thrash-basis revalidation
+
+This checks that `scenario_thrash_gemini_01` now has a satisfied committed Gemini thrash basis and replication law.
+It validates the Gemini baseline index, the Gemini thrash basis note, the Gemini thrash replication note, the committed Gemini thrash packet series, the live Gemini thrash builder set, and the repeated paired-run distinctness rules. It does not generate any new evidence.
+
+Direct command:
+
+```sh
+python3 -m pytest tests/unit/test_mediation_gemini_thrash_basis.py -q
+```
+
+Repo-local entry point:
+
+```sh
+make revalidate-mediation-gemini-thrash-basis
+```
+
 ## Mediation OpenAI uncertainty-basis revalidation
 
 This checks that `scenario_uncertainty_openai_01` now has a satisfied committed OpenAI basis and replication law.
@@ -489,9 +540,11 @@ This runs all current mediation-evidence checks together:
 - live reference baseline packet revalidation
 - live Gemini baseline packet revalidation
 - live OpenAI baseline packet revalidation
+- live experimental Gemini mediated-thrash revalidation
 - live experimental Gemini mediated-uncertainty revalidation
 - live experimental reference mediated-uncertainty revalidation
 - live experimental reference mediated-thrash revalidation
+- Gemini thrash basis and replication validation
 - Gemini uncertainty basis and replication validation
 - OpenAI uncertainty baseline validation
 - live experimental OpenAI mediated-uncertainty revalidation

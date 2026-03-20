@@ -1,12 +1,12 @@
 # CORTEX_V2_MEDIATION_HOST_SPLIT_COMPARISON_0
 
 Date: 2026-03-20
-Status: `reference_and_gemini_series_with_openai_uncertainty_three_pairs_recorded`
+Status: `reference_and_gemini_two_series_with_openai_uncertainty_three_pairs_recorded`
 
 ## Scope
 
 This document records the host-split mediation comparison surface.
-Version `0` stays strictly host-split first: separate sections for `reference`, `gemini`, and `openai`, with no pooled host summary row, and it now records three reference-only experimental thrash pairs, three reference-only experimental uncertainty pairs, three Gemini-only experimental uncertainty pairs, and three OpenAI-only experimental uncertainty pairs.
+Version `0` stays strictly host-split first: separate sections for `reference`, `gemini`, and `openai`, with no pooled host summary row, and it now records three reference-only experimental thrash pairs, three Gemini-only experimental thrash pairs, three reference-only experimental uncertainty pairs, three Gemini-only experimental uncertainty pairs, and three OpenAI-only experimental uncertainty pairs.
 
 ## Reference
 
@@ -20,7 +20,7 @@ Version `0` stays strictly host-split first: separate sections for `reference`, 
 
 | scenario_id | usable_pair_count | host_specific_affordance_note | host_flattening_tags | current_verdict | supporting_paired_episode_sets | notes |
 | --- | --- | --- | --- | --- | --- | --- |
-| scenario_thrash_gemini_01 | 0 | Planned Gemini branch-control comparison with Gemini-native lifecycle behavior preserved. | none | insufficient | none | No live paired runs recorded yet. |
+| scenario_thrash_gemini_01 | 3 | Three Gemini-only experimental branch-control comparisons preserve the same Gemini-native lifecycle surface while removing one redundant `resume` before certified completion. | none | insufficient | pair_gemini_thrash_001, pair_gemini_thrash_002, pair_gemini_thrash_003 | Three paired runs are recorded, but this host-specific surface remains descriptive until broader host or scenario coverage exists. |
 | scenario_uncertainty_gemini_01 | 3 | Three Gemini-only experimental uncertainty comparisons preserve contradiction/degradation-bearing truth while removing one redundant uncertified loop before the same certified resolution class. | none | insufficient | pair_gemini_uncertainty_001, pair_gemini_uncertainty_002, pair_gemini_uncertainty_003 | Three paired runs are recorded, but this host-specific surface remains descriptive until broader host or scenario coverage exists. |
 | scenario_host_gemini_01 | 0 | Planned Gemini realization comparison with host-native affordances preserved. | none | insufficient | none | No live paired runs recorded yet. |
 

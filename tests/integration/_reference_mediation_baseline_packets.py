@@ -81,6 +81,20 @@ _SCOPE_TEXT = {
         "It does not justify mediation, does not authorize implementation work, and "
         "package-level evidence notes govern any verdict."
     ),
+    ("scenario_thrash_gemini_01", "baseline_non_mediated"): (
+        "This committed run packet records one Gemini-host baseline-only thrash "
+        "packet within the committed Gemini thrash paired-run series for mediation "
+        "evidence review.\n"
+        "It does not provide comparative mediation evidence by itself, justify "
+        "mediation, or authorize implementation work."
+    ),
+    ("scenario_thrash_gemini_01", "experimental_mediated"): (
+        "This committed run packet records one Gemini-host experimental mediated "
+        "thrash comparator within the committed Gemini thrash paired-run series for "
+        "mediation evidence review.\n"
+        "It does not justify mediation, does not authorize implementation work, and "
+        "package-level evidence notes govern any verdict."
+    ),
     ("scenario_uncertainty_reference_01", "baseline_non_mediated"): (
         "This committed run packet records one reference-host baseline-only uncertainty "
         "packet within the committed uncertainty paired-run series for mediation "

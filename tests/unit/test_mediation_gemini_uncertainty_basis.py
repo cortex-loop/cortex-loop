@@ -102,13 +102,18 @@ def test_evidence_note_keeps_mediation_blocked_with_gemini_uncertainty_series() 
 
     assert (
         status(EVIDENCE_NOTE_PATH)
-        == "reference_and_gemini_series_with_openai_uncertainty_three_pairs_recorded"
+        == "reference_and_gemini_two_series_with_openai_uncertainty_three_pairs_recorded"
     )
     assert "Three experimental OpenAI-only uncertainty pairs are now recorded" in text
     assert "Three experimental Gemini-only uncertainty pairs are now recorded" in text
+    assert "Three experimental Gemini-only baseline-versus-mediated thrash pairs are now recorded" in text
     assert (
         "`scenario_uncertainty_gemini_01` / `gemini` now has `candidate_positive` "
         "cell-level signal for better uncertainty handling"
+    ) in text
+    assert (
+        "`scenario_thrash_gemini_01` / `gemini` now has `candidate_positive` "
+        "cell-level signal for reduced thrashing and better branch discipline"
     ) in text
     assert "Mediation remains blocked" in text
     assert "no implementation seam may open" in text
