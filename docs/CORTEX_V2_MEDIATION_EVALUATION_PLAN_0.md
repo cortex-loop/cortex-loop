@@ -115,7 +115,7 @@ Any future mediated comparison remains subject to the current packet and justifi
 
 Before a mediation implementation seam may open, the repo should have a concrete evidence package containing at least:
 
-- one scenario catalog describing the compared scenario set and host coverage
+- one scenario catalog describing the compared scenario set and host coverage using `docs/CORTEX_V2_MEDIATION_SCENARIO_CATALOG_0.md`
 - one paired run ledger for baseline vs mediated runs using `docs/CORTEX_V2_MEDIATION_RUN_PACKET_TEMPLATE_0.md`
 - one per-axis comparison table covering all five required lift axes
 - one burden comparison surface for equal-value tasks
