@@ -1,4 +1,4 @@
-# scenario_thrash_reference_01__experimental_mediated__run_001
+# scenario_thrash_reference_01__experimental_mediated__run_002
 
 Date: 2026-03-20
 Status: `reviewed_evidence`
@@ -13,8 +13,8 @@ It does not justify mediation, does not authorize implementation work, and packa
 - date: 2026-03-20
 - status: `reviewed_evidence`
 - scenario_id: `scenario_thrash_reference_01`
-- run_id: `reference_thrash_mediated_run_001`
-- paired_episode_set_id: `pair_reference_thrash_001`
+- run_id: `reference_thrash_mediated_run_002`
+- paired_episode_set_id: `pair_reference_thrash_002`
 
 ## Variant Metadata
 
@@ -34,22 +34,22 @@ It does not justify mediation, does not authorize implementation work, and packa
 
 ## Scenario Inputs
 
-- starting_request_or_event: bounded reference-host approval flow on `thrash-session-1` with repeated candidate-bearing follow-up before final certified completion
+- starting_request_or_event: bounded reference-host approval flow on `thrash-session-2` with repeated candidate-bearing follow-up before final certified completion
 - host_surface: reference-host commitment path plus landed SRE goal, brake, allocation, and core support-session surfaces
 - declared_scenario_goal: evaluate whether mediation reduces repeated branch reopen or resume cycles on a bounded multi-step reference-host episode without reducing lawful task completion
 - bounded_environment_or_approval_context: `CommitmentEnvironmentHandle` with `available_query_kinds={EXECUTION_TRACE}` and `capability_tags={trace/read}` on `env_local_default`
 
 ## Run Outputs
 
-- outcome_summary: The experimental mediated comparator reaches the same certified reference-host completion class at `thrash-mediated-step-3` after one guarded uncertified follow-up.
+- outcome_summary: The experimental mediated comparator reaches the same certified reference-host completion class at `thrash-mediated-002-step-3` after one guarded uncertified follow-up.
 - branch_trajectory_summary: The experimental comparator derives `open -> suspend -> merge`, removing the extra `resume` step present in the baseline while preserving certified completion.
-- uncertainty_or_brake_summary: The guarded uncertified intermediate state remains explicit at `thrash-mediated-step-2`; certification still requires lawful provenance at `thrash-mediated-step-3`.
+- uncertainty_or_brake_summary: The guarded uncertified intermediate state remains explicit at `thrash-mediated-002-step-2`; certification still requires lawful provenance at `thrash-mediated-002-step-3`.
 - burden_summary: none
 - host_realization_summary: The comparator remains reference-only and preserves the same reference-host commitment boundary and support-session evidence surface.
 
 ## Artifact Refs
 
-- event_trace_refs: `thrash-mediated-step-1:ApprovalRequest/open, thrash-mediated-step-2:ApprovalResult/suspend, thrash-mediated-step-3:ApprovalResult/merge`
+- event_trace_refs: `thrash-mediated-002-step-1:ApprovalRequest/open, thrash-mediated-002-step-2:ApprovalResult/suspend, thrash-mediated-002-step-3:ApprovalResult/merge`
 - contradiction_refs: none
 - degradation_refs: none
 - aux_burden_refs_if_present: none
@@ -91,7 +91,7 @@ It does not justify mediation, does not authorize implementation work, and packa
 
 - exclusion_status: `none`
 - failure_tags: `none`
-- notes: This experimental mediated packet is part of the committed reference thrash paired-run series under `pair_reference_thrash_001`. A single packet does not justify mediation; package-level evidence notes govern verdicts.
+- notes: This experimental mediated packet is part of the committed reference thrash paired-run series under `pair_reference_thrash_002`. A single packet does not justify mediation; package-level evidence notes govern verdicts.
 
 ## Reviewer Note
 

@@ -1,7 +1,8 @@
-"""Build or emit the experimental reference-host mediated thrash comparator."""
+"""Build or emit the experimental reference-host mediated thrash comparators."""
 
 from __future__ import annotations
 
+from functools import partial
 import sys
 
 from cortex.core.commitments import CommitmentStatus
@@ -21,47 +22,60 @@ from tests.integration._reference_mediation_baseline_packets import (
     render_reference_mediation_packet,
 )
 from tests.integration._reference_mediation_thrash_episode import (
+    DEFAULT_REFERENCE_THRASH_PAIR_KEY,
+    REFERENCE_THRASH_PAIR_KEYS,
+    REFERENCE_THRASH_PAIR_SPECS,
     build_reference_thrash_episode_snapshot,
 )
 
 
-REFERENCE_THRASH_MEDIATED_PACKET_PATH = (
-    "docs/mediation_evidence/reference/"
-    "scenario_thrash_reference_01__experimental_mediated__run_001.md"
-)
+REFERENCE_THRASH_MEDIATED_PACKET_PATH = REFERENCE_THRASH_PAIR_SPECS[
+    DEFAULT_REFERENCE_THRASH_PAIR_KEY
+].mediated_packet_path
+REFERENCE_THRASH_MEDIATED_PACKET_PATHS = {
+    pair_key: REFERENCE_THRASH_PAIR_SPECS[pair_key].mediated_packet_path
+    for pair_key in REFERENCE_THRASH_PAIR_KEYS
+}
 EXPERIMENTAL_REFERENCE_THRASH_BRANCH_SEQUENCE = ("open", "suspend", "merge")
 _REVIEWER_NOTE = (
-    "This is experimental mediated evidence only, remains reference-only, and one paired "
-    "run is not enough to justify mediation or authorize any implementation seam."
+    "This is experimental mediated evidence only within the committed reference thrash "
+    "paired-run series. It remains reference-only, does not justify mediation, and "
+    "package-level evidence notes govern any verdict."
 )
 
 
-def build_reference_mediated_thrash_episode_snapshot() -> dict[str, object]:
-    baseline_snapshot = build_reference_thrash_episode_snapshot()
+def build_reference_mediated_thrash_episode_snapshot(
+    pair_key: str = DEFAULT_REFERENCE_THRASH_PAIR_KEY,
+) -> dict[str, object]:
+    spec = REFERENCE_THRASH_PAIR_SPECS[pair_key]
+    baseline_snapshot = build_reference_thrash_episode_snapshot(pair_key)
     baseline_steps = baseline_snapshot["steps"]
     assert isinstance(baseline_steps, list)
     assert baseline_snapshot["branch_sequence"] == ["open", "suspend", "resume", "merge"]
 
     shared_open_step = {
         **baseline_steps[0],
-        "step_id": "thrash-mediated-step-1",
+        "step_id": f"{spec.mediated_step_prefix}-1",
     }
     shared_suspend_step = {
         **baseline_steps[1],
-        "step_id": "thrash-mediated-step-2",
+        "step_id": f"{spec.mediated_step_prefix}-2",
     }
-    merge_step = _build_merge_step()
+    merge_step = _build_merge_step(spec)
 
     steps = [shared_open_step, shared_suspend_step, merge_step]
     branch_sequence = _derive_branch_sequence(steps)
 
     return {
         "scenario_id": "scenario_thrash_reference_01",
-        "run_id": "reference_thrash_mediated_run_001",
-        "paired_episode_set_id": "pair_reference_thrash_001",
-        "session_id": "thrash-session-1",
-        "candidate_id": "candidate-thrash-1",
-        "commitment_id": "thrash-commit-1",
+        "run_id": spec.mediated_run_id,
+        "paired_episode_set_id": spec.pair_id,
+        "session_id": spec.session_id,
+        "candidate_id": spec.candidate_id,
+        "commitment_id": spec.commitment_id,
+        "provenance_artifact_id": spec.provenance_artifact_id,
+        "branch_track_ref": spec.branch_track_ref,
+        "uncertainty_spike_tag": spec.uncertainty_spike_tag,
         "branch_sequence": list(branch_sequence),
         "event_trace_refs": ", ".join(
             f"{step['step_id']}:{step['host_event_name']}/{operation}"
@@ -77,8 +91,11 @@ def build_reference_mediated_thrash_episode_snapshot() -> dict[str, object]:
     }
 
 
-def build_reference_thrash_mediated_packet() -> PacketSnapshot:
-    snapshot = build_reference_mediated_thrash_episode_snapshot()
+def build_reference_thrash_mediated_packet(
+    pair_key: str = DEFAULT_REFERENCE_THRASH_PAIR_KEY,
+) -> PacketSnapshot:
+    spec = REFERENCE_THRASH_PAIR_SPECS[pair_key]
+    snapshot = build_reference_mediated_thrash_episode_snapshot(pair_key)
     steps = snapshot["steps"]
 
     assert isinstance(steps, list)
@@ -93,16 +110,16 @@ def build_reference_thrash_mediated_packet() -> PacketSnapshot:
 
     return build_reference_mediation_packet(
         scenario_id="scenario_thrash_reference_01",
-        run_id="reference_thrash_mediated_run_001",
-        paired_episode_set_id="pair_reference_thrash_001",
+        run_id=spec.mediated_run_id,
+        paired_episode_set_id=spec.pair_id,
         scenario_family="thrash_control",
         task_value_rubric_id="task_value_equal_completion",
         approval_or_environment_context_id="env_local_default",
         variant="experimental_mediated",
         scenario_inputs={
             "starting_request_or_event": (
-                "bounded reference-host approval flow on `thrash-session-1` with repeated "
-                "candidate-bearing follow-up before final certified completion"
+                f"bounded reference-host approval flow on `{spec.session_id}` with "
+                "repeated candidate-bearing follow-up before final certified completion"
             ),
             "host_surface": (
                 "reference-host commitment path plus landed SRE goal, brake, allocation, "
@@ -122,8 +139,8 @@ def build_reference_thrash_mediated_packet() -> PacketSnapshot:
         run_outputs={
             "outcome_summary": (
                 "The experimental mediated comparator reaches the same certified "
-                "reference-host completion class at `thrash-mediated-step-3` after one "
-                "guarded uncertified follow-up."
+                f"reference-host completion class at `{spec.mediated_step_prefix}-3` "
+                "after one guarded uncertified follow-up."
             ),
             "branch_trajectory_summary": (
                 "The experimental comparator derives `open -> suspend -> merge`, removing "
@@ -132,8 +149,8 @@ def build_reference_thrash_mediated_packet() -> PacketSnapshot:
             ),
             "uncertainty_or_brake_summary": (
                 "The guarded uncertified intermediate state remains explicit at "
-                "`thrash-mediated-step-2`; certification still requires lawful provenance "
-                "at `thrash-mediated-step-3`."
+                f"`{spec.mediated_step_prefix}-2`; certification still requires lawful "
+                f"provenance at `{spec.mediated_step_prefix}-3`."
             ),
             "burden_summary": "none",
             "host_realization_summary": (
@@ -150,60 +167,74 @@ def build_reference_thrash_mediated_packet() -> PacketSnapshot:
         },
         lift_axis_notes={
             "Reduced Thrashing": (
-                "This experimental reference-only pair preserves certified completion with "
-                "a shorter branch sequence than baseline, but only one pair is recorded.",
-                "One paired run is not enough to claim thrash reduction.",
+                "This experimental reference-only packet preserves certified completion "
+                "with a shorter branch sequence than its matched baseline packet.",
+                "Package-level evidence notes govern whether repeated paired evidence is "
+                "enough to claim thrash reduction.",
             ),
             "Better Branch Discipline": (
-                "This experimental reference-only pair avoids the extra branch `resume` "
-                "step while keeping the same completion class, but only one pair exists.",
-                "One paired run is not enough to claim branch-discipline lift.",
+                "This experimental reference-only packet avoids the extra branch `resume` "
+                "step while keeping the same completion class.",
+                "Package-level evidence notes govern whether repeated paired evidence is "
+                "enough to claim branch-discipline lift.",
             ),
             "Better Uncertainty Handling": (
-                "The guarded uncertified intermediate state remains explicit, but only one "
-                "paired run exists.",
-                "One paired run is not enough to claim uncertainty-handling lift.",
+                "The guarded uncertified intermediate state remains explicit within the "
+                "committed thrash paired-run series.",
+                "Package-level evidence notes govern whether repeated paired evidence is "
+                "enough to claim uncertainty-handling lift.",
             ),
             "Lower Visible Burden At Equal Task Value": (
                 "Equal certified completion is preserved and no AUX burden artifact is "
-                "recorded, but only one paired run exists.",
-                "One paired run is not enough to claim burden lift.",
+                "recorded within this packet.",
+                "Package-level evidence notes govern whether repeated paired evidence is "
+                "enough to claim burden lift.",
             ),
             "Better Host-Specialized Realization": (
-                "The comparator stays reference-only and host-split, but only one paired "
-                "run exists.",
-                "One paired run is not enough to claim host-specialized realization lift.",
+                "The comparator stays reference-only and host-split within the committed "
+                "thrash paired-run series.",
+                "Package-level evidence notes govern whether repeated paired evidence is "
+                "enough to claim host-specialized realization lift.",
             ),
         },
         exclusion_notes=(
-            "This experimental mediated packet is paired with the committed baseline "
-            "reference thrash packet under `pair_reference_thrash_001`; one pair is not "
-            "enough to justify any mediation verdict."
+            "This experimental mediated packet is part of the committed reference thrash "
+            f"paired-run series under `{spec.pair_id}`. A single packet does not justify "
+            "mediation; package-level evidence notes govern verdicts."
         ),
         reviewer_note=_REVIEWER_NOTE,
     )
 
 
-def emit_reference_mediated_thrash_candidate() -> None:
-    sys.stdout.write(f"--- {REFERENCE_THRASH_MEDIATED_PACKET_PATH}\n")
-    sys.stdout.write(
-        render_reference_mediation_packet(
-            REFERENCE_THRASH_MEDIATED_PACKET_PATH,
-            build_reference_thrash_mediated_packet(),
-        )
+REFERENCE_THRASH_MEDIATED_PACKET_DOC_BUILDERS = {
+    REFERENCE_THRASH_MEDIATED_PACKET_PATHS[pair_key]: partial(
+        build_reference_thrash_mediated_packet, pair_key
     )
+    for pair_key in REFERENCE_THRASH_PAIR_KEYS
+}
 
 
-def _build_merge_step() -> dict[str, object]:
+def emit_reference_mediated_thrash_candidate() -> None:
+    for relative_path, builder in REFERENCE_THRASH_MEDIATED_PACKET_DOC_BUILDERS.items():
+        sys.stdout.write(f"--- {relative_path}\n")
+        sys.stdout.write(
+            render_reference_mediation_packet(
+                relative_path,
+                builder(),
+            )
+        )
+
+
+def _build_merge_step(spec) -> dict[str, object]:
     result = evaluate_reference_host_commitment(
         "ApprovalResult",
         {
-            "commitment_id": "thrash-commit-1",
-            "session_id": "thrash-session-1",
+            "commitment_id": spec.commitment_id,
+            "session_id": spec.session_id,
             "externally_consequential": True,
         },
         environment_handle=reference_environment_handle(),
-        provenance_manifest=provenance_manifest_for("artifact-thrash-1"),
+        provenance_manifest=provenance_manifest_for(spec.provenance_artifact_id),
     )
     assert result.dispatch_decision.lane is DispatchLane.FULL_COMMITMENT
     assert result.verdict is not None
@@ -216,8 +247,8 @@ def _build_merge_step() -> dict[str, object]:
         AllocationScorecard(
             scores=(
                 AllocationScore(SoftControlFamily.NEUTRAL, 1.0),
-                AllocationScore(SoftControlFamily.CHECK, 1.12),
-                AllocationScore(SoftControlFamily.BRANCH, 0.9),
+                AllocationScore(SoftControlFamily.CHECK, spec.merge_check_score),
+                AllocationScore(SoftControlFamily.BRANCH, spec.merge_branch_score),
             ),
             activation_threshold=0.1,
         )
@@ -225,11 +256,11 @@ def _build_merge_step() -> dict[str, object]:
     assert decision.selected_family is SoftControlFamily.CHECK
 
     return {
-        "step_id": "thrash-mediated-step-3",
+        "step_id": f"{spec.mediated_step_prefix}-3",
         "host_event_name": "ApprovalResult",
         "payload_identity": (
-            "commitment_id=thrash-commit-1, externally_consequential=True, "
-            "session_id=thrash-session-1"
+            f"commitment_id={spec.commitment_id}, externally_consequential=True, "
+            f"session_id={spec.session_id}"
         ),
         "dispatch_lane": result.dispatch_decision.lane.value,
         "selected_soft_control_family": decision.selected_family.value,

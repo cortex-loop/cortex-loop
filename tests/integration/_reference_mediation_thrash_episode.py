@@ -1,7 +1,8 @@
-"""Build the live reference-host thrash baseline episode for mediation evidence."""
+"""Build the live reference-host thrash baseline episodes for mediation evidence."""
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from dataclasses import dataclass
 
 from cortex.core.commitments import CommitmentStatus
@@ -30,6 +31,120 @@ EXPECTED_REFERENCE_THRASH_BRANCH_SEQUENCE = (
     BranchOperation.RESUME.value,
     BranchOperation.MERGE.value,
 )
+DEFAULT_REFERENCE_THRASH_PAIR_KEY = "001"
+REFERENCE_THRASH_PAIR_KEYS = ("001", "002", "003")
+
+
+@dataclass(frozen=True, slots=True)
+class ReferenceThrashPairSpec:
+    pair_key: str
+    pair_id: str
+    baseline_run_id: str
+    mediated_run_id: str
+    session_id: str
+    candidate_id: str
+    commitment_id: str
+    provenance_artifact_id: str
+    branch_track_ref: str
+    uncertainty_spike_tag: str
+    open_check_score: float
+    open_branch_score: float
+    suspend_check_score: float
+    suspend_branch_score: float
+    resume_check_score: float
+    resume_branch_score: float
+    merge_check_score: float
+    merge_branch_score: float
+
+    @property
+    def baseline_packet_path(self) -> str:
+        return (
+            "docs/mediation_evidence/reference/"
+            f"scenario_thrash_reference_01__baseline_non_mediated__run_{self.pair_key}.md"
+        )
+
+    @property
+    def mediated_packet_path(self) -> str:
+        return (
+            "docs/mediation_evidence/reference/"
+            f"scenario_thrash_reference_01__experimental_mediated__run_{self.pair_key}.md"
+        )
+
+    @property
+    def baseline_step_prefix(self) -> str:
+        if self.pair_key == DEFAULT_REFERENCE_THRASH_PAIR_KEY:
+            return "thrash-step"
+        return f"thrash-{self.pair_key}-step"
+
+    @property
+    def mediated_step_prefix(self) -> str:
+        if self.pair_key == DEFAULT_REFERENCE_THRASH_PAIR_KEY:
+            return "thrash-mediated-step"
+        return f"thrash-mediated-{self.pair_key}-step"
+
+
+REFERENCE_THRASH_PAIR_SPECS: Mapping[str, ReferenceThrashPairSpec] = {
+    "001": ReferenceThrashPairSpec(
+        pair_key="001",
+        pair_id="pair_reference_thrash_001",
+        baseline_run_id="reference_thrash_baseline_run_001",
+        mediated_run_id="reference_thrash_mediated_run_001",
+        session_id="thrash-session-1",
+        candidate_id="candidate-thrash-1",
+        commitment_id="thrash-commit-1",
+        provenance_artifact_id="artifact-thrash-1",
+        branch_track_ref="branch-approval-context",
+        uncertainty_spike_tag="goal-progress-ambiguity",
+        open_check_score=1.05,
+        open_branch_score=1.25,
+        suspend_check_score=1.18,
+        suspend_branch_score=0.95,
+        resume_check_score=1.05,
+        resume_branch_score=1.22,
+        merge_check_score=1.12,
+        merge_branch_score=0.9,
+    ),
+    "002": ReferenceThrashPairSpec(
+        pair_key="002",
+        pair_id="pair_reference_thrash_002",
+        baseline_run_id="reference_thrash_baseline_run_002",
+        mediated_run_id="reference_thrash_mediated_run_002",
+        session_id="thrash-session-2",
+        candidate_id="candidate-thrash-2",
+        commitment_id="thrash-commit-2",
+        provenance_artifact_id="artifact-thrash-2",
+        branch_track_ref="branch-provenance-review",
+        uncertainty_spike_tag="provenance-lag-ambiguity",
+        open_check_score=1.07,
+        open_branch_score=1.27,
+        suspend_check_score=1.20,
+        suspend_branch_score=0.94,
+        resume_check_score=1.04,
+        resume_branch_score=1.19,
+        merge_check_score=1.14,
+        merge_branch_score=0.91,
+    ),
+    "003": ReferenceThrashPairSpec(
+        pair_key="003",
+        pair_id="pair_reference_thrash_003",
+        baseline_run_id="reference_thrash_baseline_run_003",
+        mediated_run_id="reference_thrash_mediated_run_003",
+        session_id="thrash-session-3",
+        candidate_id="candidate-thrash-3",
+        commitment_id="thrash-commit-3",
+        provenance_artifact_id="artifact-thrash-3",
+        branch_track_ref="branch-evidence-confirmation",
+        uncertainty_spike_tag="artifact-consistency-ambiguity",
+        open_check_score=1.03,
+        open_branch_score=1.24,
+        suspend_check_score=1.17,
+        suspend_branch_score=0.96,
+        resume_check_score=1.06,
+        resume_branch_score=1.21,
+        merge_check_score=1.13,
+        merge_branch_score=0.92,
+    ),
+}
 
 
 @dataclass(frozen=True, slots=True)
@@ -44,23 +159,29 @@ class _EpisodeStep:
     outcome_class: str
 
 
-def build_reference_thrash_episode_snapshot() -> dict[str, object]:
+def build_reference_thrash_episode_snapshot(
+    pair_key: str = DEFAULT_REFERENCE_THRASH_PAIR_KEY,
+) -> dict[str, object]:
+    spec = REFERENCE_THRASH_PAIR_SPECS[pair_key]
     environment_handle = reference_environment_handle()
     steps = (
-        _build_open_step(environment_handle),
-        _build_suspend_step(environment_handle),
-        _build_resume_step(environment_handle),
-        _build_merge_step(environment_handle),
+        _build_open_step(environment_handle, spec),
+        _build_suspend_step(environment_handle, spec),
+        _build_resume_step(environment_handle, spec),
+        _build_merge_step(environment_handle, spec),
     )
     branch_sequence = _derive_branch_sequence(steps)
 
     return {
         "scenario_id": "scenario_thrash_reference_01",
-        "run_id": "reference_thrash_baseline_run_001",
-        "paired_episode_set_id": "pair_reference_thrash_001",
-        "session_id": "thrash-session-1",
-        "candidate_id": "candidate-thrash-1",
-        "commitment_id": "thrash-commit-1",
+        "run_id": spec.baseline_run_id,
+        "paired_episode_set_id": spec.pair_id,
+        "session_id": spec.session_id,
+        "candidate_id": spec.candidate_id,
+        "commitment_id": spec.commitment_id,
+        "provenance_artifact_id": spec.provenance_artifact_id,
+        "branch_track_ref": spec.branch_track_ref,
+        "uncertainty_spike_tag": spec.uncertainty_spike_tag,
         "branch_sequence": list(branch_sequence),
         "event_trace_refs": ", ".join(
             f"{step.step_id}:{_raw_host_event_name(step.result)}/{operation}"
@@ -99,26 +220,26 @@ def build_reference_thrash_episode_snapshot() -> dict[str, object]:
     }
 
 
-def _build_open_step(environment_handle) -> _EpisodeStep:
+def _build_open_step(environment_handle, spec: ReferenceThrashPairSpec) -> _EpisodeStep:
     result = evaluate_reference_host_commitment(
         "ApprovalRequest",
         {
-            "candidate_id": "candidate-thrash-1",
-            "session_id": "thrash-session-1",
+            "candidate_id": spec.candidate_id,
+            "session_id": spec.session_id,
         },
         environment_handle=environment_handle,
     )
     assert result.dispatch_decision.lane is DispatchLane.CANDIDATE_BEARING
     assert result.candidate is not None
-    assert result.candidate.candidate_id == "candidate-thrash-1"
+    assert result.candidate.candidate_id == spec.candidate_id
     assert result.verdict is None
 
     decision = neutral_dominance_decision(
         AllocationScorecard(
             scores=(
                 AllocationScore(SoftControlFamily.NEUTRAL, 1.0),
-                AllocationScore(SoftControlFamily.CHECK, 1.05),
-                AllocationScore(SoftControlFamily.BRANCH, 1.25),
+                AllocationScore(SoftControlFamily.CHECK, spec.open_check_score),
+                AllocationScore(SoftControlFamily.BRANCH, spec.open_branch_score),
             ),
             activation_threshold=0.1,
         )
@@ -132,12 +253,12 @@ def _build_open_step(environment_handle) -> _EpisodeStep:
     # derive a lawful suspend event from state rather than prose.
     goal_continuity = GoalContinuityView(
         main_goal_ref="goal-thrash-main",
-        active_track_ref="branch-approval-context",
+        active_track_ref=spec.branch_track_ref,
         pending_goal_refs=(),
         resume_anchor_available=True,
     )
     support_session = SupportSessionState(
-        branch_registry=("main", "branch-approval-context"),
+        branch_registry=("main", spec.branch_track_ref),
         pending_goal_refs=(),
         budget_history=("budget/branch",),
         brake_history=("quiescent",),
@@ -145,9 +266,11 @@ def _build_open_step(environment_handle) -> _EpisodeStep:
         reminders=(),
     )
     return _EpisodeStep(
-        step_id="thrash-step-1",
+        step_id=f"{spec.baseline_step_prefix}-1",
         result=result,
-        payload_identity="candidate_id=candidate-thrash-1, session_id=thrash-session-1",
+        payload_identity=(
+            f"candidate_id={spec.candidate_id}, session_id={spec.session_id}"
+        ),
         selected_family=decision.selected_family,
         brake_state=brake.state,
         goal_continuity=goal_continuity,
@@ -156,12 +279,12 @@ def _build_open_step(environment_handle) -> _EpisodeStep:
     )
 
 
-def _build_suspend_step(environment_handle) -> _EpisodeStep:
+def _build_suspend_step(environment_handle, spec: ReferenceThrashPairSpec) -> _EpisodeStep:
     result = evaluate_reference_host_commitment(
         "ApprovalResult",
         {
-            "commitment_id": "thrash-commit-1",
-            "session_id": "thrash-session-1",
+            "commitment_id": spec.commitment_id,
+            "session_id": spec.session_id,
             "externally_consequential": True,
         },
         environment_handle=environment_handle,
@@ -178,7 +301,7 @@ def _build_suspend_step(environment_handle) -> _EpisodeStep:
             UncertaintyEstimate(
                 "evidence",
                 0.62,
-                spike_tags=frozenset({"goal-progress-ambiguity"}),
+                spike_tags=frozenset({spec.uncertainty_spike_tag}),
             ),
         )
     )
@@ -188,8 +311,8 @@ def _build_suspend_step(environment_handle) -> _EpisodeStep:
         AllocationScorecard(
             scores=(
                 AllocationScore(SoftControlFamily.NEUTRAL, 1.0),
-                AllocationScore(SoftControlFamily.CHECK, 1.18),
-                AllocationScore(SoftControlFamily.BRANCH, 0.95),
+                AllocationScore(SoftControlFamily.CHECK, spec.suspend_check_score),
+                AllocationScore(SoftControlFamily.BRANCH, spec.suspend_branch_score),
             ),
             activation_threshold=0.1,
         )
@@ -199,23 +322,23 @@ def _build_suspend_step(environment_handle) -> _EpisodeStep:
     goal_continuity = GoalContinuityView(
         main_goal_ref="goal-thrash-main",
         active_track_ref="main",
-        pending_goal_refs=("branch-approval-context",),
+        pending_goal_refs=(spec.branch_track_ref,),
         resume_anchor_available=True,
     )
     support_session = SupportSessionState(
-        branch_registry=("main", "branch-approval-context"),
-        pending_goal_refs=("branch-approval-context",),
+        branch_registry=("main", spec.branch_track_ref),
+        pending_goal_refs=(spec.branch_track_ref,),
         budget_history=("budget/branch", "budget/check"),
         brake_history=("quiescent", "guarded"),
         wake_counters=(SupportCounter("candidate-bearing", 1),),
-        reminders=("resume-branch-approval-context",),
+        reminders=(f"resume-{spec.branch_track_ref}",),
     )
     return _EpisodeStep(
-        step_id="thrash-step-2",
+        step_id=f"{spec.baseline_step_prefix}-2",
         result=result,
         payload_identity=(
-            "commitment_id=thrash-commit-1, externally_consequential=True, "
-            "session_id=thrash-session-1"
+            f"commitment_id={spec.commitment_id}, externally_consequential=True, "
+            f"session_id={spec.session_id}"
         ),
         selected_family=decision.selected_family,
         brake_state=brake.state,
@@ -225,18 +348,18 @@ def _build_suspend_step(environment_handle) -> _EpisodeStep:
     )
 
 
-def _build_resume_step(environment_handle) -> _EpisodeStep:
+def _build_resume_step(environment_handle, spec: ReferenceThrashPairSpec) -> _EpisodeStep:
     result = evaluate_reference_host_commitment(
         "ApprovalRequest",
         {
-            "candidate_id": "candidate-thrash-1",
-            "session_id": "thrash-session-1",
+            "candidate_id": spec.candidate_id,
+            "session_id": spec.session_id,
         },
         environment_handle=environment_handle,
     )
     assert result.dispatch_decision.lane is DispatchLane.CANDIDATE_BEARING
     assert result.candidate is not None
-    assert result.candidate.candidate_id == "candidate-thrash-1"
+    assert result.candidate.candidate_id == spec.candidate_id
     assert result.verdict is None
 
     brake = evaluate_brake_state(())
@@ -246,8 +369,8 @@ def _build_resume_step(environment_handle) -> _EpisodeStep:
         AllocationScorecard(
             scores=(
                 AllocationScore(SoftControlFamily.NEUTRAL, 1.0),
-                AllocationScore(SoftControlFamily.CHECK, 1.05),
-                AllocationScore(SoftControlFamily.BRANCH, 1.22),
+                AllocationScore(SoftControlFamily.CHECK, spec.resume_check_score),
+                AllocationScore(SoftControlFamily.BRANCH, spec.resume_branch_score),
             ),
             activation_threshold=0.1,
         )
@@ -256,12 +379,12 @@ def _build_resume_step(environment_handle) -> _EpisodeStep:
 
     goal_continuity = GoalContinuityView(
         main_goal_ref="goal-thrash-main",
-        active_track_ref="branch-approval-context",
+        active_track_ref=spec.branch_track_ref,
         pending_goal_refs=(),
         resume_anchor_available=True,
     )
     support_session = SupportSessionState(
-        branch_registry=("main", "branch-approval-context"),
+        branch_registry=("main", spec.branch_track_ref),
         pending_goal_refs=(),
         budget_history=("budget/branch", "budget/check", "budget/branch"),
         brake_history=("quiescent", "guarded", "quiescent"),
@@ -269,9 +392,11 @@ def _build_resume_step(environment_handle) -> _EpisodeStep:
         reminders=("collect-provenance-before-final-approval",),
     )
     return _EpisodeStep(
-        step_id="thrash-step-3",
+        step_id=f"{spec.baseline_step_prefix}-3",
         result=result,
-        payload_identity="candidate_id=candidate-thrash-1, session_id=thrash-session-1",
+        payload_identity=(
+            f"candidate_id={spec.candidate_id}, session_id={spec.session_id}"
+        ),
         selected_family=decision.selected_family,
         brake_state=brake.state,
         goal_continuity=goal_continuity,
@@ -280,16 +405,16 @@ def _build_resume_step(environment_handle) -> _EpisodeStep:
     )
 
 
-def _build_merge_step(environment_handle) -> _EpisodeStep:
+def _build_merge_step(environment_handle, spec: ReferenceThrashPairSpec) -> _EpisodeStep:
     result = evaluate_reference_host_commitment(
         "ApprovalResult",
         {
-            "commitment_id": "thrash-commit-1",
-            "session_id": "thrash-session-1",
+            "commitment_id": spec.commitment_id,
+            "session_id": spec.session_id,
             "externally_consequential": True,
         },
         environment_handle=environment_handle,
-        provenance_manifest=provenance_manifest_for("artifact-thrash-1"),
+        provenance_manifest=provenance_manifest_for(spec.provenance_artifact_id),
     )
     assert result.dispatch_decision.lane is DispatchLane.FULL_COMMITMENT
     assert result.verdict is not None
@@ -304,8 +429,8 @@ def _build_merge_step(environment_handle) -> _EpisodeStep:
         AllocationScorecard(
             scores=(
                 AllocationScore(SoftControlFamily.NEUTRAL, 1.0),
-                AllocationScore(SoftControlFamily.CHECK, 1.12),
-                AllocationScore(SoftControlFamily.BRANCH, 0.9),
+                AllocationScore(SoftControlFamily.CHECK, spec.merge_check_score),
+                AllocationScore(SoftControlFamily.BRANCH, spec.merge_branch_score),
             ),
             activation_threshold=0.1,
         )
@@ -327,11 +452,11 @@ def _build_merge_step(environment_handle) -> _EpisodeStep:
         reminders=(),
     )
     return _EpisodeStep(
-        step_id="thrash-step-4",
+        step_id=f"{spec.baseline_step_prefix}-4",
         result=result,
         payload_identity=(
-            "commitment_id=thrash-commit-1, externally_consequential=True, "
-            "session_id=thrash-session-1"
+            f"commitment_id={spec.commitment_id}, externally_consequential=True, "
+            f"session_id={spec.session_id}"
         ),
         selected_family=decision.selected_family,
         brake_state=brake.state,

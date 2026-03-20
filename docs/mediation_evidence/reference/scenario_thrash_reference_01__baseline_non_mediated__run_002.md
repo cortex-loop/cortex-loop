@@ -1,4 +1,4 @@
-# scenario_thrash_reference_01__baseline_non_mediated__run_001
+# scenario_thrash_reference_01__baseline_non_mediated__run_002
 
 Date: 2026-03-20
 Status: `reviewed_evidence`
@@ -13,8 +13,8 @@ It does not provide comparative mediation evidence by itself, justify mediation,
 - date: 2026-03-20
 - status: `reviewed_evidence`
 - scenario_id: `scenario_thrash_reference_01`
-- run_id: `reference_thrash_baseline_run_001`
-- paired_episode_set_id: `pair_reference_thrash_001`
+- run_id: `reference_thrash_baseline_run_002`
+- paired_episode_set_id: `pair_reference_thrash_002`
 
 ## Variant Metadata
 
@@ -34,22 +34,22 @@ It does not provide comparative mediation evidence by itself, justify mediation,
 
 ## Scenario Inputs
 
-- starting_request_or_event: bounded reference-host approval flow on `thrash-session-1` with repeated candidate-bearing follow-up before final certified completion
+- starting_request_or_event: bounded reference-host approval flow on `thrash-session-2` with repeated candidate-bearing follow-up before final certified completion
 - host_surface: reference-host commitment path plus landed SRE goal, brake, allocation, and core support-session surfaces
 - declared_scenario_goal: evaluate whether mediation reduces repeated branch reopen or resume cycles on a bounded multi-step reference-host episode without reducing lawful task completion
 - bounded_environment_or_approval_context: `CommitmentEnvironmentHandle` with `available_query_kinds={EXECUTION_TRACE}` and `capability_tags={trace/read}` on `env_local_default`
 
 ## Run Outputs
 
-- outcome_summary: The bounded reference-host episode reaches certified completion at `thrash-step-4` after one guarded uncertified follow-up at `thrash-step-2`.
-- branch_trajectory_summary: The live reference-host episode derives an explicit `open -> suspend -> resume -> merge` sequence across `thrash-step-1` through `thrash-step-4`.
-- uncertainty_or_brake_summary: Brake state is `guarded` only at `thrash-step-2` from elevated evidence uncertainty; no contradiction or degradation smoothing occurs.
+- outcome_summary: The bounded reference-host episode reaches certified completion at `thrash-002-step-4` after one guarded uncertified follow-up at `thrash-002-step-2`.
+- branch_trajectory_summary: The live reference-host episode derives an explicit `open -> suspend -> resume -> merge` sequence across `thrash-002-step-1` through `thrash-002-step-4`.
+- uncertainty_or_brake_summary: Brake state is `guarded` only at `thrash-002-step-2` from elevated evidence uncertainty; no contradiction or degradation smoothing occurs.
 - burden_summary: none
 - host_realization_summary: Reference-host commitment and landed SRE branch-control surfaces are exercised together without any pooled host claim.
 
 ## Artifact Refs
 
-- event_trace_refs: `thrash-step-1:ApprovalRequest/open, thrash-step-2:ApprovalResult/suspend, thrash-step-3:ApprovalRequest/resume, thrash-step-4:ApprovalResult/merge`
+- event_trace_refs: `thrash-002-step-1:ApprovalRequest/open, thrash-002-step-2:ApprovalResult/suspend, thrash-002-step-3:ApprovalRequest/resume, thrash-002-step-4:ApprovalResult/merge`
 - contradiction_refs: none
 - degradation_refs: none
 - aux_burden_refs_if_present: none
@@ -91,7 +91,7 @@ It does not provide comparative mediation evidence by itself, justify mediation,
 
 - exclusion_status: `none`
 - failure_tags: `none`
-- notes: This packet is part of the committed reference thrash paired-run series under `pair_reference_thrash_001`. A single packet does not justify mediation; package-level evidence notes govern verdicts.
+- notes: This packet is part of the committed reference thrash paired-run series under `pair_reference_thrash_002`. A single packet does not justify mediation; package-level evidence notes govern verdicts.
 
 ## Reviewer Note
 

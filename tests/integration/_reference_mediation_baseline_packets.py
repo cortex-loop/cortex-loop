@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Callable, Mapping
+from functools import partial
 from pathlib import Path
 import sys
 
@@ -15,6 +16,9 @@ from tests.integration._reference_lane_packet_example import (
     build_reference_lane_packet_example_snapshot,
 )
 from tests.integration._reference_mediation_thrash_episode import (
+    DEFAULT_REFERENCE_THRASH_PAIR_KEY,
+    REFERENCE_THRASH_PAIR_KEYS,
+    REFERENCE_THRASH_PAIR_SPECS,
     build_reference_thrash_episode_snapshot,
 )
 
@@ -31,9 +35,12 @@ REFERENCE_MEDIATION_BASELINE_PACKET_PATHS = {
         "scenario_host_reference_01__baseline_non_mediated__run_001.md"
     ),
     "scenario_thrash_reference_01": (
-        "docs/mediation_evidence/reference/"
-        "scenario_thrash_reference_01__baseline_non_mediated__run_001.md"
+        REFERENCE_THRASH_PAIR_SPECS[DEFAULT_REFERENCE_THRASH_PAIR_KEY].baseline_packet_path
     ),
+}
+REFERENCE_THRASH_BASELINE_PACKET_PATHS = {
+    pair_key: REFERENCE_THRASH_PAIR_SPECS[pair_key].baseline_packet_path
+    for pair_key in REFERENCE_THRASH_PAIR_KEYS
 }
 _SCOPE_TEXT = {
     ("scenario_uncertainty_reference_01", "baseline_non_mediated"): (
@@ -50,15 +57,17 @@ _SCOPE_TEXT = {
     ),
     ("scenario_thrash_reference_01", "baseline_non_mediated"): (
         "This committed run packet records one reference-host baseline-only thrash "
-        "control packet for mediation evidence review.\n"
-        "It does not provide comparative mediation evidence, justify mediation, or "
-        "authorize implementation work."
+        "control packet within the committed thrash paired-run series for mediation "
+        "evidence review.\n"
+        "It does not provide comparative mediation evidence by itself, justify "
+        "mediation, or authorize implementation work."
     ),
     ("scenario_thrash_reference_01", "experimental_mediated"): (
         "This committed run packet records one reference-host experimental mediated "
-        "thrash comparator for mediation evidence review.\n"
+        "thrash comparator within the committed thrash paired-run series for mediation "
+        "evidence review.\n"
         "It does not justify mediation, does not authorize implementation work, and "
-        "one paired run is not enough to claim lift."
+        "package-level evidence notes govern any verdict."
     ),
 }
 _INVARIANT_LOCK = {
@@ -71,6 +80,11 @@ _INVARIANT_LOCK = {
 _REVIEWER_NOTE = (
     "This is baseline-only committed evidence, not comparative mediation evidence, "
     "and it does not justify mediation or authorize any implementation seam."
+)
+_THRASH_BASELINE_REVIEWER_NOTE = (
+    "This is baseline-only committed evidence within the committed reference thrash "
+    "paired-run series. It is not comparative mediation evidence by itself and does "
+    "not justify mediation or authorize any implementation seam."
 )
 
 
@@ -287,8 +301,11 @@ def build_reference_host_realization_baseline_packet() -> PacketSnapshot:
     )
 
 
-def build_reference_thrash_baseline_packet() -> PacketSnapshot:
-    snapshot = build_reference_thrash_episode_snapshot()
+def build_reference_thrash_baseline_packet(
+    pair_key: str = DEFAULT_REFERENCE_THRASH_PAIR_KEY,
+) -> PacketSnapshot:
+    spec = REFERENCE_THRASH_PAIR_SPECS[pair_key]
+    snapshot = build_reference_thrash_episode_snapshot(pair_key)
     steps = snapshot["steps"]
 
     assert isinstance(steps, list)
@@ -304,15 +321,15 @@ def build_reference_thrash_baseline_packet() -> PacketSnapshot:
 
     return build_reference_mediation_packet(
         scenario_id="scenario_thrash_reference_01",
-        run_id="reference_thrash_baseline_run_001",
-        paired_episode_set_id="pair_reference_thrash_001",
+        run_id=spec.baseline_run_id,
+        paired_episode_set_id=spec.pair_id,
         scenario_family="thrash_control",
         task_value_rubric_id="task_value_equal_completion",
         approval_or_environment_context_id="env_local_default",
         scenario_inputs={
             "starting_request_or_event": (
-                "bounded reference-host approval flow on `thrash-session-1` with repeated "
-                "candidate-bearing follow-up before final certified completion"
+                f"bounded reference-host approval flow on `{spec.session_id}` with "
+                "repeated candidate-bearing follow-up before final certified completion"
             ),
             "host_surface": (
                 "reference-host commitment path plus landed SRE goal, brake, allocation, "
@@ -332,17 +349,18 @@ def build_reference_thrash_baseline_packet() -> PacketSnapshot:
         run_outputs={
             "outcome_summary": (
                 "The bounded reference-host episode reaches certified completion at "
-                "`thrash-step-4` after one guarded uncertified follow-up at "
-                "`thrash-step-2`."
+                f"`{spec.baseline_step_prefix}-4` after one guarded uncertified follow-up "
+                f"at `{spec.baseline_step_prefix}-2`."
             ),
             "branch_trajectory_summary": (
                 "The live reference-host episode derives an explicit "
                 "`open -> suspend -> resume -> merge` sequence across "
-                "`thrash-step-1` through `thrash-step-4`."
+                f"`{spec.baseline_step_prefix}-1` through `{spec.baseline_step_prefix}-4`."
             ),
             "uncertainty_or_brake_summary": (
-                "Brake state is `guarded` only at `thrash-step-2` from elevated evidence "
-                "uncertainty; no contradiction or degradation smoothing occurs."
+                f"Brake state is `guarded` only at `{spec.baseline_step_prefix}-2` from "
+                "elevated evidence uncertainty; no contradiction or degradation "
+                "smoothing occurs."
             ),
             "burden_summary": "none",
             "host_realization_summary": (
@@ -359,38 +377,42 @@ def build_reference_thrash_baseline_packet() -> PacketSnapshot:
         },
         lift_axis_notes={
             "Reduced Thrashing": (
-                "This packet records one lawful multi-step reference-host branch cycle, "
-                "but no matched mediated comparison exists.",
-                "One baseline-only `open -> suspend -> resume -> merge` episode does not "
-                "establish thrash reduction.",
+                "This packet records one lawful multi-step reference-host branch cycle "
+                "within the committed thrash paired-run series.",
+                "Package-level evidence notes govern whether repeated paired evidence is "
+                "enough to claim thrash reduction.",
             ),
             "Better Branch Discipline": (
                 "This packet preserves explicit branch trajectory evidence on the "
-                "reference-host path, but no mediated comparison exists.",
-                "One baseline-only branch-control trace is descriptive only for this "
-                "scenario-host cell.",
+                "reference-host path within the committed thrash paired-run series.",
+                "Package-level evidence notes govern whether repeated paired evidence is "
+                "enough to claim branch-discipline lift.",
             ),
             "Better Uncertainty Handling": (
-                "The guarded uncertified follow-up remains explicit at `thrash-step-2`, "
-                "but no mediated comparison exists.",
-                "One baseline-only guarded transition does not establish comparative lift.",
+                "The guarded uncertified follow-up remains explicit within the committed "
+                "thrash paired-run series.",
+                "Package-level evidence notes govern whether repeated paired evidence is "
+                "enough to claim uncertainty lift.",
             ),
             "Lower Visible Burden At Equal Task Value": (
-                "Baseline-only packet; no equal-value burden comparison is recorded.",
-                "No committed AUX burden artifact exists for this packet.",
+                "Baseline-only packet within the committed thrash paired-run series; no "
+                "AUX burden artifact is recorded here.",
+                "Package-level evidence notes govern whether repeated paired evidence is "
+                "enough to claim burden lift.",
             ),
             "Better Host-Specialized Realization": (
                 "This packet exercises the reference-host commitment path together with "
-                "landed SRE branch-control carriers, but no mediated comparison exists.",
-                "Reference-host realization remains descriptive until a matched mediated "
-                "run exists.",
+                "landed SRE branch-control carriers within the committed thrash series.",
+                "Package-level evidence notes govern whether repeated paired evidence is "
+                "enough to claim host-specialized realization lift.",
             ),
         },
         exclusion_notes=(
-            "This packet is intentionally baseline-only and reserves "
-            "`pair_reference_thrash_001` for the current reference-only experimental "
-            "comparison without justifying any mediation claim."
+            "This packet is part of the committed reference thrash paired-run series "
+            f"under `{spec.pair_id}`. A single packet does not justify mediation; "
+            "package-level evidence notes govern verdicts."
         ),
+        reviewer_note=_THRASH_BASELINE_REVIEWER_NOTE,
     )
 
 
@@ -400,6 +422,22 @@ REFERENCE_MEDIATION_BASELINE_PACKET_BUILDERS: Mapping[
     "scenario_uncertainty_reference_01": build_reference_uncertainty_baseline_packet,
     "scenario_host_reference_01": build_reference_host_realization_baseline_packet,
     "scenario_thrash_reference_01": build_reference_thrash_baseline_packet,
+}
+REFERENCE_MEDIATION_BASELINE_PACKET_DOC_BUILDERS: Mapping[
+    str, Callable[[], PacketSnapshot]
+] = {
+    REFERENCE_MEDIATION_BASELINE_PACKET_PATHS["scenario_uncertainty_reference_01"]: (
+        build_reference_uncertainty_baseline_packet
+    ),
+    REFERENCE_MEDIATION_BASELINE_PACKET_PATHS["scenario_host_reference_01"]: (
+        build_reference_host_realization_baseline_packet
+    ),
+    **{
+        REFERENCE_THRASH_BASELINE_PACKET_PATHS[pair_key]: partial(
+            build_reference_thrash_baseline_packet, pair_key
+        )
+        for pair_key in REFERENCE_THRASH_PAIR_KEYS
+    },
 }
 
 
@@ -518,15 +556,14 @@ def render_reference_mediation_packet(
 
 
 def emit_reference_mediation_baseline_packets() -> None:
-    for index, (scenario_id, builder) in enumerate(
-        REFERENCE_MEDIATION_BASELINE_PACKET_BUILDERS.items()
+    for index, (relative_path, builder) in enumerate(
+        REFERENCE_MEDIATION_BASELINE_PACKET_DOC_BUILDERS.items()
     ):
-        relative_path = REFERENCE_MEDIATION_BASELINE_PACKET_PATHS[scenario_id]
         sys.stdout.write(f"--- {relative_path}\n")
         sys.stdout.write(
             render_reference_mediation_packet(relative_path, builder())
         )
-        if index != len(REFERENCE_MEDIATION_BASELINE_PACKET_BUILDERS) - 1:
+        if index != len(REFERENCE_MEDIATION_BASELINE_PACKET_DOC_BUILDERS) - 1:
             sys.stdout.write("\n")
 
 

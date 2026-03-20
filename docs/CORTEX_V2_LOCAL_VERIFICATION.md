@@ -143,7 +143,7 @@ make revalidate-mediation-evidence-package
 ## Mediation run-packet revalidation
 
 This checks the committed reference-host baseline run index and the committed run-packet instances.
-It validates packet metadata against the scenario catalog, confirms the three committed reference baseline packets stay baseline-only, and checks the first experimental mediated thrash packet.
+It validates packet metadata against the scenario catalog, confirms the canonical baseline anchors remain lawful, validates the full five-packet reference baseline set, and checks the three committed experimental mediated thrash packets.
 
 Direct command:
 
@@ -159,7 +159,7 @@ make revalidate-mediation-run-packets
 
 ## Live reference mediation-baseline revalidation
 
-This revalidates the three committed reference-host baseline mediation packets against live reference-host code paths.
+This revalidates the five committed reference-host baseline mediation packets against live reference-host code paths.
 It remains reference-first and baseline-only: it does not advance any paired counts and it does not add Gemini or OpenAI live packets.
 
 Direct command:
@@ -177,7 +177,7 @@ make revalidate-reference-mediation-baselines
 ## Reference mediation-baseline candidate refresh
 
 This emits candidate refreshed reference-host baseline mediation packet docs to stdout for manual inspection.
-It prints markdown for all three committed reference packet docs with committed relative-path headers, does not overwrite the committed packet docs, and does not authorize any paired comparison or mediation implementation work.
+It prints markdown for all five committed reference baseline packet docs with committed relative-path headers, does not overwrite the committed packet docs, and does not authorize any paired comparison or mediation implementation work.
 
 Direct command:
 
@@ -193,8 +193,8 @@ make emit-reference-mediation-baselines-candidate
 
 ## Experimental reference mediated-thrash revalidation
 
-This revalidates the first experimental reference-only mediated thrash comparator against live reference-host code paths.
-It checks that the mediated packet stays reference-only, preserves the same completion class and truth boundary as baseline, and reduces branch oscillation without widening any verdict.
+This revalidates the three committed experimental reference-only mediated thrash comparators against live reference-host code paths.
+It checks that each mediated packet stays reference-only, preserves the same completion class and truth boundary as baseline, and reduces branch oscillation without widening package-level verdicts.
 
 Direct command:
 
@@ -210,8 +210,8 @@ make revalidate-reference-mediated-thrash
 
 ## Experimental reference mediated-thrash candidate refresh
 
-This emits the committed experimental reference-only mediated thrash packet doc to stdout for manual inspection.
-It prints markdown with the committed relative-path header, does not overwrite the committed doc, and does not authorize mediation implementation work.
+This emits the committed experimental reference-only mediated thrash packet docs to stdout for manual inspection.
+It prints markdown for all three committed thrash comparator docs with committed relative-path headers, does not overwrite the committed docs, and does not authorize mediation implementation work.
 
 Direct command:
 
@@ -227,8 +227,8 @@ make emit-reference-mediated-thrash-candidate
 
 ## Mediation reference-thrash basis revalidation
 
-This checks that `scenario_thrash_reference_01` now has a satisfied committed basis.
-It validates the supporting basis note, confirms that the committed thrash packet and live thrash builder exist, and checks that the deterministic branch-derivation rules are still documented. It does not generate any new evidence.
+This checks that `scenario_thrash_reference_01` now has a satisfied committed basis and replication law.
+It validates the supporting basis note, the replication note, the committed thrash packet series, the live thrash builder set, and the deterministic branch-derivation and cross-pair distinctness rules. It does not generate any new evidence.
 
 Direct command:
 
@@ -249,7 +249,7 @@ This runs all current mediation-evidence checks together:
 - run-packet instance validation
 - live reference baseline packet revalidation
 - live experimental reference mediated-thrash revalidation
-- reference thrash-basis validation
+- reference thrash basis and replication validation
 
 It remains check-only and does not generate evidence or authorize mediation implementation.
 

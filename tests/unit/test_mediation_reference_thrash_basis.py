@@ -7,6 +7,9 @@ from tests._mediation_evidence import (
     REFERENCE_BASELINE_INDEX_PATH,
     REFERENCE_THRASH_BASIS_NOTE_PATH,
     REFERENCE_THRASH_PACKET_PATH,
+    REFERENCE_THRASH_REPLICATION_NOTE_PATH,
+    REFERENCE_THRASH_BASELINE_PACKET_PATHS,
+    REFERENCE_THRASH_MEDIATED_PACKET_PATHS,
     parse_markdown_table,
     read,
     section,
@@ -17,6 +20,8 @@ from tests.integration._reference_mediation_baseline_packets import (
 )
 from tests.integration._reference_mediation_thrash_episode import (
     EXPECTED_REFERENCE_THRASH_BRANCH_SEQUENCE,
+    REFERENCE_THRASH_PAIR_KEYS,
+    REFERENCE_THRASH_PAIR_SPECS,
     build_reference_thrash_episode_snapshot,
 )
 
@@ -26,10 +31,10 @@ def test_reference_thrash_basis_note_exists_and_records_satisfied_basis() -> Non
 
     assert REFERENCE_THRASH_BASIS_NOTE_PATH.is_file()
     assert status(REFERENCE_THRASH_BASIS_NOTE_PATH) == "reference thrash basis satisfied"
-    assert "basis is now satisfied by one committed reference-host baseline packet" in text
+    assert "basis is now satisfied by the committed reference-host thrash baseline series" in text
     assert "tests/integration/_reference_mediation_thrash_episode.py" in text
     assert "tests/integration/test_reference_mediation_baseline_packets.py" in text
-    assert "docs/mediation_evidence/reference/scenario_thrash_reference_01__baseline_non_mediated__run_001.md" in text
+    assert "docs/CORTEX_V2_MEDIATION_REFERENCE_THRASH_REPLICATION_NOTE_0.md" in text
 
 
 def test_reference_thrash_basis_note_contains_exact_derivation_rules_and_anti_patterns() -> None:
@@ -65,10 +70,10 @@ def test_reference_thrash_basis_note_contains_exact_derivation_rules_and_anti_pa
     )
 
 
-def test_reference_thrash_builder_and_packet_exist_and_match_index() -> None:
+def test_reference_thrash_builder_packet_series_and_replication_note_exist() -> None:
     rows = parse_markdown_table(section(read(REFERENCE_BASELINE_INDEX_PATH), "Index Rows"))
     thrash_row = next(row for row in rows if row["scenario_id"] == "scenario_thrash_reference_01")
-    snapshot = build_reference_thrash_episode_snapshot()
+    replication_text = read(REFERENCE_THRASH_REPLICATION_NOTE_PATH)
 
     assert thrash_row["evidence_status"] == "baseline_packet_committed"
     assert thrash_row["paired_episode_set_id"] == "pair_reference_thrash_001"
@@ -83,13 +88,38 @@ def test_reference_thrash_builder_and_packet_exist_and_match_index() -> None:
     )
     assert REFERENCE_THRASH_PACKET_PATH.exists()
     assert "scenario_thrash_reference_01" in REFERENCE_MEDIATION_BASELINE_PACKET_BUILDERS
-    assert snapshot["branch_sequence"] == list(EXPECTED_REFERENCE_THRASH_BRANCH_SEQUENCE)
+    assert status(REFERENCE_THRASH_REPLICATION_NOTE_PATH) == "reference thrash replication law recorded"
+    assert "pair_reference_thrash_001" in replication_text
+    assert "pair_reference_thrash_002" in replication_text
+    assert "pair_reference_thrash_003" in replication_text
+    assert "unique:" in replication_text
+    assert "session_id" in replication_text
+    assert "candidate_id" in replication_text
+    assert "commitment_id" in replication_text
+    assert "provenance artifact id" in replication_text
+    assert "non-main branch track ref" in replication_text
+    assert "uncertainty spike tag" in replication_text
+
+    for pair_key in REFERENCE_THRASH_PAIR_KEYS:
+        snapshot = build_reference_thrash_episode_snapshot(pair_key)
+        assert snapshot["branch_sequence"] == list(EXPECTED_REFERENCE_THRASH_BRANCH_SEQUENCE)
+        assert REFERENCE_THRASH_BASELINE_PACKET_PATHS[pair_key].exists()
+        assert REFERENCE_THRASH_MEDIATED_PACKET_PATHS[pair_key].exists()
+
+    assert len({spec.pair_id for spec in REFERENCE_THRASH_PAIR_SPECS.values()}) == 3
+    assert len({spec.session_id for spec in REFERENCE_THRASH_PAIR_SPECS.values()}) == 3
+    assert len({spec.candidate_id for spec in REFERENCE_THRASH_PAIR_SPECS.values()}) == 3
+    assert len({spec.commitment_id for spec in REFERENCE_THRASH_PAIR_SPECS.values()}) == 3
+    assert len({spec.provenance_artifact_id for spec in REFERENCE_THRASH_PAIR_SPECS.values()}) == 3
+    assert len({spec.branch_track_ref for spec in REFERENCE_THRASH_PAIR_SPECS.values()}) == 3
+    assert len({spec.uncertainty_spike_tag for spec in REFERENCE_THRASH_PAIR_SPECS.values()}) == 3
 
 
-def test_evidence_note_keeps_mediation_blocked_with_one_reference_only_pair() -> None:
+def test_evidence_note_keeps_mediation_blocked_with_three_reference_only_pairs() -> None:
     text = read(EVIDENCE_NOTE_PATH)
 
     assert "All current reference-host scenario families now have committed baseline run packets" in text
-    assert "One experimental reference-only baseline-versus-mediated thrash pair is now recorded" in text
+    assert "Three experimental reference-only baseline-versus-mediated thrash pairs are now recorded" in text
+    assert "candidate_positive" in text
     assert "Mediation remains blocked" in text
     assert "no implementation seam may open" in text

@@ -1,12 +1,12 @@
 # CORTEX_V2_MEDIATION_PAIRED_RUN_LEDGER_0
 
 Date: 2026-03-20
-Status: `reference_thrash_pair_recorded`
+Status: `reference_thrash_three_pairs_recorded`
 
 ## Scope
 
 This ledger records the planned mediation-comparison coverage surface and any later paired baseline versus mediated runs.
-Version `0` still precommits coverage from the current scenario catalog and preserves explicit exclusions, and it now records one reference-only experimental thrash pair.
+Version `0` still precommits coverage from the current scenario catalog and preserves explicit exclusions, and it now records three reference-only experimental thrash pairs.
 
 ## Use Rules
 
@@ -33,5 +33,7 @@ Version `0` still precommits coverage from the current scenario catalog and pres
 
 | paired_episode_set_id | scenario_id | host_family | baseline_run_id | mediated_run_id | baseline_packet_ref | mediated_packet_ref | pair_status | failure_tags | notes |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| pair_reference_thrash_001 | scenario_thrash_reference_01 | reference | reference_thrash_baseline_run_001 | reference_thrash_mediated_run_001 | docs/mediation_evidence/reference/scenario_thrash_reference_01__baseline_non_mediated__run_001.md | docs/mediation_evidence/reference/scenario_thrash_reference_01__experimental_mediated__run_001.md | usable | none | One reference-only experimental pair is recorded for the thrash scenario. The same scenario, host, rubric, environment context, commitment boundary, and evidence surface are preserved, but one pair is not enough to justify any verdict. |
+| pair_reference_thrash_001 | scenario_thrash_reference_01 | reference | reference_thrash_baseline_run_001 | reference_thrash_mediated_run_001 | docs/mediation_evidence/reference/scenario_thrash_reference_01__baseline_non_mediated__run_001.md | docs/mediation_evidence/reference/scenario_thrash_reference_01__experimental_mediated__run_001.md | usable | none | First reference-only experimental thrash pair. The same scenario, host, rubric, environment context, commitment boundary, and evidence surface are preserved. |
+| pair_reference_thrash_002 | scenario_thrash_reference_01 | reference | reference_thrash_baseline_run_002 | reference_thrash_mediated_run_002 | docs/mediation_evidence/reference/scenario_thrash_reference_01__baseline_non_mediated__run_002.md | docs/mediation_evidence/reference/scenario_thrash_reference_01__experimental_mediated__run_002.md | usable | none | Second reference-only experimental thrash pair. The same scenario, host, rubric, environment context, commitment boundary, and evidence surface are preserved. |
+| pair_reference_thrash_003 | scenario_thrash_reference_01 | reference | reference_thrash_baseline_run_003 | reference_thrash_mediated_run_003 | docs/mediation_evidence/reference/scenario_thrash_reference_01__baseline_non_mediated__run_003.md | docs/mediation_evidence/reference/scenario_thrash_reference_01__experimental_mediated__run_003.md | usable | none | Third reference-only experimental thrash pair. The same scenario, host, rubric, environment context, commitment boundary, and evidence surface are preserved. |
 | none_recorded_yet | — | — | — | — | — | — | not_recorded | none | No additional live paired runs are recorded yet. |

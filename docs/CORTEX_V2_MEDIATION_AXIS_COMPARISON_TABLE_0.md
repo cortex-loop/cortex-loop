@@ -1,12 +1,12 @@
 # CORTEX_V2_MEDIATION_AXIS_COMPARISON_TABLE_0
 
 Date: 2026-03-20
-Status: `reference_thrash_pair_recorded`
+Status: `reference_thrash_three_pairs_recorded`
 
 ## Scope
 
 This document preseeds the five lift-axis comparison surfaces from the current mediation scenario catalog.
-Version `0` records one reference-only experimental thrash pair, keeps every verdict conservative, and does not pool across hosts.
+Version `0` records three reference-only experimental thrash pairs, keeps the package-level summaries conservative, and does not pool across hosts.
 
 ## Count Rules
 
@@ -19,7 +19,7 @@ Version `0` records one reference-only experimental thrash pair, keeps every ver
 
 | scenario_id | host_family | usable_pair_count | confidence_downgraded_pair_count | excluded_pair_count | current_verdict | supporting_paired_episode_sets | notes |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| scenario_thrash_reference_01 | reference | 1 | 0 | 0 | insufficient | pair_reference_thrash_001 | One reference-only experimental pair is recorded; one pair is not enough to justify a verdict. |
+| scenario_thrash_reference_01 | reference | 3 | 0 | 0 | candidate_positive | pair_reference_thrash_001, pair_reference_thrash_002, pair_reference_thrash_003 | Three reference-only experimental pairs are recorded for this scenario-host cell and they show repeated shorter branch sequences at equal completion class. |
 | scenario_thrash_gemini_01 | gemini | 0 | 0 | 0 | insufficient | none | No live paired runs recorded yet. |
 | scenario_thrash_openai_01 | openai | 0 | 0 | 0 | insufficient | none | No live paired runs recorded yet. |
 | scenario_uncertainty_reference_01 | reference | 0 | 0 | 0 | insufficient | none | No live paired runs recorded yet. |
@@ -33,7 +33,7 @@ Version `0` records one reference-only experimental thrash pair, keeps every ver
 
 | scenario_id | host_family | usable_pair_count | confidence_downgraded_pair_count | excluded_pair_count | current_verdict | supporting_paired_episode_sets | notes |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| scenario_thrash_reference_01 | reference | 1 | 0 | 0 | insufficient | pair_reference_thrash_001 | One reference-only experimental pair is recorded; one pair is not enough to justify a verdict. |
+| scenario_thrash_reference_01 | reference | 3 | 0 | 0 | candidate_positive | pair_reference_thrash_001, pair_reference_thrash_002, pair_reference_thrash_003 | Three reference-only experimental pairs are recorded for this scenario-host cell and they show repeated branch-discipline improvement at equal completion class. |
 | scenario_thrash_gemini_01 | gemini | 0 | 0 | 0 | insufficient | none | No live paired runs recorded yet. |
 | scenario_thrash_openai_01 | openai | 0 | 0 | 0 | insufficient | none | No live paired runs recorded yet. |
 | scenario_uncertainty_reference_01 | reference | 0 | 0 | 0 | insufficient | none | No live paired runs recorded yet. |
@@ -47,7 +47,7 @@ Version `0` records one reference-only experimental thrash pair, keeps every ver
 
 | scenario_id | host_family | usable_pair_count | confidence_downgraded_pair_count | excluded_pair_count | current_verdict | supporting_paired_episode_sets | notes |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| scenario_thrash_reference_01 | reference | 1 | 0 | 0 | insufficient | pair_reference_thrash_001 | One reference-only experimental pair is recorded; one pair is not enough to justify a verdict. |
+| scenario_thrash_reference_01 | reference | 3 | 0 | 0 | insufficient | pair_reference_thrash_001, pair_reference_thrash_002, pair_reference_thrash_003 | Three reference-only experimental pairs are recorded, but the current committed evidence remains too narrow to justify an uncertainty-handling verdict. |
 | scenario_thrash_gemini_01 | gemini | 0 | 0 | 0 | insufficient | none | No live paired runs recorded yet. |
 | scenario_thrash_openai_01 | openai | 0 | 0 | 0 | insufficient | none | No live paired runs recorded yet. |
 | scenario_uncertainty_reference_01 | reference | 0 | 0 | 0 | insufficient | none | No live paired runs recorded yet. |
@@ -61,7 +61,7 @@ Version `0` records one reference-only experimental thrash pair, keeps every ver
 
 | scenario_id | host_family | usable_pair_count | confidence_downgraded_pair_count | excluded_pair_count | current_verdict | supporting_paired_episode_sets | notes |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| scenario_thrash_reference_01 | reference | 1 | 0 | 0 | insufficient | pair_reference_thrash_001 | One reference-only experimental pair is recorded; one pair is not enough to justify a verdict. |
+| scenario_thrash_reference_01 | reference | 3 | 0 | 0 | insufficient | pair_reference_thrash_001, pair_reference_thrash_002, pair_reference_thrash_003 | Three reference-only experimental pairs preserve equal completion, but no lower-burden evidence is committed yet. |
 | scenario_thrash_gemini_01 | gemini | 0 | 0 | 0 | insufficient | none | No live paired runs recorded yet. |
 | scenario_thrash_openai_01 | openai | 0 | 0 | 0 | insufficient | none | No live paired runs recorded yet. |
 | scenario_uncertainty_reference_01 | reference | 0 | 0 | 0 | insufficient | none | No live paired runs recorded yet. |
@@ -75,7 +75,7 @@ Version `0` records one reference-only experimental thrash pair, keeps every ver
 
 | scenario_id | host_family | usable_pair_count | confidence_downgraded_pair_count | excluded_pair_count | current_verdict | supporting_paired_episode_sets | notes |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| scenario_thrash_reference_01 | reference | 1 | 0 | 0 | insufficient | pair_reference_thrash_001 | One reference-only experimental pair is recorded; one pair is not enough to justify a verdict. |
+| scenario_thrash_reference_01 | reference | 3 | 0 | 0 | insufficient | pair_reference_thrash_001, pair_reference_thrash_002, pair_reference_thrash_003 | Three reference-only experimental pairs are recorded, but this host-specialized realization cell remains descriptive only. |
 | scenario_thrash_gemini_01 | gemini | 0 | 0 | 0 | insufficient | none | No live paired runs recorded yet. |
 | scenario_thrash_openai_01 | openai | 0 | 0 | 0 | insufficient | none | No live paired runs recorded yet. |
 | scenario_uncertainty_reference_01 | reference | 0 | 0 | 0 | insufficient | none | No live paired runs recorded yet. |
