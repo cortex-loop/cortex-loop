@@ -737,8 +737,11 @@ def test_evidence_note_keeps_mediation_blocked_with_reference_gemini_and_openai_
         "`docs/CORTEX_V2_MEDIATION_GEMINI_HOST_REALIZATION_ADMISSIBILITY_NOTE_0.md`."
     ) in text
     assert (
-        "`scenario_host_openai_01` remains intentionally unpaired pending the OpenAI "
-        "admissibility audit recorded in "
+        "A baseline-only OpenAI host-realization anchor is now recorded through "
+        "`docs/CORTEX_V2_OPENAI_LANE_PACKET_EXAMPLE_0.md` and "
+        "`docs/mediation_evidence/openai/scenario_host_openai_01__baseline_non_mediated__run_001.md`, "
+        "but `scenario_host_openai_01` remains intentionally unpaired pending the OpenAI "
+        "comparator admissibility audit recorded in "
         "`docs/CORTEX_V2_MEDIATION_OPENAI_HOST_REALIZATION_ADMISSIBILITY_NOTE_0.md`."
     ) in text
     assert (

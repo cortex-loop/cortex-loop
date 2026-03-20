@@ -19,6 +19,7 @@ from tests._mediation_evidence import (
     MEDIATION_REFERENCE_PACKET_ROOT,
     MEDIATION_GEMINI_PACKET_ROOT,
     OPENAI_BASELINE_INDEX_PATH,
+    OPENAI_HOST_REALIZATION_PACKET_PATH,
     OPENAI_THRASH_BASELINE_PACKET_PATHS,
     OPENAI_THRASH_MEDIATED_PACKET_PATHS,
     OPENAI_THRASH_PACKET_PATH,
@@ -106,8 +107,9 @@ def test_openai_baseline_index_is_openai_only_and_commits_canonical_openai_ancho
 
     assert OPENAI_BASELINE_INDEX_PATH.is_file()
     assert status(OPENAI_BASELINE_INDEX_PATH) == "openai mediation baseline run index (`active`, baseline-only)"
-    assert len(rows) == 2
+    assert len(rows) == 3
     assert {row["scenario_id"] for row in rows} == {
+        "scenario_host_openai_01",
         "scenario_thrash_openai_01",
         "scenario_uncertainty_openai_01",
     }
@@ -299,7 +301,7 @@ def test_committed_openai_baseline_packets_match_catalog_and_stay_baseline_only(
     failure_tags = load_failure_tags()
     baseline_packets = sorted(MEDIATION_OPENAI_PACKET_ROOT.glob("*__baseline_non_mediated__run_*.md"))
 
-    assert len(baseline_packets) == 6
+    assert len(baseline_packets) == 7
 
     for packet_path in baseline_packets:
         packet = parse_run_packet(packet_path)
@@ -314,7 +316,13 @@ def test_committed_openai_baseline_packets_match_catalog_and_stay_baseline_only(
             packet["variant_metadata"]["approval_or_environment_context_id"]
             == scenario["approval_or_environment_context_id"]
         )
-        if packet["header"]["scenario_id"] == "scenario_uncertainty_openai_01":
+        if packet["header"]["scenario_id"] == "scenario_host_openai_01":
+            rows = parse_markdown_table(section(read(OPENAI_BASELINE_INDEX_PATH), "Index Rows"))
+            row = next(row for row in rows if row["scenario_id"] == packet["header"]["scenario_id"])
+            assert packet_path == OPENAI_HOST_REALIZATION_PACKET_PATH
+            assert packet["header"]["run_id"] == row["run_id"]
+            assert packet["header"]["paired_episode_set_id"] == row["paired_episode_set_id"]
+        elif packet["header"]["scenario_id"] == "scenario_uncertainty_openai_01":
             assert packet_path in OPENAI_UNCERTAINTY_BASELINE_PACKET_PATHS.values()
             assert packet["header"]["run_id"].startswith("openai_uncertainty_baseline_run_")
             assert packet["header"]["paired_episode_set_id"].startswith("pair_openai_uncertainty_")
@@ -483,9 +491,10 @@ def test_gemini_packet_directory_contains_seven_baselines_and_six_experimental_p
     ]
 
 
-def test_openai_packet_directory_contains_six_baselines_and_six_experimental_packets() -> None:
+def test_openai_packet_directory_contains_seven_baselines_and_six_experimental_packets() -> None:
     packet_names = sorted(path.name for path in MEDIATION_OPENAI_PACKET_ROOT.glob("*.md"))
     assert packet_names == [
+        "scenario_host_openai_01__baseline_non_mediated__run_001.md",
         "scenario_thrash_openai_01__baseline_non_mediated__run_001.md",
         "scenario_thrash_openai_01__baseline_non_mediated__run_002.md",
         "scenario_thrash_openai_01__baseline_non_mediated__run_003.md",

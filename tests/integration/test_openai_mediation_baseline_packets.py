@@ -5,6 +5,7 @@ from __future__ import annotations
 from pathlib import Path
 
 from tests._mediation_evidence import (
+    OPENAI_HOST_REALIZATION_PACKET_PATH,
     OPENAI_THRASH_BASELINE_PACKET_PATHS,
     OPENAI_UNCERTAINTY_BASELINE_PACKET_PATHS,
     packet_without_path,
@@ -14,6 +15,7 @@ from tests.integration._openai_mediation_baseline_packets import (
     OPENAI_MEDIATION_BASELINE_PACKET_DOC_BUILDERS,
     OPENAI_THRASH_BASELINE_PACKET_PATHS as EMITTED_OPENAI_THRASH_PACKET_PATHS,
     OPENAI_UNCERTAINTY_BASELINE_PACKET_PATHS as EMITTED_OPENAI_PACKET_PATHS,
+    build_openai_host_realization_baseline_packet,
     build_openai_thrash_baseline_packet,
     build_openai_uncertainty_baseline_packet,
     emit_openai_mediation_baseline_packets,
@@ -30,6 +32,11 @@ from tests.integration._openai_mediation_uncertainty_episode import (
     OPENAI_UNCERTAINTY_PAIR_SPECS,
     build_openai_uncertainty_episode_snapshot,
 )
+
+
+def test_openai_host_realization_baseline_packet_matches_committed_doc() -> None:
+    committed_packet = packet_without_path(parse_run_packet(OPENAI_HOST_REALIZATION_PACKET_PATH))
+    assert build_openai_host_realization_baseline_packet() == committed_packet
 
 
 def test_openai_uncertainty_baseline_packet_matches_committed_doc() -> None:
@@ -78,15 +85,17 @@ def test_candidate_emitter_prints_openai_baseline_packets_as_markdown(
     emit_openai_mediation_baseline_packets()
     captured = capsys.readouterr().out
 
+    assert (
+        "--- docs/mediation_evidence/openai/"
+        "scenario_host_openai_01__baseline_non_mediated__run_001.md"
+    ) in captured
     for relative_path in EMITTED_OPENAI_PACKET_PATHS.values():
         assert f"--- {relative_path}" in captured
     for relative_path in EMITTED_OPENAI_THRASH_PACKET_PATHS.values():
         assert f"--- {relative_path}" in captured
 
     emitted_docs = _parse_emitted_docs(captured)
-    assert set(emitted_docs) == set(EMITTED_OPENAI_PACKET_PATHS.values()) | set(
-        EMITTED_OPENAI_THRASH_PACKET_PATHS.values()
-    )
+    assert set(emitted_docs) == set(OPENAI_MEDIATION_BASELINE_PACKET_DOC_BUILDERS)
 
     for relative_path, builder in OPENAI_MEDIATION_BASELINE_PACKET_DOC_BUILDERS.items():
         temp_doc = tmp_path / Path(relative_path).name

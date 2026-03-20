@@ -42,6 +42,7 @@ python3 -m pytest tests/unit/test_correspondence_contract.py \
   tests/integration/test_reference_lane_latency.py \
   tests/integration/test_reference_lane_packet_example.py \
   tests/integration/test_gemini_lane_packet_example.py \
+  tests/integration/test_openai_lane_packet_example.py \
   tests/integration/test_aux_claim_conservative.py \
   tests/unit/test_import_smoke.py -q
 ```
@@ -120,6 +121,40 @@ Repo-local entry point:
 
 ```sh
 make emit-gemini-packet-candidate
+```
+
+## OpenAI-lane packet-example revalidation
+
+This revalidates the committed OpenAI-lane packet example doc against the already-landed live OpenAI packet/publication path.
+It does not emit candidate refreshed evidence and it does not overwrite the committed example doc.
+
+Direct command:
+
+```sh
+python3 -m pytest tests/integration/test_openai_lane_packet_example.py
+```
+
+Repo-local entry point:
+
+```sh
+make revalidate-openai-packet
+```
+
+## OpenAI-lane packet-example candidate refresh
+
+This emits candidate refreshed OpenAI packet-example evidence from the already-landed live packet/publication path to stdout for manual inspection.
+It does not update blocker truth and it does not overwrite the committed example doc.
+
+Direct command:
+
+```sh
+python3 -m tests.integration._openai_lane_packet_example
+```
+
+Repo-local entry point:
+
+```sh
+make emit-openai-packet-candidate
 ```
 
 ## Latency-evidence revalidation
@@ -212,8 +247,8 @@ make revalidate-mediation-gemini-host-realization-basis
 
 ## Mediation OpenAI host-realization admissibility revalidation
 
-This checks that `scenario_host_openai_01` remains intentionally unpaired and unanchored until a lawful OpenAI host-facing publication surface is actually admissible.
-It validates the OpenAI admissibility note, the continued absence of committed OpenAI host-realization packets, the OpenAI baseline-index guardrail, and the package blocker truth. It does not generate evidence.
+This checks that `scenario_host_openai_01` now has a lawful baseline-only OpenAI host-facing publication anchor while remaining intentionally unpaired until a lawful comparator is actually admissible.
+It validates the OpenAI admissibility note, the committed OpenAI packet example, the committed OpenAI baseline host packet, the continued absence of committed OpenAI mediated host packets, the OpenAI baseline-index guardrail, and the package blocker truth. It does not generate evidence.
 
 Direct command:
 
@@ -230,7 +265,7 @@ make revalidate-mediation-openai-host-realization-basis
 ## Mediation run-packet revalidation
 
 This checks the committed reference-host, Gemini-host, and OpenAI-host baseline run indexes and the committed run-packet instances.
-It validates packet metadata against the scenario catalog, confirms the canonical baseline anchors remain lawful, validates the full seven-packet reference baseline set, validates the seven-packet Gemini baseline set, validates the six-packet OpenAI baseline set, and checks the eighteen committed experimental mediated uncertainty and thrash packets.
+It validates packet metadata against the scenario catalog, confirms the canonical baseline anchors remain lawful, validates the full seven-packet reference baseline set, validates the seven-packet Gemini baseline set, validates the seven-packet OpenAI baseline set, and checks the eighteen committed experimental mediated uncertainty and thrash packets.
 
 Direct command:
 
@@ -298,7 +333,7 @@ make emit-gemini-mediation-baselines-candidate
 ## Live OpenAI mediation-baseline revalidation
 
 This revalidates the committed OpenAI-host baseline packet series against the landed OpenAI carrier slices.
-It remains OpenAI-only and baseline-only: it covers the three committed OpenAI uncertainty baseline docs plus the three committed OpenAI thrash baseline docs and does not by itself justify any verdict.
+It remains OpenAI-only and baseline-only: it covers the one OpenAI host-realization baseline anchor, the three committed OpenAI uncertainty baseline docs, and the three committed OpenAI thrash baseline docs and does not by itself justify any verdict.
 
 Direct command:
 
@@ -315,7 +350,7 @@ make revalidate-openai-mediation-baselines
 ## OpenAI mediation-baseline candidate refresh
 
 This emits the committed OpenAI-host baseline mediation packet docs to stdout for manual inspection.
-It prints markdown for all six committed OpenAI baseline docs with committed relative-path headers, does not overwrite the committed packet docs, and does not authorize any paired comparison or mediation implementation work.
+It prints markdown for all seven committed OpenAI baseline docs with committed relative-path headers, does not overwrite the committed packet docs, and does not authorize any paired comparison or mediation implementation work.
 
 Direct command:
 
