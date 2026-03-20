@@ -26,6 +26,7 @@ The OpenAI thrash series is now backed by `docs/CORTEX_V2_MEDIATION_OPENAI_THRAS
 The OpenAI uncertainty series is now backed by `docs/CORTEX_V2_MEDIATION_OPENAI_UNCERTAINTY_BASIS_NOTE_0.md` and `docs/CORTEX_V2_MEDIATION_OPENAI_UNCERTAINTY_REPLICATION_NOTE_0.md`, which record the committed OpenAI baseline series, the live episode builder, and the counted three-pair replication law.
 `scenario_host_reference_01` remains intentionally unpaired pending the comparator admissibility audit recorded in `docs/CORTEX_V2_MEDIATION_REFERENCE_HOST_REALIZATION_ADMISSIBILITY_NOTE_0.md`.
 `scenario_host_gemini_01` remains intentionally unpaired pending the Gemini admissibility audit recorded in `docs/CORTEX_V2_MEDIATION_GEMINI_HOST_REALIZATION_ADMISSIBILITY_NOTE_0.md`.
+`scenario_host_openai_01` remains intentionally unpaired pending the OpenAI admissibility audit recorded in `docs/CORTEX_V2_MEDIATION_OPENAI_HOST_REALIZATION_ADMISSIBILITY_NOTE_0.md`.
 `scenario_thrash_reference_01` / `reference` now has `candidate_positive` cell-level signal for reduced thrashing and better branch discipline, while package-level axis summaries remain globally `insufficient`.
 `scenario_thrash_gemini_01` / `gemini` now has `candidate_positive` cell-level signal for reduced thrashing and better branch discipline, while package-level axis summaries remain globally `insufficient`.
 `scenario_thrash_openai_01` / `openai` now has `candidate_positive` cell-level signal for reduced thrashing and better branch discipline, while package-level axis summaries remain globally `insufficient`.

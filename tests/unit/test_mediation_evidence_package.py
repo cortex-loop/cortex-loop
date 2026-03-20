@@ -532,6 +532,10 @@ def test_results_surfaces_are_preseeded_for_all_catalog_cells_and_follow_fairnes
     assert pair_counts[gemini_host_realization_cell]["usable"] == 0
     assert pair_counts[gemini_host_realization_cell]["confidence_downgraded"] == 0
     assert pair_counts[gemini_host_realization_cell]["excluded"] == 0
+    openai_host_realization_cell = ("scenario_host_openai_01", "openai")
+    assert pair_counts[openai_host_realization_cell]["usable"] == 0
+    assert pair_counts[openai_host_realization_cell]["confidence_downgraded"] == 0
+    assert pair_counts[openai_host_realization_cell]["excluded"] == 0
     gemini_thrash_cell = ("scenario_thrash_gemini_01", "gemini")
     assert pair_counts[gemini_thrash_cell]["usable"] == 3
     assert pair_counts[gemini_thrash_cell]["confidence_downgraded"] == 0
@@ -598,6 +602,9 @@ def test_results_surfaces_are_preseeded_for_all_catalog_cells_and_follow_fairnes
                 assert row["current_verdict"] == "insufficient"
                 assert supporting_ids(row["supporting_paired_episode_sets"]) == set()
             if cell == gemini_host_realization_cell:
+                assert row["current_verdict"] == "insufficient"
+                assert supporting_ids(row["supporting_paired_episode_sets"]) == set()
+            if cell == openai_host_realization_cell:
                 assert row["current_verdict"] == "insufficient"
                 assert supporting_ids(row["supporting_paired_episode_sets"]) == set()
             if cell == gemini_thrash_cell:
@@ -725,6 +732,11 @@ def test_evidence_note_keeps_mediation_blocked_with_reference_gemini_and_openai_
         "`scenario_host_gemini_01` remains intentionally unpaired pending the Gemini "
         "admissibility audit recorded in "
         "`docs/CORTEX_V2_MEDIATION_GEMINI_HOST_REALIZATION_ADMISSIBILITY_NOTE_0.md`."
+    ) in text
+    assert (
+        "`scenario_host_openai_01` remains intentionally unpaired pending the OpenAI "
+        "admissibility audit recorded in "
+        "`docs/CORTEX_V2_MEDIATION_OPENAI_HOST_REALIZATION_ADMISSIBILITY_NOTE_0.md`."
     ) in text
     assert (
         "`scenario_thrash_reference_01` / `reference` now has `candidate_positive` "
