@@ -1,11 +1,11 @@
 # CORTEX_V2_MEDIATION_GEMINI_HOST_REALIZATION_ADMISSIBILITY_NOTE_0
 
 Date: 2026-03-20
-Status: `gemini host realization comparator not yet admissible`
+Status: `one lawful gemini host realization comparator pair recorded`
 
 ## Scope
 
-This note records the current admissibility result for any future mediated comparator under `scenario_host_gemini_01`.
+This note records the current admissibility result for mediated comparison under `scenario_host_gemini_01`.
 It does not justify mediation, activate mediation, or authorize a comparative implementation seam.
 
 ## Audited Live Surfaces
@@ -18,21 +18,28 @@ The current admissibility audit is grounded in these already-landed Gemini-host 
 - `tests/integration/_gemini_lane_packet_example.py`
 - `tests/integration/test_gemini_lane_packet_example.py`
 - `docs/CORTEX_V2_GEMINI_LANE_PACKET_EXAMPLE_0.md`
+- `tests/integration/_gemini_mediated_lane_packet_example.py`
+- `tests/integration/test_gemini_mediated_lane_packet_example.py`
+- `docs/CORTEX_V2_GEMINI_MEDIATED_LANE_PACKET_EXAMPLE_0.md`
 - `docs/mediation_evidence/gemini/scenario_host_gemini_01__baseline_non_mediated__run_001.md`
+- `docs/mediation_evidence/gemini/scenario_host_gemini_01__experimental_mediated__run_001.md`
+- `docs/CORTEX_V2_MEDIATION_GEMINI_HOST_REALIZATION_REPLICATION_NOTE_0.md`
 
-## Current Blocker
+## Recorded Comparator Strength
 
 Gemini has landed observe/bind, commitment-path, neutral-only, thrash, and uncertainty carriers.
-Those surfaces are strong enough to audit, and one lawful Gemini host-facing publication surface is now committed.
-They still do not establish a lawful Gemini host-realization comparison surface.
+The current baseline is already a strong contradiction-preserving Gemini host-facing surface, and one lawful Gemini host-realization comparator pair is now recorded.
+The recorded pair preserves:
 
-The current blocker is explicit:
+- Gemini observe/bind meaning across `content.delta` and `interaction.complete`
+- candidate-bearing prelude plus full-commitment dispatch on the current landed path
+- a certified `current-pair` evaluation packet on both sides
+- explicit contradiction and degradation records
+- explicit truthful-withheld fields on the committed packet surface
+- the selected family `seek-context`
+- the same host-opportunity set containing `mcp.query`
 
-- one lawful Gemini host-facing publication surface is now committed through the Gemini-lane `current-pair` packet example
-- no matched mediated Gemini host-realization publication surface exists yet
-- Gemini thrash and uncertainty evidence may not be reused as proxy host-realization evidence
-
-A baseline-only Gemini host-realization anchor is now recorded, but it does not by itself earn a lawful comparator.
+The recorded pair is admissible because the only mediated delta is direct host-native opportunity specialization at the selection layer while packet truth and publication meaning remain fixed.
 
 ## Admissibility Law
 
@@ -44,34 +51,34 @@ Any future counted comparator for `scenario_host_gemini_01` must preserve all of
 - `approval_or_environment_context_id=env_boundary_sensitive`
 - the same Gemini observe/bind meaning
 - the same commitment truth boundary
-- the same host-facing evidence/publication surface
+- the same evaluation-packet publication surface
 - the same packet kind: `current-pair`
 - the same final certified completion class
 - the same contradiction/degradation preservation law
 - the same truthful-withheld meaning
-- no host flattening
-- no truth smoothing
+- the same selected family: `seek-context`
+- the same host-opportunity set containing `mcp.query`
 
-No comparator may count until a matched mediated Gemini host-realization publication surface is first defined from live code.
+The only admissible mediation delta is a live, host-facing realization choice that is visible before or at the host-opportunity selection layer and does not alter packet truth or publication meaning.
 
 ## Forbidden Counted Drift
 
 The following do not qualify as Gemini host-realization evidence for this scenario:
 
 - claiming host lift from thrash or uncertainty packets
-- claiming host lift from candidate-bearing turns alone
-- adding a mediated comparator before a matched mediated publication surface exists
 - changing Gemini host semantics to make mediation look better
+- dropping truthful-withheld fields
+- changing `current-pair` packet semantics
 - using latency-only improvement, shorter artifacts, or cosmetic simplification as host-realization evidence
 - claiming host lift from prose-only interpretation with no live code path
 
 ## Current Outcome
 
-No admissible Gemini host-realization comparator is recorded yet for `scenario_host_gemini_01`.
-A baseline-only Gemini host-realization anchor is now recorded for `scenario_host_gemini_01`.
-The scenario still remains intentionally unpaired, no paired-ledger row is countable for this cell, and the host-realization axis remains `insufficient`.
+One lawful Gemini host-realization comparator pair is recorded for `scenario_host_gemini_01`.
+That pair is Gemini-only, it preserves packet truth/publication meaning, and `scenario_host_gemini_01` / `gemini` still remains `insufficient` because one pair is below the three-pair minimum.
+Reference still carries the only host-realization `candidate_positive` cell, package-level host-specialized realization evidence remains `insufficient`, and OpenAI remains baseline-only and intentionally unpaired.
 
 ## Outcome
 
-The current honest result is that Gemini host realization remains intentionally unpaired pending a future admissible comparator that preserves the same Gemini host-facing publication surface and satisfies the law above.
-Mediation remains blocked, and this note exists to prevent fake Gemini host-lift evidence from being counted by drift or by omission.
+The current honest result is that one lawful Gemini host-realization comparator pair is recorded while package-level host-specialized realization evidence remains `insufficient`.
+In short: one Gemini-only comparator pair is real host-realization evidence, it is still below threshold for any non-`insufficient` Gemini cell verdict, and mediation remains blocked.

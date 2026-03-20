@@ -150,10 +150,18 @@ _SCOPE_TEXT = {
         "evidence notes govern any verdict."
     ),
     ("scenario_host_gemini_01", "baseline_non_mediated"): (
-        "This committed run packet records one Gemini-host baseline-only realization "
-        "packet for mediation evidence review.\n"
-        "It does not provide comparative mediation evidence, justify mediation, or "
-        "authorize implementation work."
+        "This committed run packet records one Gemini-host baseline-only "
+        "host-realization packet within the committed Gemini host-realization "
+        "paired-run series for mediation evidence review.\n"
+        "It does not provide comparative mediation evidence by itself, justify "
+        "mediation, or authorize implementation work."
+    ),
+    ("scenario_host_gemini_01", "experimental_mediated"): (
+        "This committed run packet records one Gemini-host experimental mediated "
+        "host-realization comparator within the committed Gemini host-realization "
+        "paired-run series for mediation evidence review.\n"
+        "It remains Gemini-only, does not justify mediation, and package-level "
+        "evidence notes govern any verdict."
     ),
     ("scenario_host_openai_01", "baseline_non_mediated"): (
         "This committed run packet records one OpenAI-host baseline-only realization "

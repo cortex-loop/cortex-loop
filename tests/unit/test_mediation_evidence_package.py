@@ -72,7 +72,7 @@ def test_paired_run_ledger_is_preseeded_from_scenario_catalog() -> None:
 
     assert (
         status(PAIRED_LEDGER_PATH)
-        == "reference_three_series_with_gemini_two_series_and_openai_two_series_recorded"
+        == "reference_three_series_with_gemini_three_series_and_openai_two_series_recorded"
     )
 
     coverage_rows = parse_markdown_table(
@@ -161,6 +161,29 @@ def test_paired_run_ledger_is_preseeded_from_scenario_catalog() -> None:
             "failure_tags": "none",
             "notes": (
                 "Third reference-only mediation-specific host-realization pair. The same "
+                "scenario, host, rubric, environment context, commitment boundary, "
+                "evaluation-packet publication surface, and host-opportunity set are "
+                "preserved while direct `mcp.query` specialization changes from `0` to `1`."
+            ),
+        },
+        {
+            "paired_episode_set_id": "pair_gemini_host_001",
+            "scenario_id": "scenario_host_gemini_01",
+            "host_family": "gemini",
+            "baseline_run_id": "gemini_host_realization_baseline_run_001",
+            "mediated_run_id": "gemini_host_realization_mediated_run_001",
+            "baseline_packet_ref": (
+                "docs/mediation_evidence/gemini/"
+                "scenario_host_gemini_01__baseline_non_mediated__run_001.md"
+            ),
+            "mediated_packet_ref": (
+                "docs/mediation_evidence/gemini/"
+                "scenario_host_gemini_01__experimental_mediated__run_001.md"
+            ),
+            "pair_status": "usable",
+            "failure_tags": "none",
+            "notes": (
+                "First Gemini-only mediation-specific host-realization pair. The same "
                 "scenario, host, rubric, environment context, commitment boundary, "
                 "evaluation-packet publication surface, and host-opportunity set are "
                 "preserved while direct `mcp.query` specialization changes from `0` to `1`."
@@ -598,7 +621,7 @@ def test_results_surfaces_are_preseeded_for_all_catalog_cells_and_follow_fairnes
     assert pair_counts[host_realization_cell]["confidence_downgraded"] == 0
     assert pair_counts[host_realization_cell]["excluded"] == 0
     gemini_host_realization_cell = ("scenario_host_gemini_01", "gemini")
-    assert pair_counts[gemini_host_realization_cell]["usable"] == 0
+    assert pair_counts[gemini_host_realization_cell]["usable"] == 1
     assert pair_counts[gemini_host_realization_cell]["confidence_downgraded"] == 0
     assert pair_counts[gemini_host_realization_cell]["excluded"] == 0
     openai_host_realization_cell = ("scenario_host_openai_01", "openai")
@@ -632,7 +655,7 @@ def test_results_surfaces_are_preseeded_for_all_catalog_cells_and_follow_fairnes
     axis_text = read(AXIS_TABLE_PATH)
     assert (
         status(AXIS_TABLE_PATH)
-        == "reference_three_series_with_gemini_two_series_and_openai_two_series_recorded"
+        == "reference_three_series_with_gemini_three_series_and_openai_two_series_recorded"
     )
     expected_positive = {
         ("Reduced Thrashing", ("scenario_thrash_reference_01", "reference")),
@@ -683,7 +706,9 @@ def test_results_surfaces_are_preseeded_for_all_catalog_cells_and_follow_fairnes
                 }
             if cell == gemini_host_realization_cell:
                 assert row["current_verdict"] == "insufficient"
-                assert supporting_ids(row["supporting_paired_episode_sets"]) == set()
+                assert supporting_ids(row["supporting_paired_episode_sets"]) == {
+                    "pair_gemini_host_001"
+                }
             if cell == openai_host_realization_cell:
                 assert row["current_verdict"] == "insufficient"
                 assert supporting_ids(row["supporting_paired_episode_sets"]) == set()
@@ -741,7 +766,7 @@ def test_results_surfaces_are_preseeded_for_all_catalog_cells_and_follow_fairnes
     burden_rows = parse_markdown_table(section(read(BURDEN_TABLE_PATH), "Comparison Table"))
     assert (
         status(BURDEN_TABLE_PATH)
-        == "reference_three_series_with_gemini_two_series_and_openai_two_series_recorded"
+        == "reference_three_series_with_gemini_three_series_and_openai_two_series_recorded"
     )
     assert {(row["scenario_id"], row["host_family"]) for row in burden_rows} == expected_cells
     for row in burden_rows:
@@ -763,11 +788,16 @@ def test_results_surfaces_are_preseeded_for_all_catalog_cells_and_follow_fairnes
                 "pair_reference_host_002",
                 "pair_reference_host_003",
             }
+        if cell == gemini_host_realization_cell:
+            assert row["equal_value_gate"] == "passed"
+            assert supporting_ids(row["supporting_paired_episode_sets"]) == {
+                "pair_gemini_host_001"
+            }
 
     host_split_text = read(HOST_SPLIT_TABLE_PATH)
     assert (
         status(HOST_SPLIT_TABLE_PATH)
-        == "reference_three_series_with_gemini_two_series_and_openai_two_series_recorded"
+        == "reference_three_series_with_gemini_three_series_and_openai_two_series_recorded"
     )
     assert "all-hosts" not in host_split_text.lower()
     host_sections = {
@@ -801,6 +831,11 @@ def test_results_surfaces_are_preseeded_for_all_catalog_cells_and_follow_fairnes
                     "pair_reference_host_003",
                 }
                 assert row["current_verdict"] == "insufficient"
+            if (row["scenario_id"], host_family) == gemini_host_realization_cell:
+                assert supporting_ids(row["supporting_paired_episode_sets"]) == {
+                    "pair_gemini_host_001"
+                }
+                assert row["current_verdict"] == "insufficient"
 
 
 def test_evidence_note_keeps_mediation_blocked_with_reference_gemini_and_openai_series() -> None:
@@ -808,7 +843,7 @@ def test_evidence_note_keeps_mediation_blocked_with_reference_gemini_and_openai_
 
     assert (
         status(EVIDENCE_NOTE_PATH)
-        == "reference_three_series_with_gemini_two_series_and_openai_two_series_recorded"
+        == "reference_three_series_with_gemini_three_series_and_openai_two_series_recorded"
     )
     assert "All current reference-host scenario families now have committed baseline run packets" in text
     assert "Three experimental reference-only baseline-versus-mediated thrash pairs are now recorded" in text
@@ -827,13 +862,11 @@ def test_evidence_note_keeps_mediation_blocked_with_reference_gemini_and_openai_
     )
     assert "package-level host-specialized realization remains `insufficient`." in text
     assert (
-        "A baseline-only Gemini host-realization anchor is now recorded through "
-        "`docs/CORTEX_V2_GEMINI_LANE_PACKET_EXAMPLE_0.md` and "
-        "`docs/mediation_evidence/gemini/scenario_host_gemini_01__baseline_non_mediated__run_001.md`, "
-        "but `scenario_host_gemini_01` remains intentionally unpaired pending the Gemini "
-        "comparator admissibility audit recorded in "
-        "`docs/CORTEX_V2_MEDIATION_GEMINI_HOST_REALIZATION_ADMISSIBILITY_NOTE_0.md`."
+        "One Gemini-only mediation-specific host-realization pair is now recorded for "
+        "`scenario_host_gemini_01`, but `scenario_host_gemini_01` / `gemini` remains "
+        "`insufficient` because one pair is still below the three-pair minimum."
     ) in text
+    assert "reference still carries the only host-realization `candidate_positive` cell." in text
     assert (
         "A baseline-only OpenAI host-realization anchor is now recorded through "
         "`docs/CORTEX_V2_OPENAI_LANE_PACKET_EXAMPLE_0.md` and "
@@ -886,6 +919,6 @@ def test_evidence_note_keeps_mediation_blocked_with_reference_gemini_and_openai_
     )
     assert host_statuses == {
         "reference": "baseline_and_three_paired_series_recorded",
-        "gemini": "baseline_and_two_paired_series_recorded",
+        "gemini": "baseline_and_three_paired_series_recorded",
         "openai": "baseline_and_two_paired_series_recorded",
     }

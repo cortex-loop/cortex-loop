@@ -1,4 +1,4 @@
-"""Build or emit candidate Gemini-lane packet-example evidence."""
+"""Build or emit candidate Gemini mediated-lane packet-example evidence."""
 
 from __future__ import annotations
 
@@ -6,10 +6,12 @@ import json
 import sys
 
 from cortex.core.dispatch import DispatchLane
+from cortex.drivers.gemini_host_commitment import evaluate_gemini_host_commitment
 from cortex.eval.artifacts import CurrentPairFragment, EventTraceArtifact
 from cortex.eval.harness import build_evaluation_harness_result
 from cortex.eval.packets import WithheldField, build_evaluation_packet
-from cortex.drivers.gemini_host_commitment import evaluate_gemini_host_commitment
+from cortex.sre.families import SoftControlFamily
+from cortex.sre.opportunities import HostNativeOpportunity, specialize_host_native_opportunity
 from tests.integration._gemini_host_realization_pair import (
     GEMINI_HOST_REALIZATION_PAIR_SPEC,
 )
@@ -22,7 +24,43 @@ from tests.integration._reference_lane import (
 )
 
 
-def build_gemini_lane_packet_example_snapshot() -> dict[str, object]:
+def build_gemini_host_realization_specialization_snapshot(
+    *,
+    clearly_superior: bool,
+) -> dict[str, object]:
+    opportunity = HostNativeOpportunity(
+        opportunity_ref="mcp.query",
+        supported_families=frozenset({SoftControlFamily.SEEK_CONTEXT}),
+        clearly_superior=clearly_superior,
+        native_surface_tags=frozenset({"mcp", "structured-query"}),
+    )
+    specialization = specialize_host_native_opportunity(
+        SoftControlFamily.SEEK_CONTEXT,
+        (opportunity,),
+    )
+
+    assert specialization.selected_family is SoftControlFamily.SEEK_CONTEXT
+    if clearly_superior:
+        assert specialization.preferred_opportunity is opportunity
+        assert specialization.direct_opportunity_specialization_used is True
+    else:
+        assert specialization.preferred_opportunity is None
+        assert specialization.direct_opportunity_specialization_used is False
+
+    preferred_opportunity_ref = None
+    if specialization.preferred_opportunity is not None:
+        preferred_opportunity_ref = specialization.preferred_opportunity.opportunity_ref
+
+    return {
+        "selected_family": specialization.selected_family.value,
+        "preferred_opportunity_ref": preferred_opportunity_ref,
+        "direct_opportunity_specialization_used": specialization.direct_opportunity_specialization_used,
+        "host_opportunity_refs": [opportunity.opportunity_ref],
+        "native_surface_tags": sorted(opportunity.native_surface_tags),
+    }
+
+
+def build_gemini_mediated_lane_packet_example_snapshot() -> dict[str, object]:
     spec = GEMINI_HOST_REALIZATION_PAIR_SPEC
     contradiction, degradation = host_surface_degradation_pair(
         source_tag=spec.contradiction_source_tag,
@@ -63,7 +101,7 @@ def build_gemini_lane_packet_example_snapshot() -> dict[str, object]:
     assert result.verdict is not None
 
     event_trace = EventTraceArtifact(
-        trace_id=f"gemini-lane:{result.candidate.candidate_id}",
+        trace_id=f"gemini-mediated-lane:{result.candidate.candidate_id}",
         event_refs=(
             candidate_result.bound_event.observation.event.native_event_name,
             result.bound_event.observation.event.native_event_name,
@@ -97,6 +135,9 @@ def build_gemini_lane_packet_example_snapshot() -> dict[str, object]:
             ),
         ),
     )
+    specialization = build_gemini_host_realization_specialization_snapshot(
+        clearly_superior=True,
+    )
 
     assert packet.current_pair is current_pair
     assert packet.blocker is None
@@ -123,6 +164,7 @@ def build_gemini_lane_packet_example_snapshot() -> dict[str, object]:
             "event_refs": list(event_trace.event_refs),
             "record_refs": list(event_trace.record_refs),
         },
+        "opportunity_specialization": specialization,
         "withheld_fields": [
             {
                 "field_ref": field.field_ref,
@@ -148,8 +190,8 @@ def build_gemini_lane_packet_example_snapshot() -> dict[str, object]:
     }
 
 
-def emit_gemini_lane_packet_example_snapshot() -> None:
-    json.dump(build_gemini_lane_packet_example_snapshot(), sys.stdout, indent=2)
+def emit_gemini_mediated_lane_packet_example_snapshot() -> None:
+    json.dump(build_gemini_mediated_lane_packet_example_snapshot(), sys.stdout, indent=2)
     sys.stdout.write("\n")
 
 
@@ -162,4 +204,4 @@ def _payload_metadata(result: object, key: str) -> object:
 
 
 if __name__ == "__main__":
-    emit_gemini_lane_packet_example_snapshot()
+    emit_gemini_mediated_lane_packet_example_snapshot()

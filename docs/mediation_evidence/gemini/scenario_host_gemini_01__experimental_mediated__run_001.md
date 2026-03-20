@@ -1,24 +1,24 @@
-# scenario_host_gemini_01__baseline_non_mediated__run_001
+# scenario_host_gemini_01__experimental_mediated__run_001
 
 Date: 2026-03-20
 Status: `reviewed_evidence`
 
 ## Scope
 
-This committed run packet records one Gemini-host baseline-only host-realization packet within the committed Gemini host-realization paired-run series for mediation evidence review.
-It does not provide comparative mediation evidence by itself, justify mediation, or authorize implementation work.
+This committed run packet records one Gemini-host experimental mediated host-realization comparator within the committed Gemini host-realization paired-run series for mediation evidence review.
+It remains Gemini-only, does not justify mediation, and package-level evidence notes govern any verdict.
 
 ## Header
 
 - date: 2026-03-20
 - status: `reviewed_evidence`
 - scenario_id: `scenario_host_gemini_01`
-- run_id: `gemini_host_realization_baseline_run_001`
+- run_id: `gemini_host_realization_mediated_run_001`
 - paired_episode_set_id: `pair_gemini_host_001`
 
 ## Variant Metadata
 
-- variant: `baseline_non_mediated`
+- variant: `experimental_mediated`
 - host_family: `gemini`
 - scenario_family: `host_realization`
 - task_value_rubric_id: `task_value_equal_host_realization`
@@ -41,37 +41,37 @@ It does not provide comparative mediation evidence by itself, justify mediation,
 
 ## Run Outputs
 
-- outcome_summary: The baseline Gemini-host path preserves the same certified current-pair evaluation packet with explicit contradiction, degradation, and truthful-withheld fields while retaining the generic `seek-context` family without direct host-native specialization.
-- branch_trajectory_summary: One Gemini-native candidate-bearing turn is followed by one full-commitment publication path only; the comparator delta for this pair is the host-opportunity realization choice, not a branch-sequence change.
-- uncertainty_or_brake_summary: Contradiction and degradation remain explicit in the committed Gemini packet example, and `direct_opportunity_specialization_used=0` remains explicit for the baseline side of the pair.
+- outcome_summary: The mediated Gemini-host path preserves the same certified current-pair evaluation packet with explicit contradiction, degradation, and truthful-withheld fields while directly specializing `mcp.query` for the selected `seek-context` family.
+- branch_trajectory_summary: One Gemini-native candidate-bearing turn is followed by one full-commitment publication path only; the comparator delta is the host-opportunity realization choice, not a branch-sequence change.
+- uncertainty_or_brake_summary: Contradiction and degradation remain explicit in the committed Gemini packet example, and `direct_opportunity_specialization_used=1` remains explicit for the mediated side of the pair.
 - burden_summary: none
-- host_realization_summary: Gemini-host realization retains the selected family `seek-context` with `direct_opportunity_specialization_used=0` while preserving the same host-opportunity set containing `mcp.query` and the same certified `current-pair` publication surface.
+- host_realization_summary: Gemini-host realization keeps the same selected family `seek-context`, the same bounded host-opportunity set containing `mcp.query`, and the same certified `current-pair` publication surface while changing `direct_opportunity_specialization_used` from `0` to `1`.
 
 ## Artifact Refs
 
-- event_trace_refs: `gemini-lane:gemini-host-packet-candidate-1`
+- event_trace_refs: `gemini-mediated-lane:gemini-host-packet-candidate-1`
 - contradiction_refs: `gemini-host-publication-check:Gemini host publication evidence remains partially withheld`
 - degradation_refs: `gemini-host-publication-partial`
 - aux_burden_refs_if_present: none
-- evaluation_packet_refs_if_present: `docs/CORTEX_V2_GEMINI_LANE_PACKET_EXAMPLE_0.md`
+- evaluation_packet_refs_if_present: `docs/CORTEX_V2_GEMINI_MEDIATED_LANE_PACKET_EXAMPLE_0.md`
 
 ## Lift-Axis Observations
 
 ### Reduced Thrashing
 
-- observation: This baseline packet is part of the committed Gemini host-realization paired-run series, but it is not a branch-control comparison.
+- observation: This mediated packet is part of the committed Gemini host-realization paired-run series, but it is not a branch-control comparison.
 - metric_notes: Package-level evidence notes govern whether repeated paired evidence is enough to claim any thrash verdict.
 - verdict: `insufficient`
 
 ### Better Branch Discipline
 
-- observation: This baseline packet changes no branch trajectory and records no branch-control lift by itself.
+- observation: This mediated packet changes no branch trajectory and records no branch-control lift by itself.
 - metric_notes: Package-level evidence notes govern whether repeated paired evidence is enough to claim any branch-discipline verdict.
 - verdict: `insufficient`
 
 ### Better Uncertainty Handling
 
-- observation: This packet preserves contradiction and degradation explicitly on the same certified publication surface used by the comparator.
+- observation: This packet preserves contradiction and degradation explicitly on the same certified publication surface used by the baseline.
 - metric_notes: Package-level evidence notes govern whether repeated paired evidence is enough to claim any uncertainty-handling verdict.
 - verdict: `insufficient`
 
@@ -83,16 +83,16 @@ It does not provide comparative mediation evidence by itself, justify mediation,
 
 ### Better Host-Specialized Realization
 
-- observation: This baseline packet keeps the same host-opportunity set containing `mcp.query` but does not directly specialize it.
-- metric_notes: The host-realization metric is `direct_opportunity_specialization_used=0` on the baseline side of the pair.
+- observation: This mediated packet directly specializes `mcp.query` for the selected `seek-context` family while preserving the same certified Gemini `current-pair` publication surface.
+- metric_notes: The host-realization metric is `direct_opportunity_specialization_used=1` on the mediated side of the pair.
 - verdict: `insufficient`
 
 ## Exclusions Or Unusable-Pair Notes
 
 - exclusion_status: `none`
 - failure_tags: `none`
-- notes: This packet is the baseline side of `pair_gemini_host_001`. A single packet does not justify mediation; package-level evidence notes govern verdicts.
+- notes: This packet is the mediated side of `pair_gemini_host_001`. A single packet does not justify mediation; package-level evidence notes govern verdicts.
 
 ## Reviewer Note
 
-- reviewer_note: This is baseline-only committed evidence within the committed Gemini host-realization paired-run series. It is not comparative mediation evidence by itself, does not justify mediation, and package-level evidence notes govern any verdict.
+- reviewer_note: This is experimental mediated evidence only within the committed Gemini host-realization paired-run series. It remains Gemini-only, does not justify mediation, and package-level evidence notes govern any verdict.

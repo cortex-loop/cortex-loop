@@ -42,6 +42,7 @@ python3 -m pytest tests/unit/test_correspondence_contract.py \
   tests/integration/test_reference_lane_latency.py \
   tests/integration/test_reference_lane_packet_example.py \
   tests/integration/test_gemini_lane_packet_example.py \
+  tests/integration/test_gemini_mediated_lane_packet_example.py \
   tests/integration/test_openai_lane_packet_example.py \
   tests/integration/test_aux_claim_conservative.py \
   tests/unit/test_import_smoke.py -q
@@ -265,8 +266,8 @@ make emit-reference-mediated-host-realization-candidate
 
 ## Mediation Gemini host-realization admissibility revalidation
 
-This checks that `scenario_host_gemini_01` now has a lawful baseline-only Gemini host-facing publication anchor while remaining intentionally unpaired until a lawful comparator is actually admissible.
-It validates the Gemini admissibility note, the committed Gemini packet example, the committed Gemini baseline host packet, the continued absence of committed Gemini mediated host packets, the Gemini baseline-index guardrail, and the package blocker truth. It does not generate evidence.
+This checks that `scenario_host_gemini_01` now has one lawful Gemini-only host-realization comparator pair recorded while remaining below the three-pair minimum.
+It validates the Gemini admissibility note, the committed Gemini baseline and mediated packet examples, the committed Gemini baseline and mediated host packets, the Gemini replication law, the rebound baseline-index row, the recorded paired-ledger row, and the package blocker truth. It does not generate evidence.
 
 Direct command:
 
@@ -278,6 +279,41 @@ Repo-local entry point:
 
 ```sh
 make revalidate-mediation-gemini-host-realization-basis
+```
+
+## Live Gemini mediated host-realization revalidation
+
+This revalidates the committed mediated Gemini lane packet example and the first recorded Gemini host-realization comparator pair against live Gemini code.
+It remains Gemini-only and evidence-only, and it does not justify mediation.
+
+Direct commands:
+
+```sh
+python3 -m pytest tests/integration/test_gemini_mediated_lane_packet_example.py -q
+python3 -m pytest tests/integration/test_gemini_mediated_host_realization_comparator.py -q
+```
+
+Repo-local entry point:
+
+```sh
+make revalidate-gemini-mediated-host-realization
+```
+
+## Gemini mediated host-realization candidate refresh
+
+This emits the committed mediated Gemini host-realization packet doc to stdout for manual inspection.
+It does not overwrite the committed doc and it does not authorize mediation implementation.
+
+Direct command:
+
+```sh
+python3 -m tests.integration._gemini_mediation_host_realization_experimental
+```
+
+Repo-local entry point:
+
+```sh
+make emit-gemini-mediated-host-realization-candidate
 ```
 
 ## Mediation OpenAI host-realization admissibility revalidation
@@ -300,7 +336,7 @@ make revalidate-mediation-openai-host-realization-basis
 ## Mediation run-packet revalidation
 
 This checks the committed reference-host, Gemini-host, and OpenAI-host baseline run indexes and the committed run-packet instances.
-It validates packet metadata against the scenario catalog, confirms the canonical baseline anchors remain lawful, validates the full nine-packet reference baseline set, validates the seven-packet Gemini baseline set, validates the seven-packet OpenAI baseline set, and checks the twenty-one committed experimental mediated uncertainty, thrash, and reference host-realization packets.
+It validates packet metadata against the scenario catalog, confirms the canonical baseline anchors remain lawful, validates the full nine-packet reference baseline set, validates the seven-packet Gemini baseline set, validates the seven-packet OpenAI baseline set, and checks the twenty-two committed experimental mediated uncertainty, thrash, reference host-realization, and Gemini host-realization packets.
 
 Direct command:
 
@@ -334,7 +370,7 @@ make revalidate-reference-mediation-baselines
 ## Live Gemini mediation-baseline revalidation
 
 This revalidates the committed Gemini-host baseline packet series against the landed Gemini commitment-path slice.
-It covers the one Gemini host-realization baseline anchor, the three Gemini uncertainty baselines, and the three Gemini thrash baselines, remains Gemini-only and baseline-only, and does not by itself justify any paired verdict.
+It covers the baseline side of the first counted Gemini host-realization pair, the three Gemini uncertainty baselines, and the three Gemini thrash baselines, remains Gemini-only and baseline-only, and does not by itself justify any paired verdict.
 
 Direct command:
 

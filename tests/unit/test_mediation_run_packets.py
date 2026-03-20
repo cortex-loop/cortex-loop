@@ -6,6 +6,7 @@ from pathlib import Path
 
 from tests._mediation_evidence import (
     GEMINI_BASELINE_INDEX_PATH,
+    GEMINI_HOST_REALIZATION_MEDIATED_PACKET_PATH,
     GEMINI_HOST_REALIZATION_PACKET_PATH,
     GEMINI_THRASH_BASELINE_PACKET_PATHS,
     GEMINI_THRASH_MEDIATED_PACKET_PATH,
@@ -261,7 +262,7 @@ def test_experimental_gemini_packets_match_catalog_and_stay_experimental() -> No
     failure_tags = load_failure_tags()
     experimental_packets = sorted(MEDIATION_GEMINI_PACKET_ROOT.glob("*__experimental_mediated__run_*.md"))
 
-    assert len(experimental_packets) == 6
+    assert len(experimental_packets) == 7
 
     for packet_path in experimental_packets:
         packet = parse_run_packet(packet_path)
@@ -278,7 +279,11 @@ def test_experimental_gemini_packets_match_catalog_and_stay_experimental() -> No
             == scenario["approval_or_environment_context_id"]
         )
 
-        if packet["header"]["scenario_id"] == "scenario_uncertainty_gemini_01":
+        if packet["header"]["scenario_id"] == "scenario_host_gemini_01":
+            assert packet_path == GEMINI_HOST_REALIZATION_MEDIATED_PACKET_PATH
+            assert packet["header"]["run_id"] == "gemini_host_realization_mediated_run_001"
+            assert packet["header"]["paired_episode_set_id"] == "pair_gemini_host_001"
+        elif packet["header"]["scenario_id"] == "scenario_uncertainty_gemini_01":
             assert packet_path in GEMINI_UNCERTAINTY_MEDIATED_PACKET_PATHS.values()
             assert packet["header"]["run_id"].startswith("gemini_uncertainty_mediated_run_")
             assert packet["header"]["paired_episode_set_id"].startswith("pair_gemini_uncertainty_")
@@ -494,6 +499,7 @@ def test_gemini_packet_directory_contains_seven_baselines_and_six_experimental_p
     packet_names = sorted(path.name for path in MEDIATION_GEMINI_PACKET_ROOT.glob("*.md"))
     assert packet_names == [
         "scenario_host_gemini_01__baseline_non_mediated__run_001.md",
+        "scenario_host_gemini_01__experimental_mediated__run_001.md",
         "scenario_thrash_gemini_01__baseline_non_mediated__run_001.md",
         "scenario_thrash_gemini_01__baseline_non_mediated__run_002.md",
         "scenario_thrash_gemini_01__baseline_non_mediated__run_003.md",

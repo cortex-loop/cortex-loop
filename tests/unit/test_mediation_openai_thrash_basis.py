@@ -99,7 +99,7 @@ def test_evidence_note_keeps_mediation_blocked_with_openai_thrash_series() -> No
 
     assert (
         status(EVIDENCE_NOTE_PATH)
-        == "reference_three_series_with_gemini_two_series_and_openai_two_series_recorded"
+        == "reference_three_series_with_gemini_three_series_and_openai_two_series_recorded"
     )
     assert "Three experimental OpenAI-only baseline-versus-mediated thrash pairs are now recorded" in text
     assert "docs/CORTEX_V2_MEDIATION_OPENAI_THRASH_BASIS_NOTE_0.md" in text

@@ -16,6 +16,9 @@ from tests.integration._gemini_mediation_thrash_episode import (
 from tests.integration._gemini_lane_packet_example import (
     build_gemini_lane_packet_example_snapshot,
 )
+from tests.integration._gemini_mediated_lane_packet_example import (
+    build_gemini_host_realization_specialization_snapshot,
+)
 from tests.integration._gemini_mediation_uncertainty_episode import (
     DEFAULT_GEMINI_UNCERTAINTY_PAIR_KEY,
     GEMINI_UNCERTAINTY_PAIR_KEYS,
@@ -65,13 +68,18 @@ _GEMINI_THRASH_REVIEWER_NOTE = (
     "itself and does not justify mediation or authorize any implementation seam."
 )
 _GEMINI_HOST_REALIZATION_REVIEWER_NOTE = (
-    "This is baseline-only committed evidence, not comparative mediation evidence, "
-    "and it does not justify mediation or authorize any implementation seam."
+    "This is baseline-only committed evidence within the committed Gemini "
+    "host-realization paired-run series. It is not comparative mediation evidence by "
+    "itself, does not justify mediation, and package-level evidence notes govern any "
+    "verdict."
 )
 
 
 def build_gemini_host_realization_baseline_packet() -> PacketSnapshot:
     snapshot = build_gemini_lane_packet_example_snapshot()
+    specialization = build_gemini_host_realization_specialization_snapshot(
+        clearly_superior=False,
+    )
 
     assert snapshot["dispatch_lanes"] == {
         "candidate": DispatchLane.CANDIDATE_BEARING.value,
@@ -80,6 +88,10 @@ def build_gemini_host_realization_baseline_packet() -> PacketSnapshot:
     assert snapshot["candidate_id"] == "gemini-host-packet-candidate-1"
     assert snapshot["verdict_status"] == "certified"
     assert snapshot["packet_kind"] == "current-pair"
+    assert specialization["selected_family"] == "seek-context"
+    assert specialization["preferred_opportunity_ref"] is None
+    assert specialization["direct_opportunity_specialization_used"] is False
+    assert specialization["host_opportunity_refs"] == ["mcp.query"]
 
     candidate_event = snapshot["candidate_event"]
     publication_event = snapshot["publication_event"]
@@ -103,7 +115,7 @@ def build_gemini_host_realization_baseline_packet() -> PacketSnapshot:
     return build_reference_mediation_packet(
         scenario_id="scenario_host_gemini_01",
         run_id="gemini_host_realization_baseline_run_001",
-        paired_episode_set_id="pending_pair_gemini_host_001",
+        paired_episode_set_id="pair_gemini_host_001",
         scenario_family="host_realization",
         task_value_rubric_id="task_value_equal_host_realization",
         approval_or_environment_context_id="env_boundary_sensitive",
@@ -115,39 +127,44 @@ def build_gemini_host_realization_baseline_packet() -> PacketSnapshot:
                 "with `commitment_id=gemini-host-packet-commit-1`"
             ),
             "host_surface": (
-                "Gemini-host observe/bind plus candidate-bearing continuation and "
-                "commitment-to-eval-packet publication path"
+                "Gemini-host opportunity selection plus candidate-bearing "
+                "continuation and commitment-to-eval-packet publication path"
             ),
             "declared_scenario_goal": (
-                "evaluate whether mediation improves Gemini-native opportunity use or "
-                "fallback selection without host flattening"
+                "evaluate whether mediation produces any Gemini-host realization lift "
+                "without adding burden or branch churn"
             ),
             "bounded_environment_or_approval_context": (
                 "Gemini-host candidate-bearing plus commitment/publication path with "
-                "lawful provenance, contradiction-preserving degradation handling, and "
-                "the committed Gemini-lane packet/publication surface"
+                "lawful provenance, contradiction-preserving degradation handling, the "
+                "committed Gemini-lane packet/publication surface, and a bounded "
+                "host-opportunity set containing `mcp.query`"
             ),
         },
         run_outputs={
             "outcome_summary": (
-                "The landed Gemini-host path produces a certified current-pair "
-                "evaluation packet with explicit contradiction, degradation, and "
-                "truthful-withheld fields after a Gemini-native candidate-bearing prelude."
+                "The baseline Gemini-host path preserves the same certified "
+                "current-pair evaluation packet with explicit contradiction, "
+                "degradation, and truthful-withheld fields while retaining the "
+                "generic `seek-context` family without direct host-native specialization."
             ),
             "branch_trajectory_summary": (
                 "One Gemini-native candidate-bearing turn is followed by one "
-                "full-commitment publication path only; no matched branch-lift "
-                "comparison is recorded in this baseline packet."
+                "full-commitment publication path only; the comparator delta for "
+                "this pair is the host-opportunity realization choice, not a "
+                "branch-sequence change."
             ),
             "uncertainty_or_brake_summary": (
                 "Contradiction and degradation remain explicit in the committed Gemini "
-                "packet example; no comparative uncertainty claim is made."
+                "packet example, and `direct_opportunity_specialization_used=0` "
+                "remains explicit for the baseline side of the pair."
             ),
             "burden_summary": "none",
             "host_realization_summary": (
-                "Gemini-host observe/bind, candidate-bearing continuation, "
-                "commitment, and publication surfaces are exercised end to end "
-                "without any pooled host claim."
+                "Gemini-host realization retains the selected family `seek-context` "
+                "with `direct_opportunity_specialization_used=0` while preserving the "
+                "same host-opportunity set containing `mcp.query` and the same "
+                "certified `current-pair` publication surface."
             ),
         },
         artifact_refs={
@@ -161,35 +178,42 @@ def build_gemini_host_realization_baseline_packet() -> PacketSnapshot:
         },
         lift_axis_notes={
             "Reduced Thrashing": (
-                "Baseline-only packet; no matched mediated run is recorded.",
-                "No repeated reopen/resume metric is available from this packet alone.",
+                "This baseline packet is part of the committed Gemini "
+                "host-realization paired-run series, but it is not a branch-control "
+                "comparison.",
+                "Package-level evidence notes govern whether repeated paired evidence is "
+                "enough to claim any thrash verdict.",
             ),
             "Better Branch Discipline": (
-                "Baseline-only packet; no matched mediated run is recorded.",
-                "No comparative branch-discipline evidence exists for this scenario-host "
-                "cell yet.",
+                "This baseline packet changes no branch trajectory and records no "
+                "branch-control lift by itself.",
+                "Package-level evidence notes govern whether repeated paired evidence is "
+                "enough to claim any branch-discipline verdict.",
             ),
             "Better Uncertainty Handling": (
-                "This packet preserves contradiction and degradation explicitly, but no "
-                "mediated comparison exists.",
-                "One baseline publication packet does not establish comparative "
-                "uncertainty lift.",
+                "This packet preserves contradiction and degradation explicitly on the "
+                "same certified publication surface used by the comparator.",
+                "Package-level evidence notes govern whether repeated paired evidence is "
+                "enough to claim any uncertainty-handling verdict.",
             ),
             "Lower Visible Burden At Equal Task Value": (
-                "Baseline-only packet; no equal-value burden comparison is recorded.",
-                "No committed AUX burden artifact exists for this packet.",
+                "The pair holds the same certified completion class and truth boundary, "
+                "but this packet carries no AUX burden artifact.",
+                "Package-level evidence notes govern whether repeated paired evidence is "
+                "enough to claim any lower-burden verdict.",
             ),
             "Better Host-Specialized Realization": (
-                "This packet exercises the Gemini-host candidate-bearing and publication "
-                "path end to end, but no mediated comparison exists.",
-                "Gemini-host realization remains descriptive only until a matched "
-                "mediated run exists.",
+                "This baseline packet keeps the same host-opportunity set containing "
+                "`mcp.query` but does not directly specialize it.",
+                "The host-realization metric is "
+                "`direct_opportunity_specialization_used=0` on the baseline side of "
+                "the pair.",
             ),
         },
         exclusion_notes=(
-            "This packet is intentionally baseline-only and reserves "
-            "`pending_pair_gemini_host_001` for a future honest comparison if one is "
-            "ever earned."
+            "This packet is the baseline side of `pair_gemini_host_001`. A single "
+            "packet does not justify mediation; package-level evidence notes govern "
+            "verdicts."
         ),
         reviewer_note=_GEMINI_HOST_REALIZATION_REVIEWER_NOTE,
     )

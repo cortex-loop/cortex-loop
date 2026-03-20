@@ -1,7 +1,7 @@
 # CORTEX_V2_MEDIATION_EVIDENCE_NOTE_0
 
 Date: 2026-03-21
-Status: `reference_three_series_with_gemini_two_series_and_openai_two_series_recorded`
+Status: `reference_three_series_with_gemini_three_series_and_openai_two_series_recorded`
 
 ## Scope
 
@@ -25,10 +25,12 @@ The Gemini uncertainty series is now backed by `docs/CORTEX_V2_MEDIATION_GEMINI_
 The OpenAI thrash series is now backed by `docs/CORTEX_V2_MEDIATION_OPENAI_THRASH_BASIS_NOTE_0.md` and `docs/CORTEX_V2_MEDIATION_OPENAI_THRASH_REPLICATION_NOTE_0.md`, which record the committed OpenAI baseline series, the live episode builder, and the counted three-pair replication law.
 The OpenAI uncertainty series is now backed by `docs/CORTEX_V2_MEDIATION_OPENAI_UNCERTAINTY_BASIS_NOTE_0.md` and `docs/CORTEX_V2_MEDIATION_OPENAI_UNCERTAINTY_REPLICATION_NOTE_0.md`, which record the committed OpenAI baseline series, the live episode builder, and the counted three-pair replication law.
 The reference host-realization series is now backed by `docs/CORTEX_V2_MEDIATION_REFERENCE_HOST_REALIZATION_REPLICATION_NOTE_0.md`, which records the counted three-pair reference host-realization fairness law.
+The Gemini host-realization series is now backed by `docs/CORTEX_V2_MEDIATION_GEMINI_HOST_REALIZATION_REPLICATION_NOTE_0.md`, which records the first counted Gemini host-realization fairness law.
 Three reference-only mediation-specific host-realization pairs are now recorded for `scenario_host_reference_01`.
-A baseline-only Gemini host-realization anchor is now recorded through `docs/CORTEX_V2_GEMINI_LANE_PACKET_EXAMPLE_0.md` and `docs/mediation_evidence/gemini/scenario_host_gemini_01__baseline_non_mediated__run_001.md`, but `scenario_host_gemini_01` remains intentionally unpaired pending the Gemini comparator admissibility audit recorded in `docs/CORTEX_V2_MEDIATION_GEMINI_HOST_REALIZATION_ADMISSIBILITY_NOTE_0.md`.
+One Gemini-only mediation-specific host-realization pair is now recorded for `scenario_host_gemini_01`, but `scenario_host_gemini_01` / `gemini` remains `insufficient` because one pair is still below the three-pair minimum.
 A baseline-only OpenAI host-realization anchor is now recorded through `docs/CORTEX_V2_OPENAI_LANE_PACKET_EXAMPLE_0.md` and `docs/mediation_evidence/openai/scenario_host_openai_01__baseline_non_mediated__run_001.md`, but `scenario_host_openai_01` remains intentionally unpaired pending the OpenAI comparator admissibility audit recorded in `docs/CORTEX_V2_MEDIATION_OPENAI_HOST_REALIZATION_ADMISSIBILITY_NOTE_0.md`.
 `scenario_host_reference_01` / `reference` now has `candidate_positive` signal for better host-specialized realization, while package-level host-specialized realization remains `insufficient`.
+reference still carries the only host-realization `candidate_positive` cell.
 `scenario_thrash_reference_01` / `reference` now has `candidate_positive` cell-level signal for reduced thrashing and better branch discipline, while package-level axis summaries remain globally `insufficient`.
 `scenario_thrash_gemini_01` / `gemini` now has `candidate_positive` cell-level signal for reduced thrashing and better branch discipline, while package-level axis summaries remain globally `insufficient`.
 `scenario_thrash_openai_01` / `openai` now has `candidate_positive` cell-level signal for reduced thrashing and better branch discipline, while package-level axis summaries remain globally `insufficient`.
@@ -47,7 +49,7 @@ A baseline-only OpenAI host-realization anchor is now recorded through `docs/COR
 ## Per-Host Status
 
 - `reference`: `baseline_and_three_paired_series_recorded`
-- `gemini`: `baseline_and_two_paired_series_recorded`
+- `gemini`: `baseline_and_three_paired_series_recorded`
 - `openai`: `baseline_and_two_paired_series_recorded`
 
 ## Blocker Statement
