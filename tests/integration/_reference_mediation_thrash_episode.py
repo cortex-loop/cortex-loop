@@ -57,7 +57,7 @@ def build_reference_thrash_episode_snapshot() -> dict[str, object]:
     return {
         "scenario_id": "scenario_thrash_reference_01",
         "run_id": "reference_thrash_baseline_run_001",
-        "paired_episode_set_id": "pending_pair_reference_thrash_001",
+        "paired_episode_set_id": "pair_reference_thrash_001",
         "session_id": "thrash-session-1",
         "candidate_id": "candidate-thrash-1",
         "commitment_id": "thrash-commit-1",

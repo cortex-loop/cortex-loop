@@ -1,7 +1,7 @@
 # CORTEX_V2_MEDIATION_EVIDENCE_NOTE_0
 
 Date: 2026-03-20
-Status: `reference_baseline_runs_recorded`
+Status: `reference_baseline_and_one_pair_recorded`
 
 ## Scope
 
@@ -11,9 +11,10 @@ Version `0` is a reporting scaffold only; it does not justify mediation, activat
 ## Current Evidence State
 
 All current reference-host scenario families now have committed baseline run packets in `docs/CORTEX_V2_MEDIATION_REFERENCE_BASELINE_INDEX_0.md`.
-No live baseline-versus-mediated paired runs are currently recorded in `docs/CORTEX_V2_MEDIATION_PAIRED_RUN_LEDGER_0.md`.
+One experimental reference-only baseline-versus-mediated thrash pair is now recorded in `docs/CORTEX_V2_MEDIATION_PAIRED_RUN_LEDGER_0.md`.
 The current package is preseeded from the scenario catalog so future evidence cannot cherry-pick only favorable scenario-host cells.
 The reference thrash baseline is now backed by `docs/CORTEX_V2_MEDIATION_REFERENCE_THRASH_BASIS_NOTE_0.md`, which records the committed packet, the live episode builder, and the deterministic derivation rules for the lawful `open -> suspend -> resume -> merge` sequence.
+The experimental reference-only comparator preserves the same certified completion class and truth boundary while reducing the branch sequence to `open -> suspend -> merge`, but one pair is still far below the threshold for any verdict.
 
 ## Per-Axis Status
 
@@ -25,7 +26,7 @@ The reference thrash baseline is now backed by `docs/CORTEX_V2_MEDIATION_REFEREN
 
 ## Per-Host Status
 
-- `reference`: `baseline_only_runs_recorded`
+- `reference`: `baseline_and_one_paired_run_recorded`
 - `gemini`: `planned_only`
 - `openai`: `planned_only`
 

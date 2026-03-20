@@ -1,12 +1,12 @@
 # CORTEX_V2_MEDIATION_PAIRED_RUN_LEDGER_0
 
 Date: 2026-03-20
-Status: `no_live_pairs_recorded`
+Status: `reference_thrash_pair_recorded`
 
 ## Scope
 
 This ledger records the planned mediation-comparison coverage surface and any later paired baseline versus mediated runs.
-Version `0` is scaffold-only: it precommits coverage from the current scenario catalog and preserves explicit exclusions without recording any live pairs yet.
+Version `0` still precommits coverage from the current scenario catalog and preserves explicit exclusions, and it now records one reference-only experimental thrash pair.
 
 ## Use Rules
 
@@ -33,4 +33,5 @@ Version `0` is scaffold-only: it precommits coverage from the current scenario c
 
 | paired_episode_set_id | scenario_id | host_family | baseline_run_id | mediated_run_id | baseline_packet_ref | mediated_packet_ref | pair_status | failure_tags | notes |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| none_recorded_yet | — | — | — | — | — | — | not_recorded | none | No live paired runs are recorded yet. |
+| pair_reference_thrash_001 | scenario_thrash_reference_01 | reference | reference_thrash_baseline_run_001 | reference_thrash_mediated_run_001 | docs/mediation_evidence/reference/scenario_thrash_reference_01__baseline_non_mediated__run_001.md | docs/mediation_evidence/reference/scenario_thrash_reference_01__experimental_mediated__run_001.md | usable | none | One reference-only experimental pair is recorded for the thrash scenario. The same scenario, host, rubric, environment context, commitment boundary, and evidence surface are preserved, but one pair is not enough to justify any verdict. |
+| none_recorded_yet | — | — | — | — | — | — | not_recorded | none | No additional live paired runs are recorded yet. |

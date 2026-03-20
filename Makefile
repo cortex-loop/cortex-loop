@@ -3,7 +3,7 @@ PYTEST ?= $(PYTHON) -m pytest
 COVERAGE ?= $(PYTHON) -m coverage
 COVERAGE_RC ?= .coveragerc
 
-.PHONY: test-unit test-integration test-smoke verify revalidate-reference-packet emit-reference-packet-candidate revalidate-latency-evidence emit-latency-evidence-candidate revalidate-mediation-evidence-package revalidate-mediation-run-packets revalidate-reference-mediation-baselines emit-reference-mediation-baselines-candidate revalidate-mediation-reference-thrash-basis revalidate-mediation-evidence coverage test-correspondence-core test-correspondence-ports test-correspondence-sre test-correspondence-periphery
+.PHONY: test-unit test-integration test-smoke verify revalidate-reference-packet emit-reference-packet-candidate revalidate-latency-evidence emit-latency-evidence-candidate revalidate-mediation-evidence-package revalidate-mediation-run-packets revalidate-reference-mediation-baselines emit-reference-mediation-baselines-candidate revalidate-reference-mediated-thrash emit-reference-mediated-thrash-candidate revalidate-mediation-reference-thrash-basis revalidate-mediation-evidence coverage test-correspondence-core test-correspondence-ports test-correspondence-sre test-correspondence-periphery
 
 test-unit:
 	$(PYTEST) tests/unit
@@ -51,6 +51,12 @@ revalidate-reference-mediation-baselines:
 emit-reference-mediation-baselines-candidate:
 	$(PYTHON) -m tests.integration._reference_mediation_baseline_packets
 
+revalidate-reference-mediated-thrash:
+	$(PYTEST) tests/integration/test_reference_mediated_thrash_comparator.py -q
+
+emit-reference-mediated-thrash-candidate:
+	$(PYTHON) -m tests.integration._reference_mediation_thrash_experimental
+
 revalidate-mediation-reference-thrash-basis:
 	$(PYTEST) tests/unit/test_mediation_reference_thrash_basis.py -q
 
@@ -58,6 +64,7 @@ revalidate-mediation-evidence:
 	$(MAKE) revalidate-mediation-evidence-package
 	$(MAKE) revalidate-mediation-run-packets
 	$(MAKE) revalidate-reference-mediation-baselines
+	$(MAKE) revalidate-reference-mediated-thrash
 	$(MAKE) revalidate-mediation-reference-thrash-basis
 
 coverage:

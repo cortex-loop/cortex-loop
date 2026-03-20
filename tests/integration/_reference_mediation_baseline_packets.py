@@ -36,23 +36,29 @@ REFERENCE_MEDIATION_BASELINE_PACKET_PATHS = {
     ),
 }
 _SCOPE_TEXT = {
-    "scenario_uncertainty_reference_01": (
+    ("scenario_uncertainty_reference_01", "baseline_non_mediated"): (
         "This committed run packet records one reference-host baseline-only uncertainty "
         "packet for mediation evidence review.\n"
         "It does not provide comparative mediation evidence, justify mediation, or "
         "authorize implementation work."
     ),
-    "scenario_host_reference_01": (
+    ("scenario_host_reference_01", "baseline_non_mediated"): (
         "This committed run packet records one reference-host baseline-only realization "
         "packet for mediation evidence review.\n"
         "It does not provide comparative mediation evidence, justify mediation, or "
         "authorize implementation work."
     ),
-    "scenario_thrash_reference_01": (
+    ("scenario_thrash_reference_01", "baseline_non_mediated"): (
         "This committed run packet records one reference-host baseline-only thrash "
         "control packet for mediation evidence review.\n"
         "It does not provide comparative mediation evidence, justify mediation, or "
         "authorize implementation work."
+    ),
+    ("scenario_thrash_reference_01", "experimental_mediated"): (
+        "This committed run packet records one reference-host experimental mediated "
+        "thrash comparator for mediation evidence review.\n"
+        "It does not justify mediation, does not authorize implementation work, and "
+        "one paired run is not enough to claim lift."
     ),
 }
 _INVARIANT_LOCK = {
@@ -85,7 +91,7 @@ def build_reference_uncertainty_baseline_packet() -> PacketSnapshot:
     assert result.verdict.contradiction_refs == ()
     assert result.verdict.degradation_refs == ()
 
-    return _build_packet(
+    return build_reference_mediation_packet(
         scenario_id="scenario_uncertainty_reference_01",
         run_id="reference_uncertainty_baseline_run_001",
         paired_episode_set_id="pending_pair_reference_uncertainty_001",
@@ -190,7 +196,7 @@ def build_reference_host_realization_baseline_packet() -> PacketSnapshot:
     assert isinstance(contradiction_ref, dict)
     assert isinstance(degradation_ref, dict)
 
-    return _build_packet(
+    return build_reference_mediation_packet(
         scenario_id="scenario_host_reference_01",
         run_id="reference_host_realization_baseline_run_001",
         paired_episode_set_id="pending_pair_reference_host_001",
@@ -296,10 +302,10 @@ def build_reference_thrash_baseline_packet() -> PacketSnapshot:
     assert steps[1]["brake_state"] == "guarded"
     assert steps[3]["dispatch_lane"] == DispatchLane.FULL_COMMITMENT.value
 
-    return _build_packet(
+    return build_reference_mediation_packet(
         scenario_id="scenario_thrash_reference_01",
         run_id="reference_thrash_baseline_run_001",
-        paired_episode_set_id="pending_pair_reference_thrash_001",
+        paired_episode_set_id="pair_reference_thrash_001",
         scenario_family="thrash_control",
         task_value_rubric_id="task_value_equal_completion",
         approval_or_environment_context_id="env_local_default",
@@ -382,8 +388,8 @@ def build_reference_thrash_baseline_packet() -> PacketSnapshot:
         },
         exclusion_notes=(
             "This packet is intentionally baseline-only and reserves "
-            "`pending_pair_reference_thrash_001` for a future honest comparison if one "
-            "is ever earned."
+            "`pair_reference_thrash_001` for the current reference-only experimental "
+            "comparison without justifying any mediation claim."
         ),
     )
 
@@ -397,11 +403,12 @@ REFERENCE_MEDIATION_BASELINE_PACKET_BUILDERS: Mapping[
 }
 
 
-def render_reference_mediation_baseline_packet(
+def render_reference_mediation_packet(
     relative_path: str,
     packet: PacketSnapshot,
 ) -> str:
     scenario_id = str(packet["header"]["scenario_id"])
+    variant = str(packet["variant_metadata"]["variant"])
     lines = [
         f"# {Path(relative_path).stem}",
         "",
@@ -410,7 +417,7 @@ def render_reference_mediation_baseline_packet(
         "",
         "## Scope",
         "",
-        _SCOPE_TEXT[scenario_id],
+        _SCOPE_TEXT[(scenario_id, variant)],
         "",
         "## Header",
         "",
@@ -517,13 +524,13 @@ def emit_reference_mediation_baseline_packets() -> None:
         relative_path = REFERENCE_MEDIATION_BASELINE_PACKET_PATHS[scenario_id]
         sys.stdout.write(f"--- {relative_path}\n")
         sys.stdout.write(
-            render_reference_mediation_baseline_packet(relative_path, builder())
+            render_reference_mediation_packet(relative_path, builder())
         )
         if index != len(REFERENCE_MEDIATION_BASELINE_PACKET_BUILDERS) - 1:
             sys.stdout.write("\n")
 
 
-def _build_packet(
+def build_reference_mediation_packet(
     *,
     scenario_id: str,
     run_id: str,
@@ -531,11 +538,13 @@ def _build_packet(
     scenario_family: str,
     task_value_rubric_id: str,
     approval_or_environment_context_id: str,
+    variant: str = "baseline_non_mediated",
     scenario_inputs: dict[str, str],
     run_outputs: dict[str, str],
     artifact_refs: dict[str, str],
     lift_axis_notes: Mapping[str, tuple[str, str]],
     exclusion_notes: str,
+    reviewer_note: str = _REVIEWER_NOTE,
 ) -> PacketSnapshot:
     return {
         "status": "reviewed_evidence",
@@ -547,7 +556,7 @@ def _build_packet(
             "paired_episode_set_id": paired_episode_set_id,
         },
         "variant_metadata": {
-            "variant": "baseline_non_mediated",
+            "variant": variant,
             "host_family": "reference",
             "scenario_family": scenario_family,
             "task_value_rubric_id": task_value_rubric_id,
@@ -571,7 +580,7 @@ def _build_packet(
             "notes": exclusion_notes,
         },
         "reviewer_note": {
-            "reviewer_note": _REVIEWER_NOTE,
+            "reviewer_note": reviewer_note,
         },
     }
 

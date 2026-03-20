@@ -70,7 +70,7 @@ def test_paired_run_ledger_is_preseeded_from_scenario_catalog() -> None:
         for scenario_id, scenario in scenarios.items()
     }
 
-    assert status(PAIRED_LEDGER_PATH) == "no_live_pairs_recorded"
+    assert status(PAIRED_LEDGER_PATH) == "reference_thrash_pair_recorded"
 
     coverage_rows = parse_markdown_table(
         section(read(PAIRED_LEDGER_PATH), "Coverage Commitments")
@@ -92,6 +92,32 @@ def test_paired_run_ledger_is_preseeded_from_scenario_catalog() -> None:
     recorded_rows = parse_markdown_table(
         section(read(PAIRED_LEDGER_PATH), "Recorded Paired Runs")
     )
+    real_rows = [row for row in recorded_rows if row["paired_episode_set_id"] != "none_recorded_yet"]
+    assert real_rows == [
+        {
+            "paired_episode_set_id": "pair_reference_thrash_001",
+            "scenario_id": "scenario_thrash_reference_01",
+            "host_family": "reference",
+            "baseline_run_id": "reference_thrash_baseline_run_001",
+            "mediated_run_id": "reference_thrash_mediated_run_001",
+            "baseline_packet_ref": (
+                "docs/mediation_evidence/reference/"
+                "scenario_thrash_reference_01__baseline_non_mediated__run_001.md"
+            ),
+            "mediated_packet_ref": (
+                "docs/mediation_evidence/reference/"
+                "scenario_thrash_reference_01__experimental_mediated__run_001.md"
+            ),
+            "pair_status": "usable",
+            "failure_tags": "none",
+            "notes": (
+                "One reference-only experimental pair is recorded for the thrash "
+                "scenario. The same scenario, host, rubric, environment context, "
+                "commitment boundary, and evidence surface are preserved, but one pair "
+                "is not enough to justify any verdict."
+            ),
+        }
+    ]
     placeholder_rows = [row for row in recorded_rows if row["paired_episode_set_id"] == "none_recorded_yet"]
     assert len(placeholder_rows) == 1
     placeholder_row = placeholder_rows[0]
@@ -131,7 +157,7 @@ def test_results_surfaces_are_preseeded_for_all_catalog_cells_and_follow_fairnes
     assert {row["approval_or_environment_context_id"] for row in coverage_rows} <= allowed_contexts
 
     axis_text = read(AXIS_TABLE_PATH)
-    assert status(AXIS_TABLE_PATH) == "no_live_pairs_recorded"
+    assert status(AXIS_TABLE_PATH) == "reference_thrash_pair_recorded"
     for heading in AXIS_HEADINGS:
         rows = parse_markdown_table(section(axis_text, heading))
         assert {(row["scenario_id"], row["host_family"]) for row in rows} == expected_cells
@@ -153,7 +179,7 @@ def test_results_surfaces_are_preseeded_for_all_catalog_cells_and_follow_fairnes
                 assert row["current_verdict"] != "candidate_positive"
 
     burden_rows = parse_markdown_table(section(read(BURDEN_TABLE_PATH), "Comparison Table"))
-    assert status(BURDEN_TABLE_PATH) == "no_live_pairs_recorded"
+    assert status(BURDEN_TABLE_PATH) == "reference_thrash_pair_recorded"
     assert {(row["scenario_id"], row["host_family"]) for row in burden_rows} == expected_cells
     for row in burden_rows:
         cell = (row["scenario_id"], row["host_family"])
@@ -169,7 +195,7 @@ def test_results_surfaces_are_preseeded_for_all_catalog_cells_and_follow_fairnes
             assert row["equal_value_gate"] == "passed"
 
     host_split_text = read(HOST_SPLIT_TABLE_PATH)
-    assert status(HOST_SPLIT_TABLE_PATH) == "no_live_pairs_recorded"
+    assert status(HOST_SPLIT_TABLE_PATH) == "reference_thrash_pair_recorded"
     assert "all-hosts" not in host_split_text.lower()
     host_sections = {
         "reference": parse_markdown_table(section(host_split_text, "Reference")),
@@ -197,12 +223,12 @@ def test_results_surfaces_are_preseeded_for_all_catalog_cells_and_follow_fairnes
                 assert row["current_verdict"] != "candidate_positive"
 
 
-def test_evidence_note_keeps_mediation_blocked_without_live_runs() -> None:
+def test_evidence_note_keeps_mediation_blocked_with_one_reference_only_pair() -> None:
     text = read(EVIDENCE_NOTE_PATH)
 
-    assert status(EVIDENCE_NOTE_PATH) == "reference_baseline_runs_recorded"
+    assert status(EVIDENCE_NOTE_PATH) == "reference_baseline_and_one_pair_recorded"
     assert "All current reference-host scenario families now have committed baseline run packets" in text
-    assert "No live baseline-versus-mediated paired runs are currently recorded" in text
+    assert "One experimental reference-only baseline-versus-mediated thrash pair is now recorded" in text
     assert "Mediation remains blocked" in text
     assert "no implementation seam may open" in text
     assert "`scenario_thrash_reference_01` remains an explicit `artifact_gap`" not in text
@@ -222,7 +248,7 @@ def test_evidence_note_keeps_mediation_blocked_without_live_runs() -> None:
         re.findall(r"^- `([^`]+)`: `([^`]+)`$", section(text, "Per-Host Status"), re.MULTILINE)
     )
     assert host_statuses == {
-        "reference": "baseline_only_runs_recorded",
+        "reference": "baseline_and_one_paired_run_recorded",
         "gemini": "planned_only",
         "openai": "planned_only",
     }

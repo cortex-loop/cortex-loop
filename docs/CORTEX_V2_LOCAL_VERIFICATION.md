@@ -143,7 +143,7 @@ make revalidate-mediation-evidence-package
 ## Mediation run-packet revalidation
 
 This checks the committed reference-host baseline run index and the committed run-packet instances.
-It validates packet metadata against the scenario catalog and confirms the three committed reference packets stay baseline-only.
+It validates packet metadata against the scenario catalog, confirms the three committed reference baseline packets stay baseline-only, and checks the first experimental mediated thrash packet.
 
 Direct command:
 
@@ -191,6 +191,40 @@ Repo-local entry point:
 make emit-reference-mediation-baselines-candidate
 ```
 
+## Experimental reference mediated-thrash revalidation
+
+This revalidates the first experimental reference-only mediated thrash comparator against live reference-host code paths.
+It checks that the mediated packet stays reference-only, preserves the same completion class and truth boundary as baseline, and reduces branch oscillation without widening any verdict.
+
+Direct command:
+
+```sh
+python3 -m pytest tests/integration/test_reference_mediated_thrash_comparator.py -q
+```
+
+Repo-local entry point:
+
+```sh
+make revalidate-reference-mediated-thrash
+```
+
+## Experimental reference mediated-thrash candidate refresh
+
+This emits the committed experimental reference-only mediated thrash packet doc to stdout for manual inspection.
+It prints markdown with the committed relative-path header, does not overwrite the committed doc, and does not authorize mediation implementation work.
+
+Direct command:
+
+```sh
+python3 -m tests.integration._reference_mediation_thrash_experimental
+```
+
+Repo-local entry point:
+
+```sh
+make emit-reference-mediated-thrash-candidate
+```
+
 ## Mediation reference-thrash basis revalidation
 
 This checks that `scenario_thrash_reference_01` now has a satisfied committed basis.
@@ -214,6 +248,7 @@ This runs all current mediation-evidence checks together:
 - package scaffold validation
 - run-packet instance validation
 - live reference baseline packet revalidation
+- live experimental reference mediated-thrash revalidation
 - reference thrash-basis validation
 
 It remains check-only and does not generate evidence or authorize mediation implementation.

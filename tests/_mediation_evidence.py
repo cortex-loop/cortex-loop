@@ -25,6 +25,10 @@ REFERENCE_THRASH_PACKET_PATH = (
     MEDIATION_REFERENCE_PACKET_ROOT
     / "scenario_thrash_reference_01__baseline_non_mediated__run_001.md"
 )
+REFERENCE_THRASH_MEDIATED_PACKET_PATH = (
+    MEDIATION_REFERENCE_PACKET_ROOT
+    / "scenario_thrash_reference_01__experimental_mediated__run_001.md"
+)
 
 VERDICTS = {"negative", "neutral", "mixed", "candidate_positive", "insufficient"}
 PAIR_STATUSES = {"not_recorded", "usable", "confidence_downgraded", "excluded"}

@@ -1,18 +1,18 @@
 # CORTEX_V2_MEDIATION_HOST_SPLIT_COMPARISON_0
 
 Date: 2026-03-20
-Status: `no_live_pairs_recorded`
+Status: `reference_thrash_pair_recorded`
 
 ## Scope
 
 This document records the host-split mediation comparison surface.
-Version `0` stays strictly host-split first: separate sections for `reference`, `gemini`, and `openai`, with no pooled host summary row.
+Version `0` stays strictly host-split first: separate sections for `reference`, `gemini`, and `openai`, with no pooled host summary row, and it now records one reference-only experimental thrash pair.
 
 ## Reference
 
 | scenario_id | usable_pair_count | host_specific_affordance_note | host_flattening_tags | current_verdict | supporting_paired_episode_sets | notes |
 | --- | --- | --- | --- | --- | --- | --- |
-| scenario_thrash_reference_01 | 0 | Planned reference-host branch-control comparison. | none | insufficient | none | No live paired runs recorded yet. |
+| scenario_thrash_reference_01 | 1 | One reference-only experimental branch-control comparison preserves the same host commitment boundary while shortening the branch sequence. | none | insufficient | pair_reference_thrash_001 | One paired run is recorded, but one pair is not enough to justify a host-specific verdict. |
 | scenario_uncertainty_reference_01 | 0 | Planned reference-host uncertainty and brake comparison. | none | insufficient | none | No live paired runs recorded yet. |
 | scenario_host_reference_01 | 0 | Planned reference-host realization comparison. | none | insufficient | none | No live paired runs recorded yet. |
 

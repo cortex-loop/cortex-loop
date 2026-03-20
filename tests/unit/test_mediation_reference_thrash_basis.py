@@ -71,6 +71,7 @@ def test_reference_thrash_builder_and_packet_exist_and_match_index() -> None:
     snapshot = build_reference_thrash_episode_snapshot()
 
     assert thrash_row["evidence_status"] == "baseline_packet_committed"
+    assert thrash_row["paired_episode_set_id"] == "pair_reference_thrash_001"
     assert thrash_row["packet_path"] == (
         "docs/mediation_evidence/reference/"
         "scenario_thrash_reference_01__baseline_non_mediated__run_001.md"
@@ -85,10 +86,10 @@ def test_reference_thrash_builder_and_packet_exist_and_match_index() -> None:
     assert snapshot["branch_sequence"] == list(EXPECTED_REFERENCE_THRASH_BRANCH_SEQUENCE)
 
 
-def test_evidence_note_keeps_mediation_blocked_and_paired_runs_absent() -> None:
+def test_evidence_note_keeps_mediation_blocked_with_one_reference_only_pair() -> None:
     text = read(EVIDENCE_NOTE_PATH)
 
     assert "All current reference-host scenario families now have committed baseline run packets" in text
-    assert "No live baseline-versus-mediated paired runs are currently recorded" in text
+    assert "One experimental reference-only baseline-versus-mediated thrash pair is now recorded" in text
     assert "Mediation remains blocked" in text
     assert "no implementation seam may open" in text

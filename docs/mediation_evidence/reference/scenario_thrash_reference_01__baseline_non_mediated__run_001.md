@@ -14,7 +14,7 @@ It does not provide comparative mediation evidence, justify mediation, or author
 - status: `reviewed_evidence`
 - scenario_id: `scenario_thrash_reference_01`
 - run_id: `reference_thrash_baseline_run_001`
-- paired_episode_set_id: `pending_pair_reference_thrash_001`
+- paired_episode_set_id: `pair_reference_thrash_001`
 
 ## Variant Metadata
 
@@ -91,7 +91,7 @@ It does not provide comparative mediation evidence, justify mediation, or author
 
 - exclusion_status: `none`
 - failure_tags: `none`
-- notes: This packet is intentionally baseline-only and reserves `pending_pair_reference_thrash_001` for a future honest comparison if one is ever earned.
+- notes: This packet is intentionally baseline-only and reserves `pair_reference_thrash_001` for the current reference-only experimental comparison without justifying any mediation claim.
 
 ## Reviewer Note
 

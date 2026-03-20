@@ -47,4 +47,4 @@ These do not qualify as a `scenario_thrash_reference_01` basis:
 ## Outcome
 
 `scenario_thrash_reference_01` is now satisfied by one committed baseline-only reference packet.
-It remains baseline-only evidence: paired runs are still absent, all mediation verdicts remain `insufficient`, and mediation remains blocked until qualifying comparative lift evidence exists.
+That baseline basis now supports one reference-only experimental paired comparator, but all mediation verdicts remain `insufficient`, and mediation remains blocked until qualifying comparative lift evidence exists.
