@@ -27,6 +27,7 @@ from tests._mediation_evidence import (
     OPENAI_UNCERTAINTY_MEDIATED_PACKET_PATHS,
     OPENAI_UNCERTAINTY_PACKET_PATH,
     REFERENCE_BASELINE_INDEX_PATH,
+    REFERENCE_HOST_REALIZATION_MEDIATED_PACKET_PATH,
     REFERENCE_UNCERTAINTY_BASELINE_PACKET_PATHS,
     REFERENCE_UNCERTAINTY_MEDIATED_PACKET_PATHS,
     REFERENCE_UNCERTAINTY_PACKET_PATH,
@@ -409,6 +410,7 @@ def test_experimental_reference_packets_match_catalog_and_stay_experimental() ->
     scenarios = load_scenarios()
     failure_tags = load_failure_tags()
     mediated_packets = {
+        "host": REFERENCE_HOST_REALIZATION_MEDIATED_PACKET_PATH,
         **REFERENCE_THRASH_MEDIATED_PACKET_PATHS,
         **REFERENCE_UNCERTAINTY_MEDIATED_PACKET_PATHS,
     }
@@ -419,7 +421,10 @@ def test_experimental_reference_packets_match_catalog_and_stay_experimental() ->
 
         assert packet_path.is_file()
         assert packet["status"] == "reviewed_evidence"
-        if packet["header"]["scenario_id"] == "scenario_thrash_reference_01":
+        if packet["header"]["scenario_id"] == "scenario_host_reference_01":
+            assert packet["header"]["run_id"] == "reference_host_realization_mediated_run_001"
+            assert packet["header"]["paired_episode_set_id"] == "pair_reference_host_001"
+        elif packet["header"]["scenario_id"] == "scenario_thrash_reference_01":
             assert packet["header"]["run_id"].startswith("reference_thrash_mediated_run_")
             assert packet["header"]["paired_episode_set_id"].startswith("pair_reference_thrash_")
         else:
@@ -453,10 +458,11 @@ def test_experimental_reference_packets_match_catalog_and_stay_experimental() ->
         assert "package-level evidence notes govern any verdict" in reviewer_note
 
 
-def test_reference_packet_directory_contains_seven_baselines_and_six_experimental_packets() -> None:
+def test_reference_packet_directory_contains_seven_baselines_and_seven_experimental_packets() -> None:
     packet_names = sorted(path.name for path in MEDIATION_REFERENCE_PACKET_ROOT.glob("*.md"))
     assert packet_names == [
         "scenario_host_reference_01__baseline_non_mediated__run_001.md",
+        "scenario_host_reference_01__experimental_mediated__run_001.md",
         "scenario_thrash_reference_01__baseline_non_mediated__run_001.md",
         "scenario_thrash_reference_01__baseline_non_mediated__run_002.md",
         "scenario_thrash_reference_01__baseline_non_mediated__run_003.md",

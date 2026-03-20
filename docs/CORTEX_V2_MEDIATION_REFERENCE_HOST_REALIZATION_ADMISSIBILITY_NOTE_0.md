@@ -1,12 +1,12 @@
 # CORTEX_V2_MEDIATION_REFERENCE_HOST_REALIZATION_ADMISSIBILITY_NOTE_0
 
 Date: 2026-03-20
-Status: `host realization comparator not yet admissible`
+Status: `one lawful reference host realization comparator pair recorded`
 
 ## Scope
 
-This note records the current admissibility result for any future mediated comparator under `scenario_host_reference_01`.
-It does not justify mediation, activate mediation, or authorize a comparative implementation seam.
+This note records the current admissibility result for mediated comparison under `scenario_host_reference_01`.
+It does not justify mediation, activate mediation, or authorize a mediation implementation seam.
 
 ## Audited Live Surfaces
 
@@ -15,22 +15,31 @@ The current admissibility audit is grounded in these already-landed reference-ho
 - `tests/integration/_reference_lane_packet_example.py`
 - `tests/integration/test_reference_lane_packet_example.py`
 - `docs/CORTEX_V2_REFERENCE_LANE_PACKET_EXAMPLE_2.md`
+- `tests/integration/_reference_mediated_lane_packet_example.py`
+- `tests/integration/test_reference_mediated_lane_packet_example.py`
+- `docs/CORTEX_V2_REFERENCE_MEDIATED_LANE_PACKET_EXAMPLE_0.md`
 - `tests/integration/_reference_mediation_baseline_packets.py`
+- `tests/integration/_reference_mediation_host_realization_experimental.py`
+- `tests/integration/test_reference_mediated_host_realization_comparator.py`
 - `tests/integration/test_reference_mediation_baseline_packets.py`
 - `docs/mediation_evidence/reference/scenario_host_reference_01__baseline_non_mediated__run_001.md`
+- `docs/mediation_evidence/reference/scenario_host_reference_01__experimental_mediated__run_001.md`
+- `docs/CORTEX_V2_MEDIATION_REFERENCE_HOST_REALIZATION_REPLICATION_NOTE_0.md`
 
-## Current Baseline Strength
+## Recorded Comparator Strength
 
-The current host baseline is already a strong host-native reference surface.
-It already preserves:
+The current baseline is already a strong host-native, contradiction-preserving reference surface, and one lawful reference host-realization comparator pair is now recorded.
+The recorded pair preserves:
 
 - reference-host observe/bind meaning
 - full-commitment dispatch on the current landed path
-- a certified `current-pair` evaluation packet
+- a certified `current-pair` evaluation packet on both sides
 - explicit contradiction and degradation records
 - explicit truthful-withheld fields on the committed packet surface
+- the selected family `seek-context`
+- the same host-opportunity set containing `mcp.query`
 
-Because the current baseline is already host-native and contradiction-preserving, a mediated comparator is not earned merely because a baseline packet exists.
+The recorded pair is admissible because the only mediated delta is direct host-native opportunity specialization at the selection layer while packet truth and publication meaning remain fixed.
 
 ## Admissibility Law
 
@@ -47,6 +56,8 @@ Any future counted comparator for `scenario_host_reference_01` must preserve all
 - the same final certified completion class
 - the same contradiction/degradation preservation law
 - the same truthful-withheld meaning
+- the same selected family: `seek-context`
+- the same host-opportunity set containing `mcp.query`
 
 The only admissible mediation delta is a live, host-facing realization choice that is visible before or at the host-opportunity selection layer and does not alter packet truth or publication meaning.
 
@@ -67,10 +78,11 @@ Latency-only or cosmetic simplification is not host-realization evidence for thi
 
 ## Current Outcome
 
-No admissible mediated comparator is recorded yet for `scenario_host_reference_01`.
-The scenario therefore remains baseline-only, `pending_pair_reference_host_001` remains pending, no paired-ledger row is countable for this cell, and the host-realization axis remains `insufficient`.
+One lawful reference host-realization comparator pair is recorded for `scenario_host_reference_01`.
+That pair is reference-only, it preserves packet truth/publication meaning, and the host-realization cell still remains `insufficient` because one pair is below the three-pair minimum.
 
 ## Outcome
 
-The current honest result is that host realization remains intentionally unpaired pending an admissible comparator audit outcome that satisfies the law above.
+The current honest result is that one admissible reference-only host-realization comparator pair is now recorded while package-level host-realization evidence remains insufficient.
+In short: one lawful reference host-realization comparator pair is recorded, but that evidence is still below threshold.
 Mediation remains blocked, and this note exists to prevent fake host-lift evidence from being counted by drift or by omission.

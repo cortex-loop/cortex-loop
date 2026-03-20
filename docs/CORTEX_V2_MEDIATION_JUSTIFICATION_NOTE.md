@@ -35,11 +35,11 @@ Current repo evidence is insufficient on every required axis:
 
 | Required lift | Current repo state | Audit result |
 | --- | --- | --- |
-| reduced thrashing | No mediation-vs-non-mediation measurement exists in docs, tests, or gates. | insufficient evidence |
-| better branch discipline | Goal continuity and branch carriers are landed, but no mediation experiment shows improved branch behavior. | insufficient evidence |
-| better uncertainty handling | Uncertainty and brake slices are landed, but no mediation comparison shows better handling. | insufficient evidence |
-| lower visible burden at equal task value | AUX burden scaffolds and reference-lane latency evidence exist, but no mediation comparison shows equal-value burden reduction. | insufficient evidence |
-| better host-specialized realization | Reference, Gemini, and OpenAI host slices exist, but no mediation-specific host realization evidence exists. | insufficient evidence |
+| reduced thrashing | Reference, Gemini, and OpenAI thrash comparisons now exist and produce cell-level signal, but package-level evidence remains too narrow. | insufficient evidence |
+| better branch discipline | Reference, Gemini, and OpenAI thrash comparisons now exist and produce cell-level signal, but package-level evidence remains too narrow. | insufficient evidence |
+| better uncertainty handling | Reference, Gemini, and OpenAI uncertainty comparisons now exist and produce cell-level signal, but package-level evidence remains too narrow. | insufficient evidence |
+| lower visible burden at equal task value | Equal-value paired evidence now exists for thrash, uncertainty, and one reference host-realization pair, but no lower-burden lift is committed. | insufficient evidence |
+| better host-specialized realization | One reference-only mediation-specific host-realization pair is now recorded, while Gemini and OpenAI remain baseline-only and the package remains too narrow. | insufficient evidence |
 
 ## Decision
 
@@ -48,8 +48,8 @@ Phase 16 mediation is `not justified yet`.
 The repo currently has:
 
 - packet permission for a later experimental mediation extension, and
-- no live experimental evidence that mediation improves behavior on any required axis.
+- live experimental evidence on several cells, but no package-level evidence strong enough to justify mediation.
 
-Because that evidence is missing, mediation should remain unstarted.
-Do not open a mediation implementation seam until a dedicated comparative evaluation plan and measurable lift evidence exist.
+Because that evidence is still too narrow at package level, mediation should remain unstarted.
+Do not open a mediation implementation seam until broader comparative evidence is strong enough at package level, not just on isolated cells.
 The required comparative evidence plan is recorded in `docs/CORTEX_V2_MEDIATION_EVALUATION_PLAN_0.md`.

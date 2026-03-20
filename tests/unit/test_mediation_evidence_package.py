@@ -98,6 +98,29 @@ def test_paired_run_ledger_is_preseeded_from_scenario_catalog() -> None:
     real_rows = [row for row in recorded_rows if row["paired_episode_set_id"] != "none_recorded_yet"]
     assert real_rows == [
         {
+            "paired_episode_set_id": "pair_reference_host_001",
+            "scenario_id": "scenario_host_reference_01",
+            "host_family": "reference",
+            "baseline_run_id": "reference_host_realization_baseline_run_001",
+            "mediated_run_id": "reference_host_realization_mediated_run_001",
+            "baseline_packet_ref": (
+                "docs/mediation_evidence/reference/"
+                "scenario_host_reference_01__baseline_non_mediated__run_001.md"
+            ),
+            "mediated_packet_ref": (
+                "docs/mediation_evidence/reference/"
+                "scenario_host_reference_01__experimental_mediated__run_001.md"
+            ),
+            "pair_status": "usable",
+            "failure_tags": "none",
+            "notes": (
+                "First reference-only mediation-specific host-realization pair. The same "
+                "scenario, host, rubric, environment context, commitment boundary, "
+                "evaluation-packet publication surface, and host-opportunity set are "
+                "preserved while direct `mcp.query` specialization changes from `0` to `1`."
+            ),
+        },
+        {
             "paired_episode_set_id": "pair_reference_thrash_001",
             "scenario_id": "scenario_thrash_reference_01",
             "host_family": "reference",
@@ -525,7 +548,7 @@ def test_results_surfaces_are_preseeded_for_all_catalog_cells_and_follow_fairnes
         assert row["host_family"] in allowed_hosts
     pair_counts = aggregate_pair_counts(pair_rows)
     host_realization_cell = ("scenario_host_reference_01", "reference")
-    assert pair_counts[host_realization_cell]["usable"] == 0
+    assert pair_counts[host_realization_cell]["usable"] == 1
     assert pair_counts[host_realization_cell]["confidence_downgraded"] == 0
     assert pair_counts[host_realization_cell]["excluded"] == 0
     gemini_host_realization_cell = ("scenario_host_gemini_01", "gemini")
@@ -600,7 +623,9 @@ def test_results_surfaces_are_preseeded_for_all_catalog_cells_and_follow_fairnes
                 assert row["current_verdict"] != "candidate_positive"
             if cell == host_realization_cell:
                 assert row["current_verdict"] == "insufficient"
-                assert supporting_ids(row["supporting_paired_episode_sets"]) == set()
+                assert supporting_ids(row["supporting_paired_episode_sets"]) == {
+                    "pair_reference_host_001"
+                }
             if cell == gemini_host_realization_cell:
                 assert row["current_verdict"] == "insufficient"
                 assert supporting_ids(row["supporting_paired_episode_sets"]) == set()
@@ -676,6 +701,11 @@ def test_results_surfaces_are_preseeded_for_all_catalog_cells_and_follow_fairnes
             assert counts["usable"] >= 3
         if row["current_verdict"] == "candidate_positive":
             assert row["equal_value_gate"] == "passed"
+        if cell == host_realization_cell:
+            assert row["equal_value_gate"] == "passed"
+            assert supporting_ids(row["supporting_paired_episode_sets"]) == {
+                "pair_reference_host_001"
+            }
 
     host_split_text = read(HOST_SPLIT_TABLE_PATH)
     assert (
@@ -707,6 +737,11 @@ def test_results_surfaces_are_preseeded_for_all_catalog_cells_and_follow_fairnes
                 assert counts["usable"] >= 3
             if "host_flattening" in tag_set(row["host_flattening_tags"]):
                 assert row["current_verdict"] != "candidate_positive"
+            if (row["scenario_id"], host_family) == host_realization_cell:
+                assert supporting_ids(row["supporting_paired_episode_sets"]) == {
+                    "pair_reference_host_001"
+                }
+                assert row["current_verdict"] == "insufficient"
 
 
 def test_evidence_note_keeps_mediation_blocked_with_reference_gemini_and_openai_series() -> None:
@@ -724,9 +759,9 @@ def test_evidence_note_keeps_mediation_blocked_with_reference_gemini_and_openai_
     assert "Three experimental Gemini-only uncertainty pairs are now recorded" in text
     assert "Three experimental OpenAI-only uncertainty pairs are now recorded" in text
     assert (
-        "`scenario_host_reference_01` remains intentionally unpaired pending the comparator "
-        "admissibility audit recorded in "
-        "`docs/CORTEX_V2_MEDIATION_REFERENCE_HOST_REALIZATION_ADMISSIBILITY_NOTE_0.md`."
+        "One reference-only mediation-specific host-realization pair is now recorded for "
+        "`scenario_host_reference_01`, but the cell remains `insufficient` because one "
+        "pair is below the three-pair minimum."
     ) in text
     assert (
         "A baseline-only Gemini host-realization anchor is now recorded through "

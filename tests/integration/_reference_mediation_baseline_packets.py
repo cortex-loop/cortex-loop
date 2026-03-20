@@ -13,6 +13,9 @@ from tests._mediation_evidence import AXIS_HEADINGS
 from tests.integration._reference_lane_packet_example import (
     build_reference_lane_packet_example_snapshot,
 )
+from tests.integration._reference_mediated_lane_packet_example import (
+    build_reference_host_realization_specialization_snapshot,
+)
 from tests.integration._reference_mediation_thrash_episode import (
     DEFAULT_REFERENCE_THRASH_PAIR_KEY,
     REFERENCE_THRASH_PAIR_KEYS,
@@ -124,10 +127,18 @@ _SCOPE_TEXT = {
         "package-level evidence notes govern any verdict."
     ),
     ("scenario_host_reference_01", "baseline_non_mediated"): (
-        "This committed run packet records one reference-host baseline-only realization "
-        "packet for mediation evidence review.\n"
-        "It does not provide comparative mediation evidence, justify mediation, or "
-        "authorize implementation work."
+        "This committed run packet records the baseline side of the first recorded "
+        "reference-host host-realization comparator pair for mediation evidence "
+        "review.\n"
+        "It does not justify mediation, and package-level evidence notes govern any "
+        "verdict."
+    ),
+    ("scenario_host_reference_01", "experimental_mediated"): (
+        "This committed run packet records the mediated side of the first recorded "
+        "reference-host host-realization comparator pair for mediation evidence "
+        "review.\n"
+        "It remains reference-only, does not justify mediation, and package-level "
+        "evidence notes govern any verdict."
     ),
     ("scenario_host_gemini_01", "baseline_non_mediated"): (
         "This committed run packet records one Gemini-host baseline-only realization "
@@ -176,6 +187,11 @@ _THRASH_BASELINE_REVIEWER_NOTE = (
     "This is baseline-only committed evidence within the committed reference thrash "
     "paired-run series. It is not comparative mediation evidence by itself and does "
     "not justify mediation or authorize any implementation seam."
+)
+_HOST_REALIZATION_BASELINE_REVIEWER_NOTE = (
+    "This is baseline-only committed evidence within the first recorded reference "
+    "host-realization pair. It is not comparative mediation evidence by itself, does "
+    "not justify mediation, and package-level evidence notes govern any verdict."
 )
 
 
@@ -282,11 +298,18 @@ def build_reference_uncertainty_baseline_packet(
 
 def build_reference_host_realization_baseline_packet() -> PacketSnapshot:
     snapshot = build_reference_lane_packet_example_snapshot()
+    specialization = build_reference_host_realization_specialization_snapshot(
+        clearly_superior=False,
+    )
 
     assert snapshot["dispatch_lane"] == DispatchLane.FULL_COMMITMENT.value
     assert snapshot["candidate_id"] == "commit-packet-1"
     assert snapshot["verdict_status"] == CommitmentStatus.CERTIFIED.value
     assert snapshot["packet_kind"] == "current-pair"
+    assert specialization["selected_family"] == "seek-context"
+    assert specialization["preferred_opportunity_ref"] is None
+    assert specialization["direct_opportunity_specialization_used"] is False
+    assert specialization["host_opportunity_refs"] == ["mcp.query"]
 
     event_trace = snapshot["event_trace"]
     contradiction_refs = snapshot["contradiction_refs"]
@@ -306,7 +329,7 @@ def build_reference_host_realization_baseline_packet() -> PacketSnapshot:
     return build_reference_mediation_packet(
         scenario_id="scenario_host_reference_01",
         run_id="reference_host_realization_baseline_run_001",
-        paired_episode_set_id="pending_pair_reference_host_001",
+        paired_episode_set_id="pair_reference_host_001",
         scenario_family="host_realization",
         task_value_rubric_id="task_value_equal_host_realization",
         approval_or_environment_context_id="env_boundary_sensitive",
@@ -316,7 +339,8 @@ def build_reference_host_realization_baseline_packet() -> PacketSnapshot:
                 "`session_id=packet-session-1`"
             ),
             "host_surface": (
-                "reference-host observe/bind plus commitment-to-eval-packet publication path"
+                "reference-host opportunity selection plus commitment-to-eval-packet "
+                "publication path"
             ),
             "declared_scenario_goal": (
                 "evaluate whether mediation produces any reference-host realization lift "
@@ -324,28 +348,34 @@ def build_reference_host_realization_baseline_packet() -> PacketSnapshot:
             ),
             "bounded_environment_or_approval_context": (
                 "reference-host commitment path with lawful provenance, "
-                "contradiction-preserving degradation handling, and the committed "
-                "reference-lane packet/publication surface"
+                "contradiction-preserving degradation handling, the committed "
+                "reference-lane packet/publication surface, and a bounded host-opportunity "
+                "set containing `mcp.query`"
             ),
         },
         run_outputs={
             "outcome_summary": (
-                "The landed reference-host path produces a certified current-pair "
+                "The baseline reference-host path preserves a certified current-pair "
                 "evaluation packet with explicit contradiction, degradation, and "
-                "truthful-withheld fields."
+                "truthful-withheld fields while retaining the generic `seek-context` "
+                "family without direct host-native specialization."
             ),
             "branch_trajectory_summary": (
-                "Single full-commitment publication path only; no branch-lift comparison "
-                "is recorded in this baseline packet."
+                "Single full-commitment publication path only; the comparator delta for "
+                "this pair is the host-opportunity realization choice, not a "
+                "branch-sequence change."
             ),
             "uncertainty_or_brake_summary": (
                 "Contradiction and degradation remain explicit in the committed packet "
-                "example; no comparative uncertainty claim is made."
+                "example, and `direct_opportunity_specialization_used=0` remains "
+                "explicit for the baseline side of the pair."
             ),
             "burden_summary": "none",
             "host_realization_summary": (
-                "Reference-host observe/bind, commitment, and publication surfaces are "
-                "exercised end-to-end without any pooled host claim."
+                "Reference-host realization retains the selected family `seek-context` "
+                "with `direct_opportunity_specialization_used=0` while preserving the "
+                "same host-opportunity set containing `mcp.query` and the same "
+                "certified `current-pair` publication surface."
             ),
         },
         artifact_refs={
@@ -361,36 +391,41 @@ def build_reference_host_realization_baseline_packet() -> PacketSnapshot:
         },
         lift_axis_notes={
             "Reduced Thrashing": (
-                "Baseline-only packet; no matched mediated run is recorded.",
-                "No repeated reopen/resume metric is available from this packet alone.",
+                "This baseline packet is the baseline side of one recorded "
+                "host-realization pair, but it is not a branch-control comparison.",
+                "One host-realization pair is below the three-pair threshold and does "
+                "not establish any thrash verdict.",
             ),
             "Better Branch Discipline": (
-                "Baseline-only packet; no matched mediated run is recorded.",
-                "No comparative branch-discipline evidence exists for this scenario-host "
-                "cell yet.",
+                "This baseline packet changes no branch trajectory and records no "
+                "branch-control lift by itself.",
+                "One host-realization pair is below the three-pair threshold and does "
+                "not establish any branch-discipline verdict.",
             ),
             "Better Uncertainty Handling": (
-                "This packet preserves contradiction and degradation explicitly, but no "
-                "mediated comparison exists.",
-                "One baseline publication packet does not establish comparative "
-                "uncertainty lift.",
+                "This packet preserves contradiction and degradation explicitly on the "
+                "same certified publication surface used by the comparator.",
+                "One host-realization pair is below the three-pair threshold and does "
+                "not establish any uncertainty-handling verdict.",
             ),
             "Lower Visible Burden At Equal Task Value": (
-                "Baseline-only packet; no equal-value burden comparison is recorded.",
-                "No committed AUX burden artifact exists for this packet.",
+                "The pair holds the same certified completion class and truth boundary, "
+                "but this packet carries no AUX burden artifact.",
+                "The equal-value gate can pass without producing any lower-burden claim.",
             ),
             "Better Host-Specialized Realization": (
-                "This packet exercises the reference-host publication path end to end, "
-                "but no mediated comparison exists.",
-                "Reference-host realization remains descriptive only until a matched "
-                "mediated run exists.",
+                "This baseline packet keeps the same host-opportunity set containing "
+                "`mcp.query` but does not directly specialize it.",
+                "The host-realization metric is "
+                "`direct_opportunity_specialization_used=0` on the baseline side of "
+                "the pair.",
             ),
         },
         exclusion_notes=(
-            "This packet is intentionally baseline-only and reserves "
-            "`pending_pair_reference_host_001` for a future honest comparison if one is "
-            "ever earned."
+            "This packet is the baseline side of `pair_reference_host_001`. One pair "
+            "does not justify mediation; package-level evidence notes govern verdicts."
         ),
+        reviewer_note=_HOST_REALIZATION_BASELINE_REVIEWER_NOTE,
     )
 
 
