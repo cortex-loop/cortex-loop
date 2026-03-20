@@ -1,7 +1,7 @@
 # CORTEX_V2_MEDIATION_EVIDENCE_NOTE_0
 
 Date: 2026-03-20
-Status: `reference_baseline_and_two_reference_series_recorded`
+Status: `reference_series_and_gemini_baseline_anchor_recorded`
 
 ## Scope
 
@@ -11,6 +11,7 @@ Version `0` is a reporting scaffold only; it does not justify mediation, activat
 ## Current Evidence State
 
 All current reference-host scenario families now have committed baseline run packets in `docs/CORTEX_V2_MEDIATION_REFERENCE_BASELINE_INDEX_0.md`.
+A committed Gemini uncertainty baseline anchor is now recorded in `docs/CORTEX_V2_MEDIATION_GEMINI_BASELINE_INDEX_0.md` and backed by `docs/CORTEX_V2_MEDIATION_GEMINI_UNCERTAINTY_BASIS_NOTE_0.md`.
 Three experimental reference-only baseline-versus-mediated thrash pairs are now recorded in `docs/CORTEX_V2_MEDIATION_PAIRED_RUN_LEDGER_0.md`.
 Three experimental reference-only uncertainty pairs are now recorded in `docs/CORTEX_V2_MEDIATION_PAIRED_RUN_LEDGER_0.md`.
 The current package is preseeded from the scenario catalog so future evidence cannot cherry-pick only favorable scenario-host cells.
@@ -31,10 +32,10 @@ The reference uncertainty baseline series is now backed by `docs/CORTEX_V2_MEDIA
 ## Per-Host Status
 
 - `reference`: `baseline_and_two_paired_series_recorded`
-- `gemini`: `planned_only`
+- `gemini`: `baseline_anchor_recorded`
 - `openai`: `planned_only`
 
 ## Blocker Statement
 
-Mediation remains blocked because the current evidence is still too narrow and too reference-local to justify implementation.
+Mediation remains blocked because the current evidence is still too narrow and still missing counted non-reference comparisons to justify implementation.
 If no mediation-vs-non-mediation axis shows measurable lift under this package, mediation remains blocked and no implementation seam may open.

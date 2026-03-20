@@ -159,8 +159,8 @@ make revalidate-mediation-reference-host-realization-basis
 
 ## Mediation run-packet revalidation
 
-This checks the committed reference-host baseline run index and the committed run-packet instances.
-It validates packet metadata against the scenario catalog, confirms the canonical baseline anchors remain lawful, validates the full seven-packet reference baseline set, and checks the six committed experimental mediated uncertainty and thrash packets.
+This checks the committed reference-host and Gemini-host baseline run indexes and the committed run-packet instances.
+It validates packet metadata against the scenario catalog, confirms the canonical baseline anchors remain lawful, validates the full seven-packet reference baseline set, validates the Gemini uncertainty baseline anchor, and checks the six committed experimental mediated uncertainty and thrash packets.
 
 Direct command:
 
@@ -189,6 +189,40 @@ Repo-local entry point:
 
 ```sh
 make revalidate-reference-mediation-baselines
+```
+
+## Live Gemini mediation-baseline revalidation
+
+This revalidates the committed Gemini-host uncertainty baseline anchor against the landed Gemini commitment-path slice.
+It remains Gemini-only and baseline-only: it does not advance any paired counts and it does not add Gemini mediated packets.
+
+Direct command:
+
+```sh
+python3 -m pytest tests/integration/test_gemini_mediation_baseline_packets.py -q
+```
+
+Repo-local entry point:
+
+```sh
+make revalidate-gemini-mediation-baselines
+```
+
+## Gemini mediation-baseline candidate refresh
+
+This emits the committed Gemini-host baseline mediation packet doc to stdout for manual inspection.
+It prints markdown for the committed Gemini baseline anchor with the committed relative-path header, does not overwrite the committed packet doc, and does not authorize any paired comparison or mediation implementation work.
+
+Direct command:
+
+```sh
+python3 -m tests.integration._gemini_mediation_baseline_packets
+```
+
+Repo-local entry point:
+
+```sh
+make emit-gemini-mediation-baselines-candidate
 ```
 
 ## Reference mediation-baseline candidate refresh
@@ -276,6 +310,23 @@ Repo-local entry point:
 make emit-reference-mediated-uncertainty-candidate
 ```
 
+## Mediation Gemini uncertainty-basis revalidation
+
+This checks that `scenario_uncertainty_gemini_01` now has one lawful committed non-reference baseline anchor.
+It validates the Gemini baseline index, the Gemini uncertainty basis note, the committed Gemini packet doc, the absence of any Gemini mediated packet, and the package blocker truth. It does not generate any new evidence.
+
+Direct command:
+
+```sh
+python3 -m pytest tests/unit/test_mediation_gemini_uncertainty_basis.py -q
+```
+
+Repo-local entry point:
+
+```sh
+make revalidate-mediation-gemini-uncertainty-basis
+```
+
 ## Mediation reference-uncertainty basis revalidation
 
 This checks that `scenario_uncertainty_reference_01` now has a satisfied committed basis and replication law.
@@ -317,8 +368,10 @@ This runs all current mediation-evidence checks together:
 - host-realization admissibility validation
 - run-packet instance validation
 - live reference baseline packet revalidation
+- live Gemini baseline packet revalidation
 - live experimental reference mediated-uncertainty revalidation
 - live experimental reference mediated-thrash revalidation
+- Gemini uncertainty baseline validation
 - reference uncertainty basis and replication validation
 - reference thrash basis and replication validation
 

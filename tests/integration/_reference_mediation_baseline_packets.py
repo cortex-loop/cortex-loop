@@ -53,6 +53,12 @@ REFERENCE_THRASH_BASELINE_PACKET_PATHS = {
     for pair_key in REFERENCE_THRASH_PAIR_KEYS
 }
 _SCOPE_TEXT = {
+    ("scenario_uncertainty_gemini_01", "baseline_non_mediated"): (
+        "This committed run packet records one Gemini-host baseline-only uncertainty "
+        "anchor for mediation evidence review.\n"
+        "It does not provide comparative mediation evidence, justify mediation, or "
+        "authorize implementation work."
+    ),
     ("scenario_uncertainty_reference_01", "baseline_non_mediated"): (
         "This committed run packet records one reference-host baseline-only uncertainty "
         "packet within the committed uncertainty paired-run series for mediation "
@@ -574,6 +580,7 @@ def build_reference_mediation_packet(
     task_value_rubric_id: str,
     approval_or_environment_context_id: str,
     variant: str = "baseline_non_mediated",
+    host_family: str = "reference",
     scenario_inputs: dict[str, str],
     run_outputs: dict[str, str],
     artifact_refs: dict[str, str],
@@ -592,7 +599,7 @@ def build_reference_mediation_packet(
         },
         "variant_metadata": {
             "variant": variant,
-            "host_family": "reference",
+            "host_family": host_family,
             "scenario_family": scenario_family,
             "task_value_rubric_id": task_value_rubric_id,
             "approval_or_environment_context_id": approval_or_environment_context_id,

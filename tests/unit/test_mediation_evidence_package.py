@@ -261,6 +261,10 @@ def test_results_surfaces_are_preseeded_for_all_catalog_cells_and_follow_fairnes
     assert pair_counts[host_realization_cell]["usable"] == 0
     assert pair_counts[host_realization_cell]["confidence_downgraded"] == 0
     assert pair_counts[host_realization_cell]["excluded"] == 0
+    gemini_uncertainty_cell = ("scenario_uncertainty_gemini_01", "gemini")
+    assert pair_counts[gemini_uncertainty_cell]["usable"] == 0
+    assert pair_counts[gemini_uncertainty_cell]["confidence_downgraded"] == 0
+    assert pair_counts[gemini_uncertainty_cell]["excluded"] == 0
 
     coverage_rows = parse_markdown_table(
         section(read(PAIRED_LEDGER_PATH), "Coverage Commitments")
@@ -299,6 +303,9 @@ def test_results_surfaces_are_preseeded_for_all_catalog_cells_and_follow_fairnes
             if {"scenario_mismatch", "host_mismatch", "boundary_drift"} & counts["excluded_failure_tags"]:
                 assert row["current_verdict"] != "candidate_positive"
             if cell == host_realization_cell:
+                assert row["current_verdict"] == "insufficient"
+                assert supporting_ids(row["supporting_paired_episode_sets"]) == set()
+            if cell == gemini_uncertainty_cell:
                 assert row["current_verdict"] == "insufficient"
                 assert supporting_ids(row["supporting_paired_episode_sets"]) == set()
 
@@ -347,11 +354,16 @@ def test_results_surfaces_are_preseeded_for_all_catalog_cells_and_follow_fairnes
                 assert row["current_verdict"] != "candidate_positive"
 
 
-def test_evidence_note_keeps_mediation_blocked_with_two_reference_only_series() -> None:
+def test_evidence_note_keeps_mediation_blocked_with_reference_series_and_gemini_anchor() -> None:
     text = read(EVIDENCE_NOTE_PATH)
 
-    assert status(EVIDENCE_NOTE_PATH) == "reference_baseline_and_two_reference_series_recorded"
+    assert status(EVIDENCE_NOTE_PATH) == "reference_series_and_gemini_baseline_anchor_recorded"
     assert "All current reference-host scenario families now have committed baseline run packets" in text
+    assert (
+        "A committed Gemini uncertainty baseline anchor is now recorded in "
+        "`docs/CORTEX_V2_MEDIATION_GEMINI_BASELINE_INDEX_0.md` and backed by "
+        "`docs/CORTEX_V2_MEDIATION_GEMINI_UNCERTAINTY_BASIS_NOTE_0.md`."
+    ) in text
     assert "Three experimental reference-only baseline-versus-mediated thrash pairs are now recorded" in text
     assert "Three experimental reference-only uncertainty pairs are now recorded" in text
     assert (
@@ -387,6 +399,6 @@ def test_evidence_note_keeps_mediation_blocked_with_two_reference_only_series() 
     )
     assert host_statuses == {
         "reference": "baseline_and_two_paired_series_recorded",
-        "gemini": "planned_only",
+        "gemini": "baseline_anchor_recorded",
         "openai": "planned_only",
     }
