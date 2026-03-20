@@ -16,6 +16,7 @@ Three experimental reference-only uncertainty pairs are now recorded in `docs/CO
 The current package is preseeded from the scenario catalog so future evidence cannot cherry-pick only favorable scenario-host cells.
 The reference thrash baseline series is now backed by `docs/CORTEX_V2_MEDIATION_REFERENCE_THRASH_BASIS_NOTE_0.md` and `docs/CORTEX_V2_MEDIATION_REFERENCE_THRASH_REPLICATION_NOTE_0.md`, which record the committed baseline series, the live episode builder, the deterministic derivation rules, and the counted three-pair replication law.
 The reference uncertainty baseline series is now backed by `docs/CORTEX_V2_MEDIATION_REFERENCE_UNCERTAINTY_BASIS_NOTE_0.md` and `docs/CORTEX_V2_MEDIATION_REFERENCE_UNCERTAINTY_REPLICATION_NOTE_0.md`, which record the committed baseline series, the live episode builder, and the counted three-pair replication law.
+`scenario_host_reference_01` remains intentionally unpaired pending the comparator admissibility audit recorded in `docs/CORTEX_V2_MEDIATION_REFERENCE_HOST_REALIZATION_ADMISSIBILITY_NOTE_0.md`.
 `scenario_thrash_reference_01` / `reference` now has `candidate_positive` cell-level signal for reduced thrashing and better branch discipline, while package-level axis summaries remain globally `insufficient`.
 `scenario_uncertainty_reference_01` / `reference` now has `candidate_positive` cell-level signal for better uncertainty handling, while package-level axis summaries remain globally `insufficient`.
 

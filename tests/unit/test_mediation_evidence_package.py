@@ -257,6 +257,10 @@ def test_results_surfaces_are_preseeded_for_all_catalog_cells_and_follow_fairnes
         assert row["scenario_id"] in scenarios
         assert row["host_family"] in allowed_hosts
     pair_counts = aggregate_pair_counts(pair_rows)
+    host_realization_cell = ("scenario_host_reference_01", "reference")
+    assert pair_counts[host_realization_cell]["usable"] == 0
+    assert pair_counts[host_realization_cell]["confidence_downgraded"] == 0
+    assert pair_counts[host_realization_cell]["excluded"] == 0
 
     coverage_rows = parse_markdown_table(
         section(read(PAIRED_LEDGER_PATH), "Coverage Commitments")
@@ -294,6 +298,9 @@ def test_results_surfaces_are_preseeded_for_all_catalog_cells_and_follow_fairnes
             assert supporting_ids(row["supporting_paired_episode_sets"]) == counts["supporting_ids"]
             if {"scenario_mismatch", "host_mismatch", "boundary_drift"} & counts["excluded_failure_tags"]:
                 assert row["current_verdict"] != "candidate_positive"
+            if cell == host_realization_cell:
+                assert row["current_verdict"] == "insufficient"
+                assert supporting_ids(row["supporting_paired_episode_sets"]) == set()
 
     burden_rows = parse_markdown_table(section(read(BURDEN_TABLE_PATH), "Comparison Table"))
     assert status(BURDEN_TABLE_PATH) == "reference_thrash_and_uncertainty_three_pairs_recorded"
@@ -347,6 +354,11 @@ def test_evidence_note_keeps_mediation_blocked_with_two_reference_only_series() 
     assert "All current reference-host scenario families now have committed baseline run packets" in text
     assert "Three experimental reference-only baseline-versus-mediated thrash pairs are now recorded" in text
     assert "Three experimental reference-only uncertainty pairs are now recorded" in text
+    assert (
+        "`scenario_host_reference_01` remains intentionally unpaired pending the comparator "
+        "admissibility audit recorded in "
+        "`docs/CORTEX_V2_MEDIATION_REFERENCE_HOST_REALIZATION_ADMISSIBILITY_NOTE_0.md`."
+    ) in text
     assert (
         "`scenario_thrash_reference_01` / `reference` now has `candidate_positive` "
         "cell-level signal for reduced thrashing and better branch discipline" in text

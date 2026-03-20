@@ -140,6 +140,23 @@ Repo-local entry point:
 make revalidate-mediation-evidence-package
 ```
 
+## Mediation reference host-realization admissibility revalidation
+
+This checks that `scenario_host_reference_01` remains intentionally baseline-only until a lawful mediated comparator is actually admissible.
+It validates the supporting admissibility note, the host baseline-anchor row, the absence of counted host-realization pairs, and the package blocker truth. It does not generate evidence.
+
+Direct command:
+
+```sh
+python3 -m pytest tests/unit/test_mediation_reference_host_realization_basis.py -q
+```
+
+Repo-local entry point:
+
+```sh
+make revalidate-mediation-reference-host-realization-basis
+```
+
 ## Mediation run-packet revalidation
 
 This checks the committed reference-host baseline run index and the committed run-packet instances.
@@ -297,6 +314,7 @@ make revalidate-mediation-reference-thrash-basis
 
 This runs all current mediation-evidence checks together:
 - package scaffold validation
+- host-realization admissibility validation
 - run-packet instance validation
 - live reference baseline packet revalidation
 - live experimental reference mediated-uncertainty revalidation
