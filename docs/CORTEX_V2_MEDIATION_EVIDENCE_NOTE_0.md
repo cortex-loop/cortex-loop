@@ -14,6 +14,7 @@ Committed reference-host baseline run packets are now recorded in `docs/CORTEX_V
 No live baseline-versus-mediated paired runs are currently recorded in `docs/CORTEX_V2_MEDIATION_PAIRED_RUN_LEDGER_0.md`.
 The current package is preseeded from the scenario catalog so future evidence cannot cherry-pick only favorable scenario-host cells.
 `scenario_thrash_reference_01` remains an explicit `artifact_gap` because the repo does not yet contain an honest repeated branch-churn reference packet.
+That thrash gap is now backed by `docs/CORTEX_V2_MEDIATION_REFERENCE_THRASH_BASIS_NOTE_0.md`, which records why the current repo surfaces are still insufficient.
 
 ## Per-Axis Status
 

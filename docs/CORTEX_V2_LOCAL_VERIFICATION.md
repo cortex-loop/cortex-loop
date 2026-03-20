@@ -191,12 +191,30 @@ Repo-local entry point:
 make emit-reference-mediation-baselines-candidate
 ```
 
+## Mediation reference-thrash basis revalidation
+
+This checks that `scenario_thrash_reference_01` still remains an honest `artifact_gap`.
+It validates the supporting basis note, confirms that no committed thrash packet or live thrash builder exists, and does not generate any new evidence.
+
+Direct command:
+
+```sh
+python3 -m pytest tests/unit/test_mediation_reference_thrash_basis.py -q
+```
+
+Repo-local entry point:
+
+```sh
+make revalidate-mediation-reference-thrash-basis
+```
+
 ## Aggregate mediation-evidence revalidation
 
 This runs all current mediation-evidence checks together:
 - package scaffold validation
 - run-packet instance validation
 - live reference baseline packet revalidation
+- reference thrash-gap basis validation
 
 It remains check-only and does not generate evidence or authorize mediation implementation.
 
