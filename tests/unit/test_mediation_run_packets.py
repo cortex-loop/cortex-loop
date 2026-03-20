@@ -20,7 +20,7 @@ from tests._mediation_evidence import (
 )
 
 
-def test_reference_baseline_index_is_reference_only_and_explicit_about_gaps() -> None:
+def test_reference_baseline_index_is_reference_only_and_commits_all_reference_packets() -> None:
     scenarios = load_scenarios()
     failure_tags = load_failure_tags()
     rows = parse_markdown_table(section(read(REFERENCE_BASELINE_INDEX_PATH), "Index Rows"))
@@ -41,16 +41,11 @@ def test_reference_baseline_index_is_reference_only_and_explicit_about_gaps() ->
         assert scenarios[row["scenario_id"]]["host_family"] == "reference"
         assert all_tags_allowed(row["failure_tags"], failure_tags)
 
-        if row["evidence_status"] == "baseline_packet_committed":
-            packet_path = Path(row["packet_path"])
-            assert packet_path.parts[:3] == ("docs", "mediation_evidence", "reference")
-            assert (REFERENCE_BASELINE_INDEX_PATH.parents[1] / packet_path).is_file()
-            assert row["failure_tags"] == "none"
-        else:
-            assert row["evidence_status"] == "artifact_gap"
-            assert row["scenario_id"] == "scenario_thrash_reference_01"
-            assert row["packet_path"] == "none"
-            assert row["failure_tags"] == "artifact_gap"
+        assert row["evidence_status"] == "baseline_packet_committed"
+        packet_path = Path(row["packet_path"])
+        assert packet_path.parts[:3] == ("docs", "mediation_evidence", "reference")
+        assert (REFERENCE_BASELINE_INDEX_PATH.parents[1] / packet_path).is_file()
+        assert row["failure_tags"] == "none"
 
 
 def test_committed_reference_baseline_packets_match_catalog_and_stay_baseline_only() -> None:
@@ -59,11 +54,7 @@ def test_committed_reference_baseline_packets_match_catalog_and_stay_baseline_on
     rows = parse_markdown_table(section(read(REFERENCE_BASELINE_INDEX_PATH), "Index Rows"))
     committed_rows = [row for row in rows if row["evidence_status"] == "baseline_packet_committed"]
 
-    assert len(committed_rows) == 2
-    assert not any(
-        row["scenario_id"] == "scenario_thrash_reference_01" and row["evidence_status"] == "baseline_packet_committed"
-        for row in rows
-    )
+    assert len(committed_rows) == 3
 
     for row in committed_rows:
         packet_path = REFERENCE_BASELINE_INDEX_PATH.parents[1] / row["packet_path"]
@@ -99,9 +90,10 @@ def test_committed_reference_baseline_packets_match_catalog_and_stay_baseline_on
         assert "does not justify mediation" in reviewer_note
 
 
-def test_reference_packet_directory_contains_only_the_two_committed_packets() -> None:
+def test_reference_packet_directory_contains_only_the_three_committed_packets() -> None:
     packet_names = sorted(path.name for path in MEDIATION_REFERENCE_PACKET_ROOT.glob("*.md"))
     assert packet_names == [
         "scenario_host_reference_01__baseline_non_mediated__run_001.md",
+        "scenario_thrash_reference_01__baseline_non_mediated__run_001.md",
         "scenario_uncertainty_reference_01__baseline_non_mediated__run_001.md",
     ]

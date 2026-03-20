@@ -1,56 +1,43 @@
 # CORTEX_V2_MEDIATION_REFERENCE_THRASH_BASIS_NOTE_0
 
 Date: 2026-03-20
-Status: `artifact_gap remains honest`
+Status: `reference thrash basis satisfied`
 
 ## Scope
 
-This note records why `scenario_thrash_reference_01` still remains an explicit `artifact_gap`.
-It does not justify mediation, activate mediation, or authorize a thrash baseline packet seam by itself.
+This note records why `scenario_thrash_reference_01` now has a sufficient runnable basis for one committed reference-host baseline packet.
+It does not justify mediation, activate mediation, or authorize any comparative implementation seam by itself.
 
-## Current Audit Result
+## Basis Result
 
-`scenario_thrash_reference_01` must remain `artifact_gap` in the current repo state.
+The reference thrash basis is now satisfied by one committed reference-host baseline packet.
+The repo now contains a lawful multi-step reference-host episode with explicit branch-trajectory evidence, lawful task completion, live packet rebuilding from code, semantic packet revalidation, and candidate packet emission without overwrite.
 
-The audited surfaces are insufficient for a committed reference thrash baseline packet:
+## Sufficient Surfaces
 
-- existing reference-host evidence is limited to single-path reference-host commitment and publication packets
-- the committed reference baseline packet surfaces cover uncertainty and host realization only
-- the SRE branch, goals, and brake tests are carrier and policy surfaces, not a bounded reference-host multi-step episode
-- no current repo surface records a lawful repeated reopen/resume or branch-oscillation trace on a bounded reference-host task
+The current sufficient surfaces for `scenario_thrash_reference_01` are:
 
-## Audited Insufficient Surfaces
-
-The current audit covered these surfaces and found them insufficient as a runnable basis:
-
-- reference-host commitment/publication packet surfaces:
-  - `tests/unit/test_reference_host_commitment.py`
-  - `tests/integration/test_reference_lane_packet_example.py`
+- live episode builder:
+  - `tests/integration/_reference_mediation_thrash_episode.py`
+- live packet revalidation:
   - `tests/integration/test_reference_mediation_baseline_packets.py`
-- SRE branch/goals/brake carrier tests:
-  - `tests/unit/test_sre_goals_branching.py`
-  - `tests/unit/test_sre_neutral_hinge.py`
+- committed packet doc:
+  - `docs/mediation_evidence/reference/scenario_thrash_reference_01__baseline_non_mediated__run_001.md`
 
-Carrier or policy tests alone are insufficient.
-They do not record a reference-host multi-step episode, a visible branch trajectory, or a lawful reopen/resume trace that could support a committed baseline mediation packet.
+These surfaces are sufficient because they bind the reference-host commitment path to landed SRE goal, brake, allocation, and support-session carriers across one bounded four-step episode that ends in certified completion.
 
-## Future Packet Readiness Checklist
+## Deterministic Branch Derivation Rules
 
-All of the following must exist before a future `scenario_thrash_reference_01` packet seam may open:
+- `open`: a non-main branch appears in `branch_registry` that was absent in the previous step, and the selected family for the current step is `branch`
+- `suspend`: the previous step had `active_track_ref` equal to a non-main branch, the current step returns `active_track_ref` to `main`, and that branch still remains in `branch_registry`
+- `resume`: the previous step had `active_track_ref="main"`, the current step switches to an existing non-main branch, and `resume_anchor_available=True`
+- `merge`: a non-main branch present in the previous step disappears from `branch_registry` after the current step yields a `FULL_COMMITMENT` verdict of `CERTIFIED`
 
-- one bounded `reference`-host multi-step scenario, not a pure SRE unit test
-- at least one candidate-bearing or full-commitment turn plus at least one follow-up turn on the same episode
-- explicit branch trajectory evidence, including at least one reopen/resume, suspend/resume, or equivalent branch-control event that is visible in committed evidence
-- explicit task-value completion outcome so thrash reduction cannot be claimed by abandoning the task
-- the same commitment boundary and evidence/publication surface that future mediated comparison would use
-- a live builder from code
-- a committed markdown baseline packet
-- a semantic revalidation test from live code
-- a candidate-emission command that does not overwrite docs
+The committed reference thrash packet is only lawful because the live builder derives the exact branch sequence `open -> suspend -> resume -> merge` from those rules rather than from hand-written prose.
 
 ## Non-Qualifying Anti-Patterns
 
-These do not qualify as a future `scenario_thrash_reference_01` basis:
+These do not qualify as a `scenario_thrash_reference_01` basis:
 
 - pure carrier-type tests
 - synthetic branch labels with no host episode
@@ -59,4 +46,5 @@ These do not qualify as a future `scenario_thrash_reference_01` basis:
 
 ## Outcome
 
-Until the readiness checklist is satisfied from live reference-host code, `scenario_thrash_reference_01` must stay `artifact_gap`.
+`scenario_thrash_reference_01` is now satisfied by one committed baseline-only reference packet.
+It remains baseline-only evidence: paired runs are still absent, all mediation verdicts remain `insufficient`, and mediation remains blocked until qualifying comparative lift evidence exists.

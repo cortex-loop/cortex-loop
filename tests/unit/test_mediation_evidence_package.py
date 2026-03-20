@@ -201,11 +201,11 @@ def test_evidence_note_keeps_mediation_blocked_without_live_runs() -> None:
     text = read(EVIDENCE_NOTE_PATH)
 
     assert status(EVIDENCE_NOTE_PATH) == "reference_baseline_runs_recorded"
-    assert "Committed reference-host baseline run packets are now recorded" in text
+    assert "All current reference-host scenario families now have committed baseline run packets" in text
     assert "No live baseline-versus-mediated paired runs are currently recorded" in text
     assert "Mediation remains blocked" in text
     assert "no implementation seam may open" in text
-    assert "`scenario_thrash_reference_01` remains an explicit `artifact_gap`" in text
+    assert "`scenario_thrash_reference_01` remains an explicit `artifact_gap`" not in text
 
     axis_statuses = dict(
         re.findall(r"^- ([^:]+): `([^`]+)`$", section(text, "Per-Axis Status"), re.MULTILINE)

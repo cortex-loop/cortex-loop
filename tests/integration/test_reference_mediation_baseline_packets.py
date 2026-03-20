@@ -5,31 +5,67 @@ from __future__ import annotations
 from pathlib import Path
 
 from tests._mediation_evidence import (
-    REFERENCE_BASELINE_INDEX_PATH,
-    REFERENCE_THRASH_PACKET_PATH,
     REPO_ROOT,
     packet_without_path,
-    parse_markdown_table,
     parse_run_packet,
-    read,
-    section,
 )
 from tests.integration._reference_mediation_baseline_packets import (
     REFERENCE_MEDIATION_BASELINE_PACKET_BUILDERS,
     REFERENCE_MEDIATION_BASELINE_PACKET_PATHS,
+    build_reference_host_realization_baseline_packet,
+    build_reference_thrash_baseline_packet,
+    build_reference_uncertainty_baseline_packet,
     emit_reference_mediation_baseline_packets,
+)
+from tests.integration._reference_mediation_thrash_episode import (
+    EXPECTED_REFERENCE_THRASH_BRANCH_SEQUENCE,
+    build_reference_thrash_episode_snapshot,
 )
 
 
-def test_reference_mediation_baseline_packets_match_committed_docs() -> None:
-    for scenario_id, builder in REFERENCE_MEDIATION_BASELINE_PACKET_BUILDERS.items():
-        committed_path = REPO_ROOT / REFERENCE_MEDIATION_BASELINE_PACKET_PATHS[scenario_id]
-        committed_packet = packet_without_path(parse_run_packet(committed_path))
+def test_reference_uncertainty_baseline_packet_matches_committed_doc() -> None:
+    committed_path = REPO_ROOT / REFERENCE_MEDIATION_BASELINE_PACKET_PATHS[
+        "scenario_uncertainty_reference_01"
+    ]
+    committed_packet = packet_without_path(parse_run_packet(committed_path))
 
-        assert builder() == committed_packet
+    assert build_reference_uncertainty_baseline_packet() == committed_packet
 
 
-def test_candidate_emitter_prints_both_reference_packets_as_markdown(
+def test_reference_host_realization_baseline_packet_matches_committed_doc() -> None:
+    committed_path = REPO_ROOT / REFERENCE_MEDIATION_BASELINE_PACKET_PATHS[
+        "scenario_host_reference_01"
+    ]
+    committed_packet = packet_without_path(parse_run_packet(committed_path))
+
+    assert build_reference_host_realization_baseline_packet() == committed_packet
+
+
+def test_reference_thrash_baseline_packet_matches_committed_doc() -> None:
+    committed_path = REPO_ROOT / REFERENCE_MEDIATION_BASELINE_PACKET_PATHS[
+        "scenario_thrash_reference_01"
+    ]
+    committed_packet = packet_without_path(parse_run_packet(committed_path))
+
+    assert build_reference_thrash_baseline_packet() == committed_packet
+
+
+def test_reference_thrash_episode_derives_expected_branch_sequence() -> None:
+    snapshot = build_reference_thrash_episode_snapshot()
+
+    assert snapshot["branch_sequence"] == list(EXPECTED_REFERENCE_THRASH_BRANCH_SEQUENCE)
+    assert [step["derived_branch_operation"] for step in snapshot["steps"]] == list(
+        EXPECTED_REFERENCE_THRASH_BRANCH_SEQUENCE
+    )
+    assert [step["outcome_class"] for step in snapshot["steps"]] == [
+        "candidate-bearing",
+        "uncertified-full-commitment",
+        "candidate-bearing",
+        "certified-full-commitment",
+    ]
+
+
+def test_candidate_emitter_prints_all_three_reference_packets_as_markdown(
     capsys, tmp_path: Path
 ) -> None:
     emit_reference_mediation_baseline_packets()
@@ -40,26 +76,12 @@ def test_candidate_emitter_prints_both_reference_packets_as_markdown(
 
     emitted_docs = _parse_emitted_docs(captured)
     assert set(emitted_docs) == set(REFERENCE_MEDIATION_BASELINE_PACKET_PATHS.values())
-    assert "scenario_thrash_reference_01" not in emitted_docs
 
     for scenario_id, relative_path in REFERENCE_MEDIATION_BASELINE_PACKET_PATHS.items():
         temp_doc = tmp_path / Path(relative_path).name
         temp_doc.write_text(emitted_docs[relative_path], encoding="utf-8")
         emitted_packet = packet_without_path(parse_run_packet(temp_doc))
         assert emitted_packet == REFERENCE_MEDIATION_BASELINE_PACKET_BUILDERS[scenario_id]()
-
-
-def test_reference_thrash_packet_remains_an_explicit_gap() -> None:
-    rows = parse_markdown_table(section(read(REFERENCE_BASELINE_INDEX_PATH), "Index Rows"))
-    thrash_row = next(row for row in rows if row["scenario_id"] == "scenario_thrash_reference_01")
-
-    assert set(REFERENCE_MEDIATION_BASELINE_PACKET_BUILDERS) == {
-        "scenario_uncertainty_reference_01",
-        "scenario_host_reference_01",
-    }
-    assert thrash_row["evidence_status"] == "artifact_gap"
-    assert thrash_row["packet_path"] == "none"
-    assert not REFERENCE_THRASH_PACKET_PATH.exists()
 
 
 def _parse_emitted_docs(output: str) -> dict[str, str]:

@@ -143,7 +143,7 @@ make revalidate-mediation-evidence-package
 ## Mediation run-packet revalidation
 
 This checks the committed reference-host baseline run index and the committed run-packet instances.
-It validates packet metadata against the scenario catalog, confirms the packets stay baseline-only, and keeps the explicit `artifact_gap` for the reference thrash scenario visible.
+It validates packet metadata against the scenario catalog and confirms the three committed reference packets stay baseline-only.
 
 Direct command:
 
@@ -159,8 +159,8 @@ make revalidate-mediation-run-packets
 
 ## Live reference mediation-baseline revalidation
 
-This revalidates the two committed reference-host baseline mediation packets against live reference-host code paths.
-It remains reference-first and baseline-only: it does not advance any paired counts, it does not add Gemini or OpenAI live packets, and it keeps `scenario_thrash_reference_01` as an explicit `artifact_gap`.
+This revalidates the three committed reference-host baseline mediation packets against live reference-host code paths.
+It remains reference-first and baseline-only: it does not advance any paired counts and it does not add Gemini or OpenAI live packets.
 
 Direct command:
 
@@ -177,7 +177,7 @@ make revalidate-reference-mediation-baselines
 ## Reference mediation-baseline candidate refresh
 
 This emits candidate refreshed reference-host baseline mediation packet docs to stdout for manual inspection.
-It prints markdown with committed relative-path headers, does not overwrite the committed packet docs, and does not authorize any paired comparison or mediation implementation work.
+It prints markdown for all three committed reference packet docs with committed relative-path headers, does not overwrite the committed packet docs, and does not authorize any paired comparison or mediation implementation work.
 
 Direct command:
 
@@ -193,8 +193,8 @@ make emit-reference-mediation-baselines-candidate
 
 ## Mediation reference-thrash basis revalidation
 
-This checks that `scenario_thrash_reference_01` still remains an honest `artifact_gap`.
-It validates the supporting basis note, confirms that no committed thrash packet or live thrash builder exists, and does not generate any new evidence.
+This checks that `scenario_thrash_reference_01` now has a satisfied committed basis.
+It validates the supporting basis note, confirms that the committed thrash packet and live thrash builder exist, and checks that the deterministic branch-derivation rules are still documented. It does not generate any new evidence.
 
 Direct command:
 
@@ -214,7 +214,7 @@ This runs all current mediation-evidence checks together:
 - package scaffold validation
 - run-packet instance validation
 - live reference baseline packet revalidation
-- reference thrash-gap basis validation
+- reference thrash-basis validation
 
 It remains check-only and does not generate evidence or authorize mediation implementation.
 
