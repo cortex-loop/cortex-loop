@@ -3,7 +3,7 @@ PYTEST ?= $(PYTHON) -m pytest
 COVERAGE ?= $(PYTHON) -m coverage
 COVERAGE_RC ?= .coveragerc
 
-.PHONY: test-unit test-integration test-smoke verify revalidate-reference-packet emit-reference-packet-candidate revalidate-latency-evidence emit-latency-evidence-candidate coverage test-correspondence-core test-correspondence-ports test-correspondence-sre test-correspondence-periphery
+.PHONY: test-unit test-integration test-smoke verify revalidate-reference-packet emit-reference-packet-candidate revalidate-latency-evidence emit-latency-evidence-candidate revalidate-mediation-evidence-package coverage test-correspondence-core test-correspondence-ports test-correspondence-sre test-correspondence-periphery
 
 test-unit:
 	$(PYTEST) tests/unit
@@ -38,6 +38,9 @@ revalidate-latency-evidence:
 
 emit-latency-evidence-candidate:
 	$(PYTHON) -m tests.integration._reference_lane_latency_evidence
+
+revalidate-mediation-evidence-package:
+	$(PYTEST) tests/unit/test_mediation_evidence_package.py -q
 
 coverage:
 	$(COVERAGE) --version >/dev/null 2>&1 || { \

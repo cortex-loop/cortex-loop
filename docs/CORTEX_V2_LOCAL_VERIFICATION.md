@@ -1,6 +1,6 @@
 # CORTEX_V2_LOCAL_VERIFICATION
 
-Date: 2026-03-18
+Date: 2026-03-20
 Status: active local verification entry points for the landed v2 boundary
 
 ## Purpose
@@ -122,6 +122,23 @@ make emit-latency-evidence-candidate
 ```
 
 Exact committed-doc regeneration is still explicit/manual/out of scope unless separately requested.
+
+## Mediation-evidence package revalidation
+
+This checks the committed mediation evidence scaffold for fair matched-pair accounting, host-split preseed coverage, conservative verdict defaults, and blocker truth.
+It is check-only: it does not generate run packets, emit candidate evidence, or authorize mediation implementation.
+
+Direct command:
+
+```sh
+python3 -m pytest tests/unit/test_mediation_evidence_package.py -q
+```
+
+Repo-local entry point:
+
+```sh
+make revalidate-mediation-evidence-package
+```
 
 ## Individual entry points
 
