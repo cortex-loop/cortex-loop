@@ -33,7 +33,8 @@ It is useful for quick local confidence only and must not be treated as full-sui
 Direct command:
 
 ```sh
-python3 -m pytest tests/unit/test_correspondence_core.py \
+python3 -m pytest tests/unit/test_correspondence_contract.py \
+  tests/unit/test_correspondence_core.py \
   tests/unit/test_correspondence_ports.py \
   tests/unit/test_correspondence_sre.py \
   tests/unit/test_correspondence_periphery.py \
@@ -654,6 +655,23 @@ Repo-local entry point:
 
 ```sh
 make test-correspondence-core
+```
+
+## Correspondence contract drift check
+
+This checks that the correspondence landing rule stays aligned across the living correspondence authority, the implementation master plan, and the repo agent contract.
+It is a policy-sync check only. It does not validate individual correspondence rows or runtime behavior.
+
+Direct command:
+
+```sh
+python3 -m pytest tests/unit/test_correspondence_contract.py
+```
+
+Repo-local entry point:
+
+```sh
+make test-correspondence-contract
 ```
 
 ## Ports correspondence drift check

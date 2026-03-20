@@ -111,6 +111,29 @@ If a v1 mechanism is being carried over, re-earn it under the v2 packet instead 
 - If you change the packet, say whether the implementation master plan must change in the same slice.
 - If you change the intended v1 carryover boundary, update `V1_CODE_PORT_DETERMINATION.md` in the same slice.
 
+## Correspondence acceptance discipline
+
+- `docs/CORTEX_V2_MATH_TO_CODE_CORRESPONDENCE.md` is the single living correspondence authority. Do not create a second correspondence doctrine elsewhere.
+- Before planning or issuing a worker seam, classify the seam as `load-bearing` or `non-load-bearing`.
+- Every load-bearing seam plan must include `Correspondence impact:` listing the exact rows expected to be added, updated, or confirmed in `docs/CORTEX_V2_MATH_TO_CODE_CORRESPONDENCE.md`.
+- A non-load-bearing seam may use `Correspondence impact: none expected` only with a one-line reason.
+- Before acceptance, compare planned `Correspondence impact:` against delivered `Correspondence rows touched:`.
+
+## Boundary-carrier seam discipline
+
+If a seam changes a typed boundary contract (for example: constructor validation, required fields, enum/domain narrowing, or invariant enforcement):
+
+- Treat all direct construction sites of that carrier as part of the review surface until classified.
+- Before editing, classify construction sites as:
+  - owned and must reconcile in the same seam,
+  - out-of-scope blocker,
+  - or already lawful / no change needed.
+- Do not mark a seam `landed` if the canonical verification bundle fails due to owned-surface fallout.
+- Do not tighten a boundary carrier only on abstract strictness grounds unless either:
+  - the carrier is itself a truth/publication surface,
+  - or a real runtime/publication path has been reproduced.
+- Keep accepted baseline and candidate seam distinct; unaccepted local edits are not truth.
+
 ## Phase gate discipline
 
 - `docs/CORTEX_V2_PHASE_GATES_2.md` is the live gate ledger for cross-seam closure conditions that are broader than one correspondence row.
@@ -122,6 +145,9 @@ If a v1 mechanism is being carried over, re-earn it under the v2 packet instead 
 
 - The parent thread must independently verify worker claims before accepting or committing a seam.
 - Acceptance is adversarial, not ceremonial: the parent should try to break the seam at its most likely failure mode before marking it `landed`.
+- A load-bearing seam may not be accepted as `landed` unless the handoff includes a code diff, tests, and exact `Correspondence rows touched:`.
+- `Correspondence rows touched: none` is only acceptable when the seam is non-load-bearing or when the handoff explicitly justifies why no new load-bearing object, operator, implementation home, read/write path, or promised test surface changed.
+- If a seam adds or moves a load-bearing object, operator, implementation home, read/write path, or promised test surface without a correspondence update or explicit confirmation of an existing row, it cannot be marked `landed`.
 - Before acceptance, classify seam risk at minimum as one of:
   - deterministic code/doc seam,
   - parser/doc-sync seam,
