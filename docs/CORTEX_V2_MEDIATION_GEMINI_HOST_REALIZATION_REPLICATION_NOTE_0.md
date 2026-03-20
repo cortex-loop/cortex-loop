@@ -13,14 +13,18 @@ It does not justify mediation, activate mediation, or widen the allowed comparis
 The counted Gemini host-realization pair set is currently:
 
 - `pair_gemini_host_001`
+- `pair_gemini_host_002`
+- `pair_gemini_host_003`
 
 ## Cross-Pair Distinctness
 
 | pair_id | baseline_run_id | mediated_run_id | session_id | commitment_candidate_id | provenance_artifact_id | contradiction_source_tag | contradiction_summary | degradation_reason_code |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | pair_gemini_host_001 | gemini_host_realization_baseline_run_001 | gemini_host_realization_mediated_run_001 | gemini-host-packet-session-1 | gemini-host-packet-candidate-1 / gemini-host-packet-commit-1 | gemini-host-artifact-1 | gemini-host-publication-check | Gemini host publication evidence remains partially withheld | gemini-host-publication-partial |
+| pair_gemini_host_002 | gemini_host_realization_baseline_run_002 | gemini_host_realization_mediated_run_002 | gemini-host-packet-session-2 | gemini-host-packet-candidate-2 / gemini-host-packet-commit-2 | gemini-host-artifact-2 | gemini-host-receipt-check | Gemini structured query result omitted one confirmation field | gemini-host-publication-partial-002 |
+| pair_gemini_host_003 | gemini_host_realization_baseline_run_003 | gemini_host_realization_mediated_run_003 | gemini-host-packet-session-3 | gemini-host-packet-candidate-3 / gemini-host-packet-commit-3 | gemini-host-artifact-3 | gemini-host-artifact-check | Gemini supporting artifact trace remained partial | gemini-host-publication-partial-003 |
 
-Baseline and mediated trace ids must remain distinct within the pair.
+Trace ids must also remain distinct across the series.
 
 ## Within-Pair Fairness Law
 
@@ -58,5 +62,5 @@ No pair may count if it changes any of the following:
 
 ## Outcome
 
-`pair_gemini_host_001` is countable only because the baseline and mediated sides preserve the same certified Gemini `current-pair` publication surface while changing only direct host-native opportunity specialization at the selection layer.
-One Gemini-only pair is real host-realization evidence, but `scenario_host_gemini_01` / `gemini` remains `insufficient` because one pair is below the three-pair minimum, package-level host-specialized realization remains `insufficient`, and mediation remains blocked.
+`pair_gemini_host_001`, `pair_gemini_host_002`, and `pair_gemini_host_003` are countable only because the baseline and mediated sides preserve the same certified Gemini `current-pair` publication surface while changing only direct host-native opportunity specialization at the selection layer.
+Three Gemini-only pairs are real host-realization evidence, `scenario_host_gemini_01` / `gemini` now has `candidate_positive` cell-level signal for better host-specialized realization, package-level host-specialized realization remains `insufficient`, and mediation remains blocked.

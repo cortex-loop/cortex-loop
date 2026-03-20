@@ -5,7 +5,9 @@ from __future__ import annotations
 import sys
 
 from tests.integration._gemini_host_realization_pair import (
-    GEMINI_HOST_REALIZATION_PAIR_SPEC,
+    DEFAULT_GEMINI_HOST_REALIZATION_PAIR_KEY,
+    GEMINI_HOST_REALIZATION_PAIR_KEYS,
+    GEMINI_HOST_REALIZATION_PAIR_SPECS,
 )
 from tests.integration._gemini_lane_packet_example import (
     build_gemini_lane_packet_example_snapshot,
@@ -21,8 +23,14 @@ from tests.integration._reference_mediation_baseline_packets import (
 )
 
 GEMINI_HOST_REALIZATION_MEDIATED_PACKET_PATH = (
-    GEMINI_HOST_REALIZATION_PAIR_SPEC.mediated_packet_path
+    GEMINI_HOST_REALIZATION_PAIR_SPECS[
+        DEFAULT_GEMINI_HOST_REALIZATION_PAIR_KEY
+    ].mediated_packet_path
 )
+GEMINI_HOST_REALIZATION_MEDIATED_PACKET_PATHS = {
+    pair_key: GEMINI_HOST_REALIZATION_PAIR_SPECS[pair_key].mediated_packet_path
+    for pair_key in GEMINI_HOST_REALIZATION_PAIR_KEYS
+}
 _REVIEWER_NOTE = (
     "This is experimental mediated evidence only within the committed Gemini "
     "host-realization paired-run series. It remains Gemini-only, does not justify "
@@ -30,10 +38,12 @@ _REVIEWER_NOTE = (
 )
 
 
-def build_gemini_host_realization_comparator_snapshot() -> dict[str, object]:
-    spec = GEMINI_HOST_REALIZATION_PAIR_SPEC
-    baseline_snapshot = build_gemini_lane_packet_example_snapshot()
-    mediated_snapshot = build_gemini_mediated_lane_packet_example_snapshot()
+def build_gemini_host_realization_comparator_snapshot(
+    pair_key: str = DEFAULT_GEMINI_HOST_REALIZATION_PAIR_KEY,
+) -> dict[str, object]:
+    spec = GEMINI_HOST_REALIZATION_PAIR_SPECS[pair_key]
+    baseline_snapshot = build_gemini_lane_packet_example_snapshot(pair_key)
+    mediated_snapshot = build_gemini_mediated_lane_packet_example_snapshot(pair_key)
     baseline_specialization = build_gemini_host_realization_specialization_snapshot(
         clearly_superior=False,
     )
@@ -80,9 +90,11 @@ def build_gemini_host_realization_comparator_snapshot() -> dict[str, object]:
     }
 
 
-def build_gemini_host_realization_mediated_packet() -> PacketSnapshot:
-    spec = GEMINI_HOST_REALIZATION_PAIR_SPEC
-    snapshot = build_gemini_mediated_lane_packet_example_snapshot()
+def build_gemini_host_realization_mediated_packet(
+    pair_key: str = DEFAULT_GEMINI_HOST_REALIZATION_PAIR_KEY,
+) -> PacketSnapshot:
+    spec = GEMINI_HOST_REALIZATION_PAIR_SPECS[pair_key]
+    snapshot = build_gemini_mediated_lane_packet_example_snapshot(pair_key)
     specialization = snapshot["opportunity_specialization"]
 
     assert isinstance(specialization, dict)
@@ -218,14 +230,21 @@ def build_gemini_host_realization_mediated_packet() -> PacketSnapshot:
 
 
 GEMINI_HOST_REALIZATION_MEDIATED_PACKET_DOC_BUILDERS = {
-    GEMINI_HOST_REALIZATION_MEDIATED_PACKET_PATH: build_gemini_host_realization_mediated_packet
+    GEMINI_HOST_REALIZATION_MEDIATED_PACKET_PATHS[pair_key]: (
+        lambda pair_key=pair_key: build_gemini_host_realization_mediated_packet(pair_key)
+    )
+    for pair_key in GEMINI_HOST_REALIZATION_PAIR_KEYS
 }
 
 
 def emit_gemini_mediated_host_realization_candidate() -> None:
-    for relative_path, builder in GEMINI_HOST_REALIZATION_MEDIATED_PACKET_DOC_BUILDERS.items():
+    for index, (relative_path, builder) in enumerate(
+        GEMINI_HOST_REALIZATION_MEDIATED_PACKET_DOC_BUILDERS.items()
+    ):
         sys.stdout.write(f"--- {relative_path}\n")
         sys.stdout.write(render_reference_mediation_packet(relative_path, builder()))
+        if index != len(GEMINI_HOST_REALIZATION_MEDIATED_PACKET_DOC_BUILDERS) - 1:
+            sys.stdout.write("\n")
 
 
 if __name__ == "__main__":

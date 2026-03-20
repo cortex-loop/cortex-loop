@@ -1,7 +1,7 @@
 # CORTEX_V2_MEDIATION_GEMINI_HOST_REALIZATION_ADMISSIBILITY_NOTE_0
 
 Date: 2026-03-20
-Status: `one lawful gemini host realization comparator pair recorded`
+Status: `three lawful gemini host realization comparator pairs recorded`
 
 ## Scope
 
@@ -22,14 +22,18 @@ The current admissibility audit is grounded in these already-landed Gemini-host 
 - `tests/integration/test_gemini_mediated_lane_packet_example.py`
 - `docs/CORTEX_V2_GEMINI_MEDIATED_LANE_PACKET_EXAMPLE_0.md`
 - `docs/mediation_evidence/gemini/scenario_host_gemini_01__baseline_non_mediated__run_001.md`
+- `docs/mediation_evidence/gemini/scenario_host_gemini_01__baseline_non_mediated__run_002.md`
+- `docs/mediation_evidence/gemini/scenario_host_gemini_01__baseline_non_mediated__run_003.md`
 - `docs/mediation_evidence/gemini/scenario_host_gemini_01__experimental_mediated__run_001.md`
+- `docs/mediation_evidence/gemini/scenario_host_gemini_01__experimental_mediated__run_002.md`
+- `docs/mediation_evidence/gemini/scenario_host_gemini_01__experimental_mediated__run_003.md`
 - `docs/CORTEX_V2_MEDIATION_GEMINI_HOST_REALIZATION_REPLICATION_NOTE_0.md`
 
 ## Recorded Comparator Strength
 
 Gemini has landed observe/bind, commitment-path, neutral-only, thrash, and uncertainty carriers.
-The current baseline is already a strong contradiction-preserving Gemini host-facing surface, and one lawful Gemini host-realization comparator pair is now recorded.
-The recorded pair preserves:
+The current baseline is already a strong contradiction-preserving Gemini host-facing surface, and three lawful Gemini host-realization comparator pairs are now recorded.
+The recorded pairs preserve:
 
 - Gemini observe/bind meaning across `content.delta` and `interaction.complete`
 - candidate-bearing prelude plus full-commitment dispatch on the current landed path
@@ -39,7 +43,7 @@ The recorded pair preserves:
 - the selected family `seek-context`
 - the same host-opportunity set containing `mcp.query`
 
-The recorded pair is admissible because the only mediated delta is direct host-native opportunity specialization at the selection layer while packet truth and publication meaning remain fixed.
+The recorded pairs are admissible because the only mediated delta is direct host-native opportunity specialization at the selection layer while packet truth and publication meaning remain fixed.
 
 ## Admissibility Law
 
@@ -74,11 +78,11 @@ The following do not qualify as Gemini host-realization evidence for this scenar
 
 ## Current Outcome
 
-One lawful Gemini host-realization comparator pair is recorded for `scenario_host_gemini_01`.
-That pair is Gemini-only, it preserves packet truth/publication meaning, and `scenario_host_gemini_01` / `gemini` still remains `insufficient` because one pair is below the three-pair minimum.
-Reference still carries the only host-realization `candidate_positive` cell, package-level host-specialized realization evidence remains `insufficient`, and OpenAI remains baseline-only and intentionally unpaired.
+Three lawful Gemini host-realization comparator pairs are recorded for `scenario_host_gemini_01`.
+Those pairs are Gemini-only, they preserve packet truth/publication meaning, and `scenario_host_gemini_01` / `gemini` now has `candidate_positive` cell-level signal for better host-specialized realization.
+Package-level host-specialized realization evidence remains `insufficient` because OpenAI remains baseline-only and intentionally unpaired, and no mediation implementation seam is justified.
 
 ## Outcome
 
-The current honest result is that one lawful Gemini host-realization comparator pair is recorded while package-level host-specialized realization evidence remains `insufficient`.
-In short: one Gemini-only comparator pair is real host-realization evidence, it is still below threshold for any non-`insufficient` Gemini cell verdict, and mediation remains blocked.
+The current honest result is that three lawful Gemini host-realization comparator pairs are recorded while package-level host-specialized realization evidence remains `insufficient`.
+In short: three Gemini-only comparator pairs are real host-realization evidence, one exact Gemini cell now has `candidate_positive` signal for better host-specialized realization, and mediation remains blocked.

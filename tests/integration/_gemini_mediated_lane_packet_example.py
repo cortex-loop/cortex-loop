@@ -13,7 +13,9 @@ from cortex.eval.packets import WithheldField, build_evaluation_packet
 from cortex.sre.families import SoftControlFamily
 from cortex.sre.opportunities import HostNativeOpportunity, specialize_host_native_opportunity
 from tests.integration._gemini_host_realization_pair import (
-    GEMINI_HOST_REALIZATION_PAIR_SPEC,
+    DEFAULT_GEMINI_HOST_REALIZATION_PAIR_KEY,
+    GEMINI_HOST_REALIZATION_PAIR_KEYS,
+    GEMINI_HOST_REALIZATION_PAIR_SPECS,
 )
 from tests.integration._gemini_mediation_uncertainty_episode import (
     gemini_environment_handle,
@@ -60,8 +62,11 @@ def build_gemini_host_realization_specialization_snapshot(
     }
 
 
-def build_gemini_mediated_lane_packet_example_snapshot() -> dict[str, object]:
-    spec = GEMINI_HOST_REALIZATION_PAIR_SPEC
+def build_gemini_mediated_lane_packet_example_snapshot(
+    pair_key: str = DEFAULT_GEMINI_HOST_REALIZATION_PAIR_KEY,
+) -> dict[str, object]:
+    assert pair_key in GEMINI_HOST_REALIZATION_PAIR_KEYS
+    spec = GEMINI_HOST_REALIZATION_PAIR_SPECS[pair_key]
     contradiction, degradation = host_surface_degradation_pair(
         source_tag=spec.contradiction_source_tag,
         summary=spec.contradiction_summary,

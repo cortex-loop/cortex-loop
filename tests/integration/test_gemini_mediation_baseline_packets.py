@@ -5,13 +5,17 @@ from __future__ import annotations
 from pathlib import Path
 
 from tests._mediation_evidence import (
-    GEMINI_HOST_REALIZATION_PACKET_PATH,
     GEMINI_THRASH_BASELINE_PACKET_PATHS,
     GEMINI_UNCERTAINTY_BASELINE_PACKET_PATHS,
     packet_without_path,
     parse_run_packet,
 )
+from tests.integration._gemini_host_realization_pair import (
+    GEMINI_HOST_REALIZATION_PAIR_KEYS,
+    GEMINI_HOST_REALIZATION_PAIR_SPECS,
+)
 from tests.integration._gemini_mediation_baseline_packets import (
+    GEMINI_HOST_REALIZATION_BASELINE_PACKET_PATHS,
     GEMINI_MEDIATION_BASELINE_PACKET_DOC_BUILDERS,
     build_gemini_host_realization_baseline_packet,
     build_gemini_thrash_baseline_packet,
@@ -41,9 +45,12 @@ def test_gemini_uncertainty_baseline_packet_matches_committed_doc() -> None:
 
 
 def test_gemini_host_realization_baseline_packet_matches_committed_doc() -> None:
-    committed_packet = packet_without_path(parse_run_packet(GEMINI_HOST_REALIZATION_PACKET_PATH))
+    for pair_key in GEMINI_HOST_REALIZATION_PAIR_KEYS:
+        committed_packet = packet_without_path(
+            parse_run_packet(Path(GEMINI_HOST_REALIZATION_BASELINE_PACKET_PATHS[pair_key]))
+        )
 
-    assert build_gemini_host_realization_baseline_packet() == committed_packet
+        assert build_gemini_host_realization_baseline_packet(pair_key) == committed_packet
 
 
 def test_gemini_thrash_baseline_packet_matches_committed_doc() -> None:
@@ -87,6 +94,27 @@ def test_gemini_thrash_baseline_series_uses_distinct_predeclared_ids() -> None:
     assert len({spec.provenance_artifact_id for spec in GEMINI_THRASH_PAIR_SPECS.values()}) == 3
     assert len({spec.branch_track_ref for spec in GEMINI_THRASH_PAIR_SPECS.values()}) == 3
     assert len({spec.uncertainty_spike_tag for spec in GEMINI_THRASH_PAIR_SPECS.values()}) == 3
+    assert len(baseline_paths) == 3
+
+
+def test_gemini_host_realization_baseline_series_uses_distinct_predeclared_ids() -> None:
+    baseline_paths = {
+        Path(path).name for path in GEMINI_HOST_REALIZATION_BASELINE_PACKET_PATHS.values()
+    }
+
+    for pair_key in GEMINI_HOST_REALIZATION_PAIR_KEYS:
+        snapshot = build_gemini_host_realization_baseline_packet(pair_key)
+        assert snapshot["header"]["scenario_id"] == "scenario_host_gemini_01"
+        assert snapshot["variant_metadata"]["variant"] == "baseline_non_mediated"
+
+    assert len({spec.pair_id for spec in GEMINI_HOST_REALIZATION_PAIR_SPECS.values()}) == 3
+    assert len({spec.session_id for spec in GEMINI_HOST_REALIZATION_PAIR_SPECS.values()}) == 3
+    assert len({spec.candidate_id for spec in GEMINI_HOST_REALIZATION_PAIR_SPECS.values()}) == 3
+    assert len({spec.commitment_id for spec in GEMINI_HOST_REALIZATION_PAIR_SPECS.values()}) == 3
+    assert len({spec.provenance_artifact_id for spec in GEMINI_HOST_REALIZATION_PAIR_SPECS.values()}) == 3
+    assert len({spec.contradiction_source_tag for spec in GEMINI_HOST_REALIZATION_PAIR_SPECS.values()}) == 3
+    assert len({spec.contradiction_summary for spec in GEMINI_HOST_REALIZATION_PAIR_SPECS.values()}) == 3
+    assert len({spec.degradation_reason_code for spec in GEMINI_HOST_REALIZATION_PAIR_SPECS.values()}) == 3
     assert len(baseline_paths) == 3
 
 

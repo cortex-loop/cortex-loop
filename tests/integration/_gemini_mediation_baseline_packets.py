@@ -7,6 +7,11 @@ from functools import partial
 import sys
 
 from cortex.core.dispatch import DispatchLane
+from tests.integration._gemini_host_realization_pair import (
+    DEFAULT_GEMINI_HOST_REALIZATION_PAIR_KEY,
+    GEMINI_HOST_REALIZATION_PAIR_KEYS,
+    GEMINI_HOST_REALIZATION_PAIR_SPECS,
+)
 from tests.integration._gemini_mediation_thrash_episode import (
     DEFAULT_GEMINI_THRASH_PAIR_KEY,
     GEMINI_THRASH_PAIR_KEYS,
@@ -35,8 +40,9 @@ from tests.integration._reference_mediation_baseline_packets import (
 
 GEMINI_MEDIATION_BASELINE_PACKET_PATHS = {
     "scenario_host_gemini_01": (
-        "docs/mediation_evidence/gemini/"
-        "scenario_host_gemini_01__baseline_non_mediated__run_001.md"
+        GEMINI_HOST_REALIZATION_PAIR_SPECS[
+            DEFAULT_GEMINI_HOST_REALIZATION_PAIR_KEY
+        ].baseline_packet_path
     ),
     "scenario_uncertainty_gemini_01": (
         GEMINI_UNCERTAINTY_PAIR_SPECS[
@@ -48,6 +54,10 @@ GEMINI_MEDIATION_BASELINE_PACKET_PATHS = {
             DEFAULT_GEMINI_THRASH_PAIR_KEY
         ].baseline_packet_path
     ),
+}
+GEMINI_HOST_REALIZATION_BASELINE_PACKET_PATHS = {
+    pair_key: GEMINI_HOST_REALIZATION_PAIR_SPECS[pair_key].baseline_packet_path
+    for pair_key in GEMINI_HOST_REALIZATION_PAIR_KEYS
 }
 GEMINI_UNCERTAINTY_BASELINE_PACKET_PATHS = {
     pair_key: GEMINI_UNCERTAINTY_PAIR_SPECS[pair_key].baseline_packet_path
@@ -75,8 +85,11 @@ _GEMINI_HOST_REALIZATION_REVIEWER_NOTE = (
 )
 
 
-def build_gemini_host_realization_baseline_packet() -> PacketSnapshot:
-    snapshot = build_gemini_lane_packet_example_snapshot()
+def build_gemini_host_realization_baseline_packet(
+    pair_key: str = DEFAULT_GEMINI_HOST_REALIZATION_PAIR_KEY,
+) -> PacketSnapshot:
+    spec = GEMINI_HOST_REALIZATION_PAIR_SPECS[pair_key]
+    snapshot = build_gemini_lane_packet_example_snapshot(pair_key)
     specialization = build_gemini_host_realization_specialization_snapshot(
         clearly_superior=False,
     )
@@ -85,7 +98,7 @@ def build_gemini_host_realization_baseline_packet() -> PacketSnapshot:
         "candidate": DispatchLane.CANDIDATE_BEARING.value,
         "publication": DispatchLane.FULL_COMMITMENT.value,
     }
-    assert snapshot["candidate_id"] == "gemini-host-packet-candidate-1"
+    assert snapshot["candidate_id"] == spec.candidate_id
     assert snapshot["verdict_status"] == "certified"
     assert snapshot["packet_kind"] == "current-pair"
     assert specialization["selected_family"] == "seek-context"
@@ -114,17 +127,16 @@ def build_gemini_host_realization_baseline_packet() -> PacketSnapshot:
 
     return build_reference_mediation_packet(
         scenario_id="scenario_host_gemini_01",
-        run_id="gemini_host_realization_baseline_run_001",
-        paired_episode_set_id="pair_gemini_host_001",
+        run_id=spec.baseline_run_id,
+        paired_episode_set_id=spec.pair_id,
         scenario_family="host_realization",
         task_value_rubric_id="task_value_equal_host_realization",
         approval_or_environment_context_id="env_boundary_sensitive",
         host_family="gemini",
         scenario_inputs={
             "starting_request_or_event": (
-                "`content.delta` candidate-bearing turn on "
-                "`gemini-host-packet-session-1` followed by `interaction.complete` "
-                "with `commitment_id=gemini-host-packet-commit-1`"
+                f"`content.delta` candidate-bearing turn on `{spec.session_id}` "
+                f"followed by `interaction.complete` with `commitment_id={spec.commitment_id}`"
             ),
             "host_surface": (
                 "Gemini-host opportunity selection plus candidate-bearing "
@@ -211,9 +223,8 @@ def build_gemini_host_realization_baseline_packet() -> PacketSnapshot:
             ),
         },
         exclusion_notes=(
-            "This packet is the baseline side of `pair_gemini_host_001`. A single "
-            "packet does not justify mediation; package-level evidence notes govern "
-            "verdicts."
+            f"This packet is the baseline side of `{spec.pair_id}`. A single packet "
+            "does not justify mediation; package-level evidence notes govern verdicts."
         ),
         reviewer_note=_GEMINI_HOST_REALIZATION_REVIEWER_NOTE,
     )
@@ -438,9 +449,12 @@ def build_gemini_thrash_baseline_packet(
 
 
 GEMINI_MEDIATION_BASELINE_PACKET_DOC_BUILDERS: Mapping[str, Callable[[], PacketSnapshot]] = {
-    GEMINI_MEDIATION_BASELINE_PACKET_PATHS["scenario_host_gemini_01"]: (
-        build_gemini_host_realization_baseline_packet
-    ),
+    **{
+        GEMINI_HOST_REALIZATION_BASELINE_PACKET_PATHS[pair_key]: partial(
+            build_gemini_host_realization_baseline_packet, pair_key
+        )
+        for pair_key in GEMINI_HOST_REALIZATION_PAIR_KEYS
+    },
     **{
         GEMINI_UNCERTAINTY_BASELINE_PACKET_PATHS[pair_key]: partial(
             build_gemini_uncertainty_baseline_packet, pair_key
