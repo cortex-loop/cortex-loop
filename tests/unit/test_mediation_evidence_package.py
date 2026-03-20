@@ -72,7 +72,7 @@ def test_paired_run_ledger_is_preseeded_from_scenario_catalog() -> None:
 
     assert (
         status(PAIRED_LEDGER_PATH)
-        == "reference_and_gemini_two_series_with_openai_uncertainty_three_pairs_recorded"
+        == "reference_and_gemini_two_series_with_openai_two_series_recorded"
     )
 
     coverage_rows = parse_markdown_table(
@@ -226,6 +226,72 @@ def test_paired_run_ledger_is_preseeded_from_scenario_catalog() -> None:
             "notes": (
                 "Third Gemini-only experimental thrash pair. The same scenario, host, "
                 "rubric, environment context, commitment boundary, and direct Gemini "
+                "commitment-path plus branch-derivation evidence surface are preserved."
+            ),
+        },
+        {
+            "paired_episode_set_id": "pair_openai_thrash_001",
+            "scenario_id": "scenario_thrash_openai_01",
+            "host_family": "openai",
+            "baseline_run_id": "openai_thrash_baseline_run_001",
+            "mediated_run_id": "openai_thrash_mediated_run_001",
+            "baseline_packet_ref": (
+                "docs/mediation_evidence/openai/"
+                "scenario_thrash_openai_01__baseline_non_mediated__run_001.md"
+            ),
+            "mediated_packet_ref": (
+                "docs/mediation_evidence/openai/"
+                "scenario_thrash_openai_01__experimental_mediated__run_001.md"
+            ),
+            "pair_status": "usable",
+            "failure_tags": "none",
+            "notes": (
+                "First OpenAI-only experimental thrash pair. The same scenario, host, "
+                "rubric, environment context, commitment boundary, and direct OpenAI "
+                "commitment-path plus branch-derivation evidence surface are preserved."
+            ),
+        },
+        {
+            "paired_episode_set_id": "pair_openai_thrash_002",
+            "scenario_id": "scenario_thrash_openai_01",
+            "host_family": "openai",
+            "baseline_run_id": "openai_thrash_baseline_run_002",
+            "mediated_run_id": "openai_thrash_mediated_run_002",
+            "baseline_packet_ref": (
+                "docs/mediation_evidence/openai/"
+                "scenario_thrash_openai_01__baseline_non_mediated__run_002.md"
+            ),
+            "mediated_packet_ref": (
+                "docs/mediation_evidence/openai/"
+                "scenario_thrash_openai_01__experimental_mediated__run_002.md"
+            ),
+            "pair_status": "usable",
+            "failure_tags": "none",
+            "notes": (
+                "Second OpenAI-only experimental thrash pair. The same scenario, host, "
+                "rubric, environment context, commitment boundary, and direct OpenAI "
+                "commitment-path plus branch-derivation evidence surface are preserved."
+            ),
+        },
+        {
+            "paired_episode_set_id": "pair_openai_thrash_003",
+            "scenario_id": "scenario_thrash_openai_01",
+            "host_family": "openai",
+            "baseline_run_id": "openai_thrash_baseline_run_003",
+            "mediated_run_id": "openai_thrash_mediated_run_003",
+            "baseline_packet_ref": (
+                "docs/mediation_evidence/openai/"
+                "scenario_thrash_openai_01__baseline_non_mediated__run_003.md"
+            ),
+            "mediated_packet_ref": (
+                "docs/mediation_evidence/openai/"
+                "scenario_thrash_openai_01__experimental_mediated__run_003.md"
+            ),
+            "pair_status": "usable",
+            "failure_tags": "none",
+            "notes": (
+                "Third OpenAI-only experimental thrash pair. The same scenario, host, "
+                "rubric, environment context, commitment boundary, and direct OpenAI "
                 "commitment-path plus branch-derivation evidence surface are preserved."
             ),
         },
@@ -466,6 +532,10 @@ def test_results_surfaces_are_preseeded_for_all_catalog_cells_and_follow_fairnes
     assert pair_counts[gemini_thrash_cell]["usable"] == 3
     assert pair_counts[gemini_thrash_cell]["confidence_downgraded"] == 0
     assert pair_counts[gemini_thrash_cell]["excluded"] == 0
+    openai_thrash_cell = ("scenario_thrash_openai_01", "openai")
+    assert pair_counts[openai_thrash_cell]["usable"] == 3
+    assert pair_counts[openai_thrash_cell]["confidence_downgraded"] == 0
+    assert pair_counts[openai_thrash_cell]["excluded"] == 0
     gemini_uncertainty_cell = ("scenario_uncertainty_gemini_01", "gemini")
     assert pair_counts[gemini_uncertainty_cell]["usable"] == 3
     assert pair_counts[gemini_uncertainty_cell]["confidence_downgraded"] == 0
@@ -485,13 +555,15 @@ def test_results_surfaces_are_preseeded_for_all_catalog_cells_and_follow_fairnes
     axis_text = read(AXIS_TABLE_PATH)
     assert (
         status(AXIS_TABLE_PATH)
-        == "reference_and_gemini_two_series_with_openai_uncertainty_three_pairs_recorded"
+        == "reference_and_gemini_two_series_with_openai_two_series_recorded"
     )
     expected_positive = {
         ("Reduced Thrashing", ("scenario_thrash_reference_01", "reference")),
         ("Reduced Thrashing", ("scenario_thrash_gemini_01", "gemini")),
+        ("Reduced Thrashing", ("scenario_thrash_openai_01", "openai")),
         ("Better Branch Discipline", ("scenario_thrash_reference_01", "reference")),
         ("Better Branch Discipline", ("scenario_thrash_gemini_01", "gemini")),
+        ("Better Branch Discipline", ("scenario_thrash_openai_01", "openai")),
         ("Better Uncertainty Handling", ("scenario_uncertainty_reference_01", "reference")),
         ("Better Uncertainty Handling", ("scenario_uncertainty_gemini_01", "gemini")),
         ("Better Uncertainty Handling", ("scenario_uncertainty_openai_01", "openai")),
@@ -531,6 +603,16 @@ def test_results_surfaces_are_preseeded_for_all_catalog_cells_and_follow_fairnes
                     "pair_gemini_thrash_002",
                     "pair_gemini_thrash_003",
                 }
+            if cell == openai_thrash_cell:
+                if heading in {"Reduced Thrashing", "Better Branch Discipline"}:
+                    assert row["current_verdict"] == "candidate_positive"
+                else:
+                    assert row["current_verdict"] == "insufficient"
+                assert supporting_ids(row["supporting_paired_episode_sets"]) == {
+                    "pair_openai_thrash_001",
+                    "pair_openai_thrash_002",
+                    "pair_openai_thrash_003",
+                }
             if cell == gemini_uncertainty_cell:
                 if heading == "Better Uncertainty Handling":
                     assert row["current_verdict"] == "candidate_positive"
@@ -565,7 +647,7 @@ def test_results_surfaces_are_preseeded_for_all_catalog_cells_and_follow_fairnes
     burden_rows = parse_markdown_table(section(read(BURDEN_TABLE_PATH), "Comparison Table"))
     assert (
         status(BURDEN_TABLE_PATH)
-        == "reference_and_gemini_two_series_with_openai_uncertainty_three_pairs_recorded"
+        == "reference_and_gemini_two_series_with_openai_two_series_recorded"
     )
     assert {(row["scenario_id"], row["host_family"]) for row in burden_rows} == expected_cells
     for row in burden_rows:
@@ -584,7 +666,7 @@ def test_results_surfaces_are_preseeded_for_all_catalog_cells_and_follow_fairnes
     host_split_text = read(HOST_SPLIT_TABLE_PATH)
     assert (
         status(HOST_SPLIT_TABLE_PATH)
-        == "reference_and_gemini_two_series_with_openai_uncertainty_three_pairs_recorded"
+        == "reference_and_gemini_two_series_with_openai_two_series_recorded"
     )
     assert "all-hosts" not in host_split_text.lower()
     host_sections = {
@@ -618,11 +700,12 @@ def test_evidence_note_keeps_mediation_blocked_with_reference_gemini_and_openai_
 
     assert (
         status(EVIDENCE_NOTE_PATH)
-        == "reference_and_gemini_two_series_with_openai_uncertainty_three_pairs_recorded"
+        == "reference_and_gemini_two_series_with_openai_two_series_recorded"
     )
     assert "All current reference-host scenario families now have committed baseline run packets" in text
     assert "Three experimental reference-only baseline-versus-mediated thrash pairs are now recorded" in text
     assert "Three experimental Gemini-only baseline-versus-mediated thrash pairs are now recorded" in text
+    assert "Three experimental OpenAI-only baseline-versus-mediated thrash pairs are now recorded" in text
     assert "Three experimental reference-only uncertainty pairs are now recorded" in text
     assert "Three experimental Gemini-only uncertainty pairs are now recorded" in text
     assert "Three experimental OpenAI-only uncertainty pairs are now recorded" in text
@@ -637,6 +720,10 @@ def test_evidence_note_keeps_mediation_blocked_with_reference_gemini_and_openai_
     )
     assert (
         "`scenario_thrash_gemini_01` / `gemini` now has `candidate_positive` "
+        "cell-level signal for reduced thrashing and better branch discipline" in text
+    )
+    assert (
+        "`scenario_thrash_openai_01` / `openai` now has `candidate_positive` "
         "cell-level signal for reduced thrashing and better branch discipline" in text
     )
     assert (
@@ -672,5 +759,5 @@ def test_evidence_note_keeps_mediation_blocked_with_reference_gemini_and_openai_
     assert host_statuses == {
         "reference": "baseline_and_two_paired_series_recorded",
         "gemini": "baseline_and_two_paired_series_recorded",
-        "openai": "baseline_and_one_paired_series_recorded",
+        "openai": "baseline_and_two_paired_series_recorded",
     }

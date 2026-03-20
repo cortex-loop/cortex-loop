@@ -107,8 +107,9 @@ def test_evidence_note_keeps_mediation_blocked_with_openai_uncertainty_series() 
 
     assert (
         status(EVIDENCE_NOTE_PATH)
-        == "reference_and_gemini_two_series_with_openai_uncertainty_three_pairs_recorded"
+        == "reference_and_gemini_two_series_with_openai_two_series_recorded"
     )
+    assert "Three experimental OpenAI-only baseline-versus-mediated thrash pairs are now recorded" in text
     assert "Three experimental OpenAI-only uncertainty pairs are now recorded" in text
     assert (
         "`scenario_uncertainty_openai_01` / `openai` now has `candidate_positive` "

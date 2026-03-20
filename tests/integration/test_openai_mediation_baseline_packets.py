@@ -5,15 +5,24 @@ from __future__ import annotations
 from pathlib import Path
 
 from tests._mediation_evidence import (
+    OPENAI_THRASH_BASELINE_PACKET_PATHS,
     OPENAI_UNCERTAINTY_BASELINE_PACKET_PATHS,
     packet_without_path,
     parse_run_packet,
 )
 from tests.integration._openai_mediation_baseline_packets import (
     OPENAI_MEDIATION_BASELINE_PACKET_DOC_BUILDERS,
+    OPENAI_THRASH_BASELINE_PACKET_PATHS as EMITTED_OPENAI_THRASH_PACKET_PATHS,
     OPENAI_UNCERTAINTY_BASELINE_PACKET_PATHS as EMITTED_OPENAI_PACKET_PATHS,
+    build_openai_thrash_baseline_packet,
     build_openai_uncertainty_baseline_packet,
     emit_openai_mediation_baseline_packets,
+)
+from tests.integration._openai_mediation_thrash_episode import (
+    EXPECTED_OPENAI_THRASH_BRANCH_SEQUENCE,
+    OPENAI_THRASH_PAIR_KEYS,
+    OPENAI_THRASH_PAIR_SPECS,
+    build_openai_thrash_episode_snapshot,
 )
 from tests.integration._openai_mediation_uncertainty_episode import (
     EXPECTED_OPENAI_UNCERTAINTY_STEP_SEQUENCE,
@@ -44,6 +53,25 @@ def test_openai_uncertainty_baseline_series_records_expected_loop_shape() -> Non
         assert snapshot["steps"][-1]["outcome_class"] == "certified-full-commitment"
 
 
+def test_openai_thrash_baseline_packet_matches_committed_doc() -> None:
+    for pair_key in OPENAI_THRASH_PAIR_KEYS:
+        committed_packet = packet_without_path(
+            parse_run_packet(OPENAI_THRASH_BASELINE_PACKET_PATHS[pair_key])
+        )
+        assert build_openai_thrash_baseline_packet(pair_key) == committed_packet
+
+
+def test_openai_thrash_baseline_series_records_expected_branch_shape() -> None:
+    for pair_key in OPENAI_THRASH_PAIR_KEYS:
+        packet = build_openai_thrash_baseline_packet(pair_key)
+        snapshot = build_openai_thrash_episode_snapshot(pair_key)
+
+        assert packet["header"]["paired_episode_set_id"] == OPENAI_THRASH_PAIR_SPECS[pair_key].pair_id
+        assert snapshot["branch_sequence"] == list(EXPECTED_OPENAI_THRASH_BRANCH_SEQUENCE)
+        assert snapshot["steps"][1]["brake_state"] == "guarded"
+        assert snapshot["steps"][-1]["outcome_class"] == "certified-full-commitment"
+
+
 def test_candidate_emitter_prints_openai_baseline_packets_as_markdown(
     capsys, tmp_path: Path
 ) -> None:
@@ -52,15 +80,29 @@ def test_candidate_emitter_prints_openai_baseline_packets_as_markdown(
 
     for relative_path in EMITTED_OPENAI_PACKET_PATHS.values():
         assert f"--- {relative_path}" in captured
+    for relative_path in EMITTED_OPENAI_THRASH_PACKET_PATHS.values():
+        assert f"--- {relative_path}" in captured
 
     emitted_docs = _parse_emitted_docs(captured)
-    assert set(emitted_docs) == set(EMITTED_OPENAI_PACKET_PATHS.values())
+    assert set(emitted_docs) == set(EMITTED_OPENAI_PACKET_PATHS.values()) | set(
+        EMITTED_OPENAI_THRASH_PACKET_PATHS.values()
+    )
 
     for relative_path, builder in OPENAI_MEDIATION_BASELINE_PACKET_DOC_BUILDERS.items():
         temp_doc = tmp_path / Path(relative_path).name
         temp_doc.write_text(emitted_docs[relative_path], encoding="utf-8")
         emitted_packet = packet_without_path(parse_run_packet(temp_doc))
         assert emitted_packet == builder()
+
+
+def test_openai_thrash_baseline_series_uses_distinct_predeclared_ids() -> None:
+    assert len({spec.pair_id for spec in OPENAI_THRASH_PAIR_SPECS.values()}) == 3
+    assert len({spec.session_id for spec in OPENAI_THRASH_PAIR_SPECS.values()}) == 3
+    assert len({spec.candidate_id for spec in OPENAI_THRASH_PAIR_SPECS.values()}) == 3
+    assert len({spec.commitment_id for spec in OPENAI_THRASH_PAIR_SPECS.values()}) == 3
+    assert len({spec.provenance_artifact_id for spec in OPENAI_THRASH_PAIR_SPECS.values()}) == 3
+    assert len({spec.branch_track_ref for spec in OPENAI_THRASH_PAIR_SPECS.values()}) == 3
+    assert len({spec.uncertainty_spike_tag for spec in OPENAI_THRASH_PAIR_SPECS.values()}) == 3
 
 
 def _parse_emitted_docs(output: str) -> dict[str, str]:

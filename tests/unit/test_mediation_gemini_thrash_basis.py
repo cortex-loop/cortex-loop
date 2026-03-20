@@ -98,9 +98,10 @@ def test_evidence_note_keeps_mediation_blocked_with_gemini_thrash_series() -> No
 
     assert (
         status(EVIDENCE_NOTE_PATH)
-        == "reference_and_gemini_two_series_with_openai_uncertainty_three_pairs_recorded"
+        == "reference_and_gemini_two_series_with_openai_two_series_recorded"
     )
     assert "Three experimental Gemini-only baseline-versus-mediated thrash pairs are now recorded" in text
+    assert "Three experimental OpenAI-only baseline-versus-mediated thrash pairs are now recorded" in text
     assert "docs/CORTEX_V2_MEDIATION_GEMINI_THRASH_BASIS_NOTE_0.md" in text
     assert (
         "`scenario_thrash_gemini_01` / `gemini` now has `candidate_positive` "

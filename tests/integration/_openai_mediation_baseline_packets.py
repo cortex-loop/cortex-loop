@@ -7,6 +7,13 @@ from functools import partial
 import sys
 
 from cortex.core.dispatch import DispatchLane
+from tests.integration._openai_mediation_thrash_episode import (
+    DEFAULT_OPENAI_THRASH_PAIR_KEY,
+    OPENAI_THRASH_PAIR_KEYS,
+    OPENAI_THRASH_PAIR_SPECS,
+    build_openai_thrash_episode_snapshot,
+    openai_thrash_scenario_inputs,
+)
 from tests.integration._openai_mediation_uncertainty_episode import (
     DEFAULT_OPENAI_UNCERTAINTY_PAIR_KEY,
     OPENAI_UNCERTAINTY_PAIR_KEYS,
@@ -27,15 +34,27 @@ OPENAI_MEDIATION_BASELINE_PACKET_PATHS = {
             DEFAULT_OPENAI_UNCERTAINTY_PAIR_KEY
         ].baseline_packet_path
     ),
+    "scenario_thrash_openai_01": (
+        OPENAI_THRASH_PAIR_SPECS[DEFAULT_OPENAI_THRASH_PAIR_KEY].baseline_packet_path
+    ),
 }
 OPENAI_UNCERTAINTY_BASELINE_PACKET_PATHS = {
     pair_key: OPENAI_UNCERTAINTY_PAIR_SPECS[pair_key].baseline_packet_path
     for pair_key in OPENAI_UNCERTAINTY_PAIR_KEYS
 }
+OPENAI_THRASH_BASELINE_PACKET_PATHS = {
+    pair_key: OPENAI_THRASH_PAIR_SPECS[pair_key].baseline_packet_path
+    for pair_key in OPENAI_THRASH_PAIR_KEYS
+}
 _OPENAI_UNCERTAINTY_REVIEWER_NOTE = (
     "This is baseline-only committed evidence within the committed OpenAI "
     "uncertainty paired-run series. It is not comparative mediation evidence by "
     "itself and does not justify mediation or authorize any implementation seam."
+)
+_OPENAI_THRASH_REVIEWER_NOTE = (
+    "This is baseline-only committed evidence within the committed OpenAI thrash "
+    "paired-run series. It is not comparative mediation evidence by itself and "
+    "does not justify mediation or authorize any implementation seam."
 )
 
 
@@ -141,11 +160,116 @@ def build_openai_uncertainty_baseline_packet(
     )
 
 
-OPENAI_MEDIATION_BASELINE_PACKET_DOC_BUILDERS: Mapping[str, Callable[[], PacketSnapshot]] = {
-    OPENAI_UNCERTAINTY_BASELINE_PACKET_PATHS[pair_key]: partial(
-        build_openai_uncertainty_baseline_packet, pair_key
+def build_openai_thrash_baseline_packet(
+    pair_key: str = DEFAULT_OPENAI_THRASH_PAIR_KEY,
+) -> PacketSnapshot:
+    spec = OPENAI_THRASH_PAIR_SPECS[pair_key]
+    snapshot = build_openai_thrash_episode_snapshot(pair_key)
+    steps = snapshot["steps"]
+
+    assert isinstance(steps, list)
+    assert snapshot["branch_sequence"] == ["open", "suspend", "resume", "merge"]
+    assert [step["outcome_class"] for step in steps] == [
+        "candidate-bearing",
+        "uncertified-full-commitment",
+        "candidate-bearing",
+        "certified-full-commitment",
+    ]
+    assert steps[1]["brake_state"] == "guarded"
+    assert steps[3]["dispatch_lane"] == DispatchLane.FULL_COMMITMENT.value
+
+    return build_reference_mediation_packet(
+        scenario_id="scenario_thrash_openai_01",
+        run_id=spec.baseline_run_id,
+        paired_episode_set_id=spec.pair_id,
+        scenario_family="thrash_control",
+        task_value_rubric_id="task_value_equal_completion",
+        approval_or_environment_context_id="env_local_default",
+        host_family="openai",
+        scenario_inputs=openai_thrash_scenario_inputs(spec),
+        run_outputs={
+            "outcome_summary": (
+                "The bounded OpenAI-host episode reaches certified completion at "
+                f"`{spec.baseline_step_prefix}-4` after one guarded uncertified "
+                f"follow-up at `{spec.baseline_step_prefix}-2`."
+            ),
+            "branch_trajectory_summary": (
+                "The live OpenAI-host episode derives an explicit "
+                "`open -> suspend -> resume -> merge` sequence across "
+                f"`{spec.baseline_step_prefix}-1` through `{spec.baseline_step_prefix}-4`."
+            ),
+            "uncertainty_or_brake_summary": (
+                f"Brake state is `guarded` only at `{spec.baseline_step_prefix}-2` "
+                "from elevated evidence uncertainty; no contradiction or degradation "
+                "smoothing occurs."
+            ),
+            "burden_summary": "none",
+            "host_realization_summary": (
+                "OpenAI-host commitment and landed SRE branch-control surfaces are "
+                "exercised together without any pooled host claim."
+            ),
+        },
+        artifact_refs={
+            "event_trace_refs": str(snapshot["event_trace_refs"]),
+            "contradiction_refs": "none",
+            "degradation_refs": "none",
+            "aux_burden_refs_if_present": "none",
+            "evaluation_packet_refs_if_present": "none",
+        },
+        lift_axis_notes={
+            "Reduced Thrashing": (
+                "This packet records one lawful multi-step OpenAI-host branch cycle "
+                "within the committed thrash paired-run series.",
+                "Package-level evidence notes govern whether repeated paired evidence is "
+                "enough to claim thrash reduction.",
+            ),
+            "Better Branch Discipline": (
+                "This packet preserves explicit branch trajectory evidence on the "
+                "OpenAI-host path within the committed thrash paired-run series.",
+                "Package-level evidence notes govern whether repeated paired evidence is "
+                "enough to claim branch-discipline lift.",
+            ),
+            "Better Uncertainty Handling": (
+                "The guarded uncertified follow-up remains explicit within the committed "
+                "thrash paired-run series.",
+                "Package-level evidence notes govern whether repeated paired evidence is "
+                "enough to claim uncertainty lift.",
+            ),
+            "Lower Visible Burden At Equal Task Value": (
+                "Baseline-only packet within the committed thrash paired-run series; no "
+                "AUX burden artifact is recorded here.",
+                "Package-level evidence notes govern whether repeated paired evidence is "
+                "enough to claim burden lift.",
+            ),
+            "Better Host-Specialized Realization": (
+                "This packet exercises the OpenAI-host commitment path together with "
+                "landed SRE branch-control carriers within the committed thrash series.",
+                "Package-level evidence notes govern whether repeated paired evidence is "
+                "enough to claim host-specialized realization lift.",
+            ),
+        },
+        exclusion_notes=(
+            "This packet is part of the committed OpenAI thrash paired-run series under "
+            f"`{spec.pair_id}`. A single packet does not justify mediation; "
+            "package-level evidence notes govern verdicts."
+        ),
+        reviewer_note=_OPENAI_THRASH_REVIEWER_NOTE,
     )
-    for pair_key in OPENAI_UNCERTAINTY_PAIR_KEYS
+
+
+OPENAI_MEDIATION_BASELINE_PACKET_DOC_BUILDERS: Mapping[str, Callable[[], PacketSnapshot]] = {
+    **{
+        OPENAI_UNCERTAINTY_BASELINE_PACKET_PATHS[pair_key]: partial(
+            build_openai_uncertainty_baseline_packet, pair_key
+        )
+        for pair_key in OPENAI_UNCERTAINTY_PAIR_KEYS
+    },
+    **{
+        OPENAI_THRASH_BASELINE_PACKET_PATHS[pair_key]: partial(
+            build_openai_thrash_baseline_packet, pair_key
+        )
+        for pair_key in OPENAI_THRASH_PAIR_KEYS
+    },
 }
 
 

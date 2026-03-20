@@ -160,7 +160,7 @@ make revalidate-mediation-reference-host-realization-basis
 ## Mediation run-packet revalidation
 
 This checks the committed reference-host, Gemini-host, and OpenAI-host baseline run indexes and the committed run-packet instances.
-It validates packet metadata against the scenario catalog, confirms the canonical baseline anchors remain lawful, validates the full seven-packet reference baseline set, validates the six-packet Gemini baseline set, validates the six-packet OpenAI baseline set, and checks the fifteen committed experimental mediated uncertainty and thrash packets.
+It validates packet metadata against the scenario catalog, confirms the canonical baseline anchors remain lawful, validates the full seven-packet reference baseline set, validates the six-packet Gemini baseline set, validates the six-packet OpenAI baseline set, and checks the eighteen committed experimental mediated uncertainty and thrash packets.
 
 Direct command:
 
@@ -227,8 +227,8 @@ make emit-gemini-mediation-baselines-candidate
 
 ## Live OpenAI mediation-baseline revalidation
 
-This revalidates the committed OpenAI-host uncertainty baseline packet series against the landed OpenAI commitment-path slice.
-It remains OpenAI-only and baseline-only: it covers the three committed OpenAI uncertainty baseline docs and does not by itself justify any verdict.
+This revalidates the committed OpenAI-host baseline packet series against the landed OpenAI carrier slices.
+It remains OpenAI-only and baseline-only: it covers the three committed OpenAI uncertainty baseline docs plus the three committed OpenAI thrash baseline docs and does not by itself justify any verdict.
 
 Direct command:
 
@@ -245,7 +245,7 @@ make revalidate-openai-mediation-baselines
 ## OpenAI mediation-baseline candidate refresh
 
 This emits the committed OpenAI-host baseline mediation packet docs to stdout for manual inspection.
-It prints markdown for the three committed OpenAI baseline docs with committed relative-path headers, does not overwrite the committed packet docs, and does not authorize any paired comparison or mediation implementation work.
+It prints markdown for all six committed OpenAI baseline docs with committed relative-path headers, does not overwrite the committed packet docs, and does not authorize any paired comparison or mediation implementation work.
 
 Direct command:
 
@@ -257,6 +257,40 @@ Repo-local entry point:
 
 ```sh
 make emit-openai-mediation-baselines-candidate
+```
+
+## Experimental OpenAI mediated-thrash revalidation
+
+This revalidates the three committed experimental OpenAI-only mediated thrash comparators against live OpenAI lifecycle code.
+It checks that each mediated packet stays OpenAI-only, preserves the same certified completion class and commitment boundary as baseline, and removes one redundant `resume` without widening package-level verdicts.
+
+Direct command:
+
+```sh
+python3 -m pytest tests/integration/test_openai_mediated_thrash_comparator.py -q
+```
+
+Repo-local entry point:
+
+```sh
+make revalidate-openai-mediated-thrash
+```
+
+## Experimental OpenAI mediated-thrash candidate refresh
+
+This emits the committed experimental OpenAI-only mediated thrash packet docs to stdout for manual inspection.
+It prints markdown for all three committed OpenAI thrash mediated packet docs with committed relative-path headers, does not overwrite the committed packet docs, and does not authorize mediation implementation work.
+
+Direct command:
+
+```sh
+python3 -m tests.integration._openai_mediation_thrash_experimental
+```
+
+Repo-local entry point:
+
+```sh
+make emit-openai-mediated-thrash-candidate
 ```
 
 ## Experimental OpenAI mediated-uncertainty revalidation
@@ -497,6 +531,23 @@ Repo-local entry point:
 make revalidate-mediation-openai-uncertainty-basis
 ```
 
+## Mediation OpenAI thrash-basis revalidation
+
+This checks that `scenario_thrash_openai_01` now has a satisfied committed OpenAI thrash basis and replication law.
+It validates the OpenAI baseline index, the OpenAI thrash basis note, the replication note, the committed OpenAI thrash packet series, the live OpenAI thrash builder set, and the repeated paired-run distinctness rules. It does not generate any new evidence.
+
+Direct command:
+
+```sh
+python3 -m pytest tests/unit/test_mediation_openai_thrash_basis.py -q
+```
+
+Repo-local entry point:
+
+```sh
+make revalidate-mediation-openai-thrash-basis
+```
+
 ## Mediation reference-uncertainty basis revalidation
 
 This checks that `scenario_uncertainty_reference_01` now has a satisfied committed basis and replication law.
@@ -540,13 +591,15 @@ This runs all current mediation-evidence checks together:
 - live reference baseline packet revalidation
 - live Gemini baseline packet revalidation
 - live OpenAI baseline packet revalidation
+- live experimental OpenAI mediated-thrash revalidation
 - live experimental Gemini mediated-thrash revalidation
 - live experimental Gemini mediated-uncertainty revalidation
 - live experimental reference mediated-uncertainty revalidation
 - live experimental reference mediated-thrash revalidation
 - Gemini thrash basis and replication validation
 - Gemini uncertainty basis and replication validation
-- OpenAI uncertainty baseline validation
+- OpenAI thrash basis and replication validation
+- OpenAI baseline validation
 - live experimental OpenAI mediated-uncertainty revalidation
 - OpenAI uncertainty basis and replication validation
 - reference uncertainty basis and replication validation
