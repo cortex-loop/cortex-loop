@@ -105,6 +105,20 @@ EXPECTATIONS = (
         ),
     ),
     SreCorrespondenceExpectation(
+        row_label="build_reference_allocation_scorecard",
+        module_path="cortex.sre.reference_scoring",
+        symbol_name="build_reference_allocation_scorecard",
+        promised_surfaces=(
+            PromisedTestSurface(
+                test_file="tests/unit/test_reference_runtime_scoring.py",
+                test_names=(
+                    "test_reference_scoring_defaults_to_neutral_when_margin_is_below_threshold",
+                    "test_reference_scoring_keeps_masked_family_inadmissible_even_when_top_ranked",
+                ),
+            ),
+        ),
+    ),
+    SreCorrespondenceExpectation(
         row_label="neutral_dominance_decision",
         module_path="cortex.sre.policy",
         symbol_name="neutral_dominance_decision",
@@ -115,6 +129,38 @@ EXPECTATIONS = (
                     "test_neutral_dominance_returns_neutral_when_margin_is_below_threshold",
                     "test_neutral_dominance_returns_strongest_non_neutral_when_threshold_is_met",
                     "test_neutral_path_law_rejects_scorecards_that_omit_neutral",
+                ),
+            ),
+        ),
+    ),
+    SreCorrespondenceExpectation(
+        row_label="ReferenceSoftControlSelection",
+        module_path="cortex.sre.reference_scoring",
+        symbol_name="ReferenceSoftControlSelection",
+        promised_surfaces=(
+            PromisedTestSurface(
+                test_file="tests/unit/test_reference_runtime_scoring.py",
+                test_names=(
+                    "test_reference_scoring_defaults_to_neutral_when_margin_is_below_threshold",
+                    "test_reference_scoring_promotes_brake_when_guarded_pressure_is_present",
+                    "test_reference_scoring_promotes_branch_under_branch_pressure",
+                    "test_reference_scoring_keeps_masked_family_inadmissible_even_when_top_ranked",
+                ),
+            ),
+        ),
+    ),
+    SreCorrespondenceExpectation(
+        row_label="select_reference_soft_control",
+        module_path="cortex.sre.reference_scoring",
+        symbol_name="select_reference_soft_control",
+        promised_surfaces=(
+            PromisedTestSurface(
+                test_file="tests/unit/test_reference_runtime_scoring.py",
+                test_names=(
+                    "test_reference_scoring_defaults_to_neutral_when_margin_is_below_threshold",
+                    "test_reference_scoring_promotes_brake_when_guarded_pressure_is_present",
+                    "test_reference_scoring_promotes_branch_under_branch_pressure",
+                    "test_reference_scoring_keeps_masked_family_inadmissible_even_when_top_ranked",
                 ),
             ),
         ),
