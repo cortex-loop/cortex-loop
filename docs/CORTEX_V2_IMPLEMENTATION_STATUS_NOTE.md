@@ -1,6 +1,6 @@
 # CORTEX_V2_IMPLEMENTATION_STATUS_NOTE
 
-Date: 2026-03-21
+Date: 2026-03-24
 Status: final implementation closeout note for the currently justified v2 roadmap
 
 ## Scope
@@ -57,9 +57,9 @@ It does not open new feature work.
   - reduced thrashing,
   - better branch discipline,
   - better uncertainty handling,
-  - better host-specialized realization.
+  - better host-specialized realization,
+  - and lower visible burden on the reference thrash cell.
 - Package-level evidence remains `insufficient` on every required mediation axis.
-- Lower visible burden at equal task value still has no committed lift.
 
 ## Maintainability Debt, Not Roadmap Debt
 

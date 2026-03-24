@@ -21,6 +21,11 @@ from tests.integration._reference_mediation_baseline_packets import (
     build_reference_mediation_packet,
     render_reference_mediation_packet,
 )
+from tests.integration._reference_mediation_thrash_burden import (
+    build_reference_thrash_burden_artifact,
+    emit_reference_thrash_burden_artifacts,
+    reference_thrash_mediated_burden_artifact_path,
+)
 from tests.integration._reference_mediation_thrash_episode import (
     DEFAULT_REFERENCE_THRASH_PAIR_KEY,
     REFERENCE_THRASH_PAIR_KEYS,
@@ -34,6 +39,10 @@ REFERENCE_THRASH_MEDIATED_PACKET_PATH = REFERENCE_THRASH_PAIR_SPECS[
 ].mediated_packet_path
 REFERENCE_THRASH_MEDIATED_PACKET_PATHS = {
     pair_key: REFERENCE_THRASH_PAIR_SPECS[pair_key].mediated_packet_path
+    for pair_key in REFERENCE_THRASH_PAIR_KEYS
+}
+REFERENCE_THRASH_MEDIATED_BURDEN_PATHS = {
+    pair_key: reference_thrash_mediated_burden_artifact_path(pair_key)
     for pair_key in REFERENCE_THRASH_PAIR_KEYS
 }
 EXPERIMENTAL_REFERENCE_THRASH_BRANCH_SEQUENCE = ("open", "suspend", "merge")
@@ -96,6 +105,7 @@ def build_reference_thrash_mediated_packet(
 ) -> PacketSnapshot:
     spec = REFERENCE_THRASH_PAIR_SPECS[pair_key]
     snapshot = build_reference_mediated_thrash_episode_snapshot(pair_key)
+    burden_artifact = build_reference_thrash_mediated_burden_artifact(pair_key)
     steps = snapshot["steps"]
 
     assert isinstance(steps, list)
@@ -152,7 +162,11 @@ def build_reference_thrash_mediated_packet(
                 f"`{spec.mediated_step_prefix}-2`; certification still requires lawful "
                 f"provenance at `{spec.mediated_step_prefix}-3`."
             ),
-            "burden_summary": "none",
+            "burden_summary": (
+                "Visible intervention burden is recorded as "
+                f"`intervention_burden={burden_artifact['aux_burden_report']['intervention_burden']}` "
+                "from the committed branch-operation count on this mediated run."
+            ),
             "host_realization_summary": (
                 "The comparator remains reference-only and preserves the same reference-host "
                 "commitment boundary and support-session evidence surface."
@@ -162,7 +176,7 @@ def build_reference_thrash_mediated_packet(
             "event_trace_refs": str(snapshot["event_trace_refs"]),
             "contradiction_refs": "none",
             "degradation_refs": "none",
-            "aux_burden_refs_if_present": "none",
+            "aux_burden_refs_if_present": REFERENCE_THRASH_MEDIATED_BURDEN_PATHS[pair_key],
             "evaluation_packet_refs_if_present": "none",
         },
         lift_axis_notes={
@@ -185,10 +199,10 @@ def build_reference_thrash_mediated_packet(
                 "enough to claim uncertainty-handling lift.",
             ),
             "Lower Visible Burden At Equal Task Value": (
-                "Equal certified completion is preserved and no AUX burden artifact is "
-                "recorded within this packet.",
-                "Package-level evidence notes govern whether repeated paired evidence is "
-                "enough to claim burden lift.",
+                "Equal certified completion is preserved with "
+                f"`intervention_burden={burden_artifact['aux_burden_report']['intervention_burden']}` "
+                "recorded from the visible branch-operation count.",
+                "The burden metric is the exact committed branch-operation count for this run.",
             ),
             "Better Host-Specialized Realization": (
                 "The comparator stays reference-only and host-split within the committed "
@@ -206,9 +220,34 @@ def build_reference_thrash_mediated_packet(
     )
 
 
+def build_reference_thrash_mediated_burden_artifact(
+    pair_key: str = DEFAULT_REFERENCE_THRASH_PAIR_KEY,
+) -> dict[str, object]:
+    spec = REFERENCE_THRASH_PAIR_SPECS[pair_key]
+    snapshot = build_reference_mediated_thrash_episode_snapshot(pair_key)
+    branch_sequence = snapshot["branch_sequence"]
+
+    assert branch_sequence == list(EXPERIMENTAL_REFERENCE_THRASH_BRANCH_SEQUENCE)
+
+    return build_reference_thrash_burden_artifact(
+        pair_id=spec.pair_id,
+        pair_key=pair_key,
+        run_id=spec.mediated_run_id,
+        variant="experimental_mediated",
+        host_family="reference",
+        branch_sequence=branch_sequence,
+    )
+
+
 REFERENCE_THRASH_MEDIATED_PACKET_DOC_BUILDERS = {
     REFERENCE_THRASH_MEDIATED_PACKET_PATHS[pair_key]: partial(
         build_reference_thrash_mediated_packet, pair_key
+    )
+    for pair_key in REFERENCE_THRASH_PAIR_KEYS
+}
+REFERENCE_THRASH_MEDIATED_BURDEN_DOC_BUILDERS = {
+    REFERENCE_THRASH_MEDIATED_BURDEN_PATHS[pair_key]: partial(
+        build_reference_thrash_mediated_burden_artifact, pair_key
     )
     for pair_key in REFERENCE_THRASH_PAIR_KEYS
 }
@@ -223,6 +262,8 @@ def emit_reference_mediated_thrash_candidate() -> None:
                 builder(),
             )
         )
+        sys.stdout.write("\n")
+    emit_reference_thrash_burden_artifacts(REFERENCE_THRASH_MEDIATED_BURDEN_DOC_BUILDERS)
 
 
 def _build_merge_step(spec) -> dict[str, object]:

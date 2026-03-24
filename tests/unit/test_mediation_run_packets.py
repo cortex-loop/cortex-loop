@@ -37,16 +37,20 @@ from tests._mediation_evidence import (
     REFERENCE_HOST_REALIZATION_PACKET_PATH,
     REFERENCE_HOST_REALIZATION_MEDIATED_PACKET_PATH,
     REFERENCE_HOST_REALIZATION_MEDIATED_PACKET_PATHS,
+    REFERENCE_THRASH_BASELINE_BURDEN_PATHS,
     REFERENCE_UNCERTAINTY_BASELINE_PACKET_PATHS,
     REFERENCE_UNCERTAINTY_MEDIATED_PACKET_PATHS,
     REFERENCE_UNCERTAINTY_PACKET_PATH,
     REFERENCE_THRASH_BASELINE_PACKET_PATHS,
+    REFERENCE_THRASH_MEDIATED_BURDEN_PATHS,
     REFERENCE_THRASH_MEDIATED_PACKET_PATHS,
+    REPO_ROOT,
     RUN_PACKET_INVARIANT_FIELDS,
     VERDICTS,
     all_tags_allowed,
     load_failure_tags,
     load_scenarios,
+    parse_aux_burden_artifact,
     parse_markdown_table,
     parse_run_packet,
     read,
@@ -140,7 +144,11 @@ def test_openai_baseline_index_is_openai_only_and_commits_canonical_openai_ancho
 def test_committed_reference_baseline_packets_match_catalog_and_stay_baseline_only() -> None:
     scenarios = load_scenarios()
     failure_tags = load_failure_tags()
-    baseline_packets = sorted(MEDIATION_REFERENCE_PACKET_ROOT.glob("*__baseline_non_mediated__run_*.md"))
+    baseline_packets = sorted(
+        path
+        for path in MEDIATION_REFERENCE_PACKET_ROOT.glob("*__baseline_non_mediated__run_*.md")
+        if "__aux_burden" not in path.name
+    )
 
     assert len(baseline_packets) == 9
 
@@ -489,7 +497,11 @@ def test_experimental_reference_packets_match_catalog_and_stay_experimental() ->
 
 
 def test_reference_packet_directory_contains_nine_baselines_and_nine_experimental_packets() -> None:
-    packet_names = sorted(path.name for path in MEDIATION_REFERENCE_PACKET_ROOT.glob("*.md"))
+    packet_names = sorted(
+        path.name
+        for path in MEDIATION_REFERENCE_PACKET_ROOT.glob("*.md")
+        if "__aux_burden" not in path.name
+    )
     assert packet_names == [
         "scenario_host_reference_01__baseline_non_mediated__run_001.md",
         "scenario_host_reference_01__baseline_non_mediated__run_002.md",
@@ -510,6 +522,52 @@ def test_reference_packet_directory_contains_nine_baselines_and_nine_experimenta
         "scenario_uncertainty_reference_01__experimental_mediated__run_002.md",
         "scenario_uncertainty_reference_01__experimental_mediated__run_003.md",
     ]
+
+
+def test_reference_packet_directory_contains_only_reference_thrash_aux_burden_artifacts() -> None:
+    burden_names = sorted(
+        path.name
+        for path in MEDIATION_REFERENCE_PACKET_ROOT.glob("*__aux_burden.md")
+    )
+    assert burden_names == [
+        "scenario_thrash_reference_01__baseline_non_mediated__run_001__aux_burden.md",
+        "scenario_thrash_reference_01__baseline_non_mediated__run_002__aux_burden.md",
+        "scenario_thrash_reference_01__baseline_non_mediated__run_003__aux_burden.md",
+        "scenario_thrash_reference_01__experimental_mediated__run_001__aux_burden.md",
+        "scenario_thrash_reference_01__experimental_mediated__run_002__aux_burden.md",
+        "scenario_thrash_reference_01__experimental_mediated__run_003__aux_burden.md",
+    ]
+
+
+def test_reference_thrash_packets_and_aux_burden_artifacts_stay_in_sync() -> None:
+    for pair_key in ("001", "002", "003"):
+        baseline_packet = parse_run_packet(REFERENCE_THRASH_BASELINE_PACKET_PATHS[pair_key])
+        mediated_packet = parse_run_packet(REFERENCE_THRASH_MEDIATED_PACKET_PATHS[pair_key])
+        baseline_burden = parse_aux_burden_artifact(REFERENCE_THRASH_BASELINE_BURDEN_PATHS[pair_key])
+        mediated_burden = parse_aux_burden_artifact(REFERENCE_THRASH_MEDIATED_BURDEN_PATHS[pair_key])
+
+        assert baseline_packet["artifact_refs"]["aux_burden_refs_if_present"] == str(
+            REFERENCE_THRASH_BASELINE_BURDEN_PATHS[pair_key].relative_to(REPO_ROOT)
+        )
+        assert mediated_packet["artifact_refs"]["aux_burden_refs_if_present"] == str(
+            REFERENCE_THRASH_MEDIATED_BURDEN_PATHS[pair_key].relative_to(REPO_ROOT)
+        )
+        assert baseline_burden["status"] == "reviewed_evidence"
+        assert mediated_burden["status"] == "reviewed_evidence"
+        assert baseline_burden["header"]["scenario_id"] == baseline_packet["header"]["scenario_id"]
+        assert mediated_burden["header"]["scenario_id"] == mediated_packet["header"]["scenario_id"]
+        assert baseline_burden["header"]["run_id"] == baseline_packet["header"]["run_id"]
+        assert mediated_burden["header"]["run_id"] == mediated_packet["header"]["run_id"]
+        assert baseline_burden["header"]["paired_episode_set_id"] == baseline_packet["header"][
+            "paired_episode_set_id"
+        ]
+        assert mediated_burden["header"]["paired_episode_set_id"] == mediated_packet["header"][
+            "paired_episode_set_id"
+        ]
+        assert baseline_burden["aux_burden_report"]["intervention_burden"] == "4.0"
+        assert mediated_burden["aux_burden_report"]["intervention_burden"] == "3.0"
+        assert baseline_burden["derivation"]["branch_sequence"] == "open -> suspend -> resume -> merge"
+        assert mediated_burden["derivation"]["branch_sequence"] == "open -> suspend -> merge"
 
 
 def test_gemini_packet_directory_contains_nine_baselines_and_nine_experimental_packets() -> None:

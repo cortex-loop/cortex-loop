@@ -27,6 +27,11 @@ from tests.integration._reference_mediation_thrash_episode import (
     REFERENCE_THRASH_PAIR_SPECS,
     build_reference_thrash_episode_snapshot,
 )
+from tests.integration._reference_mediation_thrash_burden import (
+    build_reference_thrash_burden_artifact,
+    emit_reference_thrash_burden_artifacts,
+    reference_thrash_baseline_burden_artifact_path,
+)
 from tests.integration._reference_mediation_uncertainty_episode import (
     DEFAULT_REFERENCE_UNCERTAINTY_PAIR_KEY,
     REFERENCE_UNCERTAINTY_PAIR_KEYS,
@@ -62,6 +67,10 @@ REFERENCE_UNCERTAINTY_BASELINE_PACKET_PATHS = {
 }
 REFERENCE_THRASH_BASELINE_PACKET_PATHS = {
     pair_key: REFERENCE_THRASH_PAIR_SPECS[pair_key].baseline_packet_path
+    for pair_key in REFERENCE_THRASH_PAIR_KEYS
+}
+REFERENCE_THRASH_BASELINE_BURDEN_PATHS = {
+    pair_key: reference_thrash_baseline_burden_artifact_path(pair_key)
     for pair_key in REFERENCE_THRASH_PAIR_KEYS
 }
 _SCOPE_TEXT = {
@@ -464,6 +473,7 @@ def build_reference_thrash_baseline_packet(
 ) -> PacketSnapshot:
     spec = REFERENCE_THRASH_PAIR_SPECS[pair_key]
     snapshot = build_reference_thrash_episode_snapshot(pair_key)
+    burden_artifact = build_reference_thrash_baseline_burden_artifact(pair_key)
     steps = snapshot["steps"]
 
     assert isinstance(steps, list)
@@ -520,7 +530,11 @@ def build_reference_thrash_baseline_packet(
                 "elevated evidence uncertainty; no contradiction or degradation "
                 "smoothing occurs."
             ),
-            "burden_summary": "none",
+            "burden_summary": (
+                "Visible intervention burden is recorded as "
+                f"`intervention_burden={burden_artifact['aux_burden_report']['intervention_burden']}` "
+                "from the committed branch-operation count on this baseline run."
+            ),
             "host_realization_summary": (
                 "Reference-host commitment and landed SRE branch-control surfaces are "
                 "exercised together without any pooled host claim."
@@ -530,7 +544,7 @@ def build_reference_thrash_baseline_packet(
             "event_trace_refs": str(snapshot["event_trace_refs"]),
             "contradiction_refs": "none",
             "degradation_refs": "none",
-            "aux_burden_refs_if_present": "none",
+            "aux_burden_refs_if_present": REFERENCE_THRASH_BASELINE_BURDEN_PATHS[pair_key],
             "evaluation_packet_refs_if_present": "none",
         },
         lift_axis_notes={
@@ -553,10 +567,10 @@ def build_reference_thrash_baseline_packet(
                 "enough to claim uncertainty lift.",
             ),
             "Lower Visible Burden At Equal Task Value": (
-                "Baseline-only packet within the committed thrash paired-run series; no "
-                "AUX burden artifact is recorded here.",
-                "Package-level evidence notes govern whether repeated paired evidence is "
-                "enough to claim burden lift.",
+                "Baseline-only packet within the committed thrash paired-run series with "
+                f"`intervention_burden={burden_artifact['aux_burden_report']['intervention_burden']}` "
+                "recorded from the visible branch-operation count.",
+                "The burden metric is the exact committed branch-operation count for this run.",
             ),
             "Better Host-Specialized Realization": (
                 "This packet exercises the reference-host commitment path together with "
@@ -571,6 +585,25 @@ def build_reference_thrash_baseline_packet(
             "package-level evidence notes govern verdicts."
         ),
         reviewer_note=_THRASH_BASELINE_REVIEWER_NOTE,
+    )
+
+
+def build_reference_thrash_baseline_burden_artifact(
+    pair_key: str = DEFAULT_REFERENCE_THRASH_PAIR_KEY,
+) -> dict[str, object]:
+    spec = REFERENCE_THRASH_PAIR_SPECS[pair_key]
+    snapshot = build_reference_thrash_episode_snapshot(pair_key)
+    branch_sequence = snapshot["branch_sequence"]
+
+    assert branch_sequence == ["open", "suspend", "resume", "merge"]
+
+    return build_reference_thrash_burden_artifact(
+        pair_id=spec.pair_id,
+        pair_key=pair_key,
+        run_id=spec.baseline_run_id,
+        variant="baseline_non_mediated",
+        host_family="reference",
+        branch_sequence=branch_sequence,
     )
 
 
@@ -598,6 +631,12 @@ REFERENCE_MEDIATION_BASELINE_PACKET_DOC_BUILDERS: Mapping[str, Callable[[], Pack
         )
         for pair_key in REFERENCE_THRASH_PAIR_KEYS
     },
+}
+REFERENCE_THRASH_BASELINE_BURDEN_DOC_BUILDERS: Mapping[str, Callable[[], dict[str, object]]] = {
+    REFERENCE_THRASH_BASELINE_BURDEN_PATHS[pair_key]: partial(
+        build_reference_thrash_baseline_burden_artifact, pair_key
+    )
+    for pair_key in REFERENCE_THRASH_PAIR_KEYS
 }
 
 
@@ -699,6 +738,9 @@ def emit_reference_mediation_baseline_packets() -> None:
         sys.stdout.write(render_reference_mediation_packet(relative_path, builder()))
         if index != len(REFERENCE_MEDIATION_BASELINE_PACKET_DOC_BUILDERS) - 1:
             sys.stdout.write("\n")
+    if REFERENCE_THRASH_BASELINE_BURDEN_DOC_BUILDERS:
+        sys.stdout.write("\n")
+        emit_reference_thrash_burden_artifacts(REFERENCE_THRASH_BASELINE_BURDEN_DOC_BUILDERS)
 
 
 def build_reference_mediation_packet(

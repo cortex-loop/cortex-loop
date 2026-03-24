@@ -5,8 +5,11 @@ from __future__ import annotations
 from pathlib import Path
 
 from tests._mediation_evidence import (
+    REPO_ROOT,
     REFERENCE_THRASH_BASELINE_PACKET_PATHS,
+    REFERENCE_THRASH_MEDIATED_BURDEN_PATHS,
     REFERENCE_THRASH_MEDIATED_PACKET_PATHS,
+    parse_aux_burden_artifact,
     packet_without_path,
     parse_run_packet,
 )
@@ -21,8 +24,10 @@ from tests.integration._reference_mediation_thrash_episode import (
 )
 from tests.integration._reference_mediation_thrash_experimental import (
     EXPERIMENTAL_REFERENCE_THRASH_BRANCH_SEQUENCE,
+    REFERENCE_THRASH_MEDIATED_BURDEN_DOC_BUILDERS,
     REFERENCE_THRASH_MEDIATED_PACKET_DOC_BUILDERS,
     REFERENCE_THRASH_MEDIATED_PACKET_PATHS as EMITTED_THRASH_PACKET_PATHS,
+    build_reference_thrash_mediated_burden_artifact,
     build_reference_mediated_thrash_episode_snapshot,
     build_reference_thrash_mediated_packet,
     emit_reference_mediated_thrash_candidate,
@@ -37,12 +42,25 @@ def test_reference_thrash_mediated_packet_matches_committed_doc() -> None:
         assert build_reference_thrash_mediated_packet(pair_key) == committed_packet
 
 
+def test_reference_thrash_mediated_burden_artifact_matches_committed_doc() -> None:
+    for pair_key in REFERENCE_THRASH_PAIR_KEYS:
+        committed_artifact = {
+            key: value
+            for key, value in parse_aux_burden_artifact(
+                REPO_ROOT / REFERENCE_THRASH_MEDIATED_BURDEN_PATHS[pair_key]
+            ).items()
+            if key != "path"
+        }
+        assert build_reference_thrash_mediated_burden_artifact(pair_key) == committed_artifact
+
+
 def test_reference_thrash_mediated_pair_remains_fair_and_reduces_branch_ops() -> None:
     for pair_key in REFERENCE_THRASH_PAIR_KEYS:
         baseline_packet = build_reference_thrash_baseline_packet(pair_key)
         mediated_packet = build_reference_thrash_mediated_packet(pair_key)
         baseline_snapshot = build_reference_thrash_episode_snapshot(pair_key)
         mediated_snapshot = build_reference_mediated_thrash_episode_snapshot(pair_key)
+        mediated_burden = build_reference_thrash_mediated_burden_artifact(pair_key)
 
         assert baseline_packet["header"]["scenario_id"] == mediated_packet["header"]["scenario_id"]
         assert (
@@ -81,6 +99,7 @@ def test_reference_thrash_mediated_pair_remains_fair_and_reduces_branch_ops() ->
         assert mediated_snapshot["steps"][-1]["outcome_class"] == "certified-full-commitment"
         assert baseline_snapshot["steps"][1]["brake_state"] == "guarded"
         assert mediated_snapshot["steps"][1]["brake_state"] == "guarded"
+        assert mediated_burden["aux_burden_report"]["intervention_burden"] == "3.0"
 
 
 def test_reference_thrash_mediated_candidate_emitter_prints_markdown(
@@ -91,15 +110,26 @@ def test_reference_thrash_mediated_candidate_emitter_prints_markdown(
 
     for relative_path in EMITTED_THRASH_PACKET_PATHS.values():
         assert f"--- {relative_path}" in captured
+    for relative_path in REFERENCE_THRASH_MEDIATED_BURDEN_DOC_BUILDERS:
+        assert f"--- {relative_path}" in captured
 
     emitted_docs = _parse_emitted_docs(captured)
-    assert set(emitted_docs) == set(EMITTED_THRASH_PACKET_PATHS.values())
+    assert set(emitted_docs) == set(EMITTED_THRASH_PACKET_PATHS.values()) | set(
+        REFERENCE_THRASH_MEDIATED_BURDEN_DOC_BUILDERS
+    )
 
     for relative_path, builder in REFERENCE_THRASH_MEDIATED_PACKET_DOC_BUILDERS.items():
         temp_doc = tmp_path / Path(relative_path).name
         temp_doc.write_text(emitted_docs[relative_path], encoding="utf-8")
         emitted_packet = packet_without_path(parse_run_packet(temp_doc))
         assert emitted_packet == builder()
+    for relative_path, builder in REFERENCE_THRASH_MEDIATED_BURDEN_DOC_BUILDERS.items():
+        temp_doc = tmp_path / Path(relative_path).name
+        temp_doc.write_text(emitted_docs[relative_path], encoding="utf-8")
+        emitted_artifact = {
+            key: value for key, value in parse_aux_burden_artifact(temp_doc).items() if key != "path"
+        }
+        assert emitted_artifact == builder()
 
 
 def test_reference_thrash_pair_series_uses_distinct_predeclared_ids() -> None:

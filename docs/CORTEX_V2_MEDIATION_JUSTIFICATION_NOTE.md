@@ -1,6 +1,6 @@
 # CORTEX_V2_MEDIATION_JUSTIFICATION_NOTE
 
-Date: 2026-03-18
+Date: 2026-03-24
 Status: `not justified yet`
 
 ## Scope
@@ -38,7 +38,7 @@ Current repo evidence is insufficient on every required axis:
 | reduced thrashing | Reference, Gemini, and OpenAI thrash comparisons now exist and produce cell-level signal, but package-level evidence remains too narrow. | insufficient evidence |
 | better branch discipline | Reference, Gemini, and OpenAI thrash comparisons now exist and produce cell-level signal, but package-level evidence remains too narrow. | insufficient evidence |
 | better uncertainty handling | Reference, Gemini, and OpenAI uncertainty comparisons now exist and produce cell-level signal, but package-level evidence remains too narrow. | insufficient evidence |
-| lower visible burden at equal task value | Equal-value paired evidence now exists for thrash, uncertainty, and three reference host-realization pairs, but no lower-burden lift is committed. | insufficient evidence |
+| lower visible burden at equal task value | Reference thrash now carries one burden cell-level signal, but package-level burden evidence remains too narrow. | insufficient evidence |
 | better host-specialized realization | Three reference-only mediation-specific host-realization pairs are now recorded, three Gemini-only pairs are now recorded, and three OpenAI-only pairs are now recorded, but the package-level evidence still remains too narrow. | insufficient evidence |
 
 ## Decision

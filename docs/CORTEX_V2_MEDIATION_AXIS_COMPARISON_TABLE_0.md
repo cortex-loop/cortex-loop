@@ -1,6 +1,6 @@
 # CORTEX_V2_MEDIATION_AXIS_COMPARISON_TABLE_0
 
-Date: 2026-03-21
+Date: 2026-03-24
 Status: `reference_three_series_with_gemini_three_series_and_openai_three_series_recorded`
 
 ## Scope
@@ -61,7 +61,7 @@ Version `0` records three reference-only mediation-specific host-realization pai
 
 | scenario_id | host_family | usable_pair_count | confidence_downgraded_pair_count | excluded_pair_count | current_verdict | supporting_paired_episode_sets | notes |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| scenario_thrash_reference_01 | reference | 3 | 0 | 0 | insufficient | pair_reference_thrash_001, pair_reference_thrash_002, pair_reference_thrash_003 | Three reference-only experimental pairs preserve equal completion, but no lower-burden evidence is committed yet. |
+| scenario_thrash_reference_01 | reference | 3 | 0 | 0 | candidate_positive | pair_reference_thrash_001, pair_reference_thrash_002, pair_reference_thrash_003 | Three reference-only experimental pairs preserve equal completion while reducing visible intervention burden from `4.0` to `3.0` on every counted pair. |
 | scenario_thrash_gemini_01 | gemini | 3 | 0 | 0 | insufficient | pair_gemini_thrash_001, pair_gemini_thrash_002, pair_gemini_thrash_003 | Three Gemini-only experimental pairs preserve equal completion, but no lower-burden evidence is committed yet. |
 | scenario_thrash_openai_01 | openai | 3 | 0 | 0 | insufficient | pair_openai_thrash_001, pair_openai_thrash_002, pair_openai_thrash_003 | Three OpenAI-only experimental pairs preserve equal completion, but no lower-burden evidence is committed yet. |
 | scenario_uncertainty_reference_01 | reference | 3 | 0 | 0 | insufficient | pair_reference_uncertainty_001, pair_reference_uncertainty_002, pair_reference_uncertainty_003 | Three reference-only experimental uncertainty pairs preserve equal truth/class resolution, but no lower-burden evidence is committed yet. |

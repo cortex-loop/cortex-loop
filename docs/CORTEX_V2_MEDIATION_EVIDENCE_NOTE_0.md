@@ -1,6 +1,6 @@
 # CORTEX_V2_MEDIATION_EVIDENCE_NOTE_0
 
-Date: 2026-03-21
+Date: 2026-03-24
 Status: `reference_three_series_with_gemini_three_series_and_openai_three_series_recorded`
 
 ## Scope
@@ -34,6 +34,7 @@ Three OpenAI-only mediation-specific host-realization pairs are now recorded for
 `scenario_host_openai_01` / `openai` now has `candidate_positive` signal for better host-specialized realization, while package-level host-specialized realization remains `insufficient`.
 reference, Gemini, and OpenAI now carry the host-realization `candidate_positive` cells.
 `scenario_thrash_reference_01` / `reference` now has `candidate_positive` cell-level signal for reduced thrashing and better branch discipline, while package-level axis summaries remain globally `insufficient`.
+`scenario_thrash_reference_01` / `reference` now also has `candidate_positive` cell-level signal for lower visible burden at equal task value, while the package-level burden axis remains `insufficient`.
 `scenario_thrash_gemini_01` / `gemini` now has `candidate_positive` cell-level signal for reduced thrashing and better branch discipline, while package-level axis summaries remain globally `insufficient`.
 `scenario_thrash_openai_01` / `openai` now has `candidate_positive` cell-level signal for reduced thrashing and better branch discipline, while package-level axis summaries remain globally `insufficient`.
 `scenario_uncertainty_reference_01` / `reference` now has `candidate_positive` cell-level signal for better uncertainty handling, while package-level axis summaries remain globally `insufficient`.

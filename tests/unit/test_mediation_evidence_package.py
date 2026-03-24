@@ -747,6 +747,10 @@ def test_results_surfaces_are_preseeded_for_all_catalog_cells_and_follow_fairnes
     assert pair_counts[gemini_thrash_cell]["usable"] == 3
     assert pair_counts[gemini_thrash_cell]["confidence_downgraded"] == 0
     assert pair_counts[gemini_thrash_cell]["excluded"] == 0
+    reference_thrash_cell = ("scenario_thrash_reference_01", "reference")
+    assert pair_counts[reference_thrash_cell]["usable"] == 3
+    assert pair_counts[reference_thrash_cell]["confidence_downgraded"] == 0
+    assert pair_counts[reference_thrash_cell]["excluded"] == 0
     openai_thrash_cell = ("scenario_thrash_openai_01", "openai")
     assert pair_counts[openai_thrash_cell]["usable"] == 3
     assert pair_counts[openai_thrash_cell]["confidence_downgraded"] == 0
@@ -782,6 +786,10 @@ def test_results_surfaces_are_preseeded_for_all_catalog_cells_and_follow_fairnes
         ("Better Uncertainty Handling", ("scenario_uncertainty_reference_01", "reference")),
         ("Better Uncertainty Handling", ("scenario_uncertainty_gemini_01", "gemini")),
         ("Better Uncertainty Handling", ("scenario_uncertainty_openai_01", "openai")),
+        (
+            "Lower Visible Burden At Equal Task Value",
+            ("scenario_thrash_reference_01", "reference"),
+        ),
         (
             "Better Host-Specialized Realization",
             ("scenario_host_reference_01", "reference"),
@@ -916,8 +924,33 @@ def test_results_surfaces_are_preseeded_for_all_catalog_cells_and_follow_fairnes
             assert counts["usable"] >= 3
         if row["current_verdict"] == "candidate_positive":
             assert row["equal_value_gate"] == "passed"
+        if cell == reference_thrash_cell:
+            assert row["equal_value_gate"] == "passed"
+            assert row["current_verdict"] == "candidate_positive"
+            assert row["baseline_burden_refs"] == (
+                "docs/mediation_evidence/reference/"
+                "scenario_thrash_reference_01__baseline_non_mediated__run_001__aux_burden.md, "
+                "docs/mediation_evidence/reference/"
+                "scenario_thrash_reference_01__baseline_non_mediated__run_002__aux_burden.md, "
+                "docs/mediation_evidence/reference/"
+                "scenario_thrash_reference_01__baseline_non_mediated__run_003__aux_burden.md"
+            )
+            assert row["mediated_burden_refs"] == (
+                "docs/mediation_evidence/reference/"
+                "scenario_thrash_reference_01__experimental_mediated__run_001__aux_burden.md, "
+                "docs/mediation_evidence/reference/"
+                "scenario_thrash_reference_01__experimental_mediated__run_002__aux_burden.md, "
+                "docs/mediation_evidence/reference/"
+                "scenario_thrash_reference_01__experimental_mediated__run_003__aux_burden.md"
+            )
+            assert supporting_ids(row["supporting_paired_episode_sets"]) == {
+                "pair_reference_thrash_001",
+                "pair_reference_thrash_002",
+                "pair_reference_thrash_003",
+            }
         if cell == host_realization_cell:
             assert row["equal_value_gate"] == "passed"
+            assert row["current_verdict"] == "insufficient"
             assert supporting_ids(row["supporting_paired_episode_sets"]) == {
                 "pair_reference_host_001",
                 "pair_reference_host_002",
@@ -925,6 +958,7 @@ def test_results_surfaces_are_preseeded_for_all_catalog_cells_and_follow_fairnes
             }
         if cell == gemini_host_realization_cell:
             assert row["equal_value_gate"] == "passed"
+            assert row["current_verdict"] == "insufficient"
             assert supporting_ids(row["supporting_paired_episode_sets"]) == {
                 "pair_gemini_host_001",
                 "pair_gemini_host_002",
@@ -932,6 +966,7 @@ def test_results_surfaces_are_preseeded_for_all_catalog_cells_and_follow_fairnes
             }
         if cell == openai_host_realization_cell:
             assert row["equal_value_gate"] == "passed"
+            assert row["current_verdict"] == "insufficient"
             assert supporting_ids(row["supporting_paired_episode_sets"]) == {
                 "pair_openai_host_001",
                 "pair_openai_host_002",

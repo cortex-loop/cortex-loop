@@ -1,6 +1,6 @@
 # CORTEX_V2_MEDIATION_REFERENCE_THRASH_REPLICATION_NOTE_0
 
-Date: 2026-03-20
+Date: 2026-03-24
 Status: `reference thrash replication law recorded`
 
 ## Scope
@@ -65,6 +65,15 @@ The experimental mediated comparator law remains:
 - `open -> suspend -> merge`
 
 No other branch-operation sequence is eligible for this counted three-pair set.
+
+## Allowed Burden Delta
+
+The only counted burden delta for this three-pair set is the removal of one visible intervention step while preserving the same host family, task-value rubric, commitment boundary, evidence/publication surface, and certified completion class.
+
+- baseline visible burden: `4.0`
+- mediated visible burden: `3.0`
+
+No other burden metric or generic runtime-cost claim is eligible for this counted three-pair set.
 
 ## Outcome
 

@@ -1,6 +1,6 @@
 # CORTEX_V2_MEDIATION_REFERENCE_THRASH_BASIS_NOTE_0
 
-Date: 2026-03-20
+Date: 2026-03-24
 Status: `reference thrash basis satisfied`
 
 ## Scope
@@ -39,6 +39,16 @@ These surfaces are sufficient because they bind the reference-host commitment pa
 
 The committed reference thrash baseline packets are only lawful because the live builder derives the exact branch sequence `open -> suspend -> resume -> merge` from those rules rather than from hand-written prose.
 
+## Deterministic Visible-Burden Derivation
+
+The same live branch sequence also supports deterministic visible-burden derivation for this scenario family.
+
+- visible burden metric: exact committed branch-operation count for the run
+- baseline burden law: `open -> suspend -> resume -> merge` yields `intervention_burden=4.0`
+- mediated burden law: `open -> suspend -> merge` yields `intervention_burden=3.0`
+
+This burden derivation is lawful only because it is computed from the same committed episode steps and preserves the same task-value rubric, commitment truth boundary, and evidence surface.
+
 ## Non-Qualifying Anti-Patterns
 
 These do not qualify as a `scenario_thrash_reference_01` basis:
@@ -51,4 +61,4 @@ These do not qualify as a `scenario_thrash_reference_01` basis:
 ## Outcome
 
 `scenario_thrash_reference_01` is now satisfied by the committed baseline-only reference thrash series.
-That baseline basis now supports the recorded three-pair reference-only experimental comparator set under `docs/CORTEX_V2_MEDIATION_REFERENCE_THRASH_REPLICATION_NOTE_0.md`, but package-level axis summaries still remain `insufficient`, and mediation remains blocked until qualifying comparative lift evidence exists.
+That baseline basis now supports the recorded three-pair reference-only experimental comparator set under `docs/CORTEX_V2_MEDIATION_REFERENCE_THRASH_REPLICATION_NOTE_0.md`, including deterministic visible-burden derivation from the same committed steps, but package-level axis summaries still remain `insufficient`, and mediation remains blocked until qualifying comparative lift evidence exists.

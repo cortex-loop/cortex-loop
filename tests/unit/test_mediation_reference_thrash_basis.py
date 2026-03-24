@@ -5,10 +5,12 @@ from __future__ import annotations
 from tests._mediation_evidence import (
     EVIDENCE_NOTE_PATH,
     REFERENCE_BASELINE_INDEX_PATH,
+    REFERENCE_THRASH_BASELINE_BURDEN_PATHS,
     REFERENCE_THRASH_BASIS_NOTE_PATH,
     REFERENCE_THRASH_PACKET_PATH,
     REFERENCE_THRASH_REPLICATION_NOTE_PATH,
     REFERENCE_THRASH_BASELINE_PACKET_PATHS,
+    REFERENCE_THRASH_MEDIATED_BURDEN_PATHS,
     REFERENCE_THRASH_MEDIATED_PACKET_PATHS,
     parse_markdown_table,
     read,
@@ -35,6 +37,7 @@ def test_reference_thrash_basis_note_exists_and_records_satisfied_basis() -> Non
     assert "tests/integration/_reference_mediation_thrash_episode.py" in text
     assert "tests/integration/test_reference_mediation_baseline_packets.py" in text
     assert "docs/CORTEX_V2_MEDIATION_REFERENCE_THRASH_REPLICATION_NOTE_0.md" in text
+    assert "deterministic visible-burden derivation" in text.lower()
 
 
 def test_reference_thrash_basis_note_contains_exact_derivation_rules_and_anti_patterns() -> None:
@@ -99,12 +102,15 @@ def test_reference_thrash_builder_packet_series_and_replication_note_exist() -> 
     assert "provenance artifact id" in replication_text
     assert "non-main branch track ref" in replication_text
     assert "uncertainty spike tag" in replication_text
+    assert "visible intervention step" in replication_text
 
     for pair_key in REFERENCE_THRASH_PAIR_KEYS:
         snapshot = build_reference_thrash_episode_snapshot(pair_key)
         assert snapshot["branch_sequence"] == list(EXPECTED_REFERENCE_THRASH_BRANCH_SEQUENCE)
         assert REFERENCE_THRASH_BASELINE_PACKET_PATHS[pair_key].exists()
         assert REFERENCE_THRASH_MEDIATED_PACKET_PATHS[pair_key].exists()
+        assert REFERENCE_THRASH_BASELINE_BURDEN_PATHS[pair_key].exists()
+        assert REFERENCE_THRASH_MEDIATED_BURDEN_PATHS[pair_key].exists()
 
     assert len({spec.pair_id for spec in REFERENCE_THRASH_PAIR_SPECS.values()}) == 3
     assert len({spec.session_id for spec in REFERENCE_THRASH_PAIR_SPECS.values()}) == 3
@@ -121,6 +127,8 @@ def test_evidence_note_keeps_mediation_blocked_with_three_reference_only_pairs()
     assert "All current reference-host scenario families now have committed baseline run packets" in text
     assert "Three experimental reference-only baseline-versus-mediated thrash pairs are now recorded" in text
     assert "Three experimental reference-only uncertainty pairs are now recorded" in text
+    assert "scenario_thrash_reference_01" in text
+    assert "lower visible burden" in text.lower()
     assert "candidate_positive" in text
     assert "Mediation remains blocked" in text
     assert "no implementation seam may open" in text
