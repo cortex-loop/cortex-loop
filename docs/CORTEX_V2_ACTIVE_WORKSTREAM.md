@@ -7,14 +7,14 @@ It is workflow state only. It does not override the packet documents, implementa
 
 ## 1. Accepted baseline
 
-- Accepted baseline branch: `codex/r2b-reference-runtime-scoring`
-- Accepted baseline commit: `fc6a9cb`
+- Accepted baseline branch: `codex/r2c-runtime-shell-integration`
+- Accepted baseline commit: `50c37b0`
 - Accepted baseline state:
   - burden-axis re-audit is accepted through the three thrash-host burden slices
   - package-level burden remains `insufficient`
   - mediation remains blocked / not justified
   - verification-ergonomics expansion beyond the accepted post-`E4` boundary is not currently promoted
-  - continuation hardening, the Erika support surface, the runtime-program lock, the first accepted reference-host local CLI shell, the first bounded reference executive-state builder, and the first bounded reference soft-control scoring/selection layer are accepted on top of the same product truth
+  - continuation hardening, the Erika support surface, the runtime-program lock, the first accepted reference-host local CLI shell, the first bounded reference executive-state builder, the first bounded reference soft-control scoring/selection layer, and the first integrated computed executive slice inside the runtime shell are accepted on top of the same product truth
 - Accepted baseline authority anchors:
   - `docs/CORTEX_V2_IMPLEMENTATION_STATUS_NOTE.md`
   - `docs/CORTEX_V2_IMPLEMENTATION_MASTER_PLAN_2.md`
@@ -24,22 +24,22 @@ It is workflow state only. It does not override the packet documents, implementa
 
 ## 2. Current campaign and seam state
 
-- Current campaign: computed reference runtime-shell integration opening from an accepted scoring baseline
-- Current working branch at ledger update: `codex/r2b-reference-runtime-scoring`
-- Current branch role: clean accepted scoring branch after the first bounded `U_t^{sre}` realization
-- Current candidate seam: none yet; `R2C` is the next lawful opening move
+- Current campaign: reference live continuity slice opening from an accepted computed-shell baseline
+- Current working branch at ledger update: `codex/r2c-runtime-shell-integration`
+- Current branch role: clean accepted runtime-shell branch after the first landed computed executive slice
+- Current candidate seam: none yet; `R3A` is the next lawful opening move
 - Current seam status: `accepted baseline / ready for next seam selection`
 - Seam risk: no active seam; the next seam is a cross-layer product/runtime seam
 
 ## 3. Next lawful move
 
-- `R2B` stop-gate re-audit answer:
-  - yes, the bounded reference-only scoring layer is stable enough to open runtime-shell integration
-- Open `R2C` from this clean accepted head:
-  - wire the accepted builder and scoring layer into the reference runtime shell
-  - surface a compact `executive_state_summary` in the CLI record
-  - keep the seam reference-host only and stop again before continuity work
-- After `R2C` is accepted, stop and re-audit whether `R3A` can open on the resulting clean tree.
+- `R2` stop-gate re-audit answer:
+  - yes, the computed reference slice is now stable enough to open the first live continuity law
+- Open `R3A` from this clean accepted head:
+  - extend the runtime session and shell to represent open/suspend/resume/merge continuity inside one process
+  - keep continuity explicit and reuse existing branch/goal carriers
+  - do not add cross-process, cross-host, or mediation/runtime-AUX behavior
+- After `R3A` is accepted, stop and re-audit whether `R3B` can open on the resulting clean tree.
 
 ## 4. Explicitly blocked moves
 
@@ -48,12 +48,12 @@ It is workflow state only. It does not override the packet documents, implementa
 - Do not reopen `E6` verification-ergonomics helper work without a new explicit re-audit.
 - Do not promote package-level mediation justification from current burden evidence.
 - Do not let support-surface documents silently redefine packet or status authority.
-- Do not open `R3A` until `R2C` lands on a clean tree and the computed reference executive slice is honestly marked landed.
+- Do not open `R3B` or `R3C` until `R3A` lands on a clean tree.
 - Do not open Gemini/OpenAI runtime, cross-host runtime, runtime AUX activation, offline consolidation, or mediation implementation from this reference runtime-shell line.
 
 ## 5. Acknowledged worktree noise at ledger update
 
-- The accepted scoring line is clean at the end of `R2B`.
+- The accepted computed-shell line is clean at the end of `R2C`.
 - The older `codex/e1-verification-substrate-entrypoints` workspace remains mixed and is not the source of truth for this train.
 - Local workspace directories already exist under `.claude/worktrees/`.
 - Re-read `git status --short --untracked-files=all` before opening any new seam; this summary is only the continuity reminder, not the canonical file list.
