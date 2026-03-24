@@ -137,6 +137,23 @@ It may not:
 - repeated reruns pass,
 - and the phase-gate row for `R3` is honestly closed
 
+## Current accepted state after `R3` closeout
+
+At the accepted post-`R3B` baseline:
+
+- the first accepted reference-host local CLI shell is real,
+- the first bounded computed executive slice is real inside that shell,
+- the first one-process live continuity slice with explicit rejection enforcement is real,
+- and the runtime program is now stopped for re-audit rather than widened by inertia.
+
+This closeout does **not** authorize:
+
+- broader multi-agent runtime,
+- cross-host runtime rollout,
+- runtime AUX activation,
+- offline consolidation,
+- or mediation implementation.
+
 ## Explicitly blocked moves
 
 This program does not authorize:

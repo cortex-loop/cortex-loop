@@ -209,11 +209,11 @@ def test_resume_protocol_and_active_workstream_contract_exist() -> None:
     assert "Never promote uncommitted local edits to accepted baseline truth." in agents_text
 
     assert "Status: live workflow-state ledger for compaction-safe continuation." in workstream_text
-    assert "Accepted baseline branch: `codex/r3a-reference-continuity-session-law`" in workstream_text
-    assert "Accepted baseline commit: `49aac6c`" in workstream_text
-    assert "Current working branch at ledger update: `codex/r3a-reference-continuity-session-law`" in workstream_text
-    assert "clean accepted runtime-shell branch after the first landed live continuity law" in workstream_text
-    assert "Current candidate seam: none yet; `R3B` is the next lawful opening move" in workstream_text
+    assert "Accepted baseline branch: `codex/r3b-continuity-enforcement`" in workstream_text
+    assert "Accepted baseline commit: `2945585`" in workstream_text
+    assert "Current working branch at ledger update: `codex/r3c-continuity-reaudit`" in workstream_text
+    assert "clean accepted runtime-program closeout branch after `R3` landed for current scope" in workstream_text
+    assert "Current candidate seam: none; the train is stopped pending new problem selection" in workstream_text
     assert "Do not treat the mixed `codex/e1-verification-substrate-entrypoints` worktree as accepted truth." in workstream_text
     assert "git branch --show-current" in workstream_text
     assert "git status --short --untracked-files=all" in workstream_text
@@ -240,12 +240,13 @@ def test_reference_runtime_program_lock_is_recorded() -> None:
     assert "`R3` reference live continuity slice" in phase_gate_text
     assert "the first accepted reference-host local CLI shell is landed" in phase_gate_text
     assert "the first bounded `X_t^{ref}` builder, `U_t^{sre}` scoring/selection layer, and runtime-shell integration are landed" in phase_gate_text
-    assert "the first one-process live continuity law is landed on the reference-host CLI shell" in phase_gate_text
+    assert "the first one-process live continuity law and explicit rejection enforcement are landed on the reference-host CLI shell" in phase_gate_text
 
-    assert "Current campaign: reference continuity enforcement opening from an accepted session-law baseline" in workstream_text
-    assert "R3A` stop-gate re-audit answer:" in workstream_text
-    assert "yes, the first live continuity law is now stable enough to open continuity enforcement" in workstream_text
-    assert "Open `R3B` from this clean accepted head:" in workstream_text
+    assert "Current campaign: post-closeout runtime re-audit from the accepted reference continuity baseline" in workstream_text
+    assert "R3` stop-gate re-audit answer:" in workstream_text
+    assert "the first reference-host runtime shell, the first computed executive slice, and the first live continuity slice are now real for current scope" in workstream_text
+    assert "stop and choose the next real problem intentionally" in workstream_text
+    assert "the first one-process live continuity slice with explicit rejection enforcement is real" in program_text
 
 
 def test_erika_visualizations_are_framed_as_support_surfaces() -> None:
@@ -257,9 +258,9 @@ def test_erika_visualizations_are_framed_as_support_surfaces() -> None:
     assert "north-star product target" in markdown_text
     assert "lawful gap programs" in markdown_text
     assert "mechanisms Cortex has already stolen so far" in markdown_text
-    assert "**Accepted factual baseline:** `codex/r3a-reference-continuity-session-law` at `49aac6c`" in markdown_text
-    assert "the first one-process live continuity law is now accepted on top of that shell" in markdown_text
-    assert "Open `R3B` and keep it strictly to explicit continuity enforcement on top of the landed session law" in markdown_text
+    assert "**Accepted factual baseline:** `codex/r3b-continuity-enforcement` at `2945585`" in markdown_text
+    assert "the first one-process live continuity slice with explicit rejection enforcement is now accepted on top of that shell" in markdown_text
+    assert "Stop here and choose the next runtime problem intentionally" in markdown_text
     assert "cortex-archival-dossiers/" not in markdown_text
     assert "Current Justified Boundary" in html_text
     assert "Gap Programs" in html_text
@@ -269,10 +270,10 @@ def test_erika_visualizations_are_framed_as_support_surfaces() -> None:
     assert "not current committed roadmap" in html_text
     assert "Biology Tracker: What Cortex Has Stolen So Far" in html_text
     assert "which brain-inspired mechanisms Cortex has already stolen so far" in html_text
-    assert "Accepted Baseline 49aac6c" in html_text
+    assert "Accepted Baseline 2945585" in html_text
     assert "first integrated computed executive slice are real" not in html_text
-    assert "the first one-process continuity law is also real" in html_text
-    assert "Open explicit continuity enforcement on top of the accepted session-law shell" in html_text
+    assert "the first one-process continuity slice with explicit rejection enforcement is also real" in html_text
+    assert "Stop here and choose the next runtime problem intentionally" in html_text
     assert '<details class="biology-card"' in html_text
     assert "What we've stolen so far" in html_text
     assert "What is still partial" in html_text
