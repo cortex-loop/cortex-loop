@@ -1,6 +1,6 @@
 # CORTEX_V2_IMPLEMENTATION_STATUS_NOTE
 
-Date: 2026-03-18
+Date: 2026-03-21
 Status: final implementation closeout note for the currently justified v2 roadmap
 
 ## Scope
@@ -53,21 +53,23 @@ It does not open new feature work.
 
 - Mediation remains unstarted and not justified.
 - The governing decision is recorded in `docs/CORTEX_V2_MEDIATION_JUSTIFICATION_NOTE.md`.
-- Current repo evidence does not show measurable lift for:
+- Current repo evidence now shows cell-level lift on:
   - reduced thrashing,
   - better branch discipline,
   - better uncertainty handling,
-  - lower visible burden at equal task value,
   - better host-specialized realization.
+- Package-level evidence remains `insufficient` on every required mediation axis.
+- Lower visible burden at equal task value still has no committed lift.
 
 ## Maintainability Debt, Not Roadmap Debt
 
 - The three host commitment composition modules are highly similar and are candidates for careful deduplication.
 - The three host neutral-only modules are also highly similar and are candidates for careful deduplication.
 - Verification tooling is intentionally minimal:
-  - there is no repo-local pytest config,
-  - there is no repo-local coverage configuration,
-  - no coverage tool is installed in the current environment.
+  - `pytest.ini` now exists for repo-local discovery,
+  - `.coveragerc` now exists for repo-local coverage configuration,
+  - repo-local verification entry points now exist in `Makefile`,
+  - the coverage path remains an explicit environment prerequisite rather than a canonical bundle dependency.
 - Workspace hygiene remains separate from roadmap completion; unrelated local noise should not be treated as implementation debt.
 
 ## Verification Snapshot
@@ -80,7 +82,7 @@ The following verification sweep passed on the closeout branch:
 - `python3 -m pytest tests/unit/test_import_smoke.py`
 - `python3 -m pytest`
 
-Observed results:
+Historical closeout results:
 
 - unit tests: `136 passed`
 - integration tests: `16 passed`
@@ -89,8 +91,14 @@ Observed results:
 
 Coverage snapshot:
 
-- not recorded
-- reason: no coverage tool or repo-local coverage configuration is present in the current environment
+- baseline recorded in `docs/CORTEX_V2_COVERAGE_BASELINE_NOTE_0.md`
+- the coverage path remains outside the canonical verification bundle
+- repo-local coverage configuration now exists in `.coveragerc`
+
+Current repo-local verification truth:
+
+- use `docs/CORTEX_V2_LOCAL_VERIFICATION.md` as the current source of truth for the canonical bundle, smoke bundle, and evidence revalidation entry points
+- the historical closeout counts above should not be read as the current live repo totals
 
 ## Recommendation
 

@@ -1,6 +1,6 @@
 # CORTEX_V2_LOCAL_VERIFICATION
 
-Date: 2026-03-20
+Date: 2026-03-21
 Status: active local verification entry points for the landed v2 boundary
 
 ## Purpose
@@ -41,9 +41,11 @@ python3 -m pytest tests/unit/test_correspondence_contract.py \
   tests/integration/test_reference_host_vertical_gate.py \
   tests/integration/test_reference_lane_latency.py \
   tests/integration/test_reference_lane_packet_example.py \
+  tests/integration/test_reference_mediated_lane_packet_example.py \
   tests/integration/test_gemini_lane_packet_example.py \
   tests/integration/test_gemini_mediated_lane_packet_example.py \
   tests/integration/test_openai_lane_packet_example.py \
+  tests/integration/test_openai_mediated_lane_packet_example.py \
   tests/integration/test_aux_claim_conservative.py \
   tests/unit/test_import_smoke.py -q
 ```
@@ -318,7 +320,7 @@ make emit-gemini-mediated-host-realization-candidate
 
 ## Live OpenAI mediated host-realization revalidation
 
-This revalidates the committed mediated OpenAI lane packet example and the first counted OpenAI host-realization comparator pair against live OpenAI code.
+This revalidates the committed mediated OpenAI lane packet example and the counted three-pair OpenAI host-realization comparator series against live OpenAI code.
 It remains OpenAI-only and evidence-only, and it does not justify mediation.
 
 Direct commands:
@@ -336,7 +338,7 @@ make revalidate-openai-mediated-host-realization
 
 ## OpenAI mediated host-realization candidate refresh
 
-This emits the committed mediated OpenAI host-realization packet doc to stdout for manual inspection.
+This emits the committed mediated OpenAI host-realization packet docs to stdout for manual inspection.
 It does not overwrite the committed docs and it does not authorize mediation implementation.
 
 Direct command:
@@ -353,8 +355,8 @@ make emit-openai-mediated-host-realization-candidate
 
 ## Mediation OpenAI host-realization admissibility revalidation
 
-This checks that `scenario_host_openai_01` now has one lawful OpenAI host-realization comparator pair recorded while remaining below the three-pair minimum.
-It validates the OpenAI admissibility note, the committed OpenAI baseline and mediated packet examples, the committed OpenAI baseline and mediated host packets, the OpenAI baseline-index guardrail, the paired-ledger row, and the package blocker truth. It does not generate evidence.
+This checks that `scenario_host_openai_01` now has three lawful OpenAI host-realization comparator pairs recorded and that the OpenAI host-realization cell is now `candidate_positive` while package-level mediation evidence remains blocked.
+It validates the OpenAI admissibility note, the committed OpenAI baseline and mediated packet examples, the committed OpenAI baseline and mediated host packets, the OpenAI baseline-index guardrail, the paired-ledger rows, and the package blocker truth. It does not generate evidence.
 
 Direct command:
 
@@ -371,7 +373,7 @@ make revalidate-mediation-openai-host-realization-basis
 ## Mediation run-packet revalidation
 
 This checks the committed reference-host, Gemini-host, and OpenAI-host baseline run indexes and the committed run-packet instances.
-It validates packet metadata against the scenario catalog, confirms the canonical baseline anchors remain lawful, validates the full nine-packet reference baseline set, validates the full nine-packet Gemini baseline set, validates the seven-packet OpenAI baseline set, and checks the twenty-five committed experimental mediated uncertainty, thrash, reference host-realization, Gemini host-realization, and OpenAI host-realization packets.
+It validates packet metadata against the scenario catalog, confirms the canonical baseline anchors remain lawful, validates the full nine-packet reference baseline set, validates the full nine-packet Gemini baseline set, validates the full nine-packet OpenAI baseline set, and checks the twenty-seven committed experimental mediated uncertainty, thrash, reference host-realization, Gemini host-realization, and OpenAI host-realization packets.
 
 Direct command:
 
@@ -828,11 +830,44 @@ make revalidate-mediation-evidence
 ## Individual entry points
 
 ```sh
+make seam-preflight
 make test-unit
 make test-integration
 make test-smoke
 make verify
 ```
+
+## Seam preflight
+
+Use this before opening a new seam.
+It is a workflow guard, not a test bundle.
+
+Direct commands:
+
+```sh
+git branch --show-current
+git rev-list --left-right --count main...origin/main
+git status --short --untracked-files=all
+```
+
+Repo-local entry point:
+
+```sh
+make seam-preflight
+```
+
+The target:
+
+- prints the current branch
+- prints `main...origin/main` divergence when that comparison is available
+- prints full worktree status
+- fails on `main`
+- fails when tracked worktree changes are still present
+- reminds the operator to classify seam risk before opening new work
+- reminds the operator that timing-, environment-sensitive, and shared verification-plumbing seams require repeated reruns before acceptance
+
+It does not fail on untracked noise by itself.
+Its purpose is to stop “next seam” work when the current seam is still open.
 
 ## Core correspondence drift check
 
@@ -932,7 +967,7 @@ This seam adds one local coverage invocation and one matching repo-local entry p
 
 Coverage is still not part of the canonical local verification bundle.
 Minimal local prerequisite: install a package that provides `python3 -m coverage`.
-Coverage tooling is not installed by default in the current repo environment, so `make coverage` will fail until that prerequisite is present.
+The first committed baseline in `docs/CORTEX_V2_COVERAGE_BASELINE_NOTE_0.md` was captured in an environment where that prerequisite was present.
 
 Current repo-local coverage scope from `.coveragerc`:
 
@@ -958,9 +993,9 @@ Repo-local entry point:
 make coverage
 ```
 
-If the tool is unavailable, `make coverage` fails with a short actionable message instead of silently succeeding.
+If the tool is unavailable in another environment, `make coverage` fails with a short actionable message instead of silently succeeding.
 
-Still intentionally not included in this seam:
+Still intentionally not included in this coverage surface:
 
-- no coverage baseline artifact
+- coverage remains outside the canonical local verification bundle
 - no coverage threshold or pass/fail gate
