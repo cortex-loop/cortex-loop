@@ -6,6 +6,7 @@ from cortex.runtime.reference import (
     run_reference_runtime_step,
 )
 from cortex.sre.brake import BrakeState
+from cortex.sre.feedback import ReferenceRealizationFeedback
 from cortex.sre.families import SoftControlFamily
 
 
@@ -21,6 +22,7 @@ def test_reference_runtime_session_tracks_minimum_live_state() -> None:
     assert session.brake_history == ()
     assert session.last_selected_family is None
     assert session.last_commitment_result_summary is None
+    assert session.last_realization_feedback is None
     assert session.as_summary()["branch_registry"] == ["main"]
     assert session.as_summary()["active_track_ref"] == "main"
 
@@ -35,6 +37,7 @@ def test_reference_runtime_step_result_surfaces_cheap_reference_event_without_co
     assert result.bound_event.observation.event.native_event_name == "context/load"
     assert result.dispatch_decision.lane is DispatchLane.CHEAP
     assert result.selected_family is SoftControlFamily.NEUTRAL
+    assert result.realized_family is SoftControlFamily.NEUTRAL
     assert result.brake_state is BrakeState.QUIESCENT
     assert result.executive_state_summary["mode_tag"] == "pass_through"
     assert result.executive_state_summary["budget_band"] == "low"
@@ -45,6 +48,15 @@ def test_reference_runtime_step_result_surfaces_cheap_reference_event_without_co
     assert result.session.brake_history == ("quiescent",)
     assert result.session.last_selected_family is SoftControlFamily.NEUTRAL
     assert result.session.last_commitment_result_summary is None
+    assert isinstance(result.session.last_realization_feedback, ReferenceRealizationFeedback)
+    assert result.session.last_realization_feedback.as_summary() == {
+        "selected_family": "neutral",
+        "realized_family": "neutral",
+        "brake_state": "quiescent",
+        "commitment_result_kind": None,
+        "warning_codes": [],
+        "host_friction_tags": [],
+    }
 
 
 def test_reference_runtime_step_result_keeps_candidate_bearing_event_candidate_only() -> None:
@@ -64,6 +76,7 @@ def test_reference_runtime_step_result_keeps_candidate_bearing_event_candidate_o
     assert second.event_index == 2
     assert second.dispatch_decision.lane is DispatchLane.CANDIDATE_BEARING
     assert second.commitment_result_kind is None
+    assert second.realized_family is SoftControlFamily.NEUTRAL
     assert second.session.session_id == "session-2"
     assert second.session.active_track_ref == "main"
     assert second.session.budget_history == ("shell-low", "shell-medium")
@@ -71,6 +84,8 @@ def test_reference_runtime_step_result_keeps_candidate_bearing_event_candidate_o
     assert second.executive_state_summary["mode_tag"] == "review_pending"
     assert second.executive_state_summary["budget_band"] == "medium"
     assert second.session.last_commitment_result_summary == "candidate-only"
+    assert second.session.last_realization_feedback is not None
+    assert second.session.last_realization_feedback.commitment_result_kind is None
     assert second.session_summary["event_index"] == 2
 
 
@@ -89,12 +104,15 @@ def test_reference_runtime_step_result_certifies_full_commitment_when_runtime_pa
     assert result.dispatch_decision.lane is DispatchLane.FULL_COMMITMENT
     assert result.commitment_result_kind == "certified"
     assert result.selected_family is SoftControlFamily.NEUTRAL
+    assert result.realized_family is SoftControlFamily.NEUTRAL
     assert result.brake_state is BrakeState.QUIESCENT
     assert result.executive_state_summary["mode_tag"] == "commitment_path"
     assert result.executive_state_summary["budget_band"] == "high"
     assert result.session.active_track_ref == "main"
     assert result.session.budget_history == ("shell-high",)
     assert result.session.last_commitment_result_summary == "certified"
+    assert result.session.last_realization_feedback is not None
+    assert result.session.last_realization_feedback.commitment_result_kind == "certified"
 
 
 def test_reference_runtime_step_rejects_malformed_open_without_mutating_existing_anchor() -> None:

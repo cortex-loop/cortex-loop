@@ -41,6 +41,7 @@ from cortex.sre.branching import BranchOperation
 from cortex.sre.brake import BrakeState
 from cortex.sre.families import SoftControlFamily
 from cortex.sre.reference_builder import build_reference_executive_state
+from cortex.sre.feedback import ReferenceRealizationFeedback
 from cortex.sre.reference_scoring import select_reference_soft_control
 from cortex.sre.state import ReferenceExecutiveState
 
@@ -58,6 +59,7 @@ class ReferenceRuntimeSession:
     brake_history: tuple[str, ...] = ()
     last_selected_family: SoftControlFamily | None = None
     last_commitment_result_summary: str | None = None
+    last_realization_feedback: ReferenceRealizationFeedback | None = None
 
     def __post_init__(self) -> None:
         if self.session_id is not None and not (
@@ -114,6 +116,15 @@ class ReferenceRuntimeSession:
             raise ValueError(
                 "ReferenceRuntimeSession.last_commitment_result_summary must be non-empty after trimming when provided."
             )
+        if self.last_realization_feedback is not None and not isinstance(
+            self.last_realization_feedback,
+            ReferenceRealizationFeedback,
+        ):
+            actual_type = type(self.last_realization_feedback).__name__
+            raise TypeError(
+                "ReferenceRuntimeSession.last_realization_feedback must be "
+                f"ReferenceRealizationFeedback | None, got {actual_type}."
+            )
 
     def as_summary(self) -> dict[str, Any]:
         return {
@@ -140,6 +151,7 @@ class ReferenceRuntimeStepResult:
     dispatch_decision: DispatchDecision
     executive_state: ReferenceExecutiveState
     selected_family: SoftControlFamily
+    realized_family: SoftControlFamily
     brake_state: BrakeState
     warnings: tuple[str, ...] = field(default_factory=tuple)
     session: ReferenceRuntimeSession = field(default_factory=ReferenceRuntimeSession)
@@ -176,6 +188,12 @@ class ReferenceRuntimeStepResult:
             actual_type = type(self.selected_family).__name__
             raise TypeError(
                 "ReferenceRuntimeStepResult.selected_family must be SoftControlFamily, "
+                f"got {actual_type}."
+            )
+        if not isinstance(self.realized_family, SoftControlFamily):
+            actual_type = type(self.realized_family).__name__
+            raise TypeError(
+                "ReferenceRuntimeStepResult.realized_family must be SoftControlFamily, "
                 f"got {actual_type}."
             )
         if not isinstance(self.brake_state, BrakeState):
@@ -306,6 +324,7 @@ def run_reference_runtime_step(
         brake_history=prior_session.brake_history,
         last_selected_family=prior_session.last_selected_family,
         last_commitment_result_summary=prior_session.last_commitment_result_summary,
+        last_realization_feedback=prior_session.last_realization_feedback,
     )
     executive_state = build_reference_executive_state(
         bound_event.observation,
@@ -321,6 +340,7 @@ def run_reference_runtime_step(
     )
     selection = select_reference_soft_control(executive_state)
     selected_family = selection.selected_family
+    realized_family = selected_family
     brake_state = executive_state.brake.brake_state
     updated_session = ReferenceRuntimeSession(
         session_id=provisional_session.session_id,
@@ -335,6 +355,16 @@ def run_reference_runtime_step(
             dispatch_decision.lane,
             commitment_result_kind,
         ),
+        last_realization_feedback=ReferenceRealizationFeedback(
+            selected_family=selected_family,
+            realized_family=realized_family,
+            brake_state=brake_state,
+            commitment_result_kind=commitment_result_kind,
+            warning_codes=tuple(warnings),
+            host_friction_tags=tuple(
+                sorted(executive_state.control_allocation.host_friction_tags)
+            ),
+        ),
     )
     return ReferenceRuntimeStepResult(
         event_index=updated_session.event_index,
@@ -342,6 +372,7 @@ def run_reference_runtime_step(
         dispatch_decision=dispatch_decision,
         executive_state=executive_state,
         selected_family=selected_family,
+        realized_family=realized_family,
         brake_state=brake_state,
         warnings=warnings,
         session=updated_session,

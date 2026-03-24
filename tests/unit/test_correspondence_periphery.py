@@ -608,6 +608,21 @@ EXPECTATIONS = (
         ),
     ),
     PeripheryCorrespondenceExpectation(
+        row_label="ReferenceRealizationFeedback",
+        home_path="cortex/sre/feedback.py",
+        module_path="cortex.sre.feedback",
+        symbol_name="ReferenceRealizationFeedback",
+        promised_surfaces=(
+            PromisedTestSurface(
+                test_file="tests/unit/test_reference_realization_feedback.py",
+                test_names=(
+                    "test_reference_realization_feedback_preserves_last_step_shell_outcome",
+                    "test_reference_realization_feedback_rejects_noncanonical_commitment_kind",
+                ),
+            ),
+        ),
+    ),
+    PeripheryCorrespondenceExpectation(
         row_label="ReferenceRuntimeSession",
         home_path="cortex/runtime/reference.py",
         module_path="cortex.runtime.reference",
