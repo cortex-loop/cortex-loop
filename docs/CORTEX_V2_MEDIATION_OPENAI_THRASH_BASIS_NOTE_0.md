@@ -1,6 +1,6 @@
 # CORTEX_V2_MEDIATION_OPENAI_THRASH_BASIS_NOTE_0
 
-Date: 2026-03-20
+Date: 2026-03-24
 Status: `openai thrash paired-series basis satisfied`
 
 ## Scope
@@ -43,6 +43,14 @@ The committed OpenAI thrash series is only countable because it preserves all of
 - the same `env_local_default` context
 
 The counted comparator difference is only the removal of one redundant `resume` after the guarded uncertified follow-up.
+
+The same live branch sequence now also supports deterministic visible-burden derivation for this scenario family.
+
+- visible burden metric: exact committed branch-operation count for the run
+- baseline burden law: `open -> suspend -> resume -> merge` yields `intervention_burden=4.0`
+- mediated burden law: `open -> suspend -> merge` yields `intervention_burden=3.0`
+
+This burden derivation is lawful only because it is computed from the same committed episode steps and preserves the same OpenAI observe/bind meaning, task-value rubric, commitment truth boundary, and evidence surface.
 
 ## Anti-Patterns
 

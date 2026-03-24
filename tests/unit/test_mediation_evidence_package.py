@@ -795,6 +795,10 @@ def test_results_surfaces_are_preseeded_for_all_catalog_cells_and_follow_fairnes
             ("scenario_thrash_gemini_01", "gemini"),
         ),
         (
+            "Lower Visible Burden At Equal Task Value",
+            ("scenario_thrash_openai_01", "openai"),
+        ),
+        (
             "Better Host-Specialized Realization",
             ("scenario_host_reference_01", "reference"),
         ),
@@ -874,7 +878,11 @@ def test_results_surfaces_are_preseeded_for_all_catalog_cells_and_follow_fairnes
                     "pair_gemini_thrash_003",
                 }
             if cell == openai_thrash_cell:
-                if heading in {"Reduced Thrashing", "Better Branch Discipline"}:
+                if heading in {
+                    "Reduced Thrashing",
+                    "Better Branch Discipline",
+                    "Lower Visible Burden At Equal Task Value",
+                }:
                     assert row["current_verdict"] == "candidate_positive"
                 else:
                     assert row["current_verdict"] == "insufficient"
@@ -979,6 +987,30 @@ def test_results_surfaces_are_preseeded_for_all_catalog_cells_and_follow_fairnes
                 "pair_gemini_thrash_001",
                 "pair_gemini_thrash_002",
                 "pair_gemini_thrash_003",
+            }
+        if cell == openai_thrash_cell:
+            assert row["equal_value_gate"] == "passed"
+            assert row["current_verdict"] == "candidate_positive"
+            assert row["baseline_burden_refs"] == (
+                "docs/mediation_evidence/openai/"
+                "scenario_thrash_openai_01__baseline_non_mediated__run_001__aux_burden.md, "
+                "docs/mediation_evidence/openai/"
+                "scenario_thrash_openai_01__baseline_non_mediated__run_002__aux_burden.md, "
+                "docs/mediation_evidence/openai/"
+                "scenario_thrash_openai_01__baseline_non_mediated__run_003__aux_burden.md"
+            )
+            assert row["mediated_burden_refs"] == (
+                "docs/mediation_evidence/openai/"
+                "scenario_thrash_openai_01__experimental_mediated__run_001__aux_burden.md, "
+                "docs/mediation_evidence/openai/"
+                "scenario_thrash_openai_01__experimental_mediated__run_002__aux_burden.md, "
+                "docs/mediation_evidence/openai/"
+                "scenario_thrash_openai_01__experimental_mediated__run_003__aux_burden.md"
+            )
+            assert supporting_ids(row["supporting_paired_episode_sets"]) == {
+                "pair_openai_thrash_001",
+                "pair_openai_thrash_002",
+                "pair_openai_thrash_003",
             }
         if cell == host_realization_cell:
             assert row["equal_value_gate"] == "passed"
@@ -1120,6 +1152,10 @@ def test_evidence_note_keeps_mediation_blocked_with_reference_gemini_and_openai_
     assert (
         "`scenario_thrash_openai_01` / `openai` now has `candidate_positive` "
         "cell-level signal for reduced thrashing and better branch discipline" in text
+    )
+    assert (
+        "`scenario_thrash_openai_01` / `openai` now also has `candidate_positive` "
+        "cell-level signal for lower visible burden at equal task value" in text
     )
     assert (
         "`scenario_uncertainty_reference_01` / `reference` now has "

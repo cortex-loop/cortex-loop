@@ -38,6 +38,7 @@ reference, Gemini, and OpenAI now carry the host-realization `candidate_positive
 `scenario_thrash_gemini_01` / `gemini` now has `candidate_positive` cell-level signal for reduced thrashing and better branch discipline, while package-level axis summaries remain globally `insufficient`.
 `scenario_thrash_gemini_01` / `gemini` now also has `candidate_positive` cell-level signal for lower visible burden at equal task value, while the package-level burden axis remains `insufficient`.
 `scenario_thrash_openai_01` / `openai` now has `candidate_positive` cell-level signal for reduced thrashing and better branch discipline, while package-level axis summaries remain globally `insufficient`.
+`scenario_thrash_openai_01` / `openai` now also has `candidate_positive` cell-level signal for lower visible burden at equal task value, while the package-level burden axis remains `insufficient`.
 `scenario_uncertainty_reference_01` / `reference` now has `candidate_positive` cell-level signal for better uncertainty handling, while package-level axis summaries remain globally `insufficient`.
 `scenario_uncertainty_gemini_01` / `gemini` now has `candidate_positive` cell-level signal for better uncertainty handling, while package-level axis summaries remain globally `insufficient`.
 `scenario_uncertainty_openai_01` / `openai` now has `candidate_positive` cell-level signal for better uncertainty handling, while package-level axis summaries remain globally `insufficient`.

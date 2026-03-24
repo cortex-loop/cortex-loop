@@ -28,7 +28,9 @@ from tests._mediation_evidence import (
     OPENAI_HOST_REALIZATION_MEDIATED_PACKET_PATH,
     OPENAI_HOST_REALIZATION_MEDIATED_PACKET_PATHS,
     OPENAI_HOST_REALIZATION_PACKET_PATH,
+    OPENAI_THRASH_BASELINE_BURDEN_PATHS,
     OPENAI_THRASH_BASELINE_PACKET_PATHS,
+    OPENAI_THRASH_MEDIATED_BURDEN_PATHS,
     OPENAI_THRASH_MEDIATED_PACKET_PATHS,
     OPENAI_THRASH_PACKET_PATH,
     OPENAI_UNCERTAINTY_BASELINE_PACKET_PATHS,
@@ -339,7 +341,11 @@ def test_experimental_gemini_packets_match_catalog_and_stay_experimental() -> No
 def test_committed_openai_baseline_packets_match_catalog_and_stay_baseline_only() -> None:
     scenarios = load_scenarios()
     failure_tags = load_failure_tags()
-    baseline_packets = sorted(MEDIATION_OPENAI_PACKET_ROOT.glob("*__baseline_non_mediated__run_*.md"))
+    baseline_packets = sorted(
+        path
+        for path in MEDIATION_OPENAI_PACKET_ROOT.glob("*__baseline_non_mediated__run_*.md")
+        if "__aux_burden" not in path.name
+    )
 
     assert len(baseline_packets) == 9
 
@@ -652,7 +658,11 @@ def test_gemini_thrash_packets_and_aux_burden_artifacts_stay_in_sync() -> None:
 
 
 def test_openai_packet_directory_contains_nine_baselines_and_nine_experimental_packets() -> None:
-    packet_names = sorted(path.name for path in MEDIATION_OPENAI_PACKET_ROOT.glob("*.md"))
+    packet_names = sorted(
+        path.name
+        for path in MEDIATION_OPENAI_PACKET_ROOT.glob("*.md")
+        if "__aux_burden" not in path.name
+    )
     assert packet_names == [
         "scenario_host_openai_01__baseline_non_mediated__run_001.md",
         "scenario_host_openai_01__baseline_non_mediated__run_002.md",
@@ -673,3 +683,46 @@ def test_openai_packet_directory_contains_nine_baselines_and_nine_experimental_p
         "scenario_uncertainty_openai_01__experimental_mediated__run_002.md",
         "scenario_uncertainty_openai_01__experimental_mediated__run_003.md",
     ]
+
+
+def test_openai_packet_directory_contains_only_openai_thrash_aux_burden_artifacts() -> None:
+    burden_names = sorted(path.name for path in MEDIATION_OPENAI_PACKET_ROOT.glob("*__aux_burden.md"))
+    assert burden_names == [
+        "scenario_thrash_openai_01__baseline_non_mediated__run_001__aux_burden.md",
+        "scenario_thrash_openai_01__baseline_non_mediated__run_002__aux_burden.md",
+        "scenario_thrash_openai_01__baseline_non_mediated__run_003__aux_burden.md",
+        "scenario_thrash_openai_01__experimental_mediated__run_001__aux_burden.md",
+        "scenario_thrash_openai_01__experimental_mediated__run_002__aux_burden.md",
+        "scenario_thrash_openai_01__experimental_mediated__run_003__aux_burden.md",
+    ]
+
+
+def test_openai_thrash_packets_and_aux_burden_artifacts_stay_in_sync() -> None:
+    for pair_key in ("001", "002", "003"):
+        baseline_packet = parse_run_packet(OPENAI_THRASH_BASELINE_PACKET_PATHS[pair_key])
+        mediated_packet = parse_run_packet(OPENAI_THRASH_MEDIATED_PACKET_PATHS[pair_key])
+        baseline_burden = parse_aux_burden_artifact(OPENAI_THRASH_BASELINE_BURDEN_PATHS[pair_key])
+        mediated_burden = parse_aux_burden_artifact(OPENAI_THRASH_MEDIATED_BURDEN_PATHS[pair_key])
+
+        assert baseline_packet["artifact_refs"]["aux_burden_refs_if_present"] == str(
+            OPENAI_THRASH_BASELINE_BURDEN_PATHS[pair_key].relative_to(REPO_ROOT)
+        )
+        assert mediated_packet["artifact_refs"]["aux_burden_refs_if_present"] == str(
+            OPENAI_THRASH_MEDIATED_BURDEN_PATHS[pair_key].relative_to(REPO_ROOT)
+        )
+        assert baseline_burden["status"] == "reviewed_evidence"
+        assert mediated_burden["status"] == "reviewed_evidence"
+        assert baseline_burden["header"]["scenario_id"] == baseline_packet["header"]["scenario_id"]
+        assert mediated_burden["header"]["scenario_id"] == mediated_packet["header"]["scenario_id"]
+        assert baseline_burden["header"]["run_id"] == baseline_packet["header"]["run_id"]
+        assert mediated_burden["header"]["run_id"] == mediated_packet["header"]["run_id"]
+        assert baseline_burden["header"]["paired_episode_set_id"] == baseline_packet["header"][
+            "paired_episode_set_id"
+        ]
+        assert mediated_burden["header"]["paired_episode_set_id"] == mediated_packet["header"][
+            "paired_episode_set_id"
+        ]
+        assert baseline_burden["aux_burden_report"]["intervention_burden"] == "4.0"
+        assert mediated_burden["aux_burden_report"]["intervention_burden"] == "3.0"
+        assert baseline_burden["derivation"]["branch_sequence"] == "open -> suspend -> resume -> merge"
+        assert mediated_burden["derivation"]["branch_sequence"] == "open -> suspend -> merge"

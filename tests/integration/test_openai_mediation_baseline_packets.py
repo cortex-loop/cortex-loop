@@ -5,11 +5,14 @@ from __future__ import annotations
 from pathlib import Path
 
 from tests._mediation_evidence import (
+    REPO_ROOT,
     OPENAI_HOST_REALIZATION_BASELINE_PACKET_PATHS,
     OPENAI_HOST_REALIZATION_PACKET_PATH,
+    OPENAI_THRASH_BASELINE_BURDEN_PATHS,
     OPENAI_THRASH_BASELINE_PACKET_PATHS,
     OPENAI_UNCERTAINTY_BASELINE_PACKET_PATHS,
     packet_without_path,
+    parse_aux_burden_artifact,
     parse_run_packet,
 )
 from tests.integration._openai_host_realization_pair import (
@@ -19,9 +22,11 @@ from tests.integration._openai_host_realization_pair import (
 from tests.integration._openai_mediation_baseline_packets import (
     OPENAI_MEDIATION_BASELINE_PACKET_DOC_BUILDERS,
     OPENAI_HOST_REALIZATION_BASELINE_PACKET_PATHS as EMITTED_OPENAI_HOST_PACKET_PATHS,
+    OPENAI_THRASH_BASELINE_BURDEN_DOC_BUILDERS,
     OPENAI_THRASH_BASELINE_PACKET_PATHS as EMITTED_OPENAI_THRASH_PACKET_PATHS,
     OPENAI_UNCERTAINTY_BASELINE_PACKET_PATHS as EMITTED_OPENAI_PACKET_PATHS,
     build_openai_host_realization_baseline_packet,
+    build_openai_thrash_baseline_burden_artifact,
     build_openai_thrash_baseline_packet,
     build_openai_uncertainty_baseline_packet,
     emit_openai_mediation_baseline_packets,
@@ -88,6 +93,17 @@ def test_openai_thrash_baseline_packet_matches_committed_doc() -> None:
         assert build_openai_thrash_baseline_packet(pair_key) == committed_packet
 
 
+def test_openai_thrash_baseline_burden_artifact_matches_committed_doc() -> None:
+    for pair_key in OPENAI_THRASH_PAIR_KEYS:
+        committed_path = REPO_ROOT / OPENAI_THRASH_BASELINE_BURDEN_PATHS[pair_key]
+        committed_artifact = {
+            key: value
+            for key, value in parse_aux_burden_artifact(committed_path).items()
+            if key != "path"
+        }
+        assert build_openai_thrash_baseline_burden_artifact(pair_key) == committed_artifact
+
+
 def test_openai_thrash_baseline_series_records_expected_branch_shape() -> None:
     for pair_key in OPENAI_THRASH_PAIR_KEYS:
         packet = build_openai_thrash_baseline_packet(pair_key)
@@ -115,15 +131,26 @@ def test_candidate_emitter_prints_openai_baseline_packets_as_markdown(
         assert f"--- {relative_path}" in captured
     for relative_path in EMITTED_OPENAI_THRASH_PACKET_PATHS.values():
         assert f"--- {relative_path}" in captured
+    for relative_path in OPENAI_THRASH_BASELINE_BURDEN_DOC_BUILDERS:
+        assert f"--- {relative_path}" in captured
 
     emitted_docs = _parse_emitted_docs(captured)
-    assert set(emitted_docs) == set(OPENAI_MEDIATION_BASELINE_PACKET_DOC_BUILDERS)
+    assert set(emitted_docs) == set(OPENAI_MEDIATION_BASELINE_PACKET_DOC_BUILDERS) | set(
+        OPENAI_THRASH_BASELINE_BURDEN_DOC_BUILDERS
+    )
 
     for relative_path, builder in OPENAI_MEDIATION_BASELINE_PACKET_DOC_BUILDERS.items():
         temp_doc = tmp_path / Path(relative_path).name
         temp_doc.write_text(emitted_docs[relative_path], encoding="utf-8")
         emitted_packet = packet_without_path(parse_run_packet(temp_doc))
         assert emitted_packet == builder()
+    for relative_path, builder in OPENAI_THRASH_BASELINE_BURDEN_DOC_BUILDERS.items():
+        temp_doc = tmp_path / Path(relative_path).name
+        temp_doc.write_text(emitted_docs[relative_path], encoding="utf-8")
+        emitted_burden = {
+            key: value for key, value in parse_aux_burden_artifact(temp_doc).items() if key != "path"
+        }
+        assert emitted_burden == builder()
 
 
 def test_openai_thrash_baseline_series_uses_distinct_predeclared_ids() -> None:

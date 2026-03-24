@@ -18,6 +18,11 @@ from tests.integration._openai_mediation_baseline_packets import (
     build_reference_mediation_packet,
     render_reference_mediation_packet,
 )
+from tests.integration._openai_mediation_thrash_burden import (
+    build_openai_thrash_burden_artifact,
+    emit_openai_thrash_burden_artifacts,
+    openai_thrash_mediated_burden_artifact_path,
+)
 from tests.integration._openai_mediation_thrash_episode import (
     DEFAULT_OPENAI_THRASH_PAIR_KEY,
     OPENAI_THRASH_PAIR_KEYS,
@@ -34,6 +39,10 @@ OPENAI_THRASH_MEDIATED_PACKET_PATH = OPENAI_THRASH_PAIR_SPECS[
 ].mediated_packet_path
 OPENAI_THRASH_MEDIATED_PACKET_PATHS = {
     pair_key: OPENAI_THRASH_PAIR_SPECS[pair_key].mediated_packet_path
+    for pair_key in OPENAI_THRASH_PAIR_KEYS
+}
+OPENAI_THRASH_MEDIATED_BURDEN_PATHS = {
+    pair_key: openai_thrash_mediated_burden_artifact_path(pair_key)
     for pair_key in OPENAI_THRASH_PAIR_KEYS
 }
 EXPERIMENTAL_OPENAI_THRASH_BRANCH_SEQUENCE = ("open", "suspend", "merge")
@@ -97,9 +106,11 @@ def build_openai_thrash_mediated_packet(
     spec = OPENAI_THRASH_PAIR_SPECS[pair_key]
     snapshot = build_openai_mediated_thrash_episode_snapshot(pair_key)
     steps = snapshot["steps"]
+    branch_sequence = snapshot["branch_sequence"]
+    burden_artifact = build_openai_thrash_mediated_burden_artifact(pair_key)
 
     assert isinstance(steps, list)
-    assert snapshot["branch_sequence"] == list(EXPERIMENTAL_OPENAI_THRASH_BRANCH_SEQUENCE)
+    assert branch_sequence == list(EXPERIMENTAL_OPENAI_THRASH_BRANCH_SEQUENCE)
     assert [step["outcome_class"] for step in steps] == [
         "candidate-bearing",
         "uncertified-full-commitment",
@@ -134,7 +145,11 @@ def build_openai_thrash_mediated_packet(
                 f"`{spec.mediated_step_prefix}-2`; certification still requires lawful "
                 f"provenance at `{spec.mediated_step_prefix}-3`."
             ),
-            "burden_summary": "none",
+            "burden_summary": (
+                "Visible intervention burden is recorded as "
+                f"`intervention_burden={burden_artifact['aux_burden_report']['intervention_burden']}` "
+                "from the committed branch-operation count on this mediated run."
+            ),
             "host_realization_summary": (
                 "The comparator stays OpenAI-only and preserves the same OpenAI-native "
                 "lifecycle and branch-derivation evidence surface."
@@ -144,7 +159,7 @@ def build_openai_thrash_mediated_packet(
             "event_trace_refs": str(snapshot["event_trace_refs"]),
             "contradiction_refs": "none",
             "degradation_refs": "none",
-            "aux_burden_refs_if_present": "none",
+            "aux_burden_refs_if_present": OPENAI_THRASH_MEDIATED_BURDEN_PATHS[pair_key],
             "evaluation_packet_refs_if_present": "none",
         },
         lift_axis_notes={
@@ -167,10 +182,11 @@ def build_openai_thrash_mediated_packet(
                 "enough to claim uncertainty-handling lift.",
             ),
             "Lower Visible Burden At Equal Task Value": (
-                "Equal certified completion is preserved and no AUX burden artifact is "
-                "recorded within this packet.",
-                "Package-level evidence notes govern whether repeated paired evidence is "
-                "enough to claim burden lift.",
+                "Equal certified completion is preserved with "
+                f"`intervention_burden={burden_artifact['aux_burden_report']['intervention_burden']}` "
+                "recorded from the visible branch-operation count.",
+                "The burden metric is the exact committed branch-operation count for this "
+                "run.",
             ),
             "Better Host-Specialized Realization": (
                 "The comparator stays OpenAI-only and host-split within the committed "
@@ -188,9 +204,34 @@ def build_openai_thrash_mediated_packet(
     )
 
 
+def build_openai_thrash_mediated_burden_artifact(
+    pair_key: str = DEFAULT_OPENAI_THRASH_PAIR_KEY,
+) -> dict[str, object]:
+    spec = OPENAI_THRASH_PAIR_SPECS[pair_key]
+    snapshot = build_openai_mediated_thrash_episode_snapshot(pair_key)
+    branch_sequence = snapshot["branch_sequence"]
+
+    assert branch_sequence == list(EXPERIMENTAL_OPENAI_THRASH_BRANCH_SEQUENCE)
+
+    return build_openai_thrash_burden_artifact(
+        pair_id=spec.pair_id,
+        pair_key=pair_key,
+        run_id=spec.mediated_run_id,
+        variant="experimental_mediated",
+        host_family="openai",
+        branch_sequence=branch_sequence,
+    )
+
+
 OPENAI_THRASH_MEDIATED_PACKET_DOC_BUILDERS = {
     OPENAI_THRASH_MEDIATED_PACKET_PATHS[pair_key]: partial(
         build_openai_thrash_mediated_packet, pair_key
+    )
+    for pair_key in OPENAI_THRASH_PAIR_KEYS
+}
+OPENAI_THRASH_MEDIATED_BURDEN_DOC_BUILDERS = {
+    OPENAI_THRASH_MEDIATED_BURDEN_PATHS[pair_key]: partial(
+        build_openai_thrash_mediated_burden_artifact, pair_key
     )
     for pair_key in OPENAI_THRASH_PAIR_KEYS
 }
@@ -200,6 +241,8 @@ def emit_openai_mediated_thrash_candidate() -> None:
     for relative_path, builder in OPENAI_THRASH_MEDIATED_PACKET_DOC_BUILDERS.items():
         sys.stdout.write(f"--- {relative_path}\n")
         sys.stdout.write(render_reference_mediation_packet(relative_path, builder()))
+        sys.stdout.write("\n")
+    emit_openai_thrash_burden_artifacts(OPENAI_THRASH_MEDIATED_BURDEN_DOC_BUILDERS)
 
 
 def _build_merge_step(spec: OpenAIThrashPairSpec) -> dict[str, object]:

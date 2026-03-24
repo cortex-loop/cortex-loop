@@ -58,7 +58,7 @@ It does not open new feature work.
   - better branch discipline,
   - better uncertainty handling,
   - better host-specialized realization,
-  - and lower visible burden on the reference and Gemini thrash cells.
+  - and lower visible burden on the reference, Gemini, and OpenAI thrash cells.
 - Package-level evidence remains `insufficient` on every required mediation axis.
 
 ## Maintainability Debt, Not Roadmap Debt

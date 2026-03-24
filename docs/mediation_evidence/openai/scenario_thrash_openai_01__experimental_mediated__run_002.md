@@ -44,7 +44,7 @@ It does not justify mediation, does not authorize implementation work, and packa
 - outcome_summary: The experimental mediated comparator reaches the same certified OpenAI-host completion class at `openai-thrash-mediated-002-step-3` after one guarded uncertified follow-up.
 - branch_trajectory_summary: The experimental comparator derives `open -> suspend -> merge`, removing the extra `resume` step present in the baseline while preserving certified completion.
 - uncertainty_or_brake_summary: The guarded uncertified intermediate state remains explicit at `openai-thrash-mediated-002-step-2`; certification still requires lawful provenance at `openai-thrash-mediated-002-step-3`.
-- burden_summary: none
+- burden_summary: Visible intervention burden is recorded as `intervention_burden=3.0` from the committed branch-operation count on this mediated run.
 - host_realization_summary: The comparator stays OpenAI-only and preserves the same OpenAI-native lifecycle and branch-derivation evidence surface.
 
 ## Artifact Refs
@@ -52,7 +52,7 @@ It does not justify mediation, does not authorize implementation work, and packa
 - event_trace_refs: `openai-thrash-mediated-002-step-1:response.output_text.delta/open, openai-thrash-mediated-002-step-2:response.completed/suspend, openai-thrash-mediated-002-step-3:response.completed/merge`
 - contradiction_refs: none
 - degradation_refs: none
-- aux_burden_refs_if_present: none
+- aux_burden_refs_if_present: `docs/mediation_evidence/openai/scenario_thrash_openai_01__experimental_mediated__run_002__aux_burden.md`
 - evaluation_packet_refs_if_present: none
 
 ## Lift-Axis Observations
@@ -77,8 +77,8 @@ It does not justify mediation, does not authorize implementation work, and packa
 
 ### Lower Visible Burden At Equal Task Value
 
-- observation: Equal certified completion is preserved and no AUX burden artifact is recorded within this packet.
-- metric_notes: Package-level evidence notes govern whether repeated paired evidence is enough to claim burden lift.
+- observation: Equal certified completion is preserved with `intervention_burden=3.0` recorded from the visible branch-operation count.
+- metric_notes: The burden metric is the exact committed branch-operation count for this run.
 - verdict: `insufficient`
 
 ### Better Host-Specialized Realization
