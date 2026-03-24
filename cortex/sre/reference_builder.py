@@ -9,6 +9,7 @@ from cortex.core.observation import ObservationBundle
 from cortex.core.support import SupportSnapshot
 
 from .brake import BrakeState, evaluate_brake_state
+from .feedback import ReferenceRealizationFeedback
 from .families import SoftControlFamily
 from .goals import GoalContinuityView
 from .state import (
@@ -28,6 +29,7 @@ class PriorReferenceRuntimeSessionLike(Protocol):
     budget_history: tuple[str, ...]
     brake_history: tuple[str, ...]
     last_selected_family: SoftControlFamily | None
+    last_realization_feedback: ReferenceRealizationFeedback | None
 
 
 def build_reference_executive_state(
@@ -60,7 +62,12 @@ def build_reference_executive_state(
     missing_resume_anchor = "resume-anchor-missing" in support_snapshot.session.reminders
     active_track_ref = _active_track_ref(branch_registry, prior_session)
     main_goal_ref = pending_goal_refs[0] if pending_goal_refs else None
-    contradiction_spike_flags = _contradiction_spike_flags(support_snapshot, missing_resume_anchor)
+    prior_feedback_spike_flags = _prior_feedback_spike_flags(prior_session)
+    contradiction_spike_flags = _contradiction_spike_flags(
+        support_snapshot,
+        missing_resume_anchor,
+        prior_feedback_spike_flags,
+    )
 
     uncertainty_estimates = _uncertainty_estimates(
         native_event_name=observation.event.native_event_name,
@@ -69,10 +76,14 @@ def build_reference_executive_state(
         branch_registry=branch_registry,
         pending_goal_refs=pending_goal_refs,
         contradiction_spike_flags=contradiction_spike_flags,
+        goal_progress_floor=_goal_progress_floor(prior_session),
     )
     brake_evaluation = evaluate_brake_state(
         uncertainty_estimates,
-        repeated_degradations=len(support_snapshot.trace.degradation_records),
+        repeated_degradations=(
+            len(support_snapshot.trace.degradation_records)
+            + _additional_degradation_pressure(prior_session, prior_feedback_spike_flags)
+        ),
         missing_resume_anchor=missing_resume_anchor,
         host_friction_level=_host_friction_level(support_snapshot, executive_environment_view),
     )
@@ -165,6 +176,7 @@ def _active_track_ref(
 def _contradiction_spike_flags(
     support_snapshot: SupportSnapshot,
     missing_resume_anchor: bool,
+    prior_feedback_spike_flags: frozenset[str],
 ) -> frozenset[str]:
     flags: set[str] = set()
     for degradation_record in support_snapshot.trace.degradation_records:
@@ -173,6 +185,7 @@ def _contradiction_spike_flags(
             flags.add(contradiction_record.source_tag)
     if missing_resume_anchor:
         flags.add("resume-anchor-missing")
+    flags.update(prior_feedback_spike_flags)
     return frozenset(flags)
 
 
@@ -184,6 +197,7 @@ def _uncertainty_estimates(
     branch_registry: tuple[str, ...],
     pending_goal_refs: tuple[str, ...],
     contradiction_spike_flags: frozenset[str],
+    goal_progress_floor: float,
 ) -> tuple[UncertaintyEstimate, ...]:
     event_base = _event_base_uncertainty(native_event_name)
     degradation_spikes = frozenset(
@@ -206,6 +220,7 @@ def _uncertainty_estimates(
         goal_progress_level = max(goal_progress_level, 0.35)
     if any(branch_ref != "main" for branch_ref in branch_registry):
         goal_progress_level = max(goal_progress_level, 0.55)
+    goal_progress_level = max(goal_progress_level, goal_progress_floor)
 
     return (
         UncertaintyEstimate(
@@ -231,6 +246,55 @@ def _uncertainty_estimates(
             spike_tags=contradiction_spike_flags,
         ),
     )
+
+
+def _prior_feedback_spike_flags(
+    prior_session: PriorReferenceRuntimeSessionLike | None,
+) -> frozenset[str]:
+    if prior_session is None or prior_session.last_realization_feedback is None:
+        return frozenset()
+
+    feedback = prior_session.last_realization_feedback
+    flags: set[str] = set()
+    if any(code.startswith("continuity-rejected:") for code in feedback.warning_codes):
+        flags.add("prior-continuity-rejection")
+    if any(code.startswith("session-rejected:") for code in feedback.warning_codes):
+        flags.add("prior-session-mismatch")
+    if feedback.realized_family is not feedback.selected_family:
+        flags.add("prior-enforcement-override")
+    return frozenset(flags)
+
+
+def _goal_progress_floor(
+    prior_session: PriorReferenceRuntimeSessionLike | None,
+) -> float:
+    if prior_session is None or prior_session.last_realization_feedback is None:
+        return 0.0
+
+    feedback = prior_session.last_realization_feedback
+    if any(
+        code.startswith(("continuity-rejected:", "session-rejected:"))
+        for code in feedback.warning_codes
+    ):
+        return 0.55
+    if feedback.realized_family is not feedback.selected_family:
+        return 0.45
+    return 0.0
+
+
+def _additional_degradation_pressure(
+    prior_session: PriorReferenceRuntimeSessionLike | None,
+    prior_feedback_spike_flags: frozenset[str],
+) -> int:
+    if prior_feedback_spike_flags:
+        return 1
+    if (
+        prior_session is not None
+        and prior_session.last_realization_feedback is not None
+        and prior_session.last_realization_feedback.brake_state is BrakeState.LATCHED
+    ):
+        return 1
+    return 0
 
 
 def _host_friction_level(

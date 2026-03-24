@@ -18,6 +18,7 @@ from cortex.core.support import (
 from cortex.drivers.reference_host import observe_reference_host_event
 from cortex.runtime.reference import ReferenceRuntimeSession
 from cortex.sre.brake import BrakeState
+from cortex.sre.feedback import ReferenceRealizationFeedback
 from cortex.sre.families import SoftControlFamily
 from cortex.sre.reference_builder import build_reference_executive_state
 
@@ -188,4 +189,84 @@ def test_build_reference_executive_state_surfaces_guarded_brake_when_snapshot_ha
             "single-process-limit",
             "capability-view-missing",
         }
+    )
+
+
+def test_build_reference_executive_state_raises_goal_progress_floor_after_session_rejection() -> None:
+    state = build_reference_executive_state(
+        observe_reference_host_event("ContextLoad", {"session_id": "runtime-5"}).observation,
+        SupportSnapshot(
+            trace=SupportTraceState(),
+            session=SupportSessionState(branch_registry=("main",)),
+            host=SupportHostState(),
+            exec_memory_pub=SupportExecMemoryState(),
+        ),
+        ExecutiveEnvironmentView(
+            available_query_kinds=frozenset({CAPABILITY_VIEW, EXECUTION_TRACE}),
+            host_capability_tags=frozenset({"reference-local"}),
+        ),
+        ReferenceRuntimeSession(
+            session_id="runtime-5",
+            event_index=2,
+            active_track_ref="main",
+            budget_history=("shell-low", "shell-low"),
+            brake_history=("quiescent", "quiescent"),
+            last_selected_family=SoftControlFamily.NEUTRAL,
+            last_realization_feedback=ReferenceRealizationFeedback(
+                selected_family=SoftControlFamily.NEUTRAL,
+                realized_family=SoftControlFamily.NEUTRAL,
+                brake_state=BrakeState.QUIESCENT,
+                warning_codes=("session-rejected:mismatched-session-id:runtime-5-b",),
+            ),
+        ),
+    )
+
+    goal_progress = next(
+        estimate
+        for estimate in state.uncertainty_monitoring.classwise_uncertainty
+        if estimate.class_tag == "goal-progress"
+    )
+    assert goal_progress.level == 0.55
+    assert state.brake.brake_state is BrakeState.GUARDED
+    assert "prior-session-mismatch" in state.uncertainty_monitoring.contradiction_spike_flags
+
+
+def test_build_reference_executive_state_marks_prior_enforcement_override() -> None:
+    state = build_reference_executive_state(
+        observe_reference_host_event("ContextLoad", {"session_id": "runtime-6"}).observation,
+        SupportSnapshot(
+            trace=SupportTraceState(),
+            session=SupportSessionState(branch_registry=("main",)),
+            host=SupportHostState(),
+            exec_memory_pub=SupportExecMemoryState(),
+        ),
+        ExecutiveEnvironmentView(
+            available_query_kinds=frozenset({CAPABILITY_VIEW, EXECUTION_TRACE}),
+            host_capability_tags=frozenset({"reference-local"}),
+        ),
+        ReferenceRuntimeSession(
+            session_id="runtime-6",
+            event_index=2,
+            active_track_ref="main",
+            budget_history=("shell-low", "shell-low"),
+            brake_history=("latched", "latched"),
+            last_selected_family=SoftControlFamily.BRANCH,
+            last_realization_feedback=ReferenceRealizationFeedback(
+                selected_family=SoftControlFamily.BRANCH,
+                realized_family=SoftControlFamily.NEUTRAL,
+                brake_state=BrakeState.LATCHED,
+            ),
+        ),
+    )
+
+    goal_progress = next(
+        estimate
+        for estimate in state.uncertainty_monitoring.classwise_uncertainty
+        if estimate.class_tag == "goal-progress"
+    )
+    assert goal_progress.level == 0.45
+    assert state.brake.brake_state is BrakeState.GUARDED
+    assert (
+        "prior-enforcement-override"
+        in state.uncertainty_monitoring.contradiction_spike_flags
     )
