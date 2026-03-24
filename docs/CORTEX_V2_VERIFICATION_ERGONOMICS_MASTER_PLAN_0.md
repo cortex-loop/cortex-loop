@@ -388,7 +388,8 @@ Current next-work note:
 - E2 is effectively complete.
 - E4 is effectively landed for current scope.
 - E5 is materially landed for current scope.
-- re-audit before opening any `E6` seam.
+- post-`E4` re-audit is complete.
+- no `E6` seam is promoted at this time.
 
 ### E3
 - E3A landed Core correspondence checks
@@ -514,7 +515,19 @@ Every worker prompt should include:
 `E4` is now landed for current scope.
 `E5` is materially landed for current scope.
 
-Re-audit before any `E6`.
+### Post-`E4` re-audit result
+
+- Remaining reference-local duplication still exists:
+  - mainly repeated reference mediation scorecard-selection builders in uncertainty/thrash episode builders,
+  - plus a small number of empty-ref and candidate-bearing assertions in thrash-only helpers.
+- That remaining duplication is **not yet material enough** to justify `E6`:
+  - the live overlap is narrow,
+  - the current reference helper surface already covers the highest-value repeated outcome checks,
+  - and further dedup would start trading locality and failure readability for modest line-count savings.
+- A future `E6` seam could still stay verification-local and behavior-preserving:
+  - but only if a later maintenance pass shows a larger repeated reference-only helper shape than the repo currently has.
+- No `E6` seam is promoted from this re-audit.
+
 No broader refactor is promoted from this slice.
 That follow-on choice must remain non-feature, behavior-preserving, and verification-first.
 
