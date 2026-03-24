@@ -869,6 +869,17 @@ The target:
 It does not fail on untracked noise by itself.
 Its purpose is to stop “next seam” work when the current seam is still open.
 
+## Current live parent baseline
+
+In this maintainer workspace:
+
+- accepted post-`E4` verification baseline: `194a43f`
+- temporary live parent branch: `codex/e4b-reference-contradiction-helpers`
+- until a separate non-archival integration branch is explicitly declared, new v2 seams should branch from `codex/e4b-reference-contradiction-helpers` or a later fast-forward descendant of that accepted baseline
+- do not branch new v2 work from `codex/e1-verification-substrate-entrypoints`
+- do not branch new v2 work from `codex/closure-train-2026-03-24`
+- do not branch new v2 work from archival `main` / `origin/main`
+
 ## Core correspondence drift check
 
 This is the first Core-scoped correspondence drift check only.

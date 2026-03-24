@@ -176,6 +176,9 @@ If a seam changes a typed boundary contract (for example: constructor validation
 - Canonical archive repo: `github.com/cortex-loop/cortex-loop-v1-archive`.
 - Before editing, reconcile local `main` with `origin/main`.
 - Do not develop on `main`; create an explicit branch with the `codex/` prefix.
+- In this maintainer workspace, `main` / `origin/main` are archival-root only and are not the live v2 parent for new seams.
+- Current accepted post-`E4` baseline: commit `194a43f` on `codex/e4b-reference-contradiction-helpers`.
+- Until a separate non-archival integration branch is explicitly declared, branch new v2 work from `codex/e4b-reference-contradiction-helpers` or its fast-forward descendants, not from `codex/e1-verification-substrate-entrypoints`, `codex/closure-train-2026-03-24`, or archival `main`.
 - In this maintainer workspace, the expected public identity is `howaeri <32343362+howaeri@users.noreply.github.com>`.
 - Do not bump package versions, create releases, or add publish workflows unless the task explicitly requires it.
 

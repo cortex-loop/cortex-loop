@@ -18,6 +18,7 @@ MAKEFILE_PATH = REPO_ROOT / "Makefile"
 COVERAGE_BASELINE_NOTE_PATH = (
     REPO_ROOT / "docs" / "CORTEX_V2_COVERAGE_BASELINE_NOTE_0.md"
 )
+AGENTS_PATH = REPO_ROOT / "AGENTS.md"
 
 
 def _read(path: Path) -> str:
@@ -185,3 +186,19 @@ def test_local_verification_doc_points_to_committed_coverage_baseline() -> None:
     assert "docs/CORTEX_V2_COVERAGE_BASELINE_NOTE_0.md" in text
     assert "Coverage is still not part of the canonical local verification bundle." in text
     assert "no coverage threshold or pass/fail gate" in text
+
+
+def test_post_e4_live_parent_contract_is_recorded() -> None:
+    local_verification_text = _read(LOCAL_VERIFICATION_PATH)
+    implementation_status_text = _read(IMPLEMENTATION_STATUS_NOTE_PATH)
+    agents_text = _read(AGENTS_PATH)
+
+    assert "accepted post-`E4` verification baseline: `194a43f`" in local_verification_text
+    assert "temporary live parent branch: `codex/e4b-reference-contradiction-helpers`" in local_verification_text
+    assert "do not branch new v2 work from `codex/e1-verification-substrate-entrypoints`" in local_verification_text
+    assert "do not branch new v2 work from `codex/closure-train-2026-03-24`" in local_verification_text
+    assert "do not branch new v2 work from archival `main` / `origin/main`" in local_verification_text
+    assert "future seams should branch from the accepted post-`E4` verification baseline" in implementation_status_text
+    assert "`main` / `origin/main` are archival-root only" in agents_text
+    assert "Current accepted post-`E4` baseline: commit `194a43f` on `codex/e4b-reference-contradiction-helpers`." in agents_text
+    assert "branch new v2 work from `codex/e4b-reference-contradiction-helpers` or its fast-forward descendants" in agents_text
