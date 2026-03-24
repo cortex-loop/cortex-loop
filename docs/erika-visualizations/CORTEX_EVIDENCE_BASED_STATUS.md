@@ -2,7 +2,7 @@
 
 **Date:** 2026-03-24
 **Role:** support surface for orientation and planning
-**Accepted factual baseline:** `codex/j0-burden-axis-reaudit` at `4bb7fbf`
+**Accepted factual baseline:** `codex/s0b-erika-support-closeout` at `6218115`
 
 > This folder tracks three separate things: current accepted repo truth, the north-star product target, and the lawful gap programs required to move from the first toward the second.
 
@@ -172,7 +172,7 @@ This is a program map, not a seam queue.
 
 | Program | Why it matters | Lawful now? | Blocked by | Smallest honest next opening move |
 | --- | --- | --- | --- | --- |
-| Product shell / live runtime program | Turns the landed architecture substrate into a live working product | Only as an explicit new product program | Missing product-shell contract, host scope, runtime authority, and success criteria | Write a product-shell program brief for one live host and one entry-point surface |
+| Product shell / live runtime program | Turns the landed architecture substrate into a live working product | Only as an explicit new product program | Missing product-shell contract, host scope, runtime authority, and success criteria | Selected next opening move: reference-host local CLI runtime shell locked by `docs/CORTEX_V2_REFERENCE_RUNTIME_PROGRAM_0.md` |
 | Executive loop computation program | Converts carrier-shaped SRE views into a computed executive loop | Only as an intentional new program | Event-source contract, state-update contract, and product-shell context are not yet fixed | Define one live event-to-state computation slice that preserves the Core/SRE boundary |
 | Closed-loop feedback and enforcement program | Allows outcomes to influence later control and makes brake more than advisory where lawful | Only after runtime surfaces exist | No accepted runtime outcome loop or enforcement boundary yet | Specify one lawful outcome-to-state feedback carrier and one enforcement point that respects the certification firewall |
 | Runtime AUX activation program | Would turn evaluation-first support into runtime support only if earned | Not yet from the current closed roadmap | AUX remains runtime-off-by-default until the active core/SRE loop is stable | Keep evaluation evidence separate and define explicit activation criteria instead of coding against aspiration |
@@ -185,7 +185,8 @@ This is a program map, not a seam queue.
 
 This tracker is grounded in:
 
-- the accepted closure baseline at `4bb7fbf`,
+- the accepted support-parent baseline at `6218115`,
+- `docs/CORTEX_V2_REFERENCE_RUNTIME_PROGRAM_0.md`,
 - `docs/CORTEX_V2_CORE_2.md`,
 - `docs/CORTEX_V2_SRE_2.md`,
 - `docs/CORTEX_V2_AUX_2.md`,

@@ -93,3 +93,22 @@ Minimal schemas, the first contradiction-preserving harness, truthful-withheld p
 - Correspondence rows do not silently satisfy phase-gate rows.
 - A phase must remain `partial` or `blocked` if its relevant gate rows remain `open`, `partial`, or `drifted`.
 - If a historical gate was missed, record the miss here rather than rewriting history.
+
+---
+
+## 6. Post-closeout runtime-program gates
+
+Source of truth:
+
+- `docs/CORTEX_V2_REFERENCE_RUNTIME_PROGRAM_0.md`
+
+Overall status: `open`
+
+These rows track the first intentional product/runtime opening after the accepted v2 closeout boundary.
+They do not authorize multi-host runtime, runtime AUX activation, offline consolidation, or mediation implementation.
+
+| Gate row | Current evidence | Owner / next closeout | Status | Notes |
+| --- | --- | --- | --- | --- |
+| `R1` reference runtime shell | `docs/CORTEX_V2_REFERENCE_RUNTIME_PROGRAM_0.md` | `R1A` -> `R1C` | partial | program doctrine is locked; runtime kernel and CLI proof are not yet landed |
+| `R2` computed reference executive slice | `docs/CORTEX_V2_REFERENCE_RUNTIME_PROGRAM_0.md` | `R2A` -> `R2C` | blocked | may not close until the runtime shell is landed on a clean tree |
+| `R3` reference live continuity slice | `docs/CORTEX_V2_REFERENCE_RUNTIME_PROGRAM_0.md` | `R3A` -> `R3C` | blocked | may not close until the computed reference executive slice is landed on a clean tree |

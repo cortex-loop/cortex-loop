@@ -19,6 +19,10 @@ COVERAGE_BASELINE_NOTE_PATH = (
     REPO_ROOT / "docs" / "CORTEX_V2_COVERAGE_BASELINE_NOTE_0.md"
 )
 ACTIVE_WORKSTREAM_PATH = REPO_ROOT / "docs" / "CORTEX_V2_ACTIVE_WORKSTREAM.md"
+PHASE_GATES_PATH = REPO_ROOT / "docs" / "CORTEX_V2_PHASE_GATES_2.md"
+REFERENCE_RUNTIME_PROGRAM_PATH = (
+    REPO_ROOT / "docs" / "CORTEX_V2_REFERENCE_RUNTIME_PROGRAM_0.md"
+)
 ERIKA_VISUALIZATION_STATUS_PATH = (
     REPO_ROOT / "docs" / "erika-visualizations" / "CORTEX_EVIDENCE_BASED_STATUS.md"
 )
@@ -205,14 +209,38 @@ def test_resume_protocol_and_active_workstream_contract_exist() -> None:
     assert "Never promote uncommitted local edits to accepted baseline truth." in agents_text
 
     assert "Status: live workflow-state ledger for compaction-safe continuation." in workstream_text
-    assert "Accepted baseline branch: `codex/j0-burden-axis-reaudit`" in workstream_text
-    assert "Accepted baseline commit: `4bb7fbf`" in workstream_text
-    assert "Current working branch at ledger creation: `codex/e1-verification-substrate-entrypoints`" in workstream_text
-    assert "mixed workspace branch; do not treat it as accepted baseline truth" in workstream_text
-    assert "Do not treat mixed local edits on the current working branch as accepted truth." in workstream_text
+    assert "Accepted baseline branch: `codex/s0b-erika-support-closeout`" in workstream_text
+    assert "Accepted baseline commit: `6218115`" in workstream_text
+    assert "Current working branch at ledger update: `codex/r1a-reference-runtime-program-lock`" in workstream_text
+    assert "clean runtime-program branch opened from the accepted support parent" in workstream_text
+    assert "Do not treat the mixed `codex/e1-verification-substrate-entrypoints` worktree as accepted truth." in workstream_text
     assert "git branch --show-current" in workstream_text
     assert "git status --short --untracked-files=all" in workstream_text
     assert "Never promote an uncommitted branch head or dirty worktree state to accepted baseline truth." in workstream_text
+
+
+def test_reference_runtime_program_lock_is_recorded() -> None:
+    program_text = _read(REFERENCE_RUNTIME_PROGRAM_PATH)
+    phase_gate_text = _read(PHASE_GATES_PATH)
+    workstream_text = _read(ACTIVE_WORKSTREAM_PATH)
+
+    assert "reference-host-only runtime program" in program_text
+    assert "`python3 -m cortex.runtime.reference_cli`" in program_text
+    assert "JSONL input and JSONL output only" in program_text
+    assert "no service/API shell" in program_text
+    assert "no Gemini runtime" in program_text
+    assert "no OpenAI runtime" in program_text
+    assert "no AUX runtime activation" in program_text
+    assert "no mediation implementation" in program_text
+
+    assert "## 6. Post-closeout runtime-program gates" in phase_gate_text
+    assert "`R1` reference runtime shell" in phase_gate_text
+    assert "`R2` computed reference executive slice" in phase_gate_text
+    assert "`R3` reference live continuity slice" in phase_gate_text
+
+    assert "Current campaign: reference runtime-shell opening" in workstream_text
+    assert "Current candidate seam: runtime program lock for the reference-host local CLI shell" in workstream_text
+    assert "After `R1A` is accepted, open `R1B` as the first runtime-code seam from a clean tree." in workstream_text
 
 
 def test_erika_visualizations_are_framed_as_support_surfaces() -> None:
@@ -224,6 +252,7 @@ def test_erika_visualizations_are_framed_as_support_surfaces() -> None:
     assert "north-star product target" in markdown_text
     assert "lawful gap programs" in markdown_text
     assert "mechanisms Cortex has already stolen so far" in markdown_text
+    assert "Selected next opening move: reference-host local CLI runtime shell" in markdown_text
     assert "cortex-archival-dossiers/" not in markdown_text
     assert "Current Justified Boundary" in html_text
     assert "Gap Programs" in html_text
@@ -233,6 +262,7 @@ def test_erika_visualizations_are_framed_as_support_surfaces() -> None:
     assert "not current committed roadmap" in html_text
     assert "Biology Tracker: What Cortex Has Stolen So Far" in html_text
     assert "which brain-inspired mechanisms Cortex has already stolen so far" in html_text
+    assert "Open the reference-host local CLI runtime shell locked by" in html_text
     assert '<details class="biology-card"' in html_text
     assert "What we've stolen so far" in html_text
     assert "What is still partial" in html_text
