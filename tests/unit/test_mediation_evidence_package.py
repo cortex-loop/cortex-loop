@@ -1158,6 +1158,11 @@ def test_evidence_note_keeps_mediation_blocked_with_reference_gemini_and_openai_
         "cell-level signal for lower visible burden at equal task value" in text
     )
     assert (
+        "Reference, Gemini, and OpenAI now carry the lower-visible-burden "
+        "`candidate_positive` cells, but that burden signal remains too narrow at "
+        "package level because it is still confined to the `thrash_control` scenario family."
+    ) in text
+    assert (
         "`scenario_uncertainty_reference_01` / `reference` now has "
         "`candidate_positive` cell-level signal for better uncertainty handling" in text
     )
@@ -1170,6 +1175,10 @@ def test_evidence_note_keeps_mediation_blocked_with_reference_gemini_and_openai_
         "`candidate_positive` cell-level signal for better uncertainty handling" in text
     )
     assert "Mediation remains blocked" in text
+    assert (
+        "Lower visible burden at equal task value remains package-insufficient because "
+        "all current burden signal is still confined to the `thrash_control` scenario family."
+    ) in text
     assert "no implementation seam may open" in text
     assert "`scenario_thrash_reference_01` remains an explicit `artifact_gap`" not in text
 

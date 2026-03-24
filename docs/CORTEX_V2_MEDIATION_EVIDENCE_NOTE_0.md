@@ -39,6 +39,7 @@ reference, Gemini, and OpenAI now carry the host-realization `candidate_positive
 `scenario_thrash_gemini_01` / `gemini` now also has `candidate_positive` cell-level signal for lower visible burden at equal task value, while the package-level burden axis remains `insufficient`.
 `scenario_thrash_openai_01` / `openai` now has `candidate_positive` cell-level signal for reduced thrashing and better branch discipline, while package-level axis summaries remain globally `insufficient`.
 `scenario_thrash_openai_01` / `openai` now also has `candidate_positive` cell-level signal for lower visible burden at equal task value, while the package-level burden axis remains `insufficient`.
+Reference, Gemini, and OpenAI now carry the lower-visible-burden `candidate_positive` cells, but that burden signal remains too narrow at package level because it is still confined to the `thrash_control` scenario family.
 `scenario_uncertainty_reference_01` / `reference` now has `candidate_positive` cell-level signal for better uncertainty handling, while package-level axis summaries remain globally `insufficient`.
 `scenario_uncertainty_gemini_01` / `gemini` now has `candidate_positive` cell-level signal for better uncertainty handling, while package-level axis summaries remain globally `insufficient`.
 `scenario_uncertainty_openai_01` / `openai` now has `candidate_positive` cell-level signal for better uncertainty handling, while package-level axis summaries remain globally `insufficient`.
@@ -60,4 +61,5 @@ reference, Gemini, and OpenAI now carry the host-realization `candidate_positive
 ## Blocker Statement
 
 Mediation remains blocked because the current evidence is still too narrow across axes and hosts to justify implementation.
+Lower visible burden at equal task value remains package-insufficient because all current burden signal is still confined to the `thrash_control` scenario family.
 If no mediation-vs-non-mediation axis shows measurable lift under this package, mediation remains blocked and no implementation seam may open.

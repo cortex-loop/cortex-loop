@@ -60,6 +60,7 @@ It does not open new feature work.
   - better host-specialized realization,
   - and lower visible burden on the reference, Gemini, and OpenAI thrash cells.
 - Package-level evidence remains `insufficient` on every required mediation axis.
+- The burden axis remains package-insufficient specifically because the current burden signal is confined to the `thrash_control` scenario family.
 
 ## Maintainability Debt, Not Roadmap Debt
 
