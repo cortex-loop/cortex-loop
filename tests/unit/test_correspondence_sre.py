@@ -50,6 +50,22 @@ EXPECTATIONS = (
         ),
     ),
     SreCorrespondenceExpectation(
+        row_label="build_reference_executive_state",
+        module_path="cortex.sre.reference_builder",
+        symbol_name="build_reference_executive_state",
+        promised_surfaces=(
+            PromisedTestSurface(
+                test_file="tests/unit/test_reference_executive_builder.py",
+                test_names=(
+                    "test_build_reference_executive_state_for_cheap_event_stays_pass_through_and_low_budget",
+                    "test_build_reference_executive_state_for_candidate_bearing_event_surfaces_review_mode",
+                    "test_build_reference_executive_state_for_full_commitment_event_preserves_high_budget_band",
+                    "test_build_reference_executive_state_surfaces_guarded_brake_when_snapshot_has_degradation",
+                ),
+            ),
+        ),
+    ),
+    SreCorrespondenceExpectation(
         row_label="SoftControlFamily",
         module_path="cortex.sre.families",
         symbol_name="SoftControlFamily",

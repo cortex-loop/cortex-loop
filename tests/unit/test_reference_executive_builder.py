@@ -1,0 +1,187 @@
+"""Focused unit tests for the first computed reference executive-state builder."""
+
+from __future__ import annotations
+
+from cortex.core.environment import (
+    CAPABILITY_VIEW,
+    EXECUTION_TRACE,
+    ExecutiveEnvironmentView,
+)
+from cortex.core.errors import ContradictionRecord, DegradationRecord
+from cortex.core.support import (
+    SupportExecMemoryState,
+    SupportHostState,
+    SupportSessionState,
+    SupportSnapshot,
+    SupportTraceState,
+)
+from cortex.drivers.reference_host import observe_reference_host_event
+from cortex.runtime.reference import ReferenceRuntimeSession
+from cortex.sre.brake import BrakeState
+from cortex.sre.families import SoftControlFamily
+from cortex.sre.reference_builder import build_reference_executive_state
+
+
+def test_build_reference_executive_state_for_cheap_event_stays_pass_through_and_low_budget() -> None:
+    state = build_reference_executive_state(
+        observe_reference_host_event("ContextLoad", {"session_id": "runtime-1"}).observation,
+        SupportSnapshot(
+            trace=SupportTraceState(),
+            session=SupportSessionState(branch_registry=("main",)),
+            host=SupportHostState(),
+            exec_memory_pub=SupportExecMemoryState(),
+        ),
+        ExecutiveEnvironmentView(
+            available_query_kinds=frozenset({CAPABILITY_VIEW, EXECUTION_TRACE}),
+            host_capability_tags=frozenset({"reference-local"}),
+        ),
+        ReferenceRuntimeSession(
+            session_id="runtime-1",
+            event_index=1,
+            budget_history=("shell-low",),
+            brake_history=("quiescent",),
+            last_selected_family=SoftControlFamily.NEUTRAL,
+        ),
+    )
+
+    assert state.goal_continuity.main_goal_ref is None
+    assert state.goal_continuity.active_track_ref == "main"
+    assert state.mode_and_gating.mode_tag == "pass_through"
+    assert state.control_allocation.budget_band == "low"
+    assert state.control_allocation.top_family_set == frozenset({SoftControlFamily.NEUTRAL})
+    assert state.brake.brake_state is BrakeState.QUIESCENT
+
+
+def test_build_reference_executive_state_for_candidate_bearing_event_surfaces_review_mode() -> None:
+    state = build_reference_executive_state(
+        observe_reference_host_event(
+            "ApprovalRequest",
+            {"session_id": "runtime-2", "candidate_id": "candidate-1"},
+        ).observation,
+        SupportSnapshot(
+            trace=SupportTraceState(),
+            session=SupportSessionState(
+                branch_registry=("main",),
+                pending_goal_refs=("goal-review",),
+            ),
+            host=SupportHostState(),
+            exec_memory_pub=SupportExecMemoryState(),
+        ),
+        ExecutiveEnvironmentView(
+            available_query_kinds=frozenset({CAPABILITY_VIEW, EXECUTION_TRACE}),
+            host_capability_tags=frozenset({"reference-local"}),
+        ),
+        ReferenceRuntimeSession(
+            session_id="runtime-2",
+            event_index=2,
+            budget_history=("shell-low", "shell-medium"),
+            brake_history=("quiescent", "quiescent"),
+            last_selected_family=SoftControlFamily.NEUTRAL,
+        ),
+    )
+
+    assert state.goal_continuity.main_goal_ref == "goal-review"
+    assert state.mode_and_gating.mode_tag == "review_pending"
+    assert state.control_allocation.budget_band == "medium"
+    assert state.control_allocation.top_family_set == frozenset(
+        {SoftControlFamily.NEUTRAL, SoftControlFamily.CHECK}
+    )
+    assert state.brake.brake_state is BrakeState.QUIESCENT
+
+
+def test_build_reference_executive_state_for_full_commitment_event_preserves_high_budget_band() -> None:
+    state = build_reference_executive_state(
+        observe_reference_host_event(
+            "ApprovalResult",
+            {
+                "session_id": "runtime-3",
+                "commitment_id": "commit-1",
+                "externally_consequential": True,
+                "result_artifact_ref": "artifact-1",
+            },
+        ).observation,
+        SupportSnapshot(
+            trace=SupportTraceState(),
+            session=SupportSessionState(branch_registry=("main",)),
+            host=SupportHostState(),
+            exec_memory_pub=SupportExecMemoryState(),
+        ),
+        ExecutiveEnvironmentView(
+            available_query_kinds=frozenset({CAPABILITY_VIEW, EXECUTION_TRACE}),
+            host_capability_tags=frozenset({"reference-local"}),
+        ),
+        ReferenceRuntimeSession(
+            session_id="runtime-3",
+            event_index=3,
+            budget_history=("shell-low", "shell-medium", "shell-high"),
+            brake_history=("quiescent", "quiescent", "quiescent"),
+            last_selected_family=SoftControlFamily.NEUTRAL,
+        ),
+    )
+
+    assert state.mode_and_gating.mode_tag == "commitment_path"
+    assert state.control_allocation.budget_band == "high"
+    assert state.control_allocation.top_family_set == frozenset({SoftControlFamily.NEUTRAL})
+    assert state.uncertainty_monitoring.classwise_uncertainty[0].class_tag == "evidence"
+    assert state.brake.brake_state is BrakeState.QUIESCENT
+
+
+def test_build_reference_executive_state_surfaces_guarded_brake_when_snapshot_has_degradation() -> None:
+    state = build_reference_executive_state(
+        observe_reference_host_event("ContextLoad", {"session_id": "runtime-4"}).observation,
+        SupportSnapshot(
+            trace=SupportTraceState(
+                degradation_records=(
+                    DegradationRecord(
+                        reason_code="host-friction-spike",
+                        contradiction_records=(
+                            ContradictionRecord(
+                                source_tag="environment-drift",
+                                summary="host environment drifted",
+                            ),
+                        ),
+                    ),
+                ),
+            ),
+            session=SupportSessionState(
+                branch_registry=("main", "review-track"),
+                reminders=("resume-anchor-missing",),
+            ),
+            host=SupportHostState(constraint_tags=frozenset({"single-process-limit"})),
+            exec_memory_pub=SupportExecMemoryState(),
+        ),
+        ExecutiveEnvironmentView(
+            available_query_kinds=frozenset({EXECUTION_TRACE}),
+            host_capability_tags=frozenset({"reference-local"}),
+        ),
+        ReferenceRuntimeSession(
+            session_id="runtime-4",
+            event_index=2,
+            branch_registry=("main", "review-track"),
+            budget_history=("shell-low", "shell-medium"),
+            brake_history=("quiescent", "guarded"),
+            last_selected_family=SoftControlFamily.BRANCH,
+        ),
+    )
+
+    assert state.goal_continuity.active_track_ref == "review-track"
+    assert state.goal_continuity.resume_anchor_available is False
+    assert state.brake.brake_state is BrakeState.GUARDED
+    assert state.brake.dominant_cause_family is SoftControlFamily.BRAKE
+    assert state.mode_and_gating.mode_tag == "guarded_review"
+    assert state.mode_and_gating.family_mask == frozenset(
+        {
+            SoftControlFamily.NEUTRAL,
+            SoftControlFamily.CHECK,
+            SoftControlFamily.BRANCH,
+            SoftControlFamily.BRAKE,
+        }
+    )
+    assert "environment-drift" in state.uncertainty_monitoring.contradiction_spike_flags
+    assert "resume-anchor-missing" in state.uncertainty_monitoring.contradiction_spike_flags
+    assert state.control_allocation.host_friction_tags == frozenset(
+        {
+            "single-process-limit",
+            "capability-view-missing",
+        }
+    )
