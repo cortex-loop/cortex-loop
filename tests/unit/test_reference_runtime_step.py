@@ -34,6 +34,8 @@ def test_reference_runtime_step_result_surfaces_cheap_reference_event_without_co
     assert result.dispatch_decision.lane is DispatchLane.CHEAP
     assert result.selected_family is SoftControlFamily.NEUTRAL
     assert result.brake_state is BrakeState.QUIESCENT
+    assert result.executive_state_summary["mode_tag"] == "pass_through"
+    assert result.executive_state_summary["budget_band"] == "low"
     assert result.commitment_result_kind is None
     assert result.session.session_id == "session-1"
     assert result.session.budget_history == ("shell-low",)
@@ -62,6 +64,8 @@ def test_reference_runtime_step_result_keeps_candidate_bearing_event_candidate_o
     assert second.session.session_id == "session-2"
     assert second.session.budget_history == ("shell-low", "shell-medium")
     assert second.session.brake_history == ("quiescent", "quiescent")
+    assert second.executive_state_summary["mode_tag"] == "review_pending"
+    assert second.executive_state_summary["budget_band"] == "medium"
     assert second.session.last_commitment_result_summary == "candidate-only"
     assert second.session_summary["event_index"] == 2
 
@@ -82,5 +86,7 @@ def test_reference_runtime_step_result_certifies_full_commitment_when_runtime_pa
     assert result.commitment_result_kind == "certified"
     assert result.selected_family is SoftControlFamily.NEUTRAL
     assert result.brake_state is BrakeState.QUIESCENT
+    assert result.executive_state_summary["mode_tag"] == "commitment_path"
+    assert result.executive_state_summary["budget_band"] == "high"
     assert result.session.budget_history == ("shell-high",)
     assert result.session.last_commitment_result_summary == "certified"

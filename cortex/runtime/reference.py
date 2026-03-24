@@ -16,10 +16,19 @@ from cortex.core.commitments import (
 )
 from cortex.core.dispatch import DispatchDecision, DispatchLane, classify_dispatch
 from cortex.core.environment import (
+    CAPABILITY_VIEW,
     EXECUTION_TRACE,
     EXTERNAL_RECORD,
     RESULT_ARTIFACT,
     CommitmentEnvironmentHandle,
+    ExecutiveEnvironmentView,
+)
+from cortex.core.support import (
+    SupportExecMemoryState,
+    SupportHostState,
+    SupportSessionState,
+    SupportSnapshot,
+    SupportTraceState,
 )
 from cortex.drivers._commitment_common import (
     extract_native_commitment_fields,
@@ -28,8 +37,11 @@ from cortex.drivers._commitment_common import (
 )
 from cortex.drivers.reference_host import BoundReferenceHostEvent, observe_reference_host_event
 from cortex.drivers.reference_host_commitment import bind_reference_host_candidate
-from cortex.sre.brake import BrakeState, evaluate_brake_state
+from cortex.sre.brake import BrakeState
 from cortex.sre.families import SoftControlFamily
+from cortex.sre.reference_builder import build_reference_executive_state
+from cortex.sre.reference_scoring import select_reference_soft_control
+from cortex.sre.state import ReferenceExecutiveState
 
 _ALLOWED_COMMITMENT_RESULT_KINDS = frozenset(status.value for status in CommitmentStatus)
 
@@ -115,6 +127,7 @@ class ReferenceRuntimeStepResult:
     event_index: int
     bound_event: BoundReferenceHostEvent
     dispatch_decision: DispatchDecision
+    executive_state: ReferenceExecutiveState
     selected_family: SoftControlFamily
     brake_state: BrakeState
     warnings: tuple[str, ...] = field(default_factory=tuple)
@@ -140,6 +153,12 @@ class ReferenceRuntimeStepResult:
             actual_type = type(self.dispatch_decision).__name__
             raise TypeError(
                 "ReferenceRuntimeStepResult.dispatch_decision must be DispatchDecision, "
+                f"got {actual_type}."
+            )
+        if not isinstance(self.executive_state, ReferenceExecutiveState):
+            actual_type = type(self.executive_state).__name__
+            raise TypeError(
+                "ReferenceRuntimeStepResult.executive_state must be ReferenceExecutiveState, "
                 f"got {actual_type}."
             )
         if not isinstance(self.selected_family, SoftControlFamily):
@@ -180,6 +199,24 @@ class ReferenceRuntimeStepResult:
     @property
     def session_summary(self) -> dict[str, Any]:
         return self.session.as_summary()
+
+    @property
+    def executive_state_summary(self) -> dict[str, Any]:
+        return {
+            "mode_tag": self.executive_state.mode_and_gating.mode_tag,
+            "family_mask": sorted(
+                family.value for family in self.executive_state.mode_and_gating.family_mask
+            ),
+            "budget_band": self.executive_state.control_allocation.budget_band,
+            "top_family_set": sorted(
+                family.value for family in self.executive_state.control_allocation.top_family_set
+            ),
+            "host_friction_tags": sorted(
+                self.executive_state.control_allocation.host_friction_tags
+            ),
+            "active_track_ref": self.executive_state.goal_continuity.active_track_ref,
+            "pending_goal_refs": list(self.executive_state.goal_continuity.pending_goal_refs),
+        }
 
 
 def run_reference_runtime_step(
@@ -235,14 +272,36 @@ def run_reference_runtime_step(
         )
         commitment_result_kind = verdict.status.value
 
-    selected_family = SoftControlFamily.NEUTRAL
-    brake_state = evaluate_brake_state(()).state
-    updated_session = ReferenceRuntimeSession(
+    provisional_session = ReferenceRuntimeSession(
         session_id=_resolve_session_id(prior_session, normalized_payload),
         event_index=prior_session.event_index + 1,
         branch_registry=prior_session.branch_registry,
         pending_goal_refs=prior_session.pending_goal_refs,
         budget_history=prior_session.budget_history + (_budget_entry_for_lane(dispatch_decision.lane),),
+        brake_history=prior_session.brake_history,
+        last_selected_family=prior_session.last_selected_family,
+        last_commitment_result_summary=prior_session.last_commitment_result_summary,
+    )
+    executive_state = build_reference_executive_state(
+        bound_event.observation,
+        _build_support_snapshot(
+            provisional_session=provisional_session,
+            bound_event=bound_event,
+            dispatch_decision=dispatch_decision,
+            warnings=warnings,
+        ),
+        _build_executive_environment_view(normalized_payload),
+        provisional_session,
+    )
+    selection = select_reference_soft_control(executive_state)
+    selected_family = selection.selected_family
+    brake_state = executive_state.brake.brake_state
+    updated_session = ReferenceRuntimeSession(
+        session_id=provisional_session.session_id,
+        event_index=provisional_session.event_index,
+        branch_registry=provisional_session.branch_registry,
+        pending_goal_refs=provisional_session.pending_goal_refs,
+        budget_history=provisional_session.budget_history,
         brake_history=prior_session.brake_history + (brake_state.value,),
         last_selected_family=selected_family,
         last_commitment_result_summary=_commitment_summary_for_lane(
@@ -254,6 +313,7 @@ def run_reference_runtime_step(
         event_index=updated_session.event_index,
         bound_event=bound_event,
         dispatch_decision=dispatch_decision,
+        executive_state=executive_state,
         selected_family=selected_family,
         brake_state=brake_state,
         warnings=warnings,
@@ -298,6 +358,62 @@ def _build_environment_handle(
     return CommitmentEnvironmentHandle(
         available_query_kinds=frozenset(available_query_kinds),
         capability_tags=frozenset(capability_tags),
+    )
+
+
+def _build_executive_environment_view(
+    normalized_payload: Mapping[str, Any],
+) -> ExecutiveEnvironmentView:
+    available_query_kinds = {
+        CAPABILITY_VIEW,
+        EXECUTION_TRACE,
+    }
+    host_capability_tags = {
+        "reference-host",
+        "local-cli-runtime",
+    }
+    if _first_concrete_artifact_ref(normalized_payload) is not None:
+        available_query_kinds.add(RESULT_ARTIFACT)
+    if _as_non_empty_string(normalized_payload.get("external_record_ref")) is not None:
+        available_query_kinds.add(EXTERNAL_RECORD)
+    return ExecutiveEnvironmentView(
+        available_query_kinds=frozenset(available_query_kinds),
+        host_capability_tags=frozenset(host_capability_tags),
+    )
+
+
+def _build_support_snapshot(
+    *,
+    provisional_session: ReferenceRuntimeSession,
+    bound_event: BoundReferenceHostEvent,
+    dispatch_decision: DispatchDecision,
+    warnings: Sequence[str],
+) -> SupportSnapshot:
+    approval_boundary_tags = (
+        frozenset({"approval-required"})
+        if dispatch_decision.lane is not DispatchLane.CHEAP
+        else frozenset()
+    )
+    constraint_tags = frozenset({"runtime-warning"}) if warnings else frozenset()
+    affordance_tags = frozenset(
+        set(bound_event.lifecycle_surface.context_affordances)
+        | set(bound_event.lifecycle_surface.tool_affordances)
+        | set(bound_event.lifecycle_surface.turn_affordances)
+    )
+    return SupportSnapshot(
+        trace=SupportTraceState(recent_events=(bound_event.observation.event,)),
+        session=SupportSessionState(
+            branch_registry=provisional_session.branch_registry,
+            pending_goal_refs=provisional_session.pending_goal_refs,
+            budget_history=provisional_session.budget_history,
+            brake_history=provisional_session.brake_history,
+        ),
+        host=SupportHostState(
+            affordance_tags=affordance_tags,
+            approval_boundary_tags=approval_boundary_tags,
+            constraint_tags=constraint_tags,
+        ),
+        exec_memory_pub=SupportExecMemoryState(),
     )
 
 

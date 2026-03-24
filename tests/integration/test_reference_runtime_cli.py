@@ -18,6 +18,7 @@ EXPECTED_RECORD_KEYS = {
     "dispatch_lane",
     "selected_family",
     "brake_state",
+    "executive_state_summary",
     "warnings",
     "session_summary",
     "commitment_result_kind",
@@ -55,6 +56,16 @@ def test_reference_runtime_cli_reads_event_file_and_emits_one_record_per_event()
         "quiescent",
         "quiescent",
     ]
+    assert [record["executive_state_summary"]["mode_tag"] for record in records] == [
+        "pass_through",
+        "review_pending",
+        "commitment_path",
+    ]
+    assert [record["executive_state_summary"]["budget_band"] for record in records] == [
+        "low",
+        "medium",
+        "high",
+    ]
     assert [record["commitment_result_kind"] for record in records] == [
         None,
         None,
@@ -67,6 +78,7 @@ def test_reference_runtime_cli_reads_event_file_and_emits_one_record_per_event()
         "shell-medium",
         "shell-high",
     ]
+    assert records[-1]["executive_state_summary"]["top_family_set"] == ["neutral"]
 
 
 def test_reference_runtime_cli_reads_stdin_and_preserves_locked_output_contract() -> None:
