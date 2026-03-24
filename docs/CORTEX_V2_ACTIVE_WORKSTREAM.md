@@ -7,8 +7,8 @@ It is workflow state only. It does not override the packet documents, implementa
 
 ## 1. Accepted baseline
 
-- Accepted baseline branch: `codex/c4-reference-runtime-recloseout`
-- Accepted baseline commit: `d0caff6`
+- Accepted baseline branch: `codex/r4f-reference-feedback-reaudit`
+- Accepted baseline commit: `cecd82d`
 - Accepted baseline state:
   - burden-axis re-audit is accepted through the three thrash-host burden slices
   - package-level burden remains `insufficient`
@@ -16,22 +16,23 @@ It is workflow state only. It does not override the packet documents, implementa
   - verification-ergonomics expansion beyond the accepted post-`E4` boundary is not currently promoted
   - continuation hardening, the Erika support surface, the runtime-program lock, the first accepted reference-host local CLI shell, the first bounded reference executive-state builder, the first bounded reference soft-control scoring/selection layer, the first integrated computed executive slice inside the runtime shell, and the first one-process live continuity slice plus explicit rejection enforcement are accepted on top of the same product truth
   - the corrective runtime hardening now preserves suspended pending-goal anchors across non-continuity events, explicitly rejects malformed `open`, surfaces session-id mismatch as an explicit contradiction, and keeps lawful commitment truth visible even when continuity rejection is also present
-  - the accepted shell is now ready for one intentionally opened follow-on program: first bounded reference closed-loop feedback and latched-brake enforcement
+  - the first bounded `R4` reference closed-loop feedback slice is now landed on top of that shell: last-step realization feedback persists only the immediately previous realized outcome, the builder consumes that feedback only through bounded uncertainty/contradiction/brake-pressure updates, the CLI exposes a top-level control ledger, and latched-brake enforcement is now real and contradiction-preserving
 - Accepted baseline authority anchors:
   - `docs/CORTEX_V2_IMPLEMENTATION_STATUS_NOTE.md`
   - `docs/CORTEX_V2_IMPLEMENTATION_MASTER_PLAN_2.md`
   - `docs/CORTEX_V2_MEDIATION_JUSTIFICATION_NOTE.md`
   - `docs/CORTEX_V2_VERIFICATION_ERGONOMICS_MASTER_PLAN_0.md`
   - `docs/CORTEX_V2_REFERENCE_RUNTIME_PROGRAM_0.md`
+  - `docs/CORTEX_V2_REFERENCE_FEEDBACK_PROGRAM_0.md`
 
 ## 2. Current campaign and seam state
 
-- Current campaign: bounded `R4` reference closed-loop feedback and latched-brake program from the accepted corrected runtime shell
-- Current working branch at ledger update: `codex/p0a-r4a-reference-feedback-lock`
-- Current branch role: deterministic docs/program-lock branch for the `R4` opening move
-- Current candidate seam: `R4B` realization-feedback carrier and session persistence
-- Current seam status: `program locked / ready for first code seam`
-- Seam risk: the current seam is a new cross-layer runtime seam and must remain one-session max
+- Current campaign: no successor runtime program is opened from the accepted `R4` closeout
+- Current working branch at ledger update: `codex/r4f-reference-feedback-reaudit`
+- Current branch role: deterministic re-audit/closeout branch for the accepted `R4` landing
+- Current candidate seam: `none`
+- Current seam status: `R4 landed / stop after bounded feedback slice`
+- Seam risk: the `R4` closeout seam is complete; any future successor is a new planning/program-selection seam
 
 ## 3. Next lawful move
 
@@ -41,9 +42,12 @@ It is workflow state only. It does not override the packet documents, implementa
   - session mismatch and commitment-vs-continuity coexistence are now explicit in code, docs, and tests
   - the zero-finding re-audit bundle passed from the corrected runtime baseline
 - Next lawful move from this clean accepted head:
-  - lock and land the first bounded `R4` reference realization-feedback carrier
-  - then land the first bounded feedback-conditioned executive update, control ledger, and latched-brake enforcement point
-  - do not widen into broader runtime programs by inertia
+  - last-step realization feedback, the feedback-conditioned builder update, the top-level control ledger, and latched-brake enforcement are all landed
+  - selected-family truth and realized-family truth remain distinct when enforcement overrides runtime behavior
+  - the zero-finding re-audit bundle passed from the accepted `R4` runtime landing `cecd82d`
+  - stop and choose the next program explicitly from a clean branch off the accepted `R4` closeout line
+  - do not auto-open cross-process continuity, cross-host runtime, runtime AUX activation, offline consolidation, or mediation
+  - if a new program is proposed, lock it in docs before opening code
 
 ## 4. Explicitly blocked moves
 
@@ -57,10 +61,11 @@ It is workflow state only. It does not override the packet documents, implementa
 - Do not reopen `R3` corrective work without a new explicit runtime problem or a new audit finding.
 - Do not widen `R4` into cross-process continuity, cross-host runtime, runtime AUX activation, offline consolidation, or mediation.
 - Do not let `R4` move enforcement or policy ownership into Core.
+- Do not treat the first landed `R4` slice as permission for longer-window feedback history, a generic policy court, or broader runtime widening without a new program lock.
 
 ## 5. Acknowledged worktree noise at ledger update
 
-- The accepted re-closeout head `d0caff6` is clean at `R4` program lock.
+- The accepted `R4` runtime landing `cecd82d` is clean on the current closeout line.
 - The older `codex/e1-verification-substrate-entrypoints` workspace remains mixed and is not the source of truth for this train.
 - Local workspace directories already exist under `.claude/worktrees/`.
 - Re-read `git status --short --untracked-files=all` before opening any new seam; this summary is only the continuity reminder, not the canonical file list.

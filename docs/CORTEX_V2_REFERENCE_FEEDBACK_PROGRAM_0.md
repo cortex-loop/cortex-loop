@@ -1,11 +1,11 @@
 # CORTEX_V2_REFERENCE_FEEDBACK_PROGRAM_0
 
 Date: 2026-03-25
-Status: active runtime-program brief for the first bounded reference closed-loop feedback slice
+Status: accepted re-audited runtime-program brief for the first bounded reference closed-loop feedback slice
 
 ## Purpose
 
-This document opens the next intentional runtime program after the accepted `R1` through `R3` reference shell closeout.
+This document opens and records the closeout of the next intentional runtime program after the accepted `R1` through `R3` reference shell closeout.
 
 The chosen next opening move is:
 
@@ -143,6 +143,17 @@ Every cross-layer seam remains one-session max and must end on a clean tree befo
 - targeted tests pass twice,
 - `make seam-preflight`, `make test-smoke`, and `make verify` pass,
 - and the `R4` phase-gate row is honestly closed.
+
+## Current accepted state after `R4` closeout
+
+At the accepted `R4` runtime landing `cecd82d`:
+
+- the runtime session persists only the immediately previous realized shell outcome as `ReferenceRealizationFeedback`,
+- the executive builder uses that last-step feedback only through bounded goal-progress uncertainty, contradiction-spike, and brake-pressure updates,
+- the CLI exposes a top-level `control_ledger` with event class, admissible families, selected family, realized family, dominant uncertainty sources, brake state, budget band, and primary reason,
+- `latched` brake enforcement is real at runtime realization time and keeps `selected_family` distinct from `realized_family` when behavior is overridden,
+- lawful `commitment_result_kind` may remain visible even when a `latched-brake-enforced:*` warning is also present,
+- and the zero-finding re-audit bundle has passed for current scope.
 
 ## Explicitly blocked moves
 
