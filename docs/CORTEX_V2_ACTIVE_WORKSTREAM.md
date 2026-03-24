@@ -7,14 +7,15 @@ It is workflow state only. It does not override the packet documents, implementa
 
 ## 1. Accepted baseline
 
-- Accepted baseline branch: `codex/r3c-continuity-reaudit`
-- Accepted baseline commit: `012cc76`
+- Accepted baseline branch: `codex/c0-runtime-corrective-lock`
+- Accepted baseline commit: `2eaf5db`
 - Accepted baseline state:
   - burden-axis re-audit is accepted through the three thrash-host burden slices
   - package-level burden remains `insufficient`
   - mediation remains blocked / not justified
   - verification-ergonomics expansion beyond the accepted post-`E4` boundary is not currently promoted
   - continuation hardening, the Erika support surface, the runtime-program lock, the first accepted reference-host local CLI shell, the first bounded reference executive-state builder, the first bounded reference soft-control scoring/selection layer, the first integrated computed executive slice inside the runtime shell, and the first one-process live continuity slice plus explicit rejection enforcement are accepted on top of the same product truth
+  - the corrective runtime hardening now preserves suspended pending-goal anchors across non-continuity events, explicitly rejects malformed `open`, surfaces session-id mismatch as an explicit contradiction, and keeps lawful commitment truth visible even when continuity rejection is also present
 - Accepted baseline authority anchors:
   - `docs/CORTEX_V2_IMPLEMENTATION_STATUS_NOTE.md`
   - `docs/CORTEX_V2_IMPLEMENTATION_MASTER_PLAN_2.md`
@@ -24,24 +25,23 @@ It is workflow state only. It does not override the packet documents, implementa
 
 ## 2. Current campaign and seam state
 
-- Current campaign: corrective runtime re-hardening after the `012cc76` audit findings
-- Current working branch at ledger update: `codex/c0-runtime-corrective-lock`
-- Current branch role: corrective hardening branch reopening `R3` truth while runtime continuity and correspondence fixes are in flight
-- Current candidate seam: `C0` corrective truth lock
-- Current seam status: `corrective campaign opened / runtime closeout temporarily reopened`
-- Seam risk: shared verification-plumbing plus cross-layer product/runtime corrective work
+- Current campaign: post-corrective zero-finding re-audit from the accepted corrected runtime baseline
+- Current working branch at ledger update: `codex/c4-reference-runtime-recloseout`
+- Current branch role: clean accepted runtime re-closeout branch after the corrective train resolved the audit findings
+- Current candidate seam: none; the corrective train is closed for current scope
+- Current seam status: `accepted baseline / ready for next seam selection`
+- Seam risk: no active seam; the next seam is a new problem selection
 
 ## 3. Next lawful move
 
 - Corrective runtime re-hardening answer:
-  - the audit found one real runtime continuity bug and one living-correspondence drift issue
-  - the corrective train must resolve those issues plus the remaining session/ordering ambiguities before `R3` is re-closed as audit-clean
-- Next lawful move from this corrective branch:
-  - land the corrective truth lock
-  - harden continuity state preservation and malformed-open rejection
-  - make session mismatch and commitment-vs-continuity coexistence explicit in code, docs, and tests
-  - repair the stale correspondence comparison rows
-  - rerun the full zero-finding re-audit bundle before re-closing `R3`
+  - the pending-goal anchor-loss bug is resolved
+  - the living-correspondence drift is resolved
+  - session mismatch and commitment-vs-continuity coexistence are now explicit in code, docs, and tests
+  - the zero-finding re-audit bundle passed from the corrected runtime baseline
+- Next lawful move from this clean accepted head:
+  - stop and choose the next real problem intentionally
+  - do not treat the corrected `R3` closeout as permission to widen into broader runtime programs by inertia
 
 ## 4. Explicitly blocked moves
 
@@ -52,11 +52,11 @@ It is workflow state only. It does not override the packet documents, implementa
 - Do not let support-surface documents silently redefine packet or status authority.
 - Do not automatically open feedback, multi-host runtime, runtime AUX activation, offline consolidation, or mediation implementation from the success of `R3`.
 - Do not open Gemini/OpenAI runtime, cross-host runtime, runtime AUX activation, offline consolidation, or mediation implementation from this reference runtime-shell line.
-- Do not treat the current `R3` phase-gate closure as final truth until the corrective train re-closes it from a zero-finding audit.
+- Do not reopen `R3` corrective work without a new explicit runtime problem or a new audit finding.
 
 ## 5. Acknowledged worktree noise at ledger update
 
-- The accepted `012cc76` closeout head is clean at corrective-train open.
+- The accepted corrective-hardening head `2eaf5db` is clean at re-closeout.
 - The older `codex/e1-verification-substrate-entrypoints` workspace remains mixed and is not the source of truth for this train.
 - Local workspace directories already exist under `.claude/worktrees/`.
 - Re-read `git status --short --untracked-files=all` before opening any new seam; this summary is only the continuity reminder, not the canonical file list.

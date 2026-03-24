@@ -1,7 +1,7 @@
 # CORTEX_V2_REFERENCE_RUNTIME_PROGRAM_0
 
 Date: 2026-03-25
-Status: active corrective runtime-program brief for the first live Cortex shell
+Status: active re-hardened runtime-program brief for the first live Cortex shell
 
 ## Purpose
 
@@ -145,22 +145,18 @@ Corrective ordering law:
 - repeated reruns pass,
 - and the phase-gate row for `R3` is honestly closed
 
-## Current corrective state after the audit findings
+## Current accepted state after corrective closeout
 
-At corrective-train open from `012cc76`:
+At the accepted post-corrective baseline `2eaf5db`:
 
 - the first accepted reference-host local CLI shell is real,
 - the first bounded computed executive slice is real inside that shell,
-- the first one-process live continuity slice plus explicit rejection enforcement are real enough to keep as the program center,
-- but the closeout is temporarily reopened because the audit found one real runtime continuity bug and one living-correspondence drift issue,
-- and the program is now in corrective re-hardening rather than widened scope.
-
-Corrective hardening must additionally make these truths explicit:
-
-- non-continuity events may merge pending-goal refs, but may not silently erase suspended resume anchors,
-- malformed `open` requests must be explicitly rejected instead of clearing continuity anchors by accident,
-- a mismatched runtime `session_id` is an explicit contradiction and may not silently reassign the one-process shell,
-- and a lawful `commitment_result_kind` may coexist with a rejected continuity transition on the same event when certification evidence remains sufficient.
+- the first one-process live continuity slice plus explicit rejection enforcement are real,
+- the corrective runtime hardening now preserves suspended pending-goal anchors across non-continuity events,
+- malformed `open` requests are explicitly rejected instead of clearing continuity anchors by accident,
+- a mismatched runtime `session_id` is surfaced as an explicit contradiction and does not silently reassign the one-process shell,
+- a lawful `commitment_result_kind` may coexist with a rejected continuity transition on the same event when certification evidence remains sufficient,
+- and the corrective zero-finding re-audit has passed for current scope.
 
 This closeout does **not** authorize:
 
