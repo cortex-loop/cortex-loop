@@ -209,11 +209,11 @@ def test_resume_protocol_and_active_workstream_contract_exist() -> None:
     assert "Never promote uncommitted local edits to accepted baseline truth." in agents_text
 
     assert "Status: live workflow-state ledger for compaction-safe continuation." in workstream_text
-    assert "Accepted baseline branch: `codex/r3b-continuity-enforcement`" in workstream_text
-    assert "Accepted baseline commit: `2945585`" in workstream_text
-    assert "Current working branch at ledger update: `codex/r3c-continuity-reaudit`" in workstream_text
-    assert "clean accepted runtime-program closeout branch after `R3` landed for current scope" in workstream_text
-    assert "Current candidate seam: none; the train is stopped pending new problem selection" in workstream_text
+    assert "Accepted baseline branch: `codex/r3c-continuity-reaudit`" in workstream_text
+    assert "Accepted baseline commit: `012cc76`" in workstream_text
+    assert "Current working branch at ledger update: `codex/c0-runtime-corrective-lock`" in workstream_text
+    assert "corrective hardening branch reopening `R3` truth while runtime continuity and correspondence fixes are in flight" in workstream_text
+    assert "Current candidate seam: `C0` corrective truth lock" in workstream_text
     assert "Do not treat the mixed `codex/e1-verification-substrate-entrypoints` worktree as accepted truth." in workstream_text
     assert "git branch --show-current" in workstream_text
     assert "git status --short --untracked-files=all" in workstream_text
@@ -240,13 +240,15 @@ def test_reference_runtime_program_lock_is_recorded() -> None:
     assert "`R3` reference live continuity slice" in phase_gate_text
     assert "the first accepted reference-host local CLI shell is landed" in phase_gate_text
     assert "the first bounded `X_t^{ref}` builder, `U_t^{sre}` scoring/selection layer, and runtime-shell integration are landed" in phase_gate_text
-    assert "the first one-process live continuity law and explicit rejection enforcement are landed on the reference-host CLI shell" in phase_gate_text
+    assert "corrective re-hardening is open" in phase_gate_text
+    assert "pending-goal anchor-loss bug" in phase_gate_text
 
-    assert "Current campaign: post-closeout runtime re-audit from the accepted reference continuity baseline" in workstream_text
-    assert "R3` stop-gate re-audit answer:" in workstream_text
-    assert "the first reference-host runtime shell, the first computed executive slice, and the first live continuity slice are now real for current scope" in workstream_text
-    assert "stop and choose the next real problem intentionally" in workstream_text
-    assert "the first one-process live continuity slice with explicit rejection enforcement is real" in program_text
+    assert "Current campaign: corrective runtime re-hardening after the `012cc76` audit findings" in workstream_text
+    assert "the audit found one real runtime continuity bug and one living-correspondence drift issue" in workstream_text
+    assert "the current `R3` phase-gate closure as final truth until the corrective train re-closes it" in workstream_text
+    assert "the first one-process live continuity slice plus explicit rejection enforcement are real enough to keep as the program center" in program_text
+    assert "malformed `open` requests must be explicitly rejected" in program_text
+    assert "a lawful `commitment_result_kind` may coexist with a rejected continuity transition" in program_text
 
 
 def test_erika_visualizations_are_framed_as_support_surfaces() -> None:

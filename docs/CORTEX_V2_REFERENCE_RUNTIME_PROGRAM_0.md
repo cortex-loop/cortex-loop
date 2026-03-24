@@ -1,7 +1,7 @@
 # CORTEX_V2_REFERENCE_RUNTIME_PROGRAM_0
 
 Date: 2026-03-25
-Status: active post-closeout runtime-program brief for the first live Cortex shell
+Status: active corrective runtime-program brief for the first live Cortex shell
 
 ## Purpose
 
@@ -137,14 +137,22 @@ It may not:
 - repeated reruns pass,
 - and the phase-gate row for `R3` is honestly closed
 
-## Current accepted state after `R3` closeout
+## Current corrective state after the audit findings
 
-At the accepted post-`R3B` baseline:
+At corrective-train open from `012cc76`:
 
 - the first accepted reference-host local CLI shell is real,
 - the first bounded computed executive slice is real inside that shell,
-- the first one-process live continuity slice with explicit rejection enforcement is real,
-- and the runtime program is now stopped for re-audit rather than widened by inertia.
+- the first one-process live continuity slice plus explicit rejection enforcement are real enough to keep as the program center,
+- but the closeout is temporarily reopened because the audit found one real runtime continuity bug and one living-correspondence drift issue,
+- and the program is now in corrective re-hardening rather than widened scope.
+
+Corrective hardening must additionally make these truths explicit:
+
+- non-continuity events may merge pending-goal refs, but may not silently erase suspended resume anchors,
+- malformed `open` requests must be explicitly rejected instead of clearing continuity anchors by accident,
+- a mismatched runtime `session_id` is an explicit contradiction and may not silently reassign the one-process shell,
+- and a lawful `commitment_result_kind` may coexist with a rejected continuity transition on the same event when certification evidence remains sufficient.
 
 This closeout does **not** authorize:
 
