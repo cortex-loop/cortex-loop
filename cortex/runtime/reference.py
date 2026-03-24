@@ -145,6 +145,77 @@ class ReferenceRuntimeSession:
 
 
 @dataclass(frozen=True, slots=True)
+class ReferenceControlLedger:
+    event_class: str
+    admissible_families: tuple[SoftControlFamily, ...]
+    selected_family: SoftControlFamily
+    realized_family: SoftControlFamily
+    dominant_uncertainty_sources: tuple[str, ...]
+    brake_state: BrakeState
+    budget_band: str
+    primary_reason: str | None = None
+
+    def __post_init__(self) -> None:
+        if not (isinstance(self.event_class, str) and self.event_class.strip()):
+            raise ValueError(
+                "ReferenceControlLedger.event_class must be non-empty after trimming."
+            )
+        if any(not isinstance(family, SoftControlFamily) for family in self.admissible_families):
+            raise TypeError(
+                "ReferenceControlLedger.admissible_families must contain only SoftControlFamily instances."
+            )
+        if not isinstance(self.selected_family, SoftControlFamily):
+            actual_type = type(self.selected_family).__name__
+            raise TypeError(
+                "ReferenceControlLedger.selected_family must be SoftControlFamily, "
+                f"got {actual_type}."
+            )
+        if not isinstance(self.realized_family, SoftControlFamily):
+            actual_type = type(self.realized_family).__name__
+            raise TypeError(
+                "ReferenceControlLedger.realized_family must be SoftControlFamily, "
+                f"got {actual_type}."
+            )
+        if any(
+            not (isinstance(source, str) and source.strip())
+            for source in self.dominant_uncertainty_sources
+        ):
+            raise ValueError(
+                "ReferenceControlLedger.dominant_uncertainty_sources must contain only non-empty values after trimming."
+            )
+        if not isinstance(self.brake_state, BrakeState):
+            actual_type = type(self.brake_state).__name__
+            raise TypeError(
+                "ReferenceControlLedger.brake_state must be BrakeState, "
+                f"got {actual_type}."
+            )
+        if not (isinstance(self.budget_band, str) and self.budget_band.strip()):
+            raise ValueError(
+                "ReferenceControlLedger.budget_band must be non-empty after trimming."
+            )
+        if self.primary_reason is not None and not (
+            isinstance(self.primary_reason, str) and self.primary_reason.strip()
+        ):
+            raise ValueError(
+                "ReferenceControlLedger.primary_reason must be non-empty after trimming when provided."
+            )
+
+    def as_summary(self) -> dict[str, Any]:
+        return {
+            "event_class": self.event_class,
+            "admissible_families": [
+                family.value for family in self.admissible_families
+            ],
+            "selected_family": self.selected_family.value,
+            "realized_family": self.realized_family.value,
+            "dominant_uncertainty_sources": list(self.dominant_uncertainty_sources),
+            "brake_state": self.brake_state.value,
+            "budget_band": self.budget_band,
+            "primary_reason": self.primary_reason,
+        }
+
+
+@dataclass(frozen=True, slots=True)
 class ReferenceRuntimeStepResult:
     event_index: int
     bound_event: BoundReferenceHostEvent
@@ -153,6 +224,7 @@ class ReferenceRuntimeStepResult:
     selected_family: SoftControlFamily
     realized_family: SoftControlFamily
     brake_state: BrakeState
+    control_ledger: ReferenceControlLedger
     warnings: tuple[str, ...] = field(default_factory=tuple)
     session: ReferenceRuntimeSession = field(default_factory=ReferenceRuntimeSession)
     commitment_result_kind: str | None = None
@@ -202,6 +274,12 @@ class ReferenceRuntimeStepResult:
                 "ReferenceRuntimeStepResult.brake_state must be BrakeState, "
                 f"got {actual_type}."
             )
+        if not isinstance(self.control_ledger, ReferenceControlLedger):
+            actual_type = type(self.control_ledger).__name__
+            raise TypeError(
+                "ReferenceRuntimeStepResult.control_ledger must be ReferenceControlLedger, "
+                f"got {actual_type}."
+            )
         if any(not (isinstance(warning, str) and warning.strip()) for warning in self.warnings):
             raise ValueError(
                 "ReferenceRuntimeStepResult.warnings must contain only non-empty values after trimming."
@@ -246,6 +324,10 @@ class ReferenceRuntimeStepResult:
             "active_track_ref": self.executive_state.goal_continuity.active_track_ref,
             "pending_goal_refs": list(self.executive_state.goal_continuity.pending_goal_refs),
         }
+
+    @property
+    def control_ledger_summary(self) -> dict[str, Any]:
+        return self.control_ledger.as_summary()
 
 
 def run_reference_runtime_step(
@@ -342,6 +424,16 @@ def run_reference_runtime_step(
     selected_family = selection.selected_family
     realized_family = selected_family
     brake_state = executive_state.brake.brake_state
+    control_ledger = ReferenceControlLedger(
+        event_class=dispatch_decision.lane.value,
+        admissible_families=_admissible_families(executive_state),
+        selected_family=selected_family,
+        realized_family=realized_family,
+        dominant_uncertainty_sources=_dominant_uncertainty_sources(executive_state),
+        brake_state=brake_state,
+        budget_band=executive_state.control_allocation.budget_band,
+        primary_reason=warnings[0] if warnings else None,
+    )
     updated_session = ReferenceRuntimeSession(
         session_id=provisional_session.session_id,
         event_index=provisional_session.event_index,
@@ -374,6 +466,7 @@ def run_reference_runtime_step(
         selected_family=selected_family,
         realized_family=realized_family,
         brake_state=brake_state,
+        control_ledger=control_ledger,
         warnings=warnings,
         session=updated_session,
         commitment_result_kind=commitment_result_kind,
@@ -788,7 +881,28 @@ def _continuity_warning(reason_code: str, subject: str | None) -> str:
     return f"continuity-rejected:{reason_code}:{subject}"
 
 
+def _admissible_families(
+    executive_state: ReferenceExecutiveState,
+) -> tuple[SoftControlFamily, ...]:
+    admissible: list[SoftControlFamily] = []
+    for family in SoftControlFamily:
+        if family is SoftControlFamily.NEUTRAL or family in executive_state.mode_and_gating.family_mask:
+            admissible.append(family)
+    return tuple(admissible)
+
+
+def _dominant_uncertainty_sources(
+    executive_state: ReferenceExecutiveState,
+) -> tuple[str, ...]:
+    ranked = sorted(
+        executive_state.uncertainty_monitoring.classwise_uncertainty,
+        key=lambda estimate: (-estimate.level, estimate.class_tag),
+    )
+    return tuple(estimate.class_tag for estimate in ranked[:2])
+
+
 __all__ = [
+    "ReferenceControlLedger",
     "ReferenceRuntimeSession",
     "ReferenceRuntimeStepResult",
     "run_reference_runtime_step",

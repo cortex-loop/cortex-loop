@@ -19,6 +19,7 @@ EXPECTED_RECORD_KEYS = {
     "selected_family",
     "brake_state",
     "executive_state_summary",
+    "control_ledger",
     "warnings",
     "session_summary",
     "commitment_result_kind",
@@ -66,6 +67,26 @@ def test_reference_runtime_cli_reads_event_file_and_emits_one_record_per_event()
         "medium",
         "high",
     ]
+    assert [record["control_ledger"]["event_class"] for record in records] == [
+        "cheap",
+        "candidate-bearing",
+        "full-commitment",
+    ]
+    assert [record["control_ledger"]["selected_family"] for record in records] == [
+        "neutral",
+        "neutral",
+        "neutral",
+    ]
+    assert [record["control_ledger"]["realized_family"] for record in records] == [
+        "neutral",
+        "neutral",
+        "neutral",
+    ]
+    assert [record["control_ledger"]["brake_state"] for record in records] == [
+        "quiescent",
+        "quiescent",
+        "quiescent",
+    ]
     assert [record["commitment_result_kind"] for record in records] == [
         None,
         None,
@@ -79,6 +100,28 @@ def test_reference_runtime_cli_reads_event_file_and_emits_one_record_per_event()
         "shell-high",
     ]
     assert records[-1]["executive_state_summary"]["top_family_set"] == ["neutral"]
+    assert tuple(records[-1]) == (
+        "event_index",
+        "native_event_name",
+        "dispatch_lane",
+        "selected_family",
+        "brake_state",
+        "executive_state_summary",
+        "control_ledger",
+        "warnings",
+        "session_summary",
+        "commitment_result_kind",
+    )
+    assert tuple(records[-1]["control_ledger"]) == (
+        "event_class",
+        "admissible_families",
+        "selected_family",
+        "realized_family",
+        "dominant_uncertainty_sources",
+        "brake_state",
+        "budget_band",
+        "primary_reason",
+    )
 
 
 def test_reference_runtime_cli_reads_stdin_and_preserves_locked_output_contract() -> None:

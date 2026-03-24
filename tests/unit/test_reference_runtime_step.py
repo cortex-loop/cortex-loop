@@ -41,6 +41,16 @@ def test_reference_runtime_step_result_surfaces_cheap_reference_event_without_co
     assert result.brake_state is BrakeState.QUIESCENT
     assert result.executive_state_summary["mode_tag"] == "pass_through"
     assert result.executive_state_summary["budget_band"] == "low"
+    assert result.control_ledger_summary == {
+        "event_class": "cheap",
+        "admissible_families": ["neutral", "check"],
+        "selected_family": "neutral",
+        "realized_family": "neutral",
+        "dominant_uncertainty_sources": ["environment", "goal-progress"],
+        "brake_state": "quiescent",
+        "budget_band": "low",
+        "primary_reason": None,
+    }
     assert result.commitment_result_kind is None
     assert result.session.session_id == "session-1"
     assert result.session.active_track_ref == "main"
@@ -83,6 +93,12 @@ def test_reference_runtime_step_result_keeps_candidate_bearing_event_candidate_o
     assert second.session.brake_history == ("quiescent", "quiescent")
     assert second.executive_state_summary["mode_tag"] == "review_pending"
     assert second.executive_state_summary["budget_band"] == "medium"
+    assert second.control_ledger_summary["event_class"] == "candidate-bearing"
+    assert second.control_ledger_summary["admissible_families"] == ["neutral", "check"]
+    assert second.control_ledger_summary["dominant_uncertainty_sources"] == [
+        "evidence",
+        "environment",
+    ]
     assert second.session.last_commitment_result_summary == "candidate-only"
     assert second.session.last_realization_feedback is not None
     assert second.session.last_realization_feedback.commitment_result_kind is None
@@ -108,6 +124,16 @@ def test_reference_runtime_step_result_certifies_full_commitment_when_runtime_pa
     assert result.brake_state is BrakeState.QUIESCENT
     assert result.executive_state_summary["mode_tag"] == "commitment_path"
     assert result.executive_state_summary["budget_band"] == "high"
+    assert result.control_ledger_summary == {
+        "event_class": "full-commitment",
+        "admissible_families": ["neutral", "check"],
+        "selected_family": "neutral",
+        "realized_family": "neutral",
+        "dominant_uncertainty_sources": ["evidence", "environment"],
+        "brake_state": "quiescent",
+        "budget_band": "high",
+        "primary_reason": None,
+    }
     assert result.session.active_track_ref == "main"
     assert result.session.budget_history == ("shell-high",)
     assert result.session.last_commitment_result_summary == "certified"

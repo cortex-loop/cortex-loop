@@ -18,6 +18,7 @@ _OUTPUT_KEYS = (
     "selected_family",
     "brake_state",
     "executive_state_summary",
+    "control_ledger",
     "warnings",
     "session_summary",
     "commitment_result_kind",
@@ -39,6 +40,7 @@ def build_reference_cli_record(step_result: ReferenceRuntimeStepResult) -> dict[
         "selected_family": step_result.selected_family.value,
         "brake_state": step_result.brake_state.value,
         "executive_state_summary": step_result.executive_state_summary,
+        "control_ledger": step_result.control_ledger_summary,
         "warnings": list(step_result.warnings),
         "session_summary": step_result.session_summary,
         "commitment_result_kind": step_result.commitment_result_kind,
@@ -60,7 +62,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     try:
         lines = _input_lines(args.event_file)
         for record in _run_reference_cli_lines(lines):
-            print(json.dumps(record, sort_keys=True))
+            print(json.dumps(record))
     except (FileNotFoundError, OSError, TypeError, ValueError) as exc:
         print(f"reference_cli error: {exc}", file=sys.stderr)
         return 1

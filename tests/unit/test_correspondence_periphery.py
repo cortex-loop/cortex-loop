@@ -623,6 +623,21 @@ EXPECTATIONS = (
         ),
     ),
     PeripheryCorrespondenceExpectation(
+        row_label="ReferenceControlLedger",
+        home_path="cortex/runtime/reference.py",
+        module_path="cortex.runtime.reference",
+        symbol_name="ReferenceControlLedger",
+        promised_surfaces=(
+            PromisedTestSurface(
+                test_file="tests/unit/test_reference_runtime_step.py",
+                test_names=(
+                    "test_reference_runtime_step_result_surfaces_cheap_reference_event_without_commitment_kind",
+                    "test_reference_runtime_step_result_certifies_full_commitment_when_runtime_payload_supplies_artifact_ref",
+                ),
+            ),
+        ),
+    ),
+    PeripheryCorrespondenceExpectation(
         row_label="ReferenceRuntimeSession",
         home_path="cortex/runtime/reference.py",
         module_path="cortex.runtime.reference",
