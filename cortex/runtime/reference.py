@@ -287,10 +287,13 @@ def run_reference_runtime_step(
         next_branch_registry,
         next_active_track_ref,
         next_pending_goal_refs,
+        continuity_warnings,
+        continuity_reminders,
     ) = _apply_continuity_update(
         prior_session,
         normalized_payload,
     )
+    warnings = merge_warnings(warnings, continuity_warnings)
     provisional_session = ReferenceRuntimeSession(
         session_id=_resolve_session_id(prior_session, normalized_payload),
         event_index=prior_session.event_index + 1,
@@ -309,6 +312,7 @@ def run_reference_runtime_step(
             bound_event=bound_event,
             dispatch_decision=dispatch_decision,
             warnings=warnings,
+            reminders=continuity_reminders,
         ),
         _build_executive_environment_view(normalized_payload),
         provisional_session,
@@ -366,18 +370,26 @@ def _resolve_session_id(
 def _apply_continuity_update(
     prior_session: ReferenceRuntimeSession,
     normalized_payload: Mapping[str, Any],
-) -> tuple[tuple[str, ...], str, tuple[str, ...]]:
+) -> tuple[tuple[str, ...], str, tuple[str, ...], tuple[str, ...], tuple[str, ...]]:
     operation = _branch_operation(normalized_payload)
     branch_registry = list(prior_session.branch_registry)
     active_track_ref = prior_session.active_track_ref
     pending_goal_refs = list(prior_session.pending_goal_refs)
     branch_track_ref = _continuity_track_ref(normalized_payload)
     payload_goal_refs = _pending_goal_refs_from_payload(normalized_payload)
+    warnings: tuple[str, ...] = ()
+    reminders: tuple[str, ...] = ()
 
     if operation is None:
         if payload_goal_refs:
             pending_goal_refs = _merge_unique_refs((), payload_goal_refs)
-        return tuple(branch_registry), active_track_ref, tuple(pending_goal_refs)
+        return (
+            tuple(branch_registry),
+            active_track_ref,
+            tuple(pending_goal_refs),
+            warnings,
+            reminders,
+        )
 
     if operation is BranchOperation.OPEN:
         if branch_track_ref is not None and branch_track_ref not in branch_registry:
@@ -385,35 +397,107 @@ def _apply_continuity_update(
             active_track_ref = branch_track_ref
         pending_goal_refs = _merge_unique_refs((), payload_goal_refs)
     elif operation is BranchOperation.SUSPEND:
-        if branch_track_ref is not None and branch_track_ref in branch_registry:
-            active_track_ref = "main"
-            pending_goal_refs = _merge_unique_refs(
-                tuple(pending_goal_refs),
-                (branch_track_ref, *payload_goal_refs),
+        if (
+            branch_track_ref is None
+            or branch_track_ref not in branch_registry
+            or active_track_ref != branch_track_ref
+        ):
+            warnings = (_continuity_warning("missing-active-branch", branch_track_ref),)
+            return (
+                tuple(prior_session.branch_registry),
+                prior_session.active_track_ref,
+                tuple(prior_session.pending_goal_refs),
+                warnings,
+                reminders,
             )
+        active_track_ref = "main"
+        pending_goal_refs = _merge_unique_refs(
+            tuple(pending_goal_refs),
+            (branch_track_ref, *payload_goal_refs),
+        )
     elif operation is BranchOperation.RESUME:
-        if branch_track_ref is not None and branch_track_ref in branch_registry:
-            active_track_ref = branch_track_ref
-            pending_goal_refs = [
-                goal_ref for goal_ref in pending_goal_refs if goal_ref != branch_track_ref
-            ]
-            pending_goal_refs = _merge_unique_refs(tuple(pending_goal_refs), payload_goal_refs)
+        if branch_track_ref is None or branch_track_ref not in branch_registry:
+            warnings = (_continuity_warning("missing-active-branch", branch_track_ref),)
+            return (
+                tuple(prior_session.branch_registry),
+                prior_session.active_track_ref,
+                tuple(prior_session.pending_goal_refs),
+                warnings,
+                reminders,
+            )
+        if branch_track_ref not in pending_goal_refs:
+            warnings = (_continuity_warning("missing-resume-anchor", branch_track_ref),)
+            reminders = ("resume-anchor-missing",)
+            return (
+                tuple(prior_session.branch_registry),
+                prior_session.active_track_ref,
+                tuple(prior_session.pending_goal_refs),
+                warnings,
+                reminders,
+            )
+        active_track_ref = branch_track_ref
+        pending_goal_refs = [
+            goal_ref for goal_ref in pending_goal_refs if goal_ref != branch_track_ref
+        ]
+        pending_goal_refs = _merge_unique_refs(tuple(pending_goal_refs), payload_goal_refs)
     elif operation is BranchOperation.MERGE:
-        if branch_track_ref is not None and branch_track_ref in branch_registry:
-            branch_registry = [
-                branch_ref for branch_ref in branch_registry if branch_ref != branch_track_ref
-            ]
-            if not branch_registry:
-                branch_registry = ["main"]
-            active_track_ref = _merge_target_ref(normalized_payload) or "main"
-            pending_goal_refs = [
-                goal_ref for goal_ref in pending_goal_refs if goal_ref != branch_track_ref
-            ]
-            pending_goal_refs = _merge_unique_refs(tuple(pending_goal_refs), payload_goal_refs)
+        if branch_track_ref is None or branch_track_ref not in branch_registry:
+            warnings = (_continuity_warning("missing-active-branch", branch_track_ref),)
+            return (
+                tuple(prior_session.branch_registry),
+                prior_session.active_track_ref,
+                tuple(prior_session.pending_goal_refs),
+                warnings,
+                reminders,
+            )
+        merge_target_ref = _merge_target_ref(normalized_payload)
+        if (
+            merge_target_ref is not None
+            and merge_target_ref != "main"
+            and merge_target_ref not in branch_registry
+        ):
+            warnings = (_continuity_warning("illegal-merge-target", merge_target_ref),)
+            return (
+                tuple(prior_session.branch_registry),
+                prior_session.active_track_ref,
+                tuple(prior_session.pending_goal_refs),
+                warnings,
+                reminders,
+            )
+        if branch_track_ref in pending_goal_refs or active_track_ref != branch_track_ref:
+            warnings = (
+                _continuity_warning(
+                    "continuity-mismatch-after-suspension",
+                    branch_track_ref,
+                ),
+            )
+            return (
+                tuple(prior_session.branch_registry),
+                prior_session.active_track_ref,
+                tuple(prior_session.pending_goal_refs),
+                warnings,
+                reminders,
+            )
+        branch_registry = [
+            branch_ref for branch_ref in branch_registry if branch_ref != branch_track_ref
+        ]
+        if not branch_registry:
+            branch_registry = ["main"]
+        active_track_ref = merge_target_ref or "main"
+        pending_goal_refs = [
+            goal_ref for goal_ref in pending_goal_refs if goal_ref != branch_track_ref
+        ]
+        pending_goal_refs = _merge_unique_refs(tuple(pending_goal_refs), payload_goal_refs)
 
     if active_track_ref != "main" and active_track_ref not in branch_registry:
         active_track_ref = "main"
-    return tuple(branch_registry), active_track_ref, tuple(pending_goal_refs)
+    return (
+        tuple(branch_registry),
+        active_track_ref,
+        tuple(pending_goal_refs),
+        warnings,
+        reminders,
+    )
 
 
 def _build_environment_handle(
@@ -462,6 +546,7 @@ def _build_support_snapshot(
     bound_event: BoundReferenceHostEvent,
     dispatch_decision: DispatchDecision,
     warnings: Sequence[str],
+    reminders: Sequence[str] = (),
 ) -> SupportSnapshot:
     approval_boundary_tags = (
         frozenset({"approval-required"})
@@ -481,6 +566,7 @@ def _build_support_snapshot(
             pending_goal_refs=provisional_session.pending_goal_refs,
             budget_history=provisional_session.budget_history,
             brake_history=provisional_session.brake_history,
+            reminders=tuple(reminders),
         ),
         host=SupportHostState(
             affordance_tags=affordance_tags,
@@ -642,6 +728,12 @@ def _merge_unique_refs(
         if goal_ref not in ordered_refs:
             ordered_refs.append(goal_ref)
     return ordered_refs
+
+
+def _continuity_warning(reason_code: str, subject: str | None) -> str:
+    if subject is None:
+        return f"continuity-rejected:{reason_code}"
+    return f"continuity-rejected:{reason_code}:{subject}"
 
 
 __all__ = [

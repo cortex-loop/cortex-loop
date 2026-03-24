@@ -621,6 +621,7 @@ EXPECTATIONS = (
                 test_file="tests/integration/test_reference_runtime_continuity.py",
                 test_names=(
                     "test_reference_runtime_cli_preserves_open_suspend_resume_merge_continuity_in_one_session",
+                    "test_reference_runtime_cli_rejects_illegal_continuity_transitions_without_mutating_session_truth",
                 ),
             ),
         ),
