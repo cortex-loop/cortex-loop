@@ -2,7 +2,7 @@
 
 **Date:** 2026-03-25
 **Role:** support surface for orientation and planning
-**Accepted factual baseline:** `codex/r1c-reference-cli-loop` at `e877170`
+**Accepted factual baseline:** `codex/r2a-reference-executive-state-builder` at `31e4014`
 
 > This folder tracks three separate things: current accepted repo truth, the north-star product target, and the lawful gap programs required to move from the first toward the second.
 
@@ -44,7 +44,7 @@ If this tracker and the accepted closure status disagree, the accepted closure s
 
 ## 2. Accepted baseline snapshot
 
-The accepted factual baseline for this tracker is the accepted `R1C` runtime-shell state at `e877170`.
+The accepted factual baseline for this tracker is the accepted `R2A` executive-builder state at `31e4014`.
 
 At that accepted baseline:
 
@@ -62,7 +62,7 @@ At that accepted baseline:
 - Blocked on evidence:
   - mediation remains unjustified and unstarted.
 - Current follow-on work is evidence collection and non-feature follow-on work, not silent feature expansion.
-- The reference-host runtime program is now intentionally opened, and the first local CLI shell is accepted on top of the runtime step kernel; the computed executive slice is the next lawful opening move.
+- The reference-host runtime program is now intentionally opened, the first local CLI shell is accepted on top of the runtime step kernel, and the first bounded executive-state builder is accepted on top of that shell; reference-only scoring and selection are the next lawful opening move.
 
 ---
 
@@ -124,11 +124,11 @@ This is the primary day-to-day tracker for "where are we vs. where do I want it 
 | Capability | Desired end-state | Current accepted state | Status | Evidence / authority anchor | Next lawful move |
 | --- | --- | --- | --- | --- | --- |
 | Truth-preserving integrity core | Tiny certifying microkernel preserving commitment truth, provenance, blockedness, and contradiction honesty across hosts | Core typed substrate, commitment carriers, dispatch, certification, provenance helpers, and contradiction-preserving evidence artifacts are landed | landed at current justified boundary | `CORTEX_V2_CORE_2.md`; closure status note; implementation master plan | Keep Core small; open later product/runtime work around it rather than growing a second executive inside it |
-| Reference executive control substrate | Neutral-by-default executive with brake, uncertainty-sensitive intervention, branch and goal discipline, and host-native opportunity pricing | Active SRE reference surfaces are landed for executive state, neutral dominance, uncertainty and brake, goal continuity and branch carriers, and host-native opportunity specialization | landed at current justified boundary | `CORTEX_V2_SRE_2.md`; closure status note | Preserve this as the active reference policy layer; richer computation requires an intentionally opened executive-loop program |
+| Reference executive control substrate | Neutral-by-default executive with brake, uncertainty-sensitive intervention, branch and goal discipline, and host-native opportunity pricing | Active SRE reference surfaces are landed for executive state, neutral dominance, uncertainty and brake, goal continuity and branch carriers, host-native opportunity specialization, and the first bounded executive-state builder over runtime-visible inputs | landed at current justified boundary | `CORTEX_V2_SRE_2.md`; closure status note; accepted `R2A` head | Preserve this as the active reference policy layer; the next honest move is bounded scoring/selection over the newly landed builder |
 | Multi-host typed observation and commitment-path verticals | Live host-native observation/binding and commitment-path verticals across reference, Gemini, OpenAI, and future hosts | Reference, Gemini, and OpenAI host verticals are landed for observe/bind and commitment-path work, plus neutral-only slices | landed at current justified boundary | closure status note; implementation master plan | Open any product/runtime program on top of the landed host-native substrates instead of pretending parity work is already the product |
 | Live runtime / product shell | Real entry points, live host traffic, product shell, and runtime orchestration | The first reference-host local CLI shell is now landed on top of the accepted runtime step kernel, but it remains reference-only, local-only, and intentionally narrow | narrow / typed-carrier only | `docs/CORTEX_V2_REFERENCE_RUNTIME_PROGRAM_0.md`; `docs/CORTEX_V2_MATH_TO_CODE_CORRESPONDENCE.md`; accepted `R1C` head | Open the computed reference executive slice on top of the accepted shell before any multi-host or networked runtime widening |
 | Multi-agent lifecycle continuity | Real multi-agent branch/resume/merge continuity across live orchestration | Goal and branch carriers exist, but real multi-agent lifecycle continuity is not yet a committed product capability | narrow / typed-carrier only | `CORTEX_V2_SRE_2.md`; landed SRE surfaces in the closure status note | Define one live multi-agent continuity slice after the product shell contract exists |
-| Computed executive loop | Goals, uncertainty, allocation, and branch/state transitions computed from events and outcomes rather than mainly carried in typed views | Reference executive surfaces and policy seams exist, but much of the executive loop remains carrier-shaped rather than product-realized computation | narrow / typed-carrier only | `CORTEX_V2_SRE_2.md`; current code shape; closure status note | Open an executive-loop computation program that preserves the Core/SRE boundary and starts from one live event-to-state slice |
+| Computed executive loop | Goals, uncertainty, allocation, and branch/state transitions computed from events and outcomes rather than mainly carried in typed views | The first bounded event-to-state builder is now landed over runtime-visible observation, support, and executive-environment inputs, but scoring/selection and runtime-shell integration are still not landed | narrow / typed-carrier only | `CORTEX_V2_SRE_2.md`; `docs/CORTEX_V2_MATH_TO_CODE_CORRESPONDENCE.md`; accepted `R2A` head | Open the reference-only scoring/selection slice on top of the accepted builder before wiring it into the runtime shell |
 | Enforcing brake and closed-loop feedback | Brake can curtail downstream action when lawful, and outcomes feed back into later executive control | Brake dynamics exist as reference policy, but no accepted closed-loop product behavior is committed | narrow / typed-carrier only | `CORTEX_V2_SRE_2.md`; closure status note | Define one lawful outcome-to-state feedback slice and one enforcement boundary after runtime surfaces exist |
 | Runtime support geometry | Claim-conservative runtime geometry/evaluation supporting retrieval and diagnostics when earned | AUX geometry is official but evaluation-first and runtime-off-by-default | evaluation-first / runtime-off | `CORTEX_V2_AUX_2.md`; closure status note | Keep geometry in evaluation-first mode until an explicit activation program is opened from a stable live loop |
 | Offline consolidation and priors | Offline consolidation, priors, calibration publication, and support-memory programs | Offline consolidation and support-memory publication remain intentionally deferred | deferred | `CORTEX_V2_AUX_2.md`; closure status note | Open only after the live core/SRE loop is stable and support-write surfaces are explicitly defined |
@@ -173,8 +173,8 @@ This is a program map, not a seam queue.
 
 | Program | Why it matters | Lawful now? | Blocked by | Smallest honest next opening move |
 | --- | --- | --- | --- | --- |
-| Product shell / live runtime program | Turns the landed architecture substrate into a live working product | The first accepted reference-host local CLI shell is real, and the runtime ingress/output contract is now committed for one host and one local process | Broader shell work is still blocked by the missing computed executive slice, continuity law, and any decision about wider runtime scope | Open `R2A` and keep the next move bounded to one SRE-owned computed executive-state slice on top of the accepted shell |
-| Executive loop computation program | Converts carrier-shaped SRE views into a computed executive loop | Only as an intentional new program | Event-source contract, state-update contract, and product-shell context are not yet fixed | Define one live event-to-state computation slice that preserves the Core/SRE boundary |
+| Product shell / live runtime program | Turns the landed architecture substrate into a live working product | The first accepted reference-host local CLI shell is real, and the runtime ingress/output contract is committed for one host and one local process | Broader shell work is still blocked by the missing scoring/selection integration, continuity law, and any decision about wider runtime scope | Keep the next move inside `R2B` and `R2C`; do not widen runtime scope before the computed executive slice is finished |
+| Executive loop computation program | Converts carrier-shaped SRE views into a computed executive loop | The first bounded event-to-state slice is now landed | Scoring/selection and runtime-shell integration are still missing, so the program is not yet closed | Open `R2B` and keep it reference-only, bounded, and SRE-owned |
 | Closed-loop feedback and enforcement program | Allows outcomes to influence later control and makes brake more than advisory where lawful | Only after runtime surfaces exist | No accepted runtime outcome loop or enforcement boundary yet | Specify one lawful outcome-to-state feedback carrier and one enforcement point that respects the certification firewall |
 | Runtime AUX activation program | Would turn evaluation-first support into runtime support only if earned | Not yet from the current closed roadmap | AUX remains runtime-off-by-default until the active core/SRE loop is stable | Keep evaluation evidence separate and define explicit activation criteria instead of coding against aspiration |
 | Offline consolidation program | Enables priors, memory compression, and cross-session support learning | No; still intentionally deferred | Stable live loop, support-write doctrine, and publication surfaces are not yet in place | Define write/publication surfaces and cost-visible outputs only after a live loop exists |
@@ -186,7 +186,7 @@ This is a program map, not a seam queue.
 
 This tracker is grounded in:
 
-- the accepted runtime-shell baseline at `e877170`,
+- the accepted executive-builder baseline at `31e4014`,
 - `docs/CORTEX_V2_REFERENCE_RUNTIME_PROGRAM_0.md`,
 - `docs/CORTEX_V2_CORE_2.md`,
 - `docs/CORTEX_V2_SRE_2.md`,
