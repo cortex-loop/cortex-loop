@@ -608,6 +608,49 @@ EXPECTATIONS = (
         ),
     ),
     PeripheryCorrespondenceExpectation(
+        row_label="ReferenceRuntimeSession",
+        home_path="cortex/runtime/reference.py",
+        module_path="cortex.runtime.reference",
+        symbol_name="ReferenceRuntimeSession",
+        promised_surfaces=(
+            PromisedTestSurface(
+                test_file="tests/unit/test_reference_runtime_step.py",
+                test_names=("test_reference_runtime_session_tracks_minimum_live_state",),
+            ),
+        ),
+    ),
+    PeripheryCorrespondenceExpectation(
+        row_label="ReferenceRuntimeStepResult",
+        home_path="cortex/runtime/reference.py",
+        module_path="cortex.runtime.reference",
+        symbol_name="ReferenceRuntimeStepResult",
+        promised_surfaces=(
+            PromisedTestSurface(
+                test_file="tests/unit/test_reference_runtime_step.py",
+                test_names=(
+                    "test_reference_runtime_step_result_surfaces_cheap_reference_event_without_commitment_kind",
+                    "test_reference_runtime_step_result_certifies_full_commitment_when_runtime_payload_supplies_artifact_ref",
+                ),
+            ),
+        ),
+    ),
+    PeripheryCorrespondenceExpectation(
+        row_label="run_reference_runtime_step",
+        home_path="cortex/runtime/reference.py",
+        module_path="cortex.runtime.reference",
+        symbol_name="run_reference_runtime_step",
+        promised_surfaces=(
+            PromisedTestSurface(
+                test_file="tests/unit/test_reference_runtime_step.py",
+                test_names=(
+                    "test_reference_runtime_step_result_surfaces_cheap_reference_event_without_commitment_kind",
+                    "test_reference_runtime_step_result_keeps_candidate_bearing_event_candidate_only",
+                    "test_reference_runtime_step_result_certifies_full_commitment_when_runtime_payload_supplies_artifact_ref",
+                ),
+            ),
+        ),
+    ),
+    PeripheryCorrespondenceExpectation(
         row_label="augment_snapshot",
         home_path="cortex/aux/augmentation.py",
         module_path="cortex.aux.augmentation",

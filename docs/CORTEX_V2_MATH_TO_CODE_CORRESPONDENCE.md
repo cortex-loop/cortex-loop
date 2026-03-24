@@ -236,6 +236,18 @@ Forbidden leaks: no SRE neutral-dominance scoring or soft-control family logic m
 
 ---
 
+### 1.20 Reference runtime shell composition
+
+| Packet math | Is | Code home | Test surface | Status |
+| --- | --- | --- | --- | --- |
+| reference-host live runtime session carrier | `ReferenceRuntimeSession` | `cortex/runtime/reference.py` | `test_reference_runtime_step.py::test_reference_runtime_session_tracks_minimum_live_state` | landed |
+| reference-host runtime step result carrier | `ReferenceRuntimeStepResult` | `cortex/runtime/reference.py` | `test_reference_runtime_step.py::test_reference_runtime_step_result_surfaces_cheap_reference_event_without_commitment_kind` + `test_reference_runtime_step.py::test_reference_runtime_step_result_certifies_full_commitment_when_runtime_payload_supplies_artifact_ref` | landed |
+| reference-host runtime step composition over observe/bind, dispatch, and commitment carriers | `run_reference_runtime_step()` | `cortex/runtime/reference.py` | `test_reference_runtime_step.py::test_reference_runtime_step_result_surfaces_cheap_reference_event_without_commitment_kind` + `test_reference_runtime_step.py::test_reference_runtime_step_result_keeps_candidate_bearing_event_candidate_only` + `test_reference_runtime_step.py::test_reference_runtime_step_result_certifies_full_commitment_when_runtime_payload_supplies_artifact_ref` | landed |
+
+Forbidden leaks: the runtime shell may compose existing reference-host, core, and SRE carriers, but it may not expand Core, introduce multi-host abstraction, fake branch continuity, or launder provisional neutral selection into a computed executive loop. Cheap-path default must remain intact, and commitment result kinds may only surface from the existing certification lattice.
+
+---
+
 ## 2. V1 standard-library port correspondence
 
 ### 2.1 Commitment payload extraction (v1 `stop_payload.py`)
