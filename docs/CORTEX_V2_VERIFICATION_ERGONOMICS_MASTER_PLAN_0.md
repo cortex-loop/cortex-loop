@@ -35,8 +35,8 @@ This plan is a **follow-on campaign**, not an extension of the feature roadmap t
 - `E3` is materially landed for current scope:
   - mechanical correspondence checks already exist for contract, Core, ports, SRE, and periphery surfaces.
 - `E4` is partially landed:
-  - the reference-lane running example now has shared outcome helpers in `tests/integration/_reference_lane.py`,
-  - but contradiction/degradation helper closeout and gate-test dedup remain open.
+  - the reference-lane running example now has shared outcome helpers and shared contradiction/degradation assertions,
+  - but gate-test dedup remains open.
 - `E5` is materially landed for current scope:
   - packet-example and latency evidence revalidation paths are documented,
   - repo-local entry points exist in `Makefile`,
@@ -388,7 +388,7 @@ Current next-work note:
 - E2 is effectively complete.
 - E4 is partially landed.
 - E5 is materially landed for current scope.
-- if the extracted helper surface stays stable under the canonical bundle, `E4B` is the next candidate seam.
+- if the contradiction/degradation helper surface stays stable under the canonical bundle, `E4C` is the next candidate seam.
 
 ### E3
 - E3A landed Core correspondence checks
@@ -512,9 +512,10 @@ Every worker prompt should include:
 
 `E2C` is now landed.
 `E4A` is now landed.
+`E4B` is now landed.
 `E5` is materially landed for current scope.
 
-If the extracted reference helper surface stays stable under the canonical bundle, `E4B` is the next candidate seam.
+If the contradiction/degradation helper surface stays stable under the canonical bundle, `E4C` is the next candidate seam.
 No broader refactor is promoted from this slice.
 That follow-on choice must remain non-feature, behavior-preserving, and verification-first.
 

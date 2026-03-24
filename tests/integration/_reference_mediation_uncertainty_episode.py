@@ -15,6 +15,8 @@ from cortex.sre.families import SoftControlFamily
 from cortex.sre.policy import neutral_dominance_decision
 from cortex.sre.uncertainty import UncertaintyEstimate
 from tests.integration._reference_lane import (
+    assert_reference_commitment_result_preserves_degradation_pair,
+    assert_reference_verdict_status,
     host_surface_degradation_pair,
     provenance_manifest_for,
     reference_environment_handle,
@@ -270,11 +272,14 @@ def _build_resolve_step(
         include_provenance=True,
     )
     assert result.dispatch_decision.lane is DispatchLane.FULL_COMMITMENT
+    assert_reference_verdict_status(result, CommitmentStatus.CERTIFIED)
     assert result.verdict is not None
-    assert result.verdict.status is CommitmentStatus.CERTIFIED
     assert result.verdict.provenance_manifest is not None
-    assert result.verdict.degradation_refs == (degradation,)
-    assert contradiction in result.verdict.contradiction_refs
+    assert_reference_commitment_result_preserves_degradation_pair(
+        result,
+        contradiction,
+        degradation,
+    )
     _assert_selected_check(spec.resolve_check_score, spec.resolve_branch_score)
     brake = evaluate_brake_state(())
     assert brake.state is BrakeState.QUIESCENT
@@ -314,11 +319,14 @@ def _evaluate_uncertainty_commitment(
 
 def _assert_uncertified_result(result, contradiction: ContradictionRecord, degradation: DegradationRecord) -> None:
     assert result.dispatch_decision.lane is DispatchLane.FULL_COMMITMENT
+    assert_reference_verdict_status(result, CommitmentStatus.UNCERTIFIED)
     assert result.verdict is not None
-    assert result.verdict.status is CommitmentStatus.UNCERTIFIED
     assert result.verdict.provenance_manifest is None
-    assert result.verdict.degradation_refs == (degradation,)
-    assert contradiction in result.verdict.contradiction_refs
+    assert_reference_commitment_result_preserves_degradation_pair(
+        result,
+        contradiction,
+        degradation,
+    )
 
 
 def _assert_selected_check(check_score: float, branch_score: float) -> None:

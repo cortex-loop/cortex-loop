@@ -109,8 +109,9 @@ def test_verification_ergonomics_plan_reflects_current_campaign_state() -> None:
     assert "## 13. Current hold note" in text
     assert "`E2C` is now landed." in text
     assert "`E4A` is now landed." in text
+    assert "`E4B` is now landed." in text
     assert "`E5` is materially landed for current scope." in text
-    assert "`E4B` is the next candidate seam." in text
+    assert "`E4C` is the next candidate seam." in text
     assert "### E2C — first coverage baseline artifact" not in text
 
 
