@@ -19,6 +19,12 @@ COVERAGE_BASELINE_NOTE_PATH = (
     REPO_ROOT / "docs" / "CORTEX_V2_COVERAGE_BASELINE_NOTE_0.md"
 )
 ACTIVE_WORKSTREAM_PATH = REPO_ROOT / "docs" / "CORTEX_V2_ACTIVE_WORKSTREAM.md"
+ERIKA_VISUALIZATION_STATUS_PATH = (
+    REPO_ROOT / "docs" / "erika-visualizations" / "CORTEX_EVIDENCE_BASED_STATUS.md"
+)
+ERIKA_VISUALIZATION_HTML_PATH = (
+    REPO_ROOT / "docs" / "erika-visualizations" / "cortex-now-vs-future.html"
+)
 
 
 def _read(path: Path) -> str:
@@ -207,3 +213,29 @@ def test_resume_protocol_and_active_workstream_contract_exist() -> None:
     assert "git branch --show-current" in workstream_text
     assert "git status --short --untracked-files=all" in workstream_text
     assert "Never promote an uncommitted branch head or dirty worktree state to accepted baseline truth." in workstream_text
+
+
+def test_erika_visualizations_are_framed_as_support_surfaces() -> None:
+    markdown_text = _read(ERIKA_VISUALIZATION_STATUS_PATH)
+    html_text = _read(ERIKA_VISUALIZATION_HTML_PATH)
+
+    assert "support surface" in markdown_text
+    assert "current accepted repo truth" in markdown_text
+    assert "north-star product target" in markdown_text
+    assert "lawful gap programs" in markdown_text
+    assert "mechanisms Cortex has already stolen so far" in markdown_text
+    assert "cortex-archival-dossiers/" not in markdown_text
+    assert "Current Justified Boundary" in html_text
+    assert "Gap Programs" in html_text
+    assert "North-Star Cortex" in html_text
+    assert "support surface" in html_text
+    assert "not active authority" in html_text
+    assert "not current committed roadmap" in html_text
+    assert "Biology Tracker: What Cortex Has Stolen So Far" in html_text
+    assert "which brain-inspired mechanisms Cortex has already stolen so far" in html_text
+    assert '<details class="biology-card"' in html_text
+    assert "What we've stolen so far" in html_text
+    assert "What is still partial" in html_text
+    assert "What remains north-star only" in html_text
+    assert "Cortex Complete" not in html_text
+    assert "Today vs Future" not in html_text
