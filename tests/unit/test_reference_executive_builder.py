@@ -38,6 +38,7 @@ def test_build_reference_executive_state_for_cheap_event_stays_pass_through_and_
         ReferenceRuntimeSession(
             session_id="runtime-1",
             event_index=1,
+            active_track_ref="main",
             budget_history=("shell-low",),
             brake_history=("quiescent",),
             last_selected_family=SoftControlFamily.NEUTRAL,
@@ -74,6 +75,7 @@ def test_build_reference_executive_state_for_candidate_bearing_event_surfaces_re
         ReferenceRuntimeSession(
             session_id="runtime-2",
             event_index=2,
+            active_track_ref="main",
             budget_history=("shell-low", "shell-medium"),
             brake_history=("quiescent", "quiescent"),
             last_selected_family=SoftControlFamily.NEUTRAL,
@@ -113,6 +115,7 @@ def test_build_reference_executive_state_for_full_commitment_event_preserves_hig
         ReferenceRuntimeSession(
             session_id="runtime-3",
             event_index=3,
+            active_track_ref="main",
             budget_history=("shell-low", "shell-medium", "shell-high"),
             brake_history=("quiescent", "quiescent", "quiescent"),
             last_selected_family=SoftControlFamily.NEUTRAL,
@@ -158,6 +161,7 @@ def test_build_reference_executive_state_surfaces_guarded_brake_when_snapshot_ha
             session_id="runtime-4",
             event_index=2,
             branch_registry=("main", "review-track"),
+            active_track_ref="review-track",
             budget_history=("shell-low", "shell-medium"),
             brake_history=("quiescent", "guarded"),
             last_selected_family=SoftControlFamily.BRANCH,

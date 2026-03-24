@@ -37,6 +37,7 @@ from cortex.drivers._commitment_common import (
 )
 from cortex.drivers.reference_host import BoundReferenceHostEvent, observe_reference_host_event
 from cortex.drivers.reference_host_commitment import bind_reference_host_candidate
+from cortex.sre.branching import BranchOperation
 from cortex.sre.brake import BrakeState
 from cortex.sre.families import SoftControlFamily
 from cortex.sre.reference_builder import build_reference_executive_state
@@ -51,6 +52,7 @@ class ReferenceRuntimeSession:
     session_id: str | None = None
     event_index: int = 0
     branch_registry: tuple[str, ...] = ("main",)
+    active_track_ref: str = "main"
     pending_goal_refs: tuple[str, ...] = ()
     budget_history: tuple[str, ...] = ()
     brake_history: tuple[str, ...] = ()
@@ -75,6 +77,14 @@ class ReferenceRuntimeSession:
         if any(not (isinstance(ref, str) and ref.strip()) for ref in self.branch_registry):
             raise ValueError(
                 "ReferenceRuntimeSession.branch_registry must contain only non-empty values after trimming."
+            )
+        if not (isinstance(self.active_track_ref, str) and self.active_track_ref.strip()):
+            raise ValueError(
+                "ReferenceRuntimeSession.active_track_ref must be non-empty after trimming."
+            )
+        if self.active_track_ref != "main" and self.active_track_ref not in self.branch_registry:
+            raise ValueError(
+                "ReferenceRuntimeSession.active_track_ref must be `main` or a member of branch_registry."
             )
         if any(not (isinstance(ref, str) and ref.strip()) for ref in self.pending_goal_refs):
             raise ValueError(
@@ -110,6 +120,7 @@ class ReferenceRuntimeSession:
             "session_id": self.session_id,
             "event_index": self.event_index,
             "branch_registry": list(self.branch_registry),
+            "active_track_ref": self.active_track_ref,
             "pending_goal_refs": list(self.pending_goal_refs),
             "budget_history": list(self.budget_history),
             "brake_history": list(self.brake_history),
@@ -272,11 +283,20 @@ def run_reference_runtime_step(
         )
         commitment_result_kind = verdict.status.value
 
+    (
+        next_branch_registry,
+        next_active_track_ref,
+        next_pending_goal_refs,
+    ) = _apply_continuity_update(
+        prior_session,
+        normalized_payload,
+    )
     provisional_session = ReferenceRuntimeSession(
         session_id=_resolve_session_id(prior_session, normalized_payload),
         event_index=prior_session.event_index + 1,
-        branch_registry=prior_session.branch_registry,
-        pending_goal_refs=prior_session.pending_goal_refs,
+        branch_registry=next_branch_registry,
+        active_track_ref=next_active_track_ref,
+        pending_goal_refs=next_pending_goal_refs,
         budget_history=prior_session.budget_history + (_budget_entry_for_lane(dispatch_decision.lane),),
         brake_history=prior_session.brake_history,
         last_selected_family=prior_session.last_selected_family,
@@ -300,6 +320,7 @@ def run_reference_runtime_step(
         session_id=provisional_session.session_id,
         event_index=provisional_session.event_index,
         branch_registry=provisional_session.branch_registry,
+        active_track_ref=provisional_session.active_track_ref,
         pending_goal_refs=provisional_session.pending_goal_refs,
         budget_history=provisional_session.budget_history,
         brake_history=prior_session.brake_history + (brake_state.value,),
@@ -340,6 +361,59 @@ def _resolve_session_id(
 ) -> str | None:
     payload_session_id = _as_non_empty_string(normalized_payload.get("session_id"))
     return prior_session.session_id or payload_session_id
+
+
+def _apply_continuity_update(
+    prior_session: ReferenceRuntimeSession,
+    normalized_payload: Mapping[str, Any],
+) -> tuple[tuple[str, ...], str, tuple[str, ...]]:
+    operation = _branch_operation(normalized_payload)
+    branch_registry = list(prior_session.branch_registry)
+    active_track_ref = prior_session.active_track_ref
+    pending_goal_refs = list(prior_session.pending_goal_refs)
+    branch_track_ref = _continuity_track_ref(normalized_payload)
+    payload_goal_refs = _pending_goal_refs_from_payload(normalized_payload)
+
+    if operation is None:
+        if payload_goal_refs:
+            pending_goal_refs = _merge_unique_refs((), payload_goal_refs)
+        return tuple(branch_registry), active_track_ref, tuple(pending_goal_refs)
+
+    if operation is BranchOperation.OPEN:
+        if branch_track_ref is not None and branch_track_ref not in branch_registry:
+            branch_registry.append(branch_track_ref)
+            active_track_ref = branch_track_ref
+        pending_goal_refs = _merge_unique_refs((), payload_goal_refs)
+    elif operation is BranchOperation.SUSPEND:
+        if branch_track_ref is not None and branch_track_ref in branch_registry:
+            active_track_ref = "main"
+            pending_goal_refs = _merge_unique_refs(
+                tuple(pending_goal_refs),
+                (branch_track_ref, *payload_goal_refs),
+            )
+    elif operation is BranchOperation.RESUME:
+        if branch_track_ref is not None and branch_track_ref in branch_registry:
+            active_track_ref = branch_track_ref
+            pending_goal_refs = [
+                goal_ref for goal_ref in pending_goal_refs if goal_ref != branch_track_ref
+            ]
+            pending_goal_refs = _merge_unique_refs(tuple(pending_goal_refs), payload_goal_refs)
+    elif operation is BranchOperation.MERGE:
+        if branch_track_ref is not None and branch_track_ref in branch_registry:
+            branch_registry = [
+                branch_ref for branch_ref in branch_registry if branch_ref != branch_track_ref
+            ]
+            if not branch_registry:
+                branch_registry = ["main"]
+            active_track_ref = _merge_target_ref(normalized_payload) or "main"
+            pending_goal_refs = [
+                goal_ref for goal_ref in pending_goal_refs if goal_ref != branch_track_ref
+            ]
+            pending_goal_refs = _merge_unique_refs(tuple(pending_goal_refs), payload_goal_refs)
+
+    if active_track_ref != "main" and active_track_ref not in branch_registry:
+        active_track_ref = "main"
+    return tuple(branch_registry), active_track_ref, tuple(pending_goal_refs)
 
 
 def _build_environment_handle(
@@ -517,6 +591,57 @@ def _as_non_empty_string(value: Any) -> str | None:
         return None
     stripped = value.strip()
     return stripped or None
+
+
+def _branch_operation(normalized_payload: Mapping[str, Any]) -> BranchOperation | None:
+    raw_operation = _as_non_empty_string(normalized_payload.get("branch_operation"))
+    if raw_operation is None:
+        return None
+    try:
+        return BranchOperation(raw_operation)
+    except ValueError:
+        return None
+
+
+def _continuity_track_ref(normalized_payload: Mapping[str, Any]) -> str | None:
+    branch_track_ref = _as_non_empty_string(normalized_payload.get("branch_track_ref"))
+    if branch_track_ref is not None:
+        return branch_track_ref
+    active_track_ref = _as_non_empty_string(normalized_payload.get("active_track_ref"))
+    if active_track_ref == "main":
+        return None
+    return active_track_ref
+
+
+def _merge_target_ref(normalized_payload: Mapping[str, Any]) -> str | None:
+    return _as_non_empty_string(normalized_payload.get("merge_target_ref"))
+
+
+def _pending_goal_refs_from_payload(normalized_payload: Mapping[str, Any]) -> tuple[str, ...]:
+    value = normalized_payload.get("pending_goal_refs")
+    if not isinstance(value, Sequence) or isinstance(value, (str, bytes, bytearray)):
+        return ()
+
+    refs: list[str] = []
+    for item in value:
+        goal_ref = _as_non_empty_string(item)
+        if goal_ref is not None and goal_ref not in refs:
+            refs.append(goal_ref)
+    return tuple(refs)
+
+
+def _merge_unique_refs(
+    existing_refs: tuple[str, ...],
+    incoming_refs: Sequence[str],
+) -> list[str]:
+    ordered_refs: list[str] = []
+    for goal_ref in existing_refs:
+        if goal_ref not in ordered_refs:
+            ordered_refs.append(goal_ref)
+    for goal_ref in incoming_refs:
+        if goal_ref not in ordered_refs:
+            ordered_refs.append(goal_ref)
+    return ordered_refs
 
 
 __all__ = [

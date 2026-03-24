@@ -617,6 +617,12 @@ EXPECTATIONS = (
                 test_file="tests/unit/test_reference_runtime_step.py",
                 test_names=("test_reference_runtime_session_tracks_minimum_live_state",),
             ),
+            PromisedTestSurface(
+                test_file="tests/integration/test_reference_runtime_continuity.py",
+                test_names=(
+                    "test_reference_runtime_cli_preserves_open_suspend_resume_merge_continuity_in_one_session",
+                ),
+            ),
         ),
     ),
     PeripheryCorrespondenceExpectation(
@@ -646,6 +652,12 @@ EXPECTATIONS = (
                     "test_reference_runtime_step_result_surfaces_cheap_reference_event_without_commitment_kind",
                     "test_reference_runtime_step_result_keeps_candidate_bearing_event_candidate_only",
                     "test_reference_runtime_step_result_certifies_full_commitment_when_runtime_payload_supplies_artifact_ref",
+                ),
+            ),
+            PromisedTestSurface(
+                test_file="tests/integration/test_reference_runtime_continuity.py",
+                test_names=(
+                    "test_reference_runtime_cli_preserves_open_suspend_resume_merge_continuity_in_one_session",
                 ),
             ),
         ),

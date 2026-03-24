@@ -23,6 +23,7 @@ from .uncertainty import UncertaintyEstimate
 
 class PriorReferenceRuntimeSessionLike(Protocol):
     branch_registry: tuple[str, ...]
+    active_track_ref: str
     pending_goal_refs: tuple[str, ...]
     budget_history: tuple[str, ...]
     brake_history: tuple[str, ...]
@@ -57,7 +58,7 @@ def build_reference_executive_state(
     branch_registry = _branch_registry(support_snapshot, prior_session)
     pending_goal_refs = _pending_goal_refs(support_snapshot, prior_session)
     missing_resume_anchor = "resume-anchor-missing" in support_snapshot.session.reminders
-    active_track_ref = _active_track_ref(branch_registry)
+    active_track_ref = _active_track_ref(branch_registry, prior_session)
     main_goal_ref = pending_goal_refs[0] if pending_goal_refs else None
     contradiction_spike_flags = _contradiction_spike_flags(support_snapshot, missing_resume_anchor)
 
@@ -146,7 +147,15 @@ def _pending_goal_refs(
     return tuple(ordered_refs)
 
 
-def _active_track_ref(branch_registry: tuple[str, ...]) -> str:
+def _active_track_ref(
+    branch_registry: tuple[str, ...],
+    prior_session: PriorReferenceRuntimeSessionLike | None,
+) -> str:
+    if prior_session is not None:
+        if prior_session.active_track_ref == "main":
+            return "main"
+        if prior_session.active_track_ref in branch_registry:
+            return prior_session.active_track_ref
     for branch_ref in reversed(branch_registry):
         if branch_ref != "main":
             return branch_ref
