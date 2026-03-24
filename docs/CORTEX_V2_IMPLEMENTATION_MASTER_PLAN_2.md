@@ -51,6 +51,7 @@ Build Cortex v2 in the following order:
 
 The architectural success condition is not “all math implemented.”
 It is: **a host-native event loop with a tiny certifying microkernel, a neutral-by-default executive, explicit degradation honesty, contradiction-preserving evidence discipline, and a subagent workflow that reduces context pollution without creating multi-writer chaos.**
+A proper Cortex should also improve operator judgment, not just task completion: it should surface unresolved state early, preserve continuity explicitly, and resist premature forward motion when blocker, branch, or closure truth remains unsettled.
 
 ---
 
