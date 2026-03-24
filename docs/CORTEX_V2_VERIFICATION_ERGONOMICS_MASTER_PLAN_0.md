@@ -34,9 +34,9 @@ This plan is a **follow-on campaign**, not an extension of the feature roadmap t
   - and the first committed baseline artifact is now recorded.
 - `E3` is materially landed for current scope:
   - mechanical correspondence checks already exist for contract, Core, ports, SRE, and periphery surfaces.
-- `E4` is partially landed:
-  - the reference-lane running example now has shared outcome helpers and shared contradiction/degradation assertions,
-  - but gate-test dedup remains open.
+- `E4` is effectively landed for current scope:
+  - the reference-lane running example now has shared outcome helpers, shared contradiction/degradation assertions, and shared neutral verification helpers,
+  - and no broader gate-test dedup is promoted without a separate re-audit.
 - `E5` is materially landed for current scope:
   - packet-example and latency evidence revalidation paths are documented,
   - repo-local entry points exist in `Makefile`,
@@ -386,9 +386,9 @@ Evidence:
 Current next-work note:
 - E1 is effectively complete.
 - E2 is effectively complete.
-- E4 is partially landed.
+- E4 is effectively landed for current scope.
 - E5 is materially landed for current scope.
-- if the contradiction/degradation helper surface stays stable under the canonical bundle, `E4C` is the next candidate seam.
+- re-audit before opening any `E6` seam.
 
 ### E3
 - E3A landed Core correspondence checks
@@ -511,11 +511,10 @@ Every worker prompt should include:
 ## 13. Current hold note
 
 `E2C` is now landed.
-`E4A` is now landed.
-`E4B` is now landed.
+`E4` is now landed for current scope.
 `E5` is materially landed for current scope.
 
-If the contradiction/degradation helper surface stays stable under the canonical bundle, `E4C` is the next candidate seam.
+Re-audit before any `E6`.
 No broader refactor is promoted from this slice.
 That follow-on choice must remain non-feature, behavior-preserving, and verification-first.
 

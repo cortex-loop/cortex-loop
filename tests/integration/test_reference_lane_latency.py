@@ -12,8 +12,6 @@ from pathlib import Path
 
 from cortex.drivers.reference_host_commitment import evaluate_reference_host_commitment
 from cortex.drivers.reference_host_neutral import evaluate_reference_host_neutral
-from cortex.sre.allocation import AllocationScore, AllocationScorecard
-from cortex.sre.families import SoftControlFamily
 from cortex.sre.policy import neutral_dominance_decision
 from tests.integration._reference_lane_latency_evidence import (
     serialize_reference_lane_latency_snapshot,
@@ -22,6 +20,7 @@ from tests.integration._reference_lane import (
     assert_reference_candidate_bearing_without_verdict,
     assert_reference_cheap_path_neutral_allowed,
     assert_reference_full_commitment_certified,
+    assert_reference_neutral_sre_selected,
     candidate_bearing_event,
     cheap_path_event,
     evaluate_reference_candidate_bearing_case,
@@ -29,6 +28,7 @@ from tests.integration._reference_lane import (
     evaluate_reference_full_commitment_case,
     full_commitment_event,
     provenance_manifest_for,
+    reference_neutral_scorecard,
     reference_environment_handle,
 )
 
@@ -111,14 +111,7 @@ class CommittedLatencyEvidence:
 def collect_reference_lane_latency() -> LatencyEvidenceSnapshot:
     environment_handle = reference_environment_handle()
     provenance_manifest = provenance_manifest_for("artifact-1")
-    scorecard = AllocationScorecard(
-        scores=(
-            AllocationScore(SoftControlFamily.NEUTRAL, 1.0),
-            AllocationScore(SoftControlFamily.CHECK, 1.05),
-            AllocationScore(SoftControlFamily.SEEK_CONTEXT, 0.9),
-        ),
-        activation_threshold=0.1,
-    )
+    scorecard = reference_neutral_scorecard()
 
     assert_reference_cheap_path_neutral_allowed(evaluate_reference_cheap_path_case())
     assert_reference_candidate_bearing_without_verdict(
@@ -264,9 +257,8 @@ def _percentile(samples: list[float], percentile: float) -> float:
     return ordered[index]
 
 
-def _assert_neutral_sre_path(scorecard: AllocationScorecard) -> None:
-    decision = neutral_dominance_decision(scorecard)
-    assert decision.selected_family is SoftControlFamily.NEUTRAL
+def _assert_neutral_sre_path(scorecard) -> None:
+    assert_reference_neutral_sre_selected(neutral_dominance_decision(scorecard))
 
 
 def _load_committed_latency_evidence() -> CommittedLatencyEvidence:

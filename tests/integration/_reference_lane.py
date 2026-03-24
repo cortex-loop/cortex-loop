@@ -22,6 +22,8 @@ from cortex.drivers.reference_host_neutral import (
 )
 from cortex.eval.artifacts import CurrentPairFragment
 from cortex.eval.packets import EvaluationPacket
+from cortex.sre.allocation import AllocationScore, AllocationScorecard
+from cortex.sre.families import SoftControlFamily
 
 
 def cheap_path_event(
@@ -222,3 +224,18 @@ def assert_same_verdict(
     with_aux_present: ReferenceHostCommitmentResult,
 ) -> None:
     assert with_aux_present.verdict == baseline.verdict
+
+
+def reference_neutral_scorecard() -> AllocationScorecard:
+    return AllocationScorecard(
+        scores=(
+            AllocationScore(SoftControlFamily.NEUTRAL, 1.0),
+            AllocationScore(SoftControlFamily.CHECK, 1.05),
+            AllocationScore(SoftControlFamily.SEEK_CONTEXT, 0.9),
+        ),
+        activation_threshold=0.1,
+    )
+
+
+def assert_reference_neutral_sre_selected(decision: object) -> None:
+    assert decision.selected_family is SoftControlFamily.NEUTRAL
