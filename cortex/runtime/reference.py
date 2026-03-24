@@ -422,17 +422,23 @@ def run_reference_runtime_step(
     )
     selection = select_reference_soft_control(executive_state)
     selected_family = selection.selected_family
-    realized_family = selected_family
     brake_state = executive_state.brake.brake_state
+    dominant_uncertainty_sources = _dominant_uncertainty_sources(executive_state)
+    realized_family, enforcement_warnings = _realize_family(
+        selected_family,
+        brake_state=brake_state,
+        dominant_uncertainty_sources=dominant_uncertainty_sources,
+    )
+    warnings = merge_warnings(warnings, enforcement_warnings)
     control_ledger = ReferenceControlLedger(
         event_class=dispatch_decision.lane.value,
         admissible_families=_admissible_families(executive_state),
         selected_family=selected_family,
         realized_family=realized_family,
-        dominant_uncertainty_sources=_dominant_uncertainty_sources(executive_state),
+        dominant_uncertainty_sources=dominant_uncertainty_sources,
         brake_state=brake_state,
         budget_band=executive_state.control_allocation.budget_band,
-        primary_reason=warnings[0] if warnings else None,
+        primary_reason=_primary_reason(warnings),
     )
     updated_session = ReferenceRuntimeSession(
         session_id=provisional_session.session_id,
@@ -899,6 +905,43 @@ def _dominant_uncertainty_sources(
         key=lambda estimate: (-estimate.level, estimate.class_tag),
     )
     return tuple(estimate.class_tag for estimate in ranked[:2])
+
+
+def _realize_family(
+    selected_family: SoftControlFamily,
+    *,
+    brake_state: BrakeState,
+    dominant_uncertainty_sources: tuple[str, ...],
+) -> tuple[SoftControlFamily, tuple[str, ...]]:
+    if brake_state is not BrakeState.LATCHED:
+        return selected_family, ()
+    if selected_family in {
+        SoftControlFamily.NEUTRAL,
+        SoftControlFamily.CHECK,
+        SoftControlFamily.BRAKE,
+    }:
+        return selected_family, ()
+
+    if any(
+        source in {"evidence", "environment"}
+        for source in dominant_uncertainty_sources
+    ):
+        realized_family = SoftControlFamily.CHECK
+    else:
+        realized_family = SoftControlFamily.NEUTRAL
+    return (
+        realized_family,
+        (
+            f"latched-brake-enforced:{selected_family.value}:{realized_family.value}",
+        ),
+    )
+
+
+def _primary_reason(warnings: tuple[str, ...]) -> str | None:
+    for warning in warnings:
+        if warning.startswith("latched-brake-enforced:"):
+            return warning
+    return warnings[0] if warnings else None
 
 
 __all__ = [

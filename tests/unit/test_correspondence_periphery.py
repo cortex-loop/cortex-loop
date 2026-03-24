@@ -683,6 +683,8 @@ EXPECTATIONS = (
                     "test_reference_runtime_step_result_surfaces_cheap_reference_event_without_commitment_kind",
                     "test_reference_runtime_step_result_keeps_candidate_bearing_event_candidate_only",
                     "test_reference_runtime_step_result_certifies_full_commitment_when_runtime_payload_supplies_artifact_ref",
+                    "test_reference_runtime_step_enforces_latched_brake_to_check_when_evidence_dominates",
+                    "test_reference_runtime_step_enforces_latched_brake_to_neutral_without_evidence_or_environment",
                 ),
             ),
             PromisedTestSurface(

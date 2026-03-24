@@ -1,5 +1,8 @@
 """Unit tests for the first reference-host runtime step kernel."""
 
+import pytest
+
+import cortex.runtime.reference as reference_runtime
 from cortex.core.dispatch import DispatchLane
 from cortex.runtime.reference import (
     ReferenceRuntimeSession,
@@ -8,6 +11,15 @@ from cortex.runtime.reference import (
 from cortex.sre.brake import BrakeState
 from cortex.sre.feedback import ReferenceRealizationFeedback
 from cortex.sre.families import SoftControlFamily
+from cortex.sre.state import (
+    ReferenceBrakeView,
+    ReferenceControlAllocationView,
+    ReferenceExecutiveState,
+    ReferenceGoalContinuityView,
+    ReferenceModeAndGatingView,
+    ReferenceUncertaintyMonitoringView,
+)
+from cortex.sre.uncertainty import UncertaintyEstimate
 
 
 def test_reference_runtime_session_tracks_minimum_live_state() -> None:
@@ -190,3 +202,140 @@ def test_reference_runtime_step_rejects_mismatched_session_id_without_reassignin
     assert second.warnings == ("session-rejected:mismatched-session-id:session-stable-b",)
     assert second.session.session_id == "session-stable-a"
     assert second.session_summary["session_id"] == "session-stable-a"
+
+
+def test_reference_runtime_step_enforces_latched_brake_to_check_when_evidence_dominates(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(reference_runtime, "build_reference_executive_state", _latched_state_with_evidence)
+    monkeypatch.setattr(
+        reference_runtime,
+        "select_reference_soft_control",
+        lambda executive_state: _selection(SoftControlFamily.BRANCH),
+    )
+
+    result = run_reference_runtime_step(
+        "ApprovalResult",
+        {
+            "session_id": "session-latched-check",
+            "commitment_id": "commit-latched-check",
+            "externally_consequential": True,
+            "result_artifact_ref": "artifact-latched-check",
+        },
+    )
+
+    assert result.selected_family is SoftControlFamily.BRANCH
+    assert result.realized_family is SoftControlFamily.CHECK
+    assert result.warnings == ("latched-brake-enforced:branch:check",)
+    assert result.control_ledger_summary["selected_family"] == "branch"
+    assert result.control_ledger_summary["realized_family"] == "check"
+    assert result.control_ledger_summary["primary_reason"] == "latched-brake-enforced:branch:check"
+    assert result.commitment_result_kind == "certified"
+    assert result.session.last_realization_feedback is not None
+    assert result.session.last_realization_feedback.realized_family is SoftControlFamily.CHECK
+
+
+def test_reference_runtime_step_enforces_latched_brake_to_neutral_without_evidence_or_environment(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(reference_runtime, "build_reference_executive_state", _latched_state_without_evidence)
+    monkeypatch.setattr(
+        reference_runtime,
+        "select_reference_soft_control",
+        lambda executive_state: _selection(SoftControlFamily.ESCALATE),
+    )
+
+    result = run_reference_runtime_step(
+        "ContextLoad",
+        {"session_id": "session-latched-neutral"},
+    )
+
+    assert result.selected_family is SoftControlFamily.ESCALATE
+    assert result.realized_family is SoftControlFamily.NEUTRAL
+    assert result.warnings == ("latched-brake-enforced:escalate:neutral",)
+    assert result.control_ledger_summary["selected_family"] == "escalate"
+    assert result.control_ledger_summary["realized_family"] == "neutral"
+    assert result.control_ledger_summary["primary_reason"] == "latched-brake-enforced:escalate:neutral"
+    assert result.session.last_realization_feedback is not None
+    assert result.session.last_realization_feedback.realized_family is SoftControlFamily.NEUTRAL
+
+
+def _selection(selected_family: SoftControlFamily) -> object:
+    class _Selection:
+        def __init__(self, family: SoftControlFamily) -> None:
+            self.selected_family = family
+
+    return _Selection(selected_family)
+
+
+def _latched_state_with_evidence(*args: object, **kwargs: object) -> ReferenceExecutiveState:
+    return ReferenceExecutiveState(
+        goal_continuity=ReferenceGoalContinuityView(active_track_ref="review-track"),
+        uncertainty_monitoring=ReferenceUncertaintyMonitoringView(
+            classwise_uncertainty=(
+                UncertaintyEstimate(class_tag="evidence", level=0.95),
+                UncertaintyEstimate(class_tag="environment", level=0.75),
+                UncertaintyEstimate(class_tag="host-capability", level=0.2),
+                UncertaintyEstimate(class_tag="goal-progress", level=0.4),
+            )
+        ),
+        mode_and_gating=ReferenceModeAndGatingView(
+            mode_tag="latched_review",
+            family_mask=frozenset(
+                {
+                    SoftControlFamily.NEUTRAL,
+                    SoftControlFamily.CHECK,
+                    SoftControlFamily.BRANCH,
+                    SoftControlFamily.BRAKE,
+                }
+            ),
+        ),
+        control_allocation=ReferenceControlAllocationView(
+            budget_band="high",
+            top_family_set=frozenset(
+                {
+                    SoftControlFamily.NEUTRAL,
+                    SoftControlFamily.BRANCH,
+                    SoftControlFamily.BRAKE,
+                }
+            ),
+        ),
+        brake=ReferenceBrakeView(brake_state=BrakeState.LATCHED),
+    )
+
+
+def _latched_state_without_evidence(*args: object, **kwargs: object) -> ReferenceExecutiveState:
+    return ReferenceExecutiveState(
+        goal_continuity=ReferenceGoalContinuityView(active_track_ref="main"),
+        uncertainty_monitoring=ReferenceUncertaintyMonitoringView(
+            classwise_uncertainty=(
+                UncertaintyEstimate(class_tag="host-capability", level=0.9),
+                UncertaintyEstimate(class_tag="goal-progress", level=0.8),
+                UncertaintyEstimate(class_tag="environment", level=0.2),
+                UncertaintyEstimate(class_tag="evidence", level=0.1),
+            )
+        ),
+        mode_and_gating=ReferenceModeAndGatingView(
+            mode_tag="latched_review",
+            family_mask=frozenset(
+                {
+                    SoftControlFamily.NEUTRAL,
+                    SoftControlFamily.CHECK,
+                    SoftControlFamily.ESCALATE,
+                    SoftControlFamily.BRAKE,
+                }
+            ),
+        ),
+        control_allocation=ReferenceControlAllocationView(
+            budget_band="medium",
+            top_family_set=frozenset(
+                {
+                    SoftControlFamily.NEUTRAL,
+                    SoftControlFamily.ESCALATE,
+                    SoftControlFamily.BRAKE,
+                }
+            ),
+            host_friction_tags=frozenset({"single-process-limit"}),
+        ),
+        brake=ReferenceBrakeView(brake_state=BrakeState.LATCHED),
+    )

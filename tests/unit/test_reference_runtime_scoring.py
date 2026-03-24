@@ -124,6 +124,36 @@ def test_reference_scoring_keeps_masked_family_inadmissible_even_when_top_ranked
     assert selection.selected_family is SoftControlFamily.NEUTRAL
 
 
+def test_reference_scoring_keeps_brake_selected_under_latched_pressure() -> None:
+    selection = select_reference_soft_control(
+        _state(
+            mode_tag="latched_review",
+            family_mask=frozenset(
+                {
+                    SoftControlFamily.NEUTRAL,
+                    SoftControlFamily.CHECK,
+                    SoftControlFamily.BRAKE,
+                    SoftControlFamily.BRANCH,
+                }
+            ),
+            budget_band="high",
+            top_family_set=frozenset(
+                {
+                    SoftControlFamily.NEUTRAL,
+                    SoftControlFamily.BRAKE,
+                    SoftControlFamily.BRANCH,
+                }
+            ),
+            brake_state=BrakeState.LATCHED,
+            active_track_ref="review-track",
+            resume_anchor_available=True,
+        )
+    )
+
+    assert selection.selected_family is SoftControlFamily.BRAKE
+    assert selection.neutral_dominance.neutral_selected is False
+
+
 def _state(
     *,
     mode_tag: str,
