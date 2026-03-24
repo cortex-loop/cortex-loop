@@ -12,6 +12,11 @@ from cortex.eval.harness import build_evaluation_harness_result
 from cortex.eval.packets import WithheldField, build_evaluation_packet
 from cortex.sre.families import SoftControlFamily
 from cortex.sre.opportunities import HostNativeOpportunity, specialize_host_native_opportunity
+from tests.integration._openai_host_realization_pair import (
+    DEFAULT_OPENAI_HOST_REALIZATION_PAIR_KEY,
+    OPENAI_HOST_REALIZATION_PAIR_KEYS,
+    OPENAI_HOST_REALIZATION_PAIR_SPECS,
+)
 from tests.integration._openai_mediation_uncertainty_episode import (
     openai_environment_handle,
 )
@@ -57,34 +62,38 @@ def build_openai_host_realization_specialization_snapshot(
     }
 
 
-def build_openai_mediated_lane_packet_example_snapshot() -> dict[str, object]:
+def build_openai_mediated_lane_packet_example_snapshot(
+    pair_key: str = DEFAULT_OPENAI_HOST_REALIZATION_PAIR_KEY,
+) -> dict[str, object]:
+    assert pair_key in OPENAI_HOST_REALIZATION_PAIR_KEYS
+    spec = OPENAI_HOST_REALIZATION_PAIR_SPECS[pair_key]
     contradiction, degradation = host_surface_degradation_pair(
-        source_tag="openai-host-publication-check",
-        summary="OpenAI host publication evidence remains partially withheld",
+        source_tag=spec.contradiction_source_tag,
+        summary=spec.contradiction_summary,
         evidence_tags=frozenset({"openai", "host-publication", "truthful-withheld"}),
-        reason_code="openai-host-publication-partial",
+        reason_code=spec.degradation_reason_code,
         capability_tags=frozenset({"trace/read"}),
     )
     candidate_result = evaluate_openai_host_commitment(
         "response.output_text.delta",
         {
-            "response_id": "openai-host-packet-session-1",
-            "session_id": "openai-host-packet-session-1",
-            "candidate_id": "openai-host-packet-candidate-1",
-            "stop_fields": {"claim_id": "openai-host-packet-candidate-1"},
+            "response_id": spec.session_id,
+            "session_id": spec.session_id,
+            "candidate_id": spec.candidate_id,
+            "stop_fields": {"claim_id": spec.candidate_id},
         },
         environment_handle=openai_environment_handle(),
     )
     result = evaluate_openai_host_commitment(
         "response.completed",
         {
-            "commitment_id": "openai-host-packet-commit-1",
-            "candidate_id": "openai-host-packet-candidate-1",
-            "session_id": "openai-host-packet-session-1",
+            "commitment_id": spec.commitment_id,
+            "candidate_id": spec.candidate_id,
+            "session_id": spec.session_id,
             "externally_consequential": True,
         },
         environment_handle=openai_environment_handle(),
-        provenance_manifest=provenance_manifest_for("openai-host-artifact-1"),
+        provenance_manifest=provenance_manifest_for(spec.provenance_artifact_id),
         contradiction_refs=(contradiction,),
         degradation_refs=(degradation,),
     )

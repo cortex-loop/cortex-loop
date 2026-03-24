@@ -6,7 +6,9 @@ from tests._mediation_evidence import (
     EVIDENCE_NOTE_PATH,
     OPENAI_BASELINE_INDEX_PATH,
     OPENAI_HOST_REALIZATION_ADMISSIBILITY_NOTE_PATH,
+    OPENAI_HOST_REALIZATION_BASELINE_PACKET_PATHS,
     OPENAI_HOST_REALIZATION_MEDIATED_PACKET_PATH,
+    OPENAI_HOST_REALIZATION_MEDIATED_PACKET_PATHS,
     OPENAI_HOST_REALIZATION_PACKET_PATH,
     OPENAI_HOST_REALIZATION_REPLICATION_NOTE_PATH,
     OPENAI_MEDIATED_PACKET_EXAMPLE_DOC_PATH,
@@ -25,7 +27,7 @@ def test_openai_host_realization_admissibility_note_exists_and_records_audit() -
     assert OPENAI_HOST_REALIZATION_ADMISSIBILITY_NOTE_PATH.is_file()
     assert (
         status(OPENAI_HOST_REALIZATION_ADMISSIBILITY_NOTE_PATH)
-        == "one lawful openai host realization comparator pair recorded"
+        == "three lawful openai host realization comparator pairs recorded"
     )
     assert "tests/unit/test_openai_host.py" in text
     assert "tests/unit/test_openai_host_commitment.py" in text
@@ -39,7 +41,7 @@ def test_openai_host_realization_admissibility_note_exists_and_records_audit() -
     assert "docs/mediation_evidence/openai/scenario_host_openai_01__baseline_non_mediated__run_001.md" in text
     assert "docs/mediation_evidence/openai/scenario_host_openai_01__experimental_mediated__run_001.md" in text
     assert "docs/CORTEX_V2_MEDIATION_OPENAI_HOST_REALIZATION_REPLICATION_NOTE_0.md" in text
-    assert "one lawful OpenAI host-realization comparator pair is recorded" in text
+    assert "three lawful OpenAI host-realization comparator pairs are recorded" in text
     assert "direct host-native opportunity specialization at the selection layer" in text
     assert "OpenAI-only" in text
 
@@ -66,10 +68,10 @@ def test_openai_host_realization_admissibility_law_is_explicit() -> None:
     assert "changing OpenAI host semantics to make mediation look better" in text
     assert "using latency-only improvement, shorter artifacts, or cosmetic simplification as host-realization evidence" in text
     assert "claiming host lift from prose-only interpretation with no live code path" in text
-    assert "one lawful OpenAI host-realization comparator pair is recorded" in text
+    assert "three lawful OpenAI host-realization comparator pairs are recorded" in text
     assert (
-        "`scenario_host_openai_01` / `openai` still remains `insufficient` because one "
-        "pair is below the three-pair minimum"
+        "`scenario_host_openai_01` / `openai` now has `candidate_positive` cell-level "
+        "signal for better host-specialized realization"
     ) in text
 
 
@@ -99,6 +101,8 @@ def test_openai_host_realization_anchor_is_rebound_to_a_recorded_pair() -> None:
     assert OPENAI_MEDIATED_PACKET_EXAMPLE_DOC_PATH.is_file()
     assert OPENAI_HOST_REALIZATION_PACKET_PATH.is_file()
     assert OPENAI_HOST_REALIZATION_MEDIATED_PACKET_PATH.is_file()
+    assert all(path.is_file() for path in OPENAI_HOST_REALIZATION_BASELINE_PACKET_PATHS.values())
+    assert all(path.is_file() for path in OPENAI_HOST_REALIZATION_MEDIATED_PACKET_PATHS.values())
     assert OPENAI_HOST_REALIZATION_REPLICATION_NOTE_PATH.is_file()
 
     recorded_rows = parse_markdown_table(section(read(PAIRED_LEDGER_PATH), "Recorded Paired Runs"))
@@ -106,23 +110,32 @@ def test_openai_host_realization_anchor_is_rebound_to_a_recorded_pair() -> None:
         row for row in recorded_rows if row["scenario_id"] == "scenario_host_openai_01"
     ]
     assert [row["paired_episode_set_id"] for row in recorded_host_rows] == [
-        "pair_openai_host_001"
+        "pair_openai_host_001",
+        "pair_openai_host_002",
+        "pair_openai_host_003",
     ]
     assert {row["pair_status"] for row in recorded_host_rows} == {"usable"}
     assert {row["failure_tags"] for row in recorded_host_rows} == {"none"}
 
 
-def test_evidence_note_records_one_openai_host_pair_and_keeps_mediation_blocked() -> None:
+def test_evidence_note_records_three_openai_host_pairs_and_keeps_mediation_blocked() -> None:
     text = read(EVIDENCE_NOTE_PATH)
 
     assert (
-        "One OpenAI-only mediation-specific host-realization pair is now recorded for "
-        "`scenario_host_openai_01`, but it remains insufficient because it is only one "
-        "pair on one host."
+        "Three OpenAI-only mediation-specific host-realization pairs are now recorded "
+        "for `scenario_host_openai_01`."
+    ) in text
+    assert (
+        "`scenario_host_openai_01` / `openai` now has `candidate_positive` signal "
+        "for better host-specialized realization"
+    ) in text
+    assert (
+        "reference, Gemini, and OpenAI now carry the host-realization "
+        "`candidate_positive` cells."
     ) in text
     assert (
         "reference and Gemini remain the only host-realization `candidate_positive` cells."
-        in text
+        not in text
     )
     assert "Mediation remains blocked" in text
     assert "no implementation seam may open" in text

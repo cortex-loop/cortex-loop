@@ -28,11 +28,11 @@ The reference host-realization series is now backed by `docs/CORTEX_V2_MEDIATION
 The Gemini host-realization series is now backed by `docs/CORTEX_V2_MEDIATION_GEMINI_HOST_REALIZATION_REPLICATION_NOTE_0.md`, which records the counted three-pair Gemini host-realization fairness law.
 Three reference-only mediation-specific host-realization pairs are now recorded for `scenario_host_reference_01`.
 Three Gemini-only mediation-specific host-realization pairs are now recorded for `scenario_host_gemini_01`.
-One OpenAI-only mediation-specific host-realization pair is now recorded for `scenario_host_openai_01`, but it remains insufficient because it is only one pair on one host.
+Three OpenAI-only mediation-specific host-realization pairs are now recorded for `scenario_host_openai_01`.
 `scenario_host_reference_01` / `reference` now has `candidate_positive` signal for better host-specialized realization, while package-level host-specialized realization remains `insufficient`.
 `scenario_host_gemini_01` / `gemini` now has `candidate_positive` signal for better host-specialized realization, while package-level host-specialized realization remains `insufficient`.
-reference and Gemini now carry the host-realization `candidate_positive` cells.
-reference and Gemini remain the only host-realization `candidate_positive` cells.
+`scenario_host_openai_01` / `openai` now has `candidate_positive` signal for better host-specialized realization, while package-level host-specialized realization remains `insufficient`.
+reference, Gemini, and OpenAI now carry the host-realization `candidate_positive` cells.
 `scenario_thrash_reference_01` / `reference` now has `candidate_positive` cell-level signal for reduced thrashing and better branch discipline, while package-level axis summaries remain globally `insufficient`.
 `scenario_thrash_gemini_01` / `gemini` now has `candidate_positive` cell-level signal for reduced thrashing and better branch discipline, while package-level axis summaries remain globally `insufficient`.
 `scenario_thrash_openai_01` / `openai` now has `candidate_positive` cell-level signal for reduced thrashing and better branch discipline, while package-level axis summaries remain globally `insufficient`.

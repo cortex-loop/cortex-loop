@@ -1,7 +1,7 @@
 # CORTEX_V2_MEDIATION_OPENAI_HOST_REALIZATION_ADMISSIBILITY_NOTE_0
 
 Date: 2026-03-21
-Status: `one lawful openai host realization comparator pair recorded`
+Status: `three lawful openai host realization comparator pairs recorded`
 
 ## Scope
 
@@ -28,8 +28,8 @@ The current admissibility audit is grounded in these already-landed OpenAI-host 
 ## Recorded Comparator Strength
 
 OpenAI has landed observe/bind, commitment-path, neutral-only, thrash, and uncertainty carriers.
-The current baseline is already a strong contradiction-preserving OpenAI host-facing surface, and one lawful OpenAI host-realization comparator pair is recorded.
-The recorded pair preserves:
+The current baseline is already a strong contradiction-preserving OpenAI host-facing surface, and three lawful OpenAI host-realization comparator pairs are recorded.
+The recorded pairs preserve:
 
 - OpenAI observe/bind meaning across `response.output_text.delta` and `response.completed`
 - candidate-bearing prelude plus full-commitment dispatch on the current landed path
@@ -39,7 +39,7 @@ The recorded pair preserves:
 - the selected family `seek-context`
 - the same host-opportunity set containing `mcp.query`
 
-The recorded pair is admissible because the only mediated delta is direct host-native opportunity specialization at the selection layer while packet truth and publication meaning remain fixed.
+The recorded pairs are admissible because the only mediated delta is direct host-native opportunity specialization at the selection layer while packet truth and publication meaning remain fixed.
 
 ## Admissibility Law
 
@@ -76,11 +76,11 @@ The following do not qualify as OpenAI host-realization evidence for this scenar
 
 ## Current Outcome
 
-One lawful OpenAI host-realization comparator pair is recorded for `scenario_host_openai_01`.
-That pair is OpenAI-only, it preserves packet truth/publication meaning, and `scenario_host_openai_01` / `openai` still remains `insufficient` because one pair is below the three-pair minimum.
+Three lawful OpenAI host-realization comparator pairs are recorded for `scenario_host_openai_01`.
+Those pairs are OpenAI-only, they preserve packet truth/publication meaning, and `scenario_host_openai_01` / `openai` now has `candidate_positive` cell-level signal for better host-specialized realization.
 No package-level host-realization verdict is earned, and no mediation implementation seam is justified.
 
 ## Outcome
 
-The current honest result is that one lawful OpenAI host-realization comparator pair is recorded while package-level host-specialized realization evidence remains `insufficient`.
-In short: one OpenAI-only comparator pair is real host-realization evidence, the OpenAI host-realization cell remains below threshold, and mediation remains blocked.
+The current honest result is that three lawful OpenAI host-realization comparator pairs are recorded while package-level host-specialized realization evidence remains `insufficient`.
+In short: three OpenAI-only comparator pairs are real host-realization evidence, the OpenAI host-realization cell is now `candidate_positive`, package-level evidence remains too narrow, and mediation remains blocked.

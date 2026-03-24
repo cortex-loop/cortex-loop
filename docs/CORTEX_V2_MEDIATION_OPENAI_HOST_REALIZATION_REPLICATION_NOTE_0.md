@@ -13,14 +13,18 @@ It does not justify mediation, activate mediation, or widen the allowed comparis
 The counted OpenAI host-realization pair set is currently:
 
 - `pair_openai_host_001`
+- `pair_openai_host_002`
+- `pair_openai_host_003`
 
 ## Cross-Pair Distinctness
 
 | pair_id | baseline_run_id | mediated_run_id | session_id | candidate_id | commitment_id | provenance_artifact_id | contradiction_source_tag | contradiction_summary | degradation_reason_code |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | pair_openai_host_001 | openai_host_realization_baseline_run_001 | openai_host_realization_mediated_run_001 | openai-host-packet-session-1 | openai-host-packet-candidate-1 | openai-host-packet-commit-1 | openai-host-artifact-1 | openai-host-publication-check | OpenAI host publication evidence remains partially withheld | openai-host-publication-partial |
+| pair_openai_host_002 | openai_host_realization_baseline_run_002 | openai_host_realization_mediated_run_002 | openai-host-packet-session-2 | openai-host-packet-candidate-2 | openai-host-packet-commit-2 | openai-host-artifact-2 | openai-host-receipt-check | OpenAI structured query result omitted one confirmation field | openai-host-publication-partial-002 |
+| pair_openai_host_003 | openai_host_realization_baseline_run_003 | openai_host_realization_mediated_run_003 | openai-host-packet-session-3 | openai-host-packet-candidate-3 | openai-host-packet-commit-3 | openai-host-artifact-3 | openai-host-artifact-check | OpenAI supporting artifact trace remained partial | openai-host-publication-partial-003 |
 
-Baseline and mediated trace ids must remain distinct within the pair.
+Trace ids must also remain distinct across the series.
 
 ## Within-Pair Fairness Law
 
@@ -58,5 +62,5 @@ No pair may count if it changes any of the following:
 
 ## Outcome
 
-`pair_openai_host_001` is countable only because the baseline and mediated sides preserve the same certified OpenAI `current-pair` publication surface while changing only direct host-native opportunity specialization at the selection layer.
-One OpenAI-only pair is real host-realization evidence, `scenario_host_openai_01` / `openai` remains `insufficient`, package-level host-specialized realization remains `insufficient`, and mediation remains blocked.
+`pair_openai_host_001`, `pair_openai_host_002`, and `pair_openai_host_003` are countable only because the baseline and mediated sides preserve the same certified OpenAI `current-pair` publication surface while changing only direct host-native opportunity specialization at the selection layer.
+Three OpenAI-only pairs are real host-realization evidence, `scenario_host_openai_01` / `openai` now has `candidate_positive` cell-level signal for better host-specialized realization, package-level host-specialized realization remains `insufficient`, and mediation remains blocked.

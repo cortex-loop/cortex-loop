@@ -5,14 +5,20 @@ from __future__ import annotations
 from pathlib import Path
 
 from tests._mediation_evidence import (
+    OPENAI_HOST_REALIZATION_BASELINE_PACKET_PATHS,
     OPENAI_HOST_REALIZATION_PACKET_PATH,
     OPENAI_THRASH_BASELINE_PACKET_PATHS,
     OPENAI_UNCERTAINTY_BASELINE_PACKET_PATHS,
     packet_without_path,
     parse_run_packet,
 )
+from tests.integration._openai_host_realization_pair import (
+    OPENAI_HOST_REALIZATION_PAIR_KEYS,
+    OPENAI_HOST_REALIZATION_PAIR_SPECS,
+)
 from tests.integration._openai_mediation_baseline_packets import (
     OPENAI_MEDIATION_BASELINE_PACKET_DOC_BUILDERS,
+    OPENAI_HOST_REALIZATION_BASELINE_PACKET_PATHS as EMITTED_OPENAI_HOST_PACKET_PATHS,
     OPENAI_THRASH_BASELINE_PACKET_PATHS as EMITTED_OPENAI_THRASH_PACKET_PATHS,
     OPENAI_UNCERTAINTY_BASELINE_PACKET_PATHS as EMITTED_OPENAI_PACKET_PATHS,
     build_openai_host_realization_baseline_packet,
@@ -35,8 +41,22 @@ from tests.integration._openai_mediation_uncertainty_episode import (
 
 
 def test_openai_host_realization_baseline_packet_matches_committed_doc() -> None:
-    committed_packet = packet_without_path(parse_run_packet(OPENAI_HOST_REALIZATION_PACKET_PATH))
-    assert build_openai_host_realization_baseline_packet() == committed_packet
+    for pair_key in OPENAI_HOST_REALIZATION_PAIR_KEYS:
+        committed_packet = packet_without_path(
+            parse_run_packet(OPENAI_HOST_REALIZATION_BASELINE_PACKET_PATHS[pair_key])
+        )
+        assert build_openai_host_realization_baseline_packet(pair_key) == committed_packet
+
+
+def test_openai_host_realization_baseline_series_uses_distinct_predeclared_ids() -> None:
+    assert len({spec.pair_id for spec in OPENAI_HOST_REALIZATION_PAIR_SPECS.values()}) == 3
+    assert len({spec.session_id for spec in OPENAI_HOST_REALIZATION_PAIR_SPECS.values()}) == 3
+    assert len({spec.candidate_id for spec in OPENAI_HOST_REALIZATION_PAIR_SPECS.values()}) == 3
+    assert len({spec.commitment_id for spec in OPENAI_HOST_REALIZATION_PAIR_SPECS.values()}) == 3
+    assert len({spec.provenance_artifact_id for spec in OPENAI_HOST_REALIZATION_PAIR_SPECS.values()}) == 3
+    assert len({spec.contradiction_source_tag for spec in OPENAI_HOST_REALIZATION_PAIR_SPECS.values()}) == 3
+    assert len({spec.contradiction_summary for spec in OPENAI_HOST_REALIZATION_PAIR_SPECS.values()}) == 3
+    assert len({spec.degradation_reason_code for spec in OPENAI_HOST_REALIZATION_PAIR_SPECS.values()}) == 3
 
 
 def test_openai_uncertainty_baseline_packet_matches_committed_doc() -> None:
@@ -89,6 +109,8 @@ def test_candidate_emitter_prints_openai_baseline_packets_as_markdown(
         "--- docs/mediation_evidence/openai/"
         "scenario_host_openai_01__baseline_non_mediated__run_001.md"
     ) in captured
+    for relative_path in EMITTED_OPENAI_HOST_PACKET_PATHS.values():
+        assert f"--- {relative_path}" in captured
     for relative_path in EMITTED_OPENAI_PACKET_PATHS.values():
         assert f"--- {relative_path}" in captured
     for relative_path in EMITTED_OPENAI_THRASH_PACKET_PATHS.values():

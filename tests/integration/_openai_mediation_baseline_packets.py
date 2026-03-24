@@ -7,6 +7,11 @@ from functools import partial
 import sys
 
 from cortex.core.dispatch import DispatchLane
+from tests.integration._openai_host_realization_pair import (
+    DEFAULT_OPENAI_HOST_REALIZATION_PAIR_KEY,
+    OPENAI_HOST_REALIZATION_PAIR_KEYS,
+    OPENAI_HOST_REALIZATION_PAIR_SPECS,
+)
 from tests.integration._openai_lane_packet_example import (
     build_openai_lane_packet_example_snapshot,
 )
@@ -36,8 +41,9 @@ from tests.integration._reference_mediation_baseline_packets import (
 
 OPENAI_MEDIATION_BASELINE_PACKET_PATHS = {
     "scenario_host_openai_01": (
-        "docs/mediation_evidence/openai/"
-        "scenario_host_openai_01__baseline_non_mediated__run_001.md"
+        OPENAI_HOST_REALIZATION_PAIR_SPECS[
+            DEFAULT_OPENAI_HOST_REALIZATION_PAIR_KEY
+        ].baseline_packet_path
     ),
     "scenario_uncertainty_openai_01": (
         OPENAI_UNCERTAINTY_PAIR_SPECS[
@@ -47,6 +53,10 @@ OPENAI_MEDIATION_BASELINE_PACKET_PATHS = {
     "scenario_thrash_openai_01": (
         OPENAI_THRASH_PAIR_SPECS[DEFAULT_OPENAI_THRASH_PAIR_KEY].baseline_packet_path
     ),
+}
+OPENAI_HOST_REALIZATION_BASELINE_PACKET_PATHS = {
+    pair_key: OPENAI_HOST_REALIZATION_PAIR_SPECS[pair_key].baseline_packet_path
+    for pair_key in OPENAI_HOST_REALIZATION_PAIR_KEYS
 }
 OPENAI_UNCERTAINTY_BASELINE_PACKET_PATHS = {
     pair_key: OPENAI_UNCERTAINTY_PAIR_SPECS[pair_key].baseline_packet_path
@@ -74,8 +84,11 @@ _OPENAI_HOST_REALIZATION_REVIEWER_NOTE = (
 )
 
 
-def build_openai_host_realization_baseline_packet() -> PacketSnapshot:
-    snapshot = build_openai_lane_packet_example_snapshot()
+def build_openai_host_realization_baseline_packet(
+    pair_key: str = DEFAULT_OPENAI_HOST_REALIZATION_PAIR_KEY,
+) -> PacketSnapshot:
+    spec = OPENAI_HOST_REALIZATION_PAIR_SPECS[pair_key]
+    snapshot = build_openai_lane_packet_example_snapshot(pair_key)
     specialization = build_openai_host_realization_specialization_snapshot(
         clearly_superior=False,
     )
@@ -84,7 +97,7 @@ def build_openai_host_realization_baseline_packet() -> PacketSnapshot:
         "candidate": DispatchLane.CANDIDATE_BEARING.value,
         "publication": DispatchLane.FULL_COMMITMENT.value,
     }
-    assert snapshot["candidate_id"] == "openai-host-packet-candidate-1"
+    assert snapshot["candidate_id"] == spec.candidate_id
     assert snapshot["verdict_status"] == "certified"
     assert snapshot["packet_kind"] == "current-pair"
     assert specialization["selected_family"] == "seek-context"
@@ -114,17 +127,17 @@ def build_openai_host_realization_baseline_packet() -> PacketSnapshot:
 
     return build_reference_mediation_packet(
         scenario_id="scenario_host_openai_01",
-        run_id="openai_host_realization_baseline_run_001",
-        paired_episode_set_id="pair_openai_host_001",
+        run_id=spec.baseline_run_id,
+        paired_episode_set_id=spec.pair_id,
         scenario_family="host_realization",
         task_value_rubric_id="task_value_equal_host_realization",
         approval_or_environment_context_id="env_boundary_sensitive",
         host_family="openai",
         scenario_inputs={
             "starting_request_or_event": (
-                "`response.output_text.delta` candidate-bearing turn on "
-                "`openai-host-packet-session-1` followed by `response.completed` "
-                "with `commitment_id=openai-host-packet-commit-1`"
+                f"`response.output_text.delta` candidate-bearing turn on "
+                f"`{spec.session_id}` followed by `response.completed` "
+                f"with `commitment_id={spec.commitment_id}`"
             ),
             "host_surface": (
                 "OpenAI-host opportunity selection plus candidate-bearing continuation and "
@@ -206,9 +219,8 @@ def build_openai_host_realization_baseline_packet() -> PacketSnapshot:
             ),
         },
         exclusion_notes=(
-            "This packet is the baseline side of `pair_openai_host_001`. A single "
-            "packet does not justify mediation; package-level evidence notes govern "
-            "verdicts."
+            f"This packet is the baseline side of `{spec.pair_id}`. A single packet "
+            "does not justify mediation; package-level evidence notes govern verdicts."
         ),
         reviewer_note=_OPENAI_HOST_REALIZATION_REVIEWER_NOTE,
     )
@@ -414,9 +426,12 @@ def build_openai_thrash_baseline_packet(
 
 
 OPENAI_MEDIATION_BASELINE_PACKET_DOC_BUILDERS: Mapping[str, Callable[[], PacketSnapshot]] = {
-    OPENAI_MEDIATION_BASELINE_PACKET_PATHS["scenario_host_openai_01"]: (
-        build_openai_host_realization_baseline_packet
-    ),
+    **{
+        OPENAI_HOST_REALIZATION_BASELINE_PACKET_PATHS[pair_key]: (
+            lambda pair_key=pair_key: build_openai_host_realization_baseline_packet(pair_key)
+        )
+        for pair_key in OPENAI_HOST_REALIZATION_PAIR_KEYS
+    },
     **{
         OPENAI_UNCERTAINTY_BASELINE_PACKET_PATHS[pair_key]: partial(
             build_openai_uncertainty_baseline_packet, pair_key
