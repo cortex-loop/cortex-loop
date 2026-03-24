@@ -110,5 +110,5 @@ They do not authorize multi-host runtime, runtime AUX activation, offline consol
 | Gate row | Current evidence | Owner / next closeout | Status | Notes |
 | --- | --- | --- | --- | --- |
 | `R1` reference runtime shell | `docs/CORTEX_V2_REFERENCE_RUNTIME_PROGRAM_0.md`; `tests/unit/test_reference_runtime_step.py`; `tests/integration/test_reference_runtime_cli.py` | closed | landed | the first accepted reference-host local CLI shell is landed; cheap-path default and commitment-kind truth are preserved |
-| `R2` computed reference executive slice | `docs/CORTEX_V2_REFERENCE_RUNTIME_PROGRAM_0.md`; `tests/unit/test_reference_executive_builder.py` | `R2B` -> `R2C` | partial | the first bounded `X_t^{ref}` builder is landed; scoring/selection and runtime-shell integration are still pending |
+| `R2` computed reference executive slice | `docs/CORTEX_V2_REFERENCE_RUNTIME_PROGRAM_0.md`; `tests/unit/test_reference_executive_builder.py`; `tests/unit/test_reference_runtime_scoring.py` | `R2C` | partial | the first bounded `X_t^{ref}` builder and `U_t^{sre}` scoring/selection layer are landed; runtime-shell integration is still pending |
 | `R3` reference live continuity slice | `docs/CORTEX_V2_REFERENCE_RUNTIME_PROGRAM_0.md` | `R3A` -> `R3C` | blocked | may not close until the computed reference executive slice is landed on a clean tree |

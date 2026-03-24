@@ -209,11 +209,11 @@ def test_resume_protocol_and_active_workstream_contract_exist() -> None:
     assert "Never promote uncommitted local edits to accepted baseline truth." in agents_text
 
     assert "Status: live workflow-state ledger for compaction-safe continuation." in workstream_text
-    assert "Accepted baseline branch: `codex/r2a-reference-executive-state-builder`" in workstream_text
-    assert "Accepted baseline commit: `31e4014`" in workstream_text
-    assert "Current working branch at ledger update: `codex/r2a-reference-executive-state-builder`" in workstream_text
-    assert "clean accepted executive-builder branch after the first bounded `X_t^{ref}` realization" in workstream_text
-    assert "Current candidate seam: none yet; `R2B` is the next lawful opening move" in workstream_text
+    assert "Accepted baseline branch: `codex/r2b-reference-runtime-scoring`" in workstream_text
+    assert "Accepted baseline commit: `fc6a9cb`" in workstream_text
+    assert "Current working branch at ledger update: `codex/r2b-reference-runtime-scoring`" in workstream_text
+    assert "clean accepted scoring branch after the first bounded `U_t^{sre}` realization" in workstream_text
+    assert "Current candidate seam: none yet; `R2C` is the next lawful opening move" in workstream_text
     assert "Do not treat the mixed `codex/e1-verification-substrate-entrypoints` worktree as accepted truth." in workstream_text
     assert "git branch --show-current" in workstream_text
     assert "git status --short --untracked-files=all" in workstream_text
@@ -239,12 +239,12 @@ def test_reference_runtime_program_lock_is_recorded() -> None:
     assert "`R2` computed reference executive slice" in phase_gate_text
     assert "`R3` reference live continuity slice" in phase_gate_text
     assert "the first accepted reference-host local CLI shell is landed" in phase_gate_text
-    assert "the first bounded `X_t^{ref}` builder is landed" in phase_gate_text
+    assert "the first bounded `X_t^{ref}` builder and `U_t^{sre}` scoring/selection layer are landed" in phase_gate_text
 
-    assert "Current campaign: computed reference soft-control scoring opening from an accepted executive-builder baseline" in workstream_text
-    assert "R2A` stop-gate re-audit answer:" in workstream_text
-    assert "yes, the bounded executive-state builder is stable enough to open reference-only scoring and selection" in workstream_text
-    assert "Open `R2B` from this clean accepted head:" in workstream_text
+    assert "Current campaign: computed reference runtime-shell integration opening from an accepted scoring baseline" in workstream_text
+    assert "R2B` stop-gate re-audit answer:" in workstream_text
+    assert "yes, the bounded reference-only scoring layer is stable enough to open runtime-shell integration" in workstream_text
+    assert "Open `R2C` from this clean accepted head:" in workstream_text
 
 
 def test_erika_visualizations_are_framed_as_support_surfaces() -> None:
@@ -256,9 +256,9 @@ def test_erika_visualizations_are_framed_as_support_surfaces() -> None:
     assert "north-star product target" in markdown_text
     assert "lawful gap programs" in markdown_text
     assert "mechanisms Cortex has already stolen so far" in markdown_text
-    assert "**Accepted factual baseline:** `codex/r2a-reference-executive-state-builder` at `31e4014`" in markdown_text
-    assert "first bounded executive-state builder is accepted" in markdown_text
-    assert "Open the reference-only scoring/selection slice on top of the accepted builder" in markdown_text
+    assert "**Accepted factual baseline:** `codex/r2b-reference-runtime-scoring` at `fc6a9cb`" in markdown_text
+    assert "first bounded reference-only scoring/selection layer is accepted" in markdown_text
+    assert "Open `R2C` and wire the accepted builder/scoring layer into the reference runtime shell" in markdown_text
     assert "cortex-archival-dossiers/" not in markdown_text
     assert "Current Justified Boundary" in html_text
     assert "Gap Programs" in html_text
@@ -268,9 +268,9 @@ def test_erika_visualizations_are_framed_as_support_surfaces() -> None:
     assert "not current committed roadmap" in html_text
     assert "Biology Tracker: What Cortex Has Stolen So Far" in html_text
     assert "which brain-inspired mechanisms Cortex has already stolen so far" in html_text
-    assert "Accepted Baseline 31e4014" in html_text
-    assert "first bounded executive-state builder is landed" in html_text
-    assert "Open bounded reference-only scoring and selection on top of the accepted builder" in html_text
+    assert "Accepted Baseline fc6a9cb" in html_text
+    assert "first bounded executive-state builder plus scoring layer are landed" in html_text
+    assert "Open bounded runtime-shell integration on top of the accepted builder/scorer pair" in html_text
     assert '<details class="biology-card"' in html_text
     assert "What we've stolen so far" in html_text
     assert "What is still partial" in html_text
