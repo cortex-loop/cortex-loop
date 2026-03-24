@@ -95,3 +95,54 @@ def test_reference_runtime_step_result_certifies_full_commitment_when_runtime_pa
     assert result.session.active_track_ref == "main"
     assert result.session.budget_history == ("shell-high",)
     assert result.session.last_commitment_result_summary == "certified"
+
+
+def test_reference_runtime_step_rejects_malformed_open_without_mutating_existing_anchor() -> None:
+    opened = run_reference_runtime_step(
+        "ContextLoad",
+        {
+            "session_id": "session-open-1",
+            "branch_operation": "open",
+            "branch_track_ref": "branch-alpha",
+        },
+    )
+    suspended = run_reference_runtime_step(
+        "ApprovalRequest",
+        {
+            "session_id": "session-open-1",
+            "branch_operation": "suspend",
+            "branch_track_ref": "branch-alpha",
+            "candidate_id": "candidate-1",
+        },
+        opened.session,
+    )
+    malformed_open = run_reference_runtime_step(
+        "ContextLoad",
+        {
+            "session_id": "session-open-1",
+            "branch_operation": "open",
+        },
+        suspended.session,
+    )
+
+    assert malformed_open.warnings == ("continuity-rejected:missing-open-track-ref",)
+    assert malformed_open.session.branch_registry == ("main", "branch-alpha")
+    assert malformed_open.session.active_track_ref == "main"
+    assert malformed_open.session.pending_goal_refs == ("branch-alpha",)
+    assert malformed_open.executive_state_summary["pending_goal_refs"] == ["branch-alpha"]
+
+
+def test_reference_runtime_step_rejects_mismatched_session_id_without_reassigning_shell() -> None:
+    first = run_reference_runtime_step(
+        "ContextLoad",
+        {"session_id": "session-stable-a"},
+    )
+    second = run_reference_runtime_step(
+        "ContextLoad",
+        {"session_id": "session-stable-b"},
+        first.session,
+    )
+
+    assert second.warnings == ("session-rejected:mismatched-session-id:session-stable-b",)
+    assert second.session.session_id == "session-stable-a"
+    assert second.session_summary["session_id"] == "session-stable-a"

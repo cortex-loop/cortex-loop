@@ -256,6 +256,8 @@ def run_reference_runtime_step(
         dispatch_decision.warnings,
         extraction_result.warnings if extraction_result is not None else (),
     )
+    session_id, session_id_warnings = _resolve_session_id(prior_session, normalized_payload)
+    warnings = merge_warnings(warnings, session_id_warnings)
 
     candidate = None
     commitment_result_kind: str | None = None
@@ -295,7 +297,7 @@ def run_reference_runtime_step(
     )
     warnings = merge_warnings(warnings, continuity_warnings)
     provisional_session = ReferenceRuntimeSession(
-        session_id=_resolve_session_id(prior_session, normalized_payload),
+        session_id=session_id,
         event_index=prior_session.event_index + 1,
         branch_registry=next_branch_registry,
         active_track_ref=next_active_track_ref,
@@ -362,9 +364,16 @@ def _coerce_session(session: ReferenceRuntimeSession | None) -> ReferenceRuntime
 def _resolve_session_id(
     prior_session: ReferenceRuntimeSession,
     normalized_payload: Mapping[str, Any],
-) -> str | None:
+) -> tuple[str | None, tuple[str, ...]]:
     payload_session_id = _as_non_empty_string(normalized_payload.get("session_id"))
-    return prior_session.session_id or payload_session_id
+    if prior_session.session_id is None:
+        return payload_session_id, ()
+    if payload_session_id is None or payload_session_id == prior_session.session_id:
+        return prior_session.session_id, ()
+    return (
+        prior_session.session_id,
+        (f"session-rejected:mismatched-session-id:{payload_session_id}",),
+    )
 
 
 def _apply_continuity_update(
@@ -382,7 +391,7 @@ def _apply_continuity_update(
 
     if operation is None:
         if payload_goal_refs:
-            pending_goal_refs = _merge_unique_refs((), payload_goal_refs)
+            pending_goal_refs = _merge_unique_refs(tuple(pending_goal_refs), payload_goal_refs)
         return (
             tuple(branch_registry),
             active_track_ref,
@@ -392,10 +401,22 @@ def _apply_continuity_update(
         )
 
     if operation is BranchOperation.OPEN:
-        if branch_track_ref is not None and branch_track_ref not in branch_registry:
+        if branch_track_ref is None:
+            warnings = ("continuity-rejected:missing-open-track-ref",)
+            return (
+                tuple(prior_session.branch_registry),
+                prior_session.active_track_ref,
+                tuple(prior_session.pending_goal_refs),
+                warnings,
+                reminders,
+            )
+        if branch_track_ref not in branch_registry:
             branch_registry.append(branch_track_ref)
-            active_track_ref = branch_track_ref
-        pending_goal_refs = _merge_unique_refs((), payload_goal_refs)
+        active_track_ref = branch_track_ref
+        pending_goal_refs = [
+            goal_ref for goal_ref in pending_goal_refs if goal_ref != branch_track_ref
+        ]
+        pending_goal_refs = _merge_unique_refs(tuple(pending_goal_refs), payload_goal_refs)
     elif operation is BranchOperation.SUSPEND:
         if (
             branch_track_ref is None

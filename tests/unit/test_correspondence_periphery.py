@@ -756,3 +756,13 @@ def test_periphery_correspondence_registry_resolves_code_home_and_test_surface(
                 f"{expectation.row_label}: missing promised test function {test_name} "
                 f"in {promised_surface.test_file}"
             )
+
+
+def test_v1_comparison_rows_match_landed_runtime_and_sre_truth() -> None:
+    correspondence_text = (
+        REPO_ROOT / "docs" / "CORTEX_V2_MATH_TO_CODE_CORRESPONDENCE.md"
+    ).read_text(encoding="utf-8")
+
+    assert "| Deficit state `D_t` | `stop_signals.py` objective_gap_signature | `u_t(c)` uncertainty classes (SRE-owned) | `UncertaintyEstimate` |" in correspondence_text
+    assert "| Transition / residue `R_t` | objective_gap_state, loop_detected | `X_t^{ref}` executive state (SRE-owned) | `ReferenceExecutiveState` |" in correspondence_text
+    assert "| Action / control `A_t` | stop_stage, recommend_revert, feedback_mode | `U_t^{sre}` soft-control output | soft-control selection |" in correspondence_text

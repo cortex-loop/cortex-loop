@@ -108,16 +108,59 @@ def test_reference_runtime_cli_rejects_illegal_continuity_transitions_without_mu
             ]
         )
     )
+    malformed_open_completed = _run_reference_cli(
+        input_text="\n".join(
+            [
+                '{"event_name":"ContextLoad","payload":{"session_id":"reject-5","branch_operation":"open","branch_track_ref":"branch-alpha"}}',
+                '{"event_name":"ApprovalRequest","payload":{"session_id":"reject-5","branch_operation":"suspend","branch_track_ref":"branch-alpha","candidate_id":"candidate-reject"}}',
+                '{"event_name":"ContextLoad","payload":{"session_id":"reject-5","branch_operation":"open"}}',
+            ]
+        )
+    )
+    pending_goal_merge_completed = _run_reference_cli(
+        input_text="\n".join(
+            [
+                '{"event_name":"ContextLoad","payload":{"session_id":"reject-6","branch_operation":"open","branch_track_ref":"branch-alpha"}}',
+                '{"event_name":"ApprovalRequest","payload":{"session_id":"reject-6","branch_operation":"suspend","branch_track_ref":"branch-alpha","candidate_id":"candidate-reject"}}',
+                '{"event_name":"ContextLoad","payload":{"session_id":"reject-6","pending_goal_refs":["goal-extra"]}}',
+                '{"event_name":"ContextLoad","payload":{"session_id":"reject-6","branch_operation":"resume","branch_track_ref":"branch-alpha"}}',
+            ]
+        )
+    )
+    mismatched_session_completed = _run_reference_cli(
+        input_text="\n".join(
+            [
+                '{"event_name":"ContextLoad","payload":{"session_id":"reject-7-a"}}',
+                '{"event_name":"ContextLoad","payload":{"session_id":"reject-7-b"}}',
+            ]
+        )
+    )
+    duplicate_open_completed = _run_reference_cli(
+        input_text="\n".join(
+            [
+                '{"event_name":"ContextLoad","payload":{"session_id":"reject-8","branch_operation":"open","branch_track_ref":"branch-alpha"}}',
+                '{"event_name":"ContextLoad","payload":{"session_id":"reject-8","branch_operation":"open","branch_track_ref":"branch-alpha"}}',
+            ]
+        )
+    )
 
     assert missing_resume_anchor_completed.returncode == 0, missing_resume_anchor_completed.stderr
     assert missing_active_branch_completed.returncode == 0, missing_active_branch_completed.stderr
     assert illegal_merge_target_completed.returncode == 0, illegal_merge_target_completed.stderr
     assert suspended_merge_completed.returncode == 0, suspended_merge_completed.stderr
+    assert malformed_open_completed.returncode == 0, malformed_open_completed.stderr
+    assert pending_goal_merge_completed.returncode == 0, pending_goal_merge_completed.stderr
+    assert mismatched_session_completed.returncode == 0, mismatched_session_completed.stderr
+    assert duplicate_open_completed.returncode == 0, duplicate_open_completed.stderr
 
     missing_resume_anchor = _parse_jsonl_output(missing_resume_anchor_completed.stdout)
     missing_active_branch = _parse_jsonl_output(missing_active_branch_completed.stdout)
     illegal_merge_target = _parse_jsonl_output(illegal_merge_target_completed.stdout)
     suspended_merge = _parse_jsonl_output(suspended_merge_completed.stdout)
+    malformed_open = _parse_jsonl_output(malformed_open_completed.stdout)
+    pending_goal_merge = _parse_jsonl_output(pending_goal_merge_completed.stdout)
+    mismatched_session = _parse_jsonl_output(mismatched_session_completed.stdout)
+    duplicate_open = _parse_jsonl_output(duplicate_open_completed.stdout)
 
     assert missing_resume_anchor[-1]["warnings"] == [
         "continuity-rejected:missing-resume-anchor:branch-alpha"
@@ -148,6 +191,29 @@ def test_reference_runtime_cli_rejects_illegal_continuity_transitions_without_mu
     assert suspended_merge[-1]["session_summary"]["active_track_ref"] == "main"
     assert suspended_merge[-1]["session_summary"]["pending_goal_refs"] == ["branch-alpha"]
     assert suspended_merge[-1]["brake_state"] == "guarded"
+    assert suspended_merge[-1]["commitment_result_kind"] == "certified"
+
+    assert malformed_open[-1]["warnings"] == [
+        "continuity-rejected:missing-open-track-ref"
+    ]
+    assert malformed_open[-1]["session_summary"]["branch_registry"] == ["main", "branch-alpha"]
+    assert malformed_open[-1]["session_summary"]["active_track_ref"] == "main"
+    assert malformed_open[-1]["session_summary"]["pending_goal_refs"] == ["branch-alpha"]
+
+    assert pending_goal_merge[-1]["warnings"] == []
+    assert pending_goal_merge[-1]["session_summary"]["active_track_ref"] == "branch-alpha"
+    assert pending_goal_merge[-1]["session_summary"]["pending_goal_refs"] == ["goal-extra"]
+    assert pending_goal_merge[-1]["executive_state_summary"]["pending_goal_refs"] == ["goal-extra"]
+
+    assert mismatched_session[-1]["warnings"] == [
+        "session-rejected:mismatched-session-id:reject-7-b"
+    ]
+    assert mismatched_session[-1]["session_summary"]["session_id"] == "reject-7-a"
+
+    assert duplicate_open[-1]["warnings"] == []
+    assert duplicate_open[-1]["session_summary"]["branch_registry"] == ["main", "branch-alpha"]
+    assert duplicate_open[-1]["session_summary"]["active_track_ref"] == "branch-alpha"
+    assert duplicate_open[-1]["session_summary"]["pending_goal_refs"] == []
 
 
 def _run_reference_cli(

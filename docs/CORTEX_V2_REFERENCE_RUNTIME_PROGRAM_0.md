@@ -108,7 +108,15 @@ It may not:
 - bypass dispatch or certification,
 - invent a second continuity model outside SRE/support law,
 - fabricate commitment results for cheap or candidate-bearing events,
+- silently reassign a non-empty runtime `session_id`,
+- silently erase suspended pending-goal anchors through malformed `open` or non-continuity events,
 - or treat reference runtime success as permission for multi-host runtime rollout.
+
+Corrective ordering law:
+
+- continuity rejection must remain explicit and contradiction-preserving,
+- malformed `open` and session-id mismatch must surface explicit warnings without rewriting shell truth,
+- and lawful commitment certification may still coexist with a rejected continuity transition on the same event when certification evidence remains sufficient.
 
 ## Acceptance gates
 
