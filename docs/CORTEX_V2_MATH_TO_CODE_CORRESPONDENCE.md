@@ -243,8 +243,9 @@ Forbidden leaks: no SRE neutral-dominance scoring or soft-control family logic m
 | reference-host live runtime session carrier | `ReferenceRuntimeSession` | `cortex/runtime/reference.py` | `test_reference_runtime_step.py::test_reference_runtime_session_tracks_minimum_live_state` | landed |
 | reference-host runtime step result carrier | `ReferenceRuntimeStepResult` | `cortex/runtime/reference.py` | `test_reference_runtime_step.py::test_reference_runtime_step_result_surfaces_cheap_reference_event_without_commitment_kind` + `test_reference_runtime_step.py::test_reference_runtime_step_result_certifies_full_commitment_when_runtime_payload_supplies_artifact_ref` | landed |
 | reference-host runtime step composition over observe/bind, dispatch, and commitment carriers | `run_reference_runtime_step()` | `cortex/runtime/reference.py` | `test_reference_runtime_step.py::test_reference_runtime_step_result_surfaces_cheap_reference_event_without_commitment_kind` + `test_reference_runtime_step.py::test_reference_runtime_step_result_keeps_candidate_bearing_event_candidate_only` + `test_reference_runtime_step.py::test_reference_runtime_step_result_certifies_full_commitment_when_runtime_payload_supplies_artifact_ref` | landed |
+| `Y_{t,reference}` first accepted developer-facing runtime output projection | `build_reference_cli_record()` | `cortex/runtime/reference_cli.py` | `test_reference_runtime_cli.py::test_reference_runtime_cli_reads_event_file_and_emits_one_record_per_event` + `test_reference_runtime_cli.py::test_reference_runtime_cli_reads_stdin_and_preserves_locked_output_contract` | landed |
 
-Forbidden leaks: the runtime shell may compose existing reference-host, core, and SRE carriers, but it may not expand Core, introduce multi-host abstraction, fake branch continuity, or launder provisional neutral selection into a computed executive loop. Cheap-path default must remain intact, and commitment result kinds may only surface from the existing certification lattice.
+Forbidden leaks: the runtime shell may compose existing reference-host, core, and SRE carriers, but it may not expand Core, introduce multi-host abstraction, fake branch continuity, or launder provisional neutral selection into a computed executive loop. Cheap-path default must remain intact, and commitment result kinds may only surface from the existing certification lattice. The first outward projection may serialize landed runtime truth for local CLI use, but it may not invent continuity, commit kinds, or runtime-on executive state that the step kernel did not actually produce.
 
 ---
 
@@ -419,6 +420,6 @@ For reference, here is how v2's correspondence recovers v1's math dossier (Secti
 | Verdict law `B_t` | `StopVerdict` in `stop_policy.py` | `S_t^{commit}` commitment verdict | `CommitmentVerdict` |
 | Transition / residue `R_t` | objective_gap_state, loop_detected | `X_t^{ref}` executive state (SRE-owned) | `ReferenceExecutiveState` (not yet landed) |
 | Action / control `A_t` | stop_stage, recommend_revert, feedback_mode | `U_t^{sre}` soft-control output | soft-control selection (not yet landed) |
-| Outward projection `O_t` | runtime-facing payloads, adapter projections | `Y_{t,r}` realized interaction via `Realize_r()` | host-native realization (not yet landed) |
+| Outward projection `O_t` | runtime-facing payloads, adapter projections | `Y_{t,r}` realized interaction via host-native runtime output projection | `build_reference_cli_record()` for the first accepted reference-host CLI slice |
 
 Key difference: v1 had one stop-centered carrier story. v2 has an ownership-and-correspondence story across Core / SRE / AUX with the same level of rigor applied to a better center.

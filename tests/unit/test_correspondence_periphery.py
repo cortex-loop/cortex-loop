@@ -651,6 +651,21 @@ EXPECTATIONS = (
         ),
     ),
     PeripheryCorrespondenceExpectation(
+        row_label="build_reference_cli_record",
+        home_path="cortex/runtime/reference_cli.py",
+        module_path="cortex.runtime.reference_cli",
+        symbol_name="build_reference_cli_record",
+        promised_surfaces=(
+            PromisedTestSurface(
+                test_file="tests/integration/test_reference_runtime_cli.py",
+                test_names=(
+                    "test_reference_runtime_cli_reads_event_file_and_emits_one_record_per_event",
+                    "test_reference_runtime_cli_reads_stdin_and_preserves_locked_output_contract",
+                ),
+            ),
+        ),
+    ),
+    PeripheryCorrespondenceExpectation(
         row_label="augment_snapshot",
         home_path="cortex/aux/augmentation.py",
         module_path="cortex.aux.augmentation",
