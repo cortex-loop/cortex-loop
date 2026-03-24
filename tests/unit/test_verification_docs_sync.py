@@ -209,10 +209,11 @@ def test_resume_protocol_and_active_workstream_contract_exist() -> None:
     assert "Never promote uncommitted local edits to accepted baseline truth." in agents_text
 
     assert "Status: live workflow-state ledger for compaction-safe continuation." in workstream_text
-    assert "Accepted baseline branch: `codex/s0b-erika-support-closeout`" in workstream_text
-    assert "Accepted baseline commit: `6218115`" in workstream_text
-    assert "Current working branch at ledger update: `codex/r1a-reference-runtime-program-lock`" in workstream_text
-    assert "clean runtime-program branch opened from the accepted support parent" in workstream_text
+    assert "Accepted baseline branch: `codex/r1b-reference-runtime-step-kernel`" in workstream_text
+    assert "Accepted baseline commit: `23af64b`" in workstream_text
+    assert "Current working branch at ledger update: `codex/r1b-reference-runtime-step-kernel`" in workstream_text
+    assert "clean accepted runtime-kernel branch awaiting CLI proof" in workstream_text
+    assert "Current candidate seam: reference CLI loop for the accepted local runtime shell" in workstream_text
     assert "Do not treat the mixed `codex/e1-verification-substrate-entrypoints` worktree as accepted truth." in workstream_text
     assert "git branch --show-current" in workstream_text
     assert "git status --short --untracked-files=all" in workstream_text
@@ -237,10 +238,11 @@ def test_reference_runtime_program_lock_is_recorded() -> None:
     assert "`R1` reference runtime shell" in phase_gate_text
     assert "`R2` computed reference executive slice" in phase_gate_text
     assert "`R3` reference live continuity slice" in phase_gate_text
+    assert "runtime step kernel are landed; CLI proof is not yet landed" in phase_gate_text
 
     assert "Current campaign: reference runtime-shell opening" in workstream_text
-    assert "Current candidate seam: runtime program lock for the reference-host local CLI shell" in workstream_text
-    assert "After `R1A` is accepted, open `R1B` as the first runtime-code seam from a clean tree." in workstream_text
+    assert "Open `R1C` from this clean accepted head:" in workstream_text
+    assert "After `R1C` is accepted, stop and re-audit whether the reference runtime shell is stable enough to open `R2A`." in workstream_text
 
 
 def test_erika_visualizations_are_framed_as_support_surfaces() -> None:
@@ -252,7 +254,9 @@ def test_erika_visualizations_are_framed_as_support_surfaces() -> None:
     assert "north-star product target" in markdown_text
     assert "lawful gap programs" in markdown_text
     assert "mechanisms Cortex has already stolen so far" in markdown_text
-    assert "Selected next opening move: reference-host local CLI runtime shell" in markdown_text
+    assert "**Accepted factual baseline:** `codex/r1b-reference-runtime-step-kernel` at `23af64b`" in markdown_text
+    assert "first runtime step kernel is accepted" in markdown_text
+    assert "Land the reference-host local CLI loop on top of the accepted step kernel" in markdown_text
     assert "cortex-archival-dossiers/" not in markdown_text
     assert "Current Justified Boundary" in html_text
     assert "Gap Programs" in html_text
@@ -262,7 +266,9 @@ def test_erika_visualizations_are_framed_as_support_surfaces() -> None:
     assert "not current committed roadmap" in html_text
     assert "Biology Tracker: What Cortex Has Stolen So Far" in html_text
     assert "which brain-inspired mechanisms Cortex has already stolen so far" in html_text
-    assert "Open the reference-host local CLI runtime shell locked by" in html_text
+    assert "Accepted Baseline 23af64b" in html_text
+    assert "first runtime step kernel is accepted" in html_text
+    assert "Land the reference-host local CLI loop on top of the accepted step kernel" in html_text
     assert '<details class="biology-card"' in html_text
     assert "What we've stolen so far" in html_text
     assert "What is still partial" in html_text
