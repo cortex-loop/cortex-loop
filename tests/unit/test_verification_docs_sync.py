@@ -102,19 +102,15 @@ def test_verification_ergonomics_plan_reflects_current_campaign_state() -> None:
     assert "`E1` is effectively landed" in text
     assert "`E2` is effectively landed" in text
     assert "`E3` is materially landed for current scope" in text
-    assert "`E4` remains open" in text
+    assert "`E4` is partially landed" in text
     assert "`E5` is materially landed for current scope" in text
     assert "`E6` remains open." in text
     assert "the current repo begins with no repo-local coverage config" not in text
     assert "## 13. Current hold note" in text
     assert "`E2C` is now landed." in text
-    assert "No new seam is promoted from this slice." in text
-    assert (
-        "Re-audit `E4` versus `E5` from a clean worktree before choosing the next "
-        "campaign seam."
-    ) in text
-    assert "`E4A` is now landed." not in text
-    assert "`E4B` is the next candidate seam." not in text
+    assert "`E4A` is now landed." in text
+    assert "`E5` is materially landed for current scope." in text
+    assert "`E4B` is the next candidate seam." in text
     assert "### E2C — first coverage baseline artifact" not in text
 
 

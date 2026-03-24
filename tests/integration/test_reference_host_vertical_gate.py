@@ -4,9 +4,6 @@ from __future__ import annotations
 
 import pytest
 
-from cortex.core.commitments import (
-    CommitmentStatus,
-)
 from cortex.core.dispatch import DispatchLane, classify_dispatch
 from cortex.core.environment import (
     EXECUTION_TRACE,
@@ -14,47 +11,34 @@ from cortex.core.environment import (
 )
 from cortex.drivers.reference_host import observe_reference_host_event
 from cortex.drivers.reference_host_commitment import evaluate_reference_host_commitment
-from cortex.drivers.reference_host_neutral import (
-    NeutralContinuationCode,
-    evaluate_reference_host_neutral,
-)
 from cortex.sre.allocation import AllocationScore, AllocationScorecard
 from cortex.sre.families import SoftControlFamily
 from cortex.sre.policy import neutral_dominance_decision
 from tests.integration._reference_lane import (
+    assert_reference_candidate_bearing_without_verdict,
     assert_reference_commitment_result_preserves_degradation_pair,
-    assert_reference_verdict_status,
-    candidate_bearing_event,
+    assert_reference_cheap_path_neutral_allowed,
+    assert_reference_full_commitment_certified,
     cheap_path_event,
+    evaluate_reference_candidate_bearing_case,
+    evaluate_reference_cheap_path_case,
     evaluate_reference_full_commitment_case,
     full_commitment_event,
     host_surface_degradation_pair,
     provenance_manifest_for,
-    reference_environment_handle,
 )
 
 
 def test_cheap_path_integration_stays_cheap_and_neutral_allowed() -> None:
-    event_name, payload = cheap_path_event()
-    result = evaluate_reference_host_neutral(event_name, payload)
+    result = evaluate_reference_cheap_path_case()
 
-    assert result.dispatch_decision.lane is DispatchLane.CHEAP
-    assert result.neutral_decision.allowed is True
-    assert result.neutral_decision.result_code is NeutralContinuationCode.NEUTRAL_ALLOWED
+    assert_reference_cheap_path_neutral_allowed(result)
 
 
 def test_candidate_bearing_integration_binds_candidate_and_returns_no_verdict() -> None:
-    event_name, payload = candidate_bearing_event()
-    result = evaluate_reference_host_commitment(
-        event_name,
-        payload,
-        environment_handle=reference_environment_handle(),
-    )
+    result = evaluate_reference_candidate_bearing_case()
 
-    assert result.dispatch_decision.lane is DispatchLane.CANDIDATE_BEARING
-    assert result.candidate is not None
-    assert result.candidate.candidate_id == "candidate-1"
-    assert result.verdict is None
+    assert_reference_candidate_bearing_without_verdict(result)
 
 
 def test_full_commitment_integration_reaches_certified_with_lawful_evidence() -> None:
@@ -63,8 +47,7 @@ def test_full_commitment_integration_reaches_certified_with_lawful_evidence() ->
         provenance_reference_id="artifact-1",
     )
 
-    assert result.dispatch_decision.lane is DispatchLane.FULL_COMMITMENT
-    assert_reference_verdict_status(result, CommitmentStatus.CERTIFIED)
+    assert_reference_full_commitment_certified(result)
 
 
 def test_degradation_roundtrip_preserves_degradation_and_contradictions() -> None:

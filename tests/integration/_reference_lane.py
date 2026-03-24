@@ -8,11 +8,17 @@ from cortex.core.commitments import (
     ProvenanceEvidenceRef,
     ProvenanceManifest,
 )
+from cortex.core.dispatch import DispatchLane
 from cortex.core.errors import ContradictionRecord, DegradationRecord
 from cortex.core.environment import CommitmentEnvironmentHandle, EXECUTION_TRACE
 from cortex.drivers.reference_host_commitment import (
     ReferenceHostCommitmentResult,
     evaluate_reference_host_commitment,
+)
+from cortex.drivers.reference_host_neutral import (
+    NeutralContinuationCode,
+    ReferenceHostNeutralResult,
+    evaluate_reference_host_neutral,
 )
 from cortex.eval.artifacts import CurrentPairFragment
 from cortex.eval.packets import EvaluationPacket
@@ -72,6 +78,37 @@ def provenance_manifest_for(
     )
 
 
+def evaluate_reference_cheap_path_case(
+    *,
+    event_name: str = "ContextLoad",
+    session_id: str = " session-1 ",
+    allow_message_commitment_fallback: bool = False,
+) -> ReferenceHostNeutralResult:
+    return evaluate_reference_host_neutral(
+        *cheap_path_event(
+            event_name=event_name,
+            session_id=session_id,
+        ),
+        allow_message_commitment_fallback=allow_message_commitment_fallback,
+    )
+
+
+def evaluate_reference_candidate_bearing_case(
+    *,
+    event_name: str = "ApprovalRequest",
+    candidate_id: str = "candidate-1",
+    allow_message_commitment_fallback: bool = False,
+) -> ReferenceHostCommitmentResult:
+    return evaluate_reference_host_commitment(
+        *candidate_bearing_event(
+            event_name=event_name,
+            candidate_id=candidate_id,
+        ),
+        environment_handle=reference_environment_handle(),
+        allow_message_commitment_fallback=allow_message_commitment_fallback,
+    )
+
+
 def evaluate_reference_full_commitment_case(
     *,
     commitment_id: str,
@@ -101,6 +138,32 @@ def evaluate_reference_full_commitment_case(
         degradation_refs=degradation_refs,
         contradiction_refs=contradiction_refs,
     )
+
+
+def assert_reference_cheap_path_neutral_allowed(
+    result: ReferenceHostNeutralResult,
+) -> None:
+    assert result.dispatch_decision.lane is DispatchLane.CHEAP
+    assert result.neutral_decision.allowed is True
+    assert result.neutral_decision.result_code is NeutralContinuationCode.NEUTRAL_ALLOWED
+
+
+def assert_reference_candidate_bearing_without_verdict(
+    result: ReferenceHostCommitmentResult,
+    *,
+    expected_candidate_id: str = "candidate-1",
+) -> None:
+    assert result.dispatch_decision.lane is DispatchLane.CANDIDATE_BEARING
+    assert result.candidate is not None
+    assert result.candidate.candidate_id == expected_candidate_id
+    assert result.verdict is None
+
+
+def assert_reference_full_commitment_certified(
+    result: ReferenceHostCommitmentResult,
+) -> None:
+    assert result.dispatch_decision.lane is DispatchLane.FULL_COMMITMENT
+    assert_reference_verdict_status(result, CommitmentStatus.CERTIFIED)
 
 
 def host_surface_degradation_pair(

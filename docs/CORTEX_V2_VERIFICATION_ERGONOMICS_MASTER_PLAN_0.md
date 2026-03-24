@@ -34,9 +34,9 @@ This plan is a **follow-on campaign**, not an extension of the feature roadmap t
   - and the first committed baseline artifact is now recorded.
 - `E3` is materially landed for current scope:
   - mechanical correspondence checks already exist for contract, Core, ports, SRE, and periphery surfaces.
-- `E4` remains open:
-  - reference-lane helper extraction and gate-test dedup are still follow-on verification work,
-  - and no `E4` helper seam is counted as landed in this commit state.
+- `E4` is partially landed:
+  - the reference-lane running example now has shared outcome helpers in `tests/integration/_reference_lane.py`,
+  - but contradiction/degradation helper closeout and gate-test dedup remain open.
 - `E5` is materially landed for current scope:
   - packet-example and latency evidence revalidation paths are documented,
   - repo-local entry points exist in `Makefile`,
@@ -386,8 +386,9 @@ Evidence:
 Current next-work note:
 - E1 is effectively complete.
 - E2 is effectively complete.
+- E4 is partially landed.
 - E5 is materially landed for current scope.
-- no new seam is promoted from this slice until `E4` versus `E5` is re-audited from a clean worktree.
+- if the extracted helper surface stays stable under the canonical bundle, `E4B` is the next candidate seam.
 
 ### E3
 - E3A landed Core correspondence checks
@@ -510,8 +511,11 @@ Every worker prompt should include:
 ## 13. Current hold note
 
 `E2C` is now landed.
-No new seam is promoted from this slice.
-Re-audit `E4` versus `E5` from a clean worktree before choosing the next campaign seam.
+`E4A` is now landed.
+`E5` is materially landed for current scope.
+
+If the extracted reference helper surface stays stable under the canonical bundle, `E4B` is the next candidate seam.
+No broader refactor is promoted from this slice.
 That follow-on choice must remain non-feature, behavior-preserving, and verification-first.
 
 ---
