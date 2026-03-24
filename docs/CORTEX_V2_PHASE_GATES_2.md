@@ -102,13 +102,13 @@ Source of truth:
 
 - `docs/CORTEX_V2_REFERENCE_RUNTIME_PROGRAM_0.md`
 
-Overall status: `open`
+Overall status: `partial`
 
 These rows track the first intentional product/runtime opening after the accepted v2 closeout boundary.
 They do not authorize multi-host runtime, runtime AUX activation, offline consolidation, or mediation implementation.
 
 | Gate row | Current evidence | Owner / next closeout | Status | Notes |
 | --- | --- | --- | --- | --- |
-| `R1` reference runtime shell | `docs/CORTEX_V2_REFERENCE_RUNTIME_PROGRAM_0.md`; `tests/unit/test_reference_runtime_step.py` | `R1B` -> `R1C` | partial | program doctrine and the runtime step kernel are landed; CLI proof is not yet landed |
-| `R2` computed reference executive slice | `docs/CORTEX_V2_REFERENCE_RUNTIME_PROGRAM_0.md` | `R2A` -> `R2C` | blocked | may not close until the runtime shell is landed on a clean tree |
+| `R1` reference runtime shell | `docs/CORTEX_V2_REFERENCE_RUNTIME_PROGRAM_0.md`; `tests/unit/test_reference_runtime_step.py`; `tests/integration/test_reference_runtime_cli.py` | closed | landed | the first accepted reference-host local CLI shell is landed; cheap-path default and commitment-kind truth are preserved |
+| `R2` computed reference executive slice | `docs/CORTEX_V2_REFERENCE_RUNTIME_PROGRAM_0.md` | `R2A` -> `R2C` | open | the accepted runtime shell now exists; computed executive work may open intentionally from this clean tree |
 | `R3` reference live continuity slice | `docs/CORTEX_V2_REFERENCE_RUNTIME_PROGRAM_0.md` | `R3A` -> `R3C` | blocked | may not close until the computed reference executive slice is landed on a clean tree |
