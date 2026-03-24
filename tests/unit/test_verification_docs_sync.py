@@ -23,6 +23,9 @@ PHASE_GATES_PATH = REPO_ROOT / "docs" / "CORTEX_V2_PHASE_GATES_2.md"
 REFERENCE_RUNTIME_PROGRAM_PATH = (
     REPO_ROOT / "docs" / "CORTEX_V2_REFERENCE_RUNTIME_PROGRAM_0.md"
 )
+REFERENCE_FEEDBACK_PROGRAM_PATH = (
+    REPO_ROOT / "docs" / "CORTEX_V2_REFERENCE_FEEDBACK_PROGRAM_0.md"
+)
 ERIKA_VISUALIZATION_STATUS_PATH = (
     REPO_ROOT / "docs" / "erika-visualizations" / "CORTEX_EVIDENCE_BASED_STATUS.md"
 )
@@ -209,11 +212,11 @@ def test_resume_protocol_and_active_workstream_contract_exist() -> None:
     assert "Never promote uncommitted local edits to accepted baseline truth." in agents_text
 
     assert "Status: live workflow-state ledger for compaction-safe continuation." in workstream_text
-    assert "Accepted baseline branch: `codex/c0-runtime-corrective-lock`" in workstream_text
-    assert "Accepted baseline commit: `2eaf5db`" in workstream_text
-    assert "Current working branch at ledger update: `codex/c4-reference-runtime-recloseout`" in workstream_text
-    assert "clean accepted runtime re-closeout branch after the corrective train resolved the audit findings" in workstream_text
-    assert "Current candidate seam: none; the corrective train is closed for current scope" in workstream_text
+    assert "Accepted baseline branch: `codex/c4-reference-runtime-recloseout`" in workstream_text
+    assert "Accepted baseline commit: `d0caff6`" in workstream_text
+    assert "Current working branch at ledger update: `codex/p0a-r4a-reference-feedback-lock`" in workstream_text
+    assert "deterministic docs/program-lock branch for the `R4` opening move" in workstream_text
+    assert "Current candidate seam: `R4B` realization-feedback carrier and session persistence" in workstream_text
     assert "Do not treat the mixed `codex/e1-verification-substrate-entrypoints` worktree as accepted truth." in workstream_text
     assert "git branch --show-current" in workstream_text
     assert "git status --short --untracked-files=all" in workstream_text
@@ -222,6 +225,7 @@ def test_resume_protocol_and_active_workstream_contract_exist() -> None:
 
 def test_reference_runtime_program_lock_is_recorded() -> None:
     program_text = _read(REFERENCE_RUNTIME_PROGRAM_PATH)
+    feedback_program_text = _read(REFERENCE_FEEDBACK_PROGRAM_PATH)
     phase_gate_text = _read(PHASE_GATES_PATH)
     workstream_text = _read(ACTIVE_WORKSTREAM_PATH)
 
@@ -238,17 +242,25 @@ def test_reference_runtime_program_lock_is_recorded() -> None:
     assert "`R1` reference runtime shell" in phase_gate_text
     assert "`R2` computed reference executive slice" in phase_gate_text
     assert "`R3` reference live continuity slice" in phase_gate_text
+    assert "`R4` reference closed-loop feedback and latched-brake slice" in phase_gate_text
     assert "the first accepted reference-host local CLI shell is landed" in phase_gate_text
     assert "the first bounded `X_t^{ref}` builder, `U_t^{sre}` scoring/selection layer, and runtime-shell integration are landed" in phase_gate_text
     assert "re-hardened and audit-clean for current scope" in phase_gate_text
     assert "malformed `open` and session mismatch are explicit" in phase_gate_text
+    assert "last-step realization feedback, a top-level control ledger, and latched-brake enforcement" in phase_gate_text
 
-    assert "Current campaign: post-corrective zero-finding re-audit from the accepted corrected runtime baseline" in workstream_text
+    assert "Current campaign: bounded `R4` reference closed-loop feedback and latched-brake program from the accepted corrected runtime shell" in workstream_text
     assert "the pending-goal anchor-loss bug is resolved" in workstream_text
     assert "the zero-finding re-audit bundle passed from the corrected runtime baseline" in workstream_text
+    assert "Current seam status: `program locked / ready for first code seam`" in workstream_text
     assert "the first one-process live continuity slice plus explicit rejection enforcement are real" in program_text
     assert "the corrective zero-finding re-audit has passed for current scope" in program_text
     assert "a mismatched runtime `session_id` is surfaced as an explicit contradiction" in program_text
+    assert "first bounded reference closed-loop feedback slice" in feedback_program_text
+    assert "top-level control ledger in the runtime output surface" in feedback_program_text
+    assert "bounded latched-brake enforcement point" in feedback_program_text
+    assert "`R4B` realization-feedback carrier and persistence" in feedback_program_text
+    assert "`R4E` latched-brake enforcement" in feedback_program_text
 
 
 def test_erika_visualizations_are_framed_as_support_surfaces() -> None:
@@ -260,9 +272,10 @@ def test_erika_visualizations_are_framed_as_support_surfaces() -> None:
     assert "north-star product target" in markdown_text
     assert "lawful gap programs" in markdown_text
     assert "mechanisms Cortex has already stolen so far" in markdown_text
-    assert "**Accepted factual baseline:** `codex/r3b-continuity-enforcement` at `2945585`" in markdown_text
+    assert "**Accepted factual baseline:** `codex/c4-reference-runtime-recloseout` at `d0caff6`" in markdown_text
     assert "the first one-process live continuity slice with explicit rejection enforcement is now accepted on top of that shell" in markdown_text
-    assert "Stop here and choose the next runtime problem intentionally" in markdown_text
+    assert "`R1` through `R3` are closed and audit-clean for current scope." in markdown_text
+    assert "Open `R4`: one lawful outcome-to-state feedback carrier" in markdown_text
     assert "cortex-archival-dossiers/" not in markdown_text
     assert "Current Justified Boundary" in html_text
     assert "Gap Programs" in html_text
@@ -272,10 +285,11 @@ def test_erika_visualizations_are_framed_as_support_surfaces() -> None:
     assert "not current committed roadmap" in html_text
     assert "Biology Tracker: What Cortex Has Stolen So Far" in html_text
     assert "which brain-inspired mechanisms Cortex has already stolen so far" in html_text
-    assert "Accepted Baseline 2945585" in html_text
+    assert "Accepted Baseline d0caff6" in html_text
     assert "first integrated computed executive slice are real" not in html_text
     assert "the first one-process continuity slice with explicit rejection enforcement is also real" in html_text
-    assert "Stop here and choose the next runtime problem intentionally" in html_text
+    assert "Open `R4`: one bounded last-step realization-feedback path and one bounded latched-brake enforcement point" in html_text
+    assert "Land `R4`: one outcome-to-state feedback carrier, one top-level control ledger, and one bounded latched-brake enforcement point" in html_text
     assert '<details class="biology-card"' in html_text
     assert "What we've stolen so far" in html_text
     assert "What is still partial" in html_text

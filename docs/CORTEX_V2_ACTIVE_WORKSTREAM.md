@@ -7,8 +7,8 @@ It is workflow state only. It does not override the packet documents, implementa
 
 ## 1. Accepted baseline
 
-- Accepted baseline branch: `codex/c0-runtime-corrective-lock`
-- Accepted baseline commit: `2eaf5db`
+- Accepted baseline branch: `codex/c4-reference-runtime-recloseout`
+- Accepted baseline commit: `d0caff6`
 - Accepted baseline state:
   - burden-axis re-audit is accepted through the three thrash-host burden slices
   - package-level burden remains `insufficient`
@@ -16,6 +16,7 @@ It is workflow state only. It does not override the packet documents, implementa
   - verification-ergonomics expansion beyond the accepted post-`E4` boundary is not currently promoted
   - continuation hardening, the Erika support surface, the runtime-program lock, the first accepted reference-host local CLI shell, the first bounded reference executive-state builder, the first bounded reference soft-control scoring/selection layer, the first integrated computed executive slice inside the runtime shell, and the first one-process live continuity slice plus explicit rejection enforcement are accepted on top of the same product truth
   - the corrective runtime hardening now preserves suspended pending-goal anchors across non-continuity events, explicitly rejects malformed `open`, surfaces session-id mismatch as an explicit contradiction, and keeps lawful commitment truth visible even when continuity rejection is also present
+  - the accepted shell is now ready for one intentionally opened follow-on program: first bounded reference closed-loop feedback and latched-brake enforcement
 - Accepted baseline authority anchors:
   - `docs/CORTEX_V2_IMPLEMENTATION_STATUS_NOTE.md`
   - `docs/CORTEX_V2_IMPLEMENTATION_MASTER_PLAN_2.md`
@@ -25,12 +26,12 @@ It is workflow state only. It does not override the packet documents, implementa
 
 ## 2. Current campaign and seam state
 
-- Current campaign: post-corrective zero-finding re-audit from the accepted corrected runtime baseline
-- Current working branch at ledger update: `codex/c4-reference-runtime-recloseout`
-- Current branch role: clean accepted runtime re-closeout branch after the corrective train resolved the audit findings
-- Current candidate seam: none; the corrective train is closed for current scope
-- Current seam status: `accepted baseline / ready for next seam selection`
-- Seam risk: no active seam; the next seam is a new problem selection
+- Current campaign: bounded `R4` reference closed-loop feedback and latched-brake program from the accepted corrected runtime shell
+- Current working branch at ledger update: `codex/p0a-r4a-reference-feedback-lock`
+- Current branch role: deterministic docs/program-lock branch for the `R4` opening move
+- Current candidate seam: `R4B` realization-feedback carrier and session persistence
+- Current seam status: `program locked / ready for first code seam`
+- Seam risk: the current seam is a new cross-layer runtime seam and must remain one-session max
 
 ## 3. Next lawful move
 
@@ -40,8 +41,9 @@ It is workflow state only. It does not override the packet documents, implementa
   - session mismatch and commitment-vs-continuity coexistence are now explicit in code, docs, and tests
   - the zero-finding re-audit bundle passed from the corrected runtime baseline
 - Next lawful move from this clean accepted head:
-  - stop and choose the next real problem intentionally
-  - do not treat the corrected `R3` closeout as permission to widen into broader runtime programs by inertia
+  - lock and land the first bounded `R4` reference realization-feedback carrier
+  - then land the first bounded feedback-conditioned executive update, control ledger, and latched-brake enforcement point
+  - do not widen into broader runtime programs by inertia
 
 ## 4. Explicitly blocked moves
 
@@ -53,10 +55,12 @@ It is workflow state only. It does not override the packet documents, implementa
 - Do not automatically open feedback, multi-host runtime, runtime AUX activation, offline consolidation, or mediation implementation from the success of `R3`.
 - Do not open Gemini/OpenAI runtime, cross-host runtime, runtime AUX activation, offline consolidation, or mediation implementation from this reference runtime-shell line.
 - Do not reopen `R3` corrective work without a new explicit runtime problem or a new audit finding.
+- Do not widen `R4` into cross-process continuity, cross-host runtime, runtime AUX activation, offline consolidation, or mediation.
+- Do not let `R4` move enforcement or policy ownership into Core.
 
 ## 5. Acknowledged worktree noise at ledger update
 
-- The accepted corrective-hardening head `2eaf5db` is clean at re-closeout.
+- The accepted re-closeout head `d0caff6` is clean at `R4` program lock.
 - The older `codex/e1-verification-substrate-entrypoints` workspace remains mixed and is not the source of truth for this train.
 - Local workspace directories already exist under `.claude/worktrees/`.
 - Re-read `git status --short --untracked-files=all` before opening any new seam; this summary is only the continuity reminder, not the canonical file list.
