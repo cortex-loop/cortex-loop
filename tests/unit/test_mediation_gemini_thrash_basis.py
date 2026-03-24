@@ -5,9 +5,11 @@ from __future__ import annotations
 from tests._mediation_evidence import (
     EVIDENCE_NOTE_PATH,
     GEMINI_BASELINE_INDEX_PATH,
+    GEMINI_THRASH_BASELINE_BURDEN_PATHS,
     GEMINI_THRASH_BASIS_NOTE_PATH,
     GEMINI_THRASH_REPLICATION_NOTE_PATH,
     GEMINI_THRASH_BASELINE_PACKET_PATHS,
+    GEMINI_THRASH_MEDIATED_BURDEN_PATHS,
     GEMINI_THRASH_MEDIATED_PACKET_PATHS,
     GEMINI_THRASH_PACKET_PATH,
     parse_markdown_table,
@@ -37,6 +39,7 @@ def test_gemini_thrash_basis_note_exists_and_records_satisfied_basis() -> None:
     assert "tests/integration/_gemini_mediation_thrash_experimental.py" in text
     assert "tests/integration/test_gemini_mediated_thrash_comparator.py" in text
     assert "docs/CORTEX_V2_MEDIATION_GEMINI_THRASH_REPLICATION_NOTE_0.md" in text
+    assert "deterministic visible-burden derivation" in text.lower()
 
 
 def test_gemini_thrash_replication_note_records_fairness_and_distinctness_law() -> None:
@@ -58,6 +61,7 @@ def test_gemini_thrash_replication_note_records_fairness_and_distinctness_law() 
     assert "non-main branch track ref" in text
     assert "uncertainty spike tag" in text
     assert "claims host-realization lift from this series" in text
+    assert "visible intervention step" in text
 
 
 def test_gemini_thrash_builder_packet_series_and_replication_note_exist() -> None:
@@ -83,6 +87,8 @@ def test_gemini_thrash_builder_packet_series_and_replication_note_exist() -> Non
         assert snapshot["branch_sequence"] == list(EXPECTED_GEMINI_THRASH_BRANCH_SEQUENCE)
         assert GEMINI_THRASH_BASELINE_PACKET_PATHS[pair_key].exists()
         assert GEMINI_THRASH_MEDIATED_PACKET_PATHS[pair_key].exists()
+        assert GEMINI_THRASH_BASELINE_BURDEN_PATHS[pair_key].exists()
+        assert GEMINI_THRASH_MEDIATED_BURDEN_PATHS[pair_key].exists()
 
     assert len({spec.pair_id for spec in GEMINI_THRASH_PAIR_SPECS.values()}) == 3
     assert len({spec.session_id for spec in GEMINI_THRASH_PAIR_SPECS.values()}) == 3
@@ -106,6 +112,10 @@ def test_evidence_note_keeps_mediation_blocked_with_gemini_thrash_series() -> No
     assert (
         "`scenario_thrash_gemini_01` / `gemini` now has `candidate_positive` "
         "cell-level signal for reduced thrashing and better branch discipline"
+    ) in text
+    assert (
+        "`scenario_thrash_gemini_01` / `gemini` now also has `candidate_positive` "
+        "cell-level signal for lower visible burden at equal task value"
     ) in text
     assert "Mediation remains blocked" in text
     assert "no implementation seam may open" in text

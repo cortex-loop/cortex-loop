@@ -44,7 +44,7 @@ It does not provide comparative mediation evidence by itself, justify mediation,
 - outcome_summary: The bounded Gemini-host episode reaches certified completion at `gemini-thrash-003-step-4` after one guarded uncertified follow-up at `gemini-thrash-003-step-2`.
 - branch_trajectory_summary: The live Gemini-host episode derives an explicit `open -> suspend -> resume -> merge` sequence across `gemini-thrash-003-step-1` through `gemini-thrash-003-step-4`.
 - uncertainty_or_brake_summary: Brake state is `guarded` only at `gemini-thrash-003-step-2` from elevated evidence uncertainty; no contradiction or degradation smoothing occurs.
-- burden_summary: none
+- burden_summary: Visible intervention burden is recorded as `intervention_burden=4.0` from the committed branch-operation count on this baseline run.
 - host_realization_summary: Gemini-host commitment and landed SRE branch-control surfaces are exercised together without any pooled host claim.
 
 ## Artifact Refs
@@ -52,7 +52,7 @@ It does not provide comparative mediation evidence by itself, justify mediation,
 - event_trace_refs: `gemini-thrash-003-step-1:content.delta/open, gemini-thrash-003-step-2:interaction.complete/suspend, gemini-thrash-003-step-3:content.delta/resume, gemini-thrash-003-step-4:interaction.complete/merge`
 - contradiction_refs: none
 - degradation_refs: none
-- aux_burden_refs_if_present: none
+- aux_burden_refs_if_present: `docs/mediation_evidence/gemini/scenario_thrash_gemini_01__baseline_non_mediated__run_003__aux_burden.md`
 - evaluation_packet_refs_if_present: none
 
 ## Lift-Axis Observations
@@ -77,8 +77,8 @@ It does not provide comparative mediation evidence by itself, justify mediation,
 
 ### Lower Visible Burden At Equal Task Value
 
-- observation: Baseline-only packet within the committed thrash paired-run series; no AUX burden artifact is recorded here.
-- metric_notes: Package-level evidence notes govern whether repeated paired evidence is enough to claim burden lift.
+- observation: Baseline-only packet within the committed thrash paired-run series with `intervention_burden=4.0` recorded from the visible branch-operation count.
+- metric_notes: The burden metric is the exact committed branch-operation count for this run.
 - verdict: `insufficient`
 
 ### Better Host-Specialized Realization

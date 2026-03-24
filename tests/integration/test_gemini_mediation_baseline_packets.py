@@ -5,8 +5,10 @@ from __future__ import annotations
 from pathlib import Path
 
 from tests._mediation_evidence import (
+    REPO_ROOT,
     GEMINI_THRASH_BASELINE_PACKET_PATHS,
     GEMINI_UNCERTAINTY_BASELINE_PACKET_PATHS,
+    parse_aux_burden_artifact,
     packet_without_path,
     parse_run_packet,
 )
@@ -17,7 +19,10 @@ from tests.integration._gemini_host_realization_pair import (
 from tests.integration._gemini_mediation_baseline_packets import (
     GEMINI_HOST_REALIZATION_BASELINE_PACKET_PATHS,
     GEMINI_MEDIATION_BASELINE_PACKET_DOC_BUILDERS,
+    GEMINI_THRASH_BASELINE_BURDEN_DOC_BUILDERS,
+    GEMINI_THRASH_BASELINE_BURDEN_PATHS,
     build_gemini_host_realization_baseline_packet,
+    build_gemini_thrash_baseline_burden_artifact,
     build_gemini_thrash_baseline_packet,
     build_gemini_uncertainty_baseline_packet,
     emit_gemini_mediation_baseline_packets,
@@ -59,6 +64,17 @@ def test_gemini_thrash_baseline_packet_matches_committed_doc() -> None:
             parse_run_packet(GEMINI_THRASH_BASELINE_PACKET_PATHS[pair_key])
         )
         assert build_gemini_thrash_baseline_packet(pair_key) == committed_packet
+
+
+def test_gemini_thrash_baseline_burden_artifact_matches_committed_doc() -> None:
+    for pair_key in GEMINI_THRASH_PAIR_KEYS:
+        committed_path = REPO_ROOT / GEMINI_THRASH_BASELINE_BURDEN_PATHS[pair_key]
+        committed_artifact = {
+            key: value
+            for key, value in parse_aux_burden_artifact(committed_path).items()
+            if key != "path"
+        }
+        assert build_gemini_thrash_baseline_burden_artifact(pair_key) == committed_artifact
 
 
 def test_gemini_uncertainty_baseline_series_uses_distinct_predeclared_ids() -> None:
@@ -126,15 +142,26 @@ def test_candidate_emitter_prints_all_gemini_baseline_packets_as_markdown(
 
     for relative_path in GEMINI_MEDIATION_BASELINE_PACKET_DOC_BUILDERS:
         assert f"--- {relative_path}" in captured
+    for relative_path in GEMINI_THRASH_BASELINE_BURDEN_DOC_BUILDERS:
+        assert f"--- {relative_path}" in captured
 
     emitted_docs = _parse_emitted_docs(captured)
-    assert set(emitted_docs) == set(GEMINI_MEDIATION_BASELINE_PACKET_DOC_BUILDERS)
+    assert set(emitted_docs) == set(GEMINI_MEDIATION_BASELINE_PACKET_DOC_BUILDERS) | set(
+        GEMINI_THRASH_BASELINE_BURDEN_DOC_BUILDERS
+    )
 
     for relative_path, builder in GEMINI_MEDIATION_BASELINE_PACKET_DOC_BUILDERS.items():
         temp_doc = tmp_path / Path(relative_path).name
         temp_doc.write_text(emitted_docs[relative_path], encoding="utf-8")
         emitted_packet = packet_without_path(parse_run_packet(temp_doc))
         assert emitted_packet == builder()
+    for relative_path, builder in GEMINI_THRASH_BASELINE_BURDEN_DOC_BUILDERS.items():
+        temp_doc = tmp_path / Path(relative_path).name
+        temp_doc.write_text(emitted_docs[relative_path], encoding="utf-8")
+        emitted_artifact = {
+            key: value for key, value in parse_aux_burden_artifact(temp_doc).items() if key != "path"
+        }
+        assert emitted_artifact == builder()
 
 
 def _parse_emitted_docs(output: str) -> dict[str, str]:

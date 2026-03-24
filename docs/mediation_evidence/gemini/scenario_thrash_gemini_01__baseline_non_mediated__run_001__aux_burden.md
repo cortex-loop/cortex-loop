@@ -1,0 +1,47 @@
+# scenario_thrash_gemini_01__baseline_non_mediated__run_001__aux_burden
+
+Date: 2026-03-24
+Status: `reviewed_evidence`
+
+## Scope
+
+This committed AUX burden artifact records one Gemini-host baseline-only thrash burden measurement within the committed Gemini thrash paired-run series for mediation evidence review.
+It does not justify mediation, authorize implementation work, or imply generic runtime burden beyond the visible intervention count recorded here.
+
+## Header
+
+- date: `2026-03-24`
+- status: `reviewed_evidence`
+- scenario_id: `scenario_thrash_gemini_01`
+- run_id: `gemini_thrash_baseline_run_001`
+- paired_episode_set_id: `pair_gemini_thrash_001`
+
+## Variant Metadata
+
+- variant: `baseline_non_mediated`
+- host_family: `gemini`
+- burden_metric: `visible_intervention_steps`
+- pair_key: `001`
+
+## Aux Burden Report
+
+- compute_overhead: `0.0`
+- memory_overhead: `0.0`
+- latency_overhead: `0.0`
+- environment_query_cost: `0.0`
+- retrieval_cost: `0.0`
+- intervention_burden: `4.0`
+
+## Metadata
+
+- scenario_id: `scenario_thrash_gemini_01`
+- run_id: `gemini_thrash_baseline_run_001`
+- paired_episode_set_id: `pair_gemini_thrash_001`
+- host_family: `gemini`
+- burden_metric: `visible_intervention_steps`
+
+## Derivation
+
+- branch_sequence: `open -> suspend -> resume -> merge`
+- step_count: `4`
+- note: Visible intervention burden is the exact committed branch-operation count for this run.

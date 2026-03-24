@@ -206,6 +206,16 @@ GEMINI_THRASH_BASELINE_PACKET_PATHS = {
     )
     for pair_key in ("001", "002", "003")
 }
+GEMINI_THRASH_BASELINE_BURDEN_PATHS = {
+    pair_key: (
+        MEDIATION_GEMINI_PACKET_ROOT
+        / (
+            "scenario_thrash_gemini_01__baseline_non_mediated__run_"
+            f"{pair_key}__aux_burden.md"
+        )
+    )
+    for pair_key in ("001", "002", "003")
+}
 OPENAI_UNCERTAINTY_BASELINE_PACKET_PATHS = {
     pair_key: (
         MEDIATION_OPENAI_PACKET_ROOT
@@ -246,6 +256,16 @@ GEMINI_THRASH_MEDIATED_PACKET_PATHS = {
     pair_key: (
         MEDIATION_GEMINI_PACKET_ROOT
         / f"scenario_thrash_gemini_01__experimental_mediated__run_{pair_key}.md"
+    )
+    for pair_key in ("001", "002", "003")
+}
+GEMINI_THRASH_MEDIATED_BURDEN_PATHS = {
+    pair_key: (
+        MEDIATION_GEMINI_PACKET_ROOT
+        / (
+            "scenario_thrash_gemini_01__experimental_mediated__run_"
+            f"{pair_key}__aux_burden.md"
+        )
     )
     for pair_key in ("001", "002", "003")
 }

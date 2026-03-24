@@ -27,6 +27,11 @@ from tests.integration._gemini_mediation_thrash_episode import (
     GEMINI_THRASH_PAIR_SPECS,
     build_gemini_thrash_episode_snapshot,
 )
+from tests.integration._gemini_mediation_thrash_burden import (
+    build_gemini_thrash_burden_artifact,
+    emit_gemini_thrash_burden_artifacts,
+    gemini_thrash_mediated_burden_artifact_path,
+)
 from tests.integration._reference_lane import provenance_manifest_for
 
 
@@ -35,6 +40,10 @@ GEMINI_THRASH_MEDIATED_PACKET_PATH = GEMINI_THRASH_PAIR_SPECS[
 ].mediated_packet_path
 GEMINI_THRASH_MEDIATED_PACKET_PATHS = {
     pair_key: GEMINI_THRASH_PAIR_SPECS[pair_key].mediated_packet_path
+    for pair_key in GEMINI_THRASH_PAIR_KEYS
+}
+GEMINI_THRASH_MEDIATED_BURDEN_PATHS = {
+    pair_key: gemini_thrash_mediated_burden_artifact_path(pair_key)
     for pair_key in GEMINI_THRASH_PAIR_KEYS
 }
 EXPERIMENTAL_GEMINI_THRASH_BRANCH_SEQUENCE = ("open", "suspend", "merge")
@@ -97,6 +106,7 @@ def build_gemini_thrash_mediated_packet(
 ) -> PacketSnapshot:
     spec = GEMINI_THRASH_PAIR_SPECS[pair_key]
     snapshot = build_gemini_mediated_thrash_episode_snapshot(pair_key)
+    burden_artifact = build_gemini_thrash_mediated_burden_artifact(pair_key)
     steps = snapshot["steps"]
 
     assert isinstance(steps, list)
@@ -154,7 +164,11 @@ def build_gemini_thrash_mediated_packet(
                 f"`{spec.mediated_step_prefix}-2`; certification still requires lawful "
                 f"provenance at `{spec.mediated_step_prefix}-3`."
             ),
-            "burden_summary": "none",
+            "burden_summary": (
+                "Visible intervention burden is recorded as "
+                f"`intervention_burden={burden_artifact['aux_burden_report']['intervention_burden']}` "
+                "from the committed branch-operation count on this mediated run."
+            ),
             "host_realization_summary": (
                 "The comparator stays Gemini-only and preserves the same Gemini-native "
                 "lifecycle and branch-derivation evidence surface."
@@ -164,7 +178,7 @@ def build_gemini_thrash_mediated_packet(
             "event_trace_refs": str(snapshot["event_trace_refs"]),
             "contradiction_refs": "none",
             "degradation_refs": "none",
-            "aux_burden_refs_if_present": "none",
+            "aux_burden_refs_if_present": GEMINI_THRASH_MEDIATED_BURDEN_PATHS[pair_key],
             "evaluation_packet_refs_if_present": "none",
         },
         lift_axis_notes={
@@ -187,10 +201,10 @@ def build_gemini_thrash_mediated_packet(
                 "enough to claim uncertainty-handling lift.",
             ),
             "Lower Visible Burden At Equal Task Value": (
-                "Equal certified completion is preserved and no AUX burden artifact is "
-                "recorded within this packet.",
-                "Package-level evidence notes govern whether repeated paired evidence is "
-                "enough to claim burden lift.",
+                "Equal certified completion is preserved with "
+                f"`intervention_burden={burden_artifact['aux_burden_report']['intervention_burden']}` "
+                "recorded from the visible branch-operation count.",
+                "The burden metric is the exact committed branch-operation count for this run.",
             ),
             "Better Host-Specialized Realization": (
                 "The comparator stays Gemini-only and host-split within the committed "
@@ -208,9 +222,34 @@ def build_gemini_thrash_mediated_packet(
     )
 
 
+def build_gemini_thrash_mediated_burden_artifact(
+    pair_key: str = DEFAULT_GEMINI_THRASH_PAIR_KEY,
+) -> dict[str, object]:
+    spec = GEMINI_THRASH_PAIR_SPECS[pair_key]
+    snapshot = build_gemini_mediated_thrash_episode_snapshot(pair_key)
+    branch_sequence = snapshot["branch_sequence"]
+
+    assert branch_sequence == list(EXPERIMENTAL_GEMINI_THRASH_BRANCH_SEQUENCE)
+
+    return build_gemini_thrash_burden_artifact(
+        pair_id=spec.pair_id,
+        pair_key=pair_key,
+        run_id=spec.mediated_run_id,
+        variant="experimental_mediated",
+        host_family="gemini",
+        branch_sequence=branch_sequence,
+    )
+
+
 GEMINI_THRASH_MEDIATED_PACKET_DOC_BUILDERS = {
     GEMINI_THRASH_MEDIATED_PACKET_PATHS[pair_key]: partial(
         build_gemini_thrash_mediated_packet, pair_key
+    )
+    for pair_key in GEMINI_THRASH_PAIR_KEYS
+}
+GEMINI_THRASH_MEDIATED_BURDEN_DOC_BUILDERS = {
+    GEMINI_THRASH_MEDIATED_BURDEN_PATHS[pair_key]: partial(
+        build_gemini_thrash_mediated_burden_artifact, pair_key
     )
     for pair_key in GEMINI_THRASH_PAIR_KEYS
 }
@@ -225,6 +264,8 @@ def emit_gemini_mediated_thrash_candidate() -> None:
                 builder(),
             )
         )
+        sys.stdout.write("\n")
+    emit_gemini_thrash_burden_artifacts(GEMINI_THRASH_MEDIATED_BURDEN_DOC_BUILDERS)
 
 
 def _build_merge_step(spec: GeminiThrashPairSpec) -> dict[str, object]:
