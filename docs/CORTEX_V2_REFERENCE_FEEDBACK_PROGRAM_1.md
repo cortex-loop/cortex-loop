@@ -1,0 +1,188 @@
+# CORTEX_V2_REFERENCE_FEEDBACK_PROGRAM_1
+
+Date: 2026-03-25
+Status: accepted runtime-program brief for the first bounded reference short-window feedback slice
+
+## Purpose
+
+This document opens the next intentional runtime program after the accepted `R4` reference closed-loop feedback closeout.
+
+The chosen next opening move is:
+
+- one bounded three-step realization-feedback window,
+- one bounded prior-window summary,
+- one runtime/CLI projection for that prior-window trace,
+- and one re-audit closeout that stops again before any broader runtime widening.
+
+This document does not override:
+
+- `docs/CORTEX_V2_CORE_2.md`
+- `docs/CORTEX_V2_SRE_2.md`
+- `docs/CORTEX_V2_AUX_2.md`
+- `docs/CORTEX_V2_IMPLEMENTATION_MASTER_PLAN_2.md`
+- `docs/CORTEX_V2_IMPLEMENTATION_STATUS_NOTE.md`
+
+## Accepted parent and rationale
+
+Accepted parent for this program:
+
+- branch: `codex/s3-r4-senior-closeout`
+- commit: `9d07c5b`
+
+Accepted `R4` history still carried into this program:
+
+- accepted proof head: `7672304`
+- runtime landing inside that closeout history: `cecd82d`
+
+Why this program opens now:
+
+- the reference-host local CLI shell is already real,
+- the first bounded computed executive slice is already real,
+- the first one-process continuity law is already real and audit-clean for current scope,
+- and the first bounded last-step realization-feedback path is already real and audit-clean for current scope,
+- but the runtime shell still lacks any bounded short-window feedback law that preserves multiple recent realized outcomes without widening the runtime shell.
+
+## Locked scope
+
+This program remains:
+
+- reference-host only,
+- one-process only,
+- local CLI only,
+- packet-native,
+- and bounded to a three-step short-window feedback horizon.
+
+This program adds only:
+
+- SRE-owned `ReferenceRealizationFeedbackWindow`,
+- SRE-owned `ReferenceFeedbackWindowSummary`,
+- `summarize_reference_feedback_window(window)`,
+- `ReferenceRuntimeSession.feedback_window`,
+- `ReferenceRuntimeStepResult.feedback_window_summary`,
+- top-level CLI/runtime field `feedback_window_summary`,
+- and `session_summary.feedback_window_size`.
+
+This program does **not** authorize:
+
+- a scoring rewrite,
+- a new policy court,
+- multi-host runtime,
+- cross-process continuity,
+- runtime AUX activation,
+- offline consolidation,
+- mediation implementation,
+- or any network/service shell.
+
+## Public runtime contract
+
+The runtime shell continues to expose:
+
+- `python3 -m cortex.runtime.reference_cli`
+
+New public additions in this program are:
+
+- SRE-owned `ReferenceRealizationFeedbackWindow`
+- SRE-owned `ReferenceFeedbackWindowSummary`
+- SRE entry point `summarize_reference_feedback_window(window)`
+- `ReferenceRuntimeSession.feedback_window`
+- `ReferenceRuntimeStepResult.feedback_window_summary`
+- top-level CLI/runtime field `feedback_window_summary`
+- `session_summary.feedback_window_size`
+
+`ReferenceRealizationFeedbackWindow` is locked to:
+
+- `entries: tuple[ReferenceRealizationFeedback, ...]`
+- maximum length `3`
+- oldest-to-newest ordering
+- append behavior that keeps only the three most recent entries
+
+`ReferenceFeedbackWindowSummary` has this locked field order:
+
+- `window_size`
+- `rejection_count`
+- `override_count`
+- `latched_count`
+- `clean_success_streak`
+- `goal_progress_floor`
+- `degradation_pressure_bonus`
+- `sustained_spike_flags`
+
+`feedback_window_summary` always describes the prior window that influenced the current step.
+`session_summary.feedback_window_size` always describes the post-step window size after the current realized outcome is appended.
+
+## Runtime law for this program
+
+The runtime shell may:
+
+- retain the three most recent realized shell outcomes,
+- summarize the prior realized-outcome window through one bounded SRE helper,
+- feed that summary into the next executive-state build,
+- and project the prior-window summary in the CLI/runtime output.
+
+It may not:
+
+- widen beyond a three-step window,
+- consume hidden reward history,
+- rewrite scorer law,
+- invent a second continuity model,
+- move policy ownership into Core,
+- or smooth away contradiction when commitment truth, continuity rejection, and enforced realization coexist.
+
+Corrective `R5` law:
+
+- the builder may use the window summary only for goal-progress uncertainty floor, contradiction-spike preservation, and brake-pressure inputs,
+- `R4` last-step behavior must remain a strict subset of the new window law when `window_size == 1`,
+- the feedback window must persist runtime-realized outcomes only,
+- `feedback_window_summary` must reflect the prior influencing window rather than the post-step window,
+- and `control_ledger` shape and field ordering remain unchanged in this program.
+
+## Program order
+
+This program remains split into three bounded code seams plus closeout:
+
+1. `R5B` feedback window carrier and session persistence
+2. `R5C` SRE window summary and builder integration
+3. `R5D` runtime/CLI projection for prior-window trace
+4. `R5E` re-audit and closeout
+
+Every cross-layer seam remains one-session max and must end on a clean tree before the next seam opens.
+
+## Acceptance gates
+
+`R5` is only landed when all are true:
+
+- the feedback window is bounded to three runtime-realized outcomes,
+- `R4` last-step behavior remains a strict subset of the new window law,
+- the builder uses the window summary only through bounded uncertainty floor, contradiction-spike, and brake-pressure updates,
+- scorer law remains unchanged,
+- the CLI exposes a top-level `feedback_window_summary` and post-step `session_summary.feedback_window_size`,
+- targeted tests pass twice,
+- `make seam-preflight`, `make test-smoke`, and `make verify` pass,
+- and the `R5` phase-gate row is honestly closed.
+
+## Current accepted pre-`R5` state
+
+At the accepted closeout head `9d07c5b` (with proof head `7672304` and runtime landing `cecd82d` inside the same `R4` closeout history):
+
+- the runtime session persists only the immediately previous realized shell outcome as `ReferenceRealizationFeedback`,
+- the executive builder uses that last-step feedback only through bounded goal-progress uncertainty, contradiction-spike, and brake-pressure updates,
+- the CLI exposes a top-level `control_ledger` and keeps `selected_family` distinct from `realized_family` when latched-brake enforcement overrides behavior,
+- lawful `commitment_result_kind` may remain visible even when a `latched-brake-enforced:*` warning is also present,
+- committed end-to-end proof exists for feedback propagation, clean-success no false pressure, deterministic control-ledger ordering, and CLI-visible selected-vs-realized divergence,
+- and a zero-finding adversarial runtime/API review found no defect for current scope.
+
+## Explicitly blocked moves
+
+This program does not authorize:
+
+- broader feedback history than three realized outcomes,
+- a scoring rewrite,
+- a new policy court,
+- cross-host runtime rollout,
+- cross-process continuity,
+- runtime AUX activation,
+- offline consolidation,
+- package-level mediation promotion,
+- or a service shell.
+
+Success here only closes one bounded short-window feedback slice.

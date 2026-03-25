@@ -26,6 +26,9 @@ REFERENCE_RUNTIME_PROGRAM_PATH = (
 REFERENCE_FEEDBACK_PROGRAM_PATH = (
     REPO_ROOT / "docs" / "CORTEX_V2_REFERENCE_FEEDBACK_PROGRAM_0.md"
 )
+REFERENCE_FEEDBACK_PROGRAM_1_PATH = (
+    REPO_ROOT / "docs" / "CORTEX_V2_REFERENCE_FEEDBACK_PROGRAM_1.md"
+)
 ERIKA_VISUALIZATION_STATUS_PATH = (
     REPO_ROOT / "docs" / "erika-visualizations" / "CORTEX_EVIDENCE_BASED_STATUS.md"
 )
@@ -212,12 +215,14 @@ def test_resume_protocol_and_active_workstream_contract_exist() -> None:
     assert "Never promote uncommitted local edits to accepted baseline truth." in agents_text
 
     assert "Status: live workflow-state ledger for compaction-safe continuation." in workstream_text
-    assert "Accepted baseline branch: `codex/s2-r4-adversarial-review`" in workstream_text
-    assert "Accepted baseline commit: `7672304`" in workstream_text
-    assert "Current working branch at ledger update: `codex/s3-r4-senior-closeout`" in workstream_text
-    assert "deterministic closeout/correspondence seam after zero-finding senior review" in workstream_text
-    assert "Current candidate seam: `none`" in workstream_text
+    assert "Accepted baseline branch: `codex/s3-r4-senior-closeout`" in workstream_text
+    assert "Accepted baseline commit: `9d07c5b`" in workstream_text
+    assert "accepted `R4` closeout head is now `9d07c5b`" in workstream_text
+    assert "Current working branch at ledger update: `codex/r5e-short-window-feedback-reaudit`" in workstream_text
+    assert "deterministic support/program-lock seam opening the bounded `R5` runtime program" in workstream_text
+    assert "Current candidate seam: `R5B`" in workstream_text
     assert "Do not treat the mixed `codex/e1-verification-substrate-entrypoints` worktree as accepted truth." in workstream_text
+    assert "Do not widen `R5` beyond a bounded three-step reference-only feedback window" in workstream_text
     assert "git branch --show-current" in workstream_text
     assert "git status --short --untracked-files=all" in workstream_text
     assert "Never promote an uncommitted branch head or dirty worktree state to accepted baseline truth." in workstream_text
@@ -226,6 +231,7 @@ def test_resume_protocol_and_active_workstream_contract_exist() -> None:
 def test_reference_runtime_program_lock_is_recorded() -> None:
     program_text = _read(REFERENCE_RUNTIME_PROGRAM_PATH)
     feedback_program_text = _read(REFERENCE_FEEDBACK_PROGRAM_PATH)
+    feedback_program_1_text = _read(REFERENCE_FEEDBACK_PROGRAM_1_PATH)
     phase_gate_text = _read(PHASE_GATES_PATH)
     workstream_text = _read(ACTIVE_WORKSTREAM_PATH)
 
@@ -243,17 +249,18 @@ def test_reference_runtime_program_lock_is_recorded() -> None:
     assert "`R2` computed reference executive slice" in phase_gate_text
     assert "`R3` reference live continuity slice" in phase_gate_text
     assert "`R4` reference closed-loop feedback and latched-brake slice" in phase_gate_text
+    assert "`R5` reference short-window feedback and sustained-pressure slice" in phase_gate_text
     assert "the first accepted reference-host local CLI shell is landed" in phase_gate_text
     assert "the first bounded `X_t^{ref}` builder, `U_t^{sre}` scoring/selection layer, and runtime-shell integration are landed" in phase_gate_text
     assert "re-hardened and audit-clean for current scope" in phase_gate_text
     assert "malformed `open` and session mismatch are explicit" in phase_gate_text
     assert "feedback-conditioned builder update, top-level control ledger, and latched-brake enforcement are landed and audit-clean for current scope" in phase_gate_text
+    assert "the next bounded opening is a three-step reference-only feedback window" in phase_gate_text
 
-    assert "Current campaign: senior-critique closure complete for the accepted `R4` feedback slice" in workstream_text
-    assert "the pending-goal anchor-loss bug is resolved" in workstream_text
+    assert "Current campaign: `R5` short-window feedback and sustained-pressure program opened on the accepted `R4` closeout line" in workstream_text
     assert "committed end-to-end proof now exists for session-rejection feedback propagation" in workstream_text
     assert "the zero-finding adversarial runtime/API review found no defect for current scope" in workstream_text
-    assert "Current seam status: `R4 senior-closure landed / stop after bounded feedback slice`" in workstream_text
+    assert "Current seam status: `P0A + R5A landed / `R5` open / stop after one bounded load-bearing seam at a time`" in workstream_text
     assert "the first one-process live continuity slice plus explicit rejection enforcement are real" in program_text
     assert "the corrective zero-finding re-audit has passed for current scope" in program_text
     assert "a mismatched runtime `session_id` is surfaced as an explicit contradiction" in program_text
@@ -266,6 +273,19 @@ def test_reference_runtime_program_lock_is_recorded() -> None:
     assert "accepted senior-critique proof head `7672304` (runtime landing `cecd82d` inside the same closeout line)" in feedback_program_text
     assert "CLI-visible selected-vs-realized divergence" in feedback_program_text
     assert "zero-finding adversarial runtime/API review found no defect for current scope" in feedback_program_text
+    assert "first bounded reference short-window feedback slice" in feedback_program_1_text
+    assert "branch: `codex/s3-r4-senior-closeout`" in feedback_program_1_text
+    assert "commit: `9d07c5b`" in feedback_program_1_text
+    assert "accepted proof head: `7672304`" in feedback_program_1_text
+    assert "`ReferenceRealizationFeedbackWindow`" in feedback_program_1_text
+    assert "`ReferenceFeedbackWindowSummary`" in feedback_program_1_text
+    assert "maximum length `3`" in feedback_program_1_text
+    assert "feedback_window_summary" in feedback_program_1_text
+    assert "session_summary.feedback_window_size" in feedback_program_1_text
+    assert "This program does **not** authorize:" in feedback_program_1_text
+    assert "a scoring rewrite" in feedback_program_1_text
+    assert "`R5B` feedback window carrier and session persistence" in feedback_program_1_text
+    assert "`R5E` re-audit and closeout" in feedback_program_1_text
 
 
 def test_erika_visualizations_are_framed_as_support_surfaces() -> None:
@@ -277,11 +297,12 @@ def test_erika_visualizations_are_framed_as_support_surfaces() -> None:
     assert "north-star product target" in markdown_text
     assert "lawful gap programs" in markdown_text
     assert "mechanisms Cortex has already stolen so far" in markdown_text
-    assert "**Accepted factual baseline:** `codex/s2-r4-adversarial-review` at accepted senior-critique proof head `7672304` (`R4` runtime landing remained `cecd82d` inside the same closeout line)" in markdown_text
+    assert "**Accepted factual baseline:** `codex/s3-r4-senior-closeout` at accepted clean closeout head `9d07c5b` (`R4` proof head `7672304` and runtime landing `cecd82d` remain inside the same closeout history)" in markdown_text
     assert "the first bounded last-step realization-feedback path, the first top-level control-ledger projection, and the first bounded latched-brake enforcement point" in markdown_text
     assert "`R1` through `R4` are closed and audit-clean for current scope." in markdown_text
     assert "The first bounded reference-only slice is now landed: last-step realization feedback, a top-level control ledger, and contradiction-preserving latched-brake enforcement" in markdown_text
     assert "zero-finding adversarial runtime/API review found no defect for current scope" in markdown_text
+    assert "The next unopened program is now `R5`: bounded short-window feedback and sustained-pressure on the same reference-only shell." in markdown_text
     assert "cortex-archival-dossiers/" not in markdown_text
     assert "Current Justified Boundary" in html_text
     assert "Gap Programs" in html_text
@@ -291,13 +312,15 @@ def test_erika_visualizations_are_framed_as_support_surfaces() -> None:
     assert "not current committed roadmap" in html_text
     assert "Biology Tracker: What Cortex Has Stolen So Far" in html_text
     assert "which brain-inspired mechanisms Cortex has already stolen so far" in html_text
-    assert "Accepted R4 Proof Head 7672304" in html_text
+    assert "Accepted R4 Closeout Head 9d07c5b" in html_text
     assert "first integrated computed executive slice are real" not in html_text
     assert "it now carries the first integrated computed executive slice, one-process continuity law, last-step realization feedback, a top-level control ledger, and bounded latched-brake enforcement" in html_text
-    assert "senior-critique proof head <code>7672304</code>" in html_text
-    assert "closeout remained <code>cecd82d</code>" in html_text
-    assert "Stop after the first bounded feedback slice and choose any wider loop program explicitly instead of widening scope prematurely." in html_text
+    assert "clean closeout head <code>9d07c5b</code>" in html_text
+    assert "proof head <code>7672304</code>" in html_text
+    assert "runtime landing <code>cecd82d</code>" in html_text
+    assert "Open a bounded short-window feedback program next; do not widen host/runtime scope or turn the current shell into a generic loop court by inertia." in html_text
     assert "The first bounded reference-only slice is now landed: last-step realization feedback, a top-level control ledger, and contradiction-preserving latched-brake enforcement." in html_text
+    assert "Open `R5` only for bounded short-window feedback and sustained-pressure; keep longer-window feedback and broader enforcement as later separate programs." in html_text
     assert '<details class="biology-card"' in html_text
     assert "What we've stolen so far" in html_text
     assert "What is still partial" in html_text
