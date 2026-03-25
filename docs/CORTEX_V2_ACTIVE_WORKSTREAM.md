@@ -8,7 +8,7 @@ It is workflow state only. It does not override the packet documents, implementa
 ## 1. Accepted baseline
 
 - Accepted baseline branch: `codex/r4f-reference-feedback-reaudit`
-- Accepted baseline commit: `cecd82d`
+- Accepted baseline commit: `cdcf6d6`
 - Accepted baseline state:
   - burden-axis re-audit is accepted through the three thrash-host burden slices
   - package-level burden remains `insufficient`
@@ -27,12 +27,12 @@ It is workflow state only. It does not override the packet documents, implementa
 
 ## 2. Current campaign and seam state
 
-- Current campaign: no successor runtime program is opened from the accepted `R4` closeout
-- Current working branch at ledger update: `codex/r4f-reference-feedback-reaudit`
-- Current branch role: deterministic re-audit/closeout branch for the accepted `R4` landing
-- Current candidate seam: `none`
-- Current seam status: `R4 landed / stop after bounded feedback slice`
-- Seam risk: the `R4` closeout seam is complete; any future successor is a new planning/program-selection seam
+- Current campaign: bounded senior-critique closure train for the accepted `R4` feedback slice
+- Current working branch at ledger update: `codex/s0-r4-accepted-head-truth`
+- Current branch role: deterministic docs/test seam for accepted-head normalization after `R4` closeout
+- Current candidate seam: `S1` committed end-to-end proof for `R4` feedback and enforcement behavior
+- Current seam status: `accepted-head truth normalization in progress`
+- Seam risk: this seam is deterministic docs/test truth alignment only; later `S1` and any `S2` fix seam remain cross-layer runtime review work
 
 ## 3. Next lawful move
 
@@ -44,10 +44,10 @@ It is workflow state only. It does not override the packet documents, implementa
 - Next lawful move from this clean accepted head:
   - last-step realization feedback, the feedback-conditioned builder update, the top-level control ledger, and latched-brake enforcement are all landed
   - selected-family truth and realized-family truth remain distinct when enforcement overrides runtime behavior
-  - the zero-finding re-audit bundle passed from the accepted `R4` runtime landing `cecd82d`
-  - stop and choose the next program explicitly from a clean branch off the accepted `R4` closeout line
-  - do not auto-open cross-process continuity, cross-host runtime, runtime AUX activation, offline consolidation, or mediation
-  - if a new program is proposed, lock it in docs before opening code
+  - the zero-finding re-audit bundle passed from the accepted `R4` closeout head `cdcf6d6`
+  - normalize accepted-head truth so support/workstream surfaces point to the actual clean accepted head rather than the earlier runtime landing commit
+  - then add review-grade end-to-end proof for feedback propagation and CLI-visible enforcement behavior before claiming `R4` is hard to critique
+  - do not auto-open a new product program from this work; this is a closure-hardening train only
 
 ## 4. Explicitly blocked moves
 
@@ -65,7 +65,7 @@ It is workflow state only. It does not override the packet documents, implementa
 
 ## 5. Acknowledged worktree noise at ledger update
 
-- The accepted `R4` runtime landing `cecd82d` is clean on the current closeout line.
+- The accepted `R4` closeout head `cdcf6d6` is clean on the current closeout line.
 - The older `codex/e1-verification-substrate-entrypoints` workspace remains mixed and is not the source of truth for this train.
 - Local workspace directories already exist under `.claude/worktrees/`.
 - Re-read `git status --short --untracked-files=all` before opening any new seam; this summary is only the continuity reminder, not the canonical file list.

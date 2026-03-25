@@ -146,7 +146,7 @@ Every cross-layer seam remains one-session max and must end on a clean tree befo
 
 ## Current accepted state after `R4` closeout
 
-At the accepted `R4` runtime landing `cecd82d`:
+At the accepted `R4` closeout head `cdcf6d6` (runtime landing `cecd82d`):
 
 - the runtime session persists only the immediately previous realized shell outcome as `ReferenceRealizationFeedback`,
 - the executive builder uses that last-step feedback only through bounded goal-progress uncertainty, contradiction-spike, and brake-pressure updates,

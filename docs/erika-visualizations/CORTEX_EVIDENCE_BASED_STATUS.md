@@ -2,7 +2,7 @@
 
 **Date:** 2026-03-25
 **Role:** support surface for orientation and planning
-**Accepted factual baseline:** `codex/r4f-reference-feedback-reaudit` after accepted `R4` runtime landing `cecd82d`
+**Accepted factual baseline:** `codex/r4f-reference-feedback-reaudit` at accepted closeout head `cdcf6d6` (`R4` runtime landing remained `cecd82d`)
 
 > This folder tracks three separate things: current accepted repo truth, the north-star product target, and the lawful gap programs required to move from the first toward the second.
 
@@ -44,7 +44,7 @@ If this tracker and the accepted closure status disagree, the accepted closure s
 
 ## 2. Accepted baseline snapshot
 
-The accepted factual baseline for this tracker is the accepted `R4` closeout line after runtime landing `cecd82d`.
+The accepted factual baseline for this tracker is the accepted `R4` closeout line at clean head `cdcf6d6`.
 
 At that accepted baseline:
 
@@ -186,7 +186,7 @@ This is a program map, not a seam queue.
 
 This tracker is grounded in:
 
-- the accepted `R4` closeout line after runtime landing `cecd82d`,
+- the accepted `R4` closeout line at clean head `cdcf6d6` (with runtime landing `cecd82d` inside that closeout history),
 - `docs/CORTEX_V2_REFERENCE_RUNTIME_PROGRAM_0.md`,
 - `docs/CORTEX_V2_CORE_2.md`,
 - `docs/CORTEX_V2_SRE_2.md`,
