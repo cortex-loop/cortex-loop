@@ -633,6 +633,9 @@ EXPECTATIONS = (
                 test_names=(
                     "test_reference_runtime_step_result_surfaces_cheap_reference_event_without_commitment_kind",
                     "test_reference_runtime_step_result_certifies_full_commitment_when_runtime_payload_supplies_artifact_ref",
+                    "test_reference_runtime_step_orders_admissible_families_by_soft_control_enum",
+                    "test_reference_runtime_step_orders_dominant_uncertainty_sources_by_level_then_tag",
+                    "test_reference_runtime_step_prioritizes_enforcement_as_primary_reason_over_session_warning",
                 ),
             ),
         ),
@@ -645,7 +648,10 @@ EXPECTATIONS = (
         promised_surfaces=(
             PromisedTestSurface(
                 test_file="tests/unit/test_reference_runtime_step.py",
-                test_names=("test_reference_runtime_session_tracks_minimum_live_state",),
+                test_names=(
+                    "test_reference_runtime_session_tracks_minimum_live_state",
+                    "test_reference_runtime_step_propagates_session_rejection_feedback_into_next_event_pressure",
+                ),
             ),
             PromisedTestSurface(
                 test_file="tests/integration/test_reference_runtime_continuity.py",
@@ -667,6 +673,7 @@ EXPECTATIONS = (
                 test_names=(
                     "test_reference_runtime_step_result_surfaces_cheap_reference_event_without_commitment_kind",
                     "test_reference_runtime_step_result_certifies_full_commitment_when_runtime_payload_supplies_artifact_ref",
+                    "test_reference_runtime_step_enforces_latched_brake_to_check_when_evidence_dominates",
                 ),
             ),
         ),
@@ -683,6 +690,14 @@ EXPECTATIONS = (
                     "test_reference_runtime_step_result_surfaces_cheap_reference_event_without_commitment_kind",
                     "test_reference_runtime_step_result_keeps_candidate_bearing_event_candidate_only",
                     "test_reference_runtime_step_result_certifies_full_commitment_when_runtime_payload_supplies_artifact_ref",
+                    "test_reference_runtime_step_rejects_malformed_open_without_mutating_existing_anchor",
+                    "test_reference_runtime_step_rejects_mismatched_session_id_without_reassigning_shell",
+                    "test_reference_runtime_step_propagates_session_rejection_feedback_into_next_event_pressure",
+                    "test_reference_runtime_step_propagates_prior_enforcement_override_into_next_event_pressure",
+                    "test_reference_runtime_step_does_not_raise_feedback_pressure_after_clean_success",
+                    "test_reference_runtime_step_orders_admissible_families_by_soft_control_enum",
+                    "test_reference_runtime_step_orders_dominant_uncertainty_sources_by_level_then_tag",
+                    "test_reference_runtime_step_prioritizes_enforcement_as_primary_reason_over_session_warning",
                     "test_reference_runtime_step_enforces_latched_brake_to_check_when_evidence_dominates",
                     "test_reference_runtime_step_enforces_latched_brake_to_neutral_without_evidence_or_environment",
                 ),
@@ -691,6 +706,7 @@ EXPECTATIONS = (
                 test_file="tests/integration/test_reference_runtime_continuity.py",
                 test_names=(
                     "test_reference_runtime_cli_preserves_open_suspend_resume_merge_continuity_in_one_session",
+                    "test_reference_runtime_cli_rejects_illegal_continuity_transitions_without_mutating_session_truth",
                 ),
             ),
         ),
@@ -706,6 +722,7 @@ EXPECTATIONS = (
                 test_names=(
                     "test_reference_runtime_cli_reads_event_file_and_emits_one_record_per_event",
                     "test_reference_runtime_cli_reads_stdin_and_preserves_locked_output_contract",
+                    "test_reference_runtime_cli_in_process_surfaces_selected_vs_realized_divergence",
                 ),
             ),
         ),

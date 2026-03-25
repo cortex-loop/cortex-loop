@@ -144,16 +144,17 @@ Every cross-layer seam remains one-session max and must end on a clean tree befo
 - `make seam-preflight`, `make test-smoke`, and `make verify` pass,
 - and the `R4` phase-gate row is honestly closed.
 
-## Current accepted state after `R4` closeout
+## Current accepted state after `R4` senior closure
 
-At the accepted `R4` closeout head `cdcf6d6` (runtime landing `cecd82d`):
+At the accepted senior-critique proof head `7672304` (runtime landing `cecd82d` inside the same closeout line):
 
 - the runtime session persists only the immediately previous realized shell outcome as `ReferenceRealizationFeedback`,
 - the executive builder uses that last-step feedback only through bounded goal-progress uncertainty, contradiction-spike, and brake-pressure updates,
 - the CLI exposes a top-level `control_ledger` with event class, admissible families, selected family, realized family, dominant uncertainty sources, brake state, budget band, and primary reason,
 - `latched` brake enforcement is real at runtime realization time and keeps `selected_family` distinct from `realized_family` when behavior is overridden,
 - lawful `commitment_result_kind` may remain visible even when a `latched-brake-enforced:*` warning is also present,
-- and the zero-finding re-audit bundle has passed for current scope.
+- committed end-to-end proof now exists for session-rejection feedback propagation, prior-enforcement-override pressure, clean-success no false pressure, deterministic control-ledger ordering, and CLI-visible selected-vs-realized divergence,
+- and a zero-finding adversarial runtime/API review found no defect for current scope.
 
 ## Explicitly blocked moves
 

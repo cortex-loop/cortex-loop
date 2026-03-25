@@ -7,8 +7,8 @@ It is workflow state only. It does not override the packet documents, implementa
 
 ## 1. Accepted baseline
 
-- Accepted baseline branch: `codex/r4f-reference-feedback-reaudit`
-- Accepted baseline commit: `cdcf6d6`
+- Accepted baseline branch: `codex/s2-r4-adversarial-review`
+- Accepted baseline commit: `7672304`
 - Accepted baseline state:
   - burden-axis re-audit is accepted through the three thrash-host burden slices
   - package-level burden remains `insufficient`
@@ -17,6 +17,8 @@ It is workflow state only. It does not override the packet documents, implementa
   - continuation hardening, the Erika support surface, the runtime-program lock, the first accepted reference-host local CLI shell, the first bounded reference executive-state builder, the first bounded reference soft-control scoring/selection layer, the first integrated computed executive slice inside the runtime shell, and the first one-process live continuity slice plus explicit rejection enforcement are accepted on top of the same product truth
   - the corrective runtime hardening now preserves suspended pending-goal anchors across non-continuity events, explicitly rejects malformed `open`, surfaces session-id mismatch as an explicit contradiction, and keeps lawful commitment truth visible even when continuity rejection is also present
   - the first bounded `R4` reference closed-loop feedback slice is now landed on top of that shell: last-step realization feedback persists only the immediately previous realized outcome, the builder consumes that feedback only through bounded uncertainty/contradiction/brake-pressure updates, the CLI exposes a top-level control ledger, and latched-brake enforcement is now real and contradiction-preserving
+  - committed end-to-end proof now exists for session-rejection feedback propagation, prior-enforcement-override pressure, clean-success no false pressure, deterministic control-ledger ordering, and CLI-visible selected-vs-realized divergence
+  - a zero-finding adversarial runtime/API review found no defect for current scope
 - Accepted baseline authority anchors:
   - `docs/CORTEX_V2_IMPLEMENTATION_STATUS_NOTE.md`
   - `docs/CORTEX_V2_IMPLEMENTATION_MASTER_PLAN_2.md`
@@ -27,12 +29,12 @@ It is workflow state only. It does not override the packet documents, implementa
 
 ## 2. Current campaign and seam state
 
-- Current campaign: bounded senior-critique closure train for the accepted `R4` feedback slice
-- Current working branch at ledger update: `codex/s0-r4-accepted-head-truth`
-- Current branch role: deterministic docs/test seam for accepted-head normalization after `R4` closeout
-- Current candidate seam: `S1` committed end-to-end proof for `R4` feedback and enforcement behavior
-- Current seam status: `accepted-head truth normalization in progress`
-- Seam risk: this seam is deterministic docs/test truth alignment only; later `S1` and any `S2` fix seam remain cross-layer runtime review work
+- Current campaign: senior-critique closure complete for the accepted `R4` feedback slice
+- Current working branch at ledger update: `codex/s3-r4-senior-closeout`
+- Current branch role: deterministic closeout/correspondence seam after zero-finding senior review
+- Current candidate seam: `none`
+- Current seam status: `R4 senior-closure landed / stop after bounded feedback slice`
+- Seam risk: this closeout seam is deterministic docs/correspondence truth alignment only; the runtime/API review was completed separately and found no defect in current scope
 
 ## 3. Next lawful move
 
@@ -42,12 +44,11 @@ It is workflow state only. It does not override the packet documents, implementa
   - session mismatch and commitment-vs-continuity coexistence are now explicit in code, docs, and tests
   - the zero-finding re-audit bundle passed from the corrected runtime baseline
 - Next lawful move from this clean accepted head:
-  - last-step realization feedback, the feedback-conditioned builder update, the top-level control ledger, and latched-brake enforcement are all landed
+  - the accepted proof head `7672304` now carries review-grade end-to-end proof for feedback propagation, deterministic control-ledger ordering, and CLI-visible selected-vs-realized divergence
   - selected-family truth and realized-family truth remain distinct when enforcement overrides runtime behavior
-  - the zero-finding re-audit bundle passed from the accepted `R4` closeout head `cdcf6d6`
-  - normalize accepted-head truth so support/workstream surfaces point to the actual clean accepted head rather than the earlier runtime landing commit
-  - then add review-grade end-to-end proof for feedback propagation and CLI-visible enforcement behavior before claiming `R4` is hard to critique
-  - do not auto-open a new product program from this work; this is a closure-hardening train only
+  - the zero-finding adversarial runtime/API review found no defect for current scope
+  - stop and choose any broader runtime or product program explicitly instead of widening from this closure train by inertia
+  - do not auto-open cross-process continuity, cross-host runtime, runtime AUX activation, offline consolidation, or mediation from this work
 
 ## 4. Explicitly blocked moves
 
@@ -65,7 +66,7 @@ It is workflow state only. It does not override the packet documents, implementa
 
 ## 5. Acknowledged worktree noise at ledger update
 
-- The accepted `R4` closeout head `cdcf6d6` is clean on the current closeout line.
+- The accepted senior-critique proof head `7672304` is clean on the senior-review line.
 - The older `codex/e1-verification-substrate-entrypoints` workspace remains mixed and is not the source of truth for this train.
 - Local workspace directories already exist under `.claude/worktrees/`.
 - Re-read `git status --short --untracked-files=all` before opening any new seam; this summary is only the continuity reminder, not the canonical file list.
