@@ -162,7 +162,7 @@ Every cross-layer seam remains one-session max and must end on a clean tree befo
 
 ## Current accepted state after `R5` closeout
 
-At the accepted `R5` proof head `ee41eb4` on the same closeout line:
+On the accepted `R5` closeout line opened from `9d07c5b`, proven at `ee41eb4`, and truthfully closed at deterministic closeout head `fd6789f`:
 
 - the runtime session still persists `last_realization_feedback` as the direct last-step mirror, and it now also persists `feedback_window` as the bounded three-step oldest-to-newest realized-outcome window,
 - the window persists runtime-realized outcomes only and truncates to the three most recent entries,
@@ -172,7 +172,8 @@ At the accepted `R5` proof head `ee41eb4` on the same closeout line:
 - the runtime step result now carries `feedback_window_summary` for the prior influencing window,
 - the CLI exposes top-level `feedback_window_summary` while `session_summary.feedback_window_size` reports the post-step window size after the current realized outcome is appended,
 - lawful `commitment_result_kind` may remain visible even when continuity rejection or `latched-brake-enforced:*` warnings are also present,
-- committed end-to-end proof now exists for clean-window zero pressure, single-mismatch `0.55` floor, repeated-mismatch `0.70` floor, and oldest-entry truncation on the fourth append,
+- committed end-to-end proof now exists at `ee41eb4` for clean-window zero pressure, single-mismatch `0.55` floor, repeated-mismatch `0.70` floor, and oldest-entry truncation on the fourth append,
+- the accepted landed closeout for that same `R5` line is anchored at `fd6789f` rather than treating `ee41eb4` as the sole accepted clean baseline,
 - and a zero-finding re-audit passed for current scope.
 
 ## Explicitly blocked moves

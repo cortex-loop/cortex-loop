@@ -216,10 +216,14 @@ def test_resume_protocol_and_active_workstream_contract_exist() -> None:
 
     assert "Status: live workflow-state ledger for compaction-safe continuation." in workstream_text
     assert "Accepted baseline branch: `codex/r5e-short-window-feedback-reaudit`" in workstream_text
-    assert "Accepted baseline commit: `ee41eb4`" in workstream_text
-    assert "the accepted `R5` proof head is now `ee41eb4`" in workstream_text
-    assert "Current working branch at ledger update: `codex/r5e-short-window-feedback-reaudit`" in workstream_text
-    assert "deterministic re-audit/closeout seam after the bounded `R5` runtime landing" in workstream_text
+    assert "Accepted `R5` opening parent: `9d07c5b`" in workstream_text
+    assert "Accepted `R5` proof head: `ee41eb4`" in workstream_text
+    assert "Accepted `R5` deterministic closeout head: `fd6789f`" in workstream_text
+    assert "Accepted baseline commit: `ee41eb4`" not in workstream_text
+    assert "the accepted `R5` proof head `ee41eb4` now carries" in workstream_text
+    assert "the accepted `R5` landed closeout for that same line is anchored at deterministic closeout head `fd6789f`" in workstream_text
+    assert "Current working branch at ledger update: `codex/r5f-accepted-baseline-truth-normalization`" in workstream_text
+    assert "deterministic docs/test seam normalizing accepted-baseline truth on top of the already-landed `R5` closeout line" in workstream_text
     assert "Current candidate seam: `none`" in workstream_text
     assert "Do not treat the mixed `codex/e1-verification-substrate-entrypoints` worktree as accepted truth." in workstream_text
     assert "Do not treat the first landed `R5` slice as permission for longer-than-three-step feedback history" in workstream_text
@@ -287,7 +291,9 @@ def test_reference_runtime_program_lock_is_recorded() -> None:
     assert "`R5B` feedback window carrier and session persistence" in feedback_program_1_text
     assert "`R5E` re-audit and closeout" in feedback_program_1_text
     assert "Current accepted state after `R5` closeout" in feedback_program_1_text
-    assert "accepted `R5` proof head `ee41eb4`" in feedback_program_1_text
+    assert "opened from `9d07c5b`, proven at `ee41eb4`, and truthfully closed at deterministic closeout head `fd6789f`" in feedback_program_1_text
+    assert "committed end-to-end proof now exists at `ee41eb4`" in feedback_program_1_text
+    assert "the accepted landed closeout for that same `R5` line is anchored at `fd6789f`" in feedback_program_1_text
     assert "top-level `feedback_window_summary`" in feedback_program_1_text
     assert "single-mismatch `0.55` floor" in feedback_program_1_text
     assert "repeated-mismatch `0.70` floor" in feedback_program_1_text
@@ -302,7 +308,10 @@ def test_erika_visualizations_are_framed_as_support_surfaces() -> None:
     assert "north-star product target" in markdown_text
     assert "lawful gap programs" in markdown_text
     assert "mechanisms Cortex has already stolen so far" in markdown_text
-    assert "**Accepted factual baseline:** `codex/r5e-short-window-feedback-reaudit` at accepted `R5` proof head `ee41eb4` (`R4` proof head `7672304`, runtime landing `cecd82d`, and opening parent `9d07c5b` remain inside the same closeout history)" in markdown_text
+    assert "**Accepted factual baseline:** `codex/r5e-short-window-feedback-reaudit` at deterministic closeout head `fd6789f`, with accepted `R5` proof head `ee41eb4` inside the same closeout history (`R4` proof head `7672304`, runtime landing `cecd82d`, and opening parent `9d07c5b` remain historical anchors only)" in markdown_text
+    assert "accepted `R5` proof head `ee41eb4`" in markdown_text
+    assert "deterministic closeout head `fd6789f`" in markdown_text
+    assert "**Accepted factual baseline:** `codex/r5e-short-window-feedback-reaudit` at accepted `R5` proof head `ee41eb4`" not in markdown_text
     assert "the first bounded last-step realization-feedback path, the first top-level control-ledger projection, and the first bounded latched-brake enforcement point" in markdown_text
     assert "`R1` through `R5` are closed and audit-clean for current scope." in markdown_text
     assert "The first bounded reference-only short-window slice is now landed: a three-step realized-outcome window, a bounded prior-window summary, a top-level control ledger, top-level `feedback_window_summary`, and contradiction-preserving latched-brake enforcement" in markdown_text
@@ -317,11 +326,13 @@ def test_erika_visualizations_are_framed_as_support_surfaces() -> None:
     assert "not current committed roadmap" in html_text
     assert "Biology Tracker: What Cortex Has Stolen So Far" in html_text
     assert "which brain-inspired mechanisms Cortex has already stolen so far" in html_text
-    assert "Accepted R5 Proof Head ee41eb4" in html_text
+    assert "Accepted R5 Closeout Head fd6789f (Proof Head ee41eb4)" in html_text
     assert "first integrated computed executive slice are real" not in html_text
     assert "it now carries the first integrated computed executive slice, one-process continuity law, last-step realization feedback, a top-level control ledger, and bounded latched-brake enforcement" in html_text
-    assert "<code>R5</code> proof head <code>ee41eb4</code>" in html_text
-    assert "proof head <code>7672304</code>" in html_text
+    assert "<code>R5</code> closeout head <code>fd6789f</code>, with proof head <code>ee41eb4</code>" in html_text
+    assert "Accepted R5 Proof Head ee41eb4" not in html_text
+    assert "<code>R4</code> proof head" in html_text
+    assert "<code>7672304</code>" in html_text
     assert "runtime landing" in html_text
     assert "<code>cecd82d</code>" in html_text
     assert "Stop after the first bounded short-window feedback slice and choose any wider loop program explicitly instead of widening scope prematurely." in html_text

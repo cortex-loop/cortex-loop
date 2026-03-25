@@ -2,7 +2,7 @@
 
 **Date:** 2026-03-25
 **Role:** support surface for orientation and planning
-**Accepted factual baseline:** `codex/r5e-short-window-feedback-reaudit` at accepted `R5` proof head `ee41eb4` (`R4` proof head `7672304`, runtime landing `cecd82d`, and opening parent `9d07c5b` remain inside the same closeout history)
+**Accepted factual baseline:** `codex/r5e-short-window-feedback-reaudit` at deterministic closeout head `fd6789f`, with accepted `R5` proof head `ee41eb4` inside the same closeout history (`R4` proof head `7672304`, runtime landing `cecd82d`, and opening parent `9d07c5b` remain historical anchors only)
 
 > This folder tracks three separate things: current accepted repo truth, the north-star product target, and the lawful gap programs required to move from the first toward the second.
 
@@ -44,7 +44,7 @@ If this tracker and the accepted closure status disagree, the accepted closure s
 
 ## 2. Accepted baseline snapshot
 
-The accepted factual baseline for this tracker is the accepted `R5` proof line at clean head `ee41eb4`.
+The accepted factual baseline for this tracker is the accepted `R5` closeout line at deterministic closeout head `fd6789f`, with proof head `ee41eb4` preserved inside that same line.
 
 At that accepted baseline:
 
@@ -189,7 +189,7 @@ This is a program map, not a seam queue.
 
 This tracker is grounded in:
 
-- the accepted `R5` proof line at clean head `ee41eb4` (with `R4` proof head `7672304`, runtime landing `cecd82d`, and opening parent `9d07c5b` inside that closeout history),
+- the accepted `R5` closeout line at deterministic closeout head `fd6789f`, with proof head `ee41eb4` inside that same closeout history (and `R4` proof head `7672304`, runtime landing `cecd82d`, and opening parent `9d07c5b` kept as historical anchors only),
 - `docs/CORTEX_V2_REFERENCE_FEEDBACK_PROGRAM_1.md`,
 - `docs/CORTEX_V2_REFERENCE_RUNTIME_PROGRAM_0.md`,
 - `docs/CORTEX_V2_CORE_2.md`,
