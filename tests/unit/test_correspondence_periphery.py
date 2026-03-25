@@ -638,6 +638,38 @@ EXPECTATIONS = (
         ),
     ),
     PeripheryCorrespondenceExpectation(
+        row_label="ReferenceFeedbackWindowSummary",
+        home_path="cortex/sre/feedback.py",
+        module_path="cortex.sre.feedback",
+        symbol_name="ReferenceFeedbackWindowSummary",
+        promised_surfaces=(
+            PromisedTestSurface(
+                test_file="tests/unit/test_reference_feedback_window.py",
+                test_names=(
+                    "test_summarize_reference_feedback_window_reports_zero_pressure_for_clean_window",
+                    "test_summarize_reference_feedback_window_reports_repeated_rejection_floor_and_sustained_disruption",
+                    "test_summarize_reference_feedback_window_reports_mixed_rejection_and_override_bonus",
+                ),
+            ),
+        ),
+    ),
+    PeripheryCorrespondenceExpectation(
+        row_label="summarize_reference_feedback_window",
+        home_path="cortex/sre/feedback.py",
+        module_path="cortex.sre.feedback",
+        symbol_name="summarize_reference_feedback_window",
+        promised_surfaces=(
+            PromisedTestSurface(
+                test_file="tests/unit/test_reference_feedback_window.py",
+                test_names=(
+                    "test_summarize_reference_feedback_window_reports_single_rejection_floor",
+                    "test_summarize_reference_feedback_window_reports_repeated_override_floor",
+                    "test_summarize_reference_feedback_window_reports_mixed_rejection_and_override_bonus",
+                ),
+            ),
+        ),
+    ),
+    PeripheryCorrespondenceExpectation(
         row_label="ReferenceControlLedger",
         home_path="cortex/runtime/reference.py",
         module_path="cortex.runtime.reference",

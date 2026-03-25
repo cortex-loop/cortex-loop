@@ -9,7 +9,11 @@ from cortex.core.observation import ObservationBundle
 from cortex.core.support import SupportSnapshot
 
 from .brake import BrakeState, evaluate_brake_state
-from .feedback import ReferenceRealizationFeedback
+from .feedback import (
+    ReferenceFeedbackWindowSummary,
+    ReferenceRealizationFeedbackWindow,
+    summarize_reference_feedback_window,
+)
 from .families import SoftControlFamily
 from .goals import GoalContinuityView
 from .state import (
@@ -29,7 +33,7 @@ class PriorReferenceRuntimeSessionLike(Protocol):
     budget_history: tuple[str, ...]
     brake_history: tuple[str, ...]
     last_selected_family: SoftControlFamily | None
-    last_realization_feedback: ReferenceRealizationFeedback | None
+    feedback_window: ReferenceRealizationFeedbackWindow
 
 
 def build_reference_executive_state(
@@ -62,11 +66,11 @@ def build_reference_executive_state(
     missing_resume_anchor = "resume-anchor-missing" in support_snapshot.session.reminders
     active_track_ref = _active_track_ref(branch_registry, prior_session)
     main_goal_ref = pending_goal_refs[0] if pending_goal_refs else None
-    prior_feedback_spike_flags = _prior_feedback_spike_flags(prior_session)
+    prior_feedback_window_summary = _prior_feedback_window_summary(prior_session)
     contradiction_spike_flags = _contradiction_spike_flags(
         support_snapshot,
         missing_resume_anchor,
-        prior_feedback_spike_flags,
+        prior_feedback_window_summary.sustained_spike_flags,
     )
 
     uncertainty_estimates = _uncertainty_estimates(
@@ -76,13 +80,13 @@ def build_reference_executive_state(
         branch_registry=branch_registry,
         pending_goal_refs=pending_goal_refs,
         contradiction_spike_flags=contradiction_spike_flags,
-        goal_progress_floor=_goal_progress_floor(prior_session),
+        goal_progress_floor=prior_feedback_window_summary.goal_progress_floor,
     )
     brake_evaluation = evaluate_brake_state(
         uncertainty_estimates,
         repeated_degradations=(
             len(support_snapshot.trace.degradation_records)
-            + _additional_degradation_pressure(prior_session, prior_feedback_spike_flags)
+            + prior_feedback_window_summary.degradation_pressure_bonus
         ),
         missing_resume_anchor=missing_resume_anchor,
         host_friction_level=_host_friction_level(support_snapshot, executive_environment_view),
@@ -248,53 +252,12 @@ def _uncertainty_estimates(
     )
 
 
-def _prior_feedback_spike_flags(
+def _prior_feedback_window_summary(
     prior_session: PriorReferenceRuntimeSessionLike | None,
-) -> frozenset[str]:
-    if prior_session is None or prior_session.last_realization_feedback is None:
-        return frozenset()
-
-    feedback = prior_session.last_realization_feedback
-    flags: set[str] = set()
-    if any(code.startswith("continuity-rejected:") for code in feedback.warning_codes):
-        flags.add("prior-continuity-rejection")
-    if any(code.startswith("session-rejected:") for code in feedback.warning_codes):
-        flags.add("prior-session-mismatch")
-    if feedback.realized_family is not feedback.selected_family:
-        flags.add("prior-enforcement-override")
-    return frozenset(flags)
-
-
-def _goal_progress_floor(
-    prior_session: PriorReferenceRuntimeSessionLike | None,
-) -> float:
-    if prior_session is None or prior_session.last_realization_feedback is None:
-        return 0.0
-
-    feedback = prior_session.last_realization_feedback
-    if any(
-        code.startswith(("continuity-rejected:", "session-rejected:"))
-        for code in feedback.warning_codes
-    ):
-        return 0.55
-    if feedback.realized_family is not feedback.selected_family:
-        return 0.45
-    return 0.0
-
-
-def _additional_degradation_pressure(
-    prior_session: PriorReferenceRuntimeSessionLike | None,
-    prior_feedback_spike_flags: frozenset[str],
-) -> int:
-    if prior_feedback_spike_flags:
-        return 1
-    if (
-        prior_session is not None
-        and prior_session.last_realization_feedback is not None
-        and prior_session.last_realization_feedback.brake_state is BrakeState.LATCHED
-    ):
-        return 1
-    return 0
+) -> ReferenceFeedbackWindowSummary:
+    if prior_session is None:
+        return ReferenceFeedbackWindowSummary()
+    return summarize_reference_feedback_window(prior_session.feedback_window)
 
 
 def _host_friction_level(
