@@ -1,7 +1,7 @@
 # CORTEX_V2_REFERENCE_FEEDBACK_PROGRAM_1
 
 Date: 2026-03-25
-Status: accepted re-audited runtime-program brief for the first bounded reference short-window feedback slice
+Status: corrective runtime-program brief for the first bounded reference short-window feedback slice while the session/window carrier invariant is being re-hardened
 
 ## Purpose
 
@@ -132,6 +132,10 @@ Corrective `R5` law:
 
 - the builder may use the window summary only for goal-progress uncertainty floor, contradiction-spike preservation, and brake-pressure inputs,
 - `R4` last-step behavior must remain a strict subset of the new window law when `window_size == 1`,
+- `ReferenceRuntimeSession` may normalize lawful one-sided feedback state before any step consumes it:
+  - last-step mirror with empty window becomes a one-entry window carrying that same realized outcome,
+  - non-empty window with no last-step mirror adopts the newest window entry as the last-step mirror,
+  - and a non-empty window whose newest entry disagrees with the explicit last-step mirror is rejected,
 - the feedback window must persist runtime-realized outcomes only,
 - `feedback_window_summary` must reflect the prior influencing window rather than the post-step window,
 - and `control_ledger` shape and field ordering remain unchanged in this program.
@@ -175,6 +179,15 @@ On the accepted `R5` closeout line opened from `9d07c5b`, proven at `ee41eb4`, a
 - committed end-to-end proof now exists at `ee41eb4` for clean-window zero pressure, single-mismatch `0.55` floor, repeated-mismatch `0.70` floor, and oldest-entry truncation on the fourth append,
 - the accepted landed closeout for that same `R5` line is anchored at `fd6789f` rather than treating `ee41eb4` as the sole accepted clean baseline,
 - and a zero-finding re-audit passed for current scope.
+
+## Current corrective state on the active reclosure line
+
+On corrective branch `codex/r5g-h-corrective-reclosure` opened from accepted normalization head `7eac5e8`:
+
+- `R5` is temporarily reopened as `drifted` while the surviving session/window carrier invariant defect is being closed,
+- the reproduced defect is narrow: a direct-constructed `ReferenceRuntimeSession` may still carry `last_realization_feedback` with an empty `feedback_window`, which drops next-step pressure because the builder consumes only the bounded window,
+- the corrective seam is limited to carrier normalization/rejection law plus re-audit; it does not widen feedback horizon, scorer law, runtime scope, or policy ownership,
+- and `R5` may be re-landed only after the direct-construction reproduction is gone and the repeat-stability audit bundle passes again.
 
 ## Explicitly blocked moves
 
