@@ -22,6 +22,7 @@ _OUTPUT_KEYS = (
     "warnings",
     "session_summary",
     "commitment_result_kind",
+    "feedback_window_summary",
 )
 
 
@@ -44,6 +45,7 @@ def build_reference_cli_record(step_result: ReferenceRuntimeStepResult) -> dict[
         "warnings": list(step_result.warnings),
         "session_summary": step_result.session_summary,
         "commitment_result_kind": step_result.commitment_result_kind,
+        "feedback_window_summary": step_result.feedback_window_summary_payload,
     }
 
 

@@ -721,6 +721,7 @@ EXPECTATIONS = (
                 test_names=(
                     "test_reference_runtime_step_result_surfaces_cheap_reference_event_without_commitment_kind",
                     "test_reference_runtime_step_result_certifies_full_commitment_when_runtime_payload_supplies_artifact_ref",
+                    "test_reference_runtime_step_reports_prior_window_summary_for_single_rejection_sequence",
                     "test_reference_runtime_step_enforces_latched_brake_to_check_when_evidence_dominates",
                 ),
             ),
@@ -772,6 +773,7 @@ EXPECTATIONS = (
                     "test_reference_runtime_cli_reads_event_file_and_emits_one_record_per_event",
                     "test_reference_runtime_cli_reads_stdin_and_preserves_locked_output_contract",
                     "test_reference_runtime_cli_in_process_surfaces_selected_vs_realized_divergence",
+                    "test_reference_runtime_cli_emits_feedback_window_summary_for_real_session_mismatch_sequences",
                 ),
             ),
         ),

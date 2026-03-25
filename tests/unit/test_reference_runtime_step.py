@@ -64,6 +64,16 @@ def test_reference_runtime_step_result_surfaces_cheap_reference_event_without_co
         "budget_band": "low",
         "primary_reason": None,
     }
+    assert result.feedback_window_summary_payload == {
+        "window_size": 0,
+        "rejection_count": 0,
+        "override_count": 0,
+        "latched_count": 0,
+        "clean_success_streak": 0,
+        "goal_progress_floor": 0.0,
+        "degradation_pressure_bonus": 0,
+        "sustained_spike_flags": [],
+    }
     assert result.commitment_result_kind is None
     assert result.session.session_id == "session-1"
     assert result.session.active_track_ref == "main"
@@ -81,6 +91,7 @@ def test_reference_runtime_step_result_surfaces_cheap_reference_event_without_co
         "host_friction_tags": [],
     }
     assert result.session.feedback_window.entries == (result.session.last_realization_feedback,)
+    assert result.session_summary["feedback_window_size"] == 1
 
 
 def test_reference_runtime_step_result_keeps_candidate_bearing_event_candidate_only() -> None:
@@ -332,6 +343,71 @@ def test_reference_runtime_step_appends_feedback_window_and_truncates_oldest_ent
     assert result.session.feedback_window.entries[1].warning_codes == ("warn-3",)
     assert result.session.feedback_window.entries[2].warning_codes == ()
     assert result.session.feedback_window.entries[-1] == result.session.last_realization_feedback
+
+
+def test_reference_runtime_step_reports_prior_window_summary_for_single_rejection_sequence() -> None:
+    first = run_reference_runtime_step("ContextLoad", {"session_id": "session-a"})
+    second = run_reference_runtime_step(
+        "ContextLoad",
+        {"session_id": "session-b"},
+        first.session,
+    )
+    third = run_reference_runtime_step(
+        "ContextLoad",
+        {"session_id": "session-a"},
+        second.session,
+    )
+
+    assert third.feedback_window_summary_payload == {
+        "window_size": 2,
+        "rejection_count": 1,
+        "override_count": 0,
+        "latched_count": 0,
+        "clean_success_streak": 0,
+        "goal_progress_floor": 0.55,
+        "degradation_pressure_bonus": 1,
+        "sustained_spike_flags": ["prior-session-mismatch"],
+    }
+    assert third.session_summary["feedback_window_size"] == 3
+
+
+def test_reference_runtime_step_reports_prior_window_summary_for_repeated_rejection_sequence() -> None:
+    first = run_reference_runtime_step("ContextLoad", {"session_id": "session-a"})
+    second = run_reference_runtime_step(
+        "ContextLoad",
+        {"session_id": "session-b"},
+        first.session,
+    )
+    third = run_reference_runtime_step(
+        "ContextLoad",
+        {"session_id": "session-a"},
+        second.session,
+    )
+    fourth = run_reference_runtime_step(
+        "ContextLoad",
+        {"session_id": "session-b"},
+        third.session,
+    )
+    fifth = run_reference_runtime_step(
+        "ContextLoad",
+        {"session_id": "session-a"},
+        fourth.session,
+    )
+
+    assert fifth.feedback_window_summary_payload == {
+        "window_size": 3,
+        "rejection_count": 2,
+        "override_count": 0,
+        "latched_count": 0,
+        "clean_success_streak": 0,
+        "goal_progress_floor": 0.70,
+        "degradation_pressure_bonus": 2,
+        "sustained_spike_flags": [
+            "prior-session-mismatch",
+            "sustained-feedback-disruption",
+        ],
+    }
+    assert fifth.session_summary["feedback_window_size"] == 3
 
 
 def test_reference_runtime_step_orders_admissible_families_by_soft_control_enum(

@@ -28,6 +28,13 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 FIXTURE_PATH = (
     REPO_ROOT / "tests" / "integration" / "fixtures" / "reference_runtime_cli_session.jsonl"
 )
+FEEDBACK_WINDOW_FIXTURE_PATH = (
+    REPO_ROOT
+    / "tests"
+    / "integration"
+    / "fixtures"
+    / "reference_runtime_feedback_window_session.jsonl"
+)
 EXPECTED_RECORD_KEYS = {
     "event_index",
     "native_event_name",
@@ -39,6 +46,7 @@ EXPECTED_RECORD_KEYS = {
     "warnings",
     "session_summary",
     "commitment_result_kind",
+    "feedback_window_summary",
 }
 
 
@@ -108,6 +116,7 @@ def test_reference_runtime_cli_reads_event_file_and_emits_one_record_per_event()
         None,
         "certified",
     ]
+    assert [record["feedback_window_summary"]["window_size"] for record in records] == [0, 1, 2]
     assert all(record["warnings"] == [] for record in records)
     assert records[-1]["session_summary"]["event_index"] == 3
     assert records[-1]["session_summary"]["budget_history"] == [
@@ -115,6 +124,7 @@ def test_reference_runtime_cli_reads_event_file_and_emits_one_record_per_event()
         "shell-medium",
         "shell-high",
     ]
+    assert records[-1]["session_summary"]["feedback_window_size"] == 3
     assert records[-1]["executive_state_summary"]["top_family_set"] == ["neutral"]
     assert tuple(records[-1]) == (
         "event_index",
@@ -127,6 +137,7 @@ def test_reference_runtime_cli_reads_event_file_and_emits_one_record_per_event()
         "warnings",
         "session_summary",
         "commitment_result_kind",
+        "feedback_window_summary",
     )
     assert tuple(records[-1]["control_ledger"]) == (
         "event_class",
@@ -195,6 +206,7 @@ def test_reference_runtime_cli_in_process_surfaces_selected_vs_realized_divergen
         "warnings",
         "session_summary",
         "commitment_result_kind",
+        "feedback_window_summary",
     )
     assert records[0]["selected_family"] == "branch"
     assert records[0]["warnings"] == ["latched-brake-enforced:branch:check"]
@@ -204,6 +216,59 @@ def test_reference_runtime_cli_in_process_surfaces_selected_vs_realized_divergen
         "latched-brake-enforced:branch:check"
     )
     assert records[0]["commitment_result_kind"] == "certified"
+    assert records[0]["feedback_window_summary"]["window_size"] == 0
+
+
+def test_reference_runtime_cli_emits_feedback_window_summary_for_real_session_mismatch_sequences() -> None:
+    completed = _run_reference_cli("--event-file", str(FEEDBACK_WINDOW_FIXTURE_PATH))
+
+    assert completed.returncode == 0, completed.stderr
+    records = _parse_jsonl_output(completed.stdout)
+
+    assert len(records) == 5
+    assert [record["session_summary"]["feedback_window_size"] for record in records] == [
+        1,
+        2,
+        3,
+        3,
+        3,
+    ]
+    assert records[2]["feedback_window_summary"] == {
+        "window_size": 2,
+        "rejection_count": 1,
+        "override_count": 0,
+        "latched_count": 0,
+        "clean_success_streak": 0,
+        "goal_progress_floor": 0.55,
+        "degradation_pressure_bonus": 1,
+        "sustained_spike_flags": ["prior-session-mismatch"],
+    }
+    assert records[4]["feedback_window_summary"] == {
+        "window_size": 3,
+        "rejection_count": 2,
+        "override_count": 0,
+        "latched_count": 0,
+        "clean_success_streak": 0,
+        "goal_progress_floor": 0.70,
+        "degradation_pressure_bonus": 2,
+        "sustained_spike_flags": [
+            "prior-session-mismatch",
+            "sustained-feedback-disruption",
+        ],
+    }
+    assert tuple(records[-1]) == (
+        "event_index",
+        "native_event_name",
+        "dispatch_lane",
+        "selected_family",
+        "brake_state",
+        "executive_state_summary",
+        "control_ledger",
+        "warnings",
+        "session_summary",
+        "commitment_result_kind",
+        "feedback_window_summary",
+    )
 
 
 def _run_reference_cli(*args: str, input_text: str | None = None) -> subprocess.CompletedProcess[str]:

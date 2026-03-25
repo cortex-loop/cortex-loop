@@ -42,8 +42,10 @@ from cortex.sre.brake import BrakeState
 from cortex.sre.families import SoftControlFamily
 from cortex.sre.reference_builder import build_reference_executive_state
 from cortex.sre.feedback import (
+    ReferenceFeedbackWindowSummary,
     ReferenceRealizationFeedback,
     ReferenceRealizationFeedbackWindow,
+    summarize_reference_feedback_window,
 )
 from cortex.sre.reference_scoring import select_reference_soft_control
 from cortex.sre.state import ReferenceExecutiveState
@@ -161,6 +163,7 @@ class ReferenceRuntimeSession:
             "pending_goal_refs": list(self.pending_goal_refs),
             "budget_history": list(self.budget_history),
             "brake_history": list(self.brake_history),
+            "feedback_window_size": len(self.feedback_window.entries),
             "last_selected_family": (
                 self.last_selected_family.value
                 if self.last_selected_family is not None
@@ -251,6 +254,9 @@ class ReferenceRuntimeStepResult:
     realized_family: SoftControlFamily
     brake_state: BrakeState
     control_ledger: ReferenceControlLedger
+    feedback_window_summary: ReferenceFeedbackWindowSummary = field(
+        default_factory=ReferenceFeedbackWindowSummary
+    )
     warnings: tuple[str, ...] = field(default_factory=tuple)
     session: ReferenceRuntimeSession = field(default_factory=ReferenceRuntimeSession)
     commitment_result_kind: str | None = None
@@ -306,6 +312,12 @@ class ReferenceRuntimeStepResult:
                 "ReferenceRuntimeStepResult.control_ledger must be ReferenceControlLedger, "
                 f"got {actual_type}."
             )
+        if not isinstance(self.feedback_window_summary, ReferenceFeedbackWindowSummary):
+            actual_type = type(self.feedback_window_summary).__name__
+            raise TypeError(
+                "ReferenceRuntimeStepResult.feedback_window_summary must be "
+                f"ReferenceFeedbackWindowSummary, got {actual_type}."
+            )
         if any(not (isinstance(warning, str) and warning.strip()) for warning in self.warnings):
             raise ValueError(
                 "ReferenceRuntimeStepResult.warnings must contain only non-empty values after trimming."
@@ -355,6 +367,10 @@ class ReferenceRuntimeStepResult:
     def control_ledger_summary(self) -> dict[str, Any]:
         return self.control_ledger.as_summary()
 
+    @property
+    def feedback_window_summary_payload(self) -> dict[str, Any]:
+        return self.feedback_window_summary.as_summary()
+
 
 def run_reference_runtime_step(
     raw_event_name: str,
@@ -384,6 +400,9 @@ def run_reference_runtime_step(
     )
     session_id, session_id_warnings = _resolve_session_id(prior_session, normalized_payload)
     warnings = merge_warnings(warnings, session_id_warnings)
+    prior_feedback_window_summary = summarize_reference_feedback_window(
+        prior_session.feedback_window
+    )
 
     candidate = None
     commitment_result_kind: str | None = None
@@ -502,6 +521,7 @@ def run_reference_runtime_step(
         realized_family=realized_family,
         brake_state=brake_state,
         control_ledger=control_ledger,
+        feedback_window_summary=prior_feedback_window_summary,
         warnings=warnings,
         session=updated_session,
         commitment_result_kind=commitment_result_kind,
