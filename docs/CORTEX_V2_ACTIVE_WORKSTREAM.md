@@ -36,25 +36,26 @@ It is workflow state only. It does not override the packet documents, implementa
 
 ## 2. Current campaign and seam state
 
-- Current campaign: `R5` session feedback carrier-invariant corrective reclosure in flight
+- Current campaign: `R5` session feedback carrier-invariant corrective reclosure complete for current scope
 - Current working branch at ledger update: `codex/r5g-h-corrective-reclosure`
-- Current branch role: bounded corrective docs/runtime/docs train reopening `R5` while the surviving session/window carrier defect is being closed on top of the already-landed short-window slice
-- Current candidate seam: `R5G` session feedback carrier invariant hardening
-- Current seam status: `R5 drifted / corrective carrier reclosure in flight`
-- Seam risk: this corrective line contains one load-bearing runtime carrier seam between deterministic closure-truth re-open and re-close seams; repeat-stability reruns are required before re-landing
+- Current branch role: bounded corrective docs/runtime/docs train that closed the last surviving `R5` session/window carrier defect and re-audited the bounded short-window slice without widening scope
+- Current candidate seam: `none`
+- Current seam status: `R5 landed / stop again before any new runtime or product program`
+- Seam risk: one load-bearing runtime carrier seam plus deterministic closure-truth re-open/re-close seams were completed on the same line, and the repeat-stability rerun bundle passed before re-landing
 
 ## 3. Next lawful move
 
 - `R5` corrective answer:
   - the accepted `R5` proof head `ee41eb4` still carries the bounded three-step realized-outcome window, bounded prior-window summary law, runtime-step summary projection, and top-level CLI `feedback_window_summary`
   - the accepted `R5` landed closeout for that same line remains anchored at deterministic closeout head `fd6789f`
-  - a post-closeout audit reproduced one surviving carrier defect: `ReferenceRuntimeSession` may still carry `last_realization_feedback` with an empty `feedback_window`, which lets the next event lose prior-pressure truth because the builder consumes only the window
+  - the corrective line on `codex/r5g-h-corrective-reclosure` closed the surviving carrier defect: `ReferenceRuntimeSession` now normalizes lawful one-sided last/window state before any step consumes it and rejects divergent two-sided state explicitly
+  - the direct-construction reproduction that lost prior-pressure truth is gone on the corrective line
   - `R4` last-step behavior remains the intended strict subset when `window_size == 1`
   - scorer law remains unchanged
-- Next lawful move from this clean accepted head:
-  - close `R5G` by hardening the session/window carrier invariant without widening the bounded `R5` program
-  - re-audit and re-close `R5` only after the direct-construction reproduction is gone and repeat-stability reruns pass
-  - do not open `R6`, longer-window feedback, broader runtime, cross-process continuity, cross-host runtime, runtime AUX activation, offline consolidation, or mediation from this corrective line
+- Next lawful move from this clean corrective head:
+  - stop again and choose any broader runtime or product program explicitly
+  - if future work opens, separate longer-window feedback from broader runtime widening
+  - do not auto-open `R6`, cross-process continuity, cross-host runtime, runtime AUX activation, offline consolidation, or mediation from this corrective line
 
 ## 4. Explicitly blocked moves
 
@@ -71,7 +72,7 @@ It is workflow state only. It does not override the packet documents, implementa
 - Do not treat the first landed `R4` slice as permission for longer-window feedback history, a generic policy court, or broader runtime widening without a new program lock.
 - Do not treat the first landed `R5` slice as permission for longer-than-three-step feedback history, a scoring rewrite, a new policy court, or broader runtime widening without a new program lock.
 - Do not widen `R5` into cross-process continuity, cross-host runtime, runtime AUX activation, offline consolidation, or mediation.
-- Do not open `R6` or any broader runtime/product program until the `R5` carrier-invariant corrective reclosure is either re-landed or rejected.
+- Do not auto-open `R6` or any broader runtime/product program from the success of this corrective `R5` reclosure.
 
 ## 5. Acknowledged worktree noise at ledger update
 

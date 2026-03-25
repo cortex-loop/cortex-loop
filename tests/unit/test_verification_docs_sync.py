@@ -223,12 +223,12 @@ def test_resume_protocol_and_active_workstream_contract_exist() -> None:
     assert "the accepted `R5` proof head `ee41eb4` still carries" in workstream_text
     assert "the accepted `R5` landed closeout for that same line remains anchored at deterministic closeout head `fd6789f`" in workstream_text
     assert "Current working branch at ledger update: `codex/r5g-h-corrective-reclosure`" in workstream_text
-    assert "bounded corrective docs/runtime/docs train reopening `R5` while the surviving session/window carrier defect is being closed" in workstream_text
-    assert "Current candidate seam: `R5G` session feedback carrier invariant hardening" in workstream_text
-    assert "Current seam status: `R5 drifted / corrective carrier reclosure in flight`" in workstream_text
+    assert "bounded corrective docs/runtime/docs train that closed the last surviving `R5` session/window carrier defect and re-audited the bounded short-window slice without widening scope" in workstream_text
+    assert "Current candidate seam: `none`" in workstream_text
+    assert "Current seam status: `R5 landed / stop again before any new runtime or product program`" in workstream_text
     assert "Do not treat the mixed `codex/e1-verification-substrate-entrypoints` worktree as accepted truth." in workstream_text
     assert "Do not treat the first landed `R5` slice as permission for longer-than-three-step feedback history" in workstream_text
-    assert "Do not open `R6` or any broader runtime/product program until the `R5` carrier-invariant corrective reclosure is either re-landed or rejected." in workstream_text
+    assert "Do not auto-open `R6` or any broader runtime/product program from the success of this corrective `R5` reclosure." in workstream_text
     assert "git branch --show-current" in workstream_text
     assert "git status --short --untracked-files=all" in workstream_text
     assert "Never promote an uncommitted branch head or dirty worktree state to accepted baseline truth." in workstream_text
@@ -262,11 +262,11 @@ def test_reference_runtime_program_lock_is_recorded() -> None:
     assert "malformed `open` and session mismatch are explicit" in phase_gate_text
     assert "feedback-conditioned builder update, top-level control ledger, and latched-brake enforcement are landed and audit-clean for current scope" in phase_gate_text
     assert "the first bounded three-step realized-outcome window" in phase_gate_text
-    assert "post-closeout audit reproduced one surviving session/window carrier defect" in phase_gate_text
+    assert "the corrective line now closes the surviving session/window carrier defect" in phase_gate_text
 
-    assert "Current campaign: `R5` session feedback carrier-invariant corrective reclosure in flight" in workstream_text
+    assert "Current campaign: `R5` session feedback carrier-invariant corrective reclosure complete for current scope" in workstream_text
     assert "committed end-to-end proof now exists for session-rejection feedback propagation" in workstream_text
-    assert "the surviving session/window carrier defect is being closed" in workstream_text
+    assert "the corrective line on `codex/r5g-h-corrective-reclosure` closed the surviving carrier defect" in workstream_text
     assert "the first one-process live continuity slice plus explicit rejection enforcement are real" in program_text
     assert "the corrective zero-finding re-audit has passed for current scope" in program_text
     assert "a mismatched runtime `session_id` is surfaced as an explicit contradiction" in program_text
@@ -296,11 +296,11 @@ def test_reference_runtime_program_lock_is_recorded() -> None:
     assert "opened from `9d07c5b`, proven at `ee41eb4`, and truthfully closed at deterministic closeout head `fd6789f`" in feedback_program_1_text
     assert "committed end-to-end proof now exists at `ee41eb4`" in feedback_program_1_text
     assert "the accepted landed closeout for that same `R5` line is anchored at `fd6789f`" in feedback_program_1_text
-    assert "Current corrective state on the active reclosure line" in feedback_program_1_text
+    assert "Current corrective state after session-carrier reclosure" in feedback_program_1_text
     assert "codex/r5g-h-corrective-reclosure" in feedback_program_1_text
-    assert "R5` is temporarily reopened as `drifted`" in feedback_program_1_text
-    assert "a direct-constructed `ReferenceRuntimeSession` may still carry `last_realization_feedback` with an empty `feedback_window`" in feedback_program_1_text
-    assert "carrier normalization/rejection law plus re-audit" in feedback_program_1_text
+    assert "last-step mirror with empty window becomes a one-entry bounded window" in feedback_program_1_text
+    assert "the direct-construction reproduction that dropped next-step pressure is now closed" in feedback_program_1_text
+    assert "R5` is landed again for current scope on the corrective line" in feedback_program_1_text
     assert "top-level `feedback_window_summary`" in feedback_program_1_text
     assert "single-mismatch `0.55` floor" in feedback_program_1_text
     assert "repeated-mismatch `0.70` floor" in feedback_program_1_text
