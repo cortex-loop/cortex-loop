@@ -139,16 +139,40 @@ class ReferenceRuntimeSession:
                 "ReferenceRuntimeSession.feedback_window must be "
                 f"ReferenceRealizationFeedbackWindow, got {actual_type}."
             )
+        normalized_last_realization_feedback = self.last_realization_feedback
+        normalized_feedback_window = self.feedback_window
         if (
-            self.last_realization_feedback is not None
-            and self.feedback_window.entries
-            and self.feedback_window.entries[-1] != self.last_realization_feedback
+            normalized_last_realization_feedback is not None
+            and not normalized_feedback_window.entries
+        ):
+            normalized_feedback_window = ReferenceRealizationFeedbackWindow(
+                entries=(normalized_last_realization_feedback,)
+            )
+            object.__setattr__(self, "feedback_window", normalized_feedback_window)
+        elif (
+            normalized_last_realization_feedback is None
+            and normalized_feedback_window.entries
+        ):
+            normalized_last_realization_feedback = normalized_feedback_window.entries[-1]
+            object.__setattr__(
+                self,
+                "last_realization_feedback",
+                normalized_last_realization_feedback,
+            )
+        if (
+            normalized_last_realization_feedback is not None
+            and normalized_feedback_window.entries
+            and normalized_feedback_window.entries[-1]
+            != normalized_last_realization_feedback
         ):
             raise ValueError(
                 "ReferenceRuntimeSession.feedback_window newest entry must match "
                 "last_realization_feedback when both are present."
             )
-        if self.last_realization_feedback is None and self.feedback_window.entries:
+        if (
+            normalized_last_realization_feedback is None
+            and normalized_feedback_window.entries
+        ):
             raise ValueError(
                 "ReferenceRuntimeSession.feedback_window must be empty when "
                 "last_realization_feedback is None."

@@ -2,6 +2,9 @@
 
 from __future__ import annotations
 
+import pytest
+
+from cortex.runtime.reference import ReferenceRuntimeSession
 from cortex.sre.brake import BrakeState
 from cortex.sre.feedback import (
     ReferenceFeedbackWindowSummary,
@@ -31,6 +34,46 @@ def test_reference_realization_feedback_window_keeps_only_three_most_recent_entr
     window = window.append(feedback_d)
 
     assert window.entries == (feedback_b, feedback_c, feedback_d)
+
+
+def test_reference_runtime_session_normalizes_last_only_feedback_into_window() -> None:
+    feedback = _feedback("session-rejected:mismatched-session-id:runtime-a")
+
+    session = ReferenceRuntimeSession(
+        session_id="runtime-a",
+        last_realization_feedback=feedback,
+    )
+
+    assert session.last_realization_feedback == feedback
+    assert session.feedback_window.entries == (feedback,)
+
+
+def test_reference_runtime_session_normalizes_window_only_feedback_into_last_step_mirror() -> None:
+    feedback = _feedback("continuity-rejected:missing-open-track-ref")
+
+    session = ReferenceRuntimeSession(
+        session_id="runtime-a",
+        feedback_window=ReferenceRealizationFeedbackWindow(entries=(feedback,)),
+    )
+
+    assert session.last_realization_feedback == feedback
+    assert session.feedback_window.entries == (feedback,)
+
+
+def test_reference_runtime_session_rejects_mismatched_last_feedback_and_window_newest_entry() -> None:
+    with pytest.raises(
+        ValueError,
+        match="feedback_window newest entry must match last_realization_feedback",
+    ):
+        ReferenceRuntimeSession(
+            session_id="runtime-a",
+            last_realization_feedback=_feedback(
+                "session-rejected:mismatched-session-id:runtime-a"
+            ),
+            feedback_window=ReferenceRealizationFeedbackWindow(
+                entries=(_feedback("continuity-rejected:missing-open-track-ref"),)
+            ),
+        )
 
 
 def test_summarize_reference_feedback_window_reports_zero_pressure_for_clean_window() -> None:

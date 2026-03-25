@@ -247,6 +247,46 @@ def test_reference_runtime_step_propagates_session_rejection_feedback_into_next_
     assert follow_up.brake_state is BrakeState.GUARDED
 
 
+def test_reference_runtime_step_normalizes_last_only_prior_session_and_preserves_feedback_pressure() -> None:
+    prior_session = ReferenceRuntimeSession(
+        session_id="session-feedback-a",
+        event_index=1,
+        budget_history=("shell-low",),
+        brake_history=("quiescent",),
+        last_selected_family=SoftControlFamily.NEUTRAL,
+        last_realization_feedback=_feedback(
+            "session-rejected:mismatched-session-id:session-feedback-b"
+        ),
+    )
+
+    assert prior_session.feedback_window.entries == (
+        prior_session.last_realization_feedback,
+    )
+
+    follow_up = run_reference_runtime_step(
+        "ContextLoad",
+        {"session_id": "session-feedback-a"},
+        prior_session,
+    )
+
+    assert follow_up.feedback_window_summary_payload == {
+        "window_size": 1,
+        "rejection_count": 1,
+        "override_count": 0,
+        "latched_count": 0,
+        "clean_success_streak": 0,
+        "goal_progress_floor": 0.55,
+        "degradation_pressure_bonus": 1,
+        "sustained_spike_flags": ["prior-session-mismatch"],
+    }
+    assert _goal_progress_level(follow_up) == 0.55
+    assert (
+        "prior-session-mismatch"
+        in follow_up.executive_state.uncertainty_monitoring.contradiction_spike_flags
+    )
+    assert follow_up.brake_state is BrakeState.GUARDED
+
+
 def test_reference_runtime_step_propagates_prior_enforcement_override_into_next_event_pressure(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
