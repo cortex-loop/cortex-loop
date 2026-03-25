@@ -10,6 +10,7 @@ from .brake import BrakeState
 from .families import SoftControlFamily
 
 _ALLOWED_COMMITMENT_RESULT_KINDS = frozenset(status.value for status in CommitmentStatus)
+_MAX_REFERENCE_FEEDBACK_WINDOW_ENTRIES = 3
 
 
 @dataclass(frozen=True, slots=True)
@@ -68,4 +69,37 @@ class ReferenceRealizationFeedback:
         }
 
 
-__all__ = ["ReferenceRealizationFeedback"]
+@dataclass(frozen=True, slots=True)
+class ReferenceRealizationFeedbackWindow:
+    entries: tuple[ReferenceRealizationFeedback, ...] = ()
+
+    def __post_init__(self) -> None:
+        if len(self.entries) > _MAX_REFERENCE_FEEDBACK_WINDOW_ENTRIES:
+            raise ValueError(
+                "ReferenceRealizationFeedbackWindow.entries must contain at most three items."
+            )
+        if any(not isinstance(entry, ReferenceRealizationFeedback) for entry in self.entries):
+            raise TypeError(
+                "ReferenceRealizationFeedbackWindow.entries must contain only "
+                "ReferenceRealizationFeedback instances."
+            )
+
+    def append(
+        self,
+        feedback: ReferenceRealizationFeedback,
+    ) -> "ReferenceRealizationFeedbackWindow":
+        if not isinstance(feedback, ReferenceRealizationFeedback):
+            actual_type = type(feedback).__name__
+            raise TypeError(
+                "ReferenceRealizationFeedbackWindow.append feedback must be "
+                f"ReferenceRealizationFeedback, got {actual_type}."
+            )
+        return ReferenceRealizationFeedbackWindow(
+            entries=(self.entries + (feedback,))[-_MAX_REFERENCE_FEEDBACK_WINDOW_ENTRIES :]
+        )
+
+
+__all__ = [
+    "ReferenceRealizationFeedback",
+    "ReferenceRealizationFeedbackWindow",
+]

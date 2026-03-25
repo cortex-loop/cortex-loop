@@ -35,6 +35,7 @@ def test_reference_runtime_session_tracks_minimum_live_state() -> None:
     assert session.last_selected_family is None
     assert session.last_commitment_result_summary is None
     assert session.last_realization_feedback is None
+    assert session.feedback_window.entries == ()
     assert session.as_summary()["branch_registry"] == ["main"]
     assert session.as_summary()["active_track_ref"] == "main"
 
@@ -79,6 +80,7 @@ def test_reference_runtime_step_result_surfaces_cheap_reference_event_without_co
         "warning_codes": [],
         "host_friction_tags": [],
     }
+    assert result.session.feedback_window.entries == (result.session.last_realization_feedback,)
 
 
 def test_reference_runtime_step_result_keeps_candidate_bearing_event_candidate_only() -> None:
@@ -114,6 +116,7 @@ def test_reference_runtime_step_result_keeps_candidate_bearing_event_candidate_o
     assert second.session.last_commitment_result_summary == "candidate-only"
     assert second.session.last_realization_feedback is not None
     assert second.session.last_realization_feedback.commitment_result_kind is None
+    assert second.session.feedback_window.entries[-1] == second.session.last_realization_feedback
     assert second.session_summary["event_index"] == 2
 
 
@@ -151,6 +154,7 @@ def test_reference_runtime_step_result_certifies_full_commitment_when_runtime_pa
     assert result.session.last_commitment_result_summary == "certified"
     assert result.session.last_realization_feedback is not None
     assert result.session.last_realization_feedback.commitment_result_kind == "certified"
+    assert result.session.feedback_window.entries[-1] == result.session.last_realization_feedback
 
 
 def test_reference_runtime_step_rejects_malformed_open_without_mutating_existing_anchor() -> None:
@@ -299,6 +303,35 @@ def test_reference_runtime_step_does_not_raise_feedback_pressure_after_clean_suc
     assert _goal_progress_level(second) == 0.2
     assert not second.executive_state.uncertainty_monitoring.contradiction_spike_flags
     assert second.brake_state is BrakeState.QUIESCENT
+
+
+def test_reference_runtime_step_appends_feedback_window_and_truncates_oldest_entry() -> None:
+    session = ReferenceRuntimeSession(
+        session_id="session-feedback-window",
+        event_index=3,
+        budget_history=("shell-low", "shell-low", "shell-low"),
+        brake_history=("quiescent", "quiescent", "quiescent"),
+        last_selected_family=SoftControlFamily.NEUTRAL,
+        last_realization_feedback=_feedback("warn-3"),
+        feedback_window=reference_runtime.ReferenceRealizationFeedbackWindow(
+            entries=(
+                _feedback("warn-1"),
+                _feedback("warn-2"),
+                _feedback("warn-3"),
+            )
+        ),
+    )
+
+    result = run_reference_runtime_step(
+        "ContextLoad",
+        {"session_id": "session-feedback-window"},
+        session,
+    )
+
+    assert result.session.feedback_window.entries[0].warning_codes == ("warn-2",)
+    assert result.session.feedback_window.entries[1].warning_codes == ("warn-3",)
+    assert result.session.feedback_window.entries[2].warning_codes == ()
+    assert result.session.feedback_window.entries[-1] == result.session.last_realization_feedback
 
 
 def test_reference_runtime_step_orders_admissible_families_by_soft_control_enum(
@@ -459,6 +492,16 @@ def _selection(selected_family: SoftControlFamily) -> object:
             self.selected_family = family
 
     return _Selection(selected_family)
+
+
+def _feedback(warning_code: str) -> ReferenceRealizationFeedback:
+    warning_codes = (warning_code,) if warning_code else ()
+    return ReferenceRealizationFeedback(
+        selected_family=SoftControlFamily.NEUTRAL,
+        realized_family=SoftControlFamily.NEUTRAL,
+        brake_state=BrakeState.QUIESCENT,
+        warning_codes=warning_codes,
+    )
 
 
 def _latched_state_with_evidence(*args: object, **kwargs: object) -> ReferenceExecutiveState:

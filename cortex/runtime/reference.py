@@ -41,7 +41,10 @@ from cortex.sre.branching import BranchOperation
 from cortex.sre.brake import BrakeState
 from cortex.sre.families import SoftControlFamily
 from cortex.sre.reference_builder import build_reference_executive_state
-from cortex.sre.feedback import ReferenceRealizationFeedback
+from cortex.sre.feedback import (
+    ReferenceRealizationFeedback,
+    ReferenceRealizationFeedbackWindow,
+)
 from cortex.sre.reference_scoring import select_reference_soft_control
 from cortex.sre.state import ReferenceExecutiveState
 
@@ -60,6 +63,9 @@ class ReferenceRuntimeSession:
     last_selected_family: SoftControlFamily | None = None
     last_commitment_result_summary: str | None = None
     last_realization_feedback: ReferenceRealizationFeedback | None = None
+    feedback_window: ReferenceRealizationFeedbackWindow = field(
+        default_factory=ReferenceRealizationFeedbackWindow
+    )
 
     def __post_init__(self) -> None:
         if self.session_id is not None and not (
@@ -124,6 +130,26 @@ class ReferenceRuntimeSession:
             raise TypeError(
                 "ReferenceRuntimeSession.last_realization_feedback must be "
                 f"ReferenceRealizationFeedback | None, got {actual_type}."
+            )
+        if not isinstance(self.feedback_window, ReferenceRealizationFeedbackWindow):
+            actual_type = type(self.feedback_window).__name__
+            raise TypeError(
+                "ReferenceRuntimeSession.feedback_window must be "
+                f"ReferenceRealizationFeedbackWindow, got {actual_type}."
+            )
+        if (
+            self.last_realization_feedback is not None
+            and self.feedback_window.entries
+            and self.feedback_window.entries[-1] != self.last_realization_feedback
+        ):
+            raise ValueError(
+                "ReferenceRuntimeSession.feedback_window newest entry must match "
+                "last_realization_feedback when both are present."
+            )
+        if self.last_realization_feedback is None and self.feedback_window.entries:
+            raise ValueError(
+                "ReferenceRuntimeSession.feedback_window must be empty when "
+                "last_realization_feedback is None."
             )
 
     def as_summary(self) -> dict[str, Any]:
@@ -407,6 +433,7 @@ def run_reference_runtime_step(
         last_selected_family=prior_session.last_selected_family,
         last_commitment_result_summary=prior_session.last_commitment_result_summary,
         last_realization_feedback=prior_session.last_realization_feedback,
+        feedback_window=prior_session.feedback_window,
     )
     executive_state = build_reference_executive_state(
         bound_event.observation,
@@ -440,6 +467,16 @@ def run_reference_runtime_step(
         budget_band=executive_state.control_allocation.budget_band,
         primary_reason=_primary_reason(warnings),
     )
+    realization_feedback = ReferenceRealizationFeedback(
+        selected_family=selected_family,
+        realized_family=realized_family,
+        brake_state=brake_state,
+        commitment_result_kind=commitment_result_kind,
+        warning_codes=tuple(warnings),
+        host_friction_tags=tuple(
+            sorted(executive_state.control_allocation.host_friction_tags)
+        ),
+    )
     updated_session = ReferenceRuntimeSession(
         session_id=provisional_session.session_id,
         event_index=provisional_session.event_index,
@@ -453,16 +490,8 @@ def run_reference_runtime_step(
             dispatch_decision.lane,
             commitment_result_kind,
         ),
-        last_realization_feedback=ReferenceRealizationFeedback(
-            selected_family=selected_family,
-            realized_family=realized_family,
-            brake_state=brake_state,
-            commitment_result_kind=commitment_result_kind,
-            warning_codes=tuple(warnings),
-            host_friction_tags=tuple(
-                sorted(executive_state.control_allocation.host_friction_tags)
-            ),
-        ),
+        last_realization_feedback=realization_feedback,
+        feedback_window=prior_session.feedback_window.append(realization_feedback),
     )
     return ReferenceRuntimeStepResult(
         event_index=updated_session.event_index,

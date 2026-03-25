@@ -623,6 +623,21 @@ EXPECTATIONS = (
         ),
     ),
     PeripheryCorrespondenceExpectation(
+        row_label="ReferenceRealizationFeedbackWindow",
+        home_path="cortex/sre/feedback.py",
+        module_path="cortex.sre.feedback",
+        symbol_name="ReferenceRealizationFeedbackWindow",
+        promised_surfaces=(
+            PromisedTestSurface(
+                test_file="tests/unit/test_reference_feedback_window.py",
+                test_names=(
+                    "test_reference_realization_feedback_window_starts_empty",
+                    "test_reference_realization_feedback_window_keeps_only_three_most_recent_entries",
+                ),
+            ),
+        ),
+    ),
+    PeripheryCorrespondenceExpectation(
         row_label="ReferenceControlLedger",
         home_path="cortex/runtime/reference.py",
         module_path="cortex.runtime.reference",
@@ -651,6 +666,7 @@ EXPECTATIONS = (
                 test_names=(
                     "test_reference_runtime_session_tracks_minimum_live_state",
                     "test_reference_runtime_step_propagates_session_rejection_feedback_into_next_event_pressure",
+                    "test_reference_runtime_step_appends_feedback_window_and_truncates_oldest_entry",
                 ),
             ),
             PromisedTestSurface(
@@ -695,6 +711,7 @@ EXPECTATIONS = (
                     "test_reference_runtime_step_propagates_session_rejection_feedback_into_next_event_pressure",
                     "test_reference_runtime_step_propagates_prior_enforcement_override_into_next_event_pressure",
                     "test_reference_runtime_step_does_not_raise_feedback_pressure_after_clean_success",
+                    "test_reference_runtime_step_appends_feedback_window_and_truncates_oldest_entry",
                     "test_reference_runtime_step_orders_admissible_families_by_soft_control_enum",
                     "test_reference_runtime_step_orders_dominant_uncertainty_sources_by_level_then_tag",
                     "test_reference_runtime_step_prioritizes_enforcement_as_primary_reason_over_session_warning",
