@@ -1,7 +1,7 @@
 # CORTEX_V2_REFERENCE_FEEDBACK_PROGRAM_1
 
 Date: 2026-03-25
-Status: accepted runtime-program brief for the first bounded reference short-window feedback slice
+Status: accepted re-audited runtime-program brief for the first bounded reference short-window feedback slice
 
 ## Purpose
 
@@ -160,16 +160,20 @@ Every cross-layer seam remains one-session max and must end on a clean tree befo
 - `make seam-preflight`, `make test-smoke`, and `make verify` pass,
 - and the `R5` phase-gate row is honestly closed.
 
-## Current accepted pre-`R5` state
+## Current accepted state after `R5` closeout
 
-At the accepted closeout head `9d07c5b` (with proof head `7672304` and runtime landing `cecd82d` inside the same `R4` closeout history):
+At the accepted `R5` proof head `ee41eb4` on the same closeout line:
 
-- the runtime session persists only the immediately previous realized shell outcome as `ReferenceRealizationFeedback`,
-- the executive builder uses that last-step feedback only through bounded goal-progress uncertainty, contradiction-spike, and brake-pressure updates,
-- the CLI exposes a top-level `control_ledger` and keeps `selected_family` distinct from `realized_family` when latched-brake enforcement overrides behavior,
-- lawful `commitment_result_kind` may remain visible even when a `latched-brake-enforced:*` warning is also present,
-- committed end-to-end proof exists for feedback propagation, clean-success no false pressure, deterministic control-ledger ordering, and CLI-visible selected-vs-realized divergence,
-- and a zero-finding adversarial runtime/API review found no defect for current scope.
+- the runtime session still persists `last_realization_feedback` as the direct last-step mirror, and it now also persists `feedback_window` as the bounded three-step oldest-to-newest realized-outcome window,
+- the window persists runtime-realized outcomes only and truncates to the three most recent entries,
+- the SRE summary law now derives rejection count, override count, latched count, clean-success streak, goal-progress floor, bounded degradation-pressure bonus, and sustained spike flags from the prior window only,
+- the executive builder now consumes that prior-window summary only through bounded goal-progress uncertainty, contradiction-spike, and brake-pressure updates,
+- scorer law is unchanged from `R4`,
+- the runtime step result now carries `feedback_window_summary` for the prior influencing window,
+- the CLI exposes top-level `feedback_window_summary` while `session_summary.feedback_window_size` reports the post-step window size after the current realized outcome is appended,
+- lawful `commitment_result_kind` may remain visible even when continuity rejection or `latched-brake-enforced:*` warnings are also present,
+- committed end-to-end proof now exists for clean-window zero pressure, single-mismatch `0.55` floor, repeated-mismatch `0.70` floor, and oldest-entry truncation on the fourth append,
+- and a zero-finding re-audit passed for current scope.
 
 ## Explicitly blocked moves
 

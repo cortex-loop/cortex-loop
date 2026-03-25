@@ -7,8 +7,8 @@ It is workflow state only. It does not override the packet documents, implementa
 
 ## 1. Accepted baseline
 
-- Accepted baseline branch: `codex/s3-r4-senior-closeout`
-- Accepted baseline commit: `9d07c5b`
+- Accepted baseline branch: `codex/r5e-short-window-feedback-reaudit`
+- Accepted baseline commit: `ee41eb4`
 - Accepted baseline state:
   - burden-axis re-audit is accepted through the three thrash-host burden slices
   - package-level burden remains `insufficient`
@@ -19,7 +19,9 @@ It is workflow state only. It does not override the packet documents, implementa
   - the first bounded `R4` reference closed-loop feedback slice is now landed on top of that shell: last-step realization feedback persists only the immediately previous realized outcome, the builder consumes that feedback only through bounded uncertainty/contradiction/brake-pressure updates, the CLI exposes a top-level control ledger, and latched-brake enforcement is now real and contradiction-preserving
   - committed end-to-end proof now exists for session-rejection feedback propagation, prior-enforcement-override pressure, clean-success no false pressure, deterministic control-ledger ordering, and CLI-visible selected-vs-realized divergence
   - a zero-finding adversarial runtime/API review found no defect for current scope
-  - the accepted `R4` closeout head is now `9d07c5b`; the accepted proof head `7672304` and runtime landing `cecd82d` remain part of the same closeout history rather than the current baseline
+  - the first bounded `R5` reference short-window feedback slice is now landed on top of that shell: the runtime session persists a bounded three-step realized-outcome window, the builder consumes the prior-window summary only through bounded uncertainty/contradiction/brake-pressure updates, the runtime step result carries prior-window summary truth, and the CLI now exposes top-level `feedback_window_summary` plus post-step `session_summary.feedback_window_size`
+  - committed end-to-end proof now exists for clean-window zero pressure, single-mismatch `0.55` floor, repeated-mismatch `0.70` floor, and oldest-entry truncation on the fourth append
+  - the accepted `R5` proof head is now `ee41eb4`; the earlier `R4` proof head `7672304`, runtime landing `cecd82d`, and opening parent `9d07c5b` remain part of the same closeout history rather than competing baselines
 - Accepted baseline authority anchors:
   - `docs/CORTEX_V2_IMPLEMENTATION_STATUS_NOTE.md`
   - `docs/CORTEX_V2_IMPLEMENTATION_MASTER_PLAN_2.md`
@@ -31,25 +33,23 @@ It is workflow state only. It does not override the packet documents, implementa
 
 ## 2. Current campaign and seam state
 
-- Current campaign: `R5` short-window feedback and sustained-pressure program opened on the accepted `R4` closeout line
+- Current campaign: `R5` short-window feedback and sustained-pressure closeout complete for current scope
 - Current working branch at ledger update: `codex/r5e-short-window-feedback-reaudit`
-- Current branch role: deterministic support/program-lock seam opening the bounded `R5` runtime program
-- Current candidate seam: `R5B`
-- Current seam status: `P0A + R5A landed / `R5` open / stop after one bounded load-bearing seam at a time`
-- Seam risk: this seam is deterministic docs/support/program-lock work only; the next seam becomes cross-layer runtime work and must remain one major seam per session
+- Current branch role: deterministic re-audit/closeout seam after the bounded `R5` runtime landing
+- Current candidate seam: `none`
+- Current seam status: `R5 landed / stop after bounded short-window feedback slice`
+- Seam risk: this closeout seam is deterministic docs/support/correspondence truth alignment only; all load-bearing `R5` runtime seams are already landed on the same line
 
 ## 3. Next lawful move
 
-- `R4` closeout answer:
-  - the accepted baseline is now the clean senior-closeout head `9d07c5b`
-  - the accepted proof head `7672304` still carries review-grade end-to-end proof inside the same closeout history
-  - selected-family truth and realized-family truth remain distinct when enforcement overrides runtime behavior
-  - the zero-finding adversarial runtime/API review found no defect for current scope
+- `R5` closeout answer:
+  - the accepted `R5` proof head `ee41eb4` now carries the bounded three-step realized-outcome window, bounded prior-window summary law, runtime-step summary projection, and top-level CLI `feedback_window_summary`
+  - `R4` last-step behavior remains a strict subset of the new window law
+  - scorer law remains unchanged
+  - the zero-finding re-audit bundle passed for current scope
 - Next lawful move from this clean accepted head:
-  - open `R5B` as the first bounded short-window feedback seam
-  - add a reference-only feedback window bounded to three runtime-realized outcomes
-  - keep `R4` last-step behavior as a strict subset of the new window law
-  - do not change scorer law in this train
+  - stop again and choose any broader runtime or product program explicitly
+  - if future work opens, separate longer-window feedback from broader runtime widening
   - do not auto-open cross-process continuity, cross-host runtime, runtime AUX activation, offline consolidation, or mediation from this work
 
 ## 4. Explicitly blocked moves
@@ -65,13 +65,13 @@ It is workflow state only. It does not override the packet documents, implementa
 - Do not widen `R4` into cross-process continuity, cross-host runtime, runtime AUX activation, offline consolidation, or mediation.
 - Do not let `R4` move enforcement or policy ownership into Core.
 - Do not treat the first landed `R4` slice as permission for longer-window feedback history, a generic policy court, or broader runtime widening without a new program lock.
-- Do not widen `R5` beyond a bounded three-step reference-only feedback window, a prior-window summary, and the matching runtime/CLI trace surface.
-- Do not rewrite scorer law, open a new policy court, or widen host/runtime scope inside `R5`.
+- Do not treat the first landed `R5` slice as permission for longer-than-three-step feedback history, a scoring rewrite, a new policy court, or broader runtime widening without a new program lock.
+- Do not widen `R5` into cross-process continuity, cross-host runtime, runtime AUX activation, offline consolidation, or mediation.
 
 ## 5. Acknowledged worktree noise at ledger update
 
-- The accepted closeout head `9d07c5b` is clean on the `R5` opening line.
-- The accepted proof head `7672304` remains part of the same `R4` closeout history and is not a competing baseline.
+- The accepted `R5` proof head `ee41eb4` is clean on the `R5` closeout line.
+- The accepted `R4` proof head `7672304`, runtime landing `cecd82d`, and `R5` opening parent `9d07c5b` remain part of the same closure-train history and are not competing baselines.
 - The older `codex/e1-verification-substrate-entrypoints` workspace remains mixed and is not the source of truth for this train.
 - Local workspace directories already exist under `.claude/worktrees/`.
 - Re-read `git status --short --untracked-files=all` before opening any new seam; this summary is only the continuity reminder, not the canonical file list.
