@@ -204,6 +204,191 @@ def test_reference_runtime_step_rejects_mismatched_session_id_without_reassignin
     assert second.session_summary["session_id"] == "session-stable-a"
 
 
+def test_reference_runtime_step_propagates_session_rejection_feedback_into_next_event_pressure() -> None:
+    first = run_reference_runtime_step(
+        "ContextLoad",
+        {"session_id": "session-feedback-a"},
+    )
+    rejected = run_reference_runtime_step(
+        "ContextLoad",
+        {"session_id": "session-feedback-b"},
+        first.session,
+    )
+    follow_up = run_reference_runtime_step(
+        "ContextLoad",
+        {"session_id": "session-feedback-a"},
+        rejected.session,
+    )
+
+    assert rejected.session.last_realization_feedback is not None
+    assert rejected.session.last_realization_feedback.warning_codes == (
+        "session-rejected:mismatched-session-id:session-feedback-b",
+    )
+    assert _goal_progress_level(follow_up) == 0.55
+    assert (
+        "prior-session-mismatch"
+        in follow_up.executive_state.uncertainty_monitoring.contradiction_spike_flags
+    )
+    assert follow_up.brake_state is BrakeState.GUARDED
+
+
+def test_reference_runtime_step_propagates_prior_enforcement_override_into_next_event_pressure(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    original_builder = reference_runtime.build_reference_executive_state
+    original_select = reference_runtime.select_reference_soft_control
+
+    monkeypatch.setattr(
+        reference_runtime,
+        "build_reference_executive_state",
+        _latched_state_with_evidence,
+    )
+    monkeypatch.setattr(
+        reference_runtime,
+        "select_reference_soft_control",
+        lambda executive_state: _selection(SoftControlFamily.BRANCH),
+    )
+    enforced = run_reference_runtime_step(
+        "ApprovalResult",
+        {
+            "session_id": "session-feedback-latched",
+            "commitment_id": "commit-feedback-latched",
+            "externally_consequential": True,
+            "result_artifact_ref": "artifact-feedback-latched",
+        },
+    )
+
+    monkeypatch.setattr(
+        reference_runtime,
+        "build_reference_executive_state",
+        original_builder,
+    )
+    monkeypatch.setattr(
+        reference_runtime,
+        "select_reference_soft_control",
+        original_select,
+    )
+    follow_up = run_reference_runtime_step(
+        "ContextLoad",
+        {"session_id": "session-feedback-latched"},
+        enforced.session,
+    )
+
+    assert enforced.session.last_realization_feedback is not None
+    assert enforced.session.last_realization_feedback.selected_family is SoftControlFamily.BRANCH
+    assert enforced.session.last_realization_feedback.realized_family is SoftControlFamily.CHECK
+    assert _goal_progress_level(follow_up) == 0.45
+    assert (
+        "prior-enforcement-override"
+        in follow_up.executive_state.uncertainty_monitoring.contradiction_spike_flags
+    )
+    assert follow_up.brake_state is BrakeState.GUARDED
+
+
+def test_reference_runtime_step_does_not_raise_feedback_pressure_after_clean_success() -> None:
+    first = run_reference_runtime_step(
+        "ContextLoad",
+        {"session_id": "session-feedback-clean"},
+    )
+    second = run_reference_runtime_step(
+        "ContextLoad",
+        {"session_id": "session-feedback-clean"},
+        first.session,
+    )
+
+    assert _goal_progress_level(second) == 0.2
+    assert not second.executive_state.uncertainty_monitoring.contradiction_spike_flags
+    assert second.brake_state is BrakeState.QUIESCENT
+
+
+def test_reference_runtime_step_orders_admissible_families_by_soft_control_enum(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(
+        reference_runtime,
+        "build_reference_executive_state",
+        _state_with_ordered_family_mask,
+    )
+    monkeypatch.setattr(
+        reference_runtime,
+        "select_reference_soft_control",
+        lambda executive_state: _selection(SoftControlFamily.NEUTRAL),
+    )
+
+    result = run_reference_runtime_step(
+        "ContextLoad",
+        {"session_id": "session-admissible-order"},
+    )
+
+    assert result.control_ledger_summary["admissible_families"] == [
+        "neutral",
+        "redirect",
+        "check",
+        "branch",
+        "escalate",
+    ]
+
+
+def test_reference_runtime_step_orders_dominant_uncertainty_sources_by_level_then_tag(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(
+        reference_runtime,
+        "build_reference_executive_state",
+        _state_with_tied_uncertainty_sources,
+    )
+    monkeypatch.setattr(
+        reference_runtime,
+        "select_reference_soft_control",
+        lambda executive_state: _selection(SoftControlFamily.NEUTRAL),
+    )
+
+    result = run_reference_runtime_step(
+        "ContextLoad",
+        {"session_id": "session-uncertainty-order"},
+    )
+
+    assert result.control_ledger_summary["dominant_uncertainty_sources"] == [
+        "environment",
+        "evidence",
+    ]
+
+
+def test_reference_runtime_step_prioritizes_enforcement_as_primary_reason_over_session_warning(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(
+        reference_runtime,
+        "build_reference_executive_state",
+        _latched_state_with_evidence,
+    )
+    monkeypatch.setattr(
+        reference_runtime,
+        "select_reference_soft_control",
+        lambda executive_state: _selection(SoftControlFamily.BRANCH),
+    )
+
+    result = run_reference_runtime_step(
+        "ApprovalResult",
+        {
+            "session_id": "session-priority-b",
+            "commitment_id": "commit-priority",
+            "externally_consequential": True,
+            "result_artifact_ref": "artifact-priority",
+        },
+        ReferenceRuntimeSession(session_id="session-priority-a"),
+    )
+
+    assert result.warnings == (
+        "session-rejected:mismatched-session-id:session-priority-b",
+        "latched-brake-enforced:branch:check",
+    )
+    assert result.control_ledger_summary["primary_reason"] == (
+        "latched-brake-enforced:branch:check"
+    )
+    assert result.commitment_result_kind == "certified"
+
+
 def test_reference_runtime_step_enforces_latched_brake_to_check_when_evidence_dominates(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -258,6 +443,14 @@ def test_reference_runtime_step_enforces_latched_brake_to_neutral_without_eviden
     assert result.control_ledger_summary["primary_reason"] == "latched-brake-enforced:escalate:neutral"
     assert result.session.last_realization_feedback is not None
     assert result.session.last_realization_feedback.realized_family is SoftControlFamily.NEUTRAL
+
+
+def _goal_progress_level(result: object) -> float:
+    executive_state = result.executive_state
+    for estimate in executive_state.uncertainty_monitoring.classwise_uncertainty:
+        if estimate.class_tag == "goal-progress":
+            return estimate.level
+    raise AssertionError("missing goal-progress uncertainty estimate")
 
 
 def _selection(selected_family: SoftControlFamily) -> object:
@@ -338,4 +531,63 @@ def _latched_state_without_evidence(*args: object, **kwargs: object) -> Referenc
             host_friction_tags=frozenset({"single-process-limit"}),
         ),
         brake=ReferenceBrakeView(brake_state=BrakeState.LATCHED),
+    )
+
+
+def _state_with_ordered_family_mask(*args: object, **kwargs: object) -> ReferenceExecutiveState:
+    return ReferenceExecutiveState(
+        goal_continuity=ReferenceGoalContinuityView(active_track_ref="main"),
+        uncertainty_monitoring=ReferenceUncertaintyMonitoringView(
+            classwise_uncertainty=(
+                UncertaintyEstimate(class_tag="environment", level=0.6),
+                UncertaintyEstimate(class_tag="goal-progress", level=0.4),
+            )
+        ),
+        mode_and_gating=ReferenceModeAndGatingView(
+            mode_tag="ordered_mask",
+            family_mask=frozenset(
+                {
+                    SoftControlFamily.ESCALATE,
+                    SoftControlFamily.BRANCH,
+                    SoftControlFamily.CHECK,
+                    SoftControlFamily.REDIRECT,
+                }
+            ),
+        ),
+        control_allocation=ReferenceControlAllocationView(
+            budget_band="medium",
+            top_family_set=frozenset({SoftControlFamily.NEUTRAL}),
+        ),
+        brake=ReferenceBrakeView(brake_state=BrakeState.QUIESCENT),
+    )
+
+
+def _state_with_tied_uncertainty_sources(
+    *args: object,
+    **kwargs: object,
+) -> ReferenceExecutiveState:
+    return ReferenceExecutiveState(
+        goal_continuity=ReferenceGoalContinuityView(active_track_ref="main"),
+        uncertainty_monitoring=ReferenceUncertaintyMonitoringView(
+            classwise_uncertainty=(
+                UncertaintyEstimate(class_tag="goal-progress", level=0.8),
+                UncertaintyEstimate(class_tag="environment", level=0.8),
+                UncertaintyEstimate(class_tag="evidence", level=0.8),
+                UncertaintyEstimate(class_tag="host-capability", level=0.2),
+            )
+        ),
+        mode_and_gating=ReferenceModeAndGatingView(
+            mode_tag="tied_sources",
+            family_mask=frozenset(
+                {
+                    SoftControlFamily.NEUTRAL,
+                    SoftControlFamily.CHECK,
+                }
+            ),
+        ),
+        control_allocation=ReferenceControlAllocationView(
+            budget_band="medium",
+            top_family_set=frozenset({SoftControlFamily.NEUTRAL}),
+        ),
+        brake=ReferenceBrakeView(brake_state=BrakeState.QUIESCENT),
     )
