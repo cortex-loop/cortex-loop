@@ -1,7 +1,7 @@
 # CORTEX_V2_RUNTIME_RESTACK_PROGRAM_0
 
 Date: 2026-03-26
-Status: active support brief for the K1 runtime/product restack train
+Status: accepted re-audited support brief for the K1 runtime/product restack train
 
 ## Purpose
 
@@ -84,11 +84,10 @@ Those surfaces must stay reconciled to accepted `j2` workflow truth.
 
 Each seam must end clean before the next opens.
 
-## Current branch-local state
+## Current accepted state after K1 closeout
 
-On branch `codex/k1f-openai-service-closeout` opened from accepted `j2` closeout head `acfccf9`:
+On the accepted K1 runtime closeout line implemented at K1 proof head `d4c311f` and truthfully closed at deterministic closeout head `79b8f39` on branch `codex/k1f-openai-service-closeout`:
 
-- the reference runtime shell, bounded reference continuity, OpenAI documented-host-event runtime shell, raw-transcript ingress shell, and loopback service shell are now present as branch-local K1 candidate surfaces
-- runtime program docs, phase-gate rows, correspondence rows, runtime fixtures, runtime unit/integration tests, and repo-local runtime revalidation targets now exist on this branch
+- the reference runtime shell, bounded reference continuity, OpenAI documented-host-event runtime shell, raw-transcript ingress shell, and loopback service shell are now accepted K1 runtime/product surfaces
+- runtime program docs, phase-gate rows, correspondence rows, runtime fixtures, runtime unit/integration tests, and repo-local runtime revalidation targets now exist on the accepted K1 line
 - donor runtime code has been re-homed without importing donor workflow truth wholesale
-- this remains branch-local implementation truth until an explicit accepted-baseline update lands

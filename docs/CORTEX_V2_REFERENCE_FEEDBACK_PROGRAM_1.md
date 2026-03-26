@@ -165,9 +165,9 @@ Every cross-layer seam remains one-session max and must end on a clean tree befo
 - `make seam-preflight`, `make test-smoke`, and `make verify` pass,
 - and the `R5` phase-gate row is honestly closed.
 
-## Current K1 candidate state before closeout
+## Current accepted state after K1 closeout
 
-On branch `codex/k1f-openai-service-closeout` rooted at K1 proof head `d4c311f`:
+On the accepted K1 runtime closeout line implemented at K1 proof head `d4c311f` and truthfully closed at deterministic closeout head `79b8f39` on branch `codex/k1f-openai-service-closeout`:
 
 - the runtime session still persists `last_realization_feedback` as the direct last-step mirror, and it now also persists `feedback_window` as the bounded three-step oldest-to-newest realized-outcome window,
 - the window persists runtime-realized outcomes only and truncates to the three most recent entries,
@@ -179,7 +179,7 @@ On branch `codex/k1f-openai-service-closeout` rooted at K1 proof head `d4c311f`:
 - lawful `commitment_result_kind` may remain visible even when continuity rejection or `latched-brake-enforced:*` warnings are also present,
 - committed end-to-end proof now exists at `ee41eb4` for clean-window zero pressure, single-mismatch `0.55` floor, repeated-mismatch `0.70` floor, and oldest-entry truncation on the fourth append,
 - the accepted landed donor closeout for the historical `R5` line is still anchored at `fd6789f` rather than treating `ee41eb4` as the sole accepted clean baseline,
-- and a zero-finding re-audit passed for current scope on this candidate line.
+- and a zero-finding re-audit passed for current scope on the accepted K1 line.
 
 ## Historical corrective source state
 

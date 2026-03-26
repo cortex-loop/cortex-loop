@@ -2,7 +2,7 @@
 
 **Date:** 2026-03-26  
 **Role:** support surface for orientation and planning  
-**Accepted factual baseline:** `codex/j2-restack-acceptance-truth-normalization` at `acfccf9`
+**Accepted factual baseline:** `codex/k1f-openai-service-closeout` at `79b8f39`
 
 > This folder tracks three separate things: current accepted repo truth, the north-star product target, and the lawful gap programs required to move from the first toward the second.
 
@@ -14,7 +14,8 @@ It also tracks which brain-inspired mechanisms Cortex has already stolen so far 
 
 - Cortex v2 MVP is complete at the current justified boundary.
 - The accepted center is a tiny integrity core, active SRE reference surfaces, three host vertical slices, a contradiction-preserving evidence harness, and AUX MVP support-only surfaces.
-- The verification/evidence restack train and its workflow-baseline normalization are now landed for current scope on top of that same product truth.
+- The verification/evidence restack train and the K1 runtime/product restack are now landed for current scope on top of that same product truth.
+- The reference runtime shell, bounded reference continuity, OpenAI documented-host-event runtime shell, raw-transcript ingress shell, and loopback service shell are now accepted on the current line.
 - The OpenAI host-realization cell now has a committed three-pair evidence series and `candidate_positive` cell-level signal for better host-specialized realization.
 - Mediation remains blocked and unjustified at package level.
 - Current follow-on work is verification/evidence work, not silent feature expansion.

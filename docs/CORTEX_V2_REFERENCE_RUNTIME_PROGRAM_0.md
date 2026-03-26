@@ -1,7 +1,7 @@
 # CORTEX_V2_REFERENCE_RUNTIME_PROGRAM_0
 
 Date: 2026-03-25
-Status: active re-hardened runtime-program brief for the first live Cortex shell on the K1 candidate line
+Status: accepted re-audited runtime-program brief for the first live Cortex shell on the K1 closeout line
 
 ## Purpose
 
@@ -145,9 +145,9 @@ Corrective ordering law:
 - repeated reruns pass,
 - and the phase-gate row for `R3` is honestly closed
 
-## Current K1 candidate state before closeout
+## Current accepted state after K1 runtime closeout
 
-On branch `codex/k1f-openai-service-closeout` rooted at K1 proof head `d4c311f`:
+On the accepted K1 runtime closeout line implemented at K1 proof head `d4c311f` and truthfully closed at deterministic closeout head `79b8f39` on branch `codex/k1f-openai-service-closeout`:
 
 - the first accepted reference-host local CLI shell is real,
 - the first bounded computed executive slice is real inside that shell,
@@ -156,10 +156,7 @@ On branch `codex/k1f-openai-service-closeout` rooted at K1 proof head `d4c311f`:
 - malformed `open` requests are explicitly rejected instead of clearing continuity anchors by accident,
 - a mismatched runtime `session_id` is surfaced as an explicit contradiction and does not silently reassign the one-process shell,
 - a lawful `commitment_result_kind` may coexist with a rejected continuity transition on the same event when certification evidence remains sufficient,
-- and the corrective zero-finding re-audit has passed for current scope on this candidate line.
-
-This is branch-local K1 implementation truth.
-It does **not** by itself promote accepted baseline truth.
+- and the corrective zero-finding re-audit has passed for current scope on the accepted K1 line.
 
 This closeout does **not** authorize:
 

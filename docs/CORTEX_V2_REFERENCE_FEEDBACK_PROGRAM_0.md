@@ -144,9 +144,9 @@ Every cross-layer seam remains one-session max and must end on a clean tree befo
 - `make seam-preflight`, `make test-smoke`, and `make verify` pass,
 - and the `R4` phase-gate row is honestly closed.
 
-## Current K1 candidate state before closeout
+## Current accepted state after K1 closeout
 
-On branch `codex/k1f-openai-service-closeout` rooted at K1 proof head `d4c311f`:
+On the accepted K1 runtime closeout line implemented at K1 proof head `d4c311f` and truthfully closed at deterministic closeout head `79b8f39` on branch `codex/k1f-openai-service-closeout`:
 
 - the runtime session persists only the immediately previous realized shell outcome as `ReferenceRealizationFeedback`,
 - the executive builder uses that last-step feedback only through bounded goal-progress uncertainty, contradiction-spike, and brake-pressure updates,
@@ -154,10 +154,7 @@ On branch `codex/k1f-openai-service-closeout` rooted at K1 proof head `d4c311f`:
 - `latched` brake enforcement is real at runtime realization time and keeps `selected_family` distinct from `realized_family` when behavior is overridden,
 - lawful `commitment_result_kind` may remain visible even when a `latched-brake-enforced:*` warning is also present,
 - committed end-to-end proof now exists for session-rejection feedback propagation, prior-enforcement-override pressure, clean-success no false pressure, deterministic control-ledger ordering, and CLI-visible selected-vs-realized divergence,
-- and a zero-finding adversarial runtime/API review found no defect for current scope on this candidate line.
-
-This is branch-local K1 implementation truth.
-It does **not** by itself promote accepted baseline truth.
+- and a zero-finding adversarial runtime/API review found no defect for current scope on the accepted K1 line.
 
 ## Explicitly blocked moves
 
