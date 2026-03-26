@@ -221,25 +221,26 @@ def test_resume_protocol_and_active_workstream_contract_exist() -> None:
     assert "Never promote uncommitted local edits to accepted baseline truth." in agents_text
 
     assert "Status: live workflow-state ledger for compaction-safe continuation." in workstream_text
-    assert "Accepted baseline branch: `codex/c1-reference-continuation`" in workstream_text
+    assert "Accepted baseline branch: `codex/o1-openai-runtime-shell`" in workstream_text
     assert "Accepted `R5` opening parent: `9d07c5b`" in workstream_text
     assert "Accepted `R5` proof head: `ee41eb4`" in workstream_text
     assert "Accepted `R5` deterministic closeout head: `fd6789f`" in workstream_text
     assert "Accepted `C1` continuation proof head: `934aa87`" in workstream_text
     assert "Accepted `C1` continuation deterministic closeout head: `5b5c5b7`" in workstream_text
     assert "Accepted baseline commit: `ee41eb4`" not in workstream_text
-    assert "Accepted baseline branch: `codex/c1-reference-continuation`" in workstream_text
-    assert "the first bounded reference cross-process continuation slice is now landed on top of the same product truth: implementation landed at `934aa87`, and the clean accepted closeout line is now anchored at deterministic closeout head `5b5c5b7`" in workstream_text
+    assert "Accepted `O1` runtime proof head: `e399a14`" in workstream_text
+    assert "the first OpenAI documented host-event runtime shell is now landed on top of that same product truth at `e399a14`" in workstream_text
     assert "Current working branch at ledger update: `codex/o1-openai-runtime-shell`" in workstream_text
-    assert "bounded runtime/docs/test train that adds an OpenAI-specific documented host-event shell" in workstream_text
-    assert "Current candidate seam: `O1A` through `O1E`" in workstream_text
-    assert "Current seam status: `O1 candidate implemented and verified / accepted baseline remains clean accepted `C1` closeout line`" in workstream_text
+    assert "accepted bounded runtime/docs/test line that landed an OpenAI-specific documented host-event shell" in workstream_text
+    assert "Current candidate seam: `none`" in workstream_text
+    assert "Current seam status: `O1 landed / stop again before any new deeper one-agent product/runtime program`" in workstream_text
     assert "Do not treat the mixed `codex/e1-verification-substrate-entrypoints` worktree as accepted truth." in workstream_text
     assert "Do not treat the first landed `R5` slice as permission for longer-than-three-step feedback history" in workstream_text
     assert "Do not auto-open `R6` or any broader runtime/product program from the success of this corrective `R5` reclosure." in workstream_text
     assert "Do not widen `C1` into autosave, checkpoints, generic persistence doctrine, multi-host runtime, runtime AUX activation, offline consolidation, or mediation." in workstream_text
     assert "Do not widen directly from accepted `C1` into bidirectional OpenAI control" in workstream_text
     assert "Do not widen `O1` into live network/service doctrine, outbound OpenAI host control realization, generic runtime abstraction" in workstream_text
+    assert "Do not treat accepted `O1` as permission for outbound OpenAI host control" in workstream_text
     assert "git branch --show-current" in workstream_text
     assert "git status --short --untracked-files=all" in workstream_text
     assert "Never promote an uncommitted branch head or dirty worktree state to accepted baseline truth." in workstream_text
@@ -282,8 +283,9 @@ def test_reference_runtime_program_lock_is_recorded() -> None:
     assert "raw documented host events drive a host-specific CLI shell" in phase_gate_text
     assert "canonical Cortex event names are explicitly rejected" in phase_gate_text
     assert "diagnostic-history non-equivalence" in phase_gate_text
+    assert "| closed | landed |" in phase_gate_text
 
-    assert "Current campaign: `O1` OpenAI documented host-event runtime shell is now present on the working branch as a local candidate seam" in workstream_text
+    assert "Current campaign: `O1` accepted and closed for current scope" in workstream_text
     assert "raw documented OpenAI host events now drive a host-specific runtime shell with preserved `raw_host_event_name`" in workstream_text
     assert "canonical Cortex event names are now explicitly rejected at both CLI and runtime entrypoint level" in workstream_text
     assert "OpenAI runtime/session ownership is now self-contained inside `O1`" in workstream_text
@@ -333,12 +335,13 @@ def test_reference_runtime_program_lock_is_recorded() -> None:
     assert "`C1` equivalence does **not** require:" in continuity_program_text
     assert "`make revalidate-reference-runtime-continuity`" in continuity_program_text
     assert "implemented at `934aa87` and truthfully closed at deterministic closeout head `5b5c5b7`" in continuity_program_text
-    assert "active runtime-program brief for the first OpenAI documented host-event runtime shell" in openai_runtime_program_text
+    assert "accepted re-audited runtime-program brief for the first OpenAI documented host-event runtime shell" in openai_runtime_program_text
     assert "`python3 -m cortex.runtime.openai_cli`" in openai_runtime_program_text
     assert "`raw_host_event_name`" in openai_runtime_program_text
     assert "`make revalidate-openai-runtime`" in openai_runtime_program_text
     assert "canonical Cortex event names are now explicitly rejected at both CLI and runtime entrypoint level" in openai_runtime_program_text
     assert "runtime and session I/O ownership remain self-contained inside the OpenAI runtime modules" in openai_runtime_program_text
+    assert "At accepted `O1` runtime proof head `e399a14`" in openai_runtime_program_text
 
 
 def test_erika_visualizations_are_framed_as_support_surfaces() -> None:

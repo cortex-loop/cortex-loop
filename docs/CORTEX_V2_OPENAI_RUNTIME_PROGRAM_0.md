@@ -1,7 +1,7 @@
 # CORTEX_V2_OPENAI_RUNTIME_PROGRAM_0
 
 Date: 2026-03-26
-Status: active runtime-program brief for the first OpenAI documented host-event runtime shell
+Status: accepted re-audited runtime-program brief for the first OpenAI documented host-event runtime shell
 
 ## Purpose
 
@@ -179,21 +179,19 @@ Every seam remains one-session max and must end on a clean tree before the next 
 - `make seam-preflight`, `make revalidate-openai-runtime`, `make test-smoke`, and `make verify` pass,
 - and the `O1` phase-gate row is updated truthfully.
 
-## Current branch-local state
+## Current accepted state after `O1` closeout
 
-On branch `codex/o1-openai-runtime-shell` opened from accepted `C1` closeout head `0e94008`:
+At accepted `O1` runtime proof head `e399a14` on branch `codex/o1-openai-runtime-shell`:
 
-- `OpenAIRuntimeSession`, `OpenAIRuntimeSessionArtifact`, `run_openai_runtime_step()`, and `python3 -m cortex.runtime.openai_cli` now exist as branch-local `O1` candidate surfaces,
-- raw documented OpenAI host events now drive a host-specific runtime shell,
+- `OpenAIRuntimeSession`, `OpenAIRuntimeSessionArtifact`, `run_openai_runtime_step()`, and `python3 -m cortex.runtime.openai_cli` are now landed `O1` surfaces,
+- raw documented OpenAI host events drive a host-specific runtime shell,
 - `raw_host_event_name` is preserved in the top-level CLI record,
-- OpenAI split-run continuity proof now exists against the `O1` contract,
 - canonical Cortex event names are now explicitly rejected at both CLI and runtime entrypoint level,
+- undocumented raw OpenAI host events remain explicit conservative warnings rather than fabricated parity,
 - `O1` runtime/session I/O no longer import private reference-runtime helpers,
+- OpenAI split-run continuity proof now exists against the `O1` contract with explicit diagnostic-history non-equivalence,
 - `make revalidate-openai-runtime` now exists as the repo-local OpenAI runtime revalidation entry point,
-- and targeted reruns, repeated `make revalidate-openai-runtime`, `make test-smoke`, and `make verify` have all passed on this branch.
-
-This is branch-local implementation truth.
-It does **not** by itself promote accepted baseline truth.
+- and targeted reruns, repeated `make revalidate-openai-runtime`, `make test-smoke`, and `make verify` all passed before closeout.
 
 ## Explicitly blocked moves
 
