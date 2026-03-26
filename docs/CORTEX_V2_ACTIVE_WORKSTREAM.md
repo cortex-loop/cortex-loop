@@ -22,20 +22,24 @@ It is workflow state only. It does not override the packet documents, implementa
 
 ## 2. Current campaign and seam state
 
-- Current campaign: compaction-safe continuation hardening
-- Current working branch at ledger creation: `codex/e1-verification-substrate-entrypoints`
-- Current branch role: mixed workspace branch; do not treat it as accepted baseline truth
-- Current candidate seam: resume-contract hardening for long-run continuity
-- Current seam status: `in progress / local-only`
-- Seam risk: deterministic code/doc seam
+- Current campaign: `E2` / `E5` verification truth-sync is now the next bounded candidate seam
+- Current working branch at ledger update: `codex/e1a-resume-protocol-hardening`
+- Current branch role: accepted workflow/docs guard line that landed the continuation resume protocol, seam-preflight documentation, and the live workstream ledger without widening runtime or packet scope
+- Current candidate seam: `codex/e2e5-verification-truth-sync`
+- Current seam status: `continuation hardening landed / next lawful move is verification truth-sync on a clean descendant`
+- Seam risk: the landed continuation-hardening seam was a shared verification-plumbing seam and repeated clean-tree reruns passed before acceptance
 
 ## 3. Next lawful move
 
-- Land the continuation hardening seam:
-  - add the resume protocol to `AGENTS.md`
-  - create and maintain this workstream ledger
-  - add a narrow drift guard so future agents cannot silently skip the resume contract
-- After this seam is accepted, restate the current baseline and choose one bounded next problem before widening scope.
+- Accepted answer after continuation hardening:
+  - the repo now has an explicit resume protocol in `AGENTS.md`
+  - the repo now has a live compaction-safe workstream ledger
+  - local verification now documents `make seam-preflight`
+  - future seam work now has a narrow drift guard against reopening dirty tracked work
+- Next lawful move:
+  - open the verification/evidence truth-sync seam on a clean descendant
+  - keep the accepted baseline anchored at `4bb7fbf`
+  - do not carry mixed local evidence/runtime/support edits from `codex/e1-verification-substrate-entrypoints` directly into accepted truth
 
 ## 4. Explicitly blocked moves
 
@@ -44,10 +48,11 @@ It is workflow state only. It does not override the packet documents, implementa
 - Do not reopen `E6` verification-ergonomics helper work without a new explicit re-audit.
 - Do not promote package-level mediation justification from current burden evidence.
 - Do not let support-surface documents silently redefine packet or status authority.
+- Do not carry the one-line authority-surface edits currently sitting in `docs/CORTEX_V2_IMPLEMENTATION_MASTER_PLAN_2.md` or `docs/CORTEX_V2_SRE_2.md` into the verification/evidence restack train.
 
 ## 5. Acknowledged worktree noise at ledger creation
 
-- Mixed tracked edits already exist across verification docs, mediation docs, and reference/OpenAI verification surfaces on `codex/e1-verification-substrate-entrypoints`.
+- Mixed tracked edits still exist across verification docs, mediation docs, and reference/OpenAI verification surfaces on `codex/e1-verification-substrate-entrypoints`.
 - Untracked support-surface files already exist under `docs/erika-visualizations/`.
 - Untracked verification guard work already exists at `tests/unit/test_verification_docs_sync.py`.
 - Local workspace directories already exist under `.claude/worktrees/`.

@@ -218,9 +218,10 @@ def test_resume_protocol_and_active_workstream_contract_exist() -> None:
     assert "Status: live workflow-state ledger for compaction-safe continuation." in workstream_text
     assert "Accepted baseline branch: `codex/j0-burden-axis-reaudit`" in workstream_text
     assert "Accepted baseline commit: `4bb7fbf`" in workstream_text
-    assert "Current working branch at ledger creation: `codex/e1-verification-substrate-entrypoints`" in workstream_text
-    assert "mixed workspace branch; do not treat it as accepted baseline truth" in workstream_text
+    assert "Current working branch at ledger update: `codex/e1a-resume-protocol-hardening`" in workstream_text
+    assert "accepted workflow/docs guard line that landed the continuation resume protocol" in workstream_text
     assert "Do not treat mixed local edits on the current working branch as accepted truth." in workstream_text
+    assert "Do not carry the one-line authority-surface edits currently sitting in `docs/CORTEX_V2_IMPLEMENTATION_MASTER_PLAN_2.md` or `docs/CORTEX_V2_SRE_2.md`" in workstream_text
     assert "git branch --show-current" in workstream_text
     assert "git status --short --untracked-files=all" in workstream_text
     assert "Never promote an uncommitted branch head or dirty worktree state to accepted baseline truth." in workstream_text
