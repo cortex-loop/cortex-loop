@@ -172,7 +172,7 @@ Direct commands:
 
 ```sh
 python3 -m pytest tests/unit/test_openai_host_control.py -q
-python3 -m pytest tests/integration/test_openai_host_control.py -q
+python3 -m pytest tests/integration/test_openai_host_control_service.py -q
 python3 -m pytest tests/integration/test_openai_host_control_continuity.py -q
 ```
 

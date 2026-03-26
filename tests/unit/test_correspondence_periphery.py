@@ -1175,7 +1175,7 @@ EXPECTATIONS = (
                 test_names=("test_openai_service_action_roundtrips_records_with_fake_transport",),
             ),
             PromisedTestSurface(
-                test_file="tests/integration/test_openai_host_control.py",
+                test_file="tests/integration/test_openai_host_control_service.py",
                 test_names=(
                     "test_openai_host_control_action_endpoint_returns_ordered_o1_records_and_mutates_session",
                     "test_openai_host_control_action_endpoint_upstream_failure_returns_502_without_mutating_session",

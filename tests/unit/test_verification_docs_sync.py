@@ -404,7 +404,7 @@ def test_openai_host_control_revalidation_entry_points_are_recorded() -> None:
 
     assert "## OpenAI host-control revalidation" in local_verification_text
     assert "python3 -m pytest tests/unit/test_openai_host_control.py -q" in local_verification_text
-    assert "python3 -m pytest tests/integration/test_openai_host_control.py -q" in local_verification_text
+    assert "python3 -m pytest tests/integration/test_openai_host_control_service.py -q" in local_verification_text
     assert "python3 -m pytest tests/integration/test_openai_host_control_continuity.py -q" in local_verification_text
     assert "Canonical K2 tests use the internal fixture transport and do not require a live OpenAI network or a real API key." in local_verification_text
     assert "make revalidate-openai-host-control" in local_verification_text
