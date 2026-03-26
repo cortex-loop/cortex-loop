@@ -222,10 +222,11 @@ def test_resume_protocol_and_active_workstream_contract_exist() -> None:
     assert "Accepted `R5` opening parent: `9d07c5b`" in workstream_text
     assert "Accepted `R5` proof head: `ee41eb4`" in workstream_text
     assert "Accepted `R5` deterministic closeout head: `fd6789f`" in workstream_text
-    assert "Accepted `C1` continuation closeout head: `934aa87`" in workstream_text
+    assert "Accepted `C1` continuation proof head: `934aa87`" in workstream_text
+    assert "Accepted `C1` continuation deterministic closeout head: `5b5c5b7`" in workstream_text
     assert "Accepted baseline commit: `ee41eb4`" not in workstream_text
     assert "Accepted baseline branch: `codex/c1-reference-continuation`" in workstream_text
-    assert "the first bounded reference cross-process continuation slice is now landed on top of the same product truth at `934aa87`" in workstream_text
+    assert "the first bounded reference cross-process continuation slice is now landed on top of the same product truth: implementation landed at `934aa87`, and the clean accepted closeout line is now anchored at deterministic closeout head `5b5c5b7`" in workstream_text
     assert "Current working branch at ledger update: `codex/c1-reference-continuation`" in workstream_text
     assert "accepted bounded runtime/docs/test line that landed explicit persisted `continuity_truth`, bounded `control_residue`, explicit CLI load/save, and bounded cross-process continuity proof without widening into generic persistence or broader runtime rollout" in workstream_text
     assert "Current candidate seam: `none`" in workstream_text
@@ -271,7 +272,7 @@ def test_reference_runtime_program_lock_is_recorded() -> None:
     assert "the first bounded three-step realized-outcome window" in phase_gate_text
     assert "the corrective line now closes the surviving session/window carrier defect" in phase_gate_text
     assert "`C1` reference bounded cross-process continuation slice" in phase_gate_text
-    assert "explicit persisted `continuity_truth` plus bounded `control_residue` are now landed at accepted `C1` closeout head `934aa87`" in phase_gate_text
+    assert "explicit persisted `continuity_truth` plus bounded `control_residue` are now landed on the accepted `C1` closeout line, implemented at `934aa87` and cleanly closed at deterministic closeout head `5b5c5b7`" in phase_gate_text
 
     assert "Current campaign: `C1` accepted and closed for current scope" in workstream_text
     assert "persisted continuation truth is split into exact `continuity_truth` and bounded `control_residue`" in workstream_text
@@ -320,7 +321,7 @@ def test_reference_runtime_program_lock_is_recorded() -> None:
     assert "`control_residue`" in continuity_program_text
     assert "`C1` equivalence does **not** require:" in continuity_program_text
     assert "`make revalidate-reference-runtime-continuity`" in continuity_program_text
-    assert "At accepted `C1` continuation closeout head `934aa87`" in continuity_program_text
+    assert "implemented at `934aa87` and truthfully closed at deterministic closeout head `5b5c5b7`" in continuity_program_text
 
 
 def test_erika_visualizations_are_framed_as_support_surfaces() -> None:

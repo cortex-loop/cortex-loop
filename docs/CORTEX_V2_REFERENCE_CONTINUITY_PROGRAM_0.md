@@ -207,7 +207,7 @@ Every seam remains one-session max and must end on a clean tree before the next 
 
 ## Current accepted state after `C1` closeout
 
-At accepted `C1` continuation closeout head `934aa87` on branch `codex/c1-reference-continuation`:
+On the accepted `C1` continuation closeout line implemented at `934aa87` and truthfully closed at deterministic closeout head `5b5c5b7` on branch `codex/c1-reference-continuation`:
 
 - `ReferenceRuntimeSessionArtifact` is now landed as a bounded cross-process carrier,
 - the reference CLI now supports explicit `--load-session` / `--save-session`,

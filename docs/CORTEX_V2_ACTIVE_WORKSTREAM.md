@@ -11,7 +11,8 @@ It is workflow state only. It does not override the packet documents, implementa
 - Accepted `R5` opening parent: `9d07c5b`
 - Accepted `R5` proof head: `ee41eb4`
 - Accepted `R5` deterministic closeout head: `fd6789f`
-- Accepted `C1` continuation closeout head: `934aa87`
+- Accepted `C1` continuation proof head: `934aa87`
+- Accepted `C1` continuation deterministic closeout head: `5b5c5b7`
 - Accepted baseline state:
   - burden-axis re-audit is accepted through the three thrash-host burden slices
   - package-level burden remains `insufficient`
@@ -26,7 +27,7 @@ It is workflow state only. It does not override the packet documents, implementa
   - the accepted `R5` closeout line is truthfully landed at deterministic closeout head `fd6789f`, where the same bounded `R5` slice remains closed without reopening scope or changing phase-gate status
   - committed end-to-end proof now exists at `ee41eb4` for clean-window zero pressure, single-mismatch `0.55` floor, repeated-mismatch `0.70` floor, and oldest-entry truncation on the fourth append
   - the earlier `R4` proof head `7672304`, runtime landing `cecd82d`, and `R5` opening parent `9d07c5b` remain part of the same closeout history rather than competing baselines
-  - the first bounded reference cross-process continuation slice is now landed on top of the same product truth at `934aa87`: explicit persisted `continuity_truth`, bounded `control_residue`, explicit CLI load/save, bounded cross-process equivalence, and explicit non-equivalence of shell-long diagnostic histories are now real and audit-clean for current scope
+  - the first bounded reference cross-process continuation slice is now landed on top of the same product truth: implementation landed at `934aa87`, and the clean accepted closeout line is now anchored at deterministic closeout head `5b5c5b7`
  - Accepted baseline authority anchors:
   - `docs/CORTEX_V2_IMPLEMENTATION_STATUS_NOTE.md`
   - `docs/CORTEX_V2_IMPLEMENTATION_MASTER_PLAN_2.md`
@@ -82,7 +83,7 @@ It is workflow state only. It does not override the packet documents, implementa
 
 ## 5. Acknowledged worktree noise at ledger update
 
-- The accepted `R5` proof head `ee41eb4`, deterministic closeout head `fd6789f`, and accepted `C1` continuation closeout head `934aa87` remain the accepted baseline truth until a later committed acceptance updates them.
+- The accepted `R5` proof head `ee41eb4`, deterministic closeout head `fd6789f`, accepted `C1` continuation proof head `934aa87`, and accepted `C1` continuation deterministic closeout head `5b5c5b7` remain the accepted baseline truth until a later committed acceptance updates them.
 - The accepted `R4` proof head `7672304`, runtime landing `cecd82d`, and `R5` opening parent `9d07c5b` remain part of the same closure-train history and are not competing baselines.
 - The current branch `codex/c1-reference-continuation` is clean at the accepted `C1` head.
 - The older `codex/e1-verification-substrate-entrypoints` workspace remains mixed and is not the source of truth for this train.
