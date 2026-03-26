@@ -34,9 +34,9 @@ This plan is a **follow-on campaign**, not an extension of the feature roadmap t
   - and the first committed baseline artifact is now recorded.
 - `E3` is materially landed for current scope:
   - mechanical correspondence checks already exist for contract, Core, ports, SRE, and periphery surfaces.
-- `E4` is partially landed:
-  - the reference-lane running example now has shared outcome helpers in `tests/integration/_reference_lane.py`,
-  - but contradiction/degradation helper closeout and gate-test dedup remain open.
+- `E4` is effectively landed for current scope:
+  - the reference-lane running example now has shared outcome helpers, shared contradiction/degradation assertions, and shared neutral verification helpers,
+  - and no broader gate-test dedup is promoted without a separate re-audit.
 - `E5` is materially landed for current scope:
   - packet-example and latency evidence revalidation paths are documented,
   - repo-local entry points exist in `Makefile`,
@@ -386,9 +386,10 @@ Evidence:
 Current next-work note:
 - E1 is effectively complete.
 - E2 is effectively complete.
-- E4 is partially landed.
+- E4 is effectively landed for current scope.
 - E5 is materially landed for current scope.
-- if the extracted helper surface stays stable under the canonical bundle, `E4B` is the next candidate seam.
+- post-`E4` re-audit is complete.
+- no `E6` seam is promoted at this time.
 
 ### E3
 - E3A landed Core correspondence checks
@@ -513,7 +514,20 @@ Every worker prompt should include:
 `E2C` is now landed.
 `E5` is materially landed for current scope.
 
-If the extracted helper surface stays stable under the canonical bundle, `E4B` is the next candidate seam.
+`E4` is now landed for current scope.
+
+### Post-`E4` re-audit result
+
+- Remaining reference-local duplication still exists:
+  - mainly repeated reference mediation scorecard-selection builders in uncertainty/thrash episode builders,
+  - plus a small number of empty-ref and candidate-bearing assertions in thrash-only helpers.
+- That remaining duplication is **not yet material enough** to justify `E6`:
+  - the live overlap is narrow,
+  - the current reference helper surface already covers the highest-value repeated outcome checks,
+  - and further dedup would start trading locality and failure readability for modest line-count savings.
+- A future `E6` seam could still stay verification-local and behavior-preserving:
+  - but only if a later maintenance pass shows a larger repeated reference-only helper shape than the repo currently has.
+- No `E6` seam is promoted from this re-audit.
 
 No broader refactor is promoted from this slice.
 That follow-on choice must remain non-feature, behavior-preserving, and verification-first.

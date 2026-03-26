@@ -111,14 +111,18 @@ def test_verification_ergonomics_plan_reflects_current_campaign_state() -> None:
     assert "`E1` is effectively landed" in text
     assert "`E2` is effectively landed" in text
     assert "`E3` is materially landed for current scope" in text
-    assert "`E4` is partially landed" in text
+    assert "`E4` is effectively landed for current scope" in text
     assert "`E5` is materially landed for current scope" in text
     assert "`E6` remains open." in text
     assert "the current repo begins with no repo-local coverage config" not in text
     assert "## 13. Current hold note" in text
     assert "`E2C` is now landed." in text
+    assert "`E4` is now landed for current scope." in text
     assert "`E5` is materially landed for current scope." in text
-    assert "`E4B` is the next candidate seam." in text
+    assert "post-`E4` re-audit is complete." in text
+    assert "no `E6` seam is promoted at this time." in text
+    assert "### Post-`E4` re-audit result" in text
+    assert "No `E6` seam is promoted from this re-audit." in text
     assert "### E2C — first coverage baseline artifact" not in text
 
 
@@ -221,11 +225,11 @@ def test_resume_protocol_and_active_workstream_contract_exist() -> None:
     assert "Status: live workflow-state ledger for compaction-safe continuation." in workstream_text
     assert "Accepted baseline branch: `codex/j0-burden-axis-reaudit`" in workstream_text
     assert "Accepted baseline commit: `4bb7fbf`" in workstream_text
-    assert "Current working branch at ledger update: `codex/e2e5-verification-truth-sync`" in workstream_text
-    assert "accepted verification/docs/support truth-sync line" in workstream_text
+    assert "Current working branch at ledger update: `codex/e4b-reference-lane-helper-closeout`" in workstream_text
+    assert "accepted reference-helper closeout line" in workstream_text
     assert "Do not treat mixed local edits on the current working branch as accepted truth." in workstream_text
     assert "Do not carry the one-line authority-surface edits currently sitting in `docs/CORTEX_V2_IMPLEMENTATION_MASTER_PLAN_2.md` or `docs/CORTEX_V2_SRE_2.md`" in workstream_text
-    assert "Do not mix the OpenAI three-pair host-realization evidence seam into the reference-helper closeout seam." in workstream_text
+    assert "Do not treat a three-pair OpenAI host-realization closeout as permission for mediation implementation." in workstream_text
     assert "git branch --show-current" in workstream_text
     assert "git status --short --untracked-files=all" in workstream_text
     assert "Never promote an uncommitted branch head or dirty worktree state to accepted baseline truth." in workstream_text
