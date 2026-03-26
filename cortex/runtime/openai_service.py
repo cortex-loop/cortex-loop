@@ -14,6 +14,12 @@ from urllib.parse import urlsplit
 
 from .openai import OpenAIRuntimeSession, run_openai_runtime_step
 from .openai_cli import build_openai_cli_record
+from .openai_host_control import (
+    OpenAIResponseStreamTransport,
+    OpenAIResponseStreamTransportError,
+    _coerce_openai_host_control_request,
+    run_openai_host_control,
+)
 from .openai_ingress import parse_openai_host_event_envelope
 from .openai_session_io import (
     build_openai_runtime_session_artifact,
@@ -25,12 +31,14 @@ _LOOPBACK_HOST = "127.0.0.1"
 _DEFAULT_PORT = 8765
 _HEALTH_PATH = "/health"
 _EVENTS_PATH = "/v1/events"
+_ACTION_RESPONSE_STREAM_PATH = "/v1/actions/response-stream"
 _EXPORT_PATH = "/v1/session/export"
 _IMPORT_PATH = "/v1/session/import"
 _KNOWN_PATHS = frozenset(
     {
         _HEALTH_PATH,
         _EVENTS_PATH,
+        _ACTION_RESPONSE_STREAM_PATH,
         _EXPORT_PATH,
         _IMPORT_PATH,
     }
@@ -83,6 +91,8 @@ def handle_openai_service_request(
     path: str,
     state: OpenAIServiceState,
     body: bytes | None = None,
+    *,
+    outbound_transport: OpenAIResponseStreamTransport | None = None,
 ) -> tuple[int, dict[str, Any]]:
     if not isinstance(method, str) or not method.strip():
         raise ValueError("OpenAI service request method must be a non-empty string.")
@@ -117,6 +127,19 @@ def handle_openai_service_request(
             record = _parse_json_object(body, label="OpenAI service event body")
             return 200, _handle_openai_service_event(record, state)
 
+        if normalized_path == _ACTION_RESPONSE_STREAM_PATH:
+            if normalized_method != "POST":
+                return _error_response(
+                    405,
+                    f"{normalized_method} is not allowed for {_ACTION_RESPONSE_STREAM_PATH}.",
+                )
+            payload = _parse_json_object(body, label="OpenAI service action body")
+            return 200, handle_openai_service_action(
+                payload,
+                state,
+                outbound_transport=outbound_transport,
+            )
+
         if normalized_path == _EXPORT_PATH:
             if normalized_method != "GET":
                 return _error_response(405, f"{normalized_method} is not allowed for {_EXPORT_PATH}.")
@@ -129,6 +152,8 @@ def handle_openai_service_request(
             return 200, import_openai_service_session(payload, state)
 
         return _error_response(404, f"Unknown path: {normalized_path}")
+    except OpenAIResponseStreamTransportError as exc:
+        return _error_response(502, str(exc))
     except (TypeError, ValueError) as exc:
         return _error_response(400, str(exc))
 
@@ -243,6 +268,22 @@ def _handle_openai_service_event(
     return build_openai_cli_record(step_result)
 
 
+def handle_openai_service_action(
+    payload: Mapping[str, Any],
+    state: OpenAIServiceState,
+    *,
+    outbound_transport: OpenAIResponseStreamTransport | None = None,
+) -> dict[str, Any]:
+    request = _coerce_openai_host_control_request(payload)
+    result, updated_session = run_openai_host_control(
+        request,
+        state.session,
+        transport=outbound_transport,
+    )
+    state.replace_session(updated_session, session_loaded=True)
+    return result.as_payload()
+
+
 def _parse_json_object(body: bytes | None, *, label: str) -> Mapping[str, Any]:
     if body is None or not body.strip():
         raise ValueError(f"{label} must be a JSON object.")
@@ -322,6 +363,7 @@ __all__ = [
     "OpenAIServiceState",
     "build_openai_service_server",
     "export_openai_service_session",
+    "handle_openai_service_action",
     "handle_openai_service_request",
     "import_openai_service_session",
     "main",

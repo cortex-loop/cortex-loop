@@ -41,6 +41,9 @@ OPENAI_INGRESS_PROGRAM_PATH = (
 OPENAI_SERVICE_PROGRAM_PATH = (
     REPO_ROOT / "docs" / "CORTEX_V2_OPENAI_SERVICE_PROGRAM_0.md"
 )
+OPENAI_HOST_CONTROL_PROGRAM_PATH = (
+    REPO_ROOT / "docs" / "CORTEX_V2_OPENAI_HOST_CONTROL_PROGRAM_0.md"
+)
 RUNTIME_RESTACK_PROGRAM_PATH = (
     REPO_ROOT / "docs" / "CORTEX_V2_RUNTIME_RESTACK_PROGRAM_0.md"
 )
@@ -133,6 +136,8 @@ def test_implementation_status_note_reflects_current_verification_surfaces() -> 
     assert "Current repo evidence now shows cell-level lift on:" in text
     assert "Package-level evidence remains `insufficient` on every required mediation axis." in text
     assert "Current repo-local verification truth:" in text
+    assert "It does not by itself open new feature work." in text
+    assert "or a separately scoped bounded runtime/product follow-on train." in text
 
 
 def test_verification_ergonomics_plan_reflects_current_campaign_state() -> None:
@@ -240,12 +245,13 @@ def test_resume_protocol_and_active_workstream_contract_exist() -> None:
     assert "Status: live workflow-state ledger for compaction-safe continuation." in workstream_text
     assert "Accepted baseline branch: `codex/k1f-openai-service-closeout`" in workstream_text
     assert "Accepted baseline commit: `79b8f39`" in workstream_text
-    assert "Current working branch at ledger update: `codex/k1f-openai-service-closeout`" in workstream_text
-    assert "clean accepted K1 runtime/product closeout line" in workstream_text
-    assert "Current candidate seam: `none`" in workstream_text
-    assert "Current seam status: `K1 landed / next lawful move is an explicitly opened follow-on train from accepted K1 truth`" in workstream_text
+    assert "Current working branch at ledger update: `codex/k2-openai-host-control`" in workstream_text
+    assert "branch-local K2 candidate over accepted K1 truth" in workstream_text
+    assert "Current candidate seam: `K2` bounded OpenAI host-control closeout" in workstream_text
+    assert "Current seam status: `K2 candidate implemented and verified / accepted baseline remains clean accepted K1 line`" in workstream_text
     assert "Do not import donor runtime workflow truth wholesale from `codex/c1-reference-continuation`" in workstream_text
-    assert "Do not open outbound OpenAI host control, Gemini product/runtime, runtime AUX activation, offline consolidation, or mediation implementation from `K1`." in workstream_text
+    assert "Do not widen K2 beyond the bounded text-only `openai-response-stream` lane." in workstream_text
+    assert "Do not open tools or tool-result submission, cancel/update lanes, Gemini product/runtime, runtime AUX activation, offline consolidation, mediation implementation, or executive-loop rewrite from `K2`." in workstream_text
     assert "git branch --show-current" in workstream_text
     assert "git status --short --untracked-files=all" in workstream_text
     assert "Never promote an uncommitted branch head or dirty worktree state to accepted baseline truth." in workstream_text
@@ -259,6 +265,7 @@ def test_reference_runtime_program_lock_is_recorded() -> None:
     openai_runtime_program_text = _read(OPENAI_RUNTIME_PROGRAM_PATH)
     openai_ingress_program_text = _read(OPENAI_INGRESS_PROGRAM_PATH)
     openai_service_program_text = _read(OPENAI_SERVICE_PROGRAM_PATH)
+    openai_host_control_program_text = _read(OPENAI_HOST_CONTROL_PROGRAM_PATH)
     phase_gate_text = _read(PHASE_GATES_PATH)
     workstream_text = _read(ACTIVE_WORKSTREAM_PATH)
 
@@ -299,9 +306,10 @@ def test_reference_runtime_program_lock_is_recorded() -> None:
     assert "loopback-only HTTP is landed on the accepted K1 closeout line" in phase_gate_text
     assert "one active session per process is real for current scope" in phase_gate_text
 
-    assert "Current campaign: `none`" in workstream_text
-    assert "the reference runtime shell, bounded reference continuity, OpenAI documented-host-event runtime shell, raw-transcript ingress shell, and loopback service shell are landed on the current line" in workstream_text
-    assert "the two lawful product-facing next directions are:" in workstream_text
+    assert "Current campaign: `K2 OpenAI host-control train`" in workstream_text
+    assert "one bounded outbound OpenAI host-control lane is now real on the branch-local K2 line" in workstream_text
+    assert "the K2 request surface is strict-whitelist and text-only for current scope" in workstream_text
+    assert "returned outbound host events now re-enter accepted `O2` parsing and accepted `O1` runtime composition directly" in workstream_text
     assert "Do not import donor runtime workflow truth wholesale from `codex/c1-reference-continuation`" in workstream_text
     assert "the first one-process live continuity slice plus explicit rejection enforcement are real" in program_text
     assert "the corrective zero-finding re-audit has passed for current scope" in program_text
@@ -372,6 +380,35 @@ def test_reference_runtime_program_lock_is_recorded() -> None:
     assert "`make revalidate-openai-service`" in openai_service_program_text
     assert "Current accepted state after K1 closeout" in openai_service_program_text
     assert "implemented at K1 proof head `d4c311f` and truthfully closed at deterministic closeout head `79b8f39`" in openai_service_program_text
+    assert "are now landed `O3` surfaces" in openai_service_program_text
+    assert "same module may host a separately scoped outbound control lane" in openai_service_program_text
+
+    assert "Status: active runtime-program brief for the first bounded outbound OpenAI host-control lane" in openai_host_control_program_text
+    assert "branch: `codex/k1f-openai-service-closeout`" in openai_host_control_program_text
+    assert "commit: `79b8f39`" in openai_host_control_program_text
+    assert "`POST /v1/actions/response-stream`" in openai_host_control_program_text
+    assert "`OpenAIHostControlRequest`" in openai_host_control_program_text
+    assert "`OpenAIHostControlResult`" in openai_host_control_program_text
+    assert "strict-whitelist and text-only" in openai_host_control_program_text
+    assert "The public K2 surface remains:" in openai_host_control_program_text
+    assert "canonical tests require no live OpenAI network" in openai_host_control_program_text
+    assert "`make revalidate-openai-host-control`" in openai_host_control_program_text
+    assert "Current K2 candidate state before closeout" in openai_host_control_program_text
+    assert "`O4` OpenAI bounded outbound host-control lane" in phase_gate_text
+    assert "| local branch closeout pending acceptance | partial |" in phase_gate_text
+
+
+def test_openai_host_control_revalidation_entry_points_are_recorded() -> None:
+    local_verification_text = _read(LOCAL_VERIFICATION_PATH)
+    makefile_text = _read(MAKEFILE_PATH)
+
+    assert "## OpenAI host-control revalidation" in local_verification_text
+    assert "python3 -m pytest tests/unit/test_openai_host_control.py -q" in local_verification_text
+    assert "python3 -m pytest tests/integration/test_openai_host_control.py -q" in local_verification_text
+    assert "python3 -m pytest tests/integration/test_openai_host_control_continuity.py -q" in local_verification_text
+    assert "Canonical K2 tests use the internal fixture transport and do not require a live OpenAI network or a real API key." in local_verification_text
+    assert "make revalidate-openai-host-control" in local_verification_text
+    assert "revalidate-openai-host-control:" in makefile_text
 
 
 def test_erika_visualizations_are_framed_as_support_surfaces() -> None:
@@ -411,6 +448,8 @@ def test_erika_visualizations_are_framed_as_support_surfaces() -> None:
 
 def test_runtime_restack_program_lock_is_recorded() -> None:
     text = _read(RUNTIME_RESTACK_PROGRAM_PATH)
+    master_plan_text = _read(REPO_ROOT / "docs" / "CORTEX_V2_IMPLEMENTATION_MASTER_PLAN_2.md")
+    theory_text = _read(REPO_ROOT / "docs" / "CORTEX_V2_THEORY_2.md")
 
     assert "Status: accepted re-audited support brief for the K1 runtime/product restack train" in text
     assert "branch: `codex/j2-restack-acceptance-truth-normalization`" in text
@@ -424,3 +463,5 @@ def test_runtime_restack_program_lock_is_recorded() -> None:
     assert "OpenAI loopback service shell" in text
     assert "Current accepted state after K1 closeout" in text
     assert "implemented at K1 proof head `d4c311f` and truthfully closed at deterministic closeout head `79b8f39`" in text
+    assert "later bounded runtime/product trains may still be explicitly opened" in master_plan_text
+    assert "may separately record later accepted or candidate bounded runtime/product trains" in theory_text

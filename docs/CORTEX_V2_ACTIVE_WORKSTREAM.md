@@ -29,25 +29,24 @@ It is workflow state only. It does not override the packet documents, implementa
 
 ## 2. Current campaign and seam state
 
-- Current campaign: `none`
-- Current working branch at ledger update: `codex/k1f-openai-service-closeout`
-- Current branch role: clean accepted K1 runtime/product closeout line
-- Current candidate seam: `none`
-- Current seam status: `K1 landed / next lawful move is an explicitly opened follow-on train from accepted K1 truth`
-- Seam risk: the landed K1 seam was a parser/doc-sync plus timing or environment-sensitive subprocess, file-I/O, and loopback-HTTP seam; repeated direct and repo-local reruns passed before acceptance
+- Current campaign: `K2 OpenAI host-control train`
+- Current working branch at ledger update: `codex/k2-openai-host-control`
+- Current branch role: branch-local K2 candidate over accepted K1 truth
+- Current candidate seam: `K2` bounded OpenAI host-control closeout
+- Current seam status: `K2 candidate implemented and verified / accepted baseline remains clean accepted K1 line`
+- Seam risk: the K2 candidate is a parser/doc-sync plus timing or environment-sensitive network-stub, file-I/O, and loopback-HTTP seam; repeated direct and repo-local reruns are required before acceptance
 
 ## 3. Next lawful move
 
-- Accepted answer after K1 closeout:
-  - the K1 runtime/product restack is accepted workflow truth, not a branch-local candidate
-  - the reference runtime shell, bounded reference continuity, OpenAI documented-host-event runtime shell, raw-transcript ingress shell, and loopback service shell are landed on the current line
+- Current candidate answer after K2 implementation:
+  - the accepted K1 baseline remains unchanged at `79b8f39`
+  - one bounded outbound OpenAI host-control lane is now real on the branch-local K2 line
+  - the K2 request surface is strict-whitelist and text-only for current scope
+  - returned outbound host events now re-enter accepted `O2` parsing and accepted `O1` runtime composition directly
   - package-level mediation evidence remains `insufficient`
-  - mediation implementation remains blocked
 - Next lawful move:
-  - choose one new explicitly bounded train from accepted K1 truth
-  - the two lawful product-facing next directions are:
-    - bounded outbound OpenAI host-control realization
-    - executive-loop computation over live runtime outcomes
+  - rerun the targeted K2 bundle and repo-local revalidation targets on the clean branch
+  - then either accept K2 onto baseline truth or reject it explicitly
 
 ## 4. Explicitly blocked moves
 
@@ -60,7 +59,8 @@ It is workflow state only. It does not override the packet documents, implementa
 - Do not treat a three-pair OpenAI host-realization closeout as permission for mediation implementation.
 - Do not reinterpret a host-level `candidate_positive` cell as package-level justification.
 - Do not import donor runtime workflow truth wholesale from `codex/c1-reference-continuation`, `codex/o1-openai-runtime-shell`, `codex/o2-openai-ingress-shell`, or `codex/o3-openai-service-shell`.
-- Do not open outbound OpenAI host control, Gemini product/runtime, runtime AUX activation, offline consolidation, or mediation implementation from `K1`.
+- Do not widen K2 beyond the bounded text-only `openai-response-stream` lane.
+- Do not open tools or tool-result submission, cancel/update lanes, Gemini product/runtime, runtime AUX activation, offline consolidation, mediation implementation, or executive-loop rewrite from `K2`.
 
 ## 5. Acknowledged worktree noise at ledger creation
 

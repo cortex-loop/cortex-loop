@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import os
 import socket
 import subprocess
 import sys
@@ -81,14 +82,21 @@ class OpenAIServiceHarness:
 
 
 @contextmanager
-def run_openai_service(*args: str) -> Iterator[OpenAIServiceHarness]:
+def run_openai_service(
+    *args: str,
+    env: Mapping[str, str] | None = None,
+) -> Iterator[OpenAIServiceHarness]:
     port = _unused_tcp_port()
+    process_env = os.environ.copy()
+    if env is not None:
+        process_env.update(env)
     process = subprocess.Popen(
         [sys.executable, "-m", "cortex.runtime.openai_service", "--port", str(port), *args],
         cwd=REPO_ROOT,
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         text=True,
+        env=process_env,
     )
     harness = OpenAIServiceHarness(port=port, process=process)
     try:

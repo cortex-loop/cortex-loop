@@ -161,6 +161,27 @@ Repo-local entry point:
 make revalidate-openai-service
 ```
 
+## OpenAI host-control revalidation
+
+This revalidates the first bounded outbound OpenAI host-control lane on top of the accepted `O3` loopback shell, accepted `O2` ingress law, and accepted `O1` runtime/session law.
+It checks the strict text-only request boundary, stdlib transport parsing, loopback action endpoint behavior, and export/import continuity across multiple outbound actions.
+It does not authorize tools, tool-result submission, cancel/update lanes, remote hosting, multi-session doctrine, Gemini runtime, executive-loop rewrite, or generic runtime/service abstraction.
+Canonical K2 tests use the internal fixture transport and do not require a live OpenAI network or a real API key.
+
+Direct commands:
+
+```sh
+python3 -m pytest tests/unit/test_openai_host_control.py -q
+python3 -m pytest tests/integration/test_openai_host_control.py -q
+python3 -m pytest tests/integration/test_openai_host_control_continuity.py -q
+```
+
+Repo-local entry point:
+
+```sh
+make revalidate-openai-host-control
+```
+
 ## Reference-lane packet-example revalidation
 
 This revalidates the committed reference-lane packet example doc against the already-landed live packet path.

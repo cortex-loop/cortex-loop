@@ -1,0 +1,58 @@
+{
+  "calls": [
+    {
+      "expected_request": {
+        "action_tag": "openai-response-stream",
+        "request": {
+          "model": "gpt-5",
+          "input": "first step"
+        }
+      },
+      "events": [
+        {
+          "type": "response.created",
+          "session_id": "oa-k2-continuity",
+          "response_id": "resp-k2-cont-1"
+        },
+        {
+          "type": "response.completed",
+          "session_id": "oa-k2-continuity",
+          "response_id": "resp-k2-cont-1",
+          "commitment_id": "oa-k2-cont-commit-1",
+          "externally_consequential": true,
+          "result_artifact_ref": "oa-k2-cont-artifact-1"
+        }
+      ]
+    },
+    {
+      "expected_request": {
+        "action_tag": "openai-response-stream",
+        "request": {
+          "model": "gpt-5",
+          "input": "second step"
+        }
+      },
+      "events": [
+        {
+          "type": "response.created",
+          "session_id": "oa-k2-continuity",
+          "response_id": "resp-k2-cont-2"
+        },
+        {
+          "type": "response.output_text.delta",
+          "session_id": "oa-k2-continuity",
+          "response_id": "resp-k2-cont-2",
+          "delta": "second step"
+        },
+        {
+          "type": "response.completed",
+          "session_id": "oa-k2-continuity",
+          "response_id": "resp-k2-cont-2",
+          "commitment_id": "oa-k2-cont-commit-2",
+          "externally_consequential": true,
+          "result_artifact_ref": "oa-k2-cont-artifact-2"
+        }
+      ]
+    }
+  ]
+}

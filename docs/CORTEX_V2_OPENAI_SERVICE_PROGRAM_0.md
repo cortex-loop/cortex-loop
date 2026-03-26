@@ -59,7 +59,7 @@ This program adds only:
 - `python3 -m cortex.runtime.openai_service`
 - loopback HTTP fixtures and service continuity proof
 
-This program does **not** authorize:
+This program does **not** by itself authorize:
 
 - remote or multi-client hosting,
 - outbound OpenAI host control realization,
@@ -191,13 +191,16 @@ Every seam remains one-session max and must end on a clean tree before the next 
 
 On the accepted K1 runtime closeout line implemented at K1 proof head `d4c311f` and truthfully closed at deterministic closeout head `79b8f39` on branch `codex/k1f-openai-service-closeout`:
 
-- `OpenAIServiceState`, `handle_openai_service_request()`, `export_openai_service_session()`, `import_openai_service_session()`, and `python3 -m cortex.runtime.openai_service` now exist as branch-local `O3` candidate surfaces
+- `OpenAIServiceState`, `handle_openai_service_request()`, `export_openai_service_session()`, `import_openai_service_session()`, and `python3 -m cortex.runtime.openai_service` are now landed `O3` surfaces
 - `GET /health`, `POST /v1/events`, `GET /v1/session/export`, and `POST /v1/session/import` now exist over loopback-only HTTP
 - `/v1/events` now drives the accepted `O2` transcript parser and accepted `O1` runtime shell directly
 - loopback bind is fixed to `127.0.0.1`
 - one active session per process is real for current scope
 - service continuity proof now exists against the recorded `O3` contract, including explicit diagnostic-history non-equivalence
 - and `make revalidate-openai-service` now exists as the repo-local service revalidation entry point
+
+On later branch-local follow-on work, the same module may host a separately scoped outbound control lane.
+That does not retroactively widen what `O3` itself originally authorized.
 
 ## Explicitly blocked moves
 

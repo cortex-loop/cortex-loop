@@ -7,6 +7,7 @@ from cortex.runtime.openai_service import (
     OpenAIServiceState,
     build_openai_service_server,
     export_openai_service_session,
+    handle_openai_service_action,
     handle_openai_service_request,
     import_openai_service_session,
 )
@@ -61,3 +62,42 @@ def test_openai_service_invalid_import_becomes_400_error_payload() -> None:
 
     assert status_code == 400
     assert payload["error"].startswith("OpenAIRuntimeSessionArtifact.artifact_kind")
+
+
+def test_openai_service_action_roundtrips_records_with_fake_transport() -> None:
+    payload = {
+        "action_tag": "openai-response-stream",
+        "request": {
+            "model": "gpt-5",
+            "input": "hello",
+        },
+    }
+    state = OpenAIServiceState()
+
+    result = handle_openai_service_action(
+        payload,
+        state,
+        outbound_transport=lambda _: [
+            {
+                "type": "response.created",
+                "session_id": "oa-service-action",
+                "response_id": "resp-action-1",
+            },
+            {
+                "type": "response.completed",
+                "session_id": "oa-service-action",
+                "response_id": "resp-action-1",
+                "commitment_id": "oa-service-action-commit-1",
+                "externally_consequential": True,
+                "result_artifact_ref": "oa-service-action-artifact-1",
+            },
+        ],
+    )
+
+    assert result["action_tag"] == "openai-response-stream"
+    assert [record["raw_host_event_name"] for record in result["records"]] == [
+        "response.created",
+        "response.completed",
+    ]
+    assert state.session.event_index == 2
+    assert state.session_loaded is True

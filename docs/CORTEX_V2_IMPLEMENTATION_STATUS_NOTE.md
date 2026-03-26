@@ -6,7 +6,7 @@ Status: final implementation closeout note for the currently justified v2 roadma
 ## Scope
 
 This note records the verified end state of the currently justified Cortex v2 implementation.
-It does not open new feature work.
+It does not by itself open new feature work.
 
 ## Landed
 
@@ -106,10 +106,11 @@ Current repo-local verification truth:
 Treat Cortex v2 MVP as complete at the current justified boundary.
 
 Do not start new feature seams from this note.
-If work continues later, it should be explicitly framed as one of:
+If work continues later, it must be explicitly framed in the active workstream ledger as one of:
 
 - non-feature cleanup,
 - verification ergonomics,
-- or evidence collection for future experimental decisions such as mediation.
+- evidence collection for future experimental decisions such as mediation,
+- or a separately scoped bounded runtime/product follow-on train.
 
 In this maintainer workspace, future seam-parent truth is recorded in `docs/CORTEX_V2_ACTIVE_WORKSTREAM.md`; do not hardcode a separate accepted workflow baseline here.

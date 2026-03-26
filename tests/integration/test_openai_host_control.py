@@ -1,0 +1,126 @@
+"""Integration tests for the bounded outbound OpenAI host-control lane."""
+
+from __future__ import annotations
+
+from pathlib import Path
+
+from cortex.runtime import openai_host_transport
+
+from tests.integration._openai_service_harness import EXPECTED_RECORD_KEYS, run_openai_service
+
+
+REPO_ROOT = Path(__file__).resolve().parents[2]
+FIXTURE_DIR = REPO_ROOT / "tests" / "integration" / "fixtures"
+
+
+def test_openai_host_control_action_endpoint_returns_ordered_o1_records_and_mutates_session() -> None:
+    with run_openai_service(
+        env={
+            openai_host_transport._FIXTURE_PATH_ENV: str(
+                FIXTURE_DIR / "openai_host_control_single_call.json"
+            )
+        }
+    ) as service:
+        status_code, payload = service.request(
+            "POST",
+            "/v1/actions/response-stream",
+            {
+                "action_tag": "openai-response-stream",
+                "request": {
+                    "model": "gpt-5",
+                    "input": "hello from k2",
+                },
+            },
+        )
+        export_status, exported = service.request("GET", "/v1/session/export")
+
+    assert status_code == 200
+    assert payload["action_tag"] == "openai-response-stream"
+    assert [tuple(record) for record in payload["records"]] == [
+        EXPECTED_RECORD_KEYS,
+        EXPECTED_RECORD_KEYS,
+        EXPECTED_RECORD_KEYS,
+    ]
+    assert [record["raw_host_event_name"] for record in payload["records"]] == [
+        "response.created",
+        "response.output_text.delta",
+        "response.completed",
+    ]
+    assert export_status == 200
+    assert exported["continuity_truth"]["event_index"] == 3
+
+
+def test_openai_host_control_action_endpoint_rejects_out_of_scope_request_keys() -> None:
+    with run_openai_service() as service:
+        status_code, payload = service.request(
+            "POST",
+            "/v1/actions/response-stream",
+            {
+                "action_tag": "openai-response-stream",
+                "request": {
+                    "model": "gpt-5",
+                    "input": "hello from k2",
+                    "tools": [{"type": "function", "name": "bad"}],
+                },
+            },
+        )
+
+    assert status_code == 400
+    assert "strict text-only whitelist" in payload["error"]
+
+
+def test_openai_host_control_action_endpoint_undocumented_raw_event_warns_conservatively() -> None:
+    with run_openai_service(
+        env={
+            openai_host_transport._FIXTURE_PATH_ENV: str(
+                FIXTURE_DIR / "openai_host_control_gap_call.json"
+            )
+        }
+    ) as service:
+        status_code, payload = service.request(
+            "POST",
+            "/v1/actions/response-stream",
+            {
+                "action_tag": "openai-response-stream",
+                "request": {
+                    "model": "gpt-5",
+                    "input": "gap event",
+                },
+            },
+        )
+
+    assert status_code == 200
+    assert payload["records"][0]["raw_host_event_name"] == "response.tool_event"
+    assert payload["records"][0]["warnings"] == [
+        "No documented OpenAI lifecycle mapping for 'response.tool_event'; using conservative external/observation binding."
+    ]
+
+
+def test_openai_host_control_action_endpoint_upstream_failure_returns_502_without_mutating_session() -> None:
+    with run_openai_service(
+        env={
+            openai_host_transport._FIXTURE_PATH_ENV: str(
+                FIXTURE_DIR / "openai_host_control_failure.json"
+            )
+        }
+    ) as service:
+        status_code, payload = service.request(
+            "POST",
+            "/v1/actions/response-stream",
+            {
+                "action_tag": "openai-response-stream",
+                "request": {
+                    "model": "gpt-5",
+                    "input": "upstream failure",
+                },
+            },
+        )
+        health_status, health = service.request("GET", "/health")
+        export_status, exported = service.request("GET", "/v1/session/export")
+
+    assert status_code == 502
+    assert payload == {"error": "fixture upstream unavailable"}
+    assert health_status == 200
+    assert health["session_loaded"] is False
+    assert export_status == 200
+    assert exported["continuity_truth"]["event_index"] == 0

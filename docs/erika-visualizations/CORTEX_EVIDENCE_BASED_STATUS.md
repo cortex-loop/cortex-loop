@@ -18,7 +18,7 @@ It also tracks which brain-inspired mechanisms Cortex has already stolen so far 
 - The reference runtime shell, bounded reference continuity, OpenAI documented-host-event runtime shell, raw-transcript ingress shell, and loopback service shell are now accepted on the current line.
 - The OpenAI host-realization cell now has a committed three-pair evidence series and `candidate_positive` cell-level signal for better host-specialized realization.
 - Mediation remains blocked and unjustified at package level.
-- Current follow-on work is verification/evidence work, not silent feature expansion.
+- Current follow-on work may include explicitly opened bounded runtime/product trains in the active workstream; it should never be silent feature expansion.
 
 ## North-star product target
 

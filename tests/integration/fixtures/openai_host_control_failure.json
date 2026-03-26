@@ -1,0 +1,14 @@
+{
+  "calls": [
+    {
+      "expected_request": {
+        "action_tag": "openai-response-stream",
+        "request": {
+          "model": "gpt-5",
+          "input": "upstream failure"
+        }
+      },
+      "error": "fixture upstream unavailable"
+    }
+  ]
+}
