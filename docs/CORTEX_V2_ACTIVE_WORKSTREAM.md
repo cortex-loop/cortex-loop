@@ -7,18 +7,20 @@ It is workflow state only. It does not override the packet documents, implementa
 
 ## 1. Accepted baseline
 
-- Accepted baseline branch: `codex/j2-restack-acceptance-truth-normalization`
-- Accepted baseline commit: `acfccf9`
+- Accepted baseline branch: `codex/k1f-openai-service-closeout`
+- Accepted baseline commit: `79b8f39`
 - Accepted baseline state:
   - burden-axis re-audit remains accepted through the three thrash-host burden slices
   - package-level burden remains `insufficient`
   - mediation remains blocked / not justified
-  - the verification/evidence restack train is now landed for current scope on top of the same product truth
+  - the verification/evidence restack train remains landed on the same product truth
   - the OpenAI host-realization cell now has a committed three-pair evidence series and `candidate_positive` cell-level signal for better host-specialized realization
   - package-level mediation evidence remains `insufficient`
   - lower visible burden remains unclaimed for host-realization
-  - accepted workflow baseline truth is now normalized around that landed restack line instead of the stale `post-E4` parent story
-  - verification-ergonomics expansion beyond the accepted restack boundary is not currently promoted without a new explicit non-feature seam
+  - accepted workflow baseline truth is now normalized around the accepted K1 runtime/product closeout line
+  - the reference runtime shell, bounded reference continuity, OpenAI documented-host-event runtime shell, raw-transcript ingress shell, and loopback service shell are accepted on the same K1 closeout line
+  - `O3` is now landed on the current line rather than remaining donor-branch candidate truth
+  - the next lawful product-facing directions are bounded outbound OpenAI host-control realization or executive-loop computation over live runtime outcomes
 - Accepted baseline authority anchors:
   - `docs/CORTEX_V2_IMPLEMENTATION_STATUS_NOTE.md`
   - `docs/CORTEX_V2_IMPLEMENTATION_MASTER_PLAN_2.md`
@@ -27,28 +29,25 @@ It is workflow state only. It does not override the packet documents, implementa
 
 ## 2. Current campaign and seam state
 
-- Current campaign: `K1` runtime/product restack is now present on the working branch as a committed candidate train
+- Current campaign: `none`
 - Current working branch at ledger update: `codex/k1f-openai-service-closeout`
-- Current branch role: bounded runtime/product candidate that re-earns the donor runtime line on accepted `j2` workflow truth, from reference runtime through the OpenAI loopback service shell, without importing donor workflow truth wholesale
-- Current candidate seam: `k1f` runtime/product restack closeout
-- Current seam status: `K1 candidate implemented and verified / accepted baseline remains clean accepted j2 line`
-- Seam risk: parser/doc-sync plus timing or environment-sensitive subprocess, file-I/O, and loopback-HTTP seam; repeated direct and repo-local reruns are required before any acceptance claim
+- Current branch role: clean accepted K1 runtime/product closeout line
+- Current candidate seam: `none`
+- Current seam status: `K1 landed / next lawful move is an explicitly opened follow-on train from accepted K1 truth`
+- Seam risk: the landed K1 seam was a parser/doc-sync plus timing or environment-sensitive subprocess, file-I/O, and loopback-HTTP seam; repeated direct and repo-local reruns passed before acceptance
 
 ## 3. Next lawful move
 
-- Accepted answer on the current accepted `j2` line:
-  - the verification/evidence restack train is accepted workflow truth
-  - workflow and support surfaces now derive accepted baseline truth from this workstream ledger
+- Accepted answer after K1 closeout:
+  - the K1 runtime/product restack is accepted workflow truth, not a branch-local candidate
+  - the reference runtime shell, bounded reference continuity, OpenAI documented-host-event runtime shell, raw-transcript ingress shell, and loopback service shell are landed on the current line
   - package-level mediation evidence remains `insufficient`
   - mediation implementation remains blocked
-- K1 branch-local answer:
-  - the working branch now carries the reference runtime shell, bounded reference continuity, the OpenAI documented-host-event runtime shell, raw-transcript ingress shell, and loopback service shell
-  - runtime program docs, phase gates, correspondence rows, runtime tests, fixtures, import smoke, and repo-local revalidation targets now exist on this branch
-  - donor runtime code has been re-homed without importing donor workflow truth wholesale
-- Next lawful move from this local candidate seam:
-  - rerun the full K1 verification bundle plus repeated direct and repo-local runtime revalidation
-  - accept/merge the K1 train or reject it explicitly
-  - do not promote this branch-local implementation to accepted baseline truth without an explicit baseline update
+- Next lawful move:
+  - choose one new explicitly bounded train from accepted K1 truth
+  - the two lawful product-facing next directions are:
+    - bounded outbound OpenAI host-control realization
+    - executive-loop computation over live runtime outcomes
 
 ## 4. Explicitly blocked moves
 
@@ -67,7 +66,7 @@ It is workflow state only. It does not override the packet documents, implementa
 
 - The dirty donor branch `codex/e1-verification-substrate-entrypoints` remains mixed and is not the source of truth for future runtime restack work.
 - The donor runtime branches remain source material only; their workflow truth is not authoritative on this line.
-- The accepted `j2` line is now the source of accepted workflow baseline truth until a later accepted baseline update lands.
+- The accepted `k1f` line is now the source of accepted workflow baseline truth until a later accepted baseline update lands.
 - Local workspace directories already exist under `.claude/worktrees/`.
 - Re-read `git status --short --untracked-files=all` before opening any new seam; this summary is only the continuity reminder, not the canonical file list.
 

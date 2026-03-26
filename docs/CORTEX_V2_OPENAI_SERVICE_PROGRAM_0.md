@@ -1,7 +1,7 @@
 # CORTEX_V2_OPENAI_SERVICE_PROGRAM_0
 
 Date: 2026-03-26
-Status: active runtime-program brief for the first OpenAI loopback service shell
+Status: accepted re-audited runtime-program brief for the first OpenAI loopback service shell
 
 ## Purpose
 
@@ -187,9 +187,9 @@ Every seam remains one-session max and must end on a clean tree before the next 
 - `make seam-preflight`, `make revalidate-openai-service`, `make test-smoke`, and `make verify` pass
 - and the `O3` phase-gate row is updated truthfully
 
-## Current K1 candidate state before closeout
+## Current accepted state after K1 closeout
 
-On branch `codex/k1f-openai-service-closeout` rooted at K1 proof head `d4c311f`:
+On the accepted K1 runtime closeout line implemented at K1 proof head `d4c311f` and truthfully closed at deterministic closeout head `79b8f39` on branch `codex/k1f-openai-service-closeout`:
 
 - `OpenAIServiceState`, `handle_openai_service_request()`, `export_openai_service_session()`, `import_openai_service_session()`, and `python3 -m cortex.runtime.openai_service` now exist as branch-local `O3` candidate surfaces
 - `GET /health`, `POST /v1/events`, `GET /v1/session/export`, and `POST /v1/session/import` now exist over loopback-only HTTP
@@ -198,9 +198,6 @@ On branch `codex/k1f-openai-service-closeout` rooted at K1 proof head `d4c311f`:
 - one active session per process is real for current scope
 - service continuity proof now exists against the recorded `O3` contract, including explicit diagnostic-history non-equivalence
 - and `make revalidate-openai-service` now exists as the repo-local service revalidation entry point
-
-This is branch-local K1 implementation truth.
-It does **not** by itself promote accepted baseline truth.
 
 ## Explicitly blocked moves
 

@@ -155,9 +155,9 @@ Every seam remains one-session max and must end on a clean tree before the next 
 - `make seam-preflight`, `make revalidate-openai-ingress`, `make test-smoke`, and `make verify` pass,
 - and the `O2` phase-gate row is updated truthfully.
 
-## Current K1 candidate state before closeout
+## Current accepted state after K1 closeout
 
-On branch `codex/k1f-openai-service-closeout` rooted at K1 proof head `d4c311f`:
+On the accepted K1 runtime closeout line implemented at K1 proof head `d4c311f` and truthfully closed at deterministic closeout head `79b8f39` on branch `codex/k1f-openai-service-closeout`:
 
 - `OpenAIHostEventEnvelope` and `parse_openai_host_event_envelope()` are now landed `O2` surfaces,
 - `python3 -m cortex.runtime.openai_ingress_cli` now drives the accepted `O1` runtime shell from raw transcript records,
@@ -165,10 +165,7 @@ On branch `codex/k1f-openai-service-closeout` rooted at K1 proof head `d4c311f`:
 - canonical Cortex event names are explicitly rejected at ingress,
 - split-run ingress continuity proof now exists against the `O2` contract,
 - `make revalidate-openai-ingress` now exists as the repo-local ingress revalidation entry point,
-- and targeted reruns, repeated `make revalidate-openai-ingress`, `make test-smoke`, and `make verify` all passed on this candidate line.
-
-This is branch-local K1 implementation truth.
-It does **not** by itself promote accepted baseline truth.
+- and targeted reruns, repeated `make revalidate-openai-ingress`, `make test-smoke`, and `make verify` all passed on the accepted K1 line.
 
 ## Explicitly blocked moves
 
