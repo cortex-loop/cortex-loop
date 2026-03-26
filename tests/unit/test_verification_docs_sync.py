@@ -218,20 +218,23 @@ def test_resume_protocol_and_active_workstream_contract_exist() -> None:
     assert "Never promote uncommitted local edits to accepted baseline truth." in agents_text
 
     assert "Status: live workflow-state ledger for compaction-safe continuation." in workstream_text
-    assert "Accepted baseline branch: `codex/r5e-short-window-feedback-reaudit`" in workstream_text
+    assert "Accepted baseline branch: `codex/c1-reference-continuation`" in workstream_text
     assert "Accepted `R5` opening parent: `9d07c5b`" in workstream_text
     assert "Accepted `R5` proof head: `ee41eb4`" in workstream_text
     assert "Accepted `R5` deterministic closeout head: `fd6789f`" in workstream_text
+    assert "Accepted `C1` continuation closeout head: `934aa87`" in workstream_text
     assert "Accepted baseline commit: `ee41eb4`" not in workstream_text
-    assert "The accepted `R5` proof head `ee41eb4` and deterministic closeout head `fd6789f` remain the accepted baseline truth until a later committed acceptance updates them." in workstream_text
+    assert "Accepted baseline branch: `codex/c1-reference-continuation`" in workstream_text
+    assert "the first bounded reference cross-process continuation slice is now landed on top of the same product truth at `934aa87`" in workstream_text
     assert "Current working branch at ledger update: `codex/c1-reference-continuation`" in workstream_text
-    assert "bounded runtime/docs/test train that adds explicit persisted `continuity_truth`, bounded `control_residue`, explicit CLI load/save, and cross-process continuity proof without widening into generic persistence or broader runtime rollout" in workstream_text
-    assert "Current candidate seam: `C1A` through `C1E`" in workstream_text
-    assert "Current seam status: `C1 candidate implemented and locally verified / accepted baseline unchanged until commit or explicit acceptance`" in workstream_text
+    assert "accepted bounded runtime/docs/test line that landed explicit persisted `continuity_truth`, bounded `control_residue`, explicit CLI load/save, and bounded cross-process continuity proof without widening into generic persistence or broader runtime rollout" in workstream_text
+    assert "Current candidate seam: `none`" in workstream_text
+    assert "Current seam status: `C1 landed / stop again before any new real-host runtime or broader product program`" in workstream_text
     assert "Do not treat the mixed `codex/e1-verification-substrate-entrypoints` worktree as accepted truth." in workstream_text
     assert "Do not treat the first landed `R5` slice as permission for longer-than-three-step feedback history" in workstream_text
     assert "Do not auto-open `R6` or any broader runtime/product program from the success of this corrective `R5` reclosure." in workstream_text
     assert "Do not widen `C1` into autosave, checkpoints, generic persistence doctrine, multi-host runtime, runtime AUX activation, offline consolidation, or mediation." in workstream_text
+    assert "Do not widen directly from accepted `C1` into bidirectional OpenAI control" in workstream_text
     assert "git branch --show-current" in workstream_text
     assert "git status --short --untracked-files=all" in workstream_text
     assert "Never promote an uncommitted branch head or dirty worktree state to accepted baseline truth." in workstream_text
@@ -268,10 +271,9 @@ def test_reference_runtime_program_lock_is_recorded() -> None:
     assert "the first bounded three-step realized-outcome window" in phase_gate_text
     assert "the corrective line now closes the surviving session/window carrier defect" in phase_gate_text
     assert "`C1` reference bounded cross-process continuation slice" in phase_gate_text
-    assert "explicit persisted `continuity_truth` plus bounded `control_residue` now exist on `codex/c1-reference-continuation`" in phase_gate_text
-    assert "accepted baseline truth is unchanged until this branch is accepted/committed" in phase_gate_text
+    assert "explicit persisted `continuity_truth` plus bounded `control_residue` are now landed at accepted `C1` closeout head `934aa87`" in phase_gate_text
 
-    assert "Current campaign: `C1` bounded reference cross-process continuation implementation is now present on the working branch as a local candidate seam" in workstream_text
+    assert "Current campaign: `C1` accepted and closed for current scope" in workstream_text
     assert "persisted continuation truth is split into exact `continuity_truth` and bounded `control_residue`" in workstream_text
     assert "repo-local revalidation now includes `make revalidate-reference-runtime-continuity`" in workstream_text
     assert "the first one-process live continuity slice plus explicit rejection enforcement are real" in program_text
@@ -311,13 +313,14 @@ def test_reference_runtime_program_lock_is_recorded() -> None:
     assert "top-level `feedback_window_summary`" in feedback_program_1_text
     assert "single-mismatch `0.55` floor" in feedback_program_1_text
     assert "repeated-mismatch `0.70` floor" in feedback_program_1_text
-    assert "first bounded reference cross-process continuation slice" in continuity_program_text
+    assert "accepted re-audited runtime-program brief for the first bounded reference cross-process continuation slice" in continuity_program_text
     assert "`--load-session PATH`" in continuity_program_text
     assert "`--save-session PATH`" in continuity_program_text
     assert "`continuity_truth`" in continuity_program_text
     assert "`control_residue`" in continuity_program_text
     assert "`C1` equivalence does **not** require:" in continuity_program_text
     assert "`make revalidate-reference-runtime-continuity`" in continuity_program_text
+    assert "At accepted `C1` continuation closeout head `934aa87`" in continuity_program_text
 
 
 def test_erika_visualizations_are_framed_as_support_surfaces() -> None:

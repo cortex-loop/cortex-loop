@@ -7,10 +7,11 @@ It is workflow state only. It does not override the packet documents, implementa
 
 ## 1. Accepted baseline
 
-- Accepted baseline branch: `codex/r5e-short-window-feedback-reaudit`
+- Accepted baseline branch: `codex/c1-reference-continuation`
 - Accepted `R5` opening parent: `9d07c5b`
 - Accepted `R5` proof head: `ee41eb4`
 - Accepted `R5` deterministic closeout head: `fd6789f`
+- Accepted `C1` continuation closeout head: `934aa87`
 - Accepted baseline state:
   - burden-axis re-audit is accepted through the three thrash-host burden slices
   - package-level burden remains `insufficient`
@@ -25,7 +26,8 @@ It is workflow state only. It does not override the packet documents, implementa
   - the accepted `R5` closeout line is truthfully landed at deterministic closeout head `fd6789f`, where the same bounded `R5` slice remains closed without reopening scope or changing phase-gate status
   - committed end-to-end proof now exists at `ee41eb4` for clean-window zero pressure, single-mismatch `0.55` floor, repeated-mismatch `0.70` floor, and oldest-entry truncation on the fourth append
   - the earlier `R4` proof head `7672304`, runtime landing `cecd82d`, and `R5` opening parent `9d07c5b` remain part of the same closeout history rather than competing baselines
-- Accepted baseline authority anchors:
+  - the first bounded reference cross-process continuation slice is now landed on top of the same product truth at `934aa87`: explicit persisted `continuity_truth`, bounded `control_residue`, explicit CLI load/save, bounded cross-process equivalence, and explicit non-equivalence of shell-long diagnostic histories are now real and audit-clean for current scope
+ - Accepted baseline authority anchors:
   - `docs/CORTEX_V2_IMPLEMENTATION_STATUS_NOTE.md`
   - `docs/CORTEX_V2_IMPLEMENTATION_MASTER_PLAN_2.md`
   - `docs/CORTEX_V2_MEDIATION_JUSTIFICATION_NOTE.md`
@@ -33,29 +35,29 @@ It is workflow state only. It does not override the packet documents, implementa
   - `docs/CORTEX_V2_REFERENCE_RUNTIME_PROGRAM_0.md`
   - `docs/CORTEX_V2_REFERENCE_FEEDBACK_PROGRAM_0.md`
   - `docs/CORTEX_V2_REFERENCE_FEEDBACK_PROGRAM_1.md`
+  - `docs/CORTEX_V2_REFERENCE_CONTINUITY_PROGRAM_0.md`
 
 ## 2. Current campaign and seam state
 
-- Current campaign: `C1` bounded reference cross-process continuation implementation is now present on the working branch as a local candidate seam
+- Current campaign: `C1` accepted and closed for current scope
 - Current working branch at ledger update: `codex/c1-reference-continuation`
-- Current branch role: bounded runtime/docs/test train that adds explicit persisted `continuity_truth`, bounded `control_residue`, explicit CLI load/save, and cross-process continuity proof without widening into generic persistence or broader runtime rollout
-- Current candidate seam: `C1A` through `C1E`
-- Current seam status: `C1 candidate implemented and locally verified / accepted baseline unchanged until commit or explicit acceptance`
-- Seam risk: parser/doc-sync plus environment-sensitive subprocess/file-I/O seam; repeat-stability reruns are required before any acceptance claim
+- Current branch role: accepted bounded runtime/docs/test line that landed explicit persisted `continuity_truth`, bounded `control_residue`, explicit CLI load/save, and bounded cross-process continuity proof without widening into generic persistence or broader runtime rollout
+- Current candidate seam: `none`
+- Current seam status: `C1 landed / stop again before any new real-host runtime or broader product program`
+- Seam risk: the landed `C1` seam was parser/doc-sync plus environment-sensitive subprocess/file-I/O work, and the repeat-stability rerun bundle passed before re-landing
 
 ## 3. Next lawful move
 
-- `C1` branch-local answer:
-  - the working branch now carries `ReferenceRuntimeSessionArtifact` plus explicit `--load-session` / `--save-session`
+- `C1` accepted answer:
+  - the accepted baseline now carries `ReferenceRuntimeSessionArtifact` plus explicit `--load-session` / `--save-session`
   - persisted continuation truth is split into exact `continuity_truth` and bounded `control_residue`
   - cross-process equivalence is now defined behaviorally rather than as exact shell-history replay
   - full `budget_history` / `brake_history` remain public one-process diagnostics but are explicitly excluded from cross-process continuation truth
   - repo-local revalidation now includes `make revalidate-reference-runtime-continuity`
-  - targeted unit/integration reruns, repeated repo-local continuity revalidation, `make test-smoke`, and `make verify` have all passed on this branch
-- Next lawful move from this local candidate seam:
-  - run the full verification bundle plus repeated direct reruns and repeated repo-local continuity revalidation
-  - accept/commit the seam or reject it explicitly
-  - do not promote this branch-local implementation to accepted baseline truth while it remains uncommitted
+- Next lawful move from this clean accepted `C1` head:
+  - stop again and choose one explicit real-host runtime or broader product program
+  - if future work opens, separate first real-host runtime from multi-agent orchestration and from broader outbound/runtime doctrine
+  - do not widen directly from `C1` into bidirectional host control, Gemini runtime, cross-host runtime, runtime AUX activation, offline consolidation, or mediation
 
 ## 4. Explicitly blocked moves
 
@@ -76,15 +78,16 @@ It is workflow state only. It does not override the packet documents, implementa
 - Do not widen `C1` into autosave, checkpoints, generic persistence doctrine, multi-host runtime, runtime AUX activation, offline consolidation, or mediation.
 - Do not treat `session_summary.budget_history` or `session_summary.brake_history` as accepted cross-process continuation truth.
 - Do not silently turn the `continuity_truth` / `control_residue` split into packet doctrine or a second truth court.
+- Do not widen directly from accepted `C1` into bidirectional OpenAI control, Gemini runtime, cross-host runtime, multi-agent orchestration, runtime AUX activation, offline consolidation, or mediation without a new explicit program lock.
 
 ## 5. Acknowledged worktree noise at ledger update
 
-- The accepted `R5` proof head `ee41eb4` and deterministic closeout head `fd6789f` remain the accepted baseline truth until a later committed acceptance updates them.
+- The accepted `R5` proof head `ee41eb4`, deterministic closeout head `fd6789f`, and accepted `C1` continuation closeout head `934aa87` remain the accepted baseline truth until a later committed acceptance updates them.
 - The accepted `R4` proof head `7672304`, runtime landing `cecd82d`, and `R5` opening parent `9d07c5b` remain part of the same closure-train history and are not competing baselines.
-- The current branch `codex/c1-reference-continuation` now carries uncommitted `C1` candidate changes and is therefore not accepted baseline truth yet.
+- The current branch `codex/c1-reference-continuation` is clean at the accepted `C1` head.
 - The older `codex/e1-verification-substrate-entrypoints` workspace remains mixed and is not the source of truth for this train.
 - Local workspace directories already exist under `.claude/worktrees/`.
-- Re-read `git status --short --untracked-files=all` before any acceptance claim; this summary is only the continuity reminder, not the canonical file list.
+- Re-read `git status --short --untracked-files=all` before opening any new seam; this summary is only the continuity reminder, not the canonical file list.
 
 ## 6. Resume checklist
 

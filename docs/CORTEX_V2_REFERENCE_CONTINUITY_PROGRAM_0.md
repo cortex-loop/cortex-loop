@@ -1,7 +1,7 @@
 # CORTEX_V2_REFERENCE_CONTINUITY_PROGRAM_0
 
 Date: 2026-03-26
-Status: active runtime-program brief for the first bounded reference cross-process continuation slice
+Status: accepted re-audited runtime-program brief for the first bounded reference cross-process continuation slice
 
 ## Purpose
 
@@ -205,19 +205,17 @@ Every seam remains one-session max and must end on a clean tree before the next 
 - `make seam-preflight`, `make revalidate-reference-runtime-continuity`, `make test-smoke`, and `make verify` pass,
 - and the `C1` phase-gate row is updated truthfully.
 
-## Current branch-local state
+## Current accepted state after `C1` closeout
 
-On branch `codex/c1-reference-continuation` opened from `0654ea0`:
+At accepted `C1` continuation closeout head `934aa87` on branch `codex/c1-reference-continuation`:
 
-- `ReferenceRuntimeSessionArtifact` exists as a bounded cross-process carrier,
-- the CLI now supports explicit `--load-session` / `--save-session`,
+- `ReferenceRuntimeSessionArtifact` is now landed as a bounded cross-process carrier,
+- the reference CLI now supports explicit `--load-session` / `--save-session`,
 - the artifact persists exact `continuity_truth` and bounded `control_residue`,
 - split-run continuity proof now exists against the reference-host shell,
 - `session_summary.budget_history` and `brake_history` remain public but are explicitly excluded from cross-process equivalence,
-- and the branch-local verification surface now includes `make revalidate-reference-runtime-continuity`.
-
-This is branch-local implementation truth.
-It does **not** by itself promote accepted baseline truth.
+- `make revalidate-reference-runtime-continuity` now exists as the repo-local continuity revalidation entry point,
+- and targeted reruns, repeated repo-local continuity revalidation, `make test-smoke`, and `make verify` all passed before closeout.
 
 ## Explicitly blocked moves
 
