@@ -29,8 +29,8 @@ This document does not override:
 
 Accepted parent for this program:
 
-- branch: `codex/c1-reference-continuation`
-- commit: `0e94008`
+- branch: `codex/j2-restack-acceptance-truth-normalization`
+- commit: `acfccf9`
 
 Why this program opens now:
 
@@ -179,9 +179,9 @@ Every seam remains one-session max and must end on a clean tree before the next 
 - `make seam-preflight`, `make revalidate-openai-runtime`, `make test-smoke`, and `make verify` pass,
 - and the `O1` phase-gate row is updated truthfully.
 
-## Current accepted state after `O1` closeout
+## Current K1 candidate state before closeout
 
-On the accepted `O1` runtime closeout line implemented at `e399a14` and truthfully closed at deterministic closeout head `93f7093` on branch `codex/o1-openai-runtime-shell`:
+On branch `codex/k1f-openai-service-closeout` rooted at K1 proof head `d4c311f`:
 
 - `OpenAIRuntimeSession`, `OpenAIRuntimeSessionArtifact`, `run_openai_runtime_step()`, and `python3 -m cortex.runtime.openai_cli` are now landed `O1` surfaces,
 - raw documented OpenAI host events drive a host-specific runtime shell,
@@ -191,7 +191,10 @@ On the accepted `O1` runtime closeout line implemented at `e399a14` and truthful
 - `O1` runtime/session I/O no longer import private reference-runtime helpers,
 - OpenAI split-run continuity proof now exists against the `O1` contract with explicit diagnostic-history non-equivalence,
 - `make revalidate-openai-runtime` now exists as the repo-local OpenAI runtime revalidation entry point,
-- and targeted reruns, repeated `make revalidate-openai-runtime`, `make test-smoke`, and `make verify` all passed before closeout.
+- and targeted reruns, repeated `make revalidate-openai-runtime`, `make test-smoke`, and `make verify` all passed on this candidate line.
+
+This is branch-local K1 implementation truth.
+It does **not** by itself promote accepted baseline truth.
 
 ## Explicitly blocked moves
 

@@ -1,7 +1,7 @@
 # CORTEX_V2_REFERENCE_RUNTIME_PROGRAM_0
 
 Date: 2026-03-25
-Status: active re-hardened runtime-program brief for the first live Cortex shell
+Status: active re-hardened runtime-program brief for the first live Cortex shell on the K1 candidate line
 
 ## Purpose
 
@@ -24,10 +24,10 @@ This document does not override:
 
 ## Accepted parent and rationale
 
-Accepted parent for this program:
+Accepted parent for this program on the current line:
 
-- branch: `codex/s0b-erika-support-closeout`
-- commit: `6218115`
+- branch: `codex/j2-restack-acceptance-truth-normalization`
+- commit: `acfccf9`
 
 Why this program opens now:
 
@@ -145,9 +145,9 @@ Corrective ordering law:
 - repeated reruns pass,
 - and the phase-gate row for `R3` is honestly closed
 
-## Current accepted state after corrective closeout
+## Current K1 candidate state before closeout
 
-At the accepted post-corrective baseline `2eaf5db`:
+On branch `codex/k1f-openai-service-closeout` rooted at K1 proof head `d4c311f`:
 
 - the first accepted reference-host local CLI shell is real,
 - the first bounded computed executive slice is real inside that shell,
@@ -156,7 +156,10 @@ At the accepted post-corrective baseline `2eaf5db`:
 - malformed `open` requests are explicitly rejected instead of clearing continuity anchors by accident,
 - a mismatched runtime `session_id` is surfaced as an explicit contradiction and does not silently reassign the one-process shell,
 - a lawful `commitment_result_kind` may coexist with a rejected continuity transition on the same event when certification evidence remains sufficient,
-- and the corrective zero-finding re-audit has passed for current scope.
+- and the corrective zero-finding re-audit has passed for current scope on this candidate line.
+
+This is branch-local K1 implementation truth.
+It does **not** by itself promote accepted baseline truth.
 
 This closeout does **not** authorize:
 

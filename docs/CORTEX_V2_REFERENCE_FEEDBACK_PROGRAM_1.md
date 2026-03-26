@@ -26,10 +26,10 @@ This document does not override:
 
 Accepted parent for this program:
 
-- branch: `codex/s3-r4-senior-closeout`
-- commit: `9d07c5b`
+- branch: `codex/j2-restack-acceptance-truth-normalization`
+- commit: `acfccf9`
 
-Accepted `R4` history still carried into this program:
+Historical `R4` source lineage still carried into this program:
 
 - accepted proof head: `7672304`
 - runtime landing inside that closeout history: `cecd82d`
@@ -165,9 +165,9 @@ Every cross-layer seam remains one-session max and must end on a clean tree befo
 - `make seam-preflight`, `make test-smoke`, and `make verify` pass,
 - and the `R5` phase-gate row is honestly closed.
 
-## Current accepted state after `R5` closeout
+## Current K1 candidate state before closeout
 
-On the accepted `R5` closeout line opened from `9d07c5b`, proven at `ee41eb4`, and truthfully closed at deterministic closeout head `fd6789f`:
+On branch `codex/k1f-openai-service-closeout` rooted at K1 proof head `d4c311f`:
 
 - the runtime session still persists `last_realization_feedback` as the direct last-step mirror, and it now also persists `feedback_window` as the bounded three-step oldest-to-newest realized-outcome window,
 - the window persists runtime-realized outcomes only and truncates to the three most recent entries,
@@ -178,12 +178,12 @@ On the accepted `R5` closeout line opened from `9d07c5b`, proven at `ee41eb4`, a
 - the CLI exposes top-level `feedback_window_summary` while `session_summary.feedback_window_size` reports the post-step window size after the current realized outcome is appended,
 - lawful `commitment_result_kind` may remain visible even when continuity rejection or `latched-brake-enforced:*` warnings are also present,
 - committed end-to-end proof now exists at `ee41eb4` for clean-window zero pressure, single-mismatch `0.55` floor, repeated-mismatch `0.70` floor, and oldest-entry truncation on the fourth append,
-- the accepted landed closeout for that same `R5` line is anchored at `fd6789f` rather than treating `ee41eb4` as the sole accepted clean baseline,
-- and a zero-finding re-audit passed for current scope.
+- the accepted landed donor closeout for the historical `R5` line is still anchored at `fd6789f` rather than treating `ee41eb4` as the sole accepted clean baseline,
+- and a zero-finding re-audit passed for current scope on this candidate line.
 
-## Current corrective state after session-carrier reclosure
+## Historical corrective source state
 
-On corrective branch `codex/r5g-h-corrective-reclosure` opened from accepted normalization head `7eac5e8`:
+On corrective source branch `codex/r5g-h-corrective-reclosure` opened from accepted normalization head `7eac5e8`:
 
 - `ReferenceRuntimeSession` now normalizes lawful one-sided last/window state before any step consumes it:
   - last-step mirror with empty window becomes a one-entry bounded window,
@@ -191,7 +191,7 @@ On corrective branch `codex/r5g-h-corrective-reclosure` opened from accepted nor
   - and divergent two-sided state is rejected explicitly,
 - the direct-construction reproduction that dropped next-step pressure is now closed on the corrective line,
 - the corrective seam stayed limited to carrier normalization/rejection law plus re-audit; it did not widen feedback horizon, scorer law, runtime scope, or policy ownership,
-- and `R5` is landed again for current scope on the corrective line because the repeat-stability audit bundle passed after the carrier invariant was closed.
+- and `R5` is landed again for current scope on the historical corrective line because the repeat-stability audit bundle passed after the carrier invariant was closed.
 
 ## Explicitly blocked moves
 

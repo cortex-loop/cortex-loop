@@ -26,10 +26,10 @@ This document does not override:
 
 ## Accepted parent and rationale
 
-Parent for this program:
+Parent for this program on the current line:
 
-- branch: `codex/v2-soul-docs`
-- commit: `0654ea0`
+- branch: `codex/j2-restack-acceptance-truth-normalization`
+- commit: `acfccf9`
 
 Why this program opens now:
 
@@ -205,9 +205,9 @@ Every seam remains one-session max and must end on a clean tree before the next 
 - `make seam-preflight`, `make revalidate-reference-runtime-continuity`, `make test-smoke`, and `make verify` pass,
 - and the `C1` phase-gate row is updated truthfully.
 
-## Current accepted state after `C1` closeout
+## Current K1 candidate state before closeout
 
-On the accepted `C1` continuation closeout line implemented at `934aa87` and truthfully closed at deterministic closeout head `5b5c5b7` on branch `codex/c1-reference-continuation`:
+On branch `codex/k1f-openai-service-closeout` rooted at K1 proof head `d4c311f`:
 
 - `ReferenceRuntimeSessionArtifact` is now landed as a bounded cross-process carrier,
 - the reference CLI now supports explicit `--load-session` / `--save-session`,
@@ -215,7 +215,10 @@ On the accepted `C1` continuation closeout line implemented at `934aa87` and tru
 - split-run continuity proof now exists against the reference-host shell,
 - `session_summary.budget_history` and `brake_history` remain public but are explicitly excluded from cross-process equivalence,
 - `make revalidate-reference-runtime-continuity` now exists as the repo-local continuity revalidation entry point,
-- and targeted reruns, repeated repo-local continuity revalidation, `make test-smoke`, and `make verify` all passed before closeout.
+- and targeted reruns, repeated repo-local continuity revalidation, `make test-smoke`, and `make verify` all passed on this candidate line.
+
+This is branch-local K1 implementation truth.
+It does **not** by itself promote accepted baseline truth.
 
 ## Explicitly blocked moves
 

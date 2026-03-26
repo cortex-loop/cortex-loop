@@ -285,18 +285,18 @@ def test_reference_runtime_program_lock_is_recorded() -> None:
     assert "the first bounded three-step realized-outcome window" in phase_gate_text
     assert "the corrective line now closes the surviving session/window carrier defect" in phase_gate_text
     assert "`C1` reference bounded cross-process continuation slice" in phase_gate_text
-    assert "explicit persisted `continuity_truth` plus bounded `control_residue` are now landed on the accepted `C1` closeout line, implemented at `934aa87` and cleanly closed at deterministic closeout head `5b5c5b7`" in phase_gate_text
+    assert "explicit persisted `continuity_truth` plus bounded `control_residue` are re-earned on the current K1 candidate line rooted at `d4c311f`" in phase_gate_text
     assert "`O1` OpenAI documented host-event runtime shell" in phase_gate_text
     assert "raw documented host events drive a host-specific CLI shell" in phase_gate_text
     assert "canonical Cortex event names are explicitly rejected" in phase_gate_text
     assert "diagnostic-history non-equivalence" in phase_gate_text
     assert "| closed | landed |" in phase_gate_text
-    assert "implemented at `e399a14` and cleanly closed at deterministic closeout head `93f7093`" in phase_gate_text
+    assert "re-earned on the current K1 candidate line rooted at `d4c311f`" in phase_gate_text
     assert "`O2` OpenAI raw-transcript ingress shell" in phase_gate_text
     assert "wrapper-shaped and mixed wrapper/transcript records are explicitly rejected" in phase_gate_text
     assert "mixed wrapper/transcript records are explicitly rejected" in phase_gate_text
     assert "`O3` OpenAI loopback service shell" in phase_gate_text
-    assert "loopback-only HTTP now exists on `codex/o3-openai-service-shell`" in phase_gate_text
+    assert "loopback-only HTTP now exists on `codex/k1f-openai-service-closeout`" in phase_gate_text
     assert "one active session per process is real for current scope" in phase_gate_text
 
     assert "Current campaign: `K1` runtime/product restack is now present on the working branch as a committed candidate train" in workstream_text
@@ -311,14 +311,14 @@ def test_reference_runtime_program_lock_is_recorded() -> None:
     assert "bounded latched-brake enforcement point" in feedback_program_text
     assert "`R4B` realization-feedback carrier and persistence" in feedback_program_text
     assert "`R4E` latched-brake enforcement" in feedback_program_text
-    assert "Current accepted state after `R4` senior closure" in feedback_program_text
-    assert "accepted senior-critique proof head `7672304` (runtime landing `cecd82d` inside the same closeout line)" in feedback_program_text
+    assert "Current K1 candidate state before closeout" in feedback_program_text
+    assert "On branch `codex/k1f-openai-service-closeout` rooted at K1 proof head `d4c311f`:" in feedback_program_text
     assert "CLI-visible selected-vs-realized divergence" in feedback_program_text
     assert "zero-finding adversarial runtime/API review found no defect for current scope" in feedback_program_text
     assert "first bounded reference short-window feedback slice" in feedback_program_1_text
-    assert "branch: `codex/s3-r4-senior-closeout`" in feedback_program_1_text
-    assert "commit: `9d07c5b`" in feedback_program_1_text
-    assert "accepted proof head: `7672304`" in feedback_program_1_text
+    assert "branch: `codex/j2-restack-acceptance-truth-normalization`" in feedback_program_1_text
+    assert "commit: `acfccf9`" in feedback_program_1_text
+    assert "Historical `R4` source lineage still carried into this program:" in feedback_program_1_text
     assert "`ReferenceRealizationFeedbackWindow`" in feedback_program_1_text
     assert "`ReferenceFeedbackWindowSummary`" in feedback_program_1_text
     assert "maximum length `3`" in feedback_program_1_text
@@ -328,11 +328,11 @@ def test_reference_runtime_program_lock_is_recorded() -> None:
     assert "a scoring rewrite" in feedback_program_1_text
     assert "`R5B` feedback window carrier and session persistence" in feedback_program_1_text
     assert "`R5E` re-audit and closeout" in feedback_program_1_text
-    assert "Current accepted state after `R5` closeout" in feedback_program_1_text
-    assert "opened from `9d07c5b`, proven at `ee41eb4`, and truthfully closed at deterministic closeout head `fd6789f`" in feedback_program_1_text
+    assert "Current K1 candidate state before closeout" in feedback_program_1_text
+    assert "On branch `codex/k1f-openai-service-closeout` rooted at K1 proof head `d4c311f`:" in feedback_program_1_text
     assert "committed end-to-end proof now exists at `ee41eb4`" in feedback_program_1_text
-    assert "the accepted landed closeout for that same `R5` line is anchored at `fd6789f`" in feedback_program_1_text
-    assert "Current corrective state after session-carrier reclosure" in feedback_program_1_text
+    assert "the accepted landed donor closeout for the historical `R5` line is still anchored at `fd6789f`" in feedback_program_1_text
+    assert "Historical corrective source state" in feedback_program_1_text
     assert "codex/r5g-h-corrective-reclosure" in feedback_program_1_text
     assert "last-step mirror with empty window becomes a one-entry bounded window" in feedback_program_1_text
     assert "the direct-construction reproduction that dropped next-step pressure is now closed" in feedback_program_1_text
@@ -347,20 +347,23 @@ def test_reference_runtime_program_lock_is_recorded() -> None:
     assert "`control_residue`" in continuity_program_text
     assert "`C1` equivalence does **not** require:" in continuity_program_text
     assert "`make revalidate-reference-runtime-continuity`" in continuity_program_text
-    assert "implemented at `934aa87` and truthfully closed at deterministic closeout head `5b5c5b7`" in continuity_program_text
+    assert "Current K1 candidate state before closeout" in continuity_program_text
+    assert "On branch `codex/k1f-openai-service-closeout` rooted at K1 proof head `d4c311f`:" in continuity_program_text
     assert "accepted re-audited runtime-program brief for the first OpenAI documented host-event runtime shell" in openai_runtime_program_text
     assert "`python3 -m cortex.runtime.openai_cli`" in openai_runtime_program_text
     assert "`raw_host_event_name`" in openai_runtime_program_text
     assert "`make revalidate-openai-runtime`" in openai_runtime_program_text
     assert "canonical Cortex event names are now explicitly rejected at both CLI and runtime entrypoint level" in openai_runtime_program_text
     assert "runtime and session I/O ownership remain self-contained inside the OpenAI runtime modules" in openai_runtime_program_text
-    assert "implemented at `e399a14` and truthfully closed at deterministic closeout head `93f7093`" in openai_runtime_program_text
+    assert "Current K1 candidate state before closeout" in openai_runtime_program_text
+    assert "On branch `codex/k1f-openai-service-closeout` rooted at K1 proof head `d4c311f`:" in openai_runtime_program_text
     assert "accepted re-audited runtime-program brief for the first OpenAI raw-transcript ingress shell" in openai_ingress_program_text
     assert "`python3 -m cortex.runtime.openai_ingress_cli`" in openai_ingress_program_text
     assert "wrapper-shape `{event_name, payload}` records are explicitly rejected" in openai_ingress_program_text
     assert "mixed wrapper/transcript record that contains `event_name` or `payload`" in openai_ingress_program_text
     assert "`make revalidate-openai-ingress`" in openai_ingress_program_text
-    assert "implemented and truthfully closed at `d91f504`" in openai_ingress_program_text
+    assert "Current K1 candidate state before closeout" in openai_ingress_program_text
+    assert "On branch `codex/k1f-openai-service-closeout` rooted at K1 proof head `d4c311f`:" in openai_ingress_program_text
     assert "active runtime-program brief for the first OpenAI loopback service shell" in openai_service_program_text
     assert "`python3 -m cortex.runtime.openai_service`" in openai_service_program_text
     assert "`GET /health`" in openai_service_program_text
@@ -368,7 +371,8 @@ def test_reference_runtime_program_lock_is_recorded() -> None:
     assert "`GET /v1/session/export`" in openai_service_program_text
     assert "`POST /v1/session/import`" in openai_service_program_text
     assert "`make revalidate-openai-service`" in openai_service_program_text
-    assert "branch `codex/o3-openai-service-shell` opened from accepted `O2` closeout head `d91f504`" in openai_service_program_text
+    assert "Current K1 candidate state before closeout" in openai_service_program_text
+    assert "On branch `codex/k1f-openai-service-closeout` rooted at K1 proof head `d4c311f`:" in openai_service_program_text
 
 
 def test_erika_visualizations_are_framed_as_support_surfaces() -> None:

@@ -26,10 +26,10 @@ This document does not override:
 
 ## Accepted parent and rationale
 
-Accepted parent for this program:
+Accepted parent for this program on the current line:
 
-- branch: `codex/o2-openai-ingress-shell`
-- commit: `d91f504`
+- branch: `codex/j2-restack-acceptance-truth-normalization`
+- commit: `acfccf9`
 
 Why this program opens now:
 
@@ -187,9 +187,9 @@ Every seam remains one-session max and must end on a clean tree before the next 
 - `make seam-preflight`, `make revalidate-openai-service`, `make test-smoke`, and `make verify` pass
 - and the `O3` phase-gate row is updated truthfully
 
-## Current branch-local state
+## Current K1 candidate state before closeout
 
-On branch `codex/o3-openai-service-shell` opened from accepted `O2` closeout head `d91f504`:
+On branch `codex/k1f-openai-service-closeout` rooted at K1 proof head `d4c311f`:
 
 - `OpenAIServiceState`, `handle_openai_service_request()`, `export_openai_service_session()`, `import_openai_service_session()`, and `python3 -m cortex.runtime.openai_service` now exist as branch-local `O3` candidate surfaces
 - `GET /health`, `POST /v1/events`, `GET /v1/session/export`, and `POST /v1/session/import` now exist over loopback-only HTTP
@@ -199,7 +199,7 @@ On branch `codex/o3-openai-service-shell` opened from accepted `O2` closeout hea
 - service continuity proof now exists against the recorded `O3` contract, including explicit diagnostic-history non-equivalence
 - and `make revalidate-openai-service` now exists as the repo-local service revalidation entry point
 
-This is branch-local implementation truth.
+This is branch-local K1 implementation truth.
 It does **not** by itself promote accepted baseline truth.
 
 ## Explicitly blocked moves
