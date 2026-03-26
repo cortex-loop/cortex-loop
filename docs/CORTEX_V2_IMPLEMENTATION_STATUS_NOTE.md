@@ -111,4 +111,5 @@ If work continues later, it should be explicitly framed as one of:
 - non-feature cleanup,
 - verification ergonomics,
 - or evidence collection for future experimental decisions such as mediation.
-- In this maintainer workspace, future seams should branch from the accepted post-`E4` verification baseline recorded in `docs/CORTEX_V2_LOCAL_VERIFICATION.md`, not from the old salvage donor branch or archival `main`.
+
+In this maintainer workspace, future seam-parent truth is recorded in `docs/CORTEX_V2_ACTIVE_WORKSTREAM.md`; do not hardcode a separate accepted workflow baseline here.

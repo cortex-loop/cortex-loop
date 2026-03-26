@@ -2,7 +2,7 @@
 
 **Date:** 2026-03-26  
 **Role:** support surface for orientation and planning  
-**Accepted factual baseline:** `codex/j0-burden-axis-reaudit` at `4bb7fbf`
+**Accepted factual baseline:** `codex/j1-openai-host-realization-three-pair` at `21354ab`
 
 > This folder tracks three separate things: current accepted repo truth, the north-star product target, and the lawful gap programs required to move from the first toward the second.
 
@@ -13,6 +13,8 @@ It is not active authority and not current committed roadmap truth.
 
 - Cortex v2 MVP is complete at the current justified boundary.
 - The accepted center is a tiny integrity core, active SRE reference surfaces, three host vertical slices, a contradiction-preserving evidence harness, and AUX MVP support-only surfaces.
+- The verification/evidence restack train is now landed for current scope on top of that same product truth.
+- The OpenAI host-realization cell now has a committed three-pair evidence series and `candidate_positive` cell-level signal for better host-specialized realization.
 - Mediation remains blocked and unjustified at package level.
 - Current follow-on work is verification/evidence work, not silent feature expansion.
 

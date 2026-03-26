@@ -20,6 +20,7 @@ Active authority remains:
 
 ## Current repo evidence
 
+- The accepted workflow baseline is `codex/j1-openai-host-realization-three-pair` at `21354ab`.
 - `docs/CORTEX_V2_IMPLEMENTATION_STATUS_NOTE.md` says the current v2 roadmap is complete at the justified boundary.
 - `docs/CORTEX_V2_MEDIATION_JUSTIFICATION_NOTE.md` says mediation is still `not justified yet`.
 - `docs/CORTEX_V2_MEDIATION_EVIDENCE_NOTE_0.md` shows cell-level signal on thrash, uncertainty, and host-realization, but every package-level axis remains `insufficient`.
@@ -38,9 +39,9 @@ Active authority remains:
 
 The next honest work remains:
 
-1. verification truth-sync where status/support surfaces still drift,
-2. behavior-preserving test/helper cleanup where duplication is still open,
-3. broader evidence collection where package-level mediation blockers remain real.
+1. governance-only workflow/support truth normalization where baseline drift still exists,
+2. broader evidence collection where package-level mediation blockers remain real,
+3. later non-feature verification cleanup where a new explicit seam is justified.
 
 Do not use this memo to justify:
 

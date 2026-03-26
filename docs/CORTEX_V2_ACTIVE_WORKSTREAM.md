@@ -7,13 +7,17 @@ It is workflow state only. It does not override the packet documents, implementa
 
 ## 1. Accepted baseline
 
-- Accepted baseline branch: `codex/j0-burden-axis-reaudit`
-- Accepted baseline commit: `4bb7fbf`
+- Accepted baseline branch: `codex/j1-openai-host-realization-three-pair`
+- Accepted baseline commit: `21354ab`
 - Accepted baseline state:
-  - burden-axis re-audit is accepted through the three thrash-host burden slices
+  - burden-axis re-audit remains accepted through the three thrash-host burden slices
   - package-level burden remains `insufficient`
   - mediation remains blocked / not justified
-  - verification-ergonomics expansion beyond the accepted post-`E4` boundary is not currently promoted
+  - the verification/evidence restack train is now landed for current scope on top of the same product truth
+  - the OpenAI host-realization cell now has a committed three-pair evidence series and `candidate_positive` cell-level signal for better host-specialized realization
+  - package-level mediation evidence remains `insufficient`
+  - lower visible burden remains unclaimed for host-realization
+  - verification-ergonomics expansion beyond the accepted restack boundary is not currently promoted without a new explicit non-feature seam
 - Accepted baseline authority anchors:
   - `docs/CORTEX_V2_IMPLEMENTATION_STATUS_NOTE.md`
   - `docs/CORTEX_V2_IMPLEMENTATION_MASTER_PLAN_2.md`
@@ -22,24 +26,24 @@ It is workflow state only. It does not override the packet documents, implementa
 
 ## 2. Current campaign and seam state
 
-- Current campaign: verification/evidence restack train is landed for current scope
-- Current working branch at ledger update: `codex/j1-openai-host-realization-three-pair`
-- Current branch role: accepted OpenAI three-pair evidence closeout line that lands the verification/evidence restack train without widening into mediation implementation or new runtime/product behavior
-- Current candidate seam: `none`
-- Current seam status: `restack landed / next lawful move must be a new explicitly bounded non-feature seam or broader evidence collection seam`
-- Seam risk: the landed OpenAI three-pair evidence closeout seam was an evidence-revalidation plus shared verification-plumbing seam and repeated direct plus repo-local reruns passed before acceptance
+- Current campaign: restack acceptance truth normalization is now present on the working branch as a governance-only corrective seam
+- Current working branch at ledger update: `codex/j2-restack-acceptance-truth-normalization`
+- Current branch role: bounded workflow/support truth-normalization candidate over the accepted `j1` line; it does not widen runtime, packet, phase-gate, or correspondence scope
+- Current candidate seam: `j2` restack acceptance truth normalization
+- Current seam status: `in progress / accepted baseline remains clean accepted j1 line`
+- Seam risk: shared verification-plumbing seam
 
 ## 3. Next lawful move
 
-- Accepted answer after OpenAI three-pair evidence closeout:
-  - the OpenAI host-realization cell now has a committed three-pair evidence series and `candidate_positive` cell-level signal for better host-specialized realization
+- Accepted answer on the current accepted `j1` line:
+  - the verification/evidence restack train is accepted truth, not only a historically successful side branch
+  - the OpenAI host-realization cell has the accepted three-pair evidence series and `candidate_positive` cell-level signal
   - package-level mediation evidence remains `insufficient`
-  - lower visible burden remains unclaimed for host-realization
   - mediation implementation remains blocked
-- Next lawful move:
-  - if work continues, choose one new explicitly bounded non-feature seam
-  - or broaden evidence collection while keeping package-level mediation justification blocked
-  - do not open mediation implementation from this line
+- Next lawful move from this corrective seam:
+  - normalize workflow and support surfaces so they all derive accepted baseline truth from this workstream ledger
+  - rerun docs-sync, seam-preflight, smoke, and canonical verification
+  - accept or reject the corrective seam explicitly before opening any new work
 
 ## 4. Explicitly blocked moves
 
@@ -49,15 +53,13 @@ It is workflow state only. It does not override the packet documents, implementa
 - Do not promote package-level mediation justification from current burden evidence.
 - Do not let support-surface documents silently redefine packet or status authority.
 - Do not carry the one-line authority-surface edits currently sitting in `docs/CORTEX_V2_IMPLEMENTATION_MASTER_PLAN_2.md` or `docs/CORTEX_V2_SRE_2.md` into the verification/evidence restack train.
-- Do not mix the OpenAI three-pair host-realization evidence seam into the reference-helper closeout seam.
 - Do not treat a three-pair OpenAI host-realization closeout as permission for mediation implementation.
 - Do not reinterpret a host-level `candidate_positive` cell as package-level justification.
 
 ## 5. Acknowledged worktree noise at ledger creation
 
-- Mixed tracked edits still exist across verification docs, mediation docs, and reference/OpenAI verification surfaces on `codex/e1-verification-substrate-entrypoints`.
-- The support-surface theory and visualization files are now landed on this accepted truth-sync branch and are no longer just dirty-branch noise.
-- The dirty donor branch `codex/e1-verification-substrate-entrypoints` remains mixed and is no longer the source of truth for this restack train.
+- The dirty donor branch `codex/e1-verification-substrate-entrypoints` remains mixed and is not the source of truth for this corrective seam.
+- The accepted `j1` line remains clean and is the source of accepted workflow baseline truth until this corrective seam is accepted.
 - Local workspace directories already exist under `.claude/worktrees/`.
 - Re-read `git status --short --untracked-files=all` before opening any new seam; this summary is only the continuity reminder, not the canonical file list.
 
