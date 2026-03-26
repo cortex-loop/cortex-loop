@@ -266,6 +266,25 @@ Forbidden leaks: persisted continuation remains runtime-owned. It may not become
 
 ---
 
+### 1.22 OpenAI documented host-event runtime shell
+
+| Packet math | Is | Code home | Test surface | Status |
+| --- | --- | --- | --- | --- |
+| OpenAI host-runtime live session carrier over documented raw host events plus accepted `C1` continuation law | `OpenAIRuntimeSession` | `cortex/runtime/openai.py` | `test_openai_runtime_session_io.py::test_openai_runtime_session_artifact_roundtrips_bounded_residue` + `test_openai_runtime_continuity.py::test_openai_runtime_split_session_is_o1_equivalent_to_uninterrupted_run` | landed |
+| OpenAI host-runtime control ledger carrier | `OpenAIControlLedger` | `cortex/runtime/openai.py` | `test_openai_runtime_cli.py::test_openai_runtime_cli_reads_documented_raw_events_and_preserves_host_name` | landed |
+| OpenAI host-runtime step result carrier | `OpenAIRuntimeStepResult` | `cortex/runtime/openai.py` | `test_openai_runtime_cli.py::test_openai_runtime_cli_reads_documented_raw_events_and_preserves_host_name` | landed |
+| OpenAI host-runtime step composition over landed OpenAI observe/bind, commitment-path helpers, active SRE policy, and accepted bounded continuation law | `run_openai_runtime_step()` | `cortex/runtime/openai.py` | `test_openai_runtime_step.py::test_openai_runtime_step_rejects_canonical_cortex_event_name_before_runtime_processing` + `test_openai_runtime_cli.py::test_openai_runtime_cli_reads_documented_raw_events_and_preserves_host_name` + `test_openai_runtime_cli.py::test_openai_runtime_cli_undocumented_raw_host_event_warns_without_fabricating_parity` + `test_openai_runtime_continuity.py::test_openai_runtime_host_warning_and_certified_commitment_can_coexist_across_restart` | landed |
+| OpenAI bounded persisted continuation carrier split into exact `continuity_truth` and bounded `control_residue` | `OpenAIRuntimeSessionArtifact` | `cortex/runtime/openai_session_io.py` | `test_openai_runtime_session_io.py::test_openai_runtime_session_artifact_roundtrips_bounded_residue` | landed |
+| OpenAI runtime session -> persisted artifact build boundary | `build_openai_runtime_session_artifact()` | `cortex/runtime/openai_session_io.py` | `test_openai_runtime_session_io.py::test_openai_runtime_session_artifact_roundtrips_bounded_residue` | landed |
+| OpenAI persisted artifact -> runtime session parse boundary | `parse_openai_runtime_session_artifact()` | `cortex/runtime/openai_session_io.py` | `test_openai_runtime_session_io.py::test_openai_runtime_session_artifact_rejects_unknown_keys_and_invalid_enums` + `test_openai_runtime_session_io.py::test_openai_runtime_session_artifact_one_sided_last_feedback_normalizes_through_session_constructor` | landed |
+| OpenAI persisted artifact file read boundary for the local CLI shell | `read_openai_runtime_session_artifact()` | `cortex/runtime/openai_session_io.py` | `test_openai_runtime_session_io.py::test_openai_runtime_session_artifact_same_path_overwrite_safety` | landed |
+| OpenAI persisted artifact file write boundary for the local CLI shell | `write_openai_runtime_session_artifact()` | `cortex/runtime/openai_session_io.py` | `test_openai_runtime_session_io.py::test_openai_runtime_session_artifact_same_path_overwrite_safety` + `test_openai_runtime_cli.py::test_openai_runtime_cli_explicit_load_save_works` + `test_openai_runtime_cli.py::test_openai_runtime_cli_load_save_failure_emits_no_stdout` | landed |
+| OpenAI developer-facing runtime output projection with preserved raw host event name | `build_openai_cli_record()` | `cortex/runtime/openai_cli.py` | `test_openai_runtime_cli.py::test_openai_runtime_cli_reads_documented_raw_events_and_preserves_host_name` + `test_openai_runtime_cli.py::test_openai_runtime_cli_undocumented_raw_host_event_warns_without_fabricating_parity` | landed |
+
+Forbidden leaks: `O1` remains host-specific on purpose. It may not introduce a fake host-neutral runtime layer, generic store doctrine, live network/service doctrine, or outbound OpenAI host action realization. Raw OpenAI host event names must remain visible in the outward projection and undocumented host events must remain explicit conservative warnings rather than fabricated parity. OpenAI persisted continuation remains bounded to exact `continuity_truth` plus bounded `control_residue`; full shell-long `budget_history` and `brake_history` may remain public one-process diagnostics, but they may not become cross-process continuation truth.
+
+---
+
 ## 2. V1 standard-library port correspondence
 
 ### 2.1 Commitment payload extraction (v1 `stop_payload.py`)

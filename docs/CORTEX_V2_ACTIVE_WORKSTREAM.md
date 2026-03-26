@@ -40,25 +40,28 @@ It is workflow state only. It does not override the packet documents, implementa
 
 ## 2. Current campaign and seam state
 
-- Current campaign: `C1` accepted and closed for current scope
-- Current working branch at ledger update: `codex/c1-reference-continuation`
-- Current branch role: accepted bounded runtime/docs/test line that landed explicit persisted `continuity_truth`, bounded `control_residue`, explicit CLI load/save, and bounded cross-process continuity proof without widening into generic persistence or broader runtime rollout
-- Current candidate seam: `none`
-- Current seam status: `C1 landed / stop again before any new real-host runtime or broader product program`
-- Seam risk: the landed `C1` seam was parser/doc-sync plus environment-sensitive subprocess/file-I/O work, and the repeat-stability rerun bundle passed before re-landing
+- Current campaign: `O1` OpenAI documented host-event runtime shell is now present on the working branch as a local candidate seam
+- Current working branch at ledger update: `codex/o1-openai-runtime-shell`
+- Current branch role: bounded runtime/docs/test train that adds an OpenAI-specific documented host-event shell, OpenAI-specific bounded session persistence, preserved `raw_host_event_name`, and split-run OpenAI continuity proof without widening into live network doctrine or generic runtime abstraction
+- Current candidate seam: `O1A` through `O1E`
+- Current seam status: `O1 candidate implemented and verified / accepted baseline remains clean accepted `C1` closeout line`
+- Seam risk: parser/doc-sync plus environment-sensitive subprocess/file-I/O seam over a real host-specific runtime surface; repeat-stability reruns are required before any acceptance claim
 
 ## 3. Next lawful move
 
-- `C1` accepted answer:
-  - the accepted baseline now carries `ReferenceRuntimeSessionArtifact` plus explicit `--load-session` / `--save-session`
-  - persisted continuation truth is split into exact `continuity_truth` and bounded `control_residue`
-  - cross-process equivalence is now defined behaviorally rather than as exact shell-history replay
-  - full `budget_history` / `brake_history` remain public one-process diagnostics but are explicitly excluded from cross-process continuation truth
-  - repo-local revalidation now includes `make revalidate-reference-runtime-continuity`
-- Next lawful move from this clean accepted `C1` head:
-  - stop again and choose one explicit real-host runtime or broader product program
-  - if future work opens, separate first real-host runtime from multi-agent orchestration and from broader outbound/runtime doctrine
-  - do not widen directly from `C1` into bidirectional host control, Gemini runtime, cross-host runtime, runtime AUX activation, offline consolidation, or mediation
+- `O1` branch-local answer:
+  - the working branch now carries `OpenAIRuntimeSession`, `OpenAIRuntimeSessionArtifact`, `run_openai_runtime_step()`, and `python3 -m cortex.runtime.openai_cli`
+  - raw documented OpenAI host events now drive a host-specific runtime shell with preserved `raw_host_event_name`
+  - canonical Cortex event names are now explicitly rejected at both CLI and runtime entrypoint level
+  - undocumented OpenAI host events remain explicit conservative warnings rather than fabricated parity
+  - OpenAI runtime/session ownership is now self-contained inside `O1`
+  - OpenAI split-run equivalence now exists against the recorded `O1` contract
+  - repo-local revalidation now includes `make revalidate-openai-runtime`
+  - targeted unit/integration reruns, repeated `make revalidate-openai-runtime`, `make test-smoke`, and `make verify` have all passed on this branch
+- Next lawful move from this local candidate seam:
+  - run the full verification bundle plus repeated direct reruns and repeated repo-local OpenAI runtime revalidation
+  - accept/merge the seam or reject it explicitly
+  - do not promote this branch-local implementation to accepted baseline truth without an explicit baseline update
 
 ## 4. Explicitly blocked moves
 
@@ -80,15 +83,16 @@ It is workflow state only. It does not override the packet documents, implementa
 - Do not treat `session_summary.budget_history` or `session_summary.brake_history` as accepted cross-process continuation truth.
 - Do not silently turn the `continuity_truth` / `control_residue` split into packet doctrine or a second truth court.
 - Do not widen directly from accepted `C1` into bidirectional OpenAI control, Gemini runtime, cross-host runtime, multi-agent orchestration, runtime AUX activation, offline consolidation, or mediation without a new explicit program lock.
+- Do not widen `O1` into live network/service doctrine, outbound OpenAI host control realization, generic runtime abstraction, Gemini runtime, multi-agent orchestration, runtime AUX activation, offline consolidation, or mediation.
 
 ## 5. Acknowledged worktree noise at ledger update
 
 - The accepted `R5` proof head `ee41eb4`, deterministic closeout head `fd6789f`, accepted `C1` continuation proof head `934aa87`, and accepted `C1` continuation deterministic closeout head `5b5c5b7` remain the accepted baseline truth until a later committed acceptance updates them.
 - The accepted `R4` proof head `7672304`, runtime landing `cecd82d`, and `R5` opening parent `9d07c5b` remain part of the same closure-train history and are not competing baselines.
-- The current branch `codex/c1-reference-continuation` is clean at the accepted `C1` head.
+- The current branch `codex/o1-openai-runtime-shell` now carries committed `O1` candidate work and is therefore not accepted baseline truth yet.
 - The older `codex/e1-verification-substrate-entrypoints` workspace remains mixed and is not the source of truth for this train.
 - Local workspace directories already exist under `.claude/worktrees/`.
-- Re-read `git status --short --untracked-files=all` before opening any new seam; this summary is only the continuity reminder, not the canonical file list.
+- Re-read `git status --short --untracked-files=all` before any acceptance claim; this summary is only the continuity reminder, not the canonical file list.
 
 ## 6. Resume checklist
 

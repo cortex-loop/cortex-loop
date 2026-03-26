@@ -76,6 +76,28 @@ Repo-local entry point:
 make revalidate-reference-runtime-continuity
 ```
 
+## OpenAI runtime revalidation
+
+This revalidates the first OpenAI documented host-event runtime shell against the landed OpenAI driver slices, the active SRE loop, and the accepted `C1` continuation law.
+It checks bounded OpenAI session persistence, raw-host-event preservation, explicit CLI load/save behavior, and split-run OpenAI continuity equivalence.
+It does not authorize live network/service doctrine, outbound OpenAI host control, Gemini runtime, or generic runtime abstraction.
+
+Direct commands:
+
+```sh
+python3 -m pytest tests/unit/test_openai_runtime_session_io.py -q
+python3 -m pytest tests/unit/test_openai_runtime_step.py -q
+python3 -m pytest tests/unit/test_openai_runtime_ownership.py -q
+python3 -m pytest tests/integration/test_openai_runtime_cli.py -q
+python3 -m pytest tests/integration/test_openai_runtime_continuity.py -q
+```
+
+Repo-local entry point:
+
+```sh
+make revalidate-openai-runtime
+```
+
 ## Reference-lane packet-example revalidation
 
 This revalidates the committed reference-lane packet example doc against the already-landed live packet path.
