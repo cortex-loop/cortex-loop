@@ -118,6 +118,26 @@ Repo-local entry point:
 make revalidate-openai-ingress
 ```
 
+## OpenAI loopback service revalidation
+
+This revalidates the first loopback-only OpenAI service shell on top of the accepted `O2` raw-transcript parser and accepted `O1` runtime/session artifact.
+It checks loopback-only HTTP behavior, JSON artifact import/export, event processing over `/v1/events`, and service continuity equivalence without widening into outbound host control or generic service doctrine.
+It does not authorize remote bind, multi-session doctrine, Gemini runtime, or generic runtime/service abstraction.
+
+Direct commands:
+
+```sh
+python3 -m pytest tests/unit/test_openai_service.py -q
+python3 -m pytest tests/integration/test_openai_service.py -q
+python3 -m pytest tests/integration/test_openai_service_continuity.py -q
+```
+
+Repo-local entry point:
+
+```sh
+make revalidate-openai-service
+```
+
 ## Reference-lane packet-example revalidation
 
 This revalidates the committed reference-lane packet example doc against the already-landed live packet path.

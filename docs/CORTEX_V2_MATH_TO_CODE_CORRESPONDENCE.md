@@ -297,6 +297,20 @@ Forbidden leaks: `O2` owns transcript-shape parsing only. It may not mutate `O1`
 
 ---
 
+### 1.24 OpenAI loopback service shell
+
+| Packet math | Is | Code home | Test surface | Status |
+| --- | --- | --- | --- | --- |
+| OpenAI loopback service state carrier over exactly one active runtime session per process | `OpenAIServiceState` | `cortex/runtime/openai_service.py` | `test_openai_service.py::test_openai_service_state_constructs_cleanly` | landed |
+| loopback service request dispatch over accepted `O2` transcript parsing and accepted `O1` runtime/session law | `handle_openai_service_request()` | `cortex/runtime/openai_service.py` | `test_openai_service.py::test_openai_service_invalid_import_becomes_400_error_payload` + `test_openai_service.py::test_openai_service_unknown_path_and_wrong_method_return_json_errors` + `test_openai_service.py::test_openai_service_health_and_documented_event_flow` | landed |
+| OpenAI loopback service artifact export boundary | `export_openai_service_session()` | `cortex/runtime/openai_service.py` | `test_openai_service.py::test_openai_service_import_export_preserves_exact_artifact_shape` + `test_openai_service.py::test_openai_service_session_export_import_and_startup_load_roundtrip` | landed |
+| OpenAI loopback service artifact import boundary | `import_openai_service_session()` | `cortex/runtime/openai_service.py` | `test_openai_service.py::test_openai_service_import_export_preserves_exact_artifact_shape` + `test_openai_service.py::test_openai_service_invalid_import_becomes_400_error_payload` + `test_openai_service.py::test_openai_service_session_export_import_and_startup_load_roundtrip` | landed |
+| OpenAI loopback service shell entrypoint | `main()` | `cortex/runtime/openai_service.py` | `test_openai_service.py::test_openai_service_health_and_documented_event_flow` + `test_openai_service.py::test_openai_service_undocumented_raw_event_warns_without_fabricating_parity` + `test_openai_service_continuity.py::test_openai_service_event_sequence_is_o3_equivalent_to_o2_ingress_shell` | landed |
+
+Forbidden leaks: `O3` remains host-specific and loopback-only on purpose. It may not bind remotely, invent multi-session or multi-client doctrine, widen into outbound OpenAI host control, invent a service-specific persistence format, or introduce a generic runtime/service layer. `/v1/events` must continue to consume the accepted `O2` transcript parser rather than bypassing host-shaped ingress law. `/v1/session/export` and `/v1/session/import` may move only the accepted OpenAI runtime session artifact as JSON; they may not become path-based file APIs. The service shell may expose a more live boundary, but it may not promote `session_summary.budget_history` or `brake_history` into stronger truth than the accepted `C1`/`O1`/`O2` contracts already allow.
+
+---
+
 ## 2. V1 standard-library port correspondence
 
 ### 2.1 Commitment payload extraction (v1 `stop_payload.py`)

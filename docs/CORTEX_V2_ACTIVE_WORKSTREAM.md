@@ -48,26 +48,26 @@ It is workflow state only. It does not override the packet documents, implementa
 
 ## 2. Current campaign and seam state
 
-- Current campaign: `O2` accepted and closed for current scope
-- Current working branch at ledger update: `codex/o2-openai-ingress-shell`
-- Current branch role: accepted bounded runtime/docs/test line that adds raw-transcript ingress parsing plus a raw-transcript CLI over the accepted `O1` shell without widening into outbound host control, live network doctrine, or generic runtime abstraction
-- Current candidate seam: `none`
-- Current seam status: `O2 landed / stop again before any new deeper one-agent product/runtime program`
-- Seam risk: the landed `O2` seam was parser/doc-sync plus environment-sensitive subprocess/file-I/O work, and the repeat-stability rerun bundle passed before re-landing
+- Current campaign: `O3` OpenAI loopback service shell is now present on the working branch as a committed candidate seam
+- Current working branch at ledger update: `codex/o3-openai-service-shell`
+- Current branch role: bounded runtime/docs/test train that adds a loopback-only HTTP service shell over the accepted `O2` raw-transcript parser and accepted `O1` runtime/session artifact without widening into outbound host control, remote bind, multi-session doctrine, or generic service abstraction
+- Current candidate seam: `O3A` through `O3E`
+- Current seam status: `O3 candidate implemented and verified / accepted baseline remains clean accepted `O2` closeout line`
+- Seam risk: timing or environment-sensitive plus parser/doc-sync seam over local subprocess/HTTP behavior, artifact transport, and repeated rerun proof; repeat-stability reruns are required before any acceptance claim
 
 ## 3. Next lawful move
 
-- `O2` accepted answer:
-  - the accepted baseline now carries `OpenAIHostEventEnvelope`, `parse_openai_host_event_envelope()`, and `python3 -m cortex.runtime.openai_ingress_cli`
-  - transcript records with `type` now drive the accepted `O1` shell directly
-  - wrapper-shaped and mixed wrapper/transcript records are explicitly rejected at ingress
-  - canonical Cortex event names are explicitly rejected at ingress
-  - split-run ingress continuity now exists against the recorded `O2` contract
-  - repo-local revalidation now includes `make revalidate-openai-ingress`
-- Next lawful move from this clean accepted `O2` head:
-  - stop again and choose one deeper single-agent product/runtime program explicitly
-  - if future work opens, separate loopback service doctrine from outbound OpenAI host control and from multi-agent orchestration
-  - do not widen directly from `O2` into outbound OpenAI host control, Gemini ingress/runtime, generic ingress/runtime abstraction, runtime AUX activation, offline consolidation, or mediation
+- `O3` branch-local answer:
+  - the working branch now carries `OpenAIServiceState`, `handle_openai_service_request()`, `export_openai_service_session()`, `import_openai_service_session()`, and `python3 -m cortex.runtime.openai_service`
+  - loopback-only HTTP is now real with `GET /health`, `POST /v1/events`, `GET /v1/session/export`, and `POST /v1/session/import`
+  - `/v1/events` now drives the accepted `O2` raw-transcript parser and accepted `O1` runtime shell directly
+  - service import/export now moves the accepted OpenAI runtime session artifact as JSON rather than file paths
+  - one active session per process is now real for current scope
+  - repo-local revalidation now includes `make revalidate-openai-service`
+- Next lawful move from this local candidate seam:
+  - run the full verification bundle plus repeated direct reruns and repeated repo-local OpenAI service revalidation
+  - accept/merge the seam or reject it explicitly
+  - do not promote this branch-local implementation to accepted baseline truth without an explicit baseline update
 
 ## 4. Explicitly blocked moves
 
@@ -93,12 +93,14 @@ It is workflow state only. It does not override the packet documents, implementa
 - Do not widen `O2` into outbound OpenAI host control, live network/service doctrine, Gemini ingress/runtime, generic ingress/runtime abstraction, multi-agent orchestration, runtime AUX activation, offline consolidation, or mediation.
 - Do not treat accepted `O1` as permission for outbound OpenAI host control, Gemini runtime, or multi-agent orchestration without a new explicit program lock.
 - Do not treat accepted `O2` as permission for outbound OpenAI host control, Gemini ingress/runtime, generic ingress/runtime abstraction, multi-agent orchestration, runtime AUX activation, offline consolidation, or mediation without a new explicit program lock.
+- Do not widen `O3` into remote bind, multi-session or multi-client doctrine, outbound OpenAI host control realization, Gemini runtime, generic runtime/service abstraction, multi-agent orchestration, runtime AUX activation, offline consolidation, or mediation.
 
 ## 5. Acknowledged worktree noise at ledger update
 
 - The accepted `R5` proof head `ee41eb4`, deterministic closeout head `fd6789f`, accepted `C1` continuation proof head `934aa87`, accepted `C1` continuation deterministic closeout head `5b5c5b7`, accepted `O1` runtime proof head `e399a14`, accepted `O1` runtime deterministic closeout head `93f7093`, accepted `O2` ingress proof head `d91f504`, and accepted `O2` ingress deterministic closeout head `d91f504` remain the accepted baseline truth until a later committed acceptance updates them.
 - The accepted `R4` proof head `7672304`, runtime landing `cecd82d`, and `R5` opening parent `9d07c5b` remain part of the same closure-train history and are not competing baselines.
-- The current branch `codex/o2-openai-ingress-shell` is clean at the accepted `O2` head.
+- The current branch `codex/o3-openai-service-shell` now carries committed `O3` candidate work and is therefore not accepted baseline truth yet.
+- The accepted branch `codex/o2-openai-ingress-shell` remains clean at the accepted `O2` head.
 - The older `codex/e1-verification-substrate-entrypoints` workspace remains mixed and is not the source of truth for this train.
 - Local workspace directories already exist under `.claude/worktrees/`.
 - Re-read `git status --short --untracked-files=all` before opening any new seam; this summary is only the continuity reminder, not the canonical file list.
