@@ -22,24 +22,23 @@ It is workflow state only. It does not override the packet documents, implementa
 
 ## 2. Current campaign and seam state
 
-- Current campaign: `E2` / `E5` verification truth-sync is now the next bounded candidate seam
-- Current working branch at ledger update: `codex/e1a-resume-protocol-hardening`
-- Current branch role: accepted workflow/docs guard line that landed the continuation resume protocol, seam-preflight documentation, and the live workstream ledger without widening runtime or packet scope
-- Current candidate seam: `codex/e2e5-verification-truth-sync`
-- Current seam status: `continuation hardening landed / next lawful move is verification truth-sync on a clean descendant`
-- Seam risk: the landed continuation-hardening seam was a shared verification-plumbing seam and repeated clean-tree reruns passed before acceptance
+- Current campaign: `E4B` reference-lane helper closeout is now the next bounded candidate seam
+- Current working branch at ledger update: `codex/e2e5-verification-truth-sync`
+- Current branch role: accepted verification/docs/support truth-sync line that landed the non-authority theory/support surfaces and aligned the active verification plan with the still-open helper closeout without widening runtime or packet scope
+- Current candidate seam: `codex/e4b-reference-lane-helper-closeout`
+- Current seam status: `verification truth-sync landed / next lawful move is helper closeout on a clean descendant`
+- Seam risk: the landed verification truth-sync seam was a shared verification-plumbing seam and repeated direct plus smoke reruns passed before acceptance
 
 ## 3. Next lawful move
 
-- Accepted answer after continuation hardening:
-  - the repo now has an explicit resume protocol in `AGENTS.md`
-  - the repo now has a live compaction-safe workstream ledger
-  - local verification now documents `make seam-preflight`
-  - future seam work now has a narrow drift guard against reopening dirty tracked work
+- Accepted answer after verification truth-sync:
+  - the active verification-ergonomics plan now says `E4` is only partially landed and keeps `E4B` as the next candidate seam
+  - the repo now has non-authority theory/support surfaces that frame current accepted repo truth, north-star product target, and lawful gap programs without becoming a second roadmap court
+  - docs-sync drift checks now cover those support surfaces
 - Next lawful move:
-  - open the verification/evidence truth-sync seam on a clean descendant
-  - keep the accepted baseline anchored at `4bb7fbf`
-  - do not carry mixed local evidence/runtime/support edits from `codex/e1-verification-substrate-entrypoints` directly into accepted truth
+  - open the reference-lane helper closeout seam on a clean descendant
+  - keep accepted baseline truth anchored at `4bb7fbf`
+  - keep the mediation three-pair OpenAI host-realization evidence work separate from the reference-helper cleanup seam
 
 ## 4. Explicitly blocked moves
 
@@ -49,12 +48,13 @@ It is workflow state only. It does not override the packet documents, implementa
 - Do not promote package-level mediation justification from current burden evidence.
 - Do not let support-surface documents silently redefine packet or status authority.
 - Do not carry the one-line authority-surface edits currently sitting in `docs/CORTEX_V2_IMPLEMENTATION_MASTER_PLAN_2.md` or `docs/CORTEX_V2_SRE_2.md` into the verification/evidence restack train.
+- Do not mix the OpenAI three-pair host-realization evidence seam into the reference-helper closeout seam.
 
 ## 5. Acknowledged worktree noise at ledger creation
 
 - Mixed tracked edits still exist across verification docs, mediation docs, and reference/OpenAI verification surfaces on `codex/e1-verification-substrate-entrypoints`.
-- Untracked support-surface files already exist under `docs/erika-visualizations/`.
-- Untracked verification guard work already exists at `tests/unit/test_verification_docs_sync.py`.
+- The support-surface theory and visualization files are now landed on this accepted truth-sync branch and are no longer just dirty-branch noise.
+- The remaining mixed mediation/reference helper edits still live on `codex/e1-verification-substrate-entrypoints` and should be quarried explicitly rather than accepted wholesale.
 - Local workspace directories already exist under `.claude/worktrees/`.
 - Re-read `git status --short --untracked-files=all` before opening any new seam; this summary is only the continuity reminder, not the canonical file list.
 
