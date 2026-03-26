@@ -8,6 +8,7 @@
 
 This folder is a support surface.
 It is not active authority and not current committed roadmap truth.
+It also tracks which brain-inspired mechanisms Cortex has already stolen so far without promoting that analogy into architecture authority.
 
 ## Current accepted repo truth
 
