@@ -7,7 +7,7 @@ It is workflow state only. It does not override the packet documents, implementa
 
 ## 1. Accepted baseline
 
-- Accepted baseline branch: `codex/o1-openai-runtime-shell`
+- Accepted baseline branch: `codex/o2-openai-ingress-shell`
 - Accepted `R5` opening parent: `9d07c5b`
 - Accepted `R5` proof head: `ee41eb4`
 - Accepted `R5` deterministic closeout head: `fd6789f`
@@ -15,6 +15,8 @@ It is workflow state only. It does not override the packet documents, implementa
 - Accepted `C1` continuation deterministic closeout head: `5b5c5b7`
 - Accepted `O1` runtime proof head: `e399a14`
 - Accepted `O1` runtime deterministic closeout head: `93f7093`
+- Accepted `O2` ingress proof head: `d91f504`
+- Accepted `O2` ingress deterministic closeout head: `d91f504`
 - Accepted baseline state:
   - burden-axis re-audit is accepted through the three thrash-host burden slices
   - package-level burden remains `insufficient`
@@ -31,6 +33,7 @@ It is workflow state only. It does not override the packet documents, implementa
   - the earlier `R4` proof head `7672304`, runtime landing `cecd82d`, and `R5` opening parent `9d07c5b` remain part of the same closeout history rather than competing baselines
   - the first bounded reference cross-process continuation slice is now landed on top of the same product truth: implementation landed at `934aa87`, and the clean accepted closeout line is now anchored at deterministic closeout head `5b5c5b7`
   - the first OpenAI documented host-event runtime shell is now landed on top of that same product truth: implementation landed at `e399a14`, and the clean accepted closeout line is now anchored at deterministic closeout head `93f7093`
+  - the first OpenAI raw-transcript ingress shell is now landed on top of that same product truth: implementation landed at `d91f504`, and the clean accepted closeout line is now anchored at deterministic closeout head `d91f504`
 - Accepted baseline authority anchors:
   - `docs/CORTEX_V2_IMPLEMENTATION_STATUS_NOTE.md`
   - `docs/CORTEX_V2_IMPLEMENTATION_MASTER_PLAN_2.md`
@@ -41,29 +44,30 @@ It is workflow state only. It does not override the packet documents, implementa
   - `docs/CORTEX_V2_REFERENCE_FEEDBACK_PROGRAM_1.md`
   - `docs/CORTEX_V2_REFERENCE_CONTINUITY_PROGRAM_0.md`
   - `docs/CORTEX_V2_OPENAI_RUNTIME_PROGRAM_0.md`
+  - `docs/CORTEX_V2_OPENAI_INGRESS_PROGRAM_0.md`
 
 ## 2. Current campaign and seam state
 
-- Current campaign: `O2` OpenAI raw-transcript ingress shell is now present on the working branch as a committed candidate seam
+- Current campaign: `O2` accepted and closed for current scope
 - Current working branch at ledger update: `codex/o2-openai-ingress-shell`
-- Current branch role: bounded runtime/docs/test train that adds raw-transcript ingress parsing plus a raw-transcript CLI over the accepted `O1` shell without widening into outbound host control, live network doctrine, or generic runtime abstraction
-- Current candidate seam: `O2A` through `O2E`
-- Current seam status: `O2 candidate implemented and verified / accepted baseline remains clean accepted `O1` closeout line`
-- Seam risk: parser/doc-sync plus environment-sensitive subprocess/file-I/O seam over a host-shaped ingress boundary; repeat-stability reruns are required before any acceptance claim
+- Current branch role: accepted bounded runtime/docs/test line that adds raw-transcript ingress parsing plus a raw-transcript CLI over the accepted `O1` shell without widening into outbound host control, live network doctrine, or generic runtime abstraction
+- Current candidate seam: `none`
+- Current seam status: `O2 landed / stop again before any new deeper one-agent product/runtime program`
+- Seam risk: the landed `O2` seam was parser/doc-sync plus environment-sensitive subprocess/file-I/O work, and the repeat-stability rerun bundle passed before re-landing
 
 ## 3. Next lawful move
 
-- `O2` branch-local answer:
-  - the working branch now carries `OpenAIHostEventEnvelope`, `parse_openai_host_event_envelope()`, and `python3 -m cortex.runtime.openai_ingress_cli`
+- `O2` accepted answer:
+  - the accepted baseline now carries `OpenAIHostEventEnvelope`, `parse_openai_host_event_envelope()`, and `python3 -m cortex.runtime.openai_ingress_cli`
   - transcript records with `type` now drive the accepted `O1` shell directly
   - wrapper-shaped and mixed wrapper/transcript records are explicitly rejected at ingress
   - canonical Cortex event names are explicitly rejected at ingress
   - split-run ingress continuity now exists against the recorded `O2` contract
   - repo-local revalidation now includes `make revalidate-openai-ingress`
-- Next lawful move from this local candidate seam:
-  - run the full verification bundle plus repeated direct reruns and repeated repo-local OpenAI ingress revalidation
-  - accept/merge the seam or reject it explicitly
-  - do not promote this branch-local implementation to accepted baseline truth without an explicit baseline update
+- Next lawful move from this clean accepted `O2` head:
+  - stop again and choose one deeper single-agent product/runtime program explicitly
+  - if future work opens, separate loopback service doctrine from outbound OpenAI host control and from multi-agent orchestration
+  - do not widen directly from `O2` into outbound OpenAI host control, Gemini ingress/runtime, generic ingress/runtime abstraction, runtime AUX activation, offline consolidation, or mediation
 
 ## 4. Explicitly blocked moves
 
@@ -88,15 +92,16 @@ It is workflow state only. It does not override the packet documents, implementa
 - Do not widen `O1` into live network/service doctrine, outbound OpenAI host control realization, generic runtime abstraction, Gemini runtime, multi-agent orchestration, runtime AUX activation, offline consolidation, or mediation.
 - Do not widen `O2` into outbound OpenAI host control, live network/service doctrine, Gemini ingress/runtime, generic ingress/runtime abstraction, multi-agent orchestration, runtime AUX activation, offline consolidation, or mediation.
 - Do not treat accepted `O1` as permission for outbound OpenAI host control, Gemini runtime, or multi-agent orchestration without a new explicit program lock.
+- Do not treat accepted `O2` as permission for outbound OpenAI host control, Gemini ingress/runtime, generic ingress/runtime abstraction, multi-agent orchestration, runtime AUX activation, offline consolidation, or mediation without a new explicit program lock.
 
 ## 5. Acknowledged worktree noise at ledger update
 
-- The accepted `R5` proof head `ee41eb4`, deterministic closeout head `fd6789f`, accepted `C1` continuation proof head `934aa87`, accepted `C1` continuation deterministic closeout head `5b5c5b7`, accepted `O1` runtime proof head `e399a14`, and accepted `O1` runtime deterministic closeout head `93f7093` remain the accepted baseline truth until a later committed acceptance updates them.
+- The accepted `R5` proof head `ee41eb4`, deterministic closeout head `fd6789f`, accepted `C1` continuation proof head `934aa87`, accepted `C1` continuation deterministic closeout head `5b5c5b7`, accepted `O1` runtime proof head `e399a14`, accepted `O1` runtime deterministic closeout head `93f7093`, accepted `O2` ingress proof head `d91f504`, and accepted `O2` ingress deterministic closeout head `d91f504` remain the accepted baseline truth until a later committed acceptance updates them.
 - The accepted `R4` proof head `7672304`, runtime landing `cecd82d`, and `R5` opening parent `9d07c5b` remain part of the same closure-train history and are not competing baselines.
-- The current branch `codex/o2-openai-ingress-shell` now carries committed `O2` candidate work and is therefore not accepted baseline truth yet.
+- The current branch `codex/o2-openai-ingress-shell` is clean at the accepted `O2` head.
 - The older `codex/e1-verification-substrate-entrypoints` workspace remains mixed and is not the source of truth for this train.
 - Local workspace directories already exist under `.claude/worktrees/`.
-- Re-read `git status --short --untracked-files=all` before any acceptance claim; this summary is only the continuity reminder, not the canonical file list.
+- Re-read `git status --short --untracked-files=all` before opening any new seam; this summary is only the continuity reminder, not the canonical file list.
 
 ## 6. Resume checklist
 

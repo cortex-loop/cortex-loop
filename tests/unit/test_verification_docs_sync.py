@@ -224,7 +224,7 @@ def test_resume_protocol_and_active_workstream_contract_exist() -> None:
     assert "Never promote uncommitted local edits to accepted baseline truth." in agents_text
 
     assert "Status: live workflow-state ledger for compaction-safe continuation." in workstream_text
-    assert "Accepted baseline branch: `codex/o1-openai-runtime-shell`" in workstream_text
+    assert "Accepted baseline branch: `codex/o2-openai-ingress-shell`" in workstream_text
     assert "Accepted `R5` opening parent: `9d07c5b`" in workstream_text
     assert "Accepted `R5` proof head: `ee41eb4`" in workstream_text
     assert "Accepted `R5` deterministic closeout head: `fd6789f`" in workstream_text
@@ -233,11 +233,14 @@ def test_resume_protocol_and_active_workstream_contract_exist() -> None:
     assert "Accepted baseline commit: `ee41eb4`" not in workstream_text
     assert "Accepted `O1` runtime proof head: `e399a14`" in workstream_text
     assert "Accepted `O1` runtime deterministic closeout head: `93f7093`" in workstream_text
+    assert "Accepted `O2` ingress proof head: `d91f504`" in workstream_text
+    assert "Accepted `O2` ingress deterministic closeout head: `d91f504`" in workstream_text
     assert "the first OpenAI documented host-event runtime shell is now landed on top of that same product truth: implementation landed at `e399a14`, and the clean accepted closeout line is now anchored at deterministic closeout head `93f7093`" in workstream_text
+    assert "the first OpenAI raw-transcript ingress shell is now landed on top of that same product truth: implementation landed at `d91f504`, and the clean accepted closeout line is now anchored at deterministic closeout head `d91f504`" in workstream_text
     assert "Current working branch at ledger update: `codex/o2-openai-ingress-shell`" in workstream_text
-    assert "bounded runtime/docs/test train that adds raw-transcript ingress parsing plus a raw-transcript CLI over the accepted `O1` shell" in workstream_text
-    assert "Current candidate seam: `O2A` through `O2E`" in workstream_text
-    assert "Current seam status: `O2 candidate implemented and verified / accepted baseline remains clean accepted `O1` closeout line`" in workstream_text
+    assert "accepted bounded runtime/docs/test line that adds raw-transcript ingress parsing plus a raw-transcript CLI over the accepted `O1` shell" in workstream_text
+    assert "Current candidate seam: `none`" in workstream_text
+    assert "Current seam status: `O2 landed / stop again before any new deeper one-agent product/runtime program`" in workstream_text
     assert "Do not treat the mixed `codex/e1-verification-substrate-entrypoints` worktree as accepted truth." in workstream_text
     assert "Do not treat the first landed `R5` slice as permission for longer-than-three-step feedback history" in workstream_text
     assert "Do not auto-open `R6` or any broader runtime/product program from the success of this corrective `R5` reclosure." in workstream_text
@@ -246,6 +249,7 @@ def test_resume_protocol_and_active_workstream_contract_exist() -> None:
     assert "Do not widen `O1` into live network/service doctrine, outbound OpenAI host control realization, generic runtime abstraction" in workstream_text
     assert "Do not treat accepted `O1` as permission for outbound OpenAI host control" in workstream_text
     assert "Do not widen `O2` into outbound OpenAI host control, live network/service doctrine, Gemini ingress/runtime, generic ingress/runtime abstraction" in workstream_text
+    assert "Do not treat accepted `O2` as permission for outbound OpenAI host control, Gemini ingress/runtime, generic ingress/runtime abstraction" in workstream_text
     assert "git branch --show-current" in workstream_text
     assert "git status --short --untracked-files=all" in workstream_text
     assert "Never promote an uncommitted branch head or dirty worktree state to accepted baseline truth." in workstream_text
@@ -295,8 +299,8 @@ def test_reference_runtime_program_lock_is_recorded() -> None:
     assert "wrapper-shaped and mixed wrapper/transcript records are explicitly rejected" in phase_gate_text
     assert "mixed wrapper/transcript records are explicitly rejected" in phase_gate_text
 
-    assert "Current campaign: `O2` OpenAI raw-transcript ingress shell is now present on the working branch as a committed candidate seam" in workstream_text
-    assert "the working branch now carries `OpenAIHostEventEnvelope`, `parse_openai_host_event_envelope()`, and `python3 -m cortex.runtime.openai_ingress_cli`" in workstream_text
+    assert "Current campaign: `O2` accepted and closed for current scope" in workstream_text
+    assert "the accepted baseline now carries `OpenAIHostEventEnvelope`, `parse_openai_host_event_envelope()`, and `python3 -m cortex.runtime.openai_ingress_cli`" in workstream_text
     assert "wrapper-shaped and mixed wrapper/transcript records are explicitly rejected at ingress" in workstream_text
     assert "canonical Cortex event names are explicitly rejected at ingress" in workstream_text
     assert "repo-local revalidation now includes `make revalidate-openai-ingress`" in workstream_text
@@ -352,11 +356,12 @@ def test_reference_runtime_program_lock_is_recorded() -> None:
     assert "canonical Cortex event names are now explicitly rejected at both CLI and runtime entrypoint level" in openai_runtime_program_text
     assert "runtime and session I/O ownership remain self-contained inside the OpenAI runtime modules" in openai_runtime_program_text
     assert "implemented at `e399a14` and truthfully closed at deterministic closeout head `93f7093`" in openai_runtime_program_text
-    assert "active runtime-program brief for the first OpenAI raw-transcript ingress shell" in openai_ingress_program_text
+    assert "accepted re-audited runtime-program brief for the first OpenAI raw-transcript ingress shell" in openai_ingress_program_text
     assert "`python3 -m cortex.runtime.openai_ingress_cli`" in openai_ingress_program_text
     assert "wrapper-shape `{event_name, payload}` records are explicitly rejected" in openai_ingress_program_text
     assert "mixed wrapper/transcript record that contains `event_name` or `payload`" in openai_ingress_program_text
     assert "`make revalidate-openai-ingress`" in openai_ingress_program_text
+    assert "implemented and truthfully closed at `d91f504`" in openai_ingress_program_text
 
 
 def test_erika_visualizations_are_framed_as_support_surfaces() -> None:

@@ -1,7 +1,7 @@
 # CORTEX_V2_OPENAI_INGRESS_PROGRAM_0
 
 Date: 2026-03-26
-Status: active runtime-program brief for the first OpenAI raw-transcript ingress shell
+Status: accepted re-audited runtime-program brief for the first OpenAI raw-transcript ingress shell
 
 ## Purpose
 
@@ -155,19 +155,17 @@ Every seam remains one-session max and must end on a clean tree before the next 
 - `make seam-preflight`, `make revalidate-openai-ingress`, `make test-smoke`, and `make verify` pass,
 - and the `O2` phase-gate row is updated truthfully.
 
-## Current branch-local state
+## Current accepted state after `O2` closeout
 
-On branch `codex/o2-openai-ingress-shell` opened from accepted `O1` closeout head `93f7093`:
+On the accepted `O2` ingress closeout line implemented and truthfully closed at `d91f504` on branch `codex/o2-openai-ingress-shell`:
 
-- `OpenAIHostEventEnvelope` and `parse_openai_host_event_envelope()` now exist as branch-local `O2` candidate surfaces,
+- `OpenAIHostEventEnvelope` and `parse_openai_host_event_envelope()` are now landed `O2` surfaces,
 - `python3 -m cortex.runtime.openai_ingress_cli` now drives the accepted `O1` runtime shell from raw transcript records,
 - wrapper-shaped and mixed wrapper/transcript records are explicitly rejected at ingress,
 - canonical Cortex event names are explicitly rejected at ingress,
 - split-run ingress continuity proof now exists against the `O2` contract,
-- and `make revalidate-openai-ingress` now exists as the repo-local ingress revalidation entry point.
-
-This is branch-local implementation truth.
-It does **not** by itself promote accepted baseline truth.
+- `make revalidate-openai-ingress` now exists as the repo-local ingress revalidation entry point,
+- and targeted reruns, repeated `make revalidate-openai-ingress`, `make test-smoke`, and `make verify` all passed before closeout.
 
 ## Explicitly blocked moves
 
