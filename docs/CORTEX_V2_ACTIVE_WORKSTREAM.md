@@ -27,12 +27,12 @@ It is workflow state only. It does not override the packet documents, implementa
 
 ## 2. Current campaign and seam state
 
-- Current campaign: `K1` runtime/product restack is now present on the working branch as an explicit program-lock seam
-- Current working branch at ledger update: `codex/k1a-runtime-restack-lock`
-- Current branch role: bounded runtime/product lock seam that opens K1 without yet importing donor runtime code
-- Current candidate seam: `k1a` runtime restack lock
-- Current seam status: `in progress / accepted baseline remains clean accepted j2 line`
-- Seam risk: deterministic code/doc seam
+- Current campaign: `K1` runtime/product restack is now present on the working branch as a committed candidate train
+- Current working branch at ledger update: `codex/k1f-openai-service-closeout`
+- Current branch role: bounded runtime/product candidate that re-earns the donor runtime line on accepted `j2` workflow truth, from reference runtime through the OpenAI loopback service shell, without importing donor workflow truth wholesale
+- Current candidate seam: `k1f` runtime/product restack closeout
+- Current seam status: `K1 candidate implemented and verified / accepted baseline remains clean accepted j2 line`
+- Seam risk: parser/doc-sync plus timing or environment-sensitive subprocess, file-I/O, and loopback-HTTP seam; repeated direct and repo-local reruns are required before any acceptance claim
 
 ## 3. Next lawful move
 
@@ -41,10 +41,14 @@ It is workflow state only. It does not override the packet documents, implementa
   - workflow and support surfaces now derive accepted baseline truth from this workstream ledger
   - package-level mediation evidence remains `insufficient`
   - mediation implementation remains blocked
-- Next lawful move from `k1a`:
-  - lock the K1 runtime/product restack scope explicitly
-  - then import the reference runtime foundation before any OpenAI product shell surface
-  - do not import donor workflow truth wholesale while re-earning donor runtime code
+- K1 branch-local answer:
+  - the working branch now carries the reference runtime shell, bounded reference continuity, the OpenAI documented-host-event runtime shell, raw-transcript ingress shell, and loopback service shell
+  - runtime program docs, phase gates, correspondence rows, runtime tests, fixtures, import smoke, and repo-local revalidation targets now exist on this branch
+  - donor runtime code has been re-homed without importing donor workflow truth wholesale
+- Next lawful move from this local candidate seam:
+  - rerun the full K1 verification bundle plus repeated direct and repo-local runtime revalidation
+  - accept/merge the K1 train or reject it explicitly
+  - do not promote this branch-local implementation to accepted baseline truth without an explicit baseline update
 
 ## 4. Explicitly blocked moves
 
@@ -57,11 +61,12 @@ It is workflow state only. It does not override the packet documents, implementa
 - Do not treat a three-pair OpenAI host-realization closeout as permission for mediation implementation.
 - Do not reinterpret a host-level `candidate_positive` cell as package-level justification.
 - Do not import donor runtime workflow truth wholesale from `codex/c1-reference-continuation`, `codex/o1-openai-runtime-shell`, `codex/o2-openai-ingress-shell`, or `codex/o3-openai-service-shell`.
-- Do not open outbound OpenAI host control, Gemini product/runtime, runtime AUX activation, offline consolidation, or mediation implementation from `k1a`.
+- Do not open outbound OpenAI host control, Gemini product/runtime, runtime AUX activation, offline consolidation, or mediation implementation from `K1`.
 
 ## 5. Acknowledged worktree noise at ledger creation
 
 - The dirty donor branch `codex/e1-verification-substrate-entrypoints` remains mixed and is not the source of truth for future runtime restack work.
+- The donor runtime branches remain source material only; their workflow truth is not authoritative on this line.
 - The accepted `j2` line is now the source of accepted workflow baseline truth until a later accepted baseline update lands.
 - Local workspace directories already exist under `.claude/worktrees/`.
 - Re-read `git status --short --untracked-files=all` before opening any new seam; this summary is only the continuity reminder, not the canonical file list.

@@ -1,0 +1,3 @@
+{"event_name":"ContextLoad","payload":{"session_id":"cli-session-1"}}
+{"event_name":"ApprovalRequest","payload":{"session_id":"cli-session-1","candidate_id":"candidate-1"}}
+{"event_name":"ApprovalResult","payload":{"session_id":"cli-session-1","commitment_id":"commit-1","externally_consequential":true,"result_artifact_ref":"artifact-1"}}

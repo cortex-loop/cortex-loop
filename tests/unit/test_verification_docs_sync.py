@@ -18,17 +18,37 @@ MAKEFILE_PATH = REPO_ROOT / "Makefile"
 COVERAGE_BASELINE_NOTE_PATH = (
     REPO_ROOT / "docs" / "CORTEX_V2_COVERAGE_BASELINE_NOTE_0.md"
 )
-AGENTS_PATH = REPO_ROOT / "AGENTS.md"
 ACTIVE_WORKSTREAM_PATH = REPO_ROOT / "docs" / "CORTEX_V2_ACTIVE_WORKSTREAM.md"
-THEORY_PATH = REPO_ROOT / "docs" / "CORTEX_V2_THEORY_2.md"
+PHASE_GATES_PATH = REPO_ROOT / "docs" / "CORTEX_V2_PHASE_GATES_2.md"
+REFERENCE_RUNTIME_PROGRAM_PATH = (
+    REPO_ROOT / "docs" / "CORTEX_V2_REFERENCE_RUNTIME_PROGRAM_0.md"
+)
+REFERENCE_FEEDBACK_PROGRAM_PATH = (
+    REPO_ROOT / "docs" / "CORTEX_V2_REFERENCE_FEEDBACK_PROGRAM_0.md"
+)
+REFERENCE_FEEDBACK_PROGRAM_1_PATH = (
+    REPO_ROOT / "docs" / "CORTEX_V2_REFERENCE_FEEDBACK_PROGRAM_1.md"
+)
+REFERENCE_CONTINUITY_PROGRAM_PATH = (
+    REPO_ROOT / "docs" / "CORTEX_V2_REFERENCE_CONTINUITY_PROGRAM_0.md"
+)
+OPENAI_RUNTIME_PROGRAM_PATH = (
+    REPO_ROOT / "docs" / "CORTEX_V2_OPENAI_RUNTIME_PROGRAM_0.md"
+)
+OPENAI_INGRESS_PROGRAM_PATH = (
+    REPO_ROOT / "docs" / "CORTEX_V2_OPENAI_INGRESS_PROGRAM_0.md"
+)
+OPENAI_SERVICE_PROGRAM_PATH = (
+    REPO_ROOT / "docs" / "CORTEX_V2_OPENAI_SERVICE_PROGRAM_0.md"
+)
+RUNTIME_RESTACK_PROGRAM_PATH = (
+    REPO_ROOT / "docs" / "CORTEX_V2_RUNTIME_RESTACK_PROGRAM_0.md"
+)
 ERIKA_VISUALIZATION_STATUS_PATH = (
     REPO_ROOT / "docs" / "erika-visualizations" / "CORTEX_EVIDENCE_BASED_STATUS.md"
 )
 ERIKA_VISUALIZATION_HTML_PATH = (
     REPO_ROOT / "docs" / "erika-visualizations" / "cortex-now-vs-future.html"
-)
-RUNTIME_RESTACK_PROGRAM_PATH = (
-    REPO_ROOT / "docs" / "CORTEX_V2_RUNTIME_RESTACK_PROGRAM_0.md"
 )
 
 
@@ -207,37 +227,8 @@ def test_local_verification_doc_points_to_committed_coverage_baseline() -> None:
     assert "no coverage threshold or pass/fail gate" in text
 
 
-def test_post_e4_live_parent_contract_is_recorded() -> None:
-    workstream_text = _read(ACTIVE_WORKSTREAM_PATH)
-    local_verification_text = _read(LOCAL_VERIFICATION_PATH)
-    implementation_status_text = _read(IMPLEMENTATION_STATUS_NOTE_PATH)
-    agents_text = _read(AGENTS_PATH)
-
-    accepted_branch, accepted_commit = _extract_accepted_workflow_baseline(workstream_text)
-    assert f"Accepted baseline branch: `{accepted_branch}`" in workstream_text
-    assert f"Accepted baseline commit: `{accepted_commit}`" in workstream_text
-    assert "accepted post-`E4` verification baseline: `194a43f`" not in local_verification_text
-    assert "temporary live parent branch: `codex/e4b-reference-contradiction-helpers`" not in local_verification_text
-    assert "194a43f" not in local_verification_text
-    assert "codex/e4b-reference-contradiction-helpers" not in local_verification_text
-    assert "194a43f" not in agents_text
-    assert "codex/e4b-reference-contradiction-helpers" not in agents_text
-    assert "194a43f" not in implementation_status_text
-    assert "codex/e4b-reference-contradiction-helpers" not in implementation_status_text
-    assert "accepted workflow baseline branch and commit are recorded in `docs/CORTEX_V2_ACTIVE_WORKSTREAM.md`" in local_verification_text
-    assert "new v2 seams should branch from the accepted workflow baseline recorded there" in local_verification_text
-    assert "do not branch new v2 work from `codex/e1-verification-substrate-entrypoints`" in local_verification_text
-    assert "do not branch new v2 work from `codex/closure-train-2026-03-24`" in local_verification_text
-    assert "do not branch new v2 work from archival `main` / `origin/main`" in local_verification_text
-    assert "future seam-parent truth is recorded in `docs/CORTEX_V2_ACTIVE_WORKSTREAM.md`" in implementation_status_text
-    assert "`main` / `origin/main` are archival-root only" in agents_text
-    assert "Branch new v2 work from the accepted workflow baseline recorded in `docs/CORTEX_V2_ACTIVE_WORKSTREAM.md`." in agents_text
-    assert accepted_branch == "codex/j2-restack-acceptance-truth-normalization"
-    assert accepted_commit == "acfccf9"
-
-
 def test_resume_protocol_and_active_workstream_contract_exist() -> None:
-    agents_text = _read(AGENTS_PATH)
+    agents_text = _read(REPO_ROOT / "AGENTS.md")
     workstream_text = _read(ACTIVE_WORKSTREAM_PATH)
 
     assert "## Continuation and resume protocol" in agents_text
@@ -249,51 +240,152 @@ def test_resume_protocol_and_active_workstream_contract_exist() -> None:
     assert "Status: live workflow-state ledger for compaction-safe continuation." in workstream_text
     assert "Accepted baseline branch: `codex/j2-restack-acceptance-truth-normalization`" in workstream_text
     assert "Accepted baseline commit: `acfccf9`" in workstream_text
-    assert "Current working branch at ledger update: `codex/k1a-runtime-restack-lock`" in workstream_text
-    assert "bounded runtime/product lock seam that opens K1 without yet importing donor runtime code" in workstream_text
-    assert "Do not treat mixed local edits on the current working branch as accepted truth." in workstream_text
-    assert "Do not carry the one-line authority-surface edits currently sitting in `docs/CORTEX_V2_IMPLEMENTATION_MASTER_PLAN_2.md` or `docs/CORTEX_V2_SRE_2.md`" in workstream_text
-    assert "Do not treat a three-pair OpenAI host-realization closeout as permission for mediation implementation." in workstream_text
-    assert "Do not reinterpret a host-level `candidate_positive` cell as package-level justification." in workstream_text
+    assert "Current working branch at ledger update: `codex/k1f-openai-service-closeout`" in workstream_text
+    assert "bounded runtime/product candidate that re-earns the donor runtime line on accepted `j2` workflow truth" in workstream_text
+    assert "Current candidate seam: `k1f` runtime/product restack closeout" in workstream_text
+    assert "Current seam status: `K1 candidate implemented and verified / accepted baseline remains clean accepted j2 line`" in workstream_text
     assert "Do not import donor runtime workflow truth wholesale from `codex/c1-reference-continuation`" in workstream_text
-    assert "Do not open outbound OpenAI host control, Gemini product/runtime, runtime AUX activation, offline consolidation, or mediation implementation from `k1a`." in workstream_text
+    assert "Do not open outbound OpenAI host control, Gemini product/runtime, runtime AUX activation, offline consolidation, or mediation implementation from `K1`." in workstream_text
     assert "git branch --show-current" in workstream_text
     assert "git status --short --untracked-files=all" in workstream_text
     assert "Never promote an uncommitted branch head or dirty worktree state to accepted baseline truth." in workstream_text
 
 
-def test_runtime_restack_program_lock_is_recorded() -> None:
-    text = _read(RUNTIME_RESTACK_PROGRAM_PATH)
-
-    assert "Status: active support brief for the K1 runtime/product restack train" in text
-    assert "branch: `codex/j2-restack-acceptance-truth-normalization`" in text
-    assert "commit: `acfccf9`" in text
-    assert "The donor runtime branches are source material only:" in text
-    assert "`codex/o3-openai-service-shell`" in text
-    assert "They may not contribute workflow truth wholesale:" in text
-    assert "not `AGENTS.md`" in text
-    assert "not active workstream truth" in text
-    assert "reference runtime foundation" in text
-    assert "OpenAI loopback service shell" in text
-
-
-def test_support_surfaces_are_present_and_framed_as_non_authority() -> None:
+def test_reference_runtime_program_lock_is_recorded() -> None:
+    program_text = _read(REFERENCE_RUNTIME_PROGRAM_PATH)
+    feedback_program_text = _read(REFERENCE_FEEDBACK_PROGRAM_PATH)
+    feedback_program_1_text = _read(REFERENCE_FEEDBACK_PROGRAM_1_PATH)
+    continuity_program_text = _read(REFERENCE_CONTINUITY_PROGRAM_PATH)
+    openai_runtime_program_text = _read(OPENAI_RUNTIME_PROGRAM_PATH)
+    openai_ingress_program_text = _read(OPENAI_INGRESS_PROGRAM_PATH)
+    openai_service_program_text = _read(OPENAI_SERVICE_PROGRAM_PATH)
+    phase_gate_text = _read(PHASE_GATES_PATH)
     workstream_text = _read(ACTIVE_WORKSTREAM_PATH)
-    theory_text = _read(THEORY_PATH)
+
+    assert "reference-host-only runtime program" in program_text
+    assert "`python3 -m cortex.runtime.reference_cli`" in program_text
+    assert "JSONL input and JSONL output only" in program_text
+    assert "no service/API shell" in program_text
+    assert "no Gemini runtime" in program_text
+    assert "no OpenAI runtime" in program_text
+    assert "no AUX runtime activation" in program_text
+    assert "no mediation implementation" in program_text
+
+    assert "## 6. Post-closeout runtime-program gates" in phase_gate_text
+    assert "`R1` reference runtime shell" in phase_gate_text
+    assert "`R2` computed reference executive slice" in phase_gate_text
+    assert "`R3` reference live continuity slice" in phase_gate_text
+    assert "`R4` reference closed-loop feedback and latched-brake slice" in phase_gate_text
+    assert "`R5` reference short-window feedback and sustained-pressure slice" in phase_gate_text
+    assert "the first accepted reference-host local CLI shell is landed" in phase_gate_text
+    assert "the first bounded `X_t^{ref}` builder, `U_t^{sre}` scoring/selection layer, and runtime-shell integration are landed" in phase_gate_text
+    assert "re-hardened and audit-clean for current scope" in phase_gate_text
+    assert "malformed `open` and session mismatch are explicit" in phase_gate_text
+    assert "feedback-conditioned builder update, top-level control ledger, and latched-brake enforcement are landed and audit-clean for current scope" in phase_gate_text
+    assert "the first bounded three-step realized-outcome window" in phase_gate_text
+    assert "the corrective line now closes the surviving session/window carrier defect" in phase_gate_text
+    assert "`C1` reference bounded cross-process continuation slice" in phase_gate_text
+    assert "explicit persisted `continuity_truth` plus bounded `control_residue` are now landed on the accepted `C1` closeout line, implemented at `934aa87` and cleanly closed at deterministic closeout head `5b5c5b7`" in phase_gate_text
+    assert "`O1` OpenAI documented host-event runtime shell" in phase_gate_text
+    assert "raw documented host events drive a host-specific CLI shell" in phase_gate_text
+    assert "canonical Cortex event names are explicitly rejected" in phase_gate_text
+    assert "diagnostic-history non-equivalence" in phase_gate_text
+    assert "| closed | landed |" in phase_gate_text
+    assert "implemented at `e399a14` and cleanly closed at deterministic closeout head `93f7093`" in phase_gate_text
+    assert "`O2` OpenAI raw-transcript ingress shell" in phase_gate_text
+    assert "wrapper-shaped and mixed wrapper/transcript records are explicitly rejected" in phase_gate_text
+    assert "mixed wrapper/transcript records are explicitly rejected" in phase_gate_text
+    assert "`O3` OpenAI loopback service shell" in phase_gate_text
+    assert "loopback-only HTTP now exists on `codex/o3-openai-service-shell`" in phase_gate_text
+    assert "one active session per process is real for current scope" in phase_gate_text
+
+    assert "Current campaign: `K1` runtime/product restack is now present on the working branch as a committed candidate train" in workstream_text
+    assert "the working branch now carries the reference runtime shell, bounded reference continuity, the OpenAI documented-host-event runtime shell, raw-transcript ingress shell, and loopback service shell" in workstream_text
+    assert "runtime program docs, phase gates, correspondence rows, runtime tests, fixtures, import smoke, and repo-local revalidation targets now exist on this branch" in workstream_text
+    assert "Do not import donor runtime workflow truth wholesale from `codex/c1-reference-continuation`" in workstream_text
+    assert "the first one-process live continuity slice plus explicit rejection enforcement are real" in program_text
+    assert "the corrective zero-finding re-audit has passed for current scope" in program_text
+    assert "a mismatched runtime `session_id` is surfaced as an explicit contradiction" in program_text
+    assert "first bounded reference closed-loop feedback slice" in feedback_program_text
+    assert "top-level control ledger in the runtime output surface" in feedback_program_text
+    assert "bounded latched-brake enforcement point" in feedback_program_text
+    assert "`R4B` realization-feedback carrier and persistence" in feedback_program_text
+    assert "`R4E` latched-brake enforcement" in feedback_program_text
+    assert "Current accepted state after `R4` senior closure" in feedback_program_text
+    assert "accepted senior-critique proof head `7672304` (runtime landing `cecd82d` inside the same closeout line)" in feedback_program_text
+    assert "CLI-visible selected-vs-realized divergence" in feedback_program_text
+    assert "zero-finding adversarial runtime/API review found no defect for current scope" in feedback_program_text
+    assert "first bounded reference short-window feedback slice" in feedback_program_1_text
+    assert "branch: `codex/s3-r4-senior-closeout`" in feedback_program_1_text
+    assert "commit: `9d07c5b`" in feedback_program_1_text
+    assert "accepted proof head: `7672304`" in feedback_program_1_text
+    assert "`ReferenceRealizationFeedbackWindow`" in feedback_program_1_text
+    assert "`ReferenceFeedbackWindowSummary`" in feedback_program_1_text
+    assert "maximum length `3`" in feedback_program_1_text
+    assert "feedback_window_summary" in feedback_program_1_text
+    assert "session_summary.feedback_window_size" in feedback_program_1_text
+    assert "This program does **not** authorize:" in feedback_program_1_text
+    assert "a scoring rewrite" in feedback_program_1_text
+    assert "`R5B` feedback window carrier and session persistence" in feedback_program_1_text
+    assert "`R5E` re-audit and closeout" in feedback_program_1_text
+    assert "Current accepted state after `R5` closeout" in feedback_program_1_text
+    assert "opened from `9d07c5b`, proven at `ee41eb4`, and truthfully closed at deterministic closeout head `fd6789f`" in feedback_program_1_text
+    assert "committed end-to-end proof now exists at `ee41eb4`" in feedback_program_1_text
+    assert "the accepted landed closeout for that same `R5` line is anchored at `fd6789f`" in feedback_program_1_text
+    assert "Current corrective state after session-carrier reclosure" in feedback_program_1_text
+    assert "codex/r5g-h-corrective-reclosure" in feedback_program_1_text
+    assert "last-step mirror with empty window becomes a one-entry bounded window" in feedback_program_1_text
+    assert "the direct-construction reproduction that dropped next-step pressure is now closed" in feedback_program_1_text
+    assert "R5` is landed again for current scope on the corrective line" in feedback_program_1_text
+    assert "top-level `feedback_window_summary`" in feedback_program_1_text
+    assert "single-mismatch `0.55` floor" in feedback_program_1_text
+    assert "repeated-mismatch `0.70` floor" in feedback_program_1_text
+    assert "accepted re-audited runtime-program brief for the first bounded reference cross-process continuation slice" in continuity_program_text
+    assert "`--load-session PATH`" in continuity_program_text
+    assert "`--save-session PATH`" in continuity_program_text
+    assert "`continuity_truth`" in continuity_program_text
+    assert "`control_residue`" in continuity_program_text
+    assert "`C1` equivalence does **not** require:" in continuity_program_text
+    assert "`make revalidate-reference-runtime-continuity`" in continuity_program_text
+    assert "implemented at `934aa87` and truthfully closed at deterministic closeout head `5b5c5b7`" in continuity_program_text
+    assert "accepted re-audited runtime-program brief for the first OpenAI documented host-event runtime shell" in openai_runtime_program_text
+    assert "`python3 -m cortex.runtime.openai_cli`" in openai_runtime_program_text
+    assert "`raw_host_event_name`" in openai_runtime_program_text
+    assert "`make revalidate-openai-runtime`" in openai_runtime_program_text
+    assert "canonical Cortex event names are now explicitly rejected at both CLI and runtime entrypoint level" in openai_runtime_program_text
+    assert "runtime and session I/O ownership remain self-contained inside the OpenAI runtime modules" in openai_runtime_program_text
+    assert "implemented at `e399a14` and truthfully closed at deterministic closeout head `93f7093`" in openai_runtime_program_text
+    assert "accepted re-audited runtime-program brief for the first OpenAI raw-transcript ingress shell" in openai_ingress_program_text
+    assert "`python3 -m cortex.runtime.openai_ingress_cli`" in openai_ingress_program_text
+    assert "wrapper-shape `{event_name, payload}` records are explicitly rejected" in openai_ingress_program_text
+    assert "mixed wrapper/transcript record that contains `event_name` or `payload`" in openai_ingress_program_text
+    assert "`make revalidate-openai-ingress`" in openai_ingress_program_text
+    assert "implemented and truthfully closed at `d91f504`" in openai_ingress_program_text
+    assert "active runtime-program brief for the first OpenAI loopback service shell" in openai_service_program_text
+    assert "`python3 -m cortex.runtime.openai_service`" in openai_service_program_text
+    assert "`GET /health`" in openai_service_program_text
+    assert "`POST /v1/events`" in openai_service_program_text
+    assert "`GET /v1/session/export`" in openai_service_program_text
+    assert "`POST /v1/session/import`" in openai_service_program_text
+    assert "`make revalidate-openai-service`" in openai_service_program_text
+    assert "branch `codex/o3-openai-service-shell` opened from accepted `O2` closeout head `d91f504`" in openai_service_program_text
+
+
+def test_erika_visualizations_are_framed_as_support_surfaces() -> None:
+    workstream_text = _read(ACTIVE_WORKSTREAM_PATH)
     markdown_text = _read(ERIKA_VISUALIZATION_STATUS_PATH)
     html_text = _read(ERIKA_VISUALIZATION_HTML_PATH)
     accepted_branch, accepted_commit = _extract_accepted_workflow_baseline(workstream_text)
 
-    assert "Status: non-authority working memo" in theory_text
-    assert "This file is not an authority surface." in theory_text
-    assert "Do not open a new feature seam from this file." in theory_text
-    assert f"The accepted workflow baseline is `{accepted_branch}` at `{accepted_commit}`." in theory_text
     assert "support surface" in markdown_text
     assert "current accepted repo truth" in markdown_text
     assert "north-star product target" in markdown_text
     assert "lawful gap programs" in markdown_text
-    assert "Mechanisms Cortex has already stolen so far" in markdown_text
+    assert "mechanisms Cortex has already stolen so far" in markdown_text
     assert f"**Accepted factual baseline:** `{accepted_branch}` at `{accepted_commit}`" in markdown_text
+    assert "The verification/evidence restack train and its workflow-baseline normalization are now landed for current scope on top of that same product truth." in markdown_text
+    assert "The OpenAI host-realization cell now has a committed three-pair evidence series" in markdown_text
+    assert "cortex-archival-dossiers/" not in markdown_text
     assert "Current Justified Boundary" in html_text
     assert "Gap Programs" in html_text
     assert "North-Star Cortex" in html_text
@@ -310,3 +402,21 @@ def test_support_surfaces_are_present_and_framed_as_non_authority() -> None:
     assert "What we've stolen so far" in html_text
     assert "What is still partial" in html_text
     assert "What remains north-star only" in html_text
+    assert "Cortex Complete" not in html_text
+    assert "Today vs Future" not in html_text
+
+
+def test_runtime_restack_program_lock_is_recorded() -> None:
+    text = _read(RUNTIME_RESTACK_PROGRAM_PATH)
+
+    assert "Status: active support brief for the K1 runtime/product restack train" in text
+    assert "branch: `codex/j2-restack-acceptance-truth-normalization`" in text
+    assert "commit: `acfccf9`" in text
+    assert "The donor runtime branches are source material only:" in text
+    assert "`codex/o3-openai-service-shell`" in text
+    assert "They may not contribute workflow truth wholesale:" in text
+    assert "not `AGENTS.md`" in text
+    assert "not active workstream truth" in text
+    assert "reference runtime foundation" in text
+    assert "OpenAI loopback service shell" in text
+    assert "On branch `codex/k1f-openai-service-closeout` opened from accepted `j2` closeout head `acfccf9`:" in text

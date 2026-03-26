@@ -56,37 +56,110 @@ Repo-local entry point:
 make test-smoke
 ```
 
-## Seam preflight
+## Reference runtime revalidation
 
-Use this before opening a new seam.
-It is a workflow guard, not a test bundle.
+This revalidates the accepted reference runtime shell plus the bounded feedback/runtime-state chain before cross-process continuation is layered on top.
+It checks the runtime step kernel, executive builder, soft-control scoring, realization-feedback carriers, bounded short-window feedback behavior, and the reference runtime CLI shell.
+It does not authorize cross-process continuation, multi-host runtime, runtime AUX activation, offline consolidation, or mediation.
 
 Direct commands:
 
 ```sh
-git branch --show-current
-git rev-list --left-right --count main...origin/main
-git status --short --untracked-files=all
+python3 -m pytest tests/unit/test_reference_runtime_step.py -q
+python3 -m pytest tests/unit/test_reference_executive_builder.py -q
+python3 -m pytest tests/unit/test_reference_runtime_scoring.py -q
+python3 -m pytest tests/unit/test_reference_realization_feedback.py -q
+python3 -m pytest tests/unit/test_reference_feedback_window.py -q
+python3 -m pytest tests/integration/test_reference_runtime_cli.py -q
 ```
 
 Repo-local entry point:
 
 ```sh
-make seam-preflight
+make revalidate-reference-runtime
 ```
 
-The target:
+## Reference runtime continuity revalidation
 
-- prints the current branch
-- prints `main...origin/main` divergence when that comparison is available
-- prints full worktree status
-- fails on `main`
-- fails when tracked worktree changes are still present
-- reminds the operator to classify seam risk before opening new work
-- reminds the operator that timing-, environment-sensitive, and shared verification-plumbing seams require repeated reruns before acceptance
+This revalidates the bounded reference-host cross-process continuation slice against the already-landed one-process shell plus the explicit session-artifact boundary.
+It checks the bounded artifact carrier, explicit CLI load/save behavior, and cross-process continuity equivalence.
+It does not authorize multi-host runtime, generic persistence doctrine, or longer-horizon feedback widening.
 
-It does not fail on untracked noise by itself.
-Its purpose is to stop “next seam” work when the current seam is still open.
+Direct commands:
+
+```sh
+python3 -m pytest tests/unit/test_reference_runtime_session_io.py -q
+python3 -m pytest tests/integration/test_reference_runtime_cli.py -q
+python3 -m pytest tests/integration/test_reference_runtime_continuity.py -q
+```
+
+Repo-local entry point:
+
+```sh
+make revalidate-reference-runtime-continuity
+```
+
+## OpenAI runtime revalidation
+
+This revalidates the first OpenAI documented host-event runtime shell against the landed OpenAI driver slices, the active SRE loop, and the accepted `C1` continuation law.
+It checks bounded OpenAI session persistence, raw-host-event preservation, explicit CLI load/save behavior, and split-run OpenAI continuity equivalence.
+It does not authorize live network/service doctrine, outbound OpenAI host control, Gemini runtime, or generic runtime abstraction.
+
+Direct commands:
+
+```sh
+python3 -m pytest tests/unit/test_openai_runtime_session_io.py -q
+python3 -m pytest tests/unit/test_openai_runtime_step.py -q
+python3 -m pytest tests/unit/test_openai_runtime_ownership.py -q
+python3 -m pytest tests/integration/test_openai_runtime_cli.py -q
+python3 -m pytest tests/integration/test_openai_runtime_continuity.py -q
+```
+
+Repo-local entry point:
+
+```sh
+make revalidate-openai-runtime
+```
+
+## OpenAI ingress revalidation
+
+This revalidates the first raw-transcript OpenAI ingress shell on top of the accepted `O1` runtime shell.
+It checks transcript-shape parsing, ingress CLI behavior, split-run ingress continuity equivalence, and explicit rejection of the dev-shell wrapper shape and canonical Cortex event names.
+It does not authorize live network/service doctrine, outbound OpenAI host control, Gemini runtime, or generic runtime abstraction.
+
+Direct commands:
+
+```sh
+python3 -m pytest tests/unit/test_openai_ingress.py -q
+python3 -m pytest tests/integration/test_openai_ingress_cli.py -q
+python3 -m pytest tests/integration/test_openai_ingress_continuity.py -q
+```
+
+Repo-local entry point:
+
+```sh
+make revalidate-openai-ingress
+```
+
+## OpenAI loopback service revalidation
+
+This revalidates the first loopback-only OpenAI service shell on top of the accepted `O2` raw-transcript parser and accepted `O1` runtime/session artifact.
+It checks loopback-only HTTP behavior, JSON artifact import/export, event processing over `/v1/events`, and service continuity equivalence without widening into outbound host control or generic service doctrine.
+It does not authorize remote bind, multi-session doctrine, Gemini runtime, or generic runtime/service abstraction.
+
+Direct commands:
+
+```sh
+python3 -m pytest tests/unit/test_openai_service.py -q
+python3 -m pytest tests/integration/test_openai_service.py -q
+python3 -m pytest tests/integration/test_openai_service_continuity.py -q
+```
+
+Repo-local entry point:
+
+```sh
+make revalidate-openai-service
+```
 
 ## Reference-lane packet-example revalidation
 
@@ -901,12 +974,13 @@ The target:
 It does not fail on untracked noise by itself.
 Its purpose is to stop “next seam” work when the current seam is still open.
 
-## Current accepted workflow baseline
+## Current live parent baseline
 
 In this maintainer workspace:
 
-- the accepted workflow baseline branch and commit are recorded in `docs/CORTEX_V2_ACTIVE_WORKSTREAM.md`
-- until a separate non-archival integration branch is explicitly declared, new v2 seams should branch from the accepted workflow baseline recorded there
+- accepted post-`E4` verification baseline: `194a43f`
+- temporary live parent branch: `codex/e4b-reference-contradiction-helpers`
+- until a separate non-archival integration branch is explicitly declared, new v2 seams should branch from `codex/e4b-reference-contradiction-helpers` or a later fast-forward descendant of that accepted baseline
 - do not branch new v2 work from `codex/e1-verification-substrate-entrypoints`
 - do not branch new v2 work from `codex/closure-train-2026-03-24`
 - do not branch new v2 work from archival `main` / `origin/main`

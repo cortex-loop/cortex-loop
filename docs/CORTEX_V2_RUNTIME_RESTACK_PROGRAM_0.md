@@ -83,3 +83,12 @@ Those surfaces must stay reconciled to accepted `j2` workflow truth.
 5. OpenAI loopback service shell
 
 Each seam must end clean before the next opens.
+
+## Current branch-local state
+
+On branch `codex/k1f-openai-service-closeout` opened from accepted `j2` closeout head `acfccf9`:
+
+- the reference runtime shell, bounded reference continuity, OpenAI documented-host-event runtime shell, raw-transcript ingress shell, and loopback service shell are now present as branch-local K1 candidate surfaces
+- runtime program docs, phase-gate rows, correspondence rows, runtime fixtures, runtime unit/integration tests, and repo-local runtime revalidation targets now exist on this branch
+- donor runtime code has been re-homed without importing donor workflow truth wholesale
+- this remains branch-local implementation truth until an explicit accepted-baseline update lands
