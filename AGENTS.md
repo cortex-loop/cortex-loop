@@ -182,6 +182,29 @@ If a seam changes a typed boundary contract (for example: constructor validation
 - In this maintainer workspace, the expected public identity is `howaeri <32343362+howaeri@users.noreply.github.com>`.
 - Do not bump package versions, create releases, or add publish workflows unless the task explicitly requires it.
 
+## Continuation and resume protocol
+
+- `docs/CORTEX_V2_ACTIVE_WORKSTREAM.md` is the live workflow-state ledger for compaction-safe continuation.
+- The workstream ledger records accepted baseline truth, current seam status, next lawful move, blocked moves, and acknowledged worktree noise.
+- The workstream ledger is workflow state only. It does not override packet documents, implementation authority, phase gates, status notes, or correspondence.
+- Before opening or resuming a seam, agents must:
+  1. read `AGENTS.md`
+  2. read `docs/CORTEX_V2_ACTIVE_WORKSTREAM.md`
+  3. read the authority anchors named in the workstream ledger
+  4. run `git branch --show-current`
+  5. run `git status --short --untracked-files=all`
+  6. compare the current repo state against the accepted baseline and seam state recorded in the workstream ledger
+  7. restate the accepted baseline, current seam status, next lawful move, blocked moves, and acknowledged noise before widening scope
+- If the workstream ledger and the repo state disagree, record or resolve that drift before continuing.
+- Update the workstream ledger in the same slice whenever any of these change:
+  - accepted baseline
+  - current seam status
+  - next lawful move
+  - blocked moves
+  - acknowledged worktree noise
+- Never promote uncommitted local edits to accepted baseline truth.
+- For long trains or post-compaction resumes, treat the workstream ledger as required, not optional.
+
 ## Required handoff block
 
 Every final summary from an agent editing this repo should include:

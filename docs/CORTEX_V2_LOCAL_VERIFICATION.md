@@ -56,6 +56,38 @@ Repo-local entry point:
 make test-smoke
 ```
 
+## Seam preflight
+
+Use this before opening a new seam.
+It is a workflow guard, not a test bundle.
+
+Direct commands:
+
+```sh
+git branch --show-current
+git rev-list --left-right --count main...origin/main
+git status --short --untracked-files=all
+```
+
+Repo-local entry point:
+
+```sh
+make seam-preflight
+```
+
+The target:
+
+- prints the current branch
+- prints `main...origin/main` divergence when that comparison is available
+- prints full worktree status
+- fails on `main`
+- fails when tracked worktree changes are still present
+- reminds the operator to classify seam risk before opening new work
+- reminds the operator that timing-, environment-sensitive, and shared verification-plumbing seams require repeated reruns before acceptance
+
+It does not fail on untracked noise by itself.
+Its purpose is to stop “next seam” work when the current seam is still open.
+
 ## Reference-lane packet-example revalidation
 
 This revalidates the committed reference-lane packet example doc against the already-landed live packet path.

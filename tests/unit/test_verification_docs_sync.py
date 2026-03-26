@@ -19,6 +19,7 @@ COVERAGE_BASELINE_NOTE_PATH = (
     REPO_ROOT / "docs" / "CORTEX_V2_COVERAGE_BASELINE_NOTE_0.md"
 )
 AGENTS_PATH = REPO_ROOT / "AGENTS.md"
+ACTIVE_WORKSTREAM_PATH = REPO_ROOT / "docs" / "CORTEX_V2_ACTIVE_WORKSTREAM.md"
 
 
 def _read(path: Path) -> str:
@@ -202,3 +203,24 @@ def test_post_e4_live_parent_contract_is_recorded() -> None:
     assert "`main` / `origin/main` are archival-root only" in agents_text
     assert "Current accepted post-`E4` baseline: commit `194a43f` on `codex/e4b-reference-contradiction-helpers`." in agents_text
     assert "branch new v2 work from `codex/e4b-reference-contradiction-helpers` or its fast-forward descendants" in agents_text
+
+
+def test_resume_protocol_and_active_workstream_contract_exist() -> None:
+    agents_text = _read(AGENTS_PATH)
+    workstream_text = _read(ACTIVE_WORKSTREAM_PATH)
+
+    assert "## Continuation and resume protocol" in agents_text
+    assert "`docs/CORTEX_V2_ACTIVE_WORKSTREAM.md`" in agents_text
+    assert "git branch --show-current" in agents_text
+    assert "git status --short --untracked-files=all" in agents_text
+    assert "Never promote uncommitted local edits to accepted baseline truth." in agents_text
+
+    assert "Status: live workflow-state ledger for compaction-safe continuation." in workstream_text
+    assert "Accepted baseline branch: `codex/j0-burden-axis-reaudit`" in workstream_text
+    assert "Accepted baseline commit: `4bb7fbf`" in workstream_text
+    assert "Current working branch at ledger creation: `codex/e1-verification-substrate-entrypoints`" in workstream_text
+    assert "mixed workspace branch; do not treat it as accepted baseline truth" in workstream_text
+    assert "Do not treat mixed local edits on the current working branch as accepted truth." in workstream_text
+    assert "git branch --show-current" in workstream_text
+    assert "git status --short --untracked-files=all" in workstream_text
+    assert "Never promote an uncommitted branch head or dirty worktree state to accepted baseline truth." in workstream_text
