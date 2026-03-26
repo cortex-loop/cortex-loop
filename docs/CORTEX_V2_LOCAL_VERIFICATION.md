@@ -56,6 +56,26 @@ Repo-local entry point:
 make test-smoke
 ```
 
+## Reference runtime continuity revalidation
+
+This revalidates the bounded reference-host cross-process continuation slice against the already-landed one-process shell plus the explicit session-artifact boundary.
+It checks the bounded artifact carrier, explicit CLI load/save behavior, and cross-process continuity equivalence.
+It does not authorize multi-host runtime, generic persistence doctrine, or longer-horizon feedback widening.
+
+Direct commands:
+
+```sh
+python3 -m pytest tests/unit/test_reference_runtime_session_io.py -q
+python3 -m pytest tests/integration/test_reference_runtime_cli.py -q
+python3 -m pytest tests/integration/test_reference_runtime_continuity.py -q
+```
+
+Repo-local entry point:
+
+```sh
+make revalidate-reference-runtime-continuity
+```
+
 ## Reference-lane packet-example revalidation
 
 This revalidates the committed reference-lane packet example doc against the already-landed live packet path.

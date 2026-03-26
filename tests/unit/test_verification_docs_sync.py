@@ -29,6 +29,9 @@ REFERENCE_FEEDBACK_PROGRAM_PATH = (
 REFERENCE_FEEDBACK_PROGRAM_1_PATH = (
     REPO_ROOT / "docs" / "CORTEX_V2_REFERENCE_FEEDBACK_PROGRAM_1.md"
 )
+REFERENCE_CONTINUITY_PROGRAM_PATH = (
+    REPO_ROOT / "docs" / "CORTEX_V2_REFERENCE_CONTINUITY_PROGRAM_0.md"
+)
 ERIKA_VISUALIZATION_STATUS_PATH = (
     REPO_ROOT / "docs" / "erika-visualizations" / "CORTEX_EVIDENCE_BASED_STATUS.md"
 )
@@ -220,15 +223,15 @@ def test_resume_protocol_and_active_workstream_contract_exist() -> None:
     assert "Accepted `R5` proof head: `ee41eb4`" in workstream_text
     assert "Accepted `R5` deterministic closeout head: `fd6789f`" in workstream_text
     assert "Accepted baseline commit: `ee41eb4`" not in workstream_text
-    assert "the accepted `R5` proof head `ee41eb4` still carries" in workstream_text
-    assert "the accepted `R5` landed closeout for that same line remains anchored at deterministic closeout head `fd6789f`" in workstream_text
-    assert "Current working branch at ledger update: `codex/r5g-h-corrective-reclosure`" in workstream_text
-    assert "bounded corrective docs/runtime/docs train that closed the last surviving `R5` session/window carrier defect and re-audited the bounded short-window slice without widening scope" in workstream_text
-    assert "Current candidate seam: `none`" in workstream_text
-    assert "Current seam status: `R5 landed / stop again before any new runtime or product program`" in workstream_text
+    assert "The accepted `R5` proof head `ee41eb4` and deterministic closeout head `fd6789f` remain the accepted baseline truth until a later committed acceptance updates them." in workstream_text
+    assert "Current working branch at ledger update: `codex/c1-reference-continuation`" in workstream_text
+    assert "bounded runtime/docs/test train that adds explicit persisted `continuity_truth`, bounded `control_residue`, explicit CLI load/save, and cross-process continuity proof without widening into generic persistence or broader runtime rollout" in workstream_text
+    assert "Current candidate seam: `C1A` through `C1E`" in workstream_text
+    assert "Current seam status: `C1 candidate implemented and locally verified / accepted baseline unchanged until commit or explicit acceptance`" in workstream_text
     assert "Do not treat the mixed `codex/e1-verification-substrate-entrypoints` worktree as accepted truth." in workstream_text
     assert "Do not treat the first landed `R5` slice as permission for longer-than-three-step feedback history" in workstream_text
     assert "Do not auto-open `R6` or any broader runtime/product program from the success of this corrective `R5` reclosure." in workstream_text
+    assert "Do not widen `C1` into autosave, checkpoints, generic persistence doctrine, multi-host runtime, runtime AUX activation, offline consolidation, or mediation." in workstream_text
     assert "git branch --show-current" in workstream_text
     assert "git status --short --untracked-files=all" in workstream_text
     assert "Never promote an uncommitted branch head or dirty worktree state to accepted baseline truth." in workstream_text
@@ -238,6 +241,7 @@ def test_reference_runtime_program_lock_is_recorded() -> None:
     program_text = _read(REFERENCE_RUNTIME_PROGRAM_PATH)
     feedback_program_text = _read(REFERENCE_FEEDBACK_PROGRAM_PATH)
     feedback_program_1_text = _read(REFERENCE_FEEDBACK_PROGRAM_1_PATH)
+    continuity_program_text = _read(REFERENCE_CONTINUITY_PROGRAM_PATH)
     phase_gate_text = _read(PHASE_GATES_PATH)
     workstream_text = _read(ACTIVE_WORKSTREAM_PATH)
 
@@ -263,10 +267,13 @@ def test_reference_runtime_program_lock_is_recorded() -> None:
     assert "feedback-conditioned builder update, top-level control ledger, and latched-brake enforcement are landed and audit-clean for current scope" in phase_gate_text
     assert "the first bounded three-step realized-outcome window" in phase_gate_text
     assert "the corrective line now closes the surviving session/window carrier defect" in phase_gate_text
+    assert "`C1` reference bounded cross-process continuation slice" in phase_gate_text
+    assert "explicit persisted `continuity_truth` plus bounded `control_residue` now exist on `codex/c1-reference-continuation`" in phase_gate_text
+    assert "accepted baseline truth is unchanged until this branch is accepted/committed" in phase_gate_text
 
-    assert "Current campaign: `R5` session feedback carrier-invariant corrective reclosure complete for current scope" in workstream_text
-    assert "committed end-to-end proof now exists for session-rejection feedback propagation" in workstream_text
-    assert "the corrective line on `codex/r5g-h-corrective-reclosure` closed the surviving carrier defect" in workstream_text
+    assert "Current campaign: `C1` bounded reference cross-process continuation implementation is now present on the working branch as a local candidate seam" in workstream_text
+    assert "persisted continuation truth is split into exact `continuity_truth` and bounded `control_residue`" in workstream_text
+    assert "repo-local revalidation now includes `make revalidate-reference-runtime-continuity`" in workstream_text
     assert "the first one-process live continuity slice plus explicit rejection enforcement are real" in program_text
     assert "the corrective zero-finding re-audit has passed for current scope" in program_text
     assert "a mismatched runtime `session_id` is surfaced as an explicit contradiction" in program_text
@@ -304,6 +311,13 @@ def test_reference_runtime_program_lock_is_recorded() -> None:
     assert "top-level `feedback_window_summary`" in feedback_program_1_text
     assert "single-mismatch `0.55` floor" in feedback_program_1_text
     assert "repeated-mismatch `0.70` floor" in feedback_program_1_text
+    assert "first bounded reference cross-process continuation slice" in continuity_program_text
+    assert "`--load-session PATH`" in continuity_program_text
+    assert "`--save-session PATH`" in continuity_program_text
+    assert "`continuity_truth`" in continuity_program_text
+    assert "`control_residue`" in continuity_program_text
+    assert "`C1` equivalence does **not** require:" in continuity_program_text
+    assert "`make revalidate-reference-runtime-continuity`" in continuity_program_text
 
 
 def test_erika_visualizations_are_framed_as_support_surfaces() -> None:

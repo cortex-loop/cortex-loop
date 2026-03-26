@@ -216,6 +216,147 @@ def test_reference_runtime_cli_rejects_illegal_continuity_transitions_without_mu
     assert duplicate_open[-1]["session_summary"]["pending_goal_refs"] == []
 
 
+def test_reference_runtime_cli_split_session_is_c1_equivalent_to_one_process_baseline(
+    tmp_path: Path,
+) -> None:
+    one_process_artifact = tmp_path / "one-process.json"
+    split_seed_artifact = tmp_path / "split-seed.json"
+    split_final_artifact = tmp_path / "split-final.json"
+    fixture_lines = FIXTURE_PATH.read_text(encoding="utf-8").splitlines()
+
+    one_process_completed = _run_reference_cli(
+        "--event-file",
+        str(FIXTURE_PATH),
+        "--save-session",
+        str(one_process_artifact),
+    )
+    split_first_completed = _run_reference_cli(
+        "--save-session",
+        str(split_seed_artifact),
+        input_text="\n".join(fixture_lines[:2]) + "\n",
+    )
+    split_second_completed = _run_reference_cli(
+        "--load-session",
+        str(split_seed_artifact),
+        "--save-session",
+        str(split_final_artifact),
+        input_text="\n".join(fixture_lines[2:]) + "\n",
+    )
+
+    assert one_process_completed.returncode == 0, one_process_completed.stderr
+    assert split_first_completed.returncode == 0, split_first_completed.stderr
+    assert split_second_completed.returncode == 0, split_second_completed.stderr
+
+    one_process_records = _parse_jsonl_output(one_process_completed.stdout)
+    split_records = _parse_jsonl_output(split_first_completed.stdout) + _parse_jsonl_output(
+        split_second_completed.stdout
+    )
+
+    _assert_c1_equivalent(
+        one_process_records,
+        split_records,
+        _parse_session_artifact(one_process_artifact),
+        _parse_session_artifact(split_final_artifact),
+    )
+    assert (
+        one_process_records[-1]["session_summary"]["budget_history"]
+        != split_records[-1]["session_summary"]["budget_history"]
+    )
+    assert (
+        one_process_records[-1]["session_summary"]["brake_history"]
+        != split_records[-1]["session_summary"]["brake_history"]
+    )
+
+
+def test_reference_runtime_cli_preserves_malformed_open_rejection_across_restart(
+    tmp_path: Path,
+) -> None:
+    artifact_path = tmp_path / "session.json"
+
+    first_completed = _run_reference_cli(
+        "--save-session",
+        str(artifact_path),
+        input_text="\n".join(
+            [
+                '{"event_name":"ContextLoad","payload":{"session_id":"restart-open","branch_operation":"open","branch_track_ref":"branch-alpha"}}',
+                '{"event_name":"ApprovalRequest","payload":{"session_id":"restart-open","branch_operation":"suspend","branch_track_ref":"branch-alpha","candidate_id":"candidate-1"}}',
+            ]
+        )
+        + "\n",
+    )
+    second_completed = _run_reference_cli(
+        "--load-session",
+        str(artifact_path),
+        input_text='{"event_name":"ContextLoad","payload":{"session_id":"restart-open","branch_operation":"open"}}\n',
+    )
+
+    assert first_completed.returncode == 0, first_completed.stderr
+    assert second_completed.returncode == 0, second_completed.stderr
+
+    records = _parse_jsonl_output(second_completed.stdout)
+
+    assert records[-1]["warnings"] == ["continuity-rejected:missing-open-track-ref"]
+    assert records[-1]["session_summary"]["branch_registry"] == ["main", "branch-alpha"]
+    assert records[-1]["session_summary"]["active_track_ref"] == "main"
+    assert records[-1]["session_summary"]["pending_goal_refs"] == ["branch-alpha"]
+
+
+def test_reference_runtime_cli_preserves_mismatched_session_rejection_across_restart(
+    tmp_path: Path,
+) -> None:
+    artifact_path = tmp_path / "session.json"
+
+    first_completed = _run_reference_cli(
+        "--save-session",
+        str(artifact_path),
+        input_text='{"event_name":"ContextLoad","payload":{"session_id":"restart-stable-a"}}\n',
+    )
+    second_completed = _run_reference_cli(
+        "--load-session",
+        str(artifact_path),
+        input_text='{"event_name":"ContextLoad","payload":{"session_id":"restart-stable-b"}}\n',
+    )
+
+    assert first_completed.returncode == 0, first_completed.stderr
+    assert second_completed.returncode == 0, second_completed.stderr
+
+    records = _parse_jsonl_output(second_completed.stdout)
+
+    assert records[-1]["warnings"] == [
+        "session-rejected:mismatched-session-id:restart-stable-b"
+    ]
+    assert records[-1]["session_summary"]["session_id"] == "restart-stable-a"
+
+
+def test_reference_runtime_cli_preserves_certified_commitment_plus_illegal_merge_target_across_restart(
+    tmp_path: Path,
+) -> None:
+    artifact_path = tmp_path / "session.json"
+
+    first_completed = _run_reference_cli(
+        "--save-session",
+        str(artifact_path),
+        input_text='{"event_name":"ContextLoad","payload":{"session_id":"restart-merge","branch_operation":"open","branch_track_ref":"branch-alpha"}}\n',
+    )
+    second_completed = _run_reference_cli(
+        "--load-session",
+        str(artifact_path),
+        input_text='{"event_name":"ApprovalResult","payload":{"session_id":"restart-merge","branch_operation":"merge","branch_track_ref":"branch-alpha","merge_target_ref":"branch-ghost","commitment_id":"commit-restart","externally_consequential":true,"result_artifact_ref":"artifact-restart"}}\n',
+    )
+
+    assert first_completed.returncode == 0, first_completed.stderr
+    assert second_completed.returncode == 0, second_completed.stderr
+
+    records = _parse_jsonl_output(second_completed.stdout)
+
+    assert records[-1]["warnings"] == [
+        "continuity-rejected:illegal-merge-target:branch-ghost"
+    ]
+    assert records[-1]["commitment_result_kind"] == "certified"
+    assert records[-1]["session_summary"]["branch_registry"] == ["main", "branch-alpha"]
+    assert records[-1]["session_summary"]["active_track_ref"] == "branch-alpha"
+
+
 def _run_reference_cli(
     *args: str,
     input_text: str | None = None,
@@ -233,3 +374,37 @@ def _run_reference_cli(
 def _parse_jsonl_output(stdout: str) -> list[dict[str, object]]:
     lines = [line for line in stdout.splitlines() if line.strip()]
     return [json.loads(line) for line in lines]
+
+
+def _parse_session_artifact(path: Path) -> dict[str, object]:
+    return json.loads(path.read_text(encoding="utf-8"))
+
+
+def _assert_c1_equivalent(
+    expected_records: list[dict[str, object]],
+    actual_records: list[dict[str, object]],
+    expected_artifact: dict[str, object],
+    actual_artifact: dict[str, object],
+) -> None:
+    assert len(expected_records) == len(actual_records)
+    assert [
+        {
+            "selected_family": record["selected_family"],
+            "realized_family": record["control_ledger"]["realized_family"],
+            "warnings": record["warnings"],
+            "commitment_result_kind": record["commitment_result_kind"],
+            "feedback_window_summary": record["feedback_window_summary"],
+        }
+        for record in actual_records
+    ] == [
+        {
+            "selected_family": record["selected_family"],
+            "realized_family": record["control_ledger"]["realized_family"],
+            "warnings": record["warnings"],
+            "commitment_result_kind": record["commitment_result_kind"],
+            "feedback_window_summary": record["feedback_window_summary"],
+        }
+        for record in expected_records
+    ]
+    assert actual_artifact["continuity_truth"] == expected_artifact["continuity_truth"]
+    assert actual_artifact["control_residue"] == expected_artifact["control_residue"]

@@ -36,26 +36,26 @@ It is workflow state only. It does not override the packet documents, implementa
 
 ## 2. Current campaign and seam state
 
-- Current campaign: `R5` session feedback carrier-invariant corrective reclosure complete for current scope
-- Current working branch at ledger update: `codex/r5g-h-corrective-reclosure`
-- Current branch role: bounded corrective docs/runtime/docs train that closed the last surviving `R5` session/window carrier defect and re-audited the bounded short-window slice without widening scope
-- Current candidate seam: `none`
-- Current seam status: `R5 landed / stop again before any new runtime or product program`
-- Seam risk: one load-bearing runtime carrier seam plus deterministic closure-truth re-open/re-close seams were completed on the same line, and the repeat-stability rerun bundle passed before re-landing
+- Current campaign: `C1` bounded reference cross-process continuation implementation is now present on the working branch as a local candidate seam
+- Current working branch at ledger update: `codex/c1-reference-continuation`
+- Current branch role: bounded runtime/docs/test train that adds explicit persisted `continuity_truth`, bounded `control_residue`, explicit CLI load/save, and cross-process continuity proof without widening into generic persistence or broader runtime rollout
+- Current candidate seam: `C1A` through `C1E`
+- Current seam status: `C1 candidate implemented and locally verified / accepted baseline unchanged until commit or explicit acceptance`
+- Seam risk: parser/doc-sync plus environment-sensitive subprocess/file-I/O seam; repeat-stability reruns are required before any acceptance claim
 
 ## 3. Next lawful move
 
-- `R5` corrective answer:
-  - the accepted `R5` proof head `ee41eb4` still carries the bounded three-step realized-outcome window, bounded prior-window summary law, runtime-step summary projection, and top-level CLI `feedback_window_summary`
-  - the accepted `R5` landed closeout for that same line remains anchored at deterministic closeout head `fd6789f`
-  - the corrective line on `codex/r5g-h-corrective-reclosure` closed the surviving carrier defect: `ReferenceRuntimeSession` now normalizes lawful one-sided last/window state before any step consumes it and rejects divergent two-sided state explicitly
-  - the direct-construction reproduction that lost prior-pressure truth is gone on the corrective line
-  - `R4` last-step behavior remains the intended strict subset when `window_size == 1`
-  - scorer law remains unchanged
-- Next lawful move from this clean corrective head:
-  - stop again and choose any broader runtime or product program explicitly
-  - if future work opens, separate longer-window feedback from broader runtime widening
-  - do not auto-open `R6`, cross-process continuity, cross-host runtime, runtime AUX activation, offline consolidation, or mediation from this corrective line
+- `C1` branch-local answer:
+  - the working branch now carries `ReferenceRuntimeSessionArtifact` plus explicit `--load-session` / `--save-session`
+  - persisted continuation truth is split into exact `continuity_truth` and bounded `control_residue`
+  - cross-process equivalence is now defined behaviorally rather than as exact shell-history replay
+  - full `budget_history` / `brake_history` remain public one-process diagnostics but are explicitly excluded from cross-process continuation truth
+  - repo-local revalidation now includes `make revalidate-reference-runtime-continuity`
+  - targeted unit/integration reruns, repeated repo-local continuity revalidation, `make test-smoke`, and `make verify` have all passed on this branch
+- Next lawful move from this local candidate seam:
+  - run the full verification bundle plus repeated direct reruns and repeated repo-local continuity revalidation
+  - accept/commit the seam or reject it explicitly
+  - do not promote this branch-local implementation to accepted baseline truth while it remains uncommitted
 
 ## 4. Explicitly blocked moves
 
@@ -73,14 +73,18 @@ It is workflow state only. It does not override the packet documents, implementa
 - Do not treat the first landed `R5` slice as permission for longer-than-three-step feedback history, a scoring rewrite, a new policy court, or broader runtime widening without a new program lock.
 - Do not widen `R5` into cross-process continuity, cross-host runtime, runtime AUX activation, offline consolidation, or mediation.
 - Do not auto-open `R6` or any broader runtime/product program from the success of this corrective `R5` reclosure.
+- Do not widen `C1` into autosave, checkpoints, generic persistence doctrine, multi-host runtime, runtime AUX activation, offline consolidation, or mediation.
+- Do not treat `session_summary.budget_history` or `session_summary.brake_history` as accepted cross-process continuation truth.
+- Do not silently turn the `continuity_truth` / `control_residue` split into packet doctrine or a second truth court.
 
 ## 5. Acknowledged worktree noise at ledger update
 
-- The accepted `R5` proof head `ee41eb4` and deterministic closeout head `fd6789f` are both clean on the same `R5` closeout line.
+- The accepted `R5` proof head `ee41eb4` and deterministic closeout head `fd6789f` remain the accepted baseline truth until a later committed acceptance updates them.
 - The accepted `R4` proof head `7672304`, runtime landing `cecd82d`, and `R5` opening parent `9d07c5b` remain part of the same closure-train history and are not competing baselines.
+- The current branch `codex/c1-reference-continuation` now carries uncommitted `C1` candidate changes and is therefore not accepted baseline truth yet.
 - The older `codex/e1-verification-substrate-entrypoints` workspace remains mixed and is not the source of truth for this train.
 - Local workspace directories already exist under `.claude/worktrees/`.
-- Re-read `git status --short --untracked-files=all` before opening any new seam; this summary is only the continuity reminder, not the canonical file list.
+- Re-read `git status --short --untracked-files=all` before any acceptance claim; this summary is only the continuity reminder, not the canonical file list.
 
 ## 6. Resume checklist
 

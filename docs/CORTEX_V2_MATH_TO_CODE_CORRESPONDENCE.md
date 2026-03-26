@@ -252,6 +252,20 @@ Forbidden leaks: the runtime shell may compose existing reference-host, core, an
 
 ---
 
+### 1.21 Reference runtime persisted continuation
+
+| Packet math | Is | Code home | Test surface | Status |
+| --- | --- | --- | --- | --- |
+| bounded cross-process persisted continuation carrier split into exact `continuity_truth` and bounded `control_residue` | `ReferenceRuntimeSessionArtifact` | `cortex/runtime/reference_session_io.py` | `test_reference_runtime_session_io.py::test_reference_runtime_session_artifact_roundtrips_empty_session` + `test_reference_runtime_session_io.py::test_reference_runtime_session_artifact_roundtrips_populated_continuity_truth` + `test_reference_runtime_session_io.py::test_reference_runtime_session_artifact_roundtrips_bounded_residue_without_full_histories` | landed |
+| runtime session -> persisted artifact build boundary | `build_reference_runtime_session_artifact()` | `cortex/runtime/reference_session_io.py` | `test_reference_runtime_session_io.py::test_reference_runtime_session_artifact_roundtrips_bounded_residue_without_full_histories` | landed |
+| persisted artifact -> runtime session parse boundary | `parse_reference_runtime_session_artifact()` | `cortex/runtime/reference_session_io.py` | `test_reference_runtime_session_io.py::test_reference_runtime_session_artifact_rejects_wrong_kind_and_version` + `test_reference_runtime_session_io.py::test_reference_runtime_session_artifact_rejects_unknown_keys_everywhere` + `test_reference_runtime_session_io.py::test_reference_runtime_session_artifact_rejects_invalid_enums` + `test_reference_runtime_session_io.py::test_reference_runtime_session_artifact_rejects_mismatched_last_feedback_and_window` + `test_reference_runtime_session_io.py::test_reference_runtime_session_artifact_one_sided_last_feedback_normalizes_through_session_constructor` + `test_reference_runtime_session_io.py::test_reference_runtime_session_artifact_one_sided_window_only_normalizes_through_session_constructor` | landed |
+| explicit persisted artifact file read boundary for the local CLI shell | `read_reference_runtime_session_artifact()` | `cortex/runtime/reference_session_io.py` | `test_reference_runtime_session_io.py::test_reference_runtime_session_artifact_read_write_roundtrip_uses_json_file` + `test_reference_runtime_cli.py::test_reference_runtime_cli_bad_load_artifact_exits_non_zero_and_emits_no_stdout` + `test_reference_runtime_cli.py::test_reference_runtime_cli_zero_event_load_save_roundtrip_works` | landed |
+| explicit persisted artifact file write boundary for the local CLI shell | `write_reference_runtime_session_artifact()` | `cortex/runtime/reference_session_io.py` | `test_reference_runtime_session_io.py::test_reference_runtime_session_artifact_read_write_roundtrip_uses_json_file` + `test_reference_runtime_cli.py::test_reference_runtime_cli_save_session_does_not_change_jsonl_output` + `test_reference_runtime_cli.py::test_reference_runtime_cli_same_path_load_and_save_replaces_artifact` + `test_reference_runtime_cli.py::test_reference_runtime_cli_save_failure_emits_no_stdout` + `test_reference_runtime_cli.py::test_reference_runtime_cli_zero_event_load_save_roundtrip_works` | landed |
+
+Forbidden leaks: persisted continuation remains runtime-owned. It may not become a generic store doctrine, a host-neutral persistence framework, or a second truth court. `continuity_truth` is the only persisted restart state required to resume lawfully; `control_residue` is bounded advisory residue only. Full shell-long `budget_history` and `brake_history` may remain public one-process diagnostics, but they may not be persisted as cross-process continuation truth. CLI save/load control must remain explicit flags rather than synthetic lifecycle events. Save/load failure may not emit partial JSONL output or partial artifacts. The loader must reconstruct through `ReferenceRuntimeSession(...)` so existing lawful one-sided last/window normalization remains the only normalization path.
+
+---
+
 ## 2. V1 standard-library port correspondence
 
 ### 2.1 Commitment payload extraction (v1 `stop_payload.py`)

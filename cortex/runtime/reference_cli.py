@@ -10,6 +10,10 @@ from pathlib import Path
 from typing import Any
 
 from .reference import ReferenceRuntimeStepResult, ReferenceRuntimeSession, run_reference_runtime_step
+from .reference_session_io import (
+    read_reference_runtime_session_artifact,
+    write_reference_runtime_session_artifact,
+)
 
 _OUTPUT_KEYS = (
     "event_index",
@@ -59,11 +63,29 @@ def main(argv: Sequence[str] | None = None) -> int:
         type=Path,
         help="Read JSONL events from a file instead of stdin.",
     )
+    parser.add_argument(
+        "--load-session",
+        type=Path,
+        help="Load the initial reference runtime session from an artifact file.",
+    )
+    parser.add_argument(
+        "--save-session",
+        type=Path,
+        help="Persist the final reference runtime session to an artifact file.",
+    )
     args = parser.parse_args(argv)
 
     try:
         lines = _input_lines(args.event_file)
-        for record in _run_reference_cli_lines(lines):
+        initial_session = (
+            read_reference_runtime_session_artifact(args.load_session)
+            if args.load_session is not None
+            else ReferenceRuntimeSession()
+        )
+        records, final_session = _run_reference_cli_lines_with_session(lines, initial_session)
+        if args.save_session is not None:
+            write_reference_runtime_session_artifact(args.save_session, final_session)
+        for record in records:
             print(json.dumps(record))
     except (FileNotFoundError, OSError, TypeError, ValueError) as exc:
         print(f"reference_cli error: {exc}", file=sys.stderr)
@@ -73,18 +95,26 @@ def main(argv: Sequence[str] | None = None) -> int:
 
 
 def _run_reference_cli_lines(lines: Iterable[str]) -> list[dict[str, Any]]:
+    records, _ = _run_reference_cli_lines_with_session(lines)
+    return records
+
+
+def _run_reference_cli_lines_with_session(
+    lines: Iterable[str],
+    session: ReferenceRuntimeSession | None = None,
+) -> tuple[list[dict[str, Any]], ReferenceRuntimeSession]:
     records: list[dict[str, Any]] = []
-    session = ReferenceRuntimeSession()
+    current_session = _coerce_cli_session(session)
 
     for event_name, payload in _iter_reference_cli_events(lines):
-        step_result = run_reference_runtime_step(event_name, payload, session)
+        step_result = run_reference_runtime_step(event_name, payload, current_session)
         record = build_reference_cli_record(step_result)
         if tuple(record) != _OUTPUT_KEYS:
             raise ValueError("Reference CLI record must preserve the locked output field order.")
         records.append(record)
-        session = step_result.session
+        current_session = step_result.session
 
-    return records
+    return records, current_session
 
 
 def _input_lines(event_file: Path | None) -> Iterable[str]:
@@ -116,6 +146,18 @@ def _iter_reference_cli_events(lines: Iterable[str]) -> Iterator[tuple[str, dict
             raise ValueError(f"line {line_number}: payload must be an object.")
 
         yield event_name, event_payload
+
+
+def _coerce_cli_session(session: ReferenceRuntimeSession | None) -> ReferenceRuntimeSession:
+    if session is None:
+        return ReferenceRuntimeSession()
+    if not isinstance(session, ReferenceRuntimeSession):
+        actual_type = type(session).__name__
+        raise TypeError(
+            "reference_cli initial session must be ReferenceRuntimeSession | None, "
+            f"got {actual_type}."
+        )
+    return session
 
 
 if __name__ == "__main__":

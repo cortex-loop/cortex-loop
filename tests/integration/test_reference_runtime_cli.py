@@ -271,6 +271,173 @@ def test_reference_runtime_cli_emits_feedback_window_summary_for_real_session_mi
     )
 
 
+def test_reference_runtime_cli_save_session_does_not_change_jsonl_output(tmp_path: Path) -> None:
+    artifact_path = tmp_path / "session.json"
+
+    without_save = _run_reference_cli("--event-file", str(FIXTURE_PATH))
+    with_save = _run_reference_cli(
+        "--event-file",
+        str(FIXTURE_PATH),
+        "--save-session",
+        str(artifact_path),
+    )
+
+    assert without_save.returncode == 0, without_save.stderr
+    assert with_save.returncode == 0, with_save.stderr
+    assert with_save.stdout == without_save.stdout
+    assert _parse_session_artifact(artifact_path) == {
+        "artifact_kind": "reference-runtime-session",
+        "artifact_version": 1,
+        "continuity_truth": {
+            "session_id": "cli-session-1",
+            "event_index": 3,
+            "branch_registry": ["main"],
+            "active_track_ref": "main",
+            "pending_goal_refs": [],
+        },
+        "control_residue": {
+            "last_budget_band": "high",
+            "last_commitment_result_summary": "certified",
+            "last_realization_feedback": {
+                "selected_family": "neutral",
+                "realized_family": "neutral",
+                "brake_state": "quiescent",
+                "commitment_result_kind": "certified",
+                "warning_codes": [],
+                "host_friction_tags": ["approval-boundary-present"],
+            },
+            "feedback_window": [
+                {
+                    "selected_family": "neutral",
+                    "realized_family": "neutral",
+                    "brake_state": "quiescent",
+                    "commitment_result_kind": None,
+                    "warning_codes": [],
+                    "host_friction_tags": [],
+                },
+                {
+                    "selected_family": "neutral",
+                    "realized_family": "neutral",
+                    "brake_state": "quiescent",
+                    "commitment_result_kind": None,
+                    "warning_codes": [],
+                    "host_friction_tags": ["approval-boundary-present"],
+                },
+                {
+                    "selected_family": "neutral",
+                    "realized_family": "neutral",
+                    "brake_state": "quiescent",
+                    "commitment_result_kind": "certified",
+                    "warning_codes": [],
+                    "host_friction_tags": ["approval-boundary-present"],
+                },
+            ],
+        },
+    }
+
+
+def test_reference_runtime_cli_load_session_continues_event_index(tmp_path: Path) -> None:
+    artifact_path = tmp_path / "session.json"
+    final_path = tmp_path / "final.json"
+
+    initial_completed = _run_reference_cli(
+        "--save-session",
+        str(artifact_path),
+        input_text="\n".join(FIXTURE_PATH.read_text(encoding="utf-8").splitlines()[:2]) + "\n",
+    )
+    resumed_completed = _run_reference_cli(
+        "--load-session",
+        str(artifact_path),
+        "--save-session",
+        str(final_path),
+        input_text=FIXTURE_PATH.read_text(encoding="utf-8").splitlines()[2] + "\n",
+    )
+
+    assert initial_completed.returncode == 0, initial_completed.stderr
+    assert resumed_completed.returncode == 0, resumed_completed.stderr
+
+    resumed_records = _parse_jsonl_output(resumed_completed.stdout)
+
+    assert [record["event_index"] for record in resumed_records] == [3]
+    assert resumed_records[0]["commitment_result_kind"] == "certified"
+    assert _parse_session_artifact(final_path)["continuity_truth"]["event_index"] == 3
+
+
+def test_reference_runtime_cli_same_path_load_and_save_replaces_artifact(tmp_path: Path) -> None:
+    artifact_path = tmp_path / "session.json"
+
+    first_completed = _run_reference_cli(
+        "--save-session",
+        str(artifact_path),
+        input_text='{"event_name":"ContextLoad","payload":{"session_id":"same-path-session"}}\n',
+    )
+    second_completed = _run_reference_cli(
+        "--load-session",
+        str(artifact_path),
+        "--save-session",
+        str(artifact_path),
+        input_text='{"event_name":"ApprovalRequest","payload":{"session_id":"same-path-session","candidate_id":"candidate-1"}}\n',
+    )
+
+    assert first_completed.returncode == 0, first_completed.stderr
+    assert second_completed.returncode == 0, second_completed.stderr
+    assert _parse_session_artifact(artifact_path)["continuity_truth"]["event_index"] == 2
+
+
+def test_reference_runtime_cli_bad_load_artifact_exits_non_zero_and_emits_no_stdout(
+    tmp_path: Path,
+) -> None:
+    artifact_path = tmp_path / "broken.json"
+    artifact_path.write_text("{not-json\n", encoding="utf-8")
+
+    completed = _run_reference_cli(
+        "--load-session",
+        str(artifact_path),
+        input_text='{"event_name":"ContextLoad","payload":{"session_id":"broken"}}\n',
+    )
+
+    assert completed.returncode == 1
+    assert completed.stdout == ""
+    assert completed.stderr.startswith("reference_cli error:")
+
+
+def test_reference_runtime_cli_save_failure_emits_no_stdout(tmp_path: Path) -> None:
+    missing_parent = tmp_path / "missing-parent" / "session.json"
+
+    completed = _run_reference_cli(
+        "--save-session",
+        str(missing_parent),
+        input_text='{"event_name":"ContextLoad","payload":{"session_id":"save-failure"}}\n',
+    )
+
+    assert completed.returncode == 1
+    assert completed.stdout == ""
+    assert completed.stderr.startswith("reference_cli error:")
+
+
+def test_reference_runtime_cli_zero_event_load_save_roundtrip_works(tmp_path: Path) -> None:
+    artifact_path = tmp_path / "session.json"
+
+    initial_completed = _run_reference_cli(
+        "--save-session",
+        str(artifact_path),
+        input_text='{"event_name":"ContextLoad","payload":{"session_id":"zero-event"}}\n',
+    )
+    original_payload = _parse_session_artifact(artifact_path)
+    roundtrip_completed = _run_reference_cli(
+        "--load-session",
+        str(artifact_path),
+        "--save-session",
+        str(artifact_path),
+        input_text="",
+    )
+
+    assert initial_completed.returncode == 0, initial_completed.stderr
+    assert roundtrip_completed.returncode == 0, roundtrip_completed.stderr
+    assert roundtrip_completed.stdout == ""
+    assert _parse_session_artifact(artifact_path) == original_payload
+
+
 def _run_reference_cli(*args: str, input_text: str | None = None) -> subprocess.CompletedProcess[str]:
     return subprocess.run(
         [sys.executable, "-m", "cortex.runtime.reference_cli", *args],
@@ -285,6 +452,10 @@ def _run_reference_cli(*args: str, input_text: str | None = None) -> subprocess.
 def _parse_jsonl_output(stdout: str) -> list[dict[str, object]]:
     lines = [line for line in stdout.splitlines() if line.strip()]
     return [json.loads(line) for line in lines]
+
+
+def _parse_session_artifact(path: Path) -> dict[str, object]:
+    return json.loads(path.read_text(encoding="utf-8"))
 
 
 def _selection(selected_family: SoftControlFamily) -> object:
