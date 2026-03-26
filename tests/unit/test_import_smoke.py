@@ -14,6 +14,8 @@ IMPORT_TARGETS = [
     "cortex.runtime",
     "cortex.runtime.openai",
     "cortex.runtime.openai_cli",
+    "cortex.runtime.openai_ingress",
+    "cortex.runtime.openai_ingress_cli",
     "cortex.runtime.openai_session_io",
     "cortex.eval",
     "cortex.core.lifecycle",

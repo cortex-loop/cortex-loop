@@ -968,6 +968,53 @@ EXPECTATIONS = (
         ),
     ),
     PeripheryCorrespondenceExpectation(
+        row_label="OpenAIHostEventEnvelope",
+        home_path="cortex/runtime/openai_ingress.py",
+        module_path="cortex.runtime.openai_ingress",
+        symbol_name="OpenAIHostEventEnvelope",
+        promised_surfaces=(
+            PromisedTestSurface(
+                test_file="tests/unit/test_openai_ingress.py",
+                test_names=(
+                    "test_documented_raw_openai_event_parses_cleanly",
+                    "test_undocumented_raw_response_event_still_parses_cleanly",
+                ),
+            ),
+        ),
+    ),
+    PeripheryCorrespondenceExpectation(
+        row_label="parse_openai_host_event_envelope",
+        home_path="cortex/runtime/openai_ingress.py",
+        module_path="cortex.runtime.openai_ingress",
+        symbol_name="parse_openai_host_event_envelope",
+        promised_surfaces=(
+            PromisedTestSurface(
+                test_file="tests/unit/test_openai_ingress.py",
+                test_names=(
+                    "test_canonical_cortex_event_name_is_rejected",
+                    "test_dev_shell_wrapper_shape_is_rejected",
+                    "test_missing_type_and_non_object_record_are_rejected",
+                ),
+            ),
+        ),
+    ),
+    PeripheryCorrespondenceExpectation(
+        row_label="openai_ingress_cli_main",
+        home_path="cortex/runtime/openai_ingress_cli.py",
+        module_path="cortex.runtime.openai_ingress_cli",
+        symbol_name="main",
+        promised_surfaces=(
+            PromisedTestSurface(
+                test_file="tests/integration/test_openai_ingress_cli.py",
+                test_names=(
+                    "test_openai_ingress_cli_reads_documented_raw_transcript_fixture",
+                    "test_openai_ingress_cli_rejects_canonical_event_names_and_wrapper_shape",
+                    "test_openai_ingress_cli_undocumented_raw_host_event_still_warns_conservatively",
+                ),
+            ),
+        ),
+    ),
+    PeripheryCorrespondenceExpectation(
         row_label="run_reference_runtime_step",
         home_path="cortex/runtime/reference.py",
         module_path="cortex.runtime.reference",

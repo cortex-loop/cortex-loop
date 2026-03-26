@@ -35,6 +35,9 @@ REFERENCE_CONTINUITY_PROGRAM_PATH = (
 OPENAI_RUNTIME_PROGRAM_PATH = (
     REPO_ROOT / "docs" / "CORTEX_V2_OPENAI_RUNTIME_PROGRAM_0.md"
 )
+OPENAI_INGRESS_PROGRAM_PATH = (
+    REPO_ROOT / "docs" / "CORTEX_V2_OPENAI_INGRESS_PROGRAM_0.md"
+)
 ERIKA_VISUALIZATION_STATUS_PATH = (
     REPO_ROOT / "docs" / "erika-visualizations" / "CORTEX_EVIDENCE_BASED_STATUS.md"
 )
@@ -230,10 +233,10 @@ def test_resume_protocol_and_active_workstream_contract_exist() -> None:
     assert "Accepted baseline commit: `ee41eb4`" not in workstream_text
     assert "Accepted `O1` runtime proof head: `e399a14`" in workstream_text
     assert "the first OpenAI documented host-event runtime shell is now landed on top of that same product truth at `e399a14`" in workstream_text
-    assert "Current working branch at ledger update: `codex/o1-openai-runtime-shell`" in workstream_text
-    assert "accepted bounded runtime/docs/test line that landed an OpenAI-specific documented host-event shell" in workstream_text
-    assert "Current candidate seam: `none`" in workstream_text
-    assert "Current seam status: `O1 landed / stop again before any new deeper one-agent product/runtime program`" in workstream_text
+    assert "Current working branch at ledger update: `codex/o2-openai-ingress-shell`" in workstream_text
+    assert "bounded runtime/docs/test train that adds raw-transcript ingress parsing plus a raw-transcript CLI over the accepted `O1` shell" in workstream_text
+    assert "Current candidate seam: `O2A` through `O2E`" in workstream_text
+    assert "Current seam status: `O2 candidate implemented and verified / accepted baseline remains clean accepted `O1` closeout line`" in workstream_text
     assert "Do not treat the mixed `codex/e1-verification-substrate-entrypoints` worktree as accepted truth." in workstream_text
     assert "Do not treat the first landed `R5` slice as permission for longer-than-three-step feedback history" in workstream_text
     assert "Do not auto-open `R6` or any broader runtime/product program from the success of this corrective `R5` reclosure." in workstream_text
@@ -241,6 +244,7 @@ def test_resume_protocol_and_active_workstream_contract_exist() -> None:
     assert "Do not widen directly from accepted `C1` into bidirectional OpenAI control" in workstream_text
     assert "Do not widen `O1` into live network/service doctrine, outbound OpenAI host control realization, generic runtime abstraction" in workstream_text
     assert "Do not treat accepted `O1` as permission for outbound OpenAI host control" in workstream_text
+    assert "Do not widen `O2` into outbound OpenAI host control, live network/service doctrine, Gemini ingress/runtime, generic ingress/runtime abstraction" in workstream_text
     assert "git branch --show-current" in workstream_text
     assert "git status --short --untracked-files=all" in workstream_text
     assert "Never promote an uncommitted branch head or dirty worktree state to accepted baseline truth." in workstream_text
@@ -252,6 +256,7 @@ def test_reference_runtime_program_lock_is_recorded() -> None:
     feedback_program_1_text = _read(REFERENCE_FEEDBACK_PROGRAM_1_PATH)
     continuity_program_text = _read(REFERENCE_CONTINUITY_PROGRAM_PATH)
     openai_runtime_program_text = _read(OPENAI_RUNTIME_PROGRAM_PATH)
+    openai_ingress_program_text = _read(OPENAI_INGRESS_PROGRAM_PATH)
     phase_gate_text = _read(PHASE_GATES_PATH)
     workstream_text = _read(ACTIVE_WORKSTREAM_PATH)
 
@@ -284,12 +289,14 @@ def test_reference_runtime_program_lock_is_recorded() -> None:
     assert "canonical Cortex event names are explicitly rejected" in phase_gate_text
     assert "diagnostic-history non-equivalence" in phase_gate_text
     assert "| closed | landed |" in phase_gate_text
+    assert "`O2` OpenAI raw-transcript ingress shell" in phase_gate_text
+    assert "wrapper-shape `{event_name, payload}` records are explicitly rejected" in phase_gate_text
 
-    assert "Current campaign: `O1` accepted and closed for current scope" in workstream_text
-    assert "raw documented OpenAI host events now drive a host-specific runtime shell with preserved `raw_host_event_name`" in workstream_text
-    assert "canonical Cortex event names are now explicitly rejected at both CLI and runtime entrypoint level" in workstream_text
-    assert "OpenAI runtime/session ownership is now self-contained inside `O1`" in workstream_text
-    assert "repo-local revalidation now includes `make revalidate-openai-runtime`" in workstream_text
+    assert "Current campaign: `O2` OpenAI raw-transcript ingress shell is now present on the working branch as a committed candidate seam" in workstream_text
+    assert "the working branch now carries `OpenAIHostEventEnvelope`, `parse_openai_host_event_envelope()`, and `python3 -m cortex.runtime.openai_ingress_cli`" in workstream_text
+    assert "dev-shell wrapper records `{event_name, payload}` are explicitly rejected at ingress" in workstream_text
+    assert "canonical Cortex event names are explicitly rejected at ingress" in workstream_text
+    assert "repo-local revalidation now includes `make revalidate-openai-ingress`" in workstream_text
     assert "the first one-process live continuity slice plus explicit rejection enforcement are real" in program_text
     assert "the corrective zero-finding re-audit has passed for current scope" in program_text
     assert "a mismatched runtime `session_id` is surfaced as an explicit contradiction" in program_text
@@ -342,6 +349,10 @@ def test_reference_runtime_program_lock_is_recorded() -> None:
     assert "canonical Cortex event names are now explicitly rejected at both CLI and runtime entrypoint level" in openai_runtime_program_text
     assert "runtime and session I/O ownership remain self-contained inside the OpenAI runtime modules" in openai_runtime_program_text
     assert "At accepted `O1` runtime proof head `e399a14`" in openai_runtime_program_text
+    assert "active runtime-program brief for the first OpenAI raw-transcript ingress shell" in openai_ingress_program_text
+    assert "`python3 -m cortex.runtime.openai_ingress_cli`" in openai_ingress_program_text
+    assert "wrapper-shape `{event_name, payload}` records are explicitly rejected" in openai_ingress_program_text
+    assert "`make revalidate-openai-ingress`" in openai_ingress_program_text
 
 
 def test_erika_visualizations_are_framed_as_support_surfaces() -> None:

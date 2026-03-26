@@ -98,6 +98,26 @@ Repo-local entry point:
 make revalidate-openai-runtime
 ```
 
+## OpenAI ingress revalidation
+
+This revalidates the first raw-transcript OpenAI ingress shell on top of the accepted `O1` runtime shell.
+It checks transcript-shape parsing, ingress CLI behavior, split-run ingress continuity equivalence, and explicit rejection of the dev-shell wrapper shape and canonical Cortex event names.
+It does not authorize live network/service doctrine, outbound OpenAI host control, Gemini runtime, or generic runtime abstraction.
+
+Direct commands:
+
+```sh
+python3 -m pytest tests/unit/test_openai_ingress.py -q
+python3 -m pytest tests/integration/test_openai_ingress_cli.py -q
+python3 -m pytest tests/integration/test_openai_ingress_continuity.py -q
+```
+
+Repo-local entry point:
+
+```sh
+make revalidate-openai-ingress
+```
+
 ## Reference-lane packet-example revalidation
 
 This revalidates the committed reference-lane packet example doc against the already-landed live packet path.

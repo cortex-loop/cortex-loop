@@ -285,6 +285,18 @@ Forbidden leaks: `O1` remains host-specific on purpose. It may not introduce a f
 
 ---
 
+### 1.23 OpenAI raw-transcript ingress shell
+
+| Packet math | Is | Code home | Test surface | Status |
+| --- | --- | --- | --- | --- |
+| OpenAI raw host-transcript ingress carrier over transcript `type` plus payload remainder | `OpenAIHostEventEnvelope` | `cortex/runtime/openai_ingress.py` | `test_openai_ingress.py::test_documented_raw_openai_event_parses_cleanly` + `test_openai_ingress.py::test_undocumented_raw_response_event_still_parses_cleanly` | landed |
+| raw transcript -> ingress carrier parse boundary | `parse_openai_host_event_envelope()` | `cortex/runtime/openai_ingress.py` | `test_openai_ingress.py::test_canonical_cortex_event_name_is_rejected` + `test_openai_ingress.py::test_dev_shell_wrapper_shape_is_rejected` + `test_openai_ingress.py::test_missing_type_and_non_object_record_are_rejected` | landed |
+| OpenAI raw-transcript ingress CLI over accepted `O1` runtime shell | `main()` | `cortex/runtime/openai_ingress_cli.py` | `test_openai_ingress_cli.py::test_openai_ingress_cli_reads_documented_raw_transcript_fixture` + `test_openai_ingress_cli.py::test_openai_ingress_cli_rejects_canonical_event_names_and_wrapper_shape` + `test_openai_ingress_cli.py::test_openai_ingress_cli_undocumented_raw_host_event_still_warns_conservatively` | landed |
+
+Forbidden leaks: `O2` owns transcript-shape parsing only. It may not mutate `O1` into the only OpenAI shell, may not accept the dev-shell wrapper shape as lawful ingress, and may not fabricate host parity by silently normalizing canonical Cortex event names back into raw OpenAI host traffic. `openai_ingress_cli.py` may consume accepted `run_openai_runtime_step()` and the accepted `O1` session artifact, but it may not become a new runtime owner or a generic ingress abstraction.
+
+---
+
 ## 2. V1 standard-library port correspondence
 
 ### 2.1 Commitment payload extraction (v1 `stop_payload.py`)
