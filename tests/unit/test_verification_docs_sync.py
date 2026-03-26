@@ -229,8 +229,8 @@ def test_post_e4_live_parent_contract_is_recorded() -> None:
     assert "future seam-parent truth is recorded in `docs/CORTEX_V2_ACTIVE_WORKSTREAM.md`" in implementation_status_text
     assert "`main` / `origin/main` are archival-root only" in agents_text
     assert "Branch new v2 work from the accepted workflow baseline recorded in `docs/CORTEX_V2_ACTIVE_WORKSTREAM.md`." in agents_text
-    assert accepted_branch == "codex/j1-openai-host-realization-three-pair"
-    assert accepted_commit == "21354ab"
+    assert accepted_branch == "codex/j2-restack-acceptance-truth-normalization"
+    assert accepted_commit == "acfccf9"
 
 
 def test_resume_protocol_and_active_workstream_contract_exist() -> None:
@@ -244,14 +244,15 @@ def test_resume_protocol_and_active_workstream_contract_exist() -> None:
     assert "Never promote uncommitted local edits to accepted baseline truth." in agents_text
 
     assert "Status: live workflow-state ledger for compaction-safe continuation." in workstream_text
-    assert "Accepted baseline branch: `codex/j1-openai-host-realization-three-pair`" in workstream_text
-    assert "Accepted baseline commit: `21354ab`" in workstream_text
+    assert "Accepted baseline branch: `codex/j2-restack-acceptance-truth-normalization`" in workstream_text
+    assert "Accepted baseline commit: `acfccf9`" in workstream_text
     assert "Current working branch at ledger update: `codex/j2-restack-acceptance-truth-normalization`" in workstream_text
-    assert "bounded workflow/support truth-normalization candidate over the accepted `j1` line" in workstream_text
+    assert "clean accepted workflow-baseline line after restack acceptance truth normalization" in workstream_text
     assert "Do not treat mixed local edits on the current working branch as accepted truth." in workstream_text
     assert "Do not carry the one-line authority-surface edits currently sitting in `docs/CORTEX_V2_IMPLEMENTATION_MASTER_PLAN_2.md` or `docs/CORTEX_V2_SRE_2.md`" in workstream_text
     assert "Do not treat a three-pair OpenAI host-realization closeout as permission for mediation implementation." in workstream_text
     assert "Do not reinterpret a host-level `candidate_positive` cell as package-level justification." in workstream_text
+    assert "Do not import donor runtime workflow truth wholesale from `codex/c1-reference-continuation`" in workstream_text
     assert "git branch --show-current" in workstream_text
     assert "git status --short --untracked-files=all" in workstream_text
     assert "Never promote an uncommitted branch head or dirty worktree state to accepted baseline truth." in workstream_text

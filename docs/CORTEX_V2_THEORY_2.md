@@ -20,7 +20,7 @@ Active authority remains:
 
 ## Current repo evidence
 
-- The accepted workflow baseline is `codex/j1-openai-host-realization-three-pair` at `21354ab`.
+- The accepted workflow baseline is `codex/j2-restack-acceptance-truth-normalization` at `acfccf9`.
 - `docs/CORTEX_V2_IMPLEMENTATION_STATUS_NOTE.md` says the current v2 roadmap is complete at the justified boundary.
 - `docs/CORTEX_V2_MEDIATION_JUSTIFICATION_NOTE.md` says mediation is still `not justified yet`.
 - `docs/CORTEX_V2_MEDIATION_EVIDENCE_NOTE_0.md` shows cell-level signal on thrash, uncertainty, and host-realization, but every package-level axis remains `insufficient`.
