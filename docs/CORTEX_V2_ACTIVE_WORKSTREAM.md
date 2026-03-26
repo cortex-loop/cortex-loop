@@ -27,24 +27,24 @@ It is workflow state only. It does not override the packet documents, implementa
 
 ## 2. Current campaign and seam state
 
-- Current campaign: `none`
-- Current working branch at ledger update: `codex/j2-restack-acceptance-truth-normalization`
-- Current branch role: clean accepted workflow-baseline line after restack acceptance truth normalization
-- Current candidate seam: `none`
-- Current seam status: `j2 landed / next lawful move is an explicitly opened K1 runtime-product restack train`
-- Seam risk: the landed `j2` seam was a shared verification-plumbing seam and repeated docs-sync plus seam-preflight reruns passed before acceptance
+- Current campaign: `K1` runtime/product restack is now present on the working branch as an explicit program-lock seam
+- Current working branch at ledger update: `codex/k1a-runtime-restack-lock`
+- Current branch role: bounded runtime/product lock seam that opens K1 without yet importing donor runtime code
+- Current candidate seam: `k1a` runtime restack lock
+- Current seam status: `in progress / accepted baseline remains clean accepted j2 line`
+- Seam risk: deterministic code/doc seam
 
 ## 3. Next lawful move
 
-- Accepted answer after `j2` closeout:
-  - the verification/evidence restack train is accepted workflow truth, not only a historically successful side branch
+- Accepted answer on the current accepted `j2` line:
+  - the verification/evidence restack train is accepted workflow truth
   - workflow and support surfaces now derive accepted baseline truth from this workstream ledger
   - package-level mediation evidence remains `insufficient`
   - mediation implementation remains blocked
-- Next lawful move:
-  - open `K1` runtime/product restack explicitly on a clean descendant of accepted `j2`
-  - re-earn the donor runtime/product line on current accepted truth in dependency order
-  - do not open mediation implementation, outbound host control, Gemini product/runtime, runtime AUX activation, or offline consolidation from this line
+- Next lawful move from `k1a`:
+  - lock the K1 runtime/product restack scope explicitly
+  - then import the reference runtime foundation before any OpenAI product shell surface
+  - do not import donor workflow truth wholesale while re-earning donor runtime code
 
 ## 4. Explicitly blocked moves
 
@@ -57,6 +57,7 @@ It is workflow state only. It does not override the packet documents, implementa
 - Do not treat a three-pair OpenAI host-realization closeout as permission for mediation implementation.
 - Do not reinterpret a host-level `candidate_positive` cell as package-level justification.
 - Do not import donor runtime workflow truth wholesale from `codex/c1-reference-continuation`, `codex/o1-openai-runtime-shell`, `codex/o2-openai-ingress-shell`, or `codex/o3-openai-service-shell`.
+- Do not open outbound OpenAI host control, Gemini product/runtime, runtime AUX activation, offline consolidation, or mediation implementation from `k1a`.
 
 ## 5. Acknowledged worktree noise at ledger creation
 

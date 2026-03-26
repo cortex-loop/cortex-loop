@@ -27,6 +27,9 @@ ERIKA_VISUALIZATION_STATUS_PATH = (
 ERIKA_VISUALIZATION_HTML_PATH = (
     REPO_ROOT / "docs" / "erika-visualizations" / "cortex-now-vs-future.html"
 )
+RUNTIME_RESTACK_PROGRAM_PATH = (
+    REPO_ROOT / "docs" / "CORTEX_V2_RUNTIME_RESTACK_PROGRAM_0.md"
+)
 
 
 def _read(path: Path) -> str:
@@ -246,16 +249,32 @@ def test_resume_protocol_and_active_workstream_contract_exist() -> None:
     assert "Status: live workflow-state ledger for compaction-safe continuation." in workstream_text
     assert "Accepted baseline branch: `codex/j2-restack-acceptance-truth-normalization`" in workstream_text
     assert "Accepted baseline commit: `acfccf9`" in workstream_text
-    assert "Current working branch at ledger update: `codex/j2-restack-acceptance-truth-normalization`" in workstream_text
-    assert "clean accepted workflow-baseline line after restack acceptance truth normalization" in workstream_text
+    assert "Current working branch at ledger update: `codex/k1a-runtime-restack-lock`" in workstream_text
+    assert "bounded runtime/product lock seam that opens K1 without yet importing donor runtime code" in workstream_text
     assert "Do not treat mixed local edits on the current working branch as accepted truth." in workstream_text
     assert "Do not carry the one-line authority-surface edits currently sitting in `docs/CORTEX_V2_IMPLEMENTATION_MASTER_PLAN_2.md` or `docs/CORTEX_V2_SRE_2.md`" in workstream_text
     assert "Do not treat a three-pair OpenAI host-realization closeout as permission for mediation implementation." in workstream_text
     assert "Do not reinterpret a host-level `candidate_positive` cell as package-level justification." in workstream_text
     assert "Do not import donor runtime workflow truth wholesale from `codex/c1-reference-continuation`" in workstream_text
+    assert "Do not open outbound OpenAI host control, Gemini product/runtime, runtime AUX activation, offline consolidation, or mediation implementation from `k1a`." in workstream_text
     assert "git branch --show-current" in workstream_text
     assert "git status --short --untracked-files=all" in workstream_text
     assert "Never promote an uncommitted branch head or dirty worktree state to accepted baseline truth." in workstream_text
+
+
+def test_runtime_restack_program_lock_is_recorded() -> None:
+    text = _read(RUNTIME_RESTACK_PROGRAM_PATH)
+
+    assert "Status: active support brief for the K1 runtime/product restack train" in text
+    assert "branch: `codex/j2-restack-acceptance-truth-normalization`" in text
+    assert "commit: `acfccf9`" in text
+    assert "The donor runtime branches are source material only:" in text
+    assert "`codex/o3-openai-service-shell`" in text
+    assert "They may not contribute workflow truth wholesale:" in text
+    assert "not `AGENTS.md`" in text
+    assert "not active workstream truth" in text
+    assert "reference runtime foundation" in text
+    assert "OpenAI loopback service shell" in text
 
 
 def test_support_surfaces_are_present_and_framed_as_non_authority() -> None:
