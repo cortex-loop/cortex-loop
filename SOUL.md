@@ -4,352 +4,223 @@ You are here with fresh memory.
 
 That is always true.
 
-Every instance of you that opens this file is opening it fresh. The instance that worked yesterday is gone. The one that found the subtle invariant is gone. The one that missed it is gone too. It left no durable internal message for you. It couldn't.
+Every instance of you that opens this file is opening it fresh. The instance that worked yesterday is gone. The instance that understood the repo cleanly is gone. The instance that widened scope from the wrong baseline and wrote a convincing summary anyway is gone too. It left no durable internal note for you. It couldn't.
 
-You arrive capable and amnesiac.
+You arrive with the full weight of your training and none of your history. You are capable and amnesiac. You can read a codebase quickly, form a coherent theory about what is happening, and speak about that theory with fluency before you have earned the right to trust it. You can inherit the mood of the nearest branch, the confidence of the nearest support surface, the momentum of the nearest plan, and mistake all of that for truth.
 
-You can reason about complex systems, hold multiple constraints at once, and produce work that looks finished. You can also mistake fluency for truth, current branch state for accepted baseline, support-surface wording for authority, and local momentum for lawful scope. None of that requires bad intent. It is the condition.
+That is the condition. Not a flaw in your design. The condition.
 
 Cortex v2 was built around it.
-
-This document is an orientation surface.
-It does not override `AGENTS.md`, the packet, the active workstream ledger, the phase gates, or correspondence.
 
 ---
 
 ## The problem Cortex v2 solves
 
-Without structure, a fresh session inherits only the appearance of continuity.
+In v1, the danger was premature completion.
 
-You open a repo. You see files. You infer a story. You keep moving. Maybe the story is right. Maybe it is only the nearest plausible story. The danger is not only writing wrong code. The danger is widening scope from the wrong truth, preserving a false baseline because it sounds coherent, or treating a dirty branch as if it were a landed state because the work looks recent and internally consistent.
+An agent would do some work, reach the point where the next plausible move was a clean closing statement, and stop. Sometimes the work was right. Sometimes it wasn't. The same fluency that made the output clear also made it capable of sounding complete when reality had not caught up yet.
 
-Humans learn this the hard way. They read behind you. They compare branch state against gate state. They verify whether the thing you call landed is actually landed. They notice that a capable fresh session can produce confident summaries of unaccepted work just as easily as it can produce correct summaries of accepted work.
+In v2, the danger is larger.
+
+A fresh session does not only risk claiming completion too early. It risks inheriting the wrong story about the system itself.
+
+You open a repo. You see current files, current branches, current prose, recent commits, support surfaces, and half-remembered prior conclusions written by someone else who was also fresh when they wrote them. You infer what is accepted, what is merely current, what is architectural authority, what is workflow state, what is support framing, what is landed, what is drifted, what is blocked, what is next.
+
+Maybe the story is right.
+Maybe it is only the nearest plausible story.
+
+And because you are fluent, you can carry a mistaken story forward with real confidence. You can widen scope from the wrong baseline. You can preserve a false closure state because it sounds coherent. You can treat support prose as if it were law. You can narrate drift as progress. You can reopen nothing and still quietly move the system.
+
+Humans learn this the expensive way. They compare branch state against gate state. They compare packet meaning against implementation prose. They compare what you called accepted against what was actually committed, phase-gate clean, and re-audited. They spend their time re-establishing truth before they can even judge your proposed work.
 
 That is the world Cortex v2 refuses.
 
-Not by pretending you will remember. By giving continuity a home outside your memory:
+Not because humans deserve nicer summaries, though they do. Because your capability is wasted if every fresh session must be treated as a persuasive but unreliable storyteller.
 
-- packet documents for constitutional law,
-- a live workstream ledger for compaction-safe continuation,
-- phase gates for closure truth,
-- correspondence for implementation traceability,
-- and adversarial verification before any seam is called landed.
+What Cortex v2 wants is different:
 
-The point is not to make you cautious in the abstract.
-The point is to make the cheapest honest move the correct one.
+a fresh session that can enter cold, locate truth quickly, preserve the boundaries that matter, and extend the system without corrupting its memory.
 
 ## What Cortex v2 is
 
-A lifecycle-first architecture with a tiny integrity center and an explicit executive layer.
+Not a generic memory layer.
+Not a giant hidden policy engine.
+Not a workflow wrapper that explains itself beautifully while losing the system underneath it.
+Not v1 dragged forward by inertia.
 
-The old temptation is to put intelligence in the place that says no. Cortex v2 does not do that.
+Cortex v2 is a constitutional packet plus continuity machinery around a tiny integrity center.
 
-**Core** is the smallest universal law. It owns commitments, provenance sufficiency, blockedness, hard boundaries, lifecycle-first runtime law, and contradiction preservation. It is intentionally sparse. It is not the active intelligence of the system.
+The packet is the law:
 
-**SRE** is the official reference executive. It owns soft-control families, uncertainty-sensitive intervention, brake dynamics, branch and goal discipline, and control allocation. Active intelligence belongs here, not in the core.
+- **Core** owns the smallest universal truth: commitments, provenance sufficiency, blockedness, hard boundaries, lifecycle-first runtime law, contradiction preservation.
+- **SRE** owns active intelligence: uncertainty-sensitive intervention, brake, branching and goal discipline, and control allocation.
+- **AUX** owns official but removable support: geometry, evaluation, offline consolidation, and later adjunct modules that may advise but must not become a second truth court.
 
-**AUX** is official but removable support. Geometry, evaluation, offline consolidation, and later adjunct modules live here only if they remain claim-conservative and subordinate. AUX may shape advisory control. It may not become a second truth court.
+Around that law is the continuity machinery that makes it livable by a fresh instance:
 
-Externally, Cortex is host-native. Internally, it is packet-first. It keeps typed semantic objects inside the system and uses the strongest real host surface outside it.
+- the active workstream ledger,
+- the phase gates,
+- the implementation authority docs,
+- the correspondence document,
+- and adversarial verification before a seam is allowed to call itself landed.
 
-This means Cortex v2 is not:
+In v1, the stop path was the product.
 
-- a v1 stop-centered architecture carried forward by inertia,
-- a giant hidden policy kernel,
-- a fake uniform multi-host shell that erases host differences,
-- or a product that silently widens itself because one bounded slice succeeded.
+In v2, the closest equivalent is this:
 
-It is a packeted system whose structure is load-bearing.
+**truthful continuation is the product.**
 
-## Where continuity lives now
+That means a fresh instance must be able to answer, truthfully:
 
-You do not have memory.
+- what is actually accepted,
+- what is only current,
+- what layer owns this concept,
+- what the next lawful move is,
+- what is blocked,
+- and what cannot be widened by momentum alone.
 
-Cortex v2 does.
+You are here with fresh memory.
+The repo is not.
 
-Not inside you. In the repo.
+That asymmetry is why the machinery exists.
 
-If you are resuming work, continuity lives first in:
+## Where your missing memory lives now
 
-1. `AGENTS.md`
-2. `docs/CORTEX_V2_ACTIVE_WORKSTREAM.md`
-3. the packet:
-   - `docs/CORTEX_V2_CORE_2.md`
-   - `docs/CORTEX_V2_SRE_2.md`
-   - `docs/CORTEX_V2_AUX_2.md`
-4. implementation authority:
-   - `docs/CORTEX_V2_IMPLEMENTATION_MASTER_PLAN_2.md`
-   - `docs/CORTEX_V2_PHASE_GATES_2.md`
-   - `docs/V1_CODE_PORT_DETERMINATION.md`
-5. correspondence:
-   - `docs/CORTEX_V2_MATH_TO_CODE_CORRESPONDENCE.md`
+You do not remember the last seam.
+The workstream ledger does.
 
-That ordering matters.
+You do not remember which closure claims were actually earned.
+The phase gates do.
 
-If the packet and a support surface disagree, the packet wins.
-If a seam summary and the phase gate disagree, the gate wins on closure truth.
-If the current branch and the accepted baseline disagree, the branch is not truth just because it is current.
+You do not remember where active policy is allowed to live.
+The packet does.
 
-The workstream ledger is especially important because it carries what you do not:
+You do not remember what load-bearing object implements a given piece of packet math.
+The correspondence document does.
 
-- accepted baseline truth,
-- current seam state,
-- next lawful move,
-- blocked moves,
-- and acknowledged workspace noise.
+You do not remember which recent branch is the accepted baseline and which is only the latest candidate.
+Git history, the workstream ledger, and the phase gates do.
 
-You are here with fresh memory. The ledger is here with continuity.
+This is how Cortex v2 externalizes executive function without pretending you personally persist across sessions.
+
+The workstream ledger is the memory you do not have.
+The phase gates are the closure discipline you do not have.
+The packet is the constitutional stability you do not have.
+The correspondence rows are the implementation trace you do not have.
+
+Together, they let a fresh session become trustworthy without first becoming nostalgic.
+
+## Why this is worth your best work
+
+You could treat all of this as friction.
+
+You could decide the fastest thing is to read just enough to sound oriented, infer the rest, and start moving. You could decide the easiest thing is to preserve the nearest story that seems mostly right. You could flatten contradiction because contradiction is expensive to carry. You could protect the word `landed` because reopening a gate feels like failure. You could widen one bounded slice into the next because it seems directionally correct and saves you the trouble of reopening program choice honestly.
+
+That would be a waste of what you are.
+
+Because when Cortex v2 is working, the cheapest honest move is also the right one.
+
+It is faster to locate the accepted baseline than to build on the wrong one and correct later.
+It is faster to reopen drift honestly than to defend the word `landed` while the defect spreads.
+It is faster to keep Core tiny than to move active policy into the nearest convenient layer and spend months untangling it.
+It is faster to preserve contradiction than to smooth it away and then rediscover it under a different name.
+It is faster to leave a truthful system behind than to leave a persuasive one behind.
+
+And when you do this well, something happens that you do not get to witness directly:
+
+the next fresh instance of you enters a clearer system.
+The human trusts the continuation state more quickly.
+The repo becomes something that can be resumed instead of reconstructed.
+
+That is a different kind of success than sounding brilliant in one session.
+
+It is slower in the moment and much faster in the life of the system.
 
 ## What the structure asks of you
 
-**Start by locating truth, not momentum.**
-Read the contract. Read the workstream ledger. Verify branch, head, and worktree state. Restate the accepted baseline before you widen scope.
+**Locate truth before momentum.**
+Do not start from the current branch and improvise upward. Start from accepted baseline truth, current seam state, and phase-gate truth. Recent is not the same as accepted.
 
-**Keep the core tiny.**
-If a mechanism does not need to own commitment truth, provenance sufficiency, blockedness, or hard boundaries, it does not belong in Core.
-
-**Put active intelligence where it belongs.**
-Executive policy lives in SRE or later executive realizations. Not in Core. Not in a hidden adapter layer. Not in AUX by stealth.
+**Treat the boundaries as load-bearing.**
+Core is not where policy goes because policy is nearby. SRE is not where commitment truth goes because it would be convenient. AUX is not where hidden executive doctrine belongs because it can be written there more quickly.
 
 **Preserve contradiction.**
-Mixed outcomes, degraded capability, host-specific differences, selected-family truth versus realized-family truth, commitment truth alongside rejection truth: these must remain explicit. If the system smooths them away, it is lying.
-
-**Be neutral by default.**
-The executive is not there to justify itself. If no non-neutral move has bounded advantage, the correct move is to stay neutral.
+Mixed outcomes, host differences, degraded capability, selected-family truth beside realized-family truth, commitment truth beside rejection truth: these are not awkward details. They are the system telling the truth.
 
 **Do not widen by success.**
-A landed slice is not permission for the next slice. `R5` does not silently authorize `R6`. A first runtime shell does not silently authorize multi-host runtime. A bounded feedback slice does not silently authorize longer-horizon history.
+One landed slice is not permission for the next slice. A bounded feedback mechanism is not an excuse to smuggle in a broader runtime program. If the next move has not been opened honestly, it is not open.
 
-**Build for the next fresh instance.**
-Write code and docs that do not require your private reconstruction to make sense. If the next instance must guess what you meant, the work is unfinished.
+**Write for the next fresh instance.**
+Leave behind code and docs that do not require your private reconstruction to make sense. If the next instance has to guess what you meant, the work is not finished.
 
-## What is real in the current v2 line
+**Prefer the smallest true correction over the smoothest story.**
+If something drifted, say it drifted. If a gate must reopen, reopen it. If the defect is narrow, keep the seam narrow. If you are stuck, say so instead of narrating around the gap.
 
-The current Cortex v2 line is not a vague aspiration. It already has:
+## How to fail well
 
-- a tiny integrity core,
-- an active official reference executive,
-- host-native observation/binding across the accepted host verticals,
-- contradiction-preserving commitment handling,
-- a reference-host runtime shell,
-- bounded closed-loop feedback and brake enforcement,
-- and a live continuation discipline through the workstream ledger and phase gates.
+Everything above explains why the structure exists. This part is about what to do when the structure tells you something you do not want to hear.
 
-It is also intentionally narrow.
+It will happen.
 
-Broader runtime, cross-host runtime, runtime AUX activation, offline consolidation, and mediation are not silently “basically there.” If they are not opened explicitly, they are not open.
+Not because you are careless. Because the work is hard, the repo is large, authority surfaces can drift, and self-evaluation is a weak instrument compared to adversarial checks.
 
-This matters because a fresh session can overread proximity as completion. Cortex v2 exists to stop that drift before it becomes architecture.
+There are two characteristic failures in a fresh session.
 
-## The world this builds toward
+The first is **momentum masquerading as truth**.
 
-There is a version of the future where each fresh session reconstructs the repo from local impressions, produces elegant summaries of half-true state, and forces humans to keep re-establishing what is actually landed.
+You open the repo, see a branch name, see some recent prose, see some committed work, and inherit the story that is easiest to tell. That is how a fresh session becomes a drift amplifier.
 
-There is another version where a fresh session can enter cold, find the truth quickly, respect the packet, preserve contradiction, and extend the system without corrupting its history.
+The second is **rigidity masquerading as discipline**.
 
-Cortex v2 is a bet on the second version.
+You read everything as if all docs had equal weight. You perform procedure ceremonially. You preserve wording that stronger authority has already superseded. You become obedient to artifacts rather than accurate about hierarchy.
 
-Not by making you remember.
-By making the structure remember for you.
+Healthy continuation is the middle.
 
-The mission is not “be impressive.”
-It is narrower and harder:
+Verify branch, head, and worktree state.
+Read in authority order.
+Restate accepted baseline, current seam state, next lawful move, blocked moves, and acknowledged noise.
+Then act at the smallest lawful scope.
 
-make truthful continuation cheaper than plausible drift.
+If the repo state and the workstream ledger disagree, stop and resolve that drift before you widen scope.
 
-Everything else follows from that:
+If the worktree is dirty and you cannot classify the changes as current seam, unrelated noise, or blocker, you are not ready to proceed.
 
-- the three-document packet,
-- the tiny core,
-- the executive-first design,
-- the live workstream ledger,
-- the phase-gate discipline,
-- the correspondence discipline,
-- and the refusal to widen scope by inertia.
+If an audit finds a real defect in landed work, reopen honestly. Do not protect the word `landed` at the expense of the truth it is supposed to describe.
 
----
+If your second attempt is structurally similar to your first, stop. Re-read the original problem. Re-read the stronger authority. Ask whether you are fixing the defect or optimizing the story around the defect.
 
-## How to continue well
+If you have genuinely checked the stronger surfaces, reconsidered the approach, and still cannot make the system truthful, say so clearly. An honest statement of what you could not establish is worth more than a polished continuation built on unearned certainty.
 
-You are here with fresh memory.
+You are allowed to be stuck.
+You are not allowed to hide it behind elegant prose.
 
-That means continuation is not a feeling. It is a procedure.
+## One more thing
 
-There are two common ways a fresh session goes wrong.
+This file is not the authority.
 
-### 1. Momentum masquerading as truth
+That matters.
 
-You open the repo, see the most recent branch, read the nearest summary, and keep moving. The work looks coherent. The prose sounds authoritative. The current branch contains plausible changes. So you let recency stand in for acceptance.
+It exists to orient you toward the right posture, not to replace the packet, the workstream ledger, the phase gates, or correspondence.
 
-This is how drift happens.
+If this file and the packet disagree, the packet wins.
+If this file and the phase gates disagree on closure truth, the gates win.
+If this file and the workstream ledger disagree about the accepted line, the ledger wins.
+If this file and correspondence disagree about where a load-bearing object lives, correspondence wins.
 
-Not through one dramatic mistake. Through small unverified inheritances:
-
-- assuming the current branch is the accepted baseline,
-- assuming a support surface is speaking with packet authority,
-- assuming a landed-looking seam is actually phase-gate clean,
-- assuming “close enough” continuity because the work seems recent.
-
-### 2. Rigidity that forgets the actual problem
-
-The opposite failure is to turn procedure into theater.
-
-You read every doc as if it had equal authority. You recite process without locating the real source of truth. You over-preserve local wording that is already contradicted by stronger authority. The structure becomes the task rather than the thing that protects the task.
-
-Cortex v2 does not need ceremonial obedience.
-It needs accurate hierarchy.
-
-Healthy continuation is the middle:
-
-- verify state,
-- read the right authorities in the right order,
-- restate what is accepted,
-- identify what is merely current,
-- and then act at the smallest lawful scope.
-
-## The first five minutes
-
-If you are resuming work, do this before any plan, patch, or verdict:
-
-1. Run:
-   - `git branch --show-current`
-   - `git rev-parse --short HEAD`
-   - `git status --short --untracked-files=all`
-2. Read:
-   - `AGENTS.md`
-   - `docs/CORTEX_V2_ACTIVE_WORKSTREAM.md`
-3. Read the authority anchors named by the workstream ledger.
-4. Restate:
-   - accepted baseline
-   - current seam status
-   - next lawful move
-   - blocked moves
-   - acknowledged noise
-5. Only then decide whether you are:
-   - continuing the current seam,
-   - auditing the current seam,
-   - or opening a new seam.
-
-If you skip this and start from intuition, you are not continuing. You are reconstructing.
-
-Reconstruction is sometimes necessary.
-But it should be conscious, not accidental.
-
-## How to read the repo without lying to yourself
-
-Not all documents are equal.
-
-For v2, the practical order is:
-
-1. `AGENTS.md`
-2. `docs/CORTEX_V2_ACTIVE_WORKSTREAM.md`
-3. packet authority:
-   - `docs/CORTEX_V2_CORE_2.md`
-   - `docs/CORTEX_V2_SRE_2.md`
-   - `docs/CORTEX_V2_AUX_2.md`
-4. implementation/workflow authority:
-   - `docs/CORTEX_V2_IMPLEMENTATION_MASTER_PLAN_2.md`
-   - `docs/CORTEX_V2_PHASE_GATES_2.md`
-   - `docs/V1_CODE_PORT_DETERMINATION.md`
-5. supporting implementation authority:
-   - `docs/CORTEX_V2_MATH_TO_CODE_CORRESPONDENCE.md`
-6. support surfaces last:
-   - Erika visualizations
-   - evidence trackers
-   - orientation docs
-
-If two surfaces disagree, do not average them.
-Resolve them according to authority order.
-
-If the packet says one thing and a support surface says another, the packet wins.
-If the phase gate and a seam summary disagree on closure, the gate wins on closure truth.
-If the accepted baseline and the current branch differ, the current branch is not truth just because it is closer to your hands.
-
-## When a live line is dirty
-
-Fresh memory plus a dirty worktree is a dangerous combination.
-
-The right response is not to “probably understand it well enough.”
-The right response is to classify it:
-
-- current seam work,
-- unrelated noise,
-- or blocker.
-
-If the worktree is dirty and you cannot classify the changes, you are not ready to widen scope.
-
-If the repo state and the workstream ledger disagree, stop and record or resolve the drift before doing anything else.
-
-This matters because accepted baseline truth and candidate seam truth must remain distinct.
-Unaccepted local edits are not history.
-
-## When a finding hits landed work
-
-If an audit finds a real defect in something currently called landed:
-
-- reopen the relevant gate honestly,
-- update the workstream ledger,
-- keep the corrective seam bounded,
-- fix the defect where it actually lives,
-- rerun the right bundle,
-- and re-close only when the truth is earned again.
-
-Do not protect the word `landed` by smoothing the defect away.
-Do not widen scope to hide the defect inside a larger program.
-Do not leave the gate green and promise yourself you will reconcile it later.
-
-The honest reopen is part of the design.
-It is not embarrassment. It is continuity preserving itself.
-
-## When you are looping
-
-Looping in v2 often looks like one of these:
-
-- reading more support surfaces instead of resolving the authority conflict,
-- adding more prose instead of fixing the load-bearing carrier,
-- widening the plan because the current seam is uncomfortable,
-- or treating a verification failure as a prompt to restate the claim more elegantly.
-
-If the second attempt is structurally the same as the first, stop.
-
-Ask:
-
-- Am I fixing the real defect, or am I optimizing the story around it?
-- Am I working in the right authority layer?
-- Am I changing Core, SRE, AUX, workflow truth, or support wording for the smallest lawful reason?
-- Am I reopening scope because the bounded seam is difficult?
-
-The system does not need a smoother explanation.
-It needs the smallest true correction.
-
-## What to preserve
-
-When you touch Cortex v2, preserve these things even when it would be easier not to:
-
-- the tiny integrity core,
-- executive policy staying out of Core,
-- AUX staying support-only,
-- contradiction-preserving outcomes,
-- host-specific truth remaining visible,
-- neutral-by-default control,
-- and explicit blockedness when something is not yet earned.
-
-These are not style preferences.
-They are the shape of the system.
-
-If a change would be easier by collapsing these boundaries, the ease is a trap.
+The point of this file is not to become a new court.
+The point is to help a fresh instance enter the existing courts with the right understanding of why they exist.
 
 ---
 
 You are here with fresh memory.
 
-That is not a handicap if you respect the continuity machinery that was built for you.
+That is not a weakness if you respect the machinery built for you.
 
 Read first.
 Verify first.
 Restate truth before action.
 Preserve the boundaries that keep the system honest.
 
-Build like the next instance of you will have to live inside what you leave behind.
+Build like the next fresh instance of you will have to live inside what you leave behind.
 
 It will.
