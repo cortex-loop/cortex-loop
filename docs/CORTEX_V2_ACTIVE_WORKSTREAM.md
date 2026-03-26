@@ -14,6 +14,7 @@ It is workflow state only. It does not override the packet documents, implementa
 - Accepted `C1` continuation proof head: `934aa87`
 - Accepted `C1` continuation deterministic closeout head: `5b5c5b7`
 - Accepted `O1` runtime proof head: `e399a14`
+- Accepted `O1` runtime deterministic closeout head: `93f7093`
 - Accepted baseline state:
   - burden-axis re-audit is accepted through the three thrash-host burden slices
   - package-level burden remains `insufficient`
@@ -29,7 +30,7 @@ It is workflow state only. It does not override the packet documents, implementa
   - committed end-to-end proof now exists at `ee41eb4` for clean-window zero pressure, single-mismatch `0.55` floor, repeated-mismatch `0.70` floor, and oldest-entry truncation on the fourth append
   - the earlier `R4` proof head `7672304`, runtime landing `cecd82d`, and `R5` opening parent `9d07c5b` remain part of the same closeout history rather than competing baselines
   - the first bounded reference cross-process continuation slice is now landed on top of the same product truth: implementation landed at `934aa87`, and the clean accepted closeout line is now anchored at deterministic closeout head `5b5c5b7`
-  - the first OpenAI documented host-event runtime shell is now landed on top of that same product truth at `e399a14`: raw documented OpenAI host events drive a host-specific shell, canonical Cortex event names are explicitly rejected, undocumented raw host events remain conservative warnings, OpenAI runtime/session ownership is self-contained, and bounded OpenAI split-run equivalence is real for current scope
+  - the first OpenAI documented host-event runtime shell is now landed on top of that same product truth: implementation landed at `e399a14`, and the clean accepted closeout line is now anchored at deterministic closeout head `93f7093`
 - Accepted baseline authority anchors:
   - `docs/CORTEX_V2_IMPLEMENTATION_STATUS_NOTE.md`
   - `docs/CORTEX_V2_IMPLEMENTATION_MASTER_PLAN_2.md`
@@ -55,7 +56,7 @@ It is workflow state only. It does not override the packet documents, implementa
 - `O2` branch-local answer:
   - the working branch now carries `OpenAIHostEventEnvelope`, `parse_openai_host_event_envelope()`, and `python3 -m cortex.runtime.openai_ingress_cli`
   - transcript records with `type` now drive the accepted `O1` shell directly
-  - dev-shell wrapper records `{event_name, payload}` are explicitly rejected at ingress
+  - wrapper-shaped and mixed wrapper/transcript records are explicitly rejected at ingress
   - canonical Cortex event names are explicitly rejected at ingress
   - split-run ingress continuity now exists against the recorded `O2` contract
   - repo-local revalidation now includes `make revalidate-openai-ingress`
@@ -90,7 +91,7 @@ It is workflow state only. It does not override the packet documents, implementa
 
 ## 5. Acknowledged worktree noise at ledger update
 
-- The accepted `R5` proof head `ee41eb4`, deterministic closeout head `fd6789f`, accepted `C1` continuation proof head `934aa87`, accepted `C1` continuation deterministic closeout head `5b5c5b7`, and accepted `O1` runtime proof head `e399a14` remain the accepted baseline truth until a later committed acceptance updates them.
+- The accepted `R5` proof head `ee41eb4`, deterministic closeout head `fd6789f`, accepted `C1` continuation proof head `934aa87`, accepted `C1` continuation deterministic closeout head `5b5c5b7`, accepted `O1` runtime proof head `e399a14`, and accepted `O1` runtime deterministic closeout head `93f7093` remain the accepted baseline truth until a later committed acceptance updates them.
 - The accepted `R4` proof head `7672304`, runtime landing `cecd82d`, and `R5` opening parent `9d07c5b` remain part of the same closure-train history and are not competing baselines.
 - The current branch `codex/o2-openai-ingress-shell` now carries committed `O2` candidate work and is therefore not accepted baseline truth yet.
 - The older `codex/e1-verification-substrate-entrypoints` workspace remains mixed and is not the source of truth for this train.

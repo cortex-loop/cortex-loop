@@ -232,7 +232,8 @@ def test_resume_protocol_and_active_workstream_contract_exist() -> None:
     assert "Accepted `C1` continuation deterministic closeout head: `5b5c5b7`" in workstream_text
     assert "Accepted baseline commit: `ee41eb4`" not in workstream_text
     assert "Accepted `O1` runtime proof head: `e399a14`" in workstream_text
-    assert "the first OpenAI documented host-event runtime shell is now landed on top of that same product truth at `e399a14`" in workstream_text
+    assert "Accepted `O1` runtime deterministic closeout head: `93f7093`" in workstream_text
+    assert "the first OpenAI documented host-event runtime shell is now landed on top of that same product truth: implementation landed at `e399a14`, and the clean accepted closeout line is now anchored at deterministic closeout head `93f7093`" in workstream_text
     assert "Current working branch at ledger update: `codex/o2-openai-ingress-shell`" in workstream_text
     assert "bounded runtime/docs/test train that adds raw-transcript ingress parsing plus a raw-transcript CLI over the accepted `O1` shell" in workstream_text
     assert "Current candidate seam: `O2A` through `O2E`" in workstream_text
@@ -289,12 +290,14 @@ def test_reference_runtime_program_lock_is_recorded() -> None:
     assert "canonical Cortex event names are explicitly rejected" in phase_gate_text
     assert "diagnostic-history non-equivalence" in phase_gate_text
     assert "| closed | landed |" in phase_gate_text
+    assert "implemented at `e399a14` and cleanly closed at deterministic closeout head `93f7093`" in phase_gate_text
     assert "`O2` OpenAI raw-transcript ingress shell" in phase_gate_text
-    assert "wrapper-shape `{event_name, payload}` records are explicitly rejected" in phase_gate_text
+    assert "wrapper-shaped and mixed wrapper/transcript records are explicitly rejected" in phase_gate_text
+    assert "mixed wrapper/transcript records are explicitly rejected" in phase_gate_text
 
     assert "Current campaign: `O2` OpenAI raw-transcript ingress shell is now present on the working branch as a committed candidate seam" in workstream_text
     assert "the working branch now carries `OpenAIHostEventEnvelope`, `parse_openai_host_event_envelope()`, and `python3 -m cortex.runtime.openai_ingress_cli`" in workstream_text
-    assert "dev-shell wrapper records `{event_name, payload}` are explicitly rejected at ingress" in workstream_text
+    assert "wrapper-shaped and mixed wrapper/transcript records are explicitly rejected at ingress" in workstream_text
     assert "canonical Cortex event names are explicitly rejected at ingress" in workstream_text
     assert "repo-local revalidation now includes `make revalidate-openai-ingress`" in workstream_text
     assert "the first one-process live continuity slice plus explicit rejection enforcement are real" in program_text
@@ -348,10 +351,11 @@ def test_reference_runtime_program_lock_is_recorded() -> None:
     assert "`make revalidate-openai-runtime`" in openai_runtime_program_text
     assert "canonical Cortex event names are now explicitly rejected at both CLI and runtime entrypoint level" in openai_runtime_program_text
     assert "runtime and session I/O ownership remain self-contained inside the OpenAI runtime modules" in openai_runtime_program_text
-    assert "At accepted `O1` runtime proof head `e399a14`" in openai_runtime_program_text
+    assert "implemented at `e399a14` and truthfully closed at deterministic closeout head `93f7093`" in openai_runtime_program_text
     assert "active runtime-program brief for the first OpenAI raw-transcript ingress shell" in openai_ingress_program_text
     assert "`python3 -m cortex.runtime.openai_ingress_cli`" in openai_ingress_program_text
     assert "wrapper-shape `{event_name, payload}` records are explicitly rejected" in openai_ingress_program_text
+    assert "mixed wrapper/transcript record that contains `event_name` or `payload`" in openai_ingress_program_text
     assert "`make revalidate-openai-ingress`" in openai_ingress_program_text
 
 

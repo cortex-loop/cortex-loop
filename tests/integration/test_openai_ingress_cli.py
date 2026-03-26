@@ -71,12 +71,15 @@ def test_openai_ingress_cli_load_save_works(tmp_path: Path) -> None:
     assert records[0]["raw_host_event_name"] == "response.completed"
 
 
-def test_openai_ingress_cli_rejects_canonical_event_names_and_wrapper_shape() -> None:
+def test_openai_ingress_cli_rejects_canonical_event_names_wrapper_shape_and_mixed_shape() -> None:
     canonical = _run_openai_ingress_cli(
         input_text='{"type":"external/observation","session_id":"oa-bad","response_id":"resp-1"}\n'
     )
     wrapper = _run_openai_ingress_cli(
         input_text='{"event_name":"response.completed","payload":{"session_id":"oa-bad","response_id":"resp-1"}}\n'
+    )
+    mixed = _run_openai_ingress_cli(
+        input_text='{"type":"response.completed","event_name":"response.completed","payload":{"session_id":"oa-bad","response_id":"resp-1"},"session_id":"oa-bad","response_id":"resp-1","commitment_id":"oa-bad-commit","externally_consequential":true,"result_artifact_ref":"oa-bad-artifact"}\n'
     )
 
     assert canonical.returncode == 1
@@ -85,7 +88,11 @@ def test_openai_ingress_cli_rejects_canonical_event_names_and_wrapper_shape() ->
 
     assert wrapper.returncode == 1
     assert wrapper.stdout == ""
-    assert "dev-shell wrapper shape" in wrapper.stderr
+    assert "wrapper and mixed wrapper/transcript" in wrapper.stderr
+
+    assert mixed.returncode == 1
+    assert mixed.stdout == ""
+    assert "wrapper and mixed wrapper/transcript" in mixed.stderr
 
 
 def test_openai_ingress_cli_undocumented_raw_host_event_still_warns_conservatively() -> None:

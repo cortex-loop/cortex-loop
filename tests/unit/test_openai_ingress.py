@@ -45,11 +45,23 @@ def test_canonical_cortex_event_name_is_rejected() -> None:
 
 
 def test_dev_shell_wrapper_shape_is_rejected() -> None:
-    with pytest.raises(ValueError, match="dev-shell wrapper shape"):
+    with pytest.raises(ValueError, match="wrapper and mixed wrapper/transcript"):
         parse_openai_host_event_envelope(
             {
                 "event_name": "response.completed",
                 "payload": {"session_id": "oa-ingress"},
+            }
+        )
+
+
+def test_mixed_wrapper_and_transcript_shape_is_rejected() -> None:
+    with pytest.raises(ValueError, match="wrapper and mixed wrapper/transcript"):
+        parse_openai_host_event_envelope(
+            {
+                "type": "response.completed",
+                "event_name": "response.completed",
+                "payload": {"session_id": "oa-ingress"},
+                "session_id": "oa-ingress",
             }
         )
 

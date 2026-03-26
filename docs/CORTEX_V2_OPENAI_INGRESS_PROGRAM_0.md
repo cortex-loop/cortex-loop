@@ -86,6 +86,7 @@ Rejected input shapes:
 - non-string `type`
 - canonical Cortex names such as `external/observation`
 - the dev-shell wrapper shape `{event_name, payload}`
+- any mixed wrapper/transcript record that contains `event_name` or `payload`
 
 Output remains exactly the accepted `O1` OpenAI runtime record shape and field order.
 
@@ -102,6 +103,7 @@ It may not:
 
 - bypass the raw-host-event validator,
 - accept the dev-shell wrapper shape,
+- accept mixed wrapper/transcript records,
 - introduce live network/service doctrine,
 - realize outbound OpenAI host actions,
 - or introduce a shared ingress/runtime-common layer.
@@ -145,6 +147,7 @@ Every seam remains one-session max and must end on a clean tree before the next 
 
 - transcript records with `type` parse lawfully,
 - wrapper-shape `{event_name, payload}` records are explicitly rejected,
+- mixed wrapper/transcript records are explicitly rejected,
 - canonical Cortex event names are explicitly rejected,
 - documented raw transcript records drive the accepted `O1` shell without changing its output contract,
 - split-run ingress continuity matches the contract recorded above,
@@ -158,7 +161,7 @@ On branch `codex/o2-openai-ingress-shell` opened from accepted `O1` closeout hea
 
 - `OpenAIHostEventEnvelope` and `parse_openai_host_event_envelope()` now exist as branch-local `O2` candidate surfaces,
 - `python3 -m cortex.runtime.openai_ingress_cli` now drives the accepted `O1` runtime shell from raw transcript records,
-- wrapper-shape dev-shell records are explicitly rejected at ingress,
+- wrapper-shaped and mixed wrapper/transcript records are explicitly rejected at ingress,
 - canonical Cortex event names are explicitly rejected at ingress,
 - split-run ingress continuity proof now exists against the `O2` contract,
 - and `make revalidate-openai-ingress` now exists as the repo-local ingress revalidation entry point.

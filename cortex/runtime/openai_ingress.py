@@ -39,10 +39,10 @@ def parse_openai_host_event_envelope(record: Mapping[str, Any]) -> OpenAIHostEve
             "parse_openai_host_event_envelope.record must be a mapping, "
             f"got {actual_type}."
         )
-    if "event_name" in record and "payload" in record and "type" not in record:
+    if "event_name" in record or "payload" in record:
         raise ValueError(
-            "O2 expects raw host transcript records with `type`, not the dev-shell "
-            "wrapper shape `{event_name, payload}`."
+            "O2 expects raw host transcript records only; wrapper and mixed "
+            "wrapper/transcript shapes that include `event_name` or `payload` are unlawful."
         )
     if "type" not in record:
         raise ValueError("Raw OpenAI host transcript record must include `type`.")

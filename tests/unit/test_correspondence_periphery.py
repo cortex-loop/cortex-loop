@@ -1008,7 +1008,7 @@ EXPECTATIONS = (
                 test_file="tests/integration/test_openai_ingress_cli.py",
                 test_names=(
                     "test_openai_ingress_cli_reads_documented_raw_transcript_fixture",
-                    "test_openai_ingress_cli_rejects_canonical_event_names_and_wrapper_shape",
+                    "test_openai_ingress_cli_rejects_canonical_event_names_wrapper_shape_and_mixed_shape",
                     "test_openai_ingress_cli_undocumented_raw_host_event_still_warns_conservatively",
                 ),
             ),

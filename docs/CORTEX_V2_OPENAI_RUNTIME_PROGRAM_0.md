@@ -181,7 +181,7 @@ Every seam remains one-session max and must end on a clean tree before the next 
 
 ## Current accepted state after `O1` closeout
 
-At accepted `O1` runtime proof head `e399a14` on branch `codex/o1-openai-runtime-shell`:
+On the accepted `O1` runtime closeout line implemented at `e399a14` and truthfully closed at deterministic closeout head `93f7093` on branch `codex/o1-openai-runtime-shell`:
 
 - `OpenAIRuntimeSession`, `OpenAIRuntimeSessionArtifact`, `run_openai_runtime_step()`, and `python3 -m cortex.runtime.openai_cli` are now landed `O1` surfaces,
 - raw documented OpenAI host events drive a host-specific runtime shell,
