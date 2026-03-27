@@ -24,7 +24,7 @@ from cortex.runtime.claude_service import ClaudeServiceState, handle_claude_serv
 def test_claude_host_control_request_constructs_strict_text_only_payload() -> None:
     request = ClaudeHostControlRequest(
         action_tag="claude-message-stream",
-        model="claude-sonnet-4-5",
+        model="claude-sonnet-4-6",
         input_text="hello",
         max_output_tokens=32,
         system="be terse",
@@ -34,7 +34,7 @@ def test_claude_host_control_request_constructs_strict_text_only_payload() -> No
     assert request.as_payload() == {
         "action_tag": "claude-message-stream",
         "request": {
-            "model": "claude-sonnet-4-5",
+            "model": "claude-sonnet-4-6",
             "input": "hello",
             "max_output_tokens": 32,
             "system": "be terse",
@@ -57,7 +57,7 @@ def test_claude_host_control_service_boundary_rejects_out_of_scope_keys() -> Non
             {
                 "action_tag": "claude-message-stream",
                 "request": {
-                    "model": "claude-sonnet-4-5",
+                    "model": "claude-sonnet-4-6",
                     "input": "hello",
                     "tools": [{"type": "function", "name": "bad"}],
                 },
@@ -73,7 +73,7 @@ def test_parse_sse_events_converts_stream_frames_into_g2_shaped_records() -> Non
     events = _parse_sse_events(
         [
             b"event: message_start\n",
-            b'data: {"type":"message_start","message":{"id":"cl-msg-1","role":"assistant","model":"claude-sonnet-4-5"}}\n',
+            b'data: {"type":"message_start","message":{"id":"cl-msg-1","role":"assistant","model":"claude-sonnet-4-6"}}\n',
             b"\n",
             b"event: content_block_delta\n",
             b'data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"hello"}}\n',
@@ -89,7 +89,7 @@ def test_parse_sse_events_converts_stream_frames_into_g2_shaped_records() -> Non
             "type": "message_start",
             "message_id": "cl-msg-1",
             "role": "assistant",
-            "model": "claude-sonnet-4-5",
+            "model": "claude-sonnet-4-6",
         },
         {
             "type": "content_block_delta",
@@ -148,7 +148,7 @@ def test_run_claude_host_control_matches_manual_g1_runtime_projection() -> None:
     ]
     request = ClaudeHostControlRequest(
         action_tag="claude-message-stream",
-        model="claude-sonnet-4-5",
+        model="claude-sonnet-4-6",
         input_text="hello",
         max_output_tokens=32,
     )

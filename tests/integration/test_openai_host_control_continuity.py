@@ -93,7 +93,7 @@ def _action_payload(input_text: str) -> dict[str, object]:
     return {
         "action_tag": "openai-response-stream",
         "request": {
-            "model": "gpt-5",
+            "model": "gpt-5.4",
             "input": input_text,
         },
     }

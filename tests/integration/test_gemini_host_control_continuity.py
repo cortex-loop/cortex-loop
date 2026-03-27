@@ -93,7 +93,7 @@ def _action_payload(input_text: str) -> dict[str, object]:
     return {
         "action_tag": "gemini-interaction-stream",
         "request": {
-            "model": "gemini-2.5-flash",
+            "model": "gemini-2.5-pro",
             "input": input_text,
         },
     }

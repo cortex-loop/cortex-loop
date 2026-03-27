@@ -93,7 +93,7 @@ def _action_payload(input_text: str) -> dict[str, object]:
     return {
         "action_tag": "claude-message-stream",
         "request": {
-            "model": "claude-sonnet-4-5",
+            "model": "claude-sonnet-4-6",
             "input": input_text,
             "max_output_tokens": 256,
         },

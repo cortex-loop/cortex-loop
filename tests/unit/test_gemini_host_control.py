@@ -24,7 +24,7 @@ from cortex.runtime.gemini_service import GeminiServiceState, handle_gemini_serv
 def test_gemini_host_control_request_constructs_strict_text_only_payload() -> None:
     request = GeminiHostControlRequest(
         action_tag="gemini-interaction-stream",
-        model="gemini-2.5-flash",
+        model="gemini-2.5-pro",
         input_text="hello",
         instructions="be terse",
         metadata={"trace_id": "gm-1"},
@@ -34,7 +34,7 @@ def test_gemini_host_control_request_constructs_strict_text_only_payload() -> No
     assert request.as_payload() == {
         "action_tag": "gemini-interaction-stream",
         "request": {
-            "model": "gemini-2.5-flash",
+            "model": "gemini-2.5-pro",
             "input": "hello",
             "instructions": "be terse",
             "metadata": {"trace_id": "gm-1"},
@@ -57,7 +57,7 @@ def test_gemini_host_control_service_boundary_rejects_out_of_scope_keys() -> Non
             {
                 "action_tag": "gemini-interaction-stream",
                 "request": {
-                    "model": "gemini-2.5-flash",
+                    "model": "gemini-2.5-pro",
                     "input": "hello",
                     "tools": [{"type": "function", "name": "bad"}],
                 },
@@ -151,7 +151,7 @@ def test_run_gemini_host_control_matches_manual_g1_runtime_projection() -> None:
     ]
     request = GeminiHostControlRequest(
         action_tag="gemini-interaction-stream",
-        model="gemini-2.5-flash",
+        model="gemini-2.5-pro",
         input_text="hello",
     )
     result, final_session = run_gemini_host_control(
