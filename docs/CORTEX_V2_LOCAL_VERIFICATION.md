@@ -232,7 +232,7 @@ make revalidate-gemini-runtime
 
 ## Gemini ingress revalidation
 
-This revalidates the first Gemini raw-transcript ingress shell on top of the accepted Gemini runtime shell.
+This revalidates the first Gemini raw-transcript ingress shell on top of the accepted current-line `G1` runtime shell.
 It checks transcript-shape parsing, ingress CLI behavior, split-run ingress continuity equivalence, and explicit rejection of wrapper and canonical Cortex event-name misuse.
 
 Direct commands:
@@ -251,7 +251,7 @@ make revalidate-gemini-ingress
 
 ## Gemini loopback service revalidation
 
-This revalidates the first Gemini loopback-only service shell on top of the accepted Gemini ingress parser and accepted Gemini runtime/session artifact.
+This revalidates the first Gemini loopback-only service shell on top of the accepted current-line `G2` ingress parser and accepted current-line `G1` runtime/session artifact.
 It checks loopback-only HTTP behavior, JSON artifact import/export, event processing over `/v1/events`, and service continuity equivalence without widening into remote hosting or generic service doctrine.
 
 Direct commands:
@@ -270,7 +270,7 @@ make revalidate-gemini-service
 
 ## Gemini host-control revalidation
 
-This revalidates the first bounded outbound Gemini host-control lane on top of the accepted Gemini loopback shell, accepted Gemini ingress law, and accepted Gemini runtime/session law.
+This revalidates the first bounded outbound Gemini host-control lane on top of the accepted current-line `G3` loopback shell, accepted current-line `G2` ingress law, and accepted current-line `G1` runtime/session law.
 It checks the strict text-only request boundary, stdlib Gemini transport parsing, loopback action endpoint behavior, and export/import continuity across multiple outbound actions.
 Canonical Gemini tests use the internal fixture transport and do not require a live Gemini network or a real API key.
 

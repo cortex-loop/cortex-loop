@@ -1,18 +1,18 @@
 # CORTEX_V2_GEMINI_HOST_CONTROL_PROGRAM_0
 
 Date: 2026-03-27
-Status: active runtime-program brief for the first bounded outbound Gemini host-control lane
+Status: accepted re-audited runtime-program brief for the first bounded outbound Gemini host-control lane
 
 ## Purpose
 
-This document opens the next explicit one-agent runtime/product program after accepted `G3`.
+This document records the bounded outbound host-control slice inside the accepted G1 Gemini runtime/product parity line.
 
 The chosen next move is:
 
 - one bounded outbound Gemini control lane,
 - one text-only `gemini-interaction-stream` request surface,
 - one stdlib transport over the official Gemini `streamGenerateContent` surface,
-- one loopback service action endpoint on top of the accepted `G3` shell,
+- one loopback service action endpoint on top of the current-line `G3` shell,
 - and one re-audit closeout that preserves G1 truth while opening the first bounded outbound host-control lane.
 
 This document does not override:
@@ -34,7 +34,7 @@ Accepted parent for this program on the current line:
 
 Why this program opens now:
 
-- accepted `G3` made a real loopback service shell lawful,
+- the current line now includes a real loopback service shell,
 - the smallest remaining product gap is realized host action rather than more internal runtime math,
 - the current Gemini driver already names `gemini-interaction-stream` as the relevant host lifecycle effect,
 - and a bounded outbound lane is smaller and more truthful than tool-calling doctrine, cancel/update lanes, or executive-loop widening.
@@ -102,7 +102,7 @@ Response body shape:
 - `action_tag`
 - `records`
 
-`records` is the ordered list of exact accepted `G1` runtime record objects produced from the returned host events.
+`records` is the ordered list of exact current-line `G1` runtime record objects produced from the returned host events.
 
 All responses remain JSON.
 
@@ -117,19 +117,19 @@ Error contract:
 
 The G1 outbound lane may:
 
-- reuse the accepted loopback `G3` service shell,
+- reuse the current-line loopback `G3` service shell,
 - keep exactly one active `GeminiRuntimeSession` per process,
 - validate one strict text-only outbound request carrier,
 - execute one stdlib outbound `streamGenerateContent` transport,
-- parse returned upstream frames into the exact accepted `G2` raw transcript record shape,
-- and feed every returned host event through accepted `parse_gemini_host_event_envelope()` and accepted `run_gemini_runtime_step()`.
+- parse returned upstream frames into the exact current-line `G2` raw transcript record shape,
+- and feed every returned host event through the current-line `parse_gemini_host_event_envelope()` and `run_gemini_runtime_step()`.
 
 It may not:
 
 - accept tools or tool-result submission,
 - accept content-part arrays or multimodal payloads,
 - widen into cancel/update lanes,
-- bypass the accepted `G2` parser,
+- bypass the current-line `G2` parser,
 - widen into remote hosting or multi-client doctrine,
 - add an `gemini` SDK dependency,
 - require live network or a real API key in the canonical verification bundle,
@@ -160,7 +160,7 @@ This program remains split into five bounded seams:
 
 1. `G4A` program lock
 2. `G4B` request/result carriers plus stdlib transport
-3. `G4C` runtime composition over accepted `G2`/`G1`
+3. `G4C` runtime composition over current-line `G2`/`G1`
 4. `G4D` service endpoint and continuity proof
 5. `G4E` re-audit and closeout
 
@@ -173,21 +173,21 @@ Every seam must end on a clean tree before the next opens.
 - `POST /v1/actions/interaction-stream` is real on the loopback service shell
 - the request boundary is strict-whitelist and text-only
 - the outbound transport is stdlib-only and host-specific
-- returned upstream host events re-enter through accepted `G2` parsing and accepted `G1` runtime composition
+- returned upstream host events re-enter through the current-line `G2` parsing and current-line `G1` runtime composition
 - export/import continuity preserves exact `continuity_truth` plus bounded `control_residue`
 - targeted tests pass twice
 - `make seam-preflight`, `make revalidate-gemini-host-control`, `make revalidate-gemini-service`, `make test-smoke`, and `make verify` pass
 - and the `G4` phase-gate row is updated truthfully
 
-## Current G1 candidate state before closeout
+## Current accepted state after G1 closeout
 
-On branch `codex/g1-gemini-runtime-product-parity` rooted at accepted K3 baseline `efe003e`:
+On the accepted G1 closeout line over accepted K3 baseline `efe003e`:
 
-- `GeminiHostControlRequest`, `GeminiHostControlResult`, `execute_gemini_interaction_stream()`, `run_gemini_host_control()`, and `POST /v1/actions/interaction-stream` now exist as branch-local `G4` candidate surfaces
+- `GeminiHostControlRequest`, `GeminiHostControlResult`, `execute_gemini_interaction_stream()`, `run_gemini_host_control()`, and `POST /v1/actions/interaction-stream` are now landed `G4` surfaces, implemented at G1 proof head `fe33a7e`
 - the request boundary is strict-whitelist and text-only for current scope
 - the stdlib transport has an internal fixture mode so canonical tests require no live Gemini network
-- returned host events now re-enter the candidate `G2` parser and candidate `G1` runtime shell directly
-- `make revalidate-gemini-host-control` now exists as the repo-local G1 revalidation entry point
+- returned host events now re-enter the current-line `G2` parser and `G1` runtime shell directly
+- repeated direct reruns plus repeated `make revalidate-gemini-host-control` passed for current scope
 
 ## Explicitly blocked moves
 

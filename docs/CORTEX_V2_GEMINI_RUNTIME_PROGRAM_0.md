@@ -1,11 +1,11 @@
 # CORTEX_V2_GEMINI_RUNTIME_PROGRAM_0
 
 Date: 2026-03-27
-Status: active runtime-program brief for the first Gemini documented host-event runtime shell
+Status: accepted re-audited runtime-program brief for the first Gemini documented host-event runtime shell
 
 ## Purpose
 
-This document opens the next explicit runtime program after accepted `C1`.
+This document records the first Gemini documented host-event runtime shell accepted on the G1 runtime/product parity line after accepted K3.
 
 The chosen next move is:
 
@@ -179,16 +179,16 @@ Every seam remains one-session max and must end on a clean tree before the next 
 - `make seam-preflight`, `make revalidate-gemini-runtime`, `make test-smoke`, and `make verify` pass,
 - and the `G1` phase-gate row is updated truthfully.
 
-## Current G1 candidate state before closeout
+## Current accepted state after G1 closeout
 
-On branch `codex/g1-gemini-runtime-product-parity` rooted at accepted K3 baseline `efe003e`:
+On the accepted G1 closeout line over accepted K3 baseline `efe003e`:
 
-- `GeminiRuntimeSession`, `GeminiRuntimeSessionArtifact`, `run_gemini_runtime_step()`, and `python3 -m cortex.runtime.gemini_cli` now exist as branch-local `G1` candidate surfaces
+- `GeminiRuntimeSession`, `GeminiRuntimeSessionArtifact`, `run_gemini_runtime_step()`, and `python3 -m cortex.runtime.gemini_cli` are now landed `G1` surfaces, implemented at G1 proof head `fe33a7e`
 - raw documented Gemini host events drive a host-specific runtime shell
 - `raw_host_event_name` is preserved in the top-level CLI record
 - canonical Cortex event names are explicitly rejected at both CLI and runtime entrypoint level
 - nested `control_ledger.allocation_diagnostics` reuses accepted K3 executive allocation truth exactly for current scope
-- and `make revalidate-gemini-runtime` now exists as the repo-local Gemini runtime revalidation entry point
+- repeated direct reruns plus repeated `make revalidate-gemini-runtime` passed for current scope
 
 ## Explicitly blocked moves
 

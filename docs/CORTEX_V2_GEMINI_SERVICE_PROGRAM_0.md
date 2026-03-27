@@ -1,17 +1,17 @@
 # CORTEX_V2_GEMINI_SERVICE_PROGRAM_0
 
 Date: 2026-03-27
-Status: active runtime-program brief for the first Gemini loopback service shell
+Status: accepted re-audited runtime-program brief for the first Gemini loopback service shell
 
 ## Purpose
 
-This document opens the next explicit one-agent runtime/product program after accepted `G2`.
+This document records the loopback service slice inside the accepted G1 Gemini runtime/product parity line.
 
 The chosen next move is:
 
 - one loopback-only Gemini service shell,
-- one HTTP event ingress path over accepted `G2` transcript parsing,
-- one JSON artifact import/export surface over the accepted `G1` session carrier,
+- one HTTP event ingress path over the current-line `G2` transcript parsing,
+- one JSON artifact import/export surface over the current-line `G1` session carrier,
 - and one re-audit closeout that keeps local service reality ahead of outbound host control or broader runtime widening.
 
 This document does not override:
@@ -33,7 +33,7 @@ Accepted parent for this program on the current line:
 
 Why this program opens now:
 
-- accepted `G2` made raw Gemini transcript ingress lawful,
+- the current line now includes a landed raw Gemini transcript ingress slice,
 - the next one-agent north-star gap is a real local service shell rather than another CLI,
 - loopback-only HTTP is a smaller truthful step than outbound host control,
 - and it remains narrower than remote hosting, multi-session doctrine, or multi-agent orchestration.
@@ -99,16 +99,16 @@ HTTP surface:
 - `runtime`
 - `session_loaded`
 
-`POST /v1/events` accepts one raw Gemini transcript object in the accepted `G2` shape:
+`POST /v1/events` accepts one raw Gemini transcript object in the current-line `G2` shape:
 
 - required field: `type`
 - all remaining top-level fields become payload
 
-`POST /v1/events` returns exactly the accepted `G1` runtime record shape and field order.
+`POST /v1/events` returns exactly the current-line `G1` runtime record shape and field order.
 
-`GET /v1/session/export` returns exactly the accepted `GeminiRuntimeSessionArtifact` JSON object.
+`GET /v1/session/export` returns exactly the current-line `GeminiRuntimeSessionArtifact` JSON object.
 
-`POST /v1/session/import` accepts exactly the accepted `GeminiRuntimeSessionArtifact` JSON object and returns the resulting artifact JSON after import.
+`POST /v1/session/import` accepts exactly the current-line `GeminiRuntimeSessionArtifact` JSON object and returns the resulting artifact JSON after import.
 
 All responses are JSON.
 
@@ -125,16 +125,16 @@ The loopback service shell may:
 
 - bind only to `127.0.0.1`,
 - keep exactly one active `GeminiRuntimeSession` per process,
-- parse `POST /v1/events` bodies through accepted `parse_gemini_host_event_envelope()`,
-- run accepted `run_gemini_runtime_step()` over the in-memory session,
-- import/export the accepted `GeminiRuntimeSessionArtifact` as JSON,
+- parse `POST /v1/events` bodies through the current-line `parse_gemini_host_event_envelope()`,
+- run the current-line `run_gemini_runtime_step()` over the in-memory session,
+- import/export the current-line `GeminiRuntimeSessionArtifact` as JSON,
 - and expose a more live local service boundary without widening the runtime owner.
 
 It may not:
 
 - bind remotely,
 - create multi-session or multi-client doctrine,
-- bypass the accepted `G2` parser,
+- bypass the current-line `G2` parser,
 - invent a service-specific persistence format,
 - expose path-based import/export HTTP endpoints,
 - autosave on shutdown,
@@ -149,7 +149,7 @@ Undocumented-event law:
 
 ## G3 equivalence contract
 
-For a transcript mechanically equivalent to the accepted `G2` ingress shell, `G3` equivalence means:
+For a transcript mechanically equivalent to the current-line `G2` ingress shell, `G3` equivalence means:
 
 - same `continuity_truth`
 - same per-event `selected_family`
@@ -179,24 +179,24 @@ Every seam remains one-session max and must end on a clean tree before the next 
 `G3` is only honestly closed when all are true:
 
 - loopback-only HTTP is real at `127.0.0.1`
-- `POST /v1/events` drives accepted `G2` transcript parsing and the accepted `G1` runtime shell
-- `GET /v1/session/export` and `POST /v1/session/import` move the accepted artifact JSON without inventing a service-specific persistence format
+- `POST /v1/events` drives the current-line `G2` transcript parsing and the current-line `G1` runtime shell
+- `GET /v1/session/export` and `POST /v1/session/import` move the current-line artifact JSON without inventing a service-specific persistence format
 - one active session per process is real
 - split-run service continuity matches the contract recorded above
 - targeted tests pass twice
 - `make seam-preflight`, `make revalidate-gemini-service`, `make test-smoke`, and `make verify` pass
 - and the `G3` phase-gate row is updated truthfully
 
-## Current G1 candidate state before closeout
+## Current accepted state after G1 closeout
 
-On branch `codex/g1-gemini-runtime-product-parity` rooted at accepted K3 baseline `efe003e`:
+On the accepted G1 closeout line over accepted K3 baseline `efe003e`:
 
-- `GeminiServiceState`, `handle_gemini_service_request()`, `export_gemini_service_session()`, `import_gemini_service_session()`, and `python3 -m cortex.runtime.gemini_service` now exist as branch-local `G3` candidate surfaces
+- `GeminiServiceState`, `handle_gemini_service_request()`, `export_gemini_service_session()`, `import_gemini_service_session()`, and `python3 -m cortex.runtime.gemini_service` are now landed `G3` surfaces, implemented at G1 proof head `fe33a7e`
 - `GET /health`, `POST /v1/events`, `GET /v1/session/export`, and `POST /v1/session/import` now exist over loopback-only HTTP
-- `/v1/events` now drives the candidate `G2` transcript parser and candidate `G1` runtime shell directly
+- `/v1/events` now drives the current-line `G2` transcript parser and current-line `G1` runtime shell directly
 - loopback bind is fixed to `127.0.0.1`
 - one active session per process is real for current scope
-- and `make revalidate-gemini-service` now exists as the repo-local service revalidation entry point
+- repeated direct reruns plus repeated `make revalidate-gemini-service` passed for current scope
 
 ## Explicitly blocked moves
 

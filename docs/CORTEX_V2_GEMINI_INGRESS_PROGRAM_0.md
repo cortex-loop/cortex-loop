@@ -1,17 +1,17 @@
 # CORTEX_V2_GEMINI_INGRESS_PROGRAM_0
 
 Date: 2026-03-27
-Status: active runtime-program brief for the first Gemini raw-transcript ingress shell
+Status: accepted re-audited runtime-program brief for the first Gemini raw-transcript ingress shell
 
 ## Purpose
 
-This document opens the next explicit one-agent product/runtime program after accepted `G1`.
+This document records the raw-transcript ingress slice inside the accepted G1 Gemini runtime/product parity line.
 
 The chosen next move is:
 
 - one Gemini raw-transcript ingress parser,
 - one Gemini ingress CLI over raw host transcript records,
-- one bounded ingress continuity proof on top of accepted `G1`,
+- one bounded ingress continuity proof on top of the current-line Gemini runtime shell,
 - and one re-audit closeout that keeps real host-shaped ingress ahead of broader runtime widening.
 
 This document does not override:
@@ -32,7 +32,7 @@ Accepted parent for this program:
 
 Why this program opens now:
 
-- accepted `G1` made one real Gemini host-event shell lawful,
+- the current line now includes one real Gemini host-event shell,
 - the next one-agent north-star gap is host-shaped ingress rather than more wrapper-shaped local driving,
 - this moves the product shell closer to real host traffic without opening outbound host control or service doctrine,
 - and it is a smaller truthful step than Gemini breadth or multi-agent orchestration.
@@ -88,7 +88,7 @@ Rejected input shapes:
 - the dev-shell wrapper shape `{event_name, payload}`
 - any mixed wrapper/transcript record that contains `event_name` or `payload`
 
-Output remains exactly the accepted `G1` Gemini runtime record shape and field order.
+Output remains exactly the current-line Gemini runtime record shape and field order.
 
 ## Runtime law for this program
 
@@ -96,7 +96,7 @@ The ingress shell may:
 
 - parse raw transcript objects into `GeminiHostEventEnvelope`,
 - call accepted `run_gemini_runtime_step(envelope.event_type, envelope.payload, session)`,
-- reuse accepted `G1` session persistence unchanged,
+- reuse the current-line Gemini session persistence unchanged,
 - and emit the existing Gemini runtime projection without widening the runtime shell itself.
 
 It may not:
@@ -116,7 +116,7 @@ Undocumented-event law:
 
 ## G2 equivalence contract
 
-For a transcript mechanically equivalent to an accepted `G1` dev-shell event stream, `G2` equivalence means:
+For a transcript mechanically equivalent to the current-line Gemini dev-shell event stream, `G2` equivalence means:
 
 - same `continuity_truth`
 - same per-event `selected_family`
@@ -149,21 +149,21 @@ Every seam remains one-session max and must end on a clean tree before the next 
 - wrapper-shape `{event_name, payload}` records are explicitly rejected,
 - mixed wrapper/transcript records are explicitly rejected,
 - canonical Cortex event names are explicitly rejected,
-- documented raw transcript records drive the accepted `G1` shell without changing its output contract,
+- documented raw transcript records drive the current-line `G1` shell without changing its output contract,
 - split-run ingress continuity matches the contract recorded above,
 - targeted tests pass twice,
 - `make seam-preflight`, `make revalidate-gemini-ingress`, `make test-smoke`, and `make verify` pass,
 - and the `G2` phase-gate row is updated truthfully.
 
-## Current G1 candidate state before closeout
+## Current accepted state after G1 closeout
 
-On branch `codex/g1-gemini-runtime-product-parity` rooted at accepted K3 baseline `efe003e`:
+On the accepted G1 closeout line over accepted K3 baseline `efe003e`:
 
-- `GeminiHostEventEnvelope` and `parse_gemini_host_event_envelope()` now exist as branch-local `G2` candidate surfaces
-- `python3 -m cortex.runtime.gemini_ingress_cli` now drives the candidate `G1` runtime shell from raw transcript records
+- `GeminiHostEventEnvelope` and `parse_gemini_host_event_envelope()` are now landed `G2` surfaces, implemented at G1 proof head `fe33a7e`
+- `python3 -m cortex.runtime.gemini_ingress_cli` now drives the current-line `G1` runtime shell from raw transcript records
 - wrapper-shaped and mixed wrapper/transcript records are explicitly rejected at ingress
 - canonical Cortex event names are explicitly rejected at ingress
-- and `make revalidate-gemini-ingress` now exists as the repo-local ingress revalidation entry point
+- repeated direct reruns plus repeated `make revalidate-gemini-ingress` passed for current scope
 
 ## Explicitly blocked moves
 

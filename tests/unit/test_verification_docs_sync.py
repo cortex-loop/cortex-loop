@@ -441,16 +441,20 @@ def test_reference_runtime_program_lock_is_recorded() -> None:
     assert "`G2` Gemini raw-transcript ingress shell" in phase_gate_text
     assert "`G3` Gemini loopback service shell" in phase_gate_text
     assert "`G4` Gemini bounded outbound host-control lane" in phase_gate_text
+    assert "Gemini-specific runtime/session carriers plus persisted artifact are landed on the accepted G1 closeout line" in phase_gate_text
+    assert "Gemini raw-transcript ingress parsing is landed on the accepted G1 closeout line" in phase_gate_text
+    assert "loopback-only Gemini HTTP is landed on the accepted G1 closeout line" in phase_gate_text
+    assert "the first bounded outbound Gemini host-control lane is landed on the accepted G1 closeout line" in phase_gate_text
 
     assert "Status: accepted re-audited support brief for the G1 runtime/product restack train" in gemini_runtime_restack_text
     assert "Gemini-only" in gemini_runtime_restack_text
-    assert "Status: active runtime-program brief for the first Gemini documented host-event runtime shell" in gemini_runtime_program_text
+    assert "Status: accepted re-audited runtime-program brief for the first Gemini documented host-event runtime shell" in gemini_runtime_program_text
     assert "`python3 -m cortex.runtime.gemini_cli`" in gemini_runtime_program_text
-    assert "Status: active runtime-program brief for the first Gemini raw-transcript ingress shell" in gemini_ingress_program_text
+    assert "Status: accepted re-audited runtime-program brief for the first Gemini raw-transcript ingress shell" in gemini_ingress_program_text
     assert "`python3 -m cortex.runtime.gemini_ingress_cli`" in gemini_ingress_program_text
-    assert "Status: active runtime-program brief for the first Gemini loopback service shell" in gemini_service_program_text
+    assert "Status: accepted re-audited runtime-program brief for the first Gemini loopback service shell" in gemini_service_program_text
     assert "`python3 -m cortex.runtime.gemini_service`" in gemini_service_program_text
-    assert "Status: active runtime-program brief for the first bounded outbound Gemini host-control lane" in gemini_host_control_program_text
+    assert "Status: accepted re-audited runtime-program brief for the first bounded outbound Gemini host-control lane" in gemini_host_control_program_text
     assert "`POST /v1/actions/interaction-stream`" in gemini_host_control_program_text
 
 

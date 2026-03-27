@@ -5,7 +5,7 @@ Status: accepted re-audited support brief for the G1 runtime/product restack tra
 
 ## Purpose
 
-This document opens the next explicit post-accepted-`K3` train:
+This document records the accepted post-`K3` G1 runtime/product restack train:
 
 - land the Gemini runtime, ingress, service, and bounded host-control shells in dependency order,
 - reuse accepted K3 executive allocation diagnostics exactly as-is,
@@ -63,10 +63,10 @@ This train does **not** authorize:
 
 Each seam must end clean before the next opens.
 
-## Current G1 candidate state before closeout
+## Current accepted state after G1 closeout
 
-On branch `codex/g1-gemini-runtime-product-parity` rooted at accepted K3 baseline `efe003e`:
+On the accepted G1 closeout line over accepted K3 baseline `efe003e`:
 
-- Gemini runtime, ingress, service, and bounded host-control shells now exist as branch-local G1 candidate surfaces
+- Gemini runtime, ingress, service, and bounded host-control shells are now landed as the accepted G1 runtime/product parity stack
 - the Gemini projections reuse accepted K3 executive allocation diagnostics exactly for current scope
-- and Gemini repo-local revalidation targets now exist on the candidate line
+- Gemini repo-local revalidation targets now exist on the accepted line and repeat-stability reruns have passed for current scope
