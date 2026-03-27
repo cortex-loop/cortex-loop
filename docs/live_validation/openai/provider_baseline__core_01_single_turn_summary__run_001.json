@@ -1,0 +1,20 @@
+{
+  "command": [
+    "urllib.request",
+    "POST",
+    "https://api.openai.com/v1/responses"
+  ],
+  "ended_at": "2026-03-27T13:53:22+00:00",
+  "failure_class": "auth_missing",
+  "notes": "The installed OpenAI CLI is present, but the baseline uses the Responses API directly for structured event capture.",
+  "provider": "openai",
+  "repeat_index": 1,
+  "result_text": null,
+  "scenario_id": "core_01_single_turn_summary",
+  "started_at": "2026-03-27T13:53:22+00:00",
+  "stderr_path": "docs/live_validation/openai/provider_baseline__core_01_single_turn_summary__run_001.stderr.log",
+  "stdout_path": "docs/live_validation/openai/provider_baseline__core_01_single_turn_summary__run_001.stdout.log",
+  "structured_event_count": 0,
+  "structured_event_labels": [],
+  "success": false
+}

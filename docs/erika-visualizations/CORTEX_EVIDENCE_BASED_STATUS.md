@@ -2,7 +2,7 @@
 
 **Date:** 2026-03-26  
 **Role:** support surface for orientation and planning  
-**Accepted factual baseline:** `codex/g1-gemini-runtime-product-parity` at `9dfe38a`
+**Accepted factual baseline:** `codex/l1-live-validation` at `8eb7f08`
 
 > This folder tracks three separate things: current accepted repo truth, the north-star product target, and the lawful gap programs required to move from the first toward the second.
 
@@ -13,20 +13,21 @@ It also tracks which brain-inspired mechanisms Cortex has already stolen so far 
 ## Current accepted repo truth
 
 - Cortex v2 MVP is complete at the current justified boundary.
-- The accepted center is a tiny integrity core, active SRE reference surfaces, three host vertical slices, a contradiction-preserving evidence harness, and AUX MVP support-only surfaces.
+- The accepted center is a tiny integrity core, active SRE reference surfaces, four accepted host/runtime-product lines, a contradiction-preserving evidence harness, and AUX MVP support-only surfaces.
 - The verification/evidence restack train, K1 runtime/product restack, and K2 bounded host-control train are now landed for current scope on top of that same product truth.
 - The reference runtime shell, bounded reference continuity, OpenAI documented-host-event runtime shell, raw-transcript ingress shell, loopback service shell, and bounded outbound OpenAI host-control lane are now accepted on the current line.
 - The Gemini documented-host-event runtime shell, raw-transcript ingress shell, loopback service shell, and bounded outbound Gemini host-control lane are now accepted on the current line.
+- The Claude documented-host-event runtime shell, raw-transcript ingress shell, loopback service shell, and bounded outbound Claude host-control lane are now accepted on the current line.
 - The OpenAI host-realization cell now has a committed three-pair evidence series and `candidate_positive` cell-level signal for better host-specialized realization.
 - Mediation remains blocked and unjustified at package level.
-- Current follow-on work may include explicitly opened bounded runtime/product trains in the active workstream; the accepted one is G1 Gemini runtime/product parity and the current one is A1 Claude runtime/product parity.
+- The current open train is L1 multi-host live validation, and the first pass is blocked on live auth-model alignment rather than runtime contradiction.
 
 ## North-star product target
 
 The north-star product target is still future program space.
 It is not accepted repo truth today.
 
-- live runtime and product shell
+- live runtime and product shell proven against subscribed hosts
 - computed executive loop
 - outcome feedback and lawful enforcement
 - optional runtime support geometry if explicitly earned
@@ -35,7 +36,7 @@ It is not accepted repo truth today.
 
 ## Lawful gap programs
 
-- product shell / live runtime program
+- multi-host live validation / auth-alignment program
 - executive loop computation program
 - closed-loop feedback and enforcement program
 - runtime AUX activation program

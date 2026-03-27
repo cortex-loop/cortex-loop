@@ -1,0 +1,8 @@
+{
+  "action_tag": "claude-message-stream",
+  "request": {
+    "input": "Summarize this synthetic runtime update in exactly three bullets. Keep each bullet under eight words.\n\nUpdate: project_a migrated one background worker, one queue stalled for four minutes, no data loss occurred, rollback was not needed, and one dashboard lagged behind.",
+    "max_output_tokens": 128,
+    "model": "claude-sonnet-4-6"
+  }
+}

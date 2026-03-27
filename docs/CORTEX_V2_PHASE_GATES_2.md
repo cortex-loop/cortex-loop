@@ -129,3 +129,25 @@ They do not authorize multi-host runtime, runtime AUX activation, offline consol
 | `A2` Claude raw-transcript ingress shell | `docs/CORTEX_V2_CLAUDE_INGRESS_PROGRAM_0.md`; `tests/unit/test_claude_ingress.py`; `tests/integration/test_claude_ingress_cli.py`; `tests/integration/test_claude_ingress_continuity.py` | closed | landed | Claude raw-transcript ingress parsing is landed on the accepted G1 closeout line; transcript records with `type` drive the current-line Claude runtime shell, wrapper-shaped and mixed wrapper/transcript records are explicitly rejected, `ping` and `error` remain transport-only rather than lawful ingress records, split-run ingress continuity is proven for current scope, and repeated direct reruns plus repeated `make revalidate-claude-ingress` passed |
 | `A3` Claude loopback service shell | `docs/CORTEX_V2_CLAUDE_SERVICE_PROGRAM_0.md`; `tests/unit/test_claude_service.py`; `tests/integration/test_claude_service_http.py`; `tests/integration/test_claude_service_continuity.py` | closed | landed | loopback-only Claude HTTP is landed on the accepted G1 closeout line; `POST /v1/events` drives the current-line Claude ingress parser and Claude runtime shell, artifact import/export remains JSON-only, one active session per process is real for current scope, and repeated direct reruns plus repeated `make revalidate-claude-service` passed |
 | `A4` Claude bounded outbound host-control lane | `docs/CORTEX_V2_CLAUDE_HOST_CONTROL_PROGRAM_0.md`; `tests/unit/test_claude_host_control.py`; `tests/integration/test_claude_host_control_service.py`; `tests/integration/test_claude_host_control_continuity.py` | closed | landed | the first bounded outbound Claude host-control lane is landed on the accepted G1 closeout line, implemented at G1 proof head `fe33a7e`; `POST /v1/actions/message-stream` is text-only and strict-whitelist for current scope, returned host events re-enter the current-line Claude ingress parser and Claude runtime shell directly, the stdlib transport has an internal fixture mode so the canonical bundle requires no live network, and repeated direct reruns plus repeated `make revalidate-claude-host-control` passed |
+
+---
+
+## 7. Live-validation gates
+
+Source of truth:
+
+- `docs/CORTEX_V2_LIVE_VALIDATION_PROGRAM_0.md`
+- `docs/CORTEX_V2_LIVE_VALIDATION_SCENARIO_CATALOG_0.md`
+- `docs/CORTEX_V2_LIVE_VALIDATION_VERDICT_0.md`
+
+Overall status: `blocked`
+
+These rows track live subscribed-host validation over the accepted runtime/product shells.
+They do not authorize runtime widening, CLI-backed transport substitution, tool-use expansion, or packet reinterpretation.
+
+| Gate row | Current evidence | Owner / next closeout | Status | Notes |
+| --- | --- | --- | --- | --- |
+| `L1` Claude live validation | `docs/CORTEX_V2_LIVE_VALIDATION_PROGRAM_0.md`; `docs/live_validation/preflight_report.json`; `docs/live_validation/claude/provider_baseline_runs.json`; `docs/live_validation/claude/cortex_live_runs.json` | live-auth alignment seam then rerun `L1` | blocked | Claude Code is updated to `2.1.85` and the local CLI session exists, but the direct terminal baseline fails immediately with `auth_expired` and the current A4 live product path fails at the first action call with missing `ANTHROPIC_API_KEY`; continuity export remains reachable as a bounded artifact boundary and the blocker is explicit rather than silent |
+| `L2` Gemini live validation | `docs/CORTEX_V2_LIVE_VALIDATION_PROGRAM_0.md`; `docs/live_validation/preflight_report.json`; `docs/live_validation/gemini/provider_baseline_runs.json`; `docs/live_validation/gemini/cortex_live_runs.json` | live-auth alignment seam then rerun `L2` | blocked | Gemini CLI is updated to `0.35.2`, but the direct terminal baseline for `gemini-2.5-pro` is currently `capacity_exhausted` and the current G4 live product path fails at the first action call with missing `GEMINI_API_KEY`; the harness collapses later duplicate runs once the blocker is proven so evidence remains high-signal |
+| `L3` OpenAI live validation | `docs/CORTEX_V2_LIVE_VALIDATION_PROGRAM_0.md`; `docs/live_validation/preflight_report.json`; `docs/live_validation/openai/provider_baseline_runs.json`; `docs/live_validation/openai/cortex_live_runs.json` | live-auth alignment seam then rerun `L3` | blocked | the OpenAI CLI is installed at `2.30.0`, but the direct Responses baseline and the current O4 live product path both fail honestly with missing `OPENAI_API_KEY`; this is an auth boundary blocker, not a runtime-shell contradiction |
+| `L4` lifecycle-first payoff verdict | `docs/CORTEX_V2_LIVE_VALIDATION_VERDICT_0.md`; `docs/live_validation/comparators/live_validation_comparison.json`; `docs/live_validation/comparators/live_validation_comparison.md` | live-auth alignment seam then rerun `L1`-`L3` | partial | the first comparator exists and concludes that lifecycle-first is not yet paying off enough on real hosts because zero successful Cortex host-control runs were achieved, but it also records that the current shells surface auth/model blockers explicitly rather than fabricating parity |

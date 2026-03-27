@@ -1,0 +1,8 @@
+{
+  "action_tag": "openai-response-stream",
+  "request": {
+    "input": "second step",
+    "max_output_tokens": 96,
+    "model": "gpt-5.4"
+  }
+}

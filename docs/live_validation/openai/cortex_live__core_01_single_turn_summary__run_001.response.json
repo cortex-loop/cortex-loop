@@ -1,0 +1,23 @@
+{
+  "error": "OPENAI_API_KEY is required for the live OpenAI host-control transport.",
+  "export_payload": {
+    "artifact_kind": "openai-runtime-session",
+    "artifact_version": 1,
+    "continuity_truth": {
+      "active_track_ref": "main",
+      "branch_registry": [
+        "main"
+      ],
+      "event_index": 0,
+      "pending_goal_refs": [],
+      "session_id": null
+    },
+    "control_residue": {
+      "feedback_window": [],
+      "last_budget_band": null,
+      "last_commitment_result_summary": null,
+      "last_realization_feedback": null
+    }
+  },
+  "export_status": 200
+}

@@ -1,0 +1,8 @@
+{
+  "action_tag": "claude-message-stream",
+  "request": {
+    "input": "second step",
+    "max_output_tokens": 96,
+    "model": "claude-sonnet-4-6"
+  }
+}

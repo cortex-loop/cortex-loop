@@ -1,6 +1,6 @@
 # CORTEX_V2_IMPLEMENTATION_STATUS_NOTE
 
-Date: 2026-03-24
+Date: 2026-03-27
 Status: final implementation closeout note for the currently justified v2 roadmap
 
 ## Scope
@@ -26,8 +26,15 @@ It does not by itself open new feature work.
 - Host verticals are landed for:
   - reference host,
   - Gemini,
-  - OpenAI.
+  - OpenAI,
+  - and Claude.
   Each host has observe/bind, commitment-path, and neutral-only slices.
+- Accepted bounded runtime/product follow-on shells are landed for:
+  - reference continuity,
+  - OpenAI runtime / ingress / service / bounded host-control,
+  - Gemini runtime / ingress / service / bounded host-control,
+  - and Claude runtime / ingress / service / bounded host-control.
+- The current refreshed live-model baseline is recorded in `docs/CORTEX_V2_ACTIVE_WORKSTREAM.md` at `codex/l1-live-validation` commit `8eb7f08`.
 - Eval and proof surfaces are landed:
   - artifact schemas,
   - contradiction-preserving eval harness,
@@ -47,7 +54,7 @@ It does not by itself open new feature work.
 - AUX geometry remains evaluation-first and runtime-off-by-default.
 - AUX offline consolidation remains deferred.
 - Retrieval-shadow, offline support learning, and broader auxiliary memory programs remain deferred.
-- Broad host parity, geometry runtime, and offline learning remain out of scope for the current closeout.
+- Additional host/runtime widening beyond the accepted reference / OpenAI / Gemini / Claude line, geometry runtime, and offline learning remain out of scope for the current closeout.
 
 ## Experimental / Blocked On Evidence
 
@@ -110,7 +117,7 @@ If work continues later, it must be explicitly framed in the active workstream l
 
 - non-feature cleanup,
 - verification ergonomics,
-- evidence collection for future experimental decisions such as mediation,
+- evidence collection for future experimental decisions such as mediation or live-host validation,
 - or a separately scoped bounded runtime/product follow-on train.
 
 In this maintainer workspace, future seam-parent truth is recorded in `docs/CORTEX_V2_ACTIVE_WORKSTREAM.md`; do not hardcode a separate accepted workflow baseline here.

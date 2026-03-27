@@ -1,0 +1,4 @@
+openai_service listening on 127.0.0.1:62486
+127.0.0.1 - - [27/Mar/2026 22:51:51] "GET /health HTTP/1.1" 200 -
+127.0.0.1 - - [27/Mar/2026 22:51:51] "POST /v1/actions/response-stream HTTP/1.1" 502 -
+127.0.0.1 - - [27/Mar/2026 22:51:51] "GET /v1/session/export HTTP/1.1" 200 -

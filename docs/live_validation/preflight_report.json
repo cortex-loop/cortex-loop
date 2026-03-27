@@ -1,0 +1,107 @@
+{
+  "accepted_baseline": {
+    "branch": "codex/l1-live-validation",
+    "commit": "8eb7f08"
+  },
+  "auth_surfaces": {
+    "claude_cli_session": {
+      "api_provider": "firstParty",
+      "auth_method": "claude.ai",
+      "available": true,
+      "logged_in": true,
+      "note": "CLI session presence does not prove token freshness; live baseline runs still act as the real auth probe.",
+      "subscription_type": "pro"
+    },
+    "environment_api_keys": {
+      "ANTHROPIC_API_KEY": false,
+      "GEMINI_API_KEY": false,
+      "OPENAI_API_KEY": false
+    },
+    "gemini_cli_status_probe": {
+      "available": true,
+      "note": "Gemini CLI exposes no separate non-invasive auth-status command in the current tool surface; live prompt execution is the practical auth/capacity probe."
+    },
+    "openai_cli_capability": {
+      "installed": true,
+      "note": "The installed OpenAI CLI is an API utility and still expects an API key for live calls."
+    }
+  },
+  "generated_at": "2026-03-27T13:52:26+00:00",
+  "models_under_test": {
+    "claude": "claude-sonnet-4-6",
+    "gemini": "gemini-2.5-pro",
+    "openai": "gpt-5.4"
+  },
+  "tool_updates": {
+    "claude": {
+      "command": [
+        "claude",
+        "update"
+      ],
+      "ended_at": "2026-03-27T13:52:16+00:00",
+      "exit_code": 0,
+      "started_at": "2026-03-27T13:51:49+00:00",
+      "stderr": "",
+      "stdout": "Current version: 2.1.85\nChecking for updates to latest version...\nClaude Code is up to date (2.1.85)"
+    },
+    "gemini": {
+      "command": [
+        "brew",
+        "upgrade",
+        "gemini-cli"
+      ],
+      "ended_at": "2026-03-27T13:52:18+00:00",
+      "exit_code": 0,
+      "started_at": "2026-03-27T13:52:16+00:00",
+      "stderr": "Warning: gemini-cli 0.35.2 already installed",
+      "stdout": ""
+    },
+    "openai": {
+      "command": [
+        "pipx",
+        "upgrade",
+        "openai"
+      ],
+      "ended_at": "2026-03-27T13:52:19+00:00",
+      "exit_code": 0,
+      "started_at": "2026-03-27T13:52:18+00:00",
+      "stderr": "upgrading shared libraries...\nupgrading openai...",
+      "stdout": "openai is already at latest version 2.30.0 (location:\n$HOME/.local/pipx/venvs/openai)"
+    }
+  },
+  "tool_versions": {
+    "claude": {
+      "command": [
+        "claude",
+        "--version"
+      ],
+      "ended_at": "2026-03-27T13:52:22+00:00",
+      "exit_code": 0,
+      "started_at": "2026-03-27T13:52:19+00:00",
+      "stderr": "",
+      "stdout": "2.1.85 (Claude Code)"
+    },
+    "gemini": {
+      "command": [
+        "gemini",
+        "--version"
+      ],
+      "ended_at": "2026-03-27T13:52:24+00:00",
+      "exit_code": 0,
+      "started_at": "2026-03-27T13:52:22+00:00",
+      "stderr": "",
+      "stdout": "0.35.2"
+    },
+    "openai": {
+      "command": [
+        "openai",
+        "--version"
+      ],
+      "ended_at": "2026-03-27T13:52:24+00:00",
+      "exit_code": 0,
+      "started_at": "2026-03-27T13:52:24+00:00",
+      "stderr": "",
+      "stdout": "openai 2.30.0"
+    }
+  }
+}

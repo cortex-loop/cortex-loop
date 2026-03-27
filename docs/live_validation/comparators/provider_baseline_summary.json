@@ -1,0 +1,268 @@
+{
+  "generated_at": "2026-03-27T13:52:35+00:00",
+  "providers": {
+    "claude": {
+      "generated_at": "2026-03-27T13:52:37+00:00",
+      "provider": "claude",
+      "runs": [
+        {
+          "command": [
+            "claude",
+            "-p",
+            "Summarize this synthetic runtime update in exactly three bullets. Keep each bullet under eight words.\n\nUpdate: project_a migrated one background worker, one queue stalled for four minutes, no data loss occurred, rollback was not needed, and one dashboard lagged behind.",
+            "--model",
+            "claude-sonnet-4-6",
+            "--output-format",
+            "stream-json",
+            "--verbose",
+            "--max-turns",
+            "1",
+            "--permission-mode",
+            "plan"
+          ],
+          "ended_at": "2026-03-27T13:52:37+00:00",
+          "failure_class": "auth_expired",
+          "notes": null,
+          "provider": "claude",
+          "repeat_index": 1,
+          "result_text": "Failed to authenticate. API Error: 401 {\"type\":\"error\",\"error\":{\"type\":\"authentication_error\",\"message\":\"OAuth token has expired. Please obtain a new token or refresh your existing token.\"},\"request_id\":\"req_011CZThJYEz4Vh8TgzhoVE2D\"}",
+          "scenario_id": "core_01_single_turn_summary",
+          "started_at": "2026-03-27T13:52:35+00:00",
+          "stderr_path": "docs/live_validation/claude/provider_baseline__core_01_single_turn_summary__run_001.stderr.log",
+          "stdout_path": "docs/live_validation/claude/provider_baseline__core_01_single_turn_summary__run_001.stdout.log",
+          "structured_event_count": 3,
+          "structured_event_labels": [
+            "system",
+            "assistant",
+            "result"
+          ],
+          "success": false
+        },
+        {
+          "failure_class": "auth_expired",
+          "notes": "Skipped after an earlier blocking provider failure.",
+          "provider": "claude",
+          "repeat_index": 2,
+          "scenario_id": "core_01_single_turn_summary",
+          "skipped": true,
+          "success": false
+        },
+        {
+          "failure_class": "auth_expired",
+          "notes": "Skipped after an earlier blocking provider failure.",
+          "provider": "claude",
+          "repeat_index": 1,
+          "scenario_id": "core_02_long_stream",
+          "skipped": true,
+          "success": false
+        },
+        {
+          "failure_class": "auth_expired",
+          "notes": "Skipped after an earlier blocking provider failure.",
+          "provider": "claude",
+          "repeat_index": 2,
+          "scenario_id": "core_02_long_stream",
+          "skipped": true,
+          "success": false
+        },
+        {
+          "failure_class": "auth_expired",
+          "notes": "Skipped after an earlier blocking provider failure.",
+          "provider": "claude",
+          "repeat_index": 1,
+          "scenario_id": "core_03_two_turn_restart",
+          "skipped": true,
+          "success": false
+        },
+        {
+          "failure_class": "auth_expired",
+          "notes": "Skipped after an earlier blocking provider failure.",
+          "provider": "claude",
+          "repeat_index": 2,
+          "scenario_id": "core_03_two_turn_restart",
+          "skipped": true,
+          "success": false
+        },
+        {
+          "failure_class": "auth_expired",
+          "notes": "Skipped after an earlier blocking provider failure.",
+          "provider": "claude",
+          "repeat_index": 1,
+          "scenario_id": "claude_01_messages_shape",
+          "skipped": true,
+          "success": false
+        }
+      ]
+    },
+    "gemini": {
+      "generated_at": "2026-03-27T13:53:22+00:00",
+      "provider": "gemini",
+      "runs": [
+        {
+          "command": [
+            "gemini",
+            "-p",
+            "Summarize this synthetic runtime update in exactly three bullets. Keep each bullet under eight words.\n\nUpdate: project_a migrated one background worker, one queue stalled for four minutes, no data loss occurred, rollback was not needed, and one dashboard lagged behind.",
+            "-o",
+            "stream-json",
+            "-m",
+            "gemini-2.5-pro",
+            "--approval-mode",
+            "plan"
+          ],
+          "ended_at": "2026-03-27T13:53:22+00:00",
+          "failure_class": "capacity_exhausted",
+          "notes": "provider CLI timed out; partial output preserved for blocker classification",
+          "provider": "gemini",
+          "repeat_index": 1,
+          "result_text": "Summarize this synthetic runtime update in exactly three bullets. Keep each bullet under eight words.\n\nUpdate: project_a migrated one background worker, one queue stalled for four minutes, no data loss occurred, rollback was not needed, and one dashboard lagged behind.",
+          "scenario_id": "core_01_single_turn_summary",
+          "started_at": "2026-03-27T13:52:37+00:00",
+          "stderr_path": "docs/live_validation/gemini/provider_baseline__core_01_single_turn_summary__run_001.stderr.log",
+          "stdout_path": "docs/live_validation/gemini/provider_baseline__core_01_single_turn_summary__run_001.stdout.log",
+          "structured_event_count": 2,
+          "structured_event_labels": [
+            "init",
+            "message"
+          ],
+          "success": false
+        },
+        {
+          "failure_class": "capacity_exhausted",
+          "notes": "Skipped after an earlier blocking provider failure.",
+          "provider": "gemini",
+          "repeat_index": 2,
+          "scenario_id": "core_01_single_turn_summary",
+          "skipped": true,
+          "success": false
+        },
+        {
+          "failure_class": "capacity_exhausted",
+          "notes": "Skipped after an earlier blocking provider failure.",
+          "provider": "gemini",
+          "repeat_index": 1,
+          "scenario_id": "core_02_long_stream",
+          "skipped": true,
+          "success": false
+        },
+        {
+          "failure_class": "capacity_exhausted",
+          "notes": "Skipped after an earlier blocking provider failure.",
+          "provider": "gemini",
+          "repeat_index": 2,
+          "scenario_id": "core_02_long_stream",
+          "skipped": true,
+          "success": false
+        },
+        {
+          "failure_class": "capacity_exhausted",
+          "notes": "Skipped after an earlier blocking provider failure.",
+          "provider": "gemini",
+          "repeat_index": 1,
+          "scenario_id": "core_03_two_turn_restart",
+          "skipped": true,
+          "success": false
+        },
+        {
+          "failure_class": "capacity_exhausted",
+          "notes": "Skipped after an earlier blocking provider failure.",
+          "provider": "gemini",
+          "repeat_index": 2,
+          "scenario_id": "core_03_two_turn_restart",
+          "skipped": true,
+          "success": false
+        },
+        {
+          "failure_class": "capacity_exhausted",
+          "notes": "Skipped after an earlier blocking provider failure.",
+          "provider": "gemini",
+          "repeat_index": 1,
+          "scenario_id": "gemini_01_stream_variance",
+          "skipped": true,
+          "success": false
+        }
+      ]
+    },
+    "openai": {
+      "generated_at": "2026-03-27T13:53:22+00:00",
+      "provider": "openai",
+      "runs": [
+        {
+          "command": [
+            "urllib.request",
+            "POST",
+            "https://api.openai.com/v1/responses"
+          ],
+          "ended_at": "2026-03-27T13:53:22+00:00",
+          "failure_class": "auth_missing",
+          "notes": "The installed OpenAI CLI is present, but the baseline uses the Responses API directly for structured event capture.",
+          "provider": "openai",
+          "repeat_index": 1,
+          "result_text": null,
+          "scenario_id": "core_01_single_turn_summary",
+          "started_at": "2026-03-27T13:53:22+00:00",
+          "stderr_path": "docs/live_validation/openai/provider_baseline__core_01_single_turn_summary__run_001.stderr.log",
+          "stdout_path": "docs/live_validation/openai/provider_baseline__core_01_single_turn_summary__run_001.stdout.log",
+          "structured_event_count": 0,
+          "structured_event_labels": [],
+          "success": false
+        },
+        {
+          "failure_class": "auth_missing",
+          "notes": "Skipped after an earlier blocking provider failure.",
+          "provider": "openai",
+          "repeat_index": 2,
+          "scenario_id": "core_01_single_turn_summary",
+          "skipped": true,
+          "success": false
+        },
+        {
+          "failure_class": "auth_missing",
+          "notes": "Skipped after an earlier blocking provider failure.",
+          "provider": "openai",
+          "repeat_index": 1,
+          "scenario_id": "core_02_long_stream",
+          "skipped": true,
+          "success": false
+        },
+        {
+          "failure_class": "auth_missing",
+          "notes": "Skipped after an earlier blocking provider failure.",
+          "provider": "openai",
+          "repeat_index": 2,
+          "scenario_id": "core_02_long_stream",
+          "skipped": true,
+          "success": false
+        },
+        {
+          "failure_class": "auth_missing",
+          "notes": "Skipped after an earlier blocking provider failure.",
+          "provider": "openai",
+          "repeat_index": 1,
+          "scenario_id": "core_03_two_turn_restart",
+          "skipped": true,
+          "success": false
+        },
+        {
+          "failure_class": "auth_missing",
+          "notes": "Skipped after an earlier blocking provider failure.",
+          "provider": "openai",
+          "repeat_index": 2,
+          "scenario_id": "core_03_two_turn_restart",
+          "skipped": true,
+          "success": false
+        },
+        {
+          "failure_class": "auth_missing",
+          "notes": "Skipped after an earlier blocking provider failure.",
+          "provider": "openai",
+          "repeat_index": 1,
+          "scenario_id": "openai_01_long_responses",
+          "skipped": true,
+          "success": false
+        }
+      ]
+    }
+  },
+  "surface": "provider_baseline"
+}

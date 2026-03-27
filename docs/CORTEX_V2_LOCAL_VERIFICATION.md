@@ -368,6 +368,74 @@ Repo-local entry point:
 make revalidate-claude-host-control
 ```
 
+## Live-validation preflight
+
+This updates the installed provider CLIs, records version/auth state, and emits the machine-readable L1 preflight report.
+It is an environment-sensitive evidence command, not part of the canonical verification bundle, and it may mutate local provider tooling.
+
+Direct command:
+
+```sh
+python3 tools/live_preflight.py
+```
+
+Repo-local entry point:
+
+```sh
+make live-preflight
+```
+
+## Live provider baselines
+
+This captures direct terminal-backed provider baselines for Claude, Gemini, and OpenAI under `docs/live_validation/`.
+It is an evidence command only, not a test bundle, and it may stop after the first high-signal provider blocker instead of repeating low-signal failures.
+
+Direct command:
+
+```sh
+python3 tools/live_provider_baselines.py
+```
+
+Repo-local entry point:
+
+```sh
+make live-provider-baselines
+```
+
+## Live Cortex host-control capture
+
+This captures the authoritative product-path evidence over the loopback service plus the current A4 / G4 / O4 outbound host-control lanes.
+It is environment-sensitive and may record explicit auth or capacity blockers rather than successful live records.
+
+Direct command:
+
+```sh
+python3 tools/live_cortex_host_control.py
+```
+
+Repo-local entry point:
+
+```sh
+make live-cortex-host-control
+```
+
+## Live comparison and verdict
+
+This builds the current L1 comparison report and payoff verdict from the generated preflight, provider-baseline, and Cortex live artifacts.
+It is a support-surface summarizer only and does not change runtime behavior.
+
+Direct command:
+
+```sh
+python3 tools/live_compare.py
+```
+
+Repo-local entry point:
+
+```sh
+make live-compare
+```
+
 ## Reference-lane packet-example revalidation
 
 This revalidates the committed reference-lane packet example doc against the already-landed live packet path.

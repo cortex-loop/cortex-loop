@@ -1,0 +1,61 @@
+{
+  "cortex_success_count": 0,
+  "generated_at": "2026-03-27T13:53:26+00:00",
+  "next_corrective_seam": "open one bounded live-auth alignment seam so the provider CLI sessions and the current A4/G4/O4 live transports can both prove fresh credentials without private-account drift",
+  "provider_success_count": 0,
+  "providers": {
+    "claude": {
+      "cortex_live": {
+        "failure_classes": [
+          "auth_missing"
+        ],
+        "record_count_total": 0,
+        "successful_run_count": 0
+      },
+      "environment_api_key_present": false,
+      "provider_baseline": {
+        "failure_classes": [
+          "auth_expired"
+        ],
+        "first_success_labels": [],
+        "successful_run_count": 0
+      }
+    },
+    "gemini": {
+      "cortex_live": {
+        "failure_classes": [
+          "auth_missing"
+        ],
+        "record_count_total": 0,
+        "successful_run_count": 0
+      },
+      "environment_api_key_present": false,
+      "provider_baseline": {
+        "failure_classes": [
+          "capacity_exhausted"
+        ],
+        "first_success_labels": [],
+        "successful_run_count": 0
+      }
+    },
+    "openai": {
+      "cortex_live": {
+        "failure_classes": [
+          "auth_missing"
+        ],
+        "record_count_total": 0,
+        "successful_run_count": 0
+      },
+      "environment_api_key_present": false,
+      "provider_baseline": {
+        "failure_classes": [
+          "auth_missing"
+        ],
+        "first_success_labels": [],
+        "successful_run_count": 0
+      }
+    }
+  },
+  "verdict": "lifecycle-first is not yet paying off enough on real hosts",
+  "verdict_reason": "The current line exposes live blockers honestly, but no provider completed a successful Cortex host-control validation run."
+}
