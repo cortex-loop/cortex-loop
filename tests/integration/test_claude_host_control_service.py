@@ -27,7 +27,7 @@ def test_claude_host_control_action_endpoint_returns_ordered_g1_records_and_muta
             {
                 "action_tag": "claude-message-stream",
                 "request": {
-                    "model": "claude-sonnet-4-5",
+                    "model": "claude-sonnet-4-6",
                     "input": "hello from g1",
                     "max_output_tokens": 256,
                 },
@@ -70,7 +70,7 @@ def test_claude_host_control_action_endpoint_rejects_out_of_scope_request_keys()
             {
                 "action_tag": "claude-message-stream",
                 "request": {
-                    "model": "claude-sonnet-4-5",
+                    "model": "claude-sonnet-4-6",
                     "input": "hello from g1",
                     "max_output_tokens": 256,
                     "tools": [{"type": "function", "name": "bad"}],
@@ -96,7 +96,7 @@ def test_claude_host_control_action_endpoint_undocumented_raw_event_warns_conser
             {
                 "action_tag": "claude-message-stream",
                 "request": {
-                    "model": "claude-sonnet-4-5",
+                    "model": "claude-sonnet-4-6",
                     "input": "gap event",
                     "max_output_tokens": 256,
                 },
@@ -124,7 +124,7 @@ def test_claude_host_control_action_endpoint_upstream_failure_returns_502_withou
             {
                 "action_tag": "claude-message-stream",
                 "request": {
-                    "model": "claude-sonnet-4-5",
+                    "model": "claude-sonnet-4-6",
                     "input": "upstream failure",
                     "max_output_tokens": 256,
                 },

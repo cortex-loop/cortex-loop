@@ -27,7 +27,7 @@ def test_openai_host_control_action_endpoint_returns_ordered_o1_records_and_muta
             {
                 "action_tag": "openai-response-stream",
                 "request": {
-                    "model": "gpt-5",
+                    "model": "gpt-5.4",
                     "input": "hello from k2",
                 },
             },
@@ -64,7 +64,7 @@ def test_openai_host_control_action_endpoint_rejects_out_of_scope_request_keys()
             {
                 "action_tag": "openai-response-stream",
                 "request": {
-                    "model": "gpt-5",
+                    "model": "gpt-5.4",
                     "input": "hello from k2",
                     "tools": [{"type": "function", "name": "bad"}],
                 },
@@ -89,7 +89,7 @@ def test_openai_host_control_action_endpoint_undocumented_raw_event_warns_conser
             {
                 "action_tag": "openai-response-stream",
                 "request": {
-                    "model": "gpt-5",
+                    "model": "gpt-5.4",
                     "input": "gap event",
                 },
             },
@@ -116,7 +116,7 @@ def test_openai_host_control_action_endpoint_upstream_failure_returns_502_withou
             {
                 "action_tag": "openai-response-stream",
                 "request": {
-                    "model": "gpt-5",
+                    "model": "gpt-5.4",
                     "input": "upstream failure",
                 },
             },

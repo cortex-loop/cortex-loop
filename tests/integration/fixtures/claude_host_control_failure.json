@@ -4,7 +4,7 @@
       "expected_request": {
         "action_tag": "claude-message-stream",
         "request": {
-          "model": "claude-sonnet-4-5",
+          "model": "claude-sonnet-4-6",
           "input": "upstream failure",
           "max_output_tokens": 256
         }

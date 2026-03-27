@@ -24,7 +24,7 @@ from cortex.runtime.openai_service import OpenAIServiceState, handle_openai_serv
 def test_openai_host_control_request_constructs_strict_text_only_payload() -> None:
     request = OpenAIHostControlRequest(
         action_tag="openai-response-stream",
-        model="gpt-5",
+        model="gpt-5.4",
         input_text="hello",
         instructions="be terse",
         metadata={"trace_id": "oa-1"},
@@ -34,7 +34,7 @@ def test_openai_host_control_request_constructs_strict_text_only_payload() -> No
     assert request.as_payload() == {
         "action_tag": "openai-response-stream",
         "request": {
-            "model": "gpt-5",
+            "model": "gpt-5.4",
             "input": "hello",
             "instructions": "be terse",
             "metadata": {"trace_id": "oa-1"},
@@ -57,7 +57,7 @@ def test_openai_host_control_service_boundary_rejects_out_of_scope_keys() -> Non
             {
                 "action_tag": "openai-response-stream",
                 "request": {
-                    "model": "gpt-5",
+                    "model": "gpt-5.4",
                     "input": "hello",
                     "tools": [{"type": "function", "name": "bad"}],
                 },
@@ -151,7 +151,7 @@ def test_run_openai_host_control_matches_manual_o1_runtime_projection() -> None:
     ]
     request = OpenAIHostControlRequest(
         action_tag="openai-response-stream",
-        model="gpt-5",
+        model="gpt-5.4",
         input_text="hello",
     )
     result, final_session = run_openai_host_control(

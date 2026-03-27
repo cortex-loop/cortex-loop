@@ -68,7 +68,7 @@ def test_openai_service_action_roundtrips_records_with_fake_transport() -> None:
     payload = {
         "action_tag": "openai-response-stream",
         "request": {
-            "model": "gpt-5",
+            "model": "gpt-5.4",
             "input": "hello",
         },
     }

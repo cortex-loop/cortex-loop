@@ -68,7 +68,7 @@ def test_claude_service_action_roundtrips_records_with_fake_transport() -> None:
     payload = {
         "action_tag": "claude-message-stream",
         "request": {
-            "model": "claude-sonnet-4-5",
+            "model": "claude-sonnet-4-6",
             "input": "hello",
             "max_output_tokens": 32,
         },
