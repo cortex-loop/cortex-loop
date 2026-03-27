@@ -69,7 +69,7 @@ def test_gemini_host_control_service_boundary_rejects_out_of_scope_keys() -> Non
     assert "strict text-only whitelist" in payload["error"]
 
 
-def test_parse_sse_events_converts_stream_frames_into_o2_shaped_records() -> None:
+def test_parse_sse_events_converts_stream_frames_into_g2_shaped_records() -> None:
     events = _parse_sse_events(
         [
             b"event: content.start\n",
@@ -127,7 +127,7 @@ def test_parse_sse_events_rejects_malformed_json_event() -> None:
         )
 
 
-def test_run_gemini_host_control_matches_manual_o1_runtime_projection() -> None:
+def test_run_gemini_host_control_matches_manual_g1_runtime_projection() -> None:
     raw_events = [
         {
             "type": "content.start",

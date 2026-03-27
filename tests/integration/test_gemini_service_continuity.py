@@ -20,20 +20,20 @@ FIXTURE_PATH = (
 )
 
 
-def test_gemini_service_event_sequence_is_o3_equivalent_to_o2_ingress_shell(
+def test_gemini_service_event_sequence_is_g3_equivalent_to_g2_ingress_shell(
     tmp_path: Path,
 ) -> None:
-    o2_artifact = tmp_path / "o2-ingress.json"
-    o2_completed = _run_gemini_ingress_cli(
+    g2_artifact = tmp_path / "g2-ingress.json"
+    g2_completed = _run_gemini_ingress_cli(
         "--event-file",
         str(FIXTURE_PATH),
         "--save-session",
-        str(o2_artifact),
+        str(g2_artifact),
     )
 
-    assert o2_completed.returncode == 0, o2_completed.stderr
-    o2_records = _parse_jsonl_output(o2_completed.stdout)
-    o2_artifact_payload = _parse_session_artifact(o2_artifact)
+    assert g2_completed.returncode == 0, g2_completed.stderr
+    g2_records = _parse_jsonl_output(g2_completed.stdout)
+    g2_artifact_payload = _parse_session_artifact(g2_artifact)
 
     with run_gemini_service() as service:
         service_records = [
@@ -43,22 +43,22 @@ def test_gemini_service_event_sequence_is_o3_equivalent_to_o2_ingress_shell(
         export_status, exported = service.request("GET", "/v1/session/export")
 
     assert export_status == 200
-    _assert_o3_equivalent(o2_records, service_records, o2_artifact_payload, exported)
+    _assert_g3_equivalent(g2_records, service_records, g2_artifact_payload, exported)
 
 
-def test_gemini_service_export_import_preserves_o3_equivalence_and_keeps_diagnostics_non_equivalent(
+def test_gemini_service_export_import_preserves_g3_equivalence_and_keeps_diagnostics_non_equivalent(
     tmp_path: Path,
 ) -> None:
     uninterrupted_artifact = tmp_path / "uninterrupted.json"
-    o2_completed = _run_gemini_ingress_cli(
+    g2_completed = _run_gemini_ingress_cli(
         "--event-file",
         str(FIXTURE_PATH),
         "--save-session",
         str(uninterrupted_artifact),
     )
 
-    assert o2_completed.returncode == 0, o2_completed.stderr
-    uninterrupted_records = _parse_jsonl_output(o2_completed.stdout)
+    assert g2_completed.returncode == 0, g2_completed.stderr
+    uninterrupted_records = _parse_jsonl_output(g2_completed.stdout)
     uninterrupted_artifact_payload = _parse_session_artifact(uninterrupted_artifact)
     fixture_records = _read_fixture_records()
 
@@ -89,7 +89,7 @@ def test_gemini_service_export_import_preserves_o3_equivalence_and_keeps_diagnos
 
     assert imported == exported_seed
     assert final_export_status == 200
-    _assert_o3_equivalent(
+    _assert_g3_equivalent(
         uninterrupted_records,
         split_records,
         uninterrupted_artifact_payload,
@@ -136,7 +136,7 @@ def _parse_session_artifact(path: Path) -> dict[str, object]:
     return json.loads(path.read_text(encoding="utf-8"))
 
 
-def _assert_o3_equivalent(
+def _assert_g3_equivalent(
     expected_records: list[dict[str, object]],
     actual_records: list[dict[str, object]],
     expected_artifact: dict[str, object],

@@ -266,7 +266,7 @@ def test_resume_protocol_and_active_workstream_contract_exist() -> None:
     assert "Current working branch at ledger update: `codex/g1-gemini-runtime-product-parity`" in workstream_text
     assert "branch-local G1 candidate over accepted K3 truth" in workstream_text
     assert "Current candidate seam: `G1` Gemini runtime/product parity closeout" in workstream_text
-    assert "Current seam status: `G1 candidate implemented and partially verified / accepted baseline remains clean accepted K3 line`" in workstream_text
+    assert "Current seam status: `G1 candidate implemented and repeat-verified / accepted baseline remains clean accepted K3 line`" in workstream_text
     assert "Do not import donor runtime workflow truth wholesale from `codex/c1-reference-continuation`" in workstream_text
     assert "Do not reopen K3 into new executive-allocation widening beyond the accepted current-scope law." in workstream_text
     assert "Do not open support-memory runtime, mediation / `Q_t^{final}` experimentation, extra OpenAI work" in workstream_text

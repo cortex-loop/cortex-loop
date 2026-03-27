@@ -33,7 +33,7 @@ It is workflow state only. It does not override the packet documents, implementa
 - Current working branch at ledger update: `codex/g1-gemini-runtime-product-parity`
 - Current branch role: branch-local G1 candidate over accepted K3 truth
 - Current candidate seam: `G1` Gemini runtime/product parity closeout
-- Current seam status: `G1 candidate implemented and partially verified / accepted baseline remains clean accepted K3 line`
+- Current seam status: `G1 candidate implemented and repeat-verified / accepted baseline remains clean accepted K3 line`
 - Seam risk: the G1 candidate is a parser/doc-sync plus timing or environment-sensitive runtime/service/host-control seam; repeated direct and repo-local reruns are required before acceptance
 
 ## 3. Next lawful move
@@ -42,10 +42,10 @@ It is workflow state only. It does not override the packet documents, implementa
   - the accepted K3 baseline now includes explicit executive allocation diagnostics at `efe003e`
   - Gemini runtime, ingress, service, and bounded host-control shells are now real on the branch-local G1 line
   - Gemini reuses the accepted K3 executive allocation diagnostics exactly for current scope
+  - the direct Gemini bundle has now passed twice, all four Gemini repo-local revalidation targets have now passed twice, and the shared reference/OpenAI regression bundle remains green
   - package-level mediation evidence remains `insufficient`
 - Next lawful move:
-  - rerun the targeted Gemini bundle and repo-local revalidation targets on the clean branch
-  - then either accept G1 onto baseline truth or reject it explicitly
+  - keep the branch clean and either accept G1 onto baseline truth or reject it explicitly
 
 ## 4. Explicitly blocked moves
 

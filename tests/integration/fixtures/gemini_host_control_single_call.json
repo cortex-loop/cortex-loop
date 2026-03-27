@@ -5,28 +5,28 @@
         "action_tag": "gemini-interaction-stream",
         "request": {
           "model": "gemini-2.5-flash",
-          "input": "hello from k2"
+          "input": "hello from g1"
         }
       },
       "events": [
         {
           "type": "content.start",
-          "session_id": "gm-k2",
-          "interaction_id": "gm-int-k2-1"
+          "session_id": "gm-g4",
+          "interaction_id": "gm-int-g4-1"
         },
         {
           "type": "content.delta",
-          "session_id": "gm-k2",
-          "interaction_id": "gm-int-k2-1",
-          "delta": "hello from k2"
+          "session_id": "gm-g4",
+          "interaction_id": "gm-int-g4-1",
+          "delta": "hello from g1"
         },
         {
           "type": "interaction.complete",
-          "session_id": "gm-k2",
-          "interaction_id": "gm-int-k2-1",
-          "commitment_id": "gm-k2-commit-1",
+          "session_id": "gm-g4",
+          "interaction_id": "gm-int-g4-1",
+          "commitment_id": "gm-g4-commit-1",
           "externally_consequential": true,
-          "result_artifact_ref": "gm-k2-artifact-1"
+          "result_artifact_ref": "gm-g4-artifact-1"
         }
       ]
     }

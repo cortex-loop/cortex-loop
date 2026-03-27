@@ -13,7 +13,7 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 FIXTURE_DIR = REPO_ROOT / "tests" / "integration" / "fixtures"
 
 
-def test_gemini_host_control_action_endpoint_returns_ordered_o1_records_and_mutates_session() -> None:
+def test_gemini_host_control_action_endpoint_returns_ordered_g1_records_and_mutates_session() -> None:
     with run_gemini_service(
         env={
             gemini_host_transport._FIXTURE_PATH_ENV: str(
@@ -28,7 +28,7 @@ def test_gemini_host_control_action_endpoint_returns_ordered_o1_records_and_muta
                 "action_tag": "gemini-interaction-stream",
                 "request": {
                     "model": "gemini-2.5-flash",
-                    "input": "hello from k2",
+                    "input": "hello from g1",
                 },
             },
         )
@@ -65,7 +65,7 @@ def test_gemini_host_control_action_endpoint_rejects_out_of_scope_request_keys()
                 "action_tag": "gemini-interaction-stream",
                 "request": {
                     "model": "gemini-2.5-flash",
-                    "input": "hello from k2",
+                    "input": "hello from g1",
                     "tools": [{"type": "function", "name": "bad"}],
                 },
             },

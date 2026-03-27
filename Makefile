@@ -93,7 +93,7 @@ revalidate-gemini-ingress:
 
 revalidate-gemini-service:
 	$(PYTEST) tests/unit/test_gemini_service.py -q
-	$(PYTEST) tests/integration/test_gemini_service.py -q
+	$(PYTEST) tests/integration/test_gemini_service_http.py -q
 	$(PYTEST) tests/integration/test_gemini_service_continuity.py -q
 
 revalidate-gemini-host-control:

@@ -41,7 +41,7 @@ def parse_gemini_host_event_envelope(record: Mapping[str, Any]) -> GeminiHostEve
         )
     if "event_name" in record or "payload" in record:
         raise ValueError(
-            "O2 expects raw host transcript records only; wrapper and mixed "
+            "G2 expects raw host transcript records only; wrapper and mixed "
             "wrapper/transcript shapes that include `event_name` or `payload` are unlawful."
         )
     if "type" not in record:

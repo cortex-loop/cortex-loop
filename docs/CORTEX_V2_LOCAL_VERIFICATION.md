@@ -258,7 +258,7 @@ Direct commands:
 
 ```sh
 python3 -m pytest tests/unit/test_gemini_service.py -q
-python3 -m pytest tests/integration/test_gemini_service.py -q
+python3 -m pytest tests/integration/test_gemini_service_http.py -q
 python3 -m pytest tests/integration/test_gemini_service_continuity.py -q
 ```
 

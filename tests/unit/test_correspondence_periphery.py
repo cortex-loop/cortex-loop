@@ -1203,7 +1203,7 @@ EXPECTATIONS = (
             ),
             PromisedTestSurface(
                 test_file="tests/integration/test_gemini_runtime_continuity.py",
-                test_names=("test_gemini_runtime_split_session_is_o1_equivalent_to_uninterrupted_run",),
+                test_names=("test_gemini_runtime_split_session_is_g1_equivalent_to_uninterrupted_run",),
             ),
         ),
     ),
@@ -1218,7 +1218,7 @@ EXPECTATIONS = (
                 test_names=("test_gemini_runtime_cli_reads_documented_raw_events_and_preserves_host_name",),
             ),
             PromisedTestSurface(
-                test_file="tests/integration/test_gemini_service.py",
+                test_file="tests/integration/test_gemini_service_http.py",
                 test_names=("test_gemini_service_health_and_documented_event_flow",),
             ),
         ),
@@ -1340,7 +1340,7 @@ EXPECTATIONS = (
             ),
             PromisedTestSurface(
                 test_file="tests/integration/test_gemini_host_control_service.py",
-                test_names=("test_gemini_host_control_action_endpoint_returns_ordered_o1_records_and_mutates_session",),
+                test_names=("test_gemini_host_control_action_endpoint_returns_ordered_g1_records_and_mutates_session",),
             ),
         ),
     ),
@@ -1414,7 +1414,7 @@ EXPECTATIONS = (
                 test_names=("test_gemini_service_invalid_import_becomes_400_error_payload",),
             ),
             PromisedTestSurface(
-                test_file="tests/integration/test_gemini_service.py",
+                test_file="tests/integration/test_gemini_service_http.py",
                 test_names=(
                     "test_gemini_service_health_and_documented_event_flow",
                     "test_gemini_service_unknown_path_and_wrong_method_return_json_errors",
@@ -1433,7 +1433,7 @@ EXPECTATIONS = (
                 test_names=("test_gemini_service_import_export_preserves_exact_artifact_shape",),
             ),
             PromisedTestSurface(
-                test_file="tests/integration/test_gemini_service.py",
+                test_file="tests/integration/test_gemini_service_http.py",
                 test_names=("test_gemini_service_session_export_import_and_startup_load_roundtrip",),
             ),
         ),
@@ -1452,7 +1452,7 @@ EXPECTATIONS = (
                 ),
             ),
             PromisedTestSurface(
-                test_file="tests/integration/test_gemini_service.py",
+                test_file="tests/integration/test_gemini_service_http.py",
                 test_names=("test_gemini_service_session_export_import_and_startup_load_roundtrip",),
             ),
         ),
@@ -1464,7 +1464,7 @@ EXPECTATIONS = (
         symbol_name="main",
         promised_surfaces=(
             PromisedTestSurface(
-                test_file="tests/integration/test_gemini_service.py",
+                test_file="tests/integration/test_gemini_service_http.py",
                 test_names=(
                     "test_gemini_service_health_and_documented_event_flow",
                     "test_gemini_service_undocumented_raw_event_warns_without_fabricating_parity",
@@ -1472,7 +1472,7 @@ EXPECTATIONS = (
             ),
             PromisedTestSurface(
                 test_file="tests/integration/test_gemini_service_continuity.py",
-                test_names=("test_gemini_service_event_sequence_is_o3_equivalent_to_o2_ingress_shell",),
+                test_names=("test_gemini_service_event_sequence_is_g3_equivalent_to_g2_ingress_shell",),
             ),
         ),
     ),
@@ -1501,7 +1501,7 @@ EXPECTATIONS = (
                 test_file="tests/unit/test_gemini_host_control.py",
                 test_names=(
                     "test_gemini_host_control_result_rejects_wrong_action_tag",
-                    "test_run_gemini_host_control_matches_manual_o1_runtime_projection",
+                    "test_run_gemini_host_control_matches_manual_g1_runtime_projection",
                 ),
             ),
         ),
@@ -1515,10 +1515,10 @@ EXPECTATIONS = (
             PromisedTestSurface(
                 test_file="tests/unit/test_gemini_host_control.py",
                 test_names=(
-                    "test_parse_sse_events_converts_stream_frames_into_o2_shaped_records",
+                    "test_parse_sse_events_converts_stream_frames_into_g2_shaped_records",
                     "test_parse_sse_events_rejects_zero_event_stream",
                     "test_parse_sse_events_rejects_malformed_json_event",
-                    "test_run_gemini_host_control_matches_manual_o1_runtime_projection",
+                    "test_run_gemini_host_control_matches_manual_g1_runtime_projection",
                 ),
             ),
         ),
@@ -1531,7 +1531,7 @@ EXPECTATIONS = (
         promised_surfaces=(
             PromisedTestSurface(
                 test_file="tests/unit/test_gemini_host_control.py",
-                test_names=("test_run_gemini_host_control_matches_manual_o1_runtime_projection",),
+                test_names=("test_run_gemini_host_control_matches_manual_g1_runtime_projection",),
             ),
             PromisedTestSurface(
                 test_file="tests/integration/test_gemini_host_control_continuity.py",
@@ -1552,7 +1552,7 @@ EXPECTATIONS = (
             PromisedTestSurface(
                 test_file="tests/integration/test_gemini_host_control_service.py",
                 test_names=(
-                    "test_gemini_host_control_action_endpoint_returns_ordered_o1_records_and_mutates_session",
+                    "test_gemini_host_control_action_endpoint_returns_ordered_g1_records_and_mutates_session",
                     "test_gemini_host_control_action_endpoint_upstream_failure_returns_502_without_mutating_session",
                 ),
             ),

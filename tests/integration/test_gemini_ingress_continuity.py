@@ -18,7 +18,7 @@ FIXTURE_PATH = (
 )
 
 
-def test_gemini_ingress_split_session_is_o2_equivalent_to_uninterrupted_run(tmp_path: Path) -> None:
+def test_gemini_ingress_split_session_is_g2_equivalent_to_uninterrupted_run(tmp_path: Path) -> None:
     one_process_artifact = tmp_path / "one-process.json"
     split_seed_artifact = tmp_path / "split-seed.json"
     split_final_artifact = tmp_path / "split-final.json"
@@ -52,7 +52,7 @@ def test_gemini_ingress_split_session_is_o2_equivalent_to_uninterrupted_run(tmp_
         split_second_completed.stdout
     )
 
-    _assert_o2_equivalent(
+    _assert_g2_equivalent(
         one_process_records,
         split_records,
         _parse_session_artifact(one_process_artifact),
@@ -140,7 +140,7 @@ def _parse_session_artifact(path: Path) -> dict[str, object]:
     return json.loads(path.read_text(encoding="utf-8"))
 
 
-def _assert_o2_equivalent(
+def _assert_g2_equivalent(
     expected_records: list[dict[str, object]],
     actual_records: list[dict[str, object]],
     expected_artifact: dict[str, object],
