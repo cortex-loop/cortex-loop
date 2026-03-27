@@ -1,7 +1,7 @@
 # CORTEX_V2_CLAUDE_HOST_CONTROL_PROGRAM_0
 
 Date: 2026-03-27
-Status: active runtime-program brief for the first bounded outbound Claude host-control lane
+Status: accepted re-audited runtime-program brief for the first bounded outbound Claude host-control lane
 
 ## Purpose
 
@@ -76,7 +76,7 @@ This program does **not** authorize:
 
 ## Public service contract
 
-The public G1 surface remains:
+The public A1 surface remains:
 
 - `python3 -m cortex.runtime.claude_service`
 
@@ -115,7 +115,7 @@ Error contract:
 
 ## Runtime law for this program
 
-The G1 outbound lane may:
+The A4 outbound lane may:
 
 - reuse the current-line loopback `A3` service shell,
 - keep exactly one active `ClaudeRuntimeSession` per process,
@@ -179,11 +179,11 @@ Every seam must end on a clean tree before the next opens.
 - `make seam-preflight`, `make revalidate-claude-host-control`, `make revalidate-claude-service`, `make test-smoke`, and `make verify` pass
 - and the `A4` phase-gate row is updated truthfully
 
-## Current accepted state after G1 closeout
+## Current accepted state after A1 closeout
 
-On the accepted G1 closeout line over accepted K3 baseline `efe003e`:
+On the accepted A1 closeout line over accepted K3 baseline `efe003e`:
 
-- `ClaudeHostControlRequest`, `ClaudeHostControlResult`, `execute_claude_message_stream()`, `run_claude_host_control()`, and `POST /v1/actions/message-stream` are now landed `A4` surfaces, implemented at G1 proof head `fe33a7e`
+- `ClaudeHostControlRequest`, `ClaudeHostControlResult`, `execute_claude_message_stream()`, `run_claude_host_control()`, and `POST /v1/actions/message-stream` are now landed `A4` surfaces, implemented at A1 proof head `9d6186c`
 - the request boundary is strict-whitelist and text-only for current scope
 - the stdlib transport has an internal fixture mode so canonical tests require no live Claude network
 - returned host events now re-enter the current-line `A2` parser and `A1` runtime shell directly

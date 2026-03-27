@@ -1,7 +1,7 @@
 # CORTEX_V2_CLAUDE_RUNTIME_PROGRAM_0
 
 Date: 2026-03-27
-Status: active runtime-program brief for the first Claude documented host-event runtime shell
+Status: accepted re-audited runtime-program brief for the first Claude documented host-event runtime shell
 
 ## Purpose
 
@@ -179,11 +179,11 @@ Every seam remains one-session max and must end on a clean tree before the next 
 - `make seam-preflight`, `make revalidate-claude-runtime`, `make test-smoke`, and `make verify` pass,
 - and the `A1` phase-gate row is updated truthfully.
 
-## Current accepted state after G1 closeout
+## Current accepted state after A1 closeout
 
-On the accepted G1 closeout line over accepted K3 baseline `efe003e`:
+On the accepted A1 closeout line over accepted K3 baseline `efe003e`:
 
-- `ClaudeRuntimeSession`, `ClaudeRuntimeSessionArtifact`, `run_claude_runtime_step()`, and `python3 -m cortex.runtime.claude_cli` are now landed `A1` surfaces, implemented at G1 proof head `fe33a7e`
+- `ClaudeRuntimeSession`, `ClaudeRuntimeSessionArtifact`, `run_claude_runtime_step()`, and `python3 -m cortex.runtime.claude_cli` are now landed `A1` surfaces, implemented at A1 proof head `9d6186c`
 - raw documented Claude host events drive a host-specific runtime shell
 - `raw_host_event_name` is preserved in the top-level CLI record
 - canonical Cortex event names are explicitly rejected at both CLI and runtime entrypoint level

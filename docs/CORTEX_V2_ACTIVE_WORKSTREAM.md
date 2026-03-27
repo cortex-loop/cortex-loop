@@ -7,8 +7,8 @@ It is workflow state only. It does not override the packet documents, implementa
 
 ## 1. Accepted baseline
 
-- Accepted baseline branch: `codex/g1-gemini-runtime-product-parity`
-- Accepted baseline commit: `9dfe38a`
+- Accepted baseline branch: `codex/a1-claude-runtime-product-parity`
+- Accepted baseline commit: `9d6186c`
 - Accepted baseline state:
   - burden-axis re-audit remains accepted through the three thrash-host burden slices
   - package-level burden remains `insufficient`
@@ -17,11 +17,12 @@ It is workflow state only. It does not override the packet documents, implementa
   - the OpenAI host-realization cell now has a committed three-pair evidence series and `candidate_positive` cell-level signal for better host-specialized realization
   - package-level mediation evidence remains `insufficient`
   - lower visible burden remains unclaimed for host-realization
-  - accepted workflow baseline truth is now normalized around the accepted G1 Gemini runtime/product parity line
+  - accepted workflow baseline truth is now normalized around the accepted A1 Claude runtime/product parity line
   - the reference runtime shell, bounded reference continuity, OpenAI documented-host-event runtime shell, raw-transcript ingress shell, loopback service shell, bounded outbound OpenAI host-control lane, and explicit executive allocation diagnostics remain accepted on the current line
-  - the Gemini documented-host-event runtime shell, raw-transcript ingress shell, loopback service shell, and bounded outbound Gemini host-control lane are now accepted on the same G1 line
-  - `R6`, `O5`, `G1`, `G2`, `G3`, and `G4` are now landed on the current line
-  - the next lawful big product-facing direction is Claude runtime/product parity
+  - the Gemini documented-host-event runtime shell, raw-transcript ingress shell, loopback service shell, and bounded outbound Gemini host-control lane remain accepted on the same line
+  - the Claude documented-host-event runtime shell, raw-transcript ingress shell, loopback service shell, and bounded outbound Claude host-control lane are now accepted on the same A1 line
+  - `R6`, `O5`, `G1`, `G2`, `G3`, `G4`, `A1`, `A2`, `A3`, and `A4` are now landed on the current line
+  - the next lawful big product-facing direction is multi-host live validation across reference, Claude, Gemini, and OpenAI
 - Accepted baseline authority anchors:
   - `docs/CORTEX_V2_IMPLEMENTATION_STATUS_NOTE.md`
   - `docs/CORTEX_V2_IMPLEMENTATION_MASTER_PLAN_2.md`
@@ -30,24 +31,21 @@ It is workflow state only. It does not override the packet documents, implementa
 
 ## 2. Current campaign and seam state
 
-- Current campaign: `A1 Claude runtime/product parity train`
-- Current working branch at ledger update: `codex/g1-gemini-runtime-product-parity`
-- Current branch role: branch-local A1 candidate over accepted G1 truth
-- Current candidate seam: `A1` Claude runtime/product parity closeout
-- Current seam status: `A1 candidate implemented and partially verified / accepted baseline remains clean accepted G1 line`
-- Seam risk: the A1 candidate is a parser/doc-sync plus timing or environment-sensitive runtime/service/host-control seam; repeated direct and repo-local reruns are required before acceptance
+- Current campaign: `none`
+- Current working branch at ledger update: `codex/a1-claude-runtime-product-parity`
+- Current branch role: accepted-baseline receipt line over accepted A1 truth
+- Current candidate seam: `none`
+- Current seam status: `idle / accepted A1 closeout is recorded on the current line`
+- Seam risk: `none / no open seam`
 
 ## 3. Next lawful move
 
-- Current candidate answer after A1 implementation:
-  - the accepted G1 baseline now includes explicit K3 executive allocation diagnostics plus Gemini runtime, ingress, service, and bounded host-control shells on the same line
-  - Claude runtime, ingress, service, and bounded host-control shells are now real on the branch-local A1 line
-  - Claude reuses the accepted K3 executive allocation diagnostics exactly for current scope
-  - the direct Claude unit/integration bundles are green and `make verify` is green on the branch-local A1 line
+- Current accepted state after A1 closeout:
+  - the accepted A1 baseline now includes explicit K3 executive allocation diagnostics plus Claude runtime, ingress, service, and bounded host-control shells on the same line
+  - the direct Claude unit/integration bundles are green, the Claude code is green under `make verify`, and the Claude slice now has repo-local verification entry points on the accepted line
   - package-level mediation evidence remains `insufficient`
 - Next lawful move:
-  - rerun the targeted Claude bundle and the four Claude repo-local revalidation targets on the clean branch
-  - then either accept A1 onto baseline truth or reject it explicitly
+  - keep the branch clean and plan one bounded multi-host live validation train across reference, Claude, Gemini, and OpenAI
 
 ## 4. Explicitly blocked moves
 
@@ -68,7 +66,7 @@ It is workflow state only. It does not override the packet documents, implementa
 
 - The dirty donor branch `codex/e1-verification-substrate-entrypoints` remains mixed and is not the source of truth for future runtime restack work.
 - The donor runtime branches remain source material only; their workflow truth is not authoritative on this line.
-- The accepted `g1` line is now the source of accepted workflow baseline truth until a later accepted baseline update lands.
+- The accepted `a1` line is now the source of accepted workflow baseline truth until a later accepted baseline update lands.
 - Local workspace directories already exist under `.claude/worktrees/`.
 - Re-read `git status --short --untracked-files=all` before opening any new seam; this summary is only the continuity reminder, not the canonical file list.
 

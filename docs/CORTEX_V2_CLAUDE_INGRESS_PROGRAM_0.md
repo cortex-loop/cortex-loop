@@ -1,7 +1,7 @@
 # CORTEX_V2_CLAUDE_INGRESS_PROGRAM_0
 
 Date: 2026-03-27
-Status: active runtime-program brief for the first Claude raw-transcript ingress shell
+Status: accepted re-audited runtime-program brief for the first Claude raw-transcript ingress shell
 
 ## Purpose
 
@@ -155,11 +155,11 @@ Every seam remains one-session max and must end on a clean tree before the next 
 - `make seam-preflight`, `make revalidate-claude-ingress`, `make test-smoke`, and `make verify` pass,
 - and the `A2` phase-gate row is updated truthfully.
 
-## Current accepted state after G1 closeout
+## Current accepted state after A1 closeout
 
-On the accepted G1 closeout line over accepted K3 baseline `efe003e`:
+On the accepted A1 closeout line over accepted K3 baseline `efe003e`:
 
-- `ClaudeHostEventEnvelope` and `parse_claude_host_event_envelope()` are now landed `A2` surfaces, implemented at G1 proof head `fe33a7e`
+- `ClaudeHostEventEnvelope` and `parse_claude_host_event_envelope()` are now landed `A2` surfaces, implemented at A1 proof head `9d6186c`
 - `python3 -m cortex.runtime.claude_ingress_cli` now drives the current-line `A1` runtime shell from raw transcript records
 - wrapper-shaped and mixed wrapper/transcript records are explicitly rejected at ingress
 - canonical Cortex event names are explicitly rejected at ingress

@@ -1,11 +1,11 @@
 # CORTEX_V2_CLAUDE_RUNTIME_RESTACK_PROGRAM_0
 
 Date: 2026-03-27
-Status: active support brief for the A1 Claude runtime/product parity train
+Status: accepted re-audited support brief for the A1 Claude runtime/product parity train
 
 ## Purpose
 
-This document records the accepted post-`K3` G1 runtime/product restack train:
+This document records the accepted post-`G1` A1 Claude runtime/product parity train:
 
 - land the Claude runtime, ingress, service, and bounded host-control shells in dependency order,
 - reuse accepted K3 executive allocation diagnostics exactly as-is,
@@ -54,7 +54,7 @@ This train does **not** authorize:
 - multi-agent orchestration
 - extra OpenAI work
 
-## G1 seam order
+## A1 seam order
 
 1. Claude documented host-event runtime shell
 2. Claude raw-transcript ingress shell
@@ -63,9 +63,9 @@ This train does **not** authorize:
 
 Each seam must end clean before the next opens.
 
-## Current accepted state after G1 closeout
+## Current accepted state after A1 closeout
 
-On the accepted G1 closeout line over accepted K3 baseline `efe003e`:
+On the accepted A1 closeout line over accepted K3 baseline `efe003e`:
 
 - Claude runtime, ingress, service, and bounded host-control shells are now landed as the accepted A1 runtime/product parity stack
 - the Claude projections reuse accepted K3 executive allocation diagnostics exactly for current scope

@@ -2,7 +2,7 @@
 
 **Date:** 2026-03-26  
 **Role:** support surface for orientation and planning  
-**Accepted factual baseline:** `codex/g1-gemini-runtime-product-parity` at `9dfe38a`
+**Accepted factual baseline:** `codex/a1-claude-runtime-product-parity` at `9d6186c`
 
 > This folder tracks three separate things: current accepted repo truth, the north-star product target, and the lawful gap programs required to move from the first toward the second.
 
@@ -17,9 +17,10 @@ It also tracks which brain-inspired mechanisms Cortex has already stolen so far 
 - The verification/evidence restack train, K1 runtime/product restack, and K2 bounded host-control train are now landed for current scope on top of that same product truth.
 - The reference runtime shell, bounded reference continuity, OpenAI documented-host-event runtime shell, raw-transcript ingress shell, loopback service shell, and bounded outbound OpenAI host-control lane are now accepted on the current line.
 - The Gemini documented-host-event runtime shell, raw-transcript ingress shell, loopback service shell, and bounded outbound Gemini host-control lane are now accepted on the current line.
+- The Claude documented-host-event runtime shell, raw-transcript ingress shell, loopback service shell, and bounded outbound Claude host-control lane are now accepted on the current line.
 - The OpenAI host-realization cell now has a committed three-pair evidence series and `candidate_positive` cell-level signal for better host-specialized realization.
 - Mediation remains blocked and unjustified at package level.
-- Current follow-on work may include explicitly opened bounded runtime/product trains in the active workstream; the accepted one is G1 Gemini runtime/product parity and the current one is A1 Claude runtime/product parity.
+- No bounded runtime/product train is currently open in the active workstream; the next lawful big move is multi-host live validation across reference, Claude, Gemini, and OpenAI.
 
 ## North-star product target
 

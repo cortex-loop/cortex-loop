@@ -1,7 +1,7 @@
 # CORTEX_V2_CLAUDE_SERVICE_PROGRAM_0
 
 Date: 2026-03-27
-Status: active runtime-program brief for the first Claude loopback service shell
+Status: accepted re-audited runtime-program brief for the first Claude loopback service shell
 
 ## Purpose
 
@@ -187,11 +187,11 @@ Every seam remains one-session max and must end on a clean tree before the next 
 - `make seam-preflight`, `make revalidate-claude-service`, `make test-smoke`, and `make verify` pass
 - and the `A3` phase-gate row is updated truthfully
 
-## Current accepted state after G1 closeout
+## Current accepted state after A1 closeout
 
-On the accepted G1 closeout line over accepted K3 baseline `efe003e`:
+On the accepted A1 closeout line over accepted K3 baseline `efe003e`:
 
-- `ClaudeServiceState`, `handle_claude_service_request()`, `export_claude_service_session()`, `import_claude_service_session()`, and `python3 -m cortex.runtime.claude_service` are now landed `A3` surfaces, implemented at G1 proof head `fe33a7e`
+- `ClaudeServiceState`, `handle_claude_service_request()`, `export_claude_service_session()`, `import_claude_service_session()`, and `python3 -m cortex.runtime.claude_service` are now landed `A3` surfaces, implemented at A1 proof head `9d6186c`
 - `GET /health`, `POST /v1/events`, `GET /v1/session/export`, and `POST /v1/session/import` now exist over loopback-only HTTP
 - `/v1/events` now drives the current-line `A2` transcript parser and current-line `A1` runtime shell directly
 - loopback bind is fixed to `127.0.0.1`

@@ -261,17 +261,17 @@ def test_resume_protocol_and_active_workstream_contract_exist() -> None:
     assert "Never promote uncommitted local edits to accepted baseline truth." in agents_text
 
     assert "Status: live workflow-state ledger for compaction-safe continuation." in workstream_text
-    assert "Accepted baseline branch: `codex/g1-gemini-runtime-product-parity`" in workstream_text
-    assert "Accepted baseline commit: `9dfe38a`" in workstream_text
-    assert "Current working branch at ledger update: `codex/g1-gemini-runtime-product-parity`" in workstream_text
-    assert "branch-local A1 candidate over accepted G1 truth" in workstream_text
-    assert "Current candidate seam: `A1` Claude runtime/product parity closeout" in workstream_text
-    assert "Current seam status: `A1 candidate implemented and partially verified / accepted baseline remains clean accepted G1 line`" in workstream_text
+    assert "Accepted baseline branch: `codex/a1-claude-runtime-product-parity`" in workstream_text
+    assert "Accepted baseline commit: `9d6186c`" in workstream_text
+    assert "Current working branch at ledger update: `codex/a1-claude-runtime-product-parity`" in workstream_text
+    assert "accepted-baseline receipt line over accepted A1 truth" in workstream_text
+    assert "Current candidate seam: `none`" in workstream_text
+    assert "Current seam status: `idle / accepted A1 closeout is recorded on the current line`" in workstream_text
     assert "Do not import donor runtime workflow truth wholesale from `codex/c1-reference-continuation`" in workstream_text
     assert "Do not reopen K3 into new executive-allocation widening beyond the accepted current-scope law." in workstream_text
     assert "Do not open support-memory runtime, mediation / `Q_t^{final}` experimentation, extra Gemini or OpenAI work" in workstream_text
     assert "stale campaign-specific cleanup notes survive into the live workstream ledger" in workstream_text
-    assert "The accepted `g1` line is now the source of accepted workflow baseline truth" in workstream_text
+    assert "The accepted `a1` line is now the source of accepted workflow baseline truth" in workstream_text
     assert "verification/evidence restack train" not in workstream_text.split("## 4. Explicitly blocked moves", 1)[1].split("## 5. Acknowledged worktree noise", 1)[0]
     assert "The accepted `k1f` line is now the source of accepted workflow baseline truth" not in workstream_text
     assert "git branch --show-current" in workstream_text
@@ -334,10 +334,10 @@ def test_reference_runtime_program_lock_is_recorded() -> None:
     assert "loopback-only HTTP is landed on the accepted K1 closeout line" in phase_gate_text
     assert "one active session per process is real for current scope" in phase_gate_text
 
-    assert "Current campaign: `A1 Claude runtime/product parity train`" in workstream_text
-    assert "accepted G1 baseline now includes explicit K3 executive allocation diagnostics plus Gemini runtime, ingress, service, and bounded host-control shells on the same line" in workstream_text
-    assert "Claude runtime, ingress, service, and bounded host-control shells are now real on the branch-local A1 line" in workstream_text
-    assert "Claude reuses the accepted K3 executive allocation diagnostics exactly for current scope" in workstream_text
+    assert "Current campaign: `none`" in workstream_text
+    assert "accepted A1 baseline now includes explicit K3 executive allocation diagnostics plus Claude runtime, ingress, service, and bounded host-control shells on the same line" in workstream_text
+    assert "the direct Claude unit/integration bundles are green, the Claude code is green under `make verify`" in workstream_text
+    assert "plan one bounded multi-host live validation train across reference, Claude, Gemini, and OpenAI" in workstream_text
     assert "Do not import donor runtime workflow truth wholesale from `codex/c1-reference-continuation`" in workstream_text
     assert "the first one-process live continuity slice plus explicit rejection enforcement are real" in program_text
     assert "the corrective zero-finding re-audit has passed for current scope" in program_text
@@ -500,7 +500,7 @@ def test_erika_visualizations_are_framed_as_support_surfaces() -> None:
     assert f"**Accepted factual baseline:** `{accepted_branch}` at `{accepted_commit}`" in markdown_text
     assert "The verification/evidence restack train, K1 runtime/product restack, and K2 bounded host-control train are now landed for current scope on top of that same product truth." in markdown_text
     assert "The reference runtime shell, bounded reference continuity, OpenAI documented-host-event runtime shell, raw-transcript ingress shell, loopback service shell, and bounded outbound OpenAI host-control lane are now accepted on the current line." in markdown_text
-    assert "the accepted one is G1 Gemini runtime/product parity and the current one is A1 Claude runtime/product parity." in markdown_text
+    assert "No bounded runtime/product train is currently open in the active workstream; the next lawful big move is multi-host live validation across reference, Claude, Gemini, and OpenAI." in markdown_text
     assert "cortex-archival-dossiers/" not in markdown_text
     assert "Current Justified Boundary" in html_text
     assert "Gap Programs" in html_text
@@ -540,4 +540,4 @@ def test_runtime_restack_program_lock_is_recorded() -> None:
     assert "Current accepted state after K1 closeout" in text
     assert "implemented at K1 proof head `d4c311f` and truthfully closed at deterministic closeout head `79b8f39`" in text
     assert "later bounded runtime/product trains may still be explicitly opened" in master_plan_text
-    assert "now records accepted G1 Gemini runtime/product parity truth and the current A1 Claude runtime/product parity candidate" in theory_text
+    assert "now records accepted A1 Claude runtime/product parity truth and the next lawful move toward multi-host live validation" in theory_text
