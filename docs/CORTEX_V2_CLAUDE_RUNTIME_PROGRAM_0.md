@@ -29,8 +29,8 @@ This document does not override:
 
 Accepted parent for this program:
 
-- branch: `codex/k3-executive-live-outcome`
-- commit: `efe003e`
+- branch: `codex/g1-gemini-runtime-product-parity`
+- commit: `9dfe38a`
 
 Why this program opens now:
 
@@ -83,16 +83,17 @@ New public fields in the top-level CLI projection, in exact order:
 
 1. `event_index`
 2. `raw_host_event_name`
-3. `native_event_name`
-4. `dispatch_lane`
-5. `selected_family`
-6. `brake_state`
-7. `executive_state_summary`
-8. `control_ledger`
-9. `warnings`
-10. `session_summary`
-11. `commitment_result_kind`
-12. `feedback_window_summary`
+3. `message_id`
+4. `native_event_name`
+5. `dispatch_lane`
+6. `selected_family`
+7. `brake_state`
+8. `executive_state_summary`
+9. `control_ledger`
+10. `warnings`
+11. `session_summary`
+12. `commitment_result_kind`
+13. `feedback_window_summary`
 
 Input remains JSONL via stdin or `--event-file`.
 
@@ -159,11 +160,11 @@ Those two histories remain public one-process diagnostics only.
 
 This program remains split into five bounded seams:
 
-1. `G1A` program lock
-2. `G1B` Claude runtime/session carriers plus persisted artifact
-3. `G1C` Claude CLI projection
-4. `G1D` Claude split-run equivalence proof
-5. `G1E` re-audit and closeout
+1. `A1A` program lock
+2. `A1B` Claude runtime/session carriers plus persisted artifact
+3. `A1C` Claude CLI projection
+4. `A1D` Claude split-run equivalence proof
+5. `A1E` re-audit and closeout
 
 Every seam remains one-session max and must end on a clean tree before the next seam opens.
 
@@ -181,7 +182,7 @@ Every seam remains one-session max and must end on a clean tree before the next 
 
 ## Current accepted state after A1 closeout
 
-On the accepted A1 closeout line over accepted K3 baseline `efe003e`:
+On the accepted A1 closeout line, implemented at A1 proof head `9d6186c` over accepted G1 baseline `9dfe38a`:
 
 - `ClaudeRuntimeSession`, `ClaudeRuntimeSessionArtifact`, `run_claude_runtime_step()`, and `python3 -m cortex.runtime.claude_cli` are now landed `A1` surfaces, implemented at A1 proof head `9d6186c`
 - raw documented Claude host events drive a host-specific runtime shell

@@ -62,6 +62,21 @@ GEMINI_SERVICE_PROGRAM_PATH = (
 GEMINI_HOST_CONTROL_PROGRAM_PATH = (
     REPO_ROOT / "docs" / "CORTEX_V2_GEMINI_HOST_CONTROL_PROGRAM_0.md"
 )
+CLAUDE_RUNTIME_RESTACK_PROGRAM_PATH = (
+    REPO_ROOT / "docs" / "CORTEX_V2_CLAUDE_RUNTIME_RESTACK_PROGRAM_0.md"
+)
+CLAUDE_RUNTIME_PROGRAM_PATH = (
+    REPO_ROOT / "docs" / "CORTEX_V2_CLAUDE_RUNTIME_PROGRAM_0.md"
+)
+CLAUDE_INGRESS_PROGRAM_PATH = (
+    REPO_ROOT / "docs" / "CORTEX_V2_CLAUDE_INGRESS_PROGRAM_0.md"
+)
+CLAUDE_SERVICE_PROGRAM_PATH = (
+    REPO_ROOT / "docs" / "CORTEX_V2_CLAUDE_SERVICE_PROGRAM_0.md"
+)
+CLAUDE_HOST_CONTROL_PROGRAM_PATH = (
+    REPO_ROOT / "docs" / "CORTEX_V2_CLAUDE_HOST_CONTROL_PROGRAM_0.md"
+)
 RUNTIME_RESTACK_PROGRAM_PATH = (
     REPO_ROOT / "docs" / "CORTEX_V2_RUNTIME_RESTACK_PROGRAM_0.md"
 )
@@ -294,6 +309,11 @@ def test_reference_runtime_program_lock_is_recorded() -> None:
     gemini_ingress_program_text = _read(GEMINI_INGRESS_PROGRAM_PATH)
     gemini_service_program_text = _read(GEMINI_SERVICE_PROGRAM_PATH)
     gemini_host_control_program_text = _read(GEMINI_HOST_CONTROL_PROGRAM_PATH)
+    claude_runtime_restack_text = _read(CLAUDE_RUNTIME_RESTACK_PROGRAM_PATH)
+    claude_runtime_program_text = _read(CLAUDE_RUNTIME_PROGRAM_PATH)
+    claude_ingress_program_text = _read(CLAUDE_INGRESS_PROGRAM_PATH)
+    claude_service_program_text = _read(CLAUDE_SERVICE_PROGRAM_PATH)
+    claude_host_control_program_text = _read(CLAUDE_HOST_CONTROL_PROGRAM_PATH)
     phase_gate_text = _read(PHASE_GATES_PATH)
     workstream_text = _read(ACTIVE_WORKSTREAM_PATH)
 
@@ -456,6 +476,35 @@ def test_reference_runtime_program_lock_is_recorded() -> None:
     assert "`python3 -m cortex.runtime.gemini_service`" in gemini_service_program_text
     assert "Status: accepted re-audited runtime-program brief for the first bounded outbound Gemini host-control lane" in gemini_host_control_program_text
     assert "`POST /v1/actions/interaction-stream`" in gemini_host_control_program_text
+    assert "Status: accepted re-audited support brief for the A1 Claude runtime/product parity train" in claude_runtime_restack_text
+    assert "branch: `codex/g1-gemini-runtime-product-parity`" in claude_runtime_restack_text
+    assert "commit: `9dfe38a`" in claude_runtime_restack_text
+    assert "On the accepted A1 closeout line, implemented at A1 proof head `9d6186c` over accepted G1 baseline `9dfe38a`:" in claude_runtime_restack_text
+    assert "Status: accepted re-audited runtime-program brief for the first Claude documented host-event runtime shell" in claude_runtime_program_text
+    assert "`message_id`" in claude_runtime_program_text
+    assert "branch: `codex/g1-gemini-runtime-product-parity`" in claude_runtime_program_text
+    assert "commit: `9dfe38a`" in claude_runtime_program_text
+    assert "1. `A1A` program lock" in claude_runtime_program_text
+    assert "On the accepted A1 closeout line, implemented at A1 proof head `9d6186c` over accepted G1 baseline `9dfe38a`:" in claude_runtime_program_text
+    assert "Status: accepted re-audited runtime-program brief for the first Claude raw-transcript ingress shell" in claude_ingress_program_text
+    assert "branch: `codex/g1-gemini-runtime-product-parity`" in claude_ingress_program_text
+    assert "commit: `9dfe38a`" in claude_ingress_program_text
+    assert "1. `A2A` program lock" in claude_ingress_program_text
+    assert "undocumented raw `message_*` or `content_block_*` host events remain lawful input" in claude_ingress_program_text
+    assert "On the accepted A1 closeout line, implemented at A1 proof head `9d6186c` over accepted G1 baseline `9dfe38a`:" in claude_ingress_program_text
+    assert "Status: accepted re-audited runtime-program brief for the first Claude loopback service shell" in claude_service_program_text
+    assert "branch: `codex/g1-gemini-runtime-product-parity`" in claude_service_program_text
+    assert "commit: `9dfe38a`" in claude_service_program_text
+    assert "1. `A3A` program lock" in claude_service_program_text
+    assert "undocumented raw `message_*` or `content_block_*` events remain lawful input" in claude_service_program_text
+    assert "On the accepted A1 closeout line, implemented at A1 proof head `9d6186c` over accepted G1 baseline `9dfe38a`:" in claude_service_program_text
+    assert "Status: accepted re-audited runtime-program brief for the first bounded outbound Claude host-control lane" in claude_host_control_program_text
+    assert "branch: `codex/g1-gemini-runtime-product-parity`" in claude_host_control_program_text
+    assert "commit: `9dfe38a`" in claude_host_control_program_text
+    assert "`POST /v1/actions/message-stream`" in claude_host_control_program_text
+    assert "1. `A4A` program lock" in claude_host_control_program_text
+    assert "undocumented raw `message_*` or `content_block_*` events remain lawful downstream input" in claude_host_control_program_text
+    assert "On the accepted A1 closeout line, implemented at A1 proof head `9d6186c` over accepted G1 baseline `9dfe38a`:" in claude_host_control_program_text
 
 
 def test_openai_host_control_revalidation_entry_points_are_recorded() -> None:

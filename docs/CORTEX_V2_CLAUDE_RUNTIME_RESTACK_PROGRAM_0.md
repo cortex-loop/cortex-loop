@@ -24,14 +24,14 @@ This brief does not override:
 
 Accepted parent for this train:
 
-- branch: `codex/k3-executive-live-outcome`
-- commit: `efe003e`
+- branch: `codex/g1-gemini-runtime-product-parity`
+- commit: `9dfe38a`
 
 Why this train opens now:
 
 - release still requires all three host/model lines live,
 - Claude is the largest remaining runtime/product asymmetry,
-- and the smallest honest next big move is Claude parity on top of accepted K3 truth rather than more OpenAI widening.
+- and the smallest honest next big move is Claude parity on top of accepted G1 truth rather than more OpenAI widening.
 
 ## Locked scope
 
@@ -65,7 +65,7 @@ Each seam must end clean before the next opens.
 
 ## Current accepted state after A1 closeout
 
-On the accepted A1 closeout line over accepted K3 baseline `efe003e`:
+On the accepted A1 closeout line, implemented at A1 proof head `9d6186c` over accepted G1 baseline `9dfe38a`:
 
 - Claude runtime, ingress, service, and bounded host-control shells are now landed as the accepted A1 runtime/product parity stack
 - the Claude projections reuse accepted K3 executive allocation diagnostics exactly for current scope

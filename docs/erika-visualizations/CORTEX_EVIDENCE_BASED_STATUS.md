@@ -13,7 +13,7 @@ It also tracks which brain-inspired mechanisms Cortex has already stolen so far 
 ## Current accepted repo truth
 
 - Cortex v2 MVP is complete at the current justified boundary.
-- The accepted center is a tiny integrity core, active SRE reference surfaces, three host vertical slices, a contradiction-preserving evidence harness, and AUX MVP support-only surfaces.
+- The accepted center is a tiny integrity core, active SRE reference surfaces, four accepted host/runtime product lines, a contradiction-preserving evidence harness, and AUX MVP support-only surfaces.
 - The verification/evidence restack train, K1 runtime/product restack, and K2 bounded host-control train are now landed for current scope on top of that same product truth.
 - The reference runtime shell, bounded reference continuity, OpenAI documented-host-event runtime shell, raw-transcript ingress shell, loopback service shell, and bounded outbound OpenAI host-control lane are now accepted on the current line.
 - The Gemini documented-host-event runtime shell, raw-transcript ingress shell, loopback service shell, and bounded outbound Gemini host-control lane are now accepted on the current line.

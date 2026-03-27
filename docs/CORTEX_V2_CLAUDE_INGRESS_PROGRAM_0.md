@@ -27,8 +27,8 @@ This document does not override:
 
 Accepted parent for this program:
 
-- branch: `codex/k3-executive-live-outcome`
-- commit: `efe003e`
+- branch: `codex/g1-gemini-runtime-product-parity`
+- commit: `9dfe38a`
 
 Why this program opens now:
 
@@ -110,7 +110,7 @@ It may not:
 
 Undocumented-event law:
 
-- undocumented raw `response.*` host events remain lawful input,
+- undocumented raw `message_*` or `content_block_*` host events remain lawful input,
 - they must still degrade to explicit conservative warnings,
 - and the shell may not fabricate documented parity where none exists.
 
@@ -133,11 +133,11 @@ Those remain public diagnostics only.
 
 This program remains split into five bounded seams:
 
-1. `G2A` program lock
-2. `G2B` raw-transcript parser boundary
-3. `G2C` ingress CLI shell
-4. `G2D` ingress continuity proof
-5. `G2E` re-audit and closeout
+1. `A2A` program lock
+2. `A2B` raw-transcript parser boundary
+3. `A2C` ingress CLI shell
+4. `A2D` ingress continuity proof
+5. `A2E` re-audit and closeout
 
 Every seam remains one-session max and must end on a clean tree before the next seam opens.
 
@@ -157,7 +157,7 @@ Every seam remains one-session max and must end on a clean tree before the next 
 
 ## Current accepted state after A1 closeout
 
-On the accepted A1 closeout line over accepted K3 baseline `efe003e`:
+On the accepted A1 closeout line, implemented at A1 proof head `9d6186c` over accepted G1 baseline `9dfe38a`:
 
 - `ClaudeHostEventEnvelope` and `parse_claude_host_event_envelope()` are now landed `A2` surfaces, implemented at A1 proof head `9d6186c`
 - `python3 -m cortex.runtime.claude_ingress_cli` now drives the current-line `A1` runtime shell from raw transcript records

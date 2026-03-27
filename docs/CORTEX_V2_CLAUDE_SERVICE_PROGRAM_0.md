@@ -28,8 +28,8 @@ This document does not override:
 
 Accepted parent for this program on the current line:
 
-- branch: `codex/k3-executive-live-outcome`
-- commit: `efe003e`
+- branch: `codex/g1-gemini-runtime-product-parity`
+- commit: `9dfe38a`
 
 Why this program opens now:
 
@@ -143,7 +143,7 @@ It may not:
 
 Undocumented-event law:
 
-- undocumented raw `response.*` events remain lawful input,
+- undocumented raw `message_*` or `content_block_*` events remain lawful input,
 - they must still degrade to explicit conservative warnings,
 - and the service shell may not fabricate documented parity where none exists.
 
@@ -166,11 +166,11 @@ Those remain public diagnostics only.
 
 This program remains split into five bounded seams:
 
-1. `G3A` program lock
-2. `G3B` loopback service carrier and request boundary
-3. `G3C` HTTP shell and artifact transport
-4. `G3D` service continuity proof
-5. `G3E` re-audit and closeout
+1. `A3A` program lock
+2. `A3B` loopback service carrier and request boundary
+3. `A3C` HTTP shell and artifact transport
+4. `A3D` service continuity proof
+5. `A3E` re-audit and closeout
 
 Every seam remains one-session max and must end on a clean tree before the next seam opens.
 
@@ -189,7 +189,7 @@ Every seam remains one-session max and must end on a clean tree before the next 
 
 ## Current accepted state after A1 closeout
 
-On the accepted A1 closeout line over accepted K3 baseline `efe003e`:
+On the accepted A1 closeout line, implemented at A1 proof head `9d6186c` over accepted G1 baseline `9dfe38a`:
 
 - `ClaudeServiceState`, `handle_claude_service_request()`, `export_claude_service_session()`, `import_claude_service_session()`, and `python3 -m cortex.runtime.claude_service` are now landed `A3` surfaces, implemented at A1 proof head `9d6186c`
 - `GET /health`, `POST /v1/events`, `GET /v1/session/export`, and `POST /v1/session/import` now exist over loopback-only HTTP

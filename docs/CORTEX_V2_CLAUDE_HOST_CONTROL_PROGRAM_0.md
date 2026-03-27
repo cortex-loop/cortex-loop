@@ -29,8 +29,8 @@ This document does not override:
 
 Accepted parent for this program on the current line:
 
-- branch: `codex/k3-executive-live-outcome`
-- commit: `efe003e`
+- branch: `codex/g1-gemini-runtime-product-parity`
+- commit: `9dfe38a`
 
 Why this program opens now:
 
@@ -137,9 +137,9 @@ It may not:
 
 Undocumented-event law:
 
-- undocumented raw `content.*` or `interaction.*` events remain lawful downstream input,
+- undocumented raw `message_*` or `content_block_*` events remain lawful downstream input,
 - they must still degrade to explicit conservative warnings,
-- and G1 may not fabricate documented parity where none exists.
+- and A1 may not fabricate documented parity where none exists.
 
 ## G4 equivalence contract
 
@@ -158,11 +158,11 @@ Exact replay of one-process diagnostic `budget_history` and `brake_history` rema
 
 This program remains split into five bounded seams:
 
-1. `G4A` program lock
-2. `G4B` request/result carriers plus stdlib transport
-3. `G4C` runtime composition over current-line `A2`/`A1`
-4. `G4D` service endpoint and continuity proof
-5. `G4E` re-audit and closeout
+1. `A4A` program lock
+2. `A4B` request/result carriers plus stdlib transport
+3. `A4C` runtime composition over current-line `A2`/`A1`
+4. `A4D` service endpoint and continuity proof
+5. `A4E` re-audit and closeout
 
 Every seam must end on a clean tree before the next opens.
 
@@ -181,7 +181,7 @@ Every seam must end on a clean tree before the next opens.
 
 ## Current accepted state after A1 closeout
 
-On the accepted A1 closeout line over accepted K3 baseline `efe003e`:
+On the accepted A1 closeout line, implemented at A1 proof head `9d6186c` over accepted G1 baseline `9dfe38a`:
 
 - `ClaudeHostControlRequest`, `ClaudeHostControlResult`, `execute_claude_message_stream()`, `run_claude_host_control()`, and `POST /v1/actions/message-stream` are now landed `A4` surfaces, implemented at A1 proof head `9d6186c`
 - the request boundary is strict-whitelist and text-only for current scope
