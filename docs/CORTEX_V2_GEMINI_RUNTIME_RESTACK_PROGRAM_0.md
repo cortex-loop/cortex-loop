@@ -9,7 +9,7 @@ This document records the accepted post-`K3` G1 runtime/product restack train:
 
 - land the Gemini runtime, ingress, service, and bounded host-control shells in dependency order,
 - reuse accepted K3 executive allocation diagnostics exactly as-is,
-- and close the biggest remaining host/runtime asymmetry before the later all-three-host live validation train.
+- and close the biggest remaining host/runtime asymmetry before the later multi-host live validation train.
 
 This brief does not override:
 

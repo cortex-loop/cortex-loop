@@ -21,7 +21,7 @@ It is workflow state only. It does not override the packet documents, implementa
   - the reference runtime shell, bounded reference continuity, OpenAI documented-host-event runtime shell, raw-transcript ingress shell, loopback service shell, bounded outbound OpenAI host-control lane, and explicit executive allocation diagnostics remain accepted on the current line
   - the Gemini documented-host-event runtime shell, raw-transcript ingress shell, loopback service shell, and bounded outbound Gemini host-control lane are now accepted on the same G1 closeout line
   - `R6`, `O5`, `G1`, `G2`, `G3`, and `G4` are now landed on the current line
-  - the next lawful big product-facing direction is an all-three-host live validation train across reference, Gemini, and OpenAI
+  - the next lawful big product-facing direction is a Claude runtime/product parity train on top of accepted G1 truth
 - Accepted baseline authority anchors:
   - `docs/CORTEX_V2_IMPLEMENTATION_STATUS_NOTE.md`
   - `docs/CORTEX_V2_IMPLEMENTATION_MASTER_PLAN_2.md`
@@ -30,12 +30,12 @@ It is workflow state only. It does not override the packet documents, implementa
 
 ## 2. Current campaign and seam state
 
-- Current campaign: `none`
+- Current campaign: `A1 Claude runtime/product parity train`
 - Current working branch at ledger update: `codex/g1-gemini-runtime-product-parity`
-- Current branch role: accepted-baseline receipt line over accepted G1 truth
-- Current candidate seam: `none`
-- Current seam status: `idle / accepted G1 closeout is recorded on the current line`
-- Seam risk: `none / no open seam`
+- Current branch role: accepted-baseline planning line over accepted G1 truth
+- Current candidate seam: `A1 Claude runtime/product parity train lock`
+- Current seam status: `planning only / no Claude runtime-product code is landed yet`
+- Seam risk: deterministic code/doc seam
 
 ## 3. Next lawful move
 
@@ -44,7 +44,9 @@ It is workflow state only. It does not override the packet documents, implementa
   - the direct Gemini bundle passed twice, all four Gemini repo-local revalidation targets passed twice, and the shared reference/OpenAI regression bundle remained green before acceptance
   - package-level mediation evidence remains `insufficient`
 - Next lawful move:
-  - keep the branch clean and plan one bounded all-three-host live validation train across reference, Gemini, and OpenAI
+  - keep the branch clean and cut one bounded `codex/a1-claude-runtime-product-parity` branch from accepted G1 truth
+  - land the `A1` Claude documented host-event runtime shell first
+  - do not skip directly to live validation before Claude parity exists
 
 ## 4. Explicitly blocked moves
 
@@ -60,12 +62,14 @@ It is workflow state only. It does not override the packet documents, implementa
 - Do not import donor runtime workflow truth wholesale from `codex/c1-reference-continuation`, `codex/o1-openai-runtime-shell`, `codex/o2-openai-ingress-shell`, or `codex/o3-openai-service-shell`.
 - Do not reopen K3 into new executive-allocation widening beyond the accepted current-scope law.
 - Do not open support-memory runtime, mediation / `Q_t^{final}` experimentation, extra OpenAI work, tools or tool-result submission, runtime AUX activation, offline consolidation, or generic reward-learning doctrine from `G1`.
+- Do not skip Claude parity and jump straight to multi-host live validation while Claude remains outside the active host roadmap.
 
 ## 5. Acknowledged worktree noise at ledger creation
 
 - The dirty donor branch `codex/e1-verification-substrate-entrypoints` remains mixed and is not the source of truth for future runtime restack work.
 - The donor runtime branches remain source material only; their workflow truth is not authoritative on this line.
 - The accepted `g1` line is now the source of accepted workflow baseline truth until a later accepted baseline update lands.
+- Claude/Anthropic planning now lives on the accepted G1 line as workflow state only; no Claude runtime/product code is landed yet.
 - Local workspace directories already exist under `.claude/worktrees/`.
 - Re-read `git status --short --untracked-files=all` before opening any new seam; this summary is only the continuity reminder, not the canonical file list.
 

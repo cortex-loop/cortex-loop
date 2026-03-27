@@ -25,7 +25,7 @@ Active authority remains:
 - `docs/CORTEX_V2_MEDIATION_JUSTIFICATION_NOTE.md` says mediation is still `not justified yet`.
 - `docs/CORTEX_V2_MEDIATION_EVIDENCE_NOTE_0.md` shows cell-level signal on thrash, uncertainty, and host-realization, but every package-level axis remains `insufficient`.
 - `docs/CORTEX_V2_VERIFICATION_ERGONOMICS_MASTER_PLAN_0.md` still defines the active non-feature follow-on campaign.
-- `docs/CORTEX_V2_ACTIVE_WORKSTREAM.md` now records accepted G1 Gemini runtime/product parity truth and the next lawful move toward all-three-host live validation.
+- `docs/CORTEX_V2_ACTIVE_WORKSTREAM.md` now records accepted G1 Gemini runtime/product parity truth and active planning for the next Claude runtime/product parity train.
 - `pytest.ini`, `Makefile`, and `docs/CORTEX_V2_LOCAL_VERIFICATION.md` now provide repo-local verification entry points, including `make verify`, `make test-smoke`, evidence revalidation commands, and mediation evidence revalidation commands.
 - `.coveragerc`, `make coverage`, and `docs/CORTEX_V2_COVERAGE_BASELINE_NOTE_0.md` now exist as repo-local coverage hygiene surfaces.
 
@@ -42,7 +42,7 @@ The next honest work remains whichever explicitly bounded seam the active workst
 
 1. broader evidence collection where package-level mediation blockers remain real,
 2. later non-feature verification cleanup where a new explicit seam is justified,
-3. or a separately scoped bounded runtime/product follow-on train when the active workstream has already opened one.
+3. or a separately scoped bounded runtime/product follow-on train when the active workstream has already opened one, such as the current Claude parity plan.
 
 Do not use this memo to justify:
 

@@ -19,7 +19,7 @@ It also tracks which brain-inspired mechanisms Cortex has already stolen so far 
 - The Gemini documented-host-event runtime shell, raw-transcript ingress shell, loopback service shell, and bounded outbound Gemini host-control lane are now accepted on the current line.
 - The OpenAI host-realization cell now has a committed three-pair evidence series and `candidate_positive` cell-level signal for better host-specialized realization.
 - Mediation remains blocked and unjustified at package level.
-- No bounded runtime/product train is currently open in the active workstream; the next lawful big move is an all-three-host live validation train across reference, Gemini, and OpenAI.
+- The active workstream now plans one bounded Claude runtime/product parity train on top of the accepted G1 line before later multi-host live validation.
 
 ## North-star product target
 
@@ -35,7 +35,8 @@ It is not accepted repo truth today.
 
 ## Lawful gap programs
 
-- all-three-host live validation program
+- Claude runtime/product parity program
+- multi-host live validation program
 - executive loop computation program
 - closed-loop feedback and enforcement program
 - runtime AUX activation program

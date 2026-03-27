@@ -29,6 +29,7 @@ Closeout status:
 - AUX staging remains unchanged: geometry is evaluation-first / runtime-off-by-default, and offline consolidation remains deferred;
 - mediation remains explicitly unjustified and unstarted unless future measurable lift evidence is earned, as recorded in `docs/CORTEX_V2_MEDIATION_JUSTIFICATION_NOTE.md`.
 - if post-closeout work continues, `docs/CORTEX_V2_VERIFICATION_ERGONOMICS_MASTER_PLAN_0.md` remains the active non-feature follow-on campaign, but later bounded runtime/product trains may still be explicitly opened through separate runtime-program briefs and recorded in `docs/CORTEX_V2_ACTIVE_WORKSTREAM.md`.
+- that post-closeout path may still explicitly include a Claude/Anthropic host-parity train before any later multi-host live validation train when the workstream promotes it.
 
 ---
 

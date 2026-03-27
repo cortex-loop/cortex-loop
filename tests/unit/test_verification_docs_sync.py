@@ -62,6 +62,9 @@ GEMINI_SERVICE_PROGRAM_PATH = (
 GEMINI_HOST_CONTROL_PROGRAM_PATH = (
     REPO_ROOT / "docs" / "CORTEX_V2_GEMINI_HOST_CONTROL_PROGRAM_0.md"
 )
+CLAUDE_RUNTIME_RESTACK_PROGRAM_PATH = (
+    REPO_ROOT / "docs" / "CORTEX_V2_CLAUDE_RUNTIME_RESTACK_PROGRAM_0.md"
+)
 RUNTIME_RESTACK_PROGRAM_PATH = (
     REPO_ROOT / "docs" / "CORTEX_V2_RUNTIME_RESTACK_PROGRAM_0.md"
 )
@@ -264,10 +267,10 @@ def test_resume_protocol_and_active_workstream_contract_exist() -> None:
     assert "Accepted baseline branch: `codex/g1-gemini-runtime-product-parity`" in workstream_text
     assert "Accepted baseline commit: `9dfe38a`" in workstream_text
     assert "Current working branch at ledger update: `codex/g1-gemini-runtime-product-parity`" in workstream_text
-    assert "accepted-baseline receipt line over accepted G1 truth" in workstream_text
-    assert "Current campaign: `none`" in workstream_text
-    assert "Current candidate seam: `none`" in workstream_text
-    assert "Current seam status: `idle / accepted G1 closeout is recorded on the current line`" in workstream_text
+    assert "accepted-baseline planning line over accepted G1 truth" in workstream_text
+    assert "Current campaign: `A1 Claude runtime/product parity train`" in workstream_text
+    assert "Current candidate seam: `A1 Claude runtime/product parity train lock`" in workstream_text
+    assert "Current seam status: `planning only / no Claude runtime-product code is landed yet`" in workstream_text
     assert "Do not import donor runtime workflow truth wholesale from `codex/c1-reference-continuation`" in workstream_text
     assert "Do not reopen K3 into new executive-allocation widening beyond the accepted current-scope law." in workstream_text
     assert "Do not open support-memory runtime, mediation / `Q_t^{final}` experimentation, extra OpenAI work" in workstream_text
@@ -296,6 +299,7 @@ def test_reference_runtime_program_lock_is_recorded() -> None:
     gemini_ingress_program_text = _read(GEMINI_INGRESS_PROGRAM_PATH)
     gemini_service_program_text = _read(GEMINI_SERVICE_PROGRAM_PATH)
     gemini_host_control_program_text = _read(GEMINI_HOST_CONTROL_PROGRAM_PATH)
+    claude_runtime_restack_text = _read(CLAUDE_RUNTIME_RESTACK_PROGRAM_PATH)
     phase_gate_text = _read(PHASE_GATES_PATH)
     workstream_text = _read(ACTIVE_WORKSTREAM_PATH)
 
@@ -336,10 +340,11 @@ def test_reference_runtime_program_lock_is_recorded() -> None:
     assert "loopback-only HTTP is landed on the accepted K1 closeout line" in phase_gate_text
     assert "one active session per process is real for current scope" in phase_gate_text
 
-    assert "Current campaign: `none`" in workstream_text
+    assert "Current campaign: `A1 Claude runtime/product parity train`" in workstream_text
     assert "the accepted G1 baseline now includes explicit K3 executive allocation diagnostics plus Gemini runtime, ingress, service, and bounded host-control shells on the same line" in workstream_text
-    assert "plan one bounded all-three-host live validation train across reference, Gemini, and OpenAI" in workstream_text
+    assert "cut one bounded `codex/a1-claude-runtime-product-parity` branch from accepted G1 truth" in workstream_text
     assert "Do not import donor runtime workflow truth wholesale from `codex/c1-reference-continuation`" in workstream_text
+    assert "Do not skip Claude parity and jump straight to multi-host live validation while Claude remains outside the active host roadmap." in workstream_text
     assert "the first one-process live continuity slice plus explicit rejection enforcement are real" in program_text
     assert "the corrective zero-finding re-audit has passed for current scope" in program_text
     assert "a mismatched runtime `session_id` is surfaced as an explicit contradiction" in program_text
@@ -451,6 +456,11 @@ def test_reference_runtime_program_lock_is_recorded() -> None:
     assert "Gemini-only" in gemini_runtime_restack_text
     assert "Current accepted state after G1 closeout" in gemini_runtime_restack_text
     assert "truthfully closed at deterministic closeout head `9dfe38a`" in gemini_runtime_restack_text
+    assert "Status: active planning brief for the A1 Claude runtime/product parity train" in claude_runtime_restack_text
+    assert "branch: `codex/g1-gemini-runtime-product-parity`" in claude_runtime_restack_text
+    assert "commit: `9dfe38a`" in claude_runtime_restack_text
+    assert "`A1` Claude documented host-event runtime shell" in claude_runtime_restack_text
+    assert "`A4` Claude bounded host-control lane" in claude_runtime_restack_text
     assert "Status: accepted re-audited runtime-program brief for the first Gemini documented host-event runtime shell" in gemini_runtime_program_text
     assert "`python3 -m cortex.runtime.gemini_cli`" in gemini_runtime_program_text
     assert "Current accepted state after G1 closeout" in gemini_runtime_program_text
@@ -517,7 +527,7 @@ def test_erika_visualizations_are_framed_as_support_surfaces() -> None:
     assert "The verification/evidence restack train, K1 runtime/product restack, and K2 bounded host-control train are now landed for current scope on top of that same product truth." in markdown_text
     assert "The reference runtime shell, bounded reference continuity, OpenAI documented-host-event runtime shell, raw-transcript ingress shell, loopback service shell, and bounded outbound OpenAI host-control lane are now accepted on the current line." in markdown_text
     assert "The Gemini documented-host-event runtime shell, raw-transcript ingress shell, loopback service shell, and bounded outbound Gemini host-control lane are now accepted on the current line." in markdown_text
-    assert "No bounded runtime/product train is currently open in the active workstream; the next lawful big move is an all-three-host live validation train across reference, Gemini, and OpenAI." in markdown_text
+    assert "The active workstream now plans one bounded Claude runtime/product parity train on top of the accepted G1 line before later multi-host live validation." in markdown_text
     assert "cortex-archival-dossiers/" not in markdown_text
     assert "Current Justified Boundary" in html_text
     assert "Gap Programs" in html_text
@@ -557,4 +567,4 @@ def test_runtime_restack_program_lock_is_recorded() -> None:
     assert "Current accepted state after K1 closeout" in text
     assert "implemented at K1 proof head `d4c311f` and truthfully closed at deterministic closeout head `79b8f39`" in text
     assert "later bounded runtime/product trains may still be explicitly opened" in master_plan_text
-    assert "now records accepted G1 Gemini runtime/product parity truth and the next lawful move toward all-three-host live validation" in theory_text
+    assert "now records accepted G1 Gemini runtime/product parity truth and active planning for the next Claude runtime/product parity train" in theory_text
