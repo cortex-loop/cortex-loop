@@ -55,7 +55,7 @@ It is workflow state only. It does not override the packet documents, implementa
 - Do not reopen `E6` verification-ergonomics helper work without a new explicit re-audit.
 - Do not promote package-level mediation justification from current burden evidence.
 - Do not let support-surface documents silently redefine packet or status authority.
-- Do not carry the one-line authority-surface edits currently sitting in `docs/CORTEX_V2_IMPLEMENTATION_MASTER_PLAN_2.md` or `docs/CORTEX_V2_SRE_2.md` into the verification/evidence restack train.
+- Do not let stale campaign-specific cleanup notes survive into the live workstream ledger once the campaign has changed.
 - Do not treat a three-pair OpenAI host-realization closeout as permission for mediation implementation.
 - Do not reinterpret a host-level `candidate_positive` cell as package-level justification.
 - Do not import donor runtime workflow truth wholesale from `codex/c1-reference-continuation`, `codex/o1-openai-runtime-shell`, `codex/o2-openai-ingress-shell`, or `codex/o3-openai-service-shell`.
@@ -66,7 +66,7 @@ It is workflow state only. It does not override the packet documents, implementa
 
 - The dirty donor branch `codex/e1-verification-substrate-entrypoints` remains mixed and is not the source of truth for future runtime restack work.
 - The donor runtime branches remain source material only; their workflow truth is not authoritative on this line.
-- The accepted `k1f` line is now the source of accepted workflow baseline truth until a later accepted baseline update lands.
+- The accepted `k2` line is now the source of accepted workflow baseline truth until a later accepted baseline update lands.
 - Local workspace directories already exist under `.claude/worktrees/`.
 - Re-read `git status --short --untracked-files=all` before opening any new seam; this summary is only the continuity reminder, not the canonical file list.
 

@@ -255,6 +255,10 @@ def test_resume_protocol_and_active_workstream_contract_exist() -> None:
     assert "Do not import donor runtime workflow truth wholesale from `codex/c1-reference-continuation`" in workstream_text
     assert "Do not reopen K2 into new outbound host-control lanes." in workstream_text
     assert "Do not open support-memory runtime, mediation / `Q_t^{final}` experimentation, Gemini runtime shell" in workstream_text
+    assert "stale campaign-specific cleanup notes survive into the live workstream ledger" in workstream_text
+    assert "The accepted `k2` line is now the source of accepted workflow baseline truth" in workstream_text
+    assert "verification/evidence restack train" not in workstream_text.split("## 4. Explicitly blocked moves", 1)[1].split("## 5. Acknowledged worktree noise", 1)[0]
+    assert "The accepted `k1f` line is now the source of accepted workflow baseline truth" not in workstream_text
     assert "git branch --show-current" in workstream_text
     assert "git status --short --untracked-files=all" in workstream_text
     assert "Never promote an uncommitted branch head or dirty worktree state to accepted baseline truth." in workstream_text
