@@ -2,7 +2,7 @@
 
 **Date:** 2026-03-26  
 **Role:** support surface for orientation and planning  
-**Accepted factual baseline:** `codex/k2-openai-host-control` at `9ed7dae`
+**Accepted factual baseline:** `codex/k3-executive-live-outcome` at `efe003e`
 
 > This folder tracks three separate things: current accepted repo truth, the north-star product target, and the lawful gap programs required to move from the first toward the second.
 
@@ -18,7 +18,7 @@ It also tracks which brain-inspired mechanisms Cortex has already stolen so far 
 - The reference runtime shell, bounded reference continuity, OpenAI documented-host-event runtime shell, raw-transcript ingress shell, loopback service shell, and bounded outbound OpenAI host-control lane are now accepted on the current line.
 - The OpenAI host-realization cell now has a committed three-pair evidence series and `candidate_positive` cell-level signal for better host-specialized realization.
 - Mediation remains blocked and unjustified at package level.
-- Current follow-on work may include explicitly opened bounded runtime/product trains in the active workstream; the current one is K3 executive live-outcome allocation and it should never become silent feature expansion.
+- Current follow-on work may include explicitly opened bounded runtime/product trains in the active workstream; the accepted one is K3 executive live-outcome allocation and the current one is G1 Gemini runtime/product parity.
 
 ## North-star product target
 

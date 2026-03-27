@@ -208,6 +208,86 @@ Repo-local entry point:
 make revalidate-executive-loop
 ```
 
+## Gemini runtime revalidation
+
+This revalidates the first Gemini documented host-event runtime shell on top of the landed Gemini driver slices, the accepted K3 executive allocation diagnostics, and the accepted `C1` continuity law.
+It checks bounded Gemini session persistence, raw-host-event preservation, explicit CLI load/save behavior, and split-run Gemini continuity equivalence.
+It does not authorize live network/service doctrine, multi-host abstraction, or support-memory runtime.
+
+Direct commands:
+
+```sh
+python3 -m pytest tests/unit/test_gemini_runtime_session_io.py -q
+python3 -m pytest tests/unit/test_gemini_runtime_step.py -q
+python3 -m pytest tests/unit/test_gemini_runtime_ownership.py -q
+python3 -m pytest tests/integration/test_gemini_runtime_cli.py -q
+python3 -m pytest tests/integration/test_gemini_runtime_continuity.py -q
+```
+
+Repo-local entry point:
+
+```sh
+make revalidate-gemini-runtime
+```
+
+## Gemini ingress revalidation
+
+This revalidates the first Gemini raw-transcript ingress shell on top of the accepted Gemini runtime shell.
+It checks transcript-shape parsing, ingress CLI behavior, split-run ingress continuity equivalence, and explicit rejection of wrapper and canonical Cortex event-name misuse.
+
+Direct commands:
+
+```sh
+python3 -m pytest tests/unit/test_gemini_ingress.py -q
+python3 -m pytest tests/integration/test_gemini_ingress_cli.py -q
+python3 -m pytest tests/integration/test_gemini_ingress_continuity.py -q
+```
+
+Repo-local entry point:
+
+```sh
+make revalidate-gemini-ingress
+```
+
+## Gemini loopback service revalidation
+
+This revalidates the first Gemini loopback-only service shell on top of the accepted Gemini ingress parser and accepted Gemini runtime/session artifact.
+It checks loopback-only HTTP behavior, JSON artifact import/export, event processing over `/v1/events`, and service continuity equivalence without widening into remote hosting or generic service doctrine.
+
+Direct commands:
+
+```sh
+python3 -m pytest tests/unit/test_gemini_service.py -q
+python3 -m pytest tests/integration/test_gemini_service.py -q
+python3 -m pytest tests/integration/test_gemini_service_continuity.py -q
+```
+
+Repo-local entry point:
+
+```sh
+make revalidate-gemini-service
+```
+
+## Gemini host-control revalidation
+
+This revalidates the first bounded outbound Gemini host-control lane on top of the accepted Gemini loopback shell, accepted Gemini ingress law, and accepted Gemini runtime/session law.
+It checks the strict text-only request boundary, stdlib Gemini transport parsing, loopback action endpoint behavior, and export/import continuity across multiple outbound actions.
+Canonical Gemini tests use the internal fixture transport and do not require a live Gemini network or a real API key.
+
+Direct commands:
+
+```sh
+python3 -m pytest tests/unit/test_gemini_host_control.py -q
+python3 -m pytest tests/integration/test_gemini_host_control_service.py -q
+python3 -m pytest tests/integration/test_gemini_host_control_continuity.py -q
+```
+
+Repo-local entry point:
+
+```sh
+make revalidate-gemini-host-control
+```
+
 ## Reference-lane packet-example revalidation
 
 This revalidates the committed reference-lane packet example doc against the already-landed live packet path.

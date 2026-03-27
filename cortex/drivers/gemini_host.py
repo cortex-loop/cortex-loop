@@ -143,6 +143,18 @@ def _is_documented_gemini_event(event_name: str) -> bool:
     return any(variant in GEMINI_EVENT_ALIASES for variant in _event_name_variants(event_name))
 
 
+def is_raw_gemini_host_event_name(event_name: str) -> bool:
+    if not isinstance(event_name, str):
+        return False
+    stripped = event_name.strip()
+    if not stripped or "/" in stripped:
+        return False
+    return any(
+        variant.startswith("content") or variant.startswith("interaction")
+        for variant in _event_name_variants(stripped)
+    )
+
+
 def _event_name_variants(raw: str) -> tuple[str, ...]:
     camel_split = re.sub(r"(?<=[a-z0-9])(?=[A-Z])", "_", raw)
     lowered = camel_split.lower()
@@ -242,5 +254,6 @@ __all__ = [
     "BoundGeminiHostEvent",
     "GEMINI_HOST_SURFACE",
     "bind_gemini_event_envelope",
+    "is_raw_gemini_host_event_name",
     "observe_gemini_host_event",
 ]

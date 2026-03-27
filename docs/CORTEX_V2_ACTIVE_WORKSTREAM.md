@@ -7,8 +7,8 @@ It is workflow state only. It does not override the packet documents, implementa
 
 ## 1. Accepted baseline
 
-- Accepted baseline branch: `codex/k2-openai-host-control`
-- Accepted baseline commit: `9ed7dae`
+- Accepted baseline branch: `codex/k3-executive-live-outcome`
+- Accepted baseline commit: `efe003e`
 - Accepted baseline state:
   - burden-axis re-audit remains accepted through the three thrash-host burden slices
   - package-level burden remains `insufficient`
@@ -17,10 +17,10 @@ It is workflow state only. It does not override the packet documents, implementa
   - the OpenAI host-realization cell now has a committed three-pair evidence series and `candidate_positive` cell-level signal for better host-specialized realization
   - package-level mediation evidence remains `insufficient`
   - lower visible burden remains unclaimed for host-realization
-  - accepted workflow baseline truth is now normalized around the accepted K2 runtime/product closeout line
-  - the reference runtime shell, bounded reference continuity, OpenAI documented-host-event runtime shell, raw-transcript ingress shell, loopback service shell, and bounded outbound OpenAI host-control lane are accepted on the same K2 closeout line
-  - `O4` is now landed on the current line
-  - the next lawful product-facing direction is executive-loop computation over live runtime outcomes
+  - accepted workflow baseline truth is now normalized around the accepted K3 executive live-outcome closeout line
+  - the reference runtime shell, bounded reference continuity, OpenAI documented-host-event runtime shell, raw-transcript ingress shell, loopback service shell, bounded outbound OpenAI host-control lane, and explicit executive allocation diagnostics are accepted on the same K3 closeout line
+  - `R6` and `O5` are now landed on the current line
+  - the next lawful big product-facing direction is Gemini runtime/product parity
 - Accepted baseline authority anchors:
   - `docs/CORTEX_V2_IMPLEMENTATION_STATUS_NOTE.md`
   - `docs/CORTEX_V2_IMPLEMENTATION_MASTER_PLAN_2.md`
@@ -29,24 +29,23 @@ It is workflow state only. It does not override the packet documents, implementa
 
 ## 2. Current campaign and seam state
 
-- Current campaign: `K3 executive live-outcome train`
-- Current working branch at ledger update: `codex/k3-executive-live-outcome`
-- Current branch role: branch-local K3 candidate over accepted K2 truth
-- Current candidate seam: `K3` executive live-outcome closeout
-- Current seam status: `K3 candidate implemented and verified / accepted baseline remains clean accepted K2 line`
-- Seam risk: the K3 candidate is a parser/doc-sync plus timing or environment-sensitive runtime/service projection seam; repeated direct and repo-local reruns are required before acceptance
+- Current campaign: `G1 Gemini runtime/product parity train`
+- Current working branch at ledger update: `codex/g1-gemini-runtime-product-parity`
+- Current branch role: branch-local G1 candidate over accepted K3 truth
+- Current candidate seam: `G1` Gemini runtime/product parity closeout
+- Current seam status: `G1 candidate implemented and partially verified / accepted baseline remains clean accepted K3 line`
+- Seam risk: the G1 candidate is a parser/doc-sync plus timing or environment-sensitive runtime/service/host-control seam; repeated direct and repo-local reruns are required before acceptance
 
 ## 3. Next lawful move
 
-- Current candidate answer after K3 implementation:
-  - the accepted K2 baseline now includes the bounded outbound OpenAI host-control lane at `9ed7dae`
-  - explicit executive allocation diagnostics are now real on the branch-local K3 line
-  - `Q_t^{mem}=0.0`, `alpha_t=1.0`, and `allocated_score == online_score` for current scope
-  - runtime and service projections now surface nested `control_ledger.allocation_diagnostics`
+- Current candidate answer after G1 implementation:
+  - the accepted K3 baseline now includes explicit executive allocation diagnostics at `efe003e`
+  - Gemini runtime, ingress, service, and bounded host-control shells are now real on the branch-local G1 line
+  - Gemini reuses the accepted K3 executive allocation diagnostics exactly for current scope
   - package-level mediation evidence remains `insufficient`
 - Next lawful move:
-  - rerun the targeted K3 bundle and repo-local revalidation targets on the clean branch
-  - then either accept K3 onto baseline truth or reject it explicitly
+  - rerun the targeted Gemini bundle and repo-local revalidation targets on the clean branch
+  - then either accept G1 onto baseline truth or reject it explicitly
 
 ## 4. Explicitly blocked moves
 
@@ -59,14 +58,14 @@ It is workflow state only. It does not override the packet documents, implementa
 - Do not treat a three-pair OpenAI host-realization closeout as permission for mediation implementation.
 - Do not reinterpret a host-level `candidate_positive` cell as package-level justification.
 - Do not import donor runtime workflow truth wholesale from `codex/c1-reference-continuation`, `codex/o1-openai-runtime-shell`, `codex/o2-openai-ingress-shell`, or `codex/o3-openai-service-shell`.
-- Do not reopen K2 into new outbound host-control lanes.
-- Do not open support-memory runtime, mediation / `Q_t^{final}` experimentation, Gemini runtime shell, tools or tool-result submission, runtime AUX activation, offline consolidation, or generic reward-learning doctrine from `K3`.
+- Do not reopen K3 into new executive-allocation widening beyond the accepted current-scope law.
+- Do not open support-memory runtime, mediation / `Q_t^{final}` experimentation, extra OpenAI work, tools or tool-result submission, runtime AUX activation, offline consolidation, or generic reward-learning doctrine from `G1`.
 
 ## 5. Acknowledged worktree noise at ledger creation
 
 - The dirty donor branch `codex/e1-verification-substrate-entrypoints` remains mixed and is not the source of truth for future runtime restack work.
 - The donor runtime branches remain source material only; their workflow truth is not authoritative on this line.
-- The accepted `k2` line is now the source of accepted workflow baseline truth until a later accepted baseline update lands.
+- The accepted `k3` line is now the source of accepted workflow baseline truth until a later accepted baseline update lands.
 - Local workspace directories already exist under `.claude/worktrees/`.
 - Re-read `git status --short --untracked-files=all` before opening any new seam; this summary is only the continuity reminder, not the canonical file list.
 

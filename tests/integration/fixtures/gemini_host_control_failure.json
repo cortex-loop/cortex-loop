@@ -1,0 +1,14 @@
+{
+  "calls": [
+    {
+      "expected_request": {
+        "action_tag": "gemini-interaction-stream",
+        "request": {
+          "model": "gemini-2.5-flash",
+          "input": "upstream failure"
+        }
+      },
+      "error": "fixture upstream unavailable"
+    }
+  ]
+}

@@ -47,6 +47,21 @@ OPENAI_HOST_CONTROL_PROGRAM_PATH = (
 EXECUTIVE_LIVE_OUTCOME_PROGRAM_PATH = (
     REPO_ROOT / "docs" / "CORTEX_V2_EXECUTIVE_LIVE_OUTCOME_PROGRAM_0.md"
 )
+GEMINI_RUNTIME_RESTACK_PROGRAM_PATH = (
+    REPO_ROOT / "docs" / "CORTEX_V2_GEMINI_RUNTIME_RESTACK_PROGRAM_0.md"
+)
+GEMINI_RUNTIME_PROGRAM_PATH = (
+    REPO_ROOT / "docs" / "CORTEX_V2_GEMINI_RUNTIME_PROGRAM_0.md"
+)
+GEMINI_INGRESS_PROGRAM_PATH = (
+    REPO_ROOT / "docs" / "CORTEX_V2_GEMINI_INGRESS_PROGRAM_0.md"
+)
+GEMINI_SERVICE_PROGRAM_PATH = (
+    REPO_ROOT / "docs" / "CORTEX_V2_GEMINI_SERVICE_PROGRAM_0.md"
+)
+GEMINI_HOST_CONTROL_PROGRAM_PATH = (
+    REPO_ROOT / "docs" / "CORTEX_V2_GEMINI_HOST_CONTROL_PROGRAM_0.md"
+)
 RUNTIME_RESTACK_PROGRAM_PATH = (
     REPO_ROOT / "docs" / "CORTEX_V2_RUNTIME_RESTACK_PROGRAM_0.md"
 )
@@ -246,17 +261,17 @@ def test_resume_protocol_and_active_workstream_contract_exist() -> None:
     assert "Never promote uncommitted local edits to accepted baseline truth." in agents_text
 
     assert "Status: live workflow-state ledger for compaction-safe continuation." in workstream_text
-    assert "Accepted baseline branch: `codex/k2-openai-host-control`" in workstream_text
-    assert "Accepted baseline commit: `9ed7dae`" in workstream_text
-    assert "Current working branch at ledger update: `codex/k3-executive-live-outcome`" in workstream_text
-    assert "branch-local K3 candidate over accepted K2 truth" in workstream_text
-    assert "Current candidate seam: `K3` executive live-outcome closeout" in workstream_text
-    assert "Current seam status: `K3 candidate implemented and verified / accepted baseline remains clean accepted K2 line`" in workstream_text
+    assert "Accepted baseline branch: `codex/k3-executive-live-outcome`" in workstream_text
+    assert "Accepted baseline commit: `efe003e`" in workstream_text
+    assert "Current working branch at ledger update: `codex/g1-gemini-runtime-product-parity`" in workstream_text
+    assert "branch-local G1 candidate over accepted K3 truth" in workstream_text
+    assert "Current candidate seam: `G1` Gemini runtime/product parity closeout" in workstream_text
+    assert "Current seam status: `G1 candidate implemented and partially verified / accepted baseline remains clean accepted K3 line`" in workstream_text
     assert "Do not import donor runtime workflow truth wholesale from `codex/c1-reference-continuation`" in workstream_text
-    assert "Do not reopen K2 into new outbound host-control lanes." in workstream_text
-    assert "Do not open support-memory runtime, mediation / `Q_t^{final}` experimentation, Gemini runtime shell" in workstream_text
+    assert "Do not reopen K3 into new executive-allocation widening beyond the accepted current-scope law." in workstream_text
+    assert "Do not open support-memory runtime, mediation / `Q_t^{final}` experimentation, extra OpenAI work" in workstream_text
     assert "stale campaign-specific cleanup notes survive into the live workstream ledger" in workstream_text
-    assert "The accepted `k2` line is now the source of accepted workflow baseline truth" in workstream_text
+    assert "The accepted `k3` line is now the source of accepted workflow baseline truth" in workstream_text
     assert "verification/evidence restack train" not in workstream_text.split("## 4. Explicitly blocked moves", 1)[1].split("## 5. Acknowledged worktree noise", 1)[0]
     assert "The accepted `k1f` line is now the source of accepted workflow baseline truth" not in workstream_text
     assert "git branch --show-current" in workstream_text
@@ -274,6 +289,11 @@ def test_reference_runtime_program_lock_is_recorded() -> None:
     openai_service_program_text = _read(OPENAI_SERVICE_PROGRAM_PATH)
     openai_host_control_program_text = _read(OPENAI_HOST_CONTROL_PROGRAM_PATH)
     executive_live_outcome_program_text = _read(EXECUTIVE_LIVE_OUTCOME_PROGRAM_PATH)
+    gemini_runtime_restack_text = _read(GEMINI_RUNTIME_RESTACK_PROGRAM_PATH)
+    gemini_runtime_program_text = _read(GEMINI_RUNTIME_PROGRAM_PATH)
+    gemini_ingress_program_text = _read(GEMINI_INGRESS_PROGRAM_PATH)
+    gemini_service_program_text = _read(GEMINI_SERVICE_PROGRAM_PATH)
+    gemini_host_control_program_text = _read(GEMINI_HOST_CONTROL_PROGRAM_PATH)
     phase_gate_text = _read(PHASE_GATES_PATH)
     workstream_text = _read(ACTIVE_WORKSTREAM_PATH)
 
@@ -314,10 +334,10 @@ def test_reference_runtime_program_lock_is_recorded() -> None:
     assert "loopback-only HTTP is landed on the accepted K1 closeout line" in phase_gate_text
     assert "one active session per process is real for current scope" in phase_gate_text
 
-    assert "Current campaign: `K3 executive live-outcome train`" in workstream_text
-    assert "accepted K2 baseline now includes the bounded outbound OpenAI host-control lane at `9ed7dae`" in workstream_text
-    assert "explicit executive allocation diagnostics are now real on the branch-local K3 line" in workstream_text
-    assert "`Q_t^{mem}=0.0`, `alpha_t=1.0`, and `allocated_score == online_score` for current scope" in workstream_text
+    assert "Current campaign: `G1 Gemini runtime/product parity train`" in workstream_text
+    assert "accepted K3 baseline now includes explicit executive allocation diagnostics at `efe003e`" in workstream_text
+    assert "Gemini runtime, ingress, service, and bounded host-control shells are now real on the branch-local G1 line" in workstream_text
+    assert "Gemini reuses the accepted K3 executive allocation diagnostics exactly for current scope" in workstream_text
     assert "Do not import donor runtime workflow truth wholesale from `codex/c1-reference-continuation`" in workstream_text
     assert "the first one-process live continuity slice plus explicit rejection enforcement are real" in program_text
     assert "the corrective zero-finding re-audit has passed for current scope" in program_text
@@ -417,6 +437,21 @@ def test_reference_runtime_program_lock_is_recorded() -> None:
     assert "`allocated_score=online_score`" in executive_live_outcome_program_text
     assert "`make revalidate-executive-loop`" in executive_live_outcome_program_text
     assert "Current K3 candidate state before closeout" in executive_live_outcome_program_text
+    assert "`G1` Gemini documented host-event runtime shell" in phase_gate_text
+    assert "`G2` Gemini raw-transcript ingress shell" in phase_gate_text
+    assert "`G3` Gemini loopback service shell" in phase_gate_text
+    assert "`G4` Gemini bounded outbound host-control lane" in phase_gate_text
+
+    assert "Status: accepted re-audited support brief for the G1 runtime/product restack train" in gemini_runtime_restack_text
+    assert "Gemini-only" in gemini_runtime_restack_text
+    assert "Status: active runtime-program brief for the first Gemini documented host-event runtime shell" in gemini_runtime_program_text
+    assert "`python3 -m cortex.runtime.gemini_cli`" in gemini_runtime_program_text
+    assert "Status: active runtime-program brief for the first Gemini raw-transcript ingress shell" in gemini_ingress_program_text
+    assert "`python3 -m cortex.runtime.gemini_ingress_cli`" in gemini_ingress_program_text
+    assert "Status: active runtime-program brief for the first Gemini loopback service shell" in gemini_service_program_text
+    assert "`python3 -m cortex.runtime.gemini_service`" in gemini_service_program_text
+    assert "Status: active runtime-program brief for the first bounded outbound Gemini host-control lane" in gemini_host_control_program_text
+    assert "`POST /v1/actions/interaction-stream`" in gemini_host_control_program_text
 
 
 def test_openai_host_control_revalidation_entry_points_are_recorded() -> None:
@@ -433,6 +468,18 @@ def test_openai_host_control_revalidation_entry_points_are_recorded() -> None:
     assert "## Executive live-outcome revalidation" in local_verification_text
     assert "make revalidate-executive-loop" in local_verification_text
     assert "revalidate-executive-loop:" in makefile_text
+    assert "## Gemini runtime revalidation" in local_verification_text
+    assert "make revalidate-gemini-runtime" in local_verification_text
+    assert "## Gemini ingress revalidation" in local_verification_text
+    assert "make revalidate-gemini-ingress" in local_verification_text
+    assert "## Gemini loopback service revalidation" in local_verification_text
+    assert "make revalidate-gemini-service" in local_verification_text
+    assert "## Gemini host-control revalidation" in local_verification_text
+    assert "make revalidate-gemini-host-control" in local_verification_text
+    assert "revalidate-gemini-runtime:" in makefile_text
+    assert "revalidate-gemini-ingress:" in makefile_text
+    assert "revalidate-gemini-service:" in makefile_text
+    assert "revalidate-gemini-host-control:" in makefile_text
 
 
 def test_erika_visualizations_are_framed_as_support_surfaces() -> None:
@@ -449,6 +496,7 @@ def test_erika_visualizations_are_framed_as_support_surfaces() -> None:
     assert f"**Accepted factual baseline:** `{accepted_branch}` at `{accepted_commit}`" in markdown_text
     assert "The verification/evidence restack train, K1 runtime/product restack, and K2 bounded host-control train are now landed for current scope on top of that same product truth." in markdown_text
     assert "The reference runtime shell, bounded reference continuity, OpenAI documented-host-event runtime shell, raw-transcript ingress shell, loopback service shell, and bounded outbound OpenAI host-control lane are now accepted on the current line." in markdown_text
+    assert "the accepted one is K3 executive live-outcome allocation and the current one is G1 Gemini runtime/product parity." in markdown_text
     assert "cortex-archival-dossiers/" not in markdown_text
     assert "Current Justified Boundary" in html_text
     assert "Gap Programs" in html_text
@@ -488,4 +536,4 @@ def test_runtime_restack_program_lock_is_recorded() -> None:
     assert "Current accepted state after K1 closeout" in text
     assert "implemented at K1 proof head `d4c311f` and truthfully closed at deterministic closeout head `79b8f39`" in text
     assert "later bounded runtime/product trains may still be explicitly opened" in master_plan_text
-    assert "now records accepted K2 host control and the current K3 executive live-outcome candidate" in theory_text
+    assert "now records accepted K3 executive allocation and the current G1 Gemini runtime/product parity candidate" in theory_text

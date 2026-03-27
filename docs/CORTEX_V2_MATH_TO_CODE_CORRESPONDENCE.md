@@ -325,6 +325,63 @@ Forbidden leaks: `O4` remains host-specific, text-only, and single-lane on purpo
 
 ---
 
+### 1.26 Gemini documented host-event runtime shell
+
+| Packet math | Is | Code home | Test surface | Status |
+| --- | --- | --- | --- | --- |
+| Gemini host-runtime live session carrier over documented raw host events plus accepted `C1` continuation law | `GeminiRuntimeSession` | `cortex/runtime/gemini.py` | `test_gemini_runtime_session_io.py::test_gemini_runtime_session_artifact_roundtrips_bounded_residue` + `test_gemini_runtime_continuity.py::test_gemini_runtime_split_session_is_o1_equivalent_to_uninterrupted_run` | branch-local candidate |
+| Gemini host-runtime control ledger carrier with nested executive allocation diagnostics | `GeminiControlLedger` | `cortex/runtime/gemini.py` | `test_gemini_runtime_cli.py::test_gemini_runtime_cli_reads_documented_raw_events_and_preserves_host_name` | branch-local candidate |
+| Gemini host-runtime step result carrier | `GeminiRuntimeStepResult` | `cortex/runtime/gemini.py` | `test_gemini_runtime_cli.py::test_gemini_runtime_cli_reads_documented_raw_events_and_preserves_host_name` | branch-local candidate |
+| Gemini host-runtime step composition over landed Gemini observe/bind, commitment-path helpers, accepted K3 executive allocation, and accepted bounded continuation law | `run_gemini_runtime_step()` | `cortex/runtime/gemini.py` | `test_gemini_runtime_step.py::test_gemini_runtime_step_rejects_canonical_cortex_event_name_before_runtime_processing` + `test_gemini_runtime_cli.py::test_gemini_runtime_cli_reads_documented_raw_events_and_preserves_host_name` + `test_gemini_runtime_cli.py::test_gemini_runtime_cli_undocumented_raw_host_event_warns_without_fabricating_parity` + `test_gemini_runtime_continuity.py::test_gemini_runtime_host_warning_and_certified_commitment_can_coexist_across_restart` | branch-local candidate |
+| Gemini bounded persisted continuation carrier split into exact `continuity_truth` and bounded `control_residue` | `GeminiRuntimeSessionArtifact` | `cortex/runtime/gemini_session_io.py` | `test_gemini_runtime_session_io.py::test_gemini_runtime_session_artifact_roundtrips_bounded_residue` | branch-local candidate |
+| Gemini runtime session -> persisted artifact build boundary | `build_gemini_runtime_session_artifact()` | `cortex/runtime/gemini_session_io.py` | `test_gemini_runtime_session_io.py::test_gemini_runtime_session_artifact_roundtrips_bounded_residue` | branch-local candidate |
+| Gemini persisted artifact -> runtime session parse boundary | `parse_gemini_runtime_session_artifact()` | `cortex/runtime/gemini_session_io.py` | `test_gemini_runtime_session_io.py::test_gemini_runtime_session_artifact_rejects_unknown_keys_and_invalid_enums` + `test_gemini_runtime_session_io.py::test_gemini_runtime_session_artifact_one_sided_last_feedback_normalizes_through_session_constructor` | branch-local candidate |
+| Gemini persisted artifact file read/write boundaries for the local CLI shell | `read_gemini_runtime_session_artifact()` + `write_gemini_runtime_session_artifact()` | `cortex/runtime/gemini_session_io.py` | `test_gemini_runtime_session_io.py::test_gemini_runtime_session_artifact_same_path_overwrite_safety` + `test_gemini_runtime_cli.py::test_gemini_runtime_cli_explicit_load_save_works` + `test_gemini_runtime_cli.py::test_gemini_runtime_cli_load_save_failure_emits_no_stdout` | branch-local candidate |
+| Gemini developer-facing runtime output projection with preserved raw host event name and nested executive allocation diagnostics | `build_gemini_cli_record()` | `cortex/runtime/gemini_cli.py` | `test_gemini_runtime_cli.py::test_gemini_runtime_cli_reads_documented_raw_events_and_preserves_host_name` + `test_gemini_runtime_cli.py::test_gemini_runtime_cli_undocumented_raw_host_event_warns_without_fabricating_parity` | branch-local candidate |
+
+Forbidden leaks: `G1` remains Gemini-specific on purpose. It may not introduce a fake host-neutral runtime layer, generic store doctrine, live network/service doctrine, or broader Gemini host action realization than the separately scoped `G4` lane allows. Raw Gemini host event names must remain visible in the outward projection and undocumented host events must remain explicit conservative warnings rather than fabricated parity. Gemini persisted continuation remains bounded to exact `continuity_truth` plus bounded `control_residue`; full shell-long `budget_history` and `brake_history` may remain public one-process diagnostics, but they may not become cross-process continuation truth.
+
+---
+
+### 1.27 Gemini raw-transcript ingress shell
+
+| Packet math | Is | Code home | Test surface | Status |
+| --- | --- | --- | --- | --- |
+| Gemini raw host-transcript ingress carrier over transcript `type` plus payload remainder | `GeminiHostEventEnvelope` | `cortex/runtime/gemini_ingress.py` | `test_gemini_ingress.py::test_documented_raw_gemini_event_parses_cleanly` + `test_gemini_ingress.py::test_undocumented_raw_content_event_still_parses_cleanly` | branch-local candidate |
+| raw transcript -> Gemini ingress carrier parse boundary | `parse_gemini_host_event_envelope()` | `cortex/runtime/gemini_ingress.py` | `test_gemini_ingress.py::test_canonical_cortex_event_name_is_rejected` + `test_gemini_ingress.py::test_dev_shell_wrapper_shape_is_rejected` + `test_gemini_ingress.py::test_missing_type_and_non_object_record_are_rejected` | branch-local candidate |
+| Gemini raw-transcript ingress CLI over accepted `G1` runtime shell | `main()` | `cortex/runtime/gemini_ingress_cli.py` | `test_gemini_ingress_cli.py::test_gemini_ingress_cli_reads_documented_raw_transcript_fixture` + `test_gemini_ingress_cli.py::test_gemini_ingress_cli_rejects_canonical_event_names_wrapper_shape_and_mixed_shape` + `test_gemini_ingress_cli.py::test_gemini_ingress_cli_undocumented_raw_host_event_still_warns_conservatively` | branch-local candidate |
+
+Forbidden leaks: `G2` owns transcript-shape parsing only. It may not mutate `G1` into the only Gemini shell, may not accept the dev-shell wrapper shape as lawful ingress, may not accept mixed wrapper/transcript records as lawful ingress, and may not fabricate host parity by silently normalizing canonical Cortex event names back into raw Gemini host traffic. `gemini_ingress_cli.py` may consume accepted `run_gemini_runtime_step()` and the accepted `G1` session artifact, but it may not become a new runtime owner or a generic ingress abstraction.
+
+---
+
+### 1.28 Gemini loopback service shell
+
+| Packet math | Is | Code home | Test surface | Status |
+| --- | --- | --- | --- | --- |
+| Gemini loopback service state carrier over exactly one active runtime session per process | `GeminiServiceState` | `cortex/runtime/gemini_service.py` | `test_gemini_service.py::test_gemini_service_state_constructs_cleanly` | branch-local candidate |
+| loopback Gemini service request dispatch over accepted `G2` transcript parsing and accepted `G1` runtime/session law | `handle_gemini_service_request()` | `cortex/runtime/gemini_service.py` | `test_gemini_service.py::test_gemini_service_invalid_import_becomes_400_error_payload` + `test_gemini_service.py::test_gemini_service_unknown_path_and_wrong_method_return_json_errors` + `test_gemini_service.py::test_gemini_service_health_and_documented_event_flow` | branch-local candidate |
+| Gemini loopback service artifact export/import boundaries | `export_gemini_service_session()` + `import_gemini_service_session()` | `cortex/runtime/gemini_service.py` | `test_gemini_service.py::test_gemini_service_import_export_preserves_exact_artifact_shape` + `test_gemini_service.py::test_gemini_service_session_export_import_and_startup_load_roundtrip` | branch-local candidate |
+| Gemini loopback service shell entrypoint | `main()` | `cortex/runtime/gemini_service.py` | `test_gemini_service.py::test_gemini_service_health_and_documented_event_flow` + `test_gemini_service.py::test_gemini_service_undocumented_raw_event_warns_without_fabricating_parity` + `test_gemini_service_continuity.py::test_gemini_service_event_sequence_is_g3_equivalent_to_g2_ingress_shell` | branch-local candidate |
+
+Forbidden leaks: `G3` remains host-specific and loopback-only on purpose. It may not bind remotely, invent multi-session or multi-client doctrine, invent a service-specific persistence format, or introduce a generic runtime/service layer. `/v1/events` must continue to consume the accepted `G2` transcript parser rather than bypassing host-shaped ingress law. `/v1/session/export` and `/v1/session/import` may move only the accepted Gemini runtime session artifact as JSON; they may not become path-based file APIs.
+
+---
+
+### 1.29 Gemini bounded outbound host-control lane
+
+| Packet math | Is | Code home | Test surface | Status |
+| --- | --- | --- | --- | --- |
+| bounded outbound Gemini host-control request carrier | `GeminiHostControlRequest` | `cortex/runtime/gemini_host_control.py` | `test_gemini_host_control.py::test_gemini_host_control_request_constructs_strict_text_only_payload` + `test_gemini_host_control.py::test_gemini_host_control_service_boundary_rejects_out_of_scope_keys` | branch-local candidate |
+| bounded outbound Gemini host-control result carrier | `GeminiHostControlResult` | `cortex/runtime/gemini_host_control.py` | `test_gemini_host_control.py::test_gemini_host_control_result_rejects_wrong_action_tag` + `test_gemini_host_control.py::test_run_gemini_host_control_matches_manual_g1_runtime_projection` | branch-local candidate |
+| stdlib Gemini `streamGenerateContent` transport over the bounded text-only lane | `execute_gemini_interaction_stream()` | `cortex/runtime/gemini_host_transport.py` | `test_gemini_host_control.py::test_parse_sse_events_converts_stream_frames_into_o2_shaped_records` + `test_gemini_host_control.py::test_parse_sse_events_rejects_zero_event_stream` + `test_gemini_host_control.py::test_parse_sse_events_rejects_malformed_json_event` + `test_gemini_host_control.py::test_run_gemini_host_control_matches_manual_g1_runtime_projection` | branch-local candidate |
+| outbound Gemini action -> accepted `G2`/`G1` runtime composition | `run_gemini_host_control()` | `cortex/runtime/gemini_host_control.py` | `test_gemini_host_control.py::test_run_gemini_host_control_matches_manual_g1_runtime_projection` + `test_gemini_host_control_continuity.py::test_gemini_host_control_export_import_preserves_control_truth` | branch-local candidate |
+| loopback Gemini service outbound action boundary over the bounded `G4` lane | `handle_gemini_service_action()` | `cortex/runtime/gemini_service.py` | `test_gemini_service.py::test_gemini_service_action_roundtrips_records_with_fake_transport` + `test_gemini_host_control.py::test_gemini_host_control_service_boundary_rejects_out_of_scope_keys` + `test_gemini_host_control_service.py::test_gemini_host_control_action_endpoint_returns_ordered_g1_records_and_mutates_session` + `test_gemini_host_control_service.py::test_gemini_host_control_action_endpoint_upstream_failure_returns_502_without_mutating_session` | branch-local candidate |
+
+Forbidden leaks: `G4` remains host-specific, text-only, and single-lane on purpose. It may not widen into tools or tool-result submission, cancel/update lanes, multimodal or content-part request doctrine, remote hosting, multi-session or multi-client doctrine, generic runtime/service abstraction, or a second executive doctrine. The transport may use only a stdlib Gemini-specific client for current scope and the canonical verification bundle may not require live network or a real API key. Returned upstream host events must re-enter through the accepted `G2` transcript parser and accepted `G1` runtime shell rather than bypassing those laws.
+
+---
+
 ## 2. V1 standard-library port correspondence
 
 ### 2.1 Commitment payload extraction (v1 `stop_payload.py`)
