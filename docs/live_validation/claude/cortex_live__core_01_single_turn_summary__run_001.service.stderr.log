@@ -1,4 +1,0 @@
-claude_service listening on 127.0.0.1:62446
-127.0.0.1 - - [27/Mar/2026 22:51:49] "GET /health HTTP/1.1" 200 -
-127.0.0.1 - - [27/Mar/2026 22:51:49] "POST /v1/actions/message-stream HTTP/1.1" 502 -
-127.0.0.1 - - [27/Mar/2026 22:51:49] "GET /v1/session/export HTTP/1.1" 200 -

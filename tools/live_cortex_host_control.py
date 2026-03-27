@@ -1,9 +1,10 @@
-"""Loopback-service live host-control capture for L1."""
+"""Current loopback-service automation-lane probe for L2."""
 
 from __future__ import annotations
 
 import argparse
 import json
+import os
 import socket
 import subprocess
 import sys
@@ -15,16 +16,14 @@ from pathlib import Path
 from typing import Any, Iterator
 
 from live_validation_common import (
-    COMMON_SCENARIOS,
-    HOST_TAILORED_SCENARIOS,
-    PROVIDER_MODELS,
-    PROVIDER_ROOTS,
+    MODEL_MATRIX,
     classify_failure,
+    comparator_path,
     ensure_live_validation_dirs,
     now_utc_iso,
-    should_collapse_after_failure,
+    provider_root,
+    resolve_auth_mode,
     write_json,
-    write_text,
 )
 
 
@@ -49,99 +48,81 @@ PROVIDER_CONFIG = {
     },
 }
 
+SMOKE_PROMPT = "Respond exactly with OK."
+
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         prog="python3 tools/live_cortex_host_control.py",
-        description="Capture live Cortex loopback-service host-control runs for L1.",
+        description="Probe the current loopback-service automation lane.",
     )
     parser.add_argument(
         "--provider",
         choices=("claude", "gemini", "openai", "all"),
         default="all",
     )
+    parser.add_argument(
+        "--lane",
+        choices=("automation",),
+        default="automation",
+    )
     args = parser.parse_args(argv)
 
     ensure_live_validation_dirs()
     providers = ("claude", "gemini", "openai") if args.provider == "all" else (args.provider,)
-    overall_summary: dict[str, Any] = {
-        "generated_at": now_utc_iso(),
-        "surface": "cortex_live_host_control",
-        "providers": {},
-    }
+    summary_path = comparator_path("cortex_live_summary.json")
+    summary = _read_json(summary_path)
+    if not summary:
+        summary = {
+            "generated_at": now_utc_iso(),
+            "surface": "cortex_live_host_control",
+            "lane": args.lane,
+            "providers": {},
+        }
+    summary["generated_at"] = now_utc_iso()
+    summary["surface"] = "cortex_live_host_control"
+    summary["lane"] = args.lane
     for provider in providers:
-        overall_summary["providers"][provider] = _capture_provider(provider)
-    write_json(
-        PROVIDER_ROOTS["comparators"] / "cortex_live_summary.json",
-        overall_summary,
-    )
-    print(json.dumps(overall_summary, indent=2, sort_keys=True))
+        summary["providers"][provider] = _capture_provider(provider)
+    write_json(summary_path, summary)
+    print(json.dumps(summary, indent=2, sort_keys=True))
     return 0
 
 
 def _capture_provider(provider: str) -> dict[str, Any]:
-    provider_root = PROVIDER_ROOTS[provider]
-    schedule = [*COMMON_SCENARIOS, *HOST_TAILORED_SCENARIOS[provider]]
-    runs: list[dict[str, Any]] = []
-    blocked_failure: str | None = None
-
-    for scenario in schedule:
-        for repeat_index in range(1, scenario.repeat_count + 1):
-            if blocked_failure is not None:
-                runs.append(
-                    {
-                        "provider": provider,
-                        "scenario_id": scenario.scenario_id,
-                        "repeat_index": repeat_index,
-                        "success": False,
-                        "skipped": True,
-                        "failure_class": blocked_failure,
-                        "notes": "Skipped after an earlier blocking Cortex live-path failure.",
-                    }
-                )
-                continue
-            result = _run_single_live_call(
-                provider=provider,
-                scenario_id=scenario.scenario_id,
-                prompt=scenario.prompt,
-                max_output_tokens=scenario.max_output_tokens,
-                repeat_index=repeat_index,
-                provider_root=provider_root,
-            )
-            runs.append(result)
-            if should_collapse_after_failure(result.get("failure_class")):
-                blocked_failure = result["failure_class"]
-
-    continuity_result = _run_continuity_capture(provider, provider_root)
-    runs.append(continuity_result)
+    root = provider_root(provider, "automation", "service")
+    auth_mode = resolve_auth_mode(provider, "automation")
+    model = MODEL_MATRIX[provider]["automation"].preferred
+    runs = [
+        _run_single_live_call(provider, auth_mode=auth_mode, model=model, root=root),
+        _run_continuity_capture(provider, auth_mode=auth_mode, model=model, root=root),
+    ]
     summary = {
-        "provider": provider,
         "generated_at": now_utc_iso(),
+        "provider": provider,
+        "lane": "automation",
         "runs": runs,
     }
-    write_json(provider_root / "cortex_live_runs.json", summary)
+    write_json(root / "service_runs.json", summary)
     return summary
 
 
 def _run_single_live_call(
-    *,
     provider: str,
-    scenario_id: str,
-    prompt: str,
-    max_output_tokens: int,
-    repeat_index: int,
-    provider_root: Path,
+    *,
+    auth_mode: str,
+    model: str,
+    root: Path,
 ) -> dict[str, Any]:
-    stem = f"cortex_live__{scenario_id}__run_{repeat_index:03d}"
-    request_path = provider_root / f"{stem}.request.json"
-    response_path = provider_root / f"{stem}.response.json"
-    service_log_path = provider_root / f"{stem}.service.stderr.log"
-
-    payload = _action_payload(provider, prompt, max_output_tokens=max_output_tokens)
+    stem = "service_smoke"
+    request_path = root / f"{stem}.request.json"
+    response_path = root / f"{stem}.response.json"
+    service_log_path = root / f"{stem}.service.stderr.log"
+    payload = _action_payload(provider, SMOKE_PROMPT, model=model)
     write_json(request_path, payload)
 
     started_at = now_utc_iso()
-    with _running_service(provider, service_log_path) as base_url:
+    with _running_service(provider, service_log_path, auth_mode=auth_mode) as base_url:
         status_code, response_payload = _request_json(
             "POST",
             f"{base_url}{PROVIDER_CONFIG[provider]['action_path']}",
@@ -160,34 +141,35 @@ def _run_single_live_call(
     failure_class = classify_failure(json.dumps(response_payload, sort_keys=True))
     return {
         "provider": provider,
-        "scenario_id": scenario_id,
-        "repeat_index": repeat_index,
+        "lane": "automation",
+        "auth_mode": auth_mode,
+        "model": model,
+        "scenario_id": "service_smoke",
         "started_at": started_at,
         "ended_at": ended_at,
         "success": status_code == 200 and failure_class is None and "records" in response_payload,
         "failure_class": failure_class,
         "http_status": status_code,
-        "request_path": str(request_path.relative_to(provider_root.parents[2])),
-        "response_path": str(response_path.relative_to(provider_root.parents[2])),
-        "service_log_path": str(service_log_path.relative_to(provider_root.parents[2])),
+        "request_path": str(request_path.relative_to(root.parents[4])),
+        "response_path": str(response_path.relative_to(root.parents[4])),
+        "service_log_path": str(service_log_path.relative_to(root.parents[4])),
         "record_count": len(response_payload.get("records", [])) if isinstance(response_payload.get("records"), list) else 0,
     }
 
 
-def _run_continuity_capture(provider: str, provider_root: Path) -> dict[str, Any]:
-    stem = "cortex_live__core_03_two_turn_restart__continuity"
-    first_request_path = provider_root / f"{stem}.first.request.json"
-    second_request_path = provider_root / f"{stem}.second.request.json"
-    continuity_path = provider_root / f"{stem}.json"
-    service_log_path = provider_root / f"{stem}.service.stderr.log"
+def _run_continuity_capture(
+    provider: str,
+    *,
+    auth_mode: str,
+    model: str,
+    root: Path,
+) -> dict[str, Any]:
+    stem = "service_restart_continuity"
+    artifact_path = root / f"{stem}.json"
+    first_payload = _action_payload(provider, "first step", model=model)
+    second_payload = _action_payload(provider, "second step", model=model)
 
-    first_payload = _action_payload(provider, "first step", max_output_tokens=96)
-    second_payload = _action_payload(provider, "second step", max_output_tokens=96)
-    write_json(first_request_path, first_payload)
-    write_json(second_request_path, second_payload)
-
-    started_at = now_utc_iso()
-    with _running_service(provider, service_log_path) as first_url:
+    with _running_service(provider, root / f"{stem}.first.service.stderr.log", auth_mode=auth_mode) as first_url:
         first_status, first_response = _request_json(
             "POST",
             f"{first_url}{PROVIDER_CONFIG[provider]['action_path']}",
@@ -198,28 +180,22 @@ def _run_continuity_capture(provider: str, provider_root: Path) -> dict[str, Any
     if first_status != 200 or export_status != 200:
         payload = {
             "provider": provider,
-            "started_at": started_at,
-            "ended_at": now_utc_iso(),
+            "lane": "automation",
+            "auth_mode": auth_mode,
+            "model": model,
             "success": False,
             "failure_class": classify_failure(
                 json.dumps(first_response, sort_keys=True) + json.dumps(exported_seed, sort_keys=True)
             ),
-            "http_statuses": {
-                "first_status": first_status,
-                "export_status": export_status,
-            },
-            "notes": "Continuity capture stopped at the first action/export boundary.",
+            "http_statuses": {"first_status": first_status, "export_status": export_status},
+            "notes": "Continuity stopped at the first action/export boundary.",
         }
-        write_json(continuity_path, payload)
-        return {
-            "provider": provider,
-            "scenario_id": "core_03_two_turn_restart__continuity",
-            "repeat_index": 1,
-            **payload,
-            "artifact_path": str(continuity_path.relative_to(provider_root.parents[2])),
-        }
+        write_json(artifact_path, payload)
+        payload["artifact_path"] = str(artifact_path.relative_to(root.parents[4]))
+        payload["scenario_id"] = "service_restart_continuity"
+        return payload
 
-    with _running_service(provider, service_log_path) as second_url:
+    with _running_service(provider, root / f"{stem}.second.service.stderr.log", auth_mode=auth_mode) as second_url:
         import_status, import_response = _request_json(
             "POST",
             f"{second_url}/v1/session/import",
@@ -235,11 +211,12 @@ def _run_continuity_capture(provider: str, provider_root: Path) -> dict[str, Any
             f"{second_url}/v1/session/export",
             None,
         )
-    ended_at = now_utc_iso()
     payload = {
         "provider": provider,
-        "started_at": started_at,
-        "ended_at": ended_at,
+        "lane": "automation",
+        "auth_mode": auth_mode,
+        "model": model,
+        "scenario_id": "service_restart_continuity",
         "success": (
             import_status == 200
             and second_status == 200
@@ -261,44 +238,34 @@ def _run_continuity_capture(provider: str, provider_root: Path) -> dict[str, Any
         "record_count": len(first_response.get("records", [])) + len(second_response.get("records", []))
         if isinstance(first_response.get("records"), list) and isinstance(second_response.get("records"), list)
         else 0,
-        "first_response": first_response,
-        "second_response": second_response,
-        "final_export": final_export,
     }
-    write_json(continuity_path, payload)
-    return {
-        "provider": provider,
-        "scenario_id": "core_03_two_turn_restart__continuity",
-        "repeat_index": 1,
-        "started_at": started_at,
-        "ended_at": ended_at,
-        "success": payload["success"],
-        "failure_class": payload["failure_class"],
-        "artifact_path": str(continuity_path.relative_to(provider_root.parents[2])),
-        "record_count": payload["record_count"],
-    }
+    write_json(artifact_path, payload)
+    payload["artifact_path"] = str(artifact_path.relative_to(root.parents[4]))
+    return payload
 
 
-def _action_payload(provider: str, prompt: str, *, max_output_tokens: int) -> dict[str, Any]:
-    config = PROVIDER_CONFIG[provider]
-    request_payload: dict[str, Any] = {
-        "model": PROVIDER_MODELS[provider],
-        "input": prompt,
-    }
-    if provider == "claude":
-        request_payload["max_output_tokens"] = max_output_tokens
-    else:
-        request_payload["max_output_tokens"] = max_output_tokens
+def _action_payload(provider: str, prompt: str, *, model: str) -> dict[str, Any]:
     return {
-        "action_tag": config["action_tag"],
-        "request": request_payload,
+        "action_tag": PROVIDER_CONFIG[provider]["action_tag"],
+        "request": {
+            "model": model,
+            "input": prompt,
+            "max_output_tokens": 96,
+        },
     }
 
 
 @contextmanager
-def _running_service(provider: str, log_path: Path) -> Iterator[str]:
+def _running_service(provider: str, log_path: Path, *, auth_mode: str) -> Iterator[str]:
     port = _free_port()
     module = PROVIDER_CONFIG[provider]["module"]
+    env = os.environ.copy()
+    if provider == "claude":
+        env["CORTEX_CLAUDE_LIVE_AUTH_MODE"] = auth_mode
+    elif provider == "gemini":
+        env["CORTEX_GEMINI_LIVE_AUTH_MODE"] = auth_mode
+    else:
+        env["CORTEX_OPENAI_LIVE_AUTH_MODE"] = auth_mode
     command = [sys.executable, "-m", module, "--port", str(port)]
     with log_path.open("w", encoding="utf-8") as log_file:
         process = subprocess.Popen(
@@ -306,6 +273,7 @@ def _running_service(provider: str, log_path: Path) -> Iterator[str]:
             stdout=subprocess.DEVNULL,
             stderr=log_file,
             cwd=str(Path(__file__).resolve().parents[1]),
+            env=env,
             text=True,
         )
         try:
@@ -336,17 +304,13 @@ def _wait_for_health(base_url: str, *, expected_runtime: str) -> None:
             status_code, payload = _request_json("GET", f"{base_url}/health", None)
             if status_code == 200 and payload.get("runtime") == expected_runtime:
                 return
-        except Exception as exc:  # pragma: no cover - best-effort readiness loop
+        except Exception as exc:  # pragma: no cover
             last_error = exc
         time.sleep(0.1)
     raise RuntimeError(f"service at {base_url} did not become healthy: {last_error}")
 
 
-def _request_json(
-    method: str,
-    url: str,
-    payload: dict[str, Any] | None,
-) -> tuple[int, dict[str, Any]]:
+def _request_json(method: str, url: str, payload: dict[str, Any] | None) -> tuple[int, dict[str, Any]]:
     body = None
     headers = {"Accept": "application/json"}
     if payload is not None:
@@ -364,6 +328,12 @@ def _request_json(
         except json.JSONDecodeError:
             payload = {"error": data or exc.reason}
         return exc.code, payload
+
+
+def _read_json(path: Path) -> dict[str, Any]:
+    if not path.exists():
+        return {}
+    return json.loads(path.read_text(encoding="utf-8"))
 
 
 if __name__ == "__main__":

@@ -1,4 +1,4 @@
-"""Terminal-backed provider baseline capture for L1 live validation."""
+"""Provider baseline capture for the L2 live testing environment."""
 
 from __future__ import annotations
 
@@ -12,116 +12,131 @@ from pathlib import Path
 from typing import Any
 
 from live_validation_common import (
-    COMMON_SCENARIOS,
-    HOST_TAILORED_SCENARIOS,
-    PROVIDER_MODELS,
-    PROVIDER_ROOTS,
     classify_failure,
+    choose_model,
+    comparator_path,
     ensure_live_validation_dirs,
     extract_event_labels,
     extract_result_text,
     now_utc_iso,
     parse_json_lines,
     provider_cli_workspace,
+    provider_root,
+    resolve_auth_mode,
+    run_command,
     sanitize_text,
     should_collapse_after_failure,
+    vertex_adc_available,
     write_json,
     write_text,
 )
 
 
+_SMOKE_PROMPT = "Respond exactly with OK."
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         prog="python3 tools/live_provider_baselines.py",
-        description="Capture direct terminal-backed provider baseline runs for L1.",
+        description="Capture provider baseline runs for the selected lane.",
     )
     parser.add_argument(
         "--provider",
         choices=("claude", "gemini", "openai", "all"),
         default="all",
     )
+    parser.add_argument(
+        "--lane",
+        choices=("operator", "automation"),
+        default="operator",
+    )
     args = parser.parse_args(argv)
 
     ensure_live_validation_dirs()
     providers = ("claude", "gemini", "openai") if args.provider == "all" else (args.provider,)
-
-    overall_summary: dict[str, Any] = {
-        "generated_at": now_utc_iso(),
-        "surface": "provider_baseline",
-        "providers": {},
-    }
+    summary_path = comparator_path(f"{args.lane}_provider_baseline_summary.json")
+    overall_summary = _read_json(summary_path)
+    if not overall_summary:
+        overall_summary = {
+            "generated_at": now_utc_iso(),
+            "surface": "provider_baseline",
+            "lane": args.lane,
+            "providers": {},
+        }
+    overall_summary["generated_at"] = now_utc_iso()
+    overall_summary["surface"] = "provider_baseline"
+    overall_summary["lane"] = args.lane
     for provider in providers:
-        overall_summary["providers"][provider] = _capture_provider(provider)
-
-    write_json(
-        PROVIDER_ROOTS["comparators"] / "provider_baseline_summary.json",
-        overall_summary,
-    )
+        overall_summary["providers"][provider] = _capture_provider(provider, lane=args.lane)
+    write_json(summary_path, overall_summary)
     print(json.dumps(overall_summary, indent=2, sort_keys=True))
     return 0
 
 
-def _capture_provider(provider: str) -> dict[str, Any]:
-    provider_root = PROVIDER_ROOTS[provider]
-    schedule = [*COMMON_SCENARIOS, *HOST_TAILORED_SCENARIOS[provider]]
+def _capture_provider(provider: str, *, lane: str) -> dict[str, Any]:
+    root = provider_root(provider, lane, "baselines")
     runs: list[dict[str, Any]] = []
     blocked_failure: str | None = None
 
-    for scenario in schedule:
-        for repeat_index in range(1, scenario.repeat_count + 1):
-            if blocked_failure is not None:
-                runs.append(
-                    {
-                        "provider": provider,
-                        "scenario_id": scenario.scenario_id,
-                        "repeat_index": repeat_index,
-                        "success": False,
-                        "skipped": True,
-                        "failure_class": blocked_failure,
-                        "notes": "Skipped after an earlier blocking provider failure.",
-                    }
-                )
-                continue
-            result = _run_single_provider_baseline(
-                provider=provider,
-                scenario_id=scenario.scenario_id,
-                prompt=scenario.prompt,
-                max_output_tokens=scenario.max_output_tokens,
-                repeat_index=repeat_index,
-                provider_root=provider_root,
+    for repeat_index in (1, 2):
+        if blocked_failure is not None:
+            runs.append(
+                {
+                    "provider": provider,
+                    "lane": lane,
+                    "repeat_index": repeat_index,
+                    "success": False,
+                    "skipped": True,
+                    "failure_class": blocked_failure,
+                    "notes": "Skipped after an earlier blocking provider failure.",
+                }
             )
-            runs.append(result)
-            if should_collapse_after_failure(result.get("failure_class")):
-                blocked_failure = result["failure_class"]
+            continue
+        result = _run_single_provider_baseline(
+            provider=provider,
+            lane=lane,
+            repeat_index=repeat_index,
+            provider_root_path=root,
+        )
+        runs.append(result)
+        if should_collapse_after_failure(result.get("failure_class")):
+            blocked_failure = result["failure_class"]
 
     summary = {
-        "provider": provider,
         "generated_at": now_utc_iso(),
+        "provider": provider,
+        "lane": lane,
         "runs": runs,
     }
-    write_json(provider_root / "provider_baseline_runs.json", summary)
+    write_json(root / "provider_baseline_runs.json", summary)
     return summary
 
 
 def _run_single_provider_baseline(
     *,
     provider: str,
-    scenario_id: str,
-    prompt: str,
-    max_output_tokens: int,
+    lane: str,
     repeat_index: int,
-    provider_root: Path,
+    provider_root_path: Path,
 ) -> dict[str, Any]:
-    stem = f"provider_baseline__{scenario_id}__run_{repeat_index:03d}"
-    stdout_path = provider_root / f"{stem}.stdout.log"
-    stderr_path = provider_root / f"{stem}.stderr.log"
-    metadata_path = provider_root / f"{stem}.json"
+    stem = f"provider_baseline__smoke__run_{repeat_index:03d}"
+    stdout_path = provider_root_path / f"{stem}.stdout.log"
+    stderr_path = provider_root_path / f"{stem}.stderr.log"
+    metadata_path = provider_root_path / f"{stem}.json"
 
+    auth_mode = resolve_auth_mode(provider, lane)
+    first_model = choose_model(provider, lane)
     started_at = now_utc_iso()
-    if provider == "openai":
-        run_result = _run_openai_baseline(prompt, max_output_tokens=max_output_tokens)
-    else:
-        run_result = _run_cli_baseline(provider, prompt)
+    run_result = _run_provider_probe(provider, lane=lane, auth_mode=auth_mode, model=first_model)
+    failure_class = classify_failure(f"{run_result['stdout']}\n{run_result['stderr']}")
+    if failure_class is None and run_result["exit_code"] == 124:
+        failure_class = "operator_timeout" if lane == "operator" else "quota_exhausted"
+    chosen_model = choose_model(provider, lane, first_failure=failure_class)
+    if chosen_model != first_model:
+        run_result = _run_provider_probe(provider, lane=lane, auth_mode=auth_mode, model=chosen_model)
+        failure_class = classify_failure(f"{run_result['stdout']}\n{run_result['stderr']}")
+        if failure_class is None and run_result["exit_code"] == 124:
+            failure_class = "operator_timeout" if lane == "operator" else "quota_exhausted"
     ended_at = now_utc_iso()
 
     stdout_text = sanitize_text(run_result.pop("stdout"))
@@ -130,18 +145,19 @@ def _run_single_provider_baseline(
     write_text(stderr_path, stderr_text)
 
     records = parse_json_lines(stdout_text)
-    failure_class = classify_failure(f"{stdout_text}\n{stderr_text}")
     payload = {
         "provider": provider,
-        "scenario_id": scenario_id,
+        "lane": lane,
         "repeat_index": repeat_index,
+        "auth_mode": auth_mode,
+        "model": chosen_model,
         "started_at": started_at,
         "ended_at": ended_at,
         "success": run_result["exit_code"] == 0 and failure_class is None,
         "failure_class": failure_class,
         "command": run_result["command"],
-        "stdout_path": str(stdout_path.relative_to(provider_root.parents[2])),
-        "stderr_path": str(stderr_path.relative_to(provider_root.parents[2])),
+        "stdout_path": str(stdout_path.relative_to(provider_root_path.parents[4])),
+        "stderr_path": str(stderr_path.relative_to(provider_root_path.parents[4])),
         "structured_event_count": len(records),
         "structured_event_labels": extract_event_labels(records),
         "result_text": extract_result_text(records, stdout_text),
@@ -151,16 +167,35 @@ def _run_single_provider_baseline(
     return payload
 
 
-def _run_cli_baseline(provider: str, prompt: str) -> dict[str, Any]:
-    with provider_cli_workspace() as workspace:
-        cwd = Path(workspace)
+def _run_provider_probe(
+    provider: str,
+    *,
+    lane: str,
+    auth_mode: str,
+    model: str,
+) -> dict[str, Any]:
+    if lane == "operator":
         if provider == "claude":
-            command = [
+            return _run_claude_operator_probe(model)
+        if provider == "gemini":
+            return _run_gemini_operator_probe(model)
+        return _run_openai_operator_probe(model)
+    if provider == "claude":
+        return _run_claude_automation_probe(model, auth_mode=auth_mode)
+    if provider == "gemini":
+        return _run_gemini_automation_probe(model, auth_mode=auth_mode)
+    return _run_openai_automation_probe(model, auth_mode=auth_mode)
+
+
+def _run_claude_operator_probe(model: str) -> dict[str, Any]:
+    with provider_cli_workspace() as workspace:
+        return run_command(
+            [
                 "claude",
                 "-p",
-                prompt,
+                _SMOKE_PROMPT,
                 "--model",
-                PROVIDER_MODELS[provider],
+                model,
                 "--output-format",
                 "stream-json",
                 "--verbose",
@@ -168,42 +203,64 @@ def _run_cli_baseline(provider: str, prompt: str) -> dict[str, Any]:
                 "1",
                 "--permission-mode",
                 "plan",
-            ]
-        elif provider == "gemini":
-            command = [
-                "gemini",
-                "-p",
-                prompt,
-                "-o",
-                "stream-json",
-                "-m",
-                PROVIDER_MODELS[provider],
-                "--approval-mode",
-                "plan",
-            ]
-        else:
-            raise ValueError(f"unsupported provider: {provider}")
+            ],
+            cwd=Path(workspace),
+            timeout_seconds=30.0,
+        )
 
+
+def _run_gemini_operator_probe(model: str) -> dict[str, Any]:
+    with provider_cli_workspace() as workspace:
         try:
-            process = subprocess.run(
-                command,
-                cwd=str(cwd),
+            completed = subprocess.run(
+                [
+                    "gemini",
+                    "-p",
+                    _SMOKE_PROMPT,
+                    "-o",
+                    "stream-json",
+                    "-m",
+                    model,
+                    "--approval-mode",
+                    "plan",
+                ],
+                cwd=workspace,
                 text=True,
                 capture_output=True,
-                check=False,
                 timeout=45.0,
+                check=False,
             )
             return {
-                "command": command,
-                "exit_code": process.returncode,
-                "stdout": process.stdout,
-                "stderr": process.stderr,
+                "command": [
+                    "gemini",
+                    "-p",
+                    _SMOKE_PROMPT,
+                    "-o",
+                    "stream-json",
+                    "-m",
+                    model,
+                    "--approval-mode",
+                    "plan",
+                ],
+                "exit_code": completed.returncode,
+                "stdout": completed.stdout,
+                "stderr": completed.stderr,
             }
         except subprocess.TimeoutExpired as exc:
             stdout = exc.stdout if isinstance(exc.stdout, str) else (exc.stdout or b"").decode("utf-8", errors="replace")
             stderr = exc.stderr if isinstance(exc.stderr, str) else (exc.stderr or b"").decode("utf-8", errors="replace")
             return {
-                "command": command,
+                "command": [
+                    "gemini",
+                    "-p",
+                    _SMOKE_PROMPT,
+                    "-o",
+                    "stream-json",
+                    "-m",
+                    model,
+                    "--approval-mode",
+                    "plan",
+                ],
                 "exit_code": 124,
                 "stdout": stdout,
                 "stderr": stderr,
@@ -211,91 +268,169 @@ def _run_cli_baseline(provider: str, prompt: str) -> dict[str, Any]:
             }
 
 
-def _run_openai_baseline(prompt: str, *, max_output_tokens: int) -> dict[str, Any]:
-    api_key = os.environ.get("OPENAI_API_KEY")
-    if not api_key:
-        return {
-            "command": [
-                "urllib.request",
-                "POST",
-                "https://api.openai.com/v1/responses",
+def _run_openai_operator_probe(model: str) -> dict[str, Any]:
+    with provider_cli_workspace() as workspace:
+        return run_command(
+            [
+                "codex",
+                "exec",
+                "--json",
+                "--skip-git-repo-check",
+                "--sandbox",
+                "read-only",
+                "-m",
+                model,
+                _SMOKE_PROMPT,
             ],
-            "exit_code": 1,
-            "stdout": "",
-            "stderr": "OPENAI_API_KEY is required for the direct OpenAI baseline capture.",
-            "notes": "The installed OpenAI CLI is present, but the baseline uses the Responses API directly for structured event capture.",
-        }
+            cwd=Path(workspace),
+            timeout_seconds=30.0,
+        )
 
-    request_body = {
-        "model": PROVIDER_MODELS["openai"],
-        "input": [{"role": "user", "content": prompt}],
-        "max_output_tokens": max_output_tokens,
-        "stream": True,
+
+def _run_claude_automation_probe(model: str, *, auth_mode: str) -> dict[str, Any]:
+    if auth_mode != "api_key":
+        return _unsupported_auth_mode("claude", auth_mode)
+    api_key = os.environ.get("ANTHROPIC_API_KEY")
+    if not api_key:
+        return _missing_key_probe("ANTHROPIC_API_KEY")
+    body = {
+        "model": model,
+        "max_tokens": 16,
+        "messages": [{"role": "user", "content": _SMOKE_PROMPT}],
     }
-    http_request = urllib.request.Request(
-        "https://api.openai.com/v1/responses",
-        data=json.dumps(request_body).encode("utf-8"),
+    request = urllib.request.Request(
+        "https://api.anthropic.com/v1/messages",
+        data=json.dumps(body).encode("utf-8"),
         headers={
-            "Authorization": f"Bearer {api_key}",
             "Content-Type": "application/json",
-            "Accept": "text/event-stream",
+            "x-api-key": api_key,
+            "anthropic-version": "2023-06-01",
         },
         method="POST",
     )
+    return _run_json_http_probe(request, note="Direct Anthropic Messages JSON probe.")
+
+
+def _run_gemini_automation_probe(model: str, *, auth_mode: str) -> dict[str, Any]:
+    if auth_mode == "vertex_adc":
+        if not vertex_adc_available():
+            return {
+                "command": ["gcloud", "auth", "application-default", "print-access-token"],
+                "exit_code": 1,
+                "stdout": "",
+                "stderr": "Vertex ADC is not available for the Gemini automation lane.",
+                "notes": "Expected GOOGLE_CLOUD_PROJECT and GOOGLE_CLOUD_LOCATION plus a valid ADC token.",
+            }
+        token = run_command(["gcloud", "auth", "application-default", "print-access-token"], timeout_seconds=30.0)
+        project = os.environ.get("GOOGLE_CLOUD_PROJECT") or os.environ.get("GCLOUD_PROJECT")
+        location = os.environ.get("GOOGLE_CLOUD_LOCATION") or os.environ.get("VERTEX_LOCATION")
+        request = urllib.request.Request(
+            (
+                f"https://{location}-aiplatform.googleapis.com/v1/projects/{project}/locations/{location}"
+                f"/publishers/google/models/{model}:generateContent"
+            ),
+            data=json.dumps({"contents": [{"role": "user", "parts": [{"text": _SMOKE_PROMPT}]}]}).encode("utf-8"),
+            headers={
+                "Authorization": f"Bearer {token['stdout'].strip()}",
+                "Content-Type": "application/json",
+            },
+            method="POST",
+        )
+        return _run_json_http_probe(request, note="Direct Vertex Gemini JSON probe.")
+    if auth_mode != "api_key":
+        return _unsupported_auth_mode("gemini", auth_mode)
+    api_key = os.environ.get("GEMINI_API_KEY")
+    if not api_key:
+        return _missing_key_probe("GEMINI_API_KEY")
+    request = urllib.request.Request(
+        f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={api_key}",
+        data=json.dumps({"contents": [{"role": "user", "parts": [{"text": _SMOKE_PROMPT}]}]}).encode("utf-8"),
+        headers={"Content-Type": "application/json"},
+        method="POST",
+    )
+    return _run_json_http_probe(request, note="Direct Gemini JSON probe.")
+
+
+def _run_openai_automation_probe(model: str, *, auth_mode: str) -> dict[str, Any]:
+    if auth_mode != "api_key":
+        return _unsupported_auth_mode("openai", auth_mode)
+    api_key = os.environ.get("OPENAI_API_KEY")
+    if not api_key:
+        return _missing_key_probe("OPENAI_API_KEY")
+    request = urllib.request.Request(
+        "https://api.openai.com/v1/responses",
+        data=json.dumps({"model": model, "input": _SMOKE_PROMPT}).encode("utf-8"),
+        headers={
+            "Authorization": f"Bearer {api_key}",
+            "Content-Type": "application/json",
+        },
+        method="POST",
+    )
+    return _run_json_http_probe(request, note="Direct OpenAI Responses JSON probe.")
+
+
+def _run_json_http_probe(request: urllib.request.Request, *, note: str) -> dict[str, Any]:
+    started_at = now_utc_iso()
     try:
-        with urllib.request.urlopen(http_request, timeout=60.0) as response:
-            raw_chunks = [line.decode("utf-8", errors="replace") for line in response]
+        with urllib.request.urlopen(request, timeout=60.0) as response:
+            payload = response.read().decode("utf-8")
+        ended_at = now_utc_iso()
         return {
-            "command": [
-                "urllib.request",
-                "POST",
-                "https://api.openai.com/v1/responses",
-            ],
+            "command": [request.full_url],
             "exit_code": 0,
-            "stdout": "".join(raw_chunks),
+            "stdout": payload,
             "stderr": "",
-            "notes": "Direct Responses SSE capture over stdlib urllib.",
+            "started_at": started_at,
+            "ended_at": ended_at,
+            "notes": note,
         }
     except urllib.error.HTTPError as exc:
+        ended_at = now_utc_iso()
+        body = exc.read().decode("utf-8")
         return {
-            "command": [
-                "urllib.request",
-                "POST",
-                "https://api.openai.com/v1/responses",
-            ],
+            "command": [request.full_url],
             "exit_code": 1,
             "stdout": "",
-            "stderr": f"HTTP {exc.code}: {_http_error_message(exc)}",
-            "notes": "Direct Responses SSE capture over stdlib urllib.",
+            "stderr": f"HTTP {exc.code}: {body}",
+            "started_at": started_at,
+            "ended_at": ended_at,
+            "notes": note,
         }
     except urllib.error.URLError as exc:
+        ended_at = now_utc_iso()
         return {
-            "command": [
-                "urllib.request",
-                "POST",
-                "https://api.openai.com/v1/responses",
-            ],
+            "command": [request.full_url],
             "exit_code": 1,
             "stdout": "",
             "stderr": f"connection failed: {exc.reason}",
-            "notes": "Direct Responses SSE capture over stdlib urllib.",
+            "started_at": started_at,
+            "ended_at": ended_at,
+            "notes": note,
         }
 
 
-def _http_error_message(exc: urllib.error.HTTPError) -> str:
-    try:
-        payload = json.loads(exc.read().decode("utf-8"))
-    except Exception:
-        return exc.reason or "unknown upstream error"
-    if isinstance(payload, dict):
-        error = payload.get("error")
-        if isinstance(error, dict):
-            message = error.get("message")
-            if isinstance(message, str) and message.strip():
-                return message.strip()
-        if isinstance(error, str) and error.strip():
-            return error.strip()
-    return exc.reason or "unknown upstream error"
+def _missing_key_probe(key_name: str) -> dict[str, Any]:
+    return {
+        "command": [key_name],
+        "exit_code": 1,
+        "stdout": "",
+        "stderr": f"{key_name} is required for the selected automation lane.",
+    }
+
+
+def _unsupported_auth_mode(provider: str, auth_mode: str) -> dict[str, Any]:
+    return {
+        "command": [provider, auth_mode],
+        "exit_code": 1,
+        "stdout": "",
+        "stderr": f"{provider} automation auth mode `{auth_mode}` is not supported by this probe.",
+    }
+
+
+def _read_json(path: Path) -> dict[str, Any]:
+    if not path.exists():
+        return {}
+    return json.loads(path.read_text(encoding="utf-8"))
 
 
 if __name__ == "__main__":

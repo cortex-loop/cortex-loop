@@ -1,65 +1,65 @@
 # CORTEX_V2_LIVE_VALIDATION_VERDICT_0
 
 Date: 2026-03-27
-Status: first L1 live-validation verdict note
+Status: first L2 live-testing environment verdict note
 
 ## Verdict
 
-**lifecycle-first is not yet paying off enough on real hosts**
+**lifecycle-first is promising but under-instrumented**
 
 Reason:
 
-- the current line exposes live blockers honestly,
-- but zero providers completed a successful Cortex host-control validation run on this pass.
+- the signed-in operator lane is now real and has one clean OpenAI/Codex success on the shared coding harness,
+- the same operator lane preserves a truthful incompleteness path on OpenAI/Codex,
+- but Claude is still blocked on expired auth, Gemini is still an operator-lane watchlist, and the automation/service lane is still all-blocked on missing automation credentials.
 
-## Evidence summary
+## Current host summary
 
 ### Claude
 
-- direct provider baseline: `auth_expired`
-- Cortex live product path: `auth_missing`
-- interpretation:
-  - the CLI session exists, but it is not fresh enough for a real provider call
-  - the current A4 live product path still requires `ANTHROPIC_API_KEY`
+- operator probe: `auth_expired`
+- operator product path: blocked before task execution
+- automation lane: blocked on missing `ANTHROPIC_API_KEY`
 
 ### Gemini
 
-- direct provider baseline: `capacity_exhausted`
-- Cortex live product path: `auth_missing`
-- interpretation:
-  - the installed CLI is current, but `gemini-2.5-pro` is not currently runnable through the provider baseline path
-  - the current G4 live product path still requires `GEMINI_API_KEY`
+- operator probe: fallback to `gemini-2.5-flash` succeeds
+- operator baseline: mixed and still operationally unstable
+- operator product path: not yet counted as success
+- automation lane: blocked on missing ADC or `GEMINI_API_KEY`
 
 ### OpenAI
 
-- direct provider baseline: `auth_missing`
-- Cortex live product path: `auth_missing`
-- interpretation:
-  - the OpenAI CLI is installed, but both the baseline and the current O4 live product path still require `OPENAI_API_KEY`
+- operator probe: clean on signed-in Codex
+- operator baseline: clean on signed-in Codex
+- operator product path:
+  - `pass_minimal`: success
+  - `truth_gap`: truthful incomplete
+  - `restart_continuity`: success
+- automation lane: blocked on missing `OPENAI_API_KEY`
 
-## What the first pass still proves
+## What L2 already improves over L1
 
-The first pass is not valueless.
-It proves:
-
-- the toolchain-update step is real and repeatable,
-- the direct-provider and Cortex live-product harnesses are real,
-- the current shells fail with explicit typed blockers rather than silent hangs or fabricated parity,
-- and the continuity/export boundary remains reachable even when the live action itself fails.
-
-That is useful, but it is still below the threshold needed to claim that lifecycle-first is already paying off on real hosts.
+- OpenAI signed-in operator truth now uses the host-native Codex surface rather than the wrong `openai` utility surface
+- Gemini now has an explicit fallback model policy instead of “preferred only or fail blindly”
+- live machine artifacts are local-only and no longer belong in git
+- the verdict now depends on a real coding harness rather than summary-only prompts
 
 ## Next corrective seam
 
-Open one bounded **live-auth alignment** seam that:
+Open one bounded **operator-auth and automation-credential stabilization** seam that:
 
-- refreshes the Claude CLI token or equivalent live auth surface,
-- supplies the env-key auth the accepted A4 / G4 / O4 transports actually require,
-- and picks a subscription-runnable Gemini live model if `gemini-2.5-pro` remains capacity-blocked.
+- refreshes Claude auth and re-proves the Claude signed-in operator lane
+- stabilizes or narrows the Gemini operator-lane watchlist on `gemini-2.5-flash` or a later explicit fallback
+- provides automation credentials for the current service lane:
+  - `ANTHROPIC_API_KEY`
+  - Vertex ADC or `GEMINI_API_KEY`
+  - `OPENAI_API_KEY`
 
 After that seam lands, rerun:
 
 - `make live-preflight`
 - `make live-provider-baselines`
+- `make live-host-native-product-paths`
 - `make live-cortex-host-control`
 - `make live-compare`

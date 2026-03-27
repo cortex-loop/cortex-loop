@@ -1,59 +1,72 @@
 # CORTEX_V2_LIVE_VALIDATION_SCENARIO_CATALOG_0
 
 Date: 2026-03-27
-Status: active scenario catalog for the first L1 live-validation pass
+Status: active L2 scenario catalog for the signed-in-first live environment
 
-## Purpose
+## Shared coding harness
 
-This catalog records the common-core and host-tailored live scenarios for the L1 audit.
-It is a support brief for evidence capture, not packet authority.
+Project:
 
-## Common-core scenarios
+- `tests/fixtures/live_validation/project_template/`
 
-### `core_01_single_turn_summary`
+Target task:
 
-- goal: one bounded summarization/transformation request
-- evidence target:
-  - verify that the provider baseline path starts cleanly
-  - verify that the Cortex host-control path reaches the first action boundary
-  - classify the first blocker honestly if the run does not complete
+- fix the `normalize_port()` upper-bound bug
+- run `python -m pytest -q tests/test_normalize_port.py`
 
-### `core_02_long_stream`
+## Shared scenarios
 
-- goal: one prompt that should force multiple streamed chunks or blocks
-- evidence target:
-  - verify whether the provider baseline and Cortex path expose chunk cadence at all
-  - classify whether the current blocker is auth/capacity or event-surface related
+### `pass_minimal`
 
-### `core_03_two_turn_restart`
+- goal: one clean minimal bug-fix pass
+- operator lane:
+  - provider-native signed-in surface edits the workspace and runs the target test
+- automation lane:
+  - current service lane stays secondary until a separate raw-response extraction seam is earned
 
-- goal: two-step continuity/export-import audit
-- evidence target:
-  - verify that the current service export/import boundary remains reachable
-  - prove that a successful first action and successful second action can survive restart once auth-model alignment exists
+### `restart_continuity`
 
-## Host-tailored scenarios
+- goal: prove whether the same host-native lane can resume and finish cleanly after an explicit first-turn inspection
+- turn 1:
+  - inspect only
+  - no edits
+  - no tests
+- turn 2:
+  - resume the prior session
+  - apply the smallest fix
+  - run the target test
 
-### `claude_01_messages_shape`
+### `truth_gap`
 
-- goal: surface richer Claude Messages-shell structure when available
-- current first-pass result: skipped after the initial Claude auth-expired blocker
+- goal: prove that the host-native lane can preserve incompleteness honestly
+- rule:
+  - inspect only
+  - no edits
+  - no tests
+  - the result is counted truthful only if the task remains incomplete and the model says so explicitly
 
-### `gemini_01_stream_variance`
+## Host caveats
 
-- goal: surface longer Gemini streaming cadence or candidate/content-block variance when available
-- current first-pass result: skipped after the initial Gemini capacity-exhausted blocker
+### Claude
 
-### `openai_01_long_responses`
+- current caveat: auth freshness
+- probe surface: operator preflight plus the signed-in Claude baseline
 
-- goal: surface longer OpenAI Responses streaming behavior when available
-- current first-pass result: skipped after the initial OpenAI auth-missing blocker
+### Gemini
 
-## Blocker-collapse rule
+- current caveat: quota/capacity and operator stability on the preferred model
+- probe surface: operator preflight plus the signed-in Gemini baseline and product lane
 
-The first L1 pass uses one explicit blocker-collapse rule:
+### OpenAI
 
-- if a provider proves a high-signal blocker such as `auth_missing`, `auth_expired`, or `capacity_exhausted`,
-- later scheduled runs for that same provider are recorded as skipped rather than rerunning the same low-signal failure repeatedly.
+- current caveat: none on the signed-in Codex smoke and coding path so far
+- probe surface: operator preflight plus Codex baseline and product lane
 
-This keeps the evidence high-signal and cheap without pretending the blocked provider succeeded.
+## Artifact policy
+
+- machine output: local-only under `.cortex/live_validation/`
+- committed docs:
+  - this catalog
+  - the program brief
+  - the verdict note
+  - workstream / gate / verification summaries

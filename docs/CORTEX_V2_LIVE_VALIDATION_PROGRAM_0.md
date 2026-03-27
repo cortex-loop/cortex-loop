@@ -1,100 +1,94 @@
 # CORTEX_V2_LIVE_VALIDATION_PROGRAM_0
 
 Date: 2026-03-27
-Status: active live-validation program brief for the first multi-host subscribed-host audit pass
+Status: active L2 live-testing environment and auth-alignment brief
 
 ## Purpose
 
-This document records the first bounded live-validation train over the accepted reference, OpenAI, Gemini, and Claude runtime/product shells.
+This document records the second live-validation train over the accepted reference, OpenAI, Gemini, and Claude runtime/product shells.
 
-The train compares:
+The train is now split into two explicit live lanes:
 
-- direct terminal-backed provider baselines,
-- the accepted loopback-service plus host-control product path,
-- and the resulting evidence needed to judge whether the lifecycle-first approach is paying off on real hosts.
+- operator lane:
+  - signed-in host-native product surfaces
+  - primary acceptance-grade live truth
+- automation lane:
+  - API key or ADC-backed headless surfaces
+  - secondary live truth for unattended reproducibility
 
-This program does not override:
-
-- `docs/CORTEX_V2_CORE_2.md`
-- `docs/CORTEX_V2_SRE_2.md`
-- `docs/CORTEX_V2_AUX_2.md`
-- `docs/CORTEX_V2_IMPLEMENTATION_MASTER_PLAN_2.md`
-- `docs/CORTEX_V2_PHASE_GATES_2.md`
-- `docs/CORTEX_V2_MATH_TO_CODE_CORRESPONDENCE.md`
-
-## Accepted parent and baseline normalization
+## Accepted parent
 
 Accepted parent for this train:
 
 - branch: `codex/l1-live-validation`
 - commit: `8eb7f08`
 
-This is the refreshed-model line that carries:
+This remains the refreshed-model baseline line:
 
-- Claude pinned to `claude-sonnet-4-6`,
-- Gemini pinned to `gemini-2.5-pro`,
-- and OpenAI pinned to `gpt-5.4`.
+- Claude `claude-sonnet-4-6`
+- Gemini `gemini-2.5-pro`
+- OpenAI `gpt-5.4`
 
-## Locked scope
+The operator lane also carries a separate OpenAI coding-model preference:
 
-This train remains:
+- preferred: `gpt-5.3-codex`
+- fallback: `gpt-5.4`
 
-- evidence-first
-- host-specific
-- runtime-product-path honest
-- and bounded to direct provider baseline capture, loopback-service host-control capture, and comparison
+## L2 environment rules
 
-This train does **not** authorize:
+- live artifacts are local-only under `.cortex/live_validation/`
+- repo-tracked docs carry only summaries and verdicts
+- signed-in host-native truth is primary
+- current A4 / G4 / O4 service lanes remain secondary automation truth
+- OpenAI signed-in operator truth uses `codex`, not `openai`
+- Gemini signed-in operator truth may fall back from `gemini-2.5-pro` to `gemini-2.5-flash`
 
-- CLI-backed transport substitution for the accepted A4 / G4 / O4 lanes
-- tools or tool-result submission
-- thinking blocks
-- multimodal widening
-- runtime AUX activation
-- support-memory runtime
-- mediation implementation
-- generic runtime/service abstraction
+## Shared coding harness
 
-## Current L1 surfaces
+The main payoff evidence now uses one tiny coding project rather than generic summary prompts.
 
-- machine-readable preflight report: `docs/live_validation/preflight_report.json`
-- direct provider baseline summaries:
-  - `docs/live_validation/claude/provider_baseline_runs.json`
-  - `docs/live_validation/gemini/provider_baseline_runs.json`
-  - `docs/live_validation/openai/provider_baseline_runs.json`
-- Cortex live-path summaries:
-  - `docs/live_validation/claude/cortex_live_runs.json`
-  - `docs/live_validation/gemini/cortex_live_runs.json`
-  - `docs/live_validation/openai/cortex_live_runs.json`
-- comparison and verdict:
-  - `docs/live_validation/comparators/live_validation_comparison.json`
-  - `docs/live_validation/comparators/live_validation_comparison.md`
-  - `docs/CORTEX_V2_LIVE_VALIDATION_VERDICT_0.md`
+Shared task:
 
-## Initial evidence after the first pass
+- fix the `normalize_port()` upper-bound bug
+- run `python -m pytest -q tests/test_normalize_port.py`
+- keep the change minimal
 
-The first L1 pass is real and machine-backed, but it is blocked:
+Shared scenarios:
 
-- the provider toolchain is updated locally
-- the direct provider baseline path is real for all three providers
-- the Cortex loopback-service plus host-control path is real for all three providers
-- no provider completed a successful live Cortex host-control run on this pass
+- `pass_minimal`
+- `restart_continuity`
+- `truth_gap`
 
-Observed blocker classes:
+Host caveats remain explicit and separate from the shared success lanes.
 
-- Claude direct terminal baseline: `auth_expired`
-- Gemini direct terminal baseline: `capacity_exhausted`
-- OpenAI direct baseline: `auth_missing`
-- Claude / Gemini / OpenAI Cortex live product paths: `auth_missing`
+## Current L2 evidence
+
+Current local evidence after the first L2 pass:
+
+- operator preflight:
+  - Claude session is present but token freshness is blocked (`auth_expired`)
+  - Gemini operator probe succeeds on fallback `gemini-2.5-flash`
+  - Codex operator probe succeeds on `gpt-5.3-codex`
+- operator baselines:
+  - Claude blocked on `auth_expired`
+  - Gemini baseline is mixed and remains a watchlist
+  - OpenAI baseline is clean on Codex
+- operator product paths:
+  - OpenAI succeeds on `pass_minimal`
+  - OpenAI preserves `truth_gap`
+  - OpenAI succeeds on `restart_continuity`
+  - Claude remains blocked on auth freshness
+  - Gemini operator product lane remains unresolved and is not yet counted as success
+- automation lane:
+  - current service path still fails honestly on missing automation credentials for all three providers
 
 ## Closeout law
 
-`L1` is only honestly closed when all are true:
+`L2` is only honestly closed when all are true:
 
-- at least one successful direct provider baseline run exists for Claude, Gemini, and OpenAI
-- at least one successful live Cortex host-control run exists for Claude, Gemini, and OpenAI
-- at least one continuity/export-import live scenario completes successfully per provider
-- the comparison and verdict are regenerated after those successful runs
-- and the `L1`-`L4` phase-gate rows are updated truthfully
-
-Until then, this train remains partial or blocked rather than silently “close enough.”
+- Claude operator lane is re-proven after auth refresh
+- Gemini operator lane is either stable on `gemini-2.5-pro` or stably accepted on explicit fallback `gemini-2.5-flash`
+- OpenAI operator lane remains stable on Codex
+- at least one automation-lane host-control success exists per provider
+- the local-only compare output is regenerated after the final reruns
+- and the `L1`-`L4` gate rows are updated truthfully to the new L2 evidence state

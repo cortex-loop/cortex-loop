@@ -370,7 +370,7 @@ make revalidate-claude-host-control
 
 ## Live-validation preflight
 
-This updates the installed provider CLIs, records version/auth state, and emits the machine-readable L1 preflight report.
+This updates or verifies the current live-testing toolchain, records install channels, operator-lane auth freshness, automation-lane credential availability, and writes the local-only preflight report under `.cortex/live_validation/`.
 It is an environment-sensitive evidence command, not part of the canonical verification bundle, and it may mutate local provider tooling.
 
 Direct command:
@@ -387,13 +387,15 @@ make live-preflight
 
 ## Live provider baselines
 
-This captures direct terminal-backed provider baselines for Claude, Gemini, and OpenAI under `docs/live_validation/`.
-It is an evidence command only, not a test bundle, and it may stop after the first high-signal provider blocker instead of repeating low-signal failures.
+This captures provider smoke baselines.
+By default it runs the signed-in operator lane.
+The automation lane remains available as a separate optional comparison path.
+Machine output is local-only under `.cortex/live_validation/`.
 
 Direct command:
 
 ```sh
-python3 tools/live_provider_baselines.py
+python3 tools/live_provider_baselines.py --lane operator
 ```
 
 Repo-local entry point:
@@ -402,15 +404,40 @@ Repo-local entry point:
 make live-provider-baselines
 ```
 
-## Live Cortex host-control capture
+Optional automation comparison:
 
-This captures the authoritative product-path evidence over the loopback service plus the current A4 / G4 / O4 outbound host-control lanes.
-It is environment-sensitive and may record explicit auth or capacity blockers rather than successful live records.
+```sh
+python3 tools/live_provider_baselines.py --lane automation
+make live-provider-baselines-automation
+```
+
+## Live host-native product paths
+
+This is the primary acceptance-grade live lane.
+It runs the shared coding harness against signed-in host-native provider surfaces, keeps artifacts local-only, and measures `pass_minimal`, `restart_continuity`, and `truth_gap`.
 
 Direct command:
 
 ```sh
-python3 tools/live_cortex_host_control.py
+python3 tools/live_host_native_product_paths.py
+```
+
+Repo-local entry point:
+
+```sh
+make live-host-native-product-paths
+```
+
+## Live Cortex host-control capture
+
+This captures the current automation-side loopback service plus A4 / G4 / O4 host-control lanes.
+It is no longer the primary live truth; it is the secondary unattended lane.
+Machine output is local-only under `.cortex/live_validation/`.
+
+Direct command:
+
+```sh
+python3 tools/live_cortex_host_control.py --lane automation
 ```
 
 Repo-local entry point:
@@ -421,7 +448,7 @@ make live-cortex-host-control
 
 ## Live comparison and verdict
 
-This builds the current L1 comparison report and payoff verdict from the generated preflight, provider-baseline, and Cortex live artifacts.
+This builds the current L2 comparison report and payoff verdict from the local-only preflight, operator baseline, signed-in operator product, and automation service artifacts.
 It is a support-surface summarizer only and does not change runtime behavior.
 
 Direct command:

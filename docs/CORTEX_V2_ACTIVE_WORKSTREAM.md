@@ -17,13 +17,12 @@ It is workflow state only. It does not override the packet documents, implementa
   - the OpenAI host-realization cell now has a committed three-pair evidence series and `candidate_positive` cell-level signal for better host-specialized realization
   - package-level mediation evidence remains `insufficient`
   - lower visible burden remains unclaimed for host-realization
-  - accepted workflow baseline truth is now normalized around the refreshed post-A1 live-model line
+  - accepted workflow baseline truth remains the refreshed post-A1 live-model line
   - the reference runtime shell, bounded reference continuity, OpenAI documented-host-event runtime shell, raw-transcript ingress shell, loopback service shell, bounded outbound OpenAI host-control lane, and explicit executive allocation diagnostics remain accepted on the current line
   - the Gemini documented-host-event runtime shell, raw-transcript ingress shell, loopback service shell, and bounded outbound Gemini host-control lane remain accepted on the current line
   - the Claude documented-host-event runtime shell, raw-transcript ingress shell, loopback service shell, and bounded outbound Claude host-control lane remain accepted on the current line
   - refreshed live models on the current line are `claude-sonnet-4-6`, `gemini-2.5-pro`, and `gpt-5.4`
   - `R6`, `O5`, `G1`, `G2`, `G3`, `G4`, `A1`, `A2`, `A3`, and `A4` are landed on the current line
-  - the next lawful big product-facing direction is L1 multi-host live validation
 - Accepted baseline authority anchors:
   - `docs/CORTEX_V2_IMPLEMENTATION_STATUS_NOTE.md`
   - `docs/CORTEX_V2_IMPLEMENTATION_MASTER_PLAN_2.md`
@@ -32,47 +31,47 @@ It is workflow state only. It does not override the packet documents, implementa
 
 ## 2. Current campaign and seam state
 
-- Current campaign: `L1 multi-host live validation train`
+- Current campaign: `L2 s-tier live testing environment and auth-alignment train`
 - Current working branch at ledger update: `codex/l1-live-validation`
-- Current branch role: branch-local L1 candidate over the accepted refreshed A1 line; newer local edits are not baseline truth until committed
-- Current candidate seam: `L0/L1` live-validation preflight, capture harness, and first verdict pass
-- Current seam status: `initial live evidence captured / partial and blocked on live auth-model alignment`
-- Seam risk: timing or environment-sensitive evidence seam; repeated direct reruns and repeated repo-local entry-point reruns are required before any future closure claim
+- Current branch role: branch-local L2 candidate over accepted refreshed A1 truth
+- Current candidate seam: operator/automation lane split, local-only evidence migration, and shared coding-harness re-earn
+- Current seam status: `partially implemented and partially verified`
+- Seam risk: timing or environment-sensitive evidence seam with local toolchain coupling; repeated reruns are required before any closure claim
 
 ## 3. Next lawful move
 
-- Current candidate answer after the first L1 evidence pass:
-  - the toolchain is updated locally: `claude` `2.1.85`, `gemini` `0.35.2`, and `openai` `2.30.0`
-  - the machine-readable preflight report exists at `docs/live_validation/preflight_report.json`
-  - direct provider baseline capture exists for Claude, Gemini, and OpenAI with explicit blocker classes rather than silent failure
-  - Cortex loopback-service plus host-control capture exists for Claude, Gemini, and OpenAI and fails honestly at the live auth boundary for current scope
-  - the first comparator and verdict exist at `docs/live_validation/comparators/live_validation_comparison.{json,md}`
+- Current L2 answer so far:
+  - the live-testing environment now has explicit operator and automation lane semantics
+  - the local artifact root is now `.cortex/live_validation/` rather than repo-tracked `docs/live_validation/`
+  - preflight now detects install channels, auth modes, operator probe status, and fallback models
+  - Codex signed-in operator baseline is real on `gpt-5.3-codex`
+  - Codex signed-in operator product path already completes `pass_minimal`, preserves `truth_gap`, and passes `restart_continuity`
+  - Claude signed-in operator path remains blocked by expired auth
+  - Gemini signed-in operator smoke falls back to `gemini-2.5-flash`; the heavier operator product lane remains an operational watchlist and is not yet counted as success
+  - the current automation/service lane still fails honestly on missing automation credentials
 - Next lawful move:
-  - open one bounded live-auth alignment seam that makes the provider CLI sessions and the current A4 / G4 / O4 live transports prove fresh credentials without private-account drift
-  - choose a subscription-runnable Gemini live model if `gemini-2.5-pro` remains capacity-blocked in the provider CLI baseline path
-  - rerun `make live-preflight`, `make live-provider-baselines`, `make live-cortex-host-control`, and `make live-compare` after alignment
-  - only then decide whether a richer live-host capture seam is justified
+  - refresh Claude Code auth and re-prove the Claude operator lane
+  - stabilize the Gemini operator product lane on the explicit fallback model or classify the remaining watchlist more narrowly
+  - add or configure automation credentials:
+    - `ANTHROPIC_API_KEY`
+    - Vertex ADC or `GEMINI_API_KEY`
+    - `OPENAI_API_KEY`
+  - rerun `make live-preflight`, `make live-provider-baselines`, `make live-host-native-product-paths`, `make live-cortex-host-control`, and `make live-compare`
+  - only after that decide whether the automation lane needs a richer raw-response extraction seam
 
 ## 4. Explicitly blocked moves
 
-- Do not treat mixed local edits on the current working branch as accepted truth.
-- Do not branch new work from archival `main`.
-- Do not reopen `E6` verification-ergonomics helper work without a new explicit re-audit.
-- Do not promote package-level mediation justification from current burden evidence.
-- Do not let support-surface documents silently redefine packet or status authority.
-- Do not treat a three-pair OpenAI host-realization closeout as permission for mediation implementation.
-- Do not reinterpret a host-level `candidate_positive` cell as package-level justification.
-- Do not import donor runtime workflow truth wholesale from `codex/c1-reference-continuation`, `codex/o1-openai-runtime-shell`, `codex/o2-openai-ingress-shell`, or `codex/o3-openai-service-shell`.
+- Do not treat signed-in provider CLI sessions as equivalent to the automation credentials the current A4 / G4 / O4 service paths require.
+- Do not flatten provider auth into a generic shared credential broker.
+- Do not shell out from current A4 / G4 / O4 transports to provider CLIs without an explicit host-owned re-audit.
 - Do not reopen K3 into new executive-allocation widening beyond the accepted current-scope law.
-- Do not treat signed-in provider CLI sessions as equivalent to the API-key auth the current A4 / G4 / O4 live transports require.
-- Do not shell out from the current runtime transports to provider CLIs without a separately scoped auth-alignment seam.
-- Do not open support-memory runtime, mediation / `Q_t^{final}` experimentation, tools or tool-result submission, thinking blocks, multimodal payloads, runtime AUX activation, offline consolidation, or generic reward-learning doctrine from `L1`.
-- Do not reinterpret the current live blockers as proof that lifecycle-first is architecturally wrong; the current evidence is about auth-model alignment, not packet failure.
+- Do not open support-memory runtime, mediation / `Q_t^{final}` experimentation, tool-result submission, multimodal widening, runtime AUX activation, offline consolidation, or generic reward-learning doctrine from `L2`.
+- Do not keep repo-tracked live artifacts under `docs/live_validation/`; live machine output is local-only now.
+- Do not interpret the current Gemini operator-lane instability as proof that the signed-in-first design is wrong; it is a host/watchlist issue until repeated reruns say otherwise.
 
 ## 5. Acknowledged worktree noise at ledger creation
 
-- The accepted refreshed A1 line at `8eb7f08` is now the source of accepted workflow baseline truth until a later accepted baseline update lands.
-- `docs/live_validation/` now contains generated evidence artifacts and summary files from the initial L1 pass; reruns are expected to overwrite those support artifacts.
+- `.cortex/live_validation/` now contains local-only generated evidence for the current L2 pass and is expected to churn across reruns.
 - Local workspace directories already exist under `.claude/worktrees/`.
 - Re-read `git status --short --untracked-files=all` before opening any new seam; this summary is only the continuity reminder, not the canonical file list.
 

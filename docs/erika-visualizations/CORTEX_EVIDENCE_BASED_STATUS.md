@@ -20,7 +20,9 @@ It also tracks which brain-inspired mechanisms Cortex has already stolen so far 
 - The Claude documented-host-event runtime shell, raw-transcript ingress shell, loopback service shell, and bounded outbound Claude host-control lane are now accepted on the current line.
 - The OpenAI host-realization cell now has a committed three-pair evidence series and `candidate_positive` cell-level signal for better host-specialized realization.
 - Mediation remains blocked and unjustified at package level.
-- The current open train is L1 multi-host live validation, and the first pass is blocked on live auth-model alignment rather than runtime contradiction.
+- The current open train is L2 s-tier live testing environment and auth alignment.
+- The live environment now treats signed-in host-native truth as primary, keeps machine artifacts local-only under `.cortex/live_validation/`, and uses Codex rather than `openai` as the OpenAI operator surface.
+- Current live evidence is mixed: Codex is clean on the shared coding harness, Claude is blocked on auth freshness, Gemini remains a watchlist, and the automation lane is still credential-blocked.
 
 ## North-star product target
 
