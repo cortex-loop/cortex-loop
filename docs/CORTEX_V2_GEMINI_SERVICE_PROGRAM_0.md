@@ -189,9 +189,9 @@ Every seam remains one-session max and must end on a clean tree before the next 
 
 ## Current accepted state after G1 closeout
 
-On the accepted G1 closeout line over accepted K3 baseline `efe003e`:
+On the accepted G1 closeout line, implemented at G1 proof head `fe33a7e` and truthfully closed at deterministic closeout head `9dfe38a` over accepted K3 baseline `efe003e`:
 
-- `GeminiServiceState`, `handle_gemini_service_request()`, `export_gemini_service_session()`, `import_gemini_service_session()`, and `python3 -m cortex.runtime.gemini_service` are now landed `G3` surfaces, implemented at G1 proof head `fe33a7e`
+- `GeminiServiceState`, `handle_gemini_service_request()`, `export_gemini_service_session()`, `import_gemini_service_session()`, and `python3 -m cortex.runtime.gemini_service` are now landed `G3` surfaces
 - `GET /health`, `POST /v1/events`, `GET /v1/session/export`, and `POST /v1/session/import` now exist over loopback-only HTTP
 - `/v1/events` now drives the current-line `G2` transcript parser and current-line `G1` runtime shell directly
 - loopback bind is fixed to `127.0.0.1`

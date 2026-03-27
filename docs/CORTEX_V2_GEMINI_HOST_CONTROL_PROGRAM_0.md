@@ -181,9 +181,9 @@ Every seam must end on a clean tree before the next opens.
 
 ## Current accepted state after G1 closeout
 
-On the accepted G1 closeout line over accepted K3 baseline `efe003e`:
+On the accepted G1 closeout line, implemented at G1 proof head `fe33a7e` and truthfully closed at deterministic closeout head `9dfe38a` over accepted K3 baseline `efe003e`:
 
-- `GeminiHostControlRequest`, `GeminiHostControlResult`, `execute_gemini_interaction_stream()`, `run_gemini_host_control()`, and `POST /v1/actions/interaction-stream` are now landed `G4` surfaces, implemented at G1 proof head `fe33a7e`
+- `GeminiHostControlRequest`, `GeminiHostControlResult`, `execute_gemini_interaction_stream()`, `run_gemini_host_control()`, and `POST /v1/actions/interaction-stream` are now landed `G4` surfaces
 - the request boundary is strict-whitelist and text-only for current scope
 - the stdlib transport has an internal fixture mode so canonical tests require no live Gemini network
 - returned host events now re-enter the current-line `G2` parser and `G1` runtime shell directly

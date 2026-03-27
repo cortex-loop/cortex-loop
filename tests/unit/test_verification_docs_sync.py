@@ -261,19 +261,21 @@ def test_resume_protocol_and_active_workstream_contract_exist() -> None:
     assert "Never promote uncommitted local edits to accepted baseline truth." in agents_text
 
     assert "Status: live workflow-state ledger for compaction-safe continuation." in workstream_text
-    assert "Accepted baseline branch: `codex/k3-executive-live-outcome`" in workstream_text
-    assert "Accepted baseline commit: `efe003e`" in workstream_text
+    assert "Accepted baseline branch: `codex/g1-gemini-runtime-product-parity`" in workstream_text
+    assert "Accepted baseline commit: `9dfe38a`" in workstream_text
     assert "Current working branch at ledger update: `codex/g1-gemini-runtime-product-parity`" in workstream_text
-    assert "branch-local G1 candidate over accepted K3 truth" in workstream_text
-    assert "Current candidate seam: `G1` Gemini runtime/product parity closeout" in workstream_text
-    assert "Current seam status: `G1 candidate implemented and repeat-verified / accepted baseline remains clean accepted K3 line`" in workstream_text
+    assert "accepted-baseline receipt line over accepted G1 truth" in workstream_text
+    assert "Current campaign: `none`" in workstream_text
+    assert "Current candidate seam: `none`" in workstream_text
+    assert "Current seam status: `idle / accepted G1 closeout is recorded on the current line`" in workstream_text
     assert "Do not import donor runtime workflow truth wholesale from `codex/c1-reference-continuation`" in workstream_text
     assert "Do not reopen K3 into new executive-allocation widening beyond the accepted current-scope law." in workstream_text
     assert "Do not open support-memory runtime, mediation / `Q_t^{final}` experimentation, extra OpenAI work" in workstream_text
     assert "stale campaign-specific cleanup notes survive into the live workstream ledger" in workstream_text
-    assert "The accepted `k3` line is now the source of accepted workflow baseline truth" in workstream_text
+    assert "The accepted `g1` line is now the source of accepted workflow baseline truth" in workstream_text
     assert "verification/evidence restack train" not in workstream_text.split("## 4. Explicitly blocked moves", 1)[1].split("## 5. Acknowledged worktree noise", 1)[0]
     assert "The accepted `k1f` line is now the source of accepted workflow baseline truth" not in workstream_text
+    assert "The accepted `k3` line is now the source of accepted workflow baseline truth" not in workstream_text
     assert "git branch --show-current" in workstream_text
     assert "git status --short --untracked-files=all" in workstream_text
     assert "Never promote an uncommitted branch head or dirty worktree state to accepted baseline truth." in workstream_text
@@ -334,10 +336,9 @@ def test_reference_runtime_program_lock_is_recorded() -> None:
     assert "loopback-only HTTP is landed on the accepted K1 closeout line" in phase_gate_text
     assert "one active session per process is real for current scope" in phase_gate_text
 
-    assert "Current campaign: `G1 Gemini runtime/product parity train`" in workstream_text
-    assert "accepted K3 baseline now includes explicit executive allocation diagnostics at `efe003e`" in workstream_text
-    assert "Gemini runtime, ingress, service, and bounded host-control shells are now real on the branch-local G1 line" in workstream_text
-    assert "Gemini reuses the accepted K3 executive allocation diagnostics exactly for current scope" in workstream_text
+    assert "Current campaign: `none`" in workstream_text
+    assert "the accepted G1 baseline now includes explicit K3 executive allocation diagnostics plus Gemini runtime, ingress, service, and bounded host-control shells on the same line" in workstream_text
+    assert "plan one bounded all-three-host live validation train across reference, Gemini, and OpenAI" in workstream_text
     assert "Do not import donor runtime workflow truth wholesale from `codex/c1-reference-continuation`" in workstream_text
     assert "the first one-process live continuity slice plus explicit rejection enforcement are real" in program_text
     assert "the corrective zero-finding re-audit has passed for current scope" in program_text
@@ -448,14 +449,29 @@ def test_reference_runtime_program_lock_is_recorded() -> None:
 
     assert "Status: accepted re-audited support brief for the G1 runtime/product restack train" in gemini_runtime_restack_text
     assert "Gemini-only" in gemini_runtime_restack_text
+    assert "Current accepted state after G1 closeout" in gemini_runtime_restack_text
+    assert "truthfully closed at deterministic closeout head `9dfe38a`" in gemini_runtime_restack_text
     assert "Status: accepted re-audited runtime-program brief for the first Gemini documented host-event runtime shell" in gemini_runtime_program_text
     assert "`python3 -m cortex.runtime.gemini_cli`" in gemini_runtime_program_text
+    assert "Current accepted state after G1 closeout" in gemini_runtime_program_text
+    assert "truthfully closed at deterministic closeout head `9dfe38a`" in gemini_runtime_program_text
     assert "Status: accepted re-audited runtime-program brief for the first Gemini raw-transcript ingress shell" in gemini_ingress_program_text
     assert "`python3 -m cortex.runtime.gemini_ingress_cli`" in gemini_ingress_program_text
+    assert "Current accepted state after G1 closeout" in gemini_ingress_program_text
+    assert "truthfully closed at deterministic closeout head `9dfe38a`" in gemini_ingress_program_text
     assert "Status: accepted re-audited runtime-program brief for the first Gemini loopback service shell" in gemini_service_program_text
     assert "`python3 -m cortex.runtime.gemini_service`" in gemini_service_program_text
+    assert "Current accepted state after G1 closeout" in gemini_service_program_text
+    assert "truthfully closed at deterministic closeout head `9dfe38a`" in gemini_service_program_text
     assert "Status: accepted re-audited runtime-program brief for the first bounded outbound Gemini host-control lane" in gemini_host_control_program_text
     assert "`POST /v1/actions/interaction-stream`" in gemini_host_control_program_text
+    assert "Current accepted state after G1 closeout" in gemini_host_control_program_text
+    assert "truthfully closed at deterministic closeout head `9dfe38a`" in gemini_host_control_program_text
+    assert "Current G1 candidate state before closeout" not in gemini_runtime_restack_text
+    assert "Current G1 candidate state before closeout" not in gemini_runtime_program_text
+    assert "Current G1 candidate state before closeout" not in gemini_ingress_program_text
+    assert "Current G1 candidate state before closeout" not in gemini_service_program_text
+    assert "Current G1 candidate state before closeout" not in gemini_host_control_program_text
 
 
 def test_openai_host_control_revalidation_entry_points_are_recorded() -> None:
@@ -500,7 +516,8 @@ def test_erika_visualizations_are_framed_as_support_surfaces() -> None:
     assert f"**Accepted factual baseline:** `{accepted_branch}` at `{accepted_commit}`" in markdown_text
     assert "The verification/evidence restack train, K1 runtime/product restack, and K2 bounded host-control train are now landed for current scope on top of that same product truth." in markdown_text
     assert "The reference runtime shell, bounded reference continuity, OpenAI documented-host-event runtime shell, raw-transcript ingress shell, loopback service shell, and bounded outbound OpenAI host-control lane are now accepted on the current line." in markdown_text
-    assert "the accepted one is K3 executive live-outcome allocation and the current one is G1 Gemini runtime/product parity." in markdown_text
+    assert "The Gemini documented-host-event runtime shell, raw-transcript ingress shell, loopback service shell, and bounded outbound Gemini host-control lane are now accepted on the current line." in markdown_text
+    assert "No bounded runtime/product train is currently open in the active workstream; the next lawful big move is an all-three-host live validation train across reference, Gemini, and OpenAI." in markdown_text
     assert "cortex-archival-dossiers/" not in markdown_text
     assert "Current Justified Boundary" in html_text
     assert "Gap Programs" in html_text
@@ -540,4 +557,4 @@ def test_runtime_restack_program_lock_is_recorded() -> None:
     assert "Current accepted state after K1 closeout" in text
     assert "implemented at K1 proof head `d4c311f` and truthfully closed at deterministic closeout head `79b8f39`" in text
     assert "later bounded runtime/product trains may still be explicitly opened" in master_plan_text
-    assert "now records accepted K3 executive allocation and the current G1 Gemini runtime/product parity candidate" in theory_text
+    assert "now records accepted G1 Gemini runtime/product parity truth and the next lawful move toward all-three-host live validation" in theory_text

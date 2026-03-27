@@ -65,7 +65,7 @@ Each seam must end clean before the next opens.
 
 ## Current accepted state after G1 closeout
 
-On the accepted G1 closeout line over accepted K3 baseline `efe003e`:
+On the accepted G1 closeout line, implemented at G1 proof head `fe33a7e` and truthfully closed at deterministic closeout head `9dfe38a` over accepted K3 baseline `efe003e`:
 
 - Gemini runtime, ingress, service, and bounded host-control shells are now landed as the accepted G1 runtime/product parity stack
 - the Gemini projections reuse accepted K3 executive allocation diagnostics exactly for current scope

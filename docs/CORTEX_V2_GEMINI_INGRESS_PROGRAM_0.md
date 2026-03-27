@@ -157,9 +157,9 @@ Every seam remains one-session max and must end on a clean tree before the next 
 
 ## Current accepted state after G1 closeout
 
-On the accepted G1 closeout line over accepted K3 baseline `efe003e`:
+On the accepted G1 closeout line, implemented at G1 proof head `fe33a7e` and truthfully closed at deterministic closeout head `9dfe38a` over accepted K3 baseline `efe003e`:
 
-- `GeminiHostEventEnvelope` and `parse_gemini_host_event_envelope()` are now landed `G2` surfaces, implemented at G1 proof head `fe33a7e`
+- `GeminiHostEventEnvelope` and `parse_gemini_host_event_envelope()` are now landed `G2` surfaces
 - `python3 -m cortex.runtime.gemini_ingress_cli` now drives the current-line `G1` runtime shell from raw transcript records
 - wrapper-shaped and mixed wrapper/transcript records are explicitly rejected at ingress
 - canonical Cortex event names are explicitly rejected at ingress

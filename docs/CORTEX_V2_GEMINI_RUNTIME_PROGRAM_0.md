@@ -181,9 +181,9 @@ Every seam remains one-session max and must end on a clean tree before the next 
 
 ## Current accepted state after G1 closeout
 
-On the accepted G1 closeout line over accepted K3 baseline `efe003e`:
+On the accepted G1 closeout line, implemented at G1 proof head `fe33a7e` and truthfully closed at deterministic closeout head `9dfe38a` over accepted K3 baseline `efe003e`:
 
-- `GeminiRuntimeSession`, `GeminiRuntimeSessionArtifact`, `run_gemini_runtime_step()`, and `python3 -m cortex.runtime.gemini_cli` are now landed `G1` surfaces, implemented at G1 proof head `fe33a7e`
+- `GeminiRuntimeSession`, `GeminiRuntimeSessionArtifact`, `run_gemini_runtime_step()`, and `python3 -m cortex.runtime.gemini_cli` are now landed `G1` surfaces
 - raw documented Gemini host events drive a host-specific runtime shell
 - `raw_host_event_name` is preserved in the top-level CLI record
 - canonical Cortex event names are explicitly rejected at both CLI and runtime entrypoint level
