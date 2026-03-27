@@ -20,6 +20,8 @@ def test_openai_host_control_export_import_preserves_control_truth() -> None:
 
     assert _project_records(split_records) == _project_records(uninterrupted_records)
     assert split_artifact == uninterrupted_artifact
+    assert "allocation_diagnostics" not in split_artifact["continuity_truth"]
+    assert "allocation_diagnostics" not in split_artifact["control_residue"]
 
 
 def _run_uninterrupted() -> tuple[list[dict[str, object]], dict[str, object]]:
@@ -105,6 +107,7 @@ def _project_records(records: list[dict[str, object]]) -> list[dict[str, object]
             "warnings": record["warnings"],
             "commitment_result_kind": record["commitment_result_kind"],
             "feedback_window_summary": record["feedback_window_summary"],
+            "allocation_diagnostics": record["control_ledger"]["allocation_diagnostics"],
         }
         for record in records
     ]

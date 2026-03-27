@@ -40,6 +40,12 @@ def test_openai_service_health_and_documented_event_flow() -> None:
         assert record["event_index"] == 1
         assert record["raw_host_event_name"] == "response.output_text.delta"
         assert record["dispatch_lane"] == "cheap"
+        assert tuple(record["control_ledger"]["allocation_diagnostics"]) == (
+            "alpha_t",
+            "activation_threshold",
+            "selected_delta_over_neutral",
+            "scores",
+        )
 
         health_status, updated_health = service.request("GET", "/health")
         assert health_status == 200
@@ -130,6 +136,12 @@ def test_openai_service_undocumented_raw_event_warns_without_fabricating_parity(
         assert payload["warnings"] == [
             "No documented OpenAI lifecycle mapping for 'response.tool_event'; using conservative external/observation binding."
         ]
+        assert tuple(payload["control_ledger"]["allocation_diagnostics"]) == (
+            "alpha_t",
+            "activation_threshold",
+            "selected_delta_over_neutral",
+            "scores",
+        )
 
 
 def test_openai_service_session_export_import_and_startup_load_roundtrip(tmp_path: Path) -> None:

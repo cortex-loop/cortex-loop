@@ -46,6 +46,12 @@ def test_openai_host_control_action_endpoint_returns_ordered_o1_records_and_muta
         "response.output_text.delta",
         "response.completed",
     ]
+    assert tuple(payload["records"][-1]["control_ledger"]["allocation_diagnostics"]) == (
+        "alpha_t",
+        "activation_threshold",
+        "selected_delta_over_neutral",
+        "scores",
+    )
     assert export_status == 200
     assert exported["continuity_truth"]["event_index"] == 3
 

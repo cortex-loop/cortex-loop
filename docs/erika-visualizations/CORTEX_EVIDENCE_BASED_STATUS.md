@@ -2,7 +2,7 @@
 
 **Date:** 2026-03-26  
 **Role:** support surface for orientation and planning  
-**Accepted factual baseline:** `codex/k1f-openai-service-closeout` at `79b8f39`
+**Accepted factual baseline:** `codex/k2-openai-host-control` at `9ed7dae`
 
 > This folder tracks three separate things: current accepted repo truth, the north-star product target, and the lawful gap programs required to move from the first toward the second.
 
@@ -14,11 +14,11 @@ It also tracks which brain-inspired mechanisms Cortex has already stolen so far 
 
 - Cortex v2 MVP is complete at the current justified boundary.
 - The accepted center is a tiny integrity core, active SRE reference surfaces, three host vertical slices, a contradiction-preserving evidence harness, and AUX MVP support-only surfaces.
-- The verification/evidence restack train and the K1 runtime/product restack are now landed for current scope on top of that same product truth.
-- The reference runtime shell, bounded reference continuity, OpenAI documented-host-event runtime shell, raw-transcript ingress shell, and loopback service shell are now accepted on the current line.
+- The verification/evidence restack train, K1 runtime/product restack, and K2 bounded host-control train are now landed for current scope on top of that same product truth.
+- The reference runtime shell, bounded reference continuity, OpenAI documented-host-event runtime shell, raw-transcript ingress shell, loopback service shell, and bounded outbound OpenAI host-control lane are now accepted on the current line.
 - The OpenAI host-realization cell now has a committed three-pair evidence series and `candidate_positive` cell-level signal for better host-specialized realization.
 - Mediation remains blocked and unjustified at package level.
-- Current follow-on work may include explicitly opened bounded runtime/product trains in the active workstream; it should never be silent feature expansion.
+- Current follow-on work may include explicitly opened bounded runtime/product trains in the active workstream; the current one is K3 executive live-outcome allocation and it should never become silent feature expansion.
 
 ## North-star product target
 

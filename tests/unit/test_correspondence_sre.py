@@ -86,6 +86,7 @@ EXPECTATIONS = (
                 test_names=(
                     "test_neutral_dominance_returns_neutral_when_margin_is_below_threshold",
                     "test_neutral_dominance_returns_strongest_non_neutral_when_threshold_is_met",
+                    "test_allocation_score_defaults_online_and_allocated_to_score",
                 ),
             ),
         ),
@@ -100,6 +101,7 @@ EXPECTATIONS = (
                 test_names=(
                     "test_neutral_dominance_returns_neutral_when_margin_is_below_threshold",
                     "test_neutral_dominance_returns_strongest_non_neutral_when_threshold_is_met",
+                    "test_allocation_scorecard_requires_alpha_in_unit_interval",
                 ),
             ),
         ),
@@ -114,6 +116,7 @@ EXPECTATIONS = (
                 test_names=(
                     "test_reference_scoring_defaults_to_neutral_when_margin_is_below_threshold",
                     "test_reference_scoring_keeps_masked_family_inadmissible_even_when_top_ranked",
+                    "test_reference_scoring_exposes_explicit_online_allocation_diagnostics",
                 ),
             ),
         ),

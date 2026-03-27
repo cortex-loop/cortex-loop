@@ -20,12 +20,12 @@ Active authority remains:
 
 ## Current repo evidence
 
-- The accepted workflow baseline is `codex/k1f-openai-service-closeout` at `79b8f39`.
+- The accepted workflow baseline is `codex/k2-openai-host-control` at `9ed7dae`.
 - `docs/CORTEX_V2_IMPLEMENTATION_STATUS_NOTE.md` says the current v2 roadmap is complete at the justified boundary.
 - `docs/CORTEX_V2_MEDIATION_JUSTIFICATION_NOTE.md` says mediation is still `not justified yet`.
 - `docs/CORTEX_V2_MEDIATION_EVIDENCE_NOTE_0.md` shows cell-level signal on thrash, uncertainty, and host-realization, but every package-level axis remains `insufficient`.
 - `docs/CORTEX_V2_VERIFICATION_ERGONOMICS_MASTER_PLAN_0.md` still defines the active non-feature follow-on campaign.
-- `docs/CORTEX_V2_ACTIVE_WORKSTREAM.md` may separately record later accepted or candidate bounded runtime/product trains.
+- `docs/CORTEX_V2_ACTIVE_WORKSTREAM.md` now records accepted K2 host control and the current K3 executive live-outcome candidate.
 - `pytest.ini`, `Makefile`, and `docs/CORTEX_V2_LOCAL_VERIFICATION.md` now provide repo-local verification entry points, including `make verify`, `make test-smoke`, evidence revalidation commands, and mediation evidence revalidation commands.
 - `.coveragerc`, `make coverage`, and `docs/CORTEX_V2_COVERAGE_BASELINE_NOTE_0.md` now exist as repo-local coverage hygiene surfaces.
 
@@ -40,10 +40,9 @@ Active authority remains:
 
 The next honest work remains whichever explicitly bounded seam the active workstream records next, with strong bias toward the smallest truthful move.
 
-1. governance-only workflow/support truth normalization where baseline drift still exists,
-2. broader evidence collection where package-level mediation blockers remain real,
-3. later non-feature verification cleanup where a new explicit seam is justified,
-4. or a separately scoped bounded runtime/product follow-on train when the active workstream has already opened one.
+1. broader evidence collection where package-level mediation blockers remain real,
+2. later non-feature verification cleanup where a new explicit seam is justified,
+3. or a separately scoped bounded runtime/product follow-on train when the active workstream has already opened one.
 
 Do not use this memo to justify:
 

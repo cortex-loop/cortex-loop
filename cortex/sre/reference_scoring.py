@@ -5,7 +5,11 @@ from __future__ import annotations
 from collections.abc import Sequence
 from dataclasses import dataclass
 
-from .allocation import AllocationScore, AllocationScorecard
+from .allocation import (
+    AllocationScore,
+    AllocationScorecard,
+    build_allocation_diagnostics_payload,
+)
 from .brake import BrakeState
 from .families import SoftControlFamily
 from .opportunities import (
@@ -92,6 +96,7 @@ def build_reference_allocation_scorecard(
     activation_threshold = _activation_threshold(
         executive_state.control_allocation.budget_band
     )
+    online_components = build_reference_online_score_components(executive_state)
 
     scores: list[AllocationScore] = []
     for family in SoftControlFamily:
@@ -111,21 +116,23 @@ def build_reference_allocation_scorecard(
         if brake_state is not BrakeState.QUIESCENT and family is SoftControlFamily.BRAKE:
             reason_tags.add(f"brake:{brake_state.value}")
 
+        online_score = _online_score(online_components[family])
         scores.append(
             AllocationScore(
                 family=family,
-                score=_score_for_family(
-                    family,
-                    executive_state=executive_state,
-                ),
+                score=online_score,
                 admissible=admissible,
                 reason_tags=frozenset(reason_tags),
+                online_score=online_score,
+                memory_score=0.0,
+                allocated_score=online_score,
             )
         )
 
     return AllocationScorecard(
         scores=tuple(scores),
         activation_threshold=activation_threshold,
+        alpha_t=1.0,
     )
 
 
@@ -152,50 +159,122 @@ def _activation_threshold(budget_band: str) -> float:
     return _THRESHOLDS.get(budget_band, 0.3)
 
 
-def _score_for_family(
+def build_reference_online_score_components(
+    executive_state: ReferenceExecutiveState,
+) -> dict[SoftControlFamily, dict[str, float]]:
+    if not isinstance(executive_state, ReferenceExecutiveState):
+        actual_type = type(executive_state).__name__
+        raise TypeError(
+            "build_reference_online_score_components.executive_state must be "
+            f"ReferenceExecutiveState, got {actual_type}."
+        )
+
+    return {
+        family: _online_score_components_for_family(
+            family,
+            executive_state=executive_state,
+        )
+        for family in SoftControlFamily
+    }
+
+
+def _online_score_components_for_family(
     family: SoftControlFamily,
     *,
     executive_state: ReferenceExecutiveState,
-) -> float:
-    score = _BASE_SCORES[family]
+) -> dict[str, float]:
+    task_progress = float(_BASE_SCORES[family])
     top_family_set = executive_state.control_allocation.top_family_set
     family_mask = executive_state.mode_and_gating.family_mask
     mode_tag = executive_state.mode_and_gating.mode_tag
     brake_state = executive_state.brake.brake_state
     host_friction_tags = executive_state.control_allocation.host_friction_tags
     budget_band = executive_state.control_allocation.budget_band
+    goal_continuity = executive_state.goal_continuity
+    contradiction_spike_flags = (
+        executive_state.uncertainty_monitoring.contradiction_spike_flags
+    )
+
+    uncertainty_reduction = 0.0
+    continuity_value = 0.0
+    stability_value = 0.0
+    control_burden = 0.0
+    host_friction = 0.0
+    visible_burden = 0.0
 
     if family in top_family_set and family is not SoftControlFamily.NEUTRAL:
-        score += 0.45
+        stability_value += 0.45
     if family in family_mask and family is not SoftControlFamily.NEUTRAL:
-        score += 0.1
+        task_progress += 0.1
     if mode_tag == "review_pending" and family is SoftControlFamily.CHECK:
-        score += 0.25
+        uncertainty_reduction += 0.25
     if mode_tag == "commitment_path" and family is SoftControlFamily.CHECK:
-        score += 0.15
+        uncertainty_reduction += 0.15
     if family is SoftControlFamily.BRANCH and family in top_family_set:
-        score += 0.35
+        continuity_value += 0.35
     if family is SoftControlFamily.BRAKE:
         if brake_state is BrakeState.GUARDED:
-            score += 0.45
+            stability_value += 0.45
         if brake_state is BrakeState.LATCHED:
-            score += 0.75
+            stability_value += 0.75
     if family is SoftControlFamily.ESCALATE and host_friction_tags:
-        score += 0.25
+        stability_value += 0.25
     if family is SoftControlFamily.SEEK_CONTEXT and any(
         tag.endswith("missing") for tag in host_friction_tags
     ):
-        score += 0.15
+        uncertainty_reduction += 0.15
     if budget_band == "high" and family in {
         SoftControlFamily.CHECK,
         SoftControlFamily.BRANCH,
     }:
-        score += 0.05
-    return score
+        task_progress += 0.05
+
+    if goal_continuity.pending_goal_refs and family is SoftControlFamily.REDIRECT:
+        continuity_value += 0.05
+    if goal_continuity.active_track_ref != "main" and family is SoftControlFamily.BRANCH:
+        continuity_value += 0.05
+    if goal_continuity.resume_anchor_available and family is SoftControlFamily.BRANCH:
+        continuity_value += 0.05
+
+    if contradiction_spike_flags:
+        if family is SoftControlFamily.CHECK:
+            uncertainty_reduction += 0.05
+        if family is SoftControlFamily.BRAKE:
+            stability_value += 0.05
+
+    if family is SoftControlFamily.BRANCH:
+        if brake_state is BrakeState.GUARDED:
+            control_burden += 0.5
+        if brake_state is BrakeState.LATCHED:
+            control_burden += 0.8
+
+    return {
+        "task_progress": task_progress,
+        "uncertainty_reduction": uncertainty_reduction,
+        "goal_continuity": continuity_value,
+        "stability": stability_value,
+        "control_burden": control_burden,
+        "host_friction": host_friction,
+        "visible_burden": visible_burden,
+    }
+
+
+def _online_score(components: dict[str, float]) -> float:
+    return (
+        components["task_progress"]
+        + components["uncertainty_reduction"]
+        + components["goal_continuity"]
+        + components["stability"]
+        - components["control_burden"]
+        - components["host_friction"]
+        - components["visible_burden"]
+    )
 
 
 __all__ = [
     "ReferenceSoftControlSelection",
+    "build_allocation_diagnostics_payload",
     "build_reference_allocation_scorecard",
+    "build_reference_online_score_components",
     "select_reference_soft_control",
 ]

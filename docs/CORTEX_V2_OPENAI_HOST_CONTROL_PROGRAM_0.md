@@ -1,7 +1,7 @@
 # CORTEX_V2_OPENAI_HOST_CONTROL_PROGRAM_0
 
 Date: 2026-03-27
-Status: active runtime-program brief for the first bounded outbound OpenAI host-control lane
+Status: accepted re-audited runtime-program brief for the first bounded outbound OpenAI host-control lane
 
 ## Purpose
 
@@ -13,7 +13,7 @@ The chosen next move is:
 - one text-only `openai-response-stream` request surface,
 - one stdlib transport over the official OpenAI Responses create+stream surface,
 - one loopback service action endpoint on top of the accepted `O3` shell,
-- and one candidate K2 closeout that preserves K1 truth instead of widening into generic host control.
+- and one re-audit closeout that preserves K1 truth while opening the first bounded outbound host-control lane.
 
 This document does not override:
 
@@ -179,18 +179,16 @@ Every seam must end on a clean tree before the next opens.
 - `make seam-preflight`, `make revalidate-openai-host-control`, `make revalidate-openai-service`, `make test-smoke`, and `make verify` pass
 - and the `O4` phase-gate row is updated truthfully
 
-## Current K2 candidate state before closeout
+## Current accepted state after K2 closeout
 
-On branch `codex/k2-openai-host-control` rooted at accepted K1 baseline `79b8f39`:
+On the accepted K2 host-control closeout line implemented at K2 proof head `5ed9549` and truthfully closed at deterministic closeout head `9ed7dae` on branch `codex/k2-openai-host-control`:
 
-- `OpenAIHostControlRequest`, `OpenAIHostControlResult`, `execute_openai_response_stream()`, `run_openai_host_control()`, and `POST /v1/actions/response-stream` now exist as branch-local `O4` candidate surfaces
-- the new request boundary is strict-whitelist and text-only for current scope
+- `OpenAIHostControlRequest`, `OpenAIHostControlResult`, `execute_openai_response_stream()`, `run_openai_host_control()`, and `POST /v1/actions/response-stream` are now landed `O4` surfaces
+- the request boundary is strict-whitelist and text-only for current scope
 - the stdlib transport has an internal fixture mode so canonical tests require no live OpenAI network
-- returned host events now re-enter the current-line `O2` parser and current-line `O1` runtime shell directly
-- and `make revalidate-openai-host-control` now exists as the repo-local K2 revalidation entry point
-
-This is branch-local K2 implementation truth.
-It does **not** by itself promote accepted baseline truth.
+- returned host events now re-enter the accepted `O2` parser and accepted `O1` runtime shell directly
+- `make revalidate-openai-host-control` now exists as the repo-local K2 revalidation entry point
+- and targeted direct reruns, repeated repo-local revalidation, `make test-smoke`, and `make verify` all passed on the accepted K2 line
 
 ## Explicitly blocked moves
 

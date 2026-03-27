@@ -846,6 +846,10 @@ EXPECTATIONS = (
                 test_file="tests/integration/test_openai_runtime_cli.py",
                 test_names=("test_openai_runtime_cli_reads_documented_raw_events_and_preserves_host_name",),
             ),
+            PromisedTestSurface(
+                test_file="tests/integration/test_openai_service.py",
+                test_names=("test_openai_service_health_and_documented_event_flow",),
+            ),
         ),
     ),
     PeripheryCorrespondenceExpectation(
@@ -964,6 +968,10 @@ EXPECTATIONS = (
                     "test_openai_runtime_cli_reads_documented_raw_events_and_preserves_host_name",
                     "test_openai_runtime_cli_undocumented_raw_host_event_warns_without_fabricating_parity",
                 ),
+            ),
+            PromisedTestSurface(
+                test_file="tests/integration/test_openai_host_control_service.py",
+                test_names=("test_openai_host_control_action_endpoint_returns_ordered_o1_records_and_mutates_session",),
             ),
         ),
     ),

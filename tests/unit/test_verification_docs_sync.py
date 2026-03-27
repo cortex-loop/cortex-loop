@@ -44,6 +44,9 @@ OPENAI_SERVICE_PROGRAM_PATH = (
 OPENAI_HOST_CONTROL_PROGRAM_PATH = (
     REPO_ROOT / "docs" / "CORTEX_V2_OPENAI_HOST_CONTROL_PROGRAM_0.md"
 )
+EXECUTIVE_LIVE_OUTCOME_PROGRAM_PATH = (
+    REPO_ROOT / "docs" / "CORTEX_V2_EXECUTIVE_LIVE_OUTCOME_PROGRAM_0.md"
+)
 RUNTIME_RESTACK_PROGRAM_PATH = (
     REPO_ROOT / "docs" / "CORTEX_V2_RUNTIME_RESTACK_PROGRAM_0.md"
 )
@@ -243,15 +246,15 @@ def test_resume_protocol_and_active_workstream_contract_exist() -> None:
     assert "Never promote uncommitted local edits to accepted baseline truth." in agents_text
 
     assert "Status: live workflow-state ledger for compaction-safe continuation." in workstream_text
-    assert "Accepted baseline branch: `codex/k1f-openai-service-closeout`" in workstream_text
-    assert "Accepted baseline commit: `79b8f39`" in workstream_text
-    assert "Current working branch at ledger update: `codex/k2-openai-host-control`" in workstream_text
-    assert "branch-local K2 candidate over accepted K1 truth" in workstream_text
-    assert "Current candidate seam: `K2` bounded OpenAI host-control closeout" in workstream_text
-    assert "Current seam status: `K2 candidate implemented and verified / accepted baseline remains clean accepted K1 line`" in workstream_text
+    assert "Accepted baseline branch: `codex/k2-openai-host-control`" in workstream_text
+    assert "Accepted baseline commit: `9ed7dae`" in workstream_text
+    assert "Current working branch at ledger update: `codex/k3-executive-live-outcome`" in workstream_text
+    assert "branch-local K3 candidate over accepted K2 truth" in workstream_text
+    assert "Current candidate seam: `K3` executive live-outcome closeout" in workstream_text
+    assert "Current seam status: `K3 candidate implemented and verified / accepted baseline remains clean accepted K2 line`" in workstream_text
     assert "Do not import donor runtime workflow truth wholesale from `codex/c1-reference-continuation`" in workstream_text
-    assert "Do not widen K2 beyond the bounded text-only `openai-response-stream` lane." in workstream_text
-    assert "Do not open tools or tool-result submission, cancel/update lanes, Gemini product/runtime, runtime AUX activation, offline consolidation, mediation implementation, or executive-loop rewrite from `K2`." in workstream_text
+    assert "Do not reopen K2 into new outbound host-control lanes." in workstream_text
+    assert "Do not open support-memory runtime, mediation / `Q_t^{final}` experimentation, Gemini runtime shell" in workstream_text
     assert "git branch --show-current" in workstream_text
     assert "git status --short --untracked-files=all" in workstream_text
     assert "Never promote an uncommitted branch head or dirty worktree state to accepted baseline truth." in workstream_text
@@ -266,6 +269,7 @@ def test_reference_runtime_program_lock_is_recorded() -> None:
     openai_ingress_program_text = _read(OPENAI_INGRESS_PROGRAM_PATH)
     openai_service_program_text = _read(OPENAI_SERVICE_PROGRAM_PATH)
     openai_host_control_program_text = _read(OPENAI_HOST_CONTROL_PROGRAM_PATH)
+    executive_live_outcome_program_text = _read(EXECUTIVE_LIVE_OUTCOME_PROGRAM_PATH)
     phase_gate_text = _read(PHASE_GATES_PATH)
     workstream_text = _read(ACTIVE_WORKSTREAM_PATH)
 
@@ -306,10 +310,10 @@ def test_reference_runtime_program_lock_is_recorded() -> None:
     assert "loopback-only HTTP is landed on the accepted K1 closeout line" in phase_gate_text
     assert "one active session per process is real for current scope" in phase_gate_text
 
-    assert "Current campaign: `K2 OpenAI host-control train`" in workstream_text
-    assert "one bounded outbound OpenAI host-control lane is now real on the branch-local K2 line" in workstream_text
-    assert "the K2 request surface is strict-whitelist and text-only for current scope" in workstream_text
-    assert "returned outbound host events now re-enter accepted `O2` parsing and accepted `O1` runtime composition directly" in workstream_text
+    assert "Current campaign: `K3 executive live-outcome train`" in workstream_text
+    assert "accepted K2 baseline now includes the bounded outbound OpenAI host-control lane at `9ed7dae`" in workstream_text
+    assert "explicit executive allocation diagnostics are now real on the branch-local K3 line" in workstream_text
+    assert "`Q_t^{mem}=0.0`, `alpha_t=1.0`, and `allocated_score == online_score` for current scope" in workstream_text
     assert "Do not import donor runtime workflow truth wholesale from `codex/c1-reference-continuation`" in workstream_text
     assert "the first one-process live continuity slice plus explicit rejection enforcement are real" in program_text
     assert "the corrective zero-finding re-audit has passed for current scope" in program_text
@@ -383,7 +387,7 @@ def test_reference_runtime_program_lock_is_recorded() -> None:
     assert "are now landed `O3` surfaces" in openai_service_program_text
     assert "same module may host a separately scoped outbound control lane" in openai_service_program_text
 
-    assert "Status: active runtime-program brief for the first bounded outbound OpenAI host-control lane" in openai_host_control_program_text
+    assert "Status: accepted re-audited runtime-program brief for the first bounded outbound OpenAI host-control lane" in openai_host_control_program_text
     assert "branch: `codex/k1f-openai-service-closeout`" in openai_host_control_program_text
     assert "commit: `79b8f39`" in openai_host_control_program_text
     assert "`POST /v1/actions/response-stream`" in openai_host_control_program_text
@@ -393,9 +397,22 @@ def test_reference_runtime_program_lock_is_recorded() -> None:
     assert "The public K2 surface remains:" in openai_host_control_program_text
     assert "canonical tests require no live OpenAI network" in openai_host_control_program_text
     assert "`make revalidate-openai-host-control`" in openai_host_control_program_text
-    assert "Current K2 candidate state before closeout" in openai_host_control_program_text
+    assert "Current accepted state after K2 closeout" in openai_host_control_program_text
+    assert "implemented at K2 proof head `5ed9549` and truthfully closed at deterministic closeout head `9ed7dae`" in openai_host_control_program_text
     assert "`O4` OpenAI bounded outbound host-control lane" in phase_gate_text
-    assert "| local branch closeout pending acceptance | partial |" in phase_gate_text
+    assert "cleanly closed at deterministic closeout head `9ed7dae`" in phase_gate_text
+    assert "`R6` explicit executive allocation slice on the reference runtime shell" in phase_gate_text
+    assert "`O5` OpenAI executive allocation projection slice" in phase_gate_text
+
+    assert "Status: active runtime-program brief for the first explicit executive live-outcome allocation slice" in executive_live_outcome_program_text
+    assert "branch: `codex/k2-openai-host-control`" in executive_live_outcome_program_text
+    assert "commit: `9ed7dae`" in executive_live_outcome_program_text
+    assert "nested `control_ledger.allocation_diagnostics`" in executive_live_outcome_program_text
+    assert "`Q_t^{mem}=0.0`" in executive_live_outcome_program_text
+    assert "`alpha_t=1.0`" in executive_live_outcome_program_text
+    assert "`allocated_score=online_score`" in executive_live_outcome_program_text
+    assert "`make revalidate-executive-loop`" in executive_live_outcome_program_text
+    assert "Current K3 candidate state before closeout" in executive_live_outcome_program_text
 
 
 def test_openai_host_control_revalidation_entry_points_are_recorded() -> None:
@@ -409,6 +426,9 @@ def test_openai_host_control_revalidation_entry_points_are_recorded() -> None:
     assert "Canonical K2 tests use the internal fixture transport and do not require a live OpenAI network or a real API key." in local_verification_text
     assert "make revalidate-openai-host-control" in local_verification_text
     assert "revalidate-openai-host-control:" in makefile_text
+    assert "## Executive live-outcome revalidation" in local_verification_text
+    assert "make revalidate-executive-loop" in local_verification_text
+    assert "revalidate-executive-loop:" in makefile_text
 
 
 def test_erika_visualizations_are_framed_as_support_surfaces() -> None:
@@ -423,8 +443,8 @@ def test_erika_visualizations_are_framed_as_support_surfaces() -> None:
     assert "lawful gap programs" in markdown_text
     assert "mechanisms Cortex has already stolen so far" in markdown_text
     assert f"**Accepted factual baseline:** `{accepted_branch}` at `{accepted_commit}`" in markdown_text
-    assert "The verification/evidence restack train and the K1 runtime/product restack are now landed for current scope on top of that same product truth." in markdown_text
-    assert "The reference runtime shell, bounded reference continuity, OpenAI documented-host-event runtime shell, raw-transcript ingress shell, and loopback service shell are now accepted on the current line." in markdown_text
+    assert "The verification/evidence restack train, K1 runtime/product restack, and K2 bounded host-control train are now landed for current scope on top of that same product truth." in markdown_text
+    assert "The reference runtime shell, bounded reference continuity, OpenAI documented-host-event runtime shell, raw-transcript ingress shell, loopback service shell, and bounded outbound OpenAI host-control lane are now accepted on the current line." in markdown_text
     assert "cortex-archival-dossiers/" not in markdown_text
     assert "Current Justified Boundary" in html_text
     assert "Gap Programs" in html_text
@@ -464,4 +484,4 @@ def test_runtime_restack_program_lock_is_recorded() -> None:
     assert "Current accepted state after K1 closeout" in text
     assert "implemented at K1 proof head `d4c311f` and truthfully closed at deterministic closeout head `79b8f39`" in text
     assert "later bounded runtime/product trains may still be explicitly opened" in master_plan_text
-    assert "may separately record later accepted or candidate bounded runtime/product trains" in theory_text
+    assert "now records accepted K2 host control and the current K3 executive live-outcome candidate" in theory_text

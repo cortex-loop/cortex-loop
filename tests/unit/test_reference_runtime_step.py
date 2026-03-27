@@ -11,6 +11,8 @@ from cortex.runtime.reference import (
 from cortex.sre.brake import BrakeState
 from cortex.sre.feedback import ReferenceRealizationFeedback
 from cortex.sre.families import SoftControlFamily
+from cortex.sre.policy import neutral_dominance_decision
+from cortex.sre.reference_scoring import build_reference_allocation_scorecard
 from cortex.sre.state import (
     ReferenceBrakeView,
     ReferenceControlAllocationView,
@@ -54,16 +56,21 @@ def test_reference_runtime_step_result_surfaces_cheap_reference_event_without_co
     assert result.brake_state is BrakeState.QUIESCENT
     assert result.executive_state_summary["mode_tag"] == "pass_through"
     assert result.executive_state_summary["budget_band"] == "low"
-    assert result.control_ledger_summary == {
-        "event_class": "cheap",
-        "admissible_families": ["neutral", "check"],
-        "selected_family": "neutral",
-        "realized_family": "neutral",
-        "dominant_uncertainty_sources": ["environment", "goal-progress"],
-        "brake_state": "quiescent",
-        "budget_band": "low",
-        "primary_reason": None,
-    }
+    assert result.control_ledger_summary["event_class"] == "cheap"
+    assert result.control_ledger_summary["admissible_families"] == ["neutral", "check"]
+    assert result.control_ledger_summary["selected_family"] == "neutral"
+    assert result.control_ledger_summary["realized_family"] == "neutral"
+    assert result.control_ledger_summary["dominant_uncertainty_sources"] == [
+        "environment",
+        "goal-progress",
+    ]
+    assert result.control_ledger_summary["brake_state"] == "quiescent"
+    assert result.control_ledger_summary["budget_band"] == "low"
+    assert result.control_ledger_summary["primary_reason"] is None
+    _assert_allocation_diagnostics_shape(
+        result.control_ledger_summary["allocation_diagnostics"],
+        activation_threshold=0.35,
+    )
     assert result.feedback_window_summary_payload == {
         "window_size": 0,
         "rejection_count": 0,
@@ -150,16 +157,21 @@ def test_reference_runtime_step_result_certifies_full_commitment_when_runtime_pa
     assert result.brake_state is BrakeState.QUIESCENT
     assert result.executive_state_summary["mode_tag"] == "commitment_path"
     assert result.executive_state_summary["budget_band"] == "high"
-    assert result.control_ledger_summary == {
-        "event_class": "full-commitment",
-        "admissible_families": ["neutral", "check"],
-        "selected_family": "neutral",
-        "realized_family": "neutral",
-        "dominant_uncertainty_sources": ["evidence", "environment"],
-        "brake_state": "quiescent",
-        "budget_band": "high",
-        "primary_reason": None,
-    }
+    assert result.control_ledger_summary["event_class"] == "full-commitment"
+    assert result.control_ledger_summary["admissible_families"] == ["neutral", "check"]
+    assert result.control_ledger_summary["selected_family"] == "neutral"
+    assert result.control_ledger_summary["realized_family"] == "neutral"
+    assert result.control_ledger_summary["dominant_uncertainty_sources"] == [
+        "evidence",
+        "environment",
+    ]
+    assert result.control_ledger_summary["brake_state"] == "quiescent"
+    assert result.control_ledger_summary["budget_band"] == "high"
+    assert result.control_ledger_summary["primary_reason"] is None
+    _assert_allocation_diagnostics_shape(
+        result.control_ledger_summary["allocation_diagnostics"],
+        activation_threshold=0.2,
+    )
     assert result.session.active_track_ref == "main"
     assert result.session.budget_history == ("shell-high",)
     assert result.session.last_commitment_result_summary == "certified"
@@ -245,6 +257,10 @@ def test_reference_runtime_step_propagates_session_rejection_feedback_into_next_
         in follow_up.executive_state.uncertainty_monitoring.contradiction_spike_flags
     )
     assert follow_up.brake_state is BrakeState.GUARDED
+    assert (
+        follow_up.control_ledger_summary["allocation_diagnostics"]["selected_delta_over_neutral"]
+        > rejected.control_ledger_summary["allocation_diagnostics"]["selected_delta_over_neutral"]
+    )
 
 
 def test_reference_runtime_step_normalizes_last_only_prior_session_and_preserves_feedback_pressure() -> None:
@@ -606,8 +622,39 @@ def _selection(selected_family: SoftControlFamily) -> object:
     class _Selection:
         def __init__(self, family: SoftControlFamily) -> None:
             self.selected_family = family
+            self.scorecard = build_reference_allocation_scorecard(_latched_state_with_evidence())
+            self.neutral_dominance = neutral_dominance_decision(self.scorecard)
 
     return _Selection(selected_family)
+
+
+def _assert_allocation_diagnostics_shape(
+    payload: dict[str, object],
+    *,
+    activation_threshold: float,
+) -> None:
+    assert tuple(payload) == (
+        "alpha_t",
+        "activation_threshold",
+        "selected_delta_over_neutral",
+        "scores",
+    )
+    assert payload["alpha_t"] == 1.0
+    assert payload["activation_threshold"] == activation_threshold
+    assert isinstance(payload["selected_delta_over_neutral"], float)
+    scores = payload["scores"]
+    assert isinstance(scores, list)
+    assert [score["family"] for score in scores] == [
+        "neutral",
+        "seek-context",
+        "redirect",
+        "check",
+        "branch",
+        "escalate",
+        "brake",
+    ]
+    assert all(score["memory_score"] == 0.0 for score in scores)
+    assert all(score["allocated_score"] == score["online_score"] for score in scores)
 
 
 def _feedback(warning_code: str) -> ReferenceRealizationFeedback:

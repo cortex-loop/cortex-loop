@@ -57,6 +57,23 @@ def test_openai_runtime_cli_reads_documented_raw_events_and_preserves_host_name(
         None,
         "certified",
     ]
+    assert tuple(records[-1]["control_ledger"]) == (
+        "event_class",
+        "admissible_families",
+        "selected_family",
+        "realized_family",
+        "dominant_uncertainty_sources",
+        "brake_state",
+        "budget_band",
+        "primary_reason",
+        "allocation_diagnostics",
+    )
+    assert tuple(records[-1]["control_ledger"]["allocation_diagnostics"]) == (
+        "alpha_t",
+        "activation_threshold",
+        "selected_delta_over_neutral",
+        "scores",
+    )
 
 
 def test_openai_runtime_cli_explicit_load_save_works(tmp_path: Path) -> None:

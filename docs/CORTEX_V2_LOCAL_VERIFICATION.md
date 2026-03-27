@@ -182,6 +182,32 @@ Repo-local entry point:
 make revalidate-openai-host-control
 ```
 
+## Executive live-outcome revalidation
+
+This revalidates the first explicit executive allocation loop over the accepted reference/OpenAI runtime shells and the accepted K2 host-control lane.
+It checks explicit `Q_t^{online}` / `Q_t^{alloc}` diagnostics, `alpha_t=1.0`, `Q_t^{mem}=0.0`, nested `control_ledger.allocation_diagnostics`, and live-outcome-conditioned pressure over the already-landed feedback window.
+It does not authorize support-memory runtime, mediation, new host-control lanes, Gemini runtime shell, tools, or generic reward-learning doctrine.
+
+Direct commands:
+
+```sh
+python3 -m pytest tests/unit/test_sre_neutral_hinge.py -q
+python3 -m pytest tests/unit/test_reference_runtime_scoring.py -q
+python3 -m pytest tests/unit/test_reference_runtime_step.py -q
+python3 -m pytest tests/integration/test_reference_runtime_cli.py -q
+python3 -m pytest tests/integration/test_openai_runtime_cli.py -q
+python3 -m pytest tests/integration/test_openai_ingress_cli.py -q
+python3 -m pytest tests/integration/test_openai_service.py -q
+python3 -m pytest tests/integration/test_openai_host_control_service.py -q
+python3 -m pytest tests/integration/test_openai_host_control_continuity.py -q
+```
+
+Repo-local entry point:
+
+```sh
+make revalidate-executive-loop
+```
+
 ## Reference-lane packet-example revalidation
 
 This revalidates the committed reference-lane packet example doc against the already-landed live packet path.

@@ -273,12 +273,32 @@ def test_allocation_score_requires_numeric_score() -> None:
     score = AllocationScore(SoftControlFamily.NEUTRAL, 1.0)
 
     assert score.score == 1.0
+    assert score.online_score == 1.0
+    assert score.memory_score == 0.0
+    assert score.allocated_score == 1.0
 
     with pytest.raises(
         TypeError,
         match="AllocationScore.score must be numeric",
     ):
         AllocationScore(SoftControlFamily.NEUTRAL, "1.0")
+
+
+def test_allocation_score_defaults_online_and_allocated_to_score() -> None:
+    score = AllocationScore(
+        SoftControlFamily.CHECK,
+        1.25,
+        reason_tags=frozenset({"top-family"}),
+    )
+
+    assert score.as_summary() == {
+        "family": "check",
+        "online_score": 1.25,
+        "memory_score": 0.0,
+        "allocated_score": 1.25,
+        "admissible": True,
+        "reason_tags": ["top-family"],
+    }
 
 
 def test_allocation_score_requires_bool_admissible() -> None:
@@ -346,6 +366,36 @@ def test_allocation_scorecard_requires_numeric_activation_threshold() -> None:
         AllocationScorecard(
             scores=(AllocationScore(SoftControlFamily.NEUTRAL, 1.0),),
             activation_threshold="0.1",
+        )
+
+
+def test_allocation_scorecard_requires_alpha_in_unit_interval() -> None:
+    scorecard = AllocationScorecard(
+        scores=(AllocationScore(SoftControlFamily.NEUTRAL, 1.0),),
+        activation_threshold=0.1,
+        alpha_t=1.0,
+    )
+
+    assert scorecard.alpha_t == 1.0
+
+    with pytest.raises(
+        TypeError,
+        match="AllocationScorecard.alpha_t must be numeric",
+    ):
+        AllocationScorecard(
+            scores=(AllocationScore(SoftControlFamily.NEUTRAL, 1.0),),
+            activation_threshold=0.1,
+            alpha_t="1.0",
+        )
+
+    with pytest.raises(
+        ValueError,
+        match="AllocationScorecard.alpha_t must be between 0.0 and 1.0",
+    ):
+        AllocationScorecard(
+            scores=(AllocationScore(SoftControlFamily.NEUTRAL, 1.0),),
+            activation_threshold=0.1,
+            alpha_t=1.5,
         )
 
 

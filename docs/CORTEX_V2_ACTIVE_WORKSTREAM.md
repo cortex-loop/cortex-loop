@@ -7,8 +7,8 @@ It is workflow state only. It does not override the packet documents, implementa
 
 ## 1. Accepted baseline
 
-- Accepted baseline branch: `codex/k1f-openai-service-closeout`
-- Accepted baseline commit: `79b8f39`
+- Accepted baseline branch: `codex/k2-openai-host-control`
+- Accepted baseline commit: `9ed7dae`
 - Accepted baseline state:
   - burden-axis re-audit remains accepted through the three thrash-host burden slices
   - package-level burden remains `insufficient`
@@ -17,10 +17,10 @@ It is workflow state only. It does not override the packet documents, implementa
   - the OpenAI host-realization cell now has a committed three-pair evidence series and `candidate_positive` cell-level signal for better host-specialized realization
   - package-level mediation evidence remains `insufficient`
   - lower visible burden remains unclaimed for host-realization
-  - accepted workflow baseline truth is now normalized around the accepted K1 runtime/product closeout line
-  - the reference runtime shell, bounded reference continuity, OpenAI documented-host-event runtime shell, raw-transcript ingress shell, and loopback service shell are accepted on the same K1 closeout line
-  - `O3` is now landed on the current line rather than remaining donor-branch candidate truth
-  - the next lawful product-facing directions are bounded outbound OpenAI host-control realization or executive-loop computation over live runtime outcomes
+  - accepted workflow baseline truth is now normalized around the accepted K2 runtime/product closeout line
+  - the reference runtime shell, bounded reference continuity, OpenAI documented-host-event runtime shell, raw-transcript ingress shell, loopback service shell, and bounded outbound OpenAI host-control lane are accepted on the same K2 closeout line
+  - `O4` is now landed on the current line
+  - the next lawful product-facing direction is executive-loop computation over live runtime outcomes
 - Accepted baseline authority anchors:
   - `docs/CORTEX_V2_IMPLEMENTATION_STATUS_NOTE.md`
   - `docs/CORTEX_V2_IMPLEMENTATION_MASTER_PLAN_2.md`
@@ -29,24 +29,24 @@ It is workflow state only. It does not override the packet documents, implementa
 
 ## 2. Current campaign and seam state
 
-- Current campaign: `K2 OpenAI host-control train`
-- Current working branch at ledger update: `codex/k2-openai-host-control`
-- Current branch role: branch-local K2 candidate over accepted K1 truth
-- Current candidate seam: `K2` bounded OpenAI host-control closeout
-- Current seam status: `K2 candidate implemented and verified / accepted baseline remains clean accepted K1 line`
-- Seam risk: the K2 candidate is a parser/doc-sync plus timing or environment-sensitive network-stub, file-I/O, and loopback-HTTP seam; repeated direct and repo-local reruns are required before acceptance
+- Current campaign: `K3 executive live-outcome train`
+- Current working branch at ledger update: `codex/k3-executive-live-outcome`
+- Current branch role: branch-local K3 candidate over accepted K2 truth
+- Current candidate seam: `K3` executive live-outcome closeout
+- Current seam status: `K3 candidate implemented and verified / accepted baseline remains clean accepted K2 line`
+- Seam risk: the K3 candidate is a parser/doc-sync plus timing or environment-sensitive runtime/service projection seam; repeated direct and repo-local reruns are required before acceptance
 
 ## 3. Next lawful move
 
-- Current candidate answer after K2 implementation:
-  - the accepted K1 baseline remains unchanged at `79b8f39`
-  - one bounded outbound OpenAI host-control lane is now real on the branch-local K2 line
-  - the K2 request surface is strict-whitelist and text-only for current scope
-  - returned outbound host events now re-enter accepted `O2` parsing and accepted `O1` runtime composition directly
+- Current candidate answer after K3 implementation:
+  - the accepted K2 baseline now includes the bounded outbound OpenAI host-control lane at `9ed7dae`
+  - explicit executive allocation diagnostics are now real on the branch-local K3 line
+  - `Q_t^{mem}=0.0`, `alpha_t=1.0`, and `allocated_score == online_score` for current scope
+  - runtime and service projections now surface nested `control_ledger.allocation_diagnostics`
   - package-level mediation evidence remains `insufficient`
 - Next lawful move:
-  - rerun the targeted K2 bundle and repo-local revalidation targets on the clean branch
-  - then either accept K2 onto baseline truth or reject it explicitly
+  - rerun the targeted K3 bundle and repo-local revalidation targets on the clean branch
+  - then either accept K3 onto baseline truth or reject it explicitly
 
 ## 4. Explicitly blocked moves
 
@@ -59,8 +59,8 @@ It is workflow state only. It does not override the packet documents, implementa
 - Do not treat a three-pair OpenAI host-realization closeout as permission for mediation implementation.
 - Do not reinterpret a host-level `candidate_positive` cell as package-level justification.
 - Do not import donor runtime workflow truth wholesale from `codex/c1-reference-continuation`, `codex/o1-openai-runtime-shell`, `codex/o2-openai-ingress-shell`, or `codex/o3-openai-service-shell`.
-- Do not widen K2 beyond the bounded text-only `openai-response-stream` lane.
-- Do not open tools or tool-result submission, cancel/update lanes, Gemini product/runtime, runtime AUX activation, offline consolidation, mediation implementation, or executive-loop rewrite from `K2`.
+- Do not reopen K2 into new outbound host-control lanes.
+- Do not open support-memory runtime, mediation / `Q_t^{final}` experimentation, Gemini runtime shell, tools or tool-result submission, runtime AUX activation, offline consolidation, or generic reward-learning doctrine from `K3`.
 
 ## 5. Acknowledged worktree noise at ledger creation
 

@@ -13,6 +13,8 @@ import cortex.runtime.reference as reference_runtime
 import cortex.runtime.reference_cli as reference_cli
 from cortex.sre.brake import BrakeState
 from cortex.sre.families import SoftControlFamily
+from cortex.sre.policy import neutral_dominance_decision
+from cortex.sre.reference_scoring import build_reference_allocation_scorecard
 from cortex.sre.state import (
     ReferenceBrakeView,
     ReferenceControlAllocationView,
@@ -148,6 +150,13 @@ def test_reference_runtime_cli_reads_event_file_and_emits_one_record_per_event()
         "brake_state",
         "budget_band",
         "primary_reason",
+        "allocation_diagnostics",
+    )
+    assert tuple(records[-1]["control_ledger"]["allocation_diagnostics"]) == (
+        "alpha_t",
+        "activation_threshold",
+        "selected_delta_over_neutral",
+        "scores",
     )
 
 
@@ -462,6 +471,10 @@ def _selection(selected_family: SoftControlFamily) -> object:
     class _Selection:
         def __init__(self, family: SoftControlFamily) -> None:
             self.selected_family = family
+            self.scorecard = build_reference_allocation_scorecard(
+                _latched_state_with_evidence()
+            )
+            self.neutral_dominance = neutral_dominance_decision(self.scorecard)
 
     return _Selection(selected_family)
 

@@ -47,7 +47,10 @@ from cortex.sre.feedback import (
     ReferenceRealizationFeedbackWindow,
     summarize_reference_feedback_window,
 )
-from cortex.sre.reference_scoring import select_reference_soft_control
+from cortex.sre.reference_scoring import (
+    build_allocation_diagnostics_payload,
+    select_reference_soft_control,
+)
 from cortex.sre.state import ReferenceExecutiveState
 
 _ALLOWED_COMMITMENT_RESULT_KINDS = frozenset(status.value for status in CommitmentStatus)
@@ -207,6 +210,7 @@ class ReferenceControlLedger:
     brake_state: BrakeState
     budget_band: str
     primary_reason: str | None = None
+    allocation_diagnostics: dict[str, Any] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
         if not (isinstance(self.event_class, str) and self.event_class.strip()):
@@ -252,6 +256,10 @@ class ReferenceControlLedger:
             raise ValueError(
                 "ReferenceControlLedger.primary_reason must be non-empty after trimming when provided."
             )
+        _validate_allocation_diagnostics_payload(
+            self.allocation_diagnostics,
+            "ReferenceControlLedger.allocation_diagnostics",
+        )
 
     def as_summary(self) -> dict[str, Any]:
         return {
@@ -265,6 +273,9 @@ class ReferenceControlLedger:
             "brake_state": self.brake_state.value,
             "budget_band": self.budget_band,
             "primary_reason": self.primary_reason,
+            "allocation_diagnostics": _copy_allocation_diagnostics_payload(
+                self.allocation_diagnostics
+            ),
         }
 
 
@@ -509,6 +520,10 @@ def run_reference_runtime_step(
         brake_state=brake_state,
         budget_band=executive_state.control_allocation.budget_band,
         primary_reason=_primary_reason(warnings),
+        allocation_diagnostics=build_allocation_diagnostics_payload(
+            selection.scorecard,
+            selected_delta_over_neutral=selection.neutral_dominance.margin_over_neutral,
+        ),
     )
     realization_feedback = ReferenceRealizationFeedback(
         selected_family=selected_family,
@@ -1015,6 +1030,85 @@ def _primary_reason(warnings: tuple[str, ...]) -> str | None:
         if warning.startswith("latched-brake-enforced:"):
             return warning
     return warnings[0] if warnings else None
+
+
+_ALLOCATION_DIAGNOSTICS_KEYS = (
+    "alpha_t",
+    "activation_threshold",
+    "selected_delta_over_neutral",
+    "scores",
+)
+_ALLOCATION_SCORE_KEYS = (
+    "family",
+    "online_score",
+    "memory_score",
+    "allocated_score",
+    "admissible",
+    "reason_tags",
+)
+
+
+def _validate_allocation_diagnostics_payload(payload: dict[str, Any], label: str) -> None:
+    if not isinstance(payload, dict):
+        actual_type = type(payload).__name__
+        raise TypeError(f"{label} must be dict[str, Any], got {actual_type}.")
+    if tuple(payload) != _ALLOCATION_DIAGNOSTICS_KEYS:
+        raise ValueError(
+            f"{label} must preserve the locked key order {_ALLOCATION_DIAGNOSTICS_KEYS!r}."
+        )
+    for key in ("alpha_t", "activation_threshold", "selected_delta_over_neutral"):
+        value = payload[key]
+        if isinstance(value, bool) or not isinstance(value, (int, float)):
+            actual_type = type(value).__name__
+            raise TypeError(f"{label}.{key} must be numeric, got {actual_type}.")
+    scores = payload["scores"]
+    if not isinstance(scores, list):
+        actual_type = type(scores).__name__
+        raise TypeError(f"{label}.scores must be list[dict[str, Any]], got {actual_type}.")
+    for index, score in enumerate(scores):
+        score_label = f"{label}.scores[{index}]"
+        if not isinstance(score, dict):
+            actual_type = type(score).__name__
+            raise TypeError(f"{score_label} must be dict[str, Any], got {actual_type}.")
+        if tuple(score) != _ALLOCATION_SCORE_KEYS:
+            raise ValueError(
+                f"{score_label} must preserve the locked key order {_ALLOCATION_SCORE_KEYS!r}."
+            )
+        if not (isinstance(score["family"], str) and score["family"].strip()):
+            raise ValueError(f"{score_label}.family must be non-empty after trimming.")
+        for key in ("online_score", "memory_score", "allocated_score"):
+            value = score[key]
+            if isinstance(value, bool) or not isinstance(value, (int, float)):
+                actual_type = type(value).__name__
+                raise TypeError(f"{score_label}.{key} must be numeric, got {actual_type}.")
+        if not isinstance(score["admissible"], bool):
+            actual_type = type(score["admissible"]).__name__
+            raise TypeError(f"{score_label}.admissible must be bool, got {actual_type}.")
+        reason_tags = score["reason_tags"]
+        if not isinstance(reason_tags, list):
+            actual_type = type(reason_tags).__name__
+            raise TypeError(f"{score_label}.reason_tags must be list[str], got {actual_type}.")
+        if any(not (isinstance(tag, str) and tag.strip()) for tag in reason_tags):
+            raise ValueError(f"{score_label}.reason_tags must contain only non-empty strings.")
+
+
+def _copy_allocation_diagnostics_payload(payload: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "alpha_t": payload["alpha_t"],
+        "activation_threshold": payload["activation_threshold"],
+        "selected_delta_over_neutral": payload["selected_delta_over_neutral"],
+        "scores": [
+            {
+                "family": score["family"],
+                "online_score": score["online_score"],
+                "memory_score": score["memory_score"],
+                "allocated_score": score["allocated_score"],
+                "admissible": score["admissible"],
+                "reason_tags": list(score["reason_tags"]),
+            }
+            for score in payload["scores"]
+        ],
+    }
 
 
 __all__ = [

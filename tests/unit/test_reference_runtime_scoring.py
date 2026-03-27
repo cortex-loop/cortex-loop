@@ -6,6 +6,7 @@ from cortex.sre.brake import BrakeState
 from cortex.sre.families import SoftControlFamily
 from cortex.sre.reference_scoring import (
     build_reference_allocation_scorecard,
+    build_reference_online_score_components,
     select_reference_soft_control,
 )
 from cortex.sre.state import (
@@ -152,6 +153,32 @@ def test_reference_scoring_keeps_brake_selected_under_latched_pressure() -> None
 
     assert selection.selected_family is SoftControlFamily.BRAKE
     assert selection.neutral_dominance.neutral_selected is False
+
+
+def test_reference_scoring_exposes_explicit_online_allocation_diagnostics() -> None:
+    state = _state(
+        mode_tag="review_pending",
+        family_mask=frozenset(
+            {
+                SoftControlFamily.NEUTRAL,
+                SoftControlFamily.CHECK,
+                SoftControlFamily.BRAKE,
+            }
+        ),
+        budget_band="medium",
+        top_family_set=frozenset({SoftControlFamily.NEUTRAL, SoftControlFamily.CHECK}),
+        brake_state=BrakeState.GUARDED,
+        host_friction_tags=frozenset({"single-process-limit"}),
+    )
+
+    components = build_reference_online_score_components(state)
+    scorecard = build_reference_allocation_scorecard(state)
+
+    assert scorecard.alpha_t == 1.0
+    assert all(score.memory_score == 0.0 for score in scorecard.scores)
+    assert all(score.allocated_score == score.online_score for score in scorecard.scores)
+    assert components[SoftControlFamily.CHECK]["uncertainty_reduction"] > 0.0
+    assert components[SoftControlFamily.BRAKE]["stability"] > 0.0
 
 
 def _state(
