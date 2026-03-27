@@ -20,12 +20,12 @@ Active authority remains:
 
 ## Current repo evidence
 
-- The accepted workflow baseline is `codex/k3-executive-live-outcome` at `efe003e`.
+- The accepted workflow baseline is `codex/g1-gemini-runtime-product-parity` at `9dfe38a`.
 - `docs/CORTEX_V2_IMPLEMENTATION_STATUS_NOTE.md` says the current v2 roadmap is complete at the justified boundary.
 - `docs/CORTEX_V2_MEDIATION_JUSTIFICATION_NOTE.md` says mediation is still `not justified yet`.
 - `docs/CORTEX_V2_MEDIATION_EVIDENCE_NOTE_0.md` shows cell-level signal on thrash, uncertainty, and host-realization, but every package-level axis remains `insufficient`.
 - `docs/CORTEX_V2_VERIFICATION_ERGONOMICS_MASTER_PLAN_0.md` still defines the active non-feature follow-on campaign.
-- `docs/CORTEX_V2_ACTIVE_WORKSTREAM.md` now records accepted K3 executive allocation and the current G1 Gemini runtime/product parity candidate.
+- `docs/CORTEX_V2_ACTIVE_WORKSTREAM.md` now records accepted G1 Gemini runtime/product parity truth and the current A1 Claude runtime/product parity candidate.
 - `pytest.ini`, `Makefile`, and `docs/CORTEX_V2_LOCAL_VERIFICATION.md` now provide repo-local verification entry points, including `make verify`, `make test-smoke`, evidence revalidation commands, and mediation evidence revalidation commands.
 - `.coveragerc`, `make coverage`, and `docs/CORTEX_V2_COVERAGE_BASELINE_NOTE_0.md` now exist as repo-local coverage hygiene surfaces.
 

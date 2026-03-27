@@ -288,6 +288,86 @@ Repo-local entry point:
 make revalidate-gemini-host-control
 ```
 
+## Claude runtime revalidation
+
+This revalidates the first Claude documented host-event runtime shell on top of the landed Claude driver slices, the accepted K3 executive allocation diagnostics, and the accepted `C1` continuity law.
+It checks bounded Claude session persistence, raw-host-event preservation, top-level `message_id` projection, explicit CLI load/save behavior, and split-run Claude continuity equivalence.
+It does not authorize live network/service doctrine, multi-host abstraction, or support-memory runtime.
+
+Direct commands:
+
+```sh
+python3 -m pytest tests/unit/test_claude_runtime_session_io.py -q
+python3 -m pytest tests/unit/test_claude_runtime_step.py -q
+python3 -m pytest tests/unit/test_claude_runtime_ownership.py -q
+python3 -m pytest tests/integration/test_claude_runtime_cli.py -q
+python3 -m pytest tests/integration/test_claude_runtime_continuity.py -q
+```
+
+Repo-local entry point:
+
+```sh
+make revalidate-claude-runtime
+```
+
+## Claude ingress revalidation
+
+This revalidates the first Claude raw-transcript ingress shell on top of the current-line Claude runtime shell.
+It checks transcript-shape parsing, ingress CLI behavior, split-run ingress continuity equivalence, and explicit rejection of wrapper, canonical Cortex event-name, `ping`, and `error` misuse.
+
+Direct commands:
+
+```sh
+python3 -m pytest tests/unit/test_claude_ingress.py -q
+python3 -m pytest tests/integration/test_claude_ingress_cli.py -q
+python3 -m pytest tests/integration/test_claude_ingress_continuity.py -q
+```
+
+Repo-local entry point:
+
+```sh
+make revalidate-claude-ingress
+```
+
+## Claude loopback service revalidation
+
+This revalidates the first Claude loopback-only service shell on top of the current-line Claude ingress parser and Claude runtime/session artifact.
+It checks loopback-only HTTP behavior, JSON artifact import/export, event processing over `/v1/events`, and service continuity equivalence without widening into remote hosting or generic service doctrine.
+
+Direct commands:
+
+```sh
+python3 -m pytest tests/unit/test_claude_service.py -q
+python3 -m pytest tests/integration/test_claude_service_http.py -q
+python3 -m pytest tests/integration/test_claude_service_continuity.py -q
+```
+
+Repo-local entry point:
+
+```sh
+make revalidate-claude-service
+```
+
+## Claude host-control revalidation
+
+This revalidates the first bounded outbound Claude host-control lane on top of the current-line Claude loopback shell, current-line Claude ingress law, and current-line Claude runtime/session law.
+It checks the strict text-only request boundary, stdlib Anthropic Messages transport parsing, loopback action endpoint behavior, and export/import continuity across multiple outbound actions.
+Canonical Claude tests use the internal fixture transport and do not require a live Anthropic network or a real API key.
+
+Direct commands:
+
+```sh
+python3 -m pytest tests/unit/test_claude_host_control.py -q
+python3 -m pytest tests/integration/test_claude_host_control_service.py -q
+python3 -m pytest tests/integration/test_claude_host_control_continuity.py -q
+```
+
+Repo-local entry point:
+
+```sh
+make revalidate-claude-host-control
+```
+
 ## Reference-lane packet-example revalidation
 
 This revalidates the committed reference-lane packet example doc against the already-landed live packet path.

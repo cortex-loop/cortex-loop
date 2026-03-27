@@ -382,6 +382,63 @@ Forbidden leaks: `G4` remains host-specific, text-only, and single-lane on purpo
 
 ---
 
+### 1.30 Claude documented host-event runtime shell
+
+| Packet math | Is | Code home | Test surface | Status |
+| --- | --- | --- | --- | --- |
+| Claude host-runtime live session carrier over documented raw host events plus accepted `C1` continuation law | `ClaudeRuntimeSession` | `cortex/runtime/claude.py` | `test_claude_runtime_session_io.py::test_claude_runtime_session_artifact_roundtrips_bounded_residue` + `test_claude_runtime_continuity.py::test_claude_runtime_split_session_is_g1_equivalent_to_uninterrupted_run` | landed |
+| Claude host-runtime control ledger carrier with nested executive allocation diagnostics | `ClaudeControlLedger` | `cortex/runtime/claude.py` | `test_claude_runtime_cli.py::test_claude_runtime_cli_reads_documented_raw_events_and_preserves_host_name` | landed |
+| Claude host-runtime step result carrier | `ClaudeRuntimeStepResult` | `cortex/runtime/claude.py` | `test_claude_runtime_cli.py::test_claude_runtime_cli_reads_documented_raw_events_and_preserves_host_name` | landed |
+| Claude host-runtime step composition over landed Claude observe/bind, commitment-path helpers, accepted K3 executive allocation, and accepted bounded continuation law | `run_claude_runtime_step()` | `cortex/runtime/claude.py` | `test_claude_runtime_step.py::test_claude_runtime_step_rejects_canonical_cortex_event_name_before_runtime_processing` + `test_claude_runtime_cli.py::test_claude_runtime_cli_reads_documented_raw_events_and_preserves_host_name` + `test_claude_runtime_cli.py::test_claude_runtime_cli_undocumented_raw_host_event_warns_without_fabricating_parity` + `test_claude_runtime_continuity.py::test_claude_runtime_host_warning_and_certified_commitment_can_coexist_across_restart` | landed |
+| Claude bounded persisted continuation carrier split into exact `continuity_truth` and bounded `control_residue` | `ClaudeRuntimeSessionArtifact` | `cortex/runtime/claude_session_io.py` | `test_claude_runtime_session_io.py::test_claude_runtime_session_artifact_roundtrips_bounded_residue` | landed |
+| Claude runtime session -> persisted artifact build boundary | `build_claude_runtime_session_artifact()` | `cortex/runtime/claude_session_io.py` | `test_claude_runtime_session_io.py::test_claude_runtime_session_artifact_roundtrips_bounded_residue` | landed |
+| Claude persisted artifact -> runtime session parse boundary | `parse_claude_runtime_session_artifact()` | `cortex/runtime/claude_session_io.py` | `test_claude_runtime_session_io.py::test_claude_runtime_session_artifact_rejects_unknown_keys_and_invalid_enums` + `test_claude_runtime_session_io.py::test_claude_runtime_session_artifact_one_sided_last_feedback_normalizes_through_session_constructor` | landed |
+| Claude persisted artifact file read/write boundaries for the local CLI shell | `read_claude_runtime_session_artifact()` + `write_claude_runtime_session_artifact()` | `cortex/runtime/claude_session_io.py` | `test_claude_runtime_session_io.py::test_claude_runtime_session_artifact_same_path_overwrite_safety` + `test_claude_runtime_cli.py::test_claude_runtime_cli_explicit_load_save_works` + `test_claude_runtime_cli.py::test_claude_runtime_cli_load_save_failure_emits_no_stdout` | landed |
+| Claude developer-facing runtime output projection with preserved raw host event name, top-level `message_id`, and nested executive allocation diagnostics | `build_claude_cli_record()` | `cortex/runtime/claude_cli.py` | `test_claude_runtime_cli.py::test_claude_runtime_cli_reads_documented_raw_events_and_preserves_host_name` + `test_claude_runtime_cli.py::test_claude_runtime_cli_undocumented_raw_host_event_warns_without_fabricating_parity` | landed |
+
+Forbidden leaks: `A1` remains Claude-specific on purpose. It may not introduce a fake host-neutral runtime layer, generic store doctrine, live network/service doctrine, or broader Claude host action realization than the separately scoped `A4` lane allows. Raw Claude host event names must remain visible in the outward projection and undocumented host events must remain explicit conservative warnings rather than fabricated parity. Claude persisted continuation remains bounded to exact `continuity_truth` plus bounded `control_residue`; full shell-long `budget_history` and `brake_history` may remain public one-process diagnostics, but they may not become cross-process continuation truth.
+
+---
+
+### 1.31 Claude raw-transcript ingress shell
+
+| Packet math | Is | Code home | Test surface | Status |
+| --- | --- | --- | --- | --- |
+| Claude raw host-transcript ingress carrier over transcript `type` plus payload remainder | `ClaudeHostEventEnvelope` | `cortex/runtime/claude_ingress.py` | `test_claude_ingress.py::test_documented_raw_claude_event_parses_cleanly` + `test_claude_ingress.py::test_undocumented_raw_content_event_still_parses_cleanly` | landed |
+| raw transcript -> Claude ingress carrier parse boundary | `parse_claude_host_event_envelope()` | `cortex/runtime/claude_ingress.py` | `test_claude_ingress.py::test_canonical_cortex_event_name_is_rejected` + `test_claude_ingress.py::test_dev_shell_wrapper_shape_is_rejected` + `test_claude_ingress.py::test_missing_type_and_non_object_record_are_rejected` | landed |
+| Claude raw-transcript ingress CLI over accepted `A1` runtime shell | `main()` | `cortex/runtime/claude_ingress_cli.py` | `test_claude_ingress_cli.py::test_claude_ingress_cli_reads_documented_raw_transcript_fixture` + `test_claude_ingress_cli.py::test_claude_ingress_cli_rejects_canonical_event_names_wrapper_shape_and_mixed_shape` + `test_claude_ingress_cli.py::test_claude_ingress_cli_undocumented_raw_host_event_still_warns_conservatively` | landed |
+
+Forbidden leaks: `A2` owns transcript-shape parsing only. It may not mutate `A1` into the only Claude shell, may not accept the dev-shell wrapper shape as lawful ingress, may not accept mixed wrapper/transcript records as lawful ingress, and may not fabricate host parity by silently normalizing canonical Cortex event names back into raw Claude host traffic. `claude_ingress_cli.py` may consume accepted `run_claude_runtime_step()` and the accepted `A1` session artifact, but it may not become a new runtime owner or a generic ingress abstraction.
+
+---
+
+### 1.32 Claude loopback service shell
+
+| Packet math | Is | Code home | Test surface | Status |
+| --- | --- | --- | --- | --- |
+| Claude loopback service state carrier over exactly one active runtime session per process | `ClaudeServiceState` | `cortex/runtime/claude_service.py` | `test_claude_service.py::test_claude_service_state_constructs_cleanly` | landed |
+| loopback Claude service request dispatch over accepted `A2` transcript parsing and accepted `A1` runtime/session law | `handle_claude_service_request()` | `cortex/runtime/claude_service.py` | `test_claude_service.py::test_claude_service_invalid_import_becomes_400_error_payload` + `test_claude_service_http.py::test_claude_service_unknown_path_and_wrong_method_return_json_errors` + `test_claude_service_http.py::test_claude_service_health_and_documented_event_flow` | landed |
+| Claude loopback service artifact export/import boundaries | `export_claude_service_session()` + `import_claude_service_session()` | `cortex/runtime/claude_service.py` | `test_claude_service.py::test_claude_service_import_export_preserves_exact_artifact_shape` + `test_claude_service_http.py::test_claude_service_session_export_import_and_startup_load_roundtrip` | landed |
+| Claude loopback service shell entrypoint | `main()` | `cortex/runtime/claude_service.py` | `test_claude_service_http.py::test_claude_service_health_and_documented_event_flow` + `test_claude_service_http.py::test_claude_service_undocumented_raw_event_warns_without_fabricating_parity` + `test_claude_service_continuity.py::test_claude_service_event_sequence_is_g3_equivalent_to_g2_ingress_shell` | landed |
+
+Forbidden leaks: `A3` remains host-specific and loopback-only on purpose. It may not bind remotely, invent multi-session or multi-client doctrine, invent a service-specific persistence format, or introduce a generic runtime/service layer. `/v1/events` must continue to consume the accepted `A2` transcript parser rather than bypassing host-shaped ingress law. `/v1/session/export` and `/v1/session/import` may move only the accepted Claude runtime session artifact as JSON; they may not become path-based file APIs.
+
+---
+
+### 1.33 Claude bounded outbound host-control lane
+
+| Packet math | Is | Code home | Test surface | Status |
+| --- | --- | --- | --- | --- |
+| bounded outbound Claude host-control request carrier | `ClaudeHostControlRequest` | `cortex/runtime/claude_host_control.py` | `test_claude_host_control.py::test_claude_host_control_request_constructs_strict_text_only_payload` + `test_claude_host_control.py::test_claude_host_control_service_boundary_rejects_out_of_scope_keys` | landed |
+| bounded outbound Claude host-control result carrier | `ClaudeHostControlResult` | `cortex/runtime/claude_host_control.py` | `test_claude_host_control.py::test_claude_host_control_result_rejects_wrong_action_tag` + `test_claude_host_control.py::test_run_claude_host_control_matches_manual_g1_runtime_projection` | landed |
+| stdlib Anthropic Messages streaming transport over the bounded text-only lane | `execute_claude_message_stream()` | `cortex/runtime/claude_host_transport.py` | `test_claude_host_control.py::test_parse_sse_events_converts_stream_frames_into_g2_shaped_records` + `test_claude_host_control.py::test_parse_sse_events_rejects_zero_event_stream` + `test_claude_host_control.py::test_parse_sse_events_rejects_malformed_json_event` + `test_claude_host_control.py::test_run_claude_host_control_matches_manual_g1_runtime_projection` | landed |
+| outbound Claude action -> accepted `A2`/`A1` runtime composition | `run_claude_host_control()` | `cortex/runtime/claude_host_control.py` | `test_claude_host_control.py::test_run_claude_host_control_matches_manual_g1_runtime_projection` + `test_claude_host_control_continuity.py::test_claude_host_control_export_import_preserves_control_truth` | landed |
+| loopback Claude service outbound action boundary over the bounded `A4` lane | `handle_claude_service_action()` | `cortex/runtime/claude_service.py` | `test_claude_service.py::test_claude_service_action_roundtrips_records_with_fake_transport` + `test_claude_host_control.py::test_claude_host_control_service_boundary_rejects_out_of_scope_keys` + `test_claude_host_control_service.py::test_claude_host_control_action_endpoint_returns_ordered_g1_records_and_mutates_session` + `test_claude_host_control_service.py::test_claude_host_control_action_endpoint_upstream_failure_returns_502_without_mutating_session` | landed |
+
+Forbidden leaks: `A4` remains host-specific, text-only, and single-lane on purpose. It may not widen into tools or tool-result submission, cancel/update lanes, multimodal or content-part request doctrine, remote hosting, multi-session or multi-client doctrine, generic runtime/service abstraction, or a second executive doctrine. The transport may use only a stdlib Claude-specific client for current scope and the canonical verification bundle may not require live network or a real API key. Returned upstream host events must re-enter through the accepted `A2` transcript parser and accepted `A1` runtime shell rather than bypassing those laws.
+
+---
+
 ## 2. V1 standard-library port correspondence
 
 ### 2.1 Commitment payload extraction (v1 `stop_payload.py`)
