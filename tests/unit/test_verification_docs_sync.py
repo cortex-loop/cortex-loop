@@ -231,8 +231,10 @@ def test_repo_workflow_doc_exists_and_agents_reference_it() -> None:
     assert "python scripts/repo_workflow.py finalize" in workflow_text
     assert "python scripts/repo_workflow.py preserve-worktree" in workflow_text
     assert "python scripts/repo_workflow.py audit-branches" in workflow_text
+    assert "python scripts/repo_workflow.py cleanup-report" in workflow_text
     assert "`REPO_WORKFLOW.md` is the maintainer workflow authority" in agents_text
     assert "`scripts/repo_workflow.py` is the enforcing helper surface" in agents_text
+    assert "`cleanup-report` is the strict final repo-hygiene gate" in agents_text
     assert "`main` is the resting branch in this repository." in agents_text
     assert "archival-root only" not in agents_text
 
@@ -318,6 +320,8 @@ def test_local_verification_doc_records_repo_workflow_commands() -> None:
     assert 'python scripts/repo_workflow.py finalize --message "docs: manual branch closeout"' in doc_text
     assert "python scripts/repo_workflow.py preserve-worktree --slug root-e1-verification" in doc_text
     assert "python scripts/repo_workflow.py audit-branches" in doc_text
+    assert "python scripts/repo_workflow.py cleanup-report" in doc_text
+    assert "make repo-hygiene" in doc_text
 
 
 def test_resume_protocol_and_active_workstream_contract_exist() -> None:
@@ -338,9 +342,9 @@ def test_resume_protocol_and_active_workstream_contract_exist() -> None:
     assert "Current working branch at ledger update:" in workstream_text
     assert "Current branch role:" in workstream_text
     assert "accepted workflow baseline truth now rests on `main` rather than a long-lived working branch" in workstream_text
-    assert "Current candidate seam: none;" in workstream_text
-    assert "preserved root safety branch remains explicit but unattached" in workstream_text
-    assert "only protected or still-unmerged attached worktrees remain" in workstream_text
+    assert "Current candidate seam: none; `H3-H4` is landed for current scope" in workstream_text
+    assert "the frozen non-main branch/worktree set has been retired under pushed archive tags" in workstream_text
+    assert "the strict cleanup-report gate is now the final hygiene contract" in workstream_text
     assert "the current signed-in smoke surfaces are now clean again" in workstream_text
     assert "`codex exec` for smoke" in workstream_text
     assert "`codex app-server` for lifecycle proof" in workstream_text
@@ -352,18 +356,17 @@ def test_resume_protocol_and_active_workstream_contract_exist() -> None:
     assert "`truth_gap` is truthful on the latest reruns on `auto`" in workstream_text
     assert "`restart_continuity` is not yet repeat-stable because the latest reruns include a `capacity_exhausted` blocker on `auto`" in workstream_text
     assert "repeat-stable Gemini closure is therefore still unearned" in workstream_text
-    assert "use the root checkout at `/Users/erikahoward/cortex-loop` as the canonical clean synced `main` worktree" in workstream_text
-    assert "still-unmerged `codex/o2-openai-ingress-shell`" in workstream_text
-    assert "still-unmerged `codex/o3-openai-service-shell`" in workstream_text
-    assert "if `codex/o2-openai-ingress-shell` or `codex/o3-openai-service-shell` should be retired later, classify or land them explicitly first" in workstream_text
+    assert "use [`/Users/erikahoward/cortex-loop`](/Users/erikahoward/cortex-loop) as the only local checkout and clean synced `main`" in workstream_text
+    assert "run `python scripts/repo_workflow.py cleanup-report` or `make repo-hygiene` before calling the repo fully clean" in workstream_text
+    assert "ordinary managed-session work may now resume from clean synced `main`" in workstream_text
     assert "Do not treat signed-in provider CLI sessions as equivalent to the automation credentials" in workstream_text
     assert "Do not treat the new OpenAI App Server operator proof as license to reopen v1 assisted mode" in workstream_text
     assert "Do not keep repo-tracked live artifacts under `docs/live_validation/`" in workstream_text
     assert "Do not shell out from service transports to provider CLIs." in workstream_text
     assert "Do not silently reintroduce a pinned Gemini operator model as the default testing start point" in workstream_text
     assert "Do not start a new managed session from local `main` while it is ahead or diverged from `origin/main`." in workstream_text
-    assert "Do not delete any worktree or branch that is not both merged into `main` and explicitly classified as safe-to-clean." in workstream_text
-    assert "Do not touch `claude/*` worktrees in the cleanup slice unless they are explicitly reclassified later." in workstream_text
+    assert "Do not reintroduce extra long-lived local worktrees or non-main branch residue without an explicit new seam." in workstream_text
+    assert "Do not leave remote `review/*` heads behind after future publication cleanup." in workstream_text
     assert "git branch --show-current" in workstream_text
     assert "git status --short --untracked-files=all" in workstream_text
     assert "Never promote an uncommitted branch head or dirty worktree state to accepted baseline truth." in workstream_text
@@ -424,7 +427,7 @@ def test_reference_runtime_program_lock_is_recorded() -> None:
     assert "loopback-only HTTP is landed on the accepted K1 closeout line" in phase_gate_text
     assert "one active session per process is real for current scope" in phase_gate_text
 
-    assert "use the root checkout at `/Users/erikahoward/cortex-loop` as the canonical clean synced `main` worktree" in workstream_text
+    assert "run `python scripts/repo_workflow.py cleanup-report` or `make repo-hygiene` before calling the repo fully clean" in workstream_text
     assert "the live-testing environment now has explicit operator and automation lane semantics" in workstream_text
     assert "the current signed-in smoke surfaces are now clean again" in workstream_text
     assert "the OpenAI App Server operator lane now completes" in workstream_text

@@ -187,6 +187,50 @@ def test_audit_branches_is_non_destructive_and_reports_categories(
     assert before_branches == after_branches
 
 
+def test_cleanup_report_passes_on_clean_synced_main(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    repo, _remote, module = _prepare_repo(tmp_path, monkeypatch)
+
+    result = module.cmd_cleanup_report()
+
+    payload = json.loads(capsys.readouterr().out)
+    assert result == 0
+    assert payload["ok"] is True
+    assert payload["current_branch"] == "main"
+    assert payload["main_sync"] == "synced"
+    assert payload["status"] == "clean"
+
+
+def test_cleanup_report_fails_when_repo_has_residual_work(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    repo, _remote, module = _prepare_repo(tmp_path, monkeypatch)
+    _git(repo, "switch", "-c", "maint/manual-open")
+    (repo / "manual-committed.txt").write_text("manual\n", encoding="utf-8")
+    _git(repo, "add", "manual-committed.txt")
+    _git(repo, "commit", "-m", "docs: manual branch")
+    (repo / "manual-dirty.txt").write_text("dirty\n", encoding="utf-8")
+
+    worktree_path = tmp_path / "attached-worktree"
+    _git(repo, "worktree", "add", "-b", "review/attached", str(worktree_path), "main")
+    _git(repo, "push", "origin", "main:review/leftover")
+
+    result = module.cmd_cleanup_report()
+
+    payload = json.loads(capsys.readouterr().out)
+    assert result == 1
+    assert payload["ok"] is False
+    assert payload["current_branch"] == "maint/manual-open"
+    assert payload["main_sync"] == "synced"
+    failures = payload["failures"]
+    assert failures["current_branch"] == "maint/manual-open"
+    assert any("manual-dirty.txt" in line for line in failures["dirty"])
+    assert any(row["branch"] == "maint/manual-open" for row in failures["open_manual"])
+    assert any(row["branch"] == "review/attached" for row in failures["worktree_attached"])
+    assert "review/leftover" in failures["remote_review_heads"]
+
+
 def test_preserve_worktree_refuses_on_main(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     repo, _remote, module = _prepare_repo(tmp_path, monkeypatch)
     with pytest.raises(SystemExit, match="refuses on clean or dirty main"):

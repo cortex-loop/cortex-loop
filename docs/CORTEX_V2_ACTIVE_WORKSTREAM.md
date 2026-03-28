@@ -31,12 +31,12 @@ It is workflow state only. It does not override the packet documents, implementa
 
 ## 2. Current campaign and seam state
 
-- Current campaign: `H2 cleanup closeout`
+- Current campaign: `H3-H4 final repo closure landed`
 - Current working branch at ledger update: `main`
 - Current branch role: root checkout is the clean synced resting branch again
-- Current candidate seam: none; `H2C` is landed for current scope
-- Current seam status: `root checkout restored to main; preserved root safety branch remains explicit but unattached; merged unattached local branches were pruned; only protected or still-unmerged attached worktrees remain`
-- Seam risk: deterministic workflow-state closeout after protected-work preservation
+- Current candidate seam: none; `H3-H4` is landed for current scope
+- Current seam status: `root main is now the only local checkout target, the frozen non-main branch/worktree set has been retired under pushed archive tags, and the strict cleanup-report gate is now the final hygiene contract`
+- Seam risk: deterministic workflow/tooling closeout after archival retirement
 
 ## 3. Next lawful move
 
@@ -71,12 +71,10 @@ It is workflow state only. It does not override the packet documents, implementa
   - repeat-stable Gemini closure is therefore still unearned
   - the current automation/service lane still fails honestly on missing machine auth
 - Next lawful move:
-  - use the root checkout at `/Users/erikahoward/cortex-loop` as the canonical clean synced `main` worktree
-  - keep only the intentionally remaining attached worktrees:
-    - protected `claude/*`
-    - still-unmerged `codex/o2-openai-ingress-shell`
-    - still-unmerged `codex/o3-openai-service-shell`
-  - if `codex/o2-openai-ingress-shell` or `codex/o3-openai-service-shell` should be retired later, classify or land them explicitly first
+  - use [`/Users/erikahoward/cortex-loop`](/Users/erikahoward/cortex-loop) as the only local checkout and clean synced `main`
+  - run `python scripts/repo_workflow.py cleanup-report` or `make repo-hygiene` before calling the repo fully clean
+  - if any future non-main branch/worktree is created, either land it promptly or archive/retire it back to this single-checkout state
+  - ordinary managed-session work may now resume from clean synced `main`
   - service proof remains blocked until machine auth exists
 
 ## 4. Explicitly blocked moves
@@ -98,13 +96,12 @@ It is workflow state only. It does not override the packet documents, implementa
 - Do not shell out from service transports to provider CLIs.
 - Do not overread the current auto-mode improvement as full Gemini closure while `restart_continuity` is still not repeat-stable.
 - Do not start a new managed session from local `main` while it is ahead or diverged from `origin/main`.
-- Do not delete any worktree or branch that is not both merged into `main` and explicitly classified as safe-to-clean.
-- Do not touch `claude/*` worktrees in the cleanup slice unless they are explicitly reclassified later.
+- Do not reintroduce extra long-lived local worktrees or non-main branch residue without an explicit new seam.
+- Do not leave remote `review/*` heads behind after future publication cleanup.
 
 ## 5. Acknowledged worktree noise at ledger creation
 
 - `.cortex/live_validation/` now contains local-only generated evidence for the current L2 pass and is expected to churn across reruns.
-- Local workspace directories already exist under `.claude/worktrees/`.
 - Re-read `git status --short --untracked-files=all` before opening any new seam; this summary is only the continuity reminder, not the canonical file list.
 
 ## 6. Resume checklist

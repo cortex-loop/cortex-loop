@@ -21,9 +21,16 @@ python scripts/repo_workflow.py close-session --message "docs: end-state summary
 python scripts/repo_workflow.py finalize --message "docs: manual branch closeout"
 python scripts/repo_workflow.py preserve-worktree --slug root-e1-verification
 python scripts/repo_workflow.py audit-branches
+python scripts/repo_workflow.py cleanup-report
 ```
 
 These commands are workflow controls, not part of the canonical verification bundle.
+
+Strict final-clean entry point:
+
+```sh
+make repo-hygiene
+```
 
 ## Canonical bundle
 

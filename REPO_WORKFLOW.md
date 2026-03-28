@@ -90,6 +90,12 @@ Audit local branch hygiene without mutating refs:
 python scripts/repo_workflow.py audit-branches
 ```
 
+Require the strict final-clean contract:
+
+```bash
+python scripts/repo_workflow.py cleanup-report
+```
+
 ## Session Workflow
 
 1. Start from clean `main`.
@@ -152,6 +158,15 @@ Manual/review branch workflow:
 - is read-only
 - reports merged local branches, worktree-attached branches, and non-merged manual/managed branches
 - does not delete anything
+
+`cleanup-report`:
+
+- is read-only
+- fails unless the repo is on clean synced `main`
+- fails if any non-root worktree remains attached
+- fails if any merged local branch, open manual branch, or open managed branch remains
+- fails if any remote `review/*` head remains
+- is the final repo-hygiene gate for declaring the repo fully clean
 
 ## Commit Message Contract
 

@@ -105,12 +105,22 @@ def _ensure_canonical_origin() -> None:
         )
 
 
-def _fetch_origin() -> None:
-    _run(["git", "fetch", "origin"])
+def _fetch_origin(*, quiet: bool = False) -> None:
+    cmd = ["git", "fetch", "origin"]
+    if quiet:
+        subprocess.run(cmd, cwd=_root(), check=True, capture_output=True, text=True)
+        return
+    _run(cmd)
 
 
 def _origin_main_exists() -> bool:
-    proc = subprocess.run(["git", "rev-parse", "--verify", "origin/main"], cwd=_root(), check=False)
+    proc = subprocess.run(
+        ["git", "rev-parse", "--verify", "origin/main"],
+        cwd=_root(),
+        check=False,
+        capture_output=True,
+        text=True,
+    )
     return proc.returncode == 0
 
 
@@ -337,6 +347,54 @@ def _tracked_nested_worktree_paths() -> list[str]:
     return tracked
 
 
+def _audit_payload() -> dict[str, object]:
+    branch_heads = _branch_heads()
+    current_branch = _current_branch()
+    worktree_map = _worktree_branch_map()
+    current_root = str(_root())
+    merged_local: list[dict[str, str]] = []
+    worktree_attached: list[dict[str, str]] = []
+    open_manual: list[dict[str, str]] = []
+    open_managed: list[dict[str, str]] = []
+
+    for branch, head in branch_heads.items():
+        if branch == "main":
+            continue
+        worktree_path = worktree_map.get(branch)
+        info = {"branch": branch, "head": head}
+        if worktree_path and worktree_path != current_root:
+            worktree_attached.append({**info, "path": worktree_path})
+            continue
+        if _branch_merged_into_main(branch):
+            merged_local.append(info)
+            continue
+        if is_managed_session_branch(branch):
+            open_managed.append(info)
+            continue
+        open_manual.append(info)
+
+    return {
+        "current_branch": current_branch,
+        "main_head": _capture_optional(["git", "rev-parse", "main"]),
+        "origin_main_head": _capture_optional(["git", "rev-parse", "origin/main"]),
+        "merged_local": sorted(merged_local, key=lambda row: row["branch"]),
+        "worktree_attached": sorted(worktree_attached, key=lambda row: row["branch"]),
+        "open_manual": sorted(open_manual, key=lambda row: row["branch"]),
+        "open_managed": sorted(open_managed, key=lambda row: row["branch"]),
+    }
+
+
+def _remote_review_heads() -> list[str]:
+    output = _capture_optional(["git", "ls-remote", "--heads", "origin", "review/*"])
+    if not output:
+        return []
+    heads: list[str] = []
+    for line in output.splitlines():
+        _sha, ref = line.split("\t", 1)
+        heads.append(ref.removeprefix("refs/heads/"))
+    return sorted(heads)
+
+
 def cmd_sync_main(adopt_origin: bool) -> int:
     _ensure_clean_tree()
     _ensure_canonical_origin()
@@ -419,42 +477,46 @@ def cmd_close_session(message: str) -> int:
 
 
 def cmd_audit_branches() -> int:
-    branch_heads = _branch_heads()
-    current_branch = _current_branch()
-    worktree_map = _worktree_branch_map()
-    current_root = str(_root())
-    merged_local: list[dict[str, str]] = []
-    worktree_attached: list[dict[str, str]] = []
-    open_manual: list[dict[str, str]] = []
-    open_managed: list[dict[str, str]] = []
-
-    for branch, head in branch_heads.items():
-        if branch == "main":
-            continue
-        worktree_path = worktree_map.get(branch)
-        info = {"branch": branch, "head": head}
-        if worktree_path and worktree_path != current_root:
-            worktree_attached.append({**info, "path": worktree_path})
-            continue
-        if _branch_merged_into_main(branch):
-            merged_local.append(info)
-            continue
-        if is_managed_session_branch(branch):
-            open_managed.append(info)
-            continue
-        open_manual.append(info)
-
-    payload = {
-        "current_branch": current_branch,
-        "main_head": _capture_optional(["git", "rev-parse", "main"]),
-        "origin_main_head": _capture_optional(["git", "rev-parse", "origin/main"]),
-        "merged_local": sorted(merged_local, key=lambda row: row["branch"]),
-        "worktree_attached": sorted(worktree_attached, key=lambda row: row["branch"]),
-        "open_manual": sorted(open_manual, key=lambda row: row["branch"]),
-        "open_managed": sorted(open_managed, key=lambda row: row["branch"]),
-    }
+    payload = _audit_payload()
     print(json.dumps(payload, indent=2, sort_keys=True))
     return 0
+
+
+def cmd_cleanup_report() -> int:
+    _ensure_canonical_origin()
+    _fetch_origin(quiet=True)
+    payload = _audit_payload()
+    dirty = _tracked_status_lines()
+    main_sync = _main_origin_state()
+    remote_review_heads = _remote_review_heads()
+
+    failures: dict[str, object] = {}
+    if payload["current_branch"] != "main":
+        failures["current_branch"] = payload["current_branch"]
+    if dirty:
+        failures["dirty"] = dirty
+    if main_sync != "synced":
+        failures["main_sync"] = main_sync
+    for key in ("worktree_attached", "merged_local", "open_manual", "open_managed"):
+        rows = payload[key]
+        if rows:
+            failures[key] = rows
+    if remote_review_heads:
+        failures["remote_review_heads"] = remote_review_heads
+
+    report = {
+        "ok": not failures,
+        "current_branch": payload["current_branch"],
+        "main_head": payload["main_head"],
+        "origin_main_head": payload["origin_main_head"],
+        "main_sync": main_sync,
+    }
+    if failures:
+        report["failures"] = failures
+    else:
+        report["status"] = "clean"
+    print(json.dumps(report, indent=2, sort_keys=True))
+    return 0 if not failures else 1
 
 
 def cmd_preserve_worktree(slug: str | None) -> int:
@@ -508,6 +570,10 @@ def main(argv: list[str] | None = None) -> int:
     close_parser.add_argument("--message", required=True)
 
     subparsers.add_parser("audit-branches", help="Report local branch hygiene state without mutating refs.")
+    subparsers.add_parser(
+        "cleanup-report",
+        help="Fail unless the repo is on clean synced main with no extra worktrees, non-main branches, or remote review heads.",
+    )
 
     preserve_parser = subparsers.add_parser(
         "preserve-worktree",
@@ -526,6 +592,8 @@ def main(argv: list[str] | None = None) -> int:
         return cmd_close_session(args.message)
     if args.command == "audit-branches":
         return cmd_audit_branches()
+    if args.command == "cleanup-report":
+        return cmd_cleanup_report()
     if args.command == "preserve-worktree":
         return cmd_preserve_worktree(args.slug)
     raise SystemExit(f"Unhandled command: {args.command}")
