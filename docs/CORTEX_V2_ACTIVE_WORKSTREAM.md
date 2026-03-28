@@ -56,6 +56,7 @@ It is workflow state only. It does not override the packet documents, implementa
     - `truth_gap` truthfully
     - `restart_continuity` twice
   - the OpenAI App Server event timeline is now the real lifecycle evidence surface for current scope; ephemeral `thread/read` remains lossy and is not treated as the primary truth surface
+  - the generic cross-host `make live-host-native-product-paths` entrypoint still inherits Claude/Gemini watchlist drift and is not yet the clean acceptance signal for current scope
   - the Claude signed-in operator lane is no longer auth-blocked, but the heavier current CLI harness still stalls on the one-turn tool-use boundary for `pass_minimal` and `truth_gap`; `restart_continuity` succeeds
   - the Gemini signed-in operator lane is no longer smoke-blocked, but the heavier coding harness remains a watchlist because `capacity_exhausted` is still emitted on the explicit `gemini-2.5-flash` fallback even when the local workspace change and target test succeed
   - the current automation/service lane still fails honestly on missing automation credentials

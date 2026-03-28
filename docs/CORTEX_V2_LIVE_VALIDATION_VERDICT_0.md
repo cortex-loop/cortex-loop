@@ -15,6 +15,7 @@ Reason:
   - `codex app-server` passes `pass_minimal` twice,
   - `codex app-server` preserves `truth_gap`,
   - `codex app-server` passes `restart_continuity` twice,
+- the cross-host `make live-host-native-product-paths` entrypoint still inherits the current Claude/Gemini watchlist drift and is not the clean closure signal yet,
 - but Claude still has a partial heavier product lane because the current one-turn CLI harness stops at tool-use before `pass_minimal` and `truth_gap` can close,
 - Gemini still hits `capacity_exhausted` on the heavier coding harness even on explicit `gemini-2.5-flash` fallback,
 - and the automation/service lane is still all-blocked on missing automation credentials.
