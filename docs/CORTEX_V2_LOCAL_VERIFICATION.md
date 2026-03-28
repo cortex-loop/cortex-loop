@@ -19,6 +19,7 @@ python scripts/repo_workflow.py sync-main
 python scripts/repo_workflow.py start-session --agent codex --slug task-name
 python scripts/repo_workflow.py close-session --message "docs: end-state summary"
 python scripts/repo_workflow.py finalize --message "docs: manual branch closeout"
+python scripts/repo_workflow.py preserve-worktree --slug root-e1-verification
 python scripts/repo_workflow.py audit-branches
 ```
 

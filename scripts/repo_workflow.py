@@ -177,6 +177,10 @@ def _session_branch_name(agent: str, slug: str | None) -> str:
     return f"{agent}/{_session_timestamp()}-{_normalize_slug(slug)}"
 
 
+def _preservation_branch_name(slug: str | None) -> str:
+    return f"maint/preserved-{_session_timestamp()}-{_normalize_slug(slug)}"
+
+
 def is_managed_session_branch(branch: str) -> bool:
     return MANAGED_SESSION_BRANCH_RE.fullmatch(branch.strip()) is not None
 
@@ -308,6 +312,31 @@ def _branch_heads() -> dict[str, str]:
     return mapping
 
 
+def _nested_attached_worktree_paths() -> list[str]:
+    root = _root()
+    current_root = str(root)
+    relpaths: list[str] = []
+    for path in _worktree_branch_map().values():
+        if not path or path == current_root:
+            continue
+        candidate = Path(path)
+        try:
+            rel = candidate.relative_to(root)
+        except ValueError:
+            continue
+        relpaths.append(str(rel))
+    return sorted(set(relpaths))
+
+
+def _tracked_nested_worktree_paths() -> list[str]:
+    tracked: list[str] = []
+    for relpath in _nested_attached_worktree_paths():
+        output = _capture_optional(["git", "ls-files", "-s", "--", relpath])
+        if output:
+            tracked.append(relpath)
+    return tracked
+
+
 def cmd_sync_main(adopt_origin: bool) -> int:
     _ensure_clean_tree()
     _ensure_canonical_origin()
@@ -428,6 +457,35 @@ def cmd_audit_branches() -> int:
     return 0
 
 
+def cmd_preserve_worktree(slug: str | None) -> int:
+    branch = _current_branch()
+    if branch == "main":
+        raise SystemExit("preserve-worktree refuses on clean or dirty main; use it only on dirty non-main worktrees.")
+    lines = _tracked_status_lines()
+    if not lines:
+        raise SystemExit("preserve-worktree requires a dirty non-main worktree.")
+    tracked_nested = _tracked_nested_worktree_paths()
+    if tracked_nested:
+        raise SystemExit(
+            "preserve-worktree refuses when attached worktree paths are already tracked:\n"
+            + "\n".join(tracked_nested)
+        )
+    target_branch = branch if branch.startswith("maint/") or branch.startswith("review/") else _preservation_branch_name(slug)
+    if target_branch != branch:
+        _run(["git", "switch", "-c", target_branch])
+    _run(["git", "add", "-A"])
+    nested_paths = _nested_attached_worktree_paths()
+    if nested_paths:
+        _run(["git", "reset", "-q", "HEAD", "--", *nested_paths])
+    if not _commit_has_staged_changes():
+        raise SystemExit("preserve-worktree found no staged changes after adding tracked and untracked work.")
+    message = f"docs: preserve worktree snapshot for {_normalize_slug(slug)}"
+    _run(["git", "commit", "-m", message])
+    commit_hash = _capture(["git", "rev-parse", "HEAD"]).strip()
+    print(json.dumps({"branch": target_branch, "commit": commit_hash}, sort_keys=True))
+    return 0
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Repo workflow helpers.")
     subparsers = parser.add_subparsers(dest="command", required=True)
@@ -451,6 +509,12 @@ def main(argv: list[str] | None = None) -> int:
 
     subparsers.add_parser("audit-branches", help="Report local branch hygiene state without mutating refs.")
 
+    preserve_parser = subparsers.add_parser(
+        "preserve-worktree",
+        help="Preserve a dirty non-main worktree onto an explicit manual branch without landing it onto main.",
+    )
+    preserve_parser.add_argument("--slug")
+
     args = parser.parse_args(argv)
     if args.command == "sync-main":
         return cmd_sync_main(args.adopt_origin)
@@ -462,6 +526,8 @@ def main(argv: list[str] | None = None) -> int:
         return cmd_close_session(args.message)
     if args.command == "audit-branches":
         return cmd_audit_branches()
+    if args.command == "preserve-worktree":
+        return cmd_preserve_worktree(args.slug)
     raise SystemExit(f"Unhandled command: {args.command}")
 
 

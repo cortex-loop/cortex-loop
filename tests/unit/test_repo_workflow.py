@@ -185,3 +185,64 @@ def test_audit_branches_is_non_destructive_and_reports_categories(
     assert any(row["branch"] == "maint/manual-open" for row in payload["open_manual"])
     assert any(row["branch"] == "review/attached" for row in payload["worktree_attached"])
     assert before_branches == after_branches
+
+
+def test_preserve_worktree_refuses_on_main(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    repo, _remote, module = _prepare_repo(tmp_path, monkeypatch)
+    with pytest.raises(SystemExit, match="refuses on clean or dirty main"):
+        module.cmd_preserve_worktree("main")
+
+
+def test_preserve_worktree_creates_manual_preservation_branch_and_commit(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    repo, _remote, module = _prepare_repo(tmp_path, monkeypatch)
+    _git(repo, "switch", "-c", "codex/dirty-work")
+    monkeypatch.setattr(module, "_session_timestamp", lambda: "20260329-010203")
+    (repo / "dirty.txt").write_text("dirty\n", encoding="utf-8")
+    (repo / "untracked.txt").write_text("untracked\n", encoding="utf-8")
+
+    module.cmd_preserve_worktree("root-e1-verification")
+
+    payload = json.loads(capsys.readouterr().out)
+    assert payload["branch"] == "maint/preserved-20260329-010203-root-e1-verification"
+    assert _git_output(repo, "branch", "--show-current") == payload["branch"]
+    assert _git_output(repo, "log", "-1", "--pretty=%s") == "docs: preserve worktree snapshot for root-e1-verification"
+    assert (repo / "dirty.txt").exists()
+    assert (repo / "untracked.txt").exists()
+
+
+def test_preserve_worktree_excludes_nested_attached_worktrees(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    repo, _remote, module = _prepare_repo(tmp_path, monkeypatch)
+    _git(repo, "switch", "-c", "codex/dirty-work")
+    monkeypatch.setattr(module, "_session_timestamp", lambda: "20260329-010203")
+    (repo / ".gitignore").write_text(".claude/worktrees/\n", encoding="utf-8")
+    (repo / "dirty.txt").write_text("dirty\n", encoding="utf-8")
+    attached_path = repo / ".claude" / "worktrees" / "attached"
+    attached_path.parent.mkdir(parents=True, exist_ok=True)
+    _git(repo, "worktree", "add", "-b", "review/attached", str(attached_path), "main")
+
+    module.cmd_preserve_worktree("nested")
+
+    payload = json.loads(capsys.readouterr().out)
+    assert _git_output(repo, "branch", "--show-current") == payload["branch"]
+    assert _git_output(repo, "ls-files", "--stage", "--", ".claude/worktrees/attached") == ""
+    changed_files = _git_output(repo, "show", "--name-only", "--pretty=", payload["commit"]).splitlines()
+    assert "dirty.txt" in changed_files
+    assert ".claude/worktrees/attached" not in changed_files
+
+
+def test_preserve_worktree_refuses_when_attached_worktree_paths_are_already_tracked(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    repo, _remote, module = _prepare_repo(tmp_path, monkeypatch)
+    _git(repo, "switch", "-c", "codex/dirty-work")
+    attached_path = repo / ".claude" / "worktrees" / "attached"
+    attached_path.parent.mkdir(parents=True, exist_ok=True)
+    _git(repo, "worktree", "add", "-b", "review/attached", str(attached_path), "main")
+    _git(repo, "add", ".claude/worktrees/attached")
+
+    with pytest.raises(SystemExit, match="attached worktree paths are already tracked"):
+        module.cmd_preserve_worktree("nested")

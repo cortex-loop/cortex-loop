@@ -78,6 +78,12 @@ Finalize an explicit manual/review branch without touching `main`:
 python scripts/repo_workflow.py finalize --message "docs: manual branch closeout"
 ```
 
+Preserve a dirty non-main worktree before cleanup:
+
+```bash
+python scripts/repo_workflow.py preserve-worktree --slug root-e1-verification
+```
+
 Audit local branch hygiene without mutating refs:
 
 ```bash
@@ -132,6 +138,14 @@ Manual/review branch workflow:
 - only works on explicit non-session branches
 - runs verification before committing
 - leaves the branch in place for manual merge
+
+`preserve-worktree`:
+
+- only works on dirty non-`main` worktrees
+- creates an explicit preservation branch if needed
+- captures tracked and untracked work in a safety snapshot commit
+- does not try to land onto `main`
+- is the only explicit exception to the normal verification-before-commit rule because its purpose is work preservation, not landing
 
 `audit-branches`:
 
