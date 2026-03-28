@@ -88,6 +88,7 @@ If a v1 mechanism is being carried over, re-earn it under the v2 packet instead 
 - `REPO_WORKFLOW.md` is the maintainer workflow authority for branch/session hygiene in this repository.
 - `scripts/repo_workflow.py` is the enforcing helper surface for that workflow.
 - `docs/CORTEX_V2_ACTIVE_WORKSTREAM.md` remains continuation context, not a substitute for the resting-state branch model.
+- `preserve-worktree` is the only explicit exception to the normal verification-before-commit rule, and it exists only to avoid losing unresolved dirty work before cleanup.
 
 ## Design guardrails for v2
 

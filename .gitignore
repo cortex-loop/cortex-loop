@@ -3,3 +3,4 @@ __pycache__/
 .coverage
 .coverage.*
 .cortex/live_validation/
+.claude/worktrees/

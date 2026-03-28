@@ -31,12 +31,12 @@ It is workflow state only. It does not override the packet documents, implementa
 
 ## 2. Current campaign and seam state
 
-- Current campaign: `H1 repo hygiene restoration and main reconciliation`
-- Current working branch at ledger update: `main`
-- Current branch role: resting-state branch after workflow restoration and local fast-forward from the accepted v2 line
-- Current candidate seam: none; `H1` is now landed for current scope
-- Current seam status: `landed for current scope; repo now rests on clean local main`
-- Seam risk: deterministic workflow/tooling seam plus no-loss local branch reconciliation
+- Current campaign: `H2B root worktree preservation repair`
+- Current working branch at ledger update: `maint/h2b-preserve-repair`
+- Current branch role: explicit manual repair branch for the preservation-path fix while `main` remains the resting branch
+- Current candidate seam: none; `H2B` is now landed for current scope
+- Current seam status: `landed for current scope; root worktree preserved safely and cleanup still deferred`
+- Seam risk: deterministic workflow/tooling seam plus protected-work preservation repair
 
 ## 3. Next lawful move
 
@@ -71,10 +71,13 @@ It is workflow state only. It does not override the packet documents, implementa
   - repeat-stable Gemini closure is therefore still unearned
   - the current automation/service lane still fails honestly on missing machine auth
 - Next lawful move:
-  - publish the landed local `main` history under a review branch and reconcile `main` with `origin/main` after merge before starting the next managed session
-  - if you want to advance live service proof after that, provide machine auth and spend approval for the current A4 / G4 / O4 service lanes and rerun `L6A`-`L6D`
-  - if you want a cleaner operator-side closeout first, open one bounded Gemini `restart_continuity` repeat-stability seam after `main` is reconciled
-  - keep service proof blocked until machine auth exists
+  - open the separate audited cleanup slice:
+    - remove merged safe worktrees like `codex/o2-openai-ingress-shell` and `codex/o3-openai-service-shell`
+    - prune merged local branches that are no longer attached
+    - keep `claude/*` protected
+    - return the root worktree at `/Users/erikahoward/cortex-loop` to clean `main`
+  - after that cleanup, resume normal managed-session work from clean synced `main`
+  - service proof remains blocked until machine auth exists
 
 ## 4. Explicitly blocked moves
 
@@ -95,6 +98,8 @@ It is workflow state only. It does not override the packet documents, implementa
 - Do not shell out from service transports to provider CLIs.
 - Do not overread the current auto-mode improvement as full Gemini closure while `restart_continuity` is still not repeat-stable.
 - Do not start a new managed session from local `main` while it is ahead or diverged from `origin/main`.
+- Do not delete any worktree or branch that is not both merged into `main` and explicitly classified as safe-to-clean.
+- Do not touch `claude/*` worktrees in the cleanup slice unless they are explicitly reclassified later.
 
 ## 5. Acknowledged worktree noise at ledger creation
 
