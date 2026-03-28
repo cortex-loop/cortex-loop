@@ -8,7 +8,7 @@ It is workflow state only. It does not override the packet documents, implementa
 ## 1. Accepted baseline
 
 - Accepted baseline branch: `main`
-- Accepted baseline commit: `d8aa925`
+- Accepted baseline commit: `3637921`
 - Accepted baseline state:
   - burden-axis re-audit remains accepted through the three thrash-host burden slices
   - package-level burden remains `insufficient`
@@ -31,12 +31,12 @@ It is workflow state only. It does not override the packet documents, implementa
 
 ## 2. Current campaign and seam state
 
-- Current campaign: `H2B root worktree preservation repair`
-- Current working branch at ledger update: `maint/h2b-preserve-repair`
-- Current branch role: explicit manual repair branch for the preservation-path fix while `main` remains the resting branch
-- Current candidate seam: none; `H2B` is now landed for current scope
-- Current seam status: `landed for current scope; root worktree preserved safely and cleanup still deferred`
-- Seam risk: deterministic workflow/tooling seam plus protected-work preservation repair
+- Current campaign: `H2 cleanup follow-on hold`
+- Current working branch at ledger update: `main`
+- Current branch role: clean synced resting branch while the separate audited cleanup slice remains unopened
+- Current candidate seam: none; `H2B` is landed for current scope and `H2C` cleanup remains pending
+- Current seam status: `preserved root worktree is safe and explicit; merged-safe cleanup is still deferred`
+- Seam risk: deterministic workflow-state hold around protected-work cleanup
 
 ## 3. Next lawful move
 
