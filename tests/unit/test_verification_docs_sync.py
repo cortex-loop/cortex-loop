@@ -279,10 +279,10 @@ def test_resume_protocol_and_active_workstream_contract_exist() -> None:
     assert "Accepted baseline branch: `codex/l1-live-validation`" in workstream_text
     assert "Accepted baseline commit: `8eb7f08`" in workstream_text
     assert "Current working branch at ledger update: `codex/l1-live-validation`" in workstream_text
-    assert "branch-local L2 candidate over accepted refreshed A1 truth" in workstream_text
+    assert "accepted post-A1 live-validation line with landed operator-only payoff audit" in workstream_text
     assert "Current campaign: `L3 cross-host operator payoff audit`" in workstream_text
-    assert "Current candidate seam: operator-only payoff audit over frozen Claude/OpenAI strong lines plus explicit partial Gemini truth" in workstream_text
-    assert "Current seam status: `partially implemented and partially verified`" in workstream_text
+    assert "Current candidate seam: none; `L3` is now landed for current scope" in workstream_text
+    assert "Current seam status: `landed`" in workstream_text
     assert "all three signed-in operator probes and smoke baselines are now clean" in workstream_text
     assert "`codex exec` for smoke" in workstream_text
     assert "`codex app-server` for lifecycle proof" in workstream_text
@@ -293,8 +293,9 @@ def test_resume_protocol_and_active_workstream_contract_exist() -> None:
     assert "`pass_minimal` succeeds twice with explicit `capacity_exhausted` warnings" in workstream_text
     assert "`truth_gap` remains non-truthful (`smoothed_incomplete`) on both `gemini-2.5-flash` and `gemini-2.5-flash-lite`" in workstream_text
     assert "`restart_continuity` now succeeds on `gemini-2.5-flash-lite`" in workstream_text
-    assert "freeze Gemini as the remaining explicit partial operator host line" in workstream_text
-    assert "leave automation/service deferred" in workstream_text
+    assert "keep Gemini as the remaining explicit partial operator host line for current scope" in workstream_text
+    assert "keep automation/service deferred" in workstream_text
+    assert "open a bounded automation auth-alignment and service-lane live-proof train" in workstream_text
     assert "Do not treat signed-in provider CLI sessions as equivalent to the automation credentials" in workstream_text
     assert "Do not treat the new OpenAI App Server operator proof as license to reopen v1 assisted mode" in workstream_text
     assert "Do not keep repo-tracked live artifacts under `docs/live_validation/`" in workstream_text
@@ -516,6 +517,7 @@ def test_reference_runtime_program_lock_is_recorded() -> None:
     assert "Status: L2/L2b/L2c/L2d/L2e live-testing environment verdict note" in live_validation_verdict_text
     assert "**lifecycle-first is promising but under-instrumented**" in live_validation_verdict_text
     assert "operator-only payoff note is narrower" in live_validation_verdict_text
+    assert "operator-only audit is now landed for current scope" in live_validation_verdict_text
     assert "`codex app-server` passes `pass_minimal` twice" in live_validation_verdict_text
     assert "Claude is now re-earned on a hook-backed operator lane" in live_validation_verdict_text
     assert "`gemini-2.5-auto` is not accepted by the installed CLI" in live_validation_verdict_text
@@ -596,7 +598,7 @@ def test_erika_visualizations_are_framed_as_support_surfaces() -> None:
     assert "The verification/evidence restack train, K1 runtime/product restack, and K2 bounded host-control train are now landed for current scope on top of that same product truth." in markdown_text
     assert "The reference runtime shell, bounded reference continuity, OpenAI documented-host-event runtime shell, raw-transcript ingress shell, loopback service shell, and bounded outbound OpenAI host-control lane are now accepted on the current line." in markdown_text
     assert "The Claude documented-host-event runtime shell, raw-transcript ingress shell, loopback service shell, and bounded outbound Claude host-control lane are now accepted on the current line." in markdown_text
-    assert "The current open train is L3 cross-host operator payoff audit." in markdown_text
+    assert "operator-only payoff audit is now landed for current scope." in markdown_text
     assert "Codex rather than `openai` as the OpenAI operator surface" in markdown_text
     assert "distinguishes `codex exec` smoke from `codex app-server` lifecycle proof" in markdown_text
     assert "now records documented hook events on Claude and Gemini" in markdown_text
@@ -642,4 +644,4 @@ def test_runtime_restack_program_lock_is_recorded() -> None:
     assert "Current accepted state after K1 closeout" in text
     assert "implemented at K1 proof head `d4c311f` and truthfully closed at deterministic closeout head `79b8f39`" in text
     assert "later bounded runtime/product trains may still be explicitly opened" in master_plan_text
-    assert "now records the current L3 cross-host operator payoff-audit seam" in theory_text
+    assert "now records the landed L3 cross-host operator payoff-audit seam" in theory_text

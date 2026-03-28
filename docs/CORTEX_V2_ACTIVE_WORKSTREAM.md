@@ -33,10 +33,10 @@ It is workflow state only. It does not override the packet documents, implementa
 
 - Current campaign: `L3 cross-host operator payoff audit`
 - Current working branch at ledger update: `codex/l1-live-validation`
-- Current branch role: branch-local L2 candidate over accepted refreshed A1 truth
-- Current candidate seam: operator-only payoff audit over frozen Claude/OpenAI strong lines plus explicit partial Gemini truth
-- Current seam status: `partially implemented and partially verified`
-- Seam risk: timing or environment-sensitive evidence interpretation seam with local artifact coupling; repeated reruns are still required before any closeout claim
+- Current branch role: accepted post-A1 live-validation line with landed operator-only payoff audit
+- Current candidate seam: none; `L3` is now landed for current scope
+- Current seam status: `landed`
+- Seam risk: timing or environment-sensitive evidence interpretation seam; repeat-stability proof has now been earned for the audit surface
 
 ## 3. Next lawful move
 
@@ -71,11 +71,9 @@ It is workflow state only. It does not override the packet documents, implementa
   - repeat-stable Gemini closure is not yet earned
   - the current automation/service lane still fails honestly on missing automation credentials
 - Next lawful move:
-  - freeze Gemini as the remaining explicit partial operator host line for current scope
-  - refresh the current operator evidence bundle
-  - add the operator-only payoff audit layer and rerun it twice
-  - update the live-validation/workstream/gate/support surfaces so `L5` truth is explicit
-  - leave automation/service deferred
+  - keep Gemini as the remaining explicit partial operator host line for current scope
+  - keep automation/service deferred until you explicitly want to spend on API/ADC testing
+  - if you want the next north-star move, open a bounded automation auth-alignment and service-lane live-proof train
 
 ## 4. Explicitly blocked moves
 
@@ -92,7 +90,7 @@ It is workflow state only. It does not override the packet documents, implementa
 - Do not silently discard Gemini capacity warnings when a run otherwise succeeds; preserve them as warnings rather than pretending the host was perfectly stable.
 - Do not silently promote `gemini-2.5-auto` to supported truth on this machine; current local evidence says the installed CLI rejects it and the operator lane falls through to `gemini-2.5-flash`.
 - Do not silently promote `gemini-2.5-pro` from exploratory sidecar to closure-path truth while it is still capacity-blocked on smoke.
-- Do not reopen Gemini model chasing, API/service auth work, or assisted-mode speculation inside `L3`.
+- Do not reopen Gemini model chasing or assisted-mode speculation inside the landed `L3` audit line.
 
 ## 5. Acknowledged worktree noise at ledger creation
 

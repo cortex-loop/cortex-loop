@@ -1,7 +1,7 @@
 # CORTEX_V2_LIVE_OPERATOR_PAYOFF_AUDIT_0
 
 Date: 2026-03-28
-Status: active operator-only payoff audit note
+Status: accepted operator-only payoff audit note
 
 ## Purpose
 
