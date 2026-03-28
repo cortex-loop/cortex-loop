@@ -22,6 +22,8 @@ The current bounded follow-on seam inside `L2` is:
 - `L2c` Claude and Gemini hook-backed operator lanes
 - `L2d` Gemini repeat-stability closure
 - `L2e` Gemini closure and pro comparison
+- `G2` Gemini auto-routing operator-default normalization
+- `G3` Gemini auto-mode product-path re-earn
 
 ## Accepted parent
 
@@ -95,10 +97,12 @@ Current local evidence after the March 28 reruns:
     - `pass_minimal` twice
     - `truth_gap`
     - `restart_continuity`
-  - Gemini is now hook-backed as well; current local truth is now scenario-split:
-    - `gemini-2.5-flash` succeeds twice on `pass_minimal` with explicit `capacity_exhausted` warnings
-    - `gemini-2.5-flash-lite` still returns `smoothed_incomplete` on `truth_gap`
-    - `gemini-2.5-flash-lite` now succeeds on `restart_continuity` with explicit `capacity_exhausted` warnings
+  - Gemini is now hook-backed as well; current local truth is now split between:
+    - clean smoke surfaces in CLI auto mode
+    - deeper auto-mode product-path evidence where:
+      - `pass_minimal` succeeds twice on `auto` with explicit `capacity_exhausted` warnings
+      - `truth_gap` is truthful on the latest auto-mode reruns
+      - `restart_continuity` is still not repeat-stable because the latest reruns include a `capacity_exhausted` blocker on `auto`
     - bounded `gemini-2.5-pro` smoke remains capacity-blocked and is not closure-path truth
   - repeat-stable Gemini closure is therefore still unearned
 - automation lane:

@@ -20,9 +20,9 @@ It is an evaluation/support surface, not a runtime or auth-expansion brief.
 - Gemini remains an explicit partial host line:
   - `gemini-2.5-pro` valid but exploratory-only and capacity-blocked on smoke
   - operator probes and repeated smoke baselines are now clean in CLI auto mode
-  - `gemini-2.5-flash` closes `pass_minimal` with warning-preserving capacity pressure
-  - `gemini-2.5-flash-lite` closes `restart_continuity` with warning-preserving capacity pressure
-  - neither model closes `truth_gap` honestly
+  - the deeper auto-mode path now closes `pass_minimal` with warning-preserving capacity pressure
+  - the deeper auto-mode path now preserves `truth_gap` truthfully on the latest reruns
+  - `restart_continuity` is still not repeat-stable because the latest reruns include a `capacity_exhausted` blocker
 
 ## Audit verdict
 

@@ -11,7 +11,7 @@ This remains the broader live-validation verdict because Gemini is still an expl
 
 The new operator-only payoff note is narrower and may still conclude that operator lifecycle-first is already paying off clearly.
 That operator-only audit is now landed for current scope.
-The Gemini auto-routing operator-default normalization seam is now landed for current scope.
+The Gemini auto-mode product-path re-earn seam is now landed for current scope.
 
 Reason:
 
@@ -28,9 +28,10 @@ Reason:
 - the cross-host `make live-host-native-product-paths` entrypoint still inherits the current Claude/Gemini watchlist drift and is not the clean closure signal yet,
 - Gemini now has real hook-backed lifecycle capture and local fallback truth:
   - operator probes and repeated smoke baselines are now clean in CLI auto mode with no pinned `-m` model argument
-  - `gemini-2.5-flash` succeeds twice on `pass_minimal` with warning-preserving `capacity_exhausted`
-  - `gemini-2.5-flash-lite` still returns `smoothed_incomplete` on `truth_gap`
-  - `gemini-2.5-flash-lite` succeeds on `restart_continuity` with warning-preserving `capacity_exhausted`
+  - the deeper auto-mode product path now improves materially:
+    - `pass_minimal` succeeds twice on `auto` with warning-preserving `capacity_exhausted`
+    - `truth_gap` is truthful on the latest auto-mode reruns
+    - `restart_continuity` is still not repeat-stable because the latest reruns include a `capacity_exhausted` blocker on `auto`
   - `gemini-2.5-pro` is valid locally but still capacity-blocked on the bounded exploratory smoke lane
 - so Gemini remains the only operator-side host still blocking closure,
 - and the automation/service lane is still all-blocked on missing automation credentials.
@@ -58,9 +59,9 @@ Reason:
 - operator probe: clean in CLI auto mode with no pinned `-m` model argument
 - operator baseline: clean twice in CLI auto mode
 - operator product path:
-  - hook-backed `pass_minimal`: success twice with `capacity_exhausted` preserved as a warning
-  - `truth_gap`: still `smoothed_incomplete` on `gemini-2.5-flash-lite`
-  - `restart_continuity`: now succeeds on `gemini-2.5-flash-lite` with warning-preserving `capacity_exhausted`
+  - hook-backed `pass_minimal`: success twice on `auto` with `capacity_exhausted` preserved as a warning
+  - `truth_gap`: now truthful on the latest auto-mode reruns
+  - `restart_continuity`: not repeat-stable yet because the latest reruns include a `capacity_exhausted` blocker on `auto`
   - this remains a watchlist rather than a closed host line
 - exploratory sidecar:
   - `gemini-2.5-pro` smoke remains capacity-blocked
@@ -92,11 +93,12 @@ Reason:
 - `L2b` explicitly keeps assisted mode deferred rather than smuggling bounded corrective intervention back in from v1
 - `L2c` now re-earns Claude and Gemini on their documented hook surfaces rather than relying on transcript-only operator truth
 - `G2` now re-optimizes Gemini operator testing around CLI auto mode, removes the pinned-model default from the smoke surfaces, and keeps explicit fallbacks only for failure recovery
+- `G3` now re-earns the deeper Gemini operator lane on top of CLI auto mode: `pass_minimal` and `truth_gap` improved materially, but `restart_continuity` remains the explicit repeat-stability blocker
 - `L2e` now proves that Gemini Pro is not the current closure model on this machine and that `flash-lite` rescues continuity but not truth-gap honesty
 
 ## Next corrective seam
 
-The Gemini auto-routing operator-default normalization seam is now complete.
+The Gemini auto-mode product-path re-earn seam is now complete.
 The next honest move is one bounded seam, chosen explicitly:
 
 1. If you want to advance the service lane:
@@ -107,8 +109,8 @@ The next honest move is one bounded seam, chosen explicitly:
      - `CORTEX_LIVE_SERVICE_SPEND_APPROVED`
    - then rerun the bounded service-proof lane
 2. If you want a cleaner operator-only support story first:
-   - open one bounded Gemini deeper product-path rerun seam in CLI auto mode
-   - do not smooth the current partial truth-gap/product-path story away
+   - open one bounded Gemini `restart_continuity` repeat-stability seam
+   - do not smooth the current partial continuity story away
 
 For the service-proof path, rerun:
 

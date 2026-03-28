@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import sys
+import tempfile
 from pathlib import Path
 
 TOOLS_ROOT = Path(__file__).resolve().parents[2] / "tools"
@@ -356,6 +357,35 @@ def test_gemini_operator_commands_omit_model_flag_when_auto_is_selected(monkeypa
         auth_mode="google_login",
     )
     assert "-m" not in captured["product_path"]
+
+
+def test_gemini_baseline_keeps_auto_as_preferred_model_on_warning_bearing_success(monkeypatch) -> None:
+    monkeypatch.setattr(
+        live_provider_baselines,
+        "_run_provider_probe",
+        lambda *args, **kwargs: {
+            "command": ["gemini", "-p", "Respond exactly with OK.", "-o", "stream-json", "--approval-mode", "plan"],
+            "exit_code": 0,
+            "stdout": '{"type":"result","status":"success","error":{"message":"You have exhausted your capacity on this model."}}',
+            "stderr": "",
+            "started_at": "2026-03-29T00:00:00+00:00",
+            "ended_at": "2026-03-29T00:00:01+00:00",
+        },
+    )
+    with tempfile.TemporaryDirectory() as tmpdir:
+        payload = live_provider_baselines._run_single_provider_baseline(
+            provider="gemini",
+            lane="operator",
+            repeat_index=1,
+            provider_root_path=Path(tmpdir),
+            preferred_model_override=None,
+            fallback_model_override=None,
+            disable_auto_probe=False,
+        )
+
+    assert payload["preferred_model"] == "auto"
+    assert payload["model"] == "auto"
+    assert payload["warning_classes"] == ["capacity_exhausted"]
 
 
 def test_decide_verdict_prefers_blocker_honesty_before_optimism() -> None:

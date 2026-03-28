@@ -31,11 +31,11 @@ It is workflow state only. It does not override the packet documents, implementa
 
 ## 2. Current campaign and seam state
 
-- Current campaign: `G2 Gemini auto-routing operator-default normalization`
+- Current campaign: `G3 Gemini auto-mode product-path re-earn`
 - Current working branch at ledger update: `codex/l1-live-validation`
-- Current branch role: accepted post-A1 live-validation line with Gemini operator testing now starting in CLI auto mode by default
-- Current candidate seam: none; `G2` is now landed for current scope
-- Current seam status: `landed for current scope; service proof remains honestly blocked`
+- Current branch role: accepted post-A1 live-validation line with the deeper Gemini operator lane re-run on CLI auto mode
+- Current candidate seam: none; `G3` is now landed for current scope
+- Current seam status: `landed for current scope; Gemini remains explicit partial truth and service proof remains honestly blocked`
 - Seam risk: timing or environment-sensitive live-validation seam
 
 ## 3. Next lawful move
@@ -64,16 +64,16 @@ It is workflow state only. It does not override the packet documents, implementa
   - the Gemini operator lane is now hook-backed as well
   - Gemini operator testing now starts in CLI auto mode by default and only falls back to explicit models after failure
   - the installed CLI does accept `gemini-2.5-pro`, but the exploratory pro smoke still blocks on `capacity_exhausted`
-  - Gemini current closure-path truth is now scenario-split:
-    - `pass_minimal` succeeds twice with explicit `capacity_exhausted` warnings
-    - `truth_gap` remains non-truthful (`smoothed_incomplete`) on both `gemini-2.5-flash` and `gemini-2.5-flash-lite`
-    - `restart_continuity` now succeeds on `gemini-2.5-flash-lite` with explicit `capacity_exhausted` warnings
-  - repeat-stable Gemini closure is not yet earned
+  - the deeper Gemini auto-mode product-path rerun now shows:
+    - `pass_minimal` succeeds twice on `auto` with explicit `capacity_exhausted` warnings
+    - `truth_gap` is truthful on the latest reruns on `auto`
+    - `restart_continuity` is not yet repeat-stable because the latest reruns include a `capacity_exhausted` blocker on `auto`
+  - repeat-stable Gemini closure is therefore still unearned
   - the current automation/service lane still fails honestly on missing machine auth
 - Next lawful move:
   - if you want to advance live service proof, provide machine auth and spend approval for the current A4 / G4 / O4 service lanes and rerun `L6A`-`L6D`
-  - if you want a cleaner operator-side closeout before that, open one bounded Gemini smoke-baseline stabilization or downgrade seam rather than pretending the baseline lane is clean
-  - keep operator lanes frozen outside that bounded Gemini baseline decision
+  - if you want a cleaner operator-side closeout before that, open one bounded Gemini `restart_continuity` repeat-stability seam rather than pretending Gemini is fully closed already
+  - keep operator lanes frozen outside that bounded Gemini continuity decision
   - keep service proof blocked until machine auth exists
 
 ## 4. Explicitly blocked moves
@@ -93,6 +93,7 @@ It is workflow state only. It does not override the packet documents, implementa
 - Do not silently promote `gemini-2.5-pro` from exploratory sidecar to closure-path truth while it is still capacity-blocked on smoke.
 - Do not reopen Gemini model chasing or assisted-mode speculation inside the active `L4` service-proof train.
 - Do not shell out from service transports to provider CLIs.
+- Do not overread the current auto-mode improvement as full Gemini closure while `restart_continuity` is still not repeat-stable.
 
 ## 5. Acknowledged worktree noise at ledger creation
 

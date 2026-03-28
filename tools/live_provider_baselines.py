@@ -187,16 +187,18 @@ def _run_single_provider_baseline(
         failure_class = "operator_timeout" if lane == "operator" else "quota_exhausted"
     attempted_models = [first_model]
     if provider == "gemini" and lane == "operator":
-        auto_supported = failure_class is None
-        preferred_model = first_model if auto_supported else GEMINI_OPERATOR_FULL_LADDER[1]
-    chosen_model = choose_model(
-        provider,
-        lane,
-        first_failure=failure_class,
-        current_model=first_model,
-        auto_supported=auto_supported,
-        ladder=ladder,
-    )
+        auto_supported = run_result["exit_code"] == 0 and failure_class != "model_unavailable"
+        preferred_model = first_model if auto_supported or run_result["exit_code"] == 0 else GEMINI_OPERATOR_FULL_LADDER[1]
+    chosen_model = first_model
+    if run_result["exit_code"] != 0:
+        chosen_model = choose_model(
+            provider,
+            lane,
+            first_failure=failure_class,
+            current_model=first_model,
+            auto_supported=auto_supported,
+            ladder=ladder,
+        )
     while chosen_model != attempted_models[-1]:
         run_result = _run_provider_probe(provider, lane=lane, auth_mode=auth_mode, model=chosen_model)
         failure_class = classify_failure(f"{run_result['stdout']}\n{run_result['stderr']}")

@@ -345,8 +345,8 @@ def _run_operator_attempts(
         attempted_models.append(current_model)
 
         if provider == "gemini" and current_model == MODEL_MATRIX["gemini"]["operator"].preferred:
-            auto_supported = failure_class is None
-            if auto_supported is False:
+            auto_supported = run_result["exit_code"] == 0 and failure_class != "model_unavailable"
+            if auto_supported is False and run_result["exit_code"] != 0:
                 ladder = _requested_model_ladder(
                     provider=provider,
                     preferred_model_override=preferred_model_override,

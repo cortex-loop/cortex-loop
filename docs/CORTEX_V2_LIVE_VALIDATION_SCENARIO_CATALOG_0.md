@@ -74,9 +74,10 @@ Target task:
 - current exploratory sidecar:
   - `gemini-2.5-pro` smoke only unless the smoke becomes clean
 - current caveat:
-  - smoke surfaces now start in CLI auto mode, but the deeper product path still reflects the earlier flash/flash-lite partial truth
+  - smoke surfaces now start in CLI auto mode and are currently clean
+  - the deeper product path now also starts in CLI auto mode, but `restart_continuity` is still not repeat-stable
   - `gemini-2.5-pro` is valid locally but still capacity-blocked on smoke
-  - `truth_gap` remains the active blocker even after a `flash-lite` rerun
+  - `truth_gap` is now truthful on the latest auto-mode reruns
 - probe surface: operator preflight plus the signed-in Gemini baseline and hook-backed product lane
 
 ### OpenAI
