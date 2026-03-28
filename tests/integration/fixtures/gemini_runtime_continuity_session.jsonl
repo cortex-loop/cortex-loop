@@ -1,0 +1,4 @@
+{"event_name":"content.delta","payload":{"session_id":"gemini-cont-1","interaction_id":"gm-int-cont-1","branch_operation":"open","branch_track_ref":"branch-alpha","delta":"open"}}
+{"event_name":"content.delta","payload":{"session_id":"gemini-cont-1","interaction_id":"gm-int-cont-1","branch_operation":"suspend","branch_track_ref":"branch-alpha","stop_fields":{"claim_id":"gm-branch-candidate"}}}
+{"event_name":"content.delta","payload":{"session_id":"gemini-cont-1","interaction_id":"gm-int-cont-1","branch_operation":"resume","branch_track_ref":"branch-alpha","delta":"resume"}}
+{"event_name":"interaction.complete","payload":{"session_id":"gemini-cont-1","interaction_id":"gm-int-cont-1","branch_operation":"merge","branch_track_ref":"branch-alpha","merge_target_ref":"main","commitment_id":"gm-branch-commit","externally_consequential":true,"result_artifact_ref":"gm-branch-artifact"}}

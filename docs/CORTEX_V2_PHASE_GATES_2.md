@@ -1,0 +1,161 @@
+# CORTEX_V2_PHASE_GATES_2
+
+Status: active cross-seam gate ledger for Cortex v2 (`active`, workflow authority)
+Date: 2026-03-18
+
+Purpose:
+- track closure conditions that are broader than one implementation seam,
+- separate phase-gate truth from correspondence-row truth,
+- and keep historical gate misses explicit instead of silently forgotten.
+
+This ledger does **not** override packet meaning or seam order.
+It records whether cross-seam closure conditions are actually earned.
+
+---
+
+## 1. Status vocabulary
+
+- `landed` = the gate row is satisfied with live evidence
+- `partial` = some evidence exists, but the row is not honestly closed
+- `open` = the row has no sufficient live evidence yet
+- `blocked` = the row cannot currently close because an upstream dependency is missing
+- `drifted` = the historical repo state already crossed a gate boundary without actually earning it
+
+---
+
+## 2. First-host-vertical gate
+
+Source of truth:
+- `docs/CORTEX_V2_IMPLEMENTATION_MASTER_PLAN_2.md`, Section 7
+
+Overall status: `landed`
+
+Historical note:
+- this gate previously drifted while only placeholder tests existed,
+- the missing rows are now closed with real reference-host vertical integration coverage.
+
+| Gate row | Current evidence | Owner / next closeout | Status | Notes |
+| --- | --- | --- | --- | --- |
+| cheap-path integration | `tests/integration/test_reference_host_vertical_gate.py::test_cheap_path_integration_stays_cheap_and_neutral_allowed` | closed | landed | reference-host observe/bind -> dispatch -> neutral continuation stays cheap |
+| candidate-bearing integration | `tests/integration/test_reference_host_vertical_gate.py::test_candidate_bearing_integration_binds_candidate_and_returns_no_verdict` | closed | landed | candidate-bearing event binds a candidate and stays out of certification |
+| full commitment integration | `tests/integration/test_reference_host_vertical_gate.py::test_full_commitment_integration_reaches_certified_with_lawful_evidence` | closed | landed | reference-host commitment path reaches a real verdict under lawful evidence |
+| degradation roundtrip | `tests/integration/test_reference_host_vertical_gate.py::test_degradation_roundtrip_preserves_degradation_and_contradictions` | closed | landed | degradation and contradiction refs survive the commitment path without flattening |
+| firewall integration | `tests/integration/test_reference_host_vertical_gate.py::test_firewall_integration_rejects_executive_environment_view` | closed | landed | executive-side environment view is rejected by the certification boundary through the real host path |
+| driver-to-core-to-sre smoke | `tests/integration/test_reference_host_vertical_gate.py::test_driver_to_core_to_sre_smoke_stays_observe_bind_dispatch_and_neutral` | closed | landed | driver event -> core dispatch -> SRE neutral decision smoke over landed carriers |
+
+---
+
+## 3. Latency evidence gate
+
+Source of truth:
+- `docs/CORTEX_V2_IMPLEMENTATION_MASTER_PLAN_2.md`, Section 8
+
+Overall status: `landed`
+
+Evidence location:
+- `docs/CORTEX_V2_LATENCY_EVIDENCE_2.md`
+- `tests/integration/test_reference_lane_latency.py`
+
+The latency targets are now backed by measured in-process evidence over the landed reference-host/Core/SRE path.
+
+| Gate row | Current evidence | Owner / next closeout | Status | Notes |
+| --- | --- | --- | --- | --- |
+| cheap-path latency evidence | `docs/CORTEX_V2_LATENCY_EVIDENCE_2.md` + `tests/integration/test_reference_lane_latency.py::test_reference_lane_latency_evidence_is_structurally_produced` | closed | landed | measured median 0.0171 ms; p95 0.0184 ms; target met |
+| candidate-bearing latency evidence | `docs/CORTEX_V2_LATENCY_EVIDENCE_2.md` + `tests/integration/test_reference_lane_latency.py::test_reference_lane_latency_evidence_is_structurally_produced` | closed | landed | measured median 0.0215 ms; p95 0.0241 ms; target met |
+| full commitment latency evidence | `docs/CORTEX_V2_LATENCY_EVIDENCE_2.md` + `tests/integration/test_reference_lane_latency.py::test_reference_lane_latency_evidence_is_structurally_produced` | closed | landed | measured median 0.0257 ms; p95 0.0285 ms; target met |
+| neutral SRE scoring latency evidence | `docs/CORTEX_V2_LATENCY_EVIDENCE_2.md` + `tests/integration/test_reference_lane_latency.py::test_reference_lane_latency_evidence_is_structurally_produced` | closed | landed | measured median 0.0014 ms; p95 0.0015 ms; target met |
+
+---
+
+## 4. Proof-packet prerequisite gate
+
+Source of truth:
+- `docs/CORTEX_V2_IMPLEMENTATION_MASTER_PLAN_2.md`, Phase 13 and Phase 15 intent
+
+Overall status: `landed`
+
+Minimal schemas, the first contradiction-preserving harness, truthful-withheld packet publication logic, and a committed measured reference-lane publication example now exist.
+
+| Gate row | Current evidence | Owner / next closeout | Status | Notes |
+| --- | --- | --- | --- | --- |
+| minimal event trace artifact schema | `cortex/eval/artifacts.py::EventTraceArtifact` + `tests/unit/test_certification_artifacts.py::test_event_trace_artifact_preserves_contradictions_and_degradations` | closed | landed | minimal schema is real |
+| minimal current-pair fragment schema | `cortex/eval/artifacts.py::CurrentPairFragment` + `tests/unit/test_certification_artifacts.py::test_current_pair_fragment_carries_event_trace_and_verdict_summary` | closed | landed | minimal schema is real |
+| minimal blocker fragment schema | `cortex/eval/artifacts.py::BlockerFragment` + `tests/unit/test_certification_artifacts.py::test_blocker_fragment_preserves_reason_and_contradictions` | closed | landed | minimal schema is real |
+| contradiction-preserving eval harness | `cortex/eval/harness.py::build_evaluation_harness_result` + `tests/unit/test_eval_harness.py::test_harness_result_carries_current_pair_without_losing_refs` + `tests/unit/test_eval_harness.py::test_harness_result_carries_blocker_without_smoothing_blocker_truth` | closed | landed | minimal side-effect-free harness composes landed artifacts without flattening contradictions or degradations |
+| truthful-withheld / packet publication logic | `cortex/eval/packets.py::build_evaluation_packet` + `tests/unit/test_eval_packets.py::test_packet_built_from_current_pair_preserves_truth_and_withheld_fields` + `tests/unit/test_eval_packets.py::test_packet_built_from_blocker_preserves_truth_and_withheld_fields` | closed | landed | minimal packet surface preserves current-pair versus blocker truth and exposes withheld fields explicitly |
+| measured reference-lane publication example | `docs/CORTEX_V2_REFERENCE_LANE_PACKET_EXAMPLE_2.md` + `tests/integration/test_reference_lane_packet_example.py::test_reference_lane_current_pair_packet_example_matches_committed_doc` | closed | landed | committed reference-host full-commitment example preserves packet kind, withheld fields, contradiction refs, and degradation refs without report formatting |
+
+---
+
+## 5. Closeout law
+
+- Any handoff that claims a phase or sub-phase is `landed` must include `Phase gate check:`.
+- Correspondence rows do not silently satisfy phase-gate rows.
+- A phase must remain `partial` or `blocked` if its relevant gate rows remain `open`, `partial`, or `drifted`.
+- If a historical gate was missed, record the miss here rather than rewriting history.
+
+---
+
+## 6. Post-closeout runtime-program gates
+
+Source of truth:
+
+- `docs/CORTEX_V2_REFERENCE_RUNTIME_PROGRAM_0.md`
+
+Overall status: `partial`
+
+These rows track the first intentional product/runtime opening after the accepted v2 closeout boundary.
+They do not authorize multi-host runtime, runtime AUX activation, offline consolidation, or mediation implementation.
+
+| Gate row | Current evidence | Owner / next closeout | Status | Notes |
+| --- | --- | --- | --- | --- |
+| `R1` reference runtime shell | `docs/CORTEX_V2_REFERENCE_RUNTIME_PROGRAM_0.md`; `tests/unit/test_reference_runtime_step.py`; `tests/integration/test_reference_runtime_cli.py` | closed | landed | the first accepted reference-host local CLI shell is landed; cheap-path default and commitment-kind truth are preserved |
+| `R2` computed reference executive slice | `docs/CORTEX_V2_REFERENCE_RUNTIME_PROGRAM_0.md`; `tests/unit/test_reference_executive_builder.py`; `tests/unit/test_reference_runtime_scoring.py`; `tests/unit/test_reference_runtime_step.py`; `tests/integration/test_reference_runtime_cli.py` | closed | landed | the first bounded `X_t^{ref}` builder, `U_t^{sre}` scoring/selection layer, and runtime-shell integration are landed on the reference-host CLI shell |
+| `R3` reference live continuity slice | `docs/CORTEX_V2_REFERENCE_RUNTIME_PROGRAM_0.md`; `tests/integration/test_reference_runtime_continuity.py`; `tests/integration/test_reference_runtime_cli.py` | closed | landed | the first one-process live continuity law and explicit rejection enforcement are re-hardened and audit-clean for current scope; malformed `open` and session mismatch are explicit, pending-goal anchors are preserved, and broader multi-agent runtime, runtime AUX activation, offline consolidation, and mediation remain unopened |
+| `R4` reference closed-loop feedback and latched-brake slice | `docs/CORTEX_V2_REFERENCE_FEEDBACK_PROGRAM_0.md`; `tests/unit/test_reference_realization_feedback.py`; `tests/unit/test_reference_runtime_step.py`; `tests/unit/test_reference_executive_builder.py`; `tests/unit/test_reference_runtime_scoring.py`; `tests/integration/test_reference_runtime_cli.py` | closed | landed | the first bounded last-step realization feedback, feedback-conditioned builder update, top-level control ledger, and latched-brake enforcement are landed and audit-clean for current scope; committed end-to-end proof now covers feedback propagation, deterministic control-ledger ordering, and CLI-visible selected-vs-realized divergence, and a zero-finding adversarial runtime/API review found no defect; selected-family truth and realized-family truth remain distinct, lawful commitment truth may coexist with enforcement warnings, and broader multi-agent runtime, runtime AUX activation, offline consolidation, and mediation remain unopened |
+| `R5` reference short-window feedback and sustained-pressure slice | `docs/CORTEX_V2_REFERENCE_FEEDBACK_PROGRAM_1.md`; `tests/unit/test_reference_feedback_window.py`; `tests/unit/test_reference_runtime_step.py`; `tests/unit/test_reference_executive_builder.py`; `tests/integration/test_reference_runtime_cli.py` | closed | landed | the first bounded three-step realized-outcome window, bounded prior-window summary law, runtime-step summary projection, top-level CLI `feedback_window_summary`, and post-step `session_summary.feedback_window_size` are landed and audit-clean for current scope again; the corrective line now closes the surviving session/window carrier defect by normalizing lawful one-sided last/window state, rejecting divergent two-sided state, and preserving prior-pressure truth through direct-construction paths, while `R4` last-step behavior remains a strict subset, scorer law remains unchanged, and broader runtime, runtime AUX activation, offline consolidation, and mediation remain unopened |
+| `C1` reference bounded cross-process continuation slice | `docs/CORTEX_V2_REFERENCE_CONTINUITY_PROGRAM_0.md`; `tests/unit/test_reference_runtime_session_io.py`; `tests/integration/test_reference_runtime_cli.py`; `tests/integration/test_reference_runtime_continuity.py` | closed | landed | explicit persisted `continuity_truth` plus bounded `control_residue` are landed on the accepted K1 closeout line, implemented at K1 proof head `d4c311f` and cleanly closed at deterministic closeout head `79b8f39`; CLI load/save is explicit, split-run equivalence is proven against the recorded `C1` contract, targeted unit/integration reruns plus repeated `make revalidate-reference-runtime-continuity` passed, and shell-long `budget_history` / `brake_history` remain public one-process diagnostics rather than cross-process truth |
+| `O1` OpenAI documented host-event runtime shell | `docs/CORTEX_V2_OPENAI_RUNTIME_PROGRAM_0.md`; `tests/unit/test_openai_runtime_session_io.py`; `tests/unit/test_openai_runtime_step.py`; `tests/unit/test_openai_runtime_ownership.py`; `tests/integration/test_openai_runtime_cli.py`; `tests/integration/test_openai_runtime_continuity.py` | closed | landed | OpenAI-specific runtime/session carriers plus persisted artifact are landed on the accepted K1 closeout line, implemented at K1 proof head `d4c311f` and cleanly closed at deterministic closeout head `79b8f39`; raw documented host events drive a host-specific CLI shell, canonical Cortex event names are explicitly rejected, undocumented host events remain explicit conservative warnings, OpenAI runtime/session ownership is self-contained, split-run OpenAI equivalence is proven against the recorded `O1` contract with explicit diagnostic-history non-equivalence, and targeted unit/integration reruns plus repeated `make revalidate-openai-runtime` passed |
+| `O2` OpenAI raw-transcript ingress shell | `docs/CORTEX_V2_OPENAI_INGRESS_PROGRAM_0.md`; `tests/unit/test_openai_ingress.py`; `tests/integration/test_openai_ingress_cli.py`; `tests/integration/test_openai_ingress_continuity.py` | closed | landed | raw-transcript ingress parsing is landed on the accepted K1 closeout line, implemented at K1 proof head `d4c311f` and cleanly closed at deterministic closeout head `79b8f39`; transcript records with `type` drive the current-line `O1` shell, wrapper-shaped and mixed wrapper/transcript records are explicitly rejected, canonical Cortex event names are explicitly rejected at ingress, split-run ingress continuity is proven against the recorded `O2` contract, and repeated direct reruns plus repeated `make revalidate-openai-ingress` passed |
+| `O3` OpenAI loopback service shell | `docs/CORTEX_V2_OPENAI_SERVICE_PROGRAM_0.md`; `tests/unit/test_openai_service.py`; `tests/integration/test_openai_service.py`; `tests/integration/test_openai_service_continuity.py` | closed | landed | loopback-only HTTP is landed on the accepted K1 closeout line, implemented at K1 proof head `d4c311f` and cleanly closed at deterministic closeout head `79b8f39`; `POST /v1/events` drives the current-line `O2` parser and current-line `O1` runtime shell, `GET /v1/session/export` and `POST /v1/session/import` move the current-line OpenAI runtime artifact as JSON, one active session per process is real for current scope, and repeated direct reruns plus repeated `make revalidate-openai-service` passed |
+| `O4` OpenAI bounded outbound host-control lane | `docs/CORTEX_V2_OPENAI_HOST_CONTROL_PROGRAM_0.md`; `tests/unit/test_openai_host_control.py`; `tests/integration/test_openai_host_control_service.py`; `tests/integration/test_openai_host_control_continuity.py` | closed | landed | the first bounded outbound OpenAI host-control lane is landed on the accepted K2 closeout line, implemented at K2 proof head `5ed9549` and cleanly closed at deterministic closeout head `9ed7dae`; `POST /v1/actions/response-stream` is text-only and strict-whitelist for current scope, returned host events re-enter the current-line `O2` parser and current-line `O1` runtime shell directly, the stdlib transport has an internal fixture mode so the canonical bundle requires no live network, and repeated direct reruns plus repeated `make revalidate-openai-host-control` passed |
+| `R6` explicit executive allocation slice on the reference runtime shell | `docs/CORTEX_V2_EXECUTIVE_LIVE_OUTCOME_PROGRAM_0.md`; `tests/unit/test_sre_neutral_hinge.py`; `tests/unit/test_reference_runtime_scoring.py`; `tests/unit/test_reference_runtime_step.py`; `tests/integration/test_reference_runtime_cli.py` | closed | landed | explicit `online_score`, `memory_score`, `allocated_score`, `alpha_t`, and nested `control_ledger.allocation_diagnostics` are landed on the accepted K3 closeout line, implemented at K3 proof head `5087d36` and cleanly closed at deterministic closeout head `efe003e`; current scope keeps `Q_t^{mem}=0.0`, `alpha_t=1.0`, and `allocated_score=online_score`, and repeated direct reruns plus repeated `make revalidate-executive-loop` passed |
+| `O5` OpenAI executive allocation projection slice | `docs/CORTEX_V2_EXECUTIVE_LIVE_OUTCOME_PROGRAM_0.md`; `tests/integration/test_openai_runtime_cli.py`; `tests/integration/test_openai_ingress_cli.py`; `tests/integration/test_openai_service.py`; `tests/integration/test_openai_host_control_service.py`; `tests/integration/test_openai_host_control_continuity.py` | closed | landed | OpenAI runtime, ingress, O3 service, and K2 host-control projections now surface the same nested `control_ledger.allocation_diagnostics` payload on the accepted K3 closeout line; split-run continuity keeps artifact truth unchanged and does not promote allocation diagnostics into persisted truth, and repeated direct reruns plus repeated `make revalidate-executive-loop` passed |
+| `G1` Gemini documented host-event runtime shell | `docs/CORTEX_V2_GEMINI_RUNTIME_PROGRAM_0.md`; `tests/unit/test_gemini_runtime_session_io.py`; `tests/unit/test_gemini_runtime_step.py`; `tests/unit/test_gemini_runtime_ownership.py`; `tests/integration/test_gemini_runtime_cli.py`; `tests/integration/test_gemini_runtime_continuity.py` | closed | landed | Gemini-specific runtime/session carriers plus persisted artifact are landed on the accepted G1 closeout line, implemented at G1 proof head `fe33a7e`; raw documented Gemini host events drive a host-specific CLI shell, canonical Cortex event names are explicitly rejected, nested allocation diagnostics reuse accepted K3 truth without opening a second SRE doctrine, and repeated direct reruns plus repeated `make revalidate-gemini-runtime` passed |
+| `G2` Gemini raw-transcript ingress shell | `docs/CORTEX_V2_GEMINI_INGRESS_PROGRAM_0.md`; `tests/unit/test_gemini_ingress.py`; `tests/integration/test_gemini_ingress_cli.py`; `tests/integration/test_gemini_ingress_continuity.py` | closed | landed | Gemini raw-transcript ingress parsing is landed on the accepted G1 closeout line; transcript records with `type` drive the current-line Gemini runtime shell, wrapper-shaped and mixed wrapper/transcript records are explicitly rejected, split-run ingress continuity is proven for current scope, and repeated direct reruns plus repeated `make revalidate-gemini-ingress` passed |
+| `G3` Gemini loopback service shell | `docs/CORTEX_V2_GEMINI_SERVICE_PROGRAM_0.md`; `tests/unit/test_gemini_service.py`; `tests/integration/test_gemini_service_http.py`; `tests/integration/test_gemini_service_continuity.py` | closed | landed | loopback-only Gemini HTTP is landed on the accepted G1 closeout line; `POST /v1/events` drives the current-line Gemini ingress parser and Gemini runtime shell, artifact import/export remains JSON-only, one active session per process is real for current scope, and repeated direct reruns plus repeated `make revalidate-gemini-service` passed |
+| `G4` Gemini bounded outbound host-control lane | `docs/CORTEX_V2_GEMINI_HOST_CONTROL_PROGRAM_0.md`; `tests/unit/test_gemini_host_control.py`; `tests/integration/test_gemini_host_control_service.py`; `tests/integration/test_gemini_host_control_continuity.py` | closed | landed | the first bounded outbound Gemini host-control lane is landed on the accepted G1 closeout line, implemented at G1 proof head `fe33a7e`; `POST /v1/actions/interaction-stream` is text-only and strict-whitelist for current scope, returned host events re-enter the current-line Gemini ingress parser and Gemini runtime shell directly, the stdlib transport has an internal fixture mode so the canonical bundle requires no live network, and repeated direct reruns plus repeated `make revalidate-gemini-host-control` passed |
+| `A1` Claude documented host-event runtime shell | `docs/CORTEX_V2_CLAUDE_RUNTIME_PROGRAM_0.md`; `tests/unit/test_claude_runtime_session_io.py`; `tests/unit/test_claude_runtime_step.py`; `tests/unit/test_claude_runtime_ownership.py`; `tests/integration/test_claude_runtime_cli.py`; `tests/integration/test_claude_runtime_continuity.py` | closed | landed | Claude-specific runtime/session carriers plus persisted artifact are landed on the accepted G1 closeout line, implemented at G1 proof head `fe33a7e`; raw documented Claude host events drive a host-specific CLI shell, canonical Cortex event names are explicitly rejected, top-level `message_id` remains visible in the outward record projection, nested allocation diagnostics reuse accepted K3 truth without opening a second SRE doctrine, and repeated direct reruns plus repeated `make revalidate-claude-runtime` passed |
+| `A2` Claude raw-transcript ingress shell | `docs/CORTEX_V2_CLAUDE_INGRESS_PROGRAM_0.md`; `tests/unit/test_claude_ingress.py`; `tests/integration/test_claude_ingress_cli.py`; `tests/integration/test_claude_ingress_continuity.py` | closed | landed | Claude raw-transcript ingress parsing is landed on the accepted G1 closeout line; transcript records with `type` drive the current-line Claude runtime shell, wrapper-shaped and mixed wrapper/transcript records are explicitly rejected, `ping` and `error` remain transport-only rather than lawful ingress records, split-run ingress continuity is proven for current scope, and repeated direct reruns plus repeated `make revalidate-claude-ingress` passed |
+| `A3` Claude loopback service shell | `docs/CORTEX_V2_CLAUDE_SERVICE_PROGRAM_0.md`; `tests/unit/test_claude_service.py`; `tests/integration/test_claude_service_http.py`; `tests/integration/test_claude_service_continuity.py` | closed | landed | loopback-only Claude HTTP is landed on the accepted G1 closeout line; `POST /v1/events` drives the current-line Claude ingress parser and Claude runtime shell, artifact import/export remains JSON-only, one active session per process is real for current scope, and repeated direct reruns plus repeated `make revalidate-claude-service` passed |
+| `A4` Claude bounded outbound host-control lane | `docs/CORTEX_V2_CLAUDE_HOST_CONTROL_PROGRAM_0.md`; `tests/unit/test_claude_host_control.py`; `tests/integration/test_claude_host_control_service.py`; `tests/integration/test_claude_host_control_continuity.py` | closed | landed | the first bounded outbound Claude host-control lane is landed on the accepted G1 closeout line, implemented at G1 proof head `fe33a7e`; `POST /v1/actions/message-stream` is text-only and strict-whitelist for current scope, returned host events re-enter the current-line Claude ingress parser and Claude runtime shell directly, the stdlib transport has an internal fixture mode so the canonical bundle requires no live network, and repeated direct reruns plus repeated `make revalidate-claude-host-control` passed |
+
+---
+
+## 7. Live-validation gates
+
+Source of truth:
+
+- `docs/CORTEX_V2_LIVE_VALIDATION_PROGRAM_0.md`
+- `docs/CORTEX_V2_LIVE_VALIDATION_SCENARIO_CATALOG_0.md`
+- `docs/CORTEX_V2_LIVE_VALIDATION_VERDICT_0.md`
+
+Overall status: `partial`
+
+These rows track live subscribed-host validation over the accepted runtime/product shells.
+They do not authorize runtime widening, CLI-backed transport substitution, tool-use expansion, or packet reinterpretation.
+
+| Gate row | Current evidence | Owner / next closeout | Status | Notes |
+| --- | --- | --- | --- | --- |
+| `L1` Claude live validation | `docs/CORTEX_V2_LIVE_VALIDATION_PROGRAM_0.md`; `docs/CORTEX_V2_LIVE_VALIDATION_VERDICT_0.md`; `make live-preflight`; `make live-provider-baselines`; focused Claude operator reruns; `make live-cortex-host-control` | add automation credentials and rerun `L1` | partial | Claude operator probe and baseline are now clean on `claude-sonnet-4-6`, and the hook-backed operator lane now succeeds on `pass_minimal`, `truth_gap`, and `restart_continuity`; the automation lane is still blocked on missing `ANTHROPIC_API_KEY` |
+| `L1A` Claude hook-backed operator lifecycle proof | `docs/CORTEX_V2_LIVE_VALIDATION_PROGRAM_0.md`; `docs/CORTEX_V2_LIVE_VALIDATION_VERDICT_0.md`; focused Claude operator reruns | closed | landed | the documented Claude hook surface is now re-earned for current scope: `SessionStart`, `PreToolUse`, `PostToolUse`, `Stop`, and `SessionEnd` are recorded on the signed-in operator lane, and the bounded shared coding harness closes on `pass_minimal`, `truth_gap`, and `restart_continuity` |
+| `L2` Gemini live validation | `docs/CORTEX_V2_LIVE_VALIDATION_PROGRAM_0.md`; `docs/CORTEX_V2_LIVE_VALIDATION_VERDICT_0.md`; `make live-preflight`; `make live-provider-baselines`; focused Gemini operator reruns; `make live-cortex-host-control` | either accept Gemini as the remaining explicit partial host line, or open one bounded Gemini `restart_continuity` repeat-stability seam | partial | Gemini local truth is now better on both smoke and deeper operator surfaces: operator preflight and repeated smoke baselines are clean in CLI auto mode with no pinned `-m` model argument; the deeper auto-mode product path now succeeds twice on `pass_minimal` with warning-preserving `capacity_exhausted`, preserves `truth_gap` truthfully on the latest reruns, and still fails to earn repeat-stable `restart_continuity` because the latest reruns include a `capacity_exhausted` blocker on `auto`; exploratory `gemini-2.5-pro` smoke remains capacity-blocked; the automation lane is still blocked on missing ADC or `GEMINI_API_KEY` |
+| `L2A` Gemini hook-backed operator lifecycle proof | `docs/CORTEX_V2_LIVE_VALIDATION_PROGRAM_0.md`; `docs/CORTEX_V2_LIVE_VALIDATION_VERDICT_0.md`; focused Gemini operator reruns | partial | partial | the documented Gemini hook surface is re-earned on the signed-in operator lane: `SessionStart`, `BeforeTool`, `AfterTool`, and `SessionEnd` are captured, `truth_gap` is now truthful on the latest auto-mode reruns, but `restart_continuity` is still not repeat-stable, so the hook-backed line remains partial rather than landed |
+| `L3` OpenAI live validation | `docs/CORTEX_V2_LIVE_VALIDATION_PROGRAM_0.md`; `docs/CORTEX_V2_LIVE_VALIDATION_VERDICT_0.md`; `make live-preflight`; `make live-provider-baselines`; `make live-openai-app-server`; `make live-cortex-host-control` | add automation credentials and rerun `L3` | partial | OpenAI now uses the correct signed-in operator hierarchy: `codex exec` for smoke and `codex app-server` for lifecycle proof; the operator lane succeeds on `pass_minimal`, preserves `truth_gap`, and succeeds on `restart_continuity`, while the automation/service lane remains blocked on missing `OPENAI_API_KEY` |
+| `L3A` OpenAI App Server operator lifecycle proof | `docs/CORTEX_V2_LIVE_VALIDATION_PROGRAM_0.md`; `docs/CORTEX_V2_LIVE_VALIDATION_VERDICT_0.md`; `make live-openai-app-server` | closed | landed | the bounded `codex app-server` operator lane is now re-earned for current scope: repeated `pass_minimal` and repeated `restart_continuity` succeed, `truth_gap` remains truthful, `codex exec` is preserved as the smoke lane, and assisted-mode / bridge-era intervention remains explicitly deferred |
+| `L4` lifecycle-first payoff verdict | `docs/CORTEX_V2_LIVE_VALIDATION_VERDICT_0.md`; `make live-compare` | provide machine auth / spend approval and rerun the bounded service-proof lane | partial | the broader verdict remains partial because operator truth is strong on Claude and OpenAI while Gemini remains an explicit partial host line: smoke and the deeper auto-mode path improved materially, but `restart_continuity` is still not repeat-stable, and the current service lane is still all-blocked on missing machine auth |
+| `L5` cross-host operator payoff audit | `docs/CORTEX_V2_LIVE_OPERATOR_PAYOFF_AUDIT_0.md`; `make live-compare`; `make live-operator-payoff-audit` | closed | landed | operator-only payoff audit remains landed for current scope after the Gemini auto-mode reruns: repeated `make live-operator-payoff-audit` plus repeated `make live-compare` still hold the same operator-only verdict, and the audit remains compatible with Gemini staying explicit partial truth rather than a closed host line |
+| `L6A` Claude service live proof | `docs/CORTEX_V2_LIVE_SERVICE_PROOF_0.md`; `make live-preflight`; `python3 tools/live_cortex_host_control.py --lane automation --provider claude`; `make live-compare` | provide machine auth or spend approval, then rerun `L6A` twice | blocked | current local auth readiness is not yet sufficient to prove the Claude service lane; signed-in Claude CLI truth does not satisfy service-lane auth |
+| `L6B` Gemini service live proof | `docs/CORTEX_V2_LIVE_SERVICE_PROOF_0.md`; `make live-preflight`; `python3 tools/live_cortex_host_control.py --lane automation --provider gemini`; `make live-compare` | provide machine auth or spend approval, then rerun `L6B` twice | blocked | current local auth readiness is not yet sufficient to prove the Gemini service lane; signed-in Gemini CLI truth does not satisfy service-lane auth |
+| `L6C` OpenAI service live proof | `docs/CORTEX_V2_LIVE_SERVICE_PROOF_0.md`; `make live-preflight`; `python3 tools/live_cortex_host_control.py --lane automation --provider openai`; `make live-compare` | provide machine auth or spend approval, then rerun `L6C` twice | blocked | current local auth readiness is not yet sufficient to prove the OpenAI service lane; signed-in Codex truth does not satisfy service-lane auth |
+| `L6D` package-level service proof | `docs/CORTEX_V2_LIVE_SERVICE_PROOF_0.md`; `make live-compare` | `L6A`, `L6B`, and `L6C` must all land first | blocked | package-level service proof remains blocked until all three host service rows are landed |

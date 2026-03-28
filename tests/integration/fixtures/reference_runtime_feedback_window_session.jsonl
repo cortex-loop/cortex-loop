@@ -1,0 +1,5 @@
+{"event_name":"ContextLoad","payload":{"session_id":"window-a"}}
+{"event_name":"ContextLoad","payload":{"session_id":"window-b"}}
+{"event_name":"ContextLoad","payload":{"session_id":"window-a"}}
+{"event_name":"ContextLoad","payload":{"session_id":"window-b"}}
+{"event_name":"ContextLoad","payload":{"session_id":"window-a"}}

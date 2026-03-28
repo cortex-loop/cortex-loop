@@ -1,0 +1,23 @@
+{
+  "calls": [
+    {
+      "expected_request": {
+        "action_tag": "openai-response-stream",
+        "request": {
+          "model": "gpt-5.4",
+          "input": "gap event"
+        }
+      },
+      "events": [
+        {
+          "type": "response.tool_event",
+          "session_id": "oa-k2-gap",
+          "response_id": "resp-k2-gap-1",
+          "commitment_id": "oa-k2-gap-commit-1",
+          "externally_consequential": true,
+          "result_artifact_ref": "oa-k2-gap-artifact-1"
+        }
+      ]
+    }
+  ]
+}
