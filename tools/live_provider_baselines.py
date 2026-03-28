@@ -13,6 +13,7 @@ from typing import Any
 
 from live_validation_common import (
     GEMINI_OPERATOR_FULL_LADDER,
+    MODEL_MATRIX,
     classify_failure,
     choose_model,
     comparator_path,

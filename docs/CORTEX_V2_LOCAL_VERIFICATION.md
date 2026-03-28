@@ -387,12 +387,19 @@ Repo-local entry point:
 make live-preflight
 ```
 
+Optional explicit updater path:
+
+```sh
+make live-preflight-update
+```
+
 ## Live provider baselines
 
 This captures provider smoke baselines.
 By default it runs the signed-in operator lane.
 The automation lane remains available as a separate optional comparison path.
 Machine output is local-only under `.cortex/live_validation/`.
+These smoke baselines are environment-sensitive and may fail honestly on host capacity pressure even when deeper operator lifecycle evidence remains usable.
 
 Direct command:
 

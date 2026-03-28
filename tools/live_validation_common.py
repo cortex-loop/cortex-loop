@@ -253,7 +253,7 @@ def resolve_auth_mode(provider: str, lane: str, env: MappingLike | None = None) 
     if configured and configured != "auto":
         return configured
     if lane == "automation" and provider == "gemini":
-        if vertex_adc_available():
+        if vertex_adc_available(source):
             return "vertex_adc"
         if bool(source.get("GEMINI_API_KEY")):
             return "api_key"
@@ -302,7 +302,7 @@ def automation_auth_readiness(provider: str, env: MappingLike | None = None) -> 
             "api_key_present": has_required,
         }
 
-    vertex_ready = vertex_adc_available()
+    vertex_ready = vertex_adc_available(source)
     api_ready = api_keys["GEMINI_API_KEY"]
     if auth_mode == "vertex_adc":
         if vertex_ready:
@@ -635,15 +635,18 @@ def api_key_presence(env: MappingLike | None = None) -> dict[str, bool]:
     }
 
 
-def vertex_adc_available() -> bool:
+def vertex_adc_available(env: MappingLike | None = None) -> bool:
+    source = os.environ if env is None else env
     if not command_exists("gcloud"):
         return False
-    project = os.environ.get("GOOGLE_CLOUD_PROJECT") or os.environ.get("GCLOUD_PROJECT")
-    location = os.environ.get("GOOGLE_CLOUD_LOCATION") or os.environ.get("VERTEX_LOCATION")
+    project = source.get("GOOGLE_CLOUD_PROJECT") or source.get("GCLOUD_PROJECT")
+    location = source.get("GOOGLE_CLOUD_LOCATION") or source.get("VERTEX_LOCATION")
     if not project or not location:
         return False
+    command_env = None if env is None else {**os.environ, **dict(source)}
     result = run_command(
         ["gcloud", "auth", "application-default", "print-access-token"],
+        env=command_env,
         timeout_seconds=30.0,
     )
     return result["exit_code"] == 0 and bool(result["stdout"].strip())

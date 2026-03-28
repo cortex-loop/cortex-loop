@@ -2,8 +2,19 @@
 
 from __future__ import annotations
 
-from tools.live_validation_common import (
+import sys
+from pathlib import Path
+
+TOOLS_ROOT = Path(__file__).resolve().parents[2] / "tools"
+if str(TOOLS_ROOT) not in sys.path:
+    sys.path.insert(0, str(TOOLS_ROOT))
+
+import live_cortex_host_control as live_host_control
+import live_provider_baselines as live_provider_baselines
+import live_validation_common as live_validation_common
+from live_validation_common import (
     BLOCKING_FAILURE_CLASSES,
+    GEMINI_AUTH_MODE_ENV,
     GEMINI_OPERATOR_FULL_LADDER,
     MODEL_MATRIX,
     automation_auth_readiness,
@@ -163,6 +174,7 @@ def test_gemini_model_ladder_and_choose_model_follow_auto_then_flash_then_flash_
 def test_automation_auth_readiness_defaults_to_missing_without_machine_creds() -> None:
     env = {}
     assert automation_auth_readiness("claude", env)["status"] == "missing"
+    assert automation_auth_readiness("gemini", env)["status"] == "missing"
     assert automation_auth_readiness("openai", env)["status"] == "missing"
 
 
@@ -175,6 +187,112 @@ def test_automation_auth_readiness_blocks_api_key_lanes_without_spend_approval()
         automation_auth_readiness("openai", {"OPENAI_API_KEY": "test-key"})["status"]
         == "blocked_by_spend_policy"
     )
+
+
+def test_gemini_automation_auth_readiness_is_ready_with_vertex_adc_and_spend_approval(monkeypatch) -> None:
+    monkeypatch.setattr(live_validation_common, "command_exists", lambda command: command == "gcloud")
+    monkeypatch.setattr(
+        live_validation_common,
+        "run_command",
+        lambda *args, **kwargs: {
+            "command": ["gcloud", "auth", "application-default", "print-access-token"],
+            "exit_code": 0,
+            "stdout": "token\n",
+            "stderr": "",
+            "started_at": "2026-03-28T00:00:00+00:00",
+            "ended_at": "2026-03-28T00:00:00+00:00",
+        },
+    )
+
+    readiness = automation_auth_readiness(
+        "gemini",
+        {
+            "GOOGLE_CLOUD_PROJECT": "project-a",
+            "GOOGLE_CLOUD_LOCATION": "us-central1",
+            "CORTEX_LIVE_SERVICE_SPEND_APPROVED": "1",
+        },
+    )
+
+    assert readiness["auth_mode"] == "vertex_adc"
+    assert readiness["vertex_adc_available"] is True
+    assert readiness["status"] == "ready"
+
+
+def test_gemini_automation_auth_readiness_can_be_blocked_by_spend_policy(monkeypatch) -> None:
+    monkeypatch.setattr(live_validation_common, "command_exists", lambda command: command == "gcloud")
+    monkeypatch.setattr(
+        live_validation_common,
+        "run_command",
+        lambda *args, **kwargs: {
+            "command": ["gcloud", "auth", "application-default", "print-access-token"],
+            "exit_code": 0,
+            "stdout": "token\n",
+            "stderr": "",
+            "started_at": "2026-03-28T00:00:00+00:00",
+            "ended_at": "2026-03-28T00:00:00+00:00",
+        },
+    )
+
+    readiness = automation_auth_readiness(
+        "gemini",
+        {
+            "GOOGLE_CLOUD_PROJECT": "project-a",
+            "GOOGLE_CLOUD_LOCATION": "us-central1",
+        },
+    )
+
+    assert readiness["auth_mode"] == "vertex_adc"
+    assert readiness["vertex_adc_available"] is True
+    assert readiness["status"] == "blocked_by_spend_policy"
+
+
+def test_gemini_automation_auth_readiness_can_be_mis_scoped(monkeypatch) -> None:
+    monkeypatch.setattr(live_validation_common, "command_exists", lambda command: command == "gcloud")
+    monkeypatch.setattr(
+        live_validation_common,
+        "run_command",
+        lambda *args, **kwargs: {
+            "command": ["gcloud", "auth", "application-default", "print-access-token"],
+            "exit_code": 1,
+            "stdout": "",
+            "stderr": "no adc",
+            "started_at": "2026-03-28T00:00:00+00:00",
+            "ended_at": "2026-03-28T00:00:00+00:00",
+        },
+    )
+
+    readiness = automation_auth_readiness(
+        "gemini",
+        {
+            GEMINI_AUTH_MODE_ENV: "vertex_adc",
+            "GEMINI_API_KEY": "test-key",
+        },
+    )
+
+    assert readiness["auth_mode"] == "vertex_adc"
+    assert readiness["vertex_adc_available"] is False
+    assert readiness["api_key_present"] is True
+    assert readiness["status"] == "mis_scoped"
+
+
+def test_single_provider_service_summary_does_not_include_stale_other_providers() -> None:
+    summary = live_host_control._build_summary(
+        lane="automation",
+        provider_payloads={"claude": {"provider": "claude", "runs": []}},
+    )
+
+    assert summary["lane"] == "automation"
+    assert summary["providers"] == {"claude": {"provider": "claude", "runs": []}}
+
+
+def test_provider_baseline_requested_model_ladder_uses_current_model_matrix() -> None:
+    assert live_provider_baselines._requested_model_ladder(
+        provider="openai",
+        lane="operator",
+        preferred_model_override=None,
+        fallback_model_override=None,
+        disable_auto_probe=False,
+    ) == ("gpt-5.3-codex", "gpt-5.4")
 
 
 def test_decide_verdict_prefers_blocker_honesty_before_optimism() -> None:

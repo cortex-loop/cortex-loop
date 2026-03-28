@@ -11,11 +11,11 @@ This remains the broader live-validation verdict because Gemini is still an expl
 
 The new operator-only payoff note is narrower and may still conclude that operator lifecycle-first is already paying off clearly.
 That operator-only audit is now landed for current scope.
-The current active train is now the bounded service-lane live-proof train.
+The last-session closure re-audit is now complete for current scope.
 
 Reason:
 
-- all three signed-in operator smokes and provider baselines are now green,
+- Claude and OpenAI signed-in operator probes and smoke baselines are now green, while Gemini smoke-baseline reruns are currently host-fragile,
 - Claude is now re-earned on a hook-backed operator lane:
   - `pass_minimal` twice
   - `truth_gap`
@@ -28,6 +28,8 @@ Reason:
 - the cross-host `make live-host-native-product-paths` entrypoint still inherits the current Claude/Gemini watchlist drift and is not the clean closure signal yet,
 - Gemini now has real hook-backed lifecycle capture and local fallback truth:
   - `gemini-2.5-auto` is not accepted by the installed CLI on this machine
+  - repeated preflight probes currently fall through to usable `gemini-2.5-flash-lite`
+  - repeated operator smoke baselines on `gemini-2.5-flash` are currently `capacity_exhausted`
   - `gemini-2.5-flash` succeeds twice on `pass_minimal` with warning-preserving `capacity_exhausted`
   - `gemini-2.5-flash-lite` still returns `smoothed_incomplete` on `truth_gap`
   - `gemini-2.5-flash-lite` succeeds on `restart_continuity` with warning-preserving `capacity_exhausted`
@@ -55,8 +57,8 @@ Reason:
 
 ### Gemini
 
-- operator probe: `gemini-2.5-auto` is rejected locally; fallback to `gemini-2.5-flash` succeeds
-- operator baseline: clean twice on fallback `gemini-2.5-flash`
+- operator probe: `gemini-2.5-auto` is rejected locally; current repeated preflight probes fall through to usable `gemini-2.5-flash-lite`
+- operator baseline: repeated smoke baselines on `gemini-2.5-flash` are currently `capacity_exhausted`
 - operator product path:
   - hook-backed `pass_minimal`: success twice with `capacity_exhausted` preserved as a warning
   - `truth_gap`: still `smoothed_incomplete` on `gemini-2.5-flash-lite`
@@ -96,21 +98,21 @@ Reason:
 
 ## Next corrective seam
 
-Open one bounded **automation auth-alignment and service-lane live-proof** seam that:
+The strict closure re-audit is now complete.
+The next honest move is one bounded seam, chosen explicitly:
 
-- classifies service-lane auth readiness explicitly as:
-  - `ready`
-  - `missing`
-  - `mis_scoped`
-  - `blocked_by_spend_policy`
-- keeps the current operator truth frozen while the service lane is re-earned or honestly blocked
-- provides machine auth and spend approval for the current service lane:
-  - `ANTHROPIC_API_KEY`
-  - Vertex ADC or `GEMINI_API_KEY`
-  - `OPENAI_API_KEY`
-  - `CORTEX_LIVE_SERVICE_SPEND_APPROVED`
+1. If you want to advance the service lane:
+   - provide machine auth and spend approval for:
+     - `ANTHROPIC_API_KEY`
+     - Vertex ADC or `GEMINI_API_KEY`
+     - `OPENAI_API_KEY`
+     - `CORTEX_LIVE_SERVICE_SPEND_APPROVED`
+   - then rerun the bounded service-proof lane
+2. If you want a cleaner operator-only support story first:
+   - open one bounded Gemini smoke-baseline stabilization or downgrade seam
+   - do not smooth the current Gemini baseline fragility away
 
-After that seam lands, rerun:
+For the service-proof path, rerun:
 
 - `make live-preflight`
 - `python3 tools/live_cortex_host_control.py --lane automation --provider claude`

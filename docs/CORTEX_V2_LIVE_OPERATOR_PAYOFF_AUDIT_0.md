@@ -20,6 +20,8 @@ It is an evaluation/support surface, not a runtime or auth-expansion brief.
 - Gemini remains an explicit partial host line:
   - `gemini-2.5-auto` unsupported locally
   - `gemini-2.5-pro` valid but exploratory-only and capacity-blocked on smoke
+  - repeated preflight probes currently fall through to usable `gemini-2.5-flash-lite`
+  - repeated operator smoke baselines on `gemini-2.5-flash` are currently `capacity_exhausted`
   - `gemini-2.5-flash` closes `pass_minimal` with warning-preserving capacity pressure
   - `gemini-2.5-flash-lite` closes `restart_continuity` with warning-preserving capacity pressure
   - neither model closes `truth_gap` honestly
@@ -31,7 +33,7 @@ It is an evaluation/support surface, not a runtime or auth-expansion brief.
 Qualifier:
 
 - Gemini remains explicit partial truth rather than hidden success
-- automation/service remains deferred and unproven
+- automation/service remains blocked on missing machine auth and unproven
 
 ## Why this is the current verdict
 

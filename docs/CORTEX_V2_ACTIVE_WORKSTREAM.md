@@ -31,12 +31,12 @@ It is workflow state only. It does not override the packet documents, implementa
 
 ## 2. Current campaign and seam state
 
-- Current campaign: `L4 automation auth-alignment and service-lane live proof`
+- Current campaign: `L4A last-session closure re-audit`
 - Current working branch at ledger update: `codex/l1-live-validation`
-- Current branch role: accepted post-A1 live-validation line with landed operator-only payoff audit and active service-proof candidate
-- Current candidate seam: automation auth readiness, bounded service-lane proof, and service-vs-operator delta reporting
-- Current seam status: `implemented and verified; current live proof remains blocked on missing machine auth`
-- Seam risk: timing or environment-sensitive live-service seam with real credential/spend coupling
+- Current branch role: accepted post-A1 live-validation line with strict closure re-audit completed over the L4 service-proof slice
+- Current candidate seam: none; `L4A` closure re-audit is now landed for current scope
+- Current seam status: `landed for current scope; service proof remains honestly blocked`
+- Seam risk: timing or environment-sensitive live-service/evidence-revalidation seam
 
 ## 3. Next lawful move
 
@@ -44,10 +44,10 @@ It is workflow state only. It does not override the packet documents, implementa
   - the live-testing environment now has explicit operator and automation lane semantics
   - the local artifact root is `.cortex/live_validation/` rather than repo-tracked `docs/live_validation/`
   - preflight now detects install channels, auth modes, operator probe status, fallback models, and OpenAI surface split
-  - all three signed-in operator probes and smoke baselines are now clean:
-    - Claude on `claude-sonnet-4-6`
-    - Gemini on fallback `gemini-2.5-flash`
-    - OpenAI/Codex on `gpt-5.3-codex`
+  - the current signed-in smoke surfaces are now split rather than uniformly clean:
+    - Claude probe and smoke baselines are clean on `claude-sonnet-4-6`
+    - Gemini probe currently falls through to `gemini-2.5-flash-lite` cleanly after `gemini-2.5-auto` rejection, but repeated operator smoke baselines on `gemini-2.5-flash` are currently `capacity_exhausted`
+    - OpenAI/Codex probe and smoke baselines are clean on `gpt-5.3-codex`
   - the OpenAI operator hierarchy is now explicit:
     - `codex exec` for smoke
     - `codex app-server` for lifecycle proof
@@ -69,12 +69,12 @@ It is workflow state only. It does not override the packet documents, implementa
     - `truth_gap` remains non-truthful (`smoothed_incomplete`) on both `gemini-2.5-flash` and `gemini-2.5-flash-lite`
     - `restart_continuity` now succeeds on `gemini-2.5-flash-lite` with explicit `capacity_exhausted` warnings
   - repeat-stable Gemini closure is not yet earned
-  - the current automation/service lane still fails honestly on missing automation credentials
+  - the current automation/service lane still fails honestly on missing machine auth
 - Next lawful move:
-  - provide machine auth and spend approval for the current A4 / G4 / O4 service lanes
-  - rerun `make live-preflight` plus per-provider service smoke and restart/import/export continuity proof twice
-  - update `L6A`-`L6D` from `blocked` only if those reruns earn real live service success
-  - keep operator lanes frozen while the service proof is earned or honestly blocked
+  - if you want to advance live service proof, provide machine auth and spend approval for the current A4 / G4 / O4 service lanes and rerun `L6A`-`L6D`
+  - if you want a cleaner operator-side closeout before that, open one bounded Gemini smoke-baseline stabilization or downgrade seam rather than pretending the baseline lane is clean
+  - keep operator lanes frozen outside that bounded Gemini baseline decision
+  - keep service proof blocked until machine auth exists
 
 ## 4. Explicitly blocked moves
 
@@ -93,6 +93,7 @@ It is workflow state only. It does not override the packet documents, implementa
 - Do not silently promote `gemini-2.5-pro` from exploratory sidecar to closure-path truth while it is still capacity-blocked on smoke.
 - Do not reopen Gemini model chasing or assisted-mode speculation inside the active `L4` service-proof train.
 - Do not shell out from service transports to provider CLIs.
+- Do not keep saying all signed-in operator smoke baselines are clean while Gemini repeated smoke baselines remain `capacity_exhausted`.
 
 ## 5. Acknowledged worktree noise at ledger creation
 

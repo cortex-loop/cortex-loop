@@ -76,7 +76,7 @@ def _build_audit(compare: dict[str, Any]) -> dict[str, Any]:
         "providers": providers,
         "verdict": verdict,
         "verdict_reason": verdict_reason,
-        "qualifier": "Gemini remains an explicit partial host line and automation/service remains deferred.",
+        "qualifier": "Gemini remains an explicit partial host line and automation/service remains blocked on missing machine auth.",
     }
 
 

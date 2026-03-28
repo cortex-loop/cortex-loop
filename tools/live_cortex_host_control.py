@@ -71,23 +71,29 @@ def main(argv: list[str] | None = None) -> int:
 
     ensure_live_validation_dirs()
     providers = ("claude", "gemini", "openai") if args.provider == "all" else (args.provider,)
-    summary_path = comparator_path("cortex_live_summary.json")
-    summary = _read_json(summary_path)
-    if not summary:
-        summary = {
-            "generated_at": now_utc_iso(),
-            "surface": "cortex_live_host_control",
-            "lane": args.lane,
-            "providers": {},
-        }
-    summary["generated_at"] = now_utc_iso()
-    summary["surface"] = "cortex_live_host_control"
-    summary["lane"] = args.lane
-    for provider in providers:
-        summary["providers"][provider] = _capture_provider(provider)
-    write_json(summary_path, summary)
+    summary = _build_summary(
+        lane=args.lane,
+        provider_payloads={provider: _capture_provider(provider) for provider in providers},
+    )
+    if args.provider == "all":
+        write_json(comparator_path("cortex_live_summary.json"), summary)
+    else:
+        write_json(comparator_path(f"cortex_live_summary_{args.provider}.json"), summary)
     print(json.dumps(summary, indent=2, sort_keys=True))
     return 0
+
+
+def _build_summary(
+    *,
+    lane: str,
+    provider_payloads: dict[str, Any],
+) -> dict[str, Any]:
+    return {
+        "generated_at": now_utc_iso(),
+        "surface": "cortex_live_host_control",
+        "lane": lane,
+        "providers": provider_payloads,
+    }
 
 
 def _capture_provider(provider: str) -> dict[str, Any]:
