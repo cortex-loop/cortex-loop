@@ -341,6 +341,17 @@ def extract_event_labels(records: list[dict[str, Any]]) -> list[str]:
 
 
 def extract_result_text(records: list[dict[str, Any]], raw_stdout: str) -> str | None:
+    latest_assistant_message: str | None = None
+    assistant_delta_chunks: list[str] = []
+    for record in records:
+        if record.get("type") == "message" and record.get("role") == "assistant":
+            content = record.get("content")
+            if isinstance(content, str) and content:
+                if record.get("delta") is True:
+                    assistant_delta_chunks.append(content)
+                else:
+                    latest_assistant_message = content.strip() or latest_assistant_message
+
     for record in reversed(records):
         result = record.get("result")
         if isinstance(result, str) and result.strip():
@@ -366,8 +377,18 @@ def extract_result_text(records: list[dict[str, Any]], raw_stdout: str) -> str |
                 if chunks:
                     return "\n".join(chunks)
         content = record.get("content")
-        if isinstance(content, str) and content.strip():
+        if (
+            isinstance(content, str)
+            and content.strip()
+            and not (record.get("type") == "message" and record.get("role") == "assistant" and record.get("delta") is True)
+        ):
             return content.strip()
+    if latest_assistant_message:
+        return latest_assistant_message
+    if assistant_delta_chunks:
+        joined = "".join(assistant_delta_chunks).strip()
+        if joined:
+            return joined
     stripped = raw_stdout.strip()
     return stripped or None
 

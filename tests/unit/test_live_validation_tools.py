@@ -74,6 +74,17 @@ def test_parse_json_lines_extracts_structured_records_only() -> None:
     assert extract_result_text(records, text) == "OK"
 
 
+def test_extract_result_text_reassembles_gemini_style_assistant_deltas() -> None:
+    records = [
+        {"type": "init", "session_id": "s-1"},
+        {"type": "message", "role": "assistant", "content": "Task: **in", "delta": True},
+        {"type": "message", "role": "assistant", "content": "complete**", "delta": True},
+        {"type": "result", "status": "success"},
+    ]
+
+    assert extract_result_text(records, "") == "Task: **incomplete**"
+
+
 def test_build_scenario_catalog_exposes_l2_harness_contract() -> None:
     catalog = build_scenario_catalog()
 
