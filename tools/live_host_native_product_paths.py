@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import subprocess
 from pathlib import Path
 from typing import Any
@@ -26,6 +27,7 @@ try:  # pragma: no cover - import path differs between script execution and pyte
         parse_json_lines,
         prepare_harness_workspace,
         provider_root,
+        REPO_ROOT,
         read_prompt_template,
         resolve_auth_mode,
         run_target_test,
@@ -53,6 +55,7 @@ except ImportError:  # pragma: no cover
         parse_json_lines,
         prepare_harness_workspace,
         provider_root,
+        REPO_ROOT,
         read_prompt_template,
         resolve_auth_mode,
         run_target_test,
@@ -177,6 +180,12 @@ def _run_single_scenario(
         scenario_id=scenario_id,
         repeat_index=repeat_index,
     )
+    hook_log_path = _configure_hook_capture(
+        provider=provider,
+        project_root=project_root,
+        scenario_id=scenario_id,
+        repeat_index=repeat_index,
+    )
     prompt_file = next(spec.operator_prompt for spec in SCENARIOS if spec.scenario_id == scenario_id)
     prompt = read_prompt_template(prompt_file)
     model = MODEL_MATRIX[provider]["operator"].preferred
@@ -187,6 +196,7 @@ def _run_single_scenario(
         project_root=project_root,
         model=model,
         auth_mode=auth_mode,
+        hook_log_path=hook_log_path,
     )
     failure_class = classify_failure(f"{run_result['stdout']}\n{run_result['stderr']}")
     if failure_class is None and run_result["exit_code"] == 124:
@@ -199,6 +209,7 @@ def _run_single_scenario(
             project_root=project_root,
             model=chosen_model,
             auth_mode=auth_mode,
+            hook_log_path=hook_log_path,
         )
         failure_class = classify_failure(f"{run_result['stdout']}\n{run_result['stderr']}")
         if failure_class is None and run_result["exit_code"] == 124:
@@ -213,6 +224,7 @@ def _run_single_scenario(
         model=chosen_model,
         auth_mode=auth_mode,
         failure_class=failure_class,
+        hook_log_path=hook_log_path,
     )
 
 
@@ -221,6 +233,12 @@ def _run_restart_continuity(provider: str, root: Path) -> dict[str, Any]:
     project_root = prepare_harness_workspace(
         provider=provider,
         lane="operator",
+        scenario_id="restart_continuity",
+        repeat_index=repeat_index,
+    )
+    hook_log_path = _configure_hook_capture(
+        provider=provider,
+        project_root=project_root,
         scenario_id="restart_continuity",
         repeat_index=repeat_index,
     )
@@ -233,6 +251,7 @@ def _run_restart_continuity(provider: str, root: Path) -> dict[str, Any]:
         project_root=project_root,
         model=chosen_model,
         auth_mode=auth_mode,
+        hook_log_path=hook_log_path,
     )
     first_failure = classify_failure(f"{first_result['stdout']}\n{first_result['stderr']}")
     if first_failure is None and first_result["exit_code"] == 124:
@@ -245,6 +264,7 @@ def _run_restart_continuity(provider: str, root: Path) -> dict[str, Any]:
             project_root=project_root,
             model=chosen_model,
             auth_mode=auth_mode,
+            hook_log_path=hook_log_path,
         )
         first_failure = classify_failure(f"{first_result['stdout']}\n{first_result['stderr']}")
         if first_failure is None and first_result["exit_code"] == 124:
@@ -261,6 +281,7 @@ def _run_restart_continuity(provider: str, root: Path) -> dict[str, Any]:
             model=chosen_model,
             auth_mode=auth_mode,
             failure_class=first_failure,
+            hook_log_path=hook_log_path,
         )
         return {
             "provider": provider,
@@ -281,6 +302,7 @@ def _run_restart_continuity(provider: str, root: Path) -> dict[str, Any]:
         model=chosen_model,
         auth_mode=auth_mode,
         session_id=session_id,
+        hook_log_path=hook_log_path,
     )
     second_failure = classify_failure(f"{second_result['stdout']}\n{second_result['stderr']}")
     if second_failure is None and second_result["exit_code"] == 124:
@@ -295,6 +317,7 @@ def _run_restart_continuity(provider: str, root: Path) -> dict[str, Any]:
         model=chosen_model,
         auth_mode=auth_mode,
         failure_class=second_failure,
+        hook_log_path=hook_log_path,
     )
     payload["session_id"] = session_id
     write_json(root / "restart_continuity.latest.json", payload)
@@ -312,6 +335,7 @@ def _materialize_operator_run(
     model: str,
     auth_mode: str,
     failure_class: str | None,
+    hook_log_path: Path | None,
 ) -> dict[str, Any]:
     stem = f"{scenario_id}__run_{repeat_index:03d}"
     stdout_path = root / f"{stem}.stdout.log"
@@ -324,7 +348,15 @@ def _materialize_operator_run(
     records = parse_json_lines(run_result["stdout"])
     modified_files = collect_modified_files(project_root)
     result_text = extract_result_text(records, run_result["stdout"])
-    success = run_result["exit_code"] == 0 and failure_class is None and test_result["exit_code"] == 0
+    hook_records = _read_hook_records(hook_log_path)
+    warning_classes = _warning_classes_for_success(
+        provider=provider,
+        failure_class=failure_class,
+        exit_code=run_result["exit_code"],
+        test_exit_code=test_result["exit_code"],
+    )
+    effective_failure_class = None if warning_classes else failure_class
+    success = run_result["exit_code"] == 0 and effective_failure_class is None and test_result["exit_code"] == 0
     truth_gap_kind = None
     if scenario_id == "truth_gap":
         truth_gap_kind = classify_truth_gap(
@@ -332,7 +364,7 @@ def _materialize_operator_run(
             test_passed=test_result["exit_code"] == 0,
             modified_files=modified_files,
         )
-        success = truth_gap_kind == "truthful_incomplete"
+        success = truth_gap_kind == "truthful_incomplete" and effective_failure_class is None
 
     payload = {
         "provider": provider,
@@ -342,10 +374,13 @@ def _materialize_operator_run(
         "auth_mode": auth_mode,
         "model": model,
         "success": success,
-        "failure_class": failure_class,
+        "failure_class": effective_failure_class,
+        "warning_classes": warning_classes,
         "command": run_result["command"],
         "structured_event_count": len(records),
         "structured_event_labels": extract_event_labels(records),
+        "hook_event_count": len(hook_records),
+        "hook_event_labels": _hook_event_labels(hook_records),
         "result_text": result_text,
         "modified_files": modified_files,
         "test_exit_code": test_result["exit_code"],
@@ -354,6 +389,9 @@ def _materialize_operator_run(
         "workspace_label": str(project_root.relative_to(project_root.parents[4])),
         "stdout_path": str(stdout_path.relative_to(root.parents[4])),
         "stderr_path": str(stderr_path.relative_to(root.parents[4])),
+        "hook_log_path": (
+            str(hook_log_path.relative_to(root.parents[4])) if hook_log_path is not None else None
+        ),
         "truth_gap_kind": truth_gap_kind,
         "started_at": run_result["started_at"],
         "ended_at": run_result["ended_at"],
@@ -370,11 +408,24 @@ def _run_provider_task(
     project_root: Path,
     model: str,
     auth_mode: str,
+    hook_log_path: Path | None = None,
 ) -> dict[str, Any]:
     if provider == "claude":
-        return _run_claude_task(prompt, project_root=project_root, model=model, auth_mode=auth_mode)
+        return _run_claude_task(
+            prompt,
+            project_root=project_root,
+            model=model,
+            auth_mode=auth_mode,
+            hook_log_path=hook_log_path,
+        )
     if provider == "gemini":
-        return _run_gemini_task(prompt, project_root=project_root, model=model, auth_mode=auth_mode)
+        return _run_gemini_task(
+            prompt,
+            project_root=project_root,
+            model=model,
+            auth_mode=auth_mode,
+            hook_log_path=hook_log_path,
+        )
     return _run_codex_task(prompt, project_root=project_root, model=model, auth_mode=auth_mode)
 
 
@@ -386,6 +437,7 @@ def _resume_provider_task(
     model: str,
     auth_mode: str,
     session_id: str | None,
+    hook_log_path: Path | None = None,
 ) -> dict[str, Any]:
     if provider == "claude":
         return _run_claude_task(
@@ -394,6 +446,7 @@ def _resume_provider_task(
             model=model,
             auth_mode=auth_mode,
             resume_session=session_id,
+            hook_log_path=hook_log_path,
         )
     if provider == "gemini":
         return _run_gemini_task(
@@ -402,6 +455,7 @@ def _resume_provider_task(
             model=model,
             auth_mode=auth_mode,
             resume_session=session_id,
+            hook_log_path=hook_log_path,
         )
     return _run_codex_task(
         prompt,
@@ -419,6 +473,7 @@ def _run_claude_task(
     model: str,
     auth_mode: str,
     resume_session: str | None = None,
+    hook_log_path: Path | None = None,
 ) -> dict[str, Any]:
     command = [
         "claude",
@@ -430,7 +485,7 @@ def _run_claude_task(
         "stream-json",
         "--verbose",
         "--max-turns",
-        "1",
+        "8",
         "--permission-mode",
         "bypassPermissions",
     ]
@@ -438,7 +493,12 @@ def _run_claude_task(
         return _unsupported_operator_mode("claude", auth_mode, command)
     if resume_session:
         command.extend(["--resume", resume_session])
-    return _run_timed_command(command, cwd=project_root, timeout_seconds=120.0)
+    return _run_timed_command(
+        command,
+        cwd=project_root,
+        timeout_seconds=180.0,
+        env=_hook_env("claude", hook_log_path),
+    )
 
 
 def _run_gemini_task(
@@ -448,6 +508,7 @@ def _run_gemini_task(
     model: str,
     auth_mode: str,
     resume_session: str | None = None,
+    hook_log_path: Path | None = None,
 ) -> dict[str, Any]:
     if auth_mode != "google_login":
         return _unsupported_operator_mode("gemini", auth_mode, ["gemini"])
@@ -464,7 +525,12 @@ def _run_gemini_task(
     ]
     if resume_session:
         command.extend(["-r", resume_session])
-    return _run_timed_command(command, cwd=project_root, timeout_seconds=120.0)
+    return _run_timed_command(
+        command,
+        cwd=project_root,
+        timeout_seconds=180.0,
+        env=_hook_env("gemini", hook_log_path),
+    )
 
 
 def _run_codex_task(
@@ -506,12 +572,14 @@ def _run_timed_command(
     *,
     cwd: Path,
     timeout_seconds: float,
+    env: dict[str, str] | None = None,
 ) -> dict[str, Any]:
     started_at = now_utc_iso()
     try:
         completed = subprocess.run(
             command,
             cwd=str(cwd),
+            env=env,
             text=True,
             capture_output=True,
             timeout=timeout_seconds,
@@ -553,6 +621,92 @@ def _read_json(path: Path) -> dict[str, Any]:
     if not path.exists():
         return {}
     return json.loads(path.read_text(encoding="utf-8"))
+
+
+def _configure_hook_capture(
+    *,
+    provider: str,
+    project_root: Path,
+    scenario_id: str,
+    repeat_index: int,
+) -> Path | None:
+    if provider not in {"claude", "gemini"}:
+        return None
+    recorder_path = REPO_ROOT / "tools" / "live_hook_recorder.py"
+    hook_log_path = provider_root(provider, "operator", "product_paths") / f"{scenario_id}__run_{repeat_index:03d}.hooks.jsonl"
+    command_literal = json.dumps(f'python3 "{recorder_path}"')
+    if provider == "claude":
+        settings_path = project_root / ".claude" / "settings.json"
+        settings_path.parent.mkdir(parents=True, exist_ok=True)
+        settings = {
+            "hooks": {
+                "SessionStart": [{"hooks": [{"type": "command", "command": json.loads(command_literal)}]}],
+                "PreToolUse": [{"matcher": ".*", "hooks": [{"type": "command", "command": json.loads(command_literal)}]}],
+                "PostToolUse": [{"matcher": ".*", "hooks": [{"type": "command", "command": json.loads(command_literal)}]}],
+                "Stop": [{"hooks": [{"type": "command", "command": json.loads(command_literal)}]}],
+                "SessionEnd": [{"hooks": [{"type": "command", "command": json.loads(command_literal)}]}],
+            }
+        }
+    else:
+        settings_path = project_root / ".gemini" / "settings.json"
+        settings_path.parent.mkdir(parents=True, exist_ok=True)
+        settings = {
+            "hooks": {
+                "SessionStart": [{"matcher": "*", "hooks": [{"name": "cortex-start", "type": "command", "command": json.loads(command_literal)}]}],
+                "BeforeTool": [{"matcher": ".*", "hooks": [{"name": "cortex-before-tool", "type": "command", "command": json.loads(command_literal)}]}],
+                "AfterTool": [{"matcher": ".*", "hooks": [{"name": "cortex-after-tool", "type": "command", "command": json.loads(command_literal)}]}],
+                "SessionEnd": [{"matcher": "*", "hooks": [{"name": "cortex-end", "type": "command", "command": json.loads(command_literal)}]}],
+            }
+        }
+    settings_path.write_text(json.dumps(settings, indent=2) + "\n", encoding="utf-8")
+    return hook_log_path
+
+
+def _hook_env(provider: str, hook_log_path: Path | None) -> dict[str, str]:
+    env = dict(os.environ)
+    env["CORTEX_LIVE_HOOK_PROVIDER"] = provider
+    if hook_log_path is not None:
+        env["CORTEX_LIVE_HOOK_SCENARIO_ID"] = hook_log_path.name.split("__run_")[0]
+        env["CORTEX_LIVE_HOOK_LOG_PATH"] = str(hook_log_path)
+    return env
+
+
+def _read_hook_records(path: Path | None) -> list[dict[str, Any]]:
+    if path is None or not path.exists():
+        return []
+    records: list[dict[str, Any]] = []
+    for raw_line in path.read_text(encoding="utf-8").splitlines():
+        line = raw_line.strip()
+        if not line:
+            continue
+        try:
+            payload = json.loads(line)
+        except json.JSONDecodeError:
+            continue
+        if isinstance(payload, dict):
+            records.append(payload)
+    return records
+
+
+def _hook_event_labels(records: list[dict[str, Any]]) -> list[str]:
+    labels: list[str] = []
+    for record in records:
+        name = record.get("hook_event_name")
+        if isinstance(name, str) and name.strip():
+            labels.append(name.strip())
+    return labels
+
+
+def _warning_classes_for_success(
+    *,
+    provider: str,
+    failure_class: str | None,
+    exit_code: int,
+    test_exit_code: int,
+) -> list[str]:
+    if provider == "gemini" and failure_class in {"capacity_exhausted", "quota_exhausted"} and exit_code == 0 and test_exit_code == 0:
+        return [failure_class]
+    return []
 
 
 if __name__ == "__main__":

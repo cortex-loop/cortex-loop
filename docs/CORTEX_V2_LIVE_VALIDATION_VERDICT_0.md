@@ -1,7 +1,7 @@
 # CORTEX_V2_LIVE_VALIDATION_VERDICT_0
 
 Date: 2026-03-28
-Status: L2/L2b live-testing environment verdict note
+Status: L2/L2b/L2c live-testing environment verdict note
 
 ## Verdict
 
@@ -10,14 +10,18 @@ Status: L2/L2b live-testing environment verdict note
 Reason:
 
 - all three signed-in operator smokes and provider baselines are now green,
+- Claude is now re-earned on a hook-backed operator lane:
+  - `pass_minimal` twice
+  - `truth_gap`
+  - `restart_continuity`
 - the OpenAI operator lane is now strong on the host-native surfaces that matter:
   - `codex exec` smoke is clean,
   - `codex app-server` passes `pass_minimal` twice,
   - `codex app-server` preserves `truth_gap`,
   - `codex app-server` passes `restart_continuity` twice,
 - the cross-host `make live-host-native-product-paths` entrypoint still inherits the current Claude/Gemini watchlist drift and is not the clean closure signal yet,
-- but Claude still has a partial heavier product lane because the current one-turn CLI harness stops at tool-use before `pass_minimal` and `truth_gap` can close,
-- Gemini still hits `capacity_exhausted` on the heavier coding harness even on explicit `gemini-2.5-flash` fallback,
+- Gemini now has real hook-backed lifecycle capture and at least one full `pass_minimal` success on explicit fallback `gemini-2.5-flash`,
+- but Gemini still hits quota/capacity retries before repeat-stable closure is earned,
 - and the automation/service lane is still all-blocked on missing automation credentials.
 
 ## Current host summary
@@ -27,9 +31,15 @@ Reason:
 - operator probe: clean on `claude-sonnet-4-6`
 - operator baseline: clean twice
 - operator product path:
-  - `pass_minimal`: not yet re-earned because the current one-turn CLI harness stops at the first tool-use
-  - `truth_gap`: not yet re-earned for the same reason
+  - hook-backed `pass_minimal`: success twice
+  - hook-backed `truth_gap`: truthful incomplete
   - `restart_continuity`: succeeds
+- hook surface:
+  - `SessionStart`
+  - `PreToolUse`
+  - `PostToolUse`
+  - `Stop`
+  - `SessionEnd`
 - automation lane: blocked on missing `ANTHROPIC_API_KEY`
 
 ### Gemini
@@ -37,9 +47,15 @@ Reason:
 - operator probe: fallback to `gemini-2.5-flash` succeeds
 - operator baseline: clean twice on fallback `gemini-2.5-flash`
 - operator product path:
-  - `pass_minimal`: still marked `capacity_exhausted` even though the workspace diff and target test succeed
-  - `restart_continuity`: still marked `capacity_exhausted`
+  - hook-backed `pass_minimal`: at least one full success now exists, but quota/capacity warnings still appear
+  - `truth_gap`: not yet re-earned on the refreshed hook-backed lane
+  - `restart_continuity`: not yet re-earned on the refreshed hook-backed lane
   - this remains a watchlist rather than a closed host line
+- hook surface:
+  - `SessionStart`
+  - `BeforeTool`
+  - `AfterTool`
+  - `SessionEnd`
 - automation lane: blocked on missing ADC or `GEMINI_API_KEY`
 
 ### OpenAI
@@ -61,13 +77,13 @@ Reason:
 - the verdict now depends on a real coding harness rather than summary-only prompts
 - `L2b` now re-earns OpenAI on the current host-native App Server lifecycle surface instead of treating `codex exec` alone as the strongest operator proof
 - `L2b` explicitly keeps assisted mode deferred rather than smuggling bounded corrective intervention back in from v1
+- `L2c` now re-earns Claude and Gemini on their documented hook surfaces rather than relying on transcript-only operator truth
 
 ## Next corrective seam
 
 Open one bounded **Claude/Gemini operator-harness re-audit plus automation-credential stabilization** seam that:
 
-- re-audits the Claude CLI harness so `pass_minimal` and `truth_gap` can close honestly without flattening Claude-specific behavior
-- stabilizes or narrows the Gemini operator-lane watchlist on `gemini-2.5-flash` or a later explicit fallback
+- reruns Gemini until either repeat-stable `gemini-2.5-flash` closure is earned or the warning-preserving fallback policy is narrowed further
 - provides automation credentials for the current service lane:
   - `ANTHROPIC_API_KEY`
   - Vertex ADC or `GEMINI_API_KEY`

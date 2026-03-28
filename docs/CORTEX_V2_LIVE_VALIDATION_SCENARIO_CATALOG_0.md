@@ -1,7 +1,7 @@
 # CORTEX_V2_LIVE_VALIDATION_SCENARIO_CATALOG_0
 
 Date: 2026-03-28
-Status: active L2 scenario catalog for the signed-in-first live environment with L2b OpenAI App Server proof
+Status: active L2 scenario catalog for the signed-in-first live environment with L2b/L2c host-native lifecycle proof
 
 ## Shared coding harness
 
@@ -49,13 +49,26 @@ Target task:
 
 ### Claude
 
-- current caveat: auth freshness
-- probe surface: operator preflight plus the signed-in Claude baseline
+- current hook-backed lane:
+  - `SessionStart`
+  - `PreToolUse`
+  - `PostToolUse`
+  - `Stop`
+  - `SessionEnd`
+- current caveat:
+  - none on the signed-in operator lane itself after the March 28 reruns
+  - automation remains credential-blocked
+- probe surface: operator preflight plus the signed-in Claude baseline and hook-backed product lane
 
 ### Gemini
 
-- current caveat: quota/capacity and operator stability on the preferred model
-- probe surface: operator preflight plus the signed-in Gemini baseline and product lane
+- current hook-backed lane:
+  - `SessionStart`
+  - `BeforeTool`
+  - `AfterTool`
+  - `SessionEnd`
+- current caveat: quota/capacity and repeat stability on explicit fallback `gemini-2.5-flash`
+- probe surface: operator preflight plus the signed-in Gemini baseline and hook-backed product lane
 
 ### OpenAI
 

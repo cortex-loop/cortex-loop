@@ -1,7 +1,7 @@
 # CORTEX_V2_LIVE_VALIDATION_PROGRAM_0
 
 Date: 2026-03-28
-Status: active L2 live-testing environment brief with L2b OpenAI App Server follow-on
+Status: active L2 live-testing environment brief with L2b/L2c host-native lifecycle follow-ons
 
 ## Purpose
 
@@ -19,6 +19,7 @@ The train is now split into two explicit live lanes:
 The current bounded follow-on seam inside `L2` is:
 
 - `L2b` OpenAI Codex App Server operator lifecycle proof
+- `L2c` Claude and Gemini hook-backed operator lanes
 
 ## Accepted parent
 
@@ -47,6 +48,7 @@ The operator lane also carries a separate OpenAI coding-model preference:
 - OpenAI signed-in operator truth is now explicitly split:
   - `codex exec` = smoke / preflight
   - `codex app-server` = lifecycle proof
+- Claude and Gemini signed-in operator truth now records documented hook events alongside the CLI transcript surfaces
 - Gemini signed-in operator truth may fall back from `gemini-2.5-pro` to `gemini-2.5-flash`
 - no assisted retry loop, corrective second-pass intervention, or v1 bridge doctrine belongs in `L2b`
 
@@ -86,8 +88,11 @@ Current local evidence after the March 28 reruns:
     - `truth_gap`
     - `restart_continuity` twice
   - OpenAI lifecycle proof is now earned from the App Server event timeline; ephemeral `thread/read` remains lossy and is treated as a host caveat rather than a failed operator lane
-  - Claude is no longer auth-blocked, but the current one-turn CLI harness still stops at the first tool-use boundary on `pass_minimal` and `truth_gap`; `restart_continuity` succeeds
-  - Gemini remains an operator watchlist because `capacity_exhausted` still appears on the explicit `gemini-2.5-flash` fallback during the heavier coding harness even when the workspace diff and target test succeed
+  - Claude is now hook-backed and succeeds on:
+    - `pass_minimal` twice
+    - `truth_gap`
+    - `restart_continuity`
+  - Gemini is now hook-backed as well; at least one full `pass_minimal` run succeeds on explicit fallback `gemini-2.5-flash`, but quota/capacity retries still prevent repeat-stable Gemini closure
 - automation lane:
   - current service path still fails honestly on missing automation credentials for all three providers
 
@@ -95,7 +100,7 @@ Current local evidence after the March 28 reruns:
 
 `L2` is only honestly closed when all are true:
 
-- Claude operator lane is re-proven beyond the current one-turn tool-use limit
+- Claude operator lane remains repeat-stable on the hook-backed path
 - Gemini operator lane is either stable on `gemini-2.5-pro` or stably accepted on explicit fallback `gemini-2.5-flash`
 - OpenAI operator lane remains stable on both:
   - `codex exec` smoke
