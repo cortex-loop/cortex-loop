@@ -31,12 +31,12 @@ It is workflow state only. It does not override the packet documents, implementa
 
 ## 2. Current campaign and seam state
 
-- Current campaign: `H2 cleanup follow-on hold`
+- Current campaign: `H2 cleanup closeout`
 - Current working branch at ledger update: `main`
-- Current branch role: clean synced resting branch while the separate audited cleanup slice remains unopened
-- Current candidate seam: none; `H2B` is landed for current scope and `H2C` cleanup remains pending
-- Current seam status: `preserved root worktree is safe and explicit; merged-safe cleanup is still deferred`
-- Seam risk: deterministic workflow-state hold around protected-work cleanup
+- Current branch role: root checkout is the clean synced resting branch again
+- Current candidate seam: none; `H2C` is landed for current scope
+- Current seam status: `root checkout restored to main; preserved root safety branch remains explicit but unattached; merged unattached local branches were pruned; only protected or still-unmerged attached worktrees remain`
+- Seam risk: deterministic workflow-state closeout after protected-work preservation
 
 ## 3. Next lawful move
 
@@ -71,12 +71,12 @@ It is workflow state only. It does not override the packet documents, implementa
   - repeat-stable Gemini closure is therefore still unearned
   - the current automation/service lane still fails honestly on missing machine auth
 - Next lawful move:
-  - open the separate audited cleanup slice:
-    - remove merged safe worktrees like `codex/o2-openai-ingress-shell` and `codex/o3-openai-service-shell`
-    - prune merged local branches that are no longer attached
-    - keep `claude/*` protected
-    - return the root worktree at `/Users/erikahoward/cortex-loop` to clean `main`
-  - after that cleanup, resume normal managed-session work from clean synced `main`
+  - use the root checkout at `/Users/erikahoward/cortex-loop` as the canonical clean synced `main` worktree
+  - keep only the intentionally remaining attached worktrees:
+    - protected `claude/*`
+    - still-unmerged `codex/o2-openai-ingress-shell`
+    - still-unmerged `codex/o3-openai-service-shell`
+  - if `codex/o2-openai-ingress-shell` or `codex/o3-openai-service-shell` should be retired later, classify or land them explicitly first
   - service proof remains blocked until machine auth exists
 
 ## 4. Explicitly blocked moves
