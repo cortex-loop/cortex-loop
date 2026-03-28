@@ -29,6 +29,7 @@ TEST_COMMAND = [_PYTHON_BIN, "-m", "pytest", "-q", "tests/test_normalize_port.py
 CLAUDE_AUTH_MODE_ENV = "CORTEX_CLAUDE_LIVE_AUTH_MODE"
 GEMINI_AUTH_MODE_ENV = "CORTEX_GEMINI_LIVE_AUTH_MODE"
 OPENAI_AUTH_MODE_ENV = "CORTEX_OPENAI_LIVE_AUTH_MODE"
+SERVICE_SPEND_APPROVAL_ENV = "CORTEX_LIVE_SERVICE_SPEND_APPROVED"
 _HOME_PATH = str(Path.home())
 _TEMP_PATH_RE = re.compile(r"/(?:private/)?var/folders/[^\s\"']+")
 _FENCED_DIFF_RE = re.compile(r"```(?:diff|patch)?\n(.*?)```", re.DOTALL)
@@ -251,9 +252,79 @@ def resolve_auth_mode(provider: str, lane: str, env: MappingLike | None = None) 
     configured = str(source.get(AUTH_MODE_ENV[provider], "auto")).strip()
     if configured and configured != "auto":
         return configured
-    if lane == "automation" and provider == "gemini" and vertex_adc_available():
-        return "vertex_adc"
+    if lane == "automation" and provider == "gemini":
+        if vertex_adc_available():
+            return "vertex_adc"
+        if bool(source.get("GEMINI_API_KEY")):
+            return "api_key"
     return DEFAULT_AUTH_MODE[provider][lane]
+
+
+def service_spend_approved(env: MappingLike | None = None) -> bool:
+    source = os.environ if env is None else env
+    value = str(source.get(SERVICE_SPEND_APPROVAL_ENV, "")).strip().lower()
+    return value in {"1", "true", "yes", "approved", "on"}
+
+
+def automation_auth_readiness(provider: str, env: MappingLike | None = None) -> dict[str, Any]:
+    source = os.environ if env is None else env
+    auth_mode = resolve_auth_mode(provider, "automation", env=source)
+    spend_approved = service_spend_approved(source)
+    api_keys = api_key_presence(source)
+
+    if provider == "claude":
+        has_required = api_keys["ANTHROPIC_API_KEY"]
+        if not has_required:
+            status = "missing"
+        elif not spend_approved:
+            status = "blocked_by_spend_policy"
+        else:
+            status = "ready"
+        return {
+            "auth_mode": auth_mode,
+            "status": status,
+            "spend_approved": spend_approved,
+            "api_key_present": has_required,
+        }
+
+    if provider == "openai":
+        has_required = api_keys["OPENAI_API_KEY"]
+        if not has_required:
+            status = "missing"
+        elif not spend_approved:
+            status = "blocked_by_spend_policy"
+        else:
+            status = "ready"
+        return {
+            "auth_mode": auth_mode,
+            "status": status,
+            "spend_approved": spend_approved,
+            "api_key_present": has_required,
+        }
+
+    vertex_ready = vertex_adc_available()
+    api_ready = api_keys["GEMINI_API_KEY"]
+    if auth_mode == "vertex_adc":
+        if vertex_ready:
+            status = "blocked_by_spend_policy" if not spend_approved else "ready"
+        elif api_ready:
+            status = "mis_scoped"
+        else:
+            status = "missing"
+    else:
+        if api_ready:
+            status = "blocked_by_spend_policy" if not spend_approved else "ready"
+        elif vertex_ready:
+            status = "mis_scoped"
+        else:
+            status = "missing"
+    return {
+        "auth_mode": auth_mode,
+        "status": status,
+        "spend_approved": spend_approved,
+        "vertex_adc_available": vertex_ready,
+        "api_key_present": api_ready,
+    }
 
 
 def provider_root(provider: str, lane: str, surface: str) -> Path:
@@ -555,11 +626,12 @@ def redact_claude_auth_payload(payload: dict[str, Any]) -> dict[str, Any]:
     }
 
 
-def api_key_presence() -> dict[str, bool]:
+def api_key_presence(env: MappingLike | None = None) -> dict[str, bool]:
+    source = os.environ if env is None else env
     return {
-        "ANTHROPIC_API_KEY": bool(os.environ.get("ANTHROPIC_API_KEY")),
-        "GEMINI_API_KEY": bool(os.environ.get("GEMINI_API_KEY")),
-        "OPENAI_API_KEY": bool(os.environ.get("OPENAI_API_KEY")),
+        "ANTHROPIC_API_KEY": bool(source.get("ANTHROPIC_API_KEY")),
+        "GEMINI_API_KEY": bool(source.get("GEMINI_API_KEY")),
+        "OPENAI_API_KEY": bool(source.get("OPENAI_API_KEY")),
     }
 
 

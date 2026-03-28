@@ -31,12 +31,12 @@ It is workflow state only. It does not override the packet documents, implementa
 
 ## 2. Current campaign and seam state
 
-- Current campaign: `L3 cross-host operator payoff audit`
+- Current campaign: `L4 automation auth-alignment and service-lane live proof`
 - Current working branch at ledger update: `codex/l1-live-validation`
-- Current branch role: accepted post-A1 live-validation line with landed operator-only payoff audit
-- Current candidate seam: none; `L3` is now landed for current scope
-- Current seam status: `landed`
-- Seam risk: timing or environment-sensitive evidence interpretation seam; repeat-stability proof has now been earned for the audit surface
+- Current branch role: accepted post-A1 live-validation line with landed operator-only payoff audit and active service-proof candidate
+- Current candidate seam: automation auth readiness, bounded service-lane proof, and service-vs-operator delta reporting
+- Current seam status: `implemented and verified; current live proof remains blocked on missing machine auth`
+- Seam risk: timing or environment-sensitive live-service seam with real credential/spend coupling
 
 ## 3. Next lawful move
 
@@ -71,9 +71,10 @@ It is workflow state only. It does not override the packet documents, implementa
   - repeat-stable Gemini closure is not yet earned
   - the current automation/service lane still fails honestly on missing automation credentials
 - Next lawful move:
-  - keep Gemini as the remaining explicit partial operator host line for current scope
-  - keep automation/service deferred until you explicitly want to spend on API/ADC testing
-  - if you want the next north-star move, open a bounded automation auth-alignment and service-lane live-proof train
+  - provide machine auth and spend approval for the current A4 / G4 / O4 service lanes
+  - rerun `make live-preflight` plus per-provider service smoke and restart/import/export continuity proof twice
+  - update `L6A`-`L6D` from `blocked` only if those reruns earn real live service success
+  - keep operator lanes frozen while the service proof is earned or honestly blocked
 
 ## 4. Explicitly blocked moves
 
@@ -90,7 +91,8 @@ It is workflow state only. It does not override the packet documents, implementa
 - Do not silently discard Gemini capacity warnings when a run otherwise succeeds; preserve them as warnings rather than pretending the host was perfectly stable.
 - Do not silently promote `gemini-2.5-auto` to supported truth on this machine; current local evidence says the installed CLI rejects it and the operator lane falls through to `gemini-2.5-flash`.
 - Do not silently promote `gemini-2.5-pro` from exploratory sidecar to closure-path truth while it is still capacity-blocked on smoke.
-- Do not reopen Gemini model chasing or assisted-mode speculation inside the landed `L3` audit line.
+- Do not reopen Gemini model chasing or assisted-mode speculation inside the active `L4` service-proof train.
+- Do not shell out from service transports to provider CLIs.
 
 ## 5. Acknowledged worktree noise at ledger creation
 

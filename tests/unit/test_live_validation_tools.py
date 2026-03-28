@@ -6,6 +6,7 @@ from tools.live_validation_common import (
     BLOCKING_FAILURE_CLASSES,
     GEMINI_OPERATOR_FULL_LADDER,
     MODEL_MATRIX,
+    automation_auth_readiness,
     build_scenario_catalog,
     choose_model,
     classify_failure,
@@ -156,6 +157,23 @@ def test_gemini_model_ladder_and_choose_model_follow_auto_then_flash_then_flash_
             auto_supported=False,
         )
         == "gemini-2.5-flash-lite"
+    )
+
+
+def test_automation_auth_readiness_defaults_to_missing_without_machine_creds() -> None:
+    env = {}
+    assert automation_auth_readiness("claude", env)["status"] == "missing"
+    assert automation_auth_readiness("openai", env)["status"] == "missing"
+
+
+def test_automation_auth_readiness_blocks_api_key_lanes_without_spend_approval() -> None:
+    assert (
+        automation_auth_readiness("claude", {"ANTHROPIC_API_KEY": "test-key"})["status"]
+        == "blocked_by_spend_policy"
+    )
+    assert (
+        automation_auth_readiness("openai", {"OPENAI_API_KEY": "test-key"})["status"]
+        == "blocked_by_spend_policy"
     )
 
 

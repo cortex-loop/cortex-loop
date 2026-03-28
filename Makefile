@@ -153,7 +153,7 @@ seam-preflight:
 	echo "seam-preflight: timing, environment-sensitive, and shared verification-plumbing seams require repeated reruns before acceptance"
 
 live-preflight:
-	$(PYTHON) tools/live_preflight.py
+	$(PYTHON) tools/live_preflight.py --skip-updates
 
 live-provider-baselines:
 	$(PYTHON) tools/live_provider_baselines.py --lane operator

@@ -17,6 +17,7 @@ from typing import Any, Iterator
 
 from live_validation_common import (
     MODEL_MATRIX,
+    automation_auth_readiness,
     classify_failure,
     comparator_path,
     ensure_live_validation_dirs,
@@ -91,20 +92,55 @@ def main(argv: list[str] | None = None) -> int:
 
 def _capture_provider(provider: str) -> dict[str, Any]:
     root = provider_root(provider, "automation", "service")
-    auth_mode = resolve_auth_mode(provider, "automation")
+    readiness = automation_auth_readiness(provider)
+    auth_mode = readiness["auth_mode"]
     model = MODEL_MATRIX[provider]["automation"].preferred
-    runs = [
-        _run_single_live_call(provider, auth_mode=auth_mode, model=model, root=root),
-        _run_continuity_capture(provider, auth_mode=auth_mode, model=model, root=root),
-    ]
+    if readiness["status"] != "ready":
+        runs = [
+            _blocked_service_run(provider, auth_mode=auth_mode, model=model, root=root, scenario_id="service_smoke", readiness=readiness),
+            _blocked_service_run(provider, auth_mode=auth_mode, model=model, root=root, scenario_id="service_restart_continuity", readiness=readiness),
+        ]
+    else:
+        runs = [
+            _run_single_live_call(provider, auth_mode=auth_mode, model=model, root=root),
+            _run_continuity_capture(provider, auth_mode=auth_mode, model=model, root=root),
+        ]
     summary = {
         "generated_at": now_utc_iso(),
         "provider": provider,
         "lane": "automation",
+        "auth_readiness": readiness,
         "runs": runs,
     }
     write_json(root / "service_runs.json", summary)
     return summary
+
+
+def _blocked_service_run(
+    provider: str,
+    *,
+    auth_mode: str,
+    model: str,
+    root: Path,
+    scenario_id: str,
+    readiness: dict[str, Any],
+) -> dict[str, Any]:
+    artifact_path = root / f"{scenario_id}.blocked.json"
+    failure_class = _service_failure_class_for_readiness(readiness["status"])
+    payload = {
+        "provider": provider,
+        "lane": "automation",
+        "auth_mode": auth_mode,
+        "model": model,
+        "scenario_id": scenario_id,
+        "success": False,
+        "failure_class": failure_class,
+        "notes": f"Skipped live service proof because automation auth is `{readiness['status']}`.",
+        "auth_readiness": readiness,
+    }
+    write_json(artifact_path, payload)
+    payload["artifact_path"] = str(artifact_path.relative_to(root.parents[4]))
+    return payload
 
 
 def _run_single_live_call(
@@ -334,6 +370,14 @@ def _read_json(path: Path) -> dict[str, Any]:
     if not path.exists():
         return {}
     return json.loads(path.read_text(encoding="utf-8"))
+
+
+def _service_failure_class_for_readiness(status: str) -> str:
+    if status == "blocked_by_spend_policy":
+        return "blocked_by_spend_policy"
+    if status == "mis_scoped":
+        return "mis_scoped"
+    return "auth_missing"
 
 
 if __name__ == "__main__":

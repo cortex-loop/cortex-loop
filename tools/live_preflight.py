@@ -12,6 +12,7 @@ from live_validation_common import (
     MODEL_MATRIX,
     PREFLIGHT_REPORT_PATH,
     api_key_presence,
+    automation_auth_readiness,
     build_scenario_catalog,
     choose_model,
     classify_failure,
@@ -61,19 +62,9 @@ def build_preflight_report(*, lane: str, skip_updates: bool) -> dict[str, Any]:
 
     operator_probe = _operator_probe_summary()
     automation_probe = {
-        "claude": {
-            "auth_mode": resolve_auth_mode("claude", "automation"),
-            "api_key_present": api_key_presence()["ANTHROPIC_API_KEY"],
-        },
-        "gemini": {
-            "auth_mode": resolve_auth_mode("gemini", "automation"),
-            "vertex_adc_available": vertex_adc_available(),
-            "api_key_present": api_key_presence()["GEMINI_API_KEY"],
-        },
-        "openai": {
-            "auth_mode": resolve_auth_mode("openai", "automation"),
-            "api_key_present": api_key_presence()["OPENAI_API_KEY"],
-        },
+        "claude": automation_auth_readiness("claude"),
+        "gemini": automation_auth_readiness("gemini"),
+        "openai": automation_auth_readiness("openai"),
     }
 
     return {

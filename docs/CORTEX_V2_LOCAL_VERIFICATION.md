@@ -370,13 +370,15 @@ make revalidate-claude-host-control
 
 ## Live-validation preflight
 
-This updates or verifies the current live-testing toolchain, records install channels, operator-lane auth freshness, automation-lane credential availability, and writes the local-only preflight report under `.cortex/live_validation/`.
-It is an environment-sensitive evidence command, not part of the canonical verification bundle, and it may mutate local provider tooling.
+This verifies the current live-testing toolchain, records install channels, operator-lane auth freshness, automation-lane credential availability, and writes the local-only preflight report under `.cortex/live_validation/`.
+The repo-local entry point is intentionally non-mutating and skips provider self-updates so the bounded service-proof train can rerun it reliably.
+Use the direct script without `--skip-updates` only when you explicitly want to try the updater path.
+It is an environment-sensitive evidence command, not part of the canonical verification bundle.
 
 Direct command:
 
 ```sh
-python3 tools/live_preflight.py
+python3 tools/live_preflight.py --skip-updates
 ```
 
 Repo-local entry point:
@@ -456,6 +458,7 @@ make live-openai-app-server
 This captures the current automation-side loopback service plus A4 / G4 / O4 host-control lanes.
 It is no longer the primary live truth; it is the secondary unattended lane.
 Machine output is local-only under `.cortex/live_validation/`.
+This is also the current service-proof entry point for the bounded automation train; rerun it per provider when machine auth is ready.
 
 Direct command:
 

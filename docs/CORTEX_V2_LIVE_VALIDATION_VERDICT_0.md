@@ -7,10 +7,11 @@ Status: L2/L2b/L2c/L2d/L2e live-testing environment verdict note
 
 **lifecycle-first is promising but under-instrumented**
 
-This remains the broader live-validation verdict because Gemini is still an explicit partial host line and the automation/service lane is still deferred.
+This remains the broader live-validation verdict because Gemini is still an explicit partial host line and the automation/service lane is still unproven on machine auth.
 
 The new operator-only payoff note is narrower and may still conclude that operator lifecycle-first is already paying off clearly.
 That operator-only audit is now landed for current scope.
+The current active train is now the bounded service-lane live-proof train.
 
 Reason:
 
@@ -95,21 +96,24 @@ Reason:
 
 ## Next corrective seam
 
-Open one bounded **Claude/Gemini operator-harness re-audit plus automation-credential stabilization** seam that:
+Open one bounded **automation auth-alignment and service-lane live-proof** seam that:
 
-- either:
-  - accepts Gemini as the remaining explicit partial host line for current scope, or
-  - runs one more bounded `truth_gap` rerun if you still want to test for model randomness before freezing the claim
-- provides automation credentials for the current service lane:
+- classifies service-lane auth readiness explicitly as:
+  - `ready`
+  - `missing`
+  - `mis_scoped`
+  - `blocked_by_spend_policy`
+- keeps the current operator truth frozen while the service lane is re-earned or honestly blocked
+- provides machine auth and spend approval for the current service lane:
   - `ANTHROPIC_API_KEY`
   - Vertex ADC or `GEMINI_API_KEY`
   - `OPENAI_API_KEY`
+  - `CORTEX_LIVE_SERVICE_SPEND_APPROVED`
 
 After that seam lands, rerun:
 
 - `make live-preflight`
-- `make live-provider-baselines`
-- `make live-openai-app-server`
-- `make live-host-native-product-paths`
-- `make live-cortex-host-control`
+- `python3 tools/live_cortex_host_control.py --lane automation --provider claude`
+- `python3 tools/live_cortex_host_control.py --lane automation --provider gemini`
+- `python3 tools/live_cortex_host_control.py --lane automation --provider openai`
 - `make live-compare`

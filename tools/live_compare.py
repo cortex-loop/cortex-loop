@@ -171,6 +171,7 @@ def _build_comparison(preflight: dict[str, Any]) -> dict[str, Any]:
         "providers": providers,
         "verdict": verdict,
         "verdict_reason": verdict_reason,
+        "service_lane_delta": _service_lane_delta(providers),
         "next_corrective_seam": _next_corrective_seam(blocker_classes, operator_pass_count, service_success_count),
     }
 
@@ -253,6 +254,10 @@ def _comparison_markdown(comparison: dict[str, Any]) -> str:
             "",
             comparison["next_corrective_seam"],
             "",
+            "## Service lane delta",
+            "",
+            comparison["service_lane_delta"],
+            "",
         ]
     )
     return "\n".join(lines)
@@ -309,6 +314,26 @@ def _build_exploratory_probe_summary(
             }
         ),
     }
+
+
+def _service_lane_delta(providers: dict[str, Any]) -> str:
+    ready = []
+    blocked = []
+    for provider, payload in providers.items():
+        automation_auth = payload.get("automation_auth", {})
+        automation_service = payload.get("automation_service", {})
+        if automation_service.get("successful_run_count", 0) > 0:
+            ready.append(provider)
+            continue
+        status = automation_auth.get("status")
+        if status:
+            blocked.append(f"{provider}:{status}")
+        else:
+            blocked.append(f"{provider}:unknown")
+    return (
+        f"operator strong/partial truth is earned on `{', '.join(providers.keys())}`; "
+        f"automation live proof is ready on `{', '.join(ready) or 'none'}` and blocked on `{', '.join(blocked)}`."
+    )
 
 
 if __name__ == "__main__":

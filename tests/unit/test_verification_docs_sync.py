@@ -80,6 +80,9 @@ LIVE_VALIDATION_SCENARIO_CATALOG_PATH = (
 LIVE_VALIDATION_VERDICT_PATH = (
     REPO_ROOT / "docs" / "CORTEX_V2_LIVE_VALIDATION_VERDICT_0.md"
 )
+LIVE_SERVICE_PROOF_PATH = (
+    REPO_ROOT / "docs" / "CORTEX_V2_LIVE_SERVICE_PROOF_0.md"
+)
 
 
 def _read(path: Path) -> str:
@@ -265,6 +268,20 @@ def test_local_verification_doc_points_to_committed_coverage_baseline() -> None:
     assert "no coverage threshold or pass/fail gate" in text
 
 
+def test_live_preflight_entrypoint_is_bounded_and_matches_makefile() -> None:
+    doc_text = _read(LOCAL_VERIFICATION_PATH)
+    makefile_text = _read(MAKEFILE_PATH)
+
+    assert "python3 tools/live_preflight.py --skip-updates" in doc_text
+    assert "repo-local entry point is intentionally non-mutating" in doc_text
+    assert "Use the direct script without `--skip-updates` only when you explicitly want to try the updater path." in doc_text
+
+    make_recipe = _expand_make_vars(
+        _extract_make_recipe(makefile_text, "live-preflight"), makefile_text
+    )
+    assert make_recipe == "python3 tools/live_preflight.py --skip-updates"
+
+
 def test_resume_protocol_and_active_workstream_contract_exist() -> None:
     agents_text = _read(REPO_ROOT / "AGENTS.md")
     workstream_text = _read(ACTIVE_WORKSTREAM_PATH)
@@ -280,9 +297,9 @@ def test_resume_protocol_and_active_workstream_contract_exist() -> None:
     assert "Accepted baseline commit: `8eb7f08`" in workstream_text
     assert "Current working branch at ledger update: `codex/l1-live-validation`" in workstream_text
     assert "accepted post-A1 live-validation line with landed operator-only payoff audit" in workstream_text
-    assert "Current campaign: `L3 cross-host operator payoff audit`" in workstream_text
-    assert "Current candidate seam: none; `L3` is now landed for current scope" in workstream_text
-    assert "Current seam status: `landed`" in workstream_text
+    assert "Current campaign: `L4 automation auth-alignment and service-lane live proof`" in workstream_text
+    assert "Current candidate seam: automation auth readiness, bounded service-lane proof, and service-vs-operator delta reporting" in workstream_text
+    assert "Current seam status: `implemented and verified; current live proof remains blocked on missing machine auth`" in workstream_text
     assert "all three signed-in operator probes and smoke baselines are now clean" in workstream_text
     assert "`codex exec` for smoke" in workstream_text
     assert "`codex app-server` for lifecycle proof" in workstream_text
@@ -293,12 +310,13 @@ def test_resume_protocol_and_active_workstream_contract_exist() -> None:
     assert "`pass_minimal` succeeds twice with explicit `capacity_exhausted` warnings" in workstream_text
     assert "`truth_gap` remains non-truthful (`smoothed_incomplete`) on both `gemini-2.5-flash` and `gemini-2.5-flash-lite`" in workstream_text
     assert "`restart_continuity` now succeeds on `gemini-2.5-flash-lite`" in workstream_text
-    assert "keep Gemini as the remaining explicit partial operator host line for current scope" in workstream_text
-    assert "keep automation/service deferred" in workstream_text
-    assert "open a bounded automation auth-alignment and service-lane live-proof train" in workstream_text
+    assert "repeat-stable Gemini closure is not yet earned" in workstream_text
+    assert "provide machine auth and spend approval for the current A4 / G4 / O4 service lanes" in workstream_text
+    assert "update `L6A`-`L6D` from `blocked` only if those reruns earn real live service success" in workstream_text
     assert "Do not treat signed-in provider CLI sessions as equivalent to the automation credentials" in workstream_text
     assert "Do not treat the new OpenAI App Server operator proof as license to reopen v1 assisted mode" in workstream_text
     assert "Do not keep repo-tracked live artifacts under `docs/live_validation/`" in workstream_text
+    assert "Do not shell out from service transports to provider CLIs." in workstream_text
     assert "accepted workflow baseline truth remains the refreshed post-A1 live-model line" in workstream_text
     assert "git branch --show-current" in workstream_text
     assert "git status --short --untracked-files=all" in workstream_text
@@ -360,7 +378,7 @@ def test_reference_runtime_program_lock_is_recorded() -> None:
     assert "loopback-only HTTP is landed on the accepted K1 closeout line" in phase_gate_text
     assert "one active session per process is real for current scope" in phase_gate_text
 
-    assert "Current campaign: `L3 cross-host operator payoff audit`" in workstream_text
+    assert "Current campaign: `L4 automation auth-alignment and service-lane live proof`" in workstream_text
     assert "the live-testing environment now has explicit operator and automation lane semantics" in workstream_text
     assert "all three signed-in operator probes and smoke baselines are now clean" in workstream_text
     assert "the OpenAI App Server operator lane now completes" in workstream_text
@@ -479,6 +497,10 @@ def test_reference_runtime_program_lock_is_recorded() -> None:
     assert "`L3A` OpenAI App Server operator lifecycle proof" in phase_gate_text
     assert "`L4` lifecycle-first payoff verdict" in phase_gate_text
     assert "`L5` cross-host operator payoff audit" in phase_gate_text
+    assert "`L6A` Claude service live proof" in phase_gate_text
+    assert "`L6B` Gemini service live proof" in phase_gate_text
+    assert "`L6C` OpenAI service live proof" in phase_gate_text
+    assert "`L6D` package-level service proof" in phase_gate_text
     assert "correct signed-in operator hierarchy" in phase_gate_text
     assert "explicit fallback `gemini-2.5-flash`" in phase_gate_text
     assert "the bounded `codex app-server` operator lane is now re-earned" in phase_gate_text
@@ -518,6 +540,10 @@ def test_reference_runtime_program_lock_is_recorded() -> None:
     assert "**lifecycle-first is promising but under-instrumented**" in live_validation_verdict_text
     assert "operator-only payoff note is narrower" in live_validation_verdict_text
     assert "operator-only audit is now landed for current scope" in live_validation_verdict_text
+    service_proof_text = _read(LIVE_SERVICE_PROOF_PATH)
+    assert "Status: active service-lane live-proof note" in service_proof_text
+    assert "Signed-in CLI sessions do **not** count as service-lane auth." in service_proof_text
+    assert "package-level service proof is updated truthfully in `docs/CORTEX_V2_PHASE_GATES_2.md`" in service_proof_text
     assert "`codex app-server` passes `pass_minimal` twice" in live_validation_verdict_text
     assert "Claude is now re-earned on a hook-backed operator lane" in live_validation_verdict_text
     assert "`gemini-2.5-auto` is not accepted by the installed CLI" in live_validation_verdict_text
@@ -598,7 +624,7 @@ def test_erika_visualizations_are_framed_as_support_surfaces() -> None:
     assert "The verification/evidence restack train, K1 runtime/product restack, and K2 bounded host-control train are now landed for current scope on top of that same product truth." in markdown_text
     assert "The reference runtime shell, bounded reference continuity, OpenAI documented-host-event runtime shell, raw-transcript ingress shell, loopback service shell, and bounded outbound OpenAI host-control lane are now accepted on the current line." in markdown_text
     assert "The Claude documented-host-event runtime shell, raw-transcript ingress shell, loopback service shell, and bounded outbound Claude host-control lane are now accepted on the current line." in markdown_text
-    assert "operator-only payoff audit is now landed for current scope." in markdown_text
+    assert "operator-only payoff audit is now landed for current scope, and the active open train is the bounded service-lane live-proof train." in markdown_text
     assert "Codex rather than `openai` as the OpenAI operator surface" in markdown_text
     assert "distinguishes `codex exec` smoke from `codex app-server` lifecycle proof" in markdown_text
     assert "now records documented hook events on Claude and Gemini" in markdown_text
@@ -644,4 +670,4 @@ def test_runtime_restack_program_lock_is_recorded() -> None:
     assert "Current accepted state after K1 closeout" in text
     assert "implemented at K1 proof head `d4c311f` and truthfully closed at deterministic closeout head `79b8f39`" in text
     assert "later bounded runtime/product trains may still be explicitly opened" in master_plan_text
-    assert "now records the landed L3 cross-host operator payoff-audit seam" in theory_text
+    assert "now records the active L4 automation auth-alignment and service-lane live-proof seam after the landed operator-only audit" in theory_text
