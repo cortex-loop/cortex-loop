@@ -83,6 +83,12 @@ Use the archive only for:
 
 If a v1 mechanism is being carried over, re-earn it under the v2 packet instead of assuming continuity.
 
+## Maintainer workflow authority
+
+- `REPO_WORKFLOW.md` is the maintainer workflow authority for branch/session hygiene in this repository.
+- `scripts/repo_workflow.py` is the enforcing helper surface for that workflow.
+- `docs/CORTEX_V2_ACTIVE_WORKSTREAM.md` remains continuation context, not a substitute for the resting-state branch model.
+
 ## Design guardrails for v2
 
 - Lifecycle-first: organize around real host lifecycle/orchestration events.
@@ -110,6 +116,17 @@ If a v1 mechanism is being carried over, re-earn it under the v2 packet instead 
 - If a concept belongs in implementation or evaluation rather than the constitutional packet, keep it out of the packet.
 - If you change the packet, say whether the implementation master plan must change in the same slice.
 - If you change the intended v1 carryover boundary, update `V1_CODE_PORT_DETERMINATION.md` in the same slice.
+
+## Counterfactual reframe discipline
+
+If repeated host-specific failure persists on the same framing:
+
+- stop before another micro-tweak on the same assumption family,
+- generate at least 3 materially different explanations for the failure,
+- make sure one explanation explicitly challenges the current framing,
+- and make sure one explanation tests the host default path before any further custom pinning or local workaround.
+
+This is maintainer workflow law, not runtime doctrine.
 
 ## Correspondence acceptance discipline
 
@@ -174,11 +191,13 @@ If a seam changes a typed boundary contract (for example: constructor validation
 
 - Canonical development repo: `github.com/cortex-loop/cortex-loop`.
 - Canonical archive repo: `github.com/cortex-loop/cortex-loop-v1-archive`.
-- Before editing, reconcile local `main` with `origin/main`.
-- Do not develop on `main`; create an explicit branch with the `codex/` prefix.
-- In this maintainer workspace, `main` / `origin/main` are archival-root only and are not the live v2 parent for new seams.
-- Branch new v2 work from the accepted workflow baseline recorded in `docs/CORTEX_V2_ACTIVE_WORKSTREAM.md`.
-- Do not branch new v2 work from `codex/e1-verification-substrate-entrypoints`, `codex/closure-train-2026-03-24`, or archival `main`.
+- `main` is the resting branch in this repository.
+- Before managed work, reconcile local `main` with `origin/main` using `python scripts/repo_workflow.py sync-main`.
+- Managed work starts from clean synced `main` via `python scripts/repo_workflow.py start-session --agent codex --slug <task-name>`.
+- Managed sessions must end with `python scripts/repo_workflow.py close-session --message "<scope>: <end-state summary>"` and return the repo to `main`.
+- `python scripts/repo_workflow.py finalize --message "<scope>: <end-state summary>"` is only for explicit manual/review branches that are chosen up front.
+- Do not accumulate accepted work indefinitely on a long-lived working branch.
+- Do not branch new v2 work from archival `main`, `codex/e1-verification-substrate-entrypoints`, or `codex/closure-train-2026-03-24`.
 - In this maintainer workspace, the expected public identity is `howaeri <32343362+howaeri@users.noreply.github.com>`.
 - Do not bump package versions, create releases, or add publish workflows unless the task explicitly requires it.
 
@@ -186,7 +205,7 @@ If a seam changes a typed boundary contract (for example: constructor validation
 
 - `docs/CORTEX_V2_ACTIVE_WORKSTREAM.md` is the live workflow-state ledger for compaction-safe continuation.
 - The workstream ledger records accepted baseline truth, current seam status, next lawful move, blocked moves, and acknowledged worktree noise.
-- The workstream ledger is workflow state only. It does not override packet documents, implementation authority, phase gates, status notes, or correspondence.
+- The workstream ledger is workflow state only. It does not override packet documents, implementation authority, phase gates, status notes, correspondence, or `REPO_WORKFLOW.md`.
 - Before opening or resuming a seam, agents must:
   1. read `AGENTS.md`
   2. read `docs/CORTEX_V2_ACTIVE_WORKSTREAM.md`
@@ -212,6 +231,7 @@ Every final summary from an agent editing this repo should include:
 - ending branch
 - commit hash or `no commit`
 - verification summary
+- `returned to main:` yes|no
 - `Phase gate check:` rows added, updated, or rechecked in `docs/CORTEX_V2_PHASE_GATES_2.md` (or `none` if no phase gate applied)
 - `Correspondence rows touched:` rows added, updated, or confirmed in `docs/CORTEX_V2_MATH_TO_CODE_CORRESPONDENCE.md` (or `none` for non-load-bearing edits)
 

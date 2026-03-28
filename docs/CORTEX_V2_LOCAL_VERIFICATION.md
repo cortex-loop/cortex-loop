@@ -9,6 +9,21 @@ This document records the repo-local verification commands for the landed Cortex
 It does not add CI or evidence regeneration.
 For routine repo-local verification, use the two entry points below: `make verify` for the canonical bundle and `make test-smoke` for the smaller smoke bundle.
 
+## Maintainer workflow
+
+Maintainer branch/session hygiene is governed by `REPO_WORKFLOW.md`.
+Use these direct commands for local workflow control:
+
+```sh
+python scripts/repo_workflow.py sync-main
+python scripts/repo_workflow.py start-session --agent codex --slug task-name
+python scripts/repo_workflow.py close-session --message "docs: end-state summary"
+python scripts/repo_workflow.py finalize --message "docs: manual branch closeout"
+python scripts/repo_workflow.py audit-branches
+```
+
+These commands are workflow controls, not part of the canonical verification bundle.
+
 ## Canonical bundle
 
 Direct commands:

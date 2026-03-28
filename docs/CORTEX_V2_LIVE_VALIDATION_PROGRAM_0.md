@@ -29,8 +29,8 @@ The current bounded follow-on seam inside `L2` is:
 
 Accepted parent for this train:
 
-- branch: `codex/l1-live-validation`
-- commit: `8eb7f08`
+- branch: `main`
+- commit: `d8aa925`
 
 This remains the refreshed-model baseline line:
 

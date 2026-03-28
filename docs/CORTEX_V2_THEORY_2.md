@@ -20,7 +20,7 @@ Active authority remains:
 
 ## Current repo evidence
 
-- The accepted workflow baseline is still the refreshed post-A1 line at `codex/l1-live-validation` commit `8eb7f08`.
+- The accepted workflow baseline is now on `main` at commit `d8aa925`.
 - `docs/CORTEX_V2_IMPLEMENTATION_STATUS_NOTE.md` says the current v2 roadmap is complete at the justified boundary.
 - `docs/CORTEX_V2_MEDIATION_JUSTIFICATION_NOTE.md` says mediation is still `not justified yet`.
 - `docs/CORTEX_V2_MEDIATION_EVIDENCE_NOTE_0.md` shows cell-level signal on thrash, uncertainty, and host-realization, but every package-level axis remains `insufficient`.

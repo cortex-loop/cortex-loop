@@ -7,8 +7,8 @@ It is workflow state only. It does not override the packet documents, implementa
 
 ## 1. Accepted baseline
 
-- Accepted baseline branch: `codex/l1-live-validation`
-- Accepted baseline commit: `8eb7f08`
+- Accepted baseline branch: `main`
+- Accepted baseline commit: `d8aa925`
 - Accepted baseline state:
   - burden-axis re-audit remains accepted through the three thrash-host burden slices
   - package-level burden remains `insufficient`
@@ -17,7 +17,7 @@ It is workflow state only. It does not override the packet documents, implementa
   - the OpenAI host-realization cell now has a committed three-pair evidence series and `candidate_positive` cell-level signal for better host-specialized realization
   - package-level mediation evidence remains `insufficient`
   - lower visible burden remains unclaimed for host-realization
-  - accepted workflow baseline truth remains the refreshed post-A1 live-model line
+  - accepted workflow baseline truth now rests on `main` rather than a long-lived working branch
   - the reference runtime shell, bounded reference continuity, OpenAI documented-host-event runtime shell, raw-transcript ingress shell, loopback service shell, bounded outbound OpenAI host-control lane, and explicit executive allocation diagnostics remain accepted on the current line
   - the Gemini documented-host-event runtime shell, raw-transcript ingress shell, loopback service shell, and bounded outbound Gemini host-control lane remain accepted on the current line
   - the Claude documented-host-event runtime shell, raw-transcript ingress shell, loopback service shell, and bounded outbound Claude host-control lane remain accepted on the current line
@@ -31,12 +31,12 @@ It is workflow state only. It does not override the packet documents, implementa
 
 ## 2. Current campaign and seam state
 
-- Current campaign: `G3 Gemini auto-mode product-path re-earn`
-- Current working branch at ledger update: `codex/l1-live-validation`
-- Current branch role: accepted post-A1 live-validation line with the deeper Gemini operator lane re-run on CLI auto mode
-- Current candidate seam: none; `G3` is now landed for current scope
-- Current seam status: `landed for current scope; Gemini remains explicit partial truth and service proof remains honestly blocked`
-- Seam risk: timing or environment-sensitive live-validation seam
+- Current campaign: `H1 repo hygiene restoration and main reconciliation`
+- Current working branch at ledger update: `main`
+- Current branch role: resting-state branch after workflow restoration and local fast-forward from the accepted v2 line
+- Current candidate seam: none; `H1` is now landed for current scope
+- Current seam status: `landed for current scope; repo now rests on clean local main`
+- Seam risk: deterministic workflow/tooling seam plus no-loss local branch reconciliation
 
 ## 3. Next lawful move
 
@@ -71,9 +71,9 @@ It is workflow state only. It does not override the packet documents, implementa
   - repeat-stable Gemini closure is therefore still unearned
   - the current automation/service lane still fails honestly on missing machine auth
 - Next lawful move:
-  - if you want to advance live service proof, provide machine auth and spend approval for the current A4 / G4 / O4 service lanes and rerun `L6A`-`L6D`
-  - if you want a cleaner operator-side closeout before that, open one bounded Gemini `restart_continuity` repeat-stability seam rather than pretending Gemini is fully closed already
-  - keep operator lanes frozen outside that bounded Gemini continuity decision
+  - publish the landed local `main` history under a review branch and reconcile `main` with `origin/main` after merge before starting the next managed session
+  - if you want to advance live service proof after that, provide machine auth and spend approval for the current A4 / G4 / O4 service lanes and rerun `L6A`-`L6D`
+  - if you want a cleaner operator-side closeout first, open one bounded Gemini `restart_continuity` repeat-stability seam after `main` is reconciled
   - keep service proof blocked until machine auth exists
 
 ## 4. Explicitly blocked moves
@@ -94,6 +94,7 @@ It is workflow state only. It does not override the packet documents, implementa
 - Do not reopen Gemini model chasing or assisted-mode speculation inside the active `L4` service-proof train.
 - Do not shell out from service transports to provider CLIs.
 - Do not overread the current auto-mode improvement as full Gemini closure while `restart_continuity` is still not repeat-stable.
+- Do not start a new managed session from local `main` while it is ahead or diverged from `origin/main`.
 
 ## 5. Acknowledged worktree noise at ledger creation
 
