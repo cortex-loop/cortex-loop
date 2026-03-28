@@ -339,7 +339,8 @@ def test_resume_protocol_and_active_workstream_contract_exist() -> None:
     assert "Current branch role:" in workstream_text
     assert "accepted workflow baseline truth now rests on `main` rather than a long-lived working branch" in workstream_text
     assert "Current candidate seam: none;" in workstream_text
-    assert "merged-safe cleanup is still deferred" in workstream_text
+    assert "preserved root safety branch remains explicit but unattached" in workstream_text
+    assert "only protected or still-unmerged attached worktrees remain" in workstream_text
     assert "the current signed-in smoke surfaces are now clean again" in workstream_text
     assert "`codex exec` for smoke" in workstream_text
     assert "`codex app-server` for lifecycle proof" in workstream_text
@@ -351,9 +352,10 @@ def test_resume_protocol_and_active_workstream_contract_exist() -> None:
     assert "`truth_gap` is truthful on the latest reruns on `auto`" in workstream_text
     assert "`restart_continuity` is not yet repeat-stable because the latest reruns include a `capacity_exhausted` blocker on `auto`" in workstream_text
     assert "repeat-stable Gemini closure is therefore still unearned" in workstream_text
-    assert "open the separate audited cleanup slice" in workstream_text
-    assert "remove merged safe worktrees like `codex/o2-openai-ingress-shell` and `codex/o3-openai-service-shell`" in workstream_text
-    assert "return the root worktree at `/Users/erikahoward/cortex-loop` to clean `main`" in workstream_text
+    assert "use the root checkout at `/Users/erikahoward/cortex-loop` as the canonical clean synced `main` worktree" in workstream_text
+    assert "still-unmerged `codex/o2-openai-ingress-shell`" in workstream_text
+    assert "still-unmerged `codex/o3-openai-service-shell`" in workstream_text
+    assert "if `codex/o2-openai-ingress-shell` or `codex/o3-openai-service-shell` should be retired later, classify or land them explicitly first" in workstream_text
     assert "Do not treat signed-in provider CLI sessions as equivalent to the automation credentials" in workstream_text
     assert "Do not treat the new OpenAI App Server operator proof as license to reopen v1 assisted mode" in workstream_text
     assert "Do not keep repo-tracked live artifacts under `docs/live_validation/`" in workstream_text
@@ -422,7 +424,7 @@ def test_reference_runtime_program_lock_is_recorded() -> None:
     assert "loopback-only HTTP is landed on the accepted K1 closeout line" in phase_gate_text
     assert "one active session per process is real for current scope" in phase_gate_text
 
-    assert "open the separate audited cleanup slice" in workstream_text
+    assert "use the root checkout at `/Users/erikahoward/cortex-loop` as the canonical clean synced `main` worktree" in workstream_text
     assert "the live-testing environment now has explicit operator and automation lane semantics" in workstream_text
     assert "the current signed-in smoke surfaces are now clean again" in workstream_text
     assert "the OpenAI App Server operator lane now completes" in workstream_text
