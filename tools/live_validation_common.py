@@ -86,6 +86,8 @@ BLOCKING_FAILURE_CLASSES = frozenset(
         "model_unavailable",
         "operator_surface_missing",
         "operator_timeout",
+        "approval_requested",
+        "user_input_requested",
     }
 )
 
@@ -535,7 +537,11 @@ def build_scenario_catalog() -> dict[str, Any]:
         "host_caveats": {
             "claude": "host_caveat_operator_claude.md",
             "gemini": "host_caveat_operator_gemini.md",
-            "openai": "host_caveat_operator_openai.md",
+            "openai": "host_caveat_operator_openai_app_server.md",
+        },
+        "openai_operator_surfaces": {
+            "smoke": "codex exec",
+            "lifecycle_proof": "codex app-server",
         },
     }
 

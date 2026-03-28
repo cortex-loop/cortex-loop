@@ -415,6 +415,7 @@ make live-provider-baselines-automation
 
 This is the primary acceptance-grade live lane.
 It runs the shared coding harness against signed-in host-native provider surfaces, keeps artifacts local-only, and measures `pass_minimal`, `restart_continuity`, and `truth_gap`.
+For OpenAI, the focused lifecycle proof now lives in the separate `codex app-server` entry point below; the generic host-native target still helps as the cross-host umbrella, but `make live-openai-app-server` is the stronger OpenAI rerun surface.
 
 Direct command:
 
@@ -426,6 +427,24 @@ Repo-local entry point:
 
 ```sh
 make live-host-native-product-paths
+```
+
+## Live OpenAI App Server operator proof
+
+This is the preferred OpenAI operator-lifecycle proof for current scope.
+It keeps `codex exec` as the smoke lane and uses `codex app-server` for the repeated shared coding harness and lifecycle-event capture.
+Machine output is local-only under `.cortex/live_validation/`.
+
+Direct command:
+
+```sh
+python3 tools/live_openai_app_server_operator.py
+```
+
+Repo-local entry point:
+
+```sh
+make live-openai-app-server
 ```
 
 ## Live Cortex host-control capture
@@ -448,7 +467,7 @@ make live-cortex-host-control
 
 ## Live comparison and verdict
 
-This builds the current L2 comparison report and payoff verdict from the local-only preflight, operator baseline, signed-in operator product, and automation service artifacts.
+This builds the current L2 comparison report and payoff verdict from the local-only preflight, operator baseline, signed-in operator lifecycle artifacts, and automation service artifacts.
 It is a support-surface summarizer only and does not change runtime behavior.
 
 Direct command:

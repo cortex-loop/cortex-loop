@@ -31,43 +31,57 @@ It is workflow state only. It does not override the packet documents, implementa
 
 ## 2. Current campaign and seam state
 
-- Current campaign: `L2 s-tier live testing environment and auth-alignment train`
+- Current campaign: `L2b Codex App Server operator lane`
 - Current working branch at ledger update: `codex/l1-live-validation`
 - Current branch role: branch-local L2 candidate over accepted refreshed A1 truth
-- Current candidate seam: operator/automation lane split, local-only evidence migration, and shared coding-harness re-earn
+- Current candidate seam: OpenAI App Server lifecycle proof plus live-truth sync on top of the signed-in-first L2 environment
 - Current seam status: `partially implemented and partially verified`
 - Seam risk: timing or environment-sensitive evidence seam with local toolchain coupling; repeated reruns are required before any closure claim
 
 ## 3. Next lawful move
 
-- Current L2 answer so far:
+- Current L2/L2b answer so far:
   - the live-testing environment now has explicit operator and automation lane semantics
-  - the local artifact root is now `.cortex/live_validation/` rather than repo-tracked `docs/live_validation/`
-  - preflight now detects install channels, auth modes, operator probe status, and fallback models
-  - Codex signed-in operator baseline is real on `gpt-5.3-codex`
-  - Codex signed-in operator product path already completes `pass_minimal`, preserves `truth_gap`, and passes `restart_continuity`
-  - Claude signed-in operator path remains blocked by expired auth
-  - Gemini signed-in operator smoke falls back to `gemini-2.5-flash`; the heavier operator product lane remains an operational watchlist and is not yet counted as success
+  - the local artifact root is `.cortex/live_validation/` rather than repo-tracked `docs/live_validation/`
+  - preflight now detects install channels, auth modes, operator probe status, fallback models, and OpenAI surface split
+  - all three signed-in operator probes and smoke baselines are now clean:
+    - Claude on `claude-sonnet-4-6`
+    - Gemini on fallback `gemini-2.5-flash`
+    - OpenAI/Codex on `gpt-5.3-codex`
+  - the OpenAI operator hierarchy is now explicit:
+    - `codex exec` for smoke
+    - `codex app-server` for lifecycle proof
+  - the OpenAI App Server operator lane now completes:
+    - `pass_minimal` twice
+    - `truth_gap` truthfully
+    - `restart_continuity` twice
+  - the OpenAI App Server event timeline is now the real lifecycle evidence surface for current scope; ephemeral `thread/read` remains lossy and is not treated as the primary truth surface
+  - the Claude signed-in operator lane is no longer auth-blocked, but the heavier current CLI harness still stalls on the one-turn tool-use boundary for `pass_minimal` and `truth_gap`; `restart_continuity` succeeds
+  - the Gemini signed-in operator lane is no longer smoke-blocked, but the heavier coding harness remains a watchlist because `capacity_exhausted` is still emitted on the explicit `gemini-2.5-flash` fallback even when the local workspace change and target test succeed
   - the current automation/service lane still fails honestly on missing automation credentials
 - Next lawful move:
-  - refresh Claude Code auth and re-prove the Claude operator lane
-  - stabilize the Gemini operator product lane on the explicit fallback model or classify the remaining watchlist more narrowly
+  - re-audit the Claude operator product harness around the current one-turn tool-use ceiling without widening host behavior or flattening Claude into a generic shell
+  - narrow the Gemini operator watchlist further:
+    - either stabilize on `gemini-2.5-flash`
+    - or document an even narrower operator fallback if the signed-in surface remains quota-sensitive
   - add or configure automation credentials:
     - `ANTHROPIC_API_KEY`
     - Vertex ADC or `GEMINI_API_KEY`
     - `OPENAI_API_KEY`
-  - rerun `make live-preflight`, `make live-provider-baselines`, `make live-host-native-product-paths`, `make live-cortex-host-control`, and `make live-compare`
-  - only after that decide whether the automation lane needs a richer raw-response extraction seam
+  - rerun `make live-preflight`, `make live-provider-baselines`, `make live-openai-app-server`, `make live-cortex-host-control`, and `make live-compare`
+  - only after Claude/Gemini operator drift and automation auth are re-earned should a broader cross-host closure claim be considered
 
 ## 4. Explicitly blocked moves
 
 - Do not treat signed-in provider CLI sessions as equivalent to the automation credentials the current A4 / G4 / O4 service paths require.
 - Do not flatten provider auth into a generic shared credential broker.
 - Do not shell out from current A4 / G4 / O4 transports to provider CLIs without an explicit host-owned re-audit.
+- Do not treat the new OpenAI App Server operator proof as license to reopen v1 assisted mode, bounded corrective retry, or App Server bridge doctrine inside `L2b`.
 - Do not reopen K3 into new executive-allocation widening beyond the accepted current-scope law.
 - Do not open support-memory runtime, mediation / `Q_t^{final}` experimentation, tool-result submission, multimodal widening, runtime AUX activation, offline consolidation, or generic reward-learning doctrine from `L2`.
 - Do not keep repo-tracked live artifacts under `docs/live_validation/`; live machine output is local-only now.
 - Do not interpret the current Gemini operator-lane instability as proof that the signed-in-first design is wrong; it is a host/watchlist issue until repeated reruns say otherwise.
+- Do not overread ephemeral OpenAI `thread/read` emptiness as if the App Server lifecycle proof failed; for current scope the event timeline is the authoritative lifecycle surface and the persisted thread view remains a caveat.
 
 ## 5. Acknowledged worktree noise at ledger creation
 

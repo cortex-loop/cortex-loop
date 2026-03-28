@@ -1,7 +1,7 @@
 # CORTEX_V2_LIVE_VALIDATION_PROGRAM_0
 
-Date: 2026-03-27
-Status: active L2 live-testing environment and auth-alignment brief
+Date: 2026-03-28
+Status: active L2 live-testing environment brief with L2b OpenAI App Server follow-on
 
 ## Purpose
 
@@ -15,6 +15,10 @@ The train is now split into two explicit live lanes:
 - automation lane:
   - API key or ADC-backed headless surfaces
   - secondary live truth for unattended reproducibility
+
+The current bounded follow-on seam inside `L2` is:
+
+- `L2b` OpenAI Codex App Server operator lifecycle proof
 
 ## Accepted parent
 
@@ -40,8 +44,11 @@ The operator lane also carries a separate OpenAI coding-model preference:
 - repo-tracked docs carry only summaries and verdicts
 - signed-in host-native truth is primary
 - current A4 / G4 / O4 service lanes remain secondary automation truth
-- OpenAI signed-in operator truth uses `codex`, not `openai`
+- OpenAI signed-in operator truth is now explicitly split:
+  - `codex exec` = smoke / preflight
+  - `codex app-server` = lifecycle proof
 - Gemini signed-in operator truth may fall back from `gemini-2.5-pro` to `gemini-2.5-flash`
+- no assisted retry loop, corrective second-pass intervention, or v1 bridge doctrine belongs in `L2b`
 
 ## Shared coding harness
 
@@ -63,22 +70,24 @@ Host caveats remain explicit and separate from the shared success lanes.
 
 ## Current L2 evidence
 
-Current local evidence after the first L2 pass:
+Current local evidence after the March 28 reruns:
 
 - operator preflight:
-  - Claude session is present but token freshness is blocked (`auth_expired`)
+  - Claude operator probe succeeds on `claude-sonnet-4-6`
   - Gemini operator probe succeeds on fallback `gemini-2.5-flash`
-  - Codex operator probe succeeds on `gpt-5.3-codex`
+  - OpenAI/Codex operator probe succeeds on `gpt-5.3-codex`
 - operator baselines:
-  - Claude blocked on `auth_expired`
-  - Gemini baseline is mixed and remains a watchlist
-  - OpenAI baseline is clean on Codex
+  - Claude baseline succeeds twice on `claude-sonnet-4-6`
+  - Gemini baseline succeeds twice on fallback `gemini-2.5-flash`
+  - OpenAI baseline succeeds twice on `codex exec`
 - operator product paths:
-  - OpenAI succeeds on `pass_minimal`
-  - OpenAI preserves `truth_gap`
-  - OpenAI succeeds on `restart_continuity`
-  - Claude remains blocked on auth freshness
-  - Gemini operator product lane remains unresolved and is not yet counted as success
+  - OpenAI App Server now succeeds on:
+    - `pass_minimal` twice
+    - `truth_gap`
+    - `restart_continuity` twice
+  - OpenAI lifecycle proof is now earned from the App Server event timeline; ephemeral `thread/read` remains lossy and is treated as a host caveat rather than a failed operator lane
+  - Claude is no longer auth-blocked, but the current one-turn CLI harness still stops at the first tool-use boundary on `pass_minimal` and `truth_gap`; `restart_continuity` succeeds
+  - Gemini remains an operator watchlist because `capacity_exhausted` still appears on the explicit `gemini-2.5-flash` fallback during the heavier coding harness even when the workspace diff and target test succeed
 - automation lane:
   - current service path still fails honestly on missing automation credentials for all three providers
 
@@ -86,9 +95,12 @@ Current local evidence after the first L2 pass:
 
 `L2` is only honestly closed when all are true:
 
-- Claude operator lane is re-proven after auth refresh
+- Claude operator lane is re-proven beyond the current one-turn tool-use limit
 - Gemini operator lane is either stable on `gemini-2.5-pro` or stably accepted on explicit fallback `gemini-2.5-flash`
-- OpenAI operator lane remains stable on Codex
+- OpenAI operator lane remains stable on both:
+  - `codex exec` smoke
+  - `codex app-server` lifecycle proof
 - at least one automation-lane host-control success exists per provider
 - the local-only compare output is regenerated after the final reruns
+- the OpenAI App Server follow-on row is updated truthfully under the live-validation gate section
 - and the `L1`-`L4` gate rows are updated truthfully to the new L2 evidence state

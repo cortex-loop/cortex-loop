@@ -280,12 +280,18 @@ def test_resume_protocol_and_active_workstream_contract_exist() -> None:
     assert "Accepted baseline commit: `8eb7f08`" in workstream_text
     assert "Current working branch at ledger update: `codex/l1-live-validation`" in workstream_text
     assert "branch-local L2 candidate over accepted refreshed A1 truth" in workstream_text
-    assert "Current candidate seam: operator/automation lane split, local-only evidence migration, and shared coding-harness re-earn" in workstream_text
+    assert "Current campaign: `L2b Codex App Server operator lane`" in workstream_text
+    assert "Current candidate seam: OpenAI App Server lifecycle proof plus live-truth sync" in workstream_text
     assert "Current seam status: `partially implemented and partially verified`" in workstream_text
-    assert "refresh Claude Code auth and re-prove the Claude operator lane" in workstream_text
-    assert "stabilize the Gemini operator product lane on the explicit fallback model" in workstream_text
+    assert "all three signed-in operator probes and smoke baselines are now clean" in workstream_text
+    assert "`codex exec` for smoke" in workstream_text
+    assert "`codex app-server` for lifecycle proof" in workstream_text
+    assert "the OpenAI App Server operator lane now completes" in workstream_text
+    assert "re-audit the Claude operator product harness" in workstream_text
+    assert "narrow the Gemini operator watchlist further" in workstream_text
     assert "add or configure automation credentials" in workstream_text
     assert "Do not treat signed-in provider CLI sessions as equivalent to the automation credentials" in workstream_text
+    assert "Do not treat the new OpenAI App Server operator proof as license to reopen v1 assisted mode" in workstream_text
     assert "Do not keep repo-tracked live artifacts under `docs/live_validation/`" in workstream_text
     assert "accepted workflow baseline truth remains the refreshed post-A1 live-model line" in workstream_text
     assert "git branch --show-current" in workstream_text
@@ -348,10 +354,10 @@ def test_reference_runtime_program_lock_is_recorded() -> None:
     assert "loopback-only HTTP is landed on the accepted K1 closeout line" in phase_gate_text
     assert "one active session per process is real for current scope" in phase_gate_text
 
-    assert "Current campaign: `L2 s-tier live testing environment and auth-alignment train`" in workstream_text
+    assert "Current campaign: `L2b Codex App Server operator lane`" in workstream_text
     assert "the live-testing environment now has explicit operator and automation lane semantics" in workstream_text
-    assert "Codex signed-in operator baseline is real on `gpt-5.3-codex`" in workstream_text
-    assert "Codex signed-in operator product path already completes `pass_minimal`" in workstream_text
+    assert "all three signed-in operator probes and smoke baselines are now clean" in workstream_text
+    assert "the OpenAI App Server operator lane now completes" in workstream_text
     assert "the first one-process live continuity slice plus explicit rejection enforcement are real" in program_text
     assert "the corrective zero-finding re-audit has passed for current scope" in program_text
     assert "a mismatched runtime `session_id` is surfaced as an explicit contradiction" in program_text
@@ -462,9 +468,11 @@ def test_reference_runtime_program_lock_is_recorded() -> None:
     assert "`L1` Claude live validation" in phase_gate_text
     assert "`L2` Gemini live validation" in phase_gate_text
     assert "`L3` OpenAI live validation" in phase_gate_text
+    assert "`L3A` OpenAI App Server operator lifecycle proof" in phase_gate_text
     assert "`L4` lifecycle-first payoff verdict" in phase_gate_text
-    assert "signed-in operator surface (`codex`)" in phase_gate_text
-    assert "fallback to `gemini-2.5-flash`" in phase_gate_text
+    assert "correct signed-in operator hierarchy" in phase_gate_text
+    assert "explicit fallback `gemini-2.5-flash`" in phase_gate_text
+    assert "the bounded `codex app-server` operator lane is now re-earned" in phase_gate_text
 
     assert "Status: accepted re-audited support brief for the G1 runtime/product restack train" in gemini_runtime_restack_text
     assert "Gemini-only" in gemini_runtime_restack_text
@@ -481,21 +489,25 @@ def test_reference_runtime_program_lock_is_recorded() -> None:
     live_validation_scenario_catalog_text = _read(LIVE_VALIDATION_SCENARIO_CATALOG_PATH)
     live_validation_verdict_text = _read(LIVE_VALIDATION_VERDICT_PATH)
 
-    assert "Status: active L2 live-testing environment and auth-alignment brief" in live_validation_program_text
+    assert "Status: active L2 live-testing environment brief with L2b OpenAI App Server follow-on" in live_validation_program_text
     assert "branch: `codex/l1-live-validation`" in live_validation_program_text
     assert "commit: `8eb7f08`" in live_validation_program_text
     assert "signed-in host-native product surfaces" in live_validation_program_text
     assert "local-only under `.cortex/live_validation/`" in live_validation_program_text
-    assert "OpenAI succeeds on `pass_minimal`" in live_validation_program_text
-    assert "Status: active L2 scenario catalog for the signed-in-first live environment" in live_validation_scenario_catalog_text
+    assert "`codex exec` = smoke / preflight" in live_validation_program_text
+    assert "`codex app-server` = lifecycle proof" in live_validation_program_text
+    assert "OpenAI App Server now succeeds on:" in live_validation_program_text
+    assert "Status: active L2 scenario catalog for the signed-in-first live environment with L2b OpenAI App Server proof" in live_validation_scenario_catalog_text
     assert "`pass_minimal`" in live_validation_scenario_catalog_text
     assert "`restart_continuity`" in live_validation_scenario_catalog_text
     assert "`truth_gap`" in live_validation_scenario_catalog_text
+    assert "`codex app-server` = lifecycle proof" in live_validation_scenario_catalog_text
     assert "machine output: local-only under `.cortex/live_validation/`" in live_validation_scenario_catalog_text
-    assert "Status: first L2 live-testing environment verdict note" in live_validation_verdict_text
+    assert "Status: L2/L2b live-testing environment verdict note" in live_validation_verdict_text
     assert "**lifecycle-first is promising but under-instrumented**" in live_validation_verdict_text
-    assert "OpenAI/Codex success on the shared coding harness" in live_validation_verdict_text
+    assert "`codex app-server` passes `pass_minimal` twice" in live_validation_verdict_text
     assert "host-native Codex surface rather than the wrong `openai` utility surface" in live_validation_verdict_text
+    assert "`L2b` now re-earns OpenAI on the current host-native App Server lifecycle surface" in live_validation_verdict_text
 
 
 def test_openai_host_control_revalidation_entry_points_are_recorded() -> None:
@@ -531,6 +543,8 @@ def test_openai_host_control_revalidation_entry_points_are_recorded() -> None:
     assert "make live-provider-baselines-automation" in local_verification_text
     assert "## Live host-native product paths" in local_verification_text
     assert "make live-host-native-product-paths" in local_verification_text
+    assert "## Live OpenAI App Server operator proof" in local_verification_text
+    assert "make live-openai-app-server" in local_verification_text
     assert "## Live Cortex host-control capture" in local_verification_text
     assert "make live-cortex-host-control" in local_verification_text
     assert "## Live comparison and verdict" in local_verification_text
@@ -539,6 +553,7 @@ def test_openai_host_control_revalidation_entry_points_are_recorded() -> None:
     assert "live-provider-baselines:" in makefile_text
     assert "live-provider-baselines-automation:" in makefile_text
     assert "live-host-native-product-paths:" in makefile_text
+    assert "live-openai-app-server:" in makefile_text
     assert "live-cortex-host-control:" in makefile_text
     assert "live-compare:" in makefile_text
 
@@ -558,8 +573,9 @@ def test_erika_visualizations_are_framed_as_support_surfaces() -> None:
     assert "The verification/evidence restack train, K1 runtime/product restack, and K2 bounded host-control train are now landed for current scope on top of that same product truth." in markdown_text
     assert "The reference runtime shell, bounded reference continuity, OpenAI documented-host-event runtime shell, raw-transcript ingress shell, loopback service shell, and bounded outbound OpenAI host-control lane are now accepted on the current line." in markdown_text
     assert "The Claude documented-host-event runtime shell, raw-transcript ingress shell, loopback service shell, and bounded outbound Claude host-control lane are now accepted on the current line." in markdown_text
-    assert "The current open train is L2 s-tier live testing environment and auth alignment." in markdown_text
+    assert "The current open train is L2b Codex App Server operator lane." in markdown_text
     assert "Codex rather than `openai` as the OpenAI operator surface" in markdown_text
+    assert "distinguishes `codex exec` smoke from `codex app-server` lifecycle proof" in markdown_text
     assert "cortex-archival-dossiers/" not in markdown_text
     assert "Current Justified Boundary" in html_text
     assert "Gap Programs" in html_text
@@ -577,7 +593,7 @@ def test_erika_visualizations_are_framed_as_support_surfaces() -> None:
     assert "What we've stolen so far" in html_text
     assert "What is still partial" in html_text
     assert "What remains north-star only" in html_text
-    assert "signed-in-first live testing environment" in html_text
+    assert "signed-in-first live testing environment with App Server lifecycle proof" in html_text
     assert "Cortex Complete" not in html_text
     assert "Today vs Future" not in html_text
 
@@ -600,4 +616,4 @@ def test_runtime_restack_program_lock_is_recorded() -> None:
     assert "Current accepted state after K1 closeout" in text
     assert "implemented at K1 proof head `d4c311f` and truthfully closed at deterministic closeout head `79b8f39`" in text
     assert "later bounded runtime/product trains may still be explicitly opened" in master_plan_text
-    assert "now records the current L2 signed-in-first live-testing environment and auth-alignment seam." in theory_text
+    assert "now records the current L2b OpenAI App Server operator-lifecycle follow-on seam" in theory_text

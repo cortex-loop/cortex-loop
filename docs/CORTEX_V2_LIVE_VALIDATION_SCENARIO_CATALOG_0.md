@@ -1,7 +1,7 @@
 # CORTEX_V2_LIVE_VALIDATION_SCENARIO_CATALOG_0
 
-Date: 2026-03-27
-Status: active L2 scenario catalog for the signed-in-first live environment
+Date: 2026-03-28
+Status: active L2 scenario catalog for the signed-in-first live environment with L2b OpenAI App Server proof
 
 ## Shared coding harness
 
@@ -59,8 +59,16 @@ Target task:
 
 ### OpenAI
 
-- current caveat: none on the signed-in Codex smoke and coding path so far
-- probe surface: operator preflight plus Codex baseline and product lane
+- signed-in operator hierarchy:
+  - `codex exec` = smoke / preflight
+  - `codex app-server` = lifecycle proof
+- current caveat:
+  - the App Server event stream is rich enough for lifecycle proof
+  - but ephemeral `thread/read` remains lossy, so current OpenAI lifecycle truth comes from the event timeline rather than persisted turn history
+- probe surface:
+  - operator preflight
+  - `codex exec` smoke baseline
+  - `codex app-server` lifecycle proof over `pass_minimal`, `truth_gap`, `restart_continuity`, and `openai_app_server_host_caveat`
 
 ## Artifact policy
 

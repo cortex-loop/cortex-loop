@@ -47,9 +47,7 @@ def _build_comparison(preflight: dict[str, Any]) -> dict[str, Any]:
         baseline_runs = _read_json(
             provider_root(provider, "operator", "baselines") / "provider_baseline_runs.json"
         ).get("runs", [])
-        operator_runs = _read_json(
-            provider_root(provider, "operator", "product_paths") / "host_native_product_runs.json"
-        ).get("runs", [])
+        operator_runs = _read_operator_lifecycle_runs(provider)
         service_runs = _read_json(
             provider_root(provider, "automation", "service") / "service_runs.json"
         ).get("runs", [])
@@ -86,7 +84,7 @@ def _build_comparison(preflight: dict[str, Any]) -> dict[str, Any]:
                 "failure_classes": baseline_failures,
                 "successful_run_count": len([run for run in baseline_runs if run.get("success")]),
             },
-            "operator_product": {
+            "operator_lifecycle": {
                 "successful_run_count": len(successful_operator),
                 "pass_minimal_success": any(
                     run.get("scenario_id") == "pass_minimal" and run.get("success")
@@ -106,6 +104,10 @@ def _build_comparison(preflight: dict[str, Any]) -> dict[str, Any]:
             "operator_probe": preflight.get("operator_probe", {}).get(provider, {}),
             "automation_auth": preflight.get("auth_surfaces", {}).get("automation", {}).get(provider, {}),
         }
+        if provider == "openai":
+            providers[provider]["operator_lifecycle"]["surface"] = "codex app-server"
+        else:
+            providers[provider]["operator_lifecycle"]["surface"] = "host-native CLI task lane"
 
     verdict, verdict_reason = decide_verdict(
         operator_pass_count=operator_pass_count,
@@ -174,10 +176,11 @@ def _comparison_markdown(comparison: dict[str, Any]) -> str:
                 f"### {provider}",
                 "",
                 f"- operator baseline failures: `{', '.join(payload['operator_baseline']['failure_classes']) or 'none'}`",
-                f"- operator pass_minimal success: `{payload['operator_product']['pass_minimal_success']}`",
-                f"- operator restart_continuity success: `{payload['operator_product']['restart_continuity_success']}`",
-                f"- operator truthful gap preserved: `{payload['operator_product']['truth_gap_preserved']}`",
-                f"- operator product failures: `{', '.join(payload['operator_product']['failure_classes']) or 'none'}`",
+                f"- operator lifecycle surface: `{payload['operator_lifecycle']['surface']}`",
+                f"- operator pass_minimal success: `{payload['operator_lifecycle']['pass_minimal_success']}`",
+                f"- operator restart_continuity success: `{payload['operator_lifecycle']['restart_continuity_success']}`",
+                f"- operator truthful gap preserved: `{payload['operator_lifecycle']['truth_gap_preserved']}`",
+                f"- operator lifecycle failures: `{', '.join(payload['operator_lifecycle']['failure_classes']) or 'none'}`",
                 f"- automation service failures: `{', '.join(payload['automation_service']['failure_classes']) or 'none'}`",
                 "",
             ]
@@ -197,6 +200,14 @@ def _read_json(path: Path) -> dict[str, Any]:
     if not path.exists():
         return {}
     return json.loads(path.read_text(encoding="utf-8"))
+
+
+def _read_operator_lifecycle_runs(provider: str) -> list[dict[str, Any]]:
+    if provider == "openai":
+        return _read_json(provider_root(provider, "operator", "app_server") / "app_server_runs.json").get("runs", [])
+    return _read_json(
+        provider_root(provider, "operator", "product_paths") / "host_native_product_runs.json"
+    ).get("runs", [])
 
 
 if __name__ == "__main__":

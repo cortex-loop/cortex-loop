@@ -8,31 +8,60 @@ import subprocess
 from pathlib import Path
 from typing import Any
 
-from live_validation_common import (
-    BLOCKING_FAILURE_CLASSES,
-    MODEL_MATRIX,
-    SCENARIOS,
-    choose_model,
-    classify_failure,
-    classify_truth_gap,
-    collect_modified_files,
-    comparator_path,
-    ensure_live_validation_dirs,
-    extract_event_labels,
-    extract_result_text,
-    extract_session_id,
-    now_utc_iso,
-    parse_json_lines,
-    prepare_harness_workspace,
-    provider_root,
-    read_prompt_template,
-    resolve_auth_mode,
-    run_target_test,
-    sanitize_text,
-    should_collapse_after_failure,
-    write_json,
-    write_text,
-)
+try:  # pragma: no cover - import path differs between script execution and pytest import.
+    from .live_validation_common import (
+        BLOCKING_FAILURE_CLASSES,
+        MODEL_MATRIX,
+        SCENARIOS,
+        choose_model,
+        classify_failure,
+        classify_truth_gap,
+        collect_modified_files,
+        comparator_path,
+        ensure_live_validation_dirs,
+        extract_event_labels,
+        extract_result_text,
+        extract_session_id,
+        now_utc_iso,
+        parse_json_lines,
+        prepare_harness_workspace,
+        provider_root,
+        read_prompt_template,
+        resolve_auth_mode,
+        run_target_test,
+        sanitize_text,
+        should_collapse_after_failure,
+        write_json,
+        write_text,
+    )
+    from .live_openai_app_server_operator import run_openai_app_server_validation
+except ImportError:  # pragma: no cover
+    from live_validation_common import (
+        BLOCKING_FAILURE_CLASSES,
+        MODEL_MATRIX,
+        SCENARIOS,
+        choose_model,
+        classify_failure,
+        classify_truth_gap,
+        collect_modified_files,
+        comparator_path,
+        ensure_live_validation_dirs,
+        extract_event_labels,
+        extract_result_text,
+        extract_session_id,
+        now_utc_iso,
+        parse_json_lines,
+        prepare_harness_workspace,
+        provider_root,
+        read_prompt_template,
+        resolve_auth_mode,
+        run_target_test,
+        sanitize_text,
+        should_collapse_after_failure,
+        write_json,
+        write_text,
+    )
+    from live_openai_app_server_operator import run_openai_app_server_validation
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -69,6 +98,8 @@ def main(argv: list[str] | None = None) -> int:
 
 
 def _run_provider(provider: str) -> dict[str, Any]:
+    if provider == "openai":
+        return run_openai_app_server_validation()
     root = provider_root(provider, "operator", "product_paths")
     baseline_summary = _read_json(comparator_path("operator_provider_baseline_summary.json"))
     baseline_runs = baseline_summary.get("providers", {}).get(provider, {}).get("runs", [])

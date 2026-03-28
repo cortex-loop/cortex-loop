@@ -90,6 +90,9 @@ def test_build_scenario_catalog_exposes_l2_harness_contract() -> None:
     )
     assert catalog["operator_continuity"]["turn_1_prompt"] == "restart_continuity_turn1_operator.md"
     assert catalog["host_caveats"]["claude"] == "host_caveat_operator_claude.md"
+    assert catalog["host_caveats"]["openai"] == "host_caveat_operator_openai_app_server.md"
+    assert catalog["openai_operator_surfaces"]["smoke"] == "codex exec"
+    assert catalog["openai_operator_surfaces"]["lifecycle_proof"] == "codex app-server"
     assert MODEL_MATRIX["openai"]["operator"].preferred == "gpt-5.3-codex"
     assert MODEL_MATRIX["gemini"]["operator"].fallback == "gemini-2.5-flash"
 
