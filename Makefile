@@ -3,7 +3,7 @@ PYTEST ?= $(PYTHON) -m pytest
 COVERAGE ?= $(PYTHON) -m coverage
 COVERAGE_RC ?= .coveragerc
 
-.PHONY: test-unit test-integration test-smoke verify revalidate-reference-packet emit-reference-packet-candidate revalidate-gemini-packet emit-gemini-packet-candidate revalidate-openai-packet emit-openai-packet-candidate revalidate-latency-evidence emit-latency-evidence-candidate revalidate-mediation-evidence-package revalidate-mediation-run-packets revalidate-reference-mediation-baselines emit-reference-mediation-baselines-candidate revalidate-gemini-mediation-baselines emit-gemini-mediation-baselines-candidate revalidate-openai-mediation-baselines emit-openai-mediation-baselines-candidate revalidate-reference-mediated-host-realization emit-reference-mediated-host-realization-candidate revalidate-gemini-mediated-host-realization emit-gemini-mediated-host-realization-candidate revalidate-openai-mediated-host-realization emit-openai-mediated-host-realization-candidate revalidate-reference-mediated-thrash emit-reference-mediated-thrash-candidate revalidate-reference-mediated-uncertainty emit-reference-mediated-uncertainty-candidate revalidate-gemini-mediated-uncertainty emit-gemini-mediated-uncertainty-candidate revalidate-gemini-mediated-thrash emit-gemini-mediated-thrash-candidate revalidate-openai-mediated-uncertainty emit-openai-mediated-uncertainty-candidate revalidate-openai-mediated-thrash emit-openai-mediated-thrash-candidate revalidate-mediation-reference-host-realization-basis revalidate-mediation-gemini-host-realization-basis revalidate-mediation-openai-host-realization-basis revalidate-mediation-reference-thrash-basis revalidate-mediation-reference-uncertainty-basis revalidate-mediation-gemini-thrash-basis revalidate-mediation-gemini-uncertainty-basis revalidate-mediation-openai-thrash-basis revalidate-mediation-openai-uncertainty-basis revalidate-mediation-evidence coverage test-correspondence-contract test-correspondence-core test-correspondence-ports test-correspondence-sre test-correspondence-periphery
+.PHONY: test-unit test-integration test-smoke verify seam-preflight revalidate-reference-packet emit-reference-packet-candidate revalidate-gemini-packet emit-gemini-packet-candidate revalidate-openai-packet emit-openai-packet-candidate revalidate-latency-evidence emit-latency-evidence-candidate revalidate-mediation-evidence-package revalidate-mediation-run-packets revalidate-reference-mediation-baselines emit-reference-mediation-baselines-candidate revalidate-gemini-mediation-baselines emit-gemini-mediation-baselines-candidate revalidate-openai-mediation-baselines emit-openai-mediation-baselines-candidate revalidate-reference-mediated-host-realization emit-reference-mediated-host-realization-candidate revalidate-gemini-mediated-host-realization emit-gemini-mediated-host-realization-candidate revalidate-openai-mediated-host-realization emit-openai-mediated-host-realization-candidate revalidate-reference-mediated-thrash emit-reference-mediated-thrash-candidate revalidate-reference-mediated-uncertainty emit-reference-mediated-uncertainty-candidate revalidate-gemini-mediated-uncertainty emit-gemini-mediated-uncertainty-candidate revalidate-gemini-mediated-thrash emit-gemini-mediated-thrash-candidate revalidate-openai-mediated-uncertainty emit-openai-mediated-uncertainty-candidate revalidate-openai-mediated-thrash emit-openai-mediated-thrash-candidate revalidate-mediation-reference-host-realization-basis revalidate-mediation-gemini-host-realization-basis revalidate-mediation-openai-host-realization-basis revalidate-mediation-reference-thrash-basis revalidate-mediation-reference-uncertainty-basis revalidate-mediation-gemini-thrash-basis revalidate-mediation-gemini-uncertainty-basis revalidate-mediation-openai-thrash-basis revalidate-mediation-openai-uncertainty-basis revalidate-mediation-evidence coverage test-correspondence-contract test-correspondence-core test-correspondence-ports test-correspondence-sre test-correspondence-periphery
 
 test-unit:
 	$(PYTEST) tests/unit
@@ -32,6 +32,35 @@ verify:
 	$(PYTEST) tests/unit -q
 	$(PYTEST) tests/integration -q
 	$(PYTEST) tests/unit/test_import_smoke.py -q
+
+seam-preflight:
+	@branch="$$(git branch --show-current)"; \
+	echo "branch: $$branch"; \
+	if [ "$$branch" = "main" ]; then \
+		echo "seam-preflight: refuse to start a seam on main"; \
+		exit 1; \
+	fi; \
+	divergence="$$(git rev-list --left-right --count main...origin/main 2>/dev/null || true)"; \
+	if [ -n "$$divergence" ]; then \
+		echo "main_vs_origin_main: $$divergence"; \
+	else \
+		echo "main_vs_origin_main: unavailable"; \
+	fi; \
+	status="$$(git status --short --untracked-files=all)"; \
+	if [ -n "$$status" ]; then \
+		echo "worktree_status:"; \
+		printf '%s\n' "$$status"; \
+	else \
+		echo "worktree_status: clean"; \
+	fi; \
+	tracked_dirty="$$(git status --porcelain=v1 --untracked-files=all | grep -v '^?? ' || true)"; \
+	if [ -n "$$tracked_dirty" ]; then \
+		echo "seam-preflight: tracked worktree changes must be accepted or committed before a new seam"; \
+		echo "classify dirty paths as current seam / unrelated noise / blocker before continuing"; \
+		exit 1; \
+	fi; \
+	echo "seam-preflight: classify seam risk as deterministic code/doc, parser/doc-sync, timing or environment-sensitive, or shared verification-plumbing"; \
+	echo "seam-preflight: timing, environment-sensitive, and shared verification-plumbing seams require repeated reruns before acceptance"
 
 revalidate-reference-packet:
 	$(PYTEST) tests/integration/test_reference_lane_packet_example.py

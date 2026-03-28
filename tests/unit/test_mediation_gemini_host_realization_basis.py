@@ -129,7 +129,8 @@ def test_evidence_note_records_three_gemini_host_pairs_and_keeps_mediation_block
         "for better host-specialized realization"
     ) in text
     assert (
-        "reference and Gemini now carry the host-realization `candidate_positive` cells."
+        "reference, Gemini, and OpenAI now carry the host-realization "
+        "`candidate_positive` cells."
     ) in text
     assert "Mediation remains blocked" in text
     assert "no implementation seam may open" in text

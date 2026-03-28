@@ -1,7 +1,7 @@
 # CORTEX_V2_VERIFICATION_ERGONOMICS_MASTER_PLAN_0
 
 Status: canonical follow-on master plan for non-feature verification ergonomics (`active`)
-Date: 2026-03-18
+Date: 2026-03-21
 Primary objective: improve **verification usability, reproducibility, coverage visibility, correspondence auditability, and evidence revalidation ergonomics** for the landed Cortex v2 MVP **without changing Core / SRE / AUX behavior**.
 
 Active authority this plan assumes:
@@ -18,6 +18,30 @@ Active authority this plan assumes:
 - `AGENTS.md`
 
 This plan is a **follow-on campaign**, not an extension of the feature roadmap that ended at the current justified v2 boundary.
+
+---
+
+## Current Campaign State
+
+- `E1` is effectively landed:
+  - `pytest.ini` exists,
+  - `Makefile` exposes the canonical and smoke bundles,
+  - `make seam-preflight` now blocks new seam work on `main` or a tracked-dirty worktree,
+  - and `docs/CORTEX_V2_LOCAL_VERIFICATION.md` records the repo-local entry points.
+- `E2` is effectively landed:
+  - `.coveragerc` exists,
+  - `make coverage` exists,
+  - and the first committed baseline artifact is now recorded.
+- `E3` is materially landed for current scope:
+  - mechanical correspondence checks already exist for contract, Core, ports, SRE, and periphery surfaces.
+- `E4` is partially landed:
+  - the reference-lane running example now has shared outcome helpers in `tests/integration/_reference_lane.py`,
+  - but contradiction/degradation helper closeout and gate-test dedup remain open.
+- `E5` is materially landed for current scope:
+  - packet-example and latency evidence revalidation paths are documented,
+  - repo-local entry points exist in `Makefile`,
+  - and the phase-gate ledger already treats those evidence surfaces as landed.
+- `E6` remains open.
 
 ---
 
@@ -191,15 +215,16 @@ Make the landed verification surfaces runnable and discoverable from repo-local 
 Add repo-local coverage generation without changing the closeout truth.
 
 #### Required outcomes
-- repo-local coverage configuration
-- explicit statement that the current repo begins with no repo-local coverage config and no coverage tool installed
-- one documented coverage command and any minimal local prerequisite needed to run it
+- repo-local coverage configuration and command are already landed
+- one documented coverage command and the minimal local prerequisite needed to run it
+- one committed baseline artifact built from live repeated local runs
 - explicit statement of what is and is not covered
 - zero reinterpretation of MVP completeness based on first coverage numbers
 
 #### Done means
-- coverage can be generated locally using repo-local configuration plus documented local prerequisites
+- coverage can be generated locally using the landed repo-local configuration plus documented local prerequisites
 - the output is stable enough to use as future hygiene evidence
+- the config/command layer and the first committed baseline artifact are both landed
 
 #### Anti-drift
 - do not turn coverage into a new feature gate immediately
@@ -358,6 +383,13 @@ Evidence:
 - E2B coverage command and docs
 - E2C optional first baseline artifact
 
+Current next-work note:
+- E1 is effectively complete.
+- E2 is effectively complete.
+- E4 is partially landed.
+- E5 is materially landed for current scope.
+- if the extracted helper surface stays stable under the canonical bundle, `E4B` is the next candidate seam.
+
 ### E3
 - E3A landed Core correspondence checks
 - E3B landed SRE correspondence checks
@@ -476,22 +508,15 @@ Every worker prompt should include:
 
 ---
 
-## 13. First recommended seam
+## 13. Current hold note
 
-If this plan is landed and becomes active, the strongest first seam is:
+`E2C` is now landed.
+`E4A` is now landed.
+`E5` is materially landed for current scope.
 
-### E1A — repo-local pytest configuration and canonical local verification commands
-
-Why it wins first:
-- it directly addresses an explicit maintainability gap from the closeout note
-- it improves every later verification seam
-- it changes no product behavior
-- it gives the architect a stable local verification contract before coverage, correspondence, and evidence revalidation work
-
-Preferred touch surface:
-- repo-local pytest config file
-- one minimal local verification entry point
-- one short supporting doc update that records the canonical commands
+If the extracted reference helper surface stays stable under the canonical bundle, `E4B` is the next candidate seam.
+No broader refactor is promoted from this slice.
+That follow-on choice must remain non-feature, behavior-preserving, and verification-first.
 
 ---
 

@@ -259,6 +259,52 @@ def test_paired_run_ledger_is_preseeded_from_scenario_catalog() -> None:
             ),
         },
         {
+            "paired_episode_set_id": "pair_openai_host_002",
+            "scenario_id": "scenario_host_openai_01",
+            "host_family": "openai",
+            "baseline_run_id": "openai_host_realization_baseline_run_002",
+            "mediated_run_id": "openai_host_realization_mediated_run_002",
+            "baseline_packet_ref": (
+                "docs/mediation_evidence/openai/"
+                "scenario_host_openai_01__baseline_non_mediated__run_002.md"
+            ),
+            "mediated_packet_ref": (
+                "docs/mediation_evidence/openai/"
+                "scenario_host_openai_01__experimental_mediated__run_002.md"
+            ),
+            "pair_status": "usable",
+            "failure_tags": "none",
+            "notes": (
+                "Second OpenAI-only mediation-specific host-realization pair. The same "
+                "scenario, host, rubric, environment context, commitment boundary, "
+                "evaluation-packet publication surface, and host-opportunity set are "
+                "preserved while direct `mcp.query` specialization changes from `0` to `1`."
+            ),
+        },
+        {
+            "paired_episode_set_id": "pair_openai_host_003",
+            "scenario_id": "scenario_host_openai_01",
+            "host_family": "openai",
+            "baseline_run_id": "openai_host_realization_baseline_run_003",
+            "mediated_run_id": "openai_host_realization_mediated_run_003",
+            "baseline_packet_ref": (
+                "docs/mediation_evidence/openai/"
+                "scenario_host_openai_01__baseline_non_mediated__run_003.md"
+            ),
+            "mediated_packet_ref": (
+                "docs/mediation_evidence/openai/"
+                "scenario_host_openai_01__experimental_mediated__run_003.md"
+            ),
+            "pair_status": "usable",
+            "failure_tags": "none",
+            "notes": (
+                "Third OpenAI-only mediation-specific host-realization pair. The same "
+                "scenario, host, rubric, environment context, commitment boundary, "
+                "evaluation-packet publication surface, and host-opportunity set are "
+                "preserved while direct `mcp.query` specialization changes from `0` to `1`."
+            ),
+        },
+        {
             "paired_episode_set_id": "pair_reference_thrash_001",
             "scenario_id": "scenario_thrash_reference_01",
             "host_family": "reference",
@@ -694,7 +740,7 @@ def test_results_surfaces_are_preseeded_for_all_catalog_cells_and_follow_fairnes
     assert pair_counts[gemini_host_realization_cell]["confidence_downgraded"] == 0
     assert pair_counts[gemini_host_realization_cell]["excluded"] == 0
     openai_host_realization_cell = ("scenario_host_openai_01", "openai")
-    assert pair_counts[openai_host_realization_cell]["usable"] == 1
+    assert pair_counts[openai_host_realization_cell]["usable"] == 3
     assert pair_counts[openai_host_realization_cell]["confidence_downgraded"] == 0
     assert pair_counts[openai_host_realization_cell]["excluded"] == 0
     gemini_thrash_cell = ("scenario_thrash_gemini_01", "gemini")
@@ -744,6 +790,10 @@ def test_results_surfaces_are_preseeded_for_all_catalog_cells_and_follow_fairnes
             "Better Host-Specialized Realization",
             ("scenario_host_gemini_01", "gemini"),
         ),
+        (
+            "Better Host-Specialized Realization",
+            ("scenario_host_openai_01", "openai"),
+        ),
     }
     for heading in AXIS_HEADINGS:
         rows = parse_markdown_table(section(axis_text, heading))
@@ -788,9 +838,14 @@ def test_results_surfaces_are_preseeded_for_all_catalog_cells_and_follow_fairnes
                     "pair_gemini_host_003",
                 }
             if cell == openai_host_realization_cell:
-                assert row["current_verdict"] == "insufficient"
+                if heading == "Better Host-Specialized Realization":
+                    assert row["current_verdict"] == "candidate_positive"
+                else:
+                    assert row["current_verdict"] == "insufficient"
                 assert supporting_ids(row["supporting_paired_episode_sets"]) == {
-                    "pair_openai_host_001"
+                    "pair_openai_host_001",
+                    "pair_openai_host_002",
+                    "pair_openai_host_003",
                 }
             if cell == gemini_thrash_cell:
                 if heading in {"Reduced Thrashing", "Better Branch Discipline"}:
@@ -878,7 +933,9 @@ def test_results_surfaces_are_preseeded_for_all_catalog_cells_and_follow_fairnes
         if cell == openai_host_realization_cell:
             assert row["equal_value_gate"] == "passed"
             assert supporting_ids(row["supporting_paired_episode_sets"]) == {
-                "pair_openai_host_001"
+                "pair_openai_host_001",
+                "pair_openai_host_002",
+                "pair_openai_host_003",
             }
 
     host_split_text = read(HOST_SPLIT_TABLE_PATH)
@@ -927,7 +984,9 @@ def test_results_surfaces_are_preseeded_for_all_catalog_cells_and_follow_fairnes
                 assert row["current_verdict"] == "insufficient"
             if (row["scenario_id"], host_family) == openai_host_realization_cell:
                 assert supporting_ids(row["supporting_paired_episode_sets"]) == {
-                    "pair_openai_host_001"
+                    "pair_openai_host_001",
+                    "pair_openai_host_002",
+                    "pair_openai_host_003",
                 }
                 assert row["current_verdict"] == "insufficient"
 
@@ -963,15 +1022,21 @@ def test_evidence_note_keeps_mediation_blocked_with_reference_gemini_and_openai_
         "`scenario_host_gemini_01` / `gemini` now has `candidate_positive` signal "
         "for better host-specialized realization"
     ) in text
-    assert "reference and Gemini now carry the host-realization `candidate_positive` cells." in text
     assert (
-        "One OpenAI-only mediation-specific host-realization pair is now recorded for "
-        "`scenario_host_openai_01`, but it remains insufficient because it is only one "
-        "pair on one host."
+        "reference, Gemini, and OpenAI now carry the host-realization "
+        "`candidate_positive` cells."
+    ) in text
+    assert (
+        "Three OpenAI-only mediation-specific host-realization pairs are now recorded "
+        "for `scenario_host_openai_01`."
+    ) in text
+    assert (
+        "`scenario_host_openai_01` / `openai` now has `candidate_positive` signal "
+        "for better host-specialized realization"
     ) in text
     assert (
         "reference and Gemini remain the only host-realization `candidate_positive` cells."
-        in text
+        not in text
     )
     assert (
         "`scenario_thrash_reference_01` / `reference` now has `candidate_positive` "

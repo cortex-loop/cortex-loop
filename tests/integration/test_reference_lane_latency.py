@@ -10,14 +10,8 @@ import time
 from dataclasses import dataclass
 from pathlib import Path
 
-from cortex.core.commitments import (
-    CommitmentStatus,
-)
 from cortex.drivers.reference_host_commitment import evaluate_reference_host_commitment
-from cortex.drivers.reference_host_neutral import (
-    NeutralContinuationCode,
-    evaluate_reference_host_neutral,
-)
+from cortex.drivers.reference_host_neutral import evaluate_reference_host_neutral
 from cortex.sre.allocation import AllocationScore, AllocationScorecard
 from cortex.sre.families import SoftControlFamily
 from cortex.sre.policy import neutral_dominance_decision
@@ -25,8 +19,14 @@ from tests.integration._reference_lane_latency_evidence import (
     serialize_reference_lane_latency_snapshot,
 )
 from tests.integration._reference_lane import (
+    assert_reference_candidate_bearing_without_verdict,
+    assert_reference_cheap_path_neutral_allowed,
+    assert_reference_full_commitment_certified,
     candidate_bearing_event,
     cheap_path_event,
+    evaluate_reference_candidate_bearing_case,
+    evaluate_reference_cheap_path_case,
+    evaluate_reference_full_commitment_case,
     full_commitment_event,
     provenance_manifest_for,
     reference_environment_handle,
@@ -120,9 +120,16 @@ def collect_reference_lane_latency() -> LatencyEvidenceSnapshot:
         activation_threshold=0.1,
     )
 
-    _assert_cheap_path()
-    _assert_candidate_bearing_path(environment_handle)
-    _assert_full_commitment_path(environment_handle, provenance_manifest)
+    assert_reference_cheap_path_neutral_allowed(evaluate_reference_cheap_path_case())
+    assert_reference_candidate_bearing_without_verdict(
+        evaluate_reference_candidate_bearing_case()
+    )
+    assert_reference_full_commitment_certified(
+        evaluate_reference_full_commitment_case(
+            commitment_id="commit-1",
+            provenance_reference_id="artifact-1",
+        )
+    )
     _assert_neutral_sre_path(scorecard)
 
     rows = (
@@ -255,34 +262,6 @@ def _percentile(samples: list[float], percentile: float) -> float:
     ordered = sorted(samples)
     index = max(0, math.ceil(percentile * len(ordered)) - 1)
     return ordered[index]
-
-
-def _assert_cheap_path() -> None:
-    result = evaluate_reference_host_neutral(*cheap_path_event())
-    assert result.neutral_decision.allowed is True
-    assert result.neutral_decision.result_code is NeutralContinuationCode.NEUTRAL_ALLOWED
-
-
-def _assert_candidate_bearing_path(environment_handle: object) -> None:
-    result = evaluate_reference_host_commitment(
-        *candidate_bearing_event(),
-        environment_handle=environment_handle,
-    )
-    assert result.candidate is not None
-    assert result.verdict is None
-
-
-def _assert_full_commitment_path(
-    environment_handle: object,
-    provenance_manifest: object,
-) -> None:
-    result = evaluate_reference_host_commitment(
-        *full_commitment_event(commitment_id="commit-1"),
-        environment_handle=environment_handle,
-        provenance_manifest=provenance_manifest,
-    )
-    assert result.verdict is not None
-    assert result.verdict.status is CommitmentStatus.CERTIFIED
 
 
 def _assert_neutral_sre_path(scorecard: AllocationScorecard) -> None:

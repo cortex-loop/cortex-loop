@@ -1,0 +1,1414 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cortex: Boundary, Gaps, North Star</title>
+<style>
+  :root {
+    --bg: #f4efe7;
+    --bg-alt: #efe6da;
+    --panel: rgba(255, 252, 247, 0.92);
+    --ink: #18202b;
+    --muted: #5f635d;
+    --line: #d9c7b3;
+    --shadow: rgba(24, 32, 43, 0.08);
+
+    --current: #17624d;
+    --current-bg: rgba(23, 98, 77, 0.10);
+    --current-line: rgba(23, 98, 77, 0.28);
+
+    --gap: #9a5a08;
+    --gap-bg: rgba(154, 90, 8, 0.10);
+    --gap-line: rgba(154, 90, 8, 0.26);
+
+    --north: #244bb8;
+    --north-bg: rgba(36, 75, 184, 0.10);
+    --north-line: rgba(36, 75, 184, 0.24);
+
+    --blocked: #982c2c;
+    --blocked-bg: rgba(152, 44, 44, 0.10);
+    --blocked-line: rgba(152, 44, 44, 0.25);
+
+    --runtime-off: #6650a4;
+    --runtime-off-bg: rgba(102, 80, 164, 0.10);
+    --runtime-off-line: rgba(102, 80, 164, 0.24);
+
+    --typed: #476a95;
+    --typed-bg: rgba(71, 106, 149, 0.10);
+    --typed-line: rgba(71, 106, 149, 0.24);
+
+    --font-sans: "Avenir Next", "Segoe UI", "Helvetica Neue", sans-serif;
+    --font-serif: "Iowan Old Style", "Palatino Linotype", "Book Antiqua", serif;
+    --font-mono: "IBM Plex Mono", "SFMono-Regular", "Menlo", monospace;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    font-family: var(--font-sans);
+    color: var(--ink);
+    background:
+      radial-gradient(circle at top left, rgba(36, 75, 184, 0.08), transparent 28%),
+      radial-gradient(circle at top right, rgba(23, 98, 77, 0.08), transparent 30%),
+      linear-gradient(180deg, var(--bg), var(--bg-alt));
+    min-height: 100vh;
+  }
+
+  .page {
+    max-width: 1640px;
+    margin: 0 auto;
+    padding: 36px 20px 28px;
+  }
+
+  .hero {
+    margin-bottom: 22px;
+    padding: 28px 30px;
+    border: 1px solid var(--line);
+    border-radius: 24px;
+    background: rgba(255, 252, 247, 0.82);
+    box-shadow: 0 20px 60px var(--shadow);
+    backdrop-filter: blur(10px);
+  }
+
+  .hero-eyebrow {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 10px;
+  }
+
+  .hero h1 {
+    margin: 0 0 10px;
+    font-family: var(--font-serif);
+    font-size: clamp(34px, 4vw, 56px);
+    font-weight: 500;
+    line-height: 1.02;
+    letter-spacing: -0.03em;
+  }
+
+  .hero p {
+    max-width: 980px;
+    margin: 0;
+    font-size: 16px;
+    line-height: 1.7;
+    color: var(--muted);
+  }
+
+  .support-note {
+    margin-top: 18px;
+    padding: 18px 20px;
+    border-radius: 18px;
+    border: 1px solid var(--line);
+    background: rgba(244, 239, 231, 0.78);
+    display: grid;
+    gap: 10px;
+  }
+
+  .support-note strong {
+    color: var(--ink);
+  }
+
+  .note-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+  }
+
+  .note-card {
+    padding: 12px 14px;
+    border-radius: 14px;
+    background: rgba(255, 252, 247, 0.75);
+    border: 1px solid var(--line);
+  }
+
+  .note-card .label {
+    display: block;
+    margin-bottom: 6px;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.10em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  .note-card .value {
+    font-size: 14px;
+    line-height: 1.5;
+  }
+
+  .tracker-strip {
+    margin: 16px 0 20px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .biology-strip {
+    margin: 0 0 20px;
+    padding: 18px 18px 16px;
+    border: 1px solid var(--line);
+    border-radius: 22px;
+    background: rgba(255, 252, 247, 0.80);
+    box-shadow: 0 14px 40px var(--shadow);
+  }
+
+  .biology-strip h2 {
+    margin: 0 0 8px;
+    font-family: var(--font-serif);
+    font-size: 24px;
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+  }
+
+  .biology-strip p {
+    margin: 0 0 14px;
+    color: var(--muted);
+    font-size: 14px;
+    line-height: 1.65;
+    max-width: 980px;
+  }
+
+  .biology-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px;
+  }
+
+  .biology-card {
+    padding: 12px 14px;
+    border-radius: 16px;
+    border: 1px solid var(--line);
+    background: rgba(255, 252, 247, 0.78);
+  }
+
+  .biology-card[open] {
+    box-shadow: inset 0 0 0 1px rgba(24, 32, 43, 0.04);
+  }
+
+  .biology-card summary {
+    padding: 0;
+  }
+
+  .biology-summary {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .biology-card .mech {
+    display: block;
+    margin-bottom: 6px;
+    font-size: 13px;
+    font-weight: 700;
+    line-height: 1.35;
+  }
+
+  .biology-card .home {
+    display: block;
+    font-size: 12px;
+    color: var(--muted);
+    line-height: 1.5;
+  }
+
+  .biology-card .details-body {
+    margin-top: 12px;
+    padding: 12px 0 0;
+    border-top: 1px solid rgba(217, 199, 179, 0.65);
+    background: transparent;
+  }
+
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    border-radius: 999px;
+    border: 1px solid var(--line);
+    background: rgba(255, 252, 247, 0.76);
+    font-size: 12px;
+    color: var(--muted);
+  }
+
+  .dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 999px;
+    display: inline-block;
+  }
+
+  .panels {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 16px;
+  }
+
+  .panel {
+    border-radius: 24px;
+    padding: 22px 18px 18px;
+    border: 1px solid var(--line);
+    background: var(--panel);
+    box-shadow: 0 14px 42px var(--shadow);
+    backdrop-filter: blur(8px);
+  }
+
+  .panel.current { border-color: var(--current-line); }
+  .panel.gap { border-color: var(--gap-line); }
+  .panel.north { border-color: var(--north-line); }
+
+  .panel-head {
+    padding-bottom: 14px;
+    margin-bottom: 14px;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .panel-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 10px;
+    padding: 6px 10px;
+    border-radius: 999px;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.10em;
+  }
+
+  .panel.current .panel-tag {
+    color: var(--current);
+    background: var(--current-bg);
+    border: 1px solid var(--current-line);
+  }
+
+  .panel.gap .panel-tag {
+    color: var(--gap);
+    background: var(--gap-bg);
+    border: 1px solid var(--gap-line);
+  }
+
+  .panel.north .panel-tag {
+    color: var(--north);
+    background: var(--north-bg);
+    border: 1px solid var(--north-line);
+  }
+
+  .panel h2 {
+    margin: 0 0 8px;
+    font-family: var(--font-serif);
+    font-size: 28px;
+    line-height: 1.08;
+    letter-spacing: -0.02em;
+  }
+
+  .panel p {
+    margin: 0;
+    color: var(--muted);
+    font-size: 14px;
+    line-height: 1.7;
+  }
+
+  .cards {
+    display: grid;
+    gap: 12px;
+    margin-top: 10px;
+  }
+
+  details.card {
+    border-radius: 18px;
+    border: 1px solid var(--line);
+    background: rgba(255, 252, 247, 0.84);
+    overflow: hidden;
+  }
+
+  details.card[open] {
+    box-shadow: inset 0 0 0 1px rgba(24, 32, 43, 0.04);
+  }
+
+  .card.current-card { border-color: var(--current-line); }
+  .card.gap-card { border-color: var(--gap-line); }
+  .card.north-card { border-color: var(--north-line); }
+  .card.blocked-card { border-color: var(--blocked-line); }
+  .card.runtime-off-card { border-color: var(--runtime-off-line); }
+  .card.typed-card { border-color: var(--typed-line); }
+
+  summary {
+    list-style: none;
+    cursor: pointer;
+    padding: 16px 16px 14px;
+  }
+
+  summary::-webkit-details-marker { display: none; }
+
+  .card-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .card-title {
+    margin: 0;
+    font-size: 15px;
+    font-weight: 700;
+    line-height: 1.35;
+  }
+
+  .card-subtitle {
+    margin-top: 6px;
+    font-size: 12px;
+    line-height: 1.5;
+    color: var(--muted);
+  }
+
+  .badge {
+    white-space: nowrap;
+    padding: 6px 10px;
+    border-radius: 999px;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    border: 1px solid var(--line);
+  }
+
+  .badge.landed {
+    color: var(--current);
+    background: var(--current-bg);
+    border-color: var(--current-line);
+  }
+
+  .badge.typed {
+    color: var(--typed);
+    background: var(--typed-bg);
+    border-color: var(--typed-line);
+  }
+
+  .badge.runtime-off {
+    color: var(--runtime-off);
+    background: var(--runtime-off-bg);
+    border-color: var(--runtime-off-line);
+  }
+
+  .badge.deferred {
+    color: var(--gap);
+    background: var(--gap-bg);
+    border-color: var(--gap-line);
+  }
+
+  .badge.blocked {
+    color: var(--blocked);
+    background: var(--blocked-bg);
+    border-color: var(--blocked-line);
+  }
+
+  .badge.north {
+    color: var(--north);
+    background: var(--north-bg);
+    border-color: var(--north-line);
+  }
+
+  .details-body {
+    padding: 0 16px 16px;
+    border-top: 1px solid rgba(217, 199, 179, 0.65);
+    background:
+      linear-gradient(180deg, rgba(255, 252, 247, 0.98), rgba(249, 244, 236, 0.96));
+  }
+
+  .detail-row {
+    padding-top: 12px;
+  }
+
+  .detail-label {
+    display: block;
+    margin-bottom: 6px;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.10em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  .detail-text {
+    margin: 0;
+    font-size: 13px;
+    line-height: 1.68;
+    color: var(--ink);
+  }
+
+  .footer-note {
+    margin-top: 18px;
+    padding: 16px 18px;
+    border: 1px solid var(--line);
+    border-radius: 18px;
+    background: rgba(255, 252, 247, 0.76);
+    color: var(--muted);
+    font-size: 13px;
+    line-height: 1.7;
+  }
+
+  @media (max-width: 1200px) {
+    .panels {
+      grid-template-columns: 1fr;
+    }
+
+    .biology-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .note-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
+</head>
+<body>
+<main class="page">
+  <section class="hero">
+    <div class="hero-eyebrow">Support Surface / Accepted Baseline 4bb7fbf</div>
+    <h1>Cortex: Boundary, Gaps, North Star</h1>
+    <p>
+      This companion visual is for tracking where Cortex is now, what product target it is
+      ultimately trying to reach, which brain-inspired mechanisms Cortex has already stolen so far,
+      and which gap programs would move it there without silently overriding the packet or the
+      accepted closure boundary.
+    </p>
+
+    <div class="support-note">
+      <strong>
+        This folder tracks three separate things: current accepted repo truth, the north-star
+        product target, and the lawful gap programs required to move from the first toward the second.
+      </strong>
+      <div class="note-grid">
+        <div class="note-card">
+          <span class="label">Support Surface</span>
+          <div class="value">
+            This is a support surface. It is not active authority and it does not override
+            the packet, the implementation master plan, or the implementation status note.
+          </div>
+        </div>
+        <div class="note-card">
+          <span class="label">Accepted Factual Baseline</span>
+          <div class="value">
+            Closure-train branch <code>codex/j0-burden-axis-reaudit</code> at
+            <code>4bb7fbf</code>.
+          </div>
+        </div>
+        <div class="note-card">
+          <span class="label">Analogy Rule</span>
+          <div class="value">
+            Biological language is analogy only. It is useful for orientation, but it is not
+            current committed roadmap and not architecture authority.
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="tracker-strip">
+    <div class="chip"><span class="dot" style="background: var(--current);"></span>Current accepted repo truth</div>
+    <div class="chip"><span class="dot" style="background: var(--gap);"></span>Lawful gap programs</div>
+    <div class="chip"><span class="dot" style="background: var(--north);"></span>North-star product target</div>
+    <div class="chip"><span class="dot" style="background: var(--blocked);"></span>Blockedness remains explicit</div>
+  </div>
+
+  <section class="biology-strip">
+    <h2>Biology Tracker: What Cortex Has Stolen So Far</h2>
+    <p>
+      This is the biology-facing scan line for the page. It shows which brain-inspired mechanisms
+      already have real software homes in the accepted closure baseline, which ones exist only as
+      narrow or carrier-shaped surfaces, and which ones remain explicitly deferred or runtime-off.
+    </p>
+    <div class="biology-grid">
+      <details class="biology-card" open>
+        <summary>
+          <div class="biology-summary">
+            <div>
+              <span class="mech">Thalamic relay / routing</span>
+              <span class="home">Drivers + dispatch</span>
+            </div>
+            <span class="badge landed">Landed</span>
+          </div>
+        </summary>
+        <div class="details-body">
+          <div class="detail-row">
+            <span class="detail-label">What we've stolen so far</span>
+            <p class="detail-text">Typed host observation/binding and lane routing exist across reference, Gemini, and OpenAI. Cortex already has a real routing-and-normalization layer rather than only a metaphor.</p>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">What is still partial</span>
+            <p class="detail-text">The relay is still repo- and evidence-shaped rather than a live ingress of real host traffic.</p>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">What remains north-star only</span>
+            <p class="detail-text">A live product shell where real lifecycle events continuously feed the rest of the system.</p>
+          </div>
+        </div>
+      </details>
+      <details class="biology-card">
+        <summary>
+          <div class="biology-summary">
+            <div>
+              <span class="mech">Neurochemical modulation</span>
+              <span class="home">Core commitment / provenance / contradiction boundary</span>
+            </div>
+            <span class="badge landed">Landed</span>
+          </div>
+        </summary>
+        <div class="details-body">
+          <div class="detail-row">
+            <span class="detail-label">What we've stolen so far</span>
+            <p class="detail-text">Core already acts like a constraint/modulation layer around trustworthy commitment handling: extraction, certification, provenance, contradiction preservation, and blockedness are real and load-bearing.</p>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">What is still partial</span>
+            <p class="detail-text">This is not a graded confidence court and should not silently become one.</p>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">What remains north-star only</span>
+            <p class="detail-text">Any richer modulation-like support must still remain subordinate to the packet boundary rather than overriding certification truth.</p>
+          </div>
+        </div>
+      </details>
+      <details class="biology-card">
+        <summary>
+          <div class="biology-summary">
+            <div>
+              <span class="mech">dlPFC planning / continuity</span>
+              <span class="home">SRE goal continuity and branch carriers</span>
+            </div>
+            <span class="badge typed">Typed Carrier</span>
+          </div>
+        </summary>
+        <div class="details-body">
+          <div class="detail-row">
+            <span class="detail-label">What we've stolen so far</span>
+            <p class="detail-text">Cortex already has lawful goal continuity and branch-control surfaces in SRE. The planning/continuity role is explicitly represented rather than missing entirely.</p>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">What is still partial</span>
+            <p class="detail-text">These are still more carrier-shaped than live computed loop behavior.</p>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">What remains north-star only</span>
+            <p class="detail-text">Live goal-stack maintenance, branch continuity, and multi-agent planning updates driven by runtime outcomes.</p>
+          </div>
+        </div>
+      </details>
+      <details class="biology-card">
+        <summary>
+          <div class="biology-summary">
+            <div>
+              <span class="mech">ACC uncertainty / conflict</span>
+              <span class="home">SRE uncertainty carriers plus brake inputs</span>
+            </div>
+            <span class="badge typed">Typed Carrier</span>
+          </div>
+        </summary>
+        <div class="details-body">
+          <div class="detail-row">
+            <span class="detail-label">What we've stolen so far</span>
+            <p class="detail-text">Uncertainty is represented explicitly and already matters to brake/policy seams. Cortex has an uncertainty role, not only implicit haze.</p>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">What is still partial</span>
+            <p class="detail-text">The role is not yet a fully recurrent computed conflict-monitoring loop.</p>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">What remains north-star only</span>
+            <p class="detail-text">Computed aggregation, propagation, and outcome-conditioned conflict updates across a live executive loop.</p>
+          </div>
+        </div>
+      </details>
+      <details class="biology-card">
+        <summary>
+          <div class="biology-summary">
+            <div>
+              <span class="mech">IFG-preSMA-STN brake</span>
+              <span class="home">SRE brake policy</span>
+            </div>
+            <span class="badge landed">Landed</span>
+          </div>
+        </summary>
+        <div class="details-body">
+          <div class="detail-row">
+            <span class="detail-label">What we've stolen so far</span>
+            <p class="detail-text">Real advisory brake dynamics exist now with quiescent, guarded, and latched policy semantics.</p>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">What is still partial</span>
+            <p class="detail-text">Brake is not yet enforcing live downstream action boundaries in a committed runtime loop.</p>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">What remains north-star only</span>
+            <p class="detail-text">Feedback-coupled inhibition where brake meaningfully shapes later control and lawful execution.</p>
+          </div>
+        </div>
+      </details>
+      <details class="biology-card">
+        <summary>
+          <div class="biology-summary">
+            <div>
+              <span class="mech">Corticostriatal / BG gating</span>
+              <span class="home">Neutral dominance, mode/gating, opportunity pricing</span>
+            </div>
+            <span class="badge typed">Typed Carrier</span>
+          </div>
+        </summary>
+        <div class="details-body">
+          <div class="detail-row">
+            <span class="detail-label">What we've stolen so far</span>
+            <p class="detail-text">Cortex already has real arbitration and gating-like behavior in neutral dominance and host-native opportunity policy.</p>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">What is still partial</span>
+            <p class="detail-text">There is no accepted independent reward-history gatekeeper yet.</p>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">What remains north-star only</span>
+            <p class="detail-text">Closed go/no-go loops where outcome history shapes later action gating without violating Core truth boundaries.</p>
+          </div>
+        </div>
+      </details>
+      <details class="biology-card">
+        <summary>
+          <div class="biology-summary">
+            <div>
+              <span class="mech">vmPFC-OFC risk / value</span>
+              <span class="home">Burden terms and limited control-cost surfaces</span>
+            </div>
+            <span class="badge typed">Typed Carrier</span>
+          </div>
+        </summary>
+        <div class="details-body">
+          <div class="detail-row">
+            <span class="detail-label">What we've stolen so far</span>
+            <p class="detail-text">Cost and burden are already visible in limited forms, including host-friction pricing and AUX burden surfaces.</p>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">What is still partial</span>
+            <p class="detail-text">There is not yet a rich live consequence-evaluation loop shaping runtime control.</p>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">What remains north-star only</span>
+            <p class="detail-text">Broader value/risk integration that stays claim-conservative and subordinate to Core and SRE law.</p>
+          </div>
+        </div>
+      </details>
+      <details class="biology-card">
+        <summary>
+          <div class="biology-summary">
+            <div>
+              <span class="mech">Association cortex / geometry</span>
+              <span class="home">AUX geometry and evaluation</span>
+            </div>
+            <span class="badge runtime-off">Runtime-Off</span>
+          </div>
+        </summary>
+        <div class="details-body">
+          <div class="detail-row">
+            <span class="detail-label">What we've stolen so far</span>
+            <p class="detail-text">Geometry is already architecturally present and packet-visible as an AUX support surface.</p>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">What is still partial</span>
+            <p class="detail-text">It is evaluation-first and runtime-off-by-default by design.</p>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">What remains north-star only</span>
+            <p class="detail-text">Optional runtime support geometry, but only if activation is explicitly earned from a stable live loop.</p>
+          </div>
+        </div>
+      </details>
+      <details class="biology-card">
+        <summary>
+          <div class="biology-summary">
+            <div>
+              <span class="mech">Hippocampal replay / consolidation</span>
+              <span class="home">AUX offline consolidation and priors</span>
+            </div>
+            <span class="badge deferred">Deferred</span>
+          </div>
+        </summary>
+        <div class="details-body">
+          <div class="detail-row">
+            <span class="detail-label">What we've stolen so far</span>
+            <p class="detail-text">The role is explicitly reserved in the architecture rather than being forgotten, and the deferral is intentional.</p>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">What is still partial</span>
+            <p class="detail-text">No active consolidation, priors, or calibration publication are part of the current justified boundary.</p>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">What remains north-star only</span>
+            <p class="detail-text">Cross-session support learning, priors, and calibration publication built from a stable live loop.</p>
+          </div>
+        </div>
+      </details>
+    </div>
+  </section>
+
+  <section class="panels">
+    <article class="panel current">
+      <div class="panel-head">
+        <div class="panel-tag"><span class="dot" style="background: var(--current);"></span>Accepted truth</div>
+        <h2>Current Justified Boundary</h2>
+        <p>
+          What is already landed at the accepted closure baseline. This panel is for current accepted
+          repo truth, not for future desire. It is also the fastest answer to "which mechanisms have
+          we actually stolen so far?"
+        </p>
+      </div>
+      <div class="cards">
+        <details class="card current-card" open>
+          <summary>
+            <div class="card-head">
+              <div>
+                <div class="card-title">Truth-preserving integrity core</div>
+                <div class="card-subtitle">Modulation / truth boundary, not a full product shell</div>
+              </div>
+              <span class="badge landed">Landed</span>
+            </div>
+          </summary>
+          <div class="details-body">
+            <div class="detail-row">
+              <span class="detail-label">Current accepted state</span>
+              <p class="detail-text">The tiny integrity core is landed: typed substrate, commitment carriers, dispatch, certification, provenance helpers, and contradiction-preserving evidence artifacts.</p>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">Evidence basis</span>
+              <p class="detail-text">Closure status note plus the active Core packet.</p>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">North-star target</span>
+              <p class="detail-text">Keep Core small while a live product and richer executive layers grow around it.</p>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">What is not yet true</span>
+              <p class="detail-text">The landed core is not itself a live runtime, a full cortex, or an authorization to move weighted executive policy into Core.</p>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">Smallest lawful next opening move</span>
+              <p class="detail-text">Open later runtime or executive-loop programs around Core rather than expanding Core into a second executive.</p>
+            </div>
+          </div>
+        </details>
+
+        <details class="card current-card">
+          <summary>
+            <div class="card-head">
+              <div>
+                <div class="card-title">Reference executive control substrate</div>
+                <div class="card-subtitle">Neutral-by-default SRE policy seams are real and landed</div>
+              </div>
+              <span class="badge landed">Landed</span>
+            </div>
+          </summary>
+          <div class="details-body">
+            <div class="detail-row">
+              <span class="detail-label">Current accepted state</span>
+              <p class="detail-text">Executive state, neutral dominance, uncertainty and brake, goal continuity and branch carriers, and host-native opportunity specialization are all landed reference surfaces.</p>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">Evidence basis</span>
+              <p class="detail-text">Closure status note and the active SRE packet.</p>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">North-star target</span>
+              <p class="detail-text">A richer computed executive loop built on top of the same Core/SRE boundary law.</p>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">What is not yet true</span>
+              <p class="detail-text">The current SRE is not yet the full live product loop with computed state updates from runtime outcomes.</p>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">Smallest lawful next opening move</span>
+              <p class="detail-text">Open an explicit executive-loop computation program instead of calling the current landed SRE a failure.</p>
+            </div>
+          </div>
+        </details>
+
+        <details class="card current-card">
+          <summary>
+            <div class="card-head">
+              <div>
+                <div class="card-title">Three host vertical slices</div>
+                <div class="card-subtitle">Reference, Gemini, and OpenAI typed observation/binding plus commitment-path work</div>
+              </div>
+              <span class="badge landed">Landed</span>
+            </div>
+          </summary>
+          <div class="details-body">
+            <div class="detail-row">
+              <span class="detail-label">Current accepted state</span>
+              <p class="detail-text">Reference, Gemini, and OpenAI host verticals are landed for observe/bind and commitment-path work, with neutral-only slices also present.</p>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">Evidence basis</span>
+              <p class="detail-text">Closure status note and implementation master plan closeout.</p>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">North-star target</span>
+              <p class="detail-text">A live product shell that uses the host-native substrates rather than replacing them.</p>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">What is not yet true</span>
+              <p class="detail-text">These landed host surfaces are not themselves a committed live runtime or a complete product shell.</p>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">Smallest lawful next opening move</span>
+              <p class="detail-text">Open a product-shell program around one host and one entry-point surface, using the landed substrates as the base.</p>
+            </div>
+          </div>
+        </details>
+
+        <details class="card current-card">
+          <summary>
+            <div class="card-head">
+              <div>
+                <div class="card-title">Contradiction-preserving evidence harness</div>
+                <div class="card-subtitle">Proof artifacts, packet publication, and comparative evidence surfaces are real</div>
+              </div>
+              <span class="badge landed">Landed</span>
+            </div>
+          </summary>
+          <div class="details-body">
+            <div class="detail-row">
+              <span class="detail-label">Current accepted state</span>
+              <p class="detail-text">Artifact schemas, truthful-withheld packet publication, the contradiction-preserving eval harness, and measured reference packet examples are landed.</p>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">Evidence basis</span>
+              <p class="detail-text">Closure status note and verification/evidence docs.</p>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">North-star target</span>
+              <p class="detail-text">Keep the same evidence discipline while a live product loop and future experimental decisions become more measurable.</p>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">What is not yet true</span>
+              <p class="detail-text">Evidence strength does not by itself mean the repo has already opened every future product program.</p>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">Smallest lawful next opening move</span>
+              <p class="detail-text">Use this harness to justify future programs explicitly instead of letting aspiration silently become roadmap truth.</p>
+            </div>
+          </div>
+        </details>
+
+        <details class="card runtime-off-card">
+          <summary>
+            <div class="card-head">
+              <div>
+                <div class="card-title">AUX support surfaces</div>
+                <div class="card-subtitle">Support-only, claim-conservative, and intentionally staged</div>
+              </div>
+              <span class="badge runtime-off">Runtime-Off</span>
+            </div>
+          </summary>
+          <div class="details-body">
+            <div class="detail-row">
+              <span class="detail-label">Current accepted state</span>
+              <p class="detail-text">AUX MVP support surfaces are landed, geometry is evaluation-first and runtime-off-by-default, and offline consolidation remains deferred.</p>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">Evidence basis</span>
+              <p class="detail-text">Active AUX packet plus closure status note.</p>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">North-star target</span>
+              <p class="detail-text">Optional runtime support geometry and later support-memory programs only if activation is explicitly earned.</p>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">What is not yet true</span>
+              <p class="detail-text">Runtime geometry is not active and offline consolidation is not part of the current committed MVP boundary.</p>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">Smallest lawful next opening move</span>
+              <p class="detail-text">Keep AUX evaluation-first until a stable live loop exists and explicit activation criteria are written down.</p>
+            </div>
+          </div>
+        </details>
+
+        <details class="card blocked-card">
+          <summary>
+            <div class="card-head">
+              <div>
+                <div class="card-title">Experimental mediation</div>
+                <div class="card-subtitle">Visible evidence exists, but implementation remains blocked</div>
+              </div>
+              <span class="badge blocked">Blocked On Evidence</span>
+            </div>
+          </summary>
+          <div class="details-body">
+            <div class="detail-row">
+              <span class="detail-label">Current accepted state</span>
+              <p class="detail-text">Mediation remains unstarted and not justified. Cell-level signal exists on several axes, but package-level evidence is still insufficient.</p>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">Evidence basis</span>
+              <p class="detail-text">Mediation justification note and accepted burden/evidence closeout.</p>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">North-star target</span>
+              <p class="detail-text">Evidence-earned experimental mediation that remains sparse, claim-conservative, and off-by-default unless justified.</p>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">What is not yet true</span>
+              <p class="detail-text">There is no accepted mediation implementation program, and no current committed roadmap says to start one now.</p>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">Smallest lawful next opening move</span>
+              <p class="detail-text">Continue evidence collection only; broaden package-level evidence before any implementation seam is proposed.</p>
+            </div>
+          </div>
+        </details>
+      </div>
+    </article>
+
+    <article class="panel gap">
+      <div class="panel-head">
+        <div class="panel-tag"><span class="dot" style="background: var(--gap);"></span>Program map</div>
+        <h2>Gap Programs</h2>
+        <p>
+          This is where impatience becomes useful. Each card names a real product-relevant gap,
+          whether it is lawful to open now, and the smallest honest opening move.
+        </p>
+      </div>
+      <div class="cards">
+        <details class="card gap-card" open>
+          <summary>
+            <div class="card-head">
+              <div>
+                <div class="card-title">Live Runtime / Product Shell</div>
+                <div class="card-subtitle">Turn the landed architecture substrate into a live product</div>
+              </div>
+              <span class="badge deferred">Program Opening</span>
+            </div>
+          </summary>
+          <div class="details-body">
+            <div class="detail-row">
+              <span class="detail-label">Current accepted state</span>
+              <p class="detail-text">No accepted live runtime entry point or product shell exists at the current justified boundary.</p>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">Evidence basis</span>
+              <p class="detail-text">Implementation master plan closeout and closure status note.</p>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">North-star target</span>
+              <p class="detail-text">A real host-native product shell with live traffic, real lifecycle surfaces, and a preserved tiny core.</p>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">What is not yet true</span>
+              <p class="detail-text">This is not yet an active program, and no live host scope or success criteria have been committed.</p>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">Smallest lawful next opening move</span>
+              <p class="detail-text">Write a product-shell program brief for one host and one entry-point surface instead of silently treating it as the implied next seam.</p>
+            </div>
+          </div>
+        </details>
+
+        <details class="card typed-card">
+          <summary>
+            <div class="card-head">
+              <div>
+                <div class="card-title">Computed Executive Loop</div>
+                <div class="card-subtitle">Move from carrier-shaped views to computed state</div>
+              </div>
+              <span class="badge typed">Typed Carrier</span>
+            </div>
+          </summary>
+          <div class="details-body">
+            <div class="detail-row">
+              <span class="detail-label">Current accepted state</span>
+              <p class="detail-text">Reference executive views and policy seams are landed, but much of the loop is still carrier-shaped rather than product-realized computation.</p>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">Evidence basis</span>
+              <p class="detail-text">SRE packet plus current accepted code shape.</p>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">North-star target</span>
+              <p class="detail-text">Goals, uncertainty, allocation, and branch/state transitions computed from live events and outcomes.</p>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">What is not yet true</span>
+              <p class="detail-text">No accepted live event-to-state computation contract has been opened yet.</p>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">Smallest lawful next opening move</span>
+              <p class="detail-text">Define one event-to-state computation slice after the product-shell contract is fixed.</p>
+            </div>
+          </div>
+        </details>
+
+        <details class="card gap-card">
+          <summary>
+            <div class="card-head">
+              <div>
+                <div class="card-title">Closed Feedback / Enforcement</div>
+                <div class="card-subtitle">Make outcomes matter later and make brake more than advisory where lawful</div>
+              </div>
+              <span class="badge deferred">Program Opening</span>
+            </div>
+          </summary>
+          <div class="details-body">
+            <div class="detail-row">
+              <span class="detail-label">Current accepted state</span>
+              <p class="detail-text">Brake policy is real, but enforcing brake behavior and closed-loop outcome feedback are not committed product behavior.</p>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">Evidence basis</span>
+              <p class="detail-text">Active SRE packet and closure status note.</p>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">North-star target</span>
+              <p class="detail-text">Execution outcomes update later control, and lawful brake states can actually curtail downstream action.</p>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">What is not yet true</span>
+              <p class="detail-text">There is no accepted runtime outcome loop or enforcement boundary yet.</p>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">Smallest lawful next opening move</span>
+              <p class="detail-text">Specify one outcome-to-state feedback carrier and one enforcement boundary that keeps the certification firewall intact.</p>
+            </div>
+          </div>
+        </details>
+
+        <details class="card runtime-off-card">
+          <summary>
+            <div class="card-head">
+              <div>
+                <div class="card-title">Runtime AUX Activation</div>
+                <div class="card-subtitle">Only if activation is earned, not because the analogy is attractive</div>
+              </div>
+              <span class="badge runtime-off">Runtime-Off</span>
+            </div>
+          </summary>
+          <div class="details-body">
+            <div class="detail-row">
+              <span class="detail-label">Current accepted state</span>
+              <p class="detail-text">Geometry remains evaluation-first and runtime-off-by-default. Offline consolidation remains deferred.</p>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">Evidence basis</span>
+              <p class="detail-text">Active AUX packet and closure status note.</p>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">North-star target</span>
+              <p class="detail-text">Runtime support geometry that improves support quality without becoming a hidden truth court.</p>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">What is not yet true</span>
+              <p class="detail-text">No current committed roadmap activates runtime geometry now.</p>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">Smallest lawful next opening move</span>
+              <p class="detail-text">Define activation entry criteria and keep evaluation evidence separate from runtime claims.</p>
+            </div>
+          </div>
+        </details>
+
+        <details class="card gap-card">
+          <summary>
+            <div class="card-head">
+              <div>
+                <div class="card-title">Offline Consolidation</div>
+                <div class="card-subtitle">Priors, calibration, and support-memory publication</div>
+              </div>
+              <span class="badge deferred">Deferred</span>
+            </div>
+          </summary>
+          <div class="details-body">
+            <div class="detail-row">
+              <span class="detail-label">Current accepted state</span>
+              <p class="detail-text">Offline consolidation is explicitly deferred until the active core/SRE loop is stable.</p>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">Evidence basis</span>
+              <p class="detail-text">Active AUX packet and closure status note.</p>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">North-star target</span>
+              <p class="detail-text">Cross-session support learning, priors, and calibration publication that remain cost-visible and claim-conservative.</p>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">What is not yet true</span>
+              <p class="detail-text">No stable live loop, support-write contract, or publication surfaces are committed yet.</p>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">Smallest lawful next opening move</span>
+              <p class="detail-text">Define publication/write surfaces only after a live loop exists.</p>
+            </div>
+          </div>
+        </details>
+
+        <details class="card blocked-card">
+          <summary>
+            <div class="card-head">
+              <div>
+                <div class="card-title">Mediation Evidence / Justification</div>
+                <div class="card-subtitle">The only lawful path toward future mediation is still evidence-first</div>
+              </div>
+              <span class="badge blocked">Evidence-Only</span>
+            </div>
+          </summary>
+          <div class="details-body">
+            <div class="detail-row">
+              <span class="detail-label">Current accepted state</span>
+              <p class="detail-text">Cell-level evidence exists on several axes, but package-level justification is still insufficient and mediation remains blocked.</p>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">Evidence basis</span>
+              <p class="detail-text">Mediation justification note and accepted evidence/burden closeout.</p>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">North-star target</span>
+              <p class="detail-text">A later experimental mediation layer only if broader package-level evidence justifies it.</p>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">What is not yet true</span>
+              <p class="detail-text">There is no active mediation implementation program, and this panel does not promote one by inertia.</p>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">Smallest lawful next opening move</span>
+              <p class="detail-text">Broaden the evidence base beyond the current narrow scenario families; do not open implementation from blocked evidence.</p>
+            </div>
+          </div>
+        </details>
+      </div>
+    </article>
+
+    <article class="panel north">
+      <div class="panel-head">
+        <div class="panel-tag"><span class="dot" style="background: var(--north);"></span>North-star target</div>
+        <h2>North-Star Cortex</h2>
+        <p>
+          This panel keeps the longer-horizon product target visible. It is not active authority
+          and not current committed roadmap. It is a direction, not a present-tense verdict.
+        </p>
+      </div>
+      <div class="cards">
+        <details class="card north-card" open>
+          <summary>
+            <div class="card-head">
+              <div>
+                <div class="card-title">Live working product</div>
+                <div class="card-subtitle">Host-native runtime, real entry points, real product shell</div>
+              </div>
+              <span class="badge north">North-Star</span>
+            </div>
+          </summary>
+          <div class="details-body">
+            <div class="detail-row">
+              <span class="detail-label">Current accepted state</span>
+              <p class="detail-text">The accepted repo boundary is an architecture substrate, not a product shell.</p>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">Evidence basis</span>
+              <p class="detail-text">Implementation master plan closeout and closure status note.</p>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">North-star target</span>
+              <p class="detail-text">A live, host-native product where the landed substrate actually runs through a real lifecycle surface.</p>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">What is not yet true</span>
+              <p class="detail-text">This target is not yet opened as a current committed roadmap.</p>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">Smallest lawful next opening move</span>
+              <p class="detail-text">Open an explicit product program rather than treating the north-star as if it were already a committed seam queue.</p>
+            </div>
+          </div>
+        </details>
+
+        <details class="card north-card">
+          <summary>
+            <div class="card-head">
+              <div>
+                <div class="card-title">Multi-agent cortex loop</div>
+                <div class="card-subtitle">Branch, suspend, resume, merge, and continuity across live orchestration</div>
+              </div>
+              <span class="badge north">North-Star</span>
+            </div>
+          </summary>
+          <div class="details-body">
+            <div class="detail-row">
+              <span class="detail-label">Current accepted state</span>
+              <p class="detail-text">Goal and branch carriers exist, but full live multi-agent continuity is not yet a committed product capability.</p>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">Evidence basis</span>
+              <p class="detail-text">SRE packet plus the landed reference executive surfaces.</p>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">North-star target</span>
+              <p class="detail-text">A real multi-agent loop with lawful continuity, branch discipline, and host-native orchestration support.</p>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">What is not yet true</span>
+              <p class="detail-text">No live orchestration contract has yet been committed for this target.</p>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">Smallest lawful next opening move</span>
+              <p class="detail-text">Define one live continuity problem after the runtime surface is fixed.</p>
+            </div>
+          </div>
+        </details>
+
+        <details class="card north-card">
+          <summary>
+            <div class="card-head">
+              <div>
+                <div class="card-title">Computed executive state</div>
+                <div class="card-subtitle">dlPFC, ACC, and branch control as live computation</div>
+              </div>
+              <span class="badge north">North-Star</span>
+            </div>
+          </summary>
+          <div class="details-body">
+            <div class="detail-row">
+              <span class="detail-label">Current accepted state</span>
+              <p class="detail-text">The reference executive is landed, but much of the loop is still carrier-shaped rather than live computed state.</p>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">Evidence basis</span>
+              <p class="detail-text">SRE packet and current accepted code shape.</p>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">North-star target</span>
+              <p class="detail-text">Goal, uncertainty, allocation, and branch/state updates computed from real events and outcomes without collapsing the packet boundary.</p>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">What is not yet true</span>
+              <p class="detail-text">This is not yet an accepted product behavior surface.</p>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">Smallest lawful next opening move</span>
+              <p class="detail-text">Choose one computed loop slice, not a total rewrite.</p>
+            </div>
+          </div>
+        </details>
+
+        <details class="card north-card">
+          <summary>
+            <div class="card-head">
+              <div>
+                <div class="card-title">Enforcing brake and closed feedback</div>
+                <div class="card-subtitle">Plan, act, observe outcome, update, and continue</div>
+              </div>
+              <span class="badge north">North-Star</span>
+            </div>
+          </summary>
+          <div class="details-body">
+            <div class="detail-row">
+              <span class="detail-label">Current accepted state</span>
+              <p class="detail-text">Advisory brake exists; no accepted closed-loop runtime behavior is yet committed.</p>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">Evidence basis</span>
+              <p class="detail-text">SRE packet and current closure boundary.</p>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">North-star target</span>
+              <p class="detail-text">A lawful recurrent loop where later control is updated by prior outcomes and brake can matter in execution.</p>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">What is not yet true</span>
+              <p class="detail-text">No live closed-loop behavior is committed, and no same-event firewall exception exists.</p>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">Smallest lawful next opening move</span>
+              <p class="detail-text">Define one outcome-feedback path that preserves the event-local certification firewall.</p>
+            </div>
+          </div>
+        </details>
+
+        <details class="card north-card">
+          <summary>
+            <div class="card-head">
+              <div>
+                <div class="card-title">Runtime support geometry</div>
+                <div class="card-subtitle">Association-like support without hidden truth rewrites</div>
+              </div>
+              <span class="badge north">North-Star</span>
+            </div>
+          </summary>
+          <div class="details-body">
+            <div class="detail-row">
+              <span class="detail-label">Current accepted state</span>
+              <p class="detail-text">Geometry is a packet-visible AUX surface, but evaluation-first and runtime-off-by-default.</p>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">Evidence basis</span>
+              <p class="detail-text">AUX packet and closure status note.</p>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">North-star target</span>
+              <p class="detail-text">Optional runtime support geometry that improves retrieval and diagnostics while remaining removable and claim-conservative.</p>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">What is not yet true</span>
+              <p class="detail-text">No accepted roadmap says runtime geometry should be turned on yet.</p>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">Smallest lawful next opening move</span>
+              <p class="detail-text">Keep geometry in evaluation mode until live-loop stability and activation criteria exist.</p>
+            </div>
+          </div>
+        </details>
+
+        <details class="card north-card">
+          <summary>
+            <div class="card-head">
+              <div>
+                <div class="card-title">Offline consolidation and priors</div>
+                <div class="card-subtitle">Cross-session support learning, calibration, and memory publication</div>
+              </div>
+              <span class="badge north">North-Star</span>
+            </div>
+          </summary>
+          <div class="details-body">
+            <div class="detail-row">
+              <span class="detail-label">Current accepted state</span>
+              <p class="detail-text">Offline consolidation remains intentionally deferred until the active core/SRE loop is stable.</p>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">Evidence basis</span>
+              <p class="detail-text">AUX packet and closure status note.</p>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">North-star target</span>
+              <p class="detail-text">Cost-visible, support-only priors and calibration publication built from a stable live loop.</p>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">What is not yet true</span>
+              <p class="detail-text">No support-write doctrine or publication surface is committed yet for this target.</p>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">Smallest lawful next opening move</span>
+              <p class="detail-text">Define publication outputs and write rules after a live loop exists rather than coding consolidation by analogy alone.</p>
+            </div>
+          </div>
+        </details>
+      </div>
+    </article>
+  </section>
+
+  <div class="footer-note">
+    Read this page in one order if you need accepted truth, in another if you need product direction.
+    Start with <strong>Current Justified Boundary</strong> when you need closure truth.
+    Start with <strong>Gap Programs</strong> when you need lawful next openings.
+    Start with <strong>North-Star Cortex</strong> when you need to remember what the long-horizon product is meant to become.
+  </div>
+</main>
+</body>
+</html>

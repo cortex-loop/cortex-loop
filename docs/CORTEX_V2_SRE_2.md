@@ -539,6 +539,7 @@ unless the chosen action is the cheapest lawful move to reduce the very uncertai
 
 The SRE must preserve the main task as an explicit control object.
 Local repair, side investigations, and branch experiments may not silently replace the main task.
+The reference executive should therefore be state-aware and closure-aware: when unresolved branch state, blocker risk, or pending-goal debt is salient, it should prefer truthful continuity and explicit closure over premature forward motion.
 
 ### 8.2 Pending-goal discipline
 

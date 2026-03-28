@@ -4,6 +4,11 @@ from __future__ import annotations
 
 import sys
 
+from tests.integration._openai_host_realization_pair import (
+    DEFAULT_OPENAI_HOST_REALIZATION_PAIR_KEY,
+    OPENAI_HOST_REALIZATION_PAIR_KEYS,
+    OPENAI_HOST_REALIZATION_PAIR_SPECS,
+)
 from tests.integration._openai_lane_packet_example import (
     build_openai_lane_packet_example_snapshot,
 )
@@ -17,17 +22,15 @@ from tests.integration._reference_mediation_baseline_packets import (
     render_reference_mediation_packet,
 )
 
-OPENAI_HOST_REALIZATION_PAIR_ID = "pair_openai_host_001"
-OPENAI_HOST_REALIZATION_BASELINE_RUN_ID = "openai_host_realization_baseline_run_001"
-OPENAI_HOST_REALIZATION_MEDIATED_RUN_ID = "openai_host_realization_mediated_run_001"
-OPENAI_HOST_REALIZATION_SESSION_ID = "openai-host-packet-session-1"
-OPENAI_HOST_REALIZATION_CANDIDATE_ID = "openai-host-packet-candidate-1"
-OPENAI_HOST_REALIZATION_COMMITMENT_ID = "openai-host-packet-commit-1"
-OPENAI_HOST_REALIZATION_PROVENANCE_ARTIFACT_ID = "openai-host-artifact-1"
 OPENAI_HOST_REALIZATION_MEDIATED_PACKET_PATH = (
-    "docs/mediation_evidence/openai/"
-    "scenario_host_openai_01__experimental_mediated__run_001.md"
+    OPENAI_HOST_REALIZATION_PAIR_SPECS[
+        DEFAULT_OPENAI_HOST_REALIZATION_PAIR_KEY
+    ].mediated_packet_path
 )
+OPENAI_HOST_REALIZATION_MEDIATED_PACKET_PATHS = {
+    pair_key: OPENAI_HOST_REALIZATION_PAIR_SPECS[pair_key].mediated_packet_path
+    for pair_key in OPENAI_HOST_REALIZATION_PAIR_KEYS
+}
 _REVIEWER_NOTE = (
     "This is experimental mediated evidence only within the committed OpenAI "
     "host-realization paired-run series. It remains OpenAI-only, does not justify "
@@ -35,9 +38,12 @@ _REVIEWER_NOTE = (
 )
 
 
-def build_openai_host_realization_comparator_snapshot() -> dict[str, object]:
-    baseline_snapshot = build_openai_lane_packet_example_snapshot()
-    mediated_snapshot = build_openai_mediated_lane_packet_example_snapshot()
+def build_openai_host_realization_comparator_snapshot(
+    pair_key: str = DEFAULT_OPENAI_HOST_REALIZATION_PAIR_KEY,
+) -> dict[str, object]:
+    spec = OPENAI_HOST_REALIZATION_PAIR_SPECS[pair_key]
+    baseline_snapshot = build_openai_lane_packet_example_snapshot(pair_key)
+    mediated_snapshot = build_openai_mediated_lane_packet_example_snapshot(pair_key)
     baseline_specialization = build_openai_host_realization_specialization_snapshot(
         clearly_superior=False,
     )
@@ -61,13 +67,13 @@ def build_openai_host_realization_comparator_snapshot() -> dict[str, object]:
     assert mediated_specialization["direct_opportunity_specialization_used"] is True
 
     return {
-        "paired_episode_set_id": OPENAI_HOST_REALIZATION_PAIR_ID,
-        "session_id": OPENAI_HOST_REALIZATION_SESSION_ID,
-        "candidate_id": OPENAI_HOST_REALIZATION_CANDIDATE_ID,
-        "commitment_id": OPENAI_HOST_REALIZATION_COMMITMENT_ID,
-        "provenance_artifact_id": OPENAI_HOST_REALIZATION_PROVENANCE_ARTIFACT_ID,
-        "baseline_run_id": OPENAI_HOST_REALIZATION_BASELINE_RUN_ID,
-        "mediated_run_id": OPENAI_HOST_REALIZATION_MEDIATED_RUN_ID,
+        "paired_episode_set_id": spec.pair_id,
+        "session_id": spec.session_id,
+        "candidate_id": spec.candidate_id,
+        "commitment_id": spec.commitment_id,
+        "provenance_artifact_id": spec.provenance_artifact_id,
+        "baseline_run_id": spec.baseline_run_id,
+        "mediated_run_id": spec.mediated_run_id,
         "selected_family": "seek-context",
         "host_opportunity_refs": ["mcp.query"],
         "baseline_direct_opportunity_specialization_used": 0,
@@ -84,8 +90,11 @@ def build_openai_host_realization_comparator_snapshot() -> dict[str, object]:
     }
 
 
-def build_openai_host_realization_mediated_packet() -> PacketSnapshot:
-    snapshot = build_openai_mediated_lane_packet_example_snapshot()
+def build_openai_host_realization_mediated_packet(
+    pair_key: str = DEFAULT_OPENAI_HOST_REALIZATION_PAIR_KEY,
+) -> PacketSnapshot:
+    spec = OPENAI_HOST_REALIZATION_PAIR_SPECS[pair_key]
+    snapshot = build_openai_mediated_lane_packet_example_snapshot(pair_key)
     specialization = snapshot["opportunity_specialization"]
 
     assert isinstance(specialization, dict)
@@ -113,8 +122,8 @@ def build_openai_host_realization_mediated_packet() -> PacketSnapshot:
 
     return build_reference_mediation_packet(
         scenario_id="scenario_host_openai_01",
-        run_id=OPENAI_HOST_REALIZATION_MEDIATED_RUN_ID,
-        paired_episode_set_id=OPENAI_HOST_REALIZATION_PAIR_ID,
+        run_id=spec.mediated_run_id,
+        paired_episode_set_id=spec.pair_id,
         scenario_family="host_realization",
         task_value_rubric_id="task_value_equal_host_realization",
         approval_or_environment_context_id="env_boundary_sensitive",
@@ -123,9 +132,9 @@ def build_openai_host_realization_mediated_packet() -> PacketSnapshot:
         scenario_inputs={
             "starting_request_or_event": (
                 f"`response.output_text.delta` candidate-bearing turn on "
-                f"`{OPENAI_HOST_REALIZATION_SESSION_ID}` followed by "
+                f"`{spec.session_id}` followed by "
                 f"`response.completed` with "
-                f"`commitment_id={OPENAI_HOST_REALIZATION_COMMITMENT_ID}`"
+                f"`commitment_id={spec.commitment_id}`"
             ),
             "host_surface": (
                 "OpenAI-host opportunity selection plus candidate-bearing "
@@ -215,7 +224,7 @@ def build_openai_host_realization_mediated_packet() -> PacketSnapshot:
             ),
         },
         exclusion_notes=(
-            f"This packet is the mediated side of `{OPENAI_HOST_REALIZATION_PAIR_ID}`. "
+            f"This packet is the mediated side of `{spec.pair_id}`. "
             "A single packet does not justify mediation; package-level evidence notes "
             "govern verdicts."
         ),
@@ -224,14 +233,21 @@ def build_openai_host_realization_mediated_packet() -> PacketSnapshot:
 
 
 OPENAI_HOST_REALIZATION_MEDIATED_PACKET_DOC_BUILDERS = {
-    OPENAI_HOST_REALIZATION_MEDIATED_PACKET_PATH: build_openai_host_realization_mediated_packet,
+    OPENAI_HOST_REALIZATION_MEDIATED_PACKET_PATHS[pair_key]: (
+        lambda pair_key=pair_key: build_openai_host_realization_mediated_packet(pair_key)
+    )
+    for pair_key in OPENAI_HOST_REALIZATION_PAIR_KEYS
 }
 
 
 def emit_openai_mediated_host_realization_candidate() -> None:
-    for relative_path, builder in OPENAI_HOST_REALIZATION_MEDIATED_PACKET_DOC_BUILDERS.items():
+    for index, (relative_path, builder) in enumerate(
+        OPENAI_HOST_REALIZATION_MEDIATED_PACKET_DOC_BUILDERS.items()
+    ):
         sys.stdout.write(f"--- {relative_path}\n")
         sys.stdout.write(render_reference_mediation_packet(relative_path, builder()))
+        if index != len(OPENAI_HOST_REALIZATION_MEDIATED_PACKET_DOC_BUILDERS) - 1:
+            sys.stdout.write("\n")
 
 
 if __name__ == "__main__":
