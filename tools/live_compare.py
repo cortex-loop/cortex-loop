@@ -48,6 +48,8 @@ def _build_comparison(preflight: dict[str, Any]) -> dict[str, Any]:
             provider_root(provider, "operator", "baselines") / "provider_baseline_runs.json"
         ).get("runs", [])
         operator_runs = _read_operator_lifecycle_runs(provider)
+        exploratory_baseline_runs = _read_exploratory_baseline_runs(provider)
+        exploratory_operator_runs = _read_exploratory_operator_runs(provider)
         service_runs = _read_json(
             provider_root(provider, "automation", "service") / "service_runs.json"
         ).get("runs", [])
@@ -142,6 +144,13 @@ def _build_comparison(preflight: dict[str, Any]) -> dict[str, Any]:
             providers[provider]["operator_lifecycle"]["surface"] = "codex app-server"
         else:
             providers[provider]["operator_lifecycle"]["surface"] = "host-native CLI task lane"
+        if provider == "gemini":
+            providers[provider]["operator_lifecycle"]["warning_preserving"] = bool(operator_warning_classes)
+            providers[provider]["operator_lifecycle"]["scenario_split"] = len(chosen_models) > 1
+            providers[provider]["exploratory_probe"] = _build_exploratory_probe_summary(
+                exploratory_baseline_runs,
+                exploratory_operator_runs,
+            )
 
     verdict, verdict_reason = decide_verdict(
         operator_pass_count=operator_pass_count,
@@ -218,10 +227,23 @@ def _comparison_markdown(comparison: dict[str, Any]) -> str:
                 f"- operator warning classes: `{', '.join(payload['operator_lifecycle']['warning_classes']) or 'none'}`",
                 f"- operator hook labels: `{', '.join(payload['operator_lifecycle']['hook_event_labels']) or 'none'}`",
                 f"- operator lifecycle failures: `{', '.join(payload['operator_lifecycle']['failure_classes']) or 'none'}`",
+                f"- operator warning-preserving: `{payload['operator_lifecycle'].get('warning_preserving', False)}`",
+                f"- operator scenario-split: `{payload['operator_lifecycle'].get('scenario_split', False)}`",
                 f"- automation service failures: `{', '.join(payload['automation_service']['failure_classes']) or 'none'}`",
                 "",
             ]
         )
+        if provider == "gemini":
+            exploratory = payload.get("exploratory_probe", {})
+            lines.extend(
+                [
+                    f"- exploratory pro smoke success: `{exploratory.get('smoke_success', False)}`",
+                    f"- exploratory pro truth_gap preserved: `{exploratory.get('truth_gap_preserved', False)}`",
+                    f"- exploratory pro chosen models: `{', '.join(exploratory.get('chosen_models', [])) or 'none'}`",
+                    f"- exploratory pro failures: `{', '.join(exploratory.get('failure_classes', [])) or 'none'}`",
+                    "",
+                ]
+            )
     lines.extend(
         [
             "## Next corrective seam",
@@ -245,6 +267,45 @@ def _read_operator_lifecycle_runs(provider: str) -> list[dict[str, Any]]:
     return _read_json(
         provider_root(provider, "operator", "product_paths") / "host_native_product_runs.json"
     ).get("runs", [])
+
+
+def _read_exploratory_baseline_runs(provider: str) -> list[dict[str, Any]]:
+    return _read_json(
+        provider_root(provider, "operator", "baselines_exploratory") / "provider_baseline_runs.json"
+    ).get("runs", [])
+
+
+def _read_exploratory_operator_runs(provider: str) -> list[dict[str, Any]]:
+    return _read_json(
+        provider_root(provider, "operator", "product_paths_exploratory") / "host_native_product_runs.json"
+    ).get("runs", [])
+
+
+def _build_exploratory_probe_summary(
+    baseline_runs: list[dict[str, Any]],
+    operator_runs: list[dict[str, Any]],
+) -> dict[str, Any]:
+    return {
+        "smoke_success": any(run.get("success") for run in baseline_runs),
+        "truth_gap_preserved": any(
+            run.get("scenario_id") == "truth_gap" and run.get("truth_gap_kind") == "truthful_incomplete"
+            for run in operator_runs
+        ),
+        "chosen_models": sorted(
+            {
+                run["model"]
+                for run in baseline_runs + operator_runs
+                if isinstance(run.get("model"), str) and run.get("model")
+            }
+        ),
+        "failure_classes": sorted(
+            {
+                run["failure_class"]
+                for run in baseline_runs + operator_runs
+                if run.get("failure_class")
+            }
+        ),
+    }
 
 
 if __name__ == "__main__":

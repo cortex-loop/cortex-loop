@@ -51,11 +51,32 @@ def main(argv: list[str] | None = None) -> int:
         choices=("operator", "automation"),
         default="operator",
     )
+    parser.add_argument(
+        "--preferred-model",
+        default=None,
+    )
+    parser.add_argument(
+        "--fallback-model",
+        default=None,
+    )
+    parser.add_argument(
+        "--disable-auto-probe",
+        action="store_true",
+    )
+    parser.add_argument(
+        "--exploratory-probe",
+        action="store_true",
+    )
     args = parser.parse_args(argv)
 
     ensure_live_validation_dirs()
     providers = ("claude", "gemini", "openai") if args.provider == "all" else (args.provider,)
-    summary_path = comparator_path(f"{args.lane}_provider_baseline_summary.json")
+    summary_name = (
+        f"{args.lane}_provider_baseline_summary__exploratory.json"
+        if args.exploratory_probe
+        else f"{args.lane}_provider_baseline_summary.json"
+    )
+    summary_path = comparator_path(summary_name)
     overall_summary = _read_json(summary_path)
     if not overall_summary:
         overall_summary = {
@@ -68,14 +89,29 @@ def main(argv: list[str] | None = None) -> int:
     overall_summary["surface"] = "provider_baseline"
     overall_summary["lane"] = args.lane
     for provider in providers:
-        overall_summary["providers"][provider] = _capture_provider(provider, lane=args.lane)
+        overall_summary["providers"][provider] = _capture_provider(
+            provider,
+            lane=args.lane,
+            preferred_model_override=args.preferred_model,
+            fallback_model_override=args.fallback_model,
+            disable_auto_probe=args.disable_auto_probe,
+            exploratory_probe=args.exploratory_probe,
+        )
     write_json(summary_path, overall_summary)
     print(json.dumps(overall_summary, indent=2, sort_keys=True))
     return 0
 
 
-def _capture_provider(provider: str, *, lane: str) -> dict[str, Any]:
-    root = provider_root(provider, lane, "baselines")
+def _capture_provider(
+    provider: str,
+    *,
+    lane: str,
+    preferred_model_override: str | None,
+    fallback_model_override: str | None,
+    disable_auto_probe: bool,
+    exploratory_probe: bool,
+) -> dict[str, Any]:
+    root = provider_root(provider, lane, "baselines_exploratory" if exploratory_probe else "baselines")
     runs: list[dict[str, Any]] = []
     blocked_failure: str | None = None
 
@@ -98,6 +134,9 @@ def _capture_provider(provider: str, *, lane: str) -> dict[str, Any]:
             lane=lane,
             repeat_index=repeat_index,
             provider_root_path=root,
+            preferred_model_override=preferred_model_override,
+            fallback_model_override=fallback_model_override,
+            disable_auto_probe=disable_auto_probe,
         )
         runs.append(result)
         if should_collapse_after_failure(result.get("failure_class")):
@@ -119,6 +158,9 @@ def _run_single_provider_baseline(
     lane: str,
     repeat_index: int,
     provider_root_path: Path,
+    preferred_model_override: str | None,
+    fallback_model_override: str | None,
+    disable_auto_probe: bool,
 ) -> dict[str, Any]:
     stem = f"provider_baseline__smoke__run_{repeat_index:03d}"
     stdout_path = provider_root_path / f"{stem}.stdout.log"
@@ -128,7 +170,15 @@ def _run_single_provider_baseline(
     auth_mode = resolve_auth_mode(provider, lane)
     preferred_model = choose_model(provider, lane)
     auto_supported: bool | None = None
-    first_model = preferred_model
+    ladder = _requested_model_ladder(
+        provider=provider,
+        lane=lane,
+        preferred_model_override=preferred_model_override,
+        fallback_model_override=fallback_model_override,
+        disable_auto_probe=disable_auto_probe,
+    )
+    first_model = ladder[0]
+    preferred_model = first_model
     started_at = now_utc_iso()
     run_result = _run_provider_probe(provider, lane=lane, auth_mode=auth_mode, model=first_model)
     failure_class = classify_failure(f"{run_result['stdout']}\n{run_result['stderr']}")
@@ -144,6 +194,7 @@ def _run_single_provider_baseline(
         first_failure=failure_class,
         current_model=first_model,
         auto_supported=auto_supported,
+        ladder=ladder,
     )
     while chosen_model != attempted_models[-1]:
         run_result = _run_provider_probe(provider, lane=lane, auth_mode=auth_mode, model=chosen_model)
@@ -157,6 +208,7 @@ def _run_single_provider_baseline(
             first_failure=failure_class,
             current_model=chosen_model,
             auto_supported=auto_supported,
+            ladder=ladder,
         )
     ended_at = now_utc_iso()
 
@@ -461,6 +513,32 @@ def _read_json(path: Path) -> dict[str, Any]:
     if not path.exists():
         return {}
     return json.loads(path.read_text(encoding="utf-8"))
+
+
+def _requested_model_ladder(
+    *,
+    provider: str,
+    lane: str,
+    preferred_model_override: str | None,
+    fallback_model_override: str | None,
+    disable_auto_probe: bool,
+) -> tuple[str, ...]:
+    if preferred_model_override:
+        ladder = [preferred_model_override]
+        if fallback_model_override and fallback_model_override.lower() != "none" and fallback_model_override != preferred_model_override:
+            ladder.append(fallback_model_override)
+        return tuple(ladder)
+    if provider == "gemini" and lane == "operator" and disable_auto_probe:
+        ladder = ["gemini-2.5-flash"]
+        if fallback_model_override and fallback_model_override.lower() != "none" and fallback_model_override not in ladder:
+            ladder.append(fallback_model_override)
+        elif "gemini-2.5-flash-lite" not in ladder:
+            ladder.append("gemini-2.5-flash-lite")
+        return tuple(ladder)
+    return (MODEL_MATRIX[provider][lane].preferred,) if MODEL_MATRIX[provider][lane].fallback is None else (
+        MODEL_MATRIX[provider][lane].preferred,
+        MODEL_MATRIX[provider][lane].fallback,
+    )
 
 
 if __name__ == "__main__":

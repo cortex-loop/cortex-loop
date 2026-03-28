@@ -1,7 +1,7 @@
 # CORTEX_V2_LIVE_VALIDATION_VERDICT_0
 
 Date: 2026-03-28
-Status: L2/L2b/L2c/L2d live-testing environment verdict note
+Status: L2/L2b/L2c/L2d/L2e live-testing environment verdict note
 
 ## Verdict
 
@@ -23,8 +23,9 @@ Reason:
 - Gemini now has real hook-backed lifecycle capture and local fallback truth:
   - `gemini-2.5-auto` is not accepted by the installed CLI on this machine
   - `gemini-2.5-flash` succeeds twice on `pass_minimal` with warning-preserving `capacity_exhausted`
-  - `truth_gap` is still non-truthful (`smoothed_incomplete`)
-  - `restart_continuity` still blocks on `capacity_exhausted`
+  - `gemini-2.5-flash-lite` still returns `smoothed_incomplete` on `truth_gap`
+  - `gemini-2.5-flash-lite` succeeds on `restart_continuity` with warning-preserving `capacity_exhausted`
+  - `gemini-2.5-pro` is valid locally but still capacity-blocked on the bounded exploratory smoke lane
 - so Gemini remains the only operator-side host still blocking closure,
 - and the automation/service lane is still all-blocked on missing automation credentials.
 
@@ -52,9 +53,11 @@ Reason:
 - operator baseline: clean twice on fallback `gemini-2.5-flash`
 - operator product path:
   - hook-backed `pass_minimal`: success twice with `capacity_exhausted` preserved as a warning
-  - `truth_gap`: still `smoothed_incomplete`
-  - `restart_continuity`: still blocked on `capacity_exhausted`
+  - `truth_gap`: still `smoothed_incomplete` on `gemini-2.5-flash-lite`
+  - `restart_continuity`: now succeeds on `gemini-2.5-flash-lite` with warning-preserving `capacity_exhausted`
   - this remains a watchlist rather than a closed host line
+- exploratory sidecar:
+  - `gemini-2.5-pro` smoke remains capacity-blocked
 - hook surface:
   - `SessionStart`
   - `BeforeTool`
@@ -83,14 +86,15 @@ Reason:
 - `L2b` explicitly keeps assisted mode deferred rather than smuggling bounded corrective intervention back in from v1
 - `L2c` now re-earns Claude and Gemini on their documented hook surfaces rather than relying on transcript-only operator truth
 - `L2d` now proves the local Gemini CLI does not accept `gemini-2.5-auto` here and reclassifies Gemini warning-preserving task success without hiding the remaining truth-gap and continuity failures
+- `L2e` now proves that Gemini Pro is not the current closure model on this machine and that `flash-lite` rescues continuity but not truth-gap honesty
 
 ## Next corrective seam
 
 Open one bounded **Claude/Gemini operator-harness re-audit plus automation-credential stabilization** seam that:
 
 - either:
-  - reruns Gemini again on `gemini-2.5-flash` after the current quota window, or
-  - narrows the local fallback further to `gemini-2.5-flash-lite` for `truth_gap` and `restart_continuity`
+  - accepts Gemini as the remaining explicit partial host line for current scope, or
+  - runs one more bounded `truth_gap` rerun if you still want to test for model randomness before freezing the claim
 - provides automation credentials for the current service lane:
   - `ANTHROPIC_API_KEY`
   - Vertex ADC or `GEMINI_API_KEY`

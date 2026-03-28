@@ -419,6 +419,7 @@ For OpenAI, the focused lifecycle proof now lives in the separate `codex app-ser
 For Claude and Gemini, the operator lane now records documented hook events alongside the CLI transcript artifacts.
 While Claude and Gemini still carry operator-harness drift, do not treat the aggregate cross-host entrypoint by itself as the clean closure signal.
 For focused Gemini reruns, use the direct script with `--provider gemini --scenario ... --max-attempts ... --cooldown-seconds ...` rather than relying on the umbrella target alone.
+The Gemini-focused reruns now also accept `--preferred-model`, `--fallback-model`, `--disable-auto-probe`, and `--exploratory-probe` when a bounded local model split or Pro sidecar is needed.
 
 Direct command:
 

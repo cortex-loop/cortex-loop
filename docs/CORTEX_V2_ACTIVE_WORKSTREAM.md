@@ -31,10 +31,10 @@ It is workflow state only. It does not override the packet documents, implementa
 
 ## 2. Current campaign and seam state
 
-- Current campaign: `L2d Gemini repeat-stability closure`
+- Current campaign: `L2e Gemini closure and pro comparison`
 - Current working branch at ledger update: `codex/l1-live-validation`
 - Current branch role: branch-local L2 candidate over accepted refreshed A1 truth
-- Current candidate seam: Gemini model ladder, focused reruns, and warning-preserving closure truth on top of the signed-in-first L2 environment
+- Current candidate seam: Gemini flash/flash-lite closure mapping plus bounded pro comparison on top of the signed-in-first L2 environment
 - Current seam status: `partially implemented and partially verified`
 - Seam risk: timing or environment-sensitive evidence seam with local toolchain coupling; repeated reruns are required before any closure claim
 
@@ -63,16 +63,15 @@ It is workflow state only. It does not override the packet documents, implementa
     - `restart_continuity`
   - the Gemini operator lane is now hook-backed as well
   - the installed Gemini CLI does not accept `gemini-2.5-auto` on this machine; the current ladder therefore falls through to `gemini-2.5-flash`
-  - Gemini current truth on `gemini-2.5-flash` is:
+  - the installed CLI does accept `gemini-2.5-pro`, but the exploratory pro smoke still blocks on `capacity_exhausted`
+  - Gemini current closure-path truth is now scenario-split:
     - `pass_minimal` succeeds twice with explicit `capacity_exhausted` warnings
-    - `truth_gap` remains non-truthful (`smoothed_incomplete`) even after fallback and warning-preserving classification
-    - `restart_continuity` still blocks on `capacity_exhausted`
+    - `truth_gap` remains non-truthful (`smoothed_incomplete`) on both `gemini-2.5-flash` and `gemini-2.5-flash-lite`
+    - `restart_continuity` now succeeds on `gemini-2.5-flash-lite` with explicit `capacity_exhausted` warnings
   - repeat-stable Gemini closure is not yet earned
   - the current automation/service lane still fails honestly on missing automation credentials
 - Next lawful move:
-  - decide whether the next Gemini step is:
-    - one more repeat-stability rerun on `gemini-2.5-flash`, or
-    - a narrower signed-in fallback on `gemini-2.5-flash-lite` for `truth_gap` and `restart_continuity`
+  - accept Gemini as the remaining partial host line for current scope unless you want one more bounded `truth_gap` rerun on `gemini-2.5-flash-lite`
   - add or configure automation credentials:
     - `ANTHROPIC_API_KEY`
     - Vertex ADC or `GEMINI_API_KEY`
@@ -94,6 +93,7 @@ It is workflow state only. It does not override the packet documents, implementa
 - Do not overread ephemeral OpenAI `thread/read` emptiness as if the App Server lifecycle proof failed; for current scope the event timeline is the authoritative lifecycle surface and the persisted thread view remains a caveat.
 - Do not silently discard Gemini capacity warnings when a run otherwise succeeds; preserve them as warnings rather than pretending the host was perfectly stable.
 - Do not silently promote `gemini-2.5-auto` to supported truth on this machine; current local evidence says the installed CLI rejects it and the operator lane falls through to `gemini-2.5-flash`.
+- Do not silently promote `gemini-2.5-pro` from exploratory sidecar to closure-path truth while it is still capacity-blocked on smoke.
 
 ## 5. Acknowledged worktree noise at ledger creation
 

@@ -71,9 +71,12 @@ Target task:
   - `gemini-2.5-auto` if the installed CLI accepts it
   - otherwise `gemini-2.5-flash`
   - then `gemini-2.5-flash-lite`
+- current exploratory sidecar:
+  - `gemini-2.5-pro` smoke only unless the smoke becomes clean
 - current caveat:
   - the installed CLI rejects `gemini-2.5-auto` on this machine
-  - quota/capacity and repeat stability remain the active blocker on `gemini-2.5-flash`
+  - `gemini-2.5-pro` is valid locally but still capacity-blocked on smoke
+  - `truth_gap` remains the active blocker even after a `flash-lite` rerun
 - probe surface: operator preflight plus the signed-in Gemini baseline and hook-backed product lane
 
 ### OpenAI

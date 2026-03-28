@@ -474,8 +474,9 @@ def choose_model(
     first_failure: str | None = None,
     current_model: str | None = None,
     auto_supported: bool | None = None,
+    ladder: tuple[str, ...] | None = None,
 ) -> str:
-    ladder = model_ladder(provider, lane, auto_supported=auto_supported)
+    ladder = ladder or model_ladder(provider, lane, auto_supported=auto_supported)
     if current_model is None:
         return ladder[0]
     if first_failure in {"capacity_exhausted", "quota_exhausted", "model_unavailable"}:

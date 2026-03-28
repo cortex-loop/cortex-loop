@@ -93,11 +93,32 @@ def main(argv: list[str] | None = None) -> int:
         type=int,
         default=30,
     )
+    parser.add_argument(
+        "--preferred-model",
+        default=None,
+    )
+    parser.add_argument(
+        "--fallback-model",
+        default=None,
+    )
+    parser.add_argument(
+        "--disable-auto-probe",
+        action="store_true",
+    )
+    parser.add_argument(
+        "--exploratory-probe",
+        action="store_true",
+    )
     args = parser.parse_args(argv)
 
     ensure_live_validation_dirs()
     providers = ("claude", "gemini", "openai") if args.provider == "all" else (args.provider,)
-    summary_path = comparator_path("host_native_product_paths_summary.json")
+    summary_name = (
+        "host_native_product_paths_summary__exploratory.json"
+        if args.exploratory_probe
+        else "host_native_product_paths_summary.json"
+    )
+    summary_path = comparator_path(summary_name)
     summary = _read_json(summary_path)
     if not summary:
         summary = {
@@ -115,6 +136,10 @@ def main(argv: list[str] | None = None) -> int:
             scenario=args.scenario,
             max_attempts=max(1, args.max_attempts),
             cooldown_seconds=max(0, args.cooldown_seconds),
+            preferred_model_override=args.preferred_model,
+            fallback_model_override=args.fallback_model,
+            disable_auto_probe=args.disable_auto_probe,
+            exploratory_probe=args.exploratory_probe,
         )
     write_json(summary_path, summary)
     print(json.dumps(summary, indent=2, sort_keys=True))
@@ -127,10 +152,15 @@ def _run_provider(
     scenario: str,
     max_attempts: int,
     cooldown_seconds: int,
+    preferred_model_override: str | None,
+    fallback_model_override: str | None,
+    disable_auto_probe: bool,
+    exploratory_probe: bool,
 ) -> dict[str, Any]:
     if provider == "openai":
         return run_openai_app_server_validation(scenario=scenario)
-    root = provider_root(provider, "operator", "product_paths")
+    surface = "product_paths_exploratory" if exploratory_probe else "product_paths"
+    root = provider_root(provider, "operator", surface)
     existing_summary = _read_json(root / "host_native_product_runs.json")
     existing_runs = existing_summary.get("runs", []) if scenario != "all" else []
     baseline_summary = _read_json(comparator_path("operator_provider_baseline_summary.json"))
@@ -189,6 +219,9 @@ def _run_provider(
                 root,
                 max_attempts=max_attempts,
                 cooldown_seconds=cooldown_seconds,
+                preferred_model_override=preferred_model_override,
+                fallback_model_override=fallback_model_override,
+                disable_auto_probe=disable_auto_probe,
             )
             runs.append(result)
             if should_collapse_after_failure(result.get("failure_class")):
@@ -200,6 +233,9 @@ def _run_provider(
             root,
             max_attempts=max_attempts,
             cooldown_seconds=cooldown_seconds,
+            preferred_model_override=preferred_model_override,
+            fallback_model_override=fallback_model_override,
+            disable_auto_probe=disable_auto_probe,
         )
         runs.append(continuity)
     summary = {
@@ -220,6 +256,9 @@ def _run_single_scenario(
     *,
     max_attempts: int,
     cooldown_seconds: int,
+    preferred_model_override: str | None,
+    fallback_model_override: str | None,
+    disable_auto_probe: bool,
 ) -> dict[str, Any]:
     project_root = prepare_harness_workspace(
         provider=provider,
@@ -244,6 +283,9 @@ def _run_single_scenario(
         hook_log_path=hook_log_path,
         max_attempts=max_attempts,
         cooldown_seconds=cooldown_seconds,
+        preferred_model_override=preferred_model_override,
+        fallback_model_override=fallback_model_override,
+        disable_auto_probe=disable_auto_probe,
     )
     return _materialize_operator_run(
         provider=provider,
@@ -271,9 +313,18 @@ def _run_operator_attempts(
     hook_log_path: Path | None,
     max_attempts: int,
     cooldown_seconds: int,
+    preferred_model_override: str | None,
+    fallback_model_override: str | None,
+    disable_auto_probe: bool,
 ) -> tuple[dict[str, Any], str | None, str, str, bool | None, list[str]]:
     auto_supported: bool | None = None
-    preferred_model = MODEL_MATRIX[provider]["operator"].preferred
+    ladder = _requested_model_ladder(
+        provider=provider,
+        preferred_model_override=preferred_model_override,
+        fallback_model_override=fallback_model_override,
+        disable_auto_probe=disable_auto_probe,
+    )
+    preferred_model = ladder[0]
     current_model = preferred_model
     attempted_models: list[str] = []
     run_result: dict[str, Any] | None = None
@@ -296,11 +347,13 @@ def _run_operator_attempts(
         if provider == "gemini" and current_model == MODEL_MATRIX["gemini"]["operator"].preferred:
             auto_supported = failure_class != "model_unavailable"
             if auto_supported is False:
-                preferred_model = choose_model(
-                    "gemini",
-                    "operator",
-                    auto_supported=False,
+                ladder = _requested_model_ladder(
+                    provider=provider,
+                    preferred_model_override=preferred_model_override,
+                    fallback_model_override=fallback_model_override,
+                    disable_auto_probe=True,
                 )
+                preferred_model = ladder[0]
 
         if run_result["exit_code"] == 0:
             break
@@ -311,6 +364,7 @@ def _run_operator_attempts(
             first_failure=failure_class,
             current_model=current_model,
             auto_supported=auto_supported,
+            ladder=ladder,
         )
         if next_model != current_model:
             current_model = next_model
@@ -339,6 +393,9 @@ def _run_restart_continuity(
     *,
     max_attempts: int,
     cooldown_seconds: int,
+    preferred_model_override: str | None,
+    fallback_model_override: str | None,
+    disable_auto_probe: bool,
 ) -> dict[str, Any]:
     repeat_index = 1
     project_root = prepare_harness_workspace(
@@ -362,6 +419,9 @@ def _run_restart_continuity(
         hook_log_path=hook_log_path,
         max_attempts=max_attempts,
         cooldown_seconds=cooldown_seconds,
+        preferred_model_override=preferred_model_override,
+        fallback_model_override=fallback_model_override,
+        disable_auto_probe=disable_auto_probe,
     )
 
     if first_failure in BLOCKING_FAILURE_CLASSES:
@@ -727,6 +787,31 @@ def _read_json(path: Path) -> dict[str, Any]:
     if not path.exists():
         return {}
     return json.loads(path.read_text(encoding="utf-8"))
+
+
+def _requested_model_ladder(
+    *,
+    provider: str,
+    preferred_model_override: str | None,
+    fallback_model_override: str | None,
+    disable_auto_probe: bool,
+) -> tuple[str, ...]:
+    if preferred_model_override:
+        ladder = [preferred_model_override]
+        if fallback_model_override and fallback_model_override.lower() != "none" and fallback_model_override != preferred_model_override:
+            ladder.append(fallback_model_override)
+        return tuple(ladder)
+    if provider == "gemini" and disable_auto_probe:
+        ladder = ["gemini-2.5-flash"]
+        if fallback_model_override and fallback_model_override.lower() != "none" and fallback_model_override not in ladder:
+            ladder.append(fallback_model_override)
+        elif "gemini-2.5-flash-lite" not in ladder:
+            ladder.append("gemini-2.5-flash-lite")
+        return tuple(ladder)
+    return (MODEL_MATRIX[provider]["operator"].preferred,) if MODEL_MATRIX[provider]["operator"].fallback is None else (
+        MODEL_MATRIX[provider]["operator"].preferred,
+        MODEL_MATRIX[provider]["operator"].fallback,
+    )
 
 
 def _merge_runs(existing_runs: list[dict[str, Any]], new_runs: list[dict[str, Any]]) -> list[dict[str, Any]]:
