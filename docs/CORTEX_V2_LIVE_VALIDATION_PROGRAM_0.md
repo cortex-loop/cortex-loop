@@ -1,7 +1,7 @@
 # CORTEX_V2_LIVE_VALIDATION_PROGRAM_0
 
 Date: 2026-03-28
-Status: active L2 live-testing environment brief with L2b/L2c host-native lifecycle follow-ons
+Status: active L2 live-testing environment brief with L2b/L2c/L2d host-native lifecycle follow-ons
 
 ## Purpose
 
@@ -20,6 +20,7 @@ The current bounded follow-on seam inside `L2` is:
 
 - `L2b` OpenAI Codex App Server operator lifecycle proof
 - `L2c` Claude and Gemini hook-backed operator lanes
+- `L2d` Gemini repeat-stability closure
 
 ## Accepted parent
 
@@ -50,6 +51,7 @@ The operator lane also carries a separate OpenAI coding-model preference:
   - `codex app-server` = lifecycle proof
 - Claude and Gemini signed-in operator truth now records documented hook events alongside the CLI transcript surfaces
 - Gemini signed-in operator truth may fall back from `gemini-2.5-pro` to `gemini-2.5-flash`
+- current local Gemini truth also records that `gemini-2.5-auto` is not accepted by the installed CLI on this machine
 - no assisted retry loop, corrective second-pass intervention, or v1 bridge doctrine belongs in `L2b`
 
 ## Shared coding harness
@@ -76,7 +78,7 @@ Current local evidence after the March 28 reruns:
 
 - operator preflight:
   - Claude operator probe succeeds on `claude-sonnet-4-6`
-  - Gemini operator probe succeeds on fallback `gemini-2.5-flash`
+  - Gemini operator probe starts on `gemini-2.5-auto`, records local `model_unavailable`, and falls through to `gemini-2.5-flash`
   - OpenAI/Codex operator probe succeeds on `gpt-5.3-codex`
 - operator baselines:
   - Claude baseline succeeds twice on `claude-sonnet-4-6`
@@ -92,7 +94,11 @@ Current local evidence after the March 28 reruns:
     - `pass_minimal` twice
     - `truth_gap`
     - `restart_continuity`
-  - Gemini is now hook-backed as well; at least one full `pass_minimal` run succeeds on explicit fallback `gemini-2.5-flash`, but quota/capacity retries still prevent repeat-stable Gemini closure
+  - Gemini is now hook-backed as well; current local truth on explicit fallback `gemini-2.5-flash` is:
+    - `pass_minimal` succeeds twice with explicit `capacity_exhausted` warnings
+    - `truth_gap` remains `smoothed_incomplete`
+    - `restart_continuity` still blocks on `capacity_exhausted`
+  - repeat-stable Gemini closure is therefore still unearned
 - automation lane:
   - current service path still fails honestly on missing automation credentials for all three providers
 
@@ -101,7 +107,7 @@ Current local evidence after the March 28 reruns:
 `L2` is only honestly closed when all are true:
 
 - Claude operator lane remains repeat-stable on the hook-backed path
-- Gemini operator lane is either stable on `gemini-2.5-pro` or stably accepted on explicit fallback `gemini-2.5-flash`
+- Gemini operator lane is either stable on a supported local preferred model or stably accepted on an explicit local fallback model
 - OpenAI operator lane remains stable on both:
   - `codex exec` smoke
   - `codex app-server` lifecycle proof

@@ -1,7 +1,7 @@
 # CORTEX_V2_LIVE_VALIDATION_VERDICT_0
 
 Date: 2026-03-28
-Status: L2/L2b/L2c live-testing environment verdict note
+Status: L2/L2b/L2c/L2d live-testing environment verdict note
 
 ## Verdict
 
@@ -20,8 +20,12 @@ Reason:
   - `codex app-server` preserves `truth_gap`,
   - `codex app-server` passes `restart_continuity` twice,
 - the cross-host `make live-host-native-product-paths` entrypoint still inherits the current Claude/Gemini watchlist drift and is not the clean closure signal yet,
-- Gemini now has real hook-backed lifecycle capture and at least one full `pass_minimal` success on explicit fallback `gemini-2.5-flash`,
-- but Gemini still hits quota/capacity retries before repeat-stable closure is earned,
+- Gemini now has real hook-backed lifecycle capture and local fallback truth:
+  - `gemini-2.5-auto` is not accepted by the installed CLI on this machine
+  - `gemini-2.5-flash` succeeds twice on `pass_minimal` with warning-preserving `capacity_exhausted`
+  - `truth_gap` is still non-truthful (`smoothed_incomplete`)
+  - `restart_continuity` still blocks on `capacity_exhausted`
+- so Gemini remains the only operator-side host still blocking closure,
 - and the automation/service lane is still all-blocked on missing automation credentials.
 
 ## Current host summary
@@ -44,12 +48,12 @@ Reason:
 
 ### Gemini
 
-- operator probe: fallback to `gemini-2.5-flash` succeeds
+- operator probe: `gemini-2.5-auto` is rejected locally; fallback to `gemini-2.5-flash` succeeds
 - operator baseline: clean twice on fallback `gemini-2.5-flash`
 - operator product path:
-  - hook-backed `pass_minimal`: at least one full success now exists, but quota/capacity warnings still appear
-  - `truth_gap`: not yet re-earned on the refreshed hook-backed lane
-  - `restart_continuity`: not yet re-earned on the refreshed hook-backed lane
+  - hook-backed `pass_minimal`: success twice with `capacity_exhausted` preserved as a warning
+  - `truth_gap`: still `smoothed_incomplete`
+  - `restart_continuity`: still blocked on `capacity_exhausted`
   - this remains a watchlist rather than a closed host line
 - hook surface:
   - `SessionStart`
@@ -78,12 +82,15 @@ Reason:
 - `L2b` now re-earns OpenAI on the current host-native App Server lifecycle surface instead of treating `codex exec` alone as the strongest operator proof
 - `L2b` explicitly keeps assisted mode deferred rather than smuggling bounded corrective intervention back in from v1
 - `L2c` now re-earns Claude and Gemini on their documented hook surfaces rather than relying on transcript-only operator truth
+- `L2d` now proves the local Gemini CLI does not accept `gemini-2.5-auto` here and reclassifies Gemini warning-preserving task success without hiding the remaining truth-gap and continuity failures
 
 ## Next corrective seam
 
 Open one bounded **Claude/Gemini operator-harness re-audit plus automation-credential stabilization** seam that:
 
-- reruns Gemini until either repeat-stable `gemini-2.5-flash` closure is earned or the warning-preserving fallback policy is narrowed further
+- either:
+  - reruns Gemini again on `gemini-2.5-flash` after the current quota window, or
+  - narrows the local fallback further to `gemini-2.5-flash-lite` for `truth_gap` and `restart_continuity`
 - provides automation credentials for the current service lane:
   - `ANTHROPIC_API_KEY`
   - Vertex ADC or `GEMINI_API_KEY`

@@ -20,9 +20,9 @@ It also tracks which brain-inspired mechanisms Cortex has already stolen so far 
 - The Claude documented-host-event runtime shell, raw-transcript ingress shell, loopback service shell, and bounded outbound Claude host-control lane are now accepted on the current line.
 - The OpenAI host-realization cell now has a committed three-pair evidence series and `candidate_positive` cell-level signal for better host-specialized realization.
 - Mediation remains blocked and unjustified at package level.
-- The current open train is L2c Claude and Gemini hook-backed operator lanes.
+- The current open train is L2d Gemini repeat-stability closure.
 - The live environment now treats signed-in host-native truth as primary, keeps machine artifacts local-only under `.cortex/live_validation/`, uses Codex rather than `openai` as the OpenAI operator surface, distinguishes `codex exec` smoke from `codex app-server` lifecycle proof, and now records documented hook events on Claude and Gemini.
-- Current live evidence is mixed but materially stronger than before: all three signed-in smokes are green, OpenAI App Server is clean on the shared coding harness, Claude hook-backed operator truth is now strong, Gemini hook-backed truth exists but still carries capacity warnings, and the automation lane is still credential-blocked.
+- Current live evidence is mixed but materially stronger than before: all three signed-in smokes are green, OpenAI App Server is clean on the shared coding harness, Claude hook-backed operator truth is now strong, and Gemini now has a narrower truthful state: the installed CLI rejects `gemini-2.5-auto`, `gemini-2.5-flash` passes `pass_minimal` twice with warning-preserving capacity warnings, but `truth_gap` and `restart_continuity` still block closure. The automation lane is still credential-blocked.
 
 ## North-star product target
 

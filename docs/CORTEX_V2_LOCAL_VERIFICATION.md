@@ -418,6 +418,7 @@ It runs the shared coding harness against signed-in host-native provider surface
 For OpenAI, the focused lifecycle proof now lives in the separate `codex app-server` entry point below; the generic host-native target still helps as the cross-host umbrella, but `make live-openai-app-server` is the stronger OpenAI rerun surface.
 For Claude and Gemini, the operator lane now records documented hook events alongside the CLI transcript artifacts.
 While Claude and Gemini still carry operator-harness drift, do not treat the aggregate cross-host entrypoint by itself as the clean closure signal.
+For focused Gemini reruns, use the direct script with `--provider gemini --scenario ... --max-attempts ... --cooldown-seconds ...` rather than relying on the umbrella target alone.
 
 Direct command:
 

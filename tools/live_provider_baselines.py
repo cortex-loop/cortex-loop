@@ -12,6 +12,7 @@ from pathlib import Path
 from typing import Any
 
 from live_validation_common import (
+    GEMINI_OPERATOR_FULL_LADDER,
     classify_failure,
     choose_model,
     comparator_path,
@@ -125,18 +126,38 @@ def _run_single_provider_baseline(
     metadata_path = provider_root_path / f"{stem}.json"
 
     auth_mode = resolve_auth_mode(provider, lane)
-    first_model = choose_model(provider, lane)
+    preferred_model = choose_model(provider, lane)
+    auto_supported: bool | None = None
+    first_model = preferred_model
     started_at = now_utc_iso()
     run_result = _run_provider_probe(provider, lane=lane, auth_mode=auth_mode, model=first_model)
     failure_class = classify_failure(f"{run_result['stdout']}\n{run_result['stderr']}")
     if failure_class is None and run_result["exit_code"] == 124:
         failure_class = "operator_timeout" if lane == "operator" else "quota_exhausted"
-    chosen_model = choose_model(provider, lane, first_failure=failure_class)
-    if chosen_model != first_model:
+    attempted_models = [first_model]
+    if provider == "gemini" and lane == "operator":
+        auto_supported = failure_class != "model_unavailable"
+        preferred_model = first_model if auto_supported else GEMINI_OPERATOR_FULL_LADDER[1]
+    chosen_model = choose_model(
+        provider,
+        lane,
+        first_failure=failure_class,
+        current_model=first_model,
+        auto_supported=auto_supported,
+    )
+    while chosen_model != attempted_models[-1]:
         run_result = _run_provider_probe(provider, lane=lane, auth_mode=auth_mode, model=chosen_model)
         failure_class = classify_failure(f"{run_result['stdout']}\n{run_result['stderr']}")
         if failure_class is None and run_result["exit_code"] == 124:
             failure_class = "operator_timeout" if lane == "operator" else "quota_exhausted"
+        attempted_models.append(chosen_model)
+        chosen_model = choose_model(
+            provider,
+            lane,
+            first_failure=failure_class,
+            current_model=chosen_model,
+            auto_supported=auto_supported,
+        )
     ended_at = now_utc_iso()
 
     stdout_text = sanitize_text(run_result.pop("stdout"))
@@ -145,16 +166,25 @@ def _run_single_provider_baseline(
     write_text(stderr_path, stderr_text)
 
     records = parse_json_lines(stdout_text)
+    warning_classes: list[str] = []
+    effective_failure_class = failure_class
+    if provider == "gemini" and lane == "operator" and run_result["exit_code"] == 0 and failure_class in {"capacity_exhausted", "quota_exhausted"}:
+        warning_classes = [failure_class]
+        effective_failure_class = None
     payload = {
         "provider": provider,
         "lane": lane,
         "repeat_index": repeat_index,
         "auth_mode": auth_mode,
-        "model": chosen_model,
+        "preferred_model": preferred_model,
+        "model": attempted_models[-1],
+        "auto_supported": auto_supported,
+        "attempted_models": attempted_models,
         "started_at": started_at,
         "ended_at": ended_at,
-        "success": run_result["exit_code"] == 0 and failure_class is None,
-        "failure_class": failure_class,
+        "success": run_result["exit_code"] == 0 and effective_failure_class is None,
+        "failure_class": effective_failure_class,
+        "warning_classes": warning_classes,
         "command": run_result["command"],
         "stdout_path": str(stdout_path.relative_to(provider_root_path.parents[4])),
         "stderr_path": str(stderr_path.relative_to(provider_root_path.parents[4])),

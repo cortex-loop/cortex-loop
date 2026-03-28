@@ -67,7 +67,13 @@ Target task:
   - `BeforeTool`
   - `AfterTool`
   - `SessionEnd`
-- current caveat: quota/capacity and repeat stability on explicit fallback `gemini-2.5-flash`
+- current model ladder:
+  - `gemini-2.5-auto` if the installed CLI accepts it
+  - otherwise `gemini-2.5-flash`
+  - then `gemini-2.5-flash-lite`
+- current caveat:
+  - the installed CLI rejects `gemini-2.5-auto` on this machine
+  - quota/capacity and repeat stability remain the active blocker on `gemini-2.5-flash`
 - probe surface: operator preflight plus the signed-in Gemini baseline and hook-backed product lane
 
 ### OpenAI

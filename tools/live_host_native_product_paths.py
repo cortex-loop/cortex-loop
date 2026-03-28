@@ -6,6 +6,7 @@ import argparse
 import json
 import os
 import subprocess
+import time
 from pathlib import Path
 from typing import Any
 
@@ -77,6 +78,21 @@ def main(argv: list[str] | None = None) -> int:
         choices=("claude", "gemini", "openai", "all"),
         default="all",
     )
+    parser.add_argument(
+        "--scenario",
+        choices=("pass_minimal", "truth_gap", "restart_continuity", "all"),
+        default="all",
+    )
+    parser.add_argument(
+        "--max-attempts",
+        type=int,
+        default=3,
+    )
+    parser.add_argument(
+        "--cooldown-seconds",
+        type=int,
+        default=30,
+    )
     args = parser.parse_args(argv)
 
     ensure_live_validation_dirs()
@@ -94,16 +110,29 @@ def main(argv: list[str] | None = None) -> int:
     summary["surface"] = "host_native_product_paths"
     summary["lane"] = "operator"
     for provider in providers:
-        summary["providers"][provider] = _run_provider(provider)
+        summary["providers"][provider] = _run_provider(
+            provider,
+            scenario=args.scenario,
+            max_attempts=max(1, args.max_attempts),
+            cooldown_seconds=max(0, args.cooldown_seconds),
+        )
     write_json(summary_path, summary)
     print(json.dumps(summary, indent=2, sort_keys=True))
     return 0
 
 
-def _run_provider(provider: str) -> dict[str, Any]:
+def _run_provider(
+    provider: str,
+    *,
+    scenario: str,
+    max_attempts: int,
+    cooldown_seconds: int,
+) -> dict[str, Any]:
     if provider == "openai":
-        return run_openai_app_server_validation()
+        return run_openai_app_server_validation(scenario=scenario)
     root = provider_root(provider, "operator", "product_paths")
+    existing_summary = _read_json(root / "host_native_product_runs.json")
+    existing_runs = existing_summary.get("runs", []) if scenario != "all" else []
     baseline_summary = _read_json(comparator_path("operator_provider_baseline_summary.json"))
     baseline_runs = baseline_summary.get("providers", {}).get(provider, {}).get("runs", [])
     blocking_baseline_failures = sorted(
@@ -136,13 +165,15 @@ def _run_provider(provider: str) -> dict[str, Any]:
     runs: list[dict[str, Any]] = []
     blocked_failure: str | None = None
 
-    for scenario in SCENARIOS:
-        for repeat_index in range(1, scenario.repeat_count + 1):
+    for scenario_spec in SCENARIOS:
+        if scenario not in {"all", scenario_spec.scenario_id}:
+            continue
+        for repeat_index in range(1, scenario_spec.repeat_count + 1):
             if blocked_failure is not None:
                 runs.append(
                     {
                         "provider": provider,
-                        "scenario_id": scenario.scenario_id,
+                        "scenario_id": scenario_spec.scenario_id,
                         "repeat_index": repeat_index,
                         "success": False,
                         "skipped": True,
@@ -151,18 +182,31 @@ def _run_provider(provider: str) -> dict[str, Any]:
                     }
                 )
                 continue
-            result = _run_single_scenario(provider, scenario.scenario_id, repeat_index, root)
+            result = _run_single_scenario(
+                provider,
+                scenario_spec.scenario_id,
+                repeat_index,
+                root,
+                max_attempts=max_attempts,
+                cooldown_seconds=cooldown_seconds,
+            )
             runs.append(result)
             if should_collapse_after_failure(result.get("failure_class")):
                 blocked_failure = result["failure_class"]
 
-    continuity = _run_restart_continuity(provider, root)
-    runs.append(continuity)
+    if scenario in {"all", "restart_continuity"}:
+        continuity = _run_restart_continuity(
+            provider,
+            root,
+            max_attempts=max_attempts,
+            cooldown_seconds=cooldown_seconds,
+        )
+        runs.append(continuity)
     summary = {
         "generated_at": now_utc_iso(),
         "provider": provider,
         "lane": "operator",
-        "runs": runs,
+        "runs": _merge_runs(existing_runs, runs) if scenario != "all" else runs,
     }
     write_json(root / "host_native_product_runs.json", summary)
     return summary
@@ -173,6 +217,9 @@ def _run_single_scenario(
     scenario_id: str,
     repeat_index: int,
     root: Path,
+    *,
+    max_attempts: int,
+    cooldown_seconds: int,
 ) -> dict[str, Any]:
     project_root = prepare_harness_workspace(
         provider=provider,
@@ -188,32 +235,16 @@ def _run_single_scenario(
     )
     prompt_file = next(spec.operator_prompt for spec in SCENARIOS if spec.scenario_id == scenario_id)
     prompt = read_prompt_template(prompt_file)
-    model = MODEL_MATRIX[provider]["operator"].preferred
     auth_mode = resolve_auth_mode(provider, "operator")
-    run_result = _run_provider_task(
-        provider,
+    run_result, failure_class, chosen_model, preferred_model, auto_supported, attempted_models = _run_operator_attempts(
+        provider=provider,
         prompt=prompt,
         project_root=project_root,
-        model=model,
         auth_mode=auth_mode,
         hook_log_path=hook_log_path,
+        max_attempts=max_attempts,
+        cooldown_seconds=cooldown_seconds,
     )
-    failure_class = classify_failure(f"{run_result['stdout']}\n{run_result['stderr']}")
-    if failure_class is None and run_result["exit_code"] == 124:
-        failure_class = "operator_timeout"
-    chosen_model = choose_model(provider, "operator", first_failure=failure_class)
-    if chosen_model != model:
-        run_result = _run_provider_task(
-            provider,
-            prompt=prompt,
-            project_root=project_root,
-            model=chosen_model,
-            auth_mode=auth_mode,
-            hook_log_path=hook_log_path,
-        )
-        failure_class = classify_failure(f"{run_result['stdout']}\n{run_result['stderr']}")
-        if failure_class is None and run_result["exit_code"] == 124:
-            failure_class = "operator_timeout"
     return _materialize_operator_run(
         provider=provider,
         scenario_id=scenario_id,
@@ -222,13 +253,93 @@ def _run_single_scenario(
         root=root,
         run_result=run_result,
         model=chosen_model,
+        preferred_model=preferred_model,
+        auto_supported=auto_supported,
+        attempted_models=attempted_models,
         auth_mode=auth_mode,
         failure_class=failure_class,
         hook_log_path=hook_log_path,
     )
 
 
-def _run_restart_continuity(provider: str, root: Path) -> dict[str, Any]:
+def _run_operator_attempts(
+    *,
+    provider: str,
+    prompt: str,
+    project_root: Path,
+    auth_mode: str,
+    hook_log_path: Path | None,
+    max_attempts: int,
+    cooldown_seconds: int,
+) -> tuple[dict[str, Any], str | None, str, str, bool | None, list[str]]:
+    auto_supported: bool | None = None
+    preferred_model = MODEL_MATRIX[provider]["operator"].preferred
+    current_model = preferred_model
+    attempted_models: list[str] = []
+    run_result: dict[str, Any] | None = None
+    failure_class: str | None = None
+
+    for attempt_index in range(1, max_attempts + 1):
+        run_result = _run_provider_task(
+            provider,
+            prompt=prompt,
+            project_root=project_root,
+            model=current_model,
+            auth_mode=auth_mode,
+            hook_log_path=hook_log_path,
+        )
+        failure_class = classify_failure(f"{run_result['stdout']}\n{run_result['stderr']}")
+        if failure_class is None and run_result["exit_code"] == 124:
+            failure_class = "operator_timeout"
+        attempted_models.append(current_model)
+
+        if provider == "gemini" and current_model == MODEL_MATRIX["gemini"]["operator"].preferred:
+            auto_supported = failure_class != "model_unavailable"
+            if auto_supported is False:
+                preferred_model = choose_model(
+                    "gemini",
+                    "operator",
+                    auto_supported=False,
+                )
+
+        if run_result["exit_code"] == 0:
+            break
+
+        next_model = choose_model(
+            provider,
+            "operator",
+            first_failure=failure_class,
+            current_model=current_model,
+            auto_supported=auto_supported,
+        )
+        if next_model != current_model:
+            current_model = next_model
+            continue
+        if failure_class not in {"capacity_exhausted", "quota_exhausted", "operator_timeout"}:
+            break
+        if attempt_index < max_attempts and cooldown_seconds > 0:
+            time.sleep(cooldown_seconds)
+
+    if run_result is None:
+        raise RuntimeError("operator attempt loop produced no run result")
+
+    return (
+        run_result,
+        failure_class,
+        current_model,
+        preferred_model,
+        auto_supported,
+        attempted_models,
+    )
+
+
+def _run_restart_continuity(
+    provider: str,
+    root: Path,
+    *,
+    max_attempts: int,
+    cooldown_seconds: int,
+) -> dict[str, Any]:
     repeat_index = 1
     project_root = prepare_harness_workspace(
         provider=provider,
@@ -243,32 +354,15 @@ def _run_restart_continuity(provider: str, root: Path) -> dict[str, Any]:
         repeat_index=repeat_index,
     )
     auth_mode = resolve_auth_mode(provider, "operator")
-    chosen_model = MODEL_MATRIX[provider]["operator"].preferred
-
-    first_result = _run_provider_task(
-        provider,
+    first_result, first_failure, chosen_model, preferred_model, auto_supported, attempted_models = _run_operator_attempts(
+        provider=provider,
         prompt=read_prompt_template("restart_continuity_turn1_operator.md"),
         project_root=project_root,
-        model=chosen_model,
         auth_mode=auth_mode,
         hook_log_path=hook_log_path,
+        max_attempts=max_attempts,
+        cooldown_seconds=cooldown_seconds,
     )
-    first_failure = classify_failure(f"{first_result['stdout']}\n{first_result['stderr']}")
-    if first_failure is None and first_result["exit_code"] == 124:
-        first_failure = "operator_timeout"
-    chosen_model = choose_model(provider, "operator", first_failure=first_failure)
-    if chosen_model != MODEL_MATRIX[provider]["operator"].preferred:
-        first_result = _run_provider_task(
-            provider,
-            prompt=read_prompt_template("restart_continuity_turn1_operator.md"),
-            project_root=project_root,
-            model=chosen_model,
-            auth_mode=auth_mode,
-            hook_log_path=hook_log_path,
-        )
-        first_failure = classify_failure(f"{first_result['stdout']}\n{first_result['stderr']}")
-        if first_failure is None and first_result["exit_code"] == 124:
-            first_failure = "operator_timeout"
 
     if first_failure in BLOCKING_FAILURE_CLASSES:
         first_metadata = _materialize_operator_run(
@@ -279,6 +373,9 @@ def _run_restart_continuity(provider: str, root: Path) -> dict[str, Any]:
             root=root,
             run_result=first_result,
             model=chosen_model,
+            preferred_model=preferred_model,
+            auto_supported=auto_supported,
+            attempted_models=attempted_models,
             auth_mode=auth_mode,
             failure_class=first_failure,
             hook_log_path=hook_log_path,
@@ -315,6 +412,9 @@ def _run_restart_continuity(provider: str, root: Path) -> dict[str, Any]:
         root=root,
         run_result=second_result,
         model=chosen_model,
+        preferred_model=preferred_model,
+        auto_supported=auto_supported,
+        attempted_models=attempted_models + [chosen_model],
         auth_mode=auth_mode,
         failure_class=second_failure,
         hook_log_path=hook_log_path,
@@ -333,6 +433,9 @@ def _materialize_operator_run(
     root: Path,
     run_result: dict[str, Any],
     model: str,
+    preferred_model: str,
+    auto_supported: bool | None,
+    attempted_models: list[str],
     auth_mode: str,
     failure_class: str | None,
     hook_log_path: Path | None,
@@ -372,7 +475,10 @@ def _materialize_operator_run(
         "scenario_id": scenario_id,
         "repeat_index": repeat_index,
         "auth_mode": auth_mode,
+        "preferred_model": preferred_model,
         "model": model,
+        "auto_supported": auto_supported,
+        "attempted_models": attempted_models,
         "success": success,
         "failure_class": effective_failure_class,
         "warning_classes": warning_classes,
@@ -623,6 +729,17 @@ def _read_json(path: Path) -> dict[str, Any]:
     return json.loads(path.read_text(encoding="utf-8"))
 
 
+def _merge_runs(existing_runs: list[dict[str, Any]], new_runs: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    merged: dict[tuple[str | None, int | None], dict[str, Any]] = {}
+    order: list[tuple[str | None, int | None]] = []
+    for run in existing_runs + new_runs:
+        key = (run.get("scenario_id"), run.get("repeat_index"))
+        if key not in merged:
+            order.append(key)
+        merged[key] = run
+    return [merged[key] for key in order]
+
+
 def _configure_hook_capture(
     *,
     provider: str,
@@ -704,7 +821,8 @@ def _warning_classes_for_success(
     exit_code: int,
     test_exit_code: int,
 ) -> list[str]:
-    if provider == "gemini" and failure_class in {"capacity_exhausted", "quota_exhausted"} and exit_code == 0 and test_exit_code == 0:
+    _ = test_exit_code
+    if provider == "gemini" and failure_class in {"capacity_exhausted", "quota_exhausted"} and exit_code == 0:
         return [failure_class]
     return []
 

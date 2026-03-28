@@ -55,7 +55,7 @@ MODEL_MATRIX: dict[str, dict[str, LiveModelPreference]] = {
         "automation": LiveModelPreference("claude-sonnet-4-6", "claude-sonnet-4-5"),
     },
     "gemini": {
-        "operator": LiveModelPreference("gemini-2.5-pro", "gemini-2.5-flash"),
+        "operator": LiveModelPreference("gemini-2.5-auto", "gemini-2.5-flash"),
         "automation": LiveModelPreference("gemini-2.5-pro", "gemini-2.5-flash"),
     },
     "openai": {
@@ -63,6 +63,9 @@ MODEL_MATRIX: dict[str, dict[str, LiveModelPreference]] = {
         "automation": LiveModelPreference("gpt-5.4", None),
     },
 }
+
+GEMINI_OPERATOR_FALLBACK_CHAIN = ("gemini-2.5-flash", "gemini-2.5-flash-lite")
+GEMINI_OPERATOR_FULL_LADDER = ("gemini-2.5-auto",) + GEMINI_OPERATOR_FALLBACK_CHAIN
 
 DEFAULT_AUTH_MODE: dict[str, dict[str, str]] = {
     "claude": {"operator": "claude_code", "automation": "api_key"},
@@ -380,7 +383,7 @@ def extract_result_text(records: list[dict[str, Any]], raw_stdout: str) -> str |
         if (
             isinstance(content, str)
             and content.strip()
-            and not (record.get("type") == "message" and record.get("role") == "assistant" and record.get("delta") is True)
+            and record.get("type") != "message"
         ):
             return content.strip()
     if latest_assistant_message:
@@ -425,12 +428,17 @@ def classify_failure(text: str) -> str | None:
         return "auth_missing"
     if "not logged in" in lowered or "please login" in lowered:
         return "not_logged_in"
+    if (
+        "model_not_found" in lowered
+        or "model not found" in lowered
+        or "unsupported model" in lowered
+        or "requested entity was not found" in lowered
+    ):
+        return "model_unavailable"
     if "exhausted your capacity on this model" in lowered:
         return "capacity_exhausted"
     if "insufficient_quota" in lowered or "quota" in lowered:
         return "quota_exhausted"
-    if "model_not_found" in lowered or "model not found" in lowered or "unsupported model" in lowered:
-        return "model_unavailable"
     if "codex cli is not installed" in lowered or "surface is unavailable" in lowered:
         return "operator_surface_missing"
     if "anthropic_api_key is required" in lowered or "gemini_api_key is required" in lowered or "openai_api_key is required" in lowered:
@@ -442,11 +450,42 @@ def should_collapse_after_failure(failure_class: str | None) -> bool:
     return failure_class in BLOCKING_FAILURE_CLASSES
 
 
-def choose_model(provider: str, lane: str, *, first_failure: str | None = None) -> str:
+def model_ladder(
+    provider: str,
+    lane: str,
+    *,
+    auto_supported: bool | None = None,
+) -> tuple[str, ...]:
+    if provider == "gemini" and lane == "operator":
+        if auto_supported is False:
+            return GEMINI_OPERATOR_FALLBACK_CHAIN
+        return GEMINI_OPERATOR_FULL_LADDER
     selection = MODEL_MATRIX[provider][lane]
-    if first_failure in {"capacity_exhausted", "model_unavailable"} and selection.fallback:
-        return selection.fallback
-    return selection.preferred
+    ladder = [selection.preferred]
+    if selection.fallback:
+        ladder.append(selection.fallback)
+    return tuple(ladder)
+
+
+def choose_model(
+    provider: str,
+    lane: str,
+    *,
+    first_failure: str | None = None,
+    current_model: str | None = None,
+    auto_supported: bool | None = None,
+) -> str:
+    ladder = model_ladder(provider, lane, auto_supported=auto_supported)
+    if current_model is None:
+        return ladder[0]
+    if first_failure in {"capacity_exhausted", "quota_exhausted", "model_unavailable"}:
+        try:
+            index = ladder.index(current_model)
+        except ValueError:
+            return ladder[0]
+        if index + 1 < len(ladder):
+            return ladder[index + 1]
+    return current_model
 
 
 def extract_unified_diff(text: str) -> str | None:
@@ -542,6 +581,7 @@ def build_scenario_catalog() -> dict[str, Any]:
         "artifact_root": ".cortex/live_validation",
         "shared_template_root": "tests/fixtures/live_validation/project_template",
         "test_command": "python -m pytest -q tests/test_normalize_port.py",
+        "gemini_operator_model_ladder": list(GEMINI_OPERATOR_FULL_LADDER),
         "operator_scenarios": [
             {
                 "scenario_id": scenario.scenario_id,

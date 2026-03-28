@@ -4,12 +4,15 @@ from __future__ import annotations
 
 from tools.live_validation_common import (
     BLOCKING_FAILURE_CLASSES,
+    GEMINI_OPERATOR_FULL_LADDER,
     MODEL_MATRIX,
     build_scenario_catalog,
+    choose_model,
     classify_failure,
     decide_verdict,
     extract_event_labels,
     extract_result_text,
+    model_ladder,
     parse_json_lines,
     redact_claude_auth_payload,
     should_collapse_after_failure,
@@ -44,6 +47,7 @@ def test_classify_failure_recognizes_live_auth_and_capacity_blockers() -> None:
         classify_failure("You have exhausted your capacity on this model.")
         == "capacity_exhausted"
     )
+    assert classify_failure("Requested entity was not found.") == "model_unavailable"
     assert classify_failure("model_not_found") == "model_unavailable"
     assert classify_failure("totally different error") is None
 
@@ -85,6 +89,17 @@ def test_extract_result_text_reassembles_gemini_style_assistant_deltas() -> None
     assert extract_result_text(records, "") == "Task: **incomplete**"
 
 
+def test_extract_result_text_does_not_fall_back_to_user_prompt_when_assistant_deltas_exist() -> None:
+    records = [
+        {"type": "message", "role": "user", "content": "Prompt text"},
+        {"type": "message", "role": "assistant", "content": "Actual", "delta": True},
+        {"type": "message", "role": "assistant", "content": " answer", "delta": True},
+        {"type": "result", "status": "success"},
+    ]
+
+    assert extract_result_text(records, "") == "Actual answer"
+
+
 def test_build_scenario_catalog_exposes_l2_harness_contract() -> None:
     catalog = build_scenario_catalog()
 
@@ -104,8 +119,44 @@ def test_build_scenario_catalog_exposes_l2_harness_contract() -> None:
     assert catalog["host_caveats"]["openai"] == "host_caveat_operator_openai_app_server.md"
     assert catalog["openai_operator_surfaces"]["smoke"] == "codex exec"
     assert catalog["openai_operator_surfaces"]["lifecycle_proof"] == "codex app-server"
+    assert catalog["gemini_operator_model_ladder"] == [
+        "gemini-2.5-auto",
+        "gemini-2.5-flash",
+        "gemini-2.5-flash-lite",
+    ]
     assert MODEL_MATRIX["openai"]["operator"].preferred == "gpt-5.3-codex"
+    assert MODEL_MATRIX["gemini"]["operator"].preferred == "gemini-2.5-auto"
     assert MODEL_MATRIX["gemini"]["operator"].fallback == "gemini-2.5-flash"
+
+
+def test_gemini_model_ladder_and_choose_model_follow_auto_then_flash_then_flash_lite() -> None:
+    assert model_ladder("gemini", "operator") == GEMINI_OPERATOR_FULL_LADDER
+    assert model_ladder("gemini", "operator", auto_supported=False) == (
+        "gemini-2.5-flash",
+        "gemini-2.5-flash-lite",
+    )
+    assert choose_model("gemini", "operator") == "gemini-2.5-auto"
+    assert choose_model("gemini", "operator", auto_supported=False) == "gemini-2.5-flash"
+    assert (
+        choose_model(
+            "gemini",
+            "operator",
+            current_model="gemini-2.5-auto",
+            first_failure="model_unavailable",
+            auto_supported=False,
+        )
+        == "gemini-2.5-flash"
+    )
+    assert (
+        choose_model(
+            "gemini",
+            "operator",
+            current_model="gemini-2.5-flash",
+            first_failure="capacity_exhausted",
+            auto_supported=False,
+        )
+        == "gemini-2.5-flash-lite"
+    )
 
 
 def test_decide_verdict_prefers_blocker_honesty_before_optimism() -> None:

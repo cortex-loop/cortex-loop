@@ -58,6 +58,36 @@ def _build_comparison(preflight: dict[str, Any]) -> dict[str, Any]:
             for run in operator_runs
             if run.get("scenario_id") == "truth_gap" and run.get("truth_gap_kind") == "truthful_incomplete"
         ]
+        operator_warning_classes = sorted(
+            {
+                warning
+                for run in operator_runs
+                for warning in run.get("warning_classes", [])
+                if isinstance(warning, str) and warning
+            }
+        )
+        chosen_models = sorted(
+            {
+                run["model"]
+                for run in operator_runs
+                if isinstance(run.get("model"), str) and run.get("model")
+            }
+        )
+        preferred_models = sorted(
+            {
+                run["preferred_model"]
+                for run in operator_runs
+                if isinstance(run.get("preferred_model"), str) and run.get("preferred_model")
+            }
+        )
+        hook_event_labels = sorted(
+            {
+                label
+                for run in operator_runs
+                for label in run.get("hook_event_labels", [])
+                if isinstance(label, str) and label
+            }
+        )
         successful_service = [run for run in service_runs if run.get("success")]
         baseline_failures = sorted(
             {run["failure_class"] for run in baseline_runs if run.get("failure_class")}
@@ -96,6 +126,10 @@ def _build_comparison(preflight: dict[str, Any]) -> dict[str, Any]:
                 ),
                 "truth_gap_preserved": bool(truthful_gaps),
                 "failure_classes": operator_failures,
+                "warning_classes": operator_warning_classes,
+                "preferred_models": preferred_models,
+                "chosen_models": chosen_models,
+                "hook_event_labels": hook_event_labels,
             },
             "automation_service": {
                 "successful_run_count": len(successful_service),
@@ -180,6 +214,9 @@ def _comparison_markdown(comparison: dict[str, Any]) -> str:
                 f"- operator pass_minimal success: `{payload['operator_lifecycle']['pass_minimal_success']}`",
                 f"- operator restart_continuity success: `{payload['operator_lifecycle']['restart_continuity_success']}`",
                 f"- operator truthful gap preserved: `{payload['operator_lifecycle']['truth_gap_preserved']}`",
+                f"- operator chosen models: `{', '.join(payload['operator_lifecycle']['chosen_models']) or 'none'}`",
+                f"- operator warning classes: `{', '.join(payload['operator_lifecycle']['warning_classes']) or 'none'}`",
+                f"- operator hook labels: `{', '.join(payload['operator_lifecycle']['hook_event_labels']) or 'none'}`",
                 f"- operator lifecycle failures: `{', '.join(payload['operator_lifecycle']['failure_classes']) or 'none'}`",
                 f"- automation service failures: `{', '.join(payload['automation_service']['failure_classes']) or 'none'}`",
                 "",

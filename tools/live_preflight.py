@@ -8,6 +8,7 @@ from typing import Any
 
 from live_validation_common import (
     AUTH_MODE_ENV,
+    GEMINI_OPERATOR_FULL_LADDER,
     MODEL_MATRIX,
     PREFLIGHT_REPORT_PATH,
     api_key_presence,
@@ -100,6 +101,7 @@ def build_preflight_report(*, lane: str, skip_updates: bool) -> dict[str, Any]:
                 lane_name: {
                     "preferred": pref.preferred,
                     "fallback": pref.fallback,
+                    "fallback_chain": list(GEMINI_OPERATOR_FULL_LADDER[1:]) if provider == "gemini" and lane_name == "operator" else ([pref.fallback] if pref.fallback else []),
                 }
                 for lane_name, pref in lane_map.items()
             }
@@ -193,6 +195,7 @@ def _probe_claude_operator() -> dict[str, Any]:
         failure_class = classify_failure(f"{probe['stdout']}\n{probe['stderr']}")
     return {
         "auth_mode": resolve_auth_mode("claude", "operator"),
+        "preferred_model": preferred,
         "model": chosen_model,
         "failure_class": failure_class,
         "command": probe["command"],
@@ -201,15 +204,36 @@ def _probe_claude_operator() -> dict[str, Any]:
 
 def _probe_gemini_operator() -> dict[str, Any]:
     preferred = MODEL_MATRIX["gemini"]["operator"].preferred
+    attempted_models: list[str] = []
     probe = _run_gemini_probe(preferred)
     failure_class = classify_failure(f"{probe['stdout']}\n{probe['stderr']}")
-    chosen_model = choose_model("gemini", "operator", first_failure=failure_class)
-    if chosen_model != preferred:
+    attempted_models.append(preferred)
+    auto_supported = failure_class != "model_unavailable"
+    chosen_model = choose_model(
+        "gemini",
+        "operator",
+        first_failure=failure_class,
+        current_model=preferred,
+        auto_supported=auto_supported,
+    )
+    while chosen_model != attempted_models[-1]:
         probe = _run_gemini_probe(chosen_model)
         failure_class = classify_failure(f"{probe['stdout']}\n{probe['stderr']}")
+        attempted_models.append(chosen_model)
+        chosen_model = choose_model(
+            "gemini",
+            "operator",
+            first_failure=failure_class,
+            current_model=chosen_model,
+            auto_supported=auto_supported,
+        )
+    final_model = attempted_models[-1]
     return {
         "auth_mode": resolve_auth_mode("gemini", "operator"),
-        "model": chosen_model,
+        "preferred_model": preferred if auto_supported else GEMINI_OPERATOR_FULL_LADDER[1],
+        "model": final_model,
+        "auto_supported": auto_supported,
+        "attempted_models": attempted_models,
         "failure_class": failure_class,
         "command": probe["command"],
     }
@@ -225,6 +249,7 @@ def _probe_openai_operator() -> dict[str, Any]:
         failure_class = classify_failure(f"{probe['stdout']}\n{probe['stderr']}")
     return {
         "auth_mode": resolve_auth_mode("openai", "operator"),
+        "preferred_model": preferred,
         "model": chosen_model,
         "failure_class": failure_class,
         "command": probe["command"],
