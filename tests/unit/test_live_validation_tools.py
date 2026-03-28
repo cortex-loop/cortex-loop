@@ -10,6 +10,8 @@ if str(TOOLS_ROOT) not in sys.path:
     sys.path.insert(0, str(TOOLS_ROOT))
 
 import live_cortex_host_control as live_host_control
+import live_host_native_product_paths as live_host_native_product_paths
+import live_preflight as live_preflight
 import live_provider_baselines as live_provider_baselines
 import live_validation_common as live_validation_common
 from live_validation_common import (
@@ -132,12 +134,12 @@ def test_build_scenario_catalog_exposes_l2_harness_contract() -> None:
     assert catalog["openai_operator_surfaces"]["smoke"] == "codex exec"
     assert catalog["openai_operator_surfaces"]["lifecycle_proof"] == "codex app-server"
     assert catalog["gemini_operator_model_ladder"] == [
-        "gemini-2.5-auto",
+        "auto",
         "gemini-2.5-flash",
         "gemini-2.5-flash-lite",
     ]
     assert MODEL_MATRIX["openai"]["operator"].preferred == "gpt-5.3-codex"
-    assert MODEL_MATRIX["gemini"]["operator"].preferred == "gemini-2.5-auto"
+    assert MODEL_MATRIX["gemini"]["operator"].preferred == "auto"
     assert MODEL_MATRIX["gemini"]["operator"].fallback == "gemini-2.5-flash"
 
 
@@ -147,14 +149,24 @@ def test_gemini_model_ladder_and_choose_model_follow_auto_then_flash_then_flash_
         "gemini-2.5-flash",
         "gemini-2.5-flash-lite",
     )
-    assert choose_model("gemini", "operator") == "gemini-2.5-auto"
+    assert choose_model("gemini", "operator") == "auto"
     assert choose_model("gemini", "operator", auto_supported=False) == "gemini-2.5-flash"
     assert (
         choose_model(
             "gemini",
             "operator",
-            current_model="gemini-2.5-auto",
+            current_model="auto",
             first_failure="model_unavailable",
+            auto_supported=False,
+        )
+        == "gemini-2.5-flash"
+    )
+    assert (
+        choose_model(
+            "gemini",
+            "operator",
+            current_model="auto",
+            first_failure="operator_timeout",
             auto_supported=False,
         )
         == "gemini-2.5-flash"
@@ -293,6 +305,57 @@ def test_provider_baseline_requested_model_ladder_uses_current_model_matrix() ->
         fallback_model_override=None,
         disable_auto_probe=False,
     ) == ("gpt-5.3-codex", "gpt-5.4")
+
+
+def test_gemini_operator_commands_omit_model_flag_when_auto_is_selected(monkeypatch) -> None:
+    captured: dict[str, list[str]] = {}
+
+    def fake_run_command(command, **kwargs):
+        captured["preflight"] = command
+        return {
+            "command": command,
+            "exit_code": 0,
+            "stdout": "",
+            "stderr": "",
+            "started_at": "2026-03-28T00:00:00+00:00",
+            "ended_at": "2026-03-28T00:00:00+00:00",
+        }
+
+    monkeypatch.setattr(live_preflight, "run_command", fake_run_command)
+    live_preflight._run_gemini_probe("auto")
+    assert "-m" not in captured["preflight"]
+
+    def fake_subprocess_run(command, **kwargs):
+        captured["baseline"] = command
+        class Result:
+            returncode = 0
+            stdout = ""
+            stderr = ""
+        return Result()
+
+    monkeypatch.setattr(live_provider_baselines.subprocess, "run", fake_subprocess_run)
+    live_provider_baselines._run_gemini_operator_probe("auto")
+    assert "-m" not in captured["baseline"]
+
+    def fake_timed_command(command, **kwargs):
+        captured["product_path"] = command
+        return {
+            "command": command,
+            "exit_code": 0,
+            "stdout": "",
+            "stderr": "",
+            "started_at": "2026-03-28T00:00:00+00:00",
+            "ended_at": "2026-03-28T00:00:00+00:00",
+        }
+
+    monkeypatch.setattr(live_host_native_product_paths, "_run_timed_command", fake_timed_command)
+    live_host_native_product_paths._run_gemini_task(
+        "Respond exactly with OK.",
+        project_root=Path("/tmp"),
+        model="auto",
+        auth_mode="google_login",
+    )
+    assert "-m" not in captured["product_path"]
 
 
 def test_decide_verdict_prefers_blocker_honesty_before_optimism() -> None:

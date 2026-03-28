@@ -199,7 +199,7 @@ def _probe_gemini_operator() -> dict[str, Any]:
     probe = _run_gemini_probe(preferred)
     failure_class = classify_failure(f"{probe['stdout']}\n{probe['stderr']}")
     attempted_models.append(preferred)
-    auto_supported = failure_class != "model_unavailable"
+    auto_supported = failure_class is None
     chosen_model = choose_model(
         "gemini",
         "operator",
@@ -271,18 +271,19 @@ def _run_claude_probe(model: str) -> dict[str, Any]:
 
 def _run_gemini_probe(model: str) -> dict[str, Any]:
     with tempfile_workspace() as cwd:
+        command = [
+            "gemini",
+            "-p",
+            "Respond exactly with OK.",
+            "-o",
+            "stream-json",
+            "--approval-mode",
+            "plan",
+        ]
+        if model != "auto":
+            command[5:5] = ["-m", model]
         return run_command(
-            [
-                "gemini",
-                "-p",
-                "Respond exactly with OK.",
-                "-o",
-                "stream-json",
-                "-m",
-                model,
-                "--approval-mode",
-                "plan",
-            ],
+            command,
             cwd=cwd,
             timeout_seconds=30.0,
         )

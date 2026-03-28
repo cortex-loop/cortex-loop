@@ -18,10 +18,8 @@ It is an evaluation/support surface, not a runtime or auth-expansion brief.
   - `codex exec` smoke
   - `codex app-server` lifecycle proof
 - Gemini remains an explicit partial host line:
-  - `gemini-2.5-auto` unsupported locally
   - `gemini-2.5-pro` valid but exploratory-only and capacity-blocked on smoke
-  - repeated preflight probes currently fall through to usable `gemini-2.5-flash-lite`
-  - repeated operator smoke baselines on `gemini-2.5-flash` are currently `capacity_exhausted`
+  - operator probes and repeated smoke baselines are now clean in CLI auto mode
   - `gemini-2.5-flash` closes `pass_minimal` with warning-preserving capacity pressure
   - `gemini-2.5-flash-lite` closes `restart_continuity` with warning-preserving capacity pressure
   - neither model closes `truth_gap` honestly

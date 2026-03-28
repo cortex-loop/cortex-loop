@@ -345,7 +345,7 @@ def _run_operator_attempts(
         attempted_models.append(current_model)
 
         if provider == "gemini" and current_model == MODEL_MATRIX["gemini"]["operator"].preferred:
-            auto_supported = failure_class != "model_unavailable"
+            auto_supported = failure_class is None
             if auto_supported is False:
                 ladder = _requested_model_ladder(
                     provider=provider,
@@ -684,11 +684,11 @@ def _run_gemini_task(
         prompt,
         "-o",
         "stream-json",
-        "-m",
-        model,
         "--approval-mode",
         "yolo",
     ]
+    if model != "auto":
+        command[5:5] = ["-m", model]
     if resume_session:
         command.extend(["-r", resume_session])
     return _run_timed_command(

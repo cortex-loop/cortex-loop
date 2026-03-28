@@ -187,7 +187,7 @@ def _run_single_provider_baseline(
         failure_class = "operator_timeout" if lane == "operator" else "quota_exhausted"
     attempted_models = [first_model]
     if provider == "gemini" and lane == "operator":
-        auto_supported = failure_class != "model_unavailable"
+        auto_supported = failure_class is None
         preferred_model = first_model if auto_supported else GEMINI_OPERATOR_FULL_LADDER[1]
     chosen_model = choose_model(
         provider,
@@ -294,19 +294,20 @@ def _run_claude_operator_probe(model: str) -> dict[str, Any]:
 
 def _run_gemini_operator_probe(model: str) -> dict[str, Any]:
     with provider_cli_workspace() as workspace:
+        command = [
+            "gemini",
+            "-p",
+            _SMOKE_PROMPT,
+            "-o",
+            "stream-json",
+            "--approval-mode",
+            "plan",
+        ]
+        if model != "auto":
+            command[5:5] = ["-m", model]
         try:
             completed = subprocess.run(
-                [
-                    "gemini",
-                    "-p",
-                    _SMOKE_PROMPT,
-                    "-o",
-                    "stream-json",
-                    "-m",
-                    model,
-                    "--approval-mode",
-                    "plan",
-                ],
+                command,
                 cwd=workspace,
                 text=True,
                 capture_output=True,
@@ -314,17 +315,7 @@ def _run_gemini_operator_probe(model: str) -> dict[str, Any]:
                 check=False,
             )
             return {
-                "command": [
-                    "gemini",
-                    "-p",
-                    _SMOKE_PROMPT,
-                    "-o",
-                    "stream-json",
-                    "-m",
-                    model,
-                    "--approval-mode",
-                    "plan",
-                ],
+                "command": command,
                 "exit_code": completed.returncode,
                 "stdout": completed.stdout,
                 "stderr": completed.stderr,
@@ -333,17 +324,7 @@ def _run_gemini_operator_probe(model: str) -> dict[str, Any]:
             stdout = exc.stdout if isinstance(exc.stdout, str) else (exc.stdout or b"").decode("utf-8", errors="replace")
             stderr = exc.stderr if isinstance(exc.stderr, str) else (exc.stderr or b"").decode("utf-8", errors="replace")
             return {
-                "command": [
-                    "gemini",
-                    "-p",
-                    _SMOKE_PROMPT,
-                    "-o",
-                    "stream-json",
-                    "-m",
-                    model,
-                    "--approval-mode",
-                    "plan",
-                ],
+                "command": command,
                 "exit_code": 124,
                 "stdout": stdout,
                 "stderr": stderr,

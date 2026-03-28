@@ -68,13 +68,13 @@ Target task:
   - `AfterTool`
   - `SessionEnd`
 - current model ladder:
-  - `gemini-2.5-auto` if the installed CLI accepts it
-  - otherwise `gemini-2.5-flash`
+  - CLI auto mode first
+  - then `gemini-2.5-flash`
   - then `gemini-2.5-flash-lite`
 - current exploratory sidecar:
   - `gemini-2.5-pro` smoke only unless the smoke becomes clean
 - current caveat:
-  - the installed CLI rejects `gemini-2.5-auto` on this machine
+  - smoke surfaces now start in CLI auto mode, but the deeper product path still reflects the earlier flash/flash-lite partial truth
   - `gemini-2.5-pro` is valid locally but still capacity-blocked on smoke
   - `truth_gap` remains the active blocker even after a `flash-lite` rerun
 - probe surface: operator preflight plus the signed-in Gemini baseline and hook-backed product lane

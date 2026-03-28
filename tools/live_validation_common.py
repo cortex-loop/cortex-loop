@@ -56,7 +56,7 @@ MODEL_MATRIX: dict[str, dict[str, LiveModelPreference]] = {
         "automation": LiveModelPreference("claude-sonnet-4-6", "claude-sonnet-4-5"),
     },
     "gemini": {
-        "operator": LiveModelPreference("gemini-2.5-auto", "gemini-2.5-flash"),
+        "operator": LiveModelPreference("auto", "gemini-2.5-flash"),
         "automation": LiveModelPreference("gemini-2.5-pro", "gemini-2.5-flash"),
     },
     "openai": {
@@ -66,7 +66,7 @@ MODEL_MATRIX: dict[str, dict[str, LiveModelPreference]] = {
 }
 
 GEMINI_OPERATOR_FALLBACK_CHAIN = ("gemini-2.5-flash", "gemini-2.5-flash-lite")
-GEMINI_OPERATOR_FULL_LADDER = ("gemini-2.5-auto",) + GEMINI_OPERATOR_FALLBACK_CHAIN
+GEMINI_OPERATOR_FULL_LADDER = ("auto",) + GEMINI_OPERATOR_FALLBACK_CHAIN
 
 DEFAULT_AUTH_MODE: dict[str, dict[str, str]] = {
     "claude": {"operator": "claude_code", "automation": "api_key"},
@@ -550,7 +550,7 @@ def choose_model(
     ladder = ladder or model_ladder(provider, lane, auto_supported=auto_supported)
     if current_model is None:
         return ladder[0]
-    if first_failure in {"capacity_exhausted", "quota_exhausted", "model_unavailable"}:
+    if first_failure in {"capacity_exhausted", "quota_exhausted", "model_unavailable", "operator_timeout"}:
         try:
             index = ladder.index(current_model)
         except ValueError:

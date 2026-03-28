@@ -11,11 +11,11 @@ This remains the broader live-validation verdict because Gemini is still an expl
 
 The new operator-only payoff note is narrower and may still conclude that operator lifecycle-first is already paying off clearly.
 That operator-only audit is now landed for current scope.
-The last-session closure re-audit is now complete for current scope.
+The Gemini auto-routing operator-default normalization seam is now landed for current scope.
 
 Reason:
 
-- Claude and OpenAI signed-in operator probes and smoke baselines are now green, while Gemini smoke-baseline reruns are currently host-fragile,
+- all three signed-in operator probes and smoke baselines are now green again, with Gemini now starting in CLI auto mode rather than a pinned model,
 - Claude is now re-earned on a hook-backed operator lane:
   - `pass_minimal` twice
   - `truth_gap`
@@ -27,9 +27,7 @@ Reason:
   - `codex app-server` passes `restart_continuity` twice,
 - the cross-host `make live-host-native-product-paths` entrypoint still inherits the current Claude/Gemini watchlist drift and is not the clean closure signal yet,
 - Gemini now has real hook-backed lifecycle capture and local fallback truth:
-  - `gemini-2.5-auto` is not accepted by the installed CLI on this machine
-  - repeated preflight probes currently fall through to usable `gemini-2.5-flash-lite`
-  - repeated operator smoke baselines on `gemini-2.5-flash` are currently `capacity_exhausted`
+  - operator probes and repeated smoke baselines are now clean in CLI auto mode with no pinned `-m` model argument
   - `gemini-2.5-flash` succeeds twice on `pass_minimal` with warning-preserving `capacity_exhausted`
   - `gemini-2.5-flash-lite` still returns `smoothed_incomplete` on `truth_gap`
   - `gemini-2.5-flash-lite` succeeds on `restart_continuity` with warning-preserving `capacity_exhausted`
@@ -57,8 +55,8 @@ Reason:
 
 ### Gemini
 
-- operator probe: `gemini-2.5-auto` is rejected locally; current repeated preflight probes fall through to usable `gemini-2.5-flash-lite`
-- operator baseline: repeated smoke baselines on `gemini-2.5-flash` are currently `capacity_exhausted`
+- operator probe: clean in CLI auto mode with no pinned `-m` model argument
+- operator baseline: clean twice in CLI auto mode
 - operator product path:
   - hook-backed `pass_minimal`: success twice with `capacity_exhausted` preserved as a warning
   - `truth_gap`: still `smoothed_incomplete` on `gemini-2.5-flash-lite`
@@ -93,12 +91,12 @@ Reason:
 - `L2b` now re-earns OpenAI on the current host-native App Server lifecycle surface instead of treating `codex exec` alone as the strongest operator proof
 - `L2b` explicitly keeps assisted mode deferred rather than smuggling bounded corrective intervention back in from v1
 - `L2c` now re-earns Claude and Gemini on their documented hook surfaces rather than relying on transcript-only operator truth
-- `L2d` now proves the local Gemini CLI does not accept `gemini-2.5-auto` here and reclassifies Gemini warning-preserving task success without hiding the remaining truth-gap and continuity failures
+- `G2` now re-optimizes Gemini operator testing around CLI auto mode, removes the pinned-model default from the smoke surfaces, and keeps explicit fallbacks only for failure recovery
 - `L2e` now proves that Gemini Pro is not the current closure model on this machine and that `flash-lite` rescues continuity but not truth-gap honesty
 
 ## Next corrective seam
 
-The strict closure re-audit is now complete.
+The Gemini auto-routing operator-default normalization seam is now complete.
 The next honest move is one bounded seam, chosen explicitly:
 
 1. If you want to advance the service lane:
@@ -109,8 +107,8 @@ The next honest move is one bounded seam, chosen explicitly:
      - `CORTEX_LIVE_SERVICE_SPEND_APPROVED`
    - then rerun the bounded service-proof lane
 2. If you want a cleaner operator-only support story first:
-   - open one bounded Gemini smoke-baseline stabilization or downgrade seam
-   - do not smooth the current Gemini baseline fragility away
+   - open one bounded Gemini deeper product-path rerun seam in CLI auto mode
+   - do not smooth the current partial truth-gap/product-path story away
 
 For the service-proof path, rerun:
 

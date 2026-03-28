@@ -400,6 +400,7 @@ By default it runs the signed-in operator lane.
 The automation lane remains available as a separate optional comparison path.
 Machine output is local-only under `.cortex/live_validation/`.
 These smoke baselines are environment-sensitive and may fail honestly on host capacity pressure even when deeper operator lifecycle evidence remains usable.
+For Gemini operator testing, the baseline now starts in CLI auto mode by default and only falls back to an explicit model after a real failure or timeout.
 
 Direct command:
 
@@ -429,6 +430,7 @@ For Claude and Gemini, the operator lane now records documented hook events alon
 While Claude and Gemini still carry operator-harness drift, do not treat the aggregate cross-host entrypoint by itself as the clean closure signal.
 For focused Gemini reruns, use the direct script with `--provider gemini --scenario ... --max-attempts ... --cooldown-seconds ...` rather than relying on the umbrella target alone.
 The Gemini-focused reruns now also accept `--preferred-model`, `--fallback-model`, `--disable-auto-probe`, and `--exploratory-probe` when a bounded local model split or Pro sidecar is needed.
+Without an explicit override, Gemini operator testing now starts in CLI auto mode rather than a pinned `-m` model.
 
 Direct command:
 

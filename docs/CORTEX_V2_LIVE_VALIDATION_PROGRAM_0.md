@@ -51,8 +51,7 @@ The operator lane also carries a separate OpenAI coding-model preference:
   - `codex exec` = smoke / preflight
   - `codex app-server` = lifecycle proof
 - Claude and Gemini signed-in operator truth now records documented hook events alongside the CLI transcript surfaces
-- Gemini signed-in operator truth may fall back from `gemini-2.5-pro` to `gemini-2.5-flash`
-- current local Gemini truth also records that `gemini-2.5-auto` is not accepted by the installed CLI on this machine
+- Gemini signed-in operator testing now starts in CLI auto mode and only falls back to explicit models after failure
 - current local Gemini truth also records that `gemini-2.5-pro` is valid locally but remains capacity-blocked on the bounded exploratory smoke lane
 - no assisted retry loop, corrective second-pass intervention, or v1 bridge doctrine belongs in `L2b`
 
@@ -80,11 +79,11 @@ Current local evidence after the March 28 reruns:
 
 - operator preflight:
   - Claude operator probe succeeds on `claude-sonnet-4-6`
-  - Gemini operator probe starts on `gemini-2.5-auto`, records local `model_unavailable`, and falls through to `gemini-2.5-flash`
+  - Gemini operator probe now starts in CLI auto mode with no pinned `-m` model argument and succeeds cleanly
   - OpenAI/Codex operator probe succeeds on `gpt-5.3-codex`
 - operator baselines:
   - Claude baseline succeeds twice on `claude-sonnet-4-6`
-  - Gemini baseline succeeds twice on fallback `gemini-2.5-flash`
+  - Gemini baseline now succeeds twice in CLI auto mode
   - OpenAI baseline succeeds twice on `codex exec`
 - operator product paths:
   - OpenAI App Server now succeeds on:
