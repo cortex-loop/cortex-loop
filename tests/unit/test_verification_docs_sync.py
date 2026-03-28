@@ -156,6 +156,8 @@ def _expand_make_vars(command: str, makefile_text: str) -> str:
 
 def test_implementation_status_note_reflects_current_verification_surfaces() -> None:
     text = _read(IMPLEMENTATION_STATUS_NOTE_PATH)
+    workstream_text = _read(ACTIVE_WORKSTREAM_PATH)
+    _accepted_branch, accepted_commit = _extract_accepted_workflow_baseline(workstream_text)
 
     assert "there is no repo-local pytest config" not in text
     assert "there is no repo-local coverage configuration" not in text
@@ -174,7 +176,7 @@ def test_implementation_status_note_reflects_current_verification_surfaces() -> 
     assert "Gemini runtime / ingress / service / bounded host-control" in text
     assert "Claude runtime / ingress / service / bounded host-control" in text
     assert "`main`" in text
-    assert "`d8aa925`" in text
+    assert f"`{accepted_commit}`" in text
 
 
 def test_verification_ergonomics_plan_reflects_current_campaign_state() -> None:
@@ -321,6 +323,7 @@ def test_local_verification_doc_records_repo_workflow_commands() -> None:
 def test_resume_protocol_and_active_workstream_contract_exist() -> None:
     agents_text = _read(REPO_ROOT / "AGENTS.md")
     workstream_text = _read(ACTIVE_WORKSTREAM_PATH)
+    accepted_branch, accepted_commit = _extract_accepted_workflow_baseline(workstream_text)
 
     assert "## Continuation and resume protocol" in agents_text
     assert "`docs/CORTEX_V2_ACTIVE_WORKSTREAM.md`" in agents_text
@@ -329,13 +332,14 @@ def test_resume_protocol_and_active_workstream_contract_exist() -> None:
     assert "Never promote uncommitted local edits to accepted baseline truth." in agents_text
 
     assert "Status: live workflow-state ledger for compaction-safe continuation." in workstream_text
-    assert "Accepted baseline branch: `main`" in workstream_text
-    assert "Accepted baseline commit: `d8aa925`" in workstream_text
-    assert "Current working branch at ledger update: `maint/h2b-preserve-repair`" in workstream_text
+    assert f"Accepted baseline branch: `{accepted_branch}`" in workstream_text
+    assert f"Accepted baseline commit: `{accepted_commit}`" in workstream_text
+    assert "Current campaign:" in workstream_text
+    assert "Current working branch at ledger update:" in workstream_text
+    assert "Current branch role:" in workstream_text
     assert "accepted workflow baseline truth now rests on `main` rather than a long-lived working branch" in workstream_text
-    assert "Current campaign: `H2B root worktree preservation repair`" in workstream_text
-    assert "Current candidate seam: none; `H2B` is now landed for current scope" in workstream_text
-    assert "Current seam status: `landed for current scope; root worktree preserved safely and cleanup still deferred`" in workstream_text
+    assert "Current candidate seam: none;" in workstream_text
+    assert "merged-safe cleanup is still deferred" in workstream_text
     assert "the current signed-in smoke surfaces are now clean again" in workstream_text
     assert "`codex exec` for smoke" in workstream_text
     assert "`codex app-server` for lifecycle proof" in workstream_text
@@ -418,7 +422,7 @@ def test_reference_runtime_program_lock_is_recorded() -> None:
     assert "loopback-only HTTP is landed on the accepted K1 closeout line" in phase_gate_text
     assert "one active session per process is real for current scope" in phase_gate_text
 
-    assert "Current campaign: `H2B root worktree preservation repair`" in workstream_text
+    assert "open the separate audited cleanup slice" in workstream_text
     assert "the live-testing environment now has explicit operator and automation lane semantics" in workstream_text
     assert "the current signed-in smoke surfaces are now clean again" in workstream_text
     assert "the OpenAI App Server operator lane now completes" in workstream_text
@@ -560,10 +564,12 @@ def test_reference_runtime_program_lock_is_recorded() -> None:
     live_validation_program_text = _read(LIVE_VALIDATION_PROGRAM_PATH)
     live_validation_scenario_catalog_text = _read(LIVE_VALIDATION_SCENARIO_CATALOG_PATH)
     live_validation_verdict_text = _read(LIVE_VALIDATION_VERDICT_PATH)
+    workstream_text = _read(ACTIVE_WORKSTREAM_PATH)
+    accepted_branch, accepted_commit = _extract_accepted_workflow_baseline(workstream_text)
 
     assert "Status: active L2 live-testing environment brief with L2b/L2c/L2d/L2e host-native lifecycle follow-ons" in live_validation_program_text
-    assert "branch: `main`" in live_validation_program_text
-    assert "commit: `d8aa925`" in live_validation_program_text
+    assert f"branch: `{accepted_branch}`" in live_validation_program_text
+    assert f"commit: `{accepted_commit}`" in live_validation_program_text
     assert "signed-in host-native product surfaces" in live_validation_program_text
     assert "local-only under `.cortex/live_validation/`" in live_validation_program_text
     assert "`codex exec` = smoke / preflight" in live_validation_program_text
@@ -713,4 +719,4 @@ def test_runtime_restack_program_lock_is_recorded() -> None:
     assert "Current accepted state after K1 closeout" in text
     assert "implemented at K1 proof head `d4c311f` and truthfully closed at deterministic closeout head `79b8f39`" in text
     assert "later bounded runtime/product trains may still be explicitly opened" in master_plan_text
-    assert "now records the landed Gemini auto-mode product-path re-earn seam and the remaining blocked service-proof move after it" in theory_text
+    assert "now records the landed preservation-path repair, the protected preserved root worktree, and the remaining audited cleanup slice before broader continuation" in theory_text

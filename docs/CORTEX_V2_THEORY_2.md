@@ -20,12 +20,12 @@ Active authority remains:
 
 ## Current repo evidence
 
-- The accepted workflow baseline is now on `main` at commit `d8aa925`.
+- The accepted workflow baseline is now on `main` at commit `3637921`.
 - `docs/CORTEX_V2_IMPLEMENTATION_STATUS_NOTE.md` says the current v2 roadmap is complete at the justified boundary.
 - `docs/CORTEX_V2_MEDIATION_JUSTIFICATION_NOTE.md` says mediation is still `not justified yet`.
 - `docs/CORTEX_V2_MEDIATION_EVIDENCE_NOTE_0.md` shows cell-level signal on thrash, uncertainty, and host-realization, but every package-level axis remains `insufficient`.
 - `docs/CORTEX_V2_VERIFICATION_ERGONOMICS_MASTER_PLAN_0.md` still defines the active non-feature follow-on campaign.
-- `docs/CORTEX_V2_ACTIVE_WORKSTREAM.md` now records the landed Gemini auto-mode product-path re-earn seam and the remaining blocked service-proof move after it.
+- `docs/CORTEX_V2_ACTIVE_WORKSTREAM.md` now records the landed preservation-path repair, the protected preserved root worktree, and the remaining audited cleanup slice before broader continuation.
 - `pytest.ini`, `Makefile`, and `docs/CORTEX_V2_LOCAL_VERIFICATION.md` now provide repo-local verification entry points, including `make verify`, `make test-smoke`, evidence revalidation commands, and mediation evidence revalidation commands.
 - `.coveragerc`, `make coverage`, and `docs/CORTEX_V2_COVERAGE_BASELINE_NOTE_0.md` now exist as repo-local coverage hygiene surfaces.
 

@@ -34,7 +34,7 @@ It does not by itself open new feature work.
   - OpenAI runtime / ingress / service / bounded host-control,
   - Gemini runtime / ingress / service / bounded host-control,
   - and Claude runtime / ingress / service / bounded host-control.
-- The current refreshed live-model baseline is recorded in `docs/CORTEX_V2_ACTIVE_WORKSTREAM.md` on `main` at commit `d8aa925`.
+- The current refreshed live-model baseline is recorded in `docs/CORTEX_V2_ACTIVE_WORKSTREAM.md` on `main` at commit `3637921`.
 - Eval and proof surfaces are landed:
   - artifact schemas,
   - contradiction-preserving eval harness,
