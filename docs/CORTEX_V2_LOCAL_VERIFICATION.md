@@ -486,6 +486,23 @@ Repo-local entry point:
 make live-compare
 ```
 
+## Live operator payoff audit
+
+This builds the operator-only payoff audit from the already-captured live operator artifacts.
+It does not rerun any hosts by itself and does not change runtime behavior.
+
+Direct command:
+
+```sh
+python3 tools/live_operator_payoff_audit.py
+```
+
+Repo-local entry point:
+
+```sh
+make live-operator-payoff-audit
+```
+
 ## Reference-lane packet-example revalidation
 
 This revalidates the committed reference-lane packet example doc against the already-landed live packet path.

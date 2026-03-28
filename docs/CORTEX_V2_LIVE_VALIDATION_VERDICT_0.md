@@ -7,6 +7,10 @@ Status: L2/L2b/L2c/L2d/L2e live-testing environment verdict note
 
 **lifecycle-first is promising but under-instrumented**
 
+This remains the broader live-validation verdict because Gemini is still an explicit partial host line and the automation/service lane is still deferred.
+
+The new operator-only payoff note is narrower and may still conclude that operator lifecycle-first is already paying off clearly.
+
 Reason:
 
 - all three signed-in operator smokes and provider baselines are now green,

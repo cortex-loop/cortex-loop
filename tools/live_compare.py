@@ -151,6 +151,9 @@ def _build_comparison(preflight: dict[str, Any]) -> dict[str, Any]:
                 exploratory_baseline_runs,
                 exploratory_operator_runs,
             )
+            providers[provider]["operator_lifecycle"]["explicit_partial"] = True
+        else:
+            providers[provider]["operator_lifecycle"]["explicit_partial"] = False
 
     verdict, verdict_reason = decide_verdict(
         operator_pass_count=operator_pass_count,
