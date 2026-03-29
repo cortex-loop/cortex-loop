@@ -8,7 +8,7 @@ It is workflow state only. It does not override the packet documents, implementa
 ## 1. Accepted baseline
 
 - Accepted baseline branch: `main`
-- Accepted baseline commit: `30871e6`
+- Accepted baseline commit: `b20f81f`
 - Accepted baseline state:
   - burden-axis re-audit remains accepted through the three thrash-host burden slices
   - package-level burden remains `insufficient`
@@ -25,6 +25,11 @@ It is workflow state only. It does not override the packet documents, implementa
     - no residual local non-main branches
     - no remote `review/*` heads
     - retired non-main lines preserved under pushed `archive/final-repo-closeout/*` tags
+  - `N1` service-lane proof is now landed for current machine truth:
+    - automation preflight reruns remain all-`missing`
+    - automation baseline reruns now block honestly on readiness rather than faking direct network probes
+    - service-lane reruns remain all-blocked on `auth_missing`
+    - operator proof remains the accepted current line and is preserved in compare/audit support surfaces when this seam reruns automation-only artifacts
   - the reference runtime shell, bounded reference continuity, OpenAI documented-host-event runtime shell, raw-transcript ingress shell, loopback service shell, bounded outbound OpenAI host-control lane, and explicit executive allocation diagnostics remain accepted on the current line
   - the Gemini documented-host-event runtime shell, raw-transcript ingress shell, loopback service shell, and bounded outbound Gemini host-control lane remain accepted on the current line
   - the Claude documented-host-event runtime shell, raw-transcript ingress shell, loopback service shell, and bounded outbound Claude host-control lane remain accepted on the current line
@@ -38,12 +43,12 @@ It is workflow state only. It does not override the packet documents, implementa
 
 ## 2. Current campaign and seam state
 
-- Current campaign: `H3-H4 final repo closure landed`
+- Current campaign: `N1 service-lane proof and auth alignment`
 - Current working branch at ledger update: `main`
-- Current branch role: root checkout is the clean synced resting branch again
-- Current candidate seam: none; `H3-H4` is landed for current scope
-- Current seam status: `root main is now the only local checkout target, the frozen non-main branch/worktree set has been retired under pushed archive tags, and the strict cleanup-report gate is now the final hygiene contract`
-- Seam risk: deterministic workflow/tooling closeout after archival retirement
+- Current branch role: clean synced resting branch after the current-machine `N1` reruns
+- Current candidate seam: none; `N1` is landed for current scope with an honest blocked service outcome
+- Current seam status: `all three automation/service lanes remain blocked on missing machine auth, operator truth remains the accepted current line, and the compare surface now separates accepted operator proof from current automation reruns`
+- Seam risk: timing/environment-sensitive live-proof seam plus deterministic tooling/docs sync
 
 ## 3. Next lawful move
 
@@ -78,10 +83,13 @@ It is workflow state only. It does not override the packet documents, implementa
   - repeat-stable Gemini closure is therefore still unearned
   - the current automation/service lane still fails honestly on missing machine auth
 - Next lawful move:
-  - use [`/Users/erikahoward/cortex-loop`](/Users/erikahoward/cortex-loop) as the only local checkout and clean synced `main`
-  - run `python scripts/repo_workflow.py cleanup-report` or `make repo-hygiene` before calling the repo fully clean
-  - if any future non-main branch/worktree is created, either land it promptly or archive/retire it back to this single-checkout state
-  - ordinary managed-session work may now resume from clean synced `main`
+  - provide bounded machine auth plus spend approval for:
+    - `ANTHROPIC_API_KEY`
+    - Vertex ADC or `GEMINI_API_KEY`
+    - `OPENAI_API_KEY`
+    - `CORTEX_LIVE_SERVICE_SPEND_APPROVED`
+  - rerun the bounded `N1` service-proof lane exactly as recorded in `docs/CORTEX_V2_LOCAL_VERIFICATION.md`
+  - if service auth still cannot be provided, keep `L6A-D` blocked and choose a different bounded north-star seam instead of widening auth/runtime doctrine
   - service proof remains blocked until machine auth exists
 
 ## 4. Explicitly blocked moves

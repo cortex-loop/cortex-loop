@@ -5,12 +5,14 @@ from __future__ import annotations
 import sys
 import tempfile
 from pathlib import Path
+from contextlib import contextmanager
 
 TOOLS_ROOT = Path(__file__).resolve().parents[2] / "tools"
 if str(TOOLS_ROOT) not in sys.path:
     sys.path.insert(0, str(TOOLS_ROOT))
 
 import live_cortex_host_control as live_host_control
+import live_compare as live_compare
 import live_host_native_product_paths as live_host_native_product_paths
 import live_preflight as live_preflight
 import live_provider_baselines as live_provider_baselines
@@ -306,6 +308,144 @@ def test_provider_baseline_requested_model_ladder_uses_current_model_matrix() ->
         fallback_model_override=None,
         disable_auto_probe=False,
     ) == ("gpt-5.3-codex", "gpt-5.4")
+
+
+def test_automation_provider_baseline_skips_when_auth_readiness_is_blocked(monkeypatch) -> None:
+    monkeypatch.setattr(
+        live_provider_baselines,
+        "automation_auth_readiness",
+        lambda provider: {
+            "auth_mode": "api_key",
+            "status": "blocked_by_spend_policy",
+            "spend_approved": False,
+            "api_key_present": True,
+        },
+    )
+    monkeypatch.setattr(
+        live_provider_baselines,
+        "_run_provider_probe",
+        lambda *args, **kwargs: (_ for _ in ()).throw(AssertionError("probe should not run")),
+    )
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        root = Path(tmpdir) / ".cortex" / "live_validation" / "automation" / "claude" / "baselines"
+        payload = live_provider_baselines._run_single_provider_baseline(
+            provider="claude",
+            lane="automation",
+            repeat_index=1,
+            provider_root_path=root,
+            preferred_model_override=None,
+            fallback_model_override=None,
+            disable_auto_probe=False,
+        )
+
+    assert payload["failure_class"] == "blocked_by_spend_policy"
+    assert payload["auth_readiness"]["status"] == "blocked_by_spend_policy"
+    assert payload["success"] is False
+
+
+def test_single_live_service_call_records_export_and_warning_timing(monkeypatch) -> None:
+    @contextmanager
+    def fake_running_service(provider, log_path, *, auth_mode):
+        yield "http://127.0.0.1:9999"
+
+    responses = iter(
+        [
+            (
+                200,
+                {"records": [{"type": "response"}], "error": {"message": "insufficient_quota"}},
+                "2026-03-29T00:00:00+00:00",
+                "2026-03-29T00:00:01+00:00",
+            ),
+            (
+                200,
+                {"session": {"id": "s-1"}},
+                "2026-03-29T00:00:02+00:00",
+                "2026-03-29T00:00:03+00:00",
+            ),
+        ]
+    )
+
+    monkeypatch.setattr(live_host_control, "_running_service", fake_running_service)
+    monkeypatch.setattr(live_host_control, "_request_json", lambda *args, **kwargs: next(responses))
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        root = Path(tmpdir) / ".cortex" / "live_validation" / "automation" / "claude" / "service"
+        payload = live_host_control._run_single_live_call(
+            "claude",
+            auth_mode="api_key",
+            model="claude-sonnet-4-6",
+            root=root,
+        )
+
+    assert payload["success"] is True
+    assert payload["failure_class"] is None
+    assert payload["warning_classes"] == ["quota_exhausted"]
+    assert payload["first_record_at"] == "2026-03-29T00:00:01+00:00"
+    assert payload["final_record_at"] == "2026-03-29T00:00:01+00:00"
+    assert payload["export_received_at"] == "2026-03-29T00:00:03+00:00"
+    assert payload["record_count"] == 1
+    assert payload["export_path"].endswith("service_smoke.export.json")
+
+
+def test_service_lane_delta_reports_auth_readiness_and_service_success() -> None:
+    delta = live_compare._service_lane_delta(
+        {
+            "claude": {
+                "automation_auth": {"status": "missing"},
+                "automation_service": {"successful_run_count": 0},
+            },
+            "gemini": {
+                "automation_auth": {"status": "ready"},
+                "automation_service": {"successful_run_count": 0},
+            },
+            "openai": {
+                "automation_auth": {"status": "blocked_by_spend_policy"},
+                "automation_service": {"successful_run_count": 1},
+            },
+        }
+    )
+
+    assert "automation auth readiness is `gemini` ready" in delta
+    assert "claude:missing" in delta
+    assert "openai:blocked_by_spend_policy" in delta
+    assert "automation service proof is landed on `openai`" in delta
+
+
+def test_live_compare_falls_back_to_accepted_operator_truth_when_local_operator_artifacts_are_absent(
+    monkeypatch,
+) -> None:
+    workstream_text = """
+- the OpenAI App Server operator lane now completes:
+    - `pass_minimal` twice
+    - `truth_gap` truthfully
+    - `restart_continuity` twice
+- the Claude operator lane is now hook-backed and completes:
+    - `pass_minimal` twice
+    - `truth_gap` truthfully
+    - `restart_continuity`
+- the deeper Gemini auto-mode product-path rerun now shows:
+    - `pass_minimal` succeeds twice on `auto` with explicit `capacity_exhausted` warnings
+    - `truth_gap` is truthful on the latest reruns on `auto`
+    - `restart_continuity` is not yet repeat-stable because the latest reruns include a `capacity_exhausted` blocker on `auto`
+"""
+    monkeypatch.setattr(live_compare, "WORKSTREAM_PATH", Path("/tmp/workstream.md"))
+    live_compare.WORKSTREAM_PATH.write_text(workstream_text, encoding="utf-8")
+    monkeypatch.setattr(
+        live_compare,
+        "_read_json",
+        lambda path: {"operator_probe": {"claude": {}, "gemini": {}, "openai": {}}}
+        if path == live_compare.PREFLIGHT_REPORT_PATH
+        else {},
+    )
+
+    comparison = live_compare._build_comparison({"operator_probe": {"claude": {}, "gemini": {}, "openai": {}}, "auth_surfaces": {"automation": {}}})
+
+    assert comparison["operator_pass_count"] == 3
+    assert comparison["operator_truthful_gap_count"] == 3
+    assert comparison["providers"]["claude"]["operator_lifecycle"]["source"] == "accepted_workstream"
+    assert comparison["providers"]["gemini"]["operator_lifecycle"]["restart_continuity_success"] is False
+    assert comparison["providers"]["openai"]["operator_lifecycle"]["pass_minimal_success"] is True
 
 
 def test_gemini_operator_commands_omit_model_flag_when_auto_is_selected(monkeypatch) -> None:

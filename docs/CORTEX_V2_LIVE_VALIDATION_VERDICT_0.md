@@ -7,7 +7,7 @@ Status: L2/L2b/L2c/L2d/L2e live-testing environment verdict note
 
 **lifecycle-first is promising but under-instrumented**
 
-This remains the broader live-validation verdict because Gemini is still an explicit partial host line and the automation/service lane is still unproven on machine auth.
+This remains the broader live-validation verdict because Gemini is still an explicit partial host line and the March 29 automation/service reruns remain all-blocked on missing machine auth.
 
 The new operator-only payoff note is narrower and may still conclude that operator lifecycle-first is already paying off clearly.
 That operator-only audit is now landed for current scope.
@@ -34,7 +34,7 @@ Reason:
     - `restart_continuity` is still not repeat-stable because the latest reruns include a `capacity_exhausted` blocker on `auto`
   - `gemini-2.5-pro` is valid locally but still capacity-blocked on the bounded exploratory smoke lane
 - so Gemini remains the only operator-side host still blocking closure,
-- and the automation/service lane is still all-blocked on missing automation credentials.
+- and the March 29 automation/service reruns remain all-blocked on missing machine auth.
 
 ## Current host summary
 
@@ -52,7 +52,7 @@ Reason:
   - `PostToolUse`
   - `Stop`
   - `SessionEnd`
-- automation lane: blocked on missing `ANTHROPIC_API_KEY`
+- automation lane: repeated `N1` reruns remain blocked on missing `ANTHROPIC_API_KEY`
 
 ### Gemini
 
@@ -70,7 +70,7 @@ Reason:
   - `BeforeTool`
   - `AfterTool`
   - `SessionEnd`
-- automation lane: blocked on missing ADC or `GEMINI_API_KEY`
+- automation lane: repeated `N1` reruns remain blocked on missing ADC or `GEMINI_API_KEY`
 
 ### OpenAI
 
@@ -81,7 +81,7 @@ Reason:
   - `codex app-server truth_gap`: truthful incomplete
   - `codex app-server restart_continuity`: success twice
   - current caveat: App Server `thread/read` remains lossy for ephemeral threads, so the event timeline is the primary lifecycle truth surface
-- automation lane: blocked on missing `OPENAI_API_KEY`
+- automation lane: repeated `N1` reruns remain blocked on missing `OPENAI_API_KEY`
 
 ## What L2 already improves over L1
 
@@ -112,7 +112,7 @@ The next honest move is one bounded seam, chosen explicitly:
    - open one bounded Gemini `restart_continuity` repeat-stability seam
    - do not smooth the current partial continuity story away
 
-For the service-proof path, rerun:
+For the bounded service-proof path, rerun:
 
 - `make live-preflight`
 - `python3 tools/live_cortex_host_control.py --lane automation --provider claude`

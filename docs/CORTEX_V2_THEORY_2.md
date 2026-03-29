@@ -20,12 +20,12 @@ Active authority remains:
 
 ## Current repo evidence
 
-- The accepted workflow baseline is now on `main` at commit `30871e6`.
+- The accepted workflow baseline is now on `main` at commit `b20f81f`.
 - `docs/CORTEX_V2_IMPLEMENTATION_STATUS_NOTE.md` says the current v2 roadmap is complete at the justified boundary.
 - `docs/CORTEX_V2_MEDIATION_JUSTIFICATION_NOTE.md` says mediation is still `not justified yet`.
 - `docs/CORTEX_V2_MEDIATION_EVIDENCE_NOTE_0.md` shows cell-level signal on thrash, uncertainty, and host-realization, but every package-level axis remains `insufficient`.
 - `docs/CORTEX_V2_VERIFICATION_ERGONOMICS_MASTER_PLAN_0.md` still defines the active non-feature follow-on campaign.
-- `docs/CORTEX_V2_ACTIVE_WORKSTREAM.md` now records the landed final repo closure, the single-checkout resting-state model, and the strict `cleanup-report` gate for future hygiene.
+- `docs/CORTEX_V2_ACTIVE_WORKSTREAM.md` now records the bounded `N1` service-lane reruns, the current all-blocked machine-auth outcome, and the next lawful move to provide machine auth rather than widen doctrine.
 - `pytest.ini`, `Makefile`, and `docs/CORTEX_V2_LOCAL_VERIFICATION.md` now provide repo-local verification entry points, including `make verify`, `make test-smoke`, evidence revalidation commands, and mediation evidence revalidation commands.
 - `.coveragerc`, `make coverage`, and `docs/CORTEX_V2_COVERAGE_BASELINE_NOTE_0.md` now exist as repo-local coverage hygiene surfaces.
 

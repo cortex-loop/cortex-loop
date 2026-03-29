@@ -444,6 +444,8 @@ python3 tools/live_provider_baselines.py --lane automation
 make live-provider-baselines-automation
 ```
 
+When machine auth is absent, the automation baseline now exits with explicit auth-readiness blockers instead of attempting direct provider probes.
+
 ## Live host-native product paths
 
 This is the primary acceptance-grade live lane.
@@ -491,6 +493,7 @@ This captures the current automation-side loopback service plus A4 / G4 / O4 hos
 It is no longer the primary live truth; it is the secondary unattended lane.
 Machine output is local-only under `.cortex/live_validation/`.
 This is also the current service-proof entry point for the bounded automation train; rerun it per provider when machine auth is ready.
+When the current train reruns only automation artifacts, the compare and operator-payoff support surfaces preserve the already-accepted operator truth rather than zeroing it out.
 
 Direct command:
 

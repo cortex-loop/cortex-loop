@@ -22,11 +22,15 @@ Signed-in CLI sessions do **not** count as service-lane auth.
 
 ## Current local state
 
-Current local machine state after the first service-proof pass:
+Current local machine state after the March 29 reruns:
 
 - Claude automation auth: `missing`
 - Gemini automation auth: `missing`
 - OpenAI automation auth: `missing`
+- repeated automation baseline reruns now stop immediately on auth readiness instead of attempting direct provider probes when machine auth is absent
+- repeated bounded service-lane reruns stay blocked on `auth_missing` for:
+  - `service_smoke`
+  - `service_restart_continuity`
 - no local service-lane live proof is yet earned
 
 ## Closeout law

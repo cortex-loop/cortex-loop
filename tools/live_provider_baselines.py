@@ -14,6 +14,7 @@ from typing import Any
 from live_validation_common import (
     GEMINI_OPERATOR_FULL_LADDER,
     MODEL_MATRIX,
+    automation_auth_readiness,
     classify_failure,
     choose_model,
     comparator_path,
@@ -170,6 +171,7 @@ def _run_single_provider_baseline(
 
     auth_mode = resolve_auth_mode(provider, lane)
     preferred_model = choose_model(provider, lane)
+    auth_readiness = automation_auth_readiness(provider) if lane == "automation" else None
     auto_supported: bool | None = None
     ladder = _requested_model_ladder(
         provider=provider,
@@ -180,6 +182,36 @@ def _run_single_provider_baseline(
     )
     first_model = ladder[0]
     preferred_model = first_model
+    if lane == "automation" and auth_readiness is not None and auth_readiness["status"] != "ready":
+        started_at = now_utc_iso()
+        ended_at = now_utc_iso()
+        write_text(stdout_path, "")
+        write_text(stderr_path, "")
+        payload = {
+            "provider": provider,
+            "lane": lane,
+            "repeat_index": repeat_index,
+            "auth_mode": auth_readiness["auth_mode"],
+            "auth_readiness": auth_readiness,
+            "preferred_model": preferred_model,
+            "model": first_model,
+            "auto_supported": None,
+            "attempted_models": [first_model],
+            "started_at": started_at,
+            "ended_at": ended_at,
+            "success": False,
+            "failure_class": _automation_failure_class_for_readiness(auth_readiness["status"]),
+            "warning_classes": [],
+            "command": [provider, "automation-readiness-blocked"],
+            "stdout_path": str(stdout_path.relative_to(provider_root_path.parents[4])),
+            "stderr_path": str(stderr_path.relative_to(provider_root_path.parents[4])),
+            "structured_event_count": 0,
+            "structured_event_labels": [],
+            "result_text": None,
+            "notes": f"Skipped automation baseline because auth readiness is `{auth_readiness['status']}`.",
+        }
+        write_json(metadata_path, payload)
+        return payload
     started_at = now_utc_iso()
     run_result = _run_provider_probe(provider, lane=lane, auth_mode=auth_mode, model=first_model)
     failure_class = classify_failure(f"{run_result['stdout']}\n{run_result['stderr']}")
@@ -231,6 +263,7 @@ def _run_single_provider_baseline(
         "lane": lane,
         "repeat_index": repeat_index,
         "auth_mode": auth_mode,
+        "auth_readiness": auth_readiness,
         "preferred_model": preferred_model,
         "model": attempted_models[-1],
         "auto_supported": auto_supported,
@@ -497,6 +530,14 @@ def _read_json(path: Path) -> dict[str, Any]:
     if not path.exists():
         return {}
     return json.loads(path.read_text(encoding="utf-8"))
+
+
+def _automation_failure_class_for_readiness(status: str) -> str:
+    if status == "blocked_by_spend_policy":
+        return "blocked_by_spend_policy"
+    if status == "mis_scoped":
+        return "mis_scoped"
+    return "auth_missing"
 
 
 def _requested_model_ladder(
