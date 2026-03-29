@@ -1,12 +1,24 @@
 # CORTEX_V2_LIVE_SERVICE_PROOF_0
 
 Date: 2026-03-28
-Status: deferred current-machine service-lane live-proof note
+Status: active capable-machine service-proof contract with current-machine blocker note
 
 ## Purpose
 
 This note records the first bounded automation auth-alignment and service-lane live-proof train over the current Claude, Gemini, and OpenAI loopback service paths.
 It is a testing/support surface and does not open new runtime doctrine.
+
+## Capable-machine entry condition
+
+Actual service proof belongs only on a machine that satisfies all of:
+
+- clean synced `main`
+- provider CLIs installed for the intended providers
+- automation auth readiness reads `ready` for the intended providers
+- explicit spend approval env is present where required
+- the current repo and local live-validation tooling are available unchanged
+
+If those conditions are not met, the lawful outcome is `blocked` or `partial`, not “implemented anyway.”
 
 ## Auth policy
 
@@ -22,7 +34,7 @@ Signed-in CLI sessions do **not** count as service-lane auth.
 
 ## Current local state
 
-Current local machine state after the March 29 reruns:
+Current local machine state after the March 29 reruns and current-machine N2 contract/tooling reruns:
 
 - Claude automation auth: `missing`
 - Gemini automation auth: `missing`
@@ -32,7 +44,8 @@ Current local machine state after the March 29 reruns:
   - `service_smoke`
   - `service_restart_continuity`
 - no local service-lane live proof is yet earned
-- the service-lane proof is now explicitly deferred for this machine until machine auth is intentionally reopened
+- this machine is explicitly out of scope for actual service proof execution until machine auth is intentionally reopened
+- `N2` therefore remains blocked pending a properly provisioned capable machine
 
 ## Closeout law
 

@@ -68,11 +68,11 @@ It is workflow state only. It does not override the packet documents, implementa
 
 ## 2. Current campaign and seam state
 
-- Current campaign: `post-K next-train selection pending`
+- Current campaign: `N2 capable-machine service-proof blocked pending qualified machine`
 - Current working branch at ledger update: `main`
 - Current branch role: clean synced resting branch after K-train closeout
-- Current candidate seam: none; the bounded K train is landed for current scope on the proven reference/OpenAI lanes and no new implementation seam is active yet
-- Current seam status: `zero-finding K-train closure audit is complete for current scope: computed allocation, feedback-conditioned thresholding, and bounded enforcement-aware realized control are stable on the proven reference/OpenAI lanes, shared runtime projections remain compatible, exact accepted-head lookup now lives only in clean synced main rather than mirrored support-doc hashes, and no support-memory/service/auth/mediation widening was introduced`
+- Current candidate seam: none; the K train remains landed, the N2 contract/tooling slice is current, and actual capable-machine service proof is blocked here
+- Current seam status: `zero-finding K-train closure audit is complete for current scope, live-preflight and automation-lane tooling now honor the accepted-baseline lookup contract again, repeated current-machine N2 reruns reconfirm all three automation auth states as missing, and this machine remains out of scope for actual service proof`
 - the compare surface and live-validation truth from earlier seams remain accepted ancestor input and are not being reopened by the landed K train.
 - Seam risk: load-bearing runtime seam plus deterministic docs/correspondence sync
 
@@ -112,12 +112,17 @@ It is workflow state only. It does not override the packet documents, implementa
   - repeat-stable Gemini closure is therefore still unearned
   - the current automation/service lane still fails honestly on missing machine auth
 - Next lawful move:
-  - keep the machine-auth service lane explicitly deferred on this machine
+  - keep the machine-auth service lane explicitly deferred on this machine for actual proof execution
   - keep Gemini as the remaining explicit partial host line on this machine
   - do not reopen the K train by inertia now that the bounded proven-lane executive/runtime line is landed
-  - the next lawful move must be a separate post-K seam choice:
-    - either reopen live service proof on a machine that can honestly support machine auth and spend approval
-    - or open a separately justified evidence/preparation seam for later support-memory or mediation work without silently turning it into runtime doctrine
+  - the next lawful move inside `N2` is:
+    - move the repo to a capable machine
+    - confirm clean synced `main`
+    - confirm provider CLIs are installed
+    - confirm machine auth readiness is `ready` for the intended providers
+    - confirm spend approval is explicitly present where required
+    - then rerun the bounded service-proof bundle there
+  - if a capable machine is not available yet, stay blocked rather than collapsing `N2` into local prep-only work or fake service proof
 
 ## 4. Explicitly blocked moves
 

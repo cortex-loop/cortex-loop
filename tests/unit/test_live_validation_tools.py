@@ -6,6 +6,7 @@ import sys
 import tempfile
 from pathlib import Path
 from contextlib import contextmanager
+import json
 
 TOOLS_ROOT = Path(__file__).resolve().parents[2] / "tools"
 if str(TOOLS_ROOT) not in sys.path:
@@ -191,6 +192,33 @@ def test_automation_auth_readiness_defaults_to_missing_without_machine_creds() -
     assert automation_auth_readiness("claude", env)["status"] == "missing"
     assert automation_auth_readiness("gemini", env)["status"] == "missing"
     assert automation_auth_readiness("openai", env)["status"] == "missing"
+
+
+def test_read_workstream_baseline_resolves_commit_from_branch_lookup(monkeypatch, tmp_path: Path) -> None:
+    workstream = tmp_path / "workstream.md"
+    workstream.write_text(
+        "- Accepted baseline branch: `main`\n"
+        "- Accepted baseline commit lookup: `git rev-parse HEAD` on clean synced `main`\n",
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(live_validation_common, "WORKSTREAM_PATH", workstream)
+    monkeypatch.setattr(
+        live_validation_common,
+        "run_command",
+        lambda *args, **kwargs: {
+            "command": ["git", "rev-parse", "main"],
+            "exit_code": 0,
+            "stdout": "deadbeef1234567890\n",
+            "stderr": "",
+            "started_at": "2026-03-29T00:00:00+00:00",
+            "ended_at": "2026-03-29T00:00:00+00:00",
+        },
+    )
+
+    assert live_validation_common.read_workstream_baseline() == (
+        "main",
+        "deadbeef1234567890",
+    )
 
 
 def test_automation_auth_readiness_blocks_api_key_lanes_without_spend_approval() -> None:
@@ -689,4 +717,15 @@ def test_next_corrective_seam_prefers_deferral_when_gemini_capacity_is_the_resid
             service_success_count=0,
         )
         == "treat Gemini as the remaining explicit partial host line on this machine and defer further local continuity tweaking until host capacity changes or service auth is intentionally reopened"
+    )
+
+
+def test_next_corrective_seam_prefers_capable_machine_when_service_auth_is_missing() -> None:
+    assert (
+        live_compare._next_corrective_seam(
+            blocker_classes={"auth_missing", "capacity_exhausted"},
+            operator_pass_count=3,
+            service_success_count=0,
+        )
+        == "treat the current machine as out of scope for actual service proof, move the repo to a capable machine with machine auth and spend approval, and rerun the bounded service-proof train there"
     )

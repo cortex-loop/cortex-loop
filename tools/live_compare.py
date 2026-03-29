@@ -190,15 +190,15 @@ def _next_corrective_seam(
     operator_pass_count: int,
     service_success_count: int,
 ) -> str:
-    if service_success_count == 0 and operator_pass_count >= 3 and "capacity_exhausted" in blocker_classes:
-        return (
-            "treat Gemini as the remaining explicit partial host line on this machine and defer further local continuity tweaking until host capacity changes or service auth is intentionally reopened"
-        )
     if service_success_count == 0 and (
         "auth_missing" in blocker_classes or "blocked_by_spend_policy" in blocker_classes or "mis_scoped" in blocker_classes
     ):
         return (
-            "treat the automation service lane as explicitly deferred on this machine until machine auth is intentionally reopened; if work continues now, prefer a bounded non-service seam such as Gemini restart_continuity repeat-stability"
+            "treat the current machine as out of scope for actual service proof, move the repo to a capable machine with machine auth and spend approval, and rerun the bounded service-proof train there"
+        )
+    if service_success_count == 0 and operator_pass_count >= 3 and "capacity_exhausted" in blocker_classes:
+        return (
+            "treat Gemini as the remaining explicit partial host line on this machine and defer further local continuity tweaking until host capacity changes or service auth is intentionally reopened"
         )
     if "auth_expired" in blocker_classes or "not_logged_in" in blocker_classes:
         return (
@@ -214,7 +214,7 @@ def _next_corrective_seam(
         )
     if service_success_count == 0:
         return (
-            "re-open the automation auth-alignment seam for the current service endpoints without demoting the signed-in operator lane"
+            "continue the service-proof train only on a capable machine that can honestly satisfy the machine-auth and spend contract"
         )
     return (
         "add a raw-response extraction seam for the automation service lane only if shared coding-harness parity is still too thin after auth alignment"

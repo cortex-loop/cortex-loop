@@ -108,12 +108,12 @@ The Gemini auto-mode product-path re-earn seam and follow-on repeat-stability re
 The next honest move is one bounded seam, chosen explicitly:
 
 1. For current-machine continuation:
-   - keep the machine-auth service lane deferred
+   - keep the machine-auth service lane deferred for actual proof execution
    - accept Gemini as the remaining explicit partial host line on this machine
    - do not smooth the current partial continuity story away
 2. If you later intentionally reopen service proof:
-   - satisfy the bounded service auth/spend contract recorded in `docs/CORTEX_V2_LIVE_SERVICE_PROOF_0.md`
-   - then rerun the bounded service-proof lane
+   - move the repo to a capable machine that satisfies the bounded auth/spend contract recorded in `docs/CORTEX_V2_LIVE_SERVICE_PROOF_0.md`
+   - then rerun the bounded service-proof lane there
 
 For the bounded service-proof path, rerun later:
 

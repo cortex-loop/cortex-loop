@@ -348,10 +348,11 @@ def test_resume_protocol_and_active_workstream_contract_exist() -> None:
     assert "Current working branch at ledger update:" in workstream_text
     assert "Current branch role:" in workstream_text
     assert "accepted workflow baseline truth now rests on `main` rather than a long-lived working branch" in workstream_text
-    assert "Current campaign: `post-K next-train selection pending`" in workstream_text
-    assert "Current candidate seam: none; the bounded K train is landed for current scope on the proven reference/OpenAI lanes and no new implementation seam is active yet" in workstream_text
+    assert "Current campaign: `N2 capable-machine service-proof blocked pending qualified machine`" in workstream_text
+    assert "Current candidate seam: none; the K train remains landed, the N2 contract/tooling slice is current, and actual capable-machine service proof is blocked here" in workstream_text
     assert "zero-finding K-train closure audit is complete for current scope" in workstream_text
-    assert "computed allocation, feedback-conditioned thresholding, and bounded enforcement-aware realized control are stable on the proven reference/OpenAI lanes" in workstream_text
+    assert "live-preflight and automation-lane tooling now honor the accepted-baseline lookup contract again" in workstream_text
+    assert "repeated current-machine N2 reruns reconfirm all three automation auth states as missing" in workstream_text
     assert "the compare surface and live-validation truth from earlier seams remain accepted ancestor input and are not being reopened by the landed K train." in workstream_text
     assert "the current signed-in smoke surfaces are now clean again" in workstream_text
     assert "`codex exec` for smoke" in workstream_text
@@ -365,7 +366,9 @@ def test_resume_protocol_and_active_workstream_contract_exist() -> None:
     assert "`restart_continuity` remains mixed after the best-practice re-audit" in workstream_text
     assert "repeat-stable Gemini closure is therefore still unearned" in workstream_text
     assert "do not reopen the K train by inertia now that the bounded proven-lane executive/runtime line is landed" in workstream_text
-    assert "the next lawful move must be a separate post-K seam choice" in workstream_text
+    assert "the next lawful move inside `N2` is:" in workstream_text
+    assert "move the repo to a capable machine" in workstream_text
+    assert "if a capable machine is not available yet, stay blocked rather than collapsing `N2` into local prep-only work or fake service proof" in workstream_text
     assert "Do not treat signed-in provider CLI sessions as equivalent to the automation credentials" in workstream_text
     assert "Do not treat the new OpenAI App Server operator proof as license to reopen v1 assisted mode" in workstream_text
     assert "Do not keep repo-tracked live artifacts under `docs/live_validation/`" in workstream_text
@@ -439,7 +442,7 @@ def test_reference_runtime_program_lock_is_recorded() -> None:
     assert "loopback-only HTTP is landed on the accepted K1 closeout line" in phase_gate_text
     assert "one active session per process is real for current scope" in phase_gate_text
 
-    assert "the next lawful move must be a separate post-K seam choice" in workstream_text
+    assert "the next lawful move inside `N2` is:" in workstream_text
     assert "the live-testing environment now has explicit operator and automation lane semantics" in workstream_text
     assert "the current signed-in smoke surfaces are now clean again" in workstream_text
     assert "the OpenAI App Server operator lane now completes" in workstream_text
@@ -622,8 +625,11 @@ def test_reference_runtime_program_lock_is_recorded() -> None:
     assert "operator-only audit is now landed for current scope" in live_validation_verdict_text
     assert "The Gemini auto-mode product-path re-earn seam is now landed for current scope." in live_validation_verdict_text
     service_proof_text = _read(LIVE_SERVICE_PROOF_PATH)
-    assert "Status: deferred current-machine service-lane live-proof note" in service_proof_text
+    assert "Status: active capable-machine service-proof contract with current-machine blocker note" in service_proof_text
     assert "Signed-in CLI sessions do **not** count as service-lane auth." in service_proof_text
+    assert "Actual service proof belongs only on a machine that satisfies all of:" in service_proof_text
+    assert "this machine is explicitly out of scope for actual service proof execution" in service_proof_text
+    assert "`N2` therefore remains blocked pending a properly provisioned capable machine" in service_proof_text
     assert "package-level service proof is updated truthfully in `docs/CORTEX_V2_PHASE_GATES_2.md`" in service_proof_text
     assert "repeated automation baseline reruns now stop immediately on auth readiness" in service_proof_text
     assert "repeated bounded service-lane reruns stay blocked on `auth_missing`" in service_proof_text
@@ -775,5 +781,4 @@ def test_runtime_restack_program_lock_is_recorded() -> None:
     assert "implemented at K1 proof head `d4c311f` and truthfully closed at deterministic closeout head `79b8f39`" in text
     assert "later bounded runtime/product trains may still be explicitly opened" in master_plan_text
     assert "records the bounded K train as landed on the proven reference/OpenAI lanes" in theory_text
-    assert "records a zero-finding closure audit for current scope" in theory_text
-    assert "explicit post-K next-train selection" in theory_text
+    assert "records `N2` as blocked pending a capable machine" in theory_text

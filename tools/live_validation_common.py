@@ -127,9 +127,23 @@ def read_workstream_baseline() -> tuple[str, str]:
     text = WORKSTREAM_PATH.read_text(encoding="utf-8")
     branch_match = re.search(r"Accepted baseline branch: `([^`]+)`", text)
     commit_match = re.search(r"Accepted baseline commit: `([^`]+)`", text)
-    if branch_match is None or commit_match is None:
+    if branch_match is None:
         raise ValueError("workstream baseline is missing")
-    return branch_match.group(1), commit_match.group(1)
+    branch = branch_match.group(1)
+    if commit_match is not None:
+        return branch, commit_match.group(1)
+    resolved_commit = _resolve_git_ref(branch)
+    return branch, resolved_commit
+
+
+def _resolve_git_ref(ref: str) -> str:
+    result = run_command(["git", "rev-parse", ref], cwd=REPO_ROOT, timeout_seconds=30.0)
+    if result["exit_code"] != 0:
+        raise ValueError(f"unable to resolve workstream baseline ref: {ref}")
+    resolved = (result["stdout"] or "").strip().splitlines()
+    if not resolved or not resolved[0].strip():
+        raise ValueError(f"workstream baseline ref resolved to empty output: {ref}")
+    return resolved[0].strip()
 
 
 def write_json(path: Path, payload: Any) -> None:
