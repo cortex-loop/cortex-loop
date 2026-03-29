@@ -557,6 +557,41 @@ Repo-local entry point:
 make live-operator-payoff-audit
 ```
 
+## Live operator directionality
+
+This runs the paired raw-vs-Cortex operator audit on the current machine.
+It is operator-only and does not reopen service proof.
+If a host's raw baseline cannot be isolated safely, the run must mark that pair blocked instead of comparing dishonestly.
+
+Direct command:
+
+```sh
+python3 tools/live_operator_directionality.py
+```
+
+Repo-local entry point:
+
+```sh
+make live-operator-directionality
+```
+
+## Live operator directionality audit
+
+This reduces the paired raw-vs-Cortex operator artifacts into per-host and package directionality truth.
+It is an evaluation/support surface only.
+
+Direct command:
+
+```sh
+python3 tools/live_operator_directionality_audit.py
+```
+
+Repo-local entry point:
+
+```sh
+make live-operator-directionality-audit
+```
+
 ## Reference-lane packet-example revalidation
 
 This revalidates the committed reference-lane packet example doc against the already-landed live packet path.

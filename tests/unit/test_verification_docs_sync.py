@@ -90,6 +90,15 @@ LIVE_VALIDATION_VERDICT_PATH = (
 LIVE_SERVICE_PROOF_PATH = (
     REPO_ROOT / "docs" / "CORTEX_V2_LIVE_SERVICE_PROOF_0.md"
 )
+OPERATOR_DIRECTIONALITY_PROGRAM_PATH = (
+    REPO_ROOT / "docs" / "CORTEX_V2_OPERATOR_DIRECTIONALITY_PROGRAM_0.md"
+)
+OPERATOR_DIRECTIONALITY_SCENARIO_CATALOG_PATH = (
+    REPO_ROOT / "docs" / "CORTEX_V2_OPERATOR_DIRECTIONALITY_SCENARIO_CATALOG_0.md"
+)
+OPERATOR_DIRECTIONALITY_AUDIT_PATH = (
+    REPO_ROOT / "docs" / "CORTEX_V2_OPERATOR_DIRECTIONALITY_AUDIT_0.md"
+)
 
 
 def _read(path: Path) -> str:
@@ -348,11 +357,10 @@ def test_resume_protocol_and_active_workstream_contract_exist() -> None:
     assert "Current working branch at ledger update:" in workstream_text
     assert "Current branch role:" in workstream_text
     assert "accepted workflow baseline truth now rests on `main` rather than a long-lived working branch" in workstream_text
-    assert "Current campaign: `N2 capable-machine service-proof blocked pending qualified machine`" in workstream_text
-    assert "Current candidate seam: none; the K train remains landed, the N2 contract/tooling slice is current, and actual capable-machine service proof is blocked here" in workstream_text
-    assert "zero-finding K-train closure audit is complete for current scope" in workstream_text
-    assert "live-preflight and automation-lane tooling now honor the accepted-baseline lookup contract again" in workstream_text
-    assert "repeated current-machine N2 reruns reconfirm all three automation auth states as missing" in workstream_text
+    assert "Current campaign: `post-Q1 Gemini directionality explanation pending`" in workstream_text
+    assert "Current candidate seam: none; `Q1` is landed on the current machine, `N2` remains blocked on a capable machine, and the mixed Gemini directionality result is the next unresolved line" in workstream_text
+    assert "the paired raw-vs-Cortex operator audit is complete on the current machine" in workstream_text
+    assert "Claude and OpenAI are positive, Gemini is mixed, package direction is mixed" in workstream_text
     assert "the compare surface and live-validation truth from earlier seams remain accepted ancestor input and are not being reopened by the landed K train." in workstream_text
     assert "the current signed-in smoke surfaces are now clean again" in workstream_text
     assert "`codex exec` for smoke" in workstream_text
@@ -366,9 +374,9 @@ def test_resume_protocol_and_active_workstream_contract_exist() -> None:
     assert "`restart_continuity` remains mixed after the best-practice re-audit" in workstream_text
     assert "repeat-stable Gemini closure is therefore still unearned" in workstream_text
     assert "do not reopen the K train by inertia now that the bounded proven-lane executive/runtime line is landed" in workstream_text
-    assert "the next lawful move inside `N2` is:" in workstream_text
-    assert "move the repo to a capable machine" in workstream_text
-    assert "if a capable machine is not available yet, stay blocked rather than collapsing `N2` into local prep-only work or fake service proof" in workstream_text
+    assert "do not widen from the mixed `Q1` package result into new runtime or product claims" in workstream_text
+    assert "the next lawful move is one narrow Gemini explanation seam" in workstream_text
+    assert "keep `N2` as a separate blocked train pending a capable machine" in workstream_text
     assert "Do not treat signed-in provider CLI sessions as equivalent to the automation credentials" in workstream_text
     assert "Do not treat the new OpenAI App Server operator proof as license to reopen v1 assisted mode" in workstream_text
     assert "Do not keep repo-tracked live artifacts under `docs/live_validation/`" in workstream_text
@@ -397,6 +405,9 @@ def test_reference_runtime_program_lock_is_recorded() -> None:
     executive_live_outcome_program_text = _read(EXECUTIVE_LIVE_OUTCOME_PROGRAM_PATH)
     computed_executive_loop_program_text = _read(COMPUTED_EXECUTIVE_LOOP_PROGRAM_PATH)
     closed_loop_enforcement_program_text = _read(CLOSED_LOOP_ENFORCEMENT_PROGRAM_PATH)
+    operator_directionality_program_text = _read(OPERATOR_DIRECTIONALITY_PROGRAM_PATH)
+    operator_directionality_scenario_catalog_text = _read(OPERATOR_DIRECTIONALITY_SCENARIO_CATALOG_PATH)
+    operator_directionality_audit_text = _read(OPERATOR_DIRECTIONALITY_AUDIT_PATH)
     gemini_runtime_restack_text = _read(GEMINI_RUNTIME_RESTACK_PROGRAM_PATH)
     gemini_runtime_program_text = _read(GEMINI_RUNTIME_PROGRAM_PATH)
     gemini_ingress_program_text = _read(GEMINI_INGRESS_PROGRAM_PATH)
@@ -442,7 +453,7 @@ def test_reference_runtime_program_lock_is_recorded() -> None:
     assert "loopback-only HTTP is landed on the accepted K1 closeout line" in phase_gate_text
     assert "one active session per process is real for current scope" in phase_gate_text
 
-    assert "the next lawful move inside `N2` is:" in workstream_text
+    assert "do not widen from the mixed `Q1` package result into new runtime or product claims" in workstream_text
     assert "the live-testing environment now has explicit operator and automation lane semantics" in workstream_text
     assert "the current signed-in smoke surfaces are now clean again" in workstream_text
     assert "the OpenAI App Server operator lane now completes" in workstream_text
@@ -560,6 +571,18 @@ def test_reference_runtime_program_lock_is_recorded() -> None:
     assert "guarded-feedback enforcement may conservatively realize `check` or `neutral`" in closed_loop_enforcement_program_text
     assert "`Q_t^{mem}=0.0`" in closed_loop_enforcement_program_text
     assert "Current accepted state after K-train closeout" in closed_loop_enforcement_program_text
+    assert "Status: accepted re-audited evaluation brief for the first raw-vs-Cortex operator directionality audit" in operator_directionality_program_text
+    assert "raw-host vs Cortex-operator" in operator_directionality_program_text
+    assert "If the audit shows mixed or negative directionality, record that directly and treat it as the blocker to further widening." in operator_directionality_program_text
+    assert "Status: accepted scenario catalog for the raw-vs-Cortex operator directionality audit" in operator_directionality_scenario_catalog_text
+    assert "`pass_minimal`" in operator_directionality_scenario_catalog_text
+    assert "`truth_gap`" in operator_directionality_scenario_catalog_text
+    assert "`restart_continuity`" in operator_directionality_scenario_catalog_text
+    assert "Status: accepted paired raw-vs-Cortex operator directionality audit note" in operator_directionality_audit_text
+    assert "**mixed_direction**" in operator_directionality_audit_text
+    assert "Claude is directionally positive" in operator_directionality_audit_text
+    assert "OpenAI is directionally positive" in operator_directionality_audit_text
+    assert "Gemini is mixed" in operator_directionality_audit_text
     assert "`G1` Gemini documented host-event runtime shell" in phase_gate_text
     assert "`G2` Gemini raw-transcript ingress shell" in phase_gate_text
     assert "`G3` Gemini loopback service shell" in phase_gate_text
@@ -701,6 +724,10 @@ def test_openai_host_control_revalidation_entry_points_are_recorded() -> None:
     assert "make live-compare" in local_verification_text
     assert "## Live operator payoff audit" in local_verification_text
     assert "make live-operator-payoff-audit" in local_verification_text
+    assert "## Live operator directionality" in local_verification_text
+    assert "make live-operator-directionality" in local_verification_text
+    assert "## Live operator directionality audit" in local_verification_text
+    assert "make live-operator-directionality-audit" in local_verification_text
     assert "live-preflight:" in makefile_text
     assert "live-provider-baselines:" in makefile_text
     assert "live-provider-baselines-automation:" in makefile_text
@@ -709,6 +736,8 @@ def test_openai_host_control_revalidation_entry_points_are_recorded() -> None:
     assert "live-cortex-host-control:" in makefile_text
     assert "live-compare:" in makefile_text
     assert "live-operator-payoff-audit:" in makefile_text
+    assert "live-operator-directionality:" in makefile_text
+    assert "live-operator-directionality-audit:" in makefile_text
 
 
 def test_erika_visualizations_are_framed_as_support_surfaces() -> None:
@@ -780,5 +809,7 @@ def test_runtime_restack_program_lock_is_recorded() -> None:
     assert "Current accepted state after K1 closeout" in text
     assert "implemented at K1 proof head `d4c311f` and truthfully closed at deterministic closeout head `79b8f39`" in text
     assert "later bounded runtime/product trains may still be explicitly opened" in master_plan_text
-    assert "records the bounded K train as landed on the proven reference/OpenAI lanes" in theory_text
-    assert "records `N2` as blocked pending a capable machine" in theory_text
+    assert "records the bounded K train as landed" in theory_text
+    assert "records the landed `Q1` directionality audit" in theory_text
+    assert "Gemini is mixed" in theory_text
+    assert "narrow Gemini explanation seam" in theory_text

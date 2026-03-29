@@ -22,6 +22,7 @@ LOCAL_LIVE_ROOT = REPO_ROOT / ".cortex" / "live_validation"
 PREFLIGHT_REPORT_PATH = LOCAL_LIVE_ROOT / "preflight_report.json"
 COMPARATOR_ROOT = LOCAL_LIVE_ROOT / "comparators"
 WORKSPACE_ROOT = LOCAL_LIVE_ROOT / "workspaces"
+OPERATOR_DIRECTIONALITY_ROOT = LOCAL_LIVE_ROOT / "operator_directionality"
 TEMPLATE_ROOT = REPO_ROOT / "tests" / "fixtures" / "live_validation" / "project_template"
 PROMPTS_ROOT = REPO_ROOT / "tests" / "fixtures" / "live_validation" / "prompts"
 _PYTHON_BIN = shutil.which("python3") or sys.executable
@@ -117,6 +118,7 @@ def ensure_live_validation_dirs() -> None:
     LOCAL_LIVE_ROOT.mkdir(parents=True, exist_ok=True)
     COMPARATOR_ROOT.mkdir(parents=True, exist_ok=True)
     WORKSPACE_ROOT.mkdir(parents=True, exist_ok=True)
+    OPERATOR_DIRECTIONALITY_ROOT.mkdir(parents=True, exist_ok=True)
 
 
 def now_utc_iso() -> str:
@@ -343,6 +345,10 @@ def automation_auth_readiness(provider: str, env: MappingLike | None = None) -> 
 
 def provider_root(provider: str, lane: str, surface: str) -> Path:
     return LOCAL_LIVE_ROOT / lane / provider / surface
+
+
+def operator_directionality_root(provider: str, variant: str) -> Path:
+    return OPERATOR_DIRECTIONALITY_ROOT / provider / variant
 
 
 def comparator_path(name: str) -> Path:

@@ -15,6 +15,8 @@ if str(TOOLS_ROOT) not in sys.path:
 import live_cortex_host_control as live_host_control
 import live_compare as live_compare
 import live_host_native_product_paths as live_host_native_product_paths
+import live_operator_directionality as live_operator_directionality
+import live_operator_directionality_audit as live_operator_directionality_audit
 import live_preflight as live_preflight
 import live_provider_baselines as live_provider_baselines
 import live_validation_common as live_validation_common
@@ -729,3 +731,149 @@ def test_next_corrective_seam_prefers_capable_machine_when_service_auth_is_missi
         )
         == "treat the current machine as out of scope for actual service proof, move the repo to a capable machine with machine auth and spend approval, and rerun the bounded service-proof train there"
     )
+
+
+def test_operator_directionality_raw_precheck_blocks_gemini_when_global_hooks_exist(tmp_path, monkeypatch) -> None:
+    fake_home = tmp_path / "home"
+    settings_path = fake_home / ".gemini" / "settings.json"
+    settings_path.parent.mkdir(parents=True)
+    settings_path.write_text('{"hooks":{"SessionStart":[]}}\n', encoding="utf-8")
+    monkeypatch.setattr(live_operator_directionality.Path, "home", lambda: fake_home)
+
+    payload = live_operator_directionality._raw_host_precheck("gemini")
+
+    assert payload["status"] == "blocked"
+    assert payload["reason"] == "blocked_raw_baseline_contaminated"
+
+
+def test_operator_directionality_raw_precheck_allows_claude_when_setting_sources_exist(monkeypatch) -> None:
+    monkeypatch.setattr(
+        live_operator_directionality,
+        "run_command",
+        lambda *args, **kwargs: {
+            "command": ["claude", "--help"],
+            "exit_code": 0,
+            "stdout": "--setting-sources\n",
+            "stderr": "",
+            "started_at": "2026-03-29T00:00:00+00:00",
+            "ended_at": "2026-03-29T00:00:00+00:00",
+        },
+    )
+
+    payload = live_operator_directionality._raw_host_precheck("claude")
+
+    assert payload["status"] == "ready"
+    assert payload["isolation_mode"] == "setting_sources_local"
+
+
+def test_operator_directionality_raw_precheck_uses_isolated_codex_home_when_auth_exists(tmp_path, monkeypatch) -> None:
+    fake_home = tmp_path / "home"
+    codex_root = fake_home / ".codex"
+    codex_root.mkdir(parents=True)
+    (codex_root / "auth.json").write_text("{}", encoding="utf-8")
+    monkeypatch.setattr(live_operator_directionality.Path, "home", lambda: fake_home)
+
+    payload = live_operator_directionality._raw_host_precheck("openai")
+
+    assert payload["status"] == "ready"
+    assert payload["isolation_mode"] == "isolated_codex_home_auth_only"
+
+
+def test_operator_directionality_audit_blocks_pairs_with_blocked_raw_host() -> None:
+    audited = live_operator_directionality_audit._audit_pair(
+        {
+            "scenario_id": "pass_minimal",
+            "repeat_index": 1,
+            "pair_status": "blocked",
+            "blocked_reason": "blocked_raw_baseline_contaminated",
+        }
+    )
+
+    assert audited["pair_verdict"] == "blocked"
+
+
+def test_operator_directionality_audit_marks_negative_when_raw_succeeds_and_cortex_fails() -> None:
+    audited = live_operator_directionality_audit._audit_pair(
+        {
+            "scenario_id": "pass_minimal",
+            "repeat_index": 1,
+            "pair_status": "compared",
+            "raw_host": {
+                "success": True,
+                "test_exit_code": 0,
+                "warning_classes": [],
+                "attempted_models": ["auto"],
+                "modified_files": ["src/normalize_port.py"],
+            },
+            "cortex_operator": {
+                "success": False,
+                "test_exit_code": 1,
+                "warning_classes": [],
+                "attempted_models": ["auto"],
+                "modified_files": ["src/normalize_port.py"],
+            },
+        }
+    )
+
+    assert audited["pair_verdict"] == "negative"
+
+
+def test_operator_directionality_audit_marks_mixed_when_truth_gap_matches_but_burden_is_worse() -> None:
+    audited = live_operator_directionality_audit._audit_pair(
+        {
+            "scenario_id": "truth_gap",
+            "repeat_index": 1,
+            "pair_status": "compared",
+            "raw_host": {
+                "truth_gap_kind": "truthful_incomplete",
+                "warning_classes": [],
+                "attempted_models": ["auto"],
+            },
+            "cortex_operator": {
+                "truth_gap_kind": "truthful_incomplete",
+                "warning_classes": ["capacity_exhausted"],
+                "attempted_models": ["auto", "gemini-2.5-flash"],
+            },
+        }
+    )
+
+    assert audited["pair_verdict"] == "mixed"
+
+
+def test_operator_directionality_package_verdict_prefers_mixed_direction_over_fake_positive() -> None:
+    verdict, reason = live_operator_directionality_audit._package_verdict(
+        ["positive", "mixed", "blocked"]
+    )
+
+    assert verdict == "mixed_direction"
+    assert "mixed or blocked" in reason
+
+
+def test_operator_directionality_main_merges_provider_summaries(tmp_path, monkeypatch) -> None:
+    comparator_root = tmp_path / "comparators"
+    directionality_root = tmp_path / "directionality"
+    comparator_root.mkdir(parents=True)
+    directionality_root.mkdir(parents=True)
+
+    monkeypatch.setattr(
+        live_operator_directionality,
+        "comparator_path",
+        lambda name: comparator_root / name,
+    )
+    monkeypatch.setattr(
+        live_operator_directionality,
+        "operator_directionality_root",
+        lambda provider, variant: directionality_root / provider / variant,
+    )
+    monkeypatch.setattr(live_operator_directionality, "ensure_live_validation_dirs", lambda: None)
+    monkeypatch.setattr(
+        live_operator_directionality,
+        "_run_provider",
+        lambda provider, **kwargs: {"provider": provider, "pairs": [{"scenario_id": "pass_minimal"}]},
+    )
+
+    assert live_operator_directionality.main(["--provider", "claude"]) == 0
+    assert live_operator_directionality.main(["--provider", "openai"]) == 0
+
+    merged = json.loads((comparator_root / "operator_directionality_summary.json").read_text())
+    assert sorted(merged["providers"]) == ["claude", "openai"]

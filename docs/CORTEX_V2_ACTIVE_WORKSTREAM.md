@@ -43,6 +43,12 @@ It is workflow state only. It does not override the packet documents, implementa
     - bounded prior-feedback pressure is now explicit through internal `feedback_pressure_tags`
     - guarded-feedback and latched-brake realization remain explicit rather than smoothing selected-family, realized-family, or lawful commitment truth
     - no support-memory runtime, mediation, service/auth widening, or broader host rollout was introduced
+  - `Q1` raw-vs-Cortex operator directionality audit is now landed on the current machine:
+    - Claude is `positive`
+    - OpenAI is `positive`
+    - Gemini is `mixed`
+    - package verdict is `mixed_direction`
+    - the current blocker is now the mixed Gemini directionality result rather than an abstract “evaluate later” placeholder
   - Gemini restart-continuity repeat-stability re-audit is now landed for current machine truth:
     - local Gemini settings already match current best practice:
       - no pinned default model
@@ -68,11 +74,11 @@ It is workflow state only. It does not override the packet documents, implementa
 
 ## 2. Current campaign and seam state
 
-- Current campaign: `N2 capable-machine service-proof blocked pending qualified machine`
+- Current campaign: `post-Q1 Gemini directionality explanation pending`
 - Current working branch at ledger update: `main`
 - Current branch role: clean synced resting branch after K-train closeout
-- Current candidate seam: none; the K train remains landed, the N2 contract/tooling slice is current, and actual capable-machine service proof is blocked here
-- Current seam status: `zero-finding K-train closure audit is complete for current scope, live-preflight and automation-lane tooling now honor the accepted-baseline lookup contract again, repeated current-machine N2 reruns reconfirm all three automation auth states as missing, and this machine remains out of scope for actual service proof`
+- Current candidate seam: none; `Q1` is landed on the current machine, `N2` remains blocked on a capable machine, and the mixed Gemini directionality result is the next unresolved line
+- Current seam status: `the paired raw-vs-Cortex operator audit is complete on the current machine: Claude and OpenAI are positive, Gemini is mixed, package direction is mixed, and no runtime doctrine was widened`
 - the compare surface and live-validation truth from earlier seams remain accepted ancestor input and are not being reopened by the landed K train.
 - Seam risk: load-bearing runtime seam plus deterministic docs/correspondence sync
 
@@ -115,14 +121,13 @@ It is workflow state only. It does not override the packet documents, implementa
   - keep the machine-auth service lane explicitly deferred on this machine for actual proof execution
   - keep Gemini as the remaining explicit partial host line on this machine
   - do not reopen the K train by inertia now that the bounded proven-lane executive/runtime line is landed
-  - the next lawful move inside `N2` is:
-    - move the repo to a capable machine
-    - confirm clean synced `main`
-    - confirm provider CLIs are installed
-    - confirm machine auth readiness is `ready` for the intended providers
-    - confirm spend approval is explicitly present where required
-    - then rerun the bounded service-proof bundle there
-  - if a capable machine is not available yet, stay blocked rather than collapsing `N2` into local prep-only work or fake service proof
+  - do not widen from the mixed `Q1` package result into new runtime or product claims
+  - the next lawful move is one narrow Gemini explanation seam:
+    - determine whether the mixed Gemini directionality result reflects
+      - true Cortex-added burden,
+      - host-capacity noise,
+      - or audit-measurement noise
+  - keep `N2` as a separate blocked train pending a capable machine; do not conflate that with the Gemini directionality blocker
 
 ## 4. Explicitly blocked moves
 

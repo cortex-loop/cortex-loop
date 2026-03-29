@@ -859,11 +859,17 @@ def _configure_hook_capture(
     project_root: Path,
     scenario_id: str,
     repeat_index: int,
+    log_root: Path | None = None,
 ) -> Path | None:
     if provider not in {"claude", "gemini"}:
         return None
     recorder_path = REPO_ROOT / "tools" / "live_hook_recorder.py"
-    hook_log_path = provider_root(provider, "operator", "product_paths") / f"{scenario_id}__run_{repeat_index:03d}.hooks.jsonl"
+    effective_log_root = (
+        provider_root(provider, "operator", "product_paths")
+        if log_root is None
+        else log_root
+    )
+    hook_log_path = effective_log_root / f"{scenario_id}__run_{repeat_index:03d}.hooks.jsonl"
     command_literal = json.dumps(f'python3 "{recorder_path}"')
     if provider == "claude":
         settings_path = project_root / ".claude" / "settings.json"

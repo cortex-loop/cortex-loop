@@ -226,10 +226,11 @@ def classify_app_server_request_blocker(request_methods: list[str]) -> str | Non
 
 
 class _AppServerClient:
-    def __init__(self, *, cwd: Path, stderr_path: Path) -> None:
+    def __init__(self, *, cwd: Path, stderr_path: Path, env: dict[str, str] | None = None) -> None:
         self._process = subprocess.Popen(
             ["codex", "app-server"],
             cwd=str(cwd),
+            env=env,
             stdin=subprocess.PIPE,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
@@ -540,6 +541,8 @@ def _run_single_turn_attempts(
     preferred_model: str,
     scenario_id: str,
     ephemeral: bool = True,
+    env: dict[str, str] | None = None,
+    stderr_path: Path | None = None,
 ) -> tuple[dict[str, Any], str | None, str]:
     first_state, first_failure = _run_single_turn(
         project_root=project_root,
@@ -548,6 +551,8 @@ def _run_single_turn_attempts(
         model=preferred_model,
         scenario_id=scenario_id,
         ephemeral=ephemeral,
+        env=env,
+        stderr_path=stderr_path,
     )
     chosen_model = choose_model("openai", "operator", first_failure=first_failure)
     if chosen_model == preferred_model:
@@ -559,6 +564,8 @@ def _run_single_turn_attempts(
         model=chosen_model,
         scenario_id=scenario_id,
         ephemeral=ephemeral,
+        env=env,
+        stderr_path=stderr_path,
     )
     return fallback_state, fallback_failure, chosen_model
 
@@ -571,12 +578,19 @@ def _run_single_turn(
     model: str,
     scenario_id: str,
     ephemeral: bool,
+    env: dict[str, str] | None = None,
+    stderr_path: Path | None = None,
 ) -> tuple[dict[str, Any], str | None]:
     started_at = now_utc_iso()
     client = _AppServerClient(
         cwd=project_root,
-        stderr_path=provider_root("openai", "operator", "app_server")
-        / f"{scenario_id}.live.stderr.log",
+        stderr_path=(
+            provider_root("openai", "operator", "app_server")
+            / f"{scenario_id}.live.stderr.log"
+            if stderr_path is None
+            else stderr_path
+        ),
+        env=env,
     )
     try:
         if auth_mode != "codex_cli":
@@ -671,12 +685,19 @@ def _run_resumed_turn(
     auth_mode: str,
     model: str,
     thread_id: str | None,
+    env: dict[str, str] | None = None,
+    stderr_path: Path | None = None,
 ) -> tuple[dict[str, Any], str | None]:
     started_at = now_utc_iso()
     client = _AppServerClient(
         cwd=project_root,
-        stderr_path=provider_root("openai", "operator", "app_server")
-        / "restart_continuity.resume.live.stderr.log",
+        stderr_path=(
+            provider_root("openai", "operator", "app_server")
+            / "restart_continuity.resume.live.stderr.log"
+            if stderr_path is None
+            else stderr_path
+        ),
+        env=env,
     )
     try:
         if auth_mode != "codex_cli":
