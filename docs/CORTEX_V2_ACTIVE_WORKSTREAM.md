@@ -8,7 +8,7 @@ It is workflow state only. It does not override the packet documents, implementa
 ## 1. Accepted baseline
 
 - Accepted baseline branch: `main`
-- Accepted baseline commit: `bf2a026`
+- Accepted baseline commit: `2089c38`
 - Accepted baseline state:
   - burden-axis re-audit remains accepted through the three thrash-host burden slices
   - package-level burden remains `insufficient`
