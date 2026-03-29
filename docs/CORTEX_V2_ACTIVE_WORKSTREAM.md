@@ -8,7 +8,9 @@ It is workflow state only. It does not override the packet documents, implementa
 ## 1. Accepted baseline
 
 - Accepted baseline branch: `main`
-- Accepted baseline commit: `2089c38`
+- Accepted baseline commit lookup: `git rev-parse HEAD` on clean synced `main`
+- Accepted baseline note:
+  - exact accepted-head hashes are intentionally not mirrored in repo-tracked support docs because they self-stale on the next accepted closure commit
 - Accepted baseline state:
   - burden-axis re-audit remains accepted through the three thrash-host burden slices
   - package-level burden remains `insufficient`
@@ -52,7 +54,7 @@ It is workflow state only. It does not override the packet documents, implementa
   - the Gemini documented-host-event runtime shell, raw-transcript ingress shell, loopback service shell, and bounded outbound Gemini host-control lane remain accepted on the current line
   - the Claude documented-host-event runtime shell, raw-transcript ingress shell, loopback service shell, and bounded outbound Claude host-control lane remain accepted on the current line
   - refreshed live models on the current line are `claude-sonnet-4-6`, `gemini-2.5-pro`, and `gpt-5.4`
-  - `R6`, `O5`, `G1`, `G2`, `G3`, `G4`, `A1`, `A2`, `A3`, and `A4` are landed on the current line
+  - `R6`, `R7`, `O5`, `O6`, `G1`, `G2`, `G3`, `G4`, `A1`, `A2`, `A3`, and `A4` are landed on the current line
 - Accepted baseline authority anchors:
   - `docs/CORTEX_V2_IMPLEMENTATION_STATUS_NOTE.md`
   - `docs/CORTEX_V2_IMPLEMENTATION_MASTER_PLAN_2.md`
@@ -61,11 +63,11 @@ It is workflow state only. It does not override the packet documents, implementa
 
 ## 2. Current campaign and seam state
 
-- Current campaign: `K4 computed executive loop on proven lanes`
+- Current campaign: `post-K4 closeout and continuation hardening`
 - Current working branch at ledger update: `main`
-- Current branch role: clean synced resting branch after K4 closeout
-- Current candidate seam: none; `K4` is landed for current scope on the proven reference/OpenAI lanes
-- Current seam status: `bounded computed executive loop is now real on the proven reference/OpenAI lanes, shared runtime projections remain compatible, and no support-memory/service/auth/mediation widening was introduced`
+- Current branch role: clean synced resting branch after K4 and K4F closeout
+- Current candidate seam: none; `K4` is landed for current scope on the proven reference/OpenAI lanes and its continuation/support truth is now hardened
+- Current seam status: `bounded computed executive loop is now real on the proven reference/OpenAI lanes, shared runtime projections remain compatible, exact accepted-head lookup now lives only in clean synced main rather than mirrored support-doc hashes, and no support-memory/service/auth/mediation widening was introduced`
 - the compare surface and live-validation truth from earlier seams remain accepted ancestor input and are not being reopened by K4.
 - Seam risk: load-bearing runtime seam plus deterministic docs/correspondence sync
 

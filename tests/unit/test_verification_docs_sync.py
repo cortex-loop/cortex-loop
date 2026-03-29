@@ -93,12 +93,11 @@ def _read(path: Path) -> str:
     return path.read_text(encoding="utf-8")
 
 
-def _extract_accepted_workflow_baseline(workstream_text: str) -> tuple[str, str]:
+def _extract_accepted_workflow_baseline(workstream_text: str) -> str:
     branch_match = re.search(r"Accepted baseline branch: `([^`]+)`", workstream_text)
-    commit_match = re.search(r"Accepted baseline commit: `([^`]+)`", workstream_text)
-    if branch_match is None or commit_match is None:
+    if branch_match is None:
         raise AssertionError("missing accepted workflow baseline in workstream ledger")
-    return branch_match.group(1), commit_match.group(1)
+    return branch_match.group(1)
 
 
 def _extract_sh_block(doc: str, heading: str) -> str:
@@ -159,8 +158,6 @@ def _expand_make_vars(command: str, makefile_text: str) -> str:
 
 def test_implementation_status_note_reflects_current_verification_surfaces() -> None:
     text = _read(IMPLEMENTATION_STATUS_NOTE_PATH)
-    workstream_text = _read(ACTIVE_WORKSTREAM_PATH)
-    _accepted_branch, accepted_commit = _extract_accepted_workflow_baseline(workstream_text)
 
     assert "there is no repo-local pytest config" not in text
     assert "there is no repo-local coverage configuration" not in text
@@ -178,8 +175,8 @@ def test_implementation_status_note_reflects_current_verification_surfaces() -> 
     assert "OpenAI runtime / ingress / service / bounded host-control" in text
     assert "Gemini runtime / ingress / service / bounded host-control" in text
     assert "Claude runtime / ingress / service / bounded host-control" in text
-    assert "`main`" in text
-    assert f"`{accepted_commit}`" in text
+    assert "clean synced `main` line" in text
+    assert "do not hardcode a separate accepted workflow baseline here" in text
 
 
 def test_verification_ergonomics_plan_reflects_current_campaign_state() -> None:
@@ -330,7 +327,7 @@ def test_local_verification_doc_records_repo_workflow_commands() -> None:
 def test_resume_protocol_and_active_workstream_contract_exist() -> None:
     agents_text = _read(REPO_ROOT / "AGENTS.md")
     workstream_text = _read(ACTIVE_WORKSTREAM_PATH)
-    accepted_branch, accepted_commit = _extract_accepted_workflow_baseline(workstream_text)
+    accepted_branch = _extract_accepted_workflow_baseline(workstream_text)
 
     assert "## Continuation and resume protocol" in agents_text
     assert "`docs/CORTEX_V2_ACTIVE_WORKSTREAM.md`" in agents_text
@@ -340,12 +337,13 @@ def test_resume_protocol_and_active_workstream_contract_exist() -> None:
 
     assert "Status: live workflow-state ledger for compaction-safe continuation." in workstream_text
     assert f"Accepted baseline branch: `{accepted_branch}`" in workstream_text
-    assert f"Accepted baseline commit: `{accepted_commit}`" in workstream_text
+    assert "Accepted baseline commit lookup: `git rev-parse HEAD` on clean synced `main`" in workstream_text
+    assert "exact accepted-head hashes are intentionally not mirrored in repo-tracked support docs" in workstream_text
     assert "Current campaign:" in workstream_text
     assert "Current working branch at ledger update:" in workstream_text
     assert "Current branch role:" in workstream_text
     assert "accepted workflow baseline truth now rests on `main` rather than a long-lived working branch" in workstream_text
-    assert "Current candidate seam: none; `K4` is landed for current scope on the proven reference/OpenAI lanes" in workstream_text
+    assert "Current candidate seam: none; `K4` is landed for current scope on the proven reference/OpenAI lanes and its continuation/support truth is now hardened" in workstream_text
     assert "bounded computed executive loop is now real on the proven reference/OpenAI lanes" in workstream_text
     assert "the compare surface and live-validation truth from earlier seams remain accepted ancestor input and are not being reopened by K4." in workstream_text
     assert "the current signed-in smoke surfaces are now clean again" in workstream_text
@@ -535,10 +533,11 @@ def test_reference_runtime_program_lock_is_recorded() -> None:
     assert "`allocated_score=online_score`" in executive_live_outcome_program_text
     assert "`make revalidate-executive-loop`" in executive_live_outcome_program_text
     assert "Current K3 candidate state before closeout" in executive_live_outcome_program_text
-    assert "Status: active runtime-program brief for the first bounded computed executive loop on proven reference/OpenAI lanes" in computed_executive_loop_program_text
+    assert "Status: accepted re-audited runtime-program brief for the first bounded computed executive loop on proven reference/OpenAI lanes" in computed_executive_loop_program_text
     assert "`Q_t^{mem}=0.0`" in computed_executive_loop_program_text
     assert "`allocated_score` may differ from `online_score`" in computed_executive_loop_program_text
     assert "No new public shells are introduced." in computed_executive_loop_program_text
+    assert "Current accepted state after K4 closeout" in computed_executive_loop_program_text
     assert "`G1` Gemini documented host-event runtime shell" in phase_gate_text
     assert "`G2` Gemini raw-transcript ingress shell" in phase_gate_text
     assert "`G3` Gemini loopback service shell" in phase_gate_text
@@ -580,11 +579,11 @@ def test_reference_runtime_program_lock_is_recorded() -> None:
     live_validation_scenario_catalog_text = _read(LIVE_VALIDATION_SCENARIO_CATALOG_PATH)
     live_validation_verdict_text = _read(LIVE_VALIDATION_VERDICT_PATH)
     workstream_text = _read(ACTIVE_WORKSTREAM_PATH)
-    accepted_branch, accepted_commit = _extract_accepted_workflow_baseline(workstream_text)
+    accepted_branch = _extract_accepted_workflow_baseline(workstream_text)
 
     assert "Status: active L2 live-testing environment brief with L2b/L2c/L2d/L2e host-native lifecycle follow-ons" in live_validation_program_text
     assert f"branch: `{accepted_branch}`" in live_validation_program_text
-    assert f"commit: `{accepted_commit}`" in live_validation_program_text
+    assert "clean synced `main` line recorded in `docs/CORTEX_V2_ACTIVE_WORKSTREAM.md`" in live_validation_program_text
     assert "signed-in host-native product surfaces" in live_validation_program_text
     assert "local-only under `.cortex/live_validation/`" in live_validation_program_text
     assert "`codex exec` = smoke / preflight" in live_validation_program_text
@@ -685,14 +684,17 @@ def test_erika_visualizations_are_framed_as_support_surfaces() -> None:
     workstream_text = _read(ACTIVE_WORKSTREAM_PATH)
     markdown_text = _read(ERIKA_VISUALIZATION_STATUS_PATH)
     html_text = _read(ERIKA_VISUALIZATION_HTML_PATH)
-    accepted_branch, accepted_commit = _extract_accepted_workflow_baseline(workstream_text)
+    accepted_branch = _extract_accepted_workflow_baseline(workstream_text)
 
     assert "support surface" in markdown_text
     assert "current accepted repo truth" in markdown_text
     assert "north-star product target" in markdown_text
     assert "lawful gap programs" in markdown_text
     assert "mechanisms Cortex has already stolen so far" in markdown_text
-    assert f"**Accepted factual baseline:** `{accepted_branch}` at `{accepted_commit}`" in markdown_text
+    assert (
+        f"**Accepted factual baseline:** clean synced `{accepted_branch}` line recorded in "
+        "`docs/CORTEX_V2_ACTIVE_WORKSTREAM.md`"
+    ) in markdown_text
     assert "The verification/evidence restack train, K1 runtime/product restack, and K2 bounded host-control train are now landed for current scope on top of that same product truth." in markdown_text
     assert "The reference runtime shell, bounded reference continuity, OpenAI documented-host-event runtime shell, raw-transcript ingress shell, loopback service shell, and bounded outbound OpenAI host-control lane are now accepted on the current line." in markdown_text
     assert "The Claude documented-host-event runtime shell, raw-transcript ingress shell, loopback service shell, and bounded outbound Claude host-control lane are now accepted on the current line." in markdown_text
@@ -712,8 +714,8 @@ def test_erika_visualizations_are_framed_as_support_surfaces() -> None:
     assert "Biology Tracker: What Cortex Has Stolen So Far" in html_text
     assert "which brain-inspired mechanisms Cortex has already stolen so far" in html_text
     assert (
-        f"The accepted factual baseline is <code>{accepted_branch}</code> at "
-        f"<code>{accepted_commit}</code>."
+        f"The accepted factual baseline is the clean synced <code>{accepted_branch}</code> "
+        "line recorded in <code>docs/CORTEX_V2_ACTIVE_WORKSTREAM.md</code>."
     ) in html_text
     assert '<details class="biology-card"' in html_text
     assert "What we've stolen so far" in html_text
@@ -742,4 +744,4 @@ def test_runtime_restack_program_lock_is_recorded() -> None:
     assert "Current accepted state after K1 closeout" in text
     assert "implemented at K1 proof head `d4c311f` and truthfully closed at deterministic closeout head `79b8f39`" in text
     assert "later bounded runtime/product trains may still be explicitly opened" in master_plan_text
-    assert "records the active `K4` computed executive-loop seam over proven reference/OpenAI lanes" in theory_text
+    assert "records `K4` as landed on the proven reference/OpenAI lanes" in theory_text

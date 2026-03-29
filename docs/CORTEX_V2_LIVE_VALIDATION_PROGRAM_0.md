@@ -27,10 +27,10 @@ The current bounded follow-on seam inside `L2` is:
 
 ## Accepted parent
 
-Accepted parent for this train:
+Accepted baseline for this train on the current line:
 
 - branch: `main`
-- commit: `2089c38`
+- line: clean synced `main` line recorded in `docs/CORTEX_V2_ACTIVE_WORKSTREAM.md`
 
 This remains the refreshed-model baseline line:
 

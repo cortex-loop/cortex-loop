@@ -539,6 +539,66 @@ def test_neutral_dominance_keeps_neutral_on_exact_threshold_tie() -> None:
     assert decision.margin_over_neutral == 0.0
 
 
+def test_neutral_dominance_ranks_by_allocated_score_not_raw_online_score() -> None:
+    decision = neutral_dominance_decision(
+        AllocationScorecard(
+            scores=(
+                AllocationScore(
+                    SoftControlFamily.NEUTRAL,
+                    1.0,
+                    online_score=1.0,
+                    allocated_score=1.0,
+                ),
+                AllocationScore(
+                    SoftControlFamily.CHECK,
+                    1.05,
+                    online_score=1.4,
+                    allocated_score=1.05,
+                ),
+                AllocationScore(
+                    SoftControlFamily.REDIRECT,
+                    1.08,
+                    online_score=1.2,
+                    allocated_score=1.08,
+                ),
+            ),
+            activation_threshold=0.05,
+            alpha_t=0.75,
+        )
+    )
+
+    assert decision.selected_family is SoftControlFamily.REDIRECT
+    assert decision.neutral_selected is False
+    assert abs(decision.margin_over_neutral - 0.08) < 1e-12
+
+
+def test_neutral_dominance_uses_allocated_margin_for_threshold() -> None:
+    decision = neutral_dominance_decision(
+        AllocationScorecard(
+            scores=(
+                AllocationScore(
+                    SoftControlFamily.NEUTRAL,
+                    1.0,
+                    online_score=1.0,
+                    allocated_score=1.0,
+                ),
+                AllocationScore(
+                    SoftControlFamily.CHECK,
+                    1.04,
+                    online_score=1.4,
+                    allocated_score=1.04,
+                ),
+            ),
+            activation_threshold=0.05,
+            alpha_t=0.75,
+        )
+    )
+
+    assert decision.selected_family is SoftControlFamily.NEUTRAL
+    assert decision.neutral_selected is True
+    assert abs(decision.margin_over_neutral - 0.04) < 1e-12
+
+
 def test_neutral_dominance_returns_strongest_non_neutral_when_threshold_is_met() -> None:
     decision = neutral_dominance_decision(
         AllocationScorecard(

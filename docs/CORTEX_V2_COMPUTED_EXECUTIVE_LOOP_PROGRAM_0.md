@@ -1,7 +1,7 @@
 # CORTEX_V2_COMPUTED_EXECUTIVE_LOOP_PROGRAM_0
 
 Date: 2026-03-29
-Status: active runtime-program brief for the first bounded computed executive loop on proven reference/OpenAI lanes
+Status: accepted re-audited runtime-program brief for the first bounded computed executive loop on proven reference/OpenAI lanes
 
 ## Purpose
 
@@ -140,9 +140,9 @@ K4 is only honestly closed when all are true:
 - `R7` and `O6` are updated truthfully
 - `R6/O5` remain the accepted diagnostics-first ancestor slice
 
-## Current K4 candidate state before closeout
+## Current accepted state after K4 closeout
 
-On the current K4 candidate line opened from accepted baseline `a369874`:
+On the accepted K4 closeout line opened from accepted parent `a369874`:
 
 - `alpha_t` is computed from runtime-visible pressure rather than fixed
 - `allocated_score` is the actual selection score while `online_score` remains diagnostic
