@@ -2,7 +2,7 @@
 
 **Date:** 2026-03-28
 **Role:** support surface for orientation and planning  
-**Accepted factual baseline:** `main` at `b20f81f`
+**Accepted factual baseline:** `main` at `bf2a026`
 
 > This folder tracks three separate things: current accepted repo truth, the north-star product target, and the lawful gap programs required to move from the first toward the second.
 

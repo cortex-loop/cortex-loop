@@ -30,7 +30,7 @@ The current bounded follow-on seam inside `L2` is:
 Accepted parent for this train:
 
 - branch: `main`
-- commit: `b20f81f`
+- commit: `bf2a026`
 
 This remains the refreshed-model baseline line:
 

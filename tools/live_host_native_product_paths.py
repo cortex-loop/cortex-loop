@@ -192,6 +192,13 @@ def _run_provider(
         write_json(root / "host_native_product_runs.json", summary)
         return summary
 
+    if existing_runs:
+        existing_runs = [
+            run
+            for run in existing_runs
+            if run.get("scenario_id") != "operator_product_gate"
+        ]
+
     runs: list[dict[str, Any]] = []
     blocked_failure: str | None = None
 
@@ -231,6 +238,7 @@ def _run_provider(
         continuity = _run_restart_continuity(
             provider,
             root,
+            existing_runs=existing_runs,
             max_attempts=max_attempts,
             cooldown_seconds=cooldown_seconds,
             preferred_model_override=preferred_model_override,
@@ -310,6 +318,7 @@ def _run_operator_attempts(
     prompt: str,
     project_root: Path,
     auth_mode: str,
+    approval_mode: str | None,
     hook_log_path: Path | None,
     max_attempts: int,
     cooldown_seconds: int,
@@ -337,6 +346,7 @@ def _run_operator_attempts(
             project_root=project_root,
             model=current_model,
             auth_mode=auth_mode,
+            approval_mode=approval_mode,
             hook_log_path=hook_log_path,
         )
         failure_class = classify_failure(f"{run_result['stdout']}\n{run_result['stderr']}")
@@ -391,13 +401,14 @@ def _run_restart_continuity(
     provider: str,
     root: Path,
     *,
+    existing_runs: list[dict[str, Any]],
     max_attempts: int,
     cooldown_seconds: int,
     preferred_model_override: str | None,
     fallback_model_override: str | None,
     disable_auto_probe: bool,
 ) -> dict[str, Any]:
-    repeat_index = 1
+    repeat_index = _next_repeat_index(existing_runs, "restart_continuity")
     project_root = prepare_harness_workspace(
         provider=provider,
         lane="operator",
@@ -416,6 +427,7 @@ def _run_restart_continuity(
         prompt=read_prompt_template("restart_continuity_turn1_operator.md"),
         project_root=project_root,
         auth_mode=auth_mode,
+        approval_mode="plan" if provider == "gemini" else None,
         hook_log_path=hook_log_path,
         max_attempts=max_attempts,
         cooldown_seconds=cooldown_seconds,
@@ -459,6 +471,7 @@ def _run_restart_continuity(
         model=chosen_model,
         auth_mode=auth_mode,
         session_id=session_id,
+        approval_mode="yolo" if provider == "gemini" else None,
         hook_log_path=hook_log_path,
     )
     second_failure = classify_failure(f"{second_result['stdout']}\n{second_result['stderr']}")
@@ -574,6 +587,7 @@ def _run_provider_task(
     project_root: Path,
     model: str,
     auth_mode: str,
+    approval_mode: str | None = None,
     hook_log_path: Path | None = None,
 ) -> dict[str, Any]:
     if provider == "claude":
@@ -590,6 +604,7 @@ def _run_provider_task(
             project_root=project_root,
             model=model,
             auth_mode=auth_mode,
+            approval_mode=approval_mode,
             hook_log_path=hook_log_path,
         )
     return _run_codex_task(prompt, project_root=project_root, model=model, auth_mode=auth_mode)
@@ -603,6 +618,7 @@ def _resume_provider_task(
     model: str,
     auth_mode: str,
     session_id: str | None,
+    approval_mode: str | None = None,
     hook_log_path: Path | None = None,
 ) -> dict[str, Any]:
     if provider == "claude":
@@ -621,6 +637,7 @@ def _resume_provider_task(
             model=model,
             auth_mode=auth_mode,
             resume_session=session_id,
+            approval_mode=approval_mode,
             hook_log_path=hook_log_path,
         )
     return _run_codex_task(
@@ -674,10 +691,12 @@ def _run_gemini_task(
     model: str,
     auth_mode: str,
     resume_session: str | None = None,
+    approval_mode: str | None = None,
     hook_log_path: Path | None = None,
 ) -> dict[str, Any]:
     if auth_mode != "google_login":
         return _unsupported_operator_mode("gemini", auth_mode, ["gemini"])
+    effective_approval_mode = approval_mode or "yolo"
     command = [
         "gemini",
         "-p",
@@ -685,7 +704,7 @@ def _run_gemini_task(
         "-o",
         "stream-json",
         "--approval-mode",
-        "yolo",
+        effective_approval_mode,
     ]
     if model != "auto":
         command[5:5] = ["-m", model]
@@ -823,6 +842,15 @@ def _merge_runs(existing_runs: list[dict[str, Any]], new_runs: list[dict[str, An
             order.append(key)
         merged[key] = run
     return [merged[key] for key in order]
+
+
+def _next_repeat_index(existing_runs: list[dict[str, Any]], scenario_id: str) -> int:
+    existing_indexes = [
+        int(run["repeat_index"])
+        for run in existing_runs
+        if run.get("scenario_id") == scenario_id and isinstance(run.get("repeat_index"), int)
+    ]
+    return (max(existing_indexes) + 1) if existing_indexes else 1
 
 
 def _configure_hook_capture(

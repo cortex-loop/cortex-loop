@@ -22,7 +22,7 @@ It is an evaluation/support surface, not a runtime or auth-expansion brief.
   - operator probes and repeated smoke baselines are now clean in CLI auto mode
   - the deeper auto-mode path now closes `pass_minimal` with warning-preserving capacity pressure
   - the deeper auto-mode path now preserves `truth_gap` truthfully on the latest reruns
-  - `restart_continuity` is still not repeat-stable because the latest reruns include a `capacity_exhausted` blocker
+  - `restart_continuity` is still not repeat-stable after the current best-practice re-audit because successful resumed completions now coexist with recurring first-turn `capacity_exhausted` failures
 
 ## Audit verdict
 

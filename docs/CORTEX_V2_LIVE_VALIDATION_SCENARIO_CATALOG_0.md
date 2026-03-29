@@ -75,8 +75,15 @@ Target task:
   - `gemini-2.5-pro` smoke only unless the smoke becomes clean
 - current caveat:
   - smoke surfaces now start in CLI auto mode and are currently clean
-  - the deeper product path now also starts in CLI auto mode, but `restart_continuity` is still not repeat-stable
+  - the deeper product path now also starts in CLI auto mode
+  - the current re-audit confirms local settings already follow current best practice:
+    - no pinned default model
+    - `modelRouting=true`
+    - explicit project-scoped resume IDs remain valid on the current CLI
+  - the first inspect-only continuity turn now uses `plan` approval mode and the resumed edit/test turn keeps `yolo`
+  - `restart_continuity` is still not repeat-stable because successful resumed completions now coexist with recurring first-turn `capacity_exhausted` failures
   - `gemini-2.5-pro` is valid locally but still capacity-blocked on smoke
+  - exploratory `gemini-2.5-flash` continuity did not eliminate the first-turn capacity blocker
   - `truth_gap` is now truthful on the latest auto-mode reruns
 - probe surface: operator preflight plus the signed-in Gemini baseline and hook-backed product lane
 

@@ -31,7 +31,12 @@ Reason:
   - the deeper auto-mode product path now improves materially:
     - `pass_minimal` succeeds twice on `auto` with warning-preserving `capacity_exhausted`
     - `truth_gap` is truthful on the latest auto-mode reruns
-    - `restart_continuity` is still not repeat-stable because the latest reruns include a `capacity_exhausted` blocker on `auto`
+    - `restart_continuity` is still not repeat-stable after the best-practice re-audit:
+      - local settings already use auto routing with no pinned default model
+      - explicit Gemini session IDs are valid resume IDs on the current CLI
+      - the first inspect-only continuity turn now uses the lighter `plan` approval mode before the resumed `yolo` edit/test turn
+      - successful resumed completions now coexist with recurring first-turn `capacity_exhausted` failures on `auto`
+      - an exploratory `gemini-2.5-flash` sidecar also failed on first-turn `capacity_exhausted`
   - `gemini-2.5-pro` is valid locally but still capacity-blocked on the bounded exploratory smoke lane
 - so Gemini remains the only operator-side host still blocking closure,
 - and the March 29 automation/service reruns ended in a fully deferred machine-auth service lane on this machine.
@@ -61,10 +66,11 @@ Reason:
 - operator product path:
   - hook-backed `pass_minimal`: success twice on `auto` with `capacity_exhausted` preserved as a warning
   - `truth_gap`: now truthful on the latest auto-mode reruns
-  - `restart_continuity`: not repeat-stable yet because the latest reruns include a `capacity_exhausted` blocker on `auto`
+  - `restart_continuity`: still not repeat-stable after the best-practice re-audit because successful resumed completions now coexist with recurring first-turn `capacity_exhausted` failures on `auto`
   - this remains a watchlist rather than a closed host line
 - exploratory sidecar:
   - `gemini-2.5-pro` smoke remains capacity-blocked
+  - `gemini-2.5-flash` continuity also failed on first-turn `capacity_exhausted`
 - hook surface:
   - `SessionStart`
   - `BeforeTool`
@@ -98,12 +104,12 @@ Reason:
 
 ## Next corrective seam
 
-The Gemini auto-mode product-path re-earn seam is now complete.
+The Gemini auto-mode product-path re-earn seam and follow-on repeat-stability re-audit are now complete.
 The next honest move is one bounded seam, chosen explicitly:
 
 1. For current-machine continuation:
    - keep the machine-auth service lane deferred
-   - open one bounded Gemini `restart_continuity` repeat-stability seam
+   - accept Gemini as the remaining explicit partial host line on this machine
    - do not smooth the current partial continuity story away
 2. If you later intentionally reopen service proof:
    - satisfy the bounded service auth/spend contract recorded in `docs/CORTEX_V2_LIVE_SERVICE_PROOF_0.md`

@@ -456,6 +456,7 @@ While Claude and Gemini still carry operator-harness drift, do not treat the agg
 For focused Gemini reruns, use the direct script with `--provider gemini --scenario ... --max-attempts ... --cooldown-seconds ...` rather than relying on the umbrella target alone.
 The Gemini-focused reruns now also accept `--preferred-model`, `--fallback-model`, `--disable-auto-probe`, and `--exploratory-probe` when a bounded local model split or Pro sidecar is needed.
 Without an explicit override, Gemini operator testing now starts in CLI auto mode rather than a pinned `-m` model.
+For Gemini `restart_continuity`, the inspect-only first turn now uses the lighter `plan` approval mode and the resumed edit/test turn keeps `yolo`.
 
 Direct command:
 
