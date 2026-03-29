@@ -158,6 +158,13 @@ def test_reference_runtime_cli_reads_event_file_and_emits_one_record_per_event()
         "selected_delta_over_neutral",
         "scores",
     )
+    assert [record["control_ledger"]["allocation_diagnostics"]["alpha_t"] for record in records] == [
+        1.0,
+        0.85,
+        0.85,
+    ]
+    assert records[1]["control_ledger"]["allocation_diagnostics"]["scores"][0]["allocated_score"] != records[1]["control_ledger"]["allocation_diagnostics"]["scores"][0]["online_score"]
+    assert records[2]["control_ledger"]["allocation_diagnostics"]["scores"][0]["allocated_score"] != records[2]["control_ledger"]["allocation_diagnostics"]["scores"][0]["online_score"]
 
 
 def test_reference_runtime_cli_reads_stdin_and_preserves_locked_output_contract() -> None:

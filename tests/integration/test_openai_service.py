@@ -46,6 +46,7 @@ def test_openai_service_health_and_documented_event_flow() -> None:
             "selected_delta_over_neutral",
             "scores",
         )
+        assert record["control_ledger"]["allocation_diagnostics"]["alpha_t"] == 1.0
 
         health_status, updated_health = service.request("GET", "/health")
         assert health_status == 200
@@ -142,6 +143,8 @@ def test_openai_service_undocumented_raw_event_warns_without_fabricating_parity(
             "selected_delta_over_neutral",
             "scores",
         )
+        assert payload["control_ledger"]["allocation_diagnostics"]["alpha_t"] == 0.75
+        assert payload["control_ledger"]["allocation_diagnostics"]["scores"][0]["allocated_score"] != payload["control_ledger"]["allocation_diagnostics"]["scores"][0]["online_score"]
 
 
 def test_openai_service_session_export_import_and_startup_load_roundtrip(tmp_path: Path) -> None:

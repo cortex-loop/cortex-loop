@@ -70,6 +70,8 @@ def test_reference_runtime_step_result_surfaces_cheap_reference_event_without_co
     _assert_allocation_diagnostics_shape(
         result.control_ledger_summary["allocation_diagnostics"],
         activation_threshold=0.35,
+        expected_alpha=1.0,
+        expect_allocated_equals_online=True,
     )
     assert result.feedback_window_summary_payload == {
         "window_size": 0,
@@ -171,6 +173,8 @@ def test_reference_runtime_step_result_certifies_full_commitment_when_runtime_pa
     _assert_allocation_diagnostics_shape(
         result.control_ledger_summary["allocation_diagnostics"],
         activation_threshold=0.2,
+        expected_alpha=0.85,
+        expect_allocated_equals_online=False,
     )
     assert result.session.active_track_ref == "main"
     assert result.session.budget_history == ("shell-high",)
@@ -632,6 +636,8 @@ def _assert_allocation_diagnostics_shape(
     payload: dict[str, object],
     *,
     activation_threshold: float,
+    expected_alpha: float,
+    expect_allocated_equals_online: bool,
 ) -> None:
     assert tuple(payload) == (
         "alpha_t",
@@ -639,7 +645,7 @@ def _assert_allocation_diagnostics_shape(
         "selected_delta_over_neutral",
         "scores",
     )
-    assert payload["alpha_t"] == 1.0
+    assert payload["alpha_t"] == pytest.approx(expected_alpha)
     assert payload["activation_threshold"] == activation_threshold
     assert isinstance(payload["selected_delta_over_neutral"], float)
     scores = payload["scores"]
@@ -654,7 +660,10 @@ def _assert_allocation_diagnostics_shape(
         "brake",
     ]
     assert all(score["memory_score"] == 0.0 for score in scores)
-    assert all(score["allocated_score"] == score["online_score"] for score in scores)
+    if expect_allocated_equals_online:
+        assert all(score["allocated_score"] == score["online_score"] for score in scores)
+    else:
+        assert any(score["allocated_score"] != score["online_score"] for score in scores)
 
 
 def _feedback(warning_code: str) -> ReferenceRealizationFeedback:

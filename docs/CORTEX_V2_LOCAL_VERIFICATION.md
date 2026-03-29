@@ -207,8 +207,8 @@ make revalidate-openai-host-control
 
 ## Executive live-outcome revalidation
 
-This revalidates the first explicit executive allocation loop over the accepted reference/OpenAI runtime shells and the accepted K2 host-control lane.
-It checks explicit `Q_t^{online}` / `Q_t^{alloc}` diagnostics, `alpha_t=1.0`, `Q_t^{mem}=0.0`, nested `control_ledger.allocation_diagnostics`, and live-outcome-conditioned pressure over the already-landed feedback window.
+This revalidates the bounded computed executive loop over the accepted reference/OpenAI runtime shells and the accepted K2 host-control lane.
+It checks explicit `Q_t^{online}` / `Q_t^{alloc}` diagnostics, computed `alpha_t`, `Q_t^{mem}=0.0`, nested `control_ledger.allocation_diagnostics`, and live-outcome-conditioned pressure over the already-landed feedback window.
 It does not authorize support-memory runtime, mediation, new host-control lanes, Gemini runtime shell, tools, or generic reward-learning doctrine.
 
 Direct commands:

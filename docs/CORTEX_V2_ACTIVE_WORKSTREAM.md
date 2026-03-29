@@ -30,6 +30,12 @@ It is workflow state only. It does not override the packet documents, implementa
     - automation baseline reruns now block honestly on readiness rather than faking direct network probes
     - service-lane reruns remain all-blocked on `auth_missing`
     - operator proof remains the accepted current line and is preserved in compare/audit support surfaces when this seam reruns automation-only artifacts
+  - `K4` bounded computed executive loop is now landed on the proven reference/OpenAI lanes:
+    - `alpha_t` is computed from runtime-visible pressure rather than fixed
+    - `Q_t^{mem}` remains `0.0`
+    - `allocated_score` can differ from `online_score`
+    - selection now runs on allocated-score semantics
+    - the existing public runtime projection shapes remain unchanged
   - Gemini restart-continuity repeat-stability re-audit is now landed for current machine truth:
     - local Gemini settings already match current best practice:
       - no pinned default model
@@ -55,13 +61,13 @@ It is workflow state only. It does not override the packet documents, implementa
 
 ## 2. Current campaign and seam state
 
-- Current campaign: `Gemini restart-continuity repeat-stability re-audit`
+- Current campaign: `K4 computed executive loop on proven lanes`
 - Current working branch at ledger update: `main`
-- Current branch role: clean synced resting branch after the current-machine `N1` reruns
-- Current candidate seam: none; Gemini repeat-stability re-audit is landed for current scope with an honest mixed-capacity outcome
-- Current seam status: `Gemini continuity remains explicit partial truth after the best-practice re-audit: settings are aligned, resume semantics are valid, the first-turn plan/yolo split is landed, but first-turn capacity failures still recur and the flash sidecar did not rescue them`
-- the compare surface now separates accepted operator proof from current automation reruns and current local Gemini continuity evidence.
-- Seam risk: timing/environment-sensitive live-proof seam plus deterministic tooling/docs sync
+- Current branch role: clean synced resting branch after K4 closeout
+- Current candidate seam: none; `K4` is landed for current scope on the proven reference/OpenAI lanes
+- Current seam status: `bounded computed executive loop is now real on the proven reference/OpenAI lanes, shared runtime projections remain compatible, and no support-memory/service/auth/mediation widening was introduced`
+- the compare surface and live-validation truth from earlier seams remain accepted ancestor input and are not being reopened by K4.
+- Seam risk: load-bearing runtime seam plus deterministic docs/correspondence sync
 
 ## 3. Next lawful move
 
@@ -99,11 +105,9 @@ It is workflow state only. It does not override the packet documents, implementa
   - repeat-stable Gemini closure is therefore still unearned
   - the current automation/service lane still fails honestly on missing machine auth
 - Next lawful move:
-  - treat the machine-auth service lane as explicitly deferred on this machine
   - keep the machine-auth service lane explicitly deferred on this machine
-  - treat Gemini as the remaining explicit partial host line on this machine rather than reopening more local continuity tweaks immediately
-  - if work continues now, choose a different bounded north-star seam instead of further Gemini model/approval experimentation
-  - only reopen Gemini continuity later if host conditions materially change or a new official Gemini CLI practice emerges
+  - keep Gemini as the remaining explicit partial host line on this machine
+  - the next lawful north-star seam is bounded closed-loop feedback and enforcement on the proven reference/OpenAI lanes
 
 ## 4. Explicitly blocked moves
 
@@ -123,6 +127,8 @@ It is workflow state only. It does not override the packet documents, implementa
 - Do not reopen Gemini model chasing or assisted-mode speculation inside the active `L4` service-proof train.
 - Do not shell out from service transports to provider CLIs.
 - Do not overread the current auto-mode improvement as full Gemini closure while `restart_continuity` is still not repeat-stable.
+- Do not widen `K4` into support-memory runtime, mediation, service/auth work, or broader host rollout.
+- Do not unfreeze threshold law in `K4`; the current budget-band activation-threshold law stays fixed.
 - Do not start a new managed session from local `main` while it is ahead or diverged from `origin/main`.
 - Do not reintroduce extra long-lived local worktrees or non-main branch residue without an explicit new seam.
 - Do not leave remote `review/*` heads behind after future publication cleanup.

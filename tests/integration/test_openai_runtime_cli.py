@@ -74,6 +74,13 @@ def test_openai_runtime_cli_reads_documented_raw_events_and_preserves_host_name(
         "selected_delta_over_neutral",
         "scores",
     )
+    assert [record["control_ledger"]["allocation_diagnostics"]["alpha_t"] for record in records] == [
+        1.0,
+        0.75,
+        0.85,
+    ]
+    assert records[1]["control_ledger"]["allocation_diagnostics"]["scores"][0]["allocated_score"] != records[1]["control_ledger"]["allocation_diagnostics"]["scores"][0]["online_score"]
+    assert records[2]["control_ledger"]["allocation_diagnostics"]["scores"][0]["allocated_score"] != records[2]["control_ledger"]["allocation_diagnostics"]["scores"][0]["online_score"]
 
 
 def test_openai_runtime_cli_explicit_load_save_works(tmp_path: Path) -> None:

@@ -25,7 +25,7 @@ Active authority remains:
 - `docs/CORTEX_V2_MEDIATION_JUSTIFICATION_NOTE.md` says mediation is still `not justified yet`.
 - `docs/CORTEX_V2_MEDIATION_EVIDENCE_NOTE_0.md` shows cell-level signal on thrash, uncertainty, and host-realization, but every package-level axis remains `insufficient`.
 - `docs/CORTEX_V2_VERIFICATION_ERGONOMICS_MASTER_PLAN_0.md` still defines the active non-feature follow-on campaign.
-- `docs/CORTEX_V2_ACTIVE_WORKSTREAM.md` now records the bounded `N1` service-lane reruns, the current all-auth-missing machine outcome, and the explicit decision to defer service proof on this machine rather than treat API-key setup as the current blocker.
+- `docs/CORTEX_V2_ACTIVE_WORKSTREAM.md` now records the active `K4` computed executive-loop seam over proven reference/OpenAI lanes while service proof stays deferred on this machine and Gemini remains the explicit partial host line.
 - `pytest.ini`, `Makefile`, and `docs/CORTEX_V2_LOCAL_VERIFICATION.md` now provide repo-local verification entry points, including `make verify`, `make test-smoke`, evidence revalidation commands, and mediation evidence revalidation commands.
 - `.coveragerc`, `make coverage`, and `docs/CORTEX_V2_COVERAGE_BASELINE_NOTE_0.md` now exist as repo-local coverage hygiene surfaces.
 

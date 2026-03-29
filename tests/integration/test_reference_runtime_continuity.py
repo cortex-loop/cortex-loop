@@ -29,9 +29,9 @@ def test_reference_runtime_cli_preserves_open_suspend_resume_merge_continuity_in
     assert len(records) == 4
     assert [record["event_index"] for record in records] == [1, 2, 3, 4]
     assert [record["selected_family"] for record in records] == [
+        "neutral",
         "brake",
-        "brake",
-        "brake",
+        "neutral",
         "neutral",
     ]
     assert [record["brake_state"] for record in records] == [
@@ -39,6 +39,12 @@ def test_reference_runtime_cli_preserves_open_suspend_resume_merge_continuity_in
         "guarded",
         "guarded",
         "quiescent",
+    ]
+    assert [record["control_ledger"]["allocation_diagnostics"]["alpha_t"] for record in records] == [
+        0.75,
+        0.75,
+        0.75,
+        0.85,
     ]
     assert [record["session_summary"]["branch_registry"] for record in records] == [
         ["main", "branch-alpha"],

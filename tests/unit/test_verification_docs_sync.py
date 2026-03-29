@@ -48,6 +48,9 @@ OPENAI_HOST_CONTROL_PROGRAM_PATH = (
 EXECUTIVE_LIVE_OUTCOME_PROGRAM_PATH = (
     REPO_ROOT / "docs" / "CORTEX_V2_EXECUTIVE_LIVE_OUTCOME_PROGRAM_0.md"
 )
+COMPUTED_EXECUTIVE_LOOP_PROGRAM_PATH = (
+    REPO_ROOT / "docs" / "CORTEX_V2_COMPUTED_EXECUTIVE_LOOP_PROGRAM_0.md"
+)
 GEMINI_RUNTIME_RESTACK_PROGRAM_PATH = (
     REPO_ROOT / "docs" / "CORTEX_V2_GEMINI_RUNTIME_RESTACK_PROGRAM_0.md"
 )
@@ -342,10 +345,9 @@ def test_resume_protocol_and_active_workstream_contract_exist() -> None:
     assert "Current working branch at ledger update:" in workstream_text
     assert "Current branch role:" in workstream_text
     assert "accepted workflow baseline truth now rests on `main` rather than a long-lived working branch" in workstream_text
-    assert "Current candidate seam: none; Gemini repeat-stability re-audit is landed for current scope with an honest mixed-capacity outcome" in workstream_text
-    assert "automation baseline reruns now block honestly on readiness rather than faking direct network probes" in workstream_text
-    assert "the compare surface now separates accepted operator proof from current automation reruns and current local Gemini continuity evidence." in workstream_text
-    assert "the Gemini continuity harness now preserves repeated continuity artifacts instead of overwriting them" in workstream_text
+    assert "Current candidate seam: none; `K4` is landed for current scope on the proven reference/OpenAI lanes" in workstream_text
+    assert "bounded computed executive loop is now real on the proven reference/OpenAI lanes" in workstream_text
+    assert "the compare surface and live-validation truth from earlier seams remain accepted ancestor input and are not being reopened by K4." in workstream_text
     assert "the current signed-in smoke surfaces are now clean again" in workstream_text
     assert "`codex exec` for smoke" in workstream_text
     assert "`codex app-server` for lifecycle proof" in workstream_text
@@ -357,9 +359,7 @@ def test_resume_protocol_and_active_workstream_contract_exist() -> None:
     assert "`truth_gap` is truthful on the latest reruns on `auto`" in workstream_text
     assert "`restart_continuity` remains mixed after the best-practice re-audit" in workstream_text
     assert "repeat-stable Gemini closure is therefore still unearned" in workstream_text
-    assert "treat the machine-auth service lane as explicitly deferred on this machine" in workstream_text
-    assert "treat Gemini as the remaining explicit partial host line on this machine rather than reopening more local continuity tweaks immediately" in workstream_text
-    assert "choose a different bounded north-star seam instead of further Gemini model/approval experimentation" in workstream_text
+    assert "the next lawful north-star seam is bounded closed-loop feedback and enforcement on the proven reference/OpenAI lanes" in workstream_text
     assert "Do not treat signed-in provider CLI sessions as equivalent to the automation credentials" in workstream_text
     assert "Do not treat the new OpenAI App Server operator proof as license to reopen v1 assisted mode" in workstream_text
     assert "Do not keep repo-tracked live artifacts under `docs/live_validation/`" in workstream_text
@@ -368,6 +368,8 @@ def test_resume_protocol_and_active_workstream_contract_exist() -> None:
     assert "Do not start a new managed session from local `main` while it is ahead or diverged from `origin/main`." in workstream_text
     assert "Do not reopen Gemini model chasing or assisted-mode speculation inside the active `L4` service-proof train." in workstream_text
     assert "Do not shell out from service transports to provider CLIs." in workstream_text
+    assert "Do not widen `K4` into support-memory runtime, mediation, service/auth work, or broader host rollout." in workstream_text
+    assert "Do not unfreeze threshold law in `K4`" in workstream_text
     assert "git branch --show-current" in workstream_text
     assert "git status --short --untracked-files=all" in workstream_text
     assert "Never promote an uncommitted branch head or dirty worktree state to accepted baseline truth." in workstream_text
@@ -383,6 +385,7 @@ def test_reference_runtime_program_lock_is_recorded() -> None:
     openai_service_program_text = _read(OPENAI_SERVICE_PROGRAM_PATH)
     openai_host_control_program_text = _read(OPENAI_HOST_CONTROL_PROGRAM_PATH)
     executive_live_outcome_program_text = _read(EXECUTIVE_LIVE_OUTCOME_PROGRAM_PATH)
+    computed_executive_loop_program_text = _read(COMPUTED_EXECUTIVE_LOOP_PROGRAM_PATH)
     gemini_runtime_restack_text = _read(GEMINI_RUNTIME_RESTACK_PROGRAM_PATH)
     gemini_runtime_program_text = _read(GEMINI_RUNTIME_PROGRAM_PATH)
     gemini_ingress_program_text = _read(GEMINI_INGRESS_PROGRAM_PATH)
@@ -428,7 +431,7 @@ def test_reference_runtime_program_lock_is_recorded() -> None:
     assert "loopback-only HTTP is landed on the accepted K1 closeout line" in phase_gate_text
     assert "one active session per process is real for current scope" in phase_gate_text
 
-    assert "treat the machine-auth service lane as explicitly deferred on this machine" in workstream_text
+    assert "the next lawful north-star seam is bounded closed-loop feedback and enforcement on the proven reference/OpenAI lanes" in workstream_text
     assert "the live-testing environment now has explicit operator and automation lane semantics" in workstream_text
     assert "the current signed-in smoke surfaces are now clean again" in workstream_text
     assert "the OpenAI App Server operator lane now completes" in workstream_text
@@ -520,6 +523,8 @@ def test_reference_runtime_program_lock_is_recorded() -> None:
     assert "cleanly closed at deterministic closeout head `9ed7dae`" in phase_gate_text
     assert "`R6` explicit executive allocation slice on the reference runtime shell" in phase_gate_text
     assert "`O5` OpenAI executive allocation projection slice" in phase_gate_text
+    assert "`R7` reference computed executive loop" in phase_gate_text
+    assert "`O6` OpenAI computed executive loop projection slice" in phase_gate_text
 
     assert "Status: active runtime-program brief for the first explicit executive live-outcome allocation slice" in executive_live_outcome_program_text
     assert "branch: `codex/k2-openai-host-control`" in executive_live_outcome_program_text
@@ -530,6 +535,10 @@ def test_reference_runtime_program_lock_is_recorded() -> None:
     assert "`allocated_score=online_score`" in executive_live_outcome_program_text
     assert "`make revalidate-executive-loop`" in executive_live_outcome_program_text
     assert "Current K3 candidate state before closeout" in executive_live_outcome_program_text
+    assert "Status: active runtime-program brief for the first bounded computed executive loop on proven reference/OpenAI lanes" in computed_executive_loop_program_text
+    assert "`Q_t^{mem}=0.0`" in computed_executive_loop_program_text
+    assert "`allocated_score` may differ from `online_score`" in computed_executive_loop_program_text
+    assert "No new public shells are introduced." in computed_executive_loop_program_text
     assert "`G1` Gemini documented host-event runtime shell" in phase_gate_text
     assert "`G2` Gemini raw-transcript ingress shell" in phase_gate_text
     assert "`G3` Gemini loopback service shell" in phase_gate_text
@@ -733,4 +742,4 @@ def test_runtime_restack_program_lock_is_recorded() -> None:
     assert "Current accepted state after K1 closeout" in text
     assert "implemented at K1 proof head `d4c311f` and truthfully closed at deterministic closeout head `79b8f39`" in text
     assert "later bounded runtime/product trains may still be explicitly opened" in master_plan_text
-    assert "the explicit decision to defer service proof on this machine rather than treat API-key setup as the current blocker" in theory_text
+    assert "records the active `K4` computed executive-loop seam over proven reference/OpenAI lanes" in theory_text

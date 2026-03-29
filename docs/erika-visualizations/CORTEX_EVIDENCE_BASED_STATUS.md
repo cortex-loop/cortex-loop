@@ -20,6 +20,10 @@ It also tracks which brain-inspired mechanisms Cortex has already stolen so far 
 - The Claude documented-host-event runtime shell, raw-transcript ingress shell, loopback service shell, and bounded outbound Claude host-control lane are now accepted on the current line.
 - The OpenAI host-realization cell now has a committed three-pair evidence series and `candidate_positive` cell-level signal for better host-specialized realization.
 - Mediation remains blocked and unjustified at package level.
+- A bounded computed executive loop is now landed on the proven reference/OpenAI lanes:
+  - `alpha_t` is computed from runtime-visible pressure
+  - `Q_t^{mem}` remains `0.0`
+  - `allocation_diagnostics` stays runtime-visible and non-persisted
 - The operator-only payoff audit is now landed for current scope, and the deeper Gemini operator lane has now been re-earned on CLI auto mode before the remaining service-proof blockers.
 - The live environment now treats signed-in host-native truth as primary, keeps machine artifacts local-only under `.cortex/live_validation/`, uses Codex rather than `openai` as the OpenAI operator surface, distinguishes `codex exec` smoke from `codex app-server` lifecycle proof, and now records documented hook events on Claude and Gemini.
 - Current live evidence is mixed but materially stronger than before: Claude and OpenAI signed-in smoke surfaces are currently green, OpenAI App Server is clean on the shared coding harness, Claude hook-backed operator truth is now strong, and Gemini now has a cleaner smoke story plus a better deeper auto-mode story: operator probe and smoke baselines are now clean in CLI auto mode, `gemini-2.5-pro` is valid but capacity-blocked on smoke, the deeper Gemini auto-mode path now closes `pass_minimal` and preserves `truth_gap` truthfully on the latest reruns, `restart_continuity` is still not repeat-stable because the latest reruns include a `capacity_exhausted` blocker, and the automation lane is still credential-blocked.
@@ -39,7 +43,7 @@ It is not accepted repo truth today.
 ## Lawful gap programs
 
 - multi-host live validation / auth-alignment program
-- executive loop computation program
+- broader/memory-conditioned executive loop computation program
 - closed-loop feedback and enforcement program
 - runtime AUX activation program
 - offline consolidation program
@@ -57,7 +61,7 @@ It is not accepted repo truth today.
 ## What is still partial
 
 - multi-agent lifecycle continuity
-- computed executive loop
+- broader multi-host or memory-conditioned computed executive loop
 - enforcing brake and closed-loop feedback
 - runtime support geometry
 - offline consolidation

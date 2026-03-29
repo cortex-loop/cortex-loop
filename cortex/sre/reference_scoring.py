@@ -96,6 +96,7 @@ def build_reference_allocation_scorecard(
     activation_threshold = _activation_threshold(
         executive_state.control_allocation.budget_band
     )
+    alpha_t = compute_reference_alpha_t(executive_state)
     online_components = build_reference_online_score_components(executive_state)
 
     scores: list[AllocationScore] = []
@@ -115,24 +116,27 @@ def build_reference_allocation_scorecard(
             reason_tags.add("masked")
         if brake_state is not BrakeState.QUIESCENT and family is SoftControlFamily.BRAKE:
             reason_tags.add(f"brake:{brake_state.value}")
+        reason_tags.add("allocation:online-only")
+        reason_tags.add(_alpha_reason_tag(alpha_t))
 
         online_score = _online_score(online_components[family])
+        allocated_score = alpha_t * online_score
         scores.append(
             AllocationScore(
                 family=family,
-                score=online_score,
+                score=allocated_score,
                 admissible=admissible,
                 reason_tags=frozenset(reason_tags),
                 online_score=online_score,
                 memory_score=0.0,
-                allocated_score=online_score,
+                allocated_score=allocated_score,
             )
         )
 
     return AllocationScorecard(
         scores=tuple(scores),
         activation_threshold=activation_threshold,
-        alpha_t=1.0,
+        alpha_t=alpha_t,
     )
 
 
@@ -157,6 +161,34 @@ def select_reference_soft_control(
 
 def _activation_threshold(budget_band: str) -> float:
     return _THRESHOLDS.get(budget_band, 0.3)
+
+
+def compute_reference_alpha_t(
+    executive_state: ReferenceExecutiveState,
+) -> float:
+    if not isinstance(executive_state, ReferenceExecutiveState):
+        actual_type = type(executive_state).__name__
+        raise TypeError(
+            "compute_reference_alpha_t.executive_state must be "
+            f"ReferenceExecutiveState, got {actual_type}."
+        )
+
+    brake_state = executive_state.brake.brake_state
+    host_friction_tags = executive_state.control_allocation.host_friction_tags
+    contradiction_spike_flags = executive_state.uncertainty_monitoring.contradiction_spike_flags
+    max_uncertainty = max(
+        (estimate.level for estimate in executive_state.uncertainty_monitoring.classwise_uncertainty),
+        default=0.0,
+    )
+    pressure = bool(host_friction_tags or contradiction_spike_flags or max_uncertainty >= 0.55)
+
+    if brake_state is BrakeState.LATCHED:
+        return 0.65
+    if brake_state is BrakeState.GUARDED and pressure:
+        return 0.75
+    if pressure:
+        return 0.85
+    return 1.0
 
 
 def build_reference_online_score_components(
@@ -271,10 +303,23 @@ def _online_score(components: dict[str, float]) -> float:
     )
 
 
+def _alpha_reason_tag(alpha_t: float) -> str:
+    if alpha_t == 1.0:
+        return "alpha:1.0"
+    if alpha_t == 0.85:
+        return "alpha:0.85"
+    if alpha_t == 0.75:
+        return "alpha:0.75"
+    if alpha_t == 0.65:
+        return "alpha:0.65"
+    return f"alpha:{alpha_t:.2f}"
+
+
 __all__ = [
     "ReferenceSoftControlSelection",
     "build_allocation_diagnostics_payload",
     "build_reference_allocation_scorecard",
     "build_reference_online_score_components",
+    "compute_reference_alpha_t",
     "select_reference_soft_control",
 ]

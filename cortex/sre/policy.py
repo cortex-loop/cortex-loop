@@ -66,7 +66,7 @@ def neutral_dominance_decision(scorecard: AllocationScorecard) -> NeutralDominan
             activation_threshold=scorecard.activation_threshold,
         )
 
-    margin = best_non_neutral.score - neutral_score.score
+    margin = best_non_neutral.allocated_score - neutral_score.allocated_score
     if margin <= scorecard.activation_threshold:
         return NeutralDominanceDecision(
             selected_family=SoftControlFamily.NEUTRAL,
@@ -101,7 +101,7 @@ def _best_non_neutral_score(
     ]
     if not candidates:
         return None
-    return max(candidates, key=lambda score: score.score)
+    return max(candidates, key=lambda score: score.allocated_score)
 
 
 __all__ = ["NeutralDominanceDecision", "neutral_dominance_decision"]

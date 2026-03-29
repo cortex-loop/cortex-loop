@@ -2,11 +2,14 @@
 
 from __future__ import annotations
 
+import pytest
+
 from cortex.sre.brake import BrakeState
 from cortex.sre.families import SoftControlFamily
 from cortex.sre.reference_scoring import (
     build_reference_allocation_scorecard,
     build_reference_online_score_components,
+    compute_reference_alpha_t,
     select_reference_soft_control,
 )
 from cortex.sre.state import (
@@ -174,11 +177,63 @@ def test_reference_scoring_exposes_explicit_online_allocation_diagnostics() -> N
     components = build_reference_online_score_components(state)
     scorecard = build_reference_allocation_scorecard(state)
 
-    assert scorecard.alpha_t == 1.0
+    assert scorecard.alpha_t == 0.75
     assert all(score.memory_score == 0.0 for score in scorecard.scores)
-    assert all(score.allocated_score == score.online_score for score in scorecard.scores)
+    assert all(score.allocated_score == pytest.approx(score.online_score * 0.75) for score in scorecard.scores)
     assert components[SoftControlFamily.CHECK]["uncertainty_reduction"] > 0.0
     assert components[SoftControlFamily.BRAKE]["stability"] > 0.0
+    assert all("allocation:online-only" in score.reason_tags for score in scorecard.scores)
+    assert all("alpha:0.75" in score.reason_tags for score in scorecard.scores)
+
+
+def test_reference_alpha_t_changes_with_visible_pressure_only() -> None:
+    calm = _state(
+        mode_tag="pass_through",
+        family_mask=frozenset({SoftControlFamily.NEUTRAL, SoftControlFamily.CHECK}),
+        budget_band="medium",
+        top_family_set=frozenset({SoftControlFamily.NEUTRAL}),
+        brake_state=BrakeState.QUIESCENT,
+    )
+    pressured = _state(
+        mode_tag="pass_through",
+        family_mask=frozenset({SoftControlFamily.NEUTRAL, SoftControlFamily.CHECK}),
+        budget_band="medium",
+        top_family_set=frozenset({SoftControlFamily.NEUTRAL}),
+        brake_state=BrakeState.GUARDED,
+        host_friction_tags=frozenset({"single-process-limit"}),
+    )
+
+    assert compute_reference_alpha_t(calm) == 1.0
+    assert compute_reference_alpha_t(pressured) == 0.75
+
+
+def test_reference_scoring_selection_can_change_under_allocated_score_semantics() -> None:
+    unpressured = _state(
+        mode_tag="review_pending",
+        family_mask=frozenset({SoftControlFamily.NEUTRAL, SoftControlFamily.CHECK}),
+        budget_band="high",
+        top_family_set=frozenset({SoftControlFamily.NEUTRAL, SoftControlFamily.CHECK}),
+        brake_state=BrakeState.QUIESCENT,
+    )
+    pressured = _state(
+        mode_tag="review_pending",
+        family_mask=frozenset(
+            {
+                SoftControlFamily.NEUTRAL,
+                SoftControlFamily.CHECK,
+                SoftControlFamily.BRAKE,
+            }
+        ),
+        budget_band="medium",
+        top_family_set=frozenset({SoftControlFamily.NEUTRAL, SoftControlFamily.CHECK}),
+        brake_state=BrakeState.GUARDED,
+        host_friction_tags=frozenset({"single-process-limit"}),
+    )
+
+    assert build_reference_allocation_scorecard(unpressured).alpha_t == 1.0
+    assert select_reference_soft_control(unpressured).selected_family is SoftControlFamily.CHECK
+    assert build_reference_allocation_scorecard(pressured).alpha_t == 0.75
+    assert select_reference_soft_control(pressured).selected_family is SoftControlFamily.NEUTRAL
 
 
 def _state(
