@@ -68,11 +68,11 @@ It is workflow state only. It does not override the packet documents, implementa
 
 ## 2. Current campaign and seam state
 
-- Current campaign: `post-K train closeout on proven reference/OpenAI lanes`
+- Current campaign: `post-K next-train selection pending`
 - Current working branch at ledger update: `main`
 - Current branch role: clean synced resting branch after K-train closeout
-- Current candidate seam: none; the bounded K train is landed for current scope on the proven reference/OpenAI lanes
-- Current seam status: `computed allocation, feedback-conditioned thresholding, and bounded enforcement-aware realized control are now real on the proven reference/OpenAI lanes, shared runtime projections remain compatible, exact accepted-head lookup now lives only in clean synced main rather than mirrored support-doc hashes, and no support-memory/service/auth/mediation widening was introduced`
+- Current candidate seam: none; the bounded K train is landed for current scope on the proven reference/OpenAI lanes and no new implementation seam is active yet
+- Current seam status: `zero-finding K-train closure audit is complete for current scope: computed allocation, feedback-conditioned thresholding, and bounded enforcement-aware realized control are stable on the proven reference/OpenAI lanes, shared runtime projections remain compatible, exact accepted-head lookup now lives only in clean synced main rather than mirrored support-doc hashes, and no support-memory/service/auth/mediation widening was introduced`
 - the compare surface and live-validation truth from earlier seams remain accepted ancestor input and are not being reopened by the landed K train.
 - Seam risk: load-bearing runtime seam plus deterministic docs/correspondence sync
 

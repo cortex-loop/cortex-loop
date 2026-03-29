@@ -348,9 +348,10 @@ def test_resume_protocol_and_active_workstream_contract_exist() -> None:
     assert "Current working branch at ledger update:" in workstream_text
     assert "Current branch role:" in workstream_text
     assert "accepted workflow baseline truth now rests on `main` rather than a long-lived working branch" in workstream_text
-    assert "Current campaign: `post-K train closeout on proven reference/OpenAI lanes`" in workstream_text
-    assert "Current candidate seam: none; the bounded K train is landed for current scope on the proven reference/OpenAI lanes" in workstream_text
-    assert "computed allocation, feedback-conditioned thresholding, and bounded enforcement-aware realized control are now real on the proven reference/OpenAI lanes" in workstream_text
+    assert "Current campaign: `post-K next-train selection pending`" in workstream_text
+    assert "Current candidate seam: none; the bounded K train is landed for current scope on the proven reference/OpenAI lanes and no new implementation seam is active yet" in workstream_text
+    assert "zero-finding K-train closure audit is complete for current scope" in workstream_text
+    assert "computed allocation, feedback-conditioned thresholding, and bounded enforcement-aware realized control are stable on the proven reference/OpenAI lanes" in workstream_text
     assert "the compare surface and live-validation truth from earlier seams remain accepted ancestor input and are not being reopened by the landed K train." in workstream_text
     assert "the current signed-in smoke surfaces are now clean again" in workstream_text
     assert "`codex exec` for smoke" in workstream_text
@@ -730,6 +731,7 @@ def test_erika_visualizations_are_framed_as_support_surfaces() -> None:
     assert "`gemini-2.5-pro` is valid but capacity-blocked on smoke" in markdown_text
     assert "A bounded feedback-conditioned threshold and enforcement-aware realized control loop is now also landed on the proven reference/OpenAI lanes" in markdown_text
     assert "broader or stronger closed-loop enforcement beyond the proven reference/OpenAI lanes" in markdown_text
+    assert "closed-loop feedback and enforcement program" not in markdown_text
     assert "cortex-archival-dossiers/" not in markdown_text
     assert "Current Justified Boundary" in html_text
     assert "Gap Programs" in html_text
@@ -749,6 +751,7 @@ def test_erika_visualizations_are_framed_as_support_surfaces() -> None:
     assert "What remains north-star only" in html_text
     assert "signed-in-first live testing environment with App Server and hook lifecycle proof" in html_text
     assert "broader or stronger lawful enforcement beyond proven lanes" in html_text
+    assert "closed-loop feedback and enforcement" not in html_text
     assert "Cortex Complete" not in html_text
     assert "Today vs Future" not in html_text
 
@@ -772,3 +775,5 @@ def test_runtime_restack_program_lock_is_recorded() -> None:
     assert "implemented at K1 proof head `d4c311f` and truthfully closed at deterministic closeout head `79b8f39`" in text
     assert "later bounded runtime/product trains may still be explicitly opened" in master_plan_text
     assert "records the bounded K train as landed on the proven reference/OpenAI lanes" in theory_text
+    assert "records a zero-finding closure audit for current scope" in theory_text
+    assert "explicit post-K next-train selection" in theory_text
