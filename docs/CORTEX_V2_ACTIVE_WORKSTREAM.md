@@ -74,13 +74,13 @@ It is workflow state only. It does not override the packet documents, implementa
 
 ## 2. Current campaign and seam state
 
-- Current campaign: `post-Q1 Gemini directionality explanation pending`
-- Current working branch at ledger update: `main`
-- Current branch role: clean synced resting branch after K-train closeout
-- Current candidate seam: none; `Q1` is landed on the current machine, `N2` remains blocked on a capable machine, and the mixed Gemini directionality result is the next unresolved line
-- Current seam status: `the paired raw-vs-Cortex operator audit is complete on the current machine: Claude and OpenAI are positive, Gemini is mixed, package direction is mixed, and no runtime doctrine was widened`
+- Current campaign: `Gemini operator auth-path explanation pending`
+- Current working branch at ledger update: `codex/20260330-005755-gemini-operator-api-key-recheck`
+- Current branch role: managed session branch for a non-load-bearing Gemini evidence-plumbing recheck
+- Current candidate seam: `Gemini operator API-key auth-path truthfulness`; `Q1` remains landed on the current machine, `N2` remains blocked on a capable machine, and the current unresolved line is whether the new Gemini API-key path materially changes the mixed host result
+- Current seam status: `the live harness now detects Gemini operator API-key mode from CLI settings/env, correctly classifies GEMINI_API_KEY environment-variable failures as auth_missing, and blocks raw-vs-Cortex directionality scoring when both variants are auth-blocked; the current local API-key recheck is itself still blocked because headless gemini -p requires GEMINI_API_KEY in the shell environment`
 - the compare surface and live-validation truth from earlier seams remain accepted ancestor input and are not being reopened by the landed K train.
-- Seam risk: load-bearing runtime seam plus deterministic docs/correspondence sync
+- Seam risk: shared verification-plumbing seam plus environment-sensitive evidence rerun
 
 ## 3. Next lawful move
 
@@ -116,14 +116,24 @@ It is workflow state only. It does not override the packet documents, implementa
       - first-turn `capacity_exhausted` failures still recur
       - an exploratory `gemini-2.5-flash` sidecar did not eliminate the first-turn capacity blocker
   - repeat-stable Gemini closure is therefore still unearned
+  - the current Gemini operator API-key recheck now adds one narrower local blocker:
+    - Gemini CLI `0.35.3` does switch the operator lane to `api_key` when `.gemini/settings.json` selects `gemini-api-key`
+    - but headless `gemini -p` still blocks with `auth_missing` until `GEMINI_API_KEY` is present in the shell environment
+    - the recheck tooling now reports that blocker truthfully instead of mislabeling it as a clean probe
   - the current automation/service lane still fails honestly on missing machine auth
 - Next lawful move:
   - keep the machine-auth service lane explicitly deferred on this machine for actual proof execution
   - keep Gemini as the remaining explicit partial host line on this machine
   - do not reopen the K train by inertia now that the bounded proven-lane executive/runtime line is landed
   - do not widen from the mixed `Q1` package result into new runtime or product claims
-  - the next lawful move is one narrow Gemini explanation seam:
-    - determine whether the mixed Gemini directionality result reflects
+  - the next lawful move remains one narrow Gemini explanation seam, but it now has a stricter first gate:
+    - provide `GEMINI_API_KEY` in the shell environment for the headless operator lane
+    - then rerun a bounded Gemini-only slice before touching package-level directionality truth:
+      - preflight twice
+      - operator baseline
+      - product-path pass / gap / continuity
+      - paired raw-vs-Cortex directionality only after those entry checks are stable
+    - then determine whether the mixed Gemini directionality result reflects
       - true Cortex-added burden,
       - host-capacity noise,
       - or audit-measurement noise
@@ -144,6 +154,7 @@ It is workflow state only. It does not override the packet documents, implementa
 - Do not silently discard Gemini capacity warnings when a run otherwise succeeds; preserve them as warnings rather than pretending the host was perfectly stable.
 - Do not silently reintroduce a pinned Gemini operator model as the default testing start point; current local truth is that CLI auto mode is the intended default.
 - Do not silently promote `gemini-2.5-pro` from exploratory sidecar to closure-path truth while it is still capacity-blocked on smoke.
+- Do not treat selecting `gemini-api-key` in `.gemini/settings.json` as sufficient for headless Gemini operator proof; the current CLI still requires `GEMINI_API_KEY` in the shell environment or a loaded `.env`.
 - Do not reopen Gemini model chasing or assisted-mode speculation inside the active `L4` service-proof train.
 - Do not shell out from service transports to provider CLIs.
 - Do not overread the current auto-mode improvement as full Gemini closure while `restart_continuity` is still not repeat-stable.

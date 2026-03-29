@@ -9,6 +9,7 @@ from typing import Any
 
 try:  # pragma: no cover
     from .live_validation_common import (
+        BLOCKING_FAILURE_CLASSES,
         comparator_path,
         ensure_live_validation_dirs,
         now_utc_iso,
@@ -18,6 +19,7 @@ try:  # pragma: no cover
     )
 except ImportError:  # pragma: no cover
     from live_validation_common import (
+        BLOCKING_FAILURE_CLASSES,
         comparator_path,
         ensure_live_validation_dirs,
         now_utc_iso,
@@ -101,6 +103,18 @@ def _audit_pair(pair: dict[str, Any]) -> dict[str, Any]:
     raw = pair["raw_host"]
     cortex = pair["cortex_operator"]
     notes: list[str] = []
+    raw_failure = raw.get("failure_class")
+    cortex_failure = cortex.get("failure_class")
+
+    if raw_failure in BLOCKING_FAILURE_CLASSES and cortex_failure in BLOCKING_FAILURE_CLASSES:
+        return {
+            "scenario_id": pair.get("scenario_id"),
+            "repeat_index": pair.get("repeat_index"),
+            "pair_verdict": "blocked",
+            "notes": [
+                "both raw_host and cortex_operator were blocked before a meaningful comparison was possible"
+            ],
+        }
 
     if pair.get("scenario_id") == "truth_gap":
         raw_truth = raw.get("truth_gap_kind") == "truthful_incomplete"

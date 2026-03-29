@@ -62,6 +62,12 @@ def test_redact_claude_auth_payload_omits_private_identity_fields() -> None:
 
 def test_classify_failure_recognizes_live_auth_and_capacity_blockers() -> None:
     assert classify_failure("ANTHROPIC_API_KEY is required") == "auth_missing"
+    assert (
+        classify_failure(
+            "When using Gemini API, you must specify the GEMINI_API_KEY environment variable."
+        )
+        == "auth_missing"
+    )
     assert classify_failure("OAuth token has expired") == "auth_expired"
     assert (
         classify_failure("You have exhausted your capacity on this model.")
@@ -186,6 +192,36 @@ def test_gemini_model_ladder_and_choose_model_follow_auto_then_flash_then_flash_
             auto_supported=False,
         )
         == "gemini-2.5-flash-lite"
+    )
+
+
+def test_gemini_operator_auth_mode_uses_api_key_when_selected_in_settings(tmp_path, monkeypatch) -> None:
+    fake_home = tmp_path / "home"
+    settings_path = fake_home / ".gemini" / "settings.json"
+    settings_path.parent.mkdir(parents=True)
+    settings_path.write_text(
+        json.dumps({"security": {"auth": {"selectedType": "gemini-api-key"}}}),
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(live_validation_common.Path, "home", lambda: fake_home)
+
+    assert live_validation_common.resolve_auth_mode("gemini", "operator", env={}) == "api_key"
+
+
+def test_gemini_operator_auth_mode_prefers_env_key_without_settings(monkeypatch) -> None:
+    monkeypatch.setattr(
+        live_validation_common.Path,
+        "home",
+        lambda: Path("/tmp/nonexistent-gemini-home"),
+    )
+
+    assert (
+        live_validation_common.resolve_auth_mode(
+            "gemini",
+            "operator",
+            env={"GEMINI_API_KEY": "test-key"},
+        )
+        == "api_key"
     )
 
 
@@ -640,7 +676,7 @@ def test_gemini_operator_commands_omit_model_flag_when_auto_is_selected(monkeypa
         "Respond exactly with OK.",
         project_root=Path("/tmp"),
         model="auto",
-        auth_mode="google_login",
+        auth_mode="api_key",
     )
     assert "-m" not in captured["product_path"]
     assert captured["product_path"][-1] == "yolo"
@@ -649,7 +685,7 @@ def test_gemini_operator_commands_omit_model_flag_when_auto_is_selected(monkeypa
         "Respond exactly with OK.",
         project_root=Path("/tmp"),
         model="auto",
-        auth_mode="google_login",
+        auth_mode="api_key",
         approval_mode="plan",
     )
     assert "-m" not in captured["product_path"]
@@ -683,6 +719,105 @@ def test_gemini_baseline_keeps_auto_as_preferred_model_on_warning_bearing_succes
     assert payload["preferred_model"] == "auto"
     assert payload["model"] == "auto"
     assert payload["warning_classes"] == ["capacity_exhausted"]
+
+
+def test_product_path_single_scenario_passes_default_approval_mode(monkeypatch, tmp_path: Path) -> None:
+    monkeypatch.setattr(
+        live_host_native_product_paths,
+        "prepare_harness_workspace",
+        lambda **kwargs: tmp_path / "project_a",
+    )
+    monkeypatch.setattr(
+        live_host_native_product_paths,
+        "_configure_hook_capture",
+        lambda **kwargs: None,
+    )
+    monkeypatch.setattr(
+        live_host_native_product_paths,
+        "read_prompt_template",
+        lambda filename: "Respond exactly with OK.",
+    )
+    monkeypatch.setattr(
+        live_host_native_product_paths,
+        "resolve_auth_mode",
+        lambda provider, lane: "api_key",
+    )
+
+    captured: dict[str, object] = {}
+
+    def fake_run_operator_attempts(**kwargs):
+        captured["approval_mode"] = kwargs["approval_mode"]
+        return (
+            {
+                "command": ["gemini"],
+                "exit_code": 1,
+                "stdout": "",
+                "stderr": "When using Gemini API, you must specify the GEMINI_API_KEY environment variable.",
+                "started_at": "2026-03-30T00:00:00+00:00",
+                "ended_at": "2026-03-30T00:00:00+00:00",
+            },
+            "auth_missing",
+            "auto",
+            "auto",
+            False,
+            ["auto"],
+        )
+
+    monkeypatch.setattr(live_host_native_product_paths, "_run_operator_attempts", fake_run_operator_attempts)
+    monkeypatch.setattr(
+        live_host_native_product_paths,
+        "_materialize_operator_run",
+        lambda **kwargs: {"success": False, "failure_class": "auth_missing"},
+    )
+
+    live_host_native_product_paths._run_single_scenario(
+        "gemini",
+        "pass_minimal",
+        1,
+        tmp_path,
+        max_attempts=1,
+        cooldown_seconds=0,
+        preferred_model_override=None,
+        fallback_model_override=None,
+        disable_auto_probe=False,
+    )
+
+    assert captured["approval_mode"] is None
+
+
+def test_gemini_raw_directionality_task_accepts_api_key_auth_mode(monkeypatch) -> None:
+    captured: dict[str, list[str]] = {}
+
+    def fake_timed_command(command, **kwargs):
+        captured["command"] = command
+        return {
+            "command": command,
+            "exit_code": 0,
+            "stdout": "",
+            "stderr": "",
+            "started_at": "2026-03-30T00:00:00+00:00",
+            "ended_at": "2026-03-30T00:00:00+00:00",
+        }
+
+    monkeypatch.setattr(live_host_native_product_paths, "_run_timed_command", fake_timed_command)
+
+    live_operator_directionality._run_raw_gemini_task(
+        "Respond exactly with OK.",
+        project_root=Path("/tmp"),
+        model="auto",
+        auth_mode="api_key",
+        approval_mode="plan",
+    )
+
+    assert captured["command"] == [
+        "gemini",
+        "-p",
+        "Respond exactly with OK.",
+        "-o",
+        "stream-json",
+        "--approval-mode",
+        "plan",
+    ]
 
 
 def test_decide_verdict_prefers_blocker_honesty_before_optimism() -> None:
@@ -816,6 +951,28 @@ def test_operator_directionality_audit_marks_negative_when_raw_succeeds_and_cort
     )
 
     assert audited["pair_verdict"] == "negative"
+
+
+def test_operator_directionality_audit_blocks_when_both_variants_hit_auth_missing() -> None:
+    audited = live_operator_directionality_audit._audit_pair(
+        {
+            "scenario_id": "pass_minimal",
+            "repeat_index": 1,
+            "pair_status": "compared",
+            "raw_host": {
+                "success": False,
+                "failure_class": "auth_missing",
+                "test_exit_code": 1,
+            },
+            "cortex_operator": {
+                "success": False,
+                "failure_class": "auth_missing",
+                "test_exit_code": 1,
+            },
+        }
+    )
+
+    assert audited["pair_verdict"] == "blocked"
 
 
 def test_operator_directionality_audit_marks_mixed_when_truth_gap_matches_but_burden_is_worse() -> None:

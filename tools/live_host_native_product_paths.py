@@ -288,6 +288,7 @@ def _run_single_scenario(
         prompt=prompt,
         project_root=project_root,
         auth_mode=auth_mode,
+        approval_mode=None,
         hook_log_path=hook_log_path,
         max_attempts=max_attempts,
         cooldown_seconds=cooldown_seconds,
@@ -694,7 +695,7 @@ def _run_gemini_task(
     approval_mode: str | None = None,
     hook_log_path: Path | None = None,
 ) -> dict[str, Any]:
-    if auth_mode != "google_login":
+    if auth_mode not in {"google_login", "api_key"}:
         return _unsupported_operator_mode("gemini", auth_mode, ["gemini"])
     effective_approval_mode = approval_mode or "yolo"
     command = [

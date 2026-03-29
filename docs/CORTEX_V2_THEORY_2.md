@@ -26,6 +26,7 @@ Active authority remains:
 - `docs/CORTEX_V2_MEDIATION_EVIDENCE_NOTE_0.md` shows cell-level signal on thrash, uncertainty, and host-realization, but every package-level axis remains `insufficient`.
 - `docs/CORTEX_V2_VERIFICATION_ERGONOMICS_MASTER_PLAN_0.md` still defines the active non-feature follow-on campaign.
 - `docs/CORTEX_V2_ACTIVE_WORKSTREAM.md` now records the bounded K train as landed, records `N2` as blocked pending a capable machine, and records the landed `Q1` directionality audit: Claude and OpenAI are positive, Gemini is mixed, and the next honest move is a narrow Gemini explanation seam rather than further widening.
+- The current Gemini auth-path recheck also says not to overread a settings-only API-key switch: on the current CLI, headless operator reruns still require `GEMINI_API_KEY` in the shell environment before new Gemini directionality evidence can be collected honestly.
 - `pytest.ini`, `Makefile`, and `docs/CORTEX_V2_LOCAL_VERIFICATION.md` now provide repo-local verification entry points, including `make verify`, `make test-smoke`, evidence revalidation commands, and mediation evidence revalidation commands.
 - `.coveragerc`, `make coverage`, and `docs/CORTEX_V2_COVERAGE_BASELINE_NOTE_0.md` now exist as repo-local coverage hygiene surfaces.
 

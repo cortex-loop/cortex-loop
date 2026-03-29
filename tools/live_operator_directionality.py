@@ -604,7 +604,7 @@ def _run_raw_gemini_task(
     resume_session: str | None = None,
     approval_mode: str | None = None,
 ) -> dict[str, Any]:
-    if auth_mode != "google_login":
+    if auth_mode not in {"google_login", "api_key"}:
         return host_paths._unsupported_operator_mode("gemini", auth_mode, ["gemini"])
     effective_approval_mode = approval_mode or "yolo"
     command = [

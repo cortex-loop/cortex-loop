@@ -268,6 +268,12 @@ def resolve_auth_mode(provider: str, lane: str, env: MappingLike | None = None) 
     configured = str(source.get(AUTH_MODE_ENV[provider], "auto")).strip()
     if configured and configured != "auto":
         return configured
+    if lane == "operator" and provider == "gemini":
+        if bool(source.get("GEMINI_API_KEY")):
+            return "api_key"
+        selected_type = gemini_selected_auth_type()
+        if selected_type == "gemini-api-key":
+            return "api_key"
     if lane == "automation" and provider == "gemini":
         if vertex_adc_available(source):
             return "vertex_adc"
@@ -515,6 +521,8 @@ def classify_failure(text: str) -> str | None:
         return "auth_expired"
     if "api key is required" in lowered or "_api_key is required" in lowered:
         return "auth_missing"
+    if "gemini_api_key environment variable" in lowered:
+        return "auth_missing"
     if "must be provided with -k/--api-key" in lowered:
         return "auth_missing"
     if "not logged in" in lowered or "please login" in lowered:
@@ -670,6 +678,28 @@ def vertex_adc_available(env: MappingLike | None = None) -> bool:
         timeout_seconds=30.0,
     )
     return result["exit_code"] == 0 and bool(result["stdout"].strip())
+
+
+def gemini_selected_auth_type() -> str | None:
+    settings_path = Path.home() / ".gemini" / "settings.json"
+    if not settings_path.exists():
+        return None
+    try:
+        payload = json.loads(settings_path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError:
+        return None
+    if not isinstance(payload, dict):
+        return None
+    security = payload.get("security")
+    if not isinstance(security, dict):
+        return None
+    auth = security.get("auth")
+    if not isinstance(auth, dict):
+        return None
+    selected_type = auth.get("selectedType")
+    if isinstance(selected_type, str) and selected_type.strip():
+        return selected_type.strip()
+    return None
 
 
 def build_scenario_catalog() -> dict[str, Any]:

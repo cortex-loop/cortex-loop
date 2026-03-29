@@ -357,10 +357,11 @@ def test_resume_protocol_and_active_workstream_contract_exist() -> None:
     assert "Current working branch at ledger update:" in workstream_text
     assert "Current branch role:" in workstream_text
     assert "accepted workflow baseline truth now rests on `main` rather than a long-lived working branch" in workstream_text
-    assert "Current campaign: `post-Q1 Gemini directionality explanation pending`" in workstream_text
-    assert "Current candidate seam: none; `Q1` is landed on the current machine, `N2` remains blocked on a capable machine, and the mixed Gemini directionality result is the next unresolved line" in workstream_text
-    assert "the paired raw-vs-Cortex operator audit is complete on the current machine" in workstream_text
-    assert "Claude and OpenAI are positive, Gemini is mixed, package direction is mixed" in workstream_text
+    assert "Current campaign: `Gemini operator auth-path explanation pending`" in workstream_text
+    assert "Current candidate seam: `Gemini operator API-key auth-path truthfulness`;" in workstream_text
+    assert "`Q1` remains landed on the current machine" in workstream_text
+    assert "the live harness now detects Gemini operator API-key mode from CLI settings/env" in workstream_text
+    assert "headless gemini -p requires GEMINI_API_KEY in the shell environment" in workstream_text
     assert "the compare surface and live-validation truth from earlier seams remain accepted ancestor input and are not being reopened by the landed K train." in workstream_text
     assert "the current signed-in smoke surfaces are now clean again" in workstream_text
     assert "`codex exec` for smoke" in workstream_text
@@ -373,15 +374,19 @@ def test_resume_protocol_and_active_workstream_contract_exist() -> None:
     assert "`truth_gap` is truthful on the latest reruns on `auto`" in workstream_text
     assert "`restart_continuity` remains mixed after the best-practice re-audit" in workstream_text
     assert "repeat-stable Gemini closure is therefore still unearned" in workstream_text
+    assert "the current Gemini operator API-key recheck now adds one narrower local blocker" in workstream_text
+    assert "the recheck tooling now reports that blocker truthfully instead of mislabeling it as a clean probe" in workstream_text
     assert "do not reopen the K train by inertia now that the bounded proven-lane executive/runtime line is landed" in workstream_text
     assert "do not widen from the mixed `Q1` package result into new runtime or product claims" in workstream_text
-    assert "the next lawful move is one narrow Gemini explanation seam" in workstream_text
+    assert "the next lawful move remains one narrow Gemini explanation seam, but it now has a stricter first gate" in workstream_text
+    assert "provide `GEMINI_API_KEY` in the shell environment for the headless operator lane" in workstream_text
     assert "keep `N2` as a separate blocked train pending a capable machine" in workstream_text
     assert "Do not treat signed-in provider CLI sessions as equivalent to the automation credentials" in workstream_text
     assert "Do not treat the new OpenAI App Server operator proof as license to reopen v1 assisted mode" in workstream_text
     assert "Do not keep repo-tracked live artifacts under `docs/live_validation/`" in workstream_text
     assert "Do not shell out from service transports to provider CLIs." in workstream_text
     assert "Do not silently reintroduce a pinned Gemini operator model as the default testing start point" in workstream_text
+    assert "Do not treat selecting `gemini-api-key` in `.gemini/settings.json` as sufficient for headless Gemini operator proof" in workstream_text
     assert "Do not start a new managed session from local `main` while it is ahead or diverged from `origin/main`." in workstream_text
     assert "Do not reopen Gemini model chasing or assisted-mode speculation inside the active `L4` service-proof train." in workstream_text
     assert "Do not shell out from service transports to provider CLIs." in workstream_text
@@ -813,3 +818,4 @@ def test_runtime_restack_program_lock_is_recorded() -> None:
     assert "records the landed `Q1` directionality audit" in theory_text
     assert "Gemini is mixed" in theory_text
     assert "narrow Gemini explanation seam" in theory_text
+    assert "headless operator reruns still require `GEMINI_API_KEY` in the shell environment" in theory_text
