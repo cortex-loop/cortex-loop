@@ -357,11 +357,12 @@ def test_resume_protocol_and_active_workstream_contract_exist() -> None:
     assert "Current working branch at ledger update:" in workstream_text
     assert "Current branch role:" in workstream_text
     assert "accepted workflow baseline truth now rests on `main` rather than a long-lived working branch" in workstream_text
-    assert "Current campaign: `Gemini vanilla directionality normalization pending`" in workstream_text
-    assert "Current candidate seam: `Gemini vanilla operator directionality rerun`;" in workstream_text
+    assert "Current campaign: `Gemini auto-only operator contract pending rerun`" in workstream_text
+    assert "Current candidate seam: `Gemini auto-only operator contract`;" in workstream_text
     assert "`Q1` remains landed on the accepted current-machine line" in workstream_text
-    assert "the Gemini operator harness now keeps the first continuity turn on the vanilla headless path instead of forcing plan mode" in workstream_text
-    assert "free API-key lane quickly re-blocks on quota pressure under repeat load" in workstream_text
+    assert "the Gemini operator/evaluation harness now uses the installed CLI default auto route only" in workstream_text
+    assert "fresh auto-only preflight plus fresh auto-only baseline reruns are now stable on the API-key lane" in workstream_text
+    assert "fresh auto-only `pass_minimal` product-path rerun now shows the next blocker cleanly" in workstream_text
     assert "the compare surface and live-validation truth from earlier seams remain accepted ancestor input and are not being reopened by the landed K train." in workstream_text
     assert "the current signed-in smoke surfaces are now clean again" in workstream_text
     assert "`codex exec` for smoke" in workstream_text
@@ -376,21 +377,24 @@ def test_resume_protocol_and_active_workstream_contract_exist() -> None:
     assert "repeat-stable Gemini closure is therefore still unearned" in workstream_text
     assert "the current Gemini operator API-key recheck now adds one narrower local blocker" in workstream_text
     assert "the recheck tooling now reports that blocker truthfully instead of mislabeling it as a clean probe" in workstream_text
-    assert "forcing `plan` on the first continuity turn was a real confound on the free API-key lane" in workstream_text
-    assert "one-off vanilla reruns can complete all three scenario families on this machine" in workstream_text
-    assert "repeated free-tier calls quickly hit `quota_exhausted` on the flash lane" in workstream_text
+    assert "the operator/evaluation harness no longer calls `gemini-2.5-flash` or `gemini-2.5-flash-lite`" in workstream_text
+    assert "fresh auto-only preflight reruns are stable on `auto` with `auth_mode=api_key` and `failure_class=quota_exhausted`" in workstream_text
+    assert "fresh auto-only operator baseline reruns are stable on `auto` and return `OK` twice with no named-model fallback" in workstream_text
+    assert "fresh auto-only `pass_minimal` product-path rerun now blocks immediately on `quota_exhausted` with `model: auto-gemini-3`" in workstream_text
     assert "do not reopen the K train by inertia now that the bounded proven-lane executive/runtime line is landed" in workstream_text
     assert "do not widen from the mixed `Q1` package result into new runtime or product claims" in workstream_text
-    assert "the next lawful move remains one narrow Gemini explanation seam, but the auth/bootstrap gate is now cleared" in workstream_text
-    assert "do not change package-level directionality truth until the Gemini paired rerun is repeat-stable on the normalized vanilla path" in workstream_text
+    assert "the next lawful move remains one narrow Gemini explanation seam, but the operator contract is now stricter" in workstream_text
+    assert "do not call explicit Gemini model names anywhere on the operator/evaluation path" in workstream_text
+    assert "rerun the bounded Gemini-only slice from clean local artifacts under the auto-only contract" in workstream_text
     assert "keep `N2` as a separate blocked train pending a capable machine" in workstream_text
     assert "Do not treat signed-in provider CLI sessions as equivalent to the automation credentials" in workstream_text
     assert "Do not treat the new OpenAI App Server operator proof as license to reopen v1 assisted mode" in workstream_text
     assert "Do not keep repo-tracked live artifacts under `docs/live_validation/`" in workstream_text
     assert "Do not shell out from service transports to provider CLIs." in workstream_text
     assert "Do not silently reintroduce a pinned Gemini operator model as the default testing start point" in workstream_text
+    assert "Do not pass explicit Gemini operator model names anywhere on the operator/evaluation harness" in workstream_text
     assert "Do not treat selecting `gemini-api-key` in `.gemini/settings.json` as sufficient for headless Gemini operator proof" in workstream_text
-    assert "Do not use Gemini `plan` mode as the default comparison baseline on the free API-key operator lane" in workstream_text
+    assert "Do not use Gemini `plan` mode as the default comparison baseline on the operator/evaluation path." in workstream_text
     assert "Do not start a new managed session from local `main` while it is ahead or diverged from `origin/main`." in workstream_text
     assert "Do not reopen Gemini model chasing or assisted-mode speculation inside the active `L4` service-proof train." in workstream_text
     assert "Do not shell out from service transports to provider CLIs." in workstream_text
@@ -584,9 +588,10 @@ def test_reference_runtime_program_lock_is_recorded() -> None:
     assert "raw-host vs Cortex-operator" in operator_directionality_program_text
     assert "Gemini comparison guard:" in operator_directionality_program_text
     assert "do not use `plan` mode as the default Gemini comparison baseline" in operator_directionality_program_text
+    assert "do not pass explicit Gemini operator model names anywhere in the paired comparison harness" in operator_directionality_program_text
     assert "If the audit shows mixed or negative directionality, record that directly and treat it as the blocker to further widening." in operator_directionality_program_text
     assert "Status: accepted scenario catalog for the raw-vs-Cortex operator directionality audit" in operator_directionality_scenario_catalog_text
-    assert "Gemini uses the same headless CLI surface on both variants" in operator_directionality_scenario_catalog_text
+    assert "Gemini uses the same headless CLI surface on both variants, with no explicit `-m` model argument" in operator_directionality_scenario_catalog_text
     assert "`pass_minimal`" in operator_directionality_scenario_catalog_text
     assert "`truth_gap`" in operator_directionality_scenario_catalog_text
     assert "`restart_continuity`" in operator_directionality_scenario_catalog_text
@@ -830,3 +835,5 @@ def test_runtime_restack_program_lock_is_recorded() -> None:
     assert "headless operator reruns still require `GEMINI_API_KEY` in the shell environment" in theory_text
     assert "old `plan`-mode path was a real confound" in theory_text
     assert "repeated paired runs on the free API-key lane still turn mixed under flash-tier quota pressure" in theory_text
+    assert "the operator/evaluation harness must not call explicit Gemini model names at all" in theory_text
+    assert "fresh auto-only product-path rerun is sharper still" in theory_text

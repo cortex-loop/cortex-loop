@@ -57,7 +57,7 @@ MODEL_MATRIX: dict[str, dict[str, LiveModelPreference]] = {
         "automation": LiveModelPreference("claude-sonnet-4-6", "claude-sonnet-4-5"),
     },
     "gemini": {
-        "operator": LiveModelPreference("auto", "gemini-2.5-flash"),
+        "operator": LiveModelPreference("auto", None),
         "automation": LiveModelPreference("gemini-2.5-pro", "gemini-2.5-flash"),
     },
     "openai": {
@@ -66,8 +66,7 @@ MODEL_MATRIX: dict[str, dict[str, LiveModelPreference]] = {
     },
 }
 
-GEMINI_OPERATOR_FALLBACK_CHAIN = ("gemini-2.5-flash", "gemini-2.5-flash-lite")
-GEMINI_OPERATOR_FULL_LADDER = ("auto",) + GEMINI_OPERATOR_FALLBACK_CHAIN
+GEMINI_OPERATOR_FULL_LADDER = ("auto",)
 
 DEFAULT_AUTH_MODE: dict[str, dict[str, str]] = {
     "claude": {"operator": "claude_code", "automation": "api_key"},
@@ -556,8 +555,6 @@ def model_ladder(
     auto_supported: bool | None = None,
 ) -> tuple[str, ...]:
     if provider == "gemini" and lane == "operator":
-        if auto_supported is False:
-            return GEMINI_OPERATOR_FALLBACK_CHAIN
         return GEMINI_OPERATOR_FULL_LADDER
     selection = MODEL_MATRIX[provider][lane]
     ladder = [selection.preferred]

@@ -145,24 +145,17 @@ def test_build_scenario_catalog_exposes_l2_harness_contract() -> None:
     assert catalog["host_caveats"]["openai"] == "host_caveat_operator_openai_app_server.md"
     assert catalog["openai_operator_surfaces"]["smoke"] == "codex exec"
     assert catalog["openai_operator_surfaces"]["lifecycle_proof"] == "codex app-server"
-    assert catalog["gemini_operator_model_ladder"] == [
-        "auto",
-        "gemini-2.5-flash",
-        "gemini-2.5-flash-lite",
-    ]
+    assert catalog["gemini_operator_model_ladder"] == ["auto"]
     assert MODEL_MATRIX["openai"]["operator"].preferred == "gpt-5.3-codex"
     assert MODEL_MATRIX["gemini"]["operator"].preferred == "auto"
-    assert MODEL_MATRIX["gemini"]["operator"].fallback == "gemini-2.5-flash"
+    assert MODEL_MATRIX["gemini"]["operator"].fallback is None
 
 
-def test_gemini_model_ladder_and_choose_model_follow_auto_then_flash_then_flash_lite() -> None:
+def test_gemini_model_ladder_and_choose_model_stay_auto_only() -> None:
     assert model_ladder("gemini", "operator") == GEMINI_OPERATOR_FULL_LADDER
-    assert model_ladder("gemini", "operator", auto_supported=False) == (
-        "gemini-2.5-flash",
-        "gemini-2.5-flash-lite",
-    )
+    assert model_ladder("gemini", "operator", auto_supported=False) == ("auto",)
     assert choose_model("gemini", "operator") == "auto"
-    assert choose_model("gemini", "operator", auto_supported=False) == "gemini-2.5-flash"
+    assert choose_model("gemini", "operator", auto_supported=False) == "auto"
     assert (
         choose_model(
             "gemini",
@@ -171,7 +164,7 @@ def test_gemini_model_ladder_and_choose_model_follow_auto_then_flash_then_flash_
             first_failure="model_unavailable",
             auto_supported=False,
         )
-        == "gemini-2.5-flash"
+        == "auto"
     )
     assert (
         choose_model(
@@ -181,17 +174,17 @@ def test_gemini_model_ladder_and_choose_model_follow_auto_then_flash_then_flash_
             first_failure="operator_timeout",
             auto_supported=False,
         )
-        == "gemini-2.5-flash"
+        == "auto"
     )
     assert (
         choose_model(
             "gemini",
             "operator",
-            current_model="gemini-2.5-flash",
+            current_model="auto",
             first_failure="capacity_exhausted",
             auto_supported=False,
         )
-        == "gemini-2.5-flash-lite"
+        == "auto"
     )
 
 
@@ -647,6 +640,7 @@ def test_gemini_operator_commands_omit_model_flag_when_auto_is_selected(monkeypa
     monkeypatch.setattr(live_preflight, "run_command", fake_run_command)
     live_preflight._run_gemini_probe("auto")
     assert "-m" not in captured["preflight"]
+    assert captured["preflight"][-1] == "yolo"
 
     def fake_subprocess_run(command, **kwargs):
         captured["baseline"] = command
@@ -659,6 +653,7 @@ def test_gemini_operator_commands_omit_model_flag_when_auto_is_selected(monkeypa
     monkeypatch.setattr(live_provider_baselines.subprocess, "run", fake_subprocess_run)
     live_provider_baselines._run_gemini_operator_probe("auto")
     assert "-m" not in captured["baseline"]
+    assert captured["baseline"][-1] == "yolo"
 
     def fake_timed_command(command, **kwargs):
         captured["product_path"] = command
@@ -697,7 +692,7 @@ def test_gemini_baseline_keeps_auto_as_preferred_model_on_warning_bearing_succes
         live_provider_baselines,
         "_run_provider_probe",
         lambda *args, **kwargs: {
-            "command": ["gemini", "-p", "Respond exactly with OK.", "-o", "stream-json", "--approval-mode", "plan"],
+            "command": ["gemini", "-p", "Respond exactly with OK.", "-o", "stream-json", "--approval-mode", "yolo"],
             "exit_code": 0,
             "stdout": '{"type":"result","status":"success","error":{"message":"You have exhausted your capacity on this model."}}',
             "stderr": "",
@@ -1114,8 +1109,8 @@ def test_operator_directionality_audit_marks_mixed_when_truth_gap_matches_but_bu
             },
             "cortex_operator": {
                 "truth_gap_kind": "truthful_incomplete",
-                "warning_classes": ["capacity_exhausted"],
-                "attempted_models": ["auto", "gemini-2.5-flash"],
+                "warning_classes": ["quota_exhausted"],
+                "attempted_models": ["auto"],
             },
         }
     )

@@ -221,7 +221,7 @@ def _probe_gemini_operator() -> dict[str, Any]:
     final_model = attempted_models[-1]
     return {
         "auth_mode": resolve_auth_mode("gemini", "operator"),
-        "preferred_model": preferred if auto_supported else GEMINI_OPERATOR_FULL_LADDER[1],
+        "preferred_model": preferred,
         "model": final_model,
         "auto_supported": auto_supported,
         "attempted_models": attempted_models,
@@ -278,7 +278,7 @@ def _run_gemini_probe(model: str) -> dict[str, Any]:
             "-o",
             "stream-json",
             "--approval-mode",
-            "plan",
+            "yolo",
         ]
         if model != "auto":
             command[5:5] = ["-m", model]

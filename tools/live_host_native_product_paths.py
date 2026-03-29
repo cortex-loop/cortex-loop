@@ -357,14 +357,6 @@ def _run_operator_attempts(
 
         if provider == "gemini" and current_model == MODEL_MATRIX["gemini"]["operator"].preferred:
             auto_supported = run_result["exit_code"] == 0 and failure_class != "model_unavailable"
-            if auto_supported is False and run_result["exit_code"] != 0:
-                ladder = _requested_model_ladder(
-                    provider=provider,
-                    preferred_model_override=preferred_model_override,
-                    fallback_model_override=fallback_model_override,
-                    disable_auto_probe=True,
-                )
-                preferred_model = ladder[0]
 
         if run_result["exit_code"] == 0:
             break
@@ -821,13 +813,8 @@ def _requested_model_ladder(
         if fallback_model_override and fallback_model_override.lower() != "none" and fallback_model_override != preferred_model_override:
             ladder.append(fallback_model_override)
         return tuple(ladder)
-    if provider == "gemini" and disable_auto_probe:
-        ladder = ["gemini-2.5-flash"]
-        if fallback_model_override and fallback_model_override.lower() != "none" and fallback_model_override not in ladder:
-            ladder.append(fallback_model_override)
-        elif "gemini-2.5-flash-lite" not in ladder:
-            ladder.append("gemini-2.5-flash-lite")
-        return tuple(ladder)
+    if provider == "gemini":
+        return (MODEL_MATRIX[provider]["operator"].preferred,)
     return (MODEL_MATRIX[provider]["operator"].preferred,) if MODEL_MATRIX[provider]["operator"].fallback is None else (
         MODEL_MATRIX[provider]["operator"].preferred,
         MODEL_MATRIX[provider]["operator"].fallback,

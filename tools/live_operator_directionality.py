@@ -465,14 +465,6 @@ def _run_raw_operator_attempts(
 
         if provider == "gemini" and current_model == MODEL_MATRIX["gemini"]["operator"].preferred:
             auto_supported = run_result["exit_code"] == 0 and failure_class != "model_unavailable"
-            if auto_supported is False and run_result["exit_code"] != 0:
-                ladder = host_paths._requested_model_ladder(
-                    provider=provider,
-                    preferred_model_override=None,
-                    fallback_model_override=None,
-                    disable_auto_probe=True,
-                )
-                preferred_model = ladder[0]
 
         if run_result["exit_code"] == 0:
             break

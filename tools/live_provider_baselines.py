@@ -220,7 +220,7 @@ def _run_single_provider_baseline(
     attempted_models = [first_model]
     if provider == "gemini" and lane == "operator":
         auto_supported = run_result["exit_code"] == 0 and failure_class != "model_unavailable"
-        preferred_model = first_model if auto_supported or run_result["exit_code"] == 0 else GEMINI_OPERATOR_FULL_LADDER[1]
+        preferred_model = first_model
     chosen_model = first_model
     if run_result["exit_code"] != 0:
         chosen_model = choose_model(
@@ -336,7 +336,7 @@ def _run_gemini_operator_probe(model: str) -> dict[str, Any]:
             "-o",
             "stream-json",
             "--approval-mode",
-            "plan",
+            "yolo",
         ]
         if model != "auto":
             command[5:5] = ["-m", model]
@@ -553,13 +553,8 @@ def _requested_model_ladder(
         if fallback_model_override and fallback_model_override.lower() != "none" and fallback_model_override != preferred_model_override:
             ladder.append(fallback_model_override)
         return tuple(ladder)
-    if provider == "gemini" and lane == "operator" and disable_auto_probe:
-        ladder = ["gemini-2.5-flash"]
-        if fallback_model_override and fallback_model_override.lower() != "none" and fallback_model_override not in ladder:
-            ladder.append(fallback_model_override)
-        elif "gemini-2.5-flash-lite" not in ladder:
-            ladder.append("gemini-2.5-flash-lite")
-        return tuple(ladder)
+    if provider == "gemini" and lane == "operator":
+        return (MODEL_MATRIX[provider][lane].preferred,)
     return (MODEL_MATRIX[provider][lane].preferred,) if MODEL_MATRIX[provider][lane].fallback is None else (
         MODEL_MATRIX[provider][lane].preferred,
         MODEL_MATRIX[provider][lane].fallback,
