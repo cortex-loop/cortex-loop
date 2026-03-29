@@ -724,4 +724,4 @@ def test_runtime_restack_program_lock_is_recorded() -> None:
     assert "Current accepted state after K1 closeout" in text
     assert "implemented at K1 proof head `d4c311f` and truthfully closed at deterministic closeout head `79b8f39`" in text
     assert "later bounded runtime/product trains may still be explicitly opened" in master_plan_text
-    assert "now records the landed preservation-path repair, the protected preserved root worktree, and the remaining audited cleanup slice before broader continuation" in theory_text
+    assert "now records the landed final repo closure, the single-checkout resting-state model, and the strict `cleanup-report` gate for future hygiene" in theory_text

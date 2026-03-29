@@ -8,7 +8,7 @@ It is workflow state only. It does not override the packet documents, implementa
 ## 1. Accepted baseline
 
 - Accepted baseline branch: `main`
-- Accepted baseline commit: `3637921`
+- Accepted baseline commit: `30871e6`
 - Accepted baseline state:
   - burden-axis re-audit remains accepted through the three thrash-host burden slices
   - package-level burden remains `insufficient`
@@ -18,6 +18,13 @@ It is workflow state only. It does not override the packet documents, implementa
   - package-level mediation evidence remains `insufficient`
   - lower visible burden remains unclaimed for host-realization
   - accepted workflow baseline truth now rests on `main` rather than a long-lived working branch
+  - final repo closure is now landed on the current line:
+    - one clean synced local checkout only
+    - one local branch only: `main`
+    - no attached non-root worktrees
+    - no residual local non-main branches
+    - no remote `review/*` heads
+    - retired non-main lines preserved under pushed `archive/final-repo-closeout/*` tags
   - the reference runtime shell, bounded reference continuity, OpenAI documented-host-event runtime shell, raw-transcript ingress shell, loopback service shell, bounded outbound OpenAI host-control lane, and explicit executive allocation diagnostics remain accepted on the current line
   - the Gemini documented-host-event runtime shell, raw-transcript ingress shell, loopback service shell, and bounded outbound Gemini host-control lane remain accepted on the current line
   - the Claude documented-host-event runtime shell, raw-transcript ingress shell, loopback service shell, and bounded outbound Claude host-control lane remain accepted on the current line
