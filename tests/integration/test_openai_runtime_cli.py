@@ -79,6 +79,10 @@ def test_openai_runtime_cli_reads_documented_raw_events_and_preserves_host_name(
         0.75,
         0.85,
     ]
+    assert [
+        record["control_ledger"]["allocation_diagnostics"]["activation_threshold"]
+        for record in records
+    ] == [0.35, 0.35, 0.25]
     assert records[1]["control_ledger"]["allocation_diagnostics"]["scores"][0]["allocated_score"] != records[1]["control_ledger"]["allocation_diagnostics"]["scores"][0]["online_score"]
     assert records[2]["control_ledger"]["allocation_diagnostics"]["scores"][0]["allocated_score"] != records[2]["control_ledger"]["allocation_diagnostics"]["scores"][0]["online_score"]
 

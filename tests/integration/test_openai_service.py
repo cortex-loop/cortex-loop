@@ -47,6 +47,7 @@ def test_openai_service_health_and_documented_event_flow() -> None:
             "scores",
         )
         assert record["control_ledger"]["allocation_diagnostics"]["alpha_t"] == 1.0
+        assert record["control_ledger"]["allocation_diagnostics"]["activation_threshold"] == 0.35
 
         health_status, updated_health = service.request("GET", "/health")
         assert health_status == 200
@@ -144,6 +145,7 @@ def test_openai_service_undocumented_raw_event_warns_without_fabricating_parity(
             "scores",
         )
         assert payload["control_ledger"]["allocation_diagnostics"]["alpha_t"] == 0.75
+        assert payload["control_ledger"]["allocation_diagnostics"]["activation_threshold"] == 0.30
         assert payload["control_ledger"]["allocation_diagnostics"]["scores"][0]["allocated_score"] != payload["control_ledger"]["allocation_diagnostics"]["scores"][0]["online_score"]
 
 

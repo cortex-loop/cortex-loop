@@ -114,6 +114,7 @@ def build_reference_executive_state(
             brake_state=brake_evaluation.state,
         ),
         host_friction_tags=_host_friction_tags(support_snapshot, executive_environment_view),
+        feedback_pressure_tags=_feedback_pressure_tags(prior_feedback_window_summary),
     )
     brake_view = ReferenceBrakeView(
         brake_state=brake_evaluation.state,
@@ -338,6 +339,21 @@ def _host_friction_tags(
         tags.add("capability-view-missing")
     if EXECUTION_TRACE not in executive_environment_view.available_query_kinds:
         tags.add("execution-trace-missing")
+    return frozenset(tags)
+
+
+def _feedback_pressure_tags(
+    prior_feedback_window_summary: ReferenceFeedbackWindowSummary,
+) -> frozenset[str]:
+    tags: set[str] = set()
+    if prior_feedback_window_summary.rejection_count >= 1:
+        tags.add("feedback:rejection-pressure")
+    if prior_feedback_window_summary.override_count >= 1:
+        tags.add("feedback:override-pressure")
+    if prior_feedback_window_summary.latched_count >= 1:
+        tags.add("feedback:latched-history")
+    if prior_feedback_window_summary.degradation_pressure_bonus >= 1:
+        tags.add("feedback:degradation-pressure")
     return frozenset(tags)
 
 

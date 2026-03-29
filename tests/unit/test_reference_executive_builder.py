@@ -191,6 +191,7 @@ def test_build_reference_executive_state_surfaces_guarded_brake_when_snapshot_ha
             "capability-view-missing",
         }
     )
+    assert not state.control_allocation.feedback_pressure_tags
 
 
 def test_build_reference_executive_state_raises_goal_progress_floor_after_session_rejection() -> None:
@@ -240,6 +241,12 @@ def test_build_reference_executive_state_raises_goal_progress_floor_after_sessio
     assert goal_progress.level == 0.55
     assert state.brake.brake_state is BrakeState.GUARDED
     assert "prior-session-mismatch" in state.uncertainty_monitoring.contradiction_spike_flags
+    assert state.control_allocation.feedback_pressure_tags == frozenset(
+        {
+            "feedback:degradation-pressure",
+            "feedback:rejection-pressure",
+        }
+    )
 
 
 def test_build_reference_executive_state_marks_prior_enforcement_override() -> None:
@@ -289,6 +296,13 @@ def test_build_reference_executive_state_marks_prior_enforcement_override() -> N
     assert (
         "prior-enforcement-override"
         in state.uncertainty_monitoring.contradiction_spike_flags
+    )
+    assert state.control_allocation.feedback_pressure_tags == frozenset(
+        {
+            "feedback:degradation-pressure",
+            "feedback:latched-history",
+            "feedback:override-pressure",
+        }
     )
 
 
@@ -347,6 +361,12 @@ def test_build_reference_executive_state_uses_repeated_rejection_window_pressure
     assert "prior-continuity-rejection" in state.uncertainty_monitoring.contradiction_spike_flags
     assert "prior-session-mismatch" in state.uncertainty_monitoring.contradiction_spike_flags
     assert "sustained-feedback-disruption" in state.uncertainty_monitoring.contradiction_spike_flags
+    assert state.control_allocation.feedback_pressure_tags == frozenset(
+        {
+            "feedback:degradation-pressure",
+            "feedback:rejection-pressure",
+        }
+    )
 
 
 def test_build_reference_executive_state_uses_repeated_override_window_pressure() -> None:
@@ -400,6 +420,13 @@ def test_build_reference_executive_state_uses_repeated_override_window_pressure(
     assert state.brake.brake_state is BrakeState.LATCHED
     assert "prior-enforcement-override" in state.uncertainty_monitoring.contradiction_spike_flags
     assert "sustained-latched-brake" in state.uncertainty_monitoring.contradiction_spike_flags
+    assert state.control_allocation.feedback_pressure_tags == frozenset(
+        {
+            "feedback:degradation-pressure",
+            "feedback:latched-history",
+            "feedback:override-pressure",
+        }
+    )
 
 
 def test_build_reference_executive_state_clean_window_does_not_raise_pressure() -> None:
@@ -457,3 +484,4 @@ def test_build_reference_executive_state_clean_window_does_not_raise_pressure() 
     assert goal_progress.level == 0.2
     assert state.brake.brake_state is BrakeState.QUIESCENT
     assert not state.uncertainty_monitoring.contradiction_spike_flags
+    assert not state.control_allocation.feedback_pressure_tags

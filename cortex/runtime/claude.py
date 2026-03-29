@@ -509,6 +509,7 @@ def run_claude_runtime_step(
         selected_family,
         brake_state=brake_state,
         dominant_uncertainty_sources=dominant_uncertainty_sources,
+        feedback_pressure_tags=executive_state.control_allocation.feedback_pressure_tags,
     )
     warnings = merge_warnings(warnings, enforcement_warnings)
     control_ledger = ClaudeControlLedger(
@@ -998,14 +999,29 @@ def _realize_family(
     *,
     brake_state: BrakeState,
     dominant_uncertainty_sources: tuple[str, ...],
+    feedback_pressure_tags: frozenset[str],
 ) -> tuple[SoftControlFamily, tuple[str, ...]]:
-    if brake_state is not BrakeState.LATCHED:
-        return selected_family, ()
     if selected_family in {
         SoftControlFamily.NEUTRAL,
         SoftControlFamily.CHECK,
         SoftControlFamily.BRAKE,
     }:
+        return selected_family, ()
+    if (
+        brake_state is BrakeState.GUARDED
+        and _has_guarded_feedback_enforcement_pressure(feedback_pressure_tags)
+    ):
+        if any(source in {"evidence", "environment"} for source in dominant_uncertainty_sources):
+            realized_family = SoftControlFamily.CHECK
+        else:
+            realized_family = SoftControlFamily.NEUTRAL
+        return (
+            realized_family,
+            (
+                f"guarded-feedback-enforced:{selected_family.value}:{realized_family.value}",
+            ),
+        )
+    if brake_state is not BrakeState.LATCHED:
         return selected_family, ()
     if any(source in {"evidence", "environment"} for source in dominant_uncertainty_sources):
         realized_family = SoftControlFamily.CHECK
@@ -1019,9 +1035,23 @@ def _realize_family(
     )
 
 
+def _has_guarded_feedback_enforcement_pressure(
+    feedback_pressure_tags: frozenset[str],
+) -> bool:
+    return bool(
+        {
+            "feedback:override-pressure",
+            "feedback:rejection-pressure",
+        }
+        & feedback_pressure_tags
+    )
+
+
 def _primary_reason(warnings: tuple[str, ...]) -> str | None:
     for warning in warnings:
-        if warning.startswith("latched-brake-enforced:"):
+        if warning.startswith(
+            ("latched-brake-enforced:", "guarded-feedback-enforced:")
+        ):
             return warning
     return warnings[0] if warnings else None
 

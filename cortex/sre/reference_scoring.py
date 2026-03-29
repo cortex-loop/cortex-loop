@@ -30,7 +30,7 @@ _BASE_SCORES = {
     SoftControlFamily.BRAKE: 0.4,
 }
 
-_THRESHOLDS = {
+_BASE_ACTIVATION_THRESHOLDS = {
     "low": 0.35,
     "medium": 0.25,
     "high": 0.2,
@@ -93,9 +93,7 @@ def build_reference_allocation_scorecard(
     host_friction_tags = executive_state.control_allocation.host_friction_tags
     brake_state = executive_state.brake.brake_state
     mode_tag = executive_state.mode_and_gating.mode_tag
-    activation_threshold = _activation_threshold(
-        executive_state.control_allocation.budget_band
-    )
+    activation_threshold = compute_reference_activation_threshold(executive_state)
     alpha_t = compute_reference_alpha_t(executive_state)
     online_components = build_reference_online_score_components(executive_state)
 
@@ -159,8 +157,8 @@ def select_reference_soft_control(
     )
 
 
-def _activation_threshold(budget_band: str) -> float:
-    return _THRESHOLDS.get(budget_band, 0.3)
+def _baseline_activation_threshold(budget_band: str) -> float:
+    return _BASE_ACTIVATION_THRESHOLDS.get(budget_band, 0.3)
 
 
 def compute_reference_alpha_t(
@@ -191,6 +189,31 @@ def compute_reference_alpha_t(
     return 1.0
 
 
+def compute_reference_activation_threshold(
+    executive_state: ReferenceExecutiveState,
+) -> float:
+    if not isinstance(executive_state, ReferenceExecutiveState):
+        actual_type = type(executive_state).__name__
+        raise TypeError(
+            "compute_reference_activation_threshold.executive_state must be "
+            f"ReferenceExecutiveState, got {actual_type}."
+        )
+
+    threshold = _baseline_activation_threshold(
+        executive_state.control_allocation.budget_band
+    )
+    brake_state = executive_state.brake.brake_state
+    if brake_state is BrakeState.LATCHED:
+        threshold += 0.10
+    elif brake_state is BrakeState.GUARDED:
+        threshold += 0.05
+    if _has_current_visible_pressure(executive_state):
+        threshold += 0.05
+    if executive_state.control_allocation.feedback_pressure_tags:
+        threshold += 0.05
+    return min(0.45, max(0.20, threshold))
+
+
 def build_reference_online_score_components(
     executive_state: ReferenceExecutiveState,
 ) -> dict[SoftControlFamily, dict[str, float]]:
@@ -208,6 +231,29 @@ def build_reference_online_score_components(
         )
         for family in SoftControlFamily
     }
+
+
+def _has_current_visible_pressure(
+    executive_state: ReferenceExecutiveState,
+) -> bool:
+    contradiction_spike_flags = executive_state.uncertainty_monitoring.contradiction_spike_flags
+    current_visible_contradictions = any(
+        not (flag.startswith("prior-") or flag.startswith("sustained-"))
+        for flag in contradiction_spike_flags
+    )
+    non_goal_uncertainty = max(
+        (
+            estimate.level
+            for estimate in executive_state.uncertainty_monitoring.classwise_uncertainty
+            if estimate.class_tag != "goal-progress"
+        ),
+        default=0.0,
+    )
+    return bool(
+        executive_state.control_allocation.host_friction_tags
+        or current_visible_contradictions
+        or non_goal_uncertainty >= 0.55
+    )
 
 
 def _online_score_components_for_family(
@@ -319,6 +365,7 @@ __all__ = [
     "ReferenceSoftControlSelection",
     "build_allocation_diagnostics_payload",
     "build_reference_allocation_scorecard",
+    "compute_reference_activation_threshold",
     "build_reference_online_score_components",
     "compute_reference_alpha_t",
     "select_reference_soft_control",

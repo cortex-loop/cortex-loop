@@ -34,6 +34,10 @@ It does not by itself open new feature work.
   - OpenAI runtime / ingress / service / bounded host-control,
   - Gemini runtime / ingress / service / bounded host-control,
   - and Claude runtime / ingress / service / bounded host-control.
+- The clean synced `main` line also carries accepted post-closeout executive/runtime follow-ons on the proven reference/OpenAI lanes:
+  - bounded computed allocation,
+  - bounded feedback-conditioned intervention thresholding,
+  - and bounded enforcement-aware realized control.
 - The current refreshed live-model baseline is recorded in `docs/CORTEX_V2_ACTIVE_WORKSTREAM.md` on the clean synced `main` line.
 - Eval and proof surfaces are landed:
   - artifact schemas,

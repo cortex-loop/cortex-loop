@@ -51,6 +51,9 @@ EXECUTIVE_LIVE_OUTCOME_PROGRAM_PATH = (
 COMPUTED_EXECUTIVE_LOOP_PROGRAM_PATH = (
     REPO_ROOT / "docs" / "CORTEX_V2_COMPUTED_EXECUTIVE_LOOP_PROGRAM_0.md"
 )
+CLOSED_LOOP_ENFORCEMENT_PROGRAM_PATH = (
+    REPO_ROOT / "docs" / "CORTEX_V2_CLOSED_LOOP_ENFORCEMENT_PROGRAM_0.md"
+)
 GEMINI_RUNTIME_RESTACK_PROGRAM_PATH = (
     REPO_ROOT / "docs" / "CORTEX_V2_GEMINI_RUNTIME_RESTACK_PROGRAM_0.md"
 )
@@ -177,6 +180,8 @@ def test_implementation_status_note_reflects_current_verification_surfaces() -> 
     assert "Claude runtime / ingress / service / bounded host-control" in text
     assert "clean synced `main` line" in text
     assert "do not hardcode a separate accepted workflow baseline here" in text
+    assert "bounded feedback-conditioned intervention thresholding" in text
+    assert "bounded enforcement-aware realized control" in text
 
 
 def test_verification_ergonomics_plan_reflects_current_campaign_state() -> None:
@@ -343,9 +348,10 @@ def test_resume_protocol_and_active_workstream_contract_exist() -> None:
     assert "Current working branch at ledger update:" in workstream_text
     assert "Current branch role:" in workstream_text
     assert "accepted workflow baseline truth now rests on `main` rather than a long-lived working branch" in workstream_text
-    assert "Current candidate seam: none; `K4` is landed for current scope on the proven reference/OpenAI lanes and its continuation/support truth is now hardened" in workstream_text
-    assert "bounded computed executive loop is now real on the proven reference/OpenAI lanes" in workstream_text
-    assert "the compare surface and live-validation truth from earlier seams remain accepted ancestor input and are not being reopened by K4." in workstream_text
+    assert "Current campaign: `post-K train closeout on proven reference/OpenAI lanes`" in workstream_text
+    assert "Current candidate seam: none; the bounded K train is landed for current scope on the proven reference/OpenAI lanes" in workstream_text
+    assert "computed allocation, feedback-conditioned thresholding, and bounded enforcement-aware realized control are now real on the proven reference/OpenAI lanes" in workstream_text
+    assert "the compare surface and live-validation truth from earlier seams remain accepted ancestor input and are not being reopened by the landed K train." in workstream_text
     assert "the current signed-in smoke surfaces are now clean again" in workstream_text
     assert "`codex exec` for smoke" in workstream_text
     assert "`codex app-server` for lifecycle proof" in workstream_text
@@ -357,7 +363,8 @@ def test_resume_protocol_and_active_workstream_contract_exist() -> None:
     assert "`truth_gap` is truthful on the latest reruns on `auto`" in workstream_text
     assert "`restart_continuity` remains mixed after the best-practice re-audit" in workstream_text
     assert "repeat-stable Gemini closure is therefore still unearned" in workstream_text
-    assert "the next lawful north-star seam is bounded closed-loop feedback and enforcement on the proven reference/OpenAI lanes" in workstream_text
+    assert "do not reopen the K train by inertia now that the bounded proven-lane executive/runtime line is landed" in workstream_text
+    assert "the next lawful move must be a separate post-K seam choice" in workstream_text
     assert "Do not treat signed-in provider CLI sessions as equivalent to the automation credentials" in workstream_text
     assert "Do not treat the new OpenAI App Server operator proof as license to reopen v1 assisted mode" in workstream_text
     assert "Do not keep repo-tracked live artifacts under `docs/live_validation/`" in workstream_text
@@ -368,6 +375,7 @@ def test_resume_protocol_and_active_workstream_contract_exist() -> None:
     assert "Do not shell out from service transports to provider CLIs." in workstream_text
     assert "Do not widen `K4` into support-memory runtime, mediation, service/auth work, or broader host rollout." in workstream_text
     assert "Do not unfreeze threshold law in `K4`" in workstream_text
+    assert "Do not widen the landed K train into support-memory runtime, mediation, vigor scaling, service/auth work on this machine, or broader host rollout." in workstream_text
     assert "git branch --show-current" in workstream_text
     assert "git status --short --untracked-files=all" in workstream_text
     assert "Never promote an uncommitted branch head or dirty worktree state to accepted baseline truth." in workstream_text
@@ -384,6 +392,7 @@ def test_reference_runtime_program_lock_is_recorded() -> None:
     openai_host_control_program_text = _read(OPENAI_HOST_CONTROL_PROGRAM_PATH)
     executive_live_outcome_program_text = _read(EXECUTIVE_LIVE_OUTCOME_PROGRAM_PATH)
     computed_executive_loop_program_text = _read(COMPUTED_EXECUTIVE_LOOP_PROGRAM_PATH)
+    closed_loop_enforcement_program_text = _read(CLOSED_LOOP_ENFORCEMENT_PROGRAM_PATH)
     gemini_runtime_restack_text = _read(GEMINI_RUNTIME_RESTACK_PROGRAM_PATH)
     gemini_runtime_program_text = _read(GEMINI_RUNTIME_PROGRAM_PATH)
     gemini_ingress_program_text = _read(GEMINI_INGRESS_PROGRAM_PATH)
@@ -429,7 +438,7 @@ def test_reference_runtime_program_lock_is_recorded() -> None:
     assert "loopback-only HTTP is landed on the accepted K1 closeout line" in phase_gate_text
     assert "one active session per process is real for current scope" in phase_gate_text
 
-    assert "the next lawful north-star seam is bounded closed-loop feedback and enforcement on the proven reference/OpenAI lanes" in workstream_text
+    assert "the next lawful move must be a separate post-K seam choice" in workstream_text
     assert "the live-testing environment now has explicit operator and automation lane semantics" in workstream_text
     assert "the current signed-in smoke surfaces are now clean again" in workstream_text
     assert "the OpenAI App Server operator lane now completes" in workstream_text
@@ -523,6 +532,10 @@ def test_reference_runtime_program_lock_is_recorded() -> None:
     assert "`O5` OpenAI executive allocation projection slice" in phase_gate_text
     assert "`R7` reference computed executive loop" in phase_gate_text
     assert "`O6` OpenAI computed executive loop projection slice" in phase_gate_text
+    assert "`R8` reference feedback-conditioned intervention threshold" in phase_gate_text
+    assert "`O7` OpenAI feedback-conditioned threshold projection slice" in phase_gate_text
+    assert "`R9` reference enforcement-aware realized control loop" in phase_gate_text
+    assert "`O8` OpenAI enforcement-aware realized projection slice" in phase_gate_text
 
     assert "Status: active runtime-program brief for the first explicit executive live-outcome allocation slice" in executive_live_outcome_program_text
     assert "branch: `codex/k2-openai-host-control`" in executive_live_outcome_program_text
@@ -538,6 +551,11 @@ def test_reference_runtime_program_lock_is_recorded() -> None:
     assert "`allocated_score` may differ from `online_score`" in computed_executive_loop_program_text
     assert "No new public shells are introduced." in computed_executive_loop_program_text
     assert "Current accepted state after K4 closeout" in computed_executive_loop_program_text
+    assert "Status: accepted re-audited runtime-program brief for the bounded closed-loop feedback and enforcement train on proven reference/OpenAI lanes" in closed_loop_enforcement_program_text
+    assert "feedback-conditioned intervention-threshold law" in closed_loop_enforcement_program_text
+    assert "guarded-feedback enforcement may conservatively realize `check` or `neutral`" in closed_loop_enforcement_program_text
+    assert "`Q_t^{mem}=0.0`" in closed_loop_enforcement_program_text
+    assert "Current accepted state after K-train closeout" in closed_loop_enforcement_program_text
     assert "`G1` Gemini documented host-event runtime shell" in phase_gate_text
     assert "`G2` Gemini raw-transcript ingress shell" in phase_gate_text
     assert "`G3` Gemini loopback service shell" in phase_gate_text
@@ -637,8 +655,14 @@ def test_openai_host_control_revalidation_entry_points_are_recorded() -> None:
     assert "make revalidate-openai-host-control" in local_verification_text
     assert "revalidate-openai-host-control:" in makefile_text
     assert "## Executive live-outcome revalidation" in local_verification_text
+    assert "feedback-conditioned `activation_threshold`" in local_verification_text
+    assert "guarded/latched enforcement-aware realized control behavior" in local_verification_text
     assert "make revalidate-executive-loop" in local_verification_text
     assert "revalidate-executive-loop:" in makefile_text
+    assert "python3 -m pytest tests/unit/test_reference_executive_builder.py -q" in local_verification_text
+    assert "python3 -m pytest tests/unit/test_openai_runtime_step.py -q" in local_verification_text
+    assert "python3 -m pytest tests/integration/test_reference_runtime_continuity.py -q" in local_verification_text
+    assert "python3 -m pytest tests/integration/test_openai_runtime_continuity.py -q" in local_verification_text
     assert "## Gemini runtime revalidation" in local_verification_text
     assert "make revalidate-gemini-runtime" in local_verification_text
     assert "## Gemini ingress revalidation" in local_verification_text
@@ -704,6 +728,8 @@ def test_erika_visualizations_are_framed_as_support_surfaces() -> None:
     assert "now records documented hook events on Claude and Gemini" in markdown_text
     assert "operator probe and smoke baselines are now clean in CLI auto mode" in markdown_text
     assert "`gemini-2.5-pro` is valid but capacity-blocked on smoke" in markdown_text
+    assert "A bounded feedback-conditioned threshold and enforcement-aware realized control loop is now also landed on the proven reference/OpenAI lanes" in markdown_text
+    assert "broader or stronger closed-loop enforcement beyond the proven reference/OpenAI lanes" in markdown_text
     assert "cortex-archival-dossiers/" not in markdown_text
     assert "Current Justified Boundary" in html_text
     assert "Gap Programs" in html_text
@@ -722,6 +748,7 @@ def test_erika_visualizations_are_framed_as_support_surfaces() -> None:
     assert "What is still partial" in html_text
     assert "What remains north-star only" in html_text
     assert "signed-in-first live testing environment with App Server and hook lifecycle proof" in html_text
+    assert "broader or stronger lawful enforcement beyond proven lanes" in html_text
     assert "Cortex Complete" not in html_text
     assert "Today vs Future" not in html_text
 
@@ -744,4 +771,4 @@ def test_runtime_restack_program_lock_is_recorded() -> None:
     assert "Current accepted state after K1 closeout" in text
     assert "implemented at K1 proof head `d4c311f` and truthfully closed at deterministic closeout head `79b8f39`" in text
     assert "later bounded runtime/product trains may still be explicitly opened" in master_plan_text
-    assert "records `K4` as landed on the proven reference/OpenAI lanes" in theory_text
+    assert "records the bounded K train as landed on the proven reference/OpenAI lanes" in theory_text

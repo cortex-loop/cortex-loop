@@ -145,7 +145,7 @@ EXPECTATIONS = (
                 test_file="tests/unit/test_reference_runtime_scoring.py",
                 test_names=(
                     "test_reference_scoring_defaults_to_neutral_when_margin_is_below_threshold",
-                    "test_reference_scoring_promotes_brake_when_guarded_pressure_is_present",
+                    "test_reference_scoring_tightens_to_neutral_when_guarded_pressure_is_present",
                     "test_reference_scoring_promotes_branch_under_branch_pressure",
                     "test_reference_scoring_keeps_masked_family_inadmissible_even_when_top_ranked",
                 ),
@@ -161,7 +161,7 @@ EXPECTATIONS = (
                 test_file="tests/unit/test_reference_runtime_scoring.py",
                 test_names=(
                     "test_reference_scoring_defaults_to_neutral_when_margin_is_below_threshold",
-                    "test_reference_scoring_promotes_brake_when_guarded_pressure_is_present",
+                    "test_reference_scoring_tightens_to_neutral_when_guarded_pressure_is_present",
                     "test_reference_scoring_promotes_branch_under_branch_pressure",
                     "test_reference_scoring_keeps_masked_family_inadmissible_even_when_top_ranked",
                 ),

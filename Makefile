@@ -73,10 +73,14 @@ revalidate-openai-host-control:
 
 revalidate-executive-loop:
 	$(PYTEST) tests/unit/test_sre_neutral_hinge.py -q
+	$(PYTEST) tests/unit/test_reference_executive_builder.py -q
 	$(PYTEST) tests/unit/test_reference_runtime_scoring.py -q
 	$(PYTEST) tests/unit/test_reference_runtime_step.py -q
+	$(PYTEST) tests/unit/test_openai_runtime_step.py -q
 	$(PYTEST) tests/integration/test_reference_runtime_cli.py -q
+	$(PYTEST) tests/integration/test_reference_runtime_continuity.py -q
 	$(PYTEST) tests/integration/test_openai_runtime_cli.py -q
+	$(PYTEST) tests/integration/test_openai_runtime_continuity.py -q
 	$(PYTEST) tests/integration/test_openai_ingress_cli.py -q
 	$(PYTEST) tests/integration/test_openai_service.py -q
 	$(PYTEST) tests/integration/test_openai_host_control_service.py -q

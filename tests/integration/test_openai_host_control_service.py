@@ -52,6 +52,10 @@ def test_openai_host_control_action_endpoint_returns_ordered_o1_records_and_muta
         "selected_delta_over_neutral",
         "scores",
     )
+    assert [
+        record["control_ledger"]["allocation_diagnostics"]["activation_threshold"]
+        for record in payload["records"]
+    ] == [0.35, 0.35, 0.25]
     assert payload["records"][-1]["control_ledger"]["allocation_diagnostics"]["alpha_t"] == 0.85
     assert payload["records"][-1]["control_ledger"]["allocation_diagnostics"]["scores"][0]["allocated_score"] != payload["records"][-1]["control_ledger"]["allocation_diagnostics"]["scores"][0]["online_score"]
     assert export_status == 200

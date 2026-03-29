@@ -9,6 +9,7 @@ from cortex.sre.families import SoftControlFamily
 from cortex.sre.reference_scoring import (
     build_reference_allocation_scorecard,
     build_reference_online_score_components,
+    compute_reference_activation_threshold,
     compute_reference_alpha_t,
     select_reference_soft_control,
 )
@@ -42,7 +43,7 @@ def test_reference_scoring_defaults_to_neutral_when_margin_is_below_threshold() 
     assert selection.neutral_dominance.neutral_selected is True
 
 
-def test_reference_scoring_promotes_brake_when_guarded_pressure_is_present() -> None:
+def test_reference_scoring_tightens_to_neutral_when_guarded_pressure_is_present() -> None:
     selection = select_reference_soft_control(
         _state(
             mode_tag="guarded_review",
@@ -65,8 +66,8 @@ def test_reference_scoring_promotes_brake_when_guarded_pressure_is_present() -> 
         )
     )
 
-    assert selection.selected_family is SoftControlFamily.BRAKE
-    assert selection.neutral_dominance.neutral_selected is False
+    assert selection.selected_family is SoftControlFamily.NEUTRAL
+    assert selection.neutral_dominance.neutral_selected is True
 
 
 def test_reference_scoring_promotes_branch_under_branch_pressure() -> None:
@@ -207,6 +208,44 @@ def test_reference_alpha_t_changes_with_visible_pressure_only() -> None:
     assert compute_reference_alpha_t(pressured) == 0.75
 
 
+def test_reference_activation_threshold_uses_feedback_pressure_without_touching_alpha() -> None:
+    guarded = _state(
+        mode_tag="review_pending",
+        family_mask=frozenset(
+            {
+                SoftControlFamily.NEUTRAL,
+                SoftControlFamily.CHECK,
+                SoftControlFamily.BRAKE,
+            }
+        ),
+        budget_band="high",
+        top_family_set=frozenset({SoftControlFamily.NEUTRAL, SoftControlFamily.CHECK}),
+        brake_state=BrakeState.GUARDED,
+    )
+    feedback_pressured = _state(
+        mode_tag="review_pending",
+        family_mask=frozenset(
+            {
+                SoftControlFamily.NEUTRAL,
+                SoftControlFamily.CHECK,
+                SoftControlFamily.BRAKE,
+            }
+        ),
+        budget_band="high",
+        top_family_set=frozenset({SoftControlFamily.NEUTRAL, SoftControlFamily.CHECK}),
+        brake_state=BrakeState.GUARDED,
+        feedback_pressure_tags=frozenset({"feedback:override-pressure"}),
+    )
+
+    assert compute_reference_alpha_t(guarded) == 1.0
+    assert compute_reference_activation_threshold(guarded) == pytest.approx(0.25)
+    assert select_reference_soft_control(guarded).selected_family is SoftControlFamily.CHECK
+
+    assert compute_reference_alpha_t(feedback_pressured) == 1.0
+    assert compute_reference_activation_threshold(feedback_pressured) == pytest.approx(0.30)
+    assert select_reference_soft_control(feedback_pressured).selected_family is SoftControlFamily.CHECK
+
+
 def test_reference_scoring_selection_can_change_under_allocated_score_semantics() -> None:
     unpressured = _state(
         mode_tag="review_pending",
@@ -244,6 +283,7 @@ def _state(
     top_family_set: frozenset[SoftControlFamily],
     brake_state: BrakeState,
     host_friction_tags: frozenset[str] = frozenset(),
+    feedback_pressure_tags: frozenset[str] = frozenset(),
     active_track_ref: str = "main",
     resume_anchor_available: bool = False,
 ) -> ReferenceExecutiveState:
@@ -261,6 +301,7 @@ def _state(
             budget_band=budget_band,
             top_family_set=top_family_set,
             host_friction_tags=host_friction_tags,
+            feedback_pressure_tags=feedback_pressure_tags,
         ),
         brake=ReferenceBrakeView(brake_state=brake_state),
     )

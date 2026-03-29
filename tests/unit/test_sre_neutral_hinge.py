@@ -218,6 +218,27 @@ def test_reference_control_allocation_view_requires_non_empty_host_friction_tags
         )
 
 
+def test_reference_control_allocation_view_requires_non_empty_feedback_pressure_tags() -> None:
+    view = ReferenceControlAllocationView(
+        budget_band="low",
+        feedback_pressure_tags=frozenset({"feedback:override-pressure"}),
+    )
+
+    assert view.feedback_pressure_tags == frozenset({"feedback:override-pressure"})
+
+    with pytest.raises(
+        ValueError,
+        match=(
+            "ReferenceControlAllocationView.feedback_pressure_tags must contain only "
+            "non-empty values after trimming."
+        ),
+    ):
+        ReferenceControlAllocationView(
+            budget_band="low",
+            feedback_pressure_tags=frozenset({"   "}),
+        )
+
+
 def test_reference_brake_view_requires_typed_brake_state() -> None:
     view = ReferenceBrakeView(brake_state=BrakeState.GUARDED)
 

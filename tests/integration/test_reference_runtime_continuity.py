@@ -7,6 +7,8 @@ import subprocess
 import sys
 from pathlib import Path
 
+import pytest
+
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 FIXTURE_PATH = (
@@ -30,7 +32,7 @@ def test_reference_runtime_cli_preserves_open_suspend_resume_merge_continuity_in
     assert [record["event_index"] for record in records] == [1, 2, 3, 4]
     assert [record["selected_family"] for record in records] == [
         "neutral",
-        "brake",
+        "neutral",
         "neutral",
         "neutral",
     ]
@@ -46,6 +48,10 @@ def test_reference_runtime_cli_preserves_open_suspend_resume_merge_continuity_in
         0.75,
         0.85,
     ]
+    assert [
+        record["control_ledger"]["allocation_diagnostics"]["activation_threshold"]
+        for record in records
+    ] == pytest.approx([0.40, 0.35, 0.40, 0.25])
     assert [record["session_summary"]["branch_registry"] for record in records] == [
         ["main", "branch-alpha"],
         ["main", "branch-alpha"],

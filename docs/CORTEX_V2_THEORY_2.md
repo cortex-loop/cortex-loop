@@ -25,7 +25,7 @@ Active authority remains:
 - `docs/CORTEX_V2_MEDIATION_JUSTIFICATION_NOTE.md` says mediation is still `not justified yet`.
 - `docs/CORTEX_V2_MEDIATION_EVIDENCE_NOTE_0.md` shows cell-level signal on thrash, uncertainty, and host-realization, but every package-level axis remains `insufficient`.
 - `docs/CORTEX_V2_VERIFICATION_ERGONOMICS_MASTER_PLAN_0.md` still defines the active non-feature follow-on campaign.
-- `docs/CORTEX_V2_ACTIVE_WORKSTREAM.md` now records `K4` as landed on the proven reference/OpenAI lanes, keeps service proof deferred on this machine, keeps Gemini as the explicit partial host line, and points the next lawful move at bounded closed-loop feedback and enforcement on the proven reference/OpenAI lanes.
+- `docs/CORTEX_V2_ACTIVE_WORKSTREAM.md` now records the bounded K train as landed on the proven reference/OpenAI lanes, keeps service proof deferred on this machine, keeps Gemini as the explicit partial host line, and requires any next move to be a separate post-K seam rather than more K widening by inertia.
 - `pytest.ini`, `Makefile`, and `docs/CORTEX_V2_LOCAL_VERIFICATION.md` now provide repo-local verification entry points, including `make verify`, `make test-smoke`, evidence revalidation commands, and mediation evidence revalidation commands.
 - `.coveragerc`, `make coverage`, and `docs/CORTEX_V2_COVERAGE_BASELINE_NOTE_0.md` now exist as repo-local coverage hygiene surfaces.
 

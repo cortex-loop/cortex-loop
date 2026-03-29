@@ -163,6 +163,10 @@ def test_reference_runtime_cli_reads_event_file_and_emits_one_record_per_event()
         0.85,
         0.85,
     ]
+    assert [
+        record["control_ledger"]["allocation_diagnostics"]["activation_threshold"]
+        for record in records
+    ] == [0.35, 0.30, 0.25]
     assert records[1]["control_ledger"]["allocation_diagnostics"]["scores"][0]["allocated_score"] != records[1]["control_ledger"]["allocation_diagnostics"]["scores"][0]["online_score"]
     assert records[2]["control_ledger"]["allocation_diagnostics"]["scores"][0]["allocated_score"] != records[2]["control_ledger"]["allocation_diagnostics"]["scores"][0]["online_score"]
 

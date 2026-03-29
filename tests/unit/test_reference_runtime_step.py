@@ -172,7 +172,7 @@ def test_reference_runtime_step_result_certifies_full_commitment_when_runtime_pa
     assert result.control_ledger_summary["primary_reason"] is None
     _assert_allocation_diagnostics_shape(
         result.control_ledger_summary["allocation_diagnostics"],
-        activation_threshold=0.2,
+        activation_threshold=0.25,
         expected_alpha=0.85,
         expect_allocated_equals_online=False,
     )
@@ -614,6 +614,42 @@ def test_reference_runtime_step_enforces_latched_brake_to_neutral_without_eviden
     assert result.session.last_realization_feedback.realized_family is SoftControlFamily.NEUTRAL
 
 
+def test_reference_runtime_step_enforces_guarded_feedback_pressure_to_check_when_evidence_dominates(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(
+        reference_runtime,
+        "build_reference_executive_state",
+        _guarded_state_with_feedback_pressure,
+    )
+    monkeypatch.setattr(
+        reference_runtime,
+        "select_reference_soft_control",
+        lambda executive_state: _selection(SoftControlFamily.BRANCH),
+    )
+
+    result = run_reference_runtime_step(
+        "ApprovalResult",
+        {
+            "session_id": "session-guarded-feedback",
+            "commitment_id": "commit-guarded-feedback",
+            "externally_consequential": True,
+            "result_artifact_ref": "artifact-guarded-feedback",
+        },
+    )
+
+    assert result.selected_family is SoftControlFamily.BRANCH
+    assert result.realized_family is SoftControlFamily.CHECK
+    assert result.warnings == ("guarded-feedback-enforced:branch:check",)
+    assert result.control_ledger_summary["selected_family"] == "branch"
+    assert result.control_ledger_summary["realized_family"] == "check"
+    assert result.control_ledger_summary["primary_reason"] == (
+        "guarded-feedback-enforced:branch:check"
+    )
+    assert result.session.last_realization_feedback is not None
+    assert result.session.last_realization_feedback.realized_family is SoftControlFamily.CHECK
+
+
 def _goal_progress_level(result: object) -> float:
     executive_state = result.executive_state
     for estimate in executive_state.uncertainty_monitoring.classwise_uncertainty:
@@ -746,6 +782,46 @@ def _latched_state_without_evidence(*args: object, **kwargs: object) -> Referenc
             host_friction_tags=frozenset({"single-process-limit"}),
         ),
         brake=ReferenceBrakeView(brake_state=BrakeState.LATCHED),
+    )
+
+
+def _guarded_state_with_feedback_pressure(
+    *args: object,
+    **kwargs: object,
+) -> ReferenceExecutiveState:
+    return ReferenceExecutiveState(
+        goal_continuity=ReferenceGoalContinuityView(active_track_ref="review-track"),
+        uncertainty_monitoring=ReferenceUncertaintyMonitoringView(
+            classwise_uncertainty=(
+                UncertaintyEstimate(class_tag="evidence", level=0.95),
+                UncertaintyEstimate(class_tag="environment", level=0.75),
+                UncertaintyEstimate(class_tag="host-capability", level=0.2),
+                UncertaintyEstimate(class_tag="goal-progress", level=0.45),
+            ),
+            contradiction_spike_flags=frozenset({"prior-enforcement-override"}),
+        ),
+        mode_and_gating=ReferenceModeAndGatingView(
+            mode_tag="guarded_review",
+            family_mask=frozenset(
+                {
+                    SoftControlFamily.NEUTRAL,
+                    SoftControlFamily.CHECK,
+                    SoftControlFamily.BRANCH,
+                    SoftControlFamily.BRAKE,
+                }
+            ),
+        ),
+        control_allocation=ReferenceControlAllocationView(
+            budget_band="high",
+            top_family_set=frozenset(
+                {
+                    SoftControlFamily.NEUTRAL,
+                    SoftControlFamily.BRANCH,
+                }
+            ),
+            feedback_pressure_tags=frozenset({"feedback:override-pressure"}),
+        ),
+        brake=ReferenceBrakeView(brake_state=BrakeState.GUARDED),
     )
 
 

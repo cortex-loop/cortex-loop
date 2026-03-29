@@ -38,6 +38,11 @@ It is workflow state only. It does not override the packet documents, implementa
     - `allocated_score` can differ from `online_score`
     - selection now runs on allocated-score semantics
     - the existing public runtime projection shapes remain unchanged
+  - the bounded K train is now landed on the proven reference/OpenAI lanes:
+    - `activation_threshold` is now feedback-conditioned rather than fixed to budget-band baseline alone
+    - bounded prior-feedback pressure is now explicit through internal `feedback_pressure_tags`
+    - guarded-feedback and latched-brake realization remain explicit rather than smoothing selected-family, realized-family, or lawful commitment truth
+    - no support-memory runtime, mediation, service/auth widening, or broader host rollout was introduced
   - Gemini restart-continuity repeat-stability re-audit is now landed for current machine truth:
     - local Gemini settings already match current best practice:
       - no pinned default model
@@ -54,7 +59,7 @@ It is workflow state only. It does not override the packet documents, implementa
   - the Gemini documented-host-event runtime shell, raw-transcript ingress shell, loopback service shell, and bounded outbound Gemini host-control lane remain accepted on the current line
   - the Claude documented-host-event runtime shell, raw-transcript ingress shell, loopback service shell, and bounded outbound Claude host-control lane remain accepted on the current line
   - refreshed live models on the current line are `claude-sonnet-4-6`, `gemini-2.5-pro`, and `gpt-5.4`
-  - `R6`, `R7`, `O5`, `O6`, `G1`, `G2`, `G3`, `G4`, `A1`, `A2`, `A3`, and `A4` are landed on the current line
+  - `R6`, `R7`, `R8`, `R9`, `O5`, `O6`, `O7`, `O8`, `G1`, `G2`, `G3`, `G4`, `A1`, `A2`, `A3`, and `A4` are landed on the current line
 - Accepted baseline authority anchors:
   - `docs/CORTEX_V2_IMPLEMENTATION_STATUS_NOTE.md`
   - `docs/CORTEX_V2_IMPLEMENTATION_MASTER_PLAN_2.md`
@@ -63,12 +68,12 @@ It is workflow state only. It does not override the packet documents, implementa
 
 ## 2. Current campaign and seam state
 
-- Current campaign: `post-K4 closeout and continuation hardening`
+- Current campaign: `post-K train closeout on proven reference/OpenAI lanes`
 - Current working branch at ledger update: `main`
-- Current branch role: clean synced resting branch after K4 and K4F closeout
-- Current candidate seam: none; `K4` is landed for current scope on the proven reference/OpenAI lanes and its continuation/support truth is now hardened
-- Current seam status: `bounded computed executive loop is now real on the proven reference/OpenAI lanes, shared runtime projections remain compatible, exact accepted-head lookup now lives only in clean synced main rather than mirrored support-doc hashes, and no support-memory/service/auth/mediation widening was introduced`
-- the compare surface and live-validation truth from earlier seams remain accepted ancestor input and are not being reopened by K4.
+- Current branch role: clean synced resting branch after K-train closeout
+- Current candidate seam: none; the bounded K train is landed for current scope on the proven reference/OpenAI lanes
+- Current seam status: `computed allocation, feedback-conditioned thresholding, and bounded enforcement-aware realized control are now real on the proven reference/OpenAI lanes, shared runtime projections remain compatible, exact accepted-head lookup now lives only in clean synced main rather than mirrored support-doc hashes, and no support-memory/service/auth/mediation widening was introduced`
+- the compare surface and live-validation truth from earlier seams remain accepted ancestor input and are not being reopened by the landed K train.
 - Seam risk: load-bearing runtime seam plus deterministic docs/correspondence sync
 
 ## 3. Next lawful move
@@ -109,7 +114,10 @@ It is workflow state only. It does not override the packet documents, implementa
 - Next lawful move:
   - keep the machine-auth service lane explicitly deferred on this machine
   - keep Gemini as the remaining explicit partial host line on this machine
-  - the next lawful north-star seam is bounded closed-loop feedback and enforcement on the proven reference/OpenAI lanes
+  - do not reopen the K train by inertia now that the bounded proven-lane executive/runtime line is landed
+  - the next lawful move must be a separate post-K seam choice:
+    - either reopen live service proof on a machine that can honestly support machine auth and spend approval
+    - or open a separately justified evidence/preparation seam for later support-memory or mediation work without silently turning it into runtime doctrine
 
 ## 4. Explicitly blocked moves
 
@@ -131,6 +139,7 @@ It is workflow state only. It does not override the packet documents, implementa
 - Do not overread the current auto-mode improvement as full Gemini closure while `restart_continuity` is still not repeat-stable.
 - Do not widen `K4` into support-memory runtime, mediation, service/auth work, or broader host rollout.
 - Do not unfreeze threshold law in `K4`; the current budget-band activation-threshold law stays fixed.
+- Do not widen the landed K train into support-memory runtime, mediation, vigor scaling, service/auth work on this machine, or broader host rollout.
 - Do not start a new managed session from local `main` while it is ahead or diverged from `origin/main`.
 - Do not reintroduce extra long-lived local worktrees or non-main branch residue without an explicit new seam.
 - Do not leave remote `review/*` heads behind after future publication cleanup.

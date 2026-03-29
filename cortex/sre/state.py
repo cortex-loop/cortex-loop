@@ -55,6 +55,7 @@ class ReferenceControlAllocationView:
     budget_band: str
     top_family_set: frozenset[SoftControlFamily] = field(default_factory=frozenset)
     host_friction_tags: frozenset[str] = field(default_factory=frozenset)
+    feedback_pressure_tags: frozenset[str] = field(default_factory=frozenset)
 
     def __post_init__(self) -> None:
         if not self.budget_band.strip():
@@ -69,6 +70,11 @@ class ReferenceControlAllocationView:
         if any(not tag.strip() for tag in self.host_friction_tags):
             raise ValueError(
                 "ReferenceControlAllocationView.host_friction_tags must contain only "
+                "non-empty values after trimming."
+            )
+        if any(not tag.strip() for tag in self.feedback_pressure_tags):
+            raise ValueError(
+                "ReferenceControlAllocationView.feedback_pressure_tags must contain only "
                 "non-empty values after trimming."
             )
 
