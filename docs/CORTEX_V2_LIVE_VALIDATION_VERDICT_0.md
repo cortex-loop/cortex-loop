@@ -7,7 +7,7 @@ Status: L2/L2b/L2c/L2d/L2e live-testing environment verdict note
 
 **lifecycle-first is promising but under-instrumented**
 
-This remains the broader live-validation verdict because Gemini is still an explicit partial host line and the March 29 automation/service reruns remain all-blocked on missing machine auth.
+This remains the broader live-validation verdict because Gemini is still an explicit partial host line and the March 29 automation/service reruns ended in an explicit deferred service continuation for this machine.
 
 The new operator-only payoff note is narrower and may still conclude that operator lifecycle-first is already paying off clearly.
 That operator-only audit is now landed for current scope.
@@ -34,7 +34,7 @@ Reason:
     - `restart_continuity` is still not repeat-stable because the latest reruns include a `capacity_exhausted` blocker on `auto`
   - `gemini-2.5-pro` is valid locally but still capacity-blocked on the bounded exploratory smoke lane
 - so Gemini remains the only operator-side host still blocking closure,
-- and the March 29 automation/service reruns remain all-blocked on missing machine auth.
+- and the March 29 automation/service reruns ended in a fully deferred machine-auth service lane on this machine.
 
 ## Current host summary
 
@@ -52,7 +52,7 @@ Reason:
   - `PostToolUse`
   - `Stop`
   - `SessionEnd`
-- automation lane: repeated `N1` reruns remain blocked on missing `ANTHROPIC_API_KEY`
+- automation lane: repeated `N1` reruns remain auth-missing, so the service proof is deferred on this machine
 
 ### Gemini
 
@@ -70,7 +70,7 @@ Reason:
   - `BeforeTool`
   - `AfterTool`
   - `SessionEnd`
-- automation lane: repeated `N1` reruns remain blocked on missing ADC or `GEMINI_API_KEY`
+- automation lane: repeated `N1` reruns remain auth-missing, so the service proof is deferred on this machine
 
 ### OpenAI
 
@@ -81,7 +81,7 @@ Reason:
   - `codex app-server truth_gap`: truthful incomplete
   - `codex app-server restart_continuity`: success twice
   - current caveat: App Server `thread/read` remains lossy for ephemeral threads, so the event timeline is the primary lifecycle truth surface
-- automation lane: repeated `N1` reruns remain blocked on missing `OPENAI_API_KEY`
+- automation lane: repeated `N1` reruns remain auth-missing, so the service proof is deferred on this machine
 
 ## What L2 already improves over L1
 
@@ -101,18 +101,15 @@ Reason:
 The Gemini auto-mode product-path re-earn seam is now complete.
 The next honest move is one bounded seam, chosen explicitly:
 
-1. If you want to advance the service lane:
-   - provide machine auth and spend approval for:
-     - `ANTHROPIC_API_KEY`
-     - Vertex ADC or `GEMINI_API_KEY`
-     - `OPENAI_API_KEY`
-     - `CORTEX_LIVE_SERVICE_SPEND_APPROVED`
-   - then rerun the bounded service-proof lane
-2. If you want a cleaner operator-only support story first:
+1. For current-machine continuation:
+   - keep the machine-auth service lane deferred
    - open one bounded Gemini `restart_continuity` repeat-stability seam
    - do not smooth the current partial continuity story away
+2. If you later intentionally reopen service proof:
+   - satisfy the bounded service auth/spend contract recorded in `docs/CORTEX_V2_LIVE_SERVICE_PROOF_0.md`
+   - then rerun the bounded service-proof lane
 
-For the bounded service-proof path, rerun:
+For the bounded service-proof path, rerun later:
 
 - `make live-preflight`
 - `python3 tools/live_cortex_host_control.py --lane automation --provider claude`

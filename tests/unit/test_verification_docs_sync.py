@@ -342,7 +342,7 @@ def test_resume_protocol_and_active_workstream_contract_exist() -> None:
     assert "Current working branch at ledger update:" in workstream_text
     assert "Current branch role:" in workstream_text
     assert "accepted workflow baseline truth now rests on `main` rather than a long-lived working branch" in workstream_text
-    assert "Current candidate seam: none; `N1` is landed for current scope with an honest blocked service outcome" in workstream_text
+    assert "Current candidate seam: none; `N1` is landed for current scope with an explicit deferred service continuation" in workstream_text
     assert "automation baseline reruns now block honestly on readiness rather than faking direct network probes" in workstream_text
     assert "the compare surface now separates accepted operator proof from current automation reruns" in workstream_text
     assert "the current signed-in smoke surfaces are now clean again" in workstream_text
@@ -356,9 +356,9 @@ def test_resume_protocol_and_active_workstream_contract_exist() -> None:
     assert "`truth_gap` is truthful on the latest reruns on `auto`" in workstream_text
     assert "`restart_continuity` is not yet repeat-stable because the latest reruns include a `capacity_exhausted` blocker on `auto`" in workstream_text
     assert "repeat-stable Gemini closure is therefore still unearned" in workstream_text
-    assert "provide bounded machine auth plus spend approval for:" in workstream_text
-    assert "rerun the bounded `N1` service-proof lane exactly as recorded in `docs/CORTEX_V2_LOCAL_VERIFICATION.md`" in workstream_text
-    assert "service proof remains blocked until machine auth exists" in workstream_text
+    assert "treat the machine-auth service lane as explicitly deferred on this machine" in workstream_text
+    assert "open one bounded Gemini `restart_continuity` repeat-stability seam" in workstream_text
+    assert "only reopen the bounded `N1` service-proof lane later if machine auth is intentionally provided" in workstream_text
     assert "Do not treat signed-in provider CLI sessions as equivalent to the automation credentials" in workstream_text
     assert "Do not treat the new OpenAI App Server operator proof as license to reopen v1 assisted mode" in workstream_text
     assert "Do not keep repo-tracked live artifacts under `docs/live_validation/`" in workstream_text
@@ -427,7 +427,7 @@ def test_reference_runtime_program_lock_is_recorded() -> None:
     assert "loopback-only HTTP is landed on the accepted K1 closeout line" in phase_gate_text
     assert "one active session per process is real for current scope" in phase_gate_text
 
-    assert "provide bounded machine auth plus spend approval for:" in workstream_text
+    assert "treat the machine-auth service lane as explicitly deferred on this machine" in workstream_text
     assert "the live-testing environment now has explicit operator and automation lane semantics" in workstream_text
     assert "the current signed-in smoke surfaces are now clean again" in workstream_text
     assert "the OpenAI App Server operator lane now completes" in workstream_text
@@ -594,7 +594,7 @@ def test_reference_runtime_program_lock_is_recorded() -> None:
     assert "operator-only audit is now landed for current scope" in live_validation_verdict_text
     assert "The Gemini auto-mode product-path re-earn seam is now landed for current scope." in live_validation_verdict_text
     service_proof_text = _read(LIVE_SERVICE_PROOF_PATH)
-    assert "Status: active service-lane live-proof note" in service_proof_text
+    assert "Status: deferred current-machine service-lane live-proof note" in service_proof_text
     assert "Signed-in CLI sessions do **not** count as service-lane auth." in service_proof_text
     assert "package-level service proof is updated truthfully in `docs/CORTEX_V2_PHASE_GATES_2.md`" in service_proof_text
     assert "repeated automation baseline reruns now stop immediately on auth readiness" in service_proof_text
@@ -728,4 +728,4 @@ def test_runtime_restack_program_lock_is_recorded() -> None:
     assert "Current accepted state after K1 closeout" in text
     assert "implemented at K1 proof head `d4c311f` and truthfully closed at deterministic closeout head `79b8f39`" in text
     assert "later bounded runtime/product trains may still be explicitly opened" in master_plan_text
-    assert "now records the bounded `N1` service-lane reruns, the current all-blocked machine-auth outcome, and the next lawful move to provide machine auth rather than widen doctrine" in theory_text
+    assert "now records the bounded `N1` service-lane reruns, the current all-auth-missing machine outcome, and the explicit decision to defer service proof on this machine rather than treat API-key setup as the current blocker" in theory_text

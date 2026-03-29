@@ -43,11 +43,11 @@ It is workflow state only. It does not override the packet documents, implementa
 
 ## 2. Current campaign and seam state
 
-- Current campaign: `N1 service-lane proof and auth alignment`
+- Current campaign: `N1 service-lane proof deferred for current machine`
 - Current working branch at ledger update: `main`
 - Current branch role: clean synced resting branch after the current-machine `N1` reruns
-- Current candidate seam: none; `N1` is landed for current scope with an honest blocked service outcome
-- Current seam status: `all three automation/service lanes remain blocked on missing machine auth, operator truth remains the accepted current line, and the compare surface now separates accepted operator proof from current automation reruns`
+- Current candidate seam: none; `N1` is landed for current scope with an explicit deferred service continuation
+- Current seam status: `all three automation/service lanes remain auth-missing on this machine, service proof is now explicitly deferred rather than treated as the current blocker, operator truth remains the accepted current line, and the compare surface now separates accepted operator proof from current automation reruns`
 - Seam risk: timing/environment-sensitive live-proof seam plus deterministic tooling/docs sync
 
 ## 3. Next lawful move
@@ -83,14 +83,9 @@ It is workflow state only. It does not override the packet documents, implementa
   - repeat-stable Gemini closure is therefore still unearned
   - the current automation/service lane still fails honestly on missing machine auth
 - Next lawful move:
-  - provide bounded machine auth plus spend approval for:
-    - `ANTHROPIC_API_KEY`
-    - Vertex ADC or `GEMINI_API_KEY`
-    - `OPENAI_API_KEY`
-    - `CORTEX_LIVE_SERVICE_SPEND_APPROVED`
-  - rerun the bounded `N1` service-proof lane exactly as recorded in `docs/CORTEX_V2_LOCAL_VERIFICATION.md`
-  - if service auth still cannot be provided, keep `L6A-D` blocked and choose a different bounded north-star seam instead of widening auth/runtime doctrine
-  - service proof remains blocked until machine auth exists
+  - treat the machine-auth service lane as explicitly deferred on this machine
+  - if work continues now, open one bounded Gemini `restart_continuity` repeat-stability seam rather than reopening auth alignment
+  - only reopen the bounded `N1` service-proof lane later if machine auth is intentionally provided
 
 ## 4. Explicitly blocked moves
 

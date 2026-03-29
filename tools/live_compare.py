@@ -193,7 +193,7 @@ def _next_corrective_seam(
         "auth_missing" in blocker_classes or "blocked_by_spend_policy" in blocker_classes or "mis_scoped" in blocker_classes
     ):
         return (
-            "provide the required machine auth and explicit spend approval for the bounded service lane, then rerun the automation proof without widening runtime or transport doctrine"
+            "treat the automation service lane as explicitly deferred on this machine until machine auth is intentionally reopened; if work continues now, prefer a bounded non-service seam such as Gemini restart_continuity repeat-stability"
         )
     if "auth_expired" in blocker_classes or "not_logged_in" in blocker_classes:
         return (
@@ -459,8 +459,8 @@ def _service_lane_delta(providers: dict[str, Any]) -> str:
             blocked.append(f"{provider}:unknown")
     return (
         f"operator strong/partial truth is earned on `{', '.join(providers.keys())}`; "
-        f"automation auth readiness is `{', '.join(ready) or 'none'}` ready and `{', '.join(blocked) or 'none'}` blocked; "
-        f"automation service proof is landed on `{', '.join(service_success) or 'none'}`."
+        f"automation auth readiness is `{', '.join(ready) or 'none'}` ready and `{', '.join(blocked) or 'none'}` unavailable; "
+        f"automation service proof is `{', '.join(service_success) or 'none'}` landed and otherwise deferred on this machine."
     )
 
 

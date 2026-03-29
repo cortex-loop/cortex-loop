@@ -1,7 +1,7 @@
 # CORTEX_V2_LIVE_SERVICE_PROOF_0
 
 Date: 2026-03-28
-Status: active service-lane live-proof note
+Status: deferred current-machine service-lane live-proof note
 
 ## Purpose
 
@@ -32,6 +32,7 @@ Current local machine state after the March 29 reruns:
   - `service_smoke`
   - `service_restart_continuity`
 - no local service-lane live proof is yet earned
+- the service-lane proof is now explicitly deferred for this machine until machine auth is intentionally reopened
 
 ## Closeout law
 

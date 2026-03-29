@@ -409,7 +409,7 @@ def test_service_lane_delta_reports_auth_readiness_and_service_success() -> None
     assert "automation auth readiness is `gemini` ready" in delta
     assert "claude:missing" in delta
     assert "openai:blocked_by_spend_policy" in delta
-    assert "automation service proof is landed on `openai`" in delta
+    assert "automation service proof is `openai` landed and otherwise deferred on this machine" in delta
 
 
 def test_live_compare_falls_back_to_accepted_operator_truth_when_local_operator_artifacts_are_absent(
