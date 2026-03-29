@@ -74,11 +74,11 @@ It is workflow state only. It does not override the packet documents, implementa
 
 ## 2. Current campaign and seam state
 
-- Current campaign: `Gemini operator auth-path explanation pending`
-- Current working branch at ledger update: `codex/20260330-005755-gemini-operator-api-key-recheck`
-- Current branch role: managed session branch for a non-load-bearing Gemini evidence-plumbing recheck
-- Current candidate seam: `Gemini operator API-key auth-path truthfulness`; `Q1` remains landed on the current machine, `N2` remains blocked on a capable machine, and the current unresolved line is whether the new Gemini API-key path materially changes the mixed host result
-- Current seam status: `the live harness now detects Gemini operator API-key mode from CLI settings/env, correctly classifies GEMINI_API_KEY environment-variable failures as auth_missing, and blocks raw-vs-Cortex directionality scoring when both variants are auth-blocked; the current local API-key recheck is itself still blocked because headless gemini -p requires GEMINI_API_KEY in the shell environment`
+- Current campaign: `Gemini vanilla directionality normalization pending`
+- Current working branch at ledger update: `review/gemini-vanilla-directionality`
+- Current branch role: explicit manual review branch because local `main` is ahead of `origin/main` by one verified unpublished commit and a managed session cannot be started honestly from that state
+- Current candidate seam: `Gemini vanilla operator directionality rerun`; `Q1` remains landed on the accepted current-machine line, `N2` remains blocked on a capable machine, and the current unresolved line is whether removing the Gemini `plan`-mode confound changes the mixed host result
+- Current seam status: `the Gemini operator harness now keeps the first continuity turn on the vanilla headless path instead of forcing plan mode; direct vanilla reruns can complete pass_minimal, preserve truth_gap, and resume restart_continuity, but the bounded paired rerun remains mixed because the free API-key lane quickly re-blocks on quota pressure under repeat load`
 - the compare surface and live-validation truth from earlier seams remain accepted ancestor input and are not being reopened by the landed K train.
 - Seam risk: shared verification-plumbing seam plus environment-sensitive evidence rerun
 
@@ -120,23 +120,23 @@ It is workflow state only. It does not override the packet documents, implementa
     - Gemini CLI `0.35.3` does switch the operator lane to `api_key` when `.gemini/settings.json` selects `gemini-api-key`
     - but headless `gemini -p` still blocks with `auth_missing` until `GEMINI_API_KEY` is present in the shell environment
     - the recheck tooling now reports that blocker truthfully instead of mislabeling it as a clean probe
+  - the later Gemini vanilla rerun now sharpens that story further:
+    - forcing `plan` on the first continuity turn was a real confound on the free API-key lane
+    - one-off vanilla reruns can complete all three scenario families on this machine
+    - but the bounded paired rerun still becomes mixed because repeated free-tier calls quickly hit `quota_exhausted` on the flash lane
   - the current automation/service lane still fails honestly on missing machine auth
 - Next lawful move:
   - keep the machine-auth service lane explicitly deferred on this machine for actual proof execution
   - keep Gemini as the remaining explicit partial host line on this machine
   - do not reopen the K train by inertia now that the bounded proven-lane executive/runtime line is landed
   - do not widen from the mixed `Q1` package result into new runtime or product claims
-  - the next lawful move remains one narrow Gemini explanation seam, but it now has a stricter first gate:
-    - provide `GEMINI_API_KEY` in the shell environment for the headless operator lane
-    - then rerun a bounded Gemini-only slice before touching package-level directionality truth:
-      - preflight twice
-      - operator baseline
-      - product-path pass / gap / continuity
-      - paired raw-vs-Cortex directionality only after those entry checks are stable
-    - then determine whether the mixed Gemini directionality result reflects
+  - the next lawful move remains one narrow Gemini explanation seam, but the auth/bootstrap gate is now cleared
+  - the remaining question is narrower:
+    - determine whether the still-mixed Gemini result now reflects
       - true Cortex-added burden,
-      - host-capacity noise,
-      - or audit-measurement noise
+      - repeat-load free-tier quota pressure,
+      - or residual audit-measurement noise
+  - do not change package-level directionality truth until the Gemini paired rerun is repeat-stable on the normalized vanilla path
   - keep `N2` as a separate blocked train pending a capable machine; do not conflate that with the Gemini directionality blocker
 
 ## 4. Explicitly blocked moves
@@ -155,6 +155,7 @@ It is workflow state only. It does not override the packet documents, implementa
 - Do not silently reintroduce a pinned Gemini operator model as the default testing start point; current local truth is that CLI auto mode is the intended default.
 - Do not silently promote `gemini-2.5-pro` from exploratory sidecar to closure-path truth while it is still capacity-blocked on smoke.
 - Do not treat selecting `gemini-api-key` in `.gemini/settings.json` as sufficient for headless Gemini operator proof; the current CLI still requires `GEMINI_API_KEY` in the shell environment or a loaded `.env`.
+- Do not use Gemini `plan` mode as the default comparison baseline on the free API-key operator lane; it changes the routed quota/model path and contaminates the audit.
 - Do not reopen Gemini model chasing or assisted-mode speculation inside the active `L4` service-proof train.
 - Do not shell out from service transports to provider CLIs.
 - Do not overread the current auto-mode improvement as full Gemini closure while `restart_continuity` is still not repeat-stable.

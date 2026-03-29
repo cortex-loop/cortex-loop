@@ -341,7 +341,7 @@ def _run_cli_restart_continuity_variant(
             prompt=first_prompt,
             project_root=project_root,
             auth_mode=auth_mode,
-            approval_mode="plan" if provider == "gemini" else None,
+            approval_mode=None,
             hook_log_path=hook_log_path,
             max_attempts=3,
             cooldown_seconds=30,
@@ -355,7 +355,7 @@ def _run_cli_restart_continuity_variant(
             prompt=first_prompt,
             project_root=project_root,
             auth_mode=auth_mode,
-            approval_mode="plan" if provider == "gemini" else None,
+            approval_mode=None,
             precheck=precheck,
         )
 

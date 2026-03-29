@@ -75,3 +75,18 @@ The next honest move is one narrow explanation seam:
   - or audit-measurement noise
 
 Do not widen runtime doctrine until that is clearer.
+
+## Later Gemini vanilla rerun
+
+A later Gemini-only rerun on the free API-key lane removed one real confound:
+
+- the comparison baseline no longer forces `plan` mode on the first continuity turn
+- one-off vanilla headless reruns can complete `pass_minimal`, preserve `truth_gap`, and resume `restart_continuity`
+
+But the bounded paired rerun still did not produce a clean host-positive result:
+
+- `pass_minimal` improved relative to the older `plan`-confounded path but still carried higher burden on repeated pairs
+- `truth_gap` and `restart_continuity` were quickly re-blocked by free-tier quota exhaustion under repeat load
+
+So the honest host line remains `mixed`.
+The confound was real, but removing it did not by itself clear Gemini to package-positive directionality.

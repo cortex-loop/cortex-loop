@@ -562,6 +562,7 @@ make live-operator-payoff-audit
 This runs the paired raw-vs-Cortex operator audit on the current machine.
 It is operator-only and does not reopen service proof.
 If a host's raw baseline cannot be isolated safely, the run must mark that pair blocked instead of comparing dishonestly.
+For Gemini on the free API-key lane, keep the comparison on the vanilla headless execution path rather than forcing `plan` mode as the baseline.
 
 Direct command:
 

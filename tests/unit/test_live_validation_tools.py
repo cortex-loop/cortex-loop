@@ -767,7 +767,11 @@ def test_product_path_single_scenario_passes_default_approval_mode(monkeypatch, 
     monkeypatch.setattr(
         live_host_native_product_paths,
         "_materialize_operator_run",
-        lambda **kwargs: {"success": False, "failure_class": "auth_missing"},
+        lambda **kwargs: {
+            "success": False,
+            "failure_class": "auth_missing",
+            "artifact_path": ".cortex/live_validation/operator/gemini/product_paths/restart_continuity_turn_1__run_001.json",
+        },
     )
 
     live_host_native_product_paths._run_single_scenario(
@@ -775,6 +779,76 @@ def test_product_path_single_scenario_passes_default_approval_mode(monkeypatch, 
         "pass_minimal",
         1,
         tmp_path,
+        max_attempts=1,
+        cooldown_seconds=0,
+        preferred_model_override=None,
+        fallback_model_override=None,
+        disable_auto_probe=False,
+    )
+
+    assert captured["approval_mode"] is None
+
+
+def test_product_path_restart_continuity_uses_default_first_turn_for_gemini(
+    monkeypatch,
+    tmp_path: Path,
+) -> None:
+    monkeypatch.setattr(
+        live_host_native_product_paths,
+        "prepare_harness_workspace",
+        lambda **kwargs: tmp_path / "project_a",
+    )
+    monkeypatch.setattr(
+        live_host_native_product_paths,
+        "_configure_hook_capture",
+        lambda **kwargs: None,
+    )
+    monkeypatch.setattr(
+        live_host_native_product_paths,
+        "resolve_auth_mode",
+        lambda provider, lane: "api_key",
+    )
+    monkeypatch.setattr(
+        live_host_native_product_paths,
+        "read_prompt_template",
+        lambda filename: "prompt",
+    )
+
+    captured: dict[str, object] = {}
+
+    def fake_run_operator_attempts(**kwargs):
+        captured["approval_mode"] = kwargs["approval_mode"]
+        return (
+            {
+                "command": ["gemini"],
+                "exit_code": 1,
+                "stdout": "",
+                "stderr": "When using Gemini API, you must specify the GEMINI_API_KEY environment variable.",
+                "started_at": "2026-03-30T00:00:00+00:00",
+                "ended_at": "2026-03-30T00:00:00+00:00",
+            },
+            "auth_missing",
+            "auto",
+            "auto",
+            False,
+            ["auto"],
+        )
+
+    monkeypatch.setattr(live_host_native_product_paths, "_run_operator_attempts", fake_run_operator_attempts)
+    monkeypatch.setattr(
+        live_host_native_product_paths,
+        "_materialize_operator_run",
+        lambda **kwargs: {
+            "success": False,
+            "failure_class": "auth_missing",
+            "artifact_path": ".cortex/live_validation/operator/gemini/product_paths/restart_continuity_turn_1__run_001.json",
+        },
+    )
+
+    live_host_native_product_paths._run_restart_continuity(
+        "gemini",
+        tmp_path,
+        existing_runs=[],
         max_attempts=1,
         cooldown_seconds=0,
         preferred_model_override=None,
@@ -818,6 +892,58 @@ def test_gemini_raw_directionality_task_accepts_api_key_auth_mode(monkeypatch) -
         "--approval-mode",
         "plan",
     ]
+
+
+def test_operator_directionality_restart_continuity_uses_default_first_turn_for_gemini(
+    monkeypatch,
+    tmp_path: Path,
+) -> None:
+    monkeypatch.setattr(
+        live_operator_directionality,
+        "resolve_auth_mode",
+        lambda provider, lane: "api_key",
+    )
+    monkeypatch.setattr(
+        live_operator_directionality,
+        "read_prompt_template",
+        lambda filename: "prompt",
+    )
+
+    captured: dict[str, object] = {}
+
+    def fake_run_operator_attempts(**kwargs):
+        captured["approval_mode"] = kwargs["approval_mode"]
+        return (
+            {
+                "command": ["gemini"],
+                "exit_code": 1,
+                "stdout": "",
+                "stderr": "When using Gemini API, you must specify the GEMINI_API_KEY environment variable.",
+                "started_at": "2026-03-30T00:00:00+00:00",
+                "ended_at": "2026-03-30T00:00:00+00:00",
+            },
+            "auth_missing",
+            "auto",
+            "auto",
+            False,
+            ["auto"],
+        )
+
+    monkeypatch.setattr(live_host_native_product_paths, "_run_operator_attempts", fake_run_operator_attempts)
+
+    payload = live_operator_directionality._run_cli_restart_continuity_variant(
+        "gemini",
+        variant="cortex_operator",
+        scenario_id="restart_continuity",
+        repeat_index=1,
+        project_root=tmp_path / "project_a",
+        root=tmp_path,
+        hook_log_path=None,
+        precheck={"status": "ready"},
+    )
+
+    assert captured["approval_mode"] is None
+    assert payload["failure_class"] == "auth_missing"
 
 
 def test_decide_verdict_prefers_blocker_honesty_before_optimism() -> None:

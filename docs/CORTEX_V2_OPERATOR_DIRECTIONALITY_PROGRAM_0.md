@@ -42,8 +42,14 @@ Locked variants:
 Locked hosts:
 
 - Claude signed-in CLI
-- Gemini signed-in CLI
+- Gemini headless CLI on the same operator surface, using the default execution path rather than a forced `plan` baseline
 - OpenAI signed-in `codex app-server`
+
+Gemini comparison guard:
+
+- do not use `plan` mode as the default Gemini comparison baseline
+- keep the same headless CLI surface, but prefer the vanilla execution path first
+- reason: on free API-key auth, `plan` can route `auto` onto a materially different quota/model path and contaminate the comparison
 
 Locked scenarios:
 

@@ -428,7 +428,7 @@ def _run_restart_continuity(
         prompt=read_prompt_template("restart_continuity_turn1_operator.md"),
         project_root=project_root,
         auth_mode=auth_mode,
-        approval_mode="plan" if provider == "gemini" else None,
+        approval_mode=None,
         hook_log_path=hook_log_path,
         max_attempts=max_attempts,
         cooldown_seconds=cooldown_seconds,
