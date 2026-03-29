@@ -56,8 +56,11 @@ def _build_comparison(preflight: dict[str, Any]) -> dict[str, Any]:
             provider_root(provider, "automation", "service") / "service_runs.json"
         ).get("runs", [])
         accepted_operator_payload = accepted_operator.get(provider)
-        if not baseline_runs and not operator_runs and accepted_operator_payload is not None:
-            operator_runs = accepted_operator_payload["synthetic_runs"]
+        operator_runs, operator_source = _effective_operator_runs(
+            provider=provider,
+            operator_runs=operator_runs,
+            accepted_operator_payload=accepted_operator_payload,
+        )
 
         successful_operator = [run for run in operator_runs if run.get("success")]
         truthful_gaps = [
@@ -65,6 +68,7 @@ def _build_comparison(preflight: dict[str, Any]) -> dict[str, Any]:
             for run in operator_runs
             if run.get("scenario_id") == "truth_gap" and run.get("truth_gap_kind") == "truthful_incomplete"
         ]
+        continuity_success = _continuity_success(provider=provider, operator_runs=operator_runs)
         operator_warning_classes = sorted(
             {
                 warning
@@ -129,17 +133,14 @@ def _build_comparison(preflight: dict[str, Any]) -> dict[str, Any]:
                     run.get("scenario_id") == "pass_minimal" and run.get("success")
                     for run in operator_runs
                 ),
-                "restart_continuity_success": any(
-                    run.get("scenario_id") == "restart_continuity" and run.get("success")
-                    for run in operator_runs
-                ),
+                "restart_continuity_success": continuity_success,
                 "truth_gap_preserved": bool(truthful_gaps),
                 "failure_classes": operator_failures,
                 "warning_classes": operator_warning_classes,
                 "preferred_models": preferred_models,
                 "chosen_models": chosen_models,
                 "hook_event_labels": hook_event_labels,
-                "source": accepted_operator_payload["source"] if accepted_operator_payload is not None and not baseline_runs and accepted_operator_payload["synthetic_runs"] == operator_runs else "local_artifacts",
+                "source": operator_source,
             },
             "automation_service": {
                 "successful_run_count": len(successful_service),
@@ -189,6 +190,10 @@ def _next_corrective_seam(
     operator_pass_count: int,
     service_success_count: int,
 ) -> str:
+    if service_success_count == 0 and operator_pass_count >= 3 and "capacity_exhausted" in blocker_classes:
+        return (
+            "treat Gemini as the remaining explicit partial host line on this machine and defer further local continuity tweaking until host capacity changes or service auth is intentionally reopened"
+        )
     if service_success_count == 0 and (
         "auth_missing" in blocker_classes or "blocked_by_spend_policy" in blocker_classes or "mis_scoped" in blocker_classes
     ):
@@ -281,6 +286,54 @@ def _read_json(path: Path) -> dict[str, Any]:
     if not path.exists():
         return {}
     return json.loads(path.read_text(encoding="utf-8"))
+
+
+def _effective_operator_runs(
+    *,
+    provider: str,
+    operator_runs: list[dict[str, Any]],
+    accepted_operator_payload: dict[str, Any] | None,
+) -> tuple[list[dict[str, Any]], str]:
+    filtered_runs = [
+        run for run in operator_runs if run.get("scenario_id") != "operator_product_gate"
+    ]
+    if accepted_operator_payload is None:
+        return filtered_runs, "local_artifacts"
+    if not filtered_runs:
+        return list(accepted_operator_payload["synthetic_runs"]), accepted_operator_payload["source"]
+
+    covered = {
+        run.get("scenario_id")
+        for run in filtered_runs
+        if isinstance(run.get("scenario_id"), str)
+    }
+    supplemented = list(filtered_runs)
+    for synthetic in accepted_operator_payload["synthetic_runs"]:
+        if synthetic.get("scenario_id") not in covered:
+            supplemented.append(synthetic)
+    source = "mixed_local_and_accepted" if len(supplemented) != len(filtered_runs) else "local_artifacts"
+    return supplemented, source
+
+
+def _continuity_success(*, provider: str, operator_runs: list[dict[str, Any]]) -> bool:
+    continuity_runs = [
+        run for run in operator_runs if run.get("scenario_id") == "restart_continuity"
+    ]
+    if provider != "gemini":
+        return any(run.get("success") for run in continuity_runs)
+
+    local_continuity_runs = [
+        run for run in continuity_runs
+        if str(run.get("artifact_path", "")).startswith(".cortex/live_validation/operator/gemini/product_paths/")
+    ]
+    if len(local_continuity_runs) >= 2:
+        ordered = sorted(
+            local_continuity_runs,
+            key=lambda run: int(run.get("repeat_index", 0)),
+        )
+        latest_two = ordered[-2:]
+        return all(run.get("success") for run in latest_two)
+    return any(run.get("success") for run in continuity_runs)
 
 
 def _accepted_operator_fallbacks() -> dict[str, dict[str, Any]]:

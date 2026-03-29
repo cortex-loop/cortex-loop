@@ -342,9 +342,10 @@ def test_resume_protocol_and_active_workstream_contract_exist() -> None:
     assert "Current working branch at ledger update:" in workstream_text
     assert "Current branch role:" in workstream_text
     assert "accepted workflow baseline truth now rests on `main` rather than a long-lived working branch" in workstream_text
-    assert "Current candidate seam: none; `N1` is landed for current scope with an explicit deferred service continuation" in workstream_text
+    assert "Current candidate seam: none; Gemini repeat-stability re-audit is landed for current scope with an honest mixed-capacity outcome" in workstream_text
     assert "automation baseline reruns now block honestly on readiness rather than faking direct network probes" in workstream_text
-    assert "the compare surface now separates accepted operator proof from current automation reruns" in workstream_text
+    assert "the compare surface now separates accepted operator proof from current automation reruns and current local Gemini continuity evidence." in workstream_text
+    assert "the Gemini continuity harness now preserves repeated continuity artifacts instead of overwriting them" in workstream_text
     assert "the current signed-in smoke surfaces are now clean again" in workstream_text
     assert "`codex exec` for smoke" in workstream_text
     assert "`codex app-server` for lifecycle proof" in workstream_text
@@ -354,11 +355,11 @@ def test_resume_protocol_and_active_workstream_contract_exist() -> None:
     assert "the installed CLI does accept `gemini-2.5-pro`" in workstream_text
     assert "`pass_minimal` succeeds twice on `auto` with explicit `capacity_exhausted` warnings" in workstream_text
     assert "`truth_gap` is truthful on the latest reruns on `auto`" in workstream_text
-    assert "`restart_continuity` is not yet repeat-stable because the latest reruns include a `capacity_exhausted` blocker on `auto`" in workstream_text
+    assert "`restart_continuity` remains mixed after the best-practice re-audit" in workstream_text
     assert "repeat-stable Gemini closure is therefore still unearned" in workstream_text
     assert "treat the machine-auth service lane as explicitly deferred on this machine" in workstream_text
-    assert "open one bounded Gemini `restart_continuity` repeat-stability seam" in workstream_text
-    assert "only reopen the bounded `N1` service-proof lane later if machine auth is intentionally provided" in workstream_text
+    assert "treat Gemini as the remaining explicit partial host line on this machine rather than reopening more local continuity tweaks immediately" in workstream_text
+    assert "choose a different bounded north-star seam instead of further Gemini model/approval experimentation" in workstream_text
     assert "Do not treat signed-in provider CLI sessions as equivalent to the automation credentials" in workstream_text
     assert "Do not treat the new OpenAI App Server operator proof as license to reopen v1 assisted mode" in workstream_text
     assert "Do not keep repo-tracked live artifacts under `docs/live_validation/`" in workstream_text
@@ -552,7 +553,7 @@ def test_reference_runtime_program_lock_is_recorded() -> None:
     assert "`L6D` package-level service proof" in phase_gate_text
     assert "correct signed-in operator hierarchy" in phase_gate_text
     assert "operator preflight and repeated smoke baselines are clean in CLI auto mode" in phase_gate_text
-    assert "the latest reruns include a `capacity_exhausted` blocker on `auto`" in phase_gate_text
+    assert "successful resumed completions coexist with recurring first-turn `capacity_exhausted` failures" in phase_gate_text
     assert "the bounded `codex app-server` operator lane is now re-earned" in phase_gate_text
 
     assert "Status: accepted re-audited support brief for the G1 runtime/product restack train" in gemini_runtime_restack_text
@@ -605,6 +606,9 @@ def test_reference_runtime_program_lock_is_recorded() -> None:
     assert "`pass_minimal` succeeds twice on `auto`" in live_validation_verdict_text
     assert "`truth_gap`: now truthful on the latest auto-mode reruns" in live_validation_verdict_text
     assert "`gemini-2.5-pro` is valid locally but still capacity-blocked" in live_validation_verdict_text
+    assert "explicit Gemini session IDs are valid resume IDs on the current CLI" in live_validation_verdict_text
+    assert "the first inspect-only continuity turn now uses the lighter `plan` approval mode" in live_validation_verdict_text
+    assert "`gemini-2.5-flash` continuity also failed on first-turn `capacity_exhausted`" in live_validation_verdict_text
     assert "host-native Codex surface rather than the wrong `openai` utility surface" in live_validation_verdict_text
     assert "`L2b` now re-earns OpenAI on the current host-native App Server lifecycle surface" in live_validation_verdict_text
     assert "`L2c` now re-earns Claude and Gemini on their documented hook surfaces" in live_validation_verdict_text
@@ -648,6 +652,7 @@ def test_openai_host_control_revalidation_entry_points_are_recorded() -> None:
     assert "## Live host-native product paths" in local_verification_text
     assert "make live-host-native-product-paths" in local_verification_text
     assert "For Claude and Gemini, the operator lane now records documented hook events" in local_verification_text
+    assert "For Gemini `restart_continuity`, the inspect-only first turn now uses the lighter `plan` approval mode" in local_verification_text
     assert "## Live OpenAI App Server operator proof" in local_verification_text
     assert "make live-openai-app-server" in local_verification_text
     assert "## Live Cortex host-control capture" in local_verification_text
@@ -728,4 +733,4 @@ def test_runtime_restack_program_lock_is_recorded() -> None:
     assert "Current accepted state after K1 closeout" in text
     assert "implemented at K1 proof head `d4c311f` and truthfully closed at deterministic closeout head `79b8f39`" in text
     assert "later bounded runtime/product trains may still be explicitly opened" in master_plan_text
-    assert "now records the bounded `N1` service-lane reruns, the current all-auth-missing machine outcome, and the explicit decision to defer service proof on this machine rather than treat API-key setup as the current blocker" in theory_text
+    assert "the explicit decision to defer service proof on this machine rather than treat API-key setup as the current blocker" in theory_text

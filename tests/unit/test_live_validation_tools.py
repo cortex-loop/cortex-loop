@@ -448,6 +448,122 @@ def test_live_compare_falls_back_to_accepted_operator_truth_when_local_operator_
     assert comparison["providers"]["openai"]["operator_lifecycle"]["pass_minimal_success"] is True
 
 
+def test_live_compare_supplements_partial_local_operator_runs_with_accepted_truth(
+    monkeypatch,
+) -> None:
+    workstream_text = """
+- the OpenAI App Server operator lane now completes:
+    - `pass_minimal` twice
+    - `truth_gap` truthfully
+    - `restart_continuity` twice
+- the Claude operator lane is now hook-backed and completes:
+    - `pass_minimal` twice
+    - `truth_gap` truthfully
+    - `restart_continuity`
+- the deeper Gemini auto-mode product-path rerun now shows:
+    - `pass_minimal` succeeds twice on `auto` with explicit `capacity_exhausted` warnings
+    - `truth_gap` is truthful on the latest reruns on `auto`
+    - `restart_continuity` is not yet repeat-stable because the latest reruns include a `capacity_exhausted` blocker on `auto`
+"""
+    monkeypatch.setattr(live_compare, "WORKSTREAM_PATH", Path("/tmp/workstream-mixed.md"))
+    live_compare.WORKSTREAM_PATH.write_text(workstream_text, encoding="utf-8")
+
+    local_product_runs = {
+        "runs": [
+            {
+                "scenario_id": "operator_product_gate",
+                "repeat_index": 1,
+                "success": False,
+                "failure_class": "operator_surface_missing",
+            },
+            {
+                "scenario_id": "restart_continuity",
+                "repeat_index": 1,
+                "success": True,
+                "failure_class": None,
+                "warning_classes": ["capacity_exhausted"],
+                "model": "auto",
+                "preferred_model": "auto",
+                "hook_event_labels": ["SessionStart", "BeforeTool", "AfterTool", "SessionEnd"],
+            },
+        ]
+    }
+
+    def fake_read_json(path):
+        text_path = str(path)
+        if path == live_compare.PREFLIGHT_REPORT_PATH:
+            return {
+                "operator_probe": {"claude": {}, "gemini": {}, "openai": {}},
+                "auth_surfaces": {
+                    "automation": {
+                        "claude": {"status": "missing"},
+                        "gemini": {"status": "missing"},
+                        "openai": {"status": "missing"},
+                    }
+                },
+            }
+        if text_path.endswith("operator/gemini/product_paths/host_native_product_runs.json"):
+            return local_product_runs
+        return {}
+
+    monkeypatch.setattr(live_compare, "_read_json", fake_read_json)
+
+    comparison = live_compare._build_comparison(
+        {
+            "operator_probe": {"claude": {}, "gemini": {}, "openai": {}},
+            "auth_surfaces": {"automation": {"claude": {"status": "missing"}, "gemini": {"status": "missing"}, "openai": {"status": "missing"}}},
+        }
+    )
+
+    gemini = comparison["providers"]["gemini"]["operator_lifecycle"]
+    assert gemini["source"] == "mixed_local_and_accepted"
+    assert gemini["pass_minimal_success"] is True
+    assert gemini["truth_gap_preserved"] is True
+    assert gemini["restart_continuity_success"] is True
+
+
+def test_gemini_continuity_requires_latest_local_runs_to_be_repeat_stable() -> None:
+    runs = [
+        {
+            "scenario_id": "restart_continuity",
+            "repeat_index": 1,
+            "success": True,
+            "artifact_path": ".cortex/live_validation/operator/gemini/product_paths/restart_continuity__run_001.json",
+        },
+        {
+            "scenario_id": "restart_continuity",
+            "repeat_index": 2,
+            "success": False,
+            "artifact_path": ".cortex/live_validation/operator/gemini/product_paths/restart_continuity_turn_1__run_002.json",
+        },
+        {
+            "scenario_id": "restart_continuity",
+            "repeat_index": 3,
+            "success": True,
+            "artifact_path": ".cortex/live_validation/operator/gemini/product_paths/restart_continuity__run_003.json",
+        },
+        {
+            "scenario_id": "restart_continuity",
+            "repeat_index": 4,
+            "success": False,
+            "artifact_path": ".cortex/live_validation/operator/gemini/product_paths/restart_continuity_turn_1__run_004.json",
+        },
+    ]
+
+    assert live_compare._continuity_success(provider="gemini", operator_runs=runs) is False
+
+
+def test_next_repeat_index_advances_for_existing_restart_runs() -> None:
+    existing_runs = [
+        {"scenario_id": "restart_continuity", "repeat_index": 1},
+        {"scenario_id": "restart_continuity", "repeat_index": 2},
+        {"scenario_id": "truth_gap", "repeat_index": 1},
+    ]
+
+    assert live_host_native_product_paths._next_repeat_index(existing_runs, "restart_continuity") == 3
+    assert live_host_native_product_paths._next_repeat_index(existing_runs, "pass_minimal") == 1
+
+
 def test_gemini_operator_commands_omit_model_flag_when_auto_is_selected(monkeypatch) -> None:
     captured: dict[str, list[str]] = {}
 
@@ -497,6 +613,17 @@ def test_gemini_operator_commands_omit_model_flag_when_auto_is_selected(monkeypa
         auth_mode="google_login",
     )
     assert "-m" not in captured["product_path"]
+    assert captured["product_path"][-1] == "yolo"
+
+    live_host_native_product_paths._run_gemini_task(
+        "Respond exactly with OK.",
+        project_root=Path("/tmp"),
+        model="auto",
+        auth_mode="google_login",
+        approval_mode="plan",
+    )
+    assert "-m" not in captured["product_path"]
+    assert captured["product_path"][-1] == "plan"
 
 
 def test_gemini_baseline_keeps_auto_as_preferred_model_on_warning_bearing_success(monkeypatch) -> None:
@@ -552,3 +679,14 @@ def test_decide_verdict_prefers_blocker_honesty_before_optimism() -> None:
         service_success_count=0,
         blocker_classes={"runtime_error"},
     )[0] == "lifecycle-first is promising but under-instrumented"
+
+
+def test_next_corrective_seam_prefers_deferral_when_gemini_capacity_is_the_residual_issue() -> None:
+    assert (
+        live_compare._next_corrective_seam(
+            blocker_classes={"capacity_exhausted"},
+            operator_pass_count=3,
+            service_success_count=0,
+        )
+        == "treat Gemini as the remaining explicit partial host line on this machine and defer further local continuity tweaking until host capacity changes or service auth is intentionally reopened"
+    )

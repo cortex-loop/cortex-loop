@@ -8,7 +8,7 @@ It is workflow state only. It does not override the packet documents, implementa
 ## 1. Accepted baseline
 
 - Accepted baseline branch: `main`
-- Accepted baseline commit: `b20f81f`
+- Accepted baseline commit: `bf2a026`
 - Accepted baseline state:
   - burden-axis re-audit remains accepted through the three thrash-host burden slices
   - package-level burden remains `insufficient`
@@ -30,6 +30,18 @@ It is workflow state only. It does not override the packet documents, implementa
     - automation baseline reruns now block honestly on readiness rather than faking direct network probes
     - service-lane reruns remain all-blocked on `auth_missing`
     - operator proof remains the accepted current line and is preserved in compare/audit support surfaces when this seam reruns automation-only artifacts
+  - Gemini restart-continuity repeat-stability re-audit is now landed for current machine truth:
+    - local Gemini settings already match current best practice:
+      - no pinned default model
+      - `modelRouting=true`
+      - explicit project-scoped resume IDs remain valid on the current CLI
+    - the Gemini continuity harness now preserves repeated continuity artifacts instead of overwriting them
+    - the first inspect-only Gemini continuity turn now uses `plan` approval mode and the resumed edit/test turn keeps `yolo`
+    - current local Gemini continuity truth remains mixed on `auto`:
+      - successful resumed completions exist
+      - first-turn `capacity_exhausted` failures still recur
+    - an exploratory `gemini-2.5-flash` sidecar also failed on first-turn `capacity_exhausted`
+    - the remaining Gemini continuity blocker now looks host-capacity-driven rather than a settings or resume-semantics mistake
   - the reference runtime shell, bounded reference continuity, OpenAI documented-host-event runtime shell, raw-transcript ingress shell, loopback service shell, bounded outbound OpenAI host-control lane, and explicit executive allocation diagnostics remain accepted on the current line
   - the Gemini documented-host-event runtime shell, raw-transcript ingress shell, loopback service shell, and bounded outbound Gemini host-control lane remain accepted on the current line
   - the Claude documented-host-event runtime shell, raw-transcript ingress shell, loopback service shell, and bounded outbound Claude host-control lane remain accepted on the current line
@@ -43,11 +55,12 @@ It is workflow state only. It does not override the packet documents, implementa
 
 ## 2. Current campaign and seam state
 
-- Current campaign: `N1 service-lane proof deferred for current machine`
+- Current campaign: `Gemini restart-continuity repeat-stability re-audit`
 - Current working branch at ledger update: `main`
 - Current branch role: clean synced resting branch after the current-machine `N1` reruns
-- Current candidate seam: none; `N1` is landed for current scope with an explicit deferred service continuation
-- Current seam status: `all three automation/service lanes remain auth-missing on this machine, service proof is now explicitly deferred rather than treated as the current blocker, operator truth remains the accepted current line, and the compare surface now separates accepted operator proof from current automation reruns`
+- Current candidate seam: none; Gemini repeat-stability re-audit is landed for current scope with an honest mixed-capacity outcome
+- Current seam status: `Gemini continuity remains explicit partial truth after the best-practice re-audit: settings are aligned, resume semantics are valid, the first-turn plan/yolo split is landed, but first-turn capacity failures still recur and the flash sidecar did not rescue them`
+- the compare surface now separates accepted operator proof from current automation reruns and current local Gemini continuity evidence.
 - Seam risk: timing/environment-sensitive live-proof seam plus deterministic tooling/docs sync
 
 ## 3. Next lawful move
@@ -79,13 +92,18 @@ It is workflow state only. It does not override the packet documents, implementa
   - the deeper Gemini auto-mode product-path rerun now shows:
     - `pass_minimal` succeeds twice on `auto` with explicit `capacity_exhausted` warnings
     - `truth_gap` is truthful on the latest reruns on `auto`
-    - `restart_continuity` is not yet repeat-stable because the latest reruns include a `capacity_exhausted` blocker on `auto`
+    - `restart_continuity` remains mixed after the best-practice re-audit:
+      - successful resumed completions exist on `auto`
+      - first-turn `capacity_exhausted` failures still recur
+      - an exploratory `gemini-2.5-flash` sidecar did not eliminate the first-turn capacity blocker
   - repeat-stable Gemini closure is therefore still unearned
   - the current automation/service lane still fails honestly on missing machine auth
 - Next lawful move:
   - treat the machine-auth service lane as explicitly deferred on this machine
-  - if work continues now, open one bounded Gemini `restart_continuity` repeat-stability seam rather than reopening auth alignment
-  - only reopen the bounded `N1` service-proof lane later if machine auth is intentionally provided
+  - keep the machine-auth service lane explicitly deferred on this machine
+  - treat Gemini as the remaining explicit partial host line on this machine rather than reopening more local continuity tweaks immediately
+  - if work continues now, choose a different bounded north-star seam instead of further Gemini model/approval experimentation
+  - only reopen Gemini continuity later if host conditions materially change or a new official Gemini CLI practice emerges
 
 ## 4. Explicitly blocked moves
 
