@@ -74,11 +74,11 @@ It is workflow state only. It does not override the packet documents, implementa
 
 ## 2. Current campaign and seam state
 
-- Current campaign: `Gemini auto-only operator contract pending rerun`
+- Current campaign: `Round 2 stable-headless operator audit in progress`
 - Current working branch at ledger update: `review/gemini-vanilla-directionality`
 - Current branch role: explicit manual review branch because local `main` is ahead of `origin/main` by one verified unpublished commit and a managed session cannot be started honestly from that state
-- Current candidate seam: `Gemini auto-only operator contract`; `Q1` remains landed on the accepted current-machine line, `N2` remains blocked on a capable machine, and the current unresolved line is whether the mixed Gemini host result survives once the operator/evaluation harness stops calling explicit model names
-- Current seam status: `the Gemini operator/evaluation harness now uses the installed CLI default auto route only: no explicit operator fallback ladder remains, no operator probe or baseline passes a named Gemini model, fresh auto-only preflight plus fresh auto-only baseline reruns are now stable on the API-key lane, and a fresh auto-only `pass_minimal` product-path rerun now shows the next blocker cleanly: immediate `quota_exhausted` on `auto-gemini-3` before work begins`
+- Current candidate seam: `Round 2 stable-headless operator rerun`; `Q1` remains the accepted ancestor audit on the current machine, `N2` remains blocked on a capable machine, and the current unresolved line is whether the package direction improves once all hosts are tested on their stable default headless contract
+- Current seam status: `round 2 is now underway on the review branch: Claude remains positive, OpenAI remains positive, Gemini is now blocked rather than silently downgraded because the auto-only operator path hits quota_exhausted under repeat load, and package direction therefore remains mixed`
 - the compare surface and live-validation truth from earlier seams remain accepted ancestor input and are not being reopened by the landed K train.
 - Seam risk: shared verification-plumbing seam plus environment-sensitive evidence rerun
 
@@ -125,23 +125,22 @@ It is workflow state only. It does not override the packet documents, implementa
     - fresh auto-only preflight reruns are stable on `auto` with `auth_mode=api_key` and `failure_class=quota_exhausted`
     - fresh auto-only operator baseline reruns are stable on `auto` and return `OK` twice with no named-model fallback
     - a fresh auto-only `pass_minimal` product-path rerun now blocks immediately on `quota_exhausted` with `model: auto-gemini-3`
-    - the remaining work is to regenerate the paired directionality artifacts under this auto-only contract before changing host/package verdict truth
+    - the fresh round-2 paired audit now shows:
+      - Claude remains `positive`
+      - OpenAI remains `positive`
+      - Gemini is `blocked`
+      - package verdict remains `mixed_direction`
   - the current automation/service lane still fails honestly on missing machine auth
 - Next lawful move:
   - keep the machine-auth service lane explicitly deferred on this machine for actual proof execution
   - keep Gemini as the remaining explicit partial host line on this machine
   - do not reopen the K train by inertia now that the bounded proven-lane executive/runtime line is landed
   - do not widen from the mixed `Q1` package result into new runtime or product claims
-  - the next lawful move remains one narrow Gemini explanation seam, but the operator contract is now stricter:
+  - the next lawful move remains one narrow Gemini explanation seam, now against the round-2 contract:
     - do not call explicit Gemini model names anywhere on the operator/evaluation path
-    - rerun the bounded Gemini-only slice from clean local artifacts under the auto-only contract:
-      - preflight twice
-      - operator baseline twice
-      - product-path pass / gap / continuity
-      - paired raw-vs-Cortex directionality
-    - then determine whether the mixed Gemini directionality result reflects
+    - determine whether the Gemini `blocked` round-2 result reflects
+      - repeat-load quota pressure on the true auto route,
       - true Cortex-added burden,
-      - repeat-load quota pressure on the auto route,
       - or residual audit-measurement noise
   - keep `N2` as a separate blocked train pending a capable machine; do not conflate that with the Gemini directionality blocker
 

@@ -90,3 +90,24 @@ But the bounded paired rerun still did not produce a clean host-positive result:
 
 So the honest host line remains `mixed`.
 The confound was real, but removing it did not by itself clear Gemini to package-positive directionality.
+
+## Round 2 Stable-Defaults Rerun
+
+Round 2 reran the operator audit under a stricter cross-host contract:
+
+- Claude stayed on the normal headless print surface with the current explicit stable model
+- Gemini stayed on the headless CLI default auto route with no explicit `-m` model argument
+- OpenAI stayed on the current `codex exec` smoke / `codex app-server` lifecycle split with the current explicit stable model
+
+Round 2 result:
+
+- Claude: `positive`
+- OpenAI: `positive`
+- Gemini: `blocked`
+- package verdict: `mixed_direction`
+
+Current reading:
+
+- the earlier Gemini `plan`/named-model confounds were real and are now removed
+- but the true `auto` route on the free API-key lane still blocks repeated paired runs with `quota_exhausted`
+- so the remaining Gemini problem is now more honestly a stability/quota problem on the real default path, not a harness-side model chase

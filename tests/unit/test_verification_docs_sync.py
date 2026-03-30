@@ -336,6 +336,7 @@ def test_local_verification_doc_records_repo_workflow_commands() -> None:
     assert "python scripts/repo_workflow.py audit-branches" in doc_text
     assert "python scripts/repo_workflow.py cleanup-report" in doc_text
     assert "make repo-hygiene" in doc_text
+    assert "keep the current explicit stable models unless a separate host-defaults seam is explicitly opened" in doc_text
 
 
 def test_resume_protocol_and_active_workstream_contract_exist() -> None:
@@ -357,12 +358,11 @@ def test_resume_protocol_and_active_workstream_contract_exist() -> None:
     assert "Current working branch at ledger update:" in workstream_text
     assert "Current branch role:" in workstream_text
     assert "accepted workflow baseline truth now rests on `main` rather than a long-lived working branch" in workstream_text
-    assert "Current campaign: `Gemini auto-only operator contract pending rerun`" in workstream_text
-    assert "Current candidate seam: `Gemini auto-only operator contract`;" in workstream_text
-    assert "`Q1` remains landed on the accepted current-machine line" in workstream_text
-    assert "the Gemini operator/evaluation harness now uses the installed CLI default auto route only" in workstream_text
-    assert "fresh auto-only preflight plus fresh auto-only baseline reruns are now stable on the API-key lane" in workstream_text
-    assert "fresh auto-only `pass_minimal` product-path rerun now shows the next blocker cleanly" in workstream_text
+    assert "Current campaign: `Round 2 stable-headless operator audit in progress`" in workstream_text
+    assert "Current candidate seam: `Round 2 stable-headless operator rerun`;" in workstream_text
+    assert "`Q1` remains the accepted ancestor audit on the current machine" in workstream_text
+    assert "round 2 is now underway on the review branch" in workstream_text
+    assert "Claude remains positive, OpenAI remains positive, Gemini is now blocked" in workstream_text
     assert "the compare surface and live-validation truth from earlier seams remain accepted ancestor input and are not being reopened by the landed K train." in workstream_text
     assert "the current signed-in smoke surfaces are now clean again" in workstream_text
     assert "`codex exec` for smoke" in workstream_text
@@ -381,11 +381,12 @@ def test_resume_protocol_and_active_workstream_contract_exist() -> None:
     assert "fresh auto-only preflight reruns are stable on `auto` with `auth_mode=api_key` and `failure_class=quota_exhausted`" in workstream_text
     assert "fresh auto-only operator baseline reruns are stable on `auto` and return `OK` twice with no named-model fallback" in workstream_text
     assert "fresh auto-only `pass_minimal` product-path rerun now blocks immediately on `quota_exhausted` with `model: auto-gemini-3`" in workstream_text
+    assert "the fresh round-2 paired audit now shows:" in workstream_text
+    assert "package verdict remains `mixed_direction`" in workstream_text
     assert "do not reopen the K train by inertia now that the bounded proven-lane executive/runtime line is landed" in workstream_text
     assert "do not widen from the mixed `Q1` package result into new runtime or product claims" in workstream_text
-    assert "the next lawful move remains one narrow Gemini explanation seam, but the operator contract is now stricter" in workstream_text
-    assert "do not call explicit Gemini model names anywhere on the operator/evaluation path" in workstream_text
-    assert "rerun the bounded Gemini-only slice from clean local artifacts under the auto-only contract" in workstream_text
+    assert "the next lawful move remains one narrow Gemini explanation seam, now against the round-2 contract" in workstream_text
+    assert "determine whether the Gemini `blocked` round-2 result reflects" in workstream_text
     assert "keep `N2` as a separate blocked train pending a capable machine" in workstream_text
     assert "Do not treat signed-in provider CLI sessions as equivalent to the automation credentials" in workstream_text
     assert "Do not treat the new OpenAI App Server operator proof as license to reopen v1 assisted mode" in workstream_text
@@ -586,6 +587,9 @@ def test_reference_runtime_program_lock_is_recorded() -> None:
     assert "Current accepted state after K-train closeout" in closed_loop_enforcement_program_text
     assert "Status: accepted re-audited evaluation brief for the first raw-vs-Cortex operator directionality audit" in operator_directionality_program_text
     assert "raw-host vs Cortex-operator" in operator_directionality_program_text
+    assert "Round-2 stable default rule:" in operator_directionality_program_text
+    assert "Claude signed-in CLI on the normal `-p/--print` headless surface with one explicit stable GA model" in operator_directionality_program_text
+    assert "OpenAI signed-in `codex app-server`, with the existing `codex exec` smoke / `codex app-server` lifecycle split and one explicit stable model" in operator_directionality_program_text
     assert "Gemini comparison guard:" in operator_directionality_program_text
     assert "do not use `plan` mode as the default Gemini comparison baseline" in operator_directionality_program_text
     assert "do not pass explicit Gemini operator model names anywhere in the paired comparison harness" in operator_directionality_program_text
@@ -602,6 +606,8 @@ def test_reference_runtime_program_lock_is_recorded() -> None:
     assert "Gemini is mixed" in operator_directionality_audit_text
     assert "Later Gemini vanilla rerun" in operator_directionality_audit_text
     assert "The confound was real, but removing it did not by itself clear Gemini" in operator_directionality_audit_text
+    assert "Round 2 Stable-Defaults Rerun" in operator_directionality_audit_text
+    assert "Gemini: `blocked`" in operator_directionality_audit_text
     assert "`G1` Gemini documented host-event runtime shell" in phase_gate_text
     assert "`G2` Gemini raw-transcript ingress shell" in phase_gate_text
     assert "`G3` Gemini loopback service shell" in phase_gate_text
@@ -837,3 +843,4 @@ def test_runtime_restack_program_lock_is_recorded() -> None:
     assert "repeated paired runs on the free API-key lane still turn mixed under flash-tier quota pressure" in theory_text
     assert "the operator/evaluation harness must not call explicit Gemini model names at all" in theory_text
     assert "fresh auto-only product-path rerun is sharper still" in theory_text
+    assert "first full round-2 stable-defaults rerun now says the package is still `mixed_direction`" in theory_text

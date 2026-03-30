@@ -30,6 +30,7 @@ Active authority remains:
 - The later Gemini vanilla rerun says the old `plan`-mode path was a real confound, but not the whole problem: one-off vanilla runs can succeed, while repeated paired runs on the free API-key lane still turn mixed under flash-tier quota pressure.
 - The current auto-only contract tightening goes one step further: the operator/evaluation harness must not call explicit Gemini model names at all, and fresh preflight/baseline truth is now being re-earned on pure `auto`.
 - The first fresh auto-only product-path rerun is sharper still: `pass_minimal` can now fail immediately on `auto-gemini-3` with `quota_exhausted`, so the remaining blocker is not “wrong fallback model” anymore but the stability of the real auto route under repeat operator load.
+- The first full round-2 stable-defaults rerun now says the package is still `mixed_direction`: Claude and OpenAI remain positive, while Gemini is now more honestly `blocked` on the true auto route under repeat load.
 - `pytest.ini`, `Makefile`, and `docs/CORTEX_V2_LOCAL_VERIFICATION.md` now provide repo-local verification entry points, including `make verify`, `make test-smoke`, evidence revalidation commands, and mediation evidence revalidation commands.
 - `.coveragerc`, `make coverage`, and `docs/CORTEX_V2_COVERAGE_BASELINE_NOTE_0.md` now exist as repo-local coverage hygiene surfaces.
 

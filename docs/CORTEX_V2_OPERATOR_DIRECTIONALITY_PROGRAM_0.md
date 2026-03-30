@@ -41,9 +41,14 @@ Locked variants:
 
 Locked hosts:
 
-- Claude signed-in CLI
+- Claude signed-in CLI on the normal `-p/--print` headless surface with one explicit stable GA model
 - Gemini headless CLI on the same operator surface, using the CLI default Auto (Gemini 3) routing with no explicit `-m` model argument
-- OpenAI signed-in `codex app-server`
+- OpenAI signed-in `codex app-server`, with the existing `codex exec` smoke / `codex app-server` lifecycle split and one explicit stable model
+
+Round-2 stable default rule:
+
+- if a host has a documented auto-routing layer that is itself part of the product, test that routing layer directly
+- if a host does not expose that same documented routing behavior, keep one explicit stable model for reproducibility
 
 Gemini comparison guard:
 
