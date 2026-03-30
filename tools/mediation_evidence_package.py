@@ -333,8 +333,8 @@ def _check_failure_taxonomy(layout: PackageLayout, errors: list[str]) -> None:
 def _check_evidence_note(layout: PackageLayout, errors: list[str]) -> None:
     text = read(layout.evidence_note_path)
     required_snippets = (
-        "Mediation implementation remains blocked pending J3 justification review.",
-        "The blocker has changed: package-level mediation evidence is no longer `insufficient` everywhere",
+        "The accepted J3 decision is that mediation is now justified for one bounded experimental seam.",
+        "The accepted package-level decision is recorded in `docs/CORTEX_V2_MEDIATION_JUSTIFICATION_NOTE.md`.",
         "Branch-discipline evidence no longer derives only from `thrash_control`.",
         "Lower-visible-burden evidence is no longer confined to the `thrash_control` scenario family.",
         "Gemini remains explicit as partial/contaminated where needed and is not hidden behind pooled summaries.",

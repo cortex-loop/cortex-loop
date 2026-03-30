@@ -61,4 +61,4 @@ These do not qualify as a `scenario_thrash_reference_01` basis:
 ## Outcome
 
 `scenario_thrash_reference_01` is now satisfied by the committed baseline-only reference thrash series.
-That baseline basis now supports the recorded three-pair reference-only experimental comparator set under `docs/CORTEX_V2_MEDIATION_REFERENCE_THRASH_REPLICATION_NOTE_0.md`, including deterministic visible-burden derivation from the same committed steps, but package-level axis summaries still remain `insufficient`, and mediation remains blocked until qualifying comparative lift evidence exists.
+That baseline basis now supports the recorded three-pair reference-only experimental comparator set under `docs/CORTEX_V2_MEDIATION_REFERENCE_THRASH_REPLICATION_NOTE_0.md`, including deterministic visible-burden derivation from the same committed steps, but this remains cell-local evidence only. The accepted package-level justification decision is recorded in `docs/CORTEX_V2_MEDIATION_JUSTIFICATION_NOTE.md`, and this note does not by itself authorize implementation.

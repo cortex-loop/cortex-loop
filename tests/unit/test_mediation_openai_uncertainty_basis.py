@@ -101,7 +101,7 @@ def test_openai_builder_packet_series_and_replication_note_exist() -> None:
     assert len({spec.uncertainty_spike_tag for spec in OPENAI_UNCERTAINTY_PAIR_SPECS.values()}) == 3
 
 
-def test_evidence_note_keeps_mediation_blocked_with_openai_uncertainty_series() -> None:
+def test_evidence_note_keeps_openai_uncertainty_explicit_under_j3() -> None:
     text = read(EVIDENCE_NOTE_PATH)
     ledger_rows = parse_markdown_table(section(read(PAIRED_LEDGER_PATH), "Recorded Paired Runs"))
 
@@ -109,6 +109,6 @@ def test_evidence_note_keeps_mediation_blocked_with_openai_uncertainty_series() 
     assert "- better uncertainty handling: `insufficient`" in text
     assert "scenario_uncertainty_openai_01/openai" in text
     assert "Current uncertainty signal still comes from one family only and still lacks Claude expansion." in text
-    assert "Mediation implementation remains blocked pending J3 justification review." in text
-    assert "no implementation seam may open" in text
+    assert "The accepted J3 decision is that mediation is now justified for one bounded experimental seam." in text
+    assert "This evidence package is not a second truth court and does not by itself authorize implementation." in text
     assert any(row["scenario_id"] == "scenario_uncertainty_openai_01" for row in ledger_rows)

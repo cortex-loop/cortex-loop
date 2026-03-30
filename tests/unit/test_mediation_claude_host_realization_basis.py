@@ -102,7 +102,7 @@ def test_claude_host_realization_anchor_is_rebound_to_a_recorded_pair() -> None:
     assert {row["failure_tags"] for row in recorded_host_rows} == {"none"}
 
 
-def test_evidence_note_records_three_claude_host_pairs_and_updates_package_gap() -> None:
+def test_evidence_note_records_three_claude_host_pairs_and_supports_j3_decision() -> None:
     text = read(EVIDENCE_NOTE_PATH)
 
     assert (
@@ -114,4 +114,4 @@ def test_evidence_note_records_three_claude_host_pairs_and_updates_package_gap()
         "for better host-specialized realization"
     ) in text
     assert "Reference, Gemini, OpenAI, and Claude now carry the host-realization `candidate_positive` cells." in text
-    assert "Mediation implementation remains blocked pending J3 justification review." in text
+    assert "The accepted J3 decision is that mediation is now justified for one bounded experimental seam." in text

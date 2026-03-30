@@ -6,7 +6,7 @@ Status: `j2_gap_closure_reference_openai_claude_recorded`
 ## Scope
 
 This note summarizes the current state of the mediation evidence package after the mandatory J2 gap-closure reruns.
-Version `0` remains evidence-only; it does not justify mediation implementation by itself.
+Version `0` remains evidence-only; it supports the accepted J3 justification decision but does not by itself authorize mediation implementation.
 
 ## Current Evidence State
 
@@ -53,21 +53,20 @@ Gemini remains explicit as partial/contaminated where needed and is not hidden b
 
 ## Blocker Statement
 
-Mediation implementation remains blocked pending J3 justification review.
-The blocker has changed: package-level mediation evidence is no longer `insufficient` everywhere, but the repo still requires a dedicated justification update before any mediation code may open.
-Better uncertainty handling remains the one still-package-insufficient axis because the current uncertainty signal still comes from one family only and still lacks Claude expansion.
-No mediation implementation seam may open from J2 alone.
-In other words, no implementation seam may open from J2 alone.
+The accepted J3 decision is that mediation is now justified for one bounded experimental seam.
+Better uncertainty handling remains the one still-package-insufficient axis because the current uncertainty signal still comes from one family only and still lacks Claude expansion, but that gap is explicit and non-blocking for one first bounded seam.
+The accepted package-level decision is recorded in `docs/CORTEX_V2_MEDIATION_JUSTIFICATION_NOTE.md`.
+This evidence package is not a second truth court and does not by itself authorize implementation.
 
 ## Exact Missing-Evidence Delta
 
 | axis | current_package_verdict | current_candidate_positive_cells | why_still_insufficient | minimum_additional_paired_evidence |
 | --- | --- | --- | --- | --- |
-| reduced thrashing | candidate_positive | scenario_thrash_reference_01/reference; scenario_thrash_gemini_01/gemini; scenario_thrash_openai_01/openai; scenario_branch_reference_01/reference; scenario_branch_openai_01/openai; scenario_branch_claude_01/claude | J2 now adds a dedicated branch-discipline family with repeated lower reopen/resume counts on the three preferred hosts. | no mandatory additional reruns required before J3 justification review |
-| better branch discipline | candidate_positive | scenario_thrash_reference_01/reference; scenario_thrash_gemini_01/gemini; scenario_thrash_openai_01/openai; scenario_branch_reference_01/reference; scenario_branch_openai_01/openai; scenario_branch_claude_01/claude | J2 now adds a dedicated branch-discipline family on the three preferred hosts. | no mandatory additional reruns required before J3 justification review |
+| reduced thrashing | candidate_positive | scenario_thrash_reference_01/reference; scenario_thrash_gemini_01/gemini; scenario_thrash_openai_01/openai; scenario_branch_reference_01/reference; scenario_branch_openai_01/openai; scenario_branch_claude_01/claude | J2 now adds a dedicated branch-discipline family with repeated lower reopen/resume counts on the three preferred hosts. | no mandatory additional paired evidence before one bounded experimental seam |
+| better branch discipline | candidate_positive | scenario_thrash_reference_01/reference; scenario_thrash_gemini_01/gemini; scenario_thrash_openai_01/openai; scenario_branch_reference_01/reference; scenario_branch_openai_01/openai; scenario_branch_claude_01/claude | J2 now adds a dedicated branch-discipline family on the three preferred hosts. | no mandatory additional paired evidence before one bounded experimental seam |
 | better uncertainty handling | insufficient | scenario_uncertainty_reference_01/reference; scenario_uncertainty_gemini_01/gemini; scenario_uncertainty_openai_01/openai | Current uncertainty signal still comes from one family only and still lacks Claude expansion. | optionally record scenario_uncertainty_claude_01 if the remaining uncertainty gap still matters after J2 |
-| lower visible burden at equal task value | candidate_positive | scenario_thrash_reference_01/reference; scenario_thrash_gemini_01/gemini; scenario_thrash_openai_01/openai; scenario_burden_reference_01/reference; scenario_burden_openai_01/openai; scenario_burden_claude_01/claude | J2 broadens the burden axis beyond `thrash_control` on the three preferred hosts. | no mandatory additional reruns required before J3 justification review |
-| better host-specialized realization | candidate_positive | scenario_host_reference_01/reference; scenario_host_gemini_01/gemini; scenario_host_openai_01/openai; scenario_host_claude_01/claude | Claude host-realization is now present and the refreshed reference/openai lines remain positive. | no mandatory additional reruns required before J3 justification review |
+| lower visible burden at equal task value | candidate_positive | scenario_thrash_reference_01/reference; scenario_thrash_gemini_01/gemini; scenario_thrash_openai_01/openai; scenario_burden_reference_01/reference; scenario_burden_openai_01/openai; scenario_burden_claude_01/claude | J2 broadens the burden axis beyond `thrash_control` on the three preferred hosts. | no mandatory additional paired evidence before one bounded experimental seam |
+| better host-specialized realization | candidate_positive | scenario_host_reference_01/reference; scenario_host_gemini_01/gemini; scenario_host_openai_01/openai; scenario_host_claude_01/claude | Claude host-realization is now present and the refreshed reference/openai lines remain positive. | no mandatory additional paired evidence before one bounded experimental seam |
 
 ## Next Rerun Contract
 

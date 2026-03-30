@@ -93,11 +93,11 @@ It is workflow state only. It does not override the packet documents, implementa
 
 ## 2. Current campaign and seam state
 
-- Current campaign: `J3 mediation justification update pending`
-- Current working branch at ledger update: `main`
-- Current branch role: resting branch after the merged J2 evidence publication line
-- Current candidate seam: `none`; `J2` is now accepted baseline truth on `main`, `Q1` remains accepted ancestor truth, and `N2` remains blocked on a capable machine
-- Current seam status: `J2 is now accepted baseline truth on the canonical line. Package-level evidence is no longer insufficient everywhere, but mediation implementation remains blocked pending J3 justification update because better uncertainty handling remains package-insufficient on the current line.`
+- Current campaign: `J3 mediation justification update candidate`
+- Current working branch at ledger update: `codex/j3-mediation-justification-update`
+- Current branch role: explicit manual review branch opened from clean `main` to record the accepted current mediation justification decision
+- Current candidate seam: `J3 mediation justification update`; `J2` is now accepted baseline truth on `main`, `Q1` remains accepted ancestor truth, and `N2` remains blocked on a capable machine
+- Current seam status: `J3 now records the accepted current decision that one bounded experimental mediation seam is justified on the branch. J2 already earned package-level candidate-positive signal on reduced thrashing, better branch discipline, lower visible burden at equal task value, and better host-specialized realization; better uncertainty handling remains package-insufficient but explicit and non-blocking for one first bounded seam. J3 itself does not implement mediation.`
 - the compare surface and live-validation truth from earlier seams remain accepted ancestor input and are not being reopened by the landed K train.
 - Seam risk: deterministic code/doc seam
 
@@ -149,12 +149,13 @@ It is workflow state only. It does not override the packet documents, implementa
 - Current blocker shape:
   - keep the machine-auth service lane explicitly deferred on this machine for actual proof execution
   - do not reopen the K train by inertia now that the bounded proven-lane executive/runtime line is landed
-  - `J2` has now changed the mediation blocker shape: package-level evidence is no longer `insufficient` on every required axis
-  - mediation implementation remains blocked pending `J3` justification review rather than further mandatory J2 reruns
-  - better uncertainty handling remains the one still-package-insufficient axis on the current line because it still comes from one family only and still lacks Claude expansion
+  - J2 already changed the mediation blocker shape: package-level evidence is no longer `insufficient` on every required axis
+  - J3 now treats the remaining uncertainty gap as explicit but non-blocking for one bounded experimental seam
+  - mediation remains unimplemented and experimental / off-by-default on the current line
   - Gemini should remain explicit as a partial/contaminated live rerun host rather than being hidden behind pooled mediation summaries
 - Next lawful move:
-  - open `J3` mediation justification update from clean synced `main`
+  - publish/review the `codex/j3-mediation-justification-update` branch as the accepted current mediation justification decision
+  - after acceptance, plan one bounded experimental mediation seam rather than collecting more mandatory J2-style evidence first
   - optional `scenario_uncertainty_claude_01` remains deferred unless the J3 review still says the uncertainty gap blocks the next decision
   - keep `N2` as a separate blocked train pending a capable machine rather than reopening service proof on this host
 
@@ -184,6 +185,8 @@ It is workflow state only. It does not override the packet documents, implementa
 - Do not widen `K4` into support-memory runtime, mediation, service/auth work, or broader host rollout.
 - Do not unfreeze threshold law in `K4`; the current budget-band activation-threshold law stays fixed.
 - Do not widen the landed K train into support-memory runtime, mediation, vigor scaling, service/auth work on this machine, or broader host rollout.
+- Do not implement mediation in `J3`; this seam is justification/workflow/evidence interpretation only.
+- Do not treat `J3` as license for broad rollout, default-on mediation, live/provider mediation, Core widening, or AUX runtime widening.
 - Do not start a new managed session from local `main` while it is ahead or diverged from `origin/main`.
 - Do not reintroduce extra long-lived local worktrees or non-main branch residue without an explicit new seam.
 - Do not leave remote `review/*` heads behind after future publication cleanup.

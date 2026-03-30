@@ -97,7 +97,7 @@ def test_gemini_builder_packet_series_and_replication_note_exist() -> None:
     assert len({spec.uncertainty_spike_tag for spec in GEMINI_UNCERTAINTY_PAIR_SPECS.values()}) == 3
 
 
-def test_evidence_note_keeps_mediation_blocked_with_gemini_uncertainty_series() -> None:
+def test_evidence_note_keeps_gemini_uncertainty_explicit_under_j3() -> None:
     text = read(EVIDENCE_NOTE_PATH)
 
     assert status(EVIDENCE_NOTE_PATH) == "j2_gap_closure_reference_openai_claude_recorded"
@@ -105,5 +105,5 @@ def test_evidence_note_keeps_mediation_blocked_with_gemini_uncertainty_series() 
     assert "scenario_uncertainty_gemini_01/gemini" in text
     assert "scenario_uncertainty_openai_01/openai" in text
     assert "still lacks Claude expansion" in text
-    assert "Mediation implementation remains blocked pending J3 justification review." in text
-    assert "no implementation seam may open" in text
+    assert "The accepted J3 decision is that mediation is now justified for one bounded experimental seam." in text
+    assert "This evidence package is not a second truth court and does not by itself authorize implementation." in text

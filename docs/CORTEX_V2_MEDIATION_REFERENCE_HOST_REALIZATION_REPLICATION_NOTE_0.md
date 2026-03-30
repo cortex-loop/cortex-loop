@@ -62,4 +62,4 @@ No pair may count if it changes any of the following:
 ## Outcome
 
 `pair_reference_host_001`, `pair_reference_host_002`, and `pair_reference_host_003` are countable only because the baseline and mediated sides preserve the same certified `current-pair` publication surface while changing only direct host-native opportunity specialization at the selection layer.
-Three reference-only pairs are real host-realization evidence, but package-level host-specialized realization remains `insufficient` and mediation remains blocked.
+Three reference-only pairs are real host-realization evidence, and the accepted package-level justification decision is recorded in `docs/CORTEX_V2_MEDIATION_JUSTIFICATION_NOTE.md`. This replication note does not by itself authorize implementation.

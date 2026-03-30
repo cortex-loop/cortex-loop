@@ -1,4 +1,4 @@
-"""Checks for the J1 mediation evidence package baseline."""
+"""Checks for the current mediation evidence package."""
 
 from __future__ import annotations
 
@@ -152,7 +152,7 @@ def test_axis_and_evidence_note_now_end_with_exact_missing_delta() -> None:
     }
     burden_row = next(row for row in axis_rows if row["axis"] == "lower visible burden at equal task value")
     assert "broadens the burden axis beyond" in burden_row["why_still_insufficient"]
-    assert "J3 mediation justification update" in burden_row["minimum_additional_paired_evidence"]
+    assert "one bounded experimental seam" in burden_row["minimum_additional_paired_evidence"]
 
     assert [row["target_id"] for row in rerun_rows] == ["uncertainty_expansion_if_still_needed"]
 

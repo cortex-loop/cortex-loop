@@ -63,4 +63,4 @@ No pair may count if it changes any of the following:
 ## Outcome
 
 `pair_openai_host_001`, `pair_openai_host_002`, and `pair_openai_host_003` are countable only because the baseline and mediated sides preserve the same certified OpenAI `current-pair` publication surface while changing only direct host-native opportunity specialization at the selection layer.
-Three OpenAI-only pairs are real host-realization evidence, `scenario_host_openai_01` / `openai` now has `candidate_positive` cell-level signal for better host-specialized realization, package-level host-specialized realization remains `insufficient`, and mediation remains blocked.
+Three OpenAI-only pairs are real host-realization evidence, `scenario_host_openai_01` / `openai` now has `candidate_positive` cell-level signal for better host-specialized realization, and the accepted package-level justification decision is recorded in `docs/CORTEX_V2_MEDIATION_JUSTIFICATION_NOTE.md`. This replication note does not by itself authorize implementation.

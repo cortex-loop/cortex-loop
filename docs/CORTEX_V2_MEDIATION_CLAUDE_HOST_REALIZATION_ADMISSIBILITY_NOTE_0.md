@@ -58,5 +58,5 @@ The only admissible mediation delta is a live, host-facing realization choice th
 
 Three lawful Claude host-realization comparator pairs are recorded for `scenario_host_claude_01`.
 Those pairs are Claude-only, they preserve packet truth/publication meaning, and `scenario_host_claude_01` / `claude` now has `candidate_positive` cell-level signal for better host-specialized realization.
-In short: three lawful Claude host-realization comparator pairs are recorded, one exact Claude cell now has `candidate_positive` signal for better host-specialized realization, and mediation implementation remains blocked pending J3 justification review.
-No package-level mediation implementation is justified from this note alone.
+In short: three lawful Claude host-realization comparator pairs are recorded, one exact Claude cell now has `candidate_positive` signal for better host-specialized realization, and the accepted package-level justification decision is recorded in `docs/CORTEX_V2_MEDIATION_JUSTIFICATION_NOTE.md`.
+No package-level mediation implementation is justified from this note alone; this note does not by itself authorize implementation.

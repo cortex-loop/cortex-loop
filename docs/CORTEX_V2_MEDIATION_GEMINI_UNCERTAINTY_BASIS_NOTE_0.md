@@ -57,4 +57,4 @@ The following remain non-qualifying for this basis:
 ## Outcome
 
 `scenario_uncertainty_gemini_01` now has a satisfied Gemini-only basis for comparative evidence review.
-Even with the satisfied basis, mediation remains blocked until the broader evidence package says otherwise.
+Even with the satisfied basis, this remains cell-local evidence only. The accepted package-level justification decision is recorded in `docs/CORTEX_V2_MEDIATION_JUSTIFICATION_NOTE.md`, and this note does not by itself authorize implementation.

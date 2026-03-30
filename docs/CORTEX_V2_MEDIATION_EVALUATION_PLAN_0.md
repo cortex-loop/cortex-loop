@@ -1,12 +1,12 @@
 # CORTEX_V2_MEDIATION_EVALUATION_PLAN_0
 
-Date: 2026-03-20
-Status: active comparative evidence plan for future mediation audit (`planning only`)
+Date: 2026-03-31
+Status: historical comparative evidence plan satisfied by accepted J3 justification update (`historical`, `planning complete`)
 
 ## Scope
 
-This document defines the comparative evidence plan required before any mediation implementation seam may begin.
-Mediation remains unimplemented and unjustified; this document does not approve or start mediation code.
+This document defined the comparative evidence plan required before any mediation implementation seam could begin.
+Mediation remains unimplemented; this document does not approve or start mediation code by itself.
 
 ## Authority
 
@@ -18,11 +18,11 @@ Mediation remains unimplemented and unjustified; this document does not approve 
 
 ## One-paragraph verdict
 
-The current repo state permits mediation only as a later experimental possibility, not as active implementation work. This plan converts that blocker into a comparative evidence program: define how mediated and non-mediated behavior would be compared on the same scenarios, what artifacts would count as measurable lift, and what evidence gaps would still block implementation. It does not widen the truth court, change runtime behavior, or mutate phase/gate truth.
+This plan converted the old mediation blocker into a comparative evidence program and has now been satisfied by the accepted J2 package plus the accepted J3 justification update. It remains useful as the historical evidence protocol, but it is no longer the active blocker note.
 
 ## Scope and Non-Scope
 
-Planning-only scope:
+Historical planning scope:
 - define the comparative question
 - define experimental units and the baseline comparison
 - define required lift axes, evidence shapes, and stop rules
@@ -113,7 +113,7 @@ Any future mediated comparison remains subject to the current packet and justifi
 
 ## Required Evaluation Artifacts Before Any Future Implementation Seam
 
-Before a mediation implementation seam may open, the repo should have a concrete evidence package containing at least:
+Before a mediation implementation seam could open, the repo needed a concrete evidence package containing at least:
 
 - one scenario catalog describing the compared scenario set and host coverage using `docs/CORTEX_V2_MEDIATION_SCENARIO_CATALOG_0.md`
 - one paired run ledger for baseline vs mediated runs using `docs/CORTEX_V2_MEDIATION_PAIRED_RUN_LEDGER_0.md` and per-run packets using `docs/CORTEX_V2_MEDIATION_RUN_PACKET_TEMPLATE_0.md`
@@ -128,8 +128,8 @@ The evidence package may live in docs, reproducible reports, or committed evalua
 
 ## Stop Rule
 
-If no mediation-vs-non-mediation axis shows measurable lift under this plan, mediation remains blocked and no implementation seam may open.
+If no mediation-vs-non-mediation axis showed measurable lift under this plan, mediation remained blocked and no implementation seam could open.
 
 ## Next-Step Rule
 
-This plan enables evidence-collection planning only. It does not authorize mediation code, packet edits, default-on behavior, or phase/gate status changes. If candidate-positive evidence is collected later, the next honest step is a justification update reviewing that evidence, not immediate implementation by inertia.
+This plan no longer governs active evidence collection. J3 justification review is now complete. The next honest step is a bounded experimental mediation implementation-planning seam under the accepted J3 limits, not a rerun of this planning document and not implementation by inertia.

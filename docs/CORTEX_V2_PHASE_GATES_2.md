@@ -165,3 +165,24 @@ They do not authorize runtime widening, CLI-backed transport substitution, tool-
 | `L6B` Gemini service live proof | `docs/CORTEX_V2_LIVE_SERVICE_PROOF_0.md`; `make live-preflight`; `python3 tools/live_cortex_host_control.py --lane automation --provider gemini`; `make live-compare` | rerun `L6B` on a capable machine with `vertex_adc` first or `GEMINI_API_KEY` second plus explicit spend approval; require two successful bounded reruns before closure | blocked | the current machine remains out of scope for actual Gemini service proof because machine auth readiness is not yet satisfied; signed-in Gemini CLI truth still does not count as service-lane auth |
 | `L6C` OpenAI service live proof | `docs/CORTEX_V2_LIVE_SERVICE_PROOF_0.md`; `make live-preflight`; `python3 tools/live_cortex_host_control.py --lane automation --provider openai`; `make live-compare` | rerun `L6C` on a capable machine with `OPENAI_API_KEY` and explicit spend approval; require two successful bounded reruns before closure | blocked | the current machine remains out of scope for actual OpenAI service proof because machine auth readiness is not yet satisfied; signed-in Codex truth still does not count as service-lane auth |
 | `L6D` package-level service proof | `docs/CORTEX_V2_LIVE_SERVICE_PROOF_0.md`; `make live-compare` | `L6A`, `L6B`, and `L6C` must all land on a capable machine first | blocked | package-level service proof remains unearned; `N2` is now the active capable-machine contract, but this machine still cannot close the service lane honestly |
+
+---
+
+## 8. Mediation justification gate
+
+Source of truth:
+
+- `docs/CORTEX_V2_MEDIATION_JUSTIFICATION_NOTE.md`
+- `docs/CORTEX_V2_MEDIATION_EVIDENCE_NOTE_0.md`
+- `docs/CORTEX_V2_MEDIATION_AXIS_COMPARISON_TABLE_0.md`
+- `docs/CORTEX_V2_MEDIATION_BURDEN_COMPARISON_0.md`
+- `docs/CORTEX_V2_MEDIATION_HOST_SPLIT_COMPARISON_0.md`
+
+Overall status: `landed`
+
+This row records whether package-level evidence is strong enough to justify one bounded experimental mediation seam.
+It does not authorize implementation by itself, and it does not widen packet meaning, rollout scope, or runtime defaults.
+
+| Gate row | Current evidence | Owner / next closeout | Status | Notes |
+| --- | --- | --- | --- | --- |
+| `J3` mediation justification review | `docs/CORTEX_V2_MEDIATION_JUSTIFICATION_NOTE.md`; `docs/CORTEX_V2_MEDIATION_EVIDENCE_NOTE_0.md`; `docs/CORTEX_V2_MEDIATION_AXIS_COMPARISON_TABLE_0.md`; `docs/CORTEX_V2_MEDIATION_BURDEN_COMPARISON_0.md`; `docs/CORTEX_V2_MEDIATION_HOST_SPLIT_COMPARISON_0.md` | closed | landed | J2 earned package-level `candidate_positive` signal on reduced thrashing, better branch discipline, lower visible burden at equal task value, and better host-specialized realization; uncertainty remains `insufficient` but explicit and non-blocking for one first bounded experimental seam. Mediation remains unimplemented, experimental / off-by-default, SRE-only, limited to `Q_t^{base} -> Q_t^{final}`, and forbidden from changing commitment truth or widening into Core, AUX runtime, live/provider paths, or broad rollout. |
