@@ -85,11 +85,11 @@ It is workflow state only. It does not override the packet documents, implementa
 
 ## 2. Current campaign and seam state
 
-- Current campaign: `J2 mediation gap-closure reruns`
+- Current campaign: `J2 mediation gap-closure reruns candidate complete`
 - Current working branch at ledger update: `codex/j2-mediation-gap-closure-reruns`
 - Current branch role: explicit manual evidence-rerun branch opened from clean `main` after the landed J1 package baseline
-- Current candidate seam: `J2 mediation gap-closure reruns`; `J1` is now accepted baseline truth on `main`, `Q1` remains accepted ancestor truth, `N2` remains blocked on a capable machine, and the current J2 branch is for evidence collection only rather than mediation implementation
-- Current seam status: `J2 branch opened from clean main; no new reruns have started yet; the immediate next lawful move is a decision-complete J2 rerun plan over the already-recorded branch-discipline, burden, host-realization, and uncertainty package gaps`
+- Current candidate seam: `J2 mediation gap-closure reruns`; `J1` is now accepted baseline truth on `main`, `Q1` remains accepted ancestor truth, `N2` remains blocked on a capable machine, and the current J2 branch remains evidence-only rather than mediation implementation
+- Current seam status: `J2 now records the mandatory deterministic gap-closure evidence on the branch: dedicated branch-discipline families on reference/openai/claude, dedicated non-thrash burden families on reference/openai/claude, and the first Claude host-realization line. The package is no longer insufficient everywhere: reduced thrashing, better branch discipline, lower visible burden, and better host-specialized realization are now package-level candidate-positive, while uncertainty handling remains package-insufficient on the current line.`
 - the compare surface and live-validation truth from earlier seams remain accepted ancestor input and are not being reopened by the landed K train.
 - Seam risk: deterministic code/doc seam
 
@@ -141,18 +141,14 @@ It is workflow state only. It does not override the packet documents, implementa
 - Current blocker shape:
   - keep the machine-auth service lane explicitly deferred on this machine for actual proof execution
   - do not reopen the K train by inertia now that the bounded proven-lane executive/runtime line is landed
-  - `J1` is now landed on `main`; mediation remains blocked because package-level evidence is still insufficient on every required axis
-  - current burden signal remains too narrow because it is still confined to the `thrash_control` family
-  - current branch-discipline signal still derives only from `thrash_control`
-  - current host-specialized realization signal has candidate-positive cells on reference, Gemini, and OpenAI, but Claude is still missing from the mediation package
+  - `J2` now changes the mediation blocker shape: package-level evidence is no longer `insufficient` on every required axis
+  - mediation implementation remains blocked pending `J3` justification review rather than further mandatory J2 reruns
+  - better uncertainty handling remains the one still-package-insufficient axis on the current line because it still comes from one family only and still lacks Claude expansion
   - Gemini should remain explicit as a partial/contaminated live rerun host rather than being hidden behind pooled mediation summaries
 - Next lawful move:
-  - keep this branch evidence-only and plan J2 before collecting new reruns
-  - first `J2` targets remain:
-    - one branch-discipline family on reference, OpenAI, and Claude
-    - one non-thrash equal-value burden family on reference, OpenAI, and Claude
-    - one host-realization expansion on Claude plus refreshes on reference and OpenAI
-    - one uncertainty expansion on Claude if the package gap table still says the one-family uncertainty line is too narrow
+  - publish/review the `codex/j2-mediation-gap-closure-reruns` branch as an evidence-only justification-review candidate
+  - after acceptance, open `J3` mediation justification update rather than mediation implementation
+  - optional `scenario_uncertainty_claude_01` remains deferred unless the J3 review still says the uncertainty gap blocks the next decision
   - keep `N2` as a separate blocked train pending a capable machine rather than reopening service proof on this host
 
 ## 4. Explicitly blocked moves

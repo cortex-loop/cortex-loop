@@ -98,10 +98,9 @@ def test_reference_uncertainty_builder_packet_series_and_replication_note_exist(
 def test_evidence_note_keeps_mediation_blocked_with_reference_uncertainty_series() -> None:
     text = read(EVIDENCE_NOTE_PATH)
 
-    assert "Three experimental reference-only uncertainty pairs are now recorded" in text
-    assert (
-        "`scenario_uncertainty_reference_01` / `reference` now has `candidate_positive` "
-        "cell-level signal for better uncertainty handling"
-    ) in text
-    assert "Mediation remains blocked" in text
+    assert status(EVIDENCE_NOTE_PATH) == "j2_gap_closure_reference_openai_claude_recorded"
+    assert "- better uncertainty handling: `insufficient`" in text
+    assert "scenario_uncertainty_reference_01/reference" in text
+    assert "still lacks Claude expansion" in text
+    assert "Mediation implementation remains blocked pending J3 justification review." in text
     assert "no implementation seam may open" in text

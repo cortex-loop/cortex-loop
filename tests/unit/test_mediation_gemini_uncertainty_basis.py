@@ -100,21 +100,10 @@ def test_gemini_builder_packet_series_and_replication_note_exist() -> None:
 def test_evidence_note_keeps_mediation_blocked_with_gemini_uncertainty_series() -> None:
     text = read(EVIDENCE_NOTE_PATH)
 
-    assert (
-        status(EVIDENCE_NOTE_PATH)
-        == "reference_three_series_with_gemini_three_series_and_openai_three_series_recorded"
-    )
-    assert "Three experimental OpenAI-only baseline-versus-mediated thrash pairs are now recorded" in text
-    assert "Three experimental OpenAI-only uncertainty pairs are now recorded" in text
-    assert "Three experimental Gemini-only uncertainty pairs are now recorded" in text
-    assert "Three experimental Gemini-only baseline-versus-mediated thrash pairs are now recorded" in text
-    assert (
-        "`scenario_uncertainty_gemini_01` / `gemini` now has `candidate_positive` "
-        "cell-level signal for better uncertainty handling"
-    ) in text
-    assert (
-        "`scenario_thrash_gemini_01` / `gemini` now has `candidate_positive` "
-        "cell-level signal for reduced thrashing and better branch discipline"
-    ) in text
-    assert "Mediation remains blocked" in text
+    assert status(EVIDENCE_NOTE_PATH) == "j2_gap_closure_reference_openai_claude_recorded"
+    assert "- better uncertainty handling: `insufficient`" in text
+    assert "scenario_uncertainty_gemini_01/gemini" in text
+    assert "scenario_uncertainty_openai_01/openai" in text
+    assert "still lacks Claude expansion" in text
+    assert "Mediation implementation remains blocked pending J3 justification review." in text
     assert "no implementation seam may open" in text

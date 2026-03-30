@@ -105,16 +105,10 @@ def test_evidence_note_keeps_mediation_blocked_with_openai_uncertainty_series() 
     text = read(EVIDENCE_NOTE_PATH)
     ledger_rows = parse_markdown_table(section(read(PAIRED_LEDGER_PATH), "Recorded Paired Runs"))
 
-    assert (
-        status(EVIDENCE_NOTE_PATH)
-        == "reference_three_series_with_gemini_three_series_and_openai_three_series_recorded"
-    )
-    assert "Three experimental OpenAI-only baseline-versus-mediated thrash pairs are now recorded" in text
-    assert "Three experimental OpenAI-only uncertainty pairs are now recorded" in text
-    assert (
-        "`scenario_uncertainty_openai_01` / `openai` now has `candidate_positive` "
-        "cell-level signal for better uncertainty handling"
-    ) in text
-    assert "Mediation remains blocked" in text
+    assert status(EVIDENCE_NOTE_PATH) == "j2_gap_closure_reference_openai_claude_recorded"
+    assert "- better uncertainty handling: `insufficient`" in text
+    assert "scenario_uncertainty_openai_01/openai" in text
+    assert "Current uncertainty signal still comes from one family only and still lacks Claude expansion." in text
+    assert "Mediation implementation remains blocked pending J3 justification review." in text
     assert "no implementation seam may open" in text
     assert any(row["scenario_id"] == "scenario_uncertainty_openai_01" for row in ledger_rows)

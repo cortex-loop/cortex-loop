@@ -69,7 +69,7 @@ def test_reference_host_realization_admissibility_law_is_explicit() -> None:
         "`scenario_host_reference_01` / `reference` now has `candidate_positive` "
         "cell-level signal for better host-specialized realization"
     ) in text
-    assert "package-level host-specialized realization evidence remains `insufficient`" in text
+    assert "Mediation implementation remains blocked pending J3 justification review" not in text
 
 
 def test_reference_host_realization_anchor_is_rebound_to_a_recorded_pair() -> None:
@@ -128,6 +128,6 @@ def test_evidence_note_records_three_reference_host_pairs_and_keeps_mediation_bl
         "`scenario_host_reference_01` / `reference` now has `candidate_positive` "
         "signal for better host-specialized realization"
     ) in text
-    assert "package-level host-specialized realization remains `insufficient`." in text
-    assert "Mediation remains blocked" in text
+    assert "Reference, Gemini, OpenAI, and Claude now carry the host-realization `candidate_positive` cells." in text
+    assert "Mediation implementation remains blocked pending J3 justification review." in text
     assert "no implementation seam may open" in text

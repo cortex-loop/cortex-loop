@@ -124,11 +124,11 @@ def test_reference_thrash_builder_packet_series_and_replication_note_exist() -> 
 def test_evidence_note_keeps_mediation_blocked_with_three_reference_only_pairs() -> None:
     text = read(EVIDENCE_NOTE_PATH)
 
-    assert "All current reference-host scenario families now have committed baseline run packets" in text
-    assert "Three experimental reference-only baseline-versus-mediated thrash pairs are now recorded" in text
-    assert "Three experimental reference-only uncertainty pairs are now recorded" in text
-    assert "scenario_thrash_reference_01" in text
-    assert "lower visible burden" in text.lower()
+    assert status(EVIDENCE_NOTE_PATH) == "j2_gap_closure_reference_openai_claude_recorded"
+    assert "All current reference-host, Gemini-host, OpenAI-host, and Claude-host committed mediation packet surfaces are now present on the current line." in text
+    assert "- reduced thrashing: `candidate_positive`" in text
+    assert "scenario_thrash_reference_01/reference" in text
+    assert "scenario_branch_reference_01/reference" in text
     assert "candidate_positive" in text
-    assert "Mediation remains blocked" in text
+    assert "Mediation implementation remains blocked pending J3 justification review." in text
     assert "no implementation seam may open" in text

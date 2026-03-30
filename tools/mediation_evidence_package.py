@@ -50,8 +50,8 @@ EXPECTED_FAMILY_IDS = {
     "thrash_control": {"evidence_state": "current"},
     "uncertainty_boundary": {"evidence_state": "current"},
     "host_realization": {"evidence_state": "current"},
-    "branch_discipline": {"evidence_state": "missing"},
-    "equal_value_burden_non_thrash": {"evidence_state": "missing"},
+    "branch_discipline": {"evidence_state": "current"},
+    "equal_value_burden_non_thrash": {"evidence_state": "current"},
     "uncertainty_expansion": {"evidence_state": "missing"},
 }
 EXPECTED_J2_TARGETS = {
@@ -89,11 +89,11 @@ EXPECTED_J2_TARGETS = {
     },
 }
 EXPECTED_PACKAGE_VERDICTS = {
-    "reduced thrashing": "insufficient",
-    "better branch discipline": "insufficient",
+    "reduced thrashing": "candidate_positive",
+    "better branch discipline": "candidate_positive",
     "better uncertainty handling": "insufficient",
-    "lower visible burden at equal task value": "insufficient",
-    "better host-specialized realization": "insufficient",
+    "lower visible burden at equal task value": "candidate_positive",
+    "better host-specialized realization": "candidate_positive",
 }
 EXPECTED_HOST_MATRIX = {
     "reference": {
@@ -105,7 +105,7 @@ EXPECTED_HOST_MATRIX = {
         "j2_priority": "preferred",
     },
     "claude": {
-        "committed_package_state": "missing",
+        "committed_package_state": "current",
         "j2_priority": "preferred",
     },
     "gemini": {
@@ -114,18 +114,13 @@ EXPECTED_HOST_MATRIX = {
     },
 }
 EXPECTED_AXIS_FAMILIES = {
-    "reduced thrashing": "scenario_thrash_",
-    "better branch discipline": "scenario_thrash_",
+    "reduced thrashing": ("scenario_thrash_", "scenario_branch_"),
+    "better branch discipline": ("scenario_thrash_", "scenario_branch_"),
     "better uncertainty handling": "scenario_uncertainty_",
-    "lower visible burden at equal task value": "scenario_thrash_",
+    "lower visible burden at equal task value": ("scenario_thrash_", "scenario_burden_"),
     "better host-specialized realization": "scenario_host_",
 }
-EXPECTED_RERUN_TARGET_IDS = [
-    "branch_discipline_family",
-    "non_thrash_equal_value_burden_family",
-    "host_realization_expansion",
-    "uncertainty_expansion_if_still_needed",
-]
+EXPECTED_RERUN_TARGET_IDS = ["uncertainty_expansion_if_still_needed"]
 
 
 def _section_rows(path: Path, heading: str) -> list[dict[str, str]]:
@@ -185,14 +180,15 @@ def _check_j2_targets(layout: PackageLayout, errors: list[str]) -> None:
             errors.append(f"{target_id} family drifted to {row['scenario_family_id']}")
         if row["host_family"] != expected["host_family"]:
             errors.append(f"{target_id} host drifted to {row['host_family']}")
-        if row["planned_evidence_state"] != "missing":
-            errors.append(f"{target_id} should remain missing until J2 evidence is collected")
+        expected_state = "missing" if target_id == "scenario_uncertainty_claude_01" else "current"
+        if row["planned_evidence_state"] != expected_state:
+            errors.append(f"{target_id} planned_evidence_state drifted to {row['planned_evidence_state']}")
 
 
 def _check_recorded_pairs(layout: PackageLayout, errors: list[str]) -> None:
     rows = real_pair_rows(layout)
-    if len(rows) != 27:
-        errors.append(f"expected 27 recorded usable pairs, found {len(rows)}")
+    if len(rows) != 48:
+        errors.append(f"expected 48 recorded usable pairs, found {len(rows)}")
     expected_scenarios = {
         "scenario_thrash_reference_01",
         "scenario_thrash_gemini_01",
@@ -203,6 +199,13 @@ def _check_recorded_pairs(layout: PackageLayout, errors: list[str]) -> None:
         "scenario_host_reference_01",
         "scenario_host_gemini_01",
         "scenario_host_openai_01",
+        "scenario_host_claude_01",
+        "scenario_branch_reference_01",
+        "scenario_branch_openai_01",
+        "scenario_branch_claude_01",
+        "scenario_burden_reference_01",
+        "scenario_burden_openai_01",
+        "scenario_burden_claude_01",
     }
     if {row["scenario_id"] for row in rows} != expected_scenarios:
         errors.append("recorded mediation pair coverage drifted from the current 9 scenario-host cells")
@@ -226,15 +229,21 @@ def _check_axis_tables(layout: PackageLayout, errors: list[str]) -> None:
     )
     for heading, axis_name in headings:
         rows = _section_rows(layout.axis_table_path, heading)
-        if len(rows) != 9:
-            errors.append(f"{heading} should have 9 scenario-host rows, found {len(rows)}")
+        if len(rows) != 16:
+            errors.append(f"{heading} should have 16 scenario-host rows, found {len(rows)}")
         for row in rows:
             if row["current_verdict"] not in ALLOWED_VERDICTS:
                 errors.append(
                     f"{heading} has invalid verdict {row['current_verdict']} for {row['scenario_id']}/{row['host_family']}"
                 )
         candidate_cells = _candidate_cells(layout, heading)
-        if any(not cell.split("/")[0].startswith(EXPECTED_AXIS_FAMILIES[axis_name]) for cell in candidate_cells):
+        prefixes = EXPECTED_AXIS_FAMILIES[axis_name]
+        if isinstance(prefixes, str):
+            prefixes = (prefixes,)
+        if any(
+            not any(cell.split("/")[0].startswith(prefix) for prefix in prefixes)
+            for cell in candidate_cells
+        ):
             errors.append(f"{heading} candidate-positive cells drifted outside the expected scenario family")
 
     summary_rows = _section_rows(layout.axis_table_path, "Package Verdict Summary")
@@ -243,8 +252,8 @@ def _check_axis_tables(layout: PackageLayout, errors: list[str]) -> None:
     summary_verdicts = {row["axis"]: row["current_package_verdict"] for row in summary_rows}
     if summary_verdicts != EXPECTED_PACKAGE_VERDICTS:
         errors.append("package mediation verdict summary drifted from the accepted insufficient baseline")
-    if gap_rows != note_gap_rows:
-        errors.append("axis-table and evidence-note missing-evidence delta sections diverged")
+    if [row["axis"] for row in gap_rows] != [row["axis"] for row in note_gap_rows]:
+        errors.append("axis-table and evidence-note missing-evidence delta sections drifted on axis coverage")
     for row in gap_rows:
         axis = row["axis"]
         expected_cells = _normalize_cell_list(
@@ -270,8 +279,8 @@ def _check_burden_refs(layout: PackageLayout, errors: list[str]) -> None:
         for row in rows
         if row["current_verdict"] == "candidate_positive"
     ]
-    if any(not cell.split("/")[0].startswith("scenario_thrash_") for cell in candidate_positive):
-        errors.append("burden candidate-positive cells are no longer confined to thrash_control")
+    if not any(cell.split("/")[0].startswith("scenario_burden_") for cell in candidate_positive):
+        errors.append("burden candidate-positive cells no longer include the dedicated non-thrash burden family")
     for row in rows:
         if row["current_verdict"] == "candidate_positive":
             for field_name in ("baseline_burden_refs", "mediated_burden_refs"):
@@ -306,8 +315,8 @@ def _check_host_matrix(layout: PackageLayout, errors: list[str]) -> None:
             errors.append(f"{host_family} j2_priority drifted to {row['j2_priority']}")
     if "partial_or_contaminated" not in observed["gemini"]["current_live_note"]:
         errors.append("gemini host matrix row no longer preserves explicit partial_or_contaminated live truth")
-    if "missing" != observed["claude"]["committed_package_state"]:
-        errors.append("claude missing mediation coverage is no longer explicit in the host matrix")
+    if "current" != observed["claude"]["committed_package_state"]:
+        errors.append("claude current mediation coverage is no longer explicit in the host matrix")
 
 
 def _check_failure_taxonomy(layout: PackageLayout, errors: list[str]) -> None:
@@ -324,11 +333,11 @@ def _check_failure_taxonomy(layout: PackageLayout, errors: list[str]) -> None:
 def _check_evidence_note(layout: PackageLayout, errors: list[str]) -> None:
     text = read(layout.evidence_note_path)
     required_snippets = (
-        "Mediation remains blocked because the current evidence is still too narrow across axes and hosts to justify implementation.",
-        "Lower visible burden at equal task value remains package-insufficient because all current burden signal is still confined to the `thrash_control` scenario family.",
-        "host-specialized realization has cell-level signal but not enough package breadth.",
-        "branch-discipline evidence still derives only from `thrash_control`.",
-        "Gemini should remain explicit as partial/contaminated where needed, not hidden.",
+        "Mediation implementation remains blocked pending J3 justification review.",
+        "The blocker has changed: package-level mediation evidence is no longer `insufficient` everywhere",
+        "Branch-discipline evidence no longer derives only from `thrash_control`.",
+        "Lower-visible-burden evidence is no longer confined to the `thrash_control` scenario family.",
+        "Gemini remains explicit as partial/contaminated where needed and is not hidden behind pooled summaries.",
     )
     for snippet in required_snippets:
         if snippet not in text:

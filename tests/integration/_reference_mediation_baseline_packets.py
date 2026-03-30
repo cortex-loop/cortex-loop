@@ -185,6 +185,20 @@ _SCOPE_TEXT = {
         "It remains OpenAI-only, does not justify mediation, and package-level "
         "evidence notes govern any verdict."
     ),
+    ("scenario_host_claude_01", "baseline_non_mediated"): (
+        "This committed run packet records one Claude-host baseline-only "
+        "host-realization packet within the committed Claude host-realization "
+        "paired-run series for mediation evidence review.\n"
+        "It does not provide comparative mediation evidence by itself, justify "
+        "mediation, or authorize implementation work."
+    ),
+    ("scenario_host_claude_01", "experimental_mediated"): (
+        "This committed run packet records one Claude-host experimental mediated "
+        "host-realization comparator within the committed Claude host-realization "
+        "paired-run series for mediation evidence review.\n"
+        "It remains Claude-only, does not justify mediation, and package-level "
+        "evidence notes govern any verdict."
+    ),
     ("scenario_thrash_reference_01", "baseline_non_mediated"): (
         "This committed run packet records one reference-host baseline-only thrash "
         "control packet within the committed thrash paired-run series for mediation "
