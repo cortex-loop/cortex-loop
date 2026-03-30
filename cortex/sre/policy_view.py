@@ -82,7 +82,13 @@ def build_executive_policy_view(
     )
     stop_threshold = max(
         0.40,
-        min(0.75, 0.75 - (0.25 * modulators.stop_pressure)),
+        min(
+            0.75,
+            0.75
+            - (0.20 * summary.quota_pressure)
+            - (0.10 * summary.verification_conflict_pressure)
+            + (0.05 * summary.continuity_demand),
+        ),
     )
     allow_extra_read_pass = (
         modulators.update_pressure >= 0.50

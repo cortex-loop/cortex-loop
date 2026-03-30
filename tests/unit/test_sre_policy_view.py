@@ -60,6 +60,43 @@ def test_policy_view_allows_extra_read_pass_at_explicit_threshold() -> None:
     assert policy.allow_extra_read_pass is True
 
 
+def test_policy_view_stop_threshold_responds_to_summary_pressure() -> None:
+    low_pressure = build_executive_policy_view(
+        ExecutiveSignalSummary(
+            uncertainty=0.35,
+            repeated_failure_pressure=0.0,
+            quota_pressure=0.0,
+            continuity_demand=0.0,
+            novelty_pressure=0.2,
+            verification_conflict_pressure=0.0,
+        ),
+        ExecutiveModulatorState(
+            focus_gain=0.0,
+            explore_gain=0.0,
+            stop_pressure=0.6,
+            update_pressure=0.0,
+        ),
+    )
+    high_pressure = build_executive_policy_view(
+        ExecutiveSignalSummary(
+            uncertainty=0.35,
+            repeated_failure_pressure=0.0,
+            quota_pressure=1.0,
+            continuity_demand=0.0,
+            novelty_pressure=0.2,
+            verification_conflict_pressure=1.0,
+        ),
+        ExecutiveModulatorState(
+            focus_gain=0.0,
+            explore_gain=0.0,
+            stop_pressure=0.6,
+            update_pressure=0.0,
+        ),
+    )
+
+    assert high_pressure.stop_threshold < low_pressure.stop_threshold
+
+
 def test_policy_view_bounds_numeric_fields() -> None:
     summary = ExecutiveSignalSummary(
         uncertainty=1.0,
