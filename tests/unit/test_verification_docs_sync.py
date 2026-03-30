@@ -369,8 +369,10 @@ def test_resume_protocol_and_active_workstream_contract_exist() -> None:
     assert "accepted workflow baseline truth now rests on `main` rather than a long-lived working branch" in workstream_text
     assert "`Q1` remains the accepted ancestor audit on `main`" in workstream_text
     assert "Current campaign: `M2 executive summary, persistent modulators, and policy view candidate complete`" in workstream_text
+    assert "Current working branch at ledger update: `codex/m2-executive-summary-policy`" in workstream_text
+    assert "Current branch role: explicit manual SRE refinement branch because the M2 summary/memory/policy seam is not yet published on the canonical line" in workstream_text
     assert "Current candidate seam: `M2 executive summary, persistent modulators, and policy view`;" in workstream_text
-    assert "the M2 summary/memory/policy layer is now implemented on the explanation branch" in workstream_text
+    assert "the M2 summary/memory/policy layer is now implemented on the M2 branch" in workstream_text
     assert "the previously re-earned candidate package-positive operator directionality line remains the current branch truth" in workstream_text
     assert "the compare surface and live-validation truth from earlier seams remain accepted ancestor input and are not being reopened by the landed K train." in workstream_text
     assert "the current signed-in smoke surfaces are now clean again" in workstream_text
@@ -417,7 +419,7 @@ def test_resume_protocol_and_active_workstream_contract_exist() -> None:
     assert "do not reopen the K train by inertia now that the bounded proven-lane executive/runtime line is landed" in workstream_text
     assert "do not widen from the current candidate package-positive review-branch result into new runtime or product claims by inertia" in workstream_text
     assert "treat the current package-positive operator line as candidate branch truth until it is reviewed and accepted" in workstream_text
-    assert "the next lawful move is to publish/review this branch as the candidate package-positive operator directionality line" in workstream_text
+    assert "the next lawful move is to publish/review the `codex/m2-executive-summary-policy` branch as the candidate package-positive operator directionality line plus the M2 SRE refinement" in workstream_text
     assert "after acceptance, keep `N2` as a separate blocked train pending a capable machine" in workstream_text
     assert "keep `N2` as a separate blocked train pending a capable machine" in workstream_text
     assert "Do not treat signed-in provider CLI sessions as equivalent to the automation credentials" in workstream_text
@@ -937,7 +939,7 @@ def test_runtime_restack_program_lock_is_recorded() -> None:
     assert "the operator/evaluation harness must not call explicit Gemini model names at all" in theory_text
     assert "fresh auto-only product-path rerun is sharper still" in theory_text
     assert "first full round-2 stable-defaults rerun now says the package is still `mixed_direction`" in theory_text
-    assert "current explanation branch now carries the provider-limit neutrality hardening, the OpenAI continuity transport fix, the Claude efficiency rerun, the first compact SRE modulator bundle, and the M2 summary/memory/policy refinement" in theory_text
+    assert "current M2 branch now carries the provider-limit neutrality hardening, the OpenAI continuity transport fix, the Claude efficiency rerun, the first compact SRE modulator bundle, and the M2 summary/memory/policy refinement" in theory_text
     assert "focused OpenAI truth-gap proof now shows `modulator_summary`, `modulator_memory`, `policy_view`, and a real extra inspect read-pass" in theory_text
     assert "candidate package-positive operator directionality line remains intact" in theory_text
-    assert "next honest move is still to publish/review the candidate line rather than widen further" in theory_text
+    assert "next honest move is to publish/review the M2 branch rather than widen further" in theory_text

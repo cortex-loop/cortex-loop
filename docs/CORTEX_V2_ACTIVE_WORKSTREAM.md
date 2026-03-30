@@ -75,10 +75,10 @@ It is workflow state only. It does not override the packet documents, implementa
 ## 2. Current campaign and seam state
 
 - Current campaign: `M2 executive summary, persistent modulators, and policy view candidate complete`
-- Current working branch at ledger update: `codex/claude-directionality-explanation`
-- Current branch role: explicit manual explanation branch off the review line because local `main` remains ahead of `origin/main` and a managed session cannot be started honestly from that state
-- Current candidate seam: `M2 executive summary, persistent modulators, and policy view`; `Q1` remains the accepted ancestor audit on `main`, `N2` remains blocked on a capable machine, and the current explanation branch now carries the S1 route selector plus provider-limit neutrality, the OpenAI continuity transport fix, the Claude efficiency rerun, the compact SRE modulator bundle, and the new summary/memory/policy refinement`
-- Current seam status: `the M2 summary/memory/policy layer is now implemented on the explanation branch: one focused OpenAI truth_gap rerun shows live modulator_summary, modulator_memory, policy_view, and an actual extra inspect read-pass in artifacts, while the previously re-earned candidate package-positive operator directionality line remains the current branch truth`
+- Current working branch at ledger update: `codex/m2-executive-summary-policy`
+- Current branch role: explicit manual SRE refinement branch because the M2 summary/memory/policy seam is not yet published on the canonical line
+- Current candidate seam: `M2 executive summary, persistent modulators, and policy view`; `Q1` remains the accepted ancestor audit on `main`, `N2` remains blocked on a capable machine, and the current M2 branch now carries the S1 route selector plus provider-limit neutrality, the OpenAI continuity transport fix, the Claude efficiency rerun, the compact SRE modulator bundle, and the new summary/memory/policy refinement`
+- Current seam status: `the M2 summary/memory/policy layer is now implemented on the M2 branch: one focused OpenAI truth_gap rerun shows live modulator_summary, modulator_memory, policy_view, and an actual extra inspect read-pass in artifacts, while the previously re-earned candidate package-positive operator directionality line remains the current branch truth`
 - the compare surface and live-validation truth from earlier seams remain accepted ancestor input and are not being reopened by the landed K train.
 - Seam risk: shared verification-plumbing seam plus environment-sensitive evidence rerun
 
@@ -161,7 +161,7 @@ It is workflow state only. It does not override the packet documents, implementa
   - treat the current package-positive operator line as candidate branch truth until it is reviewed and accepted
   - do not reopen the K train by inertia now that the bounded proven-lane executive/runtime line is landed
   - do not widen from the current candidate package-positive review-branch result into new runtime or product claims by inertia
-  - the next lawful move is to publish/review this branch as the candidate package-positive operator directionality line
+  - the next lawful move is to publish/review the `codex/m2-executive-summary-policy` branch as the candidate package-positive operator directionality line plus the M2 SRE refinement
   - after acceptance, keep `N2` as a separate blocked train pending a capable machine rather than reopening service proof on this host
 
 ## 4. Explicitly blocked moves
