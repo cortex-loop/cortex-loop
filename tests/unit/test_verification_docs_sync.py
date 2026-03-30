@@ -389,6 +389,7 @@ def test_resume_protocol_and_active_workstream_contract_exist() -> None:
     assert "Current working branch at ledger update: `main`" in workstream_text
     assert "Current branch role: resting branch after the merged J3 mediation justification decision" in workstream_text
     assert "Current candidate seam: `none`; `J3` is now accepted baseline truth on `main`" in workstream_text
+    assert "mediation is now justified for one bounded experimental seam, but implementation remains unopened on the accepted line" in workstream_text
     assert "`J2` is now landed on the canonical line:" in workstream_text
     assert "dedicated branch-discipline families now exist on `reference`, `openai`, and `claude`" in workstream_text
     assert "dedicated non-thrash burden families now exist on `reference`, `openai`, and `claude`" in workstream_text
@@ -944,7 +945,7 @@ def test_runtime_restack_program_lock_is_recorded() -> None:
     assert "later bounded runtime/product trains may still be explicitly opened" in master_plan_text
     assert "one bounded experimental seam is now justified" in master_plan_text
     assert "records the bounded K train as landed" in theory_text
-    assert "records `M2`, `J1`, and `J2` as landed on `main`" in theory_text
+    assert "records `M2`, `J1`, `J2`, and `J3` as landed on `main`" in theory_text
     assert "mediation is justified for one bounded experimental seam" in theory_text
     assert "headless operator reruns still require `GEMINI_API_KEY` in the shell environment" in theory_text
     assert "old `plan`-mode path was a real confound" in theory_text
@@ -952,7 +953,7 @@ def test_runtime_restack_program_lock_is_recorded() -> None:
     assert "the operator/evaluation harness must not call explicit Gemini model names at all" in theory_text
     assert "fresh auto-only product-path rerun is sharper still" in theory_text
     assert "first full round-2 stable-defaults rerun now says the package is still `mixed_direction`" in theory_text
-    assert "docs/CORTEX_V2_ACTIVE_WORKSTREAM.md` now records the bounded K train as landed, records `N2` as blocked pending a capable machine, records `M2`, `J1`, and `J2` as landed on `main`, and records `J3` as the current justification-update candidate." in theory_text
+    assert "docs/CORTEX_V2_ACTIVE_WORKSTREAM.md` now records the bounded K train as landed, records `N2` as blocked pending a capable machine, and records `M2`, `J1`, `J2`, and `J3` as landed on `main`, with bounded experimental mediation-seam planning as the next lawful move." in theory_text
     assert "The clean synced `main` line now carries the provider-limit neutrality hardening, the OpenAI continuity transport fix, the Claude efficiency rerun, the first compact SRE modulator bundle, the landed M2 summary/memory/policy refinement, the landed J1 mediation evidence package baseline, and the landed J2 gap-closure evidence package." in theory_text
     assert "the landed J1 mediation evidence package baseline" in theory_text
     assert "mediation is now justified for one bounded experimental seam" in theory_text
