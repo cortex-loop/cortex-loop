@@ -815,6 +815,7 @@ def _materialize_run(
     failure_class: str | None,
     run_test: bool,
     notes: str | None = None,
+    route_diagnostics: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     stem = f"{scenario_id}__run_{repeat_index:03d}"
     timeline_path = root / f"{stem}.timeline.jsonl"
@@ -870,6 +871,8 @@ def _materialize_run(
         "ended_at": run_state["ended_at"],
         "notes": notes,
     }
+    if route_diagnostics:
+        payload.update(route_diagnostics)
     write_json(artifact_path, payload)
     payload["artifact_path"] = str(artifact_path.relative_to(root.parents[4]))
     return payload

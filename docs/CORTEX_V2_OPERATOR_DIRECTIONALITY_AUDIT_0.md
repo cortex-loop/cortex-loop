@@ -122,15 +122,19 @@ On the review branch, the first SRE-owned operator route selector now sits above
 - verification requirement
 - and explicit blockedness under observed host friction / quota pressure
 
-Under that candidate routing layer, the fresh round-2 audit now returns:
+Under the corrected reducer and fresh closure rerun, the current review-branch audit now returns:
 
-- Claude: `positive`
+- Claude: `negative`
 - OpenAI: `positive`
-- Gemini: `positive` on the current audit surface
-- package verdict: `promising_positive`
+- Gemini: `positive`
+- package verdict: `not_yet_positive`
 
-Important caveat:
+Current reading:
 
-- Gemini still has blocked pairs in the local evidence
-- the difference is that those blocked pairs are now surfaced through explicit route/block decisions rather than hidden model fallback or `plan`-mode confounds
-- so the current branch truth is stronger than the original `Q1` line, but it is still branch-candidate truth until this review branch is published and accepted
+- the earlier branch-local `promising_positive` line was an overclaim and is now withdrawn
+- Gemini remains positive on the current audit surface without named-model fallback or `plan`-mode confounds
+- OpenAI remains positive on the same isolated App Server surface
+- Claude is now the real blocker:
+  - one fresh `pass_minimal` pair is negative because `raw_host` completed while the hook-backed `cortex_operator` lane returned a rate-limit result and made no change
+- so the next honest move is not publication as package-positive and not more widening
+- the next honest move is one narrow Claude explanation seam for the negative `pass_minimal` pair on the hook-backed lane

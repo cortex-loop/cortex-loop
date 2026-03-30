@@ -12,10 +12,10 @@ from pathlib import Path
 from typing import Any
 
 from cortex.sre.operator_routing import (
-    build_operator_probe_task_state,
     build_operator_route_diagnostics,
     select_operator_route,
 )
+from live_operator_route_state import build_operator_probe_task_state
 
 from live_validation_common import (
     MODEL_MATRIX,
@@ -241,7 +241,7 @@ def _run_single_provider_baseline(
         failure_class = "operator_timeout" if lane == "operator" else "quota_exhausted"
     attempted_models = [first_model]
     if provider == "gemini" and lane == "operator":
-        auto_supported = run_result["exit_code"] == 0 and failure_class != "model_unavailable"
+        auto_supported = failure_class != "model_unavailable"
         preferred_model = first_model
     chosen_model = first_model
     if run_result["exit_code"] != 0:

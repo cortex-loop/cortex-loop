@@ -316,8 +316,7 @@ EXPECTATIONS = (
             PromisedTestSurface(
                 test_file="tests/unit/test_operator_routing.py",
                 test_names=(
-                    "test_build_operator_task_state_uses_exact_scenario_defaults",
-                    "test_build_operator_task_state_applies_uncertainty_and_pressure_rules",
+                    "test_operator_task_state_requires_bounded_numeric_axes",
                     "test_select_operator_route_prefers_default_execute_under_low_pressure",
                     "test_select_operator_route_can_choose_guarded_execute_under_higher_pressure",
                     "test_select_operator_route_prefers_guarded_continuity_for_resumptive_host_friction",

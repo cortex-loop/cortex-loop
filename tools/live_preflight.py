@@ -199,7 +199,7 @@ def _probe_gemini_operator() -> dict[str, Any]:
     probe = _run_gemini_probe(preferred)
     failure_class = classify_failure(f"{probe['stdout']}\n{probe['stderr']}")
     attempted_models.append(preferred)
-    auto_supported = failure_class is None
+    auto_supported = failure_class != "model_unavailable"
     chosen_model = choose_model(
         "gemini",
         "operator",

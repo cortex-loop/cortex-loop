@@ -70,7 +70,7 @@ def _build_audit(summary: dict[str, Any]) -> dict[str, Any]:
 def _audit_provider(provider: str, payload: dict[str, Any]) -> dict[str, Any]:
     pairs = payload.get("pairs", [])
     scenario_summaries: dict[str, Any] = {}
-    pair_verdicts: list[str] = []
+    scenario_verdicts: list[str] = []
     for scenario_id in _SCENARIOS:
         scenario_pairs = [pair for pair in pairs if pair.get("scenario_id") == scenario_id]
         audited_pairs = [_audit_pair(pair) for pair in scenario_pairs]
@@ -81,9 +81,9 @@ def _audit_provider(provider: str, payload: dict[str, Any]) -> dict[str, Any]:
             "scenario_verdict": scenario_verdict,
             "pairs": audited_pairs,
         }
-        pair_verdicts.extend(pair["pair_verdict"] for pair in audited_pairs)
+        scenario_verdicts.append(scenario_verdict)
 
-    host_verdict = _host_verdict(pair_verdicts)
+    host_verdict = _host_verdict(scenario_verdicts)
     return {
         "raw_host_precheck": payload.get("raw_host_precheck", {}),
         "scenario_summaries": scenario_summaries,
@@ -212,16 +212,20 @@ def _scenario_verdict(audited_pairs: list[dict[str, Any]]) -> str:
         return "mixed"
     if all(verdict == "blocked" for verdict in verdicts):
         return "blocked"
+    if any(verdict == "blocked" for verdict in verdicts):
+        return "mixed"
     return "positive"
 
 
-def _host_verdict(pair_verdicts: list[str]) -> str:
-    non_empty = [verdict for verdict in pair_verdicts if verdict]
+def _host_verdict(scenario_verdicts: list[str]) -> str:
+    non_empty = [verdict for verdict in scenario_verdicts if verdict]
     if not non_empty or all(verdict == "blocked" for verdict in non_empty):
         return "blocked"
     if any(verdict == "negative" for verdict in non_empty):
         return "negative"
     if any(verdict == "mixed" for verdict in non_empty):
+        return "mixed"
+    if any(verdict == "blocked" for verdict in non_empty):
         return "mixed"
     return "positive"
 

@@ -12,9 +12,9 @@ from typing import Any
 
 from cortex.sre.operator_routing import (
     build_operator_route_diagnostics,
-    build_operator_task_state,
     select_operator_route,
 )
+from live_operator_route_state import build_operator_task_state
 
 try:  # pragma: no cover - import path differs between script execution and pytest import.
     from .live_validation_common import (
@@ -404,7 +404,7 @@ def _run_operator_attempts(
         attempted_models.append(current_model)
 
         if provider == "gemini" and current_model == MODEL_MATRIX["gemini"]["operator"].preferred:
-            auto_supported = run_result["exit_code"] == 0 and failure_class != "model_unavailable"
+            auto_supported = failure_class != "model_unavailable"
 
         if run_result["exit_code"] == 0:
             break
@@ -618,7 +618,11 @@ def _materialize_operator_run(
         test_exit_code=test_result["exit_code"],
     )
     effective_failure_class = None if warning_classes else failure_class
-    success = run_result["exit_code"] == 0 and effective_failure_class is None and test_result["exit_code"] == 0
+    success = (
+        effective_failure_class is None
+        and test_result["exit_code"] == 0
+        and (run_result["exit_code"] == 0 or bool(warning_classes))
+    )
     truth_gap_kind = None
     if scenario_id == "truth_gap":
         truth_gap_kind = classify_truth_gap(
@@ -1056,7 +1060,9 @@ def _warning_classes_for_success(
     exit_code: int,
     test_exit_code: int,
 ) -> list[str]:
-    _ = test_exit_code
+    _ = exit_code
+    if failure_class == "operator_timeout" and test_exit_code == 0:
+        return [failure_class]
     if provider == "gemini" and failure_class in {"capacity_exhausted", "quota_exhausted"} and exit_code == 0:
         return [failure_class]
     return []

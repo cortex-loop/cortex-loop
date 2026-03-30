@@ -14,9 +14,9 @@ from typing import Any, Iterator
 
 from cortex.sre.operator_routing import (
     build_operator_route_diagnostics,
-    build_operator_task_state,
     select_operator_route,
 )
+from live_operator_route_state import build_operator_task_state
 
 try:  # pragma: no cover
     from . import live_host_native_product_paths as host_paths
@@ -259,6 +259,8 @@ def _run_variant(
             scenario_id=scenario_id,
             repeat_index=repeat_index,
             precheck=precheck,
+            baseline_runs=baseline_runs,
+            prior_runs=prior_runs,
         )
     return _run_cli_variant(
         provider,
@@ -309,6 +311,8 @@ def _run_cli_variant(
             root=root,
             hook_log_path=hook_log_path,
             precheck=precheck,
+            baseline_runs=baseline_runs,
+            prior_runs=prior_runs,
         )
 
     prompt = read_prompt_template(_SCENARIOS[scenario_id]["prompt_file"])
@@ -574,7 +578,7 @@ def _run_raw_operator_attempts(
         attempted_models.append(current_model)
 
         if provider == "gemini" and current_model == MODEL_MATRIX["gemini"]["operator"].preferred:
-            auto_supported = run_result["exit_code"] == 0 and failure_class != "model_unavailable"
+            auto_supported = failure_class != "model_unavailable"
 
         if run_result["exit_code"] == 0:
             break
@@ -735,6 +739,8 @@ def _run_openai_variant(
     scenario_id: str,
     repeat_index: int,
     precheck: dict[str, Any],
+    baseline_runs: list[dict[str, Any]],
+    prior_runs: tuple[dict[str, Any], ...],
 ) -> dict[str, Any]:
     root = operator_directionality_root("openai", variant)
     project_root = prepare_harness_workspace(
@@ -744,6 +750,42 @@ def _run_openai_variant(
         repeat_index=repeat_index,
     )
     auth_mode = resolve_auth_mode("openai", "operator")
+    route_state = build_operator_task_state(
+        scenario_id,
+        previous_same_host_run_failed_before_completion=summarize_operator_runs(
+            prior_runs,
+            scenario_id=scenario_id,
+        )["previous_failed_before_completion"],
+        recent_probe_failure_class=recent_operator_probe_failure("openai"),
+        recent_baseline_clean_count=summarize_operator_runs(baseline_runs)["clean_success_count"],
+        recent_warning_bearing_success_present=summarize_operator_runs(baseline_runs)["warning_bearing_success_present"],
+        recent_product_failure_class=summarize_operator_runs(
+            prior_runs,
+            scenario_id=scenario_id,
+        )["latest_failure_class"],
+    )
+    route_decision = select_operator_route(route_state)
+    route_diagnostics = build_operator_route_diagnostics(route_state, route_decision)
+    if route_decision.blocked_reason is not None:
+        payload = host_paths._blocked_operator_route_payload(
+            provider="openai",
+            scenario_id=scenario_id,
+            repeat_index=repeat_index,
+            route_diagnostics=route_diagnostics,
+            failure_class=host_paths._blocked_route_failure_class(
+                route_state,
+                recent_probe_failure_class=recent_operator_probe_failure("openai"),
+                recent_product_failure_class=summarize_operator_runs(
+                    prior_runs,
+                    scenario_id=scenario_id,
+                )["latest_failure_class"],
+            ),
+            notes="Route selector blocked paired execution before host work started.",
+        )
+        payload["variant"] = variant
+        payload["surface"] = _SURFACE_LABEL["openai"]
+        payload["attempted_models"] = []
+        return payload
     if scenario_id == "restart_continuity":
         return _run_openai_restart_continuity_variant(
             variant=variant,
@@ -752,6 +794,8 @@ def _run_openai_variant(
             project_root=project_root,
             root=root,
             auth_mode=auth_mode,
+            route_diagnostics=route_diagnostics,
+            require_verification=route_decision.budget.require_verification,
         )
 
     prompt = read_prompt_template(_SCENARIOS[scenario_id]["prompt_file"])
@@ -773,7 +817,8 @@ def _run_openai_variant(
         model=model,
         run_state=run_state,
         failure_class=failure_class,
-        run_test=_SCENARIOS[scenario_id]["run_test"],
+        run_test=route_decision.budget.require_verification and _SCENARIOS[scenario_id]["run_test"],
+        route_diagnostics=route_diagnostics,
     )
     payload["variant"] = variant
     payload["surface"] = _SURFACE_LABEL["openai"]
@@ -789,6 +834,8 @@ def _run_openai_restart_continuity_variant(
     project_root: Path,
     root: Path,
     auth_mode: str,
+    route_diagnostics: dict[str, Any],
+    require_verification: bool,
 ) -> dict[str, Any]:
     first_prompt = read_prompt_template(_SCENARIOS[scenario_id]["turn1_prompt_file"])
     second_prompt = read_prompt_template(_SCENARIOS[scenario_id]["turn2_prompt_file"])
@@ -813,6 +860,7 @@ def _run_openai_restart_continuity_variant(
                 failure_class=first_failure,
                 run_test=False,
                 notes="Continuity stopped at the first App Server turn.",
+                route_diagnostics=route_diagnostics,
             )
             payload["variant"] = variant
             payload["surface"] = _SURFACE_LABEL["openai"]
@@ -852,7 +900,8 @@ def _run_openai_restart_continuity_variant(
         model=model,
         run_state=combined_state,
         failure_class=second_failure,
-        run_test=True,
+        run_test=require_verification,
+        route_diagnostics=route_diagnostics,
     )
     payload["variant"] = variant
     payload["surface"] = _SURFACE_LABEL["openai"]

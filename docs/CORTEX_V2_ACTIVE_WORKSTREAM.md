@@ -74,11 +74,11 @@ It is workflow state only. It does not override the packet documents, implementa
 
 ## 2. Current campaign and seam state
 
-- Current campaign: `S1 operator routing and round-2 rerun candidate complete`
+- Current campaign: `S1F closure and truth hardening rerun complete`
 - Current working branch at ledger update: `review/gemini-vanilla-directionality`
 - Current branch role: explicit manual review branch because local `main` is ahead of `origin/main` by one verified unpublished commit and a managed session cannot be started honestly from that state
-- Current candidate seam: `S1 operator routing and round-2 stabilization`; `Q1` remains the accepted ancestor audit on `main`, `N2` remains blocked on a capable machine, and the current review-branch candidate now carries the first SRE-owned operator route selector plus one fresh round-2 rerun`
-- Current seam status: `the S1 route selector is now implemented on the review branch and round 2 has been rerun under the stricter stable-default contract: Claude remains positive, OpenAI remains positive, and the current audit surface now returns Gemini positive and package promising_positive because the earlier Gemini model-routing confounds are gone and the remaining blocked pairs are surfaced explicitly`
+- Current candidate seam: `S1F closure and truth hardening`; `Q1` remains the accepted ancestor audit on `main`, `N2` remains blocked on a capable machine, and the current review-branch candidate now carries the first SRE-owned operator route selector plus the corrected round-2 closure rerun`
+- Current seam status: `the S1 route selector remains implemented on the review branch, but the corrected rerun now removes the earlier overclaim: Gemini is positive, OpenAI is positive, Claude is negative on one fresh hook-backed pass_minimal pair, and the package verdict is now not_yet_positive`
 - the compare surface and live-validation truth from earlier seams remain accepted ancestor input and are not being reopened by the landed K train.
 - Seam risk: shared verification-plumbing seam plus environment-sensitive evidence rerun
 
@@ -126,20 +126,20 @@ It is workflow state only. It does not override the packet documents, implementa
     - fresh auto-only operator baseline reruns are stable on `auto` and return `OK` twice with no named-model fallback
     - a fresh auto-only `pass_minimal` product-path rerun now blocks immediately on `quota_exhausted` with `model: auto-gemini-3`
     - the S1 route selector now turns those same pressures into explicit route/budget decisions on the operator path
-    - the fresh round-2 paired audit on the review branch now shows:
-      - Claude remains `positive`
-      - OpenAI remains `positive`
-      - Gemini is `positive` on the current audit surface, with blocked pairs preserved explicitly instead of hidden model downgrade
-      - package verdict is now `promising_positive`
+    - the fresh corrected closure rerun on the review branch now shows:
+      - Gemini is `positive`
+      - OpenAI is `positive`
+      - Claude is `negative` because one fresh hook-backed `pass_minimal` pair hit a rate-limit result while `raw_host` completed
+      - package verdict is now `not_yet_positive`
   - the current automation/service lane still fails honestly on missing machine auth
 - Next lawful move:
   - keep the machine-auth service lane explicitly deferred on this machine for actual proof execution
-  - keep Gemini as the remaining explicit partial host line on this machine
+  - stop treating Gemini as the active branch blocker for this seam; the corrected rerun now makes Claude the active blocker
   - do not reopen the K train by inertia now that the bounded proven-lane executive/runtime line is landed
-  - do not widen from the mixed `Q1` package result into new runtime or product claims
-  - the next lawful move is to publish/review this branch as the candidate S1 line rather than widening further on a dirty workflow state
-  - after acceptance, the next bounded train should project the same route/budget selector into the proven reference/OpenAI runtime surfaces without moving policy into Core
-  - keep `N2` as a separate blocked train pending a capable machine; do not conflate that with the Gemini directionality blocker
+  - do not widen from the current `not_yet_positive` review-branch result into new runtime or product claims
+  - do not publish/review this branch as package-positive while the fresh Claude negative pair remains unexplained
+  - the next lawful move is one narrow Claude explanation seam for the hook-backed `pass_minimal` negative pair rather than more routing widening
+  - keep `N2` as a separate blocked train pending a capable machine; do not conflate that with the current Claude operator blocker
 
 ## 4. Explicitly blocked moves
 
@@ -163,6 +163,7 @@ It is workflow state only. It does not override the packet documents, implementa
 - Do not reopen Gemini model chasing or assisted-mode speculation inside the active `L4` service-proof train.
 - Do not shell out from service transports to provider CLIs.
 - Do not overread the current auto-mode improvement as full Gemini closure while `restart_continuity` is still not repeat-stable.
+- Do not overread the current S1 route selector as a package-positive result while the fresh Claude hook-backed `pass_minimal` pair is still negative.
 - Do not widen `K4` into support-memory runtime, mediation, service/auth work, or broader host rollout.
 - Do not unfreeze threshold law in `K4`; the current budget-band activation-threshold law stays fixed.
 - Do not widen the landed K train into support-memory runtime, mediation, vigor scaling, service/auth work on this machine, or broader host rollout.

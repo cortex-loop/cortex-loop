@@ -6,9 +6,7 @@ from cortex.sre.operator_routing import (
     OperatorRouteProfile,
     OperatorTaskMode,
     OperatorTaskState,
-    build_operator_probe_task_state,
     build_operator_route_diagnostics,
-    build_operator_task_state,
     select_operator_route,
 )
 
@@ -40,69 +38,17 @@ def test_operator_task_state_requires_bounded_numeric_axes() -> None:
         )
 
 
-def test_build_operator_task_state_uses_exact_scenario_defaults() -> None:
-    execute_state = build_operator_task_state("pass_minimal")
-    inspect_state = build_operator_task_state("truth_gap")
-    continuity_state = build_operator_task_state("restart_continuity")
-
-    assert execute_state.task_mode is OperatorTaskMode.EXECUTE
-    assert execute_state.complexity == pytest.approx(0.45)
-    assert execute_state.continuity_demand == pytest.approx(0.05)
-    assert execute_state.verification_demand == pytest.approx(0.80)
-    assert execute_state.visible_burden_sensitivity == pytest.approx(0.45)
-
-    assert inspect_state.task_mode is OperatorTaskMode.INSPECT
-    assert inspect_state.complexity == pytest.approx(0.20)
-    assert inspect_state.verification_demand == pytest.approx(0.00)
-    assert inspect_state.visible_burden_sensitivity == pytest.approx(0.80)
-
-    assert continuity_state.task_mode is OperatorTaskMode.RESUME_EXECUTE
-    assert continuity_state.continuity_demand == pytest.approx(0.95)
-    assert continuity_state.verification_demand == pytest.approx(0.80)
-
-
-def test_build_operator_task_state_applies_uncertainty_and_pressure_rules() -> None:
-    calm = build_operator_task_state(
-        "pass_minimal",
-        recent_baseline_clean_count=2,
-    )
-    warning = build_operator_task_state(
-        "pass_minimal",
-        recent_warning_bearing_success_present=True,
-    )
-    blocked = build_operator_task_state(
-        "pass_minimal",
-        recent_probe_failure_class="quota_exhausted",
-    )
-    failed_before_completion = build_operator_task_state(
-        "pass_minimal",
-        previous_same_host_run_failed_before_completion=True,
-        recent_baseline_clean_count=2,
-    )
-
-    assert calm.host_friction == pytest.approx(0.0)
-    assert calm.quota_pressure == pytest.approx(0.0)
-
-    assert warning.host_friction == pytest.approx(0.55)
-    assert warning.quota_pressure == pytest.approx(0.60)
-
-    assert blocked.host_friction == pytest.approx(0.85)
-    assert blocked.quota_pressure == pytest.approx(0.90)
-
-    assert failed_before_completion.uncertainty == pytest.approx(0.65)
-
-
-def test_build_operator_probe_task_state_is_inspect_light_by_default() -> None:
-    state = build_operator_probe_task_state(recent_baseline_clean_count=2)
-    decision = select_operator_route(state)
-
-    assert state.task_mode is OperatorTaskMode.INSPECT
-    assert decision.profile is OperatorRouteProfile.INSPECT_LIGHT
-    assert decision.budget.require_verification is False
-
-
 def test_select_operator_route_prefers_default_execute_under_low_pressure() -> None:
-    state = build_operator_task_state("pass_minimal", recent_baseline_clean_count=2)
+    state = OperatorTaskState(
+        task_mode=OperatorTaskMode.EXECUTE,
+        complexity=0.45,
+        continuity_demand=0.05,
+        verification_demand=0.80,
+        uncertainty=0.45,
+        host_friction=0.0,
+        quota_pressure=0.0,
+        visible_burden_sensitivity=0.45,
+    )
     decision = select_operator_route(state)
 
     assert decision.profile is OperatorRouteProfile.EXECUTE_STANDARD
@@ -129,10 +75,15 @@ def test_select_operator_route_can_choose_guarded_execute_under_higher_pressure(
 
 
 def test_select_operator_route_prefers_guarded_continuity_for_resumptive_host_friction() -> None:
-    state = build_operator_task_state(
-        "restart_continuity",
-        recent_warning_bearing_success_present=True,
-        recent_product_failure_class="capacity_exhausted",
+    state = OperatorTaskState(
+        task_mode=OperatorTaskMode.RESUME_EXECUTE,
+        complexity=0.55,
+        continuity_demand=0.95,
+        verification_demand=0.80,
+        uncertainty=0.45,
+        host_friction=0.85,
+        quota_pressure=0.90,
+        visible_burden_sensitivity=0.55,
     )
     decision = select_operator_route(state)
 
@@ -156,9 +107,15 @@ def test_select_operator_route_prefers_guarded_continuity_for_resumptive_host_fr
 
 
 def test_select_operator_route_blocks_non_inspect_when_quota_is_high() -> None:
-    state = build_operator_task_state(
-        "pass_minimal",
-        recent_probe_failure_class="quota_exhausted",
+    state = OperatorTaskState(
+        task_mode=OperatorTaskMode.EXECUTE,
+        complexity=0.45,
+        continuity_demand=0.05,
+        verification_demand=0.80,
+        uncertainty=0.45,
+        host_friction=0.85,
+        quota_pressure=0.90,
+        visible_burden_sensitivity=0.45,
     )
     decision = select_operator_route(state)
 
@@ -168,7 +125,16 @@ def test_select_operator_route_blocks_non_inspect_when_quota_is_high() -> None:
 
 
 def test_build_operator_route_diagnostics_exposes_state_and_budget() -> None:
-    state = build_operator_task_state("truth_gap", recent_baseline_clean_count=2)
+    state = OperatorTaskState(
+        task_mode=OperatorTaskMode.INSPECT,
+        complexity=0.20,
+        continuity_demand=0.00,
+        verification_demand=0.00,
+        uncertainty=0.35,
+        host_friction=0.0,
+        quota_pressure=0.0,
+        visible_burden_sensitivity=0.80,
+    )
     decision = select_operator_route(state)
     payload = build_operator_route_diagnostics(state, decision)
 

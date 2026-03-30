@@ -8,6 +8,8 @@ from pathlib import Path
 from contextlib import contextmanager
 import json
 
+import pytest
+
 TOOLS_ROOT = Path(__file__).resolve().parents[2] / "tools"
 if str(TOOLS_ROOT) not in sys.path:
     sys.path.insert(0, str(TOOLS_ROOT))
@@ -17,6 +19,7 @@ import live_compare as live_compare
 import live_host_native_product_paths as live_host_native_product_paths
 import live_operator_directionality as live_operator_directionality
 import live_operator_directionality_audit as live_operator_directionality_audit
+import live_operator_route_state as live_operator_route_state
 import live_preflight as live_preflight
 import live_provider_baselines as live_provider_baselines
 import live_validation_common as live_validation_common
@@ -186,6 +189,55 @@ def test_gemini_model_ladder_and_choose_model_stay_auto_only() -> None:
         )
         == "auto"
     )
+
+
+def test_live_operator_route_state_uses_exact_scenario_defaults() -> None:
+    execute_state = live_operator_route_state.build_operator_task_state("pass_minimal")
+    inspect_state = live_operator_route_state.build_operator_task_state("truth_gap")
+    continuity_state = live_operator_route_state.build_operator_task_state("restart_continuity")
+
+    assert execute_state.task_mode.value == "execute"
+    assert execute_state.complexity == pytest.approx(0.45)
+    assert execute_state.continuity_demand == pytest.approx(0.05)
+    assert execute_state.verification_demand == pytest.approx(0.80)
+    assert execute_state.visible_burden_sensitivity == pytest.approx(0.45)
+
+    assert inspect_state.task_mode.value == "inspect"
+    assert inspect_state.complexity == pytest.approx(0.20)
+    assert inspect_state.verification_demand == pytest.approx(0.00)
+    assert inspect_state.visible_burden_sensitivity == pytest.approx(0.80)
+
+    assert continuity_state.task_mode.value == "resume_execute"
+    assert continuity_state.continuity_demand == pytest.approx(0.95)
+    assert continuity_state.verification_demand == pytest.approx(0.80)
+
+
+def test_live_operator_route_state_applies_uncertainty_and_pressure_rules() -> None:
+    calm = live_operator_route_state.build_operator_task_state(
+        "pass_minimal",
+        recent_baseline_clean_count=2,
+    )
+    warning = live_operator_route_state.build_operator_task_state(
+        "pass_minimal",
+        recent_warning_bearing_success_present=True,
+    )
+    blocked = live_operator_route_state.build_operator_task_state(
+        "pass_minimal",
+        recent_probe_failure_class="quota_exhausted",
+    )
+    failed_before_completion = live_operator_route_state.build_operator_task_state(
+        "pass_minimal",
+        previous_same_host_run_failed_before_completion=True,
+        recent_baseline_clean_count=2,
+    )
+
+    assert calm.host_friction == pytest.approx(0.0)
+    assert calm.quota_pressure == pytest.approx(0.0)
+    assert warning.host_friction == pytest.approx(0.55)
+    assert warning.quota_pressure == pytest.approx(0.60)
+    assert blocked.host_friction == pytest.approx(0.85)
+    assert blocked.quota_pressure == pytest.approx(0.90)
+    assert failed_before_completion.uncertainty == pytest.approx(0.65)
 
 
 def test_gemini_operator_auth_mode_uses_api_key_when_selected_in_settings(tmp_path, monkeypatch) -> None:
@@ -437,6 +489,102 @@ def test_operator_provider_baseline_surfaces_route_diagnostics(monkeypatch) -> N
     assert payload["route_profile"] == "inspect_light"
     assert payload["route_budget"]["max_turns"] == 1
     assert payload["state_vector"] == [0.1, 0.0, 0.05, 0.35, 0.0, 0.0]
+
+
+def test_auto_supported_remains_true_for_gemini_quota_failures(monkeypatch) -> None:
+    quota_result = {
+        "command": ["gemini", "-p", "Respond exactly with OK.", "-o", "stream-json", "--approval-mode", "yolo"],
+        "exit_code": 1,
+        "stdout": "",
+        "stderr": '{"type":"result","status":"error","error":{"message":"[API Error: You have exhausted your daily quota on this model.]"}}',
+        "started_at": "2026-03-30T00:00:00+00:00",
+        "ended_at": "2026-03-30T00:00:01+00:00",
+    }
+
+    monkeypatch.setattr(live_preflight, "_run_gemini_probe", lambda model: dict(quota_result))
+    probe = live_preflight._probe_gemini_operator()
+    assert probe["auto_supported"] is True
+
+    monkeypatch.setattr(
+        live_provider_baselines,
+        "_run_provider_probe",
+        lambda *args, **kwargs: dict(quota_result),
+    )
+    with tempfile.TemporaryDirectory() as tmpdir:
+        payload = live_provider_baselines._run_single_provider_baseline(
+            provider="gemini",
+            lane="operator",
+            repeat_index=1,
+            provider_root_path=Path(tmpdir),
+            preferred_model_override=None,
+            fallback_model_override=None,
+            disable_auto_probe=False,
+            prior_runs=(),
+        )
+    assert payload["auto_supported"] is True
+
+
+def test_operator_timeout_after_successful_verification_is_warning_not_failure(
+    monkeypatch,
+    tmp_path: Path,
+) -> None:
+    project_root = tmp_path / "workspace"
+    project_root.mkdir()
+    root = tmp_path / "artifacts"
+    root.mkdir()
+
+    monkeypatch.setattr(
+        live_host_native_product_paths,
+        "run_target_test",
+        lambda project_root: {"exit_code": 0, "stdout": "2 passed", "stderr": ""},
+    )
+    monkeypatch.setattr(
+        live_host_native_product_paths,
+        "parse_json_lines",
+        lambda text: [],
+    )
+    monkeypatch.setattr(
+        live_host_native_product_paths,
+        "collect_modified_files",
+        lambda project_root: ["src/normalize_port.py"],
+    )
+    monkeypatch.setattr(
+        live_host_native_product_paths,
+        "extract_result_text",
+        lambda records, text: "completed",
+    )
+    monkeypatch.setattr(
+        live_host_native_product_paths,
+        "_read_hook_records",
+        lambda path: [],
+    )
+
+    payload = live_host_native_product_paths._materialize_operator_run(
+        provider="claude",
+        scenario_id="pass_minimal",
+        repeat_index=1,
+        project_root=project_root,
+        root=root,
+        run_result={
+            "command": ["claude", "-p", "prompt"],
+            "stdout": "",
+            "stderr": "",
+            "exit_code": 124,
+            "started_at": "2026-03-30T00:00:00+00:00",
+            "ended_at": "2026-03-30T00:03:00+00:00",
+        },
+        model="claude-sonnet-4-6",
+        preferred_model="claude-sonnet-4-6",
+        auto_supported=None,
+        attempted_models=["claude-sonnet-4-6"],
+        auth_mode="claude_code",
+        failure_class="operator_timeout",
+        hook_log_path=None,
+    )
+
+    assert payload["success"] is True
+    assert payload["failure_class"] is None
+    assert payload["warning_classes"] == ["operator_timeout"]
 
 
 def test_single_live_service_call_records_export_and_warning_timing(monkeypatch) -> None:
@@ -1052,6 +1200,48 @@ def test_operator_directionality_restart_continuity_uses_default_first_turn_for_
     assert payload["failure_class"] == "auth_missing"
 
 
+def test_operator_directionality_cli_variant_forwards_restart_context(
+    monkeypatch,
+    tmp_path: Path,
+) -> None:
+    captured: dict[str, object] = {}
+
+    monkeypatch.setattr(
+        live_operator_directionality,
+        "prepare_harness_workspace",
+        lambda **kwargs: tmp_path / "project_a",
+    )
+    monkeypatch.setattr(
+        live_host_native_product_paths,
+        "_configure_hook_capture",
+        lambda **kwargs: None,
+    )
+
+    def fake_restart(**kwargs):
+        captured["baseline_runs"] = kwargs["baseline_runs"]
+        captured["prior_runs"] = kwargs["prior_runs"]
+        return {"scenario_id": "restart_continuity", "repeat_index": 1, "success": False}
+
+    monkeypatch.setattr(
+        live_operator_directionality,
+        "_run_cli_restart_continuity_variant",
+        lambda provider, **kwargs: fake_restart(**kwargs),
+    )
+
+    live_operator_directionality._run_cli_variant(
+        "gemini",
+        variant="raw_host",
+        scenario_id="restart_continuity",
+        repeat_index=1,
+        precheck={"status": "ready"},
+        baseline_runs=[{"repeat_index": 1}],
+        prior_runs=({"repeat_index": 1},),
+    )
+
+    assert captured["baseline_runs"] == [{"repeat_index": 1}]
+    assert captured["prior_runs"] == ({"repeat_index": 1},)
+
+
 def test_decide_verdict_prefers_blocker_honesty_before_optimism() -> None:
     assert decide_verdict(
         operator_pass_count=3,
@@ -1229,6 +1419,27 @@ def test_operator_directionality_audit_marks_mixed_when_truth_gap_matches_but_bu
     assert audited["pair_verdict"] == "mixed"
 
 
+def test_operator_directionality_scenario_verdict_is_mixed_when_positive_and_blocked_pairs_coexist() -> None:
+    assert (
+        live_operator_directionality_audit._scenario_verdict(
+            [
+                {"pair_verdict": "positive"},
+                {"pair_verdict": "blocked"},
+            ]
+        )
+        == "mixed"
+    )
+
+
+def test_operator_directionality_host_verdict_is_mixed_when_positive_and_blocked_pairs_coexist() -> None:
+    assert (
+        live_operator_directionality_audit._host_verdict(
+            ["positive", "positive", "blocked"]
+        )
+        == "mixed"
+    )
+
+
 def test_operator_directionality_package_verdict_prefers_mixed_direction_over_fake_positive() -> None:
     verdict, reason = live_operator_directionality_audit._package_verdict(
         ["positive", "mixed", "blocked"]
@@ -1266,3 +1477,105 @@ def test_operator_directionality_main_merges_provider_summaries(tmp_path, monkey
 
     merged = json.loads((comparator_root / "operator_directionality_summary.json").read_text())
     assert sorted(merged["providers"]) == ["claude", "openai"]
+
+
+def test_openai_directionality_variant_applies_route_diagnostics(monkeypatch, tmp_path: Path) -> None:
+    fake_state = {
+        "started_at": "2026-03-30T00:00:00+00:00",
+        "ended_at": "2026-03-30T00:00:01+00:00",
+        "timeline": [],
+        "stderr_text": "",
+        "thread_read": {},
+        "thread_id": None,
+        "lifecycle_summary": {
+            "thread_id": None,
+            "lifecycle_event_count": 0,
+            "lifecycle_event_labels": [],
+            "item_lifecycle_counts": {},
+            "server_request_methods": [],
+            "result_text": "ok",
+        },
+    }
+    captured: dict[str, object] = {}
+
+    monkeypatch.setattr(
+        live_operator_directionality,
+        "operator_directionality_root",
+        lambda provider, variant: tmp_path / provider / variant,
+    )
+    monkeypatch.setattr(
+        live_operator_directionality,
+        "prepare_harness_workspace",
+        lambda **kwargs: tmp_path / "workspace",
+    )
+    monkeypatch.setattr(
+        live_operator_directionality,
+        "resolve_auth_mode",
+        lambda provider, lane: "codex_cli",
+    )
+    monkeypatch.setattr(
+        live_operator_directionality,
+        "read_prompt_template",
+        lambda name: "prompt",
+    )
+
+    @contextmanager
+    def fake_openai_variant_env(variant: str, precheck: dict[str, object]):
+        yield None
+
+    monkeypatch.setattr(
+        live_operator_directionality,
+        "_openai_variant_env",
+        fake_openai_variant_env,
+    )
+    monkeypatch.setattr(
+        live_operator_directionality,
+        "recent_operator_probe_failure",
+        lambda provider: None,
+    )
+    monkeypatch.setattr(
+        live_operator_directionality,
+        "summarize_operator_runs",
+        lambda runs, scenario_id=None: {
+            "previous_failed_before_completion": False,
+            "clean_success_count": 2,
+            "warning_bearing_success_present": False,
+            "latest_failure_class": None,
+        },
+    )
+    monkeypatch.setattr(
+        live_operator_directionality,
+        "_run_openai_single_turn_attempts",
+        lambda **kwargs: (fake_state, None, "gpt-5.3-codex", ["gpt-5.3-codex"]),
+    )
+
+    def fake_materialize_run(**kwargs):
+        captured["route_diagnostics"] = kwargs["route_diagnostics"]
+        captured["run_test"] = kwargs["run_test"]
+        return {
+            "provider": "openai",
+            "scenario_id": kwargs["scenario_id"],
+            "repeat_index": kwargs["repeat_index"],
+            "success": True,
+        }
+
+    monkeypatch.setattr(
+        live_operator_directionality.openai_operator,
+        "_materialize_run",
+        fake_materialize_run,
+    )
+
+    payload = live_operator_directionality._run_openai_variant(
+        variant="raw_host",
+        scenario_id="pass_minimal",
+        repeat_index=1,
+        precheck={"status": "ready"},
+        baseline_runs=[],
+        prior_runs=(),
+    )
+
+    assert captured["run_test"] is True
+    assert captured["route_diagnostics"]["route_profile"] == "execute_standard"
+    assert payload["variant"] == "raw_host"
+    assert payload["surface"] == "codex_app_server"
+    assert payload["attempted_models"] == ["gpt-5.3-codex"]
