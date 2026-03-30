@@ -102,20 +102,10 @@ def test_gemini_thrash_builder_packet_series_and_replication_note_exist() -> Non
 def test_evidence_note_keeps_mediation_blocked_with_gemini_thrash_series() -> None:
     text = read(EVIDENCE_NOTE_PATH)
 
-    assert (
-        status(EVIDENCE_NOTE_PATH)
-        == "reference_three_series_with_gemini_three_series_and_openai_three_series_recorded"
-    )
-    assert "Three experimental Gemini-only baseline-versus-mediated thrash pairs are now recorded" in text
-    assert "Three experimental OpenAI-only baseline-versus-mediated thrash pairs are now recorded" in text
-    assert "docs/CORTEX_V2_MEDIATION_GEMINI_THRASH_BASIS_NOTE_0.md" in text
-    assert (
-        "`scenario_thrash_gemini_01` / `gemini` now has `candidate_positive` "
-        "cell-level signal for reduced thrashing and better branch discipline"
-    ) in text
-    assert (
-        "`scenario_thrash_gemini_01` / `gemini` now also has `candidate_positive` "
-        "cell-level signal for lower visible burden at equal task value"
-    ) in text
-    assert "Mediation remains blocked" in text
+    assert status(EVIDENCE_NOTE_PATH) == "j2_gap_closure_reference_openai_claude_recorded"
+    assert "- reduced thrashing: `candidate_positive`" in text
+    assert "- better branch discipline: `candidate_positive`" in text
+    assert "scenario_thrash_gemini_01/gemini" in text
+    assert "scenario_branch_claude_01/claude" in text
+    assert "Mediation implementation remains blocked pending J3 justification review." in text
     assert "no implementation seam may open" in text

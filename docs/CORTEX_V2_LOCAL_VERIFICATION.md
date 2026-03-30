@@ -770,6 +770,53 @@ Repo-local entry point:
 make revalidate-mediation-evidence-package
 ```
 
+## Mediation branch-discipline revalidation
+
+This revalidates the new J2 branch-discipline family on the preferred deterministic hosts.
+It checks the new reference/OpenAI/Claude branch-discipline basis notes and the committed mediated comparator packet series.
+It remains evidence-only and does not authorize mediation implementation.
+
+Repo-local entry point:
+
+```sh
+make revalidate-mediation-branch-discipline
+```
+
+## Mediation non-thrash burden revalidation
+
+This revalidates the new J2 non-thrash burden family on the preferred deterministic hosts.
+It checks the new reference/OpenAI/Claude burden basis notes, the committed comparator packet series, and the committed AUX burden artifacts.
+It remains evidence-only and does not authorize mediation implementation.
+
+Repo-local entry point:
+
+```sh
+make revalidate-mediation-non-thrash-burden
+```
+
+## Mediation Claude host-realization revalidation
+
+This revalidates the new J2 Claude host-realization expansion.
+It checks the committed Claude lane packet example, the committed Claude mediated packet example, the Claude host-realization basis note, and the full three-pair Claude host-realization comparator series.
+It remains Claude-only and evidence-only, and it does not authorize mediation implementation.
+
+Repo-local entry point:
+
+```sh
+make revalidate-mediation-claude-host-realization
+```
+
+## Optional Claude uncertainty revalidation
+
+This target is reserved for the optional J2 Claude uncertainty expansion only if that narrower rerun is explicitly opened later.
+On the current line, no committed Claude uncertainty package exists yet.
+
+Repo-local entry point:
+
+```sh
+make revalidate-mediation-claude-uncertainty
+```
+
 ## Mediation reference host-realization admissibility revalidation
 
 This checks that `scenario_host_reference_01` now has three lawful reference-only host-realization comparator pairs, that the cell now has `candidate_positive` signal for better host-specialized realization, and that package-level mediation evidence remains blocked.

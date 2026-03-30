@@ -77,14 +77,12 @@ def test_mediation_package_tool_emits_normalized_summary() -> None:
     summary = tool.emit_summary()
 
     assert "# Mediation Evidence Package Summary" in summary
-    assert "- reduced thrashing: `insufficient`" in summary
-    assert "- better branch discipline: `insufficient`" in summary
+    assert "- reduced thrashing: `candidate_positive`" in summary
+    assert "- better branch discipline: `candidate_positive`" in summary
     assert "- better uncertainty handling: `insufficient`" in summary
-    assert "- lower visible burden at equal task value: `insufficient`" in summary
-    assert "- better host-specialized realization: `insufficient`" in summary
-    assert "`branch_discipline_family` on reference, openai, claude" in summary
-    assert "`non_thrash_equal_value_burden_family` on reference, openai, claude" in summary
-    assert "`host_realization_expansion` on reference, openai, claude" in summary
+    assert "- lower visible burden at equal task value: `candidate_positive`" in summary
+    assert "- better host-specialized realization: `candidate_positive`" in summary
+    assert "`uncertainty_expansion_if_still_needed` on claude first, then stable second-family expansion" in summary
 
 
 def test_scenario_catalog_records_current_families_and_j2_targets() -> None:
@@ -118,7 +116,7 @@ def test_scenario_catalog_records_current_families_and_j2_targets() -> None:
         "scenario_host_claude_01",
         "scenario_uncertainty_claude_01",
     ]
-    assert {row["planned_evidence_state"] for row in target_rows} == {"missing"}
+    assert {row["planned_evidence_state"] for row in target_rows} == {"current", "missing"}
 
 
 def test_paired_ledger_keeps_current_pairs_and_planned_slots_separate() -> None:
@@ -126,7 +124,7 @@ def test_paired_ledger_keeps_current_pairs_and_planned_slots_separate() -> None:
     planned_rows = parse_markdown_table(section(read(PAIRED_LEDGER_PATH), "J2 Planned Pair Slots"))
 
     real_rows = [row for row in recorded_rows if row["paired_episode_set_id"] != "none_recorded_yet"]
-    assert len(real_rows) == 27
+    assert len(real_rows) == 48
     assert {row["pair_status"] for row in real_rows} == {"usable"}
     assert {row["failure_tags"] for row in real_rows} == {"none"}
     assert [row["proposed_scenario_id"] for row in planned_rows] == [
@@ -139,6 +137,7 @@ def test_paired_ledger_keeps_current_pairs_and_planned_slots_separate() -> None:
         "scenario_host_claude_01",
         "scenario_uncertainty_claude_01",
     ]
+    assert {row["planned_status"] for row in planned_rows} == {"current", "missing"}
 
 
 def test_axis_and_evidence_note_now_end_with_exact_missing_delta() -> None:
@@ -146,18 +145,16 @@ def test_axis_and_evidence_note_now_end_with_exact_missing_delta() -> None:
     note_rows = parse_markdown_table(section(read(EVIDENCE_NOTE_PATH), "Exact Missing-Evidence Delta"))
     rerun_rows = parse_markdown_table(section(read(EVIDENCE_NOTE_PATH), "Next Rerun Contract"))
 
-    assert axis_rows == note_rows
-    assert {row["current_package_verdict"] for row in axis_rows} == {"insufficient"}
+    assert [row["axis"] for row in axis_rows] == [row["axis"] for row in note_rows]
+    assert {row["current_package_verdict"] for row in axis_rows} == {
+        "candidate_positive",
+        "insufficient",
+    }
     burden_row = next(row for row in axis_rows if row["axis"] == "lower visible burden at equal task value")
-    assert "thrash_control" in burden_row["why_still_insufficient"]
-    assert "scenario_burden_reference_01" in burden_row["minimum_additional_paired_evidence"]
+    assert "broadens the burden axis beyond" in burden_row["why_still_insufficient"]
+    assert "J3 mediation justification update" in burden_row["minimum_additional_paired_evidence"]
 
-    assert [row["target_id"] for row in rerun_rows] == [
-        "branch_discipline_family",
-        "non_thrash_equal_value_burden_family",
-        "host_realization_expansion",
-        "uncertainty_expansion_if_still_needed",
-    ]
+    assert [row["target_id"] for row in rerun_rows] == ["uncertainty_expansion_if_still_needed"]
 
 
 def test_host_split_matrix_makes_claude_missing_and_gemini_partial_explicit() -> None:
@@ -172,7 +169,7 @@ def test_host_split_matrix_makes_claude_missing_and_gemini_partial_explicit() ->
     claude_row = next(row for row in rows if row["host_family"] == "claude")
     gemini_row = next(row for row in rows if row["host_family"] == "gemini")
 
-    assert claude_row["committed_package_state"] == "missing"
+    assert claude_row["committed_package_state"] == "current"
     assert claude_row["j2_priority"] == "preferred"
     assert gemini_row["committed_package_state"] == "current"
     assert gemini_row["j2_priority"] == "explicit_partial"
@@ -185,7 +182,7 @@ def test_checker_fails_when_burden_ref_is_missing() -> None:
     burden_path = temp_root / "docs" / "CORTEX_V2_MEDIATION_BURDEN_COMPARISON_0.md"
     _replace_once(
         burden_path,
-        "docs/mediation_evidence/reference/scenario_thrash_reference_01__baseline_non_mediated__run_001__aux_burden.md",
+        "docs/mediation_evidence/reference/scenario_burden_reference_01__baseline_non_mediated__run_001__aux_burden.md",
         "docs/mediation_evidence/reference/missing__aux_burden.md",
     )
 
@@ -199,7 +196,7 @@ def test_checker_fails_when_required_j2_target_is_removed() -> None:
     temp_root = _temp_repo_copy()
     catalog_path = temp_root / "docs" / "CORTEX_V2_MEDIATION_SCENARIO_CATALOG_0.md"
     text = catalog_path.read_text(encoding="utf-8")
-    line = "| scenario_branch_claude_01 | branch_discipline | claude | better branch discipline | 3 | missing | Adds the missing Claude branch-discipline line. |\n"
+    line = "| scenario_branch_claude_01 | branch_discipline | claude | better branch discipline | 3 | current | Adds the missing Claude branch-discipline line. |\n"
     if line not in text:
         raise AssertionError("missing expected J2 target line")
     catalog_path.write_text(text.replace(line, "", 1), encoding="utf-8")
@@ -215,8 +212,8 @@ def test_checker_fails_when_forbidden_verdict_is_introduced() -> None:
     axis_path = temp_root / "docs" / "CORTEX_V2_MEDIATION_AXIS_COMPARISON_TABLE_0.md"
     _replace_once(
         axis_path,
-        "| scenario_thrash_reference_01 | reference | 3 | 0 | 0 | candidate_positive |",
-        "| scenario_thrash_reference_01 | reference | 3 | 0 | 0 | positive |",
+        "| scenario_branch_reference_01 | reference | 3 | 0 | 0 | candidate_positive |",
+        "| scenario_branch_reference_01 | reference | 3 | 0 | 0 | positive |",
     )
 
     errors = tool.check_package(tool.build_layout(temp_root))
@@ -230,13 +227,13 @@ def test_checker_fails_when_claude_missing_coverage_is_hidden() -> None:
     host_path = temp_root / "docs" / "CORTEX_V2_MEDIATION_HOST_SPLIT_COMPARISON_0.md"
     _replace_once(
         host_path,
-        "| claude | missing | none | Current live operator line is positive, but mediation package coverage is still absent. | preferred | Highest-value missing host for host-realization and non-thrash burden breadth. |",
-        "| claude | current | none | Current live operator line is positive, but mediation package coverage is still absent. | preferred | Highest-value missing host for host-realization and non-thrash burden breadth. |",
+        "| claude | current | host_realization; branch_discipline; equal_value_burden_non_thrash | Claude is now present in the mediation package on deterministic evidence surfaces. | preferred | Claude is the only new host added in J2. |",
+        "| claude | missing | host_realization; branch_discipline; equal_value_burden_non_thrash | Claude is now present in the mediation package on deterministic evidence surfaces. | preferred | Claude is the only new host added in J2. |",
     )
 
     errors = tool.check_package(tool.build_layout(temp_root))
 
-    assert any("claude missing mediation coverage" in error.lower() for error in errors)
+    assert any("claude current mediation coverage" in error.lower() for error in errors)
 
 
 def test_checker_fails_when_gemini_partial_status_is_hidden() -> None:

@@ -102,6 +102,9 @@ OPERATOR_DIRECTIONALITY_AUDIT_PATH = (
 OPERATOR_ROUTING_PROGRAM_PATH = (
     REPO_ROOT / "docs" / "CORTEX_V2_OPERATOR_ROUTING_PROGRAM_0.md"
 )
+MEDIATION_JUSTIFICATION_NOTE_PATH = (
+    REPO_ROOT / "docs" / "CORTEX_V2_MEDIATION_JUSTIFICATION_NOTE.md"
+)
 
 
 def _read(path: Path) -> str:
@@ -181,8 +184,9 @@ def test_implementation_status_note_reflects_current_verification_surfaces() -> 
     assert "repo-local verification entry points now exist in `Makefile`" in text
     assert "no committed baseline artifact is recorded" not in text
     assert "baseline recorded in `docs/CORTEX_V2_COVERAGE_BASELINE_NOTE_0.md`" in text
-    assert "Current repo evidence now shows cell-level lift on:" in text
-    assert "Package-level evidence remains `insufficient` on every required mediation axis." in text
+    assert "It does not track later candidate or post-closeout mediation evidence;" in text
+    assert "At the time of this accepted closeout note, repo evidence showed cell-level lift on:" in text
+    assert "At that accepted closeout point, package-level evidence remained `insufficient` on every required mediation axis." in text
     assert "Current repo-local verification truth:" in text
     assert "It does not by itself open new feature work." in text
     assert "or a separately scoped bounded runtime/product follow-on train." in text
@@ -194,6 +198,16 @@ def test_implementation_status_note_reflects_current_verification_surfaces() -> 
     assert "do not hardcode a separate accepted workflow baseline here" in text
     assert "bounded feedback-conditioned intervention thresholding" in text
     assert "bounded enforcement-aware realized control" in text
+
+
+def test_mediation_justification_note_is_historical_scope_only() -> None:
+    text = _read(MEDIATION_JUSTIFICATION_NOTE_PATH)
+
+    assert "This note records the last accepted Phase 16A justification decision only." in text
+    assert "It does not track later candidate or post-closeout mediation evidence;" in text
+    assert "At the time of this accepted audit, repo evidence was insufficient on every required axis:" in text
+    assert "At that accepted audit point, Phase 16 mediation was `not justified yet`." in text
+    assert "Later candidate evidence may change the blocker shape" in text
 
 
 def test_verification_ergonomics_plan_reflects_current_campaign_state() -> None:
@@ -369,12 +383,13 @@ def test_resume_protocol_and_active_workstream_contract_exist() -> None:
     assert "Current branch role:" in workstream_text
     assert "accepted workflow baseline truth now rests on `main` rather than a long-lived working branch" in workstream_text
     assert "`Q1` remains accepted ancestor truth" in workstream_text
-    assert "Current campaign: `J1 mediation evidence package and gap-closure baseline`" in workstream_text
-    assert "Current working branch at ledger update: `codex/j1-mediation-evidence-package`" in workstream_text
-    assert "Current branch role: explicit manual evidence/package branch because the J1 mediation package baseline is not yet published on the canonical line" in workstream_text
-    assert "Current candidate seam: `J1 mediation evidence package and gap-closure baseline`;" in workstream_text
-    assert "J1 now normalizes the post-M2 workflow state" in workstream_text
+    assert "Current campaign: `J2 mediation gap-closure reruns candidate complete`" in workstream_text
+    assert "Current working branch at ledger update: `codex/j2-mediation-gap-closure-reruns`" in workstream_text
+    assert "Current branch role: explicit manual evidence-rerun branch opened from clean `main` after the landed J1 package baseline" in workstream_text
+    assert "Current candidate seam: `J2 mediation gap-closure reruns`;" in workstream_text
+    assert "J2 now records the mandatory deterministic gap-closure evidence on the branch" in workstream_text
     assert "`M2` is now landed on the canonical line:" in workstream_text
+    assert "`J1` is now landed on the canonical line:" in workstream_text
     assert "the compare surface and live-validation truth from earlier seams remain accepted ancestor input and are not being reopened by the landed K train." in workstream_text
     assert "the current signed-in smoke surfaces are now clean again" in workstream_text
     assert "`codex exec` for smoke" in workstream_text
@@ -400,14 +415,13 @@ def test_resume_protocol_and_active_workstream_contract_exist() -> None:
     assert "`ExecutivePolicyView`" in workstream_text
     assert "live `modulator_summary`, `modulator_memory`, and `policy_view` diagnostics on the operator path" in workstream_text
     assert "the stop-threshold law is now decoupled from self-referential `stop_pressure` comparison" in workstream_text
-    assert "`M2` is now landed on `main`; mediation remains blocked because package-level evidence is still insufficient on every required axis" in workstream_text
-    assert "current burden signal remains too narrow because it is still confined to the `thrash_control` family" in workstream_text
-    assert "current branch-discipline signal still derives only from `thrash_control`" in workstream_text
-    assert "current host-specialized realization signal has candidate-positive cells on reference, Gemini, and OpenAI, but Claude is still missing from the mediation package" in workstream_text
+    assert "`J2` now changes the mediation blocker shape: package-level evidence is no longer `insufficient` on every required axis" in workstream_text
+    assert "mediation implementation remains blocked pending `J3` justification review" in workstream_text
+    assert "better uncertainty handling remains the one still-package-insufficient axis on the current line" in workstream_text
     assert "Gemini should remain explicit as a partial/contaminated live rerun host rather than being hidden behind pooled mediation summaries" in workstream_text
     assert "do not reopen the K train by inertia now that the bounded proven-lane executive/runtime line is landed" in workstream_text
-    assert "publish/review the `codex/j1-mediation-evidence-package` branch as an evidence-only mediation package baseline" in workstream_text
-    assert "after acceptance, open `J2` mediation gap-closure reruns rather than mediation implementation" in workstream_text
+    assert "publish/review the `codex/j2-mediation-gap-closure-reruns` branch as an evidence-only justification-review candidate" in workstream_text
+    assert "after acceptance, open `J3` mediation justification update rather than mediation implementation" in workstream_text
     assert "keep `N2` as a separate blocked train pending a capable machine" in workstream_text
     assert "Do not treat signed-in provider CLI sessions as equivalent to the automation credentials" in workstream_text
     assert "Do not treat the new OpenAI App Server operator proof as license to reopen v1 assisted mode" in workstream_text
@@ -490,7 +504,9 @@ def test_reference_runtime_program_lock_is_recorded() -> None:
     assert "loopback-only HTTP is landed on the accepted K1 closeout line" in phase_gate_text
     assert "one active session per process is real for current scope" in phase_gate_text
 
-    assert "M2` is now landed on `main`; mediation remains blocked because package-level evidence is still insufficient on every required axis" in workstream_text
+    assert "`J2` now changes the mediation blocker shape: package-level evidence is no longer `insufficient` on every required axis" in workstream_text
+    assert "mediation implementation remains blocked pending `J3` justification review" in workstream_text
+    assert "better uncertainty handling remains the one still-package-insufficient axis on the current line" in workstream_text
     assert "the live-testing environment now has explicit operator and automation lane semantics" in workstream_text
     assert "the current signed-in smoke surfaces are now clean again" in workstream_text
     assert "the OpenAI App Server operator lane now completes" in workstream_text
@@ -917,14 +933,17 @@ def test_runtime_restack_program_lock_is_recorded() -> None:
     assert "implemented at K1 proof head `d4c311f` and truthfully closed at deterministic closeout head `79b8f39`" in text
     assert "later bounded runtime/product trains may still be explicitly opened" in master_plan_text
     assert "records the bounded K train as landed" in theory_text
-    assert "records `M2` as landed on `main`" in theory_text
-    assert "opens `J1` as the evidence-only mediation package baseline" in theory_text
+    assert "records `M2` and `J1` as landed on `main`" in theory_text
+    assert "records the current `J2` branch as the evidence-only mediation gap-closure rerun candidate" in theory_text
     assert "headless operator reruns still require `GEMINI_API_KEY` in the shell environment" in theory_text
     assert "old `plan`-mode path was a real confound" in theory_text
     assert "repeated paired runs on the free API-key lane still turn mixed under flash-tier quota pressure" in theory_text
     assert "the operator/evaluation harness must not call explicit Gemini model names at all" in theory_text
     assert "fresh auto-only product-path rerun is sharper still" in theory_text
     assert "first full round-2 stable-defaults rerun now says the package is still `mixed_direction`" in theory_text
-    assert "docs/CORTEX_V2_ACTIVE_WORKSTREAM.md` now records the bounded K train as landed, records `N2` as blocked pending a capable machine, records `M2` as landed on `main`, and opens `J1` as the evidence-only mediation package baseline rather than a new runtime seam." in theory_text
-    assert "The clean synced `main` line now carries the provider-limit neutrality hardening, the OpenAI continuity transport fix, the Claude efficiency rerun, the first compact SRE modulator bundle, and the landed M2 summary/memory/policy refinement." in theory_text
-    assert "The next honest move is now J1 evidence packaging and explicit mediation-gap classification rather than mediation implementation or further runtime widening." in theory_text
+    assert "docs/CORTEX_V2_ACTIVE_WORKSTREAM.md` now records the bounded K train as landed, records `N2` as blocked pending a capable machine, records `M2` and `J1` as landed on `main`, and records the current `J2` branch as the evidence-only mediation gap-closure rerun candidate." in theory_text
+    assert "The clean synced `main` line now carries the provider-limit neutrality hardening, the OpenAI continuity transport fix, the Claude efficiency rerun, the first compact SRE modulator bundle, the landed M2 summary/memory/policy refinement, and the landed J1 mediation evidence package baseline." in theory_text
+    assert "the landed J1 mediation evidence package baseline" in theory_text
+    assert "The current J2 branch then adds dedicated branch-discipline evidence on reference/openai/claude, dedicated non-thrash burden evidence on reference/openai/claude, and the first Claude host-realization line." in theory_text
+    assert "The blocker is no longer “package-insufficient everywhere”" in theory_text
+    assert "the next honest move after J2 is now J3 mediation justification review" in theory_text

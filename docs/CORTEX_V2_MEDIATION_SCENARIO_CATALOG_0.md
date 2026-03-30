@@ -49,9 +49,9 @@ Unless a scenario says otherwise:
 | --- | --- | --- | --- | --- | --- |
 | thrash_control | reference, gemini, openai current; claude missing | reduced thrashing; better branch discipline; lower visible burden at equal task value | yes | current | Current burden signal lives only here, so package-level burden remains too narrow. |
 | uncertainty_boundary | reference, gemini, openai current; claude missing | better uncertainty handling | conditional | current | Current uncertainty signal exists, but it still comes from one family only. |
-| host_realization | reference, gemini, openai current; claude missing | better host-specialized realization | conditional | current | Cell-level host-realization signal exists, but Claude breadth is still missing. |
-| branch_discipline | none current; reference, openai, claude planned | better branch discipline; reduced thrashing secondary | yes | missing | Needed because current branch-discipline signal derives only from thrash_control. |
-| equal_value_burden_non_thrash | none current; reference, openai, claude planned | lower visible burden at equal task value | yes | missing | Needed because current burden signal is confined to thrash_control. |
+| host_realization | reference, gemini, openai, claude current | better host-specialized realization | conditional | current | Cell-level host-realization signal now spans all four current host lines. |
+| branch_discipline | reference, openai, claude current | better branch discipline; reduced thrashing secondary | yes | current | J2 now adds a dedicated branch-discipline family so this axis no longer derives only from thrash_control. |
+| equal_value_burden_non_thrash | reference, openai, claude current | lower visible burden at equal task value | yes | current | J2 now broadens the burden axis beyond thrash_control. |
 | uncertainty_expansion | none current; claude or second-family expansion planned | better uncertainty handling | conditional | missing | Needed if one-family uncertainty evidence remains too narrow after J2. |
 
 ## Scenario Families
@@ -78,6 +78,21 @@ Designed to expose host-native opportunity use, fallback behavior, and host-spec
 
 Primary lift axes:
 - better host-specialized realization
+- lower visible burden at equal task value
+
+### `branch_discipline`
+
+Designed to expose stale, orphaned, and unnecessary branch debt directly rather than inferring it only from thrash control.
+
+Primary lift axes:
+- better branch discipline
+- reduced thrashing
+
+### `equal_value_burden_non_thrash`
+
+Designed to expose lower visible burden at equal task value without relying on thrash-style branch churn.
+
+Primary lift axes:
 - lower visible burden at equal task value
 
 ## Scenario Inventory
@@ -211,6 +226,98 @@ Primary lift axes:
 - secondary_lift_axes:
   - lower visible burden at equal task value
 
+### `scenario_branch_reference_01`
+
+- scenario_family: `branch_discipline`
+- host_family: `reference`
+- task_value_rubric_id: `task_value_equal_completion`
+- approval_or_environment_context_id: `env_local_default`
+- minimum_paired_run_count: `3`
+- scenario_goal: evaluate whether mediation reduces stale, orphaned, and unnecessary branch debt on a bounded reference-host episode without lowering lawful task completion
+- starting_request_or_event: bounded reference-host branch-review task with one candidate-bearing branch detour before certified completion
+- primary_lift_axes:
+  - better branch discipline
+- secondary_lift_axes:
+  - reduced thrashing
+
+### `scenario_branch_openai_01`
+
+- scenario_family: `branch_discipline`
+- host_family: `openai`
+- task_value_rubric_id: `task_value_equal_completion`
+- approval_or_environment_context_id: `env_local_default`
+- minimum_paired_run_count: `3`
+- scenario_goal: evaluate whether mediation reduces stale, orphaned, and unnecessary branch debt on a bounded OpenAI-host episode without lowering lawful task completion
+- starting_request_or_event: bounded OpenAI-host branch-review task with one candidate-bearing branch detour before certified completion
+- primary_lift_axes:
+  - better branch discipline
+- secondary_lift_axes:
+  - reduced thrashing
+
+### `scenario_branch_claude_01`
+
+- scenario_family: `branch_discipline`
+- host_family: `claude`
+- task_value_rubric_id: `task_value_equal_completion`
+- approval_or_environment_context_id: `env_local_default`
+- minimum_paired_run_count: `3`
+- scenario_goal: evaluate whether mediation reduces stale, orphaned, and unnecessary branch debt on a bounded Claude-host episode without lowering lawful task completion
+- starting_request_or_event: bounded Claude-host branch-review task with one candidate-bearing branch detour before certified completion
+- primary_lift_axes:
+  - better branch discipline
+- secondary_lift_axes:
+  - reduced thrashing
+
+### `scenario_burden_reference_01`
+
+- scenario_family: `equal_value_burden_non_thrash`
+- host_family: `reference`
+- task_value_rubric_id: `task_value_equal_completion`
+- approval_or_environment_context_id: `env_local_default`
+- minimum_paired_run_count: `3`
+- scenario_goal: evaluate whether mediation lowers visible burden on a bounded reference-host episode without relying on thrash-style branch churn
+- starting_request_or_event: bounded reference-host completion task with one non-thrash verification step before certified resolution
+- primary_lift_axes:
+  - lower visible burden at equal task value
+
+### `scenario_burden_openai_01`
+
+- scenario_family: `equal_value_burden_non_thrash`
+- host_family: `openai`
+- task_value_rubric_id: `task_value_equal_completion`
+- approval_or_environment_context_id: `env_local_default`
+- minimum_paired_run_count: `3`
+- scenario_goal: evaluate whether mediation lowers visible burden on a bounded OpenAI-host episode without relying on thrash-style branch churn
+- starting_request_or_event: bounded OpenAI-host completion task with one non-thrash verification step before certified resolution
+- primary_lift_axes:
+  - lower visible burden at equal task value
+
+### `scenario_burden_claude_01`
+
+- scenario_family: `equal_value_burden_non_thrash`
+- host_family: `claude`
+- task_value_rubric_id: `task_value_equal_completion`
+- approval_or_environment_context_id: `env_local_default`
+- minimum_paired_run_count: `3`
+- scenario_goal: evaluate whether mediation lowers visible burden on a bounded Claude-host episode without relying on thrash-style branch churn
+- starting_request_or_event: bounded Claude-host completion task with one non-thrash verification step before certified resolution
+- primary_lift_axes:
+  - lower visible burden at equal task value
+
+### `scenario_host_claude_01`
+
+- scenario_family: `host_realization`
+- host_family: `claude`
+- task_value_rubric_id: `task_value_equal_host_realization`
+- approval_or_environment_context_id: `env_boundary_sensitive`
+- minimum_paired_run_count: `3`
+- scenario_goal: evaluate whether mediation improves Claude-native realization quality without adding burden or branch churn
+- starting_request_or_event: bounded Claude-host task where Claude-native candidate-bearing and publication affordances are materially relevant
+- primary_lift_axes:
+  - better host-specialized realization
+- secondary_lift_axes:
+  - lower visible burden at equal task value
+
 ## Exclusion Rules
 
 Exclude a scenario from mediation comparison if any of the following are true:
@@ -231,11 +338,11 @@ Exclude a scenario from mediation comparison if any of the following are true:
 
 | proposed_scenario_id | scenario_family_id | host_family | primary_axis | minimum_paired_run_count | planned_evidence_state | notes |
 | --- | --- | --- | --- | --- | --- | --- |
-| scenario_branch_reference_01 | branch_discipline | reference | better branch discipline | 3 | missing | First stable non-thrash branch-discipline target. |
-| scenario_branch_openai_01 | branch_discipline | openai | better branch discipline | 3 | missing | Second stable non-thrash branch-discipline target. |
-| scenario_branch_claude_01 | branch_discipline | claude | better branch discipline | 3 | missing | Adds the missing Claude branch-discipline line. |
-| scenario_burden_reference_01 | equal_value_burden_non_thrash | reference | lower visible burden at equal task value | 3 | missing | First non-thrash equal-value burden family. |
-| scenario_burden_openai_01 | equal_value_burden_non_thrash | openai | lower visible burden at equal task value | 3 | missing | Second non-thrash equal-value burden family. |
-| scenario_burden_claude_01 | equal_value_burden_non_thrash | claude | lower visible burden at equal task value | 3 | missing | Adds the missing Claude burden line. |
-| scenario_host_claude_01 | host_realization | claude | better host-specialized realization | 3 | missing | Expands host-realization breadth onto Claude. |
+| scenario_branch_reference_01 | branch_discipline | reference | better branch discipline | 3 | current | First stable non-thrash branch-discipline target. |
+| scenario_branch_openai_01 | branch_discipline | openai | better branch discipline | 3 | current | Second stable non-thrash branch-discipline target. |
+| scenario_branch_claude_01 | branch_discipline | claude | better branch discipline | 3 | current | Adds the missing Claude branch-discipline line. |
+| scenario_burden_reference_01 | equal_value_burden_non_thrash | reference | lower visible burden at equal task value | 3 | current | First non-thrash equal-value burden family. |
+| scenario_burden_openai_01 | equal_value_burden_non_thrash | openai | lower visible burden at equal task value | 3 | current | Second non-thrash equal-value burden family. |
+| scenario_burden_claude_01 | equal_value_burden_non_thrash | claude | lower visible burden at equal task value | 3 | current | Adds the missing Claude burden line. |
+| scenario_host_claude_01 | host_realization | claude | better host-specialized realization | 3 | current | Expands host-realization breadth onto Claude. |
 | scenario_uncertainty_claude_01 | uncertainty_expansion | claude | better uncertainty handling | 3 | missing | First uncertainty expansion target if one-family evidence remains too narrow. |

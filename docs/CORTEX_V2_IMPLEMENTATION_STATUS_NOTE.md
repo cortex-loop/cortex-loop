@@ -7,6 +7,7 @@ Status: final implementation closeout note for the currently justified v2 roadma
 
 This note records the verified end state of the currently justified Cortex v2 implementation.
 It does not by itself open new feature work.
+It does not track later candidate or post-closeout mediation evidence; use `docs/CORTEX_V2_ACTIVE_WORKSTREAM.md` for that later branch truth.
 
 ## Landed
 
@@ -64,14 +65,14 @@ It does not by itself open new feature work.
 
 - Mediation remains unstarted and not justified.
 - The governing decision is recorded in `docs/CORTEX_V2_MEDIATION_JUSTIFICATION_NOTE.md`.
-- Current repo evidence now shows cell-level lift on:
+- At the time of this accepted closeout note, repo evidence showed cell-level lift on:
   - reduced thrashing,
   - better branch discipline,
   - better uncertainty handling,
   - better host-specialized realization,
   - and lower visible burden on the reference, Gemini, and OpenAI thrash cells.
-- Package-level evidence remains `insufficient` on every required mediation axis.
-- The burden axis remains package-insufficient specifically because the current burden signal is confined to the `thrash_control` scenario family.
+- At that accepted closeout point, package-level evidence remained `insufficient` on every required mediation axis.
+- At that accepted closeout point, the burden axis remained package-insufficient specifically because the burden signal was confined to the `thrash_control` scenario family.
 
 ## Maintainability Debt, Not Roadmap Debt
 

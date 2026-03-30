@@ -12,6 +12,7 @@ import re
 class PackageLayout:
     repo_root: Path
     docs_root: Path
+    mediation_claude_packet_root: Path
     mediation_reference_packet_root: Path
     mediation_gemini_packet_root: Path
     mediation_openai_packet_root: Path
@@ -31,6 +32,7 @@ def build_layout(repo_root: Path | None = None) -> PackageLayout:
     return PackageLayout(
         repo_root=resolved_repo_root,
         docs_root=docs_root,
+        mediation_claude_packet_root=docs_root / "mediation_evidence" / "claude",
         mediation_reference_packet_root=docs_root / "mediation_evidence" / "reference",
         mediation_gemini_packet_root=docs_root / "mediation_evidence" / "gemini",
         mediation_openai_packet_root=docs_root / "mediation_evidence" / "openai",
@@ -49,6 +51,7 @@ DEFAULT_LAYOUT = build_layout()
 
 REPO_ROOT = DEFAULT_LAYOUT.repo_root
 DOCS_ROOT = DEFAULT_LAYOUT.docs_root
+MEDIATION_CLAUDE_PACKET_ROOT = DEFAULT_LAYOUT.mediation_claude_packet_root
 MEDIATION_REFERENCE_PACKET_ROOT = DEFAULT_LAYOUT.mediation_reference_packet_root
 MEDIATION_GEMINI_PACKET_ROOT = DEFAULT_LAYOUT.mediation_gemini_packet_root
 MEDIATION_OPENAI_PACKET_ROOT = DEFAULT_LAYOUT.mediation_openai_packet_root
@@ -254,6 +257,7 @@ __all__ = [
     "EVIDENCE_NOTE_PATH",
     "FAILURE_TAXONOMY_PATH",
     "HOST_SPLIT_TABLE_PATH",
+    "MEDIATION_CLAUDE_PACKET_ROOT",
     "MEDIATION_GEMINI_PACKET_ROOT",
     "MEDIATION_OPENAI_PACKET_ROOT",
     "MEDIATION_REFERENCE_PACKET_ROOT",
