@@ -11,11 +11,15 @@ import urllib.request
 from pathlib import Path
 from typing import Any
 
+from cortex.sre.modulators import update_executive_modulators
 from cortex.sre.operator_routing import (
     build_operator_route_diagnostics,
-    select_operator_route,
+    select_operator_route_with_modulators,
 )
-from live_operator_route_state import build_operator_probe_task_state
+from live_operator_route_state import (
+    build_operator_modulator_inputs,
+    build_operator_probe_task_state,
+)
 
 from live_validation_common import (
     MODEL_MATRIX,
@@ -231,7 +235,13 @@ def _run_single_provider_baseline(
             recent_baseline_clean_count=prior_signal["clean_success_count"],
             recent_warning_bearing_success_present=prior_signal["warning_bearing_success_present"],
         )
-        route_decision = select_operator_route(route_state)
+        modulator_update = update_executive_modulators(
+            build_operator_modulator_inputs(
+                route_state,
+                previous_same_host_run_failed_before_completion=prior_signal["previous_failed_before_completion"],
+            )
+        )
+        route_decision = select_operator_route_with_modulators(route_state, modulator_update)
         route_diagnostics = build_operator_route_diagnostics(route_state, route_decision)
 
     started_at = now_utc_iso()

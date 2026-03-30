@@ -326,6 +326,38 @@ EXPECTATIONS = (
             ),
         ),
     ),
+    SreCorrespondenceExpectation(
+        row_label="ExecutiveModulatorState",
+        module_path="cortex.sre.modulators",
+        symbol_name="ExecutiveModulatorState",
+        promised_surfaces=(
+            PromisedTestSurface(
+                test_file="tests/unit/test_sre_modulators.py",
+                test_names=(
+                    "test_modulator_update_clips_values_into_unit_interval",
+                    "test_high_quota_pressure_raises_stop_pressure",
+                    "test_high_continuity_raises_focus_gain",
+                    "test_repeated_failure_raises_explore_gain",
+                    "test_high_novelty_raises_update_pressure",
+                ),
+            ),
+        ),
+    ),
+    SreCorrespondenceExpectation(
+        row_label="update_executive_modulators",
+        module_path="cortex.sre.modulators",
+        symbol_name="update_executive_modulators",
+        promised_surfaces=(
+            PromisedTestSurface(
+                test_file="tests/unit/test_sre_modulators.py",
+                test_names=(
+                    "test_modulator_update_clips_values_into_unit_interval",
+                    "test_modulator_stop_pressure_can_block_route",
+                    "test_modulator_update_pressure_adds_extra_read_pass",
+                ),
+            ),
+        ),
+    ),
 )
 
 

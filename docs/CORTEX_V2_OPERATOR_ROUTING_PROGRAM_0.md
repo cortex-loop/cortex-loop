@@ -62,12 +62,24 @@ Locked state axes:
 The route selector uses:
 
 - a bounded task-state vector `z_t = [c_t, k_t, v_t, u_t, h_t, q_t]`
+- one compact executive modulator bundle over observable control inputs
 - fixed route prototypes for the five non-blocked profiles
 - fixed axis weights over those six dimensions
 - explicit gain priors
 - one discrete gate against the task-mode default profile
 - one hard quota-pressure block for non-inspect routes
 - and one resumptive guarded-continuity preference under strong host friction
+
+The modulator layer uses:
+
+- `m_t = [u_t, f_t, q_t, c_t, n_t]`
+- fixed linear coefficients plus small fixed biases
+- hard clipping into `[0,1]`
+- four compact gains:
+  - `focus_gain`
+  - `explore_gain`
+  - `stop_pressure`
+  - `update_pressure`
 
 The route selector may choose:
 
@@ -76,6 +88,13 @@ The route selector may choose:
 - continuity budget
 - verification requirement
 - and explicit blockedness
+
+The modulator layer may change:
+
+- preference for default / continuity profiles
+- the margin needed to switch away from default profile
+- blocking pressure under quota / repeated failure
+- one extra read pass on inspect routes when uncertainty is high and quota pressure is low
 
 It may not choose:
 
@@ -101,6 +120,8 @@ Required local artifact diagnostics:
 - `quota_pressure`
 - `host_friction`
 - `blocked_reason`
+- `modulator_state`
+- `modulator_reason_tags`
 
 These diagnostics are local-only under `.cortex/live_validation/`.
 They are not packet truth and may not be promoted into runtime/public doctrine by this train alone.
@@ -110,6 +131,7 @@ They are not packet truth and may not be promoted into runtime/public doctrine b
 Minimum deterministic proof:
 
 - `python3 -m pytest tests/unit/test_operator_routing.py -q`
+- `python3 -m pytest tests/unit/test_sre_modulators.py -q`
 - `python3 -m pytest tests/unit/test_live_validation_tools.py -q`
 - `python3 -m pytest tests/unit/test_correspondence_sre.py -q`
 - `python3 -m pytest tests/unit/test_verification_docs_sync.py -q`
@@ -128,3 +150,5 @@ Acceptance:
 - Gemini remains no-`-m` and no-`plan` on the operator/eval path
 - Claude/OpenAI remain on the locked stable host defaults
 - blocked results are explicit and attributable to route state / host state rather than hidden rerouting
+- the compact modulator bundle is SRE-owned, operational, and visibly changes route/budget behavior
+- the implementation stays abstract and does not use neurotransmitter names as code objects

@@ -10,11 +10,15 @@ import time
 from pathlib import Path
 from typing import Any
 
+from cortex.sre.modulators import update_executive_modulators
 from cortex.sre.operator_routing import (
     build_operator_route_diagnostics,
-    select_operator_route,
+    select_operator_route_with_modulators,
 )
-from live_operator_route_state import build_operator_task_state
+from live_operator_route_state import (
+    build_operator_modulator_inputs,
+    build_operator_task_state,
+)
 
 try:  # pragma: no cover - import path differs between script execution and pytest import.
     from .live_validation_common import (
@@ -314,7 +318,20 @@ def _run_single_scenario(
         recent_warning_bearing_success_present=summarize_operator_runs(baseline_runs)["warning_bearing_success_present"],
         recent_product_failure_class=summarize_operator_runs(prior_runs, scenario_id=scenario_id)["latest_failure_class"],
     )
-    route_decision = select_operator_route(route_state)
+    modulator_update = update_executive_modulators(
+        build_operator_modulator_inputs(
+            route_state,
+            previous_same_host_run_failed_before_completion=summarize_operator_runs(
+                prior_runs,
+                scenario_id=scenario_id,
+            )["previous_failed_before_completion"],
+            recent_product_failure_class=summarize_operator_runs(
+                prior_runs,
+                scenario_id=scenario_id,
+            )["latest_failure_class"],
+        )
+    )
+    route_decision = select_operator_route_with_modulators(route_state, modulator_update)
     route_diagnostics = build_operator_route_diagnostics(route_state, route_decision)
     if route_decision.blocked_reason is not None:
         return _blocked_operator_route_payload(
@@ -484,7 +501,20 @@ def _run_restart_continuity(
             scenario_id="restart_continuity",
         )["latest_failure_class"],
     )
-    route_decision = select_operator_route(route_state)
+    modulator_update = update_executive_modulators(
+        build_operator_modulator_inputs(
+            route_state,
+            previous_same_host_run_failed_before_completion=summarize_operator_runs(
+                prior_runs,
+                scenario_id="restart_continuity",
+            )["previous_failed_before_completion"],
+            recent_product_failure_class=summarize_operator_runs(
+                prior_runs,
+                scenario_id="restart_continuity",
+            )["latest_failure_class"],
+        )
+    )
+    route_decision = select_operator_route_with_modulators(route_state, modulator_update)
     route_diagnostics = build_operator_route_diagnostics(route_state, route_decision)
     if route_decision.blocked_reason is not None:
         return _blocked_operator_route_payload(

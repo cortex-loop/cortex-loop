@@ -143,3 +143,10 @@ def test_build_operator_route_diagnostics_exposes_state_and_budget() -> None:
     assert payload["quota_pressure"] == 0.0
     assert payload["blocked_reason"] is None
     assert payload["route_budget"]["max_turns"] == 1
+    assert payload["modulator_state"] == {
+        "focus_gain": 0.0,
+        "explore_gain": 0.0,
+        "stop_pressure": 0.0,
+        "update_pressure": 0.0,
+    }
+    assert payload["modulator_reason_tags"] == []

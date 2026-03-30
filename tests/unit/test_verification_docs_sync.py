@@ -342,6 +342,7 @@ def test_local_verification_doc_records_repo_workflow_commands() -> None:
     assert "keep the current explicit stable models unless a separate host-defaults seam is explicitly opened" in doc_text
     assert "## Operator routing realization" in doc_text
     assert "python3 -m pytest tests/unit/test_operator_routing.py -q" in doc_text
+    assert "python3 -m pytest tests/unit/test_sre_modulators.py -q" in doc_text
     assert "python3 -m pytest tests/unit/test_correspondence_sre.py -q" in doc_text
 
 
@@ -365,10 +366,10 @@ def test_resume_protocol_and_active_workstream_contract_exist() -> None:
     assert "Current branch role:" in workstream_text
     assert "accepted workflow baseline truth now rests on `main` rather than a long-lived working branch" in workstream_text
     assert "`Q1` remains the accepted ancestor audit on `main`" in workstream_text
-    assert "Current campaign: `C1 Claude efficiency and usage-window hardening candidate complete`" in workstream_text
-    assert "Current candidate seam: `C1 Claude efficiency and usage-window hardening`;" in workstream_text
-    assert "the Claude efficiency seam is now re-earned on the explanation branch" in workstream_text
-    assert "Claude is positive again after the lower turn-budget / leaner hook rerun, Gemini is positive, OpenAI is positive" in workstream_text
+    assert "Current campaign: `M1 SRE modulator carriers and executive gain law candidate complete`" in workstream_text
+    assert "Current candidate seam: `M1 SRE modulator carriers and executive gain law`;" in workstream_text
+    assert "the compact SRE modulator bundle is now implemented on the explanation branch" in workstream_text
+    assert "Claude is positive, Gemini is positive, OpenAI is positive, and the package verdict remains promising_positive" in workstream_text
     assert "the compare surface and live-validation truth from earlier seams remain accepted ancestor input and are not being reopened by the landed K train." in workstream_text
     assert "the current signed-in smoke surfaces are now clean again" in workstream_text
     assert "`codex exec` for smoke" in workstream_text
@@ -395,8 +396,13 @@ def test_resume_protocol_and_active_workstream_contract_exist() -> None:
     assert "OpenAI `restart_continuity` is now re-earned on the directionality path after the non-ephemeral thread-resume fix" in workstream_text
     assert "OpenAI is now `positive`" in workstream_text
     assert "package verdict is now `promising_positive`" in workstream_text
+    assert "the M1 compact modulator bundle now adds:" in workstream_text
+    assert "`focus_gain`" in workstream_text
+    assert "live `modulator_state` and `modulator_reason_tags` diagnostics on operator artifacts" in workstream_text
+    assert "a focused OpenAI truth_gap rerun confirms those diagnostics are present on live artifacts" in workstream_text
     assert "do not reopen the K train by inertia now that the bounded proven-lane executive/runtime line is landed" in workstream_text
     assert "do not widen from the current candidate package-positive review-branch result into new runtime or product claims by inertia" in workstream_text
+    assert "treat the current package-positive operator line as candidate branch truth until it is reviewed and accepted" in workstream_text
     assert "the next lawful move is to publish/review this branch as the candidate package-positive operator directionality line" in workstream_text
     assert "after acceptance, keep `N2` as a separate blocked train pending a capable machine" in workstream_text
     assert "keep `N2` as a separate blocked train pending a capable machine" in workstream_text
@@ -408,6 +414,7 @@ def test_resume_protocol_and_active_workstream_contract_exist() -> None:
     assert "Do not pass explicit Gemini operator model names anywhere on the operator/evaluation harness" in workstream_text
     assert "Do not overread provider-limit interference as a product-quality defeat for Cortex by itself." in workstream_text
     assert "Do not treat selecting `gemini-api-key` in `.gemini/settings.json` as sufficient for headless Gemini operator proof" in workstream_text
+    assert "docs/erika-visualizations/CORTEX_EVIDENCE_BASED_STATUS.md" in workstream_text
     assert "Do not use Gemini `plan` mode as the default comparison baseline on the operator/evaluation path." in workstream_text
     assert "Do not start a new managed session from local `main` while it is ahead or diverged from `origin/main`." in workstream_text
     assert "Do not reopen Gemini model chasing or assisted-mode speculation inside the active `L4` service-proof train." in workstream_text
@@ -621,15 +628,29 @@ def test_reference_runtime_program_lock_is_recorded() -> None:
     assert "Locked route profiles:" in operator_routing_program_text
     assert "`inspect_light`" in operator_routing_program_text
     assert "`blocked`" in operator_routing_program_text
+    assert "one compact executive modulator bundle over observable control inputs" in operator_routing_program_text
+    assert "The modulator layer uses:" in operator_routing_program_text
+    assert "`focus_gain`" in operator_routing_program_text
+    assert "`explore_gain`" in operator_routing_program_text
+    assert "`stop_pressure`" in operator_routing_program_text
+    assert "`update_pressure`" in operator_routing_program_text
     assert "The route selector may choose:" in operator_routing_program_text
     assert "retry budget" in operator_routing_program_text
+    assert "The modulator layer may change:" in operator_routing_program_text
+    assert "one extra read pass on inspect routes" in operator_routing_program_text
     assert "It may not choose:" in operator_routing_program_text
     assert "named models" in operator_routing_program_text
     assert "Required local artifact diagnostics:" in operator_routing_program_text
     assert "`route_profile`" in operator_routing_program_text
     assert "`blocked_reason`" in operator_routing_program_text
+    assert "`modulator_state`" in operator_routing_program_text
+    assert "`modulator_reason_tags`" in operator_routing_program_text
     assert "Minimum deterministic proof:" in operator_routing_program_text
     assert "`python3 -m pytest tests/unit/test_operator_routing.py -q`" in operator_routing_program_text
+    assert "`python3 -m pytest tests/unit/test_sre_modulators.py -q`" in operator_routing_program_text
+    assert "the implementation stays abstract and does not use neurotransmitter names as code objects" in operator_routing_program_text
+    assert "dopamine" not in operator_routing_program_text.lower()
+    assert "serotonin" not in operator_routing_program_text.lower()
     assert "Status: accepted paired raw-vs-Cortex operator directionality audit note" in operator_directionality_audit_text
     assert "**mixed_direction**" in operator_directionality_audit_text
     assert "Claude is directionally positive" in operator_directionality_audit_text
@@ -888,7 +909,7 @@ def test_runtime_restack_program_lock_is_recorded() -> None:
     assert "the operator/evaluation harness must not call explicit Gemini model names at all" in theory_text
     assert "fresh auto-only product-path rerun is sharper still" in theory_text
     assert "first full round-2 stable-defaults rerun now says the package is still `mixed_direction`" in theory_text
-    assert "current explanation branch now carries the provider-limit neutrality hardening, the OpenAI continuity transport fix, and the Claude efficiency rerun" in theory_text
+    assert "current explanation branch now carries the provider-limit neutrality hardening, the OpenAI continuity transport fix, the Claude efficiency rerun, and the first compact SRE modulator bundle" in theory_text
     assert "Claude is positive again after the lower turn-budget / leaner hook rerun" in theory_text
     assert "OpenAI is positive again after the non-ephemeral thread-resume fix" in theory_text
     assert "package verdict is `promising_positive`" in theory_text

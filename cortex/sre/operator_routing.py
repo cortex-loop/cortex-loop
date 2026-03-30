@@ -2,9 +2,15 @@
 
 from __future__ import annotations
 
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, dataclass, replace
 from enum import Enum
 from numbers import Real
+
+from .modulators import (
+    ExecutiveModulatorState,
+    ExecutiveModulatorUpdate,
+    ZERO_EXECUTIVE_MODULATOR_UPDATE,
+)
 
 
 class OperatorTaskMode(str, Enum):
@@ -118,6 +124,8 @@ class OperatorRouteDecision:
     selected_margin: float
     neutral_margin: float
     reason_tags: frozenset[str]
+    modulator_state: ExecutiveModulatorState
+    modulator_reason_tags: frozenset[str]
     blocked_reason: str | None = None
 
     def __post_init__(self) -> None:
@@ -133,6 +141,12 @@ class OperatorRouteDecision:
                 "OperatorRouteDecision.budget must be OperatorBudgetProfile, "
                 f"got {actual_type}."
             )
+        if not isinstance(self.modulator_state, ExecutiveModulatorState):
+            actual_type = type(self.modulator_state).__name__
+            raise TypeError(
+                "OperatorRouteDecision.modulator_state must be ExecutiveModulatorState, "
+                f"got {actual_type}."
+            )
         for field_name in ("selected_margin", "neutral_margin"):
             value = getattr(self, field_name)
             if not isinstance(value, Real):
@@ -143,6 +157,10 @@ class OperatorRouteDecision:
         if any(not tag.strip() for tag in self.reason_tags):
             raise ValueError(
                 "OperatorRouteDecision.reason_tags must contain only non-empty values after trimming."
+            )
+        if any(not tag.strip() for tag in self.modulator_reason_tags):
+            raise ValueError(
+                "OperatorRouteDecision.modulator_reason_tags must contain only non-empty values after trimming."
             )
         if self.blocked_reason is not None and not self.blocked_reason.strip():
             raise ValueError(
@@ -274,17 +292,39 @@ _LAMBDA_V = 0.15
 _MARGIN_THRESHOLD = 0.08
 
 def select_operator_route(state: OperatorTaskState) -> OperatorRouteDecision:
+    return select_operator_route_with_modulators(state, ZERO_EXECUTIVE_MODULATOR_UPDATE)
+
+
+def select_operator_route_with_modulators(
+    state: OperatorTaskState,
+    modulator_update: ExecutiveModulatorUpdate | None = None,
+) -> OperatorRouteDecision:
     if not isinstance(state, OperatorTaskState):
         actual_type = type(state).__name__
         raise TypeError(
             "select_operator_route.state must be OperatorTaskState, "
             f"got {actual_type}."
         )
+    if modulator_update is None:
+        modulator_update = ZERO_EXECUTIVE_MODULATOR_UPDATE
+    if not isinstance(modulator_update, ExecutiveModulatorUpdate):
+        actual_type = type(modulator_update).__name__
+        raise TypeError(
+            "select_operator_route.modulator_update must be ExecutiveModulatorUpdate, "
+            f"got {actual_type}."
+        )
 
     admissible_profiles = _ADMISSIBLE_PROFILES_BY_MODE[state.task_mode]
     default_profile = _DEFAULT_PROFILE_BY_MODE[state.task_mode]
+    modulator_state = modulator_update.state
     utilities = {
         profile: _route_utility(profile, state)
+        + _modulator_profile_adjustment(
+            profile,
+            default_profile=default_profile,
+            state=state,
+            modulator_state=modulator_state,
+        )
         for profile in admissible_profiles
     }
     reason_tags = {
@@ -307,8 +347,9 @@ def select_operator_route(state: OperatorTaskState) -> OperatorRouteDecision:
     default_utility = utilities[default_profile]
     selected_utility = utilities[selected_profile]
     neutral_margin = selected_utility - default_utility
+    margin_threshold = _effective_margin_threshold(modulator_state)
 
-    if selected_profile is not default_profile and neutral_margin < _MARGIN_THRESHOLD:
+    if selected_profile is not default_profile and neutral_margin < margin_threshold:
         selected_profile = default_profile
         selected_utility = default_utility
         neutral_margin = 0.0
@@ -318,6 +359,19 @@ def select_operator_route(state: OperatorTaskState) -> OperatorRouteDecision:
     else:
         reason_tags.add("gate:non-default-profile")
 
+    if modulator_state.stop_pressure >= 0.75 and selected_profile is not OperatorRouteProfile.INSPECT_LIGHT:
+        reason_tags.add("blocked:modulator-stop-pressure")
+        return OperatorRouteDecision(
+            profile=OperatorRouteProfile.BLOCKED,
+            budget=_BUDGET_PROFILES[OperatorRouteProfile.BLOCKED],
+            selected_margin=selected_utility,
+            neutral_margin=neutral_margin,
+            reason_tags=frozenset(reason_tags),
+            modulator_state=modulator_state,
+            modulator_reason_tags=modulator_update.reason_tags,
+            blocked_reason="blocked_by_modulator_stop_pressure",
+        )
+
     if state.quota_pressure >= 0.80 and selected_profile is not OperatorRouteProfile.INSPECT_LIGHT:
         reason_tags.add("blocked:quota-pressure")
         return OperatorRouteDecision(
@@ -326,15 +380,26 @@ def select_operator_route(state: OperatorTaskState) -> OperatorRouteDecision:
             selected_margin=selected_utility,
             neutral_margin=neutral_margin,
             reason_tags=frozenset(reason_tags),
+            modulator_state=modulator_state,
+            modulator_reason_tags=modulator_update.reason_tags,
             blocked_reason="blocked_by_quota_pressure",
         )
 
+    budget = _apply_modulators_to_budget(
+        _BUDGET_PROFILES[selected_profile],
+        state=state,
+        modulator_state=modulator_state,
+        reason_tags=reason_tags,
+    )
+
     return OperatorRouteDecision(
         profile=selected_profile,
-        budget=_BUDGET_PROFILES[selected_profile],
+        budget=budget,
         selected_margin=selected_utility,
         neutral_margin=neutral_margin,
         reason_tags=frozenset(reason_tags | {f"profile:{selected_profile.value}"}),
+        modulator_state=modulator_state,
+        modulator_reason_tags=modulator_update.reason_tags,
     )
 
 
@@ -364,6 +429,8 @@ def build_operator_route_diagnostics(
         "quota_pressure": round(float(state.quota_pressure), 4),
         "host_friction": round(float(state.host_friction), 4),
         "blocked_reason": decision.blocked_reason,
+        "modulator_state": decision.modulator_state.as_payload(),
+        "modulator_reason_tags": sorted(decision.modulator_reason_tags),
     }
 
 def _route_utility(
@@ -389,6 +456,58 @@ def _route_utility(
     )
 
 
+def _modulator_profile_adjustment(
+    profile: OperatorRouteProfile,
+    *,
+    default_profile: OperatorRouteProfile,
+    state: OperatorTaskState,
+    modulator_state: ExecutiveModulatorState,
+) -> float:
+    adjustment = 0.0
+    if profile is default_profile:
+        adjustment += 0.12 * modulator_state.focus_gain
+    if state.task_mode is OperatorTaskMode.RESUME_EXECUTE and profile in {
+        OperatorRouteProfile.CONTINUITY_STANDARD,
+        OperatorRouteProfile.CONTINUITY_GUARDED,
+    }:
+        adjustment += 0.08 * modulator_state.focus_gain
+    if profile is not default_profile:
+        adjustment += 0.04 * modulator_state.explore_gain
+    return adjustment
+
+
+def _effective_margin_threshold(modulator_state: ExecutiveModulatorState) -> float:
+    return max(
+        0.0,
+        min(
+            0.20,
+            _MARGIN_THRESHOLD + (0.08 * modulator_state.focus_gain) - (0.08 * modulator_state.explore_gain),
+        ),
+    )
+
+
+def _apply_modulators_to_budget(
+    budget: OperatorBudgetProfile,
+    *,
+    state: OperatorTaskState,
+    modulator_state: ExecutiveModulatorState,
+    reason_tags: set[str],
+) -> OperatorBudgetProfile:
+    if (
+        state.task_mode is OperatorTaskMode.INSPECT
+        and modulator_state.update_pressure >= 0.60
+        and state.uncertainty >= 0.60
+        and state.quota_pressure < 0.60
+    ):
+        reason_tags.add("budget:extra-read-pass")
+        return replace(
+            budget,
+            max_retries=budget.max_retries + 1,
+            allow_extra_read_pass=True,
+        )
+    return budget
+
+
 __all__ = [
     "OperatorBudgetProfile",
     "OperatorRouteDecision",
@@ -396,5 +515,6 @@ __all__ = [
     "OperatorTaskMode",
     "OperatorTaskState",
     "build_operator_route_diagnostics",
+    "select_operator_route_with_modulators",
     "select_operator_route",
 ]

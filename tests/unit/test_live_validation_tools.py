@@ -321,6 +321,26 @@ def test_live_operator_route_state_applies_uncertainty_and_pressure_rules() -> N
     assert failed_before_completion.uncertainty == pytest.approx(0.65)
 
 
+def test_live_operator_route_state_builds_modulator_inputs_from_observable_signals() -> None:
+    state = live_operator_route_state.build_operator_task_state(
+        "truth_gap",
+        previous_same_host_run_failed_before_completion=True,
+        recent_baseline_clean_count=2,
+    )
+
+    inputs = live_operator_route_state.build_operator_modulator_inputs(
+        state,
+        previous_same_host_run_failed_before_completion=True,
+        recent_product_failure_class="runtime_error",
+    )
+
+    assert inputs.uncertainty == pytest.approx(0.65)
+    assert inputs.repeated_failure_pressure == pytest.approx(0.75)
+    assert inputs.quota_pressure == pytest.approx(0.0)
+    assert inputs.continuity_demand == pytest.approx(0.0)
+    assert inputs.novelty_pressure == pytest.approx(0.70)
+
+
 def test_gemini_operator_auth_mode_uses_api_key_when_selected_in_settings(tmp_path, monkeypatch) -> None:
     fake_home = tmp_path / "home"
     settings_path = fake_home / ".gemini" / "settings.json"
@@ -570,6 +590,13 @@ def test_operator_provider_baseline_surfaces_route_diagnostics(monkeypatch) -> N
     assert payload["route_profile"] == "inspect_light"
     assert payload["route_budget"]["max_turns"] == 1
     assert payload["state_vector"] == [0.1, 0.0, 0.05, 0.35, 0.0, 0.0]
+    assert payload["modulator_state"] == {
+        "focus_gain": 0.045,
+        "explore_gain": 0.2075,
+        "stop_pressure": 0.0525,
+        "update_pressure": 0.555,
+    }
+    assert payload["modulator_reason_tags"] == ["novelty_bias"]
 
 
 def test_auto_supported_remains_true_for_gemini_quota_failures(monkeypatch) -> None:

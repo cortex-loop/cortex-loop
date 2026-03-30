@@ -74,11 +74,11 @@ It is workflow state only. It does not override the packet documents, implementa
 
 ## 2. Current campaign and seam state
 
-- Current campaign: `C1 Claude efficiency and usage-window hardening candidate complete`
+- Current campaign: `M1 SRE modulator carriers and executive gain law candidate complete`
 - Current working branch at ledger update: `codex/claude-directionality-explanation`
 - Current branch role: explicit manual explanation branch off the review line because local `main` remains ahead of `origin/main` and a managed session cannot be started honestly from that state
-- Current candidate seam: `C1 Claude efficiency and usage-window hardening`; `Q1` remains the accepted ancestor audit on `main`, `N2` remains blocked on a capable machine, and the current explanation branch now carries the S1 route selector plus the provider-limit neutrality hardening, the OpenAI continuity transport fix, and the Claude efficiency rerun`
-- Current seam status: `the Claude efficiency seam is now re-earned on the explanation branch: Claude is positive again after the lower turn-budget / leaner hook rerun, Gemini is positive, OpenAI is positive, and the package verdict is now promising_positive`
+- Current candidate seam: `M1 SRE modulator carriers and executive gain law`; `Q1` remains the accepted ancestor audit on `main`, `N2` remains blocked on a capable machine, and the current explanation branch now carries the S1 route selector plus provider-limit neutrality, the OpenAI continuity transport fix, the Claude efficiency rerun, and the first compact SRE modulator bundle`
+- Current seam status: `the compact SRE modulator bundle is now implemented on the explanation branch, one focused OpenAI truth_gap rerun shows live modulator diagnostics in artifacts, and the candidate package-positive operator directionality line remains intact: Claude is positive, Gemini is positive, OpenAI is positive, and the package verdict remains promising_positive`
 - the compare surface and live-validation truth from earlier seams remain accepted ancestor input and are not being reopened by the landed K train.
 - Seam risk: shared verification-plumbing seam plus environment-sensitive evidence rerun
 
@@ -134,10 +134,18 @@ It is workflow state only. It does not override the packet documents, implementa
       - OpenAI `restart_continuity` is now re-earned on the directionality path after the non-ephemeral thread-resume fix
       - OpenAI is now `positive`
       - package verdict is now `promising_positive`
+    - the M1 compact modulator bundle now adds:
+      - `focus_gain`
+      - `explore_gain`
+      - `stop_pressure`
+      - `update_pressure`
+      - live `modulator_state` and `modulator_reason_tags` diagnostics on operator artifacts
+      - one bounded extra-read-pass path when uncertainty is high and quota pressure is low
+    - a focused OpenAI truth_gap rerun confirms those diagnostics are present on live artifacts without breaking the current candidate package-positive line
   - the current automation/service lane still fails honestly on missing machine auth
 - Next lawful move:
   - keep the machine-auth service lane explicitly deferred on this machine for actual proof execution
-  - stop treating the earlier Claude rate-limit pair as proof that S1 routing regressed quality
+  - treat the current package-positive operator line as candidate branch truth until it is reviewed and accepted
   - do not reopen the K train by inertia now that the bounded proven-lane executive/runtime line is landed
   - do not widen from the current candidate package-positive review-branch result into new runtime or product claims by inertia
   - the next lawful move is to publish/review this branch as the candidate package-positive operator directionality line
@@ -176,6 +184,7 @@ It is workflow state only. It does not override the packet documents, implementa
 ## 5. Acknowledged worktree noise at ledger creation
 
 - `.cortex/live_validation/` now contains local-only generated evidence for the current L2 pass and is expected to churn across reruns.
+- `docs/erika-visualizations/CORTEX_EVIDENCE_BASED_STATUS.md` and `docs/erika-visualizations/cortex-now-vs-future.html` remain unrelated support-surface edits in the current local worktree and are not part of the M1 seam itself.
 - Re-read `git status --short --untracked-files=all` before opening any new seam; this summary is only the continuity reminder, not the canonical file list.
 
 ## 6. Resume checklist
