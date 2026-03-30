@@ -13,12 +13,9 @@ It is workflow state only. It does not override the packet documents, implementa
   - exact accepted-head hashes are intentionally not mirrored in repo-tracked support docs because they self-stale on the next accepted closure commit
 - Accepted baseline state:
   - burden-axis re-audit remains accepted through the three thrash-host burden slices
-  - package-level burden remains `insufficient`
-  - mediation remains blocked / not justified
+  - mediation implementation remains blocked pending `J3` justification update
   - the verification/evidence restack train remains landed on the same product truth
   - the OpenAI host-realization cell now has a committed three-pair evidence series and `candidate_positive` cell-level signal for better host-specialized realization
-  - package-level mediation evidence remains `insufficient`
-  - lower visible burden remains unclaimed for host-realization
   - accepted workflow baseline truth now rests on `main` rather than a long-lived working branch
   - final repo closure is now landed on the current line:
     - one clean synced local checkout only
@@ -54,6 +51,17 @@ It is workflow state only. It does not override the packet documents, implementa
     - package verdict remains `insufficient` on every mediation axis
     - the remaining mediation gap is now explicit rather than rhetorical
     - J2 rerun targets are now recorded without opening mediation implementation
+  - `J2` is now landed on the canonical line:
+    - dedicated branch-discipline families now exist on `reference`, `openai`, and `claude`
+    - dedicated non-thrash burden families now exist on `reference`, `openai`, and `claude`
+    - the first Claude host-realization line is now committed on the canonical line
+    - package-level evidence is no longer `insufficient` everywhere:
+      - reduced thrashing is `candidate_positive`
+      - better branch discipline is `candidate_positive`
+      - lower visible burden at equal task value is `candidate_positive`
+      - better host-specialized realization is `candidate_positive`
+      - better uncertainty handling remains `insufficient`
+    - the next lawful move is now `J3` mediation justification update rather than mediation implementation
   - `Q1` raw-vs-Cortex operator directionality audit is now landed on the current machine:
     - Claude is `positive`
     - OpenAI is `positive`
@@ -85,11 +93,11 @@ It is workflow state only. It does not override the packet documents, implementa
 
 ## 2. Current campaign and seam state
 
-- Current campaign: `J2 mediation gap-closure reruns candidate complete`
-- Current working branch at ledger update: `codex/j2-mediation-gap-closure-reruns`
-- Current branch role: explicit manual evidence-rerun branch opened from clean `main` after the landed J1 package baseline
-- Current candidate seam: `J2 mediation gap-closure reruns`; `J1` is now accepted baseline truth on `main`, `Q1` remains accepted ancestor truth, `N2` remains blocked on a capable machine, and the current J2 branch remains evidence-only rather than mediation implementation
-- Current seam status: `J2 now records the mandatory deterministic gap-closure evidence on the branch: dedicated branch-discipline families on reference/openai/claude, dedicated non-thrash burden families on reference/openai/claude, and the first Claude host-realization line. The package is no longer insufficient everywhere: reduced thrashing, better branch discipline, lower visible burden, and better host-specialized realization are now package-level candidate-positive, while uncertainty handling remains package-insufficient on the current line.`
+- Current campaign: `J3 mediation justification update pending`
+- Current working branch at ledger update: `main`
+- Current branch role: resting branch after the merged J2 evidence publication line
+- Current candidate seam: `none`; `J2` is now accepted baseline truth on `main`, `Q1` remains accepted ancestor truth, and `N2` remains blocked on a capable machine
+- Current seam status: `J2 is now accepted baseline truth on the canonical line. Package-level evidence is no longer insufficient everywhere, but mediation implementation remains blocked pending J3 justification update because better uncertainty handling remains package-insufficient on the current line.`
 - the compare surface and live-validation truth from earlier seams remain accepted ancestor input and are not being reopened by the landed K train.
 - Seam risk: deterministic code/doc seam
 
@@ -141,13 +149,12 @@ It is workflow state only. It does not override the packet documents, implementa
 - Current blocker shape:
   - keep the machine-auth service lane explicitly deferred on this machine for actual proof execution
   - do not reopen the K train by inertia now that the bounded proven-lane executive/runtime line is landed
-  - `J2` now changes the mediation blocker shape: package-level evidence is no longer `insufficient` on every required axis
+  - `J2` has now changed the mediation blocker shape: package-level evidence is no longer `insufficient` on every required axis
   - mediation implementation remains blocked pending `J3` justification review rather than further mandatory J2 reruns
   - better uncertainty handling remains the one still-package-insufficient axis on the current line because it still comes from one family only and still lacks Claude expansion
   - Gemini should remain explicit as a partial/contaminated live rerun host rather than being hidden behind pooled mediation summaries
 - Next lawful move:
-  - publish/review the `codex/j2-mediation-gap-closure-reruns` branch as an evidence-only justification-review candidate
-  - after acceptance, open `J3` mediation justification update rather than mediation implementation
+  - open `J3` mediation justification update from clean synced `main`
   - optional `scenario_uncertainty_claude_01` remains deferred unless the J3 review still says the uncertainty gap blocks the next decision
   - keep `N2` as a separate blocked train pending a capable machine rather than reopening service proof on this host
 

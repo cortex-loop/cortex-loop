@@ -383,11 +383,15 @@ def test_resume_protocol_and_active_workstream_contract_exist() -> None:
     assert "Current branch role:" in workstream_text
     assert "accepted workflow baseline truth now rests on `main` rather than a long-lived working branch" in workstream_text
     assert "`Q1` remains accepted ancestor truth" in workstream_text
-    assert "Current campaign: `J2 mediation gap-closure reruns candidate complete`" in workstream_text
-    assert "Current working branch at ledger update: `codex/j2-mediation-gap-closure-reruns`" in workstream_text
-    assert "Current branch role: explicit manual evidence-rerun branch opened from clean `main` after the landed J1 package baseline" in workstream_text
-    assert "Current candidate seam: `J2 mediation gap-closure reruns`;" in workstream_text
-    assert "J2 now records the mandatory deterministic gap-closure evidence on the branch" in workstream_text
+    assert "Current campaign: `J3 mediation justification update pending`" in workstream_text
+    assert "Current working branch at ledger update: `main`" in workstream_text
+    assert "Current branch role: resting branch after the merged J2 evidence publication line" in workstream_text
+    assert "Current candidate seam: `none`; `J2` is now accepted baseline truth on `main`" in workstream_text
+    assert "`J2` is now landed on the canonical line:" in workstream_text
+    assert "dedicated branch-discipline families now exist on `reference`, `openai`, and `claude`" in workstream_text
+    assert "dedicated non-thrash burden families now exist on `reference`, `openai`, and `claude`" in workstream_text
+    assert "the first Claude host-realization line is now committed on the canonical line" in workstream_text
+    assert "Package-level evidence is no longer insufficient everywhere" in workstream_text
     assert "`M2` is now landed on the canonical line:" in workstream_text
     assert "`J1` is now landed on the canonical line:" in workstream_text
     assert "the compare surface and live-validation truth from earlier seams remain accepted ancestor input and are not being reopened by the landed K train." in workstream_text
@@ -415,13 +419,12 @@ def test_resume_protocol_and_active_workstream_contract_exist() -> None:
     assert "`ExecutivePolicyView`" in workstream_text
     assert "live `modulator_summary`, `modulator_memory`, and `policy_view` diagnostics on the operator path" in workstream_text
     assert "the stop-threshold law is now decoupled from self-referential `stop_pressure` comparison" in workstream_text
-    assert "`J2` now changes the mediation blocker shape: package-level evidence is no longer `insufficient` on every required axis" in workstream_text
+    assert "`J2` has now changed the mediation blocker shape: package-level evidence is no longer `insufficient` on every required axis" in workstream_text
     assert "mediation implementation remains blocked pending `J3` justification review" in workstream_text
     assert "better uncertainty handling remains the one still-package-insufficient axis on the current line" in workstream_text
     assert "Gemini should remain explicit as a partial/contaminated live rerun host rather than being hidden behind pooled mediation summaries" in workstream_text
     assert "do not reopen the K train by inertia now that the bounded proven-lane executive/runtime line is landed" in workstream_text
-    assert "publish/review the `codex/j2-mediation-gap-closure-reruns` branch as an evidence-only justification-review candidate" in workstream_text
-    assert "after acceptance, open `J3` mediation justification update rather than mediation implementation" in workstream_text
+    assert "open `J3` mediation justification update from clean synced `main`" in workstream_text
     assert "keep `N2` as a separate blocked train pending a capable machine" in workstream_text
     assert "Do not treat signed-in provider CLI sessions as equivalent to the automation credentials" in workstream_text
     assert "Do not treat the new OpenAI App Server operator proof as license to reopen v1 assisted mode" in workstream_text
@@ -504,7 +507,7 @@ def test_reference_runtime_program_lock_is_recorded() -> None:
     assert "loopback-only HTTP is landed on the accepted K1 closeout line" in phase_gate_text
     assert "one active session per process is real for current scope" in phase_gate_text
 
-    assert "`J2` now changes the mediation blocker shape: package-level evidence is no longer `insufficient` on every required axis" in workstream_text
+    assert "`J2` has now changed the mediation blocker shape: package-level evidence is no longer `insufficient` on every required axis" in workstream_text
     assert "mediation implementation remains blocked pending `J3` justification review" in workstream_text
     assert "better uncertainty handling remains the one still-package-insufficient axis on the current line" in workstream_text
     assert "the live-testing environment now has explicit operator and automation lane semantics" in workstream_text
