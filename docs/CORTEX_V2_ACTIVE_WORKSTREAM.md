@@ -13,7 +13,7 @@ It is workflow state only. It does not override the packet documents, implementa
   - exact accepted-head hashes are intentionally not mirrored in repo-tracked support docs because they self-stale on the next accepted closure commit
 - Accepted baseline state:
   - burden-axis re-audit remains accepted through the three thrash-host burden slices
-  - mediation implementation remains blocked pending `J3` justification update
+  - mediation is now justified for one bounded experimental seam, but implementation remains unopened on the accepted line
   - the verification/evidence restack train remains landed on the same product truth
   - the OpenAI host-realization cell now has a committed three-pair evidence series and `candidate_positive` cell-level signal for better host-specialized realization
   - accepted workflow baseline truth now rests on `main` rather than a long-lived working branch
@@ -61,7 +61,7 @@ It is workflow state only. It does not override the packet documents, implementa
       - lower visible burden at equal task value is `candidate_positive`
       - better host-specialized realization is `candidate_positive`
       - better uncertainty handling remains `insufficient`
-    - the next lawful move is now `J3` mediation justification update rather than mediation implementation
+    - J2 now serves as the historical enabling evidence later accepted by J3
   - `J3` is now landed on the canonical line:
     - mediation is now justified for one bounded experimental seam
     - better uncertainty handling remains `insufficient`, but that gap is explicit and non-blocking for one first bounded seam
