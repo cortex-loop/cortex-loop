@@ -30,6 +30,7 @@ try:  # pragma: no cover - import path differs between script execution and pyte
         extract_event_labels,
         extract_result_text,
         extract_session_id,
+        extract_token_usage,
         now_utc_iso,
         parse_json_lines,
         prepare_harness_workspace,
@@ -61,6 +62,7 @@ except ImportError:  # pragma: no cover
         extract_event_labels,
         extract_result_text,
         extract_session_id,
+        extract_token_usage,
         now_utc_iso,
         parse_json_lines,
         prepare_harness_workspace,
@@ -336,6 +338,7 @@ def _run_single_scenario(
         auth_mode=auth_mode,
         approval_mode=None,
         hook_log_path=hook_log_path,
+        scenario_id=scenario_id,
         max_attempts=min(max_attempts, 1 + route_decision.budget.max_retries),
         cooldown_seconds=cooldown_seconds,
         preferred_model_override=preferred_model_override,
@@ -369,6 +372,7 @@ def _run_operator_attempts(
     auth_mode: str,
     approval_mode: str | None,
     hook_log_path: Path | None,
+    scenario_id: str,
     max_attempts: int,
     cooldown_seconds: int,
     preferred_model_override: str | None,
@@ -397,6 +401,7 @@ def _run_operator_attempts(
             auth_mode=auth_mode,
             approval_mode=approval_mode,
             hook_log_path=hook_log_path,
+            scenario_id=scenario_id,
         )
         failure_class = classify_failure(f"{run_result['stdout']}\n{run_result['stderr']}")
         if failure_class is None and run_result["exit_code"] == 124:
@@ -504,6 +509,7 @@ def _run_restart_continuity(
         auth_mode=auth_mode,
         approval_mode=None,
         hook_log_path=hook_log_path,
+        scenario_id="restart_continuity",
         max_attempts=min(max_attempts, 1 + route_decision.budget.max_retries),
         cooldown_seconds=cooldown_seconds,
         preferred_model_override=preferred_model_override,
@@ -551,6 +557,7 @@ def _run_restart_continuity(
         session_id=session_id,
         approval_mode="yolo" if provider == "gemini" else None,
         hook_log_path=hook_log_path,
+        scenario_id="restart_continuity",
     )
     second_failure = classify_failure(f"{second_result['stdout']}\n{second_result['stderr']}")
     if second_failure is None and second_result["exit_code"] == 124:
@@ -617,6 +624,7 @@ def _materialize_operator_run(
         exit_code=run_result["exit_code"],
         test_exit_code=test_result["exit_code"],
     )
+    token_usage = extract_token_usage(provider, records)
     effective_failure_class = None if warning_classes else failure_class
     success = (
         effective_failure_class is None
@@ -664,6 +672,13 @@ def _materialize_operator_run(
         "truth_gap_kind": truth_gap_kind,
         "started_at": run_result["started_at"],
         "ended_at": run_result["ended_at"],
+        **token_usage,
+        **_provider_limit_fields(
+            provider=provider,
+            failure_class=failure_class,
+            warning_classes=warning_classes,
+            result_text=result_text,
+        ),
     }
     if route_diagnostics is not None:
         payload.update(route_diagnostics)
@@ -681,6 +696,7 @@ def _run_provider_task(
     auth_mode: str,
     approval_mode: str | None = None,
     hook_log_path: Path | None = None,
+    scenario_id: str | None = None,
 ) -> dict[str, Any]:
     if provider == "claude":
         return _run_claude_task(
@@ -689,6 +705,7 @@ def _run_provider_task(
             model=model,
             auth_mode=auth_mode,
             hook_log_path=hook_log_path,
+            scenario_id=scenario_id,
         )
     if provider == "gemini":
         return _run_gemini_task(
@@ -712,6 +729,7 @@ def _resume_provider_task(
     session_id: str | None,
     approval_mode: str | None = None,
     hook_log_path: Path | None = None,
+    scenario_id: str | None = None,
 ) -> dict[str, Any]:
     if provider == "claude":
         return _run_claude_task(
@@ -721,6 +739,7 @@ def _resume_provider_task(
             auth_mode=auth_mode,
             resume_session=session_id,
             hook_log_path=hook_log_path,
+            scenario_id=scenario_id,
         )
     if provider == "gemini":
         return _run_gemini_task(
@@ -749,6 +768,7 @@ def _run_claude_task(
     auth_mode: str,
     resume_session: str | None = None,
     hook_log_path: Path | None = None,
+    scenario_id: str | None = None,
 ) -> dict[str, Any]:
     command = [
         "claude",
@@ -760,7 +780,7 @@ def _run_claude_task(
         "stream-json",
         "--verbose",
         "--max-turns",
-        "8",
+        str(_claude_max_turns(scenario_id, resume_session=resume_session)),
         "--permission-mode",
         "bypassPermissions",
     ]
@@ -774,6 +794,18 @@ def _run_claude_task(
         timeout_seconds=180.0,
         env=_hook_env("claude", hook_log_path),
     )
+
+
+def _claude_max_turns(scenario_id: str | None, *, resume_session: str | None = None) -> int:
+    if resume_session:
+        return 3
+    if scenario_id == "truth_gap":
+        return 2
+    if scenario_id == "pass_minimal":
+        return 3
+    if scenario_id in {"restart_continuity", "restart_continuity_turn_1"}:
+        return 2
+    return 4
 
 
 def _run_gemini_task(
@@ -922,6 +954,23 @@ def _blocked_operator_route_payload(
         "success": False,
         "failure_class": failure_class,
         "notes": notes or "Route selector blocked execution before host work started.",
+        "token_usage_visible": False,
+        "input_tokens": None,
+        "output_tokens": None,
+        "cache_tokens": None,
+        "provider_limit_interference": failure_class in {"quota_exhausted", "capacity_exhausted", "rate_limited"},
+        "provider_limit_kind": (
+            failure_class if failure_class in {"quota_exhausted", "capacity_exhausted", "rate_limited"} else None
+        ),
+        "comparison_contaminated": failure_class in {"quota_exhausted", "capacity_exhausted", "rate_limited"},
+        "provider_window_caution": provider == "claude"
+        and failure_class in {"quota_exhausted", "capacity_exhausted", "rate_limited"},
+        "provider_window_note": (
+            "Claude usage-window interference likely contaminated this run."
+            if provider == "claude"
+            and failure_class in {"quota_exhausted", "capacity_exhausted", "rate_limited"}
+            else None
+        ),
     }
     payload.update(route_diagnostics)
     return payload
@@ -999,7 +1048,6 @@ def _configure_hook_capture(
                 "SessionStart": [{"hooks": [{"type": "command", "command": json.loads(command_literal)}]}],
                 "PreToolUse": [{"matcher": ".*", "hooks": [{"type": "command", "command": json.loads(command_literal)}]}],
                 "PostToolUse": [{"matcher": ".*", "hooks": [{"type": "command", "command": json.loads(command_literal)}]}],
-                "Stop": [{"hooks": [{"type": "command", "command": json.loads(command_literal)}]}],
                 "SessionEnd": [{"hooks": [{"type": "command", "command": json.loads(command_literal)}]}],
             }
         }
@@ -1066,6 +1114,50 @@ def _warning_classes_for_success(
     if provider == "gemini" and failure_class in {"capacity_exhausted", "quota_exhausted"} and exit_code == 0:
         return [failure_class]
     return []
+
+
+def _provider_limit_fields(
+    *,
+    provider: str,
+    failure_class: str | None,
+    warning_classes: list[str],
+    result_text: str | None,
+) -> dict[str, Any]:
+    limit_kind = _provider_limit_kind(
+        failure_class=failure_class,
+        warning_classes=warning_classes,
+        result_text=result_text,
+    )
+    return {
+        "provider_limit_interference": limit_kind is not None,
+        "provider_limit_kind": limit_kind,
+        "comparison_contaminated": limit_kind is not None,
+        "provider_window_caution": provider == "claude" and limit_kind is not None,
+        "provider_window_note": (
+            "Claude usage-window interference likely contaminated this run."
+            if provider == "claude" and limit_kind is not None
+            else None
+        ),
+    }
+
+
+def _provider_limit_kind(
+    *,
+    failure_class: str | None,
+    warning_classes: list[str],
+    result_text: str | None,
+) -> str | None:
+    candidates = list(warning_classes)
+    if failure_class:
+        candidates.append(failure_class)
+    if isinstance(result_text, str):
+        classified = classify_failure(result_text)
+        if classified:
+            candidates.append(classified)
+    for candidate in candidates:
+        if candidate in {"quota_exhausted", "capacity_exhausted", "rate_limited"}:
+            return candidate
+    return None
 
 
 if __name__ == "__main__":

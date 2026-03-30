@@ -14,7 +14,6 @@ def main(argv: list[str] | None = None) -> int:
     payload_text = sys.stdin.read()
     log_path = os.environ.get("CORTEX_LIVE_HOOK_LOG_PATH")
     if not log_path:
-        print("{}", flush=True)
         return 0
 
     entry: dict[str, Any] = {}
@@ -36,7 +35,6 @@ def main(argv: list[str] | None = None) -> int:
     with path.open("a", encoding="utf-8") as handle:
         handle.write(json.dumps(entry, sort_keys=True) + "\n")
 
-    print("{}", flush=True)
     return 0
 
 

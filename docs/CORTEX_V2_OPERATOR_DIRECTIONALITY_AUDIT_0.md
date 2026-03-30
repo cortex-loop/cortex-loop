@@ -9,6 +9,12 @@ This note records the first paired raw-vs-Cortex operator directionality audit o
 It is an evaluation/support surface only.
 It does not authorize runtime-doctrine changes, service proof, support-memory runtime, or mediation work.
 
+The audit now distinguishes:
+
+- quality failure
+- burden / efficiency
+- provider-limit interference
+
 ## Package verdict
 
 **mixed_direction**
@@ -138,3 +144,44 @@ Current reading:
   - one fresh `pass_minimal` pair is negative because `raw_host` completed while the hook-backed `cortex_operator` lane returned a rate-limit result and made no change
 - so the next honest move is not publication as package-positive and not more widening
 - the next honest move is one narrow Claude explanation seam for the negative `pass_minimal` pair on the hook-backed lane
+
+## S1G Provider-Limit Neutrality Candidate
+
+The current explanation branch hardens the audit further:
+
+- Anthropic `"You've hit your limit"` results are now normalized as provider-limit interference
+- one-sided provider-limit hits are now treated as non-comparable blocking evidence rather than automatic directional loss
+- pair order now alternates by repeat index to reduce shared-budget bias
+- the merged comparator summary now rebuilds from provider-local summaries instead of preserving stale merged truth
+- local artifacts now expose:
+  - `token_usage_visible`
+  - `input_tokens`
+  - `output_tokens`
+  - `cache_tokens`
+  - `provider_limit_interference`
+  - `provider_limit_kind`
+  - `comparison_contaminated`
+
+Current local neutrality-hardened reread:
+
+- Claude: `positive`
+- Gemini: `positive`
+- OpenAI: `positive`
+- package verdict: `promising_positive`
+
+Current reading:
+
+- the earlier apparent Claude regression was mostly an evidence problem:
+  - one-sided provider usage-window interference had been read as a true negative
+  - after neutrality hardening and the Claude efficiency seam, Claude is now positive again on the current local audit
+- the OpenAI explanation seam then removed the real continuity transport artifact:
+  - the directionality harness now starts the first App Server continuity turn with `thread_ephemeral: false`
+  - `no rollout found for thread id` is now normalized as `continuity_rollout_missing`
+  - fresh OpenAI reruns now land `restart_continuity` positively on both variants
+- the Claude efficiency seam then re-earned the remaining host line:
+  - lower scenario-specific Claude turn caps are now in place for the audit lane
+  - SessionStart no longer injects meaningless `{}` into Claude context
+  - the candidate Claude audit hook surface now omits `Stop`
+  - fresh Claude reruns land all three scenarios positively without provider-window contamination
+- so all three hosts are now positive on the current candidate branch
+- the next honest move is to publish/review this branch as the candidate package-positive operator directionality line rather than widen further

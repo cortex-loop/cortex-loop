@@ -73,3 +73,32 @@ Locked minimum evidence:
 - Do not smooth blocked or mixed host results into package-level positivity.
 - Do not credit signed-in operator truth as service proof.
 - If the audit shows mixed or negative directionality, record that directly and treat it as the blocker to further widening.
+
+## Provider-Limit Neutrality
+
+Provider limits are evidence, but they are not directional product failure by themselves.
+
+Required audit distinction:
+
+- `quality_axis`
+- `burden_axis`
+- `provider_limit_interference`
+
+Neutrality law:
+
+- `quota_exhausted`, provider usage-window exhaustion, and equivalent host-limit hits do not count as directional product failure by themselves
+- if provider limits prevent meaningful comparison, the pair is `blocked`
+- if comparison remains only partially meaningful because burden/efficiency concerns remain, the pair is `mixed`
+- only genuine task, truth, or continuity degradation counts as `negative`
+
+Efficiency law:
+
+- token inefficiency is not the same thing as product failure
+- but obvious repeated Cortex-added burden should block a clean positive story
+- where host-visible token usage exists, record it explicitly
+- where it does not, mark visibility insufficient rather than inventing counts
+
+Order-bias law:
+
+- pair order must alternate by repeat index to reduce shared-budget bias
+- merged comparator summaries must rebuild from provider-local summaries after reruns rather than preserving stale merged truth

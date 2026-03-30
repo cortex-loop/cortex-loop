@@ -74,11 +74,11 @@ It is workflow state only. It does not override the packet documents, implementa
 
 ## 2. Current campaign and seam state
 
-- Current campaign: `S1F closure and truth hardening rerun complete`
-- Current working branch at ledger update: `review/gemini-vanilla-directionality`
-- Current branch role: explicit manual review branch because local `main` is ahead of `origin/main` by one verified unpublished commit and a managed session cannot be started honestly from that state
-- Current candidate seam: `S1F closure and truth hardening`; `Q1` remains the accepted ancestor audit on `main`, `N2` remains blocked on a capable machine, and the current review-branch candidate now carries the first SRE-owned operator route selector plus the corrected round-2 closure rerun`
-- Current seam status: `the S1 route selector remains implemented on the review branch, but the corrected rerun now removes the earlier overclaim: Gemini is positive, OpenAI is positive, Claude is negative on one fresh hook-backed pass_minimal pair, and the package verdict is now not_yet_positive`
+- Current campaign: `C1 Claude efficiency and usage-window hardening candidate complete`
+- Current working branch at ledger update: `codex/claude-directionality-explanation`
+- Current branch role: explicit manual explanation branch off the review line because local `main` remains ahead of `origin/main` and a managed session cannot be started honestly from that state
+- Current candidate seam: `C1 Claude efficiency and usage-window hardening`; `Q1` remains the accepted ancestor audit on `main`, `N2` remains blocked on a capable machine, and the current explanation branch now carries the S1 route selector plus the provider-limit neutrality hardening, the OpenAI continuity transport fix, and the Claude efficiency rerun`
+- Current seam status: `the Claude efficiency seam is now re-earned on the explanation branch: Claude is positive again after the lower turn-budget / leaner hook rerun, Gemini is positive, OpenAI is positive, and the package verdict is now promising_positive`
 - the compare surface and live-validation truth from earlier seams remain accepted ancestor input and are not being reopened by the landed K train.
 - Seam risk: shared verification-plumbing seam plus environment-sensitive evidence rerun
 
@@ -126,20 +126,22 @@ It is workflow state only. It does not override the packet documents, implementa
     - fresh auto-only operator baseline reruns are stable on `auto` and return `OK` twice with no named-model fallback
     - a fresh auto-only `pass_minimal` product-path rerun now blocks immediately on `quota_exhausted` with `model: auto-gemini-3`
     - the S1 route selector now turns those same pressures into explicit route/budget decisions on the operator path
-    - the fresh corrected closure rerun on the review branch now shows:
-      - Gemini is `positive`
-      - OpenAI is `positive`
-      - Claude is `negative` because one fresh hook-backed `pass_minimal` pair hit a rate-limit result while `raw_host` completed
-      - package verdict is now `not_yet_positive`
+    - the S1G provider-limit neutrality hardening now says:
+      - pair order alternates by repeat index to reduce shared-budget bias
+      - provider usage-window / quota hits are treated as comparison contamination rather than automatic directional loss
+      - Claude is now `positive` again after the lower turn-budget / leaner hook rerun
+      - Gemini remains `positive`
+      - OpenAI `restart_continuity` is now re-earned on the directionality path after the non-ephemeral thread-resume fix
+      - OpenAI is now `positive`
+      - package verdict is now `promising_positive`
   - the current automation/service lane still fails honestly on missing machine auth
 - Next lawful move:
   - keep the machine-auth service lane explicitly deferred on this machine for actual proof execution
-  - stop treating Gemini as the active branch blocker for this seam; the corrected rerun now makes Claude the active blocker
+  - stop treating the earlier Claude rate-limit pair as proof that S1 routing regressed quality
   - do not reopen the K train by inertia now that the bounded proven-lane executive/runtime line is landed
-  - do not widen from the current `not_yet_positive` review-branch result into new runtime or product claims
-  - do not publish/review this branch as package-positive while the fresh Claude negative pair remains unexplained
-  - the next lawful move is one narrow Claude explanation seam for the hook-backed `pass_minimal` negative pair rather than more routing widening
-  - keep `N2` as a separate blocked train pending a capable machine; do not conflate that with the current Claude operator blocker
+  - do not widen from the current candidate package-positive review-branch result into new runtime or product claims by inertia
+  - the next lawful move is to publish/review this branch as the candidate package-positive operator directionality line
+  - after acceptance, keep `N2` as a separate blocked train pending a capable machine rather than reopening service proof on this host
 
 ## 4. Explicitly blocked moves
 
@@ -163,7 +165,7 @@ It is workflow state only. It does not override the packet documents, implementa
 - Do not reopen Gemini model chasing or assisted-mode speculation inside the active `L4` service-proof train.
 - Do not shell out from service transports to provider CLIs.
 - Do not overread the current auto-mode improvement as full Gemini closure while `restart_continuity` is still not repeat-stable.
-- Do not overread the current S1 route selector as a package-positive result while the fresh Claude hook-backed `pass_minimal` pair is still negative.
+- Do not overread provider-limit interference as a product-quality defeat for Cortex by itself.
 - Do not widen `K4` into support-memory runtime, mediation, service/auth work, or broader host rollout.
 - Do not unfreeze threshold law in `K4`; the current budget-band activation-threshold law stays fixed.
 - Do not widen the landed K train into support-memory runtime, mediation, vigor scaling, service/auth work on this machine, or broader host rollout.

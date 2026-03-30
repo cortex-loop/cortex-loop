@@ -364,11 +364,11 @@ def test_resume_protocol_and_active_workstream_contract_exist() -> None:
     assert "Current working branch at ledger update:" in workstream_text
     assert "Current branch role:" in workstream_text
     assert "accepted workflow baseline truth now rests on `main` rather than a long-lived working branch" in workstream_text
-    assert "Current campaign: `S1F closure and truth hardening rerun complete`" in workstream_text
-    assert "Current candidate seam: `S1F closure and truth hardening`;" in workstream_text
     assert "`Q1` remains the accepted ancestor audit on `main`" in workstream_text
-    assert "the S1 route selector remains implemented on the review branch" in workstream_text
-    assert "Gemini is positive, OpenAI is positive, Claude is negative on one fresh hook-backed pass_minimal pair" in workstream_text
+    assert "Current campaign: `C1 Claude efficiency and usage-window hardening candidate complete`" in workstream_text
+    assert "Current candidate seam: `C1 Claude efficiency and usage-window hardening`;" in workstream_text
+    assert "the Claude efficiency seam is now re-earned on the explanation branch" in workstream_text
+    assert "Claude is positive again after the lower turn-budget / leaner hook rerun, Gemini is positive, OpenAI is positive" in workstream_text
     assert "the compare surface and live-validation truth from earlier seams remain accepted ancestor input and are not being reopened by the landed K train." in workstream_text
     assert "the current signed-in smoke surfaces are now clean again" in workstream_text
     assert "`codex exec` for smoke" in workstream_text
@@ -388,14 +388,17 @@ def test_resume_protocol_and_active_workstream_contract_exist() -> None:
     assert "fresh auto-only operator baseline reruns are stable on `auto` and return `OK` twice with no named-model fallback" in workstream_text
     assert "fresh auto-only `pass_minimal` product-path rerun now blocks immediately on `quota_exhausted` with `model: auto-gemini-3`" in workstream_text
     assert "the S1 route selector now turns those same pressures into explicit route/budget decisions on the operator path" in workstream_text
-    assert "the fresh corrected closure rerun on the review branch now shows" in workstream_text
-    assert "Claude is `negative` because one fresh hook-backed `pass_minimal` pair hit a rate-limit result while `raw_host` completed" in workstream_text
-    assert "package verdict is now `not_yet_positive`" in workstream_text
-    assert "the next lawful move is one narrow Claude explanation seam for the hook-backed `pass_minimal` negative pair" in workstream_text
+    assert "the S1G provider-limit neutrality hardening now says:" in workstream_text
+    assert "pair order alternates by repeat index to reduce shared-budget bias" in workstream_text
+    assert "provider usage-window / quota hits are treated as comparison contamination rather than automatic directional loss" in workstream_text
+    assert "Claude is now `positive` again after the lower turn-budget / leaner hook rerun" in workstream_text
+    assert "OpenAI `restart_continuity` is now re-earned on the directionality path after the non-ephemeral thread-resume fix" in workstream_text
+    assert "OpenAI is now `positive`" in workstream_text
+    assert "package verdict is now `promising_positive`" in workstream_text
     assert "do not reopen the K train by inertia now that the bounded proven-lane executive/runtime line is landed" in workstream_text
-    assert "do not widen from the current `not_yet_positive` review-branch result into new runtime or product claims" in workstream_text
-    assert "do not publish/review this branch as package-positive while the fresh Claude negative pair remains unexplained" in workstream_text
-    assert "the next lawful move is one narrow Claude explanation seam for the hook-backed `pass_minimal` negative pair rather than more routing widening" in workstream_text
+    assert "do not widen from the current candidate package-positive review-branch result into new runtime or product claims by inertia" in workstream_text
+    assert "the next lawful move is to publish/review this branch as the candidate package-positive operator directionality line" in workstream_text
+    assert "after acceptance, keep `N2` as a separate blocked train pending a capable machine" in workstream_text
     assert "keep `N2` as a separate blocked train pending a capable machine" in workstream_text
     assert "Do not treat signed-in provider CLI sessions as equivalent to the automation credentials" in workstream_text
     assert "Do not treat the new OpenAI App Server operator proof as license to reopen v1 assisted mode" in workstream_text
@@ -403,6 +406,7 @@ def test_resume_protocol_and_active_workstream_contract_exist() -> None:
     assert "Do not shell out from service transports to provider CLIs." in workstream_text
     assert "Do not silently reintroduce a pinned Gemini operator model as the default testing start point" in workstream_text
     assert "Do not pass explicit Gemini operator model names anywhere on the operator/evaluation harness" in workstream_text
+    assert "Do not overread provider-limit interference as a product-quality defeat for Cortex by itself." in workstream_text
     assert "Do not treat selecting `gemini-api-key` in `.gemini/settings.json` as sufficient for headless Gemini operator proof" in workstream_text
     assert "Do not use Gemini `plan` mode as the default comparison baseline on the operator/evaluation path." in workstream_text
     assert "Do not start a new managed session from local `main` while it is ahead or diverged from `origin/main`." in workstream_text
@@ -477,7 +481,7 @@ def test_reference_runtime_program_lock_is_recorded() -> None:
     assert "loopback-only HTTP is landed on the accepted K1 closeout line" in phase_gate_text
     assert "one active session per process is real for current scope" in phase_gate_text
 
-    assert "do not widen from the current `not_yet_positive` review-branch result into new runtime or product claims" in workstream_text
+    assert "do not widen from the current candidate package-positive review-branch result into new runtime or product claims by inertia" in workstream_text
     assert "the live-testing environment now has explicit operator and automation lane semantics" in workstream_text
     assert "the current signed-in smoke surfaces are now clean again" in workstream_text
     assert "the OpenAI App Server operator lane now completes" in workstream_text
@@ -636,9 +640,18 @@ def test_reference_runtime_program_lock_is_recorded() -> None:
     assert "Round 2 Stable-Defaults Rerun" in operator_directionality_audit_text
     assert "Gemini: `blocked`" in operator_directionality_audit_text
     assert "S1 Routing Candidate" in operator_directionality_audit_text
-    assert "Claude: `negative`" in operator_directionality_audit_text
-    assert "package verdict: `not_yet_positive`" in operator_directionality_audit_text
-    assert "one fresh `pass_minimal` pair is negative because `raw_host` completed while the hook-backed `cortex_operator` lane returned a rate-limit result and made no change" in operator_directionality_audit_text
+    assert "The audit now distinguishes:" in operator_directionality_audit_text
+    assert "provider-limit interference" in operator_directionality_audit_text
+    assert "S1G Provider-Limit Neutrality Candidate" in operator_directionality_audit_text
+    assert "Claude: `positive`" in operator_directionality_audit_text
+    assert "OpenAI: `positive`" in operator_directionality_audit_text
+    assert "package verdict: `promising_positive`" in operator_directionality_audit_text
+    assert "pair order now alternates by repeat index to reduce shared-budget bias" in operator_directionality_audit_text
+    assert "one-sided provider-limit hits are now treated as non-comparable blocking evidence rather than automatic directional loss" in operator_directionality_audit_text
+    assert "the OpenAI explanation seam then removed the real continuity transport artifact" in operator_directionality_audit_text
+    assert "fresh OpenAI reruns now land `restart_continuity` positively on both variants" in operator_directionality_audit_text
+    assert "the Claude efficiency seam then re-earned the remaining host line" in operator_directionality_audit_text
+    assert "fresh Claude reruns land all three scenarios positively without provider-window contamination" in operator_directionality_audit_text
     assert "`G1` Gemini documented host-event runtime shell" in phase_gate_text
     assert "`G2` Gemini raw-transcript ingress shell" in phase_gate_text
     assert "`G3` Gemini loopback service shell" in phase_gate_text
@@ -875,7 +888,8 @@ def test_runtime_restack_program_lock_is_recorded() -> None:
     assert "the operator/evaluation harness must not call explicit Gemini model names at all" in theory_text
     assert "fresh auto-only product-path rerun is sharper still" in theory_text
     assert "first full round-2 stable-defaults rerun now says the package is still `mixed_direction`" in theory_text
-    assert "review-branch `S1F` closure rerun removes the earlier overclaim" in theory_text
-    assert "Claude is now negative on one fresh hook-backed `pass_minimal` pair" in theory_text
-    assert "package verdict is `not_yet_positive`" in theory_text
-    assert "next honest move is a narrow Claude explanation seam" in theory_text
+    assert "current explanation branch now carries the provider-limit neutrality hardening, the OpenAI continuity transport fix, and the Claude efficiency rerun" in theory_text
+    assert "Claude is positive again after the lower turn-budget / leaner hook rerun" in theory_text
+    assert "OpenAI is positive again after the non-ephemeral thread-resume fix" in theory_text
+    assert "package verdict is `promising_positive`" in theory_text
+    assert "next honest move is to publish/review the candidate line rather than widen further" in theory_text
