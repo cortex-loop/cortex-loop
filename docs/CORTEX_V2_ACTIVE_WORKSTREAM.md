@@ -49,6 +49,11 @@ It is workflow state only. It does not override the packet documents, implementa
     - `ExecutivePolicyView`
     - live `modulator_summary`, `modulator_memory`, and `policy_view` diagnostics on the operator path
     - the stop-threshold law is now decoupled from self-referential `stop_pressure` comparison
+  - `J1` is now landed on the canonical line:
+    - one checked mediation evidence package now exists on `main`
+    - package verdict remains `insufficient` on every mediation axis
+    - the remaining mediation gap is now explicit rather than rhetorical
+    - J2 rerun targets are now recorded without opening mediation implementation
   - `Q1` raw-vs-Cortex operator directionality audit is now landed on the current machine:
     - Claude is `positive`
     - OpenAI is `positive`
@@ -80,11 +85,11 @@ It is workflow state only. It does not override the packet documents, implementa
 
 ## 2. Current campaign and seam state
 
-- Current campaign: `J1 mediation evidence package and gap-closure baseline`
-- Current working branch at ledger update: `codex/j1-mediation-evidence-package`
-- Current branch role: explicit manual evidence/package branch because the J1 mediation package baseline is not yet published on the canonical line
-- Current candidate seam: `J1 mediation evidence package and gap-closure baseline`; `M2` is already landed on `main`, `Q1` remains accepted ancestor truth, `N2` remains blocked on a capable machine, and the current J1 branch is evidence-only rather than runtime-widening
-- Current seam status: `J1 now normalizes the post-M2 workflow state, upgrades the committed mediation evidence package into one inspectable checked surface, and converts the mediation blocker into an exact missing-evidence delta without opening mediation code or widening runtime/product truth`
+- Current campaign: `J2 mediation gap-closure reruns`
+- Current working branch at ledger update: `codex/j2-mediation-gap-closure-reruns`
+- Current branch role: explicit manual evidence-rerun branch opened from clean `main` after the landed J1 package baseline
+- Current candidate seam: `J2 mediation gap-closure reruns`; `J1` is now accepted baseline truth on `main`, `Q1` remains accepted ancestor truth, `N2` remains blocked on a capable machine, and the current J2 branch is for evidence collection only rather than mediation implementation
+- Current seam status: `J2 branch opened from clean main; no new reruns have started yet; the immediate next lawful move is a decision-complete J2 rerun plan over the already-recorded branch-discipline, burden, host-realization, and uncertainty package gaps`
 - the compare surface and live-validation truth from earlier seams remain accepted ancestor input and are not being reopened by the landed K train.
 - Seam risk: deterministic code/doc seam
 
@@ -136,15 +141,14 @@ It is workflow state only. It does not override the packet documents, implementa
 - Current blocker shape:
   - keep the machine-auth service lane explicitly deferred on this machine for actual proof execution
   - do not reopen the K train by inertia now that the bounded proven-lane executive/runtime line is landed
-  - `M2` is now landed on `main`; mediation remains blocked because package-level evidence is still insufficient on every required axis
+  - `J1` is now landed on `main`; mediation remains blocked because package-level evidence is still insufficient on every required axis
   - current burden signal remains too narrow because it is still confined to the `thrash_control` family
   - current branch-discipline signal still derives only from `thrash_control`
   - current host-specialized realization signal has candidate-positive cells on reference, Gemini, and OpenAI, but Claude is still missing from the mediation package
   - Gemini should remain explicit as a partial/contaminated live rerun host rather than being hidden behind pooled mediation summaries
 - Next lawful move:
-  - publish/review the `codex/j1-mediation-evidence-package` branch as an evidence-only mediation package baseline
-  - after acceptance, open `J2` mediation gap-closure reruns rather than mediation implementation
-  - first `J2` targets should be:
+  - keep this branch evidence-only and plan J2 before collecting new reruns
+  - first `J2` targets remain:
     - one branch-discipline family on reference, OpenAI, and Claude
     - one non-thrash equal-value burden family on reference, OpenAI, and Claude
     - one host-realization expansion on Claude plus refreshes on reference and OpenAI
