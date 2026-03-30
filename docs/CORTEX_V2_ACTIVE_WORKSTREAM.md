@@ -62,6 +62,11 @@ It is workflow state only. It does not override the packet documents, implementa
       - better host-specialized realization is `candidate_positive`
       - better uncertainty handling remains `insufficient`
     - the next lawful move is now `J3` mediation justification update rather than mediation implementation
+  - `J3` is now landed on the canonical line:
+    - mediation is now justified for one bounded experimental seam
+    - better uncertainty handling remains `insufficient`, but that gap is explicit and non-blocking for one first bounded seam
+    - mediation remains unimplemented, experimental / off-by-default, and constrained to a future SRE-only seam
+    - the next lawful move is now to plan one bounded experimental mediation seam rather than reopen evidence collection by inertia
   - `Q1` raw-vs-Cortex operator directionality audit is now landed on the current machine:
     - Claude is `positive`
     - OpenAI is `positive`
@@ -93,11 +98,11 @@ It is workflow state only. It does not override the packet documents, implementa
 
 ## 2. Current campaign and seam state
 
-- Current campaign: `J3 mediation justification update candidate`
-- Current working branch at ledger update: `codex/j3-mediation-justification-update`
-- Current branch role: explicit manual review branch opened from clean `main` to record the accepted current mediation justification decision
-- Current candidate seam: `J3 mediation justification update`; `J2` is now accepted baseline truth on `main`, `Q1` remains accepted ancestor truth, and `N2` remains blocked on a capable machine
-- Current seam status: `J3 now records the accepted current decision that one bounded experimental mediation seam is justified on the branch. J2 already earned package-level candidate-positive signal on reduced thrashing, better branch discipline, lower visible burden at equal task value, and better host-specialized realization; better uncertainty handling remains package-insufficient but explicit and non-blocking for one first bounded seam. J3 itself does not implement mediation.`
+- Current campaign: `bounded experimental mediation seam planning pending`
+- Current working branch at ledger update: `main`
+- Current branch role: resting branch after the merged J3 mediation justification decision
+- Current candidate seam: `none`; `J3` is now accepted baseline truth on `main`, `Q1` remains accepted ancestor truth, and `N2` remains blocked on a capable machine
+- Current seam status: `J3 is now accepted baseline truth on the canonical line. Mediation is justified for one bounded experimental seam, but no mediation implementation has been opened yet. Better uncertainty handling remains explicit and package-insufficient, but it is non-blocking for the first bounded seam on the current line.`
 - the compare surface and live-validation truth from earlier seams remain accepted ancestor input and are not being reopened by the landed K train.
 - Seam risk: deterministic code/doc seam
 
@@ -154,8 +159,7 @@ It is workflow state only. It does not override the packet documents, implementa
   - mediation remains unimplemented and experimental / off-by-default on the current line
   - Gemini should remain explicit as a partial/contaminated live rerun host rather than being hidden behind pooled mediation summaries
 - Next lawful move:
-  - publish/review the `codex/j3-mediation-justification-update` branch as the accepted current mediation justification decision
-  - after acceptance, plan one bounded experimental mediation seam rather than collecting more mandatory J2-style evidence first
+  - open one bounded experimental mediation implementation-planning seam from clean synced `main`
   - optional `scenario_uncertainty_claude_01` remains deferred unless the J3 review still says the uncertainty gap blocks the next decision
   - keep `N2` as a separate blocked train pending a capable machine rather than reopening service proof on this host
 
