@@ -560,14 +560,16 @@ make live-operator-payoff-audit
 ## Operator routing realization
 
 This revalidates the first bounded SRE-owned operator routing layer over the live-testing harness.
-It checks the bounded task-state builder, compact SRE modulator update law, geometric route selector, quota-pressure blocking, guarded continuity preference, one extra inspect read-pass law, and route/modulator diagnostics carried into live artifacts.
+It checks the bounded task-state builder, the executive summary carrier, persistent tonic modulator update law, policy-view derivation, geometric route selector, quota-pressure blocking, guarded continuity preference, one extra inspect read-pass law, and route/modulator/policy diagnostics carried into live artifacts.
 It does not authorize named model routing, service/auth widening, AUX activation, or packet-level runtime changes.
 
 Direct commands:
 
 ```sh
 python3 -m pytest tests/unit/test_operator_routing.py -q
+python3 -m pytest tests/unit/test_sre_executive_summary.py -q
 python3 -m pytest tests/unit/test_sre_modulators.py -q
+python3 -m pytest tests/unit/test_sre_policy_view.py -q
 python3 -m pytest tests/unit/test_live_validation_tools.py -q
 python3 -m pytest tests/unit/test_correspondence_sre.py -q
 ```

@@ -321,24 +321,28 @@ def test_live_operator_route_state_applies_uncertainty_and_pressure_rules() -> N
     assert failed_before_completion.uncertainty == pytest.approx(0.65)
 
 
-def test_live_operator_route_state_builds_modulator_inputs_from_observable_signals() -> None:
+def test_live_operator_route_state_builds_summary_inputs_from_observable_signals() -> None:
     state = live_operator_route_state.build_operator_task_state(
         "truth_gap",
         previous_same_host_run_failed_before_completion=True,
         recent_baseline_clean_count=2,
     )
 
-    inputs = live_operator_route_state.build_operator_modulator_inputs(
+    inputs = live_operator_route_state.build_operator_summary_inputs(
         state,
         previous_same_host_run_failed_before_completion=True,
+        recent_probe_failure_class=None,
         recent_product_failure_class="runtime_error",
+        recent_warning_bearing_success_present=False,
+        verification_required=False,
     )
 
     assert inputs.uncertainty == pytest.approx(0.65)
-    assert inputs.repeated_failure_pressure == pytest.approx(0.75)
+    assert inputs.previous_same_host_run_failed_before_completion is True
+    assert inputs.recent_product_failure_class == "runtime_error"
     assert inputs.quota_pressure == pytest.approx(0.0)
     assert inputs.continuity_demand == pytest.approx(0.0)
-    assert inputs.novelty_pressure == pytest.approx(0.70)
+    assert inputs.verification_required is False
 
 
 def test_gemini_operator_auth_mode_uses_api_key_when_selected_in_settings(tmp_path, monkeypatch) -> None:
@@ -594,7 +598,7 @@ def test_operator_provider_baseline_surfaces_route_diagnostics(monkeypatch) -> N
     assert payload["state_vector"] == [0.1, 0.0, 0.05, 0.35, 0.0, 0.0]
     assert payload["modulator_state"] == {
         "focus_gain": 0.045,
-        "explore_gain": 0.2075,
+        "explore_gain": 0.3475,
         "stop_pressure": 0.0525,
         "update_pressure": 0.555,
     }
@@ -1214,7 +1218,7 @@ def test_product_path_single_scenario_blocks_when_route_selector_blocks(
 
     assert payload["failure_class"] == "quota_exhausted"
     assert payload["route_profile"] == "blocked"
-    assert payload["blocked_reason"] == "blocked_by_quota_pressure"
+    assert payload["blocked_reason"] == "blocked_by_modulator_stop_pressure"
 
 
 def test_product_path_restart_continuity_uses_default_first_turn_for_gemini(

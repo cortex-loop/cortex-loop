@@ -10,13 +10,15 @@ import time
 from pathlib import Path
 from typing import Any
 
-from cortex.sre.modulators import update_executive_modulators
+from cortex.sre.executive_summary import build_executive_signal_summary
+from cortex.sre.modulators import ExecutiveModulatorMemory, update_executive_modulators
 from cortex.sre.operator_routing import (
     build_operator_route_diagnostics,
-    select_operator_route_with_modulators,
+    select_operator_route_with_policy,
 )
+from cortex.sre.policy_view import build_executive_policy_view
 from live_operator_route_state import (
-    build_operator_modulator_inputs,
+    build_operator_summary_inputs,
     build_operator_task_state,
 )
 
@@ -318,20 +320,26 @@ def _run_single_scenario(
         recent_warning_bearing_success_present=summarize_operator_runs(baseline_runs)["warning_bearing_success_present"],
         recent_product_failure_class=summarize_operator_runs(prior_runs, scenario_id=scenario_id)["latest_failure_class"],
     )
-    modulator_update = update_executive_modulators(
-        build_operator_modulator_inputs(
+    summary = build_executive_signal_summary(
+        build_operator_summary_inputs(
             route_state,
             previous_same_host_run_failed_before_completion=summarize_operator_runs(
                 prior_runs,
                 scenario_id=scenario_id,
             )["previous_failed_before_completion"],
+            recent_probe_failure_class=recent_operator_probe_failure(provider),
             recent_product_failure_class=summarize_operator_runs(
                 prior_runs,
                 scenario_id=scenario_id,
             )["latest_failure_class"],
+            recent_warning_bearing_success_present=summarize_operator_runs(baseline_runs)["warning_bearing_success_present"],
+            verification_required=True,
         )
     )
-    route_decision = select_operator_route_with_modulators(route_state, modulator_update)
+    previous_memory = _latest_modulator_memory(prior_runs)
+    modulator_update = update_executive_modulators(summary, previous_memory)
+    policy_view = build_executive_policy_view(summary, modulator_update.state)
+    route_decision = select_operator_route_with_policy(route_state, modulator_update, policy_view)
     route_diagnostics = build_operator_route_diagnostics(route_state, route_decision)
     if route_decision.blocked_reason is not None:
         return _blocked_operator_route_payload(
@@ -501,20 +509,26 @@ def _run_restart_continuity(
             scenario_id="restart_continuity",
         )["latest_failure_class"],
     )
-    modulator_update = update_executive_modulators(
-        build_operator_modulator_inputs(
+    summary = build_executive_signal_summary(
+        build_operator_summary_inputs(
             route_state,
             previous_same_host_run_failed_before_completion=summarize_operator_runs(
                 prior_runs,
                 scenario_id="restart_continuity",
             )["previous_failed_before_completion"],
+            recent_probe_failure_class=recent_operator_probe_failure(provider),
             recent_product_failure_class=summarize_operator_runs(
                 prior_runs,
                 scenario_id="restart_continuity",
             )["latest_failure_class"],
+            recent_warning_bearing_success_present=summarize_operator_runs(baseline_runs)["warning_bearing_success_present"],
+            verification_required=True,
         )
     )
-    route_decision = select_operator_route_with_modulators(route_state, modulator_update)
+    previous_memory = _latest_modulator_memory(prior_runs)
+    modulator_update = update_executive_modulators(summary, previous_memory)
+    policy_view = build_executive_policy_view(summary, modulator_update.state)
+    route_decision = select_operator_route_with_policy(route_state, modulator_update, policy_view)
     route_diagnostics = build_operator_route_diagnostics(route_state, route_decision)
     if route_decision.blocked_reason is not None:
         return _blocked_operator_route_payload(
@@ -1014,6 +1028,26 @@ def _read_json(path: Path) -> dict[str, Any]:
     if not path.exists():
         return {}
     return json.loads(path.read_text(encoding="utf-8"))
+
+
+def _latest_modulator_memory(
+    runs: tuple[dict[str, Any], ...],
+) -> ExecutiveModulatorMemory | None:
+    recent = [
+        payload
+        for payload in runs
+        if isinstance(payload, dict) and isinstance(payload.get("modulator_memory"), dict)
+    ]
+    if not recent:
+        return None
+    latest = max(recent, key=lambda payload: str(payload.get("ended_at", "")))
+    memory = latest["modulator_memory"]
+    return ExecutiveModulatorMemory(
+        focus_tonic=float(memory["focus_tonic"]),
+        explore_tonic=float(memory["explore_tonic"]),
+        stop_tonic=float(memory["stop_tonic"]),
+        update_tonic=float(memory["update_tonic"]),
+    )
 
 
 def _requested_model_ladder(

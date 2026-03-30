@@ -74,11 +74,11 @@ It is workflow state only. It does not override the packet documents, implementa
 
 ## 2. Current campaign and seam state
 
-- Current campaign: `M1F modulator closure and behavioral binding candidate complete`
+- Current campaign: `M2 executive summary, persistent modulators, and policy view candidate complete`
 - Current working branch at ledger update: `codex/claude-directionality-explanation`
 - Current branch role: explicit manual explanation branch off the review line because local `main` remains ahead of `origin/main` and a managed session cannot be started honestly from that state
-- Current candidate seam: `M1F modulator closure and behavioral binding`; `Q1` remains the accepted ancestor audit on `main`, `N2` remains blocked on a capable machine, and the current explanation branch now carries the S1 route selector plus provider-limit neutrality, the OpenAI continuity transport fix, the Claude efficiency rerun, the first compact SRE modulator bundle, and one bounded live proof of extra inspect-pass behavior`
-- Current seam status: `the compact SRE modulator bundle is now behaviorally real on the explanation branch: one focused OpenAI truth_gap rerun shows live modulator diagnostics plus an actual extra inspect read-pass in artifacts, while the previously re-earned candidate package-positive operator directionality line remains the current branch truth`
+- Current candidate seam: `M2 executive summary, persistent modulators, and policy view`; `Q1` remains the accepted ancestor audit on `main`, `N2` remains blocked on a capable machine, and the current explanation branch now carries the S1 route selector plus provider-limit neutrality, the OpenAI continuity transport fix, the Claude efficiency rerun, the compact SRE modulator bundle, and the new summary/memory/policy refinement`
+- Current seam status: `the M2 summary/memory/policy layer is now implemented on the explanation branch: one focused OpenAI truth_gap rerun shows live modulator_summary, modulator_memory, policy_view, and an actual extra inspect read-pass in artifacts, while the previously re-earned candidate package-positive operator directionality line remains the current branch truth`
 - the compare surface and live-validation truth from earlier seams remain accepted ancestor input and are not being reopened by the landed K train.
 - Seam risk: shared verification-plumbing seam plus environment-sensitive evidence rerun
 
@@ -147,6 +147,14 @@ It is workflow state only. It does not override the packet documents, implementa
       - `extra_read_pass_mode = resume`
       - `thread_ephemeral = false`
       - the focused slice proves the extra inspect pass is real rather than diagnostic-only
+    - the M2 refinement now adds:
+      - `ExecutiveSignalSummary`
+      - persistent tonic `ExecutiveModulatorMemory`
+      - `ExecutivePolicyView`
+      - live `modulator_summary`
+      - live `modulator_memory`
+      - live `policy_view`
+    - one focused OpenAI truth-gap rerun now proves those new fields land on artifacts while preserving the already re-earned candidate package-positive line
   - the current automation/service lane still fails honestly on missing machine auth
 - Next lawful move:
   - keep the machine-auth service lane explicitly deferred on this machine for actual proof execution
@@ -189,7 +197,6 @@ It is workflow state only. It does not override the packet documents, implementa
 ## 5. Acknowledged worktree noise at ledger creation
 
 - `.cortex/live_validation/` now contains local-only generated evidence for the current L2 pass and is expected to churn across reruns.
-- `docs/erika-visualizations/CORTEX_EVIDENCE_BASED_STATUS.md` and `docs/erika-visualizations/cortex-now-vs-future.html` remain unrelated support-surface edits in the current local worktree and are not part of the M1 seam itself.
 - Re-read `git status --short --untracked-files=all` before opening any new seam; this summary is only the continuity reminder, not the canonical file list.
 
 ## 6. Resume checklist

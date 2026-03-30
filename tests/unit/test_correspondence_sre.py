@@ -344,6 +344,34 @@ EXPECTATIONS = (
         ),
     ),
     SreCorrespondenceExpectation(
+        row_label="ExecutiveSignalSummary",
+        module_path="cortex.sre.executive_summary",
+        symbol_name="ExecutiveSignalSummary",
+        promised_surfaces=(
+            PromisedTestSurface(
+                test_file="tests/unit/test_sre_executive_summary.py",
+                test_names=(
+                    "test_executive_signal_summary_inputs_require_bounded_values",
+                    "test_executive_signal_summary_raises_repeated_failure_pressure_from_observable_failures",
+                ),
+            ),
+        ),
+    ),
+    SreCorrespondenceExpectation(
+        row_label="build_executive_signal_summary",
+        module_path="cortex.sre.executive_summary",
+        symbol_name="build_executive_signal_summary",
+        promised_surfaces=(
+            PromisedTestSurface(
+                test_file="tests/unit/test_sre_executive_summary.py",
+                test_names=(
+                    "test_executive_signal_summary_inputs_require_bounded_values",
+                    "test_executive_signal_summary_raises_repeated_failure_pressure_from_observable_failures",
+                ),
+            ),
+        ),
+    ),
+    SreCorrespondenceExpectation(
         row_label="update_executive_modulators",
         module_path="cortex.sre.modulators",
         symbol_name="update_executive_modulators",
@@ -354,6 +382,36 @@ EXPECTATIONS = (
                     "test_modulator_update_clips_values_into_unit_interval",
                     "test_modulator_stop_pressure_can_block_route",
                     "test_modulator_update_pressure_adds_extra_read_pass",
+                ),
+            ),
+        ),
+    ),
+    SreCorrespondenceExpectation(
+        row_label="ExecutivePolicyView",
+        module_path="cortex.sre.policy_view",
+        symbol_name="ExecutivePolicyView",
+        promised_surfaces=(
+            PromisedTestSurface(
+                test_file="tests/unit/test_sre_policy_view.py",
+                test_names=(
+                    "test_policy_view_switch_margin_changes_with_focus_and_explore",
+                    "test_policy_view_allows_extra_read_pass_at_explicit_threshold",
+                    "test_policy_view_bounds_numeric_fields",
+                ),
+            ),
+        ),
+    ),
+    SreCorrespondenceExpectation(
+        row_label="build_executive_policy_view",
+        module_path="cortex.sre.policy_view",
+        symbol_name="build_executive_policy_view",
+        promised_surfaces=(
+            PromisedTestSurface(
+                test_file="tests/unit/test_sre_policy_view.py",
+                test_names=(
+                    "test_policy_view_switch_margin_changes_with_focus_and_explore",
+                    "test_policy_view_allows_extra_read_pass_at_explicit_threshold",
+                    "test_policy_view_bounds_numeric_fields",
                 ),
             ),
         ),

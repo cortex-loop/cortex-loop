@@ -11,14 +11,16 @@ import urllib.request
 from pathlib import Path
 from typing import Any
 
+from cortex.sre.executive_summary import build_executive_signal_summary
 from cortex.sre.modulators import update_executive_modulators
 from cortex.sre.operator_routing import (
     build_operator_route_diagnostics,
-    select_operator_route_with_modulators,
+    select_operator_route_with_policy,
 )
+from cortex.sre.policy_view import build_executive_policy_view
 from live_operator_route_state import (
-    build_operator_modulator_inputs,
     build_operator_probe_task_state,
+    build_operator_summary_inputs,
 )
 
 from live_validation_common import (
@@ -235,13 +237,18 @@ def _run_single_provider_baseline(
             recent_baseline_clean_count=prior_signal["clean_success_count"],
             recent_warning_bearing_success_present=prior_signal["warning_bearing_success_present"],
         )
-        modulator_update = update_executive_modulators(
-            build_operator_modulator_inputs(
+        summary = build_executive_signal_summary(
+            build_operator_summary_inputs(
                 route_state,
                 previous_same_host_run_failed_before_completion=prior_signal["previous_failed_before_completion"],
+                recent_probe_failure_class=recent_operator_probe_failure(provider),
+                recent_warning_bearing_success_present=prior_signal["warning_bearing_success_present"],
+                verification_required=False,
             )
         )
-        route_decision = select_operator_route_with_modulators(route_state, modulator_update)
+        modulator_update = update_executive_modulators(summary, None)
+        policy_view = build_executive_policy_view(summary, modulator_update.state)
+        route_decision = select_operator_route_with_policy(route_state, modulator_update, policy_view)
         route_diagnostics = build_operator_route_diagnostics(route_state, route_decision)
 
     started_at = now_utc_iso()

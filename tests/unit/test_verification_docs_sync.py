@@ -342,7 +342,9 @@ def test_local_verification_doc_records_repo_workflow_commands() -> None:
     assert "keep the current explicit stable models unless a separate host-defaults seam is explicitly opened" in doc_text
     assert "## Operator routing realization" in doc_text
     assert "python3 -m pytest tests/unit/test_operator_routing.py -q" in doc_text
+    assert "python3 -m pytest tests/unit/test_sre_executive_summary.py -q" in doc_text
     assert "python3 -m pytest tests/unit/test_sre_modulators.py -q" in doc_text
+    assert "python3 -m pytest tests/unit/test_sre_policy_view.py -q" in doc_text
     assert "python3 -m pytest tests/unit/test_correspondence_sre.py -q" in doc_text
 
 
@@ -366,9 +368,9 @@ def test_resume_protocol_and_active_workstream_contract_exist() -> None:
     assert "Current branch role:" in workstream_text
     assert "accepted workflow baseline truth now rests on `main` rather than a long-lived working branch" in workstream_text
     assert "`Q1` remains the accepted ancestor audit on `main`" in workstream_text
-    assert "Current campaign: `M1F modulator closure and behavioral binding candidate complete`" in workstream_text
-    assert "Current candidate seam: `M1F modulator closure and behavioral binding`;" in workstream_text
-    assert "the compact SRE modulator bundle is now behaviorally real on the explanation branch" in workstream_text
+    assert "Current campaign: `M2 executive summary, persistent modulators, and policy view candidate complete`" in workstream_text
+    assert "Current candidate seam: `M2 executive summary, persistent modulators, and policy view`;" in workstream_text
+    assert "the M2 summary/memory/policy layer is now implemented on the explanation branch" in workstream_text
     assert "the previously re-earned candidate package-positive operator directionality line remains the current branch truth" in workstream_text
     assert "the compare surface and live-validation truth from earlier seams remain accepted ancestor input and are not being reopened by the landed K train." in workstream_text
     assert "the current signed-in smoke surfaces are now clean again" in workstream_text
@@ -404,6 +406,14 @@ def test_resume_protocol_and_active_workstream_contract_exist() -> None:
     assert "`extra_read_pass_completed = true`" in workstream_text
     assert "`extra_read_pass_mode = resume`" in workstream_text
     assert "`thread_ephemeral = false`" in workstream_text
+    assert "the M2 refinement now adds:" in workstream_text
+    assert "`ExecutiveSignalSummary`" in workstream_text
+    assert "persistent tonic `ExecutiveModulatorMemory`" in workstream_text
+    assert "`ExecutivePolicyView`" in workstream_text
+    assert "live `modulator_summary`" in workstream_text
+    assert "live `modulator_memory`" in workstream_text
+    assert "live `policy_view`" in workstream_text
+    assert "one focused OpenAI truth-gap rerun now proves those new fields land on artifacts while preserving the already re-earned candidate package-positive line" in workstream_text
     assert "do not reopen the K train by inertia now that the bounded proven-lane executive/runtime line is landed" in workstream_text
     assert "do not widen from the current candidate package-positive review-branch result into new runtime or product claims by inertia" in workstream_text
     assert "treat the current package-positive operator line as candidate branch truth until it is reviewed and accepted" in workstream_text
@@ -418,7 +428,6 @@ def test_resume_protocol_and_active_workstream_contract_exist() -> None:
     assert "Do not pass explicit Gemini operator model names anywhere on the operator/evaluation harness" in workstream_text
     assert "Do not overread provider-limit interference as a product-quality defeat for Cortex by itself." in workstream_text
     assert "Do not treat selecting `gemini-api-key` in `.gemini/settings.json` as sufficient for headless Gemini operator proof" in workstream_text
-    assert "docs/erika-visualizations/CORTEX_EVIDENCE_BASED_STATUS.md" in workstream_text
     assert "Do not use Gemini `plan` mode as the default comparison baseline on the operator/evaluation path." in workstream_text
     assert "Do not start a new managed session from local `main` while it is ahead or diverged from `origin/main`." in workstream_text
     assert "Do not reopen Gemini model chasing or assisted-mode speculation inside the active `L4` service-proof train." in workstream_text
@@ -632,26 +641,40 @@ def test_reference_runtime_program_lock_is_recorded() -> None:
     assert "Locked route profiles:" in operator_routing_program_text
     assert "`inspect_light`" in operator_routing_program_text
     assert "`blocked`" in operator_routing_program_text
-    assert "one compact executive modulator bundle over observable control inputs" in operator_routing_program_text
+    assert "one compact executive summary over observable control inputs" in operator_routing_program_text
+    assert "one compact tonic executive modulator bundle over that summary" in operator_routing_program_text
+    assert "one compact executive policy view derived from summary + modulators" in operator_routing_program_text
+    assert "The summary layer uses:" in operator_routing_program_text
     assert "The modulator layer uses:" in operator_routing_program_text
+    assert "The policy layer uses:" in operator_routing_program_text
     assert "`focus_gain`" in operator_routing_program_text
     assert "`explore_gain`" in operator_routing_program_text
     assert "`stop_pressure`" in operator_routing_program_text
     assert "`update_pressure`" in operator_routing_program_text
+    assert "`default_profile_bonus`" in operator_routing_program_text
+    assert "`switch_margin`" in operator_routing_program_text
+    assert "`stop_threshold`" in operator_routing_program_text
+    assert "`verification_intensity`" in operator_routing_program_text
     assert "The route selector may choose:" in operator_routing_program_text
     assert "retry budget" in operator_routing_program_text
     assert "The modulator layer may change:" in operator_routing_program_text
     assert "one extra read pass on inspect routes" in operator_routing_program_text
+    assert "The policy layer is the only place where those behavior consequences should be expressed." in operator_routing_program_text
     assert "It may not choose:" in operator_routing_program_text
     assert "named models" in operator_routing_program_text
     assert "Required local artifact diagnostics:" in operator_routing_program_text
     assert "`route_profile`" in operator_routing_program_text
     assert "`blocked_reason`" in operator_routing_program_text
+    assert "`modulator_summary`" in operator_routing_program_text
+    assert "`modulator_memory`" in operator_routing_program_text
     assert "`modulator_state`" in operator_routing_program_text
     assert "`modulator_reason_tags`" in operator_routing_program_text
+    assert "`policy_view`" in operator_routing_program_text
     assert "Minimum deterministic proof:" in operator_routing_program_text
     assert "`python3 -m pytest tests/unit/test_operator_routing.py -q`" in operator_routing_program_text
+    assert "`python3 -m pytest tests/unit/test_sre_executive_summary.py -q`" in operator_routing_program_text
     assert "`python3 -m pytest tests/unit/test_sre_modulators.py -q`" in operator_routing_program_text
+    assert "`python3 -m pytest tests/unit/test_sre_policy_view.py -q`" in operator_routing_program_text
     assert "the implementation stays abstract and does not use neurotransmitter names as code objects" in operator_routing_program_text
     assert "`route_budget.max_turns` is the outer harness turn budget" in operator_routing_program_text
     assert "dopamine" not in operator_routing_program_text.lower()
@@ -914,7 +937,7 @@ def test_runtime_restack_program_lock_is_recorded() -> None:
     assert "the operator/evaluation harness must not call explicit Gemini model names at all" in theory_text
     assert "fresh auto-only product-path rerun is sharper still" in theory_text
     assert "first full round-2 stable-defaults rerun now says the package is still `mixed_direction`" in theory_text
-    assert "current explanation branch now carries the provider-limit neutrality hardening, the OpenAI continuity transport fix, the Claude efficiency rerun, and the first compact SRE modulator bundle" in theory_text
-    assert "The M1F closure pass then proved that `update_pressure` can trigger a real extra inspect read-pass" in theory_text
+    assert "current explanation branch now carries the provider-limit neutrality hardening, the OpenAI continuity transport fix, the Claude efficiency rerun, the first compact SRE modulator bundle, and the M2 summary/memory/policy refinement" in theory_text
+    assert "focused OpenAI truth-gap proof now shows `modulator_summary`, `modulator_memory`, `policy_view`, and a real extra inspect read-pass" in theory_text
     assert "candidate package-positive operator directionality line remains intact" in theory_text
     assert "next honest move is still to publish/review the candidate line rather than widen further" in theory_text

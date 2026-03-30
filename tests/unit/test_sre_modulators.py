@@ -4,8 +4,9 @@ from pathlib import Path
 
 import pytest
 
+from cortex.sre.executive_summary import ExecutiveSignalSummary
 from cortex.sre.modulators import (
-    ExecutiveModulatorInputs,
+    ExecutiveModulatorMemory,
     update_executive_modulators,
 )
 from cortex.sre.operator_routing import (
@@ -17,12 +18,13 @@ from cortex.sre.operator_routing import (
 
 def test_modulator_update_clips_values_into_unit_interval() -> None:
     update = update_executive_modulators(
-        ExecutiveModulatorInputs(
+        ExecutiveSignalSummary(
             uncertainty=1.0,
             repeated_failure_pressure=1.0,
             quota_pressure=1.0,
             continuity_demand=1.0,
             novelty_pressure=1.0,
+            verification_conflict_pressure=1.0,
         )
     )
 
@@ -32,21 +34,23 @@ def test_modulator_update_clips_values_into_unit_interval() -> None:
 
 def test_high_quota_pressure_raises_stop_pressure() -> None:
     low = update_executive_modulators(
-        ExecutiveModulatorInputs(
+        ExecutiveSignalSummary(
             uncertainty=0.1,
             repeated_failure_pressure=0.0,
             quota_pressure=0.0,
             continuity_demand=0.1,
             novelty_pressure=0.1,
+            verification_conflict_pressure=0.0,
         )
     )
     high = update_executive_modulators(
-        ExecutiveModulatorInputs(
+        ExecutiveSignalSummary(
             uncertainty=0.1,
             repeated_failure_pressure=0.0,
             quota_pressure=1.0,
             continuity_demand=0.1,
             novelty_pressure=0.1,
+            verification_conflict_pressure=0.0,
         )
     )
 
@@ -55,21 +59,23 @@ def test_high_quota_pressure_raises_stop_pressure() -> None:
 
 def test_high_continuity_raises_focus_gain() -> None:
     low = update_executive_modulators(
-        ExecutiveModulatorInputs(
+        ExecutiveSignalSummary(
             uncertainty=0.2,
             repeated_failure_pressure=0.0,
             quota_pressure=0.0,
             continuity_demand=0.0,
             novelty_pressure=0.1,
+            verification_conflict_pressure=0.0,
         )
     )
     high = update_executive_modulators(
-        ExecutiveModulatorInputs(
+        ExecutiveSignalSummary(
             uncertainty=0.2,
             repeated_failure_pressure=0.0,
             quota_pressure=0.0,
             continuity_demand=1.0,
             novelty_pressure=0.1,
+            verification_conflict_pressure=0.0,
         )
     )
 
@@ -78,21 +84,23 @@ def test_high_continuity_raises_focus_gain() -> None:
 
 def test_repeated_failure_raises_explore_gain() -> None:
     low = update_executive_modulators(
-        ExecutiveModulatorInputs(
+        ExecutiveSignalSummary(
             uncertainty=0.2,
             repeated_failure_pressure=0.0,
             quota_pressure=0.0,
             continuity_demand=0.2,
             novelty_pressure=0.1,
+            verification_conflict_pressure=0.0,
         )
     )
     high = update_executive_modulators(
-        ExecutiveModulatorInputs(
+        ExecutiveSignalSummary(
             uncertainty=0.2,
             repeated_failure_pressure=1.0,
             quota_pressure=0.0,
             continuity_demand=0.2,
             novelty_pressure=0.1,
+            verification_conflict_pressure=0.0,
         )
     )
 
@@ -101,21 +109,23 @@ def test_repeated_failure_raises_explore_gain() -> None:
 
 def test_high_novelty_raises_update_pressure() -> None:
     low = update_executive_modulators(
-        ExecutiveModulatorInputs(
+        ExecutiveSignalSummary(
             uncertainty=0.2,
             repeated_failure_pressure=0.0,
             quota_pressure=0.0,
             continuity_demand=0.2,
             novelty_pressure=0.0,
+            verification_conflict_pressure=0.0,
         )
     )
     high = update_executive_modulators(
-        ExecutiveModulatorInputs(
+        ExecutiveSignalSummary(
             uncertainty=0.2,
             repeated_failure_pressure=0.0,
             quota_pressure=0.0,
             continuity_demand=0.2,
             novelty_pressure=1.0,
+            verification_conflict_pressure=0.0,
         )
     )
 
@@ -134,12 +144,13 @@ def test_modulator_stop_pressure_can_block_route() -> None:
         visible_burden_sensitivity=0.45,
     )
     update = update_executive_modulators(
-        ExecutiveModulatorInputs(
+        ExecutiveSignalSummary(
             uncertainty=0.90,
             repeated_failure_pressure=1.0,
             quota_pressure=1.0,
             continuity_demand=0.05,
             novelty_pressure=0.2,
+            verification_conflict_pressure=0.2,
         )
     )
 
@@ -160,12 +171,13 @@ def test_modulator_update_pressure_adds_extra_read_pass() -> None:
         visible_burden_sensitivity=0.80,
     )
     update = update_executive_modulators(
-        ExecutiveModulatorInputs(
+        ExecutiveSignalSummary(
             uncertainty=0.70,
             repeated_failure_pressure=0.0,
             quota_pressure=0.10,
             continuity_demand=0.00,
             novelty_pressure=0.80,
+            verification_conflict_pressure=0.0,
         )
     )
 
@@ -185,3 +197,25 @@ def test_modulator_module_uses_abstract_control_names() -> None:
 
     for forbidden in ("dopamine", "serotonin", "acetylcholine", "norepinephrine"):
         assert forbidden not in text
+
+
+def test_modulator_update_uses_persistence_from_previous_memory() -> None:
+    update = update_executive_modulators(
+        ExecutiveSignalSummary(
+            uncertainty=0.2,
+            repeated_failure_pressure=0.0,
+            quota_pressure=0.0,
+            continuity_demand=0.0,
+            novelty_pressure=0.0,
+            verification_conflict_pressure=0.0,
+        ),
+        ExecutiveModulatorMemory(
+            focus_tonic=1.0,
+            explore_tonic=0.0,
+            stop_tonic=0.0,
+            update_tonic=0.0,
+        ),
+    )
+
+    assert update.previous_memory is not None
+    assert update.next_memory.focus_tonic > 0.70

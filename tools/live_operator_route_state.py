@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from cortex.sre.modulators import ExecutiveModulatorInputs
+from cortex.sre.executive_summary import ExecutiveSignalSummaryInputs
 from cortex.sre.operator_routing import OperatorTaskMode, OperatorTaskState
 
 
@@ -137,50 +137,35 @@ def _pressure_levels(
 
 
 __all__ = [
-    "build_operator_modulator_inputs",
+    "build_operator_summary_inputs",
     "build_operator_probe_task_state",
     "build_operator_task_state",
 ]
 
 
-def build_operator_modulator_inputs(
+def build_operator_summary_inputs(
     state: OperatorTaskState,
     *,
     previous_same_host_run_failed_before_completion: bool = False,
     recent_product_failure_class: str | None = None,
-) -> ExecutiveModulatorInputs:
+    recent_probe_failure_class: str | None = None,
+    recent_warning_bearing_success_present: bool = False,
+    verification_required: bool = False,
+) -> ExecutiveSignalSummaryInputs:
     if not isinstance(state, OperatorTaskState):
         actual_type = type(state).__name__
         raise TypeError(
-            "build_operator_modulator_inputs.state must be OperatorTaskState, "
+            "build_operator_summary_inputs.state must be OperatorTaskState, "
             f"got {actual_type}."
         )
-    non_limit_failure = recent_product_failure_class not in {
-        None,
-        "quota_exhausted",
-        "capacity_exhausted",
-        "continuity_rollout_missing",
-    }
-    repeated_failure_pressure = (
-        0.75
-        if previous_same_host_run_failed_before_completion
-        else 0.55
-        if non_limit_failure
-        else 0.0
-    )
-    novelty_pressure = (
-        0.70
-        if state.task_mode is OperatorTaskMode.INSPECT
-        else 0.55
-        if previous_same_host_run_failed_before_completion
-        else 0.35
-        if non_limit_failure
-        else 0.20
-    )
-    return ExecutiveModulatorInputs(
+    return ExecutiveSignalSummaryInputs(
+        task_mode=state.task_mode,
         uncertainty=state.uncertainty,
-        repeated_failure_pressure=repeated_failure_pressure,
         quota_pressure=state.quota_pressure,
         continuity_demand=state.continuity_demand,
-        novelty_pressure=novelty_pressure,
+        previous_same_host_run_failed_before_completion=previous_same_host_run_failed_before_completion,
+        recent_product_failure_class=recent_product_failure_class,
+        recent_probe_failure_class=recent_probe_failure_class,
+        recent_warning_bearing_success_present=recent_warning_bearing_success_present,
+        verification_required=verification_required,
     )

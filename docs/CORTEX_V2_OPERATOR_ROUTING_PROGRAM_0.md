@@ -62,7 +62,9 @@ Locked state axes:
 The route selector uses:
 
 - a bounded task-state vector `z_t = [c_t, k_t, v_t, u_t, h_t, q_t]`
-- one compact executive modulator bundle over observable control inputs
+- one compact executive summary over observable control inputs
+- one compact tonic executive modulator bundle over that summary
+- one compact executive policy view derived from summary + modulators
 - fixed route prototypes for the five non-blocked profiles
 - fixed axis weights over those six dimensions
 - explicit gain priors
@@ -70,16 +72,31 @@ The route selector uses:
 - one hard quota-pressure block for non-inspect routes
 - and one resumptive guarded-continuity preference under strong host friction
 
+The summary layer uses:
+
+- `S_t = [u_t, f_t, q_t, c_t, n_t, v_t]`
+- bounded observable inputs only
+- no hidden reward memory
+
 The modulator layer uses:
 
-- `m_t = [u_t, f_t, q_t, c_t, n_t]`
-- fixed linear coefficients plus small fixed biases
+- the current summary plus bounded prior tonic state
+- fixed coefficients and fixed persistence
 - hard clipping into `[0,1]`
-- four compact gains:
+- four tonic gains:
   - `focus_gain`
   - `explore_gain`
   - `stop_pressure`
   - `update_pressure`
+
+The policy layer uses:
+
+- one compact `ExecutivePolicyView`
+- `default_profile_bonus`
+- `switch_margin`
+- `stop_threshold`
+- `allow_extra_read_pass`
+- `verification_intensity`
 
 The route selector may choose:
 
@@ -101,6 +118,8 @@ The modulator layer may change:
 - the margin needed to switch away from default profile
 - blocking pressure under quota / repeated failure
 - one extra read pass on inspect routes when uncertainty is high and quota pressure is low
+
+The policy layer is the only place where those behavior consequences should be expressed.
 
 It may not choose:
 
@@ -126,8 +145,11 @@ Required local artifact diagnostics:
 - `quota_pressure`
 - `host_friction`
 - `blocked_reason`
+- `modulator_summary`
+- `modulator_memory`
 - `modulator_state`
 - `modulator_reason_tags`
+- `policy_view`
 
 These diagnostics are local-only under `.cortex/live_validation/`.
 They are not packet truth and may not be promoted into runtime/public doctrine by this train alone.
@@ -137,7 +159,9 @@ They are not packet truth and may not be promoted into runtime/public doctrine b
 Minimum deterministic proof:
 
 - `python3 -m pytest tests/unit/test_operator_routing.py -q`
+- `python3 -m pytest tests/unit/test_sre_executive_summary.py -q`
 - `python3 -m pytest tests/unit/test_sre_modulators.py -q`
+- `python3 -m pytest tests/unit/test_sre_policy_view.py -q`
 - `python3 -m pytest tests/unit/test_live_validation_tools.py -q`
 - `python3 -m pytest tests/unit/test_correspondence_sre.py -q`
 - `python3 -m pytest tests/unit/test_verification_docs_sync.py -q`
@@ -157,4 +181,5 @@ Acceptance:
 - Claude/OpenAI remain on the locked stable host defaults
 - blocked results are explicit and attributable to route state / host state rather than hidden rerouting
 - the compact modulator bundle is SRE-owned, operational, and visibly changes route/budget behavior
+- the executive summary, tonic modulator memory, and policy view are all explicit typed SRE objects
 - the implementation stays abstract and does not use neurotransmitter names as code objects

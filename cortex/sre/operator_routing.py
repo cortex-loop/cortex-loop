@@ -6,11 +6,14 @@ from dataclasses import asdict, dataclass, replace
 from enum import Enum
 from numbers import Real
 
+from .executive_summary import ExecutiveSignalSummary
 from .modulators import (
+    ExecutiveModulatorMemory,
     ExecutiveModulatorState,
     ExecutiveModulatorUpdate,
-    ZERO_EXECUTIVE_MODULATOR_UPDATE,
+    ZERO_EXECUTIVE_MODULATOR_MEMORY,
 )
+from .policy_view import ExecutivePolicyView, build_executive_policy_view
 
 
 class OperatorTaskMode(str, Enum):
@@ -124,8 +127,11 @@ class OperatorRouteDecision:
     selected_margin: float
     neutral_margin: float
     reason_tags: frozenset[str]
+    summary: ExecutiveSignalSummary
+    modulator_memory: ExecutiveModulatorMemory
     modulator_state: ExecutiveModulatorState
     modulator_reason_tags: frozenset[str]
+    policy_view: ExecutivePolicyView
     blocked_reason: str | None = None
 
     def __post_init__(self) -> None:
@@ -145,6 +151,24 @@ class OperatorRouteDecision:
             actual_type = type(self.modulator_state).__name__
             raise TypeError(
                 "OperatorRouteDecision.modulator_state must be ExecutiveModulatorState, "
+                f"got {actual_type}."
+            )
+        if not isinstance(self.modulator_memory, ExecutiveModulatorMemory):
+            actual_type = type(self.modulator_memory).__name__
+            raise TypeError(
+                "OperatorRouteDecision.modulator_memory must be ExecutiveModulatorMemory, "
+                f"got {actual_type}."
+            )
+        if not isinstance(self.summary, ExecutiveSignalSummary):
+            actual_type = type(self.summary).__name__
+            raise TypeError(
+                "OperatorRouteDecision.summary must be ExecutiveSignalSummary, "
+                f"got {actual_type}."
+            )
+        if not isinstance(self.policy_view, ExecutivePolicyView):
+            actual_type = type(self.policy_view).__name__
+            raise TypeError(
+                "OperatorRouteDecision.policy_view must be ExecutivePolicyView, "
                 f"got {actual_type}."
             )
         for field_name in ("selected_margin", "neutral_margin"):
@@ -292,12 +316,53 @@ _LAMBDA_V = 0.15
 _MARGIN_THRESHOLD = 0.08
 
 def select_operator_route(state: OperatorTaskState) -> OperatorRouteDecision:
-    return select_operator_route_with_modulators(state, ZERO_EXECUTIVE_MODULATOR_UPDATE)
+    zero_summary = ExecutiveSignalSummary(
+        uncertainty=0.0,
+        repeated_failure_pressure=0.0,
+        quota_pressure=0.0,
+        continuity_demand=0.0,
+        novelty_pressure=0.0,
+        verification_conflict_pressure=0.0,
+    )
+    zero_update = ExecutiveModulatorUpdate(
+        summary=zero_summary,
+        previous_memory=ZERO_EXECUTIVE_MODULATOR_MEMORY,
+        next_memory=ZERO_EXECUTIVE_MODULATOR_MEMORY,
+        state=ExecutiveModulatorState(
+            focus_gain=0.0,
+            explore_gain=0.0,
+            stop_pressure=0.0,
+            update_pressure=0.0,
+        ),
+        reason_tags=frozenset(),
+    )
+    zero_policy = build_executive_policy_view(zero_summary, zero_update.state)
+    return select_operator_route_with_policy(state, zero_update, zero_policy)
 
 
 def select_operator_route_with_modulators(
     state: OperatorTaskState,
     modulator_update: ExecutiveModulatorUpdate | None = None,
+) -> OperatorRouteDecision:
+    if modulator_update is None:
+        return select_operator_route(state)
+    if not isinstance(modulator_update, ExecutiveModulatorUpdate):
+        actual_type = type(modulator_update).__name__
+        raise TypeError(
+            "select_operator_route.modulator_update must be ExecutiveModulatorUpdate, "
+            f"got {actual_type}."
+        )
+    return select_operator_route_with_policy(
+        state,
+        modulator_update,
+        build_executive_policy_view(modulator_update.summary, modulator_update.state),
+    )
+
+
+def select_operator_route_with_policy(
+    state: OperatorTaskState,
+    modulator_update: ExecutiveModulatorUpdate,
+    policy_view: ExecutivePolicyView,
 ) -> OperatorRouteDecision:
     if not isinstance(state, OperatorTaskState):
         actual_type = type(state).__name__
@@ -305,25 +370,28 @@ def select_operator_route_with_modulators(
             "select_operator_route.state must be OperatorTaskState, "
             f"got {actual_type}."
         )
-    if modulator_update is None:
-        modulator_update = ZERO_EXECUTIVE_MODULATOR_UPDATE
     if not isinstance(modulator_update, ExecutiveModulatorUpdate):
         actual_type = type(modulator_update).__name__
         raise TypeError(
             "select_operator_route.modulator_update must be ExecutiveModulatorUpdate, "
             f"got {actual_type}."
         )
+    if not isinstance(policy_view, ExecutivePolicyView):
+        actual_type = type(policy_view).__name__
+        raise TypeError(
+            "select_operator_route.policy_view must be ExecutivePolicyView, "
+            f"got {actual_type}."
+        )
 
     admissible_profiles = _ADMISSIBLE_PROFILES_BY_MODE[state.task_mode]
     default_profile = _DEFAULT_PROFILE_BY_MODE[state.task_mode]
-    modulator_state = modulator_update.state
     utilities = {
         profile: _route_utility(profile, state)
-        + _modulator_profile_adjustment(
+        + _policy_profile_adjustment(
             profile,
             default_profile=default_profile,
             state=state,
-            modulator_state=modulator_state,
+            policy_view=policy_view,
         )
         for profile in admissible_profiles
     }
@@ -347,7 +415,7 @@ def select_operator_route_with_modulators(
     default_utility = utilities[default_profile]
     selected_utility = utilities[selected_profile]
     neutral_margin = selected_utility - default_utility
-    margin_threshold = _effective_margin_threshold(modulator_state)
+    margin_threshold = _effective_margin_threshold(policy_view)
 
     if selected_profile is not default_profile and neutral_margin < margin_threshold:
         selected_profile = default_profile
@@ -359,7 +427,7 @@ def select_operator_route_with_modulators(
     else:
         reason_tags.add("gate:non-default-profile")
 
-    if modulator_state.stop_pressure >= 0.75 and selected_profile is not OperatorRouteProfile.INSPECT_LIGHT:
+    if modulator_update.state.stop_pressure >= policy_view.stop_threshold and selected_profile is not OperatorRouteProfile.INSPECT_LIGHT:
         reason_tags.add("blocked:modulator-stop-pressure")
         return OperatorRouteDecision(
             profile=OperatorRouteProfile.BLOCKED,
@@ -367,8 +435,11 @@ def select_operator_route_with_modulators(
             selected_margin=selected_utility,
             neutral_margin=neutral_margin,
             reason_tags=frozenset(reason_tags),
-            modulator_state=modulator_state,
+            summary=modulator_update.summary,
+            modulator_memory=modulator_update.next_memory,
+            modulator_state=modulator_update.state,
             modulator_reason_tags=modulator_update.reason_tags,
+            policy_view=policy_view,
             blocked_reason="blocked_by_modulator_stop_pressure",
         )
 
@@ -380,15 +451,18 @@ def select_operator_route_with_modulators(
             selected_margin=selected_utility,
             neutral_margin=neutral_margin,
             reason_tags=frozenset(reason_tags),
-            modulator_state=modulator_state,
+            summary=modulator_update.summary,
+            modulator_memory=modulator_update.next_memory,
+            modulator_state=modulator_update.state,
             modulator_reason_tags=modulator_update.reason_tags,
+            policy_view=policy_view,
             blocked_reason="blocked_by_quota_pressure",
         )
 
-    budget = _apply_modulators_to_budget(
+    budget = _apply_policy_to_budget(
         _BUDGET_PROFILES[selected_profile],
         state=state,
-        modulator_state=modulator_state,
+        policy_view=policy_view,
         reason_tags=reason_tags,
     )
 
@@ -398,8 +472,11 @@ def select_operator_route_with_modulators(
         selected_margin=selected_utility,
         neutral_margin=neutral_margin,
         reason_tags=frozenset(reason_tags | {f"profile:{selected_profile.value}"}),
-        modulator_state=modulator_state,
+        summary=modulator_update.summary,
+        modulator_memory=modulator_update.next_memory,
+        modulator_state=modulator_update.state,
         modulator_reason_tags=modulator_update.reason_tags,
+        policy_view=policy_view,
     )
 
 
@@ -429,8 +506,11 @@ def build_operator_route_diagnostics(
         "quota_pressure": round(float(state.quota_pressure), 4),
         "host_friction": round(float(state.host_friction), 4),
         "blocked_reason": decision.blocked_reason,
+        "modulator_summary": decision.summary.as_payload(),
+        "modulator_memory": decision.modulator_memory.as_payload(),
         "modulator_state": decision.modulator_state.as_payload(),
         "modulator_reason_tags": sorted(decision.modulator_reason_tags),
+        "policy_view": decision.policy_view.as_payload(),
     }
 
 def _route_utility(
@@ -456,49 +536,36 @@ def _route_utility(
     )
 
 
-def _modulator_profile_adjustment(
+def _policy_profile_adjustment(
     profile: OperatorRouteProfile,
     *,
     default_profile: OperatorRouteProfile,
     state: OperatorTaskState,
-    modulator_state: ExecutiveModulatorState,
+    policy_view: ExecutivePolicyView,
 ) -> float:
     adjustment = 0.0
     if profile is default_profile:
-        adjustment += 0.12 * modulator_state.focus_gain
+        adjustment += policy_view.default_profile_bonus
     if state.task_mode is OperatorTaskMode.RESUME_EXECUTE and profile in {
         OperatorRouteProfile.CONTINUITY_STANDARD,
         OperatorRouteProfile.CONTINUITY_GUARDED,
     }:
-        adjustment += 0.08 * modulator_state.focus_gain
-    if profile is not default_profile:
-        adjustment += 0.04 * modulator_state.explore_gain
+        adjustment += 0.04 * policy_view.default_profile_bonus
     return adjustment
 
 
-def _effective_margin_threshold(modulator_state: ExecutiveModulatorState) -> float:
-    return max(
-        0.0,
-        min(
-            0.20,
-            _MARGIN_THRESHOLD + (0.08 * modulator_state.focus_gain) - (0.08 * modulator_state.explore_gain),
-        ),
-    )
+def _effective_margin_threshold(policy_view: ExecutivePolicyView) -> float:
+    return float(policy_view.switch_margin)
 
 
-def _apply_modulators_to_budget(
+def _apply_policy_to_budget(
     budget: OperatorBudgetProfile,
     *,
     state: OperatorTaskState,
-    modulator_state: ExecutiveModulatorState,
+    policy_view: ExecutivePolicyView,
     reason_tags: set[str],
 ) -> OperatorBudgetProfile:
-    if (
-        state.task_mode is OperatorTaskMode.INSPECT
-        and modulator_state.update_pressure >= 0.50
-        and state.uncertainty >= 0.35
-        and state.quota_pressure < 0.60
-    ):
+    if state.task_mode is OperatorTaskMode.INSPECT and policy_view.allow_extra_read_pass:
         reason_tags.add("budget:extra-read-pass")
         return replace(
             budget,
@@ -515,6 +582,7 @@ __all__ = [
     "OperatorTaskMode",
     "OperatorTaskState",
     "build_operator_route_diagnostics",
+    "select_operator_route_with_policy",
     "select_operator_route_with_modulators",
     "select_operator_route",
 ]

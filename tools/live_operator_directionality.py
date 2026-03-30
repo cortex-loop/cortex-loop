@@ -12,13 +12,15 @@ from contextlib import contextmanager, nullcontext
 from pathlib import Path
 from typing import Any, Iterator
 
-from cortex.sre.modulators import update_executive_modulators
+from cortex.sre.executive_summary import build_executive_signal_summary
+from cortex.sre.modulators import ExecutiveModulatorMemory, update_executive_modulators
 from cortex.sre.operator_routing import (
     build_operator_route_diagnostics,
-    select_operator_route_with_modulators,
+    select_operator_route_with_policy,
 )
+from cortex.sre.policy_view import build_executive_policy_view
 from live_operator_route_state import (
-    build_operator_modulator_inputs,
+    build_operator_summary_inputs,
     build_operator_task_state,
 )
 
@@ -364,20 +366,26 @@ def _run_cli_variant(
             scenario_id=scenario_id,
         )["latest_failure_class"],
     )
-    modulator_update = update_executive_modulators(
-        build_operator_modulator_inputs(
+    summary = build_executive_signal_summary(
+        build_operator_summary_inputs(
             route_state,
             previous_same_host_run_failed_before_completion=summarize_operator_runs(
                 prior_runs,
                 scenario_id=scenario_id,
             )["previous_failed_before_completion"],
+            recent_probe_failure_class=recent_operator_probe_failure(provider),
             recent_product_failure_class=summarize_operator_runs(
                 prior_runs,
                 scenario_id=scenario_id,
             )["latest_failure_class"],
+            recent_warning_bearing_success_present=summarize_operator_runs(baseline_runs)["warning_bearing_success_present"],
+            verification_required=bool(_SCENARIOS[scenario_id]["run_test"]),
         )
     )
-    route_decision = select_operator_route_with_modulators(route_state, modulator_update)
+    previous_memory = _latest_modulator_memory(prior_runs)
+    modulator_update = update_executive_modulators(summary, previous_memory)
+    policy_view = build_executive_policy_view(summary, modulator_update.state)
+    route_decision = select_operator_route_with_policy(route_state, modulator_update, policy_view)
     route_diagnostics = build_operator_route_diagnostics(route_state, route_decision)
     if route_decision.blocked_reason is not None:
         return host_paths._blocked_operator_route_payload(
@@ -494,20 +502,26 @@ def _run_cli_restart_continuity_variant(
             scenario_id=scenario_id,
         )["latest_failure_class"],
     )
-    modulator_update = update_executive_modulators(
-        build_operator_modulator_inputs(
+    summary = build_executive_signal_summary(
+        build_operator_summary_inputs(
             route_state,
             previous_same_host_run_failed_before_completion=summarize_operator_runs(
                 prior_runs,
                 scenario_id=scenario_id,
             )["previous_failed_before_completion"],
+            recent_probe_failure_class=recent_operator_probe_failure(provider),
             recent_product_failure_class=summarize_operator_runs(
                 prior_runs,
                 scenario_id=scenario_id,
             )["latest_failure_class"],
+            recent_warning_bearing_success_present=summarize_operator_runs(baseline_runs)["warning_bearing_success_present"],
+            verification_required=True,
         )
     )
-    route_decision = select_operator_route_with_modulators(route_state, modulator_update)
+    previous_memory = _latest_modulator_memory(prior_runs)
+    modulator_update = update_executive_modulators(summary, previous_memory)
+    policy_view = build_executive_policy_view(summary, modulator_update.state)
+    route_decision = select_operator_route_with_policy(route_state, modulator_update, policy_view)
     route_diagnostics = build_operator_route_diagnostics(route_state, route_decision)
     if route_decision.blocked_reason is not None:
         return host_paths._blocked_operator_route_payload(
@@ -862,20 +876,26 @@ def _run_openai_variant(
             scenario_id=scenario_id,
         )["latest_failure_class"],
     )
-    modulator_update = update_executive_modulators(
-        build_operator_modulator_inputs(
+    summary = build_executive_signal_summary(
+        build_operator_summary_inputs(
             route_state,
             previous_same_host_run_failed_before_completion=summarize_operator_runs(
                 prior_runs,
                 scenario_id=scenario_id,
             )["previous_failed_before_completion"],
+            recent_probe_failure_class=recent_operator_probe_failure("openai"),
             recent_product_failure_class=summarize_operator_runs(
                 prior_runs,
                 scenario_id=scenario_id,
             )["latest_failure_class"],
+            recent_warning_bearing_success_present=summarize_operator_runs(baseline_runs)["warning_bearing_success_present"],
+            verification_required=bool(_SCENARIOS[scenario_id]["run_test"]),
         )
     )
-    route_decision = select_operator_route_with_modulators(route_state, modulator_update)
+    previous_memory = _latest_modulator_memory(prior_runs)
+    modulator_update = update_executive_modulators(summary, previous_memory)
+    policy_view = build_executive_policy_view(summary, modulator_update.state)
+    route_decision = select_operator_route_with_policy(route_state, modulator_update, policy_view)
     route_diagnostics = build_operator_route_diagnostics(route_state, route_decision)
     if route_decision.blocked_reason is not None:
         payload = host_paths._blocked_operator_route_payload(
@@ -1402,6 +1422,26 @@ def _provider_window_caution(
     if latest.get("provider_window_caution") or latest.get("provider_limit_interference"):
         return "Recent Claude provider-window interference suggests the current usage window is contaminated; skip this pair rather than spending another immediate attempt."
     return None
+
+
+def _latest_modulator_memory(
+    runs: tuple[dict[str, Any], ...],
+) -> ExecutiveModulatorMemory | None:
+    recent = [
+        payload
+        for payload in runs
+        if isinstance(payload, dict) and isinstance(payload.get("modulator_memory"), dict)
+    ]
+    if not recent:
+        return None
+    latest = max(recent, key=lambda payload: str(payload.get("ended_at", "")))
+    memory = latest["modulator_memory"]
+    return ExecutiveModulatorMemory(
+        focus_tonic=float(memory["focus_tonic"]),
+        explore_tonic=float(memory["explore_tonic"]),
+        stop_tonic=float(memory["stop_tonic"]),
+        update_tonic=float(memory["update_tonic"]),
+    )
 
 
 if __name__ == "__main__":
