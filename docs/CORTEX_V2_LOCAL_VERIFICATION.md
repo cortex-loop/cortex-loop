@@ -757,10 +757,11 @@ Exact committed-doc regeneration is still explicit/manual/out of scope unless se
 This checks the committed mediation evidence scaffold for fair matched-pair accounting, host-split preseed coverage, conservative verdict defaults, and blocker truth.
 It is check-only: it does not generate run packets, emit candidate evidence, or authorize mediation implementation.
 
-Direct command:
+Direct commands:
 
 ```sh
 python3 -m pytest tests/unit/test_mediation_evidence_package.py -q
+python3 tools/mediation_evidence_package.py --check
 ```
 
 Repo-local entry point:

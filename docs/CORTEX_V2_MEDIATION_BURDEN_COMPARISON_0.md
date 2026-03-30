@@ -14,6 +14,12 @@ Version `0` is preseeded from the current scenario catalog and now records three
 - `candidate_positive` is forbidden unless `equal_value_gate=passed` for every counted pair in that exact scenario-host cell.
 - Keep excluded or drifted pairs in the paired-run ledger instead of laundering them into the burden table.
 
+## Package Burden Verdict
+
+| axis | current_package_verdict | current_candidate_positive_cells | why_still_insufficient |
+| --- | --- | --- | --- |
+| lower visible burden at equal task value | insufficient | scenario_thrash_reference_01/reference; scenario_thrash_gemini_01/gemini; scenario_thrash_openai_01/openai | All current burden signal is confined to `thrash_control`; no non-thrash equal-value burden family is committed yet. |
+
 ## Comparison Table
 
 | scenario_id | host_family | usable_pair_count | equal_value_gate | baseline_burden_refs | mediated_burden_refs | current_verdict | supporting_paired_episode_sets | notes |
@@ -27,3 +33,9 @@ Version `0` is preseeded from the current scenario catalog and now records three
 | scenario_host_reference_01 | reference | 3 | passed | none | none | insufficient | pair_reference_host_001, pair_reference_host_002, pair_reference_host_003 | Three reference-only host-realization pairs preserve the same certified completion class and truth boundary, but no lower-burden evidence is committed yet. |
 | scenario_host_gemini_01 | gemini | 3 | passed | none | none | insufficient | pair_gemini_host_001, pair_gemini_host_002, pair_gemini_host_003 | Three Gemini-only host-realization pairs preserve the same certified completion class and truth boundary, but no lower-burden evidence is committed yet. |
 | scenario_host_openai_01 | openai | 3 | passed | none | none | insufficient | pair_openai_host_001, pair_openai_host_002, pair_openai_host_003 | Three OpenAI-only host-realization pairs preserve the same certified completion class and truth boundary, but no lower-burden evidence is committed yet. |
+
+## Exact Burden Gap
+
+| gap_id | current_status | why_missing | minimum_next_evidence |
+| --- | --- | --- | --- |
+| non_thrash_equal_value_burden_family | insufficient | All current candidate-positive burden cells come from thrash_control only. | Record scenario_burden_reference_01, scenario_burden_openai_01, and scenario_burden_claude_01 with equal-value gates passed and burden refs present. |

@@ -43,6 +43,12 @@ It is workflow state only. It does not override the packet documents, implementa
     - bounded prior-feedback pressure is now explicit through internal `feedback_pressure_tags`
     - guarded-feedback and latched-brake realization remain explicit rather than smoothing selected-family, realized-family, or lawful commitment truth
     - no support-memory runtime, mediation, service/auth widening, or broader host rollout was introduced
+  - `M2` is now landed on the canonical line:
+    - `ExecutiveSignalSummary`
+    - persistent tonic `ExecutiveModulatorMemory`
+    - `ExecutivePolicyView`
+    - live `modulator_summary`, `modulator_memory`, and `policy_view` diagnostics on the operator path
+    - the stop-threshold law is now decoupled from self-referential `stop_pressure` comparison
   - `Q1` raw-vs-Cortex operator directionality audit is now landed on the current machine:
     - Claude is `positive`
     - OpenAI is `positive`
@@ -74,13 +80,13 @@ It is workflow state only. It does not override the packet documents, implementa
 
 ## 2. Current campaign and seam state
 
-- Current campaign: `M2 executive summary, persistent modulators, and policy view candidate complete`
-- Current working branch at ledger update: `codex/m2-executive-summary-policy`
-- Current branch role: explicit manual SRE refinement branch because the M2 summary/memory/policy seam is not yet published on the canonical line
-- Current candidate seam: `M2 executive summary, persistent modulators, and policy view`; `Q1` remains the accepted ancestor audit on `main`, `N2` remains blocked on a capable machine, and the current M2 branch now carries the S1 route selector plus provider-limit neutrality, the OpenAI continuity transport fix, the Claude efficiency rerun, the compact SRE modulator bundle, and the new summary/memory/policy refinement`
-- Current seam status: `the M2 summary/memory/policy layer is now implemented on the M2 branch: one focused OpenAI truth_gap rerun shows live modulator_summary, modulator_memory, policy_view, and an actual extra inspect read-pass in artifacts, while the previously re-earned candidate package-positive operator directionality line remains the current branch truth`
+- Current campaign: `J1 mediation evidence package and gap-closure baseline`
+- Current working branch at ledger update: `codex/j1-mediation-evidence-package`
+- Current branch role: explicit manual evidence/package branch because the J1 mediation package baseline is not yet published on the canonical line
+- Current candidate seam: `J1 mediation evidence package and gap-closure baseline`; `M2` is already landed on `main`, `Q1` remains accepted ancestor truth, `N2` remains blocked on a capable machine, and the current J1 branch is evidence-only rather than runtime-widening
+- Current seam status: `J1 now normalizes the post-M2 workflow state, upgrades the committed mediation evidence package into one inspectable checked surface, and converts the mediation blocker into an exact missing-evidence delta without opening mediation code or widening runtime/product truth`
 - the compare surface and live-validation truth from earlier seams remain accepted ancestor input and are not being reopened by the landed K train.
-- Seam risk: shared verification-plumbing seam plus environment-sensitive evidence rerun
+- Seam risk: deterministic code/doc seam
 
 ## 3. Next lawful move
 
@@ -126,43 +132,24 @@ It is workflow state only. It does not override the packet documents, implementa
     - fresh auto-only operator baseline reruns are stable on `auto` and return `OK` twice with no named-model fallback
     - a fresh auto-only `pass_minimal` product-path rerun now blocks immediately on `quota_exhausted` with `model: auto-gemini-3`
     - the S1 route selector now turns those same pressures into explicit route/budget decisions on the operator path
-    - the S1G provider-limit neutrality hardening now says:
-      - pair order alternates by repeat index to reduce shared-budget bias
-      - provider usage-window / quota hits are treated as comparison contamination rather than automatic directional loss
-      - Claude is now `positive` again after the lower turn-budget / leaner hook rerun
-      - Gemini remains `positive`
-      - OpenAI `restart_continuity` is now re-earned on the directionality path after the non-ephemeral thread-resume fix
-      - OpenAI is now `positive`
-      - package verdict is now `promising_positive`
-    - the M1 compact modulator bundle now adds:
-      - `focus_gain`
-      - `explore_gain`
-      - `stop_pressure`
-      - `update_pressure`
-      - live `modulator_state` and `modulator_reason_tags` diagnostics on operator artifacts
-      - one bounded extra-read-pass path when uncertainty is high and quota pressure is low
-    - the M1F closure rerun now confirms more than diagnostics on a bounded live slice:
-      - OpenAI truth-gap artifacts now show `extra_read_pass_attempted = true`
-      - `extra_read_pass_completed = true`
-      - `extra_read_pass_mode = resume`
-      - `thread_ephemeral = false`
-      - the focused slice proves the extra inspect pass is real rather than diagnostic-only
-    - the M2 refinement now adds:
-      - `ExecutiveSignalSummary`
-      - persistent tonic `ExecutiveModulatorMemory`
-      - `ExecutivePolicyView`
-      - live `modulator_summary`
-      - live `modulator_memory`
-      - live `policy_view`
-    - one focused OpenAI truth-gap rerun now proves those new fields land on artifacts while preserving the already re-earned candidate package-positive line
   - the current automation/service lane still fails honestly on missing machine auth
-- Next lawful move:
+- Current blocker shape:
   - keep the machine-auth service lane explicitly deferred on this machine for actual proof execution
-  - treat the current package-positive operator line as candidate branch truth until it is reviewed and accepted
   - do not reopen the K train by inertia now that the bounded proven-lane executive/runtime line is landed
-  - do not widen from the current candidate package-positive review-branch result into new runtime or product claims by inertia
-  - the next lawful move is to publish/review the `codex/m2-executive-summary-policy` branch as the candidate package-positive operator directionality line plus the M2 SRE refinement
-  - after acceptance, keep `N2` as a separate blocked train pending a capable machine rather than reopening service proof on this host
+  - `M2` is now landed on `main`; mediation remains blocked because package-level evidence is still insufficient on every required axis
+  - current burden signal remains too narrow because it is still confined to the `thrash_control` family
+  - current branch-discipline signal still derives only from `thrash_control`
+  - current host-specialized realization signal has candidate-positive cells on reference, Gemini, and OpenAI, but Claude is still missing from the mediation package
+  - Gemini should remain explicit as a partial/contaminated live rerun host rather than being hidden behind pooled mediation summaries
+- Next lawful move:
+  - publish/review the `codex/j1-mediation-evidence-package` branch as an evidence-only mediation package baseline
+  - after acceptance, open `J2` mediation gap-closure reruns rather than mediation implementation
+  - first `J2` targets should be:
+    - one branch-discipline family on reference, OpenAI, and Claude
+    - one non-thrash equal-value burden family on reference, OpenAI, and Claude
+    - one host-realization expansion on Claude plus refreshes on reference and OpenAI
+    - one uncertainty expansion on Claude if the package gap table still says the one-family uncertainty line is too narrow
+  - keep `N2` as a separate blocked train pending a capable machine rather than reopening service proof on this host
 
 ## 4. Explicitly blocked moves
 

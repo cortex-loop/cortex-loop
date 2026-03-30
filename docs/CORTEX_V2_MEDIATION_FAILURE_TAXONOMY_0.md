@@ -79,6 +79,27 @@ It is evidence-facing only. It does not authorize mediation, change packet meani
 - pair effect: may invalidate the pair if it changes the run outcome materially; otherwise downgrade confidence explicitly.
 - usual severity: `medium`
 
+### `provider_limit_contamination`
+
+- meaning: provider usage-window or shared-budget interference polluted the comparison.
+- triggering evidence: quota wall, rolling-window exhaustion, or paired ordering that causes one side to hit an explicit provider limit before the task meaningfully runs.
+- pair effect: does not automatically invalidate the pair, but blocks any clean lift or clean defeat claim unless the contamination is explicitly modeled and preserved.
+- usual severity: `medium`
+
+### `host_capacity_contamination`
+
+- meaning: host capacity pressure or transient host-side exhaustion polluted the comparison.
+- triggering evidence: `capacity_exhausted`, overloaded host surface, or host-side refusal that changes the runnable budget independently of the compared executive difference.
+- pair effect: does not automatically invalidate the pair, but blocks any clean directional claim unless the contamination is preserved explicitly.
+- usual severity: `medium`
+
+### `stale_evidence`
+
+- meaning: the evidence cell exists, but it is too old, too narrow, or too disconnected from the current package question to count as fresh breadth.
+- triggering evidence: one-family-only signal, outdated host line, or historical evidence that has not yet been expanded into the missing package-level comparison surface.
+- pair effect: does not invalidate the underlying pair, but prevents promotion from cell-level signal to package-level justification.
+- usual severity: `medium`
+
 ### `none`
 
 - meaning: no material failure category was observed for this run or pair.

@@ -218,6 +218,7 @@ emit-latency-evidence-candidate:
 
 revalidate-mediation-evidence-package:
 	$(PYTEST) tests/unit/test_mediation_evidence_package.py -q
+	$(PYTHON) tools/mediation_evidence_package.py --check
 
 revalidate-mediation-reference-host-realization-basis:
 	$(PYTEST) tests/unit/test_mediation_reference_host_realization_basis.py -q

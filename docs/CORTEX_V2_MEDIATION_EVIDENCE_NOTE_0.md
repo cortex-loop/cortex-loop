@@ -63,3 +63,26 @@ Reference, Gemini, and OpenAI now carry the lower-visible-burden `candidate_posi
 Mediation remains blocked because the current evidence is still too narrow across axes and hosts to justify implementation.
 Lower visible burden at equal task value remains package-insufficient because all current burden signal is still confined to the `thrash_control` scenario family.
 If no mediation-vs-non-mediation axis shows measurable lift under this package, mediation remains blocked and no implementation seam may open.
+
+## Exact Missing-Evidence Delta
+
+| axis | current_package_verdict | current_candidate_positive_cells | why_still_insufficient | minimum_additional_paired_evidence |
+| --- | --- | --- | --- | --- |
+| reduced thrashing | insufficient | scenario_thrash_reference_01/reference; scenario_thrash_gemini_01/gemini; scenario_thrash_openai_01/openai | Current signal comes from one family only and has no non-thrash corroboration. | Record scenario_branch_reference_01, scenario_branch_openai_01, and scenario_branch_claude_01 with 3 usable pairs each. |
+| better branch discipline | insufficient | scenario_thrash_reference_01/reference; scenario_thrash_gemini_01/gemini; scenario_thrash_openai_01/openai | Current branch-discipline signal derives only from thrash_control and has no dedicated family. | Record scenario_branch_reference_01, scenario_branch_openai_01, and scenario_branch_claude_01 with 3 usable pairs each. |
+| better uncertainty handling | insufficient | scenario_uncertainty_reference_01/reference; scenario_uncertainty_gemini_01/gemini; scenario_uncertainty_openai_01/openai | Current uncertainty signal comes from one family only and still has no Claude expansion. | Record scenario_uncertainty_claude_01 with 3 usable pairs, or add one second uncertainty-sensitive family on stable hosts. |
+| lower visible burden at equal task value | insufficient | scenario_thrash_reference_01/reference; scenario_thrash_gemini_01/gemini; scenario_thrash_openai_01/openai | Current burden signal is confined to thrash_control and no non-thrash equal-value burden family is recorded. | Record scenario_burden_reference_01, scenario_burden_openai_01, and scenario_burden_claude_01 with burden refs and 3 usable pairs each. |
+| better host-specialized realization | insufficient | scenario_host_reference_01/reference; scenario_host_gemini_01/gemini; scenario_host_openai_01/openai | Current signal exists on one family only, Claude is missing, and future reruns should favor the most stable hosts first. | Record scenario_host_claude_01 with 3 usable pairs and refresh host_realization on reference and openai before promotion. |
+
+host-specialized realization has cell-level signal but not enough package breadth.
+branch-discipline evidence still derives only from `thrash_control`.
+Gemini should remain explicit as partial/contaminated where needed, not hidden.
+
+## Next Rerun Contract
+
+| target_id | preferred_hosts | minimum_pairs | reason |
+| --- | --- | --- | --- |
+| branch_discipline_family | reference, openai, claude | 3 usable pairs per host | Current branch-discipline signal derives only from thrash_control. |
+| non_thrash_equal_value_burden_family | reference, openai, claude | 3 usable pairs per host | Current burden signal is confined to thrash_control. |
+| host_realization_expansion | reference, openai, claude | 3 usable pairs per host | Current host-realization signal lacks Claude breadth and should favor the most stable hosts first. |
+| uncertainty_expansion_if_still_needed | claude first, then stable second-family expansion | 3 usable pairs | Current uncertainty signal comes from one family only and may still be too narrow after J2. |

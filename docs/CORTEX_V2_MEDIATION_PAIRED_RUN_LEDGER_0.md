@@ -15,6 +15,14 @@ Version `0` still precommits coverage from the current scenario catalog and pres
 - Use `docs/CORTEX_V2_MEDIATION_RUN_PACKET_TEMPLATE_0.md` for the per-run packet refs recorded below.
 - This ledger does not justify mediation or authorize implementation work.
 
+## Package Coverage Summary
+
+| coverage_surface | current_state | notes |
+| --- | --- | --- |
+| current committed scenario-host cells | 9 current cells / 27 usable pairs | Reference, Gemini, and OpenAI current package cells are recorded; Claude is still absent from the mediation package. |
+| missing J2 breadth | 8 planned targets / 0 recorded pairs | Branch-discipline, non-thrash burden, Claude host-realization, and Claude uncertainty-expansion rows remain missing. |
+| contamination-preserving rule | explicit | Provider-limit and host-capacity contamination must remain explicit rather than being laundered into clean lift or clean defeat. |
+
 ## Coverage Commitments
 
 | scenario_id | host_family | scenario_family | task_value_rubric_id | approval_or_environment_context_id | minimum_paired_run_count | coverage_status |
@@ -61,3 +69,16 @@ Version `0` still precommits coverage from the current scenario catalog and pres
 | pair_openai_uncertainty_002 | scenario_uncertainty_openai_01 | openai | openai_uncertainty_baseline_run_002 | openai_uncertainty_mediated_run_002 | docs/mediation_evidence/openai/scenario_uncertainty_openai_01__baseline_non_mediated__run_002.md | docs/mediation_evidence/openai/scenario_uncertainty_openai_01__experimental_mediated__run_002.md | usable | none | Second OpenAI-only experimental uncertainty pair. The same scenario, host, rubric, environment context, commitment boundary, contradiction/degradation law, and direct commitment-path evidence surface are preserved. |
 | pair_openai_uncertainty_003 | scenario_uncertainty_openai_01 | openai | openai_uncertainty_baseline_run_003 | openai_uncertainty_mediated_run_003 | docs/mediation_evidence/openai/scenario_uncertainty_openai_01__baseline_non_mediated__run_003.md | docs/mediation_evidence/openai/scenario_uncertainty_openai_01__experimental_mediated__run_003.md | usable | none | Third OpenAI-only experimental uncertainty pair. The same scenario, host, rubric, environment context, commitment boundary, contradiction/degradation law, and direct commitment-path evidence surface are preserved. |
 | none_recorded_yet | — | — | — | — | — | — | not_recorded | none | No additional live paired runs are recorded yet. |
+
+## J2 Planned Pair Slots
+
+| proposed_scenario_id | host_family | minimum_paired_run_count | planned_status | notes |
+| --- | --- | --- | --- | --- |
+| scenario_branch_reference_01 | reference | 3 | missing | First stable non-thrash branch-discipline target. |
+| scenario_branch_openai_01 | openai | 3 | missing | Second stable non-thrash branch-discipline target. |
+| scenario_branch_claude_01 | claude | 3 | missing | Adds the missing Claude branch-discipline line. |
+| scenario_burden_reference_01 | reference | 3 | missing | First non-thrash equal-value burden family. |
+| scenario_burden_openai_01 | openai | 3 | missing | Second non-thrash equal-value burden family. |
+| scenario_burden_claude_01 | claude | 3 | missing | Adds the missing Claude burden line. |
+| scenario_host_claude_01 | claude | 3 | missing | Expands host-realization breadth onto Claude. |
+| scenario_uncertainty_claude_01 | claude | 3 | missing | First uncertainty expansion target if one-family evidence remains too narrow. |
