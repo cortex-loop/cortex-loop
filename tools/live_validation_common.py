@@ -160,6 +160,60 @@ def write_text(path: Path, text: str) -> None:
     path.write_text(sanitize_text(text), encoding="utf-8")
 
 
+def read_json_file(path: Path) -> dict[str, Any]:
+    if not path.exists():
+        return {}
+    return json.loads(path.read_text(encoding="utf-8"))
+
+
+def recent_operator_probe_failure(provider: str) -> str | None:
+    report = read_json_file(PREFLIGHT_REPORT_PATH)
+    operator_probe = report.get("operator_probe", {}).get(provider, {})
+    failure_class = operator_probe.get("failure_class")
+    return failure_class if isinstance(failure_class, str) and failure_class else None
+
+
+def summarize_operator_runs(
+    runs: list[dict[str, Any]] | tuple[dict[str, Any], ...],
+    *,
+    scenario_id: str | None = None,
+) -> dict[str, Any]:
+    filtered = [
+        run
+        for run in runs
+        if isinstance(run, dict)
+        and not run.get("skipped")
+        and (scenario_id is None or run.get("scenario_id") == scenario_id)
+    ]
+    clean_success_count = sum(
+        1
+        for run in filtered
+        if run.get("success") and not run.get("warning_classes")
+    )
+    warning_bearing_success_present = any(
+        run.get("success") and bool(run.get("warning_classes"))
+        for run in filtered
+    )
+    latest_failure_class = next(
+        (
+            str(run.get("failure_class"))
+            for run in reversed(filtered)
+            if isinstance(run.get("failure_class"), str) and run.get("failure_class")
+        ),
+        None,
+    )
+    previous_failed_before_completion = any(
+        (not run.get("success")) and not run.get("skipped")
+        for run in filtered
+    )
+    return {
+        "clean_success_count": clean_success_count,
+        "warning_bearing_success_present": warning_bearing_success_present,
+        "latest_failure_class": latest_failure_class,
+        "previous_failed_before_completion": previous_failed_before_completion,
+    }
+
+
 def sanitize_text(text: str) -> str:
     sanitized = text.replace(_HOME_PATH, "$HOME")
     sanitized = _TEMP_PATH_RE.sub("<temp-workspace>", sanitized)

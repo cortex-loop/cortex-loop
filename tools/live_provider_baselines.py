@@ -11,8 +11,13 @@ import urllib.request
 from pathlib import Path
 from typing import Any
 
+from cortex.sre.operator_routing import (
+    build_operator_probe_task_state,
+    build_operator_route_diagnostics,
+    select_operator_route,
+)
+
 from live_validation_common import (
-    GEMINI_OPERATOR_FULL_LADDER,
     MODEL_MATRIX,
     automation_auth_readiness,
     classify_failure,
@@ -25,9 +30,11 @@ from live_validation_common import (
     parse_json_lines,
     provider_cli_workspace,
     provider_root,
+    recent_operator_probe_failure,
     resolve_auth_mode,
     run_command,
     sanitize_text,
+    summarize_operator_runs,
     should_collapse_after_failure,
     vertex_adc_available,
     write_json,
@@ -139,6 +146,7 @@ def _capture_provider(
             preferred_model_override=preferred_model_override,
             fallback_model_override=fallback_model_override,
             disable_auto_probe=disable_auto_probe,
+            prior_runs=tuple(runs),
         )
         runs.append(result)
         if should_collapse_after_failure(result.get("failure_class")):
@@ -163,6 +171,7 @@ def _run_single_provider_baseline(
     preferred_model_override: str | None,
     fallback_model_override: str | None,
     disable_auto_probe: bool,
+    prior_runs: tuple[dict[str, Any], ...] = (),
 ) -> dict[str, Any]:
     stem = f"provider_baseline__smoke__run_{repeat_index:03d}"
     stdout_path = provider_root_path / f"{stem}.stdout.log"
@@ -173,6 +182,7 @@ def _run_single_provider_baseline(
     preferred_model = choose_model(provider, lane)
     auth_readiness = automation_auth_readiness(provider) if lane == "automation" else None
     auto_supported: bool | None = None
+    route_diagnostics: dict[str, Any] | None = None
     ladder = _requested_model_ladder(
         provider=provider,
         lane=lane,
@@ -212,6 +222,18 @@ def _run_single_provider_baseline(
         }
         write_json(metadata_path, payload)
         return payload
+
+    if lane == "operator":
+        prior_signal = summarize_operator_runs(prior_runs)
+        route_state = build_operator_probe_task_state(
+            previous_same_host_run_failed_before_completion=prior_signal["previous_failed_before_completion"],
+            recent_probe_failure_class=recent_operator_probe_failure(provider),
+            recent_baseline_clean_count=prior_signal["clean_success_count"],
+            recent_warning_bearing_success_present=prior_signal["warning_bearing_success_present"],
+        )
+        route_decision = select_operator_route(route_state)
+        route_diagnostics = build_operator_route_diagnostics(route_state, route_decision)
+
     started_at = now_utc_iso()
     run_result = _run_provider_probe(provider, lane=lane, auth_mode=auth_mode, model=first_model)
     failure_class = classify_failure(f"{run_result['stdout']}\n{run_result['stderr']}")
@@ -281,6 +303,8 @@ def _run_single_provider_baseline(
         "result_text": extract_result_text(records, stdout_text),
         "notes": run_result.get("notes"),
     }
+    if route_diagnostics is not None:
+        payload.update(route_diagnostics)
     write_json(metadata_path, payload)
     return payload
 

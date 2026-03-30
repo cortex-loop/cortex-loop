@@ -111,3 +111,26 @@ Current reading:
 - the earlier Gemini `plan`/named-model confounds were real and are now removed
 - but the true `auto` route on the free API-key lane still blocks repeated paired runs with `quota_exhausted`
 - so the remaining Gemini problem is now more honestly a stability/quota problem on the real default path, not a harness-side model chase
+
+## S1 Routing Candidate
+
+On the review branch, the first SRE-owned operator route selector now sits above the live harness and governs:
+
+- route profile
+- retry budget
+- continuity budget
+- verification requirement
+- and explicit blockedness under observed host friction / quota pressure
+
+Under that candidate routing layer, the fresh round-2 audit now returns:
+
+- Claude: `positive`
+- OpenAI: `positive`
+- Gemini: `positive` on the current audit surface
+- package verdict: `promising_positive`
+
+Important caveat:
+
+- Gemini still has blocked pairs in the local evidence
+- the difference is that those blocked pairs are now surfaced through explicit route/block decisions rather than hidden model fallback or `plan`-mode confounds
+- so the current branch truth is stronger than the original `Q1` line, but it is still branch-candidate truth until this review branch is published and accepted

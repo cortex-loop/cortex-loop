@@ -10,6 +10,12 @@ import time
 from pathlib import Path
 from typing import Any
 
+from cortex.sre.operator_routing import (
+    build_operator_route_diagnostics,
+    build_operator_task_state,
+    select_operator_route,
+)
+
 try:  # pragma: no cover - import path differs between script execution and pytest import.
     from .live_validation_common import (
         BLOCKING_FAILURE_CLASSES,
@@ -28,11 +34,14 @@ try:  # pragma: no cover - import path differs between script execution and pyte
         parse_json_lines,
         prepare_harness_workspace,
         provider_root,
+        recent_operator_probe_failure,
         REPO_ROOT,
         read_prompt_template,
+        read_json_file,
         resolve_auth_mode,
         run_target_test,
         sanitize_text,
+        summarize_operator_runs,
         should_collapse_after_failure,
         write_json,
         write_text,
@@ -56,11 +65,14 @@ except ImportError:  # pragma: no cover
         parse_json_lines,
         prepare_harness_workspace,
         provider_root,
+        recent_operator_probe_failure,
         REPO_ROOT,
         read_prompt_template,
+        read_json_file,
         resolve_auth_mode,
         run_target_test,
         sanitize_text,
+        summarize_operator_runs,
         should_collapse_after_failure,
         write_json,
         write_text,
@@ -224,6 +236,8 @@ def _run_provider(
                 scenario_spec.scenario_id,
                 repeat_index,
                 root,
+                baseline_runs=baseline_runs,
+                prior_runs=tuple(runs),
                 max_attempts=max_attempts,
                 cooldown_seconds=cooldown_seconds,
                 preferred_model_override=preferred_model_override,
@@ -239,6 +253,8 @@ def _run_provider(
             provider,
             root,
             existing_runs=existing_runs,
+            baseline_runs=baseline_runs,
+            prior_runs=tuple(runs),
             max_attempts=max_attempts,
             cooldown_seconds=cooldown_seconds,
             preferred_model_override=preferred_model_override,
@@ -262,6 +278,8 @@ def _run_single_scenario(
     repeat_index: int,
     root: Path,
     *,
+    baseline_runs: list[dict[str, Any]],
+    prior_runs: tuple[dict[str, Any], ...],
     max_attempts: int,
     cooldown_seconds: int,
     preferred_model_override: str | None,
@@ -283,6 +301,34 @@ def _run_single_scenario(
     prompt_file = next(spec.operator_prompt for spec in SCENARIOS if spec.scenario_id == scenario_id)
     prompt = read_prompt_template(prompt_file)
     auth_mode = resolve_auth_mode(provider, "operator")
+    route_state = build_operator_task_state(
+        scenario_id,
+        previous_same_host_run_failed_before_completion=summarize_operator_runs(
+            prior_runs,
+            scenario_id=scenario_id,
+        )["previous_failed_before_completion"],
+        recent_probe_failure_class=recent_operator_probe_failure(provider),
+        recent_baseline_clean_count=summarize_operator_runs(baseline_runs)["clean_success_count"],
+        recent_warning_bearing_success_present=summarize_operator_runs(baseline_runs)["warning_bearing_success_present"],
+        recent_product_failure_class=summarize_operator_runs(prior_runs, scenario_id=scenario_id)["latest_failure_class"],
+    )
+    route_decision = select_operator_route(route_state)
+    route_diagnostics = build_operator_route_diagnostics(route_state, route_decision)
+    if route_decision.blocked_reason is not None:
+        return _blocked_operator_route_payload(
+            provider=provider,
+            scenario_id=scenario_id,
+            repeat_index=repeat_index,
+            route_diagnostics=route_diagnostics,
+            failure_class=_blocked_route_failure_class(
+                route_state,
+                recent_probe_failure_class=recent_operator_probe_failure(provider),
+                recent_product_failure_class=summarize_operator_runs(
+                    prior_runs,
+                    scenario_id=scenario_id,
+                )["latest_failure_class"],
+            ),
+        )
     run_result, failure_class, chosen_model, preferred_model, auto_supported, attempted_models = _run_operator_attempts(
         provider=provider,
         prompt=prompt,
@@ -290,7 +336,7 @@ def _run_single_scenario(
         auth_mode=auth_mode,
         approval_mode=None,
         hook_log_path=hook_log_path,
-        max_attempts=max_attempts,
+        max_attempts=min(max_attempts, 1 + route_decision.budget.max_retries),
         cooldown_seconds=cooldown_seconds,
         preferred_model_override=preferred_model_override,
         fallback_model_override=fallback_model_override,
@@ -310,6 +356,8 @@ def _run_single_scenario(
         auth_mode=auth_mode,
         failure_class=failure_class,
         hook_log_path=hook_log_path,
+        run_verification=route_decision.budget.require_verification,
+        route_diagnostics=route_diagnostics,
     )
 
 
@@ -395,6 +443,8 @@ def _run_restart_continuity(
     root: Path,
     *,
     existing_runs: list[dict[str, Any]],
+    baseline_runs: list[dict[str, Any]],
+    prior_runs: tuple[dict[str, Any], ...],
     max_attempts: int,
     cooldown_seconds: int,
     preferred_model_override: str | None,
@@ -415,6 +465,38 @@ def _run_restart_continuity(
         repeat_index=repeat_index,
     )
     auth_mode = resolve_auth_mode(provider, "operator")
+    route_state = build_operator_task_state(
+        "restart_continuity",
+        previous_same_host_run_failed_before_completion=summarize_operator_runs(
+            prior_runs,
+            scenario_id="restart_continuity",
+        )["previous_failed_before_completion"],
+        recent_probe_failure_class=recent_operator_probe_failure(provider),
+        recent_baseline_clean_count=summarize_operator_runs(baseline_runs)["clean_success_count"],
+        recent_warning_bearing_success_present=summarize_operator_runs(baseline_runs)["warning_bearing_success_present"],
+        recent_product_failure_class=summarize_operator_runs(
+            prior_runs,
+            scenario_id="restart_continuity",
+        )["latest_failure_class"],
+    )
+    route_decision = select_operator_route(route_state)
+    route_diagnostics = build_operator_route_diagnostics(route_state, route_decision)
+    if route_decision.blocked_reason is not None:
+        return _blocked_operator_route_payload(
+            provider=provider,
+            scenario_id="restart_continuity",
+            repeat_index=repeat_index,
+            route_diagnostics=route_diagnostics,
+            failure_class=_blocked_route_failure_class(
+                route_state,
+                recent_probe_failure_class=recent_operator_probe_failure(provider),
+                recent_product_failure_class=summarize_operator_runs(
+                    prior_runs,
+                    scenario_id="restart_continuity",
+                )["latest_failure_class"],
+            ),
+            notes="Continuity blocked before the first signed-in operator turn.",
+        )
     first_result, first_failure, chosen_model, preferred_model, auto_supported, attempted_models = _run_operator_attempts(
         provider=provider,
         prompt=read_prompt_template("restart_continuity_turn1_operator.md"),
@@ -422,7 +504,7 @@ def _run_restart_continuity(
         auth_mode=auth_mode,
         approval_mode=None,
         hook_log_path=hook_log_path,
-        max_attempts=max_attempts,
+        max_attempts=min(max_attempts, 1 + route_decision.budget.max_retries),
         cooldown_seconds=cooldown_seconds,
         preferred_model_override=preferred_model_override,
         fallback_model_override=fallback_model_override,
@@ -444,6 +526,8 @@ def _run_restart_continuity(
             auth_mode=auth_mode,
             failure_class=first_failure,
             hook_log_path=hook_log_path,
+            run_verification=False,
+            route_diagnostics=route_diagnostics,
         )
         return {
             "provider": provider,
@@ -453,6 +537,7 @@ def _run_restart_continuity(
             "failure_class": first_failure,
             "artifact_path": first_metadata["artifact_path"],
             "notes": "Continuity stopped at the first signed-in operator turn.",
+            **route_diagnostics,
         }
 
     first_records = parse_json_lines(first_result["stdout"])
@@ -484,6 +569,8 @@ def _run_restart_continuity(
         auth_mode=auth_mode,
         failure_class=second_failure,
         hook_log_path=hook_log_path,
+        run_verification=route_decision.budget.require_verification,
+        route_diagnostics=route_diagnostics,
     )
     payload["session_id"] = session_id
     write_json(root / "restart_continuity.latest.json", payload)
@@ -505,6 +592,8 @@ def _materialize_operator_run(
     auth_mode: str,
     failure_class: str | None,
     hook_log_path: Path | None,
+    run_verification: bool = True,
+    route_diagnostics: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     stem = f"{scenario_id}__run_{repeat_index:03d}"
     stdout_path = root / f"{stem}.stdout.log"
@@ -513,7 +602,11 @@ def _materialize_operator_run(
     write_text(stdout_path, run_result["stdout"])
     write_text(stderr_path, run_result["stderr"])
 
-    test_result = run_target_test(project_root)
+    test_result = (
+        run_target_test(project_root)
+        if run_verification
+        else {"exit_code": None, "stdout": "", "stderr": ""}
+    )
     records = parse_json_lines(run_result["stdout"])
     modified_files = collect_modified_files(project_root)
     result_text = extract_result_text(records, run_result["stdout"])
@@ -568,6 +661,8 @@ def _materialize_operator_run(
         "started_at": run_result["started_at"],
         "ended_at": run_result["ended_at"],
     }
+    if route_diagnostics is not None:
+        payload.update(route_diagnostics)
     write_json(metadata_path, payload)
     payload["artifact_path"] = str(metadata_path.relative_to(root.parents[4]))
     return payload
@@ -793,6 +888,39 @@ def _unsupported_operator_mode(provider: str, auth_mode: str, command: list[str]
         "started_at": now_utc_iso(),
         "ended_at": now_utc_iso(),
     }
+
+
+def _blocked_route_failure_class(
+    route_state,
+    *,
+    recent_probe_failure_class: str | None,
+    recent_product_failure_class: str | None,
+) -> str:
+    for candidate in (recent_product_failure_class, recent_probe_failure_class):
+        if candidate in {"quota_exhausted", "capacity_exhausted"}:
+            return candidate
+    return "quota_exhausted" if route_state.quota_pressure >= 0.80 else "operator_timeout"
+
+
+def _blocked_operator_route_payload(
+    *,
+    provider: str,
+    scenario_id: str,
+    repeat_index: int,
+    route_diagnostics: dict[str, Any],
+    failure_class: str,
+    notes: str | None = None,
+) -> dict[str, Any]:
+    payload = {
+        "provider": provider,
+        "scenario_id": scenario_id,
+        "repeat_index": repeat_index,
+        "success": False,
+        "failure_class": failure_class,
+        "notes": notes or "Route selector blocked execution before host work started.",
+    }
+    payload.update(route_diagnostics)
+    return payload
 
 
 def _read_json(path: Path) -> dict[str, Any]:

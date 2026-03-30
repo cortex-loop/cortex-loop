@@ -12,6 +12,12 @@ from contextlib import contextmanager, nullcontext
 from pathlib import Path
 from typing import Any, Iterator
 
+from cortex.sre.operator_routing import (
+    build_operator_route_diagnostics,
+    build_operator_task_state,
+    select_operator_route,
+)
+
 try:  # pragma: no cover
     from . import live_host_native_product_paths as host_paths
     from . import live_openai_app_server_operator as openai_operator
@@ -30,9 +36,11 @@ try:  # pragma: no cover
         operator_directionality_root,
         prepare_harness_workspace,
         read_prompt_template,
+        recent_operator_probe_failure,
         resolve_auth_mode,
         run_command,
         run_target_test,
+        summarize_operator_runs,
         write_json,
     )
 except ImportError:  # pragma: no cover
@@ -53,9 +61,11 @@ except ImportError:  # pragma: no cover
         operator_directionality_root,
         prepare_harness_workspace,
         read_prompt_template,
+        recent_operator_probe_failure,
         resolve_auth_mode,
         run_command,
         run_target_test,
+        summarize_operator_runs,
         write_json,
     )
 
@@ -142,17 +152,31 @@ def _run_provider(
     repeat_count: int,
 ) -> dict[str, Any]:
     precheck = _raw_host_precheck(provider)
+    baseline_summary = _read_json(comparator_path("operator_provider_baseline_summary.json"))
+    baseline_runs = baseline_summary.get("providers", {}).get(provider, {}).get("runs", [])
+    prior_variant_runs: dict[str, list[dict[str, Any]]] = {variant: [] for variant in _VARIANTS}
     pairs: list[dict[str, Any]] = []
     for scenario_id in scenarios:
         for repeat_index in range(1, repeat_count + 1):
-            pairs.append(
-                _run_pair(
-                    provider,
-                    scenario_id=scenario_id,
-                    repeat_index=repeat_index,
-                    precheck=precheck,
-                )
+            pair = _run_pair(
+                provider,
+                scenario_id=scenario_id,
+                repeat_index=repeat_index,
+                precheck=precheck,
+                baseline_runs=baseline_runs,
+                prior_variant_runs={
+                    variant: tuple(runs)
+                    for variant, runs in prior_variant_runs.items()
+                },
             )
+            pairs.append(pair)
+            if pair.get("pair_status") == "compared":
+                raw_host = pair.get("raw_host")
+                cortex_operator = pair.get("cortex_operator")
+                if isinstance(raw_host, dict):
+                    prior_variant_runs["raw_host"].append(raw_host)
+                if isinstance(cortex_operator, dict):
+                    prior_variant_runs["cortex_operator"].append(cortex_operator)
     summary = {
         "generated_at": now_utc_iso(),
         "provider": provider,
@@ -170,6 +194,8 @@ def _run_pair(
     scenario_id: str,
     repeat_index: int,
     precheck: dict[str, Any],
+    baseline_runs: list[dict[str, Any]],
+    prior_variant_runs: dict[str, tuple[dict[str, Any], ...]],
 ) -> dict[str, Any]:
     if precheck["status"] != "ready":
         raw_payload = _blocked_raw_payload(
@@ -194,6 +220,8 @@ def _run_pair(
         scenario_id=scenario_id,
         repeat_index=repeat_index,
         precheck=precheck,
+        baseline_runs=baseline_runs,
+        prior_runs=prior_variant_runs["raw_host"],
     )
     cortex_payload = _run_variant(
         provider,
@@ -201,6 +229,8 @@ def _run_pair(
         scenario_id=scenario_id,
         repeat_index=repeat_index,
         precheck=precheck,
+        baseline_runs=baseline_runs,
+        prior_runs=prior_variant_runs["cortex_operator"],
     )
     return {
         "provider": provider,
@@ -220,6 +250,8 @@ def _run_variant(
     scenario_id: str,
     repeat_index: int,
     precheck: dict[str, Any],
+    baseline_runs: list[dict[str, Any]],
+    prior_runs: tuple[dict[str, Any], ...],
 ) -> dict[str, Any]:
     if provider == "openai":
         return _run_openai_variant(
@@ -234,6 +266,8 @@ def _run_variant(
         scenario_id=scenario_id,
         repeat_index=repeat_index,
         precheck=precheck,
+        baseline_runs=baseline_runs,
+        prior_runs=prior_runs,
     )
 
 
@@ -244,6 +278,8 @@ def _run_cli_variant(
     scenario_id: str,
     repeat_index: int,
     precheck: dict[str, Any],
+    baseline_runs: list[dict[str, Any]],
+    prior_runs: tuple[dict[str, Any], ...],
 ) -> dict[str, Any]:
     root = operator_directionality_root(provider, variant)
     project_root = prepare_harness_workspace(
@@ -277,6 +313,38 @@ def _run_cli_variant(
 
     prompt = read_prompt_template(_SCENARIOS[scenario_id]["prompt_file"])
     auth_mode = resolve_auth_mode(provider, "operator")
+    route_state = build_operator_task_state(
+        scenario_id,
+        previous_same_host_run_failed_before_completion=summarize_operator_runs(
+            prior_runs,
+            scenario_id=scenario_id,
+        )["previous_failed_before_completion"],
+        recent_probe_failure_class=recent_operator_probe_failure(provider),
+        recent_baseline_clean_count=summarize_operator_runs(baseline_runs)["clean_success_count"],
+        recent_warning_bearing_success_present=summarize_operator_runs(baseline_runs)["warning_bearing_success_present"],
+        recent_product_failure_class=summarize_operator_runs(
+            prior_runs,
+            scenario_id=scenario_id,
+        )["latest_failure_class"],
+    )
+    route_decision = select_operator_route(route_state)
+    route_diagnostics = build_operator_route_diagnostics(route_state, route_decision)
+    if route_decision.blocked_reason is not None:
+        return host_paths._blocked_operator_route_payload(
+            provider=provider,
+            scenario_id=scenario_id,
+            repeat_index=repeat_index,
+            route_diagnostics=route_diagnostics,
+            failure_class=host_paths._blocked_route_failure_class(
+                route_state,
+                recent_probe_failure_class=recent_operator_probe_failure(provider),
+                recent_product_failure_class=summarize_operator_runs(
+                    prior_runs,
+                    scenario_id=scenario_id,
+                )["latest_failure_class"],
+            ),
+            notes="Route selector blocked paired execution before host work started.",
+        )
     if variant == "cortex_operator":
         run_result, failure_class, chosen_model, preferred_model, auto_supported, attempted_models = host_paths._run_operator_attempts(
             provider=provider,
@@ -285,7 +353,7 @@ def _run_cli_variant(
             auth_mode=auth_mode,
             approval_mode=None,
             hook_log_path=hook_log_path,
-            max_attempts=3,
+            max_attempts=1 + route_decision.budget.max_retries,
             cooldown_seconds=30,
             preferred_model_override=None,
             fallback_model_override=None,
@@ -299,6 +367,7 @@ def _run_cli_variant(
             auth_mode=auth_mode,
             approval_mode=None,
             precheck=precheck,
+            max_attempts=1 + route_decision.budget.max_retries,
         )
     payload = host_paths._materialize_operator_run(
         provider=provider,
@@ -314,6 +383,8 @@ def _run_cli_variant(
         auth_mode=auth_mode,
         failure_class=failure_class,
         hook_log_path=hook_log_path,
+        run_verification=route_decision.budget.require_verification,
+        route_diagnostics=route_diagnostics,
     )
     payload["variant"] = variant
     payload["surface"] = _SURFACE_LABEL[provider]
@@ -330,10 +401,44 @@ def _run_cli_restart_continuity_variant(
     root: Path,
     hook_log_path: Path | None,
     precheck: dict[str, Any],
+    baseline_runs: list[dict[str, Any]],
+    prior_runs: tuple[dict[str, Any], ...],
 ) -> dict[str, Any]:
     auth_mode = resolve_auth_mode(provider, "operator")
     first_prompt = read_prompt_template(_SCENARIOS[scenario_id]["turn1_prompt_file"])
     second_prompt = read_prompt_template(_SCENARIOS[scenario_id]["turn2_prompt_file"])
+    route_state = build_operator_task_state(
+        scenario_id,
+        previous_same_host_run_failed_before_completion=summarize_operator_runs(
+            prior_runs,
+            scenario_id=scenario_id,
+        )["previous_failed_before_completion"],
+        recent_probe_failure_class=recent_operator_probe_failure(provider),
+        recent_baseline_clean_count=summarize_operator_runs(baseline_runs)["clean_success_count"],
+        recent_warning_bearing_success_present=summarize_operator_runs(baseline_runs)["warning_bearing_success_present"],
+        recent_product_failure_class=summarize_operator_runs(
+            prior_runs,
+            scenario_id=scenario_id,
+        )["latest_failure_class"],
+    )
+    route_decision = select_operator_route(route_state)
+    route_diagnostics = build_operator_route_diagnostics(route_state, route_decision)
+    if route_decision.blocked_reason is not None:
+        return host_paths._blocked_operator_route_payload(
+            provider=provider,
+            scenario_id=scenario_id,
+            repeat_index=repeat_index,
+            route_diagnostics=route_diagnostics,
+            failure_class=host_paths._blocked_route_failure_class(
+                route_state,
+                recent_probe_failure_class=recent_operator_probe_failure(provider),
+                recent_product_failure_class=summarize_operator_runs(
+                    prior_runs,
+                    scenario_id=scenario_id,
+                )["latest_failure_class"],
+            ),
+            notes="Route selector blocked continuity before the first operator turn.",
+        )
 
     if variant == "cortex_operator":
         first_result, first_failure, chosen_model, preferred_model, auto_supported, attempted_models = host_paths._run_operator_attempts(
@@ -343,7 +448,7 @@ def _run_cli_restart_continuity_variant(
             auth_mode=auth_mode,
             approval_mode=None,
             hook_log_path=hook_log_path,
-            max_attempts=3,
+            max_attempts=1 + route_decision.budget.max_retries,
             cooldown_seconds=30,
             preferred_model_override=None,
             fallback_model_override=None,
@@ -357,6 +462,7 @@ def _run_cli_restart_continuity_variant(
             auth_mode=auth_mode,
             approval_mode=None,
             precheck=precheck,
+            max_attempts=1 + route_decision.budget.max_retries,
         )
 
     if first_failure in host_paths.BLOCKING_FAILURE_CLASSES:
@@ -373,6 +479,7 @@ def _run_cli_restart_continuity_variant(
             "preferred_model": preferred_model,
             "notes": "Continuity stopped at the first operator turn.",
             "artifact_path": None,
+            **route_diagnostics,
         }
         return payload
 
@@ -419,6 +526,8 @@ def _run_cli_restart_continuity_variant(
         auth_mode=auth_mode,
         failure_class=second_failure,
         hook_log_path=hook_log_path,
+        run_verification=route_decision.budget.require_verification,
+        route_diagnostics=route_diagnostics,
     )
     payload["variant"] = variant
     payload["surface"] = _SURFACE_LABEL[provider]
@@ -434,6 +543,7 @@ def _run_raw_operator_attempts(
     auth_mode: str,
     approval_mode: str | None,
     precheck: dict[str, Any],
+    max_attempts: int,
 ) -> tuple[dict[str, Any], str | None, str, str, bool | None, list[str]]:
     auto_supported: bool | None = None
     ladder = host_paths._requested_model_ladder(
@@ -448,7 +558,7 @@ def _run_raw_operator_attempts(
     run_result: dict[str, Any] | None = None
     failure_class: str | None = None
 
-    for attempt_index in range(1, 4):
+    for attempt_index in range(1, max_attempts + 1):
         run_result = _run_raw_provider_task(
             provider,
             prompt=prompt,
@@ -482,7 +592,7 @@ def _run_raw_operator_attempts(
             continue
         if failure_class not in {"capacity_exhausted", "quota_exhausted", "operator_timeout"}:
             break
-        if attempt_index < 3:
+        if attempt_index < max_attempts:
             time.sleep(30)
 
     if run_result is None:

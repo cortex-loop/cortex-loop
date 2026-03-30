@@ -403,6 +403,42 @@ def test_automation_provider_baseline_skips_when_auth_readiness_is_blocked(monke
     assert payload["success"] is False
 
 
+def test_operator_provider_baseline_surfaces_route_diagnostics(monkeypatch) -> None:
+    monkeypatch.setattr(
+        live_provider_baselines,
+        "recent_operator_probe_failure",
+        lambda provider: None,
+    )
+    monkeypatch.setattr(
+        live_provider_baselines,
+        "_run_provider_probe",
+        lambda *args, **kwargs: {
+            "command": ["gemini", "-p", "Respond exactly with OK.", "-o", "stream-json", "--approval-mode", "yolo"],
+            "exit_code": 0,
+            "stdout": '{"type":"message","role":"assistant","content":"OK"}\n{"type":"result","status":"success"}',
+            "stderr": "",
+            "started_at": "2026-03-30T00:00:00+00:00",
+            "ended_at": "2026-03-30T00:00:01+00:00",
+        },
+    )
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        payload = live_provider_baselines._run_single_provider_baseline(
+            provider="gemini",
+            lane="operator",
+            repeat_index=1,
+            provider_root_path=Path(tmpdir),
+            preferred_model_override=None,
+            fallback_model_override=None,
+            disable_auto_probe=False,
+            prior_runs=(),
+        )
+
+    assert payload["route_profile"] == "inspect_light"
+    assert payload["route_budget"]["max_turns"] == 1
+    assert payload["state_vector"] == [0.1, 0.0, 0.05, 0.35, 0.0, 0.0]
+
+
 def test_single_live_service_call_records_export_and_warning_timing(monkeypatch) -> None:
     @contextmanager
     def fake_running_service(provider, log_path, *, auth_mode):
@@ -737,6 +773,11 @@ def test_product_path_single_scenario_passes_default_approval_mode(monkeypatch, 
         "resolve_auth_mode",
         lambda provider, lane: "api_key",
     )
+    monkeypatch.setattr(
+        live_host_native_product_paths,
+        "recent_operator_probe_failure",
+        lambda provider: None,
+    )
 
     captured: dict[str, object] = {}
 
@@ -774,6 +815,8 @@ def test_product_path_single_scenario_passes_default_approval_mode(monkeypatch, 
         "pass_minimal",
         1,
         tmp_path,
+        baseline_runs=[],
+        prior_runs=(),
         max_attempts=1,
         cooldown_seconds=0,
         preferred_model_override=None,
@@ -782,6 +825,60 @@ def test_product_path_single_scenario_passes_default_approval_mode(monkeypatch, 
     )
 
     assert captured["approval_mode"] is None
+
+
+def test_product_path_single_scenario_blocks_when_route_selector_blocks(
+    monkeypatch,
+    tmp_path: Path,
+) -> None:
+    monkeypatch.setattr(
+        live_host_native_product_paths,
+        "prepare_harness_workspace",
+        lambda **kwargs: tmp_path / "project_a",
+    )
+    monkeypatch.setattr(
+        live_host_native_product_paths,
+        "_configure_hook_capture",
+        lambda **kwargs: None,
+    )
+    monkeypatch.setattr(
+        live_host_native_product_paths,
+        "read_prompt_template",
+        lambda filename: "prompt",
+    )
+    monkeypatch.setattr(
+        live_host_native_product_paths,
+        "resolve_auth_mode",
+        lambda provider, lane: "api_key",
+    )
+    monkeypatch.setattr(
+        live_host_native_product_paths,
+        "recent_operator_probe_failure",
+        lambda provider: "quota_exhausted",
+    )
+    monkeypatch.setattr(
+        live_host_native_product_paths,
+        "_run_operator_attempts",
+        lambda **kwargs: (_ for _ in ()).throw(AssertionError("operator call should not run")),
+    )
+
+    payload = live_host_native_product_paths._run_single_scenario(
+        "gemini",
+        "pass_minimal",
+        1,
+        tmp_path,
+        baseline_runs=[],
+        prior_runs=(),
+        max_attempts=1,
+        cooldown_seconds=0,
+        preferred_model_override=None,
+        fallback_model_override=None,
+        disable_auto_probe=False,
+    )
+
+    assert payload["failure_class"] == "quota_exhausted"
+    assert payload["route_profile"] == "blocked"
+    assert payload["blocked_reason"] == "blocked_by_quota_pressure"
 
 
 def test_product_path_restart_continuity_uses_default_first_turn_for_gemini(
@@ -802,6 +899,11 @@ def test_product_path_restart_continuity_uses_default_first_turn_for_gemini(
         live_host_native_product_paths,
         "resolve_auth_mode",
         lambda provider, lane: "api_key",
+    )
+    monkeypatch.setattr(
+        live_host_native_product_paths,
+        "recent_operator_probe_failure",
+        lambda provider: None,
     )
     monkeypatch.setattr(
         live_host_native_product_paths,
@@ -844,6 +946,8 @@ def test_product_path_restart_continuity_uses_default_first_turn_for_gemini(
         "gemini",
         tmp_path,
         existing_runs=[],
+        baseline_runs=[],
+        prior_runs=(),
         max_attempts=1,
         cooldown_seconds=0,
         preferred_model_override=None,
@@ -900,6 +1004,11 @@ def test_operator_directionality_restart_continuity_uses_default_first_turn_for_
     )
     monkeypatch.setattr(
         live_operator_directionality,
+        "recent_operator_probe_failure",
+        lambda provider: None,
+    )
+    monkeypatch.setattr(
+        live_operator_directionality,
         "read_prompt_template",
         lambda filename: "prompt",
     )
@@ -935,6 +1044,8 @@ def test_operator_directionality_restart_continuity_uses_default_first_turn_for_
         root=tmp_path,
         hook_log_path=None,
         precheck={"status": "ready"},
+        baseline_runs=[],
+        prior_runs=(),
     )
 
     assert captured["approval_mode"] is None

@@ -99,6 +99,9 @@ OPERATOR_DIRECTIONALITY_SCENARIO_CATALOG_PATH = (
 OPERATOR_DIRECTIONALITY_AUDIT_PATH = (
     REPO_ROOT / "docs" / "CORTEX_V2_OPERATOR_DIRECTIONALITY_AUDIT_0.md"
 )
+OPERATOR_ROUTING_PROGRAM_PATH = (
+    REPO_ROOT / "docs" / "CORTEX_V2_OPERATOR_ROUTING_PROGRAM_0.md"
+)
 
 
 def _read(path: Path) -> str:
@@ -337,6 +340,9 @@ def test_local_verification_doc_records_repo_workflow_commands() -> None:
     assert "python scripts/repo_workflow.py cleanup-report" in doc_text
     assert "make repo-hygiene" in doc_text
     assert "keep the current explicit stable models unless a separate host-defaults seam is explicitly opened" in doc_text
+    assert "## Operator routing realization" in doc_text
+    assert "python3 -m pytest tests/unit/test_operator_routing.py -q" in doc_text
+    assert "python3 -m pytest tests/unit/test_correspondence_sre.py -q" in doc_text
 
 
 def test_resume_protocol_and_active_workstream_contract_exist() -> None:
@@ -358,11 +364,11 @@ def test_resume_protocol_and_active_workstream_contract_exist() -> None:
     assert "Current working branch at ledger update:" in workstream_text
     assert "Current branch role:" in workstream_text
     assert "accepted workflow baseline truth now rests on `main` rather than a long-lived working branch" in workstream_text
-    assert "Current campaign: `Round 2 stable-headless operator audit in progress`" in workstream_text
-    assert "Current candidate seam: `Round 2 stable-headless operator rerun`;" in workstream_text
-    assert "`Q1` remains the accepted ancestor audit on the current machine" in workstream_text
-    assert "round 2 is now underway on the review branch" in workstream_text
-    assert "Claude remains positive, OpenAI remains positive, Gemini is now blocked" in workstream_text
+    assert "Current campaign: `S1 operator routing and round-2 rerun candidate complete`" in workstream_text
+    assert "Current candidate seam: `S1 operator routing and round-2 stabilization`;" in workstream_text
+    assert "`Q1` remains the accepted ancestor audit on `main`" in workstream_text
+    assert "the S1 route selector is now implemented on the review branch" in workstream_text
+    assert "Claude remains positive, OpenAI remains positive, and the current audit surface now returns Gemini positive" in workstream_text
     assert "the compare surface and live-validation truth from earlier seams remain accepted ancestor input and are not being reopened by the landed K train." in workstream_text
     assert "the current signed-in smoke surfaces are now clean again" in workstream_text
     assert "`codex exec` for smoke" in workstream_text
@@ -381,12 +387,13 @@ def test_resume_protocol_and_active_workstream_contract_exist() -> None:
     assert "fresh auto-only preflight reruns are stable on `auto` with `auth_mode=api_key` and `failure_class=quota_exhausted`" in workstream_text
     assert "fresh auto-only operator baseline reruns are stable on `auto` and return `OK` twice with no named-model fallback" in workstream_text
     assert "fresh auto-only `pass_minimal` product-path rerun now blocks immediately on `quota_exhausted` with `model: auto-gemini-3`" in workstream_text
-    assert "the fresh round-2 paired audit now shows:" in workstream_text
-    assert "package verdict remains `mixed_direction`" in workstream_text
+    assert "the S1 route selector now turns those same pressures into explicit route/budget decisions on the operator path" in workstream_text
+    assert "the fresh round-2 paired audit on the review branch now shows:" in workstream_text
+    assert "package verdict is now `promising_positive`" in workstream_text
     assert "do not reopen the K train by inertia now that the bounded proven-lane executive/runtime line is landed" in workstream_text
     assert "do not widen from the mixed `Q1` package result into new runtime or product claims" in workstream_text
-    assert "the next lawful move remains one narrow Gemini explanation seam, now against the round-2 contract" in workstream_text
-    assert "determine whether the Gemini `blocked` round-2 result reflects" in workstream_text
+    assert "the next lawful move is to publish/review this branch as the candidate S1 line" in workstream_text
+    assert "after acceptance, the next bounded train should project the same route/budget selector into the proven reference/OpenAI runtime surfaces" in workstream_text
     assert "keep `N2` as a separate blocked train pending a capable machine" in workstream_text
     assert "Do not treat signed-in provider CLI sessions as equivalent to the automation credentials" in workstream_text
     assert "Do not treat the new OpenAI App Server operator proof as license to reopen v1 assisted mode" in workstream_text
@@ -422,6 +429,7 @@ def test_reference_runtime_program_lock_is_recorded() -> None:
     operator_directionality_program_text = _read(OPERATOR_DIRECTIONALITY_PROGRAM_PATH)
     operator_directionality_scenario_catalog_text = _read(OPERATOR_DIRECTIONALITY_SCENARIO_CATALOG_PATH)
     operator_directionality_audit_text = _read(OPERATOR_DIRECTIONALITY_AUDIT_PATH)
+    operator_routing_program_text = _read(OPERATOR_ROUTING_PROGRAM_PATH)
     gemini_runtime_restack_text = _read(GEMINI_RUNTIME_RESTACK_PROGRAM_PATH)
     gemini_runtime_program_text = _read(GEMINI_RUNTIME_PROGRAM_PATH)
     gemini_ingress_program_text = _read(GEMINI_INGRESS_PROGRAM_PATH)
@@ -599,6 +607,23 @@ def test_reference_runtime_program_lock_is_recorded() -> None:
     assert "`pass_minimal`" in operator_directionality_scenario_catalog_text
     assert "`truth_gap`" in operator_directionality_scenario_catalog_text
     assert "`restart_continuity`" in operator_directionality_scenario_catalog_text
+    assert "Status: active runtime-program brief for the first bounded SRE-owned operator routing train" in operator_routing_program_text
+    assert "one bounded SRE + harness train" in operator_routing_program_text
+    assert "one SRE-owned operator route selector over low-dimensional task-state geometry" in operator_routing_program_text
+    assert "This document does not authorize:" in operator_routing_program_text
+    assert "named model routing" in operator_routing_program_text
+    assert "Locked route profiles:" in operator_routing_program_text
+    assert "`inspect_light`" in operator_routing_program_text
+    assert "`blocked`" in operator_routing_program_text
+    assert "The route selector may choose:" in operator_routing_program_text
+    assert "retry budget" in operator_routing_program_text
+    assert "It may not choose:" in operator_routing_program_text
+    assert "named models" in operator_routing_program_text
+    assert "Required local artifact diagnostics:" in operator_routing_program_text
+    assert "`route_profile`" in operator_routing_program_text
+    assert "`blocked_reason`" in operator_routing_program_text
+    assert "Minimum deterministic proof:" in operator_routing_program_text
+    assert "`python3 -m pytest tests/unit/test_operator_routing.py -q`" in operator_routing_program_text
     assert "Status: accepted paired raw-vs-Cortex operator directionality audit note" in operator_directionality_audit_text
     assert "**mixed_direction**" in operator_directionality_audit_text
     assert "Claude is directionally positive" in operator_directionality_audit_text
@@ -608,6 +633,8 @@ def test_reference_runtime_program_lock_is_recorded() -> None:
     assert "The confound was real, but removing it did not by itself clear Gemini" in operator_directionality_audit_text
     assert "Round 2 Stable-Defaults Rerun" in operator_directionality_audit_text
     assert "Gemini: `blocked`" in operator_directionality_audit_text
+    assert "S1 Routing Candidate" in operator_directionality_audit_text
+    assert "package verdict: `promising_positive`" in operator_directionality_audit_text
     assert "`G1` Gemini documented host-event runtime shell" in phase_gate_text
     assert "`G2` Gemini raw-transcript ingress shell" in phase_gate_text
     assert "`G3` Gemini loopback service shell" in phase_gate_text
@@ -844,3 +871,5 @@ def test_runtime_restack_program_lock_is_recorded() -> None:
     assert "the operator/evaluation harness must not call explicit Gemini model names at all" in theory_text
     assert "fresh auto-only product-path rerun is sharper still" in theory_text
     assert "first full round-2 stable-defaults rerun now says the package is still `mixed_direction`" in theory_text
+    assert "review-branch `S1` routing candidate improves that further" in theory_text
+    assert "fresh round-2 audit on that branch now returns `promising_positive`" in theory_text

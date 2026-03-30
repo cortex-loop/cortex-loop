@@ -557,6 +557,20 @@ Repo-local entry point:
 make live-operator-payoff-audit
 ```
 
+## Operator routing realization
+
+This revalidates the first bounded SRE-owned operator routing layer over the live-testing harness.
+It checks the bounded task-state builder, geometric route selector, quota-pressure blocking, guarded continuity preference, and route diagnostics carried into live artifacts.
+It does not authorize named model routing, service/auth widening, AUX activation, or packet-level runtime changes.
+
+Direct commands:
+
+```sh
+python3 -m pytest tests/unit/test_operator_routing.py -q
+python3 -m pytest tests/unit/test_live_validation_tools.py -q
+python3 -m pytest tests/unit/test_correspondence_sre.py -q
+```
+
 ## Live operator directionality
 
 This runs the paired raw-vs-Cortex operator audit on the current machine.
