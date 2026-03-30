@@ -600,6 +600,16 @@ def extract_token_usage(provider: str, records: list[dict[str, Any]]) -> dict[st
     }
 
 
+def rewrite_artifact_payload(payload: dict[str, Any]) -> None:
+    artifact_path = payload.get("artifact_path")
+    if not isinstance(artifact_path, str) or not artifact_path.strip():
+        raise ValueError("rewrite_artifact_payload requires payload['artifact_path']")
+    path = REPO_ROOT / artifact_path
+    serializable = dict(payload)
+    serializable.pop("artifact_path", None)
+    write_json(path, serializable)
+
+
 def extract_session_id(provider: str, records: list[dict[str, Any]]) -> str | None:
     for record in records:
         if provider == "claude":

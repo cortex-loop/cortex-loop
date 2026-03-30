@@ -495,8 +495,8 @@ def _apply_modulators_to_budget(
 ) -> OperatorBudgetProfile:
     if (
         state.task_mode is OperatorTaskMode.INSPECT
-        and modulator_state.update_pressure >= 0.60
-        and state.uncertainty >= 0.60
+        and modulator_state.update_pressure >= 0.50
+        and state.uncertainty >= 0.35
         and state.quota_pressure < 0.60
     ):
         reason_tags.add("budget:extra-read-pass")

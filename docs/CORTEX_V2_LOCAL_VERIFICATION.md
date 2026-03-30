@@ -560,7 +560,7 @@ make live-operator-payoff-audit
 ## Operator routing realization
 
 This revalidates the first bounded SRE-owned operator routing layer over the live-testing harness.
-It checks the bounded task-state builder, compact SRE modulator update law, geometric route selector, quota-pressure blocking, guarded continuity preference, and route/modulator diagnostics carried into live artifacts.
+It checks the bounded task-state builder, compact SRE modulator update law, geometric route selector, quota-pressure blocking, guarded continuity preference, one extra inspect read-pass law, and route/modulator diagnostics carried into live artifacts.
 It does not authorize named model routing, service/auth widening, AUX activation, or packet-level runtime changes.
 
 Direct commands:

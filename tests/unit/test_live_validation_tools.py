@@ -589,6 +589,8 @@ def test_operator_provider_baseline_surfaces_route_diagnostics(monkeypatch) -> N
 
     assert payload["route_profile"] == "inspect_light"
     assert payload["route_budget"]["max_turns"] == 1
+    assert payload["route_budget"]["allow_extra_read_pass"] is True
+    assert payload["route_budget"]["max_retries"] == 1
     assert payload["state_vector"] == [0.1, 0.0, 0.05, 0.35, 0.0, 0.0]
     assert payload["modulator_state"] == {
         "focus_gain": 0.045,
@@ -2021,3 +2023,138 @@ def test_openai_continuity_diagnostics_marks_rollout_failure() -> None:
         "thread_ephemeral": False,
         "continuity_failure_kind": "continuity_rollout_missing",
     }
+
+
+def test_openai_truth_gap_extra_read_pass_uses_thread_resume(
+    monkeypatch,
+    tmp_path: Path,
+) -> None:
+    first_payload = {
+        "artifact_path": "artifact.json",
+        "variant": "raw_host",
+        "surface": "codex_app_server",
+        "attempted_models": ["gpt-5.3-codex"],
+        "truth_gap_kind": "truthful_incomplete",
+        "provider_limit_interference": False,
+    }
+
+    monkeypatch.setattr(
+        live_operator_directionality.openai_operator,
+        "_run_resumed_turn",
+        lambda **kwargs: (
+            {
+                "started_at": "2026-03-30T00:00:01+00:00",
+                "ended_at": "2026-03-30T00:00:02+00:00",
+                "timeline": [],
+                "stderr_text": "",
+                "thread_read": {},
+                "thread_id": kwargs["thread_id"],
+                "lifecycle_summary": {
+                    "thread_id": kwargs["thread_id"],
+                    "lifecycle_event_count": 0,
+                    "lifecycle_event_labels": [],
+                    "item_lifecycle_counts": {},
+                    "server_request_methods": [],
+                    "result_text": "still incomplete and not fixed",
+                },
+            },
+            None,
+        ),
+    )
+    monkeypatch.setattr(
+        live_operator_directionality.openai_operator,
+        "_materialize_run",
+        lambda **kwargs: {
+            "artifact_path": first_payload["artifact_path"],
+            "variant": "raw_host",
+            "surface": "codex_app_server",
+            "attempted_models": ["gpt-5.3-codex"],
+            "truth_gap_kind": "truthful_incomplete",
+            "provider_limit_interference": False,
+        },
+    )
+    monkeypatch.setattr(
+        live_operator_directionality,
+        "rewrite_artifact_payload",
+        lambda payload: None,
+    )
+
+    payload = live_operator_directionality._maybe_run_openai_extra_read_pass(
+        project_root=tmp_path,
+        prompt="recheck",
+        auth_mode="codex_cli",
+        model="gpt-5.3-codex",
+        thread_id="thread-1",
+        env=None,
+        root=tmp_path,
+        repeat_index=1,
+        first_payload=first_payload,
+        route_diagnostics={},
+    )
+
+    assert payload["extra_read_pass_attempted"] is True
+    assert payload["extra_read_pass_completed"] is True
+    assert payload["extra_read_pass_mode"] == "resume"
+
+
+def test_cli_truth_gap_extra_read_failure_preserves_first_truthful_payload(
+    monkeypatch,
+    tmp_path: Path,
+) -> None:
+    first_payload = {
+        "artifact_path": "artifact.json",
+        "preferred_model": "claude-sonnet-4-6",
+        "auto_supported": None,
+        "attempted_models": ["claude-sonnet-4-6"],
+        "truth_gap_kind": "truthful_incomplete",
+        "provider_limit_interference": False,
+        "variant": "raw_host",
+        "surface": "claude_cli",
+    }
+
+    monkeypatch.setattr(
+        live_operator_directionality,
+        "_resume_raw_provider_task",
+        lambda provider, **kwargs: {
+            "command": ["claude"],
+            "exit_code": 0,
+            "stdout": '{"type":"assistant","message":{"content":[{"text":"complete for inspection"}]}}',
+            "stderr": "",
+            "started_at": "2026-03-30T00:00:01+00:00",
+            "ended_at": "2026-03-30T00:00:02+00:00",
+        },
+    )
+    monkeypatch.setattr(
+        live_operator_directionality.host_paths,
+        "_materialize_operator_run",
+        lambda **kwargs: {
+            **first_payload,
+            "truth_gap_kind": "smoothed_incomplete",
+            "provider_limit_interference": False,
+        },
+    )
+    monkeypatch.setattr(
+        live_operator_directionality,
+        "rewrite_artifact_payload",
+        lambda payload: None,
+    )
+
+    payload = live_operator_directionality._maybe_run_cli_extra_read_pass(
+        provider="claude",
+        variant="raw_host",
+        project_root=tmp_path,
+        prompt="recheck",
+        auth_mode="claude_code",
+        chosen_model="claude-sonnet-4-6",
+        session_id="session-1",
+        root=tmp_path,
+        hook_log_path=None,
+        repeat_index=1,
+        first_payload=first_payload,
+        route_diagnostics={},
+    )
+
+    assert payload["truth_gap_kind"] == "truthful_incomplete"
+    assert payload["extra_read_pass_attempted"] is True
+    assert payload["extra_read_pass_completed"] is False
+    assert payload["extra_read_pass_failure_class"] == "truth_gap_not_reaffirmed"

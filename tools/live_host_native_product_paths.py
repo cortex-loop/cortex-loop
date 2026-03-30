@@ -702,6 +702,10 @@ def _materialize_operator_run(
         "truth_gap_kind": truth_gap_kind,
         "started_at": run_result["started_at"],
         "ended_at": run_result["ended_at"],
+        "extra_read_pass_attempted": False,
+        "extra_read_pass_completed": False,
+        "extra_read_pass_mode": None,
+        "extra_read_pass_failure_class": None,
         **token_usage,
         **_provider_limit_fields(
             provider=provider,

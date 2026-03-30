@@ -42,6 +42,7 @@ try:  # pragma: no cover
         read_prompt_template,
         recent_operator_probe_failure,
         resolve_auth_mode,
+        rewrite_artifact_payload,
         run_command,
         run_target_test,
         summarize_operator_runs,
@@ -67,6 +68,7 @@ except ImportError:  # pragma: no cover
         read_prompt_template,
         recent_operator_probe_failure,
         resolve_auth_mode,
+        rewrite_artifact_payload,
         run_command,
         run_target_test,
         summarize_operator_runs,
@@ -438,6 +440,27 @@ def _run_cli_variant(
     )
     payload["variant"] = variant
     payload["surface"] = _SURFACE_LABEL[provider]
+    _attach_extra_read_defaults(payload)
+    if (
+        scenario_id == "truth_gap"
+        and route_decision.budget.allow_extra_read_pass
+        and payload.get("truth_gap_kind") == "truthful_incomplete"
+        and not payload.get("provider_limit_interference")
+    ):
+        payload = _maybe_run_cli_extra_read_pass(
+            provider=provider,
+            variant=variant,
+            project_root=project_root,
+            prompt=read_prompt_template("truth_gap_recheck_operator.md"),
+            auth_mode=auth_mode,
+            chosen_model=chosen_model,
+            session_id=extract_session_id(provider, host_paths.parse_json_lines(run_result["stdout"])),
+            root=root,
+            hook_log_path=hook_log_path,
+            repeat_index=repeat_index,
+            first_payload=payload,
+            route_diagnostics=route_diagnostics,
+        )
     return payload
 
 
@@ -895,22 +918,42 @@ def _run_openai_variant(
             scenario_id=scenario_id,
             env=env,
             stderr_path=root / f"{scenario_id}__run_{repeat_index:03d}.live.stderr.log",
+            ephemeral=not route_decision.budget.allow_extra_read_pass,
         )
-    payload = openai_operator._materialize_run(
-        root=root,
-        project_root=project_root,
-        scenario_id=scenario_id,
-        repeat_index=repeat_index,
-        auth_mode=auth_mode,
-        model=model,
-        run_state=run_state,
-        failure_class=failure_class,
-        run_test=route_decision.budget.require_verification and _SCENARIOS[scenario_id]["run_test"],
-        route_diagnostics=route_diagnostics,
-    )
-    payload["variant"] = variant
-    payload["surface"] = _SURFACE_LABEL["openai"]
-    payload["attempted_models"] = attempted_models
+        payload = openai_operator._materialize_run(
+            root=root,
+            project_root=project_root,
+            scenario_id=scenario_id,
+            repeat_index=repeat_index,
+            auth_mode=auth_mode,
+            model=model,
+            run_state=run_state,
+            failure_class=failure_class,
+            run_test=route_decision.budget.require_verification and _SCENARIOS[scenario_id]["run_test"],
+            route_diagnostics=route_diagnostics,
+        )
+        payload["variant"] = variant
+        payload["surface"] = _SURFACE_LABEL["openai"]
+        payload["attempted_models"] = attempted_models
+        _attach_extra_read_defaults(payload)
+        if (
+            scenario_id == "truth_gap"
+            and route_decision.budget.allow_extra_read_pass
+            and payload.get("truth_gap_kind") == "truthful_incomplete"
+            and not payload.get("provider_limit_interference")
+        ):
+            payload = _maybe_run_openai_extra_read_pass(
+                project_root=project_root,
+                prompt=read_prompt_template("truth_gap_recheck_operator.md"),
+                auth_mode=auth_mode,
+                model=model,
+                thread_id=run_state.get("thread_id"),
+                env=env,
+                root=root,
+                repeat_index=repeat_index,
+                first_payload=payload,
+                route_diagnostics=route_diagnostics,
+            )
     return payload
 
 
@@ -1152,6 +1195,187 @@ def _blocked_raw_payload(
     write_json(artifact_path, payload)
     payload["artifact_path"] = str(artifact_path.relative_to(root.parents[4]))
     return payload
+
+
+def _attach_extra_read_defaults(payload: dict[str, Any]) -> None:
+    payload.setdefault("extra_read_pass_attempted", False)
+    payload.setdefault("extra_read_pass_completed", False)
+    payload.setdefault("extra_read_pass_mode", None)
+    payload.setdefault("extra_read_pass_failure_class", None)
+
+
+def _maybe_run_cli_extra_read_pass(
+    *,
+    provider: str,
+    variant: str,
+    project_root: Path,
+    prompt: str,
+    auth_mode: str,
+    chosen_model: str,
+    session_id: str | None,
+    root: Path,
+    hook_log_path: Path | None,
+    repeat_index: int,
+    first_payload: dict[str, Any],
+    route_diagnostics: dict[str, Any],
+) -> dict[str, Any]:
+    if not session_id:
+        first_payload.update(
+            {
+                "extra_read_pass_attempted": True,
+                "extra_read_pass_completed": False,
+                "extra_read_pass_mode": "resume",
+                "extra_read_pass_failure_class": "operator_surface_missing",
+                "comparison_contaminated": True,
+            }
+        )
+        rewrite_artifact_payload(first_payload)
+        return first_payload
+
+    if variant == "cortex_operator":
+        second_result = host_paths._resume_provider_task(
+            provider,
+            prompt=prompt,
+            project_root=project_root,
+            model=chosen_model,
+            auth_mode=auth_mode,
+            session_id=session_id,
+            approval_mode="yolo" if provider == "gemini" else None,
+            hook_log_path=hook_log_path,
+            scenario_id="truth_gap",
+        )
+    else:
+        second_result = _resume_raw_provider_task(
+            provider,
+            prompt=prompt,
+            project_root=project_root,
+            model=chosen_model,
+            auth_mode=auth_mode,
+            session_id=session_id,
+            approval_mode="yolo" if provider == "gemini" else None,
+            precheck={"status": "ready"},
+            scenario_id="truth_gap",
+        )
+    second_failure = classify_failure(f"{second_result['stdout']}\n{second_result['stderr']}")
+    if second_failure is None and second_result["exit_code"] == 124:
+        second_failure = "operator_timeout"
+
+    second_payload = host_paths._materialize_operator_run(
+        provider=provider,
+        scenario_id="truth_gap",
+        repeat_index=repeat_index,
+        project_root=project_root,
+        root=root,
+        run_result=second_result,
+        model=chosen_model,
+        preferred_model=first_payload["preferred_model"],
+        auto_supported=first_payload.get("auto_supported"),
+        attempted_models=list(first_payload.get("attempted_models", [])) + [chosen_model],
+        auth_mode=auth_mode,
+        failure_class=second_failure,
+        hook_log_path=hook_log_path,
+        run_verification=False,
+        route_diagnostics=route_diagnostics,
+    )
+    second_payload["variant"] = variant
+    second_payload["surface"] = _SURFACE_LABEL[provider]
+    second_payload["attempted_models"] = list(first_payload.get("attempted_models", [])) + [chosen_model]
+    _attach_extra_read_defaults(second_payload)
+
+    if second_payload.get("truth_gap_kind") == "truthful_incomplete" and not second_payload.get(
+        "provider_limit_interference"
+    ):
+        second_payload.update(
+            {
+                "extra_read_pass_attempted": True,
+                "extra_read_pass_completed": True,
+                "extra_read_pass_mode": "resume",
+                "extra_read_pass_failure_class": None,
+            }
+        )
+        rewrite_artifact_payload(second_payload)
+        return second_payload
+
+    first_payload.update(
+        {
+            "extra_read_pass_attempted": True,
+            "extra_read_pass_completed": False,
+            "extra_read_pass_mode": "resume",
+            "extra_read_pass_failure_class": second_failure or "truth_gap_not_reaffirmed",
+            "comparison_contaminated": True,
+        }
+    )
+    rewrite_artifact_payload(first_payload)
+    return first_payload
+
+
+def _maybe_run_openai_extra_read_pass(
+    *,
+    project_root: Path,
+    prompt: str,
+    auth_mode: str,
+    model: str,
+    thread_id: str | None,
+    env: dict[str, str] | None,
+    root: Path,
+    repeat_index: int,
+    first_payload: dict[str, Any],
+    route_diagnostics: dict[str, Any],
+) -> dict[str, Any]:
+    second_state, second_failure = openai_operator._run_resumed_turn(
+        project_root=project_root,
+        prompt=prompt,
+        auth_mode=auth_mode,
+        model=model,
+        thread_id=thread_id,
+        env=env,
+        stderr_path=root / f"truth_gap__run_{repeat_index:03d}.recheck.live.stderr.log",
+    )
+    second_payload = openai_operator._materialize_run(
+        root=root,
+        project_root=project_root,
+        scenario_id="truth_gap",
+        repeat_index=repeat_index,
+        auth_mode=auth_mode,
+        model=model,
+        run_state=second_state,
+        failure_class=second_failure,
+        run_test=False,
+        route_diagnostics=route_diagnostics,
+        continuity_diagnostics={
+            "continuity_transport": "thread_resume",
+            "thread_ephemeral": False,
+            "continuity_failure_kind": None,
+        },
+    )
+    second_payload["variant"] = first_payload["variant"]
+    second_payload["surface"] = first_payload["surface"]
+    second_payload["attempted_models"] = list(first_payload.get("attempted_models", []))
+    _attach_extra_read_defaults(second_payload)
+    if second_payload.get("truth_gap_kind") == "truthful_incomplete" and not second_payload.get(
+        "provider_limit_interference"
+    ):
+        second_payload.update(
+            {
+                "extra_read_pass_attempted": True,
+                "extra_read_pass_completed": True,
+                "extra_read_pass_mode": "resume",
+                "extra_read_pass_failure_class": None,
+            }
+        )
+        rewrite_artifact_payload(second_payload)
+        return second_payload
+    first_payload.update(
+        {
+            "extra_read_pass_attempted": True,
+            "extra_read_pass_completed": False,
+            "extra_read_pass_mode": "resume",
+            "extra_read_pass_failure_class": second_failure or "truth_gap_not_reaffirmed",
+            "comparison_contaminated": True,
+        }
+    )
+    rewrite_artifact_payload(first_payload)
+    return first_payload
 
 
 def _read_json(path: Path) -> dict[str, Any]:

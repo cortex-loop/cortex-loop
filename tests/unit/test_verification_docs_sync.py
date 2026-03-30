@@ -366,10 +366,10 @@ def test_resume_protocol_and_active_workstream_contract_exist() -> None:
     assert "Current branch role:" in workstream_text
     assert "accepted workflow baseline truth now rests on `main` rather than a long-lived working branch" in workstream_text
     assert "`Q1` remains the accepted ancestor audit on `main`" in workstream_text
-    assert "Current campaign: `M1 SRE modulator carriers and executive gain law candidate complete`" in workstream_text
-    assert "Current candidate seam: `M1 SRE modulator carriers and executive gain law`;" in workstream_text
-    assert "the compact SRE modulator bundle is now implemented on the explanation branch" in workstream_text
-    assert "Claude is positive, Gemini is positive, OpenAI is positive, and the package verdict remains promising_positive" in workstream_text
+    assert "Current campaign: `M1F modulator closure and behavioral binding candidate complete`" in workstream_text
+    assert "Current candidate seam: `M1F modulator closure and behavioral binding`;" in workstream_text
+    assert "the compact SRE modulator bundle is now behaviorally real on the explanation branch" in workstream_text
+    assert "the previously re-earned candidate package-positive operator directionality line remains the current branch truth" in workstream_text
     assert "the compare surface and live-validation truth from earlier seams remain accepted ancestor input and are not being reopened by the landed K train." in workstream_text
     assert "the current signed-in smoke surfaces are now clean again" in workstream_text
     assert "`codex exec` for smoke" in workstream_text
@@ -399,7 +399,11 @@ def test_resume_protocol_and_active_workstream_contract_exist() -> None:
     assert "the M1 compact modulator bundle now adds:" in workstream_text
     assert "`focus_gain`" in workstream_text
     assert "live `modulator_state` and `modulator_reason_tags` diagnostics on operator artifacts" in workstream_text
-    assert "a focused OpenAI truth_gap rerun confirms those diagnostics are present on live artifacts" in workstream_text
+    assert "the M1F closure rerun now confirms more than diagnostics on a bounded live slice:" in workstream_text
+    assert "OpenAI truth-gap artifacts now show `extra_read_pass_attempted = true`" in workstream_text
+    assert "`extra_read_pass_completed = true`" in workstream_text
+    assert "`extra_read_pass_mode = resume`" in workstream_text
+    assert "`thread_ephemeral = false`" in workstream_text
     assert "do not reopen the K train by inertia now that the bounded proven-lane executive/runtime line is landed" in workstream_text
     assert "do not widen from the current candidate package-positive review-branch result into new runtime or product claims by inertia" in workstream_text
     assert "treat the current package-positive operator line as candidate branch truth until it is reviewed and accepted" in workstream_text
@@ -649,6 +653,7 @@ def test_reference_runtime_program_lock_is_recorded() -> None:
     assert "`python3 -m pytest tests/unit/test_operator_routing.py -q`" in operator_routing_program_text
     assert "`python3 -m pytest tests/unit/test_sre_modulators.py -q`" in operator_routing_program_text
     assert "the implementation stays abstract and does not use neurotransmitter names as code objects" in operator_routing_program_text
+    assert "`route_budget.max_turns` is the outer harness turn budget" in operator_routing_program_text
     assert "dopamine" not in operator_routing_program_text.lower()
     assert "serotonin" not in operator_routing_program_text.lower()
     assert "Status: accepted paired raw-vs-Cortex operator directionality audit note" in operator_directionality_audit_text
@@ -910,7 +915,6 @@ def test_runtime_restack_program_lock_is_recorded() -> None:
     assert "fresh auto-only product-path rerun is sharper still" in theory_text
     assert "first full round-2 stable-defaults rerun now says the package is still `mixed_direction`" in theory_text
     assert "current explanation branch now carries the provider-limit neutrality hardening, the OpenAI continuity transport fix, the Claude efficiency rerun, and the first compact SRE modulator bundle" in theory_text
-    assert "Claude is positive again after the lower turn-budget / leaner hook rerun" in theory_text
-    assert "OpenAI is positive again after the non-ephemeral thread-resume fix" in theory_text
-    assert "package verdict is `promising_positive`" in theory_text
-    assert "next honest move is to publish/review the candidate line rather than widen further" in theory_text
+    assert "The M1F closure pass then proved that `update_pressure` can trigger a real extra inspect read-pass" in theory_text
+    assert "candidate package-positive operator directionality line remains intact" in theory_text
+    assert "next honest move is still to publish/review the candidate line rather than widen further" in theory_text

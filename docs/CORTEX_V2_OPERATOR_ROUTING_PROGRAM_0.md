@@ -89,6 +89,12 @@ The route selector may choose:
 - verification requirement
 - and explicit blockedness
 
+Budget note:
+
+- `route_budget.max_turns` is the outer harness turn budget
+- host-specific transport caps may still exist separately
+- this train only claims host transport control where it is actually wired
+
 The modulator layer may change:
 
 - preference for default / continuity profiles
