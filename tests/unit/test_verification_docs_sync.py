@@ -102,6 +102,9 @@ OPERATOR_DIRECTIONALITY_AUDIT_PATH = (
 OPERATOR_ROUTING_PROGRAM_PATH = (
     REPO_ROOT / "docs" / "CORTEX_V2_OPERATOR_ROUTING_PROGRAM_0.md"
 )
+MEDIATION_JUSTIFICATION_NOTE_PATH = (
+    REPO_ROOT / "docs" / "CORTEX_V2_MEDIATION_JUSTIFICATION_NOTE.md"
+)
 
 
 def _read(path: Path) -> str:
@@ -181,8 +184,9 @@ def test_implementation_status_note_reflects_current_verification_surfaces() -> 
     assert "repo-local verification entry points now exist in `Makefile`" in text
     assert "no committed baseline artifact is recorded" not in text
     assert "baseline recorded in `docs/CORTEX_V2_COVERAGE_BASELINE_NOTE_0.md`" in text
-    assert "Current repo evidence now shows cell-level lift on:" in text
-    assert "Package-level evidence remains `insufficient` on every required mediation axis." in text
+    assert "It does not track later candidate or post-closeout mediation evidence;" in text
+    assert "At the time of this accepted closeout note, repo evidence showed cell-level lift on:" in text
+    assert "At that accepted closeout point, package-level evidence remained `insufficient` on every required mediation axis." in text
     assert "Current repo-local verification truth:" in text
     assert "It does not by itself open new feature work." in text
     assert "or a separately scoped bounded runtime/product follow-on train." in text
@@ -194,6 +198,16 @@ def test_implementation_status_note_reflects_current_verification_surfaces() -> 
     assert "do not hardcode a separate accepted workflow baseline here" in text
     assert "bounded feedback-conditioned intervention thresholding" in text
     assert "bounded enforcement-aware realized control" in text
+
+
+def test_mediation_justification_note_is_historical_scope_only() -> None:
+    text = _read(MEDIATION_JUSTIFICATION_NOTE_PATH)
+
+    assert "This note records the last accepted Phase 16A justification decision only." in text
+    assert "It does not track later candidate or post-closeout mediation evidence;" in text
+    assert "At the time of this accepted audit, repo evidence was insufficient on every required axis:" in text
+    assert "At that accepted audit point, Phase 16 mediation was `not justified yet`." in text
+    assert "Later candidate evidence may change the blocker shape" in text
 
 
 def test_verification_ergonomics_plan_reflects_current_campaign_state() -> None:

@@ -5,8 +5,9 @@ Status: `not justified yet`
 
 ## Scope
 
-This note closes the Phase 16A justification audit only.
+This note records the last accepted Phase 16A justification decision only.
 It does not start mediation implementation.
+It does not track later candidate or post-closeout mediation evidence; use `docs/CORTEX_V2_ACTIVE_WORKSTREAM.md` and the mediation evidence package surfaces for that later branch truth.
 
 ## Authority audited
 
@@ -30,8 +31,8 @@ The active packet and plan already constrain mediation tightly:
 
 ## Evidence audit
 
-Phase 16 is only warranted if the repo already shows measurable lift on at least one required axis.
-Current repo evidence is insufficient on every required axis:
+Phase 16 was only warranted if the repo already showed measurable lift on at least one required axis.
+At the time of this accepted audit, repo evidence was insufficient on every required axis:
 
 | Required lift | Current repo state | Audit result |
 | --- | --- | --- |
@@ -43,14 +44,15 @@ Current repo evidence is insufficient on every required axis:
 
 ## Decision
 
-Phase 16 mediation is `not justified yet`.
+At that accepted audit point, Phase 16 mediation was `not justified yet`.
 
-The repo currently has:
+The accepted audit line had:
 
 - packet permission for a later experimental mediation extension, and
 - live experimental evidence on several cells, but no package-level evidence strong enough to justify mediation.
 
-Because that evidence is still too narrow at package level, mediation should remain unstarted.
-Three positive thrash-host burden cells do not justify package-level burden promotion by themselves because they still come from one scenario family only.
+Because that accepted evidence was still too narrow at package level, mediation should remain unstarted.
+Three positive thrash-host burden cells did not justify package-level burden promotion by themselves because they still came from one scenario family only.
 Do not open a mediation implementation seam until broader comparative evidence is strong enough at package level, not just on isolated cells.
 The required comparative evidence plan is recorded in `docs/CORTEX_V2_MEDIATION_EVALUATION_PLAN_0.md`.
+Later candidate evidence may change the blocker shape, but that requires a dedicated follow-on justification update rather than reinterpreting this accepted audit note.
