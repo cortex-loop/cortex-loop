@@ -27,7 +27,7 @@ Closeout status:
 - the verified end-state snapshot is recorded in `docs/CORTEX_V2_IMPLEMENTATION_STATUS_NOTE.md`;
 - the `_2` packet documents remain the active architectural authority;
 - AUX staging remains unchanged: geometry is evaluation-first / runtime-off-by-default, and offline consolidation remains deferred;
-- mediation remains explicitly unjustified and unstarted unless future measurable lift evidence is earned, as recorded in `docs/CORTEX_V2_MEDIATION_JUSTIFICATION_NOTE.md`.
+- mediation remains experimental and unimplemented; one bounded experimental seam is now justified, as recorded in `docs/CORTEX_V2_MEDIATION_JUSTIFICATION_NOTE.md`.
 - if post-closeout work continues, `docs/CORTEX_V2_VERIFICATION_ERGONOMICS_MASTER_PLAN_0.md` remains the active non-feature follow-on campaign, but later bounded runtime/product trains may still be explicitly opened through separate runtime-program briefs and recorded in `docs/CORTEX_V2_ACTIVE_WORKSTREAM.md`.
 
 ---

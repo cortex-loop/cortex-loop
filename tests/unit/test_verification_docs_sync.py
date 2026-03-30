@@ -187,6 +187,7 @@ def test_implementation_status_note_reflects_current_verification_surfaces() -> 
     assert "It does not track later candidate or post-closeout mediation evidence;" in text
     assert "At the time of this accepted closeout note, repo evidence showed cell-level lift on:" in text
     assert "At that accepted closeout point, package-level evidence remained `insufficient` on every required mediation axis." in text
+    assert "The current accepted mediation-justification decision is recorded in `docs/CORTEX_V2_MEDIATION_JUSTIFICATION_NOTE.md`." in text
     assert "Current repo-local verification truth:" in text
     assert "It does not by itself open new feature work." in text
     assert "or a separately scoped bounded runtime/product follow-on train." in text
@@ -200,14 +201,15 @@ def test_implementation_status_note_reflects_current_verification_surfaces() -> 
     assert "bounded enforcement-aware realized control" in text
 
 
-def test_mediation_justification_note_is_historical_scope_only() -> None:
+def test_mediation_justification_note_records_current_decision() -> None:
     text = _read(MEDIATION_JUSTIFICATION_NOTE_PATH)
 
-    assert "This note records the last accepted Phase 16A justification decision only." in text
-    assert "It does not track later candidate or post-closeout mediation evidence;" in text
-    assert "At the time of this accepted audit, repo evidence was insufficient on every required axis:" in text
-    assert "At that accepted audit point, Phase 16 mediation was `not justified yet`." in text
-    assert "Later candidate evidence may change the blocker shape" in text
+    assert "This note records the accepted current mediation justification decision." in text
+    assert "Status: `justified for one bounded experimental mediation seam`" in text
+    assert "The current accepted J2 package now shows:" in text
+    assert "explicit but non-blocking gap" in text
+    assert "Phase 16 mediation is now justified for one bounded experimental seam." in text
+    assert "The next lawful move after this note is to plan and implement one bounded experimental mediation seam under those limits." in text
 
 
 def test_verification_ergonomics_plan_reflects_current_campaign_state() -> None:
@@ -383,15 +385,15 @@ def test_resume_protocol_and_active_workstream_contract_exist() -> None:
     assert "Current branch role:" in workstream_text
     assert "accepted workflow baseline truth now rests on `main` rather than a long-lived working branch" in workstream_text
     assert "`Q1` remains accepted ancestor truth" in workstream_text
-    assert "Current campaign: `J3 mediation justification update pending`" in workstream_text
-    assert "Current working branch at ledger update: `main`" in workstream_text
-    assert "Current branch role: resting branch after the merged J2 evidence publication line" in workstream_text
-    assert "Current candidate seam: `none`; `J2` is now accepted baseline truth on `main`" in workstream_text
+    assert "Current campaign: `J3 mediation justification update candidate`" in workstream_text
+    assert "Current working branch at ledger update: `codex/j3-mediation-justification-update`" in workstream_text
+    assert "Current branch role: explicit manual review branch opened from clean `main` to record the accepted current mediation justification decision" in workstream_text
+    assert "Current candidate seam: `J3 mediation justification update`;" in workstream_text
     assert "`J2` is now landed on the canonical line:" in workstream_text
     assert "dedicated branch-discipline families now exist on `reference`, `openai`, and `claude`" in workstream_text
     assert "dedicated non-thrash burden families now exist on `reference`, `openai`, and `claude`" in workstream_text
     assert "the first Claude host-realization line is now committed on the canonical line" in workstream_text
-    assert "Package-level evidence is no longer insufficient everywhere" in workstream_text
+    assert "one bounded experimental mediation seam is justified on the branch" in workstream_text
     assert "`M2` is now landed on the canonical line:" in workstream_text
     assert "`J1` is now landed on the canonical line:" in workstream_text
     assert "the compare surface and live-validation truth from earlier seams remain accepted ancestor input and are not being reopened by the landed K train." in workstream_text
@@ -419,13 +421,16 @@ def test_resume_protocol_and_active_workstream_contract_exist() -> None:
     assert "`ExecutivePolicyView`" in workstream_text
     assert "live `modulator_summary`, `modulator_memory`, and `policy_view` diagnostics on the operator path" in workstream_text
     assert "the stop-threshold law is now decoupled from self-referential `stop_pressure` comparison" in workstream_text
-    assert "`J2` has now changed the mediation blocker shape: package-level evidence is no longer `insufficient` on every required axis" in workstream_text
-    assert "mediation implementation remains blocked pending `J3` justification review" in workstream_text
-    assert "better uncertainty handling remains the one still-package-insufficient axis on the current line" in workstream_text
+    assert "one bounded experimental mediation seam is justified on the branch" in workstream_text
+    assert "better uncertainty handling remains package-insufficient but explicit and non-blocking for one first bounded seam" in workstream_text
+    assert "mediation remains unimplemented and experimental / off-by-default on the current line" in workstream_text
     assert "Gemini should remain explicit as a partial/contaminated live rerun host rather than being hidden behind pooled mediation summaries" in workstream_text
     assert "do not reopen the K train by inertia now that the bounded proven-lane executive/runtime line is landed" in workstream_text
-    assert "open `J3` mediation justification update from clean synced `main`" in workstream_text
+    assert "publish/review the `codex/j3-mediation-justification-update` branch as the accepted current mediation justification decision" in workstream_text
+    assert "after acceptance, plan one bounded experimental mediation seam rather than collecting more mandatory J2-style evidence first" in workstream_text
     assert "keep `N2` as a separate blocked train pending a capable machine" in workstream_text
+    assert "Do not implement mediation in `J3`;" in workstream_text
+    assert "Do not treat `J3` as license for broad rollout" in workstream_text
     assert "Do not treat signed-in provider CLI sessions as equivalent to the automation credentials" in workstream_text
     assert "Do not treat the new OpenAI App Server operator proof as license to reopen v1 assisted mode" in workstream_text
     assert "Do not keep repo-tracked live artifacts under `docs/live_validation/`" in workstream_text
@@ -507,12 +512,14 @@ def test_reference_runtime_program_lock_is_recorded() -> None:
     assert "loopback-only HTTP is landed on the accepted K1 closeout line" in phase_gate_text
     assert "one active session per process is real for current scope" in phase_gate_text
 
-    assert "`J2` has now changed the mediation blocker shape: package-level evidence is no longer `insufficient` on every required axis" in workstream_text
-    assert "mediation implementation remains blocked pending `J3` justification review" in workstream_text
-    assert "better uncertainty handling remains the one still-package-insufficient axis on the current line" in workstream_text
+    assert "one bounded experimental mediation seam is justified on the branch" in workstream_text
+    assert "better uncertainty handling remains package-insufficient but explicit and non-blocking for one first bounded seam" in workstream_text
     assert "the live-testing environment now has explicit operator and automation lane semantics" in workstream_text
     assert "the current signed-in smoke surfaces are now clean again" in workstream_text
     assert "the OpenAI App Server operator lane now completes" in workstream_text
+    assert "## 8. Mediation justification gate" in phase_gate_text
+    assert "`J3` mediation justification review" in phase_gate_text
+    assert "one bounded experimental mediation seam" in phase_gate_text
     assert "the first one-process live continuity slice plus explicit rejection enforcement are real" in program_text
     assert "the corrective zero-finding re-audit has passed for current scope" in program_text
     assert "a mismatched runtime `session_id` is surfaced as an explicit contradiction" in program_text
@@ -935,18 +942,18 @@ def test_runtime_restack_program_lock_is_recorded() -> None:
     assert "Current accepted state after K1 closeout" in text
     assert "implemented at K1 proof head `d4c311f` and truthfully closed at deterministic closeout head `79b8f39`" in text
     assert "later bounded runtime/product trains may still be explicitly opened" in master_plan_text
+    assert "one bounded experimental seam is now justified" in master_plan_text
     assert "records the bounded K train as landed" in theory_text
-    assert "records `M2` and `J1` as landed on `main`" in theory_text
-    assert "records the current `J2` branch as the evidence-only mediation gap-closure rerun candidate" in theory_text
+    assert "records `M2`, `J1`, and `J2` as landed on `main`" in theory_text
+    assert "mediation is justified for one bounded experimental seam" in theory_text
     assert "headless operator reruns still require `GEMINI_API_KEY` in the shell environment" in theory_text
     assert "old `plan`-mode path was a real confound" in theory_text
     assert "repeated paired runs on the free API-key lane still turn mixed under flash-tier quota pressure" in theory_text
     assert "the operator/evaluation harness must not call explicit Gemini model names at all" in theory_text
     assert "fresh auto-only product-path rerun is sharper still" in theory_text
     assert "first full round-2 stable-defaults rerun now says the package is still `mixed_direction`" in theory_text
-    assert "docs/CORTEX_V2_ACTIVE_WORKSTREAM.md` now records the bounded K train as landed, records `N2` as blocked pending a capable machine, records `M2` and `J1` as landed on `main`, and records the current `J2` branch as the evidence-only mediation gap-closure rerun candidate." in theory_text
-    assert "The clean synced `main` line now carries the provider-limit neutrality hardening, the OpenAI continuity transport fix, the Claude efficiency rerun, the first compact SRE modulator bundle, the landed M2 summary/memory/policy refinement, and the landed J1 mediation evidence package baseline." in theory_text
+    assert "docs/CORTEX_V2_ACTIVE_WORKSTREAM.md` now records the bounded K train as landed, records `N2` as blocked pending a capable machine, records `M2`, `J1`, and `J2` as landed on `main`, and records `J3` as the current justification-update candidate." in theory_text
+    assert "The clean synced `main` line now carries the provider-limit neutrality hardening, the OpenAI continuity transport fix, the Claude efficiency rerun, the first compact SRE modulator bundle, the landed M2 summary/memory/policy refinement, the landed J1 mediation evidence package baseline, and the landed J2 gap-closure evidence package." in theory_text
     assert "the landed J1 mediation evidence package baseline" in theory_text
-    assert "The current J2 branch then adds dedicated branch-discipline evidence on reference/openai/claude, dedicated non-thrash burden evidence on reference/openai/claude, and the first Claude host-realization line." in theory_text
-    assert "The blocker is no longer “package-insufficient everywhere”" in theory_text
-    assert "the next honest move after J2 is now J3 mediation justification review" in theory_text
+    assert "mediation is now justified for one bounded experimental seam" in theory_text
+    assert "the next honest move after J2 is now J3 mediation justification review" not in theory_text

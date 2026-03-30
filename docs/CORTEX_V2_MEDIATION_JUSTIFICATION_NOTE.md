@@ -1,13 +1,13 @@
 # CORTEX_V2_MEDIATION_JUSTIFICATION_NOTE
 
-Date: 2026-03-24
-Status: `not justified yet`
+Date: 2026-03-31
+Status: `justified for one bounded experimental mediation seam`
 
 ## Scope
 
-This note records the last accepted Phase 16A justification decision only.
-It does not start mediation implementation.
-It does not track later candidate or post-closeout mediation evidence; use `docs/CORTEX_V2_ACTIVE_WORKSTREAM.md` and the mediation evidence package surfaces for that later branch truth.
+This note records the accepted current mediation justification decision.
+It does not start mediation implementation by itself.
+It records whether the current accepted evidence is strong enough to justify one bounded experimental seam.
 
 ## Authority audited
 
@@ -31,28 +31,36 @@ The active packet and plan already constrain mediation tightly:
 
 ## Evidence audit
 
-Phase 16 was only warranted if the repo already showed measurable lift on at least one required axis.
-At the time of this accepted audit, repo evidence was insufficient on every required axis:
+Phase 16 is only warranted if the repo shows measurable lift on at least one required axis.
+The current accepted J2 package now shows:
 
 | Required lift | Current repo state | Audit result |
 | --- | --- | --- |
-| reduced thrashing | Reference, Gemini, and OpenAI thrash comparisons now exist and produce cell-level signal, but package-level evidence remains too narrow. | insufficient evidence |
-| better branch discipline | Reference, Gemini, and OpenAI thrash comparisons now exist and produce cell-level signal, but package-level evidence remains too narrow. | insufficient evidence |
-| better uncertainty handling | Reference, Gemini, and OpenAI uncertainty comparisons now exist and produce cell-level signal, but package-level evidence remains too narrow. | insufficient evidence |
-| lower visible burden at equal task value | Reference, Gemini, and OpenAI thrash now carry burden cell-level signal, but that evidence remains too narrow at package level because it is confined to the `thrash_control` scenario family. | insufficient evidence |
-| better host-specialized realization | Three reference-only mediation-specific host-realization pairs are now recorded, three Gemini-only pairs are now recorded, and three OpenAI-only pairs are now recorded, but the package-level evidence still remains too narrow. | insufficient evidence |
+| reduced thrashing | The J2 package now carries repeated `candidate_positive` signal on the three thrash cells plus the new branch-discipline family on `reference`, `openai`, and `claude`. | justified |
+| better branch discipline | The J2 package now carries repeated `candidate_positive` signal on the three thrash cells plus the dedicated branch-discipline family on `reference`, `openai`, and `claude`. | justified |
+| better uncertainty handling | The current uncertainty signal still comes from one family only and still lacks Claude expansion. | explicit but non-blocking gap |
+| lower visible burden at equal task value | The J2 package now carries repeated `candidate_positive` signal on the three thrash burden cells plus the dedicated non-thrash burden family on `reference`, `openai`, and `claude`. | justified |
+| better host-specialized realization | The J2 package now carries repeated `candidate_positive` signal on `reference`, `gemini`, `openai`, and the new Claude host-realization line. | justified |
 
 ## Decision
 
-At that accepted audit point, Phase 16 mediation was `not justified yet`.
+Phase 16 mediation is now justified for one bounded experimental seam.
 
-The accepted audit line had:
+The current accepted line has:
 
-- packet permission for a later experimental mediation extension, and
-- live experimental evidence on several cells, but no package-level evidence strong enough to justify mediation.
+- packet permission for a bounded experimental mediation extension, and
+- package-level `candidate_positive` evidence on four required axes.
 
-Because that accepted evidence was still too narrow at package level, mediation should remain unstarted.
-Three positive thrash-host burden cells did not justify package-level burden promotion by themselves because they still came from one scenario family only.
-Do not open a mediation implementation seam until broader comparative evidence is strong enough at package level, not just on isolated cells.
-The required comparative evidence plan is recorded in `docs/CORTEX_V2_MEDIATION_EVALUATION_PLAN_0.md`.
-Later candidate evidence may change the blocker shape, but that requires a dedicated follow-on justification update rather than reinterpreting this accepted audit note.
+Better uncertainty handling remains `insufficient`, but that explicit gap is non-blocking for one first bounded experimental seam because the package already carries justified package-level signal on reduced thrashing, better branch discipline, lower visible burden at equal task value, and better host-specialized realization.
+The accepted authorization boundary is therefore:
+
+- one bounded experimental mediation seam only
+- mediation remains unimplemented
+- mediation remains experimental / off-by-default
+- mediation remains SRE-only
+- mediation remains limited to `Q_t^{base} -> Q_t^{final}`
+- mediation may not change commitment truth
+- mediation may not widen into Core, AUX runtime, live/provider paths, or broad rollout
+
+The next lawful move after this note is to plan and implement one bounded experimental mediation seam under those limits.
+Optional Claude uncertainty expansion remains deferred unless later implementation evidence shows that the remaining uncertainty gap still matters.

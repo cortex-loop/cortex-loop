@@ -78,4 +78,4 @@ No other burden metric or generic runtime-cost claim is eligible for this counte
 ## Outcome
 
 The repeated reference thrash evidence set is only countable because the three pairs satisfy both the within-pair fairness law and the cross-pair distinctness law.
-Even with three counted pairs, mediation remains blocked until the broader evidence package says otherwise.
+Even with three counted pairs, this remains cell-local evidence only. The accepted package-level justification decision is recorded in `docs/CORTEX_V2_MEDIATION_JUSTIFICATION_NOTE.md`, and this note does not by itself authorize implementation.

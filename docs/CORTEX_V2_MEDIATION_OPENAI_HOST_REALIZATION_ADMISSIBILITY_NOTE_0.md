@@ -82,5 +82,5 @@ No package-level host-realization verdict is earned, and no mediation implementa
 
 ## Outcome
 
-The current honest result is that three lawful OpenAI host-realization comparator pairs are recorded while package-level host-specialized realization evidence remains `insufficient`.
-In short: three OpenAI-only comparator pairs are real host-realization evidence, the OpenAI host-realization cell is now `candidate_positive`, package-level evidence remains too narrow, and mediation remains blocked.
+The current honest result is that three lawful OpenAI host-realization comparator pairs are recorded. This is cell-local evidence only; the accepted package-level justification decision is recorded in `docs/CORTEX_V2_MEDIATION_JUSTIFICATION_NOTE.md`.
+In short: three OpenAI-only comparator pairs are real host-realization evidence, the OpenAI host-realization cell is now `candidate_positive`, and this note does not by itself authorize implementation.

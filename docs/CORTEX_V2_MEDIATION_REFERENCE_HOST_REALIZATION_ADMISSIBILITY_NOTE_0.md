@@ -88,5 +88,5 @@ Package-level host-specialized realization evidence remains `insufficient` becau
 
 ## Outcome
 
-The current honest result is that three admissible reference-only host-realization comparator pairs are now recorded while package-level host-specialized realization evidence remains `insufficient`.
-In short: three lawful reference host-realization comparator pairs are recorded, one exact cell now has `candidate_positive` signal for better host-specialized realization, and mediation remains blocked.
+The current honest result is that three admissible reference-only host-realization comparator pairs are now recorded. This is cell-local evidence only; the accepted package-level justification decision is recorded in `docs/CORTEX_V2_MEDIATION_JUSTIFICATION_NOTE.md`.
+In short: three lawful reference host-realization comparator pairs are recorded, one exact cell now has `candidate_positive` signal for better host-specialized realization, and this note does not by itself authorize implementation.

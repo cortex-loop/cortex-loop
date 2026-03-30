@@ -17,7 +17,7 @@ This document records the equal-value burden comparison surface for mediation ev
 
 | axis | current_package_verdict | current_candidate_positive_cells | why_still_insufficient |
 | --- | --- | --- | --- |
-| lower visible burden at equal task value | candidate_positive | scenario_thrash_reference_01/reference; scenario_thrash_gemini_01/gemini; scenario_thrash_openai_01/openai; scenario_burden_reference_01/reference; scenario_burden_openai_01/openai; scenario_burden_claude_01/claude | J2 broadens the burden axis beyond `thrash_control` on the three preferred hosts. |
+| lower visible burden at equal task value | candidate_positive | scenario_thrash_reference_01/reference; scenario_thrash_gemini_01/gemini; scenario_thrash_openai_01/openai; scenario_burden_reference_01/reference; scenario_burden_openai_01/openai; scenario_burden_claude_01/claude | J2 broadens the burden axis beyond `thrash_control` on the three preferred hosts, so no current burden blocker remains for one bounded experimental seam. |
 
 ## Comparison Table
 
@@ -34,4 +34,4 @@ This document records the equal-value burden comparison surface for mediation ev
 
 | gap_id | current_status | why_missing | minimum_next_evidence |
 | --- | --- | --- | --- |
-| non_thrash_equal_value_burden_family | resolved | J2 now records dedicated non-thrash burden evidence on the three preferred hosts. | no mandatory additional burden reruns required before J3 justification review |
+| non_thrash_equal_value_burden_family | resolved | J2 now records dedicated non-thrash burden evidence on the three preferred hosts. | no mandatory additional burden reruns are required before one bounded experimental seam |

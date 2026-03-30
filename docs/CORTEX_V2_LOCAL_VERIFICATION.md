@@ -819,8 +819,8 @@ make revalidate-mediation-claude-uncertainty
 
 ## Mediation reference host-realization admissibility revalidation
 
-This checks that `scenario_host_reference_01` now has three lawful reference-only host-realization comparator pairs, that the cell now has `candidate_positive` signal for better host-specialized realization, and that package-level mediation evidence remains blocked.
-It validates the supporting admissibility note, the updated baseline-anchor row, the recorded paired-ledger rows, and the package blocker truth. It does not generate evidence.
+This checks that `scenario_host_reference_01` now has three lawful reference-only host-realization comparator pairs, that the cell now has `candidate_positive` signal for better host-specialized realization, and that the package still supports the accepted J3 justification decision without becoming a second truth court.
+It validates the supporting admissibility note, the updated baseline-anchor row, the recorded paired-ledger rows, and the package-level decision wording. It does not generate evidence.
 
 Direct command:
 
@@ -871,8 +871,8 @@ make emit-reference-mediated-host-realization-candidate
 
 ## Mediation Gemini host-realization admissibility revalidation
 
-This checks that `scenario_host_gemini_01` now has three lawful Gemini-only host-realization comparator pairs recorded and that the exact Gemini host-realization cell now has `candidate_positive` signal for better host-specialized realization while package-level mediation evidence remains blocked.
-It validates the Gemini admissibility note, the committed Gemini baseline and mediated packet examples, the committed Gemini baseline and mediated host packets, the Gemini replication law, the rebound baseline-index row, the recorded paired-ledger row, and the package blocker truth. It does not generate evidence.
+This checks that `scenario_host_gemini_01` now has three lawful Gemini-only host-realization comparator pairs recorded and that the exact Gemini host-realization cell now has `candidate_positive` signal for better host-specialized realization while the package still supports the accepted J3 decision without becoming a second truth court.
+It validates the Gemini admissibility note, the committed Gemini baseline and mediated packet examples, the committed Gemini baseline and mediated host packets, the Gemini replication law, the rebound baseline-index row, the recorded paired-ledger row, and the package-level decision wording. It does not generate evidence.
 
 Direct command:
 
@@ -958,8 +958,8 @@ make emit-openai-mediated-host-realization-candidate
 
 ## Mediation OpenAI host-realization admissibility revalidation
 
-This checks that `scenario_host_openai_01` now has three lawful OpenAI host-realization comparator pairs recorded and that the OpenAI host-realization cell is now `candidate_positive` while package-level mediation evidence remains blocked.
-It validates the OpenAI admissibility note, the committed OpenAI baseline and mediated packet examples, the committed OpenAI baseline and mediated host packets, the OpenAI baseline-index guardrail, the paired-ledger rows, and the package blocker truth. It does not generate evidence.
+This checks that `scenario_host_openai_01` now has three lawful OpenAI host-realization comparator pairs recorded and that the OpenAI host-realization cell is now `candidate_positive` while the package still supports the accepted J3 decision without becoming a second truth court.
+It validates the OpenAI admissibility note, the committed OpenAI baseline and mediated packet examples, the committed OpenAI baseline and mediated host packets, the OpenAI baseline-index guardrail, the paired-ledger rows, and the package-level decision wording. It does not generate evidence.
 
 Direct command:
 
@@ -975,8 +975,8 @@ make revalidate-mediation-openai-host-realization-basis
 
 ## Mediation run-packet revalidation
 
-This checks the committed reference-host, Gemini-host, and OpenAI-host baseline run indexes and the committed run-packet instances.
-It validates packet metadata against the scenario catalog, confirms the canonical baseline anchors remain lawful, validates the full nine-packet reference baseline set, validates the full nine-packet Gemini baseline set, validates the full nine-packet OpenAI baseline set, and checks the twenty-seven committed experimental mediated uncertainty, thrash, reference host-realization, Gemini host-realization, and OpenAI host-realization packets.
+This checks the committed reference-host, Gemini-host, OpenAI-host, and Claude-host run-packet instances against the current scenario catalog.
+It validates packet metadata against the scenario catalog, confirms the canonical baseline anchors remain lawful, validates the current committed baseline sets for all four hosts, and checks the full committed mediated packet surface for thrash, uncertainty, branch-discipline, non-thrash burden, and host-realization.
 
 Direct command:
 
@@ -1428,6 +1428,17 @@ Repo-local entry point:
 
 ```sh
 make revalidate-mediation-evidence
+```
+
+## Mediation justification revalidation
+
+This reruns the full mediation evidence package and then checks that the current justification/workflow truth is synced to that accepted J3 decision.
+It remains check-only and does not authorize implementation by itself.
+
+Repo-local entry point:
+
+```sh
+make revalidate-mediation-justification
 ```
 
 ## Individual entry points

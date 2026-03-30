@@ -117,7 +117,7 @@ def test_reference_host_realization_anchor_is_rebound_to_a_recorded_pair() -> No
     assert {row["failure_tags"] for row in recorded_host_rows} == {"none"}
 
 
-def test_evidence_note_records_three_reference_host_pairs_and_keeps_mediation_blocked() -> None:
+def test_evidence_note_records_three_reference_host_pairs_and_supports_j3_decision() -> None:
     text = read(EVIDENCE_NOTE_PATH)
 
     assert (
@@ -129,5 +129,5 @@ def test_evidence_note_records_three_reference_host_pairs_and_keeps_mediation_bl
         "signal for better host-specialized realization"
     ) in text
     assert "Reference, Gemini, OpenAI, and Claude now carry the host-realization `candidate_positive` cells." in text
-    assert "Mediation implementation remains blocked pending J3 justification review." in text
-    assert "no implementation seam may open" in text
+    assert "The accepted J3 decision is that mediation is now justified for one bounded experimental seam." in text
+    assert "This evidence package is not a second truth court and does not by itself authorize implementation." in text
