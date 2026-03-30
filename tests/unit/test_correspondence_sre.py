@@ -50,6 +50,38 @@ EXPECTATIONS = (
         ),
     ),
     SreCorrespondenceExpectation(
+        row_label="ReferenceModeAndGatingView",
+        module_path="cortex.sre.state",
+        symbol_name="ReferenceModeAndGatingView",
+        promised_surfaces=(
+            PromisedTestSurface(
+                test_file="tests/unit/test_sre_neutral_hinge.py",
+                test_names=(
+                    "test_reference_executive_state_exposes_minimum_software_facing_views",
+                    "test_reference_mode_and_gating_view_requires_non_empty_mode_tag",
+                    "test_reference_mode_and_gating_view_requires_typed_family_mask",
+                ),
+            ),
+        ),
+    ),
+    SreCorrespondenceExpectation(
+        row_label="ReferenceControlAllocationView",
+        module_path="cortex.sre.state",
+        symbol_name="ReferenceControlAllocationView",
+        promised_surfaces=(
+            PromisedTestSurface(
+                test_file="tests/unit/test_sre_neutral_hinge.py",
+                test_names=(
+                    "test_reference_executive_state_exposes_minimum_software_facing_views",
+                    "test_reference_control_allocation_view_requires_non_empty_budget_band",
+                    "test_reference_control_allocation_view_requires_typed_top_family_set",
+                    "test_reference_control_allocation_view_requires_non_empty_host_friction_tags",
+                    "test_reference_control_allocation_view_requires_non_empty_feedback_pressure_tags",
+                ),
+            ),
+        ),
+    ),
+    SreCorrespondenceExpectation(
         row_label="build_reference_executive_state",
         module_path="cortex.sre.reference_builder",
         symbol_name="build_reference_executive_state",
@@ -272,6 +304,56 @@ EXPECTATIONS = (
                     "test_family_is_retained_when_no_clearly_superior_opportunity_exists",
                     "test_failed_specialization_surfaces_degradation_reason_and_safer_fallback",
                     "test_selected_family_remains_distinct_from_direct_opportunity",
+                ),
+            ),
+        ),
+    ),
+    SreCorrespondenceExpectation(
+        row_label="select_operator_route",
+        module_path="cortex.sre.operator_routing",
+        symbol_name="select_operator_route",
+        promised_surfaces=(
+            PromisedTestSurface(
+                test_file="tests/unit/test_operator_routing.py",
+                test_names=(
+                    "test_operator_task_state_requires_bounded_numeric_axes",
+                    "test_select_operator_route_prefers_default_execute_under_low_pressure",
+                    "test_select_operator_route_can_choose_guarded_execute_under_higher_pressure",
+                    "test_select_operator_route_prefers_guarded_continuity_for_resumptive_host_friction",
+                    "test_select_operator_route_blocks_non_inspect_when_quota_is_high",
+                    "test_build_operator_route_diagnostics_exposes_state_and_budget",
+                ),
+            ),
+        ),
+    ),
+    SreCorrespondenceExpectation(
+        row_label="ExecutiveModulatorState",
+        module_path="cortex.sre.modulators",
+        symbol_name="ExecutiveModulatorState",
+        promised_surfaces=(
+            PromisedTestSurface(
+                test_file="tests/unit/test_sre_modulators.py",
+                test_names=(
+                    "test_modulator_update_clips_values_into_unit_interval",
+                    "test_high_quota_pressure_raises_stop_pressure",
+                    "test_high_continuity_raises_focus_gain",
+                    "test_repeated_failure_raises_explore_gain",
+                    "test_high_novelty_raises_update_pressure",
+                ),
+            ),
+        ),
+    ),
+    SreCorrespondenceExpectation(
+        row_label="update_executive_modulators",
+        module_path="cortex.sre.modulators",
+        symbol_name="update_executive_modulators",
+        promised_surfaces=(
+            PromisedTestSurface(
+                test_file="tests/unit/test_sre_modulators.py",
+                test_names=(
+                    "test_modulator_update_clips_values_into_unit_interval",
+                    "test_modulator_stop_pressure_can_block_route",
+                    "test_modulator_update_pressure_adds_extra_read_pass",
                 ),
             ),
         ),

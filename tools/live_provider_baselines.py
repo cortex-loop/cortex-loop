@@ -11,8 +11,17 @@ import urllib.request
 from pathlib import Path
 from typing import Any
 
+from cortex.sre.modulators import update_executive_modulators
+from cortex.sre.operator_routing import (
+    build_operator_route_diagnostics,
+    select_operator_route_with_modulators,
+)
+from live_operator_route_state import (
+    build_operator_modulator_inputs,
+    build_operator_probe_task_state,
+)
+
 from live_validation_common import (
-    GEMINI_OPERATOR_FULL_LADDER,
     MODEL_MATRIX,
     automation_auth_readiness,
     classify_failure,
@@ -25,9 +34,11 @@ from live_validation_common import (
     parse_json_lines,
     provider_cli_workspace,
     provider_root,
+    recent_operator_probe_failure,
     resolve_auth_mode,
     run_command,
     sanitize_text,
+    summarize_operator_runs,
     should_collapse_after_failure,
     vertex_adc_available,
     write_json,
@@ -139,6 +150,7 @@ def _capture_provider(
             preferred_model_override=preferred_model_override,
             fallback_model_override=fallback_model_override,
             disable_auto_probe=disable_auto_probe,
+            prior_runs=tuple(runs),
         )
         runs.append(result)
         if should_collapse_after_failure(result.get("failure_class")):
@@ -163,6 +175,7 @@ def _run_single_provider_baseline(
     preferred_model_override: str | None,
     fallback_model_override: str | None,
     disable_auto_probe: bool,
+    prior_runs: tuple[dict[str, Any], ...] = (),
 ) -> dict[str, Any]:
     stem = f"provider_baseline__smoke__run_{repeat_index:03d}"
     stdout_path = provider_root_path / f"{stem}.stdout.log"
@@ -173,6 +186,7 @@ def _run_single_provider_baseline(
     preferred_model = choose_model(provider, lane)
     auth_readiness = automation_auth_readiness(provider) if lane == "automation" else None
     auto_supported: bool | None = None
+    route_diagnostics: dict[str, Any] | None = None
     ladder = _requested_model_ladder(
         provider=provider,
         lane=lane,
@@ -212,6 +226,24 @@ def _run_single_provider_baseline(
         }
         write_json(metadata_path, payload)
         return payload
+
+    if lane == "operator":
+        prior_signal = summarize_operator_runs(prior_runs)
+        route_state = build_operator_probe_task_state(
+            previous_same_host_run_failed_before_completion=prior_signal["previous_failed_before_completion"],
+            recent_probe_failure_class=recent_operator_probe_failure(provider),
+            recent_baseline_clean_count=prior_signal["clean_success_count"],
+            recent_warning_bearing_success_present=prior_signal["warning_bearing_success_present"],
+        )
+        modulator_update = update_executive_modulators(
+            build_operator_modulator_inputs(
+                route_state,
+                previous_same_host_run_failed_before_completion=prior_signal["previous_failed_before_completion"],
+            )
+        )
+        route_decision = select_operator_route_with_modulators(route_state, modulator_update)
+        route_diagnostics = build_operator_route_diagnostics(route_state, route_decision)
+
     started_at = now_utc_iso()
     run_result = _run_provider_probe(provider, lane=lane, auth_mode=auth_mode, model=first_model)
     failure_class = classify_failure(f"{run_result['stdout']}\n{run_result['stderr']}")
@@ -219,8 +251,8 @@ def _run_single_provider_baseline(
         failure_class = "operator_timeout" if lane == "operator" else "quota_exhausted"
     attempted_models = [first_model]
     if provider == "gemini" and lane == "operator":
-        auto_supported = run_result["exit_code"] == 0 and failure_class != "model_unavailable"
-        preferred_model = first_model if auto_supported or run_result["exit_code"] == 0 else GEMINI_OPERATOR_FULL_LADDER[1]
+        auto_supported = failure_class != "model_unavailable"
+        preferred_model = first_model
     chosen_model = first_model
     if run_result["exit_code"] != 0:
         chosen_model = choose_model(
@@ -281,6 +313,8 @@ def _run_single_provider_baseline(
         "result_text": extract_result_text(records, stdout_text),
         "notes": run_result.get("notes"),
     }
+    if route_diagnostics is not None:
+        payload.update(route_diagnostics)
     write_json(metadata_path, payload)
     return payload
 
@@ -336,7 +370,7 @@ def _run_gemini_operator_probe(model: str) -> dict[str, Any]:
             "-o",
             "stream-json",
             "--approval-mode",
-            "plan",
+            "yolo",
         ]
         if model != "auto":
             command[5:5] = ["-m", model]
@@ -553,13 +587,8 @@ def _requested_model_ladder(
         if fallback_model_override and fallback_model_override.lower() != "none" and fallback_model_override != preferred_model_override:
             ladder.append(fallback_model_override)
         return tuple(ladder)
-    if provider == "gemini" and lane == "operator" and disable_auto_probe:
-        ladder = ["gemini-2.5-flash"]
-        if fallback_model_override and fallback_model_override.lower() != "none" and fallback_model_override not in ladder:
-            ladder.append(fallback_model_override)
-        elif "gemini-2.5-flash-lite" not in ladder:
-            ladder.append("gemini-2.5-flash-lite")
-        return tuple(ladder)
+    if provider == "gemini" and lane == "operator":
+        return (MODEL_MATRIX[provider][lane].preferred,)
     return (MODEL_MATRIX[provider][lane].preferred,) if MODEL_MATRIX[provider][lane].fallback is None else (
         MODEL_MATRIX[provider][lane].preferred,
         MODEL_MATRIX[provider][lane].fallback,

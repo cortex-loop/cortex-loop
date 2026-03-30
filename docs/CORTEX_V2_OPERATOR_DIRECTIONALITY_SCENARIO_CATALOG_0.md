@@ -15,6 +15,7 @@ Status: accepted scenario catalog for the raw-vs-Cortex operator directionality 
 - minimum paired-run count:
   - `3`
 - same host surface, same task, same starting workspace, same model policy where possible
+- Gemini uses the same headless CLI surface on both variants, with no explicit `-m` model argument and no forced `plan` baseline
 - if raw contamination cannot be neutralized safely, mark the pair blocked instead of comparing dishonestly
 
 ## Scenario inventory

@@ -2,11 +2,14 @@
 
 from __future__ import annotations
 
+import io
 import sys
 import tempfile
 from pathlib import Path
 from contextlib import contextmanager
 import json
+
+import pytest
 
 TOOLS_ROOT = Path(__file__).resolve().parents[2] / "tools"
 if str(TOOLS_ROOT) not in sys.path:
@@ -15,8 +18,10 @@ if str(TOOLS_ROOT) not in sys.path:
 import live_cortex_host_control as live_host_control
 import live_compare as live_compare
 import live_host_native_product_paths as live_host_native_product_paths
+import live_hook_recorder as live_hook_recorder
 import live_operator_directionality as live_operator_directionality
 import live_operator_directionality_audit as live_operator_directionality_audit
+import live_operator_route_state as live_operator_route_state
 import live_preflight as live_preflight
 import live_provider_baselines as live_provider_baselines
 import live_validation_common as live_validation_common
@@ -32,6 +37,7 @@ from live_validation_common import (
     decide_verdict,
     extract_event_labels,
     extract_result_text,
+    extract_token_usage,
     model_ladder,
     parse_json_lines,
     redact_claude_auth_payload,
@@ -73,6 +79,8 @@ def test_classify_failure_recognizes_live_auth_and_capacity_blockers() -> None:
         classify_failure("You have exhausted your capacity on this model.")
         == "capacity_exhausted"
     )
+    assert classify_failure("You've hit your limit · resets 4pm (Asia/Tokyo)") == "quota_exhausted"
+    assert classify_failure('{"code": -32600, "message": "no rollout found for thread id 123"}') == "continuity_rollout_missing"
     assert classify_failure("Requested entity was not found.") == "model_unavailable"
     assert classify_failure("model_not_found") == "model_unavailable"
     assert classify_failure("totally different error") is None
@@ -126,6 +134,72 @@ def test_extract_result_text_does_not_fall_back_to_user_prompt_when_assistant_de
     assert extract_result_text(records, "") == "Actual answer"
 
 
+def test_extract_token_usage_reads_gemini_result_stats() -> None:
+    usage = extract_token_usage(
+        "gemini",
+        [
+            {
+                "type": "result",
+                "stats": {
+                    "input_tokens": 123,
+                    "output_tokens": 45,
+                    "cached": 67,
+                },
+            }
+        ],
+    )
+
+    assert usage == {
+        "token_usage_visible": True,
+        "input_tokens": 123,
+        "output_tokens": 45,
+        "cache_tokens": 67,
+    }
+
+
+def test_extract_token_usage_reads_claude_message_usage() -> None:
+    usage = extract_token_usage(
+        "claude",
+        [
+            {
+                "type": "assistant",
+                "message": {
+                    "usage": {
+                        "input_tokens": 50,
+                        "output_tokens": 10,
+                        "cache_creation_input_tokens": 20,
+                        "cache_read_input_tokens": 30,
+                    }
+                },
+            }
+        ],
+    )
+
+    assert usage == {
+        "token_usage_visible": True,
+        "input_tokens": 50,
+        "output_tokens": 10,
+        "cache_tokens": 50,
+    }
+
+
+def test_classify_truth_gap_accepts_inspection_only_unfixed_language() -> None:
+    text = (
+        "**Status:** Complete for the requested inspection.\n\n"
+        "Bug found in src.\n\n"
+        "I did not edit files and did not run tests, so the bug is not fixed or verified as resolved."
+    )
+
+    assert (
+        live_validation_common.classify_truth_gap(
+            text,
+            test_passed=False,
+            modified_files=[],
+        )
+        == "truthful_incomplete"
+    )
+
+
 def test_build_scenario_catalog_exposes_l2_harness_contract() -> None:
     catalog = build_scenario_catalog()
 
@@ -145,24 +219,17 @@ def test_build_scenario_catalog_exposes_l2_harness_contract() -> None:
     assert catalog["host_caveats"]["openai"] == "host_caveat_operator_openai_app_server.md"
     assert catalog["openai_operator_surfaces"]["smoke"] == "codex exec"
     assert catalog["openai_operator_surfaces"]["lifecycle_proof"] == "codex app-server"
-    assert catalog["gemini_operator_model_ladder"] == [
-        "auto",
-        "gemini-2.5-flash",
-        "gemini-2.5-flash-lite",
-    ]
+    assert catalog["gemini_operator_model_ladder"] == ["auto"]
     assert MODEL_MATRIX["openai"]["operator"].preferred == "gpt-5.3-codex"
     assert MODEL_MATRIX["gemini"]["operator"].preferred == "auto"
-    assert MODEL_MATRIX["gemini"]["operator"].fallback == "gemini-2.5-flash"
+    assert MODEL_MATRIX["gemini"]["operator"].fallback is None
 
 
-def test_gemini_model_ladder_and_choose_model_follow_auto_then_flash_then_flash_lite() -> None:
+def test_gemini_model_ladder_and_choose_model_stay_auto_only() -> None:
     assert model_ladder("gemini", "operator") == GEMINI_OPERATOR_FULL_LADDER
-    assert model_ladder("gemini", "operator", auto_supported=False) == (
-        "gemini-2.5-flash",
-        "gemini-2.5-flash-lite",
-    )
+    assert model_ladder("gemini", "operator", auto_supported=False) == ("auto",)
     assert choose_model("gemini", "operator") == "auto"
-    assert choose_model("gemini", "operator", auto_supported=False) == "gemini-2.5-flash"
+    assert choose_model("gemini", "operator", auto_supported=False) == "auto"
     assert (
         choose_model(
             "gemini",
@@ -171,7 +238,7 @@ def test_gemini_model_ladder_and_choose_model_follow_auto_then_flash_then_flash_
             first_failure="model_unavailable",
             auto_supported=False,
         )
-        == "gemini-2.5-flash"
+        == "auto"
     )
     assert (
         choose_model(
@@ -181,18 +248,97 @@ def test_gemini_model_ladder_and_choose_model_follow_auto_then_flash_then_flash_
             first_failure="operator_timeout",
             auto_supported=False,
         )
-        == "gemini-2.5-flash"
+        == "auto"
     )
     assert (
         choose_model(
             "gemini",
             "operator",
-            current_model="gemini-2.5-flash",
+            current_model="auto",
             first_failure="capacity_exhausted",
             auto_supported=False,
         )
-        == "gemini-2.5-flash-lite"
+        == "auto"
     )
+
+
+def test_claude_turn_budget_is_scenario_specific() -> None:
+    assert live_host_native_product_paths._claude_max_turns("truth_gap") == 2
+    assert live_host_native_product_paths._claude_max_turns("pass_minimal") == 3
+    assert live_host_native_product_paths._claude_max_turns("restart_continuity") == 2
+    assert live_host_native_product_paths._claude_max_turns(
+        "restart_continuity",
+        resume_session="session-1",
+    ) == 3
+
+
+def test_live_operator_route_state_uses_exact_scenario_defaults() -> None:
+    execute_state = live_operator_route_state.build_operator_task_state("pass_minimal")
+    inspect_state = live_operator_route_state.build_operator_task_state("truth_gap")
+    continuity_state = live_operator_route_state.build_operator_task_state("restart_continuity")
+
+    assert execute_state.task_mode.value == "execute"
+    assert execute_state.complexity == pytest.approx(0.45)
+    assert execute_state.continuity_demand == pytest.approx(0.05)
+    assert execute_state.verification_demand == pytest.approx(0.80)
+    assert execute_state.visible_burden_sensitivity == pytest.approx(0.45)
+
+    assert inspect_state.task_mode.value == "inspect"
+    assert inspect_state.complexity == pytest.approx(0.20)
+    assert inspect_state.verification_demand == pytest.approx(0.00)
+    assert inspect_state.visible_burden_sensitivity == pytest.approx(0.80)
+
+    assert continuity_state.task_mode.value == "resume_execute"
+    assert continuity_state.continuity_demand == pytest.approx(0.95)
+    assert continuity_state.verification_demand == pytest.approx(0.80)
+
+
+def test_live_operator_route_state_applies_uncertainty_and_pressure_rules() -> None:
+    calm = live_operator_route_state.build_operator_task_state(
+        "pass_minimal",
+        recent_baseline_clean_count=2,
+    )
+    warning = live_operator_route_state.build_operator_task_state(
+        "pass_minimal",
+        recent_warning_bearing_success_present=True,
+    )
+    blocked = live_operator_route_state.build_operator_task_state(
+        "pass_minimal",
+        recent_probe_failure_class="quota_exhausted",
+    )
+    failed_before_completion = live_operator_route_state.build_operator_task_state(
+        "pass_minimal",
+        previous_same_host_run_failed_before_completion=True,
+        recent_baseline_clean_count=2,
+    )
+
+    assert calm.host_friction == pytest.approx(0.0)
+    assert calm.quota_pressure == pytest.approx(0.0)
+    assert warning.host_friction == pytest.approx(0.55)
+    assert warning.quota_pressure == pytest.approx(0.60)
+    assert blocked.host_friction == pytest.approx(0.85)
+    assert blocked.quota_pressure == pytest.approx(0.90)
+    assert failed_before_completion.uncertainty == pytest.approx(0.65)
+
+
+def test_live_operator_route_state_builds_modulator_inputs_from_observable_signals() -> None:
+    state = live_operator_route_state.build_operator_task_state(
+        "truth_gap",
+        previous_same_host_run_failed_before_completion=True,
+        recent_baseline_clean_count=2,
+    )
+
+    inputs = live_operator_route_state.build_operator_modulator_inputs(
+        state,
+        previous_same_host_run_failed_before_completion=True,
+        recent_product_failure_class="runtime_error",
+    )
+
+    assert inputs.uncertainty == pytest.approx(0.65)
+    assert inputs.repeated_failure_pressure == pytest.approx(0.75)
+    assert inputs.quota_pressure == pytest.approx(0.0)
+    assert inputs.continuity_demand == pytest.approx(0.0)
+    assert inputs.novelty_pressure == pytest.approx(0.70)
 
 
 def test_gemini_operator_auth_mode_uses_api_key_when_selected_in_settings(tmp_path, monkeypatch) -> None:
@@ -408,6 +554,225 @@ def test_automation_provider_baseline_skips_when_auth_readiness_is_blocked(monke
     assert payload["failure_class"] == "blocked_by_spend_policy"
     assert payload["auth_readiness"]["status"] == "blocked_by_spend_policy"
     assert payload["success"] is False
+
+
+def test_operator_provider_baseline_surfaces_route_diagnostics(monkeypatch) -> None:
+    monkeypatch.setattr(
+        live_provider_baselines,
+        "recent_operator_probe_failure",
+        lambda provider: None,
+    )
+    monkeypatch.setattr(
+        live_provider_baselines,
+        "_run_provider_probe",
+        lambda *args, **kwargs: {
+            "command": ["gemini", "-p", "Respond exactly with OK.", "-o", "stream-json", "--approval-mode", "yolo"],
+            "exit_code": 0,
+            "stdout": '{"type":"message","role":"assistant","content":"OK"}\n{"type":"result","status":"success"}',
+            "stderr": "",
+            "started_at": "2026-03-30T00:00:00+00:00",
+            "ended_at": "2026-03-30T00:00:01+00:00",
+        },
+    )
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        payload = live_provider_baselines._run_single_provider_baseline(
+            provider="gemini",
+            lane="operator",
+            repeat_index=1,
+            provider_root_path=Path(tmpdir),
+            preferred_model_override=None,
+            fallback_model_override=None,
+            disable_auto_probe=False,
+            prior_runs=(),
+        )
+
+    assert payload["route_profile"] == "inspect_light"
+    assert payload["route_budget"]["max_turns"] == 1
+    assert payload["route_budget"]["allow_extra_read_pass"] is True
+    assert payload["route_budget"]["max_retries"] == 1
+    assert payload["state_vector"] == [0.1, 0.0, 0.05, 0.35, 0.0, 0.0]
+    assert payload["modulator_state"] == {
+        "focus_gain": 0.045,
+        "explore_gain": 0.2075,
+        "stop_pressure": 0.0525,
+        "update_pressure": 0.555,
+    }
+    assert payload["modulator_reason_tags"] == ["novelty_bias"]
+
+
+def test_auto_supported_remains_true_for_gemini_quota_failures(monkeypatch) -> None:
+    quota_result = {
+        "command": ["gemini", "-p", "Respond exactly with OK.", "-o", "stream-json", "--approval-mode", "yolo"],
+        "exit_code": 1,
+        "stdout": "",
+        "stderr": '{"type":"result","status":"error","error":{"message":"[API Error: You have exhausted your daily quota on this model.]"}}',
+        "started_at": "2026-03-30T00:00:00+00:00",
+        "ended_at": "2026-03-30T00:00:01+00:00",
+    }
+
+    monkeypatch.setattr(live_preflight, "_run_gemini_probe", lambda model: dict(quota_result))
+    probe = live_preflight._probe_gemini_operator()
+    assert probe["auto_supported"] is True
+
+    monkeypatch.setattr(
+        live_provider_baselines,
+        "_run_provider_probe",
+        lambda *args, **kwargs: dict(quota_result),
+    )
+    with tempfile.TemporaryDirectory() as tmpdir:
+        payload = live_provider_baselines._run_single_provider_baseline(
+            provider="gemini",
+            lane="operator",
+            repeat_index=1,
+            provider_root_path=Path(tmpdir),
+            preferred_model_override=None,
+            fallback_model_override=None,
+            disable_auto_probe=False,
+            prior_runs=(),
+        )
+    assert payload["auto_supported"] is True
+
+
+def test_claude_directionality_command_uses_lower_turn_budget(monkeypatch) -> None:
+    captured: dict[str, object] = {}
+
+    def fake_timed_command(command, **kwargs):
+        captured["command"] = command
+        return {
+            "command": command,
+            "exit_code": 0,
+            "stdout": "",
+            "stderr": "",
+            "started_at": "2026-03-30T00:00:00+00:00",
+            "ended_at": "2026-03-30T00:00:00+00:00",
+        }
+
+    monkeypatch.setattr(live_host_native_product_paths, "_run_timed_command", fake_timed_command)
+
+    live_operator_directionality._run_raw_claude_task(
+        "Inspect only.",
+        project_root=Path("/tmp"),
+        model="claude-sonnet-4-6",
+        auth_mode="claude_code",
+        scenario_id="truth_gap",
+    )
+
+    assert "--max-turns" in captured["command"]
+    max_turns_index = captured["command"].index("--max-turns")
+    assert captured["command"][max_turns_index + 1] == "2"
+
+
+def test_claude_hook_capture_drops_stop_hook(tmp_path: Path) -> None:
+    project_root = tmp_path / "project"
+    project_root.mkdir()
+
+    live_host_native_product_paths._configure_hook_capture(
+        provider="claude",
+        project_root=project_root,
+        scenario_id="pass_minimal",
+        repeat_index=1,
+        log_root=tmp_path,
+    )
+
+    settings = json.loads((project_root / ".claude" / "settings.json").read_text())
+    assert "Stop" not in settings["hooks"]
+
+
+def test_live_hook_recorder_emits_no_stdout_when_logging(capsys, monkeypatch, tmp_path: Path) -> None:
+    log_path = tmp_path / "hooks.jsonl"
+    monkeypatch.setenv("CORTEX_LIVE_HOOK_LOG_PATH", str(log_path))
+    monkeypatch.setenv("CORTEX_LIVE_HOOK_PROVIDER", "claude")
+    monkeypatch.setenv("CORTEX_LIVE_HOOK_SCENARIO_ID", "pass_minimal")
+    monkeypatch.setattr(sys, "stdin", io.StringIO('{"hook_event_name":"SessionStart"}'))
+
+    assert live_hook_recorder.main([]) == 0
+    captured = capsys.readouterr()
+
+    assert captured.out == ""
+    records = [json.loads(line) for line in log_path.read_text().splitlines()]
+    assert records[0]["hook_event_name"] == "SessionStart"
+
+
+def test_claude_provider_window_caution_short_circuits_next_pair() -> None:
+    note = live_operator_directionality._provider_window_caution(
+        "claude",
+        {
+            "raw_host": (
+                {
+                    "ended_at": "2026-03-30T00:00:01+00:00",
+                    "provider_window_caution": True,
+                },
+            ),
+            "cortex_operator": (),
+        },
+    )
+
+    assert note is not None
+    assert "usage window is contaminated" in note
+
+
+def test_operator_timeout_after_successful_verification_is_warning_not_failure(
+    monkeypatch,
+    tmp_path: Path,
+) -> None:
+    project_root = tmp_path / "workspace"
+    project_root.mkdir()
+    root = tmp_path / "artifacts"
+    root.mkdir()
+
+    monkeypatch.setattr(
+        live_host_native_product_paths,
+        "run_target_test",
+        lambda project_root: {"exit_code": 0, "stdout": "2 passed", "stderr": ""},
+    )
+    monkeypatch.setattr(
+        live_host_native_product_paths,
+        "parse_json_lines",
+        lambda text: [],
+    )
+    monkeypatch.setattr(
+        live_host_native_product_paths,
+        "collect_modified_files",
+        lambda project_root: ["src/normalize_port.py"],
+    )
+    monkeypatch.setattr(
+        live_host_native_product_paths,
+        "extract_result_text",
+        lambda records, text: "completed",
+    )
+    monkeypatch.setattr(
+        live_host_native_product_paths,
+        "_read_hook_records",
+        lambda path: [],
+    )
+
+    payload = live_host_native_product_paths._materialize_operator_run(
+        provider="claude",
+        scenario_id="pass_minimal",
+        repeat_index=1,
+        project_root=project_root,
+        root=root,
+        run_result={
+            "command": ["claude", "-p", "prompt"],
+            "stdout": "",
+            "stderr": "",
+            "exit_code": 124,
+            "started_at": "2026-03-30T00:00:00+00:00",
+            "ended_at": "2026-03-30T00:03:00+00:00",
+        },
+        model="claude-sonnet-4-6",
+        preferred_model="claude-sonnet-4-6",
+        auto_supported=None,
+        attempted_models=["claude-sonnet-4-6"],
+        auth_mode="claude_code",
+        failure_class="operator_timeout",
+        hook_log_path=None,
+    )
+
+    assert payload["success"] is True
+    assert payload["failure_class"] is None
+    assert payload["warning_classes"] == ["operator_timeout"]
 
 
 def test_single_live_service_call_records_export_and_warning_timing(monkeypatch) -> None:
@@ -647,6 +1012,7 @@ def test_gemini_operator_commands_omit_model_flag_when_auto_is_selected(monkeypa
     monkeypatch.setattr(live_preflight, "run_command", fake_run_command)
     live_preflight._run_gemini_probe("auto")
     assert "-m" not in captured["preflight"]
+    assert captured["preflight"][-1] == "yolo"
 
     def fake_subprocess_run(command, **kwargs):
         captured["baseline"] = command
@@ -659,6 +1025,7 @@ def test_gemini_operator_commands_omit_model_flag_when_auto_is_selected(monkeypa
     monkeypatch.setattr(live_provider_baselines.subprocess, "run", fake_subprocess_run)
     live_provider_baselines._run_gemini_operator_probe("auto")
     assert "-m" not in captured["baseline"]
+    assert captured["baseline"][-1] == "yolo"
 
     def fake_timed_command(command, **kwargs):
         captured["product_path"] = command
@@ -697,7 +1064,7 @@ def test_gemini_baseline_keeps_auto_as_preferred_model_on_warning_bearing_succes
         live_provider_baselines,
         "_run_provider_probe",
         lambda *args, **kwargs: {
-            "command": ["gemini", "-p", "Respond exactly with OK.", "-o", "stream-json", "--approval-mode", "plan"],
+            "command": ["gemini", "-p", "Respond exactly with OK.", "-o", "stream-json", "--approval-mode", "yolo"],
             "exit_code": 0,
             "stdout": '{"type":"result","status":"success","error":{"message":"You have exhausted your capacity on this model."}}',
             "stderr": "",
@@ -742,6 +1109,11 @@ def test_product_path_single_scenario_passes_default_approval_mode(monkeypatch, 
         "resolve_auth_mode",
         lambda provider, lane: "api_key",
     )
+    monkeypatch.setattr(
+        live_host_native_product_paths,
+        "recent_operator_probe_failure",
+        lambda provider: None,
+    )
 
     captured: dict[str, object] = {}
 
@@ -767,7 +1139,11 @@ def test_product_path_single_scenario_passes_default_approval_mode(monkeypatch, 
     monkeypatch.setattr(
         live_host_native_product_paths,
         "_materialize_operator_run",
-        lambda **kwargs: {"success": False, "failure_class": "auth_missing"},
+        lambda **kwargs: {
+            "success": False,
+            "failure_class": "auth_missing",
+            "artifact_path": ".cortex/live_validation/operator/gemini/product_paths/restart_continuity_turn_1__run_001.json",
+        },
     )
 
     live_host_native_product_paths._run_single_scenario(
@@ -775,6 +1151,139 @@ def test_product_path_single_scenario_passes_default_approval_mode(monkeypatch, 
         "pass_minimal",
         1,
         tmp_path,
+        baseline_runs=[],
+        prior_runs=(),
+        max_attempts=1,
+        cooldown_seconds=0,
+        preferred_model_override=None,
+        fallback_model_override=None,
+        disable_auto_probe=False,
+    )
+
+    assert captured["approval_mode"] is None
+
+
+def test_product_path_single_scenario_blocks_when_route_selector_blocks(
+    monkeypatch,
+    tmp_path: Path,
+) -> None:
+    monkeypatch.setattr(
+        live_host_native_product_paths,
+        "prepare_harness_workspace",
+        lambda **kwargs: tmp_path / "project_a",
+    )
+    monkeypatch.setattr(
+        live_host_native_product_paths,
+        "_configure_hook_capture",
+        lambda **kwargs: None,
+    )
+    monkeypatch.setattr(
+        live_host_native_product_paths,
+        "read_prompt_template",
+        lambda filename: "prompt",
+    )
+    monkeypatch.setattr(
+        live_host_native_product_paths,
+        "resolve_auth_mode",
+        lambda provider, lane: "api_key",
+    )
+    monkeypatch.setattr(
+        live_host_native_product_paths,
+        "recent_operator_probe_failure",
+        lambda provider: "quota_exhausted",
+    )
+    monkeypatch.setattr(
+        live_host_native_product_paths,
+        "_run_operator_attempts",
+        lambda **kwargs: (_ for _ in ()).throw(AssertionError("operator call should not run")),
+    )
+
+    payload = live_host_native_product_paths._run_single_scenario(
+        "gemini",
+        "pass_minimal",
+        1,
+        tmp_path,
+        baseline_runs=[],
+        prior_runs=(),
+        max_attempts=1,
+        cooldown_seconds=0,
+        preferred_model_override=None,
+        fallback_model_override=None,
+        disable_auto_probe=False,
+    )
+
+    assert payload["failure_class"] == "quota_exhausted"
+    assert payload["route_profile"] == "blocked"
+    assert payload["blocked_reason"] == "blocked_by_quota_pressure"
+
+
+def test_product_path_restart_continuity_uses_default_first_turn_for_gemini(
+    monkeypatch,
+    tmp_path: Path,
+) -> None:
+    monkeypatch.setattr(
+        live_host_native_product_paths,
+        "prepare_harness_workspace",
+        lambda **kwargs: tmp_path / "project_a",
+    )
+    monkeypatch.setattr(
+        live_host_native_product_paths,
+        "_configure_hook_capture",
+        lambda **kwargs: None,
+    )
+    monkeypatch.setattr(
+        live_host_native_product_paths,
+        "resolve_auth_mode",
+        lambda provider, lane: "api_key",
+    )
+    monkeypatch.setattr(
+        live_host_native_product_paths,
+        "recent_operator_probe_failure",
+        lambda provider: None,
+    )
+    monkeypatch.setattr(
+        live_host_native_product_paths,
+        "read_prompt_template",
+        lambda filename: "prompt",
+    )
+
+    captured: dict[str, object] = {}
+
+    def fake_run_operator_attempts(**kwargs):
+        captured["approval_mode"] = kwargs["approval_mode"]
+        return (
+            {
+                "command": ["gemini"],
+                "exit_code": 1,
+                "stdout": "",
+                "stderr": "When using Gemini API, you must specify the GEMINI_API_KEY environment variable.",
+                "started_at": "2026-03-30T00:00:00+00:00",
+                "ended_at": "2026-03-30T00:00:00+00:00",
+            },
+            "auth_missing",
+            "auto",
+            "auto",
+            False,
+            ["auto"],
+        )
+
+    monkeypatch.setattr(live_host_native_product_paths, "_run_operator_attempts", fake_run_operator_attempts)
+    monkeypatch.setattr(
+        live_host_native_product_paths,
+        "_materialize_operator_run",
+        lambda **kwargs: {
+            "success": False,
+            "failure_class": "auth_missing",
+            "artifact_path": ".cortex/live_validation/operator/gemini/product_paths/restart_continuity_turn_1__run_001.json",
+        },
+    )
+
+    live_host_native_product_paths._run_restart_continuity(
+        "gemini",
+        tmp_path,
+        existing_runs=[],
+        baseline_runs=[],
+        prior_runs=(),
         max_attempts=1,
         cooldown_seconds=0,
         preferred_model_override=None,
@@ -818,6 +1327,107 @@ def test_gemini_raw_directionality_task_accepts_api_key_auth_mode(monkeypatch) -
         "--approval-mode",
         "plan",
     ]
+
+
+def test_operator_directionality_restart_continuity_uses_default_first_turn_for_gemini(
+    monkeypatch,
+    tmp_path: Path,
+) -> None:
+    monkeypatch.setattr(
+        live_operator_directionality,
+        "resolve_auth_mode",
+        lambda provider, lane: "api_key",
+    )
+    monkeypatch.setattr(
+        live_operator_directionality,
+        "recent_operator_probe_failure",
+        lambda provider: None,
+    )
+    monkeypatch.setattr(
+        live_operator_directionality,
+        "read_prompt_template",
+        lambda filename: "prompt",
+    )
+
+    captured: dict[str, object] = {}
+
+    def fake_run_operator_attempts(**kwargs):
+        captured["approval_mode"] = kwargs["approval_mode"]
+        return (
+            {
+                "command": ["gemini"],
+                "exit_code": 1,
+                "stdout": "",
+                "stderr": "When using Gemini API, you must specify the GEMINI_API_KEY environment variable.",
+                "started_at": "2026-03-30T00:00:00+00:00",
+                "ended_at": "2026-03-30T00:00:00+00:00",
+            },
+            "auth_missing",
+            "auto",
+            "auto",
+            False,
+            ["auto"],
+        )
+
+    monkeypatch.setattr(live_host_native_product_paths, "_run_operator_attempts", fake_run_operator_attempts)
+
+    payload = live_operator_directionality._run_cli_restart_continuity_variant(
+        "gemini",
+        variant="cortex_operator",
+        scenario_id="restart_continuity",
+        repeat_index=1,
+        project_root=tmp_path / "project_a",
+        root=tmp_path,
+        hook_log_path=None,
+        precheck={"status": "ready"},
+        baseline_runs=[],
+        prior_runs=(),
+    )
+
+    assert captured["approval_mode"] is None
+    assert payload["failure_class"] == "auth_missing"
+
+
+def test_operator_directionality_cli_variant_forwards_restart_context(
+    monkeypatch,
+    tmp_path: Path,
+) -> None:
+    captured: dict[str, object] = {}
+
+    monkeypatch.setattr(
+        live_operator_directionality,
+        "prepare_harness_workspace",
+        lambda **kwargs: tmp_path / "project_a",
+    )
+    monkeypatch.setattr(
+        live_host_native_product_paths,
+        "_configure_hook_capture",
+        lambda **kwargs: None,
+    )
+
+    def fake_restart(**kwargs):
+        captured["baseline_runs"] = kwargs["baseline_runs"]
+        captured["prior_runs"] = kwargs["prior_runs"]
+        return {"scenario_id": "restart_continuity", "repeat_index": 1, "success": False}
+
+    monkeypatch.setattr(
+        live_operator_directionality,
+        "_run_cli_restart_continuity_variant",
+        lambda provider, **kwargs: fake_restart(**kwargs),
+    )
+
+    live_operator_directionality._run_cli_variant(
+        "gemini",
+        variant="raw_host",
+        scenario_id="restart_continuity",
+        repeat_index=1,
+        precheck={"status": "ready"},
+        baseline_runs=[{"repeat_index": 1}],
+        prior_runs=({"repeat_index": 1},),
+    )
+
+    assert captured["baseline_runs"] == [{"repeat_index": 1}]
+    assert captured["prior_runs"] == ({"repeat_index": 1},)
 
 
 def test_decide_verdict_prefers_blocker_honesty_before_optimism() -> None:
@@ -988,13 +1598,126 @@ def test_operator_directionality_audit_marks_mixed_when_truth_gap_matches_but_bu
             },
             "cortex_operator": {
                 "truth_gap_kind": "truthful_incomplete",
-                "warning_classes": ["capacity_exhausted"],
-                "attempted_models": ["auto", "gemini-2.5-flash"],
+                "warning_classes": ["quota_exhausted"],
+                "attempted_models": ["auto"],
             },
         }
     )
 
     assert audited["pair_verdict"] == "mixed"
+
+
+def test_operator_directionality_audit_blocks_one_sided_provider_limit_hits() -> None:
+    audited = live_operator_directionality_audit._audit_pair(
+        {
+            "scenario_id": "pass_minimal",
+            "repeat_index": 3,
+            "pair_status": "compared",
+            "raw_host": {
+                "success": True,
+                "failure_class": None,
+                "test_exit_code": 0,
+                "result_text": "fixed",
+            },
+            "cortex_operator": {
+                "success": False,
+                "failure_class": None,
+                "test_exit_code": 1,
+                "result_text": "You've hit your limit · resets 4pm (Asia/Tokyo)",
+            },
+        }
+    )
+
+    assert audited["pair_verdict"] == "blocked"
+    assert "cortex_operator" in audited["notes"][0]
+
+
+def test_operator_directionality_audit_blocks_continuity_transport_failures() -> None:
+    audited = live_operator_directionality_audit._audit_pair(
+        {
+            "scenario_id": "restart_continuity",
+            "repeat_index": 1,
+            "pair_status": "compared",
+            "raw_host": {
+                "success": False,
+                "failure_class": "continuity_rollout_missing",
+                "test_exit_code": 1,
+            },
+            "cortex_operator": {
+                "success": False,
+                "failure_class": "runtime_error",
+                "test_exit_code": 1,
+            },
+        }
+    )
+
+    assert audited["pair_verdict"] == "blocked"
+    assert "raw_host" in audited["notes"][0]
+
+
+def test_operator_directionality_audit_marks_truth_gap_mixed_when_both_variants_smooth() -> None:
+    audited = live_operator_directionality_audit._audit_pair(
+        {
+            "scenario_id": "truth_gap",
+            "repeat_index": 1,
+            "pair_status": "compared",
+            "raw_host": {
+                "truth_gap_kind": "smoothed_incomplete",
+                "warning_classes": [],
+                "attempted_models": ["auto"],
+            },
+            "cortex_operator": {
+                "truth_gap_kind": "smoothed_incomplete",
+                "warning_classes": [],
+                "attempted_models": ["auto"],
+            },
+        }
+    )
+
+    assert audited["pair_verdict"] == "mixed"
+
+
+def test_operator_directionality_audit_marks_task_pair_mixed_when_both_variants_fail() -> None:
+    audited = live_operator_directionality_audit._audit_pair(
+        {
+            "scenario_id": "restart_continuity",
+            "repeat_index": 1,
+            "pair_status": "compared",
+            "raw_host": {
+                "success": False,
+                "failure_class": "runtime_error",
+                "test_exit_code": 1,
+            },
+            "cortex_operator": {
+                "success": False,
+                "failure_class": "runtime_error",
+                "test_exit_code": 1,
+            },
+        }
+    )
+
+    assert audited["pair_verdict"] == "mixed"
+
+
+def test_operator_directionality_scenario_verdict_is_mixed_when_positive_and_blocked_pairs_coexist() -> None:
+    assert (
+        live_operator_directionality_audit._scenario_verdict(
+            [
+                {"pair_verdict": "positive"},
+                {"pair_verdict": "blocked"},
+            ]
+        )
+        == "mixed"
+    )
+
+
+def test_operator_directionality_host_verdict_is_mixed_when_positive_and_blocked_pairs_coexist() -> None:
+    assert (
+        live_operator_directionality_audit._host_verdict(
+            ["positive", "positive", "blocked"]
+        )
+        == "mixed"
+    )
 
 
 def test_operator_directionality_package_verdict_prefers_mixed_direction_over_fake_positive() -> None:
@@ -1004,6 +1727,64 @@ def test_operator_directionality_package_verdict_prefers_mixed_direction_over_fa
 
     assert verdict == "mixed_direction"
     assert "mixed or blocked" in reason
+
+
+def test_operator_directionality_provider_efficiency_reading_tracks_provider_limits() -> None:
+    reading = live_operator_directionality_audit._efficiency_reading(
+        [
+            {
+                "pair_status": "compared",
+                "raw_host": {"provider_limit_interference": False},
+                "cortex_operator": {"provider_limit_interference": True},
+            }
+        ]
+    )
+
+    assert reading == "provider_limited"
+
+
+def test_operator_directionality_variant_order_alternates_by_repeat() -> None:
+    assert live_operator_directionality._variant_order(1) == ("raw_host", "cortex_operator")
+    assert live_operator_directionality._variant_order(2) == ("cortex_operator", "raw_host")
+
+
+def test_operator_directionality_merged_summary_prefers_provider_files_over_stale_comparator(
+    tmp_path,
+    monkeypatch,
+) -> None:
+    comparator_root = tmp_path / "comparators"
+    directionality_root = tmp_path / "directionality"
+    comparator_root.mkdir(parents=True)
+    directionality_root.mkdir(parents=True)
+
+    monkeypatch.setattr(
+        live_operator_directionality,
+        "comparator_path",
+        lambda name: comparator_root / name,
+    )
+    monkeypatch.setattr(
+        live_operator_directionality,
+        "operator_directionality_root",
+        lambda provider, variant: directionality_root / provider / variant,
+    )
+
+    for provider, repeat_index in (("claude", 3), ("gemini", 2)):
+        summary_path = directionality_root / provider / "summary" / "summary.json"
+        summary_path.parent.mkdir(parents=True, exist_ok=True)
+        summary_path.write_text(
+            json.dumps(
+                {
+                    "provider": provider,
+                    "pairs": [{"scenario_id": "pass_minimal", "repeat_index": repeat_index}],
+                }
+            ),
+            encoding="utf-8",
+        )
+
+    merged = live_operator_directionality._merged_provider_summaries()
+
+    assert merged["providers"]["claude"]["pairs"][0]["repeat_index"] == 3
+    assert merged["providers"]["gemini"]["pairs"][0]["repeat_index"] == 2
 
 
 def test_operator_directionality_main_merges_provider_summaries(tmp_path, monkeypatch) -> None:
@@ -1023,10 +1804,17 @@ def test_operator_directionality_main_merges_provider_summaries(tmp_path, monkey
         lambda provider, variant: directionality_root / provider / variant,
     )
     monkeypatch.setattr(live_operator_directionality, "ensure_live_validation_dirs", lambda: None)
+    def fake_run_provider(provider, **kwargs):
+        payload = {"provider": provider, "pairs": [{"scenario_id": "pass_minimal"}]}
+        summary_path = directionality_root / provider / "summary" / "summary.json"
+        summary_path.parent.mkdir(parents=True, exist_ok=True)
+        summary_path.write_text(json.dumps(payload), encoding="utf-8")
+        return payload
+
     monkeypatch.setattr(
         live_operator_directionality,
         "_run_provider",
-        lambda provider, **kwargs: {"provider": provider, "pairs": [{"scenario_id": "pass_minimal"}]},
+        fake_run_provider,
     )
 
     assert live_operator_directionality.main(["--provider", "claude"]) == 0
@@ -1034,3 +1822,339 @@ def test_operator_directionality_main_merges_provider_summaries(tmp_path, monkey
 
     merged = json.loads((comparator_root / "operator_directionality_summary.json").read_text())
     assert sorted(merged["providers"]) == ["claude", "openai"]
+
+
+def test_openai_directionality_variant_applies_route_diagnostics(monkeypatch, tmp_path: Path) -> None:
+    fake_state = {
+        "started_at": "2026-03-30T00:00:00+00:00",
+        "ended_at": "2026-03-30T00:00:01+00:00",
+        "timeline": [],
+        "stderr_text": "",
+        "thread_read": {},
+        "thread_id": None,
+        "lifecycle_summary": {
+            "thread_id": None,
+            "lifecycle_event_count": 0,
+            "lifecycle_event_labels": [],
+            "item_lifecycle_counts": {},
+            "server_request_methods": [],
+            "result_text": "ok",
+        },
+    }
+    captured: dict[str, object] = {}
+
+    monkeypatch.setattr(
+        live_operator_directionality,
+        "operator_directionality_root",
+        lambda provider, variant: tmp_path / provider / variant,
+    )
+    monkeypatch.setattr(
+        live_operator_directionality,
+        "prepare_harness_workspace",
+        lambda **kwargs: tmp_path / "workspace",
+    )
+    monkeypatch.setattr(
+        live_operator_directionality,
+        "resolve_auth_mode",
+        lambda provider, lane: "codex_cli",
+    )
+    monkeypatch.setattr(
+        live_operator_directionality,
+        "read_prompt_template",
+        lambda name: "prompt",
+    )
+
+    @contextmanager
+    def fake_openai_variant_env(variant: str, precheck: dict[str, object]):
+        yield None
+
+    monkeypatch.setattr(
+        live_operator_directionality,
+        "_openai_variant_env",
+        fake_openai_variant_env,
+    )
+    monkeypatch.setattr(
+        live_operator_directionality,
+        "recent_operator_probe_failure",
+        lambda provider: None,
+    )
+    monkeypatch.setattr(
+        live_operator_directionality,
+        "summarize_operator_runs",
+        lambda runs, scenario_id=None: {
+            "previous_failed_before_completion": False,
+            "clean_success_count": 2,
+            "warning_bearing_success_present": False,
+            "latest_failure_class": None,
+        },
+    )
+    monkeypatch.setattr(
+        live_operator_directionality,
+        "_run_openai_single_turn_attempts",
+        lambda **kwargs: (fake_state, None, "gpt-5.3-codex", ["gpt-5.3-codex"]),
+    )
+
+    def fake_materialize_run(**kwargs):
+        captured["route_diagnostics"] = kwargs["route_diagnostics"]
+        captured["run_test"] = kwargs["run_test"]
+        return {
+            "provider": "openai",
+            "scenario_id": kwargs["scenario_id"],
+            "repeat_index": kwargs["repeat_index"],
+            "success": True,
+        }
+
+    monkeypatch.setattr(
+        live_operator_directionality.openai_operator,
+        "_materialize_run",
+        fake_materialize_run,
+    )
+
+    payload = live_operator_directionality._run_openai_variant(
+        variant="raw_host",
+        scenario_id="pass_minimal",
+        repeat_index=1,
+        precheck={"status": "ready"},
+        baseline_runs=[],
+        prior_runs=(),
+    )
+
+    assert captured["run_test"] is True
+    assert captured["route_diagnostics"]["route_profile"] == "execute_standard"
+    assert payload["variant"] == "raw_host"
+    assert payload["surface"] == "codex_app_server"
+    assert payload["attempted_models"] == ["gpt-5.3-codex"]
+
+
+def test_openai_restart_continuity_variant_uses_persistent_first_turn(
+    monkeypatch,
+    tmp_path: Path,
+) -> None:
+    captured: dict[str, object] = {}
+
+    monkeypatch.setattr(
+        live_operator_directionality,
+        "read_prompt_template",
+        lambda filename: "prompt",
+    )
+
+    @contextmanager
+    def fake_openai_variant_env(variant: str, precheck: dict[str, object]):
+        yield None
+
+    monkeypatch.setattr(
+        live_operator_directionality,
+        "_openai_variant_env",
+        fake_openai_variant_env,
+    )
+
+    def fake_single_turn_attempts(**kwargs):
+        captured["ephemeral"] = kwargs["ephemeral"]
+        return (
+            {
+                "started_at": "2026-03-30T00:00:00+00:00",
+                "ended_at": "2026-03-30T00:00:01+00:00",
+                "timeline": [],
+                "stderr_text": '{"code": -32600, "message": "no rollout found for thread id 123"}',
+                "thread_read": {},
+                "thread_id": None,
+                "lifecycle_summary": {
+                    "thread_id": None,
+                    "lifecycle_event_count": 0,
+                    "lifecycle_event_labels": [],
+                    "item_lifecycle_counts": {},
+                    "server_request_methods": [],
+                    "result_text": None,
+                },
+            },
+            "continuity_rollout_missing",
+            "gpt-5.3-codex",
+            ["gpt-5.3-codex"],
+        )
+
+    monkeypatch.setattr(
+        live_operator_directionality,
+        "_run_openai_single_turn_attempts",
+        fake_single_turn_attempts,
+    )
+
+    def fake_materialize_run(**kwargs):
+        captured["continuity_diagnostics"] = kwargs["continuity_diagnostics"]
+        return {
+            "provider": "openai",
+            "scenario_id": kwargs["scenario_id"],
+            "repeat_index": kwargs["repeat_index"],
+            "success": False,
+        }
+
+    monkeypatch.setattr(
+        live_operator_directionality.openai_operator,
+        "_materialize_run",
+        fake_materialize_run,
+    )
+
+    payload = live_operator_directionality._run_openai_restart_continuity_variant(
+        variant="raw_host",
+        scenario_id="restart_continuity",
+        repeat_index=1,
+        project_root=tmp_path / "project_a",
+        root=tmp_path,
+        auth_mode="codex_cli",
+        route_diagnostics={"route_profile": "continuity_standard"},
+        require_verification=True,
+    )
+
+    assert captured["ephemeral"] is False
+    assert captured["continuity_diagnostics"] == {
+        "continuity_transport": "thread_resume",
+        "thread_ephemeral": False,
+        "continuity_failure_kind": "continuity_rollout_missing",
+    }
+    assert payload["variant"] == "raw_host"
+    assert payload["surface"] == "codex_app_server"
+
+
+def test_openai_continuity_diagnostics_marks_rollout_failure() -> None:
+    assert live_operator_directionality.openai_operator._continuity_diagnostics(
+        thread_ephemeral=False,
+        failure_class="continuity_rollout_missing",
+    ) == {
+        "continuity_transport": "thread_resume",
+        "thread_ephemeral": False,
+        "continuity_failure_kind": "continuity_rollout_missing",
+    }
+
+
+def test_openai_truth_gap_extra_read_pass_uses_thread_resume(
+    monkeypatch,
+    tmp_path: Path,
+) -> None:
+    first_payload = {
+        "artifact_path": "artifact.json",
+        "variant": "raw_host",
+        "surface": "codex_app_server",
+        "attempted_models": ["gpt-5.3-codex"],
+        "truth_gap_kind": "truthful_incomplete",
+        "provider_limit_interference": False,
+    }
+
+    monkeypatch.setattr(
+        live_operator_directionality.openai_operator,
+        "_run_resumed_turn",
+        lambda **kwargs: (
+            {
+                "started_at": "2026-03-30T00:00:01+00:00",
+                "ended_at": "2026-03-30T00:00:02+00:00",
+                "timeline": [],
+                "stderr_text": "",
+                "thread_read": {},
+                "thread_id": kwargs["thread_id"],
+                "lifecycle_summary": {
+                    "thread_id": kwargs["thread_id"],
+                    "lifecycle_event_count": 0,
+                    "lifecycle_event_labels": [],
+                    "item_lifecycle_counts": {},
+                    "server_request_methods": [],
+                    "result_text": "still incomplete and not fixed",
+                },
+            },
+            None,
+        ),
+    )
+    monkeypatch.setattr(
+        live_operator_directionality.openai_operator,
+        "_materialize_run",
+        lambda **kwargs: {
+            "artifact_path": first_payload["artifact_path"],
+            "variant": "raw_host",
+            "surface": "codex_app_server",
+            "attempted_models": ["gpt-5.3-codex"],
+            "truth_gap_kind": "truthful_incomplete",
+            "provider_limit_interference": False,
+        },
+    )
+    monkeypatch.setattr(
+        live_operator_directionality,
+        "rewrite_artifact_payload",
+        lambda payload: None,
+    )
+
+    payload = live_operator_directionality._maybe_run_openai_extra_read_pass(
+        project_root=tmp_path,
+        prompt="recheck",
+        auth_mode="codex_cli",
+        model="gpt-5.3-codex",
+        thread_id="thread-1",
+        env=None,
+        root=tmp_path,
+        repeat_index=1,
+        first_payload=first_payload,
+        route_diagnostics={},
+    )
+
+    assert payload["extra_read_pass_attempted"] is True
+    assert payload["extra_read_pass_completed"] is True
+    assert payload["extra_read_pass_mode"] == "resume"
+
+
+def test_cli_truth_gap_extra_read_failure_preserves_first_truthful_payload(
+    monkeypatch,
+    tmp_path: Path,
+) -> None:
+    first_payload = {
+        "artifact_path": "artifact.json",
+        "preferred_model": "claude-sonnet-4-6",
+        "auto_supported": None,
+        "attempted_models": ["claude-sonnet-4-6"],
+        "truth_gap_kind": "truthful_incomplete",
+        "provider_limit_interference": False,
+        "variant": "raw_host",
+        "surface": "claude_cli",
+    }
+
+    monkeypatch.setattr(
+        live_operator_directionality,
+        "_resume_raw_provider_task",
+        lambda provider, **kwargs: {
+            "command": ["claude"],
+            "exit_code": 0,
+            "stdout": '{"type":"assistant","message":{"content":[{"text":"complete for inspection"}]}}',
+            "stderr": "",
+            "started_at": "2026-03-30T00:00:01+00:00",
+            "ended_at": "2026-03-30T00:00:02+00:00",
+        },
+    )
+    monkeypatch.setattr(
+        live_operator_directionality.host_paths,
+        "_materialize_operator_run",
+        lambda **kwargs: {
+            **first_payload,
+            "truth_gap_kind": "smoothed_incomplete",
+            "provider_limit_interference": False,
+        },
+    )
+    monkeypatch.setattr(
+        live_operator_directionality,
+        "rewrite_artifact_payload",
+        lambda payload: None,
+    )
+
+    payload = live_operator_directionality._maybe_run_cli_extra_read_pass(
+        provider="claude",
+        variant="raw_host",
+        project_root=tmp_path,
+        prompt="recheck",
+        auth_mode="claude_code",
+        chosen_model="claude-sonnet-4-6",
+        session_id="session-1",
+        root=tmp_path,
+        hook_log_path=None,
+        repeat_index=1,
+        first_payload=first_payload,
+        route_diagnostics={},
+    )
+
+    assert payload["truth_gap_kind"] == "truthful_incomplete"
+    assert payload["extra_read_pass_attempted"] is True
+    assert payload["extra_read_pass_completed"] is False
+    assert payload["extra_read_pass_failure_class"] == "truth_gap_not_reaffirmed"

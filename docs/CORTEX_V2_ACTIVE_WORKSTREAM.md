@@ -74,11 +74,11 @@ It is workflow state only. It does not override the packet documents, implementa
 
 ## 2. Current campaign and seam state
 
-- Current campaign: `Gemini operator auth-path explanation pending`
-- Current working branch at ledger update: `codex/20260330-005755-gemini-operator-api-key-recheck`
-- Current branch role: managed session branch for a non-load-bearing Gemini evidence-plumbing recheck
-- Current candidate seam: `Gemini operator API-key auth-path truthfulness`; `Q1` remains landed on the current machine, `N2` remains blocked on a capable machine, and the current unresolved line is whether the new Gemini API-key path materially changes the mixed host result
-- Current seam status: `the live harness now detects Gemini operator API-key mode from CLI settings/env, correctly classifies GEMINI_API_KEY environment-variable failures as auth_missing, and blocks raw-vs-Cortex directionality scoring when both variants are auth-blocked; the current local API-key recheck is itself still blocked because headless gemini -p requires GEMINI_API_KEY in the shell environment`
+- Current campaign: `M1F modulator closure and behavioral binding candidate complete`
+- Current working branch at ledger update: `codex/claude-directionality-explanation`
+- Current branch role: explicit manual explanation branch off the review line because local `main` remains ahead of `origin/main` and a managed session cannot be started honestly from that state
+- Current candidate seam: `M1F modulator closure and behavioral binding`; `Q1` remains the accepted ancestor audit on `main`, `N2` remains blocked on a capable machine, and the current explanation branch now carries the S1 route selector plus provider-limit neutrality, the OpenAI continuity transport fix, the Claude efficiency rerun, the first compact SRE modulator bundle, and one bounded live proof of extra inspect-pass behavior`
+- Current seam status: `the compact SRE modulator bundle is now behaviorally real on the explanation branch: one focused OpenAI truth_gap rerun shows live modulator diagnostics plus an actual extra inspect read-pass in artifacts, while the previously re-earned candidate package-positive operator directionality line remains the current branch truth`
 - the compare surface and live-validation truth from earlier seams remain accepted ancestor input and are not being reopened by the landed K train.
 - Seam risk: shared verification-plumbing seam plus environment-sensitive evidence rerun
 
@@ -120,24 +120,41 @@ It is workflow state only. It does not override the packet documents, implementa
     - Gemini CLI `0.35.3` does switch the operator lane to `api_key` when `.gemini/settings.json` selects `gemini-api-key`
     - but headless `gemini -p` still blocks with `auth_missing` until `GEMINI_API_KEY` is present in the shell environment
     - the recheck tooling now reports that blocker truthfully instead of mislabeling it as a clean probe
+  - the current Gemini auto-only operator contract now tightens that further:
+    - the operator/evaluation harness no longer calls `gemini-2.5-flash` or `gemini-2.5-flash-lite`
+    - fresh auto-only preflight reruns are stable on `auto` with `auth_mode=api_key` and `failure_class=quota_exhausted`
+    - fresh auto-only operator baseline reruns are stable on `auto` and return `OK` twice with no named-model fallback
+    - a fresh auto-only `pass_minimal` product-path rerun now blocks immediately on `quota_exhausted` with `model: auto-gemini-3`
+    - the S1 route selector now turns those same pressures into explicit route/budget decisions on the operator path
+    - the S1G provider-limit neutrality hardening now says:
+      - pair order alternates by repeat index to reduce shared-budget bias
+      - provider usage-window / quota hits are treated as comparison contamination rather than automatic directional loss
+      - Claude is now `positive` again after the lower turn-budget / leaner hook rerun
+      - Gemini remains `positive`
+      - OpenAI `restart_continuity` is now re-earned on the directionality path after the non-ephemeral thread-resume fix
+      - OpenAI is now `positive`
+      - package verdict is now `promising_positive`
+    - the M1 compact modulator bundle now adds:
+      - `focus_gain`
+      - `explore_gain`
+      - `stop_pressure`
+      - `update_pressure`
+      - live `modulator_state` and `modulator_reason_tags` diagnostics on operator artifacts
+      - one bounded extra-read-pass path when uncertainty is high and quota pressure is low
+    - the M1F closure rerun now confirms more than diagnostics on a bounded live slice:
+      - OpenAI truth-gap artifacts now show `extra_read_pass_attempted = true`
+      - `extra_read_pass_completed = true`
+      - `extra_read_pass_mode = resume`
+      - `thread_ephemeral = false`
+      - the focused slice proves the extra inspect pass is real rather than diagnostic-only
   - the current automation/service lane still fails honestly on missing machine auth
 - Next lawful move:
   - keep the machine-auth service lane explicitly deferred on this machine for actual proof execution
-  - keep Gemini as the remaining explicit partial host line on this machine
+  - treat the current package-positive operator line as candidate branch truth until it is reviewed and accepted
   - do not reopen the K train by inertia now that the bounded proven-lane executive/runtime line is landed
-  - do not widen from the mixed `Q1` package result into new runtime or product claims
-  - the next lawful move remains one narrow Gemini explanation seam, but it now has a stricter first gate:
-    - provide `GEMINI_API_KEY` in the shell environment for the headless operator lane
-    - then rerun a bounded Gemini-only slice before touching package-level directionality truth:
-      - preflight twice
-      - operator baseline
-      - product-path pass / gap / continuity
-      - paired raw-vs-Cortex directionality only after those entry checks are stable
-    - then determine whether the mixed Gemini directionality result reflects
-      - true Cortex-added burden,
-      - host-capacity noise,
-      - or audit-measurement noise
-  - keep `N2` as a separate blocked train pending a capable machine; do not conflate that with the Gemini directionality blocker
+  - do not widen from the current candidate package-positive review-branch result into new runtime or product claims by inertia
+  - the next lawful move is to publish/review this branch as the candidate package-positive operator directionality line
+  - after acceptance, keep `N2` as a separate blocked train pending a capable machine rather than reopening service proof on this host
 
 ## 4. Explicitly blocked moves
 
@@ -153,11 +170,15 @@ It is workflow state only. It does not override the packet documents, implementa
 - Do not overread ephemeral OpenAI `thread/read` emptiness as if the App Server lifecycle proof failed; for current scope the event timeline is the authoritative lifecycle surface and the persisted thread view remains a caveat.
 - Do not silently discard Gemini capacity warnings when a run otherwise succeeds; preserve them as warnings rather than pretending the host was perfectly stable.
 - Do not silently reintroduce a pinned Gemini operator model as the default testing start point; current local truth is that CLI auto mode is the intended default.
+- Do not pass explicit Gemini operator model names anywhere on the operator/evaluation harness; let the installed CLI default auto route decide.
 - Do not silently promote `gemini-2.5-pro` from exploratory sidecar to closure-path truth while it is still capacity-blocked on smoke.
 - Do not treat selecting `gemini-api-key` in `.gemini/settings.json` as sufficient for headless Gemini operator proof; the current CLI still requires `GEMINI_API_KEY` in the shell environment or a loaded `.env`.
+- Do not use Gemini `plan` mode as the default comparison baseline on the operator/evaluation path.
+- Do not use Gemini `plan` mode as the default comparison baseline on the free API-key operator lane; it changes the routed quota/model path and contaminates the audit.
 - Do not reopen Gemini model chasing or assisted-mode speculation inside the active `L4` service-proof train.
 - Do not shell out from service transports to provider CLIs.
 - Do not overread the current auto-mode improvement as full Gemini closure while `restart_continuity` is still not repeat-stable.
+- Do not overread provider-limit interference as a product-quality defeat for Cortex by itself.
 - Do not widen `K4` into support-memory runtime, mediation, service/auth work, or broader host rollout.
 - Do not unfreeze threshold law in `K4`; the current budget-band activation-threshold law stays fixed.
 - Do not widen the landed K train into support-memory runtime, mediation, vigor scaling, service/auth work on this machine, or broader host rollout.
@@ -168,6 +189,7 @@ It is workflow state only. It does not override the packet documents, implementa
 ## 5. Acknowledged worktree noise at ledger creation
 
 - `.cortex/live_validation/` now contains local-only generated evidence for the current L2 pass and is expected to churn across reruns.
+- `docs/erika-visualizations/CORTEX_EVIDENCE_BASED_STATUS.md` and `docs/erika-visualizations/cortex-now-vs-future.html` remain unrelated support-surface edits in the current local worktree and are not part of the M1 seam itself.
 - Re-read `git status --short --untracked-files=all` before opening any new seam; this summary is only the continuity reminder, not the canonical file list.
 
 ## 6. Resume checklist

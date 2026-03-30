@@ -496,6 +496,10 @@ def _run_restart_continuity(*, root: Path, auth_mode: str, repeat_index: int) ->
             failure_class=first_failure,
             run_test=False,
             notes="Continuity stopped at the first App Server turn.",
+            continuity_diagnostics=_continuity_diagnostics(
+                thread_ephemeral=False,
+                failure_class=first_failure,
+            ),
         )
 
     thread_id = _extract_thread_id(first_state["thread_read"])
@@ -530,6 +534,10 @@ def _run_restart_continuity(*, root: Path, auth_mode: str, repeat_index: int) ->
         run_state=combined_state,
         failure_class=second_failure,
         run_test=True,
+        continuity_diagnostics=_continuity_diagnostics(
+            thread_ephemeral=False,
+            failure_class=second_failure,
+        ),
     )
 
 
@@ -815,6 +823,8 @@ def _materialize_run(
     failure_class: str | None,
     run_test: bool,
     notes: str | None = None,
+    route_diagnostics: dict[str, Any] | None = None,
+    continuity_diagnostics: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     stem = f"{scenario_id}__run_{repeat_index:03d}"
     timeline_path = root / f"{stem}.timeline.jsonl"
@@ -869,7 +879,23 @@ def _materialize_run(
         "started_at": run_state["started_at"],
         "ended_at": run_state["ended_at"],
         "notes": notes,
+        "extra_read_pass_attempted": False,
+        "extra_read_pass_completed": False,
+        "extra_read_pass_mode": None,
+        "extra_read_pass_failure_class": None,
+        "token_usage_visible": False,
+        "input_tokens": None,
+        "output_tokens": None,
+        "cache_tokens": None,
+        **_provider_limit_fields(
+            failure_class=failure_class,
+            result_text=result_text,
+        ),
     }
+    if route_diagnostics:
+        payload.update(route_diagnostics)
+    if continuity_diagnostics:
+        payload.update(continuity_diagnostics)
     write_json(artifact_path, payload)
     payload["artifact_path"] = str(artifact_path.relative_to(root.parents[4]))
     return payload
@@ -891,6 +917,47 @@ def _classify_state_failure(run_state: dict[str, Any]) -> str | None:
         ]
     )
     return classify_failure(text)
+
+
+def _provider_limit_fields(
+    *,
+    failure_class: str | None,
+    result_text: str | None,
+) -> dict[str, Any]:
+    candidates: list[str] = []
+    if failure_class:
+        candidates.append(failure_class)
+    if isinstance(result_text, str):
+        classified = classify_failure(result_text)
+        if classified:
+            candidates.append(classified)
+    limit_kind = next(
+        (
+            candidate
+            for candidate in candidates
+            if candidate in {"quota_exhausted", "capacity_exhausted", "rate_limited"}
+        ),
+        None,
+    )
+    return {
+        "provider_limit_interference": limit_kind is not None,
+        "provider_limit_kind": limit_kind,
+        "comparison_contaminated": limit_kind is not None,
+    }
+
+
+def _continuity_diagnostics(
+    *,
+    thread_ephemeral: bool,
+    failure_class: str | None,
+) -> dict[str, Any]:
+    return {
+        "continuity_transport": "thread_resume",
+        "thread_ephemeral": thread_ephemeral,
+        "continuity_failure_kind": (
+            failure_class if failure_class == "continuity_rollout_missing" else None
+        ),
+    }
 
 
 def _write_timeline(path: Path, timeline: list[dict[str, Any]]) -> None:

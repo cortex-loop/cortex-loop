@@ -557,11 +557,28 @@ Repo-local entry point:
 make live-operator-payoff-audit
 ```
 
+## Operator routing realization
+
+This revalidates the first bounded SRE-owned operator routing layer over the live-testing harness.
+It checks the bounded task-state builder, compact SRE modulator update law, geometric route selector, quota-pressure blocking, guarded continuity preference, one extra inspect read-pass law, and route/modulator diagnostics carried into live artifacts.
+It does not authorize named model routing, service/auth widening, AUX activation, or packet-level runtime changes.
+
+Direct commands:
+
+```sh
+python3 -m pytest tests/unit/test_operator_routing.py -q
+python3 -m pytest tests/unit/test_sre_modulators.py -q
+python3 -m pytest tests/unit/test_live_validation_tools.py -q
+python3 -m pytest tests/unit/test_correspondence_sre.py -q
+```
+
 ## Live operator directionality
 
 This runs the paired raw-vs-Cortex operator audit on the current machine.
 It is operator-only and does not reopen service proof.
 If a host's raw baseline cannot be isolated safely, the run must mark that pair blocked instead of comparing dishonestly.
+For Gemini on the free API-key lane, keep the comparison on the vanilla headless execution path with no explicit `-m` model argument and no forced `plan` baseline.
+For Claude and OpenAI, keep the current explicit stable models unless a separate host-defaults seam is explicitly opened.
 
 Direct command:
 

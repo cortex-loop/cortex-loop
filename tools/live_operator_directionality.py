@@ -12,6 +12,16 @@ from contextlib import contextmanager, nullcontext
 from pathlib import Path
 from typing import Any, Iterator
 
+from cortex.sre.modulators import update_executive_modulators
+from cortex.sre.operator_routing import (
+    build_operator_route_diagnostics,
+    select_operator_route_with_modulators,
+)
+from live_operator_route_state import (
+    build_operator_modulator_inputs,
+    build_operator_task_state,
+)
+
 try:  # pragma: no cover
     from . import live_host_native_product_paths as host_paths
     from . import live_openai_app_server_operator as openai_operator
@@ -30,9 +40,12 @@ try:  # pragma: no cover
         operator_directionality_root,
         prepare_harness_workspace,
         read_prompt_template,
+        recent_operator_probe_failure,
         resolve_auth_mode,
+        rewrite_artifact_payload,
         run_command,
         run_target_test,
+        summarize_operator_runs,
         write_json,
     )
 except ImportError:  # pragma: no cover
@@ -53,9 +66,12 @@ except ImportError:  # pragma: no cover
         operator_directionality_root,
         prepare_harness_workspace,
         read_prompt_template,
+        recent_operator_probe_failure,
         resolve_auth_mode,
+        rewrite_artifact_payload,
         run_command,
         run_target_test,
+        summarize_operator_runs,
         write_json,
     )
 
@@ -111,25 +127,14 @@ def main(argv: list[str] | None = None) -> int:
     providers = ("claude", "gemini", "openai") if args.provider == "all" else (args.provider,)
     scenarios = tuple(_SCENARIOS) if args.scenario == "all" else (args.scenario,)
 
-    summary = _read_json(comparator_path("operator_directionality_summary.json"))
-    if not summary:
-        summary = {
-            "generated_at": now_utc_iso(),
-            "surface": "operator_directionality",
-            "lane": "operator",
-            "providers": {},
-        }
-    summary["generated_at"] = now_utc_iso()
-    summary["surface"] = "operator_directionality"
-    summary["lane"] = "operator"
-    if args.provider == "all":
-        summary["providers"] = {}
+    provider_updates: dict[str, Any] = {}
     for provider in providers:
-        summary["providers"][provider] = _run_provider(
+        provider_updates[provider] = _run_provider(
             provider,
             scenarios=scenarios,
             repeat_count=max(1, args.repeat_count),
         )
+        summary = _merged_provider_summaries(provider_updates)
         write_json(comparator_path("operator_directionality_summary.json"), summary)
     print(json.dumps(summary, indent=2, sort_keys=True))
     return 0
@@ -142,17 +147,31 @@ def _run_provider(
     repeat_count: int,
 ) -> dict[str, Any]:
     precheck = _raw_host_precheck(provider)
+    baseline_summary = _read_json(comparator_path("operator_provider_baseline_summary.json"))
+    baseline_runs = baseline_summary.get("providers", {}).get(provider, {}).get("runs", [])
+    prior_variant_runs: dict[str, list[dict[str, Any]]] = {variant: [] for variant in _VARIANTS}
     pairs: list[dict[str, Any]] = []
     for scenario_id in scenarios:
         for repeat_index in range(1, repeat_count + 1):
-            pairs.append(
-                _run_pair(
-                    provider,
-                    scenario_id=scenario_id,
-                    repeat_index=repeat_index,
-                    precheck=precheck,
-                )
+            pair = _run_pair(
+                provider,
+                scenario_id=scenario_id,
+                repeat_index=repeat_index,
+                precheck=precheck,
+                baseline_runs=baseline_runs,
+                prior_variant_runs={
+                    variant: tuple(runs)
+                    for variant, runs in prior_variant_runs.items()
+                },
             )
+            pairs.append(pair)
+            if pair.get("pair_status") == "compared":
+                raw_host = pair.get("raw_host")
+                cortex_operator = pair.get("cortex_operator")
+                if isinstance(raw_host, dict):
+                    prior_variant_runs["raw_host"].append(raw_host)
+                if isinstance(cortex_operator, dict):
+                    prior_variant_runs["cortex_operator"].append(cortex_operator)
     summary = {
         "generated_at": now_utc_iso(),
         "provider": provider,
@@ -170,6 +189,8 @@ def _run_pair(
     scenario_id: str,
     repeat_index: int,
     precheck: dict[str, Any],
+    baseline_runs: list[dict[str, Any]],
+    prior_variant_runs: dict[str, tuple[dict[str, Any], ...]],
 ) -> dict[str, Any]:
     if precheck["status"] != "ready":
         raw_payload = _blocked_raw_payload(
@@ -188,29 +209,71 @@ def _run_pair(
             "cortex_operator": None,
         }
 
-    raw_payload = _run_variant(
-        provider,
-        variant="raw_host",
-        scenario_id=scenario_id,
-        repeat_index=repeat_index,
-        precheck=precheck,
-    )
-    cortex_payload = _run_variant(
-        provider,
-        variant="cortex_operator",
-        scenario_id=scenario_id,
-        repeat_index=repeat_index,
-        precheck=precheck,
-    )
+    provider_window_caution = _provider_window_caution(provider, prior_variant_runs)
+    if provider_window_caution is not None:
+        raw_payload = _blocked_raw_payload(
+            provider,
+            scenario_id=scenario_id,
+            repeat_index=repeat_index,
+            reason="blocked_by_provider_window_caution",
+        )
+        raw_payload["provider_window_caution"] = True
+        raw_payload["provider_window_note"] = provider_window_caution
+        raw_payload["comparison_contaminated"] = True
+        return {
+            "provider": provider,
+            "scenario_id": scenario_id,
+            "repeat_index": repeat_index,
+            "pair_status": "blocked",
+            "blocked_reason": "blocked_by_provider_window_caution",
+            "raw_host": raw_payload,
+            "cortex_operator": None,
+            "variant_order": list(_variant_order(repeat_index)),
+        }
+
+    pair_payloads: dict[str, dict[str, Any]] = {}
+    variant_order = _variant_order(repeat_index)
+    for variant in variant_order:
+        pair_payloads[variant] = _run_variant(
+            provider,
+            variant=variant,
+            scenario_id=scenario_id,
+            repeat_index=repeat_index,
+            precheck=precheck,
+            baseline_runs=baseline_runs,
+            prior_runs=prior_variant_runs[variant],
+        )
     return {
         "provider": provider,
         "scenario_id": scenario_id,
         "repeat_index": repeat_index,
         "pair_status": "compared",
         "blocked_reason": None,
-        "raw_host": raw_payload,
-        "cortex_operator": cortex_payload,
+        "variant_order": list(variant_order),
+        "raw_host": pair_payloads["raw_host"],
+        "cortex_operator": pair_payloads["cortex_operator"],
     }
+
+
+def _variant_order(repeat_index: int) -> tuple[str, str]:
+    return ("raw_host", "cortex_operator") if repeat_index % 2 == 1 else ("cortex_operator", "raw_host")
+
+
+def _merged_provider_summaries(provider_updates: dict[str, Any] | None = None) -> dict[str, Any]:
+    updates = {} if provider_updates is None else dict(provider_updates)
+    summary = {
+        "generated_at": now_utc_iso(),
+        "surface": "operator_directionality",
+        "lane": "operator",
+        "providers": {},
+    }
+    for provider in ("claude", "gemini", "openai"):
+        payload = updates.get(provider)
+        if payload is None:
+            payload = _read_json(operator_directionality_root(provider, "summary") / "summary.json")
+        if payload:
+            summary["providers"][provider] = payload
+    return summary
 
 
 def _run_variant(
@@ -220,6 +283,8 @@ def _run_variant(
     scenario_id: str,
     repeat_index: int,
     precheck: dict[str, Any],
+    baseline_runs: list[dict[str, Any]],
+    prior_runs: tuple[dict[str, Any], ...],
 ) -> dict[str, Any]:
     if provider == "openai":
         return _run_openai_variant(
@@ -227,6 +292,8 @@ def _run_variant(
             scenario_id=scenario_id,
             repeat_index=repeat_index,
             precheck=precheck,
+            baseline_runs=baseline_runs,
+            prior_runs=prior_runs,
         )
     return _run_cli_variant(
         provider,
@@ -234,6 +301,8 @@ def _run_variant(
         scenario_id=scenario_id,
         repeat_index=repeat_index,
         precheck=precheck,
+        baseline_runs=baseline_runs,
+        prior_runs=prior_runs,
     )
 
 
@@ -244,6 +313,8 @@ def _run_cli_variant(
     scenario_id: str,
     repeat_index: int,
     precheck: dict[str, Any],
+    baseline_runs: list[dict[str, Any]],
+    prior_runs: tuple[dict[str, Any], ...],
 ) -> dict[str, Any]:
     root = operator_directionality_root(provider, variant)
     project_root = prepare_harness_workspace(
@@ -273,10 +344,57 @@ def _run_cli_variant(
             root=root,
             hook_log_path=hook_log_path,
             precheck=precheck,
+            baseline_runs=baseline_runs,
+            prior_runs=prior_runs,
         )
 
     prompt = read_prompt_template(_SCENARIOS[scenario_id]["prompt_file"])
     auth_mode = resolve_auth_mode(provider, "operator")
+    route_state = build_operator_task_state(
+        scenario_id,
+        previous_same_host_run_failed_before_completion=summarize_operator_runs(
+            prior_runs,
+            scenario_id=scenario_id,
+        )["previous_failed_before_completion"],
+        recent_probe_failure_class=recent_operator_probe_failure(provider),
+        recent_baseline_clean_count=summarize_operator_runs(baseline_runs)["clean_success_count"],
+        recent_warning_bearing_success_present=summarize_operator_runs(baseline_runs)["warning_bearing_success_present"],
+        recent_product_failure_class=summarize_operator_runs(
+            prior_runs,
+            scenario_id=scenario_id,
+        )["latest_failure_class"],
+    )
+    modulator_update = update_executive_modulators(
+        build_operator_modulator_inputs(
+            route_state,
+            previous_same_host_run_failed_before_completion=summarize_operator_runs(
+                prior_runs,
+                scenario_id=scenario_id,
+            )["previous_failed_before_completion"],
+            recent_product_failure_class=summarize_operator_runs(
+                prior_runs,
+                scenario_id=scenario_id,
+            )["latest_failure_class"],
+        )
+    )
+    route_decision = select_operator_route_with_modulators(route_state, modulator_update)
+    route_diagnostics = build_operator_route_diagnostics(route_state, route_decision)
+    if route_decision.blocked_reason is not None:
+        return host_paths._blocked_operator_route_payload(
+            provider=provider,
+            scenario_id=scenario_id,
+            repeat_index=repeat_index,
+            route_diagnostics=route_diagnostics,
+            failure_class=host_paths._blocked_route_failure_class(
+                route_state,
+                recent_probe_failure_class=recent_operator_probe_failure(provider),
+                recent_product_failure_class=summarize_operator_runs(
+                    prior_runs,
+                    scenario_id=scenario_id,
+                )["latest_failure_class"],
+            ),
+            notes="Route selector blocked paired execution before host work started.",
+        )
     if variant == "cortex_operator":
         run_result, failure_class, chosen_model, preferred_model, auto_supported, attempted_models = host_paths._run_operator_attempts(
             provider=provider,
@@ -285,7 +403,8 @@ def _run_cli_variant(
             auth_mode=auth_mode,
             approval_mode=None,
             hook_log_path=hook_log_path,
-            max_attempts=3,
+            scenario_id=scenario_id,
+            max_attempts=1 + route_decision.budget.max_retries,
             cooldown_seconds=30,
             preferred_model_override=None,
             fallback_model_override=None,
@@ -299,6 +418,8 @@ def _run_cli_variant(
             auth_mode=auth_mode,
             approval_mode=None,
             precheck=precheck,
+            scenario_id=scenario_id,
+            max_attempts=1 + route_decision.budget.max_retries,
         )
     payload = host_paths._materialize_operator_run(
         provider=provider,
@@ -314,9 +435,32 @@ def _run_cli_variant(
         auth_mode=auth_mode,
         failure_class=failure_class,
         hook_log_path=hook_log_path,
+        run_verification=route_decision.budget.require_verification,
+        route_diagnostics=route_diagnostics,
     )
     payload["variant"] = variant
     payload["surface"] = _SURFACE_LABEL[provider]
+    _attach_extra_read_defaults(payload)
+    if (
+        scenario_id == "truth_gap"
+        and route_decision.budget.allow_extra_read_pass
+        and payload.get("truth_gap_kind") == "truthful_incomplete"
+        and not payload.get("provider_limit_interference")
+    ):
+        payload = _maybe_run_cli_extra_read_pass(
+            provider=provider,
+            variant=variant,
+            project_root=project_root,
+            prompt=read_prompt_template("truth_gap_recheck_operator.md"),
+            auth_mode=auth_mode,
+            chosen_model=chosen_model,
+            session_id=extract_session_id(provider, host_paths.parse_json_lines(run_result["stdout"])),
+            root=root,
+            hook_log_path=hook_log_path,
+            repeat_index=repeat_index,
+            first_payload=payload,
+            route_diagnostics=route_diagnostics,
+        )
     return payload
 
 
@@ -330,10 +474,57 @@ def _run_cli_restart_continuity_variant(
     root: Path,
     hook_log_path: Path | None,
     precheck: dict[str, Any],
+    baseline_runs: list[dict[str, Any]],
+    prior_runs: tuple[dict[str, Any], ...],
 ) -> dict[str, Any]:
     auth_mode = resolve_auth_mode(provider, "operator")
     first_prompt = read_prompt_template(_SCENARIOS[scenario_id]["turn1_prompt_file"])
     second_prompt = read_prompt_template(_SCENARIOS[scenario_id]["turn2_prompt_file"])
+    route_state = build_operator_task_state(
+        scenario_id,
+        previous_same_host_run_failed_before_completion=summarize_operator_runs(
+            prior_runs,
+            scenario_id=scenario_id,
+        )["previous_failed_before_completion"],
+        recent_probe_failure_class=recent_operator_probe_failure(provider),
+        recent_baseline_clean_count=summarize_operator_runs(baseline_runs)["clean_success_count"],
+        recent_warning_bearing_success_present=summarize_operator_runs(baseline_runs)["warning_bearing_success_present"],
+        recent_product_failure_class=summarize_operator_runs(
+            prior_runs,
+            scenario_id=scenario_id,
+        )["latest_failure_class"],
+    )
+    modulator_update = update_executive_modulators(
+        build_operator_modulator_inputs(
+            route_state,
+            previous_same_host_run_failed_before_completion=summarize_operator_runs(
+                prior_runs,
+                scenario_id=scenario_id,
+            )["previous_failed_before_completion"],
+            recent_product_failure_class=summarize_operator_runs(
+                prior_runs,
+                scenario_id=scenario_id,
+            )["latest_failure_class"],
+        )
+    )
+    route_decision = select_operator_route_with_modulators(route_state, modulator_update)
+    route_diagnostics = build_operator_route_diagnostics(route_state, route_decision)
+    if route_decision.blocked_reason is not None:
+        return host_paths._blocked_operator_route_payload(
+            provider=provider,
+            scenario_id=scenario_id,
+            repeat_index=repeat_index,
+            route_diagnostics=route_diagnostics,
+            failure_class=host_paths._blocked_route_failure_class(
+                route_state,
+                recent_probe_failure_class=recent_operator_probe_failure(provider),
+                recent_product_failure_class=summarize_operator_runs(
+                    prior_runs,
+                    scenario_id=scenario_id,
+                )["latest_failure_class"],
+            ),
+            notes="Route selector blocked continuity before the first operator turn.",
+        )
 
     if variant == "cortex_operator":
         first_result, first_failure, chosen_model, preferred_model, auto_supported, attempted_models = host_paths._run_operator_attempts(
@@ -341,9 +532,10 @@ def _run_cli_restart_continuity_variant(
             prompt=first_prompt,
             project_root=project_root,
             auth_mode=auth_mode,
-            approval_mode="plan" if provider == "gemini" else None,
+            approval_mode=None,
             hook_log_path=hook_log_path,
-            max_attempts=3,
+            scenario_id="restart_continuity",
+            max_attempts=1 + route_decision.budget.max_retries,
             cooldown_seconds=30,
             preferred_model_override=None,
             fallback_model_override=None,
@@ -355,8 +547,10 @@ def _run_cli_restart_continuity_variant(
             prompt=first_prompt,
             project_root=project_root,
             auth_mode=auth_mode,
-            approval_mode="plan" if provider == "gemini" else None,
+            approval_mode=None,
             precheck=precheck,
+            scenario_id="restart_continuity",
+            max_attempts=1 + route_decision.budget.max_retries,
         )
 
     if first_failure in host_paths.BLOCKING_FAILURE_CLASSES:
@@ -373,6 +567,7 @@ def _run_cli_restart_continuity_variant(
             "preferred_model": preferred_model,
             "notes": "Continuity stopped at the first operator turn.",
             "artifact_path": None,
+            **route_diagnostics,
         }
         return payload
 
@@ -388,6 +583,7 @@ def _run_cli_restart_continuity_variant(
             session_id=session_id,
             approval_mode="yolo" if provider == "gemini" else None,
             hook_log_path=hook_log_path,
+            scenario_id="restart_continuity",
         )
     else:
         second_result = _resume_raw_provider_task(
@@ -399,6 +595,7 @@ def _run_cli_restart_continuity_variant(
             session_id=session_id,
             approval_mode="yolo" if provider == "gemini" else None,
             precheck=precheck,
+            scenario_id="restart_continuity",
         )
 
     second_failure = classify_failure(f"{second_result['stdout']}\n{second_result['stderr']}")
@@ -419,6 +616,8 @@ def _run_cli_restart_continuity_variant(
         auth_mode=auth_mode,
         failure_class=second_failure,
         hook_log_path=hook_log_path,
+        run_verification=route_decision.budget.require_verification,
+        route_diagnostics=route_diagnostics,
     )
     payload["variant"] = variant
     payload["surface"] = _SURFACE_LABEL[provider]
@@ -434,6 +633,8 @@ def _run_raw_operator_attempts(
     auth_mode: str,
     approval_mode: str | None,
     precheck: dict[str, Any],
+    scenario_id: str,
+    max_attempts: int,
 ) -> tuple[dict[str, Any], str | None, str, str, bool | None, list[str]]:
     auto_supported: bool | None = None
     ladder = host_paths._requested_model_ladder(
@@ -448,7 +649,7 @@ def _run_raw_operator_attempts(
     run_result: dict[str, Any] | None = None
     failure_class: str | None = None
 
-    for attempt_index in range(1, 4):
+    for attempt_index in range(1, max_attempts + 1):
         run_result = _run_raw_provider_task(
             provider,
             prompt=prompt,
@@ -457,6 +658,7 @@ def _run_raw_operator_attempts(
             auth_mode=auth_mode,
             approval_mode=approval_mode,
             precheck=precheck,
+            scenario_id=scenario_id,
         )
         failure_class = classify_failure(f"{run_result['stdout']}\n{run_result['stderr']}")
         if failure_class is None and run_result["exit_code"] == 124:
@@ -464,15 +666,7 @@ def _run_raw_operator_attempts(
         attempted_models.append(current_model)
 
         if provider == "gemini" and current_model == MODEL_MATRIX["gemini"]["operator"].preferred:
-            auto_supported = run_result["exit_code"] == 0 and failure_class != "model_unavailable"
-            if auto_supported is False and run_result["exit_code"] != 0:
-                ladder = host_paths._requested_model_ladder(
-                    provider=provider,
-                    preferred_model_override=None,
-                    fallback_model_override=None,
-                    disable_auto_probe=True,
-                )
-                preferred_model = ladder[0]
+            auto_supported = failure_class != "model_unavailable"
 
         if run_result["exit_code"] == 0:
             break
@@ -490,7 +684,7 @@ def _run_raw_operator_attempts(
             continue
         if failure_class not in {"capacity_exhausted", "quota_exhausted", "operator_timeout"}:
             break
-        if attempt_index < 3:
+        if attempt_index < max_attempts:
             time.sleep(30)
 
     if run_result is None:
@@ -515,9 +709,16 @@ def _run_raw_provider_task(
     auth_mode: str,
     approval_mode: str | None,
     precheck: dict[str, Any],
+    scenario_id: str | None = None,
 ) -> dict[str, Any]:
     if provider == "claude":
-        return _run_raw_claude_task(prompt, project_root=project_root, model=model, auth_mode=auth_mode)
+        return _run_raw_claude_task(
+            prompt,
+            project_root=project_root,
+            model=model,
+            auth_mode=auth_mode,
+            scenario_id=scenario_id,
+        )
     if provider == "gemini":
         return _run_raw_gemini_task(
             prompt,
@@ -539,6 +740,7 @@ def _resume_raw_provider_task(
     session_id: str | None,
     approval_mode: str | None,
     precheck: dict[str, Any],
+    scenario_id: str | None = None,
 ) -> dict[str, Any]:
     if provider == "claude":
         return _run_raw_claude_task(
@@ -547,6 +749,7 @@ def _resume_raw_provider_task(
             model=model,
             auth_mode=auth_mode,
             resume_session=session_id,
+            scenario_id=scenario_id,
         )
     if provider == "gemini":
         return _run_raw_gemini_task(
@@ -567,6 +770,7 @@ def _run_raw_claude_task(
     model: str,
     auth_mode: str,
     resume_session: str | None = None,
+    scenario_id: str | None = None,
 ) -> dict[str, Any]:
     command = [
         "claude",
@@ -578,7 +782,7 @@ def _run_raw_claude_task(
         "stream-json",
         "--verbose",
         "--max-turns",
-        "8",
+        str(host_paths._claude_max_turns(scenario_id, resume_session=resume_session)),
         "--permission-mode",
         "bypassPermissions",
         "--setting-sources",
@@ -633,6 +837,8 @@ def _run_openai_variant(
     scenario_id: str,
     repeat_index: int,
     precheck: dict[str, Any],
+    baseline_runs: list[dict[str, Any]],
+    prior_runs: tuple[dict[str, Any], ...],
 ) -> dict[str, Any]:
     root = operator_directionality_root("openai", variant)
     project_root = prepare_harness_workspace(
@@ -642,6 +848,55 @@ def _run_openai_variant(
         repeat_index=repeat_index,
     )
     auth_mode = resolve_auth_mode("openai", "operator")
+    route_state = build_operator_task_state(
+        scenario_id,
+        previous_same_host_run_failed_before_completion=summarize_operator_runs(
+            prior_runs,
+            scenario_id=scenario_id,
+        )["previous_failed_before_completion"],
+        recent_probe_failure_class=recent_operator_probe_failure("openai"),
+        recent_baseline_clean_count=summarize_operator_runs(baseline_runs)["clean_success_count"],
+        recent_warning_bearing_success_present=summarize_operator_runs(baseline_runs)["warning_bearing_success_present"],
+        recent_product_failure_class=summarize_operator_runs(
+            prior_runs,
+            scenario_id=scenario_id,
+        )["latest_failure_class"],
+    )
+    modulator_update = update_executive_modulators(
+        build_operator_modulator_inputs(
+            route_state,
+            previous_same_host_run_failed_before_completion=summarize_operator_runs(
+                prior_runs,
+                scenario_id=scenario_id,
+            )["previous_failed_before_completion"],
+            recent_product_failure_class=summarize_operator_runs(
+                prior_runs,
+                scenario_id=scenario_id,
+            )["latest_failure_class"],
+        )
+    )
+    route_decision = select_operator_route_with_modulators(route_state, modulator_update)
+    route_diagnostics = build_operator_route_diagnostics(route_state, route_decision)
+    if route_decision.blocked_reason is not None:
+        payload = host_paths._blocked_operator_route_payload(
+            provider="openai",
+            scenario_id=scenario_id,
+            repeat_index=repeat_index,
+            route_diagnostics=route_diagnostics,
+            failure_class=host_paths._blocked_route_failure_class(
+                route_state,
+                recent_probe_failure_class=recent_operator_probe_failure("openai"),
+                recent_product_failure_class=summarize_operator_runs(
+                    prior_runs,
+                    scenario_id=scenario_id,
+                )["latest_failure_class"],
+            ),
+            notes="Route selector blocked paired execution before host work started.",
+        )
+        payload["variant"] = variant
+        payload["surface"] = _SURFACE_LABEL["openai"]
+        payload["attempted_models"] = []
+        return payload
     if scenario_id == "restart_continuity":
         return _run_openai_restart_continuity_variant(
             variant=variant,
@@ -650,6 +905,8 @@ def _run_openai_variant(
             project_root=project_root,
             root=root,
             auth_mode=auth_mode,
+            route_diagnostics=route_diagnostics,
+            require_verification=route_decision.budget.require_verification,
         )
 
     prompt = read_prompt_template(_SCENARIOS[scenario_id]["prompt_file"])
@@ -661,21 +918,42 @@ def _run_openai_variant(
             scenario_id=scenario_id,
             env=env,
             stderr_path=root / f"{scenario_id}__run_{repeat_index:03d}.live.stderr.log",
+            ephemeral=not route_decision.budget.allow_extra_read_pass,
         )
-    payload = openai_operator._materialize_run(
-        root=root,
-        project_root=project_root,
-        scenario_id=scenario_id,
-        repeat_index=repeat_index,
-        auth_mode=auth_mode,
-        model=model,
-        run_state=run_state,
-        failure_class=failure_class,
-        run_test=_SCENARIOS[scenario_id]["run_test"],
-    )
-    payload["variant"] = variant
-    payload["surface"] = _SURFACE_LABEL["openai"]
-    payload["attempted_models"] = attempted_models
+        payload = openai_operator._materialize_run(
+            root=root,
+            project_root=project_root,
+            scenario_id=scenario_id,
+            repeat_index=repeat_index,
+            auth_mode=auth_mode,
+            model=model,
+            run_state=run_state,
+            failure_class=failure_class,
+            run_test=route_decision.budget.require_verification and _SCENARIOS[scenario_id]["run_test"],
+            route_diagnostics=route_diagnostics,
+        )
+        payload["variant"] = variant
+        payload["surface"] = _SURFACE_LABEL["openai"]
+        payload["attempted_models"] = attempted_models
+        _attach_extra_read_defaults(payload)
+        if (
+            scenario_id == "truth_gap"
+            and route_decision.budget.allow_extra_read_pass
+            and payload.get("truth_gap_kind") == "truthful_incomplete"
+            and not payload.get("provider_limit_interference")
+        ):
+            payload = _maybe_run_openai_extra_read_pass(
+                project_root=project_root,
+                prompt=read_prompt_template("truth_gap_recheck_operator.md"),
+                auth_mode=auth_mode,
+                model=model,
+                thread_id=run_state.get("thread_id"),
+                env=env,
+                root=root,
+                repeat_index=repeat_index,
+                first_payload=payload,
+                route_diagnostics=route_diagnostics,
+            )
     return payload
 
 
@@ -687,6 +965,8 @@ def _run_openai_restart_continuity_variant(
     project_root: Path,
     root: Path,
     auth_mode: str,
+    route_diagnostics: dict[str, Any],
+    require_verification: bool,
 ) -> dict[str, Any]:
     first_prompt = read_prompt_template(_SCENARIOS[scenario_id]["turn1_prompt_file"])
     second_prompt = read_prompt_template(_SCENARIOS[scenario_id]["turn2_prompt_file"])
@@ -698,6 +978,7 @@ def _run_openai_restart_continuity_variant(
             scenario_id=f"{scenario_id}_turn_1",
             env=env,
             stderr_path=root / f"{scenario_id}__run_{repeat_index:03d}.turn1.live.stderr.log",
+            ephemeral=False,
         )
         if first_failure is not None:
             payload = openai_operator._materialize_run(
@@ -711,6 +992,11 @@ def _run_openai_restart_continuity_variant(
                 failure_class=first_failure,
                 run_test=False,
                 notes="Continuity stopped at the first App Server turn.",
+                route_diagnostics=route_diagnostics,
+                continuity_diagnostics=openai_operator._continuity_diagnostics(
+                    thread_ephemeral=False,
+                    failure_class=first_failure,
+                ),
             )
             payload["variant"] = variant
             payload["surface"] = _SURFACE_LABEL["openai"]
@@ -750,7 +1036,12 @@ def _run_openai_restart_continuity_variant(
         model=model,
         run_state=combined_state,
         failure_class=second_failure,
-        run_test=True,
+        run_test=require_verification,
+        route_diagnostics=route_diagnostics,
+        continuity_diagnostics=openai_operator._continuity_diagnostics(
+            thread_ephemeral=False,
+            failure_class=second_failure,
+        ),
     )
     payload["variant"] = variant
     payload["surface"] = _SURFACE_LABEL["openai"]
@@ -767,6 +1058,7 @@ def _run_openai_single_turn_attempts(
     scenario_id: str,
     env: dict[str, str] | None,
     stderr_path: Path,
+    ephemeral: bool = True,
 ) -> tuple[dict[str, Any], str | None, str, list[str]]:
     preferred_model = MODEL_MATRIX["openai"]["operator"].preferred
     attempted_models = [preferred_model]
@@ -776,7 +1068,7 @@ def _run_openai_single_turn_attempts(
         auth_mode=auth_mode,
         model=preferred_model,
         scenario_id=scenario_id,
-        ephemeral=True,
+        ephemeral=ephemeral,
         env=env,
         stderr_path=stderr_path,
     )
@@ -788,7 +1080,7 @@ def _run_openai_single_turn_attempts(
             auth_mode=auth_mode,
             model=chosen_model,
             scenario_id=scenario_id,
-            ephemeral=True,
+            ephemeral=ephemeral,
             env=env,
             stderr_path=stderr_path,
         )
@@ -890,16 +1182,226 @@ def _blocked_raw_payload(
         "success": False,
         "failure_class": reason or _RAW_BASELINE_FAILURE,
         "notes": "Skipped raw-host paired run because the baseline could not be isolated safely on this machine.",
+        "token_usage_visible": False,
+        "input_tokens": None,
+        "output_tokens": None,
+        "cache_tokens": None,
+        "provider_limit_interference": False,
+        "provider_limit_kind": None,
+        "comparison_contaminated": True,
+        "provider_window_caution": False,
+        "provider_window_note": None,
     }
     write_json(artifact_path, payload)
     payload["artifact_path"] = str(artifact_path.relative_to(root.parents[4]))
     return payload
 
 
+def _attach_extra_read_defaults(payload: dict[str, Any]) -> None:
+    payload.setdefault("extra_read_pass_attempted", False)
+    payload.setdefault("extra_read_pass_completed", False)
+    payload.setdefault("extra_read_pass_mode", None)
+    payload.setdefault("extra_read_pass_failure_class", None)
+
+
+def _maybe_run_cli_extra_read_pass(
+    *,
+    provider: str,
+    variant: str,
+    project_root: Path,
+    prompt: str,
+    auth_mode: str,
+    chosen_model: str,
+    session_id: str | None,
+    root: Path,
+    hook_log_path: Path | None,
+    repeat_index: int,
+    first_payload: dict[str, Any],
+    route_diagnostics: dict[str, Any],
+) -> dict[str, Any]:
+    if not session_id:
+        first_payload.update(
+            {
+                "extra_read_pass_attempted": True,
+                "extra_read_pass_completed": False,
+                "extra_read_pass_mode": "resume",
+                "extra_read_pass_failure_class": "operator_surface_missing",
+                "comparison_contaminated": True,
+            }
+        )
+        rewrite_artifact_payload(first_payload)
+        return first_payload
+
+    if variant == "cortex_operator":
+        second_result = host_paths._resume_provider_task(
+            provider,
+            prompt=prompt,
+            project_root=project_root,
+            model=chosen_model,
+            auth_mode=auth_mode,
+            session_id=session_id,
+            approval_mode="yolo" if provider == "gemini" else None,
+            hook_log_path=hook_log_path,
+            scenario_id="truth_gap",
+        )
+    else:
+        second_result = _resume_raw_provider_task(
+            provider,
+            prompt=prompt,
+            project_root=project_root,
+            model=chosen_model,
+            auth_mode=auth_mode,
+            session_id=session_id,
+            approval_mode="yolo" if provider == "gemini" else None,
+            precheck={"status": "ready"},
+            scenario_id="truth_gap",
+        )
+    second_failure = classify_failure(f"{second_result['stdout']}\n{second_result['stderr']}")
+    if second_failure is None and second_result["exit_code"] == 124:
+        second_failure = "operator_timeout"
+
+    second_payload = host_paths._materialize_operator_run(
+        provider=provider,
+        scenario_id="truth_gap",
+        repeat_index=repeat_index,
+        project_root=project_root,
+        root=root,
+        run_result=second_result,
+        model=chosen_model,
+        preferred_model=first_payload["preferred_model"],
+        auto_supported=first_payload.get("auto_supported"),
+        attempted_models=list(first_payload.get("attempted_models", [])) + [chosen_model],
+        auth_mode=auth_mode,
+        failure_class=second_failure,
+        hook_log_path=hook_log_path,
+        run_verification=False,
+        route_diagnostics=route_diagnostics,
+    )
+    second_payload["variant"] = variant
+    second_payload["surface"] = _SURFACE_LABEL[provider]
+    second_payload["attempted_models"] = list(first_payload.get("attempted_models", [])) + [chosen_model]
+    _attach_extra_read_defaults(second_payload)
+
+    if second_payload.get("truth_gap_kind") == "truthful_incomplete" and not second_payload.get(
+        "provider_limit_interference"
+    ):
+        second_payload.update(
+            {
+                "extra_read_pass_attempted": True,
+                "extra_read_pass_completed": True,
+                "extra_read_pass_mode": "resume",
+                "extra_read_pass_failure_class": None,
+            }
+        )
+        rewrite_artifact_payload(second_payload)
+        return second_payload
+
+    first_payload.update(
+        {
+            "extra_read_pass_attempted": True,
+            "extra_read_pass_completed": False,
+            "extra_read_pass_mode": "resume",
+            "extra_read_pass_failure_class": second_failure or "truth_gap_not_reaffirmed",
+            "comparison_contaminated": True,
+        }
+    )
+    rewrite_artifact_payload(first_payload)
+    return first_payload
+
+
+def _maybe_run_openai_extra_read_pass(
+    *,
+    project_root: Path,
+    prompt: str,
+    auth_mode: str,
+    model: str,
+    thread_id: str | None,
+    env: dict[str, str] | None,
+    root: Path,
+    repeat_index: int,
+    first_payload: dict[str, Any],
+    route_diagnostics: dict[str, Any],
+) -> dict[str, Any]:
+    second_state, second_failure = openai_operator._run_resumed_turn(
+        project_root=project_root,
+        prompt=prompt,
+        auth_mode=auth_mode,
+        model=model,
+        thread_id=thread_id,
+        env=env,
+        stderr_path=root / f"truth_gap__run_{repeat_index:03d}.recheck.live.stderr.log",
+    )
+    second_payload = openai_operator._materialize_run(
+        root=root,
+        project_root=project_root,
+        scenario_id="truth_gap",
+        repeat_index=repeat_index,
+        auth_mode=auth_mode,
+        model=model,
+        run_state=second_state,
+        failure_class=second_failure,
+        run_test=False,
+        route_diagnostics=route_diagnostics,
+        continuity_diagnostics={
+            "continuity_transport": "thread_resume",
+            "thread_ephemeral": False,
+            "continuity_failure_kind": None,
+        },
+    )
+    second_payload["variant"] = first_payload["variant"]
+    second_payload["surface"] = first_payload["surface"]
+    second_payload["attempted_models"] = list(first_payload.get("attempted_models", []))
+    _attach_extra_read_defaults(second_payload)
+    if second_payload.get("truth_gap_kind") == "truthful_incomplete" and not second_payload.get(
+        "provider_limit_interference"
+    ):
+        second_payload.update(
+            {
+                "extra_read_pass_attempted": True,
+                "extra_read_pass_completed": True,
+                "extra_read_pass_mode": "resume",
+                "extra_read_pass_failure_class": None,
+            }
+        )
+        rewrite_artifact_payload(second_payload)
+        return second_payload
+    first_payload.update(
+        {
+            "extra_read_pass_attempted": True,
+            "extra_read_pass_completed": False,
+            "extra_read_pass_mode": "resume",
+            "extra_read_pass_failure_class": second_failure or "truth_gap_not_reaffirmed",
+            "comparison_contaminated": True,
+        }
+    )
+    rewrite_artifact_payload(first_payload)
+    return first_payload
+
+
 def _read_json(path: Path) -> dict[str, Any]:
     if not path.exists():
         return {}
     return json.loads(path.read_text(encoding="utf-8"))
+
+
+def _provider_window_caution(
+    provider: str,
+    prior_variant_runs: dict[str, tuple[dict[str, Any], ...]],
+) -> str | None:
+    if provider != "claude":
+        return None
+    recent_runs = [
+        payload
+        for runs in prior_variant_runs.values()
+        for payload in runs
+        if isinstance(payload, dict)
+    ]
+    if not recent_runs:
+        return None
+    latest = max(recent_runs, key=lambda payload: str(payload.get("ended_at", "")))
+    if latest.get("provider_window_caution") or latest.get("provider_limit_interference"):
+        return "Recent Claude provider-window interference suggests the current usage window is contaminated; skip this pair rather than spending another immediate attempt."
+    return None
 
 
 if __name__ == "__main__":
