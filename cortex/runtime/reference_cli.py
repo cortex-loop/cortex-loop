@@ -9,6 +9,8 @@ from collections.abc import Iterable, Iterator, Sequence
 from pathlib import Path
 from typing import Any
 
+from cortex.sre.mediation import ReferenceMediationMode
+
 from .reference import ReferenceRuntimeStepResult, ReferenceRuntimeSession, run_reference_runtime_step
 from .reference_session_io import (
     read_reference_runtime_session_artifact,
@@ -73,6 +75,12 @@ def main(argv: Sequence[str] | None = None) -> int:
         type=Path,
         help="Persist the final reference runtime session to an artifact file.",
     )
+    parser.add_argument(
+        "--mediation-mode",
+        choices=tuple(mode.value for mode in ReferenceMediationMode),
+        default=ReferenceMediationMode.IDENTITY.value,
+        help="Reference-host mediation finalization mode.",
+    )
     args = parser.parse_args(argv)
 
     try:
@@ -82,7 +90,11 @@ def main(argv: Sequence[str] | None = None) -> int:
             if args.load_session is not None
             else ReferenceRuntimeSession()
         )
-        records, final_session = _run_reference_cli_lines_with_session(lines, initial_session)
+        records, final_session = _run_reference_cli_lines_with_session(
+            lines,
+            initial_session,
+            mediation_mode=ReferenceMediationMode(args.mediation_mode),
+        )
         if args.save_session is not None:
             write_reference_runtime_session_artifact(args.save_session, final_session)
         for record in records:
@@ -94,20 +106,34 @@ def main(argv: Sequence[str] | None = None) -> int:
     return 0
 
 
-def _run_reference_cli_lines(lines: Iterable[str]) -> list[dict[str, Any]]:
-    records, _ = _run_reference_cli_lines_with_session(lines)
+def _run_reference_cli_lines(
+    lines: Iterable[str],
+    *,
+    mediation_mode: ReferenceMediationMode = ReferenceMediationMode.IDENTITY,
+) -> list[dict[str, Any]]:
+    records, _ = _run_reference_cli_lines_with_session(
+        lines,
+        mediation_mode=mediation_mode,
+    )
     return records
 
 
 def _run_reference_cli_lines_with_session(
     lines: Iterable[str],
     session: ReferenceRuntimeSession | None = None,
+    *,
+    mediation_mode: ReferenceMediationMode = ReferenceMediationMode.IDENTITY,
 ) -> tuple[list[dict[str, Any]], ReferenceRuntimeSession]:
     records: list[dict[str, Any]] = []
     current_session = _coerce_cli_session(session)
 
     for event_name, payload in _iter_reference_cli_events(lines):
-        step_result = run_reference_runtime_step(event_name, payload, current_session)
+        step_result = run_reference_runtime_step(
+            event_name,
+            payload,
+            current_session,
+            mediation_mode=mediation_mode,
+        )
         record = build_reference_cli_record(step_result)
         if tuple(record) != _OUTPUT_KEYS:
             raise ValueError("Reference CLI record must preserve the locked output field order.")

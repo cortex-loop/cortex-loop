@@ -40,6 +40,7 @@ from cortex.drivers.claude_host import (
     observe_claude_host_event,
 )
 from cortex.drivers.claude_host_commitment import bind_claude_host_candidate
+from cortex.sre.allocation import build_allocation_diagnostics_payload
 from cortex.sre.branching import BranchOperation
 from cortex.sre.brake import BrakeState
 from cortex.sre.families import SoftControlFamily
@@ -50,10 +51,7 @@ from cortex.sre.feedback import (
     summarize_reference_feedback_window,
 )
 from cortex.sre.reference_builder import build_reference_executive_state
-from cortex.sre.reference_scoring import (
-    build_allocation_diagnostics_payload,
-    select_reference_soft_control,
-)
+from cortex.sre.reference_scoring import select_reference_soft_control
 from cortex.sre.state import ReferenceExecutiveState
 
 _ALLOWED_COMMITMENT_RESULT_KINDS = frozenset(status.value for status in CommitmentStatus)

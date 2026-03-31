@@ -8,14 +8,17 @@ from dataclasses import dataclass
 from .allocation import (
     AllocationScore,
     AllocationScorecard,
-    build_allocation_diagnostics_payload,
 )
 from .brake import BrakeState
 from .families import SoftControlFamily
+from .mediation import (
+    ReferenceMediationFinalization,
+    ReferenceMediationMode,
+    finalize_reference_soft_control,
+)
 from .opportunities import (
     HostNativeOpportunity,
     OpportunitySpecializationResult,
-    specialize_host_native_opportunity,
 )
 from .policy import NeutralDominanceDecision, neutral_dominance_decision
 from .state import ReferenceExecutiveState
@@ -49,7 +52,8 @@ _SEEK_CONTEXT_PRESSURE_TAGS = frozenset(
 class ReferenceSoftControlSelection:
     scorecard: AllocationScorecard
     neutral_dominance: NeutralDominanceDecision
-    opportunity_specialization: OpportunitySpecializationResult
+    selected_family_before_finalization: SoftControlFamily
+    mediation_finalization: ReferenceMediationFinalization
     selected_family: SoftControlFamily
 
     def __post_init__(self) -> None:
@@ -66,13 +70,22 @@ class ReferenceSoftControlSelection:
                 f"NeutralDominanceDecision, got {actual_type}."
             )
         if not isinstance(
-            self.opportunity_specialization,
-            OpportunitySpecializationResult,
+            self.selected_family_before_finalization,
+            SoftControlFamily,
         ):
-            actual_type = type(self.opportunity_specialization).__name__
+            actual_type = type(self.selected_family_before_finalization).__name__
             raise TypeError(
-                "ReferenceSoftControlSelection.opportunity_specialization must be "
-                f"OpportunitySpecializationResult, got {actual_type}."
+                "ReferenceSoftControlSelection.selected_family_before_finalization "
+                f"must be SoftControlFamily, got {actual_type}."
+            )
+        if not isinstance(
+            self.mediation_finalization,
+            ReferenceMediationFinalization,
+        ):
+            actual_type = type(self.mediation_finalization).__name__
+            raise TypeError(
+                "ReferenceSoftControlSelection.mediation_finalization must be "
+                f"ReferenceMediationFinalization, got {actual_type}."
             )
         if not isinstance(self.selected_family, SoftControlFamily):
             actual_type = type(self.selected_family).__name__
@@ -80,10 +93,19 @@ class ReferenceSoftControlSelection:
                 "ReferenceSoftControlSelection.selected_family must be SoftControlFamily, "
                 f"got {actual_type}."
             )
-        if self.selected_family is not self.opportunity_specialization.selected_family:
+        if self.selected_family_before_finalization is not self.neutral_dominance.selected_family:
             raise ValueError(
-                "ReferenceSoftControlSelection.selected_family must match the opportunity-specialized family."
+                "ReferenceSoftControlSelection.selected_family_before_finalization "
+                "must match the neutral-dominance family."
             )
+        if self.selected_family is not self.mediation_finalization.selected_family_after_finalization:
+            raise ValueError(
+                "ReferenceSoftControlSelection.selected_family must match the mediation-finalized family."
+            )
+
+    @property
+    def opportunity_specialization(self) -> OpportunitySpecializationResult:
+        return self.mediation_finalization.opportunity_specialization
 
 
 def build_reference_allocation_scorecard(
@@ -154,19 +176,22 @@ def build_reference_allocation_scorecard(
 def select_reference_soft_control(
     executive_state: ReferenceExecutiveState,
     *,
+    mediation_mode: ReferenceMediationMode = ReferenceMediationMode.IDENTITY,
     opportunities: Sequence[HostNativeOpportunity] = (),
 ) -> ReferenceSoftControlSelection:
     scorecard = build_reference_allocation_scorecard(executive_state)
     dominance = neutral_dominance_decision(scorecard)
-    opportunity_specialization = specialize_host_native_opportunity(
+    mediation_finalization = finalize_reference_soft_control(
         dominance.selected_family,
-        opportunities,
+        mediation_mode=mediation_mode,
+        opportunities=opportunities,
     )
     return ReferenceSoftControlSelection(
         scorecard=scorecard,
         neutral_dominance=dominance,
-        opportunity_specialization=opportunity_specialization,
-        selected_family=opportunity_specialization.selected_family,
+        selected_family_before_finalization=dominance.selected_family,
+        mediation_finalization=mediation_finalization,
+        selected_family=mediation_finalization.selected_family_after_finalization,
     )
 
 

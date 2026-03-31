@@ -13,6 +13,10 @@ import cortex.runtime.reference as reference_runtime
 import cortex.runtime.reference_cli as reference_cli
 from cortex.sre.brake import BrakeState
 from cortex.sre.families import SoftControlFamily
+from cortex.sre.mediation import (
+    ReferenceMediationMode,
+    finalize_reference_soft_control,
+)
 from cortex.sre.policy import neutral_dominance_decision
 from cortex.sre.reference_scoring import build_reference_allocation_scorecard
 from cortex.sre.state import (
@@ -157,6 +161,7 @@ def test_reference_runtime_cli_reads_event_file_and_emits_one_record_per_event()
         "activation_threshold",
         "selected_delta_over_neutral",
         "scores",
+        "mediation",
     )
     assert [record["control_ledger"]["allocation_diagnostics"]["alpha_t"] for record in records] == [
         1.0,
@@ -169,6 +174,27 @@ def test_reference_runtime_cli_reads_event_file_and_emits_one_record_per_event()
     ] == [0.35, 0.30, 0.25]
     assert records[1]["control_ledger"]["allocation_diagnostics"]["scores"][0]["allocated_score"] != records[1]["control_ledger"]["allocation_diagnostics"]["scores"][0]["online_score"]
     assert records[2]["control_ledger"]["allocation_diagnostics"]["scores"][0]["allocated_score"] != records[2]["control_ledger"]["allocation_diagnostics"]["scores"][0]["online_score"]
+    assert all(
+        record["control_ledger"]["allocation_diagnostics"]["mediation"]["mediation_identity"]
+        is True
+        for record in records
+    )
+
+
+def test_reference_runtime_cli_accepts_explicit_mediation_mode_flag() -> None:
+    completed = _run_reference_cli(
+        "--event-file",
+        str(FIXTURE_PATH),
+        "--mediation-mode",
+        ReferenceMediationMode.HOST_REALIZATION_EXPERIMENTAL.value,
+    )
+
+    assert completed.returncode == 0, completed.stderr
+    records = _parse_jsonl_output(completed.stdout)
+    assert all(
+        "mediation" in record["control_ledger"]["allocation_diagnostics"]
+        for record in records
+    )
 
 
 def test_reference_runtime_cli_reads_stdin_and_preserves_locked_output_contract() -> None:
@@ -195,7 +221,7 @@ def test_reference_runtime_cli_in_process_surfaces_selected_vs_realized_divergen
     monkeypatch.setattr(
         reference_runtime,
         "select_reference_soft_control",
-        lambda executive_state: _selection(SoftControlFamily.BRANCH),
+        lambda executive_state, *args, **kwargs: _selection(SoftControlFamily.BRANCH),
     )
 
     records = reference_cli._run_reference_cli_lines(
@@ -211,7 +237,8 @@ def test_reference_runtime_cli_in_process_surfaces_selected_vs_realized_divergen
                     },
                 }
             )
-        ]
+        ],
+        mediation_mode=ReferenceMediationMode.HOST_REALIZATION_EXPERIMENTAL,
     )
 
     assert len(records) == 1
@@ -481,11 +508,13 @@ def _parse_session_artifact(path: Path) -> dict[str, object]:
 def _selection(selected_family: SoftControlFamily) -> object:
     class _Selection:
         def __init__(self, family: SoftControlFamily) -> None:
+            self.selected_family_before_finalization = family
             self.selected_family = family
             self.scorecard = build_reference_allocation_scorecard(
                 _latched_state_with_evidence()
             )
             self.neutral_dominance = neutral_dominance_decision(self.scorecard)
+            self.mediation_finalization = finalize_reference_soft_control(family)
 
     return _Selection(selected_family)
 

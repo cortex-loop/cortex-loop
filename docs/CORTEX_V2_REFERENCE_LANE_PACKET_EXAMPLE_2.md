@@ -6,7 +6,8 @@ Date: 2026-03-18
 Purpose:
 - record one real contradiction-preserving reference-host packet example built from landed surfaces,
 - tie the committed example to a live integration test,
-- keep earned packet truth distinct from later report formatting or UI work.
+- keep earned packet truth distinct from later report formatting or UI work,
+- expose the runtime-backed identity control path used for the same packet example.
 
 Source test:
 - `tests/integration/test_reference_lane_packet_example.py::test_reference_lane_current_pair_packet_example_matches_committed_doc`
@@ -14,11 +15,11 @@ Source test:
 Earned in this example:
 - reference-host full-commitment event -> commitment verdict -> event trace artifact -> current-pair fragment -> eval harness -> eval packet,
 - explicit contradiction and degradation preservation,
-- explicit truthful-withheld field exposure.
+- explicit truthful-withheld field exposure,
+- runtime-backed `seek-context` selection with identity finalization and no direct host-native specialization.
 
 Not earned in this example:
 - report formatting or UI rendering,
-- runtime wiring,
 - additional packet taxonomy beyond the minimal current-pair / blocker split.
 
 ## Example Snapshot
@@ -41,6 +42,24 @@ Not earned in this example:
     "record_refs": [
       "artifact-packet-1"
     ]
+  },
+  "runtime_control": {
+    "selected_family": "seek-context",
+    "realized_family": "seek-context",
+    "host_opportunity_refs": [
+      "mcp.query"
+    ],
+    "mediation": {
+      "mediation_active": false,
+      "mediation_identity": true,
+      "selected_family_before_finalization": "seek-context",
+      "selected_family_after_finalization": "seek-context",
+      "preferred_opportunity_ref": null,
+      "direct_opportunity_specialization_used": false,
+      "mediation_reason_tags": [
+        "mode:identity"
+      ]
+    }
   },
   "withheld_fields": [
     {

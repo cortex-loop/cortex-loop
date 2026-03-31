@@ -39,12 +39,6 @@ def test_reference_host_realization_mediated_packet_matches_committed_doc() -> N
 
 
 def test_reference_host_realization_pair_remains_fair_and_changes_only_specialization() -> None:
-    baseline_specialization = build_reference_host_realization_specialization_snapshot(
-        clearly_superior=False,
-    )
-    mediated_specialization = build_reference_host_realization_specialization_snapshot(
-        clearly_superior=True,
-    )
     seen_ids: dict[str, set[str]] = {
         "pair_ids": set(),
         "session_ids": set(),
@@ -59,6 +53,14 @@ def test_reference_host_realization_pair_remains_fair_and_changes_only_specializ
 
     for pair_key in REFERENCE_HOST_REALIZATION_PAIR_KEYS:
         spec = REFERENCE_HOST_REALIZATION_PAIR_SPECS[pair_key]
+        baseline_specialization = build_reference_host_realization_specialization_snapshot(
+            pair_key=pair_key,
+            clearly_superior=False,
+        )
+        mediated_specialization = build_reference_host_realization_specialization_snapshot(
+            pair_key=pair_key,
+            clearly_superior=True,
+        )
         baseline_packet = build_reference_host_realization_baseline_packet(pair_key)
         mediated_packet = build_reference_host_realization_mediated_packet(pair_key)
         comparator = build_reference_host_realization_comparator_snapshot(pair_key)
@@ -78,6 +80,28 @@ def test_reference_host_realization_pair_remains_fair_and_changes_only_specializ
         assert comparator["host_opportunity_refs"] == ["mcp.query"]
         assert comparator["baseline_direct_opportunity_specialization_used"] == 0
         assert comparator["mediated_direct_opportunity_specialization_used"] == 1
+        assert comparator["baseline_runtime_control"]["selected_family"] == "seek-context"
+        assert comparator["mediated_runtime_control"]["selected_family"] == "seek-context"
+        assert comparator["baseline_runtime_control"]["realized_family"] == "seek-context"
+        assert comparator["mediated_runtime_control"]["realized_family"] == "seek-context"
+        assert comparator["baseline_runtime_control"]["host_opportunity_refs"] == ["mcp.query"]
+        assert comparator["mediated_runtime_control"]["host_opportunity_refs"] == ["mcp.query"]
+        assert (
+            comparator["baseline_runtime_control"]["mediation"]["direct_opportunity_specialization_used"]
+            is False
+        )
+        assert (
+            comparator["mediated_runtime_control"]["mediation"]["direct_opportunity_specialization_used"]
+            is True
+        )
+        assert (
+            comparator["baseline_runtime_control"]["mediation"]["preferred_opportunity_ref"]
+            is None
+        )
+        assert (
+            comparator["mediated_runtime_control"]["mediation"]["preferred_opportunity_ref"]
+            == "mcp.query"
+        )
         assert baseline_specialization["preferred_opportunity_ref"] is None
         assert mediated_specialization["preferred_opportunity_ref"] == "mcp.query"
         assert baseline_specialization["direct_opportunity_specialization_used"] is False

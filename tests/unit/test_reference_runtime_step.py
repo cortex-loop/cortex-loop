@@ -12,6 +12,10 @@ from cortex.runtime.reference import (
 from cortex.sre.brake import BrakeState
 from cortex.sre.feedback import ReferenceRealizationFeedback
 from cortex.sre.families import SoftControlFamily
+from cortex.sre.mediation import (
+    ReferenceMediationMode,
+    finalize_reference_soft_control,
+)
 from cortex.sre.policy import neutral_dominance_decision
 from cortex.sre.reference_scoring import build_reference_allocation_scorecard
 from cortex.sre.state import (
@@ -73,6 +77,14 @@ def test_reference_runtime_step_result_surfaces_cheap_reference_event_without_co
         activation_threshold=0.35,
         expected_alpha=1.0,
         expect_allocated_equals_online=True,
+        expected_mediation={
+            "mediation_active": False,
+            "mediation_identity": True,
+            "selected_family_before_finalization": "neutral",
+            "selected_family_after_finalization": "neutral",
+            "preferred_opportunity_ref": None,
+            "direct_opportunity_specialization_used": False,
+        },
     )
     assert result.feedback_window_summary_payload == {
         "window_size": 0,
@@ -104,21 +116,14 @@ def test_reference_runtime_step_result_surfaces_cheap_reference_event_without_co
     assert result.session_summary["feedback_window_size"] == 1
 
 
-def test_reference_runtime_step_selects_seek_context_when_capability_view_is_missing(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    monkeypatch.setattr(
-        reference_runtime,
-        "_build_executive_environment_view",
-        lambda normalized_payload: ExecutiveEnvironmentView(
-            available_query_kinds=frozenset({EXECUTION_TRACE}),
-            host_capability_tags=frozenset({"reference-host", "local-cli-runtime"}),
-        ),
-    )
-
+def test_reference_runtime_step_selects_seek_context_when_capability_view_is_missing() -> None:
     result = run_reference_runtime_step(
         "ContextLoad",
         {"session_id": "session-missing-capability-view"},
+        executive_environment_view=ExecutiveEnvironmentView(
+            available_query_kinds=frozenset({EXECUTION_TRACE}),
+            host_capability_tags=frozenset({"reference-host", "local-cli-runtime"}),
+        ),
     )
 
     assert result.selected_family is SoftControlFamily.SEEK_CONTEXT
@@ -149,10 +154,47 @@ def test_reference_runtime_step_selects_seek_context_when_capability_view_is_mis
         activation_threshold=0.45,
         expected_alpha=0.75,
         expect_allocated_equals_online=False,
+        expected_mediation={
+            "mediation_active": False,
+            "mediation_identity": True,
+            "selected_family_before_finalization": "seek-context",
+            "selected_family_after_finalization": "seek-context",
+            "preferred_opportunity_ref": None,
+            "direct_opportunity_specialization_used": False,
+        },
     )
     assert (
         result.control_ledger_summary["allocation_diagnostics"]["selected_delta_over_neutral"]
         > result.control_ledger_summary["allocation_diagnostics"]["activation_threshold"]
+    )
+
+
+def test_reference_runtime_step_experimental_mediation_specializes_reference_mcp_query() -> None:
+    result = run_reference_runtime_step(
+        "ContextLoad",
+        {"session_id": "session-missing-capability-view"},
+        executive_environment_view=ExecutiveEnvironmentView(
+            available_query_kinds=frozenset({EXECUTION_TRACE}),
+            host_capability_tags=frozenset({"reference-host", "local-cli-runtime"}),
+        ),
+        mediation_mode=ReferenceMediationMode.HOST_REALIZATION_EXPERIMENTAL,
+    )
+
+    assert result.selected_family is SoftControlFamily.SEEK_CONTEXT
+    assert result.realized_family is SoftControlFamily.SEEK_CONTEXT
+    _assert_allocation_diagnostics_shape(
+        result.control_ledger_summary["allocation_diagnostics"],
+        activation_threshold=0.45,
+        expected_alpha=0.75,
+        expect_allocated_equals_online=False,
+        expected_mediation={
+            "mediation_active": True,
+            "mediation_identity": False,
+            "selected_family_before_finalization": "seek-context",
+            "selected_family_after_finalization": "seek-context",
+            "preferred_opportunity_ref": "mcp.query",
+            "direct_opportunity_specialization_used": True,
+        },
     )
 
 
@@ -228,6 +270,14 @@ def test_reference_runtime_step_result_certifies_full_commitment_when_runtime_pa
         activation_threshold=0.25,
         expected_alpha=0.85,
         expect_allocated_equals_online=False,
+        expected_mediation={
+            "mediation_active": False,
+            "mediation_identity": True,
+            "selected_family_before_finalization": "neutral",
+            "selected_family_after_finalization": "neutral",
+            "preferred_opportunity_ref": None,
+            "direct_opportunity_specialization_used": False,
+        },
     )
     assert result.session.active_track_ref == "main"
     assert result.session.budget_history == ("shell-high",)
@@ -374,7 +424,7 @@ def test_reference_runtime_step_propagates_prior_enforcement_override_into_next_
     monkeypatch.setattr(
         reference_runtime,
         "select_reference_soft_control",
-        lambda executive_state: _selection(SoftControlFamily.BRANCH),
+        lambda executive_state, *args, **kwargs: _selection(SoftControlFamily.BRANCH),
     )
     enforced = run_reference_runtime_step(
         "ApprovalResult",
@@ -534,7 +584,7 @@ def test_reference_runtime_step_orders_admissible_families_by_soft_control_enum(
     monkeypatch.setattr(
         reference_runtime,
         "select_reference_soft_control",
-        lambda executive_state: _selection(SoftControlFamily.NEUTRAL),
+        lambda executive_state, *args, **kwargs: _selection(SoftControlFamily.NEUTRAL),
     )
 
     result = run_reference_runtime_step(
@@ -562,7 +612,7 @@ def test_reference_runtime_step_orders_dominant_uncertainty_sources_by_level_the
     monkeypatch.setattr(
         reference_runtime,
         "select_reference_soft_control",
-        lambda executive_state: _selection(SoftControlFamily.NEUTRAL),
+        lambda executive_state, *args, **kwargs: _selection(SoftControlFamily.NEUTRAL),
     )
 
     result = run_reference_runtime_step(
@@ -587,7 +637,7 @@ def test_reference_runtime_step_prioritizes_enforcement_as_primary_reason_over_s
     monkeypatch.setattr(
         reference_runtime,
         "select_reference_soft_control",
-        lambda executive_state: _selection(SoftControlFamily.BRANCH),
+        lambda executive_state, *args, **kwargs: _selection(SoftControlFamily.BRANCH),
     )
 
     result = run_reference_runtime_step(
@@ -618,7 +668,7 @@ def test_reference_runtime_step_enforces_latched_brake_to_check_when_evidence_do
     monkeypatch.setattr(
         reference_runtime,
         "select_reference_soft_control",
-        lambda executive_state: _selection(SoftControlFamily.BRANCH),
+        lambda executive_state, *args, **kwargs: _selection(SoftControlFamily.BRANCH),
     )
 
     result = run_reference_runtime_step(
@@ -649,7 +699,7 @@ def test_reference_runtime_step_enforces_latched_brake_to_neutral_without_eviden
     monkeypatch.setattr(
         reference_runtime,
         "select_reference_soft_control",
-        lambda executive_state: _selection(SoftControlFamily.ESCALATE),
+        lambda executive_state, *args, **kwargs: _selection(SoftControlFamily.ESCALATE),
     )
 
     result = run_reference_runtime_step(
@@ -678,7 +728,7 @@ def test_reference_runtime_step_enforces_guarded_feedback_pressure_to_check_when
     monkeypatch.setattr(
         reference_runtime,
         "select_reference_soft_control",
-        lambda executive_state: _selection(SoftControlFamily.BRANCH),
+        lambda executive_state, *args, **kwargs: _selection(SoftControlFamily.BRANCH),
     )
 
     result = run_reference_runtime_step(
@@ -714,9 +764,11 @@ def _goal_progress_level(result: object) -> float:
 def _selection(selected_family: SoftControlFamily) -> object:
     class _Selection:
         def __init__(self, family: SoftControlFamily) -> None:
+            self.selected_family_before_finalization = family
             self.selected_family = family
             self.scorecard = build_reference_allocation_scorecard(_latched_state_with_evidence())
             self.neutral_dominance = neutral_dominance_decision(self.scorecard)
+            self.mediation_finalization = finalize_reference_soft_control(family)
 
     return _Selection(selected_family)
 
@@ -727,12 +779,14 @@ def _assert_allocation_diagnostics_shape(
     activation_threshold: float,
     expected_alpha: float,
     expect_allocated_equals_online: bool,
+    expected_mediation: dict[str, object],
 ) -> None:
     assert tuple(payload) == (
         "alpha_t",
         "activation_threshold",
         "selected_delta_over_neutral",
         "scores",
+        "mediation",
     )
     assert payload["alpha_t"] == pytest.approx(expected_alpha)
     assert payload["activation_threshold"] == pytest.approx(activation_threshold)
@@ -753,6 +807,33 @@ def _assert_allocation_diagnostics_shape(
         assert all(score["allocated_score"] == score["online_score"] for score in scores)
     else:
         assert any(score["allocated_score"] != score["online_score"] for score in scores)
+    mediation = payload["mediation"]
+    assert isinstance(mediation, dict)
+    assert tuple(mediation) == (
+        "mediation_active",
+        "mediation_identity",
+        "selected_family_before_finalization",
+        "selected_family_after_finalization",
+        "preferred_opportunity_ref",
+        "direct_opportunity_specialization_used",
+        "mediation_reason_tags",
+    )
+    assert mediation["mediation_active"] is expected_mediation["mediation_active"]
+    assert mediation["mediation_identity"] is expected_mediation["mediation_identity"]
+    assert (
+        mediation["selected_family_before_finalization"]
+        == expected_mediation["selected_family_before_finalization"]
+    )
+    assert (
+        mediation["selected_family_after_finalization"]
+        == expected_mediation["selected_family_after_finalization"]
+    )
+    assert mediation["preferred_opportunity_ref"] == expected_mediation["preferred_opportunity_ref"]
+    assert (
+        mediation["direct_opportunity_specialization_used"]
+        is expected_mediation["direct_opportunity_specialization_used"]
+    )
+    assert isinstance(mediation["mediation_reason_tags"], list)
 
 
 def _feedback(warning_code: str) -> ReferenceRealizationFeedback:

@@ -350,6 +350,7 @@ def build_reference_host_realization_baseline_packet(
     spec = REFERENCE_HOST_REALIZATION_PAIR_SPECS[pair_key]
     snapshot = build_reference_lane_packet_example_snapshot(pair_key)
     specialization = build_reference_host_realization_specialization_snapshot(
+        pair_key=pair_key,
         clearly_superior=False,
     )
 
@@ -357,7 +358,9 @@ def build_reference_host_realization_baseline_packet(
     assert snapshot["candidate_id"] == spec.commitment_id
     assert snapshot["verdict_status"] == CommitmentStatus.CERTIFIED.value
     assert snapshot["packet_kind"] == "current-pair"
+    assert snapshot["runtime_control"]["mediation"]["mediation_identity"] is True
     assert specialization["selected_family"] == "seek-context"
+    assert specialization["realized_family"] == "seek-context"
     assert specialization["preferred_opportunity_ref"] is None
     assert specialization["direct_opportunity_specialization_used"] is False
     assert specialization["host_opportunity_refs"] == ["mcp.query"]

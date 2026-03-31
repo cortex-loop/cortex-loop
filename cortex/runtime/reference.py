@@ -37,9 +37,12 @@ from cortex.drivers._commitment_common import (
 )
 from cortex.drivers.reference_host import BoundReferenceHostEvent, observe_reference_host_event
 from cortex.drivers.reference_host_commitment import bind_reference_host_candidate
+from cortex.sre.allocation import build_allocation_diagnostics_payload
 from cortex.sre.branching import BranchOperation
 from cortex.sre.brake import BrakeState
 from cortex.sre.families import SoftControlFamily
+from cortex.sre.mediation import ReferenceMediationMode
+from cortex.sre.opportunities import HostNativeOpportunity
 from cortex.sre.reference_builder import build_reference_executive_state
 from cortex.sre.feedback import (
     ReferenceFeedbackWindowSummary,
@@ -47,10 +50,7 @@ from cortex.sre.feedback import (
     ReferenceRealizationFeedbackWindow,
     summarize_reference_feedback_window,
 )
-from cortex.sre.reference_scoring import (
-    build_allocation_diagnostics_payload,
-    select_reference_soft_control,
-)
+from cortex.sre.reference_scoring import select_reference_soft_control
 from cortex.sre.state import ReferenceExecutiveState
 
 _ALLOWED_COMMITMENT_RESULT_KINDS = frozenset(status.value for status in CommitmentStatus)
@@ -411,6 +411,9 @@ def run_reference_runtime_step(
     raw_event_name: str,
     raw_payload: Mapping[str, Any] | None,
     session: ReferenceRuntimeSession | None = None,
+    *,
+    executive_environment_view: ExecutiveEnvironmentView | None = None,
+    mediation_mode: ReferenceMediationMode = ReferenceMediationMode.IDENTITY,
 ) -> ReferenceRuntimeStepResult:
     prior_session = _coerce_session(session)
     bound_event = observe_reference_host_event(raw_event_name, raw_payload)
@@ -498,10 +501,17 @@ def run_reference_runtime_step(
             warnings=warnings,
             reminders=continuity_reminders,
         ),
-        _build_executive_environment_view(normalized_payload),
+        _coerce_executive_environment_view(
+            executive_environment_view,
+            normalized_payload=normalized_payload,
+        ),
         provisional_session,
     )
-    selection = select_reference_soft_control(executive_state)
+    selection = select_reference_soft_control(
+        executive_state,
+        mediation_mode=mediation_mode,
+        opportunities=_reference_host_native_opportunities(bound_event),
+    )
     selected_family = selection.selected_family
     brake_state = executive_state.brake.brake_state
     dominant_uncertainty_sources = _dominant_uncertainty_sources(executive_state)
@@ -524,6 +534,7 @@ def run_reference_runtime_step(
         allocation_diagnostics=build_allocation_diagnostics_payload(
             selection.scorecard,
             selected_delta_over_neutral=selection.neutral_dominance.margin_over_neutral,
+            mediation_payload=selection.mediation_finalization.as_payload(),
         ),
     )
     realization_feedback = ReferenceRealizationFeedback(
@@ -780,6 +791,22 @@ def _build_executive_environment_view(
     )
 
 
+def _coerce_executive_environment_view(
+    executive_environment_view: ExecutiveEnvironmentView | None,
+    *,
+    normalized_payload: Mapping[str, Any],
+) -> ExecutiveEnvironmentView:
+    if executive_environment_view is None:
+        return _build_executive_environment_view(normalized_payload)
+    if not isinstance(executive_environment_view, ExecutiveEnvironmentView):
+        actual_type = type(executive_environment_view).__name__
+        raise TypeError(
+            "run_reference_runtime_step.executive_environment_view must be "
+            f"ExecutiveEnvironmentView | None, got {actual_type}."
+        )
+    return executive_environment_view
+
+
 def _build_support_snapshot(
     *,
     provisional_session: ReferenceRuntimeSession,
@@ -815,6 +842,22 @@ def _build_support_snapshot(
         ),
         exec_memory_pub=SupportExecMemoryState(),
     )
+
+
+def _reference_host_native_opportunities(
+    bound_event: BoundReferenceHostEvent,
+) -> tuple[HostNativeOpportunity, ...]:
+    opportunities: list[HostNativeOpportunity] = []
+    if "mcp.query" in bound_event.lifecycle_surface.mcp_affordances:
+        opportunities.append(
+            HostNativeOpportunity(
+                opportunity_ref="mcp.query",
+                supported_families=frozenset({SoftControlFamily.SEEK_CONTEXT}),
+                clearly_superior=True,
+                native_surface_tags=frozenset({"mcp", "structured-query"}),
+            )
+        )
+    return tuple(opportunities)
 
 
 def _build_provenance_manifest(
@@ -1067,6 +1110,7 @@ _ALLOCATION_DIAGNOSTICS_KEYS = (
     "activation_threshold",
     "selected_delta_over_neutral",
     "scores",
+    "mediation",
 )
 _ALLOCATION_SCORE_KEYS = (
     "family",
@@ -1075,6 +1119,15 @@ _ALLOCATION_SCORE_KEYS = (
     "allocated_score",
     "admissible",
     "reason_tags",
+)
+_MEDIATION_DIAGNOSTICS_KEYS = (
+    "mediation_active",
+    "mediation_identity",
+    "selected_family_before_finalization",
+    "selected_family_after_finalization",
+    "preferred_opportunity_ref",
+    "direct_opportunity_specialization_used",
+    "mediation_reason_tags",
 )
 
 
@@ -1120,6 +1173,56 @@ def _validate_allocation_diagnostics_payload(payload: dict[str, Any], label: str
             raise TypeError(f"{score_label}.reason_tags must be list[str], got {actual_type}.")
         if any(not (isinstance(tag, str) and tag.strip()) for tag in reason_tags):
             raise ValueError(f"{score_label}.reason_tags must contain only non-empty strings.")
+    mediation = payload["mediation"]
+    if not isinstance(mediation, dict):
+        actual_type = type(mediation).__name__
+        raise TypeError(f"{label}.mediation must be dict[str, Any], got {actual_type}.")
+    if tuple(mediation) != _MEDIATION_DIAGNOSTICS_KEYS:
+        raise ValueError(
+            f"{label}.mediation must preserve the locked key order "
+            f"{_MEDIATION_DIAGNOSTICS_KEYS!r}."
+        )
+    if not isinstance(mediation["mediation_active"], bool):
+        actual_type = type(mediation["mediation_active"]).__name__
+        raise TypeError(
+            f"{label}.mediation.mediation_active must be bool, got {actual_type}."
+        )
+    if not isinstance(mediation["mediation_identity"], bool):
+        actual_type = type(mediation["mediation_identity"]).__name__
+        raise TypeError(
+            f"{label}.mediation.mediation_identity must be bool, got {actual_type}."
+        )
+    for key in (
+        "selected_family_before_finalization",
+        "selected_family_after_finalization",
+    ):
+        value = mediation[key]
+        if not (isinstance(value, str) and value.strip()):
+            raise ValueError(f"{label}.mediation.{key} must be non-empty after trimming.")
+    preferred_opportunity_ref = mediation["preferred_opportunity_ref"]
+    if preferred_opportunity_ref is not None and not (
+        isinstance(preferred_opportunity_ref, str) and preferred_opportunity_ref.strip()
+    ):
+        raise ValueError(
+            f"{label}.mediation.preferred_opportunity_ref must be non-empty after trimming when provided."
+        )
+    if not isinstance(mediation["direct_opportunity_specialization_used"], bool):
+        actual_type = type(mediation["direct_opportunity_specialization_used"]).__name__
+        raise TypeError(
+            f"{label}.mediation.direct_opportunity_specialization_used must be bool, got {actual_type}."
+        )
+    mediation_reason_tags = mediation["mediation_reason_tags"]
+    if not isinstance(mediation_reason_tags, list):
+        actual_type = type(mediation_reason_tags).__name__
+        raise TypeError(
+            f"{label}.mediation.mediation_reason_tags must be list[str], got {actual_type}."
+        )
+    if any(
+        not (isinstance(tag, str) and tag.strip()) for tag in mediation_reason_tags
+    ):
+        raise ValueError(
+            f"{label}.mediation.mediation_reason_tags must contain only non-empty strings."
+        )
 
 
 def _copy_allocation_diagnostics_payload(payload: dict[str, Any]) -> dict[str, Any]:
@@ -1138,6 +1241,21 @@ def _copy_allocation_diagnostics_payload(payload: dict[str, Any]) -> dict[str, A
             }
             for score in payload["scores"]
         ],
+        "mediation": {
+            "mediation_active": payload["mediation"]["mediation_active"],
+            "mediation_identity": payload["mediation"]["mediation_identity"],
+            "selected_family_before_finalization": payload["mediation"][
+                "selected_family_before_finalization"
+            ],
+            "selected_family_after_finalization": payload["mediation"][
+                "selected_family_after_finalization"
+            ],
+            "preferred_opportunity_ref": payload["mediation"]["preferred_opportunity_ref"],
+            "direct_opportunity_specialization_used": payload["mediation"][
+                "direct_opportunity_specialization_used"
+            ],
+            "mediation_reason_tags": list(payload["mediation"]["mediation_reason_tags"]),
+        },
     }
 
 
