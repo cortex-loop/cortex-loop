@@ -104,7 +104,7 @@ def test_reference_runtime_step_result_surfaces_cheap_reference_event_without_co
     assert result.session_summary["feedback_window_size"] == 1
 
 
-def test_reference_runtime_step_keeps_seek_context_unreachable_when_capability_view_is_missing(
+def test_reference_runtime_step_selects_seek_context_when_capability_view_is_missing(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     monkeypatch.setattr(
@@ -121,18 +121,39 @@ def test_reference_runtime_step_keeps_seek_context_unreachable_when_capability_v
         {"session_id": "session-missing-capability-view"},
     )
 
-    assert result.selected_family is SoftControlFamily.NEUTRAL
+    assert result.selected_family is SoftControlFamily.SEEK_CONTEXT
+    assert result.realized_family is SoftControlFamily.SEEK_CONTEXT
     assert "capability-view-missing" in result.executive_state_summary["host_friction_tags"]
     assert result.brake_state is BrakeState.GUARDED
-    assert result.executive_state_summary["family_mask"] == ["brake", "check", "neutral"]
-    assert result.executive_state_summary["top_family_set"] == ["brake", "neutral"]
-    assert "seek-context" not in result.executive_state_summary["family_mask"]
-    assert "seek-context" not in result.executive_state_summary["top_family_set"]
+    assert result.executive_state_summary["family_mask"] == [
+        "brake",
+        "check",
+        "neutral",
+        "seek-context",
+    ]
+    assert result.executive_state_summary["top_family_set"] == [
+        "brake",
+        "neutral",
+        "seek-context",
+    ]
     assert result.control_ledger_summary["admissible_families"] == [
         "neutral",
+        "seek-context",
         "check",
         "brake",
     ]
+    assert result.control_ledger_summary["selected_family"] == "seek-context"
+    assert result.control_ledger_summary["realized_family"] == "seek-context"
+    _assert_allocation_diagnostics_shape(
+        result.control_ledger_summary["allocation_diagnostics"],
+        activation_threshold=0.45,
+        expected_alpha=0.75,
+        expect_allocated_equals_online=False,
+    )
+    assert (
+        result.control_ledger_summary["allocation_diagnostics"]["selected_delta_over_neutral"]
+        > result.control_ledger_summary["allocation_diagnostics"]["activation_threshold"]
+    )
 
 
 def test_reference_runtime_step_result_keeps_candidate_bearing_event_candidate_only() -> None:
@@ -714,7 +735,7 @@ def _assert_allocation_diagnostics_shape(
         "scores",
     )
     assert payload["alpha_t"] == pytest.approx(expected_alpha)
-    assert payload["activation_threshold"] == activation_threshold
+    assert payload["activation_threshold"] == pytest.approx(activation_threshold)
     assert isinstance(payload["selected_delta_over_neutral"], float)
     scores = payload["scores"]
     assert isinstance(scores, list)

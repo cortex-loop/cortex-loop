@@ -100,9 +100,9 @@ It is workflow state only. It does not override the packet documents, implementa
 
 - Current campaign: `J4 first bounded experimental host-realization mediation train active`
 - Current working branch at ledger update: `review/j4a-closure-cleanup`
-- Current branch role: explicit review branch carrying the accepted J4A cleanup plus tests-first J4B inspection truth ahead of local `main`
-- Current candidate seam: `J4B` bounded reference-lane `seek-context` reachability seam; `J4C` remains the reserved off-by-default host-realization finalizer seam after `J4B` closes honestly; `J3` is accepted baseline truth on `main`, `Q1` remains accepted ancestor truth, and `N2` remains blocked on a capable machine
-- Current seam status: `J4A` is now locked on the canonical line. The first mediation train is pinned as a reference-host host-realization seam because it is the smallest defensible implementation target after `J3`: it preserves commitment truth, packet publication meaning, branch law, and uncertainty law while targeting only direct host-native opportunity specialization. A tests-first inspection on the current review line now makes the next gap explicit: the real reference runtime lane does not reach `seek-context`, and builder-only simulated admission still leaves `neutral` selected under the current activation-threshold law. No runtime code or correspondence row has landed yet. `J4B` therefore cannot honestly be skipped on current code: it should start as the smallest runtime reachability seam at `X_t^{ref}`, widening to `Q_t^{online}(a)` / `Q_t^{alloc}(a)` only if builder-side admission alone still fails. `J4C` remains closed until generic `seek-context` is truly reachable on the reference runtime lane.`
+- Current branch role: explicit review branch carrying the accepted J4A cleanup plus committed J4B implementation truth ahead of local `main`
+- Current candidate seam: `J4B` bounded reference-lane `seek-context` reachability seam is now implemented on the current review line; `J4C` remains the reserved off-by-default host-realization finalizer seam after `J4B` is accepted on the canonical line; `J3` is accepted baseline truth on `main`, `Q1` remains accepted ancestor truth, and `N2` remains blocked on a capable machine
+- Current seam status: `J4A` is now locked on the canonical line. The first mediation train is pinned as a reference-host host-realization seam because it is the smallest defensible implementation target after `J3`: it preserves commitment truth, packet publication meaning, branch law, and uncertainty law while targeting only direct host-native opportunity specialization. A bounded J4B implementation now exists on the current review line: exact missing-capability / missing-context pressure now admits `seek-context` in `X_t^{ref}`, and the scorer now uses the same exact-pressure predicate to make `seek-context` beat neutral on the real guarded capability-gap path without touching `alpha_t` or activation-threshold law. The reference runtime lane now selects `seek-context` end-to-end on the capability-view-missing path, while generic host friction still does not open the route. `U_t^{sre}` remains the pre-finalization selector, `Adm_r^{pre}` remains unchanged, and `Q_t^{final}(a)` remains closed. Accepted baseline truth on `main` remains pre-`J4B` until this review line is accepted.`
 - the compare surface and live-validation truth from earlier seams remain accepted ancestor input and are not being reopened by this J4 mediation train.
 - Seam risk: deterministic code/doc seam
 
@@ -156,14 +156,13 @@ It is workflow state only. It does not override the packet documents, implementa
   - do not reopen the K train by inertia now that the bounded proven-lane executive/runtime line is landed
   - J2 already changed the mediation blocker shape: package-level evidence is no longer `insufficient` on every required axis
   - J3 now treats the remaining uncertainty gap as explicit but non-blocking for one bounded experimental seam
-  - the first mediation train remains unimplemented and experimental / off-by-default on the current line
+  - the first mediation train is now partially implemented on the current review line, remains experimental / off-by-default, and is not yet accepted on the canonical line
   - Gemini should remain explicit as a partial/contaminated live rerun host rather than being hidden behind pooled mediation summaries
 - Next lawful move:
-  - land `J4B` from clean synced `main` as the smallest real runtime reachability seam for `seek-context`
-  - start with explicit `seek-context` admission in `X_t^{ref}` only under missing-context / missing-capability pressure that is already runtime-visible on the reference lane
-  - if builder-side admission alone still leaves `neutral` selected, widen in the same seam only to the `Q_t^{online}(a)` / `Q_t^{alloc}(a)` realization row
-  - keep `Q_t^{final}(a)` closed in `J4B`; `J4C` opens only after generic `seek-context` becomes truly reachable on the reference runtime lane
-  - update the exact planned correspondence rows for the smallest implementation that actually changes runtime behavior: `X_t^{ref}` first, then `Q_t^{online}(a)` / `Q_t^{alloc}(a)` only if required, with explicit confirmation that `U_t^{sre}` remains pre-finalization selection and `Adm_r^{pre}` remains unchanged in `J4B`
+  - reconcile or publish the current review line so `J4B` can be accepted onto clean synced `main`
+  - re-audit the delivered `J4B` correspondence rows on that acceptance path: `X_t^{ref}` and `Q_t^{online}(a)` / `Q_t^{alloc}(a)` updated, `U_t^{sre}` and `Adm_r^{pre}` confirmed unchanged, `Q_t^{final}(a)` still closed
+  - keep `Q_t^{final}(a)` closed and do not open `J4C` until the current `J4B` review line is accepted and re-audited on the canonical line
+  - if any further tuning is needed, keep it inside the current `J4B` review/acceptance loop rather than widening into a new seam
   - optional `scenario_uncertainty_claude_01` remains deferred unless the J3 review still says the uncertainty gap blocks the next decision
   - keep `N2` as a separate blocked train pending a capable machine rather than reopening service proof on this host
 
@@ -199,6 +198,7 @@ It is workflow state only. It does not override the packet documents, implementa
 - Do not let `J4` generic-reweight every family or collapse into a hub-style mediation score; the first train must stay sparse and host-realization-specific.
 - Do not let `J4` alter observe/bind meaning, packet publication meaning, or commitment truth to make mediation look better.
 - Do not pretend a builder-only `seek-context` mask widening is sufficient if the runtime lane still selects `neutral` under the accepted threshold law.
+- Do not reintroduce a generic `*-missing` `seek-context` heuristic; keep the exact runtime-visible pressure tags explicit.
 - Do not start a new managed session from local `main` while it is ahead or diverged from `origin/main`.
 - Do not reintroduce extra long-lived local worktrees or non-main branch residue without an explicit new seam.
 - Do not leave remote `review/*` heads behind after future publication cleanup.

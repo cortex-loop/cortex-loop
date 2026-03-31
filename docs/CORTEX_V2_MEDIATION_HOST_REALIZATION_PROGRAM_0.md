@@ -151,25 +151,26 @@ They are not packet truth, continuation truth, or publication truth.
 
 ## Planned load-bearing seam classification
 
-`J4B` is `load-bearing` if it is opened.
+`J4B` is `load-bearing` on the current review line.
 
 Purpose:
 
-- determine whether the current reference lane already reaches `seek-context` lawfully,
-- and add the smallest bounded pre-finalization reachability adjustment required for a real runtime path under explicit missing-context / missing-capability pressure, starting with admissibility and widening to scoring only if admission alone still fails.
+- make the current reference lane reach `seek-context` lawfully under explicit missing-context / missing-capability pressure,
+- and keep that change inside the smallest bounded pre-finalization adjustment that changes runtime behavior.
 
-Current inspection result on the current line:
+Current review-line implementation result on the current line:
 
-- the real reference runtime lane does not currently reach `seek-context` lawfully: `build_reference_executive_state()` keeps `seek-context` out of both the family mask and the top-family set on the current runtime path,
-- the current host-realization comparator evidence still bypasses runtime selection by directly specializing a prechosen `seek-context` family rather than earning it through the runtime lane,
-- and builder-only simulated admission under explicit `capability-view-missing` pressure still leaves `neutral` selected under the current activation-threshold law.
+- the builder now admits `seek-context` into the family mask and top-family set only on exact `missing-capability`, `capability-view-missing`, or `execution-trace-missing` pressure while generic host friction remains closed,
+- the scorer now uses the same exact-pressure predicate rather than a generic `*-missing` heuristic and gives `seek-context` the smallest route-local lift that clears neutral dominance on the real guarded capability-gap path without touching `alpha_t` or `activation_threshold`,
+- the reference runtime lane now selects `seek-context` end-to-end on the capability-view-missing path while generic host friction still remains neutral/brake dominated,
+- and the current host-realization comparator evidence still bypasses runtime selection because `J4C` remains unopened.
 
-Planned Correspondence impact for `J4B`:
+Delivered Correspondence impact for `J4B` on the current review line:
 
-- update the `X_t^{ref}` / `build_reference_executive_state()` row so explicit missing-context / missing-capability pressure can lawfully admit `seek-context`,
-- update the `Q_t^{online}(a)` / `Q_t^{alloc}(a)` realization row only if builder-side admission alone still leaves `neutral` selected on the runtime lane,
-- confirm the existing `U_t^{sre}` / `select_reference_soft_control()` row remains the pre-finalization selection owner in `J4B`,
-- and confirm the existing `Adm_r^{pre}` / `specialize_host_native_opportunity()` row remains unchanged in `J4B`.
+- updated the `X_t^{ref}` / `build_reference_executive_state()` row so explicit missing-context / missing-capability pressure can lawfully admit `seek-context`,
+- updated the `Q_t^{online}(a)` / `Q_t^{alloc}(a)` realization row so the same exact-pressure path now clears neutral dominance on the runtime lane without touching threshold or vigor law,
+- confirmed the existing `U_t^{sre}` / `select_reference_soft_control()` row remains the pre-finalization selection owner in `J4B`,
+- and confirmed the existing `Adm_r^{pre}` / `specialize_host_native_opportunity()` row remains unchanged in `J4B`.
 
 Do not open `Q_t^{final}` inside `J4B` just to compensate for a pre-selection reachability gap.
 
@@ -244,12 +245,12 @@ This train does not authorize:
 - named-model routing,
 - or a generic weighted-soup finalizer over every family.
 
-## Current accepted state after J4A program lock
+## Current review-line state after J4B implementation
 
-On the current line after this program lock:
+On the current review line after `J4B`:
 
 - the first mediation train is pinned as a reference-host host-realization slice,
-- the active next move is no longer generic “mediation planning pending,”
-- the current inspection result now says `J4B` cannot honestly be skipped on the current line: the real reference runtime lane does not yet reach `seek-context`, and builder-only simulated admission still leaves `neutral` selected under the current threshold law,
-- the smallest next move is therefore `J4B` as a runtime reachability seam, starting at `X_t^{ref}` and widening to `Q_t^{online}(a)` / `Q_t^{alloc}(a)` only if builder-side admission alone still fails,
-- and no runtime code or correspondence row has landed yet.
+- `J4B` now exists as a bounded runtime reachability seam on the current review line: exact missing-context / missing-capability pressure now admits and selects `seek-context` on the reference runtime lane,
+- generic host friction still does not open the `seek-context` route,
+- the current host-realization comparator evidence still bypasses runtime selection because `J4C` remains closed,
+- and runtime code plus correspondence rows now exist on the current review line only while accepted baseline truth on `main` remains pre-`J4B`.

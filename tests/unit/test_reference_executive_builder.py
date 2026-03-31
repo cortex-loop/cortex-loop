@@ -55,7 +55,7 @@ def test_build_reference_executive_state_for_cheap_event_stays_pass_through_and_
     assert state.brake.brake_state is BrakeState.QUIESCENT
 
 
-def test_build_reference_executive_state_keeps_seek_context_unreachable_under_missing_capability_pressure() -> None:
+def test_build_reference_executive_state_admits_seek_context_under_missing_capability_pressure() -> None:
     state = build_reference_executive_state(
         observe_reference_host_event(
             "ContextLoad",
@@ -87,6 +87,53 @@ def test_build_reference_executive_state_keeps_seek_context_unreachable_under_mi
             "capability-view-missing",
         }
     )
+    assert state.mode_and_gating.family_mask == frozenset(
+        {
+            SoftControlFamily.NEUTRAL,
+            SoftControlFamily.CHECK,
+            SoftControlFamily.BRAKE,
+            SoftControlFamily.SEEK_CONTEXT,
+        }
+    )
+    assert state.control_allocation.top_family_set == frozenset(
+        {
+            SoftControlFamily.NEUTRAL,
+            SoftControlFamily.BRAKE,
+            SoftControlFamily.SEEK_CONTEXT,
+        }
+    )
+    assert state.brake.brake_state is BrakeState.GUARDED
+    assert SoftControlFamily.SEEK_CONTEXT in state.mode_and_gating.family_mask
+    assert SoftControlFamily.SEEK_CONTEXT in state.control_allocation.top_family_set
+
+
+def test_build_reference_executive_state_keeps_seek_context_closed_under_generic_host_friction() -> None:
+    state = build_reference_executive_state(
+        observe_reference_host_event(
+            "ContextLoad",
+            {"session_id": "runtime-generic-host-friction"},
+        ).observation,
+        SupportSnapshot(
+            trace=SupportTraceState(),
+            session=SupportSessionState(branch_registry=("main",)),
+            host=SupportHostState(constraint_tags=frozenset({"single-process-limit"})),
+            exec_memory_pub=SupportExecMemoryState(),
+        ),
+        ExecutiveEnvironmentView(
+            available_query_kinds=frozenset({CAPABILITY_VIEW, EXECUTION_TRACE}),
+            host_capability_tags=frozenset({"reference-local"}),
+        ),
+        ReferenceRuntimeSession(
+            session_id="runtime-generic-host-friction",
+            event_index=1,
+            active_track_ref="main",
+            budget_history=("shell-low",),
+            brake_history=("quiescent",),
+            last_selected_family=SoftControlFamily.NEUTRAL,
+        ),
+    )
+
+    assert state.control_allocation.host_friction_tags == frozenset({"single-process-limit"})
     assert state.mode_and_gating.family_mask == frozenset(
         {
             SoftControlFamily.NEUTRAL,
@@ -231,6 +278,7 @@ def test_build_reference_executive_state_surfaces_guarded_brake_when_snapshot_ha
             SoftControlFamily.CHECK,
             SoftControlFamily.BRANCH,
             SoftControlFamily.BRAKE,
+            SoftControlFamily.SEEK_CONTEXT,
         }
     )
     assert "environment-drift" in state.uncertainty_monitoring.contradiction_spike_flags
@@ -239,6 +287,14 @@ def test_build_reference_executive_state_surfaces_guarded_brake_when_snapshot_ha
         {
             "single-process-limit",
             "capability-view-missing",
+        }
+    )
+    assert state.control_allocation.top_family_set == frozenset(
+        {
+            SoftControlFamily.NEUTRAL,
+            SoftControlFamily.BRANCH,
+            SoftControlFamily.BRAKE,
+            SoftControlFamily.SEEK_CONTEXT,
         }
     )
     assert not state.control_allocation.feedback_pressure_tags

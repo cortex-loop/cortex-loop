@@ -390,15 +390,15 @@ def test_resume_protocol_and_active_workstream_contract_exist() -> None:
     assert "`Q1` remains accepted ancestor truth" in workstream_text
     assert "Current campaign: `J4 first bounded experimental host-realization mediation train active`" in workstream_text
     assert "Current working branch at ledger update: `review/j4a-closure-cleanup`" in workstream_text
-    assert "Current branch role: explicit review branch carrying the accepted J4A cleanup plus tests-first J4B inspection truth ahead of local `main`" in workstream_text
-    assert "Current candidate seam: `J4B` bounded reference-lane `seek-context` reachability seam;" in workstream_text
-    assert "`J4C` remains the reserved off-by-default host-realization finalizer seam after `J4B` closes honestly" in workstream_text
+    assert "Current branch role: explicit review branch carrying the accepted J4A cleanup plus committed J4B implementation truth ahead of local `main`" in workstream_text
+    assert "Current candidate seam: `J4B` bounded reference-lane `seek-context` reachability seam is now implemented on the current review line;" in workstream_text
+    assert "`J4C` remains the reserved off-by-default host-realization finalizer seam after `J4B` is accepted on the canonical line" in workstream_text
     assert "mediation is now justified for one bounded experimental seam, but implementation remains unopened on the accepted line" in workstream_text
     assert "The first mediation train is pinned as a reference-host host-realization seam" in workstream_text
-    assert "No runtime code or correspondence row has landed yet." in workstream_text
-    assert "A tests-first inspection on the current review line now makes the next gap explicit" in workstream_text
-    assert "`J4B` therefore cannot honestly be skipped on current code" in workstream_text
-    assert "`J4C` remains closed until generic `seek-context` is truly reachable on the reference runtime lane." in workstream_text
+    assert "A bounded J4B implementation now exists on the current review line" in workstream_text
+    assert "exact missing-capability / missing-context pressure now admits `seek-context` in `X_t^{ref}`" in workstream_text
+    assert "generic host friction still does not open the route" in workstream_text
+    assert "`Q_t^{final}(a)` remains closed." in workstream_text
     assert "`J2` is now landed on the canonical line:" in workstream_text
     assert "dedicated branch-discipline families now exist on `reference`, `openai`, and `claude`" in workstream_text
     assert "dedicated non-thrash burden families now exist on `reference`, `openai`, and `claude`" in workstream_text
@@ -437,12 +437,10 @@ def test_resume_protocol_and_active_workstream_contract_exist() -> None:
     assert "mediation remains unimplemented, experimental / off-by-default, and constrained to a future SRE-only seam" in workstream_text
     assert "Gemini should remain explicit as a partial/contaminated live rerun host rather than being hidden behind pooled mediation summaries" in workstream_text
     assert "do not reopen the K train by inertia now that the bounded proven-lane executive/runtime line is landed" in workstream_text
-    assert "land `J4B` from clean synced `main` as the smallest real runtime reachability seam for `seek-context`" in workstream_text
-    assert "start with explicit `seek-context` admission in `X_t^{ref}` only under missing-context / missing-capability pressure" in workstream_text
-    assert "if builder-side admission alone still leaves `neutral` selected, widen in the same seam only to the `Q_t^{online}(a)` / `Q_t^{alloc}(a)` realization row" in workstream_text
-    assert "keep `Q_t^{final}(a)` closed in `J4B`; `J4C` opens only after generic `seek-context` becomes truly reachable on the reference runtime lane" in workstream_text
-    assert "update the exact planned correspondence rows for the smallest implementation that actually changes runtime behavior" in workstream_text
-    assert "`X_t^{ref}` first, then `Q_t^{online}(a)` / `Q_t^{alloc}(a)` only if required, with explicit confirmation that `U_t^{sre}` remains pre-finalization selection and `Adm_r^{pre}` remains unchanged in `J4B`" in workstream_text
+    assert "reconcile or publish the current review line so `J4B` can be accepted onto clean synced `main`" in workstream_text
+    assert "re-audit the delivered `J4B` correspondence rows on that acceptance path" in workstream_text
+    assert "keep `Q_t^{final}(a)` closed and do not open `J4C` until the current `J4B` review line is accepted and re-audited on the canonical line" in workstream_text
+    assert "if any further tuning is needed, keep it inside the current `J4B` review/acceptance loop rather than widening into a new seam" in workstream_text
     assert "keep `N2` as a separate blocked train pending a capable machine" in workstream_text
     assert "Do not implement mediation in `J3`;" in workstream_text
     assert "Do not treat `J3` as license for broad rollout" in workstream_text
@@ -450,6 +448,7 @@ def test_resume_protocol_and_active_workstream_contract_exist() -> None:
     assert "Do not let `J4` generic-reweight every family or collapse into a hub-style mediation score" in workstream_text
     assert "Do not let `J4` alter observe/bind meaning, packet publication meaning, or commitment truth to make mediation look better." in workstream_text
     assert "Do not pretend a builder-only `seek-context` mask widening is sufficient if the runtime lane still selects `neutral` under the accepted threshold law." in workstream_text
+    assert "Do not reintroduce a generic `*-missing` `seek-context` heuristic; keep the exact runtime-visible pressure tags explicit." in workstream_text
     assert "Do not treat signed-in provider CLI sessions as equivalent to the automation credentials" in workstream_text
     assert "Do not treat the new OpenAI App Server operator proof as license to reopen v1 assisted mode" in workstream_text
     assert "Do not keep repo-tracked live artifacts under `docs/live_validation/`" in workstream_text
@@ -547,13 +546,13 @@ def test_reference_runtime_program_lock_is_recorded() -> None:
     assert "This program-lock seam is `non-load-bearing`." in mediation_host_realization_program_text
     assert "Correspondence impact: none expected." in mediation_host_realization_program_text
     assert "one bounded `seek-context` reachability adjustment on explicit missing-context / missing-capability pressure" in mediation_host_realization_program_text
-    assert "`J4B` is `load-bearing` if it is opened." in mediation_host_realization_program_text
-    assert "the real reference runtime lane does not currently reach `seek-context` lawfully" in mediation_host_realization_program_text
-    assert "builder-only simulated admission under explicit `capability-view-missing` pressure still leaves `neutral` selected" in mediation_host_realization_program_text
-    assert "allow only the smallest pre-finalization scoring delta needed to make the same explicit-pressure runtime path reachable" in mediation_host_realization_program_text
+    assert "`J4B` is `load-bearing` on the current review line." in mediation_host_realization_program_text
+    assert "the builder now admits `seek-context` into the family mask and top-family set only on exact `missing-capability`, `capability-view-missing`, or `execution-trace-missing` pressure" in mediation_host_realization_program_text
+    assert "the scorer now uses the same exact-pressure predicate rather than a generic `*-missing` heuristic" in mediation_host_realization_program_text
+    assert "the reference runtime lane now selects `seek-context` end-to-end on the capability-view-missing path" in mediation_host_realization_program_text
     assert "`J4C` is `load-bearing`." in mediation_host_realization_program_text
     assert "add one new `Q_t^{final}(a)` experimental mediation-finalizer row" in mediation_host_realization_program_text
-    assert "update the `Q_t^{online}(a)` / `Q_t^{alloc}(a)` realization row only if builder-side admission alone still leaves `neutral` selected on the runtime lane" in mediation_host_realization_program_text
+    assert "updated the `Q_t^{online}(a)` / `Q_t^{alloc}(a)` realization row so the same exact-pressure path now clears neutral dominance on the runtime lane" in mediation_host_realization_program_text
     assert "Do not open `Q_t^{final}` inside `J4B` just to compensate for a pre-selection reachability gap." in mediation_host_realization_program_text
     assert "Minimum deterministic proof for each opened load-bearing stage:" in mediation_host_realization_program_text
     assert "Do not widen `J4` into branch/thrash mediation" in workstream_text
@@ -989,8 +988,8 @@ def test_runtime_restack_program_lock_is_recorded() -> None:
     assert "the operator/evaluation harness must not call explicit Gemini model names at all" in theory_text
     assert "fresh auto-only product-path rerun is sharper still" in theory_text
     assert "first full round-2 stable-defaults rerun now says the package is still `mixed_direction`" in theory_text
-    assert "docs/CORTEX_V2_ACTIVE_WORKSTREAM.md` now records the bounded K train as landed, records `N2` as blocked pending a capable machine, records `M2`, `J1`, `J2`, and `J3` as landed on `main`, and records the current J4 inspection result on the review line" in theory_text
-    assert "the real reference lane still does not reach `seek-context`, builder-only simulated admission still leaves `neutral` selected under the current threshold law, `J4B` is therefore required as the smallest runtime reachability seam, and `J4C` remains closed until that generic reachability is real." in theory_text
+    assert "docs/CORTEX_V2_ACTIVE_WORKSTREAM.md` now records the bounded K train as landed, records `N2` as blocked pending a capable machine, records `M2`, `J1`, `J2`, and `J3` as landed on `main`, and records the current J4 implementation result on the review line" in theory_text
+    assert "exact runtime-visible missing-capability / missing-context pressure now admits and selects `seek-context` on the reference runtime lane, generic host friction still does not open that route, and `J4C` remains closed pending canonical-line acceptance." in theory_text
     assert "The clean synced `main` line now carries the provider-limit neutrality hardening, the OpenAI continuity transport fix, the Claude efficiency rerun, the first compact SRE modulator bundle, the landed M2 summary/memory/policy refinement, the landed J1 mediation evidence package baseline, and the landed J2 gap-closure evidence package." in theory_text
     assert "the landed J1 mediation evidence package baseline" in theory_text
     assert "mediation is now justified for one bounded experimental seam" in theory_text
