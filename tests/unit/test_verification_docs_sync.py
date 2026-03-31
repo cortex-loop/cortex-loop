@@ -102,6 +102,9 @@ OPERATOR_DIRECTIONALITY_AUDIT_PATH = (
 OPERATOR_ROUTING_PROGRAM_PATH = (
     REPO_ROOT / "docs" / "CORTEX_V2_OPERATOR_ROUTING_PROGRAM_0.md"
 )
+MEDIATION_HOST_REALIZATION_PROGRAM_PATH = (
+    REPO_ROOT / "docs" / "CORTEX_V2_MEDIATION_HOST_REALIZATION_PROGRAM_0.md"
+)
 MEDIATION_JUSTIFICATION_NOTE_PATH = (
     REPO_ROOT / "docs" / "CORTEX_V2_MEDIATION_JUSTIFICATION_NOTE.md"
 )
@@ -385,11 +388,14 @@ def test_resume_protocol_and_active_workstream_contract_exist() -> None:
     assert "Current branch role:" in workstream_text
     assert "accepted workflow baseline truth now rests on `main` rather than a long-lived working branch" in workstream_text
     assert "`Q1` remains accepted ancestor truth" in workstream_text
-    assert "Current campaign: `bounded experimental mediation seam planning pending`" in workstream_text
+    assert "Current campaign: `J4 first bounded experimental host-realization mediation train active`" in workstream_text
     assert "Current working branch at ledger update: `main`" in workstream_text
-    assert "Current branch role: resting branch after the merged J3 mediation justification decision" in workstream_text
-    assert "Current candidate seam: `none`; `J3` is now accepted baseline truth on `main`" in workstream_text
+    assert "Current branch role: resting branch after the accepted J4A mediation program lock" in workstream_text
+    assert "Current candidate seam: `J4B` reference-host host-realization mediation;" in workstream_text
     assert "mediation is now justified for one bounded experimental seam, but implementation remains unopened on the accepted line" in workstream_text
+    assert "The first mediation train is pinned as a reference-host host-realization seam" in workstream_text
+    assert "No runtime code or correspondence row has landed yet." in workstream_text
+    assert "The first load-bearing move is `J4B`" in workstream_text
     assert "`J2` is now landed on the canonical line:" in workstream_text
     assert "dedicated branch-discipline families now exist on `reference`, `openai`, and `claude`" in workstream_text
     assert "dedicated non-thrash burden families now exist on `reference`, `openai`, and `claude`" in workstream_text
@@ -428,10 +434,14 @@ def test_resume_protocol_and_active_workstream_contract_exist() -> None:
     assert "mediation remains unimplemented, experimental / off-by-default, and constrained to a future SRE-only seam" in workstream_text
     assert "Gemini should remain explicit as a partial/contaminated live rerun host rather than being hidden behind pooled mediation summaries" in workstream_text
     assert "do not reopen the K train by inertia now that the bounded proven-lane executive/runtime line is landed" in workstream_text
-    assert "open one bounded experimental mediation implementation-planning seam from clean synced `main`" in workstream_text
+    assert "land `J4B` from clean synced `main` as the first load-bearing reference-host host-realization mediation seam" in workstream_text
+    assert "update the exact planned correspondence rows for `Q_t^{final}(a)`, `U_t^{sre}`, and any bounded `seek-context` admissibility change in the same slice" in workstream_text
     assert "keep `N2` as a separate blocked train pending a capable machine" in workstream_text
     assert "Do not implement mediation in `J3`;" in workstream_text
     assert "Do not treat `J3` as license for broad rollout" in workstream_text
+    assert "Do not widen `J4` into branch/thrash mediation, uncertainty/brake mediation, or pooled cross-host mediation" in workstream_text
+    assert "Do not let `J4` generic-reweight every family or collapse into a hub-style mediation score" in workstream_text
+    assert "Do not let `J4` alter observe/bind meaning, packet publication meaning, or commitment truth to make mediation look better." in workstream_text
     assert "Do not treat signed-in provider CLI sessions as equivalent to the automation credentials" in workstream_text
     assert "Do not treat the new OpenAI App Server operator proof as license to reopen v1 assisted mode" in workstream_text
     assert "Do not keep repo-tracked live artifacts under `docs/live_validation/`" in workstream_text
@@ -468,6 +478,9 @@ def test_reference_runtime_program_lock_is_recorded() -> None:
     operator_directionality_scenario_catalog_text = _read(OPERATOR_DIRECTIONALITY_SCENARIO_CATALOG_PATH)
     operator_directionality_audit_text = _read(OPERATOR_DIRECTIONALITY_AUDIT_PATH)
     operator_routing_program_text = _read(OPERATOR_ROUTING_PROGRAM_PATH)
+    mediation_host_realization_program_text = _read(
+        MEDIATION_HOST_REALIZATION_PROGRAM_PATH
+    )
     gemini_runtime_restack_text = _read(GEMINI_RUNTIME_RESTACK_PROGRAM_PATH)
     gemini_runtime_program_text = _read(GEMINI_RUNTIME_PROGRAM_PATH)
     gemini_ingress_program_text = _read(GEMINI_INGRESS_PROGRAM_PATH)
@@ -521,6 +534,13 @@ def test_reference_runtime_program_lock_is_recorded() -> None:
     assert "## 8. Mediation justification gate" in phase_gate_text
     assert "`J3` mediation justification review" in phase_gate_text
     assert "one bounded experimental mediation seam" in phase_gate_text
+    assert "first bounded experimental mediation slice" in mediation_host_realization_program_text
+    assert "The first mediation implementation should be a **host-realization seam**" in mediation_host_realization_program_text
+    assert "This program-lock seam is `non-load-bearing`." in mediation_host_realization_program_text
+    assert "Correspondence impact: none expected." in mediation_host_realization_program_text
+    assert "The first code seam in this train, `J4B`, is `load-bearing`." in mediation_host_realization_program_text
+    assert "add one new `Q_t^{final}(a)` experimental mediation-finalizer row" in mediation_host_realization_program_text
+    assert "Do not widen `J4` into branch/thrash mediation" in workstream_text
     assert "the first one-process live continuity slice plus explicit rejection enforcement are real" in program_text
     assert "the corrective zero-finding re-audit has passed for current scope" in program_text
     assert "a mismatched runtime `session_id` is surfaced as an explicit contradiction" in program_text

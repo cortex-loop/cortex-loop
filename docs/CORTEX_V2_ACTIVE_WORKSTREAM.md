@@ -98,11 +98,11 @@ It is workflow state only. It does not override the packet documents, implementa
 
 ## 2. Current campaign and seam state
 
-- Current campaign: `bounded experimental mediation seam planning pending`
+- Current campaign: `J4 first bounded experimental host-realization mediation train active`
 - Current working branch at ledger update: `main`
-- Current branch role: resting branch after the merged J3 mediation justification decision
-- Current candidate seam: `none`; `J3` is now accepted baseline truth on `main`, `Q1` remains accepted ancestor truth, and `N2` remains blocked on a capable machine
-- Current seam status: `J3 is now accepted baseline truth on the canonical line. Mediation is justified for one bounded experimental seam, but no mediation implementation has been opened yet. Better uncertainty handling remains explicit and package-insufficient, but it is non-blocking for the first bounded seam on the current line.`
+- Current branch role: resting branch after the accepted J4A mediation program lock
+- Current candidate seam: `J4B` reference-host host-realization mediation; `J3` is accepted baseline truth on `main`, `Q1` remains accepted ancestor truth, and `N2` remains blocked on a capable machine
+- Current seam status: `J4A` is now locked on the canonical line. The first mediation train is pinned as a reference-host host-realization seam because it is the smallest defensible implementation target after `J3`: it preserves commitment truth, packet publication meaning, branch law, and uncertainty law while targeting only direct host-native opportunity specialization. No runtime code or correspondence row has landed yet. The first load-bearing move is `J4B`: add a bounded reference-lane `seek-context` admissibility hook only if needed for a real runtime path, then land an off-by-default mediation finalizer that can nominate a clearly superior native opportunity without widening into generic family reweighting.`
 - the compare surface and live-validation truth from earlier seams remain accepted ancestor input and are not being reopened by the landed K train.
 - Seam risk: deterministic code/doc seam
 
@@ -156,10 +156,11 @@ It is workflow state only. It does not override the packet documents, implementa
   - do not reopen the K train by inertia now that the bounded proven-lane executive/runtime line is landed
   - J2 already changed the mediation blocker shape: package-level evidence is no longer `insufficient` on every required axis
   - J3 now treats the remaining uncertainty gap as explicit but non-blocking for one bounded experimental seam
-  - mediation remains unimplemented and experimental / off-by-default on the current line
+  - the first mediation train remains unimplemented and experimental / off-by-default on the current line
   - Gemini should remain explicit as a partial/contaminated live rerun host rather than being hidden behind pooled mediation summaries
 - Next lawful move:
-  - open one bounded experimental mediation implementation-planning seam from clean synced `main`
+  - land `J4B` from clean synced `main` as the first load-bearing reference-host host-realization mediation seam
+  - update the exact planned correspondence rows for `Q_t^{final}(a)`, `U_t^{sre}`, and any bounded `seek-context` admissibility change in the same slice
   - optional `scenario_uncertainty_claude_01` remains deferred unless the J3 review still says the uncertainty gap blocks the next decision
   - keep `N2` as a separate blocked train pending a capable machine rather than reopening service proof on this host
 
@@ -191,6 +192,9 @@ It is workflow state only. It does not override the packet documents, implementa
 - Do not widen the landed K train into support-memory runtime, mediation, vigor scaling, service/auth work on this machine, or broader host rollout.
 - Do not implement mediation in `J3`; this seam is justification/workflow/evidence interpretation only.
 - Do not treat `J3` as license for broad rollout, default-on mediation, live/provider mediation, Core widening, or AUX runtime widening.
+- Do not widen `J4` into branch/thrash mediation, uncertainty/brake mediation, or pooled cross-host mediation before the reference host-realization slice is either landed or rejected.
+- Do not let `J4` generic-reweight every family or collapse into a hub-style mediation score; the first train must stay sparse and host-realization-specific.
+- Do not let `J4` alter observe/bind meaning, packet publication meaning, or commitment truth to make mediation look better.
 - Do not start a new managed session from local `main` while it is ahead or diverged from `origin/main`.
 - Do not reintroduce extra long-lived local worktrees or non-main branch residue without an explicit new seam.
 - Do not leave remote `review/*` heads behind after future publication cleanup.
