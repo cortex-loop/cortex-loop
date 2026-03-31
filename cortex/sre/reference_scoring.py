@@ -36,6 +36,14 @@ _BASE_ACTIVATION_THRESHOLDS = {
     "high": 0.2,
 }
 
+_SEEK_CONTEXT_PRESSURE_TAGS = frozenset(
+    {
+        "missing-capability",
+        "capability-view-missing",
+        "execution-trace-missing",
+    }
+)
+
 
 @dataclass(frozen=True, slots=True)
 class ReferenceSoftControlSelection:
@@ -110,6 +118,11 @@ def build_reference_allocation_scorecard(
             reason_tags.add("mask-allowed")
         if host_friction_tags and family is SoftControlFamily.ESCALATE:
             reason_tags.add("host-friction")
+        if family is SoftControlFamily.SEEK_CONTEXT and _has_seek_context_pressure(
+            host_friction_tags,
+            brake_state=brake_state,
+        ):
+            reason_tags.add("seek-context-pressure")
         if not admissible and family is not SoftControlFamily.NEUTRAL:
             reason_tags.add("masked")
         if brake_state is not BrakeState.QUIESCENT and family is SoftControlFamily.BRAKE:
@@ -297,10 +310,13 @@ def _online_score_components_for_family(
             stability_value += 0.75
     if family is SoftControlFamily.ESCALATE and host_friction_tags:
         stability_value += 0.25
-    if family is SoftControlFamily.SEEK_CONTEXT and any(
-        tag.endswith("missing") for tag in host_friction_tags
+    if family is SoftControlFamily.SEEK_CONTEXT and _has_seek_context_pressure(
+        host_friction_tags,
+        brake_state=brake_state,
     ):
-        uncertainty_reduction += 0.15
+        # J4B keeps threshold and vigor law fixed, so explicit missing-context
+        # pressure needs a route-local lift that creates a real runtime path.
+        uncertainty_reduction += 0.70
     if budget_band == "high" and family in {
         SoftControlFamily.CHECK,
         SoftControlFamily.BRANCH,
@@ -359,6 +375,16 @@ def _alpha_reason_tag(alpha_t: float) -> str:
     if alpha_t == 0.65:
         return "alpha:0.65"
     return f"alpha:{alpha_t:.2f}"
+
+
+def _has_seek_context_pressure(
+    host_friction_tags: frozenset[str],
+    *,
+    brake_state: BrakeState,
+) -> bool:
+    if brake_state is BrakeState.LATCHED:
+        return False
+    return any(tag in _SEEK_CONTEXT_PRESSURE_TAGS for tag in host_friction_tags)
 
 
 __all__ = [

@@ -25,6 +25,14 @@ from .state import (
 )
 from .uncertainty import UncertaintyEstimate
 
+_SEEK_CONTEXT_PRESSURE_TAGS = frozenset(
+    {
+        "missing-capability",
+        "capability-view-missing",
+        "execution-trace-missing",
+    }
+)
+
 
 class PriorReferenceRuntimeSessionLike(Protocol):
     branch_registry: tuple[str, ...]
@@ -91,6 +99,7 @@ def build_reference_executive_state(
         missing_resume_anchor=missing_resume_anchor,
         host_friction_level=_host_friction_level(support_snapshot, executive_environment_view),
     )
+    host_friction_tags = _host_friction_tags(support_snapshot, executive_environment_view)
 
     goal_continuity = GoalContinuityView(
         main_goal_ref=main_goal_ref,
@@ -104,7 +113,11 @@ def build_reference_executive_state(
     )
     mode_and_gating = ReferenceModeAndGatingView(
         mode_tag=_mode_tag_for_event(observation.event.native_event_name, brake_evaluation.state),
-        family_mask=_family_mask_for_state(branch_registry, brake_evaluation.state),
+        family_mask=_family_mask_for_state(
+            branch_registry,
+            brake_evaluation.state,
+            host_friction_tags,
+        ),
     )
     control_allocation = ReferenceControlAllocationView(
         budget_band=_budget_band_for_state(observation.event.native_event_name, prior_session),
@@ -112,8 +125,9 @@ def build_reference_executive_state(
             native_event_name=observation.event.native_event_name,
             branch_registry=branch_registry,
             brake_state=brake_evaluation.state,
+            host_friction_tags=host_friction_tags,
         ),
-        host_friction_tags=_host_friction_tags(support_snapshot, executive_environment_view),
+        host_friction_tags=host_friction_tags,
         feedback_pressure_tags=_feedback_pressure_tags(prior_feedback_window_summary),
     )
     brake_view = ReferenceBrakeView(
@@ -287,6 +301,7 @@ def _mode_tag_for_event(native_event_name: str, brake_state: BrakeState) -> str:
 def _family_mask_for_state(
     branch_registry: tuple[str, ...],
     brake_state: BrakeState,
+    host_friction_tags: frozenset[str],
 ) -> frozenset[SoftControlFamily]:
     families = {
         SoftControlFamily.NEUTRAL,
@@ -296,6 +311,8 @@ def _family_mask_for_state(
         families.add(SoftControlFamily.BRANCH)
     if brake_state is not BrakeState.QUIESCENT:
         families.add(SoftControlFamily.BRAKE)
+    if _has_seek_context_pressure(host_friction_tags, brake_state=brake_state):
+        families.add(SoftControlFamily.SEEK_CONTEXT)
     return frozenset(families)
 
 
@@ -317,6 +334,7 @@ def _top_family_set(
     native_event_name: str,
     branch_registry: tuple[str, ...],
     brake_state: BrakeState,
+    host_friction_tags: frozenset[str],
 ) -> frozenset[SoftControlFamily]:
     families = {SoftControlFamily.NEUTRAL}
     if native_event_name == "approval/request":
@@ -325,6 +343,8 @@ def _top_family_set(
         families.add(SoftControlFamily.BRANCH)
     if brake_state is not BrakeState.QUIESCENT:
         families.add(SoftControlFamily.BRAKE)
+    if _has_seek_context_pressure(host_friction_tags, brake_state=brake_state):
+        families.add(SoftControlFamily.SEEK_CONTEXT)
     return frozenset(families)
 
 
@@ -340,6 +360,16 @@ def _host_friction_tags(
     if EXECUTION_TRACE not in executive_environment_view.available_query_kinds:
         tags.add("execution-trace-missing")
     return frozenset(tags)
+
+
+def _has_seek_context_pressure(
+    host_friction_tags: frozenset[str],
+    *,
+    brake_state: BrakeState,
+) -> bool:
+    if brake_state is BrakeState.LATCHED:
+        return False
+    return any(tag in _SEEK_CONTEXT_PRESSURE_TAGS for tag in host_friction_tags)
 
 
 def _feedback_pressure_tags(

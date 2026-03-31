@@ -3,6 +3,7 @@
 import pytest
 
 import cortex.runtime.reference as reference_runtime
+from cortex.core.environment import EXECUTION_TRACE, ExecutiveEnvironmentView
 from cortex.core.dispatch import DispatchLane
 from cortex.runtime.reference import (
     ReferenceRuntimeSession,
@@ -101,6 +102,58 @@ def test_reference_runtime_step_result_surfaces_cheap_reference_event_without_co
     }
     assert result.session.feedback_window.entries == (result.session.last_realization_feedback,)
     assert result.session_summary["feedback_window_size"] == 1
+
+
+def test_reference_runtime_step_selects_seek_context_when_capability_view_is_missing(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(
+        reference_runtime,
+        "_build_executive_environment_view",
+        lambda normalized_payload: ExecutiveEnvironmentView(
+            available_query_kinds=frozenset({EXECUTION_TRACE}),
+            host_capability_tags=frozenset({"reference-host", "local-cli-runtime"}),
+        ),
+    )
+
+    result = run_reference_runtime_step(
+        "ContextLoad",
+        {"session_id": "session-missing-capability-view"},
+    )
+
+    assert result.selected_family is SoftControlFamily.SEEK_CONTEXT
+    assert result.realized_family is SoftControlFamily.SEEK_CONTEXT
+    assert "capability-view-missing" in result.executive_state_summary["host_friction_tags"]
+    assert result.brake_state is BrakeState.GUARDED
+    assert result.executive_state_summary["family_mask"] == [
+        "brake",
+        "check",
+        "neutral",
+        "seek-context",
+    ]
+    assert result.executive_state_summary["top_family_set"] == [
+        "brake",
+        "neutral",
+        "seek-context",
+    ]
+    assert result.control_ledger_summary["admissible_families"] == [
+        "neutral",
+        "seek-context",
+        "check",
+        "brake",
+    ]
+    assert result.control_ledger_summary["selected_family"] == "seek-context"
+    assert result.control_ledger_summary["realized_family"] == "seek-context"
+    _assert_allocation_diagnostics_shape(
+        result.control_ledger_summary["allocation_diagnostics"],
+        activation_threshold=0.45,
+        expected_alpha=0.75,
+        expect_allocated_equals_online=False,
+    )
+    assert (
+        result.control_ledger_summary["allocation_diagnostics"]["selected_delta_over_neutral"]
+        > result.control_ledger_summary["allocation_diagnostics"]["activation_threshold"]
+    )
 
 
 def test_reference_runtime_step_result_keeps_candidate_bearing_event_candidate_only() -> None:
@@ -682,7 +735,7 @@ def _assert_allocation_diagnostics_shape(
         "scores",
     )
     assert payload["alpha_t"] == pytest.approx(expected_alpha)
-    assert payload["activation_threshold"] == activation_threshold
+    assert payload["activation_threshold"] == pytest.approx(activation_threshold)
     assert isinstance(payload["selected_delta_over_neutral"], float)
     scores = payload["scores"]
     assert isinstance(scores, list)

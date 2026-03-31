@@ -90,6 +90,8 @@ EXPECTATIONS = (
                 test_file="tests/unit/test_reference_executive_builder.py",
                 test_names=(
                     "test_build_reference_executive_state_for_cheap_event_stays_pass_through_and_low_budget",
+                    "test_build_reference_executive_state_admits_seek_context_under_missing_capability_pressure",
+                    "test_build_reference_executive_state_keeps_seek_context_closed_under_generic_host_friction",
                     "test_build_reference_executive_state_for_candidate_bearing_event_surfaces_review_mode",
                     "test_build_reference_executive_state_for_full_commitment_event_preserves_high_budget_band",
                     "test_build_reference_executive_state_surfaces_guarded_brake_when_snapshot_has_degradation",
@@ -147,6 +149,8 @@ EXPECTATIONS = (
                 test_file="tests/unit/test_reference_runtime_scoring.py",
                 test_names=(
                     "test_reference_scoring_defaults_to_neutral_when_margin_is_below_threshold",
+                    "test_reference_scoring_selects_seek_context_under_missing_capability_pressure_when_admitted",
+                    "test_reference_scoring_keeps_seek_context_neutral_dominated_under_generic_host_friction_even_if_admitted",
                     "test_reference_scoring_keeps_masked_family_inadmissible_even_when_top_ranked",
                     "test_reference_scoring_exposes_explicit_online_allocation_diagnostics",
                 ),
@@ -177,6 +181,7 @@ EXPECTATIONS = (
                 test_file="tests/unit/test_reference_runtime_scoring.py",
                 test_names=(
                     "test_reference_scoring_defaults_to_neutral_when_margin_is_below_threshold",
+                    "test_reference_scoring_selects_seek_context_under_missing_capability_pressure_when_admitted",
                     "test_reference_scoring_tightens_to_neutral_when_guarded_pressure_is_present",
                     "test_reference_scoring_promotes_branch_under_branch_pressure",
                     "test_reference_scoring_keeps_masked_family_inadmissible_even_when_top_ranked",
@@ -193,6 +198,7 @@ EXPECTATIONS = (
                 test_file="tests/unit/test_reference_runtime_scoring.py",
                 test_names=(
                     "test_reference_scoring_defaults_to_neutral_when_margin_is_below_threshold",
+                    "test_reference_scoring_selects_seek_context_under_missing_capability_pressure_when_admitted",
                     "test_reference_scoring_tightens_to_neutral_when_guarded_pressure_is_present",
                     "test_reference_scoring_promotes_branch_under_branch_pressure",
                     "test_reference_scoring_keeps_masked_family_inadmissible_even_when_top_ranked",

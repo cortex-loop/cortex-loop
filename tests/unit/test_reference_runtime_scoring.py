@@ -43,6 +43,101 @@ def test_reference_scoring_defaults_to_neutral_when_margin_is_below_threshold() 
     assert selection.neutral_dominance.neutral_selected is True
 
 
+def test_reference_scoring_selects_seek_context_under_missing_capability_pressure_when_admitted() -> None:
+    state = _state(
+        mode_tag="guarded_review",
+        family_mask=frozenset(
+            {
+                SoftControlFamily.NEUTRAL,
+                SoftControlFamily.CHECK,
+                SoftControlFamily.BRAKE,
+                SoftControlFamily.SEEK_CONTEXT,
+            }
+        ),
+        budget_band="low",
+        top_family_set=frozenset(
+            {
+                SoftControlFamily.NEUTRAL,
+                SoftControlFamily.BRAKE,
+                SoftControlFamily.SEEK_CONTEXT,
+            }
+        ),
+        brake_state=BrakeState.GUARDED,
+        host_friction_tags=frozenset(
+            {
+                "missing-capability",
+                "capability-view-missing",
+            }
+        ),
+    )
+
+    scorecard = build_reference_allocation_scorecard(state)
+    selection = select_reference_soft_control(state)
+    neutral_score = next(
+        score for score in scorecard.scores if score.family is SoftControlFamily.NEUTRAL
+    )
+    brake_score = next(
+        score for score in scorecard.scores if score.family is SoftControlFamily.BRAKE
+    )
+    seek_context_score = next(
+        score
+        for score in scorecard.scores
+        if score.family is SoftControlFamily.SEEK_CONTEXT
+    )
+
+    assert seek_context_score.admissible is True
+    assert seek_context_score.allocated_score > neutral_score.allocated_score
+    assert seek_context_score.allocated_score > brake_score.allocated_score
+    assert selection.neutral_dominance.margin_over_neutral == pytest.approx(
+        seek_context_score.allocated_score - neutral_score.allocated_score
+    )
+    assert "seek-context-pressure" in seek_context_score.reason_tags
+    assert (
+        selection.neutral_dominance.margin_over_neutral
+        > selection.neutral_dominance.activation_threshold
+    )
+    assert selection.neutral_dominance.activation_threshold == pytest.approx(0.45)
+    assert selection.selected_family is SoftControlFamily.SEEK_CONTEXT
+    assert selection.neutral_dominance.neutral_selected is False
+
+
+def test_reference_scoring_keeps_seek_context_neutral_dominated_under_generic_host_friction_even_if_admitted() -> None:
+    state = _state(
+        mode_tag="guarded_review",
+        family_mask=frozenset(
+            {
+                SoftControlFamily.NEUTRAL,
+                SoftControlFamily.CHECK,
+                SoftControlFamily.BRAKE,
+                SoftControlFamily.SEEK_CONTEXT,
+            }
+        ),
+        budget_band="low",
+        top_family_set=frozenset(
+            {
+                SoftControlFamily.NEUTRAL,
+                SoftControlFamily.BRAKE,
+                SoftControlFamily.SEEK_CONTEXT,
+            }
+        ),
+        brake_state=BrakeState.GUARDED,
+        host_friction_tags=frozenset({"single-process-limit"}),
+    )
+
+    scorecard = build_reference_allocation_scorecard(state)
+    selection = select_reference_soft_control(state)
+    seek_context_score = next(
+        score
+        for score in scorecard.scores
+        if score.family is SoftControlFamily.SEEK_CONTEXT
+    )
+
+    assert seek_context_score.admissible is True
+    assert "seek-context-pressure" not in seek_context_score.reason_tags
+    assert selection.selected_family is SoftControlFamily.NEUTRAL
+    assert selection.neutral_dominance.neutral_selected is True
+
+
 def test_reference_scoring_tightens_to_neutral_when_guarded_pressure_is_present() -> None:
     selection = select_reference_soft_control(
         _state(
