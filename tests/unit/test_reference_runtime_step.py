@@ -3,6 +3,7 @@
 import pytest
 
 import cortex.runtime.reference as reference_runtime
+from cortex.core.environment import EXECUTION_TRACE, ExecutiveEnvironmentView
 from cortex.core.dispatch import DispatchLane
 from cortex.runtime.reference import (
     ReferenceRuntimeSession,
@@ -101,6 +102,37 @@ def test_reference_runtime_step_result_surfaces_cheap_reference_event_without_co
     }
     assert result.session.feedback_window.entries == (result.session.last_realization_feedback,)
     assert result.session_summary["feedback_window_size"] == 1
+
+
+def test_reference_runtime_step_keeps_seek_context_unreachable_when_capability_view_is_missing(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(
+        reference_runtime,
+        "_build_executive_environment_view",
+        lambda normalized_payload: ExecutiveEnvironmentView(
+            available_query_kinds=frozenset({EXECUTION_TRACE}),
+            host_capability_tags=frozenset({"reference-host", "local-cli-runtime"}),
+        ),
+    )
+
+    result = run_reference_runtime_step(
+        "ContextLoad",
+        {"session_id": "session-missing-capability-view"},
+    )
+
+    assert result.selected_family is SoftControlFamily.NEUTRAL
+    assert "capability-view-missing" in result.executive_state_summary["host_friction_tags"]
+    assert result.brake_state is BrakeState.GUARDED
+    assert result.executive_state_summary["family_mask"] == ["brake", "check", "neutral"]
+    assert result.executive_state_summary["top_family_set"] == ["brake", "neutral"]
+    assert "seek-context" not in result.executive_state_summary["family_mask"]
+    assert "seek-context" not in result.executive_state_summary["top_family_set"]
+    assert result.control_ledger_summary["admissible_families"] == [
+        "neutral",
+        "check",
+        "brake",
+    ]
 
 
 def test_reference_runtime_step_result_keeps_candidate_bearing_event_candidate_only() -> None:

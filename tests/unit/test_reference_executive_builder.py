@@ -55,6 +55,56 @@ def test_build_reference_executive_state_for_cheap_event_stays_pass_through_and_
     assert state.brake.brake_state is BrakeState.QUIESCENT
 
 
+def test_build_reference_executive_state_keeps_seek_context_unreachable_under_missing_capability_pressure() -> None:
+    state = build_reference_executive_state(
+        observe_reference_host_event(
+            "ContextLoad",
+            {"session_id": "runtime-j4b-gap"},
+        ).observation,
+        SupportSnapshot(
+            trace=SupportTraceState(),
+            session=SupportSessionState(branch_registry=("main",)),
+            host=SupportHostState(constraint_tags=frozenset({"missing-capability"})),
+            exec_memory_pub=SupportExecMemoryState(),
+        ),
+        ExecutiveEnvironmentView(
+            available_query_kinds=frozenset({EXECUTION_TRACE}),
+            host_capability_tags=frozenset({"reference-local"}),
+        ),
+        ReferenceRuntimeSession(
+            session_id="runtime-j4b-gap",
+            event_index=1,
+            active_track_ref="main",
+            budget_history=("shell-low",),
+            brake_history=("quiescent",),
+            last_selected_family=SoftControlFamily.NEUTRAL,
+        ),
+    )
+
+    assert state.control_allocation.host_friction_tags == frozenset(
+        {
+            "missing-capability",
+            "capability-view-missing",
+        }
+    )
+    assert state.mode_and_gating.family_mask == frozenset(
+        {
+            SoftControlFamily.NEUTRAL,
+            SoftControlFamily.CHECK,
+            SoftControlFamily.BRAKE,
+        }
+    )
+    assert state.control_allocation.top_family_set == frozenset(
+        {
+            SoftControlFamily.NEUTRAL,
+            SoftControlFamily.BRAKE,
+        }
+    )
+    assert state.brake.brake_state is BrakeState.GUARDED
+    assert SoftControlFamily.SEEK_CONTEXT not in state.mode_and_gating.family_mask
+    assert SoftControlFamily.SEEK_CONTEXT not in state.control_allocation.top_family_set
+
+
 def test_build_reference_executive_state_for_candidate_bearing_event_surfaces_review_mode() -> None:
     state = build_reference_executive_state(
         observe_reference_host_event(

@@ -99,10 +99,10 @@ It is workflow state only. It does not override the packet documents, implementa
 ## 2. Current campaign and seam state
 
 - Current campaign: `J4 first bounded experimental host-realization mediation train active`
-- Current working branch at ledger update: `main`
-- Current branch role: resting branch after the accepted J4A mediation program lock
-- Current candidate seam: `J4B` bounded reference-lane `seek-context` admissibility decision seam; `J4C` remains the reserved off-by-default host-realization finalizer seam if `J4B` is unnecessary or lands cleanly; `J3` is accepted baseline truth on `main`, `Q1` remains accepted ancestor truth, and `N2` remains blocked on a capable machine
-- Current seam status: `J4A` is now locked on the canonical line. The first mediation train is pinned as a reference-host host-realization seam because it is the smallest defensible implementation target after `J3`: it preserves commitment truth, packet publication meaning, branch law, and uncertainty law while targeting only direct host-native opportunity specialization. No runtime code or correspondence row has landed yet. The next load-bearing decision is explicit: open `J4B` only if the reference lane really needs one bounded `seek-context` admissibility hook for a real runtime path; otherwise skip directly to `J4C`, the off-by-default mediation finalizer seam that can nominate a clearly superior native opportunity without widening into generic family reweighting.`
+- Current working branch at ledger update: `review/j4a-closure-cleanup`
+- Current branch role: explicit review branch carrying the accepted J4A cleanup plus tests-first J4B inspection truth ahead of local `main`
+- Current candidate seam: `J4B` bounded reference-lane `seek-context` reachability seam; `J4C` remains the reserved off-by-default host-realization finalizer seam after `J4B` closes honestly; `J3` is accepted baseline truth on `main`, `Q1` remains accepted ancestor truth, and `N2` remains blocked on a capable machine
+- Current seam status: `J4A` is now locked on the canonical line. The first mediation train is pinned as a reference-host host-realization seam because it is the smallest defensible implementation target after `J3`: it preserves commitment truth, packet publication meaning, branch law, and uncertainty law while targeting only direct host-native opportunity specialization. A tests-first inspection on the current review line now makes the next gap explicit: the real reference runtime lane does not reach `seek-context`, and builder-only simulated admission still leaves `neutral` selected under the current activation-threshold law. No runtime code or correspondence row has landed yet. `J4B` therefore cannot honestly be skipped on current code: it should start as the smallest runtime reachability seam at `X_t^{ref}`, widening to `Q_t^{online}(a)` / `Q_t^{alloc}(a)` only if builder-side admission alone still fails. `J4C` remains closed until generic `seek-context` is truly reachable on the reference runtime lane.`
 - the compare surface and live-validation truth from earlier seams remain accepted ancestor input and are not being reopened by this J4 mediation train.
 - Seam risk: deterministic code/doc seam
 
@@ -159,10 +159,11 @@ It is workflow state only. It does not override the packet documents, implementa
   - the first mediation train remains unimplemented and experimental / off-by-default on the current line
   - Gemini should remain explicit as a partial/contaminated live rerun host rather than being hidden behind pooled mediation summaries
 - Next lawful move:
-  - decide from clean synced `main` whether the reference lane already reaches `seek-context` lawfully
-  - if it does not, land `J4B` as the bounded reference-lane admissibility seam and update only the exact `X_t^{ref}` correspondence row it changes
-  - if it does, skip `J4B` and open `J4C` directly as the off-by-default mediation finalizer seam
-  - update the exact planned correspondence rows for the opened stage in the same slice: `X_t^{ref}` for `J4B`, or `Q_t^{final}(a)` plus `U_t^{sre}` with explicit `Adm_r^{pre}` confirmation for `J4C`
+  - land `J4B` from clean synced `main` as the smallest real runtime reachability seam for `seek-context`
+  - start with explicit `seek-context` admission in `X_t^{ref}` only under missing-context / missing-capability pressure that is already runtime-visible on the reference lane
+  - if builder-side admission alone still leaves `neutral` selected, widen in the same seam only to the `Q_t^{online}(a)` / `Q_t^{alloc}(a)` realization row
+  - keep `Q_t^{final}(a)` closed in `J4B`; `J4C` opens only after generic `seek-context` becomes truly reachable on the reference runtime lane
+  - update the exact planned correspondence rows for the smallest implementation that actually changes runtime behavior: `X_t^{ref}` first, then `Q_t^{online}(a)` / `Q_t^{alloc}(a)` only if required, with explicit confirmation that `U_t^{sre}` remains pre-finalization selection and `Adm_r^{pre}` remains unchanged in `J4B`
   - optional `scenario_uncertainty_claude_01` remains deferred unless the J3 review still says the uncertainty gap blocks the next decision
   - keep `N2` as a separate blocked train pending a capable machine rather than reopening service proof on this host
 
@@ -197,6 +198,7 @@ It is workflow state only. It does not override the packet documents, implementa
 - Do not widen `J4` into branch/thrash mediation, uncertainty/brake mediation, or pooled cross-host mediation before the reference host-realization slice is either landed or rejected.
 - Do not let `J4` generic-reweight every family or collapse into a hub-style mediation score; the first train must stay sparse and host-realization-specific.
 - Do not let `J4` alter observe/bind meaning, packet publication meaning, or commitment truth to make mediation look better.
+- Do not pretend a builder-only `seek-context` mask widening is sufficient if the runtime lane still selects `neutral` under the accepted threshold law.
 - Do not start a new managed session from local `main` while it is ahead or diverged from `origin/main`.
 - Do not reintroduce extra long-lived local worktrees or non-main branch residue without an explicit new seam.
 - Do not leave remote `review/*` heads behind after future publication cleanup.

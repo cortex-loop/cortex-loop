@@ -78,7 +78,7 @@ This program remains:
 
 This program adds only:
 
-- one bounded `seek-context` admissibility hook on explicit missing-context / missing-capability pressure if the current reference lane otherwise cannot lawfully reach the host-realization target,
+- one bounded `seek-context` reachability adjustment on explicit missing-context / missing-capability pressure, starting with admissibility and widening only to the smallest pre-finalization scoring delta if admission alone still leaves `neutral` selected,
 - one bounded experimental `Finalize^{exp}` step at the host-opportunity selection layer,
 - one explicit mediation config/flag that defaults to identity / disabled,
 - and one nested runtime diagnostic surface for mediation-active versus identity behavior.
@@ -102,16 +102,18 @@ This program keeps fixed:
 Current-scope mediation law for this train is the narrowest lawful discrete equivalent of `Q_t^{base} -> Q_t^{final}`:
 
 1. keep the current family-level allocation and neutral-dominance law intact by default;
-2. if no lawful reference path can currently reach `seek-context`, admit `seek-context` only on explicit missing-context / missing-capability pressure in the reference lane;
-3. if the experimental mediation flag is disabled, `Finalize^{exp}` remains identity;
-4. if the flag is enabled and the already-selected family is `seek-context`, allow one bounded host-realization finalization step over the existing host-opportunity set;
-5. direct specialization is lawful only when a realizable `HostNativeOpportunity` for `seek-context` is marked `clearly_superior`;
-6. if the preferred opportunity is unrealizable, keep family truth explicit and surface degradation/fallback through the existing opportunity-specialization law;
-7. do not generic-reweight `branch`, `check`, `brake`, or `neutral` as part of this first train.
+2. if no lawful reference path can currently reach `seek-context`, first admit `seek-context` only on explicit missing-context / missing-capability pressure in the reference lane;
+3. if builder-side admission alone still leaves `neutral` selected, allow only the smallest pre-finalization scoring delta needed to make the same explicit-pressure runtime path reachable;
+4. if the experimental mediation flag is disabled, `Finalize^{exp}` remains identity;
+5. if the flag is enabled and the already-selected family is `seek-context`, allow one bounded host-realization finalization step over the existing host-opportunity set;
+6. direct specialization is lawful only when a realizable `HostNativeOpportunity` for `seek-context` is marked `clearly_superior`;
+7. if the preferred opportunity is unrealizable, keep family truth explicit and surface degradation/fallback through the existing opportunity-specialization law;
+8. do not generic-reweight `branch`, `check`, `brake`, or `neutral` as part of this first train.
 
 This means the first train may change:
 
 - whether `seek-context` becomes admissible on the reference lane under explicit missing-context pressure,
+- whether the same explicit-pressure runtime path also requires a minimal pre-finalization scoring delta to overcome neutral dominance,
 - whether `seek-context` remains a generic family choice or becomes a direct `mcp.query` nomination,
 - and whether that experimental direct specialization is recorded explicitly in runtime diagnostics.
 
@@ -154,13 +156,22 @@ They are not packet truth, continuation truth, or publication truth.
 Purpose:
 
 - determine whether the current reference lane already reaches `seek-context` lawfully,
-- and add one bounded `seek-context` admissibility hook only if that hook is required for a real runtime path under explicit missing-context / missing-capability pressure.
+- and add the smallest bounded pre-finalization reachability adjustment required for a real runtime path under explicit missing-context / missing-capability pressure, starting with admissibility and widening to scoring only if admission alone still fails.
 
-Planned Correspondence impact for `J4B` if opened:
+Current inspection result on the current line:
 
-- update the `X_t^{ref}` / `build_reference_executive_state()` row only if the reference lane truly needs one bounded `seek-context` admissibility trigger under explicit missing-context pressure.
+- the real reference runtime lane does not currently reach `seek-context` lawfully: `build_reference_executive_state()` keeps `seek-context` out of both the family mask and the top-family set on the current runtime path,
+- the current host-realization comparator evidence still bypasses runtime selection by directly specializing a prechosen `seek-context` family rather than earning it through the runtime lane,
+- and builder-only simulated admission under explicit `capability-view-missing` pressure still leaves `neutral` selected under the current activation-threshold law.
 
-If the current reference lane already reaches `seek-context` lawfully, skip `J4B` rather than manufacturing a hook just to preserve stage symmetry.
+Planned Correspondence impact for `J4B`:
+
+- update the `X_t^{ref}` / `build_reference_executive_state()` row so explicit missing-context / missing-capability pressure can lawfully admit `seek-context`,
+- update the `Q_t^{online}(a)` / `Q_t^{alloc}(a)` realization row only if builder-side admission alone still leaves `neutral` selected on the runtime lane,
+- confirm the existing `U_t^{sre}` / `select_reference_soft_control()` row remains the pre-finalization selection owner in `J4B`,
+- and confirm the existing `Adm_r^{pre}` / `specialize_host_native_opportunity()` row remains unchanged in `J4B`.
+
+Do not open `Q_t^{final}` inside `J4B` just to compensate for a pre-selection reachability gap.
 
 `J4C` is `load-bearing`.
 
@@ -183,7 +194,7 @@ If the implementation cannot name the exact correspondence rows for the opened s
 This train is split into six bounded stages:
 
 1. `J4A` program lock, workstream sync, and acceptance-law pin
-2. `J4B` bounded reference-lane `seek-context` admissibility decision seam, with a hook only if required for a real runtime path
+2. `J4B` bounded reference-lane `seek-context` reachability seam, starting with admissibility and widening only if required for a real runtime path
 3. `J4C` experimental mediation-finalizer carrier and nested diagnostics
 4. `J4D` reference runtime projection and deterministic re-audit
 5. `J4E` optional proven-lane OpenAI projection only if `J4D` lands cleanly and the PHI loop still passes
@@ -202,8 +213,6 @@ Minimum deterministic proof for each opened load-bearing stage:
 - `python3 -m pytest tests/unit/test_correspondence_sre.py -q`
 - `python3 -m pytest tests/unit/test_verification_docs_sync.py -q`
 
-If `J4B` is skipped because no admissibility hook is needed, the same deterministic bundle still applies to `J4C`.
-
 If a new deterministic runtime-side packet/example surface is introduced for this train, it must also gain a committed doc/example test pair in the same slice.
 
 ## Acceptance gates
@@ -212,7 +221,7 @@ The first mediation train is only honestly landed when all are true:
 
 - mediation remains disabled / identity by default,
 - reference acceptance truth stays reference-only unless a later stage explicitly widens it,
-- `seek-context` becomes reachable only under explicit missing-context / missing-capability pressure if an admissibility hook is needed at all,
+- `seek-context` becomes reachable only under explicit missing-context / missing-capability pressure, using the smallest pre-finalization reachability adjustment the runtime lane actually requires,
 - direct host-native opportunity specialization becomes live only when `mcp.query` is clearly superior,
 - selected-family truth remains explicit before and after finalization,
 - commitment truth and packet publication meaning remain unchanged,
@@ -241,5 +250,6 @@ On the current line after this program lock:
 
 - the first mediation train is pinned as a reference-host host-realization slice,
 - the active next move is no longer generic “mediation planning pending,”
-- the next load-bearing decision is now explicit: open `J4B` only if the reference lane really needs a bounded `seek-context` admissibility hook; otherwise open `J4C` directly,
+- the current inspection result now says `J4B` cannot honestly be skipped on the current line: the real reference runtime lane does not yet reach `seek-context`, and builder-only simulated admission still leaves `neutral` selected under the current threshold law,
+- the smallest next move is therefore `J4B` as a runtime reachability seam, starting at `X_t^{ref}` and widening to `Q_t^{online}(a)` / `Q_t^{alloc}(a)` only if builder-side admission alone still fails,
 - and no runtime code or correspondence row has landed yet.
