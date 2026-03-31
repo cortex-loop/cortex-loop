@@ -149,23 +149,41 @@ They are not packet truth, continuation truth, or publication truth.
 
 ## Planned load-bearing seam classification
 
-The first code seam in this train, `J4B`, is `load-bearing`.
+`J4B` is `load-bearing` if it is opened.
 
-Planned Correspondence impact:
+Purpose:
 
-- update the `X_t^{ref}` / `build_reference_executive_state()` row if the reference lane needs one bounded `seek-context` admissibility trigger under explicit missing-context pressure,
+- determine whether the current reference lane already reaches `seek-context` lawfully,
+- and add one bounded `seek-context` admissibility hook only if that hook is required for a real runtime path under explicit missing-context / missing-capability pressure.
+
+Planned Correspondence impact for `J4B` if opened:
+
+- update the `X_t^{ref}` / `build_reference_executive_state()` row only if the reference lane truly needs one bounded `seek-context` admissibility trigger under explicit missing-context pressure.
+
+If the current reference lane already reaches `seek-context` lawfully, skip `J4B` rather than manufacturing a hook just to preserve stage symmetry.
+
+`J4C` is `load-bearing`.
+
+Purpose:
+
+- land the off-by-default experimental mediation finalizer,
+- keep selected-family truth explicit before and after finalization,
+- and surface only nested runtime-local mediation diagnostics.
+
+Planned Correspondence impact for `J4C`:
+
 - add one new `Q_t^{final}(a)` experimental mediation-finalizer row with its exact code home and test surface,
 - update the `U_t^{sre}` / `select_reference_soft_control()` row so it explicitly includes the off-by-default mediation finalizer path,
 - confirm the existing `Adm_r^{pre}` / `specialize_host_native_opportunity()` row remains the owner of direct opportunity nomination rather than channel realization.
 
-If the implementation cannot name those exact correspondence rows before code lands, the seam is not ready.
+If the implementation cannot name the exact correspondence rows for the opened stage before code lands, that stage is not ready.
 
 ## Program order
 
 This train is split into six bounded stages:
 
 1. `J4A` program lock, workstream sync, and acceptance-law pin
-2. `J4B` bounded reference-lane `seek-context` admissibility hook, only if required for a real runtime path
+2. `J4B` bounded reference-lane `seek-context` admissibility decision seam, with a hook only if required for a real runtime path
 3. `J4C` experimental mediation-finalizer carrier and nested diagnostics
 4. `J4D` reference runtime projection and deterministic re-audit
 5. `J4E` optional proven-lane OpenAI projection only if `J4D` lands cleanly and the PHI loop still passes
@@ -175,7 +193,7 @@ Every load-bearing stage must end on a clean tree before the next opens.
 
 ## Test and rerun contract
 
-Minimum deterministic proof for the first load-bearing stage:
+Minimum deterministic proof for each opened load-bearing stage:
 
 - `python3 -m pytest tests/unit/test_sre_opportunities.py -q`
 - `python3 -m pytest tests/unit/test_reference_executive_builder.py -q`
@@ -183,6 +201,8 @@ Minimum deterministic proof for the first load-bearing stage:
 - `python3 -m pytest tests/unit/test_reference_runtime_step.py -q`
 - `python3 -m pytest tests/unit/test_correspondence_sre.py -q`
 - `python3 -m pytest tests/unit/test_verification_docs_sync.py -q`
+
+If `J4B` is skipped because no admissibility hook is needed, the same deterministic bundle still applies to `J4C`.
 
 If a new deterministic runtime-side packet/example surface is introduced for this train, it must also gain a committed doc/example test pair in the same slice.
 
@@ -198,7 +218,7 @@ The first mediation train is only honestly landed when all are true:
 - commitment truth and packet publication meaning remain unchanged,
 - the train does not generic-reweight all families or collapse into a hub score,
 - no new top-level runtime shell or top-level `control_ledger` shape is introduced,
-- the planned correspondence rows are updated exactly,
+- the correspondence rows for the opened stage are updated exactly,
 - and the targeted deterministic bundle passes twice.
 
 ## Explicitly blocked moves
@@ -221,5 +241,5 @@ On the current line after this program lock:
 
 - the first mediation train is pinned as a reference-host host-realization slice,
 - the active next move is no longer generic “mediation planning pending,”
-- the first load-bearing move is now explicit: `J4B` reference-lane host-realization mediation,
+- the next load-bearing decision is now explicit: open `J4B` only if the reference lane really needs a bounded `seek-context` admissibility hook; otherwise open `J4C` directly,
 - and no runtime code or correspondence row has landed yet.

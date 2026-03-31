@@ -391,11 +391,13 @@ def test_resume_protocol_and_active_workstream_contract_exist() -> None:
     assert "Current campaign: `J4 first bounded experimental host-realization mediation train active`" in workstream_text
     assert "Current working branch at ledger update: `main`" in workstream_text
     assert "Current branch role: resting branch after the accepted J4A mediation program lock" in workstream_text
-    assert "Current candidate seam: `J4B` reference-host host-realization mediation;" in workstream_text
+    assert "Current candidate seam: `J4B` bounded reference-lane `seek-context` admissibility decision seam;" in workstream_text
+    assert "`J4C` remains the reserved off-by-default host-realization finalizer seam" in workstream_text
     assert "mediation is now justified for one bounded experimental seam, but implementation remains unopened on the accepted line" in workstream_text
     assert "The first mediation train is pinned as a reference-host host-realization seam" in workstream_text
     assert "No runtime code or correspondence row has landed yet." in workstream_text
-    assert "The first load-bearing move is `J4B`" in workstream_text
+    assert "The next load-bearing decision is explicit" in workstream_text
+    assert "otherwise skip directly to `J4C`" in workstream_text
     assert "`J2` is now landed on the canonical line:" in workstream_text
     assert "dedicated branch-discipline families now exist on `reference`, `openai`, and `claude`" in workstream_text
     assert "dedicated non-thrash burden families now exist on `reference`, `openai`, and `claude`" in workstream_text
@@ -403,7 +405,7 @@ def test_resume_protocol_and_active_workstream_contract_exist() -> None:
     assert "mediation is now justified for one bounded experimental seam" in workstream_text
     assert "`M2` is now landed on the canonical line:" in workstream_text
     assert "`J1` is now landed on the canonical line:" in workstream_text
-    assert "the compare surface and live-validation truth from earlier seams remain accepted ancestor input and are not being reopened by the landed K train." in workstream_text
+    assert "the compare surface and live-validation truth from earlier seams remain accepted ancestor input and are not being reopened by this J4 mediation train." in workstream_text
     assert "the current signed-in smoke surfaces are now clean again" in workstream_text
     assert "`codex exec` for smoke" in workstream_text
     assert "`codex app-server` for lifecycle proof" in workstream_text
@@ -434,8 +436,11 @@ def test_resume_protocol_and_active_workstream_contract_exist() -> None:
     assert "mediation remains unimplemented, experimental / off-by-default, and constrained to a future SRE-only seam" in workstream_text
     assert "Gemini should remain explicit as a partial/contaminated live rerun host rather than being hidden behind pooled mediation summaries" in workstream_text
     assert "do not reopen the K train by inertia now that the bounded proven-lane executive/runtime line is landed" in workstream_text
-    assert "land `J4B` from clean synced `main` as the first load-bearing reference-host host-realization mediation seam" in workstream_text
-    assert "update the exact planned correspondence rows for `Q_t^{final}(a)`, `U_t^{sre}`, and any bounded `seek-context` admissibility change in the same slice" in workstream_text
+    assert "decide from clean synced `main` whether the reference lane already reaches `seek-context` lawfully" in workstream_text
+    assert "if it does not, land `J4B` as the bounded reference-lane admissibility seam" in workstream_text
+    assert "if it does, skip `J4B` and open `J4C` directly as the off-by-default mediation finalizer seam" in workstream_text
+    assert "update the exact planned correspondence rows for the opened stage in the same slice" in workstream_text
+    assert "`X_t^{ref}` for `J4B`, or `Q_t^{final}(a)` plus `U_t^{sre}` with explicit `Adm_r^{pre}` confirmation for `J4C`" in workstream_text
     assert "keep `N2` as a separate blocked train pending a capable machine" in workstream_text
     assert "Do not implement mediation in `J3`;" in workstream_text
     assert "Do not treat `J3` as license for broad rollout" in workstream_text
@@ -538,8 +543,12 @@ def test_reference_runtime_program_lock_is_recorded() -> None:
     assert "The first mediation implementation should be a **host-realization seam**" in mediation_host_realization_program_text
     assert "This program-lock seam is `non-load-bearing`." in mediation_host_realization_program_text
     assert "Correspondence impact: none expected." in mediation_host_realization_program_text
-    assert "The first code seam in this train, `J4B`, is `load-bearing`." in mediation_host_realization_program_text
+    assert "`J4B` is `load-bearing` if it is opened." in mediation_host_realization_program_text
+    assert "If the current reference lane already reaches `seek-context` lawfully, skip `J4B` rather than manufacturing a hook" in mediation_host_realization_program_text
+    assert "`J4C` is `load-bearing`." in mediation_host_realization_program_text
     assert "add one new `Q_t^{final}(a)` experimental mediation-finalizer row" in mediation_host_realization_program_text
+    assert "Minimum deterministic proof for each opened load-bearing stage:" in mediation_host_realization_program_text
+    assert "If `J4B` is skipped because no admissibility hook is needed, the same deterministic bundle still applies to `J4C`." in mediation_host_realization_program_text
     assert "Do not widen `J4` into branch/thrash mediation" in workstream_text
     assert "the first one-process live continuity slice plus explicit rejection enforcement are real" in program_text
     assert "the corrective zero-finding re-audit has passed for current scope" in program_text
@@ -973,7 +982,8 @@ def test_runtime_restack_program_lock_is_recorded() -> None:
     assert "the operator/evaluation harness must not call explicit Gemini model names at all" in theory_text
     assert "fresh auto-only product-path rerun is sharper still" in theory_text
     assert "first full round-2 stable-defaults rerun now says the package is still `mixed_direction`" in theory_text
-    assert "docs/CORTEX_V2_ACTIVE_WORKSTREAM.md` now records the bounded K train as landed, records `N2` as blocked pending a capable machine, and records `M2`, `J1`, `J2`, and `J3` as landed on `main`, with bounded experimental mediation-seam planning as the next lawful move." in theory_text
+    assert "docs/CORTEX_V2_ACTIVE_WORKSTREAM.md` now records the bounded K train as landed, records `N2` as blocked pending a capable machine, records `M2`, `J1`, `J2`, and `J3` as landed on `main`, and records `J4A` as the accepted mediation program lock" in theory_text
+    assert "open `J4B` only if the reference lane needs bounded `seek-context` admissibility, otherwise open `J4C` directly as the off-by-default mediation-finalizer seam." in theory_text
     assert "The clean synced `main` line now carries the provider-limit neutrality hardening, the OpenAI continuity transport fix, the Claude efficiency rerun, the first compact SRE modulator bundle, the landed M2 summary/memory/policy refinement, the landed J1 mediation evidence package baseline, and the landed J2 gap-closure evidence package." in theory_text
     assert "the landed J1 mediation evidence package baseline" in theory_text
     assert "mediation is now justified for one bounded experimental seam" in theory_text

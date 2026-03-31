@@ -101,9 +101,9 @@ It is workflow state only. It does not override the packet documents, implementa
 - Current campaign: `J4 first bounded experimental host-realization mediation train active`
 - Current working branch at ledger update: `main`
 - Current branch role: resting branch after the accepted J4A mediation program lock
-- Current candidate seam: `J4B` reference-host host-realization mediation; `J3` is accepted baseline truth on `main`, `Q1` remains accepted ancestor truth, and `N2` remains blocked on a capable machine
-- Current seam status: `J4A` is now locked on the canonical line. The first mediation train is pinned as a reference-host host-realization seam because it is the smallest defensible implementation target after `J3`: it preserves commitment truth, packet publication meaning, branch law, and uncertainty law while targeting only direct host-native opportunity specialization. No runtime code or correspondence row has landed yet. The first load-bearing move is `J4B`: add a bounded reference-lane `seek-context` admissibility hook only if needed for a real runtime path, then land an off-by-default mediation finalizer that can nominate a clearly superior native opportunity without widening into generic family reweighting.`
-- the compare surface and live-validation truth from earlier seams remain accepted ancestor input and are not being reopened by the landed K train.
+- Current candidate seam: `J4B` bounded reference-lane `seek-context` admissibility decision seam; `J4C` remains the reserved off-by-default host-realization finalizer seam if `J4B` is unnecessary or lands cleanly; `J3` is accepted baseline truth on `main`, `Q1` remains accepted ancestor truth, and `N2` remains blocked on a capable machine
+- Current seam status: `J4A` is now locked on the canonical line. The first mediation train is pinned as a reference-host host-realization seam because it is the smallest defensible implementation target after `J3`: it preserves commitment truth, packet publication meaning, branch law, and uncertainty law while targeting only direct host-native opportunity specialization. No runtime code or correspondence row has landed yet. The next load-bearing decision is explicit: open `J4B` only if the reference lane really needs one bounded `seek-context` admissibility hook for a real runtime path; otherwise skip directly to `J4C`, the off-by-default mediation finalizer seam that can nominate a clearly superior native opportunity without widening into generic family reweighting.`
+- the compare surface and live-validation truth from earlier seams remain accepted ancestor input and are not being reopened by this J4 mediation train.
 - Seam risk: deterministic code/doc seam
 
 ## 3. Next lawful move
@@ -159,8 +159,10 @@ It is workflow state only. It does not override the packet documents, implementa
   - the first mediation train remains unimplemented and experimental / off-by-default on the current line
   - Gemini should remain explicit as a partial/contaminated live rerun host rather than being hidden behind pooled mediation summaries
 - Next lawful move:
-  - land `J4B` from clean synced `main` as the first load-bearing reference-host host-realization mediation seam
-  - update the exact planned correspondence rows for `Q_t^{final}(a)`, `U_t^{sre}`, and any bounded `seek-context` admissibility change in the same slice
+  - decide from clean synced `main` whether the reference lane already reaches `seek-context` lawfully
+  - if it does not, land `J4B` as the bounded reference-lane admissibility seam and update only the exact `X_t^{ref}` correspondence row it changes
+  - if it does, skip `J4B` and open `J4C` directly as the off-by-default mediation finalizer seam
+  - update the exact planned correspondence rows for the opened stage in the same slice: `X_t^{ref}` for `J4B`, or `Q_t^{final}(a)` plus `U_t^{sre}` with explicit `Adm_r^{pre}` confirmation for `J4C`
   - optional `scenario_uncertainty_claude_01` remains deferred unless the J3 review still says the uncertainty gap blocks the next decision
   - keep `N2` as a separate blocked train pending a capable machine rather than reopening service proof on this host
 
