@@ -185,4 +185,26 @@ It does not authorize implementation by itself, and it does not widen packet mea
 
 | Gate row | Current evidence | Owner / next closeout | Status | Notes |
 | --- | --- | --- | --- | --- |
-| `J3` mediation justification review | `docs/CORTEX_V2_MEDIATION_JUSTIFICATION_NOTE.md`; `docs/CORTEX_V2_MEDIATION_EVIDENCE_NOTE_0.md`; `docs/CORTEX_V2_MEDIATION_AXIS_COMPARISON_TABLE_0.md`; `docs/CORTEX_V2_MEDIATION_BURDEN_COMPARISON_0.md`; `docs/CORTEX_V2_MEDIATION_HOST_SPLIT_COMPARISON_0.md` | closed | landed | J2 earned package-level `candidate_positive` signal on reduced thrashing, better branch discipline, lower visible burden at equal task value, and better host-specialized realization; uncertainty remains `insufficient` but explicit and non-blocking for one first bounded experimental seam. Mediation remains unimplemented, experimental / off-by-default, SRE-only, limited to `Q_t^{base} -> Q_t^{final}`, and forbidden from changing commitment truth or widening into Core, AUX runtime, live/provider paths, or broad rollout. |
+| `J3` mediation justification review | `docs/CORTEX_V2_MEDIATION_JUSTIFICATION_NOTE.md`; `docs/CORTEX_V2_MEDIATION_EVIDENCE_NOTE_0.md`; `docs/CORTEX_V2_MEDIATION_AXIS_COMPARISON_TABLE_0.md`; `docs/CORTEX_V2_MEDIATION_BURDEN_COMPARISON_0.md`; `docs/CORTEX_V2_MEDIATION_HOST_SPLIT_COMPARISON_0.md` | closed | landed | J2 earned package-level `candidate_positive` signal on reduced thrashing, better branch discipline, lower visible burden at equal task value, and better host-specialized realization; uncertainty remains `insufficient` but explicit and non-blocking for one first bounded experimental seam. `J3` itself does not authorize rollout or default-on mediation, and later `J4` rows carry the actual implementation truth under the same SRE-only, experimental, `Q_t^{base} -> Q_t^{final}` limits. |
+
+---
+
+## 9. Mediation implementation gate
+
+Source of truth:
+
+- `docs/CORTEX_V2_MEDIATION_HOST_REALIZATION_PROGRAM_0.md`
+- `docs/CORTEX_V2_REFERENCE_LANE_PACKET_EXAMPLE_2.md`
+- `docs/CORTEX_V2_REFERENCE_MEDIATED_LANE_PACKET_EXAMPLE_0.md`
+
+Overall status: `partial`
+
+These rows track the first bounded mediation implementation after `J3`.
+They do not authorize Core widening, AUX runtime widening, multi-host runtime rollout, or default-on mediation.
+
+| Gate row | Current evidence | Owner / next closeout | Status | Notes |
+| --- | --- | --- | --- | --- |
+| `J4B` reference `seek-context` reachability slice | `docs/CORTEX_V2_MEDIATION_HOST_REALIZATION_PROGRAM_0.md`; `tests/unit/test_reference_executive_builder.py`; `tests/unit/test_reference_runtime_scoring.py`; `tests/unit/test_reference_runtime_step.py` | closed | landed | exact missing-capability / missing-context pressure now admits and selects `seek-context` on the real reference runtime lane while generic host friction still stays closed; `Q_t^{final}(a)` remains identity on accepted baseline truth |
+| `J4C` reference experimental host-realization finalizer | `docs/CORTEX_V2_MEDIATION_HOST_REALIZATION_PROGRAM_0.md`; `cortex/sre/mediation.py`; `tests/unit/test_sre_mediation.py`; `tests/unit/test_reference_runtime_scoring.py`; `tests/unit/test_reference_runtime_step.py`; `tests/integration/test_reference_runtime_cli.py` | keep identity default and close workflow on clean synced `main` | landed | explicit `mediation_mode` now defaults to identity; experimental mode finalizes only already-selected `seek-context` and only specializes clearly superior runtime-visible `mcp.query` opportunities |
+| `J4D` runtime-backed reference mediation evidence closure | `docs/CORTEX_V2_REFERENCE_LANE_PACKET_EXAMPLE_2.md`; `docs/CORTEX_V2_REFERENCE_MEDIATED_LANE_PACKET_EXAMPLE_0.md`; `tests/integration/test_reference_lane_packet_example.py`; `tests/integration/test_reference_mediated_lane_packet_example.py`; `tests/integration/test_reference_mediated_host_realization_comparator.py` | keep non-reference mediated artifacts evidence-only and close workflow on clean synced `main` | landed | the reference baseline and mediated packet examples plus the host-realization comparator now use the real reference runtime path; packet truth remains unchanged while the comparator delta is only nested mediation diagnostics plus direct specialization |
+| `J4F` workflow closeout and hygiene | `docs/CORTEX_V2_ACTIVE_WORKSTREAM.md`; `REPO_WORKFLOW.md`; `python3 scripts/repo_workflow.py close-session --message ...`; `python3 scripts/repo_workflow.py sync-main`; `python3 scripts/repo_workflow.py cleanup-report` | close the current managed session, publish or merge the branch, sync `main`, and verify cleanup | open | mediation is not S-tier until workflow truth, correspondence truth, phase-gate truth, and branch truth all match on clean synced `main` |

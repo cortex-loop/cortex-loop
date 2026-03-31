@@ -10,11 +10,13 @@ from cortex.drivers.reference_host_commitment import evaluate_reference_host_com
 from cortex.eval.artifacts import CurrentPairFragment, EventTraceArtifact
 from cortex.eval.harness import build_evaluation_harness_result
 from cortex.eval.packets import WithheldField, build_evaluation_packet
-from cortex.sre.families import SoftControlFamily
-from cortex.sre.opportunities import HostNativeOpportunity, specialize_host_native_opportunity
+from cortex.sre.mediation import ReferenceMediationMode
 from tests.integration._reference_host_realization_pairs import (
     DEFAULT_REFERENCE_HOST_REALIZATION_PAIR_KEY,
     REFERENCE_HOST_REALIZATION_PAIR_SPECS,
+)
+from tests.integration._reference_host_realization_runtime import (
+    build_reference_host_realization_runtime_snapshot,
 )
 from tests.integration._reference_lane import (
     assert_reference_packet_preserves_degradation_pair,
@@ -27,39 +29,36 @@ from tests.integration._reference_lane import (
 
 def build_reference_host_realization_specialization_snapshot(
     *,
+    pair_key: str = DEFAULT_REFERENCE_HOST_REALIZATION_PAIR_KEY,
     clearly_superior: bool,
 ) -> dict[str, object]:
-    opportunity = HostNativeOpportunity(
-        opportunity_ref="mcp.query",
-        supported_families=frozenset({SoftControlFamily.SEEK_CONTEXT}),
-        clearly_superior=clearly_superior,
-        native_surface_tags=frozenset({"mcp", "structured-query"}),
+    runtime_control = build_reference_host_realization_runtime_snapshot(
+        pair_key,
+        mediation_mode=(
+            ReferenceMediationMode.HOST_REALIZATION_EXPERIMENTAL
+            if clearly_superior
+            else ReferenceMediationMode.IDENTITY
+        ),
     )
-    specialization = specialize_host_native_opportunity(
-        SoftControlFamily.SEEK_CONTEXT,
-        (opportunity,),
-    )
+    mediation = runtime_control["mediation"]
 
-    assert specialization.selected_family is SoftControlFamily.SEEK_CONTEXT
+    assert isinstance(mediation, dict)
+    assert runtime_control["selected_family"] == "seek-context"
     if clearly_superior:
-        assert specialization.preferred_opportunity is opportunity
-        assert specialization.direct_opportunity_specialization_used is True
+        assert mediation["preferred_opportunity_ref"] == "mcp.query"
+        assert mediation["direct_opportunity_specialization_used"] is True
     else:
-        assert specialization.preferred_opportunity is None
-        assert specialization.direct_opportunity_specialization_used is False
-
-    preferred_opportunity_ref = None
-    if specialization.preferred_opportunity is not None:
-        preferred_opportunity_ref = specialization.preferred_opportunity.opportunity_ref
+        assert mediation["preferred_opportunity_ref"] is None
+        assert mediation["direct_opportunity_specialization_used"] is False
 
     return {
-        "selected_family": specialization.selected_family.value,
-        "preferred_opportunity_ref": preferred_opportunity_ref,
+        "selected_family": runtime_control["selected_family"],
+        "realized_family": runtime_control["realized_family"],
+        "preferred_opportunity_ref": mediation["preferred_opportunity_ref"],
         "direct_opportunity_specialization_used": (
-            specialization.direct_opportunity_specialization_used
+            mediation["direct_opportunity_specialization_used"]
         ),
-        "host_opportunity_refs": [opportunity.opportunity_ref],
-        "native_surface_tags": sorted(opportunity.native_surface_tags),
+        "host_opportunity_refs": runtime_control["host_opportunity_refs"],
     }
 
 
@@ -67,6 +66,10 @@ def build_reference_mediated_lane_packet_example_snapshot(
     pair_key: str = DEFAULT_REFERENCE_HOST_REALIZATION_PAIR_KEY,
 ) -> dict[str, object]:
     spec = REFERENCE_HOST_REALIZATION_PAIR_SPECS[pair_key]
+    runtime_control = build_reference_host_realization_runtime_snapshot(
+        pair_key,
+        mediation_mode=ReferenceMediationMode.HOST_REALIZATION_EXPERIMENTAL,
+    )
     contradiction, degradation = host_surface_degradation_pair(
         source_tag=spec.contradiction_source_tag,
         summary=spec.contradiction_summary,
@@ -123,12 +126,19 @@ def build_reference_mediated_lane_packet_example_snapshot(
         ),
     )
     specialization = build_reference_host_realization_specialization_snapshot(
+        pair_key=pair_key,
         clearly_superior=True,
     )
 
     assert packet.current_pair is current_pair
     assert packet.blocker is None
     assert packet.warnings == result.warnings
+    assert runtime_control["selected_family"] == "seek-context"
+    assert runtime_control["realized_family"] == "seek-context"
+    assert runtime_control["host_opportunity_refs"] == ["mcp.query"]
+    assert runtime_control["mediation"]["mediation_active"] is True
+    assert runtime_control["mediation"]["preferred_opportunity_ref"] == "mcp.query"
+    assert runtime_control["mediation"]["direct_opportunity_specialization_used"] is True
     assert_reference_packet_preserves_degradation_pair(
         current_pair,
         packet,
@@ -150,6 +160,7 @@ def build_reference_mediated_lane_packet_example_snapshot(
             "event_refs": list(event_trace.event_refs),
             "record_refs": list(event_trace.record_refs),
         },
+        "runtime_control": runtime_control,
         "opportunity_specialization": specialization,
         "withheld_fields": [
             {

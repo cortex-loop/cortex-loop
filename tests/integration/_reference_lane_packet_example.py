@@ -10,6 +10,10 @@ from cortex.drivers.reference_host_commitment import evaluate_reference_host_com
 from cortex.eval.artifacts import CurrentPairFragment, EventTraceArtifact
 from cortex.eval.harness import build_evaluation_harness_result
 from cortex.eval.packets import WithheldField, build_evaluation_packet
+from cortex.sre.mediation import ReferenceMediationMode
+from tests.integration._reference_host_realization_runtime import (
+    build_reference_host_realization_runtime_snapshot,
+)
 from tests.integration._reference_lane import (
     assert_reference_packet_preserves_degradation_pair,
     full_commitment_event,
@@ -27,6 +31,10 @@ def build_reference_lane_packet_example_snapshot(
     pair_key: str = DEFAULT_REFERENCE_HOST_REALIZATION_PAIR_KEY,
 ) -> dict[str, object]:
     spec = REFERENCE_HOST_REALIZATION_PAIR_SPECS[pair_key]
+    runtime_control = build_reference_host_realization_runtime_snapshot(
+        pair_key,
+        mediation_mode=ReferenceMediationMode.IDENTITY,
+    )
     contradiction, degradation = host_surface_degradation_pair(
         source_tag=spec.contradiction_source_tag,
         summary=spec.contradiction_summary,
@@ -86,6 +94,11 @@ def build_reference_lane_packet_example_snapshot(
     assert packet.current_pair is current_pair
     assert packet.blocker is None
     assert packet.warnings == result.warnings
+    assert runtime_control["selected_family"] == "seek-context"
+    assert runtime_control["realized_family"] == "seek-context"
+    assert runtime_control["host_opportunity_refs"] == ["mcp.query"]
+    assert runtime_control["mediation"]["mediation_identity"] is True
+    assert runtime_control["mediation"]["direct_opportunity_specialization_used"] is False
     assert_reference_packet_preserves_degradation_pair(
         current_pair,
         packet,
@@ -107,6 +120,7 @@ def build_reference_lane_packet_example_snapshot(
             "event_refs": list(event_trace.event_refs),
             "record_refs": list(event_trace.record_refs),
         },
+        "runtime_control": runtime_control,
         "withheld_fields": [
             {
                 "field_ref": field.field_ref,

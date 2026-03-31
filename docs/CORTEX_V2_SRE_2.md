@@ -276,6 +276,7 @@ U_t^{sre} = \operatorname{Select}^{soft}(X_t^{ref},Q_t^{final},\mathcal A_t^{pos
 where `U_t^{sre}` is the chosen soft-control output together with bounded diagnostics.
 
 When no experimental extension is active, `\operatorname{Finalize}^{exp}` is the identity and `Q_t^{final}=Q_t^{base}`.
+In a discrete runtime realization, `\mathcal A_t^{post}` may be enforced as brake-conditioned realization constraints after soft selection, provided selected-family truth and realized-family truth remain explicit and auditable.
 
 ### 5.2 Discrete reference realization law
 

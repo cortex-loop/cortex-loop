@@ -30,6 +30,7 @@ REFERENCE_HOST_SURFACE = LifecycleSurface(
         }
     ),
     turn_affordances=frozenset({"turn/complete"}),
+    mcp_affordances=frozenset({"mcp.query"}),
     effect_map=(
         LifecycleEffectBinding(
             action_tag="tool-call",

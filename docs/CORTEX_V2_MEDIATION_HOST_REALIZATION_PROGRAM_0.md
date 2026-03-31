@@ -36,7 +36,7 @@ Reason: this slice locks the first mediation train, but it does not yet land a n
 Accepted parent for this program on the current line:
 
 - branch: `main`
-- commit: `b025eb5fe572932a52e4efd16b424ecdc0e40872`
+- commit: `b90bb498ec1f5cf0127262b0d944f2ffdaed35ef`
 
 Why this program opens now:
 
@@ -97,6 +97,13 @@ This program keeps fixed:
 - existing public reference runtime shell shape,
 - and packet publication meaning.
 
+Current accepted canonical state before the active closeout slice:
+
+- `J4B` is now landed on `main`,
+- exact missing-capability / missing-context pressure now admits and selects `seek-context` on the real reference runtime lane,
+- generic host friction still does not open the route,
+- and `Q_t^{final}(a)` remains identity on accepted baseline truth.
+
 ## Runtime law for this program
 
 Current-scope mediation law for this train is the narrowest lawful discrete equivalent of `Q_t^{base} -> Q_t^{final}`:
@@ -132,6 +139,10 @@ The public surface remains:
 
 - `python3 -m cortex.runtime.reference_cli`
 
+Current-scope experimental control uses:
+
+- `python3 -m cortex.runtime.reference_cli --mediation-mode {identity,host-realization-experimental}`
+
 No new top-level runtime fields or top-level `control_ledger` keys should be introduced for this first train.
 
 If runtime projection changes at all, it must remain nested under `control_ledger.allocation_diagnostics`.
@@ -151,26 +162,26 @@ They are not packet truth, continuation truth, or publication truth.
 
 ## Planned load-bearing seam classification
 
-`J4B` is `load-bearing` on the current review line.
+`J4B` is `load-bearing`.
 
 Purpose:
 
 - make the current reference lane reach `seek-context` lawfully under explicit missing-context / missing-capability pressure,
 - and keep that change inside the smallest bounded pre-finalization adjustment that changes runtime behavior.
 
-Current review-line implementation result on the current line:
+Delivered implementation result on the current line:
 
 - the builder now admits `seek-context` into the family mask and top-family set only on exact `missing-capability`, `capability-view-missing`, or `execution-trace-missing` pressure while generic host friction remains closed,
 - the scorer now uses the same exact-pressure predicate rather than a generic `*-missing` heuristic and gives `seek-context` the smallest route-local lift that clears neutral dominance on the real guarded capability-gap path without touching `alpha_t` or `activation_threshold`,
 - the reference runtime lane now selects `seek-context` end-to-end on the capability-view-missing path while generic host friction still remains neutral/brake dominated,
-- and the current host-realization comparator evidence still bypasses runtime selection because `J4C` remains unopened.
+- and `J4B` itself still stops before host-realization finalization, which is now owned by later `J4C/J4D` runtime-backed work rather than by the reachability seam.
 
-Delivered Correspondence impact for `J4B` on the current review line:
+Delivered Correspondence impact for `J4B`:
 
 - updated the `X_t^{ref}` / `build_reference_executive_state()` row so explicit missing-context / missing-capability pressure can lawfully admit `seek-context`,
 - updated the `Q_t^{online}(a)` / `Q_t^{alloc}(a)` realization row so the same exact-pressure path now clears neutral dominance on the runtime lane without touching threshold or vigor law,
 - confirmed the existing `U_t^{sre}` / `select_reference_soft_control()` row remains the pre-finalization selection owner in `J4B`,
-- and confirmed the existing `Adm_r^{pre}` / `specialize_host_native_opportunity()` row remains unchanged in `J4B`.
+- and confirmed the post-selection host-native opportunity nomination row for `specialize_host_native_opportunity()` remains unchanged in `J4B`.
 
 Do not open `Q_t^{final}` inside `J4B` just to compensate for a pre-selection reachability gap.
 
@@ -182,13 +193,11 @@ Purpose:
 - keep selected-family truth explicit before and after finalization,
 - and surface only nested runtime-local mediation diagnostics.
 
-Planned Correspondence impact for `J4C`:
+Delivered Correspondence impact for `J4C` on the current managed session branch:
 
 - add one new `Q_t^{final}(a)` experimental mediation-finalizer row with its exact code home and test surface,
 - update the `U_t^{sre}` / `select_reference_soft_control()` row so it explicitly includes the off-by-default mediation finalizer path,
-- confirm the existing `Adm_r^{pre}` / `specialize_host_native_opportunity()` row remains the owner of direct opportunity nomination rather than channel realization.
-
-If the implementation cannot name the exact correspondence rows for the opened stage before code lands, that stage is not ready.
+- confirm the post-selection host-native opportunity nomination row for `specialize_host_native_opportunity()` remains the owner of direct opportunity nomination rather than channel realization.
 
 ## Program order
 
@@ -198,7 +207,7 @@ This train is split into six bounded stages:
 2. `J4B` bounded reference-lane `seek-context` reachability seam, starting with admissibility and widening only if required for a real runtime path
 3. `J4C` experimental mediation-finalizer carrier and nested diagnostics
 4. `J4D` reference runtime projection and deterministic re-audit
-5. `J4E` optional proven-lane OpenAI projection only if `J4D` lands cleanly and the PHI loop still passes
+5. `J4E` explicitly declined for current closeout unless post-`J4D` review reopens a real reference-to-OpenAI truth gap
 6. `J4F` closeout or rollback-to-disabled state if the train drifts or fails to show a defensible behavioral consequence
 
 Every load-bearing stage must end on a clean tree before the next opens.
@@ -245,12 +254,14 @@ This train does not authorize:
 - named-model routing,
 - or a generic weighted-soup finalizer over every family.
 
-## Current review-line state after J4B implementation
+## Current managed-session state after `J4D` candidate implementation
 
-On the current review line after `J4B`:
+On the current managed session branch:
 
-- the first mediation train is pinned as a reference-host host-realization slice,
-- `J4B` now exists as a bounded runtime reachability seam on the current review line: exact missing-context / missing-capability pressure now admits and selects `seek-context` on the reference runtime lane,
-- generic host friction still does not open the `seek-context` route,
-- the current host-realization comparator evidence still bypasses runtime selection because `J4C` remains closed,
-- and runtime code plus correspondence rows now exist on the current review line only while accepted baseline truth on `main` remains pre-`J4B`.
+- the first mediation train remains pinned as a reference-host host-realization slice,
+- `J4B` is now accepted baseline truth on `main`,
+- `J4C` is now implemented as an off-by-default reference finalizer with explicit `ReferenceMediationMode`, a tiny SRE-owned finalization surface, and nested mediation diagnostics under `control_ledger.allocation_diagnostics.mediation`,
+- the reference lifecycle surface now advertises bounded `mcp.query` affordance truth and the runtime derives the typed host opportunity set from lifecycle-visible data rather than tests,
+- `J4D` now replaces the old reference specialization helper fiction: the committed reference baseline and mediated packet examples plus the host-realization comparator are now generated from the real reference runtime path,
+- non-reference mediated artifacts remain evidence-only,
+- and `J4F` remains open until workflow truth, phase-gate truth, correspondence truth, and clean synced `main` branch truth are reconciled together.

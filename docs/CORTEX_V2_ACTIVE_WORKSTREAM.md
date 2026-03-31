@@ -13,7 +13,7 @@ It is workflow state only. It does not override the packet documents, implementa
   - exact accepted-head hashes are intentionally not mirrored in repo-tracked support docs because they self-stale on the next accepted closure commit
 - Accepted baseline state:
   - burden-axis re-audit remains accepted through the three thrash-host burden slices
-  - mediation is now justified for one bounded experimental seam, but implementation remains unopened on the accepted line
+  - mediation is now justified for one bounded experimental seam, and `J4B` bounded reference-lane reachability is now landed on the accepted line while `J4C/J4D/J4F` remain outside accepted baseline truth
   - the verification/evidence restack train remains landed on the same product truth
   - the OpenAI host-realization cell now has a committed three-pair evidence series and `candidate_positive` cell-level signal for better host-specialized realization
   - accepted workflow baseline truth now rests on `main` rather than a long-lived working branch
@@ -67,6 +67,11 @@ It is workflow state only. It does not override the packet documents, implementa
     - better uncertainty handling remains `insufficient`, but that gap is explicit and non-blocking for one first bounded seam
     - mediation remains unimplemented, experimental / off-by-default, and constrained to a future SRE-only seam
     - the next lawful move is now to plan one bounded experimental mediation seam rather than reopen evidence collection by inertia
+  - `J4B` is now landed on the canonical line:
+    - exact missing-capability / missing-context pressure now admits `seek-context` in `X_t^{ref}`
+    - the same exact-pressure predicate now makes `seek-context` beat neutral on the real guarded capability-gap path
+    - generic host friction still does not open the route
+    - accepted baseline truth still keeps `Q_t^{final}(a)` closed
   - `Q1` raw-vs-Cortex operator directionality audit is now landed on the current machine:
     - Claude is `positive`
     - OpenAI is `positive`
@@ -98,73 +103,25 @@ It is workflow state only. It does not override the packet documents, implementa
 
 ## 2. Current campaign and seam state
 
-- Current campaign: `J4 first bounded experimental host-realization mediation train active`
-- Current working branch at ledger update: `review/j4a-closure-cleanup`
-- Current branch role: explicit review branch carrying the accepted J4A cleanup plus committed J4B implementation truth ahead of local `main`
-- Current candidate seam: `J4B` bounded reference-lane `seek-context` reachability seam is now implemented on the current review line; `J4C` remains the reserved off-by-default host-realization finalizer seam after `J4B` is accepted on the canonical line; `J3` is accepted baseline truth on `main`, `Q1` remains accepted ancestor truth, and `N2` remains blocked on a capable machine
-- Current seam status: `J4A` is now locked on the canonical line. The first mediation train is pinned as a reference-host host-realization seam because it is the smallest defensible implementation target after `J3`: it preserves commitment truth, packet publication meaning, branch law, and uncertainty law while targeting only direct host-native opportunity specialization. A bounded J4B implementation now exists on the current review line: exact missing-capability / missing-context pressure now admits `seek-context` in `X_t^{ref}`, and the scorer now uses the same exact-pressure predicate to make `seek-context` beat neutral on the real guarded capability-gap path without touching `alpha_t` or activation-threshold law. The reference runtime lane now selects `seek-context` end-to-end on the capability-view-missing path, while generic host friction still does not open the route. `U_t^{sre}` remains the pre-finalization selector, `Adm_r^{pre}` remains unchanged, and `Q_t^{final}(a)` remains closed. Accepted baseline truth on `main` remains pre-`J4B` until this review line is accepted.`
-- the compare surface and live-validation truth from earlier seams remain accepted ancestor input and are not being reopened by this J4 mediation train.
+- Current campaign: `J4 bounded reference mediation closeout active`
+- Current working branch at ledger update: `codex/20260331-164221-mediation-s-tier-closeout`
+- Current branch role: managed session branched from clean synced `main` after canonical `J4B` acceptance
+- Current candidate seam: `J4C` off-by-default reference host-realization finalizer plus `J4D` runtime-backed evidence closure plus `J4F` workflow/authority closeout
+- Current seam status: `J4B` is now accepted baseline truth on `main`: exact missing-capability / missing-context pressure now admits `seek-context` in `X_t^{ref}`, the same exact-pressure predicate now makes `seek-context` beat neutral on the real guarded capability-gap path, generic host friction still does not open the route, and accepted baseline truth still keeps `Q_t^{final}(a)` closed. On the current managed session branch, `J4C/J4D` are now implemented candidate truth: `ReferenceMediationMode` defaults to identity, experimental mode finalizes only already-selected `seek-context`, reference lifecycle surfaces now advertise bounded `mcp.query` affordance truth, the runtime derives the typed host opportunity set from lifecycle-visible data rather than tests, nested mediation diagnostics are live under `control_ledger.allocation_diagnostics.mediation`, and the committed reference baseline/mediated packet examples plus the host-realization comparator now use the real runtime path rather than a specialization-only helper.
+- the reference-only acceptance boundary remains explicit: non-reference mediated artifacts remain evidence-only, `J4E` is explicitly declined for current closeout unless a later post-closeout review reopens a real truth gap, and `N2` remains a separate capable-machine blocker rather than part of this train.
+- the compare surface and live-validation truth from earlier seams remain accepted ancestor input and are not being reopened by this J4 mediation closeout.
 - Seam risk: deterministic code/doc seam
 
 ## 3. Next lawful move
 
-- Current L2/L2b answer so far:
-  - the live-testing environment now has explicit operator and automation lane semantics
-  - the local artifact root is `.cortex/live_validation/` rather than repo-tracked `docs/live_validation/`
-  - preflight now detects install channels, auth modes, operator probe status, fallback models, and OpenAI surface split
-  - the current signed-in smoke surfaces are now clean again:
-    - Claude probe and smoke baselines are clean on `claude-sonnet-4-6`
-    - Gemini probe and repeated smoke baselines are now clean in CLI auto mode with no pinned `-m` model argument
-    - OpenAI/Codex probe and smoke baselines are clean on `gpt-5.3-codex`
-  - the OpenAI operator hierarchy is now explicit:
-    - `codex exec` for smoke
-    - `codex app-server` for lifecycle proof
-  - the OpenAI App Server operator lane now completes:
-    - `pass_minimal` twice
-    - `truth_gap` truthfully
-    - `restart_continuity` twice
-  - the OpenAI App Server event timeline is now the real lifecycle evidence surface for current scope; ephemeral `thread/read` remains lossy and is not treated as the primary truth surface
-  - the generic cross-host `make live-host-native-product-paths` entrypoint still inherits Claude/Gemini watchlist drift and is not yet the clean acceptance signal for current scope
-  - the Claude operator lane is now hook-backed and completes:
-    - `pass_minimal` twice
-    - `truth_gap` truthfully
-    - `restart_continuity`
-  - the Gemini operator lane is now hook-backed as well
-  - Gemini operator testing now starts in CLI auto mode by default and only falls back to explicit models after failure
-  - the installed CLI does accept `gemini-2.5-pro`, but the exploratory pro smoke still blocks on `capacity_exhausted`
-  - the deeper Gemini auto-mode product-path rerun now shows:
-    - `pass_minimal` succeeds twice on `auto` with explicit `capacity_exhausted` warnings
-    - `truth_gap` is truthful on the latest reruns on `auto`
-    - `restart_continuity` remains mixed after the best-practice re-audit:
-      - successful resumed completions exist on `auto`
-      - first-turn `capacity_exhausted` failures still recur
-      - an exploratory `gemini-2.5-flash` sidecar did not eliminate the first-turn capacity blocker
-  - repeat-stable Gemini closure is therefore still unearned
-  - the current Gemini operator API-key recheck now adds one narrower local blocker:
-    - Gemini CLI `0.35.3` does switch the operator lane to `api_key` when `.gemini/settings.json` selects `gemini-api-key`
-    - but headless `gemini -p` still blocks with `auth_missing` until `GEMINI_API_KEY` is present in the shell environment
-    - the recheck tooling now reports that blocker truthfully instead of mislabeling it as a clean probe
-  - the current Gemini auto-only operator contract now tightens that further:
-    - the operator/evaluation harness no longer calls `gemini-2.5-flash` or `gemini-2.5-flash-lite`
-    - fresh auto-only preflight reruns are stable on `auto` with `auth_mode=api_key` and `failure_class=quota_exhausted`
-    - fresh auto-only operator baseline reruns are stable on `auto` and return `OK` twice with no named-model fallback
-    - a fresh auto-only `pass_minimal` product-path rerun now blocks immediately on `quota_exhausted` with `model: auto-gemini-3`
-    - the S1 route selector now turns those same pressures into explicit route/budget decisions on the operator path
-  - the current automation/service lane still fails honestly on missing machine auth
 - Current blocker shape:
-  - keep the machine-auth service lane explicitly deferred on this machine for actual proof execution
-  - do not reopen the K train by inertia now that the bounded proven-lane executive/runtime line is landed
-  - J2 already changed the mediation blocker shape: package-level evidence is no longer `insufficient` on every required axis
-  - J3 now treats the remaining uncertainty gap as explicit but non-blocking for one bounded experimental seam
-  - the first mediation train is now partially implemented on the current review line, remains experimental / off-by-default, and is not yet accepted on the canonical line
-  - Gemini should remain explicit as a partial/contaminated live rerun host rather than being hidden behind pooled mediation summaries
+  - `J4F` workflow closure remains open until branch truth, correspondence truth, phase-gate truth, and clean synced `main` branch truth all match
+  - service-lane `N2` remains blocked on a capable machine and is not part of the current mediation closeout
+  - non-reference mediated artifacts remain evidence-only and must not be upgraded inside this train
 - Next lawful move:
-  - reconcile or publish the current review line so `J4B` can be accepted onto clean synced `main`
-  - re-audit the delivered `J4B` correspondence rows on that acceptance path: `X_t^{ref}` and `Q_t^{online}(a)` / `Q_t^{alloc}(a)` updated, `U_t^{sre}` and `Adm_r^{pre}` confirmed unchanged, `Q_t^{final}(a)` still closed
-  - keep `Q_t^{final}(a)` closed and do not open `J4C` until the current `J4B` review line is accepted and re-audited on the canonical line
-  - if any further tuning is needed, keep it inside the current `J4B` review/acceptance loop rather than widening into a new seam
-  - optional `scenario_uncertainty_claude_01` remains deferred unless the J3 review still says the uncertainty gap blocks the next decision
-  - keep `N2` as a separate blocked train pending a capable machine rather than reopening service proof on this host
+  - finish the authority repair so `\mathcal A_t^{pre}`, `\mathcal A_t^{post}`, `Q_t^{final}(a)`, and post-selection host-opportunity nomination each have one explicit owner in packet, correspondence, phase-gate, and workstream truth
+  - rerun the bounded mediation proof bundle twice together with correspondence/doc-sync guards
+  - close the managed session, return to `main`, publish or merge the branch, sync `main`, and require `cleanup-report` before declaring the first mediation train S-tier
 
 ## 4. Explicitly blocked moves
 
@@ -199,7 +156,6 @@ It is workflow state only. It does not override the packet documents, implementa
 - Do not let `J4` alter observe/bind meaning, packet publication meaning, or commitment truth to make mediation look better.
 - Do not pretend a builder-only `seek-context` mask widening is sufficient if the runtime lane still selects `neutral` under the accepted threshold law.
 - Do not reintroduce a generic `*-missing` `seek-context` heuristic; keep the exact runtime-visible pressure tags explicit.
-- Do not start a new managed session from local `main` while it is ahead or diverged from `origin/main`.
 - Do not reintroduce extra long-lived local worktrees or non-main branch residue without an explicit new seam.
 - Do not leave remote `review/*` heads behind after future publication cleanup.
 

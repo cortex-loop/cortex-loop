@@ -207,6 +207,52 @@ EXPECTATIONS = (
         ),
     ),
     SreCorrespondenceExpectation(
+        row_label="ReferenceMediationFinalization",
+        module_path="cortex.sre.mediation",
+        symbol_name="ReferenceMediationFinalization",
+        promised_surfaces=(
+            PromisedTestSurface(
+                test_file="tests/unit/test_sre_mediation.py",
+                test_names=(
+                    "test_reference_mediation_identity_mode_preserves_family_without_specialization",
+                    "test_reference_mediation_experimental_mode_specializes_seek_context_when_runtime_visible_opportunity_exists",
+                ),
+            ),
+        ),
+    ),
+    SreCorrespondenceExpectation(
+        row_label="finalize_reference_soft_control",
+        module_path="cortex.sre.mediation",
+        symbol_name="finalize_reference_soft_control",
+        promised_surfaces=(
+            PromisedTestSurface(
+                test_file="tests/unit/test_sre_mediation.py",
+                test_names=(
+                    "test_reference_mediation_identity_mode_preserves_family_without_specialization",
+                    "test_reference_mediation_experimental_mode_specializes_seek_context_when_runtime_visible_opportunity_exists",
+                    "test_reference_mediation_experimental_mode_keeps_identity_for_non_seek_context_family",
+                    "test_reference_mediation_experimental_mode_preserves_existing_degradation_fallback_semantics",
+                ),
+            ),
+        ),
+    ),
+    SreCorrespondenceExpectation(
+        row_label="_realize_family",
+        module_path="cortex.runtime.reference",
+        symbol_name="_realize_family",
+        promised_surfaces=(
+            PromisedTestSurface(
+                test_file="tests/unit/test_reference_runtime_step.py",
+                test_names=(
+                    "test_reference_runtime_step_experimental_mediation_specializes_reference_mcp_query",
+                    "test_reference_runtime_step_enforces_latched_brake_to_check_when_evidence_dominates",
+                    "test_reference_runtime_step_enforces_latched_brake_to_neutral_without_evidence_or_environment",
+                    "test_reference_runtime_step_enforces_guarded_feedback_pressure_to_check_when_evidence_dominates",
+                ),
+            ),
+        ),
+    ),
+    SreCorrespondenceExpectation(
         row_label="UncertaintyEstimate",
         module_path="cortex.sre.uncertainty",
         symbol_name="UncertaintyEstimate",

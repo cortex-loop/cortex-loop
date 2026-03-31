@@ -43,6 +43,7 @@ def test_bound_event_carrier_contains_surface_observation_and_normalized_payload
     assert bound.observation.payload_view.payload_handle.payload_kind == "reference-host-payload"
     assert bound.normalized_payload == {"session_id": "session-3"}
     assert bound.warnings == ()
+    assert bound.lifecycle_surface.mcp_affordances == frozenset({"mcp.query"})
 
 
 def test_proposal_like_raw_host_event_binds_cleanly_and_is_dispatch_ready() -> None:

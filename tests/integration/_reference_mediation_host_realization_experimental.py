@@ -45,9 +45,11 @@ def build_reference_host_realization_comparator_snapshot(
     baseline_snapshot = build_reference_lane_packet_example_snapshot(pair_key)
     mediated_snapshot = build_reference_mediated_lane_packet_example_snapshot(pair_key)
     baseline_specialization = build_reference_host_realization_specialization_snapshot(
+        pair_key=pair_key,
         clearly_superior=False,
     )
     mediated_specialization = build_reference_host_realization_specialization_snapshot(
+        pair_key=pair_key,
         clearly_superior=True,
     )
 
@@ -57,8 +59,34 @@ def build_reference_host_realization_comparator_snapshot(
     assert baseline_snapshot["withheld_fields"] == mediated_snapshot["withheld_fields"]
     assert baseline_snapshot["contradiction_refs"] == mediated_snapshot["contradiction_refs"]
     assert baseline_snapshot["degradation_refs"] == mediated_snapshot["degradation_refs"]
+    assert baseline_snapshot["runtime_control"]["selected_family"] == "seek-context"
+    assert mediated_snapshot["runtime_control"]["selected_family"] == "seek-context"
+    assert baseline_snapshot["runtime_control"]["realized_family"] == "seek-context"
+    assert mediated_snapshot["runtime_control"]["realized_family"] == "seek-context"
+    assert baseline_snapshot["runtime_control"]["host_opportunity_refs"] == ["mcp.query"]
+    assert mediated_snapshot["runtime_control"]["host_opportunity_refs"] == ["mcp.query"]
+    assert baseline_snapshot["runtime_control"]["mediation"]["mediation_identity"] is True
+    assert mediated_snapshot["runtime_control"]["mediation"]["mediation_active"] is True
+    assert (
+        baseline_snapshot["runtime_control"]["mediation"]["selected_family_before_finalization"]
+        == "seek-context"
+    )
+    assert (
+        mediated_snapshot["runtime_control"]["mediation"]["selected_family_before_finalization"]
+        == "seek-context"
+    )
+    assert (
+        baseline_snapshot["runtime_control"]["mediation"]["selected_family_after_finalization"]
+        == "seek-context"
+    )
+    assert (
+        mediated_snapshot["runtime_control"]["mediation"]["selected_family_after_finalization"]
+        == "seek-context"
+    )
     assert baseline_specialization["selected_family"] == "seek-context"
     assert mediated_specialization["selected_family"] == "seek-context"
+    assert baseline_specialization["realized_family"] == "seek-context"
+    assert mediated_specialization["realized_family"] == "seek-context"
     assert baseline_specialization["host_opportunity_refs"] == ["mcp.query"]
     assert mediated_specialization["host_opportunity_refs"] == ["mcp.query"]
     assert baseline_specialization["preferred_opportunity_ref"] is None
@@ -84,6 +112,8 @@ def build_reference_host_realization_comparator_snapshot(
         "mediated_verdict_status": mediated_snapshot["verdict_status"],
         "baseline_trace_id": baseline_snapshot["event_trace"]["trace_id"],
         "mediated_trace_id": mediated_snapshot["event_trace"]["trace_id"],
+        "baseline_runtime_control": baseline_snapshot["runtime_control"],
+        "mediated_runtime_control": mediated_snapshot["runtime_control"],
         "withheld_fields": baseline_snapshot["withheld_fields"],
         "contradiction_refs": baseline_snapshot["contradiction_refs"],
         "degradation_refs": baseline_snapshot["degradation_refs"],
@@ -96,12 +126,17 @@ def build_reference_host_realization_mediated_packet(
     spec = REFERENCE_HOST_REALIZATION_PAIR_SPECS[pair_key]
     snapshot = build_reference_mediated_lane_packet_example_snapshot(pair_key)
     specialization = snapshot["opportunity_specialization"]
+    runtime_control = snapshot["runtime_control"]
 
     assert isinstance(specialization, dict)
+    assert isinstance(runtime_control, dict)
     assert specialization["selected_family"] == "seek-context"
+    assert specialization["realized_family"] == "seek-context"
     assert specialization["preferred_opportunity_ref"] == "mcp.query"
     assert specialization["direct_opportunity_specialization_used"] is True
     assert specialization["host_opportunity_refs"] == ["mcp.query"]
+    assert runtime_control["mediation"]["preferred_opportunity_ref"] == "mcp.query"
+    assert runtime_control["mediation"]["direct_opportunity_specialization_used"] is True
     assert snapshot["dispatch_lane"] == "full-commitment"
     assert snapshot["verdict_status"] == "certified"
     assert snapshot["packet_kind"] == "current-pair"

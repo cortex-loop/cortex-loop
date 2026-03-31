@@ -6,6 +6,8 @@ import pytest
 
 from cortex.sre.brake import BrakeState
 from cortex.sre.families import SoftControlFamily
+from cortex.sre.mediation import ReferenceMediationMode
+from cortex.sre.opportunities import HostNativeOpportunity
 from cortex.sre.reference_scoring import (
     build_reference_allocation_scorecard,
     build_reference_online_score_components,
@@ -136,6 +138,87 @@ def test_reference_scoring_keeps_seek_context_neutral_dominated_under_generic_ho
     assert "seek-context-pressure" not in seek_context_score.reason_tags
     assert selection.selected_family is SoftControlFamily.NEUTRAL
     assert selection.neutral_dominance.neutral_selected is True
+
+
+def test_reference_scoring_identity_mode_preserves_seek_context_without_direct_specialization() -> None:
+    selection = select_reference_soft_control(
+        _state(
+            mode_tag="guarded_review",
+            family_mask=frozenset(
+                {
+                    SoftControlFamily.NEUTRAL,
+                    SoftControlFamily.CHECK,
+                    SoftControlFamily.BRAKE,
+                    SoftControlFamily.SEEK_CONTEXT,
+                }
+            ),
+            budget_band="low",
+            top_family_set=frozenset(
+                {
+                    SoftControlFamily.NEUTRAL,
+                    SoftControlFamily.BRAKE,
+                    SoftControlFamily.SEEK_CONTEXT,
+                }
+            ),
+            brake_state=BrakeState.GUARDED,
+            host_friction_tags=frozenset({"missing-capability", "capability-view-missing"}),
+        ),
+        opportunities=(
+            HostNativeOpportunity(
+                opportunity_ref="mcp.query",
+                supported_families=frozenset({SoftControlFamily.SEEK_CONTEXT}),
+                clearly_superior=True,
+                native_surface_tags=frozenset({"mcp", "structured-query"}),
+            ),
+        ),
+    )
+
+    assert selection.selected_family_before_finalization is SoftControlFamily.SEEK_CONTEXT
+    assert selection.selected_family is SoftControlFamily.SEEK_CONTEXT
+    assert selection.opportunity_specialization.direct_opportunity_specialization_used is False
+    assert selection.mediation_finalization.as_payload()["mediation_active"] is False
+
+
+def test_reference_scoring_experimental_mode_specializes_only_seek_context() -> None:
+    selection = select_reference_soft_control(
+        _state(
+            mode_tag="guarded_review",
+            family_mask=frozenset(
+                {
+                    SoftControlFamily.NEUTRAL,
+                    SoftControlFamily.CHECK,
+                    SoftControlFamily.BRAKE,
+                    SoftControlFamily.SEEK_CONTEXT,
+                }
+            ),
+            budget_band="low",
+            top_family_set=frozenset(
+                {
+                    SoftControlFamily.NEUTRAL,
+                    SoftControlFamily.BRAKE,
+                    SoftControlFamily.SEEK_CONTEXT,
+                }
+            ),
+            brake_state=BrakeState.GUARDED,
+            host_friction_tags=frozenset({"missing-capability", "capability-view-missing"}),
+        ),
+        mediation_mode=ReferenceMediationMode.HOST_REALIZATION_EXPERIMENTAL,
+        opportunities=(
+            HostNativeOpportunity(
+                opportunity_ref="mcp.query",
+                supported_families=frozenset({SoftControlFamily.SEEK_CONTEXT}),
+                clearly_superior=True,
+                native_surface_tags=frozenset({"mcp", "structured-query"}),
+            ),
+        ),
+    )
+
+    assert selection.selected_family_before_finalization is SoftControlFamily.SEEK_CONTEXT
+    assert selection.selected_family is SoftControlFamily.SEEK_CONTEXT
+    assert selection.opportunity_specialization.direct_opportunity_specialization_used is True
+    assert selection.opportunity_specialization.preferred_opportunity is not None
+    assert selection.opportunity_specialization.preferred_opportunity.opportunity_ref == "mcp.query"
+    assert selection.mediation_finalization.as_payload()["mediation_active"] is True
 
 
 def test_reference_scoring_tightens_to_neutral_when_guarded_pressure_is_present() -> None:

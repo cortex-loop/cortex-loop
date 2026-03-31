@@ -114,6 +114,7 @@ def build_allocation_diagnostics_payload(
     scorecard: AllocationScorecard,
     *,
     selected_delta_over_neutral: float,
+    mediation_payload: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     if not isinstance(scorecard, AllocationScorecard):
         actual_type = type(scorecard).__name__
@@ -127,12 +128,21 @@ def build_allocation_diagnostics_payload(
             "build_allocation_diagnostics_payload.selected_delta_over_neutral must be numeric, "
             f"got {actual_type}."
         )
-    return {
+    if mediation_payload is not None and not isinstance(mediation_payload, dict):
+        actual_type = type(mediation_payload).__name__
+        raise TypeError(
+            "build_allocation_diagnostics_payload.mediation_payload must be "
+            f"dict[str, Any] | None, got {actual_type}."
+        )
+    payload = {
         "alpha_t": float(scorecard.alpha_t),
         "activation_threshold": float(scorecard.activation_threshold),
         "selected_delta_over_neutral": float(selected_delta_over_neutral),
         "scores": [score.as_summary() for score in scorecard.scores],
     }
+    if mediation_payload is not None:
+        payload["mediation"] = mediation_payload
+    return payload
 
 
 __all__ = [
