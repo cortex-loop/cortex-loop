@@ -13,7 +13,7 @@ It is workflow state only. It does not override the packet documents, implementa
   - exact accepted-head hashes are intentionally not mirrored in repo-tracked support docs because they self-stale on the next accepted closure commit
 - Accepted baseline state:
   - burden-axis re-audit remains accepted through the three thrash-host burden slices
-  - mediation is now justified for one bounded experimental seam, and `J4B` bounded reference-lane reachability is now landed on the accepted line while `J4C/J4D/J4F` remain outside accepted baseline truth
+  - mediation is now justified for one bounded experimental seam, and the full first bounded reference mediation train `J4B/J4C/J4D/J4F` is now landed on the accepted line
   - the verification/evidence restack train remains landed on the same product truth
   - the OpenAI host-realization cell now has a committed three-pair evidence series and `candidate_positive` cell-level signal for better host-specialized realization
   - accepted workflow baseline truth now rests on `main` rather than a long-lived working branch
@@ -65,13 +65,14 @@ It is workflow state only. It does not override the packet documents, implementa
   - `J3` is now landed on the canonical line:
     - mediation is now justified for one bounded experimental seam
     - better uncertainty handling remains `insufficient`, but that gap is explicit and non-blocking for one first bounded seam
-    - mediation remains unimplemented, experimental / off-by-default, and constrained to a future SRE-only seam
-    - the next lawful move is now to plan one bounded experimental mediation seam rather than reopen evidence collection by inertia
-  - `J4B` is now landed on the canonical line:
-    - exact missing-capability / missing-context pressure now admits `seek-context` in `X_t^{ref}`
-    - the same exact-pressure predicate now makes `seek-context` beat neutral on the real guarded capability-gap path
-    - generic host friction still does not open the route
-    - accepted baseline truth still keeps `Q_t^{final}(a)` closed
+    - at `J3` acceptance time the next lawful move became one bounded experimental SRE-only mediation seam rather than reopening evidence collection by inertia
+  - `J4` bounded reference mediation closeout is now landed on the canonical line:
+    - `J4B`: exact missing-capability / missing-context pressure now admits `seek-context` in `X_t^{ref}`
+    - `J4B`: the same exact-pressure predicate now makes `seek-context` beat neutral on the real guarded capability-gap path while generic host friction still does not open the route
+    - `J4C`: `ReferenceMediationMode` defaults to identity, experimental mode finalizes only already-selected `seek-context`, and `Q_t^{final}(a)` is now implemented as an explicit bounded SRE-owned finalizer
+    - `J4D`: the committed reference baseline/mediated packet examples plus the host-realization comparator now use the real runtime path rather than a specialization-only helper
+    - `J4F`: workflow truth, phase-gate truth, correspondence truth, and branch truth now match on clean synced `main`
+    - non-reference mediated artifacts remain evidence-only and `J4E` is explicitly declined for the current closeout
   - `Q1` raw-vs-Cortex operator directionality audit is now landed on the current machine:
     - Claude is `positive`
     - OpenAI is `positive`
@@ -103,25 +104,25 @@ It is workflow state only. It does not override the packet documents, implementa
 
 ## 2. Current campaign and seam state
 
-- Current campaign: `J4 bounded reference mediation closeout active`
-- Current working branch at ledger update: `codex/20260331-164221-mediation-s-tier-closeout`
-- Current branch role: managed session branched from clean synced `main` after canonical `J4B` acceptance
-- Current candidate seam: `J4C` off-by-default reference host-realization finalizer plus `J4D` runtime-backed evidence closure plus `J4F` workflow/authority closeout
-- Current seam status: `J4B` is now accepted baseline truth on `main`: exact missing-capability / missing-context pressure now admits `seek-context` in `X_t^{ref}`, the same exact-pressure predicate now makes `seek-context` beat neutral on the real guarded capability-gap path, generic host friction still does not open the route, and accepted baseline truth still keeps `Q_t^{final}(a)` closed. On the current managed session branch, `J4C/J4D` are now implemented candidate truth: `ReferenceMediationMode` defaults to identity, experimental mode finalizes only already-selected `seek-context`, reference lifecycle surfaces now advertise bounded `mcp.query` affordance truth, the runtime derives the typed host opportunity set from lifecycle-visible data rather than tests, nested mediation diagnostics are live under `control_ledger.allocation_diagnostics.mediation`, and the committed reference baseline/mediated packet examples plus the host-realization comparator now use the real runtime path rather than a specialization-only helper.
+- Current campaign: `No active mediation seam; first bounded reference mediation closeout landed`
+- Current working branch at ledger update: `main`
+- Current branch role: clean synced resting branch after merged `J4` closeout and `cleanup-report`
+- Current candidate seam: `none open`
+- Current seam status: the first bounded reference mediation train is now accepted baseline truth on `main`: `J4B` exact-pressure `seek-context` reachability is landed, `J4C` identity-default reference finalization is landed, `J4D` runtime-backed reference packet/comparator evidence closure is landed, and `J4F` workflow/authority closure is landed. Reference lifecycle surfaces advertise bounded `mcp.query` affordance truth, the runtime derives the typed host opportunity set from lifecycle-visible data rather than tests, and nested mediation diagnostics remain live under `control_ledger.allocation_diagnostics.mediation`.
 - the reference-only acceptance boundary remains explicit: non-reference mediated artifacts remain evidence-only, `J4E` is explicitly declined for current closeout unless a later post-closeout review reopens a real truth gap, and `N2` remains a separate capable-machine blocker rather than part of this train.
-- the compare surface and live-validation truth from earlier seams remain accepted ancestor input and are not being reopened by this J4 mediation closeout.
-- Seam risk: deterministic code/doc seam
+- the compare surface and live-validation truth from earlier seams remain accepted ancestor input and are not being reopened after this landed `J4` closeout.
+- Seam risk: none active; last closed seam was a deterministic code/doc seam
 
 ## 3. Next lawful move
 
 - Current blocker shape:
-  - `J4F` workflow closure remains open until branch truth, correspondence truth, phase-gate truth, and clean synced `main` branch truth all match
+  - there is no open `J4` mediation blocker on accepted baseline truth
   - service-lane `N2` remains blocked on a capable machine and is not part of the current mediation closeout
   - non-reference mediated artifacts remain evidence-only and must not be upgraded inside this train
 - Next lawful move:
-  - finish the authority repair so `\mathcal A_t^{pre}`, `\mathcal A_t^{post}`, `Q_t^{final}(a)`, and post-selection host-opportunity nomination each have one explicit owner in packet, correspondence, phase-gate, and workstream truth
-  - rerun the bounded mediation proof bundle twice together with correspondence/doc-sync guards
-  - close the managed session, return to `main`, publish or merge the branch, sync `main`, and require `cleanup-report` before declaring the first mediation train S-tier
+  - keep the first bounded reference mediation train closed on clean synced `main` unless a new bounded program explicitly reopens it
+  - do not open `J4E` absent a real post-closeout truth gap on the already-proven OpenAI lane
+  - continue non-mediation follow-on work on its own authority surface rather than treating mediation as partially open
 
 ## 4. Explicitly blocked moves
 
