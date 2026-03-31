@@ -387,14 +387,17 @@ def test_resume_protocol_and_active_workstream_contract_exist() -> None:
     assert "Current working branch at ledger update:" in workstream_text
     assert "Current branch role:" in workstream_text
     assert "accepted workflow baseline truth now rests on `main` rather than a long-lived working branch" in workstream_text
-    assert "Current campaign: `J4 bounded reference mediation closeout active`" in workstream_text
-    assert "Current working branch at ledger update: `codex/20260331-164221-mediation-s-tier-closeout`" in workstream_text
-    assert "Current branch role: managed session branched from clean synced `main` after canonical `J4B` acceptance" in workstream_text
-    assert "Current candidate seam: `J4C` off-by-default reference host-realization finalizer plus `J4D` runtime-backed evidence closure plus `J4F` workflow/authority closeout" in workstream_text
-    assert "mediation is now justified for one bounded experimental seam, and `J4B` bounded reference-lane reachability is now landed on the accepted line" in workstream_text
-    assert "`J4B` is now accepted baseline truth on `main`" in workstream_text
+    assert "Current campaign: `No active mediation seam; first bounded reference mediation closeout landed`" in workstream_text
+    assert "Current working branch at ledger update: `main`" in workstream_text
+    assert "Current branch role: clean synced resting branch after merged `J4` closeout and `cleanup-report`" in workstream_text
+    assert "Current candidate seam: `none open`" in workstream_text
+    assert "mediation is now justified for one bounded experimental seam, and the full first bounded reference mediation train `J4B/J4C/J4D/J4F` is now landed on the accepted line" in workstream_text
+    assert "`J4B`: exact missing-capability / missing-context pressure now admits `seek-context` in `X_t^{ref}`" in workstream_text
+    assert "`J4C` identity-default reference finalization is landed" in workstream_text
+    assert "`J4D` runtime-backed reference packet/comparator evidence closure is landed" in workstream_text
+    assert "`J4F` workflow/authority closure is landed" in workstream_text
     assert "`ReferenceMediationMode` defaults to identity" in workstream_text
-    assert "reference lifecycle surfaces now advertise bounded `mcp.query` affordance truth" in workstream_text
+    assert "Reference lifecycle surfaces advertise bounded `mcp.query` affordance truth" in workstream_text
     assert "the committed reference baseline/mediated packet examples plus the host-realization comparator now use the real runtime path rather than a specialization-only helper" in workstream_text
     assert "non-reference mediated artifacts remain evidence-only" in workstream_text
     assert "`J4E` is explicitly declined for current closeout" in workstream_text
@@ -405,7 +408,7 @@ def test_resume_protocol_and_active_workstream_contract_exist() -> None:
     assert "mediation is now justified for one bounded experimental seam" in workstream_text
     assert "`M2` is now landed on the canonical line:" in workstream_text
     assert "`J1` is now landed on the canonical line:" in workstream_text
-    assert "the compare surface and live-validation truth from earlier seams remain accepted ancestor input and are not being reopened by this J4 mediation closeout." in workstream_text
+    assert "the compare surface and live-validation truth from earlier seams remain accepted ancestor input and are not being reopened after this landed `J4` closeout." in workstream_text
     assert "`M2` is now landed on the canonical line:" in workstream_text
     assert "`ExecutiveSignalSummary`" in workstream_text
     assert "persistent tonic `ExecutiveModulatorMemory`" in workstream_text
@@ -415,12 +418,12 @@ def test_resume_protocol_and_active_workstream_contract_exist() -> None:
     assert "`J3` is now landed on the canonical line:" in workstream_text
     assert "mediation is now justified for one bounded experimental seam" in workstream_text
     assert "better uncertainty handling remains `insufficient`, but that gap is explicit and non-blocking for one first bounded seam" in workstream_text
-    assert "mediation remains unimplemented, experimental / off-by-default, and constrained to a future SRE-only seam" in workstream_text
-    assert "`J4F` workflow closure remains open" in workstream_text
+    assert "at `J3` acceptance time the next lawful move became one bounded experimental SRE-only mediation seam" in workstream_text
+    assert "there is no open `J4` mediation blocker on accepted baseline truth" in workstream_text
     assert "service-lane `N2` remains blocked on a capable machine" in workstream_text
-    assert "finish the authority repair so `\\mathcal A_t^{pre}`, `\\mathcal A_t^{post}`, `Q_t^{final}(a)`, and post-selection host-opportunity nomination each have one explicit owner" in workstream_text
-    assert "rerun the bounded mediation proof bundle twice together with correspondence/doc-sync guards" in workstream_text
-    assert "close the managed session, return to `main`, publish or merge the branch, sync `main`, and require `cleanup-report`" in workstream_text
+    assert "keep the first bounded reference mediation train closed on clean synced `main` unless a new bounded program explicitly reopens it" in workstream_text
+    assert "do not open `J4E` absent a real post-closeout truth gap on the already-proven OpenAI lane" in workstream_text
+    assert "continue non-mediation follow-on work on its own authority surface rather than treating mediation as partially open" in workstream_text
     assert "Do not implement mediation in `J3`;" in workstream_text
     assert "Do not treat `J3` as license for broad rollout" in workstream_text
     assert "Do not widen `J4` into branch/thrash mediation, uncertainty/brake mediation, or pooled cross-host mediation" in workstream_text
@@ -513,9 +516,9 @@ def test_reference_runtime_program_lock_is_recorded() -> None:
 
     assert "mediation is now justified for one bounded experimental seam" in workstream_text
     assert "better uncertainty handling remains `insufficient`, but that gap is explicit and non-blocking for one first bounded seam" in workstream_text
-    assert "Current campaign: `J4 bounded reference mediation closeout active`" in workstream_text
-    assert "Current candidate seam: `J4C` off-by-default reference host-realization finalizer plus `J4D` runtime-backed evidence closure plus `J4F` workflow/authority closeout" in workstream_text
-    assert "rerun the bounded mediation proof bundle twice together with correspondence/doc-sync guards" in workstream_text
+    assert "Current campaign: `No active mediation seam; first bounded reference mediation closeout landed`" in workstream_text
+    assert "Current candidate seam: `none open`" in workstream_text
+    assert "keep the first bounded reference mediation train closed on clean synced `main` unless a new bounded program explicitly reopens it" in workstream_text
     assert "## 8. Mediation justification gate" in phase_gate_text
     assert "`J3` mediation justification review" in phase_gate_text
     assert "one bounded experimental mediation seam" in phase_gate_text
@@ -538,11 +541,12 @@ def test_reference_runtime_program_lock_is_recorded() -> None:
     assert "updated the `Q_t^{online}(a)` / `Q_t^{alloc}(a)` realization row so the same exact-pressure path now clears neutral dominance on the runtime lane" in mediation_host_realization_program_text
     assert "Do not open `Q_t^{final}` inside `J4B` just to compensate for a pre-selection reachability gap." in mediation_host_realization_program_text
     assert "`python3 -m cortex.runtime.reference_cli --mediation-mode {identity,host-realization-experimental}`" in mediation_host_realization_program_text
-    assert "Current managed-session state after `J4D` candidate implementation" in mediation_host_realization_program_text
+    assert "Current accepted state after `J4F` closeout" in mediation_host_realization_program_text
     assert "`J4B` is now accepted baseline truth on `main`" in mediation_host_realization_program_text
-    assert "`J4C` is now implemented as an off-by-default reference finalizer" in mediation_host_realization_program_text
+    assert "`J4C` is now landed as an off-by-default reference finalizer" in mediation_host_realization_program_text
     assert "`J4D` now replaces the old reference specialization helper fiction" in mediation_host_realization_program_text
-    assert "`J4F` remains open until workflow truth, phase-gate truth, correspondence truth, and clean synced `main` branch truth are reconciled together." in mediation_host_realization_program_text
+    assert "`J4E` is explicitly declined for the current closeout unless a later post-closeout review reopens a real truth gap" in mediation_host_realization_program_text
+    assert "`J4F` is now landed: workflow truth, phase-gate truth, correspondence truth, and branch truth are reconciled together on clean synced `main`." in mediation_host_realization_program_text
     assert "Minimum deterministic proof for each opened load-bearing stage:" in mediation_host_realization_program_text
     assert "Do not widen `J4` into branch/thrash mediation" in workstream_text
     assert "the first one-process live continuity slice plus explicit rejection enforcement are real" in program_text
@@ -969,7 +973,6 @@ def test_runtime_restack_program_lock_is_recorded() -> None:
     assert "later bounded runtime/product trains may still be explicitly opened" in master_plan_text
     assert "one bounded experimental seam is now justified" in master_plan_text
     assert "records the bounded K train as landed" in theory_text
-    assert "records `M2`, `J1`, `J2`, `J3`, and accepted `J4B` on `main`" in theory_text
     assert "mediation is justified for one bounded experimental seam" in theory_text
     assert "headless operator reruns still require `GEMINI_API_KEY` in the shell environment" in theory_text
     assert "old `plan`-mode path was a real confound" in theory_text
@@ -977,9 +980,9 @@ def test_runtime_restack_program_lock_is_recorded() -> None:
     assert "the operator/evaluation harness must not call explicit Gemini model names at all" in theory_text
     assert "fresh auto-only product-path rerun is sharper still" in theory_text
     assert "first full round-2 stable-defaults rerun now says the package is still `mixed_direction`" in theory_text
-    assert "docs/CORTEX_V2_ACTIVE_WORKSTREAM.md` now records the bounded K train as landed, records `N2` as blocked pending a capable machine, records `M2`, `J1`, `J2`, `J3`, and accepted `J4B` on `main`" in theory_text
-    assert "off-by-default reference mediation finalization, runtime-backed reference packet/comparator regeneration, and authority repair are now in progress on `codex/20260331-164221-mediation-s-tier-closeout`" in theory_text
-    assert "non-reference mediated artifacts remain evidence-only." in theory_text
+    assert "docs/CORTEX_V2_ACTIVE_WORKSTREAM.md` now records the bounded K train as landed, records `N2` as blocked pending a capable machine, records `M2`, `J1`, `J2`, `J3`, and the full bounded reference mediation closeout `J4B/J4C/J4D/J4F` on `main`" in theory_text
+    assert "keeps non-reference mediated artifacts evidence-only." in theory_text
+    assert "keeps non-reference mediated artifacts evidence-only." in theory_text
     assert "The clean synced `main` line now carries the provider-limit neutrality hardening, the OpenAI continuity transport fix, the Claude efficiency rerun, the first compact SRE modulator bundle, the landed M2 summary/memory/policy refinement, the landed J1 mediation evidence package baseline, and the landed J2 gap-closure evidence package." in theory_text
     assert "the landed J1 mediation evidence package baseline" in theory_text
     assert "mediation is now justified for one bounded experimental seam" in theory_text

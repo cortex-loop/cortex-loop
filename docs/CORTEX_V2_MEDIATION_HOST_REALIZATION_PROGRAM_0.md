@@ -254,14 +254,15 @@ This train does not authorize:
 - named-model routing,
 - or a generic weighted-soup finalizer over every family.
 
-## Current managed-session state after `J4D` candidate implementation
+## Current accepted state after `J4F` closeout
 
-On the current managed session branch:
+On clean synced `main`:
 
 - the first mediation train remains pinned as a reference-host host-realization slice,
 - `J4B` is now accepted baseline truth on `main`,
-- `J4C` is now implemented as an off-by-default reference finalizer with explicit `ReferenceMediationMode`, a tiny SRE-owned finalization surface, and nested mediation diagnostics under `control_ledger.allocation_diagnostics.mediation`,
+- `J4C` is now landed as an off-by-default reference finalizer with explicit `ReferenceMediationMode`, a tiny SRE-owned finalization surface, and nested mediation diagnostics under `control_ledger.allocation_diagnostics.mediation`,
 - the reference lifecycle surface now advertises bounded `mcp.query` affordance truth and the runtime derives the typed host opportunity set from lifecycle-visible data rather than tests,
 - `J4D` now replaces the old reference specialization helper fiction: the committed reference baseline and mediated packet examples plus the host-realization comparator are now generated from the real reference runtime path,
 - non-reference mediated artifacts remain evidence-only,
-- and `J4F` remains open until workflow truth, phase-gate truth, correspondence truth, and clean synced `main` branch truth are reconciled together.
+- `J4E` is explicitly declined for the current closeout unless a later post-closeout review reopens a real truth gap,
+- and `J4F` is now landed: workflow truth, phase-gate truth, correspondence truth, and branch truth are reconciled together on clean synced `main`.
