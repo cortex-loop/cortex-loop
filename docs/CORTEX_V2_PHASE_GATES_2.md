@@ -28,7 +28,7 @@ It records whether cross-seam closure conditions are actually earned.
 Source of truth:
 - `docs/CORTEX_V2_IMPLEMENTATION_MASTER_PLAN_2.md`, Section 7
 
-Overall status: `landed`
+Overall status: `partial`
 
 Historical note:
 - this gate previously drifted while only placeholder tests existed,
@@ -146,7 +146,7 @@ Source of truth:
 - `docs/CORTEX_V2_LIVE_VALIDATION_SCENARIO_CATALOG_0.md`
 - `docs/CORTEX_V2_LIVE_VALIDATION_VERDICT_0.md`
 
-Overall status: `partial`
+Overall status: `landed`
 
 These rows track live subscribed-host validation over the accepted runtime/product shells.
 They do not authorize runtime widening, CLI-backed transport substitution, tool-use expansion, or packet reinterpretation.
@@ -197,7 +197,7 @@ Source of truth:
 - `docs/CORTEX_V2_REFERENCE_LANE_PACKET_EXAMPLE_2.md`
 - `docs/CORTEX_V2_REFERENCE_MEDIATED_LANE_PACKET_EXAMPLE_0.md`
 
-Overall status: `partial`
+Overall status: `landed`
 
 These rows track the first bounded mediation implementation after `J3`.
 They do not authorize Core widening, AUX runtime widening, multi-host runtime rollout, or default-on mediation.
