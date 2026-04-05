@@ -523,6 +523,13 @@ def test_reference_runtime_program_lock_is_recorded() -> None:
     assert "`J3` mediation justification review" in phase_gate_text
     assert "one bounded experimental mediation seam" in phase_gate_text
     assert "## 9. Mediation implementation gate" in phase_gate_text
+    gate_9_match = re.search(
+        r"## 9\. Mediation implementation gate\n(?P<section>.*?)(?:\n## |\Z)",
+        phase_gate_text,
+        re.S,
+    )
+    assert gate_9_match is not None
+    assert "Overall status: `landed`" in gate_9_match.group("section")
     assert "`J4B` reference `seek-context` reachability slice" in phase_gate_text
     assert "`J4C` reference experimental host-realization finalizer" in phase_gate_text
     assert "`J4D` runtime-backed reference mediation evidence closure" in phase_gate_text
