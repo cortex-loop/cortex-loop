@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import re
+import subprocess
 from pathlib import Path
 
 
@@ -112,6 +113,16 @@ MEDIATION_JUSTIFICATION_NOTE_PATH = (
 
 def _read(path: Path) -> str:
     return path.read_text(encoding="utf-8")
+
+
+def _read_git_ref_text(ref: str, path: Path) -> str:
+    relative_path = path.relative_to(REPO_ROOT).as_posix()
+    return subprocess.check_output(
+        ["git", "show", f"{ref}:{relative_path}"],
+        cwd=REPO_ROOT,
+        text=True,
+        encoding="utf-8",
+    )
 
 
 def _extract_accepted_workflow_baseline(workstream_text: str) -> str:
@@ -783,6 +794,48 @@ def test_reference_runtime_program_lock_is_recorded() -> None:
     assert "Overall status: `landed` for the accepted OpenAI-only product scope" in phase_gate_text
     assert "| `L4` lifecycle-first payoff verdict | `docs/CORTEX_V2_LIVE_VALIDATION_VERDICT_0.md`; `make live-compare` | closed for the accepted OpenAI-only product scope; reopen only if product scope intentionally widens | landed |" in phase_gate_text
     assert "| `L6D` package-level service proof | `docs/CORTEX_V2_LIVE_SERVICE_PROOF_0.md`; `make live-compare` | closed for the accepted OpenAI-only product scope; reopen only if product scope intentionally widens | landed |" in phase_gate_text
+
+
+def test_accepted_openai_only_scope_claim_matches_main_line() -> None:
+    workstream_text = _read(ACTIVE_WORKSTREAM_PATH)
+    live_validation_program_text = _read(LIVE_VALIDATION_PROGRAM_PATH)
+    live_validation_verdict_text = _read(LIVE_VALIDATION_VERDICT_PATH)
+    service_proof_text = _read(LIVE_SERVICE_PROOF_PATH)
+    phase_gate_text = _read(PHASE_GATES_PATH)
+
+    main_workstream_text = _read_git_ref_text("main", ACTIVE_WORKSTREAM_PATH)
+    main_phase_gate_text = _read_git_ref_text("main", PHASE_GATES_PATH)
+    main_live_validation_scope_source = _read_git_ref_text(
+        "main", REPO_ROOT / "tools" / "live_validation_common.py"
+    )
+
+    accepted_scope_claim = (
+        "the accepted product/runtime claim is now explicitly OpenAI-only on the canonical direct-API lane"
+    )
+    accepted_program_scope_claim = (
+        "the accepted current product scope on the canonical direct-API lane is now OpenAI-only"
+    )
+    accepted_verdict_scope_claim = (
+        "the accepted current product scope on the canonical lane is now OpenAI-only"
+    )
+    landed_l4_row = (
+        "| `L4` lifecycle-first payoff verdict | `docs/CORTEX_V2_LIVE_VALIDATION_VERDICT_0.md`; `make live-compare` | closed for the accepted OpenAI-only product scope; reopen only if product scope intentionally widens | landed |"
+    )
+    landed_l6d_row = (
+        "| `L6D` package-level service proof | `docs/CORTEX_V2_LIVE_SERVICE_PROOF_0.md`; `make live-compare` | closed for the accepted OpenAI-only product scope; reopen only if product scope intentionally widens | landed |"
+    )
+
+    assert accepted_scope_claim in workstream_text
+    assert accepted_program_scope_claim in live_validation_program_text
+    assert accepted_verdict_scope_claim in live_validation_verdict_text
+    assert "accepted current product scope: `openai`" in service_proof_text
+    assert landed_l4_row in phase_gate_text
+    assert landed_l6d_row in phase_gate_text
+
+    assert accepted_scope_claim in main_workstream_text
+    assert '"provider_scope": ["openai"]' in main_live_validation_scope_source
+    assert landed_l4_row in main_phase_gate_text
+    assert landed_l6d_row in main_phase_gate_text
 
 
 def test_openai_host_control_revalidation_entry_points_are_recorded() -> None:
