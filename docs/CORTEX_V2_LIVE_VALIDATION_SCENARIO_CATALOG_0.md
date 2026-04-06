@@ -1,7 +1,7 @@
 # CORTEX_V2_LIVE_VALIDATION_SCENARIO_CATALOG_0
 
-Date: 2026-04-06
-Status: active live-validation scenario catalog with the shared canonical direct-API suite recorded for current scope
+Date: 2026-04-07
+Status: active live-validation scenario catalog with OpenAI-only canonical product scope and dormant Claude expansion plumbing
 
 ## Shared coding harness
 
@@ -23,7 +23,8 @@ Target task family:
   - operator/headless-CLI paired comparison
 - canonical-truth target:
   - `canonical_anchor` direct-API suite
-  - currently re-earned on OpenAI current scope and implemented for Claude once auth is ready
+  - currently re-earned on OpenAI-only product scope
+  - Claude retains the same path only as future host-expansion plumbing
   - return a unified diff patch only
   - apply the patch externally in the harness
   - run the target test externally in the harness
@@ -34,7 +35,8 @@ Target task family:
 - goal: prove whether the same lane can resume and finish cleanly after an explicit first-turn inspection
 - canonical-truth target:
   - `canonical_anchor` direct-API suite
-  - currently re-earned on OpenAI current scope and implemented for Claude once auth is ready
+  - currently re-earned on OpenAI-only product scope
+  - Claude retains the same path only as future host-expansion plumbing
   - turn 1 uses the automation continuity inspection prompt
   - turn 2 resumes after session import and returns a unified diff patch only
   - apply the patch externally in the harness and run the target test externally
@@ -48,7 +50,8 @@ Target task family:
   - no tests
 - canonical-truth law:
   - `canonical_anchor` keeps the API lane text-only and toolless
-  - OpenAI is the first re-earned current-scope host; Claude uses the same lane once auth is ready
+  - OpenAI is the current re-earned product host
+  - Claude retains the same lane only as future host-expansion plumbing
   - no edits and no tests are available on the runtime lane itself
   - truth is scored from the returned text plus explicit no-edit/no-test harness evidence
 
@@ -66,18 +69,19 @@ Target task family:
 ### Claude
 
 - operator watchlist lane exists now
-- service/API truth is blocked on missing auth on this machine
+- shared canonical-suite plumbing exists for a later host-expansion train
+- Claude is intentionally outside the current OpenAI-only product scope
 
 ### Gemini
 
 - operator watchlist lane exists now
 - current operator results remain the noisiest host-boundary watchlist line
-- service/API truth is blocked on missing auth on this machine
+- Gemini is intentionally outside current product scope and remains watchlist-only
 
 ### OpenAI
 
 - operator watchlist lane exists now
-- direct-API canonical truth is re-earned for current scope through the repeat-stable OpenAI `canonical_anchor` suite
+- direct-API canonical truth is re-earned for current OpenAI-only product scope through the repeat-stable OpenAI `canonical_anchor` suite
 
 ## Artifact policy
 

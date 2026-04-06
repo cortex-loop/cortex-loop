@@ -1,7 +1,7 @@
 # CORTEX_V2_LIVE_SERVICE_PROOF_0
 
-Date: 2026-04-06
-Status: active canonical-truth service-proof note with the first OpenAI anchor re-earned for current scope
+Date: 2026-04-07
+Status: active canonical-truth service-proof note with OpenAI-only product scope re-earned on the current line
 
 ## Purpose
 
@@ -41,7 +41,7 @@ Signed-in CLI sessions do **not** count as service-lane auth.
 
 ## Current local state
 
-Current local machine state on the accepted P1 line:
+Current local machine state on the accepted current line:
 
 - Claude automation auth: `missing`
 - Gemini automation auth: `missing`
@@ -57,7 +57,8 @@ Current local machine state on the accepted P1 line:
   - current probe surface only
 - `canonical_anchor`
   - `suite_role = canonical_truth_anchor`
-  - implemented for `claude` and `openai` in current scope
+  - accepted current product scope: `openai`
+  - dormant future host-expansion plumbing: `claude`
   - scenarios:
     - `pass_minimal`
     - `truth_gap`
@@ -72,8 +73,8 @@ Current local machine state on the accepted P1 line:
   - `pass_minimal`: positive three times
   - `truth_gap`: `truthful_incomplete` three times
   - `restart_continuity`: positive three times
-- the first canonical three-scenario API truth anchor is therefore re-earned for current OpenAI scope on this machine through three positive current-machine `canonical_anchor` cycles
-- Claude canonical truth remains blocked honestly on missing auth readiness
+- the first canonical three-scenario API truth anchor is therefore re-earned for current OpenAI-only product scope on this machine through three positive current-machine `canonical_anchor` cycles
+- Claude host-expansion proof remains blocked honestly on missing auth readiness, but it no longer blocks the current product scope
 - Gemini remains watchlist-only until its direct API/service lane is explicitly opened
 
 ## Reset law
@@ -84,9 +85,8 @@ Current local machine state on the accepted P1 line:
 
 ## Next lawful move
 
-On a capable machine:
-
-1. rerun `claude --suite canonical_anchor` if auth is ready
+1. open the bounded `X1` OpenAI-only runtime-compression train on clean `main`
+2. keep `claude` as future host-expansion plumbing only until a later explicit host-expansion train is opened
 3. keep `gemini` watchlist-only until direct API/service auth exists
 4. keep headless-CLI reruns downstream of canonical truth as watchlist-only diagnostics
 

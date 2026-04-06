@@ -31,16 +31,17 @@ It is workflow state only. It does not override the packet documents, implementa
     - `OPENAI_API_KEY`: ready
     - `ANTHROPIC_API_KEY`: missing
     - `GEMINI_API_KEY`: missing
-  - one current-machine API truth anchor is now re-earned for current scope on OpenAI
-  - the shared `canonical_anchor` direct-API suite is accepted for `claude` and `openai` in current scope
+  - the accepted product/runtime claim is now explicitly OpenAI-only on the canonical direct-API lane
+  - one current-machine API truth anchor is now re-earned for current OpenAI-only product scope
+  - the shared `canonical_anchor` direct-API suite remains implemented for `claude` and `openai`, but only `openai` is in the accepted current product scope
   - the strongest current Gemini recovery evidence remains branch-local and non-authoritative until re-earned under the reset contract
 
 ## 2. Current campaign and seam state
 
 - Current campaign: `P1 product-first reduction program`
 - Current working branch at ledger update: `main`
-- Current branch role: accepted resting line after the P1 closure train
-- Current candidate seam: `C1 Claude canonical API anchor on the shared direct-API suite`
+- Current branch role: accepted resting line after the S1 OpenAI-only scope narrowing seam
+- Current candidate seam: `X1 OpenAI-only product-runtime compression`
 - Current seam status:
   - A0 is now accepted on local `main`
   - the explicit `current|canonical_anchor` direct-API service suites are accepted on the current line
@@ -51,20 +52,21 @@ It is workflow state only. It does not override the packet documents, implementa
     - `pass_minimal`
     - `truth_gap` with `truthful_incomplete`
     - `restart_continuity`
+  - the accepted canonical provider scope is now `openai` only
   - compare/verdict logic now computes current-scope canonical truth from the declared `canonical_anchor` provider scope rather than every auth-ready provider
   - `python3 tools/live_compare.py` now reports:
     - `canonical runtime truth is re-earned for current scope`
     - `direct_api canonical truth is re-earned for current scope on openai`
-  - Claude canonical truth remains blocked honestly on missing direct API auth
-  - Gemini remains canonical-lane out of scope for the shared `canonical_anchor` harness and watchlist-only until its direct API lane is opened deliberately
+  - Claude canonical-suite plumbing remains implemented, but Claude is now outside the accepted current product scope and stays frozen as future host-expansion backlog
+  - Gemini remains canonical-lane out of scope and watchlist-only until its direct API lane is opened deliberately
   - headless-CLI operator evidence remains watchlist-only, with Gemini local-vs-accepted drift surfaced explicitly rather than promoted into runtime truth
 
 ## 3. Next lawful move
 
-- On a capable machine, rerun `claude` on `--suite canonical_anchor` once `ANTHROPIC_API_KEY` is intentionally ready.
-- After that bounded host step:
-  - keep `gemini` as watchlist-only until direct API/service auth exists
-  - do not begin X1 runtime compression before a second direct-API host is re-earned or package scope is explicitly narrowed
+- Open `X1` as an OpenAI-only product-runtime compression seam on clean `main`.
+- Keep `claude` and `gemini` as future host-expansion backlog only:
+  - `claude` retains dormant shared `canonical_anchor` plumbing for a later explicit host-expansion train
+  - `gemini` remains watchlist-only until direct API/service auth exists and a separate host-expansion train is opened
 - Do not treat branch-local Gemini CLI positives as accepted truth.
 
 ## 4. Explicitly blocked moves
@@ -77,7 +79,8 @@ It is workflow state only. It does not override the packet documents, implementa
 - Do not substitute more CLI cleverness for missing direct API/service auth.
 - Do not shell out from service transports to provider CLIs.
 - Do not treat current-machine auth absence as permission to fake service proof.
-- Do not begin runtime compression while only one direct-API host is re-earned.
+- Do not widen accepted current product scope beyond OpenAI without a separate host-expansion train.
+- Do not spend on Claude or Gemini service proof while the accepted product scope is intentionally OpenAI-only.
 - Do not silently promote `minimal` execution flavor from falsification tooling into a product default.
 - Do not add new control/accounting surfaces unless they change route choice, tool exposure, blockedness, or observable runtime outcome.
 - Do not let accepted watchlist fallback rows silently inflate canonical-looking package summaries.

@@ -253,6 +253,7 @@ def _next_corrective_seam(
     watchlist_drift_hosts = [
         provider
         for provider, payload in providers.items()
+        if provider in scoped_providers
         if payload.get("operator_lifecycle", {}).get("accepted_watchlist_drift_detected")
     ]
 
@@ -273,7 +274,7 @@ def _next_corrective_seam(
             "keep blocked providers watchlist-only until direct auth exists, and do not let CLI evidence promote or overturn canonical runtime truth"
         )
     return (
-        "continue expanding the canonical direct-API truth suite only through bounded runtime-confirmation seams; keep operator reruns as watchlist-only diagnostics"
+        "current product scope is already re-earned on the canonical direct-API lane; keep out-of-scope hosts on watchlist or future host-expansion seams, and open the bounded OpenAI-only runtime-compression train next"
     )
 
 

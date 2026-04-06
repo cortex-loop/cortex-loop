@@ -388,8 +388,8 @@ def test_resume_protocol_and_active_workstream_contract_exist() -> None:
     assert "Current branch role:" in workstream_text
     assert "Current campaign: `P1 product-first reduction program`" in workstream_text
     assert "Current working branch at ledger update: `main`" in workstream_text
-    assert "Current branch role: accepted resting line after the P1 closure train" in workstream_text
-    assert "Current candidate seam: `C1 Claude canonical API anchor on the shared direct-API suite`" in workstream_text
+    assert "Current branch role: accepted resting line after the S1 OpenAI-only scope narrowing seam" in workstream_text
+    assert "Current candidate seam: `X1 OpenAI-only product-runtime compression`" in workstream_text
     assert "A0 is now accepted on local `main`" in workstream_text
     assert "`service_api` is the canonical runtime truth lane" in workstream_text
     assert "`operator_cli` is a watchlist and exploratory-comparison lane" in workstream_text
@@ -397,9 +397,11 @@ def test_resume_protocol_and_active_workstream_contract_exist() -> None:
     assert "Gemini: unresolved watchlist signal" in workstream_text
     assert "OpenAI: positive watchlist signal" in workstream_text
     assert "review branches such as `review/gemini-cause-proof` remain evidence only and are not accepted runtime truth" in workstream_text
+    assert "the accepted product/runtime claim is now explicitly OpenAI-only on the canonical direct-API lane" in workstream_text
     assert "Do not treat signed-in provider CLI sessions as canonical runtime truth." in workstream_text
     assert "Do not let CLI-only positives promote accepted product/runtime claims." in workstream_text
     assert "Do not shell out from service transports to provider CLIs." in workstream_text
+    assert "Do not widen accepted current product scope beyond OpenAI without a separate host-expansion train." in workstream_text
     assert "git branch --show-current" in workstream_text
     assert "git status --short --untracked-files=all" in workstream_text
     assert "Never promote an uncommitted branch head or dirty worktree state to accepted baseline truth." in workstream_text
@@ -470,7 +472,7 @@ def test_reference_runtime_program_lock_is_recorded() -> None:
     assert "one active session per process is real for current scope" in phase_gate_text
 
     assert "Current campaign: `P1 product-first reduction program`" in workstream_text
-    assert "Current candidate seam: `C1 Claude canonical API anchor on the shared direct-API suite`" in workstream_text
+    assert "Current candidate seam: `X1 OpenAI-only product-runtime compression`" in workstream_text
     assert "`service_api` is the canonical runtime truth lane" in workstream_text
     assert "`operator_cli` is a watchlist and exploratory-comparison lane" in workstream_text
     assert "## 8. Mediation justification gate" in phase_gate_text
@@ -713,11 +715,12 @@ def test_reference_runtime_program_lock_is_recorded() -> None:
     assert "`L6C` OpenAI service live proof" in phase_gate_text
     assert "`L6D` package-level service proof" in phase_gate_text
     assert "These rows track the two-lane live-validation contract after the R1 reset." in phase_gate_text
+    assert "Claude and Gemini may remain blocked as future host-expansion backlog without blocking the current OpenAI-only product claim." in phase_gate_text
     assert "Claude currently contributes positive watchlist evidence on the headless-CLI lane" in phase_gate_text
     assert "Gemini remains the noisiest headless-CLI watchlist line" in phase_gate_text
     assert "the bounded `codex app-server` operator lane remains re-earned as watchlist-only lifecycle evidence" in phase_gate_text
     assert "OpenAI direct-API canonical truth is now re-earned for current scope on this machine" in phase_gate_text
-    assert "the shared `canonical_anchor` direct-API suite is implemented for Claude on the accepted line" in phase_gate_text
+    assert "the shared `canonical_anchor` direct-API suite remains implemented for Claude future host-expansion plumbing" in phase_gate_text
 
     assert "Status: accepted re-audited support brief for the G1 runtime/product restack train" in gemini_runtime_restack_text
     assert "Gemini-only" in gemini_runtime_restack_text
@@ -742,9 +745,10 @@ def test_reference_runtime_program_lock_is_recorded() -> None:
     assert "`service_api`" in live_validation_program_text
     assert "`operator_cli`" in live_validation_program_text
     assert "local-only under `.cortex/live_validation/`" in live_validation_program_text
+    assert "the accepted current product scope on the canonical direct-API lane is now OpenAI-only" in live_validation_program_text
     assert "the OpenAI direct-service lane is repeat-stably re-earned through three positive current-machine `canonical_anchor` cycles on the shared suite" in live_validation_program_text
-    assert "the Claude direct-service lane now shares that same canonical suite implementation but remains auth-blocked on this machine" in live_validation_program_text
-    assert "Status: active live-validation scenario catalog with the shared canonical direct-API suite recorded for current scope" in live_validation_scenario_catalog_text
+    assert "the Claude direct-service lane retains that same canonical suite implementation as future host-expansion plumbing" in live_validation_program_text
+    assert "Status: active live-validation scenario catalog with OpenAI-only canonical product scope and dormant Claude expansion plumbing" in live_validation_scenario_catalog_text
     assert "`pass_minimal`" in live_validation_scenario_catalog_text
     assert "`restart_continuity`" in live_validation_scenario_catalog_text
     assert "`truth_gap`" in live_validation_scenario_catalog_text
@@ -755,6 +759,7 @@ def test_reference_runtime_program_lock_is_recorded() -> None:
     assert "**canonical runtime truth is re-earned for current scope; operator truth remains watchlist-only**" in live_validation_verdict_text
     assert "`service_api`: `execution_surface = direct_api`, `evidence_role = canonical_truth`" in live_validation_verdict_text
     assert "`operator_cli`: `execution_surface = headless_cli`, `evidence_role = watchlist`" in live_validation_verdict_text
+    assert "the accepted current product scope on the canonical lane is now OpenAI-only" in live_validation_verdict_text
     assert "Current working branch at ledger update: `main`" in workstream_text
     assert "A0 is now accepted on local `main`" in workstream_text
     assert "three positive current-machine `canonical_anchor` cycles" in workstream_text
@@ -762,18 +767,22 @@ def test_reference_runtime_program_lock_is_recorded() -> None:
     assert "three positive current-machine `canonical_anchor` cycles" in live_validation_verdict_text
     assert "land the OpenAI current-scope canonical anchor" not in live_validation_verdict_text
     service_proof_text = _read(LIVE_SERVICE_PROOF_PATH)
-    assert "Status: active canonical-truth service-proof note with the first OpenAI anchor re-earned for current scope" in service_proof_text
+    assert "Status: active canonical-truth service-proof note with OpenAI-only product scope re-earned on the current line" in service_proof_text
     assert "`service_api` is the canonical runtime truth lane" in service_proof_text
     assert "`execution_surface = direct_api`" in service_proof_text
     assert "`evidence_role = canonical_truth`" in service_proof_text
     assert "Signed-in CLI sessions do **not** count as service-lane auth." in service_proof_text
     assert "Actual service proof belongs only on a machine that satisfies all of:" in service_proof_text
-    assert "the first canonical three-scenario API truth anchor is therefore re-earned for current OpenAI scope on this machine through three positive current-machine `canonical_anchor` cycles" in service_proof_text
-    assert "implemented for `claude` and `openai` in current scope" in service_proof_text
+    assert "the first canonical three-scenario API truth anchor is therefore re-earned for current OpenAI-only product scope on this machine through three positive current-machine `canonical_anchor` cycles" in service_proof_text
+    assert "accepted current product scope: `openai`" in service_proof_text
+    assert "dormant future host-expansion plumbing: `claude`" in service_proof_text
     assert "No future product/runtime claim may land from CLI-only proof." in service_proof_text
     assert "land this OpenAI current-scope anchor" not in service_proof_text
     phase_gate_text = _read(PHASE_GATES_PATH)
     assert "three positive current-machine `canonical_anchor` cycles" in phase_gate_text
+    assert "Overall status: `landed` for the accepted OpenAI-only product scope" in phase_gate_text
+    assert "| `L4` lifecycle-first payoff verdict | `docs/CORTEX_V2_LIVE_VALIDATION_VERDICT_0.md`; `make live-compare` | closed for the accepted OpenAI-only product scope; reopen only if product scope intentionally widens | landed |" in phase_gate_text
+    assert "| `L6D` package-level service proof | `docs/CORTEX_V2_LIVE_SERVICE_PROOF_0.md`; `make live-compare` | closed for the accepted OpenAI-only product scope; reopen only if product scope intentionally widens | landed |" in phase_gate_text
 
 
 def test_openai_host_control_revalidation_entry_points_are_recorded() -> None:

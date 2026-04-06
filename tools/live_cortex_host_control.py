@@ -268,7 +268,7 @@ def _capture_canonical_anchor_cycle(
                 suite_id=suite_id,
                 suite_role=suite_role,
                 cycle_index=cycle_index,
-                notes="`canonical_anchor` is implemented only for Claude and OpenAI in current scope.",
+                notes="`canonical_anchor` is implemented for OpenAI current product scope and retained for Claude future host-expansion plumbing.",
             )
             for scenario_id in scenario_ids
         ]

@@ -1,6 +1,6 @@
 # CORTEX_V2_LIVE_VALIDATION_PROGRAM_0
 
-Date: 2026-04-06
+Date: 2026-04-07
 Status: active live-validation program under the R1 two-lane truth reset
 
 ## Purpose
@@ -47,12 +47,12 @@ Shared scenarios:
 Current reality:
 
 - the operator/watchlist lane already uses the shared coding harness
-- the OpenAI and Claude direct-service lanes now share the `canonical_anchor` suite implementation
+- the accepted current product scope on the canonical direct-API lane is now OpenAI-only
 - the OpenAI direct-service lane is repeat-stably re-earned through three positive current-machine `canonical_anchor` cycles on the shared suite for:
   - `pass_minimal`
   - `truth_gap`
   - `restart_continuity`
-- the Claude direct-service lane now shares that same canonical suite implementation but remains auth-blocked on this machine
+- the Claude direct-service lane retains that same canonical suite implementation as future host-expansion plumbing, but it is intentionally outside the current product scope
 - Gemini remains watchlist-only until its direct API lane is explicitly opened
 
 ## Closeout law
@@ -68,6 +68,6 @@ This program is only honestly closed when all are true:
 
 ## Next lawful move
 
-1. rerun `claude --suite canonical_anchor` if auth is ready on that machine
-3. keep operator/CLI reruns as watchlist evidence and drift detection while `claude` and `gemini` remain unearned on the API lane
-4. do not begin runtime compression before a second direct-API host is re-earned or package scope is explicitly narrowed
+1. open the bounded `X1` OpenAI-only runtime-compression train on clean `main`
+2. keep operator/CLI reruns as watchlist evidence and drift detection only
+3. keep `claude` and `gemini` outside the current product scope until a later host-expansion train is intentionally opened
