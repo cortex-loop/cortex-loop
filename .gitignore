@@ -4,3 +4,6 @@ __pycache__/
 .coverage.*
 .cortex/live_validation/
 .claude/worktrees/
+.env
+.env.*
+!.env.example
