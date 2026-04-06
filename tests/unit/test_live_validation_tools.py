@@ -239,6 +239,18 @@ def test_build_scenario_catalog_exposes_l2_harness_contract() -> None:
     assert MODEL_MATRIX["gemini"]["operator"].fallback is None
 
 
+def test_openai_automation_service_model_split_uses_mini_for_smoke_only() -> None:
+    assert live_host_control._service_model_for_scenario("openai", "service_smoke") == "gpt-5.4-mini"
+    assert (
+        live_host_control._service_model_for_scenario("openai", "service_restart_continuity")
+        == MODEL_MATRIX["openai"]["automation"].preferred
+    )
+    assert (
+        live_host_control._service_model_for_scenario("claude", "service_smoke")
+        == MODEL_MATRIX["claude"]["automation"].preferred
+    )
+
+
 def test_gemini_model_ladder_and_choose_model_stay_auto_only() -> None:
     assert model_ladder("gemini", "operator") == GEMINI_OPERATOR_FULL_LADDER
     assert model_ladder("gemini", "operator", auto_supported=False) == ("auto",)

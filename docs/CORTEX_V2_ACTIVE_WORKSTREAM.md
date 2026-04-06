@@ -48,6 +48,7 @@ It is workflow state only. It does not override the packet documents, implementa
   - the operator-payoff support note/tooling is now demoted to historical/watchlist diagnostic status only
   - Section 7 live-validation phase-gate rows are now rebased to the two-lane truth contract rather than the older operator-first framing
   - deterministic closure checks and repeated current-machine reruns now agree on the same canonical-blocked/watchlist-only interpretation
+  - the OpenAI automation probe now keeps `gpt-5.4` as the stronger continuity model while using `gpt-5.4-mini` for the cheaper `service_smoke` probe
 
 ## 3. Next lawful move
 

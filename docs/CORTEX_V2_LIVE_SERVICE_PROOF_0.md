@@ -53,6 +53,9 @@ Current local machine state at the R1 reset:
 - the current direct-service proof tool still only covers:
   - `service_smoke`
   - `service_restart_continuity`
+- current OpenAI service-probe model policy:
+  - `service_smoke` may use `gpt-5.4-mini` as the cheaper direct-API probe
+  - `service_restart_continuity` stays on `gpt-5.4` as the stronger current canonical continuity probe
 - the first canonical three-scenario API truth anchor remains a later bounded seam:
   - `pass_minimal`
   - `truth_gap`

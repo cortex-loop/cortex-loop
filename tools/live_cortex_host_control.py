@@ -102,16 +102,17 @@ def _capture_provider(provider: str) -> dict[str, Any]:
     root = provider_root(provider, "automation", "service")
     readiness = automation_auth_readiness(provider)
     auth_mode = readiness["auth_mode"]
-    model = MODEL_MATRIX[provider]["automation"].preferred
+    smoke_model = _service_model_for_scenario(provider, "service_smoke")
+    continuity_model = _service_model_for_scenario(provider, "service_restart_continuity")
     if readiness["status"] != "ready":
         runs = [
-            _blocked_service_run(provider, auth_mode=auth_mode, model=model, root=root, scenario_id="service_smoke", readiness=readiness),
-            _blocked_service_run(provider, auth_mode=auth_mode, model=model, root=root, scenario_id="service_restart_continuity", readiness=readiness),
+            _blocked_service_run(provider, auth_mode=auth_mode, model=smoke_model, root=root, scenario_id="service_smoke", readiness=readiness),
+            _blocked_service_run(provider, auth_mode=auth_mode, model=continuity_model, root=root, scenario_id="service_restart_continuity", readiness=readiness),
         ]
     else:
         runs = [
-            _run_single_live_call(provider, auth_mode=auth_mode, model=model, root=root),
-            _run_continuity_capture(provider, auth_mode=auth_mode, model=model, root=root),
+            _run_single_live_call(provider, auth_mode=auth_mode, model=smoke_model, root=root),
+            _run_continuity_capture(provider, auth_mode=auth_mode, model=continuity_model, root=root),
         ]
     summary = {
         "generated_at": now_utc_iso(),
@@ -123,6 +124,12 @@ def _capture_provider(provider: str) -> dict[str, Any]:
     }
     write_json(root / "service_runs.json", summary)
     return summary
+
+
+def _service_model_for_scenario(provider: str, scenario_id: str) -> str:
+    if provider == "openai" and scenario_id == "service_smoke":
+        return "gpt-5.4-mini"
+    return MODEL_MATRIX[provider]["automation"].preferred
 
 
 def _blocked_service_run(
