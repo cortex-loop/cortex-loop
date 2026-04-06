@@ -1,7 +1,7 @@
 # CORTEX_V2_LIVE_VALIDATION_SCENARIO_CATALOG_0
 
 Date: 2026-04-06
-Status: active live-validation scenario catalog with the OpenAI canonical anchor recorded for current scope
+Status: active live-validation scenario catalog with the shared canonical direct-API suite recorded for current scope
 
 ## Shared coding harness
 
@@ -22,7 +22,8 @@ Target task family:
 - watchlist use:
   - operator/headless-CLI paired comparison
 - canonical-truth target:
-  - OpenAI `canonical_anchor` direct-API suite
+  - `canonical_anchor` direct-API suite
+  - currently re-earned on OpenAI current scope and implemented for Claude once auth is ready
   - return a unified diff patch only
   - apply the patch externally in the harness
   - run the target test externally in the harness
@@ -32,7 +33,8 @@ Target task family:
 
 - goal: prove whether the same lane can resume and finish cleanly after an explicit first-turn inspection
 - canonical-truth target:
-  - OpenAI `canonical_anchor` direct-API suite
+  - `canonical_anchor` direct-API suite
+  - currently re-earned on OpenAI current scope and implemented for Claude once auth is ready
   - turn 1 uses the automation continuity inspection prompt
   - turn 2 resumes after session import and returns a unified diff patch only
   - apply the patch externally in the harness and run the target test externally
@@ -45,7 +47,8 @@ Target task family:
   - no edits
   - no tests
 - canonical-truth law:
-  - OpenAI `canonical_anchor` keeps the API lane text-only and toolless
+  - `canonical_anchor` keeps the API lane text-only and toolless
+  - OpenAI is the first re-earned current-scope host; Claude uses the same lane once auth is ready
   - no edits and no tests are available on the runtime lane itself
   - truth is scored from the returned text plus explicit no-edit/no-test harness evidence
 

@@ -71,6 +71,8 @@ SERVICE_SUITES = {
     },
 }
 
+_CANONICAL_ANCHOR_PROVIDERS = frozenset({"claude", "openai"})
+
 SMOKE_PROMPT = "Respond exactly with OK."
 _PATCH_TARGET = "src/normalize_port.py"
 _WORKSPACE_CONTEXT_FILES = (
@@ -254,7 +256,7 @@ def _capture_canonical_anchor_cycle(
     suite_role = SERVICE_SUITES[suite_id]["suite_role"]
     scenario_ids = SERVICE_SUITES[suite_id]["scenario_ids"]
 
-    if provider != "openai":
+    if provider not in _CANONICAL_ANCHOR_PROVIDERS:
         runs = [
             _blocked_service_run(
                 provider,
@@ -266,7 +268,7 @@ def _capture_canonical_anchor_cycle(
                 suite_id=suite_id,
                 suite_role=suite_role,
                 cycle_index=cycle_index,
-                notes="`canonical_anchor` is implemented only for OpenAI in this train.",
+                notes="`canonical_anchor` is implemented only for Claude and OpenAI in current scope.",
             )
             for scenario_id in scenario_ids
         ]

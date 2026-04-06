@@ -19,6 +19,7 @@ Reason:
   - `pass_minimal`
   - `truth_gap`
   - `restart_continuity`
+- Claude now shares the same canonical suite implementation, but its direct-API lane remains blocked on missing auth on this machine
 - so one host is now re-earned on the canonical runtime lane for current scope on this machine
 - operator/headless-CLI evidence remains useful, but it is no longer allowed to stand in for canonical runtime truth by itself
 
@@ -54,6 +55,7 @@ It does not yet make the broader package sufficient for cross-host canonical run
 ### Claude
 
 - operator watchlist signal is net positive
+- the shared `canonical_anchor` direct-API path is now implemented for Claude
 - service/API truth remains blocked on missing `ANTHROPIC_API_KEY`
 
 ### Gemini
@@ -70,8 +72,9 @@ It does not yet make the broader package sufficient for cross-host canonical run
 
 ## Next lawful move
 
-1. land the OpenAI current-scope canonical anchor on the accepted line
-2. add `claude` if auth is ready on that machine
+1. land the OpenAI current-scope canonical anchor plus Claude canonical-suite parity on the accepted line
+2. rerun `claude --suite canonical_anchor` if auth is ready on that machine
 3. keep Gemini watchlist-only until direct API/service auth exists
+4. do not begin runtime compression before a second direct-API host is re-earned or package scope is explicitly narrowed
 
 Do not reopen mediation, AUX runtime, memory/runtime learning, or broad control-law expansion before that.

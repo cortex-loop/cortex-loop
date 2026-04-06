@@ -920,7 +920,7 @@ def build_scenario_catalog() -> dict[str, Any]:
             },
             "canonical_anchor": {
                 "suite_role": "canonical_truth_anchor",
-                "provider_scope": ["openai"],
+                "provider_scope": ["claude", "openai"],
                 "scenarios": ["pass_minimal", "truth_gap", "restart_continuity"],
             },
         },

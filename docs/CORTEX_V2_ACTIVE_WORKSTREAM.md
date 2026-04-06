@@ -27,8 +27,8 @@ It is workflow state only. It does not override the packet documents, implementa
     - OpenAI: positive watchlist signal
   - signed-in CLI/operator results remain useful for host watchlisting, packaging/confound detection, and falsification work
   - CLI/operator results alone do not earn canonical runtime truth
-  - current machine service auth remains blocked:
-    - `OPENAI_API_KEY`: missing
+  - current machine service auth now reads:
+    - `OPENAI_API_KEY`: ready
     - `ANTHROPIC_API_KEY`: missing
     - `GEMINI_API_KEY`: missing
   - no current-machine API truth anchor is yet re-earned
@@ -36,32 +36,35 @@ It is workflow state only. It does not override the packet documents, implementa
 
 ## 2. Current campaign and seam state
 
-- Current campaign: `OA1 OpenAI canonical API truth anchor`
-- Current working branch at ledger update: `review/oa1-openai-canonical-anchor`
+- Current campaign: `P1 product-first reduction program`
+- Current working branch at ledger update: `review/p1-product-first-reduction`
 - Current branch role: explicit manual/review branch because local `main` is ahead of `origin/main`; accepted baseline truth remains the clean local `main` line
-- Current candidate seam: `OA1 OpenAI canonical direct-API truth anchor`
+- Current candidate seam: `A0 OpenAI anchor acceptance plus C1 Claude canonical-suite parity`
 - Current seam status:
   - the R1 reset closure remains the accepted baseline on local `main`
-  - this review branch adds explicit `current|canonical_anchor` service suites to the OpenAI automation lane
+  - this review branch carries the explicit `current|canonical_anchor` service suites on the direct-API automation lane
   - the OpenAI service spend split is now explicit:
     - `service_smoke` uses `gpt-5.4-mini`
     - `canonical_anchor` scenarios use `gpt-5.4`
-  - the OpenAI direct-API `canonical_anchor` suite is now repeat-stably positive on the current machine:
-    - `pass_minimal` twice
-    - `truth_gap` twice with `truthful_incomplete`
-    - `restart_continuity` twice
+  - the OpenAI direct-API `canonical_anchor` suite is now repeat-stably positive on the current machine and was rechecked again on this branch:
+    - `pass_minimal` three times
+    - `truth_gap` three times with `truthful_incomplete`
+    - `restart_continuity` three times
+  - the shared `canonical_anchor` harness is now implemented for `claude` and `openai` in current scope
   - `python3 tools/live_compare.py` now reports:
     - `canonical runtime truth is re-earned for current scope`
     - `direct_api canonical truth is re-earned for current scope on openai`
-  - Claude and Gemini remain canonical-lane blocked on missing direct API auth
+  - Claude canonical truth remains blocked honestly on missing direct API auth
+  - Gemini remains canonical-lane out of scope for the shared `canonical_anchor` harness and watchlist-only until its direct API lane is opened deliberately
   - headless-CLI operator evidence remains watchlist-only, with Gemini local-vs-accepted drift surfaced explicitly rather than promoted into runtime truth
 
 ## 3. Next lawful move
 
-- Finalize and manually reconcile this review branch so the OpenAI canonical anchor becomes the new local accepted line.
+- Finalize and manually reconcile this review branch so the OpenAI current-scope canonical anchor and Claude canonical-suite parity become the new local accepted line.
 - After that closure lands, the next bounded runtime move is:
-  - add `claude` as the second canonical direct-API host if auth is ready
+  - rerun `claude` on `--suite canonical_anchor` once `ANTHROPIC_API_KEY` is intentionally ready
   - keep `gemini` as watchlist-only until direct API/service auth exists
+  - do not begin X1 runtime compression before a second direct-API host is re-earned or package scope is explicitly narrowed
 - Do not treat branch-local Gemini CLI positives as accepted truth.
 
 ## 4. Explicitly blocked moves
@@ -74,6 +77,7 @@ It is workflow state only. It does not override the packet documents, implementa
 - Do not substitute more CLI cleverness for missing direct API/service auth.
 - Do not shell out from service transports to provider CLIs.
 - Do not treat current-machine auth absence as permission to fake service proof.
+- Do not begin runtime compression while only one direct-API host is re-earned.
 - Do not silently promote `minimal` execution flavor from falsification tooling into a product default.
 - Do not add new control/accounting surfaces unless they change route choice, tool exposure, blockedness, or observable runtime outcome.
 - Do not let accepted watchlist fallback rows silently inflate canonical-looking package summaries.

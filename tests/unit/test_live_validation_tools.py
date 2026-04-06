@@ -269,7 +269,10 @@ def test_build_scenario_catalog_exposes_l2_harness_contract() -> None:
         "service_smoke",
         "service_restart_continuity",
     ]
-    assert catalog["automation_service_suites"]["canonical_anchor"]["provider_scope"] == ["openai"]
+    assert catalog["automation_service_suites"]["canonical_anchor"]["provider_scope"] == [
+        "claude",
+        "openai",
+    ]
     assert catalog["host_caveats"]["claude"] == "host_caveat_operator_claude.md"
     assert catalog["host_caveats"]["openai"] == "host_caveat_operator_openai_app_server.md"
     assert catalog["openai_operator_surfaces"]["smoke"] == "codex exec"
@@ -1176,15 +1179,17 @@ def test_single_live_service_call_records_export_and_warning_timing(monkeypatch)
     assert payload["export_path"].endswith("current__cycle_001__service_smoke.export.json")
 
 
-def test_canonical_anchor_is_openai_only(monkeypatch, tmp_path: Path) -> None:
+def test_claude_canonical_anchor_blocks_truthfully_when_auth_is_missing(
+    monkeypatch, tmp_path: Path
+) -> None:
     monkeypatch.setattr(
         live_host_control,
         "automation_auth_readiness",
         lambda provider: {
             "auth_mode": "api_key",
-            "status": "ready",
+            "status": "missing",
             "spend_approved": True,
-            "api_key_present": True,
+            "api_key_present": False,
         },
     )
     monkeypatch.setattr(
@@ -1194,6 +1199,32 @@ def test_canonical_anchor_is_openai_only(monkeypatch, tmp_path: Path) -> None:
     )
 
     payload = live_host_control._capture_provider("claude", suite_id="canonical_anchor")
+
+    assert payload["suite_id"] == "canonical_anchor"
+    assert payload["cycle_count"] == 1
+    assert payload["latest_cycle_status"] == "blocked"
+    assert payload["latest_failure_classes"] == ["auth_missing"]
+
+
+def test_gemini_canonical_anchor_remains_mis_scoped(monkeypatch, tmp_path: Path) -> None:
+    monkeypatch.setattr(
+        live_host_control,
+        "automation_auth_readiness",
+        lambda provider: {
+            "auth_mode": "vertex_adc",
+            "status": "ready",
+            "spend_approved": True,
+            "api_key_present": False,
+            "vertex_adc_available": True,
+        },
+    )
+    monkeypatch.setattr(
+        live_host_control,
+        "provider_root",
+        lambda provider, lane, surface: tmp_path / lane / provider / surface,
+    )
+
+    payload = live_host_control._capture_provider("gemini", suite_id="canonical_anchor")
 
     assert payload["suite_id"] == "canonical_anchor"
     assert payload["cycle_count"] == 1

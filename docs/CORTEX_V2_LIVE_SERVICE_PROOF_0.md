@@ -41,7 +41,7 @@ Signed-in CLI sessions do **not** count as service-lane auth.
 
 ## Current local state
 
-Current local machine state on the OA1 branch:
+Current local machine state on the P1 branch:
 
 - Claude automation auth: `missing`
 - Gemini automation auth: `missing`
@@ -57,7 +57,7 @@ Current local machine state on the OA1 branch:
   - current probe surface only
 - `canonical_anchor`
   - `suite_role = canonical_truth_anchor`
-  - implemented for `openai` only in current scope
+  - implemented for `claude` and `openai` in current scope
   - scenarios:
     - `pass_minimal`
     - `truth_gap`
@@ -72,7 +72,8 @@ Current local machine state on the OA1 branch:
   - `truth_gap`: `truthful_incomplete` twice
   - `restart_continuity`: positive twice
 - the first canonical three-scenario API truth anchor is therefore re-earned for current OpenAI scope on this machine
-- Claude and Gemini remain blocked honestly on missing auth readiness
+- Claude canonical truth remains blocked honestly on missing auth readiness
+- Gemini remains watchlist-only until its direct API/service lane is explicitly opened
 
 ## Reset law
 
@@ -84,8 +85,8 @@ Current local machine state on the OA1 branch:
 
 On a capable machine:
 
-1. land this OpenAI current-scope anchor on the accepted line
-2. add `claude` if auth is ready
+1. land this OpenAI current-scope anchor plus Claude canonical-suite parity on the accepted line
+2. rerun `claude --suite canonical_anchor` if auth is ready
 3. keep `gemini` watchlist-only until direct API/service auth exists
 4. keep headless-CLI reruns downstream of canonical truth as watchlist-only diagnostics
 

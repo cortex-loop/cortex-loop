@@ -386,10 +386,10 @@ def test_resume_protocol_and_active_workstream_contract_exist() -> None:
     assert "Current campaign:" in workstream_text
     assert "Current working branch at ledger update:" in workstream_text
     assert "Current branch role:" in workstream_text
-    assert "Current campaign: `OA1 OpenAI canonical API truth anchor`" in workstream_text
-    assert "Current working branch at ledger update: `review/oa1-openai-canonical-anchor`" in workstream_text
+    assert "Current campaign: `P1 product-first reduction program`" in workstream_text
+    assert "Current working branch at ledger update: `review/p1-product-first-reduction`" in workstream_text
     assert "Current branch role: explicit manual/review branch because local `main` is ahead of `origin/main`; accepted baseline truth remains the clean local `main` line" in workstream_text
-    assert "Current candidate seam: `OA1 OpenAI canonical direct-API truth anchor`" in workstream_text
+    assert "Current candidate seam: `A0 OpenAI anchor acceptance plus C1 Claude canonical-suite parity`" in workstream_text
     assert "`service_api` is the canonical runtime truth lane" in workstream_text
     assert "`operator_cli` is a watchlist and exploratory-comparison lane" in workstream_text
     assert "Claude: positive watchlist signal" in workstream_text
@@ -468,8 +468,8 @@ def test_reference_runtime_program_lock_is_recorded() -> None:
     assert "loopback-only HTTP is landed on the accepted K1 closeout line" in phase_gate_text
     assert "one active session per process is real for current scope" in phase_gate_text
 
-    assert "Current campaign: `OA1 OpenAI canonical API truth anchor`" in workstream_text
-    assert "Current candidate seam: `OA1 OpenAI canonical direct-API truth anchor`" in workstream_text
+    assert "Current campaign: `P1 product-first reduction program`" in workstream_text
+    assert "Current candidate seam: `A0 OpenAI anchor acceptance plus C1 Claude canonical-suite parity`" in workstream_text
     assert "`service_api` is the canonical runtime truth lane" in workstream_text
     assert "`operator_cli` is a watchlist and exploratory-comparison lane" in workstream_text
     assert "## 8. Mediation justification gate" in phase_gate_text
@@ -716,7 +716,7 @@ def test_reference_runtime_program_lock_is_recorded() -> None:
     assert "Gemini remains the noisiest headless-CLI watchlist line" in phase_gate_text
     assert "the bounded `codex app-server` operator lane remains re-earned as watchlist-only lifecycle evidence" in phase_gate_text
     assert "OpenAI direct-API canonical truth is now re-earned for current scope on this machine" in phase_gate_text
-    assert "cross-host runtime payoff remains partial because Claude and Gemini are still unearned on the canonical lane" in phase_gate_text
+    assert "Claude now shares the same canonical suite implementation but remains auth-blocked" in phase_gate_text
 
     assert "Status: accepted re-audited support brief for the G1 runtime/product restack train" in gemini_runtime_restack_text
     assert "Gemini-only" in gemini_runtime_restack_text
@@ -741,8 +741,9 @@ def test_reference_runtime_program_lock_is_recorded() -> None:
     assert "`service_api`" in live_validation_program_text
     assert "`operator_cli`" in live_validation_program_text
     assert "local-only under `.cortex/live_validation/`" in live_validation_program_text
-    assert "the OpenAI direct-API canonical anchor is repeat-stably re-earned on the current machine" in live_validation_program_text
-    assert "Status: active live-validation scenario catalog with the OpenAI canonical anchor recorded for current scope" in live_validation_scenario_catalog_text
+    assert "the OpenAI direct-service lane is repeat-stably re-earned through the shared `canonical_anchor` suite on the current machine" in live_validation_program_text
+    assert "the Claude direct-service lane now shares that same canonical suite implementation but remains auth-blocked on this machine" in live_validation_program_text
+    assert "Status: active live-validation scenario catalog with the shared canonical direct-API suite recorded for current scope" in live_validation_scenario_catalog_text
     assert "`pass_minimal`" in live_validation_scenario_catalog_text
     assert "`restart_continuity`" in live_validation_scenario_catalog_text
     assert "`truth_gap`" in live_validation_scenario_catalog_text
@@ -761,6 +762,7 @@ def test_reference_runtime_program_lock_is_recorded() -> None:
     assert "Signed-in CLI sessions do **not** count as service-lane auth." in service_proof_text
     assert "Actual service proof belongs only on a machine that satisfies all of:" in service_proof_text
     assert "the first canonical three-scenario API truth anchor is therefore re-earned for current OpenAI scope on this machine" in service_proof_text
+    assert "implemented for `claude` and `openai` in current scope" in service_proof_text
     assert "No future product/runtime claim may land from CLI-only proof." in service_proof_text
 
 
@@ -812,6 +814,7 @@ def test_openai_host_control_revalidation_entry_points_are_recorded() -> None:
     assert "make live-cortex-host-control" in local_verification_text
     assert "python3 tools/live_cortex_host_control.py --lane automation --provider openai --suite current" in local_verification_text
     assert "python3 tools/live_cortex_host_control.py --lane automation --provider openai --suite canonical_anchor" in local_verification_text
+    assert "python3 tools/live_cortex_host_control.py --lane automation --provider claude --suite canonical_anchor" in local_verification_text
     assert "compare and retained watchlist support surfaces preserve accepted watchlist context explicitly" in local_verification_text
     assert "## Live comparison and verdict" in local_verification_text
     assert "make live-compare" in local_verification_text
