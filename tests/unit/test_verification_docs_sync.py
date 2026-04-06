@@ -401,7 +401,7 @@ def test_resume_protocol_and_active_workstream_contract_exist() -> None:
     assert "Current working branch at ledger update: `main`" in workstream_text
     assert "Current branch role: accepted resting line after the X1 OpenAI-only product-runtime compression seam" in workstream_text
     assert "Current candidate seam: `X2 OpenAI-only support/eval compression`" in workstream_text
-    assert "A0 is now accepted on local `main`" in workstream_text
+    assert "A0, P1C, S1, S1C, and X1 are now accepted on local `main`" in workstream_text
     assert "`service_api` is the canonical runtime truth lane" in workstream_text
     assert "`operator_cli` is a watchlist and exploratory-comparison lane" in workstream_text
     assert "Claude: positive watchlist signal" in workstream_text
@@ -470,9 +470,10 @@ def test_reference_runtime_program_lock_is_recorded() -> None:
     assert "`C1` reference bounded cross-process continuation slice" in phase_gate_text
     assert "explicit persisted `continuity_truth` plus bounded `control_residue` are landed on the accepted K1 closeout line, implemented at K1 proof head `d4c311f` and cleanly closed at deterministic closeout head `79b8f39`" in phase_gate_text
     assert "`O1` OpenAI documented host-event runtime shell" in phase_gate_text
-    assert "raw documented host events drive a host-specific CLI shell" in phase_gate_text
+    assert "raw documented host events now drive the compressed OpenAI-only product shell" in phase_gate_text
     assert "canonical Cortex event names are explicitly rejected" in phase_gate_text
-    assert "diagnostic-history non-equivalence" in phase_gate_text
+    assert "undocumented host events remain explicit conservative warnings" in phase_gate_text
+    assert "the OpenAI path no longer transits reference-soft-control selection or allocation diagnostics" in phase_gate_text
     assert "| closed | landed |" in phase_gate_text
     assert "landed on the accepted K1 closeout line, implemented at K1 proof head `d4c311f`" in phase_gate_text
     assert "`O2` OpenAI raw-transcript ingress shell" in phase_gate_text
@@ -776,7 +777,7 @@ def test_reference_runtime_program_lock_is_recorded() -> None:
     assert "`operator_cli`: `execution_surface = headless_cli`, `evidence_role = watchlist`" in live_validation_verdict_text
     assert "the accepted current product scope on the canonical lane is now OpenAI-only" in live_validation_verdict_text
     assert "Current working branch at ledger update: `main`" in workstream_text
-    assert "A0 is now accepted on local `main`" in workstream_text
+    assert "A0, P1C, S1, S1C, and X1 are now accepted on local `main`" in workstream_text
     assert "X1 are now accepted on local `main`" in workstream_text
     assert "Current candidate seam: `X2 OpenAI-only support/eval compression`" in workstream_text
     assert "three positive current-machine `canonical_anchor` cycles" in workstream_text
@@ -891,7 +892,7 @@ def test_accepted_x1_openai_runtime_compression_claim_matches_main_line() -> Non
     assert landed_o4_detail in phase_gate_text
 
     assert accepted_x1_workstream_claim in main_workstream_text
-    assert 'artifact_kind = "openai_product_journal"' in main_openai_session_io_text
+    assert '_ARTIFACT_KIND = "openai_product_journal"' in main_openai_session_io_text
     assert '"decision",' in main_openai_cli_text
     assert '"journal",' in main_openai_cli_text
     assert landed_o1_row in main_phase_gate_text
