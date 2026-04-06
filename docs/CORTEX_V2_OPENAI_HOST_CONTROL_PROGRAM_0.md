@@ -145,14 +145,10 @@ Undocumented-event law:
 
 For the same ordered outbound action calls and the same returned host-event stream, `O4` equivalence means:
 
-- same per-event `selected_family`
-- same per-event `realized_family`
+- same ordered current-line `O1` records with exact `decision + journal` projection
 - same per-event `warnings`
 - same per-event `commitment_result_kind`
-- same per-event `feedback_window_summary`
-- same final persisted artifact with exact `continuity_truth` and `control_residue`
-
-Exact replay of one-process diagnostic `budget_history` and `brake_history` remains out of scope for cross-process equivalence.
+- same final persisted artifact with exact `openai_product_journal` v1 truth
 
 ## Program order
 
@@ -174,12 +170,12 @@ Every seam must end on a clean tree before the next opens.
 - the request boundary is strict-whitelist and text-only
 - the outbound transport is stdlib-only and host-specific
 - returned upstream host events re-enter through accepted `O2` parsing and accepted `O1` runtime composition
-- export/import continuity preserves exact `continuity_truth` plus bounded `control_residue`
+- export/import continuity preserves exact `openai_product_journal` v1 truth
 - targeted tests pass twice
 - `make seam-preflight`, `make revalidate-openai-host-control`, `make revalidate-openai-service`, `make test-smoke`, and `make verify` pass
 - and the `O4` phase-gate row is updated truthfully
 
-## Current accepted state after K2 closeout
+## Historical accepted state before X1 compression
 
 On the accepted K2 host-control closeout line implemented at K2 proof head `5ed9549` and truthfully closed at deterministic closeout head `9ed7dae` on branch `codex/k2-openai-host-control`:
 
@@ -189,6 +185,15 @@ On the accepted K2 host-control closeout line implemented at K2 proof head `5ed9
 - returned host events now re-enter the accepted `O2` parser and accepted `O1` runtime shell directly
 - `make revalidate-openai-host-control` now exists as the repo-local K2 revalidation entry point
 - and targeted direct reruns, repeated repo-local revalidation, `make test-smoke`, and `make verify` all passed on the accepted K2 line
+
+## Current accepted state after X1 compression
+
+On the accepted X1 line:
+
+- `run_openai_host_control()` still re-enters the accepted `O2` parser and compressed `O1` runtime shell directly,
+- `OpenAIHostControlResult.records` now carry the exact compact `decision + journal` projection,
+- export/import continuity across outbound actions now preserves `openai_product_journal` v1 only,
+- and the older allocation/feedback story survives only as historical/reference evidence rather than the accepted OpenAI-only product runtime.
 
 ## Explicitly blocked moves
 

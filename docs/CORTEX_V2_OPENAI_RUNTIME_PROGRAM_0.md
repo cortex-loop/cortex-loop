@@ -1,7 +1,7 @@
 # CORTEX_V2_OPENAI_RUNTIME_PROGRAM_0
 
 Date: 2026-03-26
-Status: accepted re-audited runtime-program brief for the first OpenAI documented host-event runtime shell
+Status: accepted re-audited runtime-program brief for the compressed OpenAI-only documented host-event product shell
 
 ## Purpose
 
@@ -50,14 +50,14 @@ This program remains:
 - packet-subordinate,
 - and ingress-only.
 
-This program adds only:
+This program now carries the X1 accepted compression on top of the earlier O1 shell and adds only:
 
-- `OpenAIRuntimeSession`
-- `OpenAIRuntimeSessionArtifact`
-- `run_openai_runtime_step()`
+- compact `OpenAIRuntimeSession` product-journal truth
+- compact `OpenAIRuntimeSessionArtifact`
+- `run_openai_runtime_step()` over the compact decision table
 - `python3 -m cortex.runtime.openai_cli`
-- raw OpenAI host-event output projection with `raw_host_event_name`
-- and OpenAI split-run equivalence proof
+- raw OpenAI host-event output projection with `raw_host_event_name`, `decision`, and `journal`
+- and OpenAI split-run equivalence proof on the compressed carrier
 
 This program does **not** authorize:
 
@@ -79,20 +79,16 @@ The OpenAI runtime shell exposes:
 
 - `python3 -m cortex.runtime.openai_cli`
 
-New public fields in the top-level CLI projection, in exact order:
+Top-level CLI projection fields, in exact order:
 
 1. `event_index`
 2. `raw_host_event_name`
 3. `native_event_name`
 4. `dispatch_lane`
-5. `selected_family`
-6. `brake_state`
-7. `executive_state_summary`
-8. `control_ledger`
-9. `warnings`
-10. `session_summary`
-11. `commitment_result_kind`
-12. `feedback_window_summary`
+5. `decision`
+6. `warnings`
+7. `journal`
+8. `commitment_result_kind`
 
 Input remains JSONL via stdin or `--event-file`.
 
@@ -105,12 +101,13 @@ Each input line must contain:
 
 ## Runtime law for this program
 
-The OpenAI runtime shell may:
+The accepted OpenAI runtime shell may:
 
 - bind raw documented OpenAI Responses event names through the landed OpenAI driver,
 - reject already-canonical Cortex event names before runtime processing,
 - run the landed core dispatch and OpenAI commitment-path helpers,
-- reuse the accepted bounded `C1` continuation law with OpenAI-owned carriers,
+- reuse OpenAI-owned continuation through one compact product journal,
+- compute one explicit OpenAI-only decision table over consequential-write pressure, approval pressure, evidence gap, continuation debt, and accepted failure classes,
 - and emit a host-specific runtime projection that preserves `raw_host_event_name`.
 
 It may not:
@@ -119,7 +116,8 @@ It may not:
 - widen into live network/service doctrine,
 - realize outbound OpenAI host actions,
 - introduce a generic runtime substrate,
-- or treat OpenAI-specific success as permission for Gemini runtime or broader orchestration.
+- treat OpenAI-specific success as permission for Gemini runtime or broader orchestration,
+- or route accepted product behavior through the reference-soft-control allocation stack.
 
 Undocumented-event law:
 
@@ -130,9 +128,10 @@ Undocumented-event law:
 Persistence law:
 
 - the OpenAI persisted artifact is host-specific and versioned,
-- it keeps the same top-level split as accepted `C1`: `continuity_truth` and `control_residue`,
-- it persists bounded residue only,
-- it does **not** persist full shell-long `budget_history` or `brake_history`,
+- the only accepted export/import contract is `openai_product_journal` v1 with one top-level `journal` object,
+- it persists only `session_id`, `event_index`, `active_goal_ref`, `pending_goal_refs`, `confirmed_artifact_refs`, `last_failure_class`, and `next_recommended_move`,
+- it does **not** persist `continuity_truth`, `control_residue`, branch registry, feedback residue, `budget_history`, or `brake_history`,
+- legacy pre-X1 artifacts are explicitly rejected rather than silently migrated,
 - runtime and session I/O ownership remain self-contained inside the OpenAI runtime modules,
 - and explicit load/save failure emits no stdout.
 
@@ -140,20 +139,11 @@ Persistence law:
 
 `O1` equivalence means:
 
-- same `continuity_truth`
-- same per-event `selected_family`
-- same per-event `realized_family`
+- same `journal`
+- same per-event `decision`
 - same per-event `warnings`
 - same per-event `commitment_result_kind`
-- same per-event `feedback_window_summary`
-- same final persisted `control_residue`
-
-`O1` equivalence does **not** require:
-
-- exact byte-for-byte replay of `session_summary.budget_history`
-- exact byte-for-byte replay of `session_summary.brake_history`
-
-Those two histories remain public one-process diagnostics only.
+- same final persisted artifact
 
 ## Program order
 
@@ -173,13 +163,15 @@ Every seam remains one-session max and must end on a clean tree before the next 
 
 - documented raw OpenAI host events flow through the shell with preserved `raw_host_event_name`,
 - undocumented raw host events remain explicit conservative warnings rather than fabricated parity,
-- OpenAI bounded session persistence is real,
+- OpenAI compact product-journal persistence is real,
+- the outward record preserves the exact `decision + journal` contract,
+- the accepted OpenAI product path no longer depends on reference-soft-control selection or allocation diagnostics,
 - split-run OpenAI equivalence matches the contract recorded above,
 - targeted tests pass twice,
 - `make seam-preflight`, `make revalidate-openai-runtime`, `make test-smoke`, and `make verify` pass,
 - and the `O1` phase-gate row is updated truthfully.
 
-## Current accepted state after K1 closeout
+## Historical accepted state before X1 compression
 
 On the accepted K1 runtime closeout line implemented at K1 proof head `d4c311f` and truthfully closed at deterministic closeout head `79b8f39` on branch `codex/k1f-openai-service-closeout`:
 
@@ -192,6 +184,17 @@ On the accepted K1 runtime closeout line implemented at K1 proof head `d4c311f` 
 - OpenAI split-run continuity proof now exists against the `O1` contract with explicit diagnostic-history non-equivalence,
 - `make revalidate-openai-runtime` now exists as the repo-local OpenAI runtime revalidation entry point,
 - and targeted reruns, repeated `make revalidate-openai-runtime`, `make test-smoke`, and `make verify` all passed on the accepted K1 line.
+
+## Current accepted state after X1 compression
+
+On the accepted X1 line:
+
+- `OpenAIRuntimeSession` is now the compact product journal for the accepted OpenAI-only product path,
+- `OpenAIRuntimeSessionArtifact` now exports/imports `openai_product_journal` v1 only,
+- `run_openai_runtime_step()` now uses an explicit OpenAI-only decision table instead of the reference-soft-control allocation path,
+- `python3 -m cortex.runtime.openai_cli` now emits the compact `decision + journal` projection while preserving `raw_host_event_name`,
+- split-run OpenAI equivalence is now re-earned on the compact journal carrier,
+- and the old allocation/feedback surfaces survive only as historical/reference evidence rather than the accepted OpenAI-only product runtime.
 
 ## Explicitly blocked moves
 

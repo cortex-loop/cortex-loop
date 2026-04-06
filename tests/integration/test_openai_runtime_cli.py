@@ -17,14 +17,10 @@ EXPECTED_RECORD_KEYS = (
     "raw_host_event_name",
     "native_event_name",
     "dispatch_lane",
-    "selected_family",
-    "brake_state",
-    "executive_state_summary",
-    "control_ledger",
+    "decision",
     "warnings",
-    "session_summary",
+    "journal",
     "commitment_result_kind",
-    "feedback_window_summary",
 )
 
 
@@ -52,39 +48,18 @@ def test_openai_runtime_cli_reads_documented_raw_events_and_preserves_host_name(
         "candidate-bearing",
         "full-commitment",
     ]
+    assert [record["decision"] for record in records] == [
+        "continue",
+        "check",
+        "check",
+    ]
     assert [record["commitment_result_kind"] for record in records] == [
         None,
         None,
         "certified",
     ]
-    assert tuple(records[-1]["control_ledger"]) == (
-        "event_class",
-        "admissible_families",
-        "selected_family",
-        "realized_family",
-        "dominant_uncertainty_sources",
-        "brake_state",
-        "budget_band",
-        "primary_reason",
-        "allocation_diagnostics",
-    )
-    assert tuple(records[-1]["control_ledger"]["allocation_diagnostics"]) == (
-        "alpha_t",
-        "activation_threshold",
-        "selected_delta_over_neutral",
-        "scores",
-    )
-    assert [record["control_ledger"]["allocation_diagnostics"]["alpha_t"] for record in records] == [
-        1.0,
-        0.75,
-        0.85,
-    ]
-    assert [
-        record["control_ledger"]["allocation_diagnostics"]["activation_threshold"]
-        for record in records
-    ] == [0.35, 0.35, 0.25]
-    assert records[1]["control_ledger"]["allocation_diagnostics"]["scores"][0]["allocated_score"] != records[1]["control_ledger"]["allocation_diagnostics"]["scores"][0]["online_score"]
-    assert records[2]["control_ledger"]["allocation_diagnostics"]["scores"][0]["allocated_score"] != records[2]["control_ledger"]["allocation_diagnostics"]["scores"][0]["online_score"]
+    assert records[-1]["journal"]["confirmed_artifact_refs"] == ["oa-artifact-1"]
+    assert records[-1]["journal"]["next_recommended_move"] == "check"
 
 
 def test_openai_runtime_cli_explicit_load_save_works(tmp_path: Path) -> None:
@@ -109,7 +84,7 @@ def test_openai_runtime_cli_explicit_load_save_works(tmp_path: Path) -> None:
     records = _parse_jsonl_output(second_completed.stdout)
     assert records[0]["event_index"] == 2
     assert records[0]["raw_host_event_name"] == "response.completed"
-    assert _parse_session_artifact(artifact_path)["continuity_truth"]["event_index"] == 2
+    assert _parse_session_artifact(artifact_path)["journal"]["event_index"] == 2
 
 
 def test_openai_runtime_cli_rejects_canonical_cortex_event_names() -> None:

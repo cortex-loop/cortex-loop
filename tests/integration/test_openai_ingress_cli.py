@@ -17,14 +17,10 @@ EXPECTED_RECORD_KEYS = (
     "raw_host_event_name",
     "native_event_name",
     "dispatch_lane",
-    "selected_family",
-    "brake_state",
-    "executive_state_summary",
-    "control_ledger",
+    "decision",
     "warnings",
-    "session_summary",
+    "journal",
     "commitment_result_kind",
-    "feedback_window_summary",
 )
 
 
@@ -46,23 +42,8 @@ def test_openai_ingress_cli_reads_documented_raw_transcript_fixture() -> None:
         "candidate-bearing",
         "full-commitment",
     ]
-    assert tuple(records[-1]["control_ledger"]) == (
-        "event_class",
-        "admissible_families",
-        "selected_family",
-        "realized_family",
-        "dominant_uncertainty_sources",
-        "brake_state",
-        "budget_band",
-        "primary_reason",
-        "allocation_diagnostics",
-    )
-    assert tuple(records[-1]["control_ledger"]["allocation_diagnostics"]) == (
-        "alpha_t",
-        "activation_threshold",
-        "selected_delta_over_neutral",
-        "scores",
-    )
+    assert [record["decision"] for record in records] == ["continue", "check", "check"]
+    assert records[-1]["journal"]["confirmed_artifact_refs"] == ["oa-ingress-artifact-1"]
 
 
 def test_openai_ingress_cli_load_save_works(tmp_path: Path) -> None:

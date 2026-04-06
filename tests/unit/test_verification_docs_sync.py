@@ -399,8 +399,8 @@ def test_resume_protocol_and_active_workstream_contract_exist() -> None:
     assert "Current branch role:" in workstream_text
     assert "Current campaign: `P1 product-first reduction program`" in workstream_text
     assert "Current working branch at ledger update: `main`" in workstream_text
-    assert "Current branch role: accepted resting line after the S1 OpenAI-only scope narrowing seam" in workstream_text
-    assert "Current candidate seam: `X1 OpenAI-only product-runtime compression`" in workstream_text
+    assert "Current branch role: accepted resting line after the X1 OpenAI-only product-runtime compression seam" in workstream_text
+    assert "Current candidate seam: `X2 OpenAI-only support/eval compression`" in workstream_text
     assert "A0 is now accepted on local `main`" in workstream_text
     assert "`service_api` is the canonical runtime truth lane" in workstream_text
     assert "`operator_cli` is a watchlist and exploratory-comparison lane" in workstream_text
@@ -479,11 +479,11 @@ def test_reference_runtime_program_lock_is_recorded() -> None:
     assert "wrapper-shaped and mixed wrapper/transcript records are explicitly rejected" in phase_gate_text
     assert "mixed wrapper/transcript records are explicitly rejected" in phase_gate_text
     assert "`O3` OpenAI loopback service shell" in phase_gate_text
-    assert "loopback-only HTTP is landed on the accepted K1 closeout line" in phase_gate_text
+    assert "loopback-only HTTP remains real while `POST /v1/events` now returns the compact current-line `O1` `decision + journal` record" in phase_gate_text
     assert "one active session per process is real for current scope" in phase_gate_text
 
     assert "Current campaign: `P1 product-first reduction program`" in workstream_text
-    assert "Current candidate seam: `X1 OpenAI-only product-runtime compression`" in workstream_text
+    assert "Current candidate seam: `X2 OpenAI-only support/eval compression`" in workstream_text
     assert "`service_api` is the canonical runtime truth lane" in workstream_text
     assert "`operator_cli` is a watchlist and exploratory-comparison lane" in workstream_text
     assert "## 8. Mediation justification gate" in phase_gate_text
@@ -568,20 +568,24 @@ def test_reference_runtime_program_lock_is_recorded() -> None:
     assert "`make revalidate-reference-runtime-continuity`" in continuity_program_text
     assert "Current accepted state after K1 closeout" in continuity_program_text
     assert "implemented at K1 proof head `d4c311f` and truthfully closed at deterministic closeout head `79b8f39`" in continuity_program_text
-    assert "accepted re-audited runtime-program brief for the first OpenAI documented host-event runtime shell" in openai_runtime_program_text
+    assert "accepted re-audited runtime-program brief for the compressed OpenAI-only documented host-event product shell" in openai_runtime_program_text
     assert "`python3 -m cortex.runtime.openai_cli`" in openai_runtime_program_text
     assert "`raw_host_event_name`" in openai_runtime_program_text
+    assert "`openai_product_journal` v1" in openai_runtime_program_text
+    assert "exact `decision + journal` contract" in openai_runtime_program_text
     assert "`make revalidate-openai-runtime`" in openai_runtime_program_text
     assert "canonical Cortex event names are now explicitly rejected at both CLI and runtime entrypoint level" in openai_runtime_program_text
     assert "runtime and session I/O ownership remain self-contained inside the OpenAI runtime modules" in openai_runtime_program_text
-    assert "Current accepted state after K1 closeout" in openai_runtime_program_text
+    assert "Current accepted state after X1 compression" in openai_runtime_program_text
     assert "implemented at K1 proof head `d4c311f` and truthfully closed at deterministic closeout head `79b8f39`" in openai_runtime_program_text
     assert "accepted re-audited runtime-program brief for the first OpenAI raw-transcript ingress shell" in openai_ingress_program_text
     assert "`python3 -m cortex.runtime.openai_ingress_cli`" in openai_ingress_program_text
     assert "wrapper-shape `{event_name, payload}` records are explicitly rejected" in openai_ingress_program_text
     assert "mixed wrapper/transcript record that contains `event_name` or `payload`" in openai_ingress_program_text
+    assert "same `journal`" in openai_ingress_program_text
+    assert "same per-event `decision`" in openai_ingress_program_text
     assert "`make revalidate-openai-ingress`" in openai_ingress_program_text
-    assert "Current accepted state after K1 closeout" in openai_ingress_program_text
+    assert "Current accepted state after X1 compression" in openai_ingress_program_text
     assert "implemented at K1 proof head `d4c311f` and truthfully closed at deterministic closeout head `79b8f39`" in openai_ingress_program_text
     assert "accepted re-audited runtime-program brief for the first OpenAI loopback service shell" in openai_service_program_text
     assert "`python3 -m cortex.runtime.openai_service`" in openai_service_program_text
@@ -589,8 +593,9 @@ def test_reference_runtime_program_lock_is_recorded() -> None:
     assert "`POST /v1/events`" in openai_service_program_text
     assert "`GET /v1/session/export`" in openai_service_program_text
     assert "`POST /v1/session/import`" in openai_service_program_text
+    assert "`openai_product_journal` v1 only" in openai_service_program_text
     assert "`make revalidate-openai-service`" in openai_service_program_text
-    assert "Current accepted state after K1 closeout" in openai_service_program_text
+    assert "Current accepted state after X1 compression" in openai_service_program_text
     assert "implemented at K1 proof head `d4c311f` and truthfully closed at deterministic closeout head `79b8f39`" in openai_service_program_text
     assert "are now landed `O3` surfaces" in openai_service_program_text
     assert "same module may host a separately scoped outbound control lane" in openai_service_program_text
@@ -605,10 +610,10 @@ def test_reference_runtime_program_lock_is_recorded() -> None:
     assert "The public K2 surface remains:" in openai_host_control_program_text
     assert "canonical tests require no live OpenAI network" in openai_host_control_program_text
     assert "`make revalidate-openai-host-control`" in openai_host_control_program_text
-    assert "Current accepted state after K2 closeout" in openai_host_control_program_text
+    assert "Current accepted state after X1 compression" in openai_host_control_program_text
     assert "implemented at K2 proof head `5ed9549` and truthfully closed at deterministic closeout head `9ed7dae`" in openai_host_control_program_text
     assert "`O4` OpenAI bounded outbound host-control lane" in phase_gate_text
-    assert "cleanly closed at deterministic closeout head `9ed7dae`" in phase_gate_text
+    assert "ordered result records now preserve the exact compact `decision + journal` projection" in phase_gate_text
     assert "`R6` explicit executive allocation slice on the reference runtime shell" in phase_gate_text
     assert "`O5` OpenAI executive allocation projection slice" in phase_gate_text
     assert "`R7` reference computed executive loop" in phase_gate_text
@@ -618,25 +623,23 @@ def test_reference_runtime_program_lock_is_recorded() -> None:
     assert "`R9` reference enforcement-aware realized control loop" in phase_gate_text
     assert "`O8` OpenAI enforcement-aware realized projection slice" in phase_gate_text
 
-    assert "Status: active runtime-program brief for the first explicit executive live-outcome allocation slice" in executive_live_outcome_program_text
-    assert "branch: `codex/k2-openai-host-control`" in executive_live_outcome_program_text
-    assert "commit: `9ed7dae`" in executive_live_outcome_program_text
+    assert "Status: accepted historical/reference runtime-program brief for the first explicit executive live-outcome allocation slice" in executive_live_outcome_program_text
     assert "nested `control_ledger.allocation_diagnostics`" in executive_live_outcome_program_text
     assert "`Q_t^{mem}=0.0`" in executive_live_outcome_program_text
     assert "`alpha_t=1.0`" in executive_live_outcome_program_text
     assert "`allocated_score=online_score`" in executive_live_outcome_program_text
     assert "`make revalidate-executive-loop`" in executive_live_outcome_program_text
-    assert "Current K3 candidate state before closeout" in executive_live_outcome_program_text
-    assert "Status: accepted re-audited runtime-program brief for the first bounded computed executive loop on proven reference/OpenAI lanes" in computed_executive_loop_program_text
+    assert "historical/reference evidence only" in executive_live_outcome_program_text
+    assert "Status: accepted historical/reference runtime-program brief for the first bounded computed executive loop on proven reference/OpenAI lanes" in computed_executive_loop_program_text
     assert "`Q_t^{mem}=0.0`" in computed_executive_loop_program_text
     assert "`allocated_score` may differ from `online_score`" in computed_executive_loop_program_text
     assert "No new public shells are introduced." in computed_executive_loop_program_text
-    assert "Current accepted state after K4 closeout" in computed_executive_loop_program_text
-    assert "Status: accepted re-audited runtime-program brief for the bounded closed-loop feedback and enforcement train on proven reference/OpenAI lanes" in closed_loop_enforcement_program_text
+    assert "Current standing after X1" in computed_executive_loop_program_text
+    assert "Status: accepted historical/reference runtime-program brief for the bounded closed-loop feedback and enforcement train on proven reference/OpenAI lanes" in closed_loop_enforcement_program_text
     assert "feedback-conditioned intervention-threshold law" in closed_loop_enforcement_program_text
     assert "guarded-feedback enforcement may conservatively realize `check` or `neutral`" in closed_loop_enforcement_program_text
     assert "`Q_t^{mem}=0.0`" in closed_loop_enforcement_program_text
-    assert "Current accepted state after K-train closeout" in closed_loop_enforcement_program_text
+    assert "Current standing after X1" in closed_loop_enforcement_program_text
     assert "Status: accepted watchlist-evaluation brief for raw-vs-Cortex operator comparison" in operator_directionality_program_text
     assert "raw-host vs Cortex-operator" in operator_directionality_program_text
     assert "`execution_surface = headless_cli`" in operator_directionality_program_text
@@ -650,9 +653,10 @@ def test_reference_runtime_program_lock_is_recorded() -> None:
     assert "`pass_minimal`" in operator_directionality_scenario_catalog_text
     assert "`truth_gap`" in operator_directionality_scenario_catalog_text
     assert "`restart_continuity`" in operator_directionality_scenario_catalog_text
-    assert "Status: active runtime-program brief for the first bounded SRE-owned operator routing train" in operator_routing_program_text
+    assert "Status: accepted watchlist/reference brief for the first bounded SRE-owned operator routing train" in operator_routing_program_text
     assert "one bounded SRE + harness train" in operator_routing_program_text
     assert "one SRE-owned operator route selector over low-dimensional task-state geometry" in operator_routing_program_text
+    assert "It is not part of the accepted OpenAI-only product runtime path." in operator_routing_program_text
     assert "This document does not authorize:" in operator_routing_program_text
     assert "named model routing" in operator_routing_program_text
     assert "Locked route profiles:" in operator_routing_program_text
@@ -773,6 +777,8 @@ def test_reference_runtime_program_lock_is_recorded() -> None:
     assert "the accepted current product scope on the canonical lane is now OpenAI-only" in live_validation_verdict_text
     assert "Current working branch at ledger update: `main`" in workstream_text
     assert "A0 is now accepted on local `main`" in workstream_text
+    assert "X1 are now accepted on local `main`" in workstream_text
+    assert "Current candidate seam: `X2 OpenAI-only support/eval compression`" in workstream_text
     assert "three positive current-machine `canonical_anchor` cycles" in workstream_text
     assert "Finalize and manually reconcile this review branch" not in workstream_text
     assert "three positive current-machine `canonical_anchor` cycles" in live_validation_verdict_text
@@ -785,6 +791,7 @@ def test_reference_runtime_program_lock_is_recorded() -> None:
     assert "Signed-in CLI sessions do **not** count as service-lane auth." in service_proof_text
     assert "Actual service proof belongs only on a machine that satisfies all of:" in service_proof_text
     assert "the first canonical three-scenario API truth anchor is therefore re-earned for current OpenAI-only product scope on this machine through three positive current-machine `canonical_anchor` cycles" in service_proof_text
+    assert "the accepted OpenAI-only product runtime on that scope now runs on the compact `openai_product_journal` carrier plus the exact outward `decision + journal` projection" in service_proof_text
     assert "accepted current product scope: `openai`" in service_proof_text
     assert "dormant future host-expansion plumbing: `claude`" in service_proof_text
     assert "No future product/runtime claim may land from CLI-only proof." in service_proof_text
@@ -794,6 +801,7 @@ def test_reference_runtime_program_lock_is_recorded() -> None:
     assert "Overall status: `landed` for the accepted OpenAI-only product scope" in phase_gate_text
     assert "| `L4` lifecycle-first payoff verdict | `docs/CORTEX_V2_LIVE_VALIDATION_VERDICT_0.md`; `make live-compare` | closed for the accepted OpenAI-only product scope; reopen only if product scope intentionally widens | landed |" in phase_gate_text
     assert "| `L6D` package-level service proof | `docs/CORTEX_V2_LIVE_SERVICE_PROOF_0.md`; `make live-compare` | closed for the accepted OpenAI-only product scope; reopen only if product scope intentionally widens | landed |" in phase_gate_text
+    assert "landed historical/reference evidence only after X1" in phase_gate_text
 
 
 def test_accepted_openai_only_scope_claim_matches_main_line() -> None:
@@ -838,6 +846,62 @@ def test_accepted_openai_only_scope_claim_matches_main_line() -> None:
     assert landed_l6d_row in main_phase_gate_text
 
 
+def test_accepted_x1_openai_runtime_compression_claim_matches_main_line() -> None:
+    workstream_text = _read(ACTIVE_WORKSTREAM_PATH)
+    service_proof_text = _read(LIVE_SERVICE_PROOF_PATH)
+    phase_gate_text = _read(PHASE_GATES_PATH)
+
+    main_workstream_text = _read_git_ref_text("main", ACTIVE_WORKSTREAM_PATH)
+    main_phase_gate_text = _read_git_ref_text("main", PHASE_GATES_PATH)
+    main_openai_session_io_text = _read_git_ref_text(
+        "main", REPO_ROOT / "cortex" / "runtime" / "openai_session_io.py"
+    )
+    main_openai_cli_text = _read_git_ref_text(
+        "main", REPO_ROOT / "cortex" / "runtime" / "openai_cli.py"
+    )
+
+    accepted_x1_workstream_claim = (
+        "the accepted OpenAI-only product path now runs on:"
+    )
+    accepted_x1_service_claim = (
+        "the accepted OpenAI-only product runtime on that scope now runs on the compact `openai_product_journal` carrier plus the exact outward `decision + journal` projection"
+    )
+    landed_o1_row = (
+        "| `O1` OpenAI documented host-event runtime shell |"
+    )
+    landed_o1_detail = (
+        "on the accepted X1 line, raw documented host events now drive the compressed OpenAI-only product shell: the accepted persisted artifact is `openai_product_journal` v1 only, the outward record is exact `decision + journal`"
+    )
+    landed_o3_row = "| `O3` OpenAI loopback service shell |"
+    landed_o3_detail = (
+        "on the accepted X1 line, loopback-only HTTP remains real while `POST /v1/events` now returns the compact current-line `O1` `decision + journal` record, `GET /v1/session/export` and `POST /v1/session/import` move `openai_product_journal` v1 only"
+    )
+    landed_o4_row = "| `O4` OpenAI bounded outbound host-control lane |"
+    landed_o4_detail = (
+        "on the accepted X1 line, `POST /v1/actions/response-stream` remains text-only and strict-whitelist for current scope, returned host events still re-enter the current-line `O2` parser and compressed `O1` runtime shell directly, ordered result records now preserve the exact compact `decision + journal` projection, export/import continuity keeps `openai_product_journal` v1 only"
+    )
+
+    assert accepted_x1_workstream_claim in workstream_text
+    assert accepted_x1_service_claim in service_proof_text
+    assert landed_o1_row in phase_gate_text
+    assert landed_o1_detail in phase_gate_text
+    assert landed_o3_row in phase_gate_text
+    assert landed_o3_detail in phase_gate_text
+    assert landed_o4_row in phase_gate_text
+    assert landed_o4_detail in phase_gate_text
+
+    assert accepted_x1_workstream_claim in main_workstream_text
+    assert 'artifact_kind = "openai_product_journal"' in main_openai_session_io_text
+    assert '"decision",' in main_openai_cli_text
+    assert '"journal",' in main_openai_cli_text
+    assert landed_o1_row in main_phase_gate_text
+    assert landed_o1_detail in main_phase_gate_text
+    assert landed_o3_row in main_phase_gate_text
+    assert landed_o3_detail in main_phase_gate_text
+    assert landed_o4_row in main_phase_gate_text
+    assert landed_o4_detail in main_phase_gate_text
+
+
 def test_openai_host_control_revalidation_entry_points_are_recorded() -> None:
     local_verification_text = _read(LOCAL_VERIFICATION_PATH)
     makefile_text = _read(MAKEFILE_PATH)
@@ -850,6 +914,7 @@ def test_openai_host_control_revalidation_entry_points_are_recorded() -> None:
     assert "make revalidate-openai-host-control" in local_verification_text
     assert "revalidate-openai-host-control:" in makefile_text
     assert "## Executive live-outcome revalidation" in local_verification_text
+    assert "retained historical/reference revalidation surface" in local_verification_text
     assert "feedback-conditioned `activation_threshold`" in local_verification_text
     assert "guarded/latched enforcement-aware realized control behavior" in local_verification_text
     assert "make revalidate-executive-loop" in local_verification_text
@@ -878,12 +943,14 @@ def test_openai_host_control_revalidation_entry_points_are_recorded() -> None:
     assert "automation baseline now exits with explicit auth-readiness blockers" in local_verification_text
     assert "## Live host-native product paths" in local_verification_text
     assert "make live-host-native-product-paths" in local_verification_text
+    assert "retained watchlist comparison lane, not the accepted product path" in local_verification_text
     assert "For Claude and Gemini, the operator lane now records documented hook events" in local_verification_text
     assert "For Gemini `restart_continuity`, the inspect-only first turn now uses the lighter `plan` approval mode" in local_verification_text
     assert "## Live OpenAI App Server operator proof" in local_verification_text
     assert "make live-openai-app-server" in local_verification_text
     assert "## Live Cortex host-control capture" in local_verification_text
     assert "make live-cortex-host-control" in local_verification_text
+    assert "canonical service-proof and accepted product-path entry point for the direct-API lane" in local_verification_text
     assert "python3 tools/live_cortex_host_control.py --lane automation --provider openai --suite current" in local_verification_text
     assert "python3 tools/live_cortex_host_control.py --lane automation --provider openai --suite canonical_anchor" in local_verification_text
     assert "python3 tools/live_cortex_host_control.py --lane automation --provider claude --suite canonical_anchor" in local_verification_text
@@ -892,6 +959,8 @@ def test_openai_host_control_revalidation_entry_points_are_recorded() -> None:
     assert "make live-compare" in local_verification_text
     assert "## Live operator payoff audit" in local_verification_text
     assert "make live-operator-payoff-audit" in local_verification_text
+    assert "## Operator routing realization" in local_verification_text
+    assert "retained watchlist/reference diagnostic for the operator harness" in local_verification_text
     assert "## Live operator directionality" in local_verification_text
     assert "make live-operator-directionality" in local_verification_text
     assert "## Live operator directionality audit" in local_verification_text

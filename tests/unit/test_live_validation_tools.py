@@ -1717,7 +1717,7 @@ def test_live_compare_ignores_ready_out_of_scope_provider_for_current_scope_trut
     assert comparison["providers"]["gemini"]["automation_service"]["in_canonical_scope"] is False
     assert "out-of-scope direct_api providers remain watchlist-only" in comparison["service_lane_delta"]
     assert comparison["next_corrective_seam"] == (
-        "current product scope is already re-earned on the canonical direct-API lane; keep out-of-scope hosts on watchlist or future host-expansion seams, and open the bounded OpenAI-only runtime-compression train next"
+        "current product scope is already re-earned on the canonical direct-API lane; keep out-of-scope hosts on watchlist or future host-expansion seams, and open the bounded OpenAI-only support/eval compression train next"
     )
 
 
@@ -2491,7 +2491,7 @@ def test_next_corrective_seam_ignores_ready_out_of_scope_provider() -> None:
     )
 
 
-def test_next_corrective_seam_points_to_openai_only_runtime_compression_after_scope_truth() -> None:
+def test_next_corrective_seam_points_to_openai_only_support_eval_compression_after_scope_truth() -> None:
     assert (
         live_compare._next_corrective_seam(
             {
@@ -2512,7 +2512,7 @@ def test_next_corrective_seam_points_to_openai_only_runtime_compression_after_sc
             },
             canonical_scope={"openai"},
         )
-        == "current product scope is already re-earned on the canonical direct-API lane; keep out-of-scope hosts on watchlist or future host-expansion seams, and open the bounded OpenAI-only runtime-compression train next"
+        == "current product scope is already re-earned on the canonical direct-API lane; keep out-of-scope hosts on watchlist or future host-expansion seams, and open the bounded OpenAI-only support/eval compression train next"
     )
 
 

@@ -74,6 +74,7 @@ Current local machine state on the accepted current line:
   - `truth_gap`: `truthful_incomplete` three times
   - `restart_continuity`: positive three times
 - the first canonical three-scenario API truth anchor is therefore re-earned for current OpenAI-only product scope on this machine through three positive current-machine `canonical_anchor` cycles
+- the accepted OpenAI-only product runtime on that scope now runs on the compact `openai_product_journal` carrier plus the exact outward `decision + journal` projection
 - Claude host-expansion proof remains blocked honestly on missing auth readiness, but it no longer blocks the current product scope
 - Gemini remains watchlist-only until its direct API/service lane is explicitly opened
 
@@ -85,7 +86,7 @@ Current local machine state on the accepted current line:
 
 ## Next lawful move
 
-1. open the bounded `X1` OpenAI-only runtime-compression train on clean `main`
+1. open the bounded `X2` OpenAI-only support/eval compression train on clean `main`
 2. keep `claude` as future host-expansion plumbing only until a later explicit host-expansion train is opened
 3. keep `gemini` watchlist-only until direct API/service auth exists
 4. keep headless-CLI reruns downstream of canonical truth as watchlist-only diagnostics

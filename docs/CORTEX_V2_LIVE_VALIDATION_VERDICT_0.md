@@ -73,10 +73,11 @@ It does not yet make the broader package sufficient for cross-host canonical run
 - operator watchlist signal is currently the strongest
 - service/API canonical truth is re-earned for current scope through three positive current-machine `canonical_anchor` cycles
 - the direct-API anchor now defines the accepted current product scope
+- the accepted OpenAI-only product runtime now uses the compact `decision + journal` carrier rather than the older allocation-heavy shell
 
 ## Next lawful move
 
-1. open the bounded `X1` OpenAI-only runtime-compression train on clean `main`
+1. open the bounded `X2` OpenAI-only support/eval compression train on clean `main`
 2. keep Claude and Gemini on watchlist or future host-expansion backlog only
 3. do not widen current product scope without a separate host-expansion train
 

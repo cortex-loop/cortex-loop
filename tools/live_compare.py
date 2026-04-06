@@ -274,7 +274,7 @@ def _next_corrective_seam(
             "keep blocked providers watchlist-only until direct auth exists, and do not let CLI evidence promote or overturn canonical runtime truth"
         )
     return (
-        "current product scope is already re-earned on the canonical direct-API lane; keep out-of-scope hosts on watchlist or future host-expansion seams, and open the bounded OpenAI-only runtime-compression train next"
+        "current product scope is already re-earned on the canonical direct-API lane; keep out-of-scope hosts on watchlist or future host-expansion seams, and open the bounded OpenAI-only support/eval compression train next"
     )
 
 

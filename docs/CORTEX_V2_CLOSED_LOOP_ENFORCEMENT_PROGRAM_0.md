@@ -1,7 +1,10 @@
 # CORTEX_V2_CLOSED_LOOP_ENFORCEMENT_PROGRAM_0
 
 Date: 2026-03-29
-Status: accepted re-audited runtime-program brief for the bounded closed-loop feedback and enforcement train on proven reference/OpenAI lanes
+Status: accepted historical/reference runtime-program brief for the bounded closed-loop feedback and enforcement train on proven reference/OpenAI lanes
+
+After accepted X1, this document remains historical/reference evidence only.
+It is not the accepted OpenAI-only product runtime.
 
 ## Purpose
 
@@ -169,3 +172,9 @@ On the accepted K-train closeout line opened from parent `feacbf5`:
 - reference/OpenAI runtime projections preserve the same public shape while surfacing the stronger threshold law through existing nested diagnostics
 - guarded-feedback and latched-brake enforcement now preserve selected-family truth, realized-family truth, lawful commitment truth, and explicit warning truth simultaneously
 - Gemini/Claude deterministic runtime projections remain compatible with the stronger scorer/realization semantics but are not promoted to new closure truth
+
+## Current standing after X1
+
+- `R8` / `O7` / `R9` / `O8` remain landed historical/reference evidence for the older allocation-heavy OpenAI line,
+- the accepted OpenAI-only product runtime no longer carries those enforcement/threshold projections as product truth,
+- and this document now serves as historical/reference context only.

@@ -23,14 +23,10 @@ EXPECTED_RECORD_KEYS = (
     "raw_host_event_name",
     "native_event_name",
     "dispatch_lane",
-    "selected_family",
-    "brake_state",
-    "executive_state_summary",
-    "control_ledger",
+    "decision",
     "warnings",
-    "session_summary",
+    "journal",
     "commitment_result_kind",
-    "feedback_window_summary",
 )
 
 

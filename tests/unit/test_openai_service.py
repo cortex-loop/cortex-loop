@@ -27,7 +27,9 @@ def test_openai_service_import_export_preserves_exact_artifact_shape() -> None:
         OpenAIRuntimeSession(
             session_id="oa-service",
             event_index=2,
-            budget_history=("shell-low", "shell-medium"),
+            pending_goal_refs=("goal-next",),
+            confirmed_artifact_refs=("artifact-2",),
+            next_recommended_move="check",
         ),
         session_loaded=True,
     )
@@ -38,8 +40,7 @@ def test_openai_service_import_export_preserves_exact_artifact_shape() -> None:
     assert tuple(exported) == (
         "artifact_kind",
         "artifact_version",
-        "continuity_truth",
-        "control_residue",
+        "journal",
     )
     assert imported == exported
 
@@ -57,7 +58,7 @@ def test_openai_service_invalid_import_becomes_400_error_payload() -> None:
         "POST",
         "/v1/session/import",
         OpenAIServiceState(),
-        b'{"artifact_kind":"bad","artifact_version":1,"continuity_truth":{},"control_residue":{}}',
+        b'{"artifact_kind":"bad","artifact_version":1,"journal":{}}',
     )
 
     assert status_code == 400

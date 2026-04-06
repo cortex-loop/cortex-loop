@@ -104,11 +104,11 @@ HTTP surface:
 - required field: `type`
 - all remaining top-level fields become payload
 
-`POST /v1/events` returns exactly the accepted `O1` runtime record shape and field order.
+`POST /v1/events` returns exactly the current-line accepted `O1` runtime record shape and field order.
 
-`GET /v1/session/export` returns exactly the accepted `OpenAIRuntimeSessionArtifact` JSON object.
+`GET /v1/session/export` returns exactly the current-line accepted `OpenAIRuntimeSessionArtifact` JSON object.
 
-`POST /v1/session/import` accepts exactly the accepted `OpenAIRuntimeSessionArtifact` JSON object and returns the resulting artifact JSON after import.
+`POST /v1/session/import` accepts exactly the current-line accepted `OpenAIRuntimeSessionArtifact` JSON object and returns the resulting artifact JSON after import.
 
 All responses are JSON.
 
@@ -151,16 +151,11 @@ Undocumented-event law:
 
 For a transcript mechanically equivalent to the accepted `O2` ingress shell, `O3` equivalence means:
 
-- same `continuity_truth`
-- same per-event `selected_family`
-- same per-event `realized_family`
+- same `journal`
+- same per-event `decision`
 - same per-event `warnings`
 - same per-event `commitment_result_kind`
-- same per-event `feedback_window_summary`
-- same final persisted `control_residue`
-
-As in `C1`, `O1`, and `O2`, exact byte-for-byte replay of `session_summary.budget_history` and `session_summary.brake_history` is not required.
-Those remain public diagnostics only.
+- same final persisted artifact
 
 ## Program order
 
@@ -180,14 +175,14 @@ Every seam remains one-session max and must end on a clean tree before the next 
 
 - loopback-only HTTP is real at `127.0.0.1`
 - `POST /v1/events` drives accepted `O2` transcript parsing and the accepted `O1` runtime shell
-- `GET /v1/session/export` and `POST /v1/session/import` move the accepted artifact JSON without inventing a service-specific persistence format
+- `GET /v1/session/export` and `POST /v1/session/import` move the current-line accepted artifact JSON without inventing a service-specific persistence format
 - one active session per process is real
 - split-run service continuity matches the contract recorded above
 - targeted tests pass twice
 - `make seam-preflight`, `make revalidate-openai-service`, `make test-smoke`, and `make verify` pass
 - and the `O3` phase-gate row is updated truthfully
 
-## Current accepted state after K1 closeout
+## Historical accepted state before X1 compression
 
 On the accepted K1 runtime closeout line implemented at K1 proof head `d4c311f` and truthfully closed at deterministic closeout head `79b8f39` on branch `codex/k1f-openai-service-closeout`:
 
@@ -201,6 +196,15 @@ On the accepted K1 runtime closeout line implemented at K1 proof head `d4c311f` 
 
 On later branch-local follow-on work, the same module may host a separately scoped outbound control lane.
 That does not retroactively widen what `O3` itself originally authorized.
+
+## Current accepted state after X1 compression
+
+On the accepted X1 line:
+
+- `POST /v1/events` now returns the compact current-line `O1` record with exact `decision + journal` projection,
+- `GET /v1/session/export` and `POST /v1/session/import` now move `openai_product_journal` v1 only,
+- one active session per process remains real on the compact journal carrier,
+- and the older allocation-heavy OpenAI service projection survives only as historical/reference evidence rather than the accepted OpenAI-only product runtime.
 
 ## Explicitly blocked moves
 

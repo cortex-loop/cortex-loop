@@ -46,20 +46,10 @@ def test_openai_host_control_action_endpoint_returns_ordered_o1_records_and_muta
         "response.output_text.delta",
         "response.completed",
     ]
-    assert tuple(payload["records"][-1]["control_ledger"]["allocation_diagnostics"]) == (
-        "alpha_t",
-        "activation_threshold",
-        "selected_delta_over_neutral",
-        "scores",
-    )
-    assert [
-        record["control_ledger"]["allocation_diagnostics"]["activation_threshold"]
-        for record in payload["records"]
-    ] == [0.35, 0.35, 0.25]
-    assert payload["records"][-1]["control_ledger"]["allocation_diagnostics"]["alpha_t"] == 0.85
-    assert payload["records"][-1]["control_ledger"]["allocation_diagnostics"]["scores"][0]["allocated_score"] != payload["records"][-1]["control_ledger"]["allocation_diagnostics"]["scores"][0]["online_score"]
+    assert [record["decision"] for record in payload["records"]] == ["continue", "continue", "check"]
     assert export_status == 200
-    assert exported["continuity_truth"]["event_index"] == 3
+    assert exported["journal"]["event_index"] == 3
+    assert exported["journal"]["confirmed_artifact_refs"] == ["oa-k2-artifact-1"]
 
 
 def test_openai_host_control_action_endpoint_rejects_out_of_scope_request_keys() -> None:
@@ -135,4 +125,4 @@ def test_openai_host_control_action_endpoint_upstream_failure_returns_502_withou
     assert health_status == 200
     assert health["session_loaded"] is False
     assert export_status == 200
-    assert exported["continuity_truth"]["event_index"] == 0
+    assert exported["journal"]["event_index"] == 0

@@ -40,30 +40,36 @@ It is workflow state only. It does not override the packet documents, implementa
 
 - Current campaign: `P1 product-first reduction program`
 - Current working branch at ledger update: `main`
-- Current branch role: accepted resting line after the S1 OpenAI-only scope narrowing seam
-- Current candidate seam: `X1 OpenAI-only product-runtime compression`
+- Current branch role: accepted resting line after the X1 OpenAI-only product-runtime compression seam
+- Current candidate seam: `X2 OpenAI-only support/eval compression`
 - Current seam status:
-  - A0 is now accepted on local `main`
-  - the explicit `current|canonical_anchor` direct-API service suites are accepted on the current line
+  - A0, P1C, S1, S1C, and X1 are now accepted on local `main`
+  - the explicit `current|canonical_anchor` direct-API service suites remain accepted on the current line
   - the OpenAI service spend split remains explicit:
     - `service_smoke` uses `gpt-5.4-mini`
     - `canonical_anchor` scenarios use `gpt-5.4`
-  - the OpenAI direct-API `canonical_anchor` suite is now repeat-stably positive on the current machine through three positive current-machine `canonical_anchor` cycles:
+  - the OpenAI direct-API `canonical_anchor` suite remains repeat-stably positive on the current machine through three positive current-machine `canonical_anchor` cycles:
     - `pass_minimal`
     - `truth_gap` with `truthful_incomplete`
     - `restart_continuity`
-  - the accepted canonical provider scope is now `openai` only
-  - compare/verdict logic now computes current-scope canonical truth from the declared `canonical_anchor` provider scope rather than every auth-ready provider
-  - `python3 tools/live_compare.py` now reports:
+  - the accepted canonical provider scope remains `openai` only
+  - the accepted OpenAI-only product path now runs on:
+    - direct API transport
+    - one compact `openai_product_journal` continuation carrier
+    - one explicit OpenAI-only decision table
+    - one exact outward `decision + journal` projection
+  - the accepted OpenAI product path no longer transits reference-soft-control selection, allocation diagnostics, or operator-routing/modulator surfaces as product-critical truth
+  - `python3 tools/live_compare.py` continues to report:
     - `canonical runtime truth is re-earned for current scope`
     - `direct_api canonical truth is re-earned for current scope on openai`
-  - Claude canonical-suite plumbing remains implemented, but Claude is now outside the accepted current product scope and stays frozen as future host-expansion backlog
+  - `O5`-`O8` remain landed as historical/reference evidence only; they are no longer the accepted OpenAI-only product runtime after X1
+  - Claude canonical-suite plumbing remains implemented, but Claude stays outside the accepted current product scope as future host-expansion backlog
   - Gemini remains canonical-lane out of scope and watchlist-only until its direct API lane is opened deliberately
   - headless-CLI operator evidence remains watchlist-only, with Gemini local-vs-accepted drift surfaced explicitly rather than promoted into runtime truth
 
 ## 3. Next lawful move
 
-- Open `X1` as an OpenAI-only product-runtime compression seam on clean `main`.
+- Open `X2` as an OpenAI-only support/eval compression seam on clean `main`.
 - Keep `claude` and `gemini` as future host-expansion backlog only:
   - `claude` retains dormant shared `canonical_anchor` plumbing for a later explicit host-expansion train
   - `gemini` remains watchlist-only until direct API/service auth exists and a separate host-expansion train is opened

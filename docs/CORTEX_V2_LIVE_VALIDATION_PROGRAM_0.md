@@ -68,6 +68,6 @@ This program is only honestly closed when all are true:
 
 ## Next lawful move
 
-1. open the bounded `X1` OpenAI-only runtime-compression train on clean `main`
+1. open the bounded `X2` OpenAI-only support/eval compression train on clean `main`
 2. keep operator/CLI reruns as watchlist evidence and drift detection only
 3. keep `claude` and `gemini` outside the current product scope until a later host-expansion train is intentionally opened

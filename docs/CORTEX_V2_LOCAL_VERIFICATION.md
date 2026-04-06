@@ -124,8 +124,8 @@ make revalidate-reference-runtime-continuity
 
 ## OpenAI runtime revalidation
 
-This revalidates the first OpenAI documented host-event runtime shell against the landed OpenAI driver slices, the active SRE loop, and the accepted `C1` continuation law.
-It checks bounded OpenAI session persistence, raw-host-event preservation, explicit CLI load/save behavior, and split-run OpenAI continuity equivalence.
+This revalidates the accepted compressed OpenAI documented host-event product shell against the landed OpenAI driver slices, the compact product journal, and the explicit OpenAI-only decision table.
+It checks bounded OpenAI session persistence, raw-host-event preservation, exact `decision + journal` projection behavior, explicit CLI load/save behavior, and split-run OpenAI continuity equivalence.
 It does not authorize live network/service doctrine, outbound OpenAI host control, Gemini runtime, or generic runtime abstraction.
 
 Direct commands:
@@ -166,8 +166,8 @@ make revalidate-openai-ingress
 
 ## OpenAI loopback service revalidation
 
-This revalidates the first loopback-only OpenAI service shell on top of the accepted `O2` raw-transcript parser and accepted `O1` runtime/session artifact.
-It checks loopback-only HTTP behavior, JSON artifact import/export, event processing over `/v1/events`, and service continuity equivalence without widening into outbound host control or generic service doctrine.
+This revalidates the accepted loopback-only OpenAI service shell on top of the accepted `O2` raw-transcript parser and compressed `O1` runtime/session artifact.
+It checks loopback-only HTTP behavior, exact `openai_product_journal` JSON import/export, event processing over `/v1/events`, and service continuity equivalence without widening into outbound host control or generic service doctrine.
 It does not authorize remote bind, multi-session doctrine, Gemini runtime, or generic runtime/service abstraction.
 
 Direct commands:
@@ -186,8 +186,8 @@ make revalidate-openai-service
 
 ## OpenAI host-control revalidation
 
-This revalidates the first bounded outbound OpenAI host-control lane on top of the accepted `O3` loopback shell, accepted `O2` ingress law, and accepted `O1` runtime/session law.
-It checks the strict text-only request boundary, stdlib transport parsing, loopback action endpoint behavior, and export/import continuity across multiple outbound actions.
+This revalidates the accepted bounded outbound OpenAI host-control lane on top of the accepted `O3` loopback shell, accepted `O2` ingress law, and compressed `O1` runtime/session law.
+It checks the strict text-only request boundary, stdlib transport parsing, loopback action endpoint behavior, exact `decision + journal` record projection, and export/import continuity across multiple outbound actions.
 It does not authorize tools, tool-result submission, cancel/update lanes, remote hosting, multi-session doctrine, Gemini runtime, executive-loop rewrite, or generic runtime/service abstraction.
 Canonical K2 tests use the internal fixture transport and do not require a live OpenAI network or a real API key.
 
@@ -207,8 +207,8 @@ make revalidate-openai-host-control
 
 ## Executive live-outcome revalidation
 
-This revalidates the bounded proven-lane executive loop over the accepted reference/OpenAI runtime shells and the accepted K2 host-control lane.
-It now checks:
+This is now a retained historical/reference revalidation surface for the older allocation-heavy reference/OpenAI control story.
+It checks:
 - explicit `Q_t^{online}` / `Q_t^{alloc}` diagnostics
 - computed `alpha_t`
 - `Q_t^{mem}=0.0`
@@ -217,7 +217,7 @@ It now checks:
 - bounded guarded/latched enforcement-aware realized control behavior
 - and live-outcome-conditioned pressure over the already-landed feedback window
 
-It does not authorize support-memory runtime, mediation, new host-control lanes, Gemini runtime shell, tools, vigor scaling, or generic reward-learning doctrine.
+It does not define the accepted OpenAI-only product runtime after X1, and it does not authorize support-memory runtime, mediation, new host-control lanes, Gemini runtime shell, tools, vigor scaling, or generic reward-learning doctrine.
 
 Direct commands:
 
@@ -461,9 +461,9 @@ For actual N2 service proof, use a capable machine rather than treating current-
 
 ## Live host-native product paths
 
-This is the primary acceptance-grade live lane.
+This is now a retained watchlist comparison lane, not the accepted product path.
 It runs the shared coding harness against signed-in host-native provider surfaces, keeps artifacts local-only, and measures `pass_minimal`, `restart_continuity`, and `truth_gap`.
-For OpenAI, the focused lifecycle proof now lives in the separate `codex app-server` entry point below; the generic host-native target still helps as the cross-host umbrella, but `make live-openai-app-server` is the stronger OpenAI rerun surface.
+For OpenAI, the accepted product/runtime proof now lives on the direct-API host-control entry point below; the generic host-native target remains useful only as a cross-host watchlist umbrella, and `make live-openai-app-server` stays watchlist-only lifecycle evidence.
 For Claude and Gemini, the operator lane now records documented hook events alongside the CLI transcript artifacts.
 While Claude and Gemini still carry operator-harness drift, do not treat the aggregate cross-host entrypoint by itself as the clean closure signal.
 For focused Gemini reruns, use the direct script with `--provider gemini --scenario ... --max-attempts ... --cooldown-seconds ...` rather than relying on the umbrella target alone.
@@ -485,7 +485,7 @@ make live-host-native-product-paths
 
 ## Live OpenAI App Server operator proof
 
-This is the preferred OpenAI operator-lifecycle proof for current scope.
+This is the preferred OpenAI operator-lifecycle watchlist proof for current scope.
 It keeps `codex exec` as the smoke lane and uses `codex app-server` for the repeated shared coding harness and lifecycle-event capture.
 Machine output is local-only under `.cortex/live_validation/`.
 
@@ -504,7 +504,7 @@ make live-openai-app-server
 ## Live Cortex host-control capture
 
 This captures the current automation-side loopback service plus A4 / G4 / O4 host-control lanes.
-It is now the canonical service-proof entry point for the direct-API lane.
+It is now the canonical service-proof and accepted product-path entry point for the direct-API lane.
 Machine output is local-only under `.cortex/live_validation/`.
 `--suite current` remains the readiness probe surface.
 `--suite canonical_anchor` is the first real canonical truth suite and is currently implemented for Claude and OpenAI.
@@ -562,7 +562,8 @@ make live-operator-payoff-audit
 
 ## Operator routing realization
 
-This revalidates the first bounded SRE-owned operator routing layer over the live-testing harness.
+This is now a retained watchlist/reference diagnostic for the operator harness.
+It revalidates the first bounded SRE-owned operator routing layer over the live-testing harness, but it does not define or gate the accepted OpenAI-only product runtime after X1.
 It checks the bounded task-state builder, the executive summary carrier, persistent tonic modulator update law, policy-view derivation, geometric route selector, quota-pressure blocking, guarded continuity preference, one extra inspect read-pass law, and route/modulator/policy diagnostics carried into live artifacts.
 It does not authorize named model routing, service/auth widening, AUX activation, or packet-level runtime changes.
 
