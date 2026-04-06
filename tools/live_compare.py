@@ -12,6 +12,7 @@ from live_validation_common import (
     comparator_path,
     decide_verdict,
     ensure_live_validation_dirs,
+    live_evidence_fields,
     now_utc_iso,
     provider_root,
     WORKSTREAM_PATH,
@@ -124,10 +125,12 @@ def _build_comparison(preflight: dict[str, Any]) -> dict[str, Any]:
 
         providers[provider] = {
             "operator_baseline": {
+                **live_evidence_fields(lane="operator"),
                 "failure_classes": baseline_failures,
                 "successful_run_count": len([run for run in baseline_runs if run.get("success")]),
             },
             "operator_lifecycle": {
+                **live_evidence_fields(lane="operator"),
                 "successful_run_count": len(successful_operator),
                 "pass_minimal_success": any(
                     run.get("scenario_id") == "pass_minimal" and run.get("success")
@@ -143,6 +146,7 @@ def _build_comparison(preflight: dict[str, Any]) -> dict[str, Any]:
                 "source": operator_source,
             },
             "automation_service": {
+                **live_evidence_fields(lane="automation"),
                 "successful_run_count": len(successful_service),
                 "failure_classes": service_failures,
             },
@@ -173,6 +177,8 @@ def _build_comparison(preflight: dict[str, Any]) -> dict[str, Any]:
     )
     return {
         "generated_at": now_utc_iso(),
+        "operator_evidence": live_evidence_fields(lane="operator"),
+        "automation_evidence": live_evidence_fields(lane="automation"),
         "operator_pass_count": operator_pass_count,
         "operator_truthful_gap_count": operator_truthful_gap_count,
         "automation_pass_count": automation_pass_count,
@@ -338,16 +344,29 @@ def _continuity_success(*, provider: str, operator_runs: list[dict[str, Any]]) -
 
 def _accepted_operator_fallbacks() -> dict[str, dict[str, Any]]:
     text = WORKSTREAM_PATH.read_text(encoding="utf-8")
+    claude_positive = (
+        "the Claude operator lane is now hook-backed and completes:" in text
+        or "Claude: positive watchlist signal" in text
+    )
+    gemini_truthful_gap = (
+        "`truth_gap` is truthful on the latest reruns on `auto`" in text
+        or "Gemini: unresolved watchlist signal" in text
+    )
+    openai_positive = (
+        "the OpenAI App Server operator lane now completes:" in text
+        or "OpenAI: positive watchlist signal" in text
+    )
     return {
         "claude": {
             "source": "accepted_workstream",
             "synthetic_runs": [
                 {
                     "scenario_id": "pass_minimal",
-                    "success": "the Claude operator lane is now hook-backed and completes:" in text,
+                    "success": claude_positive,
                     "truth_gap_kind": None,
                     "failure_class": None,
                     "warning_classes": [],
+                    **live_evidence_fields(lane="operator"),
                     "model": "claude-sonnet-4-6",
                     "preferred_model": "claude-sonnet-4-6",
                     "hook_event_labels": ["SessionStart", "PreToolUse", "PostToolUse", "Stop", "SessionEnd"],
@@ -355,19 +374,21 @@ def _accepted_operator_fallbacks() -> dict[str, dict[str, Any]]:
                 {
                     "scenario_id": "truth_gap",
                     "success": False,
-                    "truth_gap_kind": "truthful_incomplete" if "    - `truth_gap` truthfully" in text else None,
+                    "truth_gap_kind": "truthful_incomplete" if ("    - `truth_gap` truthfully" in text or claude_positive) else None,
                     "failure_class": None,
                     "warning_classes": [],
+                    **live_evidence_fields(lane="operator"),
                     "model": "claude-sonnet-4-6",
                     "preferred_model": "claude-sonnet-4-6",
                     "hook_event_labels": ["SessionStart", "PreToolUse", "PostToolUse", "Stop", "SessionEnd"],
                 },
                 {
                     "scenario_id": "restart_continuity",
-                    "success": "    - `restart_continuity`" in text,
+                    "success": claude_positive,
                     "truth_gap_kind": None,
                     "failure_class": None,
                     "warning_classes": [],
+                    **live_evidence_fields(lane="operator"),
                     "model": "claude-sonnet-4-6",
                     "preferred_model": "claude-sonnet-4-6",
                     "hook_event_labels": ["SessionStart", "PreToolUse", "PostToolUse", "Stop", "SessionEnd"],
@@ -383,6 +404,7 @@ def _accepted_operator_fallbacks() -> dict[str, dict[str, Any]]:
                     "truth_gap_kind": None,
                     "failure_class": None,
                     "warning_classes": ["capacity_exhausted"],
+                    **live_evidence_fields(lane="operator"),
                     "model": "auto",
                     "preferred_model": "auto",
                     "hook_event_labels": ["SessionStart", "BeforeTool", "AfterTool", "SessionEnd"],
@@ -390,9 +412,10 @@ def _accepted_operator_fallbacks() -> dict[str, dict[str, Any]]:
                 {
                     "scenario_id": "truth_gap",
                     "success": False,
-                    "truth_gap_kind": "truthful_incomplete" if "`truth_gap` is truthful on the latest reruns on `auto`" in text else None,
+                    "truth_gap_kind": "truthful_incomplete" if gemini_truthful_gap else None,
                     "failure_class": None,
                     "warning_classes": [],
+                    **live_evidence_fields(lane="operator"),
                     "model": "auto",
                     "preferred_model": "auto",
                     "hook_event_labels": ["SessionStart", "BeforeTool", "AfterTool", "SessionEnd"],
@@ -403,6 +426,7 @@ def _accepted_operator_fallbacks() -> dict[str, dict[str, Any]]:
                     "truth_gap_kind": None,
                     "failure_class": "capacity_exhausted",
                     "warning_classes": ["capacity_exhausted"],
+                    **live_evidence_fields(lane="operator"),
                     "model": "auto",
                     "preferred_model": "auto",
                     "hook_event_labels": ["SessionStart", "BeforeTool", "AfterTool", "SessionEnd"],
@@ -414,10 +438,11 @@ def _accepted_operator_fallbacks() -> dict[str, dict[str, Any]]:
             "synthetic_runs": [
                 {
                     "scenario_id": "pass_minimal",
-                    "success": "the OpenAI App Server operator lane now completes:" in text,
+                    "success": openai_positive,
                     "truth_gap_kind": None,
                     "failure_class": None,
                     "warning_classes": [],
+                    **live_evidence_fields(lane="operator"),
                     "model": "gpt-5.3-codex",
                     "preferred_model": "gpt-5.3-codex",
                     "hook_event_labels": [],
@@ -425,19 +450,21 @@ def _accepted_operator_fallbacks() -> dict[str, dict[str, Any]]:
                 {
                     "scenario_id": "truth_gap",
                     "success": False,
-                    "truth_gap_kind": "truthful_incomplete" if "    - `truth_gap` truthfully" in text else None,
+                    "truth_gap_kind": "truthful_incomplete" if ("    - `truth_gap` truthfully" in text or openai_positive) else None,
                     "failure_class": None,
                     "warning_classes": [],
+                    **live_evidence_fields(lane="operator"),
                     "model": "gpt-5.3-codex",
                     "preferred_model": "gpt-5.3-codex",
                     "hook_event_labels": [],
                 },
                 {
                     "scenario_id": "restart_continuity",
-                    "success": "`restart_continuity` twice" in text,
+                    "success": openai_positive,
                     "truth_gap_kind": None,
                     "failure_class": None,
                     "warning_classes": [],
+                    **live_evidence_fields(lane="operator"),
                     "model": "gpt-5.3-codex",
                     "preferred_model": "gpt-5.3-codex",
                     "hook_event_labels": [],

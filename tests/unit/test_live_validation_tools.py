@@ -38,6 +38,7 @@ from live_validation_common import (
     extract_event_labels,
     extract_result_text,
     extract_token_usage,
+    live_evidence_fields,
     model_ladder,
     parse_json_lines,
     redact_claude_auth_payload,
@@ -80,10 +81,23 @@ def test_classify_failure_recognizes_live_auth_and_capacity_blockers() -> None:
         == "capacity_exhausted"
     )
     assert classify_failure("You've hit your limit · resets 4pm (Asia/Tokyo)") == "quota_exhausted"
+    assert classify_failure('Gemini interaction stream transport failed with HTTP 500: INTERNAL') == "provider_internal_error"
+    assert classify_failure('{"error":{"code":500,"status":"INTERNAL","message":"internal error encountered"}}') == "provider_internal_error"
     assert classify_failure('{"code": -32600, "message": "no rollout found for thread id 123"}') == "continuity_rollout_missing"
     assert classify_failure("Requested entity was not found.") == "model_unavailable"
     assert classify_failure("model_not_found") == "model_unavailable"
     assert classify_failure("totally different error") is None
+
+
+def test_live_evidence_fields_classify_watchlist_and_canonical_truth_lanes() -> None:
+    assert live_evidence_fields(lane="operator") == {
+        "execution_surface": "headless_cli",
+        "evidence_role": "watchlist",
+    }
+    assert live_evidence_fields(lane="automation") == {
+        "execution_surface": "direct_api",
+        "evidence_role": "canonical_truth",
+    }
 
 
 def test_should_collapse_after_failure_matches_blocking_classes() -> None:
@@ -513,6 +527,8 @@ def test_single_provider_service_summary_does_not_include_stale_other_providers(
     )
 
     assert summary["lane"] == "automation"
+    assert summary["execution_surface"] == "direct_api"
+    assert summary["evidence_role"] == "canonical_truth"
     assert summary["providers"] == {"claude": {"provider": "claude", "runs": []}}
 
 
@@ -683,6 +699,83 @@ def test_claude_hook_capture_drops_stop_hook(tmp_path: Path) -> None:
     assert "Stop" not in settings["hooks"]
 
 
+def test_gemini_hook_capture_skips_project_settings_for_minimal(tmp_path: Path) -> None:
+    project_root = tmp_path / "project"
+    project_root.mkdir()
+
+    hook_log_path = live_host_native_product_paths._configure_hook_capture(
+        provider="gemini",
+        project_root=project_root,
+        scenario_id="pass_minimal",
+        repeat_index=1,
+        execution_flavor="minimal",
+        log_root=tmp_path,
+    )
+
+    assert hook_log_path is None
+    assert not (project_root / ".gemini" / "settings.json").exists()
+
+
+def test_gemini_task_omits_hook_env_for_minimal_execution(monkeypatch) -> None:
+    captured: dict[str, object] = {}
+
+    def fake_timed_command(command, **kwargs):
+        captured["env"] = kwargs.get("env")
+        return {
+            "command": command,
+            "exit_code": 0,
+            "stdout": "",
+            "stderr": "",
+            "started_at": "2026-03-30T00:00:00+00:00",
+            "ended_at": "2026-03-30T00:00:00+00:00",
+        }
+
+    monkeypatch.setattr(live_host_native_product_paths, "_run_timed_command", fake_timed_command)
+
+    live_host_native_product_paths._run_gemini_task(
+        "Respond exactly with OK.",
+        project_root=Path("/tmp"),
+        model="auto",
+        auth_mode="api_key",
+        approval_mode="yolo",
+        hook_log_path=None,
+        inject_hook_env=False,
+    )
+
+    assert captured["env"] is None
+
+
+def test_gemini_task_preserves_hook_env_for_wrapped_execution(monkeypatch, tmp_path: Path) -> None:
+    captured: dict[str, object] = {}
+    hook_log_path = tmp_path / "gemini.hooks.jsonl"
+
+    def fake_timed_command(command, **kwargs):
+        captured["env"] = kwargs.get("env")
+        return {
+            "command": command,
+            "exit_code": 0,
+            "stdout": "",
+            "stderr": "",
+            "started_at": "2026-03-30T00:00:00+00:00",
+            "ended_at": "2026-03-30T00:00:00+00:00",
+        }
+
+    monkeypatch.setattr(live_host_native_product_paths, "_run_timed_command", fake_timed_command)
+
+    live_host_native_product_paths._run_gemini_task(
+        "Respond exactly with OK.",
+        project_root=Path("/tmp"),
+        model="auto",
+        auth_mode="api_key",
+        approval_mode="yolo",
+        hook_log_path=hook_log_path,
+        inject_hook_env=True,
+    )
+
+    assert captured["env"]["CORTEX_LIVE_HOOK_PROVIDER"] == "gemini"
+    assert captured["env"]["CORTEX_LIVE_HOOK_LOG_PATH"] == str(hook_log_path)
+
+
 def test_live_hook_recorder_emits_no_stdout_when_logging(capsys, monkeypatch, tmp_path: Path) -> None:
     log_path = tmp_path / "hooks.jsonl"
     monkeypatch.setenv("CORTEX_LIVE_HOOK_LOG_PATH", str(log_path))
@@ -777,6 +870,205 @@ def test_operator_timeout_after_successful_verification_is_warning_not_failure(
     assert payload["success"] is True
     assert payload["failure_class"] is None
     assert payload["warning_classes"] == ["operator_timeout"]
+
+
+def test_operator_directionality_truth_gap_minimal_flavor_skips_extra_read_pass(
+    monkeypatch,
+    tmp_path: Path,
+) -> None:
+    captured: dict[str, object] = {}
+
+    monkeypatch.setattr(
+        live_operator_directionality,
+        "prepare_harness_workspace",
+        lambda **kwargs: tmp_path / "project_a",
+    )
+    monkeypatch.setattr(
+        live_operator_directionality,
+        "read_prompt_template",
+        lambda filename: "prompt",
+    )
+    monkeypatch.setattr(
+        live_operator_directionality,
+        "resolve_auth_mode",
+        lambda provider, lane: "api_key",
+    )
+    monkeypatch.setattr(
+        live_operator_directionality,
+        "recent_operator_probe_failure",
+        lambda provider: None,
+    )
+    monkeypatch.setattr(
+        live_operator_directionality.host_paths,
+        "_resolve_cortex_execution_flavor",
+        lambda **kwargs: (
+            "minimal",
+            {
+                "execution_flavor_effective": "minimal",
+                "execution_flavor_override": "minimal",
+            },
+        ),
+    )
+    monkeypatch.setattr(
+        live_operator_directionality.host_paths,
+        "_configure_hook_capture",
+        lambda **kwargs: None,
+    )
+
+    def fake_run_operator_attempts(**kwargs):
+        captured["execution_flavor"] = kwargs["execution_flavor"]
+        return (
+            {
+                "command": ["gemini"],
+                "exit_code": 0,
+                "stdout": '{"type":"result","stats":{"input_tokens":1,"output_tokens":1,"cached":0}}',
+                "stderr": "",
+                "started_at": "2026-03-30T00:00:00+00:00",
+                "ended_at": "2026-03-30T00:00:01+00:00",
+            },
+            None,
+            "auto",
+            "auto",
+            True,
+            ["auto"],
+        )
+
+    monkeypatch.setattr(
+        live_operator_directionality.host_paths,
+        "_run_operator_attempts",
+        fake_run_operator_attempts,
+    )
+    monkeypatch.setattr(
+        live_operator_directionality.host_paths,
+        "_materialize_operator_run",
+        lambda **kwargs: {
+            "truth_gap_kind": "truthful_incomplete",
+            "provider_limit_interference": False,
+            "warning_classes": [],
+            "attempted_models": ["auto"],
+            **kwargs["route_diagnostics"],
+        },
+    )
+    monkeypatch.setattr(
+        live_operator_directionality,
+        "_maybe_run_cli_extra_read_pass",
+        lambda **kwargs: (_ for _ in ()).throw(
+            AssertionError("minimal flavor should suppress extra read pass")
+        ),
+    )
+
+    payload = live_operator_directionality._run_cli_variant(
+        "gemini",
+        variant="cortex_operator",
+        scenario_id="truth_gap",
+        repeat_index=1,
+        precheck={"status": "ready"},
+        baseline_runs=[],
+        prior_runs=(),
+        cortex_execution_flavor_override="minimal",
+    )
+
+    assert captured["execution_flavor"] == "minimal"
+    assert payload["execution_flavor_effective"] == "minimal"
+    assert payload["execution_flavor_override"] == "minimal"
+    assert payload["extra_read_pass_attempted"] is False
+
+
+def test_product_path_single_scenario_forwards_minimal_execution_flavor(
+    monkeypatch,
+    tmp_path: Path,
+) -> None:
+    captured: dict[str, object] = {}
+
+    monkeypatch.setattr(
+        live_host_native_product_paths,
+        "prepare_harness_workspace",
+        lambda **kwargs: tmp_path / "project_a",
+    )
+    monkeypatch.setattr(
+        live_host_native_product_paths,
+        "read_prompt_template",
+        lambda filename: "Respond exactly with OK.",
+    )
+    monkeypatch.setattr(
+        live_host_native_product_paths,
+        "resolve_auth_mode",
+        lambda provider, lane: "api_key",
+    )
+    monkeypatch.setattr(
+        live_host_native_product_paths,
+        "recent_operator_probe_failure",
+        lambda provider: None,
+    )
+    monkeypatch.setattr(
+        live_host_native_product_paths,
+        "_resolve_cortex_execution_flavor",
+        lambda **kwargs: (
+            "minimal",
+            {
+                "execution_flavor_effective": "minimal",
+                "execution_flavor_override": "minimal",
+            },
+        ),
+    )
+    monkeypatch.setattr(
+        live_host_native_product_paths,
+        "_configure_hook_capture",
+        lambda **kwargs: None,
+    )
+
+    def fake_run_operator_attempts(**kwargs):
+        captured["execution_flavor"] = kwargs["execution_flavor"]
+        return (
+            {
+                "command": ["gemini"],
+                "exit_code": 1,
+                "stdout": "",
+                "stderr": "When using Gemini API, you must specify the GEMINI_API_KEY environment variable.",
+                "started_at": "2026-03-30T00:00:00+00:00",
+                "ended_at": "2026-03-30T00:00:00+00:00",
+            },
+            "auth_missing",
+            "auto",
+            "auto",
+            False,
+            ["auto"],
+        )
+
+    monkeypatch.setattr(
+        live_host_native_product_paths,
+        "_run_operator_attempts",
+        fake_run_operator_attempts,
+    )
+    monkeypatch.setattr(
+        live_host_native_product_paths,
+        "_materialize_operator_run",
+        lambda **kwargs: {
+            "success": False,
+            "failure_class": "auth_missing",
+            "execution_flavor_effective": kwargs["route_diagnostics"][
+                "execution_flavor_effective"
+            ],
+        },
+    )
+
+    payload = live_host_native_product_paths._run_single_scenario(
+        "gemini",
+        "pass_minimal",
+        1,
+        tmp_path,
+        baseline_runs=[],
+        prior_runs=(),
+        max_attempts=1,
+        cooldown_seconds=0,
+        preferred_model_override=None,
+        fallback_model_override=None,
+        disable_auto_probe=False,
+        cortex_execution_flavor_override="minimal",
+    )
+
+    assert captured["execution_flavor"] == "minimal"
+    assert payload["execution_flavor_effective"] == "minimal"
 
 
 def test_single_live_service_call_records_export_and_warning_timing(monkeypatch) -> None:

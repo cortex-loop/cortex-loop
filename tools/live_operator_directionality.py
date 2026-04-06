@@ -38,6 +38,7 @@ try:  # pragma: no cover
         extract_event_labels,
         extract_result_text,
         extract_session_id,
+        live_evidence_fields,
         now_utc_iso,
         operator_directionality_root,
         prepare_harness_workspace,
@@ -64,6 +65,7 @@ except ImportError:  # pragma: no cover
         extract_event_labels,
         extract_result_text,
         extract_session_id,
+        live_evidence_fields,
         now_utc_iso,
         operator_directionality_root,
         prepare_harness_workspace,
@@ -123,6 +125,11 @@ def main(argv: list[str] | None = None) -> int:
         type=int,
         default=_REPEAT_COUNT,
     )
+    parser.add_argument(
+        "--cortex-execution-flavor",
+        choices=("auto", "minimal", "wrapped"),
+        default="auto",
+    )
     args = parser.parse_args(argv)
 
     ensure_live_validation_dirs()
@@ -135,6 +142,7 @@ def main(argv: list[str] | None = None) -> int:
             provider,
             scenarios=scenarios,
             repeat_count=max(1, args.repeat_count),
+            cortex_execution_flavor_override=args.cortex_execution_flavor,
         )
         summary = _merged_provider_summaries(provider_updates)
         write_json(comparator_path("operator_directionality_summary.json"), summary)
@@ -147,6 +155,7 @@ def _run_provider(
     *,
     scenarios: tuple[str, ...],
     repeat_count: int,
+    cortex_execution_flavor_override: str,
 ) -> dict[str, Any]:
     precheck = _raw_host_precheck(provider)
     baseline_summary = _read_json(comparator_path("operator_provider_baseline_summary.json"))
@@ -165,6 +174,7 @@ def _run_provider(
                     variant: tuple(runs)
                     for variant, runs in prior_variant_runs.items()
                 },
+                cortex_execution_flavor_override=cortex_execution_flavor_override,
             )
             pairs.append(pair)
             if pair.get("pair_status") == "compared":
@@ -178,6 +188,7 @@ def _run_provider(
         "generated_at": now_utc_iso(),
         "provider": provider,
         "lane": "operator",
+        **live_evidence_fields(lane="operator"),
         "raw_host_precheck": precheck,
         "pairs": pairs,
     }
@@ -193,6 +204,7 @@ def _run_pair(
     precheck: dict[str, Any],
     baseline_runs: list[dict[str, Any]],
     prior_variant_runs: dict[str, tuple[dict[str, Any], ...]],
+    cortex_execution_flavor_override: str,
 ) -> dict[str, Any]:
     if precheck["status"] != "ready":
         raw_payload = _blocked_raw_payload(
@@ -244,6 +256,7 @@ def _run_pair(
             precheck=precheck,
             baseline_runs=baseline_runs,
             prior_runs=prior_variant_runs[variant],
+            cortex_execution_flavor_override=cortex_execution_flavor_override,
         )
     return {
         "provider": provider,
@@ -267,6 +280,7 @@ def _merged_provider_summaries(provider_updates: dict[str, Any] | None = None) -
         "generated_at": now_utc_iso(),
         "surface": "operator_directionality",
         "lane": "operator",
+        **live_evidence_fields(lane="operator"),
         "providers": {},
     }
     for provider in ("claude", "gemini", "openai"):
@@ -287,6 +301,7 @@ def _run_variant(
     precheck: dict[str, Any],
     baseline_runs: list[dict[str, Any]],
     prior_runs: tuple[dict[str, Any], ...],
+    cortex_execution_flavor_override: str = "auto",
 ) -> dict[str, Any]:
     if provider == "openai":
         return _run_openai_variant(
@@ -296,6 +311,7 @@ def _run_variant(
             precheck=precheck,
             baseline_runs=baseline_runs,
             prior_runs=prior_runs,
+            cortex_execution_flavor_override=cortex_execution_flavor_override,
         )
     return _run_cli_variant(
         provider,
@@ -305,6 +321,7 @@ def _run_variant(
         precheck=precheck,
         baseline_runs=baseline_runs,
         prior_runs=prior_runs,
+        cortex_execution_flavor_override=cortex_execution_flavor_override,
     )
 
 
@@ -317,6 +334,7 @@ def _run_cli_variant(
     precheck: dict[str, Any],
     baseline_runs: list[dict[str, Any]],
     prior_runs: tuple[dict[str, Any], ...],
+    cortex_execution_flavor_override: str = "auto",
 ) -> dict[str, Any]:
     root = operator_directionality_root(provider, variant)
     project_root = prepare_harness_workspace(
@@ -324,17 +342,6 @@ def _run_cli_variant(
         lane=f"operator_directionality/{variant}",
         scenario_id=scenario_id,
         repeat_index=repeat_index,
-    )
-    hook_log_path = (
-        host_paths._configure_hook_capture(
-            provider=provider,
-            project_root=project_root,
-            scenario_id=scenario_id,
-            repeat_index=repeat_index,
-            log_root=root,
-        )
-        if variant == "cortex_operator"
-        else None
     )
     if scenario_id == "restart_continuity":
         return _run_cli_restart_continuity_variant(
@@ -344,10 +351,11 @@ def _run_cli_variant(
             repeat_index=repeat_index,
             project_root=project_root,
             root=root,
-            hook_log_path=hook_log_path,
+            hook_log_path=None,
             precheck=precheck,
             baseline_runs=baseline_runs,
             prior_runs=prior_runs,
+            cortex_execution_flavor_override=cortex_execution_flavor_override,
         )
 
     prompt = read_prompt_template(_SCENARIOS[scenario_id]["prompt_file"])
@@ -387,6 +395,15 @@ def _run_cli_variant(
     policy_view = build_executive_policy_view(summary, modulator_update.state)
     route_decision = select_operator_route_with_policy(route_state, modulator_update, policy_view)
     route_diagnostics = build_operator_route_diagnostics(route_state, route_decision)
+    execution_flavor = "wrapped"
+    hook_log_path = None
+    if variant == "cortex_operator":
+        execution_flavor, execution_updates = host_paths._resolve_cortex_execution_flavor(
+            provider=provider,
+            scenario_id=scenario_id,
+            override=cortex_execution_flavor_override,
+        )
+        route_diagnostics.update(execution_updates)
     if route_decision.blocked_reason is not None:
         return host_paths._blocked_operator_route_payload(
             provider=provider,
@@ -404,6 +421,15 @@ def _run_cli_variant(
             notes="Route selector blocked paired execution before host work started.",
         )
     if variant == "cortex_operator":
+        hook_log_path = host_paths._configure_hook_capture(
+            provider=provider,
+            project_root=project_root,
+            scenario_id=scenario_id,
+            repeat_index=repeat_index,
+            execution_flavor=execution_flavor,
+            log_root=root,
+        )
+    if variant == "cortex_operator":
         run_result, failure_class, chosen_model, preferred_model, auto_supported, attempted_models = host_paths._run_operator_attempts(
             provider=provider,
             prompt=prompt,
@@ -417,6 +443,7 @@ def _run_cli_variant(
             preferred_model_override=None,
             fallback_model_override=None,
             disable_auto_probe=False,
+            execution_flavor=execution_flavor,
         )
     else:
         run_result, failure_class, chosen_model, preferred_model, auto_supported, attempted_models = _run_raw_operator_attempts(
@@ -452,6 +479,7 @@ def _run_cli_variant(
     if (
         scenario_id == "truth_gap"
         and route_decision.budget.allow_extra_read_pass
+        and (variant != "cortex_operator" or execution_flavor != "minimal")
         and payload.get("truth_gap_kind") == "truthful_incomplete"
         and not payload.get("provider_limit_interference")
     ):
@@ -484,6 +512,7 @@ def _run_cli_restart_continuity_variant(
     precheck: dict[str, Any],
     baseline_runs: list[dict[str, Any]],
     prior_runs: tuple[dict[str, Any], ...],
+    cortex_execution_flavor_override: str = "auto",
 ) -> dict[str, Any]:
     auth_mode = resolve_auth_mode(provider, "operator")
     first_prompt = read_prompt_template(_SCENARIOS[scenario_id]["turn1_prompt_file"])
@@ -523,6 +552,14 @@ def _run_cli_restart_continuity_variant(
     policy_view = build_executive_policy_view(summary, modulator_update.state)
     route_decision = select_operator_route_with_policy(route_state, modulator_update, policy_view)
     route_diagnostics = build_operator_route_diagnostics(route_state, route_decision)
+    execution_flavor = "wrapped"
+    if variant == "cortex_operator":
+        execution_flavor, execution_updates = host_paths._resolve_cortex_execution_flavor(
+            provider=provider,
+            scenario_id=scenario_id,
+            override=cortex_execution_flavor_override,
+        )
+        route_diagnostics.update(execution_updates)
     if route_decision.blocked_reason is not None:
         return host_paths._blocked_operator_route_payload(
             provider=provider,
@@ -539,6 +576,15 @@ def _run_cli_restart_continuity_variant(
             ),
             notes="Route selector blocked continuity before the first operator turn.",
         )
+    if variant == "cortex_operator":
+        hook_log_path = host_paths._configure_hook_capture(
+            provider=provider,
+            project_root=project_root,
+            scenario_id=scenario_id,
+            repeat_index=repeat_index,
+            execution_flavor=execution_flavor,
+            log_root=root,
+        )
 
     if variant == "cortex_operator":
         first_result, first_failure, chosen_model, preferred_model, auto_supported, attempted_models = host_paths._run_operator_attempts(
@@ -554,6 +600,7 @@ def _run_cli_restart_continuity_variant(
             preferred_model_override=None,
             fallback_model_override=None,
             disable_auto_probe=False,
+            execution_flavor=execution_flavor,
         )
     else:
         first_result, first_failure, chosen_model, preferred_model, auto_supported, attempted_models = _run_raw_operator_attempts(
@@ -598,6 +645,7 @@ def _run_cli_restart_continuity_variant(
             approval_mode="yolo" if provider == "gemini" else None,
             hook_log_path=hook_log_path,
             scenario_id="restart_continuity",
+            execution_flavor=execution_flavor,
         )
     else:
         second_result = _resume_raw_provider_task(
@@ -853,6 +901,7 @@ def _run_openai_variant(
     precheck: dict[str, Any],
     baseline_runs: list[dict[str, Any]],
     prior_runs: tuple[dict[str, Any], ...],
+    cortex_execution_flavor_override: str = "auto",
 ) -> dict[str, Any]:
     root = operator_directionality_root("openai", variant)
     project_root = prepare_harness_workspace(
@@ -1195,6 +1244,8 @@ def _blocked_raw_payload(
     artifact_path = root / f"{scenario_id}__run_{repeat_index:03d}.blocked.json"
     payload = {
         "provider": provider,
+        "lane": "operator",
+        **live_evidence_fields(lane="operator"),
         "variant": "raw_host",
         "scenario_id": scenario_id,
         "repeat_index": repeat_index,

@@ -32,6 +32,7 @@ from live_validation_common import (
     ensure_live_validation_dirs,
     extract_event_labels,
     extract_result_text,
+    live_evidence_fields,
     now_utc_iso,
     parse_json_lines,
     provider_cli_workspace,
@@ -98,11 +99,13 @@ def main(argv: list[str] | None = None) -> int:
             "generated_at": now_utc_iso(),
             "surface": "provider_baseline",
             "lane": args.lane,
+            **live_evidence_fields(lane=args.lane),
             "providers": {},
         }
     overall_summary["generated_at"] = now_utc_iso()
     overall_summary["surface"] = "provider_baseline"
     overall_summary["lane"] = args.lane
+    overall_summary.update(live_evidence_fields(lane=args.lane))
     for provider in providers:
         overall_summary["providers"][provider] = _capture_provider(
             provider,
@@ -136,6 +139,7 @@ def _capture_provider(
                 {
                     "provider": provider,
                     "lane": lane,
+                    **live_evidence_fields(lane=lane),
                     "repeat_index": repeat_index,
                     "success": False,
                     "skipped": True,
@@ -162,6 +166,7 @@ def _capture_provider(
         "generated_at": now_utc_iso(),
         "provider": provider,
         "lane": lane,
+        **live_evidence_fields(lane=lane),
         "runs": runs,
     }
     write_json(root / "provider_baseline_runs.json", summary)
@@ -206,6 +211,7 @@ def _run_single_provider_baseline(
         payload = {
             "provider": provider,
             "lane": lane,
+            **live_evidence_fields(lane=lane),
             "repeat_index": repeat_index,
             "auth_mode": auth_readiness["auth_mode"],
             "auth_readiness": auth_readiness,
@@ -300,6 +306,7 @@ def _run_single_provider_baseline(
     payload = {
         "provider": provider,
         "lane": lane,
+        **live_evidence_fields(lane=lane),
         "repeat_index": repeat_index,
         "auth_mode": auth_mode,
         "auth_readiness": auth_readiness,

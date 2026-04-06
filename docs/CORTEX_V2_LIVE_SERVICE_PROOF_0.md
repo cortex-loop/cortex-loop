@@ -1,20 +1,26 @@
 # CORTEX_V2_LIVE_SERVICE_PROOF_0
 
-Date: 2026-03-28
-Status: active capable-machine service-proof contract with current-machine blocker note
+Date: 2026-04-06
+Status: active canonical-truth service-proof contract with current-machine blocker note
 
 ## Purpose
 
-This note records the first bounded automation auth-alignment and service-lane live-proof train over the current Claude, Gemini, and OpenAI loopback service paths.
-It is a testing/support surface and does not open new runtime doctrine.
+This note records the canonical live-runtime truth lane for Cortex v2.
+
+Under the R1 reset:
+
+- `service_api` is the canonical runtime truth lane
+- `execution_surface = direct_api`
+- `evidence_role = canonical_truth`
+
+Signed-in CLI/operator evidence may remain useful for watchlisting and falsification work, but it does not count as canonical runtime truth by itself.
 
 ## Capable-machine entry condition
 
 Actual service proof belongs only on a machine that satisfies all of:
 
 - clean synced `main`
-- provider CLIs installed for the intended providers
-- automation auth readiness reads `ready` for the intended providers
+- automation auth readiness reads `ready` for the intended provider
 - explicit spend approval env is present where required
 - the current repo and local live-validation tooling are available unchanged
 
@@ -34,36 +40,36 @@ Signed-in CLI sessions do **not** count as service-lane auth.
 
 ## Current local state
 
-Current local machine state after the March 29 reruns and current-machine N2 contract/tooling reruns:
+Current local machine state at the R1 reset:
 
 - Claude automation auth: `missing`
 - Gemini automation auth: `missing`
 - OpenAI automation auth: `missing`
-- repeated automation baseline reruns now stop immediately on auth readiness instead of attempting direct provider probes when machine auth is absent
-- repeated bounded service-lane reruns stay blocked on `auth_missing` for:
+- current-machine service truth is therefore blocked honestly on auth readiness
+- the current direct-service proof tool records:
+  - `execution_surface = direct_api`
+  - `evidence_role = canonical_truth`
+- the current direct-service proof tool still only covers:
   - `service_smoke`
   - `service_restart_continuity`
-- no local service-lane live proof is yet earned
-- this machine is explicitly out of scope for actual service proof execution until machine auth is intentionally reopened
-- `N2` therefore remains blocked pending a properly provisioned capable machine
+- the first canonical three-scenario API truth anchor remains a later bounded seam:
+  - `pass_minimal`
+  - `truth_gap`
+  - `restart_continuity`
+- until that later seam is implemented and rerun on a capable machine, no host is re-earned on the canonical runtime lane
 
-## Closeout law
+## Reset law
 
-The service-proof train is only honestly closed when all are true:
+- No future product/runtime claim may land from CLI-only proof.
+- A host may be called re-earned only after repeat-stable service/API confirmation on the canonical suite.
+- Once a canonical API truth lane exists, CLI/operator instability becomes watchlist evidence unless it exposes a direct contradiction in the canonical runtime path.
 
-- Claude automation lane lands on:
-  - one successful smoke action
-  - one successful restart/import/export continuity run
-- Gemini automation lane lands on:
-  - one successful smoke action
-  - one successful restart/import/export continuity run
-- OpenAI automation lane lands on:
-  - one successful smoke action
-  - one successful restart/import/export continuity run
-- package-level service proof is updated truthfully in `docs/CORTEX_V2_PHASE_GATES_2.md`
+## Next lawful move
 
-If any host remains blocked on auth, spend policy, quota, or transport failure:
+On a capable machine:
 
-- keep the host row partial or blocked
-- keep package-level service proof partial or blocked
-- do not use that as justification to open assistance
+1. re-earn the first API truth anchor on `openai`
+2. add `claude` if auth is ready
+3. keep `gemini` watchlist-only until direct API/service auth exists
+
+Do not use CLI fallback to fake service proof.

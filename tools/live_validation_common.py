@@ -35,6 +35,16 @@ _HOME_PATH = str(Path.home())
 _TEMP_PATH_RE = re.compile(r"/(?:private/)?var/folders/[^\s\"']+")
 _FENCED_DIFF_RE = re.compile(r"```(?:diff|patch)?\n(.*?)```", re.DOTALL)
 
+_LANE_EXECUTION_SURFACE = {
+    "operator": "headless_cli",
+    "automation": "direct_api",
+}
+
+_LANE_EVIDENCE_ROLE = {
+    "operator": "watchlist",
+    "automation": "canonical_truth",
+}
+
 
 @dataclass(frozen=True, slots=True)
 class LiveModelPreference:
@@ -159,6 +169,13 @@ def write_json(path: Path, payload: Any) -> None:
 def write_text(path: Path, text: str) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(sanitize_text(text), encoding="utf-8")
+
+
+def live_evidence_fields(*, lane: str) -> dict[str, str]:
+    return {
+        "execution_surface": _LANE_EXECUTION_SURFACE[lane],
+        "evidence_role": _LANE_EVIDENCE_ROLE[lane],
+    }
 
 
 def read_json_file(path: Path) -> dict[str, Any]:
@@ -657,6 +674,15 @@ def classify_failure(text: str) -> str | None:
         return "quota_exhausted"
     if "no rollout found for thread id" in lowered:
         return "continuity_rollout_missing"
+    if (
+        "http 500: internal" in lowered
+        or
+        "got status: internal" in lowered
+        or '"status":"internal"' in lowered
+        or ("internal error encountered" in lowered and '"code":500' in lowered)
+        or ("internal server error" in lowered and "api error" in lowered)
+    ):
+        return "provider_internal_error"
     if "insufficient_quota" in lowered or "quota" in lowered:
         return "quota_exhausted"
     if "codex cli is not installed" in lowered or "surface is unavailable" in lowered:

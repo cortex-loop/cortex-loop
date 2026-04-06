@@ -37,6 +37,7 @@ try:  # pragma: no cover - import path differs between script execution and pyte
         extract_result_text,
         extract_session_id,
         extract_token_usage,
+        live_evidence_fields,
         now_utc_iso,
         parse_json_lines,
         prepare_harness_workspace,
@@ -69,6 +70,7 @@ except ImportError:  # pragma: no cover
         extract_result_text,
         extract_session_id,
         extract_token_usage,
+        live_evidence_fields,
         now_utc_iso,
         parse_json_lines,
         prepare_harness_workspace,
@@ -129,6 +131,11 @@ def main(argv: list[str] | None = None) -> int:
         "--exploratory-probe",
         action="store_true",
     )
+    parser.add_argument(
+        "--cortex-execution-flavor",
+        choices=("auto", "minimal", "wrapped"),
+        default="auto",
+    )
     args = parser.parse_args(argv)
 
     ensure_live_validation_dirs()
@@ -145,11 +152,13 @@ def main(argv: list[str] | None = None) -> int:
             "generated_at": now_utc_iso(),
             "surface": "host_native_product_paths",
             "lane": "operator",
+            **live_evidence_fields(lane="operator"),
             "providers": {},
         }
     summary["generated_at"] = now_utc_iso()
     summary["surface"] = "host_native_product_paths"
     summary["lane"] = "operator"
+    summary.update(live_evidence_fields(lane="operator"))
     for provider in providers:
         summary["providers"][provider] = _run_provider(
             provider,
@@ -160,6 +169,7 @@ def main(argv: list[str] | None = None) -> int:
             fallback_model_override=args.fallback_model,
             disable_auto_probe=args.disable_auto_probe,
             exploratory_probe=args.exploratory_probe,
+            cortex_execution_flavor_override=args.cortex_execution_flavor,
         )
     write_json(summary_path, summary)
     print(json.dumps(summary, indent=2, sort_keys=True))
@@ -176,6 +186,7 @@ def _run_provider(
     fallback_model_override: str | None,
     disable_auto_probe: bool,
     exploratory_probe: bool,
+    cortex_execution_flavor_override: str = "auto",
 ) -> dict[str, Any]:
     if provider == "openai":
         return run_openai_app_server_validation(scenario=scenario)
@@ -198,9 +209,12 @@ def _run_provider(
             "generated_at": now_utc_iso(),
             "provider": provider,
             "lane": "operator",
+            **live_evidence_fields(lane="operator"),
             "runs": [
                 {
                     "provider": provider,
+                    "lane": "operator",
+                    **live_evidence_fields(lane="operator"),
                     "scenario_id": "operator_product_gate",
                     "repeat_index": 1,
                     "success": False,
@@ -230,6 +244,8 @@ def _run_provider(
                 runs.append(
                     {
                         "provider": provider,
+                        "lane": "operator",
+                        **live_evidence_fields(lane="operator"),
                         "scenario_id": scenario_spec.scenario_id,
                         "repeat_index": repeat_index,
                         "success": False,
@@ -251,6 +267,7 @@ def _run_provider(
                 preferred_model_override=preferred_model_override,
                 fallback_model_override=fallback_model_override,
                 disable_auto_probe=disable_auto_probe,
+                cortex_execution_flavor_override=cortex_execution_flavor_override,
             )
             runs.append(result)
             if should_collapse_after_failure(result.get("failure_class")):
@@ -268,12 +285,14 @@ def _run_provider(
             preferred_model_override=preferred_model_override,
             fallback_model_override=fallback_model_override,
             disable_auto_probe=disable_auto_probe,
+            cortex_execution_flavor_override=cortex_execution_flavor_override,
         )
         runs.append(continuity)
     summary = {
         "generated_at": now_utc_iso(),
         "provider": provider,
         "lane": "operator",
+        **live_evidence_fields(lane="operator"),
         "runs": _merge_runs(existing_runs, runs) if scenario != "all" else runs,
     }
     write_json(root / "host_native_product_runs.json", summary)
@@ -293,16 +312,11 @@ def _run_single_scenario(
     preferred_model_override: str | None,
     fallback_model_override: str | None,
     disable_auto_probe: bool,
+    cortex_execution_flavor_override: str = "auto",
 ) -> dict[str, Any]:
     project_root = prepare_harness_workspace(
         provider=provider,
         lane="operator",
-        scenario_id=scenario_id,
-        repeat_index=repeat_index,
-    )
-    hook_log_path = _configure_hook_capture(
-        provider=provider,
-        project_root=project_root,
         scenario_id=scenario_id,
         repeat_index=repeat_index,
     )
@@ -341,6 +355,12 @@ def _run_single_scenario(
     policy_view = build_executive_policy_view(summary, modulator_update.state)
     route_decision = select_operator_route_with_policy(route_state, modulator_update, policy_view)
     route_diagnostics = build_operator_route_diagnostics(route_state, route_decision)
+    execution_flavor, execution_updates = _resolve_cortex_execution_flavor(
+        provider=provider,
+        scenario_id=scenario_id,
+        override=cortex_execution_flavor_override,
+    )
+    route_diagnostics.update(execution_updates)
     if route_decision.blocked_reason is not None:
         return _blocked_operator_route_payload(
             provider=provider,
@@ -356,6 +376,13 @@ def _run_single_scenario(
                 )["latest_failure_class"],
             ),
         )
+    hook_log_path = _configure_hook_capture(
+        provider=provider,
+        project_root=project_root,
+        scenario_id=scenario_id,
+        repeat_index=repeat_index,
+        execution_flavor=execution_flavor,
+    )
     run_result, failure_class, chosen_model, preferred_model, auto_supported, attempted_models = _run_operator_attempts(
         provider=provider,
         prompt=prompt,
@@ -369,6 +396,7 @@ def _run_single_scenario(
         preferred_model_override=preferred_model_override,
         fallback_model_override=fallback_model_override,
         disable_auto_probe=disable_auto_probe,
+        execution_flavor=execution_flavor,
     )
     return _materialize_operator_run(
         provider=provider,
@@ -403,6 +431,7 @@ def _run_operator_attempts(
     preferred_model_override: str | None,
     fallback_model_override: str | None,
     disable_auto_probe: bool,
+    execution_flavor: str = "wrapped",
 ) -> tuple[dict[str, Any], str | None, str, str, bool | None, list[str]]:
     auto_supported: bool | None = None
     ladder = _requested_model_ladder(
@@ -427,6 +456,7 @@ def _run_operator_attempts(
             approval_mode=approval_mode,
             hook_log_path=hook_log_path,
             scenario_id=scenario_id,
+            execution_flavor=execution_flavor,
         )
         failure_class = classify_failure(f"{run_result['stdout']}\n{run_result['stderr']}")
         if failure_class is None and run_result["exit_code"] == 124:
@@ -480,17 +510,12 @@ def _run_restart_continuity(
     preferred_model_override: str | None,
     fallback_model_override: str | None,
     disable_auto_probe: bool,
+    cortex_execution_flavor_override: str = "auto",
 ) -> dict[str, Any]:
     repeat_index = _next_repeat_index(existing_runs, "restart_continuity")
     project_root = prepare_harness_workspace(
         provider=provider,
         lane="operator",
-        scenario_id="restart_continuity",
-        repeat_index=repeat_index,
-    )
-    hook_log_path = _configure_hook_capture(
-        provider=provider,
-        project_root=project_root,
         scenario_id="restart_continuity",
         repeat_index=repeat_index,
     )
@@ -530,6 +555,12 @@ def _run_restart_continuity(
     policy_view = build_executive_policy_view(summary, modulator_update.state)
     route_decision = select_operator_route_with_policy(route_state, modulator_update, policy_view)
     route_diagnostics = build_operator_route_diagnostics(route_state, route_decision)
+    execution_flavor, execution_updates = _resolve_cortex_execution_flavor(
+        provider=provider,
+        scenario_id="restart_continuity",
+        override=cortex_execution_flavor_override,
+    )
+    route_diagnostics.update(execution_updates)
     if route_decision.blocked_reason is not None:
         return _blocked_operator_route_payload(
             provider=provider,
@@ -546,6 +577,13 @@ def _run_restart_continuity(
             ),
             notes="Continuity blocked before the first signed-in operator turn.",
         )
+    hook_log_path = _configure_hook_capture(
+        provider=provider,
+        project_root=project_root,
+        scenario_id="restart_continuity",
+        repeat_index=repeat_index,
+        execution_flavor=execution_flavor,
+    )
     first_result, first_failure, chosen_model, preferred_model, auto_supported, attempted_models = _run_operator_attempts(
         provider=provider,
         prompt=read_prompt_template("restart_continuity_turn1_operator.md"),
@@ -559,6 +597,7 @@ def _run_restart_continuity(
         preferred_model_override=preferred_model_override,
         fallback_model_override=fallback_model_override,
         disable_auto_probe=disable_auto_probe,
+        execution_flavor=execution_flavor,
     )
 
     if first_failure in BLOCKING_FAILURE_CLASSES:
@@ -602,6 +641,7 @@ def _run_restart_continuity(
         approval_mode="yolo" if provider == "gemini" else None,
         hook_log_path=hook_log_path,
         scenario_id="restart_continuity",
+        execution_flavor=execution_flavor,
     )
     second_failure = classify_failure(f"{second_result['stdout']}\n{second_result['stderr']}")
     if second_failure is None and second_result["exit_code"] == 124:
@@ -687,6 +727,7 @@ def _materialize_operator_run(
     payload = {
         "provider": provider,
         "lane": "operator",
+        **live_evidence_fields(lane="operator"),
         "scenario_id": scenario_id,
         "repeat_index": repeat_index,
         "auth_mode": auth_mode,
@@ -745,6 +786,7 @@ def _run_provider_task(
     approval_mode: str | None = None,
     hook_log_path: Path | None = None,
     scenario_id: str | None = None,
+    execution_flavor: str = "wrapped",
 ) -> dict[str, Any]:
     if provider == "claude":
         return _run_claude_task(
@@ -763,6 +805,7 @@ def _run_provider_task(
             auth_mode=auth_mode,
             approval_mode=approval_mode,
             hook_log_path=hook_log_path,
+            inject_hook_env=execution_flavor != "minimal",
         )
     return _run_codex_task(prompt, project_root=project_root, model=model, auth_mode=auth_mode)
 
@@ -778,6 +821,7 @@ def _resume_provider_task(
     approval_mode: str | None = None,
     hook_log_path: Path | None = None,
     scenario_id: str | None = None,
+    execution_flavor: str = "wrapped",
 ) -> dict[str, Any]:
     if provider == "claude":
         return _run_claude_task(
@@ -798,6 +842,7 @@ def _resume_provider_task(
             resume_session=session_id,
             approval_mode=approval_mode,
             hook_log_path=hook_log_path,
+            inject_hook_env=execution_flavor != "minimal",
         )
     return _run_codex_task(
         prompt,
@@ -865,6 +910,7 @@ def _run_gemini_task(
     resume_session: str | None = None,
     approval_mode: str | None = None,
     hook_log_path: Path | None = None,
+    inject_hook_env: bool = True,
 ) -> dict[str, Any]:
     if auth_mode not in {"google_login", "api_key"}:
         return _unsupported_operator_mode("gemini", auth_mode, ["gemini"])
@@ -886,7 +932,7 @@ def _run_gemini_task(
         command,
         cwd=project_root,
         timeout_seconds=180.0,
-        env=_hook_env("gemini", hook_log_path),
+        env=_hook_env("gemini", hook_log_path) if inject_hook_env else None,
     )
 
 
@@ -997,6 +1043,8 @@ def _blocked_operator_route_payload(
 ) -> dict[str, Any]:
     payload = {
         "provider": provider,
+        "lane": "operator",
+        **live_evidence_fields(lane="operator"),
         "scenario_id": scenario_id,
         "repeat_index": repeat_index,
         "success": False,
@@ -1096,9 +1144,12 @@ def _configure_hook_capture(
     project_root: Path,
     scenario_id: str,
     repeat_index: int,
+    execution_flavor: str = "wrapped",
     log_root: Path | None = None,
 ) -> Path | None:
     if provider not in {"claude", "gemini"}:
+        return None
+    if execution_flavor == "minimal":
         return None
     recorder_path = REPO_ROOT / "tools" / "live_hook_recorder.py"
     effective_log_root = (
@@ -1132,6 +1183,24 @@ def _configure_hook_capture(
         }
     settings_path.write_text(json.dumps(settings, indent=2) + "\n", encoding="utf-8")
     return hook_log_path
+
+
+def _resolve_cortex_execution_flavor(
+    *,
+    provider: str,
+    scenario_id: str,
+    override: str = "auto",
+) -> tuple[str, dict[str, Any]]:
+    if provider != "gemini":
+        effective = "wrapped"
+    elif override != "auto":
+        effective = override
+    else:
+        effective = "wrapped"
+    diagnostics: dict[str, Any] = {"execution_flavor_effective": effective}
+    if override != "auto":
+        diagnostics["execution_flavor_override"] = override
+    return effective, diagnostics
 
 
 def _hook_env(provider: str, hook_log_path: Path | None) -> dict[str, str]:

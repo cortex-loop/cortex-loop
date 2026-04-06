@@ -386,65 +386,19 @@ def test_resume_protocol_and_active_workstream_contract_exist() -> None:
     assert "Current campaign:" in workstream_text
     assert "Current working branch at ledger update:" in workstream_text
     assert "Current branch role:" in workstream_text
-    assert "accepted workflow baseline truth now rests on `main` rather than a long-lived working branch" in workstream_text
-    assert "Current campaign: `No active mediation seam; first bounded reference mediation closeout landed`" in workstream_text
-    assert "Current working branch at ledger update: `main`" in workstream_text
-    assert "Current branch role: clean synced resting branch after merged `J4` closeout and `cleanup-report`" in workstream_text
-    assert "Current candidate seam: `none open`" in workstream_text
-    assert "mediation is now justified for one bounded experimental seam, and the full first bounded reference mediation train `J4B/J4C/J4D/J4F` is now landed on the accepted line" in workstream_text
-    assert "`J4B`: exact missing-capability / missing-context pressure now admits `seek-context` in `X_t^{ref}`" in workstream_text
-    assert "`J4C` identity-default reference finalization is landed" in workstream_text
-    assert "`J4D` runtime-backed reference packet/comparator evidence closure is landed" in workstream_text
-    assert "`J4F` workflow/authority closure is landed" in workstream_text
-    assert "`ReferenceMediationMode` defaults to identity" in workstream_text
-    assert "Reference lifecycle surfaces advertise bounded `mcp.query` affordance truth" in workstream_text
-    assert "the committed reference baseline/mediated packet examples plus the host-realization comparator now use the real runtime path rather than a specialization-only helper" in workstream_text
-    assert "non-reference mediated artifacts remain evidence-only" in workstream_text
-    assert "`J4E` is explicitly declined for current closeout" in workstream_text
-    assert "`J2` is now landed on the canonical line:" in workstream_text
-    assert "dedicated branch-discipline families now exist on `reference`, `openai`, and `claude`" in workstream_text
-    assert "dedicated non-thrash burden families now exist on `reference`, `openai`, and `claude`" in workstream_text
-    assert "the first Claude host-realization line is now committed on the canonical line" in workstream_text
-    assert "mediation is now justified for one bounded experimental seam" in workstream_text
-    assert "`M2` is now landed on the canonical line:" in workstream_text
-    assert "`J1` is now landed on the canonical line:" in workstream_text
-    assert "the compare surface and live-validation truth from earlier seams remain accepted ancestor input and are not being reopened after this landed `J4` closeout." in workstream_text
-    assert "`M2` is now landed on the canonical line:" in workstream_text
-    assert "`ExecutiveSignalSummary`" in workstream_text
-    assert "persistent tonic `ExecutiveModulatorMemory`" in workstream_text
-    assert "`ExecutivePolicyView`" in workstream_text
-    assert "live `modulator_summary`, `modulator_memory`, and `policy_view` diagnostics on the operator path" in workstream_text
-    assert "the stop-threshold law is now decoupled from self-referential `stop_pressure` comparison" in workstream_text
-    assert "`J3` is now landed on the canonical line:" in workstream_text
-    assert "mediation is now justified for one bounded experimental seam" in workstream_text
-    assert "better uncertainty handling remains `insufficient`, but that gap is explicit and non-blocking for one first bounded seam" in workstream_text
-    assert "at `J3` acceptance time the next lawful move became one bounded experimental SRE-only mediation seam" in workstream_text
-    assert "there is no open `J4` mediation blocker on accepted baseline truth" in workstream_text
-    assert "service-lane `N2` remains blocked on a capable machine" in workstream_text
-    assert "keep the first bounded reference mediation train closed on clean synced `main` unless a new bounded program explicitly reopens it" in workstream_text
-    assert "do not open `J4E` absent a real post-closeout truth gap on the already-proven OpenAI lane" in workstream_text
-    assert "continue non-mediation follow-on work on its own authority surface rather than treating mediation as partially open" in workstream_text
-    assert "Do not implement mediation in `J3`;" in workstream_text
-    assert "Do not treat `J3` as license for broad rollout" in workstream_text
-    assert "Do not widen `J4` into branch/thrash mediation, uncertainty/brake mediation, or pooled cross-host mediation" in workstream_text
-    assert "Do not let `J4` generic-reweight every family or collapse into a hub-style mediation score" in workstream_text
-    assert "Do not let `J4` alter observe/bind meaning, packet publication meaning, or commitment truth to make mediation look better." in workstream_text
-    assert "Do not pretend a builder-only `seek-context` mask widening is sufficient if the runtime lane still selects `neutral` under the accepted threshold law." in workstream_text
-    assert "Do not reintroduce a generic `*-missing` `seek-context` heuristic; keep the exact runtime-visible pressure tags explicit." in workstream_text
-    assert "Do not treat signed-in provider CLI sessions as equivalent to the automation credentials" in workstream_text
-    assert "Do not treat the new OpenAI App Server operator proof as license to reopen v1 assisted mode" in workstream_text
-    assert "Do not keep repo-tracked live artifacts under `docs/live_validation/`" in workstream_text
+    assert "Current campaign: `R1 strategic reset: two-lane truth, thin runtime, and surface compression`" in workstream_text
+    assert "Current working branch at ledger update: `codex/20260406-182719-r1-two-lane-reset`" in workstream_text
+    assert "Current branch role: managed session branch from clean synced `main`; accepted baseline truth remains the clean synced `main` line" in workstream_text
+    assert "Current candidate seam: `R1 two-lane truth reset`" in workstream_text
+    assert "`service_api` is the canonical runtime truth lane" in workstream_text
+    assert "`operator_cli` is a watchlist and exploratory-comparison lane" in workstream_text
+    assert "Claude: positive watchlist signal" in workstream_text
+    assert "Gemini: unresolved watchlist signal" in workstream_text
+    assert "OpenAI: positive watchlist signal" in workstream_text
+    assert "review branches such as `review/gemini-cause-proof` remain evidence only and are not accepted runtime truth" in workstream_text
+    assert "Do not treat signed-in provider CLI sessions as canonical runtime truth." in workstream_text
+    assert "Do not let CLI-only positives promote accepted product/runtime claims." in workstream_text
     assert "Do not shell out from service transports to provider CLIs." in workstream_text
-    assert "Do not silently reintroduce a pinned Gemini operator model as the default testing start point" in workstream_text
-    assert "Do not pass explicit Gemini operator model names anywhere on the operator/evaluation harness" in workstream_text
-    assert "Do not overread provider-limit interference as a product-quality defeat for Cortex by itself." in workstream_text
-    assert "Do not treat selecting `gemini-api-key` in `.gemini/settings.json` as sufficient for headless Gemini operator proof" in workstream_text
-    assert "Do not use Gemini `plan` mode as the default comparison baseline on the operator/evaluation path." in workstream_text
-    assert "Do not reopen Gemini model chasing or assisted-mode speculation inside the active `L4` service-proof train." in workstream_text
-    assert "Do not shell out from service transports to provider CLIs." in workstream_text
-    assert "Do not widen `K4` into support-memory runtime, mediation, service/auth work, or broader host rollout." in workstream_text
-    assert "Do not unfreeze threshold law in `K4`" in workstream_text
-    assert "Do not widen the landed K train into support-memory runtime, mediation, vigor scaling, service/auth work on this machine, or broader host rollout." in workstream_text
     assert "git branch --show-current" in workstream_text
     assert "git status --short --untracked-files=all" in workstream_text
     assert "Never promote an uncommitted branch head or dirty worktree state to accepted baseline truth." in workstream_text
@@ -514,11 +468,10 @@ def test_reference_runtime_program_lock_is_recorded() -> None:
     assert "loopback-only HTTP is landed on the accepted K1 closeout line" in phase_gate_text
     assert "one active session per process is real for current scope" in phase_gate_text
 
-    assert "mediation is now justified for one bounded experimental seam" in workstream_text
-    assert "better uncertainty handling remains `insufficient`, but that gap is explicit and non-blocking for one first bounded seam" in workstream_text
-    assert "Current campaign: `No active mediation seam; first bounded reference mediation closeout landed`" in workstream_text
-    assert "Current candidate seam: `none open`" in workstream_text
-    assert "keep the first bounded reference mediation train closed on clean synced `main` unless a new bounded program explicitly reopens it" in workstream_text
+    assert "Current campaign: `R1 strategic reset: two-lane truth, thin runtime, and surface compression`" in workstream_text
+    assert "Current candidate seam: `R1 two-lane truth reset`" in workstream_text
+    assert "`service_api` is the canonical runtime truth lane" in workstream_text
+    assert "`operator_cli` is a watchlist and exploratory-comparison lane" in workstream_text
     assert "## 8. Mediation justification gate" in phase_gate_text
     assert "`J3` mediation justification review" in phase_gate_text
     assert "one bounded experimental mediation seam" in phase_gate_text
@@ -555,7 +508,7 @@ def test_reference_runtime_program_lock_is_recorded() -> None:
     assert "`J4E` is explicitly declined for the current closeout unless a later post-closeout review reopens a real truth gap" in mediation_host_realization_program_text
     assert "`J4F` is now landed: workflow truth, phase-gate truth, correspondence truth, and branch truth are reconciled together on clean synced `main`." in mediation_host_realization_program_text
     assert "Minimum deterministic proof for each opened load-bearing stage:" in mediation_host_realization_program_text
-    assert "Do not widen `J4` into branch/thrash mediation" in workstream_text
+    assert "Do not reopen mediation, AUX runtime widening, support-memory runtime, or broader doctrine work during this reset." in workstream_text
     assert "the first one-process live continuity slice plus explicit rejection enforcement are real" in program_text
     assert "the corrective zero-finding re-audit has passed for current scope" in program_text
     assert "a mismatched runtime `session_id` is surfaced as an explicit contradiction" in program_text
@@ -670,17 +623,16 @@ def test_reference_runtime_program_lock_is_recorded() -> None:
     assert "guarded-feedback enforcement may conservatively realize `check` or `neutral`" in closed_loop_enforcement_program_text
     assert "`Q_t^{mem}=0.0`" in closed_loop_enforcement_program_text
     assert "Current accepted state after K-train closeout" in closed_loop_enforcement_program_text
-    assert "Status: accepted re-audited evaluation brief for the first raw-vs-Cortex operator directionality audit" in operator_directionality_program_text
+    assert "Status: accepted watchlist-evaluation brief for raw-vs-Cortex operator comparison" in operator_directionality_program_text
     assert "raw-host vs Cortex-operator" in operator_directionality_program_text
-    assert "Round-2 stable default rule:" in operator_directionality_program_text
-    assert "Claude signed-in CLI on the normal `-p/--print` headless surface with one explicit stable GA model" in operator_directionality_program_text
-    assert "OpenAI signed-in `codex app-server`, with the existing `codex exec` smoke / `codex app-server` lifecycle split and one explicit stable model" in operator_directionality_program_text
-    assert "Gemini comparison guard:" in operator_directionality_program_text
-    assert "do not use `plan` mode as the default Gemini comparison baseline" in operator_directionality_program_text
-    assert "do not pass explicit Gemini operator model names anywhere in the paired comparison harness" in operator_directionality_program_text
-    assert "If the audit shows mixed or negative directionality, record that directly and treat it as the blocker to further widening." in operator_directionality_program_text
-    assert "Status: accepted scenario catalog for the raw-vs-Cortex operator directionality audit" in operator_directionality_scenario_catalog_text
-    assert "Gemini uses the same headless CLI surface on both variants, with no explicit `-m` model argument" in operator_directionality_scenario_catalog_text
+    assert "`execution_surface = headless_cli`" in operator_directionality_program_text
+    assert "`evidence_role = watchlist`" in operator_directionality_program_text
+    assert "The Gemini operator harness may use:" in operator_directionality_program_text
+    assert "`--cortex-execution-flavor minimal`" in operator_directionality_program_text
+    assert "They do not authorize product default changes by themselves." in operator_directionality_program_text
+    assert "Status: accepted watchlist scenario catalog for the raw-vs-Cortex operator audit" in operator_directionality_scenario_catalog_text
+    assert "`execution_surface = headless_cli`" in operator_directionality_scenario_catalog_text
+    assert "`evidence_role = watchlist`" in operator_directionality_scenario_catalog_text
     assert "`pass_minimal`" in operator_directionality_scenario_catalog_text
     assert "`truth_gap`" in operator_directionality_scenario_catalog_text
     assert "`restart_continuity`" in operator_directionality_scenario_catalog_text
@@ -730,28 +682,14 @@ def test_reference_runtime_program_lock_is_recorded() -> None:
     assert "`route_budget.max_turns` is the outer harness turn budget" in operator_routing_program_text
     assert "dopamine" not in operator_routing_program_text.lower()
     assert "serotonin" not in operator_routing_program_text.lower()
-    assert "Status: accepted paired raw-vs-Cortex operator directionality audit note" in operator_directionality_audit_text
-    assert "**mixed_direction**" in operator_directionality_audit_text
-    assert "Claude is directionally positive" in operator_directionality_audit_text
-    assert "OpenAI is directionally positive" in operator_directionality_audit_text
-    assert "Gemini is mixed" in operator_directionality_audit_text
-    assert "Later Gemini vanilla rerun" in operator_directionality_audit_text
-    assert "The confound was real, but removing it did not by itself clear Gemini" in operator_directionality_audit_text
-    assert "Round 2 Stable-Defaults Rerun" in operator_directionality_audit_text
-    assert "Gemini: `blocked`" in operator_directionality_audit_text
-    assert "S1 Routing Candidate" in operator_directionality_audit_text
-    assert "The audit now distinguishes:" in operator_directionality_audit_text
-    assert "provider-limit interference" in operator_directionality_audit_text
-    assert "S1G Provider-Limit Neutrality Candidate" in operator_directionality_audit_text
-    assert "Claude: `positive`" in operator_directionality_audit_text
-    assert "OpenAI: `positive`" in operator_directionality_audit_text
-    assert "package verdict: `promising_positive`" in operator_directionality_audit_text
-    assert "pair order now alternates by repeat index to reduce shared-budget bias" in operator_directionality_audit_text
-    assert "one-sided provider-limit hits are now treated as non-comparable blocking evidence rather than automatic directional loss" in operator_directionality_audit_text
-    assert "the OpenAI explanation seam then removed the real continuity transport artifact" in operator_directionality_audit_text
-    assert "fresh OpenAI reruns now land `restart_continuity` positively on both variants" in operator_directionality_audit_text
-    assert "the Claude efficiency seam then re-earned the remaining host line" in operator_directionality_audit_text
-    assert "fresh Claude reruns land all three scenarios positively without provider-window contamination" in operator_directionality_audit_text
+    assert "Status: accepted watchlist note for paired raw-vs-Cortex operator directionality" in operator_directionality_audit_text
+    assert "`execution_surface = headless_cli`" in operator_directionality_audit_text
+    assert "`evidence_role = watchlist`" in operator_directionality_audit_text
+    assert "Claude: positive watchlist signal" in operator_directionality_audit_text
+    assert "OpenAI: positive watchlist signal" in operator_directionality_audit_text
+    assert "Gemini: unresolved watchlist signal on the accepted line" in operator_directionality_audit_text
+    assert "review/gemini-cause-proof" in operator_directionality_audit_text
+    assert "Do not read branch-local operator positives as accepted product truth." in operator_directionality_audit_text
     assert "`G1` Gemini documented host-event runtime shell" in phase_gate_text
     assert "`G2` Gemini raw-transcript ingress shell" in phase_gate_text
     assert "`G3` Gemini loopback service shell" in phase_gate_text
@@ -795,51 +733,33 @@ def test_reference_runtime_program_lock_is_recorded() -> None:
     workstream_text = _read(ACTIVE_WORKSTREAM_PATH)
     accepted_branch = _extract_accepted_workflow_baseline(workstream_text)
 
-    assert "Status: active L2 live-testing environment brief with L2b/L2c/L2d/L2e host-native lifecycle follow-ons" in live_validation_program_text
+    assert "Status: active live-validation program under the R1 two-lane truth reset" in live_validation_program_text
     assert f"branch: `{accepted_branch}`" in live_validation_program_text
     assert "clean synced `main` line recorded in `docs/CORTEX_V2_ACTIVE_WORKSTREAM.md`" in live_validation_program_text
-    assert "signed-in host-native product surfaces" in live_validation_program_text
+    assert "`service_api`" in live_validation_program_text
+    assert "`operator_cli`" in live_validation_program_text
     assert "local-only under `.cortex/live_validation/`" in live_validation_program_text
-    assert "`codex exec` = smoke / preflight" in live_validation_program_text
-    assert "`codex app-server` = lifecycle proof" in live_validation_program_text
-    assert "OpenAI App Server now succeeds on:" in live_validation_program_text
-    assert "Status: active L2 scenario catalog for the signed-in-first live environment with L2b/L2c host-native lifecycle proof" in live_validation_scenario_catalog_text
+    assert "the first canonical three-scenario API truth anchor is therefore a later bounded seam on a capable machine" in live_validation_program_text
+    assert "Status: active live-validation scenario catalog for the R1 two-lane truth reset" in live_validation_scenario_catalog_text
     assert "`pass_minimal`" in live_validation_scenario_catalog_text
     assert "`restart_continuity`" in live_validation_scenario_catalog_text
     assert "`truth_gap`" in live_validation_scenario_catalog_text
-    assert "`codex app-server` = lifecycle proof" in live_validation_scenario_catalog_text
-    assert "`PreToolUse`" in live_validation_scenario_catalog_text
-    assert "`BeforeTool`" in live_validation_scenario_catalog_text
+    assert "`execution_surface = direct_api`" in live_validation_scenario_catalog_text
+    assert "`execution_surface = headless_cli`" in live_validation_scenario_catalog_text
     assert "machine output: local-only under `.cortex/live_validation/`" in live_validation_scenario_catalog_text
-    assert "Status: L2/L2b/L2c/L2d/L2e live-testing environment verdict note" in live_validation_verdict_text
-    assert "**lifecycle-first is promising but under-instrumented**" in live_validation_verdict_text
-    assert "operator-only payoff note is narrower" in live_validation_verdict_text
-    assert "operator-only audit is now landed for current scope" in live_validation_verdict_text
-    assert "The Gemini auto-mode product-path re-earn seam is now landed for current scope." in live_validation_verdict_text
+    assert "Status: live-validation verdict note for the R1 two-lane reset" in live_validation_verdict_text
+    assert "**canonical runtime truth is still blocked on this machine; operator truth is now watchlist-only**" in live_validation_verdict_text
+    assert "`service_api`: `execution_surface = direct_api`, `evidence_role = canonical_truth`" in live_validation_verdict_text
+    assert "`operator_cli`: `execution_surface = headless_cli`, `evidence_role = watchlist`" in live_validation_verdict_text
     service_proof_text = _read(LIVE_SERVICE_PROOF_PATH)
-    assert "Status: active capable-machine service-proof contract with current-machine blocker note" in service_proof_text
+    assert "Status: active canonical-truth service-proof contract with current-machine blocker note" in service_proof_text
+    assert "`service_api` is the canonical runtime truth lane" in service_proof_text
+    assert "`execution_surface = direct_api`" in service_proof_text
+    assert "`evidence_role = canonical_truth`" in service_proof_text
     assert "Signed-in CLI sessions do **not** count as service-lane auth." in service_proof_text
     assert "Actual service proof belongs only on a machine that satisfies all of:" in service_proof_text
-    assert "this machine is explicitly out of scope for actual service proof execution" in service_proof_text
-    assert "`N2` therefore remains blocked pending a properly provisioned capable machine" in service_proof_text
-    assert "package-level service proof is updated truthfully in `docs/CORTEX_V2_PHASE_GATES_2.md`" in service_proof_text
-    assert "repeated automation baseline reruns now stop immediately on auth readiness" in service_proof_text
-    assert "repeated bounded service-lane reruns stay blocked on `auth_missing`" in service_proof_text
-    assert "`codex app-server` passes `pass_minimal` twice" in live_validation_verdict_text
-    assert "Claude is now re-earned on a hook-backed operator lane" in live_validation_verdict_text
-    assert "operator probes and repeated smoke baselines are now clean in CLI auto mode" in live_validation_verdict_text
-    assert "`pass_minimal` succeeds twice on `auto`" in live_validation_verdict_text
-    assert "`truth_gap`: now truthful on the latest auto-mode reruns" in live_validation_verdict_text
-    assert "`gemini-2.5-pro` is valid locally but still capacity-blocked" in live_validation_verdict_text
-    assert "explicit Gemini session IDs are valid resume IDs on the current CLI" in live_validation_verdict_text
-    assert "the first inspect-only continuity turn now uses the lighter `plan` approval mode" in live_validation_verdict_text
-    assert "`gemini-2.5-flash` continuity also failed on first-turn `capacity_exhausted`" in live_validation_verdict_text
-    assert "host-native Codex surface rather than the wrong `openai` utility surface" in live_validation_verdict_text
-    assert "`L2b` now re-earns OpenAI on the current host-native App Server lifecycle surface" in live_validation_verdict_text
-    assert "`L2c` now re-earns Claude and Gemini on their documented hook surfaces" in live_validation_verdict_text
-    assert "`G2` now re-optimizes Gemini operator testing around CLI auto mode" in live_validation_verdict_text
-    assert "`G3` now re-earns the deeper Gemini operator lane on top of CLI auto mode" in live_validation_verdict_text
-    assert "`L2e` now proves that Gemini Pro is not the current closure model" in live_validation_verdict_text
+    assert "the first canonical three-scenario API truth anchor remains a later bounded seam" in service_proof_text
+    assert "No future product/runtime claim may land from CLI-only proof." in service_proof_text
 
 
 def test_openai_host_control_revalidation_entry_points_are_recorded() -> None:

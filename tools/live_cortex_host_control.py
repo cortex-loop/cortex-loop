@@ -21,6 +21,7 @@ from live_validation_common import (
     classify_failure,
     comparator_path,
     ensure_live_validation_dirs,
+    live_evidence_fields,
     now_utc_iso,
     provider_root,
     resolve_auth_mode,
@@ -92,6 +93,7 @@ def _build_summary(
         "generated_at": now_utc_iso(),
         "surface": "cortex_live_host_control",
         "lane": lane,
+        **live_evidence_fields(lane=lane),
         "providers": provider_payloads,
     }
 
@@ -115,6 +117,7 @@ def _capture_provider(provider: str) -> dict[str, Any]:
         "generated_at": now_utc_iso(),
         "provider": provider,
         "lane": "automation",
+        **live_evidence_fields(lane="automation"),
         "auth_readiness": readiness,
         "runs": runs,
     }
@@ -136,6 +139,7 @@ def _blocked_service_run(
     payload = {
         "provider": provider,
         "lane": "automation",
+        **live_evidence_fields(lane="automation"),
         "auth_mode": auth_mode,
         "model": model,
         "scenario_id": scenario_id,
@@ -191,6 +195,7 @@ def _run_single_live_call(
     return {
         "provider": provider,
         "lane": "automation",
+        **live_evidence_fields(lane="automation"),
         "auth_mode": auth_mode,
         "model": model,
         "scenario_id": "service_smoke",
@@ -252,6 +257,7 @@ def _run_continuity_capture(
         payload = {
             "provider": provider,
             "lane": "automation",
+            **live_evidence_fields(lane="automation"),
             "auth_mode": auth_mode,
             "model": model,
             "success": False,
@@ -316,6 +322,7 @@ def _run_continuity_capture(
     payload = {
         "provider": provider,
         "lane": "automation",
+        **live_evidence_fields(lane="automation"),
         "auth_mode": auth_mode,
         "model": model,
         "scenario_id": "service_restart_continuity",
