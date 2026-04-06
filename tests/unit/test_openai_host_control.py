@@ -174,5 +174,6 @@ def test_run_openai_host_control_matches_manual_o1_runtime_projection() -> None:
     assert result.as_payload() == {
         "action_tag": "openai-response-stream",
         "records": expected_records,
+        "result_text": "hello",
     }
     assert final_session == current_session

@@ -100,6 +100,7 @@ class OpenAIHostControlRequest:
 class OpenAIHostControlResult:
     action_tag: str
     records: tuple[dict[str, Any], ...]
+    result_text: str | None = None
 
     def __post_init__(self) -> None:
         if self.action_tag != _ACTION_TAG:
@@ -110,12 +111,21 @@ class OpenAIHostControlResult:
             raise TypeError(
                 "OpenAIHostControlResult.records must contain only dict[str, Any] records."
             )
+        if self.result_text is not None and not (
+            isinstance(self.result_text, str) and self.result_text.strip()
+        ):
+            raise ValueError(
+                "OpenAIHostControlResult.result_text must be non-empty after trimming when provided."
+            )
 
     def as_payload(self) -> dict[str, Any]:
-        return {
+        payload = {
             "action_tag": self.action_tag,
             "records": [dict(record) for record in self.records],
         }
+        if self.result_text is not None:
+            payload["result_text"] = self.result_text
+        return payload
 
 
 def run_openai_host_control(
@@ -170,7 +180,22 @@ def run_openai_host_control(
     return OpenAIHostControlResult(
         action_tag=request.action_tag,
         records=tuple(records),
+        result_text=_extract_response_output_text(raw_events),
     ), current_session
+
+
+def _extract_response_output_text(raw_events: list[dict[str, Any]]) -> str | None:
+    chunks: list[str] = []
+    for raw_event in raw_events:
+        if raw_event.get("type") != "response.output_text.delta":
+            continue
+        delta = raw_event.get("delta")
+        if isinstance(delta, str) and delta:
+            chunks.append(delta)
+    if not chunks:
+        return None
+    joined = "".join(chunks).strip()
+    return joined or None
 
 
 def _coerce_openai_host_control_request(

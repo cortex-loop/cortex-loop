@@ -5,7 +5,7 @@ Status: live-validation verdict note for the R1 two-lane reset
 
 ## Verdict
 
-**canonical runtime truth is still blocked on this machine; operator truth is now watchlist-only**
+**canonical runtime truth is re-earned for current scope; operator truth remains watchlist-only**
 
 This is the broader live-validation verdict after the R1 reset.
 
@@ -14,8 +14,12 @@ Reason:
 - the repo now distinguishes two live-evidence lanes:
   - `service_api`: `execution_surface = direct_api`, `evidence_role = canonical_truth`
   - `operator_cli`: `execution_surface = headless_cli`, `evidence_role = watchlist`
-- current-machine service auth is still missing for Claude, Gemini, and OpenAI
-- so no host has yet been re-earned on the canonical runtime lane on this machine
+- current-machine service auth is ready for OpenAI and still missing for Claude and Gemini
+- OpenAI now clears the canonical direct-API `canonical_anchor` suite twice on:
+  - `pass_minimal`
+  - `truth_gap`
+  - `restart_continuity`
+- so one host is now re-earned on the canonical runtime lane for current scope on this machine
 - operator/headless-CLI evidence remains useful, but it is no longer allowed to stand in for canonical runtime truth by itself
 
 ## Current lane reading
@@ -23,8 +27,11 @@ Reason:
 ### Service/API lane
 
 - canonical truth lane
-- current-machine status: blocked on missing auth for all three providers
-- no current-machine API truth anchor is yet re-earned
+- current-machine status:
+  - OpenAI: re-earned for current scope
+  - Claude: blocked on missing auth
+  - Gemini: blocked on missing auth
+- one current-machine API truth anchor is now re-earned for current scope
 
 ### Operator/CLI lane
 
@@ -35,11 +42,12 @@ Reason:
 
 This makes the current machine useful for:
 
+- canonical runtime confirmation on OpenAI
 - host watchlisting
 - packaging/confound detection
 - wrapper-burden falsification
 
-It does not yet make the current machine sufficient for canonical runtime closure.
+It does not yet make the broader package sufficient for cross-host canonical runtime closure.
 
 ## Host summary
 
@@ -57,12 +65,13 @@ It does not yet make the current machine sufficient for canonical runtime closur
 ### OpenAI
 
 - operator watchlist signal is currently the strongest
-- service/API truth remains blocked on missing `OPENAI_API_KEY`
+- service/API canonical truth is re-earned for current scope through two positive `canonical_anchor` cycles
+- the direct-API anchor is currently limited to OpenAI current scope, not broader package closure
 
 ## Next lawful move
 
-1. re-earn one direct-API truth anchor on a capable machine
+1. land the OpenAI current-scope canonical anchor on the accepted line
 2. add `claude` if auth is ready on that machine
-3. treat CLI/operator reruns as watchlist evidence and drift detection until the API truth lane exists
+3. keep Gemini watchlist-only until direct API/service auth exists
 
 Do not reopen mediation, AUX runtime, memory/runtime learning, or broad control-law expansion before that.

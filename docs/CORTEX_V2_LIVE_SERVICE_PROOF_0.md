@@ -1,12 +1,12 @@
 # CORTEX_V2_LIVE_SERVICE_PROOF_0
 
 Date: 2026-04-06
-Status: active canonical-truth service-proof contract with current-machine blocker note
+Status: active canonical-truth service-proof note with the first OpenAI anchor re-earned for current scope
 
 ## Purpose
 
 This note records the canonical live-runtime truth lane for Cortex v2.
-That reset contract is already landed on local `main`; this note preserves the canonical truth lane and the current-machine blocker honestly.
+That reset contract is already landed on local `main`; this note preserves the canonical truth lane and the current machine's current-scope service truth honestly.
 
 Under the R1 reset:
 
@@ -41,26 +41,38 @@ Signed-in CLI sessions do **not** count as service-lane auth.
 
 ## Current local state
 
-Current local machine state at the R1 reset:
+Current local machine state on the OA1 branch:
 
 - Claude automation auth: `missing`
 - Gemini automation auth: `missing`
-- OpenAI automation auth: `missing`
-- current-machine service truth is therefore blocked honestly on auth readiness
+- OpenAI automation auth: `ready`
 - the current direct-service proof tool records:
   - `execution_surface = direct_api`
   - `evidence_role = canonical_truth`
-- the current direct-service proof tool still only covers:
+- the current direct-service proof tool now exposes:
   - `service_smoke`
   - `service_restart_continuity`
+- `current`
+  - `suite_role = readiness_probe`
+  - current probe surface only
+- `canonical_anchor`
+  - `suite_role = canonical_truth_anchor`
+  - implemented for `openai` only in current scope
+  - scenarios:
+    - `pass_minimal`
+    - `truth_gap`
+    - `restart_continuity`
 - current OpenAI service-probe model policy:
   - `service_smoke` may use `gpt-5.4-mini` as the cheaper direct-API probe
-  - `service_restart_continuity` stays on `gpt-5.4` as the stronger current canonical continuity probe
-- the first canonical three-scenario API truth anchor remains a later bounded seam:
-  - `pass_minimal`
-  - `truth_gap`
-  - `restart_continuity`
-- until that later seam is implemented and rerun on a capable machine, no host is re-earned on the canonical runtime lane
+  - `canonical_anchor` scenarios stay on `gpt-5.4`
+- OpenAI canonical anchor status on this machine:
+  - cycle 1: positive
+  - cycle 2: positive
+  - `pass_minimal`: positive twice
+  - `truth_gap`: `truthful_incomplete` twice
+  - `restart_continuity`: positive twice
+- the first canonical three-scenario API truth anchor is therefore re-earned for current OpenAI scope on this machine
+- Claude and Gemini remain blocked honestly on missing auth readiness
 
 ## Reset law
 
@@ -72,7 +84,7 @@ Current local machine state at the R1 reset:
 
 On a capable machine:
 
-1. re-earn the first API truth anchor on `openai`
+1. land this OpenAI current-scope anchor on the accepted line
 2. add `claude` if auth is ready
 3. keep `gemini` watchlist-only until direct API/service auth exists
 4. keep headless-CLI reruns downstream of canonical truth as watchlist-only diagnostics

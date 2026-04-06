@@ -54,9 +54,7 @@ def _build_comparison(preflight: dict[str, Any]) -> dict[str, Any]:
         operator_runs = _read_operator_lifecycle_runs(provider)
         exploratory_baseline_runs = _read_exploratory_baseline_runs(provider)
         exploratory_operator_runs = _read_exploratory_operator_runs(provider)
-        service_runs = _read_json(
-            provider_root(provider, "automation", "service") / "service_runs.json"
-        ).get("runs", [])
+        service_summary = _read_service_summary(provider)
         accepted_watchlist_payload = accepted_watchlist.get(provider)
         operator_runs, operator_source = _effective_operator_runs(
             provider=provider,
@@ -101,16 +99,13 @@ def _build_comparison(preflight: dict[str, Any]) -> dict[str, Any]:
                 if isinstance(label, str) and label
             }
         )
-        successful_service = [run for run in service_runs if run.get("success")]
         baseline_failures = sorted(
             {run["failure_class"] for run in baseline_runs if run.get("failure_class")}
         )
         operator_failures = sorted(
             {run["failure_class"] for run in operator_runs if run.get("failure_class")}
         )
-        service_failures = sorted(
-            {run["failure_class"] for run in service_runs if run.get("failure_class")}
-        )
+        service_failures = service_summary["failure_classes"]
 
         blocker_classes.update(baseline_failures)
         blocker_classes.update(operator_failures)
@@ -121,7 +116,7 @@ def _build_comparison(preflight: dict[str, Any]) -> dict[str, Any]:
             operator_pass_count += 1
         if truthful_gaps:
             operator_truthful_gap_count += 1
-        if successful_service:
+        if service_summary["canonical_anchor"]["repeat_stable_success"]:
             service_success_count += 1
 
         current_watchlist_signature = _watchlist_signature_from_runs(provider, operator_runs)
@@ -177,7 +172,9 @@ def _build_comparison(preflight: dict[str, Any]) -> dict[str, Any]:
             },
             "automation_service": {
                 **live_evidence_fields(lane="automation"),
-                "successful_run_count": len(successful_service),
+                "current": service_summary["current"],
+                "canonical_anchor": service_summary["canonical_anchor"],
+                "successful_run_count": service_summary["canonical_anchor"]["successful_cycle_count"],
                 "failure_classes": service_failures,
             },
             "operator_probe": preflight.get("operator_probe", {}).get(provider, {}),
@@ -228,10 +225,10 @@ def _next_corrective_seam(providers: dict[str, Any]) -> str:
         for provider, payload in providers.items()
         if payload.get("automation_auth", {}).get("status") == "ready"
     ]
-    service_hosts = [
+    canonical_hosts = [
         provider
         for provider, payload in providers.items()
-        if payload.get("automation_service", {}).get("successful_run_count", 0) > 0
+        if payload.get("automation_service", {}).get("canonical_anchor", {}).get("repeat_stable_success")
     ]
     blocked_statuses = {
         provider: payload.get("automation_auth", {}).get("status")
@@ -244,11 +241,11 @@ def _next_corrective_seam(providers: dict[str, Any]) -> str:
         if payload.get("operator_lifecycle", {}).get("accepted_watchlist_drift_detected")
     ]
 
-    if not service_hosts and blocked_statuses:
+    if not canonical_hosts and blocked_statuses and not ready_hosts:
         return (
             "treat the current machine as out of scope for actual service proof, move the repo to a capable machine with machine auth and spend approval, and rerun the bounded service-proof train there"
         )
-    if not service_hosts and ready_hosts:
+    if not canonical_hosts and ready_hosts:
         return (
             "rerun the bounded direct-API confirmation suite only on the currently ready hosts until canonical truth either re-earns cleanly or blocks truthfully"
         )
@@ -272,7 +269,7 @@ def _comparison_markdown(comparison: dict[str, Any]) -> str:
         f"- Generated at: `{comparison['generated_at']}`",
         f"- Watchlist pass_minimal host count: `{comparison['operator_pass_count']}`",
         f"- Watchlist truthful-gap host count: `{comparison['operator_truthful_gap_count']}`",
-        f"- Canonical direct-API success host count: `{comparison['service_success_count']}`",
+        f"- Canonical direct-API re-earned host count: `{comparison['service_success_count']}`",
         f"- Verdict: **{comparison['verdict']}**",
         "",
         comparison["verdict_reason"],
@@ -297,6 +294,9 @@ def _comparison_markdown(comparison: dict[str, Any]) -> str:
                 f"- watchlist warning classes: `{', '.join(payload['operator_lifecycle']['warning_classes']) or 'none'}`",
                 f"- watchlist hook labels: `{', '.join(payload['operator_lifecycle']['hook_event_labels']) or 'none'}`",
                 f"- watchlist lifecycle failures: `{', '.join(payload['operator_lifecycle']['failure_classes']) or 'none'}`",
+                f"- direct-API readiness status: `{payload['automation_service']['current']['latest_cycle_status']}`",
+                f"- direct-API canonical status: `{payload['automation_service']['canonical_anchor']['latest_cycle_status']}`",
+                f"- direct-API canonical repeat-stable: `{payload['automation_service']['canonical_anchor']['repeat_stable_success']}`",
                 f"- direct-API canonical failures: `{', '.join(payload['automation_service']['failure_classes']) or 'none'}`",
                 "",
             ]
@@ -579,6 +579,139 @@ def _read_exploratory_operator_runs(provider: str) -> list[dict[str, Any]]:
     ).get("runs", [])
 
 
+def _read_service_summary(provider: str) -> dict[str, Any]:
+    payload = _read_json(provider_root(provider, "automation", "service") / "service_runs.json")
+    suites = payload.get("suites", {}) if isinstance(payload.get("suites"), dict) else {}
+    if not suites and isinstance(payload.get("runs"), list):
+        suites = {
+            "current": {
+                "suite_id": "current",
+                "suite_role": "readiness_probe",
+                "cycle_count": 1,
+                "successful_cycle_count": int(bool(payload.get("runs")) and all(run.get("success") for run in payload["runs"])),
+                "latest_cycle_status": "positive"
+                if payload.get("runs") and all(run.get("success") for run in payload["runs"])
+                else "partial",
+                "latest_cycle_success": bool(payload.get("runs")) and all(run.get("success") for run in payload["runs"]),
+                "latest_failure_classes": sorted(
+                    {
+                        str(run.get("failure_class"))
+                        for run in payload["runs"]
+                        if isinstance(run.get("failure_class"), str) and run.get("failure_class")
+                    }
+                ),
+                "latest_warning_classes": sorted(
+                    {
+                        warning
+                        for run in payload["runs"]
+                        for warning in run.get("warning_classes", [])
+                        if isinstance(warning, str) and warning
+                    }
+                ),
+                "cycles": [
+                    {
+                        "cycle_index": 1,
+                        "success": bool(payload.get("runs")) and all(run.get("success") for run in payload["runs"]),
+                        "cycle_status": "positive"
+                        if payload.get("runs") and all(run.get("success") for run in payload["runs"])
+                        else "partial",
+                        "runs": payload["runs"],
+                    }
+                ],
+            }
+        }
+    current = _normalize_service_suite(
+        suites.get("current"),
+        suite_id="current",
+        suite_role="readiness_probe",
+    )
+    canonical_anchor = _normalize_service_suite(
+        suites.get("canonical_anchor"),
+        suite_id="canonical_anchor",
+        suite_role="canonical_truth_anchor",
+    )
+    return {
+        "current": current,
+        "canonical_anchor": canonical_anchor,
+        "failure_classes": sorted(
+            {
+                *current["failure_classes"],
+                *canonical_anchor["failure_classes"],
+            }
+        ),
+    }
+
+
+def _normalize_service_suite(
+    payload: dict[str, Any] | None,
+    *,
+    suite_id: str,
+    suite_role: str,
+) -> dict[str, Any]:
+    if not isinstance(payload, dict):
+        return _empty_service_suite(suite_id=suite_id, suite_role=suite_role)
+    cycles = payload.get("cycles", []) if isinstance(payload.get("cycles"), list) else []
+    latest_cycle = cycles[-1] if cycles else {}
+    latest_runs = latest_cycle.get("runs", []) if isinstance(latest_cycle.get("runs"), list) else []
+    failure_classes = payload.get("latest_failure_classes")
+    if not isinstance(failure_classes, list):
+        failure_classes = sorted(
+            {
+                str(run.get("failure_class"))
+                for run in latest_runs
+                if isinstance(run.get("failure_class"), str) and run.get("failure_class")
+            }
+        )
+    warning_classes = payload.get("latest_warning_classes")
+    if not isinstance(warning_classes, list):
+        warning_classes = sorted(
+            {
+                warning
+                for run in latest_runs
+                for warning in run.get("warning_classes", [])
+                if isinstance(warning, str) and warning
+            }
+        )
+    successful_cycle_count = payload.get("successful_cycle_count")
+    if not isinstance(successful_cycle_count, int):
+        successful_cycle_count = sum(1 for cycle in cycles if cycle.get("success"))
+    cycle_count = payload.get("cycle_count")
+    if not isinstance(cycle_count, int):
+        cycle_count = len(cycles)
+    latest_cycle_status = payload.get("latest_cycle_status")
+    if not isinstance(latest_cycle_status, str):
+        latest_cycle_status = str(latest_cycle.get("cycle_status", "absent"))
+    latest_cycle_success = payload.get("latest_cycle_success")
+    if not isinstance(latest_cycle_success, bool):
+        latest_cycle_success = bool(latest_cycle.get("success"))
+    return {
+        "suite_id": suite_id,
+        "suite_role": suite_role,
+        "cycle_count": cycle_count,
+        "successful_cycle_count": successful_cycle_count,
+        "repeat_stable_success": bool(payload.get("repeat_stable_success"))
+        or (suite_id == "canonical_anchor" and successful_cycle_count >= 2),
+        "latest_cycle_status": latest_cycle_status,
+        "latest_cycle_success": latest_cycle_success,
+        "failure_classes": failure_classes,
+        "warning_classes": warning_classes,
+    }
+
+
+def _empty_service_suite(*, suite_id: str, suite_role: str) -> dict[str, Any]:
+    return {
+        "suite_id": suite_id,
+        "suite_role": suite_role,
+        "cycle_count": 0,
+        "successful_cycle_count": 0,
+        "repeat_stable_success": False,
+        "latest_cycle_status": "absent",
+        "latest_cycle_success": False,
+        "failure_classes": [],
+        "warning_classes": [],
+    }
+
+
 def _build_exploratory_probe_summary(
     baseline_runs: list[dict[str, Any]],
     operator_runs: list[dict[str, Any]],
@@ -609,15 +742,23 @@ def _build_exploratory_probe_summary(
 def _service_lane_delta(providers: dict[str, Any]) -> str:
     ready = []
     blocked = []
-    service_success = []
+    probe_clean = []
+    canonical_success = []
+    canonical_partial = []
     watchlist = []
     drift = []
     for provider, payload in providers.items():
         automation_auth = payload.get("automation_auth", {})
         automation_service = payload.get("automation_service", {})
+        readiness_suite = automation_service.get("current", {})
+        canonical_suite = automation_service.get("canonical_anchor", {})
         operator_lifecycle = payload.get("operator_lifecycle", {})
-        if automation_service.get("successful_run_count", 0) > 0:
-            service_success.append(provider)
+        if readiness_suite.get("latest_cycle_success"):
+            probe_clean.append(provider)
+        if canonical_suite.get("repeat_stable_success"):
+            canonical_success.append(provider)
+        elif canonical_suite.get("cycle_count", 0) > 0:
+            canonical_partial.append(provider)
         status = automation_auth.get("status")
         if status == "ready":
             ready.append(provider)
@@ -632,11 +773,20 @@ def _service_lane_delta(providers: dict[str, Any]) -> str:
             watchlist.append(f"{provider}:{watchlist_status}->accepted:{accepted_status}")
         else:
             watchlist.append(f"{provider}:{watchlist_status}")
-    canonical_clause = (
-        f"direct_api canonical proof is currently landed on `{', '.join(service_success)}`"
-        if service_success
-        else "direct_api canonical truth is not yet re-earned on this machine"
-    )
+    if canonical_success:
+        canonical_clause = (
+            f"direct_api canonical truth is re-earned for current scope on `{', '.join(canonical_success)}`"
+        )
+    elif canonical_partial:
+        canonical_clause = (
+            f"direct_api canonical truth is still partial on `{', '.join(canonical_partial)}`"
+        )
+    elif probe_clean:
+        canonical_clause = (
+            f"direct_api readiness is clean on `{', '.join(probe_clean)}`, but the canonical anchor is not yet re-earned"
+        )
+    else:
+        canonical_clause = "direct_api canonical truth is not yet re-earned on this machine"
     drift_clause = (
         f"; drift against the accepted watchlist is explicit on `{', '.join(drift)}`"
         if drift

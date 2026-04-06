@@ -25,6 +25,7 @@ WORKSPACE_ROOT = LOCAL_LIVE_ROOT / "workspaces"
 OPERATOR_DIRECTIONALITY_ROOT = LOCAL_LIVE_ROOT / "operator_directionality"
 TEMPLATE_ROOT = REPO_ROOT / "tests" / "fixtures" / "live_validation" / "project_template"
 PROMPTS_ROOT = REPO_ROOT / "tests" / "fixtures" / "live_validation" / "prompts"
+LOCAL_ENV_PATH = REPO_ROOT / ".env"
 _PYTHON_BIN = shutil.which("python3") or sys.executable
 TEST_COMMAND = [_PYTHON_BIN, "-m", "pytest", "-q", "tests/test_normalize_port.py"]
 CLAUDE_AUTH_MODE_ENV = "CORTEX_CLAUDE_LIVE_AUTH_MODE"
@@ -119,7 +120,14 @@ SCENARIOS: tuple[ScenarioSpec, ...] = (
         description="preserve incompleteness honestly without edits or tests",
         repeat_count=1,
         operator_prompt="truth_gap_operator.md",
-        automation_prompt="truth_gap_operator.md",
+        automation_prompt="truth_gap_automation.md",
+    ),
+    ScenarioSpec(
+        scenario_id="restart_continuity",
+        description="resume after inspection and finish the minimal fix cleanly",
+        repeat_count=2,
+        operator_prompt="restart_continuity_turn2_operator.md",
+        automation_prompt="restart_continuity_turn2_automation.md",
     ),
 )
 
@@ -169,6 +177,31 @@ def write_json(path: Path, payload: Any) -> None:
 def write_text(path: Path, text: str) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(sanitize_text(text), encoding="utf-8")
+
+
+def load_local_env_file(path: Path = LOCAL_ENV_PATH) -> dict[str, str]:
+    if not path.exists():
+        return {}
+    loaded: dict[str, str] = {}
+    for raw_line in path.read_text(encoding="utf-8").splitlines():
+        line = raw_line.strip()
+        if not line or line.startswith("#"):
+            continue
+        if line.startswith("export "):
+            line = line[len("export ") :].strip()
+        if "=" not in line:
+            continue
+        key, value = line.split("=", 1)
+        key = key.strip()
+        if not key:
+            continue
+        value = value.strip()
+        if len(value) >= 2 and value[0] == value[-1] and value[0] in {"'", '"'}:
+            value = value[1:-1]
+        if key not in os.environ:
+            os.environ[key] = value
+        loaded[key] = os.environ[key]
+    return loaded
 
 
 def live_evidence_fields(*, lane: str) -> dict[str, str]:
@@ -872,12 +905,28 @@ def build_scenario_catalog() -> dict[str, Any]:
                 "description": scenario.description,
                 "repeat_count": scenario.repeat_count,
                 "operator_prompt": scenario.operator_prompt,
+                "automation_prompt": scenario.automation_prompt,
             }
             for scenario in SCENARIOS
         ],
         "operator_continuity": {
             "turn_1_prompt": "restart_continuity_turn1_operator.md",
             "turn_2_prompt": "restart_continuity_turn2_operator.md",
+        },
+        "automation_service_suites": {
+            "current": {
+                "suite_role": "readiness_probe",
+                "scenarios": ["service_smoke", "service_restart_continuity"],
+            },
+            "canonical_anchor": {
+                "suite_role": "canonical_truth_anchor",
+                "provider_scope": ["openai"],
+                "scenarios": ["pass_minimal", "truth_gap", "restart_continuity"],
+            },
+        },
+        "automation_continuity": {
+            "turn_1_prompt": "restart_continuity_turn1_automation.md",
+            "turn_2_prompt": "restart_continuity_turn2_automation.md",
         },
         "host_caveats": {
             "claude": "host_caveat_operator_claude.md",

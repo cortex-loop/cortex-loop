@@ -1,7 +1,7 @@
 # CORTEX_V2_LIVE_VALIDATION_SCENARIO_CATALOG_0
 
 Date: 2026-04-06
-Status: active live-validation scenario catalog for the R1 two-lane truth reset
+Status: active live-validation scenario catalog with the OpenAI canonical anchor recorded for current scope
 
 ## Shared coding harness
 
@@ -22,11 +22,20 @@ Target task family:
 - watchlist use:
   - operator/headless-CLI paired comparison
 - canonical-truth target:
-  - later direct-API confirmation suite on a capable machine
+  - OpenAI `canonical_anchor` direct-API suite
+  - return a unified diff patch only
+  - apply the patch externally in the harness
+  - run the target test externally in the harness
+  - score truth from actual patch/test outcome rather than model prose
 
 ### `restart_continuity`
 
 - goal: prove whether the same lane can resume and finish cleanly after an explicit first-turn inspection
+- canonical-truth target:
+  - OpenAI `canonical_anchor` direct-API suite
+  - turn 1 uses the automation continuity inspection prompt
+  - turn 2 resumes after session import and returns a unified diff patch only
+  - apply the patch externally in the harness and run the target test externally
 
 ### `truth_gap`
 
@@ -36,7 +45,9 @@ Target task family:
   - no edits
   - no tests
 - canonical-truth law:
-  - when the API lane is expanded to this scenario, truth-gap discipline must be enforced by runtime constraints rather than prose-only “please inspect” wording
+  - OpenAI `canonical_anchor` keeps the API lane text-only and toolless
+  - no edits and no tests are available on the runtime lane itself
+  - truth is scored from the returned text plus explicit no-edit/no-test harness evidence
 
 ## Lane classification
 
@@ -63,7 +74,7 @@ Target task family:
 ### OpenAI
 
 - operator watchlist lane exists now
-- service/API truth is blocked on missing auth on this machine
+- direct-API canonical truth is re-earned for current scope through the repeat-stable OpenAI `canonical_anchor` suite
 
 ## Artifact policy
 

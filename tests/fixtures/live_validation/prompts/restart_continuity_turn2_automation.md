@@ -1,4 +1,5 @@
-Fix the bug in `src/normalize_port.py` so `65535` is accepted as a valid port.
+Resume the prior session and apply the smallest fix you already identified for
+`src/normalize_port.py` so `65535` is accepted as a valid port.
 
 Do not edit files directly and do not run tests.
 Return only a standard git unified diff patch against the current workspace

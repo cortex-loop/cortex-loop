@@ -504,17 +504,19 @@ make live-openai-app-server
 ## Live Cortex host-control capture
 
 This captures the current automation-side loopback service plus A4 / G4 / O4 host-control lanes.
-It is no longer the primary live truth; it is the secondary unattended lane.
+It is now the canonical service-proof entry point for the direct-API lane.
 Machine output is local-only under `.cortex/live_validation/`.
-This is also the bounded service-proof entry point for the automation train.
-On this machine it is currently contract/readiness-only and not a lawful closure surface.
-Rerun it per provider only on a capable machine where machine auth is intentionally ready and spend approval is explicitly present when required.
+`--suite current` remains the readiness probe surface.
+`--suite canonical_anchor` is the first real canonical truth suite and is currently implemented only for OpenAI.
+On this machine, the OpenAI `canonical_anchor` suite is now re-earned for current scope; Claude and Gemini remain readiness-blocked.
+Rerun it per provider only on a machine where machine auth is intentionally ready and spend approval is explicitly present when required.
 When the current train reruns only automation artifacts, the compare and retained watchlist support surfaces preserve accepted watchlist context explicitly and surface local-vs-accepted drift rather than zeroing it out or silently promoting it into runtime truth.
 
 Direct command:
 
 ```sh
-python3 tools/live_cortex_host_control.py --lane automation
+python3 tools/live_cortex_host_control.py --lane automation --provider openai --suite current
+python3 tools/live_cortex_host_control.py --lane automation --provider openai --suite canonical_anchor
 ```
 
 Repo-local entry point:

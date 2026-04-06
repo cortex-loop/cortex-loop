@@ -47,8 +47,12 @@ Shared scenarios:
 Current reality:
 
 - the operator/watchlist lane already uses the shared coding harness
-- the current direct-service lane on this machine remains auth-blocked and still only exposes a smaller smoke/continuity proof surface
-- the first canonical three-scenario API truth anchor is therefore a later bounded seam on a capable machine
+- the OpenAI direct-service lane now uses the shared coding harness through the `canonical_anchor` suite
+- the OpenAI direct-API canonical anchor is repeat-stably re-earned on the current machine for:
+  - `pass_minimal`
+  - `truth_gap`
+  - `restart_continuity`
+- Claude and Gemini direct-service lanes remain auth-blocked on this machine
 
 ## Closeout law
 
@@ -63,6 +67,6 @@ This program is only honestly closed when all are true:
 
 ## Next lawful move
 
-1. re-earn one direct-API truth anchor on a capable machine
+1. land the OpenAI current-scope canonical anchor on the accepted line
 2. add `claude` if auth is ready on that machine
-3. keep operator/CLI reruns as watchlist evidence and drift detection until the API truth lane exists
+3. keep operator/CLI reruns as watchlist evidence and drift detection while `claude` and `gemini` remain unearned on the API lane

@@ -33,6 +33,7 @@ from live_validation_common import (
     extract_event_labels,
     extract_result_text,
     live_evidence_fields,
+    load_local_env_file,
     now_utc_iso,
     parse_json_lines,
     provider_cli_workspace,
@@ -85,6 +86,7 @@ def main(argv: list[str] | None = None) -> int:
     )
     args = parser.parse_args(argv)
 
+    load_local_env_file()
     ensure_live_validation_dirs()
     providers = ("claude", "gemini", "openai") if args.provider == "all" else (args.provider,)
     summary_name = (

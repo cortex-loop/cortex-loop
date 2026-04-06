@@ -36,27 +36,31 @@ It is workflow state only. It does not override the packet documents, implementa
 
 ## 2. Current campaign and seam state
 
-- Current campaign: `R1C closure train: reset reconciliation, watchlist demotion, and phase-gate truth`
-- Current working branch at ledger update: `review/r1c-closure-train`
+- Current campaign: `OA1 OpenAI canonical API truth anchor`
+- Current working branch at ledger update: `review/oa1-openai-canonical-anchor`
 - Current branch role: explicit manual/review branch because local `main` is ahead of `origin/main`; accepted baseline truth remains the clean local `main` line
-- Current candidate seam: `R1C reset closure`
+- Current candidate seam: `OA1 OpenAI canonical direct-API truth anchor`
 - Current seam status:
-  - the R1 reset remains the accepted baseline on local `main`
-  - this review branch now reconciles downstream support truth so the reset cannot silently drift back into operator-first claims
-  - compare and verdict support surfaces now read canonical runtime truth from `direct_api` first
-  - headless-CLI operator evidence remains watchlist-only, with local-vs-accepted watchlist drift surfaced explicitly instead of collapsed into package truth
-  - the operator-payoff support note/tooling is now demoted to historical/watchlist diagnostic status only
-  - Section 7 live-validation phase-gate rows are now rebased to the two-lane truth contract rather than the older operator-first framing
-  - deterministic closure checks and repeated current-machine reruns now agree on the same canonical-blocked/watchlist-only interpretation
-  - the OpenAI automation probe now keeps `gpt-5.4` as the stronger continuity model while using `gpt-5.4-mini` for the cheaper `service_smoke` probe
+  - the R1 reset closure remains the accepted baseline on local `main`
+  - this review branch adds explicit `current|canonical_anchor` service suites to the OpenAI automation lane
+  - the OpenAI service spend split is now explicit:
+    - `service_smoke` uses `gpt-5.4-mini`
+    - `canonical_anchor` scenarios use `gpt-5.4`
+  - the OpenAI direct-API `canonical_anchor` suite is now repeat-stably positive on the current machine:
+    - `pass_minimal` twice
+    - `truth_gap` twice with `truthful_incomplete`
+    - `restart_continuity` twice
+  - `python3 tools/live_compare.py` now reports:
+    - `canonical runtime truth is re-earned for current scope`
+    - `direct_api canonical truth is re-earned for current scope on openai`
+  - Claude and Gemini remain canonical-lane blocked on missing direct API auth
+  - headless-CLI operator evidence remains watchlist-only, with Gemini local-vs-accepted drift surfaced explicitly rather than promoted into runtime truth
 
 ## 3. Next lawful move
 
-- Finalize and manually reconcile this review branch so the R1 reset closeout becomes the new local accepted line.
+- Finalize and manually reconcile this review branch so the OpenAI canonical anchor becomes the new local accepted line.
 - After that closure lands, the next bounded runtime move is:
-  - re-earn one direct-API truth anchor on a capable machine
-  - first host: `openai`
-  - second host: `claude` if auth is ready
+  - add `claude` as the second canonical direct-API host if auth is ready
   - keep `gemini` as watchlist-only until direct API/service auth exists
 - Do not treat branch-local Gemini CLI positives as accepted truth.
 
