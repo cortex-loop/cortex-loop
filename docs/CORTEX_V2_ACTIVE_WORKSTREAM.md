@@ -8,7 +8,7 @@ It is workflow state only. It does not override the packet documents, implementa
 ## 1. Accepted baseline
 
 - Accepted baseline branch: `main`
-- Accepted baseline commit lookup: `git rev-parse HEAD` on clean synced `main`
+- Accepted baseline commit lookup: `git rev-parse HEAD` on the accepted local `main` line
 - Accepted baseline note:
   - exact accepted-head hashes are intentionally not mirrored in repo-tracked support docs because they self-stale on the next accepted closure commit
 - Accepted baseline state:
@@ -17,7 +17,7 @@ It is workflow state only. It does not override the packet documents, implementa
     - `docs/CORTEX_V2_SRE_2.md`
     - `docs/CORTEX_V2_AUX_2.md`
   - the tiny integrity core, contradiction discipline, and existing math-to-code traceability remain accepted
-  - review branches such as `review/gemini-cause-proof` remain evidence only and are not accepted runtime truth
+  - archived evidence such as `archive/review--gemini-cause-proof` remains evidence only and is not accepted runtime truth
   - the repo is now operating under an explicit two-lane live-evidence contract:
     - `service_api` is the canonical runtime truth lane
     - `operator_cli` is a watchlist and exploratory-comparison lane
@@ -48,7 +48,8 @@ It is workflow state only. It does not override the packet documents, implementa
   - the OpenAI service spend split remains explicit:
     - `service_smoke` uses `gpt-5.4-mini`
     - `canonical_anchor` scenarios use `gpt-5.4`
-  - the OpenAI direct-API `canonical_anchor` suite remains repeat-stably positive on the current machine through three positive current-machine `canonical_anchor` cycles:
+  - the OpenAI direct-API `canonical_anchor` suite remains repeat-stably re-earned on the current machine; exact cycle count is local-artifact truth under `.cortex/live_validation/automation/openai/service/`
+  - the stable current-scenario reading remains:
     - `pass_minimal`
     - `truth_gap` with `truthful_incomplete`
     - `restart_continuity`
@@ -66,10 +67,11 @@ It is workflow state only. It does not override the packet documents, implementa
   - Claude canonical-suite plumbing remains implemented, but Claude stays outside the accepted current product scope as future host-expansion backlog
   - Gemini remains canonical-lane out of scope and watchlist-only until its direct API lane is opened deliberately
   - headless-CLI operator evidence remains watchlist-only, with Gemini local-vs-accepted drift surfaced explicitly rather than promoted into runtime truth
+  - the older local `review/*` backlog is now archived to local `archive/review--*` tags and removed; full repo hygiene remains partial until `origin/main` reconciliation because local `main` is ahead
 
 ## 3. Next lawful move
 
-- Open `X2` as an OpenAI-only support/eval compression seam on clean `main`.
+- Open `X2` as the next OpenAI-only support/eval compression seam from the accepted local `main` line.
 - Keep `claude` and `gemini` as future host-expansion backlog only:
   - `claude` retains dormant shared `canonical_anchor` plumbing for a later explicit host-expansion train
   - `gemini` remains watchlist-only until direct API/service auth exists and a separate host-expansion train is opened
@@ -80,7 +82,7 @@ It is workflow state only. It does not override the packet documents, implementa
 - Do not treat signed-in provider CLI sessions as canonical runtime truth.
 - Do not let CLI-only positives promote accepted product/runtime claims.
 - Do not let CLI-only negatives overturn a later re-earned API truth lane unless they reveal a direct contradiction in the canonical runtime path.
-- Do not merge `review/gemini-cause-proof` or similar review branches as product-truth branches.
+- Do not promote archived Gemini recovery evidence such as `archive/review--gemini-cause-proof` into accepted product/runtime truth.
 - Do not reopen mediation, AUX runtime widening, support-memory runtime, or broader doctrine work during this reset.
 - Do not substitute more CLI cleverness for missing direct API/service auth.
 - Do not shell out from service transports to provider CLIs.

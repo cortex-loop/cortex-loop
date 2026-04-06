@@ -22,7 +22,7 @@ The live program now has two explicit evidence lanes:
 Accepted baseline for this train on the current line:
 
 - branch: `main`
-- line: clean synced `main` line recorded in `docs/CORTEX_V2_ACTIVE_WORKSTREAM.md`
+- line: accepted local `main` line recorded in `docs/CORTEX_V2_ACTIVE_WORKSTREAM.md`
 
 ## Environment rules
 
@@ -48,7 +48,7 @@ Current reality:
 
 - the operator/watchlist lane already uses the shared coding harness
 - the accepted current product scope on the canonical direct-API lane is now OpenAI-only
-- the OpenAI direct-service lane is repeat-stably re-earned through three positive current-machine `canonical_anchor` cycles on the shared suite for:
+- the OpenAI direct-service lane is repeat-stably re-earned on the shared `canonical_anchor` suite; exact cycle count is local-artifact truth under `.cortex/live_validation/automation/openai/service/`, and the stable scenario outcomes remain:
   - `pass_minimal`
   - `truth_gap`
   - `restart_continuity`
@@ -68,6 +68,6 @@ This program is only honestly closed when all are true:
 
 ## Next lawful move
 
-1. open the bounded `X2` OpenAI-only support/eval compression train on clean `main`
+1. open the bounded `X2` OpenAI-only support/eval compression train from the accepted local `main` line
 2. keep operator/CLI reruns as watchlist evidence and drift detection only
 3. keep `claude` and `gemini` outside the current product scope until a later host-expansion train is intentionally opened

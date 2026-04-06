@@ -27,7 +27,7 @@ It means the headless-CLI watchlist still contains unresolved host-boundary nois
 
 ## Review-branch evidence rule
 
-Branch-local Gemini recoveries, including the stronger results from `review/gemini-cause-proof`, remain non-authority evidence until they are re-earned under the reset contract.
+Archived Gemini recoveries, including the preserved `archive/review--gemini-cause-proof` tag, remain non-authority evidence until they are re-earned under the reset contract.
 
 Do not read branch-local operator positives as accepted product truth.
 

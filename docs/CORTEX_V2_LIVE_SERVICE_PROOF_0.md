@@ -67,13 +67,13 @@ Current local machine state on the accepted current line:
   - `service_smoke` may use `gpt-5.4-mini` as the cheaper direct-API probe
   - `canonical_anchor` scenarios stay on `gpt-5.4`
 - OpenAI canonical anchor status on this machine:
-  - cycle 1: positive
-  - cycle 2: positive
-  - cycle 3: positive
-  - `pass_minimal`: positive three times
-  - `truth_gap`: `truthful_incomplete` three times
-  - `restart_continuity`: positive three times
-- the first canonical three-scenario API truth anchor is therefore re-earned for current OpenAI-only product scope on this machine through three positive current-machine `canonical_anchor` cycles
+  - the `canonical_anchor` suite is repeat-stably re-earned for current OpenAI-only product scope
+  - exact cycle count and per-scenario totals live only in local artifacts under `.cortex/live_validation/automation/openai/service/`
+  - stable current-scenario outcomes remain:
+    - `pass_minimal`: positive
+    - `truth_gap`: `truthful_incomplete`
+    - `restart_continuity`: positive
+- the first canonical three-scenario API truth anchor is therefore repeat-stably re-earned for current OpenAI-only product scope on this machine; exact cycle count is local-artifact truth
 - the accepted OpenAI-only product runtime on that scope now runs on the compact `openai_product_journal` carrier plus the exact outward `decision + journal` projection
 - Claude host-expansion proof remains blocked honestly on missing auth readiness, but it no longer blocks the current product scope
 - Gemini remains watchlist-only until its direct API/service lane is explicitly opened
@@ -86,7 +86,7 @@ Current local machine state on the accepted current line:
 
 ## Next lawful move
 
-1. open the bounded `X2` OpenAI-only support/eval compression train on clean `main`
+1. open the bounded `X2` OpenAI-only support/eval compression train from the accepted local `main` line
 2. keep `claude` as future host-expansion plumbing only until a later explicit host-expansion train is opened
 3. keep `gemini` watchlist-only until direct API/service auth exists
 4. keep headless-CLI reruns downstream of canonical truth as watchlist-only diagnostics

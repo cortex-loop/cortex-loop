@@ -16,10 +16,11 @@ Reason:
   - `operator_cli`: `execution_surface = headless_cli`, `evidence_role = watchlist`
 - the accepted current product scope on the canonical lane is now OpenAI-only
 - current-machine service auth is ready for OpenAI and still missing for Claude and Gemini
-- OpenAI now clears the canonical direct-API `canonical_anchor` suite through three positive current-machine `canonical_anchor` cycles on:
+- OpenAI now clears the canonical direct-API `canonical_anchor` suite repeat-stably on:
   - `pass_minimal`
   - `truth_gap`
   - `restart_continuity`
+- exact cycle count remains local-artifact truth under `.cortex/live_validation/automation/openai/service/`
 - Claude retains the same canonical suite implementation as future host-expansion plumbing, but it is intentionally outside the current product scope
 - so the current product/runtime claim is now re-earned on the canonical runtime lane for current scope on this machine
 - operator/headless-CLI evidence remains useful, but it is no longer allowed to stand in for canonical runtime truth by itself
@@ -71,13 +72,13 @@ It does not yet make the broader package sufficient for cross-host canonical run
 ### OpenAI
 
 - operator watchlist signal is currently the strongest
-- service/API canonical truth is re-earned for current scope through three positive current-machine `canonical_anchor` cycles
+- service/API canonical truth is repeat-stably re-earned for current scope; exact cycle count is local-artifact truth
 - the direct-API anchor now defines the accepted current product scope
 - the accepted OpenAI-only product runtime now uses the compact `decision + journal` carrier rather than the older allocation-heavy shell
 
 ## Next lawful move
 
-1. open the bounded `X2` OpenAI-only support/eval compression train on clean `main`
+1. open the bounded `X2` OpenAI-only support/eval compression train from the accepted local `main` line
 2. keep Claude and Gemini on watchlist or future host-expansion backlog only
 3. do not widen current product scope without a separate host-expansion train
 

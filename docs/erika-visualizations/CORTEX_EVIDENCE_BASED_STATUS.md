@@ -2,7 +2,7 @@
 
 **Date:** 2026-03-29
 **Role:** support surface for orientation and planning  
-**Accepted factual baseline:** clean synced `main` line recorded in `docs/CORTEX_V2_ACTIVE_WORKSTREAM.md`
+**Accepted factual baseline:** accepted local `main` line recorded in `docs/CORTEX_V2_ACTIVE_WORKSTREAM.md`
 
 > This folder tracks three separate things: current accepted repo truth, the north-star product target, and the lawful gap programs required to move from the first toward the second.
 
