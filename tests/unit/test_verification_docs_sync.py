@@ -386,10 +386,10 @@ def test_resume_protocol_and_active_workstream_contract_exist() -> None:
     assert "Current campaign:" in workstream_text
     assert "Current working branch at ledger update:" in workstream_text
     assert "Current branch role:" in workstream_text
-    assert "Current campaign: `R1 strategic reset: two-lane truth, thin runtime, and surface compression`" in workstream_text
-    assert "Current working branch at ledger update: `codex/20260406-182719-r1-two-lane-reset`" in workstream_text
-    assert "Current branch role: managed session branch from clean synced `main`; accepted baseline truth remains the clean synced `main` line" in workstream_text
-    assert "Current candidate seam: `R1 two-lane truth reset`" in workstream_text
+    assert "Current campaign: `R1C closure train: reset reconciliation, watchlist demotion, and phase-gate truth`" in workstream_text
+    assert "Current working branch at ledger update: `review/r1c-closure-train`" in workstream_text
+    assert "Current branch role: explicit manual/review branch because local `main` is ahead of `origin/main`; accepted baseline truth remains the clean local `main` line" in workstream_text
+    assert "Current candidate seam: `R1C reset closure`" in workstream_text
     assert "`service_api` is the canonical runtime truth lane" in workstream_text
     assert "`operator_cli` is a watchlist and exploratory-comparison lane" in workstream_text
     assert "Claude: positive watchlist signal" in workstream_text
@@ -468,8 +468,8 @@ def test_reference_runtime_program_lock_is_recorded() -> None:
     assert "loopback-only HTTP is landed on the accepted K1 closeout line" in phase_gate_text
     assert "one active session per process is real for current scope" in phase_gate_text
 
-    assert "Current campaign: `R1 strategic reset: two-lane truth, thin runtime, and surface compression`" in workstream_text
-    assert "Current candidate seam: `R1 two-lane truth reset`" in workstream_text
+    assert "Current campaign: `R1C closure train: reset reconciliation, watchlist demotion, and phase-gate truth`" in workstream_text
+    assert "Current candidate seam: `R1C reset closure`" in workstream_text
     assert "`service_api` is the canonical runtime truth lane" in workstream_text
     assert "`operator_cli` is a watchlist and exploratory-comparison lane" in workstream_text
     assert "## 8. Mediation justification gate" in phase_gate_text
@@ -711,10 +711,11 @@ def test_reference_runtime_program_lock_is_recorded() -> None:
     assert "`L6B` Gemini service live proof" in phase_gate_text
     assert "`L6C` OpenAI service live proof" in phase_gate_text
     assert "`L6D` package-level service proof" in phase_gate_text
-    assert "correct signed-in operator hierarchy" in phase_gate_text
-    assert "operator preflight and repeated smoke baselines are clean in CLI auto mode" in phase_gate_text
-    assert "successful resumed completions coexist with recurring first-turn `capacity_exhausted` failures" in phase_gate_text
-    assert "the bounded `codex app-server` operator lane is now re-earned" in phase_gate_text
+    assert "These rows track the two-lane live-validation contract after the R1 reset." in phase_gate_text
+    assert "Claude currently contributes positive watchlist evidence on the headless-CLI lane" in phase_gate_text
+    assert "Gemini remains the noisiest headless-CLI watchlist line" in phase_gate_text
+    assert "the bounded `codex app-server` operator lane remains re-earned as watchlist-only lifecycle evidence" in phase_gate_text
+    assert "watchlist-positive operator evidence does not close runtime payoff" in phase_gate_text
 
     assert "Status: accepted re-audited support brief for the G1 runtime/product restack train" in gemini_runtime_restack_text
     assert "Gemini-only" in gemini_runtime_restack_text
@@ -808,7 +809,7 @@ def test_openai_host_control_revalidation_entry_points_are_recorded() -> None:
     assert "make live-openai-app-server" in local_verification_text
     assert "## Live Cortex host-control capture" in local_verification_text
     assert "make live-cortex-host-control" in local_verification_text
-    assert "compare and operator-payoff support surfaces preserve the already-accepted operator truth" in local_verification_text
+    assert "compare and retained watchlist support surfaces preserve accepted watchlist context explicitly" in local_verification_text
     assert "## Live comparison and verdict" in local_verification_text
     assert "make live-compare" in local_verification_text
     assert "## Live operator payoff audit" in local_verification_text

@@ -1136,10 +1136,11 @@ def test_service_lane_delta_reports_auth_readiness_and_service_success() -> None
     assert "automation auth readiness is `gemini` ready" in delta
     assert "claude:missing" in delta
     assert "openai:blocked_by_spend_policy" in delta
-    assert "automation service proof is `openai` landed and otherwise deferred on this machine" in delta
+    assert "direct_api canonical proof is currently landed on `openai`" in delta
+    assert "headless_cli watchlist currently reads `claude:unknown, gemini:unknown, openai:unknown`" in delta
 
 
-def test_live_compare_falls_back_to_accepted_operator_truth_when_local_operator_artifacts_are_absent(
+def test_live_compare_falls_back_to_accepted_watchlist_when_local_operator_artifacts_are_absent(
     monkeypatch,
 ) -> None:
     workstream_text = """
@@ -1170,12 +1171,13 @@ def test_live_compare_falls_back_to_accepted_operator_truth_when_local_operator_
 
     assert comparison["operator_pass_count"] == 3
     assert comparison["operator_truthful_gap_count"] == 3
-    assert comparison["providers"]["claude"]["operator_lifecycle"]["source"] == "accepted_workstream"
+    assert comparison["providers"]["claude"]["operator_lifecycle"]["source"] == "accepted_watchlist_fallback"
     assert comparison["providers"]["gemini"]["operator_lifecycle"]["restart_continuity_success"] is False
     assert comparison["providers"]["openai"]["operator_lifecycle"]["pass_minimal_success"] is True
+    assert comparison["watchlist_drift_hosts"] == []
 
 
-def test_live_compare_supplements_partial_local_operator_runs_with_accepted_truth(
+def test_live_compare_surfaces_watchlist_drift_when_local_operator_artifacts_are_partial(
     monkeypatch,
 ) -> None:
     workstream_text = """
@@ -1243,10 +1245,14 @@ def test_live_compare_supplements_partial_local_operator_runs_with_accepted_trut
     )
 
     gemini = comparison["providers"]["gemini"]["operator_lifecycle"]
-    assert gemini["source"] == "mixed_local_and_accepted"
-    assert gemini["pass_minimal_success"] is True
-    assert gemini["truth_gap_preserved"] is True
+    assert gemini["source"] == "local_artifacts"
+    assert gemini["pass_minimal_success"] is False
+    assert gemini["truth_gap_preserved"] is False
     assert gemini["restart_continuity_success"] is True
+    assert gemini["watchlist_status"] == "unresolved"
+    assert gemini["accepted_watchlist_status"] == "unresolved"
+    assert gemini["accepted_watchlist_drift_detected"] is True
+    assert comparison["watchlist_drift_hosts"] == ["gemini"]
 
 
 def test_gemini_continuity_requires_latest_local_runs_to_be_repeat_stable() -> None:
@@ -1733,7 +1739,7 @@ def test_decide_verdict_prefers_blocker_honesty_before_optimism() -> None:
         automation_pass_count=0,
         service_success_count=1,
         blocker_classes=set(),
-    )[0] == "lifecycle-first is already paying off clearly"
+    )[0] == "canonical runtime truth is re-earned for current scope"
 
     assert decide_verdict(
         operator_pass_count=0,
@@ -1741,7 +1747,7 @@ def test_decide_verdict_prefers_blocker_honesty_before_optimism() -> None:
         automation_pass_count=0,
         service_success_count=0,
         blocker_classes={"auth_missing"},
-    )[0] == "lifecycle-first is not yet paying off enough on real hosts"
+    )[0] == "canonical runtime truth is blocked on this machine"
 
     assert decide_verdict(
         operator_pass_count=2,
@@ -1749,26 +1755,39 @@ def test_decide_verdict_prefers_blocker_honesty_before_optimism() -> None:
         automation_pass_count=0,
         service_success_count=0,
         blocker_classes={"runtime_error"},
-    )[0] == "lifecycle-first is promising but under-instrumented"
+    )[0] == "canonical runtime truth is still partial"
 
 
-def test_next_corrective_seam_prefers_deferral_when_gemini_capacity_is_the_residual_issue() -> None:
+def test_next_corrective_seam_prefers_watchlist_drift_investigation_after_canonical_success() -> None:
     assert (
         live_compare._next_corrective_seam(
-            blocker_classes={"capacity_exhausted"},
-            operator_pass_count=3,
-            service_success_count=0,
+            {
+                "gemini": {
+                    "automation_auth": {"status": "ready"},
+                    "automation_service": {"successful_run_count": 1},
+                    "operator_lifecycle": {"accepted_watchlist_drift_detected": True},
+                }
+            }
         )
-        == "treat Gemini as the remaining explicit partial host line on this machine and defer further local continuity tweaking until host capacity changes or service auth is intentionally reopened"
+        == "treat the headless-CLI lane as watchlist drift detection only, keep canonical claims on the direct-API lane, and investigate local-vs-accepted watchlist differences without promoting them into runtime truth"
     )
 
 
 def test_next_corrective_seam_prefers_capable_machine_when_service_auth_is_missing() -> None:
     assert (
         live_compare._next_corrective_seam(
-            blocker_classes={"auth_missing", "capacity_exhausted"},
-            operator_pass_count=3,
-            service_success_count=0,
+            {
+                "claude": {
+                    "automation_auth": {"status": "missing"},
+                    "automation_service": {"successful_run_count": 0},
+                    "operator_lifecycle": {},
+                },
+                "gemini": {
+                    "automation_auth": {"status": "blocked_by_spend_policy"},
+                    "automation_service": {"successful_run_count": 0},
+                    "operator_lifecycle": {},
+                },
+            }
         )
         == "treat the current machine as out of scope for actual service proof, move the repo to a capable machine with machine auth and spend approval, and rerun the bounded service-proof train there"
     )

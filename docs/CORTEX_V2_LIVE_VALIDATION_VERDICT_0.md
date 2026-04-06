@@ -61,8 +61,8 @@ It does not yet make the current machine sufficient for canonical runtime closur
 
 ## Next lawful move
 
-1. land the R1 reset surfaces on clean synced `main`
-2. re-earn one direct-API truth anchor on a capable machine
-3. treat CLI/operator reruns as watchlist evidence until the API truth lane exists
+1. re-earn one direct-API truth anchor on a capable machine
+2. add `claude` if auth is ready on that machine
+3. treat CLI/operator reruns as watchlist evidence and drift detection until the API truth lane exists
 
 Do not reopen mediation, AUX runtime, memory/runtime learning, or broad control-law expansion before that.

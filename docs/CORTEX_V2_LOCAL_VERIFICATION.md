@@ -509,7 +509,7 @@ Machine output is local-only under `.cortex/live_validation/`.
 This is also the bounded service-proof entry point for the automation train.
 On this machine it is currently contract/readiness-only and not a lawful closure surface.
 Rerun it per provider only on a capable machine where machine auth is intentionally ready and spend approval is explicitly present when required.
-When the current train reruns only automation artifacts, the compare and operator-payoff support surfaces preserve the already-accepted operator truth rather than zeroing it out.
+When the current train reruns only automation artifacts, the compare and retained watchlist support surfaces preserve accepted watchlist context explicitly and surface local-vs-accepted drift rather than zeroing it out or silently promoting it into runtime truth.
 
 Direct command:
 
@@ -542,8 +542,8 @@ make live-compare
 
 ## Live operator payoff audit
 
-This builds the operator-only payoff audit from the already-captured live operator artifacts.
-It does not rerun any hosts by itself and does not change runtime behavior.
+This builds a retained historical/watchlist diagnostic from the already-captured headless-CLI operator artifacts.
+It does not rerun any hosts by itself, it does not change runtime behavior, and it is not a lawful closure surface for runtime payoff.
 
 Direct command:
 

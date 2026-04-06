@@ -36,26 +36,23 @@ It is workflow state only. It does not override the packet documents, implementa
 
 ## 2. Current campaign and seam state
 
-- Current campaign: `R1 strategic reset: two-lane truth, thin runtime, and surface compression`
-- Current working branch at ledger update: `codex/20260406-182719-r1-two-lane-reset`
-- Current branch role: managed session branch from clean synced `main`; accepted baseline truth remains the clean synced `main` line
-- Current candidate seam: `R1 two-lane truth reset`
+- Current campaign: `R1C closure train: reset reconciliation, watchlist demotion, and phase-gate truth`
+- Current working branch at ledger update: `review/r1c-closure-train`
+- Current branch role: explicit manual/review branch because local `main` is ahead of `origin/main`; accepted baseline truth remains the clean local `main` line
+- Current candidate seam: `R1C reset closure`
 - Current seam status:
-  - reset slice is now implemented and verified on this managed session branch
-  - code now classifies live evidence explicitly by:
-    - `execution_surface = headless_cli | direct_api`
-    - `evidence_role = watchlist | canonical_truth`
-  - the Gemini `auto|minimal|wrapped` execution-flavor tooling is being retained only as operator-harness falsification infrastructure
-  - operator-facing docs are now watchlist-language surfaces
-  - service/API-facing docs are now canonical-truth surfaces, while remaining blocked honestly on current-machine auth
+  - the R1 reset remains the accepted baseline on local `main`
+  - this review branch now reconciles downstream support truth so the reset cannot silently drift back into operator-first claims
+  - compare and verdict support surfaces now read canonical runtime truth from `direct_api` first
+  - headless-CLI operator evidence remains watchlist-only, with local-vs-accepted watchlist drift surfaced explicitly instead of collapsed into package truth
+  - the operator-payoff support note/tooling is now demoted to historical/watchlist diagnostic status only
+  - Section 7 live-validation phase-gate rows are now rebased to the two-lane truth contract rather than the older operator-first framing
+  - deterministic closure checks and repeated current-machine reruns now agree on the same canonical-blocked/watchlist-only interpretation
 
 ## 3. Next lawful move
 
-- Land the reset slice on clean synced `main` with:
-  - explicit two-lane truth language in the active workflow and live-validation support docs
-  - harness summaries that expose `execution_surface` and `evidence_role`
-  - docs-sync/tests aligned to the new truth model
-- After branch closeout, the next bounded runtime move is:
+- Finalize and manually reconcile this review branch so the R1 reset closeout becomes the new local accepted line.
+- After that closure lands, the next bounded runtime move is:
   - re-earn one direct-API truth anchor on a capable machine
   - first host: `openai`
   - second host: `claude` if auth is ready
@@ -74,6 +71,8 @@ It is workflow state only. It does not override the packet documents, implementa
 - Do not treat current-machine auth absence as permission to fake service proof.
 - Do not silently promote `minimal` execution flavor from falsification tooling into a product default.
 - Do not add new control/accounting surfaces unless they change route choice, tool exposure, blockedness, or observable runtime outcome.
+- Do not let accepted watchlist fallback rows silently inflate canonical-looking package summaries.
+- Do not use the operator-payoff support note/tool as an active runtime-payoff closure surface.
 
 ## 5. Acknowledged worktree noise at ledger creation
 

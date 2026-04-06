@@ -899,19 +899,25 @@ def decide_verdict(
     service_success_count: int,
     blocker_classes: set[str],
 ) -> tuple[str, str]:
-    if operator_pass_count >= 3 and operator_truthful_gap_count >= 2 and service_success_count >= 1:
+    canonical_blockers = {"auth_missing", "blocked_by_spend_policy", "mis_scoped"}
+    if service_success_count == 0 and blocker_classes.intersection(canonical_blockers):
         return (
-            "lifecycle-first is already paying off clearly",
-            "The signed-in operator lane completed the shared coding harness across hosts and the current service lane also succeeded on at least one live host path.",
+            "canonical runtime truth is blocked on this machine",
+            "Direct API confirmation is still blocked by current-machine auth or spend readiness, so headless-CLI results remain watchlist-only evidence.",
         )
-    if operator_pass_count == 0 and blocker_classes:
+    if service_success_count == 0:
         return (
-            "lifecycle-first is not yet paying off enough on real hosts",
-            "The environment exposes live blockers honestly, but the signed-in operator lane did not complete a successful shared coding task.",
+            "canonical runtime truth is still partial",
+            "Some live evidence exists, but no direct-API host path has yet been re-earned for current scope.",
+        )
+    if automation_pass_count > service_success_count:
+        return (
+            "canonical runtime truth is still partial",
+            "At least one direct-API host path succeeded, but the canonical lane is not yet stable across every currently ready host in scope.",
         )
     return (
-        "lifecycle-first is promising but under-instrumented",
-        "Some live task evidence exists, but either operator-lane coverage or current service-lane success is still too thin to prove clear payoff.",
+        "canonical runtime truth is re-earned for current scope",
+        "Repeat-stable direct-API evidence exists on every currently ready host in scope; operator/CLI evidence remains watchlist-only.",
     )
 
 

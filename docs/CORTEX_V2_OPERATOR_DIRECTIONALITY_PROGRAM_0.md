@@ -57,5 +57,5 @@ They do not authorize product default changes by themselves.
 ## Next lawful move
 
 - keep operator directionality as watchlist evidence
-- use it to detect packaging contamination, host-default-path drift, and wrapper burden
+- use it to detect packaging contamination, host-default-path drift, wrapper burden, and local-vs-accepted watchlist drift
 - move canonical runtime claims to the service/API lane described in `docs/CORTEX_V2_LIVE_SERVICE_PROOF_0.md`

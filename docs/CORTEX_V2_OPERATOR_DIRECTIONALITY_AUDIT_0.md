@@ -38,5 +38,6 @@ Use this audit to answer narrow questions such as:
 - is the wrapper adding burden on a given host?
 - is the comparison contaminated by packaging or baseline setup?
 - did a host default path drift?
+- do current local watchlist readings drift from the accepted watchlist line?
 
 Do not use this audit alone to publish runtime payoff claims.

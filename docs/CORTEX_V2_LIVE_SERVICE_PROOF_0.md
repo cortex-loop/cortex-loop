@@ -6,6 +6,7 @@ Status: active canonical-truth service-proof contract with current-machine block
 ## Purpose
 
 This note records the canonical live-runtime truth lane for Cortex v2.
+That reset contract is already landed on local `main`; this note preserves the canonical truth lane and the current-machine blocker honestly.
 
 Under the R1 reset:
 
@@ -71,5 +72,6 @@ On a capable machine:
 1. re-earn the first API truth anchor on `openai`
 2. add `claude` if auth is ready
 3. keep `gemini` watchlist-only until direct API/service auth exists
+4. keep headless-CLI reruns downstream of canonical truth as watchlist-only diagnostics
 
 Do not use CLI fallback to fake service proof.

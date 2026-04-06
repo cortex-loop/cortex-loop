@@ -38,13 +38,14 @@ def main(argv: list[str] | None = None) -> int:
 
 
 def _build_comparison(preflight: dict[str, Any]) -> dict[str, Any]:
-    accepted_operator = _accepted_operator_fallbacks()
+    accepted_watchlist = _accepted_watchlist_fallbacks()
     providers: dict[str, Any] = {}
     blocker_classes: set[str] = set()
     operator_pass_count = 0
     operator_truthful_gap_count = 0
     automation_pass_count = 0
     service_success_count = 0
+    watchlist_drift_hosts: list[str] = []
 
     for provider in ("claude", "gemini", "openai"):
         baseline_runs = _read_json(
@@ -56,11 +57,11 @@ def _build_comparison(preflight: dict[str, Any]) -> dict[str, Any]:
         service_runs = _read_json(
             provider_root(provider, "automation", "service") / "service_runs.json"
         ).get("runs", [])
-        accepted_operator_payload = accepted_operator.get(provider)
+        accepted_watchlist_payload = accepted_watchlist.get(provider)
         operator_runs, operator_source = _effective_operator_runs(
             provider=provider,
             operator_runs=operator_runs,
-            accepted_operator_payload=accepted_operator_payload,
+            accepted_watchlist_payload=accepted_watchlist_payload,
         )
 
         successful_operator = [run for run in operator_runs if run.get("success")]
@@ -123,6 +124,26 @@ def _build_comparison(preflight: dict[str, Any]) -> dict[str, Any]:
         if successful_service:
             service_success_count += 1
 
+        current_watchlist_signature = _watchlist_signature_from_runs(provider, operator_runs)
+        current_watchlist_status = current_watchlist_signature["watchlist_status"]
+        accepted_watchlist_status = (
+            _watchlist_status_from_runs(provider, accepted_watchlist_payload["synthetic_runs"])
+            if accepted_watchlist_payload is not None
+            else None
+        )
+        accepted_watchlist_signature = (
+            _watchlist_signature_from_runs(provider, accepted_watchlist_payload["synthetic_runs"])
+            if accepted_watchlist_payload is not None
+            else None
+        )
+        accepted_watchlist_drift_detected = (
+            accepted_watchlist_signature is not None
+            and operator_source == "local_artifacts"
+            and current_watchlist_signature != accepted_watchlist_signature
+        )
+        if accepted_watchlist_drift_detected:
+            watchlist_drift_hosts.append(provider)
+
         providers[provider] = {
             "operator_baseline": {
                 **live_evidence_fields(lane="operator"),
@@ -144,6 +165,15 @@ def _build_comparison(preflight: dict[str, Any]) -> dict[str, Any]:
                 "chosen_models": chosen_models,
                 "hook_event_labels": hook_event_labels,
                 "source": operator_source,
+                "watchlist_status": current_watchlist_status,
+                "accepted_watchlist_status": accepted_watchlist_status,
+                "accepted_watchlist_source": (
+                    accepted_watchlist_payload["source"]
+                    if accepted_watchlist_payload is not None
+                    else None
+                ),
+                "accepted_watchlist_signature": accepted_watchlist_signature,
+                "accepted_watchlist_drift_detected": accepted_watchlist_drift_detected,
             },
             "automation_service": {
                 **live_evidence_fields(lane="automation"),
@@ -184,46 +214,54 @@ def _build_comparison(preflight: dict[str, Any]) -> dict[str, Any]:
         "automation_pass_count": automation_pass_count,
         "service_success_count": service_success_count,
         "providers": providers,
+        "watchlist_drift_hosts": watchlist_drift_hosts,
         "verdict": verdict,
         "verdict_reason": verdict_reason,
         "service_lane_delta": _service_lane_delta(providers),
-        "next_corrective_seam": _next_corrective_seam(blocker_classes, operator_pass_count, service_success_count),
+        "next_corrective_seam": _next_corrective_seam(providers),
     }
 
 
-def _next_corrective_seam(
-    blocker_classes: set[str],
-    operator_pass_count: int,
-    service_success_count: int,
-) -> str:
-    if service_success_count == 0 and (
-        "auth_missing" in blocker_classes or "blocked_by_spend_policy" in blocker_classes or "mis_scoped" in blocker_classes
-    ):
+def _next_corrective_seam(providers: dict[str, Any]) -> str:
+    ready_hosts = [
+        provider
+        for provider, payload in providers.items()
+        if payload.get("automation_auth", {}).get("status") == "ready"
+    ]
+    service_hosts = [
+        provider
+        for provider, payload in providers.items()
+        if payload.get("automation_service", {}).get("successful_run_count", 0) > 0
+    ]
+    blocked_statuses = {
+        provider: payload.get("automation_auth", {}).get("status")
+        for provider, payload in providers.items()
+        if payload.get("automation_auth", {}).get("status") not in {None, "ready"}
+    }
+    watchlist_drift_hosts = [
+        provider
+        for provider, payload in providers.items()
+        if payload.get("operator_lifecycle", {}).get("accepted_watchlist_drift_detected")
+    ]
+
+    if not service_hosts and blocked_statuses:
         return (
             "treat the current machine as out of scope for actual service proof, move the repo to a capable machine with machine auth and spend approval, and rerun the bounded service-proof train there"
         )
-    if service_success_count == 0 and operator_pass_count >= 3 and "capacity_exhausted" in blocker_classes:
+    if not service_hosts and ready_hosts:
         return (
-            "treat Gemini as the remaining explicit partial host line on this machine and defer further local continuity tweaking until host capacity changes or service auth is intentionally reopened"
+            "rerun the bounded direct-API confirmation suite only on the currently ready hosts until canonical truth either re-earns cleanly or blocks truthfully"
         )
-    if "auth_expired" in blocker_classes or "not_logged_in" in blocker_classes:
+    if watchlist_drift_hosts:
         return (
-            "refresh or re-prove the signed-in operator credentials first, because signed-in host-native truth is the primary acceptance lane"
+            "treat the headless-CLI lane as watchlist drift detection only, keep canonical claims on the direct-API lane, and investigate local-vs-accepted watchlist differences without promoting them into runtime truth"
         )
-    if "capacity_exhausted" in blocker_classes or "model_unavailable" in blocker_classes:
+    if blocked_statuses:
         return (
-            "rerun the affected host on its documented fallback model and keep the preferred model pin visible in the verdict"
-        )
-    if operator_pass_count == 0:
-        return (
-            "finish the signed-in host-native product-path harness until at least one provider completes pass_minimal cleanly"
-        )
-    if service_success_count == 0:
-        return (
-            "continue the service-proof train only on a capable machine that can honestly satisfy the machine-auth and spend contract"
+            "keep blocked providers watchlist-only until direct auth exists, and do not let CLI evidence promote or overturn canonical runtime truth"
         )
     return (
-        "add a raw-response extraction seam for the automation service lane only if shared coding-harness parity is still too thin after auth alignment"
+        "continue expanding the canonical direct-API truth suite only through bounded runtime-confirmation seams; keep operator reruns as watchlist-only diagnostics"
     )
 
 
@@ -232,9 +270,9 @@ def _comparison_markdown(comparison: dict[str, Any]) -> str:
         "# L2 Live Testing Comparison",
         "",
         f"- Generated at: `{comparison['generated_at']}`",
-        f"- Operator pass_minimal host count: `{comparison['operator_pass_count']}`",
-        f"- Operator truthful-gap host count: `{comparison['operator_truthful_gap_count']}`",
-        f"- Automation service success host count: `{comparison['service_success_count']}`",
+        f"- Watchlist pass_minimal host count: `{comparison['operator_pass_count']}`",
+        f"- Watchlist truthful-gap host count: `{comparison['operator_truthful_gap_count']}`",
+        f"- Canonical direct-API success host count: `{comparison['service_success_count']}`",
         f"- Verdict: **{comparison['verdict']}**",
         "",
         comparison["verdict_reason"],
@@ -247,18 +285,19 @@ def _comparison_markdown(comparison: dict[str, Any]) -> str:
             [
                 f"### {provider}",
                 "",
-                f"- operator baseline failures: `{', '.join(payload['operator_baseline']['failure_classes']) or 'none'}`",
-                f"- operator lifecycle surface: `{payload['operator_lifecycle']['surface']}`",
-                f"- operator pass_minimal success: `{payload['operator_lifecycle']['pass_minimal_success']}`",
-                f"- operator restart_continuity success: `{payload['operator_lifecycle']['restart_continuity_success']}`",
-                f"- operator truthful gap preserved: `{payload['operator_lifecycle']['truth_gap_preserved']}`",
-                f"- operator chosen models: `{', '.join(payload['operator_lifecycle']['chosen_models']) or 'none'}`",
-                f"- operator warning classes: `{', '.join(payload['operator_lifecycle']['warning_classes']) or 'none'}`",
-                f"- operator hook labels: `{', '.join(payload['operator_lifecycle']['hook_event_labels']) or 'none'}`",
-                f"- operator lifecycle failures: `{', '.join(payload['operator_lifecycle']['failure_classes']) or 'none'}`",
-                f"- operator warning-preserving: `{payload['operator_lifecycle'].get('warning_preserving', False)}`",
-                f"- operator scenario-split: `{payload['operator_lifecycle'].get('scenario_split', False)}`",
-                f"- automation service failures: `{', '.join(payload['automation_service']['failure_classes']) or 'none'}`",
+                f"- headless-CLI watchlist surface: `{payload['operator_lifecycle']['surface']}`",
+                f"- headless-CLI watchlist status: `{payload['operator_lifecycle']['watchlist_status']}`",
+                f"- headless-CLI watchlist source: `{payload['operator_lifecycle']['source']}`",
+                f"- accepted watchlist status: `{payload['operator_lifecycle'].get('accepted_watchlist_status') or 'none'}`",
+                f"- accepted watchlist drift detected: `{payload['operator_lifecycle'].get('accepted_watchlist_drift_detected', False)}`",
+                f"- watchlist pass_minimal success: `{payload['operator_lifecycle']['pass_minimal_success']}`",
+                f"- watchlist restart_continuity success: `{payload['operator_lifecycle']['restart_continuity_success']}`",
+                f"- watchlist truthful gap preserved: `{payload['operator_lifecycle']['truth_gap_preserved']}`",
+                f"- watchlist chosen models: `{', '.join(payload['operator_lifecycle']['chosen_models']) or 'none'}`",
+                f"- watchlist warning classes: `{', '.join(payload['operator_lifecycle']['warning_classes']) or 'none'}`",
+                f"- watchlist hook labels: `{', '.join(payload['operator_lifecycle']['hook_event_labels']) or 'none'}`",
+                f"- watchlist lifecycle failures: `{', '.join(payload['operator_lifecycle']['failure_classes']) or 'none'}`",
+                f"- direct-API canonical failures: `{', '.join(payload['automation_service']['failure_classes']) or 'none'}`",
                 "",
             ]
         )
@@ -279,7 +318,7 @@ def _comparison_markdown(comparison: dict[str, Any]) -> str:
             "",
             comparison["next_corrective_seam"],
             "",
-            "## Service lane delta",
+            "## Lane relationship",
             "",
             comparison["service_lane_delta"],
             "",
@@ -298,27 +337,16 @@ def _effective_operator_runs(
     *,
     provider: str,
     operator_runs: list[dict[str, Any]],
-    accepted_operator_payload: dict[str, Any] | None,
+    accepted_watchlist_payload: dict[str, Any] | None,
 ) -> tuple[list[dict[str, Any]], str]:
     filtered_runs = [
         run for run in operator_runs if run.get("scenario_id") != "operator_product_gate"
     ]
-    if accepted_operator_payload is None:
+    if accepted_watchlist_payload is None:
         return filtered_runs, "local_artifacts"
     if not filtered_runs:
-        return list(accepted_operator_payload["synthetic_runs"]), accepted_operator_payload["source"]
-
-    covered = {
-        run.get("scenario_id")
-        for run in filtered_runs
-        if isinstance(run.get("scenario_id"), str)
-    }
-    supplemented = list(filtered_runs)
-    for synthetic in accepted_operator_payload["synthetic_runs"]:
-        if synthetic.get("scenario_id") not in covered:
-            supplemented.append(synthetic)
-    source = "mixed_local_and_accepted" if len(supplemented) != len(filtered_runs) else "local_artifacts"
-    return supplemented, source
+        return list(accepted_watchlist_payload["synthetic_runs"]), accepted_watchlist_payload["source"]
+    return filtered_runs, "local_artifacts"
 
 
 def _continuity_success(*, provider: str, operator_runs: list[dict[str, Any]]) -> bool:
@@ -342,7 +370,7 @@ def _continuity_success(*, provider: str, operator_runs: list[dict[str, Any]]) -
     return any(run.get("success") for run in continuity_runs)
 
 
-def _accepted_operator_fallbacks() -> dict[str, dict[str, Any]]:
+def _accepted_watchlist_fallbacks() -> dict[str, dict[str, Any]]:
     text = WORKSTREAM_PATH.read_text(encoding="utf-8")
     claude_positive = (
         "the Claude operator lane is now hook-backed and completes:" in text
@@ -358,7 +386,7 @@ def _accepted_operator_fallbacks() -> dict[str, dict[str, Any]]:
     )
     return {
         "claude": {
-            "source": "accepted_workstream",
+            "source": "accepted_watchlist_fallback",
             "synthetic_runs": [
                 {
                     "scenario_id": "pass_minimal",
@@ -396,7 +424,7 @@ def _accepted_operator_fallbacks() -> dict[str, dict[str, Any]]:
             ],
         },
         "gemini": {
-            "source": "accepted_workstream",
+            "source": "accepted_watchlist_fallback",
             "synthetic_runs": [
                 {
                     "scenario_id": "pass_minimal",
@@ -434,7 +462,7 @@ def _accepted_operator_fallbacks() -> dict[str, dict[str, Any]]:
             ],
         },
         "openai": {
-            "source": "accepted_workstream",
+            "source": "accepted_watchlist_fallback",
             "synthetic_runs": [
                 {
                     "scenario_id": "pass_minimal",
@@ -471,6 +499,63 @@ def _accepted_operator_fallbacks() -> dict[str, dict[str, Any]]:
                 },
             ],
         },
+    }
+
+
+def _watchlist_status_from_runs(provider: str, runs: list[dict[str, Any]]) -> str:
+    return _watchlist_signature_from_runs(provider, runs)["watchlist_status"]
+
+
+def _watchlist_signature_from_runs(provider: str, runs: list[dict[str, Any]]) -> dict[str, Any]:
+    return _watchlist_signature(
+        pass_minimal=any(
+            run.get("scenario_id") == "pass_minimal" and run.get("success")
+            for run in runs
+        ),
+        truth_gap=any(
+            run.get("scenario_id") == "truth_gap"
+            and run.get("truth_gap_kind") == "truthful_incomplete"
+            for run in runs
+        ),
+        continuity=_continuity_success(provider=provider, operator_runs=runs),
+        warning_classes=sorted(
+            {
+                warning
+                for run in runs
+                for warning in run.get("warning_classes", [])
+                if isinstance(warning, str) and warning
+            }
+        ),
+        failure_classes=sorted(
+            {
+                str(run.get("failure_class"))
+                for run in runs
+                if isinstance(run.get("failure_class"), str) and run.get("failure_class")
+            }
+        ),
+    )
+
+
+def _watchlist_signature(
+    *,
+    pass_minimal: bool,
+    truth_gap: bool,
+    continuity: bool,
+    warning_classes: list[str],
+    failure_classes: list[str],
+) -> dict[str, Any]:
+    watchlist_status = "blocked"
+    if pass_minimal and truth_gap and continuity and not warning_classes and not failure_classes:
+        watchlist_status = "positive"
+    elif pass_minimal or truth_gap or continuity or warning_classes or failure_classes:
+        watchlist_status = "unresolved"
+    return {
+        "watchlist_status": watchlist_status,
+        "pass_minimal_success": pass_minimal,
+        "truth_gap_preserved": truth_gap,
+        "restart_continuity_success": continuity,
+        "warning_classes": warning_classes,
+        "failure_classes": failure_classes,
     }
 
 
@@ -525,9 +610,12 @@ def _service_lane_delta(providers: dict[str, Any]) -> str:
     ready = []
     blocked = []
     service_success = []
+    watchlist = []
+    drift = []
     for provider, payload in providers.items():
         automation_auth = payload.get("automation_auth", {})
         automation_service = payload.get("automation_service", {})
+        operator_lifecycle = payload.get("operator_lifecycle", {})
         if automation_service.get("successful_run_count", 0) > 0:
             service_success.append(provider)
         status = automation_auth.get("status")
@@ -537,10 +625,27 @@ def _service_lane_delta(providers: dict[str, Any]) -> str:
             blocked.append(f"{provider}:{status}")
         else:
             blocked.append(f"{provider}:unknown")
+        watchlist_status = operator_lifecycle.get("watchlist_status", "unknown")
+        accepted_status = operator_lifecycle.get("accepted_watchlist_status")
+        if operator_lifecycle.get("accepted_watchlist_drift_detected"):
+            drift.append(provider)
+            watchlist.append(f"{provider}:{watchlist_status}->accepted:{accepted_status}")
+        else:
+            watchlist.append(f"{provider}:{watchlist_status}")
+    canonical_clause = (
+        f"direct_api canonical proof is currently landed on `{', '.join(service_success)}`"
+        if service_success
+        else "direct_api canonical truth is not yet re-earned on this machine"
+    )
+    drift_clause = (
+        f"; drift against the accepted watchlist is explicit on `{', '.join(drift)}`"
+        if drift
+        else ""
+    )
     return (
-        f"operator strong/partial truth is earned on `{', '.join(providers.keys())}`; "
+        f"{canonical_clause}; "
         f"automation auth readiness is `{', '.join(ready) or 'none'}` ready and `{', '.join(blocked) or 'none'}` unavailable; "
-        f"automation service proof is `{', '.join(service_success) or 'none'}` landed and otherwise deferred on this machine."
+        f"headless_cli watchlist currently reads `{', '.join(watchlist) or 'none'}`{drift_clause}."
     )
 
 

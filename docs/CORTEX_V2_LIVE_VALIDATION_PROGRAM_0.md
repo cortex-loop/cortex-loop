@@ -6,6 +6,7 @@ Status: active live-validation program under the R1 two-lane truth reset
 ## Purpose
 
 This document records the live-validation contract after the R1 reset.
+The reset itself is already landed on local `main`; this program keeps later live-evidence interpretation aligned to that contract.
 
 The live program now has two explicit evidence lanes:
 
@@ -59,3 +60,9 @@ This program is only honestly closed when all are true:
   - `execution_surface`
   - `evidence_role`
 - gate and workstream summaries are updated truthfully to the reset contract
+
+## Next lawful move
+
+1. re-earn one direct-API truth anchor on a capable machine
+2. add `claude` if auth is ready on that machine
+3. keep operator/CLI reruns as watchlist evidence and drift detection until the API truth lane exists
