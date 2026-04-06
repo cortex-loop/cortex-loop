@@ -9,6 +9,7 @@ from typing import Any
 
 from live_validation_common import (
     PREFLIGHT_REPORT_PATH,
+    canonical_service_provider_scope,
     comparator_path,
     decide_verdict,
     ensure_live_validation_dirs,
@@ -39,6 +40,7 @@ def main(argv: list[str] | None = None) -> int:
 
 def _build_comparison(preflight: dict[str, Any]) -> dict[str, Any]:
     accepted_watchlist = _accepted_watchlist_fallbacks()
+    canonical_scope = set(canonical_service_provider_scope())
     providers: dict[str, Any] = {}
     blocker_classes: set[str] = set()
     operator_pass_count = 0
@@ -106,17 +108,21 @@ def _build_comparison(preflight: dict[str, Any]) -> dict[str, Any]:
             {run["failure_class"] for run in operator_runs if run.get("failure_class")}
         )
         service_failures = service_summary["failure_classes"]
+        in_canonical_scope = provider in canonical_scope
 
-        blocker_classes.update(baseline_failures)
-        blocker_classes.update(operator_failures)
-        blocker_classes.update(service_failures)
-        if preflight.get("auth_surfaces", {}).get("automation", {}).get(provider, {}).get("status") == "ready":
+        if in_canonical_scope:
+            blocker_classes.update(service_failures)
+        if (
+            in_canonical_scope
+            and preflight.get("auth_surfaces", {}).get("automation", {}).get(provider, {}).get("status")
+            == "ready"
+        ):
             automation_pass_count += 1
         if any(run.get("scenario_id") == "pass_minimal" and run.get("success") for run in operator_runs):
             operator_pass_count += 1
         if truthful_gaps:
             operator_truthful_gap_count += 1
-        if service_summary["canonical_anchor"]["repeat_stable_success"]:
+        if in_canonical_scope and service_summary["canonical_anchor"]["repeat_stable_success"]:
             service_success_count += 1
 
         current_watchlist_signature = _watchlist_signature_from_runs(provider, operator_runs)
@@ -172,6 +178,7 @@ def _build_comparison(preflight: dict[str, Any]) -> dict[str, Any]:
             },
             "automation_service": {
                 **live_evidence_fields(lane="automation"),
+                "in_canonical_scope": in_canonical_scope,
                 "current": service_summary["current"],
                 "canonical_anchor": service_summary["canonical_anchor"],
                 "successful_run_count": service_summary["canonical_anchor"]["successful_cycle_count"],
@@ -206,6 +213,7 @@ def _build_comparison(preflight: dict[str, Any]) -> dict[str, Any]:
         "generated_at": now_utc_iso(),
         "operator_evidence": live_evidence_fields(lane="operator"),
         "automation_evidence": live_evidence_fields(lane="automation"),
+        "canonical_provider_scope": sorted(canonical_scope),
         "operator_pass_count": operator_pass_count,
         "operator_truthful_gap_count": operator_truthful_gap_count,
         "automation_pass_count": automation_pass_count,
@@ -214,26 +222,33 @@ def _build_comparison(preflight: dict[str, Any]) -> dict[str, Any]:
         "watchlist_drift_hosts": watchlist_drift_hosts,
         "verdict": verdict,
         "verdict_reason": verdict_reason,
-        "service_lane_delta": _service_lane_delta(providers),
-        "next_corrective_seam": _next_corrective_seam(providers),
+        "service_lane_delta": _service_lane_delta(providers, canonical_scope=canonical_scope),
+        "next_corrective_seam": _next_corrective_seam(providers, canonical_scope=canonical_scope),
     }
 
 
-def _next_corrective_seam(providers: dict[str, Any]) -> str:
+def _next_corrective_seam(
+    providers: dict[str, Any],
+    *,
+    canonical_scope: set[str] | frozenset[str] | None = None,
+) -> str:
+    scoped_providers = canonical_scope if canonical_scope is not None else set(providers)
     ready_hosts = [
         provider
         for provider, payload in providers.items()
-        if payload.get("automation_auth", {}).get("status") == "ready"
+        if provider in scoped_providers and payload.get("automation_auth", {}).get("status") == "ready"
     ]
     canonical_hosts = [
         provider
         for provider, payload in providers.items()
-        if payload.get("automation_service", {}).get("canonical_anchor", {}).get("repeat_stable_success")
+        if provider in scoped_providers
+        and payload.get("automation_service", {}).get("canonical_anchor", {}).get("repeat_stable_success")
     ]
     blocked_statuses = {
         provider: payload.get("automation_auth", {}).get("status")
         for provider, payload in providers.items()
-        if payload.get("automation_auth", {}).get("status") not in {None, "ready"}
+        if provider in scoped_providers
+        and payload.get("automation_auth", {}).get("status") not in {None, "ready"}
     }
     watchlist_drift_hosts = [
         provider
@@ -267,6 +282,7 @@ def _comparison_markdown(comparison: dict[str, Any]) -> str:
         "# L2 Live Testing Comparison",
         "",
         f"- Generated at: `{comparison['generated_at']}`",
+        f"- Canonical direct-API scope: `{', '.join(comparison['canonical_provider_scope']) or 'none'}`",
         f"- Watchlist pass_minimal host count: `{comparison['operator_pass_count']}`",
         f"- Watchlist truthful-gap host count: `{comparison['operator_truthful_gap_count']}`",
         f"- Canonical direct-API re-earned host count: `{comparison['service_success_count']}`",
@@ -295,6 +311,7 @@ def _comparison_markdown(comparison: dict[str, Any]) -> str:
                 f"- watchlist hook labels: `{', '.join(payload['operator_lifecycle']['hook_event_labels']) or 'none'}`",
                 f"- watchlist lifecycle failures: `{', '.join(payload['operator_lifecycle']['failure_classes']) or 'none'}`",
                 f"- direct-API readiness status: `{payload['automation_service']['current']['latest_cycle_status']}`",
+                f"- direct-API canonical scope: `{payload['automation_service']['in_canonical_scope']}`",
                 f"- direct-API canonical status: `{payload['automation_service']['canonical_anchor']['latest_cycle_status']}`",
                 f"- direct-API canonical repeat-stable: `{payload['automation_service']['canonical_anchor']['repeat_stable_success']}`",
                 f"- direct-API canonical failures: `{', '.join(payload['automation_service']['failure_classes']) or 'none'}`",
@@ -739,10 +756,15 @@ def _build_exploratory_probe_summary(
     }
 
 
-def _service_lane_delta(providers: dict[str, Any]) -> str:
-    ready = []
-    blocked = []
-    probe_clean = []
+def _service_lane_delta(
+    providers: dict[str, Any],
+    *,
+    canonical_scope: set[str] | frozenset[str] | None = None,
+) -> str:
+    scoped_providers = canonical_scope if canonical_scope is not None else set(providers)
+    ready_in_scope = []
+    blocked_in_scope = []
+    probe_clean_in_scope = []
     canonical_success = []
     canonical_partial = []
     watchlist = []
@@ -753,19 +775,20 @@ def _service_lane_delta(providers: dict[str, Any]) -> str:
         readiness_suite = automation_service.get("current", {})
         canonical_suite = automation_service.get("canonical_anchor", {})
         operator_lifecycle = payload.get("operator_lifecycle", {})
-        if readiness_suite.get("latest_cycle_success"):
-            probe_clean.append(provider)
-        if canonical_suite.get("repeat_stable_success"):
-            canonical_success.append(provider)
-        elif canonical_suite.get("cycle_count", 0) > 0:
-            canonical_partial.append(provider)
-        status = automation_auth.get("status")
-        if status == "ready":
-            ready.append(provider)
-        elif status:
-            blocked.append(f"{provider}:{status}")
-        else:
-            blocked.append(f"{provider}:unknown")
+        if provider in scoped_providers:
+            if readiness_suite.get("latest_cycle_success"):
+                probe_clean_in_scope.append(provider)
+            if canonical_suite.get("repeat_stable_success"):
+                canonical_success.append(provider)
+            elif canonical_suite.get("cycle_count", 0) > 0:
+                canonical_partial.append(provider)
+            status = automation_auth.get("status")
+            if status == "ready":
+                ready_in_scope.append(provider)
+            elif status:
+                blocked_in_scope.append(f"{provider}:{status}")
+            else:
+                blocked_in_scope.append(f"{provider}:unknown")
         watchlist_status = operator_lifecycle.get("watchlist_status", "unknown")
         accepted_status = operator_lifecycle.get("accepted_watchlist_status")
         if operator_lifecycle.get("accepted_watchlist_drift_detected"):
@@ -781,21 +804,27 @@ def _service_lane_delta(providers: dict[str, Any]) -> str:
         canonical_clause = (
             f"direct_api canonical truth is still partial on `{', '.join(canonical_partial)}`"
         )
-    elif probe_clean:
+    elif probe_clean_in_scope:
         canonical_clause = (
-            f"direct_api readiness is clean on `{', '.join(probe_clean)}`, but the canonical anchor is not yet re-earned"
+            f"direct_api readiness is clean in current scope on `{', '.join(probe_clean_in_scope)}`, but the canonical anchor is not yet re-earned"
         )
     else:
-        canonical_clause = "direct_api canonical truth is not yet re-earned on this machine"
+        canonical_clause = "direct_api canonical truth is not yet re-earned in current scope on this machine"
     drift_clause = (
         f"; drift against the accepted watchlist is explicit on `{', '.join(drift)}`"
         if drift
         else ""
     )
+    out_of_scope = sorted(provider for provider in providers if provider not in scoped_providers)
+    out_of_scope_clause = (
+        f"; out-of-scope direct_api providers remain watchlist-only for runtime truth: `{', '.join(out_of_scope)}`"
+        if out_of_scope
+        else ""
+    )
     return (
         f"{canonical_clause}; "
-        f"automation auth readiness is `{', '.join(ready) or 'none'}` ready and `{', '.join(blocked) or 'none'}` unavailable; "
-        f"headless_cli watchlist currently reads `{', '.join(watchlist) or 'none'}`{drift_clause}."
+        f"current-scope automation auth readiness is `{', '.join(ready_in_scope) or 'none'}` ready and `{', '.join(blocked_in_scope) or 'none'}` unavailable; "
+        f"headless_cli watchlist currently reads `{', '.join(watchlist) or 'none'}`{drift_clause}{out_of_scope_clause}."
     )
 
 

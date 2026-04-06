@@ -15,7 +15,7 @@ Reason:
   - `service_api`: `execution_surface = direct_api`, `evidence_role = canonical_truth`
   - `operator_cli`: `execution_surface = headless_cli`, `evidence_role = watchlist`
 - current-machine service auth is ready for OpenAI and still missing for Claude and Gemini
-- OpenAI now clears the canonical direct-API `canonical_anchor` suite twice on:
+- OpenAI now clears the canonical direct-API `canonical_anchor` suite through three positive current-machine `canonical_anchor` cycles on:
   - `pass_minimal`
   - `truth_gap`
   - `restart_continuity`
@@ -67,13 +67,12 @@ It does not yet make the broader package sufficient for cross-host canonical run
 ### OpenAI
 
 - operator watchlist signal is currently the strongest
-- service/API canonical truth is re-earned for current scope through two positive `canonical_anchor` cycles
+- service/API canonical truth is re-earned for current scope through three positive current-machine `canonical_anchor` cycles
 - the direct-API anchor is currently limited to OpenAI current scope, not broader package closure
 
 ## Next lawful move
 
-1. land the OpenAI current-scope canonical anchor plus Claude canonical-suite parity on the accepted line
-2. rerun `claude --suite canonical_anchor` if auth is ready on that machine
+1. rerun `claude --suite canonical_anchor` if auth is ready on that machine
 3. keep Gemini watchlist-only until direct API/service auth exists
 4. do not begin runtime compression before a second direct-API host is re-earned or package scope is explicitly narrowed
 

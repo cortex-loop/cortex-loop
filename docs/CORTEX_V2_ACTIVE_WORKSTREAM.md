@@ -31,26 +31,27 @@ It is workflow state only. It does not override the packet documents, implementa
     - `OPENAI_API_KEY`: ready
     - `ANTHROPIC_API_KEY`: missing
     - `GEMINI_API_KEY`: missing
-  - no current-machine API truth anchor is yet re-earned
+  - one current-machine API truth anchor is now re-earned for current scope on OpenAI
+  - the shared `canonical_anchor` direct-API suite is accepted for `claude` and `openai` in current scope
   - the strongest current Gemini recovery evidence remains branch-local and non-authoritative until re-earned under the reset contract
 
 ## 2. Current campaign and seam state
 
 - Current campaign: `P1 product-first reduction program`
-- Current working branch at ledger update: `review/p1-product-first-reduction`
-- Current branch role: explicit manual/review branch because local `main` is ahead of `origin/main`; accepted baseline truth remains the clean local `main` line
-- Current candidate seam: `A0 OpenAI anchor acceptance plus C1 Claude canonical-suite parity`
+- Current working branch at ledger update: `main`
+- Current branch role: accepted resting line after the P1 closure train
+- Current candidate seam: `C1 Claude canonical API anchor on the shared direct-API suite`
 - Current seam status:
-  - the R1 reset closure remains the accepted baseline on local `main`
-  - this review branch carries the explicit `current|canonical_anchor` service suites on the direct-API automation lane
-  - the OpenAI service spend split is now explicit:
+  - A0 is now accepted on local `main`
+  - the explicit `current|canonical_anchor` direct-API service suites are accepted on the current line
+  - the OpenAI service spend split remains explicit:
     - `service_smoke` uses `gpt-5.4-mini`
     - `canonical_anchor` scenarios use `gpt-5.4`
-  - the OpenAI direct-API `canonical_anchor` suite is now repeat-stably positive on the current machine and was rechecked again on this branch:
-    - `pass_minimal` three times
-    - `truth_gap` three times with `truthful_incomplete`
-    - `restart_continuity` three times
-  - the shared `canonical_anchor` harness is now implemented for `claude` and `openai` in current scope
+  - the OpenAI direct-API `canonical_anchor` suite is now repeat-stably positive on the current machine through three positive current-machine `canonical_anchor` cycles:
+    - `pass_minimal`
+    - `truth_gap` with `truthful_incomplete`
+    - `restart_continuity`
+  - compare/verdict logic now computes current-scope canonical truth from the declared `canonical_anchor` provider scope rather than every auth-ready provider
   - `python3 tools/live_compare.py` now reports:
     - `canonical runtime truth is re-earned for current scope`
     - `direct_api canonical truth is re-earned for current scope on openai`
@@ -60,9 +61,8 @@ It is workflow state only. It does not override the packet documents, implementa
 
 ## 3. Next lawful move
 
-- Finalize and manually reconcile this review branch so the OpenAI current-scope canonical anchor and Claude canonical-suite parity become the new local accepted line.
-- After that closure lands, the next bounded runtime move is:
-  - rerun `claude` on `--suite canonical_anchor` once `ANTHROPIC_API_KEY` is intentionally ready
+- On a capable machine, rerun `claude` on `--suite canonical_anchor` once `ANTHROPIC_API_KEY` is intentionally ready.
+- After that bounded host step:
   - keep `gemini` as watchlist-only until direct API/service auth exists
   - do not begin X1 runtime compression before a second direct-API host is re-earned or package scope is explicitly narrowed
 - Do not treat branch-local Gemini CLI positives as accepted truth.

@@ -1635,7 +1635,87 @@ def test_live_compare_requires_repeat_stable_canonical_anchor_for_openai_truth(m
 
     assert comparison["service_success_count"] == 1
     assert comparison["verdict"] == "canonical runtime truth is re-earned for current scope"
+    assert comparison["automation_pass_count"] == 1
+    assert comparison["canonical_provider_scope"] == ["claude", "openai"]
     assert comparison["providers"]["openai"]["automation_service"]["canonical_anchor"]["repeat_stable_success"] is True
+
+
+def test_live_compare_ignores_ready_out_of_scope_provider_for_current_scope_truth(monkeypatch) -> None:
+    def fake_read_json(path):
+        text_path = str(path)
+        if path == live_compare.PREFLIGHT_REPORT_PATH:
+            return {
+                "operator_probe": {"claude": {}, "gemini": {}, "openai": {}},
+                "auth_surfaces": {
+                    "automation": {
+                        "claude": {"status": "missing"},
+                        "gemini": {"status": "ready"},
+                        "openai": {"status": "ready"},
+                    }
+                },
+            }
+        if text_path.endswith("automation/openai/service/service_runs.json"):
+            return {
+                "suites": {
+                    "canonical_anchor": {
+                        "suite_id": "canonical_anchor",
+                        "suite_role": "canonical_truth_anchor",
+                        "cycle_count": 3,
+                        "successful_cycle_count": 3,
+                        "repeat_stable_success": True,
+                        "latest_cycle_status": "positive",
+                        "latest_cycle_success": True,
+                        "latest_failure_classes": [],
+                        "latest_warning_classes": [],
+                        "cycles": [
+                            {"cycle_index": 1, "success": True, "cycle_status": "positive", "runs": []},
+                            {"cycle_index": 2, "success": True, "cycle_status": "positive", "runs": []},
+                            {"cycle_index": 3, "success": True, "cycle_status": "positive", "runs": []},
+                        ],
+                    }
+                }
+            }
+        if text_path.endswith("automation/gemini/service/service_runs.json"):
+            return {
+                "suites": {
+                    "canonical_anchor": {
+                        "suite_id": "canonical_anchor",
+                        "suite_role": "canonical_truth_anchor",
+                        "cycle_count": 1,
+                        "successful_cycle_count": 0,
+                        "repeat_stable_success": False,
+                        "latest_cycle_status": "blocked",
+                        "latest_cycle_success": False,
+                        "latest_failure_classes": ["mis_scoped"],
+                        "latest_warning_classes": [],
+                        "cycles": [
+                            {"cycle_index": 1, "success": False, "cycle_status": "blocked", "runs": []},
+                        ],
+                    }
+                }
+            }
+        return {}
+
+    monkeypatch.setattr(live_compare, "_read_json", fake_read_json)
+
+    comparison = live_compare._build_comparison(
+        {
+            "operator_probe": {"claude": {}, "gemini": {}, "openai": {}},
+            "auth_surfaces": {
+                "automation": {
+                    "claude": {"status": "missing"},
+                    "gemini": {"status": "ready"},
+                    "openai": {"status": "ready"},
+                }
+            },
+        }
+    )
+
+    assert comparison["automation_pass_count"] == 1
+    assert comparison["service_success_count"] == 1
+    assert comparison["verdict"] == "canonical runtime truth is re-earned for current scope"
+    assert comparison["providers"]["gemini"]["automation_service"]["in_canonical_scope"] is False
+    assert "out-of-scope direct_api providers remain watchlist-only" in comparison["service_lane_delta"]
 
 
 def test_live_compare_falls_back_to_accepted_watchlist_when_local_operator_artifacts_are_absent(
@@ -2292,6 +2372,38 @@ def test_next_corrective_seam_prefers_capable_machine_when_service_auth_is_missi
                     "operator_lifecycle": {},
                 },
             }
+        )
+        == "treat the current machine as out of scope for actual service proof, move the repo to a capable machine with machine auth and spend approval, and rerun the bounded service-proof train there"
+    )
+
+
+def test_next_corrective_seam_ignores_ready_out_of_scope_provider() -> None:
+    assert (
+        live_compare._next_corrective_seam(
+            {
+                "claude": {
+                    "automation_auth": {"status": "missing"},
+                    "automation_service": {
+                        "canonical_anchor": {"repeat_stable_success": False},
+                    },
+                    "operator_lifecycle": {},
+                },
+                "gemini": {
+                    "automation_auth": {"status": "ready"},
+                    "automation_service": {
+                        "canonical_anchor": {"repeat_stable_success": False},
+                    },
+                    "operator_lifecycle": {},
+                },
+                "openai": {
+                    "automation_auth": {"status": "missing"},
+                    "automation_service": {
+                        "canonical_anchor": {"repeat_stable_success": False},
+                    },
+                    "operator_lifecycle": {},
+                },
+            },
+            canonical_scope={"claude", "openai"},
         )
         == "treat the current machine as out of scope for actual service proof, move the repo to a capable machine with machine auth and spend approval, and rerun the bounded service-proof train there"
     )

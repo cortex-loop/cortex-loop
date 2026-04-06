@@ -940,6 +940,23 @@ def build_scenario_catalog() -> dict[str, Any]:
     }
 
 
+def canonical_service_provider_scope(suite_id: str = "canonical_anchor") -> tuple[str, ...]:
+    suites = build_scenario_catalog().get("automation_service_suites", {})
+    if not isinstance(suites, dict):
+        return ()
+    suite = suites.get(suite_id)
+    if not isinstance(suite, dict):
+        return ()
+    provider_scope = suite.get("provider_scope", ())
+    if not isinstance(provider_scope, list):
+        return ()
+    return tuple(
+        provider
+        for provider in provider_scope
+        if isinstance(provider, str) and provider
+    )
+
+
 def decide_verdict(
     *,
     operator_pass_count: int,

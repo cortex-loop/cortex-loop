@@ -48,7 +48,7 @@ Current reality:
 
 - the operator/watchlist lane already uses the shared coding harness
 - the OpenAI and Claude direct-service lanes now share the `canonical_anchor` suite implementation
-- the OpenAI direct-service lane is repeat-stably re-earned through the shared `canonical_anchor` suite on the current machine for:
+- the OpenAI direct-service lane is repeat-stably re-earned through three positive current-machine `canonical_anchor` cycles on the shared suite for:
   - `pass_minimal`
   - `truth_gap`
   - `restart_continuity`
@@ -68,7 +68,6 @@ This program is only honestly closed when all are true:
 
 ## Next lawful move
 
-1. land the OpenAI current-scope canonical anchor plus Claude canonical-suite parity on the accepted line
-2. rerun `claude --suite canonical_anchor` if auth is ready on that machine
+1. rerun `claude --suite canonical_anchor` if auth is ready on that machine
 3. keep operator/CLI reruns as watchlist evidence and drift detection while `claude` and `gemini` remain unearned on the API lane
 4. do not begin runtime compression before a second direct-API host is re-earned or package scope is explicitly narrowed
