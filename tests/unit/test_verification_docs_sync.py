@@ -204,11 +204,18 @@ def test_active_current_line_docs_frame_openai_only_truth_and_watchlist_retentio
         "the accepted product/runtime claim is now explicitly OpenAI-only on the canonical direct-API lane"
         in workstream_text
     )
-    assert "X2 is implemented on this review branch only and is not accepted baseline truth yet" in workstream_text
+    assert "Current working branch at ledger update: `main`" in workstream_text
+    assert (
+        "Current branch role: accepted resting line after the X2 OpenAI-only support/eval compression seam"
+        in workstream_text
+    )
+    assert "Current candidate seam: `none active`" in workstream_text
+    assert "A0, P1C, S1, S1C, X1, and X2 are now accepted on local `main`" in workstream_text
     assert (
         "retained operator/watchlist tools stay callable as diagnostics, but they no longer define the active current-line closure path"
         in workstream_text
     )
+    assert "No active support/eval compression seam remains on the accepted local `main` line." in workstream_text
 
     assert (
         "This is the only active current-line proof bundle for the accepted OpenAI-only product scope."
@@ -223,6 +230,7 @@ def test_active_current_line_docs_frame_openai_only_truth_and_watchlist_retentio
         "retained operator/watchlist and historical/reference tools remain diagnostic evidence, not active closure surfaces"
         in program_text
     )
+    assert "no active support/eval compression seam remains on the accepted local `main` line" in program_text
 
     assert (
         "`service_api`: `execution_surface = direct_api`, `evidence_role = canonical_truth`"
@@ -236,6 +244,7 @@ def test_active_current_line_docs_frame_openai_only_truth_and_watchlist_retentio
         "Retained operator/watchlist tools remain diagnostic evidence, not active proof surfaces for the current product claim."
         in verdict_text
     )
+    assert "no active support/eval compression seam remains on the accepted local `main` line" in verdict_text
 
     assert "`service_api` is the canonical runtime truth lane" in service_proof_text
     assert (
@@ -246,6 +255,47 @@ def test_active_current_line_docs_frame_openai_only_truth_and_watchlist_retentio
         "retained operator/watchlist tools remain diagnostic evidence only and are outside the active service-proof bundle"
         in service_proof_text
     )
+    assert "no active support/eval compression seam remains on the accepted local `main` line" in service_proof_text
+
+
+def test_x2_accepted_line_claims_match_main() -> None:
+    local_verification_text = _read(LOCAL_VERIFICATION_PATH)
+    program_text = _read(LIVE_VALIDATION_PROGRAM_PATH)
+    verdict_text = _read(LIVE_VALIDATION_VERDICT_PATH)
+    service_proof_text = _read(LIVE_SERVICE_PROOF_PATH)
+    phase_gate_text = _read(PHASE_GATES_PATH)
+
+    main_local_verification_text = _read_git_ref_text("main", LOCAL_VERIFICATION_PATH)
+    main_program_text = _read_git_ref_text("main", LIVE_VALIDATION_PROGRAM_PATH)
+    main_verdict_text = _read_git_ref_text("main", LIVE_VALIDATION_VERDICT_PATH)
+    main_service_proof_text = _read_git_ref_text("main", LIVE_SERVICE_PROOF_PATH)
+    main_phase_gate_text = _read_git_ref_text("main", PHASE_GATES_PATH)
+
+    accepted_bundle_claim = (
+        "This is the only active current-line proof bundle for the accepted OpenAI-only product scope."
+    )
+    compact_l3_detail = (
+        "the active current-line proof bundle is now intentionally compact around preflight, direct OpenAI host-control reruns, `make live-compare`, and deterministic support checks"
+    )
+    compact_l6c_detail = (
+        "the active service-proof bundle is intentionally compact around preflight, direct OpenAI host-control reruns, `make live-compare`, and deterministic support checks"
+    )
+    resting_truth_phrase = (
+        "no active support/eval compression seam remains on the accepted local `main` line"
+    )
+
+    if accepted_bundle_claim in local_verification_text:
+        assert accepted_bundle_claim in main_local_verification_text
+    if compact_l3_detail in phase_gate_text:
+        assert compact_l3_detail in main_phase_gate_text
+    if compact_l6c_detail in phase_gate_text:
+        assert compact_l6c_detail in main_phase_gate_text
+    if resting_truth_phrase in program_text:
+        assert resting_truth_phrase in main_program_text
+    if resting_truth_phrase in verdict_text:
+        assert resting_truth_phrase in main_verdict_text
+    if resting_truth_phrase in service_proof_text:
+        assert resting_truth_phrase in main_service_proof_text
 
 
 def test_phase_gates_match_openai_only_truth_and_hygiene() -> None:
@@ -350,6 +400,12 @@ def test_j4f_hygiene_status_matches_local_repo_truth() -> None:
     phase_gate_text = _read(PHASE_GATES_PATH)
     current_sync_state = _main_sync_state()
     review_branches = _local_review_branches()
+    current_branch = subprocess.check_output(
+        ["git", "branch", "--show-current"],
+        cwd=REPO_ROOT,
+        text=True,
+        encoding="utf-8",
+    ).strip()
 
     partial_row = (
         "| `J4F` workflow closeout and hygiene | `docs/CORTEX_V2_ACTIVE_WORKSTREAM.md`; `REPO_WORKFLOW.md`; `python3 scripts/repo_workflow.py close-session --message ...`; `python3 scripts/repo_workflow.py sync-main`; `python3 scripts/repo_workflow.py cleanup-report` | origin/main reconciliation only | partial |"
@@ -357,5 +413,8 @@ def test_j4f_hygiene_status_matches_local_repo_truth() -> None:
 
     assert partial_row in phase_gate_text
     assert current_sync_state == "ahead"
-    assert review_branches in ([], ["review/x2-openai-support-eval-compression"])
+    if current_branch == "main":
+        assert review_branches == []
+    else:
+        assert review_branches == [current_branch]
     assert "archive/review--*` tags and removed" in phase_gate_text

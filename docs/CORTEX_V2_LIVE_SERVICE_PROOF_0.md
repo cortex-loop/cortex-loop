@@ -92,7 +92,7 @@ Current local machine state on the accepted current line:
 
 ## Next lawful move
 
-1. verify and close the bounded `X2` OpenAI-only support/eval compression seam onto the accepted local `main` line if reruns stay clean
+1. no active support/eval compression seam remains on the accepted local `main` line
 2. keep `claude` as future host-expansion plumbing only until a later explicit host-expansion train is opened
 3. keep `gemini` watchlist-only until direct API/service auth exists
 4. keep headless-CLI reruns downstream of canonical truth as watchlist-only diagnostics

@@ -80,7 +80,7 @@ Retained operator/watchlist tools remain diagnostic evidence, not active proof s
 
 ## Next lawful move
 
-1. verify and close the bounded `X2` OpenAI-only support/eval compression seam onto the accepted local `main` line if reruns stay clean
+1. no active support/eval compression seam remains on the accepted local `main` line
 2. keep Claude and Gemini on watchlist or future host-expansion backlog only
 3. do not widen current product scope without a separate host-expansion train
 4. keep `origin/main` reconciliation separate from runtime/payoff closure truth

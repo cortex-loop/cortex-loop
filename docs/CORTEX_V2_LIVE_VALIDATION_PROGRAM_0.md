@@ -74,7 +74,7 @@ This program is only honestly closed when all are true:
 
 ## Next lawful move
 
-1. verify and close the bounded `X2` OpenAI-only support/eval compression seam onto the accepted local `main` line if reruns stay clean
+1. no active support/eval compression seam remains on the accepted local `main` line
 2. keep operator/CLI reruns as watchlist evidence and drift detection only
 3. keep `claude` and `gemini` outside the current product scope until a later host-expansion train is intentionally opened
 4. treat `origin/main` reconciliation as separate workflow hygiene rather than live-validation closure
