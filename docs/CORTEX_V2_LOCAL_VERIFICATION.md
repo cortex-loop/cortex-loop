@@ -428,91 +428,27 @@ Optional explicit updater path:
 make live-preflight-update
 ```
 
-## Live provider baselines
+## Active OpenAI-only current-line proof bundle
 
-This captures provider smoke baselines.
-By default it runs the signed-in operator lane.
-The automation lane remains available as a separate optional comparison path.
-Machine output is local-only under `.cortex/live_validation/`.
-These smoke baselines are environment-sensitive and may fail honestly on host capacity pressure even when deeper operator lifecycle evidence remains usable.
-For Gemini operator testing, the baseline now starts in CLI auto mode by default and only falls back to an explicit model after a real failure or timeout.
-
-Direct command:
+This is the only active current-line proof bundle for the accepted OpenAI-only product scope.
+Run exactly these commands when you need current-line proof on this machine.
+Retained watchlist/reference tools remain callable below, but they are not active closure surfaces for runtime truth.
 
 ```sh
-python3 tools/live_provider_baselines.py --lane operator
-```
-
-Repo-local entry point:
-
-```sh
-make live-provider-baselines
-```
-
-Optional automation comparison:
-
-```sh
-python3 tools/live_provider_baselines.py --lane automation
-make live-provider-baselines-automation
-```
-
-When machine auth is absent, the automation baseline now exits with explicit auth-readiness blockers instead of attempting direct provider probes.
-For actual N2 service proof, use a capable machine rather than treating current-machine blocked output as closure evidence.
-
-## Live host-native product paths
-
-This is now a retained watchlist comparison lane, not the accepted product path.
-It runs the shared coding harness against signed-in host-native provider surfaces, keeps artifacts local-only, and measures `pass_minimal`, `restart_continuity`, and `truth_gap`.
-For OpenAI, the accepted product/runtime proof now lives on the direct-API host-control entry point below; the generic host-native target remains useful only as a cross-host watchlist umbrella, and `make live-openai-app-server` stays watchlist-only lifecycle evidence.
-For Claude and Gemini, the operator lane now records documented hook events alongside the CLI transcript artifacts.
-While Claude and Gemini still carry operator-harness drift, do not treat the aggregate cross-host entrypoint by itself as the clean closure signal.
-For focused Gemini reruns, use the direct script with `--provider gemini --scenario ... --max-attempts ... --cooldown-seconds ...` rather than relying on the umbrella target alone.
-The Gemini-focused reruns now also accept `--preferred-model`, `--fallback-model`, `--disable-auto-probe`, and `--exploratory-probe` when a bounded local model split or Pro sidecar is needed.
-Without an explicit override, Gemini operator testing now starts in CLI auto mode rather than a pinned `-m` model.
-For Gemini `restart_continuity`, the inspect-only first turn now uses the lighter `plan` approval mode and the resumed edit/test turn keeps `yolo`.
-
-Direct command:
-
-```sh
-python3 tools/live_host_native_product_paths.py
-```
-
-Repo-local entry point:
-
-```sh
-make live-host-native-product-paths
-```
-
-## Live OpenAI App Server operator proof
-
-This is the preferred OpenAI operator-lifecycle watchlist proof for current scope.
-It keeps `codex exec` as the smoke lane and uses `codex app-server` for the repeated shared coding harness and lifecycle-event capture.
-Machine output is local-only under `.cortex/live_validation/`.
-
-Direct command:
-
-```sh
-python3 tools/live_openai_app_server_operator.py
-```
-
-Repo-local entry point:
-
-```sh
-make live-openai-app-server
+python3 tools/live_preflight.py --skip-updates
+python3 tools/live_cortex_host_control.py --lane automation --provider openai --suite current
+python3 tools/live_cortex_host_control.py --lane automation --provider openai --suite canonical_anchor
+python3 tools/live_compare.py
+python3 -m pytest -q tests/unit/test_live_validation_tools.py tests/unit/test_verification_docs_sync.py tests/unit/test_correspondence_sre.py tests/unit/test_import_smoke.py
 ```
 
 ## Live Cortex host-control capture
 
-This captures the current automation-side loopback service plus A4 / G4 / O4 host-control lanes.
-It is now the canonical service-proof and accepted product-path entry point for the direct-API lane.
-Machine output is local-only under `.cortex/live_validation/`.
-`--suite current` remains the readiness probe surface.
-`--suite canonical_anchor` is the first real canonical truth suite and is currently implemented for Claude and OpenAI.
-On this machine, the OpenAI `canonical_anchor` suite is now re-earned for current scope; Claude remains auth-blocked and Gemini remains outside the shared canonical suite until its direct API lane is opened deliberately.
-Rerun it per provider only on a machine where machine auth is intentionally ready and spend approval is explicitly present when required.
-When the current train reruns only automation artifacts, the compare and retained watchlist support surfaces preserve accepted watchlist context explicitly and surface local-vs-accepted drift rather than zeroing it out or silently promoting it into runtime truth.
+This remains the canonical service-proof and accepted product-path entry point for the direct-API lane.
+For the active current-line bundle, use the two direct OpenAI commands above rather than the broader retained umbrella surfaces.
+The shared `canonical_anchor` plumbing for Claude stays implemented as future host-expansion support, but it is not part of the active OpenAI-only closure path.
 
-Direct command:
+Direct commands:
 
 ```sh
 python3 tools/live_cortex_host_control.py --lane automation --provider openai --suite current
@@ -520,7 +456,7 @@ python3 tools/live_cortex_host_control.py --lane automation --provider openai --
 python3 tools/live_cortex_host_control.py --lane automation --provider claude --suite canonical_anchor
 ```
 
-Repo-local entry point:
+Retained umbrella entry point:
 
 ```sh
 make live-cortex-host-control
@@ -528,8 +464,9 @@ make live-cortex-host-control
 
 ## Live comparison and verdict
 
-This builds the current L2 comparison report and payoff verdict from the local-only preflight, operator baseline, signed-in operator lifecycle artifacts, and automation service artifacts.
-It is a support-surface summarizer only and does not change runtime behavior.
+This is the accepted current-line comparator for the compact OpenAI-only proof bundle.
+Its primary markdown now reports current product truth first.
+Retained machine-readable JSON still carries the minimal per-provider status needed by support/watchlist tools.
 
 Direct command:
 
@@ -537,37 +474,63 @@ Direct command:
 python3 tools/live_compare.py
 ```
 
-Repo-local entry point:
+Retained repo-local entry point:
 
 ```sh
 make live-compare
 ```
 
-## Live operator payoff audit
+## Retained watchlist/reference appendix
 
-This builds a retained historical/watchlist diagnostic from the already-captured headless-CLI operator artifacts.
-It does not rerun any hosts by itself, it does not change runtime behavior, and it is not a lawful closure surface for runtime payoff.
+These retained tools remain callable for drift detection, host-boundary research, and historical/reference auditing.
+They are explicitly watchlist/reference only after X2 and are not part of the active current-line closure path.
 
-Direct command:
+### Live provider baselines
+
+This captures provider smoke baselines on the signed-in operator lane.
+Use it only for watchlist drift or exploratory comparison, not current-line runtime closure.
+
+```sh
+python3 tools/live_provider_baselines.py --lane operator
+make live-provider-baselines
+python3 tools/live_provider_baselines.py --lane automation
+make live-provider-baselines-automation
+```
+
+### Live host-native product paths
+
+This is the retained cross-host watchlist comparison lane.
+It is useful for wrapper/confound detection and host-boundary pressure, but it is not the accepted OpenAI-only product path.
+
+```sh
+python3 tools/live_host_native_product_paths.py
+make live-host-native-product-paths
+```
+
+### Live OpenAI App Server operator proof
+
+This is retained lifecycle watchlist evidence for the OpenAI operator lane.
+It does not carry current-line product closure after X2.
+
+```sh
+python3 tools/live_openai_app_server_operator.py
+make live-openai-app-server
+```
+
+### Live operator payoff audit
+
+This is a retained historical/watchlist diagnostic built from already-captured headless-CLI operator artifacts.
+It does not rerun hosts by itself and it is not a lawful closure surface for runtime payoff.
 
 ```sh
 python3 tools/live_operator_payoff_audit.py
-```
-
-Repo-local entry point:
-
-```sh
 make live-operator-payoff-audit
 ```
 
-## Operator routing realization
+### Operator routing realization
 
-This is now a retained watchlist/reference diagnostic for the operator harness.
-It revalidates the first bounded SRE-owned operator routing layer over the live-testing harness, but it does not define or gate the accepted OpenAI-only product runtime after X1.
-It checks the bounded task-state builder, the executive summary carrier, persistent tonic modulator update law, policy-view derivation, geometric route selector, quota-pressure blocking, guarded continuity preference, one extra inspect read-pass law, and route/modulator/policy diagnostics carried into live artifacts.
-It does not authorize named model routing, service/auth widening, AUX activation, or packet-level runtime changes.
-
-Direct commands:
+This is a retained watchlist/reference diagnostic for the operator harness.
+It does not define or gate the accepted OpenAI-only product runtime after X1/X2.
 
 ```sh
 python3 -m pytest tests/unit/test_operator_routing.py -q
@@ -578,40 +541,23 @@ python3 -m pytest tests/unit/test_live_validation_tools.py -q
 python3 -m pytest tests/unit/test_correspondence_sre.py -q
 ```
 
-## Live operator directionality
+### Live operator directionality
 
 This runs the paired raw-vs-Cortex operator audit on the current machine.
-It is operator-only and does not reopen service proof.
-If a host's raw baseline cannot be isolated safely, the run must mark that pair blocked instead of comparing dishonestly.
-For Gemini on the free API-key lane, keep the comparison on the vanilla headless execution path with no explicit `-m` model argument and no forced `plan` baseline.
-For Claude and OpenAI, keep the current explicit stable models unless a separate host-defaults seam is explicitly opened.
-
-Direct command:
+It is operator-only watchlist evidence and does not reopen service proof.
 
 ```sh
 python3 tools/live_operator_directionality.py
-```
-
-Repo-local entry point:
-
-```sh
 make live-operator-directionality
 ```
 
-## Live operator directionality audit
+### Live operator directionality audit
 
 This reduces the paired raw-vs-Cortex operator artifacts into per-host and package directionality truth.
-It is an evaluation/support surface only.
-
-Direct command:
+It remains an evaluation/support surface only.
 
 ```sh
 python3 tools/live_operator_directionality_audit.py
-```
-
-Repo-local entry point:
-
-```sh
 make live-operator-directionality-audit
 ```
 

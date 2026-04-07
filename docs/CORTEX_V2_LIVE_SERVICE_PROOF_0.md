@@ -20,7 +20,7 @@ Signed-in CLI/operator evidence may remain useful for watchlisting and falsifica
 
 Actual service proof belongs only on a machine that satisfies all of:
 
-- clean synced `main`
+- accepted local `main` line, with `origin/main` reconciliation tracked separately as workflow hygiene
 - automation auth readiness reads `ready` for the intended provider
 - explicit spend approval env is present where required
 - the current repo and local live-validation tooling are available unchanged
@@ -75,6 +75,12 @@ Current local machine state on the accepted current line:
     - `restart_continuity`: positive
 - the first canonical three-scenario API truth anchor is therefore repeat-stably re-earned for current OpenAI-only product scope on this machine; exact cycle count is local-artifact truth
 - the accepted OpenAI-only product runtime on that scope now runs on the compact `openai_product_journal` carrier plus the exact outward `decision + journal` projection
+- the active current-line service-proof bundle is now intentionally compact:
+  - `python3 tools/live_preflight.py --skip-updates`
+  - OpenAI `current` and `canonical_anchor` host-control reruns
+  - `python3 tools/live_compare.py`
+  - deterministic support checks only
+- retained operator/watchlist tools remain diagnostic evidence only and are outside the active service-proof bundle
 - Claude host-expansion proof remains blocked honestly on missing auth readiness, but it no longer blocks the current product scope
 - Gemini remains watchlist-only until its direct API/service lane is explicitly opened
 
@@ -86,9 +92,10 @@ Current local machine state on the accepted current line:
 
 ## Next lawful move
 
-1. open the bounded `X2` OpenAI-only support/eval compression train from the accepted local `main` line
+1. verify and close the bounded `X2` OpenAI-only support/eval compression seam onto the accepted local `main` line if reruns stay clean
 2. keep `claude` as future host-expansion plumbing only until a later explicit host-expansion train is opened
 3. keep `gemini` watchlist-only until direct API/service auth exists
 4. keep headless-CLI reruns downstream of canonical truth as watchlist-only diagnostics
+5. treat `origin/main` reconciliation as separate workflow hygiene rather than service-proof closure
 
 Do not use CLI fallback to fake service proof.

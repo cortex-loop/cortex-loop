@@ -52,6 +52,12 @@ Current reality:
   - `pass_minimal`
   - `truth_gap`
   - `restart_continuity`
+- the active current-line proof bundle is now intentionally compact:
+  - `python3 tools/live_preflight.py --skip-updates`
+  - OpenAI `current` and `canonical_anchor` direct-API host-control reruns
+  - `python3 tools/live_compare.py`
+  - deterministic support checks only
+- retained operator/watchlist and historical/reference tools remain diagnostic evidence, not active closure surfaces
 - the Claude direct-service lane retains that same canonical suite implementation as future host-expansion plumbing, but it is intentionally outside the current product scope
 - Gemini remains watchlist-only until its direct API lane is explicitly opened
 
@@ -68,6 +74,7 @@ This program is only honestly closed when all are true:
 
 ## Next lawful move
 
-1. open the bounded `X2` OpenAI-only support/eval compression train from the accepted local `main` line
+1. verify and close the bounded `X2` OpenAI-only support/eval compression seam onto the accepted local `main` line if reruns stay clean
 2. keep operator/CLI reruns as watchlist evidence and drift detection only
 3. keep `claude` and `gemini` outside the current product scope until a later host-expansion train is intentionally opened
+4. treat `origin/main` reconciliation as separate workflow hygiene rather than live-validation closure

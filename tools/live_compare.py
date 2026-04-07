@@ -274,64 +274,77 @@ def _next_corrective_seam(
             "keep blocked providers watchlist-only until direct auth exists, and do not let CLI evidence promote or overturn canonical runtime truth"
         )
     return (
-        "current product scope is already re-earned on the canonical direct-API lane; keep out-of-scope hosts on watchlist or future host-expansion seams, and open the bounded OpenAI-only support/eval compression train next"
+        "current OpenAI-only product scope is already re-earned on the canonical direct-API lane and the active support/eval shell is already compressed; keep out-of-scope hosts watchlist-only or future-host backlog, treat origin/main reconciliation as separate workflow hygiene, and open any later host expansion only through an explicit new train"
     )
 
 
 def _comparison_markdown(comparison: dict[str, Any]) -> str:
+    providers = comparison["providers"]
+    openai = providers.get("openai", {})
+    openai_service = openai.get("automation_service", {})
+    openai_canonical = openai_service.get("canonical_anchor", {})
+    openai_current = openai_service.get("current", {})
+    openai_watchlist = openai.get("operator_lifecycle", {})
+    canonical_scope = comparison["canonical_provider_scope"]
+    scoped_set = set(canonical_scope)
+    out_of_scope = sorted(provider for provider in providers if provider not in scoped_set)
+    drift_hosts = comparison["watchlist_drift_hosts"]
+
     lines = [
         "# L2 Live Testing Comparison",
         "",
         f"- Generated at: `{comparison['generated_at']}`",
-        f"- Canonical direct-API scope: `{', '.join(comparison['canonical_provider_scope']) or 'none'}`",
-        f"- Watchlist pass_minimal host count: `{comparison['operator_pass_count']}`",
-        f"- Watchlist truthful-gap host count: `{comparison['operator_truthful_gap_count']}`",
+        f"- Canonical direct-API scope: `{', '.join(canonical_scope) or 'none'}`",
         f"- Canonical direct-API re-earned host count: `{comparison['service_success_count']}`",
         f"- Verdict: **{comparison['verdict']}**",
         "",
         comparison["verdict_reason"],
         "",
-        "## Provider summary",
+        "## OpenAI current product scope",
+        "",
+        f"- direct-API readiness probe status: `{openai_current.get('latest_cycle_status', 'unknown')}`",
+        f"- direct-API canonical status: `{openai_canonical.get('latest_cycle_status', 'unknown')}`",
+        f"- direct-API repeat-stable: `{openai_canonical.get('repeat_stable_success', False)}`",
+        f"- headless-CLI watchlist status: `{openai_watchlist.get('watchlist_status', 'unknown')}`",
+        f"- accepted watchlist drift detected: `{openai_watchlist.get('accepted_watchlist_drift_detected', False)}`",
+        "",
+        "## Out-of-scope backlog",
         "",
     ]
-    for provider, payload in comparison["providers"].items():
+    for provider in out_of_scope:
+        payload = providers[provider]
+        auth_status = payload.get("automation_auth", {}).get("status", "unknown")
+        watchlist_status = payload.get("operator_lifecycle", {}).get(
+            "watchlist_status", "unknown"
+        )
+        canonical_status = (
+            payload.get("automation_service", {})
+            .get("canonical_anchor", {})
+            .get("latest_cycle_status", "unknown")
+        )
+        backlog_role = (
+            "future host-expansion backlog"
+            if provider == "claude"
+            else "watchlist-only backlog"
+        )
         lines.extend(
             [
                 f"### {provider}",
                 "",
-                f"- headless-CLI watchlist surface: `{payload['operator_lifecycle']['surface']}`",
-                f"- headless-CLI watchlist status: `{payload['operator_lifecycle']['watchlist_status']}`",
-                f"- headless-CLI watchlist source: `{payload['operator_lifecycle']['source']}`",
-                f"- accepted watchlist status: `{payload['operator_lifecycle'].get('accepted_watchlist_status') or 'none'}`",
-                f"- accepted watchlist drift detected: `{payload['operator_lifecycle'].get('accepted_watchlist_drift_detected', False)}`",
-                f"- watchlist pass_minimal success: `{payload['operator_lifecycle']['pass_minimal_success']}`",
-                f"- watchlist restart_continuity success: `{payload['operator_lifecycle']['restart_continuity_success']}`",
-                f"- watchlist truthful gap preserved: `{payload['operator_lifecycle']['truth_gap_preserved']}`",
-                f"- watchlist chosen models: `{', '.join(payload['operator_lifecycle']['chosen_models']) or 'none'}`",
-                f"- watchlist warning classes: `{', '.join(payload['operator_lifecycle']['warning_classes']) or 'none'}`",
-                f"- watchlist hook labels: `{', '.join(payload['operator_lifecycle']['hook_event_labels']) or 'none'}`",
-                f"- watchlist lifecycle failures: `{', '.join(payload['operator_lifecycle']['failure_classes']) or 'none'}`",
-                f"- direct-API readiness status: `{payload['automation_service']['current']['latest_cycle_status']}`",
-                f"- direct-API canonical scope: `{payload['automation_service']['in_canonical_scope']}`",
-                f"- direct-API canonical status: `{payload['automation_service']['canonical_anchor']['latest_cycle_status']}`",
-                f"- direct-API canonical repeat-stable: `{payload['automation_service']['canonical_anchor']['repeat_stable_success']}`",
-                f"- direct-API canonical failures: `{', '.join(payload['automation_service']['failure_classes']) or 'none'}`",
+                f"- backlog role: `{backlog_role}`",
+                f"- direct-API auth status: `{auth_status}`",
+                f"- direct-API canonical status: `{canonical_status}`",
+                f"- headless-CLI watchlist status: `{watchlist_status}`",
+                f"- accepted watchlist drift detected: `{payload.get('operator_lifecycle', {}).get('accepted_watchlist_drift_detected', False)}`",
                 "",
             ]
         )
-        if provider == "gemini":
-            exploratory = payload.get("exploratory_probe", {})
-            lines.extend(
-                [
-                    f"- exploratory pro smoke success: `{exploratory.get('smoke_success', False)}`",
-                    f"- exploratory pro truth_gap preserved: `{exploratory.get('truth_gap_preserved', False)}`",
-                    f"- exploratory pro chosen models: `{', '.join(exploratory.get('chosen_models', [])) or 'none'}`",
-                    f"- exploratory pro failures: `{', '.join(exploratory.get('failure_classes', [])) or 'none'}`",
-                    "",
-                ]
-            )
     lines.extend(
         [
+            "## Watchlist drift",
+            "",
+            f"- explicit drift hosts: `{', '.join(drift_hosts) or 'none'}`",
+            "",
             "## Next corrective seam",
             "",
             comparison["next_corrective_seam"],

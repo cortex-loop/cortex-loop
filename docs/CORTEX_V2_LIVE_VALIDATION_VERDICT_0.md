@@ -47,11 +47,13 @@ Reason:
 This makes the current machine useful for:
 
 - canonical runtime confirmation on OpenAI
+- compact current-line support/eval proof on the OpenAI-only path
 - host watchlisting
 - packaging/confound detection
 - wrapper-burden falsification
 
 It does not yet make the broader package sufficient for cross-host canonical runtime closure.
+Retained operator/watchlist tools remain diagnostic evidence, not active proof surfaces for the current product claim.
 
 ## Host summary
 
@@ -78,8 +80,9 @@ It does not yet make the broader package sufficient for cross-host canonical run
 
 ## Next lawful move
 
-1. open the bounded `X2` OpenAI-only support/eval compression train from the accepted local `main` line
+1. verify and close the bounded `X2` OpenAI-only support/eval compression seam onto the accepted local `main` line if reruns stay clean
 2. keep Claude and Gemini on watchlist or future host-expansion backlog only
 3. do not widen current product scope without a separate host-expansion train
+4. keep `origin/main` reconciliation separate from runtime/payoff closure truth
 
 Do not reopen mediation, AUX runtime, memory/runtime learning, or broad control-law expansion before that.
