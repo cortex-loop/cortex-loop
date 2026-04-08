@@ -29,8 +29,8 @@ It is workflow state only. It does not override the packet documents, implementa
   - shipping truth may remain narrower than development conformance truth
   - for Cortex-law development, the strongest available native surface on each brain is conformance-required even when shipping truth remains narrower
   - accepted operator/CLI watchlist status on the current line:
-    - Claude: positive watchlist signal
-    - Gemini: unresolved watchlist signal
+    - Claude: positive staged-workspace conformance signal, with provider-overload env blocks still possible on full tri-brain reruns
+    - Gemini: positive staged-workspace conformance signal
     - OpenAI: positive watchlist signal
   - signed-in CLI/operator results remain useful for host watchlisting, packaging/confound detection, and falsification work
   - CLI/operator results alone do not earn canonical runtime truth
@@ -42,19 +42,18 @@ It is workflow state only. It does not override the packet documents, implementa
   - one current-machine API truth anchor is now re-earned for current OpenAI-only product scope
   - the shared `canonical_anchor` direct-API suite remains implemented for `claude` and `openai`, but only `openai` is in the accepted current product scope
   - the active verified-work conformance reading on the bookmarks contract pack is:
-    - OpenAI `service_api`: partial on the corrected current run; the bounded repair path executed but still finished `test_failed`, so both conformance truth and shipping truth remain partial
-    - Claude `operator_cli`: divergent on the corrected current run because the repair attempt did not complete cleanly and the final result still fell back to raw output and `output_invalid`
-    - Gemini `operator_cli`: partial on the corrected current run; structured `json_object` extraction now works, import smoke passes, and the result still finishes `test_failed`, so the earlier false `output_invalid` divergence is removed
-  - the strongest current Gemini recovery evidence remains branch-local and non-authoritative until re-earned under the reset contract
+    - OpenAI `service_api`: partial on the repeated corrected current runs; the bounded repair path still finishes `test_failed`, so both conformance truth and shipping truth remain partial
+    - Claude `operator_cli`: no longer divergent on truthful staged-workspace runs; two focused reruns passed on attempt `1`, while repeated full tri-brain reruns hit Anthropic `529 overloaded_error` before structured output and therefore count as `env_blocked`, not protocol drift
+    - Gemini `operator_cli`: conformant on the corrected current line; staged workspace truth removes the earlier `read_file` miss, and repeated full reruns now pass the bookmarks pack
 
 ## 2. Current campaign and seam state
 
 - Current campaign: `P1 product-first reduction program`
 - Current working branch at ledger update: `main`
-- Current branch role: accepted resting line after the E4 verified-work neutralization and conformance-correction slice
+- Current branch role: accepted resting line after the E5 Claude operator workspace-truth slice
 - Current candidate seam: `none active`
 - Current seam status:
-  - A0, P1C, S1, S1C, X1, X2, the first verified-work restoration slice, the Cortex-law / fast-train method slice, and the verified-work neutralization / conformance-correction slice are now accepted on local `main`
+  - A0, P1C, S1, S1C, X1, X2, the first verified-work restoration slice, the Cortex-law / fast-train method slice, the verified-work neutralization / conformance-correction slice, and the Claude operator workspace-truth slice are now accepted on local `main`
   - the explicit `current|canonical_anchor` direct-API service suites remain accepted on the current line
   - the OpenAI service spend split remains explicit:
     - `service_smoke` uses `gpt-5.4-mini`
@@ -100,11 +99,11 @@ It is workflow state only. It does not override the packet documents, implementa
     - one explicit `build -> test -> iterate -> cut` default loop
     - one tri-brain conformance harness on the active bookmarks verified-work contract pack
     - one explicit divergence taxonomy: `cortex_law`, `brain_wiring`, `surface_wiring`, `env_blocked`
-    - one corrected verified-work audit result of `next_decision = fix_wiring_only`; Gemini no longer carries a false raw-JSON-wrapper divergence after structured `json_object` extraction, while Claude remains the only divergent surface
+    - one corrected staged-workspace verified-work audit result of `next_decision = improve_shipping_default`; Gemini is now conformant, and Claude no longer counts as divergent when Anthropic overload returns a provider-side block instead of structured output
   - shipping truth remains OpenAI-first on the service lane
   - Claude remains outside the accepted shipping default, but Claude is no longer treated as generic backlog for Cortex-law conformance work
   - Gemini remains outside the accepted shipping default, but Gemini is no longer treated as generic backlog for Cortex-law conformance work
-  - headless-CLI operator evidence remains watchlist-only, with Gemini local-vs-accepted drift surfaced explicitly rather than promoted into runtime truth
+  - headless-CLI operator evidence remains watchlist-only even when conformance is positive; it does not widen shipping truth or canonical runtime proof
   - the older local `review/*` backlog is now archived to local `archive/review--*` tags and removed; full repo hygiene remains partial until `origin/main` reconciliation because local `main` is ahead
 
 ## 3. Next lawful move
@@ -117,8 +116,9 @@ It is workflow state only. It does not override the packet documents, implementa
   - choose the fastest proving wiring and one tiny runnable contract pack
   - run tri-brain conformance on OpenAI, Claude, and Gemini
   - classify divergence as `cortex_law`, `brain_wiring`, `surface_wiring`, or `env_blocked`
-  - because the corrected current run leaves Claude as the only divergent surface, open the next seam as one narrower Claude wiring-correction train before touching Cortex law again
-  - keep OpenAI and Gemini in the `partial` bucket as real brain-wiring evidence rather than treating either as a new law failure
+  - because the corrected current line no longer has a non-shipping divergent surface, reopen the shipping-default gap next: improve `O4R` value lift on OpenAI before widening Cortex law or host scope
+  - keep Claude in the `env_blocked` bucket when Anthropic overload prevents structured output; that is provider availability noise, not a new wiring or law failure
+  - keep Gemini in the `conformant` bucket on the staged-workspace operator surface rather than reopening Gemini wiring prematurely
   - keep the default thin path unchanged while `O4R` remains partial
   - keep repeated-failure inhibition and automatic carrier selection deferred until value is earned
   - cut back rather than widen if the verified-work path continues to fail without clear lift or better conformance
@@ -127,7 +127,7 @@ It is workflow state only. It does not override the packet documents, implementa
   - `gemini` may be conformance-required on its strongest native surface before any later Gemini shipping train opens
 - Keep `origin/main` reconciliation as separate workflow hygiene rather than active product/support closure.
 - Open any later host expansion only through an explicit separate train.
-- Do not treat branch-local Gemini CLI positives as accepted truth.
+- Do not treat operator/CLI positives from Claude or Gemini as service-lane shipping truth.
 
 ## 4. Explicitly blocked moves
 

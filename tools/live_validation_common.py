@@ -735,6 +735,8 @@ def classify_failure(text: str) -> str | None:
         or
         "got status: internal" in lowered
         or '"status":"internal"' in lowered
+        or "api error: 529" in lowered
+        or "overloaded_error" in lowered
         or ("internal error encountered" in lowered and '"code":500' in lowered)
         or ("internal server error" in lowered and "api error" in lowered)
     ):

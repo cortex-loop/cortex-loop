@@ -3,9 +3,11 @@
 from __future__ import annotations
 
 import argparse
+import shutil
 import json
 import sys
 import tempfile
+from contextlib import contextmanager
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Literal
@@ -56,6 +58,7 @@ BOOKMARKS_TASK_PATH = (
 _OPENAI_ACTION_TAG = "openai-response-stream"
 _OPENAI_MODEL = "gpt-5.4"
 _CLAUDE_MODEL = "claude-sonnet-4-6"
+_CLAUDE_READ_ONLY_TOOLS = "Read,Glob,Grep,LS"
 _SURFACE_ORDER: dict[Brain, tuple[Surface, ...]] = {
     "openai": ("service_api",),
     "claude": ("operator_cli",),
@@ -107,6 +110,7 @@ class TrainCharter:
 class ContractPack:
     contract_pack: str
     prompt_text: str
+    workspace_template_relpath: str
     work_contract: WorkContract
     train_charter: TrainCharter
     shipping_default: str
@@ -116,6 +120,17 @@ class ContractPack:
             raise ValueError("ContractPack.contract_pack must be non-empty after trimming.")
         if not (isinstance(self.prompt_text, str) and self.prompt_text.strip()):
             raise ValueError("ContractPack.prompt_text must be non-empty after trimming.")
+        if not (
+            isinstance(self.workspace_template_relpath, str)
+            and self.workspace_template_relpath.strip()
+        ):
+            raise ValueError(
+                "ContractPack.workspace_template_relpath must be non-empty after trimming."
+            )
+        if Path(self.workspace_template_relpath).is_absolute():
+            raise ValueError(
+                "ContractPack.workspace_template_relpath must be repo-relative, not absolute."
+            )
         if not isinstance(self.work_contract, WorkContract):
             actual_type = type(self.work_contract).__name__
             raise TypeError(
@@ -135,6 +150,7 @@ class ContractPack:
         return {
             "contract_pack": self.contract_pack,
             "prompt_text": self.prompt_text,
+            "workspace_template_relpath": self.workspace_template_relpath,
             "work_contract": self.work_contract.as_payload(),
             "train_charter": self.train_charter.as_payload(),
             "shipping_default": self.shipping_default,
@@ -220,6 +236,7 @@ def active_contract_pack() -> ContractPack:
     return ContractPack(
         contract_pack=ACTIVE_CONTRACT_PACK,
         prompt_text=prompt_text,
+        workspace_template_relpath="tests/fixtures/live_validation/bookmarks_app_template",
         work_contract=WorkContract(
             allowed_write_paths=(
                 "src/bookmarks_api/main.py",
@@ -255,6 +272,29 @@ def active_contract_pack() -> ContractPack:
 def strongest_native_surface(brain: Brain, contract_pack: ContractPack) -> Surface:
     _ = contract_pack
     return _SURFACE_ORDER[brain][0]
+
+
+@contextmanager
+def _stage_contract_pack_workspace(
+    contract_pack: ContractPack,
+    *,
+    prefix: str,
+):
+    template_root = ROOT / contract_pack.workspace_template_relpath
+    if not template_root.exists():
+        raise FileNotFoundError(
+            "Contract pack workspace template is missing: "
+            f"{contract_pack.workspace_template_relpath}"
+        )
+    if not template_root.is_dir():
+        raise NotADirectoryError(
+            "Contract pack workspace template must be a directory: "
+            f"{contract_pack.workspace_template_relpath}"
+        )
+    with tempfile.TemporaryDirectory(prefix=prefix) as tmpdir:
+        workspace = Path(tmpdir)
+        shutil.copytree(template_root, workspace, dirs_exist_ok=True)
+        yield workspace
 
 
 def preflight_surface(brain: Brain, surface: Surface) -> SurfaceProbe:
@@ -420,7 +460,11 @@ def run_active_conformance(
             shipping_default=pack.shipping_default,
         ),
     }
-    summary["next_decision"] = _next_decision(summary["results"], summary["overall_divergence_class"])
+    summary["next_decision"] = _next_decision(
+        summary["results"],
+        summary["overall_divergence_class"],
+        shipping_default=pack.shipping_default,
+    )
 
     write_json(run_root / "summary.json", summary)
     write_text(run_root / "summary.md", render_summary_markdown(summary))
@@ -569,7 +613,7 @@ def _run_openai_service_conformance(
             divergence_class=divergence,
             note=sanitize_text(str(exc)),
             transport_failure_class=failure_class,
-            artifact_relpath=str(artifact_dir.relative_to(ROOT)),
+            artifact_relpath=_artifact_relpath(artifact_dir),
         )
 
     artifact_dir.mkdir(parents=True, exist_ok=True)
@@ -589,7 +633,7 @@ def _run_openai_service_conformance(
         contract_pack=contract_pack.contract_pack,
         outcome=result.verification,
         attempt_count=result.attempt_count or 1,
-        artifact_relpath=str(artifact_dir.relative_to(ROOT)),
+        artifact_relpath=_artifact_relpath(artifact_dir),
         note=f"runtime move: {session.next_recommended_move}",
     )
 
@@ -602,8 +646,10 @@ def _run_claude_cli_conformance(
     artifact_dir = run_root / "claude_operator_cli"
     artifact_dir.mkdir(parents=True, exist_ok=True)
     instructions = build_verified_work_instructions(contract_pack.work_contract)
-    with tempfile.TemporaryDirectory(prefix="cortex-conformance-claude-") as tmpdir:
-        workspace = Path(tmpdir)
+    with _stage_contract_pack_workspace(
+        contract_pack,
+        prefix="cortex-conformance-claude-",
+    ) as workspace:
         initial = run_command(
             [
                 "claude",
@@ -616,7 +662,7 @@ def _run_claude_cli_conformance(
                 "--permission-mode",
                 "bypassPermissions",
                 "--tools",
-                "",
+                _CLAUDE_READ_ONLY_TOOLS,
                 "--append-system-prompt",
                 instructions,
             ],
@@ -638,7 +684,7 @@ def _run_claude_cli_conformance(
                 divergence_class="env_blocked",
                 note=result["note"],
                 transport_failure_class=result["transport_failure_class"],
-                artifact_relpath=str(artifact_dir.relative_to(ROOT)),
+                artifact_relpath=_artifact_relpath(artifact_dir),
             )
         first_outcome = result["verification"]
         assert isinstance(first_outcome, VerificationOutcome)
@@ -667,7 +713,7 @@ def _run_claude_cli_conformance(
                     repair_conversion="failed_without_repair",
                     extraction_mode=result["extraction_mode"],
                     note="Claude operator surface did not return a resumable session id.",
-                    artifact_relpath=str(artifact_dir.relative_to(ROOT)),
+                    artifact_relpath=_artifact_relpath(artifact_dir),
                 )
             repair_ticket = build_verified_work_repair_ticket(first_outcome)
             resumed = run_command(
@@ -684,7 +730,7 @@ def _run_claude_cli_conformance(
                     "--permission-mode",
                     "bypassPermissions",
                     "--tools",
-                    "",
+                    _CLAUDE_READ_ONLY_TOOLS,
                     "--append-system-prompt",
                     instructions,
                 ],
@@ -706,7 +752,7 @@ def _run_claude_cli_conformance(
                     divergence_class="env_blocked",
                     note=resumed_result["note"],
                     transport_failure_class=resumed_result["transport_failure_class"],
-                    artifact_relpath=str(artifact_dir.relative_to(ROOT)),
+                    artifact_relpath=_artifact_relpath(artifact_dir),
                 )
             final_outcome = resumed_result["verification"]
             assert isinstance(final_outcome, VerificationOutcome)
@@ -722,7 +768,7 @@ def _run_claude_cli_conformance(
         attempt_count=attempt_count,
         first_outcome=first_outcome,
         extraction_mode=final_extraction_mode,
-        artifact_relpath=str(artifact_dir.relative_to(ROOT)),
+        artifact_relpath=_artifact_relpath(artifact_dir),
         note=final_note,
     )
 
@@ -734,8 +780,10 @@ def _run_gemini_cli_conformance(
 ) -> ConformanceRunResult:
     artifact_dir = run_root / "gemini_operator_cli"
     artifact_dir.mkdir(parents=True, exist_ok=True)
-    with tempfile.TemporaryDirectory(prefix="cortex-conformance-gemini-") as tmpdir:
-        workspace = Path(tmpdir)
+    with _stage_contract_pack_workspace(
+        contract_pack,
+        prefix="cortex-conformance-gemini-",
+    ) as workspace:
         initial_prompt = _render_combined_operator_prompt(
             task_prompt=contract_pack.prompt_text,
             instructions=build_verified_work_instructions(contract_pack.work_contract),
@@ -768,7 +816,7 @@ def _run_gemini_cli_conformance(
                 divergence_class="env_blocked",
                 note=result["note"],
                 transport_failure_class=result["transport_failure_class"],
-                artifact_relpath=str(artifact_dir.relative_to(ROOT)),
+                artifact_relpath=_artifact_relpath(artifact_dir),
             )
         first_outcome = result["verification"]
         assert isinstance(first_outcome, VerificationOutcome)
@@ -811,7 +859,7 @@ def _run_gemini_cli_conformance(
                     divergence_class="env_blocked",
                     note=resumed_result["note"],
                     transport_failure_class=resumed_result["transport_failure_class"],
-                    artifact_relpath=str(artifact_dir.relative_to(ROOT)),
+                    artifact_relpath=_artifact_relpath(artifact_dir),
                 )
             final_outcome = resumed_result["verification"]
             assert isinstance(final_outcome, VerificationOutcome)
@@ -827,7 +875,7 @@ def _run_gemini_cli_conformance(
         attempt_count=attempt_count,
         first_outcome=first_outcome,
         extraction_mode=final_extraction_mode,
-        artifact_relpath=str(artifact_dir.relative_to(ROOT)),
+        artifact_relpath=_artifact_relpath(artifact_dir),
         note=final_note,
     )
 
@@ -841,6 +889,13 @@ def _evaluate_operator_attempt(
     raw_stdout = str(command_result.get("stdout", "") or "")
     raw_stderr = str(command_result.get("stderr", "") or "")
     failure_class = classify_failure(f"{raw_stdout}\n{raw_stderr}")
+    records, extraction_mode = parse_json_records(raw_stdout)
+    if command_result["exit_code"] == 124 and not records and not raw_stdout.strip():
+        return {
+            "status": "env_blocked",
+            "transport_failure_class": "operator_timeout",
+            "note": "operator timed out before returning structured output",
+        }
     if command_result["exit_code"] != 0 and (
         failure_class in BLOCKING_FAILURE_CLASSES or failure_class is not None
     ):
@@ -850,19 +905,21 @@ def _evaluate_operator_attempt(
             "note": sanitize_text((raw_stderr or raw_stdout).strip() or "transport blocked"),
         }
 
-    records, extraction_mode = parse_json_records(raw_stdout)
     if provider == "claude":
         session_id = _extract_session_id_from_operator_stdout("claude", raw_stdout)
     else:
         session_id = _extract_session_id_from_operator_stdout("gemini", raw_stdout)
     result_text = extract_result_text(records, raw_stdout)
     _, verification = verify_verified_work_result(result_text, work_contract)
+    note = sanitize_text(raw_stderr.strip() or "executed")
+    if command_result["exit_code"] == 124:
+        note = sanitize_text(f"{note}\nstructured output captured before operator timeout")
     return {
         "status": "executed",
         "verification": verification,
         "session_id": session_id,
         "extraction_mode": extraction_mode,
-        "note": sanitize_text(raw_stderr.strip() or "executed"),
+        "note": note,
     }
 
 
@@ -915,6 +972,13 @@ def _repair_conversion(*, outcome: VerificationOutcome, attempt_count: int) -> s
     return "repair_attempt_no_recovery"
 
 
+def _artifact_relpath(path: Path) -> str:
+    try:
+        return str(path.relative_to(ROOT))
+    except ValueError:
+        return str(path)
+
+
 def _render_combined_operator_prompt(*, task_prompt: str, instructions: str) -> str:
     return (
         f"{task_prompt}\n\n"
@@ -936,15 +1000,38 @@ def _extract_session_id_from_operator_stdout(provider: Literal["claude", "gemini
     return None
 
 
-def _next_decision(results: list[dict[str, Any]], overall_divergence_class: str | None) -> str:
+def _next_decision(
+    results: list[dict[str, Any]],
+    overall_divergence_class: str | None,
+    *,
+    shipping_default: str,
+) -> str:
     if overall_divergence_class == "cortex_law":
         return "revise_cortex_law"
-    divergent_brains = [
-        result["brain"]
+    shipping_brain, _shipping_surface = shipping_default.split(":", 1)
+    non_shipping_divergence = [
+        result
         for result in results
-        if result["status"] in {"partial", "divergent"} and result["divergence_class"] in {"brain_wiring", "surface_wiring"}
+        if result["brain"] != shipping_brain
+        and result["status"] == "divergent"
+        and result["divergence_class"] in {"brain_wiring", "surface_wiring"}
     ]
-    if divergent_brains:
+    if non_shipping_divergence:
+        return "fix_wiring_only"
+    shipping_result = next(
+        (result for result in results if result["brain"] == shipping_brain),
+        None,
+    )
+    if shipping_result is not None and shipping_result["status"] in {"partial", "divergent"}:
+        return "improve_shipping_default"
+    non_shipping_partial = [
+        result
+        for result in results
+        if result["brain"] != shipping_brain
+        and result["status"] == "partial"
+        and result["divergence_class"] in {"brain_wiring", "surface_wiring"}
+    ]
+    if non_shipping_partial:
         return "fix_wiring_only"
     if any(result["status"] == "env_blocked" for result in results):
         return "clear_env_blocks"

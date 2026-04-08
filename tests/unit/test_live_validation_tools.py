@@ -84,6 +84,7 @@ def test_classify_failure_recognizes_live_auth_and_capacity_blockers() -> None:
     assert classify_failure("You've hit your limit · resets 4pm (Asia/Tokyo)") == "quota_exhausted"
     assert classify_failure('Gemini interaction stream transport failed with HTTP 500: INTERNAL') == "provider_internal_error"
     assert classify_failure('{"error":{"code":500,"status":"INTERNAL","message":"internal error encountered"}}') == "provider_internal_error"
+    assert classify_failure('API Error: 529 {"type":"error","error":{"type":"overloaded_error","message":"Overloaded"}}') == "provider_internal_error"
     assert classify_failure('{"code": -32600, "message": "no rollout found for thread id 123"}') == "continuity_rollout_missing"
     assert classify_failure("Requested entity was not found.") == "model_unavailable"
     assert classify_failure("model_not_found") == "model_unavailable"
@@ -163,6 +164,23 @@ def test_parse_json_records_accepts_pretty_printed_single_object() -> None:
             "response": "=== FILE: src/bookmarks_api/main.py ===\napp = object()\n=== END FILE ===",
         }
     ]
+    assert extraction_mode == "json_object"
+    assert extract_result_text(records, text) == (
+        "=== FILE: src/bookmarks_api/main.py ===\napp = object()\n=== END FILE ==="
+    )
+
+
+def test_extract_result_text_keeps_structured_timeout_payload() -> None:
+    text = json.dumps(
+        {
+            "session_id": "cl-1",
+            "result": "=== FILE: src/bookmarks_api/main.py ===\napp = object()\n=== END FILE ===",
+        },
+        indent=2,
+    )
+
+    records, extraction_mode = parse_json_records(text)
+
     assert extraction_mode == "json_object"
     assert extract_result_text(records, text) == (
         "=== FILE: src/bookmarks_api/main.py ===\napp = object()\n=== END FILE ==="

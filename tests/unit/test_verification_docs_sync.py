@@ -260,12 +260,12 @@ def test_active_current_line_docs_frame_openai_only_truth_and_watchlist_retentio
     )
     assert "Current working branch at ledger update: `main`" in workstream_text
     assert (
-        "Current branch role: accepted resting line after the E4 verified-work neutralization and conformance-correction slice"
+        "Current branch role: accepted resting line after the E5 Claude operator workspace-truth slice"
         in workstream_text
     )
     assert "Current candidate seam: `none active`" in workstream_text
     assert (
-        "A0, P1C, S1, S1C, X1, X2, the first verified-work restoration slice, the Cortex-law / fast-train method slice, and the verified-work neutralization / conformance-correction slice are now accepted on local `main`"
+        "A0, P1C, S1, S1C, X1, X2, the first verified-work restoration slice, the Cortex-law / fast-train method slice, the verified-work neutralization / conformance-correction slice, and the Claude operator workspace-truth slice are now accepted on local `main`"
         in workstream_text
     )
     assert "docs/CORTEX_V2_EXECUTIVE_RESTORATION_NOTE.md" in workstream_text
@@ -278,9 +278,9 @@ def test_active_current_line_docs_frame_openai_only_truth_and_watchlist_retentio
     assert "No active verified-work restoration seam remains on the accepted local `main` line." in workstream_text
     assert "write the `Train Charter` first" in workstream_text
     assert "run tri-brain conformance on OpenAI, Claude, and Gemini" in workstream_text
-    assert "OpenAI `service_api`: partial on the corrected current run" in workstream_text
-    assert "Claude `operator_cli`: divergent on the corrected current run because the repair attempt did not complete cleanly" in workstream_text
-    assert "Gemini `operator_cli`: partial on the corrected current run; structured `json_object` extraction now works" in workstream_text
+    assert "OpenAI `service_api`: partial on the repeated corrected current runs" in workstream_text
+    assert "Claude `operator_cli`: no longer divergent on truthful staged-workspace runs" in workstream_text
+    assert "Gemini `operator_cli`: conformant on the corrected current line" in workstream_text
 
     assert (
         "This is the only active current-line proof bundle for the accepted OpenAI-only product scope."
@@ -330,7 +330,7 @@ def test_active_current_line_docs_frame_openai_only_truth_and_watchlist_retentio
     assert "repeat-stable live lift for the verified-work path over one-shot behavior" in restoration_note_text
     assert "## Conformance reading under the current method" in restoration_note_text
     assert "It should ask whether the same Cortex law is conformant, partial, divergent, unwired, or env-blocked" in restoration_note_text
-    assert "The current next decision is therefore `fix_wiring_only`" in restoration_note_text
+    assert "The current next decision is therefore `improve_shipping_default`" in restoration_note_text
     assert "This note does not authorize:" in restoration_note_text
 
     assert "accepted bounded runtime-program brief for the first verified-work restoration slice" in verified_work_program_text
@@ -417,8 +417,10 @@ def test_phase_gates_match_openai_only_truth_and_hygiene() -> None:
     assert "tools/cortex_conformance.py" in c1_row
     assert "Train Charter" in c1_row
     assert "make conformance-preflight" in c2_row
-    assert "OpenAI `service_api` partial because the bounded repair path still finished `test_failed`" in c2_row
-    assert "Gemini `operator_cli` partial because structured `json_object` extraction now works" in c2_row
+    assert "OpenAI `service_api` partial because the bounded repair path still finishes `test_failed`" in c2_row
+    assert "Claude `operator_cli` no longer divergent because truthful staged-workspace reruns pass" in c2_row
+    assert "Anthropic `529 overloaded_error` and therefore count as `env_blocked`" in c2_row
+    assert "Gemini `operator_cli` conformant because staged workspace truth removes the earlier `read_file` miss" in c2_row
     assert "strongest available native surface may stand in for development conformance" in c3_row
     assert "historical/watchlist-only; do not use for runtime closure" in l5_row
     assert "closed | landed" in l6c_row

@@ -124,11 +124,11 @@ It should ask whether the same Cortex law is conformant, partial, divergent, unw
 
 On the current bookmarks verified-work pack, the active reading is:
 
-- OpenAI `service_api`: partial on the corrected current run because the bounded repair path still finished `test_failed`
-- Claude `operator_cli`: divergent on the corrected current run because the repair attempt did not complete cleanly and the final result still collapsed to raw output plus `output_invalid`
-- Gemini `operator_cli`: partial on the corrected current run because structured `json_object` extraction now works, import smoke passes, and the result still finishes `test_failed`
+- OpenAI `service_api`: partial on the repeated corrected current runs because the bounded repair path still finishes `test_failed`
+- Claude `operator_cli`: no longer divergent on truthful staged-workspace runs; two focused reruns passed on attempt `1`, while repeated full tri-brain reruns currently hit Anthropic `529 overloaded_error` before structured output and therefore count as `env_blocked`
+- Gemini `operator_cli`: conformant on the corrected current line because staged workspace truth removes the earlier `read_file` miss and the repeated full reruns now pass the bookmarks pack
 
-The current next decision is therefore `fix_wiring_only`, not `revise_cortex_law`, because the corrected divergence no longer repeats across brains and Claude is now the only divergent surface.
+The current next decision is therefore `improve_shipping_default`, not `fix_wiring_only` and not `revise_cortex_law`, because no non-shipping divergent surface remains on the corrected current line and the main unresolved gap is still OpenAI `O4R` value lift.
 
 ## Next lawful move
 
@@ -137,7 +137,7 @@ If a later runtime/product seam is opened after this note, the next lawful move 
 1. keep the current thin path as the default when no work contract is present
 2. recheck whether verified-work earns repeat-stable value on local larger-task reruns before widening shipping truth further
 3. run the same contract pack across OpenAI, Claude, and Gemini on their strongest available native surfaces
-4. revise Cortex law only if the same divergence repeats across brains; otherwise fix only the divergent wiring, which currently means a narrower Claude wiring-correction train
+4. revise Cortex law only if the same divergence repeats across brains; otherwise improve the remaining shipping-default gap first, reopening host wiring only if a non-shipping surface becomes truly divergent again
 5. keep repeated-failure inhibition and carrier inference deferred until that value is earned
 6. cut back rather than widen if the verified-work path keeps failing without value lift or improved conformance
 

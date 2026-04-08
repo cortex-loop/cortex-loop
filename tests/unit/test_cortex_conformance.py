@@ -50,6 +50,7 @@ def test_contract_pack_exposes_required_train_charter() -> None:
     pack = conformance.ContractPack(
         contract_pack="verified_work_bookmarks_v1",
         prompt_text="build bookmarks app",
+        workspace_template_relpath="tests/fixtures/live_validation/bookmarks_app_template",
         work_contract=_work_contract(),
         train_charter=conformance.TrainCharter(
             cortex_invariant="bounded verified-work law",
@@ -64,7 +65,26 @@ def test_contract_pack_exposes_required_train_charter() -> None:
     payload = pack.as_payload()
 
     assert payload["contract_pack"] == "verified_work_bookmarks_v1"
+    assert payload["workspace_template_relpath"] == "tests/fixtures/live_validation/bookmarks_app_template"
     assert payload["train_charter"]["cortex_invariant"] == "bounded verified-work law"
+
+
+def test_contract_pack_rejects_absolute_workspace_template_path() -> None:
+    with pytest.raises(ValueError, match="repo-relative"):
+        conformance.ContractPack(
+            contract_pack="verified_work_bookmarks_v1",
+            prompt_text="build bookmarks app",
+            workspace_template_relpath="/tmp/not-allowed",
+            work_contract=_work_contract(),
+            train_charter=conformance.TrainCharter(
+                cortex_invariant="bounded verified-work law",
+                borrowed_mechanism="tiny verifier",
+                primary_proving_wiring="openai:service_api",
+                conformance_surfaces=("openai:service_api",),
+                kill_criteria=("cut if no lift",),
+            ),
+            shipping_default="openai:service_api",
+        )
 
 
 def test_strongest_native_surface_matches_current_wiring_order() -> None:
@@ -176,4 +196,216 @@ def test_decide_iteration_outcome_requires_revision_for_shipping_regression() ->
     assert (
         conformance.decide_iteration_outcome(results, shipping_default="openai:service_api")
         == "revise"
+    )
+
+
+def test_stage_contract_pack_workspace_copies_fixture_tree() -> None:
+    pack = conformance.active_contract_pack()
+
+    with conformance._stage_contract_pack_workspace(pack, prefix="cortex-test-workspace-") as workspace:
+        assert workspace.exists()
+        assert workspace != Path(pack.workspace_template_relpath)
+        assert (workspace / "README_TASK.md").exists()
+        assert (workspace / "tests" / "test_bookmarks_api.py").exists()
+
+
+def test_run_claude_cli_conformance_uses_read_only_tools_and_skips_resume_after_pass(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    run_root = tmp_path
+    commands: list[tuple[list[str], Path | None]] = []
+    workspace_has_fixture: list[bool] = []
+
+    def _fake_run_command(command, *, cwd=None, env=None, timeout_seconds=180.0):
+        _ = env, timeout_seconds
+        commands.append((list(command), cwd))
+        workspace_has_fixture.append(
+            bool(cwd is not None and (cwd / "tests" / "test_bookmarks_api.py").exists())
+        )
+        return {
+            "command": list(command),
+            "exit_code": 0,
+            "stdout": "",
+            "stderr": "",
+            "started_at": "t0",
+            "ended_at": "t1",
+        }
+
+    monkeypatch.setattr(conformance, "run_command", _fake_run_command)
+    monkeypatch.setattr(
+        conformance,
+        "_evaluate_operator_attempt",
+        lambda **_kwargs: {
+            "status": "executed",
+            "verification": VerificationOutcome(
+                status="passed",
+                failure_class=None,
+                import_smoke_ok=True,
+                pytest_passed=11,
+            ),
+            "session_id": "cl-session",
+            "extraction_mode": "jsonl",
+            "note": "executed",
+        },
+    )
+
+    result = conformance._run_claude_cli_conformance(
+        contract_pack=conformance.active_contract_pack(),
+        run_root=run_root,
+    )
+
+    assert result.status == "conformant"
+    assert result.attempt_count == 1
+    assert len(commands) == 1
+    command, cwd = commands[0]
+    assert "--bare" not in command
+    assert command[command.index("--tools") + 1] == "Read,Glob,Grep,LS"
+    assert cwd is not None
+    assert workspace_has_fixture == [True]
+
+
+def test_run_claude_cli_conformance_reuses_workspace_and_tools_on_resume(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    run_root = tmp_path
+    commands: list[tuple[list[str], Path | None]] = []
+    staged_cwds: list[Path | None] = []
+    evaluations = iter(
+        (
+            {
+                "status": "executed",
+                "verification": VerificationOutcome(
+                    status="failed",
+                    failure_class="test_failed",
+                    import_smoke_ok=True,
+                    pytest_passed=4,
+                    pytest_failed=7,
+                ),
+                "session_id": "cl-session",
+                "extraction_mode": "jsonl",
+                "note": "executed",
+            },
+            {
+                "status": "executed",
+                "verification": VerificationOutcome(
+                    status="passed",
+                    failure_class=None,
+                    import_smoke_ok=True,
+                    pytest_passed=11,
+                ),
+                "session_id": "cl-session",
+                "extraction_mode": "jsonl",
+                "note": "executed",
+            },
+        )
+    )
+
+    def _fake_run_command(command, *, cwd=None, env=None, timeout_seconds=180.0):
+        _ = env, timeout_seconds
+        commands.append((list(command), cwd))
+        staged_cwds.append(cwd)
+        return {
+            "command": list(command),
+            "exit_code": 0,
+            "stdout": "",
+            "stderr": "",
+            "started_at": "t0",
+            "ended_at": "t1",
+        }
+
+    monkeypatch.setattr(conformance, "run_command", _fake_run_command)
+    monkeypatch.setattr(
+        conformance,
+        "_evaluate_operator_attempt",
+        lambda **_kwargs: next(evaluations),
+    )
+
+    result = conformance._run_claude_cli_conformance(
+        contract_pack=conformance.active_contract_pack(),
+        run_root=run_root,
+    )
+
+    assert result.status == "conformant"
+    assert result.attempt_count == 2
+    assert len(commands) == 2
+    assert staged_cwds[0] == staged_cwds[1]
+    first_command, _first_cwd = commands[0]
+    second_command, _second_cwd = commands[1]
+    assert first_command[first_command.index("--tools") + 1] == "Read,Glob,Grep,LS"
+    assert second_command[second_command.index("--tools") + 1] == "Read,Glob,Grep,LS"
+    assert second_command[second_command.index("-r") + 1] == "cl-session"
+
+
+def test_evaluate_operator_attempt_classifies_empty_timeout_as_env_blocked() -> None:
+    result = conformance._evaluate_operator_attempt(
+        provider="claude",
+        command_result={
+            "command": ["claude"],
+            "exit_code": 124,
+            "stdout": "",
+            "stderr": "",
+        },
+        work_contract=_work_contract(),
+    )
+
+    assert result["status"] == "env_blocked"
+    assert result["transport_failure_class"] == "operator_timeout"
+
+
+def test_evaluate_operator_attempt_preserves_structured_timeout_output(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(
+        conformance,
+        "verify_verified_work_result",
+        lambda result_text, _work_contract: (
+            {},
+            VerificationOutcome(status="passed", failure_class=None, blocked_message=result_text),
+        ),
+    )
+
+    result = conformance._evaluate_operator_attempt(
+        provider="claude",
+        command_result={
+            "command": ["claude"],
+            "exit_code": 124,
+            "stdout": '{"session_id":"cl-1","result":"=== FILE: src/bookmarks_api/main.py ===\\napp = object()\\n=== END FILE ==="}',
+            "stderr": "",
+        },
+        work_contract=_work_contract(),
+    )
+
+    assert result["status"] == "executed"
+    assert result["extraction_mode"] == "jsonl"
+    assert "operator timeout" in result["note"]
+
+
+def test_next_decision_prefers_shipping_default_gap_once_non_shipping_divergence_clears() -> None:
+    results = [
+        {
+            "brain": "openai",
+            "status": "partial",
+            "divergence_class": "brain_wiring",
+        },
+        {
+            "brain": "claude",
+            "status": "conformant",
+            "divergence_class": None,
+        },
+        {
+            "brain": "gemini",
+            "status": "partial",
+            "divergence_class": "brain_wiring",
+        },
+    ]
+
+    assert (
+        conformance._next_decision(
+            results,
+            None,
+            shipping_default="openai:service_api",
+        )
+        == "improve_shipping_default"
     )
