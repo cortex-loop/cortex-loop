@@ -1,7 +1,7 @@
 # CORTEX_V2_EXECUTIVE_RESTORATION_NOTE
 
 Date: 2026-04-08
-Status: accepted next-seam decision note for bounded executive restoration
+Status: accepted executive-restoration note with the first verified-work restoration slice now landed partially
 
 ## Scope
 
@@ -71,7 +71,7 @@ The accepted drift interpretation is therefore:
 - tiny carrier selection by task shape
 - one unified host-control family with neutral default behavior and bounded escalated repair behavior
 
-## Decision
+## Decision basis
 
 The next runtime/product seam should be a shared model-agnostic executive substrate first, not an OpenAI-only patchwork.
 
@@ -92,15 +92,31 @@ This note does not authorize:
 - broad support-ledger restoration
 - or a rollback of the recent X1/X2 reduction train
 
+## Progress on the accepted line
+
+The first restoration slice is now partly landed on the accepted line:
+
+- shared `WorkContract`, `VerificationOutcome`, and `choose_verified_work_followup()` now exist
+- the OpenAI host-control family now accepts an optional bounded `work_contract`
+- external verification now updates runtime truth directly
+- one bounded repair turn is now implemented on the verified-work path
+- the default thin path remains unchanged when no `work_contract` is present
+
+What is **not** yet earned:
+
+- repeat-stable live lift for the verified-work path over one-shot behavior
+- repeated-failure inhibition / NoGo promotion
+- automatic carrier selection
+- cross-host rollout beyond the first OpenAI realization
+
 ## Next lawful move
 
-If a new runtime/product seam is opened after this note, the smallest lawful target is:
+If a later runtime/product seam is opened after this note, the next lawful move is:
 
 1. keep the current thin path as the default when no work contract is present
-2. add an optional work contract for larger tasks
-3. bind external verification into runtime truth
-4. drive one bounded repair turn from runtime state
-5. stop repeated failed moves instead of repeating them blindly
+2. recheck whether verified-work earns repeat-stable value on local larger-task reruns before widening it further
+3. keep repeated-failure inhibition, carrier inference, and host expansion deferred until that value is earned
+4. cut back rather than widen if the verified-work path keeps failing without value lift
 
 This is the accepted north-light correction:
 

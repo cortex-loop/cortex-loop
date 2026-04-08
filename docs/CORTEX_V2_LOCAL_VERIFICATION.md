@@ -186,15 +186,27 @@ make revalidate-openai-service
 
 ## OpenAI host-control revalidation
 
-This revalidates the accepted bounded outbound OpenAI host-control lane on top of the accepted `O3` loopback shell, accepted `O2` ingress law, and compressed `O1` runtime/session law.
-It checks the strict text-only request boundary, stdlib transport parsing, loopback action endpoint behavior, exact `decision + journal` record projection, and export/import continuity across multiple outbound actions.
-It does not authorize tools, tool-result submission, cancel/update lanes, remote hosting, multi-session doctrine, Gemini runtime, executive-loop rewrite, or generic runtime/service abstraction.
-Canonical K2 tests use the internal fixture transport and do not require a live OpenAI network or a real API key.
+This revalidates the accepted bounded outbound OpenAI host-control family on top of the accepted `O3` loopback shell, accepted `O2` ingress law, and compressed `O1` runtime/session law.
+It checks:
+- the default thin text-only path when no `work_contract` is present
+- the shared verified-work law and deterministic `full_files` protocol parsing
+- runtime-native verification binding and exact `repair | check | stop` follow-up mapping
+- loopback action endpoint behavior for both thin and verified-work requests
+- exact `decision + journal` record projection
+- and export/import continuity across multiple outbound actions
+
+It does not authorize tools, tool-result submission, cancel/update lanes, remote hosting, multi-session doctrine, Gemini runtime, prompt rewriting, automatic carrier selection, or generic runtime/service abstraction.
+Deterministic host-control tests use the internal fixture transport and do not require a live OpenAI network or a real API key.
+Any larger-task live-value reruns for the verified-work path remain local exploratory evidence only and are not part of the active canonical proof bundle.
 
 Direct commands:
 
 ```sh
+python3 -m pytest tests/unit/test_verified_work.py -q
+python3 -m pytest tests/unit/test_openai_verified_work.py -q
+python3 -m pytest tests/unit/test_openai_runtime_step.py -q
 python3 -m pytest tests/unit/test_openai_host_control.py -q
+python3 -m pytest tests/unit/test_openai_service.py -q
 python3 -m pytest tests/integration/test_openai_host_control_service.py -q
 python3 -m pytest tests/integration/test_openai_host_control_continuity.py -q
 ```

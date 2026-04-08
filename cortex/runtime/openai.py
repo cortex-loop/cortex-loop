@@ -33,6 +33,11 @@ from cortex.drivers.openai_host import (
 )
 from cortex.drivers.openai_host_commitment import bind_openai_host_candidate
 from cortex.sre.branching import BranchOperation
+from cortex.sre.verified_work import (
+    VerificationOutcome,
+    WorkContract,
+    choose_verified_work_followup,
+)
 
 _ALLOWED_COMMITMENT_RESULT_KINDS = frozenset(status.value for status in CommitmentStatus)
 _ALLOWED_DECISIONS = frozenset({"continue", "check", "repair", "stop"})
@@ -44,6 +49,7 @@ _STOP_FAILURE_CLASSES = frozenset(
         "transport_error",
         "session_mismatch",
         "artifact_invalid",
+        "blocked_unsafe",
     }
 )
 _REPAIR_FAILURE_CLASSES = frozenset(
@@ -52,9 +58,14 @@ _REPAIR_FAILURE_CLASSES = frozenset(
         "patch_apply_failed",
         "test_failed",
         "continuity_import_failed",
+        "output_invalid",
+        "import_smoke_failed",
     }
 )
-_ALLOWED_FAILURE_CLASSES = _STOP_FAILURE_CLASSES | _REPAIR_FAILURE_CLASSES
+_CHECK_FAILURE_CLASSES = frozenset({"blocked_missing_info"})
+_ALLOWED_FAILURE_CLASSES = (
+    _STOP_FAILURE_CLASSES | _REPAIR_FAILURE_CLASSES | _CHECK_FAILURE_CLASSES
+)
 
 
 @dataclass(frozen=True, slots=True)
@@ -360,6 +371,42 @@ def run_openai_runtime_step(
     )
 
 
+def run_openai_runtime_verification_step(
+    outcome: VerificationOutcome,
+    session: OpenAIRuntimeSession | None,
+    *,
+    work_contract: WorkContract,
+    remaining_repairs: int,
+) -> OpenAIRuntimeSession:
+    if not isinstance(outcome, VerificationOutcome):
+        actual_type = type(outcome).__name__
+        raise TypeError(
+            "run_openai_runtime_verification_step.outcome must be VerificationOutcome, "
+            f"got {actual_type}."
+        )
+    if not isinstance(work_contract, WorkContract):
+        actual_type = type(work_contract).__name__
+        raise TypeError(
+            "run_openai_runtime_verification_step.work_contract must be WorkContract, "
+            f"got {actual_type}."
+        )
+    current_session = _coerce_session(session)
+    decision = choose_verified_work_followup(
+        work_contract,
+        outcome,
+        remaining_repairs=remaining_repairs,
+    )
+    return OpenAIRuntimeSession(
+        session_id=current_session.session_id,
+        event_index=current_session.event_index,
+        active_goal_ref=current_session.active_goal_ref,
+        pending_goal_refs=current_session.pending_goal_refs,
+        confirmed_artifact_refs=current_session.confirmed_artifact_refs,
+        last_failure_class=outcome.failure_class,
+        next_recommended_move=decision,
+    )
+
+
 def _coerce_session(session: OpenAIRuntimeSession | None) -> OpenAIRuntimeSession:
     if session is None:
         return OpenAIRuntimeSession()
@@ -542,6 +589,8 @@ def _decide_action(
     del continuation_debt
     if failure_class in _STOP_FAILURE_CLASSES:
         return "stop"
+    if failure_class in _CHECK_FAILURE_CLASSES:
+        return "check"
     if failure_class in _REPAIR_FAILURE_CLASSES:
         return "repair"
     if approval_required or consequential_write_pending or evidence_gap:
@@ -662,5 +711,6 @@ __all__ = [
     "OpenAIProductDecision",
     "OpenAIRuntimeSession",
     "OpenAIRuntimeStepResult",
+    "run_openai_runtime_verification_step",
     "run_openai_runtime_step",
 ]

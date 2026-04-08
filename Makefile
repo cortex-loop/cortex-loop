@@ -67,7 +67,11 @@ revalidate-openai-service:
 	$(PYTEST) tests/integration/test_openai_service_continuity.py -q
 
 revalidate-openai-host-control:
+	$(PYTEST) tests/unit/test_verified_work.py -q
+	$(PYTEST) tests/unit/test_openai_verified_work.py -q
+	$(PYTEST) tests/unit/test_openai_runtime_step.py -q
 	$(PYTEST) tests/unit/test_openai_host_control.py -q
+	$(PYTEST) tests/unit/test_openai_service.py -q
 	$(PYTEST) tests/integration/test_openai_host_control_service.py -q
 	$(PYTEST) tests/integration/test_openai_host_control_continuity.py -q
 

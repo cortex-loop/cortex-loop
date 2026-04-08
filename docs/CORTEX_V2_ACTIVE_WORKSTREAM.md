@@ -40,10 +40,10 @@ It is workflow state only. It does not override the packet documents, implementa
 
 - Current campaign: `P1 product-first reduction program`
 - Current working branch at ledger update: `main`
-- Current branch role: accepted resting line after the X2 OpenAI-only support/eval compression seam
+- Current branch role: accepted resting line after the E3 verified-work restoration slice
 - Current candidate seam: `none active`
 - Current seam status:
-  - A0, P1C, S1, S1C, X1, and X2 are now accepted on local `main`
+  - A0, P1C, S1, S1C, X1, X2, and the first verified-work restoration slice are now accepted on local `main`
   - the explicit `current|canonical_anchor` direct-API service suites remain accepted on the current line
   - the OpenAI service spend split remains explicit:
     - `service_smoke` uses `gpt-5.4-mini`
@@ -71,10 +71,19 @@ It is workflow state only. It does not override the packet documents, implementa
     - deterministic support checks in `tests/unit/test_live_validation_tools.py`, `tests/unit/test_verification_docs_sync.py`, `tests/unit/test_correspondence_sre.py`, and `tests/unit/test_import_smoke.py`
   - retained operator/watchlist tools stay callable as diagnostics, but they no longer define the active current-line closure path
   - `O5`-`O8` remain landed as historical/reference evidence only; they are no longer the accepted OpenAI-only product runtime after X1
-  - the accepted next-seam correction is now recorded in `docs/CORTEX_V2_EXECUTIVE_RESTORATION_NOTE.md`:
+  - the accepted next-seam correction recorded in `docs/CORTEX_V2_EXECUTIVE_RESTORATION_NOTE.md` has now landed partially on the accepted line:
     - keep the X1/X2 product simplification
     - cut prompt-shaping and benchmark-local executive control as product directions
     - restore one tiny runtime-native executive loop for larger tasks
+  - the first verified-work restoration slice now lands:
+    - shared `WorkContract`, `VerificationOutcome`, and `choose_verified_work_followup()` law
+    - optional `work_contract` activation on the OpenAI host-control family
+    - runtime-native external verification binding
+    - one bounded repair turn on the OpenAI verified-work path
+  - the accepted thin `O4` path remains unchanged when `work_contract` is absent
+  - the new `O4R` verified-work row remains partial:
+    - deterministic coverage and repo-local revalidation are landed
+    - local larger-task value lift is not yet re-earned repeat-stably
   - Claude canonical-suite plumbing remains implemented, but Claude stays outside the accepted current product scope as future host-expansion backlog
   - Gemini remains canonical-lane out of scope and watchlist-only until its direct API lane is opened deliberately
   - headless-CLI operator evidence remains watchlist-only, with Gemini local-vs-accepted drift surfaced explicitly rather than promoted into runtime truth
@@ -82,14 +91,13 @@ It is workflow state only. It does not override the packet documents, implementa
 
 ## 3. Next lawful move
 
-- No active support/eval compression seam remains on the accepted local `main` line.
-- The accepted keep/cut/restore decision for the next runtime/product seam is now recorded in `docs/CORTEX_V2_EXECUTIVE_RESTORATION_NOTE.md`.
+- No active verified-work restoration seam remains on the accepted local `main` line.
+- The accepted executive-restoration correction is now partially landed on the current line.
 - If a later runtime/product seam opens, the next lawful move is:
-  - one shared model-agnostic executive substrate seam first
-  - optional work-contract activation rather than a second product
-  - runtime-native verification binding
-  - one bounded repair/inhibition gate
-  - OpenAI as the first host realization after that shared substrate exists
+  - recheck whether the bounded verified-work path earns repeat-stable live value before widening it further
+  - keep the default thin path unchanged while `O4R` remains partial
+  - keep repeated-failure inhibition, automatic carrier selection, and multi-host rollout deferred
+  - cut back rather than widen if the verified-work path continues to fail without clear lift
 - Keep `claude` and `gemini` as future host-expansion backlog only:
   - `claude` retains dormant shared `canonical_anchor` plumbing for a later explicit host-expansion train
   - `gemini` remains watchlist-only until direct API/service auth exists and a separate host-expansion train is opened
@@ -116,6 +124,7 @@ It is workflow state only. It does not override the packet documents, implementa
 - Do not treat benchmark-local repair control as accepted product behavior.
 - Do not reopen prompt shaping or hidden build-brief doctrine as a product direction.
 - Do not solve larger-task repair by adding a second large task-specific subsystem when one optional work contract would suffice.
+- Do not promote the partial `O4R` verified-work lane into canonical-anchor proof before repeat-stable live lift is earned.
 
 ## 5. Acknowledged worktree noise at ledger creation
 

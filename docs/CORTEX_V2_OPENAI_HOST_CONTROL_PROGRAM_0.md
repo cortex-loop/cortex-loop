@@ -1,7 +1,7 @@
 # CORTEX_V2_OPENAI_HOST_CONTROL_PROGRAM_0
 
-Date: 2026-03-27
-Status: accepted re-audited runtime-program brief for the first bounded outbound OpenAI host-control lane
+Date: 2026-04-08
+Status: accepted runtime-program brief for the default bounded outbound OpenAI host-control lane after verified-work restoration
 
 ## Purpose
 
@@ -24,6 +24,7 @@ This document does not override:
 - `docs/CORTEX_V2_OPENAI_RUNTIME_PROGRAM_0.md`
 - `docs/CORTEX_V2_OPENAI_INGRESS_PROGRAM_0.md`
 - `docs/CORTEX_V2_OPENAI_SERVICE_PROGRAM_0.md`
+- `docs/CORTEX_V2_OPENAI_VERIFIED_WORK_PROGRAM_0.md`
 
 ## Accepted parent and rationale
 
@@ -47,7 +48,7 @@ This program remains:
 - one active session per process,
 - loopback-only at the public service boundary,
 - one outbound action family only: `openai-response-stream`,
-- text-only and strict-whitelist on the request surface,
+- the default thin path when no `work_contract` is present,
 - packet-subordinate,
 - and host-specific without generic action/runtime/service doctrine.
 
@@ -74,6 +75,9 @@ This program does **not** authorize:
 - mediation implementation,
 - or broader product claims beyond this bounded text-only outbound lane.
 
+Optional verified-work activation now exists, but it is governed separately by `docs/CORTEX_V2_OPENAI_VERIFIED_WORK_PROGRAM_0.md`.
+This document remains the owner of the default thin path only.
+
 ## Public service contract
 
 The public K2 surface remains:
@@ -90,12 +94,13 @@ Request body shape:
 - `action_tag` must be `openai-response-stream`
 - `request.model` required
 - `request.input` required and must be one non-empty string
-- optional request keys:
+- optional request keys on the default thin path:
   - `instructions`
   - `metadata`
   - `max_output_tokens`
+- `request.work_contract` is reserved for the separately scoped verified-work lane and is not part of the thin-path contract described here
 - `stream` is implicit `true`; if present and not `true`, reject the request
-- all other request keys are rejected
+- all other request keys are rejected on the default thin path
 
 Response body shape:
 
@@ -134,6 +139,8 @@ It may not:
 - add an `openai` SDK dependency,
 - require live network or a real API key in the canonical verification bundle,
 - or introduce a generic control substrate.
+
+Separately scoped verified-work activation may reuse the same public endpoint and module family, but it may not retroactively change the thin-path meaning recorded here.
 
 Undocumented-event law:
 
@@ -194,6 +201,12 @@ On the accepted X1 line:
 - `OpenAIHostControlResult.records` now carry the exact compact `decision + journal` projection,
 - export/import continuity across outbound actions now preserves `openai_product_journal` v1 only,
 - and the older allocation/feedback story survives only as historical/reference evidence rather than the accepted OpenAI-only product runtime.
+
+On the current accepted line after the verified-work restoration slice:
+
+- the default thin path remains text-only and functionally unchanged when `work_contract` is absent,
+- `run_openai_host_control()` still re-enters the accepted `O2` parser and compressed `O1` runtime shell directly on that thin path,
+- and optional verified-work activation is now governed separately by `docs/CORTEX_V2_OPENAI_VERIFIED_WORK_PROGRAM_0.md` rather than widening this thin-path brief.
 
 ## Explicitly blocked moves
 

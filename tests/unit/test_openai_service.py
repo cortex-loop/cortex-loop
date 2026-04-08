@@ -2,7 +2,12 @@
 
 from __future__ import annotations
 
+import pytest
+
+from tests.unit._verified_work_fixtures import VALID_FILE_MAP, render_full_files_result
+
 from cortex.runtime.openai import OpenAIRuntimeSession
+from cortex.sre.verified_work import VerificationOutcome
 from cortex.runtime.openai_service import (
     OpenAIServiceState,
     build_openai_service_server,
@@ -101,4 +106,70 @@ def test_openai_service_action_roundtrips_records_with_fake_transport() -> None:
         "response.completed",
     ]
     assert state.session.event_index == 2
+    assert state.session_loaded is True
+
+
+def test_openai_service_action_roundtrips_verified_work_payload(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    payload = {
+        "action_tag": "openai-response-stream",
+        "request": {
+            "model": "gpt-5.4",
+            "input": "build bookmarks app",
+            "work_contract": {
+                "allowed_write_paths": list(VALID_FILE_MAP),
+                "verification_profile": "python_workspace_pytest_v1",
+                "output_carrier": "full_files",
+                "max_repair_turns": 0,
+            },
+        },
+    }
+    state = OpenAIServiceState()
+    rendered = render_full_files_result(VALID_FILE_MAP)
+    monkeypatch.setattr(
+        "cortex.runtime.openai_host_control.verify_openai_verified_work_result",
+        lambda result_text, contract: (
+            VALID_FILE_MAP,
+            VerificationOutcome(
+                status="passed",
+                failure_class=None,
+                parsed_paths=tuple(VALID_FILE_MAP),
+                import_smoke_ok=True,
+                pytest_ok=True,
+                pytest_exit_code=0,
+                pytest_passed=11,
+                pytest_failed=0,
+            ),
+        ),
+    )
+
+    result = handle_openai_service_action(
+        payload,
+        state,
+        outbound_transport=lambda _: [
+            {
+                "type": "response.created",
+                "session_id": "oa-service-work",
+                "response_id": "resp-service-work-1",
+            },
+            {
+                "type": "response.output_text.delta",
+                "session_id": "oa-service-work",
+                "response_id": "resp-service-work-1",
+                "delta": rendered,
+            },
+            {
+                "type": "response.completed",
+                "session_id": "oa-service-work",
+                "response_id": "resp-service-work-1",
+            },
+        ],
+    )
+
+    assert result["action_tag"] == "openai-response-stream"
+    assert result["attempt_count"] == 1
+    assert result["verification"]["status"] == "passed"
+    assert state.session.event_index == 3
+    assert state.session.next_recommended_move == "continue"
     assert state.session_loaded is True

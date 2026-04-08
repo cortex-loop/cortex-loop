@@ -22,6 +22,9 @@ LIVE_SERVICE_PROOF_PATH = REPO_ROOT / "docs" / "CORTEX_V2_LIVE_SERVICE_PROOF_0.m
 EXECUTIVE_RESTORATION_NOTE_PATH = (
     REPO_ROOT / "docs" / "CORTEX_V2_EXECUTIVE_RESTORATION_NOTE.md"
 )
+OPENAI_VERIFIED_WORK_PROGRAM_PATH = (
+    REPO_ROOT / "docs" / "CORTEX_V2_OPENAI_VERIFIED_WORK_PROGRAM_0.md"
+)
 LIVE_COMPARE_PATH = REPO_ROOT / "tools" / "live_compare.py"
 LIVE_VALIDATION_SCOPE_SOURCE_PATH = REPO_ROOT / "tools" / "live_validation_common.py"
 
@@ -168,6 +171,20 @@ def test_watchlist_reference_appendix_retains_demoted_tools() -> None:
     assert "make live-operator-directionality-audit" in appendix
 
 
+def test_openai_host_control_local_revalidation_mentions_verified_work_without_widening_canonical_proof() -> None:
+    text = _read(LOCAL_VERIFICATION_PATH)
+    section = _extract_section(text, "OpenAI host-control revalidation")
+
+    assert "the default thin text-only path when no `work_contract` is present" in section
+    assert "shared verified-work law" in section
+    assert "runtime-native verification binding" in section
+    assert "Any larger-task live-value reruns for the verified-work path remain local exploratory evidence only" in section
+    assert "python3 -m pytest tests/unit/test_verified_work.py -q" in section
+    assert "python3 -m pytest tests/unit/test_openai_verified_work.py -q" in section
+    assert "python3 -m pytest tests/unit/test_openai_runtime_step.py -q" in section
+    assert "make revalidate-openai-host-control" in section
+
+
 def test_live_compare_is_product_first_but_json_compatible() -> None:
     text = _read(LIVE_COMPARE_PATH)
 
@@ -201,6 +218,7 @@ def test_active_current_line_docs_frame_openai_only_truth_and_watchlist_retentio
     verdict_text = _read(LIVE_VALIDATION_VERDICT_PATH)
     service_proof_text = _read(LIVE_SERVICE_PROOF_PATH)
     restoration_note_text = _read(EXECUTIVE_RESTORATION_NOTE_PATH)
+    verified_work_program_text = _read(OPENAI_VERIFIED_WORK_PROGRAM_PATH)
 
     assert "`service_api` is the canonical runtime truth lane" in workstream_text
     assert "`operator_cli` is a watchlist and exploratory-comparison lane" in workstream_text
@@ -210,18 +228,20 @@ def test_active_current_line_docs_frame_openai_only_truth_and_watchlist_retentio
     )
     assert "Current working branch at ledger update: `main`" in workstream_text
     assert (
-        "Current branch role: accepted resting line after the X2 OpenAI-only support/eval compression seam"
+        "Current branch role: accepted resting line after the E3 verified-work restoration slice"
         in workstream_text
     )
     assert "Current candidate seam: `none active`" in workstream_text
-    assert "A0, P1C, S1, S1C, X1, and X2 are now accepted on local `main`" in workstream_text
+    assert "A0, P1C, S1, S1C, X1, X2, and the first verified-work restoration slice are now accepted on local `main`" in workstream_text
     assert "docs/CORTEX_V2_EXECUTIVE_RESTORATION_NOTE.md" in workstream_text
     assert (
         "retained operator/watchlist tools stay callable as diagnostics, but they no longer define the active current-line closure path"
         in workstream_text
     )
-    assert "No active support/eval compression seam remains on the accepted local `main` line." in workstream_text
-    assert "one shared model-agnostic executive substrate seam first" in workstream_text
+    assert "the first verified-work restoration slice now lands" in workstream_text
+    assert "the new `O4R` verified-work row remains partial" in workstream_text
+    assert "No active verified-work restoration seam remains on the accepted local `main` line." in workstream_text
+    assert "recheck whether the bounded verified-work path earns repeat-stable live value before widening it further" in workstream_text
 
     assert (
         "This is the only active current-line proof bundle for the accepted OpenAI-only product scope."
@@ -263,10 +283,17 @@ def test_active_current_line_docs_frame_openai_only_truth_and_watchlist_retentio
     )
     assert "no active support/eval compression seam remains on the accepted local `main` line" in service_proof_text
 
-    assert "accepted next-seam decision note for bounded executive restoration" in restoration_note_text
+    assert "accepted executive-restoration note with the first verified-work restoration slice now landed partially" in restoration_note_text
     assert "The local larger-task exploratory runs do not justify prompt shaping" in restoration_note_text
     assert "The next runtime/product seam should be a shared model-agnostic executive substrate first" in restoration_note_text
+    assert "The first restoration slice is now partly landed on the accepted line" in restoration_note_text
+    assert "repeat-stable live lift for the verified-work path over one-shot behavior" in restoration_note_text
     assert "This note does not authorize:" in restoration_note_text
+
+    assert "accepted bounded runtime-program brief for the first verified-work restoration slice" in verified_work_program_text
+    assert "keep the accepted thin `O4` path unchanged when no `work_contract` is present" in verified_work_program_text
+    assert "This program is intentionally outside the current compact canonical proof bundle" in verified_work_program_text
+    assert "but `O4R` remains partial because live larger-task lift has not yet been re-earned repeat-stably" in verified_work_program_text
 
 
 def test_x2_accepted_line_claims_match_main() -> None:
@@ -312,6 +339,8 @@ def test_x2_accepted_line_claims_match_main() -> None:
 def test_phase_gates_match_openai_only_truth_and_hygiene() -> None:
     text = _read(PHASE_GATES_PATH)
 
+    o4_row = _extract_phase_gate_row(text, "O4")
+    o4r_row = _extract_phase_gate_row(text, "O4R")
     l3_row = _extract_phase_gate_row(text, "L3")
     l4_row = _extract_phase_gate_row(text, "L4")
     l5_row = _extract_phase_gate_row(text, "L5")
@@ -334,6 +363,10 @@ def test_phase_gates_match_openai_only_truth_and_hygiene() -> None:
         "closed for the accepted OpenAI-only product scope; reopen only if product scope intentionally widens"
         in l4_row
     )
+    assert "remains thin and text-only by default when no `work_contract` is present" in o4_row
+    assert "keeps `openai_product_journal` v1 only" in o4_row
+    assert "repeat-stable local larger-task reruns still required before closeout | partial |" in o4r_row
+    assert "one live local bookmarks rerun confirmed that runtime truth can drive a real repair continuation" in o4r_row
     assert "historical/watchlist-only; do not use for runtime closure" in l5_row
     assert "closed | landed" in l6c_row
     assert (

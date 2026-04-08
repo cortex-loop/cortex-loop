@@ -5,7 +5,12 @@ from __future__ import annotations
 import pytest
 
 import cortex.runtime.openai as openai_runtime
-from cortex.runtime.openai import OpenAIRuntimeSession, run_openai_runtime_step
+from cortex.runtime.openai import (
+    OpenAIRuntimeSession,
+    run_openai_runtime_step,
+    run_openai_runtime_verification_step,
+)
+from cortex.sre.verified_work import VerificationOutcome, WorkContract
 
 
 def test_openai_runtime_step_rejects_canonical_cortex_event_name_before_runtime_processing() -> None:
@@ -71,3 +76,55 @@ def test_openai_runtime_step_preserves_session_mismatch_as_stop_without_reassign
     assert result.product_decision.decision == "stop"
     assert result.product_decision.failure_class == "session_mismatch"
     assert result.session.session_id == "oa-mismatch-a"
+
+
+def test_openai_runtime_verification_step_updates_runtime_truth_from_external_failure() -> None:
+    contract = WorkContract(
+        allowed_write_paths=("src/bookmarks_api/main.py",),
+        verification_profile="python_workspace_pytest_v1",
+        output_carrier="full_files",
+        max_repair_turns=1,
+    )
+    updated = run_openai_runtime_verification_step(
+        VerificationOutcome(
+            status="failed",
+            failure_class="import_smoke_failed",
+            import_smoke_ok=False,
+            first_failure_excerpt="E   SyntaxError: invalid syntax",
+        ),
+        OpenAIRuntimeSession(session_id="oa-verified", event_index=3),
+        work_contract=contract,
+        remaining_repairs=1,
+    )
+
+    assert updated.as_summary() == {
+        "session_id": "oa-verified",
+        "event_index": 3,
+        "active_goal_ref": None,
+        "pending_goal_refs": [],
+        "confirmed_artifact_refs": [],
+        "last_failure_class": "import_smoke_failed",
+        "next_recommended_move": "repair",
+    }
+
+
+def test_openai_runtime_verification_step_maps_blocked_missing_info_to_check() -> None:
+    contract = WorkContract(
+        allowed_write_paths=("src/bookmarks_api/main.py",),
+        verification_profile="python_workspace_pytest_v1",
+        output_carrier="full_files",
+        max_repair_turns=1,
+    )
+    updated = run_openai_runtime_verification_step(
+        VerificationOutcome(
+            status="blocked",
+            failure_class="blocked_missing_info",
+            blocked_message="Need one more field.",
+        ),
+        OpenAIRuntimeSession(),
+        work_contract=contract,
+        remaining_repairs=1,
+    )
+
+    assert updated.last_failure_class == "blocked_missing_info"
+    assert updated.next_recommended_move == "check"
