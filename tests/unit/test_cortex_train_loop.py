@@ -196,7 +196,7 @@ def test_run_conformance_summary_truth_pilot_promotes_when_alignment_is_preserve
     assert "preserved" in record.iterations[0].reason
 
 
-def test_run_verified_work_breadth_openai_train_records_promote_on_second_pack_lift(
+def test_run_verified_work_breadth_openai_train_records_promote_on_third_pack_lift(
     tmp_path: Path,
     monkeypatch,
 ) -> None:
@@ -246,8 +246,8 @@ def test_run_verified_work_breadth_openai_train_records_promote_on_second_pack_l
     record = train_loop.run_verified_work_breadth_openai_train(loop_root=tmp_path)
 
     assert record.final_decision == "promote"
-    assert record.iterations[0].primary_metric_before == 1
-    assert record.iterations[0].primary_metric_after == 2
+    assert record.iterations[0].primary_metric_before == 2
+    assert record.iterations[0].primary_metric_after == 3
     assert (tmp_path / "verified-work-breadth-openai" / "summary.json").exists()
 
 
@@ -315,3 +315,70 @@ def test_run_verified_work_breadth_openai_train_escalates_on_repeated_env_block(
 
     assert record.final_decision == "escalate"
     assert "provider/env block" in record.iterations[0].reason
+
+
+def test_run_verified_work_breadth_openai_train_retries_once_on_non_shipping_guardrail_env_block(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    state = {"tri_brain_calls": 0}
+
+    def _fake_run_shell_command(command, *, cwd):
+        _ = cwd
+        if "pytest -q" in command:
+            return {
+                "command": command,
+                "cwd": str(cwd),
+                "exit_code": 0,
+                "stdout": "",
+                "stderr": "",
+            }
+        if "--brain openai" in command:
+            payload = {
+                "results": [
+                    {"brain": "openai", "status": "conformant"},
+                ],
+                "next_decision": "promote",
+            }
+            return {
+                "command": command,
+                "cwd": str(cwd),
+                "exit_code": 0,
+                "stdout": json.dumps(payload),
+                "stderr": "",
+            }
+        state["tri_brain_calls"] += 1
+        if state["tri_brain_calls"] == 1:
+            payload = {
+                "results": [
+                    {"brain": "openai", "status": "conformant"},
+                    {"brain": "claude", "status": "env_blocked"},
+                    {"brain": "gemini", "status": "conformant"},
+                ],
+                "next_decision": "promote",
+            }
+        else:
+            payload = {
+                "results": [
+                    {"brain": "openai", "status": "conformant"},
+                    {"brain": "claude", "status": "conformant"},
+                    {"brain": "gemini", "status": "conformant"},
+                ],
+                "next_decision": "promote",
+            }
+        return {
+            "command": command,
+            "cwd": str(cwd),
+            "exit_code": 0,
+            "stdout": json.dumps(payload),
+            "stderr": "",
+        }
+
+    monkeypatch.setattr(train_loop, "_run_shell_command", _fake_run_shell_command)
+
+    record = train_loop.run_verified_work_breadth_openai_train(loop_root=tmp_path)
+
+    assert record.final_decision == "promote"
+    assert state["tri_brain_calls"] == 2
+    assert record.iterations[0].primary_metric_after == 3
+    assert len(record.iterations[0].proof_commands) == 9

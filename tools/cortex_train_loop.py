@@ -33,6 +33,7 @@ CONFORMANCE_SUMMARY_PATH = (
 OPENAI_BREADTH_PACKS = (
     cortex_conformance.ACTIVE_CONTRACT_PACK,
     cortex_conformance.NORMALIZE_PORT_CONTRACT_PACK,
+    cortex_conformance.FEATURE_FLAGS_CONTRACT_PACK,
 )
 
 
@@ -335,53 +336,91 @@ def run_verified_work_breadth_openai_train(
     *,
     loop_root: Path = TRAIN_LOOP_ROOT,
 ) -> TrainLoopRecord:
+    baseline_pack_statuses = {
+        cortex_conformance.ACTIVE_CONTRACT_PACK: "conformant",
+        cortex_conformance.NORMALIZE_PORT_CONTRACT_PACK: "conformant",
+        cortex_conformance.FEATURE_FLAGS_CONTRACT_PACK: "unsupported",
+    }
     baseline = {
-        "primary_metric_value": 1,
+        "primary_metric_value": 2,
         "guardrail_ok": True,
-        "bookmarks_openai_status": "conformant",
-        "normalize_port_openai_status": "unsupported",
-        "normalize_port_tri_brain_status": "unmeasured",
+        "pack_statuses": dict(baseline_pack_statuses),
+        "tri_brain_guardrail_pack": cortex_conformance.FEATURE_FLAGS_CONTRACT_PACK,
+        "tri_brain_guardrail_status": "unmeasured",
         "reasons": [],
     }
-    proof_commands = (
+    proof_commands: list[str] = [
         "python3 -m pytest -q tests/unit/test_verified_work.py tests/unit/test_verified_work_runtime.py tests/unit/test_openai_host_control.py tests/unit/test_cortex_conformance.py tests/unit/test_cortex_train_loop.py tests/unit/test_verification_docs_sync.py",
         f"python3 tools/cortex_conformance.py --mode active --brain openai --contract-pack {cortex_conformance.ACTIVE_CONTRACT_PACK}",
         f"python3 tools/cortex_conformance.py --mode active --brain openai --contract-pack {cortex_conformance.ACTIVE_CONTRACT_PACK}",
         f"python3 tools/cortex_conformance.py --mode active --brain openai --contract-pack {cortex_conformance.NORMALIZE_PORT_CONTRACT_PACK}",
         f"python3 tools/cortex_conformance.py --mode active --brain openai --contract-pack {cortex_conformance.NORMALIZE_PORT_CONTRACT_PACK}",
-        f"python3 tools/cortex_conformance.py --mode active --contract-pack {cortex_conformance.NORMALIZE_PORT_CONTRACT_PACK}",
-    )
-    command_results = tuple(_run_shell_command(command, cwd=ROOT) for command in proof_commands)
+        f"python3 tools/cortex_conformance.py --mode active --brain openai --contract-pack {cortex_conformance.FEATURE_FLAGS_CONTRACT_PACK}",
+        f"python3 tools/cortex_conformance.py --mode active --brain openai --contract-pack {cortex_conformance.FEATURE_FLAGS_CONTRACT_PACK}",
+        f"python3 tools/cortex_conformance.py --mode active --contract-pack {cortex_conformance.FEATURE_FLAGS_CONTRACT_PACK}",
+    ]
+    command_results: list[dict[str, Any]] = [
+        _run_shell_command(command, cwd=ROOT) for command in proof_commands
+    ]
+
+    tri_brain_summary: dict[str, Any] | None = None
+    tri_brain_initial_result = command_results[-1]
+    if tri_brain_initial_result["exit_code"] == 0:
+        tri_brain_summary = _command_result_json(tri_brain_initial_result)
+        if _has_non_shipping_env_block(tri_brain_summary, shipping_brain="openai"):
+            retry_command = (
+                f"python3 tools/cortex_conformance.py --mode active --contract-pack "
+                f"{cortex_conformance.FEATURE_FLAGS_CONTRACT_PACK}"
+            )
+            proof_commands.append(retry_command)
+            retry_result = _run_shell_command(retry_command, cwd=ROOT)
+            command_results.append(retry_result)
+            if retry_result["exit_code"] == 0:
+                tri_brain_summary = _command_result_json(retry_result)
 
     summaries = [
         _command_result_json(result)
         for result in command_results[1:]
         if result["exit_code"] == 0
     ]
-    bookmarks_summaries = summaries[:2]
-    normalize_summaries = summaries[2:4]
-    tri_brain_summary = summaries[4] if len(summaries) >= 5 else None
+    pack_summaries = {
+        cortex_conformance.ACTIVE_CONTRACT_PACK: summaries[:2],
+        cortex_conformance.NORMALIZE_PORT_CONTRACT_PACK: summaries[2:4],
+        cortex_conformance.FEATURE_FLAGS_CONTRACT_PACK: summaries[4:6],
+    }
+    if tri_brain_summary is None:
+        tri_brain_summary = summaries[-1] if len(summaries) >= 7 else None
 
-    bookmarks_conformant = bool(bookmarks_summaries) and all(
-        _summary_brain_status(summary, brain="openai") == "conformant"
-        for summary in bookmarks_summaries
+    pack_statuses: dict[str, str] = {}
+    for pack_name, pack_runs in pack_summaries.items():
+        is_conformant = len(pack_runs) == 2 and all(
+            _summary_brain_status(summary, brain="openai") == "conformant"
+            for summary in pack_runs
+        )
+        pack_statuses[pack_name] = "conformant" if is_conformant else "not_conformant"
+    primary_metric_after = sum(
+        1 for status in pack_statuses.values() if status == "conformant"
     )
-    normalize_conformant = len(normalize_summaries) == 2 and all(
-        _summary_brain_status(summary, brain="openai") == "conformant"
-        for summary in normalize_summaries
-    )
-    primary_metric_after = int(bookmarks_conformant) + int(normalize_conformant)
     tri_brain_status = (
         tri_brain_summary.get("next_decision")
         if isinstance(tri_brain_summary, dict)
         else "unmeasured"
     )
-    guardrail_ok = command_results[0]["exit_code"] == 0 and bookmarks_conformant
+    guardrail_ok = (
+        command_results[0]["exit_code"] == 0
+        and pack_statuses.get(cortex_conformance.ACTIVE_CONTRACT_PACK) == "conformant"
+        and pack_statuses.get(cortex_conformance.NORMALIZE_PORT_CONTRACT_PACK) == "conformant"
+        and tri_brain_status == "promote"
+    )
     repeated_env_block = sum(
         1
-        for summary in normalize_summaries
+        for summary in pack_summaries[cortex_conformance.FEATURE_FLAGS_CONTRACT_PACK]
         if _summary_brain_status(summary, brain="openai") == "env_blocked"
     ) >= 2
+    repeated_non_shipping_guardrail_env_block = (
+        isinstance(tri_brain_summary, dict)
+        and _has_non_shipping_env_block(tri_brain_summary, shipping_brain="openai")
+    )
     escalation_reasons = tuple(
         reason
         for reason in (
@@ -390,14 +429,24 @@ def run_verified_work_breadth_openai_train(
                 for result in command_results
                 if result["exit_code"] != 0
             ),
-            "repeated provider/env block on normalize-port OpenAI proof"
+            "repeated provider/env block on feature-flags OpenAI proof"
             if repeated_env_block
+            else None,
+            "repeated provider/env block on feature-flags tri-brain guardrail"
+            if repeated_non_shipping_guardrail_env_block
             else None,
         )
         if reason is not None
     )
-    localized_failure = bookmarks_conformant and not normalize_conformant
-    better_classification = normalize_conformant
+    localized_failure = (
+        pack_statuses.get(cortex_conformance.ACTIVE_CONTRACT_PACK) == "conformant"
+        and pack_statuses.get(cortex_conformance.NORMALIZE_PORT_CONTRACT_PACK) == "conformant"
+        and pack_statuses.get(cortex_conformance.FEATURE_FLAGS_CONTRACT_PACK)
+        != "conformant"
+    )
+    better_classification = (
+        pack_statuses.get(cortex_conformance.FEATURE_FLAGS_CONTRACT_PACK) == "conformant"
+    )
 
     decision, reason = decide_loop_decision(
         primary_metric_before=int(baseline["primary_metric_value"]),
@@ -410,8 +459,8 @@ def run_verified_work_breadth_openai_train(
     )
     iteration = LoopIteration(
         index=1,
-        candidate_label="verified-work-breadth-openai-second-pack",
-        proof_commands=proof_commands,
+        candidate_label="verified-work-breadth-openai-third-pack",
+        proof_commands=tuple(proof_commands),
         primary_metric_before=int(baseline["primary_metric_value"]),
         primary_metric_after=primary_metric_after,
         guardrail_ok=guardrail_ok,
@@ -420,7 +469,7 @@ def run_verified_work_breadth_openai_train(
         budget_remaining=1,
         decision=decision,
         reason=reason,
-        command_results=command_results,
+        command_results=tuple(command_results),
         escalation_reasons=escalation_reasons,
     )
     record = TrainLoopRecord(
@@ -433,9 +482,9 @@ def run_verified_work_breadth_openai_train(
             "OpenAI verified-work profile routing, conformance contract-pack registry, and breadth-train proof wiring"
         ),
         borrowed_mechanism=(
-            "reuse the existing project_template normalize-port scaffold as the second verified-work pack"
+            "reuse the landed verified-work profile registry and add one middle-weight pure-Python evaluator pack"
         ),
-        contract_pack="verified_work_normalize_port_v1",
+        contract_pack=cortex_conformance.FEATURE_FLAGS_CONTRACT_PACK,
         conformance_surfaces=(
             "openai:service_api",
             "claude:operator_cli",
@@ -444,10 +493,10 @@ def run_verified_work_breadth_openai_train(
         baseline_result=baseline,
         primary_metric="openai_verified_work_breadth_score",
         guardrail_metric="bookmarks_stays_conformant_and_no_o4r_regression",
-        baseline_proof_set=proof_commands,
+        baseline_proof_set=tuple(proof_commands),
         iteration_budget=2,
         rollback_surface=(
-            "verified-work profile routing plus second-pack conformance wiring"
+            "verified-work profile routing plus third-pack conformance wiring"
         ),
         escalation_triggers=(
             "Cortex law may need revision",
@@ -580,6 +629,18 @@ def _summary_brain_status(summary: dict[str, Any], *, brain: str) -> str | None:
             status = result.get("status")
             return status if isinstance(status, str) else None
     return None
+
+
+def _has_non_shipping_env_block(summary: dict[str, Any], *, shipping_brain: str) -> bool:
+    results = summary.get("results")
+    if not isinstance(results, list):
+        return False
+    return any(
+        isinstance(result, dict)
+        and result.get("brain") != shipping_brain
+        and result.get("status") == "env_blocked"
+        for result in results
+    )
 
 
 __all__ = [

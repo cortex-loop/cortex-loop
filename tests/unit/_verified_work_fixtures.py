@@ -377,6 +377,78 @@ VALID_NORMALIZE_PORT_FILE_MAP = {
     "src/normalize_port.py": VALID_NORMALIZE_PORT_PY,
 }
 
+VALID_FEATURE_FLAG_MODELS_PY = """from __future__ import annotations
+
+from dataclasses import dataclass
+
+
+def _normalize_country_codes(values: tuple[str, ...]) -> tuple[str, ...]:
+    normalized: list[str] = []
+    for raw_value in values:
+        code = raw_value.strip().upper()
+        if not code:
+            raise ValueError("country codes must be non-empty")
+        if code not in normalized:
+            normalized.append(code)
+    return tuple(normalized)
+
+
+@dataclass(frozen=True, slots=True)
+class FeatureFlag:
+    name: str
+    enabled: bool = True
+    rollout_percentage: int = 100
+    allow_countries: tuple[str, ...] = ()
+    deny_countries: tuple[str, ...] = ()
+
+    def __post_init__(self) -> None:
+        name = self.name.strip()
+        if not name:
+            raise ValueError("name must be non-empty")
+        if self.rollout_percentage < 0 or self.rollout_percentage > 100:
+            raise ValueError("rollout_percentage must be between 0 and 100")
+        object.__setattr__(self, "name", name)
+        object.__setattr__(
+            self,
+            "allow_countries",
+            _normalize_country_codes(self.allow_countries),
+        )
+        object.__setattr__(
+            self,
+            "deny_countries",
+            _normalize_country_codes(self.deny_countries),
+        )
+"""
+
+VALID_FEATURE_FLAG_EVALUATOR_PY = """from __future__ import annotations
+
+from hashlib import sha256
+
+from .models import FeatureFlag
+
+
+def is_flag_active(flag: FeatureFlag, *, user_key: str, country: str) -> bool:
+    normalized_country = country.strip().upper()
+    if not flag.enabled:
+        return False
+    if normalized_country in flag.deny_countries:
+        return False
+    if flag.allow_countries and normalized_country not in flag.allow_countries:
+        return False
+    if flag.rollout_percentage == 0:
+        return False
+    if flag.rollout_percentage == 100:
+        return True
+    digest = sha256(f"{flag.name}:{user_key}".encode("utf-8")).hexdigest()[:8]
+    bucket = int(digest, 16) % 100
+    return bucket < flag.rollout_percentage
+"""
+
+VALID_FEATURE_FLAG_FILE_MAP = {
+    "src/feature_flags/models.py": VALID_FEATURE_FLAG_MODELS_PY,
+    "src/feature_flags/evaluator.py": VALID_FEATURE_FLAG_EVALUATOR_PY,
+}
+
 
 def render_full_files_result(file_map: dict[str, str]) -> str:
     blocks: list[str] = []

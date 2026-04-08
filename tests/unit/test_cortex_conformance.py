@@ -70,10 +70,13 @@ def test_contract_pack_exposes_required_train_charter() -> None:
     assert payload["train_charter"]["cortex_invariant"] == "bounded verified-work law"
 
 
-def test_contract_pack_registry_resolves_bookmarks_and_normalize_port() -> None:
+def test_contract_pack_registry_resolves_bookmarks_normalize_port_and_feature_flags() -> None:
     bookmarks_pack = conformance.contract_pack_by_name(conformance.ACTIVE_CONTRACT_PACK)
     normalize_pack = conformance.contract_pack_by_name(
         conformance.NORMALIZE_PORT_CONTRACT_PACK
+    )
+    feature_flags_pack = conformance.contract_pack_by_name(
+        conformance.FEATURE_FLAGS_CONTRACT_PACK
     )
 
     assert bookmarks_pack.contract_pack == "verified_work_bookmarks_v1"
@@ -83,6 +86,13 @@ def test_contract_pack_registry_resolves_bookmarks_and_normalize_port() -> None:
     )
     assert normalize_pack.work_contract.verification_profile == (
         "python_workspace_pytest_port_fix_v1"
+    )
+    assert feature_flags_pack.contract_pack == "verified_work_feature_flags_v1"
+    assert feature_flags_pack.workspace_template_relpath == (
+        "tests/fixtures/live_validation/feature_flags_template"
+    )
+    assert feature_flags_pack.work_contract.verification_profile == (
+        "python_workspace_pytest_feature_flags_v1"
     )
 
 
@@ -560,6 +570,67 @@ def test_run_active_conformance_keeps_bookmarks_as_only_latest_summary_anchor(
         brains=("openai", "claude", "gemini"),
         contract_pack=conformance.contract_pack_by_name(
             conformance.NORMALIZE_PORT_CONTRACT_PACK
+        ),
+    )
+
+    assert tmp_path / "summary.latest.json" not in written_paths
+    assert tmp_path / "summary.latest.md" not in written_paths
+
+
+def test_run_active_conformance_does_not_publish_feature_flags_as_latest_summary(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    written_paths: list[Path] = []
+
+    monkeypatch.setattr(conformance, "CONFORMANCE_ROOT", tmp_path)
+    monkeypatch.setattr(
+        conformance,
+        "now_utc_iso",
+        lambda: "2026-04-08T09:00:00+00:00",
+    )
+    monkeypatch.setattr(conformance, "load_local_env_file", lambda: None)
+    monkeypatch.setattr(
+        conformance,
+        "preflight_surface",
+        lambda brain, surface: conformance.SurfaceProbe(
+            brain=brain,
+            surface=surface,
+            status="conformant",
+            reason="ready",
+        ),
+    )
+    monkeypatch.setattr(
+        conformance,
+        "_run_conformance",
+        lambda *, brain, surface, contract_pack, run_root: conformance.ConformanceRunResult(
+            brain=brain,
+            surface=surface,
+            contract_pack=contract_pack.contract_pack,
+            status="conformant",
+            attempt_count=1,
+            verification_status="passed",
+            parseable=True,
+            import_smoke_ok=True,
+            pytest_passed=6,
+            repair_conversion="passed_without_repair",
+        ),
+    )
+    monkeypatch.setattr(
+        conformance,
+        "write_json",
+        lambda path, payload: written_paths.append(path),
+    )
+    monkeypatch.setattr(
+        conformance,
+        "write_text",
+        lambda path, text: written_paths.append(path),
+    )
+
+    conformance.run_active_conformance(
+        brains=("openai", "claude", "gemini"),
+        contract_pack=conformance.contract_pack_by_name(
+            conformance.FEATURE_FLAGS_CONTRACT_PACK
         ),
     )
 

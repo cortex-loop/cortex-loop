@@ -65,6 +65,18 @@ _VERIFIED_WORK_PROFILE_REGISTRY = {
         import_target="normalize_port",
         pytest_command=("-m", "pytest", "-q", "tests/test_normalize_port.py"),
     ),
+    "python_workspace_pytest_feature_flags_v1": VerifiedWorkProfileSpec(
+        template_root=(
+            REPO_ROOT
+            / "tests"
+            / "fixtures"
+            / "live_validation"
+            / "feature_flags_template"
+        ),
+        read_only_context_paths=("tests/test_feature_flags.py",),
+        import_target="feature_flags.evaluator",
+        pytest_command=("-m", "pytest", "-q", "tests/test_feature_flags.py"),
+    ),
 }
 
 

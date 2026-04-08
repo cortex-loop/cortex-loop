@@ -13,6 +13,7 @@ from cortex.runtime.verified_work_runtime import (
 from cortex.sre.verified_work import VerificationOutcome, WorkContract
 
 from tests.unit._verified_work_fixtures import (
+    VALID_FEATURE_FLAG_FILE_MAP,
     VALID_FILE_MAP,
     VALID_NORMALIZE_PORT_FILE_MAP,
     render_full_files_result,
@@ -32,6 +33,15 @@ def _normalize_port_work_contract(max_repair_turns: int = 1) -> WorkContract:
     return WorkContract(
         allowed_write_paths=tuple(VALID_NORMALIZE_PORT_FILE_MAP),
         verification_profile="python_workspace_pytest_port_fix_v1",
+        output_carrier="full_files",
+        max_repair_turns=max_repair_turns,
+    )
+
+
+def _feature_flags_work_contract(max_repair_turns: int = 1) -> WorkContract:
+    return WorkContract(
+        allowed_write_paths=tuple(VALID_FEATURE_FLAG_FILE_MAP),
+        verification_profile="python_workspace_pytest_feature_flags_v1",
         output_carrier="full_files",
         max_repair_turns=max_repair_turns,
     )
@@ -66,6 +76,20 @@ def test_build_verified_work_input_text_attaches_normalize_port_context() -> Non
     assert "=== CONTEXT FILE: tests/test_normalize_port.py ===" in input_text
     assert "if port >= 65535" in input_text
     assert "assert normalize_port(65535) == 65535" in input_text
+
+
+def test_build_verified_work_input_text_attaches_feature_flags_context() -> None:
+    input_text = build_verified_work_input_text(
+        "implement feature flags",
+        _feature_flags_work_contract(),
+    )
+
+    assert input_text.startswith("implement feature flags")
+    assert "=== CONTEXT FILE: src/feature_flags/models.py ===" in input_text
+    assert "=== CONTEXT FILE: src/feature_flags/evaluator.py ===" in input_text
+    assert "=== CONTEXT FILE: tests/test_feature_flags.py ===" in input_text
+    assert "FeatureFlag" in input_text
+    assert "test_deny_country_wins_over_allow_and_rollout" in input_text
 
 
 def test_verify_verified_work_result_rejects_unapproved_path() -> None:
@@ -245,9 +269,14 @@ def test_verify_verified_work_result_uses_profile_specific_verifier_targets(
         render_full_files_result(VALID_NORMALIZE_PORT_FILE_MAP),
         _normalize_port_work_contract(),
     )
+    _, feature_flags_outcome = verify_verified_work_result(
+        render_full_files_result(VALID_FEATURE_FLAG_FILE_MAP),
+        _feature_flags_work_contract(),
+    )
 
     assert bookmarks_outcome.status == "passed"
     assert port_outcome.status == "passed"
+    assert feature_flags_outcome.status == "passed"
     assert commands[0] == [
         "/usr/bin/python3",
         "-c",
@@ -271,4 +300,16 @@ def test_verify_verified_work_result_uses_profile_specific_verifier_targets(
         "pytest",
         "-q",
         "tests/test_normalize_port.py",
+    ]
+    assert commands[4] == [
+        "/usr/bin/python3",
+        "-c",
+        "import importlib; importlib.import_module('feature_flags.evaluator')",
+    ]
+    assert commands[5] == [
+        "/usr/bin/python3",
+        "-m",
+        "pytest",
+        "-q",
+        "tests/test_feature_flags.py",
     ]

@@ -55,6 +55,7 @@ ConformanceSummary = dict[str, Any]
 
 ACTIVE_CONTRACT_PACK = "verified_work_bookmarks_v1"
 NORMALIZE_PORT_CONTRACT_PACK = "verified_work_normalize_port_v1"
+FEATURE_FLAGS_CONTRACT_PACK = "verified_work_feature_flags_v1"
 CONFORMANCE_ROOT = LOCAL_LIVE_ROOT / "conformance"
 PHASE_GATES_PATH = ROOT / "docs" / "CORTEX_V2_PHASE_GATES_2.md"
 BOOKMARKS_TASK_PATH = (
@@ -62,6 +63,9 @@ BOOKMARKS_TASK_PATH = (
 )
 NORMALIZE_PORT_TASK_PATH = (
     ROOT / "tests" / "fixtures" / "live_validation" / "project_template" / "README_TASK.md"
+)
+FEATURE_FLAGS_TASK_PATH = (
+    ROOT / "tests" / "fixtures" / "live_validation" / "feature_flags_template" / "README_TASK.md"
 )
 _OPENAI_ACTION_TAG = "openai-response-stream"
 _OPENAI_MODEL = "gpt-5.4"
@@ -313,11 +317,50 @@ def contract_pack_by_name(name: str) -> ContractPack:
             ),
             shipping_default="openai:service_api",
         )
+    if name == FEATURE_FLAGS_CONTRACT_PACK:
+        prompt_text = FEATURE_FLAGS_TASK_PATH.read_text(encoding="utf-8").strip()
+        return ContractPack(
+            contract_pack=FEATURE_FLAGS_CONTRACT_PACK,
+            prompt_text=prompt_text,
+            workspace_template_relpath="tests/fixtures/live_validation/feature_flags_template",
+            work_contract=WorkContract(
+                allowed_write_paths=(
+                    "src/feature_flags/models.py",
+                    "src/feature_flags/evaluator.py",
+                ),
+                verification_profile="python_workspace_pytest_feature_flags_v1",
+                output_carrier="full_files",
+                max_repair_turns=1,
+            ),
+            train_charter=TrainCharter(
+                cortex_invariant=(
+                    "optional work contract, runtime-native verification truth, and one bounded repair turn"
+                ),
+                borrowed_mechanism=(
+                    "reuse the landed verified-work profile registry and add one middle-weight pure-Python evaluator pack"
+                ),
+                primary_proving_wiring="openai:service_api",
+                conformance_surfaces=(
+                    "openai:service_api",
+                    "claude:operator_cli",
+                    "gemini:operator_cli",
+                ),
+                kill_criteria=(
+                    "cut the third-pack breadth slice if repeat-stable OpenAI conformance does not improve within the locked iteration budget",
+                    "do not repurpose the bookmarks summary.latest anchor while breadth evidence is still being earned",
+                ),
+            ),
+            shipping_default="openai:service_api",
+        )
     raise ValueError(f"Unsupported contract pack: {name}")
 
 
 def supported_contract_pack_names() -> tuple[str, ...]:
-    return (ACTIVE_CONTRACT_PACK, NORMALIZE_PORT_CONTRACT_PACK)
+    return (
+        ACTIVE_CONTRACT_PACK,
+        NORMALIZE_PORT_CONTRACT_PACK,
+        FEATURE_FLAGS_CONTRACT_PACK,
+    )
 
 
 def strongest_native_surface(brain: Brain, contract_pack: ContractPack) -> Surface:
@@ -1209,6 +1252,7 @@ __all__ = [
     "ContractPack",
     "ConformanceRunResult",
     "DivergenceClass",
+    "FEATURE_FLAGS_CONTRACT_PACK",
     "NORMALIZE_PORT_CONTRACT_PACK",
     "TrainCharter",
     "active_contract_pack",
