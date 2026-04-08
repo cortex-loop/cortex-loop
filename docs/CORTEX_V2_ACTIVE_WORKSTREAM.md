@@ -42,7 +42,7 @@ It is workflow state only. It does not override the packet documents, implementa
   - one current-machine API truth anchor is now re-earned for current OpenAI-only product scope
   - the shared `canonical_anchor` direct-API suite remains implemented for `claude` and `openai`, but only `openai` is in the accepted current product scope
   - the active verified-work conformance reading on the bookmarks contract pack is:
-    - OpenAI `service_api`: partial on the repeated corrected current runs; the bounded repair path still finishes `test_failed`, so both conformance truth and shipping truth remain partial
+    - OpenAI `service_api`: conformant on three repeated targeted current reruns; bounded read-only workspace context now exposes the writable-file and test contract, and the shipping-default lane passes the bookmarks pack on attempt `1`
     - Claude `operator_cli`: no longer divergent on truthful staged-workspace runs; two focused reruns passed on attempt `1`, while repeated full tri-brain reruns hit Anthropic `529 overloaded_error` before structured output and therefore count as `env_blocked`, not protocol drift
     - Gemini `operator_cli`: conformant on the corrected current line; staged workspace truth removes the earlier `read_file` miss, and repeated full reruns now pass the bookmarks pack
 
@@ -50,10 +50,10 @@ It is workflow state only. It does not override the packet documents, implementa
 
 - Current campaign: `P1 product-first reduction program`
 - Current working branch at ledger update: `main`
-- Current branch role: accepted resting line after the E5 Claude operator workspace-truth slice
+- Current branch role: accepted resting line after the E6 OpenAI verified-work context slice
 - Current candidate seam: `none active`
 - Current seam status:
-  - A0, P1C, S1, S1C, X1, X2, the first verified-work restoration slice, the Cortex-law / fast-train method slice, the verified-work neutralization / conformance-correction slice, and the Claude operator workspace-truth slice are now accepted on local `main`
+  - A0, P1C, S1, S1C, X1, X2, the first verified-work restoration slice, the Cortex-law / fast-train method slice, the verified-work neutralization / conformance-correction slice, the Claude operator workspace-truth slice, and the OpenAI verified-work context slice are now accepted on local `main`
   - the explicit `current|canonical_anchor` direct-API service suites remain accepted on the current line
   - the OpenAI service spend split remains explicit:
     - `service_smoke` uses `gpt-5.4-mini`
@@ -81,7 +81,7 @@ It is workflow state only. It does not override the packet documents, implementa
     - deterministic support checks in `tests/unit/test_live_validation_tools.py`, `tests/unit/test_verification_docs_sync.py`, `tests/unit/test_correspondence_sre.py`, and `tests/unit/test_import_smoke.py`
   - retained operator/watchlist tools stay callable as diagnostics, but they no longer define the active current-line closure path
   - `O5`-`O8` remain landed as historical/reference evidence only; they are no longer the accepted OpenAI-only product runtime after X1
-  - the accepted next-seam correction recorded in `docs/CORTEX_V2_EXECUTIVE_RESTORATION_NOTE.md` has now landed partially on the accepted line:
+  - the accepted next-seam correction recorded in `docs/CORTEX_V2_EXECUTIVE_RESTORATION_NOTE.md` has now landed on the accepted OpenAI realization:
     - keep the X1/X2 product simplification
     - cut prompt-shaping and benchmark-local executive control as product directions
     - restore one tiny runtime-native executive loop for larger tasks
@@ -90,16 +90,18 @@ It is workflow state only. It does not override the packet documents, implementa
     - optional `work_contract` activation on the OpenAI host-control family
     - runtime-native external verification binding
     - one bounded repair turn on the OpenAI verified-work path
+    - one bounded read-only workspace-context attachment on the OpenAI verified-work service lane
   - the accepted thin `O4` path remains unchanged when `work_contract` is absent
-  - the new `O4R` verified-work row remains partial:
+  - the `O4R` verified-work row now lands:
     - deterministic coverage and repo-local revalidation are landed
-    - local larger-task value lift is not yet re-earned repeat-stably
+    - three repeated targeted OpenAI bookmarks reruns now pass on attempt `1`
+    - the landed lane remains explicitly outside canonical-anchor proof
   - the active Cortex-law conformance method now lands:
     - one explicit `Train Charter` requirement for long trains
     - one explicit `build -> test -> iterate -> cut` default loop
     - one tri-brain conformance harness on the active bookmarks verified-work contract pack
     - one explicit divergence taxonomy: `cortex_law`, `brain_wiring`, `surface_wiring`, `env_blocked`
-    - one corrected staged-workspace verified-work audit result of `next_decision = improve_shipping_default`; Gemini is now conformant, and Claude no longer counts as divergent when Anthropic overload returns a provider-side block instead of structured output
+    - one corrected current-line reading where the OpenAI shipping-default lane now promotes on repeated targeted reruns, Gemini remains conformant, and Claude no longer counts as divergent when Anthropic overload returns a provider-side block instead of structured output
   - shipping truth remains OpenAI-first on the service lane
   - Claude remains outside the accepted shipping default, but Claude is no longer treated as generic backlog for Cortex-law conformance work
   - Gemini remains outside the accepted shipping default, but Gemini is no longer treated as generic backlog for Cortex-law conformance work
@@ -108,20 +110,20 @@ It is workflow state only. It does not override the packet documents, implementa
 
 ## 3. Next lawful move
 
-- No active verified-work restoration seam remains on the accepted local `main` line.
-- The accepted executive-restoration correction is now partially landed on the current line.
+- No active verified-work shipping-gap seam remains on the accepted local `main` line.
+- The accepted executive-restoration correction is now landed on the current OpenAI realization.
 - If a later runtime/product seam opens, the next lawful move is:
   - write the `Train Charter` first
   - define the Cortex invariant before touching wiring
   - choose the fastest proving wiring and one tiny runnable contract pack
   - run tri-brain conformance on OpenAI, Claude, and Gemini
   - classify divergence as `cortex_law`, `brain_wiring`, `surface_wiring`, or `env_blocked`
-  - because the corrected current line no longer has a non-shipping divergent surface, reopen the shipping-default gap next: improve `O4R` value lift on OpenAI before widening Cortex law or host scope
+  - keep the landed `O4R` path stable before opening any new Cortex-law or host-scope seam
   - keep Claude in the `env_blocked` bucket when Anthropic overload prevents structured output; that is provider availability noise, not a new wiring or law failure
   - keep Gemini in the `conformant` bucket on the staged-workspace operator surface rather than reopening Gemini wiring prematurely
-  - keep the default thin path unchanged while `O4R` remains partial
-  - keep repeated-failure inhibition and automatic carrier selection deferred until value is earned
-  - cut back rather than widen if the verified-work path continues to fail without clear lift or better conformance
+  - keep the default thin path unchanged and keep the landed verified-work lane outside canonical-anchor proof
+  - keep repeated-failure inhibition and automatic carrier selection deferred until new evidence earns them
+  - open any later shipping-truth widening beyond OpenAI only through an explicit separate host shipping train
 - Keep shipping-truth widening separate from conformance work:
   - `claude` may be conformance-required on `operator_cli` before any later Claude shipping train opens
   - `gemini` may be conformance-required on its strongest native surface before any later Gemini shipping train opens
@@ -149,7 +151,7 @@ It is workflow state only. It does not override the packet documents, implementa
 - Do not treat benchmark-local repair control as accepted product behavior.
 - Do not reopen prompt shaping or hidden build-brief doctrine as a product direction.
 - Do not solve larger-task repair by adding a second large task-specific subsystem when one optional work contract would suffice.
-- Do not promote the partial `O4R` verified-work lane into canonical-anchor proof before repeat-stable live lift is earned.
+- Do not promote the landed `O4R` verified-work lane into canonical-anchor proof without a separate evidence-earning move.
 - Do not let one host or one surface redefine Cortex law by itself.
 
 ## 5. Acknowledged worktree noise at ledger creation

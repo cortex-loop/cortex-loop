@@ -5,6 +5,7 @@ from __future__ import annotations
 import pytest
 
 from cortex.runtime.verified_work_runtime import (
+    build_verified_work_input_text,
     build_verified_work_instructions,
     build_verified_work_repair_ticket,
     verify_verified_work_result,
@@ -31,6 +32,17 @@ def test_build_verified_work_instructions_lists_allowed_paths() -> None:
     assert "=== BLOCKED: unsafe_request ===" in instructions
     assert "Do not return prose" in instructions
     assert "src/bookmarks_api/main.py" in instructions
+
+
+def test_build_verified_work_input_text_attaches_workspace_context() -> None:
+    input_text = build_verified_work_input_text("build bookmarks app", _work_contract())
+
+    assert input_text.startswith("build bookmarks app")
+    assert "Read-only workspace context follows." in input_text
+    assert "=== CONTEXT FILE: src/bookmarks_api/main.py ===" in input_text
+    assert "=== CONTEXT FILE: tests/test_bookmarks_api.py ===" in input_text
+    assert "app = FastAPI(title=\"Bookmarks API\")" in input_text
+    assert "test_create_and_get_bookmark_by_id" in input_text
 
 
 def test_verify_verified_work_result_rejects_unapproved_path() -> None:

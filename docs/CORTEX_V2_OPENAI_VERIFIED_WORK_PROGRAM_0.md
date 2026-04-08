@@ -1,7 +1,7 @@
 # CORTEX_V2_OPENAI_VERIFIED_WORK_PROGRAM_0
 
 Date: 2026-04-08
-Status: accepted bounded runtime-program brief for the first verified-work restoration slice; `O4R` remains partial on the current line
+Status: accepted bounded runtime-program brief for the first verified-work restoration slice; `O4R` is now landed on the current line
 
 ## Purpose
 
@@ -13,7 +13,7 @@ The chosen move is:
 - add one optional request-scoped `work_contract`,
 - bind external verification into runtime truth,
 - allow at most one runtime-driven repair turn,
-- and keep the resulting lane explicitly outside the current canonical-anchor proof bundle until local value is re-earned.
+- and keep the resulting lane explicitly outside the current canonical-anchor proof bundle even after local value is re-earned.
 
 This document does not override:
 
@@ -127,8 +127,9 @@ When verified-work is active, the result payload may additionally include:
 
 The verified-work lane may:
 
-- keep the original user `input` literal
+- keep the original user `input` at the front of the model-facing task text
 - inject only the fixed mechanical `full_files` protocol instructions
+- attach one bounded read-only workspace context bundle over the current writable-file contents plus the contract tests on the OpenAI service lane
 - parse returned file blocks or blocked markers
 - verify the result externally against the bounded bookmarks workload
 - bind that `VerificationOutcome` into `OpenAIRuntimeSession.last_failure_class`
@@ -160,7 +161,7 @@ This program is intentionally outside the current compact canonical proof bundle
 - runtime truth, not a benchmark-local controller, decides whether the repair turn happens
 - only one repair turn is possible
 - deterministic tests and repo-local revalidation pass
-- repeated local bookmarks reruns show the runtime-driven one-repair path is not worse than one-shot and yields at least one failure-to-pass repair
+- repeated local bookmarks reruns show the shipping-default verified-work lane is repeat-stably conformant, either by a clean first-attempt pass or by one lawful failure-to-pass repair
 - and the `O4R` phase-gate row is updated truthfully
 
 ## Current state on the accepted line
@@ -170,12 +171,14 @@ On the current line:
 - the shared verified-work law is implemented
 - the shared verified-work runtime helpers now live in the neutral `cortex/runtime/verified_work_runtime.py` home
 - the OpenAI host-control family now accepts an optional bounded `work_contract`
+- the OpenAI verified-work path now attaches one bounded read-only workspace context bundle over the current writable-file contents plus `tests/test_bookmarks_api.py`
 - external verification now updates runtime truth through `run_openai_runtime_verification_step()`
 - the verified-work path can perform exactly one native continuation attempt
 - the default thin `O4` path remains unchanged when `work_contract` is absent
 - deterministic tests and repo-local revalidation are real
 - the corrected tri-brain conformance rerun removed Gemini's false raw-JSON-wrapper `output_invalid` classification without widening shipping truth
-- but `O4R` remains partial because live larger-task lift has not yet been re-earned repeat-stably
+- three repeated targeted local reruns on `python3 tools/cortex_conformance.py --mode active --brain openai` now pass the bookmarks pack on attempt `1`
+- `O4R` is therefore landed for the current OpenAI shipping-default scope, while remaining explicitly outside the current canonical-anchor proof bundle
 
 ## Explicitly blocked moves
 

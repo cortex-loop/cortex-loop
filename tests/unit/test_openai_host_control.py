@@ -339,6 +339,85 @@ def test_run_openai_host_control_verified_work_one_shot_adds_verification(
     assert final_session.last_failure_class is None
 
 
+def test_run_openai_host_control_verified_work_attaches_workspace_context_to_first_attempt(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    work_contract = WorkContract(
+        allowed_write_paths=tuple(VALID_FILE_MAP),
+        verification_profile="python_workspace_pytest_v1",
+        output_carrier="full_files",
+        max_repair_turns=0,
+    )
+    rendered = render_full_files_result(VALID_FILE_MAP)
+    seen: dict[str, str | None] = {}
+
+    def transport(
+        request: OpenAIHostControlRequest,
+        *,
+        previous_response_id: str | None = None,
+        input_text_override: str | None = None,
+    ) -> list[dict[str, object]]:
+        assert previous_response_id is None
+        assert input_text_override is None
+        seen["input_text"] = request.input_text
+        seen["instructions"] = request.instructions
+        return [
+            {
+                "type": "response.created",
+                "session_id": "oa-verified-context",
+                "response_id": "resp-verified-context-1",
+            },
+            {
+                "type": "response.output_text.delta",
+                "session_id": "oa-verified-context",
+                "response_id": "resp-verified-context-1",
+                "delta": rendered,
+            },
+            {
+                "type": "response.completed",
+                "session_id": "oa-verified-context",
+                "response_id": "resp-verified-context-1",
+            },
+        ]
+
+    monkeypatch.setattr(
+        "cortex.runtime.openai_host_control.verify_verified_work_result",
+        lambda result_text, contract: (
+            VALID_FILE_MAP,
+            VerificationOutcome(
+                status="passed",
+                failure_class=None,
+                parsed_paths=tuple(VALID_FILE_MAP),
+                import_smoke_ok=True,
+                pytest_ok=True,
+                pytest_exit_code=0,
+                pytest_passed=11,
+                pytest_failed=0,
+            ),
+        ),
+    )
+    request = OpenAIHostControlRequest(
+        action_tag="openai-response-stream",
+        model="gpt-5.4",
+        input_text="build bookmarks app",
+        max_output_tokens=4096,
+        work_contract=work_contract,
+    )
+
+    result, _final_session = run_openai_host_control(
+        request,
+        transport=transport,
+    )
+
+    assert result.attempt_count == 1
+    assert seen["input_text"] is not None
+    assert "build bookmarks app" in seen["input_text"]
+    assert "=== CONTEXT FILE: tests/test_bookmarks_api.py ===" in seen["input_text"]
+    assert "=== CONTEXT FILE: src/bookmarks_api/main.py ===" in seen["input_text"]
+    assert seen["instructions"] is not None
+    assert "Do not return prose, explanations, or code fences. Do not run tests." in seen["instructions"]
+
+
 def test_run_openai_host_control_verified_work_repairs_once_from_runtime_signal(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -365,6 +444,7 @@ def test_run_openai_host_control_verified_work_repairs_once_from_runtime_signal(
                 "previous_response_id": previous_response_id,
                 "input_text_override": input_text_override,
                 "instructions": request.instructions,
+                "request_input_text": request.input_text,
             }
         )
         if previous_response_id is None:
@@ -452,5 +532,7 @@ def test_run_openai_host_control_verified_work_repairs_once_from_runtime_signal(
     assert result.attempt_count == 2
     assert result.verification is not None
     assert result.verification.status == "passed"
+    assert "=== CONTEXT FILE: tests/test_bookmarks_api.py ===" in str(calls[0]["request_input_text"])
     assert final_session.event_index == 6
     assert final_session.next_recommended_move == "continue"
+    assert "=== CONTEXT FILE:" not in str(calls[1]["input_text_override"])

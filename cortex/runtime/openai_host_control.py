@@ -20,6 +20,7 @@ from .openai_host_transport import (
     execute_openai_response_stream_turn,
 )
 from .verified_work_runtime import (
+    build_verified_work_input_text,
     build_verified_work_instructions,
     build_verified_work_repair_ticket,
     verify_verified_work_result,
@@ -225,7 +226,10 @@ def run_openai_host_control(
     verified_request = OpenAIHostControlRequest(
         action_tag=request.action_tag,
         model=request.model,
-        input_text=request.input_text,
+        input_text=build_verified_work_input_text(
+            request.input_text,
+            request.work_contract,
+        ),
         instructions=build_verified_work_instructions(request.work_contract),
         metadata=request.metadata,
         max_output_tokens=request.max_output_tokens,

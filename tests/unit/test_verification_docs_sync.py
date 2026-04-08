@@ -260,12 +260,12 @@ def test_active_current_line_docs_frame_openai_only_truth_and_watchlist_retentio
     )
     assert "Current working branch at ledger update: `main`" in workstream_text
     assert (
-        "Current branch role: accepted resting line after the E5 Claude operator workspace-truth slice"
+        "Current branch role: accepted resting line after the E6 OpenAI verified-work context slice"
         in workstream_text
     )
     assert "Current candidate seam: `none active`" in workstream_text
     assert (
-        "A0, P1C, S1, S1C, X1, X2, the first verified-work restoration slice, the Cortex-law / fast-train method slice, the verified-work neutralization / conformance-correction slice, and the Claude operator workspace-truth slice are now accepted on local `main`"
+        "A0, P1C, S1, S1C, X1, X2, the first verified-work restoration slice, the Cortex-law / fast-train method slice, the verified-work neutralization / conformance-correction slice, the Claude operator workspace-truth slice, and the OpenAI verified-work context slice are now accepted on local `main`"
         in workstream_text
     )
     assert "docs/CORTEX_V2_EXECUTIVE_RESTORATION_NOTE.md" in workstream_text
@@ -274,11 +274,11 @@ def test_active_current_line_docs_frame_openai_only_truth_and_watchlist_retentio
         in workstream_text
     )
     assert "the first verified-work restoration slice now lands" in workstream_text
-    assert "the new `O4R` verified-work row remains partial" in workstream_text
-    assert "No active verified-work restoration seam remains on the accepted local `main` line." in workstream_text
+    assert "the `O4R` verified-work row now lands" in workstream_text
+    assert "No active verified-work shipping-gap seam remains on the accepted local `main` line." in workstream_text
     assert "write the `Train Charter` first" in workstream_text
     assert "run tri-brain conformance on OpenAI, Claude, and Gemini" in workstream_text
-    assert "OpenAI `service_api`: partial on the repeated corrected current runs" in workstream_text
+    assert "OpenAI `service_api`: conformant on three repeated targeted current reruns" in workstream_text
     assert "Claude `operator_cli`: no longer divergent on truthful staged-workspace runs" in workstream_text
     assert "Gemini `operator_cli`: conformant on the corrected current line" in workstream_text
 
@@ -322,22 +322,22 @@ def test_active_current_line_docs_frame_openai_only_truth_and_watchlist_retentio
     )
     assert "no active support/eval compression seam remains on the accepted local `main` line" in service_proof_text
 
-    assert "accepted executive-restoration note with the first verified-work restoration slice now landed partially" in restoration_note_text
+    assert "accepted executive-restoration note with the first verified-work restoration slice now landed on the current OpenAI realization" in restoration_note_text
     assert "The local larger-task exploratory runs do not justify prompt shaping" in restoration_note_text
     assert "The next runtime/product seam should improve Cortex law first" in restoration_note_text
-    assert "The first restoration slice is now partly landed on the accepted line" in restoration_note_text
+    assert "The first restoration slice is now landed on the accepted OpenAI realization" in restoration_note_text
     assert "the shared verified-work runtime helpers now live in the neutral `cortex/runtime/verified_work_runtime.py` home" in restoration_note_text
-    assert "repeat-stable live lift for the verified-work path over one-shot behavior" in restoration_note_text
+    assert "repeated targeted local OpenAI reruns on the bookmarks pack now pass on the shipping-default lane" in restoration_note_text
     assert "## Conformance reading under the current method" in restoration_note_text
     assert "It should ask whether the same Cortex law is conformant, partial, divergent, unwired, or env-blocked" in restoration_note_text
-    assert "The current next decision is therefore `improve_shipping_default`" in restoration_note_text
+    assert "The current next decision for the shipping-default lane is therefore `promote`" in restoration_note_text
     assert "This note does not authorize:" in restoration_note_text
 
     assert "accepted bounded runtime-program brief for the first verified-work restoration slice" in verified_work_program_text
     assert "keep the accepted thin `O4` path unchanged when no `work_contract` is present" in verified_work_program_text
     assert "This program is intentionally outside the current compact canonical proof bundle" in verified_work_program_text
     assert "the shared verified-work runtime helpers now live in the neutral `cortex/runtime/verified_work_runtime.py` home" in verified_work_program_text
-    assert "but `O4R` remains partial because live larger-task lift has not yet been re-earned repeat-stably" in verified_work_program_text
+    assert "`O4R` is therefore landed for the current OpenAI shipping-default scope" in verified_work_program_text
 
 
 def test_x2_accepted_line_claims_match_main() -> None:
@@ -412,15 +412,17 @@ def test_phase_gates_match_openai_only_truth_and_hygiene() -> None:
     )
     assert "remains thin and text-only by default when no `work_contract` is present" in o4_row
     assert "keeps `openai_product_journal` v1 only" in o4_row
-    assert "repeat-stable local larger-task reruns still required before closeout | partial |" in o4r_row
+    assert "closed | landed |" in o4r_row
     assert "the invariant verified-work runtime helpers now live in a neutral runtime home" in o4r_row
+    assert "bounded read-only workspace context bundle over the current writable-file contents plus the contract tests" in o4r_row
     assert "tools/cortex_conformance.py" in c1_row
     assert "Train Charter" in c1_row
     assert "make conformance-preflight" in c2_row
-    assert "OpenAI `service_api` partial because the bounded repair path still finishes `test_failed`" in c2_row
+    assert "OpenAI `service_api` conformant on three repeated targeted reruns" in c2_row
     assert "Claude `operator_cli` no longer divergent because truthful staged-workspace reruns pass" in c2_row
     assert "Anthropic `529 overloaded_error` and therefore count as `env_blocked`" in c2_row
     assert "Gemini `operator_cli` conformant because staged workspace truth removes the earlier `read_file` miss" in c2_row
+    assert "current shipping-default decision is `promote`" in c2_row
     assert "strongest available native surface may stand in for development conformance" in c3_row
     assert "historical/watchlist-only; do not use for runtime closure" in l5_row
     assert "closed | landed" in l6c_row

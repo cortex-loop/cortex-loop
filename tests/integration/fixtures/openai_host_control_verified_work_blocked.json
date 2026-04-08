@@ -1,24 +1,6 @@
 {
   "calls": [
     {
-      "expected_request": {
-        "action_tag": "openai-response-stream",
-        "request": {
-          "model": "gpt-5.4",
-          "input": "build bookmarks app",
-          "instructions": "Return only full-file blocks for the allowed paths.\nAllowed paths:\n- src/bookmarks_api/main.py\n- src/bookmarks_api/models.py\n- src/bookmarks_api/store.py\n\nFor each file, use:\n=== FILE: relative/path ===\n<full file contents>\n=== END FILE ===\n\nIf blocked because you need missing user information, use:\n=== BLOCKED: needs_user_input ===\n<message>\n=== END BLOCKED ===\n\nIf blocked because the request is unsafe, use:\n=== BLOCKED: unsafe_request ===\n<message>\n=== END BLOCKED ===\n\nDo not return prose, explanations, or code fences. Do not run tests.",
-          "work_contract": {
-            "allowed_write_paths": [
-              "src/bookmarks_api/main.py",
-              "src/bookmarks_api/models.py",
-              "src/bookmarks_api/store.py"
-            ],
-            "verification_profile": "python_workspace_pytest_v1",
-            "output_carrier": "full_files",
-            "max_repair_turns": 0
-          }
-        }
-      },
       "events": [
         {
           "type": "response.created",

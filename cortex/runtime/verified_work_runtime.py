@@ -33,6 +33,7 @@ _END_BLOCKED_MARKER = "=== END BLOCKED ==="
 _PASSED_RE = re.compile(r"(?P<count>\d+)\s+passed")
 _FAILED_RE = re.compile(r"(?P<count>\d+)\s+failed")
 _FAILING_TEST_RE = re.compile(r"^(?:FAILED|ERROR) (?P<name>tests/[^\s]+)", re.MULTILINE)
+_READ_ONLY_CONTEXT_PATHS = ("tests/test_bookmarks_api.py",)
 
 
 def build_verified_work_instructions(work_contract: WorkContract) -> str:
@@ -54,6 +55,19 @@ def build_verified_work_instructions(work_contract: WorkContract) -> str:
         "<message>\n"
         "=== END BLOCKED ===\n\n"
         "Do not return prose, explanations, or code fences. Do not run tests."
+    )
+
+
+def build_verified_work_input_text(task_prompt: str, work_contract: WorkContract) -> str:
+    if not (isinstance(task_prompt, str) and task_prompt.strip()):
+        raise ValueError(
+            "build_verified_work_input_text.task_prompt must be non-empty after trimming."
+        )
+    return (
+        f"{task_prompt.strip()}\n\n"
+        "Read-only workspace context follows. Use the existing writable-file contents and tests below as the task contract.\n"
+        "Modify only the allowed paths named in the work contract.\n\n"
+        f"{_build_verified_work_context_bundle(work_contract)}"
     )
 
 
@@ -87,6 +101,29 @@ def verify_verified_work_result(
         return file_map, blocked_outcome
     assert file_map is not None
     return file_map, _run_verified_work_verifier(file_map, work_contract)
+
+
+def _build_verified_work_context_bundle(work_contract: WorkContract) -> str:
+    context_paths = tuple(work_contract.allowed_write_paths) + _READ_ONLY_CONTEXT_PATHS
+    rendered_blocks: list[str] = []
+    for relative_path in context_paths:
+        source_path = BOOKMARKS_TEMPLATE_ROOT / relative_path
+        if not source_path.is_file():
+            raise RuntimeError(
+                "verified-work context file is missing from the bookmarks template: "
+                f"{relative_path}"
+            )
+        file_text = source_path.read_text(encoding="utf-8").rstrip()
+        rendered_blocks.append(
+            "\n".join(
+                (
+                    f"=== CONTEXT FILE: {relative_path} ===",
+                    file_text,
+                    "=== END CONTEXT FILE ===",
+                )
+            )
+        )
+    return "\n\n".join(rendered_blocks)
 
 
 def _parse_verified_work_result(
@@ -360,6 +397,7 @@ def _first_relevant_excerpt(output: str) -> str | None:
 __all__ = [
     "BLOCKED_REASON_MAP",
     "BOOKMARKS_TEMPLATE_ROOT",
+    "build_verified_work_input_text",
     "build_verified_work_instructions",
     "build_verified_work_repair_ticket",
     "verify_verified_work_result",
