@@ -19,6 +19,9 @@ LIVE_VALIDATION_VERDICT_PATH = (
     REPO_ROOT / "docs" / "CORTEX_V2_LIVE_VALIDATION_VERDICT_0.md"
 )
 LIVE_SERVICE_PROOF_PATH = REPO_ROOT / "docs" / "CORTEX_V2_LIVE_SERVICE_PROOF_0.md"
+EXECUTIVE_RESTORATION_NOTE_PATH = (
+    REPO_ROOT / "docs" / "CORTEX_V2_EXECUTIVE_RESTORATION_NOTE.md"
+)
 LIVE_COMPARE_PATH = REPO_ROOT / "tools" / "live_compare.py"
 LIVE_VALIDATION_SCOPE_SOURCE_PATH = REPO_ROOT / "tools" / "live_validation_common.py"
 
@@ -197,6 +200,7 @@ def test_active_current_line_docs_frame_openai_only_truth_and_watchlist_retentio
     program_text = _read(LIVE_VALIDATION_PROGRAM_PATH)
     verdict_text = _read(LIVE_VALIDATION_VERDICT_PATH)
     service_proof_text = _read(LIVE_SERVICE_PROOF_PATH)
+    restoration_note_text = _read(EXECUTIVE_RESTORATION_NOTE_PATH)
 
     assert "`service_api` is the canonical runtime truth lane" in workstream_text
     assert "`operator_cli` is a watchlist and exploratory-comparison lane" in workstream_text
@@ -211,11 +215,13 @@ def test_active_current_line_docs_frame_openai_only_truth_and_watchlist_retentio
     )
     assert "Current candidate seam: `none active`" in workstream_text
     assert "A0, P1C, S1, S1C, X1, and X2 are now accepted on local `main`" in workstream_text
+    assert "docs/CORTEX_V2_EXECUTIVE_RESTORATION_NOTE.md" in workstream_text
     assert (
         "retained operator/watchlist tools stay callable as diagnostics, but they no longer define the active current-line closure path"
         in workstream_text
     )
     assert "No active support/eval compression seam remains on the accepted local `main` line." in workstream_text
+    assert "one shared model-agnostic executive substrate seam first" in workstream_text
 
     assert (
         "This is the only active current-line proof bundle for the accepted OpenAI-only product scope."
@@ -256,6 +262,11 @@ def test_active_current_line_docs_frame_openai_only_truth_and_watchlist_retentio
         in service_proof_text
     )
     assert "no active support/eval compression seam remains on the accepted local `main` line" in service_proof_text
+
+    assert "accepted next-seam decision note for bounded executive restoration" in restoration_note_text
+    assert "The local larger-task exploratory runs do not justify prompt shaping" in restoration_note_text
+    assert "The next runtime/product seam should be a shared model-agnostic executive substrate first" in restoration_note_text
+    assert "This note does not authorize:" in restoration_note_text
 
 
 def test_x2_accepted_line_claims_match_main() -> None:

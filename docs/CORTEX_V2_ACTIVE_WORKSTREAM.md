@@ -71,6 +71,10 @@ It is workflow state only. It does not override the packet documents, implementa
     - deterministic support checks in `tests/unit/test_live_validation_tools.py`, `tests/unit/test_verification_docs_sync.py`, `tests/unit/test_correspondence_sre.py`, and `tests/unit/test_import_smoke.py`
   - retained operator/watchlist tools stay callable as diagnostics, but they no longer define the active current-line closure path
   - `O5`-`O8` remain landed as historical/reference evidence only; they are no longer the accepted OpenAI-only product runtime after X1
+  - the accepted next-seam correction is now recorded in `docs/CORTEX_V2_EXECUTIVE_RESTORATION_NOTE.md`:
+    - keep the X1/X2 product simplification
+    - cut prompt-shaping and benchmark-local executive control as product directions
+    - restore one tiny runtime-native executive loop for larger tasks
   - Claude canonical-suite plumbing remains implemented, but Claude stays outside the accepted current product scope as future host-expansion backlog
   - Gemini remains canonical-lane out of scope and watchlist-only until its direct API lane is opened deliberately
   - headless-CLI operator evidence remains watchlist-only, with Gemini local-vs-accepted drift surfaced explicitly rather than promoted into runtime truth
@@ -79,6 +83,13 @@ It is workflow state only. It does not override the packet documents, implementa
 ## 3. Next lawful move
 
 - No active support/eval compression seam remains on the accepted local `main` line.
+- The accepted keep/cut/restore decision for the next runtime/product seam is now recorded in `docs/CORTEX_V2_EXECUTIVE_RESTORATION_NOTE.md`.
+- If a later runtime/product seam opens, the next lawful move is:
+  - one shared model-agnostic executive substrate seam first
+  - optional work-contract activation rather than a second product
+  - runtime-native verification binding
+  - one bounded repair/inhibition gate
+  - OpenAI as the first host realization after that shared substrate exists
 - Keep `claude` and `gemini` as future host-expansion backlog only:
   - `claude` retains dormant shared `canonical_anchor` plumbing for a later explicit host-expansion train
   - `gemini` remains watchlist-only until direct API/service auth exists and a separate host-expansion train is opened
@@ -102,6 +113,9 @@ It is workflow state only. It does not override the packet documents, implementa
 - Do not add new control/accounting surfaces unless they change route choice, tool exposure, blockedness, or observable runtime outcome.
 - Do not let accepted watchlist fallback rows silently inflate canonical-looking package summaries.
 - Do not use the operator-payoff support note/tool as an active runtime-payoff closure surface.
+- Do not treat benchmark-local repair control as accepted product behavior.
+- Do not reopen prompt shaping or hidden build-brief doctrine as a product direction.
+- Do not solve larger-task repair by adding a second large task-specific subsystem when one optional work contract would suffice.
 
 ## 5. Acknowledged worktree noise at ledger creation
 
