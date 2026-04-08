@@ -12,13 +12,26 @@ from cortex.runtime.verified_work_runtime import (
 )
 from cortex.sre.verified_work import VerificationOutcome, WorkContract
 
-from tests.unit._verified_work_fixtures import VALID_FILE_MAP, render_full_files_result
+from tests.unit._verified_work_fixtures import (
+    VALID_FILE_MAP,
+    VALID_NORMALIZE_PORT_FILE_MAP,
+    render_full_files_result,
+)
 
 
 def _work_contract(max_repair_turns: int = 1) -> WorkContract:
     return WorkContract(
         allowed_write_paths=tuple(VALID_FILE_MAP),
         verification_profile="python_workspace_pytest_v1",
+        output_carrier="full_files",
+        max_repair_turns=max_repair_turns,
+    )
+
+
+def _normalize_port_work_contract(max_repair_turns: int = 1) -> WorkContract:
+    return WorkContract(
+        allowed_write_paths=tuple(VALID_NORMALIZE_PORT_FILE_MAP),
+        verification_profile="python_workspace_pytest_port_fix_v1",
         output_carrier="full_files",
         max_repair_turns=max_repair_turns,
     )
@@ -43,6 +56,16 @@ def test_build_verified_work_input_text_attaches_workspace_context() -> None:
     assert "=== CONTEXT FILE: tests/test_bookmarks_api.py ===" in input_text
     assert "app = FastAPI(title=\"Bookmarks API\")" in input_text
     assert "test_create_and_get_bookmark_by_id" in input_text
+
+
+def test_build_verified_work_input_text_attaches_normalize_port_context() -> None:
+    input_text = build_verified_work_input_text("fix normalize_port", _normalize_port_work_contract())
+
+    assert input_text.startswith("fix normalize_port")
+    assert "=== CONTEXT FILE: src/normalize_port.py ===" in input_text
+    assert "=== CONTEXT FILE: tests/test_normalize_port.py ===" in input_text
+    assert "if port >= 65535" in input_text
+    assert "assert normalize_port(65535) == 65535" in input_text
 
 
 def test_verify_verified_work_result_rejects_unapproved_path() -> None:
@@ -186,3 +209,66 @@ def test_build_verified_work_repair_ticket_is_factual_only() -> None:
     assert "Repair the previous submission without widening scope." in ticket
     assert "failure_class: blocked_unsafe" in ticket
     assert "blocked_message: Cannot help with that." in ticket
+
+
+def test_verify_verified_work_result_uses_profile_specific_verifier_targets(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    commands: list[list[str]] = []
+
+    class _Result:
+        def __init__(self, returncode: int = 0, stdout: str = "", stderr: str = "") -> None:
+            self.returncode = returncode
+            self.stdout = stdout
+            self.stderr = stderr
+
+    monkeypatch.setattr(
+        "cortex.runtime.verified_work_runtime._prepare_verified_work_python",
+        lambda _project_root: "/usr/bin/python3",
+    )
+
+    def _fake_run_command(command, *, cwd):
+        _ = cwd
+        commands.append(list(command))
+        return _Result(returncode=0, stdout="2 passed", stderr="")
+
+    monkeypatch.setattr(
+        "cortex.runtime.verified_work_runtime._run_command",
+        _fake_run_command,
+    )
+
+    _, bookmarks_outcome = verify_verified_work_result(
+        render_full_files_result(VALID_FILE_MAP),
+        _work_contract(),
+    )
+    _, port_outcome = verify_verified_work_result(
+        render_full_files_result(VALID_NORMALIZE_PORT_FILE_MAP),
+        _normalize_port_work_contract(),
+    )
+
+    assert bookmarks_outcome.status == "passed"
+    assert port_outcome.status == "passed"
+    assert commands[0] == [
+        "/usr/bin/python3",
+        "-c",
+        "import importlib; importlib.import_module('bookmarks_api.main')",
+    ]
+    assert commands[1] == [
+        "/usr/bin/python3",
+        "-m",
+        "pytest",
+        "-q",
+        "tests/test_bookmarks_api.py",
+    ]
+    assert commands[2] == [
+        "/usr/bin/python3",
+        "-c",
+        "import importlib; importlib.import_module('normalize_port')",
+    ]
+    assert commands[3] == [
+        "/usr/bin/python3",
+        "-m",
+        "pytest",
+        "-q",
+        "tests/test_normalize_port.py",
+    ]

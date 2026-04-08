@@ -49,12 +49,12 @@ It is workflow state only. It does not override the packet documents, implementa
 ## 2. Current campaign and seam state
 
 - Current campaign: `P1 product-first reduction program`
-- Current working branch at ledger update: `review/c3b-brutal-closed-loop-train-method`
-- Current branch role: explicit manual/review branch for the C3B brutal closed-loop train method while the accepted baseline remains local `main`
-- Current candidate seam: `C3B brutal closed-loop train method`
+- Current working branch at ledger update: `review/e7-verified-work-breadth-train`
+- Current branch role: explicit manual/review branch for the E7 verified-work breadth train while the accepted baseline remains local `main`
+- Current candidate seam: `E7 verified-work breadth train`
 - Current seam status:
-  - accepted baseline truth on local `main` remains the E6 OpenAI verified-work context slice
-  - A0, P1C, S1, S1C, X1, X2, the first verified-work restoration slice, the Cortex-law / fast-train method slice, the verified-work neutralization / conformance-correction slice, the Claude operator workspace-truth slice, and the OpenAI verified-work context slice are now accepted on local `main`
+  - accepted baseline truth on local `main` now includes the C3B brutal closed-loop train method on top of the E6 OpenAI verified-work context slice
+  - A0, P1C, S1, S1C, X1, X2, the first verified-work restoration slice, the Cortex-law / fast-train method slice, the verified-work neutralization / conformance-correction slice, the Claude operator workspace-truth slice, the OpenAI verified-work context slice, and the C3B brutal closed-loop train method are now accepted on local `main`
   - the explicit `current|canonical_anchor` direct-API service suites remain accepted on the current line
   - the OpenAI service spend split remains explicit:
     - `service_smoke` uses `gpt-5.4-mini`
@@ -103,7 +103,7 @@ It is workflow state only. It does not override the packet documents, implementa
     - one tri-brain conformance harness on the active bookmarks verified-work contract pack
     - one explicit divergence taxonomy: `cortex_law`, `brain_wiring`, `surface_wiring`, `env_blocked`
     - one corrected current-line reading where the OpenAI shipping-default lane now promotes on repeated targeted reruns, Gemini remains conformant, and Claude no longer counts as divergent when Anthropic overload returns a provider-side block instead of structured output
-  - the active brutal closed-loop train method on this review branch now adds:
+  - the active brutal closed-loop train method is now accepted on local `main` and remains the operating method for current review-branch work:
     - baseline result, primary metric, guardrail metric, iteration budget, rollback surface, and escalation-trigger fields to long-train charters
     - one explicit loop-class split: `deterministic`, `shared verification-plumbing`, `timing/env-sensitive`
     - one explicit per-iteration decision law: `promote`, `revise`, `cut`, `escalate`
@@ -115,21 +115,29 @@ It is workflow state only. It does not override the packet documents, implementa
   - Gemini remains outside the accepted shipping default, but Gemini is no longer treated as generic backlog for Cortex-law conformance work
   - headless-CLI operator evidence remains watchlist-only even when conformance is positive; it does not widen shipping truth or canonical runtime proof
   - the older local `review/*` backlog is now archived to local `archive/review--*` tags and removed; full repo hygiene remains partial until `origin/main` reconciliation because local `main` is ahead
-  - the conformance-summary truth pilot on this review branch now records:
+  - the accepted conformance-summary truth pilot on local `main` records:
     - baseline drift where `summary.latest` referenced missing artifacts and a stale `fix_wiring_only` decision
     - one clean full tri-brain rerun under `.cortex/live_validation/conformance/run_20260408T074128+0000`
     - one reconciled `summary.latest` state where OpenAI, Claude, and Gemini are all conformant and the shipping-default decision is `promote`
-    - `CT2` therefore re-earned on this review branch
-  - this C3B slice is landed on the current review branch and is not yet accepted on local `main`
+    - `CT2` therefore re-earned on the current line
+  - the current E7 breadth slice on this review branch now adds:
+    - one second explicit verified-work profile `python_workspace_pytest_port_fix_v1` over the existing `project_template` normalize-port task
+    - one second contract pack `verified_work_normalize_port_v1` in the conformance harness
+    - one bookmarks-preserving rule where `summary.latest` remains anchored to `verified_work_bookmarks_v1` and normalize-port breadth writes only explicit per-pack artifacts
+    - one product-facing breadth train entry `verified-work-breadth-openai` in `tools/cortex_train_loop.py`
+    - one localized verifier-install correction where the bounded workspace venv now installs `-e .[test] pytest`, keeping the existing bookmarks pack lawful while making the normalize-port verifier runnable
+    - two repeated targeted OpenAI reruns where the bookmarks pack remains conformant and the normalize-port pack now passes on attempt `1`
+    - one explicit normalize-port tri-brain guardrail rerun under `.cortex/live_validation/conformance/run_20260408T083436+0000` where OpenAI `service_api` is conformant, Claude `operator_cli` recovers after one lawful repair, Gemini `operator_cli` is conformant, and the guardrail decision remains `promote`
+  - this E7 slice is landed on the current review branch and is not yet accepted on local `main`
 
 ## 3. Next lawful move
 
 - No active verified-work shipping-gap seam remains on the accepted local `main` line.
 - The accepted executive-restoration correction is now landed on the current OpenAI realization.
 - While this explicit review branch remains open, the next lawful move is:
-  - manually merge or deliberately reject the C3B review branch before opening another runtime/product seam
+  - manually merge or deliberately reject the E7 review branch before opening another runtime/product seam
   - keep accepted-baseline truth separate from the review-branch candidate state
-- After this C3B slice is accepted, later runtime/product seams should default to:
+- After this E7 slice is accepted, later runtime/product seams should default to:
   - write the `Train Charter` first
   - record one baseline result before the first edit or candidate proof run
   - choose exactly one primary metric and one guardrail metric
@@ -146,7 +154,8 @@ It is workflow state only. It does not override the packet documents, implementa
   - keep the default thin path unchanged and keep the landed verified-work lane outside canonical-anchor proof
   - keep repeated-failure inhibition and automatic carrier selection deferred until new evidence earns them
   - open any later shipping-truth widening beyond OpenAI only through an explicit separate host shipping train
-- After this C3B slice is accepted, no active CT2 conformance-summary drift gap should remain on the current line.
+- After this E7 slice is accepted, bookmarks should remain the accepted `CT2` anchor pack unless a later deliberate breadth-closure move says otherwise.
+- After this E7 slice is accepted, the next product-facing move should be another bounded breadth or value slice rather than another governance-only train.
 - Keep shipping-truth widening separate from conformance work:
   - `claude` may be conformance-required on `operator_cli` before any later Claude shipping train opens
   - `gemini` may be conformance-required on its strongest native surface before any later Gemini shipping train opens

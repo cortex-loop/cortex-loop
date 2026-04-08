@@ -6,7 +6,12 @@ from dataclasses import dataclass
 from typing import Any
 
 _ALLOWED_OUTPUT_CARRIERS = frozenset({"full_files"})
-_ALLOWED_VERIFICATION_PROFILES = frozenset({"python_workspace_pytest_v1"})
+_ALLOWED_VERIFICATION_PROFILES = frozenset(
+    {
+        "python_workspace_pytest_v1",
+        "python_workspace_pytest_port_fix_v1",
+    }
+)
 _ALLOWED_VERIFICATION_STATUS = frozenset({"passed", "failed", "blocked"})
 _ALLOWED_VERIFICATION_FAILURE_CLASSES = frozenset(
     {

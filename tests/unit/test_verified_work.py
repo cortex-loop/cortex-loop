@@ -38,6 +38,20 @@ def test_work_contract_accepts_only_first_train_shape() -> None:
         "max_repair_turns": 1,
     }
 
+    second_contract = WorkContract(
+        allowed_write_paths=("src/normalize_port.py",),
+        verification_profile="python_workspace_pytest_port_fix_v1",
+        output_carrier="full_files",
+        max_repair_turns=1,
+    )
+
+    assert second_contract.as_payload() == {
+        "allowed_write_paths": ["src/normalize_port.py"],
+        "verification_profile": "python_workspace_pytest_port_fix_v1",
+        "output_carrier": "full_files",
+        "max_repair_turns": 1,
+    }
+
 
 def test_work_contract_rejects_duplicate_or_unbounded_paths() -> None:
     with pytest.raises(ValueError, match="duplicates"):

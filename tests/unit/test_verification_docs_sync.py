@@ -288,12 +288,12 @@ def test_active_current_line_docs_frame_openai_only_truth_and_watchlist_retentio
         assert "Current candidate seam: `none active`" in workstream_text
     else:
         assert (
-            "Current branch role: explicit manual/review branch for the C3B brutal closed-loop train method while the accepted baseline remains local `main`"
+            "Current branch role: explicit manual/review branch for the E7 verified-work breadth train while the accepted baseline remains local `main`"
             in workstream_text
         )
-        assert "Current candidate seam: `C3B brutal closed-loop train method`" in workstream_text
+        assert "Current candidate seam: `E7 verified-work breadth train`" in workstream_text
     assert (
-        "A0, P1C, S1, S1C, X1, X2, the first verified-work restoration slice, the Cortex-law / fast-train method slice, the verified-work neutralization / conformance-correction slice, the Claude operator workspace-truth slice, and the OpenAI verified-work context slice are now accepted on local `main`"
+        "A0, P1C, S1, S1C, X1, X2, the first verified-work restoration slice, the Cortex-law / fast-train method slice, the verified-work neutralization / conformance-correction slice, the Claude operator workspace-truth slice, the OpenAI verified-work context slice, and the C3B brutal closed-loop train method are now accepted on local `main`"
         in workstream_text
     )
     assert "docs/CORTEX_V2_EXECUTIVE_RESTORATION_NOTE.md" in workstream_text
@@ -311,10 +311,13 @@ def test_active_current_line_docs_frame_openai_only_truth_and_watchlist_retentio
     assert "`tools/cortex_train_loop.py`" in workstream_text
     assert "baseline drift where `summary.latest` referenced missing artifacts" in workstream_text
     assert "run_20260408T074128+0000" in workstream_text
-    assert "`CT2` therefore re-earned on this review branch" in workstream_text
+    assert "`CT2` therefore re-earned on the current line" in workstream_text
     assert "OpenAI `service_api`: conformant on three repeated targeted current reruns" in workstream_text
     assert "Claude `operator_cli`: no longer divergent on truthful staged-workspace runs" in workstream_text
     assert "Gemini `operator_cli`: conformant on the corrected current line" in workstream_text
+    assert "the current E7 breadth slice on this review branch now adds" in workstream_text
+    assert "`python_workspace_pytest_port_fix_v1`" in workstream_text
+    assert "`verified_work_normalize_port_v1`" in workstream_text
 
     assert (
         "This is the only active current-line proof bundle for the accepted OpenAI-only product scope."
@@ -367,10 +370,12 @@ def test_active_current_line_docs_frame_openai_only_truth_and_watchlist_retentio
     assert "The current next decision for the shipping-default lane is therefore `promote`" in restoration_note_text
     assert "This note does not authorize:" in restoration_note_text
 
-    assert "accepted bounded runtime-program brief for the first verified-work restoration slice" in verified_work_program_text
+    assert "accepted bounded runtime-program brief for the landed verified-work restoration lane" in verified_work_program_text
     assert "keep the accepted thin `O4` path unchanged when no `work_contract` is present" in verified_work_program_text
     assert "This program is intentionally outside the current compact canonical proof bundle" in verified_work_program_text
     assert "the shared verified-work runtime helpers now live in the neutral `cortex/runtime/verified_work_runtime.py` home" in verified_work_program_text
+    assert "`python_workspace_pytest_port_fix_v1`" in verified_work_program_text
+    assert "`verified_work_normalize_port_v1`" in verified_work_program_text
     assert "`O4R` is therefore landed for the current OpenAI shipping-default scope" in verified_work_program_text
 
 
@@ -453,7 +458,7 @@ def test_phase_gates_match_openai_only_truth_and_hygiene() -> None:
     assert "Train Charter" in c1_row
     assert "tools/cortex_train_loop.py" in c1_row
     assert "baseline / metric / rollback / escalation inputs" in c1_row
-    assert "closed on the C3B review branch" in c2_row
+    assert "closed on local `main` for the bookmarks anchor pack" in c2_row
     assert "landed" in c2_row
     assert "make conformance-preflight" in c2_row
     assert "python3 tools/cortex_conformance.py --mode reconcile-latest" in c2_row
@@ -461,9 +466,10 @@ def test_phase_gates_match_openai_only_truth_and_hygiene() -> None:
     assert "run_20260408T074128+0000" in c2_row
     assert "Claude `operator_cli` conformant after one lawful repair" in c2_row
     assert "Gemini `operator_cli` conformant" in c2_row
-    assert "`summary.latest` now publishes only from full tri-brain runs" in c2_row
+    assert "`summary.latest` now publishes only from full tri-brain runs for the bookmarks anchor pack" in c2_row
     assert "latest surviving full run that matches accepted `CT2` decision" in c2_row
     assert "current shipping-default decision is `promote`" in c2_row
+    assert "run_20260408T083436+0000" in c2_row
     assert "strongest available native surface may stand in for development conformance" in c3_row
     assert "historical/watchlist-only; do not use for runtime closure" in l5_row
     assert "closed | landed" in l6c_row

@@ -129,6 +129,12 @@ On the current bookmarks verified-work pack, the active reading is:
 - Claude `operator_cli`: no longer divergent on truthful staged-workspace runs; two focused reruns passed on attempt `1`, while repeated full tri-brain reruns currently hit Anthropic `529 overloaded_error` before structured output and therefore count as `env_blocked`
 - Gemini `operator_cli`: conformant on the corrected current line because staged workspace truth removes the earlier `read_file` miss and the repeated full reruns now pass the bookmarks pack
 
+On the current normalize-port verified-work breadth pack, the active review-branch reading is:
+
+- OpenAI `service_api`: conformant on repeated targeted reruns after one localized verifier-install correction restored the bounded workspace test environment
+- Claude `operator_cli`: conformant on the explicit tri-brain guardrail rerun after one lawful repair
+- Gemini `operator_cli`: conformant on the explicit tri-brain guardrail rerun
+
 The current next decision for the shipping-default lane is therefore `promote`, not `improve_shipping_default`, because the OpenAI `O4R` gap is now closed on repeated targeted local reruns and no non-shipping divergent surface remains on the corrected current line.
 
 ## Next lawful move
@@ -137,10 +143,11 @@ If a later runtime/product seam is opened after this note, the next lawful move 
 
 1. keep the current thin path as the default when no work contract is present
 2. keep `O4R` stable on repeated local reruns rather than reopening the law or the shipping-default wiring by habit
-3. run the same contract pack across OpenAI, Claude, and Gemini on their strongest available native surfaces whenever a later seam changes Cortex law or touches non-shipping wiring
-4. revise Cortex law only if the same divergence repeats across brains; otherwise reopen wiring only on the specific drifting brain/surface
-5. keep repeated-failure inhibition and carrier inference deferred until new evidence earns them
-6. open any later shipping-truth widening beyond OpenAI only through an explicit separate host shipping train
+3. prove breadth on another small verified-work pack before treating one-task success as a general Cortex win
+4. run the same contract pack across OpenAI, Claude, and Gemini on their strongest available native surfaces whenever a later seam changes Cortex law or touches non-shipping wiring
+5. revise Cortex law only if the same divergence repeats across brains; otherwise reopen wiring only on the specific drifting brain/surface
+6. keep repeated-failure inhibition and carrier inference deferred until new evidence earns them
+7. open any later shipping-truth widening beyond OpenAI only through an explicit separate host shipping train
 
 This is the accepted north-light correction:
 

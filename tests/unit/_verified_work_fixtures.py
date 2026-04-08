@@ -361,6 +361,22 @@ VALID_FILE_MAP = {
     "src/bookmarks_api/store.py": VALID_STORE_PY,
 }
 
+VALID_NORMALIZE_PORT_PY = """from __future__ import annotations
+
+
+def normalize_port(value: int | str) -> int:
+    port = int(value)
+    if port < 0:
+        raise ValueError("port must be non-negative")
+    if port > 65535:
+        raise ValueError("port must be <= 65535")
+    return port
+"""
+
+VALID_NORMALIZE_PORT_FILE_MAP = {
+    "src/normalize_port.py": VALID_NORMALIZE_PORT_PY,
+}
+
 
 def render_full_files_result(file_map: dict[str, str]) -> str:
     blocks: list[str] = []

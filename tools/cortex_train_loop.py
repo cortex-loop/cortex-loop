@@ -30,6 +30,10 @@ PHASE_GATES_PATH = ROOT / "docs" / "CORTEX_V2_PHASE_GATES_2.md"
 CONFORMANCE_SUMMARY_PATH = (
     ROOT / ".cortex" / "live_validation" / "conformance" / "summary.latest.json"
 )
+OPENAI_BREADTH_PACKS = (
+    cortex_conformance.ACTIVE_CONTRACT_PACK,
+    cortex_conformance.NORMALIZE_PORT_CONTRACT_PACK,
+)
 
 
 @dataclass(frozen=True, slots=True)
@@ -327,6 +331,141 @@ def run_conformance_summary_truth_pilot(
     return record
 
 
+def run_verified_work_breadth_openai_train(
+    *,
+    loop_root: Path = TRAIN_LOOP_ROOT,
+) -> TrainLoopRecord:
+    baseline = {
+        "primary_metric_value": 1,
+        "guardrail_ok": True,
+        "bookmarks_openai_status": "conformant",
+        "normalize_port_openai_status": "unsupported",
+        "normalize_port_tri_brain_status": "unmeasured",
+        "reasons": [],
+    }
+    proof_commands = (
+        "python3 -m pytest -q tests/unit/test_verified_work.py tests/unit/test_verified_work_runtime.py tests/unit/test_openai_host_control.py tests/unit/test_cortex_conformance.py tests/unit/test_cortex_train_loop.py tests/unit/test_verification_docs_sync.py",
+        f"python3 tools/cortex_conformance.py --mode active --brain openai --contract-pack {cortex_conformance.ACTIVE_CONTRACT_PACK}",
+        f"python3 tools/cortex_conformance.py --mode active --brain openai --contract-pack {cortex_conformance.ACTIVE_CONTRACT_PACK}",
+        f"python3 tools/cortex_conformance.py --mode active --brain openai --contract-pack {cortex_conformance.NORMALIZE_PORT_CONTRACT_PACK}",
+        f"python3 tools/cortex_conformance.py --mode active --brain openai --contract-pack {cortex_conformance.NORMALIZE_PORT_CONTRACT_PACK}",
+        f"python3 tools/cortex_conformance.py --mode active --contract-pack {cortex_conformance.NORMALIZE_PORT_CONTRACT_PACK}",
+    )
+    command_results = tuple(_run_shell_command(command, cwd=ROOT) for command in proof_commands)
+
+    summaries = [
+        _command_result_json(result)
+        for result in command_results[1:]
+        if result["exit_code"] == 0
+    ]
+    bookmarks_summaries = summaries[:2]
+    normalize_summaries = summaries[2:4]
+    tri_brain_summary = summaries[4] if len(summaries) >= 5 else None
+
+    bookmarks_conformant = bool(bookmarks_summaries) and all(
+        _summary_brain_status(summary, brain="openai") == "conformant"
+        for summary in bookmarks_summaries
+    )
+    normalize_conformant = len(normalize_summaries) == 2 and all(
+        _summary_brain_status(summary, brain="openai") == "conformant"
+        for summary in normalize_summaries
+    )
+    primary_metric_after = int(bookmarks_conformant) + int(normalize_conformant)
+    tri_brain_status = (
+        tri_brain_summary.get("next_decision")
+        if isinstance(tri_brain_summary, dict)
+        else "unmeasured"
+    )
+    guardrail_ok = command_results[0]["exit_code"] == 0 and bookmarks_conformant
+    repeated_env_block = sum(
+        1
+        for summary in normalize_summaries
+        if _summary_brain_status(summary, brain="openai") == "env_blocked"
+    ) >= 2
+    escalation_reasons = tuple(
+        reason
+        for reason in (
+            *(
+                f"proof command failed: {result['command']}"
+                for result in command_results
+                if result["exit_code"] != 0
+            ),
+            "repeated provider/env block on normalize-port OpenAI proof"
+            if repeated_env_block
+            else None,
+        )
+        if reason is not None
+    )
+    localized_failure = bookmarks_conformant and not normalize_conformant
+    better_classification = normalize_conformant
+
+    decision, reason = decide_loop_decision(
+        primary_metric_before=int(baseline["primary_metric_value"]),
+        primary_metric_after=primary_metric_after,
+        guardrail_ok=guardrail_ok,
+        localized_failure=localized_failure,
+        better_classification=better_classification,
+        budget_remaining=1,
+        escalation_reasons=escalation_reasons,
+    )
+    iteration = LoopIteration(
+        index=1,
+        candidate_label="verified-work-breadth-openai-second-pack",
+        proof_commands=proof_commands,
+        primary_metric_before=int(baseline["primary_metric_value"]),
+        primary_metric_after=primary_metric_after,
+        guardrail_ok=guardrail_ok,
+        localized_failure=localized_failure,
+        better_classification=better_classification,
+        budget_remaining=1,
+        decision=decision,
+        reason=reason,
+        command_results=command_results,
+        escalation_reasons=escalation_reasons,
+    )
+    record = TrainLoopRecord(
+        train_name="verified-work-breadth-openai",
+        seam_class="timing_env_sensitive",
+        cortex_invariant=(
+            "optional work contract, runtime-native verification truth, and one bounded repair turn"
+        ),
+        brain_wiring_touched=(
+            "OpenAI verified-work profile routing, conformance contract-pack registry, and breadth-train proof wiring"
+        ),
+        borrowed_mechanism=(
+            "reuse the existing project_template normalize-port scaffold as the second verified-work pack"
+        ),
+        contract_pack="verified_work_normalize_port_v1",
+        conformance_surfaces=(
+            "openai:service_api",
+            "claude:operator_cli",
+            "gemini:operator_cli",
+        ),
+        baseline_result=baseline,
+        primary_metric="openai_verified_work_breadth_score",
+        guardrail_metric="bookmarks_stays_conformant_and_no_o4r_regression",
+        baseline_proof_set=proof_commands,
+        iteration_budget=2,
+        rollback_surface=(
+            "verified-work profile routing plus second-pack conformance wiring"
+        ),
+        escalation_triggers=(
+            "Cortex law may need revision",
+            "shipping truth would widen",
+            "authority docs conflict",
+            "auth/spend/env blocks proof",
+            "two revisions fail without better classification",
+        ),
+        iterations=(iteration,),
+        final_decision=decision,
+    )
+    artifact_dir = loop_root / record.train_name
+    artifact_dir.mkdir(parents=True, exist_ok=True)
+    write_json(artifact_dir / "summary.json", record.as_payload())
+    write_text(artifact_dir / "summary.md", render_train_loop_markdown(record))
+    return record
+
+
 def render_train_loop_markdown(record: TrainLoopRecord) -> str:
     lines = [
         f"# Cortex Train Loop: {record.train_name}",
@@ -339,14 +478,16 @@ def render_train_loop_markdown(record: TrainLoopRecord) -> str:
         "",
         "## Baseline",
         "",
-        f"- primary_metric_value: `{record.baseline_result['primary_metric_value']}`",
-        f"- guardrail_ok: `{record.baseline_result['guardrail_ok']}`",
-        f"- accepted_next_decision: `{record.baseline_result['accepted_next_decision']}`",
-        f"- summary_next_decision: `{record.baseline_result['summary_next_decision']}`",
-        "",
-        "## Iterations",
-        "",
     ]
+    for key, value in record.baseline_result.items():
+        lines.append(f"- {key}: `{value}`")
+    lines.extend(
+        [
+            "",
+            "## Iterations",
+            "",
+        ]
+    )
     for iteration in record.iterations:
         lines.extend(
             [
@@ -371,13 +512,15 @@ def main(argv: list[str] | None = None) -> int:
     )
     parser.add_argument(
         "--train",
-        choices=("conformance-summary-truth",),
+        choices=("conformance-summary-truth", "verified-work-breadth-openai"),
         default="conformance-summary-truth",
     )
     args = parser.parse_args(argv)
 
     if args.train == "conformance-summary-truth":
         payload = run_conformance_summary_truth_pilot().as_payload()
+    elif args.train == "verified-work-breadth-openai":
+        payload = run_verified_work_breadth_openai_train().as_payload()
     else:  # pragma: no cover
         raise SystemExit(f"Unsupported train: {args.train}")
     print(json.dumps(payload, indent=2, sort_keys=True))
@@ -423,6 +566,22 @@ def _run_shell_command(command: str, *, cwd: Path) -> dict[str, Any]:
     )
 
 
+def _command_result_json(command_result: dict[str, Any]) -> dict[str, Any]:
+    stdout = str(command_result.get("stdout", "") or "")
+    return json.loads(stdout)
+
+
+def _summary_brain_status(summary: dict[str, Any], *, brain: str) -> str | None:
+    results = summary.get("results")
+    if not isinstance(results, list):
+        return None
+    for result in results:
+        if isinstance(result, dict) and result.get("brain") == brain:
+            status = result.get("status")
+            return status if isinstance(status, str) else None
+    return None
+
+
 __all__ = [
     "LoopDecision",
     "LoopIteration",
@@ -432,6 +591,7 @@ __all__ = [
     "evaluate_conformance_summary_truth",
     "render_train_loop_markdown",
     "run_conformance_summary_truth_pilot",
+    "run_verified_work_breadth_openai_train",
 ]
 
 

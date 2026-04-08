@@ -8,16 +8,13 @@ import shutil
 import subprocess
 import sys
 import tempfile
+from dataclasses import dataclass
 from pathlib import Path
 
 from cortex.sre.verified_work import VerificationOutcome, WorkContract
 
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
-BOOKMARKS_TEMPLATE_ROOT = (
-    REPO_ROOT / "tests" / "fixtures" / "live_validation" / "bookmarks_app_template"
-)
-BOOKMARKS_IMPORT_TARGET = "bookmarks_api.main"
 BLOCKED_REASON_MAP = {
     "needs_user_input": "blocked_missing_info",
     "unsafe_request": "blocked_unsafe",
@@ -33,7 +30,42 @@ _END_BLOCKED_MARKER = "=== END BLOCKED ==="
 _PASSED_RE = re.compile(r"(?P<count>\d+)\s+passed")
 _FAILED_RE = re.compile(r"(?P<count>\d+)\s+failed")
 _FAILING_TEST_RE = re.compile(r"^(?:FAILED|ERROR) (?P<name>tests/[^\s]+)", re.MULTILINE)
-_READ_ONLY_CONTEXT_PATHS = ("tests/test_bookmarks_api.py",)
+
+
+@dataclass(frozen=True, slots=True)
+class VerifiedWorkProfileSpec:
+    template_root: Path
+    read_only_context_paths: tuple[str, ...]
+    import_target: str | None
+    pytest_command: tuple[str, ...]
+
+
+_VERIFIED_WORK_PROFILE_REGISTRY = {
+    "python_workspace_pytest_v1": VerifiedWorkProfileSpec(
+        template_root=(
+            REPO_ROOT
+            / "tests"
+            / "fixtures"
+            / "live_validation"
+            / "bookmarks_app_template"
+        ),
+        read_only_context_paths=("tests/test_bookmarks_api.py",),
+        import_target="bookmarks_api.main",
+        pytest_command=("-m", "pytest", "-q", "tests/test_bookmarks_api.py"),
+    ),
+    "python_workspace_pytest_port_fix_v1": VerifiedWorkProfileSpec(
+        template_root=(
+            REPO_ROOT
+            / "tests"
+            / "fixtures"
+            / "live_validation"
+            / "project_template"
+        ),
+        read_only_context_paths=("tests/test_normalize_port.py",),
+        import_target="normalize_port",
+        pytest_command=("-m", "pytest", "-q", "tests/test_normalize_port.py"),
+    ),
+}
 
 
 def build_verified_work_instructions(work_contract: WorkContract) -> str:
@@ -104,13 +136,14 @@ def verify_verified_work_result(
 
 
 def _build_verified_work_context_bundle(work_contract: WorkContract) -> str:
-    context_paths = tuple(work_contract.allowed_write_paths) + _READ_ONLY_CONTEXT_PATHS
+    profile = _verified_work_profile_spec(work_contract)
+    context_paths = tuple(work_contract.allowed_write_paths) + profile.read_only_context_paths
     rendered_blocks: list[str] = []
     for relative_path in context_paths:
-        source_path = BOOKMARKS_TEMPLATE_ROOT / relative_path
+        source_path = profile.template_root / relative_path
         if not source_path.is_file():
             raise RuntimeError(
-                "verified-work context file is missing from the bookmarks template: "
+                "verified-work context file is missing from the selected template: "
                 f"{relative_path}"
             )
         file_text = source_path.read_text(encoding="utf-8").rstrip()
@@ -240,9 +273,10 @@ def _run_verified_work_verifier(
     file_map: dict[str, str],
     work_contract: WorkContract,
 ) -> VerificationOutcome:
+    profile = _verified_work_profile_spec(work_contract)
     with tempfile.TemporaryDirectory(prefix="cortex-openai-verified-work-") as tmpdir:
         project_root = Path(tmpdir) / "workspace"
-        shutil.copytree(BOOKMARKS_TEMPLATE_ROOT, project_root)
+        shutil.copytree(profile.template_root, project_root)
         for relative_path, content in file_map.items():
             destination = project_root / relative_path
             destination.parent.mkdir(parents=True, exist_ok=True)
@@ -250,27 +284,28 @@ def _run_verified_work_verifier(
 
         parsed_paths = tuple(file_map)
         python_bin = _prepare_verified_work_python(project_root)
-        import_command = [
-            str(python_bin),
-            "-c",
-            (
-                "import importlib; "
-                f"importlib.import_module('{BOOKMARKS_IMPORT_TARGET}')"
-            ),
-        ]
-        import_result = _run_command(import_command, cwd=project_root)
-        if import_result.returncode != 0:
-            return VerificationOutcome(
-                status="failed",
-                failure_class="import_smoke_failed",
-                parsed_paths=parsed_paths,
-                import_smoke_ok=False,
-                import_smoke_excerpt=_first_relevant_excerpt(_command_output(import_result)),
-                first_failure_excerpt=_first_relevant_excerpt(_command_output(import_result)),
-            )
+        if profile.import_target is not None:
+            import_command = [
+                str(python_bin),
+                "-c",
+                (
+                    "import importlib; "
+                    f"importlib.import_module('{profile.import_target}')"
+                ),
+            ]
+            import_result = _run_command(import_command, cwd=project_root)
+            if import_result.returncode != 0:
+                return VerificationOutcome(
+                    status="failed",
+                    failure_class="import_smoke_failed",
+                    parsed_paths=parsed_paths,
+                    import_smoke_ok=False,
+                    import_smoke_excerpt=_first_relevant_excerpt(_command_output(import_result)),
+                    first_failure_excerpt=_first_relevant_excerpt(_command_output(import_result)),
+                )
 
         pytest_result = _run_command(
-            [str(python_bin), "-m", "pytest", "-q", "tests/test_bookmarks_api.py"],
+            [str(python_bin), *profile.pytest_command],
             cwd=project_root,
         )
         pytest_output = _command_output(pytest_result)
@@ -345,6 +380,7 @@ def _prepare_verified_work_python(project_root: Path) -> Path:
             "--quiet",
             "-e",
             ".[test]",
+            "pytest",
         ],
         cwd=project_root,
         capture_output=True,
@@ -394,9 +430,18 @@ def _first_relevant_excerpt(output: str) -> str | None:
     return None
 
 
+def _verified_work_profile_spec(work_contract: WorkContract) -> VerifiedWorkProfileSpec:
+    try:
+        return _VERIFIED_WORK_PROFILE_REGISTRY[work_contract.verification_profile]
+    except KeyError as exc:  # pragma: no cover - WorkContract validation owns legality.
+        raise RuntimeError(
+            "verified-work profile registry is missing the active profile: "
+            f"{work_contract.verification_profile}"
+        ) from exc
+
+
 __all__ = [
     "BLOCKED_REASON_MAP",
-    "BOOKMARKS_TEMPLATE_ROOT",
     "build_verified_work_input_text",
     "build_verified_work_instructions",
     "build_verified_work_repair_ticket",

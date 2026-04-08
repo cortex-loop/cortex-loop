@@ -21,7 +21,11 @@ from cortex.runtime.openai_host_transport import (
 from cortex.runtime.openai_ingress import parse_openai_host_event_envelope
 from cortex.runtime.openai_service import OpenAIServiceState, handle_openai_service_request
 from cortex.sre.verified_work import VerificationOutcome, WorkContract
-from tests.unit._verified_work_fixtures import VALID_FILE_MAP, render_full_files_result
+from tests.unit._verified_work_fixtures import (
+    VALID_FILE_MAP,
+    VALID_NORMALIZE_PORT_FILE_MAP,
+    render_full_files_result,
+)
 
 
 def test_openai_host_control_request_constructs_strict_text_only_payload() -> None:
@@ -65,6 +69,27 @@ def test_openai_host_control_request_constructs_verified_work_payload() -> None:
     assert request.as_payload()["request"]["work_contract"] == {
         "allowed_write_paths": list(VALID_FILE_MAP),
         "verification_profile": "python_workspace_pytest_v1",
+        "output_carrier": "full_files",
+        "max_repair_turns": 1,
+    }
+
+    port_request = OpenAIHostControlRequest(
+        action_tag="openai-response-stream",
+        model="gpt-5.4",
+        input_text="fix normalize_port",
+        metadata={"trace_id": "oa-port"},
+        max_output_tokens=512,
+        work_contract=WorkContract(
+            allowed_write_paths=tuple(VALID_NORMALIZE_PORT_FILE_MAP),
+            verification_profile="python_workspace_pytest_port_fix_v1",
+            output_carrier="full_files",
+            max_repair_turns=1,
+        ),
+    )
+
+    assert port_request.as_payload()["request"]["work_contract"] == {
+        "allowed_write_paths": list(VALID_NORMALIZE_PORT_FILE_MAP),
+        "verification_profile": "python_workspace_pytest_port_fix_v1",
         "output_carrier": "full_files",
         "max_repair_turns": 1,
     }
@@ -533,6 +558,218 @@ def test_run_openai_host_control_verified_work_repairs_once_from_runtime_signal(
     assert result.verification is not None
     assert result.verification.status == "passed"
     assert "=== CONTEXT FILE: tests/test_bookmarks_api.py ===" in str(calls[0]["request_input_text"])
+    assert final_session.event_index == 6
+    assert final_session.next_recommended_move == "continue"
+    assert "=== CONTEXT FILE:" not in str(calls[1]["input_text_override"])
+
+
+def test_run_openai_host_control_verified_work_attaches_normalize_port_context(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    work_contract = WorkContract(
+        allowed_write_paths=tuple(VALID_NORMALIZE_PORT_FILE_MAP),
+        verification_profile="python_workspace_pytest_port_fix_v1",
+        output_carrier="full_files",
+        max_repair_turns=0,
+    )
+    rendered = render_full_files_result(VALID_NORMALIZE_PORT_FILE_MAP)
+    seen: dict[str, str | None] = {}
+
+    def transport(
+        request: OpenAIHostControlRequest,
+        *,
+        previous_response_id: str | None = None,
+        input_text_override: str | None = None,
+    ) -> list[dict[str, object]]:
+        assert previous_response_id is None
+        assert input_text_override is None
+        seen["input_text"] = request.input_text
+        seen["instructions"] = request.instructions
+        return [
+            {
+                "type": "response.created",
+                "session_id": "oa-port-context",
+                "response_id": "resp-port-context-1",
+            },
+            {
+                "type": "response.output_text.delta",
+                "session_id": "oa-port-context",
+                "response_id": "resp-port-context-1",
+                "delta": rendered,
+            },
+            {
+                "type": "response.completed",
+                "session_id": "oa-port-context",
+                "response_id": "resp-port-context-1",
+            },
+        ]
+
+    monkeypatch.setattr(
+        "cortex.runtime.openai_host_control.verify_verified_work_result",
+        lambda result_text, contract: (
+            VALID_NORMALIZE_PORT_FILE_MAP,
+            VerificationOutcome(
+                status="passed",
+                failure_class=None,
+                parsed_paths=tuple(VALID_NORMALIZE_PORT_FILE_MAP),
+                import_smoke_ok=True,
+                pytest_ok=True,
+                pytest_exit_code=0,
+                pytest_passed=2,
+                pytest_failed=0,
+            ),
+        ),
+    )
+    request = OpenAIHostControlRequest(
+        action_tag="openai-response-stream",
+        model="gpt-5.4",
+        input_text="fix normalize_port",
+        max_output_tokens=4096,
+        work_contract=work_contract,
+    )
+
+    result, _final_session = run_openai_host_control(
+        request,
+        transport=transport,
+    )
+
+    assert result.attempt_count == 1
+    assert seen["input_text"] is not None
+    assert "fix normalize_port" in seen["input_text"]
+    assert "=== CONTEXT FILE: src/normalize_port.py ===" in seen["input_text"]
+    assert "=== CONTEXT FILE: tests/test_normalize_port.py ===" in seen["input_text"]
+    assert seen["instructions"] is not None
+    assert "Do not return prose, explanations, or code fences. Do not run tests." in seen["instructions"]
+
+
+def test_run_openai_host_control_verified_work_normalize_port_repairs_once(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    work_contract = WorkContract(
+        allowed_write_paths=tuple(VALID_NORMALIZE_PORT_FILE_MAP),
+        verification_profile="python_workspace_pytest_port_fix_v1",
+        output_carrier="full_files",
+        max_repair_turns=1,
+    )
+    broken_file_map = dict(VALID_NORMALIZE_PORT_FILE_MAP)
+    broken_file_map["src/normalize_port.py"] = (
+        "from __future__ import annotations\n\n\n"
+        "def normalize_port(value: int | str) -> int:\n"
+        "    port = int(value)\n"
+        "    if port < 0:\n"
+        "        raise ValueError(\"port must be non-negative\")\n"
+        "    if port >= 65535:\n"
+        "        raise ValueError(\"port must be <= 65535\")\n"
+        "    return port\n"
+    )
+    first_result = render_full_files_result(broken_file_map)
+    second_result = render_full_files_result(VALID_NORMALIZE_PORT_FILE_MAP)
+    calls: list[dict[str, object]] = []
+
+    def transport(
+        request: OpenAIHostControlRequest,
+        *,
+        previous_response_id: str | None = None,
+        input_text_override: str | None = None,
+    ) -> list[dict[str, object]]:
+        calls.append(
+            {
+                "previous_response_id": previous_response_id,
+                "input_text_override": input_text_override,
+                "instructions": request.instructions,
+                "request_input_text": request.input_text,
+            }
+        )
+        if previous_response_id is None:
+            return [
+                {
+                    "type": "response.created",
+                    "session_id": "oa-port-repair",
+                    "response_id": "resp-port-repair-1",
+                },
+                {
+                    "type": "response.output_text.delta",
+                    "session_id": "oa-port-repair",
+                    "response_id": "resp-port-repair-1",
+                    "delta": first_result,
+                },
+                {
+                    "type": "response.completed",
+                    "session_id": "oa-port-repair",
+                    "response_id": "resp-port-repair-1",
+                },
+            ]
+        assert previous_response_id == "resp-port-repair-1"
+        assert isinstance(input_text_override, str)
+        assert "failure_class: test_failed" in input_text_override
+        return [
+            {
+                "type": "response.created",
+                "session_id": "oa-port-repair",
+                "response_id": "resp-port-repair-2",
+            },
+            {
+                "type": "response.output_text.delta",
+                "session_id": "oa-port-repair",
+                "response_id": "resp-port-repair-2",
+                "delta": second_result,
+            },
+            {
+                "type": "response.completed",
+                "session_id": "oa-port-repair",
+                "response_id": "resp-port-repair-2",
+            },
+        ]
+
+    request = OpenAIHostControlRequest(
+        action_tag="openai-response-stream",
+        model="gpt-5.4",
+        input_text="fix normalize_port",
+        max_output_tokens=4096,
+        work_contract=work_contract,
+    )
+    monkeypatch.setattr(
+        "cortex.runtime.openai_host_control.verify_verified_work_result",
+        lambda result_text, contract: (
+            VALID_NORMALIZE_PORT_FILE_MAP,
+            VerificationOutcome(
+                status="failed",
+                failure_class="test_failed",
+                parsed_paths=tuple(VALID_NORMALIZE_PORT_FILE_MAP),
+                import_smoke_ok=True,
+                pytest_ok=False,
+                pytest_exit_code=1,
+                pytest_passed=1,
+                pytest_failed=1,
+                first_failure_excerpt="FAILED tests/test_normalize_port.py::test_accepts_upper_bound_port",
+            ),
+        )
+        if result_text == first_result
+        else (
+            VALID_NORMALIZE_PORT_FILE_MAP,
+            VerificationOutcome(
+                status="passed",
+                failure_class=None,
+                parsed_paths=tuple(VALID_NORMALIZE_PORT_FILE_MAP),
+                import_smoke_ok=True,
+                pytest_ok=True,
+                pytest_exit_code=0,
+                pytest_passed=2,
+                pytest_failed=0,
+            ),
+        ),
+    )
+
+    result, final_session = run_openai_host_control(
+        request,
+        transport=transport,
+    )
+
+    assert len(calls) == 2
+    assert result.attempt_count == 2
+    assert result.verification is not None
+    assert result.verification.status == "passed"
+    assert "=== CONTEXT FILE: tests/test_normalize_port.py ===" in str(calls[0]["request_input_text"])
     assert final_session.event_index == 6
     assert final_session.next_recommended_move == "continue"
     assert "=== CONTEXT FILE:" not in str(calls[1]["input_text_override"])

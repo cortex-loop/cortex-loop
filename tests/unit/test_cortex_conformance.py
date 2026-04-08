@@ -70,6 +70,22 @@ def test_contract_pack_exposes_required_train_charter() -> None:
     assert payload["train_charter"]["cortex_invariant"] == "bounded verified-work law"
 
 
+def test_contract_pack_registry_resolves_bookmarks_and_normalize_port() -> None:
+    bookmarks_pack = conformance.contract_pack_by_name(conformance.ACTIVE_CONTRACT_PACK)
+    normalize_pack = conformance.contract_pack_by_name(
+        conformance.NORMALIZE_PORT_CONTRACT_PACK
+    )
+
+    assert bookmarks_pack.contract_pack == "verified_work_bookmarks_v1"
+    assert normalize_pack.contract_pack == "verified_work_normalize_port_v1"
+    assert normalize_pack.workspace_template_relpath == (
+        "tests/fixtures/live_validation/project_template"
+    )
+    assert normalize_pack.work_contract.verification_profile == (
+        "python_workspace_pytest_port_fix_v1"
+    )
+
+
 def test_contract_pack_rejects_absolute_workspace_template_path() -> None:
     with pytest.raises(ValueError, match="repo-relative"):
         conformance.ContractPack(
@@ -490,6 +506,67 @@ def test_run_active_conformance_does_not_publish_latest_for_targeted_runs(
     assert not (tmp_path / "summary.latest.md").exists()
 
 
+def test_run_active_conformance_keeps_bookmarks_as_only_latest_summary_anchor(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    written_paths: list[Path] = []
+
+    monkeypatch.setattr(conformance, "CONFORMANCE_ROOT", tmp_path)
+    monkeypatch.setattr(
+        conformance,
+        "now_utc_iso",
+        lambda: "2026-04-08T08:00:00+00:00",
+    )
+    monkeypatch.setattr(conformance, "load_local_env_file", lambda: None)
+    monkeypatch.setattr(
+        conformance,
+        "preflight_surface",
+        lambda brain, surface: conformance.SurfaceProbe(
+            brain=brain,
+            surface=surface,
+            status="conformant",
+            reason="ready",
+        ),
+    )
+    monkeypatch.setattr(
+        conformance,
+        "_run_conformance",
+        lambda *, brain, surface, contract_pack, run_root: conformance.ConformanceRunResult(
+            brain=brain,
+            surface=surface,
+            contract_pack=contract_pack.contract_pack,
+            status="conformant",
+            attempt_count=1,
+            verification_status="passed",
+            parseable=True,
+            import_smoke_ok=True,
+            pytest_passed=2,
+            repair_conversion="passed_without_repair",
+        ),
+    )
+    monkeypatch.setattr(
+        conformance,
+        "write_json",
+        lambda path, payload: written_paths.append(path),
+    )
+    monkeypatch.setattr(
+        conformance,
+        "write_text",
+        lambda path, text: written_paths.append(path),
+    )
+
+    conformance.run_active_conformance(
+        brains=("openai", "claude", "gemini"),
+        contract_pack=conformance.contract_pack_by_name(
+            conformance.NORMALIZE_PORT_CONTRACT_PACK
+        ),
+    )
+
+    assert tmp_path / "summary.latest.json" not in written_paths
+    assert tmp_path / "summary.latest.md" not in written_paths
+
+
 def test_reconcile_latest_summary_prefers_newest_surviving_full_run_matching_ct2_truth(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
@@ -502,6 +579,7 @@ def test_reconcile_latest_summary_prefers_newest_surviving_full_run_matching_ct2
         encoding="utf-8",
     )
     monkeypatch.setattr(conformance, "PHASE_GATES_PATH", phase_gates_path)
+    monkeypatch.setattr(conformance, "render_summary_markdown", lambda _summary: "")
 
     older_run = tmp_path / "run_20260408T070000+0000"
     newer_run = tmp_path / "run_20260408T071000+0000"
@@ -627,6 +705,84 @@ def test_reconcile_latest_summary_prefers_newest_surviving_full_run_matching_ct2
 
     assert reconciled["generated_at"] == "2026-04-08T07:00:00+00:00"
     assert (tmp_path / "summary.latest.json").exists()
+
+
+def test_reconcile_latest_summary_ignores_newer_non_anchor_pack_full_runs(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(conformance, "CONFORMANCE_ROOT", tmp_path)
+    monkeypatch.setattr(conformance, "ROOT", tmp_path)
+    phase_gates_path = tmp_path / "phase_gates.md"
+    phase_gates_path.write_text(
+        "| `CT2` active verified-work tri-brain conformance | evidence | owner | landed | current shipping-default decision is `promote` |\n",
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(conformance, "PHASE_GATES_PATH", phase_gates_path)
+    monkeypatch.setattr(conformance, "render_summary_markdown", lambda _summary: "")
+
+    older_run = tmp_path / "run_20260408T070000+0000"
+    newer_run = tmp_path / "run_20260408T080000+0000"
+    older_run.mkdir(parents=True)
+    newer_run.mkdir(parents=True)
+    for run_dir in (older_run, newer_run):
+        for artifact_name in (
+            "openai_service_api",
+            "claude_operator_cli",
+            "gemini_operator_cli",
+        ):
+            (run_dir / artifact_name).mkdir()
+
+    older_summary = {
+        "generated_at": "2026-04-08T07:00:00+00:00",
+        "results": [
+            {
+                "brain": "openai",
+                "artifact_relpath": "run_20260408T070000+0000/openai_service_api",
+            },
+            {
+                "brain": "claude",
+                "artifact_relpath": "run_20260408T070000+0000/claude_operator_cli",
+            },
+            {
+                "brain": "gemini",
+                "artifact_relpath": "run_20260408T070000+0000/gemini_operator_cli",
+            },
+        ],
+        "next_decision": "promote",
+        "shipping_truth": {"default": "openai:service_api"},
+        "iteration_outcome": "promote",
+        "overall_divergence_class": None,
+        "contract_pack": {"contract_pack": "verified_work_bookmarks_v1"},
+    }
+    newer_summary = {
+        "generated_at": "2026-04-08T08:00:00+00:00",
+        "results": [
+            {
+                "brain": "openai",
+                "artifact_relpath": "run_20260408T080000+0000/openai_service_api",
+            },
+            {
+                "brain": "claude",
+                "artifact_relpath": "run_20260408T080000+0000/claude_operator_cli",
+            },
+            {
+                "brain": "gemini",
+                "artifact_relpath": "run_20260408T080000+0000/gemini_operator_cli",
+            },
+        ],
+        "next_decision": "promote",
+        "shipping_truth": {"default": "openai:service_api"},
+        "iteration_outcome": "promote",
+        "overall_divergence_class": None,
+        "contract_pack": {"contract_pack": "verified_work_normalize_port_v1"},
+    }
+    (older_run / "summary.json").write_text(json.dumps(older_summary), encoding="utf-8")
+    (newer_run / "summary.json").write_text(json.dumps(newer_summary), encoding="utf-8")
+
+    reconciled = conformance.reconcile_latest_summary()
+
+    assert reconciled["contract_pack"]["contract_pack"] == "verified_work_bookmarks_v1"
 
 
 def test_reconcile_latest_summary_falls_back_to_newest_surviving_full_run_when_ct2_match_missing(

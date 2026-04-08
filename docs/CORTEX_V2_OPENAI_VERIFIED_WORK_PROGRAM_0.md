@@ -1,7 +1,7 @@
 # CORTEX_V2_OPENAI_VERIFIED_WORK_PROGRAM_0
 
 Date: 2026-04-08
-Status: accepted bounded runtime-program brief for the first verified-work restoration slice; `O4R` is now landed on the current line
+Status: accepted bounded runtime-program brief for the landed verified-work restoration lane; second-pack breadth is now re-earned on the current review line without widening canonical proof
 
 ## Purpose
 
@@ -47,7 +47,9 @@ This program remains:
 - one optional extension of the existing `POST /v1/actions/response-stream` family
 - request-scoped rather than persisted executive state
 - `full_files` only
-- one deterministic verifier profile only: `python_workspace_pytest_v1`
+- two explicit deterministic verifier profiles only:
+  - `python_workspace_pytest_v1`
+  - `python_workspace_pytest_port_fix_v1`
 - one repair budget only: `0 | 1`
 - packet-subordinate and host-specific at the adapter layer
 
@@ -58,7 +60,7 @@ This program adds only:
 - shared `choose_verified_work_followup()`
 - optional `request.work_contract` on `OpenAIHostControlRequest`
 - `run_openai_runtime_verification_step()`
-- deterministic `full_files` parsing plus the bounded bookmarks verifier
+- deterministic `full_files` parsing plus the bounded verifier-profile registry
 - one native `previous_response_id` continuation on the verified-work path
 
 This program does **not** authorize:
@@ -97,7 +99,9 @@ When `request.work_contract` is present:
   - `output_carrier`
   - `max_repair_turns`
 - `output_carrier` must be `full_files`
-- `verification_profile` must be `python_workspace_pytest_v1`
+- `verification_profile` must be one of:
+  - `python_workspace_pytest_v1`
+  - `python_workspace_pytest_port_fix_v1`
 - `max_repair_turns` must be `0` or `1`
 - caller-supplied `instructions` are rejected because the verified-work instructions are fixed by the runtime
 
@@ -131,7 +135,9 @@ The verified-work lane may:
 - inject only the fixed mechanical `full_files` protocol instructions
 - attach one bounded read-only workspace context bundle over the current writable-file contents plus the contract tests on the OpenAI service lane
 - parse returned file blocks or blocked markers
-- verify the result externally against the bounded bookmarks workload
+- verify the result externally against one bounded verifier workload selected by the explicit profile:
+  - bookmarks app for `python_workspace_pytest_v1`
+  - normalize-port project template for `python_workspace_pytest_port_fix_v1`
 - bind that `VerificationOutcome` into `OpenAIRuntimeSession.last_failure_class`
 - drive `next_recommended_move` through `choose_verified_work_followup()`
 - and perform exactly one native continuation attempt when runtime truth says `repair` and budget remains
@@ -178,6 +184,10 @@ On the current line:
 - deterministic tests and repo-local revalidation are real
 - the corrected tri-brain conformance rerun removed Gemini's false raw-JSON-wrapper `output_invalid` classification without widening shipping truth
 - three repeated targeted local reruns on `python3 tools/cortex_conformance.py --mode active --brain openai` now pass the bookmarks pack on attempt `1`
+- a second explicit breadth pack `verified_work_normalize_port_v1` now exists on the current review line over the normalize-port task in `tests/fixtures/live_validation/project_template/`
+- after one localized verifier-install correction, repeated targeted local reruns on `python3 tools/cortex_conformance.py --mode active --brain openai --contract-pack verified_work_normalize_port_v1` now pass the normalize-port pack on attempt `1`
+- one explicit tri-brain normalize-port guardrail rerun under `.cortex/live_validation/conformance/run_20260408T083436+0000` reads OpenAI `service_api` conformant, Claude `operator_cli` conformant after one lawful repair, and Gemini `operator_cli` conformant
+- bookmarks remains the accepted `CT2` anchor pack and `summary.latest` remains bookmarks-only until a later deliberate breadth-closure move says otherwise
 - `O4R` is therefore landed for the current OpenAI shipping-default scope, while remaining explicitly outside the current canonical-anchor proof bundle
 
 ## Explicitly blocked moves

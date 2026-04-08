@@ -54,10 +54,14 @@ DivergenceClass = Literal["cortex_law", "brain_wiring", "surface_wiring", "env_b
 ConformanceSummary = dict[str, Any]
 
 ACTIVE_CONTRACT_PACK = "verified_work_bookmarks_v1"
+NORMALIZE_PORT_CONTRACT_PACK = "verified_work_normalize_port_v1"
 CONFORMANCE_ROOT = LOCAL_LIVE_ROOT / "conformance"
 PHASE_GATES_PATH = ROOT / "docs" / "CORTEX_V2_PHASE_GATES_2.md"
 BOOKMARKS_TASK_PATH = (
     ROOT / "tests" / "fixtures" / "live_validation" / "bookmarks_app_template" / "README_TASK.md"
+)
+NORMALIZE_PORT_TASK_PATH = (
+    ROOT / "tests" / "fixtures" / "live_validation" / "project_template" / "README_TASK.md"
 )
 _OPENAI_ACTION_TAG = "openai-response-stream"
 _OPENAI_MODEL = "gpt-5.4"
@@ -237,41 +241,83 @@ class SurfaceProbe:
 
 
 def active_contract_pack() -> ContractPack:
-    prompt_text = BOOKMARKS_TASK_PATH.read_text(encoding="utf-8").strip()
-    return ContractPack(
-        contract_pack=ACTIVE_CONTRACT_PACK,
-        prompt_text=prompt_text,
-        workspace_template_relpath="tests/fixtures/live_validation/bookmarks_app_template",
-        work_contract=WorkContract(
-            allowed_write_paths=(
-                "src/bookmarks_api/main.py",
-                "src/bookmarks_api/models.py",
-                "src/bookmarks_api/store.py",
+    return contract_pack_by_name(ACTIVE_CONTRACT_PACK)
+
+
+def contract_pack_by_name(name: str) -> ContractPack:
+    if name == ACTIVE_CONTRACT_PACK:
+        prompt_text = BOOKMARKS_TASK_PATH.read_text(encoding="utf-8").strip()
+        return ContractPack(
+            contract_pack=ACTIVE_CONTRACT_PACK,
+            prompt_text=prompt_text,
+            workspace_template_relpath="tests/fixtures/live_validation/bookmarks_app_template",
+            work_contract=WorkContract(
+                allowed_write_paths=(
+                    "src/bookmarks_api/main.py",
+                    "src/bookmarks_api/models.py",
+                    "src/bookmarks_api/store.py",
+                ),
+                verification_profile="python_workspace_pytest_v1",
+                output_carrier="full_files",
+                max_repair_turns=1,
             ),
-            verification_profile="python_workspace_pytest_v1",
-            output_carrier="full_files",
-            max_repair_turns=1,
-        ),
-        train_charter=TrainCharter(
-            cortex_invariant=(
-                "optional work contract, runtime-native verification truth, and one bounded repair turn"
+            train_charter=TrainCharter(
+                cortex_invariant=(
+                    "optional work contract, runtime-native verification truth, and one bounded repair turn"
+                ),
+                borrowed_mechanism=(
+                    "reuse the landed verified-work law plus the existing full_files verifier contract instead of adding host-specific policy math"
+                ),
+                primary_proving_wiring="openai:service_api",
+                conformance_surfaces=(
+                    "openai:service_api",
+                    "claude:operator_cli",
+                    "gemini:operator_cli",
+                ),
+                kill_criteria=(
+                    "cut a new Cortex-law addition if it does not improve the active divergence classification after two iterations",
+                    "do not widen shipping truth from conformance-only results",
+                ),
             ),
-            borrowed_mechanism=(
-                "reuse the landed verified-work law plus the existing full_files verifier contract instead of adding host-specific policy math"
+            shipping_default="openai:service_api",
+        )
+    if name == NORMALIZE_PORT_CONTRACT_PACK:
+        prompt_text = NORMALIZE_PORT_TASK_PATH.read_text(encoding="utf-8").strip()
+        return ContractPack(
+            contract_pack=NORMALIZE_PORT_CONTRACT_PACK,
+            prompt_text=prompt_text,
+            workspace_template_relpath="tests/fixtures/live_validation/project_template",
+            work_contract=WorkContract(
+                allowed_write_paths=("src/normalize_port.py",),
+                verification_profile="python_workspace_pytest_port_fix_v1",
+                output_carrier="full_files",
+                max_repair_turns=1,
             ),
-            primary_proving_wiring="openai:service_api",
-            conformance_surfaces=(
-                "openai:service_api",
-                "claude:operator_cli",
-                "gemini:operator_cli",
+            train_charter=TrainCharter(
+                cortex_invariant=(
+                    "optional work contract, runtime-native verification truth, and one bounded repair turn"
+                ),
+                borrowed_mechanism=(
+                    "reuse the existing normalize-port project_template verifier scaffold instead of inventing a new benchmark family"
+                ),
+                primary_proving_wiring="openai:service_api",
+                conformance_surfaces=(
+                    "openai:service_api",
+                    "claude:operator_cli",
+                    "gemini:operator_cli",
+                ),
+                kill_criteria=(
+                    "cut the second-pack breadth slice if repeat-stable OpenAI conformance does not improve within the locked iteration budget",
+                    "do not repurpose the bookmarks summary.latest anchor while breadth evidence is still being earned",
+                ),
             ),
-            kill_criteria=(
-                "cut a new Cortex-law addition if it does not improve the active divergence classification after two iterations",
-                "do not widen shipping truth from conformance-only results",
-            ),
-        ),
-        shipping_default="openai:service_api",
-    )
+            shipping_default="openai:service_api",
+        )
+    raise ValueError(f"Unsupported contract pack: {name}")
+
+
+def supported_contract_pack_names() -> tuple[str, ...]:
+    return (ACTIVE_CONTRACT_PACK, NORMALIZE_PORT_CONTRACT_PACK)
 
 
 def strongest_native_surface(brain: Brain, contract_pack: ContractPack) -> Surface:
@@ -473,7 +519,7 @@ def run_active_conformance(
 
     write_json(run_root / "summary.json", summary)
     write_text(run_root / "summary.md", render_summary_markdown(summary))
-    if _is_full_brain_run(brains):
+    if _is_full_brain_run(brains) and pack.contract_pack == ACTIVE_CONTRACT_PACK:
         write_json(CONFORMANCE_ROOT / "summary.latest.json", summary)
         write_text(CONFORMANCE_ROOT / "summary.latest.md", render_summary_markdown(summary))
     return summary
@@ -541,6 +587,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument(
         "--contract-pack",
         default=ACTIVE_CONTRACT_PACK,
+        choices=supported_contract_pack_names(),
     )
     parser.add_argument(
         "--brain",
@@ -549,21 +596,20 @@ def main(argv: list[str] | None = None) -> int:
     )
     args = parser.parse_args(argv)
 
-    if args.contract_pack != ACTIVE_CONTRACT_PACK:
-        raise SystemExit(f"Unsupported contract pack: {args.contract_pack}")
-
     brains: tuple[Brain, ...]
     if args.brain == "all":
         brains = ("openai", "claude", "gemini")
     else:
         brains = (args.brain,)  # type: ignore[assignment]
 
+    pack = contract_pack_by_name(args.contract_pack)
+
     if args.mode == "preflight":
-        payload = build_preflight_report(brains=brains)
+        payload = build_preflight_report(brains=brains, contract_pack=pack)
     elif args.mode == "reconcile-latest":
         payload = reconcile_latest_summary()
     else:
-        payload = run_active_conformance(brains=brains)
+        payload = run_active_conformance(brains=brains, contract_pack=pack)
     print(json.dumps(payload, indent=2, sort_keys=True))
     return 0
 
@@ -1052,6 +1098,7 @@ def _next_decision(
 def reconcile_latest_summary() -> ConformanceSummary:
     candidate = _find_latest_full_summary(
         preferred_next_decision=_accepted_ct2_next_decision(),
+        contract_pack_name=ACTIVE_CONTRACT_PACK,
     )
     if candidate is None:
         raise RuntimeError(
@@ -1066,6 +1113,7 @@ def reconcile_latest_summary() -> ConformanceSummary:
 def _find_latest_full_summary(
     *,
     preferred_next_decision: str | None = None,
+    contract_pack_name: str | None = None,
 ) -> ConformanceSummary | None:
     run_dirs = sorted(
         (path for path in CONFORMANCE_ROOT.glob("run_*") if path.is_dir()),
@@ -1079,6 +1127,11 @@ def _find_latest_full_summary(
         try:
             summary = json.loads(summary_path.read_text(encoding="utf-8"))
         except json.JSONDecodeError:
+            continue
+        if contract_pack_name is not None and not _summary_matches_contract_pack(
+            summary,
+            contract_pack_name=contract_pack_name,
+        ):
             continue
         if not _summary_is_full_run(summary):
             continue
@@ -1140,22 +1193,36 @@ def _summary_artifacts_exist(summary: Mapping[str, Any]) -> bool:
     return True
 
 
+def _summary_matches_contract_pack(
+    summary: Mapping[str, Any],
+    *,
+    contract_pack_name: str,
+) -> bool:
+    contract_pack = summary.get("contract_pack")
+    if not isinstance(contract_pack, Mapping):
+        return False
+    return contract_pack.get("contract_pack") == contract_pack_name
+
+
 __all__ = [
     "ACTIVE_CONTRACT_PACK",
     "ContractPack",
     "ConformanceRunResult",
     "DivergenceClass",
+    "NORMALIZE_PORT_CONTRACT_PACK",
     "TrainCharter",
     "active_contract_pack",
     "build_preflight_report",
     "classify_outcome_divergence",
     "classify_shared_divergence",
+    "contract_pack_by_name",
     "decide_iteration_outcome",
     "reconcile_latest_summary",
     "preflight_surface",
     "render_summary_markdown",
     "run_active_conformance",
     "strongest_native_surface",
+    "supported_contract_pack_names",
 ]
 
 
