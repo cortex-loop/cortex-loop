@@ -490,7 +490,7 @@ def _run_cli_variant(
             prompt=read_prompt_template("truth_gap_recheck_operator.md"),
             auth_mode=auth_mode,
             chosen_model=chosen_model,
-            session_id=extract_session_id(provider, host_paths.parse_json_lines(run_result["stdout"])),
+            session_id=extract_session_id(provider, host_paths.parse_json_records(run_result["stdout"])[0]),
             root=root,
             hook_log_path=hook_log_path,
             repeat_index=repeat_index,
@@ -632,7 +632,7 @@ def _run_cli_restart_continuity_variant(
         }
         return payload
 
-    first_records = host_paths.parse_json_lines(first_result["stdout"])
+    first_records, _first_extraction_mode = host_paths.parse_json_records(first_result["stdout"])
     session_id = extract_session_id(provider, first_records)
     if variant == "cortex_operator":
         second_result = host_paths._resume_provider_task(

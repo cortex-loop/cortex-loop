@@ -1,4 +1,4 @@
-"""OpenAI verified-work helpers over the shared verified-work law."""
+"""Shared verified-work runtime helpers over the landed verified-work law."""
 
 from __future__ import annotations
 
@@ -35,7 +35,7 @@ _FAILED_RE = re.compile(r"(?P<count>\d+)\s+failed")
 _FAILING_TEST_RE = re.compile(r"^(?:FAILED|ERROR) (?P<name>tests/[^\s]+)", re.MULTILINE)
 
 
-def build_openai_verified_work_instructions(work_contract: WorkContract) -> str:
+def build_verified_work_instructions(work_contract: WorkContract) -> str:
     allowed_paths = "\n".join(f"- {path}" for path in work_contract.allowed_write_paths)
     return (
         "Return only full-file blocks for the allowed paths.\n"
@@ -57,7 +57,7 @@ def build_openai_verified_work_instructions(work_contract: WorkContract) -> str:
     )
 
 
-def build_openai_verified_work_repair_ticket(
+def build_verified_work_repair_ticket(
     outcome: VerificationOutcome,
 ) -> str:
     return (
@@ -78,18 +78,18 @@ def build_openai_verified_work_repair_ticket(
     )
 
 
-def verify_openai_verified_work_result(
+def verify_verified_work_result(
     result_text: str | None,
     work_contract: WorkContract,
 ) -> tuple[dict[str, str] | None, VerificationOutcome]:
-    file_map, blocked_outcome = _parse_openai_verified_work_result(result_text, work_contract)
+    file_map, blocked_outcome = _parse_verified_work_result(result_text, work_contract)
     if blocked_outcome is not None:
         return file_map, blocked_outcome
     assert file_map is not None
     return file_map, _run_verified_work_verifier(file_map, work_contract)
 
 
-def _parse_openai_verified_work_result(
+def _parse_verified_work_result(
     result_text: str | None,
     work_contract: WorkContract,
 ) -> tuple[dict[str, str] | None, VerificationOutcome | None]:
@@ -360,7 +360,7 @@ def _first_relevant_excerpt(output: str) -> str | None:
 __all__ = [
     "BLOCKED_REASON_MAP",
     "BOOKMARKS_TEMPLATE_ROOT",
-    "build_openai_verified_work_instructions",
-    "build_openai_verified_work_repair_ticket",
-    "verify_openai_verified_work_result",
+    "build_verified_work_instructions",
+    "build_verified_work_repair_ticket",
+    "verify_verified_work_result",
 ]

@@ -310,7 +310,7 @@ def test_run_openai_host_control_verified_work_one_shot_adds_verification(
         work_contract=work_contract,
     )
     monkeypatch.setattr(
-        "cortex.runtime.openai_host_control.verify_openai_verified_work_result",
+        "cortex.runtime.openai_host_control.verify_verified_work_result",
         lambda result_text, contract: (
             VALID_FILE_MAP,
             VerificationOutcome(
@@ -416,7 +416,7 @@ def test_run_openai_host_control_verified_work_repairs_once_from_runtime_signal(
         work_contract=work_contract,
     )
     monkeypatch.setattr(
-        "cortex.runtime.openai_host_control.verify_openai_verified_work_result",
+        "cortex.runtime.openai_host_control.verify_verified_work_result",
         lambda result_text, contract: (
             VALID_FILE_MAP,
             VerificationOutcome(

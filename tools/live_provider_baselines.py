@@ -35,7 +35,7 @@ from live_validation_common import (
     live_evidence_fields,
     load_local_env_file,
     now_utc_iso,
-    parse_json_lines,
+    parse_json_records,
     provider_cli_workspace,
     provider_root,
     recent_operator_probe_failure,
@@ -299,7 +299,7 @@ def _run_single_provider_baseline(
     write_text(stdout_path, stdout_text)
     write_text(stderr_path, stderr_text)
 
-    records = parse_json_lines(stdout_text)
+    records, _extraction_mode = parse_json_records(stdout_text)
     warning_classes: list[str] = []
     effective_failure_class = failure_class
     if provider == "gemini" and lane == "operator" and run_result["exit_code"] == 0 and failure_class in {"capacity_exhausted", "quota_exhausted"}:

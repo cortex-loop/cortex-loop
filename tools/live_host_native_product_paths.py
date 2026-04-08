@@ -39,7 +39,7 @@ try:  # pragma: no cover - import path differs between script execution and pyte
         extract_token_usage,
         live_evidence_fields,
         now_utc_iso,
-        parse_json_lines,
+        parse_json_records,
         prepare_harness_workspace,
         provider_root,
         recent_operator_probe_failure,
@@ -72,7 +72,7 @@ except ImportError:  # pragma: no cover
         extract_token_usage,
         live_evidence_fields,
         now_utc_iso,
-        parse_json_lines,
+        parse_json_records,
         prepare_harness_workspace,
         provider_root,
         recent_operator_probe_failure,
@@ -629,7 +629,7 @@ def _run_restart_continuity(
             **route_diagnostics,
         }
 
-    first_records = parse_json_lines(first_result["stdout"])
+    first_records, _first_extraction_mode = parse_json_records(first_result["stdout"])
     session_id = extract_session_id(provider, first_records)
     second_result = _resume_provider_task(
         provider,
@@ -698,7 +698,7 @@ def _materialize_operator_run(
         if run_verification
         else {"exit_code": None, "stdout": "", "stderr": ""}
     )
-    records = parse_json_lines(run_result["stdout"])
+    records, _extraction_mode = parse_json_records(run_result["stdout"])
     modified_files = collect_modified_files(project_root)
     result_text = extract_result_text(records, run_result["stdout"])
     hook_records = _read_hook_records(hook_log_path)

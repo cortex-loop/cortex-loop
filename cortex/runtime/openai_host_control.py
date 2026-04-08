@@ -19,10 +19,10 @@ from .openai_host_transport import (
     OpenAIResponseStreamTransportError,
     execute_openai_response_stream_turn,
 )
-from .openai_verified_work import (
-    build_openai_verified_work_instructions,
-    build_openai_verified_work_repair_ticket,
-    verify_openai_verified_work_result,
+from .verified_work_runtime import (
+    build_verified_work_instructions,
+    build_verified_work_repair_ticket,
+    verify_verified_work_result,
 )
 
 _ACTION_TAG = "openai-response-stream"
@@ -226,7 +226,7 @@ def run_openai_host_control(
         action_tag=request.action_tag,
         model=request.model,
         input_text=request.input_text,
-        instructions=build_openai_verified_work_instructions(request.work_contract),
+        instructions=build_verified_work_instructions(request.work_contract),
         metadata=request.metadata,
         max_output_tokens=request.max_output_tokens,
         work_contract=request.work_contract,
@@ -237,7 +237,7 @@ def run_openai_host_control(
         transport_callable=transport_callable,
     )
     try:
-        _, verification = verify_openai_verified_work_result(
+        _, verification = verify_verified_work_result(
             result_text,
             request.work_contract,
         )
@@ -262,7 +262,7 @@ def run_openai_host_control(
             raise OpenAIResponseStreamTransportError(
                 "OpenAI verified-work continuation requires a response_id on the first attempt."
             )
-        repair_ticket = build_openai_verified_work_repair_ticket(verification)
+        repair_ticket = build_verified_work_repair_ticket(verification)
         repair_events, repair_records, repair_session, repair_result_text = _run_openai_host_control_attempt(
             verified_request,
             current_session,
@@ -273,7 +273,7 @@ def run_openai_host_control(
         records.extend(repair_records)
         final_result_text = repair_result_text
         try:
-            _, verification = verify_openai_verified_work_result(
+            _, verification = verify_verified_work_result(
                 repair_result_text,
                 request.work_contract,
             )

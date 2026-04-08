@@ -41,7 +41,7 @@ from live_validation_common import (
     extract_token_usage,
     live_evidence_fields,
     model_ladder,
-    parse_json_lines,
+    parse_json_records,
     redact_claude_auth_payload,
     should_collapse_after_failure,
 )
@@ -126,7 +126,7 @@ def test_should_collapse_after_failure_matches_blocking_classes() -> None:
     assert should_collapse_after_failure(None) is False
 
 
-def test_parse_json_lines_extracts_structured_records_only() -> None:
+def test_parse_json_records_extracts_jsonl_structured_records_only() -> None:
     text = '\n'.join(
         [
             '{"type":"init","session_id":"s-1"}',
@@ -135,14 +135,56 @@ def test_parse_json_lines_extracts_structured_records_only() -> None:
         ]
     )
 
-    records = parse_json_lines(text)
+    records, extraction_mode = parse_json_records(text)
 
     assert records == [
         {"type": "init", "session_id": "s-1"},
         {"type": "item.completed", "item": {"type": "agent_message", "text": "OK"}},
     ]
+    assert extraction_mode == "jsonl"
     assert extract_event_labels(records) == ["init", "item:agent_message"]
     assert extract_result_text(records, text) == "OK"
+
+
+def test_parse_json_records_accepts_pretty_printed_single_object() -> None:
+    text = json.dumps(
+        {
+            "session_id": "gm-1",
+            "response": "=== FILE: src/bookmarks_api/main.py ===\napp = object()\n=== END FILE ===",
+        },
+        indent=2,
+    )
+
+    records, extraction_mode = parse_json_records(text)
+
+    assert records == [
+        {
+            "session_id": "gm-1",
+            "response": "=== FILE: src/bookmarks_api/main.py ===\napp = object()\n=== END FILE ===",
+        }
+    ]
+    assert extraction_mode == "json_object"
+    assert extract_result_text(records, text) == (
+        "=== FILE: src/bookmarks_api/main.py ===\napp = object()\n=== END FILE ==="
+    )
+
+
+def test_parse_json_records_accepts_json_array_of_records() -> None:
+    text = json.dumps(
+        [
+            {"type": "init", "session_id": "s-1"},
+            {"type": "result", "result": "done"},
+        ],
+        indent=2,
+    )
+
+    records, extraction_mode = parse_json_records(text)
+
+    assert records == [
+        {"type": "init", "session_id": "s-1"},
+        {"type": "result", "result": "done"},
+    ]
+    assert extraction_mode == "json_array"
 
 
 def test_extract_result_text_reassembles_gemini_style_assistant_deltas() -> None:
@@ -886,8 +928,8 @@ def test_operator_timeout_after_successful_verification_is_warning_not_failure(
     )
     monkeypatch.setattr(
         live_host_native_product_paths,
-        "parse_json_lines",
-        lambda text: [],
+        "parse_json_records",
+        lambda text: ([], "raw_fallback"),
     )
     monkeypatch.setattr(
         live_host_native_product_paths,

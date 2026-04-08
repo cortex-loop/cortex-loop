@@ -128,7 +128,7 @@ def test_openai_service_action_roundtrips_verified_work_payload(
     state = OpenAIServiceState()
     rendered = render_full_files_result(VALID_FILE_MAP)
     monkeypatch.setattr(
-        "cortex.runtime.openai_host_control.verify_openai_verified_work_result",
+        "cortex.runtime.openai_host_control.verify_verified_work_result",
         lambda result_text, contract: (
             VALID_FILE_MAP,
             VerificationOutcome(

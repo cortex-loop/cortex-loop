@@ -19,10 +19,10 @@ from cortex.runtime.openai_host_control import (  # noqa: E402
     OpenAIResponseStreamTransportError,
     run_openai_host_control,
 )
-from cortex.runtime.openai_verified_work import (  # noqa: E402
-    build_openai_verified_work_instructions,
-    build_openai_verified_work_repair_ticket,
-    verify_openai_verified_work_result,
+from cortex.runtime.verified_work_runtime import (  # noqa: E402
+    build_verified_work_instructions,
+    build_verified_work_repair_ticket,
+    verify_verified_work_result,
 )
 from cortex.sre.verified_work import VerificationOutcome, WorkContract  # noqa: E402
 
@@ -35,7 +35,7 @@ from live_validation_common import (  # noqa: E402
     extract_result_text,
     load_local_env_file,
     now_utc_iso,
-    parse_json_lines,
+    parse_json_records,
     run_command,
     sanitize_text,
     write_json,
@@ -158,6 +158,7 @@ class ConformanceRunResult:
     pytest_failed: int | None = None
     attempt_count: int | None = None
     repair_conversion: str | None = None
+    extraction_mode: str | None = None
     note: str | None = None
     transport_failure_class: str | None = None
     artifact_relpath: str | None = None
@@ -191,6 +192,7 @@ class ConformanceRunResult:
             "pytest_failed": self.pytest_failed,
             "attempt_count": self.attempt_count,
             "repair_conversion": self.repair_conversion,
+            "extraction_mode": self.extraction_mode,
             "note": self.note,
             "transport_failure_class": self.transport_failure_class,
             "artifact_relpath": self.artifact_relpath,
@@ -451,8 +453,8 @@ def render_summary_markdown(summary: dict[str, Any]) -> str:
         f"- iteration_outcome: `{summary['iteration_outcome']}`",
         f"- next_decision: `{summary['next_decision']}`",
         "",
-        "| brain | surface | status | divergence | parseable | import | tests | repair | note |",
-        "| --- | --- | --- | --- | --- | --- | --- | --- | --- |",
+        "| brain | surface | status | divergence | parseable | import | tests | repair | extraction | note |",
+        "| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |",
     ]
     for result in summary["results"]:
         tests_cell = "-"
@@ -470,6 +472,7 @@ def render_summary_markdown(summary: dict[str, Any]) -> str:
             f"{import_ok} | "
             f"{tests_cell} | "
             f"{result['repair_conversion'] or '-'} | "
+            f"{result['extraction_mode'] or '-'} | "
             f"{result['note'] or '-'} |"
         )
     return "\n".join(lines) + "\n"
@@ -598,7 +601,7 @@ def _run_claude_cli_conformance(
 ) -> ConformanceRunResult:
     artifact_dir = run_root / "claude_operator_cli"
     artifact_dir.mkdir(parents=True, exist_ok=True)
-    instructions = build_openai_verified_work_instructions(contract_pack.work_contract)
+    instructions = build_verified_work_instructions(contract_pack.work_contract)
     with tempfile.TemporaryDirectory(prefix="cortex-conformance-claude-") as tmpdir:
         workspace = Path(tmpdir)
         initial = run_command(
@@ -642,6 +645,7 @@ def _run_claude_cli_conformance(
         first_session_id = result["session_id"]
         final_outcome = first_outcome
         attempt_count = 1
+        final_extraction_mode = result["extraction_mode"]
         final_note = result["note"]
         if first_outcome.failure_class in {"output_invalid", "import_smoke_failed", "test_failed"}:
             if not isinstance(first_session_id, str) or not first_session_id.strip():
@@ -661,10 +665,11 @@ def _run_claude_cli_conformance(
                     pytest_failed=first_outcome.pytest_failed,
                     attempt_count=1,
                     repair_conversion="failed_without_repair",
+                    extraction_mode=result["extraction_mode"],
                     note="Claude operator surface did not return a resumable session id.",
                     artifact_relpath=str(artifact_dir.relative_to(ROOT)),
                 )
-            repair_ticket = build_openai_verified_work_repair_ticket(first_outcome)
+            repair_ticket = build_verified_work_repair_ticket(first_outcome)
             resumed = run_command(
                 [
                     "claude",
@@ -706,6 +711,7 @@ def _run_claude_cli_conformance(
             final_outcome = resumed_result["verification"]
             assert isinstance(final_outcome, VerificationOutcome)
             attempt_count = 2
+            final_extraction_mode = resumed_result["extraction_mode"]
             final_note = resumed_result["note"]
 
     return _result_from_verification(
@@ -715,6 +721,7 @@ def _run_claude_cli_conformance(
         outcome=final_outcome,
         attempt_count=attempt_count,
         first_outcome=first_outcome,
+        extraction_mode=final_extraction_mode,
         artifact_relpath=str(artifact_dir.relative_to(ROOT)),
         note=final_note,
     )
@@ -731,7 +738,7 @@ def _run_gemini_cli_conformance(
         workspace = Path(tmpdir)
         initial_prompt = _render_combined_operator_prompt(
             task_prompt=contract_pack.prompt_text,
-            instructions=build_openai_verified_work_instructions(contract_pack.work_contract),
+            instructions=build_verified_work_instructions(contract_pack.work_contract),
         )
         initial = run_command(
             [
@@ -767,11 +774,12 @@ def _run_gemini_cli_conformance(
         assert isinstance(first_outcome, VerificationOutcome)
         final_outcome = first_outcome
         attempt_count = 1
+        final_extraction_mode = result["extraction_mode"]
         final_note = result["note"]
         if first_outcome.failure_class in {"output_invalid", "import_smoke_failed", "test_failed"}:
             repair_ticket = _render_combined_operator_prompt(
-                task_prompt=build_openai_verified_work_repair_ticket(first_outcome),
-                instructions=build_openai_verified_work_instructions(contract_pack.work_contract),
+                task_prompt=build_verified_work_repair_ticket(first_outcome),
+                instructions=build_verified_work_instructions(contract_pack.work_contract),
             )
             resumed = run_command(
                 [
@@ -808,6 +816,7 @@ def _run_gemini_cli_conformance(
             final_outcome = resumed_result["verification"]
             assert isinstance(final_outcome, VerificationOutcome)
             attempt_count = 2
+            final_extraction_mode = resumed_result["extraction_mode"]
             final_note = resumed_result["note"]
 
     return _result_from_verification(
@@ -817,6 +826,7 @@ def _run_gemini_cli_conformance(
         outcome=final_outcome,
         attempt_count=attempt_count,
         first_outcome=first_outcome,
+        extraction_mode=final_extraction_mode,
         artifact_relpath=str(artifact_dir.relative_to(ROOT)),
         note=final_note,
     )
@@ -840,17 +850,18 @@ def _evaluate_operator_attempt(
             "note": sanitize_text((raw_stderr or raw_stdout).strip() or "transport blocked"),
         }
 
-    records = parse_json_lines(raw_stdout)
+    records, extraction_mode = parse_json_records(raw_stdout)
     if provider == "claude":
         session_id = _extract_session_id_from_operator_stdout("claude", raw_stdout)
     else:
         session_id = _extract_session_id_from_operator_stdout("gemini", raw_stdout)
     result_text = extract_result_text(records, raw_stdout)
-    _, verification = verify_openai_verified_work_result(result_text, work_contract)
+    _, verification = verify_verified_work_result(result_text, work_contract)
     return {
         "status": "executed",
         "verification": verification,
         "session_id": session_id,
+        "extraction_mode": extraction_mode,
         "note": sanitize_text(raw_stderr.strip() or "executed"),
     }
 
@@ -865,6 +876,7 @@ def _result_from_verification(
     artifact_relpath: str,
     note: str | None = None,
     first_outcome: VerificationOutcome | None = None,
+    extraction_mode: str | None = None,
 ) -> ConformanceRunResult:
     status, divergence_class = classify_outcome_divergence(surface=surface, outcome=outcome)
     return ConformanceRunResult(
@@ -885,6 +897,7 @@ def _result_from_verification(
         pytest_failed=outcome.pytest_failed,
         attempt_count=attempt_count,
         repair_conversion=_repair_conversion(outcome=outcome, attempt_count=attempt_count),
+        extraction_mode=extraction_mode,
         note=note,
         artifact_relpath=artifact_relpath,
     )
@@ -911,7 +924,7 @@ def _render_combined_operator_prompt(*, task_prompt: str, instructions: str) -> 
 
 
 def _extract_session_id_from_operator_stdout(provider: Literal["claude", "gemini"], raw_stdout: str) -> str | None:
-    records = parse_json_lines(raw_stdout)
+    records, _extraction_mode = parse_json_records(raw_stdout)
     for record in reversed(records):
         session_id = record.get("session_id")
         if isinstance(session_id, str) and session_id.strip():

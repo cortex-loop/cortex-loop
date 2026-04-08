@@ -203,7 +203,7 @@ Direct commands:
 
 ```sh
 python3 -m pytest tests/unit/test_verified_work.py -q
-python3 -m pytest tests/unit/test_openai_verified_work.py -q
+python3 -m pytest tests/unit/test_verified_work_runtime.py -q
 python3 -m pytest tests/unit/test_openai_runtime_step.py -q
 python3 -m pytest tests/unit/test_openai_host_control.py -q
 python3 -m pytest tests/unit/test_openai_service.py -q

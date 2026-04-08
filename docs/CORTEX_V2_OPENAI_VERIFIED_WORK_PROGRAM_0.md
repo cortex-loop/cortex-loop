@@ -168,11 +168,13 @@ This program is intentionally outside the current compact canonical proof bundle
 On the current line:
 
 - the shared verified-work law is implemented
+- the shared verified-work runtime helpers now live in the neutral `cortex/runtime/verified_work_runtime.py` home
 - the OpenAI host-control family now accepts an optional bounded `work_contract`
 - external verification now updates runtime truth through `run_openai_runtime_verification_step()`
 - the verified-work path can perform exactly one native continuation attempt
 - the default thin `O4` path remains unchanged when `work_contract` is absent
 - deterministic tests and repo-local revalidation are real
+- the corrected tri-brain conformance rerun removed Gemini's false raw-JSON-wrapper `output_invalid` classification without widening shipping truth
 - but `O4R` remains partial because live larger-task lift has not yet been re-earned repeat-stably
 
 ## Explicitly blocked moves

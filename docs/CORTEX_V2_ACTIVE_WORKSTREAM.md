@@ -42,19 +42,19 @@ It is workflow state only. It does not override the packet documents, implementa
   - one current-machine API truth anchor is now re-earned for current OpenAI-only product scope
   - the shared `canonical_anchor` direct-API suite remains implemented for `claude` and `openai`, but only `openai` is in the accepted current product scope
   - the active verified-work conformance reading on the bookmarks contract pack is:
-    - OpenAI `service_api`: partial on the current run; the bounded repair path executed but still finished `test_failed`, so both conformance truth and shipping truth remain partial
-    - Claude `operator_cli`: divergent on repair-turn protocol obedience after partial first-turn conformance
-    - Gemini `operator_cli`: divergent on first-turn contract obedience and repeated the same protocol failure on repair
+    - OpenAI `service_api`: partial on the corrected current run; the bounded repair path executed but still finished `test_failed`, so both conformance truth and shipping truth remain partial
+    - Claude `operator_cli`: divergent on the corrected current run because the repair attempt did not complete cleanly and the final result still fell back to raw output and `output_invalid`
+    - Gemini `operator_cli`: partial on the corrected current run; structured `json_object` extraction now works, import smoke passes, and the result still finishes `test_failed`, so the earlier false `output_invalid` divergence is removed
   - the strongest current Gemini recovery evidence remains branch-local and non-authoritative until re-earned under the reset contract
 
 ## 2. Current campaign and seam state
 
 - Current campaign: `P1 product-first reduction program`
 - Current working branch at ledger update: `main`
-- Current branch role: accepted resting line after the C2 Cortex-law truth and fast-train method slice
+- Current branch role: accepted resting line after the E4 verified-work neutralization and conformance-correction slice
 - Current candidate seam: `none active`
 - Current seam status:
-  - A0, P1C, S1, S1C, X1, X2, the first verified-work restoration slice, and the Cortex-law / fast-train method slice are now accepted on local `main`
+  - A0, P1C, S1, S1C, X1, X2, the first verified-work restoration slice, the Cortex-law / fast-train method slice, and the verified-work neutralization / conformance-correction slice are now accepted on local `main`
   - the explicit `current|canonical_anchor` direct-API service suites remain accepted on the current line
   - the OpenAI service spend split remains explicit:
     - `service_smoke` uses `gpt-5.4-mini`
@@ -100,7 +100,7 @@ It is workflow state only. It does not override the packet documents, implementa
     - one explicit `build -> test -> iterate -> cut` default loop
     - one tri-brain conformance harness on the active bookmarks verified-work contract pack
     - one explicit divergence taxonomy: `cortex_law`, `brain_wiring`, `surface_wiring`, `env_blocked`
-    - one current verified-work audit result of `next_decision = fix_wiring_only` because the observed divergences did not repeat across brains
+    - one corrected verified-work audit result of `next_decision = fix_wiring_only`; Gemini no longer carries a false raw-JSON-wrapper divergence after structured `json_object` extraction, while Claude remains the only divergent surface
   - shipping truth remains OpenAI-first on the service lane
   - Claude remains outside the accepted shipping default, but Claude is no longer treated as generic backlog for Cortex-law conformance work
   - Gemini remains outside the accepted shipping default, but Gemini is no longer treated as generic backlog for Cortex-law conformance work
@@ -117,7 +117,8 @@ It is workflow state only. It does not override the packet documents, implementa
   - choose the fastest proving wiring and one tiny runnable contract pack
   - run tri-brain conformance on OpenAI, Claude, and Gemini
   - classify divergence as `cortex_law`, `brain_wiring`, `surface_wiring`, or `env_blocked`
-  - when the same divergence does not repeat across brains, fix only the divergent wiring before touching Cortex law
+  - because the corrected current run leaves Claude as the only divergent surface, open the next seam as one narrower Claude wiring-correction train before touching Cortex law again
+  - keep OpenAI and Gemini in the `partial` bucket as real brain-wiring evidence rather than treating either as a new law failure
   - keep the default thin path unchanged while `O4R` remains partial
   - keep repeated-failure inhibition and automatic carrier selection deferred until value is earned
   - cut back rather than widen if the verified-work path continues to fail without clear lift or better conformance

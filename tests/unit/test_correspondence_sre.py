@@ -51,10 +51,10 @@ EXPECTATIONS = (
                 test_names=("test_verification_outcome_rejects_incoherent_status_and_failure_class",),
             ),
             PromisedTestSurface(
-                test_file="tests/unit/test_openai_verified_work.py",
+                test_file="tests/unit/test_verified_work_runtime.py",
                 test_names=(
-                    "test_verify_openai_verified_work_result_preserves_blocked_missing_info",
-                    "test_verify_openai_verified_work_result_accepts_passing_submission",
+                    "test_verify_verified_work_result_preserves_blocked_missing_info",
+                    "test_verify_verified_work_result_accepts_passing_submission",
                 ),
             ),
         ),

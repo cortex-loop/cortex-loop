@@ -184,7 +184,7 @@ def test_openai_host_control_local_revalidation_mentions_verified_work_without_w
     assert "runtime-native verification binding" in section
     assert "Any larger-task live-value reruns for the verified-work path remain local exploratory evidence only" in section
     assert "python3 -m pytest tests/unit/test_verified_work.py -q" in section
-    assert "python3 -m pytest tests/unit/test_openai_verified_work.py -q" in section
+    assert "python3 -m pytest tests/unit/test_verified_work_runtime.py -q" in section
     assert "python3 -m pytest tests/unit/test_openai_runtime_step.py -q" in section
     assert "make revalidate-openai-host-control" in section
 
@@ -260,12 +260,12 @@ def test_active_current_line_docs_frame_openai_only_truth_and_watchlist_retentio
     )
     assert "Current working branch at ledger update: `main`" in workstream_text
     assert (
-        "Current branch role: accepted resting line after the C2 Cortex-law truth and fast-train method slice"
+        "Current branch role: accepted resting line after the E4 verified-work neutralization and conformance-correction slice"
         in workstream_text
     )
     assert "Current candidate seam: `none active`" in workstream_text
     assert (
-        "A0, P1C, S1, S1C, X1, X2, the first verified-work restoration slice, and the Cortex-law / fast-train method slice are now accepted on local `main`"
+        "A0, P1C, S1, S1C, X1, X2, the first verified-work restoration slice, the Cortex-law / fast-train method slice, and the verified-work neutralization / conformance-correction slice are now accepted on local `main`"
         in workstream_text
     )
     assert "docs/CORTEX_V2_EXECUTIVE_RESTORATION_NOTE.md" in workstream_text
@@ -278,9 +278,9 @@ def test_active_current_line_docs_frame_openai_only_truth_and_watchlist_retentio
     assert "No active verified-work restoration seam remains on the accepted local `main` line." in workstream_text
     assert "write the `Train Charter` first" in workstream_text
     assert "run tri-brain conformance on OpenAI, Claude, and Gemini" in workstream_text
-    assert "OpenAI `service_api`: partial on the current run" in workstream_text
-    assert "Claude `operator_cli`: divergent on repair-turn protocol obedience after partial first-turn conformance" in workstream_text
-    assert "Gemini `operator_cli`: divergent on first-turn contract obedience and repeated the same protocol failure on repair" in workstream_text
+    assert "OpenAI `service_api`: partial on the corrected current run" in workstream_text
+    assert "Claude `operator_cli`: divergent on the corrected current run because the repair attempt did not complete cleanly" in workstream_text
+    assert "Gemini `operator_cli`: partial on the corrected current run; structured `json_object` extraction now works" in workstream_text
 
     assert (
         "This is the only active current-line proof bundle for the accepted OpenAI-only product scope."
@@ -326,6 +326,7 @@ def test_active_current_line_docs_frame_openai_only_truth_and_watchlist_retentio
     assert "The local larger-task exploratory runs do not justify prompt shaping" in restoration_note_text
     assert "The next runtime/product seam should improve Cortex law first" in restoration_note_text
     assert "The first restoration slice is now partly landed on the accepted line" in restoration_note_text
+    assert "the shared verified-work runtime helpers now live in the neutral `cortex/runtime/verified_work_runtime.py` home" in restoration_note_text
     assert "repeat-stable live lift for the verified-work path over one-shot behavior" in restoration_note_text
     assert "## Conformance reading under the current method" in restoration_note_text
     assert "It should ask whether the same Cortex law is conformant, partial, divergent, unwired, or env-blocked" in restoration_note_text
@@ -335,6 +336,7 @@ def test_active_current_line_docs_frame_openai_only_truth_and_watchlist_retentio
     assert "accepted bounded runtime-program brief for the first verified-work restoration slice" in verified_work_program_text
     assert "keep the accepted thin `O4` path unchanged when no `work_contract` is present" in verified_work_program_text
     assert "This program is intentionally outside the current compact canonical proof bundle" in verified_work_program_text
+    assert "the shared verified-work runtime helpers now live in the neutral `cortex/runtime/verified_work_runtime.py` home" in verified_work_program_text
     assert "but `O4R` remains partial because live larger-task lift has not yet been re-earned repeat-stably" in verified_work_program_text
 
 
@@ -411,12 +413,12 @@ def test_phase_gates_match_openai_only_truth_and_hygiene() -> None:
     assert "remains thin and text-only by default when no `work_contract` is present" in o4_row
     assert "keeps `openai_product_journal` v1 only" in o4_row
     assert "repeat-stable local larger-task reruns still required before closeout | partial |" in o4r_row
-    assert "one live local bookmarks rerun confirmed that runtime truth can drive a real repair continuation" in o4r_row
+    assert "the invariant verified-work runtime helpers now live in a neutral runtime home" in o4r_row
     assert "tools/cortex_conformance.py" in c1_row
     assert "Train Charter" in c1_row
     assert "make conformance-preflight" in c2_row
-    assert "OpenAI `service_api` partial on the current run" in c2_row
-    assert "Gemini `operator_cli` divergent on first-turn contract obedience" in c2_row
+    assert "OpenAI `service_api` partial because the bounded repair path still finished `test_failed`" in c2_row
+    assert "Gemini `operator_cli` partial because structured `json_object` extraction now works" in c2_row
     assert "strongest available native surface may stand in for development conformance" in c3_row
     assert "historical/watchlist-only; do not use for runtime closure" in l5_row
     assert "closed | landed" in l6c_row

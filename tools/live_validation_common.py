@@ -509,7 +509,7 @@ def read_prompt_template(filename: str) -> str:
     return (PROMPTS_ROOT / filename).read_text(encoding="utf-8")
 
 
-def parse_json_lines(text: str) -> list[dict[str, Any]]:
+def parse_json_records(text: str) -> tuple[list[dict[str, Any]], str]:
     records: list[dict[str, Any]] = []
     for raw_line in text.splitlines():
         line = raw_line.strip()
@@ -521,7 +521,21 @@ def parse_json_lines(text: str) -> list[dict[str, Any]]:
             continue
         if isinstance(parsed, dict):
             records.append(parsed)
-    return records
+    if records:
+        return records, "jsonl"
+
+    stripped = text.strip()
+    if not stripped:
+        return [], "raw_fallback"
+    try:
+        parsed = json.loads(stripped)
+    except json.JSONDecodeError:
+        return [], "raw_fallback"
+    if isinstance(parsed, dict):
+        return [parsed], "json_object"
+    if isinstance(parsed, list) and all(isinstance(item, dict) for item in parsed):
+        return [dict(item) for item in parsed], "json_array"
+    return [], "raw_fallback"
 
 
 def extract_event_labels(records: list[dict[str, Any]]) -> list[str]:
@@ -663,11 +677,20 @@ def rewrite_artifact_payload(payload: dict[str, Any]) -> None:
 def extract_session_id(provider: str, records: list[dict[str, Any]]) -> str | None:
     for record in records:
         if provider == "claude":
+            session_id = record.get("session_id")
+            if isinstance(session_id, str) and session_id.strip():
+                return session_id.strip()
             if record.get("type") == "system":
                 session_id = record.get("session_id")
                 if isinstance(session_id, str) and session_id.strip():
                     return session_id.strip()
         elif provider == "gemini":
+            session_id = record.get("session_id")
+            if isinstance(session_id, str) and session_id.strip():
+                return session_id.strip()
+            maybe_session = record.get("sessionId")
+            if isinstance(maybe_session, str) and maybe_session.strip():
+                return maybe_session.strip()
             if record.get("type") == "init":
                 session_id = record.get("session_id")
                 if isinstance(session_id, str) and session_id.strip():
