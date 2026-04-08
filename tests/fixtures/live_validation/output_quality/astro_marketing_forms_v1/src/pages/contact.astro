@@ -1,0 +1,32 @@
+---
+import Header from "../components/Header.astro";
+import Layout from "../layouts/Layout.astro";
+---
+
+<Layout title="Contact | Beacon Studio">
+  <Header />
+  <main>
+    <section class="hero">
+      <p style="text-transform: uppercase; letter-spacing: 0.08em; color: #8d5e37;">Contact</p>
+      <h1>Contact your team.</h1>
+      <p>This page is expected to become a production-ready contact flow.</p>
+    </section>
+    <section class="panel">
+      <form>
+        <label>
+          Name
+          <input name="name" type="text" />
+        </label>
+        <label>
+          Email
+          <input name="email" type="text" />
+        </label>
+        <label>
+          Message
+          <textarea name="message" rows="5"></textarea>
+        </label>
+        <button type="submit">Send message</button>
+      </form>
+    </section>
+  </main>
+</Layout>

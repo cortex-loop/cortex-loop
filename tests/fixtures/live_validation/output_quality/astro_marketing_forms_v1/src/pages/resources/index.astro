@@ -1,0 +1,27 @@
+---
+import Header from "../../components/Header.astro";
+import Layout from "../../layouts/Layout.astro";
+import { getResources } from "../../lib/resources";
+
+const resources = getResources();
+---
+
+<Layout title="Resources | Beacon Studio">
+  <Header />
+  <main>
+    <section class="hero">
+      <p style="text-transform: uppercase; letter-spacing: 0.08em; color: #8d5e37;">Resources</p>
+      <h1>Starter placeholder for the resource hub.</h1>
+      <p>This page should become a real resource index with integrated navigation.</p>
+    </section>
+    <section class="grid two">
+      {resources.map((resource) => (
+        <article class="panel">
+          <p>{resource.category}</p>
+          <h2><a href={`/resources/${resource.slug}/`}>{resource.title}</a></h2>
+          <p>{resource.summary}</p>
+        </article>
+      ))}
+    </section>
+  </main>
+</Layout>

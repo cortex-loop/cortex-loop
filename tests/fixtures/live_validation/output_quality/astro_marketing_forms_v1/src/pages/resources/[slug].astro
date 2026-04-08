@@ -1,0 +1,34 @@
+---
+import Header from "../../components/Header.astro";
+import Layout from "../../layouts/Layout.astro";
+import { findResource, getResources } from "../../lib/resources";
+
+export async function getStaticPaths() {
+  return getResources().map((resource) => ({
+    params: { slug: resource.slug },
+  }));
+}
+
+const { slug } = Astro.params;
+const resource = findResource(slug ?? "");
+
+if (!resource) {
+  throw new Error("resource not found");
+}
+---
+
+<Layout title={`${resource.title} | Beacon Studio`}>
+  <Header />
+  <main>
+    <article class="panel stack">
+      <p>{resource.category}</p>
+      <h1>{resource.title}</h1>
+      <p>{resource.summary}</p>
+      <ul>
+        {resource.bullets.map((bullet) => (
+          <li>{bullet}</li>
+        ))}
+      </ul>
+    </article>
+  </main>
+</Layout>

@@ -1,0 +1,29 @@
+---
+import Header from "../../components/Header.astro";
+import Layout from "../../layouts/Layout.astro";
+import { docsForTag, listTags } from "../../lib/docs";
+
+export async function getStaticPaths() {
+  return listTags().map((tag) => ({
+    params: { tag },
+  }));
+}
+
+const { tag } = Astro.params;
+const matches = docsForTag(tag ?? "");
+---
+
+<Layout title={`Tag: ${tag} | Ops Atlas`}>
+  <Header />
+  <main>
+    <section class="panel stack">
+      <p class="eyebrow">Tag</p>
+      <h1>{tag}</h1>
+      <ul>
+        {matches.map((doc) => (
+          <li><a href={`/docs/${doc.section}/${doc.slug}/`}>{doc.title}</a></li>
+        ))}
+      </ul>
+    </section>
+  </main>
+</Layout>

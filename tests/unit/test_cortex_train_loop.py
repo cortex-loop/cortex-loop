@@ -482,3 +482,113 @@ def test_run_verified_work_repair_yield_openai_train_escalates_when_no_repair_op
     assert "insufficient natural failures" in record.iterations[0].reason
     assert record.baseline_result["rounds_executed"] == 2
     assert "make revalidate-openai-host-control" in record.iterations[0].proof_commands
+
+
+def test_run_output_quality_comparison_openai_train_promotes_on_repeat_stable_advantage(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    def _fake_short_command(command, *, cwd):
+        _ = cwd
+        return {
+            "command": command,
+            "cwd": str(cwd),
+            "exit_code": 0,
+            "stdout": "",
+            "stderr": "",
+        }
+
+    summaries = iter(
+        (
+            {
+                "env_blocked": False,
+                "aggregate_objective_pass_count": {"raw": 2, "tooling_only": 4, "cortex": 4},
+                "aggregate_hidden_quality_pass_count": {"raw": 1, "tooling_only": 3, "cortex": 4},
+                "pairwise_summary": {
+                    "cortex_vs_raw": {"wins": 4, "losses": 1, "ties": 0, "win_rate": 0.8},
+                    "cortex_vs_tooling_only": {
+                        "wins": 2,
+                        "losses": 2,
+                        "ties": 1,
+                        "win_rate": 0.4,
+                    },
+                },
+            },
+            {
+                "env_blocked": False,
+                "aggregate_objective_pass_count": {"raw": 2, "tooling_only": 4, "cortex": 4},
+                "aggregate_hidden_quality_pass_count": {"raw": 1, "tooling_only": 3, "cortex": 4},
+                "pairwise_summary": {
+                    "cortex_vs_raw": {"wins": 3, "losses": 1, "ties": 1, "win_rate": 0.6},
+                    "cortex_vs_tooling_only": {
+                        "wins": 2,
+                        "losses": 2,
+                        "ties": 1,
+                        "win_rate": 0.4,
+                    },
+                },
+            },
+        )
+    )
+
+    def _fake_long_command(command, *, cwd):
+        _ = cwd
+        return {
+            "command": command,
+            "cwd": str(cwd),
+            "exit_code": 0,
+            "stdout": json.dumps(next(summaries)),
+            "stderr": "",
+        }
+
+    monkeypatch.setattr(train_loop, "_run_shell_command", _fake_short_command)
+    monkeypatch.setattr(train_loop, "_run_long_shell_command", _fake_long_command)
+
+    record = train_loop.run_output_quality_comparison_openai_train(loop_root=tmp_path)
+
+    assert record.final_decision == "promote"
+    assert record.iterations[0].primary_metric_after == 70
+    assert record.baseline_result["total_pairwise_wins"] == 7
+    assert (tmp_path / "output-quality-comparison-openai" / "summary.json").exists()
+
+
+def test_run_output_quality_comparison_openai_train_escalates_on_env_block(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    def _fake_short_command(command, *, cwd):
+        _ = cwd
+        return {
+            "command": command,
+            "cwd": str(cwd),
+            "exit_code": 0,
+            "stdout": "",
+            "stderr": "",
+        }
+
+    def _fake_long_command(command, *, cwd):
+        _ = cwd
+        return {
+            "command": command,
+            "cwd": str(cwd),
+            "exit_code": 0,
+            "stdout": json.dumps(
+                {
+                    "env_blocked": True,
+                    "aggregate_objective_pass_count": {"raw": 0, "tooling_only": 0, "cortex": 0},
+                    "aggregate_hidden_quality_pass_count": {"raw": 0, "tooling_only": 0, "cortex": 0},
+                    "pairwise_summary": {
+                        "cortex_vs_raw": {"wins": 0, "losses": 0, "ties": 0, "win_rate": 0.0},
+                    },
+                }
+            ),
+            "stderr": "",
+        }
+
+    monkeypatch.setattr(train_loop, "_run_shell_command", _fake_short_command)
+    monkeypatch.setattr(train_loop, "_run_long_shell_command", _fake_long_command)
+
+    record = train_loop.run_output_quality_comparison_openai_train(loop_root=tmp_path)
+
+    assert record.final_decision == "escalate"
+    assert "env/auth blocked" in record.iterations[0].reason

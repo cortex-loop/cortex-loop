@@ -1,0 +1,55 @@
+:root {
+  font-family: "Inter", system-ui, sans-serif;
+  color: #132030;
+  background: #f6f7fb;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+}
+
+a {
+  color: inherit;
+}
+
+.shell {
+  display: grid;
+  gap: 1rem;
+}
+
+.nav {
+  display: flex;
+  gap: 1rem;
+  padding: 1rem 1.5rem;
+  align-items: center;
+  border-bottom: 1px solid rgba(19, 32, 48, 0.12);
+  background: rgba(255, 255, 255, 0.84);
+}
+
+.panel {
+  border-radius: 1rem;
+  border: 1px solid rgba(19, 32, 48, 0.12);
+  background: white;
+  padding: 1rem 1.1rem;
+  box-shadow: 0 10px 24px rgba(19, 32, 48, 0.08);
+}
+
+main {
+  max-width: 72rem;
+  margin: 0 auto;
+  padding: 1.5rem;
+  display: grid;
+  gap: 1rem;
+}
+
+.pill {
+  display: inline-flex;
+  padding: 0.18rem 0.55rem;
+  border-radius: 999px;
+  background: #e7edf7;
+  font-size: 0.8rem;
+}

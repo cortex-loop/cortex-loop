@@ -286,6 +286,12 @@ def test_active_current_line_docs_frame_openai_only_truth_and_watchlist_retentio
             in workstream_text
         )
         assert "Current candidate seam: `none active`" in workstream_text
+    elif current_branch == "review/e12-comparative-output-quality-eval":
+        assert (
+            "Current branch role: explicit manual/review branch for the E12 comparative output-quality eval train while the accepted baseline remains local `main`"
+            in workstream_text
+        )
+        assert "Current candidate seam: `E12 comparative output-quality eval train`" in workstream_text
     else:
         assert (
             "Current branch role: explicit manual/review branch for the E9 verified-work repair-yield train while the accepted baseline remains local `main`"
@@ -293,7 +299,7 @@ def test_active_current_line_docs_frame_openai_only_truth_and_watchlist_retentio
         )
         assert "Current candidate seam: `E9 verified-work repair-yield train`" in workstream_text
     assert (
-        "A0, P1C, S1, S1C, X1, X2, the first verified-work restoration slice, the Cortex-law / fast-train method slice, the verified-work neutralization / conformance-correction slice, the Claude operator workspace-truth slice, the OpenAI verified-work context slice, the C3B brutal closed-loop train method, the E7 second-pack verified-work breadth slice, and the E8 third-pack verified-work breadth slice are now accepted on local `main`"
+        "A0, P1C, S1, S1C, X1, X2, the first verified-work restoration slice, the Cortex-law / fast-train method slice, the verified-work neutralization / conformance-correction slice, the Claude operator workspace-truth slice, the OpenAI verified-work context slice, the C3B brutal closed-loop train method, the E7 second-pack verified-work breadth slice, the E8 third-pack verified-work breadth slice, and the E9 repair-yield measurement slice are now accepted on local `main`"
         in workstream_text
     )
     assert "docs/CORTEX_V2_EXECUTIVE_RESTORATION_NOTE.md" in workstream_text
@@ -321,10 +327,14 @@ def test_active_current_line_docs_frame_openai_only_truth_and_watchlist_retentio
     assert "`python_workspace_pytest_feature_flags_v1`" in workstream_text
     assert "`verified_work_feature_flags_v1`" in workstream_text
     assert "provider-noise guardrail correction in `tools/cortex_train_loop.py`" in workstream_text
-    assert "the current E9 repair-yield slice on this review branch now adds" in workstream_text
+    assert "the accepted E9 repair-yield measurement slice on local `main` now includes" in workstream_text
     assert "`--max-repair-turns 0|1` override in `tools/cortex_conformance.py`" in workstream_text
     assert "one-shot control is `11/12` conformant, repair-enabled candidate is `12/12` conformant, and repair opportunities remain `0`" in workstream_text
     assert "one explicit cut where the richer repair-ticket/runtime change was removed after it failed to beat the one-shot control" in workstream_text
+    if current_branch == "review/e12-comparative-output-quality-eval":
+        assert "the current E12 comparative output-quality eval slice on this review branch now adds" in workstream_text
+        assert "one maintainer-only comparative runner at `tools/cortex_output_quality.py`" in workstream_text
+        assert "one hidden grading layer at `tools/output_quality_grader.py`" in workstream_text
 
     assert (
         "This is the only active current-line proof bundle for the accepted OpenAI-only product scope."

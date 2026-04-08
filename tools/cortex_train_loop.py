@@ -688,6 +688,184 @@ def run_verified_work_repair_yield_openai_train(
     return record
 
 
+def run_output_quality_comparison_openai_train(
+    *,
+    loop_root: Path = TRAIN_LOOP_ROOT,
+) -> TrainLoopRecord:
+    deterministic_command = (
+        "python3 -m pytest -q tests/unit/test_output_quality_common.py "
+        "tests/unit/test_output_quality_grader.py tests/unit/test_cortex_output_quality.py "
+        "tests/unit/test_verified_work.py tests/unit/test_verified_work_runtime.py "
+        "tests/unit/test_openai_host_control.py tests/unit/test_cortex_train_loop.py "
+        "tests/unit/test_verification_docs_sync.py"
+    )
+    proof_commands: list[str] = [
+        deterministic_command,
+        "make revalidate-openai-host-control",
+        "python3 tools/cortex_output_quality.py",
+        "python3 tools/cortex_output_quality.py",
+    ]
+    command_results: list[dict[str, Any]] = [
+        _run_shell_command(proof_commands[0], cwd=ROOT),
+        _run_shell_command(proof_commands[1], cwd=ROOT),
+        _run_long_shell_command(proof_commands[2], cwd=ROOT),
+        _run_long_shell_command(proof_commands[3], cwd=ROOT),
+    ]
+
+    benchmark_summaries = [
+        _command_result_json(result)
+        for result in command_results[2:]
+        if result["exit_code"] == 0
+    ]
+    repeat_summaries = tuple(
+        _pairwise_payload(summary, "cortex_vs_raw") for summary in benchmark_summaries
+    )
+    tooling_repeat_summaries = tuple(
+        _pairwise_payload(summary, "cortex_vs_tooling_only") for summary in benchmark_summaries
+    )
+    total_raw_objective = sum(
+        _aggregate_output_quality_count(summary, "aggregate_objective_pass_count", "raw")
+        for summary in benchmark_summaries
+    )
+    total_cortex_objective = sum(
+        _aggregate_output_quality_count(summary, "aggregate_objective_pass_count", "cortex")
+        for summary in benchmark_summaries
+    )
+    total_raw_hidden = sum(
+        _aggregate_output_quality_count(summary, "aggregate_hidden_quality_pass_count", "raw")
+        for summary in benchmark_summaries
+    )
+    total_cortex_hidden = sum(
+        _aggregate_output_quality_count(summary, "aggregate_hidden_quality_pass_count", "cortex")
+        for summary in benchmark_summaries
+    )
+    total_pairwise_wins = sum(payload["wins"] for payload in repeat_summaries)
+    total_pairwise_losses = sum(payload["losses"] for payload in repeat_summaries)
+    total_pairwise_ties = sum(payload["ties"] for payload in repeat_summaries)
+    average_win_rate = (
+        sum(payload["win_rate"] for payload in repeat_summaries) / len(repeat_summaries)
+        if repeat_summaries
+        else 0.0
+    )
+    repeat_stable = bool(repeat_summaries) and all(
+        payload["wins"] >= payload["losses"] for payload in repeat_summaries
+    )
+    positive_hidden_signal = total_cortex_hidden > total_raw_hidden
+    objective_not_worse = total_cortex_objective >= total_raw_objective
+    positive_pairwise_signal = total_pairwise_wins > total_pairwise_losses
+    env_blocked = any(
+        bool(summary.get("env_blocked")) for summary in benchmark_summaries
+    )
+
+    escalation_reasons = tuple(
+        reason
+        for reason in (
+            *(
+                f"proof command failed: {result['command']}"
+                for result in command_results
+                if result["exit_code"] != 0
+            ),
+            "output-quality benchmark env/auth blocked on the OpenAI lane"
+            if env_blocked
+            else None,
+            "output-quality benchmark did not return two clean repeat summaries"
+            if len(benchmark_summaries) != 2
+            else None,
+        )
+        if reason is not None
+    )
+
+    guardrail_ok = (
+        len(benchmark_summaries) == 2
+        and all(result["exit_code"] == 0 for result in command_results[:2])
+        and objective_not_worse
+        and positive_hidden_signal
+        and repeat_stable
+        and not env_blocked
+    )
+    primary_metric_after = round(average_win_rate * 100) if positive_pairwise_signal else 0
+
+    decision, reason = decide_loop_decision(
+        primary_metric_before=0,
+        primary_metric_after=primary_metric_after,
+        guardrail_ok=guardrail_ok,
+        localized_failure=False,
+        better_classification=positive_pairwise_signal,
+        budget_remaining=0,
+        escalation_reasons=escalation_reasons,
+    )
+    iteration = LoopIteration(
+        index=1,
+        candidate_label="output-quality-comparison-openai",
+        proof_commands=tuple(proof_commands),
+        primary_metric_before=0,
+        primary_metric_after=primary_metric_after,
+        guardrail_ok=guardrail_ok,
+        localized_failure=False,
+        better_classification=positive_pairwise_signal,
+        budget_remaining=0,
+        decision=decision,
+        reason=reason,
+        command_results=tuple(command_results),
+        escalation_reasons=escalation_reasons,
+    )
+    record = TrainLoopRecord(
+        train_name="output-quality-comparison-openai",
+        seam_class="timing_env_sensitive",
+        cortex_invariant=(
+            "optional work contract, runtime-native verification truth, and one bounded repair turn"
+        ),
+        brain_wiring_touched=(
+            "OpenAI comparative evaluation task routing, hidden output-quality grading, and repeat-run proof wiring"
+        ),
+        borrowed_mechanism=(
+            "reuse the repo's verified-work artifact discipline, visible-vs-withheld context split, and paired comparison method without widening runtime law"
+        ),
+        contract_pack=(
+            "astro_docs_site_v1,react_dashboard_v1,astro_marketing_forms_v1,"
+            "react_existing_feature_extension_v1,frontend_bugfix_cleanup_v1"
+        ),
+        conformance_surfaces=("openai:service_api",),
+        baseline_result={
+            "primary_metric_value": 0,
+            "pairwise_runs": len(repeat_summaries),
+            "total_pairwise_wins": total_pairwise_wins,
+            "total_pairwise_losses": total_pairwise_losses,
+            "total_pairwise_ties": total_pairwise_ties,
+            "total_raw_objective_pass_count": total_raw_objective,
+            "total_cortex_objective_pass_count": total_cortex_objective,
+            "total_raw_hidden_quality_pass_count": total_raw_hidden,
+            "total_cortex_hidden_quality_pass_count": total_cortex_hidden,
+            "repeat_stable": repeat_stable,
+            "tooling_pairwise_runs": len(
+                [payload for payload in tooling_repeat_summaries if payload["total"] > 0]
+            ),
+            "tooling_pairwise_summary": [payload for payload in tooling_repeat_summaries],
+        },
+        primary_metric="pairwise_win_rate_cortex_vs_raw",
+        guardrail_metric="cortex_objective_not_worse_and_hidden_quality_positive",
+        baseline_proof_set=tuple(proof_commands),
+        iteration_budget=1,
+        rollback_surface=(
+            "output-quality task packs, hidden grader, and comparative train-loop wiring"
+        ),
+        escalation_triggers=(
+            "authority docs conflict",
+            "shipping truth would widen",
+            "auth/spend/env blocks proof",
+            "benchmark harness instability",
+            "repeat run did not return two clean summaries",
+        ),
+        iterations=(iteration,),
+        final_decision=decision,
+    )
+    artifact_dir = loop_root / record.train_name
+    artifact_dir.mkdir(parents=True, exist_ok=True)
+    write_json(artifact_dir / "summary.json", record.as_payload())
+    write_text(artifact_dir / "summary.md", render_train_loop_markdown(record))
+    return record
+
+
 def render_train_loop_markdown(record: TrainLoopRecord) -> str:
     lines = [
         f"# Cortex Train Loop: {record.train_name}",
@@ -738,6 +916,7 @@ def main(argv: list[str] | None = None) -> int:
             "conformance-summary-truth",
             "verified-work-breadth-openai",
             "verified-work-repair-yield-openai",
+            "output-quality-comparison-openai",
         ),
         default="conformance-summary-truth",
     )
@@ -749,6 +928,8 @@ def main(argv: list[str] | None = None) -> int:
         payload = run_verified_work_breadth_openai_train().as_payload()
     elif args.train == "verified-work-repair-yield-openai":
         payload = run_verified_work_repair_yield_openai_train().as_payload()
+    elif args.train == "output-quality-comparison-openai":
+        payload = run_output_quality_comparison_openai_train().as_payload()
     else:  # pragma: no cover
         raise SystemExit(f"Unsupported train: {args.train}")
     print(json.dumps(payload, indent=2, sort_keys=True))
@@ -791,6 +972,16 @@ def _run_shell_command(command: str, *, cwd: Path) -> dict[str, Any]:
         ["/bin/zsh", "-lc", command],
         cwd=cwd,
         timeout_seconds=600.0,
+    )
+    result["command_text"] = command
+    return result
+
+
+def _run_long_shell_command(command: str, *, cwd: Path) -> dict[str, Any]:
+    result = run_command(
+        ["/bin/zsh", "-lc", command],
+        cwd=cwd,
+        timeout_seconds=1800.0,
     )
     result["command_text"] = command
     return result
@@ -935,6 +1126,34 @@ def _has_non_shipping_env_block(summary: dict[str, Any], *, shipping_brain: str)
     )
 
 
+def _pairwise_payload(summary: dict[str, Any], pair_name: str) -> dict[str, Any]:
+    pairwise_summary = summary.get("pairwise_summary")
+    if not isinstance(pairwise_summary, dict):
+        return {"wins": 0, "losses": 0, "ties": 0, "win_rate": 0.0, "total": 0}
+    payload = pairwise_summary.get(pair_name)
+    if not isinstance(payload, dict):
+        return {"wins": 0, "losses": 0, "ties": 0, "win_rate": 0.0, "total": 0}
+    wins = int(payload.get("wins", 0) or 0)
+    losses = int(payload.get("losses", 0) or 0)
+    ties = int(payload.get("ties", 0) or 0)
+    win_rate = float(payload.get("win_rate", 0.0) or 0.0)
+    return {
+        "wins": wins,
+        "losses": losses,
+        "ties": ties,
+        "win_rate": win_rate,
+        "total": wins + losses + ties,
+    }
+
+
+def _aggregate_output_quality_count(summary: dict[str, Any], key: str, arm: str) -> int:
+    payload = summary.get(key)
+    if not isinstance(payload, dict):
+        return 0
+    value = payload.get(arm, 0)
+    return int(value or 0)
+
+
 __all__ = [
     "LoopDecision",
     "LoopIteration",
@@ -944,6 +1163,7 @@ __all__ = [
     "evaluate_conformance_summary_truth",
     "render_train_loop_markdown",
     "run_conformance_summary_truth_pilot",
+    "run_output_quality_comparison_openai_train",
     "run_verified_work_breadth_openai_train",
     "run_verified_work_repair_yield_openai_train",
 ]
