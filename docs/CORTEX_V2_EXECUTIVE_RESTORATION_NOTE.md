@@ -73,7 +73,7 @@ The accepted drift interpretation is therefore:
 
 ## Decision basis
 
-The next runtime/product seam should be a shared model-agnostic executive substrate first, not an OpenAI-only patchwork.
+The next runtime/product seam should improve Cortex law first, then prove that law through host-specific wiring, not through an OpenAI-only patchwork.
 
 That substrate should add only:
 
@@ -82,7 +82,7 @@ That substrate should add only:
 - a bounded repair/inhibition gate
 - tiny carrier selection
 
-Then the OpenAI path should be the first host realization.
+Then the OpenAI path should be the first host realization, followed immediately by cross-brain conformance checks on the strongest available Claude and Gemini surfaces.
 
 This note does not authorize:
 
@@ -109,14 +109,36 @@ What is **not** yet earned:
 - automatic carrier selection
 - cross-host rollout beyond the first OpenAI realization
 
+## Conformance reading under the current method
+
+The active method now separates:
+
+- `Cortex truth` — optional work contract, runtime-native verification as control truth, bounded repair
+- `brain-wiring truth` — how OpenAI, Claude, and Gemini attach to that same law
+- `conformance truth` — how faithfully each active surface realizes the law
+- `shipping truth` — the current OpenAI-first product default
+
+That means later work should not ask whether a second host is "deferred" in the abstract.
+It should ask whether the same Cortex law is conformant, partial, divergent, unwired, or env-blocked on that host's strongest available native surface.
+
+On the current bookmarks verified-work pack, the active reading is:
+
+- OpenAI `service_api`: partial on the current run because the bounded repair path still finished `test_failed`
+- Claude `operator_cli`: divergent on repair-turn protocol obedience after partial first-turn conformance
+- Gemini `operator_cli`: divergent on first-turn contract obedience with the same protocol failure repeating on repair
+
+The current next decision is therefore `fix_wiring_only`, not `revise_cortex_law`, because the observed divergences did not repeat across brains.
+
 ## Next lawful move
 
 If a later runtime/product seam is opened after this note, the next lawful move is:
 
 1. keep the current thin path as the default when no work contract is present
-2. recheck whether verified-work earns repeat-stable value on local larger-task reruns before widening it further
-3. keep repeated-failure inhibition, carrier inference, and host expansion deferred until that value is earned
-4. cut back rather than widen if the verified-work path keeps failing without value lift
+2. recheck whether verified-work earns repeat-stable value on local larger-task reruns before widening shipping truth further
+3. run the same contract pack across OpenAI, Claude, and Gemini on their strongest available native surfaces
+4. revise Cortex law only if the same divergence repeats across brains; otherwise fix only the divergent wiring
+5. keep repeated-failure inhibition and carrier inference deferred until that value is earned
+6. cut back rather than widen if the verified-work path keeps failing without value lift or improved conformance
 
 This is the accepted north-light correction:
 

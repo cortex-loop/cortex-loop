@@ -30,6 +30,37 @@ Closeout status:
 - mediation remains experimental and unimplemented; one bounded experimental seam is now justified, as recorded in `docs/CORTEX_V2_MEDIATION_JUSTIFICATION_NOTE.md`.
 - if post-closeout work continues, `docs/CORTEX_V2_VERIFICATION_ERGONOMICS_MASTER_PLAN_0.md` remains the active non-feature follow-on campaign, but later bounded runtime/product trains may still be explicitly opened through separate runtime-program briefs and recorded in `docs/CORTEX_V2_ACTIVE_WORKSTREAM.md`.
 
+Post-closeout Cortex-law train method:
+
+- Cortex remains one invariant cortical circuit; host and surface differences are wiring, not alternate product identities.
+- Later Cortex-law trains must distinguish:
+  - `Cortex truth`
+  - `brain-wiring truth`
+  - `conformance truth`
+  - `shipping truth`
+- Shipping truth may remain narrower than development conformance truth.
+- For later Cortex-law work, the default fast order is:
+  1. define the Cortex law being changed
+  2. choose the fastest proving wiring
+  3. build one tiny runnable contract pack
+  4. run tri-brain conformance on OpenAI, Claude, and Gemini
+  5. classify divergence as `cortex_law`, `brain_wiring`, `surface_wiring`, or `env_blocked`
+  6. cut non-productive additions immediately
+  7. only then widen scope
+- Micro-train default:
+  - one Cortex-law micro-train at a time
+  - one proving pack at a time
+  - one divergence decision at a time
+- Speed gates:
+  - no second pack until the first has a stable divergence classification
+  - no second new mechanism in the same train unless the first one already improved conformance or shipping behavior
+  - no long run of `partial` status without an explicit `cut` or `reframe` decision
+- Research-to-code loop:
+  - start from packet and first principles
+  - borrow or clone only proven narrow mechanisms
+  - convert them into the smallest operational code form
+  - do not carry biological language into implementation unless it maps to a concrete operator, state, or gate
+
 ---
 
 ## 0. One-paragraph final verdict

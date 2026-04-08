@@ -100,7 +100,8 @@ If a v1 mechanism is being carried over, re-earn it under the v2 packet instead 
 - Microkernel-limited: the hard center stays tiny.
 - Contradiction-preserving: mixed, blocked, degraded, and host-specific outcomes must remain explicit.
 - Neutral-by-default: the executive should not intervene just to justify itself.
-- First host vertical slice before broad multi-host rollout.
+- First host vertical slice before broad multi-host shipping rollout.
+- Shipping truth may stay narrower than development conformance truth; when Cortex law changes, OpenAI, Claude, and Gemini still require explicit conformance status on their strongest available native surfaces.
 - AUX remains off the MVP critical path unless explicitly promoted.
 
 ## Porting rules from v1
@@ -118,6 +119,62 @@ If a v1 mechanism is being carried over, re-earn it under the v2 packet instead 
 - If a concept belongs in implementation or evaluation rather than the constitutional packet, keep it out of the packet.
 - If you change the packet, say whether the implementation master plan must change in the same slice.
 - If you change the intended v1 carryover boundary, update `V1_CODE_PORT_DETERMINATION.md` in the same slice.
+
+## Cortex-law train discipline
+
+Cortex is the invariant cortical circuit in this repository.
+Models, APIs, and CLIs are different brains and wiring surfaces, not different product identities.
+
+Any seam that changes Cortex law must distinguish four truths explicitly:
+
+- `Cortex truth` — the invariant law of Cortex itself
+- `brain-wiring truth` — how Cortex is attached to OpenAI, Claude, and Gemini
+- `conformance truth` — how faithfully each brain/surface realizes Cortex
+- `shipping truth` — which realization is the current product default
+
+For Cortex-law development:
+
+- do not hide major brains behind `deferred` or `future backlog only` wording when they are still required for conformance
+- use conformance statuses exactly: `conformant`, `partial`, `divergent`, `unwired`, `env_blocked`
+- keep shipping truth distinct from conformance truth; shipping may remain narrower without redefining Cortex itself
+
+Every long train must start by recording a `Train Charter` with:
+
+- `Cortex invariant`
+- `brain wiring touched`
+- `borrowed mechanism`
+- `contract pack`
+- `conformance surfaces`
+- `kill criteria`
+
+First-principles rule:
+
+- state the minimal governing principle before implementation
+- do not begin from host quirks, adapter drift, or prior local hacks
+- say what evidence would prove the current Cortex law wrong rather than only the current wiring
+
+Borrow/clone rule:
+
+- every new mechanism must identify one of:
+  - a battle-proven v1 primitive worth rewriting
+  - an external proven mechanism worth copying in tiny form
+  - or a brand-new mechanism justified directly from packet law
+- say why the chosen mechanism is small, operational, and non-decorative
+
+Rapid iteration rule:
+
+- default mode is `build -> test -> iterate -> cut`
+- the first implementation must be the smallest runnable form
+- every iteration must end in exactly one of: `promote`, `revise`, `cut`
+- if two iterations fail without improving the divergence classification, stop and reframe before adding more mechanism
+
+Tri-brain conformance rule:
+
+- when a seam changes Cortex law, run the same contract pack on OpenAI, Claude, and Gemini
+- use the strongest available native surface on each brain for development conformance
+- API/service remains preferred for shipping truth and canonical proof
+- CLI/operator is acceptable for development conformance when service wiring is absent or blocked
+- if the same divergence repeats across brains, challenge Cortex law before adding more host-specific wiring
 
 ## Counterfactual reframe discipline
 

@@ -21,6 +21,13 @@ It is workflow state only. It does not override the packet documents, implementa
   - the repo is now operating under an explicit two-lane live-evidence contract:
     - `service_api` is the canonical runtime truth lane
     - `operator_cli` is a watchlist and exploratory-comparison lane
+  - when a seam changes Cortex law, the repo now distinguishes four truths explicitly:
+    - `Cortex truth` — the invariant Cortex law
+    - `brain-wiring truth` — how OpenAI, Claude, and Gemini attach to that law
+    - `conformance truth` — how faithfully each brain/surface realizes that law
+    - `shipping truth` — which realization is the current product default
+  - shipping truth may remain narrower than development conformance truth
+  - for Cortex-law development, the strongest available native surface on each brain is conformance-required even when shipping truth remains narrower
   - accepted operator/CLI watchlist status on the current line:
     - Claude: positive watchlist signal
     - Gemini: unresolved watchlist signal
@@ -34,16 +41,20 @@ It is workflow state only. It does not override the packet documents, implementa
   - the accepted product/runtime claim is now explicitly OpenAI-only on the canonical direct-API lane
   - one current-machine API truth anchor is now re-earned for current OpenAI-only product scope
   - the shared `canonical_anchor` direct-API suite remains implemented for `claude` and `openai`, but only `openai` is in the accepted current product scope
+  - the active verified-work conformance reading on the bookmarks contract pack is:
+    - OpenAI `service_api`: partial on the current run; the bounded repair path executed but still finished `test_failed`, so both conformance truth and shipping truth remain partial
+    - Claude `operator_cli`: divergent on repair-turn protocol obedience after partial first-turn conformance
+    - Gemini `operator_cli`: divergent on first-turn contract obedience and repeated the same protocol failure on repair
   - the strongest current Gemini recovery evidence remains branch-local and non-authoritative until re-earned under the reset contract
 
 ## 2. Current campaign and seam state
 
 - Current campaign: `P1 product-first reduction program`
 - Current working branch at ledger update: `main`
-- Current branch role: accepted resting line after the E3 verified-work restoration slice
+- Current branch role: accepted resting line after the C2 Cortex-law truth and fast-train method slice
 - Current candidate seam: `none active`
 - Current seam status:
-  - A0, P1C, S1, S1C, X1, X2, and the first verified-work restoration slice are now accepted on local `main`
+  - A0, P1C, S1, S1C, X1, X2, the first verified-work restoration slice, and the Cortex-law / fast-train method slice are now accepted on local `main`
   - the explicit `current|canonical_anchor` direct-API service suites remain accepted on the current line
   - the OpenAI service spend split remains explicit:
     - `service_smoke` uses `gpt-5.4-mini`
@@ -84,8 +95,15 @@ It is workflow state only. It does not override the packet documents, implementa
   - the new `O4R` verified-work row remains partial:
     - deterministic coverage and repo-local revalidation are landed
     - local larger-task value lift is not yet re-earned repeat-stably
-  - Claude canonical-suite plumbing remains implemented, but Claude stays outside the accepted current product scope as future host-expansion backlog
-  - Gemini remains canonical-lane out of scope and watchlist-only until its direct API lane is opened deliberately
+  - the active Cortex-law conformance method now lands:
+    - one explicit `Train Charter` requirement for long trains
+    - one explicit `build -> test -> iterate -> cut` default loop
+    - one tri-brain conformance harness on the active bookmarks verified-work contract pack
+    - one explicit divergence taxonomy: `cortex_law`, `brain_wiring`, `surface_wiring`, `env_blocked`
+    - one current verified-work audit result of `next_decision = fix_wiring_only` because the observed divergences did not repeat across brains
+  - shipping truth remains OpenAI-first on the service lane
+  - Claude remains outside the accepted shipping default, but Claude is no longer treated as generic backlog for Cortex-law conformance work
+  - Gemini remains outside the accepted shipping default, but Gemini is no longer treated as generic backlog for Cortex-law conformance work
   - headless-CLI operator evidence remains watchlist-only, with Gemini local-vs-accepted drift surfaced explicitly rather than promoted into runtime truth
   - the older local `review/*` backlog is now archived to local `archive/review--*` tags and removed; full repo hygiene remains partial until `origin/main` reconciliation because local `main` is ahead
 
@@ -94,13 +112,18 @@ It is workflow state only. It does not override the packet documents, implementa
 - No active verified-work restoration seam remains on the accepted local `main` line.
 - The accepted executive-restoration correction is now partially landed on the current line.
 - If a later runtime/product seam opens, the next lawful move is:
-  - recheck whether the bounded verified-work path earns repeat-stable live value before widening it further
+  - write the `Train Charter` first
+  - define the Cortex invariant before touching wiring
+  - choose the fastest proving wiring and one tiny runnable contract pack
+  - run tri-brain conformance on OpenAI, Claude, and Gemini
+  - classify divergence as `cortex_law`, `brain_wiring`, `surface_wiring`, or `env_blocked`
+  - when the same divergence does not repeat across brains, fix only the divergent wiring before touching Cortex law
   - keep the default thin path unchanged while `O4R` remains partial
-  - keep repeated-failure inhibition, automatic carrier selection, and multi-host rollout deferred
-  - cut back rather than widen if the verified-work path continues to fail without clear lift
-- Keep `claude` and `gemini` as future host-expansion backlog only:
-  - `claude` retains dormant shared `canonical_anchor` plumbing for a later explicit host-expansion train
-  - `gemini` remains watchlist-only until direct API/service auth exists and a separate host-expansion train is opened
+  - keep repeated-failure inhibition and automatic carrier selection deferred until value is earned
+  - cut back rather than widen if the verified-work path continues to fail without clear lift or better conformance
+- Keep shipping-truth widening separate from conformance work:
+  - `claude` may be conformance-required on `operator_cli` before any later Claude shipping train opens
+  - `gemini` may be conformance-required on its strongest native surface before any later Gemini shipping train opens
 - Keep `origin/main` reconciliation as separate workflow hygiene rather than active product/support closure.
 - Open any later host expansion only through an explicit separate train.
 - Do not treat branch-local Gemini CLI positives as accepted truth.
@@ -116,7 +139,8 @@ It is workflow state only. It does not override the packet documents, implementa
 - Do not shell out from service transports to provider CLIs.
 - Do not treat current-machine auth absence as permission to fake service proof.
 - Do not widen accepted current product scope beyond OpenAI without a separate host-expansion train.
-- Do not spend on Claude or Gemini service proof while the accepted product scope is intentionally OpenAI-only.
+- Do not treat Claude or Gemini as generic backlog-only when the active seam changes Cortex law; classify them as `conformant`, `partial`, `divergent`, `unwired`, or `env_blocked` instead.
+- Do not spend on Claude or Gemini service proof while the accepted product scope is intentionally OpenAI-only unless an explicit shipping train opens.
 - Do not silently promote `minimal` execution flavor from falsification tooling into a product default.
 - Do not add new control/accounting surfaces unless they change route choice, tool exposure, blockedness, or observable runtime outcome.
 - Do not let accepted watchlist fallback rows silently inflate canonical-looking package summaries.
@@ -125,6 +149,7 @@ It is workflow state only. It does not override the packet documents, implementa
 - Do not reopen prompt shaping or hidden build-brief doctrine as a product direction.
 - Do not solve larger-task repair by adding a second large task-specific subsystem when one optional work contract would suffice.
 - Do not promote the partial `O4R` verified-work lane into canonical-anchor proof before repeat-stable live lift is earned.
+- Do not let one host or one surface redefine Cortex law by itself.
 
 ## 5. Acknowledged worktree noise at ledger creation
 
