@@ -35,6 +35,7 @@ OPENAI_BREADTH_PACKS = (
     cortex_conformance.NORMALIZE_PORT_CONTRACT_PACK,
     cortex_conformance.FEATURE_FLAGS_CONTRACT_PACK,
 )
+REPAIR_GUARDRAIL_PACK = cortex_conformance.NORMALIZE_PORT_CONTRACT_PACK
 
 
 @dataclass(frozen=True, slots=True)
@@ -515,6 +516,178 @@ def run_verified_work_breadth_openai_train(
     return record
 
 
+def run_verified_work_repair_yield_openai_train(
+    *,
+    loop_root: Path = TRAIN_LOOP_ROOT,
+) -> TrainLoopRecord:
+    deterministic_command = (
+        "python3 -m pytest -q tests/unit/test_verified_work.py tests/unit/test_verified_work_runtime.py "
+        "tests/unit/test_openai_host_control.py tests/unit/test_cortex_conformance.py "
+        "tests/unit/test_cortex_train_loop.py tests/unit/test_verification_docs_sync.py"
+    )
+    proof_commands: list[str] = [
+        deterministic_command,
+        "make revalidate-openai-host-control",
+    ]
+    command_results: list[dict[str, Any]] = [
+        _run_shell_command(command, cwd=ROOT) for command in proof_commands
+    ]
+    deterministic_proof_count = len(command_results)
+    control_summaries: list[dict[str, Any]] = []
+    candidate_summaries: list[dict[str, Any]] = []
+    rounds_executed = 0
+
+    for round_index in (1, 2):
+        rounds_executed = round_index
+        control_results = _run_openai_pack_round(
+            packs=OPENAI_BREADTH_PACKS,
+            max_repair_turns=0,
+        )
+        proof_commands.extend(_command_text(result) for result in control_results)
+        command_results.extend(control_results)
+        control_summaries.extend(
+            _command_result_json(result)
+            for result in control_results
+            if result["exit_code"] == 0
+        )
+
+        candidate_results = _run_openai_pack_round(
+            packs=OPENAI_BREADTH_PACKS,
+            max_repair_turns=1,
+        )
+        proof_commands.extend(_command_text(result) for result in candidate_results)
+        command_results.extend(candidate_results)
+        candidate_summaries.extend(
+            _command_result_json(result)
+            for result in candidate_results
+            if result["exit_code"] == 0
+        )
+        if _count_repair_opportunities(candidate_summaries) > 0:
+            break
+
+    successful_repairs = _count_recovered_repairs(candidate_summaries)
+    repair_opportunities = _count_repair_opportunities(candidate_summaries)
+    control_pass_count = _count_openai_conformant_runs(control_summaries)
+    candidate_pass_count = _count_openai_conformant_runs(candidate_summaries)
+    repeated_openai_env_block = (
+        _count_openai_env_blocks(control_summaries)
+        + _count_openai_env_blocks(candidate_summaries)
+    ) >= 2
+
+    guardrail_ok = (
+        all(result["exit_code"] == 0 for result in command_results[:deterministic_proof_count])
+        and candidate_pass_count >= control_pass_count
+    )
+    guardrail_summary: dict[str, Any] | None = None
+    if successful_repairs > 0:
+        guardrail_results = _run_nonshipping_guardrail(REPAIR_GUARDRAIL_PACK)
+        proof_commands.extend(_command_text(result) for result in guardrail_results)
+        command_results.extend(guardrail_results)
+        for guardrail_result in reversed(guardrail_results):
+            if guardrail_result["exit_code"] == 0:
+                guardrail_summary = _command_result_json(guardrail_result)
+                break
+        guardrail_ok = guardrail_ok and _guardrail_summary_ok(guardrail_summary)
+
+    escalation_reasons = tuple(
+        reason
+        for reason in (
+            *(
+                f"proof command failed: {result['command']}"
+                for result in command_results
+                if result["exit_code"] != 0
+            ),
+            "repeated provider/env block on OpenAI repair-yield proof"
+            if repeated_openai_env_block
+            else None,
+            "insufficient natural failures to measure repair yield"
+            if repair_opportunities == 0 and rounds_executed == 2
+            else None,
+            "repeated provider/env block on non-shipping repair guardrail"
+            if successful_repairs > 0
+            and not _guardrail_summary_ok(guardrail_summary)
+            and _has_non_shipping_env_block(guardrail_summary or {}, shipping_brain="openai")
+            else None,
+        )
+        if reason is not None
+    )
+
+    decision, reason = decide_loop_decision(
+        primary_metric_before=0,
+        primary_metric_after=successful_repairs,
+        guardrail_ok=guardrail_ok,
+        localized_failure=repair_opportunities > 0,
+        better_classification=successful_repairs > 0,
+        budget_remaining=0,
+        escalation_reasons=escalation_reasons,
+    )
+    iteration = LoopIteration(
+        index=1,
+        candidate_label="verified-work-repair-yield-openai-factual-ticket",
+        proof_commands=tuple(proof_commands),
+        primary_metric_before=0,
+        primary_metric_after=successful_repairs,
+        guardrail_ok=guardrail_ok,
+        localized_failure=repair_opportunities > 0,
+        better_classification=successful_repairs > 0,
+        budget_remaining=0,
+        decision=decision,
+        reason=reason,
+        command_results=tuple(command_results),
+        escalation_reasons=escalation_reasons,
+    )
+    record = TrainLoopRecord(
+        train_name="verified-work-repair-yield-openai",
+        seam_class="timing_env_sensitive",
+        cortex_invariant=(
+            "optional work contract, runtime-native verification truth, and one bounded repair turn"
+        ),
+        brain_wiring_touched=(
+            "OpenAI repair-ticket construction, verified-work outcome extraction, conformance repair-budget override, and repair-yield proof wiring"
+        ),
+        borrowed_mechanism=(
+            "reuse the landed three-pack verified-work lane and existing failure facts while comparing one-shot control against the bounded repair path"
+        ),
+        contract_pack="verified_work_bookmarks_v1,verified_work_normalize_port_v1,verified_work_feature_flags_v1",
+        conformance_surfaces=(
+            "openai:service_api",
+            "claude:operator_cli",
+            "gemini:operator_cli",
+        ),
+        baseline_result={
+            "primary_metric_value": 0,
+            "control_max_repair_turns": 0,
+            "candidate_max_repair_turns": 1,
+            "control_pass_count": control_pass_count,
+            "candidate_pass_count": candidate_pass_count,
+            "repair_opportunities": repair_opportunities,
+            "rounds_executed": rounds_executed,
+            "guardrail_pack": REPAIR_GUARDRAIL_PACK,
+        },
+        primary_metric="successful_failure_to_pass_repairs",
+        guardrail_metric="candidate_pass_count_gte_control_and_no_ct2_o4r_regression",
+        baseline_proof_set=tuple(proof_commands),
+        iteration_budget=2,
+        rollback_surface=(
+            "verified-work repair-ticket text plus conformance/train-loop proof wiring"
+        ),
+        escalation_triggers=(
+            "Cortex law may need revision",
+            "shipping truth would widen",
+            "authority docs conflict",
+            "auth/spend/env blocks proof",
+            "two revisions fail without better classification",
+        ),
+        iterations=(iteration,),
+        final_decision=decision,
+    )
+    artifact_dir = loop_root / record.train_name
+    artifact_dir.mkdir(parents=True, exist_ok=True)
+    write_json(artifact_dir / "summary.json", record.as_payload())
+    write_text(artifact_dir / "summary.md", render_train_loop_markdown(record))
+    return record
+
+
 def render_train_loop_markdown(record: TrainLoopRecord) -> str:
     lines = [
         f"# Cortex Train Loop: {record.train_name}",
@@ -561,7 +734,11 @@ def main(argv: list[str] | None = None) -> int:
     )
     parser.add_argument(
         "--train",
-        choices=("conformance-summary-truth", "verified-work-breadth-openai"),
+        choices=(
+            "conformance-summary-truth",
+            "verified-work-breadth-openai",
+            "verified-work-repair-yield-openai",
+        ),
         default="conformance-summary-truth",
     )
     args = parser.parse_args(argv)
@@ -570,6 +747,8 @@ def main(argv: list[str] | None = None) -> int:
         payload = run_conformance_summary_truth_pilot().as_payload()
     elif args.train == "verified-work-breadth-openai":
         payload = run_verified_work_breadth_openai_train().as_payload()
+    elif args.train == "verified-work-repair-yield-openai":
+        payload = run_verified_work_repair_yield_openai_train().as_payload()
     else:  # pragma: no cover
         raise SystemExit(f"Unsupported train: {args.train}")
     print(json.dumps(payload, indent=2, sort_keys=True))
@@ -608,11 +787,27 @@ def _summary_artifacts_exist(summary: Any, *, repo_root: Path) -> bool:
 
 
 def _run_shell_command(command: str, *, cwd: Path) -> dict[str, Any]:
-    return run_command(
+    result = run_command(
         ["/bin/zsh", "-lc", command],
         cwd=cwd,
         timeout_seconds=600.0,
     )
+    result["command_text"] = command
+    return result
+
+
+def _command_text(command_result: dict[str, Any]) -> str:
+    command_text = command_result.get("command_text")
+    if isinstance(command_text, str) and command_text.strip():
+        return command_text
+    command = command_result.get("command")
+    if isinstance(command, str) and command.strip():
+        return command
+    if isinstance(command, list) and len(command) >= 3 and command[0] == "/bin/zsh" and command[1] == "-lc":
+        shell_command = command[2]
+        if isinstance(shell_command, str) and shell_command.strip():
+            return shell_command
+    raise ValueError("command_result does not contain a usable command string.")
 
 
 def _command_result_json(command_result: dict[str, Any]) -> dict[str, Any]:
@@ -629,6 +824,103 @@ def _summary_brain_status(summary: dict[str, Any], *, brain: str) -> str | None:
             status = result.get("status")
             return status if isinstance(status, str) else None
     return None
+
+
+def _summary_brain_result(summary: dict[str, Any], *, brain: str) -> dict[str, Any] | None:
+    results = summary.get("results")
+    if not isinstance(results, list):
+        return None
+    for result in results:
+        if isinstance(result, dict) and result.get("brain") == brain:
+            return result
+    return None
+
+
+def _count_openai_conformant_runs(summaries: list[dict[str, Any]]) -> int:
+    return sum(
+        1
+        for summary in summaries
+        if _summary_brain_status(summary, brain="openai") == "conformant"
+    )
+
+
+def _count_openai_env_blocks(summaries: list[dict[str, Any]]) -> int:
+    return sum(
+        1
+        for summary in summaries
+        if _summary_brain_status(summary, brain="openai") == "env_blocked"
+    )
+
+
+def _count_recovered_repairs(summaries: list[dict[str, Any]]) -> int:
+    return sum(
+        1
+        for summary in summaries
+        if (
+            (_summary_brain_result(summary, brain="openai") or {}).get("repair_conversion")
+            == "recovered_after_repair"
+        )
+    )
+
+
+def _count_repair_opportunities(summaries: list[dict[str, Any]]) -> int:
+    return sum(
+        1
+        for summary in summaries
+        if (
+            (_summary_brain_result(summary, brain="openai") or {}).get("repair_conversion")
+            in {"recovered_after_repair", "repair_attempt_no_recovery"}
+        )
+    )
+
+
+def _run_openai_pack_round(
+    *,
+    packs: tuple[str, ...],
+    max_repair_turns: int,
+) -> list[dict[str, Any]]:
+    results: list[dict[str, Any]] = []
+    for pack in packs:
+        for _ in range(2):
+            command = (
+                "python3 tools/cortex_conformance.py --mode active --brain openai "
+                f"--contract-pack {pack} --max-repair-turns {max_repair_turns}"
+            )
+            results.append(_run_shell_command(command, cwd=ROOT))
+    return results
+
+
+def _run_nonshipping_guardrail(contract_pack: str) -> list[dict[str, Any]]:
+    results: list[dict[str, Any]] = []
+    for attempt in range(2):
+        command = (
+            "python3 tools/cortex_conformance.py --mode active "
+            f"--contract-pack {contract_pack}"
+        )
+        result = _run_shell_command(command, cwd=ROOT)
+        results.append(result)
+        if result["exit_code"] != 0:
+            break
+        summary = _command_result_json(result)
+        if _guardrail_summary_ok(summary):
+            break
+        if not _has_non_shipping_env_block(summary, shipping_brain="openai") or attempt == 1:
+            break
+    return results
+
+
+def _guardrail_summary_ok(summary: dict[str, Any] | None) -> bool:
+    if not isinstance(summary, dict):
+        return False
+    results = summary.get("results")
+    if not isinstance(results, list):
+        return False
+    return not any(
+        isinstance(result, dict)
+        and result.get("brain") != "openai"
+        and result.get("status") in {"divergent", "env_blocked"}
+        for result in results
+    )
 
 
 def _has_non_shipping_env_block(summary: dict[str, Any], *, shipping_brain: str) -> bool:
@@ -653,6 +945,7 @@ __all__ = [
     "render_train_loop_markdown",
     "run_conformance_summary_truth_pilot",
     "run_verified_work_breadth_openai_train",
+    "run_verified_work_repair_yield_openai_train",
 ]
 
 

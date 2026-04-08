@@ -135,14 +135,22 @@ On the accepted normalize-port verified-work breadth pack, the current reading i
 - Claude `operator_cli`: conformant on the explicit tri-brain guardrail rerun after one lawful repair
 - Gemini `operator_cli`: conformant on the explicit tri-brain guardrail rerun
 
-On the current feature-flags verified-work breadth pack, the active review-branch reading is:
+On the accepted feature-flags verified-work breadth pack, the current reading is:
 
 - OpenAI `service_api`: conformant on repeated targeted reruns without regressing the accepted bookmarks or normalize-port packs
 - Claude `operator_cli`: conformant on the explicit tri-brain guardrail rerun
 - Gemini `operator_cli`: conformant on the explicit tri-brain guardrail rerun
 - bookmarks remains the accepted `CT2` anchor pack and `summary.latest` remains bookmarks-only while the third pack stays explicit breadth evidence
 
-The current next decision for the shipping-default lane is therefore `promote`, not `improve_shipping_default`, because the OpenAI `O4R` gap is now closed on repeated targeted local reruns and no non-shipping divergent surface remains on the corrected current line.
+The current accepted next decision for the shipping-default lane is therefore `promote`, not `improve_shipping_default`, because the OpenAI `O4R` gap is now closed on repeated targeted local reruns and no non-shipping divergent surface remains on the corrected current line.
+
+On the current E9 repair-yield review line, the paired live proof reads:
+
+- OpenAI `service_api` one-shot control: `11/12` conformant across two full paired rounds
+- OpenAI `service_api` repair-enabled candidate: `12/12` conformant across the same two paired rounds
+- repair opportunities: `0`
+- train outcome: `escalate` because the current three-pack line does not produce enough natural first-attempt failures to measure repair yield honestly
+- richer repair-ticket changes were therefore cut from the runtime path rather than kept as unearned mechanism
 
 ## Next lawful move
 
@@ -150,11 +158,12 @@ If a later runtime/product seam is opened after this note, the next lawful move 
 
 1. keep the current thin path as the default when no work contract is present
 2. keep `O4R` stable on repeated local reruns rather than reopening the law or the shipping-default wiring by habit
-3. prove the middle-weight third verified-work breadth pack before treating two-pack success as a general Cortex win
-4. run the same contract pack across OpenAI, Claude, and Gemini on their strongest available native surfaces whenever a later seam changes Cortex law or touches non-shipping wiring
-5. revise Cortex law only if the same divergence repeats across brains; otherwise reopen wiring only on the specific drifting brain/surface
-6. keep repeated-failure inhibition and carrier inference deferred until new evidence earns them
-7. open any later shipping-truth widening beyond OpenAI only through an explicit separate host shipping train
+3. do not reopen breadth by habit; the three-pack shipping-default lane is already re-earned on the current line
+4. if repair yield is the next target, open a smaller repair-pressure investigation that can create honest natural repair opportunities without replay or new Cortex law
+5. run the same contract pack across OpenAI, Claude, and Gemini on their strongest available native surfaces whenever a later seam changes Cortex law or touches non-shipping wiring
+6. revise Cortex law only if the same divergence repeats across brains; otherwise reopen wiring only on the specific drifting brain/surface
+7. keep repeated-failure inhibition and carrier inference deferred until new evidence earns them
+8. open any later shipping-truth widening beyond OpenAI only through an explicit separate host shipping train
 
 This is the accepted north-light correction:
 

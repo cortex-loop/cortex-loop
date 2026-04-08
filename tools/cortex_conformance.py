@@ -10,7 +10,7 @@ import sys
 import tempfile
 from collections.abc import Mapping
 from contextlib import contextmanager
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from pathlib import Path
 from typing import Any, Literal
 
@@ -246,6 +246,21 @@ class SurfaceProbe:
 
 def active_contract_pack() -> ContractPack:
     return contract_pack_by_name(ACTIVE_CONTRACT_PACK)
+
+
+def contract_pack_with_max_repair_turns(
+    contract_pack: ContractPack,
+    *,
+    max_repair_turns: int,
+) -> ContractPack:
+    if max_repair_turns not in (0, 1):
+        raise ValueError("max_repair_turns override must be 0 or 1.")
+    if contract_pack.work_contract.max_repair_turns == max_repair_turns:
+        return contract_pack
+    return replace(
+        contract_pack,
+        work_contract=replace(contract_pack.work_contract, max_repair_turns=max_repair_turns),
+    )
 
 
 def contract_pack_by_name(name: str) -> ContractPack:
@@ -485,9 +500,15 @@ def run_active_conformance(
     *,
     brains: tuple[Brain, ...],
     contract_pack: ContractPack | None = None,
+    max_repair_turns_override: int | None = None,
 ) -> dict[str, Any]:
     load_local_env_file()
     pack = contract_pack or active_contract_pack()
+    if max_repair_turns_override is not None:
+        pack = contract_pack_with_max_repair_turns(
+            pack,
+            max_repair_turns=max_repair_turns_override,
+        )
     timestamp = now_utc_iso().replace(":", "").replace("-", "")
     run_root = CONFORMANCE_ROOT / f"run_{timestamp}"
     run_root.mkdir(parents=True, exist_ok=True)
@@ -637,6 +658,12 @@ def main(argv: list[str] | None = None) -> int:
         choices=("all", "openai", "claude", "gemini"),
         default="all",
     )
+    parser.add_argument(
+        "--max-repair-turns",
+        type=int,
+        choices=(0, 1),
+        default=None,
+    )
     args = parser.parse_args(argv)
 
     brains: tuple[Brain, ...]
@@ -652,7 +679,11 @@ def main(argv: list[str] | None = None) -> int:
     elif args.mode == "reconcile-latest":
         payload = reconcile_latest_summary()
     else:
-        payload = run_active_conformance(brains=brains, contract_pack=pack)
+        payload = run_active_conformance(
+            brains=brains,
+            contract_pack=pack,
+            max_repair_turns_override=args.max_repair_turns,
+        )
     print(json.dumps(payload, indent=2, sort_keys=True))
     return 0
 

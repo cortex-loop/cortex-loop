@@ -96,6 +96,23 @@ def test_contract_pack_registry_resolves_bookmarks_normalize_port_and_feature_fl
     )
 
 
+def test_contract_pack_with_max_repair_turns_overrides_only_repair_budget() -> None:
+    original_pack = conformance.contract_pack_by_name(conformance.FEATURE_FLAGS_CONTRACT_PACK)
+
+    overridden = conformance.contract_pack_with_max_repair_turns(
+        original_pack,
+        max_repair_turns=0,
+    )
+
+    assert overridden.contract_pack == original_pack.contract_pack
+    assert overridden.prompt_text == original_pack.prompt_text
+    assert overridden.workspace_template_relpath == original_pack.workspace_template_relpath
+    assert overridden.work_contract.allowed_write_paths == original_pack.work_contract.allowed_write_paths
+    assert overridden.work_contract.verification_profile == original_pack.work_contract.verification_profile
+    assert overridden.work_contract.max_repair_turns == 0
+    assert original_pack.work_contract.max_repair_turns == 1
+
+
 def test_contract_pack_rejects_absolute_workspace_template_path() -> None:
     with pytest.raises(ValueError, match="repo-relative"):
         conformance.ContractPack(

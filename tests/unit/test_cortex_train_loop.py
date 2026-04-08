@@ -382,3 +382,103 @@ def test_run_verified_work_breadth_openai_train_retries_once_on_non_shipping_gua
     assert state["tri_brain_calls"] == 2
     assert record.iterations[0].primary_metric_after == 3
     assert len(record.iterations[0].proof_commands) == 9
+
+
+def test_run_verified_work_repair_yield_openai_train_promotes_on_recovered_repair(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    def _fake_run_shell_command(command, *, cwd):
+        _ = cwd
+        if "pytest -q" in command:
+            payload = {}
+        elif "--contract-pack verified_work_normalize_port_v1 --max-repair-turns 1" in command:
+            payload = {
+                "results": [
+                    {
+                        "brain": "openai",
+                        "status": "conformant",
+                        "repair_conversion": "recovered_after_repair",
+                    }
+                ]
+            }
+        elif "--max-repair-turns 1" in command:
+            payload = {
+                "results": [
+                    {
+                        "brain": "openai",
+                        "status": "conformant",
+                        "repair_conversion": "passed_without_repair",
+                    }
+                ]
+            }
+        elif "--max-repair-turns 0" in command:
+            payload = {
+                "results": [
+                    {
+                        "brain": "openai",
+                        "status": "conformant",
+                        "repair_conversion": "passed_without_repair",
+                    }
+                ]
+            }
+        else:
+            payload = {
+                "results": [
+                    {"brain": "openai", "status": "conformant"},
+                    {"brain": "claude", "status": "conformant"},
+                    {"brain": "gemini", "status": "conformant"},
+                ]
+            }
+        return {
+            "command": command,
+            "cwd": str(cwd),
+            "exit_code": 0,
+            "stdout": json.dumps(payload),
+            "stderr": "",
+        }
+
+    monkeypatch.setattr(train_loop, "_run_shell_command", _fake_run_shell_command)
+
+    record = train_loop.run_verified_work_repair_yield_openai_train(loop_root=tmp_path)
+
+    assert record.final_decision == "promote"
+    assert record.iterations[0].primary_metric_before == 0
+    assert record.iterations[0].primary_metric_after == 2
+    assert record.baseline_result["repair_opportunities"] == 2
+    assert "make revalidate-openai-host-control" in record.iterations[0].proof_commands
+
+
+def test_run_verified_work_repair_yield_openai_train_escalates_when_no_repair_opportunities_appear(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    def _fake_run_shell_command(command, *, cwd):
+        _ = cwd
+        payload = {}
+        if "pytest -q" not in command:
+            payload = {
+                "results": [
+                    {
+                        "brain": "openai",
+                        "status": "conformant",
+                        "repair_conversion": "passed_without_repair",
+                    }
+                ]
+            }
+        return {
+            "command": command,
+            "cwd": str(cwd),
+            "exit_code": 0,
+            "stdout": json.dumps(payload),
+            "stderr": "",
+        }
+
+    monkeypatch.setattr(train_loop, "_run_shell_command", _fake_run_shell_command)
+
+    record = train_loop.run_verified_work_repair_yield_openai_train(loop_root=tmp_path)
+
+    assert record.final_decision == "escalate"
+    assert "insufficient natural failures" in record.iterations[0].reason
+    assert record.baseline_result["rounds_executed"] == 2
+    assert "make revalidate-openai-host-control" in record.iterations[0].proof_commands

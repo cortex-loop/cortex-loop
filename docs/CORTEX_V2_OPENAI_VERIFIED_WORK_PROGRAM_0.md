@@ -190,11 +190,15 @@ On the current line:
 - the accepted local `main` line now includes a second explicit breadth pack `verified_work_normalize_port_v1` over the normalize-port task in `tests/fixtures/live_validation/project_template/`
 - after one localized verifier-install correction, repeated targeted local reruns on `python3 tools/cortex_conformance.py --mode active --brain openai --contract-pack verified_work_normalize_port_v1` now pass the normalize-port pack on attempt `1`
 - one explicit tri-brain normalize-port guardrail rerun under `.cortex/live_validation/conformance/run_20260408T083436+0000` reads OpenAI `service_api` conformant, Claude `operator_cli` conformant after one lawful repair, and Gemini `operator_cli` conformant
-- the current E8 review line now adds a third explicit breadth pack `verified_work_feature_flags_v1` over `tests/fixtures/live_validation/feature_flags_template/`
-- the current E8 review line also adds one third explicit verifier profile `python_workspace_pytest_feature_flags_v1` and generalizes the breadth train from `2` accepted OpenAI packs to a candidate target of `3`
+- the accepted local `main` line now includes a third explicit breadth pack `verified_work_feature_flags_v1` over `tests/fixtures/live_validation/feature_flags_template/`
+- the accepted local `main` line also includes one third explicit verifier profile `python_workspace_pytest_feature_flags_v1` and the generalized breadth train from `2` accepted OpenAI packs to a landed target of `3`
 - repeated targeted local reruns on `python3 tools/cortex_conformance.py --mode active --brain openai --contract-pack verified_work_feature_flags_v1` now pass the feature-flags pack on attempt `1`
 - one explicit tri-brain feature-flags guardrail rerun under `.cortex/live_validation/conformance/run_20260408T091518+0000` reads OpenAI `service_api` conformant, Claude `operator_cli` conformant, and Gemini `operator_cli` conformant
 - one full closed-loop breadth run under `.cortex/train_loops/verified-work-breadth-openai/summary.json` now promotes with `primary_metric_before = 2` and `primary_metric_after = 3`
+- the current E9 repair-yield review line now adds one maintainer-only `--max-repair-turns 0|1` conformance override plus one paired proof surface under `.cortex/train_loops/verified-work-repair-yield-openai/summary.json`
+- that paired proof executes two full control-vs-repair rounds across bookmarks, normalize-port, and feature-flags on the OpenAI shipping-default lane
+- current E9 result is honest non-lift: one-shot control is `11/12` conformant, repair-enabled candidate is `12/12` conformant, repair opportunities are `0`, and the train therefore escalates for insufficient natural failures rather than widening runtime doctrine
+- the richer repair-ticket/runtime change was cut on the current E9 line because it did not beat the one-shot control
 - bookmarks remains the accepted `CT2` anchor pack and `summary.latest` remains bookmarks-only until a later deliberate breadth-closure move says otherwise
 - `O4R` remains landed for the current OpenAI shipping-default scope on the accepted line, while remaining explicitly outside the current canonical-anchor proof bundle
 
@@ -207,5 +211,6 @@ This program does not authorize:
 - automatic carrier selection
 - diff-based verified-work carriers
 - repeated-failure inhibition promotion
+- replay-based repair proof
 - multi-host rollout
 - or canonical-anchor widening

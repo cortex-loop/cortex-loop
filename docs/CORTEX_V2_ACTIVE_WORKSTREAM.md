@@ -49,12 +49,12 @@ It is workflow state only. It does not override the packet documents, implementa
 ## 2. Current campaign and seam state
 
 - Current campaign: `P1 product-first reduction program`
-- Current working branch at ledger update: `review/e8-verified-work-midweight-third-pack`
-- Current branch role: explicit manual/review branch for the E8 verified-work midweight third-pack train while the accepted baseline remains local `main`
-- Current candidate seam: `E8 verified-work midweight third-pack train`
+- Current working branch at ledger update: `review/e9-verified-work-repair-yield-train`
+- Current branch role: explicit manual/review branch for the E9 verified-work repair-yield train while the accepted baseline remains local `main`
+- Current candidate seam: `E9 verified-work repair-yield train`
 - Current seam status:
-  - accepted baseline truth on local `main` now includes the C3B brutal closed-loop train method on top of the accepted E7 second-pack verified-work breadth slice
-  - A0, P1C, S1, S1C, X1, X2, the first verified-work restoration slice, the Cortex-law / fast-train method slice, the verified-work neutralization / conformance-correction slice, the Claude operator workspace-truth slice, the OpenAI verified-work context slice, the C3B brutal closed-loop train method, and the E7 second-pack verified-work breadth slice are now accepted on local `main`
+  - accepted baseline truth on local `main` now includes the C3B brutal closed-loop train method on top of the accepted E8 third-pack verified-work breadth slice
+  - A0, P1C, S1, S1C, X1, X2, the first verified-work restoration slice, the Cortex-law / fast-train method slice, the verified-work neutralization / conformance-correction slice, the Claude operator workspace-truth slice, the OpenAI verified-work context slice, the C3B brutal closed-loop train method, the E7 second-pack verified-work breadth slice, and the E8 third-pack verified-work breadth slice are now accepted on local `main`
   - the explicit `current|canonical_anchor` direct-API service suites remain accepted on the current line
   - the OpenAI service spend split remains explicit:
     - `service_smoke` uses `gpt-5.4-mini`
@@ -128,7 +128,7 @@ It is workflow state only. It does not override the packet documents, implementa
     - one localized verifier-install correction where the bounded workspace venv now installs `-e .[test] pytest`, keeping the existing bookmarks pack lawful while making the normalize-port verifier runnable
     - two repeated targeted OpenAI reruns where the bookmarks pack remains conformant and the normalize-port pack now passes on attempt `1`
     - one explicit normalize-port tri-brain guardrail rerun under `.cortex/live_validation/conformance/run_20260408T083436+0000` where OpenAI `service_api` is conformant, Claude `operator_cli` recovers after one lawful repair, Gemini `operator_cli` is conformant, and the guardrail decision remains `promote`
-  - the current E8 third-pack slice on this review branch now adds:
+  - the accepted E8 third-pack breadth slice on local `main` now includes:
     - one third explicit verified-work profile `python_workspace_pytest_feature_flags_v1` over a middle-weight `feature_flags_template` task
     - one third contract pack `verified_work_feature_flags_v1` in the conformance harness
     - one third pure-Python live-validation fixture under `tests/fixtures/live_validation/feature_flags_template/`
@@ -141,16 +141,23 @@ It is workflow state only. It does not override the packet documents, implementa
     - two repeated targeted OpenAI reruns under `.cortex/live_validation/conformance/run_20260408T091458+0000` and `.cortex/live_validation/conformance/run_20260408T091508+0000` where the feature-flags pack is conformant on both runs
     - one explicit feature-flags tri-brain guardrail rerun under `.cortex/live_validation/conformance/run_20260408T091518+0000` where OpenAI `service_api`, Claude `operator_cli`, and Gemini `operator_cli` are all conformant and the guardrail decision remains `promote`
     - one full closed-loop breadth run under `.cortex/train_loops/verified-work-breadth-openai/summary.json` where `final_decision = promote` and `primary_metric_before = 2` lifts to `primary_metric_after = 3`
-  - this E8 slice is landed on the current review branch and is not yet accepted on local `main`
+  - the current E9 repair-yield slice on this review branch now adds:
+    - one maintainer-only `--max-repair-turns 0|1` override in `tools/cortex_conformance.py`
+    - one product-facing repair-yield train entry `verified-work-repair-yield-openai` in `tools/cortex_train_loop.py`
+    - one paired live proof surface where the three accepted packs run as one-shot control with `max_repair_turns = 0` and repair-enabled candidate with `max_repair_turns = 1`
+    - one explicit live result under `.cortex/train_loops/verified-work-repair-yield-openai/summary.json` where two full paired rounds execute across the three accepted packs, one-shot control is `11/12` conformant, repair-enabled candidate is `12/12` conformant, and repair opportunities remain `0`
+    - one honest train outcome where `final_decision = escalate` because natural failures were too rare to measure repair yield on the current line
+    - one explicit cut where the richer repair-ticket/runtime change was removed after it failed to beat the one-shot control
+  - this E9 slice is landed on the current review branch and is not yet accepted on local `main`
 
 ## 3. Next lawful move
 
 - No active verified-work shipping-gap seam remains on the accepted local `main` line.
 - The accepted executive-restoration correction is now landed on the current OpenAI realization.
 - While this explicit review branch remains open, the next lawful move is:
-  - manually merge or deliberately reject the E8 review branch before opening another runtime/product seam
+  - manually merge or deliberately reject the E9 review branch before opening another runtime/product seam
   - keep accepted-baseline truth separate from the review-branch candidate state
-- After this E8 slice is accepted, later runtime/product seams should default to:
+- After this E9 slice is accepted, later runtime/product seams should default to:
   - write the `Train Charter` first
   - record one baseline result before the first edit or candidate proof run
   - choose exactly one primary metric and one guardrail metric
@@ -167,8 +174,8 @@ It is workflow state only. It does not override the packet documents, implementa
   - keep the default thin path unchanged and keep the landed verified-work lane outside canonical-anchor proof
   - keep repeated-failure inhibition and automatic carrier selection deferred until new evidence earns them
   - open any later shipping-truth widening beyond OpenAI only through an explicit separate host shipping train
-- After this E8 slice is accepted, bookmarks should remain the accepted `CT2` anchor pack unless a later deliberate breadth-closure move says otherwise.
-- After this E8 slice is accepted, the next product-facing move should be another bounded value or breadth slice on the shipping-default lane rather than another governance-only train.
+- After this E9 slice is accepted, bookmarks should remain the accepted `CT2` anchor pack unless a later deliberate breadth-closure move says otherwise.
+- After this E9 slice is accepted, the next product-facing move should be a smaller repair-pressure investigation on the shipping-default lane because the paired live repair-yield proof produced zero natural repair opportunities across the current three-pack set.
 - Keep shipping-truth widening separate from conformance work:
   - `claude` may be conformance-required on `operator_cli` before any later Claude shipping train opens
   - `gemini` may be conformance-required on its strongest native surface before any later Gemini shipping train opens
@@ -198,6 +205,7 @@ It is workflow state only. It does not override the packet documents, implementa
 - Do not solve larger-task repair by adding a second large task-specific subsystem when one optional work contract would suffice.
 - Do not promote the landed `O4R` verified-work lane into canonical-anchor proof without a separate evidence-earning move.
 - Do not let one host or one surface redefine Cortex law by itself.
+- Do not add replay-based repair proof just to manufacture a repair-yield win on the current line.
 
 ## 5. Acknowledged worktree noise at ledger creation
 

@@ -282,18 +282,18 @@ def test_active_current_line_docs_frame_openai_only_truth_and_watchlist_retentio
     assert f"Current working branch at ledger update: `{current_branch}`" in workstream_text
     if current_branch == "main":
         assert (
-            "Current branch role: accepted resting line after the E7 verified-work breadth slice"
+            "Current branch role: accepted resting line after the E8 verified-work third-pack breadth slice"
             in workstream_text
         )
         assert "Current candidate seam: `none active`" in workstream_text
     else:
         assert (
-            "Current branch role: explicit manual/review branch for the E8 verified-work midweight third-pack train while the accepted baseline remains local `main`"
+            "Current branch role: explicit manual/review branch for the E9 verified-work repair-yield train while the accepted baseline remains local `main`"
             in workstream_text
         )
-        assert "Current candidate seam: `E8 verified-work midweight third-pack train`" in workstream_text
+        assert "Current candidate seam: `E9 verified-work repair-yield train`" in workstream_text
     assert (
-        "A0, P1C, S1, S1C, X1, X2, the first verified-work restoration slice, the Cortex-law / fast-train method slice, the verified-work neutralization / conformance-correction slice, the Claude operator workspace-truth slice, the OpenAI verified-work context slice, the C3B brutal closed-loop train method, and the E7 second-pack verified-work breadth slice are now accepted on local `main`"
+        "A0, P1C, S1, S1C, X1, X2, the first verified-work restoration slice, the Cortex-law / fast-train method slice, the verified-work neutralization / conformance-correction slice, the Claude operator workspace-truth slice, the OpenAI verified-work context slice, the C3B brutal closed-loop train method, the E7 second-pack verified-work breadth slice, and the E8 third-pack verified-work breadth slice are now accepted on local `main`"
         in workstream_text
     )
     assert "docs/CORTEX_V2_EXECUTIVE_RESTORATION_NOTE.md" in workstream_text
@@ -315,12 +315,16 @@ def test_active_current_line_docs_frame_openai_only_truth_and_watchlist_retentio
     assert "OpenAI `service_api`: conformant on three repeated targeted current reruns" in workstream_text
     assert "Claude `operator_cli`: no longer divergent on truthful staged-workspace runs" in workstream_text
     assert "Gemini `operator_cli`: conformant on the corrected current line" in workstream_text
-    assert "the current E8 third-pack slice on this review branch now adds" in workstream_text
+    assert "the accepted E8 third-pack breadth slice on local `main` now includes" in workstream_text
     assert "`python_workspace_pytest_port_fix_v1`" in workstream_text
     assert "`verified_work_normalize_port_v1`" in workstream_text
     assert "`python_workspace_pytest_feature_flags_v1`" in workstream_text
     assert "`verified_work_feature_flags_v1`" in workstream_text
     assert "provider-noise guardrail correction in `tools/cortex_train_loop.py`" in workstream_text
+    assert "the current E9 repair-yield slice on this review branch now adds" in workstream_text
+    assert "`--max-repair-turns 0|1` override in `tools/cortex_conformance.py`" in workstream_text
+    assert "one-shot control is `11/12` conformant, repair-enabled candidate is `12/12` conformant, and repair opportunities remain `0`" in workstream_text
+    assert "one explicit cut where the richer repair-ticket/runtime change was removed after it failed to beat the one-shot control" in workstream_text
 
     assert (
         "This is the only active current-line proof bundle for the accepted OpenAI-only product scope."
@@ -370,8 +374,11 @@ def test_active_current_line_docs_frame_openai_only_truth_and_watchlist_retentio
     assert "repeated targeted local OpenAI reruns on the bookmarks pack now pass on the shipping-default lane" in restoration_note_text
     assert "## Conformance reading under the current method" in restoration_note_text
     assert "It should ask whether the same Cortex law is conformant, partial, divergent, unwired, or env-blocked" in restoration_note_text
-    assert "On the current feature-flags verified-work breadth pack, the active review-branch reading is:" in restoration_note_text
-    assert "The current next decision for the shipping-default lane is therefore `promote`" in restoration_note_text
+    assert "On the accepted feature-flags verified-work breadth pack, the current reading is:" in restoration_note_text
+    assert "On the current E9 repair-yield review line, the paired live proof reads:" in restoration_note_text
+    assert "repair opportunities: `0`" in restoration_note_text
+    assert "open a smaller repair-pressure investigation" in restoration_note_text
+    assert "The current accepted next decision for the shipping-default lane is therefore `promote`" in restoration_note_text
     assert "This note does not authorize:" in restoration_note_text
 
     assert "accepted bounded runtime-program brief for the landed verified-work restoration lane" in verified_work_program_text
@@ -385,6 +392,8 @@ def test_active_current_line_docs_frame_openai_only_truth_and_watchlist_retentio
     assert "`O4R` remains landed for the current OpenAI shipping-default scope on the accepted line" in verified_work_program_text
     assert "primary_metric_before = 2" in verified_work_program_text
     assert "primary_metric_after = 3" in verified_work_program_text
+    assert "paired proof surface under `.cortex/train_loops/verified-work-repair-yield-openai/summary.json`" in verified_work_program_text
+    assert "one-shot control is `11/12` conformant, repair-enabled candidate is `12/12` conformant, repair opportunities are `0`" in verified_work_program_text
 
 
 def test_x2_accepted_line_claims_match_main() -> None:
