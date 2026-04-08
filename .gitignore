@@ -3,6 +3,7 @@ __pycache__/
 .coverage
 .coverage.*
 .cortex/live_validation/
+.cortex/train_loops/
 .claude/worktrees/
 .env
 .env.*

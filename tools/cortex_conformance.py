@@ -5,8 +5,10 @@ from __future__ import annotations
 import argparse
 import shutil
 import json
+import re
 import sys
 import tempfile
+from collections.abc import Mapping
 from contextlib import contextmanager
 from dataclasses import dataclass
 from pathlib import Path
@@ -49,9 +51,11 @@ Brain = Literal["openai", "claude", "gemini"]
 Surface = Literal["service_api", "operator_cli"]
 ConformanceStatus = Literal["conformant", "partial", "divergent", "unwired", "env_blocked"]
 DivergenceClass = Literal["cortex_law", "brain_wiring", "surface_wiring", "env_blocked"]
+ConformanceSummary = dict[str, Any]
 
 ACTIVE_CONTRACT_PACK = "verified_work_bookmarks_v1"
 CONFORMANCE_ROOT = LOCAL_LIVE_ROOT / "conformance"
+PHASE_GATES_PATH = ROOT / "docs" / "CORTEX_V2_PHASE_GATES_2.md"
 BOOKMARKS_TASK_PATH = (
     ROOT / "tests" / "fixtures" / "live_validation" / "bookmarks_app_template" / "README_TASK.md"
 )
@@ -64,6 +68,7 @@ _SURFACE_ORDER: dict[Brain, tuple[Surface, ...]] = {
     "claude": ("operator_cli",),
     "gemini": ("operator_cli",),
 }
+_ALL_BRAINS: tuple[Brain, ...] = tuple(_SURFACE_ORDER)
 
 
 @dataclass(frozen=True, slots=True)
@@ -468,8 +473,9 @@ def run_active_conformance(
 
     write_json(run_root / "summary.json", summary)
     write_text(run_root / "summary.md", render_summary_markdown(summary))
-    write_json(CONFORMANCE_ROOT / "summary.latest.json", summary)
-    write_text(CONFORMANCE_ROOT / "summary.latest.md", render_summary_markdown(summary))
+    if _is_full_brain_run(brains):
+        write_json(CONFORMANCE_ROOT / "summary.latest.json", summary)
+        write_text(CONFORMANCE_ROOT / "summary.latest.md", render_summary_markdown(summary))
     return summary
 
 
@@ -529,7 +535,7 @@ def main(argv: list[str] | None = None) -> int:
     )
     parser.add_argument(
         "--mode",
-        choices=("preflight", "fast", "active"),
+        choices=("preflight", "fast", "active", "reconcile-latest"),
         default="active",
     )
     parser.add_argument(
@@ -554,6 +560,8 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.mode == "preflight":
         payload = build_preflight_report(brains=brains)
+    elif args.mode == "reconcile-latest":
+        payload = reconcile_latest_summary()
     else:
         payload = run_active_conformance(brains=brains)
     print(json.dumps(payload, indent=2, sort_keys=True))
@@ -1033,9 +1041,103 @@ def _next_decision(
     ]
     if non_shipping_partial:
         return "fix_wiring_only"
-    if any(result["status"] == "env_blocked" for result in results):
+    shipping_env_blocked = shipping_result is not None and shipping_result["status"] == "env_blocked"
+    if shipping_env_blocked:
         return "clear_env_blocks"
+    if any(result["status"] == "env_blocked" for result in results):
+        return "promote"
     return "promote"
+
+
+def reconcile_latest_summary() -> ConformanceSummary:
+    candidate = _find_latest_full_summary(
+        preferred_next_decision=_accepted_ct2_next_decision(),
+    )
+    if candidate is None:
+        raise RuntimeError(
+            "No surviving full tri-brain conformance summary exists under "
+            f"{CONFORMANCE_ROOT}."
+        )
+    write_json(CONFORMANCE_ROOT / "summary.latest.json", candidate)
+    write_text(CONFORMANCE_ROOT / "summary.latest.md", render_summary_markdown(candidate))
+    return candidate
+
+
+def _find_latest_full_summary(
+    *,
+    preferred_next_decision: str | None = None,
+) -> ConformanceSummary | None:
+    run_dirs = sorted(
+        (path for path in CONFORMANCE_ROOT.glob("run_*") if path.is_dir()),
+        reverse=True,
+    )
+    fallback: ConformanceSummary | None = None
+    for run_dir in run_dirs:
+        summary_path = run_dir / "summary.json"
+        if not summary_path.exists():
+            continue
+        try:
+            summary = json.loads(summary_path.read_text(encoding="utf-8"))
+        except json.JSONDecodeError:
+            continue
+        if not _summary_is_full_run(summary):
+            continue
+        if not _summary_artifacts_exist(summary):
+            continue
+        if fallback is None:
+            fallback = summary
+        if preferred_next_decision is None:
+            return summary
+        if summary.get("next_decision") == preferred_next_decision:
+            return summary
+    return fallback
+
+
+def _accepted_ct2_next_decision() -> str | None:
+    if not PHASE_GATES_PATH.exists():
+        return None
+    text = PHASE_GATES_PATH.read_text(encoding="utf-8")
+    match = re.search(
+        r"^\| `CT2` .*?current shipping-default decision is `(?P<decision>[a-z_]+)`",
+        text,
+        re.MULTILINE,
+    )
+    if match is None:
+        return None
+    return match.group("decision")
+
+
+def _is_full_brain_run(brains: tuple[Brain, ...]) -> bool:
+    return tuple(sorted(brains)) == tuple(sorted(_ALL_BRAINS))
+
+
+def _summary_is_full_run(summary: Mapping[str, Any]) -> bool:
+    results = summary.get("results")
+    if not isinstance(results, list):
+        return False
+    brains = {
+        result.get("brain")
+        for result in results
+        if isinstance(result, Mapping) and isinstance(result.get("brain"), str)
+    }
+    return brains == set(_ALL_BRAINS)
+
+
+def _summary_artifacts_exist(summary: Mapping[str, Any]) -> bool:
+    results = summary.get("results")
+    if not isinstance(results, list):
+        return False
+    for result in results:
+        if not isinstance(result, Mapping):
+            return False
+        artifact_relpath = result.get("artifact_relpath")
+        if artifact_relpath is None:
+            continue
+        if not isinstance(artifact_relpath, str) or not artifact_relpath.strip():
+            return False
+        if not (ROOT / artifact_relpath).exists():
+            return False
+    return True
 
 
 __all__ = [
@@ -1049,6 +1151,7 @@ __all__ = [
     "classify_outcome_divergence",
     "classify_shared_divergence",
     "decide_iteration_outcome",
+    "reconcile_latest_summary",
     "preflight_surface",
     "render_summary_markdown",
     "run_active_conformance",

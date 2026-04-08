@@ -229,6 +229,17 @@ def test_agents_and_master_plan_record_cortex_law_train_method() -> None:
     assert "build -> test -> iterate -> cut" in agents_text
     assert "if two iterations fail without improving the divergence classification" in agents_text
     assert "run the same contract pack on OpenAI, Claude, and Gemini" in agents_text
+    assert "`baseline result`" in agents_text
+    assert "`primary_metric`" in agents_text
+    assert "`guardrail_metric`" in agents_text
+    assert "`iteration_budget`" in agents_text
+    assert "`rollback_surface`" in agents_text
+    assert "`escalation_triggers`" in agents_text
+    assert "`promote`, `revise`, `cut`, `escalate`" in agents_text
+    assert "`deterministic`" in agents_text
+    assert "`shared verification-plumbing`" in agents_text
+    assert "`timing/env-sensitive`" in agents_text
+    assert "tools/cortex_train_loop.py" in agents_text
 
     assert "Post-closeout Cortex-law train method:" in master_plan_text
     assert "define the Cortex law being changed" in master_plan_text
@@ -236,6 +247,10 @@ def test_agents_and_master_plan_record_cortex_law_train_method() -> None:
     assert "one Cortex-law micro-train at a time" in master_plan_text
     assert "no second pack until the first has a stable divergence classification" in master_plan_text
     assert "borrow or clone only proven narrow mechanisms" in master_plan_text
+    assert "lock one `Train Charter`, one baseline result, one primary metric, one guardrail metric" in master_plan_text
+    assert "end the iteration in exactly one of `promote`, `revise`, `cut`, or `escalate`" in master_plan_text
+    assert "`env_blocked` never counts as success" in master_plan_text
+    assert "thin local recorder" in master_plan_text
 
 
 def test_active_current_line_docs_frame_openai_only_truth_and_watchlist_retention() -> None:
@@ -258,12 +273,25 @@ def test_active_current_line_docs_frame_openai_only_truth_and_watchlist_retentio
         "the accepted product/runtime claim is now explicitly OpenAI-only on the canonical direct-API lane"
         in workstream_text
     )
-    assert "Current working branch at ledger update: `main`" in workstream_text
-    assert (
-        "Current branch role: accepted resting line after the E6 OpenAI verified-work context slice"
-        in workstream_text
-    )
-    assert "Current candidate seam: `none active`" in workstream_text
+    current_branch = subprocess.check_output(
+        ["git", "branch", "--show-current"],
+        cwd=REPO_ROOT,
+        text=True,
+        encoding="utf-8",
+    ).strip()
+    assert f"Current working branch at ledger update: `{current_branch}`" in workstream_text
+    if current_branch == "main":
+        assert (
+            "Current branch role: accepted resting line after the E6 OpenAI verified-work context slice"
+            in workstream_text
+        )
+        assert "Current candidate seam: `none active`" in workstream_text
+    else:
+        assert (
+            "Current branch role: explicit manual/review branch for the C3B brutal closed-loop train method while the accepted baseline remains local `main`"
+            in workstream_text
+        )
+        assert "Current candidate seam: `C3B brutal closed-loop train method`" in workstream_text
     assert (
         "A0, P1C, S1, S1C, X1, X2, the first verified-work restoration slice, the Cortex-law / fast-train method slice, the verified-work neutralization / conformance-correction slice, the Claude operator workspace-truth slice, and the OpenAI verified-work context slice are now accepted on local `main`"
         in workstream_text
@@ -278,6 +306,12 @@ def test_active_current_line_docs_frame_openai_only_truth_and_watchlist_retentio
     assert "No active verified-work shipping-gap seam remains on the accepted local `main` line." in workstream_text
     assert "write the `Train Charter` first" in workstream_text
     assert "run tri-brain conformance on OpenAI, Claude, and Gemini" in workstream_text
+    assert "baseline result, primary metric, guardrail metric, iteration budget, rollback surface, and escalation-trigger fields" in workstream_text
+    assert "`promote`, `revise`, `cut`, `escalate`" in workstream_text
+    assert "`tools/cortex_train_loop.py`" in workstream_text
+    assert "baseline drift where `summary.latest` referenced missing artifacts" in workstream_text
+    assert "run_20260408T074128+0000" in workstream_text
+    assert "`CT2` therefore re-earned on this review branch" in workstream_text
     assert "OpenAI `service_api`: conformant on three repeated targeted current reruns" in workstream_text
     assert "Claude `operator_cli`: no longer divergent on truthful staged-workspace runs" in workstream_text
     assert "Gemini `operator_cli`: conformant on the corrected current line" in workstream_text
@@ -417,11 +451,18 @@ def test_phase_gates_match_openai_only_truth_and_hygiene() -> None:
     assert "bounded read-only workspace context bundle over the current writable-file contents plus the contract tests" in o4r_row
     assert "tools/cortex_conformance.py" in c1_row
     assert "Train Charter" in c1_row
+    assert "tools/cortex_train_loop.py" in c1_row
+    assert "baseline / metric / rollback / escalation inputs" in c1_row
+    assert "closed on the C3B review branch" in c2_row
+    assert "landed" in c2_row
     assert "make conformance-preflight" in c2_row
+    assert "python3 tools/cortex_conformance.py --mode reconcile-latest" in c2_row
     assert "OpenAI `service_api` conformant on three repeated targeted reruns" in c2_row
-    assert "Claude `operator_cli` no longer divergent because truthful staged-workspace reruns pass" in c2_row
-    assert "Anthropic `529 overloaded_error` and therefore count as `env_blocked`" in c2_row
-    assert "Gemini `operator_cli` conformant because staged workspace truth removes the earlier `read_file` miss" in c2_row
+    assert "run_20260408T074128+0000" in c2_row
+    assert "Claude `operator_cli` conformant after one lawful repair" in c2_row
+    assert "Gemini `operator_cli` conformant" in c2_row
+    assert "`summary.latest` now publishes only from full tri-brain runs" in c2_row
+    assert "latest surviving full run that matches accepted `CT2` decision" in c2_row
     assert "current shipping-default decision is `promote`" in c2_row
     assert "strongest available native surface may stand in for development conformance" in c3_row
     assert "historical/watchlist-only; do not use for runtime closure" in l5_row

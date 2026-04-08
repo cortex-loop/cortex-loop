@@ -49,10 +49,11 @@ It is workflow state only. It does not override the packet documents, implementa
 ## 2. Current campaign and seam state
 
 - Current campaign: `P1 product-first reduction program`
-- Current working branch at ledger update: `main`
-- Current branch role: accepted resting line after the E6 OpenAI verified-work context slice
-- Current candidate seam: `none active`
+- Current working branch at ledger update: `review/c3b-brutal-closed-loop-train-method`
+- Current branch role: explicit manual/review branch for the C3B brutal closed-loop train method while the accepted baseline remains local `main`
+- Current candidate seam: `C3B brutal closed-loop train method`
 - Current seam status:
+  - accepted baseline truth on local `main` remains the E6 OpenAI verified-work context slice
   - A0, P1C, S1, S1C, X1, X2, the first verified-work restoration slice, the Cortex-law / fast-train method slice, the verified-work neutralization / conformance-correction slice, the Claude operator workspace-truth slice, and the OpenAI verified-work context slice are now accepted on local `main`
   - the explicit `current|canonical_anchor` direct-API service suites remain accepted on the current line
   - the OpenAI service spend split remains explicit:
@@ -102,28 +103,50 @@ It is workflow state only. It does not override the packet documents, implementa
     - one tri-brain conformance harness on the active bookmarks verified-work contract pack
     - one explicit divergence taxonomy: `cortex_law`, `brain_wiring`, `surface_wiring`, `env_blocked`
     - one corrected current-line reading where the OpenAI shipping-default lane now promotes on repeated targeted reruns, Gemini remains conformant, and Claude no longer counts as divergent when Anthropic overload returns a provider-side block instead of structured output
+  - the active brutal closed-loop train method on this review branch now adds:
+    - baseline result, primary metric, guardrail metric, iteration budget, rollback surface, and escalation-trigger fields to long-train charters
+    - one explicit loop-class split: `deterministic`, `shared verification-plumbing`, `timing/env-sensitive`
+    - one explicit per-iteration decision law: `promote`, `revise`, `cut`, `escalate`
+    - one thin maintainer-only recorder at `tools/cortex_train_loop.py`
+    - one conformance-summary truth pilot that records baseline, candidate proof, and final decision under `.cortex/train_loops/`
+    - one conformance-harness correction where `summary.latest` only publishes from full tri-brain runs and can be reconciled to the latest surviving full run that matches accepted `CT2` decision
   - shipping truth remains OpenAI-first on the service lane
   - Claude remains outside the accepted shipping default, but Claude is no longer treated as generic backlog for Cortex-law conformance work
   - Gemini remains outside the accepted shipping default, but Gemini is no longer treated as generic backlog for Cortex-law conformance work
   - headless-CLI operator evidence remains watchlist-only even when conformance is positive; it does not widen shipping truth or canonical runtime proof
   - the older local `review/*` backlog is now archived to local `archive/review--*` tags and removed; full repo hygiene remains partial until `origin/main` reconciliation because local `main` is ahead
+  - the conformance-summary truth pilot on this review branch now records:
+    - baseline drift where `summary.latest` referenced missing artifacts and a stale `fix_wiring_only` decision
+    - one clean full tri-brain rerun under `.cortex/live_validation/conformance/run_20260408T074128+0000`
+    - one reconciled `summary.latest` state where OpenAI, Claude, and Gemini are all conformant and the shipping-default decision is `promote`
+    - `CT2` therefore re-earned on this review branch
+  - this C3B slice is landed on the current review branch and is not yet accepted on local `main`
 
 ## 3. Next lawful move
 
 - No active verified-work shipping-gap seam remains on the accepted local `main` line.
 - The accepted executive-restoration correction is now landed on the current OpenAI realization.
-- If a later runtime/product seam opens, the next lawful move is:
+- While this explicit review branch remains open, the next lawful move is:
+  - manually merge or deliberately reject the C3B review branch before opening another runtime/product seam
+  - keep accepted-baseline truth separate from the review-branch candidate state
+- After this C3B slice is accepted, later runtime/product seams should default to:
   - write the `Train Charter` first
+  - record one baseline result before the first edit or candidate proof run
+  - choose exactly one primary metric and one guardrail metric
+  - lock one iteration budget, rollback surface, and escalation-trigger set
   - define the Cortex invariant before touching wiring
   - choose the fastest proving wiring and one tiny runnable contract pack
   - run tri-brain conformance on OpenAI, Claude, and Gemini
-  - classify divergence as `cortex_law`, `brain_wiring`, `surface_wiring`, or `env_blocked`
+  - run the exact proof set
+  - compare the candidate result against the baseline
+  - end each iteration in exactly one of `promote`, `revise`, `cut`, or `escalate`
   - keep the landed `O4R` path stable before opening any new Cortex-law or host-scope seam
   - keep Claude in the `env_blocked` bucket when Anthropic overload prevents structured output; that is provider availability noise, not a new wiring or law failure
   - keep Gemini in the `conformant` bucket on the staged-workspace operator surface rather than reopening Gemini wiring prematurely
   - keep the default thin path unchanged and keep the landed verified-work lane outside canonical-anchor proof
   - keep repeated-failure inhibition and automatic carrier selection deferred until new evidence earns them
   - open any later shipping-truth widening beyond OpenAI only through an explicit separate host shipping train
+- After this C3B slice is accepted, no active CT2 conformance-summary drift gap should remain on the current line.
 - Keep shipping-truth widening separate from conformance work:
   - `claude` may be conformance-required on `operator_cli` before any later Claude shipping train opens
   - `gemini` may be conformance-required on its strongest native surface before any later Gemini shipping train opens

@@ -28,7 +28,7 @@ It records whether cross-seam closure conditions are actually earned.
 Source of truth:
 - `docs/CORTEX_V2_IMPLEMENTATION_MASTER_PLAN_2.md`, Section 7
 
-Overall status: `partial`
+Overall status: `landed`
 
 Historical note:
 - this gate previously drifted while only placeholder tests existed,
@@ -179,15 +179,15 @@ Source of truth:
 - `docs/CORTEX_V2_IMPLEMENTATION_MASTER_PLAN_2.md`
 - `tools/cortex_conformance.py`
 
-Overall status: `partial`
+Overall status: `landed`
 
 These rows track development conformance for Cortex-law changes.
 They do not widen shipping truth or canonical runtime proof by themselves.
 
 | Gate row | Current evidence | Owner / next closeout | Status | Notes |
 | --- | --- | --- | --- | --- |
-| `CT1` conformance harness readiness | `AGENTS.md`; `docs/CORTEX_V2_IMPLEMENTATION_MASTER_PLAN_2.md`; `tools/cortex_conformance.py`; `tests/unit/test_cortex_conformance.py` | closed | landed | Cortex-law trains now require explicit truth taxonomy, `Train Charter` fields, strongest-native-surface selection, and one reusable tri-brain conformance harness over contract packs |
-| `CT2` active verified-work tri-brain conformance | `docs/CORTEX_V2_ACTIVE_WORKSTREAM.md`; `make conformance-preflight`; `make conformance-fast`; local artifacts under `.cortex/live_validation/conformance/` | keep partial until a later clean full tri-brain refresh rechecks the unchanged non-shipping operator surfaces without provider-availability noise; this no longer blocks the landed OpenAI shipping-default row | partial | the corrected active bookmarks verified-work pack now reads OpenAI `service_api` conformant on three repeated targeted reruns because bounded read-only workspace context closes the shipping-default gap, Claude `operator_cli` no longer divergent because truthful staged-workspace reruns pass while repeated full tri-brain reruns may still hit Anthropic `529 overloaded_error` and therefore count as `env_blocked`, and Gemini `operator_cli` conformant because staged workspace truth removes the earlier `read_file` miss; current shipping-default decision is `promote` |
+| `CT1` conformance harness readiness | `AGENTS.md`; `docs/CORTEX_V2_IMPLEMENTATION_MASTER_PLAN_2.md`; `tools/cortex_conformance.py`; `tools/cortex_train_loop.py`; `tests/unit/test_cortex_conformance.py`; `tests/unit/test_cortex_train_loop.py` | closed | landed | Cortex-law trains now require explicit truth taxonomy, expanded `Train Charter` fields, locked baseline / metric / rollback / escalation inputs, strongest-native-surface selection, one reusable tri-brain conformance harness, and one thin maintainer-only loop recorder over existing proof entrypoints |
+| `CT2` active verified-work tri-brain conformance | `docs/CORTEX_V2_ACTIVE_WORKSTREAM.md`; `make conformance-preflight`; `make conformance-fast`; `python3 tools/cortex_conformance.py --mode reconcile-latest`; local artifacts under `.cortex/live_validation/conformance/` | closed on the C3B review branch; recheck only if a later runtime/product seam changes the unchanged non-shipping operator surfaces or the conformance publication law | landed | the corrected active bookmarks verified-work pack now reads OpenAI `service_api` conformant on three repeated targeted reruns because bounded read-only workspace context closes the shipping-default gap, `summary.latest` now publishes only from full tri-brain runs and can be reconciled to the latest surviving full run that matches accepted `CT2` decision, and the clean full rerun under `.cortex/live_validation/conformance/run_20260408T074128+0000` re-earned the current full tri-brain reading with OpenAI `service_api` conformant, Claude `operator_cli` conformant after one lawful repair, Gemini `operator_cli` conformant, and current shipping-default decision is `promote` |
 | `CT3` strongest-native-surface fallback law | `AGENTS.md`; `docs/CORTEX_V2_IMPLEMENTATION_MASTER_PLAN_2.md`; `tools/cortex_conformance.py`; `tests/unit/test_cortex_conformance.py` | closed | landed | service/API remains preferred for shipping truth and canonical proof, while the strongest available native surface may stand in for development conformance when service wiring is absent or blocked |
 
 ---

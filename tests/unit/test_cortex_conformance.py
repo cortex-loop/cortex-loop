@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import sys
 from pathlib import Path
 
@@ -409,3 +410,301 @@ def test_next_decision_prefers_shipping_default_gap_once_non_shipping_divergence
         )
         == "improve_shipping_default"
     )
+
+
+def test_next_decision_promotes_when_only_non_shipping_env_blocks_remain() -> None:
+    results = [
+        {
+            "brain": "openai",
+            "status": "conformant",
+            "divergence_class": None,
+        },
+        {
+            "brain": "claude",
+            "status": "env_blocked",
+            "divergence_class": "env_blocked",
+        },
+        {
+            "brain": "gemini",
+            "status": "conformant",
+            "divergence_class": None,
+        },
+    ]
+
+    assert (
+        conformance._next_decision(
+            results,
+            None,
+            shipping_default="openai:service_api",
+        )
+        == "promote"
+    )
+
+
+def test_run_active_conformance_does_not_publish_latest_for_targeted_runs(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(conformance, "CONFORMANCE_ROOT", tmp_path)
+    monkeypatch.setattr(
+        conformance,
+        "now_utc_iso",
+        lambda: "2026-04-08T08:00:00+00:00",
+    )
+    monkeypatch.setattr(
+        conformance,
+        "load_local_env_file",
+        lambda: None,
+    )
+    monkeypatch.setattr(
+        conformance,
+        "preflight_surface",
+        lambda _brain, _surface: conformance.SurfaceProbe(
+            brain="openai",
+            surface="service_api",
+            status="conformant",
+            reason="ready",
+        ),
+    )
+    monkeypatch.setattr(
+        conformance,
+        "_run_conformance",
+        lambda **_kwargs: conformance.ConformanceRunResult(
+            brain="openai",
+            surface="service_api",
+            contract_pack="verified_work_bookmarks_v1",
+            status="conformant",
+            attempt_count=1,
+            verification_status="passed",
+            parseable=True,
+            import_smoke_ok=True,
+            pytest_passed=11,
+            repair_conversion="passed_without_repair",
+        ),
+    )
+
+    summary = conformance.run_active_conformance(brains=("openai",))
+
+    assert summary["results"][0]["brain"] == "openai"
+    assert not (tmp_path / "summary.latest.json").exists()
+    assert not (tmp_path / "summary.latest.md").exists()
+
+
+def test_reconcile_latest_summary_prefers_newest_surviving_full_run_matching_ct2_truth(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(conformance, "CONFORMANCE_ROOT", tmp_path)
+    monkeypatch.setattr(conformance, "ROOT", tmp_path)
+    phase_gates_path = tmp_path / "phase_gates.md"
+    phase_gates_path.write_text(
+        "| `CT2` active verified-work tri-brain conformance | evidence | owner | landed | current shipping-default decision is `promote` |\n",
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(conformance, "PHASE_GATES_PATH", phase_gates_path)
+
+    older_run = tmp_path / "run_20260408T070000+0000"
+    newer_run = tmp_path / "run_20260408T071000+0000"
+    older_run.mkdir(parents=True)
+    newer_run.mkdir(parents=True)
+
+    for run_dir in (older_run, newer_run):
+        for artifact_name in (
+            "openai_service_api",
+            "claude_operator_cli",
+            "gemini_operator_cli",
+        ):
+            (run_dir / artifact_name).mkdir()
+
+    older_summary = {
+        "generated_at": "2026-04-08T07:00:00+00:00",
+        "results": [
+            {
+                "brain": "openai",
+                "surface": "service_api",
+                "status": "conformant",
+                "divergence_class": None,
+                "parseable": True,
+                "import_smoke_ok": True,
+                "pytest_passed": 11,
+                "pytest_failed": None,
+                "repair_conversion": "passed_without_repair",
+                "extraction_mode": None,
+                "note": "runtime move: continue",
+                "artifact_relpath": "run_20260408T070000+0000/openai_service_api",
+            },
+            {
+                "brain": "claude",
+                "surface": "operator_cli",
+                "status": "env_blocked",
+                "divergence_class": "env_blocked",
+                "parseable": None,
+                "import_smoke_ok": None,
+                "pytest_passed": None,
+                "pytest_failed": None,
+                "repair_conversion": None,
+                "extraction_mode": None,
+                "note": "provider blocked",
+                "artifact_relpath": "run_20260408T070000+0000/claude_operator_cli",
+            },
+            {
+                "brain": "gemini",
+                "surface": "operator_cli",
+                "status": "conformant",
+                "divergence_class": None,
+                "parseable": True,
+                "import_smoke_ok": True,
+                "pytest_passed": 11,
+                "pytest_failed": None,
+                "repair_conversion": "passed_without_repair",
+                "extraction_mode": "json_object",
+                "note": "executed",
+                "artifact_relpath": "run_20260408T070000+0000/gemini_operator_cli",
+            },
+        ],
+        "next_decision": "promote",
+        "shipping_truth": {"default": "openai:service_api"},
+        "iteration_outcome": "promote",
+        "overall_divergence_class": None,
+        "contract_pack": {"contract_pack": "verified_work_bookmarks_v1"},
+    }
+    newer_summary = {
+        "generated_at": "2026-04-08T07:10:00+00:00",
+        "results": [
+            {
+                "brain": "openai",
+                "surface": "service_api",
+                "status": "conformant",
+                "divergence_class": None,
+                "parseable": True,
+                "import_smoke_ok": True,
+                "pytest_passed": 11,
+                "pytest_failed": None,
+                "repair_conversion": "passed_without_repair",
+                "extraction_mode": None,
+                "note": "runtime move: continue",
+                "artifact_relpath": "run_20260408T071000+0000/openai_service_api",
+            },
+            {
+                "brain": "claude",
+                "surface": "operator_cli",
+                "status": "env_blocked",
+                "divergence_class": "env_blocked",
+                "parseable": None,
+                "import_smoke_ok": None,
+                "pytest_passed": None,
+                "pytest_failed": None,
+                "repair_conversion": None,
+                "extraction_mode": None,
+                "note": "provider blocked",
+                "artifact_relpath": "run_20260408T071000+0000/claude_operator_cli",
+            },
+            {
+                "brain": "gemini",
+                "surface": "operator_cli",
+                "status": "conformant",
+                "divergence_class": None,
+                "parseable": True,
+                "import_smoke_ok": True,
+                "pytest_passed": 11,
+                "pytest_failed": None,
+                "repair_conversion": "passed_without_repair",
+                "extraction_mode": "json_object",
+                "note": "executed",
+                "artifact_relpath": "run_20260408T071000+0000/gemini_operator_cli",
+            },
+        ],
+        "next_decision": "fix_wiring_only",
+        "shipping_truth": {"default": "openai:service_api"},
+        "iteration_outcome": "revise",
+        "overall_divergence_class": None,
+        "contract_pack": {"contract_pack": "verified_work_bookmarks_v1"},
+    }
+    (older_run / "summary.json").write_text(json.dumps(older_summary), encoding="utf-8")
+    (newer_run / "summary.json").write_text(json.dumps(newer_summary), encoding="utf-8")
+
+    reconciled = conformance.reconcile_latest_summary()
+
+    assert reconciled["generated_at"] == "2026-04-08T07:00:00+00:00"
+    assert (tmp_path / "summary.latest.json").exists()
+
+
+def test_reconcile_latest_summary_falls_back_to_newest_surviving_full_run_when_ct2_match_missing(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(conformance, "CONFORMANCE_ROOT", tmp_path)
+    monkeypatch.setattr(conformance, "ROOT", tmp_path)
+    phase_gates_path = tmp_path / "phase_gates.md"
+    phase_gates_path.write_text(
+        "| `CT2` active verified-work tri-brain conformance | evidence | owner | partial | current shipping-default decision is `promote` |\n",
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(conformance, "PHASE_GATES_PATH", phase_gates_path)
+
+    newer_run = tmp_path / "run_20260408T071000+0000"
+    newer_run.mkdir(parents=True)
+    for artifact_name in (
+        "openai_service_api",
+        "claude_operator_cli",
+        "gemini_operator_cli",
+    ):
+        (newer_run / artifact_name).mkdir()
+
+    newer_summary = {
+        "generated_at": "2026-04-08T07:10:00+00:00",
+        "results": [
+            {
+                "brain": "openai",
+                "surface": "service_api",
+                "status": "conformant",
+                "divergence_class": None,
+                "parseable": True,
+                "import_smoke_ok": True,
+                "pytest_passed": 11,
+                "pytest_failed": None,
+                "repair_conversion": "passed_without_repair",
+                "extraction_mode": None,
+                "note": "runtime move: continue",
+                "artifact_relpath": "run_20260408T071000+0000/openai_service_api",
+            },
+            {
+                "brain": "claude",
+                "surface": "operator_cli",
+                "status": "divergent",
+                "divergence_class": "surface_wiring",
+                "parseable": False,
+                "import_smoke_ok": None,
+                "pytest_passed": None,
+                "pytest_failed": None,
+                "repair_conversion": "repair_attempt_no_recovery",
+                "extraction_mode": "jsonl",
+                "note": "executed",
+                "artifact_relpath": "run_20260408T071000+0000/claude_operator_cli",
+            },
+            {
+                "brain": "gemini",
+                "surface": "operator_cli",
+                "status": "conformant",
+                "divergence_class": None,
+                "parseable": True,
+                "import_smoke_ok": True,
+                "pytest_passed": 11,
+                "pytest_failed": None,
+                "repair_conversion": "passed_without_repair",
+                "extraction_mode": "json_object",
+                "note": "executed",
+                "artifact_relpath": "run_20260408T071000+0000/gemini_operator_cli",
+            },
+        ],
+        "next_decision": "fix_wiring_only",
+        "shipping_truth": {"default": "openai:service_api"},
+        "iteration_outcome": "revise",
+        "overall_divergence_class": None,
+        "contract_pack": {"contract_pack": "verified_work_bookmarks_v1"},
+    }
+    (newer_run / "summary.json").write_text(json.dumps(newer_summary), encoding="utf-8")
+
+    reconciled = conformance.reconcile_latest_summary()
+
+    assert reconciled["generated_at"] == "2026-04-08T07:10:00+00:00"

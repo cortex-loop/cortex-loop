@@ -42,24 +42,43 @@ Post-closeout Cortex-law train method:
 - For later Cortex-law work, the default fast order is:
   1. define the Cortex law being changed
   2. choose the fastest proving wiring
-  3. build one tiny runnable contract pack
-  4. run tri-brain conformance on OpenAI, Claude, and Gemini
-  5. classify divergence as `cortex_law`, `brain_wiring`, `surface_wiring`, or `env_blocked`
-  6. cut non-productive additions immediately
-  7. only then widen scope
+  3. lock one `Train Charter`, one baseline result, one primary metric, one guardrail metric, one rollback surface, and one iteration budget
+  4. build one tiny runnable contract pack
+  5. run tri-brain conformance on OpenAI, Claude, and Gemini
+  6. run the exact proof set
+  7. compare the candidate result against the baseline
+  8. end the iteration in exactly one of `promote`, `revise`, `cut`, or `escalate`
+  9. continue automatically until success or an explicit escalation trigger fires
 - Micro-train default:
   - one Cortex-law micro-train at a time
   - one proving pack at a time
   - one divergence decision at a time
+- Closed-loop default:
+  - one train, one charter, one baseline, one active decision
+  - no free-form "keep trying" behavior outside the locked iteration budget
+- Loop classes:
+  - `deterministic`
+  - `shared verification-plumbing`
+  - `timing/env-sensitive`
+- Loop-class behavior:
+  - `deterministic`: baseline + up to 2 revisions, full local proof on each iteration
+  - `shared verification-plumbing`: baseline + up to 2 deterministic revisions, then repeated repo-local reruns through the real entrypoint before `promote`
+  - `timing/env-sensitive`: deterministic proof first, then repeated direct reruns plus repeated repo-local reruns before `promote`
 - Speed gates:
   - no second pack until the first has a stable divergence classification
   - no second new mechanism in the same train unless the first one already improved conformance or shipping behavior
   - no long run of `partial` status without an explicit `cut` or `reframe` decision
+  - `env_blocked` never counts as success
+  - one immediate retry is allowed for transient provider noise
+  - repeated `env_blocked` escalates instead of silently consuming the whole train
 - Research-to-code loop:
   - start from packet and first principles
   - borrow or clone only proven narrow mechanisms
   - convert them into the smallest operational code form
   - do not carry biological language into implementation unless it maps to a concrete operator, state, or gate
+- Maintainer-only loop recording:
+  - use one thin local recorder over existing proof entrypoints
+  - do not add a generic orchestration framework or second truth ledger
 
 ---
 
