@@ -131,7 +131,8 @@ Persistence law:
 
 - the OpenAI persisted artifact is host-specific and versioned,
 - the only accepted export/import contract is `openai_product_journal` v1 with one top-level `journal` object,
-- it persists only `session_id`, `event_index`, `active_goal_ref`, `pending_goal_refs`, `confirmed_artifact_refs`, `last_failure_class`, and `next_recommended_move`,
+- it always persists `session_id`, `event_index`, `active_goal_ref`, `pending_goal_refs`, `confirmed_artifact_refs`, `last_failure_class`, and `next_recommended_move`,
+- it may additionally persist `preservation_state` on verified-work sessions only,
 - it does **not** persist `continuity_truth`, `control_residue`, branch registry, feedback residue, `budget_history`, or `brake_history`,
 - legacy pre-X1 artifacts are explicitly rejected rather than silently migrated,
 - runtime and session I/O ownership remain self-contained inside the OpenAI runtime modules,
@@ -197,6 +198,13 @@ On the accepted X1 line:
 - `python3 -m cortex.runtime.openai_cli` now emits the compact `decision + journal` projection while preserving `raw_host_event_name`,
 - split-run OpenAI equivalence is now re-earned on the compact journal carrier,
 - and the old allocation/feedback surfaces survive only as historical/reference evidence rather than the accepted OpenAI-only product runtime.
+
+On the current review line after the preservation-state candidate:
+
+- `OpenAIRuntimeSession` may now carry optional `preservation_state` on verified-work sessions only,
+- `run_openai_runtime_verification_step()` now derives and persists the preservation state from observable verification facts,
+- verified-work activation now records a deterministic task anchor when the compact journal has no active anchor yet,
+- and the thin path remains unchanged because sessions without `work_contract` still omit `preservation_state`.
 
 ## Explicitly blocked moves
 

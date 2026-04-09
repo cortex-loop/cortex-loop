@@ -33,4 +33,4 @@ def test_public_package_scripts_are_openai_only() -> None:
 def test_product_sre_directory_only_contains_shipped_modules() -> None:
     shipped_files = sorted(path.name for path in PRODUCT_SRE_DIR.glob("*.py"))
 
-    assert shipped_files == ["__init__.py", "branching.py", "verified_work.py"]
+    assert shipped_files == ["__init__.py", "branching.py", "preservation.py", "verified_work.py"]

@@ -33,10 +33,14 @@ from cortex.drivers.openai_host import (
 )
 from cortex.drivers.openai_host_commitment import bind_openai_host_candidate
 from cortex.sre.branching import BranchOperation
+from cortex.sre.preservation import (
+    PreservationState,
+    choose_preservation_move,
+    derive_preservation_state,
+)
 from cortex.sre.verified_work import (
     VerificationOutcome,
     WorkContract,
-    choose_verified_work_followup,
 )
 
 _ALLOWED_COMMITMENT_RESULT_KINDS = frozenset(status.value for status in CommitmentStatus)
@@ -77,6 +81,7 @@ class OpenAIRuntimeSession:
     confirmed_artifact_refs: tuple[str, ...] = ()
     last_failure_class: str | None = None
     next_recommended_move: str = "continue"
+    preservation_state: PreservationState | None = None
 
     def __post_init__(self) -> None:
         if self.session_id is not None and not (
@@ -130,9 +135,20 @@ class OpenAIRuntimeSession:
             raise ValueError(
                 "OpenAIRuntimeSession.active_goal_ref may not be duplicated inside pending_goal_refs."
             )
+        if self.preservation_state is not None:
+            if not isinstance(self.preservation_state, PreservationState):
+                actual_type = type(self.preservation_state).__name__
+                raise TypeError(
+                    "OpenAIRuntimeSession.preservation_state must be PreservationState | None, "
+                    f"got {actual_type}."
+                )
+            if self.active_goal_ref != self.preservation_state.task_anchor:
+                raise ValueError(
+                    "OpenAIRuntimeSession.active_goal_ref must match preservation_state.task_anchor when preservation_state is present."
+                )
 
     def as_summary(self) -> dict[str, Any]:
-        return {
+        summary = {
             "session_id": self.session_id,
             "event_index": self.event_index,
             "active_goal_ref": self.active_goal_ref,
@@ -141,6 +157,9 @@ class OpenAIRuntimeSession:
             "last_failure_class": self.last_failure_class,
             "next_recommended_move": self.next_recommended_move,
         }
+        if self.preservation_state is not None:
+            summary["preservation_state"] = self.preservation_state.as_payload()
+        return summary
 
 
 @dataclass(frozen=True, slots=True)
@@ -359,6 +378,12 @@ def run_openai_runtime_step(
         confirmed_artifact_refs=confirmed_artifact_refs,
         last_failure_class=failure_class,
         next_recommended_move=decision,
+        preservation_state=(
+            prior_session.preservation_state
+            if prior_session.preservation_state is not None
+            and next_active_goal_ref == prior_session.preservation_state.task_anchor
+            else None
+        ),
     )
     return OpenAIRuntimeStepResult(
         event_index=updated_session.event_index,
@@ -391,19 +416,23 @@ def run_openai_runtime_verification_step(
             f"got {actual_type}."
         )
     current_session = _coerce_session(session)
-    decision = choose_verified_work_followup(
+    preservation_state = derive_preservation_state(
+        current_session.active_goal_ref,
         work_contract,
+        outcome.parsed_paths,
         outcome,
         remaining_repairs=remaining_repairs,
     )
+    decision = choose_preservation_move(preservation_state)
     return OpenAIRuntimeSession(
         session_id=current_session.session_id,
         event_index=current_session.event_index,
-        active_goal_ref=current_session.active_goal_ref,
+        active_goal_ref=preservation_state.task_anchor,
         pending_goal_refs=current_session.pending_goal_refs,
         confirmed_artifact_refs=current_session.confirmed_artifact_refs,
         last_failure_class=outcome.failure_class,
         next_recommended_move=decision,
+        preservation_state=preservation_state,
     )
 
 

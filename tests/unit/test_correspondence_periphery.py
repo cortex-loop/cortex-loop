@@ -958,6 +958,45 @@ EXPECTATIONS = (
         ),
     ),
     PeripheryCorrespondenceExpectation(
+        row_label="build_verified_work_input_text",
+        home_path="cortex/runtime/verified_work_runtime.py",
+        module_path="cortex.runtime.verified_work_runtime",
+        symbol_name="build_verified_work_input_text",
+        promised_surfaces=(
+            PromisedTestSurface(
+                test_file="tests/unit/test_verified_work_runtime.py",
+                test_names=(
+                    "test_build_verified_work_input_text_attaches_workspace_context",
+                    "test_build_verified_work_input_text_attaches_normalize_port_context",
+                    "test_build_verified_work_input_text_attaches_feature_flags_context",
+                ),
+            ),
+            PromisedTestSurface(
+                test_file="tests/unit/test_openai_host_control.py",
+                test_names=(
+                    "test_run_openai_host_control_verified_work_attaches_workspace_context_to_first_attempt",
+                    "test_run_openai_host_control_verified_work_attaches_normalize_port_context",
+                    "test_run_openai_host_control_verified_work_attaches_feature_flags_context",
+                ),
+            ),
+        ),
+    ),
+    PeripheryCorrespondenceExpectation(
+        row_label="build_verified_work_repair_ticket",
+        home_path="cortex/runtime/verified_work_runtime.py",
+        module_path="cortex.runtime.verified_work_runtime",
+        symbol_name="build_verified_work_repair_ticket",
+        promised_surfaces=(
+            PromisedTestSurface(
+                test_file="tests/unit/test_verified_work_runtime.py",
+                test_names=(
+                    "test_build_verified_work_repair_ticket_is_factual_only",
+                    "test_build_verified_work_repair_ticket_supports_minimal_style",
+                ),
+            ),
+        ),
+    ),
+    PeripheryCorrespondenceExpectation(
         row_label="build_openai_cli_record",
         home_path="cortex/runtime/openai_cli.py",
         module_path="cortex.runtime.openai_cli",
@@ -1170,6 +1209,21 @@ EXPECTATIONS = (
             PromisedTestSurface(
                 test_file="tests/integration/test_openai_host_control_continuity.py",
                 test_names=("test_openai_host_control_export_import_preserves_control_truth",),
+            ),
+        ),
+    ),
+    PeripheryCorrespondenceExpectation(
+        row_label="run_openai_runtime_verification_step",
+        home_path="cortex/runtime/openai.py",
+        module_path="cortex.runtime.openai",
+        symbol_name="run_openai_runtime_verification_step",
+        promised_surfaces=(
+            PromisedTestSurface(
+                test_file="tests/unit/test_openai_runtime_step.py",
+                test_names=(
+                    "test_openai_runtime_verification_step_updates_runtime_truth_from_external_failure",
+                    "test_openai_runtime_verification_step_maps_blocked_missing_info_to_check",
+                ),
             ),
         ),
     ),

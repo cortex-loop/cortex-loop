@@ -100,11 +100,29 @@ def test_openai_runtime_verification_step_updates_runtime_truth_from_external_fa
     assert updated.as_summary() == {
         "session_id": "oa-verified",
         "event_index": 3,
-        "active_goal_ref": None,
+        "active_goal_ref": "verified-work:python_workspace_pytest_v1:src/bookmarks_api/main.py",
         "pending_goal_refs": [],
         "confirmed_artifact_refs": [],
         "last_failure_class": "import_smoke_failed",
         "next_recommended_move": "repair",
+        "preservation_state": {
+            "task_anchor": "verified-work:python_workspace_pytest_v1:src/bookmarks_api/main.py",
+            "trusted_structure": {
+                "checks": [],
+                "paths": [],
+            },
+            "falsified_structure": {
+                "failure_class": "import_smoke_failed",
+                "checks": ["import_smoke"],
+                "failing_tests": [],
+                "blocked_message": None,
+            },
+            "lawful_repair_surface": ["src/bookmarks_api/main.py"],
+            "intervention_budget": {
+                "allowed_moves": ["repair"],
+                "remaining_repairs": 1,
+            },
+        },
     }
 
 
@@ -128,3 +146,6 @@ def test_openai_runtime_verification_step_maps_blocked_missing_info_to_check() -
 
     assert updated.last_failure_class == "blocked_missing_info"
     assert updated.next_recommended_move == "check"
+    assert updated.active_goal_ref == "verified-work:python_workspace_pytest_v1:src/bookmarks_api/main.py"
+    assert updated.preservation_state is not None
+    assert updated.preservation_state.lawful_repair_surface == frozenset()

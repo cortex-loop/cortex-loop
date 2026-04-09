@@ -358,7 +358,7 @@ def test_run_openai_host_control_verified_work_one_shot_adds_verification(
     )
     monkeypatch.setattr(
         "cortex.runtime.openai_host_control.verify_verified_work_result",
-        lambda result_text, contract: (
+        lambda result_text, contract, **kwargs: (
             VALID_FILE_MAP,
             VerificationOutcome(
                 status="passed",
@@ -382,8 +382,19 @@ def test_run_openai_host_control_verified_work_one_shot_adds_verification(
     assert result.verification is not None
     assert result.verification.status == "passed"
     assert result.verification.pytest_passed == 11
+    assert final_session.active_goal_ref == (
+        "verified-work:python_workspace_pytest_v1:"
+        "src/bookmarks_api/models.py|src/bookmarks_api/store.py|src/bookmarks_api/main.py"
+    ) or final_session.active_goal_ref == (
+        "verified-work:python_workspace_pytest_v1:"
+        "src/bookmarks_api/main.py|src/bookmarks_api/models.py|src/bookmarks_api/store.py"
+    )
     assert final_session.next_recommended_move == "continue"
     assert final_session.last_failure_class is None
+    assert final_session.preservation_state is not None
+    assert final_session.preservation_state.intervention_budget.allowed_moves == frozenset(
+        {"continue"}
+    )
 
 
 def test_run_openai_host_control_verified_work_attaches_workspace_context_to_first_attempt(
@@ -429,7 +440,7 @@ def test_run_openai_host_control_verified_work_attaches_workspace_context_to_fir
 
     monkeypatch.setattr(
         "cortex.runtime.openai_host_control.verify_verified_work_result",
-        lambda result_text, contract: (
+        lambda result_text, contract, **kwargs: (
             VALID_FILE_MAP,
             VerificationOutcome(
                 status="passed",
@@ -474,10 +485,12 @@ def test_run_openai_host_control_verified_work_repairs_once_from_runtime_signal(
         output_carrier="full_files",
         max_repair_turns=1,
     )
-    broken_file_map = dict(VALID_FILE_MAP)
-    broken_file_map["src/bookmarks_api/main.py"] = "from fastapi import FastAPI\napp = FastAPI(\n"
-    first_result = render_full_files_result(broken_file_map)
-    second_result = render_full_files_result(VALID_FILE_MAP)
+    first_result = render_full_files_result(
+        {"src/bookmarks_api/main.py": "from fastapi import FastAPI\napp = FastAPI(\n"}
+    )
+    second_result = render_full_files_result(
+        {"src/bookmarks_api/main.py": VALID_FILE_MAP["src/bookmarks_api/main.py"]}
+    )
     calls: list[dict[str, object]] = []
 
     def transport(
@@ -515,7 +528,11 @@ def test_run_openai_host_control_verified_work_repairs_once_from_runtime_signal(
             ]
         assert previous_response_id == "resp-repair-1"
         assert isinstance(input_text_override, str)
+        assert "task_anchor: verified-work:python_workspace_pytest_v1:" in input_text_override
+        assert "trusted_checks: parse" in input_text_override
+        assert "trusted_paths: src/bookmarks_api/main.py" in input_text_override
         assert "failure_class: import_smoke_failed" in input_text_override
+        assert "lawful_repair_surface: src/bookmarks_api/main.py" in input_text_override
         return [
             {
                 "type": "response.created",
@@ -544,12 +561,12 @@ def test_run_openai_host_control_verified_work_repairs_once_from_runtime_signal(
     )
     monkeypatch.setattr(
         "cortex.runtime.openai_host_control.verify_verified_work_result",
-        lambda result_text, contract: (
+        lambda result_text, contract, **kwargs: (
             VALID_FILE_MAP,
             VerificationOutcome(
                 status="failed",
                 failure_class="import_smoke_failed",
-                parsed_paths=tuple(VALID_FILE_MAP),
+                parsed_paths=("src/bookmarks_api/main.py",),
                 import_smoke_ok=False,
                 first_failure_excerpt="E   SyntaxError: invalid syntax",
             ),
@@ -582,6 +599,8 @@ def test_run_openai_host_control_verified_work_repairs_once_from_runtime_signal(
     assert "=== CONTEXT FILE: tests/test_bookmarks_api.py ===" in str(calls[0]["request_input_text"])
     assert final_session.event_index == 6
     assert final_session.next_recommended_move == "continue"
+    assert "- src/bookmarks_api/main.py" in str(calls[1]["instructions"])
+    assert "src/bookmarks_api/models.py" not in str(calls[1]["instructions"])
     assert "=== CONTEXT FILE:" not in str(calls[1]["input_text_override"])
 
 
@@ -628,7 +647,7 @@ def test_run_openai_host_control_verified_work_attaches_normalize_port_context(
 
     monkeypatch.setattr(
         "cortex.runtime.openai_host_control.verify_verified_work_result",
-        lambda result_text, contract: (
+        lambda result_text, contract, **kwargs: (
             VALID_NORMALIZE_PORT_FILE_MAP,
             VerificationOutcome(
                 status="passed",
@@ -752,7 +771,7 @@ def test_run_openai_host_control_verified_work_normalize_port_repairs_once(
     )
     monkeypatch.setattr(
         "cortex.runtime.openai_host_control.verify_verified_work_result",
-        lambda result_text, contract: (
+        lambda result_text, contract, **kwargs: (
             VALID_NORMALIZE_PORT_FILE_MAP,
             VerificationOutcome(
                 status="failed",
@@ -840,7 +859,7 @@ def test_run_openai_host_control_verified_work_attaches_feature_flags_context(
 
     monkeypatch.setattr(
         "cortex.runtime.openai_host_control.verify_verified_work_result",
-        lambda result_text, contract: (
+        lambda result_text, contract, **kwargs: (
             VALID_FEATURE_FLAG_FILE_MAP,
             VerificationOutcome(
                 status="passed",
@@ -961,7 +980,7 @@ def test_run_openai_host_control_verified_work_feature_flags_repairs_once(
     )
     monkeypatch.setattr(
         "cortex.runtime.openai_host_control.verify_verified_work_result",
-        lambda result_text, contract: (
+        lambda result_text, contract, **kwargs: (
             VALID_FEATURE_FLAG_FILE_MAP,
             VerificationOutcome(
                 status="failed",

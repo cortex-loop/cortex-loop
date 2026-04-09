@@ -141,18 +141,29 @@ The verified-work lane may:
 - keep the original user `input` at the front of the model-facing task text
 - inject only the fixed mechanical `full_files` protocol instructions
 - attach one bounded read-only workspace context bundle over the current writable-file contents plus the contract tests on the OpenAI service lane
+- populate `active_goal_ref` deterministically from `verification_profile + allowed_write_paths` when verified-work begins without an existing task anchor
 - parse returned file blocks or blocked markers
 - verify the result externally against one bounded verifier workload selected by the explicit profile:
   - bookmarks app for `python_workspace_pytest_v1`
   - normalize-port project template for `python_workspace_pytest_port_fix_v1`
   - feature-flags evaluator for `python_workspace_pytest_feature_flags_v1`
-- bind that `VerificationOutcome` into `OpenAIRuntimeSession.last_failure_class`
-- drive `next_recommended_move` through `choose_verified_work_followup()`
+- derive one bounded preservation state from observable verification facts:
+  - trusted structure
+  - falsified structure
+  - lawful repair surface
+  - intervention budget
+- bind that state into:
+  - `OpenAIRuntimeSession.active_goal_ref`
+  - `OpenAIRuntimeSession.last_failure_class`
+  - optional `OpenAIRuntimeSession.preservation_state`
+- drive `next_recommended_move` through the preservation-state move law
+- verify repair on top of the preserved first-attempt file map rather than discarding already-trusted structure outside the repair surface
 - and perform exactly one native continuation attempt when runtime truth says `repair` and budget remains
 
 It may not:
 
 - widen runtime persistence beyond the compact `openai_product_journal`
+- widen the repair surface without new falsifying evidence
 - turn diagnostic SRE modulators into the live loop driver
 - invent a second host-control family
 - widen into a generic planner or generic verifier framework
@@ -188,6 +199,24 @@ On the current line:
 - the OpenAI verified-work path now attaches one bounded read-only workspace context bundle over the current writable-file contents plus `tests/test_bookmarks_api.py`
 - external verification now updates runtime truth through `run_openai_runtime_verification_step()`
 - the verified-work path can perform exactly one native continuation attempt
+- the current review line now adds one bounded preservation-state machine over:
+  - task anchor
+  - trusted structure
+  - falsified structure
+  - lawful repair surface
+  - intervention budget
+- when verified-work begins without an existing anchor, the OpenAI path now records a deterministic verified-work task anchor in the compact journal
+- runtime verification now persists optional `preservation_state` on verified-work sessions only
+- the repair turn is now preservation-centered and mechanical:
+  - trusted checks
+  - trusted paths
+  - failure class
+  - falsified checks
+  - failing tests
+  - lawful repair surface
+  - remaining repairs
+  - allowed moves
+- the repair request now narrows `allowed_write_paths` to the lawful repair surface and verifies the second attempt on top of the preserved first-attempt file map
 - the default thin `O4` path remains unchanged when `work_contract` is absent
 - deterministic tests and repo-local revalidation are real
 - the corrected tri-brain conformance rerun removed Gemini's false raw-JSON-wrapper `output_invalid` classification without widening shipping truth

@@ -76,7 +76,7 @@ def test_run_openai_host_control_experiment_can_disable_visible_contract_binding
 
     monkeypatch.setattr(
         "lab.openai_host_control_experiments.verify_verified_work_result",
-        lambda result_text, contract: (
+        lambda result_text, contract, **kwargs: (
             VALID_FILE_MAP,
             VerificationOutcome(
                 status="passed",
@@ -139,7 +139,7 @@ def test_run_openai_host_control_experiment_disables_repair_when_verification_bi
 
     monkeypatch.setattr(
         "lab.openai_host_control_experiments.verify_verified_work_result",
-        lambda result_text, contract: (
+        lambda result_text, contract, **kwargs: (
             VALID_FILE_MAP,
             VerificationOutcome(
                 status="failed",
@@ -238,7 +238,7 @@ def test_run_openai_host_control_experiment_uses_minimal_repair_ticket(
     )
     monkeypatch.setattr(
         "lab.openai_host_control_experiments.verify_verified_work_result",
-        lambda result_text, contract: next(outcomes),
+        lambda result_text, contract, **kwargs: next(outcomes),
     )
     request = OpenAIHostControlRequest(
         action_tag="openai-response-stream",
@@ -255,6 +255,7 @@ def test_run_openai_host_control_experiment_uses_minimal_repair_ticket(
 
     assert result.attempt_count == 2
     assert len(seen) == 1
+    assert "task_anchor: verified-work:python_workspace_pytest_v1:" in seen[0]
     assert "failure_class: import_smoke_failed" in seen[0]
-    assert "repair_surface: src/bookmarks_api/main.py" in seen[0]
-    assert "import_smoke_excerpt:" not in seen[0]
+    assert "lawful_repair_surface: src/bookmarks_api/main.py" in seen[0]
+    assert "trusted_paths:" not in seen[0]

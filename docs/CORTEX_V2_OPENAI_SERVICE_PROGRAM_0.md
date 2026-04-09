@@ -208,6 +208,12 @@ On the accepted X1 line:
 - one active session per process remains real on the compact journal carrier,
 - and the older allocation-heavy OpenAI service projection survives only as historical/reference evidence rather than the accepted OpenAI-only product runtime.
 
+On the current review line after the preservation-state candidate:
+
+- `openai_product_journal` v1 may now include optional `preservation_state` on verified-work sessions only,
+- `GET /v1/session/export` and `POST /v1/session/import` still move only the accepted OpenAI journal artifact rather than a new service-specific format,
+- and ordinary thin-path service use remains unchanged because sessions without verified-work state still export the compact base journal only.
+
 ## Explicitly blocked moves
 
 This program does not authorize:

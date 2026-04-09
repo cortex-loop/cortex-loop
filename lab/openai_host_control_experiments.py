@@ -11,7 +11,9 @@ from cortex.runtime.openai_host_control import (
     OpenAIHostControlResult,
     OpenAIResponseStreamTransport,
     OpenAIResponseStreamTransportError,
+    _activate_verified_work_anchor,
     _last_response_id,
+    _narrowed_repair_contract,
     _run_openai_host_control_attempt,
     run_openai_host_control,
 )
@@ -120,7 +122,7 @@ def run_openai_host_control_experiment(
             f"got {actual_type}."
         )
 
-    current_session = session or OpenAIRuntimeSession()
+    current_session = _activate_verified_work_anchor(session or OpenAIRuntimeSession(), request.work_contract)
     transport_callable = transport if transport is not None else execute_openai_response_stream_turn
     if not callable(transport_callable):
         actual_type = type(transport_callable).__name__
@@ -148,7 +150,7 @@ def run_openai_host_control_experiment(
         transport_callable=transport_callable,
     )
     try:
-        _, verification = verify_verified_work_result(
+        first_file_map, verification = verify_verified_work_result(
             result_text,
             request.work_contract,
         )
@@ -174,18 +176,35 @@ def run_openai_host_control_experiment(
         and current_session.next_recommended_move == "repair"
     )
     if repair_allowed:
+        preservation_state = current_session.preservation_state
+        if preservation_state is None:
+            raise OpenAIResponseStreamTransportError(
+                "OpenAI verified-work repair requires preservation_state after the first verification step."
+            )
         response_id = _last_response_id(raw_events)
         if response_id is None:
             raise OpenAIResponseStreamTransportError(
                 "OpenAI verified-work continuation requires a response_id on the first attempt."
             )
+        repair_contract = _narrowed_repair_contract(
+            request.work_contract,
+            preservation_state.lawful_repair_surface,
+        )
         repair_ticket = build_verified_work_repair_ticket(
-            verification,
+            preservation_state,
             style=ablation_config.repair_ticket_style,
-            repair_surface=request.work_contract.allowed_write_paths,
+        )
+        repair_request = OpenAIHostControlRequest(
+            action_tag=request.action_tag,
+            model=request.model,
+            input_text=verified_request.input_text,
+            instructions=build_verified_work_instructions(repair_contract),
+            metadata=request.metadata,
+            max_output_tokens=request.max_output_tokens,
+            work_contract=repair_contract,
         )
         repair_events, repair_records, repair_session, repair_result_text = _run_openai_host_control_attempt(
-            verified_request,
+            repair_request,
             current_session,
             transport_callable=transport_callable,
             previous_response_id=response_id,
@@ -196,7 +215,9 @@ def run_openai_host_control_experiment(
         try:
             _, verification = verify_verified_work_result(
                 repair_result_text,
-                request.work_contract,
+                repair_contract,
+                preserved_file_map=first_file_map,
+                verifier_contract=request.work_contract,
             )
         except RuntimeError as exc:
             raise OpenAIResponseStreamTransportError(

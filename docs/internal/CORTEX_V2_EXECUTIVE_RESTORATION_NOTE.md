@@ -2,8 +2,8 @@
 
 Surface: internal
 
-Date: 2026-04-08
-Status: accepted executive-restoration note with the first verified-work restoration slice landed and third-pack breadth now re-earned on the current review line
+Date: 2026-04-10
+Status: accepted executive-restoration note with the first verified-work restoration slice landed and the next preservation-state candidate now implemented on the current review line
 
 ## Scope
 
@@ -115,6 +115,18 @@ What is **not** yet earned:
 - repeated-failure inhibition / NoGo promotion
 - automatic carrier selection
 - cross-host rollout beyond the first OpenAI realization
+
+What the current review line now adds:
+
+- one minimal preservation-state machine over:
+  - task anchor
+  - trusted structure
+  - falsified structure
+  - lawful repair surface
+  - intervention budget
+- deterministic verified-work anchor activation when no active goal is already present
+- preservation-centered repair tickets with mechanical fields only
+- repair verification that preserves already-trusted first-attempt structure outside the lawful repair surface
 
 ## Conformance reading under the current method
 

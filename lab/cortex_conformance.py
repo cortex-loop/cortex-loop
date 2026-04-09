@@ -32,6 +32,7 @@ from cortex.runtime.verified_work_runtime import (  # noqa: E402
     build_verified_work_repair_ticket,
     verify_verified_work_result,
 )
+from cortex.sre.preservation import derive_preservation_state  # noqa: E402
 from cortex.sre.verified_work import VerificationOutcome, WorkContract  # noqa: E402
 
 from lab.live_validation_common import (  # noqa: E402
@@ -908,7 +909,15 @@ def _run_claude_cli_conformance(
                     note="Claude operator surface did not return a resumable session id.",
                     artifact_relpath=_artifact_relpath(artifact_dir),
                 )
-            repair_ticket = build_verified_work_repair_ticket(first_outcome)
+            repair_ticket = build_verified_work_repair_ticket(
+                derive_preservation_state(
+                    None,
+                    contract_pack.work_contract,
+                    first_outcome.parsed_paths,
+                    first_outcome,
+                    remaining_repairs=1,
+                )
+            )
             resumed = run_command(
                 [
                     "claude",
@@ -1019,7 +1028,15 @@ def _run_gemini_cli_conformance(
         final_note = result["note"]
         if first_outcome.failure_class in {"output_invalid", "import_smoke_failed", "test_failed"}:
             repair_ticket = _render_combined_operator_prompt(
-                task_prompt=build_verified_work_repair_ticket(first_outcome),
+                task_prompt=build_verified_work_repair_ticket(
+                    derive_preservation_state(
+                        None,
+                        contract_pack.work_contract,
+                        first_outcome.parsed_paths,
+                        first_outcome,
+                        remaining_repairs=1,
+                    )
+                ),
                 instructions=build_verified_work_instructions(contract_pack.work_contract),
             )
             resumed = run_command(

@@ -210,6 +210,14 @@ On the current accepted line after the verified-work restoration slice:
 - `run_openai_host_control()` still re-enters the accepted `O2` parser and compressed `O1` runtime shell directly on that thin path,
 - and optional verified-work activation is now governed separately by `docs/CORTEX_V2_OPENAI_VERIFIED_WORK_PROGRAM_0.md` rather than widening this thin-path brief.
 
+On the current review line after the preservation-state candidate:
+
+- verified-work activation now records a deterministic task anchor when no active goal is present,
+- the repair turn is now preservation-centered and mechanical rather than failure-prose-only,
+- repair requests now narrow `allowed_write_paths` to the lawful repair surface produced by runtime verification,
+- repair verification now overlays the second-attempt file map onto the preserved first-attempt file map before re-running the verifier,
+- and the thin `O4` path remains unchanged when `work_contract` is absent.
+
 ## Explicitly blocked moves
 
 This program does not authorize:

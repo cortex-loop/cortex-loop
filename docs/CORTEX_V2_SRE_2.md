@@ -110,6 +110,48 @@ Representative baskets include:
 Domain-specific binding belongs outside SRE.
 SRE owns the general executive basket, not the code-specific, writing-specific, or benchmark-specific adapter logic used to realize that basket on one proving surface.
 
+### 1.7 Active minimal preservation-state machine
+
+The first active shipped executive state beyond raw failure-class routing is a **minimal preservation-state machine**.
+
+It tracks only bounded observable facts:
+
+- `task_anchor`
+- `trusted_structure`
+- `falsified_structure`
+- `lawful_repair_surface`
+- `intervention_budget`
+
+`trusted_structure` is the bounded fact set that still survives runtime verification.
+`falsified_structure` is the bounded fact set that runtime verification just disproved.
+`lawful_repair_surface` is the bounded region that may still change without widening scope.
+`intervention_budget` is the bounded gate over the next legal move.
+
+The first invariants are:
+
+- trusted structure may not be removed without falsifying evidence
+- lawful repair surface may not widen without new falsifying evidence
+- repair may touch only the lawful repair surface
+- if no trusted/falsified contradiction justifies intervention, `continue` remains the default
+
+The first active move law is discrete and bounded:
+
+- `continue` on clean verified state
+- `check` on blocked-missing-info state
+- `repair` only when the failure is repairable, repair budget remains, and the lawful repair surface is non-empty
+- `stop` otherwise
+
+The first product realization of this law is the OpenAI verified-work lane.
+That proving surface does not own the law.
+It is only the first host/product path where Cortex now persists the preservation state, derives the next move from it, and narrows repair to the lawful repair surface while keeping the thin path unchanged when no `work_contract` is present.
+
+Implementation discipline for this active law remains strict:
+
+- observable facts only
+- no biological language in implementation
+- no semantic summaries
+- set semantics for preserved/falsified facts and repair surfaces, with deterministic serialization only at payload boundaries
+
 ---
 
 ## 2. SRE boundary contract with core

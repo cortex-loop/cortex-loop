@@ -10,6 +10,7 @@ IMPORT_TARGETS = [
     "cortex.core",
     "cortex.sre",
     "cortex.sre.branching",
+    "cortex.sre.preservation",
     "cortex.sre.verified_work",
     "cortex.aux",
     "cortex.drivers",

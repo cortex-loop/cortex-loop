@@ -9,6 +9,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Mapping
 
+from cortex.sre.preservation import PreservationState
 from cortex.runtime.openai import OpenAIRuntimeSession
 
 _ARTIFACT_KIND = "openai_product_journal"
@@ -23,6 +24,7 @@ _JOURNAL_KEYS = (
     "last_failure_class",
     "next_recommended_move",
 )
+_OPTIONAL_JOURNAL_KEY_SUFFIX = ("preservation_state",)
 
 
 @dataclass(frozen=True, slots=True)
@@ -36,6 +38,7 @@ class OpenAIRuntimeSessionArtifact:
     confirmed_artifact_refs: tuple[str, ...] = ()
     last_failure_class: str | None = None
     next_recommended_move: str = "continue"
+    preservation_state: PreservationState | None = None
 
     def __post_init__(self) -> None:
         if self.artifact_kind != _ARTIFACT_KIND:
@@ -54,21 +57,25 @@ class OpenAIRuntimeSessionArtifact:
             confirmed_artifact_refs=self.confirmed_artifact_refs,
             last_failure_class=self.last_failure_class,
             next_recommended_move=self.next_recommended_move,
+            preservation_state=self.preservation_state,
         )
 
     def as_payload(self) -> dict[str, object]:
+        journal: dict[str, object] = {
+            "session_id": self.session_id,
+            "event_index": self.event_index,
+            "active_goal_ref": self.active_goal_ref,
+            "pending_goal_refs": list(self.pending_goal_refs),
+            "confirmed_artifact_refs": list(self.confirmed_artifact_refs),
+            "last_failure_class": self.last_failure_class,
+            "next_recommended_move": self.next_recommended_move,
+        }
+        if self.preservation_state is not None:
+            journal["preservation_state"] = self.preservation_state.as_payload()
         return {
             "artifact_kind": self.artifact_kind,
             "artifact_version": self.artifact_version,
-            "journal": {
-                "session_id": self.session_id,
-                "event_index": self.event_index,
-                "active_goal_ref": self.active_goal_ref,
-                "pending_goal_refs": list(self.pending_goal_refs),
-                "confirmed_artifact_refs": list(self.confirmed_artifact_refs),
-                "last_failure_class": self.last_failure_class,
-                "next_recommended_move": self.next_recommended_move,
-            },
+            "journal": journal,
         }
 
     def to_session(self) -> OpenAIRuntimeSession:
@@ -80,6 +87,7 @@ class OpenAIRuntimeSessionArtifact:
             confirmed_artifact_refs=self.confirmed_artifact_refs,
             last_failure_class=self.last_failure_class,
             next_recommended_move=self.next_recommended_move,
+            preservation_state=self.preservation_state,
         )
 
 
@@ -100,6 +108,7 @@ def build_openai_runtime_session_artifact(
         confirmed_artifact_refs=session.confirmed_artifact_refs,
         last_failure_class=session.last_failure_class,
         next_recommended_move=session.next_recommended_move,
+        preservation_state=session.preservation_state,
     )
 
 
@@ -126,11 +135,7 @@ def parse_openai_runtime_session_artifact(
     journal_payload = payload["journal"]
     if not isinstance(journal_payload, Mapping):
         raise TypeError("OpenAIRuntimeSessionArtifact.journal must be an object.")
-    _require_exact_keys(
-        journal_payload,
-        _JOURNAL_KEYS,
-        "OpenAIRuntimeSessionArtifact.journal",
-    )
+    _require_journal_keys(journal_payload)
     artifact = OpenAIRuntimeSessionArtifact(
         session_id=_optional_non_empty_string(
             journal_payload["session_id"],
@@ -159,6 +164,11 @@ def parse_openai_runtime_session_artifact(
         next_recommended_move=_required_non_empty_string(
             journal_payload["next_recommended_move"],
             "OpenAIRuntimeSessionArtifact.journal.next_recommended_move",
+        ),
+        preservation_state=(
+            PreservationState.from_payload(journal_payload["preservation_state"])
+            if "preservation_state" in journal_payload
+            else None
         ),
     )
     return artifact.to_session()
@@ -220,6 +230,19 @@ def _require_exact_keys(
         raise ValueError(
             f"{label} must preserve the exact key order {expected_keys!r}, got {actual_keys!r}."
         )
+
+
+def _require_journal_keys(payload: Mapping[str, Any]) -> None:
+    actual_keys = tuple(payload)
+    if actual_keys == _JOURNAL_KEYS:
+        return
+    expected_with_preservation = _JOURNAL_KEYS + _OPTIONAL_JOURNAL_KEY_SUFFIX
+    if actual_keys == expected_with_preservation:
+        return
+    raise ValueError(
+        "OpenAIRuntimeSessionArtifact.journal must preserve the exact key order "
+        f"{_JOURNAL_KEYS!r} or {expected_with_preservation!r}, got {actual_keys!r}."
+    )
 
 
 def _optional_non_empty_string(value: Any, label: str) -> str | None:

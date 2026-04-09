@@ -15,6 +15,7 @@ It is workflow state only. It does not override the packet documents, implementa
   - the shipped runtime claim remains OpenAI-first
   - the proven executive value still comes from the tiny integrity core plus the verified-work loop
   - diagnostics, train loops, graders, causal maps, dynamics atlases, and workflow ledgers are not the product
+  - local `main` now includes the landed E22 mission-lock and surface-separation seam and is ahead of `origin/main` pending publication
 - Authority anchors:
   - `docs/CORTEX_V2_CORE_2.md`
   - `docs/CORTEX_V2_SRE_2.md`
@@ -38,69 +39,52 @@ It is workflow state only. It does not override the packet documents, implementa
 ## 3. Current seam
 
 - Current working branch:
-  - `codex/20260410-020933-e22-mission-lock-surface-separation`
+  - `review/e23-preservation-state-machine`
 - Current candidate seam:
-  - `E22 mission lock and surface separation`
+  - `E23 preservation-state machine`
 - Product target:
-  - make the shipped Cortex identity unmistakable as the executive layer, not the proving apparatus
+  - give the shipped Cortex executive one minimal preservation/falsification state machine with lawful repair control on the OpenAI verified-work lane
 - Surface:
-  - `internal` and `repo-boundary`
+  - `product` and `runtime-law`
 - Direct executive payoff:
-  - reduce internal goal drift so future seams are forced to justify themselves against shipped executive improvement or a direct product blocker
+  - move the verified-work lane from failure-only repair into explicit preservation-aware executive control over trusted structure, falsified structure, lawful repair surface, and intervention budget
 - Why this seam exists instead of a narrower product seam:
-  - the repo has repeatedly drifted into treating lab and governance surfaces as Cortex itself; that confusion is now a product blocker
+  - current Cortex law is still too post-hoc and too weak at representing preserved structure; that is the smallest direct product gap after E22
 - Current seam status:
-  - repo surface split is closure-ready on this branch:
-    - `cortex/` is the product package
-    - `experimental/` is the public non-shipping host/runtime surface
-    - `lab/` is the evaluation and proving surface
-    - `internal/` is the workflow and governance surface
-  - public/package boundary is now explicit and verified in:
-    - `pyproject.toml`
-    - root `README.md`
-    - `docs/CORTEX_PRODUCT_CHARTER.md`
-    - `docs/CORTEX_PRODUCT_BOUNDARY.md`
-    - `docs/README.md`
-  - canonical split surfaces now work from their new homes:
-    - `internal/workflow/repo_workflow.py`
-    - `lab/Makefile`
-    - `lab/*`
-  - one-cycle compatibility shims are still available and verified:
-    - `scripts/repo_workflow.py`
-    - `tools/*`
-  - mission-lock enforcement is active in:
-    - `AGENTS.md`
-    - boundary tests
-    - public/package/import-surface checks
-    - internal packaging-boundary checks
+  - E22 is landed locally on `main` through the canonical close-session flow and the repo is now on an explicit E23 review branch because `start-session` is blocked until that ahead-of-origin `main` history is published or reconciled
+  - current E23 candidate implementation now exists on this branch:
+    - new shipped SRE preservation-state carriers and move law
+    - OpenAI verified-work anchor activation plus preservation-state persistence
+    - preservation-centered repair ticketing
+    - lawful repair-surface narrowing on the repair turn
+    - repair verification overlay on top of preserved first-attempt file maps
+  - deterministic and repo-local proof is now green on this branch:
+    - targeted runtime/correspondence/boundary bundle
+    - `make -C lab revalidate-openai-host-control`
+    - `tests/unit/test_cortex_conformance.py`
+  - live OpenAI verified-work acceptance is still blocked in this workspace because the explicit service-lane spend gate is not enabled here; the current branch is a verified review candidate, not accepted baseline truth
 
 ## 4. Next lawful move
 
-- Accept or reject E22 from the current branch with closure evidence:
-  - product, experimental, internal, and lab verification bundles are green
-  - canonical split surfaces work from their new homes
-  - compatibility shims still work for one transition cycle
-  - the wheel now exposes only the shipped `cortex` surface plus the two OpenAI console entrypoints
-- After E22 is accepted:
-  - product/runtime seams must justify themselves against shipped executive improvement directly
-  - lab and governance seams must justify themselves as explicit product-unblocking work, not as Cortex identity
+- finalize the explicit E23 review branch with the verified deterministic + repo-local proof already earned
+- then, when explicit OpenAI service-lane spend approval is available, run the three-pack live acceptance reruns:
+  - bookmarks
+  - normalize-port
+  - feature-flags
+- accept or reject E23 only after that live acceptance read is recorded explicitly
+- publication and reconciliation remain blocked on the local `main` ahead-of-origin state until the E22/E23 history is published or reconciled explicitly
 
 ## 5. Explicitly blocked moves
 
 - Do not merge the parked E20/E21 preserved branch through E22.
-- Do not widen shipping truth in this seam.
-- Do not change `WorkContract`, packet law, or runtime executive law in this seam.
-- Do not describe lab, evidence, train, or governance work as shipped Cortex progress unless runtime behavior changes.
-- Do not reopen E20 or E21 live work from this seam.
-- Do not expose `experimental`, `lab`, or `internal` as the public install surface.
-- Do not publish console scripts beyond:
-  - `cortex-openai-cli`
-  - `cortex-openai-service`
+- Do not widen E23 beyond the OpenAI verified-work realization.
+- Do not reopen prompt shaping, basket overlays, or diagnostic modulators as runtime law.
+- Do not change the thin OpenAI path when `work_contract` is absent.
+- Do not widen retries beyond one bounded repair turn.
+- Do not treat the current review branch as accepted baseline truth before publication/reconciliation.
+- Do not claim E23 live acceptance without explicit OpenAI service-lane spend approval.
 
 ## 6. Acknowledged worktree noise
 
 - Expected current-seam noise:
-  - path moves from `tools/` to `lab/`
-  - path moves from `scripts/` to `internal/workflow/`
-  - path moves from mixed `docs/` root into `docs/experimental/`, `docs/lab/`, and `docs/internal/`
-  - import and test fallout owned by the surface split
+  - none expected beyond the owned E23 runtime/doc/test touch surface on `review/e23-preservation-state-machine`
