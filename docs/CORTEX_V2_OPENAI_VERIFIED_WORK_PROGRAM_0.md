@@ -39,6 +39,9 @@ Why this program opens now:
 - one bounded `work_contract` is smaller and more lawful than a second large task-specific subsystem,
 - and OpenAI is the only accepted live product host today, so it is the first lawful realization surface.
 
+This program is a **coding-domain restoration slice**, not a definition of general Cortex executive function.
+Its evidence is valuable for bounded larger-task control on the current coding surfaces, but it does not by itself prove cross-domain Cortex generality.
+
 ## Locked scope
 
 This program remains:

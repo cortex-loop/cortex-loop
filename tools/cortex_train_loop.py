@@ -15,6 +15,14 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 import cortex_conformance  # noqa: E402
+from causal_contribution_map import (  # noqa: E402
+    ContributionRunReading,
+    OutputQualityMetrics,
+    VerifiedWorkMetrics,
+    classify_component,
+    has_material_delta,
+    render_causal_map_note,
+)
 from live_validation_common import now_utc_iso, run_command, write_json, write_text  # noqa: E402
 
 
@@ -96,6 +104,7 @@ class TrainLoopRecord:
     iteration_budget: int
     rollback_surface: str
     escalation_triggers: tuple[str, ...]
+    analysis: dict[str, Any] = field(default_factory=dict)
     iterations: tuple[LoopIteration, ...] = field(default_factory=tuple)
     final_decision: LoopDecision | None = None
 
@@ -152,6 +161,7 @@ class TrainLoopRecord:
             "iteration_budget": self.iteration_budget,
             "rollback_surface": self.rollback_surface,
             "escalation_triggers": list(self.escalation_triggers),
+            "analysis": dict(self.analysis),
             "iterations": [iteration.as_payload() for iteration in self.iterations],
             "final_decision": self.final_decision,
         }
@@ -866,6 +876,273 @@ def run_output_quality_comparison_openai_train(
     return record
 
 
+def run_causal_contribution_map_openai_train(
+    *,
+    loop_root: Path = TRAIN_LOOP_ROOT,
+    note_path: Path | None = None,
+) -> TrainLoopRecord:
+    deterministic_command = (
+        "python3 -m pytest -q tests/unit/test_verified_work.py "
+        "tests/unit/test_verified_work_runtime.py tests/unit/test_openai_host_control.py "
+        "tests/unit/test_cortex_conformance.py tests/unit/test_output_quality_common.py "
+        "tests/unit/test_output_quality_grader.py tests/unit/test_output_quality_ablation.py "
+        "tests/unit/test_cortex_output_quality.py tests/unit/test_causal_contribution_map.py "
+        "tests/unit/test_cortex_train_loop.py tests/unit/test_verification_docs_sync.py "
+        "tests/unit/test_import_smoke.py"
+    )
+    proof_commands: list[str] = [
+        deterministic_command,
+        "make revalidate-openai-host-control",
+    ]
+    command_results: list[dict[str, Any]] = [
+        _run_shell_command(deterministic_command, cwd=ROOT),
+        _run_shell_command("make revalidate-openai-host-control", cwd=ROOT),
+    ]
+
+    baseline = _run_contribution_reading(label="baseline")
+    proof_commands.extend(baseline["proof_commands"])
+    command_results.extend(baseline["command_results"])
+    baseline_reading = baseline["reading"]
+
+    stage_results: dict[str, dict[str, Any]] = {}
+    stage_repeats: dict[str, dict[str, Any]] = {}
+    component_classifications: dict[str, dict[str, Any]] = {}
+
+    for label, flags in (
+        ("visible_contract_binding", {"visible_contract_binding": "off"}),
+        (
+            "revision_loop_off",
+            {"verification_binding": "off", "repair_turn": "off"},
+        ),
+    ):
+        stage = _run_contribution_reading(label=label, ablation_flags=flags)
+        stage_results[label] = stage
+        proof_commands.extend(stage["proof_commands"])
+        command_results.extend(stage["command_results"])
+        if has_material_delta(baseline=baseline_reading, candidate=stage["reading"]):
+            repeat = _run_contribution_reading(label=f"{label}_repeat", ablation_flags=flags)
+            stage_repeats[label] = repeat
+            proof_commands.extend(repeat["proof_commands"])
+            command_results.extend(repeat["command_results"])
+            component_classifications[label] = _classification_payload(
+                label=label,
+                baseline=baseline_reading,
+                runs=(stage["reading"], repeat["reading"]),
+            )
+        else:
+            component_classifications[label] = _classification_payload(
+                label=label,
+                baseline=baseline_reading,
+                runs=(stage["reading"],),
+            )
+
+    if _classification_requires_stage_two(component_classifications.get("revision_loop_off")):
+        stage2_flags = {
+            "verification_binding": {"verification_binding": "off", "repair_turn": "on"},
+            "repair_turn": {"verification_binding": "on", "repair_turn": "off"},
+        }
+        for label, flags in stage2_flags.items():
+            stage = _run_contribution_reading(label=label, ablation_flags=flags)
+            stage_results[label] = stage
+            proof_commands.extend(stage["proof_commands"])
+            command_results.extend(stage["command_results"])
+            if has_material_delta(baseline=baseline_reading, candidate=stage["reading"]):
+                repeat = _run_contribution_reading(label=f"{label}_repeat", ablation_flags=flags)
+                stage_repeats[label] = repeat
+                proof_commands.extend(repeat["proof_commands"])
+                command_results.extend(repeat["command_results"])
+                component_classifications[label] = _classification_payload(
+                    label=label,
+                    baseline=baseline_reading,
+                    runs=(stage["reading"], repeat["reading"]),
+                )
+            else:
+                component_classifications[label] = _classification_payload(
+                    label=label,
+                    baseline=baseline_reading,
+                    runs=(stage["reading"],),
+                )
+        repair_turn_payload = component_classifications.get("repair_turn")
+        if repair_turn_payload is not None and repair_turn_payload["classification"] in {
+            "positive",
+            "negative",
+            "mixed",
+        }:
+            flags = {
+                "verification_binding": "on",
+                "repair_turn": "on",
+                "repair_ticket_style": "minimal",
+            }
+            stage = _run_contribution_reading(label="repair_ticket_style", ablation_flags=flags)
+            stage_results["repair_ticket_style"] = stage
+            proof_commands.extend(stage["proof_commands"])
+            command_results.extend(stage["command_results"])
+            if has_material_delta(baseline=baseline_reading, candidate=stage["reading"]):
+                repeat = _run_contribution_reading(
+                    label="repair_ticket_style_repeat",
+                    ablation_flags=flags,
+                )
+                stage_repeats["repair_ticket_style"] = repeat
+                proof_commands.extend(repeat["proof_commands"])
+                command_results.extend(repeat["command_results"])
+                component_classifications["repair_ticket_style"] = _classification_payload(
+                    label="repair_ticket_style",
+                    baseline=baseline_reading,
+                    runs=(stage["reading"], repeat["reading"]),
+                )
+            else:
+                component_classifications["repair_ticket_style"] = _classification_payload(
+                    label="repair_ticket_style",
+                    baseline=baseline_reading,
+                    runs=(stage["reading"],),
+                )
+
+    if _classification_requires_stage_two(component_classifications.get("visible_contract_binding")):
+        stage2_flags = {
+            "writable_files_only_context": {
+                "visible_contract_binding": "on",
+                "visible_context_variant": "writable_files_only",
+            },
+            "writable_files_plus_visible_tests": {
+                "visible_contract_binding": "on",
+                "visible_context_variant": "writable_files_plus_visible_tests",
+            },
+        }
+        for label, flags in stage2_flags.items():
+            stage = _run_contribution_reading(label=label, ablation_flags=flags)
+            stage_results[label] = stage
+            proof_commands.extend(stage["proof_commands"])
+            command_results.extend(stage["command_results"])
+            if has_material_delta(baseline=baseline_reading, candidate=stage["reading"]):
+                repeat = _run_contribution_reading(label=f"{label}_repeat", ablation_flags=flags)
+                stage_repeats[label] = repeat
+                proof_commands.extend(repeat["proof_commands"])
+                command_results.extend(repeat["command_results"])
+                component_classifications[label] = _classification_payload(
+                    label=label,
+                    baseline=baseline_reading,
+                    runs=(stage["reading"], repeat["reading"]),
+                )
+            else:
+                component_classifications[label] = _classification_payload(
+                    label=label,
+                    baseline=baseline_reading,
+                    runs=(stage["reading"],),
+                )
+
+    positive_or_negative = [
+        payload
+        for payload in component_classifications.values()
+        if payload["classification"] in {"positive", "negative"}
+    ]
+    unresolved_env = [
+        payload
+        for payload in component_classifications.values()
+        if payload["classification"] == "unresolved_env"
+    ]
+    final_decision: LoopDecision
+    if positive_or_negative:
+        final_decision = "promote"
+    elif unresolved_env and len(unresolved_env) == len(component_classifications):
+        final_decision = "escalate"
+    else:
+        final_decision = "cut"
+
+    primary_before = round(baseline_reading.output_quality.cortex_vs_tooling_only * 100)
+    best_after = max(
+        [primary_before]
+        + [
+            round(payload["average_metrics"]["output_quality"]["cortex_vs_tooling_only"] * 100)
+            for payload in component_classifications.values()
+        ]
+    )
+    iteration = LoopIteration(
+        index=1,
+        candidate_label="causal-contribution-map-openai",
+        proof_commands=tuple(proof_commands),
+        primary_metric_before=primary_before,
+        primary_metric_after=best_after,
+        guardrail_ok=all(result["exit_code"] == 0 for result in command_results[:2]),
+        localized_failure=False,
+        better_classification=bool(positive_or_negative),
+        budget_remaining=0,
+        decision=final_decision,
+        reason=_causal_map_reason(final_decision, component_classifications),
+        command_results=tuple(command_results),
+        escalation_reasons=tuple(),
+    )
+    analysis = {
+        "baseline_metrics": _reading_payload(baseline_reading),
+        "component_classifications": component_classifications,
+        "stage_results": {
+            label: {
+                "reading": _reading_payload(payload["reading"]),
+                "ablation_flags": payload["ablation_flags"],
+            }
+            for label, payload in stage_results.items()
+        },
+        "stage_repeats": {
+            label: {
+                "reading": _reading_payload(payload["reading"]),
+                "ablation_flags": payload["ablation_flags"],
+            }
+            for label, payload in stage_repeats.items()
+        },
+        "next_lawful_move": (
+            "open one narrow runtime/product seam that strengthens the positive component and cuts the negative one"
+            if positive_or_negative
+            else "open a broader invariance/preservation reframe instead of another prompt-control train"
+        ),
+    }
+    record = TrainLoopRecord(
+        train_name="causal-contribution-map-openai",
+        seam_class="timing_env_sensitive",
+        cortex_invariant=(
+            "optional work contract, runtime-native verification truth, and one bounded repair turn"
+        ),
+        brain_wiring_touched=(
+            "evaluation-only OpenAI verified-work ablation wrapper, output-quality ablation wiring, and causal-map proof reporting"
+        ),
+        borrowed_mechanism=(
+            "reuse the accepted O4R verified-work lane and the fixed E12 benchmark, then ablate existing interventions instead of proposing a new mechanism"
+        ),
+        contract_pack=(
+            "verified_work_bookmarks_v1,verified_work_normalize_port_v1,verified_work_feature_flags_v1,"
+            "astro_docs_site_v1,react_dashboard_v1,astro_marketing_forms_v1,"
+            "react_existing_feature_extension_v1,frontend_bugfix_cleanup_v1"
+        ),
+        conformance_surfaces=("openai:service_api",),
+        baseline_result={
+            "primary_metric_value": primary_before,
+            "component_count": len(component_classifications),
+        },
+        primary_metric="cortex_vs_tooling_only_delta_with_causal_classification",
+        guardrail_metric="repeat_stable_component_classification",
+        baseline_proof_set=tuple(proof_commands),
+        iteration_budget=1,
+        rollback_surface=(
+            "evaluation-only ablation plumbing for openai_host_control, cortex_conformance, output-quality runner, and train-loop reporting"
+        ),
+        escalation_triggers=(
+            "authority docs conflict",
+            "shipping truth would widen",
+            "auth/spend/env blocks proof",
+            "benchmark or conformance harness instability",
+        ),
+        analysis=analysis,
+        iterations=(iteration,),
+        final_decision=final_decision,
+    )
+    artifact_dir = loop_root / record.train_name
+    artifact_dir.mkdir(parents=True, exist_ok=True)
+    payload = record.as_payload()
+    write_json(artifact_dir / "summary.json", payload)
+    write_text(artifact_dir / "summary.md", render_train_loop_markdown(record))
+    note_output_path = note_path or (ROOT / "docs" / "CORTEX_V2_CAUSAL_MAP_NOTE_0.md")
+    write_text(note_output_path, render_causal_map_note(payload))
+    return record
+
+
 def render_train_loop_markdown(record: TrainLoopRecord) -> str:
     lines = [
         f"# Cortex Train Loop: {record.train_name}",
@@ -917,6 +1194,7 @@ def main(argv: list[str] | None = None) -> int:
             "verified-work-breadth-openai",
             "verified-work-repair-yield-openai",
             "output-quality-comparison-openai",
+            "causal-contribution-map-openai",
         ),
         default="conformance-summary-truth",
     )
@@ -930,6 +1208,8 @@ def main(argv: list[str] | None = None) -> int:
         payload = run_verified_work_repair_yield_openai_train().as_payload()
     elif args.train == "output-quality-comparison-openai":
         payload = run_output_quality_comparison_openai_train().as_payload()
+    elif args.train == "causal-contribution-map-openai":
+        payload = run_causal_contribution_map_openai_train().as_payload()
     else:  # pragma: no cover
         raise SystemExit(f"Unsupported train: {args.train}")
     print(json.dumps(payload, indent=2, sort_keys=True))
@@ -1154,6 +1434,210 @@ def _aggregate_output_quality_count(summary: dict[str, Any], key: str, arm: str)
     return int(value or 0)
 
 
+def _run_contribution_reading(
+    *,
+    label: str,
+    ablation_flags: dict[str, str] | None = None,
+) -> dict[str, Any]:
+    output_quality_command = _build_output_quality_ablation_command(ablation_flags=ablation_flags)
+    output_quality_result = _run_long_shell_command(output_quality_command, cwd=ROOT)
+    output_quality_summary = (
+        _command_result_json(output_quality_result) if output_quality_result["exit_code"] == 0 else {}
+    )
+
+    conformance_results: list[dict[str, Any]] = []
+    conformance_summaries: list[dict[str, Any]] = []
+    for pack in OPENAI_BREADTH_PACKS:
+        command = _build_openai_conformance_ablation_command(
+            contract_pack=pack,
+            ablation_flags=ablation_flags,
+        )
+        result = _run_shell_command(command, cwd=ROOT)
+        conformance_results.append(result)
+        if result["exit_code"] == 0:
+            conformance_summaries.append(_command_result_json(result))
+
+    proof_commands = [output_quality_command, *(_command_text(result) for result in conformance_results)]
+    command_results = [output_quality_result, *conformance_results]
+    reading = ContributionRunReading(
+        label=label,
+        output_quality=_output_quality_metrics_from_summary(output_quality_summary),
+        verified_work=_verified_work_metrics_from_summaries(conformance_summaries),
+    )
+    return {
+        "label": label,
+        "ablation_flags": dict(ablation_flags or {}),
+        "proof_commands": proof_commands,
+        "command_results": command_results,
+        "reading": reading,
+    }
+
+
+def _build_output_quality_ablation_command(*, ablation_flags: dict[str, str] | None) -> str:
+    command = "python3 tools/cortex_output_quality.py"
+    if not ablation_flags:
+        return command
+    return f"{command} {_ablation_flags_text(ablation_flags)}"
+
+
+def _build_openai_conformance_ablation_command(
+    *,
+    contract_pack: str,
+    ablation_flags: dict[str, str] | None,
+) -> str:
+    command = (
+        "python3 tools/cortex_conformance.py --mode active --brain openai "
+        f"--contract-pack {contract_pack}"
+    )
+    if not ablation_flags:
+        return command
+    return f"{command} {_ablation_flags_text(ablation_flags)}"
+
+
+def _ablation_flags_text(ablation_flags: dict[str, str]) -> str:
+    return " ".join(
+        f"--{key.replace('_', '-')} {value}"
+        for key, value in ablation_flags.items()
+    )
+
+
+def _output_quality_metrics_from_summary(summary: dict[str, Any]) -> OutputQualityMetrics:
+    return OutputQualityMetrics(
+        cortex_vs_raw=_pairwise_payload(summary, "cortex_vs_raw")["win_rate"],
+        cortex_vs_tooling_only=_pairwise_payload(summary, "cortex_vs_tooling_only")["win_rate"],
+        cortex_objective_pass_count=_aggregate_output_quality_count(
+            summary,
+            "aggregate_objective_pass_count",
+            "cortex",
+        ),
+        cortex_hidden_quality_pass_count=_aggregate_output_quality_count(
+            summary,
+            "aggregate_hidden_quality_pass_count",
+            "cortex",
+        ),
+        env_blocked=bool(summary.get("env_blocked")),
+    )
+
+
+def _verified_work_metrics_from_summaries(summaries: list[dict[str, Any]]) -> VerifiedWorkMetrics:
+    openai_results = [
+        _summary_brain_result(summary, brain="openai")
+        for summary in summaries
+    ]
+    cleaned = [result for result in openai_results if isinstance(result, dict)]
+    return VerifiedWorkMetrics(
+        conformant_pack_count=sum(1 for result in cleaned if result.get("status") == "conformant"),
+        first_attempt_pass_count=sum(
+            1
+            for result in cleaned
+            if result.get("status") == "conformant" and int(result.get("attempt_count", 0) or 0) == 1
+        ),
+        repair_conversion_count=sum(
+            1 for result in cleaned if result.get("repair_conversion") == "recovered_after_repair"
+        ),
+        env_blocked=any(result.get("status") == "env_blocked" for result in cleaned),
+    )
+
+
+def _classification_requires_stage_two(payload: dict[str, Any] | None) -> bool:
+    if not isinstance(payload, dict):
+        return False
+    return payload.get("classification") in {"positive", "negative", "mixed"}
+
+
+def _classification_payload(
+    *,
+    label: str,
+    baseline: ContributionRunReading,
+    runs: tuple[ContributionRunReading, ...],
+) -> dict[str, Any]:
+    classification = classify_component(
+        baseline=baseline,
+        runs=runs,
+    )
+    average_output_quality = {
+        "cortex_vs_raw": sum(run.output_quality.cortex_vs_raw for run in runs) / len(runs),
+        "cortex_vs_tooling_only": (
+            sum(run.output_quality.cortex_vs_tooling_only for run in runs) / len(runs)
+        ),
+        "cortex_objective_pass_count": (
+            sum(run.output_quality.cortex_objective_pass_count for run in runs) / len(runs)
+        ),
+        "cortex_hidden_quality_pass_count": (
+            sum(run.output_quality.cortex_hidden_quality_pass_count for run in runs) / len(runs)
+        ),
+    }
+    average_verified_work = {
+        "conformant_pack_count": (
+            sum(run.verified_work.conformant_pack_count for run in runs) / len(runs)
+        ),
+        "first_attempt_pass_count": (
+            sum(run.verified_work.first_attempt_pass_count for run in runs) / len(runs)
+        ),
+        "repair_conversion_count": (
+            sum(run.verified_work.repair_conversion_count for run in runs) / len(runs)
+        ),
+    }
+    return {
+        "label": label,
+        "classification": classification,
+        "reason": _classification_reason(classification),
+        "run_count": len(runs),
+        "average_metrics": {
+            "output_quality": average_output_quality,
+            "verified_work": average_verified_work,
+        },
+        "runs": [_reading_payload(run) for run in runs],
+    }
+
+
+def _classification_reason(classification: str) -> str:
+    return {
+        "positive": "turning this component off repeat-stably made results materially worse",
+        "negative": "turning this component off repeat-stably made results materially better",
+        "neutral": "turning this component off produced no material delta",
+        "mixed": "turning this component off materially helped one metric or surface and hurt another",
+        "unresolved_env": "env/provider instability prevented honest classification",
+    }[classification]
+
+
+def _reading_payload(reading: ContributionRunReading) -> dict[str, Any]:
+    return {
+        "label": reading.label,
+        "output_quality": {
+            "cortex_vs_raw": reading.output_quality.cortex_vs_raw,
+            "cortex_vs_tooling_only": reading.output_quality.cortex_vs_tooling_only,
+            "cortex_objective_pass_count": reading.output_quality.cortex_objective_pass_count,
+            "cortex_hidden_quality_pass_count": reading.output_quality.cortex_hidden_quality_pass_count,
+            "env_blocked": reading.output_quality.env_blocked,
+        },
+        "verified_work": {
+            "conformant_pack_count": reading.verified_work.conformant_pack_count,
+            "first_attempt_pass_count": reading.verified_work.first_attempt_pass_count,
+            "repair_conversion_count": reading.verified_work.repair_conversion_count,
+            "env_blocked": reading.verified_work.env_blocked,
+        },
+    }
+
+
+def _causal_map_reason(
+    decision: LoopDecision,
+    component_classifications: dict[str, dict[str, Any]],
+) -> str:
+    if decision == "promote":
+        winners = ", ".join(
+            sorted(
+                label
+                for label, payload in component_classifications.items()
+                if payload["classification"] in {"positive", "negative"}
+            )
+        )
+        return f"repeat-stable component classifications earned a causal map: {winners}"
+    if decision == "escalate":
+        return "repeated env/provider instability prevented honest component classification"
+    return "the train ran cleanly but no component earned a repeat-stable positive or negative classification"
+
+
 __all__ = [
     "LoopDecision",
     "LoopIteration",
@@ -1162,6 +1646,7 @@ __all__ = [
     "decide_loop_decision",
     "evaluate_conformance_summary_truth",
     "render_train_loop_markdown",
+    "run_causal_contribution_map_openai_train",
     "run_conformance_summary_truth_pilot",
     "run_output_quality_comparison_openai_train",
     "run_verified_work_breadth_openai_train",

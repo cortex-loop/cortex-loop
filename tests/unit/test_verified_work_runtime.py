@@ -92,6 +92,23 @@ def test_build_verified_work_input_text_attaches_feature_flags_context() -> None
     assert "test_deny_country_wins_over_allow_and_rollout" in input_text
 
 
+def test_build_verified_work_input_text_can_disable_or_narrow_context() -> None:
+    no_context = build_verified_work_input_text(
+        "build bookmarks app",
+        _work_contract(),
+        context_mode="off",
+    )
+    writable_only = build_verified_work_input_text(
+        "build bookmarks app",
+        _work_contract(),
+        context_mode="writable_files_only",
+    )
+
+    assert no_context == "build bookmarks app"
+    assert "=== CONTEXT FILE: tests/test_bookmarks_api.py ===" not in writable_only
+    assert "=== CONTEXT FILE: src/bookmarks_api/main.py ===" in writable_only
+
+
 def test_verify_verified_work_result_rejects_unapproved_path() -> None:
     _, outcome = verify_verified_work_result(
         "\n".join(
@@ -233,6 +250,30 @@ def test_build_verified_work_repair_ticket_is_factual_only() -> None:
     assert "Repair the previous submission without widening scope." in ticket
     assert "failure_class: blocked_unsafe" in ticket
     assert "blocked_message: Cannot help with that." in ticket
+
+
+def test_build_verified_work_repair_ticket_supports_minimal_style() -> None:
+    outcome = VerificationOutcome(
+        status="failed",
+        failure_class="test_failed",
+        pytest_ok=False,
+        pytest_exit_code=1,
+        pytest_passed=3,
+        pytest_failed=1,
+        failing_tests=("tests/test_bookmarks_api.py::test_create_and_get_bookmark_by_id",),
+        first_failure_excerpt="FAILED tests/test_bookmarks_api.py::test_create_and_get_bookmark_by_id",
+    )
+
+    ticket = build_verified_work_repair_ticket(
+        outcome,
+        style="minimal",
+        repair_surface=("src/bookmarks_api/main.py",),
+    )
+
+    assert "failure_class: test_failed" in ticket
+    assert "failing_checks: pytest" in ticket
+    assert "repair_surface: src/bookmarks_api/main.py" in ticket
+    assert "pytest_failed:" not in ticket
 
 
 def test_verify_verified_work_result_uses_profile_specific_verifier_targets(

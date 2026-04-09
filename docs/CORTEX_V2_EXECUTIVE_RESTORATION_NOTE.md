@@ -39,6 +39,9 @@ The accepted drift interpretation is therefore:
 - not too much executive control
 - and not a reason to restore the older heavy control residue
 
+The accepted verified-work lane is therefore a **coding-domain realization** of bounded executive restoration.
+It is useful evidence, but it is not yet general Cortex proof.
+
 ## Keep
 
 - the OpenAI-only accepted current scope
@@ -171,3 +174,5 @@ This is the accepted north-light correction:
 - keep Cortex host-native
 - keep Cortex neutral by default
 - but restore one real bounded executive loop where larger-task work actually needs it
+
+Future executive-improvement seams should therefore be framed as domain-general baskets with domain binding outside SRE, rather than as code-specific helpers or prompt-shaped benchmark doctrine.

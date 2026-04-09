@@ -95,6 +95,30 @@ def test_build_output_quality_repair_ticket_includes_paths_and_failures() -> Non
     assert "allowed_write_paths: src/app.ts, src/nav.tsx" in ticket
 
 
+def test_build_output_quality_repair_ticket_supports_minimal_style() -> None:
+    evaluation = grader.OutputQualityEvaluation(
+        status="failed",
+        failure_class="build_failed",
+        objective_pass=False,
+        hidden_quality_pass=False,
+        failing_checks=("build",),
+        first_failure_excerpt="build failed",
+        checks=(),
+    )
+
+    ticket = grader.build_output_quality_repair_ticket(
+        evaluation=evaluation,
+        allowed_write_paths=("src/app.ts",),
+        style="minimal",
+        repair_surface=("src/app.ts",),
+    )
+
+    assert "failure_class: build_failed" in ticket
+    assert "failing_checks: build" in ticket
+    assert "repair_surface: src/app.ts" in ticket
+    assert "allowed_write_paths:" not in ticket
+
+
 def test_judge_pairwise_merge_worthiness_uses_objective_override() -> None:
     judgment = grader.judge_pairwise_merge_worthiness(
         prompt_text="Build the feature cleanly.",

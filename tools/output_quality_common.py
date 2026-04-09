@@ -9,6 +9,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Literal
 
+from output_quality_ablation import OutputQualityAblationConfig
+
 
 ArmName = Literal["raw", "tooling_only", "cortex"]
 _FILE_HEADER_RE = re.compile(r"^=== FILE: (?P<path>.+?) ===$")
@@ -82,10 +84,22 @@ def build_output_quality_input_text(
     task_pack: OutputQualityTaskPack,
     *,
     arm: ArmName,
+    ablation_config: OutputQualityAblationConfig | None = None,
 ) -> str:
     protocol = build_file_block_protocol(task_pack.allowed_write_paths)
     if arm == "raw":
         return f"{task_pack.prompt_text.strip()}\n\n{protocol}"
+    if arm == "cortex" and ablation_config is not None:
+        if ablation_config.visible_contract_binding == "off":
+            return f"{task_pack.prompt_text.strip()}\n\n{protocol}"
+        if ablation_config.visible_context_variant == "writable_files_only":
+            context_paths = tuple(task_pack.allowed_write_paths)
+        elif ablation_config.visible_context_variant == "writable_files_plus_visible_tests":
+            context_paths = tuple(task_pack.allowed_write_paths) + _visible_test_paths(task_pack)
+        else:
+            context_paths = None
+    else:
+        context_paths = None
     context_intro = (
         "Visible contract files follow. Additional verifier-only checks may run.\n"
         "Use the existing files below as the visible task contract.\n"
@@ -93,15 +107,22 @@ def build_output_quality_input_text(
     return (
         f"{task_pack.prompt_text.strip()}\n\n"
         f"{context_intro}"
-        f"{render_context_bundle(task_pack)}\n\n"
+        f"{render_context_bundle(task_pack, context_paths=context_paths)}\n\n"
         f"{protocol}"
     )
 
 
-def render_context_bundle(task_pack: OutputQualityTaskPack) -> str:
+def render_context_bundle(
+    task_pack: OutputQualityTaskPack,
+    *,
+    context_paths: tuple[str, ...] | None = None,
+) -> str:
     blocks: list[str] = []
     seen: set[str] = set()
-    for relative_path in (*task_pack.allowed_write_paths, *task_pack.visible_context_paths):
+    source_paths = context_paths or tuple(task_pack.allowed_write_paths) + tuple(
+        task_pack.visible_context_paths
+    )
+    for relative_path in source_paths:
         if relative_path in seen:
             continue
         seen.add(relative_path)
@@ -122,6 +143,14 @@ def render_context_bundle(task_pack: OutputQualityTaskPack) -> str:
             )
         )
     return "\n\n".join(blocks)
+
+
+def _visible_test_paths(task_pack: OutputQualityTaskPack) -> tuple[str, ...]:
+    return tuple(
+        path
+        for path in task_pack.visible_context_paths
+        if "test" in path.lower()
+    )
 
 
 def parse_output_quality_result(

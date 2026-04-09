@@ -11,6 +11,7 @@ if str(TOOLS_ROOT) not in sys.path:
     sys.path.insert(0, str(TOOLS_ROOT))
 
 import cortex_output_quality as output_quality
+from output_quality_ablation import OutputQualityAblationConfig
 from output_quality_grader import PairwiseJudgment
 
 
@@ -109,8 +110,73 @@ def test_build_suite_summary_counts_pairwise_wins() -> None:
             },
         ],
         env_blocked=False,
+        ablation_config=OutputQualityAblationConfig(verification_binding="off"),
     )
 
     assert summary["pairwise_summary"]["cortex_vs_raw"]["wins"] == 1
     assert summary["pairwise_summary"]["cortex_vs_raw"]["win_rate"] == 1.0
     assert summary["pairwise_summary"]["cortex_vs_tooling_only"]["ties"] == 1
+    assert summary["ablation_config"]["verification_binding"] == "off"
+
+
+def test_run_arm_skips_repair_when_verification_binding_is_off(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    task_pack = output_quality.task_pack_by_name("astro_docs_site_v1")
+    execute_calls: list[dict[str, object]] = []
+
+    monkeypatch.setattr(
+        output_quality,
+        "_execute_openai_turn",
+        lambda **kwargs: execute_calls.append(kwargs) or {
+            "response_id": "resp-1",
+            "output_text": "=== FILE: src/App.tsx ===\nexport default function App() { return null }\n=== END FILE ===\n",
+            "raw_events": [],
+        },
+    )
+    monkeypatch.setattr(
+        output_quality,
+        "prepare_seeded_workspace",
+        lambda **_kwargs: tmp_path,
+    )
+    monkeypatch.setattr(
+        output_quality,
+        "_evaluate_turn_output",
+        lambda **_kwargs: {
+            "evaluation": {
+                "status": "failed",
+                "failure_class": "hidden_test_failed",
+                "objective_pass": True,
+                "hidden_quality_pass": False,
+                "failing_checks": ["hidden_test"],
+                "first_failure_excerpt": "missing hidden integration",
+                "checks": [],
+            },
+            "changed_files": {},
+            "repairable": True,
+            "parse": {
+                "parse_error": None,
+                "blocked_reason": None,
+                "blocked_message": None,
+                "parsed_paths": [],
+            },
+        },
+    )
+    monkeypatch.setattr(output_quality, "write_json", lambda *_args, **_kwargs: None)
+
+    result = output_quality._run_arm(
+        task_pack=task_pack,
+        arm="cortex",
+        model="gpt-5.4",
+        task_root=tmp_path,
+        seed_workspace=tmp_path,
+        shared_install_result={"exit_code": 0, "stdout": "", "stderr": ""},
+        ablation_config=OutputQualityAblationConfig(
+            verification_binding="off",
+            repair_turn="on",
+        ),
+    )
+
+    assert result["attempt_count"] == 1
+    assert len(execute_calls) == 1

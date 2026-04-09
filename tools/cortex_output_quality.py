@@ -25,6 +25,7 @@ from live_validation_common import (
     write_json,
     write_text,
 )
+from output_quality_ablation import OutputQualityAblationConfig
 from output_quality_common import (
     ArmName,
     OutputQualityTaskPack,
@@ -66,6 +67,7 @@ def run_output_quality_suite(
     arms: tuple[ArmName, ...] = DEFAULT_ARMS,
     model: str = DEFAULT_MODEL,
     artifact_root: Path = OUTPUT_QUALITY_ROOT,
+    ablation_config: OutputQualityAblationConfig | None = None,
 ) -> dict[str, Any]:
     load_local_env_file()
     run_id = now_utc_iso().replace(":", "").replace("-", "")
@@ -93,6 +95,7 @@ def run_output_quality_suite(
                 task_root=task_root,
                 seed_workspace=seed_workspace,
                 shared_install_result=shared_install_result,
+                ablation_config=ablation_config,
             )
             arm_results[arm] = arm_result
             if arm_result["evaluation"]["status"] == "env_blocked":
@@ -124,6 +127,7 @@ def run_output_quality_suite(
         aggregate_hidden=aggregate_hidden,
         pairwise_results=pairwise_results,
         env_blocked=env_blocked,
+        ablation_config=ablation_config,
     )
     write_json(run_root / "summary.json", summary)
     write_text(run_root / "summary.md", _render_summary_markdown(summary))
@@ -147,9 +151,15 @@ def _run_arm(
     task_root: Path,
     seed_workspace: Path,
     shared_install_result: dict[str, Any],
+    ablation_config: OutputQualityAblationConfig | None,
 ) -> dict[str, Any]:
     prompt_text = task_pack.prompt_text.strip()
-    input_text = build_output_quality_input_text(task_pack, arm=arm)
+    cortex_ablation = ablation_config if arm == "cortex" else None
+    input_text = build_output_quality_input_text(
+        task_pack,
+        arm=arm,
+        ablation_config=cortex_ablation,
+    )
     initial_turn = _execute_openai_turn(
         model=model,
         input_text=input_text,
@@ -178,10 +188,18 @@ def _run_arm(
         arm == "cortex"
         and attempt1_payload["repairable"]
         and initial_turn["response_id"] is not None
+        and (cortex_ablation is None or cortex_ablation.repair_turn == "on")
+        and (cortex_ablation is None or cortex_ablation.verification_binding == "on")
     ):
         repair_ticket = build_output_quality_repair_ticket(
             evaluation=evaluate_workspace_payload(attempt1_payload["evaluation"]),
             allowed_write_paths=task_pack.allowed_write_paths,
+            style=(
+                cortex_ablation.repair_ticket_style
+                if cortex_ablation is not None
+                else "factual"
+            ),
+            repair_surface=task_pack.allowed_write_paths,
         )
         repair_turn = _execute_openai_turn(
             model=model,
@@ -330,6 +348,7 @@ def _build_suite_summary(
     aggregate_hidden: dict[str, int],
     pairwise_results: list[dict[str, Any]],
     env_blocked: bool,
+    ablation_config: OutputQualityAblationConfig | None,
 ) -> dict[str, Any]:
     try:
         artifact_root = str(run_root.relative_to(ROOT))
@@ -359,6 +378,9 @@ def _build_suite_summary(
         "artifact_root": artifact_root,
         "provider": "openai",
         "model": model,
+        "ablation_config": (
+            ablation_config.as_payload() if ablation_config is not None else None
+        ),
         "arms": list(arms),
         "task_ids": list(task_ids),
         "task_results": task_results,
@@ -636,13 +658,46 @@ def main(argv: list[str] | None = None) -> int:
         "--model",
         default=DEFAULT_MODEL,
     )
+    parser.add_argument(
+        "--visible-contract-binding",
+        choices=("on", "off"),
+        default="on",
+    )
+    parser.add_argument(
+        "--verification-binding",
+        choices=("on", "off"),
+        default="on",
+    )
+    parser.add_argument(
+        "--repair-turn",
+        choices=("on", "off"),
+        default="on",
+    )
+    parser.add_argument(
+        "--repair-ticket-style",
+        choices=("factual", "minimal"),
+        default="factual",
+    )
+    parser.add_argument(
+        "--visible-context-variant",
+        choices=("default", "writable_files_only", "writable_files_plus_visible_tests"),
+        default="default",
+    )
     args = parser.parse_args(argv)
+    ablation_config = OutputQualityAblationConfig(
+        visible_contract_binding=args.visible_contract_binding,
+        verification_binding=args.verification_binding,
+        repair_turn=args.repair_turn,
+        repair_ticket_style=args.repair_ticket_style,
+        visible_context_variant=args.visible_context_variant,
+    )
 
     try:
         summary = run_output_quality_suite(
             task_ids=tuple(args.tasks),
             arms=tuple(args.arms),
             model=args.model,
+            ablation_config=ablation_config,
         )
     except OpenAIResponseStreamTransportError as exc:
         print(

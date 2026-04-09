@@ -292,6 +292,12 @@ def test_active_current_line_docs_frame_openai_only_truth_and_watchlist_retentio
             in workstream_text
         )
         assert "Current candidate seam: `E12 comparative output-quality eval train`" in workstream_text
+    elif current_branch == "review/e18-causal-contribution-map":
+        assert (
+            "Current branch role: explicit manual/review branch for the E18 causal contribution map train while the accepted baseline remains local `main`"
+            in workstream_text
+        )
+        assert "Current candidate seam: `E18 causal contribution map train`" in workstream_text
     else:
         assert (
             "Current branch role: explicit manual/review branch for the E9 verified-work repair-yield train while the accepted baseline remains local `main`"
@@ -331,10 +337,16 @@ def test_active_current_line_docs_frame_openai_only_truth_and_watchlist_retentio
     assert "`--max-repair-turns 0|1` override in `tools/cortex_conformance.py`" in workstream_text
     assert "one-shot control is `11/12` conformant, repair-enabled candidate is `12/12` conformant, and repair opportunities remain `0`" in workstream_text
     assert "one explicit cut where the richer repair-ticket/runtime change was removed after it failed to beat the one-shot control" in workstream_text
+    assert "accepted larger-task evidence is currently strongest for `domain = coding_webapp`" in workstream_text
+    assert "that coding-domain evidence is useful but is not yet general Cortex proof" in workstream_text
     if current_branch == "review/e12-comparative-output-quality-eval":
-        assert "the current E12 comparative output-quality eval slice on this review branch now adds" in workstream_text
+        assert "the accepted E12 comparative output-quality eval slice on local `main` now adds" in workstream_text
         assert "one maintainer-only comparative runner at `tools/cortex_output_quality.py`" in workstream_text
         assert "one hidden grading layer at `tools/output_quality_grader.py`" in workstream_text
+    if current_branch == "review/e18-causal-contribution-map":
+        assert "the current E18 causal-map slice on this review branch now adds" in workstream_text
+        assert "one staged causal-contribution map train over the fixed E12 and O4R proof surfaces" in workstream_text
+        assert "docs/CORTEX_V2_CAUSAL_MAP_NOTE_0.md" in workstream_text
 
     assert (
         "This is the only active current-line proof bundle for the accepted OpenAI-only product scope."
@@ -382,6 +394,9 @@ def test_active_current_line_docs_frame_openai_only_truth_and_watchlist_retentio
     assert "The first restoration slice is now landed on the accepted OpenAI realization" in restoration_note_text
     assert "the shared verified-work runtime helpers now live in the neutral `cortex/runtime/verified_work_runtime.py` home" in restoration_note_text
     assert "repeated targeted local OpenAI reruns on the bookmarks pack now pass on the shipping-default lane" in restoration_note_text
+    assert "coding-domain realization" in restoration_note_text
+    assert "not yet general Cortex proof" in restoration_note_text
+    assert "domain-general baskets with domain binding outside SRE" in restoration_note_text
     assert "## Conformance reading under the current method" in restoration_note_text
     assert "It should ask whether the same Cortex law is conformant, partial, divergent, unwired, or env-blocked" in restoration_note_text
     assert "On the accepted feature-flags verified-work breadth pack, the current reading is:" in restoration_note_text
@@ -393,6 +408,8 @@ def test_active_current_line_docs_frame_openai_only_truth_and_watchlist_retentio
 
     assert "accepted bounded runtime-program brief for the landed verified-work restoration lane" in verified_work_program_text
     assert "keep the accepted thin `O4` path unchanged when no `work_contract` is present" in verified_work_program_text
+    assert "coding-domain restoration slice" in verified_work_program_text
+    assert "does not by itself prove cross-domain Cortex generality" in verified_work_program_text
     assert "This program is intentionally outside the current compact canonical proof bundle" in verified_work_program_text
     assert "the shared verified-work runtime helpers now live in the neutral `cortex/runtime/verified_work_runtime.py` home" in verified_work_program_text
     assert "`python_workspace_pytest_port_fix_v1`" in verified_work_program_text
@@ -404,6 +421,10 @@ def test_active_current_line_docs_frame_openai_only_truth_and_watchlist_retentio
     assert "primary_metric_after = 3" in verified_work_program_text
     assert "paired proof surface under `.cortex/train_loops/verified-work-repair-yield-openai/summary.json`" in verified_work_program_text
     assert "one-shot control is `11/12` conformant, repair-enabled candidate is `12/12` conformant, repair opportunities are `0`" in verified_work_program_text
+
+    sre_text = _read(REPO_ROOT / "docs" / "CORTEX_V2_SRE_2.md")
+    assert "Future executive improvements should be framed first as **domain-general baskets**." in sre_text
+    assert "Domain-specific binding belongs outside SRE." in sre_text
 
 
 def test_x2_accepted_line_claims_match_main() -> None:

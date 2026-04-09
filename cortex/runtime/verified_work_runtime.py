@@ -10,6 +10,7 @@ import sys
 import tempfile
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Literal
 
 from cortex.sre.verified_work import VerificationOutcome, WorkContract
 
@@ -30,6 +31,14 @@ _END_BLOCKED_MARKER = "=== END BLOCKED ==="
 _PASSED_RE = re.compile(r"(?P<count>\d+)\s+passed")
 _FAILED_RE = re.compile(r"(?P<count>\d+)\s+failed")
 _FAILING_TEST_RE = re.compile(r"^(?:FAILED|ERROR) (?P<name>tests/[^\s]+)", re.MULTILINE)
+
+VerifiedWorkContextMode = Literal[
+    "default",
+    "off",
+    "writable_files_only",
+    "writable_files_plus_visible_tests",
+]
+VerifiedWorkRepairTicketStyle = Literal["factual", "minimal"]
 
 
 @dataclass(frozen=True, slots=True)
@@ -102,22 +111,54 @@ def build_verified_work_instructions(work_contract: WorkContract) -> str:
     )
 
 
-def build_verified_work_input_text(task_prompt: str, work_contract: WorkContract) -> str:
+def build_verified_work_input_text(
+    task_prompt: str,
+    work_contract: WorkContract,
+    *,
+    context_mode: VerifiedWorkContextMode = "default",
+) -> str:
     if not (isinstance(task_prompt, str) and task_prompt.strip()):
         raise ValueError(
             "build_verified_work_input_text.task_prompt must be non-empty after trimming."
         )
+    if context_mode not in {
+        "default",
+        "off",
+        "writable_files_only",
+        "writable_files_plus_visible_tests",
+    }:
+        raise ValueError("build_verified_work_input_text.context_mode must be accepted.")
+    if context_mode == "off":
+        return task_prompt.strip()
     return (
         f"{task_prompt.strip()}\n\n"
         "Read-only workspace context follows. Use the existing writable-file contents and tests below as the task contract.\n"
         "Modify only the allowed paths named in the work contract.\n\n"
-        f"{_build_verified_work_context_bundle(work_contract)}"
+        f"{_build_verified_work_context_bundle(work_contract, context_mode=context_mode)}"
     )
 
 
 def build_verified_work_repair_ticket(
     outcome: VerificationOutcome,
+    *,
+    style: VerifiedWorkRepairTicketStyle = "factual",
+    repair_surface: tuple[str, ...] = (),
 ) -> str:
+    if style not in {"factual", "minimal"}:
+        raise ValueError("build_verified_work_repair_ticket.style must be accepted.")
+    if any(not (isinstance(path, str) and path.strip()) for path in repair_surface):
+        raise ValueError(
+            "build_verified_work_repair_ticket.repair_surface must contain only non-empty strings."
+        )
+    if style == "minimal":
+        failing_checks = ", ".join(_verification_failing_checks(outcome)) or "<none>"
+        repair_surface_text = ", ".join(repair_surface) or "<none>"
+        return (
+            "Repair the previous submission without widening scope.\n\n"
+            f"failure_class: {outcome.failure_class}\n"
+            f"failing_checks: {failing_checks}\n"
+            f"repair_surface: {repair_surface_text}"
+        )
     return (
         "Repair the previous submission without widening scope.\n\n"
         f"verification_status: {outcome.status}\n"
@@ -147,9 +188,16 @@ def verify_verified_work_result(
     return file_map, _run_verified_work_verifier(file_map, work_contract)
 
 
-def _build_verified_work_context_bundle(work_contract: WorkContract) -> str:
+def _build_verified_work_context_bundle(
+    work_contract: WorkContract,
+    *,
+    context_mode: VerifiedWorkContextMode = "default",
+) -> str:
     profile = _verified_work_profile_spec(work_contract)
-    context_paths = tuple(work_contract.allowed_write_paths) + profile.read_only_context_paths
+    if context_mode == "writable_files_only":
+        context_paths = tuple(work_contract.allowed_write_paths)
+    else:
+        context_paths = tuple(work_contract.allowed_write_paths) + profile.read_only_context_paths
     rendered_blocks: list[str] = []
     for relative_path in context_paths:
         source_path = profile.template_root / relative_path
@@ -169,6 +217,18 @@ def _build_verified_work_context_bundle(work_contract: WorkContract) -> str:
             )
         )
     return "\n\n".join(rendered_blocks)
+
+
+def _verification_failing_checks(outcome: VerificationOutcome) -> tuple[str, ...]:
+    if outcome.failure_class == "output_invalid":
+        return ("parse",)
+    if outcome.failure_class == "import_smoke_failed":
+        return ("import_smoke",)
+    if outcome.failure_class == "test_failed":
+        return ("pytest",)
+    if outcome.failure_class in {"blocked_missing_info", "blocked_unsafe"}:
+        return ("blocked",)
+    return ()
 
 
 def _parse_verified_work_result(

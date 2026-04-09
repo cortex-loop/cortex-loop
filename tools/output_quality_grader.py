@@ -128,9 +128,27 @@ def build_output_quality_repair_ticket(
     *,
     evaluation: OutputQualityEvaluation,
     allowed_write_paths: tuple[str, ...],
+    style: Literal["factual", "minimal"] = "factual",
+    repair_surface: tuple[str, ...] | None = None,
 ) -> str:
+    if style not in {"factual", "minimal"}:
+        raise ValueError("build_output_quality_repair_ticket.style must be accepted.")
+    if repair_surface is None:
+        repair_surface = allowed_write_paths
+    if any(not (isinstance(path, str) and path.strip()) for path in repair_surface):
+        raise ValueError(
+            "build_output_quality_repair_ticket.repair_surface must contain only non-empty paths."
+        )
     allowed_paths = ", ".join(allowed_write_paths) or "<none>"
     failing_checks = ", ".join(evaluation.failing_checks) or "<none>"
+    if style == "minimal":
+        repair_surface_text = ", ".join(repair_surface) or "<none>"
+        return (
+            "Repair the previous submission without widening scope.\n\n"
+            f"failure_class: {evaluation.failure_class}\n"
+            f"failing_checks: {failing_checks}\n"
+            f"repair_surface: {repair_surface_text}"
+        )
     return (
         "Repair the previous submission without widening scope.\n\n"
         f"failure_class: {evaluation.failure_class}\n"

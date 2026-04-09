@@ -23,6 +23,10 @@ from cortex.runtime.openai_host_control import (  # noqa: E402
     OpenAIResponseStreamTransportError,
     run_openai_host_control,
 )
+from cortex.runtime.openai_host_control_experiments import (  # noqa: E402
+    OpenAIHostControlAblationConfig,
+    run_openai_host_control_experiment,
+)
 from cortex.runtime.verified_work_runtime import (  # noqa: E402
     build_verified_work_instructions,
     build_verified_work_repair_ticket,
@@ -501,6 +505,7 @@ def run_active_conformance(
     brains: tuple[Brain, ...],
     contract_pack: ContractPack | None = None,
     max_repair_turns_override: int | None = None,
+    openai_ablation_config: OpenAIHostControlAblationConfig | None = None,
 ) -> dict[str, Any]:
     load_local_env_file()
     pack = contract_pack or active_contract_pack()
@@ -557,12 +562,21 @@ def run_active_conformance(
                 )
             )
             continue
-        result = _run_conformance(brain=brain, surface=surface, contract_pack=pack, run_root=run_root)
+        result = _run_conformance(
+            brain=brain,
+            surface=surface,
+            contract_pack=pack,
+            run_root=run_root,
+            openai_ablation_config=openai_ablation_config,
+        )
         results.append(result)
 
     summary = {
         "generated_at": now_utc_iso(),
         "contract_pack": pack.as_payload(),
+        "openai_ablation_config": (
+            openai_ablation_config.as_payload() if openai_ablation_config is not None else None
+        ),
         "shipping_truth": {
             "default": pack.shipping_default,
             "note": "Shipping truth may remain narrower than development conformance truth.",
@@ -664,6 +678,31 @@ def main(argv: list[str] | None = None) -> int:
         choices=(0, 1),
         default=None,
     )
+    parser.add_argument(
+        "--visible-contract-binding",
+        choices=("on", "off"),
+        default="on",
+    )
+    parser.add_argument(
+        "--verification-binding",
+        choices=("on", "off"),
+        default="on",
+    )
+    parser.add_argument(
+        "--repair-turn",
+        choices=("on", "off"),
+        default="on",
+    )
+    parser.add_argument(
+        "--repair-ticket-style",
+        choices=("factual", "minimal"),
+        default="factual",
+    )
+    parser.add_argument(
+        "--visible-context-variant",
+        choices=("default", "writable_files_only", "writable_files_plus_visible_tests"),
+        default="default",
+    )
     args = parser.parse_args(argv)
 
     brains: tuple[Brain, ...]
@@ -673,6 +712,13 @@ def main(argv: list[str] | None = None) -> int:
         brains = (args.brain,)  # type: ignore[assignment]
 
     pack = contract_pack_by_name(args.contract_pack)
+    openai_ablation_config = OpenAIHostControlAblationConfig(
+        visible_contract_binding=args.visible_contract_binding,
+        verification_binding=args.verification_binding,
+        repair_turn=args.repair_turn,
+        repair_ticket_style=args.repair_ticket_style,
+        visible_context_variant=args.visible_context_variant,
+    )
 
     if args.mode == "preflight":
         payload = build_preflight_report(brains=brains, contract_pack=pack)
@@ -683,6 +729,7 @@ def main(argv: list[str] | None = None) -> int:
             brains=brains,
             contract_pack=pack,
             max_repair_turns_override=args.max_repair_turns,
+            openai_ablation_config=openai_ablation_config,
         )
     print(json.dumps(payload, indent=2, sort_keys=True))
     return 0
@@ -694,9 +741,14 @@ def _run_conformance(
     surface: Surface,
     contract_pack: ContractPack,
     run_root: Path,
+    openai_ablation_config: OpenAIHostControlAblationConfig | None = None,
 ) -> ConformanceRunResult:
     if brain == "openai" and surface == "service_api":
-        return _run_openai_service_conformance(contract_pack=contract_pack, run_root=run_root)
+        return _run_openai_service_conformance(
+            contract_pack=contract_pack,
+            run_root=run_root,
+            openai_ablation_config=openai_ablation_config,
+        )
     if brain == "claude" and surface == "operator_cli":
         return _run_claude_cli_conformance(contract_pack=contract_pack, run_root=run_root)
     if brain == "gemini" and surface == "operator_cli":
@@ -714,6 +766,7 @@ def _run_openai_service_conformance(
     *,
     contract_pack: ContractPack,
     run_root: Path,
+    openai_ablation_config: OpenAIHostControlAblationConfig | None = None,
 ) -> ConformanceRunResult:
     artifact_dir = run_root / "openai_service_api"
     request = OpenAIHostControlRequest(
@@ -723,7 +776,13 @@ def _run_openai_service_conformance(
         work_contract=contract_pack.work_contract,
     )
     try:
-        result, session = run_openai_host_control(request)
+        if openai_ablation_config is None or openai_ablation_config.is_default():
+            result, session = run_openai_host_control(request)
+        else:
+            result, session = run_openai_host_control_experiment(
+                request,
+                ablation_config=openai_ablation_config,
+            )
     except OpenAIResponseStreamTransportError as exc:
         failure_class = classify_failure(str(exc))
         divergence = "env_blocked" if failure_class in BLOCKING_FAILURE_CLASSES else "surface_wiring"

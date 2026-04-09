@@ -94,6 +94,20 @@ They do **not** require a literal continuous solver, and they may be realized us
 The primary implementation picture is **discrete and bounded**.
 Continuous notation is secondary and explanatory.
 
+### 1.6 Domain-general improvement rule
+
+Future executive improvements should be framed first as **domain-general baskets**.
+
+Representative baskets include:
+- continuity / invariance preservation,
+- constraint-fit,
+- verification-fit,
+- repair-without-drift,
+- and other bounded executive control families that do not presume one artifact domain.
+
+Domain-specific binding belongs outside SRE.
+SRE owns the general executive basket, not the code-specific, writing-specific, or benchmark-specific adapter logic used to realize that basket on one proving surface.
+
 ---
 
 ## 2. SRE boundary contract with core

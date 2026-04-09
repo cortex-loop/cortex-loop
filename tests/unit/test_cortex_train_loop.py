@@ -592,3 +592,108 @@ def test_run_output_quality_comparison_openai_train_escalates_on_env_block(
 
     assert record.final_decision == "escalate"
     assert "env/auth blocked" in record.iterations[0].reason
+
+
+def test_run_causal_contribution_map_openai_train_promotes_on_repeat_stable_classification(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    def _fake_short_command(command, *, cwd):
+        _ = cwd
+        if "pytest -q" in command or "make revalidate-openai-host-control" in command:
+            return {
+                "command": command,
+                "cwd": str(cwd),
+                "exit_code": 0,
+                "stdout": "",
+                "stderr": "",
+            }
+        payload = {
+            "openai_ablation_config": None,
+            "results": [
+                {
+                    "brain": "openai",
+                    "status": "conformant",
+                    "attempt_count": 1,
+                    "repair_conversion": "passed_without_repair",
+                }
+            ],
+        }
+        if "--verification-binding off --repair-turn off" in command:
+            payload = {
+                "openai_ablation_config": {
+                    "verification_binding": "off",
+                    "repair_turn": "off",
+                },
+                "results": [
+                    {
+                        "brain": "openai",
+                        "status": "partial",
+                        "attempt_count": 1,
+                        "repair_conversion": "failed_without_repair",
+                    }
+                ],
+            }
+        return {
+            "command": command,
+            "cwd": str(cwd),
+            "exit_code": 0,
+            "stdout": json.dumps(payload),
+            "stderr": "",
+        }
+
+    def _fake_long_command(command, *, cwd):
+        _ = cwd
+        payload = {
+            "env_blocked": False,
+            "pairwise_summary": {
+                "cortex_vs_raw": {"wins": 2, "losses": 1, "ties": 2, "win_rate": 0.4},
+                "cortex_vs_tooling_only": {
+                    "wins": 2,
+                    "losses": 1,
+                    "ties": 2,
+                    "win_rate": 0.4,
+                },
+            },
+            "aggregate_objective_pass_count": {"cortex": 3},
+            "aggregate_hidden_quality_pass_count": {"cortex": 2},
+        }
+        if "--verification-binding off --repair-turn off" in command:
+            payload = {
+                "env_blocked": False,
+                "pairwise_summary": {
+                    "cortex_vs_raw": {"wins": 0, "losses": 3, "ties": 2, "win_rate": 0.0},
+                    "cortex_vs_tooling_only": {
+                        "wins": 0,
+                        "losses": 3,
+                        "ties": 2,
+                        "win_rate": 0.0,
+                    },
+                },
+                "aggregate_objective_pass_count": {"cortex": 1},
+                "aggregate_hidden_quality_pass_count": {"cortex": 1},
+            }
+        return {
+            "command": command,
+            "cwd": str(cwd),
+            "exit_code": 0,
+            "stdout": json.dumps(payload),
+            "stderr": "",
+        }
+
+    monkeypatch.setattr(train_loop, "_run_shell_command", _fake_short_command)
+    monkeypatch.setattr(train_loop, "_run_long_shell_command", _fake_long_command)
+
+    note_path = tmp_path / "CORTEX_V2_CAUSAL_MAP_NOTE_0.md"
+    record = train_loop.run_causal_contribution_map_openai_train(
+        loop_root=tmp_path,
+        note_path=note_path,
+    )
+
+    assert record.final_decision == "promote"
+    assert (
+        record.analysis["component_classifications"]["revision_loop_off"]["classification"]
+        == "positive"
+    )
+    assert (tmp_path / "causal-contribution-map-openai" / "summary.json").exists()
+    assert note_path.exists()

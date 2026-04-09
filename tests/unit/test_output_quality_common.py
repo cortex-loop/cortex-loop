@@ -10,6 +10,7 @@ TOOLS_ROOT = Path(__file__).resolve().parents[2] / "tools"
 if str(TOOLS_ROOT) not in sys.path:
     sys.path.insert(0, str(TOOLS_ROOT))
 
+from output_quality_ablation import OutputQualityAblationConfig
 from output_quality_common import (
     OutputQualityTaskPack,
     build_output_quality_input_text,
@@ -55,6 +56,28 @@ def test_build_output_quality_input_text_hides_verifier_only_context(tmp_path: P
     assert "=== CONTEXT FILE: src/app.ts ===" in tooling_input
     assert "=== CONTEXT FILE: README_TASK.md ===" in tooling_input
     assert "hidden.spec.ts" not in tooling_input
+
+
+def test_build_output_quality_input_text_supports_ablation_variants(tmp_path: Path) -> None:
+    task_pack = _task_pack(tmp_path)
+
+    no_context = build_output_quality_input_text(
+        task_pack,
+        arm="cortex",
+        ablation_config=OutputQualityAblationConfig(visible_contract_binding="off"),
+    )
+    writable_only = build_output_quality_input_text(
+        task_pack,
+        arm="cortex",
+        ablation_config=OutputQualityAblationConfig(
+            visible_context_variant="writable_files_only",
+        ),
+    )
+
+    assert "=== CONTEXT FILE:" not in no_context
+    assert "=== CONTEXT FILE: src/app.ts ===" in writable_only
+    assert "=== CONTEXT FILE: README_TASK.md ===" not in writable_only
+    assert "=== CONTEXT FILE: tests/visible.spec.ts ===" not in writable_only
 
 
 def test_parse_output_quality_result_accepts_full_file_blocks() -> None:

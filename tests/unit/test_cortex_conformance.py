@@ -529,8 +529,53 @@ def test_run_active_conformance_does_not_publish_latest_for_targeted_runs(
     summary = conformance.run_active_conformance(brains=("openai",))
 
     assert summary["results"][0]["brain"] == "openai"
+    assert summary["openai_ablation_config"] is None
     assert not (tmp_path / "summary.latest.json").exists()
     assert not (tmp_path / "summary.latest.md").exists()
+
+
+def test_run_active_conformance_records_openai_ablation_config(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(conformance, "CONFORMANCE_ROOT", tmp_path)
+    monkeypatch.setattr(conformance, "now_utc_iso", lambda: "2026-04-08T08:30:00+00:00")
+    monkeypatch.setattr(conformance, "load_local_env_file", lambda: None)
+    monkeypatch.setattr(
+        conformance,
+        "preflight_surface",
+        lambda _brain, _surface: conformance.SurfaceProbe(
+            brain="openai",
+            surface="service_api",
+            status="conformant",
+            reason="ready",
+        ),
+    )
+    monkeypatch.setattr(
+        conformance,
+        "_run_conformance",
+        lambda **_kwargs: conformance.ConformanceRunResult(
+            brain="openai",
+            surface="service_api",
+            contract_pack="verified_work_bookmarks_v1",
+            status="conformant",
+            attempt_count=1,
+            verification_status="passed",
+            parseable=True,
+            import_smoke_ok=True,
+            pytest_passed=11,
+            repair_conversion="passed_without_repair",
+        ),
+    )
+
+    summary = conformance.run_active_conformance(
+        brains=("openai",),
+        openai_ablation_config=conformance.OpenAIHostControlAblationConfig(
+            verification_binding="off",
+        ),
+    )
+
+    assert summary["openai_ablation_config"]["verification_binding"] == "off"
 
 
 def test_run_active_conformance_keeps_bookmarks_as_only_latest_summary_anchor(
@@ -559,7 +604,7 @@ def test_run_active_conformance_keeps_bookmarks_as_only_latest_summary_anchor(
     monkeypatch.setattr(
         conformance,
         "_run_conformance",
-        lambda *, brain, surface, contract_pack, run_root: conformance.ConformanceRunResult(
+        lambda *, brain, surface, contract_pack, run_root, **_kwargs: conformance.ConformanceRunResult(
             brain=brain,
             surface=surface,
             contract_pack=contract_pack.contract_pack,
@@ -620,7 +665,7 @@ def test_run_active_conformance_does_not_publish_feature_flags_as_latest_summary
     monkeypatch.setattr(
         conformance,
         "_run_conformance",
-        lambda *, brain, surface, contract_pack, run_root: conformance.ConformanceRunResult(
+        lambda *, brain, surface, contract_pack, run_root, **_kwargs: conformance.ConformanceRunResult(
             brain=brain,
             surface=surface,
             contract_pack=contract_pack.contract_pack,

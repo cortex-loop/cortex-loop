@@ -45,14 +45,35 @@ It is workflow state only. It does not override the packet documents, implementa
     - OpenAI `service_api`: conformant on three repeated targeted current reruns; bounded read-only workspace context now exposes the writable-file and test contract, and the shipping-default lane passes the bookmarks pack on attempt `1`
     - Claude `operator_cli`: no longer divergent on truthful staged-workspace runs; two focused reruns passed on attempt `1`, while repeated full tri-brain reruns hit Anthropic `529 overloaded_error` before structured output and therefore count as `env_blocked`, not protocol drift
     - Gemini `operator_cli`: conformant on the corrected current line; staged workspace truth removes the earlier `read_file` miss, and repeated full reruns now pass the bookmarks pack
+  - accepted larger-task evidence is currently strongest for `domain = coding_webapp`
+  - that coding-domain evidence is useful but is not yet general Cortex proof
 
 ## 2. Current campaign and seam state
 
 - Current campaign: `P1 product-first reduction program`
-- Current working branch at ledger update: `review/e12-comparative-output-quality-eval`
-- Current branch role: explicit manual/review branch for the E12 comparative output-quality eval train while the accepted baseline remains local `main`
-- Current candidate seam: `E12 comparative output-quality eval train`
+- Current working branch at ledger update: `review/e18-causal-contribution-map`
+- Current branch role: explicit manual/review branch for the E18 causal contribution map train while the accepted baseline remains local `main`
+- Current candidate seam: `E18 causal contribution map train`
 - Current seam status:
+  - the accepted local `main` line now includes the E12 comparative output-quality benchmark and train wiring as evaluation-only accepted truth
+  - the accepted larger-task evidence on local `main` is strongest for `domain = coding_webapp`, not for general cross-domain Cortex claims
+  - the E14 continuity-fit candidate family was cut
+  - the E15 task-set-gate candidate family escalated/cut without earning acceptance
+  - the E16 selective-gating candidate family was cut
+  - the E17 executive basket-selection seam was cut; no candidate basket earned an SRE home
+  - the active E18 seam is evaluation-only and instrumentation-only:
+    - determine which already-landed Cortex interventions are helping, neutral, or degrading output
+    - use the fixed E12 benchmark and the accepted O4R verified-work lane as the only proof surfaces
+    - do not widen runtime law or shipping truth while building the causal map
+    - deterministic proof is green on this review branch
+    - the live causal-map proof is still incomplete on this branch; no honest component classifications are recorded yet
+    - current pause point on this branch:
+      - earlier pause artifacts remain preserved under `.cortex/live_validation/output_quality/openai/run_20260409T072136+0000`, `.cortex/live_validation/output_quality/openai/run_20260409T073300+0000`, and `.cortex/live_validation/output_quality/openai/run_20260409T074914+0000`
+      - the deeper rerun pause now preserved on this branch is:
+        - fresh rerun E12 baseline completed under `.cortex/live_validation/output_quality/openai/run_20260409T085424+0000`
+        - `visible_contract_binding = off` initial rerun completed under `.cortex/live_validation/output_quality/openai/run_20260409T090634+0000`
+        - `visible_contract_binding = off` repeat rerun completed under `.cortex/live_validation/output_quality/openai/run_20260409T092159+0000`
+        - the next follow-on run was intentionally stopped under `.cortex/live_validation/output_quality/openai/run_20260409T093800+0000` after `1` written `result.json` artifact so the branch could pause again without losing evidence
   - accepted baseline truth on local `main` now includes the C3B brutal closed-loop train method on top of the accepted E8 third-pack verified-work breadth slice
   - A0, P1C, S1, S1C, X1, X2, the first verified-work restoration slice, the Cortex-law / fast-train method slice, the verified-work neutralization / conformance-correction slice, the Claude operator workspace-truth slice, the OpenAI verified-work context slice, the C3B brutal closed-loop train method, the E7 second-pack verified-work breadth slice, the E8 third-pack verified-work breadth slice, and the E9 repair-yield measurement slice are now accepted on local `main`
   - the explicit `current|canonical_anchor` direct-API service suites remain accepted on the current line
@@ -148,7 +169,7 @@ It is workflow state only. It does not override the packet documents, implementa
     - one explicit live result under `.cortex/train_loops/verified-work-repair-yield-openai/summary.json` where two full paired rounds execute across the three accepted packs, one-shot control is `11/12` conformant, repair-enabled candidate is `12/12` conformant, and repair opportunities remain `0`
     - one honest train outcome where `final_decision = escalate` because natural failures were too rare to measure repair yield on the current line
     - one explicit cut where the richer repair-ticket/runtime change was removed after it failed to beat the one-shot control
-  - the current E12 comparative output-quality eval slice on this review branch now adds:
+  - the accepted E12 comparative output-quality eval slice on local `main` now adds:
     - one evaluation-only output-quality task family under `tests/fixtures/live_validation/output_quality/`
     - one maintainer-only comparative runner at `tools/cortex_output_quality.py`
     - one hidden grading layer at `tools/output_quality_grader.py`
@@ -157,16 +178,22 @@ It is workflow state only. It does not override the packet documents, implementa
     - one review-branch goal of comparing `raw`, `tooling_only`, and `cortex` outputs on the same human-style web task prompts without widening shipping truth or Cortex law
     - one explicit live result under `.cortex/train_loops/output-quality-comparison-openai/summary.json` where `final_decision = promote`, the pairwise primary metric lifts from `0` to `40`, aggregate Cortex objective passes are not worse than raw, aggregate hidden-quality passes are positive over raw, and the repeated run does not flip Cortex from win to loss
     - one direct benchmark artifact pair under `.cortex/live_validation/output_quality/openai/run_20260408T135712+0000` and `.cortex/live_validation/output_quality/openai/run_20260408T140659+0000`
-  - this E12 slice is active on the current review branch and is not yet accepted on local `main`
+  - the current E18 causal-map slice on this review branch now adds:
+    - one evaluation-only ablation wrapper over the accepted OpenAI verified-work lane
+    - one matching evaluation-only ablation config on the E12 output-quality harness
+    - one staged causal-contribution map train over the fixed E12 and O4R proof surfaces
+    - one report note at `docs/CORTEX_V2_CAUSAL_MAP_NOTE_0.md`
+    - one corrected train-note write path so repo tests no longer overwrite the real causal-map note with tmp-path results
 
 ## 3. Next lawful move
 
 - No active verified-work shipping-gap seam remains on the accepted local `main` line.
 - The accepted executive-restoration correction is now landed on the current OpenAI realization.
 - While this explicit review branch remains open, the next lawful move is:
-  - manually merge or deliberately reject the E12 review branch before opening another runtime/product seam
+  - finish the E18 causal-map seam and classify the current landed interventions before proposing another executive mechanism
+  - reread `docs/CORTEX_V2_CAUSAL_MAP_NOTE_0.md` for the exact pause artifacts, then either rerun `python3 tools/cortex_train_loop.py --train causal-contribution-map-openai` cleanly from this branch or open one tiny evaluation-only resume/caching seam first because the current train loop does not yet support mid-run resume
   - keep accepted-baseline truth separate from the review-branch candidate state
-- After this E12 slice is accepted, later runtime/product seams should default to:
+- After this E18 slice is accepted, later runtime/product seams should default to:
   - write the `Train Charter` first
   - record one baseline result before the first edit or candidate proof run
   - choose exactly one primary metric and one guardrail metric
@@ -183,10 +210,9 @@ It is workflow state only. It does not override the packet documents, implementa
   - keep the default thin path unchanged and keep the landed verified-work lane outside canonical-anchor proof
   - keep repeated-failure inhibition and automatic carrier selection deferred until new evidence earns them
   - open any later shipping-truth widening beyond OpenAI only through an explicit separate host shipping train
-- After this E12 slice is accepted, bookmarks should remain the accepted `CT2` anchor pack unless a later deliberate breadth-closure move says otherwise.
-- After this E12 slice is accepted, the next product-facing move should depend on the comparative benchmark reading:
-  - if Cortex shows a repeat-stable output-quality advantage, open a narrow SRE/runtime improvement seam against the frozen benchmark
-  - if Cortex does not show clear advantage, inspect why the bounded runtime loop is not improving actual code quality before widening the assay again
+- After this E18 causal-map slice is accepted, the next product-facing move should depend on the classification result:
+  - if one current intervention is repeat-stably positive or negative, open one narrow runtime/product seam that strengthens the positive component and cuts the negative one
+  - if all current interventions remain neutral or mixed, open a broader invariance/preservation reframe instead of another prompt-control train
 - Keep shipping-truth widening separate from conformance work:
   - `claude` may be conformance-required on `operator_cli` before any later Claude shipping train opens
   - `gemini` may be conformance-required on its strongest native surface before any later Gemini shipping train opens
