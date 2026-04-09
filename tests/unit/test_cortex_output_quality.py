@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from contextlib import contextmanager
 import sys
 from pathlib import Path
 
@@ -119,6 +120,17 @@ def test_build_suite_summary_counts_pairwise_wins() -> None:
     assert summary["pairwise_summary"]["cortex_vs_raw"]["win_rate"] == 1.0
     assert summary["pairwise_summary"]["cortex_vs_tooling_only"]["ties"] == 1
     assert summary["ablation_config"]["verification_binding"] == "off"
+    assert summary["surface"] == "service_api"
+
+
+def test_build_output_quality_operator_prompt_uses_workspace_editing_not_file_blocks() -> None:
+    task_pack = output_quality.task_pack_by_name("astro_docs_site_v1")
+
+    prompt = output_quality.build_output_quality_operator_prompt(task_pack, arm="tooling_only")
+
+    assert "Edit the workspace directly" in prompt
+    assert "=== FILE:" not in prompt
+    assert "Visible contract files follow." in prompt
 
 
 def test_run_arm_skips_repair_when_verification_binding_is_off(
@@ -194,3 +206,87 @@ def test_main_requires_service_spend_approval(monkeypatch: pytest.MonkeyPatch) -
 
     with pytest.raises(SystemExit, match="service-lane spend is blocked"):
         output_quality.main([])
+
+
+def test_main_allows_operator_cli_without_service_spend_approval(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.delenv("CORTEX_LIVE_SERVICE_SPEND_APPROVED", raising=False)
+    monkeypatch.setattr(
+        output_quality,
+        "run_output_quality_suite",
+        lambda **_kwargs: {"surface": "operator_cli", "arms": [], "pairwise_summary": {}},
+    )
+
+    assert output_quality.main(["--surface", "operator_cli"]) == 0
+
+
+def test_run_arm_operator_cli_skips_repair_when_verification_binding_is_off(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    task_pack = output_quality.task_pack_by_name("astro_docs_site_v1")
+    operator_calls: list[dict[str, object]] = []
+
+    @contextmanager
+    def _fake_env():
+        yield {}
+
+    monkeypatch.setattr(output_quality, "isolated_codex_home_env", _fake_env)
+    monkeypatch.setattr(
+        output_quality,
+        "prepare_seeded_workspace",
+        lambda **_kwargs: tmp_path,
+    )
+    monkeypatch.setattr(
+        output_quality,
+        "run_openai_operator_single_turn",
+        lambda **kwargs: operator_calls.append(kwargs) or {
+            "failure_class": None,
+            "model": "gpt-5.3-codex",
+            "attempted_models": ["gpt-5.3-codex"],
+            "thread_id": "thread-1",
+            "output_text": "done",
+        },
+    )
+    monkeypatch.setattr(
+        output_quality,
+        "_evaluate_operator_turn_output",
+        lambda **_kwargs: {
+            "evaluation": {
+                "status": "failed",
+                "failure_class": "hidden_test_failed",
+                "objective_pass": True,
+                "hidden_quality_pass": False,
+                "failing_checks": ["hidden_test"],
+                "first_failure_excerpt": "missing hidden integration",
+                "checks": [],
+            },
+            "changed_files": {},
+            "repairable": True,
+            "parse": {
+                "parse_error": None,
+                "blocked_reason": None,
+                "blocked_message": None,
+                "parsed_paths": [],
+            },
+        },
+    )
+    monkeypatch.setattr(output_quality, "write_json", lambda *_args, **_kwargs: None)
+
+    result = output_quality._run_arm(
+        task_pack=task_pack,
+        arm="cortex",
+        model="gpt-5.3-codex",
+        surface="operator_cli",
+        task_root=tmp_path,
+        seed_workspace=tmp_path,
+        shared_install_result={"exit_code": 0, "stdout": "", "stderr": ""},
+        ablation_config=OutputQualityAblationConfig(
+            verification_binding="off",
+            repair_turn="on",
+        ),
+    )
+
+    assert result["attempt_count"] == 1
+    assert len(operator_calls) == 1

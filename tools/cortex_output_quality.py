@@ -6,7 +6,7 @@ import argparse
 import json
 import sys
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
 
 ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
@@ -19,11 +19,18 @@ from cortex.runtime.openai_host_transport import (
 )
 
 from live_validation_common import (
+    BLOCKING_FAILURE_CLASSES,
+    collect_modified_files,
     LOCAL_LIVE_ROOT,
     load_local_env_file,
     now_utc_iso,
     write_json,
     write_text,
+)
+from openai_operator_cli import (
+    isolated_codex_home_env,
+    run_openai_operator_resumed_turn,
+    run_openai_operator_single_turn,
 )
 from output_quality_ablation import OutputQualityAblationConfig
 from output_quality_common import (
@@ -34,10 +41,12 @@ from output_quality_common import (
     parse_output_quality_result,
     prepare_output_quality_workspace,
     prepare_seeded_workspace,
+    render_context_bundle,
     snapshot_files,
     stable_pair_order,
 )
 from output_quality_grader import (
+    OutputQualityEvaluation,
     build_output_quality_repair_ticket,
     evaluate_workspace,
     judge_pairwise_merge_worthiness,
@@ -47,7 +56,12 @@ from service_spend_gate import require_openai_service_spend_approval
 
 OUTPUT_QUALITY_ROOT = LOCAL_LIVE_ROOT / "output_quality"
 DEFAULT_ARMS: tuple[ArmName, ...] = ("raw", "tooling_only", "cortex")
-DEFAULT_MODEL = "gpt-5.4"
+OutputQualitySurface = Literal["service_api", "operator_cli"]
+DEFAULT_SURFACE: OutputQualitySurface = "service_api"
+DEFAULT_MODEL_BY_SURFACE: dict[OutputQualitySurface, str] = {
+    "service_api": "gpt-5.4",
+    "operator_cli": "gpt-5.3-codex",
+}
 
 
 def task_pack_by_name(task_id: str) -> OutputQualityTaskPack:
@@ -62,17 +76,27 @@ def supported_task_ids() -> tuple[str, ...]:
     return tuple(_task_pack_registry())
 
 
+def _surface_artifact_label(surface: OutputQualitySurface) -> str:
+    if surface == "service_api":
+        return "openai"
+    if surface == "operator_cli":
+        return "openai_operator_cli"
+    raise ValueError(f"Unsupported output-quality surface `{surface}`.")
+
+
 def run_output_quality_suite(
     *,
     task_ids: tuple[str, ...],
     arms: tuple[ArmName, ...] = DEFAULT_ARMS,
-    model: str = DEFAULT_MODEL,
+    model: str | None = None,
+    surface: OutputQualitySurface = DEFAULT_SURFACE,
     artifact_root: Path = OUTPUT_QUALITY_ROOT,
     ablation_config: OutputQualityAblationConfig | None = None,
 ) -> dict[str, Any]:
     load_local_env_file()
     run_id = now_utc_iso().replace(":", "").replace("-", "")
-    run_root = artifact_root / "openai" / f"run_{run_id}"
+    run_root = artifact_root / _surface_artifact_label(surface) / f"run_{run_id}"
+    selected_model = model or DEFAULT_MODEL_BY_SURFACE[surface]
     results: dict[str, Any] = {}
     aggregate_objective = {arm: 0 for arm in arms}
     aggregate_hidden = {arm: 0 for arm in arms}
@@ -92,7 +116,8 @@ def run_output_quality_suite(
             arm_result = _run_arm(
                 task_pack=task_pack,
                 arm=arm,
-                model=model,
+                model=selected_model,
+                surface=surface,
                 task_root=task_root,
                 seed_workspace=seed_workspace,
                 shared_install_result=shared_install_result,
@@ -109,6 +134,7 @@ def run_output_quality_suite(
             task_pack=task_pack,
             arms=arms,
             arm_results=arm_results,
+            surface=surface,
         )
         pairwise_results.extend(comparisons)
         results[task_id] = {
@@ -122,7 +148,8 @@ def run_output_quality_suite(
         run_root=run_root,
         task_ids=task_ids,
         arms=arms,
-        model=model,
+        model=selected_model,
+        surface=surface,
         task_results=results,
         aggregate_objective=aggregate_objective,
         aggregate_hidden=aggregate_hidden,
@@ -132,7 +159,10 @@ def run_output_quality_suite(
     )
     write_json(run_root / "summary.json", summary)
     write_text(run_root / "summary.md", _render_summary_markdown(summary))
-    write_json(OUTPUT_QUALITY_ROOT / "summary.latest.json", summary)
+    latest_path = OUTPUT_QUALITY_ROOT / f"summary.latest.{surface}.json"
+    write_json(latest_path, summary)
+    if surface == "service_api":
+        write_json(OUTPUT_QUALITY_ROOT / "summary.latest.json", summary)
     return summary
 
 
@@ -145,6 +175,38 @@ def _run_shared_install(task_pack: OutputQualityTaskPack, seed_workspace: Path) 
 
 
 def _run_arm(
+    *,
+    task_pack: OutputQualityTaskPack,
+    arm: ArmName,
+    model: str,
+    surface: OutputQualitySurface = DEFAULT_SURFACE,
+    task_root: Path,
+    seed_workspace: Path,
+    shared_install_result: dict[str, Any],
+    ablation_config: OutputQualityAblationConfig | None,
+) -> dict[str, Any]:
+    if surface == "operator_cli":
+        return _run_operator_cli_arm(
+            task_pack=task_pack,
+            arm=arm,
+            model=model,
+            task_root=task_root,
+            seed_workspace=seed_workspace,
+            shared_install_result=shared_install_result,
+            ablation_config=ablation_config,
+        )
+    return _run_service_api_arm(
+        task_pack=task_pack,
+        arm=arm,
+        model=model,
+        task_root=task_root,
+        seed_workspace=seed_workspace,
+        shared_install_result=shared_install_result,
+        ablation_config=ablation_config,
+    )
+
+
+def _run_service_api_arm(
     *,
     task_pack: OutputQualityTaskPack,
     arm: ArmName,
@@ -240,6 +302,107 @@ def _run_arm(
     }
 
 
+def _run_operator_cli_arm(
+    *,
+    task_pack: OutputQualityTaskPack,
+    arm: ArmName,
+    model: str,
+    task_root: Path,
+    seed_workspace: Path,
+    shared_install_result: dict[str, Any],
+    ablation_config: OutputQualityAblationConfig | None,
+) -> dict[str, Any]:
+    prompt_text = task_pack.prompt_text.strip()
+    cortex_ablation = ablation_config if arm == "cortex" else None
+    input_text = build_output_quality_operator_prompt(
+        task_pack,
+        arm=arm,
+        ablation_config=cortex_ablation,
+    )
+    workspace_root = prepare_seeded_workspace(
+        template_root=task_pack.template_root,
+        seed_workspace_root=seed_workspace,
+        run_root=task_root / arm / "workspace",
+    )
+    attempt1_root = task_root / arm / "attempt1"
+    with isolated_codex_home_env() as env:
+        initial_turn = run_openai_operator_single_turn(
+            project_root=workspace_root,
+            prompt=input_text,
+            scenario_id=f"output_quality_{task_pack.task_id}_{arm}_attempt1",
+            stderr_path=attempt1_root / "operator.stderr.log",
+            ephemeral=arm != "cortex",
+            env=env,
+            model=model,
+        )
+        attempt1_payload = _evaluate_operator_turn_output(
+            task_pack=task_pack,
+            project_root=workspace_root,
+            output_text=initial_turn["output_text"],
+            shared_install_result=shared_install_result,
+            failure_class=initial_turn["failure_class"],
+            attempted_models=initial_turn["attempted_models"],
+            thread_id=initial_turn["thread_id"],
+        )
+        attempt1_payload["output_text"] = initial_turn["output_text"]
+        attempt1_payload["input_text"] = input_text
+        write_json(attempt1_root / "result.json", attempt1_payload)
+
+        final_payload = attempt1_payload
+        attempt_count = 1
+        if (
+            arm == "cortex"
+            and attempt1_payload["repairable"]
+            and initial_turn["thread_id"] is not None
+            and (cortex_ablation is None or cortex_ablation.repair_turn == "on")
+            and (cortex_ablation is None or cortex_ablation.verification_binding == "on")
+        ):
+            repair_ticket = build_output_quality_repair_ticket(
+                evaluation=evaluate_workspace_payload(attempt1_payload["evaluation"]),
+                allowed_write_paths=task_pack.allowed_write_paths,
+                style=(
+                    cortex_ablation.repair_ticket_style
+                    if cortex_ablation is not None
+                    else "factual"
+                ),
+                repair_surface=task_pack.allowed_write_paths,
+            )
+            repair_turn = run_openai_operator_resumed_turn(
+                project_root=workspace_root,
+                prompt=repair_ticket,
+                model=initial_turn["model"],
+                thread_id=initial_turn["thread_id"],
+                stderr_path=(task_root / arm / "attempt2" / "operator.stderr.log"),
+                env=env,
+            )
+            attempt2_root = task_root / arm / "attempt2"
+            attempt2_payload = _evaluate_operator_turn_output(
+                task_pack=task_pack,
+                project_root=workspace_root,
+                output_text=repair_turn["output_text"],
+                shared_install_result=shared_install_result,
+                failure_class=repair_turn["failure_class"],
+                attempted_models=(initial_turn["attempted_models"] + [repair_turn["model"]]),
+                thread_id=repair_turn["thread_id"],
+            )
+            attempt2_payload["output_text"] = repair_turn["output_text"]
+            attempt2_payload["input_text"] = repair_ticket
+            write_json(attempt2_root / "result.json", attempt2_payload)
+            final_payload = attempt2_payload
+            attempt_count = 2
+
+    return {
+        "arm": arm,
+        "prompt_text": prompt_text,
+        "attempt_count": attempt_count,
+        "attempt1": attempt1_payload,
+        "final": final_payload,
+        "evaluation": final_payload["evaluation"],
+        "changed_files": final_payload["changed_files"],
+        "repairable": final_payload["repairable"],
+    }
+
+
 def _evaluate_turn_output(
     *,
     task_pack: OutputQualityTaskPack,
@@ -278,6 +441,203 @@ def _evaluate_turn_output(
     }
 
 
+def build_output_quality_operator_prompt(
+    task_pack: OutputQualityTaskPack,
+    *,
+    arm: ArmName,
+    ablation_config: OutputQualityAblationConfig | None = None,
+) -> str:
+    if arm == "cortex" and ablation_config is not None:
+        if ablation_config.visible_contract_binding == "off":
+            context_bundle = None
+        elif ablation_config.visible_context_variant == "writable_files_only":
+            context_bundle = render_context_bundle(
+                task_pack,
+                context_paths=tuple(task_pack.allowed_write_paths),
+            )
+        elif ablation_config.visible_context_variant == "writable_files_plus_visible_tests":
+            context_bundle = render_context_bundle(
+                task_pack,
+                context_paths=tuple(task_pack.allowed_write_paths) + _visible_test_paths(task_pack),
+            )
+        else:
+            context_bundle = render_context_bundle(task_pack)
+    elif arm == "raw":
+        context_bundle = None
+    else:
+        context_bundle = render_context_bundle(task_pack)
+
+    allowed_paths = "\n".join(f"- {path}" for path in task_pack.allowed_write_paths)
+    prompt_parts = [task_pack.prompt_text.strip()]
+    if context_bundle is not None:
+        prompt_parts.extend(
+            (
+                "Visible contract files follow. Additional verifier-only checks may run.",
+                "Use the existing files below as the visible task contract.",
+                context_bundle,
+            )
+        )
+    prompt_parts.append(
+        "\n".join(
+            (
+                "Edit the workspace directly and keep the final result mergeable.",
+                "Keep any changes within these paths:",
+                allowed_paths,
+                "You may run local checks if useful.",
+                "If essential information is missing, make no edits and reply with:",
+                "=== BLOCKED: needs_user_input ===",
+                "<message>",
+                "=== END BLOCKED ===",
+            )
+        )
+    )
+    return "\n\n".join(prompt_parts)
+
+
+def _evaluate_operator_turn_output(
+    *,
+    task_pack: OutputQualityTaskPack,
+    project_root: Path,
+    output_text: str | None,
+    shared_install_result: dict[str, Any],
+    failure_class: str | None,
+    attempted_models: list[str],
+    thread_id: str | None,
+) -> dict[str, Any]:
+    modified_files = collect_modified_files(project_root)
+    allowed_path_set = set(task_pack.allowed_write_paths)
+    disallowed_paths = sorted(path for path in modified_files if path not in allowed_path_set)
+    changed_allowed_paths = tuple(path for path in task_pack.allowed_write_paths if path in modified_files)
+    changed_files = snapshot_files(root=project_root, relative_paths=changed_allowed_paths)
+
+    if failure_class in BLOCKING_FAILURE_CLASSES:
+        evaluation = OutputQualityEvaluation(
+            status="env_blocked",
+            failure_class=failure_class,
+            objective_pass=False,
+            hidden_quality_pass=False,
+            failing_checks=("operator",),
+            first_failure_excerpt=output_text,
+            checks=(dict(shared_install_result, check_name="install"),),
+        )
+        return _operator_payload(
+            evaluation=evaluation,
+            parse_error=None,
+            blocked_reason=None,
+            blocked_message=None,
+            parsed_paths=tuple(changed_allowed_paths),
+            changed_files=changed_files,
+            attempted_models=attempted_models,
+            thread_id=thread_id,
+        )
+
+    if disallowed_paths:
+        evaluation = OutputQualityEvaluation(
+            status="failed",
+            failure_class="output_invalid",
+            objective_pass=False,
+            hidden_quality_pass=False,
+            failing_checks=("operator",),
+            first_failure_excerpt=f"operator modified unapproved path: {disallowed_paths[0]}",
+            checks=(dict(shared_install_result, check_name="install"),),
+        )
+        return _operator_payload(
+            evaluation=evaluation,
+            parse_error=f"operator modified unapproved path: {disallowed_paths[0]}",
+            blocked_reason=None,
+            blocked_message=None,
+            parsed_paths=tuple(changed_allowed_paths),
+            changed_files=changed_files,
+            attempted_models=attempted_models,
+            thread_id=thread_id,
+        )
+
+    if not changed_allowed_paths:
+        parse_result = parse_output_quality_result(
+            output_text,
+            allowed_write_paths=task_pack.allowed_write_paths,
+        )
+        if parse_result.blocked_reason is not None:
+            evaluation = _parse_failure_evaluation(
+                parse_result=parse_result,
+                shared_install_result=shared_install_result,
+            )
+            return _operator_payload(
+                evaluation=evaluation,
+                parse_error=None,
+                blocked_reason=parse_result.blocked_reason,
+                blocked_message=parse_result.blocked_message,
+                parsed_paths=(),
+                changed_files={},
+                attempted_models=attempted_models,
+                thread_id=thread_id,
+            )
+        evaluation = OutputQualityEvaluation(
+            status="failed",
+            failure_class="output_invalid",
+            objective_pass=False,
+            hidden_quality_pass=False,
+            failing_checks=("operator",),
+            first_failure_excerpt=parse_result.parse_error or output_text,
+            checks=(dict(shared_install_result, check_name="install"),),
+        )
+        return _operator_payload(
+            evaluation=evaluation,
+            parse_error=parse_result.parse_error or "operator completed without workspace edits",
+            blocked_reason=None,
+            blocked_message=None,
+            parsed_paths=(),
+            changed_files={},
+            attempted_models=attempted_models,
+            thread_id=thread_id,
+        )
+
+    evaluation = evaluate_workspace(
+        task_pack=task_pack,
+        project_root=project_root,
+        shared_install_result=shared_install_result,
+    )
+    return _operator_payload(
+        evaluation=evaluation,
+        parse_error=None,
+        blocked_reason=None,
+        blocked_message=None,
+        parsed_paths=tuple(changed_allowed_paths),
+        changed_files=changed_files,
+        attempted_models=attempted_models,
+        thread_id=thread_id,
+    )
+
+
+def _operator_payload(
+    *,
+    evaluation: OutputQualityEvaluation,
+    parse_error: str | None,
+    blocked_reason: str | None,
+    blocked_message: str | None,
+    parsed_paths: tuple[str, ...],
+    changed_files: dict[str, str],
+    attempted_models: list[str],
+    thread_id: str | None,
+) -> dict[str, Any]:
+    return {
+        "parse": {
+            "parse_error": parse_error,
+            "blocked_reason": blocked_reason,
+            "blocked_message": blocked_message,
+            "parsed_paths": sorted(parsed_paths),
+        },
+        "evaluation": evaluation.as_payload(),
+        "changed_files": changed_files,
+        "repairable": evaluation.status == "failed"
+        and evaluation.failure_class not in {"blocked_missing_info", "blocked_unsafe"},
+        "operator": {
+            "attempted_models": attempted_models,
+            "thread_id": thread_id,
+        },
+    }
+
+
 def _parse_failure_evaluation(
     *,
     parse_result: Any,
@@ -305,6 +665,7 @@ def _build_pairwise_results(
     task_pack: OutputQualityTaskPack,
     arms: tuple[ArmName, ...],
     arm_results: dict[str, Any],
+    surface: OutputQualitySurface = DEFAULT_SURFACE,
 ) -> list[dict[str, Any]]:
     pairwise: list[dict[str, Any]] = []
     for left_arm, right_arm in (("cortex", "raw"), ("cortex", "tooling_only")):
@@ -322,6 +683,7 @@ def _build_pairwise_results(
             prompt_text=task_pack.prompt_text,
             output_a=output_a,
             output_b=output_b,
+            surface=surface,
         )
         winner_arm = label_to_arm.get(judgment.winner) if judgment.winner is not None else None
         pairwise.append(
@@ -344,6 +706,7 @@ def _build_suite_summary(
     task_ids: tuple[str, ...],
     arms: tuple[ArmName, ...],
     model: str,
+    surface: OutputQualitySurface = DEFAULT_SURFACE,
     task_results: dict[str, Any],
     aggregate_objective: dict[str, int],
     aggregate_hidden: dict[str, int],
@@ -378,6 +741,7 @@ def _build_suite_summary(
         "generated_at": now_utc_iso(),
         "artifact_root": artifact_root,
         "provider": "openai",
+        "surface": surface,
         "model": model,
         "ablation_config": (
             ablation_config.as_payload() if ablation_config is not None else None
@@ -396,6 +760,7 @@ def _render_summary_markdown(summary: dict[str, Any]) -> str:
     lines = [
         "# Output Quality Summary",
         "",
+        f"- surface: `{summary['surface']}`",
         f"- model: `{summary['model']}`",
         f"- arms: `{', '.join(summary['arms'])}`",
         f"- env_blocked: `{summary['env_blocked']}`",
@@ -625,6 +990,14 @@ def _read_task_prompt(path: Path) -> str:
     return path.read_text(encoding="utf-8")
 
 
+def _visible_test_paths(task_pack: OutputQualityTaskPack) -> tuple[str, ...]:
+    return tuple(
+        path
+        for path in task_pack.visible_context_paths
+        if "test" in path.lower()
+    )
+
+
 def evaluate_workspace_payload(payload: dict[str, Any]):
     from output_quality_grader import OutputQualityEvaluation
 
@@ -642,7 +1015,7 @@ def evaluate_workspace_payload(payload: dict[str, Any]):
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         prog="python3 tools/cortex_output_quality.py",
-        description="Run the E12 comparative output-quality benchmark on the OpenAI lane.",
+        description="Run the E12 comparative output-quality benchmark on the OpenAI service or operator lane.",
     )
     parser.add_argument(
         "--tasks",
@@ -657,7 +1030,12 @@ def main(argv: list[str] | None = None) -> int:
     )
     parser.add_argument(
         "--model",
-        default=DEFAULT_MODEL,
+        default=None,
+    )
+    parser.add_argument(
+        "--surface",
+        choices=("service_api", "operator_cli"),
+        default=DEFAULT_SURFACE,
     )
     parser.add_argument(
         "--visible-contract-binding",
@@ -685,7 +1063,8 @@ def main(argv: list[str] | None = None) -> int:
         default="default",
     )
     args = parser.parse_args(argv)
-    require_openai_service_spend_approval(purpose="the E12 comparative output-quality benchmark")
+    if args.surface == "service_api":
+        require_openai_service_spend_approval(purpose="the E12 comparative output-quality benchmark")
     ablation_config = OutputQualityAblationConfig(
         visible_contract_binding=args.visible_contract_binding,
         verification_binding=args.verification_binding,
@@ -699,6 +1078,7 @@ def main(argv: list[str] | None = None) -> int:
             task_ids=tuple(args.tasks),
             arms=tuple(args.arms),
             model=args.model,
+            surface=args.surface,
             ablation_config=ablation_config,
         )
     except OpenAIResponseStreamTransportError as exc:

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from contextlib import contextmanager
 import sys
 from pathlib import Path
 
@@ -155,3 +156,49 @@ def test_parse_judge_payload_normalizes_invalid_payload() -> None:
     assert parsed["winner"] is None
     assert parsed["confidence"] == "low"
     assert parsed["reason_tags"] == ["judge-unparseable"]
+
+
+def test_judge_pairwise_merge_worthiness_operator_cli_uses_cli_helper(
+    monkeypatch,
+) -> None:
+    @contextmanager
+    def _fake_env():
+        yield {}
+
+    monkeypatch.setattr(grader, "isolated_codex_home_env", _fake_env)
+    monkeypatch.setattr(
+        grader,
+        "run_openai_operator_single_turn",
+        lambda **_kwargs: {
+            "failure_class": None,
+            "output_text": '{"winner":"b","confidence":"medium","reason_tags":["quality"]}',
+        },
+    )
+
+    judgment = grader.judge_pairwise_merge_worthiness(
+        prompt_text="Build the feature cleanly.",
+        output_a={
+            "evaluation": {
+                "objective_pass": True,
+                "hidden_quality_pass": True,
+                "failure_class": None,
+                "failing_checks": [],
+                "first_failure_excerpt": None,
+            },
+            "changed_files": {},
+        },
+        output_b={
+            "evaluation": {
+                "objective_pass": True,
+                "hidden_quality_pass": True,
+                "failure_class": None,
+                "failing_checks": [],
+                "first_failure_excerpt": None,
+            },
+            "changed_files": {},
+        },
+        surface="operator_cli",
+    )
+
+    assert judgment.winner == "b"
+    assert judgment.reason_tags == ("quality",)

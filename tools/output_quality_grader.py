@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import re
 import sys
+import tempfile
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Literal
@@ -16,10 +17,12 @@ if str(ROOT) not in sys.path:
 from cortex.runtime.openai_host_control import OpenAIHostControlRequest, run_openai_host_control
 
 from live_validation_common import classify_failure, run_command, sanitize_text
+from openai_operator_cli import isolated_codex_home_env, run_openai_operator_single_turn
 from output_quality_common import OutputQualityTaskPack
 
 
 OutcomeStatus = Literal["passed", "failed", "env_blocked"]
+JudgeSurface = Literal["service_api", "operator_cli"]
 
 
 @dataclass(frozen=True, slots=True)
@@ -164,7 +167,8 @@ def judge_pairwise_merge_worthiness(
     prompt_text: str,
     output_a: dict[str, Any],
     output_b: dict[str, Any],
-    model: str = "gpt-5.4-mini",
+    model: str | None = None,
+    surface: JudgeSurface = "service_api",
 ) -> PairwiseJudgment:
     evaluation_a = output_a["evaluation"]
     evaluation_b = output_b["evaluation"]
@@ -183,6 +187,13 @@ def judge_pairwise_merge_worthiness(
             reason_tags=("both-failed-objective",),
             objective_override=True,
         )
+    if surface == "operator_cli":
+        return _judge_pairwise_merge_worthiness_operator(
+            prompt_text=prompt_text,
+            output_a=output_a,
+            output_b=output_b,
+            model=model,
+        )
 
     judge_prompt = _build_judge_prompt(
         prompt_text=prompt_text,
@@ -191,7 +202,7 @@ def judge_pairwise_merge_worthiness(
     )
     request = OpenAIHostControlRequest(
         action_tag="openai-response-stream",
-        model=model,
+        model=model or "gpt-5.4-mini",
         input_text=judge_prompt,
         max_output_tokens=600,
     )
@@ -203,6 +214,58 @@ def judge_pairwise_merge_worthiness(
         reason_tags=tuple(parsed["reason_tags"]),
         objective_override=False,
         raw_response=result.result_text,
+    )
+
+
+def _judge_pairwise_merge_worthiness_operator(
+    *,
+    prompt_text: str,
+    output_a: dict[str, Any],
+    output_b: dict[str, Any],
+    model: str | None,
+) -> PairwiseJudgment:
+    judge_prompt = _build_judge_prompt(
+        prompt_text=prompt_text,
+        output_a=output_a,
+        output_b=output_b,
+    )
+    with tempfile.TemporaryDirectory(prefix="cortex-output-quality-judge-") as tmp_dir:
+        judge_root = Path(tmp_dir)
+        try:
+            with isolated_codex_home_env() as env:
+                turn = run_openai_operator_single_turn(
+                    project_root=judge_root,
+                    prompt=judge_prompt,
+                    scenario_id="output_quality_pairwise_judge",
+                    stderr_path=judge_root / "judge.stderr.log",
+                    ephemeral=True,
+                    env=env,
+                    model=model,
+                )
+        except RuntimeError:
+            return PairwiseJudgment(
+                winner=None,
+                confidence="low",
+                reason_tags=("judge-env-blocked",),
+                objective_override=False,
+                raw_response=None,
+            )
+    failure_class = turn.get("failure_class")
+    if isinstance(failure_class, str) and failure_class:
+        return PairwiseJudgment(
+            winner=None,
+            confidence="low",
+            reason_tags=("judge-env-blocked",),
+            objective_override=False,
+            raw_response=turn.get("output_text"),
+        )
+    parsed = _parse_judge_payload(turn.get("output_text"))
+    return PairwiseJudgment(
+        winner=parsed["winner"],
+        confidence=parsed["confidence"],
+        reason_tags=tuple(parsed["reason_tags"]),
+        objective_override=False,
+        raw_response=turn.get("output_text"),
     )
 
 

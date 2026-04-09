@@ -356,6 +356,9 @@ def test_active_current_line_docs_frame_openai_only_truth_and_watchlist_retentio
         assert "the current E18 causal-map slice on this review branch now adds" in workstream_text
         assert "one staged causal-contribution map train over the fixed E12 and O4R proof surfaces" in workstream_text
         assert "docs/CORTEX_V2_CAUSAL_MAP_NOTE_0.md" in workstream_text
+    if current_branch == "review/e19-cli-causal-map-rehome":
+        assert "the first watchlist-native OpenAI E12 bridge is now present on this branch" in workstream_text
+        assert "`tools/cortex_output_quality.py --surface operator_cli` runs the same five-task output-quality pack through `codex app-server`" in workstream_text
 
     assert (
         "This is the only active current-line proof bundle for the accepted OpenAI-only product scope."

@@ -82,6 +82,10 @@ It is workflow state only. It does not override the packet documents, implementa
     - keep the preserved E18 API evidence as historical partial evidence only
     - rehome the causal-map work onto a CLI/watchlist-native surface
     - keep shipping truth and accepted runtime law unchanged while the exploratory lane moves off API
+    - the first watchlist-native OpenAI E12 bridge is now present on this branch:
+      - `tools/cortex_output_quality.py --surface operator_cli` runs the same five-task output-quality pack through `codex app-server` instead of the OpenAI service lane
+      - the operator path uses direct workspace edits plus the existing hidden grading layer, and keeps the existing service-lane path unchanged
+      - full E18 causal-map parity is not re-earned yet because the OpenAI verified-work/O4R side of the causal map is still service-lane-only on the current line
   - accepted baseline truth on local `main` now includes the C3B brutal closed-loop train method on top of the accepted E8 third-pack verified-work breadth slice
   - A0, P1C, S1, S1C, X1, X2, the first verified-work restoration slice, the Cortex-law / fast-train method slice, the verified-work neutralization / conformance-correction slice, the Claude operator workspace-truth slice, the OpenAI verified-work context slice, the C3B brutal closed-loop train method, the E7 second-pack verified-work breadth slice, the E8 third-pack verified-work breadth slice, and the E9 repair-yield measurement slice are now accepted on local `main`
   - the explicit `current|canonical_anchor` direct-API service suites remain accepted on the current line
@@ -199,7 +203,7 @@ It is workflow state only. It does not override the packet documents, implementa
 - The accepted executive-restoration correction is now landed on the current OpenAI realization.
 - While this explicit review branch remains open, the next lawful move is:
   - keep the preserved E18 API artifacts as historical partial evidence only; do not resume the service-api train on this branch without explicit local spend approval
-  - use the current E19 seam to build a CLI/watchlist-native causal-map proof path, then restart the causal-map work there from a clean baseline
+  - use the new OpenAI `operator_cli` E12 bridge to establish a watchlist-native output-quality baseline, then extend the causal-map readout off the frozen API path
   - keep accepted-baseline truth separate from the review-branch candidate state
 - After this E18 slice is accepted, later runtime/product seams should default to:
   - write the `Train Charter` first

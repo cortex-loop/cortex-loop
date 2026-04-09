@@ -22,5 +22,5 @@ the service-api E18 execution path is now frozen on the current review branch. d
 next:
 
 1. keep the preserved API artifacts above as historical partial evidence only
-2. build a CLI/watchlist-native causal-map proof path
-3. restart the causal-map work there from a clean baseline instead of spending further API credits on the current E18 runner
+2. use the new `tools/cortex_output_quality.py --surface operator_cli` bridge to establish an OpenAI watchlist-native E12 baseline
+3. extend the OpenAI verified-work/O4R side onto a CLI/watchlist surface before re-opening a full causal-map train
