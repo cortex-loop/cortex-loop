@@ -5,6 +5,8 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
+import pytest
+
 
 TOOLS_ROOT = Path(__file__).resolve().parents[2] / "tools"
 if str(TOOLS_ROOT) not in sys.path:
@@ -180,3 +182,15 @@ def test_run_arm_skips_repair_when_verification_binding_is_off(
 
     assert result["attempt_count"] == 1
     assert len(execute_calls) == 1
+
+
+def test_main_requires_service_spend_approval(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.delenv("CORTEX_LIVE_SERVICE_SPEND_APPROVED", raising=False)
+    monkeypatch.setattr(
+        output_quality,
+        "run_output_quality_suite",
+        lambda **_kwargs: pytest.fail("run_output_quality_suite should not be called"),
+    )
+
+    with pytest.raises(SystemExit, match="service-lane spend is blocked"):
+        output_quality.main([])

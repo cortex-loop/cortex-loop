@@ -24,6 +24,7 @@ from causal_contribution_map import (  # noqa: E402
     render_causal_map_note,
 )
 from live_validation_common import now_utc_iso, run_command, write_json, write_text  # noqa: E402
+from service_spend_gate import require_openai_service_spend_approval  # noqa: E402
 
 
 LoopClass = Literal[
@@ -44,6 +45,13 @@ OPENAI_BREADTH_PACKS = (
     cortex_conformance.FEATURE_FLAGS_CONTRACT_PACK,
 )
 REPAIR_GUARDRAIL_PACK = cortex_conformance.NORMALIZE_PORT_CONTRACT_PACK
+SERVICE_SPEND_TRAINS = {
+    "conformance-summary-truth",
+    "verified-work-breadth-openai",
+    "verified-work-repair-yield-openai",
+    "output-quality-comparison-openai",
+    "causal-contribution-map-openai",
+}
 
 
 @dataclass(frozen=True, slots=True)
@@ -1199,6 +1207,11 @@ def main(argv: list[str] | None = None) -> int:
         default="conformance-summary-truth",
     )
     args = parser.parse_args(argv)
+
+    if args.train in SERVICE_SPEND_TRAINS:
+        require_openai_service_spend_approval(
+            purpose=f"the `{args.train}` train on the OpenAI service_api lane"
+        )
 
     if args.train == "conformance-summary-truth":
         payload = run_conformance_summary_truth_pilot().as_payload()

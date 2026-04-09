@@ -17,7 +17,10 @@
 
 ## Next lawful move
 
-resume from this review branch by rereading the pause artifacts above, then either:
+the service-api E18 execution path is now frozen on the current review branch. do not resume the API train unless `CORTEX_LIVE_SERVICE_SPEND_APPROVED=1` is set explicitly.
 
-1. rerun `python3 tools/cortex_train_loop.py --train causal-contribution-map-openai` cleanly from the start, or
-2. open a tiny evaluation-only resume/caching seam first, because the current E18 train loop does not yet support mid-run resume and the full causal map is too expensive to finish comfortably in one interactive pass
+next:
+
+1. keep the preserved API artifacts above as historical partial evidence only
+2. build a CLI/watchlist-native causal-map proof path
+3. restart the causal-map work there from a clean baseline instead of spending further API credits on the current E18 runner

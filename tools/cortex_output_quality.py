@@ -42,6 +42,7 @@ from output_quality_grader import (
     evaluate_workspace,
     judge_pairwise_merge_worthiness,
 )
+from service_spend_gate import require_openai_service_spend_approval
 
 
 OUTPUT_QUALITY_ROOT = LOCAL_LIVE_ROOT / "output_quality"
@@ -684,6 +685,7 @@ def main(argv: list[str] | None = None) -> int:
         default="default",
     )
     args = parser.parse_args(argv)
+    require_openai_service_spend_approval(purpose="the E12 comparative output-quality benchmark")
     ablation_config = OutputQualityAblationConfig(
         visible_contract_binding=args.visible_contract_binding,
         verification_binding=args.verification_binding,

@@ -49,6 +49,7 @@ from live_validation_common import (  # noqa: E402
     write_json,
     write_text,
 )
+from service_spend_gate import require_openai_service_spend_approval  # noqa: E402
 
 
 Brain = Literal["openai", "claude", "gemini"]
@@ -710,6 +711,11 @@ def main(argv: list[str] | None = None) -> int:
         brains = ("openai", "claude", "gemini")
     else:
         brains = (args.brain,)  # type: ignore[assignment]
+
+    if args.mode == "active" and "openai" in brains:
+        require_openai_service_spend_approval(
+            purpose="OpenAI active conformance on the service_api lane"
+        )
 
     pack = contract_pack_by_name(args.contract_pack)
     openai_ablation_config = OpenAIHostControlAblationConfig(

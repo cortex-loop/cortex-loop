@@ -156,6 +156,20 @@ def test_preflight_surface_distinguishes_env_blocked_and_unwired(monkeypatch: py
     assert gemini_ready_probe.status == "partial"
 
 
+def test_main_requires_service_spend_approval_for_openai_active(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.delenv("CORTEX_LIVE_SERVICE_SPEND_APPROVED", raising=False)
+    monkeypatch.setattr(
+        conformance,
+        "run_active_conformance",
+        lambda **_kwargs: pytest.fail("run_active_conformance should not be called"),
+    )
+
+    with pytest.raises(SystemExit, match="service-lane spend is blocked"):
+        conformance.main(["--mode", "active", "--brain", "openai"])
+
+
 def test_classify_outcome_divergence_maps_surface_and_brain_failures() -> None:
     passed = VerificationOutcome(status="passed", failure_class=None)
     test_failed = VerificationOutcome(status="failed", failure_class="test_failed")

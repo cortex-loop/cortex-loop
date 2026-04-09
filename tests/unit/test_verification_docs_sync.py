@@ -298,6 +298,15 @@ def test_active_current_line_docs_frame_openai_only_truth_and_watchlist_retentio
             in workstream_text
         )
         assert "Current candidate seam: `E18 causal contribution map train`" in workstream_text
+    elif current_branch == "review/e19-cli-causal-map-rehome":
+        assert (
+            "Current branch role: explicit manual/review branch for the E19 CLI/watchlist causal-map rehome seam while the accepted baseline remains local `main`"
+            in workstream_text
+        )
+        assert (
+            "Current candidate seam: `E19 hard local service-spend gate + CLI/watchlist causal-map rehome`"
+            in workstream_text
+        )
     else:
         assert (
             "Current branch role: explicit manual/review branch for the E9 verified-work repair-yield train while the accepted baseline remains local `main`"

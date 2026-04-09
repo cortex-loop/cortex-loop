@@ -6,6 +6,8 @@ import json
 import sys
 from pathlib import Path
 
+import pytest
+
 
 TOOLS_ROOT = Path(__file__).resolve().parents[2] / "tools"
 if str(TOOLS_ROOT) not in sys.path:
@@ -69,6 +71,22 @@ def test_decide_loop_decision_escalates_after_second_no_lift_cut() -> None:
 
     assert decision == "escalate"
     assert "two no-lift revisions" in reason
+
+
+def test_train_loop_main_requires_service_spend_approval(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.delenv("CORTEX_LIVE_SERVICE_SPEND_APPROVED", raising=False)
+    monkeypatch.setattr(
+        train_loop,
+        "run_causal_contribution_map_openai_train",
+        lambda **_kwargs: pytest.fail(
+            "run_causal_contribution_map_openai_train should not be called"
+        ),
+    )
+
+    with pytest.raises(SystemExit, match="service-lane spend is blocked"):
+        train_loop.main(["--train", "causal-contribution-map-openai"])
 
 
 def test_evaluate_conformance_summary_truth_detects_missing_artifacts(

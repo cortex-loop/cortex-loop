@@ -51,9 +51,9 @@ It is workflow state only. It does not override the packet documents, implementa
 ## 2. Current campaign and seam state
 
 - Current campaign: `P1 product-first reduction program`
-- Current working branch at ledger update: `review/e18-causal-contribution-map`
-- Current branch role: explicit manual/review branch for the E18 causal contribution map train while the accepted baseline remains local `main`
-- Current candidate seam: `E18 causal contribution map train`
+- Current working branch at ledger update: `review/e19-cli-causal-map-rehome`
+- Current branch role: explicit manual/review branch for the E19 CLI/watchlist causal-map rehome seam while the accepted baseline remains local `main`
+- Current candidate seam: `E19 hard local service-spend gate + CLI/watchlist causal-map rehome`
 - Current seam status:
   - the accepted local `main` line now includes the E12 comparative output-quality benchmark and train wiring as evaluation-only accepted truth
   - the accepted larger-task evidence on local `main` is strongest for `domain = coding_webapp`, not for general cross-domain Cortex claims
@@ -74,6 +74,14 @@ It is workflow state only. It does not override the packet documents, implementa
         - `visible_contract_binding = off` initial rerun completed under `.cortex/live_validation/output_quality/openai/run_20260409T090634+0000`
         - `visible_contract_binding = off` repeat rerun completed under `.cortex/live_validation/output_quality/openai/run_20260409T092159+0000`
         - the next follow-on run was intentionally stopped under `.cortex/live_validation/output_quality/openai/run_20260409T093800+0000` after `1` written `result.json` artifact so the branch could pause again without losing evidence
+  - the service-api E18 execution path is now intentionally frozen on this branch:
+    - the train path bypassed the existing local `CORTEX_LIVE_SERVICE_SPEND_APPROVED` gate and overspent the intended maintainer budget
+    - the current branch now hard-blocks the expensive OpenAI evaluation entrypoints unless `CORTEX_LIVE_SERVICE_SPEND_APPROVED=1` is set explicitly
+    - no further service-api reruns are lawful on this branch until a maintainer deliberately opts in again
+  - the active E19 seam on this branch is:
+    - keep the preserved E18 API evidence as historical partial evidence only
+    - rehome the causal-map work onto a CLI/watchlist-native surface
+    - keep shipping truth and accepted runtime law unchanged while the exploratory lane moves off API
   - accepted baseline truth on local `main` now includes the C3B brutal closed-loop train method on top of the accepted E8 third-pack verified-work breadth slice
   - A0, P1C, S1, S1C, X1, X2, the first verified-work restoration slice, the Cortex-law / fast-train method slice, the verified-work neutralization / conformance-correction slice, the Claude operator workspace-truth slice, the OpenAI verified-work context slice, the C3B brutal closed-loop train method, the E7 second-pack verified-work breadth slice, the E8 third-pack verified-work breadth slice, and the E9 repair-yield measurement slice are now accepted on local `main`
   - the explicit `current|canonical_anchor` direct-API service suites remain accepted on the current line
@@ -190,8 +198,8 @@ It is workflow state only. It does not override the packet documents, implementa
 - No active verified-work shipping-gap seam remains on the accepted local `main` line.
 - The accepted executive-restoration correction is now landed on the current OpenAI realization.
 - While this explicit review branch remains open, the next lawful move is:
-  - finish the E18 causal-map seam and classify the current landed interventions before proposing another executive mechanism
-  - reread `docs/CORTEX_V2_CAUSAL_MAP_NOTE_0.md` for the exact pause artifacts, then either rerun `python3 tools/cortex_train_loop.py --train causal-contribution-map-openai` cleanly from this branch or open one tiny evaluation-only resume/caching seam first because the current train loop does not yet support mid-run resume
+  - keep the preserved E18 API artifacts as historical partial evidence only; do not resume the service-api train on this branch without explicit local spend approval
+  - use the current E19 seam to build a CLI/watchlist-native causal-map proof path, then restart the causal-map work there from a clean baseline
   - keep accepted-baseline truth separate from the review-branch candidate state
 - After this E18 slice is accepted, later runtime/product seams should default to:
   - write the `Train Charter` first
@@ -243,6 +251,7 @@ It is workflow state only. It does not override the packet documents, implementa
 - Do not promote the landed `O4R` verified-work lane into canonical-anchor proof without a separate evidence-earning move.
 - Do not let one host or one surface redefine Cortex law by itself.
 - Do not add replay-based repair proof just to manufacture a repair-yield win on the current line.
+- Do not rerun the expensive OpenAI service-lane evaluation entrypoints on this branch unless `CORTEX_LIVE_SERVICE_SPEND_APPROVED=1` is set explicitly by the maintainer.
 
 ## 5. Acknowledged worktree noise at ledger creation
 
