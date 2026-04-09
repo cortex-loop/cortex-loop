@@ -2,7 +2,7 @@
 
 import pytest
 
-from cortex.runtime.claude import run_claude_runtime_step
+from experimental.runtime.claude import run_claude_runtime_step
 
 
 def test_claude_runtime_step_rejects_canonical_cortex_event_name_before_runtime_processing() -> None:

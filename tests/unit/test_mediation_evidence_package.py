@@ -22,10 +22,7 @@ from tests._mediation_evidence import (
 
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
-TOOL_PATH = REPO_ROOT / "tools" / "mediation_evidence_package.py"
-TOOLS_ROOT = REPO_ROOT / "tools"
-if str(TOOLS_ROOT) not in sys.path:
-    sys.path.insert(0, str(TOOLS_ROOT))
+TOOL_PATH = REPO_ROOT / "lab" / "mediation_evidence_package.py"
 
 
 def _load_tool():
@@ -54,15 +51,15 @@ def _replace_once(path: Path, old: str, new: str) -> None:
 def test_evaluation_plan_still_points_to_the_package_surface() -> None:
     text = read(EVALUATION_PLAN_PATH)
 
-    assert "docs/CORTEX_V2_MEDIATION_SCENARIO_CATALOG_0.md" in text
-    assert "docs/CORTEX_V2_MEDIATION_PAIRED_RUN_LEDGER_0.md" in text
-    assert "docs/CORTEX_V2_MEDIATION_AXIS_COMPARISON_TABLE_0.md" in text
-    assert "docs/CORTEX_V2_MEDIATION_BURDEN_COMPARISON_0.md" in text
-    assert "docs/CORTEX_V2_MEDIATION_HOST_SPLIT_COMPARISON_0.md" in text
-    assert "docs/CORTEX_V2_MEDIATION_EVIDENCE_NOTE_0.md" in text
-    assert "docs/CORTEX_V2_MEDIATION_FAILURE_TAXONOMY_0.md" in text
+    assert "docs/lab/CORTEX_V2_MEDIATION_SCENARIO_CATALOG_0.md" in text
+    assert "docs/lab/CORTEX_V2_MEDIATION_PAIRED_RUN_LEDGER_0.md" in text
+    assert "docs/lab/CORTEX_V2_MEDIATION_AXIS_COMPARISON_TABLE_0.md" in text
+    assert "docs/lab/CORTEX_V2_MEDIATION_BURDEN_COMPARISON_0.md" in text
+    assert "docs/lab/CORTEX_V2_MEDIATION_HOST_SPLIT_COMPARISON_0.md" in text
+    assert "docs/lab/CORTEX_V2_MEDIATION_EVIDENCE_NOTE_0.md" in text
+    assert "docs/lab/CORTEX_V2_MEDIATION_FAILURE_TAXONOMY_0.md" in text
     assert "tests/unit/test_mediation_evidence_package.py" in text
-    assert "docs/CORTEX_V2_LOCAL_VERIFICATION.md" in text
+    assert "docs/internal/CORTEX_V2_LOCAL_VERIFICATION.md" in text
 
 
 def test_mediation_package_checker_passes() -> None:
@@ -179,11 +176,11 @@ def test_host_split_matrix_makes_claude_missing_and_gemini_partial_explicit() ->
 def test_checker_fails_when_burden_ref_is_missing() -> None:
     tool = _load_tool()
     temp_root = _temp_repo_copy()
-    burden_path = temp_root / "docs" / "CORTEX_V2_MEDIATION_BURDEN_COMPARISON_0.md"
+    burden_path = temp_root / "docs" / "lab" / "CORTEX_V2_MEDIATION_BURDEN_COMPARISON_0.md"
     _replace_once(
         burden_path,
-        "docs/mediation_evidence/reference/scenario_burden_reference_01__baseline_non_mediated__run_001__aux_burden.md",
-        "docs/mediation_evidence/reference/missing__aux_burden.md",
+        "docs/lab/mediation_evidence/reference/scenario_burden_reference_01__baseline_non_mediated__run_001__aux_burden.md",
+        "docs/lab/mediation_evidence/reference/missing__aux_burden.md",
     )
 
     errors = tool.check_package(tool.build_layout(temp_root))
@@ -194,7 +191,7 @@ def test_checker_fails_when_burden_ref_is_missing() -> None:
 def test_checker_fails_when_required_j2_target_is_removed() -> None:
     tool = _load_tool()
     temp_root = _temp_repo_copy()
-    catalog_path = temp_root / "docs" / "CORTEX_V2_MEDIATION_SCENARIO_CATALOG_0.md"
+    catalog_path = temp_root / "docs" / "lab" / "CORTEX_V2_MEDIATION_SCENARIO_CATALOG_0.md"
     text = catalog_path.read_text(encoding="utf-8")
     line = "| scenario_branch_claude_01 | branch_discipline | claude | better branch discipline | 3 | current | Adds the missing Claude branch-discipline line. |\n"
     if line not in text:
@@ -209,7 +206,7 @@ def test_checker_fails_when_required_j2_target_is_removed() -> None:
 def test_checker_fails_when_forbidden_verdict_is_introduced() -> None:
     tool = _load_tool()
     temp_root = _temp_repo_copy()
-    axis_path = temp_root / "docs" / "CORTEX_V2_MEDIATION_AXIS_COMPARISON_TABLE_0.md"
+    axis_path = temp_root / "docs" / "lab" / "CORTEX_V2_MEDIATION_AXIS_COMPARISON_TABLE_0.md"
     _replace_once(
         axis_path,
         "| scenario_branch_reference_01 | reference | 3 | 0 | 0 | candidate_positive |",
@@ -224,7 +221,7 @@ def test_checker_fails_when_forbidden_verdict_is_introduced() -> None:
 def test_checker_fails_when_claude_missing_coverage_is_hidden() -> None:
     tool = _load_tool()
     temp_root = _temp_repo_copy()
-    host_path = temp_root / "docs" / "CORTEX_V2_MEDIATION_HOST_SPLIT_COMPARISON_0.md"
+    host_path = temp_root / "docs" / "lab" / "CORTEX_V2_MEDIATION_HOST_SPLIT_COMPARISON_0.md"
     _replace_once(
         host_path,
         "| claude | current | host_realization; branch_discipline; equal_value_burden_non_thrash | Claude is now present in the mediation package on deterministic evidence surfaces. | preferred | Claude is the only new host added in J2. |",
@@ -239,7 +236,7 @@ def test_checker_fails_when_claude_missing_coverage_is_hidden() -> None:
 def test_checker_fails_when_gemini_partial_status_is_hidden() -> None:
     tool = _load_tool()
     temp_root = _temp_repo_copy()
-    host_path = temp_root / "docs" / "CORTEX_V2_MEDIATION_HOST_SPLIT_COMPARISON_0.md"
+    host_path = temp_root / "docs" / "lab" / "CORTEX_V2_MEDIATION_HOST_SPLIT_COMPARISON_0.md"
     _replace_once(
         host_path,
         "| gemini | current | thrash_control; uncertainty_boundary; host_realization | Keep explicit as partial_or_contaminated for future live reruns. | explicit_partial | Do not hide current quota/capacity contamination behind pooled host averages. |",

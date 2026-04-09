@@ -1,5 +1,7 @@
 # CORTEX_V2_SRE_2
 
+Surface: product
+
 Status: canonical **SRE** document for the 3-document Cortex v2 packet (`active`; mediation extension `experimental / off-by-default`)
 Companion documents: `CORTEX_V2_CORE_2.md`, `CORTEX_V2_AUX_2.md`
 

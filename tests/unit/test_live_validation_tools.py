@@ -12,21 +12,17 @@ import json
 
 import pytest
 
-TOOLS_ROOT = Path(__file__).resolve().parents[2] / "tools"
-if str(TOOLS_ROOT) not in sys.path:
-    sys.path.insert(0, str(TOOLS_ROOT))
-
-import live_cortex_host_control as live_host_control
-import live_compare as live_compare
-import live_host_native_product_paths as live_host_native_product_paths
-import live_hook_recorder as live_hook_recorder
-import live_operator_directionality as live_operator_directionality
-import live_operator_directionality_audit as live_operator_directionality_audit
-import live_operator_route_state as live_operator_route_state
-import live_preflight as live_preflight
-import live_provider_baselines as live_provider_baselines
-import live_validation_common as live_validation_common
-from live_validation_common import (
+from lab import live_cortex_host_control as live_host_control
+from lab import live_compare as live_compare
+from lab import live_host_native_product_paths as live_host_native_product_paths
+from lab import live_hook_recorder as live_hook_recorder
+from lab import live_operator_directionality as live_operator_directionality
+from lab import live_operator_directionality_audit as live_operator_directionality_audit
+from lab import live_operator_route_state as live_operator_route_state
+from lab import live_preflight as live_preflight
+from lab import live_provider_baselines as live_provider_baselines
+from lab import live_validation_common as live_validation_common
+from lab.live_validation_common import (
     BLOCKING_FAILURE_CLASSES,
     GEMINI_AUTH_MODE_ENV,
     GEMINI_OPERATOR_FULL_LADDER,

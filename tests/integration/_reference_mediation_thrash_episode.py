@@ -8,17 +8,17 @@ from dataclasses import dataclass
 from cortex.core.commitments import CommitmentStatus
 from cortex.core.dispatch import DispatchLane
 from cortex.core.support import SupportCounter, SupportSessionState
-from cortex.drivers.reference_host_commitment import (
+from experimental.drivers.reference_host_commitment import (
     ReferenceHostCommitmentResult,
     evaluate_reference_host_commitment,
 )
-from cortex.sre.allocation import AllocationScore, AllocationScorecard
-from cortex.sre.brake import BrakeState, evaluate_brake_state
+from experimental.sre.allocation import AllocationScore, AllocationScorecard
+from experimental.sre.brake import BrakeState, evaluate_brake_state
 from cortex.sre.branching import BranchOperation
-from cortex.sre.families import SoftControlFamily
-from cortex.sre.goals import GoalContinuityView
-from cortex.sre.policy import neutral_dominance_decision
-from cortex.sre.uncertainty import UncertaintyEstimate
+from experimental.sre.families import SoftControlFamily
+from experimental.sre.goals import GoalContinuityView
+from experimental.sre.policy import neutral_dominance_decision
+from experimental.sre.uncertainty import UncertaintyEstimate
 from tests.integration._reference_lane import (
     provenance_manifest_for,
     reference_environment_handle,
@@ -59,14 +59,14 @@ class ReferenceThrashPairSpec:
     @property
     def baseline_packet_path(self) -> str:
         return (
-            "docs/mediation_evidence/reference/"
+            "docs/lab/mediation_evidence/reference/"
             f"scenario_thrash_reference_01__baseline_non_mediated__run_{self.pair_key}.md"
         )
 
     @property
     def mediated_packet_path(self) -> str:
         return (
-            "docs/mediation_evidence/reference/"
+            "docs/lab/mediation_evidence/reference/"
             f"scenario_thrash_reference_01__experimental_mediated__run_{self.pair_key}.md"
         )
 

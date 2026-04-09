@@ -24,14 +24,14 @@ class ReferenceBranchDisciplinePairSpec(BranchDisciplinePairSpec):
     @property
     def baseline_packet_path(self) -> str:
         return (
-            "docs/mediation_evidence/reference/"
+            "docs/lab/mediation_evidence/reference/"
             f"scenario_branch_reference_01__baseline_non_mediated__run_{self.pair_key}.md"
         )
 
     @property
     def mediated_packet_path(self) -> str:
         return (
-            "docs/mediation_evidence/reference/"
+            "docs/lab/mediation_evidence/reference/"
             f"scenario_branch_reference_01__experimental_mediated__run_{self.pair_key}.md"
         )
 

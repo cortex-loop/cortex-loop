@@ -1,5 +1,7 @@
 # CORTEX_V2_OPENAI_HOST_CONTROL_PROGRAM_0
 
+Surface: product
+
 Date: 2026-04-08
 Status: accepted runtime-program brief for the default bounded outbound OpenAI host-control lane after verified-work restoration
 
@@ -20,7 +22,7 @@ This document does not override:
 - `docs/CORTEX_V2_CORE_2.md`
 - `docs/CORTEX_V2_SRE_2.md`
 - `docs/CORTEX_V2_AUX_2.md`
-- `docs/CORTEX_V2_IMPLEMENTATION_MASTER_PLAN_2.md`
+- `docs/internal/CORTEX_V2_IMPLEMENTATION_MASTER_PLAN_2.md`
 - `docs/CORTEX_V2_OPENAI_RUNTIME_PROGRAM_0.md`
 - `docs/CORTEX_V2_OPENAI_INGRESS_PROGRAM_0.md`
 - `docs/CORTEX_V2_OPENAI_SERVICE_PROGRAM_0.md`

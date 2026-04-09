@@ -2,7 +2,7 @@
 
 import pytest
 
-from cortex.runtime.gemini_ingress import (
+from experimental.runtime.gemini_ingress import (
     GeminiHostEventEnvelope,
     parse_gemini_host_event_envelope,
 )

@@ -72,7 +72,7 @@ def _parse_emitted_docs(output: str) -> dict[str, str]:
     current_path: str | None = None
     current_lines: list[str] = []
     for line in output.splitlines():
-        if line.startswith("--- docs/mediation_evidence/reference/"):
+        if line.startswith("--- docs/lab/mediation_evidence/reference/"):
             if current_path is not None:
                 docs[current_path] = "\n".join(current_lines).strip() + "\n"
             current_path = line[4:].strip()

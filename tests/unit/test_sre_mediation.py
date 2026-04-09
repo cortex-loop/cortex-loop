@@ -2,12 +2,12 @@
 
 from __future__ import annotations
 
-from cortex.sre.families import SoftControlFamily
-from cortex.sre.mediation import (
+from experimental.sre.families import SoftControlFamily
+from experimental.sre.mediation import (
     ReferenceMediationMode,
     finalize_reference_soft_control,
 )
-from cortex.sre.opportunities import HostNativeOpportunity
+from experimental.sre.opportunities import HostNativeOpportunity
 
 
 def test_reference_mediation_identity_mode_preserves_family_without_specialization() -> None:

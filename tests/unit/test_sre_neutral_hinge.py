@@ -2,11 +2,11 @@
 
 import pytest
 
-from cortex.sre.allocation import AllocationScore, AllocationScorecard
-from cortex.sre.brake import BrakeState
-from cortex.sre.families import REFERENCE_SOFT_CONTROL_FAMILIES, SoftControlFamily
-from cortex.sre.policy import neutral_dominance_decision
-from cortex.sre.state import (
+from experimental.sre.allocation import AllocationScore, AllocationScorecard
+from experimental.sre.brake import BrakeState
+from experimental.sre.families import REFERENCE_SOFT_CONTROL_FAMILIES, SoftControlFamily
+from experimental.sre.policy import neutral_dominance_decision
+from experimental.sre.state import (
     ReferenceBrakeView,
     ReferenceControlAllocationView,
     ReferenceExecutiveState,
@@ -14,7 +14,7 @@ from cortex.sre.state import (
     ReferenceModeAndGatingView,
     ReferenceUncertaintyMonitoringView,
 )
-from cortex.sre.uncertainty import UncertaintyEstimate
+from experimental.sre.uncertainty import UncertaintyEstimate
 
 
 def test_exact_soft_control_family_set_matches_the_packet() -> None:
@@ -273,7 +273,7 @@ def test_reference_brake_view_requires_typed_dominant_cause_family() -> None:
 
 
 def test_reference_state_surface_does_not_export_duplicate_uncertainty_carrier() -> None:
-    from cortex.sre import state as state_module
+    from experimental.sre import state as state_module
 
     assert not hasattr(state_module, "ReferenceUncertaintyReading")
 
@@ -437,7 +437,7 @@ def test_neutral_dominance_decision_requires_typed_selected_family() -> None:
         TypeError,
         match="NeutralDominanceDecision.selected_family must be SoftControlFamily",
     ):
-        from cortex.sre.policy import NeutralDominanceDecision
+        from experimental.sre.policy import NeutralDominanceDecision
 
         NeutralDominanceDecision(
             selected_family="neutral",
@@ -448,7 +448,7 @@ def test_neutral_dominance_decision_requires_typed_selected_family() -> None:
 
 
 def test_neutral_dominance_decision_requires_bool_neutral_selected() -> None:
-    from cortex.sre.policy import NeutralDominanceDecision
+    from experimental.sre.policy import NeutralDominanceDecision
 
     decision = NeutralDominanceDecision(
         selected_family=SoftControlFamily.NEUTRAL,
@@ -472,7 +472,7 @@ def test_neutral_dominance_decision_requires_bool_neutral_selected() -> None:
 
 
 def test_neutral_dominance_decision_requires_numeric_margin() -> None:
-    from cortex.sre.policy import NeutralDominanceDecision
+    from experimental.sre.policy import NeutralDominanceDecision
 
     decision = NeutralDominanceDecision(
         selected_family=SoftControlFamily.NEUTRAL,
@@ -496,7 +496,7 @@ def test_neutral_dominance_decision_requires_numeric_margin() -> None:
 
 
 def test_neutral_dominance_decision_requires_numeric_activation_threshold() -> None:
-    from cortex.sre.policy import NeutralDominanceDecision
+    from experimental.sre.policy import NeutralDominanceDecision
 
     decision = NeutralDominanceDecision(
         selected_family=SoftControlFamily.NEUTRAL,

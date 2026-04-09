@@ -50,7 +50,7 @@ REFERENCE_MEDIATION_BASELINE_PACKET_PATHS = {
         ].baseline_packet_path
     ),
     "scenario_host_reference_01": (
-        "docs/mediation_evidence/reference/"
+        "docs/lab/mediation_evidence/reference/"
         "scenario_host_reference_01__baseline_non_mediated__run_001.md"
     ),
     "scenario_thrash_reference_01": (
@@ -440,7 +440,7 @@ def build_reference_host_realization_baseline_packet(
             "degradation_refs": str(degradation_ref["reason_code"]),
             "aux_burden_refs_if_present": "none",
             "evaluation_packet_refs_if_present": (
-                "docs/CORTEX_V2_REFERENCE_LANE_PACKET_EXAMPLE_2.md"
+                "docs/experimental/CORTEX_V2_REFERENCE_LANE_PACKET_EXAMPLE_2.md"
             ),
         },
         lift_axis_notes={

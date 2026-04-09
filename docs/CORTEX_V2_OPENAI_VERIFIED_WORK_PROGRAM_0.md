@@ -1,5 +1,7 @@
 # CORTEX_V2_OPENAI_VERIFIED_WORK_PROGRAM_0
 
+Surface: product
+
 Date: 2026-04-08
 Status: accepted bounded runtime-program brief for the landed verified-work restoration lane; third-pack breadth is now re-earned on the current review line without widening canonical proof
 
@@ -20,17 +22,17 @@ This document does not override:
 - `docs/CORTEX_V2_CORE_2.md`
 - `docs/CORTEX_V2_SRE_2.md`
 - `docs/CORTEX_V2_AUX_2.md`
-- `docs/CORTEX_V2_IMPLEMENTATION_MASTER_PLAN_2.md`
+- `docs/internal/CORTEX_V2_IMPLEMENTATION_MASTER_PLAN_2.md`
 - `docs/CORTEX_V2_OPENAI_RUNTIME_PROGRAM_0.md`
 - `docs/CORTEX_V2_OPENAI_SERVICE_PROGRAM_0.md`
 - `docs/CORTEX_V2_OPENAI_HOST_CONTROL_PROGRAM_0.md`
-- `docs/CORTEX_V2_EXECUTIVE_RESTORATION_NOTE.md`
+- `docs/internal/CORTEX_V2_EXECUTIVE_RESTORATION_NOTE.md`
 
 ## Accepted parent and rationale
 
 Accepted parent for this program on the current line:
 
-- the accepted X1/X2 OpenAI-only product shell plus the keep/cut/restore decision recorded in `docs/CORTEX_V2_EXECUTIVE_RESTORATION_NOTE.md`
+- the accepted X1/X2 OpenAI-only product shell plus the keep/cut/restore decision recorded in `docs/internal/CORTEX_V2_EXECUTIVE_RESTORATION_NOTE.md`
 
 Why this program opens now:
 
@@ -189,13 +191,13 @@ On the current line:
 - the default thin `O4` path remains unchanged when `work_contract` is absent
 - deterministic tests and repo-local revalidation are real
 - the corrected tri-brain conformance rerun removed Gemini's false raw-JSON-wrapper `output_invalid` classification without widening shipping truth
-- three repeated targeted local reruns on `python3 tools/cortex_conformance.py --mode active --brain openai` now pass the bookmarks pack on attempt `1`
+- three repeated targeted local reruns on `python3 lab/cortex_conformance.py --mode active --brain openai` now pass the bookmarks pack on attempt `1`
 - the accepted local `main` line now includes a second explicit breadth pack `verified_work_normalize_port_v1` over the normalize-port task in `tests/fixtures/live_validation/project_template/`
-- after one localized verifier-install correction, repeated targeted local reruns on `python3 tools/cortex_conformance.py --mode active --brain openai --contract-pack verified_work_normalize_port_v1` now pass the normalize-port pack on attempt `1`
+- after one localized verifier-install correction, repeated targeted local reruns on `python3 lab/cortex_conformance.py --mode active --brain openai --contract-pack verified_work_normalize_port_v1` now pass the normalize-port pack on attempt `1`
 - one explicit tri-brain normalize-port guardrail rerun under `.cortex/live_validation/conformance/run_20260408T083436+0000` reads OpenAI `service_api` conformant, Claude `operator_cli` conformant after one lawful repair, and Gemini `operator_cli` conformant
 - the accepted local `main` line now includes a third explicit breadth pack `verified_work_feature_flags_v1` over `tests/fixtures/live_validation/feature_flags_template/`
 - the accepted local `main` line also includes one third explicit verifier profile `python_workspace_pytest_feature_flags_v1` and the generalized breadth train from `2` accepted OpenAI packs to a landed target of `3`
-- repeated targeted local reruns on `python3 tools/cortex_conformance.py --mode active --brain openai --contract-pack verified_work_feature_flags_v1` now pass the feature-flags pack on attempt `1`
+- repeated targeted local reruns on `python3 lab/cortex_conformance.py --mode active --brain openai --contract-pack verified_work_feature_flags_v1` now pass the feature-flags pack on attempt `1`
 - one explicit tri-brain feature-flags guardrail rerun under `.cortex/live_validation/conformance/run_20260408T091518+0000` reads OpenAI `service_api` conformant, Claude `operator_cli` conformant, and Gemini `operator_cli` conformant
 - one full closed-loop breadth run under `.cortex/train_loops/verified-work-breadth-openai/summary.json` now promotes with `primary_metric_before = 2` and `primary_metric_after = 3`
 - the current E9 repair-yield review line now adds one maintainer-only `--max-repair-turns 0|1` conformance override plus one paired proof surface under `.cortex/train_loops/verified-work-repair-yield-openai/summary.json`

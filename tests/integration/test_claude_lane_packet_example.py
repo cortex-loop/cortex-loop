@@ -14,6 +14,7 @@ from tests.integration._claude_lane_packet_example import (
 _DOC_PATH = (
     Path(__file__).resolve().parents[2]
     / "docs"
+    / "experimental"
     / "CORTEX_V2_CLAUDE_LANE_PACKET_EXAMPLE_0.md"
 )
 
@@ -35,4 +36,3 @@ def _load_committed_snapshot() -> dict[str, object]:
     if match is None:
         raise AssertionError("Example snapshot JSON block is missing from the committed doc.")
     return json.loads(match.group(1))
-

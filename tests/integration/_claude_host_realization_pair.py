@@ -28,14 +28,14 @@ class ClaudeHostRealizationPairSpec:
     @property
     def baseline_packet_path(self) -> str:
         return (
-            "docs/mediation_evidence/claude/"
+            "docs/lab/mediation_evidence/claude/"
             f"scenario_host_claude_01__baseline_non_mediated__run_{self.pair_key}.md"
         )
 
     @property
     def mediated_packet_path(self) -> str:
         return (
-            "docs/mediation_evidence/claude/"
+            "docs/lab/mediation_evidence/claude/"
             f"scenario_host_claude_01__experimental_mediated__run_{self.pair_key}.md"
         )
 

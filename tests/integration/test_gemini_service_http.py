@@ -4,8 +4,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from cortex.runtime.gemini import GeminiRuntimeSession
-from cortex.runtime.gemini_session_io import write_gemini_runtime_session_artifact
+from experimental.runtime.gemini import GeminiRuntimeSession
+from experimental.runtime.gemini_session_io import write_gemini_runtime_session_artifact
 
 from tests.integration._gemini_service_harness import (
     EXPECTED_RECORD_KEYS,

@@ -196,7 +196,7 @@ def build_openai_host_realization_baseline_packet(
             ),
             "degradation_refs": str(degradation_ref["reason_code"]),
             "aux_burden_refs_if_present": "none",
-            "evaluation_packet_refs_if_present": "docs/CORTEX_V2_OPENAI_LANE_PACKET_EXAMPLE_0.md",
+            "evaluation_packet_refs_if_present": "docs/experimental/CORTEX_V2_OPENAI_LANE_PACKET_EXAMPLE_0.md",
         },
         lift_axis_notes={
             "Reduced Thrashing": (

@@ -13,6 +13,7 @@ from tests.integration._gemini_lane_packet_example import (
 _DOC_PATH = (
     Path(__file__).resolve().parents[2]
     / "docs"
+    / "experimental"
     / "CORTEX_V2_GEMINI_LANE_PACKET_EXAMPLE_0.md"
 )
 

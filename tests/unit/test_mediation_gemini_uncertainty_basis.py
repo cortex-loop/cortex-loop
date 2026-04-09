@@ -35,7 +35,7 @@ def test_gemini_uncertainty_basis_note_exists_and_records_satisfied_basis() -> N
     assert "basis is now satisfied by the committed Gemini-host uncertainty paired-run series" in text
     assert "tests/integration/_gemini_mediation_uncertainty_episode.py" in text
     assert "tests/integration/test_gemini_mediated_uncertainty_comparator.py" in text
-    assert "docs/CORTEX_V2_MEDIATION_GEMINI_UNCERTAINTY_REPLICATION_NOTE_0.md" in text
+    assert "docs/lab/CORTEX_V2_MEDIATION_GEMINI_UNCERTAINTY_REPLICATION_NOTE_0.md" in text
     assert "tests/integration/_gemini_mediation_baseline_packets.py" in text
     assert "tests/integration/test_gemini_mediation_baseline_packets.py" in text
 
@@ -69,7 +69,7 @@ def test_gemini_builder_packet_series_and_replication_note_exist() -> None:
     assert gemini_row["evidence_status"] == "baseline_packet_committed"
     assert gemini_row["paired_episode_set_id"] == "pair_gemini_uncertainty_001"
     assert gemini_row["packet_path"] == (
-        "docs/mediation_evidence/gemini/"
+        "docs/lab/mediation_evidence/gemini/"
         "scenario_uncertainty_gemini_01__baseline_non_mediated__run_001.md"
     )
     assert gemini_row["failure_tags"] == "none"
@@ -78,7 +78,7 @@ def test_gemini_builder_packet_series_and_replication_note_exist() -> None:
         == "tests/integration/test_gemini_mediation_baseline_packets.py::test_gemini_uncertainty_baseline_packet_matches_committed_doc"
     )
     assert GEMINI_UNCERTAINTY_PACKET_PATH.is_file()
-    assert "docs/mediation_evidence/gemini/scenario_uncertainty_gemini_01__baseline_non_mediated__run_001.md" in GEMINI_MEDIATION_BASELINE_PACKET_DOC_BUILDERS
+    assert "docs/lab/mediation_evidence/gemini/scenario_uncertainty_gemini_01__baseline_non_mediated__run_001.md" in GEMINI_MEDIATION_BASELINE_PACKET_DOC_BUILDERS
 
     for pair_key in GEMINI_UNCERTAINTY_PAIR_KEYS:
         snapshot = build_gemini_uncertainty_episode_snapshot(pair_key)

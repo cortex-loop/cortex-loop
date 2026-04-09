@@ -6,16 +6,16 @@ import json
 
 import pytest
 
-from cortex.runtime.gemini import GeminiRuntimeSession
-from cortex.runtime.gemini_session_io import (
+from experimental.runtime.gemini import GeminiRuntimeSession
+from experimental.runtime.gemini_session_io import (
     build_gemini_runtime_session_artifact,
     parse_gemini_runtime_session_artifact,
     read_gemini_runtime_session_artifact,
     write_gemini_runtime_session_artifact,
 )
-from cortex.sre.brake import BrakeState
-from cortex.sre.feedback import ReferenceRealizationFeedback, ReferenceRealizationFeedbackWindow
-from cortex.sre.families import SoftControlFamily
+from experimental.sre.brake import BrakeState
+from experimental.sre.feedback import ReferenceRealizationFeedback, ReferenceRealizationFeedbackWindow
+from experimental.sre.families import SoftControlFamily
 
 
 def test_gemini_runtime_session_artifact_roundtrips_bounded_residue() -> None:

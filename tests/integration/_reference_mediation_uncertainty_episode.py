@@ -8,12 +8,12 @@ from dataclasses import dataclass
 from cortex.core.commitments import CommitmentStatus
 from cortex.core.dispatch import DispatchLane
 from cortex.core.errors import ContradictionRecord, DegradationRecord
-from cortex.drivers.reference_host_commitment import evaluate_reference_host_commitment
-from cortex.sre.allocation import AllocationScore, AllocationScorecard
-from cortex.sre.brake import BrakeState, evaluate_brake_state
-from cortex.sre.families import SoftControlFamily
-from cortex.sre.policy import neutral_dominance_decision
-from cortex.sre.uncertainty import UncertaintyEstimate
+from experimental.drivers.reference_host_commitment import evaluate_reference_host_commitment
+from experimental.sre.allocation import AllocationScore, AllocationScorecard
+from experimental.sre.brake import BrakeState, evaluate_brake_state
+from experimental.sre.families import SoftControlFamily
+from experimental.sre.policy import neutral_dominance_decision
+from experimental.sre.uncertainty import UncertaintyEstimate
 from tests.integration._reference_lane import (
     assert_reference_commitment_result_preserves_degradation_pair,
     assert_reference_verdict_status,
@@ -52,14 +52,14 @@ class ReferenceUncertaintyPairSpec:
     @property
     def baseline_packet_path(self) -> str:
         return (
-            "docs/mediation_evidence/reference/"
+            "docs/lab/mediation_evidence/reference/"
             f"scenario_uncertainty_reference_01__baseline_non_mediated__run_{self.pair_key}.md"
         )
 
     @property
     def mediated_packet_path(self) -> str:
         return (
-            "docs/mediation_evidence/reference/"
+            "docs/lab/mediation_evidence/reference/"
             f"scenario_uncertainty_reference_01__experimental_mediated__run_{self.pair_key}.md"
         )
 

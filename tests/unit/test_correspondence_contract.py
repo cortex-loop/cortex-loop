@@ -7,8 +7,8 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 AGENTS_PATH = REPO_ROOT / "AGENTS.md"
-CORRESPONDENCE_PATH = REPO_ROOT / "docs/CORTEX_V2_MATH_TO_CODE_CORRESPONDENCE.md"
-IMPLEMENTATION_PLAN_PATH = REPO_ROOT / "docs/CORTEX_V2_IMPLEMENTATION_MASTER_PLAN_2.md"
+CORRESPONDENCE_PATH = REPO_ROOT / "docs/internal/CORTEX_V2_MATH_TO_CODE_CORRESPONDENCE.md"
+IMPLEMENTATION_PLAN_PATH = REPO_ROOT / "docs/internal/CORTEX_V2_IMPLEMENTATION_MASTER_PLAN_2.md"
 
 
 def _read(path: Path) -> str:
@@ -45,7 +45,7 @@ def test_agents_contract_requires_correspondence_planning_and_acceptance_sync() 
     text = _read(AGENTS_PATH)
 
     assert (
-        "`docs/CORTEX_V2_MATH_TO_CODE_CORRESPONDENCE.md` is the single living "
+        "`docs/internal/CORTEX_V2_MATH_TO_CODE_CORRESPONDENCE.md` is the single living "
         "correspondence authority."
     ) in text
     assert "classify the seam as `load-bearing` or `non-load-bearing`" in text

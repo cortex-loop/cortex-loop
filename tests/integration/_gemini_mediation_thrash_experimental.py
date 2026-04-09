@@ -7,11 +7,11 @@ import sys
 
 from cortex.core.commitments import CommitmentStatus
 from cortex.core.dispatch import DispatchLane
-from cortex.drivers.gemini_host_commitment import evaluate_gemini_host_commitment
-from cortex.sre.allocation import AllocationScore, AllocationScorecard
-from cortex.sre.brake import BrakeState, evaluate_brake_state
-from cortex.sre.families import SoftControlFamily
-from cortex.sre.policy import neutral_dominance_decision
+from experimental.drivers.gemini_host_commitment import evaluate_gemini_host_commitment
+from experimental.sre.allocation import AllocationScore, AllocationScorecard
+from experimental.sre.brake import BrakeState, evaluate_brake_state
+from experimental.sre.families import SoftControlFamily
+from experimental.sre.policy import neutral_dominance_decision
 from tests.integration._gemini_mediation_uncertainty_episode import (
     gemini_environment_handle,
 )

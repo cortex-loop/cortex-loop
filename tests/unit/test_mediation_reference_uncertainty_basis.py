@@ -35,7 +35,7 @@ def test_reference_uncertainty_basis_note_exists_and_records_satisfied_basis() -
     assert "basis is now satisfied by the committed reference-host uncertainty paired-run series" in text
     assert "tests/integration/_reference_mediation_uncertainty_episode.py" in text
     assert "tests/integration/test_reference_mediated_uncertainty_comparator.py" in text
-    assert "docs/CORTEX_V2_MEDIATION_REFERENCE_UNCERTAINTY_REPLICATION_NOTE_0.md" in text
+    assert "docs/lab/CORTEX_V2_MEDIATION_REFERENCE_UNCERTAINTY_REPLICATION_NOTE_0.md" in text
 
 
 def test_reference_uncertainty_replication_note_records_fairness_and_distinctness_law() -> None:
@@ -67,7 +67,7 @@ def test_reference_uncertainty_builder_packet_series_and_replication_note_exist(
     assert uncertainty_row["evidence_status"] == "baseline_packet_committed"
     assert uncertainty_row["paired_episode_set_id"] == "pair_reference_uncertainty_001"
     assert uncertainty_row["packet_path"] == (
-        "docs/mediation_evidence/reference/"
+        "docs/lab/mediation_evidence/reference/"
         "scenario_uncertainty_reference_01__baseline_non_mediated__run_001.md"
     )
     assert uncertainty_row["failure_tags"] == "none"

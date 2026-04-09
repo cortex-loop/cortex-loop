@@ -13,7 +13,7 @@ ROOT = Path(__file__).resolve().parents[2]
 
 
 def _load_repo_workflow_module():
-    script = ROOT / "scripts" / "repo_workflow.py"
+    script = ROOT / "internal" / "workflow" / "repo_workflow.py"
     sys.path.insert(0, str(script.parent))
     spec = importlib.util.spec_from_file_location("repo_workflow", script)
     assert spec is not None

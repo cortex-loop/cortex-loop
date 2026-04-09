@@ -1,0 +1,39 @@
+"""Lab-surface checks for canonical commands and moved verification paths."""
+
+from __future__ import annotations
+
+from pathlib import Path
+
+
+REPO_ROOT = Path(__file__).resolve().parents[2]
+LAB_MAKEFILE_PATH = REPO_ROOT / "lab" / "Makefile"
+TRAIN_LOOP_PATH = REPO_ROOT / "lab" / "cortex_train_loop.py"
+
+
+def _read(path: Path) -> str:
+    return path.read_text(encoding="utf-8")
+
+
+def test_lab_makefile_runs_from_repo_root_and_uses_split_test_paths() -> None:
+    text = _read(LAB_MAKEFILE_PATH)
+
+    assert 'ROOT := $(abspath $(CURDIR)/..)' in text
+    assert 'ROOT_PYTEST = cd "$(ROOT)" && $(PYTEST)' in text
+    assert 'ROOT_PYTHON = cd "$(ROOT)" && $(PYTHON)' in text
+    assert "tests/product/test_import_smoke.py" in text
+    assert "tests/internal/test_docs_boundary.py" in text
+    assert "tests/internal/test_workflow_boundary.py" in text
+    assert "tests/lab/test_lab_surface.py" in text
+    assert "\t$(PYTEST) tests/" not in text
+    assert "\t$(PYTHON) lab/" not in text
+
+
+def test_train_loop_uses_canonical_lab_and_internal_test_paths() -> None:
+    text = _read(TRAIN_LOOP_PATH)
+
+    assert "tests/internal/test_docs_boundary.py" in text
+    assert "tests/product/test_import_smoke.py" in text
+    assert "make -C lab revalidate-openai-host-control" in text
+    assert "tests/unit/test_verification_docs_sync.py" not in text
+    assert "tests/unit/test_import_smoke.py" not in text
+    assert '"make revalidate-openai-host-control"' not in text

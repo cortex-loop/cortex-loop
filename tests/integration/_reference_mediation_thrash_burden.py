@@ -23,14 +23,14 @@ _SUMMARY_NOTE = (
 
 def reference_thrash_baseline_burden_artifact_path(pair_key: str) -> str:
     return (
-        "docs/mediation_evidence/reference/"
+        "docs/lab/mediation_evidence/reference/"
         f"scenario_thrash_reference_01__baseline_non_mediated__run_{pair_key}__aux_burden.md"
     )
 
 
 def reference_thrash_mediated_burden_artifact_path(pair_key: str) -> str:
     return (
-        "docs/mediation_evidence/reference/"
+        "docs/lab/mediation_evidence/reference/"
         f"scenario_thrash_reference_01__experimental_mediated__run_{pair_key}__aux_burden.md"
     )
 

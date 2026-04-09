@@ -72,7 +72,7 @@ EXPECTATIONS = (
     ),
     SreCorrespondenceExpectation(
         row_label="ReferenceExecutiveState",
-        module_path="cortex.sre.state",
+        module_path="experimental.sre.state",
         symbol_name="ReferenceExecutiveState",
         promised_surfaces=(
             PromisedTestSurface(
@@ -94,7 +94,7 @@ EXPECTATIONS = (
     ),
     SreCorrespondenceExpectation(
         row_label="ReferenceModeAndGatingView",
-        module_path="cortex.sre.state",
+        module_path="experimental.sre.state",
         symbol_name="ReferenceModeAndGatingView",
         promised_surfaces=(
             PromisedTestSurface(
@@ -109,7 +109,7 @@ EXPECTATIONS = (
     ),
     SreCorrespondenceExpectation(
         row_label="ReferenceControlAllocationView",
-        module_path="cortex.sre.state",
+        module_path="experimental.sre.state",
         symbol_name="ReferenceControlAllocationView",
         promised_surfaces=(
             PromisedTestSurface(
@@ -126,7 +126,7 @@ EXPECTATIONS = (
     ),
     SreCorrespondenceExpectation(
         row_label="build_reference_executive_state",
-        module_path="cortex.sre.reference_builder",
+        module_path="experimental.sre.reference_builder",
         symbol_name="build_reference_executive_state",
         promised_surfaces=(
             PromisedTestSurface(
@@ -144,7 +144,7 @@ EXPECTATIONS = (
     ),
     SreCorrespondenceExpectation(
         row_label="SoftControlFamily",
-        module_path="cortex.sre.families",
+        module_path="experimental.sre.families",
         symbol_name="SoftControlFamily",
         promised_surfaces=(
             PromisedTestSurface(
@@ -155,7 +155,7 @@ EXPECTATIONS = (
     ),
     SreCorrespondenceExpectation(
         row_label="AllocationScore",
-        module_path="cortex.sre.allocation",
+        module_path="experimental.sre.allocation",
         symbol_name="AllocationScore",
         promised_surfaces=(
             PromisedTestSurface(
@@ -170,7 +170,7 @@ EXPECTATIONS = (
     ),
     SreCorrespondenceExpectation(
         row_label="AllocationScorecard",
-        module_path="cortex.sre.allocation",
+        module_path="experimental.sre.allocation",
         symbol_name="AllocationScorecard",
         promised_surfaces=(
             PromisedTestSurface(
@@ -185,7 +185,7 @@ EXPECTATIONS = (
     ),
     SreCorrespondenceExpectation(
         row_label="build_reference_allocation_scorecard",
-        module_path="cortex.sre.reference_scoring",
+        module_path="experimental.sre.reference_scoring",
         symbol_name="build_reference_allocation_scorecard",
         promised_surfaces=(
             PromisedTestSurface(
@@ -202,7 +202,7 @@ EXPECTATIONS = (
     ),
     SreCorrespondenceExpectation(
         row_label="neutral_dominance_decision",
-        module_path="cortex.sre.policy",
+        module_path="experimental.sre.policy",
         symbol_name="neutral_dominance_decision",
         promised_surfaces=(
             PromisedTestSurface(
@@ -217,7 +217,7 @@ EXPECTATIONS = (
     ),
     SreCorrespondenceExpectation(
         row_label="ReferenceSoftControlSelection",
-        module_path="cortex.sre.reference_scoring",
+        module_path="experimental.sre.reference_scoring",
         symbol_name="ReferenceSoftControlSelection",
         promised_surfaces=(
             PromisedTestSurface(
@@ -234,7 +234,7 @@ EXPECTATIONS = (
     ),
     SreCorrespondenceExpectation(
         row_label="select_reference_soft_control",
-        module_path="cortex.sre.reference_scoring",
+        module_path="experimental.sre.reference_scoring",
         symbol_name="select_reference_soft_control",
         promised_surfaces=(
             PromisedTestSurface(
@@ -251,7 +251,7 @@ EXPECTATIONS = (
     ),
     SreCorrespondenceExpectation(
         row_label="ReferenceMediationFinalization",
-        module_path="cortex.sre.mediation",
+        module_path="experimental.sre.mediation",
         symbol_name="ReferenceMediationFinalization",
         promised_surfaces=(
             PromisedTestSurface(
@@ -265,7 +265,7 @@ EXPECTATIONS = (
     ),
     SreCorrespondenceExpectation(
         row_label="finalize_reference_soft_control",
-        module_path="cortex.sre.mediation",
+        module_path="experimental.sre.mediation",
         symbol_name="finalize_reference_soft_control",
         promised_surfaces=(
             PromisedTestSurface(
@@ -281,7 +281,7 @@ EXPECTATIONS = (
     ),
     SreCorrespondenceExpectation(
         row_label="_realize_family",
-        module_path="cortex.runtime.reference",
+        module_path="experimental.runtime.reference",
         symbol_name="_realize_family",
         promised_surfaces=(
             PromisedTestSurface(
@@ -297,7 +297,7 @@ EXPECTATIONS = (
     ),
     SreCorrespondenceExpectation(
         row_label="UncertaintyEstimate",
-        module_path="cortex.sre.uncertainty",
+        module_path="experimental.sre.uncertainty",
         symbol_name="UncertaintyEstimate",
         promised_surfaces=(
             PromisedTestSurface(
@@ -311,7 +311,7 @@ EXPECTATIONS = (
     ),
     SreCorrespondenceExpectation(
         row_label="BrakeState",
-        module_path="cortex.sre.brake",
+        module_path="experimental.sre.brake",
         symbol_name="BrakeState",
         promised_surfaces=(
             PromisedTestSurface(
@@ -322,7 +322,7 @@ EXPECTATIONS = (
     ),
     SreCorrespondenceExpectation(
         row_label="evaluate_brake_state",
-        module_path="cortex.sre.brake",
+        module_path="experimental.sre.brake",
         symbol_name="evaluate_brake_state",
         promised_surfaces=(
             PromisedTestSurface(
@@ -337,7 +337,7 @@ EXPECTATIONS = (
     ),
     SreCorrespondenceExpectation(
         row_label="GoalContinuityView",
-        module_path="cortex.sre.goals",
+        module_path="experimental.sre.goals",
         symbol_name="GoalContinuityView",
         promised_surfaces=(
             PromisedTestSurface(
@@ -359,7 +359,7 @@ EXPECTATIONS = (
     ),
     SreCorrespondenceExpectation(
         row_label="HostNativeOpportunity",
-        module_path="cortex.sre.opportunities",
+        module_path="experimental.sre.opportunities",
         symbol_name="HostNativeOpportunity",
         promised_surfaces=(
             PromisedTestSurface(
@@ -373,7 +373,7 @@ EXPECTATIONS = (
     ),
     SreCorrespondenceExpectation(
         row_label="OpportunitySpecializationResult",
-        module_path="cortex.sre.opportunities",
+        module_path="experimental.sre.opportunities",
         symbol_name="OpportunitySpecializationResult",
         promised_surfaces=(
             PromisedTestSurface(
@@ -388,7 +388,7 @@ EXPECTATIONS = (
     ),
     SreCorrespondenceExpectation(
         row_label="specialize_host_native_opportunity",
-        module_path="cortex.sre.opportunities",
+        module_path="experimental.sre.opportunities",
         symbol_name="specialize_host_native_opportunity",
         promised_surfaces=(
             PromisedTestSurface(
@@ -405,7 +405,7 @@ EXPECTATIONS = (
     ),
     SreCorrespondenceExpectation(
         row_label="select_operator_route",
-        module_path="cortex.sre.operator_routing",
+        module_path="experimental.sre.operator_routing",
         symbol_name="select_operator_route",
         promised_surfaces=(
             PromisedTestSurface(
@@ -423,7 +423,7 @@ EXPECTATIONS = (
     ),
     SreCorrespondenceExpectation(
         row_label="ExecutiveModulatorState",
-        module_path="cortex.sre.modulators",
+        module_path="experimental.sre.modulators",
         symbol_name="ExecutiveModulatorState",
         promised_surfaces=(
             PromisedTestSurface(
@@ -440,7 +440,7 @@ EXPECTATIONS = (
     ),
     SreCorrespondenceExpectation(
         row_label="ExecutiveSignalSummary",
-        module_path="cortex.sre.executive_summary",
+        module_path="experimental.sre.executive_summary",
         symbol_name="ExecutiveSignalSummary",
         promised_surfaces=(
             PromisedTestSurface(
@@ -454,7 +454,7 @@ EXPECTATIONS = (
     ),
     SreCorrespondenceExpectation(
         row_label="build_executive_signal_summary",
-        module_path="cortex.sre.executive_summary",
+        module_path="experimental.sre.executive_summary",
         symbol_name="build_executive_signal_summary",
         promised_surfaces=(
             PromisedTestSurface(
@@ -468,7 +468,7 @@ EXPECTATIONS = (
     ),
     SreCorrespondenceExpectation(
         row_label="update_executive_modulators",
-        module_path="cortex.sre.modulators",
+        module_path="experimental.sre.modulators",
         symbol_name="update_executive_modulators",
         promised_surfaces=(
             PromisedTestSurface(
@@ -483,7 +483,7 @@ EXPECTATIONS = (
     ),
     SreCorrespondenceExpectation(
         row_label="ExecutivePolicyView",
-        module_path="cortex.sre.policy_view",
+        module_path="experimental.sre.policy_view",
         symbol_name="ExecutivePolicyView",
         promised_surfaces=(
             PromisedTestSurface(
@@ -498,7 +498,7 @@ EXPECTATIONS = (
     ),
     SreCorrespondenceExpectation(
         row_label="build_executive_policy_view",
-        module_path="cortex.sre.policy_view",
+        module_path="experimental.sre.policy_view",
         symbol_name="build_executive_policy_view",
         promised_surfaces=(
             PromisedTestSurface(

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from tools.live_openai_app_server_operator import (
+from lab.live_openai_app_server_operator import (
     classify_app_server_request_blocker,
     summarize_app_server_timeline,
 )
