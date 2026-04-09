@@ -1,104 +1,61 @@
 # CORTEX_V2_OPERATOR_DIRECTIONALITY_PROGRAM_0
 
-Date: 2026-03-29
-Status: accepted re-audited evaluation brief for the first raw-vs-Cortex operator directionality audit
+Date: 2026-04-06
+Status: accepted watchlist-evaluation brief for raw-vs-Cortex operator comparison
 
 ## Purpose
 
-This document opens one evaluation-only train after the bounded K train closeout.
+This document records the role of the paired raw-vs-Cortex operator harness after the R1 reset.
 
-The chosen next move is:
+The operator directionality audit remains:
 
-- one cross-host raw-vs-Cortex operator comparison,
-- one paired-run harness over the already-landed operator surfaces,
-- one audit that asks whether Cortex is improving actual outputs rather than only adding mechanism,
-- and one explicit stop before service proof, support-memory runtime, mediation, or runtime-doctrine changes.
+- evaluation-only
+- host-watchlist evidence
+- packaging/confound detection
+- falsification infrastructure for wrapper burden and comparison contamination
 
-This document does not authorize:
+It is no longer a canonical runtime-truth carrier.
 
-- service/auth work,
-- support-memory runtime,
-- mediation work,
-- runtime semantics changes,
-- or phase-gate promotion from evaluation results alone.
-
-## Locked comparison contract
+## Locked watchlist contract
 
 This audit is:
 
-- operator-only on the current machine,
-- raw-host vs Cortex-operator,
-- same host surface for both variants,
-- same scenario,
-- same starting workspace,
-- same model policy where possible,
-- and contradiction-preserving.
+- operator-only on the current machine
+- raw-host vs Cortex-operator
+- same host surface for both variants
+- same scenario
+- same starting workspace
+- contradiction-preserving
 
-Locked variants:
+Variants:
 
 - `raw_host`
 - `cortex_operator`
 
-Locked hosts:
+Execution classification:
 
-- Claude signed-in CLI on the normal `-p/--print` headless surface with one explicit stable GA model
-- Gemini headless CLI on the same operator surface, using the CLI default Auto (Gemini 3) routing with no explicit `-m` model argument
-- OpenAI signed-in `codex app-server`, with the existing `codex exec` smoke / `codex app-server` lifecycle split and one explicit stable model
+- `execution_surface = headless_cli`
+- `evidence_role = watchlist`
 
-Round-2 stable default rule:
+## Truth law after the reset
 
-- if a host has a documented auto-routing layer that is itself part of the product, test that routing layer directly
-- if a host does not expose that same documented routing behavior, keep one explicit stable model for reproducibility
+- operator-lane positives do not by themselves promote accepted runtime truth
+- operator-lane negatives do not by themselves overturn a later re-earned API truth lane unless they expose a direct contradiction in the canonical runtime path
+- blocked or contaminated pairs remain useful watchlist evidence, not product truth
 
-Gemini comparison guard:
+## Gemini falsification tooling
 
-- do not use `plan` mode as the default Gemini comparison baseline
-- do not pass explicit Gemini operator model names anywhere in the paired comparison harness
-- keep the same headless CLI surface and let the installed CLI default route decide
-- reason: forced model names and `plan` mode both materially change the quota/model path and contaminate the comparison
+The Gemini operator harness may use:
 
-Locked scenarios:
+- `--cortex-execution-flavor auto`
+- `--cortex-execution-flavor minimal`
+- `--cortex-execution-flavor wrapped`
 
-- `pass_minimal`
-- `truth_gap`
-- `restart_continuity`
+These are harness-only falsification controls.
+They do not authorize product default changes by themselves.
 
-Locked minimum evidence:
+## Next lawful move
 
-- `3` paired runs per host per scenario
-
-## Truth law
-
-- If a raw baseline cannot be isolated safely, mark it `blocked_raw_baseline_contaminated`.
-- Do not smooth blocked or mixed host results into package-level positivity.
-- Do not credit signed-in operator truth as service proof.
-- If the audit shows mixed or negative directionality, record that directly and treat it as the blocker to further widening.
-
-## Provider-Limit Neutrality
-
-Provider limits are evidence, but they are not directional product failure by themselves.
-
-Required audit distinction:
-
-- `quality_axis`
-- `burden_axis`
-- `provider_limit_interference`
-
-Neutrality law:
-
-- `quota_exhausted`, provider usage-window exhaustion, and equivalent host-limit hits do not count as directional product failure by themselves
-- if provider limits prevent meaningful comparison, the pair is `blocked`
-- if comparison remains only partially meaningful because burden/efficiency concerns remain, the pair is `mixed`
-- only genuine task, truth, or continuity degradation counts as `negative`
-
-Efficiency law:
-
-- token inefficiency is not the same thing as product failure
-- but obvious repeated Cortex-added burden should block a clean positive story
-- where host-visible token usage exists, record it explicitly
-- where it does not, mark visibility insufficient rather than inventing counts
-
-Order-bias law:
-
-- pair order must alternate by repeat index to reduce shared-budget bias
-- merged comparator summaries must rebuild from provider-local summaries after reruns rather than preserving stale merged truth
+- keep operator directionality as watchlist evidence
+- use it to detect packaging contamination, host-default-path drift, wrapper burden, and local-vs-accepted watchlist drift
+- move canonical runtime claims to the service/API lane described in `docs/CORTEX_V2_LIVE_SERVICE_PROOF_0.md`

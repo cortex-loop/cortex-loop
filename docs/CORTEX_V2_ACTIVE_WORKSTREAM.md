@@ -8,162 +8,260 @@ It is workflow state only. It does not override the packet documents, implementa
 ## 1. Accepted baseline
 
 - Accepted baseline branch: `main`
-- Accepted baseline commit lookup: `git rev-parse HEAD` on clean synced `main`
+- Accepted baseline commit lookup: `git rev-parse HEAD` on the accepted local `main` line
 - Accepted baseline note:
   - exact accepted-head hashes are intentionally not mirrored in repo-tracked support docs because they self-stale on the next accepted closure commit
 - Accepted baseline state:
-  - burden-axis re-audit remains accepted through the three thrash-host burden slices
-  - mediation is now justified for one bounded experimental seam, and the full first bounded reference mediation train `J4B/J4C/J4D/J4F` is now landed on the accepted line
-  - the verification/evidence restack train remains landed on the same product truth
-  - the OpenAI host-realization cell now has a committed three-pair evidence series and `candidate_positive` cell-level signal for better host-specialized realization
-  - accepted workflow baseline truth now rests on `main` rather than a long-lived working branch
-  - final repo closure is now landed on the current line:
-    - one clean synced local checkout only
-    - one local branch only: `main`
-    - no attached non-root worktrees
-    - no residual local non-main branches
-    - no remote `review/*` heads
-    - retired non-main lines preserved under pushed `archive/final-repo-closeout/*` tags
-  - `N1` service-lane proof is now landed for current machine truth:
-    - automation preflight reruns remain all-`missing`
-    - automation baseline reruns now block honestly on readiness rather than faking direct network probes
-    - service-lane reruns remain all-blocked on `auth_missing`
-    - operator proof remains the accepted current line and is preserved in compare/audit support surfaces when this seam reruns automation-only artifacts
-  - `K4` bounded computed executive loop is now landed on the proven reference/OpenAI lanes:
-    - `alpha_t` is computed from runtime-visible pressure rather than fixed
-    - `Q_t^{mem}` remains `0.0`
-    - `allocated_score` can differ from `online_score`
-    - selection now runs on allocated-score semantics
-    - the existing public runtime projection shapes remain unchanged
-  - the bounded K train is now landed on the proven reference/OpenAI lanes:
-    - `activation_threshold` is now feedback-conditioned rather than fixed to budget-band baseline alone
-    - bounded prior-feedback pressure is now explicit through internal `feedback_pressure_tags`
-    - guarded-feedback and latched-brake realization remain explicit rather than smoothing selected-family, realized-family, or lawful commitment truth
-    - no support-memory runtime, mediation, service/auth widening, or broader host rollout was introduced
-  - `M2` is now landed on the canonical line:
-    - `ExecutiveSignalSummary`
-    - persistent tonic `ExecutiveModulatorMemory`
-    - `ExecutivePolicyView`
-    - live `modulator_summary`, `modulator_memory`, and `policy_view` diagnostics on the operator path
-    - the stop-threshold law is now decoupled from self-referential `stop_pressure` comparison
-  - `J1` is now landed on the canonical line:
-    - one checked mediation evidence package now exists on `main`
-    - package verdict remains `insufficient` on every mediation axis
-    - the remaining mediation gap is now explicit rather than rhetorical
-    - J2 rerun targets are now recorded without opening mediation implementation
-  - `J2` is now landed on the canonical line:
-    - dedicated branch-discipline families now exist on `reference`, `openai`, and `claude`
-    - dedicated non-thrash burden families now exist on `reference`, `openai`, and `claude`
-    - the first Claude host-realization line is now committed on the canonical line
-    - package-level evidence is no longer `insufficient` everywhere:
-      - reduced thrashing is `candidate_positive`
-      - better branch discipline is `candidate_positive`
-      - lower visible burden at equal task value is `candidate_positive`
-      - better host-specialized realization is `candidate_positive`
-      - better uncertainty handling remains `insufficient`
-    - J2 now serves as the historical enabling evidence later accepted by J3
-  - `J3` is now landed on the canonical line:
-    - mediation is now justified for one bounded experimental seam
-    - better uncertainty handling remains `insufficient`, but that gap is explicit and non-blocking for one first bounded seam
-    - at `J3` acceptance time the next lawful move became one bounded experimental SRE-only mediation seam rather than reopening evidence collection by inertia
-  - `J4` bounded reference mediation closeout is now landed on the canonical line:
-    - `J4B`: exact missing-capability / missing-context pressure now admits `seek-context` in `X_t^{ref}`
-    - `J4B`: the same exact-pressure predicate now makes `seek-context` beat neutral on the real guarded capability-gap path while generic host friction still does not open the route
-    - `J4C`: `ReferenceMediationMode` defaults to identity, experimental mode finalizes only already-selected `seek-context`, and `Q_t^{final}(a)` is now implemented as an explicit bounded SRE-owned finalizer
-    - `J4D`: the committed reference baseline/mediated packet examples plus the host-realization comparator now use the real runtime path rather than a specialization-only helper
-    - `J4F`: workflow truth, phase-gate truth, correspondence truth, and branch truth now match on clean synced `main`
-    - non-reference mediated artifacts remain evidence-only and `J4E` is explicitly declined for the current closeout
-  - `Q1` raw-vs-Cortex operator directionality audit is now landed on the current machine:
-    - Claude is `positive`
-    - OpenAI is `positive`
-    - Gemini is `mixed`
-    - package verdict is `mixed_direction`
-    - the current blocker is now the mixed Gemini directionality result rather than an abstract “evaluate later” placeholder
-  - Gemini restart-continuity repeat-stability re-audit is now landed for current machine truth:
-    - local Gemini settings already match current best practice:
-      - no pinned default model
-      - `modelRouting=true`
-      - explicit project-scoped resume IDs remain valid on the current CLI
-    - the Gemini continuity harness now preserves repeated continuity artifacts instead of overwriting them
-    - the first inspect-only Gemini continuity turn now uses `plan` approval mode and the resumed edit/test turn keeps `yolo`
-    - current local Gemini continuity truth remains mixed on `auto`:
-      - successful resumed completions exist
-      - first-turn `capacity_exhausted` failures still recur
-    - an exploratory `gemini-2.5-flash` sidecar also failed on first-turn `capacity_exhausted`
-    - the remaining Gemini continuity blocker now looks host-capacity-driven rather than a settings or resume-semantics mistake
-  - the reference runtime shell, bounded reference continuity, OpenAI documented-host-event runtime shell, raw-transcript ingress shell, loopback service shell, bounded outbound OpenAI host-control lane, and explicit executive allocation diagnostics remain accepted on the current line
-  - the Gemini documented-host-event runtime shell, raw-transcript ingress shell, loopback service shell, and bounded outbound Gemini host-control lane remain accepted on the current line
-  - the Claude documented-host-event runtime shell, raw-transcript ingress shell, loopback service shell, and bounded outbound Claude host-control lane remain accepted on the current line
-  - refreshed live models on the current line are `claude-sonnet-4-6`, `gemini-2.5-pro`, and `gpt-5.4`
-  - `R6`, `R7`, `R8`, `R9`, `O5`, `O6`, `O7`, `O8`, `G1`, `G2`, `G3`, `G4`, `A1`, `A2`, `A3`, and `A4` are landed on the current line
-- Accepted baseline authority anchors:
-  - `docs/CORTEX_V2_IMPLEMENTATION_STATUS_NOTE.md`
-  - `docs/CORTEX_V2_IMPLEMENTATION_MASTER_PLAN_2.md`
-  - `docs/CORTEX_V2_MEDIATION_JUSTIFICATION_NOTE.md`
-  - `docs/CORTEX_V2_VERIFICATION_ERGONOMICS_MASTER_PLAN_0.md`
+  - packet authority remains unchanged:
+    - `docs/CORTEX_V2_CORE_2.md`
+    - `docs/CORTEX_V2_SRE_2.md`
+    - `docs/CORTEX_V2_AUX_2.md`
+  - the tiny integrity core, contradiction discipline, and existing math-to-code traceability remain accepted
+  - archived evidence such as `archive/review--gemini-cause-proof` remains evidence only and is not accepted runtime truth
+  - the repo is now operating under an explicit two-lane live-evidence contract:
+    - `service_api` is the canonical runtime truth lane
+    - `operator_cli` is a watchlist and exploratory-comparison lane
+  - when a seam changes Cortex law, the repo now distinguishes four truths explicitly:
+    - `Cortex truth` — the invariant Cortex law
+    - `brain-wiring truth` — how OpenAI, Claude, and Gemini attach to that law
+    - `conformance truth` — how faithfully each brain/surface realizes that law
+    - `shipping truth` — which realization is the current product default
+  - shipping truth may remain narrower than development conformance truth
+  - for Cortex-law development, the strongest available native surface on each brain is conformance-required even when shipping truth remains narrower
+  - accepted operator/CLI watchlist status on the current line:
+    - Claude: positive staged-workspace conformance signal, with provider-overload env blocks still possible on full tri-brain reruns
+    - Gemini: positive staged-workspace conformance signal
+    - OpenAI: positive watchlist signal
+  - signed-in CLI/operator results remain useful for host watchlisting, packaging/confound detection, and falsification work
+  - CLI/operator results alone do not earn canonical runtime truth
+  - current machine service auth now reads:
+    - `OPENAI_API_KEY`: ready
+    - `ANTHROPIC_API_KEY`: missing
+    - `GEMINI_API_KEY`: missing
+  - the accepted product/runtime claim is now explicitly OpenAI-only on the canonical direct-API lane
+  - one current-machine API truth anchor is now re-earned for current OpenAI-only product scope
+  - the shared `canonical_anchor` direct-API suite remains implemented for `claude` and `openai`, but only `openai` is in the accepted current product scope
+  - the active verified-work conformance reading on the bookmarks contract pack is:
+    - OpenAI `service_api`: conformant on three repeated targeted current reruns; bounded read-only workspace context now exposes the writable-file and test contract, and the shipping-default lane passes the bookmarks pack on attempt `1`
+    - Claude `operator_cli`: no longer divergent on truthful staged-workspace runs; two focused reruns passed on attempt `1`, while repeated full tri-brain reruns hit Anthropic `529 overloaded_error` before structured output and therefore count as `env_blocked`, not protocol drift
+    - Gemini `operator_cli`: conformant on the corrected current line; staged workspace truth removes the earlier `read_file` miss, and repeated full reruns now pass the bookmarks pack
+  - accepted larger-task evidence is currently strongest for `domain = coding_webapp`
+  - that coding-domain evidence is useful but is not yet general Cortex proof
 
 ## 2. Current campaign and seam state
 
-- Current campaign: `No active mediation seam; first bounded reference mediation closeout landed`
-- Current working branch at ledger update: `main`
-- Current branch role: clean synced resting branch after merged `J4` closeout and `cleanup-report`
-- Current candidate seam: `none open`
-- Current seam status: the first bounded reference mediation train is now accepted baseline truth on `main`: `J4B` exact-pressure `seek-context` reachability is landed, `J4C` identity-default reference finalization is landed, `J4D` runtime-backed reference packet/comparator evidence closure is landed, and `J4F` workflow/authority closure is landed. Reference lifecycle surfaces advertise bounded `mcp.query` affordance truth, the runtime derives the typed host opportunity set from lifecycle-visible data rather than tests, and nested mediation diagnostics remain live under `control_ledger.allocation_diagnostics.mediation`.
-- the reference-only acceptance boundary remains explicit: non-reference mediated artifacts remain evidence-only, `J4E` is explicitly declined for current closeout unless a later post-closeout review reopens a real truth gap, and `N2` remains a separate capable-machine blocker rather than part of this train.
-- the compare surface and live-validation truth from earlier seams remain accepted ancestor input and are not being reopened after this landed `J4` closeout.
-- Seam risk: none active; last closed seam was a deterministic code/doc seam
+- Current campaign: `P1 product-first reduction program`
+- Current working branch at ledger update: `review/e19-cli-causal-map-rehome`
+- Current branch role: explicit manual/review branch for the E19 CLI/watchlist causal-map rehome seam while the accepted baseline remains local `main`
+- Current candidate seam: `E19 hard local service-spend gate + CLI/watchlist causal-map rehome`
+- Current seam status:
+  - the accepted local `main` line now includes the E12 comparative output-quality benchmark and train wiring as evaluation-only accepted truth
+  - the accepted larger-task evidence on local `main` is strongest for `domain = coding_webapp`, not for general cross-domain Cortex claims
+  - the E14 continuity-fit candidate family was cut
+  - the E15 task-set-gate candidate family escalated/cut without earning acceptance
+  - the E16 selective-gating candidate family was cut
+  - the E17 executive basket-selection seam was cut; no candidate basket earned an SRE home
+  - the active E18 seam is evaluation-only and instrumentation-only:
+    - determine which already-landed Cortex interventions are helping, neutral, or degrading output
+    - use the fixed E12 benchmark and the accepted O4R verified-work lane as the only proof surfaces
+    - do not widen runtime law or shipping truth while building the causal map
+    - deterministic proof is green on this review branch
+    - the live causal-map proof is still incomplete on this branch; no honest component classifications are recorded yet
+    - current pause point on this branch:
+      - earlier pause artifacts remain preserved under `.cortex/live_validation/output_quality/openai/run_20260409T072136+0000`, `.cortex/live_validation/output_quality/openai/run_20260409T073300+0000`, and `.cortex/live_validation/output_quality/openai/run_20260409T074914+0000`
+      - the deeper rerun pause now preserved on this branch is:
+        - fresh rerun E12 baseline completed under `.cortex/live_validation/output_quality/openai/run_20260409T085424+0000`
+        - `visible_contract_binding = off` initial rerun completed under `.cortex/live_validation/output_quality/openai/run_20260409T090634+0000`
+        - `visible_contract_binding = off` repeat rerun completed under `.cortex/live_validation/output_quality/openai/run_20260409T092159+0000`
+        - the next follow-on run was intentionally stopped under `.cortex/live_validation/output_quality/openai/run_20260409T093800+0000` after `1` written `result.json` artifact so the branch could pause again without losing evidence
+  - the service-api E18 execution path is now intentionally frozen on this branch:
+    - the train path bypassed the existing local `CORTEX_LIVE_SERVICE_SPEND_APPROVED` gate and overspent the intended maintainer budget
+    - the current branch now hard-blocks the expensive OpenAI evaluation entrypoints unless `CORTEX_LIVE_SERVICE_SPEND_APPROVED=1` is set explicitly
+    - no further service-api reruns are lawful on this branch until a maintainer deliberately opts in again
+  - the active E19 seam on this branch is:
+    - keep the preserved E18 API evidence as historical partial evidence only
+    - rehome the causal-map work onto a CLI/watchlist-native surface
+    - keep shipping truth and accepted runtime law unchanged while the exploratory lane moves off API
+    - the first watchlist-native OpenAI E12 bridge is now present on this branch:
+      - `tools/cortex_output_quality.py --surface operator_cli` runs the same five-task output-quality pack through `codex app-server` instead of the OpenAI service lane
+      - the operator path uses direct workspace edits plus the existing hidden grading layer, and keeps the existing service-lane path unchanged
+      - full E18 causal-map parity is not re-earned yet because the OpenAI verified-work/O4R side of the causal map is still service-lane-only on the current line
+  - accepted baseline truth on local `main` now includes the C3B brutal closed-loop train method on top of the accepted E8 third-pack verified-work breadth slice
+  - A0, P1C, S1, S1C, X1, X2, the first verified-work restoration slice, the Cortex-law / fast-train method slice, the verified-work neutralization / conformance-correction slice, the Claude operator workspace-truth slice, the OpenAI verified-work context slice, the C3B brutal closed-loop train method, the E7 second-pack verified-work breadth slice, the E8 third-pack verified-work breadth slice, and the E9 repair-yield measurement slice are now accepted on local `main`
+  - the explicit `current|canonical_anchor` direct-API service suites remain accepted on the current line
+  - the OpenAI service spend split remains explicit:
+    - `service_smoke` uses `gpt-5.4-mini`
+    - `canonical_anchor` scenarios use `gpt-5.4`
+  - the OpenAI direct-API `canonical_anchor` suite remains repeat-stably re-earned on the current machine; exact cycle count is local-artifact truth under `.cortex/live_validation/automation/openai/service/`
+  - the stable current-scenario reading remains:
+    - `pass_minimal`
+    - `truth_gap` with `truthful_incomplete`
+    - `restart_continuity`
+  - the accepted canonical provider scope remains `openai` only
+  - the accepted OpenAI-only product path now runs on:
+    - direct API transport
+    - one compact `openai_product_journal` continuation carrier
+    - one explicit OpenAI-only decision table
+    - one exact outward `decision + journal` projection
+  - the accepted OpenAI product path no longer transits reference-soft-control selection, allocation diagnostics, or operator-routing/modulator surfaces as product-critical truth
+  - `python3 tools/live_compare.py` continues to report:
+    - `canonical runtime truth is re-earned for current scope`
+    - `direct_api canonical truth is re-earned for current scope on openai`
+  - the active current-line proof bundle on the accepted line is now compressed to:
+    - `python3 tools/live_preflight.py --skip-updates`
+    - `python3 tools/live_cortex_host_control.py --lane automation --provider openai --suite current`
+    - `python3 tools/live_cortex_host_control.py --lane automation --provider openai --suite canonical_anchor`
+    - `python3 tools/live_compare.py`
+    - deterministic support checks in `tests/unit/test_live_validation_tools.py`, `tests/unit/test_verification_docs_sync.py`, `tests/unit/test_correspondence_sre.py`, and `tests/unit/test_import_smoke.py`
+  - retained operator/watchlist tools stay callable as diagnostics, but they no longer define the active current-line closure path
+  - `O5`-`O8` remain landed as historical/reference evidence only; they are no longer the accepted OpenAI-only product runtime after X1
+  - the accepted next-seam correction recorded in `docs/CORTEX_V2_EXECUTIVE_RESTORATION_NOTE.md` has now landed on the accepted OpenAI realization:
+    - keep the X1/X2 product simplification
+    - cut prompt-shaping and benchmark-local executive control as product directions
+    - restore one tiny runtime-native executive loop for larger tasks
+  - the first verified-work restoration slice now lands:
+    - shared `WorkContract`, `VerificationOutcome`, and `choose_verified_work_followup()` law
+    - optional `work_contract` activation on the OpenAI host-control family
+    - runtime-native external verification binding
+    - one bounded repair turn on the OpenAI verified-work path
+    - one bounded read-only workspace-context attachment on the OpenAI verified-work service lane
+  - the accepted thin `O4` path remains unchanged when `work_contract` is absent
+  - the `O4R` verified-work row now lands:
+    - deterministic coverage and repo-local revalidation are landed
+    - three repeated targeted OpenAI bookmarks reruns now pass on attempt `1`
+    - the landed lane remains explicitly outside canonical-anchor proof
+  - the active Cortex-law conformance method now lands:
+    - one explicit `Train Charter` requirement for long trains
+    - one explicit `build -> test -> iterate -> cut` default loop
+    - one tri-brain conformance harness on the active bookmarks verified-work contract pack
+    - one explicit divergence taxonomy: `cortex_law`, `brain_wiring`, `surface_wiring`, `env_blocked`
+    - one corrected current-line reading where the OpenAI shipping-default lane now promotes on repeated targeted reruns, Gemini remains conformant, and Claude no longer counts as divergent when Anthropic overload returns a provider-side block instead of structured output
+  - the active brutal closed-loop train method is now accepted on local `main` and remains the operating method for current review-branch work:
+    - baseline result, primary metric, guardrail metric, iteration budget, rollback surface, and escalation-trigger fields to long-train charters
+    - one explicit loop-class split: `deterministic`, `shared verification-plumbing`, `timing/env-sensitive`
+    - one explicit per-iteration decision law: `promote`, `revise`, `cut`, `escalate`
+    - one thin maintainer-only recorder at `tools/cortex_train_loop.py`
+    - one conformance-summary truth pilot that records baseline, candidate proof, and final decision under `.cortex/train_loops/`
+    - one conformance-harness correction where `summary.latest` only publishes from full tri-brain runs and can be reconciled to the latest surviving full run that matches accepted `CT2` decision
+  - shipping truth remains OpenAI-first on the service lane
+  - Claude remains outside the accepted shipping default, but Claude is no longer treated as generic backlog for Cortex-law conformance work
+  - Gemini remains outside the accepted shipping default, but Gemini is no longer treated as generic backlog for Cortex-law conformance work
+  - headless-CLI operator evidence remains watchlist-only even when conformance is positive; it does not widen shipping truth or canonical runtime proof
+  - the older local `review/*` backlog is now archived to local `archive/review--*` tags and removed; full repo hygiene remains partial until `origin/main` reconciliation because local `main` is ahead
+  - the accepted conformance-summary truth pilot on local `main` records:
+    - baseline drift where `summary.latest` referenced missing artifacts and a stale `fix_wiring_only` decision
+    - one clean full tri-brain rerun under `.cortex/live_validation/conformance/run_20260408T074128+0000`
+    - one reconciled `summary.latest` state where OpenAI, Claude, and Gemini are all conformant and the shipping-default decision is `promote`
+    - `CT2` therefore re-earned on the current line
+  - the accepted E7 second-pack breadth slice on local `main` now includes:
+    - one second explicit verified-work profile `python_workspace_pytest_port_fix_v1` over the existing `project_template` normalize-port task
+    - one second contract pack `verified_work_normalize_port_v1` in the conformance harness
+    - one bookmarks-preserving rule where `summary.latest` remains anchored to `verified_work_bookmarks_v1` and normalize-port breadth writes only explicit per-pack artifacts
+    - one product-facing breadth train entry `verified-work-breadth-openai` in `tools/cortex_train_loop.py`
+    - one localized verifier-install correction where the bounded workspace venv now installs `-e .[test] pytest`, keeping the existing bookmarks pack lawful while making the normalize-port verifier runnable
+    - two repeated targeted OpenAI reruns where the bookmarks pack remains conformant and the normalize-port pack now passes on attempt `1`
+    - one explicit normalize-port tri-brain guardrail rerun under `.cortex/live_validation/conformance/run_20260408T083436+0000` where OpenAI `service_api` is conformant, Claude `operator_cli` recovers after one lawful repair, Gemini `operator_cli` is conformant, and the guardrail decision remains `promote`
+  - the accepted E8 third-pack breadth slice on local `main` now includes:
+    - one third explicit verified-work profile `python_workspace_pytest_feature_flags_v1` over a middle-weight `feature_flags_template` task
+    - one third contract pack `verified_work_feature_flags_v1` in the conformance harness
+    - one third pure-Python live-validation fixture under `tests/fixtures/live_validation/feature_flags_template/`
+    - one generalized three-pack breadth metric in `tools/cortex_train_loop.py` where the baseline is `2` conformant OpenAI packs and the target is `3`
+    - one bookmarks-preserving rule where `summary.latest` remains anchored to `verified_work_bookmarks_v1` and the new third-pack breadth evidence writes only explicit per-pack artifacts
+    - one provider-noise guardrail correction in `tools/cortex_train_loop.py` where a non-shipping tri-brain env block gets one immediate retry before the train escalates
+    - one accepted deterministic proof bundle over `tests/unit/test_verified_work.py`, `tests/unit/test_verified_work_runtime.py`, `tests/unit/test_openai_host_control.py`, `tests/unit/test_cortex_conformance.py`, `tests/unit/test_cortex_train_loop.py`, and `tests/unit/test_verification_docs_sync.py`
+    - two repeated targeted OpenAI reruns under `.cortex/live_validation/conformance/run_20260408T091326+0000` and `.cortex/live_validation/conformance/run_20260408T091407+0000` where the bookmarks pack is conformant on both runs
+    - two repeated targeted OpenAI reruns under `.cortex/live_validation/conformance/run_20260408T091445+0000` and `.cortex/live_validation/conformance/run_20260408T091451+0000` where the normalize-port pack is conformant on both runs
+    - two repeated targeted OpenAI reruns under `.cortex/live_validation/conformance/run_20260408T091458+0000` and `.cortex/live_validation/conformance/run_20260408T091508+0000` where the feature-flags pack is conformant on both runs
+    - one explicit feature-flags tri-brain guardrail rerun under `.cortex/live_validation/conformance/run_20260408T091518+0000` where OpenAI `service_api`, Claude `operator_cli`, and Gemini `operator_cli` are all conformant and the guardrail decision remains `promote`
+    - one full closed-loop breadth run under `.cortex/train_loops/verified-work-breadth-openai/summary.json` where `final_decision = promote` and `primary_metric_before = 2` lifts to `primary_metric_after = 3`
+  - the accepted E9 repair-yield measurement slice on local `main` now includes:
+    - one maintainer-only `--max-repair-turns 0|1` override in `tools/cortex_conformance.py`
+    - one product-facing repair-yield train entry `verified-work-repair-yield-openai` in `tools/cortex_train_loop.py`
+    - one paired live proof surface where the three accepted packs run as one-shot control with `max_repair_turns = 0` and repair-enabled candidate with `max_repair_turns = 1`
+    - one explicit live result under `.cortex/train_loops/verified-work-repair-yield-openai/summary.json` where two full paired rounds execute across the three accepted packs, one-shot control is `11/12` conformant, repair-enabled candidate is `12/12` conformant, and repair opportunities remain `0`
+    - one honest train outcome where `final_decision = escalate` because natural failures were too rare to measure repair yield on the current line
+    - one explicit cut where the richer repair-ticket/runtime change was removed after it failed to beat the one-shot control
+  - the accepted E12 comparative output-quality eval slice on local `main` now adds:
+    - one evaluation-only output-quality task family under `tests/fixtures/live_validation/output_quality/`
+    - one maintainer-only comparative runner at `tools/cortex_output_quality.py`
+    - one hidden grading layer at `tools/output_quality_grader.py`
+    - one parallel evaluation-only task-pack registry that keeps the accepted `O4R` verified-work lane unchanged
+    - one new comparative train entry `output-quality-comparison-openai` in `tools/cortex_train_loop.py`
+    - one review-branch goal of comparing `raw`, `tooling_only`, and `cortex` outputs on the same human-style web task prompts without widening shipping truth or Cortex law
+    - one explicit live result under `.cortex/train_loops/output-quality-comparison-openai/summary.json` where `final_decision = promote`, the pairwise primary metric lifts from `0` to `40`, aggregate Cortex objective passes are not worse than raw, aggregate hidden-quality passes are positive over raw, and the repeated run does not flip Cortex from win to loss
+    - one direct benchmark artifact pair under `.cortex/live_validation/output_quality/openai/run_20260408T135712+0000` and `.cortex/live_validation/output_quality/openai/run_20260408T140659+0000`
+  - the current E18 causal-map slice on this review branch now adds:
+    - one evaluation-only ablation wrapper over the accepted OpenAI verified-work lane
+    - one matching evaluation-only ablation config on the E12 output-quality harness
+    - one staged causal-contribution map train over the fixed E12 and O4R proof surfaces
+    - one report note at `docs/CORTEX_V2_CAUSAL_MAP_NOTE_0.md`
+    - one corrected train-note write path so repo tests no longer overwrite the real causal-map note with tmp-path results
 
 ## 3. Next lawful move
 
-- Current blocker shape:
-  - there is no open `J4` mediation blocker on accepted baseline truth
-  - service-lane `N2` remains blocked on a capable machine and is not part of the current mediation closeout
-  - non-reference mediated artifacts remain evidence-only and must not be upgraded inside this train
-- Next lawful move:
-  - keep the first bounded reference mediation train closed on clean synced `main` unless a new bounded program explicitly reopens it
-  - do not open `J4E` absent a real post-closeout truth gap on the already-proven OpenAI lane
-  - continue non-mediation follow-on work on its own authority surface rather than treating mediation as partially open
+- No active verified-work shipping-gap seam remains on the accepted local `main` line.
+- The accepted executive-restoration correction is now landed on the current OpenAI realization.
+- While this explicit review branch remains open, the next lawful move is:
+  - keep the preserved E18 API artifacts as historical partial evidence only; do not resume the service-api train on this branch without explicit local spend approval
+  - use the new OpenAI `operator_cli` E12 bridge to establish a watchlist-native output-quality baseline, then extend the causal-map readout off the frozen API path
+  - keep accepted-baseline truth separate from the review-branch candidate state
+- After this E18 slice is accepted, later runtime/product seams should default to:
+  - write the `Train Charter` first
+  - record one baseline result before the first edit or candidate proof run
+  - choose exactly one primary metric and one guardrail metric
+  - lock one iteration budget, rollback surface, and escalation-trigger set
+  - define the Cortex invariant before touching wiring
+  - choose the fastest proving wiring and one tiny runnable contract pack
+  - run tri-brain conformance on OpenAI, Claude, and Gemini
+  - run the exact proof set
+  - compare the candidate result against the baseline
+  - end each iteration in exactly one of `promote`, `revise`, `cut`, or `escalate`
+  - keep the landed `O4R` path stable before opening any new Cortex-law or host-scope seam
+  - keep Claude in the `env_blocked` bucket when Anthropic overload prevents structured output; that is provider availability noise, not a new wiring or law failure
+  - keep Gemini in the `conformant` bucket on the staged-workspace operator surface rather than reopening Gemini wiring prematurely
+  - keep the default thin path unchanged and keep the landed verified-work lane outside canonical-anchor proof
+  - keep repeated-failure inhibition and automatic carrier selection deferred until new evidence earns them
+  - open any later shipping-truth widening beyond OpenAI only through an explicit separate host shipping train
+- After this E18 causal-map slice is accepted, the next product-facing move should depend on the classification result:
+  - if one current intervention is repeat-stably positive or negative, open one narrow runtime/product seam that strengthens the positive component and cuts the negative one
+  - if all current interventions remain neutral or mixed, open a broader invariance/preservation reframe instead of another prompt-control train
+- Keep shipping-truth widening separate from conformance work:
+  - `claude` may be conformance-required on `operator_cli` before any later Claude shipping train opens
+  - `gemini` may be conformance-required on its strongest native surface before any later Gemini shipping train opens
+- Keep `origin/main` reconciliation as separate workflow hygiene rather than active product/support closure.
+- Open any later host expansion only through an explicit separate train.
+- Do not treat operator/CLI positives from Claude or Gemini as service-lane shipping truth.
 
 ## 4. Explicitly blocked moves
 
-- Do not treat signed-in provider CLI sessions as equivalent to the automation credentials the current A4 / G4 / O4 service paths require.
-- Do not flatten provider auth into a generic shared credential broker.
-- Do not shell out from current A4 / G4 / O4 transports to provider CLIs without an explicit host-owned re-audit.
-- Do not treat the new OpenAI App Server operator proof as license to reopen v1 assisted mode, bounded corrective retry, or App Server bridge doctrine inside `L2b`.
-- Do not flatten Claude/Gemini hook events into a fake OpenAI-style lifecycle vocabulary or vice versa.
-- Do not reopen K3 into new executive-allocation widening beyond the accepted current-scope law.
-- Do not open support-memory runtime, mediation / `Q_t^{final}` experimentation, tool-result submission, multimodal widening, runtime AUX activation, offline consolidation, or generic reward-learning doctrine from `L2`.
-- Do not keep repo-tracked live artifacts under `docs/live_validation/`; live machine output is local-only now.
-- Do not interpret the current Gemini operator-lane instability as proof that the signed-in-first design is wrong; it is a host/watchlist issue until repeated reruns say otherwise.
-- Do not overread ephemeral OpenAI `thread/read` emptiness as if the App Server lifecycle proof failed; for current scope the event timeline is the authoritative lifecycle surface and the persisted thread view remains a caveat.
-- Do not silently discard Gemini capacity warnings when a run otherwise succeeds; preserve them as warnings rather than pretending the host was perfectly stable.
-- Do not silently reintroduce a pinned Gemini operator model as the default testing start point; current local truth is that CLI auto mode is the intended default.
-- Do not pass explicit Gemini operator model names anywhere on the operator/evaluation harness; let the installed CLI default auto route decide.
-- Do not silently promote `gemini-2.5-pro` from exploratory sidecar to closure-path truth while it is still capacity-blocked on smoke.
-- Do not treat selecting `gemini-api-key` in `.gemini/settings.json` as sufficient for headless Gemini operator proof; the current CLI still requires `GEMINI_API_KEY` in the shell environment or a loaded `.env`.
-- Do not use Gemini `plan` mode as the default comparison baseline on the operator/evaluation path.
-- Do not use Gemini `plan` mode as the default comparison baseline on the free API-key operator lane; it changes the routed quota/model path and contaminates the audit.
-- Do not reopen Gemini model chasing or assisted-mode speculation inside the active `L4` service-proof train.
+- Do not treat signed-in provider CLI sessions as canonical runtime truth.
+- Do not let CLI-only positives promote accepted product/runtime claims.
+- Do not let CLI-only negatives overturn a later re-earned API truth lane unless they reveal a direct contradiction in the canonical runtime path.
+- Do not promote archived Gemini recovery evidence such as `archive/review--gemini-cause-proof` into accepted product/runtime truth.
+- Do not reopen mediation, AUX runtime widening, support-memory runtime, or broader doctrine work during this reset.
+- Do not substitute more CLI cleverness for missing direct API/service auth.
 - Do not shell out from service transports to provider CLIs.
-- Do not overread the current auto-mode improvement as full Gemini closure while `restart_continuity` is still not repeat-stable.
-- Do not overread provider-limit interference as a product-quality defeat for Cortex by itself.
-- Do not widen `K4` into support-memory runtime, mediation, service/auth work, or broader host rollout.
-- Do not unfreeze threshold law in `K4`; the current budget-band activation-threshold law stays fixed.
-- Do not widen the landed K train into support-memory runtime, mediation, vigor scaling, service/auth work on this machine, or broader host rollout.
-- Do not implement mediation in `J3`; this seam is justification/workflow/evidence interpretation only.
-- Do not treat `J3` as license for broad rollout, default-on mediation, live/provider mediation, Core widening, or AUX runtime widening.
-- Do not widen `J4` into branch/thrash mediation, uncertainty/brake mediation, or pooled cross-host mediation before the reference host-realization slice is either landed or rejected.
-- Do not let `J4` generic-reweight every family or collapse into a hub-style mediation score; the first train must stay sparse and host-realization-specific.
-- Do not let `J4` alter observe/bind meaning, packet publication meaning, or commitment truth to make mediation look better.
-- Do not pretend a builder-only `seek-context` mask widening is sufficient if the runtime lane still selects `neutral` under the accepted threshold law.
-- Do not reintroduce a generic `*-missing` `seek-context` heuristic; keep the exact runtime-visible pressure tags explicit.
-- Do not reintroduce extra long-lived local worktrees or non-main branch residue without an explicit new seam.
-- Do not leave remote `review/*` heads behind after future publication cleanup.
+- Do not treat current-machine auth absence as permission to fake service proof.
+- Do not widen accepted current product scope beyond OpenAI without a separate host-expansion train.
+- Do not treat Claude or Gemini as generic backlog-only when the active seam changes Cortex law; classify them as `conformant`, `partial`, `divergent`, `unwired`, or `env_blocked` instead.
+- Do not spend on Claude or Gemini service proof while the accepted product scope is intentionally OpenAI-only unless an explicit shipping train opens.
+- Do not silently promote `minimal` execution flavor from falsification tooling into a product default.
+- Do not add new control/accounting surfaces unless they change route choice, tool exposure, blockedness, or observable runtime outcome.
+- Do not let accepted watchlist fallback rows silently inflate canonical-looking package summaries.
+- Do not use the operator-payoff support note/tool as an active runtime-payoff closure surface.
+- Do not treat benchmark-local repair control as accepted product behavior.
+- Do not reopen prompt shaping or hidden build-brief doctrine as a product direction.
+- Do not solve larger-task repair by adding a second large task-specific subsystem when one optional work contract would suffice.
+- Do not promote the landed `O4R` verified-work lane into canonical-anchor proof without a separate evidence-earning move.
+- Do not let one host or one surface redefine Cortex law by itself.
+- Do not add replay-based repair proof just to manufacture a repair-yield win on the current line.
+- Do not rerun the expensive OpenAI service-lane evaluation entrypoints on this branch unless `CORTEX_LIVE_SERVICE_SPEND_APPROVED=1` is set explicitly by the maintainer.
 
 ## 5. Acknowledged worktree noise at ledger creation
 
-- `.cortex/live_validation/` now contains local-only generated evidence for the current L2 pass and is expected to churn across reruns.
-- Re-read `git status --short --untracked-files=all` before opening any new seam; this summary is only the continuity reminder, not the canonical file list.
+- `.cortex/live_validation/` contains local-only generated evidence and is expected to churn across reruns.
+- local dossier files were moved out of the repo before this seam so they do not count as acknowledged worktree noise here.
+- re-read `git status --short --untracked-files=all` before opening any new seam; this summary is only the continuity reminder, not the canonical file list.
 
 ## 6. Resume checklist
 

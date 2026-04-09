@@ -46,20 +46,10 @@ def test_openai_host_control_action_endpoint_returns_ordered_o1_records_and_muta
         "response.output_text.delta",
         "response.completed",
     ]
-    assert tuple(payload["records"][-1]["control_ledger"]["allocation_diagnostics"]) == (
-        "alpha_t",
-        "activation_threshold",
-        "selected_delta_over_neutral",
-        "scores",
-    )
-    assert [
-        record["control_ledger"]["allocation_diagnostics"]["activation_threshold"]
-        for record in payload["records"]
-    ] == [0.35, 0.35, 0.25]
-    assert payload["records"][-1]["control_ledger"]["allocation_diagnostics"]["alpha_t"] == 0.85
-    assert payload["records"][-1]["control_ledger"]["allocation_diagnostics"]["scores"][0]["allocated_score"] != payload["records"][-1]["control_ledger"]["allocation_diagnostics"]["scores"][0]["online_score"]
+    assert [record["decision"] for record in payload["records"]] == ["continue", "continue", "check"]
     assert export_status == 200
-    assert exported["continuity_truth"]["event_index"] == 3
+    assert exported["journal"]["event_index"] == 3
+    assert exported["journal"]["confirmed_artifact_refs"] == ["oa-k2-artifact-1"]
 
 
 def test_openai_host_control_action_endpoint_rejects_out_of_scope_request_keys() -> None:
@@ -135,4 +125,47 @@ def test_openai_host_control_action_endpoint_upstream_failure_returns_502_withou
     assert health_status == 200
     assert health["session_loaded"] is False
     assert export_status == 200
-    assert exported["continuity_truth"]["event_index"] == 0
+    assert exported["journal"]["event_index"] == 0
+
+
+def test_openai_host_control_action_endpoint_reports_verified_work_blocked_result() -> None:
+    with run_openai_service(
+        env={
+            openai_host_transport._FIXTURE_PATH_ENV: str(
+                FIXTURE_DIR / "openai_host_control_verified_work_blocked.json"
+            )
+        }
+    ) as service:
+        status_code, payload = service.request(
+            "POST",
+            "/v1/actions/response-stream",
+            {
+                "action_tag": "openai-response-stream",
+                "request": {
+                    "model": "gpt-5.4",
+                    "input": "build bookmarks app",
+                    "work_contract": {
+                        "allowed_write_paths": [
+                            "src/bookmarks_api/main.py",
+                            "src/bookmarks_api/models.py",
+                            "src/bookmarks_api/store.py",
+                        ],
+                        "verification_profile": "python_workspace_pytest_v1",
+                        "output_carrier": "full_files",
+                        "max_repair_turns": 0,
+                    },
+                },
+            },
+        )
+        export_status, exported = service.request("GET", "/v1/session/export")
+
+    assert status_code == 200
+    assert payload["attempt_count"] == 1
+    assert payload["verification"]["status"] == "blocked"
+    assert payload["verification"]["failure_class"] == "blocked_missing_info"
+    assert payload["verification"]["blocked_message"] == (
+        "Need a retention policy for archived bookmarks."
+    )
+    assert export_status == 200
+    assert exported["journal"]["next_recommended_move"] == "check"
+    assert exported["journal"]["last_failure_class"] == "blocked_missing_info"

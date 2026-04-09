@@ -1,7 +1,10 @@
 # CORTEX_V2_EXECUTIVE_LIVE_OUTCOME_PROGRAM_0
 
 Date: 2026-03-27
-Status: active runtime-program brief for the first explicit executive live-outcome allocation slice
+Status: accepted historical/reference runtime-program brief for the first explicit executive live-outcome allocation slice
+
+After accepted X1, this document remains historical/reference evidence only.
+It is not the accepted OpenAI-only product runtime.
 
 ## Purpose
 
@@ -163,9 +166,9 @@ K3 is only honestly closed when all are true:
 - `make seam-preflight`, `make revalidate-executive-loop`, `make revalidate-openai-host-control`, `make test-smoke`, and `make verify` pass
 - and the `R6` and `O5` phase-gate rows are updated truthfully
 
-## Current K3 candidate state before closeout
+## Historical accepted state before X1 compression
 
-On branch `codex/k3-executive-live-outcome` rooted at accepted K2 baseline `9ed7dae`:
+On the accepted K3 closeout line rooted at accepted K2 baseline `9ed7dae`:
 
 - the allocation carriers now expose explicit `online_score`, `memory_score`, and `allocated_score`
 - the scorecard now exposes `alpha_t`
@@ -173,5 +176,8 @@ On branch `codex/k3-executive-live-outcome` rooted at accepted K2 baseline `9ed7
 - `Q_t^{mem}=0.0`, `alpha_t=1.0`, and `allocated_score=online_score` hold for current scope
 - and `make revalidate-executive-loop` now exists as the repo-local K3 revalidation entry point
 
-This is branch-local K3 implementation truth.
-It does **not** by itself promote accepted baseline truth.
+## Current standing after X1
+
+- `R6` / `O5` remain landed historical/reference evidence for the old allocation-heavy OpenAI line,
+- the accepted OpenAI-only product runtime no longer exposes nested `control_ledger.allocation_diagnostics`,
+- and any future use of this slice is reference/watchlist only rather than the accepted product carrier.

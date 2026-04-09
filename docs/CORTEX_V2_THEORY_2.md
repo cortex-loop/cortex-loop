@@ -20,7 +20,7 @@ Active authority remains:
 
 ## Current repo evidence
 
-- The accepted workflow baseline is the clean synced `main` line recorded in `docs/CORTEX_V2_ACTIVE_WORKSTREAM.md`.
+- The accepted workflow baseline is the accepted local `main` line recorded in `docs/CORTEX_V2_ACTIVE_WORKSTREAM.md`.
 - `docs/CORTEX_V2_IMPLEMENTATION_STATUS_NOTE.md` says the current v2 roadmap is complete at the justified boundary.
 - `docs/CORTEX_V2_MEDIATION_JUSTIFICATION_NOTE.md` now says mediation is justified for one bounded experimental seam.
 - `docs/CORTEX_V2_MEDIATION_EVIDENCE_NOTE_0.md` now shows package-level `candidate_positive` signal on reduced thrashing, better branch discipline, lower visible burden at equal task value, and better host-specialized realization, while uncertainty remains `insufficient`.
@@ -31,7 +31,7 @@ Active authority remains:
 - The current auto-only contract tightening goes one step further: the operator/evaluation harness must not call explicit Gemini model names at all, and fresh preflight/baseline truth is now being re-earned on pure `auto`.
 - The first fresh auto-only product-path rerun is sharper still: `pass_minimal` can now fail immediately on `auto-gemini-3` with `quota_exhausted`, so the remaining blocker is not “wrong fallback model” anymore but the stability of the real auto route under repeat operator load.
 - The first full round-2 stable-defaults rerun now says the package is still `mixed_direction`: Claude and OpenAI remain positive, while Gemini is now more honestly `blocked` on the true auto route under repeat load.
-- The clean synced `main` line now carries the provider-limit neutrality hardening, the OpenAI continuity transport fix, the Claude efficiency rerun, the first compact SRE modulator bundle, the landed M2 summary/memory/policy refinement, the landed J1 mediation evidence package baseline, and the landed J2 gap-closure evidence package. J3 then converts that evidence into one accepted governance result: mediation is now justified for one bounded experimental seam, while uncertainty remains an explicit but non-blocking gap.
+- The accepted local `main` line now carries the provider-limit neutrality hardening, the OpenAI continuity transport fix, the Claude efficiency rerun, the first compact SRE modulator bundle, the landed M2 summary/memory/policy refinement, the landed J1 mediation evidence package baseline, and the landed J2 gap-closure evidence package. J3 then converts that evidence into one accepted governance result: mediation is now justified for one bounded experimental seam, while uncertainty remains an explicit but non-blocking gap.
 - `pytest.ini`, `Makefile`, and `docs/CORTEX_V2_LOCAL_VERIFICATION.md` now provide repo-local verification entry points, including `make verify`, `make test-smoke`, evidence revalidation commands, and mediation evidence revalidation commands.
 - `.coveragerc`, `make coverage`, and `docs/CORTEX_V2_COVERAGE_BASELINE_NOTE_0.md` now exist as repo-local coverage hygiene surfaces.
 

@@ -1,0 +1,1 @@
+"""Bookmark models belong here."""

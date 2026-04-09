@@ -1,996 +1,644 @@
-"""Mechanical drift checks for verification closeout and local-command docs."""
+"""Mechanical drift checks for the active shipping truth and Cortex-law conformance method."""
 
 from __future__ import annotations
 
 import re
+import subprocess
 from pathlib import Path
 
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
-IMPLEMENTATION_STATUS_NOTE_PATH = (
-    REPO_ROOT / "docs" / "CORTEX_V2_IMPLEMENTATION_STATUS_NOTE.md"
-)
-VERIFICATION_PLAN_PATH = (
-    REPO_ROOT / "docs" / "CORTEX_V2_VERIFICATION_ERGONOMICS_MASTER_PLAN_0.md"
-)
+AGENTS_PATH = REPO_ROOT / "AGENTS.md"
 LOCAL_VERIFICATION_PATH = REPO_ROOT / "docs" / "CORTEX_V2_LOCAL_VERIFICATION.md"
 MAKEFILE_PATH = REPO_ROOT / "Makefile"
-REPO_WORKFLOW_PATH = REPO_ROOT / "REPO_WORKFLOW.md"
-COVERAGE_BASELINE_NOTE_PATH = (
-    REPO_ROOT / "docs" / "CORTEX_V2_COVERAGE_BASELINE_NOTE_0.md"
-)
 ACTIVE_WORKSTREAM_PATH = REPO_ROOT / "docs" / "CORTEX_V2_ACTIVE_WORKSTREAM.md"
+IMPLEMENTATION_MASTER_PLAN_PATH = (
+    REPO_ROOT / "docs" / "CORTEX_V2_IMPLEMENTATION_MASTER_PLAN_2.md"
+)
 PHASE_GATES_PATH = REPO_ROOT / "docs" / "CORTEX_V2_PHASE_GATES_2.md"
-REFERENCE_RUNTIME_PROGRAM_PATH = (
-    REPO_ROOT / "docs" / "CORTEX_V2_REFERENCE_RUNTIME_PROGRAM_0.md"
-)
-REFERENCE_FEEDBACK_PROGRAM_PATH = (
-    REPO_ROOT / "docs" / "CORTEX_V2_REFERENCE_FEEDBACK_PROGRAM_0.md"
-)
-REFERENCE_FEEDBACK_PROGRAM_1_PATH = (
-    REPO_ROOT / "docs" / "CORTEX_V2_REFERENCE_FEEDBACK_PROGRAM_1.md"
-)
-REFERENCE_CONTINUITY_PROGRAM_PATH = (
-    REPO_ROOT / "docs" / "CORTEX_V2_REFERENCE_CONTINUITY_PROGRAM_0.md"
-)
-OPENAI_RUNTIME_PROGRAM_PATH = (
-    REPO_ROOT / "docs" / "CORTEX_V2_OPENAI_RUNTIME_PROGRAM_0.md"
-)
-OPENAI_INGRESS_PROGRAM_PATH = (
-    REPO_ROOT / "docs" / "CORTEX_V2_OPENAI_INGRESS_PROGRAM_0.md"
-)
-OPENAI_SERVICE_PROGRAM_PATH = (
-    REPO_ROOT / "docs" / "CORTEX_V2_OPENAI_SERVICE_PROGRAM_0.md"
-)
-OPENAI_HOST_CONTROL_PROGRAM_PATH = (
-    REPO_ROOT / "docs" / "CORTEX_V2_OPENAI_HOST_CONTROL_PROGRAM_0.md"
-)
-EXECUTIVE_LIVE_OUTCOME_PROGRAM_PATH = (
-    REPO_ROOT / "docs" / "CORTEX_V2_EXECUTIVE_LIVE_OUTCOME_PROGRAM_0.md"
-)
-COMPUTED_EXECUTIVE_LOOP_PROGRAM_PATH = (
-    REPO_ROOT / "docs" / "CORTEX_V2_COMPUTED_EXECUTIVE_LOOP_PROGRAM_0.md"
-)
-CLOSED_LOOP_ENFORCEMENT_PROGRAM_PATH = (
-    REPO_ROOT / "docs" / "CORTEX_V2_CLOSED_LOOP_ENFORCEMENT_PROGRAM_0.md"
-)
-GEMINI_RUNTIME_RESTACK_PROGRAM_PATH = (
-    REPO_ROOT / "docs" / "CORTEX_V2_GEMINI_RUNTIME_RESTACK_PROGRAM_0.md"
-)
-GEMINI_RUNTIME_PROGRAM_PATH = (
-    REPO_ROOT / "docs" / "CORTEX_V2_GEMINI_RUNTIME_PROGRAM_0.md"
-)
-GEMINI_INGRESS_PROGRAM_PATH = (
-    REPO_ROOT / "docs" / "CORTEX_V2_GEMINI_INGRESS_PROGRAM_0.md"
-)
-GEMINI_SERVICE_PROGRAM_PATH = (
-    REPO_ROOT / "docs" / "CORTEX_V2_GEMINI_SERVICE_PROGRAM_0.md"
-)
-GEMINI_HOST_CONTROL_PROGRAM_PATH = (
-    REPO_ROOT / "docs" / "CORTEX_V2_GEMINI_HOST_CONTROL_PROGRAM_0.md"
-)
-RUNTIME_RESTACK_PROGRAM_PATH = (
-    REPO_ROOT / "docs" / "CORTEX_V2_RUNTIME_RESTACK_PROGRAM_0.md"
-)
-ERIKA_VISUALIZATION_STATUS_PATH = (
-    REPO_ROOT / "docs" / "erika-visualizations" / "CORTEX_EVIDENCE_BASED_STATUS.md"
-)
-ERIKA_VISUALIZATION_HTML_PATH = (
-    REPO_ROOT / "docs" / "erika-visualizations" / "cortex-now-vs-future.html"
-)
 LIVE_VALIDATION_PROGRAM_PATH = (
     REPO_ROOT / "docs" / "CORTEX_V2_LIVE_VALIDATION_PROGRAM_0.md"
-)
-LIVE_VALIDATION_SCENARIO_CATALOG_PATH = (
-    REPO_ROOT / "docs" / "CORTEX_V2_LIVE_VALIDATION_SCENARIO_CATALOG_0.md"
 )
 LIVE_VALIDATION_VERDICT_PATH = (
     REPO_ROOT / "docs" / "CORTEX_V2_LIVE_VALIDATION_VERDICT_0.md"
 )
-LIVE_SERVICE_PROOF_PATH = (
-    REPO_ROOT / "docs" / "CORTEX_V2_LIVE_SERVICE_PROOF_0.md"
+LIVE_SERVICE_PROOF_PATH = REPO_ROOT / "docs" / "CORTEX_V2_LIVE_SERVICE_PROOF_0.md"
+EXECUTIVE_RESTORATION_NOTE_PATH = (
+    REPO_ROOT / "docs" / "CORTEX_V2_EXECUTIVE_RESTORATION_NOTE.md"
 )
-OPERATOR_DIRECTIONALITY_PROGRAM_PATH = (
-    REPO_ROOT / "docs" / "CORTEX_V2_OPERATOR_DIRECTIONALITY_PROGRAM_0.md"
+OPENAI_VERIFIED_WORK_PROGRAM_PATH = (
+    REPO_ROOT / "docs" / "CORTEX_V2_OPENAI_VERIFIED_WORK_PROGRAM_0.md"
 )
-OPERATOR_DIRECTIONALITY_SCENARIO_CATALOG_PATH = (
-    REPO_ROOT / "docs" / "CORTEX_V2_OPERATOR_DIRECTIONALITY_SCENARIO_CATALOG_0.md"
-)
-OPERATOR_DIRECTIONALITY_AUDIT_PATH = (
-    REPO_ROOT / "docs" / "CORTEX_V2_OPERATOR_DIRECTIONALITY_AUDIT_0.md"
-)
-OPERATOR_ROUTING_PROGRAM_PATH = (
-    REPO_ROOT / "docs" / "CORTEX_V2_OPERATOR_ROUTING_PROGRAM_0.md"
-)
-MEDIATION_HOST_REALIZATION_PROGRAM_PATH = (
-    REPO_ROOT / "docs" / "CORTEX_V2_MEDIATION_HOST_REALIZATION_PROGRAM_0.md"
-)
-MEDIATION_JUSTIFICATION_NOTE_PATH = (
-    REPO_ROOT / "docs" / "CORTEX_V2_MEDIATION_JUSTIFICATION_NOTE.md"
-)
+LIVE_COMPARE_PATH = REPO_ROOT / "tools" / "live_compare.py"
+LIVE_VALIDATION_SCOPE_SOURCE_PATH = REPO_ROOT / "tools" / "live_validation_common.py"
 
 
 def _read(path: Path) -> str:
     return path.read_text(encoding="utf-8")
 
 
-def _extract_accepted_workflow_baseline(workstream_text: str) -> str:
-    branch_match = re.search(r"Accepted baseline branch: `([^`]+)`", workstream_text)
-    if branch_match is None:
-        raise AssertionError("missing accepted workflow baseline in workstream ledger")
-    return branch_match.group(1)
+def _read_git_ref_text(ref: str, path: Path) -> str:
+    relative_path = path.relative_to(REPO_ROOT).as_posix()
+    return subprocess.check_output(
+        ["git", "show", f"{ref}:{relative_path}"],
+        cwd=REPO_ROOT,
+        text=True,
+        encoding="utf-8",
+    )
 
 
-def _extract_sh_block(doc: str, heading: str) -> str:
-    pattern = rf"## {re.escape(heading)}.*?```sh\n(.*?)```"
-    match = re.search(pattern, doc, re.DOTALL)
-    if match is None:
-        raise AssertionError(f"missing shell block for heading: {heading}")
-    return match.group(1).strip()
+def _main_sync_state() -> str:
+    raw = subprocess.check_output(
+        ["git", "rev-list", "--left-right", "--count", "origin/main...main"],
+        cwd=REPO_ROOT,
+        text=True,
+        encoding="utf-8",
+    ).strip()
+    behind_str, ahead_str = raw.split()
+    behind = int(behind_str)
+    ahead = int(ahead_str)
+    if ahead and behind:
+        return "diverged"
+    if ahead:
+        return "ahead"
+    if behind:
+        return "behind"
+    return "synced"
 
 
-def _normalize_shell_block(block: str) -> str:
-    lines: list[str] = []
-    for raw_line in block.splitlines():
-        line = raw_line.strip()
-        if not line:
-            continue
-        if line.endswith("\\"):
-            line = line[:-1].rstrip()
-        lines.append(line)
-    return " ".join(" ".join(lines).split())
-
-
-def _extract_make_targets(makefile_text: str) -> set[str]:
-    return set(re.findall(r"^([a-zA-Z0-9][a-zA-Z0-9_-]*):", makefile_text, re.MULTILINE))
+def _local_review_branches() -> list[str]:
+    output = subprocess.check_output(
+        ["git", "for-each-ref", "--format=%(refname:short)", "refs/heads/review"],
+        cwd=REPO_ROOT,
+        text=True,
+        encoding="utf-8",
+    )
+    return [line.strip() for line in output.splitlines() if line.strip()]
 
 
 def _extract_doc_make_targets(doc_text: str) -> set[str]:
     return set(re.findall(r"^make ([a-zA-Z0-9][a-zA-Z0-9_-]*)$", doc_text, re.MULTILINE))
 
 
-def _extract_make_recipe(makefile_text: str, target: str) -> str:
-    pattern = rf"^{re.escape(target)}:\n((?:\t.*\n)+)"
-    match = re.search(pattern, makefile_text, re.MULTILINE)
+def _extract_make_targets(makefile_text: str) -> set[str]:
+    return set(re.findall(r"^([a-zA-Z0-9][a-zA-Z0-9_-]*):", makefile_text, re.MULTILINE))
+
+
+def _extract_section(doc_text: str, heading: str) -> str:
+    match = re.search(
+        rf"## {re.escape(heading)}\n(?P<section>.*?)(?:\n## |\Z)",
+        doc_text,
+        re.DOTALL,
+    )
     if match is None:
-        raise AssertionError(f"missing make recipe for target: {target}")
-    recipe_lines = []
-    for line in match.group(1).splitlines():
-        stripped = line.strip()
-        if stripped:
-            recipe_lines.append(stripped)
-    return _normalize_shell_block("\n".join(recipe_lines))
+        raise AssertionError(f"missing section: {heading}")
+    return match.group("section")
 
 
-def _expand_make_vars(command: str, makefile_text: str) -> str:
-    assignments = {
-        name: value.strip()
-        for name, value in re.findall(r"^([A-Z_]+) \?= (.+)$", makefile_text, re.MULTILINE)
-    }
-    expanded = command
-    while True:
-        next_expanded = expanded
-        for name, value in assignments.items():
-            next_expanded = next_expanded.replace(f"$({name})", value)
-        if next_expanded == expanded:
-            return expanded
-        expanded = next_expanded
-
-
-def test_implementation_status_note_reflects_current_verification_surfaces() -> None:
-    text = _read(IMPLEMENTATION_STATUS_NOTE_PATH)
-
-    assert "there is no repo-local pytest config" not in text
-    assert "there is no repo-local coverage configuration" not in text
-    assert "`pytest.ini` now exists for repo-local discovery" in text
-    assert "`.coveragerc` now exists for repo-local coverage configuration" in text
-    assert "repo-local verification entry points now exist in `Makefile`" in text
-    assert "no committed baseline artifact is recorded" not in text
-    assert "baseline recorded in `docs/CORTEX_V2_COVERAGE_BASELINE_NOTE_0.md`" in text
-    assert "It does not track later candidate or post-closeout mediation evidence;" in text
-    assert "At the time of this accepted closeout note, repo evidence showed cell-level lift on:" in text
-    assert "At that accepted closeout point, package-level evidence remained `insufficient` on every required mediation axis." in text
-    assert "The current accepted mediation-justification decision is recorded in `docs/CORTEX_V2_MEDIATION_JUSTIFICATION_NOTE.md`." in text
-    assert "Current repo-local verification truth:" in text
-    assert "It does not by itself open new feature work." in text
-    assert "or a separately scoped bounded runtime/product follow-on train." in text
-    assert "- and Claude." in text
-    assert "OpenAI runtime / ingress / service / bounded host-control" in text
-    assert "Gemini runtime / ingress / service / bounded host-control" in text
-    assert "Claude runtime / ingress / service / bounded host-control" in text
-    assert "clean synced `main` line" in text
-    assert "do not hardcode a separate accepted workflow baseline here" in text
-    assert "bounded feedback-conditioned intervention thresholding" in text
-    assert "bounded enforcement-aware realized control" in text
-
-
-def test_mediation_justification_note_records_current_decision() -> None:
-    text = _read(MEDIATION_JUSTIFICATION_NOTE_PATH)
-
-    assert "This note records the accepted current mediation justification decision." in text
-    assert "Status: `justified for one bounded experimental mediation seam`" in text
-    assert "The current accepted J2 package now shows:" in text
-    assert "explicit but non-blocking gap" in text
-    assert "Phase 16 mediation is now justified for one bounded experimental seam." in text
-    assert "The next lawful move after this note is to plan and implement one bounded experimental mediation seam under those limits." in text
-
-
-def test_verification_ergonomics_plan_reflects_current_campaign_state() -> None:
-    text = _read(VERIFICATION_PLAN_PATH)
-
-    assert "## Current Campaign State" in text
-    assert "`E1` is effectively landed" in text
-    assert "`E2` is effectively landed" in text
-    assert "`E3` is materially landed for current scope" in text
-    assert "`E4` is effectively landed for current scope" in text
-    assert "`E5` is materially landed for current scope" in text
-    assert "`E6` remains open." in text
-    assert "the current repo begins with no repo-local coverage config" not in text
-    assert "## 13. Current hold note" in text
-    assert "`E2C` is now landed." in text
-    assert "`E4` is now landed for current scope." in text
-    assert "`E5` is materially landed for current scope." in text
-    assert "post-`E4` re-audit is complete." in text
-    assert "no `E6` seam is promoted at this time." in text
-    assert "### Post-`E4` re-audit result" in text
-    assert "No `E6` seam is promoted from this re-audit." in text
-    assert "### E2C — first coverage baseline artifact" not in text
-
-
-def test_coverage_baseline_note_exists() -> None:
-    text = _read(COVERAGE_BASELINE_NOTE_PATH)
-
-    assert "Status: first committed repo-local coverage baseline" in text
-    assert "make coverage" in text
-    assert "TOTAL" in text
+def _extract_phase_gate_row(doc_text: str, gate: str) -> str:
+    match = re.search(rf"^\| `{re.escape(gate)}` .*?$", doc_text, re.MULTILINE)
+    if match is None:
+        raise AssertionError(f"missing phase-gate row: {gate}")
+    return match.group(0)
 
 
 def test_local_verification_doc_make_targets_exist_in_makefile() -> None:
     doc_text = _read(LOCAL_VERIFICATION_PATH)
     makefile_text = _read(MAKEFILE_PATH)
 
-    doc_targets = _extract_doc_make_targets(doc_text)
-    make_targets = _extract_make_targets(makefile_text)
-
-    assert doc_targets <= make_targets
+    assert _extract_doc_make_targets(doc_text) <= _extract_make_targets(makefile_text)
 
 
-def test_repo_workflow_doc_exists_and_agents_reference_it() -> None:
-    workflow_text = _read(REPO_WORKFLOW_PATH)
-    agents_text = _read(REPO_ROOT / "AGENTS.md")
-
-    assert "Repo Workflow" in workflow_text
-    assert "`main` is the resting branch" in workflow_text
-    assert "python scripts/repo_workflow.py sync-main" in workflow_text
-    assert "python scripts/repo_workflow.py start-session" in workflow_text
-    assert "python scripts/repo_workflow.py close-session" in workflow_text
-    assert "python scripts/repo_workflow.py finalize" in workflow_text
-    assert "python scripts/repo_workflow.py preserve-worktree" in workflow_text
-    assert "python scripts/repo_workflow.py audit-branches" in workflow_text
-    assert "python scripts/repo_workflow.py cleanup-report" in workflow_text
-    assert "`REPO_WORKFLOW.md` is the maintainer workflow authority" in agents_text
-    assert "`scripts/repo_workflow.py` is the enforcing helper surface" in agents_text
-    assert "`cleanup-report` is the strict final repo-hygiene gate" in agents_text
-    assert "`main` is the resting branch in this repository." in agents_text
-    assert "archival-root only" not in agents_text
-
-
-def test_seam_preflight_target_and_doc_contract_exist() -> None:
-    doc_text = _read(LOCAL_VERIFICATION_PATH)
-    makefile_text = _read(MAKEFILE_PATH)
-
-    make_recipe = _extract_make_recipe(makefile_text, "seam-preflight")
-
-    assert "make seam-preflight" in doc_text
-    assert "git branch --show-current" in doc_text
-    assert "git rev-list --left-right --count main...origin/main" in doc_text
-    assert "git status --short --untracked-files=all" in doc_text
-    assert "classify seam risk before opening new work" in doc_text
-    assert "require repeated reruns before acceptance" in doc_text
-    assert "git branch --show-current" in make_recipe
-    assert "git status --short --untracked-files=all" in make_recipe
-    assert "grep -v '^?? '" in make_recipe
-    assert "tracked worktree changes must be accepted or committed before a new seam" in make_recipe
-    assert "classify seam risk as deterministic code/doc" in make_recipe
-    assert "require repeated reruns before acceptance" in make_recipe
-
-
-def test_canonical_bundle_block_matches_verify_recipe_logically() -> None:
-    doc_text = _read(LOCAL_VERIFICATION_PATH)
-    makefile_text = _read(MAKEFILE_PATH)
-
-    doc_block = _normalize_shell_block(_extract_sh_block(doc_text, "Canonical bundle"))
-    make_recipe = _expand_make_vars(
-        _extract_make_recipe(makefile_text, "verify"), makefile_text
-    )
-
-    assert doc_block == make_recipe
-
-
-def test_smoke_bundle_block_matches_test_smoke_recipe_logically() -> None:
-    doc_text = _read(LOCAL_VERIFICATION_PATH)
-    makefile_text = _read(MAKEFILE_PATH)
-
-    doc_block = _normalize_shell_block(_extract_sh_block(doc_text, "Smoke bundle"))
-    make_recipe = _expand_make_vars(
-        _extract_make_recipe(makefile_text, "test-smoke"), makefile_text
-    )
-
-    assert doc_block == make_recipe
-
-
-def test_local_verification_doc_points_to_committed_coverage_baseline() -> None:
+def test_active_openai_only_local_verification_bundle_is_recorded() -> None:
     text = _read(LOCAL_VERIFICATION_PATH)
+    section = _extract_section(text, "Active OpenAI-only current-line proof bundle")
 
-    assert "docs/CORTEX_V2_COVERAGE_BASELINE_NOTE_0.md" in text
-    assert "Coverage is still not part of the canonical local verification bundle." in text
-    assert "no coverage threshold or pass/fail gate" in text
-
-
-def test_live_preflight_entrypoint_is_bounded_and_matches_makefile() -> None:
-    doc_text = _read(LOCAL_VERIFICATION_PATH)
-    makefile_text = _read(MAKEFILE_PATH)
-
-    assert "python3 tools/live_preflight.py --skip-updates" in doc_text
-    assert "make live-preflight-update" in doc_text
-    assert "repo-local entry point is intentionally non-mutating" in doc_text
-    assert "Use the direct script without `--skip-updates` only when you explicitly want to try the updater path." in doc_text
-
-    make_recipe = _expand_make_vars(
-        _extract_make_recipe(makefile_text, "live-preflight"), makefile_text
+    assert (
+        "This is the only active current-line proof bundle for the accepted OpenAI-only product scope."
+        in section
     )
-    assert make_recipe == "python3 tools/live_preflight.py --skip-updates"
-    update_recipe = _expand_make_vars(
-        _extract_make_recipe(makefile_text, "live-preflight-update"), makefile_text
+    assert "python3 tools/live_preflight.py --skip-updates" in section
+    assert (
+        "python3 tools/live_cortex_host_control.py --lane automation --provider openai --suite current"
+        in section
     )
-    assert update_recipe == "python3 tools/live_preflight.py"
+    assert (
+        "python3 tools/live_cortex_host_control.py --lane automation --provider openai --suite canonical_anchor"
+        in section
+    )
+    assert "python3 tools/live_compare.py" in section
+    assert (
+        "python3 -m pytest -q tests/unit/test_live_validation_tools.py "
+        "tests/unit/test_verification_docs_sync.py "
+        "tests/unit/test_correspondence_sre.py tests/unit/test_import_smoke.py"
+    ) in section
+    assert (
+        "Retained watchlist/reference tools remain callable below, but they are not active closure surfaces for runtime truth."
+        in section
+    )
+
+    assert "make live-provider-baselines" not in section
+    assert "make live-host-native-product-paths" not in section
+    assert "make live-openai-app-server" not in section
+    assert "make live-operator-payoff-audit" not in section
+    assert "make live-operator-directionality" not in section
+    assert "make live-operator-directionality-audit" not in section
+    assert "tests/unit/test_operator_routing.py" not in section
 
 
-def test_local_verification_doc_records_repo_workflow_commands() -> None:
-    doc_text = _read(LOCAL_VERIFICATION_PATH)
+def test_watchlist_reference_appendix_retains_demoted_tools() -> None:
+    text = _read(LOCAL_VERIFICATION_PATH)
+    appendix = _extract_section(text, "Retained watchlist/reference appendix")
 
-    assert "## Maintainer workflow" in doc_text
-    assert "python scripts/repo_workflow.py sync-main" in doc_text
-    assert "python scripts/repo_workflow.py start-session --agent codex --slug task-name" in doc_text
-    assert 'python scripts/repo_workflow.py close-session --message "docs: end-state summary"' in doc_text
-    assert 'python scripts/repo_workflow.py finalize --message "docs: manual branch closeout"' in doc_text
-    assert "python scripts/repo_workflow.py preserve-worktree --slug root-e1-verification" in doc_text
-    assert "python scripts/repo_workflow.py audit-branches" in doc_text
-    assert "python scripts/repo_workflow.py cleanup-report" in doc_text
-    assert "make repo-hygiene" in doc_text
-    assert "keep the current explicit stable models unless a separate host-defaults seam is explicitly opened" in doc_text
-    assert "## Operator routing realization" in doc_text
-    assert "python3 -m pytest tests/unit/test_operator_routing.py -q" in doc_text
-    assert "python3 -m pytest tests/unit/test_sre_executive_summary.py -q" in doc_text
-    assert "python3 -m pytest tests/unit/test_sre_modulators.py -q" in doc_text
-    assert "python3 -m pytest tests/unit/test_sre_policy_view.py -q" in doc_text
-    assert "python3 -m pytest tests/unit/test_correspondence_sre.py -q" in doc_text
-    assert "python3 tools/mediation_evidence_package.py --check" in doc_text
+    assert (
+        "These retained tools remain callable for drift detection, host-boundary research, and historical/reference auditing."
+        in appendix
+    )
+    assert (
+        "They are explicitly watchlist/reference only after X2 and are not part of the active current-line closure path."
+        in appendix
+    )
+    assert "### Live provider baselines" in appendix
+    assert "make live-provider-baselines" in appendix
+    assert "make live-provider-baselines-automation" in appendix
+    assert "### Live host-native product paths" in appendix
+    assert "make live-host-native-product-paths" in appendix
+    assert "### Live OpenAI App Server operator proof" in appendix
+    assert "make live-openai-app-server" in appendix
+    assert "### Live operator payoff audit" in appendix
+    assert "make live-operator-payoff-audit" in appendix
+    assert "### Operator routing realization" in appendix
+    assert "tests/unit/test_operator_routing.py" in appendix
+    assert "### Live operator directionality" in appendix
+    assert "make live-operator-directionality" in appendix
+    assert "### Live operator directionality audit" in appendix
+    assert "make live-operator-directionality-audit" in appendix
 
 
-def test_resume_protocol_and_active_workstream_contract_exist() -> None:
-    agents_text = _read(REPO_ROOT / "AGENTS.md")
+def test_openai_host_control_local_revalidation_mentions_verified_work_without_widening_canonical_proof() -> None:
+    text = _read(LOCAL_VERIFICATION_PATH)
+    section = _extract_section(text, "OpenAI host-control revalidation")
+
+    assert "the default thin text-only path when no `work_contract` is present" in section
+    assert "shared verified-work law" in section
+    assert "runtime-native verification binding" in section
+    assert "Any larger-task live-value reruns for the verified-work path remain local exploratory evidence only" in section
+    assert "python3 -m pytest tests/unit/test_verified_work.py -q" in section
+    assert "python3 -m pytest tests/unit/test_verified_work_runtime.py -q" in section
+    assert "python3 -m pytest tests/unit/test_openai_runtime_step.py -q" in section
+    assert "make revalidate-openai-host-control" in section
+
+
+def test_live_compare_is_product_first_but_json_compatible() -> None:
+    text = _read(LIVE_COMPARE_PATH)
+
+    assert '"canonical_provider_scope": sorted(canonical_scope)' in text
+    assert '"service_success_count": service_success_count' in text
+    assert '"watchlist_drift_hosts": watchlist_drift_hosts' in text
+    assert '"next_corrective_seam": _next_corrective_seam(' in text
+    assert '"verdict_reason": verdict_reason' in text
+    assert '"providers": providers' in text
+
+    assert "## OpenAI current product scope" in text
+    assert "## Out-of-scope backlog" in text
+    assert "## Watchlist drift" in text
+    assert "## Next corrective seam" in text
+    assert "## Lane relationship" in text
+    assert (
+        "current OpenAI-only product scope is already re-earned on the canonical direct-API lane and the active support/eval shell is already compressed"
+        in text
+    )
+
+    assert "Watchlist pass_minimal host count" not in text
+    assert "watchlist chosen models" not in text
+    assert "watchlist hook labels" not in text
+    assert "exploratory pro chosen models" not in text
+
+
+def test_agents_and_master_plan_record_cortex_law_train_method() -> None:
+    agents_text = _read(AGENTS_PATH)
+    master_plan_text = _read(IMPLEMENTATION_MASTER_PLAN_PATH)
+
+    assert "## Cortex-law train discipline" in agents_text
+    assert "Cortex is the invariant cortical circuit in this repository." in agents_text
+    assert "`Cortex truth`" in agents_text
+    assert "`brain-wiring truth`" in agents_text
+    assert "`conformance truth`" in agents_text
+    assert "`shipping truth`" in agents_text
+    assert "`Train Charter`" in agents_text
+    assert "build -> test -> iterate -> cut" in agents_text
+    assert "if two iterations fail without improving the divergence classification" in agents_text
+    assert "run the same contract pack on OpenAI, Claude, and Gemini" in agents_text
+    assert "`baseline result`" in agents_text
+    assert "`primary_metric`" in agents_text
+    assert "`guardrail_metric`" in agents_text
+    assert "`iteration_budget`" in agents_text
+    assert "`rollback_surface`" in agents_text
+    assert "`escalation_triggers`" in agents_text
+    assert "`promote`, `revise`, `cut`, `escalate`" in agents_text
+    assert "`deterministic`" in agents_text
+    assert "`shared verification-plumbing`" in agents_text
+    assert "`timing/env-sensitive`" in agents_text
+    assert "tools/cortex_train_loop.py" in agents_text
+
+    assert "Post-closeout Cortex-law train method:" in master_plan_text
+    assert "define the Cortex law being changed" in master_plan_text
+    assert "run tri-brain conformance on OpenAI, Claude, and Gemini" in master_plan_text
+    assert "one Cortex-law micro-train at a time" in master_plan_text
+    assert "no second pack until the first has a stable divergence classification" in master_plan_text
+    assert "borrow or clone only proven narrow mechanisms" in master_plan_text
+    assert "lock one `Train Charter`, one baseline result, one primary metric, one guardrail metric" in master_plan_text
+    assert "end the iteration in exactly one of `promote`, `revise`, `cut`, or `escalate`" in master_plan_text
+    assert "`env_blocked` never counts as success" in master_plan_text
+    assert "thin local recorder" in master_plan_text
+
+
+def test_active_current_line_docs_frame_openai_only_truth_and_watchlist_retention() -> None:
     workstream_text = _read(ACTIVE_WORKSTREAM_PATH)
-    accepted_branch = _extract_accepted_workflow_baseline(workstream_text)
-
-    assert "## Continuation and resume protocol" in agents_text
-    assert "`docs/CORTEX_V2_ACTIVE_WORKSTREAM.md`" in agents_text
-    assert "git branch --show-current" in agents_text
-    assert "git status --short --untracked-files=all" in agents_text
-    assert "Never promote uncommitted local edits to accepted baseline truth." in agents_text
-
-    assert "Status: live workflow-state ledger for compaction-safe continuation." in workstream_text
-    assert f"Accepted baseline branch: `{accepted_branch}`" in workstream_text
-    assert "Accepted baseline commit lookup: `git rev-parse HEAD` on clean synced `main`" in workstream_text
-    assert "exact accepted-head hashes are intentionally not mirrored in repo-tracked support docs" in workstream_text
-    assert "Current campaign:" in workstream_text
-    assert "Current working branch at ledger update:" in workstream_text
-    assert "Current branch role:" in workstream_text
-    assert "accepted workflow baseline truth now rests on `main` rather than a long-lived working branch" in workstream_text
-    assert "Current campaign: `No active mediation seam; first bounded reference mediation closeout landed`" in workstream_text
-    assert "Current working branch at ledger update: `main`" in workstream_text
-    assert "Current branch role: clean synced resting branch after merged `J4` closeout and `cleanup-report`" in workstream_text
-    assert "Current candidate seam: `none open`" in workstream_text
-    assert "mediation is now justified for one bounded experimental seam, and the full first bounded reference mediation train `J4B/J4C/J4D/J4F` is now landed on the accepted line" in workstream_text
-    assert "`J4B`: exact missing-capability / missing-context pressure now admits `seek-context` in `X_t^{ref}`" in workstream_text
-    assert "`J4C` identity-default reference finalization is landed" in workstream_text
-    assert "`J4D` runtime-backed reference packet/comparator evidence closure is landed" in workstream_text
-    assert "`J4F` workflow/authority closure is landed" in workstream_text
-    assert "`ReferenceMediationMode` defaults to identity" in workstream_text
-    assert "Reference lifecycle surfaces advertise bounded `mcp.query` affordance truth" in workstream_text
-    assert "the committed reference baseline/mediated packet examples plus the host-realization comparator now use the real runtime path rather than a specialization-only helper" in workstream_text
-    assert "non-reference mediated artifacts remain evidence-only" in workstream_text
-    assert "`J4E` is explicitly declined for current closeout" in workstream_text
-    assert "`J2` is now landed on the canonical line:" in workstream_text
-    assert "dedicated branch-discipline families now exist on `reference`, `openai`, and `claude`" in workstream_text
-    assert "dedicated non-thrash burden families now exist on `reference`, `openai`, and `claude`" in workstream_text
-    assert "the first Claude host-realization line is now committed on the canonical line" in workstream_text
-    assert "mediation is now justified for one bounded experimental seam" in workstream_text
-    assert "`M2` is now landed on the canonical line:" in workstream_text
-    assert "`J1` is now landed on the canonical line:" in workstream_text
-    assert "the compare surface and live-validation truth from earlier seams remain accepted ancestor input and are not being reopened after this landed `J4` closeout." in workstream_text
-    assert "`M2` is now landed on the canonical line:" in workstream_text
-    assert "`ExecutiveSignalSummary`" in workstream_text
-    assert "persistent tonic `ExecutiveModulatorMemory`" in workstream_text
-    assert "`ExecutivePolicyView`" in workstream_text
-    assert "live `modulator_summary`, `modulator_memory`, and `policy_view` diagnostics on the operator path" in workstream_text
-    assert "the stop-threshold law is now decoupled from self-referential `stop_pressure` comparison" in workstream_text
-    assert "`J3` is now landed on the canonical line:" in workstream_text
-    assert "mediation is now justified for one bounded experimental seam" in workstream_text
-    assert "better uncertainty handling remains `insufficient`, but that gap is explicit and non-blocking for one first bounded seam" in workstream_text
-    assert "at `J3` acceptance time the next lawful move became one bounded experimental SRE-only mediation seam" in workstream_text
-    assert "there is no open `J4` mediation blocker on accepted baseline truth" in workstream_text
-    assert "service-lane `N2` remains blocked on a capable machine" in workstream_text
-    assert "keep the first bounded reference mediation train closed on clean synced `main` unless a new bounded program explicitly reopens it" in workstream_text
-    assert "do not open `J4E` absent a real post-closeout truth gap on the already-proven OpenAI lane" in workstream_text
-    assert "continue non-mediation follow-on work on its own authority surface rather than treating mediation as partially open" in workstream_text
-    assert "Do not implement mediation in `J3`;" in workstream_text
-    assert "Do not treat `J3` as license for broad rollout" in workstream_text
-    assert "Do not widen `J4` into branch/thrash mediation, uncertainty/brake mediation, or pooled cross-host mediation" in workstream_text
-    assert "Do not let `J4` generic-reweight every family or collapse into a hub-style mediation score" in workstream_text
-    assert "Do not let `J4` alter observe/bind meaning, packet publication meaning, or commitment truth to make mediation look better." in workstream_text
-    assert "Do not pretend a builder-only `seek-context` mask widening is sufficient if the runtime lane still selects `neutral` under the accepted threshold law." in workstream_text
-    assert "Do not reintroduce a generic `*-missing` `seek-context` heuristic; keep the exact runtime-visible pressure tags explicit." in workstream_text
-    assert "Do not treat signed-in provider CLI sessions as equivalent to the automation credentials" in workstream_text
-    assert "Do not treat the new OpenAI App Server operator proof as license to reopen v1 assisted mode" in workstream_text
-    assert "Do not keep repo-tracked live artifacts under `docs/live_validation/`" in workstream_text
-    assert "Do not shell out from service transports to provider CLIs." in workstream_text
-    assert "Do not silently reintroduce a pinned Gemini operator model as the default testing start point" in workstream_text
-    assert "Do not pass explicit Gemini operator model names anywhere on the operator/evaluation harness" in workstream_text
-    assert "Do not overread provider-limit interference as a product-quality defeat for Cortex by itself." in workstream_text
-    assert "Do not treat selecting `gemini-api-key` in `.gemini/settings.json` as sufficient for headless Gemini operator proof" in workstream_text
-    assert "Do not use Gemini `plan` mode as the default comparison baseline on the operator/evaluation path." in workstream_text
-    assert "Do not reopen Gemini model chasing or assisted-mode speculation inside the active `L4` service-proof train." in workstream_text
-    assert "Do not shell out from service transports to provider CLIs." in workstream_text
-    assert "Do not widen `K4` into support-memory runtime, mediation, service/auth work, or broader host rollout." in workstream_text
-    assert "Do not unfreeze threshold law in `K4`" in workstream_text
-    assert "Do not widen the landed K train into support-memory runtime, mediation, vigor scaling, service/auth work on this machine, or broader host rollout." in workstream_text
-    assert "git branch --show-current" in workstream_text
-    assert "git status --short --untracked-files=all" in workstream_text
-    assert "Never promote an uncommitted branch head or dirty worktree state to accepted baseline truth." in workstream_text
-
-
-def test_reference_runtime_program_lock_is_recorded() -> None:
-    program_text = _read(REFERENCE_RUNTIME_PROGRAM_PATH)
-    feedback_program_text = _read(REFERENCE_FEEDBACK_PROGRAM_PATH)
-    feedback_program_1_text = _read(REFERENCE_FEEDBACK_PROGRAM_1_PATH)
-    continuity_program_text = _read(REFERENCE_CONTINUITY_PROGRAM_PATH)
-    openai_runtime_program_text = _read(OPENAI_RUNTIME_PROGRAM_PATH)
-    openai_ingress_program_text = _read(OPENAI_INGRESS_PROGRAM_PATH)
-    openai_service_program_text = _read(OPENAI_SERVICE_PROGRAM_PATH)
-    openai_host_control_program_text = _read(OPENAI_HOST_CONTROL_PROGRAM_PATH)
-    executive_live_outcome_program_text = _read(EXECUTIVE_LIVE_OUTCOME_PROGRAM_PATH)
-    computed_executive_loop_program_text = _read(COMPUTED_EXECUTIVE_LOOP_PROGRAM_PATH)
-    closed_loop_enforcement_program_text = _read(CLOSED_LOOP_ENFORCEMENT_PROGRAM_PATH)
-    operator_directionality_program_text = _read(OPERATOR_DIRECTIONALITY_PROGRAM_PATH)
-    operator_directionality_scenario_catalog_text = _read(OPERATOR_DIRECTIONALITY_SCENARIO_CATALOG_PATH)
-    operator_directionality_audit_text = _read(OPERATOR_DIRECTIONALITY_AUDIT_PATH)
-    operator_routing_program_text = _read(OPERATOR_ROUTING_PROGRAM_PATH)
-    mediation_host_realization_program_text = _read(
-        MEDIATION_HOST_REALIZATION_PROGRAM_PATH
-    )
-    gemini_runtime_restack_text = _read(GEMINI_RUNTIME_RESTACK_PROGRAM_PATH)
-    gemini_runtime_program_text = _read(GEMINI_RUNTIME_PROGRAM_PATH)
-    gemini_ingress_program_text = _read(GEMINI_INGRESS_PROGRAM_PATH)
-    gemini_service_program_text = _read(GEMINI_SERVICE_PROGRAM_PATH)
-    gemini_host_control_program_text = _read(GEMINI_HOST_CONTROL_PROGRAM_PATH)
-    phase_gate_text = _read(PHASE_GATES_PATH)
-    workstream_text = _read(ACTIVE_WORKSTREAM_PATH)
-
-    assert "reference-host-only runtime program" in program_text
-    assert "`python3 -m cortex.runtime.reference_cli`" in program_text
-    assert "JSONL input and JSONL output only" in program_text
-    assert "no service/API shell" in program_text
-    assert "no Gemini runtime" in program_text
-    assert "no OpenAI runtime" in program_text
-    assert "no AUX runtime activation" in program_text
-    assert "no mediation implementation" in program_text
-
-    assert "## 6. Post-closeout runtime-program gates" in phase_gate_text
-    assert "`R1` reference runtime shell" in phase_gate_text
-    assert "`R2` computed reference executive slice" in phase_gate_text
-    assert "`R3` reference live continuity slice" in phase_gate_text
-    assert "`R4` reference closed-loop feedback and latched-brake slice" in phase_gate_text
-    assert "`R5` reference short-window feedback and sustained-pressure slice" in phase_gate_text
-    assert "the first accepted reference-host local CLI shell is landed" in phase_gate_text
-    assert "the first bounded `X_t^{ref}` builder, `U_t^{sre}` scoring/selection layer, and runtime-shell integration are landed" in phase_gate_text
-    assert "re-hardened and audit-clean for current scope" in phase_gate_text
-    assert "malformed `open` and session mismatch are explicit" in phase_gate_text
-    assert "feedback-conditioned builder update, top-level control ledger, and latched-brake enforcement are landed and audit-clean for current scope" in phase_gate_text
-    assert "the first bounded three-step realized-outcome window" in phase_gate_text
-    assert "the corrective line now closes the surviving session/window carrier defect" in phase_gate_text
-    assert "`C1` reference bounded cross-process continuation slice" in phase_gate_text
-    assert "explicit persisted `continuity_truth` plus bounded `control_residue` are landed on the accepted K1 closeout line, implemented at K1 proof head `d4c311f` and cleanly closed at deterministic closeout head `79b8f39`" in phase_gate_text
-    assert "`O1` OpenAI documented host-event runtime shell" in phase_gate_text
-    assert "raw documented host events drive a host-specific CLI shell" in phase_gate_text
-    assert "canonical Cortex event names are explicitly rejected" in phase_gate_text
-    assert "diagnostic-history non-equivalence" in phase_gate_text
-    assert "| closed | landed |" in phase_gate_text
-    assert "landed on the accepted K1 closeout line, implemented at K1 proof head `d4c311f`" in phase_gate_text
-    assert "`O2` OpenAI raw-transcript ingress shell" in phase_gate_text
-    assert "wrapper-shaped and mixed wrapper/transcript records are explicitly rejected" in phase_gate_text
-    assert "mixed wrapper/transcript records are explicitly rejected" in phase_gate_text
-    assert "`O3` OpenAI loopback service shell" in phase_gate_text
-    assert "loopback-only HTTP is landed on the accepted K1 closeout line" in phase_gate_text
-    assert "one active session per process is real for current scope" in phase_gate_text
-
-    assert "mediation is now justified for one bounded experimental seam" in workstream_text
-    assert "better uncertainty handling remains `insufficient`, but that gap is explicit and non-blocking for one first bounded seam" in workstream_text
-    assert "Current campaign: `No active mediation seam; first bounded reference mediation closeout landed`" in workstream_text
-    assert "Current candidate seam: `none open`" in workstream_text
-    assert "keep the first bounded reference mediation train closed on clean synced `main` unless a new bounded program explicitly reopens it" in workstream_text
-    assert "## 8. Mediation justification gate" in phase_gate_text
-    assert "`J3` mediation justification review" in phase_gate_text
-    assert "one bounded experimental mediation seam" in phase_gate_text
-    assert "## 9. Mediation implementation gate" in phase_gate_text
-    gate_9_match = re.search(
-        r"## 9\. Mediation implementation gate\n(?P<section>.*?)(?:\n## |\Z)",
-        phase_gate_text,
-        re.S,
-    )
-    assert gate_9_match is not None
-    assert "Overall status: `landed`" in gate_9_match.group("section")
-    assert "`J4B` reference `seek-context` reachability slice" in phase_gate_text
-    assert "`J4C` reference experimental host-realization finalizer" in phase_gate_text
-    assert "`J4D` runtime-backed reference mediation evidence closure" in phase_gate_text
-    assert "`J4F` workflow closeout and hygiene" in phase_gate_text
-    assert "first bounded experimental mediation slice" in mediation_host_realization_program_text
-    assert "The first mediation implementation should be a **host-realization seam**" in mediation_host_realization_program_text
-    assert "This program-lock seam is `non-load-bearing`." in mediation_host_realization_program_text
-    assert "Correspondence impact: none expected." in mediation_host_realization_program_text
-    assert "one bounded `seek-context` reachability adjustment on explicit missing-context / missing-capability pressure" in mediation_host_realization_program_text
-    assert "`J4B` is `load-bearing`." in mediation_host_realization_program_text
-    assert "the builder now admits `seek-context` into the family mask and top-family set only on exact `missing-capability`, `capability-view-missing`, or `execution-trace-missing` pressure" in mediation_host_realization_program_text
-    assert "the scorer now uses the same exact-pressure predicate rather than a generic `*-missing` heuristic" in mediation_host_realization_program_text
-    assert "the reference runtime lane now selects `seek-context` end-to-end on the capability-view-missing path" in mediation_host_realization_program_text
-    assert "`J4C` is `load-bearing`." in mediation_host_realization_program_text
-    assert "add one new `Q_t^{final}(a)` experimental mediation-finalizer row" in mediation_host_realization_program_text
-    assert "updated the `Q_t^{online}(a)` / `Q_t^{alloc}(a)` realization row so the same exact-pressure path now clears neutral dominance on the runtime lane" in mediation_host_realization_program_text
-    assert "Do not open `Q_t^{final}` inside `J4B` just to compensate for a pre-selection reachability gap." in mediation_host_realization_program_text
-    assert "`python3 -m cortex.runtime.reference_cli --mediation-mode {identity,host-realization-experimental}`" in mediation_host_realization_program_text
-    assert "Current accepted state after `J4F` closeout" in mediation_host_realization_program_text
-    assert "`J4B` is now accepted baseline truth on `main`" in mediation_host_realization_program_text
-    assert "`J4C` is now landed as an off-by-default reference finalizer" in mediation_host_realization_program_text
-    assert "`J4D` now replaces the old reference specialization helper fiction" in mediation_host_realization_program_text
-    assert "`J4E` is explicitly declined for the current closeout unless a later post-closeout review reopens a real truth gap" in mediation_host_realization_program_text
-    assert "`J4F` is now landed: workflow truth, phase-gate truth, correspondence truth, and branch truth are reconciled together on clean synced `main`." in mediation_host_realization_program_text
-    assert "Minimum deterministic proof for each opened load-bearing stage:" in mediation_host_realization_program_text
-    assert "Do not widen `J4` into branch/thrash mediation" in workstream_text
-    assert "the first one-process live continuity slice plus explicit rejection enforcement are real" in program_text
-    assert "the corrective zero-finding re-audit has passed for current scope" in program_text
-    assert "a mismatched runtime `session_id` is surfaced as an explicit contradiction" in program_text
-    assert "first bounded reference closed-loop feedback slice" in feedback_program_text
-    assert "top-level control ledger in the runtime output surface" in feedback_program_text
-    assert "bounded latched-brake enforcement point" in feedback_program_text
-    assert "`R4B` realization-feedback carrier and persistence" in feedback_program_text
-    assert "`R4E` latched-brake enforcement" in feedback_program_text
-    assert "Current accepted state after K1 closeout" in feedback_program_text
-    assert "implemented at K1 proof head `d4c311f` and truthfully closed at deterministic closeout head `79b8f39`" in feedback_program_text
-    assert "CLI-visible selected-vs-realized divergence" in feedback_program_text
-    assert "zero-finding adversarial runtime/API review found no defect for current scope" in feedback_program_text
-    assert "first bounded reference short-window feedback slice" in feedback_program_1_text
-    assert "branch: `codex/j2-restack-acceptance-truth-normalization`" in feedback_program_1_text
-    assert "commit: `acfccf9`" in feedback_program_1_text
-    assert "Historical `R4` source lineage still carried into this program:" in feedback_program_1_text
-    assert "`ReferenceRealizationFeedbackWindow`" in feedback_program_1_text
-    assert "`ReferenceFeedbackWindowSummary`" in feedback_program_1_text
-    assert "maximum length `3`" in feedback_program_1_text
-    assert "feedback_window_summary" in feedback_program_1_text
-    assert "session_summary.feedback_window_size" in feedback_program_1_text
-    assert "This program does **not** authorize:" in feedback_program_1_text
-    assert "a scoring rewrite" in feedback_program_1_text
-    assert "`R5B` feedback window carrier and session persistence" in feedback_program_1_text
-    assert "`R5E` re-audit and closeout" in feedback_program_1_text
-    assert "Current accepted state after K1 closeout" in feedback_program_1_text
-    assert "implemented at K1 proof head `d4c311f` and truthfully closed at deterministic closeout head `79b8f39`" in feedback_program_1_text
-    assert "committed end-to-end proof now exists at `ee41eb4`" in feedback_program_1_text
-    assert "the accepted landed donor closeout for the historical `R5` line is still anchored at `fd6789f`" in feedback_program_1_text
-    assert "Historical corrective source state" in feedback_program_1_text
-    assert "codex/r5g-h-corrective-reclosure" in feedback_program_1_text
-    assert "last-step mirror with empty window becomes a one-entry bounded window" in feedback_program_1_text
-    assert "the direct-construction reproduction that dropped next-step pressure is now closed" in feedback_program_1_text
-    assert "top-level `feedback_window_summary`" in feedback_program_1_text
-    assert "single-mismatch `0.55` floor" in feedback_program_1_text
-    assert "repeated-mismatch `0.70` floor" in feedback_program_1_text
-    assert "accepted re-audited runtime-program brief for the first bounded reference cross-process continuation slice" in continuity_program_text
-    assert "`--load-session PATH`" in continuity_program_text
-    assert "`--save-session PATH`" in continuity_program_text
-    assert "`continuity_truth`" in continuity_program_text
-    assert "`control_residue`" in continuity_program_text
-    assert "`C1` equivalence does **not** require:" in continuity_program_text
-    assert "`make revalidate-reference-runtime-continuity`" in continuity_program_text
-    assert "Current accepted state after K1 closeout" in continuity_program_text
-    assert "implemented at K1 proof head `d4c311f` and truthfully closed at deterministic closeout head `79b8f39`" in continuity_program_text
-    assert "accepted re-audited runtime-program brief for the first OpenAI documented host-event runtime shell" in openai_runtime_program_text
-    assert "`python3 -m cortex.runtime.openai_cli`" in openai_runtime_program_text
-    assert "`raw_host_event_name`" in openai_runtime_program_text
-    assert "`make revalidate-openai-runtime`" in openai_runtime_program_text
-    assert "canonical Cortex event names are now explicitly rejected at both CLI and runtime entrypoint level" in openai_runtime_program_text
-    assert "runtime and session I/O ownership remain self-contained inside the OpenAI runtime modules" in openai_runtime_program_text
-    assert "Current accepted state after K1 closeout" in openai_runtime_program_text
-    assert "implemented at K1 proof head `d4c311f` and truthfully closed at deterministic closeout head `79b8f39`" in openai_runtime_program_text
-    assert "accepted re-audited runtime-program brief for the first OpenAI raw-transcript ingress shell" in openai_ingress_program_text
-    assert "`python3 -m cortex.runtime.openai_ingress_cli`" in openai_ingress_program_text
-    assert "wrapper-shape `{event_name, payload}` records are explicitly rejected" in openai_ingress_program_text
-    assert "mixed wrapper/transcript record that contains `event_name` or `payload`" in openai_ingress_program_text
-    assert "`make revalidate-openai-ingress`" in openai_ingress_program_text
-    assert "Current accepted state after K1 closeout" in openai_ingress_program_text
-    assert "implemented at K1 proof head `d4c311f` and truthfully closed at deterministic closeout head `79b8f39`" in openai_ingress_program_text
-    assert "accepted re-audited runtime-program brief for the first OpenAI loopback service shell" in openai_service_program_text
-    assert "`python3 -m cortex.runtime.openai_service`" in openai_service_program_text
-    assert "`GET /health`" in openai_service_program_text
-    assert "`POST /v1/events`" in openai_service_program_text
-    assert "`GET /v1/session/export`" in openai_service_program_text
-    assert "`POST /v1/session/import`" in openai_service_program_text
-    assert "`make revalidate-openai-service`" in openai_service_program_text
-    assert "Current accepted state after K1 closeout" in openai_service_program_text
-    assert "implemented at K1 proof head `d4c311f` and truthfully closed at deterministic closeout head `79b8f39`" in openai_service_program_text
-    assert "are now landed `O3` surfaces" in openai_service_program_text
-    assert "same module may host a separately scoped outbound control lane" in openai_service_program_text
-
-    assert "Status: accepted re-audited runtime-program brief for the first bounded outbound OpenAI host-control lane" in openai_host_control_program_text
-    assert "branch: `codex/k1f-openai-service-closeout`" in openai_host_control_program_text
-    assert "commit: `79b8f39`" in openai_host_control_program_text
-    assert "`POST /v1/actions/response-stream`" in openai_host_control_program_text
-    assert "`OpenAIHostControlRequest`" in openai_host_control_program_text
-    assert "`OpenAIHostControlResult`" in openai_host_control_program_text
-    assert "strict-whitelist and text-only" in openai_host_control_program_text
-    assert "The public K2 surface remains:" in openai_host_control_program_text
-    assert "canonical tests require no live OpenAI network" in openai_host_control_program_text
-    assert "`make revalidate-openai-host-control`" in openai_host_control_program_text
-    assert "Current accepted state after K2 closeout" in openai_host_control_program_text
-    assert "implemented at K2 proof head `5ed9549` and truthfully closed at deterministic closeout head `9ed7dae`" in openai_host_control_program_text
-    assert "`O4` OpenAI bounded outbound host-control lane" in phase_gate_text
-    assert "cleanly closed at deterministic closeout head `9ed7dae`" in phase_gate_text
-    assert "`R6` explicit executive allocation slice on the reference runtime shell" in phase_gate_text
-    assert "`O5` OpenAI executive allocation projection slice" in phase_gate_text
-    assert "`R7` reference computed executive loop" in phase_gate_text
-    assert "`O6` OpenAI computed executive loop projection slice" in phase_gate_text
-    assert "`R8` reference feedback-conditioned intervention threshold" in phase_gate_text
-    assert "`O7` OpenAI feedback-conditioned threshold projection slice" in phase_gate_text
-    assert "`R9` reference enforcement-aware realized control loop" in phase_gate_text
-    assert "`O8` OpenAI enforcement-aware realized projection slice" in phase_gate_text
-
-    assert "Status: active runtime-program brief for the first explicit executive live-outcome allocation slice" in executive_live_outcome_program_text
-    assert "branch: `codex/k2-openai-host-control`" in executive_live_outcome_program_text
-    assert "commit: `9ed7dae`" in executive_live_outcome_program_text
-    assert "nested `control_ledger.allocation_diagnostics`" in executive_live_outcome_program_text
-    assert "`Q_t^{mem}=0.0`" in executive_live_outcome_program_text
-    assert "`alpha_t=1.0`" in executive_live_outcome_program_text
-    assert "`allocated_score=online_score`" in executive_live_outcome_program_text
-    assert "`make revalidate-executive-loop`" in executive_live_outcome_program_text
-    assert "Current K3 candidate state before closeout" in executive_live_outcome_program_text
-    assert "Status: accepted re-audited runtime-program brief for the first bounded computed executive loop on proven reference/OpenAI lanes" in computed_executive_loop_program_text
-    assert "`Q_t^{mem}=0.0`" in computed_executive_loop_program_text
-    assert "`allocated_score` may differ from `online_score`" in computed_executive_loop_program_text
-    assert "No new public shells are introduced." in computed_executive_loop_program_text
-    assert "Current accepted state after K4 closeout" in computed_executive_loop_program_text
-    assert "Status: accepted re-audited runtime-program brief for the bounded closed-loop feedback and enforcement train on proven reference/OpenAI lanes" in closed_loop_enforcement_program_text
-    assert "feedback-conditioned intervention-threshold law" in closed_loop_enforcement_program_text
-    assert "guarded-feedback enforcement may conservatively realize `check` or `neutral`" in closed_loop_enforcement_program_text
-    assert "`Q_t^{mem}=0.0`" in closed_loop_enforcement_program_text
-    assert "Current accepted state after K-train closeout" in closed_loop_enforcement_program_text
-    assert "Status: accepted re-audited evaluation brief for the first raw-vs-Cortex operator directionality audit" in operator_directionality_program_text
-    assert "raw-host vs Cortex-operator" in operator_directionality_program_text
-    assert "Round-2 stable default rule:" in operator_directionality_program_text
-    assert "Claude signed-in CLI on the normal `-p/--print` headless surface with one explicit stable GA model" in operator_directionality_program_text
-    assert "OpenAI signed-in `codex app-server`, with the existing `codex exec` smoke / `codex app-server` lifecycle split and one explicit stable model" in operator_directionality_program_text
-    assert "Gemini comparison guard:" in operator_directionality_program_text
-    assert "do not use `plan` mode as the default Gemini comparison baseline" in operator_directionality_program_text
-    assert "do not pass explicit Gemini operator model names anywhere in the paired comparison harness" in operator_directionality_program_text
-    assert "If the audit shows mixed or negative directionality, record that directly and treat it as the blocker to further widening." in operator_directionality_program_text
-    assert "Status: accepted scenario catalog for the raw-vs-Cortex operator directionality audit" in operator_directionality_scenario_catalog_text
-    assert "Gemini uses the same headless CLI surface on both variants, with no explicit `-m` model argument" in operator_directionality_scenario_catalog_text
-    assert "`pass_minimal`" in operator_directionality_scenario_catalog_text
-    assert "`truth_gap`" in operator_directionality_scenario_catalog_text
-    assert "`restart_continuity`" in operator_directionality_scenario_catalog_text
-    assert "Status: active runtime-program brief for the first bounded SRE-owned operator routing train" in operator_routing_program_text
-    assert "one bounded SRE + harness train" in operator_routing_program_text
-    assert "one SRE-owned operator route selector over low-dimensional task-state geometry" in operator_routing_program_text
-    assert "This document does not authorize:" in operator_routing_program_text
-    assert "named model routing" in operator_routing_program_text
-    assert "Locked route profiles:" in operator_routing_program_text
-    assert "`inspect_light`" in operator_routing_program_text
-    assert "`blocked`" in operator_routing_program_text
-    assert "one compact executive summary over observable control inputs" in operator_routing_program_text
-    assert "one compact tonic executive modulator bundle over that summary" in operator_routing_program_text
-    assert "one compact executive policy view derived from summary + modulators" in operator_routing_program_text
-    assert "The summary layer uses:" in operator_routing_program_text
-    assert "The modulator layer uses:" in operator_routing_program_text
-    assert "The policy layer uses:" in operator_routing_program_text
-    assert "`focus_gain`" in operator_routing_program_text
-    assert "`explore_gain`" in operator_routing_program_text
-    assert "`stop_pressure`" in operator_routing_program_text
-    assert "`update_pressure`" in operator_routing_program_text
-    assert "`default_profile_bonus`" in operator_routing_program_text
-    assert "`switch_margin`" in operator_routing_program_text
-    assert "`stop_threshold`" in operator_routing_program_text
-    assert "`verification_intensity`" in operator_routing_program_text
-    assert "The route selector may choose:" in operator_routing_program_text
-    assert "retry budget" in operator_routing_program_text
-    assert "The modulator layer may change:" in operator_routing_program_text
-    assert "one extra read pass on inspect routes" in operator_routing_program_text
-    assert "The policy layer is the only place where those behavior consequences should be expressed." in operator_routing_program_text
-    assert "It may not choose:" in operator_routing_program_text
-    assert "named models" in operator_routing_program_text
-    assert "Required local artifact diagnostics:" in operator_routing_program_text
-    assert "`route_profile`" in operator_routing_program_text
-    assert "`blocked_reason`" in operator_routing_program_text
-    assert "`modulator_summary`" in operator_routing_program_text
-    assert "`modulator_memory`" in operator_routing_program_text
-    assert "`modulator_state`" in operator_routing_program_text
-    assert "`modulator_reason_tags`" in operator_routing_program_text
-    assert "`policy_view`" in operator_routing_program_text
-    assert "Minimum deterministic proof:" in operator_routing_program_text
-    assert "`python3 -m pytest tests/unit/test_operator_routing.py -q`" in operator_routing_program_text
-    assert "`python3 -m pytest tests/unit/test_sre_executive_summary.py -q`" in operator_routing_program_text
-    assert "`python3 -m pytest tests/unit/test_sre_modulators.py -q`" in operator_routing_program_text
-    assert "`python3 -m pytest tests/unit/test_sre_policy_view.py -q`" in operator_routing_program_text
-    assert "the implementation stays abstract and does not use neurotransmitter names as code objects" in operator_routing_program_text
-    assert "`route_budget.max_turns` is the outer harness turn budget" in operator_routing_program_text
-    assert "dopamine" not in operator_routing_program_text.lower()
-    assert "serotonin" not in operator_routing_program_text.lower()
-    assert "Status: accepted paired raw-vs-Cortex operator directionality audit note" in operator_directionality_audit_text
-    assert "**mixed_direction**" in operator_directionality_audit_text
-    assert "Claude is directionally positive" in operator_directionality_audit_text
-    assert "OpenAI is directionally positive" in operator_directionality_audit_text
-    assert "Gemini is mixed" in operator_directionality_audit_text
-    assert "Later Gemini vanilla rerun" in operator_directionality_audit_text
-    assert "The confound was real, but removing it did not by itself clear Gemini" in operator_directionality_audit_text
-    assert "Round 2 Stable-Defaults Rerun" in operator_directionality_audit_text
-    assert "Gemini: `blocked`" in operator_directionality_audit_text
-    assert "S1 Routing Candidate" in operator_directionality_audit_text
-    assert "The audit now distinguishes:" in operator_directionality_audit_text
-    assert "provider-limit interference" in operator_directionality_audit_text
-    assert "S1G Provider-Limit Neutrality Candidate" in operator_directionality_audit_text
-    assert "Claude: `positive`" in operator_directionality_audit_text
-    assert "OpenAI: `positive`" in operator_directionality_audit_text
-    assert "package verdict: `promising_positive`" in operator_directionality_audit_text
-    assert "pair order now alternates by repeat index to reduce shared-budget bias" in operator_directionality_audit_text
-    assert "one-sided provider-limit hits are now treated as non-comparable blocking evidence rather than automatic directional loss" in operator_directionality_audit_text
-    assert "the OpenAI explanation seam then removed the real continuity transport artifact" in operator_directionality_audit_text
-    assert "fresh OpenAI reruns now land `restart_continuity` positively on both variants" in operator_directionality_audit_text
-    assert "the Claude efficiency seam then re-earned the remaining host line" in operator_directionality_audit_text
-    assert "fresh Claude reruns land all three scenarios positively without provider-window contamination" in operator_directionality_audit_text
-    assert "`G1` Gemini documented host-event runtime shell" in phase_gate_text
-    assert "`G2` Gemini raw-transcript ingress shell" in phase_gate_text
-    assert "`G3` Gemini loopback service shell" in phase_gate_text
-    assert "`G4` Gemini bounded outbound host-control lane" in phase_gate_text
-    assert "Gemini-specific runtime/session carriers plus persisted artifact are landed on the accepted G1 closeout line" in phase_gate_text
-    assert "Gemini raw-transcript ingress parsing is landed on the accepted G1 closeout line" in phase_gate_text
-    assert "loopback-only Gemini HTTP is landed on the accepted G1 closeout line" in phase_gate_text
-    assert "the first bounded outbound Gemini host-control lane is landed on the accepted G1 closeout line" in phase_gate_text
-    assert "## 7. Live-validation gates" in phase_gate_text
-    assert "`L1` Claude live validation" in phase_gate_text
-    assert "`L1A` Claude hook-backed operator lifecycle proof" in phase_gate_text
-    assert "`L2` Gemini live validation" in phase_gate_text
-    assert "`L2A` Gemini hook-backed operator lifecycle proof" in phase_gate_text
-    assert "`L3` OpenAI live validation" in phase_gate_text
-    assert "`L3A` OpenAI App Server operator lifecycle proof" in phase_gate_text
-    assert "`L4` lifecycle-first payoff verdict" in phase_gate_text
-    assert "`L5` cross-host operator payoff audit" in phase_gate_text
-    assert "`L6A` Claude service live proof" in phase_gate_text
-    assert "`L6B` Gemini service live proof" in phase_gate_text
-    assert "`L6C` OpenAI service live proof" in phase_gate_text
-    assert "`L6D` package-level service proof" in phase_gate_text
-    assert "correct signed-in operator hierarchy" in phase_gate_text
-    assert "operator preflight and repeated smoke baselines are clean in CLI auto mode" in phase_gate_text
-    assert "successful resumed completions coexist with recurring first-turn `capacity_exhausted` failures" in phase_gate_text
-    assert "the bounded `codex app-server` operator lane is now re-earned" in phase_gate_text
-
-    assert "Status: accepted re-audited support brief for the G1 runtime/product restack train" in gemini_runtime_restack_text
-    assert "Gemini-only" in gemini_runtime_restack_text
-    assert "Status: accepted re-audited runtime-program brief for the first Gemini documented host-event runtime shell" in gemini_runtime_program_text
-    assert "`python3 -m cortex.runtime.gemini_cli`" in gemini_runtime_program_text
-    assert "Status: accepted re-audited runtime-program brief for the first Gemini raw-transcript ingress shell" in gemini_ingress_program_text
-    assert "`python3 -m cortex.runtime.gemini_ingress_cli`" in gemini_ingress_program_text
-    assert "Status: accepted re-audited runtime-program brief for the first Gemini loopback service shell" in gemini_service_program_text
-    assert "`python3 -m cortex.runtime.gemini_service`" in gemini_service_program_text
-    assert "Status: accepted re-audited runtime-program brief for the first bounded outbound Gemini host-control lane" in gemini_host_control_program_text
-    assert "`POST /v1/actions/interaction-stream`" in gemini_host_control_program_text
-
-    live_validation_program_text = _read(LIVE_VALIDATION_PROGRAM_PATH)
-    live_validation_scenario_catalog_text = _read(LIVE_VALIDATION_SCENARIO_CATALOG_PATH)
-    live_validation_verdict_text = _read(LIVE_VALIDATION_VERDICT_PATH)
-    workstream_text = _read(ACTIVE_WORKSTREAM_PATH)
-    accepted_branch = _extract_accepted_workflow_baseline(workstream_text)
-
-    assert "Status: active L2 live-testing environment brief with L2b/L2c/L2d/L2e host-native lifecycle follow-ons" in live_validation_program_text
-    assert f"branch: `{accepted_branch}`" in live_validation_program_text
-    assert "clean synced `main` line recorded in `docs/CORTEX_V2_ACTIVE_WORKSTREAM.md`" in live_validation_program_text
-    assert "signed-in host-native product surfaces" in live_validation_program_text
-    assert "local-only under `.cortex/live_validation/`" in live_validation_program_text
-    assert "`codex exec` = smoke / preflight" in live_validation_program_text
-    assert "`codex app-server` = lifecycle proof" in live_validation_program_text
-    assert "OpenAI App Server now succeeds on:" in live_validation_program_text
-    assert "Status: active L2 scenario catalog for the signed-in-first live environment with L2b/L2c host-native lifecycle proof" in live_validation_scenario_catalog_text
-    assert "`pass_minimal`" in live_validation_scenario_catalog_text
-    assert "`restart_continuity`" in live_validation_scenario_catalog_text
-    assert "`truth_gap`" in live_validation_scenario_catalog_text
-    assert "`codex app-server` = lifecycle proof" in live_validation_scenario_catalog_text
-    assert "`PreToolUse`" in live_validation_scenario_catalog_text
-    assert "`BeforeTool`" in live_validation_scenario_catalog_text
-    assert "machine output: local-only under `.cortex/live_validation/`" in live_validation_scenario_catalog_text
-    assert "Status: L2/L2b/L2c/L2d/L2e live-testing environment verdict note" in live_validation_verdict_text
-    assert "**lifecycle-first is promising but under-instrumented**" in live_validation_verdict_text
-    assert "operator-only payoff note is narrower" in live_validation_verdict_text
-    assert "operator-only audit is now landed for current scope" in live_validation_verdict_text
-    assert "The Gemini auto-mode product-path re-earn seam is now landed for current scope." in live_validation_verdict_text
-    service_proof_text = _read(LIVE_SERVICE_PROOF_PATH)
-    assert "Status: active capable-machine service-proof contract with current-machine blocker note" in service_proof_text
-    assert "Signed-in CLI sessions do **not** count as service-lane auth." in service_proof_text
-    assert "Actual service proof belongs only on a machine that satisfies all of:" in service_proof_text
-    assert "this machine is explicitly out of scope for actual service proof execution" in service_proof_text
-    assert "`N2` therefore remains blocked pending a properly provisioned capable machine" in service_proof_text
-    assert "package-level service proof is updated truthfully in `docs/CORTEX_V2_PHASE_GATES_2.md`" in service_proof_text
-    assert "repeated automation baseline reruns now stop immediately on auth readiness" in service_proof_text
-    assert "repeated bounded service-lane reruns stay blocked on `auth_missing`" in service_proof_text
-    assert "`codex app-server` passes `pass_minimal` twice" in live_validation_verdict_text
-    assert "Claude is now re-earned on a hook-backed operator lane" in live_validation_verdict_text
-    assert "operator probes and repeated smoke baselines are now clean in CLI auto mode" in live_validation_verdict_text
-    assert "`pass_minimal` succeeds twice on `auto`" in live_validation_verdict_text
-    assert "`truth_gap`: now truthful on the latest auto-mode reruns" in live_validation_verdict_text
-    assert "`gemini-2.5-pro` is valid locally but still capacity-blocked" in live_validation_verdict_text
-    assert "explicit Gemini session IDs are valid resume IDs on the current CLI" in live_validation_verdict_text
-    assert "the first inspect-only continuity turn now uses the lighter `plan` approval mode" in live_validation_verdict_text
-    assert "`gemini-2.5-flash` continuity also failed on first-turn `capacity_exhausted`" in live_validation_verdict_text
-    assert "host-native Codex surface rather than the wrong `openai` utility surface" in live_validation_verdict_text
-    assert "`L2b` now re-earns OpenAI on the current host-native App Server lifecycle surface" in live_validation_verdict_text
-    assert "`L2c` now re-earns Claude and Gemini on their documented hook surfaces" in live_validation_verdict_text
-    assert "`G2` now re-optimizes Gemini operator testing around CLI auto mode" in live_validation_verdict_text
-    assert "`G3` now re-earns the deeper Gemini operator lane on top of CLI auto mode" in live_validation_verdict_text
-    assert "`L2e` now proves that Gemini Pro is not the current closure model" in live_validation_verdict_text
-
-
-def test_openai_host_control_revalidation_entry_points_are_recorded() -> None:
     local_verification_text = _read(LOCAL_VERIFICATION_PATH)
-    makefile_text = _read(MAKEFILE_PATH)
+    program_text = _read(LIVE_VALIDATION_PROGRAM_PATH)
+    verdict_text = _read(LIVE_VALIDATION_VERDICT_PATH)
+    service_proof_text = _read(LIVE_SERVICE_PROOF_PATH)
+    restoration_note_text = _read(EXECUTIVE_RESTORATION_NOTE_PATH)
+    verified_work_program_text = _read(OPENAI_VERIFIED_WORK_PROGRAM_PATH)
 
-    assert "## OpenAI host-control revalidation" in local_verification_text
-    assert "python3 -m pytest tests/unit/test_openai_host_control.py -q" in local_verification_text
-    assert "python3 -m pytest tests/integration/test_openai_host_control_service.py -q" in local_verification_text
-    assert "python3 -m pytest tests/integration/test_openai_host_control_continuity.py -q" in local_verification_text
-    assert "Canonical K2 tests use the internal fixture transport and do not require a live OpenAI network or a real API key." in local_verification_text
-    assert "make revalidate-openai-host-control" in local_verification_text
-    assert "revalidate-openai-host-control:" in makefile_text
-    assert "## Executive live-outcome revalidation" in local_verification_text
-    assert "feedback-conditioned `activation_threshold`" in local_verification_text
-    assert "guarded/latched enforcement-aware realized control behavior" in local_verification_text
-    assert "make revalidate-executive-loop" in local_verification_text
-    assert "revalidate-executive-loop:" in makefile_text
-    assert "python3 -m pytest tests/unit/test_reference_executive_builder.py -q" in local_verification_text
-    assert "python3 -m pytest tests/unit/test_openai_runtime_step.py -q" in local_verification_text
-    assert "python3 -m pytest tests/integration/test_reference_runtime_continuity.py -q" in local_verification_text
-    assert "python3 -m pytest tests/integration/test_openai_runtime_continuity.py -q" in local_verification_text
-    assert "## Gemini runtime revalidation" in local_verification_text
-    assert "make revalidate-gemini-runtime" in local_verification_text
-    assert "## Gemini ingress revalidation" in local_verification_text
-    assert "make revalidate-gemini-ingress" in local_verification_text
-    assert "## Gemini loopback service revalidation" in local_verification_text
-    assert "make revalidate-gemini-service" in local_verification_text
-    assert "## Gemini host-control revalidation" in local_verification_text
-    assert "make revalidate-gemini-host-control" in local_verification_text
-    assert "revalidate-gemini-runtime:" in makefile_text
-    assert "revalidate-gemini-ingress:" in makefile_text
-    assert "revalidate-gemini-service:" in makefile_text
-    assert "revalidate-gemini-host-control:" in makefile_text
-    assert "## Live-validation preflight" in local_verification_text
-    assert "make live-preflight" in local_verification_text
-    assert "## Live provider baselines" in local_verification_text
-    assert "make live-provider-baselines" in local_verification_text
-    assert "make live-provider-baselines-automation" in local_verification_text
-    assert "automation baseline now exits with explicit auth-readiness blockers" in local_verification_text
-    assert "## Live host-native product paths" in local_verification_text
-    assert "make live-host-native-product-paths" in local_verification_text
-    assert "For Claude and Gemini, the operator lane now records documented hook events" in local_verification_text
-    assert "For Gemini `restart_continuity`, the inspect-only first turn now uses the lighter `plan` approval mode" in local_verification_text
-    assert "## Live OpenAI App Server operator proof" in local_verification_text
-    assert "make live-openai-app-server" in local_verification_text
-    assert "## Live Cortex host-control capture" in local_verification_text
-    assert "make live-cortex-host-control" in local_verification_text
-    assert "compare and operator-payoff support surfaces preserve the already-accepted operator truth" in local_verification_text
-    assert "## Live comparison and verdict" in local_verification_text
-    assert "make live-compare" in local_verification_text
-    assert "## Live operator payoff audit" in local_verification_text
-    assert "make live-operator-payoff-audit" in local_verification_text
-    assert "## Live operator directionality" in local_verification_text
-    assert "make live-operator-directionality" in local_verification_text
-    assert "## Live operator directionality audit" in local_verification_text
-    assert "make live-operator-directionality-audit" in local_verification_text
-    assert "live-preflight:" in makefile_text
-    assert "live-provider-baselines:" in makefile_text
-    assert "live-provider-baselines-automation:" in makefile_text
-    assert "live-host-native-product-paths:" in makefile_text
-    assert "live-openai-app-server:" in makefile_text
-    assert "live-cortex-host-control:" in makefile_text
-    assert "live-compare:" in makefile_text
-    assert "live-operator-payoff-audit:" in makefile_text
-    assert "live-operator-directionality:" in makefile_text
-    assert "live-operator-directionality-audit:" in makefile_text
+    assert "`service_api` is the canonical runtime truth lane" in workstream_text
+    assert "`operator_cli` is a watchlist and exploratory-comparison lane" in workstream_text
+    assert "the repo now distinguishes four truths explicitly" in workstream_text
+    assert "`Cortex truth`" in workstream_text
+    assert "`brain-wiring truth`" in workstream_text
+    assert "`conformance truth`" in workstream_text
+    assert "`shipping truth`" in workstream_text
+    assert (
+        "the accepted product/runtime claim is now explicitly OpenAI-only on the canonical direct-API lane"
+        in workstream_text
+    )
+    current_branch = subprocess.check_output(
+        ["git", "branch", "--show-current"],
+        cwd=REPO_ROOT,
+        text=True,
+        encoding="utf-8",
+    ).strip()
+    assert f"Current working branch at ledger update: `{current_branch}`" in workstream_text
+    if current_branch == "main":
+        assert (
+            "Current branch role: accepted resting line after the E8 verified-work third-pack breadth slice"
+            in workstream_text
+        )
+        assert "Current candidate seam: `none active`" in workstream_text
+    elif current_branch == "review/e12-comparative-output-quality-eval":
+        assert (
+            "Current branch role: explicit manual/review branch for the E12 comparative output-quality eval train while the accepted baseline remains local `main`"
+            in workstream_text
+        )
+        assert "Current candidate seam: `E12 comparative output-quality eval train`" in workstream_text
+    elif current_branch == "review/e18-causal-contribution-map":
+        assert (
+            "Current branch role: explicit manual/review branch for the E18 causal contribution map train while the accepted baseline remains local `main`"
+            in workstream_text
+        )
+        assert "Current candidate seam: `E18 causal contribution map train`" in workstream_text
+    elif current_branch == "review/e19-cli-causal-map-rehome":
+        assert (
+            "Current branch role: explicit manual/review branch for the E19 CLI/watchlist causal-map rehome seam while the accepted baseline remains local `main`"
+            in workstream_text
+        )
+        assert (
+            "Current candidate seam: `E19 hard local service-spend gate + CLI/watchlist causal-map rehome`"
+            in workstream_text
+        )
+    else:
+        assert (
+            "Current branch role: explicit manual/review branch for the E9 verified-work repair-yield train while the accepted baseline remains local `main`"
+            in workstream_text
+        )
+        assert "Current candidate seam: `E9 verified-work repair-yield train`" in workstream_text
+    assert (
+        "A0, P1C, S1, S1C, X1, X2, the first verified-work restoration slice, the Cortex-law / fast-train method slice, the verified-work neutralization / conformance-correction slice, the Claude operator workspace-truth slice, the OpenAI verified-work context slice, the C3B brutal closed-loop train method, the E7 second-pack verified-work breadth slice, the E8 third-pack verified-work breadth slice, and the E9 repair-yield measurement slice are now accepted on local `main`"
+        in workstream_text
+    )
+    assert "docs/CORTEX_V2_EXECUTIVE_RESTORATION_NOTE.md" in workstream_text
+    assert (
+        "retained operator/watchlist tools stay callable as diagnostics, but they no longer define the active current-line closure path"
+        in workstream_text
+    )
+    assert "the first verified-work restoration slice now lands" in workstream_text
+    assert "the `O4R` verified-work row now lands" in workstream_text
+    assert "No active verified-work shipping-gap seam remains on the accepted local `main` line." in workstream_text
+    assert "write the `Train Charter` first" in workstream_text
+    assert "run tri-brain conformance on OpenAI, Claude, and Gemini" in workstream_text
+    assert "baseline result, primary metric, guardrail metric, iteration budget, rollback surface, and escalation-trigger fields" in workstream_text
+    assert "`promote`, `revise`, `cut`, `escalate`" in workstream_text
+    assert "`tools/cortex_train_loop.py`" in workstream_text
+    assert "baseline drift where `summary.latest` referenced missing artifacts" in workstream_text
+    assert "run_20260408T074128+0000" in workstream_text
+    assert "`CT2` therefore re-earned on the current line" in workstream_text
+    assert "OpenAI `service_api`: conformant on three repeated targeted current reruns" in workstream_text
+    assert "Claude `operator_cli`: no longer divergent on truthful staged-workspace runs" in workstream_text
+    assert "Gemini `operator_cli`: conformant on the corrected current line" in workstream_text
+    assert "the accepted E8 third-pack breadth slice on local `main` now includes" in workstream_text
+    assert "`python_workspace_pytest_port_fix_v1`" in workstream_text
+    assert "`verified_work_normalize_port_v1`" in workstream_text
+    assert "`python_workspace_pytest_feature_flags_v1`" in workstream_text
+    assert "`verified_work_feature_flags_v1`" in workstream_text
+    assert "provider-noise guardrail correction in `tools/cortex_train_loop.py`" in workstream_text
+    assert "the accepted E9 repair-yield measurement slice on local `main` now includes" in workstream_text
+    assert "`--max-repair-turns 0|1` override in `tools/cortex_conformance.py`" in workstream_text
+    assert "one-shot control is `11/12` conformant, repair-enabled candidate is `12/12` conformant, and repair opportunities remain `0`" in workstream_text
+    assert "one explicit cut where the richer repair-ticket/runtime change was removed after it failed to beat the one-shot control" in workstream_text
+    assert "accepted larger-task evidence is currently strongest for `domain = coding_webapp`" in workstream_text
+    assert "that coding-domain evidence is useful but is not yet general Cortex proof" in workstream_text
+    if current_branch == "review/e12-comparative-output-quality-eval":
+        assert "the accepted E12 comparative output-quality eval slice on local `main` now adds" in workstream_text
+        assert "one maintainer-only comparative runner at `tools/cortex_output_quality.py`" in workstream_text
+        assert "one hidden grading layer at `tools/output_quality_grader.py`" in workstream_text
+    if current_branch == "review/e18-causal-contribution-map":
+        assert "the current E18 causal-map slice on this review branch now adds" in workstream_text
+        assert "one staged causal-contribution map train over the fixed E12 and O4R proof surfaces" in workstream_text
+        assert "docs/CORTEX_V2_CAUSAL_MAP_NOTE_0.md" in workstream_text
+    if current_branch == "review/e19-cli-causal-map-rehome":
+        assert "the first watchlist-native OpenAI E12 bridge is now present on this branch" in workstream_text
+        assert "`tools/cortex_output_quality.py --surface operator_cli` runs the same five-task output-quality pack through `codex app-server`" in workstream_text
+
+    assert (
+        "This is the only active current-line proof bundle for the accepted OpenAI-only product scope."
+        in local_verification_text
+    )
+    assert "Retained watchlist/reference appendix" in local_verification_text
+
+    assert "`service_api`" in program_text
+    assert "`operator_cli`" in program_text
+    assert "the accepted current product scope on the canonical direct-API lane is now OpenAI-only" in program_text
+    assert (
+        "retained operator/watchlist and historical/reference tools remain diagnostic evidence, not active closure surfaces"
+        in program_text
+    )
+    assert "no active support/eval compression seam remains on the accepted local `main` line" in program_text
+
+    assert (
+        "`service_api`: `execution_surface = direct_api`, `evidence_role = canonical_truth`"
+        in verdict_text
+    )
+    assert (
+        "`operator_cli`: `execution_surface = headless_cli`, `evidence_role = watchlist`"
+        in verdict_text
+    )
+    assert (
+        "Retained operator/watchlist tools remain diagnostic evidence, not active proof surfaces for the current product claim."
+        in verdict_text
+    )
+    assert "no active support/eval compression seam remains on the accepted local `main` line" in verdict_text
+
+    assert "`service_api` is the canonical runtime truth lane" in service_proof_text
+    assert (
+        "accepted local `main` line, with `origin/main` reconciliation tracked separately as workflow hygiene"
+        in service_proof_text
+    )
+    assert (
+        "retained operator/watchlist tools remain diagnostic evidence only and are outside the active service-proof bundle"
+        in service_proof_text
+    )
+    assert "no active support/eval compression seam remains on the accepted local `main` line" in service_proof_text
+
+    assert "accepted executive-restoration note with the first verified-work restoration slice landed and third-pack breadth now re-earned on the current review line" in restoration_note_text
+    assert "The local larger-task exploratory runs do not justify prompt shaping" in restoration_note_text
+    assert "The next runtime/product seam should improve Cortex law first" in restoration_note_text
+    assert "The first restoration slice is now landed on the accepted OpenAI realization" in restoration_note_text
+    assert "the shared verified-work runtime helpers now live in the neutral `cortex/runtime/verified_work_runtime.py` home" in restoration_note_text
+    assert "repeated targeted local OpenAI reruns on the bookmarks pack now pass on the shipping-default lane" in restoration_note_text
+    assert "coding-domain realization" in restoration_note_text
+    assert "not yet general Cortex proof" in restoration_note_text
+    assert "domain-general baskets with domain binding outside SRE" in restoration_note_text
+    assert "## Conformance reading under the current method" in restoration_note_text
+    assert "It should ask whether the same Cortex law is conformant, partial, divergent, unwired, or env-blocked" in restoration_note_text
+    assert "On the accepted feature-flags verified-work breadth pack, the current reading is:" in restoration_note_text
+    assert "On the current E9 repair-yield review line, the paired live proof reads:" in restoration_note_text
+    assert "repair opportunities: `0`" in restoration_note_text
+    assert "open a smaller repair-pressure investigation" in restoration_note_text
+    assert "The current accepted next decision for the shipping-default lane is therefore `promote`" in restoration_note_text
+    assert "This note does not authorize:" in restoration_note_text
+
+    assert "accepted bounded runtime-program brief for the landed verified-work restoration lane" in verified_work_program_text
+    assert "keep the accepted thin `O4` path unchanged when no `work_contract` is present" in verified_work_program_text
+    assert "coding-domain restoration slice" in verified_work_program_text
+    assert "does not by itself prove cross-domain Cortex generality" in verified_work_program_text
+    assert "This program is intentionally outside the current compact canonical proof bundle" in verified_work_program_text
+    assert "the shared verified-work runtime helpers now live in the neutral `cortex/runtime/verified_work_runtime.py` home" in verified_work_program_text
+    assert "`python_workspace_pytest_port_fix_v1`" in verified_work_program_text
+    assert "`python_workspace_pytest_feature_flags_v1`" in verified_work_program_text
+    assert "`verified_work_normalize_port_v1`" in verified_work_program_text
+    assert "`verified_work_feature_flags_v1`" in verified_work_program_text
+    assert "`O4R` remains landed for the current OpenAI shipping-default scope on the accepted line" in verified_work_program_text
+    assert "primary_metric_before = 2" in verified_work_program_text
+    assert "primary_metric_after = 3" in verified_work_program_text
+    assert "paired proof surface under `.cortex/train_loops/verified-work-repair-yield-openai/summary.json`" in verified_work_program_text
+    assert "one-shot control is `11/12` conformant, repair-enabled candidate is `12/12` conformant, repair opportunities are `0`" in verified_work_program_text
+
+    sre_text = _read(REPO_ROOT / "docs" / "CORTEX_V2_SRE_2.md")
+    assert "Future executive improvements should be framed first as **domain-general baskets**." in sre_text
+    assert "Domain-specific binding belongs outside SRE." in sre_text
 
 
-def test_erika_visualizations_are_framed_as_support_surfaces() -> None:
+def test_x2_accepted_line_claims_match_main() -> None:
+    local_verification_text = _read(LOCAL_VERIFICATION_PATH)
+    program_text = _read(LIVE_VALIDATION_PROGRAM_PATH)
+    verdict_text = _read(LIVE_VALIDATION_VERDICT_PATH)
+    service_proof_text = _read(LIVE_SERVICE_PROOF_PATH)
+    phase_gate_text = _read(PHASE_GATES_PATH)
+
+    main_local_verification_text = _read_git_ref_text("main", LOCAL_VERIFICATION_PATH)
+    main_program_text = _read_git_ref_text("main", LIVE_VALIDATION_PROGRAM_PATH)
+    main_verdict_text = _read_git_ref_text("main", LIVE_VALIDATION_VERDICT_PATH)
+    main_service_proof_text = _read_git_ref_text("main", LIVE_SERVICE_PROOF_PATH)
+    main_phase_gate_text = _read_git_ref_text("main", PHASE_GATES_PATH)
+
+    accepted_bundle_claim = (
+        "This is the only active current-line proof bundle for the accepted OpenAI-only product scope."
+    )
+    compact_l3_detail = (
+        "the active current-line proof bundle is now intentionally compact around preflight, direct OpenAI host-control reruns, `make live-compare`, and deterministic support checks"
+    )
+    compact_l6c_detail = (
+        "the active service-proof bundle is intentionally compact around preflight, direct OpenAI host-control reruns, `make live-compare`, and deterministic support checks"
+    )
+    resting_truth_phrase = (
+        "no active support/eval compression seam remains on the accepted local `main` line"
+    )
+
+    if accepted_bundle_claim in local_verification_text:
+        assert accepted_bundle_claim in main_local_verification_text
+    if compact_l3_detail in phase_gate_text:
+        assert compact_l3_detail in main_phase_gate_text
+    if compact_l6c_detail in phase_gate_text:
+        assert compact_l6c_detail in main_phase_gate_text
+    if resting_truth_phrase in program_text:
+        assert resting_truth_phrase in main_program_text
+    if resting_truth_phrase in verdict_text:
+        assert resting_truth_phrase in main_verdict_text
+    if resting_truth_phrase in service_proof_text:
+        assert resting_truth_phrase in main_service_proof_text
+
+
+def test_phase_gates_match_openai_only_truth_and_hygiene() -> None:
+    text = _read(PHASE_GATES_PATH)
+
+    o4_row = _extract_phase_gate_row(text, "O4")
+    o4r_row = _extract_phase_gate_row(text, "O4R")
+    c1_row = _extract_phase_gate_row(text, "CT1")
+    c2_row = _extract_phase_gate_row(text, "CT2")
+    c3_row = _extract_phase_gate_row(text, "CT3")
+    l3_row = _extract_phase_gate_row(text, "L3")
+    l4_row = _extract_phase_gate_row(text, "L4")
+    l5_row = _extract_phase_gate_row(text, "L5")
+    l6c_row = _extract_phase_gate_row(text, "L6C")
+    l6d_row = _extract_phase_gate_row(text, "L6D")
+    j4f_row = _extract_phase_gate_row(text, "J4F")
+
+    assert (
+        "python3 tools/live_cortex_host_control.py --lane automation --provider openai --suite current"
+        in l3_row
+    )
+    assert (
+        "python3 tools/live_cortex_host_control.py --lane automation --provider openai --suite canonical_anchor"
+        in l3_row
+    )
+    assert "make live-provider-baselines" not in l3_row
+    assert "make live-openai-app-server" not in l3_row
+
+    assert (
+        "closed for the accepted OpenAI-only product scope; reopen only if product scope intentionally widens"
+        in l4_row
+    )
+    assert "remains thin and text-only by default when no `work_contract` is present" in o4_row
+    assert "keeps `openai_product_journal` v1 only" in o4_row
+    assert "closed | landed |" in o4r_row
+    assert "the invariant verified-work runtime helpers now live in a neutral runtime home" in o4r_row
+    assert "bounded read-only workspace context bundle over the current writable-file contents plus the contract tests" in o4r_row
+    assert "feature-flags breadth packs on attempt `1`" in o4r_row
+    assert "run_20260408T091518+0000" in o4r_row
+    assert "primary_metric_before = 2" in o4r_row
+    assert "primary_metric_after = 3" in o4r_row
+    assert "tools/cortex_conformance.py" in c1_row
+    assert "Train Charter" in c1_row
+    assert "tools/cortex_train_loop.py" in c1_row
+    assert "baseline / metric / rollback / escalation inputs" in c1_row
+    assert "closed on local `main` for the bookmarks anchor pack" in c2_row
+    assert "landed" in c2_row
+    assert "make conformance-preflight" in c2_row
+    assert "python3 tools/cortex_conformance.py --mode reconcile-latest" in c2_row
+    assert "OpenAI `service_api` conformant on three repeated targeted reruns" in c2_row
+    assert "run_20260408T074128+0000" in c2_row
+    assert "Claude `operator_cli` conformant after one lawful repair" in c2_row
+    assert "Gemini `operator_cli` conformant" in c2_row
+    assert "`summary.latest` now publishes only from full tri-brain runs for the bookmarks anchor pack" in c2_row
+    assert "latest surviving full run that matches accepted `CT2` decision" in c2_row
+    assert "current shipping-default decision is `promote`" in c2_row
+    assert "run_20260408T083436+0000" in c2_row
+    assert "run_20260408T091518+0000" in c2_row
+    assert "explicit per-pack evidence only" in c2_row
+    assert "strongest available native surface may stand in for development conformance" in c3_row
+    assert "historical/watchlist-only; do not use for runtime closure" in l5_row
+    assert "closed | landed" in l6c_row
+    assert (
+        "closed for the accepted OpenAI-only product scope; reopen only if product scope intentionally widens"
+        in l6d_row
+    )
+    assert "origin/main reconciliation only | partial |" in j4f_row
+
+
+def test_accepted_openai_only_scope_claim_matches_main_line() -> None:
     workstream_text = _read(ACTIVE_WORKSTREAM_PATH)
-    markdown_text = _read(ERIKA_VISUALIZATION_STATUS_PATH)
-    html_text = _read(ERIKA_VISUALIZATION_HTML_PATH)
-    accepted_branch = _extract_accepted_workflow_baseline(workstream_text)
+    program_text = _read(LIVE_VALIDATION_PROGRAM_PATH)
+    verdict_text = _read(LIVE_VALIDATION_VERDICT_PATH)
+    phase_gate_text = _read(PHASE_GATES_PATH)
 
-    assert "support surface" in markdown_text
-    assert "current accepted repo truth" in markdown_text
-    assert "north-star product target" in markdown_text
-    assert "lawful gap programs" in markdown_text
-    assert "mechanisms Cortex has already stolen so far" in markdown_text
+    main_workstream_text = _read_git_ref_text("main", ACTIVE_WORKSTREAM_PATH)
+    main_phase_gate_text = _read_git_ref_text("main", PHASE_GATES_PATH)
+    main_scope_source_text = _read_git_ref_text("main", LIVE_VALIDATION_SCOPE_SOURCE_PATH)
+
     assert (
-        f"**Accepted factual baseline:** clean synced `{accepted_branch}` line recorded in "
-        "`docs/CORTEX_V2_ACTIVE_WORKSTREAM.md`"
-    ) in markdown_text
-    assert "The verification/evidence restack train, K1 runtime/product restack, and K2 bounded host-control train are now landed for current scope on top of that same product truth." in markdown_text
-    assert "The reference runtime shell, bounded reference continuity, OpenAI documented-host-event runtime shell, raw-transcript ingress shell, loopback service shell, and bounded outbound OpenAI host-control lane are now accepted on the current line." in markdown_text
-    assert "The Claude documented-host-event runtime shell, raw-transcript ingress shell, loopback service shell, and bounded outbound Claude host-control lane are now accepted on the current line." in markdown_text
-    assert "operator-only payoff audit is now landed for current scope, and the deeper Gemini operator lane has now been re-earned on CLI auto mode before the remaining service-proof blockers." in markdown_text
-    assert "Codex rather than `openai` as the OpenAI operator surface" in markdown_text
-    assert "distinguishes `codex exec` smoke from `codex app-server` lifecycle proof" in markdown_text
-    assert "now records documented hook events on Claude and Gemini" in markdown_text
-    assert "operator probe and smoke baselines are now clean in CLI auto mode" in markdown_text
-    assert "`gemini-2.5-pro` is valid but capacity-blocked on smoke" in markdown_text
-    assert "A bounded feedback-conditioned threshold and enforcement-aware realized control loop is now also landed on the proven reference/OpenAI lanes" in markdown_text
-    assert "broader or stronger closed-loop enforcement beyond the proven reference/OpenAI lanes" in markdown_text
-    assert "closed-loop feedback and enforcement program" not in markdown_text
-    assert "cortex-archival-dossiers/" not in markdown_text
-    assert "Current Justified Boundary" in html_text
-    assert "Gap Programs" in html_text
-    assert "North-Star Cortex" in html_text
-    assert "support surface" in html_text
-    assert "not active authority" in html_text
-    assert "not current committed roadmap truth" in html_text
-    assert "Biology Tracker: What Cortex Has Stolen So Far" in html_text
-    assert "which brain-inspired mechanisms Cortex has already stolen so far" in html_text
+        "the accepted product/runtime claim is now explicitly OpenAI-only on the canonical direct-API lane"
+        in workstream_text
+    )
+    assert "the accepted current product scope on the canonical direct-API lane is now OpenAI-only" in program_text
+    assert "the accepted current product scope on the canonical lane is now OpenAI-only" in verdict_text
+    assert '"provider_scope": ["openai"]' in main_scope_source_text
     assert (
-        f"The accepted factual baseline is the clean synced <code>{accepted_branch}</code> "
-        "line recorded in <code>docs/CORTEX_V2_ACTIVE_WORKSTREAM.md</code>."
-    ) in html_text
-    assert '<details class="biology-card"' in html_text
-    assert "What we've stolen so far" in html_text
-    assert "What is still partial" in html_text
-    assert "What remains north-star only" in html_text
-    assert "signed-in-first live testing environment with App Server and hook lifecycle proof" in html_text
-    assert "broader or stronger lawful enforcement beyond proven lanes" in html_text
-    assert "closed-loop feedback and enforcement" not in html_text
-    assert "Cortex Complete" not in html_text
-    assert "Today vs Future" not in html_text
+        "the accepted product/runtime claim is now explicitly OpenAI-only on the canonical direct-API lane"
+        in main_workstream_text
+    )
+    assert (
+        "| `L4` lifecycle-first payoff verdict | `docs/CORTEX_V2_LIVE_VALIDATION_VERDICT_0.md`; `make live-compare` | closed for the accepted OpenAI-only product scope; reopen only if product scope intentionally widens | landed |"
+        in phase_gate_text
+    )
+    assert (
+        "| `L4` lifecycle-first payoff verdict | `docs/CORTEX_V2_LIVE_VALIDATION_VERDICT_0.md`; `make live-compare` | closed for the accepted OpenAI-only product scope; reopen only if product scope intentionally widens | landed |"
+        in main_phase_gate_text
+    )
 
 
-def test_runtime_restack_program_lock_is_recorded() -> None:
-    text = _read(RUNTIME_RESTACK_PROGRAM_PATH)
-    master_plan_text = _read(REPO_ROOT / "docs" / "CORTEX_V2_IMPLEMENTATION_MASTER_PLAN_2.md")
-    theory_text = _read(REPO_ROOT / "docs" / "CORTEX_V2_THEORY_2.md")
+def test_workstream_and_phase_gates_do_not_hide_major_brains_behind_generic_backlog_language() -> None:
+    workstream_text = _read(ACTIVE_WORKSTREAM_PATH)
+    phase_gate_text = _read(PHASE_GATES_PATH)
 
-    assert "Status: accepted re-audited support brief for the K1 runtime/product restack train" in text
-    assert "branch: `codex/j2-restack-acceptance-truth-normalization`" in text
-    assert "commit: `acfccf9`" in text
-    assert "The donor runtime branches are source material only:" in text
-    assert "`codex/o3-openai-service-shell`" in text
-    assert "They may not contribute workflow truth wholesale:" in text
-    assert "not `AGENTS.md`" in text
-    assert "not active workstream truth" in text
-    assert "reference runtime foundation" in text
-    assert "OpenAI loopback service shell" in text
-    assert "Current accepted state after K1 closeout" in text
-    assert "implemented at K1 proof head `d4c311f` and truthfully closed at deterministic closeout head `79b8f39`" in text
-    assert "later bounded runtime/product trains may still be explicitly opened" in master_plan_text
-    assert "one bounded experimental seam is now justified" in master_plan_text
-    assert "records the bounded K train as landed" in theory_text
-    assert "mediation is justified for one bounded experimental seam" in theory_text
-    assert "headless operator reruns still require `GEMINI_API_KEY` in the shell environment" in theory_text
-    assert "old `plan`-mode path was a real confound" in theory_text
-    assert "repeated paired runs on the free API-key lane still turn mixed under flash-tier quota pressure" in theory_text
-    assert "the operator/evaluation harness must not call explicit Gemini model names at all" in theory_text
-    assert "fresh auto-only product-path rerun is sharper still" in theory_text
-    assert "first full round-2 stable-defaults rerun now says the package is still `mixed_direction`" in theory_text
-    assert "docs/CORTEX_V2_ACTIVE_WORKSTREAM.md` now records the bounded K train as landed, records `N2` as blocked pending a capable machine, records `M2`, `J1`, `J2`, `J3`, and the full bounded reference mediation closeout `J4B/J4C/J4D/J4F` on `main`" in theory_text
-    assert "keeps non-reference mediated artifacts evidence-only." in theory_text
-    assert "keeps non-reference mediated artifacts evidence-only." in theory_text
-    assert "The clean synced `main` line now carries the provider-limit neutrality hardening, the OpenAI continuity transport fix, the Claude efficiency rerun, the first compact SRE modulator bundle, the landed M2 summary/memory/policy refinement, the landed J1 mediation evidence package baseline, and the landed J2 gap-closure evidence package." in theory_text
-    assert "the landed J1 mediation evidence package baseline" in theory_text
-    assert "mediation is now justified for one bounded experimental seam" in theory_text
-    assert "the next honest move after J2 is now J3 mediation justification review" not in theory_text
+    assert "future host-expansion backlog only" not in workstream_text
+    assert "future host-expansion backlog only" not in phase_gate_text
+    assert "Claude stays outside the accepted current product scope as future host-expansion backlog" not in workstream_text
+    assert "Claude and Gemini may remain blocked as future host-expansion backlog" not in phase_gate_text
+
+
+def test_current_state_docs_use_stable_openai_evidence_and_truthful_hygiene_language() -> None:
+    workstream_text = _read(ACTIVE_WORKSTREAM_PATH)
+    program_text = _read(LIVE_VALIDATION_PROGRAM_PATH)
+    verdict_text = _read(LIVE_VALIDATION_VERDICT_PATH)
+    service_proof_text = _read(LIVE_SERVICE_PROOF_PATH)
+    phase_gate_text = _read(PHASE_GATES_PATH)
+
+    for text in (
+        workstream_text,
+        program_text,
+        verdict_text,
+        service_proof_text,
+        phase_gate_text,
+    ):
+        assert "three positive current-machine `canonical_anchor` cycles" not in text
+
+    assert "exact cycle count is local-artifact truth" in workstream_text
+    assert "exact cycle count is local-artifact truth" in program_text
+    assert "exact cycle count remains local-artifact truth" in verdict_text
+    assert "exact cycle count and per-scenario totals live only in local artifacts" in service_proof_text
+    assert (
+        "exact cycle count remains local-artifact truth under `.cortex/live_validation/automation/openai/service/service_runs.json`"
+        in phase_gate_text
+    )
+
+    assert "clean synced `main`" not in workstream_text
+    assert "clean synced `main`" not in program_text
+    assert "clean synced `main`" not in service_proof_text
+    assert "accepted local `main` line" in workstream_text
+    assert "accepted local `main` line" in program_text
+    assert "accepted local `main` line" in service_proof_text
+
+
+def test_j4f_hygiene_status_matches_local_repo_truth() -> None:
+    phase_gate_text = _read(PHASE_GATES_PATH)
+    current_sync_state = _main_sync_state()
+    review_branches = _local_review_branches()
+    current_branch = subprocess.check_output(
+        ["git", "branch", "--show-current"],
+        cwd=REPO_ROOT,
+        text=True,
+        encoding="utf-8",
+    ).strip()
+
+    partial_row = (
+        "| `J4F` workflow closeout and hygiene | `docs/CORTEX_V2_ACTIVE_WORKSTREAM.md`; `REPO_WORKFLOW.md`; `python3 scripts/repo_workflow.py close-session --message ...`; `python3 scripts/repo_workflow.py sync-main`; `python3 scripts/repo_workflow.py cleanup-report` | origin/main reconciliation only | partial |"
+    )
+
+    assert partial_row in phase_gate_text
+    assert current_sync_state == "ahead"
+    if current_branch == "main":
+        assert review_branches == []
+    else:
+        assert current_branch in review_branches
+    assert "archive/review--*` tags and removed" in phase_gate_text

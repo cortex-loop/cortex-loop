@@ -1,7 +1,10 @@
 # CORTEX_V2_COMPUTED_EXECUTIVE_LOOP_PROGRAM_0
 
 Date: 2026-03-29
-Status: accepted re-audited runtime-program brief for the first bounded computed executive loop on proven reference/OpenAI lanes
+Status: accepted historical/reference runtime-program brief for the first bounded computed executive loop on proven reference/OpenAI lanes
+
+After accepted X1, this document remains historical/reference evidence only.
+It is not the accepted OpenAI-only product runtime.
 
 ## Purpose
 
@@ -148,3 +151,9 @@ On the accepted K4 closeout line opened from accepted parent `a369874`:
 - `allocated_score` is the actual selection score while `online_score` remains diagnostic
 - reference/OpenAI runtime projections preserve the same public shape while surfacing the stronger computed semantics
 - Claude/Gemini deterministic runtime projections remain compatible with the new scorer semantics but are not promoted to new closure truth
+
+## Current standing after X1
+
+- `R7` / `O6` remain landed historical/reference evidence for the older allocation-heavy OpenAI line,
+- the accepted OpenAI-only product runtime no longer carries computed `allocation_diagnostics` as product truth,
+- and this document now serves as historical/reference context only.

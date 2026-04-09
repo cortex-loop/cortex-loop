@@ -1,7 +1,10 @@
 # CORTEX_V2_OPERATOR_ROUTING_PROGRAM_0
 
 Date: 2026-03-30
-Status: active runtime-program brief for the first bounded SRE-owned operator routing train
+Status: accepted watchlist/reference brief for the first bounded SRE-owned operator routing train
+
+After accepted X1, this document remains watchlist/reference only.
+It is not part of the accepted OpenAI-only product runtime path.
 
 ## Purpose
 

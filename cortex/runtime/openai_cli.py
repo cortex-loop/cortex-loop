@@ -22,14 +22,10 @@ _OUTPUT_KEYS = (
     "raw_host_event_name",
     "native_event_name",
     "dispatch_lane",
-    "selected_family",
-    "brake_state",
-    "executive_state_summary",
-    "control_ledger",
+    "decision",
     "warnings",
-    "session_summary",
+    "journal",
     "commitment_result_kind",
-    "feedback_window_summary",
 )
 
 
@@ -48,14 +44,10 @@ def build_openai_cli_record(step_result: OpenAIRuntimeStepResult) -> dict[str, A
         "raw_host_event_name": payload_metadata.get("raw_host_event_name"),
         "native_event_name": step_result.bound_event.observation.event.native_event_name,
         "dispatch_lane": step_result.dispatch_decision.lane.value,
-        "selected_family": step_result.selected_family.value,
-        "brake_state": step_result.brake_state.value,
-        "executive_state_summary": step_result.executive_state_summary,
-        "control_ledger": step_result.control_ledger_summary,
+        "decision": step_result.product_decision.decision,
         "warnings": list(step_result.warnings),
-        "session_summary": step_result.session_summary,
+        "journal": step_result.journal,
         "commitment_result_kind": step_result.commitment_result_kind,
-        "feedback_window_summary": step_result.feedback_window_summary_payload,
     }
 
 

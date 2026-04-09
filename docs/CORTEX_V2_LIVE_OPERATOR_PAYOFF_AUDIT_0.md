@@ -1,46 +1,33 @@
 # CORTEX_V2_LIVE_OPERATOR_PAYOFF_AUDIT_0
 
-Date: 2026-03-28
-Status: accepted operator-only payoff audit note
+Date: 2026-04-06
+Status: retained historical/watchlist diagnostic note after the R1 reset
 
 ## Purpose
 
-This note records the first operator-only payoff audit over the current signed-in host-native lanes.
-It is an evaluation/support surface, not a runtime or auth-expansion brief.
+This note preserves the older operator-only payoff audit as a secondary diagnostic surface.
 
-## Current operator truth used by the audit
+After the R1 reset:
 
-- Claude operator lane is strong on documented hooks:
-  - `pass_minimal`
-  - `truth_gap`
-  - `restart_continuity`
-- OpenAI operator lane is strong on:
-  - `codex exec` smoke
-  - `codex app-server` lifecycle proof
-- Gemini remains an explicit partial host line:
-  - `gemini-2.5-pro` valid but exploratory-only and capacity-blocked on smoke
-  - operator probes and repeated smoke baselines are now clean in CLI auto mode
-  - the deeper auto-mode path now closes `pass_minimal` with warning-preserving capacity pressure
-  - the deeper auto-mode path now preserves `truth_gap` truthfully on the latest reruns
-  - `restart_continuity` is still not repeat-stable after the current best-practice re-audit because successful resumed completions now coexist with recurring first-turn `capacity_exhausted` failures
+- it is `execution_surface = headless_cli`
+- it is `evidence_role = watchlist`
+- it is not a canonical runtime-truth carrier
+- it is not an active closure surface for runtime payoff
 
-## Audit verdict
+## Current role
 
-**operator lifecycle-first is already paying off clearly**
+If the repo still runs the operator-payoff support tool, read it only as:
 
-Qualifier:
+- a watchlist snapshot over current headless-CLI artifacts
+- a secondary host-boundary diagnostic
+- a historical support surface that must stay downstream of canonical direct-API truth
 
-- Gemini remains explicit partial truth rather than hidden success
-- automation/service remains blocked on missing machine auth and unproven
+## Lawful use
 
-## Why this is the current verdict
+The retained operator-payoff support surface may help answer narrow questions such as:
 
-- Claude and OpenAI are now strong on real host-native operator lifecycle surfaces
-- Gemini is not smooth, but the lifecycle-first discipline is already paying off because it keeps:
-  - hook visibility explicit
-  - model and fallback choice explicit
-  - warning pressure explicit
-  - continuity truth explicit
-  - truth-gap dishonesty explicit
+- whether a host watchlist currently looks locally quiet or noisy
+- whether warnings and failures are clustering on one host
+- whether local watchlist output drifts from the accepted watchlist line
 
-That is already meaningful operator lift over a generic “task passed / task failed” view.
+Do not use this note or the corresponding tool to publish product/runtime payoff claims.

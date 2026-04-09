@@ -828,7 +828,7 @@ EXPECTATIONS = (
         promised_surfaces=(
             PromisedTestSurface(
                 test_file="tests/unit/test_openai_runtime_session_io.py",
-                test_names=("test_openai_runtime_session_artifact_roundtrips_bounded_residue",),
+                test_names=("test_openai_runtime_session_artifact_roundtrips_compact_product_journal",),
             ),
             PromisedTestSurface(
                 test_file="tests/integration/test_openai_runtime_continuity.py",
@@ -843,8 +843,8 @@ EXPECTATIONS = (
         symbol_name="OpenAIControlLedger",
         promised_surfaces=(
             PromisedTestSurface(
-                test_file="tests/integration/test_openai_runtime_cli.py",
-                test_names=("test_openai_runtime_cli_reads_documented_raw_events_and_preserves_host_name",),
+                test_file="tests/unit/test_openai_runtime_step.py",
+                test_names=("test_openai_runtime_step_uses_compact_decision_table_without_reference_soft_control",),
             ),
             PromisedTestSurface(
                 test_file="tests/integration/test_openai_service.py",
@@ -881,6 +881,8 @@ EXPECTATIONS = (
                 test_file="tests/unit/test_openai_runtime_step.py",
                 test_names=(
                     "test_openai_runtime_step_rejects_canonical_cortex_event_name_before_runtime_processing",
+                    "test_openai_runtime_step_uses_compact_decision_table_without_reference_soft_control",
+                    "test_openai_runtime_step_preserves_session_mismatch_as_stop_without_reassigning_session",
                 ),
             ),
             PromisedTestSurface(
@@ -897,7 +899,7 @@ EXPECTATIONS = (
         promised_surfaces=(
             PromisedTestSurface(
                 test_file="tests/unit/test_openai_runtime_session_io.py",
-                test_names=("test_openai_runtime_session_artifact_roundtrips_bounded_residue",),
+                test_names=("test_openai_runtime_session_artifact_roundtrips_compact_product_journal",),
             ),
         ),
     ),
@@ -909,7 +911,7 @@ EXPECTATIONS = (
         promised_surfaces=(
             PromisedTestSurface(
                 test_file="tests/unit/test_openai_runtime_session_io.py",
-                test_names=("test_openai_runtime_session_artifact_roundtrips_bounded_residue",),
+                test_names=("test_openai_runtime_session_artifact_roundtrips_compact_product_journal",),
             ),
         ),
     ),
@@ -922,8 +924,7 @@ EXPECTATIONS = (
             PromisedTestSurface(
                 test_file="tests/unit/test_openai_runtime_session_io.py",
                 test_names=(
-                    "test_openai_runtime_session_artifact_rejects_unknown_keys_and_invalid_enums",
-                    "test_openai_runtime_session_artifact_one_sided_last_feedback_normalizes_through_session_constructor",
+                    "test_openai_runtime_session_artifact_rejects_legacy_shape_unknown_keys_and_invalid_fields",
                 ),
             ),
         ),

@@ -1,0 +1,20 @@
+---
+const links = [
+  { href: "/", label: "Overview" },
+  { href: "/docs/", label: "Docs" },
+  { href: "/tags/astro/", label: "Tags" },
+];
+---
+
+<header style="border-bottom: 1px solid rgba(20, 33, 43, 0.12); background: rgba(255,255,255,0.72); backdrop-filter: blur(16px);">
+  <div style="max-width: 72rem; margin: 0 auto; padding: 1rem 1.5rem; display: flex; gap: 1rem; justify-content: space-between; align-items: center;">
+    <a href="/" style="font-weight: 700; text-decoration: none;">Ops Atlas</a>
+    <nav aria-label="Primary">
+      <ul style="display: flex; gap: 1rem; list-style: none; padding: 0; margin: 0;">
+        {links.map((link) => (
+          <li><a href={link.href} style="text-decoration: none;">{link.label}</a></li>
+        ))}
+      </ul>
+    </nav>
+  </div>
+</header>

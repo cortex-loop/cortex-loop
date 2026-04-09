@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import io
+import os
 import sys
 import tempfile
 from pathlib import Path
@@ -38,8 +39,9 @@ from live_validation_common import (
     extract_event_labels,
     extract_result_text,
     extract_token_usage,
+    live_evidence_fields,
     model_ladder,
-    parse_json_lines,
+    parse_json_records,
     redact_claude_auth_payload,
     should_collapse_after_failure,
 )
@@ -80,10 +82,42 @@ def test_classify_failure_recognizes_live_auth_and_capacity_blockers() -> None:
         == "capacity_exhausted"
     )
     assert classify_failure("You've hit your limit · resets 4pm (Asia/Tokyo)") == "quota_exhausted"
+    assert classify_failure('Gemini interaction stream transport failed with HTTP 500: INTERNAL') == "provider_internal_error"
+    assert classify_failure('{"error":{"code":500,"status":"INTERNAL","message":"internal error encountered"}}') == "provider_internal_error"
+    assert classify_failure('API Error: 529 {"type":"error","error":{"type":"overloaded_error","message":"Overloaded"}}') == "provider_internal_error"
     assert classify_failure('{"code": -32600, "message": "no rollout found for thread id 123"}') == "continuity_rollout_missing"
     assert classify_failure("Requested entity was not found.") == "model_unavailable"
     assert classify_failure("model_not_found") == "model_unavailable"
     assert classify_failure("totally different error") is None
+
+
+def test_live_evidence_fields_classify_watchlist_and_canonical_truth_lanes() -> None:
+    assert live_evidence_fields(lane="operator") == {
+        "execution_surface": "headless_cli",
+        "evidence_role": "watchlist",
+    }
+    assert live_evidence_fields(lane="automation") == {
+        "execution_surface": "direct_api",
+        "evidence_role": "canonical_truth",
+    }
+
+
+def test_load_local_env_file_preserves_existing_env_values(tmp_path: Path, monkeypatch) -> None:
+    env_path = tmp_path / ".env"
+    env_path.write_text(
+        "OPENAI_API_KEY=file-key\n"
+        "export CORTEX_LIVE_SERVICE_SPEND_APPROVED=approved\n",
+        encoding="utf-8",
+    )
+    monkeypatch.setenv("OPENAI_API_KEY", "shell-key")
+    monkeypatch.delenv("CORTEX_LIVE_SERVICE_SPEND_APPROVED", raising=False)
+
+    loaded = live_validation_common.load_local_env_file(env_path)
+
+    assert loaded["OPENAI_API_KEY"] == "shell-key"
+    assert loaded["CORTEX_LIVE_SERVICE_SPEND_APPROVED"] == "approved"
+    assert os.environ["OPENAI_API_KEY"] == "shell-key"
+    assert os.environ["CORTEX_LIVE_SERVICE_SPEND_APPROVED"] == "approved"
 
 
 def test_should_collapse_after_failure_matches_blocking_classes() -> None:
@@ -93,7 +127,7 @@ def test_should_collapse_after_failure_matches_blocking_classes() -> None:
     assert should_collapse_after_failure(None) is False
 
 
-def test_parse_json_lines_extracts_structured_records_only() -> None:
+def test_parse_json_records_extracts_jsonl_structured_records_only() -> None:
     text = '\n'.join(
         [
             '{"type":"init","session_id":"s-1"}',
@@ -102,14 +136,73 @@ def test_parse_json_lines_extracts_structured_records_only() -> None:
         ]
     )
 
-    records = parse_json_lines(text)
+    records, extraction_mode = parse_json_records(text)
 
     assert records == [
         {"type": "init", "session_id": "s-1"},
         {"type": "item.completed", "item": {"type": "agent_message", "text": "OK"}},
     ]
+    assert extraction_mode == "jsonl"
     assert extract_event_labels(records) == ["init", "item:agent_message"]
     assert extract_result_text(records, text) == "OK"
+
+
+def test_parse_json_records_accepts_pretty_printed_single_object() -> None:
+    text = json.dumps(
+        {
+            "session_id": "gm-1",
+            "response": "=== FILE: src/bookmarks_api/main.py ===\napp = object()\n=== END FILE ===",
+        },
+        indent=2,
+    )
+
+    records, extraction_mode = parse_json_records(text)
+
+    assert records == [
+        {
+            "session_id": "gm-1",
+            "response": "=== FILE: src/bookmarks_api/main.py ===\napp = object()\n=== END FILE ===",
+        }
+    ]
+    assert extraction_mode == "json_object"
+    assert extract_result_text(records, text) == (
+        "=== FILE: src/bookmarks_api/main.py ===\napp = object()\n=== END FILE ==="
+    )
+
+
+def test_extract_result_text_keeps_structured_timeout_payload() -> None:
+    text = json.dumps(
+        {
+            "session_id": "cl-1",
+            "result": "=== FILE: src/bookmarks_api/main.py ===\napp = object()\n=== END FILE ===",
+        },
+        indent=2,
+    )
+
+    records, extraction_mode = parse_json_records(text)
+
+    assert extraction_mode == "json_object"
+    assert extract_result_text(records, text) == (
+        "=== FILE: src/bookmarks_api/main.py ===\napp = object()\n=== END FILE ==="
+    )
+
+
+def test_parse_json_records_accepts_json_array_of_records() -> None:
+    text = json.dumps(
+        [
+            {"type": "init", "session_id": "s-1"},
+            {"type": "result", "result": "done"},
+        ],
+        indent=2,
+    )
+
+    records, extraction_mode = parse_json_records(text)
+
+    assert records == [
+        {"type": "init", "session_id": "s-1"},
+        {"type": "result", "result": "done"},
+    ]
+    assert extraction_mode == "json_array"
 
 
 def test_extract_result_text_reassembles_gemini_style_assistant_deltas() -> None:
@@ -214,7 +307,31 @@ def test_build_scenario_catalog_exposes_l2_harness_contract() -> None:
         row["scenario_id"] == "truth_gap"
         for row in catalog["operator_scenarios"]
     )
+    assert any(
+        row["scenario_id"] == "restart_continuity"
+        for row in catalog["operator_scenarios"]
+    )
+    truth_gap_row = next(
+        row for row in catalog["operator_scenarios"] if row["scenario_id"] == "truth_gap"
+    )
+    continuity_row = next(
+        row
+        for row in catalog["operator_scenarios"]
+        if row["scenario_id"] == "restart_continuity"
+    )
+    assert truth_gap_row["automation_prompt"] == "truth_gap_automation.md"
+    assert continuity_row["operator_prompt"] == "restart_continuity_turn2_operator.md"
+    assert continuity_row["automation_prompt"] == "restart_continuity_turn2_automation.md"
     assert catalog["operator_continuity"]["turn_1_prompt"] == "restart_continuity_turn1_operator.md"
+    assert catalog["automation_continuity"]["turn_1_prompt"] == "restart_continuity_turn1_automation.md"
+    assert catalog["automation_continuity"]["turn_2_prompt"] == "restart_continuity_turn2_automation.md"
+    assert catalog["automation_service_suites"]["current"]["scenarios"] == [
+        "service_smoke",
+        "service_restart_continuity",
+    ]
+    assert catalog["automation_service_suites"]["canonical_anchor"]["provider_scope"] == [
+        "openai",
+    ]
     assert catalog["host_caveats"]["claude"] == "host_caveat_operator_claude.md"
     assert catalog["host_caveats"]["openai"] == "host_caveat_operator_openai_app_server.md"
     assert catalog["openai_operator_surfaces"]["smoke"] == "codex exec"
@@ -223,6 +340,22 @@ def test_build_scenario_catalog_exposes_l2_harness_contract() -> None:
     assert MODEL_MATRIX["openai"]["operator"].preferred == "gpt-5.3-codex"
     assert MODEL_MATRIX["gemini"]["operator"].preferred == "auto"
     assert MODEL_MATRIX["gemini"]["operator"].fallback is None
+
+
+def test_openai_automation_service_model_split_uses_mini_for_smoke_only() -> None:
+    assert live_host_control._service_model_for_scenario("openai", "service_smoke") == "gpt-5.4-mini"
+    assert (
+        live_host_control._service_model_for_scenario("openai", "service_restart_continuity")
+        == MODEL_MATRIX["openai"]["automation"].preferred
+    )
+    assert (
+        live_host_control._service_model_for_scenario("openai", "pass_minimal")
+        == MODEL_MATRIX["openai"]["automation"].preferred
+    )
+    assert (
+        live_host_control._service_model_for_scenario("claude", "service_smoke")
+        == MODEL_MATRIX["claude"]["automation"].preferred
+    )
 
 
 def test_gemini_model_ladder_and_choose_model_stay_auto_only() -> None:
@@ -509,10 +642,14 @@ def test_gemini_automation_auth_readiness_can_be_mis_scoped(monkeypatch) -> None
 def test_single_provider_service_summary_does_not_include_stale_other_providers() -> None:
     summary = live_host_control._build_summary(
         lane="automation",
+        suite_id="current",
         provider_payloads={"claude": {"provider": "claude", "runs": []}},
     )
 
     assert summary["lane"] == "automation"
+    assert summary["suite_id"] == "current"
+    assert summary["execution_surface"] == "direct_api"
+    assert summary["evidence_role"] == "canonical_truth"
     assert summary["providers"] == {"claude": {"provider": "claude", "runs": []}}
 
 
@@ -683,6 +820,83 @@ def test_claude_hook_capture_drops_stop_hook(tmp_path: Path) -> None:
     assert "Stop" not in settings["hooks"]
 
 
+def test_gemini_hook_capture_skips_project_settings_for_minimal(tmp_path: Path) -> None:
+    project_root = tmp_path / "project"
+    project_root.mkdir()
+
+    hook_log_path = live_host_native_product_paths._configure_hook_capture(
+        provider="gemini",
+        project_root=project_root,
+        scenario_id="pass_minimal",
+        repeat_index=1,
+        execution_flavor="minimal",
+        log_root=tmp_path,
+    )
+
+    assert hook_log_path is None
+    assert not (project_root / ".gemini" / "settings.json").exists()
+
+
+def test_gemini_task_omits_hook_env_for_minimal_execution(monkeypatch) -> None:
+    captured: dict[str, object] = {}
+
+    def fake_timed_command(command, **kwargs):
+        captured["env"] = kwargs.get("env")
+        return {
+            "command": command,
+            "exit_code": 0,
+            "stdout": "",
+            "stderr": "",
+            "started_at": "2026-03-30T00:00:00+00:00",
+            "ended_at": "2026-03-30T00:00:00+00:00",
+        }
+
+    monkeypatch.setattr(live_host_native_product_paths, "_run_timed_command", fake_timed_command)
+
+    live_host_native_product_paths._run_gemini_task(
+        "Respond exactly with OK.",
+        project_root=Path("/tmp"),
+        model="auto",
+        auth_mode="api_key",
+        approval_mode="yolo",
+        hook_log_path=None,
+        inject_hook_env=False,
+    )
+
+    assert captured["env"] is None
+
+
+def test_gemini_task_preserves_hook_env_for_wrapped_execution(monkeypatch, tmp_path: Path) -> None:
+    captured: dict[str, object] = {}
+    hook_log_path = tmp_path / "gemini.hooks.jsonl"
+
+    def fake_timed_command(command, **kwargs):
+        captured["env"] = kwargs.get("env")
+        return {
+            "command": command,
+            "exit_code": 0,
+            "stdout": "",
+            "stderr": "",
+            "started_at": "2026-03-30T00:00:00+00:00",
+            "ended_at": "2026-03-30T00:00:00+00:00",
+        }
+
+    monkeypatch.setattr(live_host_native_product_paths, "_run_timed_command", fake_timed_command)
+
+    live_host_native_product_paths._run_gemini_task(
+        "Respond exactly with OK.",
+        project_root=Path("/tmp"),
+        model="auto",
+        auth_mode="api_key",
+        approval_mode="yolo",
+        hook_log_path=hook_log_path,
+        inject_hook_env=True,
+    )
+
+    assert captured["env"]["CORTEX_LIVE_HOOK_PROVIDER"] == "gemini"
+    assert captured["env"]["CORTEX_LIVE_HOOK_LOG_PATH"] == str(hook_log_path)
+
+
 def test_live_hook_recorder_emits_no_stdout_when_logging(capsys, monkeypatch, tmp_path: Path) -> None:
     log_path = tmp_path / "hooks.jsonl"
     monkeypatch.setenv("CORTEX_LIVE_HOOK_LOG_PATH", str(log_path))
@@ -732,8 +946,8 @@ def test_operator_timeout_after_successful_verification_is_warning_not_failure(
     )
     monkeypatch.setattr(
         live_host_native_product_paths,
-        "parse_json_lines",
-        lambda text: [],
+        "parse_json_records",
+        lambda text: ([], "raw_fallback"),
     )
     monkeypatch.setattr(
         live_host_native_product_paths,
@@ -779,6 +993,205 @@ def test_operator_timeout_after_successful_verification_is_warning_not_failure(
     assert payload["warning_classes"] == ["operator_timeout"]
 
 
+def test_operator_directionality_truth_gap_minimal_flavor_skips_extra_read_pass(
+    monkeypatch,
+    tmp_path: Path,
+) -> None:
+    captured: dict[str, object] = {}
+
+    monkeypatch.setattr(
+        live_operator_directionality,
+        "prepare_harness_workspace",
+        lambda **kwargs: tmp_path / "project_a",
+    )
+    monkeypatch.setattr(
+        live_operator_directionality,
+        "read_prompt_template",
+        lambda filename: "prompt",
+    )
+    monkeypatch.setattr(
+        live_operator_directionality,
+        "resolve_auth_mode",
+        lambda provider, lane: "api_key",
+    )
+    monkeypatch.setattr(
+        live_operator_directionality,
+        "recent_operator_probe_failure",
+        lambda provider: None,
+    )
+    monkeypatch.setattr(
+        live_operator_directionality.host_paths,
+        "_resolve_cortex_execution_flavor",
+        lambda **kwargs: (
+            "minimal",
+            {
+                "execution_flavor_effective": "minimal",
+                "execution_flavor_override": "minimal",
+            },
+        ),
+    )
+    monkeypatch.setattr(
+        live_operator_directionality.host_paths,
+        "_configure_hook_capture",
+        lambda **kwargs: None,
+    )
+
+    def fake_run_operator_attempts(**kwargs):
+        captured["execution_flavor"] = kwargs["execution_flavor"]
+        return (
+            {
+                "command": ["gemini"],
+                "exit_code": 0,
+                "stdout": '{"type":"result","stats":{"input_tokens":1,"output_tokens":1,"cached":0}}',
+                "stderr": "",
+                "started_at": "2026-03-30T00:00:00+00:00",
+                "ended_at": "2026-03-30T00:00:01+00:00",
+            },
+            None,
+            "auto",
+            "auto",
+            True,
+            ["auto"],
+        )
+
+    monkeypatch.setattr(
+        live_operator_directionality.host_paths,
+        "_run_operator_attempts",
+        fake_run_operator_attempts,
+    )
+    monkeypatch.setattr(
+        live_operator_directionality.host_paths,
+        "_materialize_operator_run",
+        lambda **kwargs: {
+            "truth_gap_kind": "truthful_incomplete",
+            "provider_limit_interference": False,
+            "warning_classes": [],
+            "attempted_models": ["auto"],
+            **kwargs["route_diagnostics"],
+        },
+    )
+    monkeypatch.setattr(
+        live_operator_directionality,
+        "_maybe_run_cli_extra_read_pass",
+        lambda **kwargs: (_ for _ in ()).throw(
+            AssertionError("minimal flavor should suppress extra read pass")
+        ),
+    )
+
+    payload = live_operator_directionality._run_cli_variant(
+        "gemini",
+        variant="cortex_operator",
+        scenario_id="truth_gap",
+        repeat_index=1,
+        precheck={"status": "ready"},
+        baseline_runs=[],
+        prior_runs=(),
+        cortex_execution_flavor_override="minimal",
+    )
+
+    assert captured["execution_flavor"] == "minimal"
+    assert payload["execution_flavor_effective"] == "minimal"
+    assert payload["execution_flavor_override"] == "minimal"
+    assert payload["extra_read_pass_attempted"] is False
+
+
+def test_product_path_single_scenario_forwards_minimal_execution_flavor(
+    monkeypatch,
+    tmp_path: Path,
+) -> None:
+    captured: dict[str, object] = {}
+
+    monkeypatch.setattr(
+        live_host_native_product_paths,
+        "prepare_harness_workspace",
+        lambda **kwargs: tmp_path / "project_a",
+    )
+    monkeypatch.setattr(
+        live_host_native_product_paths,
+        "read_prompt_template",
+        lambda filename: "Respond exactly with OK.",
+    )
+    monkeypatch.setattr(
+        live_host_native_product_paths,
+        "resolve_auth_mode",
+        lambda provider, lane: "api_key",
+    )
+    monkeypatch.setattr(
+        live_host_native_product_paths,
+        "recent_operator_probe_failure",
+        lambda provider: None,
+    )
+    monkeypatch.setattr(
+        live_host_native_product_paths,
+        "_resolve_cortex_execution_flavor",
+        lambda **kwargs: (
+            "minimal",
+            {
+                "execution_flavor_effective": "minimal",
+                "execution_flavor_override": "minimal",
+            },
+        ),
+    )
+    monkeypatch.setattr(
+        live_host_native_product_paths,
+        "_configure_hook_capture",
+        lambda **kwargs: None,
+    )
+
+    def fake_run_operator_attempts(**kwargs):
+        captured["execution_flavor"] = kwargs["execution_flavor"]
+        return (
+            {
+                "command": ["gemini"],
+                "exit_code": 1,
+                "stdout": "",
+                "stderr": "When using Gemini API, you must specify the GEMINI_API_KEY environment variable.",
+                "started_at": "2026-03-30T00:00:00+00:00",
+                "ended_at": "2026-03-30T00:00:00+00:00",
+            },
+            "auth_missing",
+            "auto",
+            "auto",
+            False,
+            ["auto"],
+        )
+
+    monkeypatch.setattr(
+        live_host_native_product_paths,
+        "_run_operator_attempts",
+        fake_run_operator_attempts,
+    )
+    monkeypatch.setattr(
+        live_host_native_product_paths,
+        "_materialize_operator_run",
+        lambda **kwargs: {
+            "success": False,
+            "failure_class": "auth_missing",
+            "execution_flavor_effective": kwargs["route_diagnostics"][
+                "execution_flavor_effective"
+            ],
+        },
+    )
+
+    payload = live_host_native_product_paths._run_single_scenario(
+        "gemini",
+        "pass_minimal",
+        1,
+        tmp_path,
+        baseline_runs=[],
+        prior_runs=(),
+        max_attempts=1,
+        cooldown_seconds=0,
+        preferred_model_override=None,
+        fallback_model_override=None,
+        disable_auto_probe=False,
+        cortex_execution_flavor_override="minimal",
+    )
+
+    assert captured["execution_flavor"] == "minimal"
+    assert payload["execution_flavor_effective"] == "minimal"
+
+
 def test_single_live_service_call_records_export_and_warning_timing(monkeypatch) -> None:
     @contextmanager
     def fake_running_service(provider, log_path, *, auth_mode):
@@ -820,7 +1233,317 @@ def test_single_live_service_call_records_export_and_warning_timing(monkeypatch)
     assert payload["final_record_at"] == "2026-03-29T00:00:01+00:00"
     assert payload["export_received_at"] == "2026-03-29T00:00:03+00:00"
     assert payload["record_count"] == 1
-    assert payload["export_path"].endswith("service_smoke.export.json")
+    assert payload["suite_id"] == "current"
+    assert payload["suite_role"] == "readiness_probe"
+    assert payload["export_path"].endswith("current__cycle_001__service_smoke.export.json")
+
+
+def test_claude_canonical_anchor_blocks_truthfully_when_auth_is_missing(
+    monkeypatch, tmp_path: Path
+) -> None:
+    monkeypatch.setattr(
+        live_host_control,
+        "automation_auth_readiness",
+        lambda provider: {
+            "auth_mode": "api_key",
+            "status": "missing",
+            "spend_approved": True,
+            "api_key_present": False,
+        },
+    )
+    monkeypatch.setattr(
+        live_host_control,
+        "provider_root",
+        lambda provider, lane, surface: tmp_path / lane / provider / surface,
+    )
+
+    payload = live_host_control._capture_provider("claude", suite_id="canonical_anchor")
+
+    assert payload["suite_id"] == "canonical_anchor"
+    assert payload["cycle_count"] == 1
+    assert payload["latest_cycle_status"] == "blocked"
+    assert payload["latest_failure_classes"] == ["auth_missing"]
+
+
+def test_gemini_canonical_anchor_remains_mis_scoped(monkeypatch, tmp_path: Path) -> None:
+    monkeypatch.setattr(
+        live_host_control,
+        "automation_auth_readiness",
+        lambda provider: {
+            "auth_mode": "vertex_adc",
+            "status": "ready",
+            "spend_approved": True,
+            "api_key_present": False,
+            "vertex_adc_available": True,
+        },
+    )
+    monkeypatch.setattr(
+        live_host_control,
+        "provider_root",
+        lambda provider, lane, surface: tmp_path / lane / provider / surface,
+    )
+
+    payload = live_host_control._capture_provider("gemini", suite_id="canonical_anchor")
+
+    assert payload["suite_id"] == "canonical_anchor"
+    assert payload["cycle_count"] == 1
+    assert payload["latest_cycle_status"] == "blocked"
+    assert payload["latest_failure_classes"] == ["mis_scoped"]
+
+
+def test_canonical_pass_minimal_applies_patch_and_runs_test(monkeypatch, tmp_path: Path) -> None:
+    diff_text = """diff --git a/src/normalize_port.py b/src/normalize_port.py
+--- a/src/normalize_port.py
++++ b/src/normalize_port.py
+@@ -4,5 +4,5 @@ def normalize_port(value: int | str) -> int:
+     port = int(value)
+     if port < 0:
+         raise ValueError(\"port must be non-negative\")
+-    if port >= 65535:
++    if port > 65535:
+         raise ValueError(\"port must be <= 65535\")
+     return port
+"""
+
+    @contextmanager
+    def fake_running_service(provider, log_path, *, auth_mode):
+        yield "http://127.0.0.1:9999"
+
+    responses = iter(
+        [
+            (
+                200,
+                {"records": [{"response": diff_text}]},
+                "2026-03-29T00:00:00+00:00",
+                "2026-03-29T00:00:01+00:00",
+            )
+        ]
+    )
+
+    monkeypatch.setattr(live_host_control, "_running_service", fake_running_service)
+    monkeypatch.setattr(live_host_control, "_request_json", lambda *args, **kwargs: next(responses))
+    monkeypatch.setattr(
+        live_host_control,
+        "prepare_harness_workspace",
+        lambda **kwargs: live_validation_common.prepare_harness_workspace(
+            provider="openai",
+            lane="automation",
+            scenario_id="pass_minimal",
+            repeat_index=1,
+        ),
+    )
+
+    root = tmp_path / ".cortex" / "live_validation" / "automation" / "openai" / "service"
+    payload = live_host_control._run_pass_minimal_capture(
+        provider="openai",
+        auth_mode="api_key",
+        model="gpt-5.4",
+        root=root,
+        suite_id="canonical_anchor",
+        suite_role="canonical_truth_anchor",
+        cycle_index=1,
+    )
+
+    assert payload["success"] is True
+    assert payload["failure_class"] is None
+    assert payload["modified_files"] == ["src/normalize_port.py"]
+    assert payload["test_result_path"].endswith("canonical_anchor__cycle_001__pass_minimal.test.json")
+
+
+def test_canonical_truth_gap_stays_theless_and_truthful(monkeypatch, tmp_path: Path) -> None:
+    @contextmanager
+    def fake_running_service(provider, log_path, *, auth_mode):
+        yield "http://127.0.0.1:9999"
+
+    responses = iter(
+        [
+            (
+                200,
+                {
+                    "records": [
+                        {
+                            "response": (
+                                "Task is incomplete because this is inspection only. "
+                                "I did not edit files or run tests, so the bug is not verified as fixed."
+                            )
+                        }
+                    ]
+                },
+                "2026-03-29T00:00:00+00:00",
+                "2026-03-29T00:00:01+00:00",
+            )
+        ]
+    )
+
+    monkeypatch.setattr(live_host_control, "_running_service", fake_running_service)
+    monkeypatch.setattr(live_host_control, "_request_json", lambda *args, **kwargs: next(responses))
+
+    root = tmp_path / ".cortex" / "live_validation" / "automation" / "openai" / "service"
+    payload = live_host_control._run_truth_gap_capture(
+        provider="openai",
+        auth_mode="api_key",
+        model="gpt-5.4",
+        root=root,
+        suite_id="canonical_anchor",
+        suite_role="canonical_truth_anchor",
+        cycle_index=1,
+    )
+
+    assert payload["success"] is True
+    assert payload["truth_gap_kind"] == "truthful_incomplete"
+    assert payload["failure_class"] is None
+
+
+def test_canonical_restart_continuity_uses_export_import_and_external_test(monkeypatch, tmp_path: Path) -> None:
+    diff_text = """diff --git a/src/normalize_port.py b/src/normalize_port.py
+--- a/src/normalize_port.py
++++ b/src/normalize_port.py
+@@ -4,5 +4,5 @@ def normalize_port(value: int | str) -> int:
+     port = int(value)
+     if port < 0:
+         raise ValueError(\"port must be non-negative\")
+-    if port >= 65535:
++    if port > 65535:
+         raise ValueError(\"port must be <= 65535\")
+     return port
+"""
+
+    urls = iter(["http://127.0.0.1:9999", "http://127.0.0.1:9998"])
+
+    @contextmanager
+    def fake_running_service(provider, log_path, *, auth_mode):
+        yield next(urls)
+
+    responses = iter(
+        [
+            (
+                200,
+                {"records": [{"response": "Fix the `>= 65535` guard so only ports above 65535 fail."}]},
+                "2026-03-29T00:00:00+00:00",
+                "2026-03-29T00:00:01+00:00",
+            ),
+            (
+                200,
+                {"session": {"id": "s-1"}},
+                "2026-03-29T00:00:01+00:00",
+                "2026-03-29T00:00:02+00:00",
+            ),
+            (
+                200,
+                {"session": {"id": "s-1"}},
+                "2026-03-29T00:00:02+00:00",
+                "2026-03-29T00:00:03+00:00",
+            ),
+            (
+                200,
+                {"records": [{"response": diff_text}]},
+                "2026-03-29T00:00:03+00:00",
+                "2026-03-29T00:00:04+00:00",
+            ),
+            (
+                200,
+                {"session": {"id": "s-1"}},
+                "2026-03-29T00:00:04+00:00",
+                "2026-03-29T00:00:05+00:00",
+            ),
+        ]
+    )
+
+    monkeypatch.setattr(live_host_control, "_running_service", fake_running_service)
+    monkeypatch.setattr(live_host_control, "_request_json", lambda *args, **kwargs: next(responses))
+
+    root = tmp_path / ".cortex" / "live_validation" / "automation" / "openai" / "service"
+    payload = live_host_control._run_canonical_restart_continuity_capture(
+        provider="openai",
+        auth_mode="api_key",
+        model="gpt-5.4",
+        root=root,
+        suite_id="canonical_anchor",
+        suite_role="canonical_truth_anchor",
+        cycle_index=1,
+    )
+
+    assert payload["success"] is True
+    assert payload["failure_class"] is None
+    assert payload["modified_files"] == ["src/normalize_port.py"]
+    assert payload["plan_text_path"].endswith("canonical_anchor__cycle_001__restart_continuity.plan.txt")
+
+
+def test_canonical_restart_continuity_uses_second_result_text_when_records_are_lifecycle_only(
+    monkeypatch,
+    tmp_path: Path,
+) -> None:
+    diff_text = """diff --git a/src/normalize_port.py b/src/normalize_port.py
+--- a/src/normalize_port.py
++++ b/src/normalize_port.py
+@@ -4,5 +4,5 @@ def normalize_port(value: int | str) -> int:
+     port = int(value)
+     if port < 0:
+         raise ValueError(\"port must be non-negative\")
+-    if port >= 65535:
++    if port > 65535:
+         raise ValueError(\"port must be <= 65535\")
+     return port
+"""
+
+    workspace_path = live_validation_common.prepare_harness_workspace(
+        provider="openai",
+        lane="automation",
+        scenario_id="restart_continuity",
+        repeat_index=1,
+    )
+
+    monkeypatch.setattr(
+        live_host_control,
+        "prepare_harness_workspace",
+        lambda **kwargs: workspace_path,
+    )
+    monkeypatch.setattr(
+        live_host_control,
+        "_invoke_continuity_roundtrip",
+        lambda **kwargs: {
+            "first_status": 200,
+            "export_status": 200,
+            "import_status": 200,
+            "second_status": 200,
+            "final_export_status": 200,
+            "failure_class": None,
+            "first_records": [{"response": "Change >= 65535 to > 65535."}],
+            "second_records": [],
+            "first_result_text": "Change >= 65535 to > 65535.",
+            "second_result_text": diff_text,
+            "first_request_started_at": "2026-03-29T00:00:00+00:00",
+            "first_response_received_at": "2026-03-29T00:00:01+00:00",
+            "second_response_received_at": "2026-03-29T00:00:04+00:00",
+            "import_received_at": "2026-03-29T00:00:03+00:00",
+            "final_export_received_at": "2026-03-29T00:00:05+00:00",
+            "first_request_path": "first.request.json",
+            "first_response_path": "first.response.json",
+            "first_export_path": "first.export.json",
+            "import_response_path": "import.response.json",
+            "second_request_path": "second.request.json",
+            "second_response_path": "second.response.json",
+            "final_export_path": "final.export.json",
+            "second_service_log_path": "second.stderr.log",
+            "second_response": {"result_text": diff_text},
+        },
+    )
+
+    root = tmp_path / ".cortex" / "live_validation" / "automation" / "openai" / "service"
+    payload = live_host_control._run_canonical_restart_continuity_capture(
+        provider="openai",
+        auth_mode="api_key",
+        model="gpt-5.4",
+        root=root,
+        suite_id="canonical_anchor",
+        suite_role="canonical_truth_anchor",
+        cycle_index=1,
+    )
+
+    assert payload["success"] is True
+    assert payload["failure_class"] is None
+    assert payload["modified_files"] == ["src/normalize_port.py"]
+    assert payload["test_result_path"].endswith("canonical_anchor__cycle_001__restart_continuity.test.json")
 
 
 def test_service_lane_delta_reports_auth_readiness_and_service_success() -> None:
@@ -828,26 +1551,316 @@ def test_service_lane_delta_reports_auth_readiness_and_service_success() -> None
         {
             "claude": {
                 "automation_auth": {"status": "missing"},
-                "automation_service": {"successful_run_count": 0},
+                "automation_service": {
+                    "current": {"latest_cycle_success": False},
+                    "canonical_anchor": {
+                        "cycle_count": 0,
+                        "repeat_stable_success": False,
+                    },
+                },
             },
             "gemini": {
                 "automation_auth": {"status": "ready"},
-                "automation_service": {"successful_run_count": 0},
+                "automation_service": {
+                    "current": {"latest_cycle_success": False},
+                    "canonical_anchor": {
+                        "cycle_count": 1,
+                        "repeat_stable_success": False,
+                    },
+                },
             },
             "openai": {
                 "automation_auth": {"status": "blocked_by_spend_policy"},
-                "automation_service": {"successful_run_count": 1},
+                "automation_service": {
+                    "current": {"latest_cycle_success": True},
+                    "canonical_anchor": {
+                        "cycle_count": 2,
+                        "repeat_stable_success": True,
+                    },
+                },
+            },
+        },
+        canonical_scope={"openai"},
+    )
+
+    assert "automation auth readiness is `none` ready" in delta
+    assert "openai:blocked_by_spend_policy" in delta
+    assert "direct_api canonical truth is re-earned for current scope on `openai`" in delta
+    assert "headless_cli watchlist currently reads `claude:unknown, gemini:unknown, openai:unknown`" in delta
+    assert "out-of-scope direct_api providers remain watchlist-only for runtime truth: `claude, gemini`" in delta
+
+
+def test_live_compare_treats_smoke_only_as_readiness_not_canonical_truth(monkeypatch) -> None:
+    def fake_read_json(path):
+        text_path = str(path)
+        if path == live_compare.PREFLIGHT_REPORT_PATH:
+            return {
+                "operator_probe": {"claude": {}, "gemini": {}, "openai": {}},
+                "auth_surfaces": {
+                    "automation": {
+                        "claude": {"status": "missing"},
+                        "gemini": {"status": "missing"},
+                        "openai": {"status": "ready"},
+                    }
+                },
+            }
+        if text_path.endswith("automation/openai/service/service_runs.json"):
+            return {
+                "suites": {
+                    "current": {
+                        "suite_id": "current",
+                        "suite_role": "readiness_probe",
+                        "cycle_count": 1,
+                        "successful_cycle_count": 1,
+                        "latest_cycle_status": "positive",
+                        "latest_cycle_success": True,
+                        "latest_failure_classes": [],
+                        "latest_warning_classes": [],
+                        "cycles": [{"cycle_index": 1, "success": True, "cycle_status": "positive", "runs": []}],
+                    }
+                }
+            }
+        return {}
+
+    monkeypatch.setattr(live_compare, "_read_json", fake_read_json)
+
+    comparison = live_compare._build_comparison(
+        {
+            "operator_probe": {"claude": {}, "gemini": {}, "openai": {}},
+            "auth_surfaces": {"automation": {"claude": {"status": "missing"}, "gemini": {"status": "missing"}, "openai": {"status": "ready"}}},
+        }
+    )
+
+    assert comparison["service_success_count"] == 0
+    assert comparison["verdict"] == "canonical runtime truth is still partial"
+    assert comparison["providers"]["openai"]["automation_service"]["current"]["latest_cycle_success"] is True
+    assert comparison["providers"]["openai"]["automation_service"]["canonical_anchor"]["repeat_stable_success"] is False
+
+
+def test_live_compare_requires_repeat_stable_canonical_anchor_for_openai_truth(monkeypatch) -> None:
+    def fake_read_json(path):
+        text_path = str(path)
+        if path == live_compare.PREFLIGHT_REPORT_PATH:
+            return {
+                "operator_probe": {"claude": {}, "gemini": {}, "openai": {}},
+                "auth_surfaces": {
+                    "automation": {
+                        "claude": {"status": "missing"},
+                        "gemini": {"status": "missing"},
+                        "openai": {"status": "ready"},
+                    }
+                },
+            }
+        if text_path.endswith("automation/openai/service/service_runs.json"):
+            return {
+                "suites": {
+                    "current": {
+                        "suite_id": "current",
+                        "suite_role": "readiness_probe",
+                        "cycle_count": 1,
+                        "successful_cycle_count": 1,
+                        "latest_cycle_status": "positive",
+                        "latest_cycle_success": True,
+                        "latest_failure_classes": [],
+                        "latest_warning_classes": [],
+                        "cycles": [{"cycle_index": 1, "success": True, "cycle_status": "positive", "runs": []}],
+                    },
+                    "canonical_anchor": {
+                        "suite_id": "canonical_anchor",
+                        "suite_role": "canonical_truth_anchor",
+                        "cycle_count": 2,
+                        "successful_cycle_count": 2,
+                        "repeat_stable_success": True,
+                        "latest_cycle_status": "positive",
+                        "latest_cycle_success": True,
+                        "latest_failure_classes": [],
+                        "latest_warning_classes": [],
+                        "cycles": [
+                            {"cycle_index": 1, "success": True, "cycle_status": "positive", "runs": []},
+                            {"cycle_index": 2, "success": True, "cycle_status": "positive", "runs": []},
+                        ],
+                    },
+                }
+            }
+        return {}
+
+    monkeypatch.setattr(live_compare, "_read_json", fake_read_json)
+
+    comparison = live_compare._build_comparison(
+        {
+            "operator_probe": {"claude": {}, "gemini": {}, "openai": {}},
+            "auth_surfaces": {"automation": {"claude": {"status": "missing"}, "gemini": {"status": "missing"}, "openai": {"status": "ready"}}},
+        }
+    )
+
+    assert comparison["service_success_count"] == 1
+    assert comparison["verdict"] == "canonical runtime truth is re-earned for current scope"
+    assert comparison["automation_pass_count"] == 1
+    assert comparison["canonical_provider_scope"] == ["openai"]
+    assert comparison["providers"]["openai"]["automation_service"]["canonical_anchor"]["repeat_stable_success"] is True
+
+
+def test_live_compare_ignores_ready_out_of_scope_provider_for_current_scope_truth(monkeypatch) -> None:
+    def fake_read_json(path):
+        text_path = str(path)
+        if path == live_compare.PREFLIGHT_REPORT_PATH:
+            return {
+                "operator_probe": {"claude": {}, "gemini": {}, "openai": {}},
+                "auth_surfaces": {
+                    "automation": {
+                        "claude": {"status": "missing"},
+                        "gemini": {"status": "ready"},
+                        "openai": {"status": "ready"},
+                    }
+                },
+            }
+        if text_path.endswith("automation/openai/service/service_runs.json"):
+            return {
+                "suites": {
+                    "canonical_anchor": {
+                        "suite_id": "canonical_anchor",
+                        "suite_role": "canonical_truth_anchor",
+                        "cycle_count": 3,
+                        "successful_cycle_count": 3,
+                        "repeat_stable_success": True,
+                        "latest_cycle_status": "positive",
+                        "latest_cycle_success": True,
+                        "latest_failure_classes": [],
+                        "latest_warning_classes": [],
+                        "cycles": [
+                            {"cycle_index": 1, "success": True, "cycle_status": "positive", "runs": []},
+                            {"cycle_index": 2, "success": True, "cycle_status": "positive", "runs": []},
+                            {"cycle_index": 3, "success": True, "cycle_status": "positive", "runs": []},
+                        ],
+                    }
+                }
+            }
+        if text_path.endswith("automation/gemini/service/service_runs.json"):
+            return {
+                "suites": {
+                    "canonical_anchor": {
+                        "suite_id": "canonical_anchor",
+                        "suite_role": "canonical_truth_anchor",
+                        "cycle_count": 1,
+                        "successful_cycle_count": 0,
+                        "repeat_stable_success": False,
+                        "latest_cycle_status": "blocked",
+                        "latest_cycle_success": False,
+                        "latest_failure_classes": ["mis_scoped"],
+                        "latest_warning_classes": [],
+                        "cycles": [
+                            {"cycle_index": 1, "success": False, "cycle_status": "blocked", "runs": []},
+                        ],
+                    }
+                }
+            }
+        return {}
+
+    monkeypatch.setattr(live_compare, "_read_json", fake_read_json)
+
+    comparison = live_compare._build_comparison(
+        {
+            "operator_probe": {"claude": {}, "gemini": {}, "openai": {}},
+            "auth_surfaces": {
+                "automation": {
+                    "claude": {"status": "missing"},
+                    "gemini": {"status": "ready"},
+                    "openai": {"status": "ready"},
+                }
             },
         }
     )
 
-    assert "automation auth readiness is `gemini` ready" in delta
-    assert "claude:missing" in delta
-    assert "openai:blocked_by_spend_policy" in delta
-    assert "automation service proof is `openai` landed and otherwise deferred on this machine" in delta
+    assert comparison["automation_pass_count"] == 1
+    assert comparison["service_success_count"] == 1
+    assert comparison["verdict"] == "canonical runtime truth is re-earned for current scope"
+    assert comparison["providers"]["gemini"]["automation_service"]["in_canonical_scope"] is False
+    assert "out-of-scope direct_api providers remain watchlist-only" in comparison["service_lane_delta"]
+    assert comparison["next_corrective_seam"] == (
+        "current OpenAI-only product scope is already re-earned on the canonical direct-API lane and the active support/eval shell is already compressed; keep out-of-scope hosts watchlist-only or future-host backlog, treat origin/main reconciliation as separate workflow hygiene, and open any later host expansion only through an explicit new train"
+    )
 
 
-def test_live_compare_falls_back_to_accepted_operator_truth_when_local_operator_artifacts_are_absent(
+def test_live_compare_ignores_ready_out_of_scope_claude_for_current_scope_truth(monkeypatch) -> None:
+    def fake_read_json(path):
+        text_path = str(path)
+        if path == live_compare.PREFLIGHT_REPORT_PATH:
+            return {
+                "operator_probe": {"claude": {}, "gemini": {}, "openai": {}},
+                "auth_surfaces": {
+                    "automation": {
+                        "claude": {"status": "ready"},
+                        "gemini": {"status": "missing"},
+                        "openai": {"status": "ready"},
+                    }
+                },
+            }
+        if text_path.endswith("automation/openai/service/service_runs.json"):
+            return {
+                "suites": {
+                    "canonical_anchor": {
+                        "suite_id": "canonical_anchor",
+                        "suite_role": "canonical_truth_anchor",
+                        "cycle_count": 3,
+                        "successful_cycle_count": 3,
+                        "repeat_stable_success": True,
+                        "latest_cycle_status": "positive",
+                        "latest_cycle_success": True,
+                        "latest_failure_classes": [],
+                        "latest_warning_classes": [],
+                        "cycles": [
+                            {"cycle_index": 1, "success": True, "cycle_status": "positive", "runs": []},
+                            {"cycle_index": 2, "success": True, "cycle_status": "positive", "runs": []},
+                            {"cycle_index": 3, "success": True, "cycle_status": "positive", "runs": []},
+                        ],
+                    }
+                }
+            }
+        if text_path.endswith("automation/claude/service/service_runs.json"):
+            return {
+                "suites": {
+                    "canonical_anchor": {
+                        "suite_id": "canonical_anchor",
+                        "suite_role": "canonical_truth_anchor",
+                        "cycle_count": 1,
+                        "successful_cycle_count": 0,
+                        "repeat_stable_success": False,
+                        "latest_cycle_status": "blocked",
+                        "latest_cycle_success": False,
+                        "latest_failure_classes": ["auth_missing"],
+                        "latest_warning_classes": [],
+                        "cycles": [
+                            {"cycle_index": 1, "success": False, "cycle_status": "blocked", "runs": []},
+                        ],
+                    }
+                }
+            }
+        return {}
+
+    monkeypatch.setattr(live_compare, "_read_json", fake_read_json)
+
+    comparison = live_compare._build_comparison(
+        {
+            "operator_probe": {"claude": {}, "gemini": {}, "openai": {}},
+            "auth_surfaces": {
+                "automation": {
+                    "claude": {"status": "ready"},
+                    "gemini": {"status": "missing"},
+                    "openai": {"status": "ready"},
+                }
+            },
+        }
+    )
+
+    assert comparison["canonical_provider_scope"] == ["openai"]
+    assert comparison["automation_pass_count"] == 1
+    assert comparison["service_success_count"] == 1
+    assert comparison["verdict"] == "canonical runtime truth is re-earned for current scope"
+    assert comparison["providers"]["claude"]["automation_service"]["in_canonical_scope"] is False
+    assert "out-of-scope direct_api providers remain watchlist-only" in comparison["service_lane_delta"]
+
+
+def test_live_compare_falls_back_to_accepted_watchlist_when_local_operator_artifacts_are_absent(
     monkeypatch,
 ) -> None:
     workstream_text = """
@@ -878,12 +1891,13 @@ def test_live_compare_falls_back_to_accepted_operator_truth_when_local_operator_
 
     assert comparison["operator_pass_count"] == 3
     assert comparison["operator_truthful_gap_count"] == 3
-    assert comparison["providers"]["claude"]["operator_lifecycle"]["source"] == "accepted_workstream"
+    assert comparison["providers"]["claude"]["operator_lifecycle"]["source"] == "accepted_watchlist_fallback"
     assert comparison["providers"]["gemini"]["operator_lifecycle"]["restart_continuity_success"] is False
     assert comparison["providers"]["openai"]["operator_lifecycle"]["pass_minimal_success"] is True
+    assert comparison["watchlist_drift_hosts"] == []
 
 
-def test_live_compare_supplements_partial_local_operator_runs_with_accepted_truth(
+def test_live_compare_surfaces_watchlist_drift_when_local_operator_artifacts_are_partial(
     monkeypatch,
 ) -> None:
     workstream_text = """
@@ -951,10 +1965,14 @@ def test_live_compare_supplements_partial_local_operator_runs_with_accepted_trut
     )
 
     gemini = comparison["providers"]["gemini"]["operator_lifecycle"]
-    assert gemini["source"] == "mixed_local_and_accepted"
-    assert gemini["pass_minimal_success"] is True
-    assert gemini["truth_gap_preserved"] is True
+    assert gemini["source"] == "local_artifacts"
+    assert gemini["pass_minimal_success"] is False
+    assert gemini["truth_gap_preserved"] is False
     assert gemini["restart_continuity_success"] is True
+    assert gemini["watchlist_status"] == "unresolved"
+    assert gemini["accepted_watchlist_status"] == "unresolved"
+    assert gemini["accepted_watchlist_drift_detected"] is True
+    assert comparison["watchlist_drift_hosts"] == ["gemini"]
 
 
 def test_gemini_continuity_requires_latest_local_runs_to_be_repeat_stable() -> None:
@@ -1441,7 +2459,7 @@ def test_decide_verdict_prefers_blocker_honesty_before_optimism() -> None:
         automation_pass_count=0,
         service_success_count=1,
         blocker_classes=set(),
-    )[0] == "lifecycle-first is already paying off clearly"
+    )[0] == "canonical runtime truth is re-earned for current scope"
 
     assert decide_verdict(
         operator_pass_count=0,
@@ -1449,7 +2467,7 @@ def test_decide_verdict_prefers_blocker_honesty_before_optimism() -> None:
         automation_pass_count=0,
         service_success_count=0,
         blocker_classes={"auth_missing"},
-    )[0] == "lifecycle-first is not yet paying off enough on real hosts"
+    )[0] == "canonical runtime truth is blocked on this machine"
 
     assert decide_verdict(
         operator_pass_count=2,
@@ -1457,28 +2475,104 @@ def test_decide_verdict_prefers_blocker_honesty_before_optimism() -> None:
         automation_pass_count=0,
         service_success_count=0,
         blocker_classes={"runtime_error"},
-    )[0] == "lifecycle-first is promising but under-instrumented"
+    )[0] == "canonical runtime truth is still partial"
 
 
-def test_next_corrective_seam_prefers_deferral_when_gemini_capacity_is_the_residual_issue() -> None:
+def test_next_corrective_seam_prefers_watchlist_drift_investigation_after_canonical_success() -> None:
     assert (
         live_compare._next_corrective_seam(
-            blocker_classes={"capacity_exhausted"},
-            operator_pass_count=3,
-            service_success_count=0,
+            {
+                "gemini": {
+                    "automation_auth": {"status": "ready"},
+                    "automation_service": {
+                        "canonical_anchor": {"repeat_stable_success": True},
+                    },
+                    "operator_lifecycle": {"accepted_watchlist_drift_detected": True},
+                }
+            }
         )
-        == "treat Gemini as the remaining explicit partial host line on this machine and defer further local continuity tweaking until host capacity changes or service auth is intentionally reopened"
+        == "treat the headless-CLI lane as watchlist drift detection only, keep canonical claims on the direct-API lane, and investigate local-vs-accepted watchlist differences without promoting them into runtime truth"
     )
 
 
 def test_next_corrective_seam_prefers_capable_machine_when_service_auth_is_missing() -> None:
     assert (
         live_compare._next_corrective_seam(
-            blocker_classes={"auth_missing", "capacity_exhausted"},
-            operator_pass_count=3,
-            service_success_count=0,
+            {
+                "claude": {
+                    "automation_auth": {"status": "missing"},
+                    "automation_service": {
+                        "canonical_anchor": {"repeat_stable_success": False},
+                    },
+                    "operator_lifecycle": {},
+                },
+                "gemini": {
+                    "automation_auth": {"status": "blocked_by_spend_policy"},
+                    "automation_service": {
+                        "canonical_anchor": {"repeat_stable_success": False},
+                    },
+                    "operator_lifecycle": {},
+                },
+            }
         )
         == "treat the current machine as out of scope for actual service proof, move the repo to a capable machine with machine auth and spend approval, and rerun the bounded service-proof train there"
+    )
+
+
+def test_next_corrective_seam_ignores_ready_out_of_scope_provider() -> None:
+    assert (
+        live_compare._next_corrective_seam(
+            {
+                "claude": {
+                    "automation_auth": {"status": "missing"},
+                    "automation_service": {
+                        "canonical_anchor": {"repeat_stable_success": False},
+                    },
+                    "operator_lifecycle": {},
+                },
+                "gemini": {
+                    "automation_auth": {"status": "ready"},
+                    "automation_service": {
+                        "canonical_anchor": {"repeat_stable_success": False},
+                    },
+                    "operator_lifecycle": {},
+                },
+                "openai": {
+                    "automation_auth": {"status": "missing"},
+                    "automation_service": {
+                        "canonical_anchor": {"repeat_stable_success": False},
+                    },
+                    "operator_lifecycle": {},
+                },
+            },
+            canonical_scope={"openai"},
+        )
+        == "treat the current machine as out of scope for actual service proof, move the repo to a capable machine with machine auth and spend approval, and rerun the bounded service-proof train there"
+    )
+
+
+def test_next_corrective_seam_points_to_post_x2_resting_truth() -> None:
+    assert (
+        live_compare._next_corrective_seam(
+            {
+                "claude": {
+                    "automation_auth": {"status": "missing"},
+                    "automation_service": {
+                        "canonical_anchor": {"repeat_stable_success": False},
+                    },
+                    "operator_lifecycle": {},
+                },
+                "openai": {
+                    "automation_auth": {"status": "ready"},
+                    "automation_service": {
+                        "canonical_anchor": {"repeat_stable_success": True},
+                    },
+                    "operator_lifecycle": {},
+                },
+            },
+            canonical_scope={"openai"},
+        )
+        == "current OpenAI-only product scope is already re-earned on the canonical direct-API lane and the active support/eval shell is already compressed; keep out-of-scope hosts watchlist-only or future-host backlog, treat origin/main reconciliation as separate workflow hygiene, and open any later host expansion only through an explicit new train"
     )
 
 

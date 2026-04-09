@@ -27,9 +27,23 @@ class OpenAIResponseStreamTransportError(RuntimeError):
 
 
 def execute_openai_response_stream(request: OpenAIHostControlRequest) -> list[dict[str, Any]]:
+    return execute_openai_response_stream_turn(request)
+
+
+def execute_openai_response_stream_turn(
+    request: OpenAIHostControlRequest,
+    *,
+    previous_response_id: str | None = None,
+    input_text_override: str | None = None,
+) -> list[dict[str, Any]]:
     fixture_path = os.environ.get(_FIXTURE_PATH_ENV)
     if fixture_path:
-        return _execute_fixture_response_stream(request, Path(fixture_path))
+        return _execute_fixture_response_stream(
+            request,
+            Path(fixture_path),
+            previous_response_id=previous_response_id,
+            input_text_override=input_text_override,
+        )
 
     api_key = os.environ.get("OPENAI_API_KEY")
     if not api_key:
@@ -37,7 +51,11 @@ def execute_openai_response_stream(request: OpenAIHostControlRequest) -> list[di
             "OPENAI_API_KEY is required for the live OpenAI host-control transport."
         )
 
-    body = _build_live_request_body(request)
+    body = _build_live_request_body(
+        request,
+        previous_response_id=previous_response_id,
+        input_text_override=input_text_override,
+    )
     http_request = urllib.request.Request(
         _RESPONSES_API_URL,
         data=json.dumps(body).encode("utf-8"),
@@ -66,17 +84,38 @@ def execute_openai_response_stream(request: OpenAIHostControlRequest) -> list[di
         ) from exc
 
 
-def _build_live_request_body(request: OpenAIHostControlRequest) -> dict[str, Any]:
+def _build_live_request_body(
+    request: OpenAIHostControlRequest,
+    *,
+    previous_response_id: str | None = None,
+    input_text_override: str | None = None,
+) -> dict[str, Any]:
+    return _build_live_request_body_for_turn(
+        request,
+        previous_response_id=previous_response_id,
+        input_text_override=input_text_override,
+    )
+
+
+def _build_live_request_body_for_turn(
+    request: OpenAIHostControlRequest,
+    *,
+    previous_response_id: str | None,
+    input_text_override: str | None,
+) -> dict[str, Any]:
+    input_text = input_text_override if input_text_override is not None else request.input_text
     body: dict[str, Any] = {
         "model": request.model,
         "input": [
             {
                 "role": "user",
-                "content": request.input_text,
+                "content": input_text,
             }
         ],
         "stream": True,
     }
+    if previous_response_id is not None:
+        body["previous_response_id"] = previous_response_id
     if request.instructions is not None:
         body["instructions"] = request.instructions
     if request.metadata:
@@ -89,6 +128,9 @@ def _build_live_request_body(request: OpenAIHostControlRequest) -> dict[str, Any
 def _execute_fixture_response_stream(
     request: OpenAIHostControlRequest,
     fixture_path: Path,
+    *,
+    previous_response_id: str | None,
+    input_text_override: str | None,
 ) -> list[dict[str, Any]]:
     fixture_payload = json.loads(fixture_path.read_text(encoding="utf-8"))
     calls = _fixture_calls(fixture_payload)
@@ -109,6 +151,17 @@ def _execute_fixture_response_stream(
         raise OpenAIResponseStreamTransportError(
             "OpenAI host-control fixture expected request "
             f"{expected_request!r}, got {request.as_payload()!r}."
+        )
+    expected_body = call.get("expected_body")
+    live_body = _build_live_request_body_for_turn(
+        request,
+        previous_response_id=previous_response_id,
+        input_text_override=input_text_override,
+    )
+    if expected_body is not None and expected_body != live_body:
+        raise OpenAIResponseStreamTransportError(
+            "OpenAI host-control fixture expected body "
+            f"{expected_body!r}, got {live_body!r}."
         )
     if "error" in call:
         error = call["error"]
@@ -268,5 +321,6 @@ def _event_error_message(payload: Mapping[str, Any]) -> str:
 
 __all__ = [
     "OpenAIResponseStreamTransportError",
+    "execute_openai_response_stream_turn",
     "execute_openai_response_stream",
 ]

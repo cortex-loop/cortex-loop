@@ -1,0 +1,29 @@
+---
+import Header from "../../components/Header.astro";
+import Layout from "../../layouts/Layout.astro";
+import { getAllDocs, searchDocs } from "../../lib/docs";
+
+const docs = getAllDocs();
+const initialResults = searchDocs("");
+---
+
+<Layout title="Docs | Ops Atlas">
+  <Header />
+  <main>
+    <section class="hero">
+      <div class="eyebrow">Docs</div>
+      <h1>Starter placeholder for the docs hub.</h1>
+      <p>This page needs the searchable docs index described in the task prompt.</p>
+    </section>
+    <section class="panel stack">
+      <label for="doc-search">Search docs</label>
+      <input id="doc-search" name="doc-search" type="search" placeholder="Search the docs" />
+      <div data-doc-search>{JSON.stringify(initialResults)}</div>
+      <ul>
+        {docs.slice(0, 1).map((doc) => (
+          <li>{doc.title}</li>
+        ))}
+      </ul>
+    </section>
+  </main>
+</Layout>

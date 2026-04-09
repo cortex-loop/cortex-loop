@@ -28,6 +28,49 @@ class SreCorrespondenceExpectation:
 
 EXPECTATIONS = (
     SreCorrespondenceExpectation(
+        row_label="WorkContract",
+        module_path="cortex.sre.verified_work",
+        symbol_name="WorkContract",
+        promised_surfaces=(
+            PromisedTestSurface(
+                test_file="tests/unit/test_verified_work.py",
+                test_names=(
+                    "test_work_contract_accepts_only_first_train_shape",
+                    "test_work_contract_rejects_duplicate_or_unbounded_paths",
+                ),
+            ),
+        ),
+    ),
+    SreCorrespondenceExpectation(
+        row_label="VerificationOutcome",
+        module_path="cortex.sre.verified_work",
+        symbol_name="VerificationOutcome",
+        promised_surfaces=(
+            PromisedTestSurface(
+                test_file="tests/unit/test_verified_work.py",
+                test_names=("test_verification_outcome_rejects_incoherent_status_and_failure_class",),
+            ),
+            PromisedTestSurface(
+                test_file="tests/unit/test_verified_work_runtime.py",
+                test_names=(
+                    "test_verify_verified_work_result_preserves_blocked_missing_info",
+                    "test_verify_verified_work_result_accepts_passing_submission",
+                ),
+            ),
+        ),
+    ),
+    SreCorrespondenceExpectation(
+        row_label="choose_verified_work_followup",
+        module_path="cortex.sre.verified_work",
+        symbol_name="choose_verified_work_followup",
+        promised_surfaces=(
+            PromisedTestSurface(
+                test_file="tests/unit/test_verified_work.py",
+                test_names=("test_choose_verified_work_followup_matches_exact_first_train_law",),
+            ),
+        ),
+    ),
+    SreCorrespondenceExpectation(
         row_label="ReferenceExecutiveState",
         module_path="cortex.sre.state",
         symbol_name="ReferenceExecutiveState",

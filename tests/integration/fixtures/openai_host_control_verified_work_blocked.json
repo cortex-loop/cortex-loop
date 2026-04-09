@@ -1,0 +1,24 @@
+{
+  "calls": [
+    {
+      "events": [
+        {
+          "type": "response.created",
+          "session_id": "oa-work-blocked",
+          "response_id": "resp-work-blocked-1"
+        },
+        {
+          "type": "response.output_text.delta",
+          "session_id": "oa-work-blocked",
+          "response_id": "resp-work-blocked-1",
+          "delta": "=== BLOCKED: needs_user_input ===\nNeed a retention policy for archived bookmarks.\n=== END BLOCKED ==="
+        },
+        {
+          "type": "response.completed",
+          "session_id": "oa-work-blocked",
+          "response_id": "resp-work-blocked-1"
+        }
+      ]
+    }
+  ]
+}

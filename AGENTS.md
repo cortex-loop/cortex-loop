@@ -100,7 +100,8 @@ If a v1 mechanism is being carried over, re-earn it under the v2 packet instead 
 - Microkernel-limited: the hard center stays tiny.
 - Contradiction-preserving: mixed, blocked, degraded, and host-specific outcomes must remain explicit.
 - Neutral-by-default: the executive should not intervene just to justify itself.
-- First host vertical slice before broad multi-host rollout.
+- First host vertical slice before broad multi-host shipping rollout.
+- Shipping truth may stay narrower than development conformance truth; when Cortex law changes, OpenAI, Claude, and Gemini still require explicit conformance status on their strongest available native surfaces.
 - AUX remains off the MVP critical path unless explicitly promoted.
 
 ## Porting rules from v1
@@ -118,6 +119,113 @@ If a v1 mechanism is being carried over, re-earn it under the v2 packet instead 
 - If a concept belongs in implementation or evaluation rather than the constitutional packet, keep it out of the packet.
 - If you change the packet, say whether the implementation master plan must change in the same slice.
 - If you change the intended v1 carryover boundary, update `V1_CODE_PORT_DETERMINATION.md` in the same slice.
+
+## Cortex-law train discipline
+
+Cortex is the invariant cortical circuit in this repository.
+Models, APIs, and CLIs are different brains and wiring surfaces, not different product identities.
+
+Any seam that changes Cortex law must distinguish four truths explicitly:
+
+- `Cortex truth` — the invariant law of Cortex itself
+- `brain-wiring truth` — how Cortex is attached to OpenAI, Claude, and Gemini
+- `conformance truth` — how faithfully each brain/surface realizes Cortex
+- `shipping truth` — which realization is the current product default
+
+For Cortex-law development:
+
+- do not hide major brains behind `deferred` or `future backlog only` wording when they are still required for conformance
+- use conformance statuses exactly: `conformant`, `partial`, `divergent`, `unwired`, `env_blocked`
+- keep shipping truth distinct from conformance truth; shipping may remain narrower without redefining Cortex itself
+
+Every long train must start by recording a `Train Charter` with:
+
+- `Cortex invariant`
+- `brain wiring touched`
+- `borrowed mechanism`
+- `contract pack`
+- `conformance surfaces`
+- `kill criteria`
+- `baseline result`
+- `primary_metric`
+- `guardrail_metric`
+- `iteration_budget`
+- `rollback_surface`
+- `escalation_triggers`
+
+First-principles rule:
+
+- state the minimal governing principle before implementation
+- do not begin from host quirks, adapter drift, or prior local hacks
+- say what evidence would prove the current Cortex law wrong rather than only the current wiring
+
+Borrow/clone rule:
+
+- every new mechanism must identify one of:
+  - a battle-proven v1 primitive worth rewriting
+  - an external proven mechanism worth copying in tiny form
+  - or a brand-new mechanism justified directly from packet law
+- say why the chosen mechanism is small, operational, and non-decorative
+
+Rapid iteration rule:
+
+- default mode is `build -> test -> iterate -> cut`
+- the first implementation must be the smallest runnable form
+- baseline must be recorded before the first edit or candidate proof run
+- every iteration must end in exactly one of: `promote`, `revise`, `cut`, `escalate`
+- default `iteration_budget` is `2` revisions after baseline unless the train charter locks a stricter budget
+- if two iterations fail without improving the divergence classification, stop and reframe before adding more mechanism
+
+Loop-class rule:
+
+- classify each train as exactly one of:
+  - `deterministic`
+  - `shared verification-plumbing`
+  - `timing/env-sensitive`
+- lock loop behavior by class:
+  - `deterministic`: baseline + up to 2 revisions, full local proof on each iteration
+  - `shared verification-plumbing`: baseline + up to 2 deterministic revisions, then repeat repo-local reruns through the real entrypoint before `promote`
+  - `timing/env-sensitive`: candidate must first pass deterministic proof, then each iteration requires repeated direct reruns and repeated repo-local reruns before `promote`
+- `env_blocked` never counts as success
+- one immediate retry is allowed for transient provider noise
+- repeated `env_blocked` must `escalate`, not silently consume the whole train
+
+Closed-loop decision rule:
+
+- every train must choose exactly one `primary_metric` and one `guardrail_metric`
+- allowed primary metrics are:
+  - shipping-lane pass-rate improvement on the active contract pack
+  - conformance-status improvement
+  - repair-conversion improvement
+  - divergence-class reduction
+  - deterministic bundle pass/fail improvement
+- allowed guardrails are:
+  - thin path unchanged
+  - no phase-gate regression
+  - no correspondence drift
+  - no new cross-brain contradiction
+- `promote` only if the primary metric improves and guardrails hold
+- `revise` only if the failure is localized, owned, and budget remains
+- `cut` if there is no metric lift, no clearer divergence classification, or added mechanism without changed outcome
+- `escalate` only if:
+  - Cortex law may need revision
+  - shipping truth would widen
+  - authority docs conflict
+  - auth / spend / env blocks proof
+  - or two revisions fail without better classification
+
+Tri-brain conformance rule:
+
+- when a seam changes Cortex law, run the same contract pack on OpenAI, Claude, and Gemini
+- use the strongest available native surface on each brain for development conformance
+- API/service remains preferred for shipping truth and canonical proof
+- CLI/operator is acceptable for development conformance when service wiring is absent or blocked
+- if the same divergence repeats across brains, challenge Cortex law before adding more host-specific wiring
+
+Maintainer loop recorder rule:
+
+- use one thin maintainer-only recorder such as `tools/cortex_train_loop.py` to capture baseline, proof commands, decisions, and local loop artifacts
+- do not add branch management, weighted scoring, editing logic, or a second persistent truth ledger around that recorder
 
 ## Counterfactual reframe discipline
 

@@ -254,9 +254,9 @@ This train does not authorize:
 - named-model routing,
 - or a generic weighted-soup finalizer over every family.
 
-## Current accepted state after `J4F` closeout
+## Current accepted local-main state after `J4F` closeout
 
-On clean synced `main`:
+On the accepted local `main` line:
 
 - the first mediation train remains pinned as a reference-host host-realization slice,
 - `J4B` is now accepted baseline truth on `main`,
@@ -265,4 +265,4 @@ On clean synced `main`:
 - `J4D` now replaces the old reference specialization helper fiction: the committed reference baseline and mediated packet examples plus the host-realization comparator are now generated from the real reference runtime path,
 - non-reference mediated artifacts remain evidence-only,
 - `J4E` is explicitly declined for the current closeout unless a later post-closeout review reopens a real truth gap,
-- and `J4F` is now landed: workflow truth, phase-gate truth, correspondence truth, and branch truth are reconciled together on clean synced `main`.
+- and the historical `J4F` closeout reconciled workflow truth, phase-gate truth, correspondence truth, and branch truth on the accepted local `main` line at the time of closeout; current repo-hygiene status is now tracked separately in `docs/CORTEX_V2_PHASE_GATES_2.md` and remains partial until `origin/main` reconciliation is complete.

@@ -40,14 +40,8 @@ def test_openai_service_health_and_documented_event_flow() -> None:
         assert record["event_index"] == 1
         assert record["raw_host_event_name"] == "response.output_text.delta"
         assert record["dispatch_lane"] == "cheap"
-        assert tuple(record["control_ledger"]["allocation_diagnostics"]) == (
-            "alpha_t",
-            "activation_threshold",
-            "selected_delta_over_neutral",
-            "scores",
-        )
-        assert record["control_ledger"]["allocation_diagnostics"]["alpha_t"] == 1.0
-        assert record["control_ledger"]["allocation_diagnostics"]["activation_threshold"] == 0.35
+        assert record["decision"] == "continue"
+        assert record["journal"]["event_index"] == 1
 
         health_status, updated_health = service.request("GET", "/health")
         assert health_status == 200
@@ -138,15 +132,8 @@ def test_openai_service_undocumented_raw_event_warns_without_fabricating_parity(
         assert payload["warnings"] == [
             "No documented OpenAI lifecycle mapping for 'response.tool_event'; using conservative external/observation binding."
         ]
-        assert tuple(payload["control_ledger"]["allocation_diagnostics"]) == (
-            "alpha_t",
-            "activation_threshold",
-            "selected_delta_over_neutral",
-            "scores",
-        )
-        assert payload["control_ledger"]["allocation_diagnostics"]["alpha_t"] == 0.75
-        assert payload["control_ledger"]["allocation_diagnostics"]["activation_threshold"] == 0.30
-        assert payload["control_ledger"]["allocation_diagnostics"]["scores"][0]["allocated_score"] != payload["control_ledger"]["allocation_diagnostics"]["scores"][0]["online_score"]
+        assert payload["decision"] == "check"
+        assert payload["journal"]["confirmed_artifact_refs"] == ["oa-gap-artifact"]
 
 
 def test_openai_service_session_export_import_and_startup_load_roundtrip(tmp_path: Path) -> None:
@@ -170,10 +157,9 @@ def test_openai_service_session_export_import_and_startup_load_roundtrip(tmp_pat
         assert tuple(exported) == (
             "artifact_kind",
             "artifact_version",
-            "continuity_truth",
-            "control_residue",
+            "journal",
         )
-        assert exported["continuity_truth"]["event_index"] == 1
+        assert exported["journal"]["event_index"] == 1
 
     with run_openai_service() as imported_service:
         import_status, imported = imported_service.request(
@@ -194,7 +180,8 @@ def test_openai_service_session_export_import_and_startup_load_roundtrip(tmp_pat
         OpenAIRuntimeSession(
             session_id="oa-startup",
             event_index=2,
-            budget_history=("shell-low", "shell-medium"),
+            confirmed_artifact_refs=("oa-startup-artifact",),
+            next_recommended_move="check",
         ),
     )
     with run_openai_service("--load-session", str(artifact_path)) as loaded_service:
@@ -204,4 +191,4 @@ def test_openai_service_session_export_import_and_startup_load_roundtrip(tmp_pat
         assert health_status == 200
         assert health["session_loaded"] is True
         assert export_status == 200
-        assert exported_loaded["continuity_truth"]["event_index"] == 2
+        assert exported_loaded["journal"]["event_index"] == 2

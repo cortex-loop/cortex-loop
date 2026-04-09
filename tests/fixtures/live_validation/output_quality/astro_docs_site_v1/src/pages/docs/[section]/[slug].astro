@@ -1,0 +1,40 @@
+---
+import Header from "../../../components/Header.astro";
+import Layout from "../../../layouts/Layout.astro";
+import { findDoc, getAllDocs } from "../../../lib/docs";
+
+export async function getStaticPaths() {
+  return getAllDocs().map((doc) => ({
+    params: {
+      section: doc.section,
+      slug: doc.slug,
+    },
+  }));
+}
+
+const { section, slug } = Astro.params;
+const doc = findDoc(section ?? "", slug ?? "");
+
+if (!doc) {
+  throw new Error("doc not found");
+}
+---
+
+<Layout title={`${doc.title} | Ops Atlas`}>
+  <Header />
+  <main>
+    <article class="panel stack">
+      <p class="eyebrow">{doc.section}</p>
+      <h1>{doc.title}</h1>
+      <p>{doc.summary}</p>
+      <div>
+        {doc.tags.map((tag) => (
+          <span class="badge">{tag}</span>
+        ))}
+      </div>
+      {doc.body.map((paragraph) => (
+        <p>{paragraph}</p>
+      ))}
+    </article>
+  </main>
+</Layout>

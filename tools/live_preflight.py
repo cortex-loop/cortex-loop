@@ -19,6 +19,7 @@ from live_validation_common import (
     command_exists,
     detect_install_channel,
     ensure_live_validation_dirs,
+    load_local_env_file,
     now_utc_iso,
     read_workstream_baseline,
     recommended_update_command,
@@ -119,6 +120,7 @@ def main(argv: list[str] | None = None) -> int:
     )
     args = parser.parse_args(argv)
 
+    load_local_env_file()
     report = build_preflight_report(lane=args.lane, skip_updates=args.skip_updates)
     write_json(PREFLIGHT_REPORT_PATH, report)
     print(json.dumps(report, indent=2, sort_keys=True))

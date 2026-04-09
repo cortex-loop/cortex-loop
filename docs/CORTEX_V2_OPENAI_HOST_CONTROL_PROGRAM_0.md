@@ -1,7 +1,7 @@
 # CORTEX_V2_OPENAI_HOST_CONTROL_PROGRAM_0
 
-Date: 2026-03-27
-Status: accepted re-audited runtime-program brief for the first bounded outbound OpenAI host-control lane
+Date: 2026-04-08
+Status: accepted runtime-program brief for the default bounded outbound OpenAI host-control lane after verified-work restoration
 
 ## Purpose
 
@@ -24,6 +24,7 @@ This document does not override:
 - `docs/CORTEX_V2_OPENAI_RUNTIME_PROGRAM_0.md`
 - `docs/CORTEX_V2_OPENAI_INGRESS_PROGRAM_0.md`
 - `docs/CORTEX_V2_OPENAI_SERVICE_PROGRAM_0.md`
+- `docs/CORTEX_V2_OPENAI_VERIFIED_WORK_PROGRAM_0.md`
 
 ## Accepted parent and rationale
 
@@ -47,7 +48,7 @@ This program remains:
 - one active session per process,
 - loopback-only at the public service boundary,
 - one outbound action family only: `openai-response-stream`,
-- text-only and strict-whitelist on the request surface,
+- the default thin path when no `work_contract` is present,
 - packet-subordinate,
 - and host-specific without generic action/runtime/service doctrine.
 
@@ -74,6 +75,9 @@ This program does **not** authorize:
 - mediation implementation,
 - or broader product claims beyond this bounded text-only outbound lane.
 
+Optional verified-work activation now exists, but it is governed separately by `docs/CORTEX_V2_OPENAI_VERIFIED_WORK_PROGRAM_0.md`.
+This document remains the owner of the default thin path only.
+
 ## Public service contract
 
 The public K2 surface remains:
@@ -90,12 +94,13 @@ Request body shape:
 - `action_tag` must be `openai-response-stream`
 - `request.model` required
 - `request.input` required and must be one non-empty string
-- optional request keys:
+- optional request keys on the default thin path:
   - `instructions`
   - `metadata`
   - `max_output_tokens`
+- `request.work_contract` is reserved for the separately scoped verified-work lane and is not part of the thin-path contract described here
 - `stream` is implicit `true`; if present and not `true`, reject the request
-- all other request keys are rejected
+- all other request keys are rejected on the default thin path
 
 Response body shape:
 
@@ -135,6 +140,8 @@ It may not:
 - require live network or a real API key in the canonical verification bundle,
 - or introduce a generic control substrate.
 
+Separately scoped verified-work activation may reuse the same public endpoint and module family, but it may not retroactively change the thin-path meaning recorded here.
+
 Undocumented-event law:
 
 - undocumented raw `response.*` events remain lawful downstream input,
@@ -145,14 +152,10 @@ Undocumented-event law:
 
 For the same ordered outbound action calls and the same returned host-event stream, `O4` equivalence means:
 
-- same per-event `selected_family`
-- same per-event `realized_family`
+- same ordered current-line `O1` records with exact `decision + journal` projection
 - same per-event `warnings`
 - same per-event `commitment_result_kind`
-- same per-event `feedback_window_summary`
-- same final persisted artifact with exact `continuity_truth` and `control_residue`
-
-Exact replay of one-process diagnostic `budget_history` and `brake_history` remains out of scope for cross-process equivalence.
+- same final persisted artifact with exact `openai_product_journal` v1 truth
 
 ## Program order
 
@@ -174,12 +177,12 @@ Every seam must end on a clean tree before the next opens.
 - the request boundary is strict-whitelist and text-only
 - the outbound transport is stdlib-only and host-specific
 - returned upstream host events re-enter through accepted `O2` parsing and accepted `O1` runtime composition
-- export/import continuity preserves exact `continuity_truth` plus bounded `control_residue`
+- export/import continuity preserves exact `openai_product_journal` v1 truth
 - targeted tests pass twice
 - `make seam-preflight`, `make revalidate-openai-host-control`, `make revalidate-openai-service`, `make test-smoke`, and `make verify` pass
 - and the `O4` phase-gate row is updated truthfully
 
-## Current accepted state after K2 closeout
+## Historical accepted state before X1 compression
 
 On the accepted K2 host-control closeout line implemented at K2 proof head `5ed9549` and truthfully closed at deterministic closeout head `9ed7dae` on branch `codex/k2-openai-host-control`:
 
@@ -189,6 +192,21 @@ On the accepted K2 host-control closeout line implemented at K2 proof head `5ed9
 - returned host events now re-enter the accepted `O2` parser and accepted `O1` runtime shell directly
 - `make revalidate-openai-host-control` now exists as the repo-local K2 revalidation entry point
 - and targeted direct reruns, repeated repo-local revalidation, `make test-smoke`, and `make verify` all passed on the accepted K2 line
+
+## Current accepted state after X1 compression
+
+On the accepted X1 line:
+
+- `run_openai_host_control()` still re-enters the accepted `O2` parser and compressed `O1` runtime shell directly,
+- `OpenAIHostControlResult.records` now carry the exact compact `decision + journal` projection,
+- export/import continuity across outbound actions now preserves `openai_product_journal` v1 only,
+- and the older allocation/feedback story survives only as historical/reference evidence rather than the accepted OpenAI-only product runtime.
+
+On the current accepted line after the verified-work restoration slice:
+
+- the default thin path remains text-only and functionally unchanged when `work_contract` is absent,
+- `run_openai_host_control()` still re-enters the accepted `O2` parser and compressed `O1` runtime shell directly on that thin path,
+- and optional verified-work activation is now governed separately by `docs/CORTEX_V2_OPENAI_VERIFIED_WORK_PROGRAM_0.md` rather than widening this thin-path brief.
 
 ## Explicitly blocked moves
 

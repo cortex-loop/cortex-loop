@@ -22,6 +22,7 @@ try:  # pragma: no cover - import path differs between script execution and pyte
         collect_modified_files,
         comparator_path,
         ensure_live_validation_dirs,
+        live_evidence_fields,
         now_utc_iso,
         prepare_harness_workspace,
         provider_root,
@@ -43,6 +44,7 @@ except ImportError:  # pragma: no cover
         collect_modified_files,
         comparator_path,
         ensure_live_validation_dirs,
+        live_evidence_fields,
         now_utc_iso,
         prepare_harness_workspace,
         provider_root,
@@ -109,6 +111,7 @@ def run_openai_app_server_validation(*, scenario: str = "all") -> dict[str, Any]
                         {
                             "provider": "openai",
                             "lane": "operator",
+                            **live_evidence_fields(lane="operator"),
                             "surface": "app_server",
                             "scenario_id": scenario_id,
                             "repeat_index": repeat_index,
@@ -138,6 +141,7 @@ def run_openai_app_server_validation(*, scenario: str = "all") -> dict[str, Any]
                     {
                         "provider": "openai",
                         "lane": "operator",
+                        **live_evidence_fields(lane="operator"),
                         "surface": "app_server",
                         "scenario_id": "restart_continuity",
                         "repeat_index": repeat_index,
@@ -157,6 +161,7 @@ def run_openai_app_server_validation(*, scenario: str = "all") -> dict[str, Any]
         "generated_at": now_utc_iso(),
         "provider": "openai",
         "lane": "operator",
+        **live_evidence_fields(lane="operator"),
         "surface": "app_server",
         "runs": runs,
     }
@@ -854,6 +859,7 @@ def _materialize_run(
     payload = {
         "provider": "openai",
         "lane": "operator",
+        **live_evidence_fields(lane="operator"),
         "surface": "app_server",
         "scenario_id": scenario_id,
         "repeat_index": repeat_index,

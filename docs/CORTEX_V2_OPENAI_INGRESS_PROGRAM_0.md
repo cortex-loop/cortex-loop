@@ -88,7 +88,7 @@ Rejected input shapes:
 - the dev-shell wrapper shape `{event_name, payload}`
 - any mixed wrapper/transcript record that contains `event_name` or `payload`
 
-Output remains exactly the accepted `O1` OpenAI runtime record shape and field order.
+Output remains exactly the current-line accepted `O1` OpenAI runtime record shape and field order.
 
 ## Runtime law for this program
 
@@ -118,16 +118,11 @@ Undocumented-event law:
 
 For a transcript mechanically equivalent to an accepted `O1` dev-shell event stream, `O2` equivalence means:
 
-- same `continuity_truth`
-- same per-event `selected_family`
-- same per-event `realized_family`
+- same `journal`
+- same per-event `decision`
 - same per-event `warnings`
 - same per-event `commitment_result_kind`
-- same per-event `feedback_window_summary`
-- same final persisted `control_residue`
-
-As in `C1` and `O1`, exact byte-for-byte replay of `session_summary.budget_history` and `session_summary.brake_history` is not required.
-Those remain public diagnostics only.
+- same final persisted artifact
 
 ## Program order
 
@@ -149,13 +144,13 @@ Every seam remains one-session max and must end on a clean tree before the next 
 - wrapper-shape `{event_name, payload}` records are explicitly rejected,
 - mixed wrapper/transcript records are explicitly rejected,
 - canonical Cortex event names are explicitly rejected,
-- documented raw transcript records drive the accepted `O1` shell without changing its output contract,
+- documented raw transcript records drive the current-line accepted `O1` shell without changing its output contract,
 - split-run ingress continuity matches the contract recorded above,
 - targeted tests pass twice,
 - `make seam-preflight`, `make revalidate-openai-ingress`, `make test-smoke`, and `make verify` pass,
 - and the `O2` phase-gate row is updated truthfully.
 
-## Current accepted state after K1 closeout
+## Historical accepted state before X1 compression
 
 On the accepted K1 runtime closeout line implemented at K1 proof head `d4c311f` and truthfully closed at deterministic closeout head `79b8f39` on branch `codex/k1f-openai-service-closeout`:
 
@@ -166,6 +161,15 @@ On the accepted K1 runtime closeout line implemented at K1 proof head `d4c311f` 
 - split-run ingress continuity proof now exists against the `O2` contract,
 - `make revalidate-openai-ingress` now exists as the repo-local ingress revalidation entry point,
 - and targeted reruns, repeated `make revalidate-openai-ingress`, `make test-smoke`, and `make verify` all passed on the accepted K1 line.
+
+## Current accepted state after X1 compression
+
+On the accepted X1 line:
+
+- `python3 -m cortex.runtime.openai_ingress_cli` now feeds the compressed OpenAI-only `O1` shell without changing its transcript parser boundary,
+- the accepted ingress continuity contract is now the compact `journal` plus per-event `decision`, `warnings`, and `commitment_result_kind`,
+- export/import continuity on ingress reruns now preserves `openai_product_journal` v1 only,
+- and ingress remains host-shaped while the older allocation-heavy OpenAI runtime projection survives only as historical/reference evidence.
 
 ## Explicitly blocked moves
 

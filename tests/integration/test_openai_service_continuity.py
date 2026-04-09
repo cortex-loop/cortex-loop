@@ -95,14 +95,8 @@ def test_openai_service_export_import_preserves_o3_equivalence_and_keeps_diagnos
         uninterrupted_artifact_payload,
         split_artifact,
     )
-    assert (
-        uninterrupted_records[-1]["session_summary"]["budget_history"]
-        != split_records[-1]["session_summary"]["budget_history"]
-    )
-    assert (
-        uninterrupted_records[-1]["session_summary"]["brake_history"]
-        != split_records[-1]["session_summary"]["brake_history"]
-    )
+    assert "budget_history" not in uninterrupted_records[-1]["journal"]
+    assert "brake_history" not in uninterrupted_records[-1]["journal"]
 
 
 def _run_openai_ingress_cli(
@@ -144,20 +138,18 @@ def _assert_o3_equivalent(
 ) -> None:
     assert [
         {
-            "selected_family": record["selected_family"],
-            "realized_family": record["control_ledger"]["realized_family"],
+            "decision": record["decision"],
             "warnings": record["warnings"],
             "commitment_result_kind": record["commitment_result_kind"],
-            "feedback_window_summary": record["feedback_window_summary"],
+            "journal": record["journal"],
         }
         for record in actual_records
     ] == [
         {
-            "selected_family": record["selected_family"],
-            "realized_family": record["control_ledger"]["realized_family"],
+            "decision": record["decision"],
             "warnings": record["warnings"],
             "commitment_result_kind": record["commitment_result_kind"],
-            "feedback_window_summary": record["feedback_window_summary"],
+            "journal": record["journal"],
         }
         for record in expected_records
     ]

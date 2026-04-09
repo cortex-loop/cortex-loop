@@ -1,0 +1,36 @@
+---
+import Header from "../components/Header.astro";
+import Layout from "../layouts/Layout.astro";
+---
+
+<Layout title="Book Demo | Beacon Studio">
+  <Header />
+  <main>
+    <section class="hero">
+      <p style="text-transform: uppercase; letter-spacing: 0.08em; color: #8d5e37;">Demo</p>
+      <h1>Book a demo.</h1>
+      <p>This page is expected to become a polished demo request flow.</p>
+    </section>
+    <section class="panel">
+      <form>
+        <label>
+          Work email
+          <input name="email" type="text" />
+        </label>
+        <label>
+          Company
+          <input name="company" type="text" />
+        </label>
+        <label>
+          Team size
+          <select name="teamSize">
+            <option>1-10</option>
+            <option>11-50</option>
+            <option>51+</option>
+          </select>
+        </label>
+        <button type="submit">Request demo</button>
+      </form>
+    </section>
+  </main>
+</Layout>

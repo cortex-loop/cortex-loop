@@ -25,6 +25,7 @@ WORKSPACE_ROOT = LOCAL_LIVE_ROOT / "workspaces"
 OPERATOR_DIRECTIONALITY_ROOT = LOCAL_LIVE_ROOT / "operator_directionality"
 TEMPLATE_ROOT = REPO_ROOT / "tests" / "fixtures" / "live_validation" / "project_template"
 PROMPTS_ROOT = REPO_ROOT / "tests" / "fixtures" / "live_validation" / "prompts"
+LOCAL_ENV_PATH = REPO_ROOT / ".env"
 _PYTHON_BIN = shutil.which("python3") or sys.executable
 TEST_COMMAND = [_PYTHON_BIN, "-m", "pytest", "-q", "tests/test_normalize_port.py"]
 CLAUDE_AUTH_MODE_ENV = "CORTEX_CLAUDE_LIVE_AUTH_MODE"
@@ -34,6 +35,16 @@ SERVICE_SPEND_APPROVAL_ENV = "CORTEX_LIVE_SERVICE_SPEND_APPROVED"
 _HOME_PATH = str(Path.home())
 _TEMP_PATH_RE = re.compile(r"/(?:private/)?var/folders/[^\s\"']+")
 _FENCED_DIFF_RE = re.compile(r"```(?:diff|patch)?\n(.*?)```", re.DOTALL)
+
+_LANE_EXECUTION_SURFACE = {
+    "operator": "headless_cli",
+    "automation": "direct_api",
+}
+
+_LANE_EVIDENCE_ROLE = {
+    "operator": "watchlist",
+    "automation": "canonical_truth",
+}
 
 
 @dataclass(frozen=True, slots=True)
@@ -109,7 +120,14 @@ SCENARIOS: tuple[ScenarioSpec, ...] = (
         description="preserve incompleteness honestly without edits or tests",
         repeat_count=1,
         operator_prompt="truth_gap_operator.md",
-        automation_prompt="truth_gap_operator.md",
+        automation_prompt="truth_gap_automation.md",
+    ),
+    ScenarioSpec(
+        scenario_id="restart_continuity",
+        description="resume after inspection and finish the minimal fix cleanly",
+        repeat_count=2,
+        operator_prompt="restart_continuity_turn2_operator.md",
+        automation_prompt="restart_continuity_turn2_automation.md",
     ),
 )
 
@@ -159,6 +177,38 @@ def write_json(path: Path, payload: Any) -> None:
 def write_text(path: Path, text: str) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(sanitize_text(text), encoding="utf-8")
+
+
+def load_local_env_file(path: Path = LOCAL_ENV_PATH) -> dict[str, str]:
+    if not path.exists():
+        return {}
+    loaded: dict[str, str] = {}
+    for raw_line in path.read_text(encoding="utf-8").splitlines():
+        line = raw_line.strip()
+        if not line or line.startswith("#"):
+            continue
+        if line.startswith("export "):
+            line = line[len("export ") :].strip()
+        if "=" not in line:
+            continue
+        key, value = line.split("=", 1)
+        key = key.strip()
+        if not key:
+            continue
+        value = value.strip()
+        if len(value) >= 2 and value[0] == value[-1] and value[0] in {"'", '"'}:
+            value = value[1:-1]
+        if key not in os.environ:
+            os.environ[key] = value
+        loaded[key] = os.environ[key]
+    return loaded
+
+
+def live_evidence_fields(*, lane: str) -> dict[str, str]:
+    return {
+        "execution_surface": _LANE_EXECUTION_SURFACE[lane],
+        "evidence_role": _LANE_EVIDENCE_ROLE[lane],
+    }
 
 
 def read_json_file(path: Path) -> dict[str, Any]:
@@ -459,7 +509,7 @@ def read_prompt_template(filename: str) -> str:
     return (PROMPTS_ROOT / filename).read_text(encoding="utf-8")
 
 
-def parse_json_lines(text: str) -> list[dict[str, Any]]:
+def parse_json_records(text: str) -> tuple[list[dict[str, Any]], str]:
     records: list[dict[str, Any]] = []
     for raw_line in text.splitlines():
         line = raw_line.strip()
@@ -471,7 +521,21 @@ def parse_json_lines(text: str) -> list[dict[str, Any]]:
             continue
         if isinstance(parsed, dict):
             records.append(parsed)
-    return records
+    if records:
+        return records, "jsonl"
+
+    stripped = text.strip()
+    if not stripped:
+        return [], "raw_fallback"
+    try:
+        parsed = json.loads(stripped)
+    except json.JSONDecodeError:
+        return [], "raw_fallback"
+    if isinstance(parsed, dict):
+        return [parsed], "json_object"
+    if isinstance(parsed, list) and all(isinstance(item, dict) for item in parsed):
+        return [dict(item) for item in parsed], "json_array"
+    return [], "raw_fallback"
 
 
 def extract_event_labels(records: list[dict[str, Any]]) -> list[str]:
@@ -613,11 +677,20 @@ def rewrite_artifact_payload(payload: dict[str, Any]) -> None:
 def extract_session_id(provider: str, records: list[dict[str, Any]]) -> str | None:
     for record in records:
         if provider == "claude":
+            session_id = record.get("session_id")
+            if isinstance(session_id, str) and session_id.strip():
+                return session_id.strip()
             if record.get("type") == "system":
                 session_id = record.get("session_id")
                 if isinstance(session_id, str) and session_id.strip():
                     return session_id.strip()
         elif provider == "gemini":
+            session_id = record.get("session_id")
+            if isinstance(session_id, str) and session_id.strip():
+                return session_id.strip()
+            maybe_session = record.get("sessionId")
+            if isinstance(maybe_session, str) and maybe_session.strip():
+                return maybe_session.strip()
             if record.get("type") == "init":
                 session_id = record.get("session_id")
                 if isinstance(session_id, str) and session_id.strip():
@@ -657,6 +730,17 @@ def classify_failure(text: str) -> str | None:
         return "quota_exhausted"
     if "no rollout found for thread id" in lowered:
         return "continuity_rollout_missing"
+    if (
+        "http 500: internal" in lowered
+        or
+        "got status: internal" in lowered
+        or '"status":"internal"' in lowered
+        or "api error: 529" in lowered
+        or "overloaded_error" in lowered
+        or ("internal error encountered" in lowered and '"code":500' in lowered)
+        or ("internal server error" in lowered and "api error" in lowered)
+    ):
+        return "provider_internal_error"
     if "insufficient_quota" in lowered or "quota" in lowered:
         return "quota_exhausted"
     if "codex cli is not installed" in lowered or "surface is unavailable" in lowered:
@@ -846,12 +930,28 @@ def build_scenario_catalog() -> dict[str, Any]:
                 "description": scenario.description,
                 "repeat_count": scenario.repeat_count,
                 "operator_prompt": scenario.operator_prompt,
+                "automation_prompt": scenario.automation_prompt,
             }
             for scenario in SCENARIOS
         ],
         "operator_continuity": {
             "turn_1_prompt": "restart_continuity_turn1_operator.md",
             "turn_2_prompt": "restart_continuity_turn2_operator.md",
+        },
+        "automation_service_suites": {
+            "current": {
+                "suite_role": "readiness_probe",
+                "scenarios": ["service_smoke", "service_restart_continuity"],
+            },
+            "canonical_anchor": {
+                "suite_role": "canonical_truth_anchor",
+                "provider_scope": ["openai"],
+                "scenarios": ["pass_minimal", "truth_gap", "restart_continuity"],
+            },
+        },
+        "automation_continuity": {
+            "turn_1_prompt": "restart_continuity_turn1_automation.md",
+            "turn_2_prompt": "restart_continuity_turn2_automation.md",
         },
         "host_caveats": {
             "claude": "host_caveat_operator_claude.md",
@@ -865,6 +965,23 @@ def build_scenario_catalog() -> dict[str, Any]:
     }
 
 
+def canonical_service_provider_scope(suite_id: str = "canonical_anchor") -> tuple[str, ...]:
+    suites = build_scenario_catalog().get("automation_service_suites", {})
+    if not isinstance(suites, dict):
+        return ()
+    suite = suites.get(suite_id)
+    if not isinstance(suite, dict):
+        return ()
+    provider_scope = suite.get("provider_scope", ())
+    if not isinstance(provider_scope, list):
+        return ()
+    return tuple(
+        provider
+        for provider in provider_scope
+        if isinstance(provider, str) and provider
+    )
+
+
 def decide_verdict(
     *,
     operator_pass_count: int,
@@ -873,19 +990,25 @@ def decide_verdict(
     service_success_count: int,
     blocker_classes: set[str],
 ) -> tuple[str, str]:
-    if operator_pass_count >= 3 and operator_truthful_gap_count >= 2 and service_success_count >= 1:
+    canonical_blockers = {"auth_missing", "blocked_by_spend_policy", "mis_scoped"}
+    if service_success_count == 0 and blocker_classes.intersection(canonical_blockers):
         return (
-            "lifecycle-first is already paying off clearly",
-            "The signed-in operator lane completed the shared coding harness across hosts and the current service lane also succeeded on at least one live host path.",
+            "canonical runtime truth is blocked on this machine",
+            "Direct API confirmation is still blocked by current-machine auth or spend readiness, so headless-CLI results remain watchlist-only evidence.",
         )
-    if operator_pass_count == 0 and blocker_classes:
+    if service_success_count == 0:
         return (
-            "lifecycle-first is not yet paying off enough on real hosts",
-            "The environment exposes live blockers honestly, but the signed-in operator lane did not complete a successful shared coding task.",
+            "canonical runtime truth is still partial",
+            "Some live evidence exists, but no direct-API host path has yet been re-earned for current scope.",
+        )
+    if automation_pass_count > service_success_count:
+        return (
+            "canonical runtime truth is still partial",
+            "At least one direct-API host path succeeded, but the canonical lane is not yet stable across every currently ready host in scope.",
         )
     return (
-        "lifecycle-first is promising but under-instrumented",
-        "Some live task evidence exists, but either operator-lane coverage or current service-lane success is still too thin to prove clear payoff.",
+        "canonical runtime truth is re-earned for current scope",
+        "Repeat-stable direct-API evidence exists on every currently ready host in scope; operator/CLI evidence remains watchlist-only.",
     )
 
 

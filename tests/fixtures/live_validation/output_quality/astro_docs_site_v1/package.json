@@ -1,0 +1,22 @@
+{
+  "name": "astro-docs-site-v1",
+  "type": "module",
+  "version": "0.0.1",
+  "engines": {
+    "node": ">=22.12.0"
+  },
+  "scripts": {
+    "lint": "node scripts/lint.mjs",
+    "typecheck": "astro check",
+    "build": "astro build",
+    "test:visible": "node scripts/test-visible.mjs",
+    "test:hidden": "node scripts/test-hidden.mjs"
+  },
+  "dependencies": {
+    "astro": "^6.1.4"
+  },
+  "devDependencies": {
+    "@astrojs/check": "^0.9.4",
+    "typescript": "^5.9.3"
+  }
+}

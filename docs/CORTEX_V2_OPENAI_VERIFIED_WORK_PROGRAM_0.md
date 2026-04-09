@@ -1,0 +1,219 @@
+# CORTEX_V2_OPENAI_VERIFIED_WORK_PROGRAM_0
+
+Date: 2026-04-08
+Status: accepted bounded runtime-program brief for the landed verified-work restoration lane; third-pack breadth is now re-earned on the current review line without widening canonical proof
+
+## Purpose
+
+This document opens one bounded larger-task restoration slice inside the accepted OpenAI host-control family.
+
+The chosen move is:
+
+- keep the accepted thin `O4` path unchanged when no `work_contract` is present,
+- add one optional request-scoped `work_contract`,
+- bind external verification into runtime truth,
+- allow at most one runtime-driven repair turn,
+- and keep the resulting lane explicitly outside the current canonical-anchor proof bundle even after local value is re-earned.
+
+This document does not override:
+
+- `docs/CORTEX_V2_CORE_2.md`
+- `docs/CORTEX_V2_SRE_2.md`
+- `docs/CORTEX_V2_AUX_2.md`
+- `docs/CORTEX_V2_IMPLEMENTATION_MASTER_PLAN_2.md`
+- `docs/CORTEX_V2_OPENAI_RUNTIME_PROGRAM_0.md`
+- `docs/CORTEX_V2_OPENAI_SERVICE_PROGRAM_0.md`
+- `docs/CORTEX_V2_OPENAI_HOST_CONTROL_PROGRAM_0.md`
+- `docs/CORTEX_V2_EXECUTIVE_RESTORATION_NOTE.md`
+
+## Accepted parent and rationale
+
+Accepted parent for this program on the current line:
+
+- the accepted X1/X2 OpenAI-only product shell plus the keep/cut/restore decision recorded in `docs/CORTEX_V2_EXECUTIVE_RESTORATION_NOTE.md`
+
+Why this program opens now:
+
+- larger-task exploratory runs showed that prompt shaping is the wrong axis,
+- the shared missing mechanism is runtime-native verification truth rather than more support doctrine,
+- one bounded `work_contract` is smaller and more lawful than a second large task-specific subsystem,
+- and OpenAI is the only accepted live product host today, so it is the first lawful realization surface.
+
+This program is a **coding-domain restoration slice**, not a definition of general Cortex executive function.
+Its evidence is valuable for bounded larger-task control on the current coding surfaces, but it does not by itself prove cross-domain Cortex generality.
+
+## Locked scope
+
+This program remains:
+
+- OpenAI only as the first host realization
+- one optional extension of the existing `POST /v1/actions/response-stream` family
+- request-scoped rather than persisted executive state
+- `full_files` only
+- three explicit deterministic verifier profiles only:
+  - `python_workspace_pytest_v1`
+  - `python_workspace_pytest_port_fix_v1`
+  - `python_workspace_pytest_feature_flags_v1`
+- one repair budget only: `0 | 1`
+- packet-subordinate and host-specific at the adapter layer
+
+This program adds only:
+
+- shared `WorkContract`
+- shared `VerificationOutcome`
+- shared `choose_verified_work_followup()`
+- optional `request.work_contract` on `OpenAIHostControlRequest`
+- `run_openai_runtime_verification_step()`
+- deterministic `full_files` parsing plus the bounded verifier-profile registry
+- one native `previous_response_id` continuation on the verified-work path
+
+This program does **not** authorize:
+
+- prompt rewriting
+- hidden build briefs
+- automatic carrier selection
+- diff-based verified-work carriers
+- repeated-failure `AttemptRelation` / NoGo promotion
+- tools or tool-result submission
+- cancel/update lanes
+- remote hosting
+- multi-session or multi-client doctrine
+- Gemini or Claude rollout
+- generic runtime/service abstraction
+- runtime AUX activation
+- offline consolidation
+- or broader product claims beyond this bounded verified-work lane
+
+## Public contract
+
+The public endpoint and action tag remain unchanged:
+
+- `POST /v1/actions/response-stream`
+- `action_tag = "openai-response-stream"`
+
+When `request.work_contract` is absent:
+
+- behavior remains the accepted thin `O4` text-only path
+
+When `request.work_contract` is present:
+
+- accepted keys are exactly:
+  - `allowed_write_paths`
+  - `verification_profile`
+  - `output_carrier`
+  - `max_repair_turns`
+- `output_carrier` must be `full_files`
+- `verification_profile` must be one of:
+  - `python_workspace_pytest_v1`
+  - `python_workspace_pytest_port_fix_v1`
+  - `python_workspace_pytest_feature_flags_v1`
+- `max_repair_turns` must be `0` or `1`
+- caller-supplied `instructions` are rejected because the verified-work instructions are fixed by the runtime
+
+Verified-work output protocol:
+
+- file blocks only:
+  - `=== FILE: relative/path ===`
+  - `<full file contents>`
+  - `=== END FILE ===`
+- or one blocked marker only:
+  - `=== BLOCKED: needs_user_input ===`
+  - `<message>`
+  - `=== END BLOCKED ===`
+  - `=== BLOCKED: unsafe_request ===`
+  - `<message>`
+  - `=== END BLOCKED ===`
+- no prose
+- no code fences
+- no model-run tests
+
+When verified-work is active, the result payload may additionally include:
+
+- `verification`
+- `attempt_count`
+
+## Runtime law for this program
+
+The verified-work lane may:
+
+- keep the original user `input` at the front of the model-facing task text
+- inject only the fixed mechanical `full_files` protocol instructions
+- attach one bounded read-only workspace context bundle over the current writable-file contents plus the contract tests on the OpenAI service lane
+- parse returned file blocks or blocked markers
+- verify the result externally against one bounded verifier workload selected by the explicit profile:
+  - bookmarks app for `python_workspace_pytest_v1`
+  - normalize-port project template for `python_workspace_pytest_port_fix_v1`
+  - feature-flags evaluator for `python_workspace_pytest_feature_flags_v1`
+- bind that `VerificationOutcome` into `OpenAIRuntimeSession.last_failure_class`
+- drive `next_recommended_move` through `choose_verified_work_followup()`
+- and perform exactly one native continuation attempt when runtime truth says `repair` and budget remains
+
+It may not:
+
+- widen runtime persistence beyond the compact `openai_product_journal`
+- turn diagnostic SRE modulators into the live loop driver
+- invent a second host-control family
+- widen into a generic planner or generic verifier framework
+- or silently promote local exploratory value checks into canonical runtime proof
+
+## Proof boundary
+
+This program is intentionally outside the current compact canonical proof bundle:
+
+- `L3`, `L6C`, and `canonical_anchor` remain unchanged in this train
+- the verified-work lane is deterministic-test-covered and locally rerunnable
+- live larger-task value checks remain local exploratory evidence until the row is re-earned repeat-stably
+
+## Acceptance gates
+
+`O4R` is only honestly closed when all are true:
+
+- the default thin `O4` path remains unchanged when no `work_contract` is present
+- verified-work requests bind external verification into runtime truth
+- runtime truth, not a benchmark-local controller, decides whether the repair turn happens
+- only one repair turn is possible
+- deterministic tests and repo-local revalidation pass
+- repeated local bookmarks reruns show the shipping-default verified-work lane is repeat-stably conformant, either by a clean first-attempt pass or by one lawful failure-to-pass repair
+- and the `O4R` phase-gate row is updated truthfully
+
+## Current state on the accepted line and current review line
+
+On the current line:
+
+- the shared verified-work law is implemented
+- the shared verified-work runtime helpers now live in the neutral `cortex/runtime/verified_work_runtime.py` home
+- the OpenAI host-control family now accepts an optional bounded `work_contract`
+- the OpenAI verified-work path now attaches one bounded read-only workspace context bundle over the current writable-file contents plus `tests/test_bookmarks_api.py`
+- external verification now updates runtime truth through `run_openai_runtime_verification_step()`
+- the verified-work path can perform exactly one native continuation attempt
+- the default thin `O4` path remains unchanged when `work_contract` is absent
+- deterministic tests and repo-local revalidation are real
+- the corrected tri-brain conformance rerun removed Gemini's false raw-JSON-wrapper `output_invalid` classification without widening shipping truth
+- three repeated targeted local reruns on `python3 tools/cortex_conformance.py --mode active --brain openai` now pass the bookmarks pack on attempt `1`
+- the accepted local `main` line now includes a second explicit breadth pack `verified_work_normalize_port_v1` over the normalize-port task in `tests/fixtures/live_validation/project_template/`
+- after one localized verifier-install correction, repeated targeted local reruns on `python3 tools/cortex_conformance.py --mode active --brain openai --contract-pack verified_work_normalize_port_v1` now pass the normalize-port pack on attempt `1`
+- one explicit tri-brain normalize-port guardrail rerun under `.cortex/live_validation/conformance/run_20260408T083436+0000` reads OpenAI `service_api` conformant, Claude `operator_cli` conformant after one lawful repair, and Gemini `operator_cli` conformant
+- the accepted local `main` line now includes a third explicit breadth pack `verified_work_feature_flags_v1` over `tests/fixtures/live_validation/feature_flags_template/`
+- the accepted local `main` line also includes one third explicit verifier profile `python_workspace_pytest_feature_flags_v1` and the generalized breadth train from `2` accepted OpenAI packs to a landed target of `3`
+- repeated targeted local reruns on `python3 tools/cortex_conformance.py --mode active --brain openai --contract-pack verified_work_feature_flags_v1` now pass the feature-flags pack on attempt `1`
+- one explicit tri-brain feature-flags guardrail rerun under `.cortex/live_validation/conformance/run_20260408T091518+0000` reads OpenAI `service_api` conformant, Claude `operator_cli` conformant, and Gemini `operator_cli` conformant
+- one full closed-loop breadth run under `.cortex/train_loops/verified-work-breadth-openai/summary.json` now promotes with `primary_metric_before = 2` and `primary_metric_after = 3`
+- the current E9 repair-yield review line now adds one maintainer-only `--max-repair-turns 0|1` conformance override plus one paired proof surface under `.cortex/train_loops/verified-work-repair-yield-openai/summary.json`
+- that paired proof executes two full control-vs-repair rounds across bookmarks, normalize-port, and feature-flags on the OpenAI shipping-default lane
+- current E9 result is honest non-lift: one-shot control is `11/12` conformant, repair-enabled candidate is `12/12` conformant, repair opportunities are `0`, and the train therefore escalates for insufficient natural failures rather than widening runtime doctrine
+- the richer repair-ticket/runtime change was cut on the current E9 line because it did not beat the one-shot control
+- bookmarks remains the accepted `CT2` anchor pack and `summary.latest` remains bookmarks-only until a later deliberate breadth-closure move says otherwise
+- `O4R` remains landed for the current OpenAI shipping-default scope on the accepted line, while remaining explicitly outside the current canonical-anchor proof bundle
+
+## Explicitly blocked moves
+
+This program does not authorize:
+
+- prompt shaping
+- hidden implementation preferences
+- automatic carrier selection
+- diff-based verified-work carriers
+- repeated-failure inhibition promotion
+- replay-based repair proof
+- multi-host rollout
+- or canonical-anchor widening

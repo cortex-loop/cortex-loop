@@ -32,8 +32,10 @@ from live_validation_common import (
     ensure_live_validation_dirs,
     extract_event_labels,
     extract_result_text,
+    live_evidence_fields,
+    load_local_env_file,
     now_utc_iso,
-    parse_json_lines,
+    parse_json_records,
     provider_cli_workspace,
     provider_root,
     recent_operator_probe_failure,
@@ -84,6 +86,7 @@ def main(argv: list[str] | None = None) -> int:
     )
     args = parser.parse_args(argv)
 
+    load_local_env_file()
     ensure_live_validation_dirs()
     providers = ("claude", "gemini", "openai") if args.provider == "all" else (args.provider,)
     summary_name = (
@@ -98,11 +101,13 @@ def main(argv: list[str] | None = None) -> int:
             "generated_at": now_utc_iso(),
             "surface": "provider_baseline",
             "lane": args.lane,
+            **live_evidence_fields(lane=args.lane),
             "providers": {},
         }
     overall_summary["generated_at"] = now_utc_iso()
     overall_summary["surface"] = "provider_baseline"
     overall_summary["lane"] = args.lane
+    overall_summary.update(live_evidence_fields(lane=args.lane))
     for provider in providers:
         overall_summary["providers"][provider] = _capture_provider(
             provider,
@@ -136,6 +141,7 @@ def _capture_provider(
                 {
                     "provider": provider,
                     "lane": lane,
+                    **live_evidence_fields(lane=lane),
                     "repeat_index": repeat_index,
                     "success": False,
                     "skipped": True,
@@ -162,6 +168,7 @@ def _capture_provider(
         "generated_at": now_utc_iso(),
         "provider": provider,
         "lane": lane,
+        **live_evidence_fields(lane=lane),
         "runs": runs,
     }
     write_json(root / "provider_baseline_runs.json", summary)
@@ -206,6 +213,7 @@ def _run_single_provider_baseline(
         payload = {
             "provider": provider,
             "lane": lane,
+            **live_evidence_fields(lane=lane),
             "repeat_index": repeat_index,
             "auth_mode": auth_readiness["auth_mode"],
             "auth_readiness": auth_readiness,
@@ -291,7 +299,7 @@ def _run_single_provider_baseline(
     write_text(stdout_path, stdout_text)
     write_text(stderr_path, stderr_text)
 
-    records = parse_json_lines(stdout_text)
+    records, _extraction_mode = parse_json_records(stdout_text)
     warning_classes: list[str] = []
     effective_failure_class = failure_class
     if provider == "gemini" and lane == "operator" and run_result["exit_code"] == 0 and failure_class in {"capacity_exhausted", "quota_exhausted"}:
@@ -300,6 +308,7 @@ def _run_single_provider_baseline(
     payload = {
         "provider": provider,
         "lane": lane,
+        **live_evidence_fields(lane=lane),
         "repeat_index": repeat_index,
         "auth_mode": auth_mode,
         "auth_readiness": auth_readiness,
