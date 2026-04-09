@@ -183,7 +183,7 @@ def build_gemini_host_realization_mediated_packet(
             "degradation_refs": str(degradation_ref["reason_code"]),
             "aux_burden_refs_if_present": "none",
             "evaluation_packet_refs_if_present": (
-                "docs/CORTEX_V2_GEMINI_MEDIATED_LANE_PACKET_EXAMPLE_0.md"
+                "docs/experimental/CORTEX_V2_GEMINI_MEDIATED_LANE_PACKET_EXAMPLE_0.md"
             ),
         },
         lift_axis_notes={

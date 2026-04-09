@@ -1,1 +1,1 @@
-"""Support-only live-validation tooling package."""
+"""Compatibility surface for moved lab tooling."""

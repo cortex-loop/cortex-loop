@@ -3,17 +3,11 @@
 from __future__ import annotations
 
 import json
-import sys
 from pathlib import Path
 
 import pytest
 
-
-TOOLS_ROOT = Path(__file__).resolve().parents[2] / "tools"
-if str(TOOLS_ROOT) not in sys.path:
-    sys.path.insert(0, str(TOOLS_ROOT))
-
-import cortex_conformance as conformance
+from lab import cortex_conformance as conformance
 from cortex.sre.verified_work import VerificationOutcome, WorkContract
 
 

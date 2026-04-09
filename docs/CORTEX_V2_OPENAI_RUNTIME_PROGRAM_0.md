@@ -1,5 +1,7 @@
 # CORTEX_V2_OPENAI_RUNTIME_PROGRAM_0
 
+Surface: product
+
 Date: 2026-03-26
 Status: accepted re-audited runtime-program brief for the compressed OpenAI-only documented host-event product shell
 
@@ -19,11 +21,11 @@ This document does not override:
 - `docs/CORTEX_V2_CORE_2.md`
 - `docs/CORTEX_V2_SRE_2.md`
 - `docs/CORTEX_V2_AUX_2.md`
-- `docs/CORTEX_V2_IMPLEMENTATION_MASTER_PLAN_2.md`
-- `docs/CORTEX_V2_REFERENCE_RUNTIME_PROGRAM_0.md`
-- `docs/CORTEX_V2_REFERENCE_FEEDBACK_PROGRAM_0.md`
-- `docs/CORTEX_V2_REFERENCE_FEEDBACK_PROGRAM_1.md`
-- `docs/CORTEX_V2_REFERENCE_CONTINUITY_PROGRAM_0.md`
+- `docs/internal/CORTEX_V2_IMPLEMENTATION_MASTER_PLAN_2.md`
+- `docs/experimental/CORTEX_V2_REFERENCE_RUNTIME_PROGRAM_0.md`
+- `docs/experimental/CORTEX_V2_REFERENCE_FEEDBACK_PROGRAM_0.md`
+- `docs/experimental/CORTEX_V2_REFERENCE_FEEDBACK_PROGRAM_1.md`
+- `docs/experimental/CORTEX_V2_REFERENCE_CONTINUITY_PROGRAM_0.md`
 
 ## Accepted parent and rationale
 

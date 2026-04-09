@@ -464,7 +464,7 @@ def test_run_verified_work_repair_yield_openai_train_promotes_on_recovered_repai
     assert record.iterations[0].primary_metric_before == 0
     assert record.iterations[0].primary_metric_after == 2
     assert record.baseline_result["repair_opportunities"] == 2
-    assert "make revalidate-openai-host-control" in record.iterations[0].proof_commands
+    assert "make -C lab revalidate-openai-host-control" in record.iterations[0].proof_commands
 
 
 def test_run_verified_work_repair_yield_openai_train_escalates_when_no_repair_opportunities_appear(
@@ -499,7 +499,7 @@ def test_run_verified_work_repair_yield_openai_train_escalates_when_no_repair_op
     assert record.final_decision == "escalate"
     assert "insufficient natural failures" in record.iterations[0].reason
     assert record.baseline_result["rounds_executed"] == 2
-    assert "make revalidate-openai-host-control" in record.iterations[0].proof_commands
+    assert "make -C lab revalidate-openai-host-control" in record.iterations[0].proof_commands
 
 
 def test_run_output_quality_comparison_openai_train_promotes_on_repeat_stable_advantage(

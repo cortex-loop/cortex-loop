@@ -4,12 +4,12 @@ from pathlib import Path
 
 import pytest
 
-from cortex.sre.executive_summary import ExecutiveSignalSummary
-from cortex.sre.modulators import (
+from experimental.sre.executive_summary import ExecutiveSignalSummary
+from experimental.sre.modulators import (
     ExecutiveModulatorMemory,
     update_executive_modulators,
 )
-from cortex.sre.operator_routing import (
+from experimental.sre.operator_routing import (
     OperatorTaskMode,
     OperatorTaskState,
     select_operator_route_with_modulators,
@@ -190,7 +190,7 @@ def test_modulator_update_pressure_adds_extra_read_pass() -> None:
 def test_modulator_module_uses_abstract_control_names() -> None:
     text = (
         Path(__file__).resolve().parents[2]
-        / "cortex"
+        / "experimental"
         / "sre"
         / "modulators.py"
     ).read_text(encoding="utf-8").lower()

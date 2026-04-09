@@ -2,8 +2,8 @@
 
 import pytest
 
-from cortex.sre.families import SoftControlFamily
-from cortex.sre.opportunities import (
+from experimental.sre.families import SoftControlFamily
+from experimental.sre.opportunities import (
     HostNativeOpportunity,
     specialize_host_native_opportunity,
 )

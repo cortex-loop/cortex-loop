@@ -3,16 +3,10 @@
 from __future__ import annotations
 
 from contextlib import contextmanager
-import sys
 from pathlib import Path
 
-
-TOOLS_ROOT = Path(__file__).resolve().parents[2] / "tools"
-if str(TOOLS_ROOT) not in sys.path:
-    sys.path.insert(0, str(TOOLS_ROOT))
-
-import output_quality_grader as grader
-from output_quality_common import OutputQualityTaskPack
+from lab import output_quality_grader as grader
+from lab.output_quality_common import OutputQualityTaskPack
 
 
 def _task_pack(tmp_path: Path) -> OutputQualityTaskPack:

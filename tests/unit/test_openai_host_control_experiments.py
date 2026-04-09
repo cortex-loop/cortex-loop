@@ -5,7 +5,7 @@ from __future__ import annotations
 import pytest
 
 from cortex.runtime.openai_host_control import OpenAIHostControlRequest
-from cortex.runtime.openai_host_control_experiments import (
+from lab.openai_host_control_experiments import (
     OpenAIHostControlAblationConfig,
     run_openai_host_control_experiment,
 )
@@ -34,7 +34,7 @@ def test_run_openai_host_control_experiment_defaults_to_accepted_runtime(
         return "result", "session"
 
     monkeypatch.setattr(
-        "cortex.runtime.openai_host_control_experiments.run_openai_host_control",
+        "lab.openai_host_control_experiments.run_openai_host_control",
         _fake_run_openai_host_control,
     )
     request = OpenAIHostControlRequest(
@@ -75,7 +75,7 @@ def test_run_openai_host_control_experiment_can_disable_visible_contract_binding
         ]
 
     monkeypatch.setattr(
-        "cortex.runtime.openai_host_control_experiments.verify_verified_work_result",
+        "lab.openai_host_control_experiments.verify_verified_work_result",
         lambda result_text, contract: (
             VALID_FILE_MAP,
             VerificationOutcome(
@@ -138,7 +138,7 @@ def test_run_openai_host_control_experiment_disables_repair_when_verification_bi
         ]
 
     monkeypatch.setattr(
-        "cortex.runtime.openai_host_control_experiments.verify_verified_work_result",
+        "lab.openai_host_control_experiments.verify_verified_work_result",
         lambda result_text, contract: (
             VALID_FILE_MAP,
             VerificationOutcome(
@@ -237,7 +237,7 @@ def test_run_openai_host_control_experiment_uses_minimal_repair_ticket(
         )
     )
     monkeypatch.setattr(
-        "cortex.runtime.openai_host_control_experiments.verify_verified_work_result",
+        "lab.openai_host_control_experiments.verify_verified_work_result",
         lambda result_text, contract: next(outcomes),
     )
     request = OpenAIHostControlRequest(

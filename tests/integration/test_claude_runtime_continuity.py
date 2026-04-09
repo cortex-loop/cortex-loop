@@ -121,7 +121,7 @@ def test_claude_runtime_host_warning_and_certified_commitment_can_coexist_across
 
 def _run_claude_cli(*args: str, input_text: str | None = None) -> subprocess.CompletedProcess[str]:
     return subprocess.run(
-        [sys.executable, "-m", "cortex.runtime.claude_cli", *args],
+        [sys.executable, "-m", "experimental.runtime.claude_cli", *args],
         cwd=REPO_ROOT,
         input=input_text,
         capture_output=True,

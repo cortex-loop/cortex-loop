@@ -193,7 +193,7 @@ def _assert_baseline_index(host: str) -> None:
         assert row["failure_tags"] == "none"
         assert row["evidence_status"] == "baseline_packet_committed"
         packet_path = Path(row["packet_path"])
-        assert packet_path.parts[:3] == ("docs", "mediation_evidence", host)
+        assert packet_path.parts[:4] == ("docs", "lab", "mediation_evidence", host)
         assert (REPO_ROOT / packet_path).is_file()
 
 

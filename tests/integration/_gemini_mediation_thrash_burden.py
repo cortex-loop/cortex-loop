@@ -23,14 +23,14 @@ _SUMMARY_NOTE = (
 
 def gemini_thrash_baseline_burden_artifact_path(pair_key: str) -> str:
     return (
-        "docs/mediation_evidence/gemini/"
+        "docs/lab/mediation_evidence/gemini/"
         f"scenario_thrash_gemini_01__baseline_non_mediated__run_{pair_key}__aux_burden.md"
     )
 
 
 def gemini_thrash_mediated_burden_artifact_path(pair_key: str) -> str:
     return (
-        "docs/mediation_evidence/gemini/"
+        "docs/lab/mediation_evidence/gemini/"
         f"scenario_thrash_gemini_01__experimental_mediated__run_{pair_key}__aux_burden.md"
     )
 

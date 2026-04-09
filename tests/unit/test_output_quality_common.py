@@ -2,16 +2,10 @@
 
 from __future__ import annotations
 
-import sys
 from pathlib import Path
 
-
-TOOLS_ROOT = Path(__file__).resolve().parents[2] / "tools"
-if str(TOOLS_ROOT) not in sys.path:
-    sys.path.insert(0, str(TOOLS_ROOT))
-
-from output_quality_ablation import OutputQualityAblationConfig
-from output_quality_common import (
+from lab.output_quality_ablation import OutputQualityAblationConfig
+from lab.output_quality_common import (
     OutputQualityTaskPack,
     build_output_quality_input_text,
     parse_output_quality_result,

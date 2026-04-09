@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from cortex.runtime import gemini_host_transport
+from experimental.runtime import gemini_host_transport
 
 from tests.integration._gemini_service_harness import EXPECTED_RECORD_KEYS, run_gemini_service
 

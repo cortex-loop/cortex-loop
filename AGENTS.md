@@ -3,6 +3,17 @@
 This file applies to agents editing this repository.
 It does not define runtime policy for downstream Cortex users.
 
+## Mission lock
+
+Cortex is the shipped executive layer in this repository.
+The product goal is not to ship diagnostics, train loops, graders, workstream ledgers, or governance records.
+
+Every seam must be judged against one question:
+
+**Does this make the shipped Cortex executive layer better, or directly unblock proving and building that layer?**
+
+If the answer is no, cut the seam or move it out of the product-critical path.
+
 ## Required decision loop
 
 Run this loop three times: before editing, before finalizing a change, and before handoff.
@@ -12,6 +23,16 @@ Run this loop three times: before editing, before finalizing a change, and befor
 3. `PHI_NICHE` — Is this the right mechanism for this repository, or generic bloat / v1 carryover?
 
 If any answer is no, redesign or cut scope.
+
+## Seam declaration requirement
+
+Before widening scope, every seam must declare these fields explicitly:
+
+- `Surface:` `product | experimental | lab | internal`
+- `Executive Benefit:` the direct way the seam improves the shipped executive layer, or the exact shipped-product blocker it removes
+- `Why this beats direct product work now:` one sentence
+
+If a seam is `lab` or `internal`, the declaration must explain why the work is still worth doing now instead of a narrower product seam.
 
 ## Hard stops
 
@@ -23,6 +44,9 @@ If any answer is no, redesign or cut scope.
 - Do not treat the v1 archive as active authority.
 - Do not add math that has no operational consequence.
 - Do not add tunable weights unless changing them would plausibly change runtime behavior in a legible way.
+- Do not describe lab, evidence, or governance work as Cortex product progress unless shipped runtime behavior actually changes.
+- Do not open a new diagnostic or governance seam without an explicit product-unblocking reason.
+- Do not let evaluation machinery become the public or internal identity of Cortex.
 
 ## Repo hygiene guard
 
@@ -50,12 +74,12 @@ Packet documents:
 - `docs/CORTEX_V2_AUX_2.md`
 
 Implementation/workflow documents:
-- `docs/CORTEX_V2_IMPLEMENTATION_MASTER_PLAN_2.md`
-- `docs/CORTEX_V2_PHASE_GATES_2.md`
-- `docs/V1_CODE_PORT_DETERMINATION.md`
+- `docs/internal/CORTEX_V2_IMPLEMENTATION_MASTER_PLAN_2.md`
+- `docs/internal/CORTEX_V2_PHASE_GATES_2.md`
+- `docs/internal/V1_CODE_PORT_DETERMINATION.md`
 
 Supporting implementation authority (audit surface, not architectural authority):
-- `docs/CORTEX_V2_MATH_TO_CODE_CORRESPONDENCE.md`
+- `docs/internal/CORTEX_V2_MATH_TO_CODE_CORRESPONDENCE.md`
 
 Authority order:
 
@@ -85,9 +109,9 @@ If a v1 mechanism is being carried over, re-earn it under the v2 packet instead 
 
 ## Maintainer workflow authority
 
-- `REPO_WORKFLOW.md` is the maintainer workflow authority for branch/session hygiene in this repository.
-- `scripts/repo_workflow.py` is the enforcing helper surface for that workflow.
-- `docs/CORTEX_V2_ACTIVE_WORKSTREAM.md` remains continuation context, not a substitute for the resting-state branch model.
+- `docs/internal/REPO_WORKFLOW.md` is the maintainer workflow authority for branch/session hygiene in this repository.
+- `internal/workflow/repo_workflow.py` is the enforcing helper surface for that workflow.
+- `docs/internal/CORTEX_V2_ACTIVE_WORKSTREAM.md` remains continuation context, not a substitute for the resting-state branch model.
 - `preserve-worktree` is the only explicit exception to the normal verification-before-commit rule, and it exists only to avoid losing unresolved dirty work before cleanup.
 - `cleanup-report` is the strict final repo-hygiene gate for declaring the repo fully clean.
 
@@ -224,7 +248,7 @@ Tri-brain conformance rule:
 
 Maintainer loop recorder rule:
 
-- use one thin maintainer-only recorder such as `tools/cortex_train_loop.py` to capture baseline, proof commands, decisions, and local loop artifacts
+- use one thin maintainer-only recorder such as `lab/cortex_train_loop.py` to capture baseline, proof commands, decisions, and local loop artifacts
 - do not add branch management, weighted scoring, editing logic, or a second persistent truth ledger around that recorder
 
 ## Counterfactual reframe discipline
@@ -240,9 +264,9 @@ This is maintainer workflow law, not runtime doctrine.
 
 ## Correspondence acceptance discipline
 
-- `docs/CORTEX_V2_MATH_TO_CODE_CORRESPONDENCE.md` is the single living correspondence authority. Do not create a second correspondence doctrine elsewhere.
+- `docs/internal/CORTEX_V2_MATH_TO_CODE_CORRESPONDENCE.md` is the single living correspondence authority. Do not create a second correspondence doctrine elsewhere.
 - Before planning or issuing a worker seam, classify the seam as `load-bearing` or `non-load-bearing`.
-- Every load-bearing seam plan must include `Correspondence impact:` listing the exact rows expected to be added, updated, or confirmed in `docs/CORTEX_V2_MATH_TO_CODE_CORRESPONDENCE.md`.
+- Every load-bearing seam plan must include `Correspondence impact:` listing the exact rows expected to be added, updated, or confirmed in `docs/internal/CORTEX_V2_MATH_TO_CODE_CORRESPONDENCE.md`.
 - A non-load-bearing seam may use `Correspondence impact: none expected` only with a one-line reason.
 - Before acceptance, compare planned `Correspondence impact:` against delivered `Correspondence rows touched:`.
 
@@ -263,8 +287,8 @@ If a seam changes a typed boundary contract (for example: constructor validation
 
 ## Phase gate discipline
 
-- `docs/CORTEX_V2_PHASE_GATES_2.md` is the live gate ledger for cross-seam closure conditions that are broader than one correspondence row.
-- If a handoff claims a phase or sub-phase is `landed`, recheck the relevant gate rows in `docs/CORTEX_V2_PHASE_GATES_2.md` in the same turn.
+- `docs/internal/CORTEX_V2_PHASE_GATES_2.md` is the live gate ledger for cross-seam closure conditions that are broader than one correspondence row.
+- If a handoff claims a phase or sub-phase is `landed`, recheck the relevant gate rows in `docs/internal/CORTEX_V2_PHASE_GATES_2.md` in the same turn.
 - A phase may not be marked `landed` if a relevant gate row remains `open`, `partial`, or `drifted` unless the handoff explicitly keeps the phase `partial` or `blocked`.
 - Correspondence truth and phase-gate truth are distinct. Passing one does not silently satisfy the other.
 
@@ -295,17 +319,17 @@ If a seam changes a typed boundary contract (for example: constructor validation
 - Prefer read-only subagents for archive mining, packet audit, and host research; use at most one write-capable subagent at once.
 - Keep subagent depth at `1` and total threads at `3` or fewer unless the active implementation plan is updated in the same slice.
 - If a task appears to need multiple concurrent writers, split the seam instead of widening it.
-- Keep phase-specific subagent allowances and restrictions in `docs/CORTEX_V2_IMPLEMENTATION_MASTER_PLAN_2.md`.
+- Keep phase-specific subagent allowances and restrictions in `docs/internal/CORTEX_V2_IMPLEMENTATION_MASTER_PLAN_2.md`.
 
 ## Git and workflow
 
 - Canonical development repo: `github.com/cortex-loop/cortex-loop`.
 - Canonical archive repo: `github.com/cortex-loop/cortex-loop-v1-archive`.
 - `main` is the resting branch in this repository.
-- Before managed work, reconcile local `main` with `origin/main` using `python scripts/repo_workflow.py sync-main`.
-- Managed work starts from clean synced `main` via `python scripts/repo_workflow.py start-session --agent codex --slug <task-name>`.
-- Managed sessions must end with `python scripts/repo_workflow.py close-session --message "<scope>: <end-state summary>"` and return the repo to `main`.
-- `python scripts/repo_workflow.py finalize --message "<scope>: <end-state summary>"` is only for explicit manual/review branches that are chosen up front.
+- Before managed work, reconcile local `main` with `origin/main` using `python internal/workflow/repo_workflow.py sync-main`.
+- Managed work starts from clean synced `main` via `python internal/workflow/repo_workflow.py start-session --agent codex --slug <task-name>`.
+- Managed sessions must end with `python internal/workflow/repo_workflow.py close-session --message "<scope>: <end-state summary>"` and return the repo to `main`.
+- `python internal/workflow/repo_workflow.py finalize --message "<scope>: <end-state summary>"` is only for explicit manual/review branches that are chosen up front.
 - Do not accumulate accepted work indefinitely on a long-lived working branch.
 - Do not branch new v2 work from archival `main`, `codex/e1-verification-substrate-entrypoints`, or `codex/closure-train-2026-03-24`.
 - In this maintainer workspace, the expected public identity is `howaeri <32343362+howaeri@users.noreply.github.com>`.
@@ -313,12 +337,12 @@ If a seam changes a typed boundary contract (for example: constructor validation
 
 ## Continuation and resume protocol
 
-- `docs/CORTEX_V2_ACTIVE_WORKSTREAM.md` is the live workflow-state ledger for compaction-safe continuation.
-- The workstream ledger records accepted baseline truth, current seam status, next lawful move, blocked moves, and acknowledged worktree noise.
-- The workstream ledger is workflow state only. It does not override packet documents, implementation authority, phase gates, status notes, correspondence, or `REPO_WORKFLOW.md`.
+- `docs/internal/CORTEX_V2_ACTIVE_WORKSTREAM.md` is the live workflow-state ledger for compaction-safe continuation.
+- The workstream ledger records accepted baseline truth, current seam status, product target, surface, direct executive payoff, why the seam exists instead of a narrower product seam, next lawful move, blocked moves, and acknowledged worktree noise.
+- The workstream ledger is workflow state only. It does not override packet documents, implementation authority, phase gates, status notes, correspondence, or `docs/internal/REPO_WORKFLOW.md`.
 - Before opening or resuming a seam, agents must:
   1. read `AGENTS.md`
-  2. read `docs/CORTEX_V2_ACTIVE_WORKSTREAM.md`
+  2. read `docs/internal/CORTEX_V2_ACTIVE_WORKSTREAM.md`
   3. read the authority anchors named in the workstream ledger
   4. run `git branch --show-current`
   5. run `git status --short --untracked-files=all`
@@ -342,8 +366,8 @@ Every final summary from an agent editing this repo should include:
 - commit hash or `no commit`
 - verification summary
 - `returned to main:` yes|no
-- `Phase gate check:` rows added, updated, or rechecked in `docs/CORTEX_V2_PHASE_GATES_2.md` (or `none` if no phase gate applied)
-- `Correspondence rows touched:` rows added, updated, or confirmed in `docs/CORTEX_V2_MATH_TO_CODE_CORRESPONDENCE.md` (or `none` for non-load-bearing edits)
+- `Phase gate check:` rows added, updated, or rechecked in `docs/internal/CORTEX_V2_PHASE_GATES_2.md` (or `none` if no phase gate applied)
+- `Correspondence rows touched:` rows added, updated, or confirmed in `docs/internal/CORTEX_V2_MATH_TO_CODE_CORRESPONDENCE.md` (or `none` for non-load-bearing edits)
 
 `PHILOSOPHY_AUDIT`
 - `PHI_MINIFY`: pass|fail + one-line evidence

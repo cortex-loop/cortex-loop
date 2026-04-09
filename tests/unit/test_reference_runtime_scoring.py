@@ -4,18 +4,18 @@ from __future__ import annotations
 
 import pytest
 
-from cortex.sre.brake import BrakeState
-from cortex.sre.families import SoftControlFamily
-from cortex.sre.mediation import ReferenceMediationMode
-from cortex.sre.opportunities import HostNativeOpportunity
-from cortex.sre.reference_scoring import (
+from experimental.sre.brake import BrakeState
+from experimental.sre.families import SoftControlFamily
+from experimental.sre.mediation import ReferenceMediationMode
+from experimental.sre.opportunities import HostNativeOpportunity
+from experimental.sre.reference_scoring import (
     build_reference_allocation_scorecard,
     build_reference_online_score_components,
     compute_reference_activation_threshold,
     compute_reference_alpha_t,
     select_reference_soft_control,
 )
-from cortex.sre.state import (
+from experimental.sre.state import (
     ReferenceBrakeView,
     ReferenceControlAllocationView,
     ReferenceExecutiveState,

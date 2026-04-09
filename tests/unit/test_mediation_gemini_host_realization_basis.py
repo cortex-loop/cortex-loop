@@ -34,12 +34,12 @@ def test_gemini_host_realization_admissibility_note_exists_and_records_audit() -
     assert "tests/unit/test_gemini_host_neutral.py" in text
     assert "tests/integration/_gemini_lane_packet_example.py" in text
     assert "tests/integration/test_gemini_lane_packet_example.py" in text
-    assert "docs/CORTEX_V2_GEMINI_LANE_PACKET_EXAMPLE_0.md" in text
+    assert "docs/experimental/CORTEX_V2_GEMINI_LANE_PACKET_EXAMPLE_0.md" in text
     assert "tests/integration/_gemini_mediated_lane_packet_example.py" in text
     assert "tests/integration/test_gemini_mediated_lane_packet_example.py" in text
-    assert "docs/CORTEX_V2_GEMINI_MEDIATED_LANE_PACKET_EXAMPLE_0.md" in text
-    assert "docs/mediation_evidence/gemini/scenario_host_gemini_01__baseline_non_mediated__run_001.md" in text
-    assert "docs/mediation_evidence/gemini/scenario_host_gemini_01__experimental_mediated__run_001.md" in text
+    assert "docs/experimental/CORTEX_V2_GEMINI_MEDIATED_LANE_PACKET_EXAMPLE_0.md" in text
+    assert "docs/lab/mediation_evidence/gemini/scenario_host_gemini_01__baseline_non_mediated__run_001.md" in text
+    assert "docs/lab/mediation_evidence/gemini/scenario_host_gemini_01__experimental_mediated__run_001.md" in text
     assert "three lawful Gemini host-realization comparator pairs are recorded" in text
     assert "direct host-native opportunity specialization at the selection layer" in text
     assert "Gemini-only" in text
@@ -87,7 +87,7 @@ def test_gemini_host_realization_anchor_is_rebound_to_a_recorded_pair() -> None:
     assert host_row["paired_episode_set_id"] == "pair_gemini_host_001"
     assert host_row["evidence_status"] == "baseline_packet_committed"
     assert host_row["packet_path"] == (
-        "docs/mediation_evidence/gemini/"
+        "docs/lab/mediation_evidence/gemini/"
         "scenario_host_gemini_01__baseline_non_mediated__run_001.md"
     )
     assert (

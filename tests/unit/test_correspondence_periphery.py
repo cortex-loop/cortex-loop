@@ -30,8 +30,8 @@ class PeripheryCorrespondenceExpectation:
 EXPECTATIONS = (
     PeripheryCorrespondenceExpectation(
         row_label="EventTraceArtifact",
-        home_path="cortex/eval/artifacts.py",
-        module_path="cortex.eval.artifacts",
+        home_path="experimental/eval/artifacts.py",
+        module_path="experimental.eval.artifacts",
         symbol_name="EventTraceArtifact",
         promised_surfaces=(
             PromisedTestSurface(
@@ -42,8 +42,8 @@ EXPECTATIONS = (
     ),
     PeripheryCorrespondenceExpectation(
         row_label="CurrentPairFragment",
-        home_path="cortex/eval/artifacts.py",
-        module_path="cortex.eval.artifacts",
+        home_path="experimental/eval/artifacts.py",
+        module_path="experimental.eval.artifacts",
         symbol_name="CurrentPairFragment",
         promised_surfaces=(
             PromisedTestSurface(
@@ -54,8 +54,8 @@ EXPECTATIONS = (
     ),
     PeripheryCorrespondenceExpectation(
         row_label="BlockerFragment",
-        home_path="cortex/eval/artifacts.py",
-        module_path="cortex.eval.artifacts",
+        home_path="experimental/eval/artifacts.py",
+        module_path="experimental.eval.artifacts",
         symbol_name="BlockerFragment",
         promised_surfaces=(
             PromisedTestSurface(
@@ -66,8 +66,8 @@ EXPECTATIONS = (
     ),
     PeripheryCorrespondenceExpectation(
         row_label="EvaluationHarnessResult",
-        home_path="cortex/eval/harness.py",
-        module_path="cortex.eval.harness",
+        home_path="experimental/eval/harness.py",
+        module_path="experimental.eval.harness",
         symbol_name="EvaluationHarnessResult",
         promised_surfaces=(
             PromisedTestSurface(
@@ -81,8 +81,8 @@ EXPECTATIONS = (
     ),
     PeripheryCorrespondenceExpectation(
         row_label="build_evaluation_harness_result",
-        home_path="cortex/eval/harness.py",
-        module_path="cortex.eval.harness",
+        home_path="experimental/eval/harness.py",
+        module_path="experimental.eval.harness",
         symbol_name="build_evaluation_harness_result",
         promised_surfaces=(
             PromisedTestSurface(
@@ -96,8 +96,8 @@ EXPECTATIONS = (
     ),
     PeripheryCorrespondenceExpectation(
         row_label="EvaluationPacket",
-        home_path="cortex/eval/packets.py",
-        module_path="cortex.eval.packets",
+        home_path="experimental/eval/packets.py",
+        module_path="experimental.eval.packets",
         symbol_name="EvaluationPacket",
         promised_surfaces=(
             PromisedTestSurface(
@@ -111,8 +111,8 @@ EXPECTATIONS = (
     ),
     PeripheryCorrespondenceExpectation(
         row_label="build_evaluation_packet",
-        home_path="cortex/eval/packets.py",
-        module_path="cortex.eval.packets",
+        home_path="experimental/eval/packets.py",
+        module_path="experimental.eval.packets",
         symbol_name="build_evaluation_packet",
         promised_surfaces=(
             PromisedTestSurface(
@@ -126,8 +126,8 @@ EXPECTATIONS = (
     ),
     PeripheryCorrespondenceExpectation(
         row_label="REFERENCE_HOST_SURFACE",
-        home_path="cortex/drivers/reference_host.py",
-        module_path="cortex.drivers.reference_host",
+        home_path="experimental/drivers/reference_host.py",
+        module_path="experimental.drivers.reference_host",
         symbol_name="REFERENCE_HOST_SURFACE",
         promised_surfaces=(
             PromisedTestSurface(
@@ -138,8 +138,8 @@ EXPECTATIONS = (
     ),
     PeripheryCorrespondenceExpectation(
         row_label="BoundReferenceHostEvent",
-        home_path="cortex/drivers/reference_host.py",
-        module_path="cortex.drivers.reference_host",
+        home_path="experimental/drivers/reference_host.py",
+        module_path="experimental.drivers.reference_host",
         symbol_name="BoundReferenceHostEvent",
         promised_surfaces=(
             PromisedTestSurface(
@@ -150,8 +150,8 @@ EXPECTATIONS = (
     ),
     PeripheryCorrespondenceExpectation(
         row_label="bind_reference_event_envelope",
-        home_path="cortex/drivers/reference_host.py",
-        module_path="cortex.drivers.reference_host",
+        home_path="experimental/drivers/reference_host.py",
+        module_path="experimental.drivers.reference_host",
         symbol_name="bind_reference_event_envelope",
         promised_surfaces=(
             PromisedTestSurface(
@@ -162,8 +162,8 @@ EXPECTATIONS = (
     ),
     PeripheryCorrespondenceExpectation(
         row_label="observe_reference_host_event",
-        home_path="cortex/drivers/reference_host.py",
-        module_path="cortex.drivers.reference_host",
+        home_path="experimental/drivers/reference_host.py",
+        module_path="experimental.drivers.reference_host",
         symbol_name="observe_reference_host_event",
         promised_surfaces=(
             PromisedTestSurface(
@@ -177,8 +177,8 @@ EXPECTATIONS = (
     ),
     PeripheryCorrespondenceExpectation(
         row_label="ReferenceHostCommitmentResult",
-        home_path="cortex/drivers/reference_host_commitment.py",
-        module_path="cortex.drivers.reference_host_commitment",
+        home_path="experimental/drivers/reference_host_commitment.py",
+        module_path="experimental.drivers.reference_host_commitment",
         symbol_name="ReferenceHostCommitmentResult",
         promised_surfaces=(
             PromisedTestSurface(
@@ -192,8 +192,8 @@ EXPECTATIONS = (
     ),
     PeripheryCorrespondenceExpectation(
         row_label="bind_reference_host_candidate",
-        home_path="cortex/drivers/reference_host_commitment.py",
-        module_path="cortex.drivers.reference_host_commitment",
+        home_path="experimental/drivers/reference_host_commitment.py",
+        module_path="experimental.drivers.reference_host_commitment",
         symbol_name="bind_reference_host_candidate",
         promised_surfaces=(
             PromisedTestSurface(
@@ -208,8 +208,8 @@ EXPECTATIONS = (
     ),
     PeripheryCorrespondenceExpectation(
         row_label="evaluate_reference_host_commitment",
-        home_path="cortex/drivers/reference_host_commitment.py",
-        module_path="cortex.drivers.reference_host_commitment",
+        home_path="experimental/drivers/reference_host_commitment.py",
+        module_path="experimental.drivers.reference_host_commitment",
         symbol_name="evaluate_reference_host_commitment",
         promised_surfaces=(
             PromisedTestSurface(
@@ -224,8 +224,8 @@ EXPECTATIONS = (
     ),
     PeripheryCorrespondenceExpectation(
         row_label="ReferenceHostNeutralResult",
-        home_path="cortex/drivers/reference_host_neutral.py",
-        module_path="cortex.drivers.reference_host_neutral",
+        home_path="experimental/drivers/reference_host_neutral.py",
+        module_path="experimental.drivers.reference_host_neutral",
         symbol_name="ReferenceHostNeutralResult",
         promised_surfaces=(
             PromisedTestSurface(
@@ -239,8 +239,8 @@ EXPECTATIONS = (
     ),
     PeripheryCorrespondenceExpectation(
         row_label="NeutralContinuationDecision",
-        home_path="cortex/drivers/reference_host_neutral.py",
-        module_path="cortex.drivers.reference_host_neutral",
+        home_path="experimental/drivers/reference_host_neutral.py",
+        module_path="experimental.drivers.reference_host_neutral",
         symbol_name="NeutralContinuationDecision",
         promised_surfaces=(
             PromisedTestSurface(
@@ -255,8 +255,8 @@ EXPECTATIONS = (
     ),
     PeripheryCorrespondenceExpectation(
         row_label="NeutralContinuationCode",
-        home_path="cortex/drivers/reference_host_neutral.py",
-        module_path="cortex.drivers.reference_host_neutral",
+        home_path="experimental/drivers/reference_host_neutral.py",
+        module_path="experimental.drivers.reference_host_neutral",
         symbol_name="NeutralContinuationCode",
         promised_surfaces=(
             PromisedTestSurface(
@@ -271,8 +271,8 @@ EXPECTATIONS = (
     ),
     PeripheryCorrespondenceExpectation(
         row_label="evaluate_reference_host_neutral",
-        home_path="cortex/drivers/reference_host_neutral.py",
-        module_path="cortex.drivers.reference_host_neutral",
+        home_path="experimental/drivers/reference_host_neutral.py",
+        module_path="experimental.drivers.reference_host_neutral",
         symbol_name="evaluate_reference_host_neutral",
         promised_surfaces=(
             PromisedTestSurface(
@@ -287,8 +287,8 @@ EXPECTATIONS = (
     ),
     PeripheryCorrespondenceExpectation(
         row_label="GEMINI_HOST_SURFACE",
-        home_path="cortex/drivers/gemini_host.py",
-        module_path="cortex.drivers.gemini_host",
+        home_path="experimental/drivers/gemini_host.py",
+        module_path="experimental.drivers.gemini_host",
         symbol_name="GEMINI_HOST_SURFACE",
         promised_surfaces=(
             PromisedTestSurface(
@@ -299,8 +299,8 @@ EXPECTATIONS = (
     ),
     PeripheryCorrespondenceExpectation(
         row_label="BoundGeminiHostEvent",
-        home_path="cortex/drivers/gemini_host.py",
-        module_path="cortex.drivers.gemini_host",
+        home_path="experimental/drivers/gemini_host.py",
+        module_path="experimental.drivers.gemini_host",
         symbol_name="BoundGeminiHostEvent",
         promised_surfaces=(
             PromisedTestSurface(
@@ -311,8 +311,8 @@ EXPECTATIONS = (
     ),
     PeripheryCorrespondenceExpectation(
         row_label="bind_gemini_event_envelope",
-        home_path="cortex/drivers/gemini_host.py",
-        module_path="cortex.drivers.gemini_host",
+        home_path="experimental/drivers/gemini_host.py",
+        module_path="experimental.drivers.gemini_host",
         symbol_name="bind_gemini_event_envelope",
         promised_surfaces=(
             PromisedTestSurface(
@@ -323,8 +323,8 @@ EXPECTATIONS = (
     ),
     PeripheryCorrespondenceExpectation(
         row_label="observe_gemini_host_event",
-        home_path="cortex/drivers/gemini_host.py",
-        module_path="cortex.drivers.gemini_host",
+        home_path="experimental/drivers/gemini_host.py",
+        module_path="experimental.drivers.gemini_host",
         symbol_name="observe_gemini_host_event",
         promised_surfaces=(
             PromisedTestSurface(
@@ -340,8 +340,8 @@ EXPECTATIONS = (
     ),
     PeripheryCorrespondenceExpectation(
         row_label="GeminiHostCommitmentResult",
-        home_path="cortex/drivers/gemini_host_commitment.py",
-        module_path="cortex.drivers.gemini_host_commitment",
+        home_path="experimental/drivers/gemini_host_commitment.py",
+        module_path="experimental.drivers.gemini_host_commitment",
         symbol_name="GeminiHostCommitmentResult",
         promised_surfaces=(
             PromisedTestSurface(
@@ -355,8 +355,8 @@ EXPECTATIONS = (
     ),
     PeripheryCorrespondenceExpectation(
         row_label="bind_gemini_host_candidate",
-        home_path="cortex/drivers/gemini_host_commitment.py",
-        module_path="cortex.drivers.gemini_host_commitment",
+        home_path="experimental/drivers/gemini_host_commitment.py",
+        module_path="experimental.drivers.gemini_host_commitment",
         symbol_name="bind_gemini_host_candidate",
         promised_surfaces=(
             PromisedTestSurface(
@@ -367,8 +367,8 @@ EXPECTATIONS = (
     ),
     PeripheryCorrespondenceExpectation(
         row_label="evaluate_gemini_host_commitment",
-        home_path="cortex/drivers/gemini_host_commitment.py",
-        module_path="cortex.drivers.gemini_host_commitment",
+        home_path="experimental/drivers/gemini_host_commitment.py",
+        module_path="experimental.drivers.gemini_host_commitment",
         symbol_name="evaluate_gemini_host_commitment",
         promised_surfaces=(
             PromisedTestSurface(
@@ -384,8 +384,8 @@ EXPECTATIONS = (
     ),
     PeripheryCorrespondenceExpectation(
         row_label="GeminiHostNeutralResult",
-        home_path="cortex/drivers/gemini_host_neutral.py",
-        module_path="cortex.drivers.gemini_host_neutral",
+        home_path="experimental/drivers/gemini_host_neutral.py",
+        module_path="experimental.drivers.gemini_host_neutral",
         symbol_name="GeminiHostNeutralResult",
         promised_surfaces=(
             PromisedTestSurface(
@@ -399,8 +399,8 @@ EXPECTATIONS = (
     ),
     PeripheryCorrespondenceExpectation(
         row_label="GeminiNeutralContinuationDecision",
-        home_path="cortex/drivers/gemini_host_neutral.py",
-        module_path="cortex.drivers.gemini_host_neutral",
+        home_path="experimental/drivers/gemini_host_neutral.py",
+        module_path="experimental.drivers.gemini_host_neutral",
         symbol_name="GeminiNeutralContinuationDecision",
         promised_surfaces=(
             PromisedTestSurface(
@@ -415,8 +415,8 @@ EXPECTATIONS = (
     ),
     PeripheryCorrespondenceExpectation(
         row_label="GeminiNeutralContinuationCode",
-        home_path="cortex/drivers/gemini_host_neutral.py",
-        module_path="cortex.drivers.gemini_host_neutral",
+        home_path="experimental/drivers/gemini_host_neutral.py",
+        module_path="experimental.drivers.gemini_host_neutral",
         symbol_name="GeminiNeutralContinuationCode",
         promised_surfaces=(
             PromisedTestSurface(
@@ -431,8 +431,8 @@ EXPECTATIONS = (
     ),
     PeripheryCorrespondenceExpectation(
         row_label="evaluate_gemini_host_neutral",
-        home_path="cortex/drivers/gemini_host_neutral.py",
-        module_path="cortex.drivers.gemini_host_neutral",
+        home_path="experimental/drivers/gemini_host_neutral.py",
+        module_path="experimental.drivers.gemini_host_neutral",
         symbol_name="evaluate_gemini_host_neutral",
         promised_surfaces=(
             PromisedTestSurface(
@@ -609,8 +609,8 @@ EXPECTATIONS = (
     ),
     PeripheryCorrespondenceExpectation(
         row_label="ReferenceRealizationFeedback",
-        home_path="cortex/sre/feedback.py",
-        module_path="cortex.sre.feedback",
+        home_path="experimental/sre/feedback.py",
+        module_path="experimental.sre.feedback",
         symbol_name="ReferenceRealizationFeedback",
         promised_surfaces=(
             PromisedTestSurface(
@@ -624,8 +624,8 @@ EXPECTATIONS = (
     ),
     PeripheryCorrespondenceExpectation(
         row_label="ReferenceRealizationFeedbackWindow",
-        home_path="cortex/sre/feedback.py",
-        module_path="cortex.sre.feedback",
+        home_path="experimental/sre/feedback.py",
+        module_path="experimental.sre.feedback",
         symbol_name="ReferenceRealizationFeedbackWindow",
         promised_surfaces=(
             PromisedTestSurface(
@@ -639,8 +639,8 @@ EXPECTATIONS = (
     ),
     PeripheryCorrespondenceExpectation(
         row_label="ReferenceFeedbackWindowSummary",
-        home_path="cortex/sre/feedback.py",
-        module_path="cortex.sre.feedback",
+        home_path="experimental/sre/feedback.py",
+        module_path="experimental.sre.feedback",
         symbol_name="ReferenceFeedbackWindowSummary",
         promised_surfaces=(
             PromisedTestSurface(
@@ -655,8 +655,8 @@ EXPECTATIONS = (
     ),
     PeripheryCorrespondenceExpectation(
         row_label="summarize_reference_feedback_window",
-        home_path="cortex/sre/feedback.py",
-        module_path="cortex.sre.feedback",
+        home_path="experimental/sre/feedback.py",
+        module_path="experimental.sre.feedback",
         symbol_name="summarize_reference_feedback_window",
         promised_surfaces=(
             PromisedTestSurface(
@@ -671,8 +671,8 @@ EXPECTATIONS = (
     ),
     PeripheryCorrespondenceExpectation(
         row_label="ReferenceControlLedger",
-        home_path="cortex/runtime/reference.py",
-        module_path="cortex.runtime.reference",
+        home_path="experimental/runtime/reference.py",
+        module_path="experimental.runtime.reference",
         symbol_name="ReferenceControlLedger",
         promised_surfaces=(
             PromisedTestSurface(
@@ -689,8 +689,8 @@ EXPECTATIONS = (
     ),
     PeripheryCorrespondenceExpectation(
         row_label="ReferenceRuntimeSession",
-        home_path="cortex/runtime/reference.py",
-        module_path="cortex.runtime.reference",
+        home_path="experimental/runtime/reference.py",
+        module_path="experimental.runtime.reference",
         symbol_name="ReferenceRuntimeSession",
         promised_surfaces=(
             PromisedTestSurface(
@@ -712,8 +712,8 @@ EXPECTATIONS = (
     ),
     PeripheryCorrespondenceExpectation(
         row_label="ReferenceRuntimeStepResult",
-        home_path="cortex/runtime/reference.py",
-        module_path="cortex.runtime.reference",
+        home_path="experimental/runtime/reference.py",
+        module_path="experimental.runtime.reference",
         symbol_name="ReferenceRuntimeStepResult",
         promised_surfaces=(
             PromisedTestSurface(
@@ -729,8 +729,8 @@ EXPECTATIONS = (
     ),
     PeripheryCorrespondenceExpectation(
         row_label="ReferenceRuntimeSessionArtifact",
-        home_path="cortex/runtime/reference_session_io.py",
-        module_path="cortex.runtime.reference_session_io",
+        home_path="experimental/runtime/reference_session_io.py",
+        module_path="experimental.runtime.reference_session_io",
         symbol_name="ReferenceRuntimeSessionArtifact",
         promised_surfaces=(
             PromisedTestSurface(
@@ -745,8 +745,8 @@ EXPECTATIONS = (
     ),
     PeripheryCorrespondenceExpectation(
         row_label="build_reference_runtime_session_artifact",
-        home_path="cortex/runtime/reference_session_io.py",
-        module_path="cortex.runtime.reference_session_io",
+        home_path="experimental/runtime/reference_session_io.py",
+        module_path="experimental.runtime.reference_session_io",
         symbol_name="build_reference_runtime_session_artifact",
         promised_surfaces=(
             PromisedTestSurface(
@@ -759,8 +759,8 @@ EXPECTATIONS = (
     ),
     PeripheryCorrespondenceExpectation(
         row_label="parse_reference_runtime_session_artifact",
-        home_path="cortex/runtime/reference_session_io.py",
-        module_path="cortex.runtime.reference_session_io",
+        home_path="experimental/runtime/reference_session_io.py",
+        module_path="experimental.runtime.reference_session_io",
         symbol_name="parse_reference_runtime_session_artifact",
         promised_surfaces=(
             PromisedTestSurface(
@@ -778,8 +778,8 @@ EXPECTATIONS = (
     ),
     PeripheryCorrespondenceExpectation(
         row_label="read_reference_runtime_session_artifact",
-        home_path="cortex/runtime/reference_session_io.py",
-        module_path="cortex.runtime.reference_session_io",
+        home_path="experimental/runtime/reference_session_io.py",
+        module_path="experimental.runtime.reference_session_io",
         symbol_name="read_reference_runtime_session_artifact",
         promised_surfaces=(
             PromisedTestSurface(
@@ -799,8 +799,8 @@ EXPECTATIONS = (
     ),
     PeripheryCorrespondenceExpectation(
         row_label="write_reference_runtime_session_artifact",
-        home_path="cortex/runtime/reference_session_io.py",
-        module_path="cortex.runtime.reference_session_io",
+        home_path="experimental/runtime/reference_session_io.py",
+        module_path="experimental.runtime.reference_session_io",
         symbol_name="write_reference_runtime_session_artifact",
         promised_surfaces=(
             PromisedTestSurface(
@@ -1194,8 +1194,8 @@ EXPECTATIONS = (
     ),
     PeripheryCorrespondenceExpectation(
         row_label="GeminiRuntimeSession",
-        home_path="cortex/runtime/gemini.py",
-        module_path="cortex.runtime.gemini",
+        home_path="experimental/runtime/gemini.py",
+        module_path="experimental.runtime.gemini",
         symbol_name="GeminiRuntimeSession",
         promised_surfaces=(
             PromisedTestSurface(
@@ -1210,8 +1210,8 @@ EXPECTATIONS = (
     ),
     PeripheryCorrespondenceExpectation(
         row_label="GeminiControlLedger",
-        home_path="cortex/runtime/gemini.py",
-        module_path="cortex.runtime.gemini",
+        home_path="experimental/runtime/gemini.py",
+        module_path="experimental.runtime.gemini",
         symbol_name="GeminiControlLedger",
         promised_surfaces=(
             PromisedTestSurface(
@@ -1226,8 +1226,8 @@ EXPECTATIONS = (
     ),
     PeripheryCorrespondenceExpectation(
         row_label="GeminiRuntimeStepResult",
-        home_path="cortex/runtime/gemini.py",
-        module_path="cortex.runtime.gemini",
+        home_path="experimental/runtime/gemini.py",
+        module_path="experimental.runtime.gemini",
         symbol_name="GeminiRuntimeStepResult",
         promised_surfaces=(
             PromisedTestSurface(
@@ -1238,8 +1238,8 @@ EXPECTATIONS = (
     ),
     PeripheryCorrespondenceExpectation(
         row_label="run_gemini_runtime_step",
-        home_path="cortex/runtime/gemini.py",
-        module_path="cortex.runtime.gemini",
+        home_path="experimental/runtime/gemini.py",
+        module_path="experimental.runtime.gemini",
         symbol_name="run_gemini_runtime_step",
         promised_surfaces=(
             PromisedTestSurface(
@@ -1261,8 +1261,8 @@ EXPECTATIONS = (
     ),
     PeripheryCorrespondenceExpectation(
         row_label="GeminiRuntimeSessionArtifact",
-        home_path="cortex/runtime/gemini_session_io.py",
-        module_path="cortex.runtime.gemini_session_io",
+        home_path="experimental/runtime/gemini_session_io.py",
+        module_path="experimental.runtime.gemini_session_io",
         symbol_name="GeminiRuntimeSessionArtifact",
         promised_surfaces=(
             PromisedTestSurface(
@@ -1273,8 +1273,8 @@ EXPECTATIONS = (
     ),
     PeripheryCorrespondenceExpectation(
         row_label="build_gemini_runtime_session_artifact",
-        home_path="cortex/runtime/gemini_session_io.py",
-        module_path="cortex.runtime.gemini_session_io",
+        home_path="experimental/runtime/gemini_session_io.py",
+        module_path="experimental.runtime.gemini_session_io",
         symbol_name="build_gemini_runtime_session_artifact",
         promised_surfaces=(
             PromisedTestSurface(
@@ -1285,8 +1285,8 @@ EXPECTATIONS = (
     ),
     PeripheryCorrespondenceExpectation(
         row_label="parse_gemini_runtime_session_artifact",
-        home_path="cortex/runtime/gemini_session_io.py",
-        module_path="cortex.runtime.gemini_session_io",
+        home_path="experimental/runtime/gemini_session_io.py",
+        module_path="experimental.runtime.gemini_session_io",
         symbol_name="parse_gemini_runtime_session_artifact",
         promised_surfaces=(
             PromisedTestSurface(
@@ -1300,8 +1300,8 @@ EXPECTATIONS = (
     ),
     PeripheryCorrespondenceExpectation(
         row_label="read_gemini_runtime_session_artifact",
-        home_path="cortex/runtime/gemini_session_io.py",
-        module_path="cortex.runtime.gemini_session_io",
+        home_path="experimental/runtime/gemini_session_io.py",
+        module_path="experimental.runtime.gemini_session_io",
         symbol_name="read_gemini_runtime_session_artifact",
         promised_surfaces=(
             PromisedTestSurface(
@@ -1312,8 +1312,8 @@ EXPECTATIONS = (
     ),
     PeripheryCorrespondenceExpectation(
         row_label="write_gemini_runtime_session_artifact",
-        home_path="cortex/runtime/gemini_session_io.py",
-        module_path="cortex.runtime.gemini_session_io",
+        home_path="experimental/runtime/gemini_session_io.py",
+        module_path="experimental.runtime.gemini_session_io",
         symbol_name="write_gemini_runtime_session_artifact",
         promised_surfaces=(
             PromisedTestSurface(
@@ -1328,8 +1328,8 @@ EXPECTATIONS = (
     ),
     PeripheryCorrespondenceExpectation(
         row_label="build_gemini_cli_record",
-        home_path="cortex/runtime/gemini_cli.py",
-        module_path="cortex.runtime.gemini_cli",
+        home_path="experimental/runtime/gemini_cli.py",
+        module_path="experimental.runtime.gemini_cli",
         symbol_name="build_gemini_cli_record",
         promised_surfaces=(
             PromisedTestSurface(
@@ -1347,8 +1347,8 @@ EXPECTATIONS = (
     ),
     PeripheryCorrespondenceExpectation(
         row_label="GeminiHostEventEnvelope",
-        home_path="cortex/runtime/gemini_ingress.py",
-        module_path="cortex.runtime.gemini_ingress",
+        home_path="experimental/runtime/gemini_ingress.py",
+        module_path="experimental.runtime.gemini_ingress",
         symbol_name="GeminiHostEventEnvelope",
         promised_surfaces=(
             PromisedTestSurface(
@@ -1362,8 +1362,8 @@ EXPECTATIONS = (
     ),
     PeripheryCorrespondenceExpectation(
         row_label="parse_gemini_host_event_envelope",
-        home_path="cortex/runtime/gemini_ingress.py",
-        module_path="cortex.runtime.gemini_ingress",
+        home_path="experimental/runtime/gemini_ingress.py",
+        module_path="experimental.runtime.gemini_ingress",
         symbol_name="parse_gemini_host_event_envelope",
         promised_surfaces=(
             PromisedTestSurface(
@@ -1378,8 +1378,8 @@ EXPECTATIONS = (
     ),
     PeripheryCorrespondenceExpectation(
         row_label="gemini_ingress_cli_main",
-        home_path="cortex/runtime/gemini_ingress_cli.py",
-        module_path="cortex.runtime.gemini_ingress_cli",
+        home_path="experimental/runtime/gemini_ingress_cli.py",
+        module_path="experimental.runtime.gemini_ingress_cli",
         symbol_name="main",
         promised_surfaces=(
             PromisedTestSurface(
@@ -1394,8 +1394,8 @@ EXPECTATIONS = (
     ),
     PeripheryCorrespondenceExpectation(
         row_label="GeminiServiceState",
-        home_path="cortex/runtime/gemini_service.py",
-        module_path="cortex.runtime.gemini_service",
+        home_path="experimental/runtime/gemini_service.py",
+        module_path="experimental.runtime.gemini_service",
         symbol_name="GeminiServiceState",
         promised_surfaces=(
             PromisedTestSurface(
@@ -1406,8 +1406,8 @@ EXPECTATIONS = (
     ),
     PeripheryCorrespondenceExpectation(
         row_label="handle_gemini_service_request",
-        home_path="cortex/runtime/gemini_service.py",
-        module_path="cortex.runtime.gemini_service",
+        home_path="experimental/runtime/gemini_service.py",
+        module_path="experimental.runtime.gemini_service",
         symbol_name="handle_gemini_service_request",
         promised_surfaces=(
             PromisedTestSurface(
@@ -1425,8 +1425,8 @@ EXPECTATIONS = (
     ),
     PeripheryCorrespondenceExpectation(
         row_label="export_gemini_service_session",
-        home_path="cortex/runtime/gemini_service.py",
-        module_path="cortex.runtime.gemini_service",
+        home_path="experimental/runtime/gemini_service.py",
+        module_path="experimental.runtime.gemini_service",
         symbol_name="export_gemini_service_session",
         promised_surfaces=(
             PromisedTestSurface(
@@ -1441,8 +1441,8 @@ EXPECTATIONS = (
     ),
     PeripheryCorrespondenceExpectation(
         row_label="import_gemini_service_session",
-        home_path="cortex/runtime/gemini_service.py",
-        module_path="cortex.runtime.gemini_service",
+        home_path="experimental/runtime/gemini_service.py",
+        module_path="experimental.runtime.gemini_service",
         symbol_name="import_gemini_service_session",
         promised_surfaces=(
             PromisedTestSurface(
@@ -1460,8 +1460,8 @@ EXPECTATIONS = (
     ),
     PeripheryCorrespondenceExpectation(
         row_label="gemini_service_main",
-        home_path="cortex/runtime/gemini_service.py",
-        module_path="cortex.runtime.gemini_service",
+        home_path="experimental/runtime/gemini_service.py",
+        module_path="experimental.runtime.gemini_service",
         symbol_name="main",
         promised_surfaces=(
             PromisedTestSurface(
@@ -1479,8 +1479,8 @@ EXPECTATIONS = (
     ),
     PeripheryCorrespondenceExpectation(
         row_label="GeminiHostControlRequest",
-        home_path="cortex/runtime/gemini_host_control.py",
-        module_path="cortex.runtime.gemini_host_control",
+        home_path="experimental/runtime/gemini_host_control.py",
+        module_path="experimental.runtime.gemini_host_control",
         symbol_name="GeminiHostControlRequest",
         promised_surfaces=(
             PromisedTestSurface(
@@ -1494,8 +1494,8 @@ EXPECTATIONS = (
     ),
     PeripheryCorrespondenceExpectation(
         row_label="GeminiHostControlResult",
-        home_path="cortex/runtime/gemini_host_control.py",
-        module_path="cortex.runtime.gemini_host_control",
+        home_path="experimental/runtime/gemini_host_control.py",
+        module_path="experimental.runtime.gemini_host_control",
         symbol_name="GeminiHostControlResult",
         promised_surfaces=(
             PromisedTestSurface(
@@ -1509,8 +1509,8 @@ EXPECTATIONS = (
     ),
     PeripheryCorrespondenceExpectation(
         row_label="execute_gemini_interaction_stream",
-        home_path="cortex/runtime/gemini_host_transport.py",
-        module_path="cortex.runtime.gemini_host_transport",
+        home_path="experimental/runtime/gemini_host_transport.py",
+        module_path="experimental.runtime.gemini_host_transport",
         symbol_name="execute_gemini_interaction_stream",
         promised_surfaces=(
             PromisedTestSurface(
@@ -1526,8 +1526,8 @@ EXPECTATIONS = (
     ),
     PeripheryCorrespondenceExpectation(
         row_label="run_gemini_host_control",
-        home_path="cortex/runtime/gemini_host_control.py",
-        module_path="cortex.runtime.gemini_host_control",
+        home_path="experimental/runtime/gemini_host_control.py",
+        module_path="experimental.runtime.gemini_host_control",
         symbol_name="run_gemini_host_control",
         promised_surfaces=(
             PromisedTestSurface(
@@ -1542,8 +1542,8 @@ EXPECTATIONS = (
     ),
     PeripheryCorrespondenceExpectation(
         row_label="handle_gemini_service_action",
-        home_path="cortex/runtime/gemini_service.py",
-        module_path="cortex.runtime.gemini_service",
+        home_path="experimental/runtime/gemini_service.py",
+        module_path="experimental.runtime.gemini_service",
         symbol_name="handle_gemini_service_action",
         promised_surfaces=(
             PromisedTestSurface(
@@ -1561,8 +1561,8 @@ EXPECTATIONS = (
     ),
     PeripheryCorrespondenceExpectation(
         row_label="ClaudeRuntimeSession",
-        home_path="cortex/runtime/claude.py",
-        module_path="cortex.runtime.claude",
+        home_path="experimental/runtime/claude.py",
+        module_path="experimental.runtime.claude",
         symbol_name="ClaudeRuntimeSession",
         promised_surfaces=(
             PromisedTestSurface(
@@ -1577,8 +1577,8 @@ EXPECTATIONS = (
     ),
     PeripheryCorrespondenceExpectation(
         row_label="ClaudeControlLedger",
-        home_path="cortex/runtime/claude.py",
-        module_path="cortex.runtime.claude",
+        home_path="experimental/runtime/claude.py",
+        module_path="experimental.runtime.claude",
         symbol_name="ClaudeControlLedger",
         promised_surfaces=(
             PromisedTestSurface(
@@ -1593,8 +1593,8 @@ EXPECTATIONS = (
     ),
     PeripheryCorrespondenceExpectation(
         row_label="ClaudeRuntimeStepResult",
-        home_path="cortex/runtime/claude.py",
-        module_path="cortex.runtime.claude",
+        home_path="experimental/runtime/claude.py",
+        module_path="experimental.runtime.claude",
         symbol_name="ClaudeRuntimeStepResult",
         promised_surfaces=(
             PromisedTestSurface(
@@ -1605,8 +1605,8 @@ EXPECTATIONS = (
     ),
     PeripheryCorrespondenceExpectation(
         row_label="run_claude_runtime_step",
-        home_path="cortex/runtime/claude.py",
-        module_path="cortex.runtime.claude",
+        home_path="experimental/runtime/claude.py",
+        module_path="experimental.runtime.claude",
         symbol_name="run_claude_runtime_step",
         promised_surfaces=(
             PromisedTestSurface(
@@ -1628,8 +1628,8 @@ EXPECTATIONS = (
     ),
     PeripheryCorrespondenceExpectation(
         row_label="ClaudeRuntimeSessionArtifact",
-        home_path="cortex/runtime/claude_session_io.py",
-        module_path="cortex.runtime.claude_session_io",
+        home_path="experimental/runtime/claude_session_io.py",
+        module_path="experimental.runtime.claude_session_io",
         symbol_name="ClaudeRuntimeSessionArtifact",
         promised_surfaces=(
             PromisedTestSurface(
@@ -1640,8 +1640,8 @@ EXPECTATIONS = (
     ),
     PeripheryCorrespondenceExpectation(
         row_label="build_claude_runtime_session_artifact",
-        home_path="cortex/runtime/claude_session_io.py",
-        module_path="cortex.runtime.claude_session_io",
+        home_path="experimental/runtime/claude_session_io.py",
+        module_path="experimental.runtime.claude_session_io",
         symbol_name="build_claude_runtime_session_artifact",
         promised_surfaces=(
             PromisedTestSurface(
@@ -1652,8 +1652,8 @@ EXPECTATIONS = (
     ),
     PeripheryCorrespondenceExpectation(
         row_label="parse_claude_runtime_session_artifact",
-        home_path="cortex/runtime/claude_session_io.py",
-        module_path="cortex.runtime.claude_session_io",
+        home_path="experimental/runtime/claude_session_io.py",
+        module_path="experimental.runtime.claude_session_io",
         symbol_name="parse_claude_runtime_session_artifact",
         promised_surfaces=(
             PromisedTestSurface(
@@ -1667,8 +1667,8 @@ EXPECTATIONS = (
     ),
     PeripheryCorrespondenceExpectation(
         row_label="read_claude_runtime_session_artifact",
-        home_path="cortex/runtime/claude_session_io.py",
-        module_path="cortex.runtime.claude_session_io",
+        home_path="experimental/runtime/claude_session_io.py",
+        module_path="experimental.runtime.claude_session_io",
         symbol_name="read_claude_runtime_session_artifact",
         promised_surfaces=(
             PromisedTestSurface(
@@ -1679,8 +1679,8 @@ EXPECTATIONS = (
     ),
     PeripheryCorrespondenceExpectation(
         row_label="write_claude_runtime_session_artifact",
-        home_path="cortex/runtime/claude_session_io.py",
-        module_path="cortex.runtime.claude_session_io",
+        home_path="experimental/runtime/claude_session_io.py",
+        module_path="experimental.runtime.claude_session_io",
         symbol_name="write_claude_runtime_session_artifact",
         promised_surfaces=(
             PromisedTestSurface(
@@ -1695,8 +1695,8 @@ EXPECTATIONS = (
     ),
     PeripheryCorrespondenceExpectation(
         row_label="build_claude_cli_record",
-        home_path="cortex/runtime/claude_cli.py",
-        module_path="cortex.runtime.claude_cli",
+        home_path="experimental/runtime/claude_cli.py",
+        module_path="experimental.runtime.claude_cli",
         symbol_name="build_claude_cli_record",
         promised_surfaces=(
             PromisedTestSurface(
@@ -1714,8 +1714,8 @@ EXPECTATIONS = (
     ),
     PeripheryCorrespondenceExpectation(
         row_label="ClaudeHostEventEnvelope",
-        home_path="cortex/runtime/claude_ingress.py",
-        module_path="cortex.runtime.claude_ingress",
+        home_path="experimental/runtime/claude_ingress.py",
+        module_path="experimental.runtime.claude_ingress",
         symbol_name="ClaudeHostEventEnvelope",
         promised_surfaces=(
             PromisedTestSurface(
@@ -1729,8 +1729,8 @@ EXPECTATIONS = (
     ),
     PeripheryCorrespondenceExpectation(
         row_label="parse_claude_host_event_envelope",
-        home_path="cortex/runtime/claude_ingress.py",
-        module_path="cortex.runtime.claude_ingress",
+        home_path="experimental/runtime/claude_ingress.py",
+        module_path="experimental.runtime.claude_ingress",
         symbol_name="parse_claude_host_event_envelope",
         promised_surfaces=(
             PromisedTestSurface(
@@ -1745,8 +1745,8 @@ EXPECTATIONS = (
     ),
     PeripheryCorrespondenceExpectation(
         row_label="claude_ingress_cli_main",
-        home_path="cortex/runtime/claude_ingress_cli.py",
-        module_path="cortex.runtime.claude_ingress_cli",
+        home_path="experimental/runtime/claude_ingress_cli.py",
+        module_path="experimental.runtime.claude_ingress_cli",
         symbol_name="main",
         promised_surfaces=(
             PromisedTestSurface(
@@ -1761,8 +1761,8 @@ EXPECTATIONS = (
     ),
     PeripheryCorrespondenceExpectation(
         row_label="ClaudeServiceState",
-        home_path="cortex/runtime/claude_service.py",
-        module_path="cortex.runtime.claude_service",
+        home_path="experimental/runtime/claude_service.py",
+        module_path="experimental.runtime.claude_service",
         symbol_name="ClaudeServiceState",
         promised_surfaces=(
             PromisedTestSurface(
@@ -1773,8 +1773,8 @@ EXPECTATIONS = (
     ),
     PeripheryCorrespondenceExpectation(
         row_label="handle_claude_service_request",
-        home_path="cortex/runtime/claude_service.py",
-        module_path="cortex.runtime.claude_service",
+        home_path="experimental/runtime/claude_service.py",
+        module_path="experimental.runtime.claude_service",
         symbol_name="handle_claude_service_request",
         promised_surfaces=(
             PromisedTestSurface(
@@ -1792,8 +1792,8 @@ EXPECTATIONS = (
     ),
     PeripheryCorrespondenceExpectation(
         row_label="export_claude_service_session",
-        home_path="cortex/runtime/claude_service.py",
-        module_path="cortex.runtime.claude_service",
+        home_path="experimental/runtime/claude_service.py",
+        module_path="experimental.runtime.claude_service",
         symbol_name="export_claude_service_session",
         promised_surfaces=(
             PromisedTestSurface(
@@ -1808,8 +1808,8 @@ EXPECTATIONS = (
     ),
     PeripheryCorrespondenceExpectation(
         row_label="import_claude_service_session",
-        home_path="cortex/runtime/claude_service.py",
-        module_path="cortex.runtime.claude_service",
+        home_path="experimental/runtime/claude_service.py",
+        module_path="experimental.runtime.claude_service",
         symbol_name="import_claude_service_session",
         promised_surfaces=(
             PromisedTestSurface(
@@ -1827,8 +1827,8 @@ EXPECTATIONS = (
     ),
     PeripheryCorrespondenceExpectation(
         row_label="claude_service_main",
-        home_path="cortex/runtime/claude_service.py",
-        module_path="cortex.runtime.claude_service",
+        home_path="experimental/runtime/claude_service.py",
+        module_path="experimental.runtime.claude_service",
         symbol_name="main",
         promised_surfaces=(
             PromisedTestSurface(
@@ -1846,8 +1846,8 @@ EXPECTATIONS = (
     ),
     PeripheryCorrespondenceExpectation(
         row_label="ClaudeHostControlRequest",
-        home_path="cortex/runtime/claude_host_control.py",
-        module_path="cortex.runtime.claude_host_control",
+        home_path="experimental/runtime/claude_host_control.py",
+        module_path="experimental.runtime.claude_host_control",
         symbol_name="ClaudeHostControlRequest",
         promised_surfaces=(
             PromisedTestSurface(
@@ -1861,8 +1861,8 @@ EXPECTATIONS = (
     ),
     PeripheryCorrespondenceExpectation(
         row_label="ClaudeHostControlResult",
-        home_path="cortex/runtime/claude_host_control.py",
-        module_path="cortex.runtime.claude_host_control",
+        home_path="experimental/runtime/claude_host_control.py",
+        module_path="experimental.runtime.claude_host_control",
         symbol_name="ClaudeHostControlResult",
         promised_surfaces=(
             PromisedTestSurface(
@@ -1876,8 +1876,8 @@ EXPECTATIONS = (
     ),
     PeripheryCorrespondenceExpectation(
         row_label="execute_claude_message_stream",
-        home_path="cortex/runtime/claude_host_transport.py",
-        module_path="cortex.runtime.claude_host_transport",
+        home_path="experimental/runtime/claude_host_transport.py",
+        module_path="experimental.runtime.claude_host_transport",
         symbol_name="execute_claude_message_stream",
         promised_surfaces=(
             PromisedTestSurface(
@@ -1893,8 +1893,8 @@ EXPECTATIONS = (
     ),
     PeripheryCorrespondenceExpectation(
         row_label="run_claude_host_control",
-        home_path="cortex/runtime/claude_host_control.py",
-        module_path="cortex.runtime.claude_host_control",
+        home_path="experimental/runtime/claude_host_control.py",
+        module_path="experimental.runtime.claude_host_control",
         symbol_name="run_claude_host_control",
         promised_surfaces=(
             PromisedTestSurface(
@@ -1909,8 +1909,8 @@ EXPECTATIONS = (
     ),
     PeripheryCorrespondenceExpectation(
         row_label="handle_claude_service_action",
-        home_path="cortex/runtime/claude_service.py",
-        module_path="cortex.runtime.claude_service",
+        home_path="experimental/runtime/claude_service.py",
+        module_path="experimental.runtime.claude_service",
         symbol_name="handle_claude_service_action",
         promised_surfaces=(
             PromisedTestSurface(
@@ -1928,8 +1928,8 @@ EXPECTATIONS = (
     ),
     PeripheryCorrespondenceExpectation(
         row_label="run_reference_runtime_step",
-        home_path="cortex/runtime/reference.py",
-        module_path="cortex.runtime.reference",
+        home_path="experimental/runtime/reference.py",
+        module_path="experimental.runtime.reference",
         symbol_name="run_reference_runtime_step",
         promised_surfaces=(
             PromisedTestSurface(
@@ -1962,8 +1962,8 @@ EXPECTATIONS = (
     ),
     PeripheryCorrespondenceExpectation(
         row_label="build_reference_cli_record",
-        home_path="cortex/runtime/reference_cli.py",
-        module_path="cortex.runtime.reference_cli",
+        home_path="experimental/runtime/reference_cli.py",
+        module_path="experimental.runtime.reference_cli",
         symbol_name="build_reference_cli_record",
         promised_surfaces=(
             PromisedTestSurface(
@@ -2059,7 +2059,7 @@ def test_periphery_correspondence_registry_resolves_code_home_and_test_surface(
 
 def test_v1_comparison_rows_match_landed_runtime_and_sre_truth() -> None:
     correspondence_text = (
-        REPO_ROOT / "docs" / "CORTEX_V2_MATH_TO_CODE_CORRESPONDENCE.md"
+        REPO_ROOT / "docs" / "internal" / "CORTEX_V2_MATH_TO_CODE_CORRESPONDENCE.md"
     ).read_text(encoding="utf-8")
 
     assert "| Deficit state `D_t` | `stop_signals.py` objective_gap_signature | `u_t(c)` uncertainty classes (SRE-owned) | `UncertaintyEstimate` |" in correspondence_text

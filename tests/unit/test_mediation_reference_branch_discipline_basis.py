@@ -5,20 +5,23 @@ from __future__ import annotations
 from tests._mediation_evidence import parse_markdown_table, read, section, status
 
 
-DOC_ROOT = "docs/mediation_evidence/reference/"
+DOC_ROOT = "docs/lab/mediation_evidence/reference/"
 LEDGER_PATH = (
     __import__("pathlib").Path(__file__).resolve().parents[2]
     / "docs"
+    / "lab"
     / "CORTEX_V2_MEDIATION_PAIRED_RUN_LEDGER_0.md"
 )
 BASIS_PATH = (
     __import__("pathlib").Path(__file__).resolve().parents[2]
     / "docs"
+    / "lab"
     / "CORTEX_V2_MEDIATION_REFERENCE_BRANCH_DISCIPLINE_BASIS_NOTE_0.md"
 )
 REPLICATION_PATH = (
     __import__("pathlib").Path(__file__).resolve().parents[2]
     / "docs"
+    / "lab"
     / "CORTEX_V2_MEDIATION_REFERENCE_BRANCH_DISCIPLINE_REPLICATION_NOTE_0.md"
 )
 

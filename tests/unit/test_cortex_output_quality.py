@@ -3,19 +3,13 @@
 from __future__ import annotations
 
 from contextlib import contextmanager
-import sys
 from pathlib import Path
 
 import pytest
 
-
-TOOLS_ROOT = Path(__file__).resolve().parents[2] / "tools"
-if str(TOOLS_ROOT) not in sys.path:
-    sys.path.insert(0, str(TOOLS_ROOT))
-
-import cortex_output_quality as output_quality
-from output_quality_ablation import OutputQualityAblationConfig
-from output_quality_grader import PairwiseJudgment
+from lab import cortex_output_quality as output_quality
+from lab.output_quality_ablation import OutputQualityAblationConfig
+from lab.output_quality_grader import PairwiseJudgment
 
 
 def test_supported_task_ids_cover_all_five_output_quality_tasks() -> None:

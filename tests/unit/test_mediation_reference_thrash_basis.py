@@ -36,7 +36,7 @@ def test_reference_thrash_basis_note_exists_and_records_satisfied_basis() -> Non
     assert "basis is now satisfied by the committed reference-host thrash baseline series" in text
     assert "tests/integration/_reference_mediation_thrash_episode.py" in text
     assert "tests/integration/test_reference_mediation_baseline_packets.py" in text
-    assert "docs/CORTEX_V2_MEDIATION_REFERENCE_THRASH_REPLICATION_NOTE_0.md" in text
+    assert "docs/lab/CORTEX_V2_MEDIATION_REFERENCE_THRASH_REPLICATION_NOTE_0.md" in text
     assert "deterministic visible-burden derivation" in text.lower()
 
 
@@ -81,7 +81,7 @@ def test_reference_thrash_builder_packet_series_and_replication_note_exist() -> 
     assert thrash_row["evidence_status"] == "baseline_packet_committed"
     assert thrash_row["paired_episode_set_id"] == "pair_reference_thrash_001"
     assert thrash_row["packet_path"] == (
-        "docs/mediation_evidence/reference/"
+        "docs/lab/mediation_evidence/reference/"
         "scenario_thrash_reference_01__baseline_non_mediated__run_001.md"
     )
     assert thrash_row["failure_tags"] == "none"

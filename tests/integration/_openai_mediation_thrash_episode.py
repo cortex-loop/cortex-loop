@@ -12,13 +12,13 @@ from cortex.drivers.openai_host_commitment import (
     OpenAIHostCommitmentResult,
     evaluate_openai_host_commitment,
 )
-from cortex.sre.allocation import AllocationScore, AllocationScorecard
-from cortex.sre.brake import BrakeState, evaluate_brake_state
+from experimental.sre.allocation import AllocationScore, AllocationScorecard
+from experimental.sre.brake import BrakeState, evaluate_brake_state
 from cortex.sre.branching import BranchOperation
-from cortex.sre.families import SoftControlFamily
-from cortex.sre.goals import GoalContinuityView
-from cortex.sre.policy import neutral_dominance_decision
-from cortex.sre.uncertainty import UncertaintyEstimate
+from experimental.sre.families import SoftControlFamily
+from experimental.sre.goals import GoalContinuityView
+from experimental.sre.policy import neutral_dominance_decision
+from experimental.sre.uncertainty import UncertaintyEstimate
 from tests.integration._openai_mediation_uncertainty_episode import (
     openai_environment_handle,
 )
@@ -60,14 +60,14 @@ class OpenAIThrashPairSpec:
     @property
     def baseline_packet_path(self) -> str:
         return (
-            "docs/mediation_evidence/openai/"
+            "docs/lab/mediation_evidence/openai/"
             f"scenario_thrash_openai_01__baseline_non_mediated__run_{self.pair_key}.md"
         )
 
     @property
     def mediated_packet_path(self) -> str:
         return (
-            "docs/mediation_evidence/openai/"
+            "docs/lab/mediation_evidence/openai/"
             f"scenario_thrash_openai_01__experimental_mediated__run_{self.pair_key}.md"
         )
 

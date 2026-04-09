@@ -13,6 +13,7 @@ from tests.integration._reference_lane_packet_example import (
 _DOC_PATH = (
     Path(__file__).resolve().parents[2]
     / "docs"
+    / "experimental"
     / "CORTEX_V2_REFERENCE_LANE_PACKET_EXAMPLE_2.md"
 )
 

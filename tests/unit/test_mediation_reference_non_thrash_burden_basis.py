@@ -7,9 +7,9 @@ from pathlib import Path
 from tests._mediation_evidence import parse_markdown_table, read, section, status
 
 
-LEDGER_PATH = Path(__file__).resolve().parents[2] / "docs" / "CORTEX_V2_MEDIATION_PAIRED_RUN_LEDGER_0.md"
-BASIS_PATH = Path(__file__).resolve().parents[2] / "docs" / "CORTEX_V2_MEDIATION_REFERENCE_NON_THRASH_BURDEN_BASIS_NOTE_0.md"
-REPLICATION_PATH = Path(__file__).resolve().parents[2] / "docs" / "CORTEX_V2_MEDIATION_REFERENCE_NON_THRASH_BURDEN_REPLICATION_NOTE_0.md"
+LEDGER_PATH = Path(__file__).resolve().parents[2] / "docs" / "lab" / "CORTEX_V2_MEDIATION_PAIRED_RUN_LEDGER_0.md"
+BASIS_PATH = Path(__file__).resolve().parents[2] / "docs" / "lab" / "CORTEX_V2_MEDIATION_REFERENCE_NON_THRASH_BURDEN_BASIS_NOTE_0.md"
+REPLICATION_PATH = Path(__file__).resolve().parents[2] / "docs" / "lab" / "CORTEX_V2_MEDIATION_REFERENCE_NON_THRASH_BURDEN_REPLICATION_NOTE_0.md"
 
 
 def test_reference_non_thrash_burden_basis_docs_exist() -> None:

@@ -7,9 +7,9 @@ from pathlib import Path
 from tests._mediation_evidence import parse_markdown_table, read, section, status
 
 
-LEDGER_PATH = Path(__file__).resolve().parents[2] / "docs" / "CORTEX_V2_MEDIATION_PAIRED_RUN_LEDGER_0.md"
-BASIS_PATH = Path(__file__).resolve().parents[2] / "docs" / "CORTEX_V2_MEDIATION_OPENAI_BRANCH_DISCIPLINE_BASIS_NOTE_0.md"
-REPLICATION_PATH = Path(__file__).resolve().parents[2] / "docs" / "CORTEX_V2_MEDIATION_OPENAI_BRANCH_DISCIPLINE_REPLICATION_NOTE_0.md"
+LEDGER_PATH = Path(__file__).resolve().parents[2] / "docs" / "lab" / "CORTEX_V2_MEDIATION_PAIRED_RUN_LEDGER_0.md"
+BASIS_PATH = Path(__file__).resolve().parents[2] / "docs" / "lab" / "CORTEX_V2_MEDIATION_OPENAI_BRANCH_DISCIPLINE_BASIS_NOTE_0.md"
+REPLICATION_PATH = Path(__file__).resolve().parents[2] / "docs" / "lab" / "CORTEX_V2_MEDIATION_OPENAI_BRANCH_DISCIPLINE_REPLICATION_NOTE_0.md"
 
 
 def test_openai_branch_discipline_basis_docs_exist() -> None:
@@ -31,4 +31,3 @@ def test_openai_branch_discipline_pairs_are_recorded() -> None:
         "pair_openai_branch_003",
     ]
     assert {row["pair_status"] for row in branch_rows} == {"usable"}
-

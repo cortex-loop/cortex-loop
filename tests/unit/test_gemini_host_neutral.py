@@ -3,8 +3,8 @@
 import pytest
 
 from cortex.core.dispatch import DispatchLane
-from cortex.drivers.gemini_host import observe_gemini_host_event
-from cortex.drivers.gemini_host_neutral import (
+from experimental.drivers.gemini_host import observe_gemini_host_event
+from experimental.drivers.gemini_host_neutral import (
     GeminiHostNeutralResult,
     GeminiNeutralContinuationCode,
     GeminiNeutralContinuationDecision,

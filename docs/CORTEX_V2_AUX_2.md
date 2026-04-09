@@ -1,5 +1,7 @@
 # CORTEX_V2_AUX_2
 
+Surface: product
+
 Status: canonical **AUX** document for the 3-document Cortex v2 packet (`active boundary`; geometry `evaluation-first / runtime-off-by-default`; offline consolidation `deferred until active Core/SRE loop is stable`)
 Companion documents: `CORTEX_V2_CORE_2.md`, `CORTEX_V2_SRE_2.md`
 

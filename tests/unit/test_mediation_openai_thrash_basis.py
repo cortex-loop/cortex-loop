@@ -39,7 +39,7 @@ def test_openai_thrash_basis_note_exists_and_records_satisfied_basis() -> None:
     assert "tests/integration/_openai_mediation_thrash_episode.py" in text
     assert "tests/integration/_openai_mediation_thrash_experimental.py" in text
     assert "tests/integration/test_openai_mediated_thrash_comparator.py" in text
-    assert "docs/CORTEX_V2_MEDIATION_OPENAI_THRASH_REPLICATION_NOTE_0.md" in text
+    assert "docs/lab/CORTEX_V2_MEDIATION_OPENAI_THRASH_REPLICATION_NOTE_0.md" in text
     assert "deterministic visible-burden derivation" in text.lower()
 
 
@@ -72,7 +72,7 @@ def test_openai_thrash_builder_packet_series_and_replication_note_exist() -> Non
     assert openai_row["evidence_status"] == "baseline_packet_committed"
     assert openai_row["paired_episode_set_id"] == "pair_openai_thrash_001"
     assert openai_row["packet_path"] == (
-        "docs/mediation_evidence/openai/"
+        "docs/lab/mediation_evidence/openai/"
         "scenario_thrash_openai_01__baseline_non_mediated__run_001.md"
     )
     assert openai_row["failure_tags"] == "none"
@@ -81,7 +81,7 @@ def test_openai_thrash_builder_packet_series_and_replication_note_exist() -> Non
         == "tests/integration/test_openai_mediation_baseline_packets.py::test_openai_thrash_baseline_packet_matches_committed_doc"
     )
     assert OPENAI_THRASH_PACKET_PATH.is_file()
-    assert "docs/mediation_evidence/openai/scenario_thrash_openai_01__baseline_non_mediated__run_001.md" in OPENAI_MEDIATION_BASELINE_PACKET_DOC_BUILDERS
+    assert "docs/lab/mediation_evidence/openai/scenario_thrash_openai_01__baseline_non_mediated__run_001.md" in OPENAI_MEDIATION_BASELINE_PACKET_DOC_BUILDERS
 
     for pair_key in OPENAI_THRASH_PAIR_KEYS:
         snapshot = build_openai_thrash_episode_snapshot(pair_key)

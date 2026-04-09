@@ -10,9 +10,9 @@ import time
 from dataclasses import dataclass
 from pathlib import Path
 
-from cortex.drivers.reference_host_commitment import evaluate_reference_host_commitment
-from cortex.drivers.reference_host_neutral import evaluate_reference_host_neutral
-from cortex.sre.policy import neutral_dominance_decision
+from experimental.drivers.reference_host_commitment import evaluate_reference_host_commitment
+from experimental.drivers.reference_host_neutral import evaluate_reference_host_neutral
+from experimental.sre.policy import neutral_dominance_decision
 from tests.integration._reference_lane_latency_evidence import (
     serialize_reference_lane_latency_snapshot,
 )
@@ -47,6 +47,7 @@ SUPPORTING_TEST_SURFACE = (
 LATENCY_DOC_PATH = (
     Path(__file__).resolve().parents[2]
     / "docs"
+    / "lab"
     / "CORTEX_V2_LATENCY_EVIDENCE_2.md"
 )
 MEASURED_SURFACES = (

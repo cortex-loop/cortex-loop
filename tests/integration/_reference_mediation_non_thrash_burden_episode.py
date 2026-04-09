@@ -27,28 +27,28 @@ class ReferenceNonThrashBurdenPairSpec(NonThrashBurdenPairSpec):
     @property
     def baseline_packet_path(self) -> str:
         return (
-            "docs/mediation_evidence/reference/"
+            "docs/lab/mediation_evidence/reference/"
             f"scenario_burden_reference_01__baseline_non_mediated__run_{self.pair_key}.md"
         )
 
     @property
     def mediated_packet_path(self) -> str:
         return (
-            "docs/mediation_evidence/reference/"
+            "docs/lab/mediation_evidence/reference/"
             f"scenario_burden_reference_01__experimental_mediated__run_{self.pair_key}.md"
         )
 
     @property
     def baseline_burden_path(self) -> str:
         return (
-            "docs/mediation_evidence/reference/"
+            "docs/lab/mediation_evidence/reference/"
             f"scenario_burden_reference_01__baseline_non_mediated__run_{self.pair_key}__aux_burden.md"
         )
 
     @property
     def mediated_burden_path(self) -> str:
         return (
-            "docs/mediation_evidence/reference/"
+            "docs/lab/mediation_evidence/reference/"
             f"scenario_burden_reference_01__experimental_mediated__run_{self.pair_key}__aux_burden.md"
         )
 

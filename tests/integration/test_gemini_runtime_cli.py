@@ -156,7 +156,7 @@ def test_gemini_runtime_cli_undocumented_raw_host_event_warns_without_fabricatin
 
 def _run_gemini_cli(*args: str, input_text: str | None = None) -> subprocess.CompletedProcess[str]:
     return subprocess.run(
-        [sys.executable, "-m", "cortex.runtime.gemini_cli", *args],
+        [sys.executable, "-m", "experimental.runtime.gemini_cli", *args],
         cwd=REPO_ROOT,
         input=input_text,
         capture_output=True,

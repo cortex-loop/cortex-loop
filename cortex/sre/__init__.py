@@ -1,3 +1,3 @@
-"""SRE package boundary for future executive policy seams."""
+"""Shipped SRE package boundary for the product executive surface."""
 
-__all__ = []
+__all__ = ["branching", "verified_work"]

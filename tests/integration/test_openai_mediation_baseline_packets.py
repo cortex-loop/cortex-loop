@@ -122,7 +122,7 @@ def test_candidate_emitter_prints_openai_baseline_packets_as_markdown(
     captured = capsys.readouterr().out
 
     assert (
-        "--- docs/mediation_evidence/openai/"
+        "--- docs/lab/mediation_evidence/openai/"
         "scenario_host_openai_01__baseline_non_mediated__run_001.md"
     ) in captured
     for relative_path in EMITTED_OPENAI_HOST_PACKET_PATHS.values():
@@ -169,7 +169,7 @@ def _parse_emitted_docs(output: str) -> dict[str, str]:
     current_lines: list[str] = []
 
     for line in output.splitlines():
-        if line.startswith("--- docs/mediation_evidence/openai/"):
+        if line.startswith("--- docs/lab/mediation_evidence/openai/"):
             if current_path is not None:
                 docs[current_path] = "\n".join(current_lines).strip() + "\n"
             current_path = line[4:].strip()

@@ -1,3 +1,3 @@
-"""Driver package boundary for host-facing integration seams."""
+"""Product driver package boundary for shipped host-facing seams."""
 
 __all__ = []

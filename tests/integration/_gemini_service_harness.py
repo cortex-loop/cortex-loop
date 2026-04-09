@@ -91,7 +91,7 @@ def run_gemini_service(
     if env is not None:
         process_env.update(env)
     process = subprocess.Popen(
-        [sys.executable, "-m", "cortex.runtime.gemini_service", "--port", str(port), *args],
+        [sys.executable, "-m", "experimental.runtime.gemini_service", "--port", str(port), *args],
         cwd=REPO_ROOT,
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,

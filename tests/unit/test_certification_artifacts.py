@@ -15,7 +15,7 @@ from cortex.core.environment import CommitmentEnvironmentHandle, EXECUTION_TRACE
 from cortex.core.errors import ContradictionRecord, DegradationRecord
 from cortex.core.observation import ObservationBundle, PayloadView
 from cortex.core.envelopes import LifecycleEventEnvelope
-from cortex.eval.artifacts import BlockerFragment, CurrentPairFragment, EventTraceArtifact
+from experimental.eval.artifacts import BlockerFragment, CurrentPairFragment, EventTraceArtifact
 
 
 def test_certify_commitment_returns_certified_with_concrete_evidence() -> None:
