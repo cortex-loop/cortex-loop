@@ -89,13 +89,14 @@ It is workflow state only. It does not override the packet documents, implementa
     - normalize-port recovered cleanly on the first direct repair-pressure rerun after injected `import_smoke_failed`
     - the second direct normalize-port repair-pressure rerun split with an unreproduced operator-resume payload-sanitization crash in `lab/live_openai_app_server_operator.py::_sanitize_payload()` during `wait_for_turn_completed()`
     - an immediate third normalize-port direct rerun recovered cleanly after the same injected `import_smoke_failed`
+    - two fresh direct normalize-port repair-pressure reruns on 2026-04-10 both recovered cleanly after the same injected `import_smoke_failed`
     - feature-flags direct repair-pressure reruns recovered cleanly twice after injected `test_failed`
   - both canonical repo-local entrypoint reruns under `make -C lab live-openai-operator-repair-pressure` came back clean across all three accepted packs
   - the ordinary direct conformance guardrail reruns after repair-pressure remained clean on bookmarks, normalize-port, and feature-flags
-  - the current E23 operator-cli keep/cut read therefore remains `partial` / `env-sensitive`:
+  - the current E23 operator-cli keep/cut read now lands as `keep` on the current review line without widening shipping truth:
     - Cortex-base preservation-law proof is positive on the successful repair-pressure runs
     - authoritative artifact audits passed on every successful repair-pressure run
-    - but the direct normalize-port proof set is not repeat-stable enough for a keep because one run split with an unreproduced operator resume sanitization crash inside the shared OpenAI operator proof plumbing
+    - the earlier normalize-port operator-resume payload-sanitization crash did not recur on two fresh direct reruns and currently reads as unreproduced shared operator-proof-plumbing noise rather than preservation-law drift
   - the branch is still candidate truth only, not accepted baseline truth
   - historical accepted OpenAI `service_api` evidence remains recorded as product/runtime claim history
   - the active proving/default lane for new iteration is now OpenAI `operator_cli` on this branch, while historical accepted `service_api` evidence remains recorded as product/runtime claim history and not as the day-to-day proving default
@@ -103,11 +104,10 @@ It is workflow state only. It does not override the packet documents, implementa
 ## 4. Next lawful move
 
 - keep new OpenAI `service_api` spend deferred under the current policy
-- do not promote E23 to CLI-proved candidate yet
 - keep E24 as the locally landed proving-default basis on this branch
-- keep the successful repair-pressure artifacts as the current best evidence for E23 rather than reopening broader watch surfaces by habit
-- if the normalize-port operator-resume payload-sanitization crash repeats on a fresh direct repair-pressure rerun, open one explicit localized corrective seam on the shared OpenAI operator proof plumbing
-- if the crash does not recur, rerun only the direct normalize-port repair-pressure pack until the direct proof set is honestly repeat-stable enough to keep or cut E23
+- keep the successful repair-pressure artifacts as the current best evidence for E23 and stop spending runtime on broader watch surfaces by habit
+- treat E23 as a local `keep` on the OpenAI `operator_cli` proving lane while leaving shipping truth unchanged
+- if the normalize-port operator-resume payload-sanitization crash recurs later, open one explicit localized corrective seam on the shared OpenAI operator proof plumbing rather than reopening E23 law proof
 - publication and reconciliation remain blocked on the local `main` ahead-of-origin state until the landed history is published or reconciled explicitly
 
 ## 5. Explicitly blocked moves

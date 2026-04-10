@@ -3,7 +3,7 @@
 Surface: internal
 
 Date: 2026-04-10
-Status: accepted executive-restoration note with the first verified-work restoration slice landed, the preservation-state candidate implemented, and the current OpenAI `operator_cli` repair-pressure keep/cut read recorded as partial on the current review line
+Status: accepted executive-restoration note with the first verified-work restoration slice landed, the preservation-state candidate implemented, and the current OpenAI `operator_cli` repair-pressure keep/cut read recorded as local keep evidence on the current review line
 
 ## Scope
 
@@ -136,6 +136,7 @@ What the current OpenAI `operator_cli` repair-pressure keep/cut train on the rev
   - normalize-port recovered cleanly once after injected `import_smoke_failed`
   - the second direct normalize-port repair-pressure rerun split with an unreproduced operator-resume payload-sanitization crash in `lab/live_openai_app_server_operator.py::_sanitize_payload()` during `wait_for_turn_completed()`
   - an immediate third normalize-port direct rerun recovered cleanly
+  - two fresh direct normalize-port repair-pressure reruns on 2026-04-10 both recovered cleanly after the same injected `import_smoke_failed`
   - feature-flags direct reruns recovered cleanly twice after injected `test_failed`
 - both canonical repo-local entrypoint reruns under `make -C lab live-openai-operator-repair-pressure` came back clean across all three accepted packs
 - successful repair-pressure artifact audits show the intended executive behavior:
@@ -144,9 +145,9 @@ What the current OpenAI `operator_cli` repair-pressure keep/cut train on the rev
   - repair tickets stay mechanical only
   - second-attempt writable scope stays inside the lawful repair surface
   - preserved first-attempt structure is reused outside that surface
-- current review-line classification therefore remains `partial` / `env-sensitive` rather than `keep`:
+- current review-line classification now reads as local `keep` without widening shipping truth:
   - the preservation-law behavior itself looks positive on the successful repair-pressure runs
-  - but the direct proof set is not repeat-stable enough to promote E23 honestly because one authoritative normalize-port rerun split with an unreproduced shared operator-proof-plumbing crash
+  - the earlier normalize-port operator-resume payload-sanitization crash did not recur on two fresh direct reruns and currently reads as unreproduced shared operator-proof-plumbing noise rather than preservation-law drift
 
 ## Conformance reading under the current method
 
@@ -201,9 +202,9 @@ If a later runtime/product seam is opened after this note, the next lawful move 
 2. do not reopen OpenAI `service_api` spend by habit; E24 now records OpenAI `operator_cli` as the active proving-default lane, while the older service-lane evidence remains historical product/runtime claim only
 3. keep `O4R` stable on its already-earned historical line rather than reopening the law by habit
 4. do not reopen breadth by habit; the three-pack historical line is already re-earned on the accepted note
-5. keep the maintainer-only OpenAI `operator_cli` repair-pressure proof surface as the active E23 proving method on the review line rather than reopening broader watch surfaces by habit
-6. if the normalize-port operator-resume payload-sanitization crash repeats on a fresh direct repair-pressure rerun, open one explicit localized corrective seam on the shared OpenAI operator proof plumbing
-7. if that crash does not recur, rerun only the direct normalize-port repair-pressure pack until the direct proof set is honestly repeat-stable enough to keep or cut E23
+5. keep the maintainer-only OpenAI `operator_cli` repair-pressure artifacts as the current E23 proof basis on the review line rather than reopening broader watch surfaces by habit
+6. if the normalize-port operator-resume payload-sanitization crash repeats later, open one explicit localized corrective seam on the shared OpenAI operator proof plumbing
+7. otherwise treat E23 as locally kept on the OpenAI `operator_cli` proving lane and spend the next runtime budget on a different product-bearing seam
 8. run the same contract pack across OpenAI, Claude, and Gemini on their strongest available native surfaces whenever a later seam changes Cortex law or touches non-shipping wiring
 9. revise Cortex law only if the same divergence repeats across brains; otherwise reopen wiring only on the specific drifting brain/surface
 10. keep repeated-failure inhibition and carrier inference deferred until new evidence earns them
