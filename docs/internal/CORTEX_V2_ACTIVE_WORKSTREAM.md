@@ -80,16 +80,22 @@ It is workflow state only. It does not override the packet documents, implementa
     - `python3 lab/cortex_conformance.py --mode repair-pressure --brain openai --contract-pack <accepted-pack>` now forces one verifier-visible repair case on the accepted packs without widening Cortex law
     - `make -C lab revalidate-openai-operator-repair-pressure` is the deterministic proof gate for that surface
     - `make -C lab live-openai-operator-repair-pressure` is the canonical live proof entry point
-  - repeated direct OpenAI `operator_cli` conformance reruns are now clean on the three accepted verified-work packs:
-    - bookmarks passed twice on attempt `1`
-    - normalize-port passed twice on attempt `1`
-    - feature-flags passed twice on attempt `1`
-  - that direct conformance proof did **not** exercise the preservation-aware repair branch on the accepted packs because every repeated rerun passed on attempt `1`
-  - one full OpenAI `operator_cli` output-quality watch run under `.cortex/live_validation/output_quality/openai_operator_cli/run_20260410T034643+0000/summary.json` did surface larger-task repair opportunities on the broader lab surface, but it finished `env_blocked` with all arms at `0` objective passes, all arms at `0` hidden-quality passes, and only pairwise ties
-  - the current E23 operator-cli keep/cut read is therefore `partial` / `env-sensitive`:
-    - no deterministic Cortex-base preservation-law bug was reproduced
-    - no deterministic OpenAI realization-wiring bug was reproduced
-    - but the authoritative accepted packs did not exercise repair and the broader watch surface did not close cleanly enough to promote E23 to CLI-proved candidate
+  - repeated direct OpenAI `operator_cli` conformance reruns remain clean on the three accepted verified-work packs:
+    - bookmarks passed on attempt `1`
+    - normalize-port passed on attempt `1`
+    - feature-flags passed on attempt `1`
+  - the repair-pressure proof surface has now exercised the preservation-aware repair branch on the accepted packs:
+    - bookmarks direct repair-pressure reruns recovered cleanly twice after injected `output_invalid`
+    - normalize-port recovered cleanly on the first direct repair-pressure rerun after injected `import_smoke_failed`
+    - the second direct normalize-port repair-pressure rerun split with an unreproduced operator-resume payload-sanitization crash in `lab/live_openai_app_server_operator.py::_sanitize_payload()` during `wait_for_turn_completed()`
+    - an immediate third normalize-port direct rerun recovered cleanly after the same injected `import_smoke_failed`
+    - feature-flags direct repair-pressure reruns recovered cleanly twice after injected `test_failed`
+  - both canonical repo-local entrypoint reruns under `make -C lab live-openai-operator-repair-pressure` came back clean across all three accepted packs
+  - the ordinary direct conformance guardrail reruns after repair-pressure remained clean on bookmarks, normalize-port, and feature-flags
+  - the current E23 operator-cli keep/cut read therefore remains `partial` / `env-sensitive`:
+    - Cortex-base preservation-law proof is positive on the successful repair-pressure runs
+    - authoritative artifact audits passed on every successful repair-pressure run
+    - but the direct normalize-port proof set is not repeat-stable enough for a keep because one run split with an unreproduced operator resume sanitization crash inside the shared OpenAI operator proof plumbing
   - the branch is still candidate truth only, not accepted baseline truth
   - historical accepted OpenAI `service_api` evidence remains recorded as product/runtime claim history
   - the active proving/default lane for new iteration is now OpenAI `operator_cli` on this branch, while historical accepted `service_api` evidence remains recorded as product/runtime claim history and not as the day-to-day proving default
@@ -99,9 +105,9 @@ It is workflow state only. It does not override the packet documents, implementa
 - keep new OpenAI `service_api` spend deferred under the current policy
 - do not promote E23 to CLI-proved candidate yet
 - keep E24 as the locally landed proving-default basis on this branch
-- the next proof step for E23 is now explicit, not hypothetical:
-  - run `make -C lab live-openai-operator-repair-pressure`
-  - repeat the three repair-pressure cases until they classify cleanly as keep, cut, or env-sensitive
+- keep the successful repair-pressure artifacts as the current best evidence for E23 rather than reopening broader watch surfaces by habit
+- if the normalize-port operator-resume payload-sanitization crash repeats on a fresh direct repair-pressure rerun, open one explicit localized corrective seam on the shared OpenAI operator proof plumbing
+- if the crash does not recur, rerun only the direct normalize-port repair-pressure pack until the direct proof set is honestly repeat-stable enough to keep or cut E23
 - publication and reconciliation remain blocked on the local `main` ahead-of-origin state until the landed history is published or reconciled explicitly
 
 ## 5. Explicitly blocked moves
@@ -117,6 +123,7 @@ It is workflow state only. It does not override the packet documents, implementa
 - Do not describe the historical `service_api` evidence as if it still governs day-to-day iteration after E24 is accepted.
 - Do not treat attempt-1-only conformant accepted packs as proof that the preservation-aware repair branch itself is earned.
 - Do not use the `env_blocked` operator output-quality watch run as substitute law proof for E23.
+- Do not treat the clean repo-local entrypoint reruns as sufficient to erase the one split direct normalize-port repair-pressure failure.
 
 ## 6. Acknowledged worktree noise
 
