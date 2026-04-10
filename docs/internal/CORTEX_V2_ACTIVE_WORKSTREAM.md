@@ -42,24 +42,24 @@ It is workflow state only. It does not override the packet documents, implementa
 - Current working branch:
   - `review/e23-preservation-state-machine`
 - Current candidate seam:
-  - `E23 OpenAI operator_cli keep/cut train`
+  - `E25 runtime spend allocator`
 - Product target:
-  - determine whether the preservation-state executive slice survives honest repeated OpenAI `operator_cli` proof as a CLI-proved candidate without changing the shipped OpenAI product/runtime claim
+  - route the next runtime budget to the highest-yield product-bearing seam from deterministic local artifacts instead of spending more live/runtime time on low-discrimination OpenAI watch runs
 - Surface:
-  - `internal`, `lab`, and live proving
+  - `internal`
 - Direct executive payoff:
-  - determine whether Cortex's preservation-aware repair law adds real executive value on the affordable native OpenAI proving lane before any wider product/runtime move
+  - improve Cortex development efficiency by selecting the next product-bearing proof seam from current repo truth instead of maintainer intuition
 - Why this seam exists instead of a narrower product seam:
-  - E23 is already implemented and E24 already moved the proving defaults; the missing truth is whether the preserved-structure repair law earns a keep/cut reading on the active OpenAI operator lane
+  - the current loss is seam selection quality, not missing runtime mechanism, so a tiny internal allocator beats another broad live/product rerun right now
 - Current seam status:
   - E22 is landed locally on `main` through the canonical close-session flow and the repo is now on an explicit review branch because `start-session` is blocked until that ahead-of-origin `main` history is published or reconciled
-  - E23 remains implemented on this branch as a verified product/runtime candidate:
+  - E23 remains implemented on this branch as verified product/runtime candidate state:
     - new shipped SRE preservation-state carriers and move law
     - OpenAI verified-work anchor activation plus preservation-state persistence
     - preservation-centered repair ticketing
     - lawful repair-surface narrowing on the repair turn
     - repair verification overlay on top of preserved first-attempt file maps
-  - current E24 proving-default implementation now exists on top of that branch:
+  - current E24 proving-default implementation still exists on top of that branch:
     - `ContractPack` and conformance summaries now split `product_runtime_claim` from `active_proving_default`
     - OpenAI conformance now has a real `operator_cli` runner with one resumable repair turn
     - `strongest_native_surface("openai", ...)` now defaults to `operator_cli`
@@ -84,7 +84,7 @@ It is workflow state only. It does not override the packet documents, implementa
     - bookmarks passed on attempt `1`
     - normalize-port passed on attempt `1`
     - feature-flags passed on attempt `1`
-  - the repair-pressure proof surface has now exercised the preservation-aware repair branch on the accepted packs:
+  - the repair-pressure proof surface exercised the preservation-aware repair branch on the accepted packs:
     - bookmarks direct repair-pressure reruns recovered cleanly twice after injected `output_invalid`
     - normalize-port recovered cleanly on the first direct repair-pressure rerun after injected `import_smoke_failed`
     - the second direct normalize-port repair-pressure rerun split with an unreproduced operator-resume payload-sanitization crash in `lab/live_openai_app_server_operator.py::_sanitize_payload()` during `wait_for_turn_completed()`
@@ -97,18 +97,37 @@ It is workflow state only. It does not override the packet documents, implementa
     - Cortex-base preservation-law proof is positive on the successful repair-pressure runs
     - authoritative artifact audits passed on every successful repair-pressure run
     - the earlier normalize-port operator-resume payload-sanitization crash did not recur on two fresh direct reruns and currently reads as unreproduced shared operator-proof-plumbing noise rather than preservation-law drift
+  - the new internal runtime spend allocator now exists on this branch as a deterministic maintainer-only selector over:
+    - `.cortex/live_validation/conformance/summary.latest.json`
+    - `.cortex/live_validation/output_quality/summary.latest.json`
+    - `.cortex/train_loops/*/summary.json`
+    - this active workstream ledger
+  - the allocator train output is now the active decision surface for the next runtime hour:
+    - train slug: `runtime-spend-allocator-openai`
+    - artifact path: `.cortex/train_loops/runtime-spend-allocator-openai/summary.json`
+    - human-readable note: `.cortex/train_loops/runtime-spend-allocator-openai/summary.md`
+    - current recommended next train: `real-work-replay-pack-openai`
+  - the current recommendation is grounded in current repo truth:
+    - treat E23 as a local `keep` on the OpenAI `operator_cli` proving lane while leaving shipping truth unchanged
+    - keep new OpenAI `service_api` spend deferred under the current policy
+    - the accepted verified-work packs still pass on attempt `1`, so natural repair yield remains weak on the accepted line
+    - the historical verified-work repair-yield train escalated because the accepted packs produced zero natural repair opportunities
+    - the current broad OpenAI `operator_cli` output-quality watch is `env_blocked` / zero-lift and is not a good next runtime target
+    - workflow-only publication/reconciliation closure remains useful but does not beat the next product-bearing replay-pack seam
   - the branch is still candidate truth only, not accepted baseline truth
   - historical accepted OpenAI `service_api` evidence remains recorded as product/runtime claim history
   - the active proving/default lane for new iteration is now OpenAI `operator_cli` on this branch, while historical accepted `service_api` evidence remains recorded as product/runtime claim history and not as the day-to-day proving default
 
 ## 4. Next lawful move
 
-- keep new OpenAI `service_api` spend deferred under the current policy
+- run `python3 lab/cortex_train_loop.py --train runtime-spend-allocator-openai` as the deterministic selector before opening another costly live/runtime seam
+- open `real-work-replay-pack-openai` as the next product-bearing train on the strength of the allocator artifact rather than on free-form maintainer judgment
 - keep E24 as the locally landed proving-default basis on this branch
 - keep the successful repair-pressure artifacts as the current best evidence for E23 and stop spending runtime on broader watch surfaces by habit
 - treat E23 as a local `keep` on the OpenAI `operator_cli` proving lane while leaving shipping truth unchanged
 - if the normalize-port operator-resume payload-sanitization crash recurs later, open one explicit localized corrective seam on the shared OpenAI operator proof plumbing rather than reopening E23 law proof
-- publication and reconciliation remain blocked on the local `main` ahead-of-origin state until the landed history is published or reconciled explicitly
+- keep new OpenAI `service_api` spend deferred under the current policy
+- publication and reconciliation remain blocked on the local accepted-history line until the landed history is published or reconciled explicitly, but that workflow-only closure now follows the recommended replay-pack seam
 
 ## 5. Explicitly blocked moves
 
@@ -124,6 +143,11 @@ It is workflow state only. It does not override the packet documents, implementa
 - Do not treat attempt-1-only conformant accepted packs as proof that the preservation-aware repair branch itself is earned.
 - Do not use the `env_blocked` operator output-quality watch run as substitute law proof for E23.
 - Do not treat the clean repo-local entrypoint reruns as sufficient to erase the one split direct normalize-port repair-pressure failure.
+- Do not reopen E23 broad watch surfaces by habit.
+- Do not open a new `service_api` runtime-spend seam by habit while service spend remains deferred.
+- Do not widen the next train into host expansion while the current product scope remains OpenAI-only.
+- Do not open repeated-failure inhibition or carrier-inference trains before new evidence earns them.
+- Do not let the allocator become product/runtime law, a second truth court, or a broader governance surface.
 
 ## 6. Acknowledged worktree noise
 

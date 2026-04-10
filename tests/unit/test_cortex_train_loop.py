@@ -14,6 +14,7 @@ if str(TOOLS_ROOT) not in sys.path:
     sys.path.insert(0, str(TOOLS_ROOT))
 
 import cortex_train_loop as train_loop
+import runtime_spend_allocator as spend_allocator
 
 
 def test_decide_loop_decision_promotes_on_metric_lift() -> None:
@@ -88,6 +89,36 @@ def test_train_loop_main_runs_without_service_spend_gate(
     )
 
     assert train_loop.main(["--train", "conformance-summary-truth"]) == 0
+
+
+def test_train_loop_main_runs_runtime_spend_allocator_train(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(
+        train_loop,
+        "run_runtime_spend_allocator_openai_train",
+        lambda **_kwargs: type(
+            "_Record",
+            (),
+            {
+                "as_payload": staticmethod(
+                    lambda: {
+                        "train_name": "runtime-spend-allocator-openai",
+                        "allocator_recommendation": {
+                            "recommended_train_slug": "real-work-replay-pack-openai"
+                        },
+                    }
+                ),
+                "analysis": {
+                    "allocator_recommendation": {
+                        "recommended_train_slug": "real-work-replay-pack-openai"
+                    }
+                },
+            },
+        )(),
+    )
+
+    assert train_loop.main(["--train", "runtime-spend-allocator-openai"]) == 0
 
 
 def test_evaluate_conformance_summary_truth_detects_missing_artifacts(
@@ -612,6 +643,72 @@ def test_run_output_quality_comparison_openai_train_escalates_on_env_block(
 
     assert record.final_decision == "escalate"
     assert "env/auth blocked" in record.iterations[0].reason
+
+
+def test_run_runtime_spend_allocator_openai_train_records_recommendation(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    monkeypatch.setattr(
+        train_loop,
+        "_run_shell_command",
+        lambda command, *, cwd: {
+            "command": command,
+            "command_text": command,
+            "cwd": str(cwd),
+            "exit_code": 0,
+            "stdout": "",
+            "stderr": "",
+        },
+    )
+    recommendation = spend_allocator.RuntimeSpendRecommendation(
+        host="openai",
+        signals=(
+            spend_allocator.RuntimeSpendSignal(
+                source_kind="workstream",
+                host="openai",
+                surface="operator_cli",
+                metric_family="divergence",
+                consequence="keep",
+                summary="E23 is locally kept on the operator lane.",
+                artifact_refs=("docs/internal/CORTEX_V2_ACTIVE_WORKSTREAM.md",),
+            ),
+        ),
+        recommended_candidate=spend_allocator.CandidateAssessment(
+            spec=spend_allocator.CandidateSpec(
+                slug="real-work-replay-pack-openai",
+                candidate_kind="product",
+                host="openai",
+                target_metric="repair_conversion_lift_or_first_attempt_failure_replay_coverage",
+                runtime_budget=2,
+                kill_condition="cut after 2 non-lift iterations",
+                guardrail="no regression on accepted verified-work packs",
+                proof_commands=("python3 -m pytest -q tests/unit/test_runtime_spend_allocator.py",),
+                rationale="create replayable packs from real work failures",
+            ),
+            consequence="promote",
+            rank=240,
+            reason="replay-pack train is the highest-yield next move",
+            supporting_artifact_refs=("docs/internal/CORTEX_V2_ACTIVE_WORKSTREAM.md",),
+        ),
+        ranked_candidates=(),
+        blocked_candidates=(),
+    )
+    monkeypatch.setattr(
+        train_loop,
+        "recommend_runtime_spend",
+        lambda **_kwargs: recommendation,
+    )
+
+    record = train_loop.run_runtime_spend_allocator_openai_train(loop_root=tmp_path)
+
+    assert record.final_decision == "promote"
+    summary_path = tmp_path / "runtime-spend-allocator-openai" / "summary.json"
+    assert summary_path.exists()
+    payload = json.loads(summary_path.read_text(encoding="utf-8"))
+    assert payload["allocator_recommendation"]["recommended_train_slug"] == (
+        "real-work-replay-pack-openai"
+    )
 
 
 def test_run_causal_contribution_map_openai_train_promotes_on_repeat_stable_classification(

@@ -24,6 +24,10 @@ from lab.causal_contribution_map import (  # noqa: E402
     render_causal_map_note,
 )
 from lab.live_validation_common import now_utc_iso, run_command, write_json, write_text  # noqa: E402
+from lab.runtime_spend_allocator import (  # noqa: E402
+    RuntimeSpendRecommendation,
+    recommend_runtime_spend,
+)
 
 
 LoopClass = Literal[
@@ -1154,6 +1158,114 @@ def run_causal_contribution_map_openai_train(
     return record
 
 
+def run_runtime_spend_allocator_openai_train(
+    *,
+    loop_root: Path = TRAIN_LOOP_ROOT,
+    repo_root: Path = ROOT,
+) -> TrainLoopRecord:
+    deterministic_command = (
+        "python3 -m pytest -q tests/unit/test_runtime_spend_allocator.py "
+        "tests/unit/test_cortex_train_loop.py tests/internal/test_docs_boundary.py"
+    )
+    proof_commands = [deterministic_command]
+    command_results = [_run_shell_command(deterministic_command, cwd=repo_root)]
+    recommendation = recommend_runtime_spend(host="openai", repo_root=repo_root)
+    recommended_slug = recommendation.recommended_candidate.spec.slug
+    expected_slug = "real-work-replay-pack-openai"
+
+    escalation_reasons = tuple(
+        reason
+        for reason in (
+            *(
+                f"proof command failed: {result['command_text']}"
+                for result in command_results
+                if result["exit_code"] != 0
+            ),
+            (
+                f"allocator recommended `{recommended_slug}` instead of the expected `{expected_slug}`"
+                if recommended_slug != expected_slug
+                else None
+            ),
+        )
+        if reason is not None
+    )
+
+    guardrail_ok = all(result["exit_code"] == 0 for result in command_results)
+    primary_metric_after = 1 if recommended_slug == expected_slug else 0
+    decision, reason = decide_loop_decision(
+        primary_metric_before=0,
+        primary_metric_after=primary_metric_after,
+        guardrail_ok=guardrail_ok,
+        localized_failure=recommended_slug != expected_slug,
+        better_classification=primary_metric_after == 1,
+        budget_remaining=0,
+        escalation_reasons=escalation_reasons,
+    )
+    iteration = LoopIteration(
+        index=1,
+        candidate_label="runtime-spend-allocator-openai",
+        proof_commands=tuple(proof_commands),
+        primary_metric_before=0,
+        primary_metric_after=primary_metric_after,
+        guardrail_ok=guardrail_ok,
+        localized_failure=recommended_slug != expected_slug,
+        better_classification=primary_metric_after == 1,
+        budget_remaining=0,
+        decision=decision,
+        reason=reason,
+        command_results=tuple(command_results),
+        escalation_reasons=escalation_reasons,
+    )
+    record = TrainLoopRecord(
+        train_name="runtime-spend-allocator-openai",
+        seam_class="deterministic",
+        cortex_invariant=(
+            "spend runtime on the next highest-yield product-bearing seam without widening Cortex runtime law"
+        ),
+        brain_wiring_touched=(
+            "maintainer-only OpenAI artifact selection, workstream ranking, and train-loop recommendation reporting"
+        ),
+        borrowed_mechanism=(
+            "copy the proven trace-first harness-selection lesson in tiny form by ranking the next seam from repo-local artifact summaries"
+        ),
+        contract_pack="repo-local artifact summaries only",
+        conformance_surfaces=(OPENAI_ACTIVE_PROVING_DEFAULT,),
+        baseline_result={
+            "primary_metric_value": 0,
+            "expected_recommendation": expected_slug,
+            "actual_recommendation": recommended_slug,
+            "candidate_count": len(recommendation.ranked_candidates),
+            "blocked_candidate_count": len(recommendation.blocked_candidates),
+        },
+        primary_metric="expected_next_train_recommended",
+        guardrail_metric="deterministic_proof_green_and_no_shipping_truth_widening",
+        baseline_proof_set=tuple(proof_commands),
+        iteration_budget=1,
+        rollback_surface=(
+            "runtime spend allocator module, train-loop entrypoint, and workstream next-move wording"
+        ),
+        escalation_triggers=(
+            "authority docs conflict",
+            "shipping truth would widen",
+            "allocator recommendation drifts from current repo truth",
+            "deterministic proof failed",
+        ),
+        analysis={"allocator_recommendation": recommendation.as_payload()},
+        iterations=(iteration,),
+        final_decision=decision,
+    )
+    artifact_dir = loop_root / record.train_name
+    artifact_dir.mkdir(parents=True, exist_ok=True)
+    payload = record.as_payload()
+    payload["allocator_recommendation"] = recommendation.as_payload()
+    write_json(artifact_dir / "summary.json", payload)
+    write_text(
+        artifact_dir / "summary.md",
+        render_runtime_spend_allocator_markdown(record, recommendation),
+    )
+    return record
+
+
 def render_train_loop_markdown(record: TrainLoopRecord) -> str:
     lines = [
         f"# Cortex Train Loop: {record.train_name}",
@@ -1193,6 +1305,78 @@ def render_train_loop_markdown(record: TrainLoopRecord) -> str:
     return "\n".join(lines) + "\n"
 
 
+def render_runtime_spend_allocator_markdown(
+    record: TrainLoopRecord,
+    recommendation: RuntimeSpendRecommendation,
+) -> str:
+    lines = [
+        f"# Cortex Train Loop: {record.train_name}",
+        "",
+        f"- generated_at: `{now_utc_iso()}`",
+        f"- seam_class: `{record.seam_class}`",
+        f"- primary_metric: `{record.primary_metric}`",
+        f"- guardrail_metric: `{record.guardrail_metric}`",
+        f"- final_decision: `{record.final_decision or 'none'}`",
+        "",
+        "## Recommendation",
+        "",
+        f"- recommended_train_slug: `{recommendation.recommended_candidate.spec.slug}`",
+        f"- target_metric: `{recommendation.recommended_candidate.spec.target_metric}`",
+        f"- runtime_budget: `{recommendation.recommended_candidate.spec.runtime_budget}`",
+        f"- kill_condition: {recommendation.recommended_candidate.spec.kill_condition}",
+        f"- guardrail: {recommendation.recommended_candidate.spec.guardrail}",
+        "",
+        "## Proof Commands To Run Next",
+        "",
+    ]
+    lines.extend(
+        f"- `{command}`" for command in recommendation.recommended_candidate.spec.proof_commands
+    )
+    lines.extend(["", "## Ranked Candidates", ""])
+    for candidate in recommendation.ranked_candidates:
+        lines.extend(
+            [
+                f"### {candidate.spec.slug}",
+                "",
+                f"- consequence: `{candidate.consequence}`",
+                f"- rank: `{candidate.rank}`",
+                f"- candidate_kind: `{candidate.spec.candidate_kind}`",
+                f"- runtime_budget: `{candidate.spec.runtime_budget}`",
+                f"- reason: {candidate.reason}",
+                f"- supporting_artifact_refs: `{', '.join(candidate.supporting_artifact_refs)}`",
+                "",
+            ]
+        )
+    lines.extend(["## Blocked Candidates", ""])
+    for candidate in recommendation.blocked_candidates:
+        blocked_reasons = ", ".join(candidate.blocked_reasons) or candidate.reason
+        lines.extend(
+            [
+                f"### {candidate.spec.slug}",
+                "",
+                f"- reason: {candidate.reason}",
+                f"- blocked_reasons: `{blocked_reasons}`",
+                f"- supporting_artifact_refs: `{', '.join(candidate.supporting_artifact_refs)}`",
+                "",
+            ]
+        )
+    lines.extend(["## Artifact Refs Used", ""])
+    lines.extend(f"- `{ref}`" for ref in recommendation.artifact_refs_used)
+    lines.extend(["", "## Iteration", ""])
+    for iteration in record.iterations:
+        lines.extend(
+            [
+                f"- candidate: `{iteration.candidate_label}`",
+                f"- decision: `{iteration.decision}`",
+                f"- reason: {iteration.reason}",
+                f"- primary_metric_after: `{iteration.primary_metric_after}`",
+                f"- guardrail_ok: `{iteration.guardrail_ok}`",
+                "",
+            ]
+        )
+    return "\n".join(lines).rstrip() + "\n"
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         prog="python3 lab/cortex_train_loop.py",
@@ -1206,6 +1390,7 @@ def main(argv: list[str] | None = None) -> int:
             "verified-work-repair-yield-openai",
             "output-quality-comparison-openai",
             "causal-contribution-map-openai",
+            "runtime-spend-allocator-openai",
         ),
         default="conformance-summary-truth",
     )
@@ -1221,6 +1406,12 @@ def main(argv: list[str] | None = None) -> int:
         payload = run_output_quality_comparison_openai_train().as_payload()
     elif args.train == "causal-contribution-map-openai":
         payload = run_causal_contribution_map_openai_train().as_payload()
+    elif args.train == "runtime-spend-allocator-openai":
+        record = run_runtime_spend_allocator_openai_train()
+        payload = record.as_payload()
+        allocator_recommendation = record.analysis.get("allocator_recommendation")
+        if isinstance(allocator_recommendation, dict):
+            payload["allocator_recommendation"] = allocator_recommendation
     else:  # pragma: no cover
         raise SystemExit(f"Unsupported train: {args.train}")
     print(json.dumps(payload, indent=2, sort_keys=True))
