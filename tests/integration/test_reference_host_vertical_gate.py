@@ -9,9 +9,9 @@ from cortex.core.environment import (
     EXECUTION_TRACE,
     ExecutiveEnvironmentView,
 )
-from experimental.drivers.reference_host import observe_reference_host_event
-from experimental.drivers.reference_host_commitment import evaluate_reference_host_commitment
-from experimental.sre.policy import neutral_dominance_decision
+from cortex.drivers.reference_host import observe_reference_host_event
+from cortex.drivers.reference_host_commitment import evaluate_reference_host_commitment
+from cortex.sre.policy import neutral_dominance_decision
 from tests.integration._reference_lane import (
     assert_reference_candidate_bearing_without_verdict,
     assert_reference_commitment_result_preserves_degradation_pair,

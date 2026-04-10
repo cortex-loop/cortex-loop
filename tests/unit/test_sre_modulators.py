@@ -4,12 +4,12 @@ from pathlib import Path
 
 import pytest
 
-from experimental.sre.executive_summary import ExecutiveSignalSummary
-from experimental.sre.modulators import (
+from cortex.sre.executive_summary import ExecutiveSignalSummary
+from cortex.sre.modulators import (
     ExecutiveModulatorMemory,
     update_executive_modulators,
 )
-from experimental.sre.operator_routing import (
+from cortex.sre.operator_routing import (
     OperatorTaskMode,
     OperatorTaskState,
     select_operator_route_with_modulators,

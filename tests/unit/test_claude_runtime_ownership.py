@@ -11,7 +11,7 @@ def test_claude_runtime_does_not_import_private_reference_runtime_helpers() -> N
         encoding="utf-8"
     )
 
-    assert "from experimental.runtime.reference import" not in text
+    assert "from cortex.hosts.reference.runtime import" not in text
 
 
 def test_claude_runtime_session_io_does_not_import_private_reference_session_io_helpers() -> None:
@@ -19,4 +19,4 @@ def test_claude_runtime_session_io_does_not_import_private_reference_session_io_
         encoding="utf-8"
     )
 
-    assert "from experimental.runtime.reference_session_io import" not in text
+    assert "from cortex.hosts.reference.session_io import" not in text

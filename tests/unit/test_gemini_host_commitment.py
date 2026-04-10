@@ -12,8 +12,8 @@ from cortex.core.commitments import (
 )
 from cortex.core.dispatch import DispatchLane
 from cortex.core.environment import CommitmentEnvironmentHandle, EXECUTION_TRACE
-from experimental.drivers.gemini_host import observe_gemini_host_event
-from experimental.drivers.gemini_host_commitment import (
+from cortex.drivers.gemini_host import observe_gemini_host_event
+from cortex.drivers.gemini_host_commitment import (
     GeminiHostCommitmentResult,
     bind_gemini_host_candidate,
     evaluate_gemini_host_commitment,

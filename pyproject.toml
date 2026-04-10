@@ -10,8 +10,8 @@ readme = "README.md"
 requires-python = ">=3.10"
 
 [project.scripts]
-cortex-openai-cli = "cortex.runtime.openai_cli:main"
-cortex-openai-service = "cortex.runtime.openai_service:main"
+cortex-openai-cli = "cortex.hosts.openai.cli:main"
+cortex-openai-service = "cortex.hosts.openai.service:main"
 
 [tool.setuptools]
 include-package-data = false

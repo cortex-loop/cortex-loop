@@ -4,8 +4,8 @@ import pytest
 
 from cortex.core.commitments import CommitmentStatus
 from cortex.core.errors import ContradictionRecord, DegradationRecord
-from experimental.eval.artifacts import BlockerFragment, CurrentPairFragment, EventTraceArtifact
-from experimental.eval.harness import EvaluationHarnessResult, build_evaluation_harness_result
+from lab.eval.artifacts import BlockerFragment, CurrentPairFragment, EventTraceArtifact
+from lab.eval.harness import EvaluationHarnessResult, build_evaluation_harness_result
 
 
 def test_harness_result_carries_current_pair_without_losing_refs() -> None:

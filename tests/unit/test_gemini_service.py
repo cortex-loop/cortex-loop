@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from experimental.runtime.gemini import GeminiRuntimeSession
-from experimental.runtime.gemini_service import (
+from cortex.hosts.gemini.runtime import GeminiRuntimeSession
+from cortex.hosts.gemini.service import (
     GeminiServiceState,
     build_gemini_service_server,
     export_gemini_service_session,

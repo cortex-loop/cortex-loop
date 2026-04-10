@@ -6,19 +6,19 @@ import json
 
 import pytest
 
-from experimental.runtime.gemini import GeminiRuntimeSession, run_gemini_runtime_step
-from experimental.runtime.gemini_cli import build_gemini_cli_record
-from experimental.runtime.gemini_host_control import (
+from cortex.hosts.gemini.runtime import GeminiRuntimeSession, run_gemini_runtime_step
+from cortex.hosts.gemini.cli import build_gemini_cli_record
+from cortex.hosts.gemini.host_control import (
     GeminiHostControlRequest,
     GeminiHostControlResult,
     run_gemini_host_control,
 )
-from experimental.runtime.gemini_host_transport import (
+from cortex.hosts.gemini.host_transport import (
     GeminiInteractionStreamTransportError,
     _parse_sse_events,
 )
-from experimental.runtime.gemini_ingress import parse_gemini_host_event_envelope
-from experimental.runtime.gemini_service import GeminiServiceState, handle_gemini_service_request
+from cortex.hosts.gemini.ingress import parse_gemini_host_event_envelope
+from cortex.hosts.gemini.service import GeminiServiceState, handle_gemini_service_request
 
 
 def test_gemini_host_control_request_constructs_strict_text_only_payload() -> None:

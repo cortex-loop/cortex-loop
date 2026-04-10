@@ -12,8 +12,8 @@ ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from cortex.runtime.openai_host_control import OpenAIHostControlRequest
-from cortex.runtime.openai_host_transport import (
+from cortex.hosts.openai.host_control import OpenAIHostControlRequest
+from cortex.hosts.openai.host_transport import (
     OpenAIResponseStreamTransportError,
     execute_openai_response_stream_turn,
 )

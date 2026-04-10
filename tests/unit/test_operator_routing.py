@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import pytest
 
-from experimental.sre.operator_routing import (
+from cortex.sre.operator_routing import (
     OperatorRouteProfile,
     OperatorTaskMode,
     OperatorTaskState,

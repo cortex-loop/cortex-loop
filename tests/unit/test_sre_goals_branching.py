@@ -3,10 +3,10 @@
 import pytest
 
 from cortex.sre.branching import BranchOperation
-from experimental.sre.brake import BrakeState
-from experimental.sre.families import SoftControlFamily
-from experimental.sre.goals import GoalContinuityView
-from experimental.sre.state import (
+from cortex.sre.brake import BrakeState
+from cortex.sre.families import SoftControlFamily
+from cortex.sre.goals import GoalContinuityView
+from cortex.sre.state import (
     ReferenceBrakeView,
     ReferenceControlAllocationView,
     ReferenceExecutiveState,
@@ -14,7 +14,7 @@ from experimental.sre.state import (
     ReferenceModeAndGatingView,
     ReferenceUncertaintyMonitoringView,
 )
-from experimental.sre.uncertainty import UncertaintyEstimate
+from cortex.sre.uncertainty import UncertaintyEstimate
 
 
 def test_goal_continuity_view_preserves_goal_and_pending_goal_fields() -> None:

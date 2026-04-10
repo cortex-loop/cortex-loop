@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from cortex.runtime.openai_host_control import OpenAIHostControlRequest
+from cortex.hosts.openai.host_control import OpenAIHostControlRequest
 from lab.openai_host_control_experiments import (
     OpenAIHostControlAblationConfig,
     run_openai_host_control_experiment,

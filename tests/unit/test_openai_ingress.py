@@ -2,7 +2,7 @@
 
 import pytest
 
-from cortex.runtime.openai_ingress import (
+from cortex.hosts.openai.ingress import (
     OpenAIHostEventEnvelope,
     parse_openai_host_event_envelope,
 )

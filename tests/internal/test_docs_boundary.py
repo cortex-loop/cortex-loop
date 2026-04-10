@@ -1,8 +1,10 @@
-"""Boundary and mission-lock sync checks for the E22 repo split."""
+"""Boundary and single-truth sync checks for the repo reset."""
 
 from __future__ import annotations
 
-import re
+import json
+import subprocess
+import sys
 import tomllib
 from pathlib import Path
 
@@ -13,144 +15,93 @@ README_PATH = REPO_ROOT / "README.md"
 DOCS_INDEX_PATH = REPO_ROOT / "docs" / "README.md"
 PRODUCT_CHARTER_PATH = REPO_ROOT / "docs" / "CORTEX_PRODUCT_CHARTER.md"
 PRODUCT_BOUNDARY_PATH = REPO_ROOT / "docs" / "CORTEX_PRODUCT_BOUNDARY.md"
-WORKSTREAM_PATH = REPO_ROOT / "docs" / "internal" / "CORTEX_V2_ACTIVE_WORKSTREAM.md"
+STATUS_REGISTRY_PATH = REPO_ROOT / "internal" / "truth" / "cortex_status.yaml"
+STATUS_DOC_PATH = REPO_ROOT / "docs" / "CORTEX_STATUS.md"
 PYPROJECT_PATH = REPO_ROOT / "pyproject.toml"
 ROOT_MAKEFILE_PATH = REPO_ROOT / "Makefile"
 DOCS_ROOT = REPO_ROOT / "docs"
-SURFACE_DOC_ROOTS = (
-    DOCS_ROOT / "experimental",
-    DOCS_ROOT / "internal",
-    DOCS_ROOT / "lab",
-)
 
 
 def _read(path: Path) -> str:
     return path.read_text(encoding="utf-8")
 
 
-def test_agents_records_mission_lock_and_seam_fields() -> None:
+def _load_status() -> dict[str, object]:
+    return json.loads(_read(STATUS_REGISTRY_PATH))
+
+
+def test_agents_records_mission_lock_and_single_truth_bootstrap() -> None:
     text = _read(AGENTS_PATH)
 
     assert "## Mission lock" in text
     assert "Does this make the shipped Cortex executive layer better" in text
-    assert "## Seam declaration requirement" in text
-    assert "`Surface:` `product | experimental | lab | internal`" in text
-    assert "`Executive Benefit:`" in text
-    assert "`Why this beats direct product work now:`" in text
-    assert "Do not describe lab, evidence, or governance work as Cortex product progress" in text
+    assert "internal/truth/cortex_status.yaml" in text
+    assert "docs/CORTEX_STATUS.md" in text
+    assert "AGENTS.md" in text
+    assert "git branch --show-current" in text
+    assert "git status --short --untracked-files=all" in text
     assert "Do not let evaluation machinery become the public or internal identity of Cortex." in text
+    assert "CORTEX_V2_ACTIVE_WORKSTREAM" not in text
+    assert "CORTEX_V2_PHASE_GATES_2" not in text
+    assert "CORTEX_V2_MATH_TO_CODE_CORRESPONDENCE" not in text
 
 
-def test_workstream_ledger_uses_product_first_fields() -> None:
-    text = _read(WORKSTREAM_PATH)
-
-    assert "Product target:" in text
-    assert "Surface:" in text
-    assert "Direct executive payoff:" in text
-    assert "Why this seam exists instead of a narrower product seam:" in text
-    assert "Parked evidence status:" in text
-    assert "not product truth" in text
-
-
-def test_public_docs_keep_lab_and_internal_out_of_the_front_door() -> None:
+def test_public_docs_point_to_status_and_keep_archive_out_of_the_front_door() -> None:
     readme = _read(README_PATH)
     docs_index = _read(DOCS_INDEX_PATH)
     charter = _read(PRODUCT_CHARTER_PATH)
     boundary = _read(PRODUCT_BOUNDARY_PATH)
 
-    for text in (readme, docs_index, charter, boundary):
-        assert "docs/internal/" not in text
-        assert "docs/lab/" not in text
-
-    assert "executive layer" in readme
-    assert "Not the product:" in readme
-    assert "train loops" in readme
-    assert "governance records" in readme
+    assert "docs/CORTEX_STATUS.md" in readme
+    assert "Current Status" in docs_index
+    assert "archive/" in docs_index
     assert "active workstream ledger" in charter
-    assert "not Cortex the product" in charter
-    assert "public packaging exposes only `cortex`" in boundary
+    assert "internal/truth/cortex_status.yaml" in boundary
+    for text in (readme, docs_index, charter, boundary):
+        assert "CORTEX_V2_ACTIVE_WORKSTREAM" not in text
+        assert "CORTEX_V2_PHASE_GATES_2" not in text
+        assert "CORTEX_V2_MATH_TO_CODE_CORRESPONDENCE" not in text
 
 
-def test_doc_surface_tags_match_directory_placement() -> None:
-    expected_surface_by_parent = {
-        REPO_ROOT / "docs": "product",
-        REPO_ROOT / "docs" / "experimental": "experimental",
-        REPO_ROOT / "docs" / "lab": "lab",
-        REPO_ROOT / "docs" / "internal": "internal",
+def test_active_doc_allowlist_matches_status_registry() -> None:
+    status = _load_status()
+    expected = set(status["active_docs"])
+    actual = {
+        str(path.relative_to(REPO_ROOT))
+        for path in DOCS_ROOT.rglob("*.md")
+        if not path.is_relative_to(DOCS_ROOT / "archive")
     }
 
-    for path in (REPO_ROOT / "docs").rglob("*.md"):
-        if path.name.startswith("."):
-            continue
-        if path.is_relative_to(REPO_ROOT / "docs" / "lab" / "mediation_evidence"):
-            continue
-        if path.is_relative_to(REPO_ROOT / "docs" / "internal" / "archive"):
-            continue
-        text = _read(path)
-        match = re.search(r"^Surface:\s+(\w+)\s*$", text, re.MULTILINE)
-        assert match is not None, f"missing Surface tag: {path}"
-
-        if path.parent == REPO_ROOT / "docs":
-            expected = expected_surface_by_parent[REPO_ROOT / "docs"]
-        elif path.is_relative_to(REPO_ROOT / "docs" / "experimental"):
-            expected = expected_surface_by_parent[REPO_ROOT / "docs" / "experimental"]
-        elif path.is_relative_to(REPO_ROOT / "docs" / "lab"):
-            expected = expected_surface_by_parent[REPO_ROOT / "docs" / "lab"]
-        elif path.is_relative_to(REPO_ROOT / "docs" / "internal"):
-            expected = expected_surface_by_parent[REPO_ROOT / "docs" / "internal"]
-        else:
-            raise AssertionError(f"unexpected docs path: {path}")
-
-        assert match.group(1) == expected, f"surface drift for {path}"
+    assert actual == expected
 
 
-def test_root_docs_only_exposes_split_surface_directories() -> None:
+def test_docs_directory_only_exposes_archive_and_workflow_subtrees() -> None:
     subdirs = sorted(path.name for path in DOCS_ROOT.iterdir() if path.is_dir())
 
-    assert subdirs == ["experimental", "internal", "lab"]
+    assert subdirs == ["archive", "internal"]
+    assert [path.name for path in (DOCS_ROOT / "internal").iterdir()] == ["REPO_WORKFLOW.md"]
 
 
-def test_moved_doc_references_and_path_families_do_not_drift() -> None:
-    text_roots = (
-        REPO_ROOT / "docs",
-        REPO_ROOT / "tests",
-        REPO_ROOT / "experimental",
-        REPO_ROOT / "lab",
-        REPO_ROOT / "internal",
+def test_generated_status_doc_is_current() -> None:
+    proc = subprocess.run(
+        [sys.executable, "internal/truth/generate_status.py", "--check"],
+        cwd=REPO_ROOT,
+        check=False,
+        capture_output=True,
+        text=True,
     )
-    text_files = [
-        path
-        for root in text_roots
-        for path in root.rglob("*")
-        if path.is_file() and (path.suffix in {".md", ".py", ".toml"} or path.name == "Makefile")
-    ]
-    text_files.extend(
-        [
-            REPO_ROOT / "AGENTS.md",
-            REPO_ROOT / "README.md",
-            REPO_ROOT / "Makefile",
-        ]
+    assert proc.returncode == 0, proc.stderr or proc.stdout
+    assert STATUS_DOC_PATH.exists()
+
+
+def test_no_active_code_homes_remain_under_experimental() -> None:
+    experimental_python = sorted(
+        str(path.relative_to(REPO_ROOT))
+        for path in (REPO_ROOT / "experimental").rglob("*.py")
+        if path.name != "__init__.py"
     )
-    text_files = [path for path in text_files if path != Path(__file__)]
 
-    banned_literals = {
-        "docs/archive/": "docs/internal/archive/",
-        "docs/erika-visualizations/": "docs/lab/visualizations/",
-        "docs/mediation_evidence/": "docs/lab/mediation_evidence/",
-        "docs/internal/docs/internal/REPO_WORKFLOW.md": "docs/internal/REPO_WORKFLOW.md",
-    }
-    for doc_root in SURFACE_DOC_ROOTS:
-        for moved_doc in doc_root.glob("*.md"):
-            banned_literals[f"docs/{moved_doc.name}"] = str(moved_doc.relative_to(REPO_ROOT))
-
-    offenders: list[str] = []
-    for path in text_files:
-        text = _read(path)
-        for old, replacement in banned_literals.items():
-            if old in text:
-                offenders.append(f"{path}: replace {old} -> {replacement}")
-
-    assert not offenders, "\n".join(offenders)
+    assert experimental_python == []
 
 
 def test_product_package_does_not_import_non_product_surfaces() -> None:
@@ -174,30 +125,17 @@ def test_public_packaging_surface_is_explicit() -> None:
 
     scripts = config["project"]["scripts"]
     assert scripts == {
-        "cortex-openai-cli": "cortex.runtime.openai_cli:main",
-        "cortex-openai-service": "cortex.runtime.openai_service:main",
+        "cortex-openai-cli": "cortex.hosts.openai.cli:main",
+        "cortex-openai-service": "cortex.hosts.openai.service:main",
     }
 
-    finder = config["tool"]["setuptools"]["packages"]["find"]
-    assert finder["include"] == ["cortex", "cortex.*"]
-    assert finder["exclude"] == [
-        "experimental",
-        "experimental.*",
-        "lab",
-        "lab.*",
-        "internal",
-        "internal.*",
-        "tests",
-        "tests.*",
-    ]
 
-
-def test_root_makefile_is_product_first() -> None:
+def test_root_makefile_is_purpose_first() -> None:
     text = _read(ROOT_MAKEFILE_PATH)
 
     assert "product-test:" in text
-    assert "product-openai-cli:" in text
-    assert "product-openai-service:" in text
+    assert "conformance-test:" in text
     assert "experimental-test:" in text
-    assert "make $@ is internal and deprecated; use make -C lab $@" in text
+    assert "lab-test:" in text
+    assert "archive-test:" in text
     assert "make repo-hygiene is internal and deprecated; use make -C internal cleanup-report" in text

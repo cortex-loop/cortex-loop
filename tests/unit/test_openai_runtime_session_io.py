@@ -6,8 +6,8 @@ import json
 
 import pytest
 
-from cortex.runtime.openai import OpenAIRuntimeSession
-from cortex.runtime.openai_session_io import (
+from cortex.hosts.openai.runtime import OpenAIRuntimeSession
+from cortex.hosts.openai.session_io import (
     build_openai_runtime_session_artifact,
     parse_openai_runtime_session_artifact,
     read_openai_runtime_session_artifact,

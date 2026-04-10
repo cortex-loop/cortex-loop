@@ -142,7 +142,7 @@ def test_openai_runtime_cli_undocumented_raw_host_event_warns_without_fabricatin
 
 def _run_openai_cli(*args: str, input_text: str | None = None) -> subprocess.CompletedProcess[str]:
     return subprocess.run(
-        [sys.executable, "-m", "cortex.runtime.openai_cli", *args],
+        [sys.executable, "-m", "cortex.hosts.openai.cli", *args],
         cwd=REPO_ROOT,
         input=input_text,
         capture_output=True,

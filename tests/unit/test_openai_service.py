@@ -6,9 +6,9 @@ import pytest
 
 from tests.unit._verified_work_fixtures import VALID_FILE_MAP, render_full_files_result
 
-from cortex.runtime.openai import OpenAIRuntimeSession
+from cortex.hosts.openai.runtime import OpenAIRuntimeSession
 from cortex.sre.verified_work import VerificationOutcome
-from cortex.runtime.openai_service import (
+from cortex.hosts.openai.service import (
     OpenAIServiceState,
     build_openai_service_server,
     export_openai_service_session,
@@ -128,7 +128,7 @@ def test_openai_service_action_roundtrips_verified_work_payload(
     state = OpenAIServiceState()
     rendered = render_full_files_result(VALID_FILE_MAP)
     monkeypatch.setattr(
-        "cortex.runtime.openai_host_control.verify_verified_work_result",
+        "cortex.hosts.openai.host_control.verify_verified_work_result",
         lambda result_text, contract: (
             VALID_FILE_MAP,
             VerificationOutcome(

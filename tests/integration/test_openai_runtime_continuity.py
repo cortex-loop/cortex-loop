@@ -115,7 +115,7 @@ def test_openai_runtime_host_warning_and_certified_commitment_can_coexist_across
 
 def _run_openai_cli(*args: str, input_text: str | None = None) -> subprocess.CompletedProcess[str]:
     return subprocess.run(
-        [sys.executable, "-m", "cortex.runtime.openai_cli", *args],
+        [sys.executable, "-m", "cortex.hosts.openai.cli", *args],
         cwd=REPO_ROOT,
         input=input_text,
         capture_output=True,

@@ -16,6 +16,15 @@ Active development belongs in:
 This clone should treat `main` as the resting branch.
 In short: `main` is the resting branch.
 
+## Bootstrap
+
+Every new session should start from exactly these four reads:
+
+1. `AGENTS.md`
+2. `docs/CORTEX_STATUS.md`
+3. `git branch --show-current`
+4. `git status --short --untracked-files=all`
+
 ## Goal
 
 Managed sessions should end in one of these states:
@@ -169,6 +178,15 @@ Manual/review branch workflow:
 - fails if any merged local branch, open manual branch, or open managed branch remains
 - fails if any remote `review/*` head remains
 - is the final repo-hygiene gate for declaring the repo fully clean
+
+Managed verification is purpose-first:
+
+- `make product-test`
+- `make conformance-test`
+- `make experimental-test`
+- `python3 internal/truth/generate_status.py --check`
+- `make -C internal test`
+- `make lab-test`
 
 ## Commit Message Contract
 

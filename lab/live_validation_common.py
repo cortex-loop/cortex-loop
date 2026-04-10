@@ -17,7 +17,7 @@ from typing import Any
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 DOCS_ROOT = REPO_ROOT / "docs"
-WORKSTREAM_PATH = DOCS_ROOT / "internal" / "CORTEX_V2_ACTIVE_WORKSTREAM.md"
+STATUS_REGISTRY_PATH = REPO_ROOT / "internal" / "truth" / "cortex_status.yaml"
 LOCAL_LIVE_ROOT = REPO_ROOT / ".cortex" / "live_validation"
 PREFLIGHT_REPORT_PATH = LOCAL_LIVE_ROOT / "preflight_report.json"
 COMPARATOR_ROOT = LOCAL_LIVE_ROOT / "comparators"
@@ -144,16 +144,9 @@ def now_utc_iso() -> str:
 
 
 def read_workstream_baseline() -> tuple[str, str]:
-    text = WORKSTREAM_PATH.read_text(encoding="utf-8")
-    branch_match = re.search(r"Accepted baseline branch: `([^`]+)`", text)
-    commit_match = re.search(r"Accepted baseline commit: `([^`]+)`", text)
-    if branch_match is None:
-        raise ValueError("workstream baseline is missing")
-    branch = branch_match.group(1)
-    if commit_match is not None:
-        return branch, commit_match.group(1)
-    resolved_commit = _resolve_git_ref(branch)
-    return branch, resolved_commit
+    payload = json.loads(STATUS_REGISTRY_PATH.read_text(encoding="utf-8"))
+    baseline = payload["accepted_baseline"]
+    return str(baseline["branch"]), str(baseline["commit"])
 
 
 def _resolve_git_ref(ref: str) -> str:

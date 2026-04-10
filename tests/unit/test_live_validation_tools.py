@@ -512,25 +512,18 @@ def test_automation_auth_readiness_defaults_to_missing_without_machine_creds() -
 
 
 def test_read_workstream_baseline_resolves_commit_from_branch_lookup(monkeypatch, tmp_path: Path) -> None:
-    workstream = tmp_path / "workstream.md"
-    workstream.write_text(
-        "- Accepted baseline branch: `main`\n"
-        "- Accepted baseline commit lookup: `git rev-parse HEAD` on clean synced `main`\n",
+    status = tmp_path / "cortex_status.yaml"
+    status.write_text(
+        '{\n'
+        '  "accepted_baseline": {\n'
+        '    "branch": "main",\n'
+        '    "commit": "deadbeef1234567890",\n'
+        '    "summary": "test baseline"\n'
+        "  }\n"
+        "}\n",
         encoding="utf-8",
     )
-    monkeypatch.setattr(live_validation_common, "WORKSTREAM_PATH", workstream)
-    monkeypatch.setattr(
-        live_validation_common,
-        "run_command",
-        lambda *args, **kwargs: {
-            "command": ["git", "rev-parse", "main"],
-            "exit_code": 0,
-            "stdout": "deadbeef1234567890\n",
-            "stderr": "",
-            "started_at": "2026-03-29T00:00:00+00:00",
-            "ended_at": "2026-03-29T00:00:00+00:00",
-        },
-    )
+    monkeypatch.setattr(live_validation_common, "STATUS_REGISTRY_PATH", status)
 
     assert live_validation_common.read_workstream_baseline() == (
         "main",
@@ -1859,22 +1852,32 @@ def test_live_compare_ignores_ready_out_of_scope_claude_for_current_scope_truth(
 def test_live_compare_falls_back_to_accepted_watchlist_when_local_operator_artifacts_are_absent(
     monkeypatch,
 ) -> None:
-    workstream_text = """
-- the OpenAI App Server operator lane now completes:
-    - `pass_minimal` twice
-    - `truth_gap` truthfully
-    - `restart_continuity` twice
-- the Claude operator lane is now hook-backed and completes:
-    - `pass_minimal` twice
-    - `truth_gap` truthfully
-    - `restart_continuity`
-- the deeper Gemini auto-mode product-path rerun now shows:
-    - `pass_minimal` succeeds twice on `auto` with explicit `capacity_exhausted` warnings
-    - `truth_gap` is truthful on the latest reruns on `auto`
-    - `restart_continuity` is not yet repeat-stable because the latest reruns include a `capacity_exhausted` blocker on `auto`
-"""
-    monkeypatch.setattr(live_compare, "WORKSTREAM_PATH", Path("/tmp/workstream.md"))
-    live_compare.WORKSTREAM_PATH.write_text(workstream_text, encoding="utf-8")
+    status_path = Path("/tmp/cortex-status-watchlist.json")
+    status_path.write_text(
+        json.dumps(
+            {
+                "accepted_watchlist": {
+                    "claude": {
+                        "pass_minimal": True,
+                        "truth_gap": True,
+                        "restart_continuity": True,
+                    },
+                    "gemini": {
+                        "pass_minimal": True,
+                        "truth_gap": True,
+                        "restart_continuity": False,
+                    },
+                    "openai": {
+                        "pass_minimal": True,
+                        "truth_gap": True,
+                        "restart_continuity": True,
+                    },
+                }
+            }
+        ),
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(live_compare, "STATUS_REGISTRY_PATH", status_path)
     monkeypatch.setattr(
         live_compare,
         "_read_json",
@@ -1887,7 +1890,7 @@ def test_live_compare_falls_back_to_accepted_watchlist_when_local_operator_artif
 
     assert comparison["operator_pass_count"] == 3
     assert comparison["operator_truthful_gap_count"] == 3
-    assert comparison["providers"]["claude"]["operator_lifecycle"]["source"] == "accepted_watchlist_fallback"
+    assert comparison["providers"]["claude"]["operator_lifecycle"]["source"] == "status_registry"
     assert comparison["providers"]["gemini"]["operator_lifecycle"]["restart_continuity_success"] is False
     assert comparison["providers"]["openai"]["operator_lifecycle"]["pass_minimal_success"] is True
     assert comparison["watchlist_drift_hosts"] == []
@@ -1896,22 +1899,32 @@ def test_live_compare_falls_back_to_accepted_watchlist_when_local_operator_artif
 def test_live_compare_surfaces_watchlist_drift_when_local_operator_artifacts_are_partial(
     monkeypatch,
 ) -> None:
-    workstream_text = """
-- the OpenAI App Server operator lane now completes:
-    - `pass_minimal` twice
-    - `truth_gap` truthfully
-    - `restart_continuity` twice
-- the Claude operator lane is now hook-backed and completes:
-    - `pass_minimal` twice
-    - `truth_gap` truthfully
-    - `restart_continuity`
-- the deeper Gemini auto-mode product-path rerun now shows:
-    - `pass_minimal` succeeds twice on `auto` with explicit `capacity_exhausted` warnings
-    - `truth_gap` is truthful on the latest reruns on `auto`
-    - `restart_continuity` is not yet repeat-stable because the latest reruns include a `capacity_exhausted` blocker on `auto`
-"""
-    monkeypatch.setattr(live_compare, "WORKSTREAM_PATH", Path("/tmp/workstream-mixed.md"))
-    live_compare.WORKSTREAM_PATH.write_text(workstream_text, encoding="utf-8")
+    status_path = Path("/tmp/cortex-status-watchlist-mixed.json")
+    status_path.write_text(
+        json.dumps(
+            {
+                "accepted_watchlist": {
+                    "claude": {
+                        "pass_minimal": True,
+                        "truth_gap": True,
+                        "restart_continuity": True,
+                    },
+                    "gemini": {
+                        "pass_minimal": True,
+                        "truth_gap": True,
+                        "restart_continuity": False,
+                    },
+                    "openai": {
+                        "pass_minimal": True,
+                        "truth_gap": True,
+                        "restart_continuity": True,
+                    },
+                }
+            }
+        ),
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(live_compare, "STATUS_REGISTRY_PATH", status_path)
 
     local_product_runs = {
         "runs": [

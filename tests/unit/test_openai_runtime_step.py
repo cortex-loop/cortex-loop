@@ -4,8 +4,8 @@ from __future__ import annotations
 
 import pytest
 
-import cortex.runtime.openai as openai_runtime
-from cortex.runtime.openai import (
+import cortex.hosts.openai.runtime as openai_runtime
+from cortex.hosts.openai.runtime import (
     OpenAIRuntimeSession,
     run_openai_runtime_step,
     run_openai_runtime_verification_step,

@@ -16,29 +16,19 @@ test-integration:
 	$(ROOT_PYTEST) tests/integration
 
 test-smoke:
-	$(ROOT_PYTEST) tests/unit/test_correspondence_contract.py \
-		tests/unit/test_correspondence_core.py \
-		tests/unit/test_correspondence_ports.py \
-		tests/unit/test_correspondence_sre.py \
-		tests/unit/test_correspondence_periphery.py \
-		tests/integration/test_reference_host_vertical_gate.py \
-		tests/integration/test_reference_lane_latency.py \
-		tests/integration/test_reference_lane_packet_example.py \
-		tests/integration/test_reference_mediated_lane_packet_example.py \
-		tests/integration/test_gemini_lane_packet_example.py \
-		tests/integration/test_gemini_mediated_lane_packet_example.py \
-		tests/integration/test_openai_lane_packet_example.py \
-		tests/integration/test_openai_mediated_lane_packet_example.py \
-		tests/integration/test_aux_claim_conservative.py \
-		tests/product/test_import_smoke.py \
+	$(ROOT_PYTEST) tests/product/test_import_smoke.py \
+		tests/product/test_public_boundary.py \
+		tests/conformance/test_host_import_smoke.py \
 		tests/internal/test_docs_boundary.py \
 		tests/internal/test_workflow_boundary.py \
 		tests/lab/test_lab_surface.py -q
 
 verify:
-	$(ROOT_PYTEST) tests/unit -q
-	$(ROOT_PYTEST) tests/integration -q
+	$(ROOT_PYTEST) tests/product -q
+	$(ROOT_PYTEST) tests/conformance -q
+	$(ROOT_PYTEST) tests/experimental -q
 	$(ROOT_PYTEST) tests/lab -q
+	$(ROOT_PYTEST) tests/internal -q
 
 repo-hygiene:
 	$(ROOT_PYTHON) internal/workflow/repo_workflow.py cleanup-report
@@ -237,7 +227,7 @@ emit-latency-evidence-candidate:
 	$(ROOT_PYTHON) -m tests.integration._reference_lane_latency_evidence
 
 revalidate-mediation-evidence-package:
-	$(ROOT_PYTEST) tests/unit/test_mediation_evidence_package.py -q
+	$(ROOT_PYTEST) tests/archive/test_mediation_evidence_package.py -q
 	$(ROOT_PYTHON) lab/mediation_evidence_package.py --check
 
 revalidate-mediation-reference-host-realization-basis:
@@ -413,16 +403,16 @@ coverage:
 	$(ROOT_COVERAGE) report --rcfile=$(COVERAGE_RC)
 
 test-correspondence-core:
-	$(ROOT_PYTEST) tests/unit/test_correspondence_core.py
+	$(ROOT_PYTEST) tests/archive/test_correspondence_core.py
 
 test-correspondence-contract:
-	$(ROOT_PYTEST) tests/unit/test_correspondence_contract.py
+	$(ROOT_PYTEST) tests/archive/test_correspondence_contract.py
 
 test-correspondence-ports:
-	$(ROOT_PYTEST) tests/unit/test_correspondence_ports.py
+	$(ROOT_PYTEST) tests/archive/test_correspondence_ports.py
 
 test-correspondence-sre:
-	$(ROOT_PYTEST) tests/unit/test_correspondence_sre.py
+	$(ROOT_PYTEST) tests/archive/test_correspondence_sre.py
 
 test-correspondence-periphery:
-	$(ROOT_PYTEST) tests/unit/test_correspondence_periphery.py
+	$(ROOT_PYTEST) tests/archive/test_correspondence_periphery.py

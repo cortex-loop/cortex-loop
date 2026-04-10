@@ -2,9 +2,9 @@ from __future__ import annotations
 
 import pytest
 
-from experimental.sre.executive_summary import ExecutiveSignalSummary
-from experimental.sre.modulators import ExecutiveModulatorState
-from experimental.sre.policy_view import build_executive_policy_view
+from cortex.sre.executive_summary import ExecutiveSignalSummary
+from cortex.sre.modulators import ExecutiveModulatorState
+from cortex.sre.policy_view import build_executive_policy_view
 
 
 def test_policy_view_switch_margin_changes_with_focus_and_explore() -> None:

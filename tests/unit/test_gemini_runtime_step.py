@@ -2,7 +2,7 @@
 
 import pytest
 
-from experimental.runtime.gemini import run_gemini_runtime_step
+from cortex.hosts.gemini.runtime import run_gemini_runtime_step
 
 
 def test_gemini_runtime_step_rejects_canonical_cortex_event_name_before_runtime_processing() -> None:

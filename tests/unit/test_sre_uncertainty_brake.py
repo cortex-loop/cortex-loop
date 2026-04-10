@@ -1,7 +1,7 @@
 """Focused unit tests for SRE uncertainty and brake."""
 
-from experimental.sre.brake import BrakeEvaluation, BrakeState, evaluate_brake_state
-from experimental.sre.uncertainty import REFERENCE_UNCERTAINTY_CLASSES, UncertaintyEstimate
+from cortex.sre.brake import BrakeEvaluation, BrakeState, evaluate_brake_state
+from cortex.sre.uncertainty import REFERENCE_UNCERTAINTY_CLASSES, UncertaintyEstimate
 
 
 def test_uncertainty_estimate_accepts_packet_class_tags_and_rejects_unknown_classes() -> None:

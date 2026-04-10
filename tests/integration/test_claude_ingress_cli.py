@@ -136,7 +136,7 @@ def _run_claude_ingress_cli(
     input_text: str | None = None,
 ) -> subprocess.CompletedProcess[str]:
     return subprocess.run(
-        [sys.executable, "-m", "experimental.runtime.claude_ingress_cli", *args],
+        [sys.executable, "-m", "cortex.hosts.claude.ingress_cli", *args],
         cwd=REPO_ROOT,
         input=input_text,
         capture_output=True,

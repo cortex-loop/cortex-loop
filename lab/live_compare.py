@@ -9,6 +9,7 @@ from typing import Any
 
 from lab.live_validation_common import (
     PREFLIGHT_REPORT_PATH,
+    STATUS_REGISTRY_PATH,
     canonical_service_provider_scope,
     comparator_path,
     decide_verdict,
@@ -16,7 +17,6 @@ from lab.live_validation_common import (
     live_evidence_fields,
     now_utc_iso,
     provider_root,
-    WORKSTREAM_PATH,
     write_json,
     write_text,
 )
@@ -402,26 +402,20 @@ def _continuity_success(*, provider: str, operator_runs: list[dict[str, Any]]) -
 
 
 def _accepted_watchlist_fallbacks() -> dict[str, dict[str, Any]]:
-    text = WORKSTREAM_PATH.read_text(encoding="utf-8")
-    claude_positive = (
-        "the Claude operator lane is now hook-backed and completes:" in text
-        or "Claude: positive watchlist signal" in text
+    accepted_watchlist = json.loads(STATUS_REGISTRY_PATH.read_text(encoding="utf-8")).get(
+        "accepted_watchlist",
+        {},
     )
-    gemini_truthful_gap = (
-        "`truth_gap` is truthful on the latest reruns on `auto`" in text
-        or "Gemini: unresolved watchlist signal" in text
-    )
-    openai_positive = (
-        "the OpenAI App Server operator lane now completes:" in text
-        or "OpenAI: positive watchlist signal" in text
-    )
+    claude_signal = accepted_watchlist.get("claude", {})
+    gemini_signal = accepted_watchlist.get("gemini", {})
+    openai_signal = accepted_watchlist.get("openai", {})
     return {
         "claude": {
-            "source": "accepted_watchlist_fallback",
+            "source": "status_registry",
             "synthetic_runs": [
                 {
                     "scenario_id": "pass_minimal",
-                    "success": claude_positive,
+                    "success": bool(claude_signal.get("pass_minimal")),
                     "truth_gap_kind": None,
                     "failure_class": None,
                     "warning_classes": [],
@@ -433,7 +427,9 @@ def _accepted_watchlist_fallbacks() -> dict[str, dict[str, Any]]:
                 {
                     "scenario_id": "truth_gap",
                     "success": False,
-                    "truth_gap_kind": "truthful_incomplete" if ("    - `truth_gap` truthfully" in text or claude_positive) else None,
+                    "truth_gap_kind": "truthful_incomplete"
+                    if claude_signal.get("truth_gap")
+                    else None,
                     "failure_class": None,
                     "warning_classes": [],
                     **live_evidence_fields(lane="operator"),
@@ -443,7 +439,7 @@ def _accepted_watchlist_fallbacks() -> dict[str, dict[str, Any]]:
                 },
                 {
                     "scenario_id": "restart_continuity",
-                    "success": claude_positive,
+                    "success": bool(claude_signal.get("restart_continuity")),
                     "truth_gap_kind": None,
                     "failure_class": None,
                     "warning_classes": [],
@@ -455,11 +451,11 @@ def _accepted_watchlist_fallbacks() -> dict[str, dict[str, Any]]:
             ],
         },
         "gemini": {
-            "source": "accepted_watchlist_fallback",
+            "source": "status_registry",
             "synthetic_runs": [
                 {
                     "scenario_id": "pass_minimal",
-                    "success": "`pass_minimal` succeeds twice on `auto` with explicit `capacity_exhausted` warnings" in text,
+                    "success": bool(gemini_signal.get("pass_minimal")),
                     "truth_gap_kind": None,
                     "failure_class": None,
                     "warning_classes": ["capacity_exhausted"],
@@ -471,7 +467,9 @@ def _accepted_watchlist_fallbacks() -> dict[str, dict[str, Any]]:
                 {
                     "scenario_id": "truth_gap",
                     "success": False,
-                    "truth_gap_kind": "truthful_incomplete" if gemini_truthful_gap else None,
+                    "truth_gap_kind": "truthful_incomplete"
+                    if gemini_signal.get("truth_gap")
+                    else None,
                     "failure_class": None,
                     "warning_classes": [],
                     **live_evidence_fields(lane="operator"),
@@ -481,7 +479,7 @@ def _accepted_watchlist_fallbacks() -> dict[str, dict[str, Any]]:
                 },
                 {
                     "scenario_id": "restart_continuity",
-                    "success": False,
+                    "success": bool(gemini_signal.get("restart_continuity")),
                     "truth_gap_kind": None,
                     "failure_class": "capacity_exhausted",
                     "warning_classes": ["capacity_exhausted"],
@@ -493,11 +491,11 @@ def _accepted_watchlist_fallbacks() -> dict[str, dict[str, Any]]:
             ],
         },
         "openai": {
-            "source": "accepted_watchlist_fallback",
+            "source": "status_registry",
             "synthetic_runs": [
                 {
                     "scenario_id": "pass_minimal",
-                    "success": openai_positive,
+                    "success": bool(openai_signal.get("pass_minimal")),
                     "truth_gap_kind": None,
                     "failure_class": None,
                     "warning_classes": [],
@@ -509,7 +507,9 @@ def _accepted_watchlist_fallbacks() -> dict[str, dict[str, Any]]:
                 {
                     "scenario_id": "truth_gap",
                     "success": False,
-                    "truth_gap_kind": "truthful_incomplete" if ("    - `truth_gap` truthfully" in text or openai_positive) else None,
+                    "truth_gap_kind": "truthful_incomplete"
+                    if openai_signal.get("truth_gap")
+                    else None,
                     "failure_class": None,
                     "warning_classes": [],
                     **live_evidence_fields(lane="operator"),
@@ -519,7 +519,7 @@ def _accepted_watchlist_fallbacks() -> dict[str, dict[str, Any]]:
                 },
                 {
                     "scenario_id": "restart_continuity",
-                    "success": openai_positive,
+                    "success": bool(openai_signal.get("restart_continuity")),
                     "truth_gap_kind": None,
                     "failure_class": None,
                     "warning_classes": [],

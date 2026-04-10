@@ -254,10 +254,11 @@ def _delete_branch(branch: str) -> None:
 def _run_verification_contract() -> None:
     _run(["git", "diff", "--check"])
     _run(["make", "product-test"])
+    _run(["make", "conformance-test"])
     _run(["make", "experimental-test"])
+    _run(["python3", "internal/truth/generate_status.py", "--check"])
     _run(["make", "-C", "internal", "test"])
-    _run(["make", "-C", "lab", "test-smoke"])
-    _run(["make", "-C", "lab", "verify"])
+    _run(["make", "lab-test"])
 
 
 def _commit_has_staged_changes() -> bool:

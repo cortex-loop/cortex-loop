@@ -20,7 +20,7 @@ from cortex.core.support import (
     SupportTraceState,
     WakeReceipt,
 )
-from experimental.drivers.reference_host_commitment import (
+from cortex.drivers.reference_host_commitment import (
     ReferenceHostCommitmentResult,
     evaluate_reference_host_commitment,
 )

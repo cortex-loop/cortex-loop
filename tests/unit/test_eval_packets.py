@@ -4,9 +4,9 @@ import pytest
 
 from cortex.core.commitments import CommitmentStatus
 from cortex.core.errors import ContradictionRecord, DegradationRecord
-from experimental.eval.artifacts import BlockerFragment, CurrentPairFragment, EventTraceArtifact
-from experimental.eval.harness import build_evaluation_harness_result
-from experimental.eval.packets import (
+from lab.eval.artifacts import BlockerFragment, CurrentPairFragment, EventTraceArtifact
+from lab.eval.harness import build_evaluation_harness_result
+from lab.eval.packets import (
     EvaluationPacket,
     EvaluationPacketKind,
     WithheldField,
