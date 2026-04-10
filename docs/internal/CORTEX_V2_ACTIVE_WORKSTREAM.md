@@ -42,15 +42,15 @@ It is workflow state only. It does not override the packet documents, implementa
 - Current working branch:
   - `review/e23-preservation-state-machine`
 - Current candidate seam:
-  - `E24 OpenAI operator_cli proving-default realignment`
+  - `E23 OpenAI operator_cli keep/cut train`
 - Product target:
-  - make OpenAI `operator_cli` the active proving/default lane for development, conformance, and train-loop iteration without changing the shipped OpenAI product/runtime claim
+  - determine whether the preservation-state executive slice survives honest repeated OpenAI `operator_cli` proof as a CLI-proved candidate without changing the shipped OpenAI product/runtime claim
 - Surface:
-  - `internal` and `lab`
+  - `internal`, `lab`, and live proving
 - Direct executive payoff:
-  - keep development and iteration aimed at the affordable native OpenAI lane while preserving truthful product/runtime boundaries around the shipped executive layer
+  - determine whether Cortex's preservation-aware repair law adds real executive value on the affordable native OpenAI proving lane before any wider product/runtime move
 - Why this seam exists instead of a narrower product seam:
-  - current policy defers new OpenAI `service_api` spend, but the lab still points default proving and train logic at that lane; the repo must stop drifting between product truth and proving truth before the next live executive iteration
+  - E23 is already implemented and E24 already moved the proving defaults; the missing truth is whether the preserved-structure repair law earns a keep/cut reading on the active OpenAI operator lane
 - Current seam status:
   - E22 is landed locally on `main` through the canonical close-session flow and the repo is now on an explicit review branch because `start-session` is blocked until that ahead-of-origin `main` history is published or reconciled
   - E23 remains implemented on this branch as a verified product/runtime candidate:
@@ -59,7 +59,7 @@ It is workflow state only. It does not override the packet documents, implementa
     - preservation-centered repair ticketing
     - lawful repair-surface narrowing on the repair turn
     - repair verification overlay on top of preserved first-attempt file maps
-  - current E24 candidate implementation now exists on top of that branch:
+  - current E24 proving-default implementation now exists on top of that branch:
     - `ContractPack` and conformance summaries now split `product_runtime_claim` from `active_proving_default`
     - OpenAI conformance now has a real `operator_cli` runner with one resumable repair turn
     - `strongest_native_surface("openai", ...)` now defaults to `operator_cli`
@@ -75,6 +75,16 @@ It is workflow state only. It does not override the packet documents, implementa
     - `tests/internal/test_workflow_boundary.py`
     - `make -C lab revalidate-openai-operator-cli`
     - `make -C lab revalidate-openai-host-control`
+  - repeated direct OpenAI `operator_cli` conformance reruns are now clean on the three accepted verified-work packs:
+    - bookmarks passed twice on attempt `1`
+    - normalize-port passed twice on attempt `1`
+    - feature-flags passed twice on attempt `1`
+  - that direct conformance proof did **not** exercise the preservation-aware repair branch on the accepted packs because every repeated rerun passed on attempt `1`
+  - one full OpenAI `operator_cli` output-quality watch run under `.cortex/live_validation/output_quality/openai_operator_cli/run_20260410T034643+0000/summary.json` did surface larger-task repair opportunities on the broader lab surface, but it finished `env_blocked` with all arms at `0` objective passes, all arms at `0` hidden-quality passes, and only pairwise ties
+  - the current E23 operator-cli keep/cut read is therefore `partial` / `env-sensitive`:
+    - no deterministic Cortex-base preservation-law bug was reproduced
+    - no deterministic OpenAI realization-wiring bug was reproduced
+    - but the authoritative accepted packs did not exercise repair and the broader watch surface did not close cleanly enough to promote E23 to CLI-proved candidate
   - the branch is still candidate truth only, not accepted baseline truth
   - historical accepted OpenAI `service_api` evidence remains recorded as product/runtime claim history
   - the active proving/default lane for new iteration is now OpenAI `operator_cli` on this branch, while historical accepted `service_api` evidence remains recorded as product/runtime claim history and not as the day-to-day proving default
@@ -82,8 +92,9 @@ It is workflow state only. It does not override the packet documents, implementa
 ## 4. Next lawful move
 
 - keep new OpenAI `service_api` spend deferred under the current policy
-- if no adversarial review finding remains, accept E24 locally as the proving-default realignment seam
-- after E24 lands locally, the next live proving move is repeated OpenAI `operator_cli` conformance/output-quality reruns on the bookmarks, normalize-port, and feature-flags packs rather than reopening `service_api` by habit
+- do not promote E23 to CLI-proved candidate yet
+- keep E24 as the locally landed proving-default basis on this branch
+- if E23 needs the next proof step, open one smaller OpenAI `operator_cli` repair-pressure investigation or deterministic operator-backed repair proof that exercises the preservation-aware repair branch on the accepted verified-work packs without widening Cortex law
 - publication and reconciliation remain blocked on the local `main` ahead-of-origin state until the landed history is published or reconciled explicitly
 
 ## 5. Explicitly blocked moves
@@ -97,6 +108,8 @@ It is workflow state only. It does not override the packet documents, implementa
 - Do not claim E23 live acceptance on `service_api` while service spend is intentionally deferred by policy.
 - Do not rewrite public docs to call OpenAI `operator_cli` the shipped product/runtime lane.
 - Do not describe the historical `service_api` evidence as if it still governs day-to-day iteration after E24 is accepted.
+- Do not treat attempt-1-only conformant accepted packs as proof that the preservation-aware repair branch itself is earned.
+- Do not use the `env_blocked` operator output-quality watch run as substitute law proof for E23.
 
 ## 6. Acknowledged worktree noise
 
