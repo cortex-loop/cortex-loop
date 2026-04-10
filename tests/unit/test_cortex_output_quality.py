@@ -114,7 +114,7 @@ def test_build_suite_summary_counts_pairwise_wins() -> None:
     assert summary["pairwise_summary"]["cortex_vs_raw"]["win_rate"] == 1.0
     assert summary["pairwise_summary"]["cortex_vs_tooling_only"]["ties"] == 1
     assert summary["ablation_config"]["verification_binding"] == "off"
-    assert summary["surface"] == "service_api"
+    assert summary["surface"] == "operator_cli"
 
 
 def test_build_output_quality_operator_prompt_uses_workspace_editing_not_file_blocks() -> None:
@@ -177,6 +177,7 @@ def test_run_arm_skips_repair_when_verification_binding_is_off(
         task_pack=task_pack,
         arm="cortex",
         model="gpt-5.4",
+        surface="service_api",
         task_root=tmp_path,
         seed_workspace=tmp_path,
         shared_install_result={"exit_code": 0, "stdout": "", "stderr": ""},
@@ -190,7 +191,9 @@ def test_run_arm_skips_repair_when_verification_binding_is_off(
     assert len(execute_calls) == 1
 
 
-def test_main_requires_service_spend_approval(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_main_requires_service_spend_approval_for_service_api(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     monkeypatch.delenv("CORTEX_LIVE_SERVICE_SPEND_APPROVED", raising=False)
     monkeypatch.setattr(
         output_quality,
@@ -199,7 +202,20 @@ def test_main_requires_service_spend_approval(monkeypatch: pytest.MonkeyPatch) -
     )
 
     with pytest.raises(SystemExit, match="service-lane spend is blocked"):
-        output_quality.main([])
+        output_quality.main(["--surface", "service_api"])
+
+
+def test_main_defaults_to_operator_cli_without_service_spend_approval(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.delenv("CORTEX_LIVE_SERVICE_SPEND_APPROVED", raising=False)
+    monkeypatch.setattr(
+        output_quality,
+        "run_output_quality_suite",
+        lambda **_kwargs: {"surface": "operator_cli", "arms": [], "pairwise_summary": {}},
+    )
+
+    assert output_quality.main([]) == 0
 
 
 def test_main_allows_operator_cli_without_service_spend_approval(

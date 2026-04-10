@@ -24,7 +24,6 @@ from lab.causal_contribution_map import (  # noqa: E402
     render_causal_map_note,
 )
 from lab.live_validation_common import now_utc_iso, run_command, write_json, write_text  # noqa: E402
-from lab.service_spend_gate import require_openai_service_spend_approval  # noqa: E402
 
 
 LoopClass = Literal[
@@ -45,13 +44,8 @@ OPENAI_BREADTH_PACKS = (
     cortex_conformance.FEATURE_FLAGS_CONTRACT_PACK,
 )
 REPAIR_GUARDRAIL_PACK = cortex_conformance.NORMALIZE_PORT_CONTRACT_PACK
-SERVICE_SPEND_TRAINS = {
-    "conformance-summary-truth",
-    "verified-work-breadth-openai",
-    "verified-work-repair-yield-openai",
-    "output-quality-comparison-openai",
-    "causal-contribution-map-openai",
-}
+OPENAI_PRODUCT_RUNTIME_CLAIM = cortex_conformance.OPENAI_PRODUCT_RUNTIME_CLAIM
+OPENAI_ACTIVE_PROVING_DEFAULT = cortex_conformance.OPENAI_ACTIVE_PROVING_DEFAULT
 
 
 @dataclass(frozen=True, slots=True)
@@ -226,10 +220,13 @@ def evaluate_conformance_summary_truth(
     } == {"openai", "claude", "gemini"}
     artifacts_exist = _summary_artifacts_exist(summary, repo_root=repo_root)
     summary_next_decision = summary.get("next_decision")
-    shipping_default_ok = (
+    active_proving_default_ok = (
         isinstance(summary, dict)
-        and isinstance(summary.get("shipping_truth"), dict)
-        and summary["shipping_truth"].get("default") == "openai:service_api"
+        and _summary_active_proving_default(summary) == OPENAI_ACTIVE_PROVING_DEFAULT
+    )
+    product_runtime_claim_ok = (
+        isinstance(summary, dict)
+        and _summary_product_runtime_claim(summary) == OPENAI_PRODUCT_RUNTIME_CLAIM
     )
 
     reasons: list[str] = []
@@ -239,12 +236,18 @@ def evaluate_conformance_summary_truth(
         reasons.append("summary.latest references missing artifacts")
     if summary_next_decision != accepted_next_decision:
         reasons.append("summary.latest next_decision drifts from CT2 accepted truth")
-    if not shipping_default_ok:
-        reasons.append("shipping_default drifted away from openai:service_api")
+    if not active_proving_default_ok:
+        reasons.append(
+            "active_proving_default drifted away from openai:operator_cli"
+        )
+    if not product_runtime_claim_ok:
+        reasons.append(
+            "product_runtime_claim drifted away from openai:service_api"
+        )
 
     return {
         "primary_metric_value": 0 if reasons else 1,
-        "guardrail_ok": shipping_default_ok,
+        "guardrail_ok": active_proving_default_ok and product_runtime_claim_ok,
         "accepted_next_decision": accepted_next_decision,
         "summary_next_decision": summary_next_decision,
         "is_full_run": is_full_run,
@@ -324,13 +327,13 @@ def run_conformance_summary_truth_pilot(
         ),
         contract_pack="verified_work_bookmarks_v1",
         conformance_surfaces=(
-            "openai:service_api",
+            OPENAI_ACTIVE_PROVING_DEFAULT,
             "claude:operator_cli",
             "gemini:operator_cli",
         ),
         baseline_result=baseline,
         primary_metric="conformance_summary_truth_alignment",
-        guardrail_metric="shipping_default_preserved",
+        guardrail_metric="product_runtime_claim_preserved_and_proving_default_aligned",
         baseline_proof_set=proof_commands,
         iteration_budget=2,
         rollback_surface="lab/cortex_conformance.py summary publication logic",
@@ -505,7 +508,7 @@ def run_verified_work_breadth_openai_train(
         ),
         contract_pack=cortex_conformance.FEATURE_FLAGS_CONTRACT_PACK,
         conformance_surfaces=(
-            "openai:service_api",
+            OPENAI_ACTIVE_PROVING_DEFAULT,
             "claude:operator_cli",
             "gemini:operator_cli",
         ),
@@ -545,7 +548,7 @@ def run_verified_work_repair_yield_openai_train(
     )
     proof_commands: list[str] = [
         deterministic_command,
-        "make -C lab revalidate-openai-host-control",
+        "make -C lab revalidate-openai-operator-cli",
     ]
     command_results: list[dict[str, Any]] = [
         _run_shell_command(command, cwd=ROOT) for command in proof_commands
@@ -668,7 +671,7 @@ def run_verified_work_repair_yield_openai_train(
         ),
         contract_pack="verified_work_bookmarks_v1,verified_work_normalize_port_v1,verified_work_feature_flags_v1",
         conformance_surfaces=(
-            "openai:service_api",
+            OPENAI_ACTIVE_PROVING_DEFAULT,
             "claude:operator_cli",
             "gemini:operator_cli",
         ),
@@ -719,7 +722,7 @@ def run_output_quality_comparison_openai_train(
     )
     proof_commands: list[str] = [
         deterministic_command,
-        "make -C lab revalidate-openai-host-control",
+        "make -C lab revalidate-openai-operator-cli",
         "python3 lab/cortex_output_quality.py",
         "python3 lab/cortex_output_quality.py",
     ]
@@ -843,7 +846,7 @@ def run_output_quality_comparison_openai_train(
             "astro_docs_site_v1,react_dashboard_v1,astro_marketing_forms_v1,"
             "react_existing_feature_extension_v1,frontend_bugfix_cleanup_v1"
         ),
-        conformance_surfaces=("openai:service_api",),
+        conformance_surfaces=(OPENAI_ACTIVE_PROVING_DEFAULT,),
         baseline_result={
             "primary_metric_value": 0,
             "pairwise_runs": len(repeat_summaries),
@@ -900,11 +903,11 @@ def run_causal_contribution_map_openai_train(
     )
     proof_commands: list[str] = [
         deterministic_command,
-        "make -C lab revalidate-openai-host-control",
+        "make -C lab revalidate-openai-operator-cli",
     ]
     command_results: list[dict[str, Any]] = [
         _run_shell_command(deterministic_command, cwd=ROOT),
-        _run_shell_command("make -C lab revalidate-openai-host-control", cwd=ROOT),
+        _run_shell_command("make -C lab revalidate-openai-operator-cli", cwd=ROOT),
     ]
 
     baseline = _run_contribution_reading(label="baseline")
@@ -1119,7 +1122,7 @@ def run_causal_contribution_map_openai_train(
             "astro_docs_site_v1,react_dashboard_v1,astro_marketing_forms_v1,"
             "react_existing_feature_extension_v1,frontend_bugfix_cleanup_v1"
         ),
-        conformance_surfaces=("openai:service_api",),
+        conformance_surfaces=(OPENAI_ACTIVE_PROVING_DEFAULT,),
         baseline_result={
             "primary_metric_value": primary_before,
             "component_count": len(component_classifications),
@@ -1208,11 +1211,6 @@ def main(argv: list[str] | None = None) -> int:
     )
     args = parser.parse_args(argv)
 
-    if args.train in SERVICE_SPEND_TRAINS:
-        require_openai_service_spend_approval(
-            purpose=f"the `{args.train}` train on the OpenAI service_api lane"
-        )
-
     if args.train == "conformance-summary-truth":
         payload = run_conformance_summary_truth_pilot().as_payload()
     elif args.train == "verified-work-breadth-openai":
@@ -1232,13 +1230,41 @@ def main(argv: list[str] | None = None) -> int:
 def _accepted_ct2_decision(phase_gates_path: Path) -> str:
     text = phase_gates_path.read_text(encoding="utf-8")
     match = re.search(
-        r"^\| `CT2` .*?current shipping-default decision is `(?P<decision>[a-z_]+)`",
+        r"^\| `CT2` .*?current (?:shipping-default|active proving-default) decision is `(?P<decision>[a-z_]+)`",
         text,
         re.MULTILINE,
     )
     if match is None:
         raise RuntimeError("Unable to extract CT2 accepted next decision from phase gates.")
     return match.group("decision")
+
+
+def _summary_active_proving_default(summary: dict[str, Any]) -> str | None:
+    proving_truth = summary.get("proving_truth")
+    if isinstance(proving_truth, dict):
+        value = proving_truth.get("active_default")
+        if isinstance(value, str) and value.strip():
+            return value
+    shipping_truth = summary.get("shipping_truth")
+    if isinstance(shipping_truth, dict):
+        value = shipping_truth.get("default")
+        if isinstance(value, str) and value.strip():
+            return value
+    return None
+
+
+def _summary_product_runtime_claim(summary: dict[str, Any]) -> str | None:
+    product_truth = summary.get("product_truth")
+    if isinstance(product_truth, dict):
+        value = product_truth.get("runtime_claim")
+        if isinstance(value, str) and value.strip():
+            return value
+    shipping_truth = summary.get("shipping_truth")
+    if isinstance(shipping_truth, dict):
+        value = shipping_truth.get("default")
+        if isinstance(value, str) and value.strip():
+            return value
+    return None
 
 
 def _summary_artifacts_exist(summary: Any, *, repo_root: Path) -> bool:

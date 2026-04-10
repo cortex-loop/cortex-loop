@@ -233,6 +233,33 @@ Repo-local entry point:
 make -C lab revalidate-openai-host-control
 ```
 
+## OpenAI `operator_cli` proving-default revalidation
+
+This revalidates the active maintainer proving lane for OpenAI without widening product/runtime truth.
+It checks:
+- OpenAI app-server and operator lifecycle helper coverage
+- the comparative output-quality harness on the `operator_cli` path
+- the tri-brain conformance harness on the `operator_cli` proving default
+- and the train-loop truth split between `product_runtime_claim` and `active_proving_default`
+
+It does not claim a public runtime move, and it does not replace the historical OpenAI `service_api` evidence recorded for the shipped lane.
+
+Direct commands:
+
+```sh
+python3 -m pytest tests/unit/test_live_openai_app_server_operator.py -q
+python3 -m pytest tests/unit/test_cortex_output_quality.py -q
+python3 -m pytest tests/unit/test_cortex_conformance.py -q
+python3 -m pytest tests/unit/test_cortex_train_loop.py -q
+python3 -m pytest tests/internal/test_docs_boundary.py -q
+```
+
+Repo-local entry point:
+
+```sh
+make -C lab revalidate-openai-operator-cli
+```
+
 ## Executive live-outcome revalidation
 
 This is now a retained historical/reference revalidation surface for the older allocation-heavy reference/OpenAI control story.

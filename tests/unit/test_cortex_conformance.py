@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+from contextlib import contextmanager
 from pathlib import Path
 
 import pytest
@@ -25,20 +26,26 @@ def test_train_charter_requires_all_fields() -> None:
         conformance.TrainCharter(
             cortex_invariant="",
             borrowed_mechanism="tiny verifier",
-            primary_proving_wiring="openai:service_api",
-            conformance_surfaces=("openai:service_api",),
+            primary_proving_wiring=conformance.OPENAI_ACTIVE_PROVING_DEFAULT,
+            conformance_surfaces=(conformance.OPENAI_ACTIVE_PROVING_DEFAULT,),
             kill_criteria=("cut if no lift",),
         )
 
     charter = conformance.TrainCharter(
         cortex_invariant="bounded verified-work law",
         borrowed_mechanism="tiny verifier",
-        primary_proving_wiring="openai:service_api",
-        conformance_surfaces=("openai:service_api", "claude:operator_cli"),
+        primary_proving_wiring=conformance.OPENAI_ACTIVE_PROVING_DEFAULT,
+        conformance_surfaces=(
+            conformance.OPENAI_ACTIVE_PROVING_DEFAULT,
+            "claude:operator_cli",
+        ),
         kill_criteria=("cut if no lift",),
     )
 
-    assert charter.as_payload()["primary_proving_wiring"] == "openai:service_api"
+    assert (
+        charter.as_payload()["primary_proving_wiring"]
+        == conformance.OPENAI_ACTIVE_PROVING_DEFAULT
+    )
 
 
 def test_contract_pack_exposes_required_train_charter() -> None:
@@ -50,11 +57,12 @@ def test_contract_pack_exposes_required_train_charter() -> None:
         train_charter=conformance.TrainCharter(
             cortex_invariant="bounded verified-work law",
             borrowed_mechanism="tiny verifier",
-            primary_proving_wiring="openai:service_api",
-            conformance_surfaces=("openai:service_api",),
+            primary_proving_wiring=conformance.OPENAI_ACTIVE_PROVING_DEFAULT,
+            conformance_surfaces=(conformance.OPENAI_ACTIVE_PROVING_DEFAULT,),
             kill_criteria=("cut if no lift",),
         ),
-        shipping_default="openai:service_api",
+        product_runtime_claim=conformance.OPENAI_PRODUCT_RUNTIME_CLAIM,
+        active_proving_default=conformance.OPENAI_ACTIVE_PROVING_DEFAULT,
     )
 
     payload = pack.as_payload()
@@ -62,6 +70,8 @@ def test_contract_pack_exposes_required_train_charter() -> None:
     assert payload["contract_pack"] == "verified_work_bookmarks_v1"
     assert payload["workspace_template_relpath"] == "tests/fixtures/live_validation/bookmarks_app_template"
     assert payload["train_charter"]["cortex_invariant"] == "bounded verified-work law"
+    assert payload["product_runtime_claim"] == conformance.OPENAI_PRODUCT_RUNTIME_CLAIM
+    assert payload["active_proving_default"] == conformance.OPENAI_ACTIVE_PROVING_DEFAULT
 
 
 def test_contract_pack_registry_resolves_bookmarks_normalize_port_and_feature_flags() -> None:
@@ -117,18 +127,19 @@ def test_contract_pack_rejects_absolute_workspace_template_path() -> None:
             train_charter=conformance.TrainCharter(
                 cortex_invariant="bounded verified-work law",
                 borrowed_mechanism="tiny verifier",
-                primary_proving_wiring="openai:service_api",
-                conformance_surfaces=("openai:service_api",),
+                primary_proving_wiring=conformance.OPENAI_ACTIVE_PROVING_DEFAULT,
+                conformance_surfaces=(conformance.OPENAI_ACTIVE_PROVING_DEFAULT,),
                 kill_criteria=("cut if no lift",),
             ),
-            shipping_default="openai:service_api",
+            product_runtime_claim=conformance.OPENAI_PRODUCT_RUNTIME_CLAIM,
+            active_proving_default=conformance.OPENAI_ACTIVE_PROVING_DEFAULT,
         )
 
 
 def test_strongest_native_surface_matches_current_wiring_order() -> None:
     pack = conformance.active_contract_pack()
 
-    assert conformance.strongest_native_surface("openai", pack) == "service_api"
+    assert conformance.strongest_native_surface("openai", pack) == "operator_cli"
     assert conformance.strongest_native_surface("claude", pack) == "operator_cli"
     assert conformance.strongest_native_surface("gemini", pack) == "operator_cli"
 
@@ -136,8 +147,9 @@ def test_strongest_native_surface_matches_current_wiring_order() -> None:
 def test_preflight_surface_distinguishes_env_blocked_and_unwired(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(conformance, "api_key_presence", lambda: {"OPENAI_API_KEY": False, "GEMINI_API_KEY": False})
     monkeypatch.setattr(conformance, "command_exists", lambda command: command != "gemini")
+    monkeypatch.setattr(conformance.Path, "home", staticmethod(lambda: Path("/tmp/cortex-home")))
 
-    openai_probe = conformance.preflight_surface("openai", "service_api")
+    openai_probe = conformance.preflight_surface("openai", "operator_cli")
     gemini_probe = conformance.preflight_surface("gemini", "operator_cli")
     unknown_probe = conformance.preflight_surface("claude", "service_api")  # type: ignore[arg-type]
 
@@ -146,11 +158,26 @@ def test_preflight_surface_distinguishes_env_blocked_and_unwired(monkeypatch: py
     assert unknown_probe.status == "unwired"
 
     monkeypatch.setattr(conformance, "command_exists", lambda _command: True)
+    auth_home = Path("/tmp/cortex-conformance-home")
+    (auth_home / ".codex").mkdir(parents=True, exist_ok=True)
+    (auth_home / ".codex" / "auth.json").write_text("{}", encoding="utf-8")
+    monkeypatch.setattr(conformance.Path, "home", staticmethod(lambda: auth_home))
+    openai_ready_probe = conformance.preflight_surface("openai", "operator_cli")
+    assert openai_ready_probe.status == "conformant"
     gemini_ready_probe = conformance.preflight_surface("gemini", "operator_cli")
     assert gemini_ready_probe.status == "partial"
 
 
-def test_main_requires_service_spend_approval_for_openai_active(
+def test_main_allows_openai_active_on_operator_cli_without_service_spend_approval(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.delenv("CORTEX_LIVE_SERVICE_SPEND_APPROVED", raising=False)
+    monkeypatch.setattr(conformance, "run_active_conformance", lambda **_kwargs: {"ok": True})
+
+    assert conformance.main(["--mode", "active", "--brain", "openai"]) == 0
+
+
+def test_main_requires_service_spend_approval_for_openai_service_api_override(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     monkeypatch.delenv("CORTEX_LIVE_SERVICE_SPEND_APPROVED", raising=False)
@@ -161,7 +188,9 @@ def test_main_requires_service_spend_approval_for_openai_active(
     )
 
     with pytest.raises(SystemExit, match="service-lane spend is blocked"):
-        conformance.main(["--mode", "active", "--brain", "openai"])
+        conformance.main(
+            ["--mode", "active", "--brain", "openai", "--openai-surface", "service_api"]
+        )
 
 
 def test_classify_outcome_divergence_maps_surface_and_brain_failures() -> None:
@@ -246,7 +275,9 @@ def test_decide_iteration_outcome_requires_revision_for_shipping_regression() ->
     ]
 
     assert (
-        conformance.decide_iteration_outcome(results, shipping_default="openai:service_api")
+        conformance.decide_iteration_outcome(
+            results, active_proving_default=conformance.OPENAI_ACTIVE_PROVING_DEFAULT
+        )
         == "revise"
     )
 
@@ -259,6 +290,133 @@ def test_stage_contract_pack_workspace_copies_fixture_tree() -> None:
         assert workspace != Path(pack.workspace_template_relpath)
         assert (workspace / "README_TASK.md").exists()
         assert (workspace / "tests" / "test_bookmarks_api.py").exists()
+
+
+def test_run_openai_operator_cli_conformance_passes_without_resume(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    run_root = tmp_path
+
+    @contextmanager
+    def _fake_env():
+        yield {}
+
+    monkeypatch.setattr(conformance, "isolated_codex_home_env", _fake_env)
+    monkeypatch.setattr(
+        conformance,
+        "run_openai_operator_single_turn",
+        lambda **_kwargs: {
+            "failure_class": None,
+            "model": "gpt-5.3-codex",
+            "attempted_models": ["gpt-5.3-codex"],
+            "thread_id": "thread-1",
+            "output_text": "=== FILE: src/bookmarks_api/main.py ===\napp = object()\n=== END FILE ===\n",
+        },
+    )
+    monkeypatch.setattr(
+        conformance,
+        "_evaluate_openai_operator_attempt",
+        lambda **_kwargs: {
+            "status": "executed",
+            "verification": VerificationOutcome(
+                status="passed",
+                failure_class=None,
+                import_smoke_ok=True,
+                pytest_passed=11,
+            ),
+            "session_id": "thread-1",
+            "extraction_mode": "operator_lifecycle",
+            "note": "executed",
+        },
+    )
+
+    result = conformance._run_openai_operator_cli_conformance(
+        contract_pack=conformance.active_contract_pack(),
+        run_root=run_root,
+    )
+
+    assert result.status == "conformant"
+    assert result.attempt_count == 1
+    assert result.surface == "operator_cli"
+
+
+def test_run_openai_operator_cli_conformance_reuses_thread_on_resume(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    run_root = tmp_path
+    resumed_calls: list[dict[str, object]] = []
+    evaluations = iter(
+        (
+            {
+                "status": "executed",
+                "verification": VerificationOutcome(
+                    status="failed",
+                    failure_class="test_failed",
+                    import_smoke_ok=True,
+                    pytest_passed=4,
+                    pytest_failed=7,
+                ),
+                "session_id": "thread-1",
+                "extraction_mode": "operator_lifecycle",
+                "note": "executed",
+            },
+            {
+                "status": "executed",
+                "verification": VerificationOutcome(
+                    status="passed",
+                    failure_class=None,
+                    import_smoke_ok=True,
+                    pytest_passed=11,
+                ),
+                "session_id": "thread-1",
+                "extraction_mode": "operator_lifecycle",
+                "note": "executed",
+            },
+        )
+    )
+
+    @contextmanager
+    def _fake_env():
+        yield {}
+
+    monkeypatch.setattr(conformance, "isolated_codex_home_env", _fake_env)
+    monkeypatch.setattr(
+        conformance,
+        "run_openai_operator_single_turn",
+        lambda **_kwargs: {
+            "failure_class": None,
+            "model": "gpt-5.3-codex",
+            "attempted_models": ["gpt-5.3-codex"],
+            "thread_id": "thread-1",
+            "output_text": "attempt1",
+        },
+    )
+    monkeypatch.setattr(
+        conformance,
+        "run_openai_operator_resumed_turn",
+        lambda **kwargs: resumed_calls.append(kwargs) or {
+            "failure_class": None,
+            "model": "gpt-5.3-codex",
+            "thread_id": "thread-1",
+            "output_text": "attempt2",
+        },
+    )
+    monkeypatch.setattr(
+        conformance,
+        "_evaluate_openai_operator_attempt",
+        lambda **_kwargs: next(evaluations),
+    )
+
+    result = conformance._run_openai_operator_cli_conformance(
+        contract_pack=conformance.active_contract_pack(),
+        run_root=run_root,
+    )
+
+    assert result.status == "conformant"
+    assert result.attempt_count == 2
+    assert resumed_calls[0]["thread_id"] == "thread-1"
 
 
 def test_run_claude_cli_conformance_uses_read_only_tools_and_skips_resume_after_pass(
@@ -434,7 +592,7 @@ def test_evaluate_operator_attempt_preserves_structured_timeout_output(
     assert "operator timeout" in result["note"]
 
 
-def test_next_decision_prefers_shipping_default_gap_once_non_shipping_divergence_clears() -> None:
+def test_next_decision_prefers_proving_default_gap_once_non_primary_divergence_clears() -> None:
     results = [
         {
             "brain": "openai",
@@ -457,9 +615,9 @@ def test_next_decision_prefers_shipping_default_gap_once_non_shipping_divergence
         conformance._next_decision(
             results,
             None,
-            shipping_default="openai:service_api",
+            active_proving_default=conformance.OPENAI_ACTIVE_PROVING_DEFAULT,
         )
-        == "improve_shipping_default"
+        == "improve_proving_default"
     )
 
 
@@ -486,7 +644,7 @@ def test_next_decision_promotes_when_only_non_shipping_env_blocks_remain() -> No
         conformance._next_decision(
             results,
             None,
-            shipping_default="openai:service_api",
+            active_proving_default=conformance.OPENAI_ACTIVE_PROVING_DEFAULT,
         )
         == "promote"
     )
@@ -512,7 +670,7 @@ def test_run_active_conformance_does_not_publish_latest_for_targeted_runs(
         "preflight_surface",
         lambda _brain, _surface: conformance.SurfaceProbe(
             brain="openai",
-            surface="service_api",
+            surface="operator_cli",
             status="conformant",
             reason="ready",
         ),
@@ -522,7 +680,7 @@ def test_run_active_conformance_does_not_publish_latest_for_targeted_runs(
         "_run_conformance",
         lambda **_kwargs: conformance.ConformanceRunResult(
             brain="openai",
-            surface="service_api",
+            surface="operator_cli",
             contract_pack="verified_work_bookmarks_v1",
             status="conformant",
             attempt_count=1,
@@ -538,6 +696,8 @@ def test_run_active_conformance_does_not_publish_latest_for_targeted_runs(
 
     assert summary["results"][0]["brain"] == "openai"
     assert summary["openai_ablation_config"] is None
+    assert summary["product_truth"]["runtime_claim"] == conformance.OPENAI_PRODUCT_RUNTIME_CLAIM
+    assert summary["proving_truth"]["active_default"] == conformance.OPENAI_ACTIVE_PROVING_DEFAULT
     assert not (tmp_path / "summary.latest.json").exists()
     assert not (tmp_path / "summary.latest.md").exists()
 
@@ -554,7 +714,7 @@ def test_run_active_conformance_records_openai_ablation_config(
         "preflight_surface",
         lambda _brain, _surface: conformance.SurfaceProbe(
             brain="openai",
-            surface="service_api",
+            surface="operator_cli",
             status="conformant",
             reason="ready",
         ),
@@ -564,7 +724,7 @@ def test_run_active_conformance_records_openai_ablation_config(
         "_run_conformance",
         lambda **_kwargs: conformance.ConformanceRunResult(
             brain="openai",
-            surface="service_api",
+            surface="operator_cli",
             contract_pack="verified_work_bookmarks_v1",
             status="conformant",
             attempt_count=1,

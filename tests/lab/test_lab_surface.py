@@ -33,7 +33,7 @@ def test_train_loop_uses_canonical_lab_and_internal_test_paths() -> None:
 
     assert "tests/internal/test_docs_boundary.py" in text
     assert "tests/product/test_import_smoke.py" in text
-    assert "make -C lab revalidate-openai-host-control" in text
+    assert "make -C lab revalidate-openai-operator-cli" in text
     assert "tests/unit/test_verification_docs_sync.py" not in text
     assert "tests/unit/test_import_smoke.py" not in text
     assert '"make revalidate-openai-host-control"' not in text

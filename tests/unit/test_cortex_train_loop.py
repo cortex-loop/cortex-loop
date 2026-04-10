@@ -73,20 +73,21 @@ def test_decide_loop_decision_escalates_after_second_no_lift_cut() -> None:
     assert "two no-lift revisions" in reason
 
 
-def test_train_loop_main_requires_service_spend_approval(
+def test_train_loop_main_runs_without_service_spend_gate(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     monkeypatch.delenv("CORTEX_LIVE_SERVICE_SPEND_APPROVED", raising=False)
     monkeypatch.setattr(
         train_loop,
-        "run_causal_contribution_map_openai_train",
-        lambda **_kwargs: pytest.fail(
-            "run_causal_contribution_map_openai_train should not be called"
-        ),
+        "run_conformance_summary_truth_pilot",
+        lambda **_kwargs: type(
+            "_Record",
+            (),
+            {"as_payload": staticmethod(lambda: {"train_name": "conformance-summary-truth"})},
+        )(),
     )
 
-    with pytest.raises(SystemExit, match="service-lane spend is blocked"):
-        train_loop.main(["--train", "causal-contribution-map-openai"])
+    assert train_loop.main(["--train", "conformance-summary-truth"]) == 0
 
 
 def test_evaluate_conformance_summary_truth_detects_missing_artifacts(
@@ -102,7 +103,8 @@ def test_evaluate_conformance_summary_truth_detects_missing_artifacts(
         json.dumps(
             {
                 "next_decision": "fix_wiring_only",
-                "shipping_truth": {"default": "openai:service_api"},
+                "product_truth": {"runtime_claim": train_loop.OPENAI_PRODUCT_RUNTIME_CLAIM},
+                "proving_truth": {"active_default": train_loop.OPENAI_ACTIVE_PROVING_DEFAULT},
                 "results": [
                     {"brain": "openai", "artifact_relpath": "missing/openai"},
                     {"brain": "claude", "artifact_relpath": "missing/claude"},
@@ -464,7 +466,7 @@ def test_run_verified_work_repair_yield_openai_train_promotes_on_recovered_repai
     assert record.iterations[0].primary_metric_before == 0
     assert record.iterations[0].primary_metric_after == 2
     assert record.baseline_result["repair_opportunities"] == 2
-    assert "make -C lab revalidate-openai-host-control" in record.iterations[0].proof_commands
+    assert "make -C lab revalidate-openai-operator-cli" in record.iterations[0].proof_commands
 
 
 def test_run_verified_work_repair_yield_openai_train_escalates_when_no_repair_opportunities_appear(
@@ -499,7 +501,7 @@ def test_run_verified_work_repair_yield_openai_train_escalates_when_no_repair_op
     assert record.final_decision == "escalate"
     assert "insufficient natural failures" in record.iterations[0].reason
     assert record.baseline_result["rounds_executed"] == 2
-    assert "make -C lab revalidate-openai-host-control" in record.iterations[0].proof_commands
+    assert "make -C lab revalidate-openai-operator-cli" in record.iterations[0].proof_commands
 
 
 def test_run_output_quality_comparison_openai_train_promotes_on_repeat_stable_advantage(
@@ -618,7 +620,7 @@ def test_run_causal_contribution_map_openai_train_promotes_on_repeat_stable_clas
 ) -> None:
     def _fake_short_command(command, *, cwd):
         _ = cwd
-        if "pytest -q" in command or "make revalidate-openai-host-control" in command:
+        if "pytest -q" in command or "make revalidate-openai-operator-cli" in command:
             return {
                 "command": command,
                 "cwd": str(cwd),

@@ -50,6 +50,11 @@ from lab.live_validation_common import (  # noqa: E402
     write_json,
     write_text,
 )
+from lab.openai_operator_cli import (  # noqa: E402
+    isolated_codex_home_env,
+    run_openai_operator_resumed_turn,
+    run_openai_operator_single_turn,
+)
 from lab.service_spend_gate import require_openai_service_spend_approval  # noqa: E402
 
 
@@ -75,10 +80,13 @@ FEATURE_FLAGS_TASK_PATH = (
 )
 _OPENAI_ACTION_TAG = "openai-response-stream"
 _OPENAI_MODEL = "gpt-5.4"
+_OPENAI_OPERATOR_MODEL = "gpt-5.3-codex"
 _CLAUDE_MODEL = "claude-sonnet-4-6"
 _CLAUDE_READ_ONLY_TOOLS = "Read,Glob,Grep,LS"
+OPENAI_PRODUCT_RUNTIME_CLAIM = "openai:service_api"
+OPENAI_ACTIVE_PROVING_DEFAULT = "openai:operator_cli"
 _SURFACE_ORDER: dict[Brain, tuple[Surface, ...]] = {
-    "openai": ("service_api",),
+    "openai": ("operator_cli", "service_api"),
     "claude": ("operator_cli",),
     "gemini": ("operator_cli",),
 }
@@ -132,7 +140,8 @@ class ContractPack:
     workspace_template_relpath: str
     work_contract: WorkContract
     train_charter: TrainCharter
-    shipping_default: str
+    product_runtime_claim: str
+    active_proving_default: str
 
     def __post_init__(self) -> None:
         if not (isinstance(self.contract_pack, str) and self.contract_pack.strip()):
@@ -162,8 +171,12 @@ class ContractPack:
                 "ContractPack.train_charter must be TrainCharter, "
                 f"got {actual_type}."
             )
-        if not (isinstance(self.shipping_default, str) and self.shipping_default.strip()):
-            raise ValueError("ContractPack.shipping_default must be non-empty after trimming.")
+        for label, value in (
+            ("product_runtime_claim", self.product_runtime_claim),
+            ("active_proving_default", self.active_proving_default),
+        ):
+            if not (isinstance(value, str) and value.strip()):
+                raise ValueError(f"ContractPack.{label} must be non-empty after trimming.")
 
     def as_payload(self) -> dict[str, Any]:
         return {
@@ -172,7 +185,8 @@ class ContractPack:
             "workspace_template_relpath": self.workspace_template_relpath,
             "work_contract": self.work_contract.as_payload(),
             "train_charter": self.train_charter.as_payload(),
-            "shipping_default": self.shipping_default,
+            "product_runtime_claim": self.product_runtime_claim,
+            "active_proving_default": self.active_proving_default,
         }
 
 
@@ -293,9 +307,9 @@ def contract_pack_by_name(name: str) -> ContractPack:
                 borrowed_mechanism=(
                     "reuse the landed verified-work law plus the existing full_files verifier contract instead of adding host-specific policy math"
                 ),
-                primary_proving_wiring="openai:service_api",
+                primary_proving_wiring=OPENAI_ACTIVE_PROVING_DEFAULT,
                 conformance_surfaces=(
-                    "openai:service_api",
+                    OPENAI_ACTIVE_PROVING_DEFAULT,
                     "claude:operator_cli",
                     "gemini:operator_cli",
                 ),
@@ -304,7 +318,8 @@ def contract_pack_by_name(name: str) -> ContractPack:
                     "do not widen shipping truth from conformance-only results",
                 ),
             ),
-            shipping_default="openai:service_api",
+            product_runtime_claim=OPENAI_PRODUCT_RUNTIME_CLAIM,
+            active_proving_default=OPENAI_ACTIVE_PROVING_DEFAULT,
         )
     if name == NORMALIZE_PORT_CONTRACT_PACK:
         prompt_text = NORMALIZE_PORT_TASK_PATH.read_text(encoding="utf-8").strip()
@@ -325,9 +340,9 @@ def contract_pack_by_name(name: str) -> ContractPack:
                 borrowed_mechanism=(
                     "reuse the existing normalize-port project_template verifier scaffold instead of inventing a new benchmark family"
                 ),
-                primary_proving_wiring="openai:service_api",
+                primary_proving_wiring=OPENAI_ACTIVE_PROVING_DEFAULT,
                 conformance_surfaces=(
-                    "openai:service_api",
+                    OPENAI_ACTIVE_PROVING_DEFAULT,
                     "claude:operator_cli",
                     "gemini:operator_cli",
                 ),
@@ -336,7 +351,8 @@ def contract_pack_by_name(name: str) -> ContractPack:
                     "do not repurpose the bookmarks summary.latest anchor while breadth evidence is still being earned",
                 ),
             ),
-            shipping_default="openai:service_api",
+            product_runtime_claim=OPENAI_PRODUCT_RUNTIME_CLAIM,
+            active_proving_default=OPENAI_ACTIVE_PROVING_DEFAULT,
         )
     if name == FEATURE_FLAGS_CONTRACT_PACK:
         prompt_text = FEATURE_FLAGS_TASK_PATH.read_text(encoding="utf-8").strip()
@@ -360,9 +376,9 @@ def contract_pack_by_name(name: str) -> ContractPack:
                 borrowed_mechanism=(
                     "reuse the landed verified-work profile registry and add one middle-weight pure-Python evaluator pack"
                 ),
-                primary_proving_wiring="openai:service_api",
+                primary_proving_wiring=OPENAI_ACTIVE_PROVING_DEFAULT,
                 conformance_surfaces=(
-                    "openai:service_api",
+                    OPENAI_ACTIVE_PROVING_DEFAULT,
                     "claude:operator_cli",
                     "gemini:operator_cli",
                 ),
@@ -371,7 +387,8 @@ def contract_pack_by_name(name: str) -> ContractPack:
                     "do not repurpose the bookmarks summary.latest anchor while breadth evidence is still being earned",
                 ),
             ),
-            shipping_default="openai:service_api",
+            product_runtime_claim=OPENAI_PRODUCT_RUNTIME_CLAIM,
+            active_proving_default=OPENAI_ACTIVE_PROVING_DEFAULT,
         )
     raise ValueError(f"Unsupported contract pack: {name}")
 
@@ -384,8 +401,17 @@ def supported_contract_pack_names() -> tuple[str, ...]:
     )
 
 
-def strongest_native_surface(brain: Brain, contract_pack: ContractPack) -> Surface:
-    _ = contract_pack
+def strongest_native_surface(
+    brain: Brain,
+    contract_pack: ContractPack,
+    *,
+    openai_surface_override: Surface | None = None,
+) -> Surface:
+    if brain == "openai":
+        if openai_surface_override is not None:
+            return openai_surface_override
+        _proving_brain, proving_surface = contract_pack.active_proving_default.split(":", 1)
+        return proving_surface  # type: ignore[return-value]
     return _SURFACE_ORDER[brain][0]
 
 
@@ -413,6 +439,27 @@ def _stage_contract_pack_workspace(
 
 
 def preflight_surface(brain: Brain, surface: Surface) -> SurfaceProbe:
+    if brain == "openai" and surface == "operator_cli":
+        if not command_exists("codex"):
+            return SurfaceProbe(
+                brain=brain,
+                surface=surface,
+                status="env_blocked",
+                reason="codex CLI is not installed.",
+            )
+        if (Path.home() / ".codex" / "auth.json").exists():
+            return SurfaceProbe(
+                brain=brain,
+                surface=surface,
+                status="conformant",
+                reason="OpenAI operator surface auth is present.",
+            )
+        return SurfaceProbe(
+            brain=brain,
+            surface=surface,
+            status="env_blocked",
+            reason="~/.codex/auth.json is missing.",
+        )
     if brain == "openai" and surface == "service_api":
         keys = api_key_presence()
         if keys.get("OPENAI_API_KEY"):
@@ -486,14 +533,14 @@ def classify_shared_divergence(
 def decide_iteration_outcome(
     results: list[ConformanceRunResult],
     *,
-    shipping_default: str,
+    active_proving_default: str,
 ) -> str:
-    shipping_brain, _shipping_surface = shipping_default.split(":", 1)
-    shipping_result = next(
-        (result for result in results if result.brain == shipping_brain),
+    primary_brain, _primary_surface = active_proving_default.split(":", 1)
+    primary_result = next(
+        (result for result in results if result.brain == primary_brain),
         None,
     )
-    if shipping_result is not None and shipping_result.status in {"partial", "divergent"}:
+    if primary_result is not None and primary_result.status in {"partial", "divergent"}:
         return "revise"
     if classify_shared_divergence(results) == "cortex_law":
         return "revise"
@@ -507,6 +554,7 @@ def run_active_conformance(
     brains: tuple[Brain, ...],
     contract_pack: ContractPack | None = None,
     max_repair_turns_override: int | None = None,
+    openai_surface_override: Surface | None = None,
     openai_ablation_config: OpenAIHostControlAblationConfig | None = None,
 ) -> dict[str, Any]:
     load_local_env_file()
@@ -523,7 +571,11 @@ def run_active_conformance(
     results: list[ConformanceRunResult] = []
     probes: list[SurfaceProbe] = []
     for brain in brains:
-        surface = strongest_native_surface(brain, pack)
+        surface = strongest_native_surface(
+            brain,
+            pack,
+            openai_surface_override=openai_surface_override,
+        )
         probe = preflight_surface(brain, surface)
         probes.append(probe)
         if probe.status == "unwired":
@@ -579,22 +631,26 @@ def run_active_conformance(
         "openai_ablation_config": (
             openai_ablation_config.as_payload() if openai_ablation_config is not None else None
         ),
-        "shipping_truth": {
-            "default": pack.shipping_default,
-            "note": "Shipping truth may remain narrower than development conformance truth.",
+        "product_truth": {
+            "runtime_claim": pack.product_runtime_claim,
+            "note": "Product/runtime truth remains separate from the active proving default.",
+        },
+        "proving_truth": {
+            "active_default": pack.active_proving_default,
+            "note": "Development conformance follows the active proving lane unless explicitly overridden.",
         },
         "surface_probes": [probe.as_payload() for probe in probes],
         "results": [result.as_payload() for result in results],
         "overall_divergence_class": classify_shared_divergence(results),
         "iteration_outcome": decide_iteration_outcome(
             results,
-            shipping_default=pack.shipping_default,
+            active_proving_default=pack.active_proving_default,
         ),
     }
     summary["next_decision"] = _next_decision(
         summary["results"],
         summary["overall_divergence_class"],
-        shipping_default=pack.shipping_default,
+        active_proving_default=pack.active_proving_default,
     )
 
     write_json(run_root / "summary.json", summary)
@@ -605,12 +661,21 @@ def run_active_conformance(
     return summary
 
 
-def build_preflight_report(*, brains: tuple[Brain, ...], contract_pack: ContractPack | None = None) -> dict[str, Any]:
+def build_preflight_report(
+    *,
+    brains: tuple[Brain, ...],
+    contract_pack: ContractPack | None = None,
+    openai_surface_override: Surface | None = None,
+) -> dict[str, Any]:
     load_local_env_file()
     pack = contract_pack or active_contract_pack()
     probes = []
     for brain in brains:
-        surface = strongest_native_surface(brain, pack)
+        surface = strongest_native_surface(
+            brain,
+            pack,
+            openai_surface_override=openai_surface_override,
+        )
         probes.append(preflight_surface(brain, surface).as_payload())
     return {
         "generated_at": now_utc_iso(),
@@ -620,11 +685,14 @@ def build_preflight_report(*, brains: tuple[Brain, ...], contract_pack: Contract
 
 
 def render_summary_markdown(summary: dict[str, Any]) -> str:
+    product_runtime_claim = _summary_product_runtime_claim(summary) or "unknown"
+    active_proving_default = _summary_active_proving_default(summary) or "unknown"
     lines = [
         f"# Cortex Conformance: {summary['contract_pack']['contract_pack']}",
         "",
         f"- generated_at: `{summary['generated_at']}`",
-        f"- shipping_default: `{summary['shipping_truth']['default']}`",
+        f"- product_runtime_claim: `{product_runtime_claim}`",
+        f"- active_proving_default: `{active_proving_default}`",
         f"- overall_divergence_class: `{summary['overall_divergence_class'] or 'none'}`",
         f"- iteration_outcome: `{summary['iteration_outcome']}`",
         f"- next_decision: `{summary['next_decision']}`",
@@ -675,6 +743,11 @@ def main(argv: list[str] | None = None) -> int:
         default="all",
     )
     parser.add_argument(
+        "--openai-surface",
+        choices=("service_api", "operator_cli"),
+        default=None,
+    )
+    parser.add_argument(
         "--max-repair-turns",
         type=int,
         choices=(0, 1),
@@ -713,7 +786,16 @@ def main(argv: list[str] | None = None) -> int:
     else:
         brains = (args.brain,)  # type: ignore[assignment]
 
-    if args.mode == "active" and "openai" in brains:
+    if (
+        args.mode == "active"
+        and "openai" in brains
+        and strongest_native_surface(
+            "openai",
+            contract_pack_by_name(args.contract_pack),
+            openai_surface_override=args.openai_surface,
+        )
+        == "service_api"
+    ):
         require_openai_service_spend_approval(
             purpose="OpenAI active conformance on the service_api lane"
         )
@@ -728,7 +810,11 @@ def main(argv: list[str] | None = None) -> int:
     )
 
     if args.mode == "preflight":
-        payload = build_preflight_report(brains=brains, contract_pack=pack)
+        payload = build_preflight_report(
+            brains=brains,
+            contract_pack=pack,
+            openai_surface_override=args.openai_surface,
+        )
     elif args.mode == "reconcile-latest":
         payload = reconcile_latest_summary()
     else:
@@ -736,6 +822,7 @@ def main(argv: list[str] | None = None) -> int:
             brains=brains,
             contract_pack=pack,
             max_repair_turns_override=args.max_repair_turns,
+            openai_surface_override=args.openai_surface,
             openai_ablation_config=openai_ablation_config,
         )
     print(json.dumps(payload, indent=2, sort_keys=True))
@@ -750,6 +837,11 @@ def _run_conformance(
     run_root: Path,
     openai_ablation_config: OpenAIHostControlAblationConfig | None = None,
 ) -> ConformanceRunResult:
+    if brain == "openai" and surface == "operator_cli":
+        return _run_openai_operator_cli_conformance(
+            contract_pack=contract_pack,
+            run_root=run_root,
+        )
     if brain == "openai" and surface == "service_api":
         return _run_openai_service_conformance(
             contract_pack=contract_pack,
@@ -829,6 +921,128 @@ def _run_openai_service_conformance(
         attempt_count=result.attempt_count or 1,
         artifact_relpath=_artifact_relpath(artifact_dir),
         note=f"runtime move: {session.next_recommended_move}",
+    )
+
+
+def _run_openai_operator_cli_conformance(
+    *,
+    contract_pack: ContractPack,
+    run_root: Path,
+) -> ConformanceRunResult:
+    artifact_dir = run_root / "openai_operator_cli"
+    artifact_dir.mkdir(parents=True, exist_ok=True)
+    instructions = build_verified_work_instructions(contract_pack.work_contract)
+    with _stage_contract_pack_workspace(
+        contract_pack,
+        prefix="cortex-conformance-openai-",
+    ) as workspace, isolated_codex_home_env() as env:
+        initial_prompt = _render_combined_operator_prompt(
+            task_prompt=contract_pack.prompt_text,
+            instructions=instructions,
+        )
+        initial = run_openai_operator_single_turn(
+            project_root=workspace,
+            prompt=initial_prompt,
+            scenario_id=f"conformance_{contract_pack.contract_pack}_attempt1",
+            stderr_path=artifact_dir / "attempt1.stderr.log",
+            ephemeral=False,
+            env=env,
+            model=_OPENAI_OPERATOR_MODEL,
+        )
+        write_json(artifact_dir / "attempt1.json", initial)
+        result = _evaluate_openai_operator_attempt(
+            operator_turn=initial,
+            work_contract=contract_pack.work_contract,
+        )
+        if result["status"] == "env_blocked":
+            return ConformanceRunResult(
+                brain="openai",
+                surface="operator_cli",
+                contract_pack=contract_pack.contract_pack,
+                status="env_blocked",
+                divergence_class="env_blocked",
+                note=result["note"],
+                transport_failure_class=result["transport_failure_class"],
+                artifact_relpath=_artifact_relpath(artifact_dir),
+            )
+        first_outcome = result["verification"]
+        assert isinstance(first_outcome, VerificationOutcome)
+        final_outcome = first_outcome
+        attempt_count = 1
+        final_note = result["note"]
+        final_extraction_mode = result["extraction_mode"]
+        if first_outcome.failure_class in {"output_invalid", "import_smoke_failed", "test_failed"}:
+            thread_id = result["session_id"]
+            if not isinstance(thread_id, str) or not thread_id.strip():
+                return ConformanceRunResult(
+                    brain="openai",
+                    surface="operator_cli",
+                    contract_pack=contract_pack.contract_pack,
+                    status="divergent",
+                    divergence_class="surface_wiring",
+                    first_attempt_status=first_outcome.status,
+                    first_attempt_failure_class=first_outcome.failure_class,
+                    final_failure_class=first_outcome.failure_class,
+                    verification_status=first_outcome.status,
+                    parseable=first_outcome.parse_error is None,
+                    import_smoke_ok=first_outcome.import_smoke_ok,
+                    pytest_passed=first_outcome.pytest_passed,
+                    pytest_failed=first_outcome.pytest_failed,
+                    attempt_count=1,
+                    repair_conversion="failed_without_repair",
+                    extraction_mode=result["extraction_mode"],
+                    note="OpenAI operator surface did not return a resumable thread id.",
+                    artifact_relpath=_artifact_relpath(artifact_dir),
+                )
+            repair_ticket = build_verified_work_repair_ticket(
+                derive_preservation_state(
+                    None,
+                    contract_pack.work_contract,
+                    first_outcome.parsed_paths,
+                    first_outcome,
+                    remaining_repairs=1,
+                )
+            )
+            resumed = run_openai_operator_resumed_turn(
+                project_root=workspace,
+                prompt=repair_ticket,
+                model=initial["model"],
+                thread_id=thread_id,
+                stderr_path=artifact_dir / "attempt2.stderr.log",
+                env=env,
+            )
+            write_json(artifact_dir / "attempt2.json", resumed)
+            resumed_result = _evaluate_openai_operator_attempt(
+                operator_turn=resumed,
+                work_contract=contract_pack.work_contract,
+            )
+            if resumed_result["status"] == "env_blocked":
+                return ConformanceRunResult(
+                    brain="openai",
+                    surface="operator_cli",
+                    contract_pack=contract_pack.contract_pack,
+                    status="env_blocked",
+                    divergence_class="env_blocked",
+                    note=resumed_result["note"],
+                    transport_failure_class=resumed_result["transport_failure_class"],
+                    artifact_relpath=_artifact_relpath(artifact_dir),
+                )
+            final_outcome = resumed_result["verification"]
+            assert isinstance(final_outcome, VerificationOutcome)
+            attempt_count = 2
+            final_note = resumed_result["note"]
+            final_extraction_mode = resumed_result["extraction_mode"]
+
+    return _result_from_verification(
+        brain="openai",
+        surface="operator_cli",
+        contract_pack=contract_pack.contract_pack,
+        outcome=final_outcome,
+        attempt_count=attempt_count,
+        first_outcome=first_outcome,
+        extraction_mode=final_extraction_mode,
+        artifact_relpath=_artifact_relpath(artifact_dir),
+        note=final_note,
     )
 
 
@@ -1133,6 +1347,41 @@ def _evaluate_operator_attempt(
     }
 
 
+def _evaluate_openai_operator_attempt(
+    *,
+    operator_turn: dict[str, Any],
+    work_contract: WorkContract,
+) -> dict[str, Any]:
+    output_text = operator_turn.get("output_text")
+    failure_class = operator_turn.get("failure_class")
+    if failure_class in BLOCKING_FAILURE_CLASSES:
+        return {
+            "status": "env_blocked",
+            "transport_failure_class": failure_class,
+            "note": sanitize_text(str(failure_class)),
+        }
+    if failure_class is not None and not str(output_text or "").strip():
+        return {
+            "status": "env_blocked",
+            "transport_failure_class": failure_class,
+            "note": sanitize_text(str(failure_class)),
+        }
+    _payload, verification = verify_verified_work_result(output_text, work_contract)
+    model = operator_turn.get("model")
+    note = "executed"
+    if isinstance(model, str) and model.strip():
+        note = f"operator model: {model}"
+    if failure_class is not None:
+        note = f"{note}; failure_class={failure_class}"
+    return {
+        "status": "executed",
+        "verification": verification,
+        "session_id": operator_turn.get("thread_id"),
+        "extraction_mode": "operator_lifecycle",
+        "note": sanitize_text(note),
+    }
+
+
 def _result_from_verification(
     *,
     brain: Brain,
@@ -1214,37 +1463,37 @@ def _next_decision(
     results: list[dict[str, Any]],
     overall_divergence_class: str | None,
     *,
-    shipping_default: str,
+    active_proving_default: str,
 ) -> str:
     if overall_divergence_class == "cortex_law":
         return "revise_cortex_law"
-    shipping_brain, _shipping_surface = shipping_default.split(":", 1)
+    proving_brain, _proving_surface = active_proving_default.split(":", 1)
     non_shipping_divergence = [
         result
         for result in results
-        if result["brain"] != shipping_brain
+        if result["brain"] != proving_brain
         and result["status"] == "divergent"
         and result["divergence_class"] in {"brain_wiring", "surface_wiring"}
     ]
     if non_shipping_divergence:
         return "fix_wiring_only"
-    shipping_result = next(
-        (result for result in results if result["brain"] == shipping_brain),
+    proving_result = next(
+        (result for result in results if result["brain"] == proving_brain),
         None,
     )
-    if shipping_result is not None and shipping_result["status"] in {"partial", "divergent"}:
-        return "improve_shipping_default"
+    if proving_result is not None and proving_result["status"] in {"partial", "divergent"}:
+        return "improve_proving_default"
     non_shipping_partial = [
         result
         for result in results
-        if result["brain"] != shipping_brain
+        if result["brain"] != proving_brain
         and result["status"] == "partial"
         and result["divergence_class"] in {"brain_wiring", "surface_wiring"}
     ]
     if non_shipping_partial:
         return "fix_wiring_only"
-    shipping_env_blocked = shipping_result is not None and shipping_result["status"] == "env_blocked"
-    if shipping_env_blocked:
+    proving_env_blocked = proving_result is not None and proving_result["status"] == "env_blocked"
+    if proving_env_blocked:
         return "clear_env_blocks"
     if any(result["status"] == "env_blocked" for result in results):
         return "promote"
@@ -1307,13 +1556,41 @@ def _accepted_ct2_next_decision() -> str | None:
         return None
     text = PHASE_GATES_PATH.read_text(encoding="utf-8")
     match = re.search(
-        r"^\| `CT2` .*?current shipping-default decision is `(?P<decision>[a-z_]+)`",
+        r"^\| `CT2` .*?current (?:shipping-default|active proving-default) decision is `(?P<decision>[a-z_]+)`",
         text,
         re.MULTILINE,
     )
     if match is None:
         return None
     return match.group("decision")
+
+
+def _summary_active_proving_default(summary: Mapping[str, Any]) -> str | None:
+    proving_truth = summary.get("proving_truth")
+    if isinstance(proving_truth, Mapping):
+        value = proving_truth.get("active_default")
+        if isinstance(value, str) and value.strip():
+            return value
+    shipping_truth = summary.get("shipping_truth")
+    if isinstance(shipping_truth, Mapping):
+        value = shipping_truth.get("default")
+        if isinstance(value, str) and value.strip():
+            return value
+    return None
+
+
+def _summary_product_runtime_claim(summary: Mapping[str, Any]) -> str | None:
+    product_truth = summary.get("product_truth")
+    if isinstance(product_truth, Mapping):
+        value = product_truth.get("runtime_claim")
+        if isinstance(value, str) and value.strip():
+            return value
+    shipping_truth = summary.get("shipping_truth")
+    if isinstance(shipping_truth, Mapping):
+        value = shipping_truth.get("default")
+        if isinstance(value, str) and value.strip():
+            return value
+    return None
 
 
 def _is_full_brain_run(brains: tuple[Brain, ...]) -> bool:

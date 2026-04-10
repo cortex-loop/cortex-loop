@@ -190,8 +190,8 @@ This program is intentionally outside the current compact canonical proof bundle
 - and the `O4R` phase-gate row is updated truthfully
 
 The accepted line below records the historical OpenAI `service_api` proof that closed `O4R`.
-If maintainers intentionally defer further service spend, that does not silently move the default proving lane.
-Any switch of the active OpenAI proving/default lane to `operator_cli` must be opened and recorded as an explicit later seam.
+That historical product/runtime claim remains recorded.
+E24 is the explicit later seam that moves the active OpenAI proving/default lane onto `operator_cli` for development and lab iteration without silently reinterpreting the historical accepted line.
 
 ## Current state on the accepted line and current review line
 

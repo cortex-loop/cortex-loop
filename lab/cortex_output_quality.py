@@ -57,7 +57,7 @@ from lab.service_spend_gate import require_openai_service_spend_approval
 OUTPUT_QUALITY_ROOT = LOCAL_LIVE_ROOT / "output_quality"
 DEFAULT_ARMS: tuple[ArmName, ...] = ("raw", "tooling_only", "cortex")
 OutputQualitySurface = Literal["service_api", "operator_cli"]
-DEFAULT_SURFACE: OutputQualitySurface = "service_api"
+DEFAULT_SURFACE: OutputQualitySurface = "operator_cli"
 DEFAULT_MODEL_BY_SURFACE: dict[OutputQualitySurface, str] = {
     "service_api": "gpt-5.4",
     "operator_cli": "gpt-5.3-codex",
@@ -161,7 +161,7 @@ def run_output_quality_suite(
     write_text(run_root / "summary.md", _render_summary_markdown(summary))
     latest_path = OUTPUT_QUALITY_ROOT / f"summary.latest.{surface}.json"
     write_json(latest_path, summary)
-    if surface == "service_api":
+    if surface == DEFAULT_SURFACE:
         write_json(OUTPUT_QUALITY_ROOT / "summary.latest.json", summary)
     return summary
 

@@ -139,7 +139,7 @@ The active method now separates:
 
 This section records the accepted historical proving line that re-earned `O4R` and `CT2`.
 It does not, by itself, authorize future service-spend repetition by habit.
-If maintainers intentionally defer new OpenAI `service_api` spend, the next lawful move is an explicit truth-realignment seam onto the intended proving surface, not a silent reinterpretation of the historical accepted line.
+E24 is that explicit truth-realignment seam: historical accepted OpenAI `service_api` evidence remains the recorded product/runtime claim, while the active maintainer proving default now moves separately onto OpenAI `operator_cli`.
 
 That means later work should not ask whether a second host is "deferred" in the abstract.
 It should ask whether the same Cortex law is conformant, partial, divergent, unwired, or env-blocked on that host's strongest available native surface.
@@ -163,7 +163,7 @@ On the accepted feature-flags verified-work breadth pack, the current reading is
 - Gemini `operator_cli`: conformant on the explicit tri-brain guardrail rerun
 - bookmarks remains the accepted `CT2` anchor pack and `summary.latest` remains bookmarks-only while the third pack stays explicit breadth evidence
 
-The current accepted next decision for the shipping-default lane is therefore `promote`, not `improve_shipping_default`, because the OpenAI `O4R` gap is now closed on repeated targeted local reruns and no non-shipping divergent surface remains on the corrected current line.
+The current accepted next decision for the historical service-lane anchor is therefore `promote`, and the active proving-default language now stays separate from that historical accepted line.
 
 On the current E9 repair-yield review line, the paired live proof reads:
 
@@ -178,7 +178,7 @@ On the current E9 repair-yield review line, the paired live proof reads:
 If a later runtime/product seam is opened after this note, the next lawful move is:
 
 1. keep the current thin path as the default when no work contract is present
-2. do not reopen OpenAI `service_api` spend by habit; if current policy defers it, open an explicit operator-cli truth-realignment seam instead of pretending the old proving-default lane still governs iteration
+2. do not reopen OpenAI `service_api` spend by habit; E24 now records OpenAI `operator_cli` as the active proving-default lane, while the older service-lane evidence remains historical product/runtime claim only
 3. keep `O4R` stable on its already-earned historical line rather than reopening the law by habit
 4. do not reopen breadth by habit; the three-pack historical line is already re-earned on the accepted note
 5. if repair yield is the next target, open a smaller repair-pressure investigation that can create honest natural repair opportunities without replay or new Cortex law
