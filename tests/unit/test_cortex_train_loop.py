@@ -156,6 +156,22 @@ def test_train_loop_main_runs_real_work_replay_pack_train(
     assert train_loop.main(["--train", "real-work-replay-pack-openai"]) == 0
 
 
+def test_train_loop_main_runs_real_work_replay_proof_train(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(
+        train_loop,
+        "run_real_work_replay_proof_openai_train",
+        lambda **_kwargs: type(
+            "_Record",
+            (),
+            {"as_payload": staticmethod(lambda: {"train_name": "real-work-replay-proof-openai"})},
+        )(),
+    )
+
+    assert train_loop.main(["--train", "real-work-replay-proof-openai"]) == 0
+
+
 def test_evaluate_conformance_summary_truth_detects_missing_artifacts(
     tmp_path: Path,
 ) -> None:
@@ -834,6 +850,122 @@ def test_run_real_work_replay_pack_openai_train_records_replay_pack(
     assert payload["replay_pack"]["selected_case_ids"] == [
         "openai_operator_cli_astro_marketing_forms_v1_output_invalid",
         "openai_operator_cli_react_dashboard_v1_output_invalid",
+    ]
+
+
+def test_run_real_work_replay_proof_openai_train_records_stable_improvement(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    latest_summary_path = tmp_path / ".cortex" / "live_validation" / "output_quality" / "summary.latest.json"
+    latest_summary_path.parent.mkdir(parents=True, exist_ok=True)
+    latest_summary_path.write_text(
+        json.dumps(
+            {
+                "artifact_root": ".cortex/live_validation/output_quality/openai_operator_cli/run_broad",
+                "task_ids": [
+                    "astro_docs_site_v1",
+                    "astro_marketing_forms_v1",
+                    "react_dashboard_v1",
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+    selected_tasks = ("astro_marketing_forms_v1", "frontend_bugfix_cleanup_v1")
+    monkeypatch.setattr(
+        train_loop,
+        "selected_task_ids_from_replay_pack_summary",
+        lambda **_kwargs: selected_tasks,
+    )
+    monkeypatch.setattr(
+        train_loop,
+        "_run_shell_command",
+        lambda command, *, cwd: {
+            "command": command,
+            "command_text": command,
+            "cwd": str(cwd),
+            "exit_code": 0,
+            "stdout": "",
+            "stderr": "",
+        },
+    )
+    replay_commands: list[str] = []
+    summaries = iter(
+        (
+            {
+                "artifact_root": ".cortex/train_loops/real-work-replay-proof-openai/runs/openai_operator_cli/run_one",
+                "env_blocked": False,
+                "task_results": {
+                    "astro_marketing_forms_v1": {
+                        "arms": {
+                            "cortex": {
+                                "evaluation": {"status": "failed", "failure_class": "visible_test_failed"}
+                            }
+                        }
+                    },
+                    "frontend_bugfix_cleanup_v1": {
+                        "arms": {
+                            "cortex": {
+                                "evaluation": {"status": "passed", "failure_class": None}
+                            }
+                        }
+                    },
+                },
+            },
+            {
+                "artifact_root": ".cortex/train_loops/real-work-replay-proof-openai/runs/openai_operator_cli/run_two",
+                "env_blocked": False,
+                "task_results": {
+                    "astro_marketing_forms_v1": {
+                        "arms": {
+                            "cortex": {
+                                "evaluation": {"status": "failed", "failure_class": "visible_test_failed"}
+                            }
+                        }
+                    },
+                    "frontend_bugfix_cleanup_v1": {
+                        "arms": {
+                            "cortex": {
+                                "evaluation": {"status": "passed", "failure_class": None}
+                            }
+                        }
+                    },
+                },
+            },
+        )
+    )
+    monkeypatch.setattr(
+        train_loop,
+        "_run_long_shell_command",
+        lambda command, *, cwd: (
+            replay_commands.append(command),
+            {
+                "command": command,
+                "command_text": command,
+                "cwd": str(cwd),
+                "exit_code": 0,
+                "stdout": json.dumps(next(summaries)),
+                "stderr": "",
+            },
+        )[1],
+    )
+
+    record = train_loop.run_real_work_replay_proof_openai_train(
+        loop_root=tmp_path / ".cortex" / "train_loops",
+        repo_root=tmp_path,
+    )
+
+    assert record.final_decision == "promote"
+    assert record.iterations[0].primary_metric_after == 2
+    summary_path = tmp_path / ".cortex" / "train_loops" / "real-work-replay-proof-openai" / "summary.json"
+    assert summary_path.exists()
+    payload = json.loads(summary_path.read_text(encoding="utf-8"))
+    assert all("--arms cortex" in command for command in replay_commands)
+    assert payload["analysis"]["replay_arms"] == ["cortex"]
+    assert payload["analysis"]["stable_improved_task_ids"] == [
+        "astro_marketing_forms_v1",
+        "frontend_bugfix_cleanup_v1",
     ]
 
 

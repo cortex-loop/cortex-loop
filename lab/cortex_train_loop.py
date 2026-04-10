@@ -27,6 +27,7 @@ from lab.live_validation_common import now_utc_iso, run_command, write_json, wri
 from lab.real_work_replay_pack import (  # noqa: E402
     RealWorkReplayPack,
     build_real_work_replay_pack,
+    selected_task_ids_from_replay_pack_summary,
     write_real_work_replay_pack_artifact,
 )
 from lab.runtime_spend_allocator import (  # noqa: E402
@@ -46,6 +47,9 @@ TRAIN_LOOP_ROOT = ROOT / ".cortex" / "train_loops"
 PHASE_GATES_PATH = ROOT / "docs" / "internal" / "CORTEX_V2_PHASE_GATES_2.md"
 CONFORMANCE_SUMMARY_PATH = (
     ROOT / ".cortex" / "live_validation" / "conformance" / "summary.latest.json"
+)
+OUTPUT_QUALITY_SUMMARY_PATH = (
+    ROOT / ".cortex" / "live_validation" / "output_quality" / "summary.latest.json"
 )
 OPENAI_BREADTH_PACKS = (
     cortex_conformance.ACTIVE_CONTRACT_PACK,
@@ -1379,6 +1383,152 @@ def run_real_work_replay_pack_openai_train(
     return record
 
 
+def run_real_work_replay_proof_openai_train(
+    *,
+    loop_root: Path = TRAIN_LOOP_ROOT,
+    repo_root: Path = ROOT,
+) -> TrainLoopRecord:
+    deterministic_command = (
+        "python3 -m pytest -q tests/unit/test_real_work_replay_pack.py "
+        "tests/unit/test_cortex_output_quality.py tests/unit/test_cortex_train_loop.py "
+        "tests/internal/test_docs_boundary.py"
+    )
+    artifact_root = loop_root / "real-work-replay-proof-openai" / "runs"
+    selected_task_ids = selected_task_ids_from_replay_pack_summary(repo_root=repo_root)
+    task_list = " ".join(selected_task_ids)
+    replay_command = (
+        "python3 lab/cortex_output_quality.py "
+        f"--surface operator_cli --arms cortex --tasks {task_list} "
+        f"--artifact-root {artifact_root} --skip-latest-update"
+    )
+    proof_commands = [deterministic_command, replay_command, replay_command]
+    command_results = [
+        _run_shell_command(deterministic_command, cwd=repo_root),
+        _run_long_shell_command(replay_command, cwd=repo_root),
+        _run_long_shell_command(replay_command, cwd=repo_root),
+    ]
+    benchmark_summaries = [
+        _command_result_json(result)
+        for result in command_results[1:]
+        if result["exit_code"] == 0
+    ]
+    stable_improved_task_ids = _stable_replay_improved_task_ids(benchmark_summaries)
+    env_blocked = any(bool(summary.get("env_blocked")) for summary in benchmark_summaries)
+    latest_output_quality_unchanged = _latest_output_quality_summary_unchanged(
+        repo_root=repo_root,
+        selected_task_ids=selected_task_ids,
+    )
+
+    escalation_reasons = tuple(
+        reason
+        for reason in (
+            *(
+                f"proof command failed: {result['command_text']}"
+                for result in command_results
+                if result["exit_code"] != 0
+            ),
+            "replay proof run did not return two clean summaries"
+            if len(benchmark_summaries) != 2
+            else None,
+            "replay proof run remained env/auth blocked on the OpenAI operator lane"
+            if env_blocked
+            else None,
+            "private replay proof run rewrote output-quality latest summary"
+            if not latest_output_quality_unchanged
+            else None,
+        )
+        if reason is not None
+    )
+
+    guardrail_ok = (
+        all(result["exit_code"] == 0 for result in command_results[:1])
+        and len(benchmark_summaries) == 2
+        and not env_blocked
+        and latest_output_quality_unchanged
+    )
+    primary_metric_after = len(stable_improved_task_ids)
+    decision, reason = decide_loop_decision(
+        primary_metric_before=0,
+        primary_metric_after=primary_metric_after,
+        guardrail_ok=guardrail_ok,
+        localized_failure=False,
+        better_classification=primary_metric_after > 0,
+        budget_remaining=0,
+        escalation_reasons=escalation_reasons,
+    )
+    iteration = LoopIteration(
+        index=1,
+        candidate_label="real-work-replay-proof-openai",
+        proof_commands=tuple(proof_commands),
+        primary_metric_before=0,
+        primary_metric_after=primary_metric_after,
+        guardrail_ok=guardrail_ok,
+        localized_failure=False,
+        better_classification=primary_metric_after > 0,
+        budget_remaining=0,
+        decision=decision,
+        reason=reason,
+        command_results=tuple(command_results),
+        escalation_reasons=escalation_reasons,
+    )
+    analysis = {
+        "selected_task_ids": list(selected_task_ids),
+        "replay_arms": ["cortex"],
+        "stable_improved_task_ids": list(stable_improved_task_ids),
+        "benchmark_artifact_roots": [
+            str(summary.get("artifact_root") or "") for summary in benchmark_summaries
+        ],
+        "latest_output_quality_unchanged": latest_output_quality_unchanged,
+    }
+    record = TrainLoopRecord(
+        train_name="real-work-replay-proof-openai",
+        seam_class="timing_env_sensitive",
+        cortex_invariant=(
+            "convert frozen real-work replay cases into repeat-stable divergence reduction proof without widening runtime law"
+        ),
+        brain_wiring_touched=(
+            "maintainer-only replay task selection, cortex-only private output-quality reruns, and replay-proof train reporting"
+        ),
+        borrowed_mechanism=(
+            "reuse the existing output-quality runner on a frozen selected replay subset and rerun only the Cortex arm instead of reopening the full broad watch"
+        ),
+        contract_pack="real-work replay subset from the OpenAI operator output-quality bank",
+        conformance_surfaces=(OPENAI_ACTIVE_PROVING_DEFAULT,),
+        baseline_result={
+            "primary_metric_value": 0,
+            "selected_task_count": len(selected_task_ids),
+            "selected_task_ids": list(selected_task_ids),
+            "replay_arms": ["cortex"],
+            "repeat_runs": 2,
+        },
+        primary_metric="stable_divergence_class_reduction_on_replay_pack",
+        guardrail_metric="thin_path_unchanged_and_private_replay_runs_do_not_rewrite_latest",
+        baseline_proof_set=tuple(proof_commands),
+        iteration_budget=1,
+        rollback_surface=(
+            "private replay-proof train wiring and output-quality private artifact publication"
+        ),
+        escalation_triggers=(
+            "authority docs conflict",
+            "shipping truth would widen",
+            "auth/spend/env blocks proof",
+            "private replay run rewrote shared latest truth",
+        ),
+        analysis=analysis,
+        iterations=(iteration,),
+        final_decision=decision,
+    )
+    artifact_dir = loop_root / record.train_name
+    artifact_dir.mkdir(parents=True, exist_ok=True)
+    payload = record.as_payload()
+    write_json(artifact_dir / "summary.json", payload)
+    write_text(
+        artifact_dir / "summary.md",
+        render_real_work_replay_proof_markdown(record),
+    )
+    return record
+
+
 def render_train_loop_markdown(record: TrainLoopRecord) -> str:
     lines = [
         f"# Cortex Train Loop: {record.train_name}",
@@ -1550,6 +1700,47 @@ def render_real_work_replay_pack_train_markdown(
     return "\n".join(lines).rstrip() + "\n"
 
 
+def render_real_work_replay_proof_markdown(record: TrainLoopRecord) -> str:
+    analysis = record.analysis
+    selected_task_ids = analysis.get("selected_task_ids", [])
+    replay_arms = analysis.get("replay_arms", [])
+    stable_improved_task_ids = analysis.get("stable_improved_task_ids", [])
+    benchmark_artifact_roots = analysis.get("benchmark_artifact_roots", [])
+    lines = [
+        f"# Cortex Train Loop: {record.train_name}",
+        "",
+        f"- generated_at: `{now_utc_iso()}`",
+        f"- seam_class: `{record.seam_class}`",
+        f"- primary_metric: `{record.primary_metric}`",
+        f"- guardrail_metric: `{record.guardrail_metric}`",
+        f"- final_decision: `{record.final_decision or 'none'}`",
+        "",
+        "## Replay Proof",
+        "",
+        f"- selected_task_ids: `{', '.join(selected_task_ids)}`",
+        f"- replay_arms: `{', '.join(replay_arms)}`",
+        f"- stable_improved_task_ids: `{', '.join(stable_improved_task_ids)}`",
+        f"- latest_output_quality_unchanged: `{analysis.get('latest_output_quality_unchanged')}`",
+        "",
+        "## Benchmark Artifact Roots",
+        "",
+    ]
+    lines.extend(f"- `{root}`" for root in benchmark_artifact_roots)
+    lines.extend(["", "## Iteration", ""])
+    for iteration in record.iterations:
+        lines.extend(
+            [
+                f"- candidate: `{iteration.candidate_label}`",
+                f"- decision: `{iteration.decision}`",
+                f"- reason: {iteration.reason}",
+                f"- primary_metric_after: `{iteration.primary_metric_after}`",
+                f"- guardrail_ok: `{iteration.guardrail_ok}`",
+                "",
+            ]
+        )
+    return "\n".join(lines).rstrip() + "\n"
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         prog="python3 lab/cortex_train_loop.py",
@@ -1565,6 +1756,7 @@ def main(argv: list[str] | None = None) -> int:
             "causal-contribution-map-openai",
             "runtime-spend-allocator-openai",
             "real-work-replay-pack-openai",
+            "real-work-replay-proof-openai",
         ),
         default="conformance-summary-truth",
     )
@@ -1592,6 +1784,9 @@ def main(argv: list[str] | None = None) -> int:
         replay_pack = record.analysis.get("replay_pack")
         if isinstance(replay_pack, dict):
             payload["replay_pack"] = replay_pack
+    elif args.train == "real-work-replay-proof-openai":
+        record = run_real_work_replay_proof_openai_train()
+        payload = record.as_payload()
     else:  # pragma: no cover
         raise SystemExit(f"Unsupported train: {args.train}")
     print(json.dumps(payload, indent=2, sort_keys=True))
@@ -1842,6 +2037,62 @@ def _aggregate_output_quality_count(summary: dict[str, Any], key: str, arm: str)
         return 0
     value = payload.get(arm, 0)
     return int(value or 0)
+
+
+def _stable_replay_improved_task_ids(
+    benchmark_summaries: list[dict[str, Any]],
+) -> tuple[str, ...]:
+    if not benchmark_summaries:
+        return tuple()
+    stable: set[str] | None = None
+    for summary in benchmark_summaries:
+        task_results = summary.get("task_results")
+        if not isinstance(task_results, dict):
+            return tuple()
+        improved = {
+            str(task_id)
+            for task_id, payload in task_results.items()
+            if _task_replay_improved(payload)
+        }
+        stable = improved if stable is None else stable & improved
+    return tuple(sorted(stable or set()))
+
+
+def _task_replay_improved(task_payload: Any) -> bool:
+    if not isinstance(task_payload, dict):
+        return False
+    arms = task_payload.get("arms")
+    if not isinstance(arms, dict):
+        return False
+    cortex = arms.get("cortex")
+    if not isinstance(cortex, dict):
+        return False
+    evaluation = cortex.get("evaluation")
+    if not isinstance(evaluation, dict):
+        return False
+    status = evaluation.get("status")
+    failure_class = evaluation.get("failure_class")
+    if status == "env_blocked":
+        return False
+    return failure_class != "output_invalid"
+
+
+def _latest_output_quality_summary_unchanged(
+    *,
+    repo_root: Path,
+    selected_task_ids: tuple[str, ...],
+) -> bool:
+    path = repo_root / OUTPUT_QUALITY_SUMMARY_PATH.relative_to(ROOT)
+    if not path.exists():
+        return False
+    summary = json.loads(path.read_text(encoding="utf-8"))
+    task_ids = summary.get("task_ids")
+    if not isinstance(task_ids, list):
+        return False
+    current_task_ids = tuple(
+        str(task_id) for task_id in task_ids if isinstance(task_id, str)
+    )
+    return current_task_ids != selected_task_ids
 
 
 def _run_contribution_reading(

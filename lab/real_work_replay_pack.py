@@ -16,6 +16,9 @@ ROOT = Path(__file__).resolve().parents[1]
 OUTPUT_QUALITY_SUMMARY_PATH = (
     ROOT / ".cortex" / "live_validation" / "output_quality" / "summary.latest.json"
 )
+REAL_WORK_REPLAY_PACK_SUMMARY_PATH = (
+    ROOT / ".cortex" / "train_loops" / "real-work-replay-pack-openai" / "summary.json"
+)
 
 ReplaySurface = Literal["operator_cli", "service_api", "unknown"]
 
@@ -227,6 +230,46 @@ def build_real_work_replay_pack(
             "no regression on accepted verified-work packs and no shipping-truth widening"
         ),
     )
+
+
+def load_real_work_replay_pack_summary(
+    *,
+    repo_root: Path = ROOT,
+    summary_path: Path | None = None,
+) -> dict[str, Any]:
+    summary_path = summary_path or (
+        repo_root / REAL_WORK_REPLAY_PACK_SUMMARY_PATH.relative_to(ROOT)
+    )
+    return json.loads(summary_path.read_text(encoding="utf-8"))
+
+
+def selected_task_ids_from_replay_pack_summary(
+    *,
+    repo_root: Path = ROOT,
+    summary_path: Path | None = None,
+) -> tuple[str, ...]:
+    payload = load_real_work_replay_pack_summary(repo_root=repo_root, summary_path=summary_path)
+    replay_payload = payload.get("replay_pack")
+    if not isinstance(replay_payload, dict):
+        raise ValueError("replay-pack summary is missing replay_pack payload.")
+    cases = replay_payload.get("cases")
+    selected_case_ids = replay_payload.get("selected_case_ids")
+    if not isinstance(cases, list) or not isinstance(selected_case_ids, list):
+        raise ValueError("replay-pack summary is missing case selection data.")
+    selected_case_id_set = {
+        case_id for case_id in selected_case_ids if isinstance(case_id, str) and case_id.strip()
+    }
+    selected_task_ids = [
+        str(case.get("task_id"))
+        for case in cases
+        if isinstance(case, dict)
+        and str(case.get("case_id")) in selected_case_id_set
+        and isinstance(case.get("task_id"), str)
+        and str(case.get("task_id")).strip()
+    ]
+    if not selected_task_ids:
+        raise ValueError("replay-pack summary did not resolve any selected task ids.")
+    return tuple(selected_task_ids)
 
 
 def write_real_work_replay_pack_artifact(
@@ -480,7 +523,9 @@ __all__ = [
     "RealWorkReplayCase",
     "RealWorkReplayPack",
     "build_real_work_replay_pack",
+    "load_real_work_replay_pack_summary",
     "main",
     "render_real_work_replay_pack_markdown",
+    "selected_task_ids_from_replay_pack_summary",
     "write_real_work_replay_pack_artifact",
 ]

@@ -42,15 +42,15 @@ It is workflow state only. It does not override the packet documents, implementa
 - Current working branch:
   - `review/e23-preservation-state-machine`
 - Current candidate seam:
-  - `E26 real-work replay pack`
+  - `E27 real-work replay proof`
 - Product target:
-  - turn the current broad OpenAI `operator_cli` output-quality failures into a tiny replayable proof surface that can exercise real first-attempt failure shapes without rerunning the whole noisy watch
+  - turn the selected OpenAI `operator_cli` replay-bank cases into a tiny private proof surface that can test current Cortex behavior against real first-attempt failures without reopening the full broad watch
 - Surface:
   - `internal`
 - Direct executive payoff:
-  - replace one expensive low-discrimination watch surface with a frozen replay bank of real OpenAI failure shapes that later trains can target directly
+  - measure current Cortex lift on a frozen real-failure subset with a much smaller private proof loop before spending more live runtime on broad watches
 - Why this seam exists instead of a narrower product seam:
-  - the allocator already chose the next seam; the missing move now is to freeze a small replayable pack from real work artifacts before spending more runtime on broad reruns
+  - the replay bank already exists; the missing move now is to prove or cut current Cortex behavior on that frozen subset without paying for the full broad output-quality surface
 - Current seam status:
   - E22 is landed locally on `main` through the canonical close-session flow and the repo is now on an explicit review branch because `start-session` is blocked until that ahead-of-origin `main` history is published or reconciled
   - E23 remains implemented on this branch as verified product/runtime candidate state:
@@ -131,6 +131,19 @@ It is workflow state only. It does not override the packet documents, implementa
     - it recovers changed-file maps from workspace diffs instead of trusting the failed summary payload's empty `changed_files`
     - it selects one highest-change replayable case per framework family to keep the next proof surface narrow
     - it does not add a new benchmark family, new product/runtime law, or new host scope
+  - the new E27 replay-proof train now exists on this branch as a timing/env-sensitive maintainer-only proof seam over the selected replay subset:
+    - train slug: `real-work-replay-proof-openai`
+    - output target path: `.cortex/train_loops/real-work-replay-proof-openai/summary.json`
+    - human-readable output target: `.cortex/train_loops/real-work-replay-proof-openai/summary.md`
+    - private run root: `.cortex/train_loops/real-work-replay-proof-openai/runs`
+  - the replay-proof seam was reduced after one oversized live attempt:
+    - the first live replay-proof attempt reused the full output-quality arm set and spent time on `raw` and `tooling_only` even though the replay pack already preserved the baseline failure shapes
+    - that oversized run produced two fast Astro failures (`raw`, `tooling_only`), both still `output_invalid`, while also surfacing the same `.vite` sandbox `EPERM` verification noise during model-chosen local checks
+    - that spend shape was cut and the train was revised to run only `--arms cortex` against the frozen replay subset while keeping `--skip-latest-update`
+  - the current E27 proof read is still unresolved:
+    - deterministic proof is green for the reduced `cortex`-only train
+    - a fresh reduced live replay-proof rerun on 2026-04-10 remained timing-heavy before the first completed Astro `cortex` attempt and was cut within the bounded turn budget
+    - the branch therefore carries the smaller replay-proof mechanism, but no accepted keep/cut read yet on replay efficacy
   - the branch is still candidate truth only, not accepted baseline truth
   - historical accepted OpenAI `service_api` evidence remains recorded as product/runtime claim history
   - the active proving/default lane for new iteration is now OpenAI `operator_cli` on this branch, while historical accepted `service_api` evidence remains recorded as product/runtime claim history and not as the day-to-day proving default
@@ -138,7 +151,9 @@ It is workflow state only. It does not override the packet documents, implementa
 ## 4. Next lawful move
 
 - use `.cortex/train_loops/real-work-replay-pack-openai/summary.json` as the next narrow proof target instead of the full broad output-quality watch
-- open one follow-on replay proof seam against the selected Astro/React cases from the replay bank rather than rerunning all five current output-quality tasks
+- keep the reduced `real-work-replay-proof-openai` train as the only maintained replay-proof seam
+- if more live replay spend is justified, start with one direct single-case private rerun on the selected subset before reopening the full two-case replay proof
+- keep replay proof private to `.cortex/train_loops/real-work-replay-proof-openai/runs` and keep the shared output-quality latest summary untouched
 - keep E24 as the locally landed proving-default basis on this branch
 - keep the successful repair-pressure artifacts as the current best evidence for E23 and stop spending runtime on broader watch surfaces by habit
 - treat E23 as a local `keep` on the OpenAI `operator_cli` proving lane while leaving shipping truth unchanged
@@ -167,8 +182,10 @@ It is workflow state only. It does not override the packet documents, implementa
 - Do not let the allocator become product/runtime law, a second truth court, or a broader governance surface.
 - Do not treat the full five-task OpenAI output-quality watch as the next proving surface now that the replay bank exists.
 - Do not invent a new benchmark family or fixture tree when the replay miner can reuse the existing output-quality task packs and saved workspaces.
+- Do not reopen `raw` or `tooling_only` replay arms in E27 now that the replay pack already preserves the baseline failure shapes.
+- Do not treat the cut oversized replay-proof run or the cut timing-heavy `cortex`-only rerun as proof that replay efficacy is either earned or disproven.
 
 ## 6. Acknowledged worktree noise
 
 - Expected current-seam noise:
-  - none expected beyond the owned E23 runtime/doc/test touch surface on `review/e23-preservation-state-machine`
+  - none expected beyond the owned E23/E27 runtime/doc/test touch surface on `review/e23-preservation-state-machine`

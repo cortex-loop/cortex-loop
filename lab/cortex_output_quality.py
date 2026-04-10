@@ -92,6 +92,7 @@ def run_output_quality_suite(
     surface: OutputQualitySurface = DEFAULT_SURFACE,
     artifact_root: Path = OUTPUT_QUALITY_ROOT,
     ablation_config: OutputQualityAblationConfig | None = None,
+    publish_latest: bool = True,
 ) -> dict[str, Any]:
     load_local_env_file()
     run_id = now_utc_iso().replace(":", "").replace("-", "")
@@ -159,10 +160,11 @@ def run_output_quality_suite(
     )
     write_json(run_root / "summary.json", summary)
     write_text(run_root / "summary.md", _render_summary_markdown(summary))
-    latest_path = OUTPUT_QUALITY_ROOT / f"summary.latest.{surface}.json"
-    write_json(latest_path, summary)
-    if surface == DEFAULT_SURFACE:
-        write_json(OUTPUT_QUALITY_ROOT / "summary.latest.json", summary)
+    if publish_latest:
+        latest_path = OUTPUT_QUALITY_ROOT / f"summary.latest.{surface}.json"
+        write_json(latest_path, summary)
+        if surface == DEFAULT_SURFACE:
+            write_json(OUTPUT_QUALITY_ROOT / "summary.latest.json", summary)
     return summary
 
 
@@ -1038,6 +1040,14 @@ def main(argv: list[str] | None = None) -> int:
         default=DEFAULT_SURFACE,
     )
     parser.add_argument(
+        "--artifact-root",
+        default=str(OUTPUT_QUALITY_ROOT),
+    )
+    parser.add_argument(
+        "--skip-latest-update",
+        action="store_true",
+    )
+    parser.add_argument(
         "--visible-contract-binding",
         choices=("on", "off"),
         default="on",
@@ -1080,6 +1090,8 @@ def main(argv: list[str] | None = None) -> int:
             model=args.model,
             surface=args.surface,
             ablation_config=ablation_config,
+            artifact_root=Path(args.artifact_root).resolve(),
+            publish_latest=not args.skip_latest_update,
         )
     except OpenAIResponseStreamTransportError as exc:
         print(

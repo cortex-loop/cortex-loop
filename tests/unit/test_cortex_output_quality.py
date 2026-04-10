@@ -231,6 +231,38 @@ def test_main_allows_operator_cli_without_service_spend_approval(
     assert output_quality.main(["--surface", "operator_cli"]) == 0
 
 
+def test_main_passes_private_artifact_root_and_skip_latest_update(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    captured: dict[str, object] = {}
+
+    def _fake_run_output_quality_suite(**kwargs):
+        captured.update(kwargs)
+        return {"surface": "operator_cli", "arms": [], "pairwise_summary": {}}
+
+    monkeypatch.delenv("CORTEX_LIVE_SERVICE_SPEND_APPROVED", raising=False)
+    monkeypatch.setattr(output_quality, "run_output_quality_suite", _fake_run_output_quality_suite)
+
+    assert (
+        output_quality.main(
+            [
+                "--surface",
+                "operator_cli",
+                "--tasks",
+                "astro_docs_site_v1",
+                "--artifact-root",
+                str(tmp_path / "private_runs"),
+                "--skip-latest-update",
+            ]
+        )
+        == 0
+    )
+
+    assert captured["artifact_root"] == (tmp_path / "private_runs").resolve()
+    assert captured["publish_latest"] is False
+
+
 def test_run_arm_operator_cli_skips_repair_when_verification_binding_is_off(
     tmp_path: Path,
     monkeypatch,
