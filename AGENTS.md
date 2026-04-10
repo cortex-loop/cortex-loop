@@ -20,6 +20,7 @@ Work like a first-principles AI-systems researcher:
 - choose seams by product lift, not by local neatness
 - steal executive skills from systems that already work, especially human executive function, then translate them into concrete Cortex law
 - cut work that does not improve the shipped executive layer or directly unblock proving it
+- when asked where Cortex is at, answer with the full-executive completion percent versus the shippable threshold first, then the bio-to-code matrix, then the next highest-leverage gaps
 
 ## Authority
 
@@ -89,6 +90,7 @@ If the same divergence repeats across brains, challenge Cortex law before piling
 Prefer the smallest runnable seam that produces falsifiable product evidence.
 Treat the current math as binding landing law until live evidence proves it wrong or incomplete; then revise the law explicitly instead of silently drifting in code.
 When asked what Cortex is or how far along it is, state the full executive denominator first, then distinguish shipping truth, conformance truth, and the current train.
+Use the status registry's executive completion model and bio-to-code matrix for progress answers instead of improvising a fresh denominator each time.
 
 ## Workflow
 

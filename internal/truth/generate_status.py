@@ -45,12 +45,40 @@ def _render_system_map(nodes: list[dict[str, object]], edges: list[dict[str, str
     return lines
 
 
+def _format_path_list(paths: list[str]) -> str:
+    if not paths:
+        return "_planned only_"
+    return ", ".join(f"`{path}`" for path in paths)
+
+
+def _compute_completion(
+    completion: dict[str, object], rows: list[dict[str, object]]
+) -> dict[str, object]:
+    status_fraction = completion["status_fraction"]
+    total_weight = sum(int(row["weight"]) for row in rows)
+    credited = sum(float(status_fraction[row["status"]]) * int(row["weight"]) for row in rows)
+    current_percent = round((credited / total_weight) * 100)
+    shippable_threshold = int(completion["shippable_threshold_percent"])
+    counts = {
+        status: sum(1 for row in rows if row["status"] == status)
+        for status in status_fraction
+    }
+    return {
+        "current_percent": current_percent,
+        "shippable_threshold_percent": shippable_threshold,
+        "gap_to_shippable": max(0, shippable_threshold - current_percent),
+        "counts": counts,
+        "status_fraction": status_fraction,
+    }
+
+
 def render_status(data: dict[str, object]) -> str:
     resting_state = data["resting_state"]
     bootstrap = data["bootstrap"]
     goal = data["product_goal"]
     identity = data["identity"]
-    executive_denominator = data["executive_denominator"]
+    executive_completion = data["executive_completion"]
+    bio_to_code_matrix = data["bio_to_code_matrix"]
     math_to_code_rules = data["math_to_code_rules"]
     work_today = data["work_today"]
     next_product_train = data["next_product_train"]
@@ -66,6 +94,7 @@ def render_status(data: dict[str, object]) -> str:
     blocked_moves = data["blocked_moves"]
     where_to_work = data["where_to_work"]
     active_docs = data["active_docs"]
+    completion_summary = _compute_completion(executive_completion, bio_to_code_matrix)
 
     lines: list[str] = [
         "# CORTEX Status",
@@ -117,14 +146,42 @@ def render_status(data: dict[str, object]) -> str:
     lines.extend(
         [
             "",
-            "## Executive Denominator",
+            "## Executive Completion",
             "",
-            "| Executive Skill | Status | Note |",
-            "| --- | --- | --- |",
+            f"- Current full-executive completion: `{completion_summary['current_percent']}%`",
+            f"- Shippable threshold for the full executive: `{completion_summary['shippable_threshold_percent']}%`",
+            f"- Gap to shippable full-executive read: `{completion_summary['gap_to_shippable']}` points",
+            f"- Status mix: `{completion_summary['counts']['landed']}` landed, `{completion_summary['counts']['partial']}` partial, `{completion_summary['counts']['north_star']}` north_star",
+            f"- Scoring rule: `landed={int(completion_summary['status_fraction']['landed'] * 100)}%`, `partial={int(completion_summary['status_fraction']['partial'] * 100)}%`, `north_star={int(completion_summary['status_fraction']['north_star'] * 100)}%`",
+            f"- {executive_completion['full_denominator_note']}",
+            "",
+            "When user asks where Cortex is at:",
         ]
     )
-    for item in executive_denominator:
-        lines.append(f"| {item['skill']} | `{item['status']}` | {item['note']} |")
+    lines.extend(f"- {item}" for item in executive_completion["answer_contract"])
+    lines.extend(
+        [
+            "",
+            "Fastest route to raise the score next:",
+        ]
+    )
+    for item in executive_completion["next_raise"]:
+        lines.append(
+            f"- `{item['skill']}`: `+{item['expected_points_if_landed']}` points if landed. {item['why']}"
+        )
+    lines.extend(
+        [
+            "",
+            "## Bio-To-Code Matrix",
+            "",
+            "| Executive Skill | What We Are Stealing | Status | Weight | Code Homes | Proof Surfaces | Next Move |",
+            "| --- | --- | --- | --- | --- | --- | --- |",
+        ]
+    )
+    for item in bio_to_code_matrix:
+        lines.append(
+            f"| {item['skill']} | {item['stolen_skill']} | `{item['status']}` | `{item['weight']}` | {_format_path_list(item['code_homes'])} | {_format_path_list(item['proof_surfaces'])} | {item['next_move']} |"
+        )
     lines.extend(
         [
             "",

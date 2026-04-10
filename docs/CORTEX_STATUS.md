@@ -42,18 +42,37 @@ Answering stance:
 - When describing Cortex, start with the full executive denominator before narrowing to the current shipping subset.
 - Always distinguish Cortex truth, shipping truth, conformance truth, and the current train.
 
-## Executive Denominator
+## Executive Completion
 
-| Executive Skill | Status | Note |
-| --- | --- | --- |
-| Truth-preserving commitments and bounded certification | `landed` | Core commitment extraction, provenance, certification, and contradiction-preserving truth publication are active Cortex law. |
-| Bounded correction and verified-work preservation | `landed` | Cortex can preserve task truth, run bounded correction, and keep repair lawful instead of free-form. |
-| Uncertainty handling and brake | `partial` | The repo carries active reference-policy and brake-oriented SRE structure, but it is not yet uniformly productized across the shipped lane. |
-| Branch continuity, suspend/resume, and truthful closure | `partial` | Cortex is meant to preserve main-task continuity, branch debt, and explicit closure, but that denominator still exceeds the current shipping subset. |
-| Intervention pricing versus neutrality | `partial` | The executive should decide when to intervene, remain neutral, or stop, but the full intervention-pricing loop is not yet a uniformly proven product capability. |
-| Blocker surfacing and goal-debt management | `partial` | Cortex should improve operator judgment by surfacing unresolved state early, though the full denominator remains only partly operationalized. |
-| Multi-host executive continuity | `partial` | OpenAI, Claude, Gemini, and reference are all part of Cortex truth, but their executive conformance remains uneven. |
-| Offline consolidation and support geometry | `north_star` | Support geometry, offline consolidation, and stronger mediated executive support remain goal-level denominator, not current shipped product truth. |
+- Current full-executive completion: `46%`
+- Shippable threshold for the full executive: `85%`
+- Gap to shippable full-executive read: `39` points
+- Status mix: `2` landed, `5` partial, `1` north_star
+- Scoring rule: `landed=100%`, `partial=30%`, `north_star=0%`
+- This score measures progress toward the full executive denominator, not just the current shipping lane.
+
+When user asks where Cortex is at:
+- Start with the current executive completion percent versus the shippable threshold.
+- Then summarize the bio-to-code matrix by landed, partial, and north_star rows.
+- Then name the next highest-leverage rows to raise the score without drifting from Cortex law.
+
+Fastest route to raise the score next:
+- `Branch continuity, suspend/resume, and truthful closure`: `+11` points if landed. Largest near-term product lift on the shipped lane and directly aligned with the E23 preservation-state kernel extract.
+- `Uncertainty handling and brake`: `+9` points if landed. Turns existing reference-policy structure into explicit safe intervention control on the product lane.
+- `Blocker surfacing and goal-debt management`: `+7` points if landed. Improves operator judgment and continuity with smaller scope than a full multi-host uplift.
+
+## Bio-To-Code Matrix
+
+| Executive Skill | What We Are Stealing | Status | Weight | Code Homes | Proof Surfaces | Next Move |
+| --- | --- | --- | --- | --- | --- | --- |
+| Truth-preserving commitments and bounded certification | Truth maintenance and reality binding | `landed` | `12` | `cortex/core`, `cortex/drivers` | `tests/product`, `tests/conformance` | Keep this foundation stable while richer executive control builds on top. |
+| Bounded correction and verified-work preservation | Error repair without losing the main task thread | `landed` | `15` | `cortex/runtime`, `cortex/sre`, `cortex/hosts/openai` | `tests/product` | Extract the preserved E23 kernel cleanly so this remains maintained product behavior, not branch-local evidence. |
+| Uncertainty handling and brake | Hesitation and uncertainty-aware inhibition | `partial` | `13` | `cortex/sre` | `tests/product`, `tests/experimental` | Promote brake and uncertainty control from active reference policy into uniformly proven product behavior. |
+| Branch continuity, suspend/resume, and truthful closure | Working memory across interruptions plus truthful closure | `partial` | `15` | `cortex/sre`, `cortex/hosts/openai` | `tests/product`, `tests/conformance` | Land preserved branch state, suspend/resume, and explicit closure beyond repair-local flows. |
+| Intervention pricing versus neutrality | Deciding when to intervene, stay neutral, or stop | `partial` | `10` | `cortex/sre` | `tests/product`, `tests/experimental` | Make intervene, wait, and stop choices explicit in product control policy instead of implicit host heuristics. |
+| Blocker surfacing and goal-debt management | Noticing unresolved blockers and unfinished intentions | `partial` | `10` | `cortex/sre`, `cortex/hosts/openai` | `tests/product` | Surface blocker debt and unfinished-goal state explicitly in the product lane. |
+| Multi-host executive continuity | One executive across different brains and contexts | `partial` | `15` | `cortex/hosts/openai`, `cortex/hosts/claude`, `cortex/hosts/gemini`, `cortex/hosts/reference` | `tests/product`, `tests/conformance` | Raise Claude and Gemini conformance while keeping one Cortex law across all hosts. |
+| Offline consolidation and support geometry | Sleep-like consolidation and support systems | `north_star` | `10` | _planned only_ | _planned only_ | Keep this out of the shipped lane until support geometry earns a lawful product shape. |
 
 ## Math To Code Rules
 
