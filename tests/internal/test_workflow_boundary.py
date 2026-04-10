@@ -17,6 +17,7 @@ def test_internal_workflow_surfaces_exist() -> None:
     internal_makefile = INTERNAL_MAKEFILE_PATH.read_text(encoding="utf-8")
     shim = REPO_WORKFLOW_SHIM_PATH.read_text(encoding="utf-8")
     canonical = REPO_WORKFLOW_CANONICAL_PATH.read_text(encoding="utf-8")
+    workflow_doc = (REPO_ROOT / "docs" / "internal" / "REPO_WORKFLOW.md").read_text(encoding="utf-8")
 
     assert "cleanup-report:" in internal_makefile
     assert "audit-branches:" in internal_makefile
@@ -24,6 +25,10 @@ def test_internal_workflow_surfaces_exist() -> None:
     assert "scripts/repo_workflow.py is deprecated" in shim
     assert "internal/workflow/repo_workflow.py" in shim
     assert 'DEFAULT_ROOT = Path(__file__).resolve().parents[2]' in canonical
+    assert 'help="Verify, publish, merge, sync main, and delete a managed session branch."' in canonical
+    assert 'GitHub CLI `gh` is required for managed close-session publication.' in canonical
+    assert 'def _publish_merge_sync_session(' in canonical
+    assert 'remote_managed_heads' in canonical
     assert '_run(["make", "product-test"])' in canonical
     assert '_run(["make", "conformance-test"])' in canonical
     assert '_run(["make", "experimental-test"])' in canonical
@@ -32,6 +37,9 @@ def test_internal_workflow_surfaces_exist() -> None:
     assert '_run(["make", "-C", "internal", "test"])' in canonical
     assert '_run(["make", "lab-test"])' in canonical
     assert '["make", "-C", "internal", "closeout-test"]' in canonical
+    assert "Remote publication remains separate" not in workflow_doc
+    assert "publishes the session branch, merges it, adopts `origin/main`" in workflow_doc
+    assert "clean synced `main`" in workflow_doc
 
 
 def test_compatibility_wrappers_remain_callable_for_one_transition_cycle() -> None:

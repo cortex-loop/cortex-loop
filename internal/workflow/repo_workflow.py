@@ -6,6 +6,7 @@ import datetime as dt
 import json
 import os
 import re
+import shutil
 import subprocess
 import sys
 from pathlib import Path
@@ -23,6 +24,16 @@ CANONICAL_ORIGIN_PATTERNS = (
     re.compile(r"^git@github\.com:(?P<slug>[^/\s]+/[^/\s]+?)(?:\.git)?/?$"),
     re.compile(r"^https://github\.com/(?P<slug>[^/\s]+/[^/\s]+?)(?:\.git)?/?$"),
     re.compile(r"^ssh://git@github\.com/(?P<slug>[^/\s]+/[^/\s]+?)(?:\.git)?/?$"),
+)
+VERIFICATION_CONTRACT_COMMANDS = (
+    "git diff --check",
+    "make product-test",
+    "make conformance-test",
+    "make experimental-test",
+    "python3 internal/truth/generate_status.py --check",
+    "python3 internal/archive/generate_archive_index.py --check",
+    "make -C internal test",
+    "make lab-test",
 )
 
 
@@ -103,6 +114,58 @@ def _ensure_canonical_origin() -> None:
         raise SystemExit(
             f"Remote `origin` points at '{origin}', not the canonical repo `github.com/{CANONICAL_REPO_SLUG}`."
         )
+
+
+def _publication_repo_slug() -> str:
+    slug = _repo_slug_from_remote(_origin_url())
+    if slug is not None:
+        return slug
+    if os.environ.get(ROOT_ENV_VAR):
+        return CANONICAL_REPO_SLUG
+    raise SystemExit("Unable to determine repo slug from remote `origin`.")
+
+
+def _managed_publication_required() -> bool:
+    return _repo_slug_from_remote(_origin_url()) == CANONICAL_REPO_SLUG
+
+
+def _gh_executable() -> str:
+    gh = shutil.which("gh")
+    if gh is None:
+        raise SystemExit("GitHub CLI `gh` is required for managed close-session publication.")
+    return gh
+
+
+def _gh_run(args: list[str], *, capture: bool = False) -> str:
+    proc = subprocess.run(
+        [_gh_executable(), *args],
+        cwd=_root(),
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+    if proc.returncode != 0:
+        detail = (proc.stderr or proc.stdout).strip()
+        suffix = f"\n{detail}" if detail else ""
+        raise SystemExit(f"`gh {' '.join(args)}` failed.{suffix}")
+    if capture:
+        return proc.stdout.strip()
+    return ""
+
+
+def _ensure_gh_ready() -> None:
+    _gh_executable()
+    proc = subprocess.run(
+        ["gh", "auth", "status"],
+        cwd=_root(),
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+    if proc.returncode != 0:
+        detail = (proc.stderr or proc.stdout).strip()
+        suffix = f"\n{detail}" if detail else ""
+        raise SystemExit(f"GitHub CLI `gh` must be authenticated for managed close-session publication.{suffix}")
 
 
 def _fetch_origin(*, quiet: bool = False) -> None:
@@ -243,6 +306,11 @@ def _branch_merged_into_main(branch: str) -> bool:
     return proc.returncode == 0
 
 
+def _branch_merged_into_origin_main(branch: str) -> bool:
+    proc = subprocess.run(["git", "merge-base", "--is-ancestor", branch, "origin/main"], cwd=_root(), check=False)
+    return proc.returncode == 0
+
+
 def _switch_to_main() -> None:
     _run(["git", "switch", "main"])
 
@@ -280,6 +348,131 @@ def _finalize_current_branch(message: str) -> str | None:
     _run(["git", "commit", "-m", message])
     _ensure_clean_tree()
     return _capture(["git", "rev-parse", "HEAD"]).strip()
+
+
+def _managed_pr_body(branch: str) -> str:
+    verification = "\n".join(f"- `{command}`" for command in VERIFICATION_CONTRACT_COMMANDS)
+    return (
+        "## Summary\n"
+        f"- Managed session closeout for `{branch}`.\n\n"
+        "## Verification\n"
+        f"{verification}\n"
+    )
+
+
+def _session_pull_request(branch: str) -> dict[str, object] | None:
+    output = _gh_run(
+        [
+            "pr",
+            "list",
+            "--repo",
+            _publication_repo_slug(),
+            "--head",
+            branch,
+            "--state",
+            "all",
+            "--json",
+            "number,state,url,isDraft,headRefName,baseRefName",
+        ],
+        capture=True,
+    )
+    rows = json.loads(output or "[]")
+    matches = [row for row in rows if row["headRefName"] == branch and row["baseRefName"] == "main"]
+    if len(matches) > 1:
+        raise SystemExit(f"Multiple pull requests exist for managed branch '{branch}'. Reconcile them manually.")
+    return matches[0] if matches else None
+
+
+def _push_session_branch(branch: str) -> None:
+    _run(["git", "push", "-u", "origin", branch])
+
+
+def _create_session_pull_request(branch: str, title: str) -> dict[str, object]:
+    _gh_run(
+        [
+            "pr",
+            "create",
+            "--repo",
+            _publication_repo_slug(),
+            "--base",
+            "main",
+            "--head",
+            branch,
+            "--title",
+            title,
+            "--body",
+            _managed_pr_body(branch),
+        ]
+    )
+    pr = _session_pull_request(branch)
+    if pr is None:
+        raise SystemExit(f"Managed close-session created no discoverable PR for branch '{branch}'.")
+    return pr
+
+
+def _mark_pull_request_ready(number: int) -> None:
+    _gh_run(["pr", "ready", str(number), "--repo", _publication_repo_slug()])
+
+
+def _merge_session_pull_request(number: int) -> None:
+    _gh_run(["pr", "merge", str(number), "--repo", _publication_repo_slug(), "--merge", "--delete-branch"])
+
+
+def _adopt_origin_main() -> str:
+    _ensure_clean_tree()
+    _ensure_canonical_origin()
+    _fetch_origin()
+    if not _origin_main_exists():
+        raise SystemExit("Remote `origin/main` does not exist.")
+    if _current_branch() != "main":
+        _switch_to_main()
+    if _main_upstream() != "origin/main":
+        _set_main_upstream()
+    _run(["git", "reset", "--hard", "origin/main"])
+    return _capture(["git", "rev-parse", "main"]).strip()
+
+
+def _publish_merge_sync_session(branch: str, title: str) -> dict[str, object]:
+    _ensure_canonical_origin()
+    _ensure_gh_ready()
+    _fetch_origin(quiet=True)
+
+    pr = _session_pull_request(branch)
+    if pr is not None and str(pr["state"]).upper() == "MERGED":
+        if not _branch_merged_into_origin_main(branch):
+            raise SystemExit(
+                f"Managed branch '{branch}' has an already-merged PR, but the local branch head is not contained in origin/main."
+            )
+        main_head = _adopt_origin_main()
+        _delete_branch(branch)
+        return {
+            "status": "already_merged",
+            "published_branch": branch,
+            "pr_number": pr["number"],
+            "pr_url": pr["url"],
+            "main_head": main_head,
+            "main_sync": _main_origin_state(),
+        }
+    if pr is not None and str(pr["state"]).upper() == "CLOSED":
+        raise SystemExit(f"Managed branch '{branch}' already has a closed unmerged PR. Reconcile it manually.")
+
+    _push_session_branch(branch)
+    if pr is None:
+        pr = _create_session_pull_request(branch, title)
+    if bool(pr.get("isDraft")):
+        _mark_pull_request_ready(int(pr["number"]))
+    _merge_session_pull_request(int(pr["number"]))
+
+    main_head = _adopt_origin_main()
+    _delete_branch(branch)
+    return {
+        "status": "merged",
+        "published_branch": branch,
+        "pr_number": pr["number"],
+        "pr_url": pr["url"],
+        "main_head": main_head,
+        "main_sync": _main_origin_state(),
+    }
 
 
 def _land_session_branch(branch: str) -> str:
@@ -382,6 +575,7 @@ def _audit_payload() -> dict[str, object]:
         "current_branch": current_branch,
         "main_head": _capture_optional(["git", "rev-parse", "main"]),
         "origin_main_head": _capture_optional(["git", "rev-parse", "origin/main"]),
+        "remote_managed_heads": _remote_managed_heads(),
         "remote_review_heads": _remote_review_heads(),
         "merged_local": sorted(merged_local, key=lambda row: row["branch"]),
         "worktree_attached": sorted(worktree_attached, key=lambda row: row["branch"]),
@@ -390,8 +584,8 @@ def _audit_payload() -> dict[str, object]:
     }
 
 
-def _remote_review_heads() -> list[str]:
-    output = _capture_optional(["git", "ls-remote", "--heads", "origin", "review/*"])
+def _remote_heads(*patterns: str) -> list[str]:
+    output = _capture_optional(["git", "ls-remote", "--heads", "origin", *patterns])
     if not output:
         return []
     heads: list[str] = []
@@ -399,6 +593,14 @@ def _remote_review_heads() -> list[str]:
         _sha, ref = line.split("\t", 1)
         heads.append(ref.removeprefix("refs/heads/"))
     return sorted(heads)
+
+
+def _remote_review_heads() -> list[str]:
+    return _remote_heads("review/*")
+
+
+def _remote_managed_heads() -> list[str]:
+    return [head for head in _remote_heads("codex/*", "claude/*", "maint/*") if is_managed_session_branch(head)]
 
 
 def cmd_sync_main(adopt_origin: bool) -> int:
@@ -475,10 +677,38 @@ def cmd_close_session(message: str) -> int:
     if commit_hash is None and _branch_merged_into_main(branch):
         _switch_to_main()
         _delete_branch(branch)
-        print("no-op clean tree")
+        print(
+            json.dumps(
+                {
+                    "status": "no_op",
+                    "published_branch": None,
+                    "pr_number": None,
+                    "pr_url": None,
+                    "main_head": _capture(["git", "rev-parse", "main"]).strip(),
+                    "main_sync": _main_origin_state(),
+                },
+                sort_keys=True,
+            )
+        )
+        return 0
+    if _managed_publication_required():
+        result = _publish_merge_sync_session(branch, message)
+        print(json.dumps(result, sort_keys=True))
         return 0
     landed_hash = _land_session_branch(branch)
-    print(f"main {landed_hash}")
+    print(
+        json.dumps(
+            {
+                "status": "local_only",
+                "published_branch": None,
+                "pr_number": None,
+                "pr_url": None,
+                "main_head": landed_hash,
+                "main_sync": _main_origin_state(),
+            },
+            sort_keys=True,
+        )
+    )
     return 0
 
 
@@ -506,6 +736,8 @@ def cmd_cleanup_report() -> int:
         rows = payload[key]
         if rows:
             failures[key] = rows
+    if payload["remote_managed_heads"]:
+        failures["remote_managed_heads"] = payload["remote_managed_heads"]
     if payload["remote_review_heads"]:
         failures["remote_review_heads"] = payload["remote_review_heads"]
 
@@ -526,6 +758,7 @@ def cmd_cleanup_report() -> int:
         "main_head": payload["main_head"],
         "origin_main_head": payload["origin_main_head"],
         "main_sync": main_sync,
+        "remote_managed_heads": payload["remote_managed_heads"],
         "remote_review_heads": payload["remote_review_heads"],
     }
     if failures:
@@ -583,7 +816,10 @@ def main(argv: list[str] | None = None) -> int:
     finalize_parser = subparsers.add_parser("finalize", help="Verify and commit the current manual/review branch.")
     finalize_parser.add_argument("--message", required=True)
 
-    close_parser = subparsers.add_parser("close-session", help="Verify, land, and delete a managed session branch.")
+    close_parser = subparsers.add_parser(
+        "close-session",
+        help="Verify, publish, merge, sync main, and delete a managed session branch.",
+    )
     close_parser.add_argument("--message", required=True)
 
     subparsers.add_parser("audit-branches", help="Report local branch hygiene state without mutating refs.")
