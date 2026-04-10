@@ -68,6 +68,7 @@ ACTIVE_CONTRACT_PACK = "verified_work_bookmarks_v1"
 NORMALIZE_PORT_CONTRACT_PACK = "verified_work_normalize_port_v1"
 FEATURE_FLAGS_CONTRACT_PACK = "verified_work_feature_flags_v1"
 CONFORMANCE_ROOT = LOCAL_LIVE_ROOT / "conformance"
+REPAIR_PRESSURE_ROOT = CONFORMANCE_ROOT / "repair_pressure"
 PHASE_GATES_PATH = ROOT / "docs" / "internal" / "CORTEX_V2_PHASE_GATES_2.md"
 BOOKMARKS_TASK_PATH = (
     ROOT / "tests" / "fixtures" / "live_validation" / "bookmarks_app_template" / "README_TASK.md"
@@ -85,6 +86,7 @@ _CLAUDE_MODEL = "claude-sonnet-4-6"
 _CLAUDE_READ_ONLY_TOOLS = "Read,Glob,Grep,LS"
 OPENAI_PRODUCT_RUNTIME_CLAIM = "openai:service_api"
 OPENAI_ACTIVE_PROVING_DEFAULT = "openai:operator_cli"
+_REPAIRABLE_FAILURE_CLASSES = frozenset({"output_invalid", "import_smoke_failed", "test_failed"})
 _SURFACE_ORDER: dict[Brain, tuple[Surface, ...]] = {
     "openai": ("operator_cli", "service_api"),
     "claude": ("operator_cli",),
@@ -415,6 +417,88 @@ def strongest_native_surface(
     return _SURFACE_ORDER[brain][0]
 
 
+def _render_full_files_result(file_map: Mapping[str, str]) -> str:
+    blocks: list[str] = []
+    for path in sorted(file_map):
+        blocks.append(f"=== FILE: {path} ===")
+        blocks.append(file_map[path])
+        blocks.append("=== END FILE ===")
+    return "\n".join(blocks)
+
+
+def _materialize_file_map(workspace: Path, file_map: Mapping[str, str]) -> None:
+    for relative_path, content in file_map.items():
+        destination = workspace / relative_path
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        destination.write_text(content, encoding="utf-8")
+
+
+def _inject_parse_invalid_output(result_text: str) -> str:
+    return f"unexpected text outside protocol blocks\n{result_text.strip()}"
+
+
+def _inject_import_smoke_failure(source_text: str) -> str:
+    return f"{source_text.rstrip()}\n\nBROKEN = (\n"
+
+
+def _inject_test_failure(
+    *,
+    contract_pack: ContractPack,
+    source_text: str,
+) -> tuple[str, str]:
+    if contract_pack.contract_pack == NORMALIZE_PORT_CONTRACT_PACK:
+        return (
+            "src/normalize_port.py",
+            f"{source_text.rstrip()}\n\n"
+            "def normalize_port(value: int | str) -> int:\n"
+            "    return 0\n",
+        )
+    if contract_pack.contract_pack == FEATURE_FLAGS_CONTRACT_PACK:
+        return (
+            "src/feature_flags/evaluator.py",
+            f"{source_text.rstrip()}\n\n"
+            "def is_flag_active(*_args, **_kwargs):\n"
+            "    return False\n",
+        )
+    raise ValueError(
+        "test-failure repair pressure is only defined for normalize-port and feature-flags packs."
+    )
+
+
+def _repair_pressure_failure_class(contract_pack: ContractPack) -> str:
+    if contract_pack.contract_pack == ACTIVE_CONTRACT_PACK:
+        return "output_invalid"
+    if contract_pack.contract_pack == NORMALIZE_PORT_CONTRACT_PACK:
+        return "import_smoke_failed"
+    if contract_pack.contract_pack == FEATURE_FLAGS_CONTRACT_PACK:
+        return "test_failed"
+    raise ValueError(f"Unsupported repair-pressure contract pack: {contract_pack.contract_pack}")
+
+
+def _default_repair_pressure_target_path(contract_pack: ContractPack) -> str | None:
+    if contract_pack.contract_pack == NORMALIZE_PORT_CONTRACT_PACK:
+        return "src/normalize_port.py"
+    if contract_pack.contract_pack == FEATURE_FLAGS_CONTRACT_PACK:
+        return "src/feature_flags/evaluator.py"
+    return None
+
+
+def _narrowed_repair_contract(
+    work_contract: WorkContract,
+    lawful_repair_surface: frozenset[str],
+) -> WorkContract:
+    narrowed_paths = tuple(
+        path for path in work_contract.allowed_write_paths if path in lawful_repair_surface
+    )
+    if not narrowed_paths:
+        raise ValueError("repair proof requires a non-empty lawful_repair_surface.")
+    return replace(
+        work_contract,
+        allowed_write_paths=narrowed_paths,
+        max_repair_turns=0,
+    )
+
+
 @contextmanager
 def _stage_contract_pack_workspace(
     contract_pack: ContractPack,
@@ -722,6 +806,54 @@ def render_summary_markdown(summary: dict[str, Any]) -> str:
     return "\n".join(lines) + "\n"
 
 
+def render_repair_pressure_markdown(summary: dict[str, Any]) -> str:
+    result = summary.get("result") if isinstance(summary.get("result"), Mapping) else None
+    repair_case = (
+        summary.get("repair_pressure_case")
+        if isinstance(summary.get("repair_pressure_case"), Mapping)
+        else {}
+    )
+    audit = summary.get("repair_audit") if isinstance(summary.get("repair_audit"), Mapping) else {}
+    lines = [
+        f"# OpenAI operator_cli repair pressure: {summary['contract_pack']['contract_pack']}",
+        "",
+        f"- generated_at: `{summary['generated_at']}`",
+        f"- status: `{summary['status']}`",
+        f"- proof_surface: `{summary['proof_surface']}`",
+        f"- pressure_source: `{repair_case.get('pressure_source', 'unknown')}`",
+        f"- failure_class: `{repair_case.get('failure_class', 'unknown')}`",
+        f"- target_path: `{repair_case.get('target_path') or '<none>'}`",
+        "",
+        "| audit | value |",
+        "| --- | --- |",
+    ]
+    for key in (
+        "task_anchor_present",
+        "preservation_state_present",
+        "repair_contract_matches_surface",
+        "repair_ticket_mechanical_only",
+        "attempt2_paths_within_surface",
+        "preserved_overlay_reused",
+    ):
+        if key in audit:
+            lines.append(f"| {key} | {audit[key]} |")
+    if result is not None:
+        lines.extend(
+            [
+                "",
+                "| brain | surface | status | repair | note |",
+                "| --- | --- | --- | --- | --- |",
+                "| "
+                f"{result.get('brain', '-')} | "
+                f"{result.get('surface', '-')} | "
+                f"{result.get('status', '-')} | "
+                f"{result.get('repair_conversion', '-')} | "
+                f"{result.get('note', '-') or '-'} |",
+            ]
+        )
+    return "\n".join(lines) + "\n"
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         prog="python3 lab/cortex_conformance.py",
@@ -729,7 +861,7 @@ def main(argv: list[str] | None = None) -> int:
     )
     parser.add_argument(
         "--mode",
-        choices=("preflight", "fast", "active", "reconcile-latest"),
+        choices=("preflight", "fast", "active", "repair-pressure", "reconcile-latest"),
         default="active",
     )
     parser.add_argument(
@@ -815,6 +947,17 @@ def main(argv: list[str] | None = None) -> int:
             contract_pack=pack,
             openai_surface_override=args.openai_surface,
         )
+    elif args.mode == "repair-pressure":
+        if args.brain not in {"all", "openai"}:
+            raise SystemExit("repair-pressure mode currently supports only --brain openai.")
+        requested_surface = strongest_native_surface(
+            "openai",
+            pack,
+            openai_surface_override=args.openai_surface,
+        )
+        if requested_surface != "operator_cli":
+            raise SystemExit("repair-pressure mode requires OpenAI operator_cli.")
+        payload = run_openai_operator_cli_repair_pressure(contract_pack=pack)
     elif args.mode == "reconcile-latest":
         payload = reconcile_latest_summary()
     else:
@@ -924,6 +1067,149 @@ def _run_openai_service_conformance(
     )
 
 
+def _write_openai_repair_artifacts(
+    *,
+    artifact_dir: Path,
+    preservation_state: Any,
+    repair_contract: WorkContract,
+    repair_ticket: str,
+    repair_prompt: str,
+) -> None:
+    write_json(artifact_dir / "preservation_state.json", preservation_state.as_payload())
+    write_json(artifact_dir / "repair_contract.json", repair_contract.as_payload())
+    write_text(artifact_dir / "repair_ticket.txt", repair_ticket)
+    write_text(artifact_dir / "repair_prompt.txt", repair_prompt)
+
+
+def _run_openai_operator_cli_resume_repair(
+    *,
+    artifact_dir: Path,
+    workspace: Path,
+    env: dict[str, str],
+    model: str,
+    thread_id: str,
+    preservation_state: Any,
+    preserved_file_map: dict[str, str] | None,
+    verifier_contract: WorkContract,
+) -> dict[str, Any]:
+    repair_contract = _narrowed_repair_contract(
+        verifier_contract,
+        preservation_state.lawful_repair_surface,
+    )
+    repair_ticket = build_verified_work_repair_ticket(preservation_state)
+    repair_prompt = _render_combined_operator_prompt(
+        task_prompt=repair_ticket,
+        instructions=build_verified_work_instructions(repair_contract),
+    )
+    _write_openai_repair_artifacts(
+        artifact_dir=artifact_dir,
+        preservation_state=preservation_state,
+        repair_contract=repair_contract,
+        repair_ticket=repair_ticket,
+        repair_prompt=repair_prompt,
+    )
+    resumed = run_openai_operator_resumed_turn(
+        project_root=workspace,
+        prompt=repair_prompt,
+        model=model,
+        thread_id=thread_id,
+        stderr_path=artifact_dir / "attempt2.stderr.log",
+        env=env,
+    )
+    write_json(artifact_dir / "attempt2.json", resumed)
+    resumed_result = _evaluate_openai_operator_attempt(
+        operator_turn=resumed,
+        work_contract=repair_contract,
+        preserved_file_map=preserved_file_map,
+        verifier_contract=verifier_contract,
+    )
+    resumed_result["repair_contract"] = repair_contract
+    resumed_result["repair_ticket"] = repair_ticket
+    resumed_result["repair_prompt"] = repair_prompt
+    return resumed_result
+
+
+def _build_openai_repair_pressure_case(
+    *,
+    contract_pack: ContractPack,
+    workspace: Path,
+    initial_output_text: str | None,
+    initial_file_map: dict[str, str] | None,
+    initial_outcome: VerificationOutcome,
+) -> dict[str, Any]:
+    if initial_file_map is not None:
+        _materialize_file_map(workspace, initial_file_map)
+    if initial_outcome.failure_class in _REPAIRABLE_FAILURE_CLASSES:
+        return {
+            "pressure_source": "natural",
+            "failure_class": initial_outcome.failure_class,
+            "target_path": _default_repair_pressure_target_path(contract_pack),
+            "effective_result_text": initial_output_text or "",
+            "effective_file_map": initial_file_map,
+            "effective_outcome": initial_outcome,
+            "description": "first attempt already exercised a repairable operator_cli failure.",
+        }
+    if initial_outcome.status != "passed":
+        raise RuntimeError(
+            "repair-pressure proof requires a passing or repairable first attempt."
+        )
+    if initial_file_map is None:
+        raise RuntimeError(
+            "repair-pressure proof requires a parsed first-attempt file map."
+        )
+
+    failure_class = _repair_pressure_failure_class(contract_pack)
+    target_path = _default_repair_pressure_target_path(contract_pack)
+    if failure_class == "output_invalid":
+        effective_result_text = _inject_parse_invalid_output(
+            initial_output_text or _render_full_files_result(initial_file_map)
+        )
+        effective_file_map, effective_outcome = verify_verified_work_result(
+            effective_result_text,
+            contract_pack.work_contract,
+        )
+    else:
+        if target_path is None or target_path not in initial_file_map:
+            raise RuntimeError(
+                "repair-pressure proof requires the expected target path in the first-attempt file map."
+            )
+        faulted_file_map = dict(initial_file_map)
+        if failure_class == "import_smoke_failed":
+            faulted_file_map[target_path] = _inject_import_smoke_failure(
+                faulted_file_map[target_path]
+            )
+        else:
+            _actual_target, mutated = _inject_test_failure(
+                contract_pack=contract_pack,
+                source_text=faulted_file_map[target_path],
+            )
+            faulted_file_map[target_path] = mutated
+        _materialize_file_map(workspace, faulted_file_map)
+        effective_result_text = _render_full_files_result(faulted_file_map)
+        effective_file_map, effective_outcome = verify_verified_work_result(
+            effective_result_text,
+            contract_pack.work_contract,
+        )
+
+    if effective_outcome.failure_class != failure_class:
+        raise RuntimeError(
+            "repair-pressure injection did not yield the expected verifier-visible failure "
+            f"({failure_class}); got {effective_outcome.failure_class or '<none>'}."
+        )
+    return {
+        "pressure_source": "injected",
+        "failure_class": failure_class,
+        "target_path": target_path,
+        "effective_result_text": effective_result_text,
+        "effective_file_map": effective_file_map,
+        "effective_outcome": effective_outcome,
+        "description": (
+            "maintainer-only repair-pressure case injected after a clean first attempt to "
+            "exercise the preservation-aware repair branch."
+        ),
+    }
+
+
 def _run_openai_operator_cli_conformance(
     *,
     contract_pack: ContractPack,
@@ -967,11 +1253,16 @@ def _run_openai_operator_cli_conformance(
             )
         first_outcome = result["verification"]
         assert isinstance(first_outcome, VerificationOutcome)
+        first_file_map = result.get("file_map")
+        if isinstance(first_file_map, Mapping):
+            first_file_map = {
+                str(path): str(content) for path, content in first_file_map.items()
+            }
         final_outcome = first_outcome
         attempt_count = 1
         final_note = result["note"]
         final_extraction_mode = result["extraction_mode"]
-        if first_outcome.failure_class in {"output_invalid", "import_smoke_failed", "test_failed"}:
+        if first_outcome.failure_class in _REPAIRABLE_FAILURE_CLASSES:
             thread_id = result["session_id"]
             if not isinstance(thread_id, str) or not thread_id.strip():
                 return ConformanceRunResult(
@@ -994,27 +1285,22 @@ def _run_openai_operator_cli_conformance(
                     note="OpenAI operator surface did not return a resumable thread id.",
                     artifact_relpath=_artifact_relpath(artifact_dir),
                 )
-            repair_ticket = build_verified_work_repair_ticket(
-                derive_preservation_state(
-                    None,
-                    contract_pack.work_contract,
-                    first_outcome.parsed_paths,
-                    first_outcome,
-                    remaining_repairs=1,
-                )
+            preservation_state = derive_preservation_state(
+                None,
+                contract_pack.work_contract,
+                first_outcome.parsed_paths,
+                first_outcome,
+                remaining_repairs=1,
             )
-            resumed = run_openai_operator_resumed_turn(
-                project_root=workspace,
-                prompt=repair_ticket,
+            resumed_result = _run_openai_operator_cli_resume_repair(
+                artifact_dir=artifact_dir,
+                workspace=workspace,
+                env=env,
                 model=initial["model"],
                 thread_id=thread_id,
-                stderr_path=artifact_dir / "attempt2.stderr.log",
-                env=env,
-            )
-            write_json(artifact_dir / "attempt2.json", resumed)
-            resumed_result = _evaluate_openai_operator_attempt(
-                operator_turn=resumed,
-                work_contract=contract_pack.work_contract,
+                preservation_state=preservation_state,
+                preserved_file_map=first_file_map,
+                verifier_contract=contract_pack.work_contract,
             )
             if resumed_result["status"] == "env_blocked":
                 return ConformanceRunResult(
@@ -1044,6 +1330,228 @@ def _run_openai_operator_cli_conformance(
         artifact_relpath=_artifact_relpath(artifact_dir),
         note=final_note,
     )
+
+
+def run_openai_operator_cli_repair_pressure(
+    *,
+    contract_pack: ContractPack,
+) -> dict[str, Any]:
+    if contract_pack.active_proving_default != OPENAI_ACTIVE_PROVING_DEFAULT:
+        raise ValueError(
+            "repair-pressure proof currently supports only the OpenAI operator_cli proving lane."
+        )
+
+    load_local_env_file()
+    timestamp = now_utc_iso().replace(":", "").replace("-", "")
+    run_root = REPAIR_PRESSURE_ROOT / f"run_{timestamp}_{contract_pack.contract_pack}"
+    artifact_dir = run_root / "openai_operator_cli"
+    artifact_dir.mkdir(parents=True, exist_ok=True)
+    instructions = build_verified_work_instructions(contract_pack.work_contract)
+
+    with _stage_contract_pack_workspace(
+        contract_pack,
+        prefix="cortex-repair-pressure-openai-",
+    ) as workspace, isolated_codex_home_env() as env:
+        initial_prompt = _render_combined_operator_prompt(
+            task_prompt=contract_pack.prompt_text,
+            instructions=instructions,
+        )
+        initial = run_openai_operator_single_turn(
+            project_root=workspace,
+            prompt=initial_prompt,
+            scenario_id=f"repair_pressure_{contract_pack.contract_pack}_attempt1",
+            stderr_path=artifact_dir / "attempt1.stderr.log",
+            ephemeral=False,
+            env=env,
+            model=_OPENAI_OPERATOR_MODEL,
+        )
+        write_json(artifact_dir / "attempt1.json", initial)
+        initial_result = _evaluate_openai_operator_attempt(
+            operator_turn=initial,
+            work_contract=contract_pack.work_contract,
+        )
+        if initial_result["status"] == "env_blocked":
+            summary = {
+                "generated_at": now_utc_iso(),
+                "proof_surface": "openai_operator_cli_repair_pressure",
+                "contract_pack": contract_pack.as_payload(),
+                "status": "env_blocked",
+                "artifact_relpath": _artifact_relpath(artifact_dir),
+                "note": initial_result["note"],
+                "transport_failure_class": initial_result["transport_failure_class"],
+            }
+            write_json(run_root / "summary.json", summary)
+            return summary
+
+        initial_outcome = initial_result["verification"]
+        assert isinstance(initial_outcome, VerificationOutcome)
+        initial_file_map = initial_result.get("file_map")
+        if isinstance(initial_file_map, Mapping):
+            initial_file_map = {
+                str(path): str(content) for path, content in initial_file_map.items()
+            }
+        write_json(
+            artifact_dir / "attempt1.initial_verification.json",
+            {
+                "verification": initial_outcome.as_payload(),
+                "file_map": initial_file_map,
+            },
+        )
+        repair_case = _build_openai_repair_pressure_case(
+            contract_pack=contract_pack,
+            workspace=workspace,
+            initial_output_text=initial.get("output_text"),
+            initial_file_map=initial_file_map,
+            initial_outcome=initial_outcome,
+        )
+        effective_outcome = repair_case["effective_outcome"]
+        assert isinstance(effective_outcome, VerificationOutcome)
+        write_text(
+            artifact_dir / "attempt1.effective_result.txt",
+            str(repair_case["effective_result_text"]),
+        )
+        write_json(
+            artifact_dir / "attempt1.effective_verification.json",
+            {
+                "pressure_source": repair_case["pressure_source"],
+                "failure_class": repair_case["failure_class"],
+                "target_path": repair_case["target_path"],
+                "description": repair_case["description"],
+                "verification": effective_outcome.as_payload(),
+                "file_map": repair_case["effective_file_map"],
+            },
+        )
+        preservation_state = derive_preservation_state(
+            None,
+            contract_pack.work_contract,
+            effective_outcome.parsed_paths,
+            effective_outcome,
+            remaining_repairs=1,
+        )
+        thread_id = initial_result["session_id"]
+        if not isinstance(thread_id, str) or not thread_id.strip():
+            summary = {
+                "generated_at": now_utc_iso(),
+                "proof_surface": "openai_operator_cli_repair_pressure",
+                "contract_pack": contract_pack.as_payload(),
+                "status": "partial",
+                "artifact_relpath": _artifact_relpath(artifact_dir),
+                "repair_pressure_case": {
+                    "pressure_source": repair_case["pressure_source"],
+                    "failure_class": repair_case["failure_class"],
+                    "target_path": repair_case["target_path"],
+                    "description": repair_case["description"],
+                },
+                "note": "OpenAI operator surface did not return a resumable thread id.",
+            }
+            write_json(run_root / "summary.json", summary)
+            return summary
+
+        resumed_result = _run_openai_operator_cli_resume_repair(
+            artifact_dir=artifact_dir,
+            workspace=workspace,
+            env=env,
+            model=initial["model"],
+            thread_id=thread_id,
+            preservation_state=preservation_state,
+            preserved_file_map=initial_file_map,
+            verifier_contract=contract_pack.work_contract,
+        )
+        if resumed_result["status"] == "env_blocked":
+            summary = {
+                "generated_at": now_utc_iso(),
+                "proof_surface": "openai_operator_cli_repair_pressure",
+                "contract_pack": contract_pack.as_payload(),
+                "status": "env_blocked",
+                "artifact_relpath": _artifact_relpath(artifact_dir),
+                "repair_pressure_case": {
+                    "pressure_source": repair_case["pressure_source"],
+                    "failure_class": repair_case["failure_class"],
+                    "target_path": repair_case["target_path"],
+                    "description": repair_case["description"],
+                },
+                "note": resumed_result["note"],
+                "transport_failure_class": resumed_result["transport_failure_class"],
+            }
+            write_json(run_root / "summary.json", summary)
+            return summary
+
+        final_outcome = resumed_result["verification"]
+        assert isinstance(final_outcome, VerificationOutcome)
+        final_file_map = resumed_result.get("file_map")
+        if isinstance(final_file_map, Mapping):
+            final_file_map = {str(path): str(content) for path, content in final_file_map.items()}
+        repair_contract = resumed_result["repair_contract"]
+        assert isinstance(repair_contract, WorkContract)
+        audit = {
+            "task_anchor_present": bool(preservation_state.task_anchor),
+            "preservation_state_present": True,
+            "repair_contract_matches_surface": tuple(repair_contract.allowed_write_paths)
+            == tuple(
+                path
+                for path in contract_pack.work_contract.allowed_write_paths
+                if path in preservation_state.lawful_repair_surface
+            ),
+            "repair_ticket_mechanical_only": all(
+                label in resumed_result["repair_ticket"]
+                for label in (
+                    "task_anchor:",
+                    "trusted_checks:",
+                    "trusted_paths:",
+                    "failure_class:",
+                    "falsified_checks:",
+                    "failing_tests:",
+                    "lawful_repair_surface:",
+                    "remaining_repairs:",
+                    "allowed_moves:",
+                )
+            ),
+            "attempt2_paths_within_surface": (
+                True
+                if not isinstance(final_file_map, Mapping)
+                else set(final_file_map).issubset(preservation_state.lawful_repair_surface)
+            ),
+            "preserved_overlay_reused": initial_file_map is not None,
+        }
+        result = _result_from_verification(
+            brain="openai",
+            surface="operator_cli",
+            contract_pack=contract_pack.contract_pack,
+            outcome=final_outcome,
+            attempt_count=2,
+            first_outcome=effective_outcome,
+            extraction_mode=resumed_result["extraction_mode"],
+            artifact_relpath=_artifact_relpath(artifact_dir),
+            note=resumed_result["note"],
+        )
+        summary = {
+            "generated_at": now_utc_iso(),
+            "proof_surface": "openai_operator_cli_repair_pressure",
+            "contract_pack": contract_pack.as_payload(),
+            "status": result.status,
+            "artifact_relpath": _artifact_relpath(artifact_dir),
+            "repair_pressure_case": {
+                "pressure_source": repair_case["pressure_source"],
+                "failure_class": repair_case["failure_class"],
+                "target_path": repair_case["target_path"],
+                "description": repair_case["description"],
+            },
+            "initial_attempt": {
+                "verification": initial_outcome.as_payload(),
+                "file_map": initial_file_map,
+            },
+            "effective_first_attempt": {
+                "verification": effective_outcome.as_payload(),
+                "file_map": repair_case["effective_file_map"],
+            },
+            "preservation_state": preservation_state.as_payload(),
+            "repair_contract": repair_contract.as_payload(),
+            "repair_audit": audit,
+            "result": result.as_payload(),
+        }
+        write_json(run_root / "summary.json", summary)
+        write_text(run_root / "summary.md", render_repair_pressure_markdown(summary))
+        return summary
 
 
 def _run_claude_cli_conformance(
@@ -1309,6 +1817,8 @@ def _evaluate_operator_attempt(
     provider: Literal["claude", "gemini"],
     command_result: dict[str, Any],
     work_contract: WorkContract,
+    preserved_file_map: dict[str, str] | None = None,
+    verifier_contract: WorkContract | None = None,
 ) -> dict[str, Any]:
     raw_stdout = str(command_result.get("stdout", "") or "")
     raw_stderr = str(command_result.get("stderr", "") or "")
@@ -1334,12 +1844,18 @@ def _evaluate_operator_attempt(
     else:
         session_id = _extract_session_id_from_operator_stdout("gemini", raw_stdout)
     result_text = extract_result_text(records, raw_stdout)
-    _, verification = verify_verified_work_result(result_text, work_contract)
+    file_map, verification = verify_verified_work_result(
+        result_text,
+        work_contract,
+        preserved_file_map=preserved_file_map,
+        verifier_contract=verifier_contract,
+    )
     note = sanitize_text(raw_stderr.strip() or "executed")
     if command_result["exit_code"] == 124:
         note = sanitize_text(f"{note}\nstructured output captured before operator timeout")
     return {
         "status": "executed",
+        "file_map": file_map,
         "verification": verification,
         "session_id": session_id,
         "extraction_mode": extraction_mode,
@@ -1351,6 +1867,8 @@ def _evaluate_openai_operator_attempt(
     *,
     operator_turn: dict[str, Any],
     work_contract: WorkContract,
+    preserved_file_map: dict[str, str] | None = None,
+    verifier_contract: WorkContract | None = None,
 ) -> dict[str, Any]:
     output_text = operator_turn.get("output_text")
     failure_class = operator_turn.get("failure_class")
@@ -1366,7 +1884,12 @@ def _evaluate_openai_operator_attempt(
             "transport_failure_class": failure_class,
             "note": sanitize_text(str(failure_class)),
         }
-    _payload, verification = verify_verified_work_result(output_text, work_contract)
+    file_map, verification = verify_verified_work_result(
+        output_text,
+        work_contract,
+        preserved_file_map=preserved_file_map,
+        verifier_contract=verifier_contract,
+    )
     model = operator_turn.get("model")
     note = "executed"
     if isinstance(model, str) and model.strip():
@@ -1375,6 +1898,7 @@ def _evaluate_openai_operator_attempt(
         note = f"{note}; failure_class={failure_class}"
     return {
         "status": "executed",
+        "file_map": file_map,
         "verification": verification,
         "session_id": operator_turn.get("thread_id"),
         "extraction_mode": "operator_lifecycle",
@@ -1655,6 +2179,7 @@ __all__ = [
     "preflight_surface",
     "render_summary_markdown",
     "run_active_conformance",
+    "run_openai_operator_cli_repair_pressure",
     "strongest_native_surface",
     "supported_contract_pack_names",
 ]

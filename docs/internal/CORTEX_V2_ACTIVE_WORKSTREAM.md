@@ -75,6 +75,11 @@ It is workflow state only. It does not override the packet documents, implementa
     - `tests/internal/test_workflow_boundary.py`
     - `make -C lab revalidate-openai-operator-cli`
     - `make -C lab revalidate-openai-host-control`
+  - the branch now also carries one maintainer-only OpenAI `operator_cli` repair-pressure proof surface:
+    - the OpenAI operator-cli conformance repair path now reissues a narrowed repair contract and verifies attempt `2` over the preserved first-attempt file map
+    - `python3 lab/cortex_conformance.py --mode repair-pressure --brain openai --contract-pack <accepted-pack>` now forces one verifier-visible repair case on the accepted packs without widening Cortex law
+    - `make -C lab revalidate-openai-operator-repair-pressure` is the deterministic proof gate for that surface
+    - `make -C lab live-openai-operator-repair-pressure` is the canonical live proof entry point
   - repeated direct OpenAI `operator_cli` conformance reruns are now clean on the three accepted verified-work packs:
     - bookmarks passed twice on attempt `1`
     - normalize-port passed twice on attempt `1`
@@ -94,7 +99,9 @@ It is workflow state only. It does not override the packet documents, implementa
 - keep new OpenAI `service_api` spend deferred under the current policy
 - do not promote E23 to CLI-proved candidate yet
 - keep E24 as the locally landed proving-default basis on this branch
-- if E23 needs the next proof step, open one smaller OpenAI `operator_cli` repair-pressure investigation or deterministic operator-backed repair proof that exercises the preservation-aware repair branch on the accepted verified-work packs without widening Cortex law
+- the next proof step for E23 is now explicit, not hypothetical:
+  - run `make -C lab live-openai-operator-repair-pressure`
+  - repeat the three repair-pressure cases until they classify cleanly as keep, cut, or env-sensitive
 - publication and reconciliation remain blocked on the local `main` ahead-of-origin state until the landed history is published or reconciled explicitly
 
 ## 5. Explicitly blocked moves

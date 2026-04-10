@@ -191,7 +191,7 @@ If a later runtime/product seam is opened after this note, the next lawful move 
 2. do not reopen OpenAI `service_api` spend by habit; E24 now records OpenAI `operator_cli` as the active proving-default lane, while the older service-lane evidence remains historical product/runtime claim only
 3. keep `O4R` stable on its already-earned historical line rather than reopening the law by habit
 4. do not reopen breadth by habit; the three-pack historical line is already re-earned on the accepted note
-5. if preservation-state or repair yield remains the next target, open a smaller OpenAI `operator_cli` repair-pressure investigation or deterministic operator-backed repair proof that exercises repair on the accepted verified-work packs without replay or new Cortex law
+5. if preservation-state or repair yield remains the next target, use the maintainer-only OpenAI `operator_cli` repair-pressure proof surface now wired in `lab/cortex_conformance.py --mode repair-pressure` so the accepted verified-work packs can exercise repair without widening Cortex law
 6. run the same contract pack across OpenAI, Claude, and Gemini on their strongest available native surfaces whenever a later seam changes Cortex law or touches non-shipping wiring
 7. revise Cortex law only if the same divergence repeats across brains; otherwise reopen wiring only on the specific drifting brain/surface
 8. keep repeated-failure inhibition and carrier inference deferred until new evidence earns them

@@ -10,6 +10,11 @@ import pytest
 
 from lab import cortex_conformance as conformance
 from cortex.sre.verified_work import VerificationOutcome, WorkContract
+from tests.unit._verified_work_fixtures import (
+    VALID_FEATURE_FLAG_FILE_MAP,
+    VALID_NORMALIZE_PORT_FILE_MAP,
+    render_full_files_result,
+)
 
 
 def _work_contract() -> WorkContract:
@@ -347,35 +352,7 @@ def test_run_openai_operator_cli_conformance_reuses_thread_on_resume(
 ) -> None:
     run_root = tmp_path
     resumed_calls: list[dict[str, object]] = []
-    evaluations = iter(
-        (
-            {
-                "status": "executed",
-                "verification": VerificationOutcome(
-                    status="failed",
-                    failure_class="test_failed",
-                    import_smoke_ok=True,
-                    pytest_passed=4,
-                    pytest_failed=7,
-                ),
-                "session_id": "thread-1",
-                "extraction_mode": "operator_lifecycle",
-                "note": "executed",
-            },
-            {
-                "status": "executed",
-                "verification": VerificationOutcome(
-                    status="passed",
-                    failure_class=None,
-                    import_smoke_ok=True,
-                    pytest_passed=11,
-                ),
-                "session_id": "thread-1",
-                "extraction_mode": "operator_lifecycle",
-                "note": "executed",
-            },
-        )
-    )
+    evaluation_calls: list[dict[str, object]] = []
 
     @contextmanager
     def _fake_env():
@@ -403,10 +380,44 @@ def test_run_openai_operator_cli_conformance_reuses_thread_on_resume(
             "output_text": "attempt2",
         },
     )
+
+    def _fake_evaluate_openai_operator_attempt(**kwargs):
+        evaluation_calls.append(kwargs)
+        if len(evaluation_calls) == 1:
+            return {
+                "status": "executed",
+                "file_map": {"src/bookmarks_api/main.py": "broken"},
+                "verification": VerificationOutcome(
+                    status="failed",
+                    failure_class="test_failed",
+                    parsed_paths=("src/bookmarks_api/main.py",),
+                    import_smoke_ok=True,
+                    pytest_passed=4,
+                    pytest_failed=7,
+                ),
+                "session_id": "thread-1",
+                "extraction_mode": "operator_lifecycle",
+                "note": "executed",
+            }
+        return {
+            "status": "executed",
+            "file_map": {"src/bookmarks_api/main.py": "fixed"},
+            "verification": VerificationOutcome(
+                status="passed",
+                failure_class=None,
+                parsed_paths=("src/bookmarks_api/main.py",),
+                import_smoke_ok=True,
+                pytest_passed=11,
+            ),
+            "session_id": "thread-1",
+            "extraction_mode": "operator_lifecycle",
+            "note": "executed",
+        }
+
     monkeypatch.setattr(
         conformance,
         "_evaluate_openai_operator_attempt",
-        lambda **_kwargs: next(evaluations),
+        _fake_evaluate_openai_operator_attempt,
     )
 
     result = conformance._run_openai_operator_cli_conformance(
@@ -417,6 +428,246 @@ def test_run_openai_operator_cli_conformance_reuses_thread_on_resume(
     assert result.status == "conformant"
     assert result.attempt_count == 2
     assert resumed_calls[0]["thread_id"] == "thread-1"
+    assert isinstance(resumed_calls[0]["prompt"], str)
+    assert "task_anchor: verified-work:python_workspace_pytest_v1:" in resumed_calls[0]["prompt"]
+    assert "lawful_repair_surface: src/bookmarks_api/main.py" in resumed_calls[0]["prompt"]
+    assert "- src/bookmarks_api/main.py" in resumed_calls[0]["prompt"]
+    assert "- src/bookmarks_api/models.py" not in resumed_calls[0]["prompt"]
+    assert evaluation_calls[1]["preserved_file_map"] == {
+        "src/bookmarks_api/main.py": "broken"
+    }
+    repair_contract = evaluation_calls[1]["work_contract"]
+    assert isinstance(repair_contract, WorkContract)
+    assert repair_contract.allowed_write_paths == ("src/bookmarks_api/main.py",)
+    assert repair_contract.max_repair_turns == 0
+    assert evaluation_calls[1]["verifier_contract"] == conformance.active_contract_pack().work_contract
+
+
+def test_build_openai_repair_pressure_case_injects_bookmarks_parse_invalid(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    pack = conformance.active_contract_pack()
+    initial_file_map = {"src/bookmarks_api/main.py": "app = object()"}
+
+    monkeypatch.setattr(
+        conformance,
+        "verify_verified_work_result",
+        lambda result_text, _work_contract, **_kwargs: (
+            None,
+            VerificationOutcome(
+                status="failed",
+                failure_class="output_invalid",
+                parse_error="unexpected text",
+            ),
+        ),
+    )
+
+    repair_case = conformance._build_openai_repair_pressure_case(
+        contract_pack=pack,
+        workspace=tmp_path,
+        initial_output_text=render_full_files_result(initial_file_map),
+        initial_file_map=initial_file_map,
+        initial_outcome=VerificationOutcome(
+            status="passed",
+            failure_class=None,
+            parsed_paths=("src/bookmarks_api/main.py",),
+            import_smoke_ok=True,
+            pytest_ok=True,
+            pytest_passed=1,
+        ),
+    )
+
+    assert repair_case["pressure_source"] == "injected"
+    assert repair_case["failure_class"] == "output_invalid"
+    assert repair_case["target_path"] is None
+    assert repair_case["effective_outcome"].failure_class == "output_invalid"
+    assert str(repair_case["effective_result_text"]).startswith("unexpected text outside protocol blocks")
+
+
+def test_build_openai_repair_pressure_case_injects_normalize_port_import_smoke_failure(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    pack = conformance.contract_pack_by_name(conformance.NORMALIZE_PORT_CONTRACT_PACK)
+
+    monkeypatch.setattr(
+        conformance,
+        "verify_verified_work_result",
+        lambda result_text, _work_contract, **_kwargs: (
+            VALID_NORMALIZE_PORT_FILE_MAP,
+            VerificationOutcome(
+                status="failed",
+                failure_class="import_smoke_failed",
+                parsed_paths=("src/normalize_port.py",),
+                import_smoke_ok=False,
+            ),
+        ),
+    )
+
+    repair_case = conformance._build_openai_repair_pressure_case(
+        contract_pack=pack,
+        workspace=tmp_path,
+        initial_output_text=render_full_files_result(VALID_NORMALIZE_PORT_FILE_MAP),
+        initial_file_map=VALID_NORMALIZE_PORT_FILE_MAP,
+        initial_outcome=VerificationOutcome(
+            status="passed",
+            failure_class=None,
+            parsed_paths=("src/normalize_port.py",),
+            import_smoke_ok=True,
+            pytest_ok=True,
+            pytest_passed=2,
+        ),
+    )
+
+    assert repair_case["pressure_source"] == "injected"
+    assert repair_case["failure_class"] == "import_smoke_failed"
+    assert repair_case["target_path"] == "src/normalize_port.py"
+    assert repair_case["effective_outcome"].failure_class == "import_smoke_failed"
+    assert "BROKEN = (" in (tmp_path / "src" / "normalize_port.py").read_text(encoding="utf-8")
+
+
+def test_build_openai_repair_pressure_case_injects_feature_flags_test_failure(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    pack = conformance.contract_pack_by_name(conformance.FEATURE_FLAGS_CONTRACT_PACK)
+
+    monkeypatch.setattr(
+        conformance,
+        "verify_verified_work_result",
+        lambda result_text, _work_contract, **_kwargs: (
+            VALID_FEATURE_FLAG_FILE_MAP,
+            VerificationOutcome(
+                status="failed",
+                failure_class="test_failed",
+                parsed_paths=tuple(VALID_FEATURE_FLAG_FILE_MAP),
+                import_smoke_ok=True,
+                pytest_passed=2,
+                pytest_failed=4,
+            ),
+        ),
+    )
+
+    repair_case = conformance._build_openai_repair_pressure_case(
+        contract_pack=pack,
+        workspace=tmp_path,
+        initial_output_text=render_full_files_result(VALID_FEATURE_FLAG_FILE_MAP),
+        initial_file_map=VALID_FEATURE_FLAG_FILE_MAP,
+        initial_outcome=VerificationOutcome(
+            status="passed",
+            failure_class=None,
+            parsed_paths=tuple(VALID_FEATURE_FLAG_FILE_MAP),
+            import_smoke_ok=True,
+            pytest_ok=True,
+            pytest_passed=6,
+        ),
+    )
+
+    assert repair_case["pressure_source"] == "injected"
+    assert repair_case["failure_class"] == "test_failed"
+    assert repair_case["target_path"] == "src/feature_flags/evaluator.py"
+    assert repair_case["effective_outcome"].failure_class == "test_failed"
+    assert "def is_flag_active(*_args, **_kwargs):" in (
+        tmp_path / "src" / "feature_flags" / "evaluator.py"
+    ).read_text(encoding="utf-8")
+
+
+def test_run_openai_operator_cli_repair_pressure_writes_summary(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    pack = conformance.contract_pack_by_name(conformance.FEATURE_FLAGS_CONTRACT_PACK)
+
+    @contextmanager
+    def _fake_env():
+        yield {}
+
+    monkeypatch.setattr(conformance, "REPAIR_PRESSURE_ROOT", tmp_path)
+    monkeypatch.setattr(conformance, "load_local_env_file", lambda: None)
+    monkeypatch.setattr(conformance, "now_utc_iso", lambda: "2026-04-10T05:00:00+00:00")
+    monkeypatch.setattr(conformance, "isolated_codex_home_env", _fake_env)
+    monkeypatch.setattr(
+        conformance,
+        "run_openai_operator_single_turn",
+        lambda **_kwargs: {
+            "failure_class": None,
+            "model": "gpt-5.3-codex",
+            "thread_id": "thread-1",
+            "output_text": "attempt1",
+        },
+    )
+    monkeypatch.setattr(
+        conformance,
+        "_evaluate_openai_operator_attempt",
+        lambda **_kwargs: {
+            "status": "executed",
+            "file_map": VALID_FEATURE_FLAG_FILE_MAP,
+            "verification": VerificationOutcome(
+                status="passed",
+                failure_class=None,
+                parsed_paths=tuple(VALID_FEATURE_FLAG_FILE_MAP),
+                import_smoke_ok=True,
+                pytest_ok=True,
+                pytest_passed=6,
+            ),
+            "session_id": "thread-1",
+            "extraction_mode": "operator_lifecycle",
+            "note": "executed",
+        },
+    )
+    monkeypatch.setattr(
+        conformance,
+        "_build_openai_repair_pressure_case",
+        lambda **_kwargs: {
+            "pressure_source": "injected",
+            "failure_class": "test_failed",
+            "target_path": "src/feature_flags/evaluator.py",
+            "description": "forced repair pressure",
+            "effective_result_text": "faulted",
+            "effective_file_map": VALID_FEATURE_FLAG_FILE_MAP,
+            "effective_outcome": VerificationOutcome(
+                status="failed",
+                failure_class="test_failed",
+                parsed_paths=tuple(VALID_FEATURE_FLAG_FILE_MAP),
+                import_smoke_ok=True,
+                pytest_passed=2,
+                pytest_failed=4,
+            ),
+        },
+    )
+    monkeypatch.setattr(
+        conformance,
+        "_run_openai_operator_cli_resume_repair",
+        lambda **_kwargs: {
+            "status": "executed",
+            "file_map": {"src/feature_flags/evaluator.py": "fixed"},
+            "verification": VerificationOutcome(
+                status="passed",
+                failure_class=None,
+                parsed_paths=("src/feature_flags/evaluator.py",),
+                import_smoke_ok=True,
+                pytest_ok=True,
+                pytest_passed=6,
+            ),
+            "extraction_mode": "operator_lifecycle",
+            "note": "executed",
+            "repair_contract": WorkContract(
+                allowed_write_paths=tuple(VALID_FEATURE_FLAG_FILE_MAP),
+                verification_profile="python_workspace_pytest_feature_flags_v1",
+                output_carrier="full_files",
+                max_repair_turns=0,
+            ),
+            "repair_ticket": "task_anchor: verified-work:python_workspace_pytest_feature_flags_v1:src/feature_flags/evaluator.py",
+        },
+    )
+
+    summary = conformance.run_openai_operator_cli_repair_pressure(contract_pack=pack)
+
+    assert summary["status"] == "conformant"
+    assert summary["repair_pressure_case"]["failure_class"] == "test_failed"
+    assert summary["repair_audit"]["repair_contract_matches_surface"] is True
+    assert (tmp_path / "run_20260410T050000+0000_verified_work_feature_flags_v1" / "summary.json").exists()
 
 
 def test_run_claude_cli_conformance_uses_read_only_tools_and_skips_resume_after_pass(
@@ -570,7 +821,7 @@ def test_evaluate_operator_attempt_preserves_structured_timeout_output(
     monkeypatch.setattr(
         conformance,
         "verify_verified_work_result",
-        lambda result_text, _work_contract: (
+        lambda result_text, _work_contract, **_kwargs: (
             {},
             VerificationOutcome(status="passed", failure_class=None, blocked_message=result_text),
         ),

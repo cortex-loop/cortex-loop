@@ -24,6 +24,8 @@ def test_lab_makefile_runs_from_repo_root_and_uses_split_test_paths() -> None:
     assert "tests/internal/test_docs_boundary.py" in text
     assert "tests/internal/test_workflow_boundary.py" in text
     assert "tests/lab/test_lab_surface.py" in text
+    assert "revalidate-openai-operator-repair-pressure:" in text
+    assert "live-openai-operator-repair-pressure:" in text
     assert "\t$(PYTEST) tests/" not in text
     assert "\t$(PYTHON) lab/" not in text
 

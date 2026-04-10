@@ -260,6 +260,35 @@ Repo-local entry point:
 make -C lab revalidate-openai-operator-cli
 ```
 
+## OpenAI `operator_cli` repair-pressure proof
+
+This is a maintainer-only live proof surface for E23 preservation-aware repair on the active OpenAI `operator_cli` lane.
+It does not change shipped runtime truth.
+It exists to force one verifier-visible repair case on each accepted verified-work pack so the preservation-state branch can be audited directly.
+It checks:
+- a parse-invalid carrier recovery case on bookmarks
+- an import-smoke repair case on normalize-port
+- a pytest-failure repair case on feature-flags
+- preservation-state artifact emission, narrowed repair-contract emission, and mechanical repair-ticket composition
+
+Deterministic command:
+
+```sh
+python3 -m pytest tests/unit/test_cortex_conformance.py -q -k repair_pressure
+```
+
+Repo-local entry point:
+
+```sh
+make -C lab revalidate-openai-operator-repair-pressure
+```
+
+Live proving entry point:
+
+```sh
+make -C lab live-openai-operator-repair-pressure
+```
+
 ## Executive live-outcome revalidation
 
 This is now a retained historical/reference revalidation surface for the older allocation-heavy reference/OpenAI control story.
