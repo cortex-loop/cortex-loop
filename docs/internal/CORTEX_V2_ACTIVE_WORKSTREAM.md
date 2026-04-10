@@ -42,15 +42,15 @@ It is workflow state only. It does not override the packet documents, implementa
 - Current working branch:
   - `review/e23-preservation-state-machine`
 - Current candidate seam:
-  - `E25 runtime spend allocator`
+  - `E26 real-work replay pack`
 - Product target:
-  - route the next runtime budget to the highest-yield product-bearing seam from deterministic local artifacts instead of spending more live/runtime time on low-discrimination OpenAI watch runs
+  - turn the current broad OpenAI `operator_cli` output-quality failures into a tiny replayable proof surface that can exercise real first-attempt failure shapes without rerunning the whole noisy watch
 - Surface:
   - `internal`
 - Direct executive payoff:
-  - improve Cortex development efficiency by selecting the next product-bearing proof seam from current repo truth instead of maintainer intuition
+  - replace one expensive low-discrimination watch surface with a frozen replay bank of real OpenAI failure shapes that later trains can target directly
 - Why this seam exists instead of a narrower product seam:
-  - the current loss is seam selection quality, not missing runtime mechanism, so a tiny internal allocator beats another broad live/product rerun right now
+  - the allocator already chose the next seam; the missing move now is to freeze a small replayable pack from real work artifacts before spending more runtime on broad reruns
 - Current seam status:
   - E22 is landed locally on `main` through the canonical close-session flow and the repo is now on an explicit review branch because `start-session` is blocked until that ahead-of-origin `main` history is published or reconciled
   - E23 remains implemented on this branch as verified product/runtime candidate state:
@@ -97,31 +97,48 @@ It is workflow state only. It does not override the packet documents, implementa
     - Cortex-base preservation-law proof is positive on the successful repair-pressure runs
     - authoritative artifact audits passed on every successful repair-pressure run
     - the earlier normalize-port operator-resume payload-sanitization crash did not recur on two fresh direct reruns and currently reads as unreproduced shared operator-proof-plumbing noise rather than preservation-law drift
-  - the new internal runtime spend allocator now exists on this branch as a deterministic maintainer-only selector over:
+  - the E25 internal runtime spend allocator now exists on this branch as a deterministic maintainer-only selector over:
     - `.cortex/live_validation/conformance/summary.latest.json`
     - `.cortex/live_validation/output_quality/summary.latest.json`
     - `.cortex/train_loops/*/summary.json`
     - this active workstream ledger
-  - the allocator train output is now the active decision surface for the next runtime hour:
+  - the allocator train output resolved the next runtime target:
     - train slug: `runtime-spend-allocator-openai`
     - artifact path: `.cortex/train_loops/runtime-spend-allocator-openai/summary.json`
     - human-readable note: `.cortex/train_loops/runtime-spend-allocator-openai/summary.md`
     - current recommended next train: `real-work-replay-pack-openai`
-  - the current recommendation is grounded in current repo truth:
+  - the E25 recommendation was grounded in current repo truth:
     - treat E23 as a local `keep` on the OpenAI `operator_cli` proving lane while leaving shipping truth unchanged
     - keep new OpenAI `service_api` spend deferred under the current policy
     - the accepted verified-work packs still pass on attempt `1`, so natural repair yield remains weak on the accepted line
     - the historical verified-work repair-yield train escalated because the accepted packs produced zero natural repair opportunities
     - the current broad OpenAI `operator_cli` output-quality watch is `env_blocked` / zero-lift and is not a good next runtime target
     - workflow-only publication/reconciliation closure remains useful but does not beat the next product-bearing replay-pack seam
+  - the new E26 replay-pack miner now exists on this branch as a deterministic maintainer-only reducer over the current OpenAI output-quality artifact root:
+    - train slug: `real-work-replay-pack-openai`
+    - artifact path: `.cortex/train_loops/real-work-replay-pack-openai/summary.json`
+    - human-readable note: `.cortex/train_loops/real-work-replay-pack-openai/summary.md`
+    - recovered case file maps: `.cortex/train_loops/real-work-replay-pack-openai/cases/*/file_map.json`
+  - the current replay-pack result on repo truth is:
+    - extracted replayable cases: `5`
+    - selected replay subset: `2`
+    - framework coverage: `astro`, `react`
+    - selected cases:
+      - `astro_marketing_forms_v1`
+      - `frontend_bugfix_cleanup_v1`
+  - the miner is intentionally small and artifact-first:
+    - it reads the current OpenAI output-quality summary plus the saved `seed/project_a` and `cortex/workspace/project_a` trees
+    - it recovers changed-file maps from workspace diffs instead of trusting the failed summary payload's empty `changed_files`
+    - it selects one highest-change replayable case per framework family to keep the next proof surface narrow
+    - it does not add a new benchmark family, new product/runtime law, or new host scope
   - the branch is still candidate truth only, not accepted baseline truth
   - historical accepted OpenAI `service_api` evidence remains recorded as product/runtime claim history
   - the active proving/default lane for new iteration is now OpenAI `operator_cli` on this branch, while historical accepted `service_api` evidence remains recorded as product/runtime claim history and not as the day-to-day proving default
 
 ## 4. Next lawful move
 
-- run `python3 lab/cortex_train_loop.py --train runtime-spend-allocator-openai` as the deterministic selector before opening another costly live/runtime seam
-- open `real-work-replay-pack-openai` as the next product-bearing train on the strength of the allocator artifact rather than on free-form maintainer judgment
+- use `.cortex/train_loops/real-work-replay-pack-openai/summary.json` as the next narrow proof target instead of the full broad output-quality watch
+- open one follow-on replay proof seam against the selected Astro/React cases from the replay bank rather than rerunning all five current output-quality tasks
 - keep E24 as the locally landed proving-default basis on this branch
 - keep the successful repair-pressure artifacts as the current best evidence for E23 and stop spending runtime on broader watch surfaces by habit
 - treat E23 as a local `keep` on the OpenAI `operator_cli` proving lane while leaving shipping truth unchanged
@@ -148,6 +165,8 @@ It is workflow state only. It does not override the packet documents, implementa
 - Do not widen the next train into host expansion while the current product scope remains OpenAI-only.
 - Do not open repeated-failure inhibition or carrier-inference trains before new evidence earns them.
 - Do not let the allocator become product/runtime law, a second truth court, or a broader governance surface.
+- Do not treat the full five-task OpenAI output-quality watch as the next proving surface now that the replay bank exists.
+- Do not invent a new benchmark family or fixture tree when the replay miner can reuse the existing output-quality task packs and saved workspaces.
 
 ## 6. Acknowledged worktree noise
 

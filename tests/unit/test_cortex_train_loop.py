@@ -14,6 +14,7 @@ if str(TOOLS_ROOT) not in sys.path:
     sys.path.insert(0, str(TOOLS_ROOT))
 
 import cortex_train_loop as train_loop
+import real_work_replay_pack as replay_pack
 import runtime_spend_allocator as spend_allocator
 
 
@@ -119,6 +120,40 @@ def test_train_loop_main_runs_runtime_spend_allocator_train(
     )
 
     assert train_loop.main(["--train", "runtime-spend-allocator-openai"]) == 0
+
+
+def test_train_loop_main_runs_real_work_replay_pack_train(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(
+        train_loop,
+        "run_real_work_replay_pack_openai_train",
+        lambda **_kwargs: type(
+            "_Record",
+            (),
+            {
+                "as_payload": staticmethod(
+                    lambda: {
+                        "train_name": "real-work-replay-pack-openai",
+                        "replay_pack": {
+                            "selected_case_ids": [
+                                "openai_operator_cli_astro_marketing_forms_v1_output_invalid"
+                            ]
+                        },
+                    }
+                ),
+                "analysis": {
+                    "replay_pack": {
+                        "selected_case_ids": [
+                            "openai_operator_cli_astro_marketing_forms_v1_output_invalid"
+                        ]
+                    }
+                },
+            },
+        )(),
+    )
+
+    assert train_loop.main(["--train", "real-work-replay-pack-openai"]) == 0
 
 
 def test_evaluate_conformance_summary_truth_detects_missing_artifacts(
@@ -709,6 +744,97 @@ def test_run_runtime_spend_allocator_openai_train_records_recommendation(
     assert payload["allocator_recommendation"]["recommended_train_slug"] == (
         "real-work-replay-pack-openai"
     )
+
+
+def test_run_real_work_replay_pack_openai_train_records_replay_pack(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    monkeypatch.setattr(
+        train_loop,
+        "_run_shell_command",
+        lambda command, *, cwd: {
+            "command": command,
+            "command_text": command,
+            "cwd": str(cwd),
+            "exit_code": 0,
+            "stdout": "",
+            "stderr": "",
+        },
+    )
+    replay = replay_pack.RealWorkReplayPack(
+        host="openai",
+        surface="operator_cli",
+        source_summary_relpath=".cortex/live_validation/output_quality/summary.latest.json",
+        source_artifact_root=".cortex/live_validation/output_quality/openai_operator_cli/run_test",
+        cases=(
+            replay_pack.RealWorkReplayCase(
+                case_id="openai_operator_cli_astro_marketing_forms_v1_output_invalid",
+                task_id="astro_marketing_forms_v1",
+                host="openai",
+                surface="operator_cli",
+                framework_family="astro",
+                failure_class="output_invalid",
+                parse_error="unexpected line outside file block",
+                repairable=True,
+                prompt_head="Extend the provided Astro marketing starter.",
+                allowed_write_paths=("src/pages/resources/index.astro",),
+                changed_paths=("src/pages/resources/index.astro",),
+                changed_file_map={
+                    "src/pages/resources/index.astro": "<changed>\n",
+                },
+                source_artifact_refs=(
+                    ".cortex/live_validation/output_quality/summary.latest.json",
+                ),
+                final_workspace_matches_attempt1_candidate=True,
+            ),
+            replay_pack.RealWorkReplayCase(
+                case_id="openai_operator_cli_react_dashboard_v1_output_invalid",
+                task_id="react_dashboard_v1",
+                host="openai",
+                surface="operator_cli",
+                framework_family="react",
+                failure_class="output_invalid",
+                parse_error="unexpected line outside file block",
+                repairable=True,
+                prompt_head="Extend the provided React dashboard starter.",
+                allowed_write_paths=("src/App.tsx",),
+                changed_paths=("src/App.tsx",),
+                changed_file_map={"src/App.tsx": "<changed>\n"},
+                source_artifact_refs=(
+                    ".cortex/live_validation/output_quality/summary.latest.json",
+                ),
+                final_workspace_matches_attempt1_candidate=True,
+            ),
+        ),
+        selected_case_ids=(
+            "openai_operator_cli_astro_marketing_forms_v1_output_invalid",
+            "openai_operator_cli_react_dashboard_v1_output_invalid",
+        ),
+        selection_rule="select one case per framework family",
+        recommended_target_metric=(
+            "repair_conversion_lift_or_first_attempt_failure_replay_coverage"
+        ),
+        follow_on_runtime_budget=2,
+        follow_on_kill_condition="cut after 2 non-lift iterations",
+        follow_on_guardrail="no shipping-truth widening",
+    )
+    monkeypatch.setattr(
+        train_loop,
+        "build_real_work_replay_pack",
+        lambda **_kwargs: replay,
+    )
+
+    record = train_loop.run_real_work_replay_pack_openai_train(loop_root=tmp_path)
+
+    assert record.final_decision == "promote"
+    summary_path = tmp_path / "real-work-replay-pack-openai" / "summary.json"
+    assert summary_path.exists()
+    payload = json.loads(summary_path.read_text(encoding="utf-8"))
+    assert payload["replay_pack"]["selected_case_ids"] == [
+        "openai_operator_cli_astro_marketing_forms_v1_output_invalid",
+        "openai_operator_cli_react_dashboard_v1_output_invalid",
+    ]
 
 
 def test_run_causal_contribution_map_openai_train_promotes_on_repeat_stable_classification(

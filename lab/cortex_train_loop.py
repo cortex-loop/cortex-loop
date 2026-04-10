@@ -24,6 +24,11 @@ from lab.causal_contribution_map import (  # noqa: E402
     render_causal_map_note,
 )
 from lab.live_validation_common import now_utc_iso, run_command, write_json, write_text  # noqa: E402
+from lab.real_work_replay_pack import (  # noqa: E402
+    RealWorkReplayPack,
+    build_real_work_replay_pack,
+    write_real_work_replay_pack_artifact,
+)
 from lab.runtime_spend_allocator import (  # noqa: E402
     RuntimeSpendRecommendation,
     recommend_runtime_spend,
@@ -1266,6 +1271,114 @@ def run_runtime_spend_allocator_openai_train(
     return record
 
 
+def run_real_work_replay_pack_openai_train(
+    *,
+    loop_root: Path = TRAIN_LOOP_ROOT,
+    repo_root: Path = ROOT,
+) -> TrainLoopRecord:
+    deterministic_command = (
+        "python3 -m pytest -q tests/unit/test_real_work_replay_pack.py "
+        "tests/unit/test_cortex_train_loop.py tests/internal/test_docs_boundary.py"
+    )
+    proof_commands = [deterministic_command]
+    command_results = [_run_shell_command(deterministic_command, cwd=repo_root)]
+    replay_pack = build_real_work_replay_pack(repo_root=repo_root)
+    selected_case_count = len(replay_pack.selected_case_ids)
+    framework_count = len(replay_pack.framework_coverage)
+    replay_pack_ready = selected_case_count >= 2 and framework_count >= 2
+
+    escalation_reasons = tuple(
+        reason
+        for reason in (
+            *(
+                f"proof command failed: {result['command_text']}"
+                for result in command_results
+                if result["exit_code"] != 0
+            ),
+            (
+                "real-work replay pack did not recover a cross-framework subset from current artifacts"
+                if not replay_pack_ready
+                else None
+            ),
+        )
+        if reason is not None
+    )
+    guardrail_ok = all(result["exit_code"] == 0 for result in command_results)
+    primary_metric_after = 1 if replay_pack_ready else 0
+    decision, reason = decide_loop_decision(
+        primary_metric_before=0,
+        primary_metric_after=primary_metric_after,
+        guardrail_ok=guardrail_ok,
+        localized_failure=not replay_pack_ready,
+        better_classification=replay_pack_ready,
+        budget_remaining=0,
+        escalation_reasons=escalation_reasons,
+    )
+    iteration = LoopIteration(
+        index=1,
+        candidate_label="real-work-replay-pack-openai",
+        proof_commands=tuple(proof_commands),
+        primary_metric_before=0,
+        primary_metric_after=primary_metric_after,
+        guardrail_ok=guardrail_ok,
+        localized_failure=not replay_pack_ready,
+        better_classification=replay_pack_ready,
+        budget_remaining=0,
+        decision=decision,
+        reason=reason,
+        command_results=tuple(command_results),
+        escalation_reasons=escalation_reasons,
+    )
+    record = TrainLoopRecord(
+        train_name="real-work-replay-pack-openai",
+        seam_class="deterministic",
+        cortex_invariant=(
+            "convert real OpenAI first-attempt failures into a small replayable proof surface without widening Cortex runtime law"
+        ),
+        brain_wiring_touched=(
+            "maintainer-only replay-pack mining over OpenAI operator output-quality artifacts and train-loop reporting"
+        ),
+        borrowed_mechanism=(
+            "reuse the existing output-quality task packs and captured workspaces instead of inventing a new benchmark family"
+        ),
+        contract_pack="real OpenAI output-quality artifact subset only",
+        conformance_surfaces=(OPENAI_ACTIVE_PROVING_DEFAULT,),
+        baseline_result={
+            "primary_metric_value": 0,
+            "extracted_case_count": len(replay_pack.cases),
+            "selected_case_count": selected_case_count,
+            "framework_count": framework_count,
+        },
+        primary_metric="deterministic_bundle_pass_fail_replay_pack_ready",
+        guardrail_metric="deterministic_proof_green_and_no_shipping_truth_widening",
+        baseline_proof_set=tuple(proof_commands),
+        iteration_budget=1,
+        rollback_surface=(
+            "real-work replay-pack miner, train-loop entrypoint, and active workstream routing"
+        ),
+        escalation_triggers=(
+            "authority docs conflict",
+            "shipping truth would widen",
+            "current output-quality artifacts do not recover into a replayable pack",
+            "deterministic proof failed",
+        ),
+        analysis={"replay_pack": replay_pack.as_payload()},
+        iterations=(iteration,),
+        final_decision=decision,
+    )
+    artifact_dir = loop_root / record.train_name
+    artifact_dir.mkdir(parents=True, exist_ok=True)
+    replay_payload = write_real_work_replay_pack_artifact(replay_pack, output_dir=artifact_dir)
+    payload = record.as_payload()
+    payload["replay_pack"] = replay_payload
+    write_json(artifact_dir / "summary.json", payload)
+    write_text(
+        artifact_dir / "summary.md",
+        render_real_work_replay_pack_train_markdown(record, replay_pack),
+    )
+    return record
+
+
 def render_train_loop_markdown(record: TrainLoopRecord) -> str:
     lines = [
         f"# Cortex Train Loop: {record.train_name}",
@@ -1377,6 +1490,66 @@ def render_runtime_spend_allocator_markdown(
     return "\n".join(lines).rstrip() + "\n"
 
 
+def render_real_work_replay_pack_train_markdown(
+    record: TrainLoopRecord,
+    replay_pack: RealWorkReplayPack,
+) -> str:
+    lines = [
+        f"# Cortex Train Loop: {record.train_name}",
+        "",
+        f"- generated_at: `{now_utc_iso()}`",
+        f"- seam_class: `{record.seam_class}`",
+        f"- primary_metric: `{record.primary_metric}`",
+        f"- guardrail_metric: `{record.guardrail_metric}`",
+        f"- final_decision: `{record.final_decision or 'none'}`",
+        "",
+        "## Replay Pack",
+        "",
+        f"- extracted_case_count: `{len(replay_pack.cases)}`",
+        f"- selected_case_count: `{len(replay_pack.selected_case_ids)}`",
+        f"- selected_case_ids: `{', '.join(replay_pack.selected_case_ids)}`",
+        f"- framework_coverage: `{', '.join(replay_pack.framework_coverage)}`",
+        f"- selection_rule: {replay_pack.selection_rule}",
+        f"- recommended_target_metric: `{replay_pack.recommended_target_metric}`",
+        f"- follow_on_runtime_budget: `{replay_pack.follow_on_runtime_budget}`",
+        f"- follow_on_kill_condition: {replay_pack.follow_on_kill_condition}",
+        f"- follow_on_guardrail: {replay_pack.follow_on_guardrail}",
+        "",
+        "## Selected Cases",
+        "",
+    ]
+    selected = set(replay_pack.selected_case_ids)
+    for case in replay_pack.cases:
+        if case.case_id not in selected:
+            continue
+        lines.extend(
+            [
+                f"### {case.task_id}",
+                "",
+                f"- case_id: `{case.case_id}`",
+                f"- framework_family: `{case.framework_family}`",
+                f"- failure_class: `{case.failure_class}`",
+                f"- prompt_head: {case.prompt_head}",
+                f"- changed_paths: `{', '.join(case.changed_paths)}`",
+                f"- final_workspace_matches_attempt1_candidate: `{case.final_workspace_matches_attempt1_candidate}`",
+                "",
+            ]
+        )
+    lines.extend(["## Iteration", ""])
+    for iteration in record.iterations:
+        lines.extend(
+            [
+                f"- candidate: `{iteration.candidate_label}`",
+                f"- decision: `{iteration.decision}`",
+                f"- reason: {iteration.reason}",
+                f"- primary_metric_after: `{iteration.primary_metric_after}`",
+                f"- guardrail_ok: `{iteration.guardrail_ok}`",
+                "",
+            ]
+        )
+    return "\n".join(lines).rstrip() + "\n"
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         prog="python3 lab/cortex_train_loop.py",
@@ -1391,6 +1564,7 @@ def main(argv: list[str] | None = None) -> int:
             "output-quality-comparison-openai",
             "causal-contribution-map-openai",
             "runtime-spend-allocator-openai",
+            "real-work-replay-pack-openai",
         ),
         default="conformance-summary-truth",
     )
@@ -1412,6 +1586,12 @@ def main(argv: list[str] | None = None) -> int:
         allocator_recommendation = record.analysis.get("allocator_recommendation")
         if isinstance(allocator_recommendation, dict):
             payload["allocator_recommendation"] = allocator_recommendation
+    elif args.train == "real-work-replay-pack-openai":
+        record = run_real_work_replay_pack_openai_train()
+        payload = record.as_payload()
+        replay_pack = record.analysis.get("replay_pack")
+        if isinstance(replay_pack, dict):
+            payload["replay_pack"] = replay_pack
     else:  # pragma: no cover
         raise SystemExit(f"Unsupported train: {args.train}")
     print(json.dumps(payload, indent=2, sort_keys=True))
