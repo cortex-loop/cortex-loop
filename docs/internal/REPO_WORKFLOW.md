@@ -29,8 +29,8 @@ Every new session should start from exactly these four reads:
 
 Managed sessions should end in one of these states:
 
-- clean `main` with no tracked changes
-- clean `main` with a verified local commit landed from a managed session branch
+- clean synced `main` with no tracked changes
+- clean synced `main` after managed closeout published, merged, and adopted `origin/main`
 
 Intentional manual/review branch work is the narrow exception:
 
@@ -42,7 +42,7 @@ Intentional manual/review branch work is the narrow exception:
 
 - `main` is the resting branch.
 - Active managed work happens on fresh session branches created by `start-session`.
-- `close-session` verifies the work, lands it onto local `main`, and deletes the session branch.
+- `close-session` verifies the work, publishes the session branch, merges it, adopts `origin/main`, and deletes the session branch.
 - Historical branch lines may remain locally, but they should not remain the de facto trunk.
 
 Managed session branch format:
@@ -77,7 +77,7 @@ Start a fresh managed session from clean synced `main`:
 python internal/workflow/repo_workflow.py start-session --agent codex --slug task-name
 ```
 
-Close a managed session and return to clean `main`:
+Close a managed session, publish it, and return to clean synced `main`:
 
 ```bash
 python internal/workflow/repo_workflow.py close-session --message "docs: tighten workflow wording"
@@ -114,7 +114,7 @@ python internal/workflow/repo_workflow.py cleanup-report
 3. Run `python internal/workflow/repo_workflow.py start-session --agent <codex|claude|maint> [--slug <text>]`.
 4. Do the work on the managed session branch.
 5. End with `python internal/workflow/repo_workflow.py close-session --message "<scope>: <end-state summary>"`.
-6. After `close-session` succeeds, the repo is back on clean local `main` and the session branch is gone.
+6. After `close-session` succeeds, the repo is back on clean synced `main`, the merged session branch is gone locally and remotely, and no separate publication step remains.
 
 Manual/review branch workflow:
 
@@ -145,10 +145,12 @@ Manual/review branch workflow:
 
 - only works on managed session branches
 - runs verification before committing
-- lands onto local `main` with fast-forward only
-- returns HEAD to `main`
-- deletes the managed session branch
-- refuses deletion if `main` moved and fast-forward is no longer possible
+- on the canonical repo, requires authenticated `gh` and a canonical `origin`
+- publishes the same managed session branch to `origin`
+- creates or reuses a PR against `main`
+- merges with a merge commit and deletes the remote branch
+- adopts `origin/main`, returns HEAD to `main`, and deletes the local session branch
+- leaves the managed session branch intact if publication or merge fails
 
 `finalize`:
 
@@ -176,7 +178,7 @@ Manual/review branch workflow:
 - fails unless the repo is on clean synced `main`
 - fails if any non-root worktree remains attached
 - fails if any merged local branch, open manual branch, or open managed branch remains
-- fails if any remote `review/*` head remains
+- fails if any remote managed-session head or remote `review/*` head remains
 - is the final repo-hygiene gate for declaring the repo fully clean
 
 Managed verification is purpose-first:
@@ -214,14 +216,4 @@ Avoid process-noise subjects such as:
 - `temp`
 - `WIP`
 
-## Remote Publication
-
-This workflow script manages local branch hygiene only.
-Remote publication remains separate:
-
-- push the landed local `main` commit under a review branch
-- open the PR
-- after merge, run `python internal/workflow/repo_workflow.py sync-main --adopt-origin`
-
-Do not start a new managed session from an ahead/diverged `main` until that
-reconciliation is complete.
+Do not start a new managed session from an ahead/diverged `main`.
