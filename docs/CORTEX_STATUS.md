@@ -29,6 +29,40 @@ Not product:
 - `workflow ledgers`
 - `governance records`
 
+## Identity And Research Stance
+
+Cortex is the installable executive layer that wraps a model or host surface and adds executive function to the underlying brain without redefining the brain itself as the product.
+
+Research stance:
+- Steal executive skills from systems that already work, especially human executive function, then translate them into small lawful operators, state, gates, and proof surfaces.
+- Use first-principles reasoning and live evidence together: start from packet law, then challenge or revise that law explicitly when repeated runtime evidence disproves it.
+- Prefer brilliant concrete code when it cleanly realizes the intended executive skill; do not preserve a worse abstraction just because it matched an earlier local framing.
+
+Answering stance:
+- When describing Cortex, start with the full executive denominator before narrowing to the current shipping subset.
+- Always distinguish Cortex truth, shipping truth, conformance truth, and the current train.
+
+## Executive Denominator
+
+| Executive Skill | Status | Note |
+| --- | --- | --- |
+| Truth-preserving commitments and bounded certification | `landed` | Core commitment extraction, provenance, certification, and contradiction-preserving truth publication are active Cortex law. |
+| Bounded correction and verified-work preservation | `landed` | Cortex can preserve task truth, run bounded correction, and keep repair lawful instead of free-form. |
+| Uncertainty handling and brake | `partial` | The repo carries active reference-policy and brake-oriented SRE structure, but it is not yet uniformly productized across the shipped lane. |
+| Branch continuity, suspend/resume, and truthful closure | `partial` | Cortex is meant to preserve main-task continuity, branch debt, and explicit closure, but that denominator still exceeds the current shipping subset. |
+| Intervention pricing versus neutrality | `partial` | The executive should decide when to intervene, remain neutral, or stop, but the full intervention-pricing loop is not yet a uniformly proven product capability. |
+| Blocker surfacing and goal-debt management | `partial` | Cortex should improve operator judgment by surfacing unresolved state early, though the full denominator remains only partly operationalized. |
+| Multi-host executive continuity | `partial` | OpenAI, Claude, Gemini, and reference are all part of Cortex truth, but their executive conformance remains uneven. |
+| Offline consolidation and support geometry | `north_star` | Support geometry, offline consolidation, and stronger mediated executive support remain goal-level denominator, not current shipped product truth. |
+
+## Math To Code Rules
+
+- Every load-bearing executive skill must land as explicit law, typed code, and at least one proof surface.
+- Every packet-level mathematical object should map to exactly one typed code object or operator family with one owning module.
+- Every typed load-bearing code object should have one clear home and one explicit test or proof surface.
+- Forbidden leaks across Core, SRE, AUX, host wiring, and lab proof surfaces must be explicit.
+- Law revision rule: The current math is binding landing law until live evidence disproves or narrows it. When that happens, revise the law explicitly and update the code and proof surfaces in the same seam; do not silently patch around stale math in implementation.
+
 ## System Map
 
 ```mermaid

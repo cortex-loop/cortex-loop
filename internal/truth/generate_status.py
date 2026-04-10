@@ -49,6 +49,9 @@ def render_status(data: dict[str, object]) -> str:
     resting_state = data["resting_state"]
     bootstrap = data["bootstrap"]
     goal = data["product_goal"]
+    identity = data["identity"]
+    executive_denominator = data["executive_denominator"]
+    math_to_code_rules = data["math_to_code_rules"]
     work_today = data["work_today"]
     next_product_train = data["next_product_train"]
     system_map = data["system_map"]
@@ -95,6 +98,44 @@ def render_status(data: dict[str, object]) -> str:
     lines.extend(f"- `{item}`" for item in goal["non_product"])
     lines.extend(
         [
+            "",
+            "## Identity And Research Stance",
+            "",
+            identity["statement"],
+            "",
+            "Research stance:",
+        ]
+    )
+    lines.extend(f"- {item}" for item in identity["research_stance"])
+    lines.extend(
+        [
+            "",
+            "Answering stance:",
+        ]
+    )
+    lines.extend(f"- {item}" for item in identity["answering_stance"])
+    lines.extend(
+        [
+            "",
+            "## Executive Denominator",
+            "",
+            "| Executive Skill | Status | Note |",
+            "| --- | --- | --- |",
+        ]
+    )
+    for item in executive_denominator:
+        lines.append(f"| {item['skill']} | `{item['status']}` | {item['note']} |")
+    lines.extend(
+        [
+            "",
+            "## Math To Code Rules",
+            "",
+        ]
+    )
+    lines.extend(f"- {item}" for item in math_to_code_rules["rules"])
+    lines.extend(
+        [
+            f"- Law revision rule: {math_to_code_rules['law_revision_rule']}",
             "",
             "## System Map",
             "",

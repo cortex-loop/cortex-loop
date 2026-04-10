@@ -20,6 +20,69 @@
       "governance records"
     ]
   },
+  "identity": {
+    "statement": "Cortex is the installable executive layer that wraps a model or host surface and adds executive function to the underlying brain without redefining the brain itself as the product.",
+    "research_stance": [
+      "Steal executive skills from systems that already work, especially human executive function, then translate them into small lawful operators, state, gates, and proof surfaces.",
+      "Use first-principles reasoning and live evidence together: start from packet law, then challenge or revise that law explicitly when repeated runtime evidence disproves it.",
+      "Prefer brilliant concrete code when it cleanly realizes the intended executive skill; do not preserve a worse abstraction just because it matched an earlier local framing."
+    ],
+    "answering_stance": [
+      "When describing Cortex, start with the full executive denominator before narrowing to the current shipping subset.",
+      "Always distinguish Cortex truth, shipping truth, conformance truth, and the current train."
+    ]
+  },
+  "executive_denominator": [
+    {
+      "skill": "Truth-preserving commitments and bounded certification",
+      "status": "landed",
+      "note": "Core commitment extraction, provenance, certification, and contradiction-preserving truth publication are active Cortex law."
+    },
+    {
+      "skill": "Bounded correction and verified-work preservation",
+      "status": "landed",
+      "note": "Cortex can preserve task truth, run bounded correction, and keep repair lawful instead of free-form."
+    },
+    {
+      "skill": "Uncertainty handling and brake",
+      "status": "partial",
+      "note": "The repo carries active reference-policy and brake-oriented SRE structure, but it is not yet uniformly productized across the shipped lane."
+    },
+    {
+      "skill": "Branch continuity, suspend/resume, and truthful closure",
+      "status": "partial",
+      "note": "Cortex is meant to preserve main-task continuity, branch debt, and explicit closure, but that denominator still exceeds the current shipping subset."
+    },
+    {
+      "skill": "Intervention pricing versus neutrality",
+      "status": "partial",
+      "note": "The executive should decide when to intervene, remain neutral, or stop, but the full intervention-pricing loop is not yet a uniformly proven product capability."
+    },
+    {
+      "skill": "Blocker surfacing and goal-debt management",
+      "status": "partial",
+      "note": "Cortex should improve operator judgment by surfacing unresolved state early, though the full denominator remains only partly operationalized."
+    },
+    {
+      "skill": "Multi-host executive continuity",
+      "status": "partial",
+      "note": "OpenAI, Claude, Gemini, and reference are all part of Cortex truth, but their executive conformance remains uneven."
+    },
+    {
+      "skill": "Offline consolidation and support geometry",
+      "status": "north_star",
+      "note": "Support geometry, offline consolidation, and stronger mediated executive support remain goal-level denominator, not current shipped product truth."
+    }
+  ],
+  "math_to_code_rules": {
+    "rules": [
+      "Every load-bearing executive skill must land as explicit law, typed code, and at least one proof surface.",
+      "Every packet-level mathematical object should map to exactly one typed code object or operator family with one owning module.",
+      "Every typed load-bearing code object should have one clear home and one explicit test or proof surface.",
+      "Forbidden leaks across Core, SRE, AUX, host wiring, and lab proof surfaces must be explicit."
+    ],
+    "law_revision_rule": "The current math is binding landing law until live evidence disproves or narrows it. When that happens, revise the law explicitly and update the code and proof surfaces in the same seam; do not silently patch around stale math in implementation."
+  },
   "work_today": {
     "slug": "e23-kernel-extract",
     "note": "Start from the preserved E23 evidence ref and port only the preservation-state product kernel onto clean main without reviving maintainer-only replay or allocator trains."

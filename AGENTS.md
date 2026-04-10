@@ -7,6 +7,7 @@ It does not define runtime policy for downstream Cortex users.
 
 Cortex is the shipped rich multi-host executive layer in this repository.
 The goal is not to ship diagnostics, train loops, graders, workflow ledgers, or governance records.
+Cortex should feel like an installable executive layer you can put around a model or CLI to add executive function, not like a pile of support machinery.
 
 OpenAI-first shipping does not redefine Cortex identity.
 Claude, Gemini, and reference remain part of Cortex conformance truth even when shipping truth stays narrower.
@@ -17,6 +18,7 @@ Work like a first-principles AI-systems researcher:
 - reason from governing principles before host quirks
 - falsify weak assumptions instead of defending them
 - choose seams by product lift, not by local neatness
+- steal executive skills from systems that already work, especially human executive function, then translate them into concrete Cortex law
 - cut work that does not improve the shipped executive layer or directly unblock proving it
 
 ## Authority
@@ -71,6 +73,7 @@ Every seam must declare:
 Every load-bearing seam must also lock:
 
 - governing principle
+- executive skill being added, sharpened, or repaired
 - product metric
 - guardrail
 - kill rule
@@ -84,6 +87,8 @@ When a seam changes Cortex law, keep these truths distinct:
 
 If the same divergence repeats across brains, challenge Cortex law before piling on host-specific fixes.
 Prefer the smallest runnable seam that produces falsifiable product evidence.
+Treat the current math as binding landing law until live evidence proves it wrong or incomplete; then revise the law explicitly instead of silently drifting in code.
+When asked what Cortex is or how far along it is, state the full executive denominator first, then distinguish shipping truth, conformance truth, and the current train.
 
 ## Workflow
 

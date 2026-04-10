@@ -53,6 +53,9 @@ def test_agents_records_mission_lock_and_single_truth_bootstrap() -> None:
         "## Handoff",
     ]
     assert "rich multi-host executive layer" in text
+    assert "installable executive layer" in text
+    assert "human executive function" in text
+    assert "live evidence" in text
     assert "internal/truth/cortex_status.json" in text
     assert "docs/CORTEX_STATUS.md" in text
     assert "AGENTS.md" in text
@@ -123,6 +126,9 @@ def test_status_registry_is_complete_and_stable() -> None:
         "resting_state",
         "bootstrap",
         "product_goal",
+        "identity",
+        "executive_denominator",
+        "math_to_code_rules",
         "work_today",
         "next_product_train",
         "system_map",
@@ -139,6 +145,9 @@ def test_status_registry_is_complete_and_stable() -> None:
         "active_docs",
     }
     assert status["resting_state"]["branch"] == "main"
+    assert "installable executive layer" in status["identity"]["statement"]
+    assert status["executive_denominator"]
+    assert status["math_to_code_rules"]["law_revision_rule"]
     assert status["work_today"]["slug"]
     assert status["next_product_train"]["slug"] == "e23-kernel-extract"
 
@@ -148,6 +157,11 @@ def test_generated_status_doc_includes_system_map_and_next_product_train() -> No
 
     assert "## System Map" in text
     assert "```mermaid" in text
+    assert "## Identity And Research Stance" in text
+    assert "## Executive Denominator" in text
+    assert "## Math To Code Rules" in text
+    assert "human executive function" in text
+    assert "full executive denominator" in text
     assert "## Packet To Code" in text
     assert "## Next Product Train" in text
     assert "`e23-kernel-extract`" in text
