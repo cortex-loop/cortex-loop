@@ -34,18 +34,38 @@ def _load_status() -> dict[str, object]:
 
 def test_agents_records_mission_lock_and_single_truth_bootstrap() -> None:
     text = _read(AGENTS_PATH)
+    lines = text.splitlines()
+    sections = [line for line in lines if line.startswith("## ")]
+    all_agents = sorted(
+        str(path.relative_to(REPO_ROOT))
+        for path in REPO_ROOT.rglob("AGENTS.md")
+        if ".git" not in path.parts and ".cortex" not in path.parts
+    )
 
-    assert "## Mission lock" in text
-    assert "Does this make the shipped Cortex executive layer better" in text
+    assert all_agents == ["AGENTS.md"]
+    assert len(lines) <= 180
+    assert sections == [
+        "## Mission",
+        "## Authority",
+        "## Non-Negotiables",
+        "## Working Mode",
+        "## Workflow",
+        "## Handoff",
+    ]
+    assert "rich multi-host executive layer" in text
     assert "internal/truth/cortex_status.json" in text
     assert "docs/CORTEX_STATUS.md" in text
     assert "AGENTS.md" in text
     assert "git branch --show-current" in text
     assert "git status --short --untracked-files=all" in text
-    assert "Do not let evaluation machinery become the public or internal identity of Cortex." in text
+    assert "shipping truth" in text
+    assert "conformance truth" in text
+    assert "This root `AGENTS.md` is the only agent contract in the repo." in text
     assert "CORTEX_V2_ACTIVE_WORKSTREAM" not in text
     assert "CORTEX_V2_PHASE_GATES_2" not in text
     assert "CORTEX_V2_MATH_TO_CODE_CORRESPONDENCE" not in text
+    assert "CORTEX_V2_IMPLEMENTATION_MASTER_PLAN_2" not in text
+    assert "V1_CODE_PORT_DETERMINATION" not in text
 
 
 def test_public_docs_point_to_status_and_keep_archive_out_of_the_front_door() -> None:
