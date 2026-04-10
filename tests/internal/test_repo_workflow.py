@@ -117,15 +117,22 @@ def test_close_session_returns_to_main_and_deletes_branch(
 ) -> None:
     repo, _remote, module = _prepare_repo(tmp_path, monkeypatch)
     monkeypatch.setattr(module, "_session_timestamp", lambda: "20260329-010203")
-    monkeypatch.setattr(module, "_run_verification_contract", lambda: None)
+    monkeypatch.setattr(
+        module,
+        "_run_verification_for_paths",
+        lambda _paths: ("git diff --check", "python3 internal/truth/generate_status.py --check"),
+    )
     monkeypatch.setattr(module, "_managed_publication_required", lambda: True)
     module.cmd_start_session("codex", "closeout")
     branch = _git_output(repo, "branch", "--show-current")
     (repo / "README.md").write_text("changed\n", encoding="utf-8")
 
-    def fake_publish_merge_sync_session(session_branch: str, title: str) -> dict[str, object]:
+    def fake_publish_merge_sync_session(
+        session_branch: str, title: str, verification_commands: tuple[str, ...]
+    ) -> dict[str, object]:
         assert session_branch == branch
         assert title == "docs: land managed session"
+        assert verification_commands
         _git(repo, "push", "-u", "origin", session_branch)
         _git(repo, "switch", "main")
         _git(repo, "merge", "--ff-only", session_branch)
@@ -198,13 +205,17 @@ def test_close_session_keeps_session_branch_when_publication_fails(
 ) -> None:
     repo, _remote, module = _prepare_repo(tmp_path, monkeypatch)
     monkeypatch.setattr(module, "_session_timestamp", lambda: "20260329-010203")
-    monkeypatch.setattr(module, "_run_verification_contract", lambda: None)
+    monkeypatch.setattr(
+        module,
+        "_run_verification_for_paths",
+        lambda _paths: ("git diff --check", "python3 internal/truth/generate_status.py --check"),
+    )
     monkeypatch.setattr(module, "_managed_publication_required", lambda: True)
     module.cmd_start_session("codex", "gh-fail")
     branch = _git_output(repo, "branch", "--show-current")
     (repo / "README.md").write_text("changed\n", encoding="utf-8")
 
-    def fail_publish_merge_sync_session(_branch: str, _title: str) -> dict[str, object]:
+    def fail_publish_merge_sync_session(_branch: str, _title: str, _verification_commands: tuple[str, ...]) -> dict[str, object]:
         raise SystemExit("gh auth status failed")
 
     monkeypatch.setattr(module, "_publish_merge_sync_session", fail_publish_merge_sync_session)
@@ -222,7 +233,11 @@ def test_close_session_with_existing_unique_commit_still_publishes_when_tree_is_
 ) -> None:
     repo, _remote, module = _prepare_repo(tmp_path, monkeypatch)
     monkeypatch.setattr(module, "_session_timestamp", lambda: "20260329-010203")
-    monkeypatch.setattr(module, "_run_verification_contract", lambda: None)
+    monkeypatch.setattr(
+        module,
+        "_run_verification_for_paths",
+        lambda _paths: ("git diff --check", "python3 internal/truth/generate_status.py --check"),
+    )
     monkeypatch.setattr(module, "_managed_publication_required", lambda: True)
     monkeypatch.setattr(module, "_ensure_canonical_origin", lambda: None)
     module.cmd_start_session("codex", "existing-commit")
@@ -232,11 +247,21 @@ def test_close_session_with_existing_unique_commit_still_publishes_when_tree_is_
     _git(repo, "commit", "-m", "docs: preexisting session commit")
 
     calls: list[tuple[str, object]] = []
+    verification_paths: list[list[str]] = []
 
-    def fake_publish_merge_sync_session(session_branch: str, title: str) -> dict[str, object]:
+    monkeypatch.setattr(
+        module,
+        "_run_verification_for_paths",
+        lambda paths: verification_paths.append(paths) or ("git diff --check", "python3 internal/truth/generate_status.py --check"),
+    )
+
+    def fake_publish_merge_sync_session(
+        session_branch: str, title: str, verification_commands: tuple[str, ...]
+    ) -> dict[str, object]:
         calls.append(("publish", session_branch))
         assert session_branch == branch
         assert title == "docs: close existing session commit"
+        assert verification_commands == ("git diff --check", "python3 internal/truth/generate_status.py --check")
         _git(repo, "push", "-u", "origin", session_branch)
         _git(repo, "switch", "main")
         _git(repo, "merge", "--ff-only", session_branch)
@@ -258,6 +283,7 @@ def test_close_session_with_existing_unique_commit_still_publishes_when_tree_is_
     payload = json.loads(capsys.readouterr().out.strip().splitlines()[-1])
     assert payload["status"] == "merged"
     assert ("publish", branch) in calls
+    assert verification_paths == [["README.md"]]
     assert _git_output(repo, "branch", "--show-current") == "main"
     assert _git_output(repo, "branch", "--list", branch) == ""
 
@@ -267,13 +293,17 @@ def test_close_session_keeps_session_branch_when_pr_creation_fails_after_push(
 ) -> None:
     repo, _remote, module = _prepare_repo(tmp_path, monkeypatch)
     monkeypatch.setattr(module, "_session_timestamp", lambda: "20260329-010203")
-    monkeypatch.setattr(module, "_run_verification_contract", lambda: None)
+    monkeypatch.setattr(
+        module,
+        "_run_verification_for_paths",
+        lambda _paths: ("git diff --check", "python3 internal/truth/generate_status.py --check"),
+    )
     monkeypatch.setattr(module, "_managed_publication_required", lambda: True)
     module.cmd_start_session("codex", "pr-fail")
     branch = _git_output(repo, "branch", "--show-current")
     (repo / "README.md").write_text("changed\n", encoding="utf-8")
 
-    def fail_after_push(session_branch: str, _title: str) -> dict[str, object]:
+    def fail_after_push(session_branch: str, _title: str, _verification_commands: tuple[str, ...]) -> dict[str, object]:
         _git(repo, "push", "-u", "origin", session_branch)
         raise SystemExit("PR creation failed")
 
@@ -293,9 +323,19 @@ def test_finalize_refuses_managed_session_branches(tmp_path: Path, monkeypatch: 
     module.cmd_start_session("codex", "managed")
 
     with pytest.raises(SystemExit, match="Use close-session"):
-        module.cmd_finalize("docs: should fail")
+        module.cmd_finalize("docs: should fail", manual_exception=True)
 
     assert _git_output(repo, "branch", "--show-current") == "codex/20260329-010203-managed"
+
+
+def test_finalize_requires_manual_exception_flag(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    repo, _remote, module = _prepare_repo(tmp_path, monkeypatch)
+    _git(repo, "switch", "-c", "maint/manual-work")
+
+    with pytest.raises(SystemExit, match="requires --manual-exception"):
+        module.cmd_finalize("docs: finalize manual branch", manual_exception=False)
+
+    assert _git_output(repo, "branch", "--show-current") == "maint/manual-work"
 
 
 def test_finalize_commits_manual_branch_without_touching_main(
@@ -303,10 +343,10 @@ def test_finalize_commits_manual_branch_without_touching_main(
 ) -> None:
     repo, _remote, module = _prepare_repo(tmp_path, monkeypatch)
     _git(repo, "switch", "-c", "maint/manual-work")
-    monkeypatch.setattr(module, "_run_verification_contract", lambda: None)
+    monkeypatch.setattr(module, "_run_verification_for_paths", lambda _paths: ("git diff --check", "make product-test"))
     (repo / "manual.txt").write_text("manual\n", encoding="utf-8")
 
-    module.cmd_finalize("docs: finalize manual branch")
+    module.cmd_finalize("docs: finalize manual branch", manual_exception=True)
 
     assert _git_output(repo, "branch", "--show-current") == "maint/manual-work"
     assert _git_output(repo, "log", "-1", "--pretty=%s") == "docs: finalize manual branch"
@@ -332,7 +372,11 @@ def test_publish_merge_sync_session_reuses_existing_open_pr(
         },
     )
     monkeypatch.setattr(module, "_push_session_branch", lambda branch: calls.append(("push", branch)))
-    monkeypatch.setattr(module, "_create_session_pull_request", lambda branch, title: calls.append(("create", branch, title)))
+    monkeypatch.setattr(
+        module,
+        "_create_session_pull_request",
+        lambda branch, title, verification_commands: calls.append(("create", branch, title, verification_commands)),
+    )
     monkeypatch.setattr(module, "_mark_pull_request_ready", lambda number: calls.append(("ready", number)))
     monkeypatch.setattr(module, "_merge_session_pull_request", lambda number: calls.append(("merge", number)))
     monkeypatch.setattr(
@@ -343,7 +387,9 @@ def test_publish_merge_sync_session_reuses_existing_open_pr(
     monkeypatch.setattr(module, "_delete_branch", lambda branch: calls.append(("delete", branch)))
     monkeypatch.setattr(module, "_main_origin_state", lambda: "synced")
 
-    payload = module._publish_merge_sync_session("codex/20260329-010203-test", "docs: test")
+    payload = module._publish_merge_sync_session(
+        "codex/20260329-010203-test", "docs: test", ("git diff --check", "make product-test")
+    )
 
     assert payload == {
         "status": "merged",
@@ -372,7 +418,7 @@ def test_publish_merge_sync_session_creates_pr_when_missing(
     monkeypatch.setattr(
         module,
         "_create_session_pull_request",
-        lambda branch, title: calls.append(("create", branch, title))
+        lambda branch, title, verification_commands: calls.append(("create", branch, title, verification_commands))
         or {"number": 14, "state": "OPEN", "url": "https://example.test/pr/14", "isDraft": False},
     )
     monkeypatch.setattr(module, "_merge_session_pull_request", lambda number: calls.append(("merge", number)))
@@ -380,11 +426,13 @@ def test_publish_merge_sync_session_creates_pr_when_missing(
     monkeypatch.setattr(module, "_delete_branch", lambda branch: calls.append(("delete", branch)))
     monkeypatch.setattr(module, "_main_origin_state", lambda: "synced")
 
-    payload = module._publish_merge_sync_session("codex/20260329-010203-create", "docs: create")
+    payload = module._publish_merge_sync_session(
+        "codex/20260329-010203-create", "docs: create", ("git diff --check", "make conformance-test")
+    )
 
     assert payload["pr_number"] == 14
     assert ("push", "codex/20260329-010203-create") in calls
-    assert ("create", "codex/20260329-010203-create", "docs: create") in calls
+    assert ("create", "codex/20260329-010203-create", "docs: create", ("git diff --check", "make conformance-test")) in calls
     assert ("merge", 14) in calls
 
 
@@ -409,7 +457,9 @@ def test_publish_merge_sync_session_skips_push_when_pr_is_already_merged(
     monkeypatch.setattr(module, "_delete_branch", lambda branch: calls.append(("delete", branch)))
     monkeypatch.setattr(module, "_main_origin_state", lambda: "synced")
 
-    payload = module._publish_merge_sync_session("codex/20260329-010203-test", "docs: merged")
+    payload = module._publish_merge_sync_session(
+        "codex/20260329-010203-test", "docs: merged", ("git diff --check", "make product-test")
+    )
 
     assert payload["status"] == "already_merged"
     assert payload["pr_number"] == 12
@@ -436,7 +486,9 @@ def test_publish_merge_sync_session_already_merged_payload_deletes_local_branch(
     monkeypatch.setattr(module, "_delete_branch", lambda branch: calls.append(("delete", branch)))
     monkeypatch.setattr(module, "_main_origin_state", lambda: "synced")
 
-    payload = module._publish_merge_sync_session("codex/20260329-010203-already-merged", "docs: merged")
+    payload = module._publish_merge_sync_session(
+        "codex/20260329-010203-already-merged", "docs: merged", ("git diff --check", "make product-test")
+    )
 
     assert payload == {
         "status": "already_merged",
@@ -464,7 +516,59 @@ def test_publish_merge_sync_session_refuses_closed_unmerged_pr(
     )
 
     with pytest.raises(SystemExit, match="closed unmerged PR"):
-        module._publish_merge_sync_session("codex/20260329-010203-test", "docs: closed")
+        module._publish_merge_sync_session(
+            "codex/20260329-010203-test", "docs: closed", ("git diff --check", "make product-test")
+        )
+
+
+def test_verification_commands_for_internal_paths_stay_internal_only(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    _repo, _remote, module = _prepare_repo(tmp_path, monkeypatch)
+
+    commands = module._verification_commands_for_paths(
+        ["internal/workflow/repo_workflow.py", "docs/internal/REPO_WORKFLOW.md", "tests/internal/test_repo_workflow.py"]
+    )
+
+    assert tuple(module._command_text(command) for command in commands) == (
+        "git diff --check",
+        "python3 internal/truth/generate_status.py --check",
+        "python3 internal/archive/generate_archive_index.py --check",
+        "make -C internal test",
+    )
+
+
+def test_verification_commands_for_shared_sre_paths_cover_product_and_experimental(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    _repo, _remote, module = _prepare_repo(tmp_path, monkeypatch)
+
+    commands = module._verification_commands_for_paths(["cortex/sre/preservation.py"])
+
+    assert tuple(module._command_text(command) for command in commands) == (
+        "git diff --check",
+        "make product-test",
+        "make experimental-test",
+    )
+
+
+def test_verification_commands_for_unknown_root_path_fall_back_to_full_bundle(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    _repo, _remote, module = _prepare_repo(tmp_path, monkeypatch)
+
+    commands = module._verification_commands_for_paths(["pyproject.toml"])
+
+    assert tuple(module._command_text(command) for command in commands) == (
+        "git diff --check",
+        "make product-test",
+        "make conformance-test",
+        "make experimental-test",
+        "python3 internal/truth/generate_status.py --check",
+        "python3 internal/archive/generate_archive_index.py --check",
+        "make -C internal test",
+        "make lab-test",
+    )
 
 
 def test_audit_branches_is_non_destructive_and_reports_categories(
