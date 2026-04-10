@@ -28,6 +28,7 @@ def test_internal_workflow_surfaces_exist() -> None:
     assert 'help="Verify, publish, merge, sync main, and delete a managed session branch."' in canonical
     assert 'GitHub CLI `gh` is required for managed close-session publication.' in canonical
     assert 'def _publish_merge_sync_session(' in canonical
+    assert 'def _branch_has_unique_commits(' in canonical
     assert 'remote_managed_heads' in canonical
     assert '_run(["make", "product-test"])' in canonical
     assert '_run(["make", "conformance-test"])' in canonical
@@ -37,8 +38,13 @@ def test_internal_workflow_surfaces_exist() -> None:
     assert '_run(["make", "-C", "internal", "test"])' in canonical
     assert '_run(["make", "lab-test"])' in canonical
     assert '["make", "-C", "internal", "closeout-test"]' in canonical
+    assert 'help="Fail unless the repo is on clean synced main with no extra worktrees, non-main branches, or remote managed/review heads."' in canonical
     assert "Remote publication remains separate" not in workflow_doc
     assert "publishes the session branch, merges it, adopts `origin/main`" in workflow_doc
+    assert 'no unique commits relative to `origin/main`' in workflow_doc
+    assert 'repo is not back at resting truth' in workflow_doc
+    assert '`status`, `published_branch`, `pr_number`, `pr_url`, `main_head`, and `main_sync`' in workflow_doc
+    assert '`python3 internal/archive/generate_archive_index.py --check`' in workflow_doc
     assert "clean synced `main`" in workflow_doc
 
 

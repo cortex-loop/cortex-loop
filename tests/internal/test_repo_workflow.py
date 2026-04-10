@@ -156,6 +156,7 @@ def test_close_session_noop_deletes_empty_session_branch_without_publication(
     repo, _remote, module = _prepare_repo(tmp_path, monkeypatch)
     monkeypatch.setattr(module, "_session_timestamp", lambda: "20260329-010203")
     monkeypatch.setattr(module, "_managed_publication_required", lambda: True)
+    monkeypatch.setattr(module, "_ensure_canonical_origin", lambda: None)
     module.cmd_start_session("codex", "noop")
     branch = _git_output(repo, "branch", "--show-current")
 
@@ -166,6 +167,30 @@ def test_close_session_noop_deletes_empty_session_branch_without_publication(
     assert payload["published_branch"] is None
     assert _git_output(repo, "branch", "--show-current") == "main"
     assert _git_output(repo, "branch", "--list", branch) == ""
+
+
+def test_close_session_canonical_noop_adopts_origin_main_when_upstream_advanced(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    repo, remote, module = _prepare_repo(tmp_path, monkeypatch)
+    monkeypatch.setattr(module, "_session_timestamp", lambda: "20260329-010203")
+    monkeypatch.setattr(module, "_managed_publication_required", lambda: True)
+    monkeypatch.setattr(module, "_ensure_canonical_origin", lambda: None)
+    module.cmd_start_session("codex", "noop-upstream")
+    branch = _git_output(repo, "branch", "--show-current")
+
+    _make_remote_commit(remote, tmp_path, "remote.txt", "remote\n", "docs: remote update")
+
+    module.cmd_close_session("docs: noop closeout")
+
+    payload = json.loads(capsys.readouterr().out.strip().splitlines()[-1])
+    assert payload["status"] == "no_op"
+    assert payload["published_branch"] is None
+    assert payload["main_sync"] == "synced"
+    assert payload["main_head"] == _git_output(repo, "rev-parse", "origin/main")
+    assert _git_output(repo, "branch", "--show-current") == "main"
+    assert _git_output(repo, "branch", "--list", branch) == ""
+    assert _git_output(repo, "rev-list", "--left-right", "--count", "main...origin/main") == "0\t0"
 
 
 def test_close_session_keeps_session_branch_when_publication_fails(
@@ -190,6 +215,51 @@ def test_close_session_keeps_session_branch_when_publication_fails(
     assert _git_output(repo, "branch", "--show-current") == branch
     assert _git_output(repo, "log", "main", "-1", "--pretty=%s") == "repo: initialize temp repo"
     assert _git_output(repo, "log", "HEAD", "-1", "--pretty=%s") == "docs: publication fail"
+
+
+def test_close_session_with_existing_unique_commit_still_publishes_when_tree_is_clean(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    repo, _remote, module = _prepare_repo(tmp_path, monkeypatch)
+    monkeypatch.setattr(module, "_session_timestamp", lambda: "20260329-010203")
+    monkeypatch.setattr(module, "_run_verification_contract", lambda: None)
+    monkeypatch.setattr(module, "_managed_publication_required", lambda: True)
+    monkeypatch.setattr(module, "_ensure_canonical_origin", lambda: None)
+    module.cmd_start_session("codex", "existing-commit")
+    branch = _git_output(repo, "branch", "--show-current")
+    (repo / "README.md").write_text("changed\n", encoding="utf-8")
+    _git(repo, "add", "README.md")
+    _git(repo, "commit", "-m", "docs: preexisting session commit")
+
+    calls: list[tuple[str, object]] = []
+
+    def fake_publish_merge_sync_session(session_branch: str, title: str) -> dict[str, object]:
+        calls.append(("publish", session_branch))
+        assert session_branch == branch
+        assert title == "docs: close existing session commit"
+        _git(repo, "push", "-u", "origin", session_branch)
+        _git(repo, "switch", "main")
+        _git(repo, "merge", "--ff-only", session_branch)
+        _git(repo, "push", "origin", "main")
+        _git(repo, "branch", "-D", session_branch)
+        return {
+            "status": "merged",
+            "published_branch": session_branch,
+            "pr_number": 24,
+            "pr_url": "https://example.test/pr/24",
+            "main_head": _git_output(repo, "rev-parse", "main"),
+            "main_sync": "synced",
+        }
+
+    monkeypatch.setattr(module, "_publish_merge_sync_session", fake_publish_merge_sync_session)
+
+    module.cmd_close_session("docs: close existing session commit")
+
+    payload = json.loads(capsys.readouterr().out.strip().splitlines()[-1])
+    assert payload["status"] == "merged"
+    assert ("publish", branch) in calls
+    assert _git_output(repo, "branch", "--show-current") == "main"
+    assert _git_output(repo, "branch", "--list", branch) == ""
 
 
 def test_close_session_keeps_session_branch_when_pr_creation_fails_after_push(
@@ -345,6 +415,38 @@ def test_publish_merge_sync_session_skips_push_when_pr_is_already_merged(
     assert payload["pr_number"] == 12
     assert ("push", "codex/20260329-010203-test") not in calls
     assert ("adopt", None) in calls
+
+
+def test_publish_merge_sync_session_already_merged_payload_deletes_local_branch(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    _repo, _remote, module = _prepare_repo(tmp_path, monkeypatch)
+    calls: list[tuple[str, object]] = []
+
+    monkeypatch.setattr(module, "_ensure_canonical_origin", lambda: None)
+    monkeypatch.setattr(module, "_ensure_gh_ready", lambda: None)
+    monkeypatch.setattr(module, "_fetch_origin", lambda quiet=False: None)
+    monkeypatch.setattr(
+        module,
+        "_session_pull_request",
+        lambda _branch: {"number": 21, "state": "MERGED", "url": "https://example.test/pr/21", "isDraft": False},
+    )
+    monkeypatch.setattr(module, "_branch_merged_into_origin_main", lambda _branch: True)
+    monkeypatch.setattr(module, "_adopt_origin_main", lambda: "merged456")
+    monkeypatch.setattr(module, "_delete_branch", lambda branch: calls.append(("delete", branch)))
+    monkeypatch.setattr(module, "_main_origin_state", lambda: "synced")
+
+    payload = module._publish_merge_sync_session("codex/20260329-010203-already-merged", "docs: merged")
+
+    assert payload == {
+        "status": "already_merged",
+        "published_branch": "codex/20260329-010203-already-merged",
+        "pr_number": 21,
+        "pr_url": "https://example.test/pr/21",
+        "main_head": "merged456",
+        "main_sync": "synced",
+    }
+    assert ("delete", "codex/20260329-010203-already-merged") in calls
 
 
 def test_publish_merge_sync_session_refuses_closed_unmerged_pr(

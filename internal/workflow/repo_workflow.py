@@ -311,6 +311,21 @@ def _branch_merged_into_origin_main(branch: str) -> bool:
     return proc.returncode == 0
 
 
+def _branch_has_unique_commits(branch: str, base_ref: str) -> bool:
+    proc = subprocess.run(
+        ["git", "rev-list", "--count", f"{base_ref}..{branch}"],
+        cwd=_root(),
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+    if proc.returncode != 0:
+        detail = (proc.stderr or proc.stdout).strip()
+        suffix = f"\n{detail}" if detail else ""
+        raise SystemExit(f"Unable to compare branch '{branch}' against '{base_ref}'.{suffix}")
+    return int(proc.stdout.strip() or "0") > 0
+
+
 def _switch_to_main() -> None:
     _run(["git", "switch", "main"])
 
@@ -674,7 +689,31 @@ def cmd_close_session(message: str) -> int:
     if subject_error is not None:
         raise SystemExit(subject_error)
     commit_hash = _finalize_current_branch(message)
-    if commit_hash is None and _branch_merged_into_main(branch):
+    if _managed_publication_required():
+        if commit_hash is None:
+            _ensure_canonical_origin()
+            _fetch_origin(quiet=True)
+            if not _branch_has_unique_commits(branch, "origin/main"):
+                main_head = _adopt_origin_main()
+                _delete_branch(branch)
+                print(
+                    json.dumps(
+                        {
+                            "status": "no_op",
+                            "published_branch": None,
+                            "pr_number": None,
+                            "pr_url": None,
+                            "main_head": main_head,
+                            "main_sync": _main_origin_state(),
+                        },
+                        sort_keys=True,
+                    )
+                )
+                return 0
+        result = _publish_merge_sync_session(branch, message)
+        print(json.dumps(result, sort_keys=True))
+        return 0
+    if commit_hash is None and not _branch_has_unique_commits(branch, "main"):
         _switch_to_main()
         _delete_branch(branch)
         print(
@@ -690,10 +729,6 @@ def cmd_close_session(message: str) -> int:
                 sort_keys=True,
             )
         )
-        return 0
-    if _managed_publication_required():
-        result = _publish_merge_sync_session(branch, message)
-        print(json.dumps(result, sort_keys=True))
         return 0
     landed_hash = _land_session_branch(branch)
     print(
@@ -825,7 +860,7 @@ def main(argv: list[str] | None = None) -> int:
     subparsers.add_parser("audit-branches", help="Report local branch hygiene state without mutating refs.")
     subparsers.add_parser(
         "cleanup-report",
-        help="Fail unless the repo is on clean synced main with no extra worktrees, non-main branches, or remote review heads.",
+        help="Fail unless the repo is on clean synced main with no extra worktrees, non-main branches, or remote managed/review heads.",
     )
 
     preserve_parser = subparsers.add_parser(

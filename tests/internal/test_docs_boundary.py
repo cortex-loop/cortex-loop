@@ -153,6 +153,17 @@ def test_generated_status_doc_includes_system_map_and_next_product_train() -> No
     assert "`e23-kernel-extract`" in text
 
 
+def test_front_door_surfaces_point_to_one_command_managed_closeout() -> None:
+    agents = _read(AGENTS_PATH)
+    status = _read(STATUS_DOC_PATH)
+
+    assert 'close-session --message "scope: end-state summary"' in status
+    assert "cleanup-report" in status
+    assert "manual publication" not in agents.lower()
+    assert "manual publication" not in status.lower()
+    assert "separate publication step" not in status.lower()
+
+
 def test_generated_archive_index_is_current() -> None:
     proc = subprocess.run(
         [sys.executable, "internal/archive/generate_archive_index.py", "--check"],
