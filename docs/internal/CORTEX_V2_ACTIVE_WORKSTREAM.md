@@ -143,15 +143,20 @@ It is workflow state only. It does not override the packet documents, implementa
   - the current E27 proof read is still unresolved:
     - deterministic proof is green for the reduced `cortex`-only train
     - a fresh reduced live replay-proof rerun on 2026-04-10 remained timing-heavy before the first completed Astro `cortex` attempt and was cut within the bounded turn budget
-    - one direct private single-case rerun on `frontend_bugfix_cleanup_v1` completed end-to-end on 2026-04-10 without `env_blocked` and now serves as the first clean replay discriminator on the selected subset
-    - that first React rerun still stayed `output_invalid` through the bounded repair turn:
-      - attempt `1` returned summary prose outside the operator surface despite self-reporting passing local checks under `--configLoader runner`
-      - attempt `2` returned `=== FILE:` blocks with `parse_error: operator completed without workspace edits`
-    - one prompt-hardening revision on the maintainer-only operator replay prompt did not lift that result:
-      - the second React rerun again completed without `env_blocked` and still stayed `output_invalid` through attempt `2`
-      - the repair turn changed wording from file-block output to prose-only completion text, but still produced no persisted workspace edits
-      - because the revision changed wording but not outcome, that prompt-hardening mechanism was cut and is not kept on this branch
-    - the branch therefore carries the smaller replay-proof mechanism plus one clean React replay failure artifact, but no accepted keep/cut read yet on broader replay efficacy
+    - two direct private single-case reruns on `frontend_bugfix_cleanup_v1` completed end-to-end on 2026-04-10 without `env_blocked` and exposed a shared replay-proof-plumbing defect rather than a product-only prompt failure:
+      - the first React rerun stayed `output_invalid` through the bounded repair turn
+      - the second React rerun stayed `output_invalid` through attempt `2` even after one maintainer-only prompt-hardening revision
+      - because that prompt revision changed wording but not outcome, the prompt-hardening mechanism was cut and is not kept on this branch
+    - the localized corrective seam on shared OpenAI operator replay persistence / proof plumbing is now implemented on this branch:
+      - replay workspaces now initialize a git baseline before verification so repo-local modified-file collection can see workspace edits under `.cortex/train_loops/...`
+      - deterministic proof is green on the updated replay workspace preparation and operator replay evaluation path
+    - one fresh direct private React rerun under that fixed plumbing completed end-to-end on 2026-04-10 and changed the replay read materially:
+      - artifact root: `.cortex/train_loops/real-work-replay-proof-openai/runs/openai_operator_cli/run_20260410T095305+0000`
+      - attempt `1` now records the real tracked workspace edits instead of collapsing to empty diffs and classifies as `visible_test_failed`
+      - the visible failure is now the actual duplicate `/Starter/i` match in the compare view rather than `parse_error: operator completed without workspace edits`
+      - attempt `2` repairs that failure and passes with persisted tracked workspace edits still visible to the verifier
+      - aggregate replay summary for that fixed React rerun is now `objective_pass=1`, `hidden_quality_pass=1`, `env_blocked=false`
+    - the branch therefore carries the smaller replay-proof mechanism plus one successful React replay repair artifact under the fixed plumbing; broader two-case replay efficacy remains unresolved until Astro is classified under the same repaired path
   - the branch is still candidate truth only, not accepted baseline truth
   - historical accepted OpenAI `service_api` evidence remains recorded as product/runtime claim history
   - the active proving/default lane for new iteration is now OpenAI `operator_cli` on this branch, while historical accepted `service_api` evidence remains recorded as product/runtime claim history and not as the day-to-day proving default
@@ -160,8 +165,9 @@ It is workflow state only. It does not override the packet documents, implementa
 
 - use `.cortex/train_loops/real-work-replay-pack-openai/summary.json` as the next narrow proof target instead of the full broad output-quality watch
 - keep the reduced `real-work-replay-proof-openai` train as the only maintained replay-proof seam
-- use the completed React replay artifacts under `.cortex/train_loops/real-work-replay-proof-openai/runs/openai_operator_cli/run_20260410T093621+0000` and `run_20260410T094123+0000` as the current baseline evidence
-- open one explicit localized corrective seam on shared OpenAI operator replay persistence / proof plumbing before spending more runtime on prompt micro-tweaks or reopening the full two-case replay proof
+- keep the completed React replay artifacts under `.cortex/train_loops/real-work-replay-proof-openai/runs/openai_operator_cli/run_20260410T093621+0000` and `run_20260410T094123+0000` as the pre-fix baseline evidence and use `run_20260410T095305+0000` as the post-fix proof artifact
+- keep the localized corrective seam on shared OpenAI operator replay persistence / proof plumbing as landed on this branch and do not reopen replay prompt micro-tweaks on the React case
+- spend the next bounded private replay hour on one direct `astro_marketing_forms_v1` rerun under the same fixed plumbing before reopening the full two-case replay proof
 - keep replay proof private to `.cortex/train_loops/real-work-replay-proof-openai/runs` and keep the shared output-quality latest summary untouched
 - keep E24 as the locally landed proving-default basis on this branch
 - keep the successful repair-pressure artifacts as the current best evidence for E23 and stop spending runtime on broader watch surfaces by habit
@@ -194,6 +200,7 @@ It is workflow state only. It does not override the packet documents, implementa
 - Do not reopen `raw` or `tooling_only` replay arms in E27 now that the replay pack already preserves the baseline failure shapes.
 - Do not treat the cut oversized replay-proof run or the cut timing-heavy `cortex`-only rerun as proof that replay efficacy is either earned or disproven.
 - Do not add another replay-prompt micro-tweak on the React case; the first prompt-hardening revision changed wording but not outcome.
+- Do not reopen the full two-case replay proof until one direct Astro rerun has classified whether the remaining unresolved case is now visible under the fixed replay-plumbing path.
 
 ## 6. Acknowledged worktree noise
 

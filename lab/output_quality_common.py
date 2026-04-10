@@ -10,6 +10,7 @@ from pathlib import Path
 from typing import Any, Literal
 
 from lab.output_quality_ablation import OutputQualityAblationConfig
+from lab.live_validation_common import _initialize_workspace_git
 
 
 ArmName = Literal["raw", "tooling_only", "cortex"]
@@ -289,6 +290,7 @@ def prepare_seeded_workspace(
         project_root,
         ignore=shutil.ignore_patterns("node_modules", "dist", ".astro"),
     )
+    _initialize_workspace_git(project_root)
     seed_node_modules = seed_workspace_root / "node_modules"
     if seed_node_modules.exists():
         (project_root / "node_modules").symlink_to(seed_node_modules)

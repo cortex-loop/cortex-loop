@@ -8,8 +8,9 @@ from pathlib import Path
 import pytest
 
 from lab import cortex_output_quality as output_quality
+from lab.live_validation_common import collect_modified_files
 from lab.output_quality_ablation import OutputQualityAblationConfig
-from lab.output_quality_grader import PairwiseJudgment
+from lab.output_quality_grader import OutputQualityEvaluation, PairwiseJudgment
 
 
 def test_supported_task_ids_cover_all_five_output_quality_tasks() -> None:
@@ -332,3 +333,82 @@ def test_run_arm_operator_cli_skips_repair_when_verification_binding_is_off(
 
     assert result["attempt_count"] == 1
     assert len(operator_calls) == 1
+
+
+def test_prepare_seeded_workspace_initializes_git_for_operator_diffs(tmp_path: Path) -> None:
+    template_root = tmp_path / "template"
+    seed_root = tmp_path / "seed"
+    (template_root / "src").mkdir(parents=True)
+    (template_root / "src" / "App.tsx").write_text("export default 1;\n", encoding="utf-8")
+    seed_root.mkdir(parents=True)
+
+    workspace = output_quality.prepare_seeded_workspace(
+        template_root=template_root,
+        seed_workspace_root=seed_root,
+        run_root=tmp_path / "run",
+    )
+
+    assert (workspace / ".git").exists()
+    (workspace / "src" / "App.tsx").write_text("export default 2;\n", encoding="utf-8")
+
+    assert collect_modified_files(workspace) == ["src/App.tsx"]
+
+
+def test_evaluate_operator_turn_output_uses_workspace_edits_when_files_changed(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    template_root = tmp_path / "template"
+    seed_root = tmp_path / "seed"
+    (template_root / "src").mkdir(parents=True)
+    (template_root / "src" / "App.tsx").write_text("export default 1;\n", encoding="utf-8")
+    seed_root.mkdir(parents=True)
+    workspace = output_quality.prepare_seeded_workspace(
+        template_root=template_root,
+        seed_workspace_root=seed_root,
+        run_root=tmp_path / "workspace",
+    )
+    (workspace / "src" / "App.tsx").write_text("export default 2;\n", encoding="utf-8")
+
+    task_pack = output_quality.OutputQualityTaskPack(
+        task_id="toy_operator_case",
+        prompt_text="Fix the file.",
+        template_root=template_root,
+        allowed_write_paths=("src/App.tsx",),
+        visible_context_paths=("src/App.tsx",),
+        verifier_only_paths=(),
+        install_command=("true",),
+        lint_command=("true",),
+        typecheck_command=("true",),
+        build_command=("true",),
+        visible_test_command=("true",),
+        hidden_test_command=("true",),
+    )
+
+    monkeypatch.setattr(
+        output_quality,
+        "evaluate_workspace",
+        lambda **_kwargs: OutputQualityEvaluation(
+            status="passed",
+            failure_class=None,
+            objective_pass=True,
+            hidden_quality_pass=True,
+            failing_checks=(),
+            first_failure_excerpt=None,
+            checks=(),
+        ),
+    )
+
+    payload = output_quality._evaluate_operator_turn_output(
+        task_pack=task_pack,
+        project_root=workspace,
+        output_text="Implemented the fix.",
+        shared_install_result={"exit_code": 0, "stdout": "", "stderr": ""},
+        failure_class=None,
+        attempted_models=["gpt-5.3-codex"],
+        thread_id="thread-1",
+    )
+
+    assert payload["evaluation"]["status"] == "passed"
+    assert payload["parse"]["parse_error"] is None
+    assert payload["changed_files"] == {"src/App.tsx": "export default 2;\n"}
