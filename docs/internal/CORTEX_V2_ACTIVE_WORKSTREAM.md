@@ -16,6 +16,7 @@ It is workflow state only. It does not override the packet documents, implementa
   - the proven executive value still comes from the tiny integrity core plus the verified-work loop
   - diagnostics, train loops, graders, causal maps, dynamics atlases, and workflow ledgers are not the product
   - local `main` now includes the landed E22 mission-lock and surface-separation seam and is ahead of `origin/main` pending publication
+  - historical accepted verified-work evidence on local `main` still records OpenAI `service_api` as the proving-default line, but current maintainer policy now defers further service spend and treats an OpenAI `operator_cli` proving-default realignment as the next truth-update seam rather than the current accepted state
 - Authority anchors:
   - `docs/CORTEX_V2_CORE_2.md`
   - `docs/CORTEX_V2_SRE_2.md`
@@ -62,16 +63,21 @@ It is workflow state only. It does not override the packet documents, implementa
     - targeted runtime/correspondence/boundary bundle
     - `make -C lab revalidate-openai-host-control`
     - `tests/unit/test_cortex_conformance.py`
-  - live OpenAI verified-work acceptance is still blocked in this workspace because the explicit service-lane spend gate is not enabled here; the current branch is a verified review candidate, not accepted baseline truth
+  - the branch is a verified review candidate, not accepted baseline truth
+  - the earlier plan to close E23 with new OpenAI `service_api` acceptance reruns is no longer the active maintainer policy:
+    - `service_api` spend is intentionally deferred for now
+    - OpenAI `operator_cli` is the intended default proving lane for the next truth realignment
+    - that operator-cli shift is not landed yet on this branch and must not be described as already accepted
 
 ## 4. Next lawful move
 
-- finalize the explicit E23 review branch with the verified deterministic + repo-local proof already earned
-- then, when explicit OpenAI service-lane spend approval is available, run the three-pack live acceptance reruns:
-  - bookmarks
-  - normalize-port
-  - feature-flags
-- accept or reject E23 only after that live acceptance read is recorded explicitly
+- keep the explicit E23 review branch finalized as a verified candidate with deterministic + repo-local proof already earned
+- do not spend new OpenAI `service_api` acceptance cycles under the current policy
+- open one explicit truth-realignment seam that:
+  - changes the active OpenAI proving/default lane from historical `service_api` wording to `operator_cli`
+  - updates the relevant docs, conformance/train-loop truth carriers, and acceptance procedure accordingly
+  - keeps public product/runtime claims aligned with the actual shipped surface rather than pretending the operator-cli realization is already landed
+- accept or reject E23 only after that policy-aligned proving lane is recorded truthfully and revalidated on its intended surface
 - publication and reconciliation remain blocked on the local `main` ahead-of-origin state until the E22/E23 history is published or reconciled explicitly
 
 ## 5. Explicitly blocked moves
@@ -82,7 +88,8 @@ It is workflow state only. It does not override the packet documents, implementa
 - Do not change the thin OpenAI path when `work_contract` is absent.
 - Do not widen retries beyond one bounded repair turn.
 - Do not treat the current review branch as accepted baseline truth before publication/reconciliation.
-- Do not claim E23 live acceptance without explicit OpenAI service-lane spend approval.
+- Do not claim E23 live acceptance on `service_api` while service spend is intentionally deferred by policy.
+- Do not rewrite docs to call OpenAI `operator_cli` the accepted default lane until the conformance/runtime truth surfaces are explicitly realigned.
 
 ## 6. Acknowledged worktree noise
 

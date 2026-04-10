@@ -137,6 +137,10 @@ The active method now separates:
 - `conformance truth` — how faithfully each active surface realizes the law
 - `shipping truth` — the current OpenAI-first product default
 
+This section records the accepted historical proving line that re-earned `O4R` and `CT2`.
+It does not, by itself, authorize future service-spend repetition by habit.
+If maintainers intentionally defer new OpenAI `service_api` spend, the next lawful move is an explicit truth-realignment seam onto the intended proving surface, not a silent reinterpretation of the historical accepted line.
+
 That means later work should not ask whether a second host is "deferred" in the abstract.
 It should ask whether the same Cortex law is conformant, partial, divergent, unwired, or env-blocked on that host's strongest available native surface.
 
@@ -174,13 +178,14 @@ On the current E9 repair-yield review line, the paired live proof reads:
 If a later runtime/product seam is opened after this note, the next lawful move is:
 
 1. keep the current thin path as the default when no work contract is present
-2. keep `O4R` stable on repeated local reruns rather than reopening the law or the shipping-default wiring by habit
-3. do not reopen breadth by habit; the three-pack shipping-default lane is already re-earned on the current line
-4. if repair yield is the next target, open a smaller repair-pressure investigation that can create honest natural repair opportunities without replay or new Cortex law
-5. run the same contract pack across OpenAI, Claude, and Gemini on their strongest available native surfaces whenever a later seam changes Cortex law or touches non-shipping wiring
-6. revise Cortex law only if the same divergence repeats across brains; otherwise reopen wiring only on the specific drifting brain/surface
-7. keep repeated-failure inhibition and carrier inference deferred until new evidence earns them
-8. open any later shipping-truth widening beyond OpenAI only through an explicit separate host shipping train
+2. do not reopen OpenAI `service_api` spend by habit; if current policy defers it, open an explicit operator-cli truth-realignment seam instead of pretending the old proving-default lane still governs iteration
+3. keep `O4R` stable on its already-earned historical line rather than reopening the law by habit
+4. do not reopen breadth by habit; the three-pack historical line is already re-earned on the accepted note
+5. if repair yield is the next target, open a smaller repair-pressure investigation that can create honest natural repair opportunities without replay or new Cortex law
+6. run the same contract pack across OpenAI, Claude, and Gemini on their strongest available native surfaces whenever a later seam changes Cortex law or touches non-shipping wiring
+7. revise Cortex law only if the same divergence repeats across brains; otherwise reopen wiring only on the specific drifting brain/surface
+8. keep repeated-failure inhibition and carrier inference deferred until new evidence earns them
+9. open any later shipping-truth widening beyond OpenAI only through an explicit separate host shipping train
 
 This is the accepted north-light correction:
 

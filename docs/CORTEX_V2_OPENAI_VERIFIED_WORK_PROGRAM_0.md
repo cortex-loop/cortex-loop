@@ -189,6 +189,10 @@ This program is intentionally outside the current compact canonical proof bundle
 - repeated local bookmarks reruns show the shipping-default verified-work lane is repeat-stably conformant, either by a clean first-attempt pass or by one lawful failure-to-pass repair
 - and the `O4R` phase-gate row is updated truthfully
 
+The accepted line below records the historical OpenAI `service_api` proof that closed `O4R`.
+If maintainers intentionally defer further service spend, that does not silently move the default proving lane.
+Any switch of the active OpenAI proving/default lane to `operator_cli` must be opened and recorded as an explicit later seam.
+
 ## Current state on the accepted line and current review line
 
 On the current line:
