@@ -123,6 +123,17 @@ EXPECTED_AXIS_FAMILIES = {
 EXPECTED_RERUN_TARGET_IDS = ["uncertainty_expansion_if_still_needed"]
 
 
+def _resolve_archive_ref(repo_root: Path, ref: str) -> Path:
+    normalized = ref.strip()
+    if normalized.startswith("docs/lab/"):
+        normalized = normalized.replace("docs/lab/", "docs/archive/lab/", 1)
+    elif normalized.startswith("docs/internal/"):
+        normalized = normalized.replace("docs/internal/", "docs/archive/internal/", 1)
+    elif normalized.startswith("docs/experimental/"):
+        normalized = normalized.replace("docs/experimental/", "docs/archive/experimental/", 1)
+    return repo_root / normalized
+
+
 def _section_rows(path: Path, heading: str) -> list[dict[str, str]]:
     return parse_markdown_table(section(read(path), heading))
 
@@ -215,7 +226,7 @@ def _check_recorded_pairs(layout: PackageLayout, errors: list[str]) -> None:
         if row["failure_tags"] != "none":
             errors.append(f"{row['paired_episode_set_id']} unexpectedly carries failure tags: {row['failure_tags']}")
         for ref_key in ("baseline_packet_ref", "mediated_packet_ref"):
-            if not (layout.repo_root / row[ref_key]).is_file():
+            if not _resolve_archive_ref(layout.repo_root, row[ref_key]).is_file():
                 errors.append(f"missing run packet ref for {row['paired_episode_set_id']}: {row[ref_key]}")
 
 
@@ -294,7 +305,7 @@ def _check_burden_refs(layout: PackageLayout, errors: list[str]) -> None:
                         f"{row['scenario_id']}/{row['host_family']} should carry exactly 3 {field_name} refs"
                     )
                 for ref in refs:
-                    if not (layout.repo_root / ref).is_file():
+                    if not _resolve_archive_ref(layout.repo_root, ref).is_file():
                         errors.append(f"missing burden ref for {row['scenario_id']}/{row['host_family']}: {ref}")
     gap_rows = _section_rows(layout.burden_table_path, "Exact Burden Gap")
     if len(gap_rows) != 1 or gap_rows[0]["gap_id"] != "non_thrash_equal_value_burden_family":
@@ -334,7 +345,7 @@ def _check_evidence_note(layout: PackageLayout, errors: list[str]) -> None:
     text = read(layout.evidence_note_path)
     required_snippets = (
         "The accepted J3 decision is that mediation is now justified for one bounded experimental seam.",
-        "The accepted package-level decision is recorded in `docs/lab/CORTEX_V2_MEDIATION_JUSTIFICATION_NOTE.md`.",
+        "The accepted package-level decision is recorded in `docs/archive/lab/CORTEX_V2_MEDIATION_JUSTIFICATION_NOTE.md`.",
         "Branch-discipline evidence no longer derives only from `thrash_control`.",
         "Lower-visible-burden evidence is no longer confined to the `thrash_control` scenario family.",
         "Gemini remains explicit as partial/contaminated where needed and is not hidden behind pooled summaries.",

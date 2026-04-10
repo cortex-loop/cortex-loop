@@ -74,7 +74,7 @@ Packet documents:
 - `docs/CORTEX_V2_AUX_2.md`
 
 Operational truth:
-- `internal/truth/cortex_status.yaml`
+- `internal/truth/cortex_status.json`
 - `docs/CORTEX_STATUS.md`
 
 Maintainer workflow:
@@ -86,7 +86,7 @@ Authority order:
 1. Core
 2. SRE
 3. AUX
-4. `internal/truth/cortex_status.yaml`
+4. `internal/truth/cortex_status.json`
 5. `docs/CORTEX_STATUS.md` (generated human-readable view)
 6. `docs/internal/REPO_WORKFLOW.md`
 
@@ -110,7 +110,7 @@ If a v1 mechanism is being carried over, re-earn it under the v2 packet instead 
 
 - `docs/internal/REPO_WORKFLOW.md` is the maintainer workflow authority for branch/session hygiene in this repository.
 - `internal/workflow/repo_workflow.py` is the enforcing helper surface for that workflow.
-- `internal/truth/cortex_status.yaml` is the single operational truth surface.
+- `internal/truth/cortex_status.json` is the single operational truth surface.
 - `docs/CORTEX_STATUS.md` is the generated bootstrap view for humans and new chats.
 - `preserve-worktree` is the only explicit exception to the normal verification-before-commit rule, and it exists only to avoid losing unresolved dirty work before cleanup.
 - `cleanup-report` is the strict final repo-hygiene gate for declaring the repo fully clean.
@@ -142,7 +142,7 @@ If a v1 mechanism is being carried over, re-earn it under the v2 packet instead 
 - If you introduce a new concept, say which layer owns it: Core, SRE, AUX, or later implementation-only.
 - If a concept belongs in implementation or evaluation rather than the constitutional packet, keep it out of the packet.
 - If you change the packet, say whether the implementation master plan must change in the same slice.
-- If you change the intended v1 carryover boundary, record it in `internal/truth/cortex_status.yaml` and touch archived evidence only if the historical mapping itself changed.
+- If you change the intended v1 carryover boundary, record it in `internal/truth/cortex_status.json` and touch archived evidence only if the historical mapping itself changed.
 
 ## Cortex-law train discipline
 
@@ -264,7 +264,7 @@ This is maintainer workflow law, not runtime doctrine.
 
 ## Operational truth discipline
 
-- `internal/truth/cortex_status.yaml` is the single living operational truth. Do not create a second status doctrine elsewhere.
+- `internal/truth/cortex_status.json` is the single living operational truth. Do not create a second status doctrine elsewhere.
 - Before planning or issuing a worker seam, classify the seam as `load-bearing` or `non-load-bearing`.
 - Every load-bearing seam plan must include `Status impact:` listing the exact registry keys or generated status sections expected to change.
 - A non-load-bearing seam may use `Status impact: none expected` only with a one-line reason.
@@ -333,7 +333,7 @@ Archived gate and correspondence ledgers remain evidence only. They can inform a
 ## Continuation and resume protocol
 
 - `docs/CORTEX_STATUS.md` is the live continuation surface for humans and new chats.
-- `internal/truth/cortex_status.yaml` is the machine-backed source it must match.
+- `internal/truth/cortex_status.json` is the machine-backed source it must match.
 - Before opening or resuming a seam, agents must:
   1. read `AGENTS.md`
   2. read `docs/CORTEX_STATUS.md`
@@ -342,7 +342,7 @@ Archived gate and correspondence ledgers remain evidence only. They can inform a
   5. compare the current repo state against the accepted baseline, work-today target, blocked moves, and subsystem/host status recorded in the registry
   6. restate the accepted baseline, current work target, blocked moves, and acknowledged noise before widening scope
 - If the status doc and repo state disagree, record or resolve that drift before continuing.
-- Update `internal/truth/cortex_status.yaml` and regenerate `docs/CORTEX_STATUS.md` in the same slice whenever any of these change:
+- Update `internal/truth/cortex_status.json` and regenerate `docs/CORTEX_STATUS.md` in the same slice whenever any of these change:
   - accepted baseline
   - work today target
   - subsystem status
@@ -360,7 +360,7 @@ Every final summary from an agent editing this repo should include:
 - commit hash or `no commit`
 - verification summary
 - `returned to main:` yes|no
-- `Status registry touched:` keys changed in `internal/truth/cortex_status.yaml` (or `none`)
+- `Status registry touched:` keys changed in `internal/truth/cortex_status.json` (or `none`)
 - `Status doc regenerated:` yes|no
 
 `PHILOSOPHY_AUDIT`

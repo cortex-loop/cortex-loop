@@ -1,0 +1,190 @@
+{
+  "narrative_roots": [
+    {
+      "path": "docs/archive/product",
+      "purpose": "Historical product/runtime briefs that no longer define live Cortex truth."
+    },
+    {
+      "path": "docs/archive/experimental",
+      "purpose": "Archived experimental runtime and packet narratives kept for historical reference."
+    },
+    {
+      "path": "docs/archive/internal",
+      "purpose": "Superseded workflow, implementation, and status doctrine retained as evidence only."
+    },
+    {
+      "path": "docs/archive/lab",
+      "purpose": "Archived lab narratives and proof notes that no longer belong in the active front door."
+    }
+  ],
+  "retained_evidence_refs": [
+    {
+      "label": "E23 preservation-state evidence",
+      "ref": "archive/e23-preservation-state-machine",
+      "purpose": "Preserved review evidence for extracting the E23 preservation-state product kernel without reviving the broader maintainer-only trains.",
+      "restore_hint": "git fetch origin archive/e23-preservation-state-machine:review/e23-preservation-state-machine"
+    }
+  ],
+  "retired_branches": [
+    {
+      "branch": "codex/20260409-192753-e20-openai-operator-cli-causal-map",
+      "head": "83a60a9a1c8b19488313936f620cd1eba1052b6e",
+      "purpose": "eval: add operator-cli output-quality bridge",
+      "disposition": "Deleted local branch during repo-truth closeout after recording it as retired maintainer-only work."
+    },
+    {
+      "branch": "maint/preserved-20260409-235722-e20-e21-preclose",
+      "head": "36ed87b4e3e0a142c35e35201321ffc85029a3e8",
+      "purpose": "docs: record e20 operator closeout stall",
+      "disposition": "Deleted local preservation branch after the closeout reset collapsed stale manual branch state."
+    },
+    {
+      "branch": "review/e7-verified-work-breadth-train",
+      "head": "96983365513a1b9bf673eb91659123d5b3daab52",
+      "purpose": "adapter: broaden verified-work to a second task pack",
+      "disposition": "Deleted local review branch after the repo adopted archive-only retention for superseded trains."
+    },
+    {
+      "branch": "review/e8-verified-work-midweight-third-pack",
+      "head": "1fcadd6c414b9d79f56cc136c39cb9baf454d182",
+      "purpose": "adapter: add third verified-work breadth pack",
+      "disposition": "Deleted local review branch after the repo adopted archive-only retention for superseded trains."
+    },
+    {
+      "branch": "review/e9-verified-work-repair-yield-train",
+      "head": "b6289838bc414bf4ac26c749021ca42b5e7d98dc",
+      "purpose": "eval: measure verified-work repair yield on openai",
+      "disposition": "Deleted local review branch after the repo adopted archive-only retention for superseded trains."
+    },
+    {
+      "branch": "review/e10-bookmarks-repair-signal",
+      "head": "b6289838bc414bf4ac26c749021ca42b5e7d98dc",
+      "purpose": "eval: measure verified-work repair yield on openai",
+      "disposition": "Deleted local review branch after the repo adopted archive-only retention for superseded trains."
+    },
+    {
+      "branch": "review/e11-calibrated-repair-pressure-bank",
+      "head": "a96de05ce58cf15643c8061813ee546860aeaca4",
+      "purpose": "eval: add calibrated repair-pressure bank",
+      "disposition": "Deleted local review branch after the repo adopted archive-only retention for superseded trains."
+    },
+    {
+      "branch": "review/e12-comparative-output-quality-eval",
+      "head": "7db881a5df0a4553edaa73eb852a673c963ab665",
+      "purpose": "eval: add comparative output-quality benchmark",
+      "disposition": "Deleted local review branch after the repo adopted archive-only retention for superseded trains."
+    },
+    {
+      "branch": "review/e13-repo-fit-output-quality-lift",
+      "head": "7db881a5df0a4553edaa73eb852a673c963ab665",
+      "purpose": "eval: add comparative output-quality benchmark",
+      "disposition": "Deleted local review branch after the repo adopted archive-only retention for superseded trains."
+    },
+    {
+      "branch": "review/e14-continuity-fit-reframe",
+      "head": "7db881a5df0a4553edaa73eb852a673c963ab665",
+      "purpose": "eval: add comparative output-quality benchmark",
+      "disposition": "Deleted local review branch after the repo adopted archive-only retention for superseded trains."
+    },
+    {
+      "branch": "review/e15-task-set-gate-train",
+      "head": "38fb9734e5ffc4537400816da74c4420b4b3efef",
+      "purpose": "docs: preserve worktree snapshot for e15-task-set-gate-train",
+      "disposition": "Deleted local review branch after the closeout reset replaced preserved worktree branches with the archive manifest."
+    },
+    {
+      "branch": "review/e16-selective-gating-inhibition",
+      "head": "c9739238306569fb024a121604fa47a95eb31493",
+      "purpose": "docs: preserve worktree snapshot for e16-selective-gating-cut",
+      "disposition": "Deleted local review branch after the closeout reset replaced preserved worktree branches with the archive manifest."
+    },
+    {
+      "branch": "review/e17-executive-basket-selection",
+      "head": "252ff0a98685c3366c1152039bcdb9495fb877a9",
+      "purpose": "docs: preserve worktree snapshot for e17-executive-basket-selection-cut",
+      "disposition": "Deleted local review branch after the closeout reset replaced preserved worktree branches with the archive manifest."
+    },
+    {
+      "branch": "review/e18-causal-contribution-map",
+      "head": "a945af82d17a154cc5e7dcddb0a83faa56e791a0",
+      "purpose": "docs: preserve worktree snapshot for e18-causal-contribution-map-pause2",
+      "disposition": "Deleted local review branch after the closeout reset replaced preserved worktree branches with the archive manifest."
+    },
+    {
+      "branch": "review/e23-preservation-state-machine",
+      "head": "0e01397a6b24ca813e6426eb28ddae2534eb69db",
+      "purpose": "lab: preserve operator replay workspace diffs",
+      "disposition": "Published to origin/archive/e23-preservation-state-machine, then deleted locally so E23 remains evidence-only until kernel extract."
+    },
+    {
+      "branch": "origin/review/e19-cli-causal-map-rehome",
+      "head": "f60ea38025f060748ca74d7ab6c3c451e671b9a2",
+      "purpose": "eval: add operator-cli output-quality bridge",
+      "disposition": "Pruned stale remote-tracking review ref during repo-truth closeout after the remote head was already absent."
+    },
+    {
+      "branch": "origin/review/j4-mediation-resting-state-ledger",
+      "head": "e166e4a7e19f644e9904c1f3673fbc0be30f4b32",
+      "purpose": "docs: close mediation resting-state ledger",
+      "disposition": "Pruned stale remote-tracking review ref during repo-truth closeout after the remote head was already absent."
+    },
+    {
+      "branch": "origin/review/j4-reference-mediation-closeout",
+      "head": "092cdd8033b6ed4dd1848cd9c32347241ea305b4",
+      "purpose": "kernel: land reference mediation finalizer and runtime-backed evidence",
+      "disposition": "Pruned stale remote-tracking review ref during repo-truth closeout after the remote head was already absent."
+    },
+    {
+      "branch": "origin/review/j4a-closure-cleanup",
+      "head": "63401eb485ef1aa9bca9ff3cc1a7da4d6ed2a2de",
+      "purpose": "kernel: make reference seek-context reachable under exact pressure",
+      "disposition": "Pruned stale remote-tracking review ref during repo-truth closeout after the remote head was already absent."
+    },
+    {
+      "branch": "origin/review/m0-mediation-gate-summary-landed",
+      "head": "6ca2dad1fe2f43704981278b962156227c5c1e4b",
+      "purpose": "docs: mark mediation implementation gate landed",
+      "disposition": "Pruned stale remote-tracking review ref during repo-truth closeout after the remote head was already absent."
+    },
+    {
+      "branch": "origin/review/publish-main-45305f1",
+      "head": "45305f13871cdeab11a2abdbc38eece309a0c758",
+      "purpose": "repo: separate product experimental lab and internal surfaces",
+      "disposition": "Pruned stale remote-tracking review ref during repo-truth closeout after the remote head was already absent."
+    },
+    {
+      "branch": "origin/review/repo-hygiene-restoration",
+      "head": "e479e6608d3d52881ba323f835fda3fbf2af8ed8",
+      "purpose": "repo: restore workflow hygiene and main resting state",
+      "disposition": "Pruned stale remote-tracking review ref during repo-truth closeout after the remote head was already absent."
+    },
+    {
+      "branch": "origin/review/repo-truth-closeout-publication",
+      "head": "19ab2fdb8a480a8006ddcc6c806e6394f5af769f",
+      "purpose": "repo: reset truth surfaces and active code homes",
+      "disposition": "Pruned stale remote-tracking review ref during repo-truth closeout after the remote head was already absent."
+    }
+  ],
+  "offloaded_payloads": [
+    {
+      "id": "output_quality_vendor_state",
+      "paths": [
+        "tests/lab/fixtures/output_quality/astro_docs_site_v1/.astro",
+        "tests/lab/fixtures/output_quality/astro_docs_site_v1/dist",
+        "tests/lab/fixtures/output_quality/astro_docs_site_v1/node_modules",
+        "tests/lab/fixtures/output_quality/astro_marketing_forms_v1/.astro",
+        "tests/lab/fixtures/output_quality/astro_marketing_forms_v1/dist",
+        "tests/lab/fixtures/output_quality/astro_marketing_forms_v1/node_modules",
+        "tests/lab/fixtures/output_quality/frontend_bugfix_cleanup_v1/dist",
+        "tests/lab/fixtures/output_quality/frontend_bugfix_cleanup_v1/node_modules",
+        "tests/lab/fixtures/output_quality/react_dashboard_v1/dist",
+        "tests/lab/fixtures/output_quality/react_dashboard_v1/node_modules",
+        "tests/lab/fixtures/output_quality/react_existing_feature_extension_v1/dist",
+        "tests/lab/fixtures/output_quality/react_existing_feature_extension_v1/node_modules"
+      ],
+      "restore_ref": "6dde9a18a2bbd198d25f2b524d50e44d480145cf",
+      "restore_hint": "git checkout 6dde9a18a2bbd198d25f2b524d50e44d480145cf -- <path>",
+      "local_stub": "tests/lab/fixtures/output_quality/README.md"
+    }
+  ]
+}

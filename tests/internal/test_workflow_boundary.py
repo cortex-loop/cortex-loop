@@ -20,6 +20,7 @@ def test_internal_workflow_surfaces_exist() -> None:
 
     assert "cleanup-report:" in internal_makefile
     assert "audit-branches:" in internal_makefile
+    assert "closeout-test:" in internal_makefile
     assert "scripts/repo_workflow.py is deprecated" in shim
     assert "internal/workflow/repo_workflow.py" in shim
     assert 'DEFAULT_ROOT = Path(__file__).resolve().parents[2]' in canonical
@@ -27,8 +28,10 @@ def test_internal_workflow_surfaces_exist() -> None:
     assert '_run(["make", "conformance-test"])' in canonical
     assert '_run(["make", "experimental-test"])' in canonical
     assert '_run(["python3", "internal/truth/generate_status.py", "--check"])' in canonical
+    assert '_run(["python3", "internal/archive/generate_archive_index.py", "--check"])' in canonical
     assert '_run(["make", "-C", "internal", "test"])' in canonical
     assert '_run(["make", "lab-test"])' in canonical
+    assert '["make", "-C", "internal", "closeout-test"]' in canonical
 
 
 def test_compatibility_wrappers_remain_callable_for_one_transition_cycle() -> None:

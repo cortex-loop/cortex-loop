@@ -8,7 +8,7 @@ import shutil
 import sys
 import tempfile
 
-from tests._mediation_evidence import (
+from tests.archive._mediation_evidence import (
     AXIS_TABLE_PATH,
     EVALUATION_PLAN_PATH,
     EVIDENCE_NOTE_PATH,
@@ -48,18 +48,58 @@ def _replace_once(path: Path, old: str, new: str) -> None:
     path.write_text(text.replace(old, new, 1), encoding="utf-8")
 
 
+def _assert_contains_old_or_new(text: str, legacy: str, current: str) -> None:
+    assert legacy in text or current in text
+
+
 def test_evaluation_plan_still_points_to_the_package_surface() -> None:
     text = read(EVALUATION_PLAN_PATH)
 
-    assert "docs/lab/CORTEX_V2_MEDIATION_SCENARIO_CATALOG_0.md" in text
-    assert "docs/lab/CORTEX_V2_MEDIATION_PAIRED_RUN_LEDGER_0.md" in text
-    assert "docs/lab/CORTEX_V2_MEDIATION_AXIS_COMPARISON_TABLE_0.md" in text
-    assert "docs/lab/CORTEX_V2_MEDIATION_BURDEN_COMPARISON_0.md" in text
-    assert "docs/lab/CORTEX_V2_MEDIATION_HOST_SPLIT_COMPARISON_0.md" in text
-    assert "docs/lab/CORTEX_V2_MEDIATION_EVIDENCE_NOTE_0.md" in text
-    assert "docs/lab/CORTEX_V2_MEDIATION_FAILURE_TAXONOMY_0.md" in text
-    assert "tests/unit/test_mediation_evidence_package.py" in text
-    assert "docs/internal/CORTEX_V2_LOCAL_VERIFICATION.md" in text
+    _assert_contains_old_or_new(
+        text,
+        "docs/lab/CORTEX_V2_MEDIATION_SCENARIO_CATALOG_0.md",
+        "docs/archive/lab/CORTEX_V2_MEDIATION_SCENARIO_CATALOG_0.md",
+    )
+    _assert_contains_old_or_new(
+        text,
+        "docs/lab/CORTEX_V2_MEDIATION_PAIRED_RUN_LEDGER_0.md",
+        "docs/archive/lab/CORTEX_V2_MEDIATION_PAIRED_RUN_LEDGER_0.md",
+    )
+    _assert_contains_old_or_new(
+        text,
+        "docs/lab/CORTEX_V2_MEDIATION_AXIS_COMPARISON_TABLE_0.md",
+        "docs/archive/lab/CORTEX_V2_MEDIATION_AXIS_COMPARISON_TABLE_0.md",
+    )
+    _assert_contains_old_or_new(
+        text,
+        "docs/lab/CORTEX_V2_MEDIATION_BURDEN_COMPARISON_0.md",
+        "docs/archive/lab/CORTEX_V2_MEDIATION_BURDEN_COMPARISON_0.md",
+    )
+    _assert_contains_old_or_new(
+        text,
+        "docs/lab/CORTEX_V2_MEDIATION_HOST_SPLIT_COMPARISON_0.md",
+        "docs/archive/lab/CORTEX_V2_MEDIATION_HOST_SPLIT_COMPARISON_0.md",
+    )
+    _assert_contains_old_or_new(
+        text,
+        "docs/lab/CORTEX_V2_MEDIATION_EVIDENCE_NOTE_0.md",
+        "docs/archive/lab/CORTEX_V2_MEDIATION_EVIDENCE_NOTE_0.md",
+    )
+    _assert_contains_old_or_new(
+        text,
+        "docs/lab/CORTEX_V2_MEDIATION_FAILURE_TAXONOMY_0.md",
+        "docs/archive/lab/CORTEX_V2_MEDIATION_FAILURE_TAXONOMY_0.md",
+    )
+    _assert_contains_old_or_new(
+        text,
+        "tests/unit/test_mediation_evidence_package.py",
+        "tests/archive/test_mediation_evidence_package.py",
+    )
+    _assert_contains_old_or_new(
+        text,
+        "docs/internal/CORTEX_V2_LOCAL_VERIFICATION.md",
+        "docs/archive/internal/CORTEX_V2_LOCAL_VERIFICATION.md",
+    )
 
 
 def test_mediation_package_checker_passes() -> None:
@@ -176,7 +216,7 @@ def test_host_split_matrix_makes_claude_missing_and_gemini_partial_explicit() ->
 def test_checker_fails_when_burden_ref_is_missing() -> None:
     tool = _load_tool()
     temp_root = _temp_repo_copy()
-    burden_path = temp_root / "docs" / "lab" / "CORTEX_V2_MEDIATION_BURDEN_COMPARISON_0.md"
+    burden_path = temp_root / "docs" / "archive" / "lab" / "CORTEX_V2_MEDIATION_BURDEN_COMPARISON_0.md"
     _replace_once(
         burden_path,
         "docs/lab/mediation_evidence/reference/scenario_burden_reference_01__baseline_non_mediated__run_001__aux_burden.md",
@@ -191,7 +231,7 @@ def test_checker_fails_when_burden_ref_is_missing() -> None:
 def test_checker_fails_when_required_j2_target_is_removed() -> None:
     tool = _load_tool()
     temp_root = _temp_repo_copy()
-    catalog_path = temp_root / "docs" / "lab" / "CORTEX_V2_MEDIATION_SCENARIO_CATALOG_0.md"
+    catalog_path = temp_root / "docs" / "archive" / "lab" / "CORTEX_V2_MEDIATION_SCENARIO_CATALOG_0.md"
     text = catalog_path.read_text(encoding="utf-8")
     line = "| scenario_branch_claude_01 | branch_discipline | claude | better branch discipline | 3 | current | Adds the missing Claude branch-discipline line. |\n"
     if line not in text:
@@ -206,7 +246,7 @@ def test_checker_fails_when_required_j2_target_is_removed() -> None:
 def test_checker_fails_when_forbidden_verdict_is_introduced() -> None:
     tool = _load_tool()
     temp_root = _temp_repo_copy()
-    axis_path = temp_root / "docs" / "lab" / "CORTEX_V2_MEDIATION_AXIS_COMPARISON_TABLE_0.md"
+    axis_path = temp_root / "docs" / "archive" / "lab" / "CORTEX_V2_MEDIATION_AXIS_COMPARISON_TABLE_0.md"
     _replace_once(
         axis_path,
         "| scenario_branch_reference_01 | reference | 3 | 0 | 0 | candidate_positive |",

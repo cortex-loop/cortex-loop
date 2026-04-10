@@ -1,0 +1,345 @@
+{
+  "resting_state": {
+    "branch": "main",
+    "summary": "Clean synced main is the only resting state; the richer Cortex executive remains the product goal, and archive or lab surfaces do not define live product truth."
+  },
+  "bootstrap": [
+    "AGENTS.md",
+    "docs/CORTEX_STATUS.md",
+    "git branch --show-current",
+    "git status --short --untracked-files=all"
+  ],
+  "product_goal": {
+    "title": "Rich Executive For AI",
+    "statement": "Cortex should be a richer multi-host executive layer for AI work: lifecycle-first, verification-aware, continuity-preserving, and capable of bounded correction without collapsing into host-specific hacks.",
+    "non_product": [
+      "diagnostics",
+      "train loops",
+      "graders",
+      "workflow ledgers",
+      "governance records"
+    ]
+  },
+  "work_today": {
+    "slug": "e23-kernel-extract",
+    "note": "Start from the preserved E23 evidence ref and port only the preservation-state product kernel onto clean main without reviving maintainer-only replay or allocator trains."
+  },
+  "next_product_train": {
+    "slug": "e23-kernel-extract",
+    "surface": "product",
+    "executive_benefit": "Port only the preservation-state product kernel from the preserved evidence ref onto clean main so verified-work repair law becomes a maintained Cortex capability without dragging maintainer-only trains into product truth.",
+    "why_now": "The repo closeout removes truth drift and repo-hygiene noise so the next runtime hour can go straight into a real product kernel.",
+    "primary_metric": "repair-conversion improvement on the bounded OpenAI verified-work repair bundle",
+    "guardrail": "thin OpenAI path unchanged when no work contract is present",
+    "kill_rule": "cut after 2 non-lift revisions or no clearer divergence classification"
+  },
+  "system_map": {
+    "nodes": [
+      {
+        "id": "hosts",
+        "label": "Host Surfaces\\nOpenAI / Claude / Gemini / Reference",
+        "status": "yellow"
+      },
+      {
+        "id": "core",
+        "label": "Core Microkernel\\ncommitments / provenance / dispatch",
+        "status": "green"
+      },
+      {
+        "id": "runtime",
+        "label": "Shared Runtime Kernels\\nverified-work runtime helpers",
+        "status": "green"
+      },
+      {
+        "id": "sre",
+        "label": "Shared Executive\\nbranching / brake / reference policy",
+        "status": "yellow"
+      },
+      {
+        "id": "shipping",
+        "label": "Shipping Product Lane\\nopenai:service_api",
+        "status": "green"
+      },
+      {
+        "id": "lab",
+        "label": "Proof And Data Tooling\\nconformance / output-quality / train loops",
+        "status": "gray"
+      },
+      {
+        "id": "archive",
+        "label": "Archive Evidence\\nhistorical docs / retired proof surfaces",
+        "status": "gray"
+      }
+    ],
+    "edges": [
+      {
+        "from": "hosts",
+        "to": "core"
+      },
+      {
+        "from": "core",
+        "to": "runtime"
+      },
+      {
+        "from": "core",
+        "to": "sre"
+      },
+      {
+        "from": "runtime",
+        "to": "shipping"
+      },
+      {
+        "from": "sre",
+        "to": "shipping"
+      },
+      {
+        "from": "lab",
+        "to": "core",
+        "style": "-.->"
+      },
+      {
+        "from": "lab",
+        "to": "sre",
+        "style": "-.->"
+      },
+      {
+        "from": "archive",
+        "to": "lab",
+        "style": "-.->"
+      }
+    ]
+  },
+  "subsystems": [
+    {
+      "id": "core",
+      "label": "Core Microkernel",
+      "status": "green",
+      "code_homes": [
+        "cortex/core",
+        "cortex/drivers"
+      ],
+      "note": "Active product law for commitments, provenance, dispatch, and host binding."
+    },
+    {
+      "id": "runtime_shared",
+      "label": "Shared Runtime Kernels",
+      "status": "green",
+      "code_homes": [
+        "cortex/runtime"
+      ],
+      "note": "Only shared runtime kernels belong here."
+    },
+    {
+      "id": "sre_active",
+      "label": "Shared Executive",
+      "status": "yellow",
+      "code_homes": [
+        "cortex/sre"
+      ],
+      "note": "Richer shared executive is active Cortex code; mediation remains experimental/off-by-default even though it lives beside the active SRE family."
+    },
+    {
+      "id": "hosts",
+      "label": "Host Realizations",
+      "status": "yellow",
+      "code_homes": [
+        "cortex/hosts/openai",
+        "cortex/hosts/claude",
+        "cortex/hosts/gemini",
+        "cortex/hosts/reference"
+      ],
+      "note": "Host-native shells are part of Cortex reality; shipping truth stays OpenAI-first while Claude, Gemini, and reference remain explicit conformance surfaces."
+    },
+    {
+      "id": "lab",
+      "label": "Proof And Data Tooling",
+      "status": "gray",
+      "code_homes": [
+        "lab",
+        "lab/eval",
+        "tools"
+      ],
+      "note": "Proof, evaluation, and maintainer tooling. Useful for falsification, not product truth."
+    }
+  ],
+  "packet_to_code_anchors": [
+    {
+      "packet": "Core",
+      "responsibility": "Lifecycle-first dispatch, commitment extraction, provenance, certification, and bounded environment access.",
+      "code_homes": [
+        "cortex/core",
+        "cortex/drivers"
+      ],
+      "proof_surfaces": [
+        "tests/product",
+        "tests/conformance"
+      ]
+    },
+    {
+      "packet": "SRE",
+      "responsibility": "Reference control policy, branching, brake, uncertainty, verified-work preservation, and reference scoring.",
+      "code_homes": [
+        "cortex/sre"
+      ],
+      "proof_surfaces": [
+        "tests/product",
+        "tests/experimental"
+      ]
+    },
+    {
+      "packet": "Host Wiring",
+      "responsibility": "Host-native runtime shells and transport/service bindings for OpenAI, Claude, Gemini, and reference.",
+      "code_homes": [
+        "cortex/hosts/openai",
+        "cortex/hosts/claude",
+        "cortex/hosts/gemini",
+        "cortex/hosts/reference"
+      ],
+      "proof_surfaces": [
+        "tests/product",
+        "tests/conformance"
+      ]
+    },
+    {
+      "packet": "Lab Proof",
+      "responsibility": "Conformance runners, output-quality tooling, and train-loop evidence used to falsify or prove product seams.",
+      "code_homes": [
+        "lab",
+        "lab/eval"
+      ],
+      "proof_surfaces": [
+        "tests/lab",
+        "tests/internal"
+      ]
+    }
+  ],
+  "hosts": [
+    {
+      "name": "openai",
+      "shipping": "default",
+      "conformance": "conformant",
+      "strongest_surface": "service_api",
+      "daily_iteration_surface": "operator_cli",
+      "code_home": "cortex/hosts/openai"
+    },
+    {
+      "name": "claude",
+      "shipping": "non-default",
+      "conformance": "partial",
+      "strongest_surface": "operator_cli",
+      "daily_iteration_surface": "operator_cli",
+      "code_home": "cortex/hosts/claude"
+    },
+    {
+      "name": "gemini",
+      "shipping": "non-default",
+      "conformance": "partial",
+      "strongest_surface": "operator_cli",
+      "daily_iteration_surface": "operator_cli",
+      "code_home": "cortex/hosts/gemini"
+    },
+    {
+      "name": "reference",
+      "shipping": "non-product",
+      "conformance": "conformant",
+      "strongest_surface": "reference_cli",
+      "daily_iteration_surface": "reference_cli",
+      "code_home": "cortex/hosts/reference"
+    }
+  ],
+  "conformance_summary": {
+    "accepted_next_decision": "promote",
+    "shipping_default": "openai:service_api"
+  },
+  "closure_gates": [
+    {
+      "id": "main_synced",
+      "status": "passed",
+      "note": "Resting truth is enforced through clean synced main and the workflow helper."
+    },
+    {
+      "id": "cleanup_report",
+      "status": "passed",
+      "note": "cleanup-report is the strict final hygiene gate for the resting repo state."
+    },
+    {
+      "id": "single_truth",
+      "status": "passed",
+      "note": "The status registry and generated status doc are the only live operational truth surfaces."
+    },
+    {
+      "id": "legacy_test_buckets_removed",
+      "status": "passed",
+      "note": "tests/unit and tests/integration are retired in favor of purpose-first active buckets."
+    }
+  ],
+  "retained_evidence_refs": [
+    {
+      "label": "E23 preservation-state evidence",
+      "ref": "archive/e23-preservation-state-machine",
+      "purpose": "Preserved review evidence for the next product-kernel extraction train."
+    }
+  ],
+  "proof_commands": {
+    "default": [
+      "make product-test",
+      "make conformance-test",
+      "make experimental-test",
+      "make -C internal test",
+      "make lab-test"
+    ],
+    "status": [
+      "python3 internal/truth/generate_status.py --check",
+      "python3 internal/archive/generate_archive_index.py --check"
+    ],
+    "workflow": [
+      "python3 internal/workflow/repo_workflow.py sync-main",
+      "python3 internal/workflow/repo_workflow.py start-session --agent codex --slug task-name",
+      "python3 internal/workflow/repo_workflow.py close-session --message \"scope: end-state summary\"",
+      "python3 internal/workflow/repo_workflow.py cleanup-report"
+    ]
+  },
+  "retained_data": [
+    {
+      "lane": "conformance",
+      "root": ".cortex/live_validation/conformance",
+      "retained_labels": [
+        "accepted_baseline",
+        "current_candidate",
+        "latest"
+      ],
+      "policy": "Timestamped runs are generated evidence only; manifests and summaries outrank raw timestamp directories."
+    },
+    {
+      "lane": "train_loops",
+      "root": ".cortex/train_loops",
+      "retained_labels": [
+        "accepted_baseline",
+        "current_candidate",
+        "latest"
+      ],
+      "policy": "Compact summaries are the maintained view; old train narratives are archival."
+    }
+  ],
+  "where_to_work": [
+    "Start with the E23 preservation-state kernel extract on the bounded OpenAI verified-work repair bundle.",
+    "Keep tri-brain conformance explicit while shipping truth stays OpenAI-first.",
+    "Use lab proof surfaces only to falsify or prove product seams; do not reopen broad replay/watch trains without a direct product reason."
+  ],
+  "blocked_moves": [
+    "Do not let archived docs or train notes act as live truth.",
+    "Do not treat lab or evaluation output as product progress unless shipped runtime behavior changes.",
+    "Do not hide Claude or Gemini behind backlog language when reporting conformance.",
+    "Do not reopen broad watch or replay trains until the product kernel extract is classified."
+  ],
+  "active_docs": [
+    "docs/README.md",
+    "docs/CORTEX_PRODUCT_CHARTER.md",
+    "docs/CORTEX_PRODUCT_BOUNDARY.md",
+    "docs/CORTEX_V2_CORE_2.md",
+    "docs/CORTEX_V2_SRE_2.md",
+    "docs/CORTEX_V2_AUX_2.md",
+    "docs/CORTEX_STATUS.md",
+    "docs/internal/REPO_WORKFLOW.md"
+  ]
+}

@@ -64,13 +64,31 @@ NORMALIZE_PORT_CONTRACT_PACK = "verified_work_normalize_port_v1"
 FEATURE_FLAGS_CONTRACT_PACK = "verified_work_feature_flags_v1"
 CONFORMANCE_ROOT = LOCAL_LIVE_ROOT / "conformance"
 BOOKMARKS_TASK_PATH = (
-    ROOT / "tests" / "fixtures" / "live_validation" / "bookmarks_app_template" / "README_TASK.md"
+    ROOT
+    / "tests"
+    / "lab"
+    / "fixtures"
+    / "live_validation"
+    / "bookmarks_app_template"
+    / "README_TASK.md"
 )
 NORMALIZE_PORT_TASK_PATH = (
-    ROOT / "tests" / "fixtures" / "live_validation" / "project_template" / "README_TASK.md"
+    ROOT
+    / "tests"
+    / "lab"
+    / "fixtures"
+    / "live_validation"
+    / "project_template"
+    / "README_TASK.md"
 )
 FEATURE_FLAGS_TASK_PATH = (
-    ROOT / "tests" / "fixtures" / "live_validation" / "feature_flags_template" / "README_TASK.md"
+    ROOT
+    / "tests"
+    / "lab"
+    / "fixtures"
+    / "live_validation"
+    / "feature_flags_template"
+    / "README_TASK.md"
 )
 _OPENAI_ACTION_TAG = "openai-response-stream"
 _OPENAI_MODEL = "gpt-5.4"
@@ -274,7 +292,7 @@ def contract_pack_by_name(name: str) -> ContractPack:
         return ContractPack(
             contract_pack=ACTIVE_CONTRACT_PACK,
             prompt_text=prompt_text,
-            workspace_template_relpath="tests/fixtures/live_validation/bookmarks_app_template",
+            workspace_template_relpath="tests/lab/fixtures/live_validation/bookmarks_app_template",
             work_contract=WorkContract(
                 allowed_write_paths=(
                     "src/bookmarks_api/main.py",
@@ -310,7 +328,7 @@ def contract_pack_by_name(name: str) -> ContractPack:
         return ContractPack(
             contract_pack=NORMALIZE_PORT_CONTRACT_PACK,
             prompt_text=prompt_text,
-            workspace_template_relpath="tests/fixtures/live_validation/project_template",
+            workspace_template_relpath="tests/lab/fixtures/live_validation/project_template",
             work_contract=WorkContract(
                 allowed_write_paths=("src/normalize_port.py",),
                 verification_profile="python_workspace_pytest_port_fix_v1",
@@ -342,7 +360,7 @@ def contract_pack_by_name(name: str) -> ContractPack:
         return ContractPack(
             contract_pack=FEATURE_FLAGS_CONTRACT_PACK,
             prompt_text=prompt_text,
-            workspace_template_relpath="tests/fixtures/live_validation/feature_flags_template",
+            workspace_template_relpath="tests/lab/fixtures/live_validation/feature_flags_template",
             work_contract=WorkContract(
                 allowed_write_paths=(
                     "src/feature_flags/models.py",

@@ -29,7 +29,7 @@ class PackageLayout:
 def build_layout(repo_root: Path | None = None) -> PackageLayout:
     resolved_repo_root = (repo_root or Path(__file__).resolve().parents[1]).resolve()
     docs_root = resolved_repo_root / "docs"
-    lab_docs_root = docs_root / "lab"
+    lab_docs_root = docs_root / "archive" / "lab"
     return PackageLayout(
         repo_root=resolved_repo_root,
         docs_root=docs_root,

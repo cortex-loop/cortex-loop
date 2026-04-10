@@ -54,6 +54,7 @@ _VERIFIED_WORK_PROFILE_REGISTRY = {
         template_root=(
             REPO_ROOT
             / "tests"
+            / "lab"
             / "fixtures"
             / "live_validation"
             / "bookmarks_app_template"
@@ -66,6 +67,7 @@ _VERIFIED_WORK_PROFILE_REGISTRY = {
         template_root=(
             REPO_ROOT
             / "tests"
+            / "lab"
             / "fixtures"
             / "live_validation"
             / "project_template"
@@ -78,6 +80,7 @@ _VERIFIED_WORK_PROFILE_REGISTRY = {
         template_root=(
             REPO_ROOT
             / "tests"
+            / "lab"
             / "fixtures"
             / "live_validation"
             / "feature_flags_template"

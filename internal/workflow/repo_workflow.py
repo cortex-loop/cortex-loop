@@ -257,6 +257,7 @@ def _run_verification_contract() -> None:
     _run(["make", "conformance-test"])
     _run(["make", "experimental-test"])
     _run(["python3", "internal/truth/generate_status.py", "--check"])
+    _run(["python3", "internal/archive/generate_archive_index.py", "--check"])
     _run(["make", "-C", "internal", "test"])
     _run(["make", "lab-test"])
 
@@ -381,6 +382,7 @@ def _audit_payload() -> dict[str, object]:
         "current_branch": current_branch,
         "main_head": _capture_optional(["git", "rev-parse", "main"]),
         "origin_main_head": _capture_optional(["git", "rev-parse", "origin/main"]),
+        "remote_review_heads": _remote_review_heads(),
         "merged_local": sorted(merged_local, key=lambda row: row["branch"]),
         "worktree_attached": sorted(worktree_attached, key=lambda row: row["branch"]),
         "open_manual": sorted(open_manual, key=lambda row: row["branch"]),
@@ -492,7 +494,6 @@ def cmd_cleanup_report() -> int:
     payload = _audit_payload()
     dirty = _tracked_status_lines()
     main_sync = _main_origin_state()
-    remote_review_heads = _remote_review_heads()
 
     failures: dict[str, object] = {}
     if payload["current_branch"] != "main":
@@ -505,8 +506,19 @@ def cmd_cleanup_report() -> int:
         rows = payload[key]
         if rows:
             failures[key] = rows
-    if remote_review_heads:
-        failures["remote_review_heads"] = remote_review_heads
+    if payload["remote_review_heads"]:
+        failures["remote_review_heads"] = payload["remote_review_heads"]
+
+    if not failures:
+        proc = subprocess.run(
+            ["make", "-C", "internal", "closeout-test"],
+            cwd=_root(),
+            check=False,
+            capture_output=True,
+            text=True,
+        )
+        if proc.returncode != 0:
+            failures["closeout_test"] = (proc.stderr or proc.stdout).strip()
 
     report = {
         "ok": not failures,
@@ -514,6 +526,7 @@ def cmd_cleanup_report() -> int:
         "main_head": payload["main_head"],
         "origin_main_head": payload["origin_main_head"],
         "main_sync": main_sync,
+        "remote_review_heads": payload["remote_review_heads"],
     }
     if failures:
         report["failures"] = failures
