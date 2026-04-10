@@ -17,14 +17,14 @@ from typing import Any
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 DOCS_ROOT = REPO_ROOT / "docs"
-STATUS_REGISTRY_PATH = REPO_ROOT / "internal" / "truth" / "cortex_status.yaml"
+STATUS_REGISTRY_PATH = REPO_ROOT / "internal" / "truth" / "cortex_status.json"
 LOCAL_LIVE_ROOT = REPO_ROOT / ".cortex" / "live_validation"
 PREFLIGHT_REPORT_PATH = LOCAL_LIVE_ROOT / "preflight_report.json"
 COMPARATOR_ROOT = LOCAL_LIVE_ROOT / "comparators"
 WORKSPACE_ROOT = LOCAL_LIVE_ROOT / "workspaces"
 OPERATOR_DIRECTIONALITY_ROOT = LOCAL_LIVE_ROOT / "operator_directionality"
-TEMPLATE_ROOT = REPO_ROOT / "tests" / "fixtures" / "live_validation" / "project_template"
-PROMPTS_ROOT = REPO_ROOT / "tests" / "fixtures" / "live_validation" / "prompts"
+TEMPLATE_ROOT = REPO_ROOT / "tests" / "lab" / "fixtures" / "live_validation" / "project_template"
+PROMPTS_ROOT = REPO_ROOT / "tests" / "lab" / "fixtures" / "live_validation" / "prompts"
 LOCAL_ENV_PATH = REPO_ROOT / ".env"
 _PYTHON_BIN = shutil.which("python3") or sys.executable
 TEST_COMMAND = [_PYTHON_BIN, "-m", "pytest", "-q", "tests/test_normalize_port.py"]
@@ -145,8 +145,9 @@ def now_utc_iso() -> str:
 
 def read_workstream_baseline() -> tuple[str, str]:
     payload = json.loads(STATUS_REGISTRY_PATH.read_text(encoding="utf-8"))
-    baseline = payload["accepted_baseline"]
-    return str(baseline["branch"]), str(baseline["commit"])
+    resting_state = payload["resting_state"]
+    branch = str(resting_state["branch"])
+    return branch, _resolve_git_ref(branch)
 
 
 def _resolve_git_ref(ref: str) -> str:
@@ -914,7 +915,7 @@ def gemini_selected_auth_type() -> str | None:
 def build_scenario_catalog() -> dict[str, Any]:
     return {
         "artifact_root": ".cortex/live_validation",
-        "shared_template_root": "tests/fixtures/live_validation/project_template",
+        "shared_template_root": "tests/lab/fixtures/live_validation/project_template",
         "test_command": "python -m pytest -q tests/test_normalize_port.py",
         "gemini_operator_model_ladder": list(GEMINI_OPERATOR_FULL_LADDER),
         "operator_scenarios": [

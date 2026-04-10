@@ -15,8 +15,10 @@ README_PATH = REPO_ROOT / "README.md"
 DOCS_INDEX_PATH = REPO_ROOT / "docs" / "README.md"
 PRODUCT_CHARTER_PATH = REPO_ROOT / "docs" / "CORTEX_PRODUCT_CHARTER.md"
 PRODUCT_BOUNDARY_PATH = REPO_ROOT / "docs" / "CORTEX_PRODUCT_BOUNDARY.md"
-STATUS_REGISTRY_PATH = REPO_ROOT / "internal" / "truth" / "cortex_status.yaml"
+STATUS_REGISTRY_PATH = REPO_ROOT / "internal" / "truth" / "cortex_status.json"
 STATUS_DOC_PATH = REPO_ROOT / "docs" / "CORTEX_STATUS.md"
+ARCHIVE_MANIFEST_PATH = REPO_ROOT / "internal" / "archive" / "manifest.json"
+ARCHIVE_INDEX_PATH = REPO_ROOT / "docs" / "archive" / "README.md"
 PYPROJECT_PATH = REPO_ROOT / "pyproject.toml"
 ROOT_MAKEFILE_PATH = REPO_ROOT / "Makefile"
 DOCS_ROOT = REPO_ROOT / "docs"
@@ -35,7 +37,7 @@ def test_agents_records_mission_lock_and_single_truth_bootstrap() -> None:
 
     assert "## Mission lock" in text
     assert "Does this make the shipped Cortex executive layer better" in text
-    assert "internal/truth/cortex_status.yaml" in text
+    assert "internal/truth/cortex_status.json" in text
     assert "docs/CORTEX_STATUS.md" in text
     assert "AGENTS.md" in text
     assert "git branch --show-current" in text
@@ -56,7 +58,7 @@ def test_public_docs_point_to_status_and_keep_archive_out_of_the_front_door() ->
     assert "Current Status" in docs_index
     assert "archive/" in docs_index
     assert "active workstream ledger" in charter
-    assert "internal/truth/cortex_status.yaml" in boundary
+    assert "internal/truth/cortex_status.json" in boundary
     for text in (readme, docs_index, charter, boundary):
         assert "CORTEX_V2_ACTIVE_WORKSTREAM" not in text
         assert "CORTEX_V2_PHASE_GATES_2" not in text
@@ -94,6 +96,63 @@ def test_generated_status_doc_is_current() -> None:
     assert STATUS_DOC_PATH.exists()
 
 
+def test_status_registry_is_complete_and_stable() -> None:
+    status = _load_status()
+
+    assert set(status) >= {
+        "resting_state",
+        "bootstrap",
+        "product_goal",
+        "work_today",
+        "next_product_train",
+        "system_map",
+        "subsystems",
+        "packet_to_code_anchors",
+        "hosts",
+        "conformance_summary",
+        "closure_gates",
+        "retained_evidence_refs",
+        "proof_commands",
+        "retained_data",
+        "where_to_work",
+        "blocked_moves",
+        "active_docs",
+    }
+    assert status["resting_state"]["branch"] == "main"
+    assert status["work_today"]["slug"]
+    assert status["next_product_train"]["slug"] == "e23-kernel-extract"
+
+
+def test_generated_status_doc_includes_system_map_and_next_product_train() -> None:
+    text = _read(STATUS_DOC_PATH)
+
+    assert "## System Map" in text
+    assert "```mermaid" in text
+    assert "## Packet To Code" in text
+    assert "## Next Product Train" in text
+    assert "`e23-kernel-extract`" in text
+
+
+def test_generated_archive_index_is_current() -> None:
+    proc = subprocess.run(
+        [sys.executable, "internal/archive/generate_archive_index.py", "--check"],
+        cwd=REPO_ROOT,
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+    assert proc.returncode == 0, proc.stderr or proc.stdout
+    assert ARCHIVE_INDEX_PATH.exists()
+
+
+def test_archive_manifest_tracks_retained_refs_and_offloaded_payloads() -> None:
+    manifest = json.loads(_read(ARCHIVE_MANIFEST_PATH))
+
+    assert manifest["retained_evidence_refs"]
+    assert manifest["offloaded_payloads"]
+    assert any(entry["ref"] == "archive/e23-preservation-state-machine" for entry in manifest["retained_evidence_refs"])
+
+
 def test_no_active_code_homes_remain_under_experimental() -> None:
     experimental_python = sorted(
         str(path.relative_to(REPO_ROOT))
@@ -102,6 +161,21 @@ def test_no_active_code_homes_remain_under_experimental() -> None:
     )
 
     assert experimental_python == []
+
+
+def test_legacy_test_buckets_are_removed() -> None:
+    assert not (REPO_ROOT / "tests" / "unit").exists()
+    assert not (REPO_ROOT / "tests" / "integration").exists()
+
+
+def test_lab_output_quality_fixtures_are_source_only() -> None:
+    forbidden = sorted(
+        str(path.relative_to(REPO_ROOT))
+        for path in (REPO_ROOT / "tests" / "lab" / "fixtures" / "output_quality").rglob("*")
+        if path.is_dir() and path.name in {"node_modules", "dist", ".astro"}
+    )
+
+    assert forbidden == []
 
 
 def test_product_package_does_not_import_non_product_surfaces() -> None:

@@ -258,7 +258,7 @@ def run_conformance_summary_truth_pilot(
 ) -> TrainLoopRecord:
     baseline = evaluate_conformance_summary_truth()
     proof_commands = (
-        "python3 -m pytest -q tests/unit/test_cortex_conformance.py tests/unit/test_cortex_train_loop.py tests/internal/test_docs_boundary.py",
+        "python3 -m pytest -q tests/lab/test_cortex_conformance.py tests/lab/test_cortex_train_loop.py tests/internal/test_docs_boundary.py",
         "python3 lab/cortex_conformance.py --mode reconcile-latest",
     )
     command_results = tuple(_run_shell_command(command, cwd=ROOT) for command in proof_commands)
@@ -368,7 +368,7 @@ def run_verified_work_breadth_openai_train(
         "reasons": [],
     }
     proof_commands: list[str] = [
-        "python3 -m pytest -q tests/unit/test_verified_work.py tests/unit/test_verified_work_runtime.py tests/unit/test_openai_host_control.py tests/unit/test_cortex_conformance.py tests/unit/test_cortex_train_loop.py tests/internal/test_docs_boundary.py",
+        "python3 -m pytest -q tests/product/test_verified_work.py tests/product/test_verified_work_runtime.py tests/product/test_openai_host_control.py tests/lab/test_cortex_conformance.py tests/lab/test_cortex_train_loop.py tests/internal/test_docs_boundary.py",
         f"python3 lab/cortex_conformance.py --mode active --brain openai --contract-pack {cortex_conformance.ACTIVE_CONTRACT_PACK}",
         f"python3 lab/cortex_conformance.py --mode active --brain openai --contract-pack {cortex_conformance.ACTIVE_CONTRACT_PACK}",
         f"python3 lab/cortex_conformance.py --mode active --brain openai --contract-pack {cortex_conformance.NORMALIZE_PORT_CONTRACT_PACK}",
@@ -538,9 +538,9 @@ def run_verified_work_repair_yield_openai_train(
     loop_root: Path = TRAIN_LOOP_ROOT,
 ) -> TrainLoopRecord:
     deterministic_command = (
-        "python3 -m pytest -q tests/unit/test_verified_work.py tests/unit/test_verified_work_runtime.py "
-        "tests/unit/test_openai_host_control.py tests/unit/test_cortex_conformance.py "
-        "tests/unit/test_cortex_train_loop.py tests/internal/test_docs_boundary.py"
+        "python3 -m pytest -q tests/product/test_verified_work.py tests/product/test_verified_work_runtime.py "
+        "tests/product/test_openai_host_control.py tests/lab/test_cortex_conformance.py "
+        "tests/lab/test_cortex_train_loop.py tests/internal/test_docs_boundary.py"
     )
     proof_commands: list[str] = [
         deterministic_command,
@@ -710,10 +710,10 @@ def run_output_quality_comparison_openai_train(
     loop_root: Path = TRAIN_LOOP_ROOT,
 ) -> TrainLoopRecord:
     deterministic_command = (
-        "python3 -m pytest -q tests/unit/test_output_quality_common.py "
-        "tests/unit/test_output_quality_grader.py tests/unit/test_cortex_output_quality.py "
-        "tests/unit/test_verified_work.py tests/unit/test_verified_work_runtime.py "
-        "tests/unit/test_openai_host_control.py tests/unit/test_cortex_train_loop.py "
+        "python3 -m pytest -q tests/lab/test_output_quality_common.py "
+        "tests/lab/test_output_quality_grader.py tests/lab/test_cortex_output_quality.py "
+        "tests/product/test_verified_work.py tests/product/test_verified_work_runtime.py "
+        "tests/product/test_openai_host_control.py tests/lab/test_cortex_train_loop.py "
         "tests/internal/test_docs_boundary.py"
     )
     proof_commands: list[str] = [
@@ -889,12 +889,12 @@ def run_causal_contribution_map_openai_train(
     note_path: Path | None = None,
 ) -> TrainLoopRecord:
     deterministic_command = (
-        "python3 -m pytest -q tests/unit/test_verified_work.py "
-        "tests/unit/test_verified_work_runtime.py tests/unit/test_openai_host_control.py "
-        "tests/unit/test_cortex_conformance.py tests/unit/test_output_quality_common.py "
-        "tests/unit/test_output_quality_grader.py tests/unit/test_output_quality_ablation.py "
-        "tests/unit/test_cortex_output_quality.py tests/unit/test_causal_contribution_map.py "
-        "tests/unit/test_cortex_train_loop.py tests/internal/test_docs_boundary.py "
+        "python3 -m pytest -q tests/product/test_verified_work.py "
+        "tests/product/test_verified_work_runtime.py tests/product/test_openai_host_control.py "
+        "tests/lab/test_cortex_conformance.py tests/lab/test_output_quality_common.py "
+        "tests/lab/test_output_quality_grader.py tests/lab/test_output_quality_ablation.py "
+        "tests/lab/test_cortex_output_quality.py tests/lab/test_causal_contribution_map.py "
+        "tests/lab/test_cortex_train_loop.py tests/internal/test_docs_boundary.py "
         "tests/product/test_import_smoke.py"
     )
     proof_commands: list[str] = [

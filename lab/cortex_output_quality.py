@@ -837,7 +837,7 @@ def _last_response_id(raw_events: list[dict[str, Any]]) -> str | None:
 
 
 def _task_pack_registry() -> dict[str, OutputQualityTaskPack]:
-    base = ROOT / "tests" / "fixtures" / "live_validation" / "output_quality"
+    base = ROOT / "tests" / "lab" / "fixtures" / "output_quality"
     shared_web_commands = {
         "install": ("npm", "ci"),
         "lint": ("npm", "run", "lint"),

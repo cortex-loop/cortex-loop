@@ -16,7 +16,7 @@ This repository has four explicit surfaces.
 
 `internal`
 - workflow helpers
-- `internal/truth/cortex_status.yaml`, the machine-backed operational truth
+- `internal/truth/cortex_status.json`, the machine-backed operational truth
 - `docs/internal/REPO_WORKFLOW.md`, the active workflow contract
 
 `archive`

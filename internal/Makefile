@@ -4,9 +4,14 @@ SLUG ?= session
 MESSAGE ?= docs: update internal workflow
 REPO_WORKFLOW ?= workflow/repo_workflow.py
 
-.PHONY: test sync-main start-session close-session finalize preserve-worktree audit-branches cleanup-report
+.PHONY: test closeout-test sync-main start-session close-session finalize preserve-worktree audit-branches cleanup-report
 
 test:
+	$(PYTHON) -m pytest ../tests/internal -q
+
+closeout-test:
+	$(PYTHON) ../internal/truth/generate_status.py --check
+	$(PYTHON) ../internal/archive/generate_archive_index.py --check
 	$(PYTHON) -m pytest ../tests/internal -q
 
 sync-main:

@@ -3,7 +3,6 @@ from __future__ import annotations
 
 import argparse
 import sys
-
 from pathlib import Path
 
 
@@ -14,17 +13,55 @@ if str(ROOT) not in sys.path:
 from internal.truth.status import STATUS_DOC, load_status
 
 
+STATUS_CLASS = {
+    "green": "good",
+    "yellow": "warn",
+    "red": "bad",
+    "gray": "deferred",
+}
+
+
+def _render_system_map(nodes: list[dict[str, object]], edges: list[dict[str, str]]) -> list[str]:
+    lines = ["```mermaid", "flowchart TD"]
+    for node in nodes:
+        lines.append(f'    {node["id"]}["{node["label"]}"]')
+    for edge in edges:
+        connector = edge.get("style", "-->")
+        lines.append(f'    {edge["from"]} {connector} {edge["to"]}')
+    lines.extend(
+        [
+            "",
+            "    classDef good fill:#dff3e4,stroke:#2f855a,color:#1f2937;",
+            "    classDef warn fill:#fff3cd,stroke:#b7791f,color:#1f2937;",
+            "    classDef bad fill:#f8d7da,stroke:#c53030,color:#1f2937;",
+            "    classDef deferred fill:#e5e7eb,stroke:#6b7280,color:#1f2937;",
+            "",
+        ]
+    )
+    for node in nodes:
+        css_class = STATUS_CLASS[node["status"]]
+        lines.append(f'    class {node["id"]} {css_class};')
+    lines.append("```")
+    return lines
+
+
 def render_status(data: dict[str, object]) -> str:
-    baseline = data["accepted_baseline"]
+    resting_state = data["resting_state"]
     bootstrap = data["bootstrap"]
     goal = data["product_goal"]
     work_today = data["work_today"]
+    next_product_train = data["next_product_train"]
+    system_map = data["system_map"]
     subsystems = data["subsystems"]
+    packet_anchors = data["packet_to_code_anchors"]
     hosts = data["hosts"]
     conformance_summary = data["conformance_summary"]
+    closure_gates = data["closure_gates"]
     proof_commands = data["proof_commands"]
     retained_data = data["retained_data"]
+    retained_refs = data["retained_evidence_refs"]
     blocked_moves = data["blocked_moves"]
+    where_to_work = data["where_to_work"]
     active_docs = data["active_docs"]
 
     lines: list[str] = [
@@ -32,13 +69,12 @@ def render_status(data: dict[str, object]) -> str:
         "",
         "Surface: product",
         "",
-        "_Generated from `internal/truth/cortex_status.yaml`. Edit the registry, then run `python3 internal/truth/generate_status.py`._",
+        "_Generated from `internal/truth/cortex_status.json`. Edit the registry, then run `python3 internal/truth/generate_status.py`._",
         "",
-        "## Baseline",
+        "## Resting State",
         "",
-        f"- Branch: `{baseline['branch']}`",
-        f"- Commit: `{baseline['commit']}`",
-        f"- Summary: {baseline['summary']}",
+        f"- Branch: `{resting_state['branch']}`",
+        f"- Rule: {resting_state['summary']}",
         "",
         "## Bootstrap",
         "",
@@ -47,28 +83,26 @@ def render_status(data: dict[str, object]) -> str:
     lines.extend(
         [
             "",
-        "## Goal",
-        "",
-        f"**{goal['title']}**",
-        "",
-        goal["statement"],
-        "",
-        "Not product:",
+            "## Goal",
+            "",
+            f"**{goal['title']}**",
+            "",
+            goal["statement"],
+            "",
+            "Not product:",
         ]
     )
     lines.extend(f"- `{item}`" for item in goal["non_product"])
     lines.extend(
         [
             "",
-            "## Work Today",
+            "## System Map",
             "",
-            f"- Train: `{work_today['slug']}`",
-            f"- Surface: `{work_today['surface']}`",
-            f"- Executive benefit: {work_today['executive_benefit']}",
-            f"- Why now: {work_today['why_now']}",
-            f"- Primary metric: `{work_today['primary_metric']}`",
-            f"- Guardrail: `{work_today['guardrail']}`",
-            f"- Kill rule: `{work_today['kill_rule']}`",
+        ]
+    )
+    lines.extend(_render_system_map(system_map["nodes"], system_map["edges"]))
+    lines.extend(
+        [
             "",
             "## Subsystems",
             "",
@@ -81,7 +115,21 @@ def render_status(data: dict[str, object]) -> str:
         lines.append(
             f"| {subsystem['label']} | `{subsystem['status']}` | {homes} | {subsystem['note']} |"
         )
-
+    lines.extend(
+        [
+            "",
+            "## Packet To Code",
+            "",
+            "| Packet | Responsibility | Code Homes | Proof Surfaces |",
+            "| --- | --- | --- | --- |",
+        ]
+    )
+    for anchor in packet_anchors:
+        homes = ", ".join(f"`{home}`" for home in anchor["code_homes"])
+        proofs = ", ".join(f"`{surface}`" for surface in anchor["proof_surfaces"])
+        lines.append(
+            f"| `{anchor['packet']}` | {anchor['responsibility']} | {homes} | {proofs} |"
+        )
     lines.extend(
         [
             "",
@@ -95,14 +143,42 @@ def render_status(data: dict[str, object]) -> str:
         lines.append(
             f"| `{host['name']}` | `{host['shipping']}` | `{host['conformance']}` | `{host['strongest_surface']}` | `{host['daily_iteration_surface']}` | `{host['code_home']}` |"
         )
-
     lines.extend(
         [
             "",
-            "## Conformance Summary Truth",
+            "## Shipping And Conformance Truth",
             "",
-            f"- Accepted next decision: `{conformance_summary['accepted_next_decision']}`",
             f"- Shipping default: `{conformance_summary['shipping_default']}`",
+            f"- Accepted conformance next decision: `{conformance_summary['accepted_next_decision']}`",
+            "",
+            "## Closure Gates",
+            "",
+            "| Gate | Status | Note |",
+            "| --- | --- | --- |",
+        ]
+    )
+    for gate in closure_gates:
+        lines.append(f"| `{gate['id']}` | `{gate['status']}` | {gate['note']} |")
+    lines.extend(
+        [
+            "",
+            "## Next Product Train",
+            "",
+            f"- Train: `{next_product_train['slug']}`",
+            f"- Surface: `{next_product_train['surface']}`",
+            f"- Executive benefit: {next_product_train['executive_benefit']}",
+            f"- Why now: {next_product_train['why_now']}",
+            f"- Primary metric: `{next_product_train['primary_metric']}`",
+            f"- Guardrail: `{next_product_train['guardrail']}`",
+            f"- Kill rule: `{next_product_train['kill_rule']}`",
+            "",
+            "## Where To Work Next",
+            "",
+        ]
+    )
+    lines.extend(f"- {item}" for item in where_to_work)
+    lines.extend(
+        [
             "",
             "## Canonical Proof",
             "",
@@ -113,30 +189,48 @@ def render_status(data: dict[str, object]) -> str:
         lines.append("")
         lines.extend(f"- `{command}`" for command in commands)
         lines.append("")
-
     lines.extend(["## Retained Data", ""])
     for entry in retained_data:
         labels = ", ".join(f"`{label}`" for label in entry["retained_labels"])
         lines.append(f"- `{entry['lane']}` at `{entry['root']}` keeps {labels}")
         lines.append(f"  Policy: {entry['policy']}")
+    lines.extend(["", "## Retained Evidence Refs", ""])
+    for ref in retained_refs:
+        lines.append(f"- `{ref['label']}` -> `{ref['ref']}`")
+        lines.append(f"  Purpose: {ref['purpose']}")
     lines.extend(["", "## Blocked Moves", ""])
     lines.extend(f"- {item}" for item in blocked_moves)
     lines.extend(["", "## Active Docs", ""])
     lines.extend(f"- `{path}`" for path in active_docs)
-    lines.append("")
+    lines.extend(
+        [
+            "",
+            "## Operational Focus",
+            "",
+            f"- Current tracked train: `{work_today['slug']}`",
+            f"- Current focus note: {work_today['note']}",
+            "",
+        ]
+    )
     return "\n".join(lines)
 
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="Generate the single Cortex status doc.")
-    parser.add_argument("--check", action="store_true", help="Fail if the generated doc is out of date.")
+    parser.add_argument(
+        "--check",
+        action="store_true",
+        help="Fail if the generated doc is out of date.",
+    )
     args = parser.parse_args()
 
     rendered = render_status(load_status())
     if args.check:
         current = STATUS_DOC.read_text(encoding="utf-8") if STATUS_DOC.exists() else ""
         if current != rendered:
-            raise SystemExit("docs/CORTEX_STATUS.md is out of date. Run python3 internal/truth/generate_status.py")
+            raise SystemExit(
+                "docs/CORTEX_STATUS.md is out of date. Run python3 internal/truth/generate_status.py"
+            )
         return 0
 
     STATUS_DOC.write_text(rendered, encoding="utf-8")

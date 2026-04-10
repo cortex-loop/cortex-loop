@@ -1,0 +1,83 @@
+"""Focused integration tests for the reference-host neutral-only slice."""
+
+from cortex.core.dispatch import DispatchLane
+from cortex.drivers.reference_host_neutral import (
+    NeutralContinuationCode,
+    evaluate_reference_host_neutral,
+)
+from tests.conformance.integration._reference_lane import (
+    candidate_bearing_event,
+    cheap_path_event,
+    full_commitment_event,
+)
+
+
+def test_ordinary_context_event_yields_explicit_neutral_continuation_result() -> None:
+    event_name, payload = cheap_path_event()
+    result = evaluate_reference_host_neutral(event_name, payload)
+
+    assert result.dispatch_decision.lane is DispatchLane.CHEAP
+    assert result.neutral_decision.allowed is True
+    assert result.neutral_decision.result_code is NeutralContinuationCode.NEUTRAL_ALLOWED
+
+
+def test_proposal_like_event_is_rejected_from_neutral_only_path() -> None:
+    event_name, payload = candidate_bearing_event()
+    result = evaluate_reference_host_neutral(event_name, payload)
+
+    assert result.dispatch_decision.lane is DispatchLane.CANDIDATE_BEARING
+    assert result.neutral_decision.allowed is False
+    assert (
+        result.neutral_decision.result_code
+        is NeutralContinuationCode.CANDIDATE_PATH_REQUIRED
+    )
+
+
+def test_full_commitment_event_is_rejected_from_neutral_only_path() -> None:
+    event_name, payload = full_commitment_event(
+        commitment_id="commit-neutral-1",
+    )
+    result = evaluate_reference_host_neutral(event_name, payload)
+
+    assert result.dispatch_decision.lane is DispatchLane.FULL_COMMITMENT
+    assert result.neutral_decision.allowed is False
+    assert (
+        result.neutral_decision.result_code
+        is NeutralContinuationCode.FULL_COMMITMENT_PATH_REQUIRED
+    )
+
+
+def test_malformed_native_commitment_carrier_surfaces_warning_while_staying_full_commitment() -> None:
+    result = evaluate_reference_host_neutral(
+        "ApprovalResult",
+        {
+            "externally_consequential": True,
+            "commitment_fields_source": "native",
+            "commitment_fields": "not-a-mapping",
+        },
+    )
+
+    assert result.dispatch_decision.lane is DispatchLane.FULL_COMMITMENT
+    assert result.neutral_decision.allowed is False
+    assert (
+        result.neutral_decision.result_code
+        is NeutralContinuationCode.FULL_COMMITMENT_PATH_REQUIRED
+    )
+    assert "Ignoring invalid native commitment carrier; expected an object." in result.warnings
+
+
+def test_vertical_slice_stays_observe_bind_driven_and_preserves_raw_host_metadata() -> None:
+    event_name, payload = cheap_path_event(
+        event_name="SessionStart",
+        session_id=" session-4 ",
+    )
+    result = evaluate_reference_host_neutral(event_name, payload)
+    metadata = {
+        field.key: field.value
+        for field in result.bound_event.observation.event.payload_metadata
+    }
+
+    assert result.bound_event.observation.event.native_event_name == "session/start"
+    assert metadata["raw_host_event_name"] == "SessionStart"
+    assert metadata["session_id"] == "session-4"
+    assert result.bound_event.normalized_payload == {"session_id": "session-4"}
