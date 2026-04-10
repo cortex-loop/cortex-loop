@@ -146,11 +146,13 @@ Manual/review branch workflow:
 - only works on managed session branches
 - runs verification before committing
 - on the canonical repo, requires authenticated `gh` and a canonical `origin`
+- if the branch has no unique commits relative to `origin/main`, it still adopts `origin/main`, deletes the local session branch, and returns `status: "no_op"`
 - publishes the same managed session branch to `origin`
 - creates or reuses a PR against `main`
 - merges with a merge commit and deletes the remote branch
 - adopts `origin/main`, returns HEAD to `main`, and deletes the local session branch
-- leaves the managed session branch intact if publication or merge fails
+- leaves the managed session branch intact if publication or merge fails, and the repo is not back at resting truth
+- prints a JSON payload with `status`, `published_branch`, `pr_number`, `pr_url`, `main_head`, and `main_sync`
 
 `finalize`:
 
@@ -187,6 +189,7 @@ Managed verification is purpose-first:
 - `make conformance-test`
 - `make experimental-test`
 - `python3 internal/truth/generate_status.py --check`
+- `python3 internal/archive/generate_archive_index.py --check`
 - `make -C internal test`
 - `make lab-test`
 
