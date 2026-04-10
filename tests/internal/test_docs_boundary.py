@@ -56,6 +56,8 @@ def test_agents_records_mission_lock_and_single_truth_bootstrap() -> None:
     assert "installable executive layer" in text
     assert "human executive function" in text
     assert "live evidence" in text
+    assert "full-executive completion percent versus the shippable threshold first" in text
+    assert "bio-to-code matrix" in text
     assert "internal/truth/cortex_status.json" in text
     assert "docs/CORTEX_STATUS.md" in text
     assert "AGENTS.md" in text
@@ -127,7 +129,8 @@ def test_status_registry_is_complete_and_stable() -> None:
         "bootstrap",
         "product_goal",
         "identity",
-        "executive_denominator",
+        "executive_completion",
+        "bio_to_code_matrix",
         "math_to_code_rules",
         "work_today",
         "next_product_train",
@@ -146,8 +149,18 @@ def test_status_registry_is_complete_and_stable() -> None:
     }
     assert status["resting_state"]["branch"] == "main"
     assert "installable executive layer" in status["identity"]["statement"]
-    assert status["executive_denominator"]
+    assert status["executive_completion"]["shippable_threshold_percent"] == 85
+    assert status["bio_to_code_matrix"]
     assert status["math_to_code_rules"]["law_revision_rule"]
+    assert sum(item["weight"] for item in status["bio_to_code_matrix"]) == 100
+    current_percent = round(
+        sum(
+            status["executive_completion"]["status_fraction"][item["status"]] * item["weight"]
+            for item in status["bio_to_code_matrix"]
+        )
+    )
+    assert current_percent == 46
+    assert current_percent < status["executive_completion"]["shippable_threshold_percent"]
     assert status["work_today"]["slug"]
     assert status["next_product_train"]["slug"] == "e23-kernel-extract"
 
@@ -158,9 +171,13 @@ def test_generated_status_doc_includes_system_map_and_next_product_train() -> No
     assert "## System Map" in text
     assert "```mermaid" in text
     assert "## Identity And Research Stance" in text
-    assert "## Executive Denominator" in text
+    assert "## Executive Completion" in text
+    assert "## Bio-To-Code Matrix" in text
     assert "## Math To Code Rules" in text
     assert "human executive function" in text
+    assert "Current full-executive completion: `46%`" in text
+    assert "Shippable threshold for the full executive: `85%`" in text
+    assert "When user asks where Cortex is at:" in text
     assert "full executive denominator" in text
     assert "## Packet To Code" in text
     assert "## Next Product Train" in text

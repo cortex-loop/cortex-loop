@@ -32,46 +32,150 @@
       "Always distinguish Cortex truth, shipping truth, conformance truth, and the current train."
     ]
   },
-  "executive_denominator": [
+  "executive_completion": {
+    "shippable_threshold_percent": 85,
+    "status_fraction": {
+      "landed": 1.0,
+      "partial": 0.3,
+      "north_star": 0.0
+    },
+    "full_denominator_note": "This score measures progress toward the full executive denominator, not just the current shipping lane.",
+    "answer_contract": [
+      "Start with the current executive completion percent versus the shippable threshold.",
+      "Then summarize the bio-to-code matrix by landed, partial, and north_star rows.",
+      "Then name the next highest-leverage rows to raise the score without drifting from Cortex law."
+    ],
+    "next_raise": [
+      {
+        "skill": "Branch continuity, suspend/resume, and truthful closure",
+        "expected_points_if_landed": 11,
+        "why": "Largest near-term product lift on the shipped lane and directly aligned with the E23 preservation-state kernel extract."
+      },
+      {
+        "skill": "Uncertainty handling and brake",
+        "expected_points_if_landed": 9,
+        "why": "Turns existing reference-policy structure into explicit safe intervention control on the product lane."
+      },
+      {
+        "skill": "Blocker surfacing and goal-debt management",
+        "expected_points_if_landed": 7,
+        "why": "Improves operator judgment and continuity with smaller scope than a full multi-host uplift."
+      }
+    ]
+  },
+  "bio_to_code_matrix": [
     {
       "skill": "Truth-preserving commitments and bounded certification",
+      "stolen_skill": "Truth maintenance and reality binding",
       "status": "landed",
-      "note": "Core commitment extraction, provenance, certification, and contradiction-preserving truth publication are active Cortex law."
+      "weight": 12,
+      "code_homes": [
+        "cortex/core",
+        "cortex/drivers"
+      ],
+      "proof_surfaces": [
+        "tests/product",
+        "tests/conformance"
+      ],
+      "next_move": "Keep this foundation stable while richer executive control builds on top."
     },
     {
       "skill": "Bounded correction and verified-work preservation",
+      "stolen_skill": "Error repair without losing the main task thread",
       "status": "landed",
-      "note": "Cortex can preserve task truth, run bounded correction, and keep repair lawful instead of free-form."
+      "weight": 15,
+      "code_homes": [
+        "cortex/runtime",
+        "cortex/sre",
+        "cortex/hosts/openai"
+      ],
+      "proof_surfaces": [
+        "tests/product"
+      ],
+      "next_move": "Extract the preserved E23 kernel cleanly so this remains maintained product behavior, not branch-local evidence."
     },
     {
       "skill": "Uncertainty handling and brake",
+      "stolen_skill": "Hesitation and uncertainty-aware inhibition",
       "status": "partial",
-      "note": "The repo carries active reference-policy and brake-oriented SRE structure, but it is not yet uniformly productized across the shipped lane."
+      "weight": 13,
+      "code_homes": [
+        "cortex/sre"
+      ],
+      "proof_surfaces": [
+        "tests/product",
+        "tests/experimental"
+      ],
+      "next_move": "Promote brake and uncertainty control from active reference policy into uniformly proven product behavior."
     },
     {
       "skill": "Branch continuity, suspend/resume, and truthful closure",
+      "stolen_skill": "Working memory across interruptions plus truthful closure",
       "status": "partial",
-      "note": "Cortex is meant to preserve main-task continuity, branch debt, and explicit closure, but that denominator still exceeds the current shipping subset."
+      "weight": 15,
+      "code_homes": [
+        "cortex/sre",
+        "cortex/hosts/openai"
+      ],
+      "proof_surfaces": [
+        "tests/product",
+        "tests/conformance"
+      ],
+      "next_move": "Land preserved branch state, suspend/resume, and explicit closure beyond repair-local flows."
     },
     {
       "skill": "Intervention pricing versus neutrality",
+      "stolen_skill": "Deciding when to intervene, stay neutral, or stop",
       "status": "partial",
-      "note": "The executive should decide when to intervene, remain neutral, or stop, but the full intervention-pricing loop is not yet a uniformly proven product capability."
+      "weight": 10,
+      "code_homes": [
+        "cortex/sre"
+      ],
+      "proof_surfaces": [
+        "tests/product",
+        "tests/experimental"
+      ],
+      "next_move": "Make intervene, wait, and stop choices explicit in product control policy instead of implicit host heuristics."
     },
     {
       "skill": "Blocker surfacing and goal-debt management",
+      "stolen_skill": "Noticing unresolved blockers and unfinished intentions",
       "status": "partial",
-      "note": "Cortex should improve operator judgment by surfacing unresolved state early, though the full denominator remains only partly operationalized."
+      "weight": 10,
+      "code_homes": [
+        "cortex/sre",
+        "cortex/hosts/openai"
+      ],
+      "proof_surfaces": [
+        "tests/product"
+      ],
+      "next_move": "Surface blocker debt and unfinished-goal state explicitly in the product lane."
     },
     {
       "skill": "Multi-host executive continuity",
+      "stolen_skill": "One executive across different brains and contexts",
       "status": "partial",
-      "note": "OpenAI, Claude, Gemini, and reference are all part of Cortex truth, but their executive conformance remains uneven."
+      "weight": 15,
+      "code_homes": [
+        "cortex/hosts/openai",
+        "cortex/hosts/claude",
+        "cortex/hosts/gemini",
+        "cortex/hosts/reference"
+      ],
+      "proof_surfaces": [
+        "tests/product",
+        "tests/conformance"
+      ],
+      "next_move": "Raise Claude and Gemini conformance while keeping one Cortex law across all hosts."
     },
     {
       "skill": "Offline consolidation and support geometry",
+      "stolen_skill": "Sleep-like consolidation and support systems",
       "status": "north_star",
-      "note": "Support geometry, offline consolidation, and stronger mediated executive support remain goal-level denominator, not current shipped product truth."
+      "weight": 10,
+      "code_homes": [],
+      "proof_surfaces": [],
+      "next_move": "Keep this out of the shipped lane until support geometry earns a lawful product shape."
     }
   ],
   "math_to_code_rules": {
