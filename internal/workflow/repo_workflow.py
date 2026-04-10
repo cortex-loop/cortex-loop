@@ -25,16 +25,36 @@ CANONICAL_ORIGIN_PATTERNS = (
     re.compile(r"^https://github\.com/(?P<slug>[^/\s]+/[^/\s]+?)(?:\.git)?/?$"),
     re.compile(r"^ssh://git@github\.com/(?P<slug>[^/\s]+/[^/\s]+?)(?:\.git)?/?$"),
 )
-VERIFICATION_CONTRACT_COMMANDS = (
-    "git diff --check",
-    "make product-test",
-    "make conformance-test",
-    "make experimental-test",
-    "python3 internal/truth/generate_status.py --check",
-    "python3 internal/archive/generate_archive_index.py --check",
-    "make -C internal test",
-    "make lab-test",
-)
+ALWAYS_VERIFICATION_COMMANDS: tuple[tuple[str, ...], ...] = (("git", "diff", "--check"),)
+VERIFICATION_SCOPE_ORDER = ("product", "conformance", "experimental", "internal", "lab")
+VERIFICATION_SCOPE_COMMANDS: dict[str, tuple[tuple[str, ...], ...]] = {
+    "product": (("make", "product-test"),),
+    "conformance": (("make", "conformance-test"),),
+    "experimental": (("make", "experimental-test"),),
+    "internal": (
+        ("python3", "internal/truth/generate_status.py", "--check"),
+        ("python3", "internal/archive/generate_archive_index.py", "--check"),
+        ("make", "-C", "internal", "test"),
+    ),
+    "lab": (("make", "lab-test"),),
+}
+SAFE_INTERNAL_PATHS = {
+    "AGENTS.md",
+    "README.md",
+    "docs/README.md",
+    "docs/CORTEX_PRODUCT_CHARTER.md",
+    "docs/CORTEX_PRODUCT_BOUNDARY.md",
+    "docs/CORTEX_V2_CORE_2.md",
+    "docs/CORTEX_V2_SRE_2.md",
+    "docs/CORTEX_V2_AUX_2.md",
+    "docs/CORTEX_STATUS.md",
+    "internal/truth/cortex_status.json",
+    "scripts/repo_workflow.py",
+}
+FULL_BUNDLE_FALLBACK_PATHS = {
+    "Makefile",
+    "pyproject.toml",
+}
 
 
 def _root() -> Path:
@@ -74,6 +94,10 @@ def _capture_optional(cmd: list[str], *, cwd: Path | None = None) -> str | None:
     return proc.stdout.strip() or None
 
 
+def _command_text(command: tuple[str, ...]) -> str:
+    return " ".join(command)
+
+
 def _current_branch() -> str:
     return _capture(["git", "branch", "--show-current"]).strip()
 
@@ -81,6 +105,20 @@ def _current_branch() -> str:
 def _tracked_status_lines() -> list[str]:
     output = _capture(["git", "status", "--porcelain=1", "--untracked-files=all"])
     return [line for line in output.splitlines() if line]
+
+
+def _changed_paths_between(base_ref: str, head_ref: str) -> list[str]:
+    output = _capture_optional(["git", "diff", "--name-only", f"{base_ref}..{head_ref}"])
+    if not output:
+        return []
+    return [line.strip() for line in output.splitlines() if line.strip()]
+
+
+def _staged_paths() -> list[str]:
+    output = _capture_optional(["git", "diff", "--cached", "--name-only"])
+    if not output:
+        return []
+    return [line.strip() for line in output.splitlines() if line.strip()]
 
 
 def _ensure_clean_tree() -> None:
@@ -326,6 +364,63 @@ def _branch_has_unique_commits(branch: str, base_ref: str) -> bool:
     return int(proc.stdout.strip() or "0") > 0
 
 
+def _verification_scopes_for_path(path: str) -> set[str] | None:
+    normalized = path.strip()
+    if not normalized:
+        return set()
+    if normalized in FULL_BUNDLE_FALLBACK_PATHS:
+        return None
+    if normalized in SAFE_INTERNAL_PATHS:
+        return {"internal"}
+    if normalized in {"docs/archive/README.md", "internal/archive/manifest.json"}:
+        return {"internal"}
+    if normalized.startswith(("internal/", "docs/internal/", "tests/internal/")):
+        return {"internal"}
+    if normalized.startswith(("docs/archive/", "tests/archive/")):
+        return {"internal"}
+    if normalized.startswith(("lab/", "tools/", "tests/lab/", "tests/fixtures/")):
+        return {"lab"}
+    if normalized.startswith(("experimental/", "tests/experimental/")):
+        return {"experimental"}
+    if normalized.startswith(("cortex/core/", "cortex/drivers/", "cortex/runtime/")):
+        return {"product", "conformance"}
+    if normalized.startswith("cortex/sre/"):
+        return {"product", "experimental"}
+    if normalized.startswith("cortex/hosts/openai/"):
+        return {"product"}
+    if normalized.startswith(("cortex/hosts/claude/", "cortex/hosts/gemini/", "cortex/hosts/reference/")):
+        return {"conformance"}
+    if normalized.startswith("tests/product/"):
+        return {"product"}
+    if normalized.startswith("tests/conformance/"):
+        return {"conformance"}
+    if normalized.startswith("docs/"):
+        return {"internal"}
+    if normalized.startswith("scripts/"):
+        return None
+    return None
+
+
+def _verification_scopes_for_paths(paths: list[str]) -> tuple[str, ...]:
+    scopes: set[str] = set()
+    for path in paths:
+        classified = _verification_scopes_for_path(path)
+        if classified is None:
+            return VERIFICATION_SCOPE_ORDER
+        scopes.update(classified)
+    if not scopes:
+        return ("internal",)
+    return tuple(scope for scope in VERIFICATION_SCOPE_ORDER if scope in scopes)
+
+
+def _verification_commands_for_paths(paths: list[str]) -> tuple[tuple[str, ...], ...]:
+    scopes = _verification_scopes_for_paths(paths)
+    commands = list(ALWAYS_VERIFICATION_COMMANDS)
+    for scope in scopes:
+        commands.extend(VERIFICATION_SCOPE_COMMANDS[scope])
+    return tuple(commands)
+
+
 def _switch_to_main() -> None:
     _run(["git", "switch", "main"])
 
@@ -335,14 +430,15 @@ def _delete_branch(branch: str) -> None:
 
 
 def _run_verification_contract() -> None:
-    _run(["git", "diff", "--check"])
-    _run(["make", "product-test"])
-    _run(["make", "conformance-test"])
-    _run(["make", "experimental-test"])
-    _run(["python3", "internal/truth/generate_status.py", "--check"])
-    _run(["python3", "internal/archive/generate_archive_index.py", "--check"])
-    _run(["make", "-C", "internal", "test"])
-    _run(["make", "lab-test"])
+    for command in _verification_commands_for_paths(["Makefile"]):
+        _run(list(command))
+
+
+def _run_verification_for_paths(paths: list[str]) -> tuple[str, ...]:
+    commands = _verification_commands_for_paths(paths)
+    for command in commands:
+        _run(list(command))
+    return tuple(_command_text(command) for command in commands)
 
 
 def _commit_has_staged_changes() -> bool:
@@ -350,23 +446,23 @@ def _commit_has_staged_changes() -> bool:
     return proc.returncode == 1
 
 
-def _finalize_current_branch(message: str) -> str | None:
+def _finalize_current_branch(message: str) -> tuple[str | None, tuple[str, ...]]:
     _run(["git", "add", "-A"])
     if not _commit_has_staged_changes():
         _ensure_clean_tree()
-        return None
-    _run_verification_contract()
+        return None, ()
+    verification_commands = _run_verification_for_paths(_staged_paths())
     _run(["git", "add", "-A"])
     if not _commit_has_staged_changes():
         _ensure_clean_tree()
-        return None
+        return None, verification_commands
     _run(["git", "commit", "-m", message])
     _ensure_clean_tree()
-    return _capture(["git", "rev-parse", "HEAD"]).strip()
+    return _capture(["git", "rev-parse", "HEAD"]).strip(), verification_commands
 
 
-def _managed_pr_body(branch: str) -> str:
-    verification = "\n".join(f"- `{command}`" for command in VERIFICATION_CONTRACT_COMMANDS)
+def _managed_pr_body(branch: str, verification_commands: tuple[str, ...]) -> str:
+    verification = "\n".join(f"- `{command}`" for command in verification_commands)
     return (
         "## Summary\n"
         f"- Managed session closeout for `{branch}`.\n\n"
@@ -402,7 +498,7 @@ def _push_session_branch(branch: str) -> None:
     _run(["git", "push", "-u", "origin", branch])
 
 
-def _create_session_pull_request(branch: str, title: str) -> dict[str, object]:
+def _create_session_pull_request(branch: str, title: str, verification_commands: tuple[str, ...]) -> dict[str, object]:
     _gh_run(
         [
             "pr",
@@ -416,7 +512,7 @@ def _create_session_pull_request(branch: str, title: str) -> dict[str, object]:
             "--title",
             title,
             "--body",
-            _managed_pr_body(branch),
+            _managed_pr_body(branch, verification_commands),
         ]
     )
     pr = _session_pull_request(branch)
@@ -447,7 +543,7 @@ def _adopt_origin_main() -> str:
     return _capture(["git", "rev-parse", "main"]).strip()
 
 
-def _publish_merge_sync_session(branch: str, title: str) -> dict[str, object]:
+def _publish_merge_sync_session(branch: str, title: str, verification_commands: tuple[str, ...]) -> dict[str, object]:
     _ensure_canonical_origin()
     _ensure_gh_ready()
     _fetch_origin(quiet=True)
@@ -473,7 +569,7 @@ def _publish_merge_sync_session(branch: str, title: str) -> dict[str, object]:
 
     _push_session_branch(branch)
     if pr is None:
-        pr = _create_session_pull_request(branch, title)
+        pr = _create_session_pull_request(branch, title, verification_commands)
     if bool(pr.get("isDraft")):
         _mark_pull_request_ready(int(pr["number"]))
     _merge_session_pull_request(int(pr["number"]))
@@ -665,15 +761,17 @@ def cmd_start_session(agent: str, slug: str | None) -> int:
     )
 
 
-def cmd_finalize(message: str) -> int:
+def cmd_finalize(message: str, manual_exception: bool) -> int:
     branch = _current_branch()
     error = validate_finalize_branch(branch)
     if error is not None:
         raise SystemExit(error)
+    if not manual_exception:
+        raise SystemExit("Finalize on an explicit manual/review branch requires --manual-exception.")
     subject_error = validate_commit_subject(message)
     if subject_error is not None:
         raise SystemExit(subject_error)
-    commit_hash = _finalize_current_branch(message)
+    commit_hash, _verification_commands = _finalize_current_branch(message)
     if commit_hash is None:
         print("no-op clean tree")
         return 0
@@ -688,11 +786,11 @@ def cmd_close_session(message: str) -> int:
     subject_error = validate_commit_subject(message)
     if subject_error is not None:
         raise SystemExit(subject_error)
-    commit_hash = _finalize_current_branch(message)
+    commit_hash, verification_commands = _finalize_current_branch(message)
     if _managed_publication_required():
+        _ensure_canonical_origin()
+        _fetch_origin(quiet=True)
         if commit_hash is None:
-            _ensure_canonical_origin()
-            _fetch_origin(quiet=True)
             if not _branch_has_unique_commits(branch, "origin/main"):
                 main_head = _adopt_origin_main()
                 _delete_branch(branch)
@@ -710,26 +808,29 @@ def cmd_close_session(message: str) -> int:
                     )
                 )
                 return 0
-        result = _publish_merge_sync_session(branch, message)
+            verification_commands = _run_verification_for_paths(_changed_paths_between("origin/main", branch))
+        result = _publish_merge_sync_session(branch, message, verification_commands)
         print(json.dumps(result, sort_keys=True))
         return 0
-    if commit_hash is None and not _branch_has_unique_commits(branch, "main"):
-        _switch_to_main()
-        _delete_branch(branch)
-        print(
-            json.dumps(
-                {
-                    "status": "no_op",
-                    "published_branch": None,
-                    "pr_number": None,
-                    "pr_url": None,
-                    "main_head": _capture(["git", "rev-parse", "main"]).strip(),
-                    "main_sync": _main_origin_state(),
-                },
-                sort_keys=True,
+    if commit_hash is None:
+        if not _branch_has_unique_commits(branch, "main"):
+            _switch_to_main()
+            _delete_branch(branch)
+            print(
+                json.dumps(
+                    {
+                        "status": "no_op",
+                        "published_branch": None,
+                        "pr_number": None,
+                        "pr_url": None,
+                        "main_head": _capture(["git", "rev-parse", "main"]).strip(),
+                        "main_sync": _main_origin_state(),
+                    },
+                    sort_keys=True,
+                )
             )
-        )
-        return 0
+            return 0
+        verification_commands = _run_verification_for_paths(_changed_paths_between("main", branch))
     landed_hash = _land_session_branch(branch)
     print(
         json.dumps(
@@ -848,8 +949,16 @@ def main(argv: list[str] | None = None) -> int:
     start_parser.add_argument("--agent", choices=MANAGED_SESSION_AGENTS, required=True)
     start_parser.add_argument("--slug")
 
-    finalize_parser = subparsers.add_parser("finalize", help="Verify and commit the current manual/review branch.")
+    finalize_parser = subparsers.add_parser(
+        "finalize",
+        help="Verify and commit the current manual/review branch; requires --manual-exception.",
+    )
     finalize_parser.add_argument("--message", required=True)
+    finalize_parser.add_argument(
+        "--manual-exception",
+        action="store_true",
+        help="Acknowledge that finalize is the explicit exception path for a non-session branch.",
+    )
 
     close_parser = subparsers.add_parser(
         "close-session",
@@ -875,7 +984,7 @@ def main(argv: list[str] | None = None) -> int:
     if args.command == "start-session":
         return cmd_start_session(args.agent, args.slug)
     if args.command == "finalize":
-        return cmd_finalize(args.message)
+        return cmd_finalize(args.message, args.manual_exception)
     if args.command == "close-session":
         return cmd_close_session(args.message)
     if args.command == "audit-branches":

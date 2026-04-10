@@ -86,7 +86,7 @@ python internal/workflow/repo_workflow.py close-session --message "docs: tighten
 Finalize an explicit manual/review branch without touching `main`:
 
 ```bash
-python internal/workflow/repo_workflow.py finalize --message "docs: manual branch closeout"
+python internal/workflow/repo_workflow.py finalize --manual-exception --message "docs: manual branch closeout"
 ```
 
 Preserve a dirty non-main worktree before cleanup:
@@ -121,7 +121,7 @@ Manual/review branch workflow:
 1. Confirm the task explicitly requires staying on the current non-session branch.
 2. Do not run `start-session`.
 3. Do the work on that branch.
-4. End with `python internal/workflow/repo_workflow.py finalize --message "<scope>: <end-state summary>"`.
+4. End with `python internal/workflow/repo_workflow.py finalize --manual-exception --message "<scope>: <end-state summary>"`.
 5. Leave merge/reconciliation to the manual branch owner.
 
 ## Rules
@@ -144,7 +144,7 @@ Manual/review branch workflow:
 `close-session`:
 
 - only works on managed session branches
-- runs verification before committing
+- runs the smallest surface-aware verification bundle for the staged or branch-unique paths before landing
 - on the canonical repo, requires authenticated `gh` and a canonical `origin`
 - if the branch has no unique commits relative to `origin/main`, it still adopts `origin/main`, deletes the local session branch, and returns `status: "no_op"`
 - publishes the same managed session branch to `origin`
@@ -157,7 +157,8 @@ Manual/review branch workflow:
 `finalize`:
 
 - only works on explicit non-session branches
-- runs verification before committing
+- requires `--manual-exception` so the exception path is always explicit
+- runs the smallest surface-aware verification bundle for the staged paths before committing
 - leaves the branch in place for manual merge
 
 `preserve-worktree`:
@@ -183,15 +184,15 @@ Manual/review branch workflow:
 - fails if any remote managed-session head or remote `review/*` head remains
 - is the final repo-hygiene gate for declaring the repo fully clean
 
-Managed verification is purpose-first:
+Managed verification is purpose-first and surface-aware:
 
-- `make product-test`
-- `make conformance-test`
-- `make experimental-test`
-- `python3 internal/truth/generate_status.py --check`
-- `python3 internal/archive/generate_archive_index.py --check`
-- `make -C internal test`
-- `make lab-test`
+- always: `git diff --check`
+- `product` changes: `make product-test`
+- `conformance` changes: `make conformance-test`
+- `experimental` changes: `make experimental-test`
+- `internal` and active-doc truth changes: `python3 internal/truth/generate_status.py --check`, `python3 internal/archive/generate_archive_index.py --check`, `make -C internal test`
+- `lab` changes: `make lab-test`
+- unknown or root/config changes fall back to the full active bundle
 
 ## Commit Message Contract
 

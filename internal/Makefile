@@ -24,7 +24,7 @@ close-session:
 	$(PYTHON) $(REPO_WORKFLOW) close-session --message "$(MESSAGE)"
 
 finalize:
-	$(PYTHON) $(REPO_WORKFLOW) finalize --message "$(MESSAGE)"
+	$(PYTHON) $(REPO_WORKFLOW) finalize --manual-exception --message "$(MESSAGE)"
 
 preserve-worktree:
 	$(PYTHON) $(REPO_WORKFLOW) preserve-worktree --slug $(SLUG)
