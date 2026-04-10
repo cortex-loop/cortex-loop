@@ -6,12 +6,12 @@ import json
 import sys
 
 from cortex.core.dispatch import DispatchLane
-from experimental.drivers.claude_host_commitment import evaluate_claude_host_commitment
-from experimental.eval.artifacts import CurrentPairFragment, EventTraceArtifact
-from experimental.eval.harness import build_evaluation_harness_result
-from experimental.eval.packets import WithheldField, build_evaluation_packet
-from experimental.sre.families import SoftControlFamily
-from experimental.sre.opportunities import HostNativeOpportunity, specialize_host_native_opportunity
+from cortex.drivers.claude_host_commitment import evaluate_claude_host_commitment
+from lab.eval.artifacts import CurrentPairFragment, EventTraceArtifact
+from lab.eval.harness import build_evaluation_harness_result
+from lab.eval.packets import WithheldField, build_evaluation_packet
+from cortex.sre.families import SoftControlFamily
+from cortex.sre.opportunities import HostNativeOpportunity, specialize_host_native_opportunity
 from tests.integration._claude_host_realization_pair import (
     CLAUDE_HOST_REALIZATION_PAIR_KEYS,
     CLAUDE_HOST_REALIZATION_PAIR_SPECS,

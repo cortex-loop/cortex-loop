@@ -73,30 +73,29 @@ Packet documents:
 - `docs/CORTEX_V2_SRE_2.md`
 - `docs/CORTEX_V2_AUX_2.md`
 
-Implementation/workflow documents:
-- `docs/internal/CORTEX_V2_IMPLEMENTATION_MASTER_PLAN_2.md`
-- `docs/internal/CORTEX_V2_PHASE_GATES_2.md`
-- `docs/internal/V1_CODE_PORT_DETERMINATION.md`
+Operational truth:
+- `internal/truth/cortex_status.yaml`
+- `docs/CORTEX_STATUS.md`
 
-Supporting implementation authority (audit surface, not architectural authority):
-- `docs/internal/CORTEX_V2_MATH_TO_CODE_CORRESPONDENCE.md`
+Maintainer workflow:
+- `docs/internal/REPO_WORKFLOW.md`
+- `internal/workflow/repo_workflow.py`
 
 Authority order:
 
 1. Core
 2. SRE
 3. AUX
-4. Implementation master plan
-5. Phase gates (closure truth only; does not override packet meaning or seam order)
-6. V1 code-port determination
-7. Math-to-code correspondence (traceability only; does not override packet meaning or seam order)
+4. `internal/truth/cortex_status.yaml`
+5. `docs/CORTEX_STATUS.md` (generated human-readable view)
+6. `docs/internal/REPO_WORKFLOW.md`
 
 If those documents disagree, fix the disagreement before widening scope.
 
 ## Archive authority
 
-The v1 archive is evidence and reference only.
-It is not normative authority for what v2 should be.
+`docs/archive/` and the v1 archive repo are evidence and reference only.
+They are not normative authority for what v2 should be.
 
 Use the archive only for:
 
@@ -111,7 +110,8 @@ If a v1 mechanism is being carried over, re-earn it under the v2 packet instead 
 
 - `docs/internal/REPO_WORKFLOW.md` is the maintainer workflow authority for branch/session hygiene in this repository.
 - `internal/workflow/repo_workflow.py` is the enforcing helper surface for that workflow.
-- `docs/internal/CORTEX_V2_ACTIVE_WORKSTREAM.md` remains continuation context, not a substitute for the resting-state branch model.
+- `internal/truth/cortex_status.yaml` is the single operational truth surface.
+- `docs/CORTEX_STATUS.md` is the generated bootstrap view for humans and new chats.
 - `preserve-worktree` is the only explicit exception to the normal verification-before-commit rule, and it exists only to avoid losing unresolved dirty work before cleanup.
 - `cleanup-report` is the strict final repo-hygiene gate for declaring the repo fully clean.
 
@@ -142,7 +142,7 @@ If a v1 mechanism is being carried over, re-earn it under the v2 packet instead 
 - If you introduce a new concept, say which layer owns it: Core, SRE, AUX, or later implementation-only.
 - If a concept belongs in implementation or evaluation rather than the constitutional packet, keep it out of the packet.
 - If you change the packet, say whether the implementation master plan must change in the same slice.
-- If you change the intended v1 carryover boundary, update `V1_CODE_PORT_DETERMINATION.md` in the same slice.
+- If you change the intended v1 carryover boundary, record it in `internal/truth/cortex_status.yaml` and touch archived evidence only if the historical mapping itself changed.
 
 ## Cortex-law train discipline
 
@@ -262,13 +262,13 @@ If repeated host-specific failure persists on the same framing:
 
 This is maintainer workflow law, not runtime doctrine.
 
-## Correspondence acceptance discipline
+## Operational truth discipline
 
-- `docs/internal/CORTEX_V2_MATH_TO_CODE_CORRESPONDENCE.md` is the single living correspondence authority. Do not create a second correspondence doctrine elsewhere.
+- `internal/truth/cortex_status.yaml` is the single living operational truth. Do not create a second status doctrine elsewhere.
 - Before planning or issuing a worker seam, classify the seam as `load-bearing` or `non-load-bearing`.
-- Every load-bearing seam plan must include `Correspondence impact:` listing the exact rows expected to be added, updated, or confirmed in `docs/internal/CORTEX_V2_MATH_TO_CODE_CORRESPONDENCE.md`.
-- A non-load-bearing seam may use `Correspondence impact: none expected` only with a one-line reason.
-- Before acceptance, compare planned `Correspondence impact:` against delivered `Correspondence rows touched:`.
+- Every load-bearing seam plan must include `Status impact:` listing the exact registry keys or generated status sections expected to change.
+- A non-load-bearing seam may use `Status impact: none expected` only with a one-line reason.
+- Before acceptance, compare planned `Status impact:` against delivered `Status registry touched:`.
 
 ## Boundary-carrier seam discipline
 
@@ -285,20 +285,15 @@ If a seam changes a typed boundary contract (for example: constructor validation
   - or a real runtime/publication path has been reproduced.
 - Keep accepted baseline and candidate seam distinct; unaccepted local edits are not truth.
 
-## Phase gate discipline
-
-- `docs/internal/CORTEX_V2_PHASE_GATES_2.md` is the live gate ledger for cross-seam closure conditions that are broader than one correspondence row.
-- If a handoff claims a phase or sub-phase is `landed`, recheck the relevant gate rows in `docs/internal/CORTEX_V2_PHASE_GATES_2.md` in the same turn.
-- A phase may not be marked `landed` if a relevant gate row remains `open`, `partial`, or `drifted` unless the handoff explicitly keeps the phase `partial` or `blocked`.
-- Correspondence truth and phase-gate truth are distinct. Passing one does not silently satisfy the other.
+Archived gate and correspondence ledgers remain evidence only. They can inform a seam, but they do not outrank the packet plus the single status registry.
 
 ## Parent acceptance discipline
 
 - The parent thread must independently verify worker claims before accepting or committing a seam.
 - Acceptance is adversarial, not ceremonial: the parent should try to break the seam at its most likely failure mode before marking it `landed`.
-- A load-bearing seam may not be accepted as `landed` unless the handoff includes a code diff, tests, and exact `Correspondence rows touched:`.
-- `Correspondence rows touched: none` is only acceptable when the seam is non-load-bearing or when the handoff explicitly justifies why no new load-bearing object, operator, implementation home, read/write path, or promised test surface changed.
-- If a seam adds or moves a load-bearing object, operator, implementation home, read/write path, or promised test surface without a correspondence update or explicit confirmation of an existing row, it cannot be marked `landed`.
+- A load-bearing seam may not be accepted as `landed` unless the handoff includes a code diff, tests, and exact `Status registry touched:`.
+- `Status registry touched: none` is only acceptable when the seam is non-load-bearing or when the handoff explicitly justifies why no new load-bearing object, implementation home, shipping/conformance status, or promised test surface changed.
+- If a seam adds or moves a load-bearing object, implementation home, or promised test surface without a status update or explicit confirmation that the registry is unchanged, it cannot be marked `landed`.
 - Before acceptance, classify seam risk at minimum as one of:
   - deterministic code/doc seam,
   - parser/doc-sync seam,
@@ -319,7 +314,7 @@ If a seam changes a typed boundary contract (for example: constructor validation
 - Prefer read-only subagents for archive mining, packet audit, and host research; use at most one write-capable subagent at once.
 - Keep subagent depth at `1` and total threads at `3` or fewer unless the active implementation plan is updated in the same slice.
 - If a task appears to need multiple concurrent writers, split the seam instead of widening it.
-- Keep phase-specific subagent allowances and restrictions in `docs/internal/CORTEX_V2_IMPLEMENTATION_MASTER_PLAN_2.md`.
+- Keep subagent scope small enough that the parent can still verify the seam against the packet and the single status registry.
 
 ## Git and workflow
 
@@ -337,26 +332,25 @@ If a seam changes a typed boundary contract (for example: constructor validation
 
 ## Continuation and resume protocol
 
-- `docs/internal/CORTEX_V2_ACTIVE_WORKSTREAM.md` is the live workflow-state ledger for compaction-safe continuation.
-- The workstream ledger records accepted baseline truth, current seam status, product target, surface, direct executive payoff, why the seam exists instead of a narrower product seam, next lawful move, blocked moves, and acknowledged worktree noise.
-- The workstream ledger is workflow state only. It does not override packet documents, implementation authority, phase gates, status notes, correspondence, or `docs/internal/REPO_WORKFLOW.md`.
+- `docs/CORTEX_STATUS.md` is the live continuation surface for humans and new chats.
+- `internal/truth/cortex_status.yaml` is the machine-backed source it must match.
 - Before opening or resuming a seam, agents must:
   1. read `AGENTS.md`
-  2. read `docs/internal/CORTEX_V2_ACTIVE_WORKSTREAM.md`
-  3. read the authority anchors named in the workstream ledger
-  4. run `git branch --show-current`
-  5. run `git status --short --untracked-files=all`
-  6. compare the current repo state against the accepted baseline and seam state recorded in the workstream ledger
-  7. restate the accepted baseline, current seam status, next lawful move, blocked moves, and acknowledged noise before widening scope
-- If the workstream ledger and the repo state disagree, record or resolve that drift before continuing.
-- Update the workstream ledger in the same slice whenever any of these change:
+  2. read `docs/CORTEX_STATUS.md`
+  3. run `git branch --show-current`
+  4. run `git status --short --untracked-files=all`
+  5. compare the current repo state against the accepted baseline, work-today target, blocked moves, and subsystem/host status recorded in the registry
+  6. restate the accepted baseline, current work target, blocked moves, and acknowledged noise before widening scope
+- If the status doc and repo state disagree, record or resolve that drift before continuing.
+- Update `internal/truth/cortex_status.yaml` and regenerate `docs/CORTEX_STATUS.md` in the same slice whenever any of these change:
   - accepted baseline
-  - current seam status
-  - next lawful move
+  - work today target
+  - subsystem status
+  - host shipping or conformance status
   - blocked moves
-  - acknowledged worktree noise
+  - canonical proof bundle
+  - active docs
 - Never promote uncommitted local edits to accepted baseline truth.
-- For long trains or post-compaction resumes, treat the workstream ledger as required, not optional.
 
 ## Required handoff block
 
@@ -366,8 +360,8 @@ Every final summary from an agent editing this repo should include:
 - commit hash or `no commit`
 - verification summary
 - `returned to main:` yes|no
-- `Phase gate check:` rows added, updated, or rechecked in `docs/internal/CORTEX_V2_PHASE_GATES_2.md` (or `none` if no phase gate applied)
-- `Correspondence rows touched:` rows added, updated, or confirmed in `docs/internal/CORTEX_V2_MATH_TO_CODE_CORRESPONDENCE.md` (or `none` for non-load-bearing edits)
+- `Status registry touched:` keys changed in `internal/truth/cortex_status.yaml` (or `none`)
+- `Status doc regenerated:` yes|no
 
 `PHILOSOPHY_AUDIT`
 - `PHI_MINIFY`: pass|fail + one-line evidence

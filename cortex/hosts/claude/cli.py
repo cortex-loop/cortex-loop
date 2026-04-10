@@ -1,0 +1,173 @@
+"""Developer-facing local CLI for the Claude documented host-event runtime shell."""
+
+from __future__ import annotations
+
+import argparse
+import json
+import sys
+from collections.abc import Iterable, Iterator, Sequence
+from pathlib import Path
+from typing import Any
+
+from cortex.drivers.claude_host import is_raw_claude_host_event_name
+
+from .runtime import ClaudeRuntimeSession, ClaudeRuntimeStepResult, run_claude_runtime_step
+from .session_io import (
+    read_claude_runtime_session_artifact,
+    write_claude_runtime_session_artifact,
+)
+
+_OUTPUT_KEYS = (
+    "event_index",
+    "raw_host_event_name",
+    "message_id",
+    "native_event_name",
+    "dispatch_lane",
+    "selected_family",
+    "brake_state",
+    "executive_state_summary",
+    "control_ledger",
+    "warnings",
+    "session_summary",
+    "commitment_result_kind",
+    "feedback_window_summary",
+)
+
+
+def build_claude_cli_record(step_result: ClaudeRuntimeStepResult) -> dict[str, Any]:
+    if not isinstance(step_result, ClaudeRuntimeStepResult):
+        actual_type = type(step_result).__name__
+        raise TypeError(
+            "build_claude_cli_record.step_result must be ClaudeRuntimeStepResult, "
+            f"got {actual_type}."
+        )
+    payload_metadata = {
+        field.key: field.value for field in step_result.bound_event.observation.event.payload_metadata
+    }
+    return {
+        "event_index": step_result.event_index,
+        "raw_host_event_name": payload_metadata.get("raw_host_event_name"),
+        "message_id": payload_metadata.get("message_id"),
+        "native_event_name": step_result.bound_event.observation.event.native_event_name,
+        "dispatch_lane": step_result.dispatch_decision.lane.value,
+        "selected_family": step_result.selected_family.value,
+        "brake_state": step_result.brake_state.value,
+        "executive_state_summary": step_result.executive_state_summary,
+        "control_ledger": step_result.control_ledger_summary,
+        "warnings": list(step_result.warnings),
+        "session_summary": step_result.session_summary,
+        "commitment_result_kind": step_result.commitment_result_kind,
+        "feedback_window_summary": step_result.feedback_window_summary_payload,
+    }
+
+
+def main(argv: Sequence[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(
+        prog="python3 -m cortex.hosts.claude.cli",
+        description="Process raw Claude-host runtime events from JSONL input.",
+    )
+    parser.add_argument(
+        "--event-file",
+        type=Path,
+        help="Read JSONL events from a file instead of stdin.",
+    )
+    parser.add_argument(
+        "--load-session",
+        type=Path,
+        help="Load the initial Claude runtime session from an artifact file.",
+    )
+    parser.add_argument(
+        "--save-session",
+        type=Path,
+        help="Persist the final Claude runtime session to an artifact file.",
+    )
+    args = parser.parse_args(argv)
+
+    try:
+        lines = _input_lines(args.event_file)
+        initial_session = (
+            read_claude_runtime_session_artifact(args.load_session)
+            if args.load_session is not None
+            else ClaudeRuntimeSession()
+        )
+        records, final_session = _run_claude_cli_lines_with_session(lines, initial_session)
+        if args.save_session is not None:
+            write_claude_runtime_session_artifact(args.save_session, final_session)
+        for record in records:
+            print(json.dumps(record))
+    except (FileNotFoundError, OSError, TypeError, ValueError) as exc:
+        print(f"claude_cli error: {exc}", file=sys.stderr)
+        return 1
+    return 0
+
+
+def _run_claude_cli_lines(lines: Iterable[str]) -> list[dict[str, Any]]:
+    records, _ = _run_claude_cli_lines_with_session(lines)
+    return records
+
+
+def _run_claude_cli_lines_with_session(
+    lines: Iterable[str],
+    session: ClaudeRuntimeSession | None = None,
+) -> tuple[list[dict[str, Any]], ClaudeRuntimeSession]:
+    records: list[dict[str, Any]] = []
+    current_session = _coerce_cli_session(session)
+
+    for event_name, payload in _iter_claude_cli_events(lines):
+        step_result = run_claude_runtime_step(event_name, payload, current_session)
+        record = build_claude_cli_record(step_result)
+        if tuple(record) != _OUTPUT_KEYS:
+            raise ValueError("Claude CLI record must preserve the locked output field order.")
+        records.append(record)
+        current_session = step_result.session
+
+    return records, current_session
+
+
+def _input_lines(event_file: Path | None) -> Iterable[str]:
+    if event_file is None:
+        return sys.stdin
+    with event_file.open("r", encoding="utf-8") as handle:
+        return tuple(handle.readlines())
+
+
+def _iter_claude_cli_events(lines: Iterable[str]) -> Iterator[tuple[str, dict[str, Any]]]:
+    for line_number, raw_line in enumerate(lines, start=1):
+        line = raw_line.strip()
+        if not line:
+            continue
+        try:
+            payload = json.loads(line)
+        except json.JSONDecodeError as exc:
+            raise ValueError(f"line {line_number}: invalid JSON input") from exc
+        if not isinstance(payload, dict):
+            raise ValueError(f"line {line_number}: expected a JSON object.")
+
+        event_name = payload.get("event_name")
+        event_payload = payload.get("payload")
+        if not isinstance(event_name, str) or not event_name.strip():
+            raise ValueError(f"line {line_number}: event_name must be a non-empty string.")
+        if not is_raw_claude_host_event_name(event_name):
+            raise ValueError(
+                f"line {line_number}: event_name must be a raw Claude host event name, "
+                "not a canonical Cortex event name."
+            )
+        if not isinstance(event_payload, dict):
+            raise ValueError(f"line {line_number}: payload must be an object.")
+        yield event_name, event_payload
+
+
+def _coerce_cli_session(session: ClaudeRuntimeSession | None) -> ClaudeRuntimeSession:
+    if session is None:
+        return ClaudeRuntimeSession()
+    if not isinstance(session, ClaudeRuntimeSession):
+        actual_type = type(session).__name__
+        raise TypeError(
+            "claude_cli initial session must be ClaudeRuntimeSession | None, "
+            f"got {actual_type}."
+        )
+    return session
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

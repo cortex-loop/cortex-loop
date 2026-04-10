@@ -8,7 +8,7 @@ from cortex.core.commitments import (
 )
 from cortex.core.dispatch import DispatchLane
 from cortex.core.environment import CommitmentEnvironmentHandle, EXECUTION_TRACE
-from experimental.drivers.reference_host_commitment import evaluate_reference_host_commitment
+from cortex.drivers.reference_host_commitment import evaluate_reference_host_commitment
 
 
 def test_full_commitment_reference_host_event_with_concrete_provenance_yields_certified() -> None:

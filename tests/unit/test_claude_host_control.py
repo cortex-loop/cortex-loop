@@ -6,19 +6,19 @@ import json
 
 import pytest
 
-from experimental.runtime.claude import ClaudeRuntimeSession, run_claude_runtime_step
-from experimental.runtime.claude_cli import build_claude_cli_record
-from experimental.runtime.claude_host_control import (
+from cortex.hosts.claude.runtime import ClaudeRuntimeSession, run_claude_runtime_step
+from cortex.hosts.claude.cli import build_claude_cli_record
+from cortex.hosts.claude.host_control import (
     ClaudeHostControlRequest,
     ClaudeHostControlResult,
     run_claude_host_control,
 )
-from experimental.runtime.claude_host_transport import (
+from cortex.hosts.claude.host_transport import (
     ClaudeMessageStreamTransportError,
     _parse_sse_events,
 )
-from experimental.runtime.claude_ingress import parse_claude_host_event_envelope
-from experimental.runtime.claude_service import ClaudeServiceState, handle_claude_service_request
+from cortex.hosts.claude.ingress import parse_claude_host_event_envelope
+from cortex.hosts.claude.service import ClaudeServiceState, handle_claude_service_request
 
 
 def test_claude_host_control_request_constructs_strict_text_only_payload() -> None:

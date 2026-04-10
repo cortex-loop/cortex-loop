@@ -2,11 +2,11 @@ from __future__ import annotations
 
 import pytest
 
-from experimental.sre.executive_summary import (
+from cortex.sre.executive_summary import (
     ExecutiveSignalSummaryInputs,
     build_executive_signal_summary,
 )
-from experimental.sre.operator_routing import OperatorTaskMode
+from cortex.sre.operator_routing import OperatorTaskMode
 
 
 def test_executive_signal_summary_inputs_require_bounded_values() -> None:

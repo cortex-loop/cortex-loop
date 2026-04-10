@@ -34,8 +34,12 @@ def test_wheel_build_cleans_stale_product_artifacts_and_exposes_only_public_scri
             assert len(wheels) == 1
             with zipfile.ZipFile(wheels[0]) as wheel:
                 names = set(wheel.namelist())
-                assert "cortex/sre/modulators.py" not in names
-                assert "cortex/sre/executive_summary.py" not in names
+                assert "cortex/sre/modulators.py" in names
+                assert "cortex/sre/executive_summary.py" in names
+                assert "cortex/hosts/openai/runtime.py" in names
+                assert "cortex/hosts/claude/runtime.py" in names
+                assert "cortex/hosts/gemini/runtime.py" in names
+                assert "cortex/hosts/reference/runtime.py" in names
                 assert all(not name.startswith("experimental/") for name in names)
                 assert all(not name.startswith("lab/") for name in names)
                 assert all(not name.startswith("internal/") for name in names)

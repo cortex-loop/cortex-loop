@@ -4,8 +4,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from experimental.runtime.claude import ClaudeRuntimeSession
-from experimental.runtime.claude_session_io import write_claude_runtime_session_artifact
+from cortex.hosts.claude.runtime import ClaudeRuntimeSession
+from cortex.hosts.claude.session_io import write_claude_runtime_session_artifact
 
 from tests.integration._claude_service_harness import (
     EXPECTED_RECORD_KEYS,

@@ -104,7 +104,7 @@ def _run_openai_ingress_cli(
     input_text: str | None = None,
 ) -> subprocess.CompletedProcess[str]:
     return subprocess.run(
-        [sys.executable, "-m", "cortex.runtime.openai_ingress_cli", *args],
+        [sys.executable, "-m", "cortex.hosts.openai.ingress_cli", *args],
         cwd=REPO_ROOT,
         input=input_text,
         capture_output=True,

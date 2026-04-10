@@ -374,7 +374,7 @@ def _run_reference_cli(
     input_text: str | None = None,
 ) -> subprocess.CompletedProcess[str]:
     return subprocess.run(
-        [sys.executable, "-m", "experimental.runtime.reference_cli", *args],
+        [sys.executable, "-m", "cortex.hosts.reference.cli", *args],
         cwd=REPO_ROOT,
         input=input_text,
         capture_output=True,

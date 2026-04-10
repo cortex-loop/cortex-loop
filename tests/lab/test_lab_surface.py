@@ -21,6 +21,8 @@ def test_lab_makefile_runs_from_repo_root_and_uses_split_test_paths() -> None:
     assert 'ROOT_PYTEST = cd "$(ROOT)" && $(PYTEST)' in text
     assert 'ROOT_PYTHON = cd "$(ROOT)" && $(PYTHON)' in text
     assert "tests/product/test_import_smoke.py" in text
+    assert "tests/product/test_public_boundary.py" in text
+    assert "tests/conformance/test_host_import_smoke.py" in text
     assert "tests/internal/test_docs_boundary.py" in text
     assert "tests/internal/test_workflow_boundary.py" in text
     assert "tests/lab/test_lab_surface.py" in text

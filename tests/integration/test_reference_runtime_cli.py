@@ -9,17 +9,17 @@ from pathlib import Path
 
 import pytest
 
-import experimental.runtime.reference as reference_runtime
-import experimental.runtime.reference_cli as reference_cli
-from experimental.sre.brake import BrakeState
-from experimental.sre.families import SoftControlFamily
-from experimental.sre.mediation import (
+import cortex.hosts.reference.runtime as reference_runtime
+import cortex.hosts.reference.cli as reference_cli
+from cortex.sre.brake import BrakeState
+from cortex.sre.families import SoftControlFamily
+from cortex.sre.mediation import (
     ReferenceMediationMode,
     finalize_reference_soft_control,
 )
-from experimental.sre.policy import neutral_dominance_decision
-from experimental.sre.reference_scoring import build_reference_allocation_scorecard
-from experimental.sre.state import (
+from cortex.sre.policy import neutral_dominance_decision
+from cortex.sre.reference_scoring import build_reference_allocation_scorecard
+from cortex.sre.state import (
     ReferenceBrakeView,
     ReferenceControlAllocationView,
     ReferenceExecutiveState,
@@ -27,7 +27,7 @@ from experimental.sre.state import (
     ReferenceModeAndGatingView,
     ReferenceUncertaintyMonitoringView,
 )
-from experimental.sre.uncertainty import UncertaintyEstimate
+from cortex.sre.uncertainty import UncertaintyEstimate
 
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
@@ -487,7 +487,7 @@ def test_reference_runtime_cli_zero_event_load_save_roundtrip_works(tmp_path: Pa
 
 def _run_reference_cli(*args: str, input_text: str | None = None) -> subprocess.CompletedProcess[str]:
     return subprocess.run(
-        [sys.executable, "-m", "experimental.runtime.reference_cli", *args],
+        [sys.executable, "-m", "cortex.hosts.reference.cli", *args],
         cwd=REPO_ROOT,
         input=input_text,
         capture_output=True,

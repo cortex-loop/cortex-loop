@@ -41,19 +41,19 @@ from lab.live_validation_common import (
 
 PROVIDER_CONFIG = {
     "claude": {
-        "module": "experimental.runtime.claude_service",
+        "module": "cortex.hosts.claude.service",
         "runtime_label": "claude-service",
         "action_path": "/v1/actions/message-stream",
         "action_tag": "claude-message-stream",
     },
     "gemini": {
-        "module": "experimental.runtime.gemini_service",
+        "module": "cortex.hosts.gemini.service",
         "runtime_label": "gemini-service",
         "action_path": "/v1/actions/interaction-stream",
         "action_tag": "gemini-interaction-stream",
     },
     "openai": {
-        "module": "cortex.runtime.openai_service",
+        "module": "cortex.hosts.openai.service",
         "runtime_label": "openai-service",
         "action_path": "/v1/actions/response-stream",
         "action_tag": "openai-response-stream",

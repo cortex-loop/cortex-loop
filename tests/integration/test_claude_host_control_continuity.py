@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from experimental.runtime import claude_host_transport
+from cortex.hosts import claude_host_transport
 
 from tests.integration._claude_service_harness import run_claude_service
 

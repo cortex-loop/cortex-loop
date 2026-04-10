@@ -714,12 +714,7 @@ def test_reconcile_latest_summary_prefers_newest_surviving_full_run_matching_ct2
 ) -> None:
     monkeypatch.setattr(conformance, "CONFORMANCE_ROOT", tmp_path)
     monkeypatch.setattr(conformance, "ROOT", tmp_path)
-    phase_gates_path = tmp_path / "phase_gates.md"
-    phase_gates_path.write_text(
-        "| `CT2` active verified-work tri-brain conformance | evidence | owner | landed | current shipping-default decision is `promote` |\n",
-        encoding="utf-8",
-    )
-    monkeypatch.setattr(conformance, "PHASE_GATES_PATH", phase_gates_path)
+    monkeypatch.setattr(conformance, "accepted_conformance_next_decision", lambda: "promote")
     monkeypatch.setattr(conformance, "render_summary_markdown", lambda _summary: "")
 
     older_run = tmp_path / "run_20260408T070000+0000"
@@ -854,12 +849,7 @@ def test_reconcile_latest_summary_ignores_newer_non_anchor_pack_full_runs(
 ) -> None:
     monkeypatch.setattr(conformance, "CONFORMANCE_ROOT", tmp_path)
     monkeypatch.setattr(conformance, "ROOT", tmp_path)
-    phase_gates_path = tmp_path / "phase_gates.md"
-    phase_gates_path.write_text(
-        "| `CT2` active verified-work tri-brain conformance | evidence | owner | landed | current shipping-default decision is `promote` |\n",
-        encoding="utf-8",
-    )
-    monkeypatch.setattr(conformance, "PHASE_GATES_PATH", phase_gates_path)
+    monkeypatch.setattr(conformance, "accepted_conformance_next_decision", lambda: "promote")
     monkeypatch.setattr(conformance, "render_summary_markdown", lambda _summary: "")
 
     older_run = tmp_path / "run_20260408T070000+0000"
@@ -932,12 +922,7 @@ def test_reconcile_latest_summary_falls_back_to_newest_surviving_full_run_when_c
 ) -> None:
     monkeypatch.setattr(conformance, "CONFORMANCE_ROOT", tmp_path)
     monkeypatch.setattr(conformance, "ROOT", tmp_path)
-    phase_gates_path = tmp_path / "phase_gates.md"
-    phase_gates_path.write_text(
-        "| `CT2` active verified-work tri-brain conformance | evidence | owner | partial | current shipping-default decision is `promote` |\n",
-        encoding="utf-8",
-    )
-    monkeypatch.setattr(conformance, "PHASE_GATES_PATH", phase_gates_path)
+    monkeypatch.setattr(conformance, "accepted_conformance_next_decision", lambda: "promote")
 
     newer_run = tmp_path / "run_20260408T071000+0000"
     newer_run.mkdir(parents=True)

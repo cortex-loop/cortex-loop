@@ -18,7 +18,8 @@ ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from cortex.runtime.openai_host_control import (  # noqa: E402
+from internal.truth.status import accepted_conformance_next_decision  # noqa: E402
+from cortex.hosts.openai.host_control import (  # noqa: E402
     OpenAIHostControlRequest,
     OpenAIResponseStreamTransportError,
     run_openai_host_control,
@@ -62,7 +63,6 @@ ACTIVE_CONTRACT_PACK = "verified_work_bookmarks_v1"
 NORMALIZE_PORT_CONTRACT_PACK = "verified_work_normalize_port_v1"
 FEATURE_FLAGS_CONTRACT_PACK = "verified_work_feature_flags_v1"
 CONFORMANCE_ROOT = LOCAL_LIVE_ROOT / "conformance"
-PHASE_GATES_PATH = ROOT / "docs" / "internal" / "CORTEX_V2_PHASE_GATES_2.md"
 BOOKMARKS_TASK_PATH = (
     ROOT / "tests" / "fixtures" / "live_validation" / "bookmarks_app_template" / "README_TASK.md"
 )
@@ -1286,17 +1286,7 @@ def _find_latest_full_summary(
 
 
 def _accepted_ct2_next_decision() -> str | None:
-    if not PHASE_GATES_PATH.exists():
-        return None
-    text = PHASE_GATES_PATH.read_text(encoding="utf-8")
-    match = re.search(
-        r"^\| `CT2` .*?current shipping-default decision is `(?P<decision>[a-z_]+)`",
-        text,
-        re.MULTILINE,
-    )
-    if match is None:
-        return None
-    return match.group("decision")
+    return accepted_conformance_next_decision()
 
 
 def _is_full_brain_run(brains: tuple[Brain, ...]) -> bool:

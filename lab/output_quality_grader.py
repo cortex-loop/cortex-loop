@@ -14,7 +14,7 @@ ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from cortex.runtime.openai_host_control import OpenAIHostControlRequest, run_openai_host_control
+from cortex.hosts.openai.host_control import OpenAIHostControlRequest, run_openai_host_control
 
 from lab.live_validation_common import classify_failure, run_command, sanitize_text
 from lab.openai_operator_cli import isolated_codex_home_env, run_openai_operator_single_turn

@@ -2,23 +2,23 @@
 
 import pytest
 
-import experimental.runtime.reference as reference_runtime
+import cortex.hosts.reference.runtime as reference_runtime
 from cortex.core.environment import EXECUTION_TRACE, ExecutiveEnvironmentView
 from cortex.core.dispatch import DispatchLane
-from experimental.runtime.reference import (
+from cortex.hosts.reference.runtime import (
     ReferenceRuntimeSession,
     run_reference_runtime_step,
 )
-from experimental.sre.brake import BrakeState
-from experimental.sre.feedback import ReferenceRealizationFeedback
-from experimental.sre.families import SoftControlFamily
-from experimental.sre.mediation import (
+from cortex.sre.brake import BrakeState
+from cortex.sre.feedback import ReferenceRealizationFeedback
+from cortex.sre.families import SoftControlFamily
+from cortex.sre.mediation import (
     ReferenceMediationMode,
     finalize_reference_soft_control,
 )
-from experimental.sre.policy import neutral_dominance_decision
-from experimental.sre.reference_scoring import build_reference_allocation_scorecard
-from experimental.sre.state import (
+from cortex.sre.policy import neutral_dominance_decision
+from cortex.sre.reference_scoring import build_reference_allocation_scorecard
+from cortex.sre.state import (
     ReferenceBrakeView,
     ReferenceControlAllocationView,
     ReferenceExecutiveState,
@@ -26,7 +26,7 @@ from experimental.sre.state import (
     ReferenceModeAndGatingView,
     ReferenceUncertaintyMonitoringView,
 )
-from experimental.sre.uncertainty import UncertaintyEstimate
+from cortex.sre.uncertainty import UncertaintyEstimate
 
 
 def test_reference_runtime_session_tracks_minimum_live_state() -> None:

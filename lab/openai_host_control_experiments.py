@@ -5,8 +5,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Literal
 
-from cortex.runtime.openai import OpenAIRuntimeSession, run_openai_runtime_verification_step
-from cortex.runtime.openai_host_control import (
+from cortex.hosts.openai.runtime import OpenAIRuntimeSession, run_openai_runtime_verification_step
+from cortex.hosts.openai.host_control import (
     OpenAIHostControlRequest,
     OpenAIHostControlResult,
     OpenAIResponseStreamTransport,
@@ -15,7 +15,7 @@ from cortex.runtime.openai_host_control import (
     _run_openai_host_control_attempt,
     run_openai_host_control,
 )
-from cortex.runtime.openai_host_transport import execute_openai_response_stream_turn
+from cortex.hosts.openai.host_transport import execute_openai_response_stream_turn
 from cortex.runtime.verified_work_runtime import (
     VerifiedWorkContextMode,
     build_verified_work_input_text,

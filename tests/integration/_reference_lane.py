@@ -11,19 +11,19 @@ from cortex.core.commitments import (
 from cortex.core.dispatch import DispatchLane
 from cortex.core.errors import ContradictionRecord, DegradationRecord
 from cortex.core.environment import CommitmentEnvironmentHandle, EXECUTION_TRACE
-from experimental.drivers.reference_host_commitment import (
+from cortex.drivers.reference_host_commitment import (
     ReferenceHostCommitmentResult,
     evaluate_reference_host_commitment,
 )
-from experimental.drivers.reference_host_neutral import (
+from cortex.drivers.reference_host_neutral import (
     NeutralContinuationCode,
     ReferenceHostNeutralResult,
     evaluate_reference_host_neutral,
 )
-from experimental.eval.artifacts import CurrentPairFragment
-from experimental.eval.packets import EvaluationPacket
-from experimental.sre.allocation import AllocationScore, AllocationScorecard
-from experimental.sre.families import SoftControlFamily
+from lab.eval.artifacts import CurrentPairFragment
+from lab.eval.packets import EvaluationPacket
+from cortex.sre.allocation import AllocationScore, AllocationScorecard
+from cortex.sre.families import SoftControlFamily
 
 
 def cheap_path_event(

@@ -7,9 +7,9 @@ import sys
 
 from cortex.core.dispatch import DispatchLane
 from cortex.drivers.openai_host_commitment import evaluate_openai_host_commitment
-from experimental.eval.artifacts import CurrentPairFragment, EventTraceArtifact
-from experimental.eval.harness import build_evaluation_harness_result
-from experimental.eval.packets import WithheldField, build_evaluation_packet
+from lab.eval.artifacts import CurrentPairFragment, EventTraceArtifact
+from lab.eval.harness import build_evaluation_harness_result
+from lab.eval.packets import WithheldField, build_evaluation_packet
 from tests.integration._openai_host_realization_pair import (
     DEFAULT_OPENAI_HOST_REALIZATION_PAIR_KEY,
     OPENAI_HOST_REALIZATION_PAIR_KEYS,

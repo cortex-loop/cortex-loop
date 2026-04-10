@@ -1,3 +1,3 @@
-"""Public experimental source surface for non-shipping Cortex hosts."""
+"""Reserved surface for true off-by-default Cortex experiments."""
 
-__all__ = ["drivers", "eval", "runtime", "sre"]
+__all__: list[str] = []

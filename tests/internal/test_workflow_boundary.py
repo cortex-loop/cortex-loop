@@ -24,10 +24,11 @@ def test_internal_workflow_surfaces_exist() -> None:
     assert "internal/workflow/repo_workflow.py" in shim
     assert 'DEFAULT_ROOT = Path(__file__).resolve().parents[2]' in canonical
     assert '_run(["make", "product-test"])' in canonical
+    assert '_run(["make", "conformance-test"])' in canonical
     assert '_run(["make", "experimental-test"])' in canonical
+    assert '_run(["python3", "internal/truth/generate_status.py", "--check"])' in canonical
     assert '_run(["make", "-C", "internal", "test"])' in canonical
-    assert '_run(["make", "-C", "lab", "test-smoke"])' in canonical
-    assert '_run(["make", "-C", "lab", "verify"])' in canonical
+    assert '_run(["make", "lab-test"])' in canonical
 
 
 def test_compatibility_wrappers_remain_callable_for_one_transition_cycle() -> None:

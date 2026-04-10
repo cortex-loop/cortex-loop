@@ -4,8 +4,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from cortex.runtime.openai import OpenAIRuntimeSession
-from cortex.runtime.openai_session_io import write_openai_runtime_session_artifact
+from cortex.hosts.openai.runtime import OpenAIRuntimeSession
+from cortex.hosts.openai.session_io import write_openai_runtime_session_artifact
 
 from tests.integration._openai_service_harness import (
     EXPECTED_RECORD_KEYS,

@@ -10,9 +10,9 @@ import time
 from dataclasses import dataclass
 from pathlib import Path
 
-from experimental.drivers.reference_host_commitment import evaluate_reference_host_commitment
-from experimental.drivers.reference_host_neutral import evaluate_reference_host_neutral
-from experimental.sre.policy import neutral_dominance_decision
+from cortex.drivers.reference_host_commitment import evaluate_reference_host_commitment
+from cortex.drivers.reference_host_neutral import evaluate_reference_host_neutral
+from cortex.sre.policy import neutral_dominance_decision
 from tests.integration._reference_lane_latency_evidence import (
     serialize_reference_lane_latency_snapshot,
 )

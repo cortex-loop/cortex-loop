@@ -4,7 +4,7 @@ import pytest
 
 from cortex.drivers.common_normalization import NormalizedDriverEvent
 from cortex.core.dispatch import DispatchLane, classify_dispatch
-from experimental.drivers.gemini_host import (
+from cortex.drivers.gemini_host import (
     GEMINI_HOST_SURFACE,
     BoundGeminiHostEvent,
     bind_gemini_event_envelope,

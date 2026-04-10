@@ -1,7 +1,7 @@
 """Focused tests for the reference-host observe/bind slice."""
 
 from cortex.core.dispatch import DispatchLane, classify_dispatch
-from experimental.drivers.reference_host import (
+from cortex.drivers.reference_host import (
     REFERENCE_HOST_SURFACE,
     observe_reference_host_event,
 )

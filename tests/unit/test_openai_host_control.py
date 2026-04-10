@@ -6,20 +6,20 @@ import json
 
 import pytest
 
-from cortex.runtime.openai import OpenAIRuntimeSession, run_openai_runtime_step
-from cortex.runtime.openai_cli import build_openai_cli_record
-from cortex.runtime.openai_host_control import (
+from cortex.hosts.openai.runtime import OpenAIRuntimeSession, run_openai_runtime_step
+from cortex.hosts.openai.cli import build_openai_cli_record
+from cortex.hosts.openai.host_control import (
     OpenAIHostControlRequest,
     OpenAIHostControlResult,
     _last_response_id,
     run_openai_host_control,
 )
-from cortex.runtime.openai_host_transport import (
+from cortex.hosts.openai.host_transport import (
     OpenAIResponseStreamTransportError,
     _parse_sse_events,
 )
-from cortex.runtime.openai_ingress import parse_openai_host_event_envelope
-from cortex.runtime.openai_service import OpenAIServiceState, handle_openai_service_request
+from cortex.hosts.openai.ingress import parse_openai_host_event_envelope
+from cortex.hosts.openai.service import OpenAIServiceState, handle_openai_service_request
 from cortex.sre.verified_work import VerificationOutcome, WorkContract
 from tests.unit._verified_work_fixtures import (
     VALID_FEATURE_FLAG_FILE_MAP,
@@ -357,7 +357,7 @@ def test_run_openai_host_control_verified_work_one_shot_adds_verification(
         work_contract=work_contract,
     )
     monkeypatch.setattr(
-        "cortex.runtime.openai_host_control.verify_verified_work_result",
+        "cortex.hosts.openai.host_control.verify_verified_work_result",
         lambda result_text, contract: (
             VALID_FILE_MAP,
             VerificationOutcome(
@@ -428,7 +428,7 @@ def test_run_openai_host_control_verified_work_attaches_workspace_context_to_fir
         ]
 
     monkeypatch.setattr(
-        "cortex.runtime.openai_host_control.verify_verified_work_result",
+        "cortex.hosts.openai.host_control.verify_verified_work_result",
         lambda result_text, contract: (
             VALID_FILE_MAP,
             VerificationOutcome(
@@ -543,7 +543,7 @@ def test_run_openai_host_control_verified_work_repairs_once_from_runtime_signal(
         work_contract=work_contract,
     )
     monkeypatch.setattr(
-        "cortex.runtime.openai_host_control.verify_verified_work_result",
+        "cortex.hosts.openai.host_control.verify_verified_work_result",
         lambda result_text, contract: (
             VALID_FILE_MAP,
             VerificationOutcome(
@@ -627,7 +627,7 @@ def test_run_openai_host_control_verified_work_attaches_normalize_port_context(
         ]
 
     monkeypatch.setattr(
-        "cortex.runtime.openai_host_control.verify_verified_work_result",
+        "cortex.hosts.openai.host_control.verify_verified_work_result",
         lambda result_text, contract: (
             VALID_NORMALIZE_PORT_FILE_MAP,
             VerificationOutcome(
@@ -751,7 +751,7 @@ def test_run_openai_host_control_verified_work_normalize_port_repairs_once(
         work_contract=work_contract,
     )
     monkeypatch.setattr(
-        "cortex.runtime.openai_host_control.verify_verified_work_result",
+        "cortex.hosts.openai.host_control.verify_verified_work_result",
         lambda result_text, contract: (
             VALID_NORMALIZE_PORT_FILE_MAP,
             VerificationOutcome(
@@ -839,7 +839,7 @@ def test_run_openai_host_control_verified_work_attaches_feature_flags_context(
         ]
 
     monkeypatch.setattr(
-        "cortex.runtime.openai_host_control.verify_verified_work_result",
+        "cortex.hosts.openai.host_control.verify_verified_work_result",
         lambda result_text, contract: (
             VALID_FEATURE_FLAG_FILE_MAP,
             VerificationOutcome(
@@ -960,7 +960,7 @@ def test_run_openai_host_control_verified_work_feature_flags_repairs_once(
         work_contract=work_contract,
     )
     monkeypatch.setattr(
-        "cortex.runtime.openai_host_control.verify_verified_work_result",
+        "cortex.hosts.openai.host_control.verify_verified_work_result",
         lambda result_text, contract: (
             VALID_FEATURE_FLAG_FILE_MAP,
             VerificationOutcome(

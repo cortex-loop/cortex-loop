@@ -6,11 +6,11 @@ import json
 import sys
 
 from cortex.core.dispatch import DispatchLane
-from experimental.drivers.reference_host_commitment import evaluate_reference_host_commitment
-from experimental.eval.artifacts import CurrentPairFragment, EventTraceArtifact
-from experimental.eval.harness import build_evaluation_harness_result
-from experimental.eval.packets import WithheldField, build_evaluation_packet
-from experimental.sre.mediation import ReferenceMediationMode
+from cortex.drivers.reference_host_commitment import evaluate_reference_host_commitment
+from lab.eval.artifacts import CurrentPairFragment, EventTraceArtifact
+from lab.eval.harness import build_evaluation_harness_result
+from lab.eval.packets import WithheldField, build_evaluation_packet
+from cortex.sre.mediation import ReferenceMediationMode
 from tests.integration._reference_host_realization_pairs import (
     DEFAULT_REFERENCE_HOST_REALIZATION_PAIR_KEY,
     REFERENCE_HOST_REALIZATION_PAIR_SPECS,

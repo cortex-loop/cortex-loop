@@ -15,6 +15,7 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 import lab.cortex_conformance as cortex_conformance  # noqa: E402
+from internal.truth.status import accepted_conformance_next_decision  # noqa: E402
 from lab.causal_contribution_map import (  # noqa: E402
     ContributionRunReading,
     OutputQualityMetrics,
@@ -35,7 +36,6 @@ LoopClass = Literal[
 LoopDecision = Literal["promote", "revise", "cut", "escalate"]
 
 TRAIN_LOOP_ROOT = ROOT / ".cortex" / "train_loops"
-PHASE_GATES_PATH = ROOT / "docs" / "internal" / "CORTEX_V2_PHASE_GATES_2.md"
 CONFORMANCE_SUMMARY_PATH = (
     ROOT / ".cortex" / "live_validation" / "conformance" / "summary.latest.json"
 )
@@ -203,9 +203,8 @@ def evaluate_conformance_summary_truth(
     *,
     repo_root: Path = ROOT,
     summary_path: Path = CONFORMANCE_SUMMARY_PATH,
-    phase_gates_path: Path = PHASE_GATES_PATH,
 ) -> dict[str, Any]:
-    accepted_next_decision = _accepted_ct2_decision(phase_gates_path)
+    accepted_next_decision = accepted_conformance_next_decision()
     if not summary_path.exists():
         return {
             "primary_metric_value": 0,
@@ -1227,18 +1226,6 @@ def main(argv: list[str] | None = None) -> int:
         raise SystemExit(f"Unsupported train: {args.train}")
     print(json.dumps(payload, indent=2, sort_keys=True))
     return 0
-
-
-def _accepted_ct2_decision(phase_gates_path: Path) -> str:
-    text = phase_gates_path.read_text(encoding="utf-8")
-    match = re.search(
-        r"^\| `CT2` .*?current shipping-default decision is `(?P<decision>[a-z_]+)`",
-        text,
-        re.MULTILINE,
-    )
-    if match is None:
-        raise RuntimeError("Unable to extract CT2 accepted next decision from phase gates.")
-    return match.group("decision")
 
 
 def _summary_artifacts_exist(summary: Any, *, repo_root: Path) -> bool:
