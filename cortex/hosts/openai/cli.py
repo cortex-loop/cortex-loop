@@ -31,6 +31,11 @@ _OUTPUT_KEYS = (
     "brake_state",
     "control_ledger",
     "feedback_window_summary",
+    "executive_signal_summary",
+    "executive_modulator_state",
+    "executive_policy_view",
+    "closure_required",
+    "closure_reason_tags",
     "commitment_result_kind",
 )
 
@@ -59,6 +64,11 @@ def build_openai_cli_record(step_result: OpenAIRuntimeStepResult) -> dict[str, A
         "brake_state": step_result.brake_state.value,
         "control_ledger": step_result.control_ledger_summary,
         "feedback_window_summary": step_result.feedback_window_summary_payload,
+        "executive_signal_summary": step_result.executive_signal_summary_payload,
+        "executive_modulator_state": step_result.executive_modulator_state_payload,
+        "executive_policy_view": step_result.executive_policy_view_payload,
+        "closure_required": step_result.closure_required,
+        "closure_reason_tags": list(step_result.closure_reason_tags),
         "commitment_result_kind": step_result.commitment_result_kind,
     }
 

@@ -347,6 +347,7 @@ def _activate_verified_work_anchor(
         last_commitment_result_summary=session.last_commitment_result_summary,
         last_realization_feedback=session.last_realization_feedback,
         feedback_window=session.feedback_window,
+        executive_modulator_memory=session.executive_modulator_memory,
         last_failure_class=session.last_failure_class,
         next_recommended_move=session.next_recommended_move,
         preservation_state=session.preservation_state,

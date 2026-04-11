@@ -383,6 +383,7 @@ def test_run_openai_host_control_verified_work_one_shot_adds_verification(
     assert result.verification.status == "passed"
     assert result.verification.pytest_passed == 11
     assert final_session.next_recommended_move == "continue"
+    assert final_session.executive_modulator_memory is not None
     assert final_session.last_failure_class is None
 
 
@@ -597,6 +598,7 @@ def test_run_openai_host_control_verified_work_repairs_once_from_runtime_signal(
     assert "src/bookmarks_api/store.py" not in str(calls[1]["instructions"])
     assert final_session.event_index == 6
     assert final_session.next_recommended_move == "continue"
+    assert final_session.executive_modulator_memory is not None
     assert final_session.preservation_state is not None
     assert final_session.preservation_state.task_anchor.startswith(
         "verified-work:python_workspace_pytest_v1:"
@@ -816,6 +818,7 @@ def test_run_openai_host_control_verified_work_normalize_port_repairs_once(
     assert "=== CONTEXT FILE: tests/test_normalize_port.py ===" in str(calls[0]["request_input_text"])
     assert final_session.event_index == 6
     assert final_session.next_recommended_move == "continue"
+    assert final_session.executive_modulator_memory is not None
     assert "=== CONTEXT FILE:" not in str(calls[1]["input_text_override"])
 
 
@@ -1025,4 +1028,5 @@ def test_run_openai_host_control_verified_work_feature_flags_repairs_once(
     assert "=== CONTEXT FILE: tests/test_feature_flags.py ===" in str(calls[0]["request_input_text"])
     assert final_session.event_index == 6
     assert final_session.next_recommended_move == "continue"
+    assert final_session.executive_modulator_memory is not None
     assert "=== CONTEXT FILE:" not in str(calls[1]["input_text_override"])

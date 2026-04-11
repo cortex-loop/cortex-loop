@@ -32,6 +32,11 @@ EXPECTED_RECORD_KEYS = (
     "brake_state",
     "control_ledger",
     "feedback_window_summary",
+    "executive_signal_summary",
+    "executive_modulator_state",
+    "executive_policy_view",
+    "closure_required",
+    "closure_reason_tags",
     "commitment_result_kind",
 )
 

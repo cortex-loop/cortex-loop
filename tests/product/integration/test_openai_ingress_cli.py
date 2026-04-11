@@ -26,6 +26,11 @@ EXPECTED_RECORD_KEYS = (
     "brake_state",
     "control_ledger",
     "feedback_window_summary",
+    "executive_signal_summary",
+    "executive_modulator_state",
+    "executive_policy_view",
+    "closure_required",
+    "closure_reason_tags",
     "commitment_result_kind",
 )
 
@@ -52,7 +57,10 @@ def test_openai_ingress_cli_reads_documented_raw_transcript_fixture() -> None:
     assert records[0]["selected_family"] == "seek-context"
     assert records[0]["realized_family"] == "seek-context"
     assert records[0]["brake_state"] == "guarded"
+    assert records[0]["closure_required"] is False
+    assert records[0]["closure_reason_tags"] == []
     assert records[-1]["journal"]["confirmed_artifact_refs"] == ["oa-ingress-artifact-1"]
+    assert records[-1]["journal"]["executive_modulator_memory"] is not None
 
 
 def test_openai_ingress_cli_load_save_works(tmp_path: Path) -> None:

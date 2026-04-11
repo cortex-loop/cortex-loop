@@ -47,9 +47,11 @@ def test_openai_host_control_action_endpoint_returns_ordered_o1_records_and_muta
         "response.completed",
     ]
     assert [record["decision"] for record in payload["records"]] == ["check", "check", "check"]
+    assert [record["closure_required"] for record in payload["records"]] == [False, False, False]
     assert export_status == 200
     assert exported["journal"]["event_index"] == 3
     assert exported["journal"]["confirmed_artifact_refs"] == ["oa-k2-artifact-1"]
+    assert exported["journal"]["executive_modulator_memory"] is not None
 
 
 def test_openai_host_control_action_endpoint_rejects_out_of_scope_request_keys() -> None:

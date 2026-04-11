@@ -13,6 +13,7 @@ from cortex.hosts.openai.runtime import OpenAIRuntimeSession
 from cortex.sre.feedback import ReferenceRealizationFeedback, ReferenceRealizationFeedbackWindow
 from cortex.sre.families import SoftControlFamily
 from cortex.sre.brake import BrakeState
+from cortex.sre.modulators import ExecutiveModulatorMemory
 from cortex.sre.preservation import PreservationState
 
 _ARTIFACT_KIND = "openai_product_journal"
@@ -28,6 +29,24 @@ _LEGACY_JOURNAL_KEYS = (
     "next_recommended_move",
 )
 _JOURNAL_KEYS = (
+    "session_id",
+    "event_index",
+    "branch_registry",
+    "active_track_ref",
+    "active_goal_ref",
+    "pending_goal_refs",
+    "confirmed_artifact_refs",
+    "budget_history",
+    "brake_history",
+    "last_selected_family",
+    "last_commitment_result_summary",
+    "last_realization_feedback",
+    "feedback_window",
+    "executive_modulator_memory",
+    "last_failure_class",
+    "next_recommended_move",
+)
+_PRE_MODULATOR_JOURNAL_KEYS = (
     "session_id",
     "event_index",
     "branch_registry",
@@ -67,6 +86,7 @@ class OpenAIRuntimeSessionArtifact:
     feedback_window: ReferenceRealizationFeedbackWindow = field(
         default_factory=ReferenceRealizationFeedbackWindow
     )
+    executive_modulator_memory: ExecutiveModulatorMemory | None = None
     last_failure_class: str | None = None
     next_recommended_move: str = "continue"
     preservation_state: PreservationState | None = None
@@ -94,6 +114,7 @@ class OpenAIRuntimeSessionArtifact:
             last_commitment_result_summary=self.last_commitment_result_summary,
             last_realization_feedback=self.last_realization_feedback,
             feedback_window=self.feedback_window,
+            executive_modulator_memory=self.executive_modulator_memory,
             last_failure_class=self.last_failure_class,
             next_recommended_move=self.next_recommended_move,
             preservation_state=self.preservation_state,
@@ -124,6 +145,16 @@ class OpenAIRuntimeSessionArtifact:
             "feedback_window": [
                 entry.as_summary() for entry in self.feedback_window.entries
             ],
+            "executive_modulator_memory": (
+                {
+                    "focus_tonic": float(self.executive_modulator_memory.focus_tonic),
+                    "explore_tonic": float(self.executive_modulator_memory.explore_tonic),
+                    "stop_tonic": float(self.executive_modulator_memory.stop_tonic),
+                    "update_tonic": float(self.executive_modulator_memory.update_tonic),
+                }
+                if self.executive_modulator_memory is not None
+                else None
+            ),
             "last_failure_class": self.last_failure_class,
             "next_recommended_move": self.next_recommended_move,
         }
@@ -150,6 +181,7 @@ class OpenAIRuntimeSessionArtifact:
             last_commitment_result_summary=self.last_commitment_result_summary,
             last_realization_feedback=self.last_realization_feedback,
             feedback_window=self.feedback_window,
+            executive_modulator_memory=self.executive_modulator_memory,
             last_failure_class=self.last_failure_class,
             next_recommended_move=self.next_recommended_move,
             preservation_state=self.preservation_state,
@@ -179,6 +211,7 @@ def build_openai_runtime_session_artifact(
         last_commitment_result_summary=session.last_commitment_result_summary,
         last_realization_feedback=session.last_realization_feedback,
         feedback_window=session.feedback_window,
+        executive_modulator_memory=session.executive_modulator_memory,
         last_failure_class=session.last_failure_class,
         next_recommended_move=session.next_recommended_move,
         preservation_state=session.preservation_state,
@@ -310,6 +343,10 @@ def parse_openai_runtime_session_artifact(
             journal_payload["feedback_window"],
             "OpenAIRuntimeSessionArtifact.journal.feedback_window",
         ),
+        executive_modulator_memory=_optional_executive_modulator_memory(
+            journal_payload.get("executive_modulator_memory"),
+            "OpenAIRuntimeSessionArtifact.journal.executive_modulator_memory",
+        ),
         last_failure_class=_optional_non_empty_string(
             journal_payload["last_failure_class"],
             "OpenAIRuntimeSessionArtifact.journal.last_failure_class",
@@ -386,6 +423,8 @@ def _require_journal_keys(payload: Mapping[str, Any]) -> None:
     accepted_keys = {
         _LEGACY_JOURNAL_KEYS,
         _LEGACY_JOURNAL_KEYS + _OPTIONAL_JOURNAL_KEY_SUFFIX,
+        _PRE_MODULATOR_JOURNAL_KEYS,
+        _PRE_MODULATOR_JOURNAL_KEYS + _OPTIONAL_JOURNAL_KEY_SUFFIX,
         _JOURNAL_KEYS,
         _JOURNAL_KEYS + _OPTIONAL_JOURNAL_KEY_SUFFIX,
     }
@@ -496,6 +535,15 @@ def _optional_feedback(value: Any, label: str) -> ReferenceRealizationFeedback |
     return _feedback(value, label)
 
 
+def _optional_executive_modulator_memory(
+    value: Any,
+    label: str,
+) -> ExecutiveModulatorMemory | None:
+    if value is None:
+        return None
+    return _executive_modulator_memory(value, label)
+
+
 def _feedback_window(
     value: Any,
     label: str,
@@ -547,6 +595,35 @@ def _optional_commitment_result_kind(value: Any, label: str) -> str | None:
     if stripped not in {"certified", "uncertified", "blocked"}:
         raise ValueError(f"{label} must be a canonical commitment status when provided.")
     return stripped
+
+
+def _executive_modulator_memory(value: Any, label: str) -> ExecutiveModulatorMemory:
+    if not isinstance(value, Mapping):
+        actual_type = type(value).__name__
+        raise TypeError(f"{label} must be an object, got {actual_type}.")
+    memory_keys = (
+        "focus_tonic",
+        "explore_tonic",
+        "stop_tonic",
+        "update_tonic",
+    )
+    _require_exact_keys(value, memory_keys, label)
+    return ExecutiveModulatorMemory(
+        focus_tonic=_unit_float(value["focus_tonic"], f"{label}.focus_tonic"),
+        explore_tonic=_unit_float(value["explore_tonic"], f"{label}.explore_tonic"),
+        stop_tonic=_unit_float(value["stop_tonic"], f"{label}.stop_tonic"),
+        update_tonic=_unit_float(value["update_tonic"], f"{label}.update_tonic"),
+    )
+
+
+def _unit_float(value: Any, label: str) -> float:
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
+        actual_type = type(value).__name__
+        raise TypeError(f"{label} must be numeric, got {actual_type}.")
+    parsed = float(value)
+    if not 0.0 <= parsed <= 1.0:
+        raise ValueError(f"{label} must be between 0.0 and 1.0.")
+    return parsed
 
 
 __all__ = [

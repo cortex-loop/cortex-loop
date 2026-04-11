@@ -187,6 +187,16 @@ def _assert_locked_continuity_flow(records: list[dict[str, object]]) -> None:
         "seek-context",
         "seek-context",
     ]
+    assert [record["closure_required"] for record in records] == [
+        False,
+        True,
+        False,
+        False,
+    ]
+    assert records[0]["closure_reason_tags"] == []
+    assert records[1]["closure_reason_tags"] == ["pending_goal_debt"]
+    assert records[2]["closure_reason_tags"] == []
+    assert records[3]["closure_reason_tags"] == []
     assert records[0]["journal"]["active_track_ref"] == "branch-alpha"
     assert records[0]["journal"]["active_goal_ref"] == "branch-alpha"
     assert "continuity-debt:pending-goals" in records[1]["warnings"]
@@ -198,3 +208,4 @@ def _assert_locked_continuity_flow(records: list[dict[str, object]]) -> None:
     assert records[3]["warnings"] == []
     assert records[3]["journal"]["active_track_ref"] == "main"
     assert records[3]["journal"]["pending_goal_refs"] == []
+    assert records[3]["journal"]["executive_modulator_memory"] is not None
