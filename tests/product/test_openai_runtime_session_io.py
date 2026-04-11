@@ -195,6 +195,52 @@ def test_openai_runtime_session_artifact_accepts_pre_modulator_full_journal_shap
     assert restored.active_track_ref == "branch-alpha"
 
 
+def test_openai_runtime_session_artifact_canonicalizes_noisy_modulator_memory_values() -> None:
+    payload = {
+        "artifact_kind": "openai_product_journal",
+        "artifact_version": 1,
+        "journal": {
+            "session_id": "oa-canonical-memory",
+            "event_index": 1,
+            "branch_registry": ["main"],
+            "active_track_ref": "main",
+            "active_goal_ref": None,
+            "pending_goal_refs": [],
+            "confirmed_artifact_refs": [],
+            "budget_history": [],
+            "brake_history": [],
+            "last_selected_family": None,
+            "last_commitment_result_summary": None,
+            "last_realization_feedback": None,
+            "feedback_window": [],
+            "executive_modulator_memory": {
+                "focus_tonic": 0.0,
+                "explore_tonic": 0.3375,
+                "stop_tonic": 0.6000000000000001,
+                "update_tonic": 0.40249999999999997,
+            },
+            "last_failure_class": None,
+            "next_recommended_move": "continue",
+        },
+    }
+
+    restored = parse_openai_runtime_session_artifact(payload)
+    roundtripped = build_openai_runtime_session_artifact(restored).as_payload()
+
+    assert restored.executive_modulator_memory == ExecutiveModulatorMemory(
+        focus_tonic=0.0,
+        explore_tonic=0.3375,
+        stop_tonic=0.6,
+        update_tonic=0.4025,
+    )
+    assert roundtripped["journal"]["executive_modulator_memory"] == {
+        "focus_tonic": 0.0,
+        "explore_tonic": 0.3375,
+        "stop_tonic": 0.6,
+        "update_tonic": 0.4025,
+    }
+
+
 def _base_payload() -> dict[str, object]:
     return {
         "artifact_kind": "openai_product_journal",

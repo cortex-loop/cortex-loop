@@ -151,11 +151,35 @@ def test_openai_runtime_step_keeps_hard_product_guards_ahead_of_reference_contro
         "executive_modulator_memory": {
             "focus_tonic": 0.0,
             "explore_tonic": 0.3375,
-            "stop_tonic": 0.6000000000000001,
-            "update_tonic": 0.40249999999999997,
+            "stop_tonic": 0.6,
+            "update_tonic": 0.4025,
         },
         "last_failure_class": None,
         "next_recommended_move": "check",
+    }
+
+
+def test_openai_runtime_session_canonicalizes_executive_modulator_memory_at_session_truth_boundary() -> None:
+    session = OpenAIRuntimeSession(
+        executive_modulator_memory=ExecutiveModulatorMemory(
+            focus_tonic=0.0,
+            explore_tonic=0.3375,
+            stop_tonic=0.6000000000000001,
+            update_tonic=0.40249999999999997,
+        )
+    )
+
+    assert session.executive_modulator_memory == ExecutiveModulatorMemory(
+        focus_tonic=0.0,
+        explore_tonic=0.3375,
+        stop_tonic=0.6,
+        update_tonic=0.4025,
+    )
+    assert session.as_summary()["executive_modulator_memory"] == {
+        "focus_tonic": 0.0,
+        "explore_tonic": 0.3375,
+        "stop_tonic": 0.6,
+        "update_tonic": 0.4025,
     }
 
 

@@ -262,6 +262,15 @@ class OpenAIRuntimeSession:
                 "OpenAIRuntimeSession.preservation_state must be PreservationState | None, "
                 f"got {actual_type}."
             )
+        normalized_executive_modulator_memory = _canonicalize_executive_modulator_memory(
+            self.executive_modulator_memory
+        )
+        if normalized_executive_modulator_memory != self.executive_modulator_memory:
+            object.__setattr__(
+                self,
+                "executive_modulator_memory",
+                normalized_executive_modulator_memory,
+            )
 
         normalized_branch_registry: list[str] = []
         if "main" not in self.branch_registry:
@@ -995,7 +1004,9 @@ def run_openai_runtime_step(
         ),
         last_realization_feedback=realization_feedback,
         feedback_window=prior_session.feedback_window.append(realization_feedback),
-        executive_modulator_memory=executive_modulator_update.next_memory,
+        executive_modulator_memory=_canonicalize_executive_modulator_memory(
+            executive_modulator_update.next_memory
+        ),
         last_failure_class=carried_failure_class,
         next_recommended_move=next_recommended_move,
         preservation_state=carried_preservation_state,
@@ -1928,12 +1939,21 @@ def _copy_allocation_diagnostics_payload(payload: dict[str, Any]) -> dict[str, A
 def _executive_modulator_memory_summary(
     memory: ExecutiveModulatorMemory,
 ) -> dict[str, float]:
-    return {
-        "focus_tonic": float(memory.focus_tonic),
-        "explore_tonic": float(memory.explore_tonic),
-        "stop_tonic": float(memory.stop_tonic),
-        "update_tonic": float(memory.update_tonic),
-    }
+    return _canonicalize_executive_modulator_memory(memory).as_payload()
+
+
+def _canonicalize_executive_modulator_memory(
+    memory: ExecutiveModulatorMemory | None,
+) -> ExecutiveModulatorMemory | None:
+    if memory is None:
+        return None
+    payload = memory.as_payload()
+    return ExecutiveModulatorMemory(
+        focus_tonic=payload["focus_tonic"],
+        explore_tonic=payload["explore_tonic"],
+        stop_tonic=payload["stop_tonic"],
+        update_tonic=payload["update_tonic"],
+    )
 
 
 __all__ = [
