@@ -46,9 +46,6 @@ OPENAI_BREADTH_PACKS = (
 )
 REPAIR_GUARDRAIL_PACK = cortex_conformance.NORMALIZE_PORT_CONTRACT_PACK
 SERVICE_SPEND_TRAINS = {
-    "conformance-summary-truth",
-    "verified-work-breadth-openai",
-    "verified-work-repair-yield-openai",
     "output-quality-comparison-openai",
     "causal-contribution-map-openai",
 }
@@ -228,7 +225,16 @@ def evaluate_conformance_summary_truth(
     shipping_default_ok = (
         isinstance(summary, dict)
         and isinstance(summary.get("shipping_truth"), dict)
-        and summary["shipping_truth"].get("default") == "openai:service_api"
+        and summary["shipping_truth"].get("default") == "openai:operator_cli"
+    )
+    publishable_full_run_ok = isinstance(summary, dict) and cortex_conformance._summary_is_publishable_full_run_anchor(  # noqa: SLF001
+        summary,
+        contract_pack_name=cortex_conformance.ACTIVE_CONTRACT_PACK,
+    )
+    surface_drift_reason = (
+        cortex_conformance._summary_surface_drift_reason(summary)  # noqa: SLF001
+        if isinstance(summary, dict)
+        else None
     )
 
     reasons: list[str] = []
@@ -236,14 +242,16 @@ def evaluate_conformance_summary_truth(
         reasons.append("summary.latest does not represent a full tri-brain run")
     if not artifacts_exist:
         reasons.append("summary.latest references missing artifacts")
+    if not publishable_full_run_ok and surface_drift_reason is not None:
+        reasons.append(surface_drift_reason)
     if summary_next_decision != accepted_next_decision:
         reasons.append("summary.latest next_decision drifts from CT2 accepted truth")
     if not shipping_default_ok:
-        reasons.append("shipping_default drifted away from openai:service_api")
+        reasons.append("shipping_default drifted away from openai:operator_cli")
 
     return {
         "primary_metric_value": 0 if reasons else 1,
-        "guardrail_ok": shipping_default_ok,
+        "guardrail_ok": shipping_default_ok and publishable_full_run_ok,
         "accepted_next_decision": accepted_next_decision,
         "summary_next_decision": summary_next_decision,
         "is_full_run": is_full_run,
@@ -323,7 +331,7 @@ def run_conformance_summary_truth_pilot(
         ),
         contract_pack="verified_work_bookmarks_v1",
         conformance_surfaces=(
-            "openai:service_api",
+            "openai:operator_cli",
             "claude:operator_cli",
             "gemini:operator_cli",
         ),
@@ -504,7 +512,7 @@ def run_verified_work_breadth_openai_train(
         ),
         contract_pack=cortex_conformance.FEATURE_FLAGS_CONTRACT_PACK,
         conformance_surfaces=(
-            "openai:service_api",
+            "openai:operator_cli",
             "claude:operator_cli",
             "gemini:operator_cli",
         ),
@@ -667,7 +675,7 @@ def run_verified_work_repair_yield_openai_train(
         ),
         contract_pack="verified_work_bookmarks_v1,verified_work_normalize_port_v1,verified_work_feature_flags_v1",
         conformance_surfaces=(
-            "openai:service_api",
+            "openai:operator_cli",
             "claude:operator_cli",
             "gemini:operator_cli",
         ),
@@ -1209,7 +1217,7 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.train in SERVICE_SPEND_TRAINS:
         require_openai_service_spend_approval(
-            purpose=f"the `{args.train}` train on the OpenAI service_api lane"
+            purpose=f"the `{args.train}` train on the OpenAI backup service_api lane"
         )
 
     if args.train == "conformance-summary-truth":

@@ -31,6 +31,11 @@ _OUTPUT_KEYS = (
     "session_summary",
     "commitment_result_kind",
     "feedback_window_summary",
+    "executive_signal_summary",
+    "executive_modulator_state",
+    "executive_policy_view",
+    "closure_required",
+    "closure_reason_tags",
 )
 
 
@@ -58,6 +63,11 @@ def build_claude_cli_record(step_result: ClaudeRuntimeStepResult) -> dict[str, A
         "session_summary": step_result.session_summary,
         "commitment_result_kind": step_result.commitment_result_kind,
         "feedback_window_summary": step_result.feedback_window_summary_payload,
+        "executive_signal_summary": step_result.executive_signal_summary_payload,
+        "executive_modulator_state": step_result.executive_modulator_state_payload,
+        "executive_policy_view": step_result.executive_policy_view_payload,
+        "closure_required": step_result.closure_required,
+        "closure_reason_tags": list(step_result.closure_reason_tags),
     }
 
 

@@ -288,6 +288,7 @@ def run_command(
             env=env,
             text=True,
             capture_output=True,
+            stdin=subprocess.DEVNULL,
             timeout=timeout_seconds,
             check=False,
         )
@@ -575,15 +576,15 @@ def extract_result_text(records: list[dict[str, Any]], raw_stdout: str) -> str |
     for record in reversed(records):
         result = record.get("result")
         if isinstance(result, str) and result.strip():
-            return result.strip()
+            return _trim_to_protocol_blocks(result)
         item = record.get("item")
         if isinstance(item, dict):
             text = item.get("text")
             if isinstance(text, str) and text.strip():
-                return text.strip()
+                return _trim_to_protocol_blocks(text)
         response = record.get("response")
         if isinstance(response, str) and response.strip():
-            return response.strip()
+            return _trim_to_protocol_blocks(response)
         message = record.get("message")
         if isinstance(message, dict):
             content = message.get("content")
@@ -595,22 +596,46 @@ def extract_result_text(records: list[dict[str, Any]], raw_stdout: str) -> str |
                         if isinstance(text, str) and text.strip():
                             chunks.append(text.strip())
                 if chunks:
-                    return "\n".join(chunks)
+                    return _trim_to_protocol_blocks("\n".join(chunks))
         content = record.get("content")
         if (
             isinstance(content, str)
             and content.strip()
             and record.get("type") != "message"
         ):
-            return content.strip()
+            return _trim_to_protocol_blocks(content)
     if latest_assistant_message:
-        return latest_assistant_message
+        return _trim_to_protocol_blocks(latest_assistant_message)
     if assistant_delta_chunks:
         joined = "".join(assistant_delta_chunks).strip()
         if joined:
-            return joined
+            return _trim_to_protocol_blocks(joined)
     stripped = raw_stdout.strip()
-    return stripped or None
+    return _trim_to_protocol_blocks(stripped) if stripped else None
+
+
+def _trim_to_protocol_blocks(text: str) -> str:
+    stripped = text.strip()
+    if not stripped:
+        return stripped
+    lines = stripped.splitlines()
+    start_index: int | None = None
+    end_index: int | None = None
+    for index, line in enumerate(lines):
+        candidate = line.strip()
+        if candidate.startswith("=== FILE: ") or candidate.startswith("=== BLOCKED: "):
+            start_index = index
+            break
+    if start_index is None:
+        return stripped
+    for index in range(len(lines) - 1, start_index - 1, -1):
+        candidate = lines[index].strip()
+        if candidate in {"=== END FILE ===", "=== END BLOCKED ==="}:
+            end_index = index
+            break
+    if end_index is None or end_index < start_index:
+        return stripped
+    return "\n".join(lines[start_index : end_index + 1]).strip()
 
 
 def extract_token_usage(provider: str, records: list[dict[str, Any]]) -> dict[str, Any]:

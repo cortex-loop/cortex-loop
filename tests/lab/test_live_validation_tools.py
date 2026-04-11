@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import io
 import os
+import subprocess
 import sys
 import tempfile
 from pathlib import Path
@@ -116,6 +117,25 @@ def test_load_local_env_file_preserves_existing_env_values(tmp_path: Path, monke
     assert os.environ["CORTEX_LIVE_SERVICE_SPEND_APPROVED"] == "approved"
 
 
+def test_run_command_does_not_forward_parent_stdin(monkeypatch) -> None:
+    def fake_run(command, **kwargs):
+        assert kwargs["stdin"] is subprocess.DEVNULL
+
+        class Completed:
+            returncode = 0
+            stdout = "ok"
+            stderr = ""
+
+        return Completed()
+
+    monkeypatch.setattr(live_validation_common.subprocess, "run", fake_run)
+
+    result = live_validation_common.run_command(["echo", "ok"])
+
+    assert result["exit_code"] == 0
+    assert result["stdout"] == "ok"
+
+
 def test_should_collapse_after_failure_matches_blocking_classes() -> None:
     for failure_class in BLOCKING_FAILURE_CLASSES:
         assert should_collapse_after_failure(failure_class) is True
@@ -171,6 +191,28 @@ def test_extract_result_text_keeps_structured_timeout_payload() -> None:
         {
             "session_id": "cl-1",
             "result": "=== FILE: src/bookmarks_api/main.py ===\napp = object()\n=== END FILE ===",
+        },
+        indent=2,
+    )
+
+    records, extraction_mode = parse_json_records(text)
+
+    assert extraction_mode == "json_object"
+    assert extract_result_text(records, text) == (
+        "=== FILE: src/bookmarks_api/main.py ===\napp = object()\n=== END FILE ==="
+    )
+
+
+def test_extract_result_text_trims_operator_preamble_before_protocol_blocks() -> None:
+    text = json.dumps(
+        {
+            "session_id": "cl-2",
+            "result": (
+                "Short explanation before repair.\n\n"
+                "=== FILE: src/bookmarks_api/main.py ===\n"
+                "app = object()\n"
+                "=== END FILE ==="
+            ),
         },
         indent=2,
     )

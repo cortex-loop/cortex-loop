@@ -40,6 +40,7 @@ def test_reference_runtime_session_artifact_roundtrips_empty_session() -> None:
             "last_commitment_result_summary": None,
             "last_realization_feedback": None,
             "feedback_window": [],
+            "executive_modulator_memory": None,
         },
     }
     assert restored == session
@@ -97,6 +98,7 @@ def test_reference_runtime_session_artifact_roundtrips_bounded_residue_without_f
             _feedback("warn-earlier").as_summary(),
             warning_feedback.as_summary(),
         ],
+        "executive_modulator_memory": None,
     }
     assert "budget_history" not in payload["control_residue"]
     assert "brake_history" not in payload["control_residue"]

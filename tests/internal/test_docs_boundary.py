@@ -17,6 +17,7 @@ PRODUCT_CHARTER_PATH = REPO_ROOT / "docs" / "CORTEX_PRODUCT_CHARTER.md"
 PRODUCT_BOUNDARY_PATH = REPO_ROOT / "docs" / "CORTEX_PRODUCT_BOUNDARY.md"
 STATUS_REGISTRY_PATH = REPO_ROOT / "internal" / "truth" / "cortex_status.json"
 STATUS_DOC_PATH = REPO_ROOT / "docs" / "CORTEX_STATUS.md"
+WORKFLOW_DOC_PATH = REPO_ROOT / "docs" / "internal" / "REPO_WORKFLOW.md"
 ARCHIVE_MANIFEST_PATH = REPO_ROOT / "internal" / "archive" / "manifest.json"
 ARCHIVE_INDEX_PATH = REPO_ROOT / "docs" / "archive" / "README.md"
 PYPROJECT_PATH = REPO_ROOT / "pyproject.toml"
@@ -67,6 +68,8 @@ def test_agents_records_mission_lock_and_single_truth_bootstrap() -> None:
     assert "shipping truth" in text
     assert "conformance truth" in text
     assert "This root `AGENTS.md` is the only agent contract in the repo." in text
+    assert "Do not run paid service-lane commands unless the user explicitly approves spend in the current chat." in text
+    assert "Do not set `CORTEX_LIVE_SERVICE_SPEND_APPROVED`" in text
     assert "CORTEX_V2_ACTIVE_WORKSTREAM" not in text
     assert "CORTEX_V2_PHASE_GATES_2" not in text
     assert "CORTEX_V2_MATH_TO_CODE_CORRESPONDENCE" not in text
@@ -79,12 +82,16 @@ def test_public_docs_point_to_status_and_keep_archive_out_of_the_front_door() ->
     docs_index = _read(DOCS_INDEX_PATH)
     charter = _read(PRODUCT_CHARTER_PATH)
     boundary = _read(PRODUCT_BOUNDARY_PATH)
+    workflow = _read(WORKFLOW_DOC_PATH)
 
     assert "docs/CORTEX_STATUS.md" in readme
+    assert "OpenAI product runtime on the CLI lane, with the direct service kept as a non-default backup surface" in readme
     assert "Current Status" in docs_index
     assert "archive/" in docs_index
     assert "active workstream ledger" in charter
     assert "internal/truth/cortex_status.json" in boundary
+    assert "paid OpenAI service-lane proof is never part of the default bundle" in workflow
+    assert "requires explicit user approval in the current chat" in workflow
     for text in (readme, docs_index, charter, boundary):
         assert "CORTEX_V2_ACTIVE_WORKSTREAM" not in text
         assert "CORTEX_V2_PHASE_GATES_2" not in text
@@ -160,11 +167,16 @@ def test_status_registry_is_complete_and_stable() -> None:
             for item in status["bio_to_code_matrix"]
         )
     )
-    assert current_percent == 80
-    assert current_percent < status["executive_completion"]["shippable_threshold_percent"]
+    assert current_percent == 90
+    assert current_percent >= status["executive_completion"]["shippable_threshold_percent"]
     matrix_status = {
         item["skill"]: item["status"] for item in status["bio_to_code_matrix"]
     }
+    status_mix = {
+        key: sum(1 for item in status["bio_to_code_matrix"] if item["status"] == key)
+        for key in ("landed", "partial", "north_star")
+    }
+    assert status_mix == {"landed": 7, "partial": 0, "north_star": 1}
     assert matrix_status["Uncertainty handling and brake"] == "landed"
     assert (
         matrix_status["Branch continuity, suspend/resume, and truthful closure"]
@@ -172,17 +184,20 @@ def test_status_registry_is_complete_and_stable() -> None:
     )
     assert matrix_status["Intervention pricing versus neutrality"] == "landed"
     assert matrix_status["Blocker surfacing and goal-debt management"] == "landed"
-    assert matrix_status["Multi-host executive continuity"] == "partial"
+    assert matrix_status["Multi-host executive continuity"] == "landed"
     assert matrix_status["Offline consolidation and support geometry"] == "north_star"
     assert status["executive_completion"]["next_raise"] == [
         {
-            "skill": "Multi-host executive continuity",
-            "expected_points_if_landed": 11,
-            "why": "Largest remaining near-term executive lift now that the richer OpenAI-first law is landed and proven on the shipping lane.",
+            "skill": "Offline consolidation and support geometry",
+            "expected_points_if_landed": 10,
+            "why": "Only the AUX support-geometry row remains in the denominator, and it must earn a lawful evaluation-first shape before any runtime promotion.",
         }
     ]
     host_status = {
         item["name"]: item["conformance"] for item in status["hosts"]
+    }
+    host_surfaces = {
+        item["name"]: item["strongest_surface"] for item in status["hosts"]
     }
     assert host_status == {
         "openai": "conformant",
@@ -190,8 +205,16 @@ def test_status_registry_is_complete_and_stable() -> None:
         "gemini": "partial",
         "reference": "conformant",
     }
-    assert status["work_today"]["slug"]
-    assert status["next_product_train"]["slug"] == "multi-host-executive-continuity"
+    assert host_surfaces == {
+        "openai": "operator_cli",
+        "claude": "operator_cli",
+        "gemini": "operator_cli",
+        "reference": "reference_cli",
+    }
+    assert status["conformance_summary"]["shipping_default"] == "openai:operator_cli"
+    assert status["work_today"]["slug"] == "offline-support-geometry-shape"
+    assert status["next_product_train"]["slug"] == "offline-support-geometry-shape"
+    assert status["next_product_train"]["surface"] == "experimental"
 
 
 def test_generated_status_doc_includes_system_map_and_next_product_train() -> None:
@@ -204,13 +227,15 @@ def test_generated_status_doc_includes_system_map_and_next_product_train() -> No
     assert "## Bio-To-Code Matrix" in text
     assert "## Math To Code Rules" in text
     assert "human executive function" in text
-    assert "Current full-executive completion: `80%`" in text
+    assert "Current full-executive completion: `90%`" in text
     assert "Shippable threshold for the full executive: `85%`" in text
     assert "When user asks where Cortex is at:" in text
     assert "full executive denominator" in text
     assert "## Packet To Code" in text
     assert "## Next Product Train" in text
-    assert "`multi-host-executive-continuity`" in text
+    assert "`offline-support-geometry-shape`" in text
+    assert "Shipping Product Lane\\nopenai:operator_cli" in text or "Shipping Product Lane" in text
+    assert "Shipping default: `openai:operator_cli`" in text
 
 
 def test_front_door_surfaces_point_to_one_command_managed_closeout() -> None:

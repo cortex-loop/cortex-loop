@@ -97,7 +97,7 @@ def test_evaluate_conformance_summary_truth_detects_missing_artifacts(
         json.dumps(
             {
                 "next_decision": "fix_wiring_only",
-                "shipping_truth": {"default": "openai:service_api"},
+                "shipping_truth": {"default": "openai:operator_cli"},
                 "results": [
                     {"brain": "openai", "artifact_relpath": "missing/openai"},
                     {"brain": "claude", "artifact_relpath": "missing/claude"},
@@ -116,6 +116,67 @@ def test_evaluate_conformance_summary_truth_detects_missing_artifacts(
     assert result["primary_metric_value"] == 0
     assert "references missing artifacts" in " ".join(result["reasons"])
     assert result["accepted_next_decision"] == "promote"
+
+
+def test_evaluate_conformance_summary_truth_detects_backup_openai_surface_drift(
+    tmp_path: Path,
+) -> None:
+    for artifact_name in (
+        "openai_service_api",
+        "claude_operator_cli",
+        "gemini_operator_cli",
+    ):
+        (tmp_path / artifact_name).mkdir()
+
+    summary_path = tmp_path / "summary.latest.json"
+    summary_path.write_text(
+        json.dumps(
+            {
+                "next_decision": "promote",
+                "shipping_truth": {"default": "openai:operator_cli"},
+                "contract_pack": {
+                    "contract_pack": "verified_work_bookmarks_v1",
+                    "train_charter": {
+                        "conformance_surfaces": [
+                            "openai:operator_cli",
+                            "claude:operator_cli",
+                            "gemini:operator_cli",
+                        ]
+                    },
+                },
+                "results": [
+                    {
+                        "brain": "openai",
+                        "surface": "service_api",
+                        "artifact_relpath": "openai_service_api",
+                    },
+                    {
+                        "brain": "claude",
+                        "surface": "operator_cli",
+                        "artifact_relpath": "claude_operator_cli",
+                    },
+                    {
+                        "brain": "gemini",
+                        "surface": "operator_cli",
+                        "artifact_relpath": "gemini_operator_cli",
+                    },
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    result = train_loop.evaluate_conformance_summary_truth(
+        repo_root=tmp_path,
+        summary_path=summary_path,
+    )
+
+    assert result["primary_metric_value"] == 0
+    assert result["guardrail_ok"] is False
+    assert (
+        "summary.latest reflects openai:service_api instead of openai:operator_cli"
+        in result["reasons"]
+    )
 
 
 def test_run_conformance_summary_truth_pilot_records_iteration(

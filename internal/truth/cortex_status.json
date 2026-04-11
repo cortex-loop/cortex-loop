@@ -47,9 +47,9 @@
     ],
     "next_raise": [
       {
-        "skill": "Multi-host executive continuity",
-        "expected_points_if_landed": 11,
-        "why": "Largest remaining near-term executive lift now that the richer OpenAI-first law is landed and proven on the shipping lane."
+        "skill": "Offline consolidation and support geometry",
+        "expected_points_if_landed": 10,
+        "why": "Only the AUX support-geometry row remains in the denominator, and it must earn a lawful evaluation-first shape before any runtime promotion."
       }
     ]
   },
@@ -82,7 +82,7 @@
       "proof_surfaces": [
         "tests/product"
       ],
-      "next_move": "Keep preservation-state repair stable while the remaining cross-host coherence work closes over the same executive law."
+      "next_move": "Keep preservation-state repair stable while support-side experiments stay removable and off the shipping critical path."
     },
     {
       "skill": "Uncertainty handling and brake",
@@ -96,7 +96,7 @@
         "tests/product",
         "tests/experimental"
       ],
-      "next_move": "Keep reference-derived brake and uncertainty control stable while cross-host coherence is re-earned."
+      "next_move": "Keep reference-derived brake and uncertainty control stable while AUX remains advisory and runtime-off-by-default."
     },
     {
       "skill": "Branch continuity, suspend/resume, and truthful closure",
@@ -111,7 +111,7 @@
         "tests/product",
         "tests/conformance"
       ],
-      "next_move": "Keep suspend/resume and truthful closure stable while donor-host coherence is re-earned."
+      "next_move": "Keep suspend/resume and truthful closure stable while any future support memory remains explicit, optional, and non-binding."
     },
     {
       "skill": "Intervention pricing versus neutrality",
@@ -125,7 +125,7 @@
         "tests/product",
         "tests/experimental"
       ],
-      "next_move": "Keep reference-governed intervention pricing stable while remaining host realizations re-earn coherence."
+      "next_move": "Keep reference-governed intervention pricing stable while support geometry, if added, stays removable and claim-conservative."
     },
     {
       "skill": "Blocker surfacing and goal-debt management",
@@ -139,12 +139,12 @@
       "proof_surfaces": [
         "tests/product"
       ],
-      "next_move": "Keep closure-required and blocker-debt surfacing stable while cross-host continuity is re-earned."
+      "next_move": "Keep closure-required and blocker-debt surfacing stable while support-side augmentation remains explicit and non-sovereign."
     },
     {
       "skill": "Multi-host executive continuity",
       "stolen_skill": "One executive across different brains and contexts",
-      "status": "partial",
+      "status": "landed",
       "weight": 15,
       "code_homes": [
         "cortex/hosts/openai",
@@ -156,7 +156,7 @@
         "tests/product",
         "tests/conformance"
       ],
-      "next_move": "Raise Claude and Gemini conformance while keeping one Cortex law across all hosts."
+      "next_move": "Hold one Cortex law across OpenAI, Claude, Gemini, and reference without flattening host-native realization."
     },
     {
       "skill": "Offline consolidation and support geometry",
@@ -178,17 +178,17 @@
     "law_revision_rule": "The current math is binding landing law until live evidence disproves or narrows it. When that happens, revise the law explicitly and update the code and proof surfaces in the same seam; do not silently patch around stale math in implementation."
   },
   "work_today": {
-    "slug": "multi-host-executive-continuity",
-    "note": "Raise Claude, Gemini, and reference coherence around the now-landed OpenAI-first executive law without widening shipping truth or permitting host-specific policy forks."
+    "slug": "offline-support-geometry-shape",
+    "note": "Define a lawful evaluation-first AUX support-geometry seam that improves support-side priors without becoming runtime-required or changing commitment truth."
   },
   "next_product_train": {
-    "slug": "multi-host-executive-continuity",
-    "surface": "product",
-    "executive_benefit": "Raise Claude, Gemini, and reference coherence around the now-landed richer executive law while keeping shipping truth OpenAI-first.",
-    "why_now": "The OpenAI-first executive is now shipped and proven enough that the largest remaining lift is multi-host continuity rather than more OpenAI-only behavior work.",
-    "primary_metric": "coherent cross-host conformance on continuity, brake, intervention pricing, and closure truth",
-    "guardrail": "no host-specific policy forks and no widening of shipping truth away from openai:service_api",
-    "kill_rule": "cut any wiring-only divergence into a separate seam instead of revising Cortex law prematurely"
+    "slug": "offline-support-geometry-shape",
+    "surface": "experimental",
+    "executive_benefit": "Shape removable AUX support geometry and consolidation priors so Cortex can add support-side lift without turning AUX into hidden executive truth.",
+    "why_now": "All non-north-star executive rows are now landed, so the remaining denominator work is to give AUX a lawful evaluation-first shape rather than widen shipping behavior.",
+    "primary_metric": "measured support-side lift on retrieval, review, branch, or uncertainty priors with zero change to commitment truth and runtime-off-by-default activation",
+    "guardrail": "runtime-off-by-default, support-side only, and no change to commitment certification, blockedness, or the openai:operator_cli shipping default",
+    "kill_rule": "prune any AUX seam that adds overhead without lift, smooths contradictions, or becomes operationally load-bearing for minimum lawful runtime behavior"
   },
   "system_map": {
     "nodes": [
@@ -214,7 +214,7 @@
       },
       {
         "id": "shipping",
-        "label": "Shipping Product Lane\\nopenai:service_api",
+        "label": "Shipping Product Lane\\nopenai:operator_cli",
         "status": "green"
       },
       {
@@ -375,7 +375,7 @@
       "name": "openai",
       "shipping": "default",
       "conformance": "conformant",
-      "strongest_surface": "service_api",
+      "strongest_surface": "operator_cli",
       "daily_iteration_surface": "operator_cli",
       "code_home": "cortex/hosts/openai"
     },
@@ -406,7 +406,7 @@
   ],
   "conformance_summary": {
     "accepted_next_decision": "promote",
-    "shipping_default": "openai:service_api"
+    "shipping_default": "openai:operator_cli"
   },
   "closure_gates": [
     {
@@ -479,9 +479,9 @@
     }
   ],
   "where_to_work": [
-    "Start with multi-host executive continuity around the now-landed OpenAI-first executive law.",
-    "Keep tri-brain conformance explicit while shipping truth stays OpenAI-first.",
-    "Use lab proof surfaces only to falsify or prove host-realization seams; do not widen status truth from non-shipping reruns alone."
+    "Start with evaluation-first AUX support geometry and offline-support shape, not new OpenAI or donor-host policy work.",
+    "Keep AUX removable, runtime-off-by-default, and support-side only while shipping truth stays openai:operator_cli.",
+    "Use lab and evaluation surfaces to falsify support lift, but do not promote AUX into shipping truth unless it proves lift without touching commitment law."
   ],
   "blocked_moves": [
     "Do not let archived docs or train notes act as live truth.",

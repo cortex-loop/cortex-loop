@@ -56,32 +56,37 @@ def test_reference_runtime_step_result_surfaces_cheap_reference_event_without_co
     assert result.event_index == 1
     assert result.bound_event.observation.event.native_event_name == "context/load"
     assert result.dispatch_decision.lane is DispatchLane.CHEAP
-    assert result.selected_family is SoftControlFamily.NEUTRAL
-    assert result.realized_family is SoftControlFamily.NEUTRAL
-    assert result.brake_state is BrakeState.QUIESCENT
-    assert result.executive_state_summary["mode_tag"] == "pass_through"
+    assert result.selected_family is SoftControlFamily.SEEK_CONTEXT
+    assert result.realized_family is SoftControlFamily.SEEK_CONTEXT
+    assert result.brake_state is BrakeState.GUARDED
+    assert result.executive_state_summary["mode_tag"] == "guarded_review"
     assert result.executive_state_summary["budget_band"] == "low"
     assert result.control_ledger_summary["event_class"] == "cheap"
-    assert result.control_ledger_summary["admissible_families"] == ["neutral", "check"]
-    assert result.control_ledger_summary["selected_family"] == "neutral"
-    assert result.control_ledger_summary["realized_family"] == "neutral"
-    assert result.control_ledger_summary["dominant_uncertainty_sources"] == [
-        "environment",
-        "goal-progress",
+    assert result.control_ledger_summary["admissible_families"] == [
+        "neutral",
+        "seek-context",
+        "check",
+        "brake",
     ]
-    assert result.control_ledger_summary["brake_state"] == "quiescent"
+    assert result.control_ledger_summary["selected_family"] == "seek-context"
+    assert result.control_ledger_summary["realized_family"] == "seek-context"
+    assert result.control_ledger_summary["dominant_uncertainty_sources"] == [
+        "host-capability",
+        "environment",
+    ]
+    assert result.control_ledger_summary["brake_state"] == "guarded"
     assert result.control_ledger_summary["budget_band"] == "low"
     assert result.control_ledger_summary["primary_reason"] is None
     _assert_allocation_diagnostics_shape(
         result.control_ledger_summary["allocation_diagnostics"],
-        activation_threshold=0.35,
-        expected_alpha=1.0,
-        expect_allocated_equals_online=True,
+        activation_threshold=0.45,
+        expected_alpha=0.75,
+        expect_allocated_equals_online=False,
         expected_mediation={
             "mediation_active": False,
             "mediation_identity": True,
-            "selected_family_before_finalization": "neutral",
-            "selected_family_after_finalization": "neutral",
+            "selected_family_before_finalization": "seek-context",
+            "selected_family_after_finalization": "seek-context",
             "preferred_opportunity_ref": None,
             "direct_opportunity_specialization_used": False,
         },
@@ -100,17 +105,17 @@ def test_reference_runtime_step_result_surfaces_cheap_reference_event_without_co
     assert result.session.session_id == "session-1"
     assert result.session.active_track_ref == "main"
     assert result.session.budget_history == ("shell-low",)
-    assert result.session.brake_history == ("quiescent",)
-    assert result.session.last_selected_family is SoftControlFamily.NEUTRAL
+    assert result.session.brake_history == ("guarded",)
+    assert result.session.last_selected_family is SoftControlFamily.SEEK_CONTEXT
     assert result.session.last_commitment_result_summary is None
     assert isinstance(result.session.last_realization_feedback, ReferenceRealizationFeedback)
     assert result.session.last_realization_feedback.as_summary() == {
-        "selected_family": "neutral",
-        "realized_family": "neutral",
-        "brake_state": "quiescent",
+        "selected_family": "seek-context",
+        "realized_family": "seek-context",
+        "brake_state": "guarded",
         "commitment_result_kind": None,
         "warning_codes": [],
-        "host_friction_tags": [],
+        "host_friction_tags": ["capability-view-missing"],
     }
     assert result.session.feedback_window.entries == (result.session.last_realization_feedback,)
     assert result.session_summary["feedback_window_size"] == 1
@@ -215,18 +220,24 @@ def test_reference_runtime_step_result_keeps_candidate_bearing_event_candidate_o
     assert second.event_index == 2
     assert second.dispatch_decision.lane is DispatchLane.CANDIDATE_BEARING
     assert second.commitment_result_kind is None
-    assert second.realized_family is SoftControlFamily.NEUTRAL
+    assert second.selected_family is SoftControlFamily.SEEK_CONTEXT
+    assert second.realized_family is SoftControlFamily.SEEK_CONTEXT
     assert second.session.session_id == "session-2"
     assert second.session.active_track_ref == "main"
     assert second.session.budget_history == ("shell-low", "shell-medium")
-    assert second.session.brake_history == ("quiescent", "quiescent")
-    assert second.executive_state_summary["mode_tag"] == "review_pending"
+    assert second.session.brake_history == ("guarded", "guarded")
+    assert second.executive_state_summary["mode_tag"] == "guarded_review"
     assert second.executive_state_summary["budget_band"] == "medium"
     assert second.control_ledger_summary["event_class"] == "candidate-bearing"
-    assert second.control_ledger_summary["admissible_families"] == ["neutral", "check"]
+    assert second.control_ledger_summary["admissible_families"] == [
+        "neutral",
+        "seek-context",
+        "check",
+        "brake",
+    ]
     assert second.control_ledger_summary["dominant_uncertainty_sources"] == [
+        "host-capability",
         "evidence",
-        "environment",
     ]
     assert second.session.last_commitment_result_summary == "candidate-only"
     assert second.session.last_realization_feedback is not None
@@ -249,32 +260,37 @@ def test_reference_runtime_step_result_certifies_full_commitment_when_runtime_pa
     assert result.event_index == 1
     assert result.dispatch_decision.lane is DispatchLane.FULL_COMMITMENT
     assert result.commitment_result_kind == "certified"
-    assert result.selected_family is SoftControlFamily.NEUTRAL
-    assert result.realized_family is SoftControlFamily.NEUTRAL
-    assert result.brake_state is BrakeState.QUIESCENT
-    assert result.executive_state_summary["mode_tag"] == "commitment_path"
+    assert result.selected_family is SoftControlFamily.SEEK_CONTEXT
+    assert result.realized_family is SoftControlFamily.SEEK_CONTEXT
+    assert result.brake_state is BrakeState.GUARDED
+    assert result.executive_state_summary["mode_tag"] == "guarded_review"
     assert result.executive_state_summary["budget_band"] == "high"
     assert result.control_ledger_summary["event_class"] == "full-commitment"
-    assert result.control_ledger_summary["admissible_families"] == ["neutral", "check"]
-    assert result.control_ledger_summary["selected_family"] == "neutral"
-    assert result.control_ledger_summary["realized_family"] == "neutral"
-    assert result.control_ledger_summary["dominant_uncertainty_sources"] == [
-        "evidence",
-        "environment",
+    assert result.control_ledger_summary["admissible_families"] == [
+        "neutral",
+        "seek-context",
+        "check",
+        "brake",
     ]
-    assert result.control_ledger_summary["brake_state"] == "quiescent"
+    assert result.control_ledger_summary["selected_family"] == "seek-context"
+    assert result.control_ledger_summary["realized_family"] == "seek-context"
+    assert result.control_ledger_summary["dominant_uncertainty_sources"] == [
+        "host-capability",
+        "evidence",
+    ]
+    assert result.control_ledger_summary["brake_state"] == "guarded"
     assert result.control_ledger_summary["budget_band"] == "high"
     assert result.control_ledger_summary["primary_reason"] is None
     _assert_allocation_diagnostics_shape(
         result.control_ledger_summary["allocation_diagnostics"],
-        activation_threshold=0.25,
-        expected_alpha=0.85,
+        activation_threshold=0.30,
+        expected_alpha=0.75,
         expect_allocated_equals_online=False,
         expected_mediation={
             "mediation_active": False,
             "mediation_identity": True,
-            "selected_family_before_finalization": "neutral",
-            "selected_family_after_finalization": "neutral",
+            "selected_family_before_finalization": "seek-context",
+            "selected_family_after_finalization": "seek-context",
             "preferred_opportunity_ref": None,
             "direct_opportunity_specialization_used": False,
         },
@@ -364,9 +380,9 @@ def test_reference_runtime_step_propagates_session_rejection_feedback_into_next_
         in follow_up.executive_state.uncertainty_monitoring.contradiction_spike_flags
     )
     assert follow_up.brake_state is BrakeState.GUARDED
-    assert (
-        follow_up.control_ledger_summary["allocation_diagnostics"]["selected_delta_over_neutral"]
-        > rejected.control_ledger_summary["allocation_diagnostics"]["selected_delta_over_neutral"]
+    assert follow_up.realized_family is SoftControlFamily.NEUTRAL
+    assert follow_up.control_ledger_summary["primary_reason"] == (
+        "guarded-feedback-enforced:seek-context:neutral"
     )
 
 
@@ -476,7 +492,7 @@ def test_reference_runtime_step_does_not_raise_feedback_pressure_after_clean_suc
 
     assert _goal_progress_level(second) == 0.2
     assert not second.executive_state.uncertainty_monitoring.contradiction_spike_flags
-    assert second.brake_state is BrakeState.QUIESCENT
+    assert second.brake_state is BrakeState.GUARDED
 
 
 def test_reference_runtime_step_appends_feedback_window_and_truncates_oldest_entry() -> None:
@@ -560,13 +576,14 @@ def test_reference_runtime_step_reports_prior_window_summary_for_repeated_reject
     assert fifth.feedback_window_summary_payload == {
         "window_size": 3,
         "rejection_count": 2,
-        "override_count": 0,
-        "latched_count": 0,
+        "override_count": 1,
+        "latched_count": 1,
         "clean_success_streak": 0,
         "goal_progress_floor": 0.70,
         "degradation_pressure_bonus": 2,
         "sustained_spike_flags": [
             "prior-session-mismatch",
+            "prior-enforcement-override",
             "sustained-feedback-disruption",
         ],
     }

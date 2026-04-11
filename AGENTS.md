@@ -53,6 +53,8 @@ If authority surfaces disagree, resolve the conflict before widening scope.
 - Do not let lab, eval, archive, or governance surfaces become Cortex product identity.
 - Do not move active executive policy into the core.
 - Do not let shipping truth collapse conformance truth.
+- Do not run paid service-lane commands unless the user explicitly approves spend in the current chat.
+- Do not set `CORTEX_LIVE_SERVICE_SPEND_APPROVED` or equivalent spend opt-ins on your own initiative.
 - Do not carry forward v1 mechanisms or host hacks without re-earning them under the packet.
 - Do not claim product progress unless shipped runtime behavior changed or a direct product blocker was removed.
 - Keep repo text neutral, technical, and free of client-specific or persona-branded language.

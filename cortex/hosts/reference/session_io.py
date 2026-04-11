@@ -9,8 +9,13 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Mapping
 
+from cortex.hosts._executive_closure import (
+    canonicalize_executive_modulator_memory,
+    executive_modulator_memory_payload,
+)
 from cortex.sre.feedback import ReferenceRealizationFeedback, ReferenceRealizationFeedbackWindow
 from cortex.hosts.reference.runtime import ReferenceRuntimeSession
+from cortex.sre.modulators import ExecutiveModulatorMemory
 
 _ARTIFACT_KIND = "reference-runtime-session"
 _ARTIFACT_VERSION = 1
@@ -28,6 +33,13 @@ _CONTINUITY_TRUTH_KEYS = (
     "pending_goal_refs",
 )
 _CONTROL_RESIDUE_KEYS = (
+    "last_budget_band",
+    "last_commitment_result_summary",
+    "last_realization_feedback",
+    "feedback_window",
+    "executive_modulator_memory",
+)
+_PRE_MODULATOR_CONTROL_RESIDUE_KEYS = (
     "last_budget_band",
     "last_commitment_result_summary",
     "last_realization_feedback",
@@ -51,6 +63,7 @@ class ReferenceRuntimeSessionArtifact:
     feedback_window: ReferenceRealizationFeedbackWindow = field(
         default_factory=ReferenceRealizationFeedbackWindow
     )
+    executive_modulator_memory: ExecutiveModulatorMemory | None = None
 
     def __post_init__(self) -> None:
         if self.artifact_kind != _ARTIFACT_KIND:
@@ -120,6 +133,15 @@ class ReferenceRuntimeSessionArtifact:
                 "ReferenceRuntimeSessionArtifact.feedback_window must be "
                 f"ReferenceRealizationFeedbackWindow, got {actual_type}."
             )
+        if self.executive_modulator_memory is not None and not isinstance(
+            self.executive_modulator_memory,
+            ExecutiveModulatorMemory,
+        ):
+            actual_type = type(self.executive_modulator_memory).__name__
+            raise TypeError(
+                "ReferenceRuntimeSessionArtifact.executive_modulator_memory must be "
+                f"ExecutiveModulatorMemory | None, got {actual_type}."
+            )
         if (
             self.last_realization_feedback is not None
             and self.feedback_window.entries
@@ -128,6 +150,15 @@ class ReferenceRuntimeSessionArtifact:
             raise ValueError(
                 "ReferenceRuntimeSessionArtifact.feedback_window newest entry must match "
                 "last_realization_feedback when both are present."
+            )
+        normalized_executive_modulator_memory = canonicalize_executive_modulator_memory(
+            self.executive_modulator_memory
+        )
+        if normalized_executive_modulator_memory != self.executive_modulator_memory:
+            object.__setattr__(
+                self,
+                "executive_modulator_memory",
+                normalized_executive_modulator_memory,
             )
 
     def as_payload(self) -> dict[str, object]:
@@ -152,6 +183,11 @@ class ReferenceRuntimeSessionArtifact:
                 "feedback_window": [
                     entry.as_summary() for entry in self.feedback_window.entries
                 ],
+                "executive_modulator_memory": (
+                    executive_modulator_memory_payload(self.executive_modulator_memory)
+                    if self.executive_modulator_memory is not None
+                    else None
+                ),
             },
         }
 
@@ -178,6 +214,7 @@ class ReferenceRuntimeSessionArtifact:
             last_commitment_result_summary=self.last_commitment_result_summary,
             last_realization_feedback=self.last_realization_feedback,
             feedback_window=self.feedback_window,
+            executive_modulator_memory=self.executive_modulator_memory,
         )
 
 
@@ -200,6 +237,7 @@ def build_reference_runtime_session_artifact(
         last_commitment_result_summary=session.last_commitment_result_summary,
         last_realization_feedback=session.last_realization_feedback,
         feedback_window=session.feedback_window,
+        executive_modulator_memory=session.executive_modulator_memory,
     )
 
 
@@ -241,11 +279,7 @@ def parse_reference_runtime_session_artifact(
         _CONTINUITY_TRUTH_KEYS,
         "ReferenceRuntimeSessionArtifact.continuity_truth",
     )
-    _require_exact_keys(
-        control_residue_payload,
-        _CONTROL_RESIDUE_KEYS,
-        "ReferenceRuntimeSessionArtifact.control_residue",
-    )
+    _require_control_residue_keys(control_residue_payload)
 
     artifact = ReferenceRuntimeSessionArtifact(
         session_id=_optional_non_empty_string(
@@ -283,6 +317,10 @@ def parse_reference_runtime_session_artifact(
         feedback_window=_feedback_window(
             control_residue_payload["feedback_window"],
             "ReferenceRuntimeSessionArtifact.control_residue.feedback_window",
+        ),
+        executive_modulator_memory=_optional_executive_modulator_memory(
+            control_residue_payload.get("executive_modulator_memory"),
+            "ReferenceRuntimeSessionArtifact.control_residue.executive_modulator_memory",
         ),
     )
     return artifact.to_session()
@@ -353,6 +391,19 @@ def _require_exact_keys(
         )
 
 
+def _require_control_residue_keys(payload: Mapping[str, Any]) -> None:
+    actual_keys = tuple(payload.keys())
+    if actual_keys == _CONTROL_RESIDUE_KEYS or actual_keys == _PRE_MODULATOR_CONTROL_RESIDUE_KEYS:
+        return
+    expected = f"{_CONTROL_RESIDUE_KEYS} or {_PRE_MODULATOR_CONTROL_RESIDUE_KEYS}"
+    missing_keys = [key for key in _CONTROL_RESIDUE_KEYS if key not in payload]
+    extra_keys = [key for key in actual_keys if key not in _CONTROL_RESIDUE_KEYS]
+    raise ValueError(
+        "ReferenceRuntimeSessionArtifact.control_residue keys must be exactly "
+        f"{expected}; missing={missing_keys}, extra={extra_keys}."
+    )
+
+
 def _optional_non_empty_string(value: Any, label: str) -> str | None:
     if value is None:
         return None
@@ -411,6 +462,15 @@ def _optional_feedback(value: Any, label: str) -> ReferenceRealizationFeedback |
     return _feedback(value, label)
 
 
+def _optional_executive_modulator_memory(
+    value: Any,
+    label: str,
+) -> ExecutiveModulatorMemory | None:
+    if value is None:
+        return None
+    return _executive_modulator_memory(value, label)
+
+
 def _feedback_window(
     value: Any,
     label: str,
@@ -450,6 +510,36 @@ def _feedback(value: Any, label: str) -> ReferenceRealizationFeedback:
             f"{label}.host_friction_tags",
         ),
     )
+
+
+def _executive_modulator_memory(value: Any, label: str) -> ExecutiveModulatorMemory:
+    if not isinstance(value, Mapping):
+        actual_type = type(value).__name__
+        raise TypeError(f"{label} must be an object, got {actual_type}.")
+    memory_keys = (
+        "focus_tonic",
+        "explore_tonic",
+        "stop_tonic",
+        "update_tonic",
+    )
+    _require_exact_keys(value, memory_keys, label)
+    memory = ExecutiveModulatorMemory(
+        focus_tonic=_unit_float(value["focus_tonic"], f"{label}.focus_tonic"),
+        explore_tonic=_unit_float(value["explore_tonic"], f"{label}.explore_tonic"),
+        stop_tonic=_unit_float(value["stop_tonic"], f"{label}.stop_tonic"),
+        update_tonic=_unit_float(value["update_tonic"], f"{label}.update_tonic"),
+    )
+    return canonicalize_executive_modulator_memory(memory)
+
+
+def _unit_float(value: Any, label: str) -> float:
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
+        actual_type = type(value).__name__
+        raise TypeError(f"{label} must be numeric, got {actual_type}.")
+    parsed = float(value)
+    if not 0.0 <= parsed <= 1.0:
+        raise ValueError(f"{label} must be between 0.0 and 1.0.")
+    return parsed
 
 
 def _soft_control_family(value: Any, label: str):
