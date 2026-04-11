@@ -728,7 +728,16 @@ def run_openai_runtime_step(
         continuity_warnings,
         continuity_reminders,
     ) = _apply_continuity_update(prior_session, normalized_payload)
-    warnings = merge_warnings(warnings, continuity_warnings)
+    continuity_debt = _has_continuation_debt(
+        pending_goal_refs=next_pending_goal_refs,
+        continuity_warnings=continuity_warnings,
+        continuity_reminders=continuity_reminders,
+    )
+    warnings = merge_warnings(
+        warnings,
+        continuity_warnings,
+        _continuity_debt_warnings(pending_goal_refs=next_pending_goal_refs),
+    )
     confirmed_artifact_refs = _merge_confirmed_artifact_refs(
         prior_session.confirmed_artifact_refs,
         _first_concrete_artifact_ref(normalized_payload),
@@ -801,16 +810,11 @@ def run_openai_runtime_step(
         consequential_write_pending
         and _first_concrete_artifact_ref(normalized_payload) is None
     )
-    continuation_debt = _has_continuation_debt(
-        active_track_ref=next_active_track_ref,
-        pending_goal_refs=next_pending_goal_refs,
-        continuity_reminders=continuity_reminders,
-    )
     decision = _decide_action(
         consequential_write_pending=consequential_write_pending,
         approval_required=approval_required,
         evidence_gap=evidence_gap,
-        continuation_debt=continuation_debt,
+        continuation_debt=continuity_debt,
         failure_class=failure_class,
     )
     product_decision = OpenAIProductDecision(
@@ -818,7 +822,7 @@ def run_openai_runtime_step(
         consequential_write_pending=consequential_write_pending,
         approval_required=approval_required,
         evidence_gap=evidence_gap,
-        continuation_debt=continuation_debt,
+        continuation_debt=continuity_debt,
         failure_class=failure_class,
     )
     realization_feedback = ReferenceRealizationFeedback(
@@ -1239,11 +1243,27 @@ def _decide_action(
 
 def _has_continuation_debt(
     *,
-    active_track_ref: str,
     pending_goal_refs: tuple[str, ...],
+    continuity_warnings: tuple[str, ...],
     continuity_reminders: tuple[str, ...],
 ) -> bool:
-    return active_track_ref != "main" or bool(pending_goal_refs) or bool(continuity_reminders)
+    return (
+        bool(pending_goal_refs)
+        or bool(continuity_reminders)
+        or any(
+            warning.startswith("continuity-rejected:")
+            for warning in continuity_warnings
+        )
+    )
+
+
+def _continuity_debt_warnings(
+    *,
+    pending_goal_refs: tuple[str, ...],
+) -> tuple[str, ...]:
+    if pending_goal_refs:
+        return ("continuity-debt:pending-goals",)
+    return ()
 
 
 def _budget_entry_for_lane(lane: DispatchLane) -> str:

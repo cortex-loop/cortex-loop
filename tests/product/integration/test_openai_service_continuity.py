@@ -44,6 +44,7 @@ def test_openai_service_event_sequence_is_o3_equivalent_to_o2_ingress_shell(
 
     assert export_status == 200
     _assert_o3_equivalent(o2_records, service_records, o2_artifact_payload, exported)
+    _assert_locked_continuity_flow(service_records)
 
 
 def test_openai_service_export_import_preserves_o3_equivalence_and_keeps_diagnostics_non_equivalent(
@@ -95,6 +96,7 @@ def test_openai_service_export_import_preserves_o3_equivalence_and_keeps_diagnos
         uninterrupted_artifact_payload,
         split_artifact,
     )
+    _assert_locked_continuity_flow(uninterrupted_records)
     assert uninterrupted_records[-1]["journal"]["budget_history"] == [
         "shell-low",
         "shell-medium",
@@ -164,3 +166,23 @@ def _assert_o3_equivalent(
         for record in expected_records
     ]
     assert actual_artifact == expected_artifact
+
+
+def _assert_locked_continuity_flow(records: list[dict[str, object]]) -> None:
+    assert [record["decision"] for record in records] == [
+        "continue",
+        "check",
+        "continue",
+        "check",
+    ]
+    assert records[0]["journal"]["active_track_ref"] == "branch-alpha"
+    assert records[0]["journal"]["active_goal_ref"] == "branch-alpha"
+    assert "continuity-debt:pending-goals" in records[1]["warnings"]
+    assert records[1]["journal"]["active_track_ref"] == "main"
+    assert records[1]["journal"]["pending_goal_refs"] == ["branch-alpha"]
+    assert records[2]["warnings"] == []
+    assert records[2]["journal"]["active_track_ref"] == "branch-alpha"
+    assert records[2]["journal"]["pending_goal_refs"] == []
+    assert records[3]["warnings"] == []
+    assert records[3]["journal"]["active_track_ref"] == "main"
+    assert records[3]["journal"]["pending_goal_refs"] == []

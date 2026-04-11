@@ -58,6 +58,7 @@ def test_openai_runtime_split_session_is_o1_equivalent_to_uninterrupted_run(tmp_
         _parse_session_artifact(one_process_artifact),
         _parse_session_artifact(split_final_artifact),
     )
+    _assert_locked_continuity_flow(one_process_records)
     assert one_process_records[-1]["journal"]["branch_registry"] == ["main"]
     assert one_process_records[-1]["journal"]["active_track_ref"] == "main"
     assert one_process_records[-1]["journal"]["budget_history"] == [
@@ -95,6 +96,7 @@ def test_openai_runtime_continuity_rejection_survives_restart(tmp_path: Path) ->
     assert records[-1]["warnings"] == [
         "continuity-rejected:missing-resume-anchor:branch-alpha"
     ]
+    assert records[-1]["decision"] == "check"
     assert records[-1]["journal"]["active_goal_ref"] == "branch-alpha"
     assert records[-1]["journal"]["pending_goal_refs"] == []
 
@@ -169,3 +171,23 @@ def _assert_o1_equivalent(
         for record in expected_records
     ]
     assert actual_artifact == expected_artifact
+
+
+def _assert_locked_continuity_flow(records: list[dict[str, object]]) -> None:
+    assert [record["decision"] for record in records] == [
+        "continue",
+        "check",
+        "continue",
+        "check",
+    ]
+    assert records[0]["journal"]["active_track_ref"] == "branch-alpha"
+    assert records[0]["journal"]["active_goal_ref"] == "branch-alpha"
+    assert "continuity-debt:pending-goals" in records[1]["warnings"]
+    assert records[1]["journal"]["active_track_ref"] == "main"
+    assert records[1]["journal"]["pending_goal_refs"] == ["branch-alpha"]
+    assert records[2]["warnings"] == []
+    assert records[2]["journal"]["active_track_ref"] == "branch-alpha"
+    assert records[2]["journal"]["pending_goal_refs"] == []
+    assert records[3]["warnings"] == []
+    assert records[3]["journal"]["active_track_ref"] == "main"
+    assert records[3]["journal"]["pending_goal_refs"] == []
