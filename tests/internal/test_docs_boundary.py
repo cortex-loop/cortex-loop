@@ -160,10 +160,10 @@ def test_status_registry_is_complete_and_stable() -> None:
             for item in status["bio_to_code_matrix"]
         )
     )
-    assert current_percent == 46
+    assert current_percent == 80
     assert current_percent < status["executive_completion"]["shippable_threshold_percent"]
     assert status["work_today"]["slug"]
-    assert status["next_product_train"]["slug"] == "e23-kernel-extract"
+    assert status["next_product_train"]["slug"] == "multi-host-executive-continuity"
 
 
 def test_generated_status_doc_includes_system_map_and_next_product_train() -> None:
@@ -176,13 +176,13 @@ def test_generated_status_doc_includes_system_map_and_next_product_train() -> No
     assert "## Bio-To-Code Matrix" in text
     assert "## Math To Code Rules" in text
     assert "human executive function" in text
-    assert "Current full-executive completion: `46%`" in text
+    assert "Current full-executive completion: `80%`" in text
     assert "Shippable threshold for the full executive: `85%`" in text
     assert "When user asks where Cortex is at:" in text
     assert "full executive denominator" in text
     assert "## Packet To Code" in text
     assert "## Next Product Train" in text
-    assert "`e23-kernel-extract`" in text
+    assert "`multi-host-executive-continuity`" in text
 
 
 def test_front_door_surfaces_point_to_one_command_managed_closeout() -> None:
