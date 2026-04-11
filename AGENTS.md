@@ -102,6 +102,56 @@ Do not create a second operational truth surface.
 Keep fast-changing state in `internal/truth/cortex_status.json` and regenerate `docs/CORTEX_STATUS.md` when that state changes.
 Do not recreate old workstream, phase-gate, correspondence, or implementation-ledger doctrine in new prose files.
 
+## Codex App Dogfood Mode
+
+Surface: `lab`
+Executive Benefit: collect bounded self-hosting evidence during real repo work in Codex App without promoting Codex App into product truth.
+Why this beats direct product work now: it lets real managed-session work test continuity, blocker surfacing, uncertainty/brake, and truthful closure on the operator surface we are actively using.
+
+Governing principle: dogfood evidence can challenge Cortex law, but it stays watchlist-only until a separate product seam re-earns shipped proof.
+Executive skill: branch continuity, blocker surfacing, uncertainty-aware braking, and truthful closure during real repo work.
+Product metric: `repair-conversion improvement on the bounded OpenAI verified-work repair bundle`
+Guardrail: current-worktree dogfood only; no automatic `make live-codex-dogfood` run and no product-truth changes from chat triggers.
+Kill rule: cut the mode if two dogfood sessions in a row fail to change a concrete design or implementation decision beyond the normal workflow.
+
+Exact Codex App chat triggers:
+
+- `start cortex dogfood mode`
+- `refresh cortex dogfood mode`
+- `stop cortex dogfood mode`
+- `show cortex dogfood status`
+
+Trigger handling:
+
+- `start cortex dogfood mode`: run `python3 -m lab.codex_dogfood_session activate` and adopt the printed contract for the current chat/session only.
+- `refresh cortex dogfood mode`: run `python3 -m lab.codex_dogfood_session refresh` and replace the current chat/session contract with the refreshed current-worktree contract.
+- `stop cortex dogfood mode`: run `python3 -m lab.codex_dogfood_session close --abort` unless the user explicitly asks for a full dogfood closeout with a final signal block.
+- `show cortex dogfood status`: run `python3 -m lab.codex_dogfood_session status`.
+
+Activation rules:
+
+- Activate only on a managed `codex/...` session branch.
+- Refuse activation on clean `main` and give only the minimum corrective workflow: `python3 internal/workflow/repo_workflow.py sync-main` then `python3 internal/workflow/repo_workflow.py start-session --agent codex --slug task-name`.
+- Refuse activation on any non-session branch or dirty unsupported state until the repo is reconciled.
+- Do not run `make live-codex-dogfood` automatically from these chat triggers.
+
+When dogfood mode is active:
+
+- Keep the normal repo workflow and handoff unchanged.
+- Dogfood mode is bound to the current worktree contract until refreshed.
+- Treat every dogfood artifact and helper message as current-worktree `lab` / `watchlist` evidence, never as product truth.
+- For normal managed-session closure, keep using `python3 internal/workflow/repo_workflow.py close-session --message "scope: end-state summary"` and append `DOGFOOD_SIGNAL` after the normal handoff.
+- If the user asks for a full dogfood closeout, run `python3 -m lab.codex_dogfood_session close` and persist the normal handoff summary, verification summary, and the final `DOGFOOD_SIGNAL`.
+- Append this exact block after the normal final handoff:
+
+`DOGFOOD_SIGNAL`
+`continuity_helped: yes|no`
+`blocker_surfaced: yes|no`
+`uncertainty_or_brake_used: yes|no`
+`truthful_closure: yes|no`
+`cortex_changed_next_action: yes|no`
+`note: <one sentence>`
+
 ## Handoff
 
 Every final summary must include:
