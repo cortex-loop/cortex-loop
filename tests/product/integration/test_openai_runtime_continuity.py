@@ -58,8 +58,20 @@ def test_openai_runtime_split_session_is_o1_equivalent_to_uninterrupted_run(tmp_
         _parse_session_artifact(one_process_artifact),
         _parse_session_artifact(split_final_artifact),
     )
-    assert "budget_history" not in one_process_records[-1]["journal"]
-    assert "brake_history" not in one_process_records[-1]["journal"]
+    assert one_process_records[-1]["journal"]["branch_registry"] == ["main"]
+    assert one_process_records[-1]["journal"]["active_track_ref"] == "main"
+    assert one_process_records[-1]["journal"]["budget_history"] == [
+        "shell-low",
+        "shell-medium",
+        "shell-low",
+        "shell-high",
+    ]
+    assert one_process_records[-1]["journal"]["brake_history"] == [
+        "guarded",
+        "guarded",
+        "guarded",
+        "guarded",
+    ]
 
 
 def test_openai_runtime_continuity_rejection_survives_restart(tmp_path: Path) -> None:

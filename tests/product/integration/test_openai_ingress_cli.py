@@ -20,6 +20,12 @@ EXPECTED_RECORD_KEYS = (
     "decision",
     "warnings",
     "journal",
+    "executive_state",
+    "selected_family",
+    "realized_family",
+    "brake_state",
+    "control_ledger",
+    "feedback_window_summary",
     "commitment_result_kind",
 )
 
@@ -43,6 +49,9 @@ def test_openai_ingress_cli_reads_documented_raw_transcript_fixture() -> None:
         "full-commitment",
     ]
     assert [record["decision"] for record in records] == ["continue", "check", "check"]
+    assert records[0]["selected_family"] == "seek-context"
+    assert records[0]["realized_family"] == "seek-context"
+    assert records[0]["brake_state"] == "guarded"
     assert records[-1]["journal"]["confirmed_artifact_refs"] == ["oa-ingress-artifact-1"]
 
 

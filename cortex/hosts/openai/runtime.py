@@ -1,9 +1,9 @@
-"""OpenAI documented host-event runtime shell over landed driver/core surfaces."""
+"""OpenAI documented host-event runtime shell over landed driver/core/SRE surfaces."""
 
 from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any
 
 from cortex.core.certification import certify_commitment
@@ -20,6 +20,14 @@ from cortex.core.environment import (
     EXTERNAL_RECORD,
     RESULT_ARTIFACT,
     CommitmentEnvironmentHandle,
+    ExecutiveEnvironmentView,
+)
+from cortex.core.support import (
+    SupportExecMemoryState,
+    SupportHostState,
+    SupportSessionState,
+    SupportSnapshot,
+    SupportTraceState,
 )
 from cortex.drivers._commitment_common import (
     extract_native_commitment_fields,
@@ -32,16 +40,25 @@ from cortex.drivers.openai_host import (
     observe_openai_host_event,
 )
 from cortex.drivers.openai_host_commitment import bind_openai_host_candidate
+from cortex.sre.allocation import build_allocation_diagnostics_payload
 from cortex.sre.branching import BranchOperation
+from cortex.sre.brake import BrakeState
+from cortex.sre.families import SoftControlFamily
+from cortex.sre.feedback import (
+    ReferenceFeedbackWindowSummary,
+    ReferenceRealizationFeedback,
+    ReferenceRealizationFeedbackWindow,
+    summarize_reference_feedback_window,
+)
 from cortex.sre.preservation import (
     PreservationState,
     choose_preservation_move,
     derive_preservation_state,
 )
-from cortex.sre.verified_work import (
-    VerificationOutcome,
-    WorkContract,
-)
+from cortex.sre.reference_builder import build_reference_executive_state
+from cortex.sre.reference_scoring import select_reference_soft_control
+from cortex.sre.state import ReferenceExecutiveState
+from cortex.sre.verified_work import VerificationOutcome, WorkContract
 
 _ALLOWED_COMMITMENT_RESULT_KINDS = frozenset(status.value for status in CommitmentStatus)
 _ALLOWED_DECISIONS = frozenset({"continue", "check", "repair", "stop"})
@@ -71,14 +88,50 @@ _ALLOWED_FAILURE_CLASSES = (
     _STOP_FAILURE_CLASSES | _REPAIR_FAILURE_CLASSES | _CHECK_FAILURE_CLASSES
 )
 
+_ALLOWED_BUDGET_BANDS = frozenset({"low", "medium", "high"})
+_ALLOCATION_DIAGNOSTICS_KEYS = (
+    "alpha_t",
+    "activation_threshold",
+    "selected_delta_over_neutral",
+    "scores",
+    "mediation",
+)
+_ALLOCATION_SCORE_KEYS = (
+    "family",
+    "online_score",
+    "memory_score",
+    "allocated_score",
+    "admissible",
+    "reason_tags",
+)
+_MEDIATION_DIAGNOSTICS_KEYS = (
+    "mediation_active",
+    "mediation_identity",
+    "selected_family_before_finalization",
+    "selected_family_after_finalization",
+    "preferred_opportunity_ref",
+    "direct_opportunity_specialization_used",
+    "mediation_reason_tags",
+)
+
 
 @dataclass(frozen=True, slots=True)
 class OpenAIRuntimeSession:
     session_id: str | None = None
     event_index: int = 0
+    branch_registry: tuple[str, ...] = ("main",)
+    active_track_ref: str = "main"
     active_goal_ref: str | None = None
     pending_goal_refs: tuple[str, ...] = ()
     confirmed_artifact_refs: tuple[str, ...] = ()
+    budget_history: tuple[str, ...] = ()
+    brake_history: tuple[str, ...] = ()
+    last_selected_family: SoftControlFamily | None = None
+    last_commitment_result_summary: str | None = None
+    last_realization_feedback: ReferenceRealizationFeedback | None = None
+    feedback_window: ReferenceRealizationFeedbackWindow = field(
+        default_factory=ReferenceRealizationFeedbackWindow
+    )
     last_failure_class: str | None = None
     next_recommended_move: str = "continue"
     preservation_state: PreservationState | None = None
@@ -98,6 +151,14 @@ class OpenAIRuntimeSession:
             )
         if self.event_index < 0:
             raise ValueError("OpenAIRuntimeSession.event_index must be non-negative.")
+        if any(not (isinstance(ref, str) and ref.strip()) for ref in self.branch_registry):
+            raise ValueError(
+                "OpenAIRuntimeSession.branch_registry must contain only non-empty values after trimming."
+            )
+        if not (isinstance(self.active_track_ref, str) and self.active_track_ref.strip()):
+            raise ValueError(
+                "OpenAIRuntimeSession.active_track_ref must be non-empty after trimming."
+            )
         if self.active_goal_ref is not None and not (
             isinstance(self.active_goal_ref, str) and self.active_goal_ref.strip()
         ):
@@ -115,6 +176,45 @@ class OpenAIRuntimeSession:
             raise ValueError(
                 "OpenAIRuntimeSession.confirmed_artifact_refs must contain only non-empty values after trimming."
             )
+        if any(not (isinstance(entry, str) and entry.strip()) for entry in self.budget_history):
+            raise ValueError(
+                "OpenAIRuntimeSession.budget_history must contain only non-empty values after trimming."
+            )
+        if any(not (isinstance(entry, str) and entry.strip()) for entry in self.brake_history):
+            raise ValueError(
+                "OpenAIRuntimeSession.brake_history must contain only non-empty values after trimming."
+            )
+        if self.last_selected_family is not None and not isinstance(
+            self.last_selected_family,
+            SoftControlFamily,
+        ):
+            actual_type = type(self.last_selected_family).__name__
+            raise TypeError(
+                "OpenAIRuntimeSession.last_selected_family must be SoftControlFamily | None, "
+                f"got {actual_type}."
+            )
+        if self.last_commitment_result_summary is not None and not (
+            isinstance(self.last_commitment_result_summary, str)
+            and self.last_commitment_result_summary.strip()
+        ):
+            raise ValueError(
+                "OpenAIRuntimeSession.last_commitment_result_summary must be non-empty after trimming when provided."
+            )
+        if self.last_realization_feedback is not None and not isinstance(
+            self.last_realization_feedback,
+            ReferenceRealizationFeedback,
+        ):
+            actual_type = type(self.last_realization_feedback).__name__
+            raise TypeError(
+                "OpenAIRuntimeSession.last_realization_feedback must be "
+                f"ReferenceRealizationFeedback | None, got {actual_type}."
+            )
+        if not isinstance(self.feedback_window, ReferenceRealizationFeedbackWindow):
+            actual_type = type(self.feedback_window).__name__
+            raise TypeError(
+                "OpenAIRuntimeSession.feedback_window must be "
+                f"ReferenceRealizationFeedbackWindow, got {actual_type}."
+            )
         if self.last_failure_class is not None and not (
             isinstance(self.last_failure_class, str) and self.last_failure_class.strip()
         ):
@@ -131,29 +231,141 @@ class OpenAIRuntimeSession:
                 "OpenAIRuntimeSession.next_recommended_move must be one of "
                 "`continue`, `check`, `repair`, `stop`."
             )
-        if self.active_goal_ref is not None and self.active_goal_ref in self.pending_goal_refs:
+        if self.preservation_state is not None and not isinstance(
+            self.preservation_state,
+            PreservationState,
+        ):
+            actual_type = type(self.preservation_state).__name__
+            raise TypeError(
+                "OpenAIRuntimeSession.preservation_state must be PreservationState | None, "
+                f"got {actual_type}."
+            )
+
+        normalized_branch_registry: list[str] = []
+        if "main" not in self.branch_registry:
+            normalized_branch_registry.append("main")
+        for branch_ref in self.branch_registry:
+            if branch_ref not in normalized_branch_registry:
+                normalized_branch_registry.append(branch_ref)
+
+        normalized_active_track_ref = self.active_track_ref.strip()
+        normalized_active_goal_ref = (
+            self.active_goal_ref.strip()
+            if self.active_goal_ref is not None
+            else None
+        )
+
+        normalized_last_realization_feedback = self.last_realization_feedback
+        normalized_feedback_window = self.feedback_window
+        if (
+            normalized_last_realization_feedback is not None
+            and not normalized_feedback_window.entries
+        ):
+            normalized_feedback_window = ReferenceRealizationFeedbackWindow(
+                entries=(normalized_last_realization_feedback,)
+            )
+            object.__setattr__(self, "feedback_window", normalized_feedback_window)
+        elif (
+            normalized_last_realization_feedback is None
+            and normalized_feedback_window.entries
+        ):
+            normalized_last_realization_feedback = normalized_feedback_window.entries[-1]
+            object.__setattr__(
+                self,
+                "last_realization_feedback",
+                normalized_last_realization_feedback,
+            )
+        if (
+            normalized_last_realization_feedback is not None
+            and normalized_feedback_window.entries
+            and normalized_feedback_window.entries[-1]
+            != normalized_last_realization_feedback
+        ):
+            raise ValueError(
+                "OpenAIRuntimeSession.feedback_window newest entry must match "
+                "last_realization_feedback when both are present."
+            )
+        if (
+            normalized_last_realization_feedback is None
+            and normalized_feedback_window.entries
+        ):
+            raise ValueError(
+                "OpenAIRuntimeSession.feedback_window must be empty when "
+                "last_realization_feedback is None."
+            )
+
+        if self.preservation_state is not None:
+            preservation_anchor = self.preservation_state.task_anchor
+            if (
+                normalized_active_goal_ref is not None
+                and normalized_active_goal_ref != preservation_anchor
+            ):
+                raise ValueError(
+                    "OpenAIRuntimeSession.active_goal_ref must match "
+                    "preservation_state.task_anchor when preservation_state is present."
+                )
+            normalized_active_goal_ref = preservation_anchor
+        elif normalized_active_goal_ref is not None and normalized_active_track_ref == "main":
+            normalized_active_track_ref = normalized_active_goal_ref
+
+        if (
+            self.preservation_state is None
+            and normalized_active_goal_ref is not None
+            and normalized_active_track_ref != "main"
+            and normalized_active_goal_ref != normalized_active_track_ref
+        ):
+            raise ValueError(
+                "OpenAIRuntimeSession.active_goal_ref must match active_track_ref when "
+                "preservation_state is absent and active_track_ref is not `main`."
+            )
+
+        if normalized_active_track_ref != "main" and normalized_active_track_ref not in normalized_branch_registry:
+            normalized_branch_registry.append(normalized_active_track_ref)
+        if (
+            self.preservation_state is None
+            and normalized_active_goal_ref is None
+            and normalized_active_track_ref != "main"
+        ):
+            normalized_active_goal_ref = normalized_active_track_ref
+
+        if normalized_active_goal_ref is not None and normalized_active_goal_ref in self.pending_goal_refs:
             raise ValueError(
                 "OpenAIRuntimeSession.active_goal_ref may not be duplicated inside pending_goal_refs."
             )
-        if self.preservation_state is not None:
-            if not isinstance(self.preservation_state, PreservationState):
-                actual_type = type(self.preservation_state).__name__
-                raise TypeError(
-                    "OpenAIRuntimeSession.preservation_state must be PreservationState | None, "
-                    f"got {actual_type}."
-                )
-            if self.active_goal_ref != self.preservation_state.task_anchor:
-                raise ValueError(
-                    "OpenAIRuntimeSession.active_goal_ref must match preservation_state.task_anchor when preservation_state is present."
-                )
+
+        normalized_branch_registry_tuple = tuple(normalized_branch_registry)
+        if normalized_branch_registry_tuple != self.branch_registry:
+            object.__setattr__(self, "branch_registry", normalized_branch_registry_tuple)
+        if normalized_active_track_ref != self.active_track_ref:
+            object.__setattr__(self, "active_track_ref", normalized_active_track_ref)
+        if normalized_active_goal_ref != self.active_goal_ref:
+            object.__setattr__(self, "active_goal_ref", normalized_active_goal_ref)
 
     def as_summary(self) -> dict[str, Any]:
         summary = {
             "session_id": self.session_id,
             "event_index": self.event_index,
+            "branch_registry": list(self.branch_registry),
+            "active_track_ref": self.active_track_ref,
             "active_goal_ref": self.active_goal_ref,
             "pending_goal_refs": list(self.pending_goal_refs),
             "confirmed_artifact_refs": list(self.confirmed_artifact_refs),
+            "budget_history": list(self.budget_history),
+            "brake_history": list(self.brake_history),
+            "last_selected_family": (
+                self.last_selected_family.value
+                if self.last_selected_family is not None
+                else None
+            ),
+            "last_commitment_result_summary": self.last_commitment_result_summary,
+            "last_realization_feedback": (
+                self.last_realization_feedback.as_summary()
+                if self.last_realization_feedback is not None
+                else None
+            ),
+            "feedback_window": [
+                entry.as_summary() for entry in self.feedback_window.entries
+            ],
             "last_failure_class": self.last_failure_class,
             "next_recommended_move": self.next_recommended_move,
         }
@@ -205,7 +417,87 @@ class OpenAIProductDecision:
         }
 
 
-OpenAIControlLedger = OpenAIProductDecision
+@dataclass(frozen=True, slots=True)
+class OpenAIControlLedger:
+    event_class: str
+    admissible_families: tuple[SoftControlFamily, ...]
+    selected_family: SoftControlFamily
+    realized_family: SoftControlFamily
+    dominant_uncertainty_sources: tuple[str, ...]
+    brake_state: BrakeState
+    budget_band: str
+    primary_reason: str | None = None
+    allocation_diagnostics: dict[str, Any] = field(default_factory=dict)
+
+    def __post_init__(self) -> None:
+        if not (isinstance(self.event_class, str) and self.event_class.strip()):
+            raise ValueError(
+                "OpenAIControlLedger.event_class must be non-empty after trimming."
+            )
+        if any(not isinstance(family, SoftControlFamily) for family in self.admissible_families):
+            raise TypeError(
+                "OpenAIControlLedger.admissible_families must contain only SoftControlFamily instances."
+            )
+        if not isinstance(self.selected_family, SoftControlFamily):
+            actual_type = type(self.selected_family).__name__
+            raise TypeError(
+                "OpenAIControlLedger.selected_family must be SoftControlFamily, "
+                f"got {actual_type}."
+            )
+        if not isinstance(self.realized_family, SoftControlFamily):
+            actual_type = type(self.realized_family).__name__
+            raise TypeError(
+                "OpenAIControlLedger.realized_family must be SoftControlFamily, "
+                f"got {actual_type}."
+            )
+        if any(
+            not (isinstance(source, str) and source.strip())
+            for source in self.dominant_uncertainty_sources
+        ):
+            raise ValueError(
+                "OpenAIControlLedger.dominant_uncertainty_sources must contain only non-empty values after trimming."
+            )
+        if not isinstance(self.brake_state, BrakeState):
+            actual_type = type(self.brake_state).__name__
+            raise TypeError(
+                "OpenAIControlLedger.brake_state must be BrakeState, "
+                f"got {actual_type}."
+            )
+        if not (isinstance(self.budget_band, str) and self.budget_band.strip()):
+            raise ValueError(
+                "OpenAIControlLedger.budget_band must be non-empty after trimming."
+            )
+        if self.budget_band not in _ALLOWED_BUDGET_BANDS:
+            raise ValueError(
+                "OpenAIControlLedger.budget_band must be one of `low`, `medium`, or `high`."
+            )
+        if self.primary_reason is not None and not (
+            isinstance(self.primary_reason, str) and self.primary_reason.strip()
+        ):
+            raise ValueError(
+                "OpenAIControlLedger.primary_reason must be non-empty after trimming when provided."
+            )
+        _validate_allocation_diagnostics_payload(
+            self.allocation_diagnostics,
+            "OpenAIControlLedger.allocation_diagnostics",
+        )
+
+    def as_summary(self) -> dict[str, Any]:
+        return {
+            "event_class": self.event_class,
+            "admissible_families": [
+                family.value for family in self.admissible_families
+            ],
+            "selected_family": self.selected_family.value,
+            "realized_family": self.realized_family.value,
+            "dominant_uncertainty_sources": list(self.dominant_uncertainty_sources),
+            "brake_state": self.brake_state.value,
+            "budget_band": self.budget_band,
+            "primary_reason": self.primary_reason,
+            "allocation_diagnostics": _copy_allocation_diagnostics_payload(
+                self.allocation_diagnostics
+            ),
+        }
 
 
 @dataclass(frozen=True, slots=True)
@@ -213,9 +505,25 @@ class OpenAIRuntimeStepResult:
     event_index: int
     bound_event: BoundOpenAIHostEvent
     dispatch_decision: DispatchDecision
-    product_decision: OpenAIProductDecision
-    warnings: tuple[str, ...]
-    session: OpenAIRuntimeSession
+    executive_state: ReferenceExecutiveState
+    selected_family: SoftControlFamily
+    realized_family: SoftControlFamily
+    brake_state: BrakeState
+    control_ledger: OpenAIControlLedger
+    feedback_window_summary: ReferenceFeedbackWindowSummary = field(
+        default_factory=ReferenceFeedbackWindowSummary
+    )
+    warnings: tuple[str, ...] = field(default_factory=tuple)
+    session: OpenAIRuntimeSession = field(default_factory=OpenAIRuntimeSession)
+    product_decision: OpenAIProductDecision = field(
+        default_factory=lambda: OpenAIProductDecision(
+            decision="continue",
+            consequential_write_pending=False,
+            approval_required=False,
+            evidence_gap=False,
+            continuation_debt=False,
+        )
+    )
     commitment_result_kind: str | None = None
 
     def __post_init__(self) -> None:
@@ -239,11 +547,41 @@ class OpenAIRuntimeStepResult:
                 "OpenAIRuntimeStepResult.dispatch_decision must be DispatchDecision, "
                 f"got {actual_type}."
             )
-        if not isinstance(self.product_decision, OpenAIProductDecision):
-            actual_type = type(self.product_decision).__name__
+        if not isinstance(self.executive_state, ReferenceExecutiveState):
+            actual_type = type(self.executive_state).__name__
             raise TypeError(
-                "OpenAIRuntimeStepResult.product_decision must be OpenAIProductDecision, "
+                "OpenAIRuntimeStepResult.executive_state must be ReferenceExecutiveState, "
                 f"got {actual_type}."
+            )
+        if not isinstance(self.selected_family, SoftControlFamily):
+            actual_type = type(self.selected_family).__name__
+            raise TypeError(
+                "OpenAIRuntimeStepResult.selected_family must be SoftControlFamily, "
+                f"got {actual_type}."
+            )
+        if not isinstance(self.realized_family, SoftControlFamily):
+            actual_type = type(self.realized_family).__name__
+            raise TypeError(
+                "OpenAIRuntimeStepResult.realized_family must be SoftControlFamily, "
+                f"got {actual_type}."
+            )
+        if not isinstance(self.brake_state, BrakeState):
+            actual_type = type(self.brake_state).__name__
+            raise TypeError(
+                "OpenAIRuntimeStepResult.brake_state must be BrakeState, "
+                f"got {actual_type}."
+            )
+        if not isinstance(self.control_ledger, OpenAIControlLedger):
+            actual_type = type(self.control_ledger).__name__
+            raise TypeError(
+                "OpenAIRuntimeStepResult.control_ledger must be OpenAIControlLedger, "
+                f"got {actual_type}."
+            )
+        if not isinstance(self.feedback_window_summary, ReferenceFeedbackWindowSummary):
+            actual_type = type(self.feedback_window_summary).__name__
+            raise TypeError(
+                "OpenAIRuntimeStepResult.feedback_window_summary must be "
+                f"ReferenceFeedbackWindowSummary, got {actual_type}."
             )
         if any(not (isinstance(warning, str) and warning.strip()) for warning in self.warnings):
             raise ValueError(
@@ -253,6 +591,12 @@ class OpenAIRuntimeStepResult:
             actual_type = type(self.session).__name__
             raise TypeError(
                 "OpenAIRuntimeStepResult.session must be OpenAIRuntimeSession, "
+                f"got {actual_type}."
+            )
+        if not isinstance(self.product_decision, OpenAIProductDecision):
+            actual_type = type(self.product_decision).__name__
+            raise TypeError(
+                "OpenAIRuntimeStepResult.product_decision must be OpenAIProductDecision, "
                 f"got {actual_type}."
             )
         if self.event_index != self.session.event_index:
@@ -276,6 +620,39 @@ class OpenAIRuntimeStepResult:
     @property
     def journal(self) -> dict[str, Any]:
         return self.session.as_summary()
+
+    @property
+    def executive_state_summary(self) -> dict[str, Any]:
+        return {
+            "mode_tag": self.executive_state.mode_and_gating.mode_tag,
+            "family_mask": sorted(
+                family.value for family in self.executive_state.mode_and_gating.family_mask
+            ),
+            "budget_band": self.executive_state.control_allocation.budget_band,
+            "top_family_set": sorted(
+                family.value for family in self.executive_state.control_allocation.top_family_set
+            ),
+            "host_friction_tags": sorted(
+                self.executive_state.control_allocation.host_friction_tags
+            ),
+            "feedback_pressure_tags": sorted(
+                self.executive_state.control_allocation.feedback_pressure_tags
+            ),
+            "active_track_ref": self.executive_state.goal_continuity.active_track_ref,
+            "pending_goal_refs": list(self.executive_state.goal_continuity.pending_goal_refs),
+            "resume_anchor_available": self.executive_state.goal_continuity.resume_anchor_available,
+            "contradiction_spike_flags": sorted(
+                self.executive_state.uncertainty_monitoring.contradiction_spike_flags
+            ),
+        }
+
+    @property
+    def control_ledger_summary(self) -> dict[str, Any]:
+        return self.control_ledger.as_summary()
+
+    @property
+    def feedback_window_summary_payload(self) -> dict[str, Any]:
+        return self.feedback_window_summary.as_summary()
 
 
 def run_openai_runtime_step(
@@ -314,6 +691,9 @@ def run_openai_runtime_step(
         normalized_payload,
     )
     warnings = merge_warnings(warnings, session_id_warnings)
+    prior_feedback_window_summary = summarize_reference_feedback_window(
+        prior_session.feedback_window
+    )
 
     candidate = None
     commitment_result_kind: str | None = None
@@ -342,19 +722,90 @@ def run_openai_runtime_step(
         commitment_result_kind = verdict.status.value
 
     (
-        next_active_goal_ref,
+        next_branch_registry,
+        next_active_track_ref,
         next_pending_goal_refs,
         continuity_warnings,
+        continuity_reminders,
     ) = _apply_continuity_update(prior_session, normalized_payload)
     warnings = merge_warnings(warnings, continuity_warnings)
     confirmed_artifact_refs = _merge_confirmed_artifact_refs(
         prior_session.confirmed_artifact_refs,
         _first_concrete_artifact_ref(normalized_payload),
     )
+    carried_failure_class = failure_class if failure_class is not None else prior_session.last_failure_class
+    carried_preservation_state = prior_session.preservation_state
+    provisional_session = OpenAIRuntimeSession(
+        session_id=session_id,
+        event_index=prior_session.event_index + 1,
+        branch_registry=next_branch_registry,
+        active_track_ref=next_active_track_ref,
+        active_goal_ref=_legacy_active_goal_ref(
+            next_active_track_ref,
+            preservation_state=carried_preservation_state,
+        ),
+        pending_goal_refs=next_pending_goal_refs,
+        confirmed_artifact_refs=confirmed_artifact_refs,
+        budget_history=prior_session.budget_history
+        + (_budget_entry_for_lane(dispatch_decision.lane),),
+        brake_history=prior_session.brake_history,
+        last_selected_family=prior_session.last_selected_family,
+        last_commitment_result_summary=prior_session.last_commitment_result_summary,
+        last_realization_feedback=prior_session.last_realization_feedback,
+        feedback_window=prior_session.feedback_window,
+        last_failure_class=carried_failure_class,
+        next_recommended_move=prior_session.next_recommended_move,
+        preservation_state=carried_preservation_state,
+    )
+    executive_state = build_reference_executive_state(
+        bound_event.observation,
+        _build_support_snapshot(
+            provisional_session=provisional_session,
+            bound_event=bound_event,
+            dispatch_decision=dispatch_decision,
+            warnings=warnings,
+            reminders=continuity_reminders,
+        ),
+        _build_executive_environment_view(normalized_payload),
+        provisional_session,
+    )
+    selection = select_reference_soft_control(executive_state)
+    selected_family = selection.selected_family
+    brake_state = executive_state.brake.brake_state
+    dominant_uncertainty_sources = _dominant_uncertainty_sources(executive_state)
+    realized_family, enforcement_warnings = _realize_family(
+        selected_family,
+        brake_state=brake_state,
+        dominant_uncertainty_sources=dominant_uncertainty_sources,
+        feedback_pressure_tags=executive_state.control_allocation.feedback_pressure_tags,
+    )
+    warnings = merge_warnings(warnings, enforcement_warnings)
+    control_ledger = OpenAIControlLedger(
+        event_class=dispatch_decision.lane.value,
+        admissible_families=_admissible_families(executive_state),
+        selected_family=selected_family,
+        realized_family=realized_family,
+        dominant_uncertainty_sources=dominant_uncertainty_sources,
+        brake_state=brake_state,
+        budget_band=executive_state.control_allocation.budget_band,
+        primary_reason=_primary_reason(warnings),
+        allocation_diagnostics=build_allocation_diagnostics_payload(
+            selection.scorecard,
+            selected_delta_over_neutral=selection.neutral_dominance.margin_over_neutral,
+            mediation_payload=selection.mediation_finalization.as_payload(),
+        ),
+    )
     consequential_write_pending = bool(normalized_payload.get("externally_consequential"))
     approval_required = dispatch_decision.lane is not DispatchLane.CHEAP
-    evidence_gap = consequential_write_pending and _first_concrete_artifact_ref(normalized_payload) is None
-    continuation_debt = next_active_goal_ref is not None or bool(next_pending_goal_refs)
+    evidence_gap = (
+        consequential_write_pending
+        and _first_concrete_artifact_ref(normalized_payload) is None
+    )
+    continuation_debt = _has_continuation_debt(
+        active_track_ref=next_active_track_ref,
+        pending_goal_refs=next_pending_goal_refs,
+        continuity_reminders=continuity_reminders,
+    )
     decision = _decide_action(
         consequential_write_pending=consequential_write_pending,
         approval_required=approval_required,
@@ -370,28 +821,53 @@ def run_openai_runtime_step(
         continuation_debt=continuation_debt,
         failure_class=failure_class,
     )
-    updated_session = OpenAIRuntimeSession(
-        session_id=session_id,
-        event_index=prior_session.event_index + 1,
-        active_goal_ref=next_active_goal_ref,
-        pending_goal_refs=next_pending_goal_refs,
-        confirmed_artifact_refs=confirmed_artifact_refs,
-        last_failure_class=failure_class,
-        next_recommended_move=decision,
-        preservation_state=(
-            prior_session.preservation_state
-            if prior_session.preservation_state is not None
-            and next_active_goal_ref == prior_session.preservation_state.task_anchor
-            else None
+    realization_feedback = ReferenceRealizationFeedback(
+        selected_family=selected_family,
+        realized_family=realized_family,
+        brake_state=brake_state,
+        commitment_result_kind=commitment_result_kind,
+        warning_codes=tuple(warnings),
+        host_friction_tags=tuple(
+            sorted(executive_state.control_allocation.host_friction_tags)
         ),
+    )
+    updated_session = OpenAIRuntimeSession(
+        session_id=provisional_session.session_id,
+        event_index=provisional_session.event_index,
+        branch_registry=provisional_session.branch_registry,
+        active_track_ref=provisional_session.active_track_ref,
+        active_goal_ref=_legacy_active_goal_ref(
+            provisional_session.active_track_ref,
+            preservation_state=carried_preservation_state,
+        ),
+        pending_goal_refs=provisional_session.pending_goal_refs,
+        confirmed_artifact_refs=provisional_session.confirmed_artifact_refs,
+        budget_history=provisional_session.budget_history,
+        brake_history=prior_session.brake_history + (brake_state.value,),
+        last_selected_family=selected_family,
+        last_commitment_result_summary=_commitment_summary_for_lane(
+            dispatch_decision.lane,
+            commitment_result_kind,
+        ),
+        last_realization_feedback=realization_feedback,
+        feedback_window=prior_session.feedback_window.append(realization_feedback),
+        last_failure_class=carried_failure_class,
+        next_recommended_move=decision,
+        preservation_state=carried_preservation_state,
     )
     return OpenAIRuntimeStepResult(
         event_index=updated_session.event_index,
         bound_event=bound_event,
         dispatch_decision=dispatch_decision,
-        product_decision=product_decision,
+        executive_state=executive_state,
+        selected_family=selected_family,
+        realized_family=realized_family,
+        brake_state=brake_state,
+        control_ledger=control_ledger,
+        feedback_window_summary=prior_feedback_window_summary,
         warnings=warnings,
         session=updated_session,
+        product_decision=product_decision,
         commitment_result_kind=commitment_result_kind,
     )
 
@@ -427,9 +903,17 @@ def run_openai_runtime_verification_step(
     return OpenAIRuntimeSession(
         session_id=current_session.session_id,
         event_index=current_session.event_index,
+        branch_registry=current_session.branch_registry,
+        active_track_ref=current_session.active_track_ref,
         active_goal_ref=preservation_state.task_anchor,
         pending_goal_refs=current_session.pending_goal_refs,
         confirmed_artifact_refs=current_session.confirmed_artifact_refs,
+        budget_history=current_session.budget_history,
+        brake_history=current_session.brake_history,
+        last_selected_family=current_session.last_selected_family,
+        last_commitment_result_summary=current_session.last_commitment_result_summary,
+        last_realization_feedback=current_session.last_realization_feedback,
+        feedback_window=current_session.feedback_window,
         last_failure_class=outcome.failure_class,
         next_recommended_move=decision,
         preservation_state=preservation_state,
@@ -467,70 +951,146 @@ def _resolve_session_id(
 def _apply_continuity_update(
     prior_session: OpenAIRuntimeSession,
     normalized_payload: Mapping[str, Any],
-) -> tuple[str | None, tuple[str, ...], tuple[str, ...]]:
+) -> tuple[tuple[str, ...], str, tuple[str, ...], tuple[str, ...], tuple[str, ...]]:
     operation = _branch_operation(normalized_payload)
-    active_goal_ref = prior_session.active_goal_ref
+    branch_registry = list(prior_session.branch_registry)
+    active_track_ref = prior_session.active_track_ref
     pending_goal_refs = list(prior_session.pending_goal_refs)
-    goal_ref = _continuity_track_ref(normalized_payload)
+    branch_track_ref = _continuity_track_ref(normalized_payload)
     payload_goal_refs = _pending_goal_refs_from_payload(normalized_payload)
     warnings: tuple[str, ...] = ()
+    reminders: tuple[str, ...] = ()
 
     if operation is None:
-        pending_goal_refs = _merge_unique_refs(tuple(pending_goal_refs), payload_goal_refs)
-        return active_goal_ref, _normalized_pending_goal_refs(active_goal_ref, pending_goal_refs), warnings
+        if payload_goal_refs:
+            pending_goal_refs = _merge_unique_refs(tuple(pending_goal_refs), payload_goal_refs)
+        return (
+            tuple(branch_registry),
+            active_track_ref,
+            tuple(pending_goal_refs),
+            warnings,
+            reminders,
+        )
 
     if operation is BranchOperation.OPEN:
-        if goal_ref is None:
+        if branch_track_ref is None:
             warnings = ("continuity-rejected:missing-open-track-ref",)
-            return active_goal_ref, tuple(prior_session.pending_goal_refs), warnings
-        active_goal_ref = goal_ref
-        pending_goal_refs = [ref for ref in pending_goal_refs if ref != goal_ref]
-        pending_goal_refs = _merge_unique_refs(tuple(pending_goal_refs), payload_goal_refs)
-        return active_goal_ref, _normalized_pending_goal_refs(active_goal_ref, pending_goal_refs), warnings
-
-    if operation is BranchOperation.SUSPEND:
-        if goal_ref is None or active_goal_ref != goal_ref:
-            warnings = (_continuity_warning("missing-active-branch", goal_ref),)
-            return active_goal_ref, tuple(prior_session.pending_goal_refs), warnings
-        active_goal_ref = None
-        pending_goal_refs = _merge_unique_refs(tuple(pending_goal_refs), (goal_ref, *payload_goal_refs))
-        return active_goal_ref, _normalized_pending_goal_refs(active_goal_ref, pending_goal_refs), warnings
-
-    if operation is BranchOperation.RESUME:
-        if goal_ref is None:
-            warnings = (_continuity_warning("missing-active-branch", goal_ref),)
-            return active_goal_ref, tuple(prior_session.pending_goal_refs), warnings
-        if goal_ref not in pending_goal_refs:
-            warnings = (_continuity_warning("missing-resume-anchor", goal_ref),)
-            return active_goal_ref, tuple(prior_session.pending_goal_refs), warnings
-        active_goal_ref = goal_ref
-        pending_goal_refs = [ref for ref in pending_goal_refs if ref != goal_ref]
-        pending_goal_refs = _merge_unique_refs(tuple(pending_goal_refs), payload_goal_refs)
-        return active_goal_ref, _normalized_pending_goal_refs(active_goal_ref, pending_goal_refs), warnings
-
-    if operation is BranchOperation.MERGE:
-        if goal_ref is None:
-            warnings = (_continuity_warning("missing-active-branch", goal_ref),)
-            return active_goal_ref, tuple(prior_session.pending_goal_refs), warnings
-        merge_target_ref = _merge_target_ref(normalized_payload)
-        if goal_ref in pending_goal_refs or active_goal_ref != goal_ref:
-            warnings = (
-                _continuity_warning("continuity-mismatch-after-suspension", goal_ref),
+            return (
+                tuple(prior_session.branch_registry),
+                prior_session.active_track_ref,
+                tuple(prior_session.pending_goal_refs),
+                warnings,
+                reminders,
             )
-            return active_goal_ref, tuple(prior_session.pending_goal_refs), warnings
+        if branch_track_ref not in branch_registry:
+            branch_registry.append(branch_track_ref)
+        active_track_ref = branch_track_ref
+        pending_goal_refs = [
+            goal_ref for goal_ref in pending_goal_refs if goal_ref != branch_track_ref
+        ]
+        pending_goal_refs = _merge_unique_refs(tuple(pending_goal_refs), payload_goal_refs)
+    elif operation is BranchOperation.SUSPEND:
+        if (
+            branch_track_ref is None
+            or branch_track_ref not in branch_registry
+            or active_track_ref != branch_track_ref
+        ):
+            warnings = (_continuity_warning("missing-active-branch", branch_track_ref),)
+            return (
+                tuple(prior_session.branch_registry),
+                prior_session.active_track_ref,
+                tuple(prior_session.pending_goal_refs),
+                warnings,
+                reminders,
+            )
+        active_track_ref = "main"
+        pending_goal_refs = _merge_unique_refs(
+            tuple(pending_goal_refs),
+            (branch_track_ref, *payload_goal_refs),
+        )
+    elif operation is BranchOperation.RESUME:
+        if branch_track_ref is None or branch_track_ref not in branch_registry:
+            warnings = (_continuity_warning("missing-active-branch", branch_track_ref),)
+            return (
+                tuple(prior_session.branch_registry),
+                prior_session.active_track_ref,
+                tuple(prior_session.pending_goal_refs),
+                warnings,
+                reminders,
+            )
+        if branch_track_ref not in pending_goal_refs:
+            warnings = (_continuity_warning("missing-resume-anchor", branch_track_ref),)
+            reminders = ("resume-anchor-missing",)
+            return (
+                tuple(prior_session.branch_registry),
+                prior_session.active_track_ref,
+                tuple(prior_session.pending_goal_refs),
+                warnings,
+                reminders,
+            )
+        active_track_ref = branch_track_ref
+        pending_goal_refs = [
+            goal_ref for goal_ref in pending_goal_refs if goal_ref != branch_track_ref
+        ]
+        pending_goal_refs = _merge_unique_refs(tuple(pending_goal_refs), payload_goal_refs)
+    elif operation is BranchOperation.MERGE:
+        if branch_track_ref is None or branch_track_ref not in branch_registry:
+            warnings = (_continuity_warning("missing-active-branch", branch_track_ref),)
+            return (
+                tuple(prior_session.branch_registry),
+                prior_session.active_track_ref,
+                tuple(prior_session.pending_goal_refs),
+                warnings,
+                reminders,
+            )
+        merge_target_ref = _merge_target_ref(normalized_payload)
         if (
             merge_target_ref is not None
-            and merge_target_ref not in pending_goal_refs
-            and merge_target_ref != goal_ref
+            and merge_target_ref != "main"
+            and merge_target_ref not in branch_registry
         ):
             warnings = (_continuity_warning("illegal-merge-target", merge_target_ref),)
-            return active_goal_ref, tuple(prior_session.pending_goal_refs), warnings
-        active_goal_ref = merge_target_ref
-        pending_goal_refs = [ref for ref in pending_goal_refs if ref != goal_ref]
+            return (
+                tuple(prior_session.branch_registry),
+                prior_session.active_track_ref,
+                tuple(prior_session.pending_goal_refs),
+                warnings,
+                reminders,
+            )
+        if branch_track_ref in pending_goal_refs or active_track_ref != branch_track_ref:
+            warnings = (
+                _continuity_warning(
+                    "continuity-mismatch-after-suspension",
+                    branch_track_ref,
+                ),
+            )
+            return (
+                tuple(prior_session.branch_registry),
+                prior_session.active_track_ref,
+                tuple(prior_session.pending_goal_refs),
+                warnings,
+                reminders,
+            )
+        branch_registry = [
+            branch_ref for branch_ref in branch_registry if branch_ref != branch_track_ref
+        ]
+        if not branch_registry:
+            branch_registry = ["main"]
+        active_track_ref = merge_target_ref or "main"
+        pending_goal_refs = [
+            goal_ref for goal_ref in pending_goal_refs if goal_ref != branch_track_ref
+        ]
         pending_goal_refs = _merge_unique_refs(tuple(pending_goal_refs), payload_goal_refs)
-        return active_goal_ref, _normalized_pending_goal_refs(active_goal_ref, pending_goal_refs), warnings
 
-    return active_goal_ref, tuple(prior_session.pending_goal_refs), warnings
+    if active_track_ref != "main" and active_track_ref not in branch_registry:
+        active_track_ref = "main"
+    return (
+        tuple(branch_registry),
+        active_track_ref,
+        tuple(pending_goal_refs),
+        warnings,
+        reminders,
+    )
 
 
 def _build_environment_handle(
@@ -549,6 +1109,57 @@ def _build_environment_handle(
     return CommitmentEnvironmentHandle(
         available_query_kinds=frozenset(available_query_kinds),
         capability_tags=frozenset(capability_tags),
+    )
+
+
+def _build_executive_environment_view(
+    normalized_payload: Mapping[str, Any],
+) -> ExecutiveEnvironmentView:
+    available_query_kinds = {EXECUTION_TRACE}
+    if _first_concrete_artifact_ref(normalized_payload) is not None:
+        available_query_kinds.add(RESULT_ARTIFACT)
+    if _as_non_empty_string(normalized_payload.get("external_record_ref")) is not None:
+        available_query_kinds.add(EXTERNAL_RECORD)
+    return ExecutiveEnvironmentView(
+        available_query_kinds=frozenset(available_query_kinds),
+        host_capability_tags=frozenset({"openai-host", "documented-response-stream"}),
+    )
+
+
+def _build_support_snapshot(
+    *,
+    provisional_session: OpenAIRuntimeSession,
+    bound_event: BoundOpenAIHostEvent,
+    dispatch_decision: DispatchDecision,
+    warnings: Sequence[str],
+    reminders: Sequence[str] = (),
+) -> SupportSnapshot:
+    approval_boundary_tags = (
+        frozenset({"approval-required"})
+        if dispatch_decision.lane is not DispatchLane.CHEAP
+        else frozenset()
+    )
+    constraint_tags = frozenset({"runtime-warning"}) if warnings else frozenset()
+    affordance_tags = frozenset(
+        set(bound_event.lifecycle_surface.context_affordances)
+        | set(bound_event.lifecycle_surface.tool_affordances)
+        | set(bound_event.lifecycle_surface.turn_affordances)
+    )
+    return SupportSnapshot(
+        trace=SupportTraceState(recent_events=(bound_event.observation.event,)),
+        session=SupportSessionState(
+            branch_registry=provisional_session.branch_registry,
+            pending_goal_refs=provisional_session.pending_goal_refs,
+            budget_history=provisional_session.budget_history,
+            brake_history=provisional_session.brake_history,
+            reminders=tuple(reminders),
+        ),
+        host=SupportHostState(
+            affordance_tags=affordance_tags,
+            approval_boundary_tags=approval_boundary_tags,
+            constraint_tags=constraint_tags,
+        ),
+        exec_memory_pub=SupportExecMemoryState(),
     )
 
 
@@ -615,16 +1226,55 @@ def _decide_action(
     continuation_debt: bool,
     failure_class: str | None,
 ) -> str:
-    del continuation_debt
     if failure_class in _STOP_FAILURE_CLASSES:
         return "stop"
     if failure_class in _CHECK_FAILURE_CLASSES:
         return "check"
     if failure_class in _REPAIR_FAILURE_CLASSES:
         return "repair"
-    if approval_required or consequential_write_pending or evidence_gap:
+    if approval_required or consequential_write_pending or evidence_gap or continuation_debt:
         return "check"
     return "continue"
+
+
+def _has_continuation_debt(
+    *,
+    active_track_ref: str,
+    pending_goal_refs: tuple[str, ...],
+    continuity_reminders: tuple[str, ...],
+) -> bool:
+    return active_track_ref != "main" or bool(pending_goal_refs) or bool(continuity_reminders)
+
+
+def _budget_entry_for_lane(lane: DispatchLane) -> str:
+    if lane is DispatchLane.CHEAP:
+        return "shell-low"
+    if lane is DispatchLane.CANDIDATE_BEARING:
+        return "shell-medium"
+    return "shell-high"
+
+
+def _commitment_summary_for_lane(
+    lane: DispatchLane,
+    commitment_result_kind: str | None,
+) -> str | None:
+    if lane is DispatchLane.CHEAP:
+        return None
+    if lane is DispatchLane.CANDIDATE_BEARING:
+        return "candidate-only"
+    return commitment_result_kind
+
+
+def _legacy_active_goal_ref(
+    active_track_ref: str,
+    *,
+    preservation_state: PreservationState | None,
+) -> str | None:
+    if preservation_state is not None:
+        return preservation_state.task_anchor
+    if active_track_ref == "main":
+        return None
+    return active_track_ref
 
 
 def _first_concrete_artifact_ref(normalized_payload: Mapping[str, Any]) -> str | None:
@@ -682,16 +1332,14 @@ def _continuity_track_ref(normalized_payload: Mapping[str, Any]) -> str | None:
 
 
 def _merge_target_ref(normalized_payload: Mapping[str, Any]) -> str | None:
-    target = _as_non_empty_string(normalized_payload.get("merge_target_ref"))
-    if target == "main":
-        return None
-    return target
+    return _as_non_empty_string(normalized_payload.get("merge_target_ref"))
 
 
 def _pending_goal_refs_from_payload(normalized_payload: Mapping[str, Any]) -> tuple[str, ...]:
     value = normalized_payload.get("pending_goal_refs")
     if not isinstance(value, Sequence) or isinstance(value, (str, bytes, bytearray)):
         return ()
+
     refs: list[str] = []
     for item in value:
         goal_ref = _as_non_empty_string(item)
@@ -716,23 +1364,220 @@ def _merge_unique_refs(
     return ordered_refs
 
 
-def _normalized_pending_goal_refs(
-    active_goal_ref: str | None,
-    pending_goal_refs: Sequence[str],
-) -> tuple[str, ...]:
-    normalized: list[str] = []
-    for goal_ref in pending_goal_refs:
-        if goal_ref == active_goal_ref:
-            continue
-        if goal_ref not in normalized:
-            normalized.append(goal_ref)
-    return tuple(normalized)
-
-
 def _continuity_warning(reason_code: str, subject: str | None) -> str:
     if subject is None:
         return f"continuity-rejected:{reason_code}"
     return f"continuity-rejected:{reason_code}:{subject}"
+
+
+def _admissible_families(
+    executive_state: ReferenceExecutiveState,
+) -> tuple[SoftControlFamily, ...]:
+    admissible: list[SoftControlFamily] = []
+    for family in SoftControlFamily:
+        if family is SoftControlFamily.NEUTRAL or family in executive_state.mode_and_gating.family_mask:
+            admissible.append(family)
+    return tuple(admissible)
+
+
+def _dominant_uncertainty_sources(
+    executive_state: ReferenceExecutiveState,
+) -> tuple[str, ...]:
+    ranked = sorted(
+        executive_state.uncertainty_monitoring.classwise_uncertainty,
+        key=lambda estimate: (-estimate.level, estimate.class_tag),
+    )
+    return tuple(estimate.class_tag for estimate in ranked[:2])
+
+
+def _realize_family(
+    selected_family: SoftControlFamily,
+    *,
+    brake_state: BrakeState,
+    dominant_uncertainty_sources: tuple[str, ...],
+    feedback_pressure_tags: frozenset[str],
+) -> tuple[SoftControlFamily, tuple[str, ...]]:
+    if selected_family in {
+        SoftControlFamily.NEUTRAL,
+        SoftControlFamily.CHECK,
+        SoftControlFamily.BRAKE,
+    }:
+        return selected_family, ()
+    if (
+        brake_state is BrakeState.GUARDED
+        and _has_guarded_feedback_enforcement_pressure(feedback_pressure_tags)
+    ):
+        if any(source in {"evidence", "environment"} for source in dominant_uncertainty_sources):
+            realized_family = SoftControlFamily.CHECK
+        else:
+            realized_family = SoftControlFamily.NEUTRAL
+        return (
+            realized_family,
+            (
+                f"guarded-feedback-enforced:{selected_family.value}:{realized_family.value}",
+            ),
+        )
+    if brake_state is not BrakeState.LATCHED:
+        return selected_family, ()
+
+    if any(source in {"evidence", "environment"} for source in dominant_uncertainty_sources):
+        realized_family = SoftControlFamily.CHECK
+    else:
+        realized_family = SoftControlFamily.NEUTRAL
+    return (
+        realized_family,
+        (
+            f"latched-brake-enforced:{selected_family.value}:{realized_family.value}",
+        ),
+    )
+
+
+def _has_guarded_feedback_enforcement_pressure(
+    feedback_pressure_tags: frozenset[str],
+) -> bool:
+    return bool(
+        {
+            "feedback:override-pressure",
+            "feedback:rejection-pressure",
+        }
+        & feedback_pressure_tags
+    )
+
+
+def _primary_reason(warnings: tuple[str, ...]) -> str | None:
+    for warning in warnings:
+        if warning.startswith(
+            ("latched-brake-enforced:", "guarded-feedback-enforced:")
+        ):
+            return warning
+    return warnings[0] if warnings else None
+
+
+def _validate_allocation_diagnostics_payload(payload: dict[str, Any], label: str) -> None:
+    if not isinstance(payload, dict):
+        actual_type = type(payload).__name__
+        raise TypeError(f"{label} must be dict[str, Any], got {actual_type}.")
+    if tuple(payload) != _ALLOCATION_DIAGNOSTICS_KEYS:
+        raise ValueError(
+            f"{label} must preserve the locked key order {_ALLOCATION_DIAGNOSTICS_KEYS!r}."
+        )
+    for key in ("alpha_t", "activation_threshold", "selected_delta_over_neutral"):
+        value = payload[key]
+        if isinstance(value, bool) or not isinstance(value, (int, float)):
+            actual_type = type(value).__name__
+            raise TypeError(f"{label}.{key} must be numeric, got {actual_type}.")
+    scores = payload["scores"]
+    if not isinstance(scores, list):
+        actual_type = type(scores).__name__
+        raise TypeError(f"{label}.scores must be list[dict[str, Any]], got {actual_type}.")
+    for index, score in enumerate(scores):
+        score_label = f"{label}.scores[{index}]"
+        if not isinstance(score, dict):
+            actual_type = type(score).__name__
+            raise TypeError(f"{score_label} must be dict[str, Any], got {actual_type}.")
+        if tuple(score) != _ALLOCATION_SCORE_KEYS:
+            raise ValueError(
+                f"{score_label} must preserve the locked key order {_ALLOCATION_SCORE_KEYS!r}."
+            )
+        if not (isinstance(score["family"], str) and score["family"].strip()):
+            raise ValueError(f"{score_label}.family must be non-empty after trimming.")
+        for key in ("online_score", "memory_score", "allocated_score"):
+            value = score[key]
+            if isinstance(value, bool) or not isinstance(value, (int, float)):
+                actual_type = type(value).__name__
+                raise TypeError(f"{score_label}.{key} must be numeric, got {actual_type}.")
+        if not isinstance(score["admissible"], bool):
+            actual_type = type(score["admissible"]).__name__
+            raise TypeError(f"{score_label}.admissible must be bool, got {actual_type}.")
+        reason_tags = score["reason_tags"]
+        if not isinstance(reason_tags, list):
+            actual_type = type(reason_tags).__name__
+            raise TypeError(f"{score_label}.reason_tags must be list[str], got {actual_type}.")
+        if any(not (isinstance(tag, str) and tag.strip()) for tag in reason_tags):
+            raise ValueError(
+                f"{score_label}.reason_tags must contain only non-empty values after trimming."
+            )
+    mediation = payload["mediation"]
+    if not isinstance(mediation, dict):
+        actual_type = type(mediation).__name__
+        raise TypeError(f"{label}.mediation must be dict[str, Any], got {actual_type}.")
+    if tuple(mediation) != _MEDIATION_DIAGNOSTICS_KEYS:
+        raise ValueError(
+            f"{label}.mediation must preserve the locked key order {_MEDIATION_DIAGNOSTICS_KEYS!r}."
+        )
+    for key in (
+        "mediation_active",
+        "mediation_identity",
+        "direct_opportunity_specialization_used",
+    ):
+        if not isinstance(mediation[key], bool):
+            actual_type = type(mediation[key]).__name__
+            raise TypeError(f"{label}.mediation.{key} must be bool, got {actual_type}.")
+    for key in (
+        "selected_family_before_finalization",
+        "selected_family_after_finalization",
+    ):
+        if not (isinstance(mediation[key], str) and mediation[key].strip()):
+            raise ValueError(
+                f"{label}.mediation.{key} must be non-empty after trimming."
+            )
+    preferred_opportunity_ref = mediation["preferred_opportunity_ref"]
+    if preferred_opportunity_ref is not None and not (
+        isinstance(preferred_opportunity_ref, str) and preferred_opportunity_ref.strip()
+    ):
+        raise ValueError(
+            f"{label}.mediation.preferred_opportunity_ref must be non-empty after trimming when provided."
+        )
+    mediation_reason_tags = mediation["mediation_reason_tags"]
+    if not isinstance(mediation_reason_tags, list):
+        actual_type = type(mediation_reason_tags).__name__
+        raise TypeError(
+            f"{label}.mediation.mediation_reason_tags must be list[str], got {actual_type}."
+        )
+    if any(not (isinstance(tag, str) and tag.strip()) for tag in mediation_reason_tags):
+        raise ValueError(
+            f"{label}.mediation.mediation_reason_tags must contain only non-empty values after trimming."
+        )
+
+
+def _copy_allocation_diagnostics_payload(payload: dict[str, Any]) -> dict[str, Any]:
+    _validate_allocation_diagnostics_payload(
+        payload,
+        "_copy_allocation_diagnostics_payload.payload",
+    )
+    copied_scores = [
+        {
+            "family": score["family"],
+            "online_score": score["online_score"],
+            "memory_score": score["memory_score"],
+            "allocated_score": score["allocated_score"],
+            "admissible": score["admissible"],
+            "reason_tags": list(score["reason_tags"]),
+        }
+        for score in payload["scores"]
+    ]
+    copied_mediation = {
+        "mediation_active": payload["mediation"]["mediation_active"],
+        "mediation_identity": payload["mediation"]["mediation_identity"],
+        "selected_family_before_finalization": payload["mediation"][
+            "selected_family_before_finalization"
+        ],
+        "selected_family_after_finalization": payload["mediation"][
+            "selected_family_after_finalization"
+        ],
+        "preferred_opportunity_ref": payload["mediation"]["preferred_opportunity_ref"],
+        "direct_opportunity_specialization_used": payload["mediation"][
+            "direct_opportunity_specialization_used"
+        ],
+        "mediation_reason_tags": list(payload["mediation"]["mediation_reason_tags"]),
+    }
+    return {
+        "alpha_t": payload["alpha_t"],
+        "activation_threshold": payload["activation_threshold"],
+        "selected_delta_over_neutral": payload["selected_delta_over_neutral"],
+        "scores": copied_scores,
+        "mediation": copied_mediation,
+    }
 
 
 __all__ = [

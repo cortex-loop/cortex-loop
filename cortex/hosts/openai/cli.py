@@ -25,6 +25,12 @@ _OUTPUT_KEYS = (
     "decision",
     "warnings",
     "journal",
+    "executive_state",
+    "selected_family",
+    "realized_family",
+    "brake_state",
+    "control_ledger",
+    "feedback_window_summary",
     "commitment_result_kind",
 )
 
@@ -47,6 +53,12 @@ def build_openai_cli_record(step_result: OpenAIRuntimeStepResult) -> dict[str, A
         "decision": step_result.product_decision.decision,
         "warnings": list(step_result.warnings),
         "journal": step_result.journal,
+        "executive_state": step_result.executive_state_summary,
+        "selected_family": step_result.selected_family.value,
+        "realized_family": step_result.realized_family.value,
+        "brake_state": step_result.brake_state.value,
+        "control_ledger": step_result.control_ledger_summary,
+        "feedback_window_summary": step_result.feedback_window_summary_payload,
         "commitment_result_kind": step_result.commitment_result_kind,
     }
 

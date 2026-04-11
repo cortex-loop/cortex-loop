@@ -20,6 +20,12 @@ EXPECTED_RECORD_KEYS = (
     "decision",
     "warnings",
     "journal",
+    "executive_state",
+    "selected_family",
+    "realized_family",
+    "brake_state",
+    "control_ledger",
+    "feedback_window_summary",
     "commitment_result_kind",
 )
 
@@ -58,6 +64,12 @@ def test_openai_runtime_cli_reads_documented_raw_events_and_preserves_host_name(
         None,
         "certified",
     ]
+    assert records[0]["executive_state"]["active_track_ref"] == "main"
+    assert records[0]["selected_family"] == "seek-context"
+    assert records[0]["realized_family"] == "seek-context"
+    assert records[0]["brake_state"] == "guarded"
+    assert records[0]["control_ledger"]["budget_band"] == "low"
+    assert records[0]["feedback_window_summary"]["window_size"] == 0
     assert records[-1]["journal"]["confirmed_artifact_refs"] == ["oa-artifact-1"]
     assert records[-1]["journal"]["next_recommended_move"] == "check"
 

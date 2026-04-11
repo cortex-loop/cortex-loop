@@ -60,9 +60,17 @@ def test_openai_runtime_session_artifact_roundtrips_compact_product_journal() ->
         "journal": {
             "session_id": "oa-session",
             "event_index": 3,
+            "branch_registry": ["main"],
+            "active_track_ref": "main",
             "active_goal_ref": "verified-work:python_workspace_pytest_v1:src/bookmarks_api/main.py",
             "pending_goal_refs": ["goal-follow-up"],
             "confirmed_artifact_refs": ["artifact-a", "artifact-b"],
+            "budget_history": [],
+            "brake_history": [],
+            "last_selected_family": None,
+            "last_commitment_result_summary": None,
+            "last_realization_feedback": None,
+            "feedback_window": [],
             "last_failure_class": "patch_apply_failed",
             "next_recommended_move": "repair",
             "preservation_state": {

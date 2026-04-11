@@ -26,6 +26,12 @@ EXPECTED_RECORD_KEYS = (
     "decision",
     "warnings",
     "journal",
+    "executive_state",
+    "selected_family",
+    "realized_family",
+    "brake_state",
+    "control_ledger",
+    "feedback_window_summary",
     "commitment_result_kind",
 )
 

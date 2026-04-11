@@ -95,8 +95,18 @@ def test_openai_service_export_import_preserves_o3_equivalence_and_keeps_diagnos
         uninterrupted_artifact_payload,
         split_artifact,
     )
-    assert "budget_history" not in uninterrupted_records[-1]["journal"]
-    assert "brake_history" not in uninterrupted_records[-1]["journal"]
+    assert uninterrupted_records[-1]["journal"]["budget_history"] == [
+        "shell-low",
+        "shell-medium",
+        "shell-low",
+        "shell-high",
+    ]
+    assert uninterrupted_records[-1]["journal"]["brake_history"] == [
+        "guarded",
+        "guarded",
+        "guarded",
+        "guarded",
+    ]
 
 
 def _run_openai_ingress_cli(
