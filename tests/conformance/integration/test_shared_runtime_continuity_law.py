@@ -84,6 +84,8 @@ _HOSTS: dict[str, _RuntimeHostSpec] = {
                 "active_track_ref": "branch-alpha",
                 "pending_goal_refs": [],
                 "feedback_window_summary": _ZERO_FEEDBACK_WINDOW,
+                "closure_required": False,
+                "closure_reason_tags": [],
             },
             {
                 "selected_family": "seek-context",
@@ -93,6 +95,8 @@ _HOSTS: dict[str, _RuntimeHostSpec] = {
                 "active_track_ref": "main",
                 "pending_goal_refs": ["branch-alpha"],
                 "feedback_window_summary": _FIRST_FEEDBACK_WINDOW,
+                "closure_required": True,
+                "closure_reason_tags": ["pending_goal_debt"],
             },
             {
                 "selected_family": "seek-context",
@@ -102,6 +106,8 @@ _HOSTS: dict[str, _RuntimeHostSpec] = {
                 "active_track_ref": "branch-alpha",
                 "pending_goal_refs": [],
                 "feedback_window_summary": _SECOND_FEEDBACK_WINDOW,
+                "closure_required": False,
+                "closure_reason_tags": [],
             },
             {
                 "selected_family": "seek-context",
@@ -111,6 +117,8 @@ _HOSTS: dict[str, _RuntimeHostSpec] = {
                 "active_track_ref": "main",
                 "pending_goal_refs": [],
                 "feedback_window_summary": _THIRD_FEEDBACK_WINDOW,
+                "closure_required": False,
+                "closure_reason_tags": [],
             },
         ),
         rejection_projection=(
@@ -122,6 +130,8 @@ _HOSTS: dict[str, _RuntimeHostSpec] = {
                 "active_track_ref": "branch-alpha",
                 "pending_goal_refs": [],
                 "feedback_window_summary": _ZERO_FEEDBACK_WINDOW,
+                "closure_required": False,
+                "closure_reason_tags": [],
             },
             {
                 "selected_family": "seek-context",
@@ -133,6 +143,11 @@ _HOSTS: dict[str, _RuntimeHostSpec] = {
                 "active_track_ref": "branch-alpha",
                 "pending_goal_refs": [],
                 "feedback_window_summary": _FIRST_FEEDBACK_WINDOW,
+                "closure_required": True,
+                "closure_reason_tags": [
+                    "continuity_rejection",
+                    "continuity_reminder",
+                ],
             },
         ),
     ),
@@ -148,55 +163,65 @@ _HOSTS: dict[str, _RuntimeHostSpec] = {
         + "\n",
         continuity_projection=(
             {
-                "selected_family": "neutral",
-                "realized_family": "neutral",
+                "selected_family": "seek-context",
+                "realized_family": "seek-context",
                 "brake_state": "guarded",
                 "continuity_warnings": [],
                 "active_track_ref": "branch-alpha",
                 "pending_goal_refs": [],
                 "feedback_window_summary": _ZERO_FEEDBACK_WINDOW,
+                "closure_required": False,
+                "closure_reason_tags": [],
             },
             {
-                "selected_family": "neutral",
-                "realized_family": "neutral",
+                "selected_family": "seek-context",
+                "realized_family": "seek-context",
                 "brake_state": "guarded",
                 "continuity_warnings": [],
                 "active_track_ref": "main",
                 "pending_goal_refs": ["branch-alpha"],
                 "feedback_window_summary": _FIRST_FEEDBACK_WINDOW,
+                "closure_required": True,
+                "closure_reason_tags": ["pending_goal_debt"],
             },
             {
-                "selected_family": "neutral",
-                "realized_family": "neutral",
+                "selected_family": "seek-context",
+                "realized_family": "seek-context",
                 "brake_state": "guarded",
                 "continuity_warnings": [],
                 "active_track_ref": "branch-alpha",
                 "pending_goal_refs": [],
                 "feedback_window_summary": _SECOND_FEEDBACK_WINDOW,
+                "closure_required": False,
+                "closure_reason_tags": [],
             },
             {
-                "selected_family": "neutral",
-                "realized_family": "neutral",
-                "brake_state": "quiescent",
+                "selected_family": "seek-context",
+                "realized_family": "seek-context",
+                "brake_state": "guarded",
                 "continuity_warnings": [],
                 "active_track_ref": "main",
                 "pending_goal_refs": [],
                 "feedback_window_summary": _THIRD_FEEDBACK_WINDOW,
+                "closure_required": False,
+                "closure_reason_tags": [],
             },
         ),
         rejection_projection=(
             {
-                "selected_family": "neutral",
-                "realized_family": "neutral",
+                "selected_family": "seek-context",
+                "realized_family": "seek-context",
                 "brake_state": "guarded",
                 "continuity_warnings": [],
                 "active_track_ref": "branch-alpha",
                 "pending_goal_refs": [],
                 "feedback_window_summary": _ZERO_FEEDBACK_WINDOW,
+                "closure_required": False,
+                "closure_reason_tags": [],
             },
             {
-                "selected_family": "neutral",
-                "realized_family": "neutral",
+                "selected_family": "seek-context",
+                "realized_family": "seek-context",
                 "brake_state": "guarded",
                 "continuity_warnings": [
                     "continuity-rejected:missing-resume-anchor:branch-alpha"
@@ -204,6 +229,11 @@ _HOSTS: dict[str, _RuntimeHostSpec] = {
                 "active_track_ref": "branch-alpha",
                 "pending_goal_refs": [],
                 "feedback_window_summary": _FIRST_FEEDBACK_WINDOW,
+                "closure_required": True,
+                "closure_reason_tags": [
+                    "continuity_rejection",
+                    "continuity_reminder",
+                ],
             },
         ),
     ),
@@ -219,55 +249,65 @@ _HOSTS: dict[str, _RuntimeHostSpec] = {
         + "\n",
         continuity_projection=(
             {
-                "selected_family": "neutral",
-                "realized_family": "neutral",
+                "selected_family": "seek-context",
+                "realized_family": "seek-context",
                 "brake_state": "guarded",
                 "continuity_warnings": [],
                 "active_track_ref": "branch-alpha",
                 "pending_goal_refs": [],
                 "feedback_window_summary": _ZERO_FEEDBACK_WINDOW,
+                "closure_required": False,
+                "closure_reason_tags": [],
             },
             {
-                "selected_family": "neutral",
-                "realized_family": "neutral",
+                "selected_family": "seek-context",
+                "realized_family": "seek-context",
                 "brake_state": "guarded",
                 "continuity_warnings": [],
                 "active_track_ref": "main",
                 "pending_goal_refs": ["branch-alpha"],
                 "feedback_window_summary": _FIRST_FEEDBACK_WINDOW,
+                "closure_required": True,
+                "closure_reason_tags": ["pending_goal_debt"],
             },
             {
-                "selected_family": "neutral",
-                "realized_family": "neutral",
+                "selected_family": "seek-context",
+                "realized_family": "seek-context",
                 "brake_state": "guarded",
                 "continuity_warnings": [],
                 "active_track_ref": "branch-alpha",
                 "pending_goal_refs": [],
                 "feedback_window_summary": _SECOND_FEEDBACK_WINDOW,
+                "closure_required": False,
+                "closure_reason_tags": [],
             },
             {
-                "selected_family": "neutral",
-                "realized_family": "neutral",
-                "brake_state": "quiescent",
+                "selected_family": "seek-context",
+                "realized_family": "seek-context",
+                "brake_state": "guarded",
                 "continuity_warnings": [],
                 "active_track_ref": "main",
                 "pending_goal_refs": [],
                 "feedback_window_summary": _THIRD_FEEDBACK_WINDOW,
+                "closure_required": False,
+                "closure_reason_tags": [],
             },
         ),
         rejection_projection=(
             {
-                "selected_family": "neutral",
-                "realized_family": "neutral",
+                "selected_family": "seek-context",
+                "realized_family": "seek-context",
                 "brake_state": "guarded",
                 "continuity_warnings": [],
                 "active_track_ref": "branch-alpha",
                 "pending_goal_refs": [],
                 "feedback_window_summary": _ZERO_FEEDBACK_WINDOW,
+                "closure_required": False,
+                "closure_reason_tags": [],
             },
             {
-                "selected_family": "neutral",
-                "realized_family": "neutral",
+                "selected_family": "seek-context",
+                "realized_family": "seek-context",
                 "brake_state": "guarded",
                 "continuity_warnings": [
                     "continuity-rejected:missing-resume-anchor:branch-alpha"
@@ -275,6 +315,11 @@ _HOSTS: dict[str, _RuntimeHostSpec] = {
                 "active_track_ref": "branch-alpha",
                 "pending_goal_refs": [],
                 "feedback_window_summary": _FIRST_FEEDBACK_WINDOW,
+                "closure_required": True,
+                "closure_reason_tags": [
+                    "continuity_rejection",
+                    "continuity_reminder",
+                ],
             },
         ),
     ),
@@ -290,55 +335,65 @@ _HOSTS: dict[str, _RuntimeHostSpec] = {
         + "\n",
         continuity_projection=(
             {
-                "selected_family": "neutral",
-                "realized_family": "neutral",
+                "selected_family": "seek-context",
+                "realized_family": "seek-context",
                 "brake_state": "guarded",
                 "continuity_warnings": [],
                 "active_track_ref": "branch-alpha",
                 "pending_goal_refs": [],
                 "feedback_window_summary": _ZERO_FEEDBACK_WINDOW,
+                "closure_required": False,
+                "closure_reason_tags": [],
             },
             {
-                "selected_family": "neutral",
-                "realized_family": "neutral",
+                "selected_family": "seek-context",
+                "realized_family": "seek-context",
                 "brake_state": "guarded",
                 "continuity_warnings": [],
                 "active_track_ref": "main",
                 "pending_goal_refs": ["branch-alpha"],
                 "feedback_window_summary": _FIRST_FEEDBACK_WINDOW,
+                "closure_required": True,
+                "closure_reason_tags": ["pending_goal_debt"],
             },
             {
-                "selected_family": "neutral",
-                "realized_family": "neutral",
+                "selected_family": "seek-context",
+                "realized_family": "seek-context",
                 "brake_state": "guarded",
                 "continuity_warnings": [],
                 "active_track_ref": "branch-alpha",
                 "pending_goal_refs": [],
                 "feedback_window_summary": _SECOND_FEEDBACK_WINDOW,
+                "closure_required": False,
+                "closure_reason_tags": [],
             },
             {
-                "selected_family": "neutral",
-                "realized_family": "neutral",
-                "brake_state": "quiescent",
+                "selected_family": "seek-context",
+                "realized_family": "seek-context",
+                "brake_state": "guarded",
                 "continuity_warnings": [],
                 "active_track_ref": "main",
                 "pending_goal_refs": [],
                 "feedback_window_summary": _THIRD_FEEDBACK_WINDOW,
+                "closure_required": False,
+                "closure_reason_tags": [],
             },
         ),
         rejection_projection=(
             {
-                "selected_family": "neutral",
-                "realized_family": "neutral",
+                "selected_family": "seek-context",
+                "realized_family": "seek-context",
                 "brake_state": "guarded",
                 "continuity_warnings": [],
                 "active_track_ref": "branch-alpha",
                 "pending_goal_refs": [],
                 "feedback_window_summary": _ZERO_FEEDBACK_WINDOW,
+                "closure_required": False,
+                "closure_reason_tags": [],
             },
             {
-                "selected_family": "neutral",
-                "realized_family": "neutral",
+                "selected_family": "seek-context",
+                "realized_family": "seek-context",
                 "brake_state": "guarded",
                 "continuity_warnings": [
                     "continuity-rejected:missing-resume-anchor:branch-alpha"
@@ -346,6 +401,11 @@ _HOSTS: dict[str, _RuntimeHostSpec] = {
                 "active_track_ref": "branch-alpha",
                 "pending_goal_refs": [],
                 "feedback_window_summary": _FIRST_FEEDBACK_WINDOW,
+                "closure_required": True,
+                "closure_reason_tags": [
+                    "continuity_rejection",
+                    "continuity_reminder",
+                ],
             },
         ),
     ),
@@ -366,12 +426,14 @@ def test_runtime_continuity_fixtures_lock_shared_session_truth_and_host_control_
 
     reference_truth = [
         {
-            "active_track_ref": record["active_track_ref"],
-            "pending_goal_refs": record["pending_goal_refs"],
-            "feedback_window_summary": record["feedback_window_summary"],
-        }
-        for record in _HOSTS["reference"].continuity_projection
-    ]
+                "active_track_ref": record["active_track_ref"],
+                "pending_goal_refs": record["pending_goal_refs"],
+                "feedback_window_summary": record["feedback_window_summary"],
+                "closure_required": record["closure_required"],
+                "closure_reason_tags": record["closure_reason_tags"],
+            }
+            for record in _HOSTS["reference"].continuity_projection
+        ]
     for host_name, records in projected.items():
         assert records == list(_HOSTS[host_name].continuity_projection)
         assert [
@@ -379,6 +441,8 @@ def test_runtime_continuity_fixtures_lock_shared_session_truth_and_host_control_
                 "active_track_ref": record["active_track_ref"],
                 "pending_goal_refs": record["pending_goal_refs"],
                 "feedback_window_summary": record["feedback_window_summary"],
+                "closure_required": record["closure_required"],
+                "closure_reason_tags": record["closure_reason_tags"],
             }
             for record in records
         ] == reference_truth
@@ -398,12 +462,14 @@ def test_runtime_continuity_missing_resume_anchor_lock_preserves_cross_host_reje
     ]
     reference_truth = [
         {
-            "active_track_ref": record["active_track_ref"],
-            "pending_goal_refs": record["pending_goal_refs"],
-            "feedback_window_summary": record["feedback_window_summary"],
-        }
-        for record in _HOSTS["reference"].rejection_projection
-    ]
+                "active_track_ref": record["active_track_ref"],
+                "pending_goal_refs": record["pending_goal_refs"],
+                "feedback_window_summary": record["feedback_window_summary"],
+                "closure_required": record["closure_required"],
+                "closure_reason_tags": record["closure_reason_tags"],
+            }
+            for record in _HOSTS["reference"].rejection_projection
+        ]
     for host_name, records in projected.items():
         assert records == list(_HOSTS[host_name].rejection_projection)
         assert [record["continuity_warnings"] for record in records] == reference_rejections
@@ -412,6 +478,8 @@ def test_runtime_continuity_missing_resume_anchor_lock_preserves_cross_host_reje
                 "active_track_ref": record["active_track_ref"],
                 "pending_goal_refs": record["pending_goal_refs"],
                 "feedback_window_summary": record["feedback_window_summary"],
+                "closure_required": record["closure_required"],
+                "closure_reason_tags": record["closure_reason_tags"],
             }
             for record in records
         ] == reference_truth
@@ -456,4 +524,6 @@ def _project_record(record: dict[str, object]) -> dict[str, object]:
         "active_track_ref": session_summary["active_track_ref"],
         "pending_goal_refs": session_summary["pending_goal_refs"],
         "feedback_window_summary": record["feedback_window_summary"],
+        "closure_required": record["closure_required"],
+        "closure_reason_tags": record["closure_reason_tags"],
     }

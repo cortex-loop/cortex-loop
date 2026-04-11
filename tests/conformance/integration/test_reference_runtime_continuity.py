@@ -31,27 +31,27 @@ def test_reference_runtime_cli_preserves_open_suspend_resume_merge_continuity_in
     assert len(records) == 4
     assert [record["event_index"] for record in records] == [1, 2, 3, 4]
     assert [record["selected_family"] for record in records] == [
-        "neutral",
-        "neutral",
-        "neutral",
-        "neutral",
+        "seek-context",
+        "seek-context",
+        "seek-context",
+        "seek-context",
     ]
     assert [record["brake_state"] for record in records] == [
         "guarded",
         "guarded",
         "guarded",
-        "quiescent",
+        "guarded",
     ]
     assert [record["control_ledger"]["allocation_diagnostics"]["alpha_t"] for record in records] == [
         0.75,
         0.75,
         0.75,
-        0.85,
+        0.75,
     ]
     assert [
         record["control_ledger"]["allocation_diagnostics"]["activation_threshold"]
         for record in records
-    ] == pytest.approx([0.40, 0.35, 0.40, 0.25])
+    ] == pytest.approx([0.45, 0.35, 0.45, 0.30])
     assert [record["session_summary"]["branch_registry"] for record in records] == [
         ["main", "branch-alpha"],
         ["main", "branch-alpha"],
@@ -79,6 +79,18 @@ def test_reference_runtime_cli_preserves_open_suspend_resume_merge_continuity_in
     assert [record["executive_state_summary"]["pending_goal_refs"] for record in records] == [
         [],
         ["branch-alpha"],
+        [],
+        [],
+    ]
+    assert [record["closure_required"] for record in records] == [
+        False,
+        True,
+        False,
+        False,
+    ]
+    assert [record["closure_reason_tags"] for record in records] == [
+        [],
+        ["pending_goal_debt"],
         [],
         [],
     ]

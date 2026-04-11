@@ -26,6 +26,11 @@ EXPECTED_RECORD_KEYS = (
     "session_summary",
     "commitment_result_kind",
     "feedback_window_summary",
+    "executive_signal_summary",
+    "executive_modulator_state",
+    "executive_policy_view",
+    "closure_required",
+    "closure_reason_tags",
 )
 
 

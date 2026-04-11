@@ -15,7 +15,6 @@ from cortex.core.commitments import (
 )
 from cortex.core.dispatch import DispatchDecision, DispatchLane, classify_dispatch
 from cortex.core.environment import (
-    CAPABILITY_VIEW,
     EXECUTION_TRACE,
     EXTERNAL_RECORD,
     RESULT_ARTIFACT,
@@ -40,9 +39,19 @@ from cortex.drivers.claude_host import (
     observe_claude_host_event,
 )
 from cortex.drivers.claude_host_commitment import bind_claude_host_candidate
+from cortex.hosts._executive_closure import (
+    build_runtime_executive_signal_summary_inputs,
+    canonicalize_executive_modulator_memory,
+    closure_reason_tags,
+    recent_warning_bearing_success_present,
+)
 from cortex.sre.allocation import build_allocation_diagnostics_payload
 from cortex.sre.branching import BranchOperation
 from cortex.sre.brake import BrakeState
+from cortex.sre.executive_summary import (
+    ExecutiveSignalSummary,
+    build_executive_signal_summary,
+)
 from cortex.sre.families import SoftControlFamily
 from cortex.sre.feedback import (
     ReferenceFeedbackWindowSummary,
@@ -50,6 +59,12 @@ from cortex.sre.feedback import (
     ReferenceRealizationFeedbackWindow,
     summarize_reference_feedback_window,
 )
+from cortex.sre.modulators import (
+    ExecutiveModulatorMemory,
+    ExecutiveModulatorState,
+    update_executive_modulators,
+)
+from cortex.sre.policy_view import ExecutivePolicyView, build_executive_policy_view
 from cortex.sre.reference_builder import build_reference_executive_state
 from cortex.sre.reference_scoring import select_reference_soft_control
 from cortex.sre.state import ReferenceExecutiveState
@@ -72,6 +87,7 @@ class ClaudeRuntimeSession:
     feedback_window: ReferenceRealizationFeedbackWindow = field(
         default_factory=ReferenceRealizationFeedbackWindow
     )
+    executive_modulator_memory: ExecutiveModulatorMemory | None = None
 
     def __post_init__(self) -> None:
         if self.session_id is not None and not (
@@ -143,9 +159,27 @@ class ClaudeRuntimeSession:
                 "ClaudeRuntimeSession.feedback_window must be "
                 f"ReferenceRealizationFeedbackWindow, got {actual_type}."
             )
+        if self.executive_modulator_memory is not None and not isinstance(
+            self.executive_modulator_memory,
+            ExecutiveModulatorMemory,
+        ):
+            actual_type = type(self.executive_modulator_memory).__name__
+            raise TypeError(
+                "ClaudeRuntimeSession.executive_modulator_memory must be "
+                f"ExecutiveModulatorMemory | None, got {actual_type}."
+            )
 
         normalized_last_realization_feedback = self.last_realization_feedback
         normalized_feedback_window = self.feedback_window
+        normalized_executive_modulator_memory = canonicalize_executive_modulator_memory(
+            self.executive_modulator_memory
+        )
+        if normalized_executive_modulator_memory != self.executive_modulator_memory:
+            object.__setattr__(
+                self,
+                "executive_modulator_memory",
+                normalized_executive_modulator_memory,
+            )
         if (
             normalized_last_realization_feedback is not None
             and not normalized_feedback_window.entries
@@ -287,6 +321,35 @@ class ClaudeRuntimeStepResult:
     feedback_window_summary: ReferenceFeedbackWindowSummary = field(
         default_factory=ReferenceFeedbackWindowSummary
     )
+    executive_signal_summary: ExecutiveSignalSummary = field(
+        default_factory=lambda: ExecutiveSignalSummary(
+            uncertainty=0.0,
+            repeated_failure_pressure=0.0,
+            quota_pressure=0.0,
+            continuity_demand=0.0,
+            novelty_pressure=0.0,
+            verification_conflict_pressure=0.0,
+        )
+    )
+    executive_modulator_state: ExecutiveModulatorState = field(
+        default_factory=lambda: ExecutiveModulatorState(
+            focus_gain=0.0,
+            explore_gain=0.0,
+            stop_pressure=0.0,
+            update_pressure=0.0,
+        )
+    )
+    executive_policy_view: ExecutivePolicyView = field(
+        default_factory=lambda: ExecutivePolicyView(
+            default_profile_bonus=0.0,
+            switch_margin=0.0,
+            stop_threshold=0.75,
+            allow_extra_read_pass=False,
+            verification_intensity=0.30,
+        )
+    )
+    closure_required: bool = False
+    closure_reason_tags: tuple[str, ...] = field(default_factory=tuple)
     warnings: tuple[str, ...] = field(default_factory=tuple)
     session: ClaudeRuntimeSession = field(default_factory=ClaudeRuntimeSession)
     commitment_result_kind: str | None = None
@@ -348,6 +411,37 @@ class ClaudeRuntimeStepResult:
                 "ClaudeRuntimeStepResult.feedback_window_summary must be "
                 f"ReferenceFeedbackWindowSummary, got {actual_type}."
             )
+        if not isinstance(self.executive_signal_summary, ExecutiveSignalSummary):
+            actual_type = type(self.executive_signal_summary).__name__
+            raise TypeError(
+                "ClaudeRuntimeStepResult.executive_signal_summary must be "
+                f"ExecutiveSignalSummary, got {actual_type}."
+            )
+        if not isinstance(self.executive_modulator_state, ExecutiveModulatorState):
+            actual_type = type(self.executive_modulator_state).__name__
+            raise TypeError(
+                "ClaudeRuntimeStepResult.executive_modulator_state must be "
+                f"ExecutiveModulatorState, got {actual_type}."
+            )
+        if not isinstance(self.executive_policy_view, ExecutivePolicyView):
+            actual_type = type(self.executive_policy_view).__name__
+            raise TypeError(
+                "ClaudeRuntimeStepResult.executive_policy_view must be "
+                f"ExecutivePolicyView, got {actual_type}."
+            )
+        if not isinstance(self.closure_required, bool):
+            actual_type = type(self.closure_required).__name__
+            raise TypeError(
+                "ClaudeRuntimeStepResult.closure_required must be bool, "
+                f"got {actual_type}."
+            )
+        if any(
+            not (isinstance(tag, str) and tag.strip())
+            for tag in self.closure_reason_tags
+        ):
+            raise ValueError(
+                "ClaudeRuntimeStepResult.closure_reason_tags must contain only non-empty values after trimming."
+            )
         if any(not (isinstance(warning, str) and warning.strip()) for warning in self.warnings):
             raise ValueError(
                 "ClaudeRuntimeStepResult.warnings must contain only non-empty values after trimming."
@@ -400,6 +494,18 @@ class ClaudeRuntimeStepResult:
     @property
     def feedback_window_summary_payload(self) -> dict[str, Any]:
         return self.feedback_window_summary.as_summary()
+
+    @property
+    def executive_signal_summary_payload(self) -> dict[str, Any]:
+        return self.executive_signal_summary.as_payload()
+
+    @property
+    def executive_modulator_state_payload(self) -> dict[str, Any]:
+        return self.executive_modulator_state.as_payload()
+
+    @property
+    def executive_policy_view_payload(self) -> dict[str, Any]:
+        return self.executive_policy_view.as_payload()
 
 
 def run_claude_runtime_step(
@@ -549,6 +655,65 @@ def run_claude_runtime_step(
         ),
         last_realization_feedback=realization_feedback,
         feedback_window=prior_session.feedback_window.append(realization_feedback),
+        executive_modulator_memory=prior_session.executive_modulator_memory,
+    )
+    consequential_write_pending = bool(normalized_payload.get("externally_consequential"))
+    approval_required = dispatch_decision.lane is not DispatchLane.CHEAP
+    evidence_gap = (
+        consequential_write_pending
+        and _first_concrete_artifact_ref(normalized_payload) is None
+    )
+    executive_signal_summary = build_executive_signal_summary(
+        build_runtime_executive_signal_summary_inputs(
+            executive_state=executive_state,
+            dispatch_decision=dispatch_decision,
+            active_track_ref=provisional_session.active_track_ref,
+            pending_goal_refs=provisional_session.pending_goal_refs,
+            continuity_warnings=continuity_warnings,
+            continuity_reminders=continuity_reminders,
+            approval_required=approval_required,
+            evidence_gap=evidence_gap,
+            consequential_write_pending=consequential_write_pending,
+            prior_failed_before_completion=False,
+            recent_product_failure_class=None,
+            recent_warning_bearing_success_present=recent_warning_bearing_success_present(
+                prior_session.feedback_window,
+                failed_before_completion=False,
+            ),
+            preservation_active=False,
+        )
+    )
+    executive_modulator_update = update_executive_modulators(
+        executive_signal_summary,
+        previous=prior_session.executive_modulator_memory,
+    )
+    executive_policy_view = build_executive_policy_view(
+        executive_signal_summary,
+        executive_modulator_update.state,
+    )
+    closure_reason_tags_value = closure_reason_tags(
+        warnings=warnings,
+        continuity_reminders=continuity_reminders,
+        brake_state=brake_state,
+        feedback_window_summary=prior_feedback_window_summary,
+        pending_goal_refs=provisional_session.pending_goal_refs,
+    )
+    closure_required = bool(closure_reason_tags_value)
+    updated_session = ClaudeRuntimeSession(
+        session_id=updated_session.session_id,
+        event_index=updated_session.event_index,
+        branch_registry=updated_session.branch_registry,
+        active_track_ref=updated_session.active_track_ref,
+        pending_goal_refs=updated_session.pending_goal_refs,
+        budget_history=updated_session.budget_history,
+        brake_history=updated_session.brake_history,
+        last_selected_family=updated_session.last_selected_family,
+        last_commitment_result_summary=updated_session.last_commitment_result_summary,
+        last_realization_feedback=updated_session.last_realization_feedback,
+        feedback_window=updated_session.feedback_window,
+        executive_modulator_memory=canonicalize_executive_modulator_memory(
+            executive_modulator_update.next_memory
+        ),
     )
     return ClaudeRuntimeStepResult(
         event_index=updated_session.event_index,
@@ -560,6 +725,11 @@ def run_claude_runtime_step(
         brake_state=brake_state,
         control_ledger=control_ledger,
         feedback_window_summary=prior_feedback_window_summary,
+        executive_signal_summary=executive_signal_summary,
+        executive_modulator_state=executive_modulator_update.state,
+        executive_policy_view=executive_policy_view,
+        closure_required=closure_required,
+        closure_reason_tags=closure_reason_tags_value,
         warnings=warnings,
         session=updated_session,
         commitment_result_kind=commitment_result_kind,
@@ -760,10 +930,7 @@ def _build_environment_handle(
 def _build_executive_environment_view(
     normalized_payload: Mapping[str, Any],
 ) -> ExecutiveEnvironmentView:
-    available_query_kinds = {
-        CAPABILITY_VIEW,
-        EXECUTION_TRACE,
-    }
+    available_query_kinds = {EXECUTION_TRACE}
     host_capability_tags = {
         "claude-host",
         "local-cli-runtime",

@@ -41,7 +41,7 @@ FEEDBACK_WINDOW_FIXTURE_PATH = (
     / "fixtures"
     / "reference_runtime_feedback_window_session.jsonl"
 )
-EXPECTED_RECORD_KEYS = {
+EXPECTED_RECORD_KEYS = (
     "event_index",
     "native_event_name",
     "dispatch_lane",
@@ -53,7 +53,13 @@ EXPECTED_RECORD_KEYS = {
     "session_summary",
     "commitment_result_kind",
     "feedback_window_summary",
-}
+    "executive_signal_summary",
+    "executive_modulator_state",
+    "executive_policy_view",
+    "closure_required",
+    "closure_reason_tags",
+)
+EXPECTED_RECORD_KEY_SET = set(EXPECTED_RECORD_KEYS)
 
 
 def test_reference_runtime_cli_reads_event_file_and_emits_one_record_per_event() -> None:
@@ -65,7 +71,7 @@ def test_reference_runtime_cli_reads_event_file_and_emits_one_record_per_event()
     records = _parse_jsonl_output(completed.stdout)
 
     assert len(records) == 3
-    assert all(set(record) == EXPECTED_RECORD_KEYS for record in records)
+    assert all(set(record) == EXPECTED_RECORD_KEY_SET for record in records)
     assert [record["event_index"] for record in records] == [1, 2, 3]
     assert [record["native_event_name"] for record in records] == [
         "context/load",
@@ -78,19 +84,19 @@ def test_reference_runtime_cli_reads_event_file_and_emits_one_record_per_event()
         "full-commitment",
     ]
     assert [record["selected_family"] for record in records] == [
-        "neutral",
-        "neutral",
-        "neutral",
+        "seek-context",
+        "seek-context",
+        "seek-context",
     ]
     assert [record["brake_state"] for record in records] == [
-        "quiescent",
-        "quiescent",
-        "quiescent",
+        "guarded",
+        "guarded",
+        "guarded",
     ]
     assert [record["executive_state_summary"]["mode_tag"] for record in records] == [
-        "pass_through",
-        "review_pending",
-        "commitment_path",
+        "guarded_review",
+        "guarded_review",
+        "guarded_review",
     ]
     assert [record["executive_state_summary"]["budget_band"] for record in records] == [
         "low",
@@ -103,19 +109,19 @@ def test_reference_runtime_cli_reads_event_file_and_emits_one_record_per_event()
         "full-commitment",
     ]
     assert [record["control_ledger"]["selected_family"] for record in records] == [
-        "neutral",
-        "neutral",
-        "neutral",
+        "seek-context",
+        "seek-context",
+        "seek-context",
     ]
     assert [record["control_ledger"]["realized_family"] for record in records] == [
-        "neutral",
-        "neutral",
-        "neutral",
+        "seek-context",
+        "seek-context",
+        "seek-context",
     ]
     assert [record["control_ledger"]["brake_state"] for record in records] == [
-        "quiescent",
-        "quiescent",
-        "quiescent",
+        "guarded",
+        "guarded",
+        "guarded",
     ]
     assert [record["commitment_result_kind"] for record in records] == [
         None,
@@ -131,7 +137,11 @@ def test_reference_runtime_cli_reads_event_file_and_emits_one_record_per_event()
         "shell-high",
     ]
     assert records[-1]["session_summary"]["feedback_window_size"] == 3
-    assert records[-1]["executive_state_summary"]["top_family_set"] == ["neutral"]
+    assert records[-1]["executive_state_summary"]["top_family_set"] == [
+        "brake",
+        "neutral",
+        "seek-context",
+    ]
     assert tuple(records[-1]) == (
         "event_index",
         "native_event_name",
@@ -144,6 +154,11 @@ def test_reference_runtime_cli_reads_event_file_and_emits_one_record_per_event()
         "session_summary",
         "commitment_result_kind",
         "feedback_window_summary",
+        "executive_signal_summary",
+        "executive_modulator_state",
+        "executive_policy_view",
+        "closure_required",
+        "closure_reason_tags",
     )
     assert tuple(records[-1]["control_ledger"]) == (
         "event_class",
@@ -164,14 +179,14 @@ def test_reference_runtime_cli_reads_event_file_and_emits_one_record_per_event()
         "mediation",
     )
     assert [record["control_ledger"]["allocation_diagnostics"]["alpha_t"] for record in records] == [
-        1.0,
-        0.85,
-        0.85,
+        0.75,
+        0.75,
+        0.75,
     ]
     assert [
         record["control_ledger"]["allocation_diagnostics"]["activation_threshold"]
         for record in records
-    ] == [0.35, 0.30, 0.25]
+    ] == [0.44999999999999996, 0.35, 0.30]
     assert records[1]["control_ledger"]["allocation_diagnostics"]["scores"][0]["allocated_score"] != records[1]["control_ledger"]["allocation_diagnostics"]["scores"][0]["online_score"]
     assert records[2]["control_ledger"]["allocation_diagnostics"]["scores"][0]["allocated_score"] != records[2]["control_ledger"]["allocation_diagnostics"]["scores"][0]["online_score"]
     assert all(
@@ -254,6 +269,11 @@ def test_reference_runtime_cli_in_process_surfaces_selected_vs_realized_divergen
         "session_summary",
         "commitment_result_kind",
         "feedback_window_summary",
+        "executive_signal_summary",
+        "executive_modulator_state",
+        "executive_policy_view",
+        "closure_required",
+        "closure_reason_tags",
     )
     assert records[0]["selected_family"] == "branch"
     assert records[0]["warnings"] == ["latched-brake-enforced:branch:check"]
@@ -293,13 +313,14 @@ def test_reference_runtime_cli_emits_feedback_window_summary_for_real_session_mi
     assert records[4]["feedback_window_summary"] == {
         "window_size": 3,
         "rejection_count": 2,
-        "override_count": 0,
-        "latched_count": 0,
+        "override_count": 1,
+        "latched_count": 1,
         "clean_success_streak": 0,
         "goal_progress_floor": 0.70,
         "degradation_pressure_bonus": 2,
         "sustained_spike_flags": [
             "prior-session-mismatch",
+            "prior-enforcement-override",
             "sustained-feedback-disruption",
         ],
     }
@@ -315,6 +336,11 @@ def test_reference_runtime_cli_emits_feedback_window_summary_for_real_session_mi
         "session_summary",
         "commitment_result_kind",
         "feedback_window_summary",
+        "executive_signal_summary",
+        "executive_modulator_state",
+        "executive_policy_view",
+        "closure_required",
+        "closure_reason_tags",
     )
 
 
@@ -346,39 +372,54 @@ def test_reference_runtime_cli_save_session_does_not_change_jsonl_output(tmp_pat
             "last_budget_band": "high",
             "last_commitment_result_summary": "certified",
             "last_realization_feedback": {
-                "selected_family": "neutral",
-                "realized_family": "neutral",
-                "brake_state": "quiescent",
+                "selected_family": "seek-context",
+                "realized_family": "seek-context",
+                "brake_state": "guarded",
                 "commitment_result_kind": "certified",
                 "warning_codes": [],
-                "host_friction_tags": ["approval-boundary-present"],
+                "host_friction_tags": [
+                    "approval-boundary-present",
+                    "capability-view-missing",
+                ],
             },
             "feedback_window": [
                 {
-                    "selected_family": "neutral",
-                    "realized_family": "neutral",
-                    "brake_state": "quiescent",
+                    "selected_family": "seek-context",
+                    "realized_family": "seek-context",
+                    "brake_state": "guarded",
                     "commitment_result_kind": None,
                     "warning_codes": [],
-                    "host_friction_tags": [],
+                    "host_friction_tags": ["capability-view-missing"],
                 },
                 {
-                    "selected_family": "neutral",
-                    "realized_family": "neutral",
-                    "brake_state": "quiescent",
+                    "selected_family": "seek-context",
+                    "realized_family": "seek-context",
+                    "brake_state": "guarded",
                     "commitment_result_kind": None,
                     "warning_codes": [],
-                    "host_friction_tags": ["approval-boundary-present"],
+                    "host_friction_tags": [
+                        "approval-boundary-present",
+                        "capability-view-missing",
+                    ],
                 },
                 {
-                    "selected_family": "neutral",
-                    "realized_family": "neutral",
-                    "brake_state": "quiescent",
+                    "selected_family": "seek-context",
+                    "realized_family": "seek-context",
+                    "brake_state": "guarded",
                     "commitment_result_kind": "certified",
                     "warning_codes": [],
-                    "host_friction_tags": ["approval-boundary-present"],
+                    "host_friction_tags": [
+                        "approval-boundary-present",
+                        "capability-view-missing",
+                    ],
                 },
             ],
+            "executive_modulator_memory": {
+                "focus_tonic": 0.0,
+                "explore_tonic": 0.3375,
+                "stop_tonic": 0.3698,
+                "update_tonic": 0.3949,
+            },
         },
     }
 

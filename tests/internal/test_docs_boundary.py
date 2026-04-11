@@ -160,11 +160,16 @@ def test_status_registry_is_complete_and_stable() -> None:
             for item in status["bio_to_code_matrix"]
         )
     )
-    assert current_percent == 80
-    assert current_percent < status["executive_completion"]["shippable_threshold_percent"]
+    assert current_percent == 90
+    assert current_percent >= status["executive_completion"]["shippable_threshold_percent"]
     matrix_status = {
         item["skill"]: item["status"] for item in status["bio_to_code_matrix"]
     }
+    status_mix = {
+        key: sum(1 for item in status["bio_to_code_matrix"] if item["status"] == key)
+        for key in ("landed", "partial", "north_star")
+    }
+    assert status_mix == {"landed": 7, "partial": 0, "north_star": 1}
     assert matrix_status["Uncertainty handling and brake"] == "landed"
     assert (
         matrix_status["Branch continuity, suspend/resume, and truthful closure"]
@@ -172,13 +177,13 @@ def test_status_registry_is_complete_and_stable() -> None:
     )
     assert matrix_status["Intervention pricing versus neutrality"] == "landed"
     assert matrix_status["Blocker surfacing and goal-debt management"] == "landed"
-    assert matrix_status["Multi-host executive continuity"] == "partial"
+    assert matrix_status["Multi-host executive continuity"] == "landed"
     assert matrix_status["Offline consolidation and support geometry"] == "north_star"
     assert status["executive_completion"]["next_raise"] == [
         {
-            "skill": "Multi-host executive continuity",
-            "expected_points_if_landed": 11,
-            "why": "Largest remaining near-term executive lift now that the richer OpenAI-first law is landed and proven on the shipping lane.",
+            "skill": "Offline consolidation and support geometry",
+            "expected_points_if_landed": 10,
+            "why": "Only the AUX support-geometry row remains in the denominator, and it must earn a lawful evaluation-first shape before any runtime promotion.",
         }
     ]
     host_status = {
@@ -190,8 +195,9 @@ def test_status_registry_is_complete_and_stable() -> None:
         "gemini": "partial",
         "reference": "conformant",
     }
-    assert status["work_today"]["slug"]
-    assert status["next_product_train"]["slug"] == "multi-host-executive-continuity"
+    assert status["work_today"]["slug"] == "offline-support-geometry-shape"
+    assert status["next_product_train"]["slug"] == "offline-support-geometry-shape"
+    assert status["next_product_train"]["surface"] == "experimental"
 
 
 def test_generated_status_doc_includes_system_map_and_next_product_train() -> None:
@@ -204,13 +210,13 @@ def test_generated_status_doc_includes_system_map_and_next_product_train() -> No
     assert "## Bio-To-Code Matrix" in text
     assert "## Math To Code Rules" in text
     assert "human executive function" in text
-    assert "Current full-executive completion: `80%`" in text
+    assert "Current full-executive completion: `90%`" in text
     assert "Shippable threshold for the full executive: `85%`" in text
     assert "When user asks where Cortex is at:" in text
     assert "full executive denominator" in text
     assert "## Packet To Code" in text
     assert "## Next Product Train" in text
-    assert "`multi-host-executive-continuity`" in text
+    assert "`offline-support-geometry-shape`" in text
 
 
 def test_front_door_surfaces_point_to_one_command_managed_closeout() -> None:

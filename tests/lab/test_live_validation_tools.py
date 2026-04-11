@@ -183,6 +183,28 @@ def test_extract_result_text_keeps_structured_timeout_payload() -> None:
     )
 
 
+def test_extract_result_text_trims_operator_preamble_before_protocol_blocks() -> None:
+    text = json.dumps(
+        {
+            "session_id": "cl-2",
+            "result": (
+                "Short explanation before repair.\n\n"
+                "=== FILE: src/bookmarks_api/main.py ===\n"
+                "app = object()\n"
+                "=== END FILE ==="
+            ),
+        },
+        indent=2,
+    )
+
+    records, extraction_mode = parse_json_records(text)
+
+    assert extraction_mode == "json_object"
+    assert extract_result_text(records, text) == (
+        "=== FILE: src/bookmarks_api/main.py ===\napp = object()\n=== END FILE ==="
+    )
+
+
 def test_parse_json_records_accepts_json_array_of_records() -> None:
     text = json.dumps(
         [
