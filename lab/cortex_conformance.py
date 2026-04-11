@@ -33,6 +33,7 @@ from cortex.runtime.verified_work_runtime import (  # noqa: E402
     build_verified_work_repair_ticket,
     verify_verified_work_result,
 )
+from cortex.sre.preservation import derive_preservation_state  # noqa: E402
 from cortex.sre.verified_work import VerificationOutcome, WorkContract  # noqa: E402
 
 from lab.live_validation_common import (  # noqa: E402
@@ -926,7 +927,11 @@ def _run_claude_cli_conformance(
                     note="Claude operator surface did not return a resumable session id.",
                     artifact_relpath=_artifact_relpath(artifact_dir),
                 )
-            repair_ticket = build_verified_work_repair_ticket(first_outcome)
+            preservation_state, repair_contract = _repair_preservation_state_and_contract(
+                contract_pack.work_contract,
+                first_outcome,
+            )
+            repair_ticket = build_verified_work_repair_ticket(preservation_state)
             resumed = run_command(
                 [
                     "claude",
@@ -943,7 +948,7 @@ def _run_claude_cli_conformance(
                     "--tools",
                     _CLAUDE_READ_ONLY_TOOLS,
                     "--append-system-prompt",
-                    instructions,
+                    build_verified_work_instructions(repair_contract),
                 ],
                 cwd=workspace,
                 timeout_seconds=300.0,
@@ -1036,9 +1041,13 @@ def _run_gemini_cli_conformance(
         final_extraction_mode = result["extraction_mode"]
         final_note = result["note"]
         if first_outcome.failure_class in {"output_invalid", "import_smoke_failed", "test_failed"}:
+            preservation_state, repair_contract = _repair_preservation_state_and_contract(
+                contract_pack.work_contract,
+                first_outcome,
+            )
             repair_ticket = _render_combined_operator_prompt(
-                task_prompt=build_verified_work_repair_ticket(first_outcome),
-                instructions=build_verified_work_instructions(contract_pack.work_contract),
+                task_prompt=build_verified_work_repair_ticket(preservation_state),
+                instructions=build_verified_work_instructions(repair_contract),
             )
             resumed = run_command(
                 [
@@ -1196,6 +1205,35 @@ def _render_combined_operator_prompt(*, task_prompt: str, instructions: str) -> 
         "Follow this exact output contract:\n"
         f"{instructions}"
     )
+
+
+def _repair_preservation_state_and_contract(
+    work_contract: WorkContract,
+    outcome: VerificationOutcome,
+) -> tuple[object, WorkContract]:
+    preservation_state = derive_preservation_state(
+        None,
+        work_contract,
+        outcome.parsed_paths,
+        outcome,
+        remaining_repairs=1,
+    )
+    narrowed_paths = tuple(
+        path
+        for path in work_contract.allowed_write_paths
+        if path in preservation_state.lawful_repair_surface
+    )
+    repair_contract = (
+        WorkContract(
+            allowed_write_paths=narrowed_paths,
+            verification_profile=work_contract.verification_profile,
+            output_carrier=work_contract.output_carrier,
+            max_repair_turns=0,
+        )
+        if narrowed_paths
+        else work_contract
+    )
+    return preservation_state, repair_contract
 
 
 def _extract_session_id_from_operator_stdout(provider: Literal["claude", "gemini"], raw_stdout: str) -> str | None:

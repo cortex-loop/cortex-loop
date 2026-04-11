@@ -5,6 +5,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any
 
+from .preservation import choose_preservation_move, derive_preservation_state
+
 _ALLOWED_OUTPUT_CARRIERS = frozenset({"full_files"})
 _ALLOWED_VERIFICATION_PROFILES = frozenset(
     {
@@ -194,15 +196,14 @@ def choose_verified_work_followup(
         )
     if remaining_repairs < 0:
         raise ValueError("choose_verified_work_followup.remaining_repairs must be non-negative.")
-    if outcome.status == "passed":
-        return "continue"
-    if outcome.failure_class in _CHECK_FAILURE_CLASSES:
-        return "check"
-    if outcome.failure_class in _STOP_FAILURE_CLASSES:
-        return "stop"
-    if outcome.failure_class in _REPAIRABLE_FAILURE_CLASSES:
-        return "repair" if remaining_repairs > 0 else "stop"
-    return "stop"
+    state = derive_preservation_state(
+        None,
+        work_contract,
+        outcome.parsed_paths,
+        outcome,
+        remaining_repairs=remaining_repairs,
+    )
+    return choose_preservation_move(state)
 
 
 __all__ = [

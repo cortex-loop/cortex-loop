@@ -13,17 +13,41 @@ from cortex.hosts.openai.session_io import (
     read_openai_runtime_session_artifact,
     write_openai_runtime_session_artifact,
 )
+from cortex.sre.preservation import (
+    FalsifiedStructure,
+    InterventionBudget,
+    PreservationState,
+    TrustedStructure,
+)
 
 
 def test_openai_runtime_session_artifact_roundtrips_compact_product_journal() -> None:
     session = OpenAIRuntimeSession(
         session_id="oa-session",
         event_index=3,
-        active_goal_ref="goal-fix-port-guard",
+        active_goal_ref="verified-work:python_workspace_pytest_v1:src/bookmarks_api/main.py",
         pending_goal_refs=("goal-follow-up",),
         confirmed_artifact_refs=("artifact-a", "artifact-b"),
         last_failure_class="patch_apply_failed",
         next_recommended_move="repair",
+        preservation_state=PreservationState(
+            task_anchor="verified-work:python_workspace_pytest_v1:src/bookmarks_api/main.py",
+            trusted_structure=TrustedStructure(
+                checks=frozenset({"parse"}),
+                paths=frozenset({"src/bookmarks_api/main.py"}),
+            ),
+            falsified_structure=FalsifiedStructure(
+                failure_class="patch_apply_failed",
+                checks=frozenset(),
+                failing_tests=frozenset(),
+                blocked_message=None,
+            ),
+            lawful_repair_surface=frozenset({"src/bookmarks_api/main.py"}),
+            intervention_budget=InterventionBudget(
+                allowed_moves=frozenset({"repair"}),
+                remaining_repairs=1,
+            ),
+        ),
     )
 
     artifact = build_openai_runtime_session_artifact(session)
@@ -36,11 +60,29 @@ def test_openai_runtime_session_artifact_roundtrips_compact_product_journal() ->
         "journal": {
             "session_id": "oa-session",
             "event_index": 3,
-            "active_goal_ref": "goal-fix-port-guard",
+            "active_goal_ref": "verified-work:python_workspace_pytest_v1:src/bookmarks_api/main.py",
             "pending_goal_refs": ["goal-follow-up"],
             "confirmed_artifact_refs": ["artifact-a", "artifact-b"],
             "last_failure_class": "patch_apply_failed",
             "next_recommended_move": "repair",
+            "preservation_state": {
+                "task_anchor": "verified-work:python_workspace_pytest_v1:src/bookmarks_api/main.py",
+                "trusted_structure": {
+                    "checks": ["parse"],
+                    "paths": ["src/bookmarks_api/main.py"],
+                },
+                "falsified_structure": {
+                    "failure_class": "patch_apply_failed",
+                    "checks": [],
+                    "failing_tests": [],
+                    "blocked_message": None,
+                },
+                "lawful_repair_surface": ["src/bookmarks_api/main.py"],
+                "intervention_budget": {
+                    "allowed_moves": ["repair"],
+                    "remaining_repairs": 1,
+                },
+            },
         },
     }
     assert restored == session

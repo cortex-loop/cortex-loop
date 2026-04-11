@@ -358,7 +358,7 @@ def test_run_openai_host_control_verified_work_one_shot_adds_verification(
     )
     monkeypatch.setattr(
         "cortex.hosts.openai.host_control.verify_verified_work_result",
-        lambda result_text, contract: (
+        lambda result_text, contract, **kwargs: (
             VALID_FILE_MAP,
             VerificationOutcome(
                 status="passed",
@@ -429,7 +429,7 @@ def test_run_openai_host_control_verified_work_attaches_workspace_context_to_fir
 
     monkeypatch.setattr(
         "cortex.hosts.openai.host_control.verify_verified_work_result",
-        lambda result_text, contract: (
+        lambda result_text, contract, **kwargs: (
             VALID_FILE_MAP,
             VerificationOutcome(
                 status="passed",
@@ -542,20 +542,28 @@ def test_run_openai_host_control_verified_work_repairs_once_from_runtime_signal(
         max_output_tokens=4096,
         work_contract=work_contract,
     )
-    monkeypatch.setattr(
-        "cortex.hosts.openai.host_control.verify_verified_work_result",
-        lambda result_text, contract: (
-            VALID_FILE_MAP,
-            VerificationOutcome(
-                status="failed",
-                failure_class="import_smoke_failed",
-                parsed_paths=tuple(VALID_FILE_MAP),
-                import_smoke_ok=False,
-                first_failure_excerpt="E   SyntaxError: invalid syntax",
-            ),
+    verification_calls: list[dict[str, object]] = []
+
+    def _verify_verified_work_result(result_text, contract, **kwargs):
+        verification_calls.append(
+            {
+                "result_text": result_text,
+                "contract": contract,
+                "kwargs": kwargs,
+            }
         )
-        if result_text == first_result
-        else (
+        if result_text == first_result:
+            return (
+                broken_file_map,
+                VerificationOutcome(
+                    status="failed",
+                    failure_class="import_smoke_failed",
+                    parsed_paths=("src/bookmarks_api/main.py",),
+                    import_smoke_ok=False,
+                    first_failure_excerpt="E   SyntaxError: invalid syntax",
+                ),
+            )
+        return (
             VALID_FILE_MAP,
             VerificationOutcome(
                 status="passed",
@@ -567,7 +575,11 @@ def test_run_openai_host_control_verified_work_repairs_once_from_runtime_signal(
                 pytest_passed=11,
                 pytest_failed=0,
             ),
-        ),
+        )
+
+    monkeypatch.setattr(
+        "cortex.hosts.openai.host_control.verify_verified_work_result",
+        _verify_verified_work_result,
     )
 
     result, final_session = run_openai_host_control(
@@ -580,9 +592,19 @@ def test_run_openai_host_control_verified_work_repairs_once_from_runtime_signal(
     assert result.verification is not None
     assert result.verification.status == "passed"
     assert "=== CONTEXT FILE: tests/test_bookmarks_api.py ===" in str(calls[0]["request_input_text"])
+    assert "src/bookmarks_api/main.py" in str(calls[1]["instructions"])
+    assert "src/bookmarks_api/models.py" not in str(calls[1]["instructions"])
+    assert "src/bookmarks_api/store.py" not in str(calls[1]["instructions"])
     assert final_session.event_index == 6
     assert final_session.next_recommended_move == "continue"
+    assert final_session.preservation_state is not None
+    assert final_session.preservation_state.task_anchor.startswith(
+        "verified-work:python_workspace_pytest_v1:"
+    )
     assert "=== CONTEXT FILE:" not in str(calls[1]["input_text_override"])
+    assert verification_calls[1]["contract"].allowed_write_paths == ("src/bookmarks_api/main.py",)
+    assert verification_calls[1]["kwargs"]["preserved_file_map"] == broken_file_map
+    assert verification_calls[1]["kwargs"]["verifier_contract"] == work_contract
 
 
 def test_run_openai_host_control_verified_work_attaches_normalize_port_context(
@@ -628,7 +650,7 @@ def test_run_openai_host_control_verified_work_attaches_normalize_port_context(
 
     monkeypatch.setattr(
         "cortex.hosts.openai.host_control.verify_verified_work_result",
-        lambda result_text, contract: (
+        lambda result_text, contract, **kwargs: (
             VALID_NORMALIZE_PORT_FILE_MAP,
             VerificationOutcome(
                 status="passed",
@@ -752,7 +774,7 @@ def test_run_openai_host_control_verified_work_normalize_port_repairs_once(
     )
     monkeypatch.setattr(
         "cortex.hosts.openai.host_control.verify_verified_work_result",
-        lambda result_text, contract: (
+        lambda result_text, contract, **kwargs: (
             VALID_NORMALIZE_PORT_FILE_MAP,
             VerificationOutcome(
                 status="failed",
@@ -840,7 +862,7 @@ def test_run_openai_host_control_verified_work_attaches_feature_flags_context(
 
     monkeypatch.setattr(
         "cortex.hosts.openai.host_control.verify_verified_work_result",
-        lambda result_text, contract: (
+        lambda result_text, contract, **kwargs: (
             VALID_FEATURE_FLAG_FILE_MAP,
             VerificationOutcome(
                 status="passed",
@@ -961,7 +983,7 @@ def test_run_openai_host_control_verified_work_feature_flags_repairs_once(
     )
     monkeypatch.setattr(
         "cortex.hosts.openai.host_control.verify_verified_work_result",
-        lambda result_text, contract: (
+        lambda result_text, contract, **kwargs: (
             VALID_FEATURE_FLAG_FILE_MAP,
             VerificationOutcome(
                 status="failed",
