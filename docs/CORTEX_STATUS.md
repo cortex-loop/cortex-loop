@@ -44,10 +44,10 @@ Answering stance:
 
 ## Executive Completion
 
-- Current full-executive completion: `46%`
+- Current full-executive completion: `80%`
 - Shippable threshold for the full executive: `85%`
-- Gap to shippable full-executive read: `39` points
-- Status mix: `2` landed, `5` partial, `1` north_star
+- Gap to shippable full-executive read: `5` points
+- Status mix: `6` landed, `1` partial, `1` north_star
 - Scoring rule: `landed=100%`, `partial=30%`, `north_star=0%`
 - This score measures progress toward the full executive denominator, not just the current shipping lane.
 
@@ -57,20 +57,18 @@ When user asks where Cortex is at:
 - Then name the next highest-leverage rows to raise the score without drifting from Cortex law.
 
 Fastest route to raise the score next:
-- `Branch continuity, suspend/resume, and truthful closure`: `+11` points if landed. Largest near-term product lift on the shipped lane and directly aligned with the E23 preservation-state kernel extract.
-- `Uncertainty handling and brake`: `+9` points if landed. Turns existing reference-policy structure into explicit safe intervention control on the product lane.
-- `Blocker surfacing and goal-debt management`: `+7` points if landed. Improves operator judgment and continuity with smaller scope than a full multi-host uplift.
+- `Multi-host executive continuity`: `+11` points if landed. Largest remaining near-term executive lift now that the richer OpenAI-first law is landed and proven on the shipping lane.
 
 ## Bio-To-Code Matrix
 
 | Executive Skill | What We Are Stealing | Status | Weight | Code Homes | Proof Surfaces | Next Move |
 | --- | --- | --- | --- | --- | --- | --- |
 | Truth-preserving commitments and bounded certification | Truth maintenance and reality binding | `landed` | `12` | `cortex/core`, `cortex/drivers` | `tests/product`, `tests/conformance` | Keep this foundation stable while richer executive control builds on top. |
-| Bounded correction and verified-work preservation | Error repair without losing the main task thread | `landed` | `15` | `cortex/runtime`, `cortex/sre`, `cortex/hosts/openai` | `tests/product` | Extract the preserved E23 kernel cleanly so this remains maintained product behavior, not branch-local evidence. |
-| Uncertainty handling and brake | Hesitation and uncertainty-aware inhibition | `partial` | `13` | `cortex/sre` | `tests/product`, `tests/experimental` | Promote brake and uncertainty control from active reference policy into uniformly proven product behavior. |
-| Branch continuity, suspend/resume, and truthful closure | Working memory across interruptions plus truthful closure | `partial` | `15` | `cortex/sre`, `cortex/hosts/openai` | `tests/product`, `tests/conformance` | Land preserved branch state, suspend/resume, and explicit closure beyond repair-local flows. |
-| Intervention pricing versus neutrality | Deciding when to intervene, stay neutral, or stop | `partial` | `10` | `cortex/sre` | `tests/product`, `tests/experimental` | Make intervene, wait, and stop choices explicit in product control policy instead of implicit host heuristics. |
-| Blocker surfacing and goal-debt management | Noticing unresolved blockers and unfinished intentions | `partial` | `10` | `cortex/sre`, `cortex/hosts/openai` | `tests/product` | Surface blocker debt and unfinished-goal state explicitly in the product lane. |
+| Bounded correction and verified-work preservation | Error repair without losing the main task thread | `landed` | `15` | `cortex/runtime`, `cortex/sre`, `cortex/hosts/openai` | `tests/product` | Keep preservation-state repair stable while the remaining cross-host coherence work closes over the same executive law. |
+| Uncertainty handling and brake | Hesitation and uncertainty-aware inhibition | `landed` | `13` | `cortex/sre` | `tests/product`, `tests/experimental` | Keep reference-derived brake and uncertainty control stable while cross-host coherence is re-earned. |
+| Branch continuity, suspend/resume, and truthful closure | Working memory across interruptions plus truthful closure | `landed` | `15` | `cortex/sre`, `cortex/hosts/openai` | `tests/product`, `tests/conformance` | Keep suspend/resume and truthful closure stable while donor-host coherence is re-earned. |
+| Intervention pricing versus neutrality | Deciding when to intervene, stay neutral, or stop | `landed` | `10` | `cortex/sre` | `tests/product`, `tests/experimental` | Keep reference-governed intervention pricing stable while remaining host realizations re-earn coherence. |
+| Blocker surfacing and goal-debt management | Noticing unresolved blockers and unfinished intentions | `landed` | `10` | `cortex/sre`, `cortex/hosts/openai` | `tests/product` | Keep closure-required and blocker-debt surfacing stable while cross-host continuity is re-earned. |
 | Multi-host executive continuity | One executive across different brains and contexts | `partial` | `15` | `cortex/hosts/openai`, `cortex/hosts/claude`, `cortex/hosts/gemini`, `cortex/hosts/reference` | `tests/product`, `tests/conformance` | Raise Claude and Gemini conformance while keeping one Cortex law across all hosts. |
 | Offline consolidation and support geometry | Sleep-like consolidation and support systems | `north_star` | `10` | _planned only_ | _planned only_ | Keep this out of the shipped lane until support geometry earns a lawful product shape. |
 
@@ -160,19 +158,19 @@ flowchart TD
 
 ## Next Product Train
 
-- Train: `e23-kernel-extract`
+- Train: `multi-host-executive-continuity`
 - Surface: `product`
-- Executive benefit: Port only the preservation-state product kernel from the preserved evidence ref onto clean main so verified-work repair law becomes a maintained Cortex capability without dragging maintainer-only trains into product truth.
-- Why now: The repo closeout removes truth drift and repo-hygiene noise so the next runtime hour can go straight into a real product kernel.
-- Primary metric: `repair-conversion improvement on the bounded OpenAI verified-work repair bundle`
-- Guardrail: `thin OpenAI path unchanged when no work contract is present`
-- Kill rule: `cut after 2 non-lift revisions or no clearer divergence classification`
+- Executive benefit: Raise Claude, Gemini, and reference coherence around the now-landed richer executive law while keeping shipping truth OpenAI-first.
+- Why now: The OpenAI-first executive is now shipped and proven enough that the largest remaining lift is multi-host continuity rather than more OpenAI-only behavior work.
+- Primary metric: `coherent cross-host conformance on continuity, brake, intervention pricing, and closure truth`
+- Guardrail: `no host-specific policy forks and no widening of shipping truth away from openai:service_api`
+- Kill rule: `cut any wiring-only divergence into a separate seam instead of revising Cortex law prematurely`
 
 ## Where To Work Next
 
-- Start with the E23 preservation-state kernel extract on the bounded OpenAI verified-work repair bundle.
+- Start with multi-host executive continuity around the now-landed OpenAI-first executive law.
 - Keep tri-brain conformance explicit while shipping truth stays OpenAI-first.
-- Use lab proof surfaces only to falsify or prove product seams; do not reopen broad replay/watch trains without a direct product reason.
+- Use lab proof surfaces only to falsify or prove host-realization seams; do not widen status truth from non-shipping reruns alone.
 
 ## Canonical Proof
 
@@ -206,14 +204,14 @@ flowchart TD
 ## Retained Evidence Refs
 
 - `E23 preservation-state evidence` -> `archive/e23-preservation-state-machine`
-  Purpose: Preserved review evidence for the next product-kernel extraction train.
+  Purpose: Preserved review evidence for the landed preservation-state kernel extract and later provenance checks.
 
 ## Blocked Moves
 
 - Do not let archived docs or train notes act as live truth.
 - Do not treat lab or evaluation output as product progress unless shipped runtime behavior changes.
 - Do not hide Claude or Gemini behind backlog language when reporting conformance.
-- Do not reopen broad watch or replay trains until the product kernel extract is classified.
+- Do not introduce host-specific policy forks to force donor coherence.
 
 ## Active Docs
 
@@ -228,5 +226,5 @@ flowchart TD
 
 ## Operational Focus
 
-- Current tracked train: `e23-kernel-extract`
-- Current focus note: Start from the preserved E23 evidence ref and port only the preservation-state product kernel onto clean main without reviving maintainer-only replay or allocator trains.
+- Current tracked train: `multi-host-executive-continuity`
+- Current focus note: Raise Claude, Gemini, and reference coherence around the now-landed OpenAI-first executive law without widening shipping truth or permitting host-specific policy forks.
