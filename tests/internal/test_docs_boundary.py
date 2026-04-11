@@ -162,6 +162,34 @@ def test_status_registry_is_complete_and_stable() -> None:
     )
     assert current_percent == 80
     assert current_percent < status["executive_completion"]["shippable_threshold_percent"]
+    matrix_status = {
+        item["skill"]: item["status"] for item in status["bio_to_code_matrix"]
+    }
+    assert matrix_status["Uncertainty handling and brake"] == "landed"
+    assert (
+        matrix_status["Branch continuity, suspend/resume, and truthful closure"]
+        == "landed"
+    )
+    assert matrix_status["Intervention pricing versus neutrality"] == "landed"
+    assert matrix_status["Blocker surfacing and goal-debt management"] == "landed"
+    assert matrix_status["Multi-host executive continuity"] == "partial"
+    assert matrix_status["Offline consolidation and support geometry"] == "north_star"
+    assert status["executive_completion"]["next_raise"] == [
+        {
+            "skill": "Multi-host executive continuity",
+            "expected_points_if_landed": 11,
+            "why": "Largest remaining near-term executive lift now that the richer OpenAI-first law is landed and proven on the shipping lane.",
+        }
+    ]
+    host_status = {
+        item["name"]: item["conformance"] for item in status["hosts"]
+    }
+    assert host_status == {
+        "openai": "conformant",
+        "claude": "partial",
+        "gemini": "partial",
+        "reference": "conformant",
+    }
     assert status["work_today"]["slug"]
     assert status["next_product_train"]["slug"] == "multi-host-executive-continuity"
 

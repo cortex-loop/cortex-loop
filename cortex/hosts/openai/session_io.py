@@ -146,12 +146,7 @@ class OpenAIRuntimeSessionArtifact:
                 entry.as_summary() for entry in self.feedback_window.entries
             ],
             "executive_modulator_memory": (
-                {
-                    "focus_tonic": float(self.executive_modulator_memory.focus_tonic),
-                    "explore_tonic": float(self.executive_modulator_memory.explore_tonic),
-                    "stop_tonic": float(self.executive_modulator_memory.stop_tonic),
-                    "update_tonic": float(self.executive_modulator_memory.update_tonic),
-                }
+                _executive_modulator_memory_payload(self.executive_modulator_memory)
                 if self.executive_modulator_memory is not None
                 else None
             ),
@@ -608,12 +603,38 @@ def _executive_modulator_memory(value: Any, label: str) -> ExecutiveModulatorMem
         "update_tonic",
     )
     _require_exact_keys(value, memory_keys, label)
-    return ExecutiveModulatorMemory(
-        focus_tonic=_unit_float(value["focus_tonic"], f"{label}.focus_tonic"),
-        explore_tonic=_unit_float(value["explore_tonic"], f"{label}.explore_tonic"),
-        stop_tonic=_unit_float(value["stop_tonic"], f"{label}.stop_tonic"),
-        update_tonic=_unit_float(value["update_tonic"], f"{label}.update_tonic"),
+    return _canonicalize_executive_modulator_memory(
+        ExecutiveModulatorMemory(
+            focus_tonic=_unit_float(value["focus_tonic"], f"{label}.focus_tonic"),
+            explore_tonic=_unit_float(value["explore_tonic"], f"{label}.explore_tonic"),
+            stop_tonic=_unit_float(value["stop_tonic"], f"{label}.stop_tonic"),
+            update_tonic=_unit_float(value["update_tonic"], f"{label}.update_tonic"),
+        )
     )
+
+
+def _canonicalize_executive_modulator_memory(
+    memory: ExecutiveModulatorMemory,
+) -> ExecutiveModulatorMemory:
+    payload = memory.as_payload()
+    return ExecutiveModulatorMemory(
+        focus_tonic=payload["focus_tonic"],
+        explore_tonic=payload["explore_tonic"],
+        stop_tonic=payload["stop_tonic"],
+        update_tonic=payload["update_tonic"],
+    )
+
+
+def _executive_modulator_memory_payload(
+    memory: ExecutiveModulatorMemory,
+) -> dict[str, float]:
+    canonical_memory = _canonicalize_executive_modulator_memory(memory)
+    return {
+        "focus_tonic": canonical_memory.focus_tonic,
+        "explore_tonic": canonical_memory.explore_tonic,
+        "stop_tonic": canonical_memory.stop_tonic,
+        "update_tonic": canonical_memory.update_tonic,
+    }
 
 
 def _unit_float(value: Any, label: str) -> float:
