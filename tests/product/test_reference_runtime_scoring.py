@@ -249,31 +249,40 @@ def test_reference_scoring_tightens_to_neutral_when_guarded_pressure_is_present(
 
 
 def test_reference_scoring_promotes_branch_under_branch_pressure() -> None:
-    selection = select_reference_soft_control(
-        _state(
-            mode_tag="pass_through",
-            family_mask=frozenset(
-                {
-                    SoftControlFamily.NEUTRAL,
-                    SoftControlFamily.CHECK,
-                    SoftControlFamily.BRANCH,
-                }
-            ),
-            budget_band="medium",
-            top_family_set=frozenset(
-                {
-                    SoftControlFamily.NEUTRAL,
-                    SoftControlFamily.BRANCH,
-                }
-            ),
-            brake_state=BrakeState.QUIESCENT,
-            active_track_ref="review-track",
-            resume_anchor_available=True,
-        )
+    state = _state(
+        mode_tag="pass_through",
+        family_mask=frozenset(
+            {
+                SoftControlFamily.NEUTRAL,
+                SoftControlFamily.CHECK,
+                SoftControlFamily.BRANCH,
+            }
+        ),
+        budget_band="medium",
+        top_family_set=frozenset(
+            {
+                SoftControlFamily.NEUTRAL,
+                SoftControlFamily.BRANCH,
+            }
+        ),
+        brake_state=BrakeState.QUIESCENT,
+        active_track_ref="review-track",
+        resume_anchor_available=True,
+    )
+    selection = select_reference_soft_control(state)
+    scorecard = build_reference_allocation_scorecard(state)
+    branch_score = next(
+        score for score in scorecard.scores if score.family is SoftControlFamily.BRANCH
+    )
+    neutral_score = next(
+        score for score in scorecard.scores if score.family is SoftControlFamily.NEUTRAL
     )
 
     assert selection.selected_family is SoftControlFamily.BRANCH
     assert selection.neutral_dominance.neutral_selected is False
+    assert branch_score.allocated_score > neutral_score.allocated_score
+    assert "goal-branch-coupled" in branch_score.reason_tags
+    assert "lambda_G:0.35" in branch_score.reason_tags
 
 
 def test_reference_scoring_keeps_masked_family_inadmissible_even_when_top_ranked() -> None:
