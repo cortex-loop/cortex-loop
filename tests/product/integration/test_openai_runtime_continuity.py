@@ -175,10 +175,22 @@ def _assert_o1_equivalent(
 
 def _assert_locked_continuity_flow(records: list[dict[str, object]]) -> None:
     assert [record["decision"] for record in records] == [
-        "continue",
         "check",
-        "continue",
         "check",
+        "check",
+        "check",
+    ]
+    assert [record["selected_family"] for record in records] == [
+        "seek-context",
+        "seek-context",
+        "seek-context",
+        "seek-context",
+    ]
+    assert [record["realized_family"] for record in records] == [
+        "seek-context",
+        "seek-context",
+        "seek-context",
+        "seek-context",
     ]
     assert records[0]["journal"]["active_track_ref"] == "branch-alpha"
     assert records[0]["journal"]["active_goal_ref"] == "branch-alpha"

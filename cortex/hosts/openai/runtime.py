@@ -816,6 +816,8 @@ def run_openai_runtime_step(
         evidence_gap=evidence_gap,
         continuation_debt=continuity_debt,
         failure_class=failure_class,
+        realized_family=realized_family,
+        brake_state=brake_state,
     )
     product_decision = OpenAIProductDecision(
         decision=decision,
@@ -1229,6 +1231,8 @@ def _decide_action(
     evidence_gap: bool,
     continuation_debt: bool,
     failure_class: str | None,
+    realized_family: SoftControlFamily,
+    brake_state: BrakeState,
 ) -> str:
     if failure_class in _STOP_FAILURE_CLASSES:
         return "stop"
@@ -1238,7 +1242,24 @@ def _decide_action(
         return "repair"
     if approval_required or consequential_write_pending or evidence_gap or continuation_debt:
         return "check"
-    return "continue"
+    return _action_for_realized_family(
+        realized_family=realized_family,
+        brake_state=brake_state,
+    )
+
+
+def _action_for_realized_family(
+    *,
+    realized_family: SoftControlFamily,
+    brake_state: BrakeState,
+) -> str:
+    if realized_family is SoftControlFamily.NEUTRAL:
+        return "continue"
+    if realized_family is SoftControlFamily.BRAKE:
+        if brake_state is BrakeState.LATCHED:
+            return "stop"
+        return "check"
+    return "check"
 
 
 def _has_continuation_debt(

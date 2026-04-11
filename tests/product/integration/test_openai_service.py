@@ -40,7 +40,9 @@ def test_openai_service_health_and_documented_event_flow() -> None:
         assert record["event_index"] == 1
         assert record["raw_host_event_name"] == "response.output_text.delta"
         assert record["dispatch_lane"] == "cheap"
-        assert record["decision"] == "continue"
+        assert record["selected_family"] == "seek-context"
+        assert record["realized_family"] == "seek-context"
+        assert record["decision"] == "check"
         assert record["journal"]["event_index"] == 1
 
         health_status, updated_health = service.request("GET", "/health")

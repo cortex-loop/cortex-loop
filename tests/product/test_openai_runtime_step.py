@@ -10,6 +10,8 @@ from cortex.hosts.openai.runtime import (
     run_openai_runtime_step,
     run_openai_runtime_verification_step,
 )
+from cortex.sre.brake import BrakeState
+from cortex.sre.families import SoftControlFamily
 from cortex.sre.verified_work import VerificationOutcome, WorkContract
 
 
@@ -24,7 +26,26 @@ def test_openai_runtime_step_rejects_canonical_cortex_event_name_before_runtime_
         )
 
 
-def test_openai_runtime_step_adds_reference_shell_without_changing_product_decision_table() -> None:
+def test_openai_runtime_family_shim_keeps_neutral_continue_and_brake_latched_stop() -> None:
+    assert openai_runtime._action_for_realized_family(
+        realized_family=SoftControlFamily.NEUTRAL,
+        brake_state=BrakeState.QUIESCENT,
+    ) == "continue"
+    assert openai_runtime._action_for_realized_family(
+        realized_family=SoftControlFamily.SEEK_CONTEXT,
+        brake_state=BrakeState.GUARDED,
+    ) == "check"
+    assert openai_runtime._action_for_realized_family(
+        realized_family=SoftControlFamily.BRAKE,
+        brake_state=BrakeState.GUARDED,
+    ) == "check"
+    assert openai_runtime._action_for_realized_family(
+        realized_family=SoftControlFamily.BRAKE,
+        brake_state=BrakeState.LATCHED,
+    ) == "stop"
+
+
+def test_openai_runtime_step_keeps_hard_product_guards_ahead_of_reference_control() -> None:
     assert hasattr(openai_runtime, "select_reference_soft_control")
     assert hasattr(openai_runtime, "build_reference_executive_state")
 
@@ -114,7 +135,31 @@ def test_openai_runtime_step_preserves_session_mismatch_as_stop_without_reassign
     assert result.session.session_id == "oa-mismatch-a"
 
 
-def test_openai_runtime_step_branch_open_preserves_continuity_without_forcing_check() -> None:
+def test_openai_runtime_step_cheap_seek_context_pressure_now_checks() -> None:
+    result = run_openai_runtime_step(
+        "response.output_text.delta",
+        {
+            "session_id": "oa-cheap-pressure",
+            "response_id": "resp-cheap-pressure",
+            "delta": "hello",
+        },
+        OpenAIRuntimeSession(session_id="oa-cheap-pressure"),
+    )
+
+    assert result.selected_family.value == "seek-context"
+    assert result.realized_family.value == "seek-context"
+    assert result.product_decision.as_summary() == {
+        "decision": "check",
+        "consequential_write_pending": False,
+        "approval_required": False,
+        "evidence_gap": False,
+        "continuation_debt": False,
+        "failure_class": None,
+    }
+    assert result.session.next_recommended_move == "check"
+
+
+def test_openai_runtime_step_branch_open_preserves_continuity_without_blunt_debt() -> None:
     result = run_openai_runtime_step(
         "response.output_text.delta",
         {
@@ -129,13 +174,15 @@ def test_openai_runtime_step_branch_open_preserves_continuity_without_forcing_ch
 
     assert result.warnings == ()
     assert result.product_decision.as_summary() == {
-        "decision": "continue",
+        "decision": "check",
         "consequential_write_pending": False,
         "approval_required": False,
         "evidence_gap": False,
         "continuation_debt": False,
         "failure_class": None,
     }
+    assert result.selected_family.value == "seek-context"
+    assert result.realized_family.value == "seek-context"
     assert result.session.as_summary()["branch_registry"] == ["main", "branch-alpha"]
     assert result.session.active_track_ref == "branch-alpha"
     assert result.session.active_goal_ref == "branch-alpha"

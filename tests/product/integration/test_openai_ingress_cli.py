@@ -48,7 +48,7 @@ def test_openai_ingress_cli_reads_documented_raw_transcript_fixture() -> None:
         "candidate-bearing",
         "full-commitment",
     ]
-    assert [record["decision"] for record in records] == ["continue", "check", "check"]
+    assert [record["decision"] for record in records] == ["check", "check", "check"]
     assert records[0]["selected_family"] == "seek-context"
     assert records[0]["realized_family"] == "seek-context"
     assert records[0]["brake_state"] == "guarded"

@@ -55,7 +55,7 @@ def test_openai_runtime_cli_reads_documented_raw_events_and_preserves_host_name(
         "full-commitment",
     ]
     assert [record["decision"] for record in records] == [
-        "continue",
+        "check",
         "check",
         "check",
     ]
