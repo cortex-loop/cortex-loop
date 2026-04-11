@@ -288,6 +288,7 @@ def run_command(
             env=env,
             text=True,
             capture_output=True,
+            stdin=subprocess.DEVNULL,
             timeout=timeout_seconds,
             check=False,
         )

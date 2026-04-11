@@ -187,7 +187,7 @@
     "executive_benefit": "Shape removable AUX support geometry and consolidation priors so Cortex can add support-side lift without turning AUX into hidden executive truth.",
     "why_now": "All non-north-star executive rows are now landed, so the remaining denominator work is to give AUX a lawful evaluation-first shape rather than widen shipping behavior.",
     "primary_metric": "measured support-side lift on retrieval, review, branch, or uncertainty priors with zero change to commitment truth and runtime-off-by-default activation",
-    "guardrail": "runtime-off-by-default, support-side only, and no change to commitment certification, blockedness, or the openai:service_api shipping default",
+    "guardrail": "runtime-off-by-default, support-side only, and no change to commitment certification, blockedness, or the openai:operator_cli shipping default",
     "kill_rule": "prune any AUX seam that adds overhead without lift, smooths contradictions, or becomes operationally load-bearing for minimum lawful runtime behavior"
   },
   "system_map": {
@@ -214,7 +214,7 @@
       },
       {
         "id": "shipping",
-        "label": "Shipping Product Lane\\nopenai:service_api",
+        "label": "Shipping Product Lane\\nopenai:operator_cli",
         "status": "green"
       },
       {
@@ -375,7 +375,7 @@
       "name": "openai",
       "shipping": "default",
       "conformance": "conformant",
-      "strongest_surface": "service_api",
+      "strongest_surface": "operator_cli",
       "daily_iteration_surface": "operator_cli",
       "code_home": "cortex/hosts/openai"
     },
@@ -406,7 +406,7 @@
   ],
   "conformance_summary": {
     "accepted_next_decision": "promote",
-    "shipping_default": "openai:service_api"
+    "shipping_default": "openai:operator_cli"
   },
   "closure_gates": [
     {
@@ -480,7 +480,7 @@
   ],
   "where_to_work": [
     "Start with evaluation-first AUX support geometry and offline-support shape, not new OpenAI or donor-host policy work.",
-    "Keep AUX removable, runtime-off-by-default, and support-side only while shipping truth stays openai:service_api.",
+    "Keep AUX removable, runtime-off-by-default, and support-side only while shipping truth stays openai:operator_cli.",
     "Use lab and evaluation surfaces to falsify support lift, but do not promote AUX into shipping truth unless it proves lift without touching commitment law."
   ],
   "blocked_moves": [

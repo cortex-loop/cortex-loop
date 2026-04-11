@@ -46,9 +46,6 @@ OPENAI_BREADTH_PACKS = (
 )
 REPAIR_GUARDRAIL_PACK = cortex_conformance.NORMALIZE_PORT_CONTRACT_PACK
 SERVICE_SPEND_TRAINS = {
-    "conformance-summary-truth",
-    "verified-work-breadth-openai",
-    "verified-work-repair-yield-openai",
     "output-quality-comparison-openai",
     "causal-contribution-map-openai",
 }
@@ -228,7 +225,7 @@ def evaluate_conformance_summary_truth(
     shipping_default_ok = (
         isinstance(summary, dict)
         and isinstance(summary.get("shipping_truth"), dict)
-        and summary["shipping_truth"].get("default") == "openai:service_api"
+        and summary["shipping_truth"].get("default") == "openai:operator_cli"
     )
 
     reasons: list[str] = []
@@ -239,7 +236,7 @@ def evaluate_conformance_summary_truth(
     if summary_next_decision != accepted_next_decision:
         reasons.append("summary.latest next_decision drifts from CT2 accepted truth")
     if not shipping_default_ok:
-        reasons.append("shipping_default drifted away from openai:service_api")
+        reasons.append("shipping_default drifted away from openai:operator_cli")
 
     return {
         "primary_metric_value": 0 if reasons else 1,
@@ -323,7 +320,7 @@ def run_conformance_summary_truth_pilot(
         ),
         contract_pack="verified_work_bookmarks_v1",
         conformance_surfaces=(
-            "openai:service_api",
+            "openai:operator_cli",
             "claude:operator_cli",
             "gemini:operator_cli",
         ),
@@ -504,7 +501,7 @@ def run_verified_work_breadth_openai_train(
         ),
         contract_pack=cortex_conformance.FEATURE_FLAGS_CONTRACT_PACK,
         conformance_surfaces=(
-            "openai:service_api",
+            "openai:operator_cli",
             "claude:operator_cli",
             "gemini:operator_cli",
         ),
@@ -667,7 +664,7 @@ def run_verified_work_repair_yield_openai_train(
         ),
         contract_pack="verified_work_bookmarks_v1,verified_work_normalize_port_v1,verified_work_feature_flags_v1",
         conformance_surfaces=(
-            "openai:service_api",
+            "openai:operator_cli",
             "claude:operator_cli",
             "gemini:operator_cli",
         ),
@@ -1209,7 +1206,7 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.train in SERVICE_SPEND_TRAINS:
         require_openai_service_spend_approval(
-            purpose=f"the `{args.train}` train on the OpenAI service_api lane"
+            purpose=f"the `{args.train}` train on the OpenAI backup service_api lane"
         )
 
     if args.train == "conformance-summary-truth":

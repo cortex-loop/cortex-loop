@@ -97,7 +97,7 @@ def test_evaluate_conformance_summary_truth_detects_missing_artifacts(
         json.dumps(
             {
                 "next_decision": "fix_wiring_only",
-                "shipping_truth": {"default": "openai:service_api"},
+                "shipping_truth": {"default": "openai:operator_cli"},
                 "results": [
                     {"brain": "openai", "artifact_relpath": "missing/openai"},
                     {"brain": "claude", "artifact_relpath": "missing/claude"},

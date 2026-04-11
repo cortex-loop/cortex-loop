@@ -88,7 +88,7 @@ flowchart TD
     core["Core Microkernel\ncommitments / provenance / dispatch"]
     runtime["Shared Runtime Kernels\nverified-work runtime helpers"]
     sre["Shared Executive\nbranching / brake / reference policy"]
-    shipping["Shipping Product Lane\nopenai:service_api"]
+    shipping["Shipping Product Lane\nopenai:operator_cli"]
     lab["Proof And Data Tooling\nconformance / output-quality / train loops"]
     archive["Archive Evidence\nhistorical docs / retired proof surfaces"]
     hosts --> core
@@ -137,14 +137,14 @@ flowchart TD
 
 | Host | Shipping | Conformance | Strongest Surface | Daily Iteration | Code Home |
 | --- | --- | --- | --- | --- | --- |
-| `openai` | `default` | `conformant` | `service_api` | `operator_cli` | `cortex/hosts/openai` |
+| `openai` | `default` | `conformant` | `operator_cli` | `operator_cli` | `cortex/hosts/openai` |
 | `claude` | `non-default` | `partial` | `operator_cli` | `operator_cli` | `cortex/hosts/claude` |
 | `gemini` | `non-default` | `partial` | `operator_cli` | `operator_cli` | `cortex/hosts/gemini` |
 | `reference` | `non-product` | `conformant` | `reference_cli` | `reference_cli` | `cortex/hosts/reference` |
 
 ## Shipping And Conformance Truth
 
-- Shipping default: `openai:service_api`
+- Shipping default: `openai:operator_cli`
 - Accepted conformance next decision: `promote`
 
 ## Closure Gates
@@ -163,13 +163,13 @@ flowchart TD
 - Executive benefit: Shape removable AUX support geometry and consolidation priors so Cortex can add support-side lift without turning AUX into hidden executive truth.
 - Why now: All non-north-star executive rows are now landed, so the remaining denominator work is to give AUX a lawful evaluation-first shape rather than widen shipping behavior.
 - Primary metric: `measured support-side lift on retrieval, review, branch, or uncertainty priors with zero change to commitment truth and runtime-off-by-default activation`
-- Guardrail: `runtime-off-by-default, support-side only, and no change to commitment certification, blockedness, or the openai:service_api shipping default`
+- Guardrail: `runtime-off-by-default, support-side only, and no change to commitment certification, blockedness, or the openai:operator_cli shipping default`
 - Kill rule: `prune any AUX seam that adds overhead without lift, smooths contradictions, or becomes operationally load-bearing for minimum lawful runtime behavior`
 
 ## Where To Work Next
 
 - Start with evaluation-first AUX support geometry and offline-support shape, not new OpenAI or donor-host policy work.
-- Keep AUX removable, runtime-off-by-default, and support-side only while shipping truth stays openai:service_api.
+- Keep AUX removable, runtime-off-by-default, and support-side only while shipping truth stays openai:operator_cli.
 - Use lab and evaluation surfaces to falsify support lift, but do not promote AUX into shipping truth unless it proves lift without touching commitment law.
 
 ## Canonical Proof

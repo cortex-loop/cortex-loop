@@ -193,6 +193,8 @@ Managed verification is purpose-first and surface-aware:
 - `internal` and active-doc truth changes: `python3 internal/truth/generate_status.py --check`, `python3 internal/archive/generate_archive_index.py --check`, `make -C internal test`
 - `lab` changes: `make lab-test`
 - unknown or root/config changes fall back to the full active bundle
+- paid OpenAI service-lane proof is never part of the default bundle
+- any command that relies on `CORTEX_LIVE_SERVICE_SPEND_APPROVED` requires explicit user approval in the current chat; agents may not set that opt-in on their own initiative
 
 ## Commit Message Contract
 

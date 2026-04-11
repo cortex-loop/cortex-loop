@@ -25,20 +25,20 @@ def test_train_charter_requires_all_fields() -> None:
         conformance.TrainCharter(
             cortex_invariant="",
             borrowed_mechanism="tiny verifier",
-            primary_proving_wiring="openai:service_api",
-            conformance_surfaces=("openai:service_api",),
+            primary_proving_wiring="openai:operator_cli",
+            conformance_surfaces=("openai:operator_cli",),
             kill_criteria=("cut if no lift",),
         )
 
     charter = conformance.TrainCharter(
         cortex_invariant="bounded verified-work law",
         borrowed_mechanism="tiny verifier",
-        primary_proving_wiring="openai:service_api",
-        conformance_surfaces=("openai:service_api", "claude:operator_cli"),
+        primary_proving_wiring="openai:operator_cli",
+        conformance_surfaces=("openai:operator_cli", "claude:operator_cli"),
         kill_criteria=("cut if no lift",),
     )
 
-    assert charter.as_payload()["primary_proving_wiring"] == "openai:service_api"
+    assert charter.as_payload()["primary_proving_wiring"] == "openai:operator_cli"
 
 
 def test_contract_pack_exposes_required_train_charter() -> None:
@@ -50,11 +50,11 @@ def test_contract_pack_exposes_required_train_charter() -> None:
         train_charter=conformance.TrainCharter(
             cortex_invariant="bounded verified-work law",
             borrowed_mechanism="tiny verifier",
-            primary_proving_wiring="openai:service_api",
-            conformance_surfaces=("openai:service_api",),
+            primary_proving_wiring="openai:operator_cli",
+            conformance_surfaces=("openai:operator_cli",),
             kill_criteria=("cut if no lift",),
         ),
-        shipping_default="openai:service_api",
+        shipping_default="openai:operator_cli",
     )
 
     payload = pack.as_payload()
@@ -117,27 +117,44 @@ def test_contract_pack_rejects_absolute_workspace_template_path() -> None:
             train_charter=conformance.TrainCharter(
                 cortex_invariant="bounded verified-work law",
                 borrowed_mechanism="tiny verifier",
-                primary_proving_wiring="openai:service_api",
-                conformance_surfaces=("openai:service_api",),
+                primary_proving_wiring="openai:operator_cli",
+                conformance_surfaces=("openai:operator_cli",),
                 kill_criteria=("cut if no lift",),
             ),
-            shipping_default="openai:service_api",
+            shipping_default="openai:operator_cli",
         )
 
 
 def test_strongest_native_surface_matches_current_wiring_order() -> None:
     pack = conformance.active_contract_pack()
 
-    assert conformance.strongest_native_surface("openai", pack) == "service_api"
+    assert conformance.strongest_native_surface("openai", pack) == "operator_cli"
     assert conformance.strongest_native_surface("claude", pack) == "operator_cli"
     assert conformance.strongest_native_surface("gemini", pack) == "operator_cli"
+    assert (
+        conformance.strongest_native_surface(
+            "openai",
+            pack,
+            openai_surface="service_api",
+        )
+        == "service_api"
+    )
 
 
 def test_preflight_surface_distinguishes_env_blocked_and_unwired(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setattr(conformance, "api_key_presence", lambda: {"OPENAI_API_KEY": False, "GEMINI_API_KEY": False})
-    monkeypatch.setattr(conformance, "command_exists", lambda command: command != "gemini")
+    monkeypatch.setattr(
+        conformance,
+        "api_key_presence",
+        lambda: {"OPENAI_API_KEY": False, "GEMINI_API_KEY": False},
+    )
+    monkeypatch.setattr(conformance, "command_exists", lambda command: command not in {"gemini", "codex"})
+    monkeypatch.setattr(
+        conformance,
+        "run_command",
+        lambda *_args, **_kwargs: {"exit_code": 1, "stdout": "", "stderr": "not logged in"},
+    )
 
-    openai_probe = conformance.preflight_surface("openai", "service_api")
+    openai_probe = conformance.preflight_surface("openai", "operator_cli")
     gemini_probe = conformance.preflight_surface("gemini", "operator_cli")
     unknown_probe = conformance.preflight_surface("claude", "service_api")  # type: ignore[arg-type]
 
@@ -146,11 +163,42 @@ def test_preflight_surface_distinguishes_env_blocked_and_unwired(monkeypatch: py
     assert unknown_probe.status == "unwired"
 
     monkeypatch.setattr(conformance, "command_exists", lambda _command: True)
+    monkeypatch.setattr(
+        conformance,
+        "run_command",
+        lambda *_args, **_kwargs: {
+            "exit_code": 0,
+            "stdout": "Logged in using ChatGPT",
+            "stderr": "",
+        },
+    )
+    openai_ready_probe = conformance.preflight_surface("openai", "operator_cli")
     gemini_ready_probe = conformance.preflight_surface("gemini", "operator_cli")
+    assert openai_ready_probe.status == "conformant"
     assert gemini_ready_probe.status == "partial"
 
 
-def test_main_requires_service_spend_approval_for_openai_active(
+def test_main_default_openai_active_does_not_require_service_spend_approval(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    pack = conformance.active_contract_pack()
+    monkeypatch.delenv("CORTEX_LIVE_SERVICE_SPEND_APPROVED", raising=False)
+    monkeypatch.setattr(
+        conformance,
+        "run_active_conformance",
+        lambda **_kwargs: {"ok": True},
+    )
+    monkeypatch.setattr(conformance, "load_local_env_file", lambda: None)
+    monkeypatch.setattr(
+        conformance,
+        "contract_pack_by_name",
+        lambda _name: pack,
+    )
+
+    assert conformance.main(["--mode", "active", "--brain", "openai"]) == 0
+
+
+def test_main_requires_service_spend_approval_for_backup_openai_service_lane(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     monkeypatch.delenv("CORTEX_LIVE_SERVICE_SPEND_APPROVED", raising=False)
@@ -161,7 +209,9 @@ def test_main_requires_service_spend_approval_for_openai_active(
     )
 
     with pytest.raises(SystemExit, match="service-lane spend is blocked"):
-        conformance.main(["--mode", "active", "--brain", "openai"])
+        conformance.main(
+            ["--mode", "active", "--brain", "openai", "--openai-surface", "service_api"]
+        )
 
 
 def test_classify_outcome_divergence_maps_surface_and_brain_failures() -> None:
@@ -187,7 +237,7 @@ def test_classify_shared_divergence_only_returns_cortex_law_for_repeated_same_fa
     results = [
         conformance.ConformanceRunResult(
             brain="openai",
-            surface="service_api",
+            surface="operator_cli",
             contract_pack="verified_work_bookmarks_v1",
             status="partial",
             divergence_class="brain_wiring",
@@ -228,7 +278,7 @@ def test_decide_iteration_outcome_requires_revision_for_shipping_regression() ->
     results = [
         conformance.ConformanceRunResult(
             brain="openai",
-            surface="service_api",
+            surface="operator_cli",
             contract_pack="verified_work_bookmarks_v1",
             status="partial",
             divergence_class="brain_wiring",
@@ -246,7 +296,7 @@ def test_decide_iteration_outcome_requires_revision_for_shipping_regression() ->
     ]
 
     assert (
-        conformance.decide_iteration_outcome(results, shipping_default="openai:service_api")
+        conformance.decide_iteration_outcome(results, shipping_default="openai:operator_cli")
         == "revise"
     )
 
@@ -259,6 +309,142 @@ def test_stage_contract_pack_workspace_copies_fixture_tree() -> None:
         assert workspace != Path(pack.workspace_template_relpath)
         assert (workspace / "README_TASK.md").exists()
         assert (workspace / "tests" / "test_bookmarks_api.py").exists()
+
+
+def test_run_openai_operator_cli_conformance_skips_resume_after_pass(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    run_root = tmp_path
+    commands: list[tuple[list[str], Path | None]] = []
+    monkeypatch.setattr(
+        conformance,
+        "resolve_auth_mode",
+        lambda _provider, _lane: "codex_cli",
+    )
+    monkeypatch.setattr(
+        conformance,
+        "choose_model",
+        lambda *_args, **_kwargs: "gpt-5.3-codex",
+    )
+
+    def _fake_run_command(command, *, cwd=None, env=None, timeout_seconds=300.0):
+        _ = env, timeout_seconds
+        commands.append((list(command), cwd))
+        return {
+            "command": list(command),
+            "exit_code": 0,
+            "stdout": "",
+            "stderr": "",
+            "started_at": "t0",
+            "ended_at": "t1",
+        }
+
+    monkeypatch.setattr(conformance, "run_command", _fake_run_command)
+    monkeypatch.setattr(
+        conformance,
+        "_evaluate_operator_attempt",
+        lambda **_kwargs: {
+            "status": "executed",
+            "verification": VerificationOutcome(
+                status="passed",
+                failure_class=None,
+                import_smoke_ok=True,
+                pytest_passed=11,
+            ),
+            "session_id": "thread-1",
+            "extraction_mode": "jsonl",
+            "note": "executed",
+        },
+    )
+
+    result = conformance._run_openai_operator_cli_conformance(
+        contract_pack=conformance.active_contract_pack(),
+        run_root=run_root,
+    )
+
+    assert result.status == "conformant"
+    assert result.attempt_count == 1
+    assert len(commands) == 1
+    command, cwd = commands[0]
+    assert command[:3] == ["codex", "exec", "--json"]
+    assert cwd is not None
+
+
+def test_run_openai_operator_cli_conformance_resumes_after_failed_first_attempt(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    run_root = tmp_path
+    commands: list[tuple[list[str], Path | None]] = []
+    evaluations = iter(
+        (
+            {
+                "status": "executed",
+                "verification": VerificationOutcome(
+                    status="failed",
+                    failure_class="test_failed",
+                    import_smoke_ok=True,
+                    pytest_passed=4,
+                    pytest_failed=7,
+                ),
+                "session_id": "thread-1",
+                "extraction_mode": "jsonl",
+                "note": "executed",
+            },
+            {
+                "status": "executed",
+                "verification": VerificationOutcome(
+                    status="passed",
+                    failure_class=None,
+                    import_smoke_ok=True,
+                    pytest_passed=11,
+                ),
+                "session_id": "thread-1",
+                "extraction_mode": "jsonl",
+                "note": "executed",
+            },
+        )
+    )
+    monkeypatch.setattr(
+        conformance,
+        "resolve_auth_mode",
+        lambda _provider, _lane: "codex_cli",
+    )
+    monkeypatch.setattr(
+        conformance,
+        "choose_model",
+        lambda *_args, **_kwargs: "gpt-5.3-codex",
+    )
+
+    def _fake_run_command(command, *, cwd=None, env=None, timeout_seconds=300.0):
+        _ = env, timeout_seconds
+        commands.append((list(command), cwd))
+        return {
+            "command": list(command),
+            "exit_code": 0,
+            "stdout": "",
+            "stderr": "",
+            "started_at": "t0",
+            "ended_at": "t1",
+        }
+
+    monkeypatch.setattr(conformance, "run_command", _fake_run_command)
+    monkeypatch.setattr(
+        conformance,
+        "_evaluate_operator_attempt",
+        lambda **_kwargs: next(evaluations),
+    )
+
+    result = conformance._run_openai_operator_cli_conformance(
+        contract_pack=conformance.active_contract_pack(),
+        run_root=run_root,
+    )
+
+    assert result.status == "conformant"
+    assert result.attempt_count == 2
+    assert len(commands) == 2
+    assert commands[1][0][:4] == ["codex", "exec", "resume", "--json"]
 
 
 def test_run_claude_cli_conformance_uses_read_only_tools_and_skips_resume_after_pass(
@@ -457,7 +643,7 @@ def test_next_decision_prefers_shipping_default_gap_once_non_shipping_divergence
         conformance._next_decision(
             results,
             None,
-            shipping_default="openai:service_api",
+            shipping_default="openai:operator_cli",
         )
         == "improve_shipping_default"
     )
@@ -486,7 +672,7 @@ def test_next_decision_promotes_when_only_non_shipping_env_blocks_remain() -> No
         conformance._next_decision(
             results,
             None,
-            shipping_default="openai:service_api",
+            shipping_default="openai:operator_cli",
         )
         == "promote"
     )
@@ -512,7 +698,7 @@ def test_run_active_conformance_does_not_publish_latest_for_targeted_runs(
         "preflight_surface",
         lambda _brain, _surface: conformance.SurfaceProbe(
             brain="openai",
-            surface="service_api",
+            surface="operator_cli",
             status="conformant",
             reason="ready",
         ),
@@ -522,7 +708,7 @@ def test_run_active_conformance_does_not_publish_latest_for_targeted_runs(
         "_run_conformance",
         lambda **_kwargs: conformance.ConformanceRunResult(
             brain="openai",
-            surface="service_api",
+            surface="operator_cli",
             contract_pack="verified_work_bookmarks_v1",
             status="conformant",
             attempt_count=1,
@@ -554,7 +740,7 @@ def test_run_active_conformance_records_openai_ablation_config(
         "preflight_surface",
         lambda _brain, _surface: conformance.SurfaceProbe(
             brain="openai",
-            surface="service_api",
+            surface="operator_cli",
             status="conformant",
             reason="ready",
         ),
@@ -564,7 +750,7 @@ def test_run_active_conformance_records_openai_ablation_config(
         "_run_conformance",
         lambda **_kwargs: conformance.ConformanceRunResult(
             brain="openai",
-            surface="service_api",
+            surface="operator_cli",
             contract_pack="verified_work_bookmarks_v1",
             status="conformant",
             attempt_count=1,
@@ -584,6 +770,51 @@ def test_run_active_conformance_records_openai_ablation_config(
     )
 
     assert summary["openai_ablation_config"]["verification_binding"] == "off"
+
+
+def test_run_active_conformance_reserves_unique_run_root_when_timestamp_repeats(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(conformance, "CONFORMANCE_ROOT", tmp_path)
+    monkeypatch.setattr(conformance, "now_utc_iso", lambda: "2026-04-08T08:30:00+00:00")
+    monkeypatch.setattr(conformance, "load_local_env_file", lambda: None)
+    monkeypatch.setattr(
+        conformance,
+        "preflight_surface",
+        lambda _brain, _surface: conformance.SurfaceProbe(
+            brain="openai",
+            surface="operator_cli",
+            status="conformant",
+            reason="ready",
+        ),
+    )
+    monkeypatch.setattr(
+        conformance,
+        "_run_conformance",
+        lambda *, run_root, **_kwargs: conformance.ConformanceRunResult(
+            brain="openai",
+            surface="operator_cli",
+            contract_pack="verified_work_bookmarks_v1",
+            status="conformant",
+            attempt_count=1,
+            verification_status="passed",
+            parseable=True,
+            import_smoke_ok=True,
+            pytest_passed=11,
+            repair_conversion="passed_without_repair",
+            artifact_relpath=str(run_root),
+        ),
+    )
+
+    first = conformance.run_active_conformance(brains=("openai",))
+    second = conformance.run_active_conformance(brains=("openai",))
+
+    first_relpath = first["results"][0]["artifact_relpath"]
+    second_relpath = second["results"][0]["artifact_relpath"]
+    assert first_relpath != second_relpath
+    assert (tmp_path / "run_20260408T083000+0000").exists()
+    assert (tmp_path / "run_20260408T083000+0000_2").exists()
 
 
 def test_run_active_conformance_keeps_bookmarks_as_only_latest_summary_anchor(
@@ -724,7 +955,7 @@ def test_reconcile_latest_summary_prefers_newest_surviving_full_run_matching_ct2
 
     for run_dir in (older_run, newer_run):
         for artifact_name in (
-            "openai_service_api",
+            "openai_operator_cli",
             "claude_operator_cli",
             "gemini_operator_cli",
         ):
@@ -735,7 +966,7 @@ def test_reconcile_latest_summary_prefers_newest_surviving_full_run_matching_ct2
         "results": [
             {
                 "brain": "openai",
-                "surface": "service_api",
+                "surface": "operator_cli",
                 "status": "conformant",
                 "divergence_class": None,
                 "parseable": True,
@@ -745,7 +976,7 @@ def test_reconcile_latest_summary_prefers_newest_surviving_full_run_matching_ct2
                 "repair_conversion": "passed_without_repair",
                 "extraction_mode": None,
                 "note": "runtime move: continue",
-                "artifact_relpath": "run_20260408T070000+0000/openai_service_api",
+                "artifact_relpath": "run_20260408T070000+0000/openai_operator_cli",
             },
             {
                 "brain": "claude",
@@ -777,7 +1008,7 @@ def test_reconcile_latest_summary_prefers_newest_surviving_full_run_matching_ct2
             },
         ],
         "next_decision": "promote",
-        "shipping_truth": {"default": "openai:service_api"},
+        "shipping_truth": {"default": "openai:operator_cli"},
         "iteration_outcome": "promote",
         "overall_divergence_class": None,
         "contract_pack": {"contract_pack": "verified_work_bookmarks_v1"},
@@ -787,7 +1018,7 @@ def test_reconcile_latest_summary_prefers_newest_surviving_full_run_matching_ct2
         "results": [
             {
                 "brain": "openai",
-                "surface": "service_api",
+                "surface": "operator_cli",
                 "status": "conformant",
                 "divergence_class": None,
                 "parseable": True,
@@ -797,7 +1028,7 @@ def test_reconcile_latest_summary_prefers_newest_surviving_full_run_matching_ct2
                 "repair_conversion": "passed_without_repair",
                 "extraction_mode": None,
                 "note": "runtime move: continue",
-                "artifact_relpath": "run_20260408T071000+0000/openai_service_api",
+                "artifact_relpath": "run_20260408T071000+0000/openai_operator_cli",
             },
             {
                 "brain": "claude",
@@ -829,7 +1060,7 @@ def test_reconcile_latest_summary_prefers_newest_surviving_full_run_matching_ct2
             },
         ],
         "next_decision": "fix_wiring_only",
-        "shipping_truth": {"default": "openai:service_api"},
+        "shipping_truth": {"default": "openai:operator_cli"},
         "iteration_outcome": "revise",
         "overall_divergence_class": None,
         "contract_pack": {"contract_pack": "verified_work_bookmarks_v1"},
@@ -858,7 +1089,7 @@ def test_reconcile_latest_summary_ignores_newer_non_anchor_pack_full_runs(
     newer_run.mkdir(parents=True)
     for run_dir in (older_run, newer_run):
         for artifact_name in (
-            "openai_service_api",
+            "openai_operator_cli",
             "claude_operator_cli",
             "gemini_operator_cli",
         ):
@@ -869,7 +1100,7 @@ def test_reconcile_latest_summary_ignores_newer_non_anchor_pack_full_runs(
         "results": [
             {
                 "brain": "openai",
-                "artifact_relpath": "run_20260408T070000+0000/openai_service_api",
+                "artifact_relpath": "run_20260408T070000+0000/openai_operator_cli",
             },
             {
                 "brain": "claude",
@@ -881,7 +1112,7 @@ def test_reconcile_latest_summary_ignores_newer_non_anchor_pack_full_runs(
             },
         ],
         "next_decision": "promote",
-        "shipping_truth": {"default": "openai:service_api"},
+        "shipping_truth": {"default": "openai:operator_cli"},
         "iteration_outcome": "promote",
         "overall_divergence_class": None,
         "contract_pack": {"contract_pack": "verified_work_bookmarks_v1"},
@@ -891,7 +1122,7 @@ def test_reconcile_latest_summary_ignores_newer_non_anchor_pack_full_runs(
         "results": [
             {
                 "brain": "openai",
-                "artifact_relpath": "run_20260408T080000+0000/openai_service_api",
+                "artifact_relpath": "run_20260408T080000+0000/openai_operator_cli",
             },
             {
                 "brain": "claude",
@@ -903,7 +1134,7 @@ def test_reconcile_latest_summary_ignores_newer_non_anchor_pack_full_runs(
             },
         ],
         "next_decision": "promote",
-        "shipping_truth": {"default": "openai:service_api"},
+        "shipping_truth": {"default": "openai:operator_cli"},
         "iteration_outcome": "promote",
         "overall_divergence_class": None,
         "contract_pack": {"contract_pack": "verified_work_normalize_port_v1"},
@@ -927,7 +1158,7 @@ def test_reconcile_latest_summary_falls_back_to_newest_surviving_full_run_when_c
     newer_run = tmp_path / "run_20260408T071000+0000"
     newer_run.mkdir(parents=True)
     for artifact_name in (
-        "openai_service_api",
+        "openai_operator_cli",
         "claude_operator_cli",
         "gemini_operator_cli",
     ):
@@ -938,7 +1169,7 @@ def test_reconcile_latest_summary_falls_back_to_newest_surviving_full_run_when_c
         "results": [
             {
                 "brain": "openai",
-                "surface": "service_api",
+                "surface": "operator_cli",
                 "status": "conformant",
                 "divergence_class": None,
                 "parseable": True,
@@ -948,7 +1179,7 @@ def test_reconcile_latest_summary_falls_back_to_newest_surviving_full_run_when_c
                 "repair_conversion": "passed_without_repair",
                 "extraction_mode": None,
                 "note": "runtime move: continue",
-                "artifact_relpath": "run_20260408T071000+0000/openai_service_api",
+                "artifact_relpath": "run_20260408T071000+0000/openai_operator_cli",
             },
             {
                 "brain": "claude",
@@ -980,7 +1211,7 @@ def test_reconcile_latest_summary_falls_back_to_newest_surviving_full_run_when_c
             },
         ],
         "next_decision": "fix_wiring_only",
-        "shipping_truth": {"default": "openai:service_api"},
+        "shipping_truth": {"default": "openai:operator_cli"},
         "iteration_outcome": "revise",
         "overall_divergence_class": None,
         "contract_pack": {"contract_pack": "verified_work_bookmarks_v1"},

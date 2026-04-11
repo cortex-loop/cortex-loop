@@ -1,4 +1,4 @@
-"""Local maintainer gate for service-lane spend-heavy evaluation commands."""
+"""Manual-user-exception gate for paid OpenAI service-lane evaluation commands."""
 
 from __future__ import annotations
 
@@ -10,7 +10,8 @@ def require_openai_service_spend_approval(*, purpose: str) -> None:
         return
     raise SystemExit(
         f"OpenAI service-lane spend is blocked for {purpose}. "
-        f"Set {SERVICE_SPEND_APPROVAL_ENV}=1 to opt in explicitly, "
+        "Only proceed after the user explicitly approves spend in the current chat, "
+        f"then set {SERVICE_SPEND_APPROVAL_ENV}=1 as a manual exception, "
         "or use the CLI/watchlist lane instead."
     )
 

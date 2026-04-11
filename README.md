@@ -3,7 +3,7 @@
 Cortex is the executive layer for frontier models. The shipped product is the `cortex` package: a small integrity core plus the active runtime executive that improves model behavior during real work.
 
 Current shipped surface:
-- OpenAI product runtime on the direct service and CLI lanes
+- OpenAI product runtime on the CLI lane, with the direct service kept as a non-default backup surface
 - executive control centered on bounded contracts, external verification, and constrained repair
 
 Current repo truth:

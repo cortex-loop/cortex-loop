@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import io
 import os
+import subprocess
 import sys
 import tempfile
 from pathlib import Path
@@ -114,6 +115,25 @@ def test_load_local_env_file_preserves_existing_env_values(tmp_path: Path, monke
     assert loaded["CORTEX_LIVE_SERVICE_SPEND_APPROVED"] == "approved"
     assert os.environ["OPENAI_API_KEY"] == "shell-key"
     assert os.environ["CORTEX_LIVE_SERVICE_SPEND_APPROVED"] == "approved"
+
+
+def test_run_command_does_not_forward_parent_stdin(monkeypatch) -> None:
+    def fake_run(command, **kwargs):
+        assert kwargs["stdin"] is subprocess.DEVNULL
+
+        class Completed:
+            returncode = 0
+            stdout = "ok"
+            stderr = ""
+
+        return Completed()
+
+    monkeypatch.setattr(live_validation_common.subprocess, "run", fake_run)
+
+    result = live_validation_common.run_command(["echo", "ok"])
+
+    assert result["exit_code"] == 0
+    assert result["stdout"] == "ok"
 
 
 def test_should_collapse_after_failure_matches_blocking_classes() -> None:
