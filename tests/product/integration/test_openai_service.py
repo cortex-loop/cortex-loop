@@ -40,7 +40,11 @@ def test_openai_service_health_and_documented_event_flow() -> None:
         assert record["event_index"] == 1
         assert record["raw_host_event_name"] == "response.output_text.delta"
         assert record["dispatch_lane"] == "cheap"
-        assert record["decision"] == "continue"
+        assert record["selected_family"] == "seek-context"
+        assert record["realized_family"] == "seek-context"
+        assert record["decision"] == "check"
+        assert record["closure_required"] is False
+        assert record["closure_reason_tags"] == []
         assert record["journal"]["event_index"] == 1
 
         health_status, updated_health = service.request("GET", "/health")
@@ -133,6 +137,7 @@ def test_openai_service_undocumented_raw_event_warns_without_fabricating_parity(
             "No documented OpenAI lifecycle mapping for 'response.tool_event'; using conservative external/observation binding."
         ]
         assert payload["decision"] == "check"
+        assert payload["closure_required"] is False
         assert payload["journal"]["confirmed_artifact_refs"] == ["oa-gap-artifact"]
 
 

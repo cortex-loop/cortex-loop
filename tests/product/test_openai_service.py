@@ -172,4 +172,5 @@ def test_openai_service_action_roundtrips_verified_work_payload(
     assert result["verification"]["status"] == "passed"
     assert state.session.event_index == 3
     assert state.session.next_recommended_move == "continue"
+    assert state.session.executive_modulator_memory is not None
     assert state.session_loaded is True

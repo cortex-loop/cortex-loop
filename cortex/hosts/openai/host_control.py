@@ -223,6 +223,7 @@ def run_openai_host_control(
             result_text=result_text,
         ), current_session
 
+    current_session = _activate_verified_work_anchor(current_session, request.work_contract)
     verified_request = OpenAIHostControlRequest(
         action_tag=request.action_tag,
         model=request.model,
@@ -241,7 +242,7 @@ def run_openai_host_control(
         transport_callable=transport_callable,
     )
     try:
-        _, verification = verify_verified_work_result(
+        first_file_map, verification = verify_verified_work_result(
             result_text,
             request.work_contract,
         )
@@ -261,14 +262,32 @@ def run_openai_host_control(
         request.work_contract.max_repair_turns > 0
         and current_session.next_recommended_move == "repair"
     ):
+        preservation_state = current_session.preservation_state
+        if preservation_state is None:
+            raise OpenAIResponseStreamTransportError(
+                "OpenAI verified-work repair requires preservation_state after the first verification step."
+            )
         response_id = _last_response_id(raw_events)
         if response_id is None:
             raise OpenAIResponseStreamTransportError(
                 "OpenAI verified-work continuation requires a response_id on the first attempt."
             )
-        repair_ticket = build_verified_work_repair_ticket(verification)
+        repair_contract = _narrowed_repair_contract(
+            request.work_contract,
+            preservation_state.lawful_repair_surface,
+        )
+        repair_ticket = build_verified_work_repair_ticket(preservation_state)
+        repair_request = OpenAIHostControlRequest(
+            action_tag=request.action_tag,
+            model=request.model,
+            input_text=verified_request.input_text,
+            instructions=build_verified_work_instructions(repair_contract),
+            metadata=request.metadata,
+            max_output_tokens=request.max_output_tokens,
+            work_contract=repair_contract,
+        )
         repair_events, repair_records, repair_session, repair_result_text = _run_openai_host_control_attempt(
-            verified_request,
+            repair_request,
             current_session,
             transport_callable=transport_callable,
             previous_response_id=response_id,
@@ -279,7 +298,9 @@ def run_openai_host_control(
         try:
             _, verification = verify_verified_work_result(
                 repair_result_text,
-                request.work_contract,
+                repair_contract,
+                preserved_file_map=first_file_map,
+                verifier_contract=request.work_contract,
             )
         except RuntimeError as exc:
             raise OpenAIResponseStreamTransportError(
@@ -300,6 +321,56 @@ def run_openai_host_control(
         verification=verification,
         attempt_count=attempt_count,
     ), current_session
+
+
+def _activate_verified_work_anchor(
+    session: OpenAIRuntimeSession,
+    work_contract: WorkContract,
+) -> OpenAIRuntimeSession:
+    if session.active_goal_ref is not None:
+        return session
+    task_anchor = (
+        f"verified-work:{work_contract.verification_profile}:"
+        f"{'|'.join(work_contract.allowed_write_paths)}"
+    )
+    return OpenAIRuntimeSession(
+        session_id=session.session_id,
+        event_index=session.event_index,
+        branch_registry=session.branch_registry,
+        active_track_ref=session.active_track_ref,
+        active_goal_ref=task_anchor,
+        pending_goal_refs=session.pending_goal_refs,
+        confirmed_artifact_refs=session.confirmed_artifact_refs,
+        budget_history=session.budget_history,
+        brake_history=session.brake_history,
+        last_selected_family=session.last_selected_family,
+        last_commitment_result_summary=session.last_commitment_result_summary,
+        last_realization_feedback=session.last_realization_feedback,
+        feedback_window=session.feedback_window,
+        executive_modulator_memory=session.executive_modulator_memory,
+        last_failure_class=session.last_failure_class,
+        next_recommended_move=session.next_recommended_move,
+        preservation_state=session.preservation_state,
+    )
+
+
+def _narrowed_repair_contract(
+    work_contract: WorkContract,
+    lawful_repair_surface: frozenset[str],
+) -> WorkContract:
+    narrowed_paths = tuple(
+        path for path in work_contract.allowed_write_paths if path in lawful_repair_surface
+    )
+    if not narrowed_paths:
+        raise OpenAIResponseStreamTransportError(
+            "OpenAI verified-work repair requires a non-empty lawful_repair_surface."
+        )
+    return WorkContract(
+        allowed_write_paths=narrowed_paths,
+        verification_profile=work_contract.verification_profile,
+        output_carrier=work_contract.output_carrier,
+        max_repair_turns=0,
+    )
 
 
 def _extract_response_output_text(raw_events: list[dict[str, Any]]) -> str | None:

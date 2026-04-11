@@ -10,6 +10,7 @@ from cortex.runtime.verified_work_runtime import (
     build_verified_work_repair_ticket,
     verify_verified_work_result,
 )
+from cortex.sre.preservation import derive_preservation_state
 from cortex.sre.verified_work import VerificationOutcome, WorkContract
 
 from tests.product._verified_work_fixtures import (
@@ -239,41 +240,106 @@ def test_verify_verified_work_result_accepts_passing_submission(
     assert outcome.pytest_failed == 0
 
 
-def test_build_verified_work_repair_ticket_is_factual_only() -> None:
-    _, outcome = verify_verified_work_result(
-        "=== BLOCKED: unsafe_request ===\nCannot help with that.\n=== END BLOCKED ===",
-        _work_contract(),
+def test_verify_verified_work_result_overlays_preserved_files_for_repair_verification(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    repaired_main_only = {
+        "src/bookmarks_api/main.py": VALID_FILE_MAP["src/bookmarks_api/main.py"],
+    }
+    seen: dict[str, object] = {}
+
+    def _fake_run_verified_work_verifier(file_map, work_contract):
+        seen["file_map"] = dict(file_map)
+        seen["work_contract"] = work_contract
+        return VerificationOutcome(
+            status="passed",
+            failure_class=None,
+            parsed_paths=tuple(file_map),
+            import_smoke_ok=True,
+            pytest_ok=True,
+            pytest_exit_code=0,
+            pytest_passed=11,
+            pytest_failed=0,
+        )
+
+    monkeypatch.setattr(
+        "cortex.runtime.verified_work_runtime._run_verified_work_verifier",
+        _fake_run_verified_work_verifier,
+    )
+    narrowed_contract = WorkContract(
+        allowed_write_paths=("src/bookmarks_api/main.py",),
+        verification_profile="python_workspace_pytest_v1",
+        output_carrier="full_files",
+        max_repair_turns=0,
     )
 
-    ticket = build_verified_work_repair_ticket(outcome)
+    file_map, outcome = verify_verified_work_result(
+        render_full_files_result(repaired_main_only),
+        narrowed_contract,
+        preserved_file_map={
+            "src/bookmarks_api/models.py": VALID_FILE_MAP["src/bookmarks_api/models.py"],
+            "src/bookmarks_api/store.py": VALID_FILE_MAP["src/bookmarks_api/store.py"],
+        },
+        verifier_contract=_work_contract(),
+    )
 
-    assert "Repair the previous submission without widening scope." in ticket
+    assert file_map == VALID_FILE_MAP
+    assert outcome.status == "passed"
+    assert seen["file_map"] == VALID_FILE_MAP
+    assert seen["work_contract"] == _work_contract()
+
+
+def test_build_verified_work_repair_ticket_is_factual_only() -> None:
+    state = derive_preservation_state(
+        None,
+        _work_contract(),
+        (),
+        VerificationOutcome(
+            status="blocked",
+            failure_class="blocked_unsafe",
+            blocked_message="Cannot help with that.",
+        ),
+        remaining_repairs=1,
+    )
+
+    ticket = build_verified_work_repair_ticket(state)
+
+    assert "task_anchor: verified-work:python_workspace_pytest_v1:" in ticket
     assert "failure_class: blocked_unsafe" in ticket
-    assert "blocked_message: Cannot help with that." in ticket
+    assert "falsified_checks: blocked" in ticket
+    assert "lawful_repair_surface: <none>" in ticket
 
 
 def test_build_verified_work_repair_ticket_supports_minimal_style() -> None:
-    outcome = VerificationOutcome(
-        status="failed",
-        failure_class="test_failed",
-        pytest_ok=False,
-        pytest_exit_code=1,
-        pytest_passed=3,
-        pytest_failed=1,
-        failing_tests=("tests/test_bookmarks_api.py::test_create_and_get_bookmark_by_id",),
-        first_failure_excerpt="FAILED tests/test_bookmarks_api.py::test_create_and_get_bookmark_by_id",
+    state = derive_preservation_state(
+        None,
+        _work_contract(),
+        ("src/bookmarks_api/main.py",),
+        VerificationOutcome(
+            status="failed",
+            failure_class="test_failed",
+            parsed_paths=("src/bookmarks_api/main.py",),
+            import_smoke_ok=True,
+            pytest_ok=False,
+            pytest_exit_code=1,
+            pytest_passed=3,
+            pytest_failed=1,
+            failing_tests=("tests/test_bookmarks_api.py::test_create_and_get_bookmark_by_id",),
+            first_failure_excerpt="FAILED tests/test_bookmarks_api.py::test_create_and_get_bookmark_by_id",
+        ),
+        remaining_repairs=1,
     )
 
     ticket = build_verified_work_repair_ticket(
-        outcome,
+        state,
         style="minimal",
-        repair_surface=("src/bookmarks_api/main.py",),
     )
 
+    assert "task_anchor: verified-work:python_workspace_pytest_v1:" in ticket
     assert "failure_class: test_failed" in ticket
-    assert "failing_checks: pytest" in ticket
-    assert "repair_surface: src/bookmarks_api/main.py" in ticket
-    assert "pytest_failed:" not in ticket
+    assert "falsified_checks: pytest" in ticket
+    assert "lawful_repair_surface: src/bookmarks_api/main.py" in ticket
+    assert "remaining_repairs: 1" in ticket
 
 
 def test_verify_verified_work_result_uses_profile_specific_verifier_targets(

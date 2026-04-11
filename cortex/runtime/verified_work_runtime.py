@@ -12,6 +12,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Literal
 
+from cortex.sre.preservation import PreservationState
 from cortex.sre.verified_work import VerificationOutcome, WorkContract
 
 
@@ -142,53 +143,82 @@ def build_verified_work_input_text(
 
 
 def build_verified_work_repair_ticket(
-    outcome: VerificationOutcome,
+    preservation_state: PreservationState,
     *,
     style: VerifiedWorkRepairTicketStyle = "factual",
-    repair_surface: tuple[str, ...] = (),
 ) -> str:
     if style not in {"factual", "minimal"}:
         raise ValueError("build_verified_work_repair_ticket.style must be accepted.")
-    if any(not (isinstance(path, str) and path.strip()) for path in repair_surface):
-        raise ValueError(
-            "build_verified_work_repair_ticket.repair_surface must contain only non-empty strings."
+    if not isinstance(preservation_state, PreservationState):
+        actual_type = type(preservation_state).__name__
+        raise TypeError(
+            "build_verified_work_repair_ticket.preservation_state must be PreservationState, "
+            f"got {actual_type}."
         )
+    trusted_checks = ", ".join(sorted(preservation_state.trusted_structure.checks)) or "<none>"
+    trusted_paths = ", ".join(sorted(preservation_state.trusted_structure.paths)) or "<none>"
+    falsified_checks = ", ".join(
+        sorted(preservation_state.falsified_structure.checks)
+    ) or "<none>"
+    failing_tests = ", ".join(
+        sorted(preservation_state.falsified_structure.failing_tests)
+    ) or "<none>"
+    repair_surface = ", ".join(
+        sorted(preservation_state.lawful_repair_surface)
+    ) or "<none>"
+    allowed_moves = ", ".join(sorted(preservation_state.intervention_budget.allowed_moves))
     if style == "minimal":
-        failing_checks = ", ".join(_verification_failing_checks(outcome)) or "<none>"
-        repair_surface_text = ", ".join(repair_surface) or "<none>"
         return (
-            "Repair the previous submission without widening scope.\n\n"
-            f"failure_class: {outcome.failure_class}\n"
-            f"failing_checks: {failing_checks}\n"
-            f"repair_surface: {repair_surface_text}"
+            f"task_anchor: {preservation_state.task_anchor}\n"
+            f"failure_class: {preservation_state.falsified_structure.failure_class or '<none>'}\n"
+            f"falsified_checks: {falsified_checks}\n"
+            f"lawful_repair_surface: {repair_surface}\n"
+            f"remaining_repairs: {preservation_state.intervention_budget.remaining_repairs}\n"
+            f"allowed_moves: {allowed_moves}"
         )
     return (
-        "Repair the previous submission without widening scope.\n\n"
-        f"verification_status: {outcome.status}\n"
-        f"failure_class: {outcome.failure_class}\n"
-        f"parsed_paths: {', '.join(outcome.parsed_paths) or '<none>'}\n"
-        f"parse_error: {outcome.parse_error or '<none>'}\n"
-        f"import_smoke_ok: {outcome.import_smoke_ok}\n"
-        f"import_smoke_excerpt: {outcome.import_smoke_excerpt or '<none>'}\n"
-        f"pytest_ok: {outcome.pytest_ok}\n"
-        f"pytest_exit_code: {outcome.pytest_exit_code}\n"
-        f"pytest_passed: {outcome.pytest_passed}\n"
-        f"pytest_failed: {outcome.pytest_failed}\n"
-        f"failing_tests: {', '.join(outcome.failing_tests) or '<none>'}\n"
-        f"first_failure_excerpt: {outcome.first_failure_excerpt or '<none>'}\n"
-        f"blocked_message: {outcome.blocked_message or '<none>'}"
+        f"task_anchor: {preservation_state.task_anchor}\n"
+        f"trusted_checks: {trusted_checks}\n"
+        f"trusted_paths: {trusted_paths}\n"
+        f"failure_class: {preservation_state.falsified_structure.failure_class or '<none>'}\n"
+        f"falsified_checks: {falsified_checks}\n"
+        f"failing_tests: {failing_tests}\n"
+        f"lawful_repair_surface: {repair_surface}\n"
+        f"remaining_repairs: {preservation_state.intervention_budget.remaining_repairs}\n"
+        f"allowed_moves: {allowed_moves}"
     )
 
 
 def verify_verified_work_result(
     result_text: str | None,
     work_contract: WorkContract,
+    *,
+    preserved_file_map: dict[str, str] | None = None,
+    verifier_contract: WorkContract | None = None,
 ) -> tuple[dict[str, str] | None, VerificationOutcome]:
     file_map, blocked_outcome = _parse_verified_work_result(result_text, work_contract)
     if blocked_outcome is not None:
         return file_map, blocked_outcome
     assert file_map is not None
-    return file_map, _run_verified_work_verifier(file_map, work_contract)
+    effective_file_map = _overlay_verified_work_file_map(
+        preserved_file_map,
+        file_map,
+    )
+    return effective_file_map, _run_verified_work_verifier(
+        effective_file_map,
+        verifier_contract or work_contract,
+    )
+
+
+def _overlay_verified_work_file_map(
+    preserved_file_map: dict[str, str] | None,
+    repair_file_map: dict[str, str],
+) -> dict[str, str]:
+    if preserved_file_map is None:
+        return dict(repair_file_map)
+    combined = dict(preserved_file_map)
+    combined.update(repair_file_map)
+    return combined
 
 
 def _build_verified_work_context_bundle(
@@ -220,18 +250,6 @@ def _build_verified_work_context_bundle(
             )
         )
     return "\n\n".join(rendered_blocks)
-
-
-def _verification_failing_checks(outcome: VerificationOutcome) -> tuple[str, ...]:
-    if outcome.failure_class == "output_invalid":
-        return ("parse",)
-    if outcome.failure_class == "import_smoke_failed":
-        return ("import_smoke",)
-    if outcome.failure_class == "test_failed":
-        return ("pytest",)
-    if outcome.failure_class in {"blocked_missing_info", "blocked_unsafe"}:
-        return ("blocked",)
-    return ()
 
 
 def _parse_verified_work_result(
