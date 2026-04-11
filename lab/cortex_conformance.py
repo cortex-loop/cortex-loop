@@ -667,7 +667,10 @@ def run_active_conformance(
 
     write_json(run_root / "summary.json", summary)
     write_text(run_root / "summary.md", render_summary_markdown(summary))
-    if _is_full_brain_run(brains) and pack.contract_pack == ACTIVE_CONTRACT_PACK:
+    if _summary_is_publishable_full_run_anchor(
+        summary,
+        contract_pack_name=ACTIVE_CONTRACT_PACK,
+    ):
         write_json(CONFORMANCE_ROOT / "summary.latest.json", summary)
         write_text(CONFORMANCE_ROOT / "summary.latest.md", render_summary_markdown(summary))
     return summary
@@ -1449,6 +1452,7 @@ def _run_openai_operator_command(
             "resume",
             "--json",
             "--full-auto",
+            "--skip-git-repo-check",
             resume_session,
             prompt,
         ]
@@ -1556,7 +1560,7 @@ def reconcile_latest_summary() -> ConformanceSummary:
     )
     if candidate is None:
         raise RuntimeError(
-            "No surviving full tri-brain conformance summary exists under "
+            "No surviving publishable full tri-brain conformance summary exists under "
             f"{CONFORMANCE_ROOT}."
         )
     write_json(CONFORMANCE_ROOT / "summary.latest.json", candidate)
@@ -1587,7 +1591,10 @@ def _find_latest_full_summary(
             contract_pack_name=contract_pack_name,
         ):
             continue
-        if not _summary_is_full_run(summary):
+        if not _summary_is_publishable_full_run_anchor(
+            summary,
+            contract_pack_name=contract_pack_name,
+        ):
             continue
         if not _summary_artifacts_exist(summary):
             continue
@@ -1618,6 +1625,84 @@ def _summary_is_full_run(summary: Mapping[str, Any]) -> bool:
         if isinstance(result, Mapping) and isinstance(result.get("brain"), str)
     }
     return brains == set(_ALL_BRAINS)
+
+
+def _summary_is_publishable_full_run_anchor(
+    summary: Mapping[str, Any],
+    *,
+    contract_pack_name: str | None = None,
+) -> bool:
+    if contract_pack_name is not None and not _summary_matches_contract_pack(
+        summary,
+        contract_pack_name=contract_pack_name,
+    ):
+        return False
+    if not _summary_is_full_run(summary):
+        return False
+    return _summary_surface_drift_reason(summary) is None
+
+
+def _summary_surface_drift_reason(summary: Mapping[str, Any]) -> str | None:
+    expected_surfaces = _expected_summary_surfaces(summary)
+    if expected_surfaces is None:
+        return "summary.latest is missing expected conformance surface metadata"
+    actual_surfaces = _summary_result_surfaces(summary)
+    if actual_surfaces is None:
+        return "summary.latest has invalid result surface data"
+    for brain in _ALL_BRAINS:
+        expected_surface = expected_surfaces.get(brain)
+        actual_surface = actual_surfaces.get(brain)
+        if expected_surface is None:
+            return f"summary.latest is missing expected {brain} conformance surface"
+        if actual_surface is None:
+            return f"summary.latest is missing {brain}:{expected_surface} result"
+        if actual_surface != expected_surface:
+            return (
+                f"summary.latest reflects {brain}:{actual_surface} instead of "
+                f"{brain}:{expected_surface}"
+            )
+    return None
+
+
+def _expected_summary_surfaces(summary: Mapping[str, Any]) -> dict[Brain, Surface] | None:
+    contract_pack = summary.get("contract_pack")
+    if not isinstance(contract_pack, Mapping):
+        return None
+    train_charter = contract_pack.get("train_charter")
+    if not isinstance(train_charter, Mapping):
+        return None
+    conformance_surfaces = train_charter.get("conformance_surfaces")
+    if not isinstance(conformance_surfaces, list):
+        return None
+    expected: dict[Brain, Surface] = {}
+    for item in conformance_surfaces:
+        if not isinstance(item, str) or ":" not in item:
+            return None
+        brain_text, surface_text = item.split(":", 1)
+        if brain_text not in _ALL_BRAINS:
+            continue
+        if surface_text not in ("operator_cli", "service_api"):
+            return None
+        expected[brain_text] = surface_text
+    return expected if set(expected) == set(_ALL_BRAINS) else None
+
+
+def _summary_result_surfaces(summary: Mapping[str, Any]) -> dict[Brain, Surface] | None:
+    results = summary.get("results")
+    if not isinstance(results, list):
+        return None
+    actual: dict[Brain, Surface] = {}
+    for result in results:
+        if not isinstance(result, Mapping):
+            return None
+        brain = result.get("brain")
+        surface = result.get("surface")
+        if brain not in _ALL_BRAINS:
+            continue
+        if surface not in ("operator_cli", "service_api"):
+            return None
+        actual[brain] = surface
+    return actual
 
 
 def _summary_artifacts_exist(summary: Mapping[str, Any]) -> bool:

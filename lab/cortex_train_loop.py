@@ -227,12 +227,23 @@ def evaluate_conformance_summary_truth(
         and isinstance(summary.get("shipping_truth"), dict)
         and summary["shipping_truth"].get("default") == "openai:operator_cli"
     )
+    publishable_full_run_ok = isinstance(summary, dict) and cortex_conformance._summary_is_publishable_full_run_anchor(  # noqa: SLF001
+        summary,
+        contract_pack_name=cortex_conformance.ACTIVE_CONTRACT_PACK,
+    )
+    surface_drift_reason = (
+        cortex_conformance._summary_surface_drift_reason(summary)  # noqa: SLF001
+        if isinstance(summary, dict)
+        else None
+    )
 
     reasons: list[str] = []
     if not is_full_run:
         reasons.append("summary.latest does not represent a full tri-brain run")
     if not artifacts_exist:
         reasons.append("summary.latest references missing artifacts")
+    if not publishable_full_run_ok and surface_drift_reason is not None:
+        reasons.append(surface_drift_reason)
     if summary_next_decision != accepted_next_decision:
         reasons.append("summary.latest next_decision drifts from CT2 accepted truth")
     if not shipping_default_ok:
@@ -240,7 +251,7 @@ def evaluate_conformance_summary_truth(
 
     return {
         "primary_metric_value": 0 if reasons else 1,
-        "guardrail_ok": shipping_default_ok,
+        "guardrail_ok": shipping_default_ok and publishable_full_run_ok,
         "accepted_next_decision": accepted_next_decision,
         "summary_next_decision": summary_next_decision,
         "is_full_run": is_full_run,

@@ -445,6 +445,7 @@ def test_run_openai_operator_cli_conformance_resumes_after_failed_first_attempt(
     assert result.attempt_count == 2
     assert len(commands) == 2
     assert commands[1][0][:4] == ["codex", "exec", "resume", "--json"]
+    assert "--skip-git-repo-check" in commands[1][0]
 
 
 def test_run_claude_cli_conformance_uses_read_only_tools_and_skips_resume_after_pass(
@@ -878,6 +879,65 @@ def test_run_active_conformance_keeps_bookmarks_as_only_latest_summary_anchor(
     assert tmp_path / "summary.latest.md" not in written_paths
 
 
+def test_run_active_conformance_does_not_publish_latest_for_backup_openai_service_lane(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    written_paths: list[Path] = []
+
+    monkeypatch.setattr(conformance, "CONFORMANCE_ROOT", tmp_path)
+    monkeypatch.setattr(
+        conformance,
+        "now_utc_iso",
+        lambda: "2026-04-08T08:15:00+00:00",
+    )
+    monkeypatch.setattr(conformance, "load_local_env_file", lambda: None)
+    monkeypatch.setattr(
+        conformance,
+        "preflight_surface",
+        lambda brain, surface: conformance.SurfaceProbe(
+            brain=brain,
+            surface=surface,
+            status="conformant",
+            reason="ready",
+        ),
+    )
+    monkeypatch.setattr(
+        conformance,
+        "_run_conformance",
+        lambda *, brain, surface, contract_pack, **_kwargs: conformance.ConformanceRunResult(
+            brain=brain,
+            surface=surface,
+            contract_pack=contract_pack.contract_pack,
+            status="conformant",
+            attempt_count=1,
+            verification_status="passed",
+            parseable=True,
+            import_smoke_ok=True,
+            pytest_passed=3,
+            repair_conversion="passed_without_repair",
+        ),
+    )
+    monkeypatch.setattr(
+        conformance,
+        "write_json",
+        lambda path, payload: written_paths.append(path),
+    )
+    monkeypatch.setattr(
+        conformance,
+        "write_text",
+        lambda path, text: written_paths.append(path),
+    )
+
+    conformance.run_active_conformance(
+        brains=("openai", "claude", "gemini"),
+        openai_surface="service_api",
+    )
+
+    assert tmp_path / "summary.latest.json" not in written_paths
+    assert tmp_path / "summary.latest.md" not in written_paths
+
+
 def test_run_active_conformance_does_not_publish_feature_flags_as_latest_summary(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
@@ -1011,7 +1071,7 @@ def test_reconcile_latest_summary_prefers_newest_surviving_full_run_matching_ct2
         "shipping_truth": {"default": "openai:operator_cli"},
         "iteration_outcome": "promote",
         "overall_divergence_class": None,
-        "contract_pack": {"contract_pack": "verified_work_bookmarks_v1"},
+        "contract_pack": conformance.active_contract_pack().as_payload(),
     }
     newer_summary = {
         "generated_at": "2026-04-08T07:10:00+00:00",
@@ -1063,7 +1123,7 @@ def test_reconcile_latest_summary_prefers_newest_surviving_full_run_matching_ct2
         "shipping_truth": {"default": "openai:operator_cli"},
         "iteration_outcome": "revise",
         "overall_divergence_class": None,
-        "contract_pack": {"contract_pack": "verified_work_bookmarks_v1"},
+        "contract_pack": conformance.active_contract_pack().as_payload(),
     }
     (older_run / "summary.json").write_text(json.dumps(older_summary), encoding="utf-8")
     (newer_run / "summary.json").write_text(json.dumps(newer_summary), encoding="utf-8")
@@ -1072,6 +1132,90 @@ def test_reconcile_latest_summary_prefers_newest_surviving_full_run_matching_ct2
 
     assert reconciled["generated_at"] == "2026-04-08T07:00:00+00:00"
     assert (tmp_path / "summary.latest.json").exists()
+
+
+def test_reconcile_latest_summary_prefers_publishable_cli_anchor_over_newer_backup_lane_run(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(conformance, "CONFORMANCE_ROOT", tmp_path)
+    monkeypatch.setattr(conformance, "ROOT", tmp_path)
+    monkeypatch.setattr(conformance, "accepted_conformance_next_decision", lambda: "promote")
+    monkeypatch.setattr(conformance, "render_summary_markdown", lambda _summary: "")
+
+    cli_run = tmp_path / "run_20260408T070000+0000"
+    backup_run = tmp_path / "run_20260408T071000+0000"
+    cli_run.mkdir(parents=True)
+    backup_run.mkdir(parents=True)
+
+    for run_dir, openai_dir in (
+        (cli_run, "openai_operator_cli"),
+        (backup_run, "openai_service_api"),
+    ):
+        for artifact_name in (
+            openai_dir,
+            "claude_operator_cli",
+            "gemini_operator_cli",
+        ):
+            (run_dir / artifact_name).mkdir()
+
+    cli_summary = {
+        "generated_at": "2026-04-08T07:00:00+00:00",
+        "results": [
+            {
+                "brain": "openai",
+                "surface": "operator_cli",
+                "artifact_relpath": "run_20260408T070000+0000/openai_operator_cli",
+            },
+            {
+                "brain": "claude",
+                "surface": "operator_cli",
+                "artifact_relpath": "run_20260408T070000+0000/claude_operator_cli",
+            },
+            {
+                "brain": "gemini",
+                "surface": "operator_cli",
+                "artifact_relpath": "run_20260408T070000+0000/gemini_operator_cli",
+            },
+        ],
+        "next_decision": "promote",
+        "shipping_truth": {"default": "openai:operator_cli"},
+        "iteration_outcome": "promote",
+        "overall_divergence_class": None,
+        "contract_pack": conformance.active_contract_pack().as_payload(),
+    }
+    backup_summary = {
+        "generated_at": "2026-04-08T07:10:00+00:00",
+        "results": [
+            {
+                "brain": "openai",
+                "surface": "service_api",
+                "artifact_relpath": "run_20260408T071000+0000/openai_service_api",
+            },
+            {
+                "brain": "claude",
+                "surface": "operator_cli",
+                "artifact_relpath": "run_20260408T071000+0000/claude_operator_cli",
+            },
+            {
+                "brain": "gemini",
+                "surface": "operator_cli",
+                "artifact_relpath": "run_20260408T071000+0000/gemini_operator_cli",
+            },
+        ],
+        "next_decision": "promote",
+        "shipping_truth": {"default": "openai:operator_cli"},
+        "iteration_outcome": "promote",
+        "overall_divergence_class": None,
+        "contract_pack": conformance.active_contract_pack().as_payload(),
+    }
+    (cli_run / "summary.json").write_text(json.dumps(cli_summary), encoding="utf-8")
+    (backup_run / "summary.json").write_text(json.dumps(backup_summary), encoding="utf-8")
+
+    reconciled = conformance.reconcile_latest_summary()
+
+    assert reconciled["generated_at"] == "2026-04-08T07:00:00+00:00"
+    assert reconciled["results"][0]["surface"] == "operator_cli"
 
 
 def test_reconcile_latest_summary_ignores_newer_non_anchor_pack_full_runs(
@@ -1100,14 +1244,17 @@ def test_reconcile_latest_summary_ignores_newer_non_anchor_pack_full_runs(
         "results": [
             {
                 "brain": "openai",
+                "surface": "operator_cli",
                 "artifact_relpath": "run_20260408T070000+0000/openai_operator_cli",
             },
             {
                 "brain": "claude",
+                "surface": "operator_cli",
                 "artifact_relpath": "run_20260408T070000+0000/claude_operator_cli",
             },
             {
                 "brain": "gemini",
+                "surface": "operator_cli",
                 "artifact_relpath": "run_20260408T070000+0000/gemini_operator_cli",
             },
         ],
@@ -1115,7 +1262,7 @@ def test_reconcile_latest_summary_ignores_newer_non_anchor_pack_full_runs(
         "shipping_truth": {"default": "openai:operator_cli"},
         "iteration_outcome": "promote",
         "overall_divergence_class": None,
-        "contract_pack": {"contract_pack": "verified_work_bookmarks_v1"},
+        "contract_pack": conformance.active_contract_pack().as_payload(),
     }
     newer_summary = {
         "generated_at": "2026-04-08T08:00:00+00:00",
@@ -1137,7 +1284,9 @@ def test_reconcile_latest_summary_ignores_newer_non_anchor_pack_full_runs(
         "shipping_truth": {"default": "openai:operator_cli"},
         "iteration_outcome": "promote",
         "overall_divergence_class": None,
-        "contract_pack": {"contract_pack": "verified_work_normalize_port_v1"},
+        "contract_pack": conformance.contract_pack_by_name(
+            conformance.NORMALIZE_PORT_CONTRACT_PACK
+        ).as_payload(),
     }
     (older_run / "summary.json").write_text(json.dumps(older_summary), encoding="utf-8")
     (newer_run / "summary.json").write_text(json.dumps(newer_summary), encoding="utf-8")
@@ -1214,10 +1363,58 @@ def test_reconcile_latest_summary_falls_back_to_newest_surviving_full_run_when_c
         "shipping_truth": {"default": "openai:operator_cli"},
         "iteration_outcome": "revise",
         "overall_divergence_class": None,
-        "contract_pack": {"contract_pack": "verified_work_bookmarks_v1"},
+        "contract_pack": conformance.active_contract_pack().as_payload(),
     }
     (newer_run / "summary.json").write_text(json.dumps(newer_summary), encoding="utf-8")
 
     reconciled = conformance.reconcile_latest_summary()
 
     assert reconciled["generated_at"] == "2026-04-08T07:10:00+00:00"
+
+
+def test_reconcile_latest_summary_fails_when_only_backup_lane_full_runs_survive(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(conformance, "CONFORMANCE_ROOT", tmp_path)
+    monkeypatch.setattr(conformance, "ROOT", tmp_path)
+    monkeypatch.setattr(conformance, "accepted_conformance_next_decision", lambda: "promote")
+
+    run_dir = tmp_path / "run_20260408T071000+0000"
+    run_dir.mkdir(parents=True)
+    for artifact_name in (
+        "openai_service_api",
+        "claude_operator_cli",
+        "gemini_operator_cli",
+    ):
+        (run_dir / artifact_name).mkdir()
+
+    backup_summary = {
+        "generated_at": "2026-04-08T07:10:00+00:00",
+        "results": [
+            {
+                "brain": "openai",
+                "surface": "service_api",
+                "artifact_relpath": "run_20260408T071000+0000/openai_service_api",
+            },
+            {
+                "brain": "claude",
+                "surface": "operator_cli",
+                "artifact_relpath": "run_20260408T071000+0000/claude_operator_cli",
+            },
+            {
+                "brain": "gemini",
+                "surface": "operator_cli",
+                "artifact_relpath": "run_20260408T071000+0000/gemini_operator_cli",
+            },
+        ],
+        "next_decision": "promote",
+        "shipping_truth": {"default": "openai:operator_cli"},
+        "iteration_outcome": "promote",
+        "overall_divergence_class": None,
+        "contract_pack": conformance.active_contract_pack().as_payload(),
+    }
+    (run_dir / "summary.json").write_text(json.dumps(backup_summary), encoding="utf-8")
+
+    with pytest.raises(RuntimeError, match="publishable full tri-brain conformance summary"):
+        conformance.reconcile_latest_summary()
