@@ -31,11 +31,16 @@ def main(argv: list[str] | None = None) -> int:
 
     ensure_live_validation_dirs()
     preflight = _read_json(PREFLIGHT_REPORT_PATH)
+    comparison = build_comparison_artifacts(preflight)
+    print(json.dumps(comparison, indent=2, sort_keys=True))
+    return 0
+
+
+def build_comparison_artifacts(preflight: dict[str, Any]) -> dict[str, Any]:
     comparison = _build_comparison(preflight)
     write_json(comparator_path("live_validation_comparison.json"), comparison)
     write_text(comparator_path("live_validation_comparison.md"), _comparison_markdown(comparison))
-    print(json.dumps(comparison, indent=2, sort_keys=True))
-    return 0
+    return comparison
 
 
 def _build_comparison(preflight: dict[str, Any]) -> dict[str, Any]:

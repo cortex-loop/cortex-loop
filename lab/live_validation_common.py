@@ -956,6 +956,25 @@ def build_scenario_catalog() -> dict[str, Any]:
             "smoke": "codex exec",
             "lifecycle_proof": "codex app-server",
         },
+        "codex_dogfood_profiles": {
+            "e23": {
+                "train_slug": "e23-kernel-extract",
+                "branch_format": "codex/<YYYYMMDD-HHMMSS>-<slug>",
+                "workflow_mode": "managed_session",
+                "session_start_prompt": "e23_codex_app_session_start.md",
+                "closeout_prompt": "e23_codex_app_closeout.md",
+                "runbook_path": "lab/CODEX_DOGFOOD_E23.md",
+                "sync_main_command": "python3 internal/workflow/repo_workflow.py sync-main",
+                "start_session_command": (
+                    "python3 internal/workflow/repo_workflow.py start-session "
+                    "--agent codex --slug e23-kernel-extract"
+                ),
+                "close_session_command": (
+                    "python3 internal/workflow/repo_workflow.py close-session "
+                    '--message "kernel: e23 kernel extract end-state summary"'
+                ),
+            }
+        },
     }
 
 

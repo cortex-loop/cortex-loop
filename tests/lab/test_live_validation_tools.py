@@ -332,6 +332,19 @@ def test_build_scenario_catalog_exposes_l2_harness_contract() -> None:
     assert catalog["host_caveats"]["openai"] == "host_caveat_operator_openai_app_server.md"
     assert catalog["openai_operator_surfaces"]["smoke"] == "codex exec"
     assert catalog["openai_operator_surfaces"]["lifecycle_proof"] == "codex app-server"
+    assert catalog["codex_dogfood_profiles"]["e23"]["train_slug"] == "e23-kernel-extract"
+    assert (
+        catalog["codex_dogfood_profiles"]["e23"]["session_start_prompt"]
+        == "e23_codex_app_session_start.md"
+    )
+    assert (
+        catalog["codex_dogfood_profiles"]["e23"]["closeout_prompt"]
+        == "e23_codex_app_closeout.md"
+    )
+    assert (
+        catalog["codex_dogfood_profiles"]["e23"]["start_session_command"]
+        == "python3 internal/workflow/repo_workflow.py start-session --agent codex --slug e23-kernel-extract"
+    )
     assert catalog["gemini_operator_model_ladder"] == ["auto"]
     assert MODEL_MATRIX["openai"]["operator"].preferred == "gpt-5.3-codex"
     assert MODEL_MATRIX["gemini"]["operator"].preferred == "auto"
