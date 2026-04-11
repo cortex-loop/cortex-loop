@@ -21,6 +21,9 @@ STATUS_REGISTRY_PATH = REPO_ROOT / "internal" / "truth" / "cortex_status.json"
 LOCAL_LIVE_ROOT = REPO_ROOT / ".cortex" / "live_validation"
 PREFLIGHT_REPORT_PATH = LOCAL_LIVE_ROOT / "preflight_report.json"
 COMPARATOR_ROOT = LOCAL_LIVE_ROOT / "comparators"
+DOGFOOD_ROOT = LOCAL_LIVE_ROOT / "dogfood"
+DOGFOOD_SESSIONS_ROOT = DOGFOOD_ROOT / "sessions"
+DOGFOOD_LATEST_PATH = DOGFOOD_ROOT / "latest.json"
 WORKSPACE_ROOT = LOCAL_LIVE_ROOT / "workspaces"
 OPERATOR_DIRECTIONALITY_ROOT = LOCAL_LIVE_ROOT / "operator_directionality"
 TEMPLATE_ROOT = REPO_ROOT / "tests" / "lab" / "fixtures" / "live_validation" / "project_template"
@@ -135,6 +138,7 @@ SCENARIOS: tuple[ScenarioSpec, ...] = (
 def ensure_live_validation_dirs() -> None:
     LOCAL_LIVE_ROOT.mkdir(parents=True, exist_ok=True)
     COMPARATOR_ROOT.mkdir(parents=True, exist_ok=True)
+    DOGFOOD_SESSIONS_ROOT.mkdir(parents=True, exist_ok=True)
     WORKSPACE_ROOT.mkdir(parents=True, exist_ok=True)
     OPERATOR_DIRECTIONALITY_ROOT.mkdir(parents=True, exist_ok=True)
 
@@ -171,6 +175,10 @@ def write_json(path: Path, payload: Any) -> None:
 def write_text(path: Path, text: str) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(sanitize_text(text), encoding="utf-8")
+
+
+def relative_repo_path(path: Path) -> str:
+    return str(path.relative_to(REPO_ROOT))
 
 
 def load_local_env_file(path: Path = LOCAL_ENV_PATH) -> dict[str, str]:
@@ -972,6 +980,22 @@ def build_scenario_catalog() -> dict[str, Any]:
                 "close_session_command": (
                     "python3 internal/workflow/repo_workflow.py close-session "
                     '--message "kernel: e23 kernel extract end-state summary"'
+                ),
+            },
+            "repo_any_task": {
+                "task_scope": "any_repo_work",
+                "branch_format": "codex/<YYYYMMDD-HHMMSS>-<slug>",
+                "workflow_mode": "managed_session",
+                "session_start_prompt": "repo_codex_app_dogfood_session_start.md",
+                "closeout_prompt": "repo_codex_app_dogfood_closeout.md",
+                "sync_main_command": "python3 internal/workflow/repo_workflow.py sync-main",
+                "start_session_command": (
+                    "python3 internal/workflow/repo_workflow.py start-session "
+                    "--agent codex --slug task-name"
+                ),
+                "close_session_command": (
+                    "python3 internal/workflow/repo_workflow.py close-session "
+                    '--message "scope: end-state summary"'
                 ),
             }
         },

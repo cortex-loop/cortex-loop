@@ -50,6 +50,7 @@ def test_agents_records_mission_lock_and_single_truth_bootstrap() -> None:
         "## Non-Negotiables",
         "## Working Mode",
         "## Workflow",
+        "## Codex App Dogfood Mode",
         "## Handoff",
     ]
     assert "rich multi-host executive layer" in text
