@@ -8,6 +8,7 @@ __all__ = [
     "families",
     "feedback",
     "goals",
+    "goal_branch",
     "mediation",
     "modulators",
     "opportunities",

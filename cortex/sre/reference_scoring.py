@@ -11,6 +11,7 @@ from .allocation import (
 )
 from .brake import BrakeState
 from .families import SoftControlFamily
+from .goal_branch import build_reference_goal_branch_coupling
 from .mediation import (
     ReferenceMediationFinalization,
     ReferenceMediationMode,
@@ -126,6 +127,7 @@ def build_reference_allocation_scorecard(
     activation_threshold = compute_reference_activation_threshold(executive_state)
     alpha_t = compute_reference_alpha_t(executive_state)
     online_components = build_reference_online_score_components(executive_state)
+    goal_branch_coupling = build_reference_goal_branch_coupling(executive_state)
 
     scores: list[AllocationScore] = []
     for family in SoftControlFamily:
@@ -151,9 +153,16 @@ def build_reference_allocation_scorecard(
             reason_tags.add(f"brake:{brake_state.value}")
         reason_tags.add("allocation:online-only")
         reason_tags.add(_alpha_reason_tag(alpha_t))
+        reason_tags.add(_goal_branch_weight_reason_tag(goal_branch_coupling.weight))
 
         online_score = _online_score(online_components[family])
-        allocated_score = alpha_t * online_score
+        goal_branch_score = goal_branch_coupling.score_for(family)
+        if goal_branch_coupling.weight > 0.0 and goal_branch_score.score != 0.0:
+            reason_tags.add("goal-branch-coupled")
+            reason_tags.update(goal_branch_score.reason_tags)
+        allocated_score = (alpha_t * online_score) + (
+            goal_branch_coupling.weight * goal_branch_score.score
+        )
         scores.append(
             AllocationScore(
                 family=family,
@@ -400,6 +409,10 @@ def _alpha_reason_tag(alpha_t: float) -> str:
     if alpha_t == 0.65:
         return "alpha:0.65"
     return f"alpha:{alpha_t:.2f}"
+
+
+def _goal_branch_weight_reason_tag(weight: float) -> str:
+    return f"lambda_G:{weight:.2f}"
 
 
 def _has_seek_context_pressure(
