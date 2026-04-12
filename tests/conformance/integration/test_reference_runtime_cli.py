@@ -304,6 +304,11 @@ def test_reference_runtime_cli_record_shape_stays_locked_under_explicit_offline_
         "build_reference_executive_state",
         lambda *args, **kwargs: scenario.executive_state,
     )
+    monkeypatch.setattr(
+        reference_runtime,
+        "_build_support_snapshot",
+        lambda **kwargs: scenario.target_snapshot,
+    )
 
     step_result = reference_runtime.run_reference_runtime_step(
         "ApprovalResult",

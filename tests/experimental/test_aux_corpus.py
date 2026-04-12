@@ -11,6 +11,7 @@ from cortex.aux.evaluation import (
     AuxTemporalScenario,
     evaluate_aux_support_corpus,
 )
+from cortex.sre.families import SoftControlFamily
 
 from ._aux_test_support import (
     make_aux_prune_candidate_corpus,
@@ -72,7 +73,10 @@ def test_aux_corpus_case_result_carries_support_priors_and_failure_reasons() -> 
     no_lift_case = case_map["no-lift-counterexample"]
 
     assert isinstance(burden_case, AuxCorpusCaseResult)
-    assert burden_case.support_memory_priors.active is True
+    assert burden_case.support_memory_priors.active is False
+    assert "q_mem-penalty:burden" in burden_case.support_memory_priors.score_for(
+        SoftControlFamily.CHECK
+    ).reason_tags
     assert burden_case.publication.publication_tags >= {
         "aux/offline-publication",
         "aux/temporal-corpus",

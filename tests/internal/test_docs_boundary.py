@@ -188,9 +188,9 @@ def test_status_registry_is_complete_and_stable() -> None:
     assert matrix_status["Offline consolidation and support geometry"] == "landed"
     assert status["executive_completion"]["next_raise"] == [
         {
-            "skill": "Broaden support-conditioned intervention pricing beyond reference-only replay",
+            "skill": "Cross-host shadow evidence for support-conditioned intervention pricing",
             "expected_points_if_landed": 0,
-            "why": "The full executive denominator is now landed at 100%; the next leverage is quality, breadth, and stronger non-shipping evidence without inventing a new denominator row.",
+            "why": "The reference-first quality gate passed, so the next leverage is to test the same explicit AUX-owned control law across host evidence without widening live runtime behavior or inventing a new denominator row.",
         }
     ]
     host_status = {
@@ -212,15 +212,15 @@ def test_status_registry_is_complete_and_stable() -> None:
         "reference": "reference_cli",
     }
     assert status["conformance_summary"]["shipping_default"] == "openai:operator_cli"
-    assert status["work_today"]["slug"] == "support-conditioned-intervention-pricing-quality"
+    assert status["work_today"]["slug"] == "support-conditioned-intervention-pricing-cross-host-shadow"
     assert "support-conditioned intervention pricing" in status["work_today"]["note"]
-    assert status["next_product_train"]["slug"] == "support-conditioned-intervention-pricing-quality"
-    assert status["next_product_train"]["surface"] == "product"
+    assert status["next_product_train"]["slug"] == "support-conditioned-intervention-pricing-cross-host-shadow"
+    assert status["next_product_train"]["surface"] == "experimental"
     assert "support-conditioned intervention pricing" in status["next_product_train"]["executive_benefit"]
-    assert "AUX denominator row is now landed" in status["next_product_train"]["why_now"]
-    assert "Q_mem" in status["next_product_train"]["primary_metric"]
-    assert "Q_mem" in status["where_to_work"][0]
-    assert "support-conditioned intervention pricing" in status["where_to_work"][0]
+    assert "Reference-first quality broadening passed its bounded gate" in status["next_product_train"]["why_now"]
+    assert "cross-host shadow agreement" in status["next_product_train"]["primary_metric"]
+    assert "cross-host shadow evidence" in status["where_to_work"][0]
+    assert "support-conditioned control" in status["where_to_work"][2]
     closure_gates = {gate["id"]: gate for gate in status["closure_gates"]}
     assert closure_gates["main_synced"]["status"] == "required"
     assert closure_gates["cleanup_report"]["status"] == "required"
@@ -245,14 +245,14 @@ def test_generated_status_doc_includes_system_map_and_next_product_train() -> No
     assert "full executive denominator" in text
     assert "## Packet To Code" in text
     assert "## Next Product Train" in text
-    assert "`support-conditioned-intervention-pricing-quality`" in text
+    assert "`support-conditioned-intervention-pricing-cross-host-shadow`" in text
     assert "support-conditioned intervention pricing" in text
     assert "Shipping Product Lane\\nopenai:operator_cli" in text or "Shipping Product Lane" in text
     assert "Shipping default: `openai:operator_cli`" in text
     assert "Workflow gates marked `required` are contractual gates checked by `repo_workflow.py`" in text
     assert "| `main_synced` | `required` |" in text
     assert "| `cleanup_report` | `required` |" in text
-    assert "AUX denominator row is now landed" in text
+    assert "Reference-first quality broadening passed its bounded gate" in text
     assert "proves support-side lift" not in text
 
 
