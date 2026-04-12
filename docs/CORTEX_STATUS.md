@@ -51,7 +51,7 @@ Answering stance:
 ## Current Focus
 
 - Current tracked train: `openai-operator-cli-proof-reliability`
-- Active quality/risk focus: The bounded live-code audit passed locally, but the default no-spend OpenAI operator_cli bookmarks proof hit the full first-attempt timeout and emitted parse-invalid output before falling into repair; until that route is reliable, it is the current blocker.
+- Active quality/risk focus: The OpenAI operator_cli runner now captures native workspace edits lawfully and no longer falls into parse-invalid repair theater, but the default no-spend bookmarks proof still times out on attempt 1 after real file-change work events; dominant blocker: openai-operator-timeout.
 - Next product train after the current focus: `openai-operator-cli-proof-reliability`
 
 ## Denominator / Completion Context
@@ -175,16 +175,16 @@ Workflow gates marked `required` are contractual gates checked by `repo_workflow
 - Train: `openai-operator-cli-proof-reliability`
 - Surface: `lab`
 - Executive benefit: Make the default no-spend OpenAI operator_cli proof route return bounded, parseable results so shipping truth is backed by live executable evidence instead of accepted history alone.
-- Why now: The live-code audit passed locally, but the default bookmarks proof hit the full first-attempt timeout and only reached the repair lane after parse-invalid output; until that route is reliable, cross-host shadow evidence is not the highest-leverage seam.
-- Primary metric: `verified_work_bookmarks_v1 returns a bounded publishable result or explicit env_blocked classification with attempt artifacts on the default no-spend OpenAI operator_cli lane without consuming the full first-attempt timeout`
+- Why now: The runner now materializes allowed-path workspace edits and blocks repair-after-output-invalid, but the default bookmarks proof still times out before producing a bounded publishable first attempt; until that route is reliable, cross-host shadow evidence is not the highest-leverage seam.
+- Primary metric: `verified_work_bookmarks_v1 attempt 1 exits within 180 seconds with a publishable result or explicit env_blocked classification instead of operator_timeout after real work events on the default no-spend OpenAI operator_cli lane`
 - Guardrail: `no paid service lane, no host rollout changes, no packet-law widening, and no hiding operator failure behind stale accepted runs or longer timeouts`
-- Kill rule: `cut any fix that only lengthens timeouts, suppresses parse-invalid operator output, or shifts proof onto non-default paid surfaces`
+- Kill rule: `cut any fix that only lengthens timeouts, relabels operator_timeout as success or env_blocked, or shifts proof onto non-default paid surfaces`
 
 ## Where To Work Next
 
-- Fix the default no-spend OpenAI operator_cli proof path before expanding into cross-host shadow evidence: on verified_work_bookmarks_v1 the first attempt hit the full five-minute timeout and emitted parse-invalid output before falling into repair.
-- Keep shipping truth and the full executive denominator unchanged, but treat live-proof reliability as the current blocker because the audit is ahead of the default executable proof lane.
-- Work in lab and internal proof surfaces first: bounded attempt artifacts, parseable operator output, and a clean result or explicit env_blocked classification without hiding failures behind longer timeouts or paid lanes.
+- Fix openai-operator-timeout on the default no-spend OpenAI operator_cli proof path before expanding into cross-host shadow evidence: on verified_work_bookmarks_v1 the first attempt now fails honestly as a bounded timeout after real file-change work events.
+- Keep shipping truth and the full executive denominator unchanged, but treat live-proof reliability as the current blocker because the runner is ahead of the default first-attempt completion behavior.
+- Work in lab and internal proof surfaces first: native OpenAI runner completion semantics, narrow Codex local-state or environment drag when it blocks first-attempt closure, and a clean attempt-1 publishable result or explicit env_blocked classification without longer timeouts or paid lanes.
 
 ## Canonical Proof
 

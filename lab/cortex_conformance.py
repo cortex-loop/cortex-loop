@@ -29,6 +29,7 @@ from lab.openai_host_control_experiments import (  # noqa: E402
     run_openai_host_control_experiment,
 )
 from cortex.runtime.verified_work_runtime import (  # noqa: E402
+    build_verified_work_input_text,
     build_verified_work_instructions,
     build_verified_work_repair_ticket,
     verify_verified_work_result,
@@ -40,12 +41,16 @@ from lab.live_validation_common import (  # noqa: E402
     BLOCKING_FAILURE_CLASSES,
     LOCAL_LIVE_ROOT,
     api_key_presence,
+    capture_workspace_state,
     choose_model,
     classify_failure,
     command_exists,
+    extract_event_labels,
     extract_session_id,
     extract_result_text,
+    has_verified_work_protocol_blocks,
     load_local_env_file,
+    materialize_verified_work_result_from_workspace,
     now_utc_iso,
     parse_json_records,
     resolve_auth_mode,
@@ -98,6 +103,7 @@ _OPENAI_ACTION_TAG = "openai-response-stream"
 _OPENAI_MODEL = "gpt-5.4"
 _CLAUDE_MODEL = "claude-sonnet-4-6"
 _CLAUDE_VERIFIED_WORK_TOOLS = "Read,Glob,Grep,LS,Edit,MultiEdit,Write"
+_OPENAI_OPERATOR_TIMEOUT_SECONDS = 180.0
 _SURFACE_ORDER: dict[Brain, tuple[Surface, ...]] = {
     "openai": ("operator_cli", "service_api"),
     "claude": ("operator_cli",),
@@ -886,15 +892,17 @@ def _run_openai_operator_cli_conformance(
         contract_pack,
         prefix="cortex-conformance-openai-",
     ) as workspace:
-        initial_prompt = _render_combined_operator_prompt(
+        initial_snapshot = capture_workspace_state(workspace)
+        initial_prompt = _render_openai_native_operator_prompt(
             task_prompt=contract_pack.prompt_text,
-            instructions=build_verified_work_instructions(contract_pack.work_contract),
+            work_contract=contract_pack.work_contract,
         )
         initial = _run_openai_operator_command(
             prompt=initial_prompt,
             project_root=workspace,
             model=chosen_model,
             auth_mode=auth_mode,
+            timeout_seconds=_OPENAI_OPERATOR_TIMEOUT_SECONDS,
         )
         first_failure = classify_failure(f"{initial['stdout']}\n{initial['stderr']}")
         fallback_model = choose_model(
@@ -910,12 +918,15 @@ def _run_openai_operator_cli_conformance(
                 project_root=workspace,
                 model=chosen_model,
                 auth_mode=auth_mode,
+                timeout_seconds=_OPENAI_OPERATOR_TIMEOUT_SECONDS,
             )
         write_json(artifact_dir / "attempt1.json", initial)
         result = _evaluate_operator_attempt(
             provider="openai",
             command_result=initial,
             work_contract=contract_pack.work_contract,
+            project_root=workspace,
+            workspace_baseline=initial_snapshot,
         )
         if result["status"] == "env_blocked":
             return ConformanceRunResult(
@@ -928,6 +939,25 @@ def _run_openai_operator_cli_conformance(
                 transport_failure_class=result["transport_failure_class"],
                 artifact_relpath=_artifact_relpath(artifact_dir),
             )
+        if result["status"] == "timed_out":
+            return ConformanceRunResult(
+                brain="openai",
+                surface="operator_cli",
+                contract_pack=contract_pack.contract_pack,
+                status="divergent",
+                divergence_class="surface_wiring",
+                first_attempt_status="timeout",
+                first_attempt_failure_class="operator_timeout",
+                final_failure_class="operator_timeout",
+                verification_status="failed",
+                parseable=False,
+                attempt_count=1,
+                repair_conversion="failed_without_repair",
+                extraction_mode=result["extraction_mode"],
+                note=f"model: {chosen_model}; {result['note']}",
+                transport_failure_class=result["transport_failure_class"],
+                artifact_relpath=_artifact_relpath(artifact_dir),
+            )
         first_outcome = result["verification"]
         assert isinstance(first_outcome, VerificationOutcome)
         first_session_id = result["session_id"]
@@ -935,7 +965,7 @@ def _run_openai_operator_cli_conformance(
         attempt_count = 1
         final_extraction_mode = result["extraction_mode"]
         final_note = result["note"]
-        if first_outcome.failure_class in {"output_invalid", "import_smoke_failed", "test_failed"}:
+        if first_outcome.failure_class in {"import_smoke_failed", "test_failed"}:
             if not isinstance(first_session_id, str) or not first_session_id.strip():
                 return ConformanceRunResult(
                     brain="openai",
@@ -961,9 +991,10 @@ def _run_openai_operator_cli_conformance(
                 contract_pack.work_contract,
                 first_outcome,
             )
-            repair_ticket = _render_combined_operator_prompt(
+            repair_snapshot = capture_workspace_state(workspace)
+            repair_ticket = _render_openai_native_operator_prompt(
                 task_prompt=build_verified_work_repair_ticket(preservation_state),
-                instructions=build_verified_work_instructions(repair_contract),
+                work_contract=repair_contract,
             )
             resumed = _run_openai_operator_command(
                 prompt=repair_ticket,
@@ -971,12 +1002,15 @@ def _run_openai_operator_cli_conformance(
                 model=chosen_model,
                 auth_mode=auth_mode,
                 resume_session=first_session_id,
+                timeout_seconds=_OPENAI_OPERATOR_TIMEOUT_SECONDS,
             )
             write_json(artifact_dir / "attempt2.json", resumed)
             resumed_result = _evaluate_operator_attempt(
                 provider="openai",
                 command_result=resumed,
                 work_contract=contract_pack.work_contract,
+                project_root=workspace,
+                workspace_baseline=repair_snapshot,
             )
             if resumed_result["status"] == "env_blocked":
                 return ConformanceRunResult(
@@ -986,6 +1020,28 @@ def _run_openai_operator_cli_conformance(
                     status="env_blocked",
                     divergence_class="env_blocked",
                     note=resumed_result["note"],
+                    transport_failure_class=resumed_result["transport_failure_class"],
+                    artifact_relpath=_artifact_relpath(artifact_dir),
+                )
+            if resumed_result["status"] == "timed_out":
+                return ConformanceRunResult(
+                    brain="openai",
+                    surface="operator_cli",
+                    contract_pack=contract_pack.contract_pack,
+                    status="divergent",
+                    divergence_class="surface_wiring",
+                    first_attempt_status=first_outcome.status,
+                    first_attempt_failure_class=first_outcome.failure_class,
+                    final_failure_class="operator_timeout",
+                    verification_status="failed",
+                    parseable=False,
+                    import_smoke_ok=first_outcome.import_smoke_ok,
+                    pytest_passed=first_outcome.pytest_passed,
+                    pytest_failed=first_outcome.pytest_failed,
+                    attempt_count=2,
+                    repair_conversion="repair_attempt_no_recovery",
+                    extraction_mode=resumed_result["extraction_mode"],
+                    note=f"model: {chosen_model}; {resumed_result['note']}",
                     transport_failure_class=resumed_result["transport_failure_class"],
                     artifact_relpath=_artifact_relpath(artifact_dir),
                 )
@@ -1355,11 +1411,30 @@ def _evaluate_operator_attempt(
     provider: Literal["claude", "gemini", "openai"],
     command_result: dict[str, Any],
     work_contract: WorkContract,
+    project_root: Path | None = None,
+    workspace_baseline: dict[str, str] | None = None,
 ) -> dict[str, Any]:
     raw_stdout = str(command_result.get("stdout", "") or "")
     raw_stderr = str(command_result.get("stderr", "") or "")
     failure_class = classify_failure(f"{raw_stdout}\n{raw_stderr}")
     records, extraction_mode = parse_json_records(raw_stdout)
+    has_work_events = any(label.startswith("item:") for label in extract_event_labels(records))
+    if provider == "openai" and command_result["exit_code"] == 124:
+        if failure_class in BLOCKING_FAILURE_CLASSES and not has_work_events:
+            return {
+                "status": "env_blocked",
+                "transport_failure_class": failure_class,
+                "note": sanitize_text((raw_stderr or raw_stdout).strip() or "transport blocked"),
+            }
+        timeout_note = raw_stderr.strip() or "operator timed out before returning a publishable result"
+        if has_work_events:
+            timeout_note = f"{timeout_note}\noperator timeout followed real work events"
+        return {
+            "status": "timed_out",
+            "transport_failure_class": "operator_timeout",
+            "extraction_mode": extraction_mode,
+            "note": sanitize_text(timeout_note),
+        }
     if command_result["exit_code"] == 124 and not records and not raw_stdout.strip():
         return {
             "status": "env_blocked",
@@ -1377,9 +1452,27 @@ def _evaluate_operator_attempt(
 
     session_id = extract_session_id(provider, records)
     result_text = extract_result_text(records, raw_stdout)
+    materialization_note: str | None = None
+    if (
+        provider == "openai"
+        and command_result["exit_code"] == 0
+        and failure_class is None
+        and project_root is not None
+        and workspace_baseline is not None
+        and not has_verified_work_protocol_blocks(result_text)
+    ):
+        result_text, materialization_note = materialize_verified_work_result_from_workspace(
+            project_root=project_root,
+            baseline_state=workspace_baseline,
+            allowed_write_paths=work_contract.allowed_write_paths,
+        )
+        if result_text is not None:
+            extraction_mode = "codex_workspace_materialized"
     _, verification = verify_verified_work_result(result_text, work_contract)
     note = sanitize_text(raw_stderr.strip() or "executed")
-    if command_result["exit_code"] == 124:
+    if materialization_note is not None:
+        note = sanitize_text(f"{note}\n{materialization_note}")
+    if provider != "openai" and command_result["exit_code"] == 124:
         note = sanitize_text(f"{note}\nstructured output captured before operator timeout")
     return {
         "status": "executed",
@@ -1454,6 +1547,36 @@ def _render_combined_operator_prompt(*, task_prompt: str, instructions: str) -> 
     )
 
 
+def _render_openai_native_operator_prompt(
+    *,
+    task_prompt: str,
+    work_contract: WorkContract,
+) -> str:
+    input_text = build_verified_work_input_text(
+        task_prompt,
+        work_contract,
+        context_mode="writable_files_plus_visible_tests",
+    )
+    return (
+        f"{input_text}\n\n"
+        "Operate directly on the staged workspace.\n"
+        "Edit only the allowed paths named in the work contract.\n"
+        "Keep exploration minimal and stop once the allowed files are complete.\n"
+        "The target command and visible tests are verifier context only; do not execute them yourself.\n"
+        "Do not run tests, compile checks, syntax checks, or other validation shell commands.\n"
+        "When the allowed files are complete, stop immediately.\n\n"
+        "If blocked because you need missing user information, return:\n"
+        "=== BLOCKED: needs_user_input ===\n"
+        "<message>\n"
+        "=== END BLOCKED ===\n\n"
+        "If blocked because the request is unsafe, return:\n"
+        "=== BLOCKED: unsafe_request ===\n"
+        "<message>\n"
+        "=== END BLOCKED ===\n\n"
+        "Do not return summaries, prose, or code fences."
+    )
+
+
 def _run_openai_operator_command(
     *,
     prompt: str,
@@ -1461,6 +1584,7 @@ def _run_openai_operator_command(
     model: str,
     auth_mode: str,
     resume_session: str | None = None,
+    timeout_seconds: float = _OPENAI_OPERATOR_TIMEOUT_SECONDS,
 ) -> dict[str, Any]:
     if auth_mode != "codex_cli":
         return {
@@ -1496,7 +1620,7 @@ def _run_openai_operator_command(
             model,
             prompt,
         ]
-    return run_command(command, cwd=project_root, timeout_seconds=300.0)
+    return run_command(command, cwd=project_root, timeout_seconds=timeout_seconds)
 
 
 def _repair_preservation_state_and_contract(

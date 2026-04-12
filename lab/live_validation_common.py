@@ -38,6 +38,17 @@ SERVICE_SPEND_APPROVAL_ENV = "CORTEX_LIVE_SERVICE_SPEND_APPROVED"
 _HOME_PATH = str(Path.home())
 _TEMP_PATH_RE = re.compile(r"/(?:private/)?var/folders/[^\s\"']+")
 _FENCED_DIFF_RE = re.compile(r"```(?:diff|patch)?\n(.*?)```", re.DOTALL)
+_IGNORED_WORKSPACE_DIR_NAMES = frozenset(
+    {
+        "__pycache__",
+        ".pytest_cache",
+        ".ruff_cache",
+        ".mypy_cache",
+        ".git",
+    }
+)
+_IGNORED_WORKSPACE_FILE_NAMES = frozenset({".DS_Store"})
+_IGNORED_WORKSPACE_SUFFIXES = (".pyc", ".pyo")
 
 _LANE_EXECUTION_SURFACE = {
     "operator": "headless_cli",
@@ -510,6 +521,93 @@ def run_target_test(project_root: Path) -> dict[str, Any]:
 
 def read_prompt_template(filename: str) -> str:
     return (PROMPTS_ROOT / filename).read_text(encoding="utf-8")
+
+
+def is_ignorable_workspace_path(relative_path: str) -> bool:
+    parts = Path(relative_path).parts
+    if not parts:
+        return True
+    if any(part in _IGNORED_WORKSPACE_DIR_NAMES for part in parts[:-1]):
+        return True
+    filename = parts[-1]
+    if filename in _IGNORED_WORKSPACE_FILE_NAMES:
+        return True
+    return filename.endswith(_IGNORED_WORKSPACE_SUFFIXES)
+
+
+def capture_workspace_state(project_root: Path) -> dict[str, str]:
+    state: dict[str, str] = {}
+    for path in sorted(project_root.rglob("*")):
+        if not path.is_file():
+            continue
+        relative_path = path.relative_to(project_root).as_posix()
+        if is_ignorable_workspace_path(relative_path):
+            continue
+        state[relative_path] = path.read_text(encoding="utf-8")
+    return state
+
+
+def has_verified_work_protocol_blocks(text: str | None) -> bool:
+    if text is None:
+        return False
+    return "=== FILE:" in text or "=== BLOCKED:" in text
+
+
+def materialize_verified_work_result_from_workspace(
+    *,
+    project_root: Path,
+    baseline_state: dict[str, str],
+    allowed_write_paths: tuple[str, ...],
+) -> tuple[str | None, str | None]:
+    current_state = capture_workspace_state(project_root)
+    baseline_paths = set(baseline_state)
+    current_paths = set(current_state)
+    allowed_paths = set(allowed_write_paths)
+
+    disallowed_new_paths = sorted(
+        path for path in (current_paths - baseline_paths) if path not in allowed_paths
+    )
+    disallowed_changed_paths = sorted(
+        path
+        for path in (baseline_paths & current_paths)
+        if path not in allowed_paths and current_state[path] != baseline_state[path]
+    )
+    disallowed_deleted_paths = sorted(
+        path for path in (baseline_paths - current_paths) if path not in allowed_paths
+    )
+    disallowed_paths = (
+        disallowed_new_paths + disallowed_changed_paths + disallowed_deleted_paths
+    )
+    if disallowed_paths:
+        return None, (
+            "workspace materialization rejected disallowed path changes: "
+            + ", ".join(disallowed_paths)
+        )
+
+    changed_allowed_paths: list[str] = []
+    for relative_path in allowed_write_paths:
+        before = baseline_state.get(relative_path)
+        after = current_state.get(relative_path)
+        if after is None:
+            return None, f"workspace materialization missing allowed path: {relative_path}"
+        if before != after:
+            changed_allowed_paths.append(relative_path)
+    if not changed_allowed_paths:
+        return None, "workspace materialization found no allowed-path edits"
+
+    rendered_blocks: list[str] = []
+    for relative_path in changed_allowed_paths:
+        content = current_state[relative_path].rstrip("\n")
+        rendered_blocks.append(
+            "\n".join(
+                (
+                    f"=== FILE: {relative_path} ===",
+                    content,
+                    "=== END FILE ===",
+                )
+            )
+        )
+    return "\n\n".join(rendered_blocks), None
 
 
 def parse_json_records(text: str) -> tuple[list[dict[str, Any]], str]:
