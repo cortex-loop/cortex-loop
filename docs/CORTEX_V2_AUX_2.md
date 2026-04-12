@@ -2,7 +2,7 @@
 
 Surface: product
 
-Status: canonical **AUX** document for the 3-document Cortex v2 packet (`active boundary`; geometry `evaluation-first / runtime-off-by-default`; offline consolidation `deferred until active Core/SRE loop is stable`)
+Status: canonical **AUX** document for the 3-document Cortex v2 packet (`active boundary`; geometry `evaluation-first / runtime-off-by-default`; offline support publication `evaluation-first / runtime-off-by-default`; runtime consolidation `deferred until active Core/SRE loop is stable`)
 Companion documents: `CORTEX_V2_CORE_2.md`, `CORTEX_V2_SRE_2.md`
 
 ---
@@ -84,9 +84,10 @@ AUX intentionally contains modules with different activation status.
 
 #### Evaluation-first / runtime-off-by-default
 - geometry/evaluation.
+- support-only offline publication and consolidation evaluation.
 
 #### Deferred until the active core/SRE loop is stable
-- offline consolidation / BMR-like support publication.
+- runtime use of offline consolidation / BMR-like support publication on the control path.
 
 This means the AUX layer is architecturally present now, but not every AUX mechanism is on the critical path for first working v2 runtime behavior.
 
@@ -301,7 +302,7 @@ Otherwise it should remain disabled or be removed.
 
 ## 5. Offline consolidation and BMR-like support learning
 
-Status: **deferred until the active core/SRE loop is stable**
+Status: **support-side evaluation-first / runtime-off-by-default**
 
 ### 5.1 Purpose
 
@@ -315,13 +316,14 @@ Offline consolidation exists to improve support-side priors such as:
 
 It does not exist to mutate commitment truth.
 
-### 5.2 Deferred activation law
+### 5.2 Runtime deferral law
 
-Offline consolidation is not on the critical path for first working v2 runtime behavior.
-It should remain deferred until:
+Offline support publication may be evaluated and retained on the support side now.
+It is still not on the critical path for first working v2 runtime behavior, and runtime use should remain deferred until:
 - the core event loop is stable,
 - the active SRE loop is stable,
-- and support-memory publication can be evaluated without hiding runtime defects.
+- support-memory publication has time-separated evaluation evidence rather than same-snapshot smoke evidence,
+- and retention is earned without hiding runtime defects.
 
 ### 5.3 Support-only publication law
 

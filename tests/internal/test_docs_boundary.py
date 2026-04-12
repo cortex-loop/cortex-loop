@@ -190,7 +190,7 @@ def test_status_registry_is_complete_and_stable() -> None:
         {
             "skill": "Offline consolidation and support geometry",
             "expected_points_if_landed": 10,
-            "why": "Only the AUX support-geometry row remains in the denominator, and it must earn a lawful evaluation-first shape before any runtime promotion.",
+            "why": "Only the AUX support-geometry row remains in the denominator, and it must earn broader lawful support-side value before any runtime promotion.",
         }
     ]
     host_status = {
@@ -212,9 +212,9 @@ def test_status_registry_is_complete_and_stable() -> None:
         "reference": "reference_cli",
     }
     assert status["conformance_summary"]["shipping_default"] == "openai:operator_cli"
-    assert status["work_today"]["slug"] == "offline-support-geometry-shape"
+    assert status["work_today"]["slug"] == "aux-reference-q-mem-replay"
     assert "Q_mem" in status["work_today"]["note"]
-    assert status["next_product_train"]["slug"] == "offline-support-geometry-shape"
+    assert status["next_product_train"]["slug"] == "aux-reference-q-mem-replay"
     assert status["next_product_train"]["surface"] == "experimental"
     assert "Q_mem" in status["next_product_train"]["executive_benefit"]
     assert "Q_mem" in status["next_product_train"]["why_now"]
@@ -237,7 +237,7 @@ def test_generated_status_doc_includes_system_map_and_next_product_train() -> No
     assert "full executive denominator" in text
     assert "## Packet To Code" in text
     assert "## Next Product Train" in text
-    assert "`offline-support-geometry-shape`" in text
+    assert "`aux-reference-q-mem-replay`" in text
     assert "Q_mem" in text
     assert "Shipping Product Lane\\nopenai:operator_cli" in text or "Shipping Product Lane" in text
     assert "Shipping default: `openai:operator_cli`" in text

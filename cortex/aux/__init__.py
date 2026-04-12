@@ -8,7 +8,15 @@ from .geometry import (
     AuxMatchScore,
     build_aux_geometry_report,
 )
-from .evaluation import AuxEvaluationResult, evaluate_aux_support_snapshot
+from .evaluation import (
+    AuxCorpusCaseResult,
+    AuxCorpusEvaluationResult,
+    AuxCorpusMetricSummary,
+    AuxEvaluationResult,
+    AuxTemporalScenario,
+    evaluate_aux_support_corpus,
+    evaluate_aux_support_snapshot,
+)
 from .lift import (
     AUX_LIFT_DIRECTIONS,
     AuxLiftMetric,
@@ -28,11 +36,15 @@ __all__ = [
     "AugmentedSupportSnapshot",
     "AuxBurdenReport",
     "AuxContradictionCluster",
+    "AuxCorpusCaseResult",
+    "AuxCorpusEvaluationResult",
+    "AuxCorpusMetricSummary",
     "AuxEvaluationResult",
     "AuxGeometryReport",
     "AuxLiftMetric",
     "AuxLiftReport",
     "AuxMatchScore",
+    "AuxTemporalScenario",
     "AuxiliarySupportAppendix",
     "OfflineSupportPublication",
     "augment_snapshot",
@@ -41,6 +53,7 @@ __all__ = [
     "build_aux_lift_report",
     "build_offline_support_publication",
     "build_support_memory_prior_appendix",
+    "evaluate_aux_support_corpus",
     "evaluate_aux_support_snapshot",
     "total_aux_burden",
 ]
