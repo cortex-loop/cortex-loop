@@ -67,6 +67,42 @@ EXPECTATIONS = (
         ),
     ),
     AuxCorrespondenceExpectation(
+        row_label="AuxTemporalScenario",
+        module_path="cortex.aux.evaluation",
+        symbol_name="AuxTemporalScenario",
+        promised_surfaces=(
+            PromisedTestSurface(
+                test_file="tests/experimental/test_aux_corpus.py",
+                test_names=("test_aux_temporal_scenarios_require_time_separated_source_and_target",),
+            ),
+        ),
+    ),
+    AuxCorrespondenceExpectation(
+        row_label="AuxCorpusEvaluationResult",
+        module_path="cortex.aux.evaluation",
+        symbol_name="AuxCorpusEvaluationResult",
+        promised_surfaces=(
+            PromisedTestSurface(
+                test_file="tests/experimental/test_aux_corpus.py",
+                test_names=("test_evaluate_aux_support_corpus_reports_time_separated_lift_and_acceptance",),
+            ),
+        ),
+    ),
+    AuxCorrespondenceExpectation(
+        row_label="evaluate_aux_support_corpus",
+        module_path="cortex.aux.evaluation",
+        symbol_name="evaluate_aux_support_corpus",
+        promised_surfaces=(
+            PromisedTestSurface(
+                test_file="tests/experimental/test_aux_corpus.py",
+                test_names=(
+                    "test_evaluate_aux_support_corpus_reports_time_separated_lift_and_acceptance",
+                    "test_evaluate_aux_support_corpus_can_recommend_prune_candidate_for_weak_cases",
+                ),
+            ),
+        ),
+    ),
+    AuxCorrespondenceExpectation(
         row_label="evaluate_aux_support_snapshot",
         module_path="cortex.aux.evaluation",
         symbol_name="evaluate_aux_support_snapshot",
@@ -202,6 +238,9 @@ def test_aux_correspondence_text_keeps_geometry_lift_and_publication_rows_explic
     assert "| `GeomEval` evaluation-first geometry/support report over lawful public support state | `AuxGeometryReport` + `AuxMatchScore` + `AuxContradictionCluster` |" in correspondence_text
     assert "| retention-law lift comparison over fixed support-quality and burden metrics | `AuxLiftReport` + `AuxLiftMetric` + `build_aux_lift_report()` |" in correspondence_text
     assert "| deterministic evaluation-first AUX runner over lawful public support state | `AuxEvaluationResult` + `evaluate_aux_support_snapshot()` |" in correspondence_text
+    assert "| time-separated source→target AUX corpus carrier over lawful support snapshots | `AuxTemporalScenario` |" in correspondence_text
+    assert "| time-separated AUX corpus result over casewise lift, aggregate metric passes, burden totals, and retention | `AuxCorpusEvaluationResult` |" in correspondence_text
+    assert "| time-separated AUX corpus runner over source publication and later target evaluation | `evaluate_aux_support_corpus()` |" in correspondence_text
     assert "| deterministic support-only offline publication builder over lawful public support state | `build_offline_support_publication()` |" in correspondence_text
     assert "| AUX-to-SRE explicit support-memory prior appendix over support-only offline publication | `build_support_memory_prior_appendix()` |" in correspondence_text
     assert "| `W_t^{pub+} = Augment^{aux}(W_t^{pub}, M_t^{offline})` support-only offline publication contract and augmentation-only re-entry | `OfflineSupportPublication` + `augment_snapshot_with_offline_publication()` |" in correspondence_text

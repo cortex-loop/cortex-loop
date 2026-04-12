@@ -57,7 +57,7 @@ When user asks where Cortex is at:
 - Then name the next highest-leverage rows to raise the score without drifting from Cortex law.
 
 Fastest route to raise the score next:
-- `Offline consolidation and support geometry`: `+10` points if landed. Only the AUX support-geometry row remains in the denominator, and it must earn a lawful evaluation-first shape before any runtime promotion.
+- `Offline consolidation and support geometry`: `+10` points if landed. Only the AUX support-geometry row remains in the denominator, and it must earn broader lawful support-side value before any runtime promotion.
 
 ## Bio-To-Code Matrix
 
@@ -70,7 +70,7 @@ Fastest route to raise the score next:
 | Intervention pricing versus neutrality | Deciding when to intervene, stay neutral, or stop | `landed` | `10` | `cortex/sre`, `cortex/aux` | `tests/product`, `tests/experimental` | Keep reference-governed intervention pricing stable while default shipping behavior stays zero-memory and any nonzero Q_mem or chi_t lift comes only from explicit AUX-owned support priors. |
 | Blocker surfacing and goal-debt management | Noticing unresolved blockers and unfinished intentions | `landed` | `10` | `cortex/sre`, `cortex/hosts/openai`, `cortex/hosts/claude`, `cortex/hosts/gemini`, `cortex/hosts/reference` | `tests/product`, `tests/conformance` | Keep typed goal-debt and closure-pressure state stable across hosts while support-side augmentation remains explicit and non-sovereign. |
 | Multi-host executive continuity | One executive across different brains and contexts | `landed` | `15` | `cortex/hosts/openai`, `cortex/hosts/claude`, `cortex/hosts/gemini`, `cortex/hosts/reference` | `tests/product`, `tests/conformance` | Hold one Cortex law across OpenAI, Claude, Gemini, and reference without flattening host-native realization. |
-| Offline consolidation and support geometry | Sleep-like consolidation and support systems | `north_star` | `10` | `cortex/aux` | `tests/experimental`, `tests/archive` | Keep this out of the shipped lane while proving measurable support-side lift and contradiction-preserving offline publication with runtime-off-by-default activation. |
+| Offline consolidation and support geometry | Sleep-like consolidation and support systems | `north_star` | `10` | `cortex/aux` | `tests/experimental`, `tests/archive` | Keep this out of the shipped lane while testing whether time-separated offline publication earns bounded reference-only Q_mem lift through explicit AUX augmentation. |
 
 ## Math To Code Rules
 
@@ -158,19 +158,19 @@ flowchart TD
 
 ## Next Product Train
 
-- Train: `offline-support-geometry-shape`
+- Train: `aux-reference-q-mem-replay`
 - Surface: `experimental`
-- Executive benefit: Prove retrieval, branch/resume, contradiction-cluster, and uncertainty-support lift from removable AUX geometry so future Q_mem priors can be earned lawfully without turning AUX into hidden executive truth.
-- Why now: The evaluation-first AUX scaffolding and deterministic fixture lift now exist, so the remaining denominator work is to prove broader support-side lift and retention value for future Q_mem priors rather than keep reshaping empty carriers.
-- Primary metric: `measured support-side lift on retrieval, review, branch, or uncertainty priors with zero change to commitment truth and runtime-off-by-default activation`
-- Guardrail: `runtime-off-by-default, support-side only, and no change to commitment certification, blockedness, or the openai:operator_cli shipping default`
-- Kill rule: `prune any AUX seam that adds overhead without lift, smooths contradictions, or becomes operationally load-bearing for minimum lawful runtime behavior`
+- Executive benefit: Test whether corpus-proven offline publication can improve explicit reference-only Q_mem priors and intervention pricing without turning AUX into hidden executive truth.
+- Why now: The time-separated AUX corpus now proves support-side lift and contradiction-preserving offline publication, so the next blocker is whether explicit AUX-owned Q_mem priors improve reference allocation rather than just offline reports.
+- Primary metric: `reference-only improvement in allocation or selected-family quality from explicit AUX-owned Q_mem priors with zero change to commitment truth and no shipping-lane dependence`
+- Guardrail: `reference-only, runtime-off-by-default, support-side only, and no change to commitment certification, blockedness, or the openai:operator_cli shipping default`
+- Kill rule: `prune any Q_mem replay seam that depends on hidden caches, smooths contradictions, or creates shipping-lane dependence without clear reference-side lift`
 
 ## Where To Work Next
 
-- Start with evaluation-first AUX support geometry and offline-support lift so future Q_mem support priors can be earned lawfully, not with hidden caches or new donor-host policy work.
+- Start with bounded reference-only Q_mem replay over AUX-owned offline publication now that time-separated corpus lift exists, not with hidden caches or new donor-host policy work.
 - Keep AUX removable, runtime-off-by-default, and support-side only while shipping truth stays openai:operator_cli.
-- Use lab and evaluation surfaces to falsify AUX lift, and keep Claude and Gemini parity honest with repeatable full-pack CLI conformance instead of stale one-pack gap language.
+- Use lab and evaluation surfaces to falsify reference-only Q_mem lift and retention quality, not to smuggle AUX into shipping truth or minimum lawful runtime behavior.
 
 ## Canonical Proof
 
@@ -226,5 +226,5 @@ flowchart TD
 
 ## Operational Focus
 
-- Current tracked train: `offline-support-geometry-shape`
-- Current focus note: Keep AUX evaluation-first and removable while broadening support-side lift for future Q_mem, and keep full-pack tri-brain CLI proof repeatable without host-specific policy forks.
+- Current tracked train: `aux-reference-q-mem-replay`
+- Current focus note: Keep AUX removable and runtime-off-by-default while testing whether time-separated offline publication improves explicit reference-only Q_mem priors without changing commitment truth or shipping outputs.
