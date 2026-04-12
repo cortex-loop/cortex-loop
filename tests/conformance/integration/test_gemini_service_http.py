@@ -44,6 +44,7 @@ def test_gemini_service_health_and_documented_event_flow() -> None:
             "alpha_t",
             "activation_threshold",
             "selected_delta_over_neutral",
+            "chi_t",
             "scores",
         )
 
@@ -140,6 +141,7 @@ def test_gemini_service_undocumented_raw_event_warns_without_fabricating_parity(
             "alpha_t",
             "activation_threshold",
             "selected_delta_over_neutral",
+            "chi_t",
             "scores",
         )
 

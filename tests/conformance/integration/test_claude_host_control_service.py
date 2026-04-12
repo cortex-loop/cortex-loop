@@ -56,6 +56,7 @@ def test_claude_host_control_action_endpoint_returns_ordered_g1_records_and_muta
         "alpha_t",
         "activation_threshold",
         "selected_delta_over_neutral",
+        "chi_t",
         "scores",
     )
     assert export_status == 200

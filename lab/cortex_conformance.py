@@ -97,7 +97,8 @@ FEATURE_FLAGS_TASK_PATH = (
 _OPENAI_ACTION_TAG = "openai-response-stream"
 _OPENAI_MODEL = "gpt-5.4"
 _CLAUDE_MODEL = "claude-sonnet-4-6"
-_CLAUDE_READ_ONLY_TOOLS = "Read,Glob,Grep,LS"
+_CLAUDE_VERIFIED_WORK_TOOLS = "Read,Glob,Grep,LS,Edit,MultiEdit,Write"
+_GEMINI_MODEL = "gemini-2.5-pro"
 _SURFACE_ORDER: dict[Brain, tuple[Surface, ...]] = {
     "openai": ("operator_cli", "service_api"),
     "claude": ("operator_cli",),
@@ -1095,7 +1096,7 @@ def _run_claude_cli_conformance(
                 "--permission-mode",
                 "bypassPermissions",
                 "--tools",
-                _CLAUDE_READ_ONLY_TOOLS,
+                _CLAUDE_VERIFIED_WORK_TOOLS,
                 "--append-system-prompt",
                 instructions,
             ],
@@ -1167,7 +1168,7 @@ def _run_claude_cli_conformance(
                     "--permission-mode",
                     "bypassPermissions",
                     "--tools",
-                    _CLAUDE_READ_ONLY_TOOLS,
+                    _CLAUDE_VERIFIED_WORK_TOOLS,
                     "--append-system-prompt",
                     build_verified_work_instructions(repair_contract),
                 ],
@@ -1228,6 +1229,8 @@ def _run_gemini_cli_conformance(
         initial = run_command(
             [
                 "gemini",
+                "-m",
+                _GEMINI_MODEL,
                 "-p",
                 initial_prompt,
                 "-o",
@@ -1273,6 +1276,8 @@ def _run_gemini_cli_conformance(
             resumed = run_command(
                 [
                     "gemini",
+                    "-m",
+                    _GEMINI_MODEL,
                     "--resume",
                     "latest",
                     "-p",

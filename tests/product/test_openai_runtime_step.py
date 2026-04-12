@@ -107,7 +107,7 @@ def test_openai_runtime_step_keeps_hard_product_guards_ahead_of_reference_contro
         "switch_margin": 0.053,
         "stop_threshold": 0.585,
         "allow_extra_read_pass": False,
-        "verification_intensity": 0.3805,
+        "verification_intensity": 0.382,
     }
     assert result.closure_required is False
     assert result.closure_reason_tags == ()

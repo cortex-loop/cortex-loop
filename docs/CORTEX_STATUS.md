@@ -67,10 +67,10 @@ Fastest route to raise the score next:
 | Bounded correction and verified-work preservation | Error repair without losing the main task thread | `landed` | `15` | `cortex/runtime`, `cortex/sre`, `cortex/hosts/openai` | `tests/product` | Keep preservation-state repair stable while support-side experiments stay removable and off the shipping critical path. |
 | Uncertainty handling and brake | Hesitation and uncertainty-aware inhibition | `landed` | `13` | `cortex/sre` | `tests/product`, `tests/experimental` | Keep reference-derived brake and uncertainty control stable while AUX remains advisory and runtime-off-by-default. |
 | Branch continuity, suspend/resume, and truthful closure | Working memory across interruptions plus truthful closure | `landed` | `15` | `cortex/sre`, `cortex/hosts/openai` | `tests/product`, `tests/conformance` | Keep suspend/resume and truthful closure stable while any future support memory remains explicit, optional, and non-binding. |
-| Intervention pricing versus neutrality | Deciding when to intervene, stay neutral, or stop | `landed` | `10` | `cortex/sre` | `tests/product`, `tests/experimental` | Keep reference-governed intervention pricing stable while the current landing law keeps Q_mem explicit-but-zero and future nonzero support priors stay removable, claim-conservative, and AUX-owned. |
-| Blocker surfacing and goal-debt management | Noticing unresolved blockers and unfinished intentions | `landed` | `10` | `cortex/sre`, `cortex/hosts/openai` | `tests/product` | Keep closure-required and blocker-debt surfacing stable while support-side augmentation remains explicit and non-sovereign. |
+| Intervention pricing versus neutrality | Deciding when to intervene, stay neutral, or stop | `landed` | `10` | `cortex/sre`, `cortex/aux` | `tests/product`, `tests/experimental` | Keep reference-governed intervention pricing stable while default shipping behavior stays zero-memory and any nonzero Q_mem or chi_t lift comes only from explicit AUX-owned support priors. |
+| Blocker surfacing and goal-debt management | Noticing unresolved blockers and unfinished intentions | `landed` | `10` | `cortex/sre`, `cortex/hosts/openai`, `cortex/hosts/claude`, `cortex/hosts/gemini`, `cortex/hosts/reference` | `tests/product`, `tests/conformance` | Keep typed goal-debt and closure-pressure state stable across hosts while support-side augmentation remains explicit and non-sovereign. |
 | Multi-host executive continuity | One executive across different brains and contexts | `landed` | `15` | `cortex/hosts/openai`, `cortex/hosts/claude`, `cortex/hosts/gemini`, `cortex/hosts/reference` | `tests/product`, `tests/conformance` | Hold one Cortex law across OpenAI, Claude, Gemini, and reference without flattening host-native realization. |
-| Offline consolidation and support geometry | Sleep-like consolidation and support systems | `north_star` | `10` | _planned only_ | _planned only_ | Keep this out of the shipped lane until support geometry earns a lawful product shape. |
+| Offline consolidation and support geometry | Sleep-like consolidation and support systems | `north_star` | `10` | `cortex/aux` | `tests/experimental`, `tests/archive` | Keep this out of the shipped lane while proving measurable support-side lift and contradiction-preserving offline publication with runtime-off-by-default activation. |
 
 ## Math To Code Rules
 
@@ -138,7 +138,7 @@ flowchart TD
 | Host | Shipping | Conformance | Strongest Surface | Daily Iteration | Code Home |
 | --- | --- | --- | --- | --- | --- |
 | `openai` | `default` | `conformant` | `operator_cli` | `operator_cli` | `cortex/hosts/openai` |
-| `claude` | `non-default` | `partial` | `operator_cli` | `operator_cli` | `cortex/hosts/claude` |
+| `claude` | `non-default` | `conformant` | `operator_cli` | `operator_cli` | `cortex/hosts/claude` |
 | `gemini` | `non-default` | `partial` | `operator_cli` | `operator_cli` | `cortex/hosts/gemini` |
 | `reference` | `non-product` | `conformant` | `reference_cli` | `reference_cli` | `cortex/hosts/reference` |
 
@@ -160,17 +160,17 @@ flowchart TD
 
 - Train: `offline-support-geometry-shape`
 - Surface: `experimental`
-- Executive benefit: Shape removable AUX support geometry and consolidation priors so Cortex can later earn lawful support-side priors for Q_mem without turning AUX into hidden executive truth.
-- Why now: All non-north-star executive rows are now landed, and Q_mem stays an active SRE target law, so the remaining denominator work is to give AUX a lawful evaluation-first shape rather than widen shipping behavior.
+- Executive benefit: Prove retrieval, branch/resume, contradiction-cluster, and uncertainty-support lift from removable AUX geometry so future Q_mem priors can be earned lawfully without turning AUX into hidden executive truth.
+- Why now: The evaluation-first AUX scaffolding now exists, so the remaining denominator work is to prove support-side lift and retention value for future Q_mem priors rather than keep reshaping empty carriers.
 - Primary metric: `measured support-side lift on retrieval, review, branch, or uncertainty priors with zero change to commitment truth and runtime-off-by-default activation`
 - Guardrail: `runtime-off-by-default, support-side only, and no change to commitment certification, blockedness, or the openai:operator_cli shipping default`
 - Kill rule: `prune any AUX seam that adds overhead without lift, smooths contradictions, or becomes operationally load-bearing for minimum lawful runtime behavior`
 
 ## Where To Work Next
 
-- Start with evaluation-first AUX support geometry and offline-support shape so future Q_mem support priors can be earned lawfully, not with new OpenAI or donor-host policy work.
+- Start with evaluation-first AUX support geometry and offline-support lift so future Q_mem support priors can be earned lawfully, not with hidden caches or new donor-host policy work.
 - Keep AUX removable, runtime-off-by-default, and support-side only while shipping truth stays openai:operator_cli.
-- Use lab and evaluation surfaces to falsify support lift, but do not promote AUX into shipping truth unless it proves lift without touching commitment law.
+- Use lab and evaluation surfaces to falsify AUX lift, and use conformance proof to eliminate the remaining Gemini operator_cli bookmarks gap before claiming full non-reference host parity.
 
 ## Canonical Proof
 
@@ -227,4 +227,4 @@ flowchart TD
 ## Operational Focus
 
 - Current tracked train: `offline-support-geometry-shape`
-- Current focus note: Define a lawful evaluation-first AUX support-geometry seam that can later earn support-side priors for Q_mem without becoming runtime-required or changing commitment truth.
+- Current focus note: Keep AUX evaluation-first and removable while proving support-side lift for future Q_mem, and separately remove the remaining Gemini operator_cli bookmarks gap before claiming full non-reference host parity.

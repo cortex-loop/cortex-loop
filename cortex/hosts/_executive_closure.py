@@ -11,6 +11,7 @@ from cortex.sre.feedback import (
     ReferenceFeedbackWindowSummary,
     ReferenceRealizationFeedbackWindow,
 )
+from cortex.sre.goal_debt import build_closure_pressure_state
 from cortex.sre.modulators import ExecutiveModulatorMemory
 from cortex.sre.operator_routing import OperatorTaskMode
 from cortex.sre.state import ReferenceExecutiveState
@@ -32,6 +33,22 @@ def build_runtime_executive_signal_summary_inputs(
     recent_warning_bearing_success_present: bool,
     preservation_active: bool,
 ) -> ExecutiveSignalSummaryInputs:
+    closure_pressure_state = build_closure_pressure_state(
+        active_track_ref=active_track_ref,
+        pending_goal_refs=pending_goal_refs,
+        continuity_warnings=continuity_warnings,
+        continuity_reminders=continuity_reminders,
+        degradation_pressure_bonus=0,
+        sustained_spike_flags=(),
+        repeated_failure_pressure=(
+            1.0 if prior_failed_before_completion else 0.35 if recent_warning_bearing_success_present else 0.0
+        ),
+        verification_conflict_pressure=1.0 if approval_required or evidence_gap or consequential_write_pending else 0.0,
+        quota_pressure=quota_pressure_for_budget_band(
+            executive_state.control_allocation.budget_band
+        ),
+        brake_state=executive_state.brake.brake_state,
+    )
     return ExecutiveSignalSummaryInputs(
         task_mode=task_mode_for_runtime(
             active_track_ref=active_track_ref,
@@ -43,11 +60,14 @@ def build_runtime_executive_signal_summary_inputs(
         quota_pressure=quota_pressure_for_budget_band(
             executive_state.control_allocation.budget_band
         ),
-        continuity_demand=continuity_demand(
-            active_track_ref=active_track_ref,
-            pending_goal_refs=pending_goal_refs,
-            continuity_warnings=continuity_warnings,
-            continuity_reminders=continuity_reminders,
+        continuity_demand=max(
+            continuity_demand(
+                active_track_ref=active_track_ref,
+                pending_goal_refs=pending_goal_refs,
+                continuity_warnings=continuity_warnings,
+                continuity_reminders=continuity_reminders,
+            ),
+            closure_pressure_state.goal_debt.unfinished_goal_debt,
         ),
         previous_same_host_run_failed_before_completion=prior_failed_before_completion,
         recent_product_failure_class=recent_product_failure_class,
@@ -131,26 +151,25 @@ def recent_warning_bearing_success_present(
 
 def closure_reason_tags(
     *,
+    active_track_ref: str = "main",
     warnings: tuple[str, ...],
     continuity_reminders: tuple[str, ...],
     brake_state: BrakeState,
     feedback_window_summary: ReferenceFeedbackWindowSummary,
     pending_goal_refs: tuple[str, ...],
 ) -> tuple[str, ...]:
-    tags: set[str] = set()
-    if pending_goal_refs:
-        tags.add("pending_goal_debt")
-    if _has_continuity_rejection(warnings):
-        tags.add("continuity_rejection")
-    if continuity_reminders:
-        tags.add("continuity_reminder")
-    if brake_state is BrakeState.LATCHED:
-        tags.add("latched_brake")
-    if feedback_window_summary.degradation_pressure_bonus > 0:
-        tags.add("degradation_pressure")
-    if feedback_window_summary.sustained_spike_flags:
-        tags.add("contradiction_spike")
-    return tuple(sorted(tags))
+    return build_closure_pressure_state(
+        active_track_ref=active_track_ref,
+        pending_goal_refs=pending_goal_refs,
+        continuity_warnings=warnings,
+        continuity_reminders=continuity_reminders,
+        degradation_pressure_bonus=feedback_window_summary.degradation_pressure_bonus,
+        sustained_spike_flags=feedback_window_summary.sustained_spike_flags,
+        repeated_failure_pressure=0.35 if feedback_window_summary.degradation_pressure_bonus > 0 else 0.0,
+        verification_conflict_pressure=0.0,
+        quota_pressure=0.0,
+        brake_state=brake_state,
+    ).closure_reason_tags
 
 
 def canonicalize_executive_modulator_memory(

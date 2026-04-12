@@ -56,6 +56,31 @@ EXPECTATIONS = (
         ),
     ),
     AuxCorrespondenceExpectation(
+        row_label="AuxEvaluationResult",
+        module_path="cortex.aux.evaluation",
+        symbol_name="AuxEvaluationResult",
+        promised_surfaces=(
+            PromisedTestSurface(
+                test_file="tests/experimental/test_aux_evaluation.py",
+                test_names=("test_evaluate_aux_support_snapshot_emits_geometry_and_lift_reports_with_quality_improvement",),
+            ),
+        ),
+    ),
+    AuxCorrespondenceExpectation(
+        row_label="evaluate_aux_support_snapshot",
+        module_path="cortex.aux.evaluation",
+        symbol_name="evaluate_aux_support_snapshot",
+        promised_surfaces=(
+            PromisedTestSurface(
+                test_file="tests/experimental/test_aux_evaluation.py",
+                test_names=(
+                    "test_evaluate_aux_support_snapshot_emits_geometry_and_lift_reports_with_quality_improvement",
+                    "test_evaluate_aux_support_snapshot_requires_support_snapshot",
+                ),
+            ),
+        ),
+    ),
+    AuxCorrespondenceExpectation(
         row_label="AuxLiftReport",
         module_path="cortex.aux.lift",
         symbol_name="AuxLiftReport",
@@ -98,6 +123,17 @@ EXPECTATIONS = (
         ),
     ),
     AuxCorrespondenceExpectation(
+        row_label="build_offline_support_publication",
+        module_path="cortex.aux.publication",
+        symbol_name="build_offline_support_publication",
+        promised_surfaces=(
+            PromisedTestSurface(
+                test_file="tests/experimental/test_aux_publication.py",
+                test_names=("test_build_offline_support_publication_derives_only_support_side_refs_from_snapshot",),
+            ),
+        ),
+    ),
+    AuxCorrespondenceExpectation(
         row_label="augment_snapshot_with_offline_publication",
         module_path="cortex.aux.publication",
         symbol_name="augment_snapshot_with_offline_publication",
@@ -109,6 +145,20 @@ EXPECTATIONS = (
             PromisedTestSurface(
                 test_file="tests/experimental/integration/test_aux_claim_conservative.py",
                 test_names=("test_offline_publication_augmentation_is_claim_conservative",),
+            ),
+        ),
+    ),
+    AuxCorrespondenceExpectation(
+        row_label="build_support_memory_prior_appendix",
+        module_path="cortex.aux.support_priors",
+        symbol_name="build_support_memory_prior_appendix",
+        promised_surfaces=(
+            PromisedTestSurface(
+                test_file="tests/experimental/test_aux_support_priors.py",
+                test_names=(
+                    "test_build_support_memory_prior_appendix_derives_nonzero_family_priors_from_offline_publication",
+                    "test_build_support_memory_prior_appendix_stays_inactive_without_offline_publication_tag",
+                ),
             ),
         ),
     ),
@@ -151,4 +201,7 @@ def test_aux_correspondence_text_keeps_geometry_lift_and_publication_rows_explic
 
     assert "| `GeomEval` evaluation-first geometry/support report over lawful public support state | `AuxGeometryReport` + `AuxMatchScore` + `AuxContradictionCluster` |" in correspondence_text
     assert "| retention-law lift comparison over fixed support-quality and burden metrics | `AuxLiftReport` + `AuxLiftMetric` + `build_aux_lift_report()` |" in correspondence_text
+    assert "| deterministic evaluation-first AUX runner over lawful public support state | `AuxEvaluationResult` + `evaluate_aux_support_snapshot()` |" in correspondence_text
+    assert "| deterministic support-only offline publication builder over lawful public support state | `build_offline_support_publication()` |" in correspondence_text
+    assert "| AUX-to-SRE explicit support-memory prior appendix over support-only offline publication | `build_support_memory_prior_appendix()` |" in correspondence_text
     assert "| `W_t^{pub+} = Augment^{aux}(W_t^{pub}, M_t^{offline})` support-only offline publication contract and augmentation-only re-entry | `OfflineSupportPublication` + `augment_snapshot_with_offline_publication()` |" in correspondence_text

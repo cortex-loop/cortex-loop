@@ -175,6 +175,7 @@ def test_reference_runtime_cli_reads_event_file_and_emits_one_record_per_event()
         "alpha_t",
         "activation_threshold",
         "selected_delta_over_neutral",
+        "chi_t",
         "scores",
         "mediation",
     )
@@ -555,6 +556,7 @@ def _selection(selected_family: SoftControlFamily) -> object:
         def __init__(self, family: SoftControlFamily) -> None:
             self.selected_family_before_finalization = family
             self.selected_family = family
+            self.chi_t = 0.0
             self.scorecard = build_reference_allocation_scorecard(
                 _latched_state_with_evidence()
             )

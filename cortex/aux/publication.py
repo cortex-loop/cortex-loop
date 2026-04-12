@@ -40,6 +40,18 @@ def _validate_metadata(
         raise TypeError(f"{field_name} must contain only MetadataField instances.")
 
 
+def _dedupe_refs(references: tuple[SupportReference, ...]) -> tuple[SupportReference, ...]:
+    ordered: list[SupportReference] = []
+    seen: set[tuple[str, str]] = set()
+    for reference in references:
+        key = (reference.reference_kind, reference.reference_id)
+        if key in seen:
+            continue
+        seen.add(key)
+        ordered.append(reference)
+    return tuple(ordered)
+
+
 @dataclass(frozen=True, slots=True)
 class OfflineSupportPublication:
     retrieval_prior_refs: tuple[SupportReference, ...] = field(default_factory=tuple)
@@ -86,13 +98,77 @@ class OfflineSupportPublication:
         )
 
     def support_refs(self) -> tuple[SupportReference, ...]:
-        return (
+        return _dedupe_refs(
             self.retrieval_prior_refs
             + self.branch_prior_refs
             + self.contradiction_summary_refs
             + self.uncertainty_calibration_refs
             + self.published_memory_summary_refs
         )
+
+
+def build_offline_support_publication(
+    snapshot: SupportSnapshot,
+    *,
+    publication_tags: frozenset[str] = frozenset(),
+    notes: tuple[str, ...] = (),
+    metadata: tuple[MetadataField, ...] = (),
+) -> OfflineSupportPublication:
+    if not isinstance(snapshot, SupportSnapshot):
+        actual_type = type(snapshot).__name__
+        raise TypeError(
+            "build_offline_support_publication() requires SupportSnapshot, "
+            f"got {actual_type}.",
+        )
+    retrieval_prior_refs = _dedupe_refs(
+        snapshot.exec_memory_pub.published_memory_refs + snapshot.exec_memory_pub.artifact_refs
+    )
+    branch_prior_refs = _dedupe_refs(
+        tuple(
+            SupportReference("branch", branch_ref, tags=frozenset({"branch-prior"}))
+            for branch_ref in snapshot.session.branch_registry
+            if branch_ref != "main"
+        )
+    )
+    contradiction_summary_refs = _dedupe_refs(
+        tuple(
+            SupportReference(
+                "contradiction",
+                record.reason_code,
+                tags=frozenset(record.capability_tags | {record.reason_code}),
+            )
+            for record in snapshot.trace.degradation_records
+        )
+    )
+    uncertainty_calibration_refs = _dedupe_refs(
+        tuple(
+            SupportReference("uncertainty", brake_entry, tags=frozenset({"brake-history"}))
+            for brake_entry in snapshot.session.brake_history
+        )
+        + tuple(
+            SupportReference(
+                "wake",
+                receipt.reason_tag,
+                tags=frozenset({"wake-receipt"}),
+            )
+            for receipt in snapshot.trace.wake_receipts
+        )
+    )
+    merged_tags = frozenset({"aux/offline-publication", "claim-conservative"}) | publication_tags
+    merged_notes = (
+        "support-only publication derived from lawful public support snapshot",
+    ) + notes
+    merged_metadata = (MetadataField("source", "aux/offline-publication"),) + metadata
+    return OfflineSupportPublication(
+        retrieval_prior_refs=retrieval_prior_refs,
+        branch_prior_refs=branch_prior_refs,
+        contradiction_summary_refs=contradiction_summary_refs,
+        uncertainty_calibration_refs=uncertainty_calibration_refs,
+        published_memory_summary_refs=snapshot.exec_memory_pub.published_memory_refs,
+        publication_tags=merged_tags,
+        notes=merged_notes,
+        metadata=merged_metadata,
+    )
 
 
 def augment_snapshot_with_offline_publication(
@@ -125,5 +201,6 @@ def augment_snapshot_with_offline_publication(
 
 __all__ = [
     "OfflineSupportPublication",
+    "build_offline_support_publication",
     "augment_snapshot_with_offline_publication",
 ]

@@ -5,6 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from math import isfinite
 from numbers import Real
+import re
 
 from cortex.core.envelopes import MetadataField
 from cortex.core.support import SupportReference, SupportSnapshot
@@ -43,6 +44,188 @@ def _validate_unit_score(value: float, *, field_name: str) -> None:
         raise ValueError(f"{field_name} must be finite.")
     if not 0.0 <= float(value) <= 1.0:
         raise ValueError(f"{field_name} must be between 0.0 and 1.0.")
+
+
+_TOKEN_PATTERN = re.compile(r"[a-z0-9]+")
+
+
+def _tokenize(*values: str) -> frozenset[str]:
+    tokens: set[str] = set()
+    for value in values:
+        tokens.update(_TOKEN_PATTERN.findall(value.lower()))
+    return frozenset(tokens)
+
+
+def _reference_tokens(reference: SupportReference) -> frozenset[str]:
+    tokens = set(_tokenize(reference.reference_kind, reference.reference_id))
+    for tag in reference.tags:
+        tokens.update(_tokenize(tag))
+    for field in reference.metadata:
+        tokens.update(_tokenize(field.key, str(field.value)))
+    return frozenset(tokens)
+
+
+def _dedupe_support_refs(references: tuple[SupportReference, ...]) -> tuple[SupportReference, ...]:
+    ordered: list[SupportReference] = []
+    seen: set[tuple[str, str]] = set()
+    for reference in references:
+        key = (reference.reference_kind, reference.reference_id)
+        if key in seen:
+            continue
+        seen.add(key)
+        ordered.append(reference)
+    return tuple(ordered)
+
+
+def _source_refs_for_retrieval(snapshot: SupportSnapshot) -> tuple[SupportReference, ...]:
+    refs: list[SupportReference] = [
+        SupportReference("candidate", candidate_ref, tags=frozenset({"trace-candidate"}))
+        for candidate_ref in snapshot.trace.candidate_refs
+    ]
+    refs.extend(
+        SupportReference("goal", goal_ref, tags=frozenset({"pending-goal"}))
+        for goal_ref in snapshot.session.pending_goal_refs
+    )
+    refs.extend(
+        SupportReference("wake", receipt.reason_tag, tags=frozenset({"wake-receipt"}))
+        for receipt in snapshot.trace.wake_receipts
+    )
+    refs.extend(
+        SupportReference("reminder", reminder, tags=frozenset({"continuity-reminder"}))
+        for reminder in snapshot.session.reminders
+    )
+    return _dedupe_support_refs(tuple(refs))
+
+
+def _retrieval_candidate_pool(snapshot: SupportSnapshot) -> tuple[SupportReference, ...]:
+    return _dedupe_support_refs(
+        snapshot.exec_memory_pub.published_memory_refs + snapshot.exec_memory_pub.artifact_refs
+    )
+
+
+def _match_score(
+    source_ref: SupportReference,
+    candidate_ref: SupportReference,
+    *,
+    base_score: float,
+) -> float:
+    source_tokens = _reference_tokens(source_ref)
+    candidate_tokens = _reference_tokens(candidate_ref)
+    overlap = source_tokens & candidate_tokens
+    token_union = source_tokens | candidate_tokens
+    overlap_score = (len(overlap) / len(token_union)) if token_union else 0.0
+    kind_bonus = 0.15 if source_ref.reference_kind == candidate_ref.reference_kind else 0.0
+    artifact_bonus = (
+        0.10
+        if candidate_ref.reference_kind in {"artifact", "memory", "result-artifact"}
+        else 0.0
+    )
+    return min(1.0, base_score + (0.55 * overlap_score) + kind_bonus + artifact_bonus)
+
+
+def _derive_retrieval_shadow_candidates(snapshot: SupportSnapshot) -> tuple[AuxMatchScore, ...]:
+    sources = _source_refs_for_retrieval(snapshot)
+    candidate_pool = _retrieval_candidate_pool(snapshot)
+    matches: list[AuxMatchScore] = []
+    for source_ref in sources:
+        for candidate_ref in candidate_pool:
+            score = _match_score(source_ref, candidate_ref, base_score=0.25)
+            if score < 0.25:
+                continue
+            tags = {"retrieval-shadow"}
+            if source_ref.reference_kind == "goal":
+                tags.add("goal-conditioned")
+            if source_ref.reference_kind == "reminder":
+                tags.add("continuity-conditioned")
+            matches.append(
+                AuxMatchScore(
+                    source_ref=source_ref,
+                    candidate_ref=candidate_ref,
+                    score=score,
+                    tags=frozenset(tags),
+                )
+            )
+    matches.sort(key=lambda match: (-match.score, match.source_ref.reference_id, match.candidate_ref.reference_id))
+    return tuple(matches[:6])
+
+
+def _derive_branch_resume_matches(snapshot: SupportSnapshot) -> tuple[AuxMatchScore, ...]:
+    branches = tuple(
+        SupportReference("branch", branch_ref, tags=frozenset({"resume-track"}))
+        for branch_ref in snapshot.session.branch_registry
+        if branch_ref != "main"
+    )
+    if not branches:
+        return ()
+    goals = tuple(
+        SupportReference("goal", goal_ref, tags=frozenset({"pending-goal"}))
+        for goal_ref in snapshot.session.pending_goal_refs
+    )
+    candidate_pool = goals + _retrieval_candidate_pool(snapshot)
+    matches: list[AuxMatchScore] = []
+    for branch_ref in branches:
+        for candidate_ref in candidate_pool:
+            score = _match_score(branch_ref, candidate_ref, base_score=0.20)
+            if snapshot.session.reminders:
+                score = min(1.0, score + 0.10)
+            if candidate_ref.reference_kind == "goal":
+                score = min(1.0, score + 0.15)
+            if score < 0.25:
+                continue
+            matches.append(
+                AuxMatchScore(
+                    source_ref=branch_ref,
+                    candidate_ref=candidate_ref,
+                    score=score,
+                    tags=frozenset({"resume-match"}),
+                )
+            )
+    matches.sort(key=lambda match: (-match.score, match.source_ref.reference_id, match.candidate_ref.reference_id))
+    return tuple(matches[:6])
+
+
+def _derive_contradiction_clusters(snapshot: SupportSnapshot) -> tuple[AuxContradictionCluster, ...]:
+    clusters: list[AuxContradictionCluster] = []
+    support_refs = _retrieval_candidate_pool(snapshot)
+    for record in snapshot.trace.degradation_records:
+        member_refs = support_refs or (
+            SupportReference("degradation", record.reason_code, tags=frozenset(record.capability_tags)),
+        )
+        contradiction_tags = {record.reason_code}
+        notes = ["preserve contradiction instead of smoothing"]
+        for contradiction in record.contradiction_records:
+            contradiction_tags.add(contradiction.source_tag)
+            contradiction_tags.update(contradiction.evidence_tags)
+            notes.append(contradiction.summary)
+        clusters.append(
+            AuxContradictionCluster(
+                cluster_tag=record.reason_code,
+                member_refs=member_refs,
+                contradiction_tags=frozenset(sorted(contradiction_tags)),
+                notes=tuple(notes),
+            )
+        )
+    return tuple(clusters)
+
+
+def _derive_default_burden(
+    snapshot: SupportSnapshot,
+    *,
+    retrieval_shadow_candidates: tuple["AuxMatchScore", ...],
+    branch_resume_matches: tuple["AuxMatchScore", ...],
+    contradiction_clusters: tuple["AuxContradictionCluster", ...],
+) -> AuxBurdenReport:
+    return AuxBurdenReport(
+        compute_overhead=min(1.0, 0.03 * len(snapshot.trace.recent_events)),
+        memory_overhead=min(1.0, 0.05 * len(snapshot.exec_memory_pub.published_memory_refs)),
+        latency_overhead=min(1.0, 0.02 * len(snapshot.trace.wake_receipts)),
+        environment_query_cost=min(1.0, 0.03 * len(snapshot.trace.degradation_records)),
+        retrieval_cost=min(1.0, 0.08 * len(retrieval_shadow_candidates)),
+        intervention_burden=min(
+            1.0,
+            (0.05 * len(branch_resume_matches)) + (0.04 * len(contradiction_clusters)),
+        ),
+    )
 
 
 @dataclass(frozen=True, slots=True)
@@ -177,6 +360,40 @@ def _merge_unique_strings(*groups: tuple[str, ...]) -> tuple[str, ...]:
     return tuple(ordered)
 
 
+def _merge_unique_matches(
+    *groups: tuple[AuxMatchScore, ...],
+) -> tuple[AuxMatchScore, ...]:
+    ordered: list[AuxMatchScore] = []
+    seen: set[tuple[str, str, str, str]] = set()
+    for group in groups:
+        for match in group:
+            key = (
+                match.source_ref.reference_kind,
+                match.source_ref.reference_id,
+                match.candidate_ref.reference_kind,
+                match.candidate_ref.reference_id,
+            )
+            if key in seen:
+                continue
+            seen.add(key)
+            ordered.append(match)
+    return tuple(ordered)
+
+
+def _merge_unique_clusters(
+    *groups: tuple[AuxContradictionCluster, ...],
+) -> tuple[AuxContradictionCluster, ...]:
+    ordered: list[AuxContradictionCluster] = []
+    seen: set[str] = set()
+    for group in groups:
+        for cluster in group:
+            if cluster.cluster_tag in seen:
+                continue
+            seen.add(cluster.cluster_tag)
+            ordered.append(cluster)
+    return tuple(ordered)
+
+
 def build_aux_geometry_report(
     snapshot: SupportSnapshot,
     *,
@@ -194,16 +411,41 @@ def build_aux_geometry_report(
             f"got {actual_type}.",
         )
 
+    derived_retrieval_candidates = _derive_retrieval_shadow_candidates(snapshot)
+    derived_branch_matches = _derive_branch_resume_matches(snapshot)
+    derived_contradiction_clusters = _derive_contradiction_clusters(snapshot)
+    merged_retrieval_candidates = _merge_unique_matches(
+        retrieval_shadow_candidates,
+        derived_retrieval_candidates,
+    )
+    merged_branch_matches = _merge_unique_matches(
+        branch_resume_matches,
+        derived_branch_matches,
+    )
+    merged_contradiction_clusters = _merge_unique_clusters(
+        contradiction_clusters,
+        derived_contradiction_clusters,
+    )
+    resolved_burden = (
+        _derive_default_burden(
+            snapshot,
+            retrieval_shadow_candidates=merged_retrieval_candidates,
+            branch_resume_matches=merged_branch_matches,
+            contradiction_clusters=merged_contradiction_clusters,
+        )
+        if burden is None
+        else burden
+    )
     return AuxGeometryReport(
         source_snapshot=snapshot,
-        retrieval_shadow_candidates=retrieval_shadow_candidates,
-        branch_resume_matches=branch_resume_matches,
+        retrieval_shadow_candidates=merged_retrieval_candidates,
+        branch_resume_matches=merged_branch_matches,
         uncertainty_brake_hints=_merge_unique_strings(
             _derive_default_hints(snapshot),
             uncertainty_brake_hints,
         ),
-        contradiction_clusters=contradiction_clusters,
-        burden=AuxBurdenReport() if burden is None else burden,
+        contradiction_clusters=merged_contradiction_clusters,
+        burden=resolved_burden,
         metadata=metadata,
     )
 
