@@ -394,6 +394,14 @@ where support-memory entries `i` provide prior realized returns for family `a`.
 
 If no usable support memory exists, set `Q_t^{mem}(a)=0` and surface that fact in diagnostics.
 
+Current landing law: on the active shipping and conformance lanes, `Q_t^{mem}(a)` remains
+explicitly zero-valued until lawful AUX support-memory publication exists.
+The current runtime may surface `memory_score = 0.0` as a consumer/diagnostic carrier,
+but nonzero memory-conditioned influence is not yet part of the landed shipping lane.
+Any future nonzero `Q_t^{mem}(a)` must enter through explicit AUX support-side
+augmentation/publication rather than hidden host memory, prompt heuristics, runtime caches,
+or softened closure logic.
+
 ### 6.5 Combined score
 
 \[
@@ -403,6 +411,10 @@ Q_t^{alloc}(a) = \alpha_t Q_t^{online}(a) + (1-\alpha_t)Q_t^{mem}(a)
 where `\alpha_t \in [0,1]` controls current-event vs memory reliance.
 `\alpha_t` may depend on observation freshness, environment coverage, host degradation, and support-memory quality.
 It may not depend on hidden same-event certifier internals.
+
+Current landing law: until AUX earns a lawful support-side publication path,
+shipping and conformance lanes may keep `Q_t^{mem}(a)=0` and therefore realize
+`Q_t^{alloc}(a)` through the currently landed online plus goal-branch path.
 
 ### 6.6 Neutral-dominance law
 

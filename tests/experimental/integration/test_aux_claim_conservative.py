@@ -6,6 +6,10 @@ import inspect
 
 from cortex.aux.augmentation import AugmentedSupportSnapshot, AuxiliarySupportAppendix, augment_snapshot
 from cortex.aux.cost import AuxBurdenReport
+from cortex.aux.publication import (
+    OfflineSupportPublication,
+    augment_snapshot_with_offline_publication,
+)
 from cortex.core.commitments import (
     BoundaryAssessment,
     CommitmentStatus,
@@ -106,6 +110,39 @@ def test_aux_objects_remain_support_side_and_do_not_enter_commitment_apis() -> N
     assert result.verdict is None
     assert isinstance(augmented_snapshot, AugmentedSupportSnapshot)
     assert isinstance(burden, AuxBurdenReport)
+
+
+def test_offline_publication_augmentation_is_claim_conservative() -> None:
+    baseline = evaluate_reference_full_commitment_case(
+        commitment_id="commit-aux-publication",
+        provenance_reference_id="artifact-publication",
+    )
+    publication = OfflineSupportPublication(
+        retrieval_prior_refs=(SupportReference("retrieval-prior", "retrieval-1"),),
+        branch_prior_refs=(SupportReference("branch-prior", "branch-1"),),
+        contradiction_summary_refs=(
+            SupportReference("contradiction-summary", "contradiction-1"),
+        ),
+        uncertainty_calibration_refs=(
+            SupportReference("uncertainty-calibration", "uncertainty-1"),
+        ),
+        published_memory_summary_refs=(SupportReference("memory-summary", "memory-1"),),
+        publication_tags=frozenset({"aux/offline-summary"}),
+        notes=("offline publication remains support-side only",),
+    )
+    augmented_snapshot = augment_snapshot_with_offline_publication(
+        _build_aux_scaffolds(baseline)[0].core_snapshot,
+        publication,
+    )
+    with_publication_present = evaluate_reference_full_commitment_case(
+        commitment_id="commit-aux-publication",
+        provenance_reference_id="artifact-publication",
+    )
+
+    assert_reference_verdict_status(baseline, CommitmentStatus.CERTIFIED)
+    assert_same_verdict(baseline, with_publication_present)
+    assert isinstance(augmented_snapshot, AugmentedSupportSnapshot)
+    assert "aux/offline-publication" in augmented_snapshot.auxiliary_support.derived_tags
 
 
 def _build_aux_scaffolds(

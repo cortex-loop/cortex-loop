@@ -593,3 +593,17 @@ def test_sre_correspondence_registry_resolves_code_home_and_test_surface(
                 f"{expectation.row_label}: missing promised test function {test_name} "
                 f"in {promised_surface.test_file}"
             )
+
+
+def test_q_mem_correspondence_text_keeps_active_target_law_and_zero_landing_law_explicit() -> None:
+    correspondence_text = (
+        REPO_ROOT / "docs" / "archive" / "internal" / "CORTEX_V2_MATH_TO_CODE_CORRESPONDENCE.md"
+    ).read_text(encoding="utf-8")
+
+    assert (
+        "| `Q_t^{mem}(a)` active target memory-conditioned contribution; current landing law keeps it explicit-but-zero until lawful AUX support-memory publication exists "
+        "| `AllocationScore.memory_score` current zero-valued consumer + future nonzero AUX owner `OfflineSupportPublication` |"
+        in correspondence_text
+    )
+    assert "Current-scope computed executive allocation must keep `Q_t^{mem}=0.0` on shipping and conformance lanes;" in correspondence_text
+    assert "any future nonzero memory-conditioned contribution must come only through explicit AUX support-memory publication plus augmentation" in correspondence_text

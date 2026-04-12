@@ -346,6 +346,22 @@ W_t^{pub+} = \operatorname{Augment}^{aux}(W_t^{pub}, M_t^{offline})
 
 They may not redefine core observation or commitment semantics.
 
+### 5.6 SRE handoff law
+
+Any future nonzero support-conditioned priors intended to influence `Q_t^{mem}(a)`
+must be published only as support-side public objects and must re-enter runtime support
+only through explicit AUX augmentation.
+
+They may not come from:
+- hidden host memory,
+- prompt heuristics,
+- runtime caches,
+- softened closure logic,
+- or any object that changes commitment truth.
+
+Until that publication path exists and earns retention, shipping and conformance lanes
+may keep `Q_t^{mem}(a)=0` while AUX remains removable and runtime-off-by-default.
+
 ---
 
 ## 6. Interaction with core and SRE
