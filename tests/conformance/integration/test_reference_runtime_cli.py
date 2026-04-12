@@ -9,6 +9,7 @@ from pathlib import Path
 
 import pytest
 
+from cortex.aux.reference_replay import evaluate_aux_reference_q_mem_replay
 import cortex.hosts.reference.runtime as reference_runtime
 import cortex.hosts.reference.cli as reference_cli
 from cortex.sre.brake import BrakeState
@@ -28,6 +29,8 @@ from cortex.sre.state import (
     ReferenceUncertaintyMonitoringView,
 )
 from cortex.sre.uncertainty import UncertaintyEstimate
+
+from tests.experimental._aux_test_support import make_aux_reference_replay_corpus
 
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
@@ -291,6 +294,45 @@ def test_reference_runtime_cli_in_process_surfaces_selected_vs_realized_divergen
     assert records[0]["feedback_window_summary"]["window_size"] == 0
 
 
+def test_reference_runtime_cli_record_shape_stays_locked_under_explicit_offline_publication(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    scenario = _reference_replay_scenario("contradiction-review")
+    publication = _reference_replay_publication("contradiction-review")
+    monkeypatch.setattr(
+        reference_runtime,
+        "build_reference_executive_state",
+        lambda *args, **kwargs: scenario.executive_state,
+    )
+
+    step_result = reference_runtime.run_reference_runtime_step(
+        "ApprovalResult",
+        {
+            "session_id": "session-cli-reference-replay",
+            "commitment_id": "commit-cli-reference-replay",
+            "externally_consequential": True,
+            "result_artifact_ref": "artifact-cli-reference-replay",
+        },
+        offline_publication=publication,
+    )
+    record = reference_cli.build_reference_cli_record(step_result)
+
+    assert tuple(record) == EXPECTED_RECORD_KEYS
+    assert set(record) == EXPECTED_RECORD_KEY_SET
+    assert tuple(record["control_ledger"]["allocation_diagnostics"]) == (
+        "alpha_t",
+        "activation_threshold",
+        "selected_delta_over_neutral",
+        "chi_t",
+        "scores",
+        "mediation",
+    )
+    assert any(
+        score["memory_score"] > 0.0
+        for score in record["control_ledger"]["allocation_diagnostics"]["scores"]
+    )
+
+
 def test_reference_runtime_cli_emits_feedback_window_summary_for_real_session_mismatch_sequences() -> None:
     completed = _run_reference_cli("--event-file", str(FEEDBACK_WINDOW_FIXTURE_PATH))
 
@@ -549,6 +591,18 @@ def _parse_jsonl_output(stdout: str) -> list[dict[str, object]]:
 
 def _parse_session_artifact(path: Path) -> dict[str, object]:
     return json.loads(path.read_text(encoding="utf-8"))
+
+
+def _reference_replay_scenario(scenario_id: str):
+    for scenario in make_aux_reference_replay_corpus():
+        if scenario.scenario_id == scenario_id:
+            return scenario
+    raise KeyError(f"Unknown replay scenario {scenario_id!r}.")
+
+
+def _reference_replay_publication(scenario_id: str):
+    scenario = _reference_replay_scenario(scenario_id)
+    return evaluate_aux_reference_q_mem_replay((scenario,)).case_results[0].publication
 
 
 def _selection(selected_family: SoftControlFamily) -> object:

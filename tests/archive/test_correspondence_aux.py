@@ -221,6 +221,59 @@ EXPECTATIONS = (
             ),
         ),
     ),
+    AuxCorrespondenceExpectation(
+        row_label="AuxReferenceReplayScenario",
+        module_path="cortex.aux.reference_replay",
+        symbol_name="AuxReferenceReplayScenario",
+        promised_surfaces=(
+            PromisedTestSurface(
+                test_file="tests/experimental/test_aux_reference_replay.py",
+                test_names=(
+                    "test_aux_reference_replay_scenarios_require_time_separated_support_snapshots_and_reference_state",
+                ),
+            ),
+        ),
+    ),
+    AuxCorrespondenceExpectation(
+        row_label="AuxReferenceReplayCaseResult",
+        module_path="cortex.aux.reference_replay",
+        symbol_name="AuxReferenceReplayCaseResult",
+        promised_surfaces=(
+            PromisedTestSurface(
+                test_file="tests/experimental/test_aux_reference_replay.py",
+                test_names=(
+                    "test_aux_reference_replay_case_results_carry_publication_support_priors_and_machine_readable_failures",
+                ),
+            ),
+        ),
+    ),
+    AuxCorrespondenceExpectation(
+        row_label="AuxReferenceReplayEvaluationResult",
+        module_path="cortex.aux.reference_replay",
+        symbol_name="AuxReferenceReplayEvaluationResult",
+        promised_surfaces=(
+            PromisedTestSurface(
+                test_file="tests/experimental/test_aux_reference_replay.py",
+                test_names=(
+                    "test_evaluate_aux_reference_q_mem_replay_reports_reference_only_acceptance_and_failure_labels",
+                ),
+            ),
+        ),
+    ),
+    AuxCorrespondenceExpectation(
+        row_label="evaluate_aux_reference_q_mem_replay",
+        module_path="cortex.aux.reference_replay",
+        symbol_name="evaluate_aux_reference_q_mem_replay",
+        promised_surfaces=(
+            PromisedTestSurface(
+                test_file="tests/experimental/test_aux_reference_replay.py",
+                test_names=(
+                    "test_evaluate_aux_reference_q_mem_replay_reports_reference_only_acceptance_and_failure_labels",
+                    "test_evaluate_aux_reference_q_mem_replay_validates_input_shape",
+                ),
+            ),
+        ),
+    ),
 )
 
 
@@ -269,3 +322,7 @@ def test_aux_correspondence_text_keeps_geometry_lift_and_publication_rows_explic
     assert "| deterministic support-only offline publication builder over lawful public support state | `build_offline_support_publication()` |" in correspondence_text
     assert "| AUX-to-SRE explicit support-memory prior appendix over support-only offline publication | `build_support_memory_prior_appendix()` |" in correspondence_text
     assert "| `W_t^{pub+} = Augment^{aux}(W_t^{pub}, M_t^{offline})` support-only offline publication contract and augmentation-only re-entry | `OfflineSupportPublication` + `augment_snapshot_with_offline_publication()` |" in correspondence_text
+    assert "| reference-only replay scenario over explicit AUX-owned offline publication, later target snapshot, and fixed preferred-family acceptance | `AuxReferenceReplayScenario` |" in correspondence_text
+    assert "| reference-only replay case result over merged publication, explicit support priors, baseline vs replay scorecards, and fixed failure labels | `AuxReferenceReplayCaseResult` |" in correspondence_text
+    assert "| reference-only replay aggregate result over preferred-family lift, selected-family flips, and truthful cut reasons | `AuxReferenceReplayEvaluationResult` |" in correspondence_text
+    assert "| reference-only replay runner over `OfflineSupportPublication -> augment_snapshot_with_offline_publication() -> build_support_memory_prior_appendix() -> select_reference_soft_control(memory_priors=...)` | `evaluate_aux_reference_q_mem_replay()` |" in correspondence_text

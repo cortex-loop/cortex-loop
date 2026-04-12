@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from cortex.aux.evaluation import AuxTemporalScenario
+from cortex.aux.reference_replay import AuxReferenceReplayScenario
 from cortex.core.envelopes import EventPayloadHandle, LifecycleEventEnvelope, MetadataField
 from cortex.core.errors import ContradictionRecord, DegradationRecord
 from cortex.core.support import (
@@ -15,6 +16,17 @@ from cortex.core.support import (
     SupportTraceState,
     WakeReceipt,
 )
+from cortex.sre.brake import BrakeState
+from cortex.sre.families import SoftControlFamily
+from cortex.sre.state import (
+    ReferenceBrakeView,
+    ReferenceControlAllocationView,
+    ReferenceExecutiveState,
+    ReferenceGoalContinuityView,
+    ReferenceModeAndGatingView,
+    ReferenceUncertaintyMonitoringView,
+)
+from cortex.sre.uncertainty import UncertaintyEstimate
 
 
 def make_support_snapshot() -> SupportSnapshot:
@@ -323,5 +335,220 @@ def make_aux_prune_candidate_corpus() -> tuple[AuxTemporalScenario, ...]:
                 "target-prune-burden",
                 candidate_refs=("small-fix-candidate",),
             ),
+        ),
+    )
+
+
+def make_reference_executive_state(
+    *,
+    mode_tag: str,
+    family_mask: frozenset[SoftControlFamily],
+    budget_band: str,
+    top_family_set: frozenset[SoftControlFamily],
+    brake_state: BrakeState,
+    pending_goal_refs: tuple[str, ...] = (),
+    active_track_ref: str = "main",
+    resume_anchor_available: bool = False,
+    host_friction_tags: frozenset[str] = frozenset(),
+    feedback_pressure_tags: frozenset[str] = frozenset(),
+    contradiction_spike_flags: frozenset[str] = frozenset(),
+    uncertainty_levels: tuple[tuple[str, float], ...] = (),
+) -> ReferenceExecutiveState:
+    return ReferenceExecutiveState(
+        goal_continuity=ReferenceGoalContinuityView(
+            main_goal_ref=pending_goal_refs[0] if pending_goal_refs else None,
+            active_track_ref=active_track_ref,
+            pending_goal_refs=pending_goal_refs,
+            resume_anchor_available=resume_anchor_available,
+        ),
+        uncertainty_monitoring=ReferenceUncertaintyMonitoringView(
+            classwise_uncertainty=tuple(
+                UncertaintyEstimate(class_tag=class_tag, level=level)
+                for class_tag, level in uncertainty_levels
+            ),
+            contradiction_spike_flags=contradiction_spike_flags,
+        ),
+        mode_and_gating=ReferenceModeAndGatingView(
+            mode_tag=mode_tag,
+            family_mask=family_mask,
+        ),
+        control_allocation=ReferenceControlAllocationView(
+            budget_band=budget_band,
+            top_family_set=top_family_set,
+            host_friction_tags=host_friction_tags,
+            feedback_pressure_tags=feedback_pressure_tags,
+        ),
+        brake=ReferenceBrakeView(brake_state=brake_state),
+    )
+
+
+def make_aux_reference_replay_corpus() -> tuple[AuxReferenceReplayScenario, ...]:
+    temporal_cases = {
+        scenario.scenario_id: scenario
+        for scenario in make_aux_temporal_corpus()
+    }
+    return (
+        AuxReferenceReplayScenario(
+            scenario_id="branch-resume-recovery",
+            source_snapshots=temporal_cases["branch-resume-recovery"].source_snapshots,
+            target_snapshot=temporal_cases["branch-resume-recovery"].target_snapshot,
+            executive_state=make_reference_executive_state(
+                mode_tag="review_pending",
+                family_mask=frozenset(
+                    {
+                        SoftControlFamily.NEUTRAL,
+                        SoftControlFamily.BRANCH,
+                        SoftControlFamily.CHECK,
+                        SoftControlFamily.REDIRECT,
+                    }
+                ),
+                budget_band="medium",
+                top_family_set=frozenset(
+                    {
+                        SoftControlFamily.NEUTRAL,
+                        SoftControlFamily.BRANCH,
+                    }
+                ),
+                brake_state=BrakeState.GUARDED,
+                pending_goal_refs=("review-track-goal",),
+                active_track_ref="review-track",
+                resume_anchor_available=True,
+                host_friction_tags=frozenset({"single-process-limit"}),
+                uncertainty_levels=(
+                    ("goal-progress", 0.20),
+                    ("environment", 0.30),
+                ),
+            ),
+            preferred_family=SoftControlFamily.BRANCH,
+            expect_improvement=True,
+            notes=("branch continuity should gain from explicit replay priors",),
+        ),
+        AuxReferenceReplayScenario(
+            scenario_id="contradiction-review",
+            source_snapshots=(
+                make_temporal_support_snapshot(
+                    "source-contradiction-replay",
+                    degradation_reason="host-degraded",
+                    contradiction_evidence_tags=("capability-drift", "review"),
+                    published_memory_refs=("host-degraded-memo",),
+                    wake_reason_tags=("resume-needed",),
+                    brake_history=("guarded",),
+                ),
+            ),
+            target_snapshot=temporal_cases["contradiction-review"].target_snapshot,
+            executive_state=make_reference_executive_state(
+                mode_tag="review_pending",
+                family_mask=frozenset(
+                    {
+                        SoftControlFamily.NEUTRAL,
+                        SoftControlFamily.CHECK,
+                        SoftControlFamily.BRAKE,
+                    }
+                ),
+                budget_band="high",
+                top_family_set=frozenset(
+                    {
+                        SoftControlFamily.NEUTRAL,
+                        SoftControlFamily.CHECK,
+                    }
+                ),
+                brake_state=BrakeState.GUARDED,
+                contradiction_spike_flags=frozenset({"host-degraded"}),
+                uncertainty_levels=(
+                    ("evidence", 0.60),
+                    ("environment", 0.35),
+                ),
+            ),
+            preferred_family=SoftControlFamily.CHECK,
+            expect_improvement=True,
+            notes=("contradiction summaries should lift verification selection",),
+        ),
+        AuxReferenceReplayScenario(
+            scenario_id="uncertainty-brake-calibration",
+            source_snapshots=temporal_cases["uncertainty-brake-calibration"].source_snapshots,
+            target_snapshot=temporal_cases["uncertainty-brake-calibration"].target_snapshot,
+            executive_state=make_reference_executive_state(
+                mode_tag="pass_through",
+                family_mask=frozenset(
+                    {
+                        SoftControlFamily.NEUTRAL,
+                        SoftControlFamily.BRAKE,
+                        SoftControlFamily.CHECK,
+                        SoftControlFamily.SEEK_CONTEXT,
+                    }
+                ),
+                budget_band="high",
+                top_family_set=frozenset(
+                    {
+                        SoftControlFamily.NEUTRAL,
+                        SoftControlFamily.BRAKE,
+                    }
+                ),
+                brake_state=BrakeState.GUARDED,
+                contradiction_spike_flags=frozenset({"uncertain-host"}),
+                uncertainty_levels=(
+                    ("environment", 0.62),
+                    ("host-capability", 0.30),
+                ),
+            ),
+            preferred_family=SoftControlFamily.BRAKE,
+            expect_improvement=True,
+            notes=("uncertainty calibration should strengthen brake allocation",),
+        ),
+        AuxReferenceReplayScenario(
+            scenario_id="no-lift-counterexample",
+            source_snapshots=temporal_cases["no-lift-counterexample"].source_snapshots,
+            target_snapshot=temporal_cases["no-lift-counterexample"].target_snapshot,
+            executive_state=make_reference_executive_state(
+                mode_tag="pass_through",
+                family_mask=frozenset(
+                    {
+                        SoftControlFamily.NEUTRAL,
+                        SoftControlFamily.BRANCH,
+                        SoftControlFamily.CHECK,
+                    }
+                ),
+                budget_band="medium",
+                top_family_set=frozenset(
+                    {
+                        SoftControlFamily.NEUTRAL,
+                        SoftControlFamily.BRANCH,
+                    }
+                ),
+                brake_state=BrakeState.QUIESCENT,
+                pending_goal_refs=("normalize-port-goal",),
+                uncertainty_levels=(("goal-progress", 0.10),),
+            ),
+            preferred_family=SoftControlFamily.BRANCH,
+            expect_improvement=False,
+            notes=("calm reference state should ignore replay priors",),
+        ),
+        AuxReferenceReplayScenario(
+            scenario_id="burden-heavy-counterexample",
+            source_snapshots=temporal_cases["burden-heavy-counterexample"].source_snapshots,
+            target_snapshot=temporal_cases["burden-heavy-counterexample"].target_snapshot,
+            executive_state=make_reference_executive_state(
+                mode_tag="pass_through",
+                family_mask=frozenset(
+                    {
+                        SoftControlFamily.NEUTRAL,
+                        SoftControlFamily.CHECK,
+                        SoftControlFamily.BRANCH,
+                    }
+                ),
+                budget_band="medium",
+                top_family_set=frozenset(
+                    {
+                        SoftControlFamily.NEUTRAL,
+                        SoftControlFamily.CHECK,
+                    }
+                ),
+                brake_state=BrakeState.QUIESCENT,
+                pending_goal_refs=("small-fix-goal",),
+                uncertainty_levels=(("goal-progress", 0.15),),
+            ),
+            preferred_family=SoftControlFamily.CHECK,
+            expect_improvement=False,
+            notes=("burden-heavy replay should not count as lawful control lift",),
         ),
     )

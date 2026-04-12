@@ -11,6 +11,7 @@ from cortex.core.support import SupportReference, SupportSnapshot
 from cortex.sre.memory_priors import SupportMemoryPriorAppendix
 
 from ._support_match import _match_score, _reference_tokens, _source_refs_for_retrieval
+from ._temporal_publication import _merge_temporal_publication
 from .augmentation import AugmentedSupportSnapshot
 from .cost import AuxBurdenReport
 from .geometry import (
@@ -23,7 +24,6 @@ from .lift import AUX_LIFT_DIRECTIONS, AuxLiftMetric, AuxLiftReport, build_aux_l
 from .publication import (
     OfflineSupportPublication,
     augment_snapshot_with_offline_publication,
-    build_offline_support_publication,
 )
 from .support_priors import build_support_memory_prior_appendix
 
@@ -99,91 +99,14 @@ def _contradiction_quality(report: AuxGeometryReport) -> float:
     ref_weight = sum(len(cluster.member_refs) for cluster in report.contradiction_clusters)
     return min(1.0, (0.08 * tag_weight) + (0.04 * ref_weight))
 
-
-def _dedupe_refs(references: tuple[SupportReference, ...]) -> tuple[SupportReference, ...]:
-    ordered: list[SupportReference] = []
-    seen: set[tuple[str, str]] = set()
-    for reference in references:
-        key = (reference.reference_kind, reference.reference_id)
-        if key in seen:
-            continue
-        seen.add(key)
-        ordered.append(reference)
-    return tuple(ordered)
-
-
-def _merge_notes(*groups: tuple[str, ...]) -> tuple[str, ...]:
-    ordered: list[str] = []
-    seen: set[str] = set()
-    for group in groups:
-        for value in group:
-            if value in seen:
-                continue
-            seen.add(value)
-            ordered.append(value)
-    return tuple(ordered)
-
-
 def _merge_publications(
     source_snapshots: tuple[SupportSnapshot, ...],
 ) -> OfflineSupportPublication:
-    publications = tuple(build_offline_support_publication(snapshot) for snapshot in source_snapshots)
-    return OfflineSupportPublication(
-        retrieval_prior_refs=_dedupe_refs(
-            tuple(
-                reference
-                for publication in publications
-                for reference in publication.retrieval_prior_refs
-            )
-        ),
-        branch_prior_refs=_dedupe_refs(
-            tuple(
-                reference
-                for publication in publications
-                for reference in publication.branch_prior_refs
-            )
-        ),
-        contradiction_summary_refs=_dedupe_refs(
-            tuple(
-                reference
-                for publication in publications
-                for reference in publication.contradiction_summary_refs
-            )
-        ),
-        uncertainty_calibration_refs=_dedupe_refs(
-            tuple(
-                reference
-                for publication in publications
-                for reference in publication.uncertainty_calibration_refs
-            )
-        ),
-        published_memory_summary_refs=_dedupe_refs(
-            tuple(
-                reference
-                for publication in publications
-                for reference in publication.published_memory_summary_refs
-            )
-        ),
-        publication_tags=frozenset(
-            {"aux/offline-publication", "aux/temporal-corpus"}
-            | {
-                tag
-                for publication in publications
-                for tag in publication.publication_tags
-            }
-        ),
-        notes=_merge_notes(
-            ("time-separated offline publication for later target evaluation",),
-            tuple(
-                note
-                for publication in publications
-                for note in publication.notes
-            ),
-        ),
-        metadata=(
-            MetadataField("source", "aux/temporal-corpus"),
-            MetadataField("source_snapshot_count", len(source_snapshots)),
-        ),
+    return _merge_temporal_publication(
+        source_snapshots,
+        source_label="aux/temporal-corpus",
+        extra_tags=frozenset({"aux/offline-publication", "aux/temporal-corpus"}),
+        extra_notes=("time-separated offline publication for later target evaluation",),
     )
 
 

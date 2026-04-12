@@ -47,9 +47,9 @@
     ],
     "next_raise": [
       {
-        "skill": "Offline consolidation and support geometry",
-        "expected_points_if_landed": 10,
-        "why": "Only the AUX support-geometry row remains in the denominator, and it must earn broader lawful support-side value before any runtime promotion."
+        "skill": "Broaden support-conditioned intervention pricing beyond reference-only replay",
+        "expected_points_if_landed": 0,
+        "why": "The full executive denominator is now landed at 100%; the next leverage is quality, breadth, and stronger non-shipping evidence without inventing a new denominator row."
       }
     ]
   },
@@ -166,16 +166,17 @@
     {
       "skill": "Offline consolidation and support geometry",
       "stolen_skill": "Sleep-like consolidation and support systems",
-      "status": "north_star",
+      "status": "landed",
       "weight": 10,
       "code_homes": [
         "cortex/aux"
       ],
       "proof_surfaces": [
         "tests/experimental",
-        "tests/archive"
+        "tests/archive",
+        "tests/conformance"
       ],
-      "next_move": "Keep this out of the shipped lane while testing whether time-separated offline publication earns bounded reference-only Q_mem lift through explicit AUX augmentation."
+      "next_move": "Keep offline publication explicit, removable, and non-sovereign while broadening support-conditioned intervention pricing beyond the first reference-only replay proof."
     }
   ],
   "math_to_code_rules": {
@@ -188,17 +189,17 @@
     "law_revision_rule": "The current math is binding landing law until live evidence disproves or narrows it. When that happens, revise the law explicitly and update the code and proof surfaces in the same seam; do not silently patch around stale math in implementation."
   },
   "work_today": {
-    "slug": "aux-reference-q-mem-replay",
-    "note": "Keep AUX removable and runtime-off-by-default while testing whether time-separated offline publication improves explicit reference-only Q_mem priors without changing commitment truth or shipping outputs."
+    "slug": "support-conditioned-intervention-pricing-quality",
+    "note": "With the denominator landed, broaden explicit AUX-owned support-conditioned intervention pricing beyond the first reference-only replay proof while keeping shipping defaults zero-memory and commitment truth unchanged."
   },
   "next_product_train": {
-    "slug": "aux-reference-q-mem-replay",
-    "surface": "experimental",
-    "executive_benefit": "Test whether corpus-proven offline publication can improve explicit reference-only Q_mem priors and intervention pricing without turning AUX into hidden executive truth.",
-    "why_now": "The time-separated AUX corpus now demonstrates reproducible experimental support-side lift and contradiction-preserving offline publication on the evaluation surface, so the next blocker is whether explicit AUX-owned Q_mem priors improve reference allocation rather than just offline reports.",
-    "primary_metric": "reference-only improvement in allocation or selected-family quality from explicit AUX-owned Q_mem priors with zero change to commitment truth and no shipping-lane dependence",
-    "guardrail": "reference-only, runtime-off-by-default, support-side only, and no change to commitment certification, blockedness, or the openai:operator_cli shipping default",
-    "kill_rule": "prune any Q_mem replay seam that depends on hidden caches, smooths contradictions, or creates shipping-lane dependence without clear reference-side lift"
+    "slug": "support-conditioned-intervention-pricing-quality",
+    "surface": "product",
+    "executive_benefit": "Broaden explicit AUX-owned support-conditioned intervention pricing beyond the first reference-only replay proof without turning AUX into hidden executive truth or changing shipping defaults.",
+    "why_now": "The AUX denominator row is now landed: time-separated offline publication earned lawful reference-side Q_mem lift while preserving commitment truth, so the next leverage is quality broadening rather than more AUX scaffold work.",
+    "primary_metric": "additional bounded control-quality lift from explicit AUX-owned Q_mem priors beyond the first reference-only replay seam, with zero commitment-truth divergence and zero shipping-lane dependence",
+    "guardrail": "keep replay explicit and appendix-driven, keep openai:operator_cli unchanged by default, and do not introduce hidden caches, prompt memory, or host-specific policy forks",
+    "kill_rule": "cut any broadening seam that changes commitment_result_kind, smooths contradictions, or requires shipping-lane dependence to show lift"
   },
   "system_map": {
     "nodes": [
@@ -489,9 +490,9 @@
     }
   ],
   "where_to_work": [
-    "Start with bounded reference-only Q_mem replay over AUX-owned offline publication now that time-separated corpus lift exists, not with hidden caches or new donor-host policy work.",
-    "Keep AUX removable, runtime-off-by-default, and support-side only while shipping truth stays openai:operator_cli.",
-    "Use lab and evaluation surfaces to falsify reference-only Q_mem lift and retention quality, not to smuggle AUX into shipping truth or minimum lawful runtime behavior."
+    "Treat the full executive denominator as landed and move to quality broadening: explicit AUX-owned Q_mem lift is now proven on the reference seam, so the next work is broader support-conditioned intervention pricing rather than more scaffold shaping.",
+    "Keep AUX removable, runtime-off-by-default, and appendix-driven while shipping truth stays openai:operator_cli and commitment truth stays unchanged.",
+    "Use product, conformance, and bounded evaluation seams to broaden support-conditioned control evidence without smuggling AUX into shipping defaults or inventing a new denominator row."
   ],
   "blocked_moves": [
     "Do not let archived docs or train notes act as live truth.",

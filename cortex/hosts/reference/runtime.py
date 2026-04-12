@@ -36,6 +36,11 @@ from cortex.drivers._commitment_common import (
 )
 from cortex.drivers.reference_host import BoundReferenceHostEvent, observe_reference_host_event
 from cortex.drivers.reference_host_commitment import bind_reference_host_candidate
+from cortex.aux.publication import (
+    OfflineSupportPublication,
+    augment_snapshot_with_offline_publication,
+)
+from cortex.aux.support_priors import build_support_memory_prior_appendix
 from cortex.hosts._executive_closure import (
     build_runtime_executive_signal_summary_inputs,
     canonicalize_executive_modulator_memory,
@@ -520,6 +525,7 @@ def run_reference_runtime_step(
     *,
     executive_environment_view: ExecutiveEnvironmentView | None = None,
     mediation_mode: ReferenceMediationMode = ReferenceMediationMode.IDENTITY,
+    offline_publication: OfflineSupportPublication | None = None,
 ) -> ReferenceRuntimeStepResult:
     prior_session = _coerce_session(session)
     bound_event = observe_reference_host_event(raw_event_name, raw_payload)
@@ -598,24 +604,40 @@ def run_reference_runtime_step(
         last_realization_feedback=prior_session.last_realization_feedback,
         feedback_window=prior_session.feedback_window,
     )
+    support_snapshot = _build_support_snapshot(
+        provisional_session=provisional_session,
+        bound_event=bound_event,
+        dispatch_decision=dispatch_decision,
+        warnings=warnings,
+        reminders=continuity_reminders,
+    )
     executive_state = build_reference_executive_state(
         bound_event.observation,
-        _build_support_snapshot(
-            provisional_session=provisional_session,
-            bound_event=bound_event,
-            dispatch_decision=dispatch_decision,
-            warnings=warnings,
-            reminders=continuity_reminders,
-        ),
+        support_snapshot,
         _coerce_executive_environment_view(
             executive_environment_view,
             normalized_payload=normalized_payload,
         ),
         provisional_session,
     )
+    memory_priors = None
+    if offline_publication is not None:
+        if not isinstance(offline_publication, OfflineSupportPublication):
+            actual_type = type(offline_publication).__name__
+            raise TypeError(
+                "run_reference_runtime_step.offline_publication must be "
+                f"OfflineSupportPublication | None, got {actual_type}."
+            )
+        memory_priors = build_support_memory_prior_appendix(
+            augment_snapshot_with_offline_publication(
+                support_snapshot,
+                offline_publication,
+            )
+        )
     selection = select_reference_soft_control(
         executive_state,
         mediation_mode=mediation_mode,
+        memory_priors=memory_priors,
         opportunities=_reference_host_native_opportunities(bound_event),
     )
     selected_family = selection.selected_family

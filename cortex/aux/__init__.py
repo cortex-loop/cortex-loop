@@ -29,10 +29,18 @@ from .publication import (
     build_offline_support_publication,
     augment_snapshot_with_offline_publication,
 )
+from .reference_replay import (
+    AUX_REFERENCE_REPLAY_FAILURE_LABELS,
+    AuxReferenceReplayCaseResult,
+    AuxReferenceReplayEvaluationResult,
+    AuxReferenceReplayScenario,
+    evaluate_aux_reference_q_mem_replay,
+)
 from .support_priors import build_support_memory_prior_appendix
 
 __all__ = [
     "AUX_LIFT_DIRECTIONS",
+    "AUX_REFERENCE_REPLAY_FAILURE_LABELS",
     "AugmentedSupportSnapshot",
     "AuxBurdenReport",
     "AuxContradictionCluster",
@@ -44,6 +52,9 @@ __all__ = [
     "AuxLiftMetric",
     "AuxLiftReport",
     "AuxMatchScore",
+    "AuxReferenceReplayCaseResult",
+    "AuxReferenceReplayEvaluationResult",
+    "AuxReferenceReplayScenario",
     "AuxTemporalScenario",
     "AuxiliarySupportAppendix",
     "OfflineSupportPublication",
@@ -53,6 +64,7 @@ __all__ = [
     "build_aux_lift_report",
     "build_offline_support_publication",
     "build_support_memory_prior_appendix",
+    "evaluate_aux_reference_q_mem_replay",
     "evaluate_aux_support_corpus",
     "evaluate_aux_support_snapshot",
     "total_aux_burden",
