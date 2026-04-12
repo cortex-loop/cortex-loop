@@ -57,7 +57,7 @@ When user asks where Cortex is at:
 - Then name the next highest-leverage rows to raise the score without drifting from Cortex law.
 
 Fastest route to raise the score next:
-- `Broaden support-conditioned intervention pricing beyond reference-only replay`: `+0` points if landed. The full executive denominator is now landed at 100%; the next leverage is quality, breadth, and stronger non-shipping evidence without inventing a new denominator row.
+- `Cross-host shadow evidence for support-conditioned intervention pricing`: `+0` points if landed. The reference-first quality gate passed, so the next leverage is to test the same explicit AUX-owned control law across host evidence without widening live runtime behavior or inventing a new denominator row.
 
 ## Bio-To-Code Matrix
 
@@ -67,10 +67,10 @@ Fastest route to raise the score next:
 | Bounded correction and verified-work preservation | Error repair without losing the main task thread | `landed` | `15` | `cortex/runtime`, `cortex/sre`, `cortex/hosts/openai` | `tests/product` | Keep preservation-state repair stable while support-side experiments stay removable and off the shipping critical path. |
 | Uncertainty handling and brake | Hesitation and uncertainty-aware inhibition | `landed` | `13` | `cortex/sre` | `tests/product`, `tests/experimental` | Keep reference-derived brake and uncertainty control stable while AUX remains advisory and runtime-off-by-default. |
 | Branch continuity, suspend/resume, and truthful closure | Working memory across interruptions plus truthful closure | `landed` | `15` | `cortex/sre`, `cortex/hosts/openai` | `tests/product`, `tests/conformance` | Keep suspend/resume and truthful closure stable while any future support memory remains explicit, optional, and non-binding. |
-| Intervention pricing versus neutrality | Deciding when to intervene, stay neutral, or stop | `landed` | `10` | `cortex/sre`, `cortex/aux` | `tests/product`, `tests/experimental` | Keep reference-governed intervention pricing stable while default shipping behavior stays zero-memory and any nonzero Q_mem or chi_t lift comes only from explicit AUX-owned support priors. |
+| Intervention pricing versus neutrality | Deciding when to intervene, stay neutral, or stop | `landed` | `10` | `cortex/sre`, `cortex/aux` | `tests/product`, `tests/experimental` | Hold calibrated reference-side intervention pricing stable while gathering cross-host shadow evidence before any non-reference Q_mem ingress or shipping-default change. |
 | Blocker surfacing and goal-debt management | Noticing unresolved blockers and unfinished intentions | `landed` | `10` | `cortex/sre`, `cortex/hosts/openai`, `cortex/hosts/claude`, `cortex/hosts/gemini`, `cortex/hosts/reference` | `tests/product`, `tests/conformance` | Keep typed goal-debt and closure-pressure state stable across hosts while support-side augmentation remains explicit and non-sovereign. |
 | Multi-host executive continuity | One executive across different brains and contexts | `landed` | `15` | `cortex/hosts/openai`, `cortex/hosts/claude`, `cortex/hosts/gemini`, `cortex/hosts/reference` | `tests/product`, `tests/conformance` | Hold one Cortex law across OpenAI, Claude, Gemini, and reference without flattening host-native realization. |
-| Offline consolidation and support geometry | Sleep-like consolidation and support systems | `landed` | `10` | `cortex/aux` | `tests/experimental`, `tests/archive`, `tests/conformance` | Keep offline publication explicit, removable, and non-sovereign while broadening support-conditioned intervention pricing beyond the first reference-only replay proof. |
+| Offline consolidation and support geometry | Sleep-like consolidation and support systems | `landed` | `10` | `cortex/aux` | `tests/experimental`, `tests/archive`, `tests/conformance` | Keep offline publication explicit, removable, and non-sovereign while testing cross-host shadow usefulness of support-conditioned control before any live non-reference replay rollout. |
 
 ## Math To Code Rules
 
@@ -160,19 +160,19 @@ Workflow gates marked `required` are contractual gates checked by `repo_workflow
 
 ## Next Product Train
 
-- Train: `support-conditioned-intervention-pricing-quality`
-- Surface: `product`
-- Executive benefit: Broaden explicit AUX-owned support-conditioned intervention pricing beyond the first reference-only replay proof without turning AUX into hidden executive truth or changing shipping defaults.
-- Why now: The AUX denominator row is now landed: time-separated offline publication earned lawful reference-side Q_mem lift while preserving commitment truth, so the next leverage is quality broadening rather than more AUX scaffold work.
-- Primary metric: `additional bounded control-quality lift from explicit AUX-owned Q_mem priors beyond the first reference-only replay seam, with zero commitment-truth divergence and zero shipping-lane dependence`
-- Guardrail: `keep replay explicit and appendix-driven, keep openai:operator_cli unchanged by default, and do not introduce hidden caches, prompt memory, or host-specific policy forks`
-- Kill rule: `cut any broadening seam that changes commitment_result_kind, smooths contradictions, or requires shipping-lane dependence to show lift`
+- Train: `support-conditioned-intervention-pricing-cross-host-shadow`
+- Surface: `experimental`
+- Executive benefit: Test whether the improved explicit AUX-owned support-conditioned intervention pricing remains directionally useful as shadow-only evidence across OpenAI, Claude, and Gemini without changing host runtime behavior.
+- Why now: Reference-first quality broadening passed its bounded gate, so the next leverage is cross-host shadow evidence for the same law before any non-reference replay ingress or shipping-default change.
+- Primary metric: `cross-host shadow agreement on preferred-family lift and counterexample stability from explicit AUX-owned Q_mem priors, with zero host-runtime behavior change and zero shipping-lane dependence`
+- Guardrail: `shadow only; keep q_mem reference-only in live runtimes, keep openai:operator_cli unchanged by default, and do not add hidden caches, prompt memory, or host-specific policy forks`
+- Kill rule: `cut any shadow seam that pressures a rollout before host evidence converges, or that shows repeated law drift better solved by revising Cortex law`
 
 ## Where To Work Next
 
-- Treat the full executive denominator as landed and move to quality broadening: explicit AUX-owned Q_mem lift is now proven on the reference seam, so the next work is broader support-conditioned intervention pricing rather than more scaffold shaping.
-- Keep AUX removable, runtime-off-by-default, and appendix-driven while shipping truth stays openai:operator_cli and commitment truth stays unchanged.
-- Use product, conformance, and bounded evaluation seams to broaden support-conditioned control evidence without smuggling AUX into shipping defaults or inventing a new denominator row.
+- Treat the full executive denominator as landed and move from reference-first quality to cross-host shadow evidence: explicit AUX-owned Q_mem lift is now higher-quality on the reference seam, so the next work is shadow-only breadth across host evidence rather than live rollout.
+- Keep AUX removable, runtime-off-by-default, and appendix-driven; q_mem stays reference-only in live runtimes while OpenAI, Claude, and Gemini are evaluated in shadow mode only.
+- Use experimental, product, and conformance shadow seams to test cross-host support-conditioned control agreement without widening CLI/runtime APIs or inventing a new denominator row.
 
 ## Canonical Proof
 
@@ -228,5 +228,5 @@ Workflow gates marked `required` are contractual gates checked by `repo_workflow
 
 ## Operational Focus
 
-- Current tracked train: `support-conditioned-intervention-pricing-quality`
-- Current focus note: With the denominator landed, broaden explicit AUX-owned support-conditioned intervention pricing beyond the first reference-only replay proof while keeping shipping defaults zero-memory and commitment truth unchanged.
+- Current tracked train: `support-conditioned-intervention-pricing-cross-host-shadow`
+- Current focus note: With the reference-first quality gate passed, gather cross-host shadow evidence for explicit AUX-owned support-conditioned intervention pricing while keeping live runtimes reference-only, shipping defaults zero-memory, and commitment truth unchanged.

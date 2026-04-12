@@ -318,6 +318,11 @@ def test_reference_runtime_step_replay_publication_can_flip_selected_family_with
         "build_reference_executive_state",
         lambda *args, **kwargs: scenario.executive_state,
     )
+    monkeypatch.setattr(
+        reference_runtime,
+        "_build_support_snapshot",
+        lambda **kwargs: scenario.target_snapshot,
+    )
 
     baseline = run_reference_runtime_step(
         "ApprovalResult",
@@ -433,6 +438,11 @@ def test_reference_runtime_step_replay_publication_can_lift_branch_allocation_wi
         "build_reference_executive_state",
         lambda *args, **kwargs: scenario.executive_state,
     )
+    monkeypatch.setattr(
+        reference_runtime,
+        "_build_support_snapshot",
+        lambda **kwargs: scenario.target_snapshot,
+    )
 
     baseline = run_reference_runtime_step(
         "ContextLoad",
@@ -446,7 +456,7 @@ def test_reference_runtime_step_replay_publication_can_lift_branch_allocation_wi
 
     assert baseline.commitment_result_kind is None
     assert replay.commitment_result_kind is None
-    assert baseline.selected_family is SoftControlFamily.BRANCH
+    assert baseline.selected_family is SoftControlFamily.NEUTRAL
     assert replay.selected_family is SoftControlFamily.BRANCH
     baseline_branch = _score_payload_for_family(
         baseline.control_ledger_summary["allocation_diagnostics"]["scores"],
@@ -462,6 +472,54 @@ def test_reference_runtime_step_replay_publication_can_lift_branch_allocation_wi
     assert "allocation:full-mixed" in replay_branch["reason_tags"]
 
 
+def test_reference_runtime_step_replay_publication_can_lift_retrieval_reuse_without_changing_default_shape(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    case_result = _reference_replay_case_result("retrieval-reuse")
+    scenario = _reference_replay_scenario("retrieval-reuse")
+    monkeypatch.setattr(
+        reference_runtime,
+        "build_reference_executive_state",
+        lambda *args, **kwargs: scenario.executive_state,
+    )
+    monkeypatch.setattr(
+        reference_runtime,
+        "_build_support_snapshot",
+        lambda **kwargs: scenario.target_snapshot,
+    )
+
+    baseline = run_reference_runtime_step(
+        "ContextLoad",
+        {"session_id": "session-reference-replay-retrieval"},
+    )
+    replay = run_reference_runtime_step(
+        "ContextLoad",
+        {"session_id": "session-reference-replay-retrieval"},
+        offline_publication=case_result.publication,
+    )
+
+    assert baseline.commitment_result_kind is None
+    assert replay.commitment_result_kind is None
+    assert baseline.selected_family is SoftControlFamily.NEUTRAL
+    assert replay.selected_family is SoftControlFamily.NEUTRAL
+    baseline_seek_context = _score_payload_for_family(
+        baseline.control_ledger_summary["allocation_diagnostics"]["scores"],
+        "seek-context",
+    )
+    replay_seek_context = _score_payload_for_family(
+        replay.control_ledger_summary["allocation_diagnostics"]["scores"],
+        "seek-context",
+    )
+    assert baseline_seek_context["memory_score"] == 0.0
+    assert replay_seek_context["memory_score"] > 0.0
+    assert replay_seek_context["allocated_score"] > baseline_seek_context["allocated_score"]
+    assert "allocation:online-plus-memory" in replay_seek_context["reason_tags"]
+    assert "q_mem-signal:retrieval" in replay_seek_context["reason_tags"]
+    assert tuple(baseline.control_ledger_summary["allocation_diagnostics"]) == tuple(
+        replay.control_ledger_summary["allocation_diagnostics"]
+    )
+
+
 def test_reference_runtime_step_replay_negative_case_keeps_payload_shape_and_commitment_truthful(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -471,6 +529,11 @@ def test_reference_runtime_step_replay_negative_case_keeps_payload_shape_and_com
         reference_runtime,
         "build_reference_executive_state",
         lambda *args, **kwargs: scenario.executive_state,
+    )
+    monkeypatch.setattr(
+        reference_runtime,
+        "_build_support_snapshot",
+        lambda **kwargs: scenario.target_snapshot,
     )
 
     baseline = run_reference_runtime_step(
@@ -494,6 +557,48 @@ def test_reference_runtime_step_replay_negative_case_keeps_payload_shape_and_com
     assert [score["family"] for score in baseline_scores] == [score["family"] for score in replay_scores]
     for baseline_score, replay_score in zip(baseline_scores, replay_scores, strict=True):
         assert replay_score["allocated_score"] == pytest.approx(baseline_score["allocated_score"])
+
+
+def test_reference_runtime_step_burden_heavy_replay_case_does_not_create_false_positive_family_correction(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    case_result = _reference_replay_case_result("burden-heavy-counterexample")
+    scenario = _reference_replay_scenario("burden-heavy-counterexample")
+    monkeypatch.setattr(
+        reference_runtime,
+        "build_reference_executive_state",
+        lambda *args, **kwargs: scenario.executive_state,
+    )
+    monkeypatch.setattr(
+        reference_runtime,
+        "_build_support_snapshot",
+        lambda **kwargs: scenario.target_snapshot,
+    )
+
+    baseline = run_reference_runtime_step(
+        "ContextLoad",
+        {"session_id": "session-reference-replay-burden-heavy"},
+    )
+    replay = run_reference_runtime_step(
+        "ContextLoad",
+        {"session_id": "session-reference-replay-burden-heavy"},
+        offline_publication=case_result.publication,
+    )
+
+    assert baseline.commitment_result_kind is None
+    assert replay.commitment_result_kind is None
+    assert replay.selected_family is baseline.selected_family is SoftControlFamily.NEUTRAL
+    baseline_check = _score_payload_for_family(
+        baseline.control_ledger_summary["allocation_diagnostics"]["scores"],
+        "check",
+    )
+    replay_check = _score_payload_for_family(
+        replay.control_ledger_summary["allocation_diagnostics"]["scores"],
+        "check",
+    )
+    assert replay_check["memory_score"] == 0.0
+    assert replay_check["allocated_score"] == pytest.approx(baseline_check["allocated_score"])
+    assert "allocation:online-plus-memory" not in replay_check["reason_tags"]
 
 
 def test_reference_runtime_step_without_offline_publication_makes_no_aux_calls_and_keeps_memory_priors_absent(

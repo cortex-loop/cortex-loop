@@ -37,29 +37,43 @@ def test_evaluate_aux_reference_q_mem_replay_reports_reference_only_acceptance_a
 
     assert isinstance(result, AuxReferenceReplayEvaluationResult)
     assert result.acceptance_passed is True
-    assert result.improved_preferred_family_case_count == 3
-    assert result.selected_family_change_case_count >= 1
+    assert result.improved_preferred_family_case_count == 4
+    assert result.selected_family_change_case_count == 2
+    assert result.negative_case_stable_count == 4
+    assert result.counterexample_case_count == 0
     assert result.dominant_failure_label is None
     assert result.failure_labels == ()
     assert result.failure_reasons == ()
 
     case_map = {case.scenario_id: case for case in result.case_results}
+    retrieval_case = case_map["retrieval-reuse"]
     branch_case = case_map["branch-resume-recovery"]
     contradiction_case = case_map["contradiction-review"]
     uncertainty_case = case_map["uncertainty-brake-calibration"]
     no_lift_case = case_map["no-lift-counterexample"]
     burden_case = case_map["burden-heavy-counterexample"]
+    prune_no_lift_case = case_map["prune-no-lift"]
+    prune_burden_case = case_map["prune-burden-heavy"]
 
+    assert retrieval_case.preferred_family_allocated_delta > 0.0
     assert branch_case.preferred_family_allocated_delta > 0.0
     assert contradiction_case.preferred_family_allocated_delta > 0.0
     assert uncertainty_case.preferred_family_allocated_delta > 0.0
+    assert retrieval_case.selected_family_changed_to_preferred is False
+    assert branch_case.selected_family_changed_to_preferred is True
     assert contradiction_case.baseline_selected_family.value == "neutral"
     assert contradiction_case.replay_selected_family.value == "check"
     assert contradiction_case.selected_family_changed_to_preferred is True
+    assert "q_mem-signal:contradiction" in _preferred_score(contradiction_case)["reason_tags"]
+    assert "q_mem-signal:uncertainty" in _preferred_score(uncertainty_case)["reason_tags"]
     assert no_lift_case.failure_labels == ()
     assert no_lift_case.preferred_family_allocated_delta == pytest.approx(0.0)
     assert burden_case.failure_labels == ()
     assert burden_case.preferred_family_allocated_delta == pytest.approx(0.0)
+    assert prune_no_lift_case.failure_labels == ()
+    assert prune_no_lift_case.preferred_family_allocated_delta == pytest.approx(0.0)
+    assert prune_burden_case.failure_labels == ()
+    assert prune_burden_case.preferred_family_allocated_delta == pytest.approx(0.0)
 
 
 def test_aux_reference_replay_case_results_carry_publication_support_priors_and_machine_readable_failures() -> None:
@@ -103,6 +117,8 @@ def test_aux_reference_replay_case_results_carry_publication_support_priors_and_
         "no_preferred_family_lift",
         "no_selected_family_change",
     )
+    assert result.counterexample_case_count == 1
+    assert result.negative_case_stable_count == 0
     assert result.dominant_failure_label in {
         "counterexample_dominates",
         "no_preferred_family_lift",
@@ -125,3 +141,15 @@ def test_evaluate_aux_reference_q_mem_replay_validates_input_shape(
 ) -> None:
     with pytest.raises(expected_error, match=message):
         evaluate_aux_reference_q_mem_replay(value)  # type: ignore[arg-type]
+
+
+def _preferred_score(case_result: AuxReferenceReplayCaseResult) -> dict[str, object]:
+    for score in case_result.replay_scorecard.scores:
+        if score.family is case_result.preferred_family:
+            return {
+                "family": score.family.value,
+                "reason_tags": tuple(sorted(score.reason_tags)),
+                "allocated_score": score.allocated_score,
+                "memory_score": score.memory_score,
+            }
+    raise AssertionError(f"Missing preferred family payload for {case_result.scenario_id}.")

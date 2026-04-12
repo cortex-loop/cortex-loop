@@ -4,6 +4,9 @@ from __future__ import annotations
 
 import pytest
 
+from cortex.aux._temporal_publication import _merge_temporal_publication
+from cortex.aux.publication import augment_snapshot_with_offline_publication
+from cortex.aux.support_priors import build_support_memory_prior_appendix
 from cortex.sre.brake import BrakeState
 from cortex.sre.families import SoftControlFamily
 from cortex.sre.mediation import ReferenceMediationMode
@@ -28,6 +31,7 @@ from cortex.sre.state import (
     ReferenceModeAndGatingView,
     ReferenceUncertaintyMonitoringView,
 )
+from tests.experimental._aux_test_support import make_aux_reference_replay_corpus, make_aux_temporal_corpus
 
 
 def test_reference_scoring_defaults_to_neutral_when_margin_is_below_threshold() -> None:
@@ -442,8 +446,66 @@ def test_reference_scoring_activates_q_mem_only_when_explicit_support_memory_pri
         (0.75 * branch_score.online_score) + (0.25 * 0.9)
     )
     assert "allocation:online-plus-memory" in branch_score.reason_tags
-    assert "support-memory:branch" in branch_score.reason_tags
+    assert "q_mem-signal:branch" in branch_score.reason_tags
     assert check_score.memory_score == pytest.approx(0.2)
+
+
+def test_reference_scoring_surfaces_calibrated_q_mem_signal_tags_on_reference_replay_path() -> None:
+    branch_scenario = _reference_replay_scenario("branch-resume-recovery")
+    contradiction_scenario = _reference_replay_scenario("contradiction-review")
+    uncertainty_scenario = _reference_replay_scenario("uncertainty-brake-calibration")
+
+    branch_scorecard = build_reference_allocation_scorecard(
+        branch_scenario.executive_state,
+        memory_priors=_support_memory_priors_from_temporal_case("branch-resume-recovery"),
+    )
+    contradiction_scorecard = build_reference_allocation_scorecard(
+        contradiction_scenario.executive_state,
+        memory_priors=_support_memory_priors_from_temporal_case("contradiction-review"),
+    )
+    uncertainty_scorecard = build_reference_allocation_scorecard(
+        uncertainty_scenario.executive_state,
+        memory_priors=_support_memory_priors_from_temporal_case("uncertainty-brake-calibration"),
+    )
+
+    branch_score = next(
+        score for score in branch_scorecard.scores if score.family is SoftControlFamily.BRANCH
+    )
+    check_score = next(
+        score for score in contradiction_scorecard.scores if score.family is SoftControlFamily.CHECK
+    )
+    brake_score = next(
+        score for score in uncertainty_scorecard.scores if score.family is SoftControlFamily.BRAKE
+    )
+
+    assert branch_score.memory_score > 0.0
+    assert "q_mem-signal:branch" in branch_score.reason_tags
+    assert "q_mem-signal:retrieval" in branch_score.reason_tags
+    assert check_score.memory_score > 0.0
+    assert "q_mem-signal:contradiction" in check_score.reason_tags
+    assert brake_score.memory_score > 0.0
+    assert "q_mem-signal:uncertainty" in brake_score.reason_tags
+
+
+def test_reference_scoring_burden_heavy_publication_does_not_create_false_positive_check_lift() -> None:
+    scenario = _reference_replay_scenario("burden-heavy-counterexample")
+    memory_priors = _support_memory_priors_from_temporal_case("burden-heavy-counterexample")
+
+    baseline = build_reference_allocation_scorecard(scenario.executive_state)
+    replay = build_reference_allocation_scorecard(
+        scenario.executive_state,
+        memory_priors=memory_priors,
+    )
+    baseline_check = next(
+        score for score in baseline.scores if score.family is SoftControlFamily.CHECK
+    )
+    replay_check = next(
+        score for score in replay.scores if score.family is SoftControlFamily.CHECK
+    )
+
+    assert memory_priors.active is False
+    assert replay_check.memory_score == 0.0
+    assert replay_check.allocated_score == pytest.approx(baseline_check.allocated_score)
 
 
 def test_reference_scoring_emits_full_mixed_path_when_memory_and_goal_branch_are_both_active() -> None:
@@ -668,14 +730,14 @@ def _memory_priors(
                 SupportMemoryPriorScore(
                     family=SoftControlFamily.BRANCH,
                     score=branch_score,
-                    reason_tags=frozenset({"q_mem:active", "support-memory:branch"}),
+                    reason_tags=frozenset({"q_mem:active", "q_mem-signal:branch"}),
                 )
                 if branch_score > 0.0
                 else None,
                 SupportMemoryPriorScore(
                     family=SoftControlFamily.CHECK,
                     score=check_score,
-                    reason_tags=frozenset({"q_mem:active", "support-memory:verification"}),
+                    reason_tags=frozenset({"q_mem:active", "q_mem-signal:contradiction"}),
                 )
                 if check_score > 0.0
                 else None,
@@ -685,3 +747,30 @@ def _memory_priors(
         appendix_tags=frozenset({"q_mem:explicit-aux"}),
         notes=("explicit AUX support-memory priors",),
     )
+
+
+def _reference_replay_scenario(scenario_id: str):
+    for scenario in make_aux_reference_replay_corpus():
+        if scenario.scenario_id == scenario_id:
+            return scenario
+    raise AssertionError(f"Missing reference replay scenario {scenario_id!r}.")
+
+
+def _support_memory_priors_from_temporal_case(
+    scenario_id: str,
+) -> SupportMemoryPriorAppendix:
+    temporal_case = {
+        scenario.scenario_id: scenario
+        for scenario in make_aux_temporal_corpus()
+    }[scenario_id]
+    publication = _merge_temporal_publication(
+        temporal_case.source_snapshots,
+        source_label="tests/product/test_reference_runtime_scoring",
+        extra_tags=frozenset({"aux/offline-publication", "aux/reference-replay"}),
+        extra_notes=("product scoring replay prior test",),
+    )
+    augmented = augment_snapshot_with_offline_publication(
+        temporal_case.target_snapshot,
+        publication,
+    )
+    return build_support_memory_prior_appendix(augmented)

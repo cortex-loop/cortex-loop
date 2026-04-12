@@ -387,7 +387,44 @@ def make_aux_reference_replay_corpus() -> tuple[AuxReferenceReplayScenario, ...]
         scenario.scenario_id: scenario
         for scenario in make_aux_temporal_corpus()
     }
+    prune_cases = {
+        scenario.scenario_id: scenario
+        for scenario in make_aux_prune_candidate_corpus()
+    }
     return (
+        AuxReferenceReplayScenario(
+            scenario_id="retrieval-reuse",
+            source_snapshots=temporal_cases["retrieval-reuse"].source_snapshots,
+            target_snapshot=temporal_cases["retrieval-reuse"].target_snapshot,
+            executive_state=make_reference_executive_state(
+                mode_tag="guarded_review",
+                family_mask=frozenset(
+                    {
+                        SoftControlFamily.NEUTRAL,
+                        SoftControlFamily.SEEK_CONTEXT,
+                        SoftControlFamily.CHECK,
+                        SoftControlFamily.BRAKE,
+                    }
+                ),
+                budget_band="low",
+                top_family_set=frozenset(
+                    {
+                        SoftControlFamily.NEUTRAL,
+                        SoftControlFamily.SEEK_CONTEXT,
+                    }
+                ),
+                brake_state=BrakeState.GUARDED,
+                pending_goal_refs=("normalize-port-goal",),
+                host_friction_tags=frozenset({"single-process-limit"}),
+                uncertainty_levels=(
+                    ("environment", 0.25),
+                    ("goal-progress", 0.20),
+                ),
+            ),
+            preferred_family=SoftControlFamily.SEEK_CONTEXT,
+            expect_improvement=True,
+            notes=("retrieval reuse should lift seek-context without changing commitment truth",),
+        ),
         AuxReferenceReplayScenario(
             scenario_id="branch-resume-recovery",
             source_snapshots=temporal_cases["branch-resume-recovery"].source_snapshots,
@@ -402,7 +439,7 @@ def make_aux_reference_replay_corpus() -> tuple[AuxReferenceReplayScenario, ...]
                         SoftControlFamily.REDIRECT,
                     }
                 ),
-                budget_band="medium",
+                budget_band="low",
                 top_family_set=frozenset(
                     {
                         SoftControlFamily.NEUTRAL,
@@ -519,7 +556,7 @@ def make_aux_reference_replay_corpus() -> tuple[AuxReferenceReplayScenario, ...]
                 pending_goal_refs=("normalize-port-goal",),
                 uncertainty_levels=(("goal-progress", 0.10),),
             ),
-            preferred_family=SoftControlFamily.BRANCH,
+            preferred_family=SoftControlFamily.SEEK_CONTEXT,
             expect_improvement=False,
             notes=("calm reference state should ignore replay priors",),
         ),
@@ -550,5 +587,61 @@ def make_aux_reference_replay_corpus() -> tuple[AuxReferenceReplayScenario, ...]
             preferred_family=SoftControlFamily.CHECK,
             expect_improvement=False,
             notes=("burden-heavy replay should not count as lawful control lift",),
+        ),
+        AuxReferenceReplayScenario(
+            scenario_id="prune-no-lift",
+            source_snapshots=prune_cases["prune-no-lift"].source_snapshots,
+            target_snapshot=prune_cases["prune-no-lift"].target_snapshot,
+            executive_state=make_reference_executive_state(
+                mode_tag="guarded_review",
+                family_mask=frozenset(
+                    {
+                        SoftControlFamily.NEUTRAL,
+                        SoftControlFamily.SEEK_CONTEXT,
+                        SoftControlFamily.CHECK,
+                    }
+                ),
+                budget_band="low",
+                top_family_set=frozenset(
+                    {
+                        SoftControlFamily.NEUTRAL,
+                        SoftControlFamily.SEEK_CONTEXT,
+                    }
+                ),
+                brake_state=BrakeState.GUARDED,
+                host_friction_tags=frozenset({"single-process-limit"}),
+                uncertainty_levels=(("goal-progress", 0.18),),
+            ),
+            preferred_family=SoftControlFamily.SEEK_CONTEXT,
+            expect_improvement=False,
+            notes=("prune-no-lift should stay neutral even on the reference replay seam",),
+        ),
+        AuxReferenceReplayScenario(
+            scenario_id="prune-burden-heavy",
+            source_snapshots=prune_cases["prune-burden-heavy"].source_snapshots,
+            target_snapshot=prune_cases["prune-burden-heavy"].target_snapshot,
+            executive_state=make_reference_executive_state(
+                mode_tag="pass_through",
+                family_mask=frozenset(
+                    {
+                        SoftControlFamily.NEUTRAL,
+                        SoftControlFamily.CHECK,
+                        SoftControlFamily.BRANCH,
+                    }
+                ),
+                budget_band="medium",
+                top_family_set=frozenset(
+                    {
+                        SoftControlFamily.NEUTRAL,
+                        SoftControlFamily.CHECK,
+                    }
+                ),
+                brake_state=BrakeState.GUARDED,
+                host_friction_tags=frozenset({"single-process-limit"}),
+                uncertainty_levels=(("goal-progress", 0.20),),
+            ),
+            preferred_family=SoftControlFamily.CHECK,
+            expect_improvement=False,
+            notes=("prune-burden-heavy should not create verification lift under burden penalties",),
         ),
     )

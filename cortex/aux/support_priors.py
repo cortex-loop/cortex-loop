@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from collections import Counter
+from dataclasses import dataclass
 
 from cortex.core.envelopes import MetadataField
 from cortex.core.support import SupportReference
@@ -12,11 +12,21 @@ from cortex.sre.memory_priors import (
     SupportMemoryPriorScore,
 )
 
+from ._support_match import (
+    _dedupe_support_refs,
+    _match_score,
+    _reference_tokens,
+    _source_refs_for_retrieval,
+)
 from .augmentation import AugmentedSupportSnapshot
 
 
 def _clip_unit(value: float) -> float:
     return max(0.0, min(1.0, float(value)))
+
+
+def _clip_prior_score(value: float) -> float:
+    return max(0.0, min(0.75, float(value)))
 
 
 def _refs_by_kind(
@@ -25,6 +35,234 @@ def _refs_by_kind(
 ) -> tuple[SupportReference, ...]:
     allowed = set(kinds)
     return tuple(reference for reference in references if reference.reference_kind in allowed)
+
+
+def _metadata_int(
+    metadata: tuple[MetadataField, ...],
+    key: str,
+) -> int:
+    for field in metadata:
+        if field.key != key:
+            continue
+        try:
+            return int(field.value)
+        except (TypeError, ValueError):
+            return 0
+    return 0
+
+
+def _normalized_candidate(reference: SupportReference) -> SupportReference:
+    normalized_kind = {
+        "retrieval-prior": "memory",
+        "memory-summary": "memory",
+        "branch-prior": "branch",
+        "contradiction-summary": "contradiction",
+        "uncertainty-calibration": "uncertainty",
+    }.get(reference.reference_kind, reference.reference_kind)
+    if normalized_kind == reference.reference_kind:
+        return reference
+    return SupportReference(
+        normalized_kind,
+        reference.reference_id,
+        tags=reference.tags,
+        metadata=reference.metadata,
+    )
+
+
+def _best_match_signal(
+    source_refs: tuple[SupportReference, ...],
+    candidate_refs: tuple[SupportReference, ...],
+    *,
+    base_score: float,
+) -> float:
+    best = 0.0
+    for source_ref in source_refs:
+        for candidate_ref in candidate_refs:
+            normalized_candidate = _normalized_candidate(candidate_ref)
+            token_overlap = _reference_tokens(source_ref) & _reference_tokens(normalized_candidate)
+            if not token_overlap:
+                continue
+            best = max(
+                best,
+                _match_score(source_ref, normalized_candidate, base_score=base_score),
+            )
+    return _clip_unit(best)
+
+
+def _target_branch_refs(snapshot: AugmentedSupportSnapshot) -> tuple[SupportReference, ...]:
+    branch_refs = tuple(
+        SupportReference("branch", branch_ref, tags=frozenset({"resume-track"}))
+        for branch_ref in snapshot.core_snapshot.session.branch_registry
+        if branch_ref != "main"
+    )
+    reminder_refs = tuple(
+        SupportReference("reminder", reminder, tags=frozenset({"continuity-reminder"}))
+        for reminder in snapshot.core_snapshot.session.reminders
+    )
+    goal_refs = tuple(
+        SupportReference("goal", goal_ref, tags=frozenset({"pending-goal"}))
+        for goal_ref in snapshot.core_snapshot.session.pending_goal_refs
+    )
+    return _dedupe_support_refs(branch_refs + reminder_refs + goal_refs)
+
+
+def _target_contradiction_refs(snapshot: AugmentedSupportSnapshot) -> tuple[SupportReference, ...]:
+    refs: list[SupportReference] = []
+    for record in snapshot.core_snapshot.trace.degradation_records:
+        tags = set(record.capability_tags | {record.reason_code})
+        for contradiction in record.contradiction_records:
+            tags.add(contradiction.source_tag)
+            tags.update(contradiction.evidence_tags)
+        refs.append(
+            SupportReference(
+                "contradiction",
+                record.reason_code,
+                tags=frozenset(tags),
+            )
+        )
+    return _dedupe_support_refs(tuple(refs))
+
+
+def _target_uncertainty_refs(snapshot: AugmentedSupportSnapshot) -> tuple[SupportReference, ...]:
+    refs = tuple(
+        SupportReference("uncertainty", brake_entry, tags=frozenset({"brake-history"}))
+        for brake_entry in snapshot.core_snapshot.session.brake_history
+    ) + tuple(
+        SupportReference("wake", receipt.reason_tag, tags=frozenset({"wake-receipt"}))
+        for receipt in snapshot.core_snapshot.trace.wake_receipts
+    )
+    return _dedupe_support_refs(refs)
+
+
+def _has_token(signal_tokens: frozenset[str], token: str) -> bool:
+    return token in signal_tokens
+
+
+@dataclass(frozen=True, slots=True)
+class SupportMemorySignalProfile:
+    retrieval_reuse_signal: float
+    branch_resume_signal: float
+    contradiction_review_signal: float
+    uncertainty_calibration_signal: float
+    burden_penalty: float
+
+    def __post_init__(self) -> None:
+        object.__setattr__(
+            self,
+            "retrieval_reuse_signal",
+            _clip_unit(self.retrieval_reuse_signal),
+        )
+        object.__setattr__(
+            self,
+            "branch_resume_signal",
+            _clip_unit(self.branch_resume_signal),
+        )
+        object.__setattr__(
+            self,
+            "contradiction_review_signal",
+            _clip_unit(self.contradiction_review_signal),
+        )
+        object.__setattr__(
+            self,
+            "uncertainty_calibration_signal",
+            _clip_unit(self.uncertainty_calibration_signal),
+        )
+        object.__setattr__(
+            self,
+            "burden_penalty",
+            _clip_unit(self.burden_penalty),
+        )
+
+
+def _build_signal_profile(snapshot: AugmentedSupportSnapshot) -> SupportMemorySignalProfile:
+    appendix = snapshot.auxiliary_support
+    derived_refs = appendix.derived_support_refs
+
+    retrieval_refs = _refs_by_kind(derived_refs, "memory", "artifact", "result-artifact")
+    branch_candidate_refs = _refs_by_kind(derived_refs, "branch", "memory", "artifact")
+    contradiction_refs = _refs_by_kind(derived_refs, "contradiction")
+    uncertainty_refs = _refs_by_kind(derived_refs, "uncertainty", "wake")
+
+    retrieval_signal = _best_match_signal(
+        _source_refs_for_retrieval(snapshot.core_snapshot),
+        retrieval_refs,
+        base_score=0.18,
+    )
+
+    branch_signal = _best_match_signal(
+        _target_branch_refs(snapshot),
+        branch_candidate_refs,
+        base_score=0.16,
+    )
+    if branch_signal > 0.0 and snapshot.core_snapshot.session.reminders:
+        branch_signal = _clip_unit(branch_signal + 0.05)
+
+    contradiction_signal = _best_match_signal(
+        _target_contradiction_refs(snapshot),
+        contradiction_refs,
+        base_score=0.20,
+    )
+    if contradiction_signal > 0.0 and snapshot.core_snapshot.trace.degradation_records:
+        contradiction_signal = _clip_unit(contradiction_signal + 0.15)
+
+    uncertainty_signal = _best_match_signal(
+        _target_uncertainty_refs(snapshot),
+        uncertainty_refs,
+        base_score=0.18,
+    )
+    guarded_history = {
+        entry
+        for entry in snapshot.core_snapshot.session.brake_history
+        if entry in {"guarded", "latched"}
+    }
+    if uncertainty_signal > 0.0 and guarded_history:
+        uncertainty_signal = _clip_unit(uncertainty_signal + 0.12)
+    if uncertainty_signal > 0.0 and snapshot.core_snapshot.trace.wake_receipts:
+        uncertainty_signal = _clip_unit(uncertainty_signal + 0.08)
+
+    token_pool = frozenset(
+        token
+        for reference in derived_refs
+        for token in _reference_tokens(reference)
+    )
+    source_snapshot_count = _metadata_int(appendix.metadata, "source_snapshot_count")
+    fanout_penalty = max(0.0, 0.05 * (len(derived_refs) - 4))
+    source_penalty = max(0.0, 0.10 * (source_snapshot_count - 1))
+    burden_tag_penalty = 0.15 if _has_token(token_pool, "burden") else 0.0
+    drift_tag_penalty = 0.10 if _has_token(token_pool, "drift") else 0.0
+    burden_penalty = _clip_unit(
+        fanout_penalty + source_penalty + burden_tag_penalty + drift_tag_penalty
+    )
+
+    return SupportMemorySignalProfile(
+        retrieval_reuse_signal=retrieval_signal,
+        branch_resume_signal=branch_signal,
+        contradiction_review_signal=contradiction_signal,
+        uncertainty_calibration_signal=uncertainty_signal,
+        burden_penalty=burden_penalty,
+    )
+
+
+def _reason_tags(
+    profile: SupportMemorySignalProfile,
+    *,
+    include_retrieval: bool = False,
+    include_branch: bool = False,
+    include_contradiction: bool = False,
+    include_uncertainty: bool = False,
+) -> frozenset[str]:
+    tags = {"q_mem:active"}
+    if include_retrieval and profile.retrieval_reuse_signal > 0.0:
+        tags.add("q_mem-signal:retrieval")
+    if include_branch and profile.branch_resume_signal > 0.0:
+        tags.add("q_mem-signal:branch")
+    if include_contradiction and profile.contradiction_review_signal > 0.0:
+        tags.add("q_mem-signal:contradiction")
+    if include_uncertainty and profile.uncertainty_calibration_signal > 0.0:
+        tags.add("q_mem-signal:uncertainty")
+    if profile.burden_penalty > 0.0:
+        tags.add("q_mem-penalty:burden")
+    return frozenset(tags)
 
 
 def build_support_memory_prior_appendix(
@@ -46,11 +284,11 @@ def build_support_memory_prior_appendix(
         )
 
     derived_refs = appendix.derived_support_refs
-    kind_counts = Counter(reference.reference_kind for reference in derived_refs)
     branch_refs = _refs_by_kind(derived_refs, "branch")
     retrieval_refs = _refs_by_kind(derived_refs, "memory", "artifact")
     contradiction_refs = _refs_by_kind(derived_refs, "contradiction")
     uncertainty_refs = _refs_by_kind(derived_refs, "uncertainty", "wake")
+    signal_profile = _build_signal_profile(snapshot)
 
     scores = (
         SupportMemoryPriorScore(
@@ -59,46 +297,90 @@ def build_support_memory_prior_appendix(
         ),
         SupportMemoryPriorScore(
             family=SoftControlFamily.BRANCH,
-            score=_clip_unit((0.20 * len(branch_refs)) + (0.05 * len(retrieval_refs))),
-            reason_tags=frozenset({"q_mem:active", "support-memory:branch"}),
+            score=_clip_prior_score(
+                (0.55 * signal_profile.branch_resume_signal)
+                + (0.15 * signal_profile.retrieval_reuse_signal)
+                - (0.25 * signal_profile.burden_penalty)
+            ),
+            reason_tags=_reason_tags(
+                signal_profile,
+                include_retrieval=True,
+                include_branch=True,
+            ),
             support_refs=branch_refs + retrieval_refs[:2],
         ),
         SupportMemoryPriorScore(
             family=SoftControlFamily.CHECK,
-            score=_clip_unit(
-                (0.25 * len(contradiction_refs))
-                + (0.15 * len(uncertainty_refs))
-                + (0.05 * len(retrieval_refs))
+            score=_clip_prior_score(
+                (0.50 * signal_profile.contradiction_review_signal)
+                + (0.20 * signal_profile.uncertainty_calibration_signal)
+                + (0.10 * signal_profile.retrieval_reuse_signal)
+                - (0.15 * signal_profile.burden_penalty)
             ),
-            reason_tags=frozenset({"q_mem:active", "support-memory:verification"}),
+            reason_tags=_reason_tags(
+                signal_profile,
+                include_retrieval=True,
+                include_contradiction=True,
+                include_uncertainty=True,
+            ),
             support_refs=contradiction_refs + uncertainty_refs[:2],
         ),
         SupportMemoryPriorScore(
             family=SoftControlFamily.REDIRECT,
-            score=_clip_unit(
-                (0.15 * len(branch_refs))
-                + (0.10 * len(retrieval_refs))
-                + (0.05 * kind_counts.get("memory", 0))
+            score=_clip_prior_score(
+                (0.30 * signal_profile.retrieval_reuse_signal)
+                + (0.20 * signal_profile.branch_resume_signal)
+                + (0.10 * signal_profile.contradiction_review_signal)
+                - (0.20 * signal_profile.burden_penalty)
             ),
-            reason_tags=frozenset({"q_mem:active", "support-memory:redirect"}),
+            reason_tags=_reason_tags(
+                signal_profile,
+                include_retrieval=True,
+                include_branch=True,
+                include_contradiction=True,
+            ),
             support_refs=branch_refs[:1] + retrieval_refs[:2],
         ),
         SupportMemoryPriorScore(
             family=SoftControlFamily.SEEK_CONTEXT,
-            score=_clip_unit((0.12 * len(uncertainty_refs)) + (0.08 * len(retrieval_refs))),
-            reason_tags=frozenset({"q_mem:active", "support-memory:context"}),
+            score=_clip_prior_score(
+                (0.35 * signal_profile.retrieval_reuse_signal)
+                + (0.25 * signal_profile.uncertainty_calibration_signal)
+                - (0.15 * signal_profile.burden_penalty)
+            ),
+            reason_tags=_reason_tags(
+                signal_profile,
+                include_retrieval=True,
+                include_uncertainty=True,
+            ),
             support_refs=uncertainty_refs[:2] + retrieval_refs[:1],
         ),
         SupportMemoryPriorScore(
             family=SoftControlFamily.BRAKE,
-            score=_clip_unit((0.15 * len(contradiction_refs)) + (0.12 * len(uncertainty_refs))),
-            reason_tags=frozenset({"q_mem:active", "support-memory:brake"}),
+            score=_clip_prior_score(
+                (0.35 * signal_profile.contradiction_review_signal)
+                + (0.35 * signal_profile.uncertainty_calibration_signal)
+                - (0.20 * signal_profile.burden_penalty)
+            ),
+            reason_tags=_reason_tags(
+                signal_profile,
+                include_contradiction=True,
+                include_uncertainty=True,
+            ),
             support_refs=contradiction_refs[:2] + uncertainty_refs[:1],
         ),
         SupportMemoryPriorScore(
             family=SoftControlFamily.ESCALATE,
-            score=_clip_unit(0.05 * len(contradiction_refs)),
-            reason_tags=frozenset({"q_mem:active", "support-memory:escalate"}),
+            score=_clip_prior_score(
+                (0.20 * signal_profile.contradiction_review_signal)
+                + (0.15 * signal_profile.uncertainty_calibration_signal)
+                - (0.25 * signal_profile.burden_penalty)
+            ),
+            reason_tags=_reason_tags(
+                signal_profile,
+                include_contradiction=True,
+                include_uncertainty=True,
+            ),
             support_refs=contradiction_refs[:1],
         ),
     )

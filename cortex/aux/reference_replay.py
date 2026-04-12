@@ -92,11 +92,28 @@ def _allocated_score(scorecard: AllocationScorecard, family: SoftControlFamily) 
     raise KeyError(f"Missing allocation score for family {family.value!r}.")
 
 
+def _reason_tags(scorecard: AllocationScorecard, family: SoftControlFamily) -> frozenset[str]:
+    for score in scorecard.scores:
+        if score.family is family:
+            return score.reason_tags
+    raise KeyError(f"Missing allocation score for family {family.value!r}.")
+
+
 def _choose_dominant_failure_label(counts: dict[str, int]) -> str | None:
     active = {label: count for label, count in counts.items() if count > 0}
     if not active:
         return None
     return max(sorted(active), key=lambda label: active[label])
+
+
+def _case_result_by_id(
+    case_results: tuple[AuxReferenceReplayCaseResult, ...],
+    scenario_id: str,
+) -> AuxReferenceReplayCaseResult | None:
+    for result in case_results:
+        if result.scenario_id == scenario_id:
+            return result
+    return None
 
 
 @dataclass(frozen=True, slots=True)
@@ -259,6 +276,8 @@ class AuxReferenceReplayEvaluationResult:
     case_results: tuple[AuxReferenceReplayCaseResult, ...]
     improved_preferred_family_case_count: int
     selected_family_change_case_count: int
+    negative_case_stable_count: int
+    counterexample_case_count: int
     acceptance_passed: bool
     dominant_failure_label: str | None = None
     failure_labels: tuple[str, ...] = field(default_factory=tuple)
@@ -279,6 +298,14 @@ class AuxReferenceReplayEvaluationResult:
         _validate_non_negative_int(
             self.selected_family_change_case_count,
             field_name="AuxReferenceReplayEvaluationResult.selected_family_change_case_count",
+        )
+        _validate_non_negative_int(
+            self.negative_case_stable_count,
+            field_name="AuxReferenceReplayEvaluationResult.negative_case_stable_count",
+        )
+        _validate_non_negative_int(
+            self.counterexample_case_count,
+            field_name="AuxReferenceReplayEvaluationResult.counterexample_case_count",
         )
         if not isinstance(self.acceptance_passed, bool):
             actual_type = type(self.acceptance_passed).__name__
@@ -386,8 +413,6 @@ def evaluate_aux_reference_q_mem_replay(
             preferred_family=scenario.preferred_family,
             preferred_family_delta=preferred_family_delta,
         )
-        for label in failure_labels:
-            failure_counts[label] += 1
         case_results.append(
             AuxReferenceReplayCaseResult(
                 scenario_id=scenario.scenario_id,
@@ -416,14 +441,32 @@ def evaluate_aux_reference_q_mem_replay(
     selected_family_change_case_count = sum(
         1 for result in positive_results if result.selected_family_changed_to_preferred
     )
-    negative_counterexample_count = sum(
-        1 for result in negative_results if "counterexample_dominates" in result.failure_labels
+    negative_case_stable_count = sum(
+        1
+        for result in negative_results
+        if (
+            result.preferred_family_allocated_delta <= 0.0
+            and result.replay_selected_family is not result.preferred_family
+        )
+    )
+    counterexample_case_count = len(negative_results) - negative_case_stable_count
+    contradiction_case = _case_result_by_id(tuple(case_results), "contradiction-review")
+    uncertainty_case = _case_result_by_id(tuple(case_results), "uncertainty-brake-calibration")
+    contradiction_reason_tags_preserved = (
+        contradiction_case is None
+        or "q_mem-signal:contradiction"
+        in _reason_tags(contradiction_case.replay_scorecard, SoftControlFamily.CHECK)
+    )
+    uncertainty_reason_tags_preserved = (
+        uncertainty_case is None
+        or "q_mem-signal:uncertainty"
+        in _reason_tags(uncertainty_case.replay_scorecard, SoftControlFamily.BRAKE)
     )
     if improved_preferred_family_case_count < len(positive_results):
         failure_counts["no_preferred_family_lift"] += 1
-    if selected_family_change_case_count < 1:
+    if selected_family_change_case_count < 2:
         failure_counts["no_selected_family_change"] += 1
-    if negative_counterexample_count > 0:
+    if counterexample_case_count > 0:
         failure_counts["counterexample_dominates"] += 1
 
     failure_labels = tuple(
@@ -434,13 +477,21 @@ def evaluate_aux_reference_q_mem_replay(
         failure_reasons.append(
             "not all positive replay scenarios improved preferred-family allocated score"
         )
-    if selected_family_change_case_count < 1:
+    if selected_family_change_case_count < 2:
         failure_reasons.append(
-            "no positive replay scenario changed selected_family to preferred_family"
+            "fewer than two positive replay scenarios changed selected_family to preferred_family"
         )
-    if negative_counterexample_count > 0:
+    if counterexample_case_count > 0:
         failure_reasons.append(
-            "negative replay counterexample improved or selected the preferred family"
+            "one or more negative replay counterexamples improved or selected the preferred family"
+        )
+    if not contradiction_reason_tags_preserved:
+        failure_reasons.append(
+            "contradiction-review replay did not preserve q_mem contradiction signal tags"
+        )
+    if not uncertainty_reason_tags_preserved:
+        failure_reasons.append(
+            "uncertainty-brake replay did not preserve q_mem uncertainty signal tags"
         )
     acceptance_passed = not failure_reasons
 
@@ -448,6 +499,8 @@ def evaluate_aux_reference_q_mem_replay(
         case_results=tuple(case_results),
         improved_preferred_family_case_count=improved_preferred_family_case_count,
         selected_family_change_case_count=selected_family_change_case_count,
+        negative_case_stable_count=negative_case_stable_count,
+        counterexample_case_count=counterexample_case_count,
         acceptance_passed=acceptance_passed,
         dominant_failure_label=_choose_dominant_failure_label(failure_counts),
         failure_labels=failure_labels,
