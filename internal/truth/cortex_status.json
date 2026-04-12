@@ -195,7 +195,7 @@
     "slug": "aux-reference-q-mem-replay",
     "surface": "experimental",
     "executive_benefit": "Test whether corpus-proven offline publication can improve explicit reference-only Q_mem priors and intervention pricing without turning AUX into hidden executive truth.",
-    "why_now": "The time-separated AUX corpus now proves support-side lift and contradiction-preserving offline publication, so the next blocker is whether explicit AUX-owned Q_mem priors improve reference allocation rather than just offline reports.",
+    "why_now": "The time-separated AUX corpus now demonstrates reproducible experimental support-side lift and contradiction-preserving offline publication on the evaluation surface, so the next blocker is whether explicit AUX-owned Q_mem priors improve reference allocation rather than just offline reports.",
     "primary_metric": "reference-only improvement in allocation or selected-family quality from explicit AUX-owned Q_mem priors with zero change to commitment truth and no shipping-lane dependence",
     "guardrail": "reference-only, runtime-off-by-default, support-side only, and no change to commitment certification, blockedness, or the openai:operator_cli shipping default",
     "kill_rule": "prune any Q_mem replay seam that depends on hidden caches, smooths contradictions, or creates shipping-lane dependence without clear reference-side lift"
@@ -421,13 +421,13 @@
   "closure_gates": [
     {
       "id": "main_synced",
-      "status": "passed",
-      "note": "Resting truth is enforced through clean synced main and the workflow helper."
+      "status": "required",
+      "note": "Required workflow gate: resting truth is enforced through clean synced main and the workflow helper."
     },
     {
       "id": "cleanup_report",
-      "status": "passed",
-      "note": "cleanup-report is the strict final hygiene gate for the resting repo state."
+      "status": "required",
+      "note": "Required workflow gate: cleanup-report is the strict final hygiene gate for the resting repo state."
     },
     {
       "id": "single_truth",

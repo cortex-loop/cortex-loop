@@ -251,6 +251,8 @@ def render_status(data: dict[str, object]) -> str:
             "",
             "## Closure Gates",
             "",
+            "Workflow gates marked `required` are contractual gates checked by `repo_workflow.py`, not a claim about every attached local worktree at render time.",
+            "",
             "| Gate | Status | Note |",
             "| --- | --- | --- |",
         ]

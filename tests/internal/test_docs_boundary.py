@@ -218,7 +218,15 @@ def test_status_registry_is_complete_and_stable() -> None:
     assert status["next_product_train"]["surface"] == "experimental"
     assert "Q_mem" in status["next_product_train"]["executive_benefit"]
     assert "Q_mem" in status["next_product_train"]["why_now"]
+    assert "demonstrates reproducible experimental support-side lift" in status["next_product_train"]["why_now"]
+    assert "proves support-side lift" not in status["next_product_train"]["why_now"]
     assert "Q_mem" in status["where_to_work"][0]
+    closure_gates = {gate["id"]: gate for gate in status["closure_gates"]}
+    assert closure_gates["main_synced"]["status"] == "required"
+    assert closure_gates["cleanup_report"]["status"] == "required"
+    assert closure_gates["single_truth"]["status"] == "passed"
+    assert "Required workflow gate" in closure_gates["main_synced"]["note"]
+    assert "Required workflow gate" in closure_gates["cleanup_report"]["note"]
 
 
 def test_generated_status_doc_includes_system_map_and_next_product_train() -> None:
@@ -241,6 +249,11 @@ def test_generated_status_doc_includes_system_map_and_next_product_train() -> No
     assert "Q_mem" in text
     assert "Shipping Product Lane\\nopenai:operator_cli" in text or "Shipping Product Lane" in text
     assert "Shipping default: `openai:operator_cli`" in text
+    assert "Workflow gates marked `required` are contractual gates checked by `repo_workflow.py`" in text
+    assert "| `main_synced` | `required` |" in text
+    assert "| `cleanup_report` | `required` |" in text
+    assert "demonstrates reproducible experimental support-side lift" in text
+    assert "proves support-side lift" not in text
 
 
 def test_front_door_surfaces_point_to_one_command_managed_closeout() -> None:
