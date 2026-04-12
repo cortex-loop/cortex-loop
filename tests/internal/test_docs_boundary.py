@@ -202,7 +202,7 @@ def test_status_registry_is_complete_and_stable() -> None:
     assert host_status == {
         "openai": "conformant",
         "claude": "conformant",
-        "gemini": "partial",
+        "gemini": "conformant",
         "reference": "conformant",
     }
     assert host_surfaces == {

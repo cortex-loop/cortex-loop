@@ -98,7 +98,6 @@ _OPENAI_ACTION_TAG = "openai-response-stream"
 _OPENAI_MODEL = "gpt-5.4"
 _CLAUDE_MODEL = "claude-sonnet-4-6"
 _CLAUDE_VERIFIED_WORK_TOOLS = "Read,Glob,Grep,LS,Edit,MultiEdit,Write"
-_GEMINI_MODEL = "gemini-2.5-pro"
 _SURFACE_ORDER: dict[Brain, tuple[Surface, ...]] = {
     "openai": ("operator_cli", "service_api"),
     "claude": ("operator_cli",),
@@ -1218,6 +1217,7 @@ def _run_gemini_cli_conformance(
 ) -> ConformanceRunResult:
     artifact_dir = run_root / "gemini_operator_cli"
     artifact_dir.mkdir(parents=True, exist_ok=True)
+    chosen_model = choose_model("gemini", "operator")
     with _stage_contract_pack_workspace(
         contract_pack,
         prefix="cortex-conformance-gemini-",
@@ -1226,18 +1226,19 @@ def _run_gemini_cli_conformance(
             task_prompt=contract_pack.prompt_text,
             instructions=build_verified_work_instructions(contract_pack.work_contract),
         )
+        initial_command = [
+            "gemini",
+            "-p",
+            initial_prompt,
+            "-o",
+            "json",
+            "--approval-mode",
+            "yolo",
+        ]
+        if chosen_model != "auto":
+            initial_command[1:1] = ["-m", chosen_model]
         initial = run_command(
-            [
-                "gemini",
-                "-m",
-                _GEMINI_MODEL,
-                "-p",
-                initial_prompt,
-                "-o",
-                "json",
-                "--approval-mode",
-                "yolo",
-            ],
+            initial_command,
             cwd=workspace,
             timeout_seconds=300.0,
         )
@@ -1260,11 +1261,33 @@ def _run_gemini_cli_conformance(
             )
         first_outcome = result["verification"]
         assert isinstance(first_outcome, VerificationOutcome)
+        first_session_id = result["session_id"]
         final_outcome = first_outcome
         attempt_count = 1
         final_extraction_mode = result["extraction_mode"]
         final_note = result["note"]
         if first_outcome.failure_class in {"output_invalid", "import_smoke_failed", "test_failed"}:
+            if not isinstance(first_session_id, str) or not first_session_id.strip():
+                return ConformanceRunResult(
+                    brain="gemini",
+                    surface="operator_cli",
+                    contract_pack=contract_pack.contract_pack,
+                    status="divergent",
+                    divergence_class="surface_wiring",
+                    first_attempt_status=first_outcome.status,
+                    first_attempt_failure_class=first_outcome.failure_class,
+                    final_failure_class=first_outcome.failure_class,
+                    verification_status=first_outcome.status,
+                    parseable=first_outcome.parse_error is None,
+                    import_smoke_ok=first_outcome.import_smoke_ok,
+                    pytest_passed=first_outcome.pytest_passed,
+                    pytest_failed=first_outcome.pytest_failed,
+                    attempt_count=1,
+                    repair_conversion="failed_without_repair",
+                    extraction_mode=result["extraction_mode"],
+                    note="Gemini operator surface did not return a resumable session id.",
+                    artifact_relpath=_artifact_relpath(artifact_dir),
+                )
             preservation_state, repair_contract = _repair_preservation_state_and_contract(
                 contract_pack.work_contract,
                 first_outcome,
@@ -1273,20 +1296,21 @@ def _run_gemini_cli_conformance(
                 task_prompt=build_verified_work_repair_ticket(preservation_state),
                 instructions=build_verified_work_instructions(repair_contract),
             )
+            resumed_command = [
+                "gemini",
+                "--resume",
+                first_session_id,
+                "-p",
+                repair_ticket,
+                "-o",
+                "json",
+                "--approval-mode",
+                "yolo",
+            ]
+            if chosen_model != "auto":
+                resumed_command[1:1] = ["-m", chosen_model]
             resumed = run_command(
-                [
-                    "gemini",
-                    "-m",
-                    _GEMINI_MODEL,
-                    "--resume",
-                    "latest",
-                    "-p",
-                    repair_ticket,
-                    "-o",
-                    "json",
-                    "--approval-mode",
-                    "yolo",
-                ],
+                resumed_command,
                 cwd=workspace,
                 timeout_seconds=300.0,
             )

@@ -139,7 +139,7 @@ flowchart TD
 | --- | --- | --- | --- | --- | --- |
 | `openai` | `default` | `conformant` | `operator_cli` | `operator_cli` | `cortex/hosts/openai` |
 | `claude` | `non-default` | `conformant` | `operator_cli` | `operator_cli` | `cortex/hosts/claude` |
-| `gemini` | `non-default` | `partial` | `operator_cli` | `operator_cli` | `cortex/hosts/gemini` |
+| `gemini` | `non-default` | `conformant` | `operator_cli` | `operator_cli` | `cortex/hosts/gemini` |
 | `reference` | `non-product` | `conformant` | `reference_cli` | `reference_cli` | `cortex/hosts/reference` |
 
 ## Shipping And Conformance Truth
@@ -161,7 +161,7 @@ flowchart TD
 - Train: `offline-support-geometry-shape`
 - Surface: `experimental`
 - Executive benefit: Prove retrieval, branch/resume, contradiction-cluster, and uncertainty-support lift from removable AUX geometry so future Q_mem priors can be earned lawfully without turning AUX into hidden executive truth.
-- Why now: The evaluation-first AUX scaffolding now exists, so the remaining denominator work is to prove support-side lift and retention value for future Q_mem priors rather than keep reshaping empty carriers.
+- Why now: The evaluation-first AUX scaffolding and deterministic fixture lift now exist, so the remaining denominator work is to prove broader support-side lift and retention value for future Q_mem priors rather than keep reshaping empty carriers.
 - Primary metric: `measured support-side lift on retrieval, review, branch, or uncertainty priors with zero change to commitment truth and runtime-off-by-default activation`
 - Guardrail: `runtime-off-by-default, support-side only, and no change to commitment certification, blockedness, or the openai:operator_cli shipping default`
 - Kill rule: `prune any AUX seam that adds overhead without lift, smooths contradictions, or becomes operationally load-bearing for minimum lawful runtime behavior`
@@ -170,7 +170,7 @@ flowchart TD
 
 - Start with evaluation-first AUX support geometry and offline-support lift so future Q_mem support priors can be earned lawfully, not with hidden caches or new donor-host policy work.
 - Keep AUX removable, runtime-off-by-default, and support-side only while shipping truth stays openai:operator_cli.
-- Use lab and evaluation surfaces to falsify AUX lift, and use conformance proof to eliminate the remaining Gemini operator_cli bookmarks gap before claiming full non-reference host parity.
+- Use lab and evaluation surfaces to falsify AUX lift, and keep Claude and Gemini parity honest with repeatable full-pack CLI conformance instead of stale one-pack gap language.
 
 ## Canonical Proof
 
@@ -227,4 +227,4 @@ flowchart TD
 ## Operational Focus
 
 - Current tracked train: `offline-support-geometry-shape`
-- Current focus note: Keep AUX evaluation-first and removable while proving support-side lift for future Q_mem, and separately remove the remaining Gemini operator_cli bookmarks gap before claiming full non-reference host parity.
+- Current focus note: Keep AUX evaluation-first and removable while broadening support-side lift for future Q_mem, and keep full-pack tri-brain CLI proof repeatable without host-specific policy forks.

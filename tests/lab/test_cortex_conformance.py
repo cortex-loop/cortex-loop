@@ -589,6 +589,11 @@ def test_run_gemini_cli_conformance_uses_locked_model_and_skips_resume_after_pas
 ) -> None:
     run_root = tmp_path
     commands: list[tuple[list[str], Path | None]] = []
+    monkeypatch.setattr(
+        conformance,
+        "choose_model",
+        lambda _provider, _lane: "auto",
+    )
 
     def _fake_run_command(command, *, cwd=None, env=None, timeout_seconds=180.0):
         _ = env, timeout_seconds
@@ -629,7 +634,10 @@ def test_run_gemini_cli_conformance_uses_locked_model_and_skips_resume_after_pas
     assert result.attempt_count == 1
     assert len(commands) == 1
     command, cwd = commands[0]
-    assert command[:3] == ["gemini", "-m", "gemini-2.5-pro"]
+    assert command[:2] == ["gemini", "-p"]
+    assert "Build me a small FastAPI app" in command[2]
+    assert "Follow this exact output contract" in command[2]
+    assert "-m" not in command
     assert cwd is not None
 
 
@@ -639,6 +647,11 @@ def test_run_gemini_cli_conformance_reuses_locked_model_on_resume(
 ) -> None:
     run_root = tmp_path
     commands: list[tuple[list[str], Path | None]] = []
+    monkeypatch.setattr(
+        conformance,
+        "choose_model",
+        lambda _provider, _lane: "auto",
+    )
     evaluations = iter(
         (
             {
@@ -698,9 +711,66 @@ def test_run_gemini_cli_conformance_reuses_locked_model_on_resume(
     assert len(commands) == 2
     first_command, _first_cwd = commands[0]
     second_command, _second_cwd = commands[1]
-    assert first_command[:3] == ["gemini", "-m", "gemini-2.5-pro"]
-    assert second_command[:3] == ["gemini", "-m", "gemini-2.5-pro"]
-    assert second_command[second_command.index("--resume") + 1] == "latest"
+    assert first_command[:2] == ["gemini", "-p"]
+    assert "Build me a small FastAPI app" in first_command[2]
+    assert "-m" not in first_command
+    assert "-m" not in second_command
+    assert second_command[second_command.index("--resume") + 1] == "gm-session"
+
+
+def test_run_gemini_cli_conformance_requires_resumable_session_id(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    run_root = tmp_path
+    commands: list[tuple[list[str], Path | None]] = []
+    monkeypatch.setattr(
+        conformance,
+        "choose_model",
+        lambda _provider, _lane: "auto",
+    )
+    monkeypatch.setattr(
+        conformance,
+        "_evaluate_operator_attempt",
+        lambda **_kwargs: {
+            "status": "executed",
+            "verification": VerificationOutcome(
+                status="failed",
+                failure_class="test_failed",
+                import_smoke_ok=True,
+                pytest_passed=4,
+                pytest_failed=7,
+            ),
+            "session_id": None,
+            "extraction_mode": "json_object",
+            "note": "executed",
+        },
+    )
+
+    def _fake_run_command(command, *, cwd=None, env=None, timeout_seconds=180.0):
+        _ = env, timeout_seconds
+        commands.append((list(command), cwd))
+        return {
+            "command": list(command),
+            "exit_code": 0,
+            "stdout": "",
+            "stderr": "",
+            "started_at": "t0",
+            "ended_at": "t1",
+        }
+
+    monkeypatch.setattr(conformance, "run_command", _fake_run_command)
+
+    result = conformance._run_gemini_cli_conformance(
+        contract_pack=conformance.active_contract_pack(),
+        run_root=run_root,
+    )
+
+    assert result.status == "divergent"
+    assert result.divergence_class == "surface_wiring"
+    assert result.repair_conversion == "failed_without_repair"
+    assert result.note == "Gemini operator surface did not return a resumable session id."
+    assert len(commands) == 1
 
 
 def test_evaluate_operator_attempt_classifies_empty_timeout_as_env_blocked() -> None:
