@@ -2,12 +2,26 @@
 
 from __future__ import annotations
 
+import ast
+from pathlib import Path
+
 from cortex.sre.families import SoftControlFamily
 from cortex.sre.mediation import (
     ReferenceMediationMode,
     finalize_reference_soft_control,
 )
 from cortex.sre.opportunities import HostNativeOpportunity
+
+
+REPO_ROOT = Path(__file__).resolve().parents[2]
+
+
+def _is_mediation_import(node: ast.AST) -> bool:
+    if isinstance(node, ast.Import):
+        return any(alias.name == "cortex.sre.mediation" for alias in node.names)
+    if isinstance(node, ast.ImportFrom):
+        return node.module in {"cortex.sre.mediation", "mediation"}
+    return False
 
 
 def test_reference_mediation_identity_mode_preserves_family_without_specialization() -> None:
@@ -102,3 +116,28 @@ def test_reference_mediation_experimental_mode_preserves_existing_degradation_fa
     )
     assert finalization.as_payload()["mediation_active"] is True
     assert finalization.as_payload()["mediation_identity"] is True
+
+
+def test_only_reference_scoring_imports_experimental_mediation_in_product_code() -> None:
+    offenders: list[str] = []
+    allowed_importers = {
+        "cortex/sre/reference_scoring.py",
+        "cortex/hosts/reference/runtime.py",
+        "cortex/hosts/reference/cli.py",
+    }
+    seen_importers: set[str] = set()
+
+    for path in (REPO_ROOT / "cortex").rglob("*.py"):
+        relative = path.relative_to(REPO_ROOT).as_posix()
+        if relative in {"cortex/sre/mediation.py", "cortex/sre/__init__.py"}:
+            continue
+        tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
+        if not any(_is_mediation_import(node) for node in ast.walk(tree)):
+            continue
+        if relative in allowed_importers:
+            seen_importers.add(relative)
+            continue
+        offenders.append(relative)
+
+    assert seen_importers == allowed_importers
+    assert offenders == []
