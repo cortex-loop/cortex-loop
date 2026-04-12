@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+from contextlib import contextmanager
 from pathlib import Path
 
 import pytest
@@ -316,7 +317,8 @@ def test_run_openai_operator_cli_conformance_skips_resume_after_pass(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     run_root = tmp_path
-    commands: list[tuple[list[str], Path | None]] = []
+    commands: list[tuple[list[str], Path | None, dict[str, str] | None]] = []
+    isolated_env = {"CODEX_HOME": "/tmp/cortex-codex-home"}
     monkeypatch.setattr(
         conformance,
         "resolve_auth_mode",
@@ -328,9 +330,15 @@ def test_run_openai_operator_cli_conformance_skips_resume_after_pass(
         lambda *_args, **_kwargs: "gpt-5.3-codex",
     )
 
+    @contextmanager
+    def _fake_isolated_codex_home_env():
+        yield isolated_env
+
+    monkeypatch.setattr(conformance, "isolated_codex_home_env", _fake_isolated_codex_home_env)
+
     def _fake_run_command(command, *, cwd=None, env=None, timeout_seconds=300.0):
-        _ = env, timeout_seconds
-        commands.append((list(command), cwd))
+        _ = timeout_seconds
+        commands.append((list(command), cwd, env))
         return {
             "command": list(command),
             "exit_code": 0,
@@ -366,7 +374,7 @@ def test_run_openai_operator_cli_conformance_skips_resume_after_pass(
     assert result.status == "conformant"
     assert result.attempt_count == 1
     assert len(commands) == 1
-    command, cwd = commands[0]
+    command, cwd, env = commands[0]
     assert command[:3] == ["codex", "exec", "--json"]
     prompt = command[-1]
     assert "Read-only workspace context follows." in prompt
@@ -376,6 +384,7 @@ def test_run_openai_operator_cli_conformance_skips_resume_after_pass(
     assert "Do not run tests, compile checks, syntax checks, or other validation shell commands." in prompt
     assert "Follow this exact output contract" not in prompt
     assert cwd is not None
+    assert env == isolated_env
 
 
 def test_run_openai_operator_cli_conformance_resumes_after_failed_first_attempt(
@@ -383,7 +392,8 @@ def test_run_openai_operator_cli_conformance_resumes_after_failed_first_attempt(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     run_root = tmp_path
-    commands: list[tuple[list[str], Path | None]] = []
+    commands: list[tuple[list[str], Path | None, dict[str, str] | None]] = []
+    isolated_env = {"CODEX_HOME": "/tmp/cortex-codex-home"}
     evaluations = iter(
         (
             {
@@ -424,9 +434,15 @@ def test_run_openai_operator_cli_conformance_resumes_after_failed_first_attempt(
         lambda *_args, **_kwargs: "gpt-5.3-codex",
     )
 
+    @contextmanager
+    def _fake_isolated_codex_home_env():
+        yield isolated_env
+
+    monkeypatch.setattr(conformance, "isolated_codex_home_env", _fake_isolated_codex_home_env)
+
     def _fake_run_command(command, *, cwd=None, env=None, timeout_seconds=300.0):
-        _ = env, timeout_seconds
-        commands.append((list(command), cwd))
+        _ = timeout_seconds
+        commands.append((list(command), cwd, env))
         return {
             "command": list(command),
             "exit_code": 0,
@@ -453,6 +469,8 @@ def test_run_openai_operator_cli_conformance_resumes_after_failed_first_attempt(
     assert len(commands) == 2
     assert commands[1][0][:4] == ["codex", "exec", "resume", "--json"]
     assert "--skip-git-repo-check" in commands[1][0]
+    assert commands[0][2] == isolated_env
+    assert commands[1][2] == isolated_env
 
 
 def test_run_openai_operator_cli_conformance_does_not_resume_after_output_invalid(
@@ -563,6 +581,44 @@ def test_run_openai_operator_cli_conformance_does_not_resume_after_timeout(
     assert result.first_attempt_failure_class == "operator_timeout"
     assert result.final_failure_class == "operator_timeout"
     assert len(commands) == 1
+
+
+def test_run_openai_operator_cli_conformance_returns_env_blocked_without_isolated_auth(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    run_root = tmp_path
+    monkeypatch.setattr(
+        conformance,
+        "resolve_auth_mode",
+        lambda _provider, _lane: "codex_cli",
+    )
+    monkeypatch.setattr(
+        conformance,
+        "choose_model",
+        lambda *_args, **_kwargs: "gpt-5.3-codex",
+    )
+
+    @contextmanager
+    def _missing_isolated_codex_home_env():
+        raise RuntimeError("OpenAI operator run requires ~/.codex/auth.json")
+        yield
+
+    monkeypatch.setattr(
+        conformance,
+        "isolated_codex_home_env",
+        _missing_isolated_codex_home_env,
+    )
+
+    result = conformance._run_openai_operator_cli_conformance(
+        contract_pack=conformance.active_contract_pack(),
+        run_root=run_root,
+    )
+
+    assert result.status == "env_blocked"
+    assert result.divergence_class == "env_blocked"
+    assert result.transport_failure_class == "auth_missing"
+    assert "~/.codex/auth.json" in (result.note or "")
 
 
 def test_run_claude_cli_conformance_uses_read_only_tools_and_skips_resume_after_pass(
@@ -1039,6 +1095,80 @@ def test_evaluate_operator_attempt_materializes_allowed_workspace_edits_for_open
     assert "after-from-workspace" in seen["result_text"]
 
 
+def test_evaluate_operator_attempt_materializes_changed_allowed_paths_in_contract_order(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    workspace = tmp_path / "workspace"
+    (workspace / "src" / "bookmarks_api").mkdir(parents=True)
+    (workspace / "tests").mkdir(parents=True)
+    for relative_path, content in {
+        "src/bookmarks_api/main.py": "before-main\n",
+        "src/bookmarks_api/models.py": "before-models\n",
+        "src/bookmarks_api/store.py": "before-store\n",
+        "tests/test_bookmarks_api.py": "baseline\n",
+    }.items():
+        target = workspace / relative_path
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_text(content, encoding="utf-8")
+    baseline = conformance.capture_workspace_state(workspace)
+    (workspace / "src" / "bookmarks_api" / "main.py").write_text(
+        "after-main\n",
+        encoding="utf-8",
+    )
+    (workspace / "src" / "bookmarks_api" / "store.py").write_text(
+        "after-store\n",
+        encoding="utf-8",
+    )
+    seen: dict[str, str] = {}
+
+    def _fake_verify(result_text, _work_contract):
+        seen["result_text"] = result_text
+        return {}, VerificationOutcome(status="passed", failure_class=None)
+
+    monkeypatch.setattr(conformance, "verify_verified_work_result", _fake_verify)
+    work_contract = WorkContract(
+        allowed_write_paths=(
+            "src/bookmarks_api/store.py",
+            "src/bookmarks_api/main.py",
+            "src/bookmarks_api/models.py",
+        ),
+        verification_profile="python_workspace_pytest_v1",
+        output_carrier="full_files",
+        max_repair_turns=1,
+    )
+
+    result = conformance._evaluate_operator_attempt(
+        provider="openai",
+        command_result={
+            "command": ["codex"],
+            "exit_code": 0,
+            "stdout": "\n".join(
+                (
+                    '{"type":"thread.started","thread_id":"thread-1"}',
+                    '{"type":"item.completed","item":{"type":"agent_message","text":"edited allowed workspace files directly"}}',
+                    '{"type":"item.completed","item":{"type":"file_change","changes":[{"path":"<temp-workspace>","kind":"update"}]}}',
+                )
+            ),
+            "stderr": "",
+        },
+        work_contract=work_contract,
+        project_root=workspace,
+        workspace_baseline=baseline,
+    )
+
+    assert result["status"] == "executed"
+    assert result["extraction_mode"] == "codex_workspace_materialized"
+    assert seen["result_text"] == (
+        "=== FILE: src/bookmarks_api/store.py ===\n"
+        "after-store\n"
+        "=== END FILE ===\n\n"
+        "=== FILE: src/bookmarks_api/main.py ===\n"
+        "after-main\n"
+        "=== END FILE ==="
+    )
+
+
 def test_evaluate_operator_attempt_rejects_disallowed_tracked_path_changes(
     tmp_path: Path,
 ) -> None:
@@ -1104,6 +1234,40 @@ def test_evaluate_operator_attempt_classifies_openai_timeout_after_work_events(
     assert result["status"] == "timed_out"
     assert result["transport_failure_class"] == "operator_timeout"
     assert result["extraction_mode"] == "jsonl"
+    assert "real work events" in result["note"]
+
+
+def test_evaluate_operator_attempt_classifies_realistic_openai_timeout_artifact(
+) -> None:
+    result = conformance._evaluate_operator_attempt(
+        provider="openai",
+        command_result={
+            "command": ["codex"],
+            "exit_code": 124,
+            "stdout": "\n".join(
+                (
+                    '{"type":"thread.started","thread_id":"thread-1"}',
+                    '{"type":"turn.started"}',
+                    '{"type":"item.completed","item":{"id":"item_0","type":"agent_message","text":"Implementing the FastAPI bookmark starter app now across the three allowed files."}}',
+                    '{"type":"item.completed","item":{"id":"item_1","type":"file_change","changes":[{"path":"<temp-workspace>","kind":"update"}],"status":"completed"}}',
+                    '{"type":"item.completed","item":{"id":"item_2","type":"agent_message","text":"Store behavior is in place; next I am connecting the FastAPI endpoints."}}',
+                )
+            ),
+            "stderr": "\n".join(
+                (
+                    "2026-04-12T16:15:53.808474Z  WARN codex_state::runtime: failed to open state db at $HOME/.codex/state_5.sqlite: migration 23 was previously applied but is missing in the resolved migrations",
+                    "2026-04-12T16:15:53.834731Z  WARN codex_rollout::list: state db discrepancy during find_thread_path_by_id_str_in_subdir: falling_back",
+                    "operator timed out before returning a publishable result",
+                )
+            ),
+        },
+        work_contract=_work_contract(),
+    )
+
+    assert result["status"] == "timed_out"
+    assert result["transport_failure_class"] == "operator_timeout"
+    assert result["extraction_mode"] == "jsonl"
+    assert "state db" in result["note"]
     assert "real work events" in result["note"]
 
 
