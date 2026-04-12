@@ -50,9 +50,9 @@ Answering stance:
 
 ## Current Focus
 
-- Current tracked train: `openai-operator-cli-proof-reliability`
-- Active quality/risk focus: The OpenAI operator_cli runner now captures native workspace edits lawfully and no longer falls into parse-invalid repair theater, but the default no-spend bookmarks proof still times out on attempt 1 after real file-change work events; dominant blocker: openai-operator-timeout.
-- Next product train after the current focus: `openai-operator-cli-proof-reliability`
+- Current tracked train: `support-conditioned-intervention-pricing-cross-host-shadow`
+- Active quality/risk focus: The default no-spend OpenAI operator_cli proof lane is re-earned: verified_work_bookmarks_v1, verified_work_normalize_port_v1, and verified_work_feature_flags_v1 now pass on attempt 1 with lawful codex_workspace_materialized capture. The next leverage is non-shipping cross-host shadow evidence for support-conditioned intervention pricing.
+- Next product train after the current focus: `support-conditioned-intervention-pricing-cross-host-shadow`
 
 ## Denominator / Completion Context
 
@@ -172,19 +172,19 @@ Workflow gates marked `required` are contractual gates checked by `repo_workflow
 
 ## Next Product Train
 
-- Train: `openai-operator-cli-proof-reliability`
-- Surface: `lab`
-- Executive benefit: Make the default no-spend OpenAI operator_cli proof route return bounded, parseable results so shipping truth is backed by live executable evidence instead of accepted history alone.
-- Why now: The runner now materializes allowed-path workspace edits and blocks repair-after-output-invalid, but the default bookmarks proof still times out before producing a bounded publishable first attempt; until that route is reliable, cross-host shadow evidence is not the highest-leverage seam.
-- Primary metric: `verified_work_bookmarks_v1 attempt 1 exits within 180 seconds with a publishable result or explicit env_blocked classification instead of operator_timeout after real work events on the default no-spend OpenAI operator_cli lane`
-- Guardrail: `no paid service lane, no host rollout changes, no packet-law widening, and no hiding operator failure behind stale accepted runs or longer timeouts`
-- Kill rule: `cut any fix that only lengthens timeouts, relabels operator_timeout as success or env_blocked, or shifts proof onto non-default paid surfaces`
+- Train: `support-conditioned-intervention-pricing-cross-host-shadow`
+- Surface: `experimental`
+- Executive benefit: Gather non-shipping cross-host evidence that support-conditioned intervention pricing improves control quality beyond the reference seam before any broader Q_mem rollout.
+- Why now: The default OpenAI operator_cli proof lane is now bounded and publishable across the verified-work packs, so the highest-leverage gap returns to testing whether reference-earned support-conditioned control carries real value on non-shipping host surfaces.
+- Primary metric: `shadow evaluation across Claude, Gemini, and reference shows repeat-stable support-conditioned intervention-pricing lift without changing commitment truth or shipping-default behavior`
+- Guardrail: `no non-reference Q_mem ingress, no shipping-default changes, no host-specific policy forks, and no hidden memory paths`
+- Kill rule: `cut any cross-host shadow seam that only shows lift through host-specific prompt tricks, contradiction smoothing, or changes to shipping-default behavior`
 
 ## Where To Work Next
 
-- Fix openai-operator-timeout on the default no-spend OpenAI operator_cli proof path before expanding into cross-host shadow evidence: on verified_work_bookmarks_v1 the first attempt now fails honestly as a bounded timeout after real file-change work events.
-- Keep shipping truth and the full executive denominator unchanged, but treat live-proof reliability as the current blocker because the runner is ahead of the default first-attempt completion behavior.
-- Work in lab and internal proof surfaces first: native OpenAI runner completion semantics, narrow Codex local-state or environment drag when it blocks first-attempt closure, and a clean attempt-1 publishable result or explicit env_blocked classification without longer timeouts or paid lanes.
+- Gather cross-host shadow evidence for support-conditioned intervention pricing before any non-reference Q_mem ingress or shipping-default change.
+- Keep the default no-spend OpenAI operator_cli lane as the trusted shipping proof route: bookmarks, normalize_port, and feature_flags now pass on attempt 1 with codex_workspace_materialized capture.
+- Work in experimental and lab proof surfaces first: shadow scoring on Claude, Gemini, and reference, contradiction-preserving support memory evaluation, and explicit proof that any lift is real without host-specific policy forks.
 
 ## Canonical Proof
 

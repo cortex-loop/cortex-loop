@@ -28,6 +28,7 @@ from lab.openai_host_control_experiments import (  # noqa: E402
     OpenAIHostControlAblationConfig,
     run_openai_host_control_experiment,
 )
+from lab.openai_operator_cli import isolated_codex_home_env  # noqa: E402
 from cortex.runtime.verified_work_runtime import (  # noqa: E402
     build_verified_work_input_text,
     build_verified_work_instructions,
@@ -888,168 +889,185 @@ def _run_openai_operator_cli_conformance(
     artifact_dir.mkdir(parents=True, exist_ok=True)
     auth_mode = resolve_auth_mode("openai", "operator")
     chosen_model = choose_model("openai", "operator")
-    with _stage_contract_pack_workspace(
-        contract_pack,
-        prefix="cortex-conformance-openai-",
-    ) as workspace:
-        initial_snapshot = capture_workspace_state(workspace)
-        initial_prompt = _render_openai_native_operator_prompt(
-            task_prompt=contract_pack.prompt_text,
-            work_contract=contract_pack.work_contract,
-        )
-        initial = _run_openai_operator_command(
-            prompt=initial_prompt,
-            project_root=workspace,
-            model=chosen_model,
-            auth_mode=auth_mode,
-            timeout_seconds=_OPENAI_OPERATOR_TIMEOUT_SECONDS,
-        )
-        first_failure = classify_failure(f"{initial['stdout']}\n{initial['stderr']}")
-        fallback_model = choose_model(
-            "openai",
-            "operator",
-            first_failure=first_failure,
-            current_model=chosen_model,
-        )
-        if fallback_model != chosen_model:
-            chosen_model = fallback_model
-            initial = _run_openai_operator_command(
-                prompt=initial_prompt,
-                project_root=workspace,
-                model=chosen_model,
-                auth_mode=auth_mode,
-                timeout_seconds=_OPENAI_OPERATOR_TIMEOUT_SECONDS,
-            )
-        write_json(artifact_dir / "attempt1.json", initial)
-        result = _evaluate_operator_attempt(
-            provider="openai",
-            command_result=initial,
-            work_contract=contract_pack.work_contract,
-            project_root=workspace,
-            workspace_baseline=initial_snapshot,
-        )
-        if result["status"] == "env_blocked":
-            return ConformanceRunResult(
-                brain="openai",
-                surface="operator_cli",
-                contract_pack=contract_pack.contract_pack,
-                status="env_blocked",
-                divergence_class="env_blocked",
-                note=result["note"],
-                transport_failure_class=result["transport_failure_class"],
-                artifact_relpath=_artifact_relpath(artifact_dir),
-            )
-        if result["status"] == "timed_out":
-            return ConformanceRunResult(
-                brain="openai",
-                surface="operator_cli",
-                contract_pack=contract_pack.contract_pack,
-                status="divergent",
-                divergence_class="surface_wiring",
-                first_attempt_status="timeout",
-                first_attempt_failure_class="operator_timeout",
-                final_failure_class="operator_timeout",
-                verification_status="failed",
-                parseable=False,
-                attempt_count=1,
-                repair_conversion="failed_without_repair",
-                extraction_mode=result["extraction_mode"],
-                note=f"model: {chosen_model}; {result['note']}",
-                transport_failure_class=result["transport_failure_class"],
-                artifact_relpath=_artifact_relpath(artifact_dir),
-            )
-        first_outcome = result["verification"]
-        assert isinstance(first_outcome, VerificationOutcome)
-        first_session_id = result["session_id"]
-        final_outcome = first_outcome
-        attempt_count = 1
-        final_extraction_mode = result["extraction_mode"]
-        final_note = result["note"]
-        if first_outcome.failure_class in {"import_smoke_failed", "test_failed"}:
-            if not isinstance(first_session_id, str) or not first_session_id.strip():
-                return ConformanceRunResult(
-                    brain="openai",
-                    surface="operator_cli",
-                    contract_pack=contract_pack.contract_pack,
-                    status="divergent",
-                    divergence_class="surface_wiring",
-                    first_attempt_status=first_outcome.status,
-                    first_attempt_failure_class=first_outcome.failure_class,
-                    final_failure_class=first_outcome.failure_class,
-                    verification_status=first_outcome.status,
-                    parseable=first_outcome.parse_error is None,
-                    import_smoke_ok=first_outcome.import_smoke_ok,
-                    pytest_passed=first_outcome.pytest_passed,
-                    pytest_failed=first_outcome.pytest_failed,
-                    attempt_count=1,
-                    repair_conversion="failed_without_repair",
-                    extraction_mode=result["extraction_mode"],
-                    note="OpenAI operator surface did not return a resumable thread id.",
-                    artifact_relpath=_artifact_relpath(artifact_dir),
+    try:
+        with isolated_codex_home_env() as operator_env:
+            with _stage_contract_pack_workspace(
+                contract_pack,
+                prefix="cortex-conformance-openai-",
+            ) as workspace:
+                initial_snapshot = capture_workspace_state(workspace)
+                initial_prompt = _render_openai_native_operator_prompt(
+                    task_prompt=contract_pack.prompt_text,
+                    work_contract=contract_pack.work_contract,
                 )
-            preservation_state, repair_contract = _repair_preservation_state_and_contract(
-                contract_pack.work_contract,
-                first_outcome,
-            )
-            repair_snapshot = capture_workspace_state(workspace)
-            repair_ticket = _render_openai_native_operator_prompt(
-                task_prompt=build_verified_work_repair_ticket(preservation_state),
-                work_contract=repair_contract,
-            )
-            resumed = _run_openai_operator_command(
-                prompt=repair_ticket,
-                project_root=workspace,
-                model=chosen_model,
-                auth_mode=auth_mode,
-                resume_session=first_session_id,
-                timeout_seconds=_OPENAI_OPERATOR_TIMEOUT_SECONDS,
-            )
-            write_json(artifact_dir / "attempt2.json", resumed)
-            resumed_result = _evaluate_operator_attempt(
-                provider="openai",
-                command_result=resumed,
-                work_contract=contract_pack.work_contract,
-                project_root=workspace,
-                workspace_baseline=repair_snapshot,
-            )
-            if resumed_result["status"] == "env_blocked":
-                return ConformanceRunResult(
-                    brain="openai",
-                    surface="operator_cli",
-                    contract_pack=contract_pack.contract_pack,
-                    status="env_blocked",
-                    divergence_class="env_blocked",
-                    note=resumed_result["note"],
-                    transport_failure_class=resumed_result["transport_failure_class"],
-                    artifact_relpath=_artifact_relpath(artifact_dir),
+                initial = _run_openai_operator_command(
+                    prompt=initial_prompt,
+                    project_root=workspace,
+                    model=chosen_model,
+                    auth_mode=auth_mode,
+                    env=operator_env,
+                    timeout_seconds=_OPENAI_OPERATOR_TIMEOUT_SECONDS,
                 )
-            if resumed_result["status"] == "timed_out":
-                return ConformanceRunResult(
-                    brain="openai",
-                    surface="operator_cli",
-                    contract_pack=contract_pack.contract_pack,
-                    status="divergent",
-                    divergence_class="surface_wiring",
-                    first_attempt_status=first_outcome.status,
-                    first_attempt_failure_class=first_outcome.failure_class,
-                    final_failure_class="operator_timeout",
-                    verification_status="failed",
-                    parseable=False,
-                    import_smoke_ok=first_outcome.import_smoke_ok,
-                    pytest_passed=first_outcome.pytest_passed,
-                    pytest_failed=first_outcome.pytest_failed,
-                    attempt_count=2,
-                    repair_conversion="repair_attempt_no_recovery",
-                    extraction_mode=resumed_result["extraction_mode"],
-                    note=f"model: {chosen_model}; {resumed_result['note']}",
-                    transport_failure_class=resumed_result["transport_failure_class"],
-                    artifact_relpath=_artifact_relpath(artifact_dir),
+                first_failure = classify_failure(f"{initial['stdout']}\n{initial['stderr']}")
+                fallback_model = choose_model(
+                    "openai",
+                    "operator",
+                    first_failure=first_failure,
+                    current_model=chosen_model,
                 )
-            final_outcome = resumed_result["verification"]
-            assert isinstance(final_outcome, VerificationOutcome)
-            attempt_count = 2
-            final_extraction_mode = resumed_result["extraction_mode"]
-            final_note = resumed_result["note"]
+                if fallback_model != chosen_model:
+                    chosen_model = fallback_model
+                    initial = _run_openai_operator_command(
+                        prompt=initial_prompt,
+                        project_root=workspace,
+                        model=chosen_model,
+                        auth_mode=auth_mode,
+                        env=operator_env,
+                        timeout_seconds=_OPENAI_OPERATOR_TIMEOUT_SECONDS,
+                    )
+                write_json(artifact_dir / "attempt1.json", initial)
+                result = _evaluate_operator_attempt(
+                    provider="openai",
+                    command_result=initial,
+                    work_contract=contract_pack.work_contract,
+                    project_root=workspace,
+                    workspace_baseline=initial_snapshot,
+                )
+                if result["status"] == "env_blocked":
+                    return ConformanceRunResult(
+                        brain="openai",
+                        surface="operator_cli",
+                        contract_pack=contract_pack.contract_pack,
+                        status="env_blocked",
+                        divergence_class="env_blocked",
+                        note=result["note"],
+                        transport_failure_class=result["transport_failure_class"],
+                        artifact_relpath=_artifact_relpath(artifact_dir),
+                    )
+                if result["status"] == "timed_out":
+                    return ConformanceRunResult(
+                        brain="openai",
+                        surface="operator_cli",
+                        contract_pack=contract_pack.contract_pack,
+                        status="divergent",
+                        divergence_class="surface_wiring",
+                        first_attempt_status="timeout",
+                        first_attempt_failure_class="operator_timeout",
+                        final_failure_class="operator_timeout",
+                        verification_status="failed",
+                        parseable=False,
+                        attempt_count=1,
+                        repair_conversion="failed_without_repair",
+                        extraction_mode=result["extraction_mode"],
+                        note=f"model: {chosen_model}; {result['note']}",
+                        transport_failure_class=result["transport_failure_class"],
+                        artifact_relpath=_artifact_relpath(artifact_dir),
+                    )
+                first_outcome = result["verification"]
+                assert isinstance(first_outcome, VerificationOutcome)
+                first_session_id = result["session_id"]
+                final_outcome = first_outcome
+                attempt_count = 1
+                final_extraction_mode = result["extraction_mode"]
+                final_note = result["note"]
+                if first_outcome.failure_class in {"import_smoke_failed", "test_failed"}:
+                    if not isinstance(first_session_id, str) or not first_session_id.strip():
+                        return ConformanceRunResult(
+                            brain="openai",
+                            surface="operator_cli",
+                            contract_pack=contract_pack.contract_pack,
+                            status="divergent",
+                            divergence_class="surface_wiring",
+                            first_attempt_status=first_outcome.status,
+                            first_attempt_failure_class=first_outcome.failure_class,
+                            final_failure_class=first_outcome.failure_class,
+                            verification_status=first_outcome.status,
+                            parseable=first_outcome.parse_error is None,
+                            import_smoke_ok=first_outcome.import_smoke_ok,
+                            pytest_passed=first_outcome.pytest_passed,
+                            pytest_failed=first_outcome.pytest_failed,
+                            attempt_count=1,
+                            repair_conversion="failed_without_repair",
+                            extraction_mode=result["extraction_mode"],
+                            note="OpenAI operator surface did not return a resumable thread id.",
+                            artifact_relpath=_artifact_relpath(artifact_dir),
+                        )
+                    preservation_state, repair_contract = _repair_preservation_state_and_contract(
+                        contract_pack.work_contract,
+                        first_outcome,
+                    )
+                    repair_snapshot = capture_workspace_state(workspace)
+                    repair_ticket = _render_openai_native_operator_prompt(
+                        task_prompt=build_verified_work_repair_ticket(preservation_state),
+                        work_contract=repair_contract,
+                    )
+                    resumed = _run_openai_operator_command(
+                        prompt=repair_ticket,
+                        project_root=workspace,
+                        model=chosen_model,
+                        auth_mode=auth_mode,
+                        env=operator_env,
+                        resume_session=first_session_id,
+                        timeout_seconds=_OPENAI_OPERATOR_TIMEOUT_SECONDS,
+                    )
+                    write_json(artifact_dir / "attempt2.json", resumed)
+                    resumed_result = _evaluate_operator_attempt(
+                        provider="openai",
+                        command_result=resumed,
+                        work_contract=contract_pack.work_contract,
+                        project_root=workspace,
+                        workspace_baseline=repair_snapshot,
+                    )
+                    if resumed_result["status"] == "env_blocked":
+                        return ConformanceRunResult(
+                            brain="openai",
+                            surface="operator_cli",
+                            contract_pack=contract_pack.contract_pack,
+                            status="env_blocked",
+                            divergence_class="env_blocked",
+                            note=resumed_result["note"],
+                            transport_failure_class=resumed_result["transport_failure_class"],
+                            artifact_relpath=_artifact_relpath(artifact_dir),
+                        )
+                    if resumed_result["status"] == "timed_out":
+                        return ConformanceRunResult(
+                            brain="openai",
+                            surface="operator_cli",
+                            contract_pack=contract_pack.contract_pack,
+                            status="divergent",
+                            divergence_class="surface_wiring",
+                            first_attempt_status=first_outcome.status,
+                            first_attempt_failure_class=first_outcome.failure_class,
+                            final_failure_class="operator_timeout",
+                            verification_status="failed",
+                            parseable=False,
+                            import_smoke_ok=first_outcome.import_smoke_ok,
+                            pytest_passed=first_outcome.pytest_passed,
+                            pytest_failed=first_outcome.pytest_failed,
+                            attempt_count=2,
+                            repair_conversion="repair_attempt_no_recovery",
+                            extraction_mode=resumed_result["extraction_mode"],
+                            note=f"model: {chosen_model}; {resumed_result['note']}",
+                            transport_failure_class=resumed_result["transport_failure_class"],
+                            artifact_relpath=_artifact_relpath(artifact_dir),
+                        )
+                    final_outcome = resumed_result["verification"]
+                    assert isinstance(final_outcome, VerificationOutcome)
+                    attempt_count = 2
+                    final_extraction_mode = resumed_result["extraction_mode"]
+                    final_note = resumed_result["note"]
+    except RuntimeError as exc:
+        failure_class = classify_failure(str(exc)) or "auth_missing"
+        return ConformanceRunResult(
+            brain="openai",
+            surface="operator_cli",
+            contract_pack=contract_pack.contract_pack,
+            status="env_blocked",
+            divergence_class="env_blocked",
+            note=str(exc),
+            transport_failure_class=failure_class,
+            artifact_relpath=_artifact_relpath(artifact_dir),
+        )
 
     return _result_from_verification(
         brain="openai",
@@ -1583,6 +1601,7 @@ def _run_openai_operator_command(
     project_root: Path,
     model: str,
     auth_mode: str,
+    env: Mapping[str, str] | None = None,
     resume_session: str | None = None,
     timeout_seconds: float = _OPENAI_OPERATOR_TIMEOUT_SECONDS,
 ) -> dict[str, Any]:
@@ -1620,7 +1639,12 @@ def _run_openai_operator_command(
             model,
             prompt,
         ]
-    return run_command(command, cwd=project_root, timeout_seconds=timeout_seconds)
+    return run_command(
+        command,
+        cwd=project_root,
+        env=dict(env) if env is not None else None,
+        timeout_seconds=timeout_seconds,
+    )
 
 
 def _repair_preservation_state_and_contract(

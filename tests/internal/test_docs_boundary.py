@@ -221,17 +221,17 @@ def test_status_registry_is_complete_and_stable() -> None:
         "reference": "reference_cli",
     }
     assert status["conformance_summary"]["shipping_default"] == "openai:operator_cli"
-    assert status["work_today"]["slug"] == "openai-operator-cli-proof-reliability"
-    assert "default no-spend bookmarks proof still times out on attempt 1" in status["work_today"]["note"]
-    assert "openai-operator-timeout" in status["work_today"]["note"]
-    assert status["next_product_train"]["slug"] == "openai-operator-cli-proof-reliability"
-    assert status["next_product_train"]["surface"] == "lab"
-    assert "default no-spend OpenAI operator_cli proof route" in status["next_product_train"]["executive_benefit"]
-    assert "still times out before producing a bounded publishable first attempt" in status["next_product_train"]["why_now"]
-    assert "instead of operator_timeout after real work events" in status["next_product_train"]["primary_metric"]
-    assert "Fix openai-operator-timeout" in status["where_to_work"][0]
-    assert "runner is ahead of the default first-attempt completion behavior" in status["where_to_work"][1]
-    assert "native OpenAI runner completion semantics" in status["where_to_work"][2]
+    assert status["work_today"]["slug"] == "support-conditioned-intervention-pricing-cross-host-shadow"
+    assert "default no-spend OpenAI operator_cli proof lane is re-earned" in status["work_today"]["note"]
+    assert "codex_workspace_materialized" in status["work_today"]["note"]
+    assert status["next_product_train"]["slug"] == "support-conditioned-intervention-pricing-cross-host-shadow"
+    assert status["next_product_train"]["surface"] == "experimental"
+    assert "support-conditioned intervention pricing" in status["next_product_train"]["executive_benefit"]
+    assert "default OpenAI operator_cli proof lane is now bounded and publishable" in status["next_product_train"]["why_now"]
+    assert "shadow evaluation across Claude, Gemini, and reference" in status["next_product_train"]["primary_metric"]
+    assert "Gather cross-host shadow evidence" in status["where_to_work"][0]
+    assert "trusted shipping proof route" in status["where_to_work"][1]
+    assert "shadow scoring on Claude, Gemini, and reference" in status["where_to_work"][2]
     closure_gates = {gate["id"]: gate for gate in status["closure_gates"]}
     assert closure_gates["main_synced"]["status"] == "required"
     assert closure_gates["cleanup_report"]["status"] == "required"
@@ -260,14 +260,14 @@ def test_generated_status_doc_includes_system_map_and_next_product_train() -> No
     assert "Active quality/risk focus" in text
     assert "## Packet To Code" in text
     assert "## Next Product Train" in text
-    assert "`openai-operator-cli-proof-reliability`" in text
-    assert "default no-spend OpenAI operator_cli proof route" in text
+    assert "`support-conditioned-intervention-pricing-cross-host-shadow`" in text
+    assert "support-conditioned intervention pricing" in text
     assert "Shipping Product Lane\\nopenai:operator_cli" in text or "Shipping Product Lane" in text
     assert "Shipping default: `openai:operator_cli`" in text
     assert "Workflow gates marked `required` are contractual gates checked by `repo_workflow.py`" in text
     assert "| `main_synced` | `required` |" in text
     assert "| `cleanup_report` | `required` |" in text
-    assert "default no-spend bookmarks proof still times out on attempt 1" in text
+    assert "default no-spend OpenAI operator_cli proof lane is re-earned" in text
     assert "proves support-side lift" not in text
 
 
