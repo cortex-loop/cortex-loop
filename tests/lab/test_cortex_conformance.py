@@ -368,6 +368,13 @@ def test_run_openai_operator_cli_conformance_skips_resume_after_pass(
     assert len(commands) == 1
     command, cwd = commands[0]
     assert command[:3] == ["codex", "exec", "--json"]
+    prompt = command[-1]
+    assert "Read-only workspace context follows." in prompt
+    assert "=== CONTEXT FILE: src/bookmarks_api/main.py ===" in prompt
+    assert "=== CONTEXT FILE: tests/test_bookmarks_api.py ===" in prompt
+    assert "Operate directly on the staged workspace." in prompt
+    assert "Do not run tests, compile checks, syntax checks, or other validation shell commands." in prompt
+    assert "Follow this exact output contract" not in prompt
     assert cwd is not None
 
 
@@ -446,6 +453,116 @@ def test_run_openai_operator_cli_conformance_resumes_after_failed_first_attempt(
     assert len(commands) == 2
     assert commands[1][0][:4] == ["codex", "exec", "resume", "--json"]
     assert "--skip-git-repo-check" in commands[1][0]
+
+
+def test_run_openai_operator_cli_conformance_does_not_resume_after_output_invalid(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    run_root = tmp_path
+    commands: list[tuple[list[str], Path | None]] = []
+    monkeypatch.setattr(
+        conformance,
+        "resolve_auth_mode",
+        lambda _provider, _lane: "codex_cli",
+    )
+    monkeypatch.setattr(
+        conformance,
+        "choose_model",
+        lambda *_args, **_kwargs: "gpt-5.3-codex",
+    )
+
+    def _fake_run_command(command, *, cwd=None, env=None, timeout_seconds=180.0):
+        _ = env, timeout_seconds
+        commands.append((list(command), cwd))
+        return {
+            "command": list(command),
+            "exit_code": 0,
+            "stdout": "",
+            "stderr": "",
+            "started_at": "t0",
+            "ended_at": "t1",
+        }
+
+    monkeypatch.setattr(conformance, "run_command", _fake_run_command)
+    monkeypatch.setattr(
+        conformance,
+        "_evaluate_operator_attempt",
+        lambda **_kwargs: {
+            "status": "executed",
+            "verification": VerificationOutcome(
+                status="failed",
+                failure_class="output_invalid",
+                parse_error="unexpected text outside protocol blocks: nope",
+            ),
+            "session_id": "thread-1",
+            "extraction_mode": "raw_fallback",
+            "note": "executed",
+        },
+    )
+
+    result = conformance._run_openai_operator_cli_conformance(
+        contract_pack=conformance.active_contract_pack(),
+        run_root=run_root,
+    )
+
+    assert result.status == "divergent"
+    assert result.attempt_count == 1
+    assert result.final_failure_class == "output_invalid"
+    assert len(commands) == 1
+
+
+def test_run_openai_operator_cli_conformance_does_not_resume_after_timeout(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    run_root = tmp_path
+    commands: list[tuple[list[str], Path | None]] = []
+    monkeypatch.setattr(
+        conformance,
+        "resolve_auth_mode",
+        lambda _provider, _lane: "codex_cli",
+    )
+    monkeypatch.setattr(
+        conformance,
+        "choose_model",
+        lambda *_args, **_kwargs: "gpt-5.3-codex",
+    )
+
+    def _fake_run_command(command, *, cwd=None, env=None, timeout_seconds=180.0):
+        _ = env, timeout_seconds
+        commands.append((list(command), cwd))
+        return {
+            "command": list(command),
+            "exit_code": 124,
+            "stdout": "",
+            "stderr": "",
+            "started_at": "t0",
+            "ended_at": "t1",
+        }
+
+    monkeypatch.setattr(conformance, "run_command", _fake_run_command)
+    monkeypatch.setattr(
+        conformance,
+        "_evaluate_operator_attempt",
+        lambda **_kwargs: {
+            "status": "timed_out",
+            "transport_failure_class": "operator_timeout",
+            "extraction_mode": "jsonl",
+            "note": "operator timed out before returning a publishable result",
+        },
+    )
+
+    result = conformance._run_openai_operator_cli_conformance(
+        contract_pack=conformance.active_contract_pack(),
+        run_root=run_root,
+    )
+
+    assert result.status == "divergent"
+    assert result.attempt_count == 1
+    assert result.first_attempt_failure_class == "operator_timeout"
+    assert result.final_failure_class == "operator_timeout"
+    assert len(commands) == 1
 
 
 def test_run_claude_cli_conformance_uses_read_only_tools_and_skips_resume_after_pass(
@@ -815,6 +932,179 @@ def test_evaluate_operator_attempt_preserves_structured_timeout_output(
     assert result["status"] == "executed"
     assert result["extraction_mode"] == "jsonl"
     assert "operator timeout" in result["note"]
+
+
+def test_evaluate_operator_attempt_prefers_explicit_protocol_blocks_over_workspace_materialization(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    workspace = tmp_path / "workspace"
+    (workspace / "src" / "bookmarks_api").mkdir(parents=True)
+    (workspace / "tests").mkdir(parents=True)
+    (workspace / "src" / "bookmarks_api" / "main.py").write_text(
+        "before\n",
+        encoding="utf-8",
+    )
+    (workspace / "tests" / "test_bookmarks_api.py").write_text(
+        "baseline\n",
+        encoding="utf-8",
+    )
+    baseline = conformance.capture_workspace_state(workspace)
+    (workspace / "src" / "bookmarks_api" / "main.py").write_text(
+        "after-from-workspace\n",
+        encoding="utf-8",
+    )
+    seen: dict[str, str] = {}
+
+    def _fake_verify(result_text, _work_contract):
+        seen["result_text"] = result_text
+        return {}, VerificationOutcome(status="passed", failure_class=None)
+
+    monkeypatch.setattr(conformance, "verify_verified_work_result", _fake_verify)
+
+    result = conformance._evaluate_operator_attempt(
+        provider="openai",
+        command_result={
+            "command": ["codex"],
+            "exit_code": 0,
+            "stdout": "\n".join(
+                (
+                    '{"type":"thread.started","thread_id":"thread-1"}',
+                    '{"result":"=== FILE: src/bookmarks_api/main.py ===\\nfrom-protocol\\n=== END FILE ==="}',
+                )
+            ),
+            "stderr": "",
+        },
+        work_contract=_work_contract(),
+        project_root=workspace,
+        workspace_baseline=baseline,
+    )
+
+    assert result["status"] == "executed"
+    assert result["extraction_mode"] == "jsonl"
+    assert seen["result_text"] == (
+        "=== FILE: src/bookmarks_api/main.py ===\nfrom-protocol\n=== END FILE ==="
+    )
+
+
+def test_evaluate_operator_attempt_materializes_allowed_workspace_edits_for_openai(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    workspace = tmp_path / "workspace"
+    (workspace / "src" / "bookmarks_api").mkdir(parents=True)
+    (workspace / "tests").mkdir(parents=True)
+    (workspace / "src" / "bookmarks_api" / "main.py").write_text(
+        "before\n",
+        encoding="utf-8",
+    )
+    (workspace / "tests" / "test_bookmarks_api.py").write_text(
+        "baseline\n",
+        encoding="utf-8",
+    )
+    baseline = conformance.capture_workspace_state(workspace)
+    (workspace / "src" / "bookmarks_api" / "main.py").write_text(
+        "after-from-workspace\n",
+        encoding="utf-8",
+    )
+    seen: dict[str, str] = {}
+
+    def _fake_verify(result_text, _work_contract):
+        seen["result_text"] = result_text
+        return {}, VerificationOutcome(status="passed", failure_class=None)
+
+    monkeypatch.setattr(conformance, "verify_verified_work_result", _fake_verify)
+
+    result = conformance._evaluate_operator_attempt(
+        provider="openai",
+        command_result={
+            "command": ["codex"],
+            "exit_code": 0,
+            "stdout": "\n".join(
+                (
+                    '{"type":"thread.started","thread_id":"thread-1"}',
+                    '{"type":"item.completed","item":{"type":"agent_message","text":"editing workspace directly"}}',
+                )
+            ),
+            "stderr": "",
+        },
+        work_contract=_work_contract(),
+        project_root=workspace,
+        workspace_baseline=baseline,
+    )
+
+    assert result["status"] == "executed"
+    assert result["extraction_mode"] == "codex_workspace_materialized"
+    assert "=== FILE: src/bookmarks_api/main.py ===" in seen["result_text"]
+    assert "after-from-workspace" in seen["result_text"]
+
+
+def test_evaluate_operator_attempt_rejects_disallowed_tracked_path_changes(
+    tmp_path: Path,
+) -> None:
+    workspace = tmp_path / "workspace"
+    (workspace / "src" / "bookmarks_api").mkdir(parents=True)
+    (workspace / "tests").mkdir(parents=True)
+    (workspace / "src" / "bookmarks_api" / "main.py").write_text(
+        "before\n",
+        encoding="utf-8",
+    )
+    (workspace / "tests" / "test_bookmarks_api.py").write_text(
+        "baseline\n",
+        encoding="utf-8",
+    )
+    baseline = conformance.capture_workspace_state(workspace)
+    (workspace / "tests" / "test_bookmarks_api.py").write_text(
+        "changed-disallowed\n",
+        encoding="utf-8",
+    )
+
+    result = conformance._evaluate_operator_attempt(
+        provider="openai",
+        command_result={
+            "command": ["codex"],
+            "exit_code": 0,
+            "stdout": "\n".join(
+                (
+                    '{"type":"thread.started","thread_id":"thread-1"}',
+                    '{"type":"item.completed","item":{"type":"command_execution","command":"sed","aggregated_output":"baseline"}}',
+                )
+            ),
+            "stderr": "",
+        },
+        work_contract=_work_contract(),
+        project_root=workspace,
+        workspace_baseline=baseline,
+    )
+
+    verification = result["verification"]
+    assert isinstance(verification, VerificationOutcome)
+    assert verification.failure_class == "output_invalid"
+    assert "disallowed path changes" in result["note"]
+
+
+def test_evaluate_operator_attempt_classifies_openai_timeout_after_work_events(
+) -> None:
+    result = conformance._evaluate_operator_attempt(
+        provider="openai",
+        command_result={
+            "command": ["codex"],
+            "exit_code": 124,
+            "stdout": "\n".join(
+                (
+                    '{"type":"thread.started","thread_id":"thread-1"}',
+                    '{"type":"item.completed","item":{"type":"command_execution","command":"sed","aggregated_output":"baseline"}}',
+                )
+            ),
+            "stderr": "",
+        },
+        work_contract=_work_contract(),
+    )
+
+    assert result["status"] == "timed_out"
+    assert result["transport_failure_class"] == "operator_timeout"
+    assert result["extraction_mode"] == "jsonl"
+    assert "real work events" in result["note"]
 
 
 def test_next_decision_prefers_shipping_default_gap_once_non_shipping_divergence_clears() -> None:

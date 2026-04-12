@@ -222,16 +222,16 @@ def test_status_registry_is_complete_and_stable() -> None:
     }
     assert status["conformance_summary"]["shipping_default"] == "openai:operator_cli"
     assert status["work_today"]["slug"] == "openai-operator-cli-proof-reliability"
-    assert "default no-spend OpenAI operator_cli bookmarks proof" in status["work_today"]["note"]
-    assert "parse-invalid output before falling into repair" in status["work_today"]["note"]
+    assert "default no-spend bookmarks proof still times out on attempt 1" in status["work_today"]["note"]
+    assert "openai-operator-timeout" in status["work_today"]["note"]
     assert status["next_product_train"]["slug"] == "openai-operator-cli-proof-reliability"
     assert status["next_product_train"]["surface"] == "lab"
     assert "default no-spend OpenAI operator_cli proof route" in status["next_product_train"]["executive_benefit"]
-    assert "default bookmarks proof hit the full first-attempt timeout" in status["next_product_train"]["why_now"]
-    assert "bounded publishable result or explicit env_blocked classification" in status["next_product_train"]["primary_metric"]
-    assert "Fix the default no-spend OpenAI operator_cli proof path" in status["where_to_work"][0]
-    assert "live-proof reliability as the current blocker" in status["where_to_work"][1]
-    assert "bounded attempt artifacts, parseable operator output" in status["where_to_work"][2]
+    assert "still times out before producing a bounded publishable first attempt" in status["next_product_train"]["why_now"]
+    assert "instead of operator_timeout after real work events" in status["next_product_train"]["primary_metric"]
+    assert "Fix openai-operator-timeout" in status["where_to_work"][0]
+    assert "runner is ahead of the default first-attempt completion behavior" in status["where_to_work"][1]
+    assert "native OpenAI runner completion semantics" in status["where_to_work"][2]
     closure_gates = {gate["id"]: gate for gate in status["closure_gates"]}
     assert closure_gates["main_synced"]["status"] == "required"
     assert closure_gates["cleanup_report"]["status"] == "required"
@@ -267,7 +267,7 @@ def test_generated_status_doc_includes_system_map_and_next_product_train() -> No
     assert "Workflow gates marked `required` are contractual gates checked by `repo_workflow.py`" in text
     assert "| `main_synced` | `required` |" in text
     assert "| `cleanup_report` | `required` |" in text
-    assert "default bookmarks proof hit the full first-attempt timeout" in text
+    assert "default no-spend bookmarks proof still times out on attempt 1" in text
     assert "proves support-side lift" not in text
 
 
