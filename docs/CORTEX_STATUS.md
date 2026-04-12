@@ -44,10 +44,10 @@ Answering stance:
 
 ## Executive Completion
 
-- Current full-executive completion: `90%`
+- Current full-executive completion: `100%`
 - Shippable threshold for the full executive: `85%`
 - Gap to shippable full-executive read: `0` points
-- Status mix: `7` landed, `0` partial, `1` north_star
+- Status mix: `8` landed, `0` partial, `0` north_star
 - Scoring rule: `landed=100%`, `partial=30%`, `north_star=0%`
 - This score measures progress toward the full executive denominator, not just the current shipping lane.
 
@@ -57,7 +57,7 @@ When user asks where Cortex is at:
 - Then name the next highest-leverage rows to raise the score without drifting from Cortex law.
 
 Fastest route to raise the score next:
-- `Offline consolidation and support geometry`: `+10` points if landed. Only the AUX support-geometry row remains in the denominator, and it must earn broader lawful support-side value before any runtime promotion.
+- `Broaden support-conditioned intervention pricing beyond reference-only replay`: `+0` points if landed. The full executive denominator is now landed at 100%; the next leverage is quality, breadth, and stronger non-shipping evidence without inventing a new denominator row.
 
 ## Bio-To-Code Matrix
 
@@ -70,7 +70,7 @@ Fastest route to raise the score next:
 | Intervention pricing versus neutrality | Deciding when to intervene, stay neutral, or stop | `landed` | `10` | `cortex/sre`, `cortex/aux` | `tests/product`, `tests/experimental` | Keep reference-governed intervention pricing stable while default shipping behavior stays zero-memory and any nonzero Q_mem or chi_t lift comes only from explicit AUX-owned support priors. |
 | Blocker surfacing and goal-debt management | Noticing unresolved blockers and unfinished intentions | `landed` | `10` | `cortex/sre`, `cortex/hosts/openai`, `cortex/hosts/claude`, `cortex/hosts/gemini`, `cortex/hosts/reference` | `tests/product`, `tests/conformance` | Keep typed goal-debt and closure-pressure state stable across hosts while support-side augmentation remains explicit and non-sovereign. |
 | Multi-host executive continuity | One executive across different brains and contexts | `landed` | `15` | `cortex/hosts/openai`, `cortex/hosts/claude`, `cortex/hosts/gemini`, `cortex/hosts/reference` | `tests/product`, `tests/conformance` | Hold one Cortex law across OpenAI, Claude, Gemini, and reference without flattening host-native realization. |
-| Offline consolidation and support geometry | Sleep-like consolidation and support systems | `north_star` | `10` | `cortex/aux` | `tests/experimental`, `tests/archive` | Keep this out of the shipped lane while testing whether time-separated offline publication earns bounded reference-only Q_mem lift through explicit AUX augmentation. |
+| Offline consolidation and support geometry | Sleep-like consolidation and support systems | `landed` | `10` | `cortex/aux` | `tests/experimental`, `tests/archive`, `tests/conformance` | Keep offline publication explicit, removable, and non-sovereign while broadening support-conditioned intervention pricing beyond the first reference-only replay proof. |
 
 ## Math To Code Rules
 
@@ -160,19 +160,19 @@ Workflow gates marked `required` are contractual gates checked by `repo_workflow
 
 ## Next Product Train
 
-- Train: `aux-reference-q-mem-replay`
-- Surface: `experimental`
-- Executive benefit: Test whether corpus-proven offline publication can improve explicit reference-only Q_mem priors and intervention pricing without turning AUX into hidden executive truth.
-- Why now: The time-separated AUX corpus now demonstrates reproducible experimental support-side lift and contradiction-preserving offline publication on the evaluation surface, so the next blocker is whether explicit AUX-owned Q_mem priors improve reference allocation rather than just offline reports.
-- Primary metric: `reference-only improvement in allocation or selected-family quality from explicit AUX-owned Q_mem priors with zero change to commitment truth and no shipping-lane dependence`
-- Guardrail: `reference-only, runtime-off-by-default, support-side only, and no change to commitment certification, blockedness, or the openai:operator_cli shipping default`
-- Kill rule: `prune any Q_mem replay seam that depends on hidden caches, smooths contradictions, or creates shipping-lane dependence without clear reference-side lift`
+- Train: `support-conditioned-intervention-pricing-quality`
+- Surface: `product`
+- Executive benefit: Broaden explicit AUX-owned support-conditioned intervention pricing beyond the first reference-only replay proof without turning AUX into hidden executive truth or changing shipping defaults.
+- Why now: The AUX denominator row is now landed: time-separated offline publication earned lawful reference-side Q_mem lift while preserving commitment truth, so the next leverage is quality broadening rather than more AUX scaffold work.
+- Primary metric: `additional bounded control-quality lift from explicit AUX-owned Q_mem priors beyond the first reference-only replay seam, with zero commitment-truth divergence and zero shipping-lane dependence`
+- Guardrail: `keep replay explicit and appendix-driven, keep openai:operator_cli unchanged by default, and do not introduce hidden caches, prompt memory, or host-specific policy forks`
+- Kill rule: `cut any broadening seam that changes commitment_result_kind, smooths contradictions, or requires shipping-lane dependence to show lift`
 
 ## Where To Work Next
 
-- Start with bounded reference-only Q_mem replay over AUX-owned offline publication now that time-separated corpus lift exists, not with hidden caches or new donor-host policy work.
-- Keep AUX removable, runtime-off-by-default, and support-side only while shipping truth stays openai:operator_cli.
-- Use lab and evaluation surfaces to falsify reference-only Q_mem lift and retention quality, not to smuggle AUX into shipping truth or minimum lawful runtime behavior.
+- Treat the full executive denominator as landed and move to quality broadening: explicit AUX-owned Q_mem lift is now proven on the reference seam, so the next work is broader support-conditioned intervention pricing rather than more scaffold shaping.
+- Keep AUX removable, runtime-off-by-default, and appendix-driven while shipping truth stays openai:operator_cli and commitment truth stays unchanged.
+- Use product, conformance, and bounded evaluation seams to broaden support-conditioned control evidence without smuggling AUX into shipping defaults or inventing a new denominator row.
 
 ## Canonical Proof
 
@@ -228,5 +228,5 @@ Workflow gates marked `required` are contractual gates checked by `repo_workflow
 
 ## Operational Focus
 
-- Current tracked train: `aux-reference-q-mem-replay`
-- Current focus note: Keep AUX removable and runtime-off-by-default while testing whether time-separated offline publication improves explicit reference-only Q_mem priors without changing commitment truth or shipping outputs.
+- Current tracked train: `support-conditioned-intervention-pricing-quality`
+- Current focus note: With the denominator landed, broaden explicit AUX-owned support-conditioned intervention pricing beyond the first reference-only replay proof while keeping shipping defaults zero-memory and commitment truth unchanged.

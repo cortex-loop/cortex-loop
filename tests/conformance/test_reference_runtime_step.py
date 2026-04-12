@@ -2,6 +2,7 @@
 
 import pytest
 
+from cortex.aux.reference_replay import evaluate_aux_reference_q_mem_replay
 import cortex.hosts.reference.runtime as reference_runtime
 from cortex.core.environment import EXECUTION_TRACE, ExecutiveEnvironmentView
 from cortex.core.dispatch import DispatchLane
@@ -27,6 +28,8 @@ from cortex.sre.state import (
     ReferenceUncertaintyMonitoringView,
 )
 from cortex.sre.uncertainty import UncertaintyEstimate
+
+from tests.experimental._aux_test_support import make_aux_reference_replay_corpus
 
 
 def test_reference_runtime_session_tracks_minimum_live_state() -> None:
@@ -301,6 +304,138 @@ def test_reference_runtime_step_result_certifies_full_commitment_when_runtime_pa
     assert result.session.last_realization_feedback is not None
     assert result.session.last_realization_feedback.commitment_result_kind == "certified"
     assert result.session.feedback_window.entries[-1] == result.session.last_realization_feedback
+
+
+def test_reference_runtime_step_replay_publication_can_flip_selected_family_without_changing_commitment_truth(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    case_result = _reference_replay_case_result("contradiction-review")
+    scenario = _reference_replay_scenario("contradiction-review")
+    monkeypatch.setattr(
+        reference_runtime,
+        "build_reference_executive_state",
+        lambda *args, **kwargs: scenario.executive_state,
+    )
+
+    baseline = run_reference_runtime_step(
+        "ApprovalResult",
+        {
+            "session_id": "session-reference-replay-contradiction",
+            "commitment_id": "commit-reference-replay-contradiction",
+            "externally_consequential": True,
+            "result_artifact_ref": "artifact-reference-replay-contradiction",
+        },
+    )
+    replay = run_reference_runtime_step(
+        "ApprovalResult",
+        {
+            "session_id": "session-reference-replay-contradiction",
+            "commitment_id": "commit-reference-replay-contradiction",
+            "externally_consequential": True,
+            "result_artifact_ref": "artifact-reference-replay-contradiction",
+        },
+        offline_publication=case_result.publication,
+    )
+
+    assert baseline.commitment_result_kind == replay.commitment_result_kind == "certified"
+    assert baseline.selected_family is SoftControlFamily.NEUTRAL
+    assert replay.selected_family is SoftControlFamily.CHECK
+    baseline_check = _score_payload_for_family(
+        baseline.control_ledger_summary["allocation_diagnostics"]["scores"],
+        "check",
+    )
+    replay_check = _score_payload_for_family(
+        replay.control_ledger_summary["allocation_diagnostics"]["scores"],
+        "check",
+    )
+    assert baseline_check["memory_score"] == 0.0
+    assert replay_check["memory_score"] > 0.0
+    assert replay_check["allocated_score"] > baseline_check["allocated_score"]
+    assert (
+        "allocation:online-plus-memory" in replay_check["reason_tags"]
+        or "allocation:full-mixed" in replay_check["reason_tags"]
+    )
+    assert tuple(replay.control_ledger_summary["allocation_diagnostics"]) == (
+        "alpha_t",
+        "activation_threshold",
+        "selected_delta_over_neutral",
+        "chi_t",
+        "scores",
+        "mediation",
+    )
+
+
+def test_reference_runtime_step_replay_publication_can_lift_branch_allocation_without_default_behavior_change(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    case_result = _reference_replay_case_result("branch-resume-recovery")
+    scenario = _reference_replay_scenario("branch-resume-recovery")
+    monkeypatch.setattr(
+        reference_runtime,
+        "build_reference_executive_state",
+        lambda *args, **kwargs: scenario.executive_state,
+    )
+
+    baseline = run_reference_runtime_step(
+        "ContextLoad",
+        {"session_id": "session-reference-replay-branch"},
+    )
+    replay = run_reference_runtime_step(
+        "ContextLoad",
+        {"session_id": "session-reference-replay-branch"},
+        offline_publication=case_result.publication,
+    )
+
+    assert baseline.commitment_result_kind is None
+    assert replay.commitment_result_kind is None
+    assert baseline.selected_family is SoftControlFamily.BRANCH
+    assert replay.selected_family is SoftControlFamily.BRANCH
+    baseline_branch = _score_payload_for_family(
+        baseline.control_ledger_summary["allocation_diagnostics"]["scores"],
+        "branch",
+    )
+    replay_branch = _score_payload_for_family(
+        replay.control_ledger_summary["allocation_diagnostics"]["scores"],
+        "branch",
+    )
+    assert baseline_branch["memory_score"] == 0.0
+    assert replay_branch["memory_score"] > 0.0
+    assert replay_branch["allocated_score"] > baseline_branch["allocated_score"]
+    assert "allocation:full-mixed" in replay_branch["reason_tags"]
+
+
+def test_reference_runtime_step_replay_negative_case_keeps_payload_shape_and_commitment_truthful(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    case_result = _reference_replay_case_result("no-lift-counterexample")
+    scenario = _reference_replay_scenario("no-lift-counterexample")
+    monkeypatch.setattr(
+        reference_runtime,
+        "build_reference_executive_state",
+        lambda *args, **kwargs: scenario.executive_state,
+    )
+
+    baseline = run_reference_runtime_step(
+        "ContextLoad",
+        {"session_id": "session-reference-replay-no-lift"},
+    )
+    replay = run_reference_runtime_step(
+        "ContextLoad",
+        {"session_id": "session-reference-replay-no-lift"},
+        offline_publication=case_result.publication,
+    )
+
+    assert baseline.commitment_result_kind is None
+    assert replay.commitment_result_kind is None
+    assert replay.selected_family is baseline.selected_family
+    assert tuple(baseline.control_ledger_summary["allocation_diagnostics"]) == tuple(
+        replay.control_ledger_summary["allocation_diagnostics"]
+    )
+    baseline_scores = baseline.control_ledger_summary["allocation_diagnostics"]["scores"]
+    replay_scores = replay.control_ledger_summary["allocation_diagnostics"]["scores"]
+    assert [score["family"] for score in baseline_scores] == [score["family"] for score in replay_scores]
+    for baseline_score, replay_score in zip(baseline_scores, replay_scores, strict=True):
+        assert replay_score["allocated_score"] == pytest.approx(baseline_score["allocated_score"])
 
 
 def test_reference_runtime_step_rejects_malformed_open_without_mutating_existing_anchor() -> None:
@@ -874,6 +1009,28 @@ def _feedback(warning_code: str) -> ReferenceRealizationFeedback:
         brake_state=BrakeState.QUIESCENT,
         warning_codes=warning_codes,
     )
+
+
+def _reference_replay_scenario(scenario_id: str):
+    for scenario in make_aux_reference_replay_corpus():
+        if scenario.scenario_id == scenario_id:
+            return scenario
+    raise KeyError(f"Unknown replay scenario {scenario_id!r}.")
+
+
+def _reference_replay_case_result(scenario_id: str):
+    scenario = _reference_replay_scenario(scenario_id)
+    return evaluate_aux_reference_q_mem_replay((scenario,)).case_results[0]
+
+
+def _score_payload_for_family(
+    scores: list[dict[str, object]],
+    family: str,
+) -> dict[str, object]:
+    for score in scores:
+        if score["family"] == family:
+            return score
+    raise KeyError(f"Missing score payload for family {family!r}.")
 
 
 def _latched_state_with_evidence(*args: object, **kwargs: object) -> ReferenceExecutiveState:

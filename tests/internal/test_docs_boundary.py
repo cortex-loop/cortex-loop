@@ -167,7 +167,7 @@ def test_status_registry_is_complete_and_stable() -> None:
             for item in status["bio_to_code_matrix"]
         )
     )
-    assert current_percent == 90
+    assert current_percent == 100
     assert current_percent >= status["executive_completion"]["shippable_threshold_percent"]
     matrix_status = {
         item["skill"]: item["status"] for item in status["bio_to_code_matrix"]
@@ -176,7 +176,7 @@ def test_status_registry_is_complete_and_stable() -> None:
         key: sum(1 for item in status["bio_to_code_matrix"] if item["status"] == key)
         for key in ("landed", "partial", "north_star")
     }
-    assert status_mix == {"landed": 7, "partial": 0, "north_star": 1}
+    assert status_mix == {"landed": 8, "partial": 0, "north_star": 0}
     assert matrix_status["Uncertainty handling and brake"] == "landed"
     assert (
         matrix_status["Branch continuity, suspend/resume, and truthful closure"]
@@ -185,12 +185,12 @@ def test_status_registry_is_complete_and_stable() -> None:
     assert matrix_status["Intervention pricing versus neutrality"] == "landed"
     assert matrix_status["Blocker surfacing and goal-debt management"] == "landed"
     assert matrix_status["Multi-host executive continuity"] == "landed"
-    assert matrix_status["Offline consolidation and support geometry"] == "north_star"
+    assert matrix_status["Offline consolidation and support geometry"] == "landed"
     assert status["executive_completion"]["next_raise"] == [
         {
-            "skill": "Offline consolidation and support geometry",
-            "expected_points_if_landed": 10,
-            "why": "Only the AUX support-geometry row remains in the denominator, and it must earn broader lawful support-side value before any runtime promotion.",
+            "skill": "Broaden support-conditioned intervention pricing beyond reference-only replay",
+            "expected_points_if_landed": 0,
+            "why": "The full executive denominator is now landed at 100%; the next leverage is quality, breadth, and stronger non-shipping evidence without inventing a new denominator row.",
         }
     ]
     host_status = {
@@ -212,15 +212,15 @@ def test_status_registry_is_complete_and_stable() -> None:
         "reference": "reference_cli",
     }
     assert status["conformance_summary"]["shipping_default"] == "openai:operator_cli"
-    assert status["work_today"]["slug"] == "aux-reference-q-mem-replay"
-    assert "Q_mem" in status["work_today"]["note"]
-    assert status["next_product_train"]["slug"] == "aux-reference-q-mem-replay"
-    assert status["next_product_train"]["surface"] == "experimental"
-    assert "Q_mem" in status["next_product_train"]["executive_benefit"]
-    assert "Q_mem" in status["next_product_train"]["why_now"]
-    assert "demonstrates reproducible experimental support-side lift" in status["next_product_train"]["why_now"]
-    assert "proves support-side lift" not in status["next_product_train"]["why_now"]
+    assert status["work_today"]["slug"] == "support-conditioned-intervention-pricing-quality"
+    assert "support-conditioned intervention pricing" in status["work_today"]["note"]
+    assert status["next_product_train"]["slug"] == "support-conditioned-intervention-pricing-quality"
+    assert status["next_product_train"]["surface"] == "product"
+    assert "support-conditioned intervention pricing" in status["next_product_train"]["executive_benefit"]
+    assert "AUX denominator row is now landed" in status["next_product_train"]["why_now"]
+    assert "Q_mem" in status["next_product_train"]["primary_metric"]
     assert "Q_mem" in status["where_to_work"][0]
+    assert "support-conditioned intervention pricing" in status["where_to_work"][0]
     closure_gates = {gate["id"]: gate for gate in status["closure_gates"]}
     assert closure_gates["main_synced"]["status"] == "required"
     assert closure_gates["cleanup_report"]["status"] == "required"
@@ -239,20 +239,20 @@ def test_generated_status_doc_includes_system_map_and_next_product_train() -> No
     assert "## Bio-To-Code Matrix" in text
     assert "## Math To Code Rules" in text
     assert "human executive function" in text
-    assert "Current full-executive completion: `90%`" in text
+    assert "Current full-executive completion: `100%`" in text
     assert "Shippable threshold for the full executive: `85%`" in text
     assert "When user asks where Cortex is at:" in text
     assert "full executive denominator" in text
     assert "## Packet To Code" in text
     assert "## Next Product Train" in text
-    assert "`aux-reference-q-mem-replay`" in text
-    assert "Q_mem" in text
+    assert "`support-conditioned-intervention-pricing-quality`" in text
+    assert "support-conditioned intervention pricing" in text
     assert "Shipping Product Lane\\nopenai:operator_cli" in text or "Shipping Product Lane" in text
     assert "Shipping default: `openai:operator_cli`" in text
     assert "Workflow gates marked `required` are contractual gates checked by `repo_workflow.py`" in text
     assert "| `main_synced` | `required` |" in text
     assert "| `cleanup_report` | `required` |" in text
-    assert "demonstrates reproducible experimental support-side lift" in text
+    assert "AUX denominator row is now landed" in text
     assert "proves support-side lift" not in text
 
 
