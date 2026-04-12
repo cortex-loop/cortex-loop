@@ -184,6 +184,32 @@ EXPECTATIONS = (
         ),
     ),
     SreCorrespondenceExpectation(
+        row_label="SupportMemoryPriorScore",
+        module_path="cortex.sre.memory_priors",
+        symbol_name="SupportMemoryPriorScore",
+        promised_surfaces=(
+            PromisedTestSurface(
+                test_file="tests/product/test_sre_memory_priors.py",
+                test_names=("test_support_memory_prior_score_requires_bounded_score_and_typed_refs",),
+            ),
+        ),
+    ),
+    SreCorrespondenceExpectation(
+        row_label="SupportMemoryPriorAppendix",
+        module_path="cortex.sre.memory_priors",
+        symbol_name="SupportMemoryPriorAppendix",
+        promised_surfaces=(
+            PromisedTestSurface(
+                test_file="tests/product/test_sre_memory_priors.py",
+                test_names=("test_support_memory_prior_appendix_keeps_single_score_per_family_and_defaults_missing_scores_to_zero",),
+            ),
+            PromisedTestSurface(
+                test_file="tests/product/test_reference_runtime_scoring.py",
+                test_names=("test_reference_scoring_activates_q_mem_only_when_explicit_support_memory_priors_are_present",),
+            ),
+        ),
+    ),
+    SreCorrespondenceExpectation(
         row_label="GoalBranchScore",
         module_path="cortex.sre.goal_branch",
         symbol_name="GoalBranchScore",
@@ -245,6 +271,17 @@ EXPECTATIONS = (
                     "test_reference_scoring_keeps_masked_family_inadmissible_even_when_top_ranked",
                     "test_reference_scoring_exposes_explicit_online_allocation_diagnostics",
                 ),
+            ),
+        ),
+    ),
+    SreCorrespondenceExpectation(
+        row_label="compute_reference_chi_t",
+        module_path="cortex.sre.reference_scoring",
+        symbol_name="compute_reference_chi_t",
+        promised_surfaces=(
+            PromisedTestSurface(
+                test_file="tests/product/test_reference_runtime_scoring.py",
+                test_names=("test_reference_selection_exposes_bounded_chi_t_and_lowers_it_under_guarded_pressure",),
             ),
         ),
     ),
@@ -545,6 +582,28 @@ EXPECTATIONS = (
         ),
     ),
     SreCorrespondenceExpectation(
+        row_label="GoalDebtState",
+        module_path="cortex.sre.goal_debt",
+        symbol_name="GoalDebtState",
+        promised_surfaces=(
+            PromisedTestSurface(
+                test_file="tests/product/test_sre_goal_debt.py",
+                test_names=("test_goal_debt_state_surfaces_explicit_debt_buckets",),
+            ),
+        ),
+    ),
+    SreCorrespondenceExpectation(
+        row_label="build_closure_pressure_state",
+        module_path="cortex.sre.goal_debt",
+        symbol_name="build_closure_pressure_state",
+        promised_surfaces=(
+            PromisedTestSurface(
+                test_file="tests/product/test_sre_goal_debt.py",
+                test_names=("test_closure_pressure_state_preserves_compact_runtime_reason_tags",),
+            ),
+        ),
+    ),
+    SreCorrespondenceExpectation(
         row_label="build_executive_policy_view",
         module_path="cortex.sre.policy_view",
         symbol_name="build_executive_policy_view",
@@ -601,9 +660,9 @@ def test_q_mem_correspondence_text_keeps_active_target_law_and_zero_landing_law_
     ).read_text(encoding="utf-8")
 
     assert (
-        "| `Q_t^{mem}(a)` active target memory-conditioned contribution; current landing law keeps it explicit-but-zero until lawful AUX support-memory publication exists "
-        "| `AllocationScore.memory_score` current zero-valued consumer + future nonzero AUX owner `OfflineSupportPublication` |"
+        "| `Q_t^{mem}(a)` active target memory-conditioned contribution; current landing law keeps it explicit-and-zero unless an explicit AUX-derived support-memory appendix is present "
+        "| `SupportMemoryPriorAppendix` + `SupportMemoryPriorScore` feeding `AllocationScore.memory_score` |"
         in correspondence_text
     )
-    assert "Current-scope computed executive allocation must keep `Q_t^{mem}=0.0` on shipping and conformance lanes;" in correspondence_text
-    assert "any future nonzero memory-conditioned contribution must come only through explicit AUX support-memory publication plus augmentation" in correspondence_text
+    assert "Current-scope shipping and conformance lanes keep `Q_t^{mem}=0.0` unless an explicit AUX-derived support-memory appendix is present;" in correspondence_text
+    assert "`\\chi_t` may scale only the intensity of an already-selected family; it may not fabricate `Q_t^{mem}`, bypass neutral-dominance, or weaken brake law." in correspondence_text

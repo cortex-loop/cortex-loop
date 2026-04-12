@@ -83,6 +83,7 @@ def test_claude_runtime_cli_reads_documented_raw_events_and_preserves_host_name(
         "alpha_t",
         "activation_threshold",
         "selected_delta_over_neutral",
+        "chi_t",
         "scores",
     )
 

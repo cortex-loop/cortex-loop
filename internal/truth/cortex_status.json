@@ -119,13 +119,14 @@
       "status": "landed",
       "weight": 10,
       "code_homes": [
-        "cortex/sre"
+        "cortex/sre",
+        "cortex/aux"
       ],
       "proof_surfaces": [
         "tests/product",
         "tests/experimental"
       ],
-      "next_move": "Keep reference-governed intervention pricing stable while the current landing law keeps Q_mem explicit-but-zero and future nonzero support priors stay removable, claim-conservative, and AUX-owned."
+      "next_move": "Keep reference-governed intervention pricing stable while default shipping behavior stays zero-memory and any nonzero Q_mem or chi_t lift comes only from explicit AUX-owned support priors."
     },
     {
       "skill": "Blocker surfacing and goal-debt management",
@@ -134,12 +135,16 @@
       "weight": 10,
       "code_homes": [
         "cortex/sre",
-        "cortex/hosts/openai"
+        "cortex/hosts/openai",
+        "cortex/hosts/claude",
+        "cortex/hosts/gemini",
+        "cortex/hosts/reference"
       ],
       "proof_surfaces": [
-        "tests/product"
+        "tests/product",
+        "tests/conformance"
       ],
-      "next_move": "Keep closure-required and blocker-debt surfacing stable while support-side augmentation remains explicit and non-sovereign."
+      "next_move": "Keep typed goal-debt and closure-pressure state stable across hosts while support-side augmentation remains explicit and non-sovereign."
     },
     {
       "skill": "Multi-host executive continuity",
@@ -163,9 +168,14 @@
       "stolen_skill": "Sleep-like consolidation and support systems",
       "status": "north_star",
       "weight": 10,
-      "code_homes": [],
-      "proof_surfaces": [],
-      "next_move": "Keep this out of the shipped lane until support geometry earns a lawful product shape."
+      "code_homes": [
+        "cortex/aux"
+      ],
+      "proof_surfaces": [
+        "tests/experimental",
+        "tests/archive"
+      ],
+      "next_move": "Keep this out of the shipped lane while proving measurable support-side lift and contradiction-preserving offline publication with runtime-off-by-default activation."
     }
   ],
   "math_to_code_rules": {
@@ -179,13 +189,13 @@
   },
   "work_today": {
     "slug": "offline-support-geometry-shape",
-    "note": "Define a lawful evaluation-first AUX support-geometry seam that can later earn support-side priors for Q_mem without becoming runtime-required or changing commitment truth."
+    "note": "Keep AUX evaluation-first and removable while broadening support-side lift for future Q_mem, and keep full-pack tri-brain CLI proof repeatable without host-specific policy forks."
   },
   "next_product_train": {
     "slug": "offline-support-geometry-shape",
     "surface": "experimental",
-    "executive_benefit": "Shape removable AUX support geometry and consolidation priors so Cortex can later earn lawful support-side priors for Q_mem without turning AUX into hidden executive truth.",
-    "why_now": "All non-north-star executive rows are now landed, and Q_mem stays an active SRE target law, so the remaining denominator work is to give AUX a lawful evaluation-first shape rather than widen shipping behavior.",
+    "executive_benefit": "Prove retrieval, branch/resume, contradiction-cluster, and uncertainty-support lift from removable AUX geometry so future Q_mem priors can be earned lawfully without turning AUX into hidden executive truth.",
+    "why_now": "The evaluation-first AUX scaffolding and deterministic fixture lift now exist, so the remaining denominator work is to prove broader support-side lift and retention value for future Q_mem priors rather than keep reshaping empty carriers.",
     "primary_metric": "measured support-side lift on retrieval, review, branch, or uncertainty priors with zero change to commitment truth and runtime-off-by-default activation",
     "guardrail": "runtime-off-by-default, support-side only, and no change to commitment certification, blockedness, or the openai:operator_cli shipping default",
     "kill_rule": "prune any AUX seam that adds overhead without lift, smooths contradictions, or becomes operationally load-bearing for minimum lawful runtime behavior"
@@ -382,7 +392,7 @@
     {
       "name": "claude",
       "shipping": "non-default",
-      "conformance": "partial",
+      "conformance": "conformant",
       "strongest_surface": "operator_cli",
       "daily_iteration_surface": "operator_cli",
       "code_home": "cortex/hosts/claude"
@@ -390,7 +400,7 @@
     {
       "name": "gemini",
       "shipping": "non-default",
-      "conformance": "partial",
+      "conformance": "conformant",
       "strongest_surface": "operator_cli",
       "daily_iteration_surface": "operator_cli",
       "code_home": "cortex/hosts/gemini"
@@ -479,9 +489,9 @@
     }
   ],
   "where_to_work": [
-    "Start with evaluation-first AUX support geometry and offline-support shape so future Q_mem support priors can be earned lawfully, not with new OpenAI or donor-host policy work.",
+    "Start with evaluation-first AUX support geometry and offline-support lift so future Q_mem support priors can be earned lawfully, not with hidden caches or new donor-host policy work.",
     "Keep AUX removable, runtime-off-by-default, and support-side only while shipping truth stays openai:operator_cli.",
-    "Use lab and evaluation surfaces to falsify support lift, but do not promote AUX into shipping truth unless it proves lift without touching commitment law."
+    "Use lab and evaluation surfaces to falsify AUX lift, and keep Claude and Gemini parity honest with repeatable full-pack CLI conformance instead of stale one-pack gap language."
   ],
   "blocked_moves": [
     "Do not let archived docs or train notes act as live truth.",

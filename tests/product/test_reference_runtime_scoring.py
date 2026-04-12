@@ -7,12 +7,17 @@ import pytest
 from cortex.sre.brake import BrakeState
 from cortex.sre.families import SoftControlFamily
 from cortex.sre.mediation import ReferenceMediationMode
+from cortex.sre.memory_priors import (
+    SupportMemoryPriorAppendix,
+    SupportMemoryPriorScore,
+)
 from cortex.sre.opportunities import HostNativeOpportunity
 from cortex.sre.reference_scoring import (
     build_reference_allocation_scorecard,
     build_reference_online_score_components,
     compute_reference_activation_threshold,
     compute_reference_alpha_t,
+    compute_reference_chi_t,
     select_reference_soft_control,
 )
 from cortex.sre.state import (
@@ -401,6 +406,136 @@ def test_reference_scoring_exposes_explicit_online_allocation_diagnostics() -> N
     assert all("alpha:0.75" in score.reason_tags for score in scorecard.scores)
 
 
+def test_reference_scoring_activates_q_mem_only_when_explicit_support_memory_priors_are_present() -> None:
+    state = _state(
+        mode_tag="review_pending",
+        family_mask=frozenset(
+            {
+                SoftControlFamily.NEUTRAL,
+                SoftControlFamily.CHECK,
+                SoftControlFamily.BRANCH,
+            }
+        ),
+        budget_band="medium",
+        top_family_set=frozenset({SoftControlFamily.NEUTRAL, SoftControlFamily.BRANCH}),
+        brake_state=BrakeState.GUARDED,
+        host_friction_tags=frozenset({"single-process-limit"}),
+    )
+
+    scorecard = build_reference_allocation_scorecard(
+        state,
+        memory_priors=_memory_priors(
+            branch_score=0.9,
+            check_score=0.2,
+        ),
+    )
+
+    branch_score = next(
+        score for score in scorecard.scores if score.family is SoftControlFamily.BRANCH
+    )
+    check_score = next(
+        score for score in scorecard.scores if score.family is SoftControlFamily.CHECK
+    )
+
+    assert branch_score.memory_score == pytest.approx(0.9)
+    assert branch_score.allocated_score == pytest.approx(
+        (0.75 * branch_score.online_score) + (0.25 * 0.9)
+    )
+    assert "allocation:online-plus-memory" in branch_score.reason_tags
+    assert "support-memory:branch" in branch_score.reason_tags
+    assert check_score.memory_score == pytest.approx(0.2)
+
+
+def test_reference_scoring_emits_full_mixed_path_when_memory_and_goal_branch_are_both_active() -> None:
+    state = _state(
+        mode_tag="review_pending",
+        family_mask=frozenset(
+            {
+                SoftControlFamily.NEUTRAL,
+                SoftControlFamily.CHECK,
+                SoftControlFamily.BRANCH,
+            }
+        ),
+        budget_band="medium",
+        top_family_set=frozenset({SoftControlFamily.NEUTRAL, SoftControlFamily.BRANCH}),
+        brake_state=BrakeState.GUARDED,
+        host_friction_tags=frozenset({"single-process-limit"}),
+        active_track_ref="review-track",
+        resume_anchor_available=True,
+    )
+
+    scorecard = build_reference_allocation_scorecard(
+        state,
+        memory_priors=_memory_priors(branch_score=0.6),
+    )
+    branch_score = next(
+        score for score in scorecard.scores if score.family is SoftControlFamily.BRANCH
+    )
+
+    assert branch_score.memory_score == pytest.approx(0.6)
+    assert "allocation:full-mixed" in branch_score.reason_tags
+    assert "allocation:online-plus-memory" not in branch_score.reason_tags
+    assert "allocation:online-plus-goal-branch" not in branch_score.reason_tags
+    assert "goal-branch-coupled" in branch_score.reason_tags
+    assert any(tag.startswith("lambda_G:") for tag in branch_score.reason_tags)
+
+
+def test_reference_selection_exposes_bounded_chi_t_and_lowers_it_under_guarded_pressure() -> None:
+    calm = _state(
+        mode_tag="guarded_review",
+        family_mask=frozenset(
+            {
+                SoftControlFamily.NEUTRAL,
+                SoftControlFamily.CHECK,
+                SoftControlFamily.BRAKE,
+                SoftControlFamily.SEEK_CONTEXT,
+            }
+        ),
+        budget_band="low",
+        top_family_set=frozenset(
+            {
+                SoftControlFamily.NEUTRAL,
+                SoftControlFamily.BRAKE,
+                SoftControlFamily.SEEK_CONTEXT,
+            }
+        ),
+        brake_state=BrakeState.QUIESCENT,
+        host_friction_tags=frozenset({"missing-capability", "capability-view-missing"}),
+    )
+    guarded = _state(
+        mode_tag="guarded_review",
+        family_mask=frozenset(
+            {
+                SoftControlFamily.NEUTRAL,
+                SoftControlFamily.CHECK,
+                SoftControlFamily.BRAKE,
+                SoftControlFamily.SEEK_CONTEXT,
+            }
+        ),
+        budget_band="medium",
+        top_family_set=frozenset(
+            {
+                SoftControlFamily.NEUTRAL,
+                SoftControlFamily.BRAKE,
+                SoftControlFamily.SEEK_CONTEXT,
+            }
+        ),
+        brake_state=BrakeState.GUARDED,
+        host_friction_tags=frozenset({"missing-capability", "capability-view-missing"}),
+    )
+
+    calm_selection = select_reference_soft_control(calm)
+    guarded_selection = select_reference_soft_control(guarded)
+
+    assert 0.0 <= calm_selection.chi_t <= 1.0
+    assert 0.0 <= guarded_selection.chi_t <= 1.0
+    assert guarded_selection.chi_t < calm_selection.chi_t
+    assert compute_reference_chi_t(
+        guarded,
+        neutral_dominance=guarded_selection.neutral_dominance,
+    ) == pytest.approx(guarded_selection.chi_t)
+
+
 def test_reference_alpha_t_changes_with_visible_pressure_only() -> None:
     calm = _state(
         mode_tag="pass_through",
@@ -518,4 +653,35 @@ def _state(
             feedback_pressure_tags=feedback_pressure_tags,
         ),
         brake=ReferenceBrakeView(brake_state=brake_state),
+    )
+
+
+def _memory_priors(
+    *,
+    branch_score: float = 0.0,
+    check_score: float = 0.0,
+) -> SupportMemoryPriorAppendix:
+    return SupportMemoryPriorAppendix(
+        scores=tuple(
+            score
+            for score in (
+                SupportMemoryPriorScore(
+                    family=SoftControlFamily.BRANCH,
+                    score=branch_score,
+                    reason_tags=frozenset({"q_mem:active", "support-memory:branch"}),
+                )
+                if branch_score > 0.0
+                else None,
+                SupportMemoryPriorScore(
+                    family=SoftControlFamily.CHECK,
+                    score=check_score,
+                    reason_tags=frozenset({"q_mem:active", "support-memory:verification"}),
+                )
+                if check_score > 0.0
+                else None,
+            )
+            if score is not None
+        ),
+        appendix_tags=frozenset({"q_mem:explicit-aux"}),
+        notes=("explicit AUX support-memory priors",),
     )

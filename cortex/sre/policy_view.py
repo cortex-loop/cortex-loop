@@ -55,6 +55,8 @@ class ExecutivePolicyView:
 def build_executive_policy_view(
     summary: ExecutiveSignalSummary,
     modulators: ExecutiveModulatorState,
+    *,
+    chi_t: float = 0.0,
 ) -> ExecutivePolicyView:
     if not isinstance(summary, ExecutiveSignalSummary):
         actual_type = type(summary).__name__
@@ -68,6 +70,14 @@ def build_executive_policy_view(
             "build_executive_policy_view.modulators must be ExecutiveModulatorState, "
             f"got {actual_type}."
         )
+    if not isinstance(chi_t, Real):
+        actual_type = type(chi_t).__name__
+        raise TypeError(
+            "build_executive_policy_view.chi_t must be numeric, "
+            f"got {actual_type}."
+        )
+    if not 0.0 <= float(chi_t) <= 1.0:
+        raise ValueError("build_executive_policy_view.chi_t must be between 0.0 and 1.0.")
 
     default_profile_bonus = min(
         0.20,
@@ -99,6 +109,7 @@ def build_executive_policy_view(
         0.30
         + (0.50 * modulators.focus_gain)
         + (0.20 * modulators.update_pressure)
+        + (0.15 * float(chi_t))
     )
     return ExecutivePolicyView(
         default_profile_bonus=default_profile_bonus,

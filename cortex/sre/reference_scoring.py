@@ -12,6 +12,7 @@ from .allocation import (
 from .brake import BrakeState
 from .families import SoftControlFamily
 from .goal_branch import build_reference_goal_branch_coupling
+from .memory_priors import SupportMemoryPriorAppendix
 from .mediation import (
     ReferenceMediationFinalization,
     ReferenceMediationMode,
@@ -56,6 +57,7 @@ class ReferenceSoftControlSelection:
     selected_family_before_finalization: SoftControlFamily
     mediation_finalization: ReferenceMediationFinalization
     selected_family: SoftControlFamily
+    chi_t: float
 
     def __post_init__(self) -> None:
         if not isinstance(self.scorecard, AllocationScorecard):
@@ -103,6 +105,8 @@ class ReferenceSoftControlSelection:
             raise ValueError(
                 "ReferenceSoftControlSelection.selected_family must match the mediation-finalized family."
             )
+        if not 0.0 <= float(self.chi_t) <= 1.0:
+            raise ValueError("ReferenceSoftControlSelection.chi_t must be between 0.0 and 1.0.")
 
     @property
     def opportunity_specialization(self) -> OpportunitySpecializationResult:
@@ -111,12 +115,20 @@ class ReferenceSoftControlSelection:
 
 def build_reference_allocation_scorecard(
     executive_state: ReferenceExecutiveState,
+    *,
+    memory_priors: SupportMemoryPriorAppendix | None = None,
 ) -> AllocationScorecard:
     if not isinstance(executive_state, ReferenceExecutiveState):
         actual_type = type(executive_state).__name__
         raise TypeError(
             "build_reference_allocation_scorecard.executive_state must be "
             f"ReferenceExecutiveState, got {actual_type}."
+        )
+    if memory_priors is not None and not isinstance(memory_priors, SupportMemoryPriorAppendix):
+        actual_type = type(memory_priors).__name__
+        raise TypeError(
+            "build_reference_allocation_scorecard.memory_priors must be "
+            f"SupportMemoryPriorAppendix | None, got {actual_type}."
         )
 
     family_mask = executive_state.mode_and_gating.family_mask
@@ -154,18 +166,34 @@ def build_reference_allocation_scorecard(
         reason_tags.add(_alpha_reason_tag(alpha_t))
 
         online_score = _online_score(online_components[family])
+        memory_prior = (
+            memory_priors.score_for(family)
+            if memory_priors is not None
+            else None
+        )
+        memory_score = 0.0 if memory_prior is None else float(memory_prior.score)
         goal_branch_score = goal_branch_coupling.score_for(family)
+        memory_contribution_active = memory_score > 0.0 and alpha_t < 1.0
         goal_branch_contribution_active = (
             goal_branch_coupling.weight > 0.0 and goal_branch_score.score != 0.0
         )
-        if goal_branch_contribution_active:
+        if memory_contribution_active and goal_branch_contribution_active:
+            reason_tags.add("allocation:full-mixed")
+        elif memory_contribution_active:
+            reason_tags.add("allocation:online-plus-memory")
+        elif goal_branch_contribution_active:
             reason_tags.add("allocation:online-plus-goal-branch")
+        else:
+            reason_tags.add("allocation:online-only")
+        if goal_branch_contribution_active:
             reason_tags.add(_goal_branch_weight_reason_tag(goal_branch_coupling.weight))
             reason_tags.add("goal-branch-coupled")
             reason_tags.update(goal_branch_score.reason_tags)
-        else:
-            reason_tags.add("allocation:online-only")
+        if memory_contribution_active:
+            reason_tags.update(memory_prior.reason_tags)
         allocated_score = (alpha_t * online_score) + (
+            (1.0 - alpha_t) * memory_score
+        ) + (
             goal_branch_coupling.weight * goal_branch_score.score
         )
         scores.append(
@@ -175,7 +203,7 @@ def build_reference_allocation_scorecard(
                 admissible=admissible,
                 reason_tags=frozenset(reason_tags),
                 online_score=online_score,
-                memory_score=0.0,
+                memory_score=memory_score,
                 allocated_score=allocated_score,
             )
         )
@@ -191,14 +219,22 @@ def select_reference_soft_control(
     executive_state: ReferenceExecutiveState,
     *,
     mediation_mode: ReferenceMediationMode = ReferenceMediationMode.IDENTITY,
+    memory_priors: SupportMemoryPriorAppendix | None = None,
     opportunities: Sequence[HostNativeOpportunity] = (),
 ) -> ReferenceSoftControlSelection:
-    scorecard = build_reference_allocation_scorecard(executive_state)
+    scorecard = build_reference_allocation_scorecard(
+        executive_state,
+        memory_priors=memory_priors,
+    )
     dominance = neutral_dominance_decision(scorecard)
     mediation_finalization = finalize_reference_soft_control(
         dominance.selected_family,
         mediation_mode=mediation_mode,
         opportunities=opportunities,
+    )
+    chi_t = compute_reference_chi_t(
+        executive_state,
+        neutral_dominance=dominance,
     )
     return ReferenceSoftControlSelection(
         scorecard=scorecard,
@@ -206,6 +242,7 @@ def select_reference_soft_control(
         selected_family_before_finalization=dominance.selected_family,
         mediation_finalization=mediation_finalization,
         selected_family=mediation_finalization.selected_family_after_finalization,
+        chi_t=chi_t,
     )
 
 
@@ -264,6 +301,64 @@ def compute_reference_activation_threshold(
     if executive_state.control_allocation.feedback_pressure_tags:
         threshold += 0.05
     return min(0.45, max(0.20, threshold))
+
+
+def compute_reference_chi_t(
+    executive_state: ReferenceExecutiveState,
+    *,
+    neutral_dominance: NeutralDominanceDecision,
+) -> float:
+    if not isinstance(executive_state, ReferenceExecutiveState):
+        actual_type = type(executive_state).__name__
+        raise TypeError(
+            "compute_reference_chi_t.executive_state must be "
+            f"ReferenceExecutiveState, got {actual_type}."
+        )
+    if not isinstance(neutral_dominance, NeutralDominanceDecision):
+        actual_type = type(neutral_dominance).__name__
+        raise TypeError(
+            "compute_reference_chi_t.neutral_dominance must be "
+            f"NeutralDominanceDecision, got {actual_type}."
+        )
+    if neutral_dominance.neutral_selected:
+        return 0.0
+
+    denominator = max(0.05, 1.0 - neutral_dominance.activation_threshold)
+    dominance_margin = max(
+        0.0,
+        neutral_dominance.margin_over_neutral - neutral_dominance.activation_threshold,
+    )
+    dominance_strength = min(1.0, dominance_margin / denominator)
+    uncertainty = max(
+        (
+            estimate.level
+            for estimate in executive_state.uncertainty_monitoring.classwise_uncertainty
+        ),
+        default=0.0,
+    )
+    budget_band = executive_state.control_allocation.budget_band
+    quota_pressure = 0.25 if budget_band == "low" else 0.50 if budget_band == "medium" else 0.75
+    burden_pressure = 0.0
+    if executive_state.control_allocation.host_friction_tags:
+        burden_pressure += 0.10
+    if executive_state.control_allocation.feedback_pressure_tags:
+        burden_pressure += 0.10
+    chi_t = max(
+        0.0,
+        min(
+            1.0,
+            0.20
+            + (0.70 * dominance_strength)
+            - (0.30 * uncertainty)
+            - (0.15 * quota_pressure)
+            - burden_pressure,
+        ),
+    )
+    if executive_state.brake.brake_state is BrakeState.GUARDED:
+        return min(0.55, chi_t)
+    if executive_state.brake.brake_state is BrakeState.LATCHED:
+        return min(0.20, chi_t)
+    return chi_t
 
 
 def build_reference_online_score_components(
@@ -435,6 +530,7 @@ __all__ = [
     "build_allocation_diagnostics_payload",
     "build_reference_allocation_scorecard",
     "compute_reference_activation_threshold",
+    "compute_reference_chi_t",
     "build_reference_online_score_components",
     "compute_reference_alpha_t",
     "select_reference_soft_control",

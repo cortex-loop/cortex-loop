@@ -24,15 +24,21 @@ def test_build_aux_geometry_report_derives_only_support_side_hints_and_preserves
 
     assert isinstance(report, AuxGeometryReport)
     assert report.source_snapshot is snapshot
-    assert report.retrieval_shadow_candidates == ()
-    assert report.branch_resume_matches == ()
-    assert report.burden == AuxBurdenReport()
+    assert report.retrieval_shadow_candidates
+    assert report.branch_resume_matches
+    assert report.contradiction_clusters
+    assert isinstance(report.burden, AuxBurdenReport)
     assert report.uncertainty_brake_hints == (
         "support-evidence-present",
         "branch-resume-pressure",
         "uncertainty-brake-pressure",
         "continuity-reminder-present",
     )
+    assert all(
+        "retrieval-shadow" in match.tags for match in report.retrieval_shadow_candidates
+    )
+    assert all("resume-match" in match.tags for match in report.branch_resume_matches)
+    assert report.contradiction_clusters[0].cluster_tag == "host-degraded"
 
     with pytest.raises(TypeError, match="SupportSnapshot"):
         build_aux_geometry_report(SupportState())

@@ -628,6 +628,7 @@ def run_gemini_runtime_step(
         allocation_diagnostics=build_allocation_diagnostics_payload(
             selection.scorecard,
             selected_delta_over_neutral=selection.neutral_dominance.margin_over_neutral,
+            chi_t=selection.chi_t,
         ),
     )
     realization_feedback = ReferenceRealizationFeedback(
@@ -690,8 +691,10 @@ def run_gemini_runtime_step(
     executive_policy_view = build_executive_policy_view(
         executive_signal_summary,
         executive_modulator_update.state,
+        chi_t=selection.chi_t,
     )
     closure_reason_tags_value = closure_reason_tags(
+        active_track_ref=provisional_session.active_track_ref,
         warnings=warnings,
         continuity_reminders=continuity_reminders,
         brake_state=brake_state,
@@ -1225,6 +1228,7 @@ _ALLOCATION_DIAGNOSTICS_KEYS = (
     "alpha_t",
     "activation_threshold",
     "selected_delta_over_neutral",
+    "chi_t",
     "scores",
 )
 _ALLOCATION_SCORE_KEYS = (
@@ -1245,7 +1249,7 @@ def _validate_allocation_diagnostics_payload(payload: dict[str, Any], label: str
         raise ValueError(
             f"{label} must preserve the locked key order {_ALLOCATION_DIAGNOSTICS_KEYS!r}."
         )
-    for key in ("alpha_t", "activation_threshold", "selected_delta_over_neutral"):
+    for key in ("alpha_t", "activation_threshold", "selected_delta_over_neutral", "chi_t"):
         value = payload[key]
         if isinstance(value, bool) or not isinstance(value, (int, float)):
             actual_type = type(value).__name__
@@ -1286,6 +1290,7 @@ def _copy_allocation_diagnostics_payload(payload: dict[str, Any]) -> dict[str, A
         "alpha_t": payload["alpha_t"],
         "activation_threshold": payload["activation_threshold"],
         "selected_delta_over_neutral": payload["selected_delta_over_neutral"],
+        "chi_t": payload["chi_t"],
         "scores": [
             {
                 "family": score["family"],

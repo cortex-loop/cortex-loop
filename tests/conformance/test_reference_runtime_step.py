@@ -783,6 +783,7 @@ def _selection(selected_family: SoftControlFamily) -> object:
         def __init__(self, family: SoftControlFamily) -> None:
             self.selected_family_before_finalization = family
             self.selected_family = family
+            self.chi_t = 0.0
             self.scorecard = build_reference_allocation_scorecard(_latched_state_with_evidence())
             self.neutral_dominance = neutral_dominance_decision(self.scorecard)
             self.mediation_finalization = finalize_reference_soft_control(family)
@@ -802,12 +803,14 @@ def _assert_allocation_diagnostics_shape(
         "alpha_t",
         "activation_threshold",
         "selected_delta_over_neutral",
+        "chi_t",
         "scores",
         "mediation",
     )
     assert payload["alpha_t"] == pytest.approx(expected_alpha)
     assert payload["activation_threshold"] == pytest.approx(activation_threshold)
     assert isinstance(payload["selected_delta_over_neutral"], float)
+    assert isinstance(payload["chi_t"], float)
     scores = payload["scores"]
     assert isinstance(scores, list)
     assert [score["family"] for score in scores] == [

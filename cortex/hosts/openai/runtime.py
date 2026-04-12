@@ -55,6 +55,7 @@ from cortex.sre.feedback import (
     ReferenceRealizationFeedbackWindow,
     summarize_reference_feedback_window,
 )
+from cortex.hosts._executive_closure import closure_reason_tags as shared_closure_reason_tags
 from cortex.sre.modulators import (
     ExecutiveModulatorMemory,
     ExecutiveModulatorState,
@@ -105,6 +106,7 @@ _ALLOCATION_DIAGNOSTICS_KEYS = (
     "alpha_t",
     "activation_threshold",
     "selected_delta_over_neutral",
+    "chi_t",
     "scores",
     "mediation",
 )
@@ -914,6 +916,7 @@ def run_openai_runtime_step(
         allocation_diagnostics=build_allocation_diagnostics_payload(
             selection.scorecard,
             selected_delta_over_neutral=selection.neutral_dominance.margin_over_neutral,
+            chi_t=selection.chi_t,
             mediation_payload=selection.mediation_finalization.as_payload(),
         ),
     )
@@ -944,6 +947,7 @@ def run_openai_runtime_step(
     executive_policy_view = build_executive_policy_view(
         executive_signal_summary,
         executive_modulator_update.state,
+        chi_t=selection.chi_t,
     )
     decision = _decide_action(
         consequential_write_pending=consequential_write_pending,
@@ -954,7 +958,8 @@ def run_openai_runtime_step(
         realized_family=realized_family,
         brake_state=brake_state,
     )
-    closure_reason_tags = _closure_reason_tags(
+    closure_reason_tags = shared_closure_reason_tags(
+        active_track_ref=provisional_session.active_track_ref,
         warnings=warnings,
         continuity_reminders=continuity_reminders,
         brake_state=brake_state,
@@ -1534,30 +1539,6 @@ def _recent_warning_bearing_success_present(
     )
 
 
-def _closure_reason_tags(
-    *,
-    warnings: tuple[str, ...],
-    continuity_reminders: tuple[str, ...],
-    brake_state: BrakeState,
-    feedback_window_summary: ReferenceFeedbackWindowSummary,
-    pending_goal_refs: tuple[str, ...],
-) -> tuple[str, ...]:
-    tags: set[str] = set()
-    if pending_goal_refs:
-        tags.add("pending_goal_debt")
-    if any(warning.startswith("continuity-rejected:") for warning in warnings):
-        tags.add("continuity_rejection")
-    if continuity_reminders:
-        tags.add("continuity_reminder")
-    if brake_state is BrakeState.LATCHED:
-        tags.add("latched_brake")
-    if feedback_window_summary.degradation_pressure_bonus > 0:
-        tags.add("degradation_pressure")
-    if feedback_window_summary.sustained_spike_flags:
-        tags.add("contradiction_spike")
-    return tuple(sorted(tags))
-
-
 def _next_recommended_move_for_step(decision: str, *, closure_required: bool) -> str:
     if decision != "continue":
         return decision
@@ -1817,7 +1798,7 @@ def _validate_allocation_diagnostics_payload(payload: dict[str, Any], label: str
         raise ValueError(
             f"{label} must preserve the locked key order {_ALLOCATION_DIAGNOSTICS_KEYS!r}."
         )
-    for key in ("alpha_t", "activation_threshold", "selected_delta_over_neutral"):
+    for key in ("alpha_t", "activation_threshold", "selected_delta_over_neutral", "chi_t"):
         value = payload[key]
         if isinstance(value, bool) or not isinstance(value, (int, float)):
             actual_type = type(value).__name__
@@ -1931,6 +1912,7 @@ def _copy_allocation_diagnostics_payload(payload: dict[str, Any]) -> dict[str, A
         "alpha_t": payload["alpha_t"],
         "activation_threshold": payload["activation_threshold"],
         "selected_delta_over_neutral": payload["selected_delta_over_neutral"],
+        "chi_t": payload["chi_t"],
         "scores": copied_scores,
         "mediation": copied_mediation,
     }
