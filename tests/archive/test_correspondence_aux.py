@@ -89,6 +89,28 @@ EXPECTATIONS = (
         ),
     ),
     AuxCorrespondenceExpectation(
+        row_label="AuxCorpusCaseResult",
+        module_path="cortex.aux.evaluation",
+        symbol_name="AuxCorpusCaseResult",
+        promised_surfaces=(
+            PromisedTestSurface(
+                test_file="tests/experimental/test_aux_corpus.py",
+                test_names=("test_aux_corpus_case_result_carries_support_priors_and_failure_reasons",),
+            ),
+        ),
+    ),
+    AuxCorrespondenceExpectation(
+        row_label="AuxCorpusMetricSummary",
+        module_path="cortex.aux.evaluation",
+        symbol_name="AuxCorpusMetricSummary",
+        promised_surfaces=(
+            PromisedTestSurface(
+                test_file="tests/experimental/test_aux_corpus.py",
+                test_names=("test_aux_corpus_metric_summaries_cover_fixed_metrics_and_case_accounting",),
+            ),
+        ),
+    ),
+    AuxCorrespondenceExpectation(
         row_label="evaluate_aux_support_corpus",
         module_path="cortex.aux.evaluation",
         symbol_name="evaluate_aux_support_corpus",
@@ -98,6 +120,7 @@ EXPECTATIONS = (
                 test_names=(
                     "test_evaluate_aux_support_corpus_reports_time_separated_lift_and_acceptance",
                     "test_evaluate_aux_support_corpus_can_recommend_prune_candidate_for_weak_cases",
+                    "test_evaluate_aux_support_corpus_validates_input_shape",
                 ),
             ),
         ),
@@ -239,6 +262,8 @@ def test_aux_correspondence_text_keeps_geometry_lift_and_publication_rows_explic
     assert "| retention-law lift comparison over fixed support-quality and burden metrics | `AuxLiftReport` + `AuxLiftMetric` + `build_aux_lift_report()` |" in correspondence_text
     assert "| deterministic evaluation-first AUX runner over lawful public support state | `AuxEvaluationResult` + `evaluate_aux_support_snapshot()` |" in correspondence_text
     assert "| time-separated source→target AUX corpus carrier over lawful support snapshots | `AuxTemporalScenario` |" in correspondence_text
+    assert "| time-separated AUX corpus casewise result over offline publication, augmented target, support priors, geometry, lift, and failure carriage | `AuxCorpusCaseResult` |" in correspondence_text
+    assert "| time-separated AUX corpus aggregate metric summary over improved/regressed case accounting and fixed-metric coverage | `AuxCorpusMetricSummary` |" in correspondence_text
     assert "| time-separated AUX corpus result over casewise lift, aggregate metric passes, burden totals, and retention | `AuxCorpusEvaluationResult` |" in correspondence_text
     assert "| time-separated AUX corpus runner over source publication and later target evaluation | `evaluate_aux_support_corpus()` |" in correspondence_text
     assert "| deterministic support-only offline publication builder over lawful public support state | `build_offline_support_publication()` |" in correspondence_text

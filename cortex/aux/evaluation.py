@@ -10,15 +10,13 @@ from cortex.core.envelopes import MetadataField
 from cortex.core.support import SupportReference, SupportSnapshot
 from cortex.sre.memory_priors import SupportMemoryPriorAppendix
 
+from ._support_match import _match_score, _reference_tokens, _source_refs_for_retrieval
 from .augmentation import AugmentedSupportSnapshot
 from .cost import AuxBurdenReport
 from .geometry import (
     AuxContradictionCluster,
     AuxGeometryReport,
     AuxMatchScore,
-    _match_score,
-    _reference_tokens,
-    _source_refs_for_retrieval,
     build_aux_geometry_report,
 )
 from .lift import AUX_LIFT_DIRECTIONS, AuxLiftMetric, AuxLiftReport, build_aux_lift_report, total_aux_burden

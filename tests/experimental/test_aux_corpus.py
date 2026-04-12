@@ -5,7 +5,9 @@ from __future__ import annotations
 import pytest
 
 from cortex.aux.evaluation import (
+    AuxCorpusCaseResult,
     AuxCorpusEvaluationResult,
+    AuxCorpusMetricSummary,
     AuxTemporalScenario,
     evaluate_aux_support_corpus,
 )
@@ -62,6 +64,61 @@ def test_evaluate_aux_support_corpus_reports_time_separated_lift_and_acceptance(
     )
 
 
+def test_aux_corpus_case_result_carries_support_priors_and_failure_reasons() -> None:
+    result = evaluate_aux_support_corpus(make_aux_temporal_corpus())
+
+    case_map = {case.scenario_id: case for case in result.case_results}
+    burden_case = case_map["burden-heavy-counterexample"]
+    no_lift_case = case_map["no-lift-counterexample"]
+
+    assert isinstance(burden_case, AuxCorpusCaseResult)
+    assert burden_case.support_memory_priors.active is True
+    assert burden_case.publication.publication_tags >= {
+        "aux/offline-publication",
+        "aux/temporal-corpus",
+    }
+    assert burden_case.augmented_target.core_snapshot is burden_case.geometry_report.source_snapshot
+    assert burden_case.augmented_target.auxiliary_support.derived_tags >= {
+        "aux/offline-publication",
+        "aux/temporal-corpus",
+    }
+    assert no_lift_case.failure_reasons == (
+        "no quality lift over baseline target",
+        "burden increased without offsetting quality lift",
+    )
+
+
+def test_aux_corpus_metric_summaries_cover_fixed_metrics_and_case_accounting() -> None:
+    result = evaluate_aux_support_corpus(make_aux_temporal_corpus())
+
+    assert all(isinstance(summary, AuxCorpusMetricSummary) for summary in result.metric_summaries)
+    assert {summary.metric_tag for summary in result.metric_summaries} == {
+        "retrieval_usefulness",
+        "branch_resume_fidelity",
+        "uncertainty_brake_diagnostic_lift",
+        "contradiction_preserving_clustering_quality",
+        "burden_overhead_cost",
+    }
+    for summary in result.metric_summaries:
+        assert summary.case_count == len(result.case_results)
+        assert summary.improved_case_count == len(summary.improved_case_ids)
+        assert summary.regressed_case_count == len(summary.regressed_case_ids)
+
+    contradiction_summary = next(
+        summary
+        for summary in result.metric_summaries
+        if summary.metric_tag == "contradiction_preserving_clustering_quality"
+    )
+    burden_summary = next(
+        summary
+        for summary in result.metric_summaries
+        if summary.metric_tag == "burden_overhead_cost"
+    )
+    assert contradiction_summary.regressed_case_count == 0
+    assert burden_summary.improved_case_count == 0
+    assert burden_summary.regressed_case_count >= 1
+
+
 def test_evaluate_aux_support_corpus_can_recommend_prune_candidate_for_weak_cases() -> None:
     result = evaluate_aux_support_corpus(make_aux_prune_candidate_corpus())
 
@@ -69,3 +126,20 @@ def test_evaluate_aux_support_corpus_can_recommend_prune_candidate_for_weak_case
     assert result.retention_recommendation == "prune-candidate"
     assert "fewer than 3 fixed metrics improved across corpus" in result.failure_reasons
     assert any(case.failure_reasons for case in result.case_results)
+
+
+@pytest.mark.parametrize(
+    ("value", "expected_error", "message"),
+    (
+        ((), ValueError, "requires at least one scenario"),
+        ("not-a-tuple", TypeError, "requires tuple\\[AuxTemporalScenario, ...\\]"),
+        ((object(),), TypeError, "requires only AuxTemporalScenario instances"),
+    ),
+)
+def test_evaluate_aux_support_corpus_validates_input_shape(
+    value: object,
+    expected_error: type[Exception],
+    message: str,
+) -> None:
+    with pytest.raises(expected_error, match=message):
+        evaluate_aux_support_corpus(value)  # type: ignore[arg-type]

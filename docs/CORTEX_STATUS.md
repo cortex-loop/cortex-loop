@@ -149,10 +149,12 @@ flowchart TD
 
 ## Closure Gates
 
+Workflow gates marked `required` are contractual gates checked by `repo_workflow.py`, not a claim about every attached local worktree at render time.
+
 | Gate | Status | Note |
 | --- | --- | --- |
-| `main_synced` | `passed` | Resting truth is enforced through clean synced main and the workflow helper. |
-| `cleanup_report` | `passed` | cleanup-report is the strict final hygiene gate for the resting repo state. |
+| `main_synced` | `required` | Required workflow gate: resting truth is enforced through clean synced main and the workflow helper. |
+| `cleanup_report` | `required` | Required workflow gate: cleanup-report is the strict final hygiene gate for the resting repo state. |
 | `single_truth` | `passed` | The status registry and generated status doc are the only live operational truth surfaces. |
 | `legacy_test_buckets_removed` | `passed` | tests/unit and tests/integration are retired in favor of purpose-first active buckets. |
 
@@ -161,7 +163,7 @@ flowchart TD
 - Train: `aux-reference-q-mem-replay`
 - Surface: `experimental`
 - Executive benefit: Test whether corpus-proven offline publication can improve explicit reference-only Q_mem priors and intervention pricing without turning AUX into hidden executive truth.
-- Why now: The time-separated AUX corpus now proves support-side lift and contradiction-preserving offline publication, so the next blocker is whether explicit AUX-owned Q_mem priors improve reference allocation rather than just offline reports.
+- Why now: The time-separated AUX corpus now demonstrates reproducible experimental support-side lift and contradiction-preserving offline publication on the evaluation surface, so the next blocker is whether explicit AUX-owned Q_mem priors improve reference allocation rather than just offline reports.
 - Primary metric: `reference-only improvement in allocation or selected-family quality from explicit AUX-owned Q_mem priors with zero change to commitment truth and no shipping-lane dependence`
 - Guardrail: `reference-only, runtime-off-by-default, support-side only, and no change to commitment certification, blockedness, or the openai:operator_cli shipping default`
 - Kill rule: `prune any Q_mem replay seam that depends on hidden caches, smooths contradictions, or creates shipping-lane dependence without clear reference-side lift`
