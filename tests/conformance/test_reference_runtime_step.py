@@ -824,6 +824,16 @@ def _assert_allocation_diagnostics_shape(
         assert all(score["allocated_score"] == score["online_score"] for score in scores)
     else:
         assert any(score["allocated_score"] != score["online_score"] for score in scores)
+    for score in scores:
+        reason_tags = score["reason_tags"]
+        assert isinstance(reason_tags, list)
+        if "goal-branch-coupled" in reason_tags:
+            assert "allocation:online-plus-goal-branch" in reason_tags
+            assert "allocation:online-only" not in reason_tags
+            assert any(tag.startswith("lambda_G:") for tag in reason_tags)
+        if any(tag.startswith("lambda_G:") for tag in reason_tags):
+            assert "allocation:online-plus-goal-branch" in reason_tags
+            assert "allocation:online-only" not in reason_tags
     mediation = payload["mediation"]
     assert isinstance(mediation, dict)
     assert tuple(mediation) == (

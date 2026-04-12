@@ -189,6 +189,10 @@ def test_reference_runtime_cli_reads_event_file_and_emits_one_record_per_event()
     ] == [0.44999999999999996, 0.35, 0.30]
     assert records[1]["control_ledger"]["allocation_diagnostics"]["scores"][0]["allocated_score"] != records[1]["control_ledger"]["allocation_diagnostics"]["scores"][0]["online_score"]
     assert records[2]["control_ledger"]["allocation_diagnostics"]["scores"][0]["allocated_score"] != records[2]["control_ledger"]["allocation_diagnostics"]["scores"][0]["online_score"]
+    for record in records:
+        _assert_goal_branch_allocation_truth(
+            record["control_ledger"]["allocation_diagnostics"]["scores"]
+        )
     assert all(
         record["control_ledger"]["allocation_diagnostics"]["mediation"]["mediation_identity"]
         is True
@@ -558,6 +562,19 @@ def _selection(selected_family: SoftControlFamily) -> object:
             self.mediation_finalization = finalize_reference_soft_control(family)
 
     return _Selection(selected_family)
+
+
+def _assert_goal_branch_allocation_truth(scores: list[dict[str, object]]) -> None:
+    for score in scores:
+        reason_tags = score["reason_tags"]
+        assert isinstance(reason_tags, list)
+        if "goal-branch-coupled" in reason_tags:
+            assert "allocation:online-plus-goal-branch" in reason_tags
+            assert "allocation:online-only" not in reason_tags
+            assert any(tag.startswith("lambda_G:") for tag in reason_tags)
+        if any(tag.startswith("lambda_G:") for tag in reason_tags):
+            assert "allocation:online-plus-goal-branch" in reason_tags
+            assert "allocation:online-only" not in reason_tags
 
 
 def _latched_state_with_evidence(*args: object, **kwargs: object) -> ReferenceExecutiveState:

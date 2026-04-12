@@ -33,7 +33,7 @@ EXPECTATIONS = (
         symbol_name="WorkContract",
         promised_surfaces=(
             PromisedTestSurface(
-                test_file="tests/unit/test_verified_work.py",
+                test_file="tests/product/test_verified_work.py",
                 test_names=(
                     "test_work_contract_accepts_only_first_train_shape",
                     "test_work_contract_rejects_duplicate_or_unbounded_paths",
@@ -47,11 +47,11 @@ EXPECTATIONS = (
         symbol_name="VerificationOutcome",
         promised_surfaces=(
             PromisedTestSurface(
-                test_file="tests/unit/test_verified_work.py",
+                test_file="tests/product/test_verified_work.py",
                 test_names=("test_verification_outcome_rejects_incoherent_status_and_failure_class",),
             ),
             PromisedTestSurface(
-                test_file="tests/unit/test_verified_work_runtime.py",
+                test_file="tests/product/test_verified_work_runtime.py",
                 test_names=(
                     "test_verify_verified_work_result_preserves_blocked_missing_info",
                     "test_verify_verified_work_result_accepts_passing_submission",
@@ -65,7 +65,7 @@ EXPECTATIONS = (
         symbol_name="choose_verified_work_followup",
         promised_surfaces=(
             PromisedTestSurface(
-                test_file="tests/unit/test_verified_work.py",
+                test_file="tests/product/test_verified_work.py",
                 test_names=("test_choose_verified_work_followup_matches_exact_first_train_law",),
             ),
         ),
@@ -76,7 +76,7 @@ EXPECTATIONS = (
         symbol_name="ReferenceExecutiveState",
         promised_surfaces=(
             PromisedTestSurface(
-                test_file="tests/unit/test_sre_neutral_hinge.py",
+                test_file="tests/product/test_sre_neutral_hinge.py",
                 test_names=(
                     "test_reference_executive_state_exposes_minimum_software_facing_views",
                     "test_reference_executive_state_uses_canonical_uncertainty_and_brake_types",
@@ -84,7 +84,7 @@ EXPECTATIONS = (
                 ),
             ),
             PromisedTestSurface(
-                test_file="tests/unit/test_sre_goals_branching.py",
+                test_file="tests/product/test_sre_goals_branching.py",
                 test_names=(
                     "test_reference_executive_state_uses_canonical_goal_carrier_directly",
                     "test_reference_state_surface_keeps_only_a_compatibility_alias_for_goal_view",
@@ -98,7 +98,7 @@ EXPECTATIONS = (
         symbol_name="ReferenceModeAndGatingView",
         promised_surfaces=(
             PromisedTestSurface(
-                test_file="tests/unit/test_sre_neutral_hinge.py",
+                test_file="tests/product/test_sre_neutral_hinge.py",
                 test_names=(
                     "test_reference_executive_state_exposes_minimum_software_facing_views",
                     "test_reference_mode_and_gating_view_requires_non_empty_mode_tag",
@@ -113,7 +113,7 @@ EXPECTATIONS = (
         symbol_name="ReferenceControlAllocationView",
         promised_surfaces=(
             PromisedTestSurface(
-                test_file="tests/unit/test_sre_neutral_hinge.py",
+                test_file="tests/product/test_sre_neutral_hinge.py",
                 test_names=(
                     "test_reference_executive_state_exposes_minimum_software_facing_views",
                     "test_reference_control_allocation_view_requires_non_empty_budget_band",
@@ -130,7 +130,7 @@ EXPECTATIONS = (
         symbol_name="build_reference_executive_state",
         promised_surfaces=(
             PromisedTestSurface(
-                test_file="tests/unit/test_reference_executive_builder.py",
+                test_file="tests/product/test_reference_executive_builder.py",
                 test_names=(
                     "test_build_reference_executive_state_for_cheap_event_stays_pass_through_and_low_budget",
                     "test_build_reference_executive_state_admits_seek_context_under_missing_capability_pressure",
@@ -148,7 +148,7 @@ EXPECTATIONS = (
         symbol_name="SoftControlFamily",
         promised_surfaces=(
             PromisedTestSurface(
-                test_file="tests/unit/test_sre_neutral_hinge.py",
+                test_file="tests/product/test_sre_neutral_hinge.py",
                 test_names=("test_exact_soft_control_family_set_matches_the_packet",),
             ),
         ),
@@ -159,7 +159,7 @@ EXPECTATIONS = (
         symbol_name="AllocationScore",
         promised_surfaces=(
             PromisedTestSurface(
-                test_file="tests/unit/test_sre_neutral_hinge.py",
+                test_file="tests/product/test_sre_neutral_hinge.py",
                 test_names=(
                     "test_neutral_dominance_returns_neutral_when_margin_is_below_threshold",
                     "test_neutral_dominance_returns_strongest_non_neutral_when_threshold_is_met",
@@ -174,7 +174,7 @@ EXPECTATIONS = (
         symbol_name="AllocationScorecard",
         promised_surfaces=(
             PromisedTestSurface(
-                test_file="tests/unit/test_sre_neutral_hinge.py",
+                test_file="tests/product/test_sre_neutral_hinge.py",
                 test_names=(
                     "test_neutral_dominance_returns_neutral_when_margin_is_below_threshold",
                     "test_neutral_dominance_returns_strongest_non_neutral_when_threshold_is_met",
@@ -184,12 +184,60 @@ EXPECTATIONS = (
         ),
     ),
     SreCorrespondenceExpectation(
+        row_label="GoalBranchScore",
+        module_path="cortex.sre.goal_branch",
+        symbol_name="GoalBranchScore",
+        promised_surfaces=(
+            PromisedTestSurface(
+                test_file="tests/product/test_sre_goal_branch.py",
+                test_names=(
+                    "test_goal_branch_coupling_is_zero_without_continuity_debt",
+                    "test_goal_branch_coupling_lifts_branch_and_redirect_under_pending_goals",
+                ),
+            ),
+        ),
+    ),
+    SreCorrespondenceExpectation(
+        row_label="GoalBranchCoupling",
+        module_path="cortex.sre.goal_branch",
+        symbol_name="GoalBranchCoupling",
+        promised_surfaces=(
+            PromisedTestSurface(
+                test_file="tests/product/test_sre_goal_branch.py",
+                test_names=(
+                    "test_goal_branch_coupling_shifts_toward_check_without_resume_anchor",
+                    "test_goal_branch_coupling_reduces_branch_score_under_latched_brake",
+                ),
+            ),
+        ),
+    ),
+    SreCorrespondenceExpectation(
+        row_label="build_reference_goal_branch_coupling",
+        module_path="cortex.sre.goal_branch",
+        symbol_name="build_reference_goal_branch_coupling",
+        promised_surfaces=(
+            PromisedTestSurface(
+                test_file="tests/product/test_sre_goal_branch.py",
+                test_names=(
+                    "test_goal_branch_coupling_is_zero_without_continuity_debt",
+                    "test_goal_branch_coupling_lifts_branch_and_redirect_under_pending_goals",
+                    "test_goal_branch_coupling_shifts_toward_check_without_resume_anchor",
+                    "test_goal_branch_coupling_reduces_branch_score_under_latched_brake",
+                ),
+            ),
+            PromisedTestSurface(
+                test_file="tests/product/test_reference_runtime_scoring.py",
+                test_names=("test_reference_scoring_promotes_branch_under_branch_pressure",),
+            ),
+        ),
+    ),
+    SreCorrespondenceExpectation(
         row_label="build_reference_allocation_scorecard",
         module_path="cortex.sre.reference_scoring",
         symbol_name="build_reference_allocation_scorecard",
         promised_surfaces=(
             PromisedTestSurface(
-                test_file="tests/unit/test_reference_runtime_scoring.py",
+                test_file="tests/product/test_reference_runtime_scoring.py",
                 test_names=(
                     "test_reference_scoring_defaults_to_neutral_when_margin_is_below_threshold",
                     "test_reference_scoring_selects_seek_context_under_missing_capability_pressure_when_admitted",
@@ -206,7 +254,7 @@ EXPECTATIONS = (
         symbol_name="neutral_dominance_decision",
         promised_surfaces=(
             PromisedTestSurface(
-                test_file="tests/unit/test_sre_neutral_hinge.py",
+                test_file="tests/product/test_sre_neutral_hinge.py",
                 test_names=(
                     "test_neutral_dominance_returns_neutral_when_margin_is_below_threshold",
                     "test_neutral_dominance_returns_strongest_non_neutral_when_threshold_is_met",
@@ -221,7 +269,7 @@ EXPECTATIONS = (
         symbol_name="ReferenceSoftControlSelection",
         promised_surfaces=(
             PromisedTestSurface(
-                test_file="tests/unit/test_reference_runtime_scoring.py",
+                test_file="tests/product/test_reference_runtime_scoring.py",
                 test_names=(
                     "test_reference_scoring_defaults_to_neutral_when_margin_is_below_threshold",
                     "test_reference_scoring_selects_seek_context_under_missing_capability_pressure_when_admitted",
@@ -238,7 +286,7 @@ EXPECTATIONS = (
         symbol_name="select_reference_soft_control",
         promised_surfaces=(
             PromisedTestSurface(
-                test_file="tests/unit/test_reference_runtime_scoring.py",
+                test_file="tests/product/test_reference_runtime_scoring.py",
                 test_names=(
                     "test_reference_scoring_defaults_to_neutral_when_margin_is_below_threshold",
                     "test_reference_scoring_selects_seek_context_under_missing_capability_pressure_when_admitted",
@@ -255,7 +303,7 @@ EXPECTATIONS = (
         symbol_name="ReferenceMediationFinalization",
         promised_surfaces=(
             PromisedTestSurface(
-                test_file="tests/unit/test_sre_mediation.py",
+                test_file="tests/experimental/test_sre_mediation.py",
                 test_names=(
                     "test_reference_mediation_identity_mode_preserves_family_without_specialization",
                     "test_reference_mediation_experimental_mode_specializes_seek_context_when_runtime_visible_opportunity_exists",
@@ -269,7 +317,7 @@ EXPECTATIONS = (
         symbol_name="finalize_reference_soft_control",
         promised_surfaces=(
             PromisedTestSurface(
-                test_file="tests/unit/test_sre_mediation.py",
+                test_file="tests/experimental/test_sre_mediation.py",
                 test_names=(
                     "test_reference_mediation_identity_mode_preserves_family_without_specialization",
                     "test_reference_mediation_experimental_mode_specializes_seek_context_when_runtime_visible_opportunity_exists",
@@ -285,7 +333,7 @@ EXPECTATIONS = (
         symbol_name="_realize_family",
         promised_surfaces=(
             PromisedTestSurface(
-                test_file="tests/unit/test_reference_runtime_step.py",
+                test_file="tests/conformance/test_reference_runtime_step.py",
                 test_names=(
                     "test_reference_runtime_step_experimental_mediation_specializes_reference_mcp_query",
                     "test_reference_runtime_step_enforces_latched_brake_to_check_when_evidence_dominates",
@@ -301,7 +349,7 @@ EXPECTATIONS = (
         symbol_name="UncertaintyEstimate",
         promised_surfaces=(
             PromisedTestSurface(
-                test_file="tests/unit/test_sre_uncertainty_brake.py",
+                test_file="tests/product/test_sre_uncertainty_brake.py",
                 test_names=(
                     "test_uncertainty_estimate_accepts_packet_class_tags_and_rejects_unknown_classes",
                     "test_uncertainty_estimate_enforces_bounded_values",
@@ -315,7 +363,7 @@ EXPECTATIONS = (
         symbol_name="BrakeState",
         promised_surfaces=(
             PromisedTestSurface(
-                test_file="tests/unit/test_sre_uncertainty_brake.py",
+                test_file="tests/product/test_sre_uncertainty_brake.py",
                 test_names=("test_brake_state_set_is_exact",),
             ),
         ),
@@ -326,7 +374,7 @@ EXPECTATIONS = (
         symbol_name="evaluate_brake_state",
         promised_surfaces=(
             PromisedTestSurface(
-                test_file="tests/unit/test_sre_uncertainty_brake.py",
+                test_file="tests/product/test_sre_uncertainty_brake.py",
                 test_names=(
                     "test_brake_evaluation_returns_quiescent_for_low_uncertainty_without_spikes",
                     "test_brake_evaluation_returns_guarded_for_elevated_uncertainty_or_mild_spike_pressure",
@@ -341,7 +389,7 @@ EXPECTATIONS = (
         symbol_name="GoalContinuityView",
         promised_surfaces=(
             PromisedTestSurface(
-                test_file="tests/unit/test_sre_goals_branching.py",
+                test_file="tests/product/test_sre_goals_branching.py",
                 test_names=("test_goal_continuity_view_preserves_goal_and_pending_goal_fields",),
             ),
         ),
@@ -352,7 +400,7 @@ EXPECTATIONS = (
         symbol_name="BranchOperation",
         promised_surfaces=(
             PromisedTestSurface(
-                test_file="tests/unit/test_sre_goals_branching.py",
+                test_file="tests/product/test_sre_goals_branching.py",
                 test_names=("test_branch_operation_set_is_exact",),
             ),
         ),
@@ -363,7 +411,7 @@ EXPECTATIONS = (
         symbol_name="HostNativeOpportunity",
         promised_surfaces=(
             PromisedTestSurface(
-                test_file="tests/unit/test_sre_opportunities.py",
+                test_file="tests/product/test_sre_opportunities.py",
                 test_names=(
                     "test_matching_direct_host_native_opportunity_is_nominated_when_clearly_superior",
                     "test_failed_specialization_surfaces_degradation_reason_and_safer_fallback",
@@ -377,7 +425,7 @@ EXPECTATIONS = (
         symbol_name="OpportunitySpecializationResult",
         promised_surfaces=(
             PromisedTestSurface(
-                test_file="tests/unit/test_sre_opportunities.py",
+                test_file="tests/product/test_sre_opportunities.py",
                 test_names=(
                     "test_neutral_family_returns_no_direct_opportunity_specialization",
                     "test_failed_specialization_surfaces_degradation_reason_and_safer_fallback",
@@ -392,7 +440,7 @@ EXPECTATIONS = (
         symbol_name="specialize_host_native_opportunity",
         promised_surfaces=(
             PromisedTestSurface(
-                test_file="tests/unit/test_sre_opportunities.py",
+                test_file="tests/product/test_sre_opportunities.py",
                 test_names=(
                     "test_neutral_family_returns_no_direct_opportunity_specialization",
                     "test_matching_direct_host_native_opportunity_is_nominated_when_clearly_superior",
@@ -409,7 +457,7 @@ EXPECTATIONS = (
         symbol_name="select_operator_route",
         promised_surfaces=(
             PromisedTestSurface(
-                test_file="tests/unit/test_operator_routing.py",
+                test_file="tests/product/test_operator_routing.py",
                 test_names=(
                     "test_operator_task_state_requires_bounded_numeric_axes",
                     "test_select_operator_route_prefers_default_execute_under_low_pressure",
@@ -427,7 +475,7 @@ EXPECTATIONS = (
         symbol_name="ExecutiveModulatorState",
         promised_surfaces=(
             PromisedTestSurface(
-                test_file="tests/unit/test_sre_modulators.py",
+                test_file="tests/product/test_sre_modulators.py",
                 test_names=(
                     "test_modulator_update_clips_values_into_unit_interval",
                     "test_high_quota_pressure_raises_stop_pressure",
@@ -444,7 +492,7 @@ EXPECTATIONS = (
         symbol_name="ExecutiveSignalSummary",
         promised_surfaces=(
             PromisedTestSurface(
-                test_file="tests/unit/test_sre_executive_summary.py",
+                test_file="tests/product/test_sre_executive_summary.py",
                 test_names=(
                     "test_executive_signal_summary_inputs_require_bounded_values",
                     "test_executive_signal_summary_raises_repeated_failure_pressure_from_observable_failures",
@@ -458,7 +506,7 @@ EXPECTATIONS = (
         symbol_name="build_executive_signal_summary",
         promised_surfaces=(
             PromisedTestSurface(
-                test_file="tests/unit/test_sre_executive_summary.py",
+                test_file="tests/product/test_sre_executive_summary.py",
                 test_names=(
                     "test_executive_signal_summary_inputs_require_bounded_values",
                     "test_executive_signal_summary_raises_repeated_failure_pressure_from_observable_failures",
@@ -472,7 +520,7 @@ EXPECTATIONS = (
         symbol_name="update_executive_modulators",
         promised_surfaces=(
             PromisedTestSurface(
-                test_file="tests/unit/test_sre_modulators.py",
+                test_file="tests/product/test_sre_modulators.py",
                 test_names=(
                     "test_modulator_update_clips_values_into_unit_interval",
                     "test_modulator_stop_pressure_can_block_route",
@@ -487,7 +535,7 @@ EXPECTATIONS = (
         symbol_name="ExecutivePolicyView",
         promised_surfaces=(
             PromisedTestSurface(
-                test_file="tests/unit/test_sre_policy_view.py",
+                test_file="tests/product/test_sre_policy_view.py",
                 test_names=(
                     "test_policy_view_switch_margin_changes_with_focus_and_explore",
                     "test_policy_view_allows_extra_read_pass_at_explicit_threshold",
@@ -502,7 +550,7 @@ EXPECTATIONS = (
         symbol_name="build_executive_policy_view",
         promised_surfaces=(
             PromisedTestSurface(
-                test_file="tests/unit/test_sre_policy_view.py",
+                test_file="tests/product/test_sre_policy_view.py",
                 test_names=(
                     "test_policy_view_switch_margin_changes_with_focus_and_explore",
                     "test_policy_view_allows_extra_read_pass_at_explicit_threshold",
