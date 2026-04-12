@@ -281,8 +281,24 @@ def test_reference_scoring_promotes_branch_under_branch_pressure() -> None:
     assert selection.selected_family is SoftControlFamily.BRANCH
     assert selection.neutral_dominance.neutral_selected is False
     assert branch_score.allocated_score > neutral_score.allocated_score
+    assert "allocation:online-plus-goal-branch" in branch_score.reason_tags
+    assert "allocation:online-only" not in branch_score.reason_tags
     assert "goal-branch-coupled" in branch_score.reason_tags
     assert "lambda_G:0.35" in branch_score.reason_tags
+    assert "allocation:online-plus-goal-branch" in neutral_score.reason_tags
+    assert "allocation:online-only" not in neutral_score.reason_tags
+    unaffected_score = next(
+        score
+        for score in scorecard.scores
+        if score.family is SoftControlFamily.SEEK_CONTEXT
+    )
+    assert unaffected_score.allocated_score == unaffected_score.online_score
+    assert "allocation:online-only" in unaffected_score.reason_tags
+    assert "allocation:online-plus-goal-branch" not in unaffected_score.reason_tags
+    assert "goal-branch-coupled" not in unaffected_score.reason_tags
+    assert not any(
+        tag.startswith("lambda_G:") for tag in unaffected_score.reason_tags
+    )
 
 
 def test_reference_scoring_keeps_masked_family_inadmissible_even_when_top_ranked() -> None:
@@ -367,10 +383,21 @@ def test_reference_scoring_exposes_explicit_online_allocation_diagnostics() -> N
 
     assert scorecard.alpha_t == 0.75
     assert all(score.memory_score == 0.0 for score in scorecard.scores)
-    assert all(score.allocated_score == pytest.approx(score.online_score * 0.75) for score in scorecard.scores)
+    assert all(
+        score.allocated_score == pytest.approx(score.online_score * 0.75)
+        for score in scorecard.scores
+    )
     assert components[SoftControlFamily.CHECK]["uncertainty_reduction"] > 0.0
     assert components[SoftControlFamily.BRAKE]["stability"] > 0.0
     assert all("allocation:online-only" in score.reason_tags for score in scorecard.scores)
+    assert all(
+        "allocation:online-plus-goal-branch" not in score.reason_tags
+        for score in scorecard.scores
+    )
+    assert all(
+        not any(tag.startswith("lambda_G:") for tag in score.reason_tags)
+        for score in scorecard.scores
+    )
     assert all("alpha:0.75" in score.reason_tags for score in scorecard.scores)
 
 

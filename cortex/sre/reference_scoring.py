@@ -151,15 +151,20 @@ def build_reference_allocation_scorecard(
             reason_tags.add("masked")
         if brake_state is not BrakeState.QUIESCENT and family is SoftControlFamily.BRAKE:
             reason_tags.add(f"brake:{brake_state.value}")
-        reason_tags.add("allocation:online-only")
         reason_tags.add(_alpha_reason_tag(alpha_t))
-        reason_tags.add(_goal_branch_weight_reason_tag(goal_branch_coupling.weight))
 
         online_score = _online_score(online_components[family])
         goal_branch_score = goal_branch_coupling.score_for(family)
-        if goal_branch_coupling.weight > 0.0 and goal_branch_score.score != 0.0:
+        goal_branch_contribution_active = (
+            goal_branch_coupling.weight > 0.0 and goal_branch_score.score != 0.0
+        )
+        if goal_branch_contribution_active:
+            reason_tags.add("allocation:online-plus-goal-branch")
+            reason_tags.add(_goal_branch_weight_reason_tag(goal_branch_coupling.weight))
             reason_tags.add("goal-branch-coupled")
             reason_tags.update(goal_branch_score.reason_tags)
+        else:
+            reason_tags.add("allocation:online-only")
         allocated_score = (alpha_t * online_score) + (
             goal_branch_coupling.weight * goal_branch_score.score
         )
