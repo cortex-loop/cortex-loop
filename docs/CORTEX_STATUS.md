@@ -39,10 +39,22 @@ Research stance:
 - Prefer brilliant concrete code when it cleanly realizes the intended executive skill; do not preserve a worse abstraction just because it matched an earlier local framing.
 
 Answering stance:
-- When describing Cortex, start with the full executive denominator before narrowing to the current shipping subset.
+- When describing Cortex, lead with shipping truth, conformance truth, the current train, and the active quality/risk focus; keep the full executive denominator as background context rather than the front-door headline.
 - Always distinguish Cortex truth, shipping truth, conformance truth, and the current train.
 
-## Executive Completion
+## Live Product Truth
+
+- Shipping default: `openai:operator_cli`
+- Conformance truth: `openai=conformant`, `claude=conformant`, `gemini=conformant`, `reference=conformant`
+- Accepted conformance next decision: `promote`
+
+## Current Focus
+
+- Current tracked train: `openai-operator-cli-proof-reliability`
+- Active quality/risk focus: The bounded live-code audit passed locally, but the default no-spend OpenAI operator_cli bookmarks proof hit the full first-attempt timeout and emitted parse-invalid output before falling into repair; until that route is reliable, it is the current blocker.
+- Next product train after the current focus: `openai-operator-cli-proof-reliability`
+
+## Denominator / Completion Context
 
 - Current full-executive completion: `100%`
 - Shippable threshold for the full executive: `85%`
@@ -51,13 +63,13 @@ Answering stance:
 - Scoring rule: `landed=100%`, `partial=30%`, `north_star=0%`
 - This score measures progress toward the full executive denominator, not just the current shipping lane.
 
-When user asks where Cortex is at:
-- Start with the current executive completion percent versus the shippable threshold.
-- Then summarize the bio-to-code matrix by landed, partial, and north_star rows.
-- Then name the next highest-leverage rows to raise the score without drifting from Cortex law.
+When user asks where Cortex is at now:
+- Start with shipping truth, conformance truth, the current train, and the active quality/risk focus.
+- Then give the full-executive denominator as background completion context rather than the front-door headline.
+- Then summarize the bio-to-code matrix and the next highest-leverage quality or proof blockers without drifting from Cortex law.
 
-Fastest route to raise the score next:
-- `Cross-host shadow evidence for support-conditioned intervention pricing`: `+0` points if landed. The reference-first quality gate passed, so the next leverage is to test the same explicit AUX-owned control law across host evidence without widening live runtime behavior or inventing a new denominator row.
+Denominator context from here:
+- `No remaining denominator row`: `+0` points if landed. The full executive denominator is already landed, so the active leverage is code-quality, proof-confidence, dead-weight elimination, and live-run reliability rather than score expansion.
 
 ## Bio-To-Code Matrix
 
@@ -160,19 +172,19 @@ Workflow gates marked `required` are contractual gates checked by `repo_workflow
 
 ## Next Product Train
 
-- Train: `support-conditioned-intervention-pricing-cross-host-shadow`
-- Surface: `experimental`
-- Executive benefit: Test whether the improved explicit AUX-owned support-conditioned intervention pricing remains directionally useful as shadow-only evidence across OpenAI, Claude, and Gemini without changing host runtime behavior.
-- Why now: Reference-first quality broadening passed its bounded gate, so the next leverage is cross-host shadow evidence for the same law before any non-reference replay ingress or shipping-default change.
-- Primary metric: `cross-host shadow agreement on preferred-family lift and counterexample stability from explicit AUX-owned Q_mem priors, with zero host-runtime behavior change and zero shipping-lane dependence`
-- Guardrail: `shadow only; keep q_mem reference-only in live runtimes, keep openai:operator_cli unchanged by default, and do not add hidden caches, prompt memory, or host-specific policy forks`
-- Kill rule: `cut any shadow seam that pressures a rollout before host evidence converges, or that shows repeated law drift better solved by revising Cortex law`
+- Train: `openai-operator-cli-proof-reliability`
+- Surface: `lab`
+- Executive benefit: Make the default no-spend OpenAI operator_cli proof route return bounded, parseable results so shipping truth is backed by live executable evidence instead of accepted history alone.
+- Why now: The live-code audit passed locally, but the default bookmarks proof hit the full first-attempt timeout and only reached the repair lane after parse-invalid output; until that route is reliable, cross-host shadow evidence is not the highest-leverage seam.
+- Primary metric: `verified_work_bookmarks_v1 returns a bounded publishable result or explicit env_blocked classification with attempt artifacts on the default no-spend OpenAI operator_cli lane without consuming the full first-attempt timeout`
+- Guardrail: `no paid service lane, no host rollout changes, no packet-law widening, and no hiding operator failure behind stale accepted runs or longer timeouts`
+- Kill rule: `cut any fix that only lengthens timeouts, suppresses parse-invalid operator output, or shifts proof onto non-default paid surfaces`
 
 ## Where To Work Next
 
-- Treat the full executive denominator as landed and move from reference-first quality to cross-host shadow evidence: explicit AUX-owned Q_mem lift is now higher-quality on the reference seam, so the next work is shadow-only breadth across host evidence rather than live rollout.
-- Keep AUX removable, runtime-off-by-default, and appendix-driven; q_mem stays reference-only in live runtimes while OpenAI, Claude, and Gemini are evaluated in shadow mode only.
-- Use experimental, product, and conformance shadow seams to test cross-host support-conditioned control agreement without widening CLI/runtime APIs or inventing a new denominator row.
+- Fix the default no-spend OpenAI operator_cli proof path before expanding into cross-host shadow evidence: on verified_work_bookmarks_v1 the first attempt hit the full five-minute timeout and emitted parse-invalid output before falling into repair.
+- Keep shipping truth and the full executive denominator unchanged, but treat live-proof reliability as the current blocker because the audit is ahead of the default executable proof lane.
+- Work in lab and internal proof surfaces first: bounded attempt artifacts, parseable operator output, and a clean result or explicit env_blocked classification without hiding failures behind longer timeouts or paid lanes.
 
 ## Canonical Proof
 
@@ -225,8 +237,3 @@ Workflow gates marked `required` are contractual gates checked by `repo_workflow
 - `docs/CORTEX_V2_AUX_2.md`
 - `docs/CORTEX_STATUS.md`
 - `docs/internal/REPO_WORKFLOW.md`
-
-## Operational Focus
-
-- Current tracked train: `support-conditioned-intervention-pricing-cross-host-shadow`
-- Current focus note: With the reference-first quality gate passed, gather cross-host shadow evidence for explicit AUX-owned support-conditioned intervention pricing while keeping live runtimes reference-only, shipping defaults zero-memory, and commitment truth unchanged.

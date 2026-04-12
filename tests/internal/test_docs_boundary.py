@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import os
 import subprocess
 import sys
 import tomllib
@@ -23,6 +24,7 @@ ARCHIVE_INDEX_PATH = REPO_ROOT / "docs" / "archive" / "README.md"
 PYPROJECT_PATH = REPO_ROOT / "pyproject.toml"
 ROOT_MAKEFILE_PATH = REPO_ROOT / "Makefile"
 DOCS_ROOT = REPO_ROOT / "docs"
+SKIP_WALK_DIRS = {".git", ".cortex", ".claude", "node_modules", "__pycache__"}
 
 
 def _read(path: Path) -> str:
@@ -33,15 +35,22 @@ def _load_status() -> dict[str, object]:
     return json.loads(_read(STATUS_REGISTRY_PATH))
 
 
+def _find_repo_files(filename: str) -> list[str]:
+    matches: list[str] = []
+    for current_root, dirnames, filenames in os.walk(REPO_ROOT):
+        dirnames[:] = [dirname for dirname in dirnames if dirname not in SKIP_WALK_DIRS]
+        if filename not in filenames:
+            continue
+        path = Path(current_root) / filename
+        matches.append(str(path.relative_to(REPO_ROOT)))
+    return sorted(matches)
+
+
 def test_agents_records_mission_lock_and_single_truth_bootstrap() -> None:
     text = _read(AGENTS_PATH)
     lines = text.splitlines()
     sections = [line for line in lines if line.startswith("## ")]
-    all_agents = sorted(
-        str(path.relative_to(REPO_ROOT))
-        for path in REPO_ROOT.rglob("AGENTS.md")
-        if ".git" not in path.parts and ".cortex" not in path.parts
-    )
+    all_agents = _find_repo_files("AGENTS.md")
 
     assert all_agents == ["AGENTS.md"]
     assert len(lines) <= 180
@@ -58,7 +67,7 @@ def test_agents_records_mission_lock_and_single_truth_bootstrap() -> None:
     assert "installable executive layer" in text
     assert "human executive function" in text
     assert "live evidence" in text
-    assert "full-executive completion percent versus the shippable threshold first" in text
+    assert "lead with shipping truth, conformance truth, the current train, and the active quality/risk focus" in text
     assert "bio-to-code matrix" in text
     assert "internal/truth/cortex_status.json" in text
     assert "docs/CORTEX_STATUS.md" in text
@@ -188,9 +197,9 @@ def test_status_registry_is_complete_and_stable() -> None:
     assert matrix_status["Offline consolidation and support geometry"] == "landed"
     assert status["executive_completion"]["next_raise"] == [
         {
-            "skill": "Cross-host shadow evidence for support-conditioned intervention pricing",
+            "skill": "No remaining denominator row",
             "expected_points_if_landed": 0,
-            "why": "The reference-first quality gate passed, so the next leverage is to test the same explicit AUX-owned control law across host evidence without widening live runtime behavior or inventing a new denominator row.",
+            "why": "The full executive denominator is already landed, so the active leverage is code-quality, proof-confidence, dead-weight elimination, and live-run reliability rather than score expansion.",
         }
     ]
     host_status = {
@@ -212,15 +221,17 @@ def test_status_registry_is_complete_and_stable() -> None:
         "reference": "reference_cli",
     }
     assert status["conformance_summary"]["shipping_default"] == "openai:operator_cli"
-    assert status["work_today"]["slug"] == "support-conditioned-intervention-pricing-cross-host-shadow"
-    assert "support-conditioned intervention pricing" in status["work_today"]["note"]
-    assert status["next_product_train"]["slug"] == "support-conditioned-intervention-pricing-cross-host-shadow"
-    assert status["next_product_train"]["surface"] == "experimental"
-    assert "support-conditioned intervention pricing" in status["next_product_train"]["executive_benefit"]
-    assert "Reference-first quality broadening passed its bounded gate" in status["next_product_train"]["why_now"]
-    assert "cross-host shadow agreement" in status["next_product_train"]["primary_metric"]
-    assert "cross-host shadow evidence" in status["where_to_work"][0]
-    assert "support-conditioned control" in status["where_to_work"][2]
+    assert status["work_today"]["slug"] == "openai-operator-cli-proof-reliability"
+    assert "default no-spend OpenAI operator_cli bookmarks proof" in status["work_today"]["note"]
+    assert "parse-invalid output before falling into repair" in status["work_today"]["note"]
+    assert status["next_product_train"]["slug"] == "openai-operator-cli-proof-reliability"
+    assert status["next_product_train"]["surface"] == "lab"
+    assert "default no-spend OpenAI operator_cli proof route" in status["next_product_train"]["executive_benefit"]
+    assert "default bookmarks proof hit the full first-attempt timeout" in status["next_product_train"]["why_now"]
+    assert "bounded publishable result or explicit env_blocked classification" in status["next_product_train"]["primary_metric"]
+    assert "Fix the default no-spend OpenAI operator_cli proof path" in status["where_to_work"][0]
+    assert "live-proof reliability as the current blocker" in status["where_to_work"][1]
+    assert "bounded attempt artifacts, parseable operator output" in status["where_to_work"][2]
     closure_gates = {gate["id"]: gate for gate in status["closure_gates"]}
     assert closure_gates["main_synced"]["status"] == "required"
     assert closure_gates["cleanup_report"]["status"] == "required"
@@ -235,24 +246,28 @@ def test_generated_status_doc_includes_system_map_and_next_product_train() -> No
     assert "## System Map" in text
     assert "```mermaid" in text
     assert "## Identity And Research Stance" in text
-    assert "## Executive Completion" in text
+    assert "## Live Product Truth" in text
+    assert "## Current Focus" in text
+    assert "## Denominator / Completion Context" in text
     assert "## Bio-To-Code Matrix" in text
     assert "## Math To Code Rules" in text
     assert "human executive function" in text
+    assert text.index("## Live Product Truth") < text.index("## Denominator / Completion Context")
     assert "Current full-executive completion: `100%`" in text
     assert "Shippable threshold for the full executive: `85%`" in text
-    assert "When user asks where Cortex is at:" in text
-    assert "full executive denominator" in text
+    assert "When user asks where Cortex is at now:" in text
+    assert "background completion context" in text
+    assert "Active quality/risk focus" in text
     assert "## Packet To Code" in text
     assert "## Next Product Train" in text
-    assert "`support-conditioned-intervention-pricing-cross-host-shadow`" in text
-    assert "support-conditioned intervention pricing" in text
+    assert "`openai-operator-cli-proof-reliability`" in text
+    assert "default no-spend OpenAI operator_cli proof route" in text
     assert "Shipping Product Lane\\nopenai:operator_cli" in text or "Shipping Product Lane" in text
     assert "Shipping default: `openai:operator_cli`" in text
     assert "Workflow gates marked `required` are contractual gates checked by `repo_workflow.py`" in text
     assert "| `main_synced` | `required` |" in text
     assert "| `cleanup_report` | `required` |" in text
-    assert "Reference-first quality broadening passed its bounded gate" in text
+    assert "default bookmarks proof hit the full first-attempt timeout" in text
     assert "proves support-side lift" not in text
 
 

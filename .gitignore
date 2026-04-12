@@ -8,6 +8,7 @@ build/
 dist/
 .cortex/live_validation/
 .cortex/train_loops/
+.cortex/quality_audit/
 .claude/worktrees/
 .env
 .env.*

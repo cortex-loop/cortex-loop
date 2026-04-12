@@ -95,6 +95,9 @@ def render_status(data: dict[str, object]) -> str:
     where_to_work = data["where_to_work"]
     active_docs = data["active_docs"]
     completion_summary = _compute_completion(executive_completion, bio_to_code_matrix)
+    host_truth = ", ".join(
+        f"`{host['name']}={host['conformance']}`" for host in hosts
+    )
 
     lines: list[str] = [
         "# CORTEX Status",
@@ -146,7 +149,19 @@ def render_status(data: dict[str, object]) -> str:
     lines.extend(
         [
             "",
-            "## Executive Completion",
+            "## Live Product Truth",
+            "",
+            f"- Shipping default: `{conformance_summary['shipping_default']}`",
+            f"- Conformance truth: {host_truth}",
+            f"- Accepted conformance next decision: `{conformance_summary['accepted_next_decision']}`",
+            "",
+            "## Current Focus",
+            "",
+            f"- Current tracked train: `{work_today['slug']}`",
+            f"- Active quality/risk focus: {work_today['note']}",
+            f"- Next product train after the current focus: `{next_product_train['slug']}`",
+            "",
+            "## Denominator / Completion Context",
             "",
             f"- Current full-executive completion: `{completion_summary['current_percent']}%`",
             f"- Shippable threshold for the full executive: `{completion_summary['shippable_threshold_percent']}%`",
@@ -155,14 +170,14 @@ def render_status(data: dict[str, object]) -> str:
             f"- Scoring rule: `landed={int(completion_summary['status_fraction']['landed'] * 100)}%`, `partial={int(completion_summary['status_fraction']['partial'] * 100)}%`, `north_star={int(completion_summary['status_fraction']['north_star'] * 100)}%`",
             f"- {executive_completion['full_denominator_note']}",
             "",
-            "When user asks where Cortex is at:",
+            "When user asks where Cortex is at now:",
         ]
     )
     lines.extend(f"- {item}" for item in executive_completion["answer_contract"])
     lines.extend(
         [
             "",
-            "Fastest route to raise the score next:",
+            "Denominator context from here:",
         ]
     )
     for item in executive_completion["next_raise"]:
@@ -302,16 +317,6 @@ def render_status(data: dict[str, object]) -> str:
     lines.extend(f"- {item}" for item in blocked_moves)
     lines.extend(["", "## Active Docs", ""])
     lines.extend(f"- `{path}`" for path in active_docs)
-    lines.extend(
-        [
-            "",
-            "## Operational Focus",
-            "",
-            f"- Current tracked train: `{work_today['slug']}`",
-            f"- Current focus note: {work_today['note']}",
-            "",
-        ]
-    )
     return "\n".join(lines)
 
 
