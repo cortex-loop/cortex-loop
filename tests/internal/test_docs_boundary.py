@@ -213,8 +213,12 @@ def test_status_registry_is_complete_and_stable() -> None:
     }
     assert status["conformance_summary"]["shipping_default"] == "openai:operator_cli"
     assert status["work_today"]["slug"] == "offline-support-geometry-shape"
+    assert "Q_mem" in status["work_today"]["note"]
     assert status["next_product_train"]["slug"] == "offline-support-geometry-shape"
     assert status["next_product_train"]["surface"] == "experimental"
+    assert "Q_mem" in status["next_product_train"]["executive_benefit"]
+    assert "Q_mem" in status["next_product_train"]["why_now"]
+    assert "Q_mem" in status["where_to_work"][0]
 
 
 def test_generated_status_doc_includes_system_map_and_next_product_train() -> None:
@@ -234,6 +238,7 @@ def test_generated_status_doc_includes_system_map_and_next_product_train() -> No
     assert "## Packet To Code" in text
     assert "## Next Product Train" in text
     assert "`offline-support-geometry-shape`" in text
+    assert "Q_mem" in text
     assert "Shipping Product Lane\\nopenai:operator_cli" in text or "Shipping Product Lane" in text
     assert "Shipping default: `openai:operator_cli`" in text
 
