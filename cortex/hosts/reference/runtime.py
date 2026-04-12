@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from cortex.core.certification import certify_commitment
 from cortex.core.commitments import (
@@ -36,11 +36,6 @@ from cortex.drivers._commitment_common import (
 )
 from cortex.drivers.reference_host import BoundReferenceHostEvent, observe_reference_host_event
 from cortex.drivers.reference_host_commitment import bind_reference_host_candidate
-from cortex.aux.publication import (
-    OfflineSupportPublication,
-    augment_snapshot_with_offline_publication,
-)
-from cortex.aux.support_priors import build_support_memory_prior_appendix
 from cortex.hosts._executive_closure import (
     build_runtime_executive_signal_summary_inputs,
     canonicalize_executive_modulator_memory,
@@ -72,6 +67,9 @@ from cortex.sre.feedback import (
 )
 from cortex.sre.reference_scoring import select_reference_soft_control
 from cortex.sre.state import ReferenceExecutiveState
+
+if TYPE_CHECKING:
+    from cortex.aux.publication import OfflineSupportPublication
 
 _ALLOWED_COMMITMENT_RESULT_KINDS = frozenset(status.value for status in CommitmentStatus)
 
@@ -622,7 +620,13 @@ def run_reference_runtime_step(
     )
     memory_priors = None
     if offline_publication is not None:
-        if not isinstance(offline_publication, OfflineSupportPublication):
+        from cortex.aux.publication import (
+            OfflineSupportPublication as _OfflineSupportPublication,
+            augment_snapshot_with_offline_publication,
+        )
+        from cortex.aux.support_priors import build_support_memory_prior_appendix
+
+        if not isinstance(offline_publication, _OfflineSupportPublication):
             actual_type = type(offline_publication).__name__
             raise TypeError(
                 "run_reference_runtime_step.offline_publication must be "

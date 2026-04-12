@@ -27,6 +27,57 @@ class PeripheryCorrespondenceExpectation:
     promised_surfaces: tuple[PromisedTestSurface, ...]
 
 
+def _resolve_code_home(expectation: PeripheryCorrespondenceExpectation) -> Path:
+    direct_path = REPO_ROOT / expectation.home_path
+    if direct_path.is_file():
+        return direct_path
+
+    if expectation.module_path:
+        module = importlib.import_module(expectation.module_path)
+        module_file = getattr(module, "__file__", None)
+        if module_file is not None:
+            resolved = Path(module_file).resolve()
+            if resolved.is_file():
+                return resolved
+
+    basename = Path(expectation.home_path).name
+    matches = sorted(REPO_ROOT.rglob(basename))
+    if len(matches) == 1:
+        return matches[0]
+    return direct_path
+
+
+def _resolve_promised_test_file(test_file: str) -> Path:
+    direct_path = REPO_ROOT / test_file
+    if direct_path.is_file():
+        return direct_path
+
+    basename = Path(test_file).name
+    matches = sorted((REPO_ROOT / "tests").rglob(basename))
+    if not matches:
+        return direct_path
+
+    parts = Path(test_file).parts
+    if "integration" in parts:
+        integration_matches = [path for path in matches if "integration" in path.parts]
+        if len(integration_matches) == 1:
+            return integration_matches[0]
+        if integration_matches:
+            matches = integration_matches
+    if "unit" in parts:
+        non_integration_matches = [path for path in matches if "integration" not in path.parts]
+        if len(non_integration_matches) == 1:
+            return non_integration_matches[0]
+        if non_integration_matches:
+            matches = non_integration_matches
+
+    assert len(matches) == 1, (
+        f"expected promised test file {test_file} to resolve to exactly one current file, "
+        f"got {[path.relative_to(REPO_ROOT).as_posix() for path in matches]}"
+    )
+    return matches[0]
+
+
 EXPECTATIONS = (
     PeripheryCorrespondenceExpectation(
         row_label="EventTraceArtifact",
@@ -712,17 +763,18 @@ EXPECTATIONS = (
     ),
     PeripheryCorrespondenceExpectation(
         row_label="ReferenceRuntimeStepResult",
-        home_path="experimental/runtime/reference.py",
+        home_path="cortex/hosts/reference/runtime.py",
         module_path="cortex.hosts.reference.runtime",
         symbol_name="ReferenceRuntimeStepResult",
         promised_surfaces=(
             PromisedTestSurface(
-                test_file="tests/unit/test_reference_runtime_step.py",
+                test_file="tests/conformance/test_reference_runtime_step.py",
                 test_names=(
                     "test_reference_runtime_step_result_surfaces_cheap_reference_event_without_commitment_kind",
                     "test_reference_runtime_step_result_certifies_full_commitment_when_runtime_payload_supplies_artifact_ref",
                     "test_reference_runtime_step_reports_prior_window_summary_for_single_rejection_sequence",
                     "test_reference_runtime_step_enforces_latched_brake_to_check_when_evidence_dominates",
+                    "test_reference_runtime_step_replay_publication_can_flip_selected_family_without_changing_commitment_truth",
                 ),
             ),
         ),
@@ -844,7 +896,7 @@ EXPECTATIONS = (
         promised_surfaces=(
             PromisedTestSurface(
                 test_file="tests/unit/test_openai_runtime_step.py",
-                test_names=("test_openai_runtime_step_uses_compact_decision_table_without_reference_soft_control",),
+                test_names=("test_openai_runtime_step_keeps_hard_product_guards_ahead_of_reference_control",),
             ),
             PromisedTestSurface(
                 test_file="tests/integration/test_openai_service.py",
@@ -881,7 +933,7 @@ EXPECTATIONS = (
                 test_file="tests/unit/test_openai_runtime_step.py",
                 test_names=(
                     "test_openai_runtime_step_rejects_canonical_cortex_event_name_before_runtime_processing",
-                    "test_openai_runtime_step_uses_compact_decision_table_without_reference_soft_control",
+                    "test_openai_runtime_step_keeps_hard_product_guards_ahead_of_reference_control",
                     "test_openai_runtime_step_preserves_session_mismatch_as_stop_without_reassigning_session",
                 ),
             ),
@@ -1928,16 +1980,19 @@ EXPECTATIONS = (
     ),
     PeripheryCorrespondenceExpectation(
         row_label="run_reference_runtime_step",
-        home_path="experimental/runtime/reference.py",
+        home_path="cortex/hosts/reference/runtime.py",
         module_path="cortex.hosts.reference.runtime",
         symbol_name="run_reference_runtime_step",
         promised_surfaces=(
             PromisedTestSurface(
-                test_file="tests/unit/test_reference_runtime_step.py",
+                test_file="tests/conformance/test_reference_runtime_step.py",
                 test_names=(
                     "test_reference_runtime_step_result_surfaces_cheap_reference_event_without_commitment_kind",
                     "test_reference_runtime_step_result_keeps_candidate_bearing_event_candidate_only",
                     "test_reference_runtime_step_result_certifies_full_commitment_when_runtime_payload_supplies_artifact_ref",
+                    "test_reference_runtime_step_replay_publication_can_flip_selected_family_without_changing_commitment_truth",
+                    "test_reference_runtime_step_uses_unaugmented_snapshot_for_executive_state_and_augmented_snapshot_only_for_memory_priors",
+                    "test_reference_runtime_step_without_offline_publication_makes_no_aux_calls_and_keeps_memory_priors_absent",
                     "test_reference_runtime_step_rejects_malformed_open_without_mutating_existing_anchor",
                     "test_reference_runtime_step_rejects_mismatched_session_id_without_reassigning_shell",
                     "test_reference_runtime_step_propagates_session_rejection_feedback_into_next_event_pressure",
@@ -1952,7 +2007,7 @@ EXPECTATIONS = (
                 ),
             ),
             PromisedTestSurface(
-                test_file="tests/integration/test_reference_runtime_continuity.py",
+                test_file="tests/conformance/integration/test_reference_runtime_continuity.py",
                 test_names=(
                     "test_reference_runtime_cli_preserves_open_suspend_resume_merge_continuity_in_one_session",
                     "test_reference_runtime_cli_rejects_illegal_continuity_transitions_without_mutating_session_truth",
@@ -2031,7 +2086,7 @@ EXPECTATIONS = (
 def test_periphery_correspondence_registry_resolves_code_home_and_test_surface(
     expectation: PeripheryCorrespondenceExpectation,
 ) -> None:
-    home_path = REPO_ROOT / expectation.home_path
+    home_path = _resolve_code_home(expectation)
     assert home_path.is_file(), (
         f"{expectation.row_label}: expected code home {expectation.home_path}"
     )
@@ -2044,7 +2099,7 @@ def test_periphery_correspondence_registry_resolves_code_home_and_test_surface(
         )
 
     for promised_surface in expectation.promised_surfaces:
-        test_file = REPO_ROOT / promised_surface.test_file
+        test_file = _resolve_promised_test_file(promised_surface.test_file)
         assert test_file.is_file(), (
             f"{expectation.row_label}: expected promised test file {promised_surface.test_file}"
         )
@@ -2059,7 +2114,7 @@ def test_periphery_correspondence_registry_resolves_code_home_and_test_surface(
 
 def test_v1_comparison_rows_match_landed_runtime_and_sre_truth() -> None:
     correspondence_text = (
-        REPO_ROOT / "docs" / "internal" / "CORTEX_V2_MATH_TO_CODE_CORRESPONDENCE.md"
+        REPO_ROOT / "docs" / "archive" / "internal" / "CORTEX_V2_MATH_TO_CODE_CORRESPONDENCE.md"
     ).read_text(encoding="utf-8")
 
     assert "| Deficit state `D_t` | `stop_signals.py` objective_gap_signature | `u_t(c)` uncertainty classes (SRE-owned) | `UncertaintyEstimate` |" in correspondence_text

@@ -2,7 +2,9 @@
 
 import pytest
 
+import cortex.aux.publication as aux_publication
 from cortex.aux.reference_replay import evaluate_aux_reference_q_mem_replay
+import cortex.aux.support_priors as aux_support_priors
 import cortex.hosts.reference.runtime as reference_runtime
 from cortex.core.environment import EXECUTION_TRACE, ExecutiveEnvironmentView
 from cortex.core.dispatch import DispatchLane
@@ -365,6 +367,62 @@ def test_reference_runtime_step_replay_publication_can_flip_selected_family_with
     )
 
 
+def test_reference_runtime_step_uses_unaugmented_snapshot_for_executive_state_and_augmented_snapshot_only_for_memory_priors(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    case_result = _reference_replay_case_result("contradiction-review")
+    original_builder = reference_runtime.build_reference_executive_state
+    original_select = reference_runtime.select_reference_soft_control
+    original_augment = aux_publication.augment_snapshot_with_offline_publication
+    original_prior_builder = aux_support_priors.build_support_memory_prior_appendix
+    captured: dict[str, object] = {}
+
+    def builder_wrapper(observation, support_snapshot, environment_view, provisional_session):
+        captured["executive_state_support_snapshot"] = support_snapshot
+        return original_builder(
+            observation,
+            support_snapshot,
+            environment_view,
+            provisional_session,
+        )
+
+    def augment_wrapper(snapshot, publication):
+        captured["augment_input_snapshot"] = snapshot
+        augmented = original_augment(snapshot, publication)
+        captured["augmented_snapshot"] = augmented
+        return augmented
+
+    def prior_builder_wrapper(snapshot):
+        captured["prior_builder_snapshot"] = snapshot
+        return original_prior_builder(snapshot)
+
+    def select_wrapper(executive_state, *args, **kwargs):
+        captured["selection_memory_priors"] = kwargs.get("memory_priors")
+        return original_select(executive_state, *args, **kwargs)
+
+    monkeypatch.setattr(reference_runtime, "build_reference_executive_state", builder_wrapper)
+    monkeypatch.setattr(aux_publication, "augment_snapshot_with_offline_publication", augment_wrapper)
+    monkeypatch.setattr(aux_support_priors, "build_support_memory_prior_appendix", prior_builder_wrapper)
+    monkeypatch.setattr(reference_runtime, "select_reference_soft_control", select_wrapper)
+
+    replay = run_reference_runtime_step(
+        "ApprovalResult",
+        {
+            "session_id": "session-reference-replay-law-lock",
+            "commitment_id": "commit-reference-replay-law-lock",
+            "externally_consequential": True,
+            "result_artifact_ref": "artifact-reference-replay-law-lock",
+        },
+        offline_publication=case_result.publication,
+    )
+
+    assert replay.commitment_result_kind == "certified"
+    assert captured["executive_state_support_snapshot"] is captured["augment_input_snapshot"]
+    assert captured["prior_builder_snapshot"] is captured["augmented_snapshot"]
+    assert captured["prior_builder_snapshot"] is not captured["executive_state_support_snapshot"]
+    assert captured["selection_memory_priors"] is not None
+
+
 def test_reference_runtime_step_replay_publication_can_lift_branch_allocation_without_default_behavior_change(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -436,6 +494,39 @@ def test_reference_runtime_step_replay_negative_case_keeps_payload_shape_and_com
     assert [score["family"] for score in baseline_scores] == [score["family"] for score in replay_scores]
     for baseline_score, replay_score in zip(baseline_scores, replay_scores, strict=True):
         assert replay_score["allocated_score"] == pytest.approx(baseline_score["allocated_score"])
+
+
+def test_reference_runtime_step_without_offline_publication_makes_no_aux_calls_and_keeps_memory_priors_absent(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    original_select = reference_runtime.select_reference_soft_control
+    captured: dict[str, object] = {}
+
+    def forbidden_augment(*args, **kwargs):
+        raise AssertionError("AUX augmentation should stay inactive without explicit offline publication.")
+
+    def forbidden_prior_builder(*args, **kwargs):
+        raise AssertionError("AUX memory priors should stay inactive without explicit offline publication.")
+
+    def select_wrapper(executive_state, *args, **kwargs):
+        captured["selection_memory_priors"] = kwargs.get("memory_priors")
+        return original_select(executive_state, *args, **kwargs)
+
+    monkeypatch.setattr(aux_publication, "augment_snapshot_with_offline_publication", forbidden_augment)
+    monkeypatch.setattr(aux_support_priors, "build_support_memory_prior_appendix", forbidden_prior_builder)
+    monkeypatch.setattr(reference_runtime, "select_reference_soft_control", select_wrapper)
+
+    result = run_reference_runtime_step(
+        "ContextLoad",
+        {"session_id": "session-reference-replay-default-path"},
+    )
+
+    assert result.commitment_result_kind is None
+    assert captured["selection_memory_priors"] is None
+    assert all(
+        score["memory_score"] == 0.0
+        for score in result.control_ledger_summary["allocation_diagnostics"]["scores"]
+    )
 
 
 def test_reference_runtime_step_rejects_malformed_open_without_mutating_existing_anchor() -> None:
