@@ -585,7 +585,10 @@ def test_live_operator_route_state_builds_summary_inputs_from_observable_signals
     assert inputs.verification_required is False
 
 
-def test_gemini_operator_auth_mode_uses_api_key_when_selected_in_settings(tmp_path, monkeypatch) -> None:
+def test_gemini_operator_auth_mode_defaults_to_google_login_even_when_settings_select_api_key(
+    tmp_path,
+    monkeypatch,
+) -> None:
     fake_home = tmp_path / "home"
     settings_path = fake_home / ".gemini" / "settings.json"
     settings_path.parent.mkdir(parents=True)
@@ -595,10 +598,12 @@ def test_gemini_operator_auth_mode_uses_api_key_when_selected_in_settings(tmp_pa
     )
     monkeypatch.setattr(live_validation_common.Path, "home", lambda: fake_home)
 
-    assert live_validation_common.resolve_auth_mode("gemini", "operator", env={}) == "api_key"
+    assert live_validation_common.resolve_auth_mode("gemini", "operator", env={}) == "google_login"
 
 
-def test_gemini_operator_auth_mode_prefers_env_key_without_settings(monkeypatch) -> None:
+def test_gemini_operator_auth_mode_defaults_to_google_login_even_when_api_key_present(
+    monkeypatch,
+) -> None:
     monkeypatch.setattr(
         live_validation_common.Path,
         "home",
@@ -610,6 +615,17 @@ def test_gemini_operator_auth_mode_prefers_env_key_without_settings(monkeypatch)
             "gemini",
             "operator",
             env={"GEMINI_API_KEY": "test-key"},
+        )
+        == "google_login"
+    )
+
+
+def test_gemini_operator_auth_mode_honors_explicit_override() -> None:
+    assert (
+        live_validation_common.resolve_auth_mode(
+            "gemini",
+            "operator",
+            env={"CORTEX_GEMINI_LIVE_AUTH_MODE": "api_key"},
         )
         == "api_key"
     )
