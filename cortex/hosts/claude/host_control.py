@@ -16,7 +16,18 @@ from .host_transport import (
 
 _ACTION_TAG = "claude-message-stream"
 _TOP_LEVEL_KEYS = frozenset({"action_tag", "request"})
-_REQUEST_KEYS = frozenset({"model", "input", "system", "metadata", "max_output_tokens", "stream"})
+_REQUEST_KEYS = frozenset(
+    {
+        "model",
+        "input",
+        "system",
+        "metadata",
+        "max_output_tokens",
+        "stream",
+        "audit_intensity",
+    }
+)
+_AUDIT_INTENSITIES = frozenset({"minimal", "focused", "structured"})
 
 ClaudeMessageStreamTransport = Callable[
     ["ClaudeHostControlRequest"],
@@ -32,6 +43,7 @@ class ClaudeHostControlRequest:
     max_output_tokens: int
     system: str | None = None
     metadata: dict[str, Any] = field(default_factory=dict)
+    audit_intensity: str = "minimal"
 
     def __post_init__(self) -> None:
         if self.action_tag != _ACTION_TAG:
@@ -75,6 +87,11 @@ class ClaudeHostControlRequest:
             raise ValueError(
                 "ClaudeHostControlRequest.max_output_tokens must be positive."
             )
+        if self.audit_intensity not in _AUDIT_INTENSITIES:
+            raise ValueError(
+                "ClaudeHostControlRequest.audit_intensity must be one of "
+                f"{sorted(_AUDIT_INTENSITIES)!r}."
+            )
 
     def as_payload(self) -> dict[str, Any]:
         request_payload: dict[str, Any] = {
@@ -86,6 +103,8 @@ class ClaudeHostControlRequest:
             request_payload["system"] = self.system
         if self.metadata:
             request_payload["metadata"] = dict(self.metadata)
+        if self.audit_intensity != "minimal":
+            request_payload["audit_intensity"] = self.audit_intensity
         return {
             "action_tag": self.action_tag,
             "request": request_payload,
@@ -158,6 +177,7 @@ def run_claude_host_control(
                 envelope.event_type,
                 envelope.payload,
                 current_session,
+                audit_intensity=request.audit_intensity,
             )
         except (TypeError, ValueError) as exc:
             raise ClaudeMessageStreamTransportError(
@@ -229,6 +249,10 @@ def _coerce_claude_host_control_request(
         "Claude host control request `request.system`",
     )
     metadata = _metadata_dict(request_payload.get("metadata"))
+    audit_intensity = _audit_intensity(
+        request_payload.get("audit_intensity"),
+        "Claude host control request `request.audit_intensity`",
+    )
     action_tag = _required_non_empty_string(
         payload.get("action_tag"),
         "Claude host control request `action_tag`",
@@ -240,6 +264,7 @@ def _coerce_claude_host_control_request(
         max_output_tokens=max_output_tokens,
         system=system,
         metadata=metadata,
+        audit_intensity=audit_intensity,
     )
 
 
@@ -278,6 +303,18 @@ def _required_positive_int(value: Any, label: str) -> int:
     if value <= 0:
         raise ValueError(f"{label} must be positive when provided.")
     return value
+
+
+def _audit_intensity(value: Any, label: str) -> str:
+    if value is None:
+        return "minimal"
+    if not isinstance(value, str):
+        actual_type = type(value).__name__
+        raise TypeError(f"{label} must be a string, got {actual_type}.")
+    normalized = value.strip()
+    if normalized not in _AUDIT_INTENSITIES:
+        raise ValueError(f"{label} must be one of {sorted(_AUDIT_INTENSITIES)!r}.")
+    return normalized
 
 
 def _metadata_dict(value: Any) -> dict[str, Any]:

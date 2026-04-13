@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from numbers import Real
-from typing import Any
+from typing import Any, Mapping
 
 from .families import SoftControlFamily
 
@@ -216,8 +216,85 @@ def build_allocation_diagnostics_payload(
     return payload
 
 
+def build_audit_projection_payload(
+    *,
+    selected_family: SoftControlFamily,
+    realized_family: SoftControlFamily,
+    dominant_uncertainty_sources: tuple[str, ...],
+    allocation_diagnostics: Mapping[str, Any],
+) -> dict[str, Any]:
+    if not isinstance(selected_family, SoftControlFamily):
+        actual_type = type(selected_family).__name__
+        raise TypeError(
+            "build_audit_projection_payload.selected_family must be SoftControlFamily, "
+            f"got {actual_type}."
+        )
+    if not isinstance(realized_family, SoftControlFamily):
+        actual_type = type(realized_family).__name__
+        raise TypeError(
+            "build_audit_projection_payload.realized_family must be SoftControlFamily, "
+            f"got {actual_type}."
+        )
+    if any(
+        not (isinstance(source, str) and source.strip())
+        for source in dominant_uncertainty_sources
+    ):
+        raise ValueError(
+            "build_audit_projection_payload.dominant_uncertainty_sources must contain only non-empty strings."
+        )
+    if not isinstance(allocation_diagnostics, Mapping):
+        actual_type = type(allocation_diagnostics).__name__
+        raise TypeError(
+            "build_audit_projection_payload.allocation_diagnostics must be a mapping, "
+            f"got {actual_type}."
+        )
+
+    required_keys = (
+        "activation_threshold",
+        "selected_delta_over_neutral",
+        "rejected_cheaper_families",
+        "verification_state",
+        "explainability_profile",
+        "probe_path_state",
+        "probe_unavailable_reason",
+        "probe_result_class",
+    )
+    missing = [key for key in required_keys if key not in allocation_diagnostics]
+    if missing:
+        raise ValueError(
+            "build_audit_projection_payload.allocation_diagnostics is missing required keys: "
+            + ", ".join(missing)
+        )
+
+    rejected_cheaper_families = allocation_diagnostics["rejected_cheaper_families"]
+    if any(
+        not (isinstance(family, str) and family.strip())
+        for family in rejected_cheaper_families
+    ):
+        raise ValueError(
+            "build_audit_projection_payload.rejected_cheaper_families must contain only non-empty strings."
+        )
+
+    return {
+        "selected_family": selected_family.value,
+        "realized_family": realized_family.value,
+        "dominant_uncertainty_sources": list(dominant_uncertainty_sources),
+        "activation_threshold": float(allocation_diagnostics["activation_threshold"]),
+        "selected_delta_over_neutral": float(
+            allocation_diagnostics["selected_delta_over_neutral"]
+        ),
+        "rejected_cheaper_families": list(rejected_cheaper_families),
+        "verification_state": allocation_diagnostics["verification_state"],
+        "explainability_profile": allocation_diagnostics["explainability_profile"],
+        "probe_path_state": allocation_diagnostics["probe_path_state"],
+        "probe_result_class": allocation_diagnostics["probe_result_class"],
+        "probe_unavailable_reason": allocation_diagnostics["probe_unavailable_reason"],
+    }
+
+
 __all__ = [
     "AllocationScore",
     "AllocationScorecard",
+    "build_audit_projection_payload",
     "build_allocation_diagnostics_payload",
 ]

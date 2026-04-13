@@ -46,22 +46,36 @@ def test_aux_cross_host_shadow_scenarios_require_time_separated_support_snapshot
             expect_improvement=True,
         )
 
+    with pytest.raises(ValueError, match="continuity_basis must be one of"):
+        AuxCrossHostShadowScenario(
+            scenario_id="bad-basis",
+            scenario_class="branch_resume",
+            host_name="reference",
+            source_snapshots=scenario.source_snapshots,
+            target_snapshot=scenario.target_snapshot,
+            executive_state=scenario.executive_state,
+            preferred_family=scenario.preferred_family,
+            expect_improvement=True,
+            continuity_basis="made-up",
+        )
+
 
 def test_evaluate_aux_cross_host_shadow_reports_remaining_branch_gap_and_claim_limitation_truth() -> None:
     result = evaluate_aux_cross_host_shadow(make_aux_cross_host_shadow_corpus())
 
     assert isinstance(result, AuxCrossHostShadowEvaluationResult)
     assert result.acceptance_passed is False
+    assert result.claim_mode == "reference_plus_shared_non_reference_shell"
     assert result.host_aliasing_detected is True
     assert dict(result.per_host_positive_case_counts) == {
-        "claude": 3,
-        "gemini": 3,
-        "reference": 3,
+        "claude": 4,
+        "gemini": 4,
+        "reference": 4,
     }
     assert dict(result.per_host_improved_case_counts) == {
-        "claude": 3,
-        "gemini": 3,
-        "reference": 3,
+        "claude": 4,
+        "gemini": 4,
+        "reference": 4,
     }
     assert dict(result.per_host_negative_stable_counts) == {
         "claude": 2,
@@ -70,18 +84,23 @@ def test_evaluate_aux_cross_host_shadow_reports_remaining_branch_gap_and_claim_l
     }
     assert result.repeat_stable_hosts == ()
     assert result.counterexample_case_count == 0
-    assert result.dominant_failure_label == "missing_branch_family_lift"
+    assert result.dominant_failure_label == "missing_repeat_stable_host_lift"
     assert result.failure_labels == (
         "missing_repeat_stable_host_lift",
         "missing_branch_family_lift",
+        "host_local_branch_basis_insufficient",
         "host_aliasing_detected",
     )
     assert any("branch-family lift" in reason for reason in result.failure_reasons)
+    assert any("local continuity basis weakness" in reason for reason in result.failure_reasons)
     assert any("shared documented non-reference shell" in reason for reason in result.failure_reasons)
 
     case_map = {(case.host_name, case.scenario_id): case for case in result.case_results}
     claude_retrieval = case_map[("claude", "claude-retrieval-reuse")]
-    gemini_branch = case_map[("gemini", "gemini-branch-resume")]
+    gemini_host_local_branch = case_map[("gemini", "gemini-branch-resume-host-local")]
+    gemini_reference_projected_branch = case_map[
+        ("gemini", "gemini-branch-resume-reference-projected")
+    ]
     gemini_check = case_map[("gemini", "gemini-check-review")]
     reference_invalidation = case_map[
         ("reference", "reference-fresh-contradiction-invalidation")
@@ -97,12 +116,22 @@ def test_evaluate_aux_cross_host_shadow_reports_remaining_branch_gap_and_claim_l
     assert claude_retrieval.preferred_family_uses_reliability_weight is True
     assert claude_retrieval.memory_removal_reverts_to_baseline is True
 
-    assert gemini_branch.scenario_class == "branch_resume"
-    assert gemini_branch.preferred_family_total_delta > 0.0
-    assert gemini_branch.preferred_family_reliability_delta > 0.0
-    assert gemini_branch.replay_selected_family.value == "seek-context"
+    assert gemini_host_local_branch.scenario_class == "branch_resume"
+    assert gemini_host_local_branch.continuity_basis == "host_local"
+    assert gemini_host_local_branch.preferred_family_total_delta > 0.0
+    assert gemini_host_local_branch.preferred_family_reliability_delta > 0.0
+    assert gemini_host_local_branch.replay_selected_family.value == "seek-context"
+    assert gemini_host_local_branch.selected_family_changed_to_preferred is False
+
+    assert gemini_reference_projected_branch.scenario_class == "branch_resume"
+    assert gemini_reference_projected_branch.continuity_basis == "reference_projected"
+    assert gemini_reference_projected_branch.preferred_family_total_delta > 0.0
+    assert gemini_reference_projected_branch.preferred_family_reliability_delta > 0.0
+    assert gemini_reference_projected_branch.replay_selected_family.value == "branch"
+    assert gemini_reference_projected_branch.selected_family_changed_to_preferred is True
 
     assert gemini_check.scenario_class == "check_review"
+    assert gemini_check.continuity_basis == "not_applicable"
     assert gemini_check.preferred_family_total_delta > 0.0
     assert gemini_check.preferred_family_reliability_delta > 0.0
     assert gemini_check.contradiction_invalidated_prior is False
@@ -132,6 +161,7 @@ def test_aux_cross_host_shadow_case_results_carry_host_truth_reliability_delta_a
     assert claude_retrieval.preferred_family_reliability_delta > 0.0
     assert claude_retrieval.memory_removal_reverts_to_baseline is True
     assert claude_retrieval.host_signature
+    assert "continuity-basis:not_applicable" in claude_retrieval.host_signature
     assert any(entry.startswith("family-mask:") for entry in claude_retrieval.host_signature)
     assert "aux/cross-host-shadow" in claude_retrieval.publication.publication_tags
 
@@ -192,6 +222,7 @@ def test_evaluate_aux_cross_host_shadow_emits_machine_readable_failure_labels_fo
                 executive_state=branch_state,
                 preferred_family=scenario.preferred_family,
                 expect_improvement=scenario.expect_improvement,
+                continuity_basis=scenario.continuity_basis,
                 notes=scenario.notes,
                 metadata=scenario.metadata,
             )
@@ -200,6 +231,7 @@ def test_evaluate_aux_cross_host_shadow_emits_machine_readable_failure_labels_fo
     result = evaluate_aux_cross_host_shadow(tuple(claude_only))
 
     assert result.acceptance_passed is False
+    assert result.claim_mode == "reference_plus_shared_non_reference_shell"
     assert "missing_repeat_stable_host_lift" in result.failure_labels
     assert "single_host_only_lift" in result.failure_labels
     assert result.dominant_failure_label in {
@@ -213,12 +245,12 @@ def test_evaluate_aux_cross_host_shadow_detects_non_reference_host_aliasing_and_
     result = evaluate_aux_cross_host_shadow(make_aux_cross_host_shadow_corpus())
 
     claude_signatures = {
-        case.scenario_class: case.host_signature
+        (case.scenario_class, case.continuity_basis): case.host_signature
         for case in result.case_results
         if case.host_name == "claude"
     }
     gemini_signatures = {
-        case.scenario_class: case.host_signature
+        (case.scenario_class, case.continuity_basis): case.host_signature
         for case in result.case_results
         if case.host_name == "gemini"
     }
@@ -227,6 +259,22 @@ def test_evaluate_aux_cross_host_shadow_detects_non_reference_host_aliasing_and_
     assert result.host_aliasing_detected is True
     assert "host_aliasing_detected" in result.failure_labels
     assert result.acceptance_passed is False
+
+
+def test_evaluate_aux_cross_host_shadow_classifies_branch_blocker_as_host_local_basis_insufficient() -> None:
+    result = evaluate_aux_cross_host_shadow(make_aux_cross_host_shadow_corpus())
+    branch_cases = {
+        (case.host_name, case.continuity_basis): case
+        for case in result.case_results
+        if case.scenario_class == "branch_resume"
+    }
+
+    for host_name in ("claude", "gemini", "reference"):
+        assert branch_cases[(host_name, "host_local")].replay_selected_family.value != "branch"
+        assert branch_cases[(host_name, "reference_projected")].replay_selected_family.value == "branch"
+
+    assert "host_local_branch_basis_insufficient" in result.failure_labels
+    assert "shared_branch_lift_insufficient" not in result.failure_labels
 
 
 @pytest.mark.parametrize(

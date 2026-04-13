@@ -17,8 +17,17 @@ from .host_transport import (
 _ACTION_TAG = "gemini-interaction-stream"
 _TOP_LEVEL_KEYS = frozenset({"action_tag", "request"})
 _REQUEST_KEYS = frozenset(
-    {"model", "input", "instructions", "metadata", "max_output_tokens", "stream"}
+    {
+        "model",
+        "input",
+        "instructions",
+        "metadata",
+        "max_output_tokens",
+        "stream",
+        "audit_intensity",
+    }
 )
+_AUDIT_INTENSITIES = frozenset({"minimal", "focused", "structured"})
 
 GeminiInteractionStreamTransport = Callable[
     ["GeminiHostControlRequest"],
@@ -34,6 +43,7 @@ class GeminiHostControlRequest:
     instructions: str | None = None
     metadata: dict[str, Any] = field(default_factory=dict)
     max_output_tokens: int | None = None
+    audit_intensity: str = "minimal"
 
     def __post_init__(self) -> None:
         if self.action_tag != _ACTION_TAG:
@@ -78,6 +88,11 @@ class GeminiHostControlRequest:
                 raise ValueError(
                     "GeminiHostControlRequest.max_output_tokens must be positive when provided."
                 )
+        if self.audit_intensity not in _AUDIT_INTENSITIES:
+            raise ValueError(
+                "GeminiHostControlRequest.audit_intensity must be one of "
+                f"{sorted(_AUDIT_INTENSITIES)!r}."
+            )
 
     def as_payload(self) -> dict[str, Any]:
         request_payload: dict[str, Any] = {
@@ -90,6 +105,8 @@ class GeminiHostControlRequest:
             request_payload["metadata"] = dict(self.metadata)
         if self.max_output_tokens is not None:
             request_payload["max_output_tokens"] = self.max_output_tokens
+        if self.audit_intensity != "minimal":
+            request_payload["audit_intensity"] = self.audit_intensity
         return {
             "action_tag": self.action_tag,
             "request": request_payload,
@@ -159,6 +176,7 @@ def run_gemini_host_control(
                 envelope.event_type,
                 envelope.payload,
                 current_session,
+                audit_intensity=request.audit_intensity,
             )
         except (TypeError, ValueError) as exc:
             raise GeminiInteractionStreamTransportError(
@@ -230,6 +248,10 @@ def _coerce_gemini_host_control_request(
         request_payload.get("max_output_tokens"),
         "Gemini host control request `request.max_output_tokens`",
     )
+    audit_intensity = _audit_intensity(
+        request_payload.get("audit_intensity"),
+        "Gemini host control request `request.audit_intensity`",
+    )
     action_tag = _required_non_empty_string(
         payload.get("action_tag"),
         "Gemini host control request `action_tag`",
@@ -241,6 +263,7 @@ def _coerce_gemini_host_control_request(
         instructions=instructions,
         metadata=metadata,
         max_output_tokens=max_output_tokens,
+        audit_intensity=audit_intensity,
     )
 
 
@@ -281,6 +304,18 @@ def _optional_positive_int(value: Any, label: str) -> int | None:
     if value <= 0:
         raise ValueError(f"{label} must be positive when provided.")
     return value
+
+
+def _audit_intensity(value: Any, label: str) -> str:
+    if value is None:
+        return "minimal"
+    if not isinstance(value, str):
+        actual_type = type(value).__name__
+        raise TypeError(f"{label} must be a string, got {actual_type}.")
+    normalized = value.strip()
+    if normalized not in _AUDIT_INTENSITIES:
+        raise ValueError(f"{label} must be one of {sorted(_AUDIT_INTENSITIES)!r}.")
+    return normalized
 
 
 def _metadata_dict(value: Any) -> dict[str, Any]:

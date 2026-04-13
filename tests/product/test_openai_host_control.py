@@ -117,6 +117,23 @@ def test_openai_host_control_request_constructs_verified_work_payload() -> None:
     }
 
 
+def test_openai_host_control_request_emits_non_minimal_audit_intensity_only_when_requested() -> None:
+    default_request = OpenAIHostControlRequest(
+        action_tag="openai-response-stream",
+        model="gpt-5.4",
+        input_text="hello",
+    )
+    focused_request = OpenAIHostControlRequest(
+        action_tag="openai-response-stream",
+        model="gpt-5.4",
+        input_text="hello",
+        audit_intensity="focused",
+    )
+
+    assert "audit_intensity" not in default_request.as_payload()["request"]
+    assert focused_request.as_payload()["request"]["audit_intensity"] == "focused"
+
+
 def test_openai_host_control_result_rejects_wrong_action_tag() -> None:
     with pytest.raises(ValueError, match="openai-response-stream"):
         OpenAIHostControlResult(action_tag="bad", records=())

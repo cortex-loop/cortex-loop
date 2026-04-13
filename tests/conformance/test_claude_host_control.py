@@ -43,6 +43,25 @@ def test_claude_host_control_request_constructs_strict_text_only_payload() -> No
     }
 
 
+def test_claude_host_control_request_emits_non_minimal_audit_intensity_only_when_requested() -> None:
+    default_request = ClaudeHostControlRequest(
+        action_tag="claude-message-stream",
+        model="claude-sonnet-4-6",
+        input_text="hello",
+        max_output_tokens=32,
+    )
+    focused_request = ClaudeHostControlRequest(
+        action_tag="claude-message-stream",
+        model="claude-sonnet-4-6",
+        input_text="hello",
+        max_output_tokens=32,
+        audit_intensity="focused",
+    )
+
+    assert "audit_intensity" not in default_request.as_payload()["request"]
+    assert focused_request.as_payload()["request"]["audit_intensity"] == "focused"
+
+
 def test_claude_host_control_result_rejects_wrong_action_tag() -> None:
     with pytest.raises(ValueError, match="claude-message-stream"):
         ClaudeHostControlResult(action_tag="bad", records=())

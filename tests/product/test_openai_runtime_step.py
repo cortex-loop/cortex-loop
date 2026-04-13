@@ -100,6 +100,19 @@ def test_openai_runtime_step_keeps_hard_product_guards_ahead_of_reference_contro
         == "documented-probe-surface-unavailable"
     )
     assert result.control_ledger_summary["allocation_diagnostics"]["probe_result_class"] is None
+    assert result.control_ledger_summary["audit_projection"] == {
+        "selected_family": "seek-context",
+        "realized_family": "seek-context",
+        "dominant_uncertainty_sources": ["host-capability", "environment"],
+        "activation_threshold": pytest.approx(0.22),
+        "selected_delta_over_neutral": pytest.approx(0.3705),
+        "rejected_cheaper_families": ["neutral", "check"],
+        "verification_state": "completed",
+        "explainability_profile": "focused",
+        "probe_path_state": "unavailable",
+        "probe_result_class": None,
+        "probe_unavailable_reason": "documented-probe-surface-unavailable",
+    }
     assert result.feedback_window_summary_payload["window_size"] == 0
     assert result.executive_signal_summary_payload == {
         "uncertainty": 0.55,
@@ -196,6 +209,33 @@ def test_openai_runtime_step_surfaces_typed_probe_unavailability_without_probe_r
         == "documented-probe-surface-unavailable"
     )
     assert result.control_ledger_summary["allocation_diagnostics"]["probe_result_class"] is None
+    assert result.control_ledger_summary["audit_projection"]["probe_path_state"] == (
+        "unavailable"
+    )
+    assert result.control_ledger_summary["audit_projection"]["probe_result_class"] is None
+
+
+def test_openai_runtime_step_can_raise_audit_projection_from_explicit_request() -> None:
+    result = run_openai_runtime_step(
+        "response.output_text.delta",
+        {
+            "session_id": "oa-explicit-audit",
+            "response_id": "resp-explicit-audit",
+            "delta": "hello",
+        },
+        OpenAIRuntimeSession(session_id="oa-explicit-audit"),
+        audit_intensity="structured",
+    )
+
+    assert result.control_ledger_summary["allocation_diagnostics"]["explainability_profile"] == (
+        "structured"
+    )
+    assert result.control_ledger_summary["audit_projection"]["explainability_profile"] == (
+        "structured"
+    )
+    assert result.control_ledger_summary["audit_projection"]["selected_family"] == (
+        result.control_ledger_summary["selected_family"]
+    )
 
 
 def test_openai_runtime_session_canonicalizes_executive_modulator_memory_at_session_truth_boundary() -> None:
