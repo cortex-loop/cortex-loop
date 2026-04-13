@@ -106,8 +106,6 @@ def build_reference_goal_branch_coupling(
         branch_burden += 0.12
     if active_branch and not branch_intent_present:
         branch_burden += 0.08
-    if active_branch and anchor_source == "branch_registry_only":
-        branch_burden += 0.06
     if active_branch and not has_resume_anchor:
         branch_burden += 0.12
 
@@ -128,10 +126,6 @@ def build_reference_goal_branch_coupling(
                 weight += 0.03
             if anchor_source == "continuity_reminder":
                 weight += 0.04
-            elif anchor_source == "trace_wake":
-                weight += 0.02
-            elif anchor_source == "branch_registry_only":
-                weight -= 0.03
         if brake_state is BrakeState.GUARDED:
             weight += 0.04
         elif brake_state is BrakeState.LATCHED:

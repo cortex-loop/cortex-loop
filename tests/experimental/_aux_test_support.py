@@ -22,6 +22,7 @@ from cortex.core.support import (
 )
 from cortex.sre.brake import BrakeState
 from cortex.sre.families import SoftControlFamily
+from cortex.sre.goals import make_resume_reminder
 from cortex.sre.state import (
     ReferenceBrakeView,
     ReferenceControlAllocationView,
@@ -196,7 +197,7 @@ def make_aux_temporal_corpus() -> tuple[AuxTemporalScenario, ...]:
                 make_temporal_support_snapshot(
                     "source-branch-a",
                     branch_registry=("main", "review-track"),
-                    reminders=("resume review-track before closing",),
+                    reminders=(make_resume_reminder("review-track"),),
                     published_memory_refs=("review-track-memo",),
                 ),
                 make_temporal_support_snapshot(
@@ -211,7 +212,7 @@ def make_aux_temporal_corpus() -> tuple[AuxTemporalScenario, ...]:
                 candidate_refs=("review-track-candidate",),
                 pending_goal_refs=("review-track-goal",),
                 branch_registry=("main", "review-track"),
-                reminders=("resume review-track after review",),
+                reminders=(make_resume_reminder("review-track"),),
             ),
         ),
         AuxTemporalScenario(
@@ -840,7 +841,7 @@ def _runtime_branch_resume_shadow_seed(
         host_name,
         seeded_branch_state=True,
         contradiction_pressure=False,
-        continuity_reminders=("resume review-track after review",),
+        continuity_reminders=(make_resume_reminder("review-track"),),
     )
 
 

@@ -5,13 +5,12 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from numbers import Real
 
+_MACHINE_RESUME_PREFIX = "cortex/continuity-resume:"
 _ANCHOR_SOURCES = frozenset(
     {
         "none",
         "pending_goal",
         "continuity_reminder",
-        "trace_wake",
-        "branch_registry_only",
     }
 )
 _ANCHOR_FRESHNESS = frozenset({"absent", "fresh", "stale"})
@@ -20,7 +19,15 @@ _ANCHOR_FRESHNESS = frozenset({"absent", "fresh", "stale"})
 def make_resume_reminder(track_ref: str) -> str:
     if not (isinstance(track_ref, str) and track_ref.strip()):
         raise ValueError("make_resume_reminder.track_ref must be non-empty after trimming.")
-    return f"resume {track_ref} after review"
+    return f"{_MACHINE_RESUME_PREFIX}{track_ref.strip()}"
+
+
+def is_authoritative_resume_reminder(reminder: str) -> bool:
+    if not (isinstance(reminder, str) and reminder.strip()):
+        raise ValueError(
+            "is_authoritative_resume_reminder.reminder must be non-empty after trimming."
+        )
+    return reminder.strip().startswith(_MACHINE_RESUME_PREFIX)
 
 
 def parse_resume_reminder_track(reminder: str) -> str | None:
@@ -29,6 +36,9 @@ def parse_resume_reminder_track(reminder: str) -> str | None:
             "parse_resume_reminder_track.reminder must be non-empty after trimming."
         )
     normalized = reminder.strip()
+    if normalized.startswith(_MACHINE_RESUME_PREFIX):
+        track_ref = normalized.removeprefix(_MACHINE_RESUME_PREFIX).strip()
+        return track_ref or None
     if not normalized.startswith("resume "):
         return None
     body = normalized.removeprefix("resume ")
@@ -37,6 +47,20 @@ def parse_resume_reminder_track(reminder: str) -> str | None:
             track_ref = body.split(delimiter, 1)[0].strip()
             return track_ref or None
     return None
+
+
+def normalize_continuity_reminder(reminder: str) -> str | None:
+    if not (isinstance(reminder, str) and reminder.strip()):
+        raise ValueError(
+            "normalize_continuity_reminder.reminder must be non-empty after trimming."
+        )
+    normalized = reminder.strip()
+    if normalized == "resume-anchor-missing":
+        return normalized
+    track_ref = parse_resume_reminder_track(normalized)
+    if track_ref is None:
+        return None
+    return make_resume_reminder(track_ref)
 
 
 @dataclass(frozen=True, slots=True)
@@ -108,4 +132,10 @@ class GoalContinuityView:
                 )
 
 
-__all__ = ["GoalContinuityView", "make_resume_reminder", "parse_resume_reminder_track"]
+__all__ = [
+    "GoalContinuityView",
+    "is_authoritative_resume_reminder",
+    "make_resume_reminder",
+    "normalize_continuity_reminder",
+    "parse_resume_reminder_track",
+]

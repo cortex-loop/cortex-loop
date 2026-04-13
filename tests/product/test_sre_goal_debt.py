@@ -7,6 +7,7 @@ from cortex.sre.goal_debt import (
     build_closure_pressure_state,
     build_goal_debt_state,
 )
+from cortex.sre.goals import make_resume_reminder
 
 
 def test_goal_debt_state_surfaces_explicit_debt_buckets() -> None:
@@ -14,7 +15,7 @@ def test_goal_debt_state_surfaces_explicit_debt_buckets() -> None:
         active_track_ref="review-track",
         pending_goal_refs=("goal-1",),
         continuity_warnings=("continuity-rejected:review-track",),
-        continuity_reminders=("resume review-track",),
+        continuity_reminders=(make_resume_reminder("review-track"),),
         degradation_pressure_bonus=2,
         sustained_spike_flags=("host/runtime",),
         repeated_failure_pressure=0.75,
@@ -34,7 +35,7 @@ def test_closure_pressure_state_preserves_compact_runtime_reason_tags() -> None:
         active_track_ref="main",
         pending_goal_refs=("goal-1",),
         continuity_warnings=("continuity-rejected:goal-1",),
-        continuity_reminders=("resume goal-1",),
+        continuity_reminders=(make_resume_reminder("goal-1"),),
         degradation_pressure_bonus=1,
         sustained_spike_flags=("host/runtime",),
         repeated_failure_pressure=0.35,

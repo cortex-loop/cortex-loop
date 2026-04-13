@@ -292,13 +292,15 @@ def test_generated_status_doc_includes_system_map_and_next_product_train() -> No
     assert "durable support-memory distillation" in text
 
 
-def test_front_door_surfaces_point_to_one_command_managed_closeout() -> None:
+def test_front_door_surfaces_point_to_local_first_and_explicit_publish_closeout() -> None:
     agents = _read(AGENTS_PATH)
     status = _read(STATUS_DOC_PATH)
 
     assert 'close-session --message "scope: end-state summary"' in status
+    assert 'close-session --publish --message "scope: end-state summary"' in status
     assert "cleanup-report" in status
     assert "explicit denominator or progress-accounting questions" in agents
+    assert "close-session --publish" in agents
     assert "manual publication" not in agents.lower()
     assert "manual publication" not in status.lower()
     assert "separate publication step" not in status.lower()

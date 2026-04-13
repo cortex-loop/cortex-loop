@@ -146,7 +146,7 @@ When dogfood mode is active:
 - Keep the normal repo workflow and handoff unchanged.
 - Dogfood mode is bound to the current worktree contract until refreshed.
 - Treat every dogfood artifact and helper message as current-worktree `lab` / `watchlist` evidence, never as product truth.
-- For normal managed-session closure, keep using `python3 internal/workflow/repo_workflow.py close-session --message "scope: end-state summary"` and append `DOGFOOD_SIGNAL` after the normal handoff.
+- For normal managed-session checkpointing, keep using `python3 internal/workflow/repo_workflow.py close-session --message "scope: end-state summary"` and append `DOGFOOD_SIGNAL` after the normal handoff; use `close-session --publish` only when the user explicitly wants publication or resting-truth return.
 - If the user asks for a full dogfood closeout, run `python3 -m lab.codex_dogfood_session close` and persist the normal handoff summary, verification summary, and the final `DOGFOOD_SIGNAL`.
 - Append this exact block after the normal final handoff:
 

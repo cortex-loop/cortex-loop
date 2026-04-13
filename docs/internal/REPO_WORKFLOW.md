@@ -42,7 +42,7 @@ Intentional manual/review branch work is the narrow exception:
 
 - `main` is the resting branch.
 - Active managed work happens on fresh session branches created by `start-session`.
-- `close-session` verifies the work, publishes the session branch, merges it, adopts `origin/main`, and deletes the session branch.
+- `close-session` verifies the work and checkpoints the managed session branch locally by default; `close-session --publish` is the explicit publish/merge/sync path.
 - Historical branch lines may remain locally, but they should not remain the de facto trunk.
 
 Managed session branch format:
@@ -77,10 +77,16 @@ Start a fresh managed session from clean synced `main`:
 python internal/workflow/repo_workflow.py start-session --agent codex --slug task-name
 ```
 
-Close a managed session, publish it, and return to clean synced `main`:
+Checkpoint a managed session locally and keep the session branch open:
 
 ```bash
 python internal/workflow/repo_workflow.py close-session --message "docs: tighten workflow wording"
+```
+
+Publish a managed session only at a real stopping point:
+
+```bash
+python internal/workflow/repo_workflow.py close-session --publish --message "docs: tighten workflow wording"
 ```
 
 Finalize an explicit manual/review branch without touching `main`:
@@ -130,10 +136,11 @@ python internal/workflow/repo_workflow.py cleanup-report
 1. Start from clean `main`.
 2. Run `python internal/workflow/repo_workflow.py sync-main` if needed.
 3. Run `python internal/workflow/repo_workflow.py start-session --agent <codex|claude|maint> [--slug <text>]`.
-4. Do the work on the managed session branch.
+4. Do one or more seams on the managed session branch.
 5. Scaffold or refresh the closeout contract with `python -m internal.closeout.contract init --mode close-session`, then fill the generated JSON under `.cortex/closeout_contract/<branch>/closeout.json`.
-6. End with `python internal/workflow/repo_workflow.py close-session --message "<scope>: <end-state summary>"`.
-7. After `close-session` succeeds, the repo is back on clean synced `main`, the merged session branch is gone locally and remotely, and no separate publication step remains.
+6. Use `python internal/workflow/repo_workflow.py close-session --message "<scope>: <end-state summary>"` to checkpoint locally as often as needed.
+7. Use `python internal/workflow/repo_workflow.py close-session --publish --message "<scope>: <end-state summary>"` only when you explicitly want publication or have reached a real stopping point.
+8. After `close-session --publish` succeeds, the repo is back on clean synced `main`, the merged session branch is gone locally and remotely, and no separate publication step remains.
 
 Manual/review branch workflow:
 
@@ -170,14 +177,16 @@ Manual/review branch workflow:
 - revalidates the closeout contract after verification so tracked-path drift during verification cannot slip through to publication or landing
 - infers `load_bearing` when reviewed paths touch `cortex/**`, `lab/**`, `docs/CORTEX_V2_*.md`, `internal/truth/cortex_status.json`, `docs/CORTEX_STATUS.md`, `AGENTS.md`, `docs/internal/REPO_WORKFLOW.md`, `internal/workflow/**`, `internal/closeout/**`, or `internal/Makefile`
 - hard-fails if the contract self-declares `standard` where reviewed paths require `load_bearing`
-- on the canonical repo, requires authenticated `gh` and a canonical `origin`
+- defaults to a local checkpoint path that commits verified work and leaves the managed session branch checked out
+- returns `status: "checkpointed_local"` on that default path, with no push, PR, merge, local `main` mutation, or branch deletion
+- `--publish` on the canonical repo requires authenticated `gh` and a canonical `origin`
 - if the branch has no unique commits relative to `origin/main`, it still adopts `origin/main`, deletes the local session branch, and returns `status: "no_op"`
 - the no-op exemption is the only path that bypasses the closeout contract gate
-- publishes the same managed session branch to `origin`
-- creates or reuses a PR against `main`
-- merges with a merge commit and deletes the remote branch
-- adopts `origin/main`, returns HEAD to `main`, and deletes the local session branch
-- leaves the managed session branch intact if publication or merge fails, and the repo is not back at resting truth
+- `--publish` publishes the same managed session branch to `origin`
+- `--publish` creates or reuses a PR against `main`
+- `--publish` merges with a merge commit and deletes the remote branch
+- `--publish` adopts `origin/main`, returns HEAD to `main`, and deletes the local session branch
+- leaves the managed session branch intact if checkpointing, publication, or merge fails, and the repo is not back at resting truth
 - prints a JSON payload with `status`, `published_branch`, `pr_number`, `pr_url`, `main_head`, and `main_sync`
 
 `finalize`:
@@ -247,6 +256,12 @@ Live CLI invocation contract:
 - Gemini operator-lane auth defaults to `google_login`; `api_key` operator mode requires an explicit `CORTEX_GEMINI_LIVE_AUTH_MODE=api_key` override.
 - If a direct headless Gemini operator probe is truly necessary, match the harness shape: `gemini -p "<prompt>" -o stream-json --approval-mode yolo`, adding `-m <model>` only when the model is not `auto`.
 - Use interactive `gemini` only for sign-in or auth repair, not as the normal live watchlist execution path.
+
+Publication-cost rule:
+
+- Default to local-first checkpointing and make publication explicit.
+- Do not use `[skip ci]`, `[ci skip]`, `[skip actions]`, or similar commit-message tags as the normal cost-control mechanism; skipped `push` or `pull_request` workflows can leave required checks pending and block merges.
+- If account-level Actions cost remains a problem after batching publication, optimize actual workflow triggers separately with path filters, explicit dispatch, or concurrency, but only where tracked workflow files exist.
 
 ## Commit Message Contract
 
