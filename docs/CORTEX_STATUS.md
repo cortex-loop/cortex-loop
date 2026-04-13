@@ -50,9 +50,9 @@ Answering stance:
 
 ## Current Focus
 
-- Current tracked train: `inspect-execute-resume-posture-control`
-- Active quality/risk focus: The bounded AUX shadow surface still earns `full_cross_host`, and durable support-memory distillation is now landed support-side and removable: bounded AUX episodes persist in SQLite with deterministic connection ownership and absolute-time filtering, offline distillation preserves replay/shadow lift and negative stability, positive priors require repeated matched support rather than a generic second episode, and raw episodes may not drive runtime selection directly. Shipping and conformance still keep `Q_mem = 0`, and the next highest-leverage gap is posture-sensitive online control so inspect, execute, and resume can alter verification intensity, read allowance, and stop thresholds without mode churn.
-- Next product train after the current focus: `selective-anti-thrash-with-creativity-budget`
+- Current tracked train: `selective-anti-thrash-with-creativity-budget`
+- Active quality/risk focus: The bounded AUX shadow surface still earns `full_cross_host`, durable support-memory distillation remains explicit and removable, and posture-sensitive online control is now landed on the live runtime path: cheap non-debt events recover `inspect`, continuity debt keeps `resume`, non-cheap non-debt paths default to `execute`, and reference/OpenAI/Claude/Gemini now expose posture plus bounded operator-route truth without widening runtime ingress. Shipping and conformance still keep `Q_mem = 0`, route blockedness remains non-sovereign, and the next highest-leverage gap is selective anti-thrash so unchanged-condition repetition can be taxed without suppressing novelty.
+- Next product train after the current focus: `bounded-live-support-memory-reentry`
 
 ## Bio-To-Code Matrix
 
@@ -62,7 +62,7 @@ Answering stance:
 | Bounded correction and verified-work preservation | Error repair without losing the main task thread | `landed` | `15` | `cortex/runtime`, `cortex/sre`, `cortex/hosts/openai` | `tests/product` | Keep preservation-state repair stable while support-side experiments stay removable and off the shipping critical path. |
 | Uncertainty handling and brake | Hesitation and uncertainty-aware inhibition | `landed` | `13` | `cortex/sre` | `tests/product`, `tests/experimental` | Keep reference-derived brake and uncertainty control stable while AUX remains advisory and runtime-off-by-default. |
 | Branch continuity, suspend/resume, and truthful closure | Working memory across interruptions plus truthful closure | `landed` | `15` | `cortex/sre`, `cortex/hosts/openai` | `tests/product`, `tests/conformance` | Keep suspend/resume and truthful closure stable now that host-local branch continuity is repaired across Claude, Gemini, and reference; branch-local continuity may reopen only from branch-linked cues, and any future support memory must remain explicit, optional, and non-binding. |
-| Intervention pricing versus neutrality | Deciding when to intervene, stay neutral, or stop | `landed` | `10` | `cortex/sre`, `cortex/aux` | `tests/product`, `tests/experimental` | Hold calibrated intervention pricing stable now that the bounded AUX shadow surface earns `full_cross_host`; keep bounded audit compact on the shipped lane while posture-sensitive online control becomes the next active leverage. |
+| Intervention pricing versus neutrality | Deciding when to intervene, stay neutral, or stop | `landed` | `10` | `cortex/sre`, `cortex/aux` | `tests/product`, `tests/experimental` | Hold calibrated intervention pricing stable now that posture-sensitive online control is landed on the live runtime path; anti-thrash is the next active leverage, and any later live memory re-entry must remain explicit, bounded, and separately earned. |
 | Blocker surfacing and goal-debt management | Noticing unresolved blockers and unfinished intentions | `landed` | `10` | `cortex/sre`, `cortex/hosts/openai`, `cortex/hosts/claude`, `cortex/hosts/gemini`, `cortex/hosts/reference` | `tests/product`, `tests/conformance` | Keep typed goal-debt and closure-pressure state stable across hosts while support-side augmentation remains explicit and non-sovereign. |
 | Multi-host executive continuity | One executive across different brains and contexts | `landed` | `15` | `cortex/hosts/openai`, `cortex/hosts/claude`, `cortex/hosts/gemini`, `cortex/hosts/reference` | `tests/product`, `tests/conformance` | Hold one Cortex law across OpenAI, Claude, Gemini, and reference without flattening host-native realization. |
 | Offline consolidation and support geometry | Sleep-like consolidation and support systems | `landed` | `10` | `cortex/aux` | `tests/experimental`, `tests/archive`, `tests/conformance` | Keep durable support-memory distillation explicit, removable, and non-sovereign now that the bounded AUX shadow surface earns `full_cross_host`; raw SQLite episodes stay support-side only, episode windows stay absolute-time correct, and positive priors must require repeated matched support rather than a generic second episode. |
@@ -155,19 +155,19 @@ Workflow gates marked `required` are contractual gates checked by `repo_workflow
 
 ## Next Product Train
 
-- Train: `selective-anti-thrash-with-creativity-budget`
-- Surface: `experimental`
-- Executive benefit: Suppress repeated unchanged-condition loops without suppressing creative reframing or better outcomes.
-- Why now: Persistent support-memory distillation is now landed support-side and posture-sensitive online control is the active train, so anti-thrash stays queued until posture provides the context needed to tax repetition selectively rather than bluntly.
-- Primary metric: `fewer unchanged-condition loops while novel branches, stronger verification moves, and changed-evidence retries still clear the gate`
-- Guardrail: `no global retry ban, no creativity collapse, and no new soft-control family`
-- Kill rule: `cut any seam that makes Cortex safer-but-dumber or suppresses productive novelty`
+- Train: `bounded-live-support-memory-reentry`
+- Surface: `experimental + product`
+- Executive benefit: Test whether explicit distilled support priors can safely influence narrow live control lanes without hidden policy or stale-memory superstition.
+- Why now: Durable support-memory distillation is landed, posture-sensitive online control is now live, and anti-thrash becomes the current train; only after that control envelope is explicit should a separate seam test whether any live `Q_mem` re-entry is worth earning.
+- Primary metric: `bounded live tasks improve only when explicit distilled priors are injected, while contradiction and TTL invalidation still dominate stale memory`
+- Guardrail: `no raw SQLite ingress, no hidden memory path, no truth mutation, and no nonzero shipping/conformance `Q_mem` without separate proof`
+- Kill rule: `cut any seam that needs generic reward learning, host myths, or silent memory influence to show lift`
 
 ## Where To Work Next
 
 - Keep the bounded audit surface compact and truthful on the shipped lane: selected versus realized family, uncertainty, threshold, delta, verification, and probe truth only.
 - Keep the no-spend live evidence current and explicit: fast conformance is green, the deeper directionality and host-native watchlists are refreshed, and non-shipping auth or env caveats must stay explicit instead of silently stale.
-- Keep AUX memory and posture law explicit and removable now that durable support-memory distillation is landed: raw SQLite episodes stay support-side only, episode windows stay absolute-time correct, distilled publications remain the only re-entry path, matched support must repeat before positive priors publish, and live `Q_mem` stays zero on shipping and conformance lanes while posture control becomes the active train.
+- Keep posture and AUX memory law explicit and removable now that posture-sensitive online control is landed: inspect is live on cheap non-debt events, resume stays continuity-conditioned, route truth stays bounded and non-sovereign, raw SQLite episodes stay support-side only, and any anti-thrash seam must tax unchanged-condition repetition without collapsing creativity while live `Q_mem` stays zero on shipping and conformance lanes.
 
 ## Canonical Proof
 
@@ -211,6 +211,7 @@ Workflow gates marked `required` are contractual gates checked by `repo_workflow
 - Do not hide Claude or Gemini behind backlog language when reporting conformance.
 - Do not route raw AUX SQLite episodes directly into runtime action selection; only distilled removable publications may re-enter.
 - Do not let a generic second unrelated episode smuggle a positive AUX prior into retrieval, branch, memory-summary, or uncertainty output.
+- Do not let anti-thrash become a global retry ban or a creativity collapse.
 - Do not introduce host-specific policy forks to force donor coherence.
 - Do not let generic pending-goal debt, plain-English reminder text, or generic `resume*` wake cues act as branch-specific continuity anchors.
 

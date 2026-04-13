@@ -59,6 +59,7 @@ EXPECTED_RECORD_KEYS = (
     "executive_signal_summary",
     "executive_modulator_state",
     "executive_policy_view",
+    "operator_route",
     "closure_required",
     "closure_reason_tags",
 )
@@ -100,6 +101,11 @@ def test_reference_runtime_cli_reads_event_file_and_emits_one_record_per_event()
         "guarded_review",
         "review_pending",
         "commitment_path",
+    ]
+    assert [record["executive_state_summary"]["posture"] for record in records] == [
+        "inspect",
+        "execute",
+        "execute",
     ]
     assert [record["executive_state_summary"]["budget_band"] for record in records] == [
         "low",
@@ -160,9 +166,15 @@ def test_reference_runtime_cli_reads_event_file_and_emits_one_record_per_event()
         "executive_signal_summary",
         "executive_modulator_state",
         "executive_policy_view",
+        "operator_route",
         "closure_required",
         "closure_reason_tags",
     )
+    assert [record["operator_route"]["route_profile"] for record in records] == [
+        "inspect_light",
+        "execute_standard",
+        "execute_standard",
+    ]
     assert tuple(records[-1]["control_ledger"]) == (
         "event_class",
         "admissible_families",
@@ -302,6 +314,7 @@ def test_reference_runtime_cli_in_process_surfaces_selected_vs_realized_divergen
         "executive_signal_summary",
         "executive_modulator_state",
         "executive_policy_view",
+        "operator_route",
         "closure_required",
         "closure_reason_tags",
     )
@@ -426,6 +439,7 @@ def test_reference_runtime_cli_emits_feedback_window_summary_for_real_session_mi
         "executive_signal_summary",
         "executive_modulator_state",
         "executive_policy_view",
+        "operator_route",
         "closure_required",
         "closure_reason_tags",
     )
@@ -514,14 +528,14 @@ def test_reference_runtime_cli_save_session_does_not_change_jsonl_output(tmp_pat
                     "probe_result_class": "succeeded",
                 },
             ],
-            "executive_modulator_memory": {
-                "focus_tonic": 0.0,
-                "explore_tonic": 0.3375,
-                "stop_tonic": 0.3698,
-                "update_tonic": 0.3949,
+                "executive_modulator_memory": {
+                    "focus_tonic": 0.0,
+                    "explore_tonic": 0.3678,
+                    "stop_tonic": 0.3698,
+                    "update_tonic": 0.4455,
+                },
             },
-        },
-    }
+        }
 
 
 def test_reference_runtime_cli_load_session_continues_event_index(tmp_path: Path) -> None:

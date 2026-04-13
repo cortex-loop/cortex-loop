@@ -22,11 +22,14 @@ def test_claude_runtime_step_surfaces_probe_unavailability_honestly() -> None:
         {"session_id": "cl-probe", "message_id": "cl-msg-1", "delta": "hello"},
     )
 
+    assert result.executive_state_summary["posture"] == "inspect"
     assert result.executive_state_summary["probe_path_state"] == "unavailable"
     assert (
         result.executive_state_summary["probe_unavailable_reason"]
         == "documented-probe-surface-unavailable"
     )
+    assert result.operator_route_payload["route_profile"] == "inspect_light"
+    assert result.operator_route_payload["route_budget"]["allow_extra_read_pass"] is True
     assert result.control_ledger_summary["allocation_diagnostics"]["probe_path_state"] == (
         "unavailable"
     )

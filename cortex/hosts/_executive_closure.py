@@ -14,7 +14,7 @@ from cortex.sre.feedback import (
 )
 from cortex.sre.goal_debt import build_closure_pressure_state
 from cortex.sre.modulators import ExecutiveModulatorMemory
-from cortex.sre.operator_routing import OperatorTaskMode
+from cortex.sre.operator_routing import OperatorTaskMode, OperatorTaskState
 from cortex.sre.state import ReferenceExecutiveState
 
 
@@ -51,13 +51,19 @@ def build_runtime_executive_signal_summary_inputs(
         ),
         brake_state=executive_state.brake.brake_state,
     )
+    task_mode = task_mode_for_runtime(
+        dispatch_decision=dispatch_decision,
+        active_track_ref=active_track_ref,
+        pending_goal_refs=pending_goal_refs,
+        continuity_warnings=continuity_warnings,
+        continuity_reminders=continuity_reminders,
+        approval_required=approval_required,
+        evidence_gap=evidence_gap,
+        consequential_write_pending=consequential_write_pending,
+        preservation_active=preservation_active,
+    )
     return ExecutiveSignalSummaryInputs(
-        task_mode=task_mode_for_runtime(
-            active_track_ref=active_track_ref,
-            pending_goal_refs=pending_goal_refs,
-            continuity_warnings=continuity_warnings,
-            continuity_reminders=continuity_reminders,
-        ),
+        task_mode=task_mode,
         uncertainty=max_uncertainty_level(executive_state),
         quota_pressure=quota_pressure_for_budget_band(
             executive_state.control_allocation.budget_band
@@ -87,10 +93,15 @@ def build_runtime_executive_signal_summary_inputs(
 
 def task_mode_for_runtime(
     *,
+    dispatch_decision: DispatchDecision,
     active_track_ref: str,
     pending_goal_refs: tuple[str, ...],
     continuity_warnings: tuple[str, ...],
     continuity_reminders: tuple[str, ...],
+    approval_required: bool,
+    evidence_gap: bool,
+    consequential_write_pending: bool,
+    preservation_active: bool,
 ) -> OperatorTaskMode:
     if (
         active_track_ref != "main"
@@ -99,7 +110,27 @@ def task_mode_for_runtime(
         or _has_continuity_rejection(continuity_warnings)
     ):
         return OperatorTaskMode.RESUME_EXECUTE
+    if (
+        dispatch_decision.lane is DispatchLane.CHEAP
+        and not approval_required
+        and not evidence_gap
+        and not consequential_write_pending
+        and not preservation_active
+    ):
+        return OperatorTaskMode.INSPECT
     return OperatorTaskMode.EXECUTE
+
+
+def public_posture_for_task_mode(task_mode: OperatorTaskMode) -> str:
+    if not isinstance(task_mode, OperatorTaskMode):
+        actual_type = type(task_mode).__name__
+        raise TypeError(
+            "public_posture_for_task_mode.task_mode must be OperatorTaskMode, "
+            f"got {actual_type}."
+        )
+    if task_mode is OperatorTaskMode.RESUME_EXECUTE:
+        return "resume"
+    return task_mode.value
 
 
 def max_uncertainty_level(executive_state: ReferenceExecutiveState) -> float:
@@ -136,6 +167,37 @@ def continuity_demand(
     if active_track_ref != "main":
         return 0.7
     return 0.0
+
+
+def build_runtime_operator_task_state(
+    *,
+    summary_inputs: ExecutiveSignalSummaryInputs,
+    executive_state: ReferenceExecutiveState,
+) -> OperatorTaskState:
+    if not isinstance(summary_inputs, ExecutiveSignalSummaryInputs):
+        actual_type = type(summary_inputs).__name__
+        raise TypeError(
+            "build_runtime_operator_task_state.summary_inputs must be "
+            f"ExecutiveSignalSummaryInputs, got {actual_type}."
+        )
+    if not isinstance(executive_state, ReferenceExecutiveState):
+        actual_type = type(executive_state).__name__
+        raise TypeError(
+            "build_runtime_operator_task_state.executive_state must be "
+            f"ReferenceExecutiveState, got {actual_type}."
+        )
+    return OperatorTaskState(
+        task_mode=summary_inputs.task_mode,
+        complexity=_route_complexity_for_task_mode(summary_inputs.task_mode),
+        continuity_demand=float(summary_inputs.continuity_demand),
+        verification_demand=0.8 if summary_inputs.verification_required else 0.0,
+        uncertainty=float(summary_inputs.uncertainty),
+        host_friction=float(executive_state.control_allocation.host_friction_level),
+        quota_pressure=float(summary_inputs.quota_pressure),
+        visible_burden_sensitivity=float(
+            executive_state.control_allocation.visible_burden_scale
+        ),
+    )
 
 
 def recent_warning_bearing_success_present(
@@ -223,6 +285,14 @@ def _has_continuity_rejection(warnings: Sequence[str]) -> bool:
     return any(warning.startswith("continuity-rejected:") for warning in warnings)
 
 
+def _route_complexity_for_task_mode(task_mode: OperatorTaskMode) -> float:
+    if task_mode is OperatorTaskMode.INSPECT:
+        return 0.20
+    if task_mode is OperatorTaskMode.RESUME_EXECUTE:
+        return 0.55
+    return 0.45
+
+
 def _latest_probe_feedback(
     feedback_window: ReferenceRealizationFeedbackWindow,
 ) -> ReferenceRealizationFeedback | None:
@@ -233,12 +303,14 @@ def _latest_probe_feedback(
 
 
 __all__ = [
+    "build_runtime_operator_task_state",
     "build_runtime_executive_signal_summary_inputs",
     "canonicalize_executive_modulator_memory",
     "closure_reason_tags",
     "continuity_demand",
     "executive_modulator_memory_payload",
     "max_uncertainty_level",
+    "public_posture_for_task_mode",
     "quota_pressure_for_budget_band",
     "recent_probe_failure_class",
     "recent_warning_bearing_success_present",

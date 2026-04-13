@@ -595,10 +595,10 @@ When the brake is `latched`, the SRE may not choose any family that:
 unless the chosen action is the minimum-burden lawful move that directly reduces the
 dominant uncertainty source that caused the latch.
 
-The currently landed relief action set is limited to `check` and native `seek-context`
-when either is the cheapest lawful route to reduce the dominant uncertainty. A bounded
-branch-resume/inspection move remains a future admissible realization, but it must be
-implemented and separately proved before it becomes active doctrine.
+The currently landed relief action set includes `check`, native `seek-context`, and a
+bounded `inspect` posture on cheap non-debt runtime events when that posture only changes
+verification/read control and does not alter certification or blockedness law. Branch
+resume remains continuity-conditioned and may not be fabricated from generic debt cues.
 
 ---
 

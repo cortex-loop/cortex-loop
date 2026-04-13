@@ -40,11 +40,14 @@ from cortex.drivers.gemini_host import (
 )
 from cortex.drivers.gemini_host_commitment import bind_gemini_host_candidate
 from cortex.hosts._executive_closure import (
+    build_runtime_operator_task_state,
     build_runtime_executive_signal_summary_inputs,
     canonicalize_executive_modulator_memory,
     closure_reason_tags,
+    public_posture_for_task_mode,
     recent_probe_failure_class as recent_probe_failure_class_from_feedback_window,
     recent_warning_bearing_success_present,
+    task_mode_for_runtime,
     verification_state_for_runtime,
 )
 from cortex.sre.allocation import (
@@ -69,6 +72,12 @@ from cortex.sre.modulators import (
     ExecutiveModulatorMemory,
     ExecutiveModulatorState,
     update_executive_modulators,
+)
+from cortex.sre.operator_routing import (
+    OperatorRouteDecision,
+    OperatorTaskState,
+    build_operator_route_diagnostics,
+    select_operator_route_with_policy,
 )
 from cortex.sre.opportunities import BoundedProbeContract, HostNativeOpportunity
 from cortex.sre.policy_view import ExecutivePolicyView, build_executive_policy_view
@@ -377,6 +386,8 @@ class GeminiRuntimeStepResult:
             verification_intensity=0.30,
         )
     )
+    operator_task_state: OperatorTaskState | None = None
+    operator_route: OperatorRouteDecision | None = None
     closure_required: bool = False
     closure_reason_tags: tuple[str, ...] = field(default_factory=tuple)
     warnings: tuple[str, ...] = field(default_factory=tuple)
@@ -458,6 +469,18 @@ class GeminiRuntimeStepResult:
                 "GeminiRuntimeStepResult.executive_policy_view must be "
                 f"ExecutivePolicyView, got {actual_type}."
             )
+        if not isinstance(self.operator_task_state, OperatorTaskState):
+            actual_type = type(self.operator_task_state).__name__
+            raise TypeError(
+                "GeminiRuntimeStepResult.operator_task_state must be "
+                f"OperatorTaskState, got {actual_type}."
+            )
+        if not isinstance(self.operator_route, OperatorRouteDecision):
+            actual_type = type(self.operator_route).__name__
+            raise TypeError(
+                "GeminiRuntimeStepResult.operator_route must be "
+                f"OperatorRouteDecision, got {actual_type}."
+            )
         if not isinstance(self.closure_required, bool):
             actual_type = type(self.closure_required).__name__
             raise TypeError(
@@ -501,6 +524,9 @@ class GeminiRuntimeStepResult:
     @property
     def executive_state_summary(self) -> dict[str, Any]:
         return {
+            "posture": public_posture_for_task_mode(
+                self.executive_state.mode_and_gating.task_mode
+            ),
             "mode_tag": self.executive_state.mode_and_gating.mode_tag,
             "family_mask": sorted(
                 family.value for family in self.executive_state.mode_and_gating.family_mask
@@ -544,6 +570,13 @@ class GeminiRuntimeStepResult:
     @property
     def executive_policy_view_payload(self) -> dict[str, Any]:
         return self.executive_policy_view.as_payload()
+
+    @property
+    def operator_route_payload(self) -> dict[str, Any]:
+        return build_operator_route_diagnostics(
+            self.operator_task_state,
+            self.operator_route,
+        )
 
 
 def run_gemini_runtime_step(
@@ -619,6 +652,12 @@ def run_gemini_runtime_step(
         continuity_reminders,
     ) = _apply_continuity_update(prior_session, normalized_payload)
     warnings = merge_warnings(warnings, continuity_warnings)
+    consequential_write_pending = bool(normalized_payload.get("externally_consequential"))
+    approval_required = dispatch_decision.lane is not DispatchLane.CHEAP
+    evidence_gap = (
+        consequential_write_pending
+        and _first_concrete_artifact_ref(normalized_payload) is None
+    )
     provisional_session = GeminiRuntimeSession(
         session_id=session_id,
         event_index=prior_session.event_index + 1,
@@ -642,6 +681,17 @@ def run_gemini_runtime_step(
         reminders=continuity_reminders,
     )
     opportunities = _gemini_host_native_opportunities(bound_event)
+    runtime_task_mode = task_mode_for_runtime(
+        dispatch_decision=dispatch_decision,
+        active_track_ref=provisional_session.active_track_ref,
+        pending_goal_refs=provisional_session.pending_goal_refs,
+        continuity_warnings=continuity_warnings,
+        continuity_reminders=continuity_reminders,
+        approval_required=approval_required,
+        evidence_gap=evidence_gap,
+        consequential_write_pending=consequential_write_pending,
+        preservation_active=False,
+    )
     executive_state = build_reference_executive_state(
         bound_event.observation,
         support_snapshot,
@@ -649,6 +699,7 @@ def run_gemini_runtime_step(
         provisional_session,
         opportunities=opportunities,
         audit_intensity=audit_intensity,
+        task_mode=runtime_task_mode,
     )
     selection = select_reference_soft_control(
         executive_state,
@@ -743,35 +794,28 @@ def run_gemini_runtime_step(
         feedback_window=prior_session.feedback_window.append(realization_feedback),
         executive_modulator_memory=prior_session.executive_modulator_memory,
     )
-    consequential_write_pending = bool(normalized_payload.get("externally_consequential"))
-    approval_required = dispatch_decision.lane is not DispatchLane.CHEAP
-    evidence_gap = (
-        consequential_write_pending
-        and _first_concrete_artifact_ref(normalized_payload) is None
+    executive_summary_inputs = build_runtime_executive_signal_summary_inputs(
+        executive_state=executive_state,
+        dispatch_decision=dispatch_decision,
+        active_track_ref=provisional_session.active_track_ref,
+        pending_goal_refs=provisional_session.pending_goal_refs,
+        continuity_warnings=continuity_warnings,
+        continuity_reminders=continuity_reminders,
+        approval_required=approval_required,
+        evidence_gap=evidence_gap,
+        consequential_write_pending=consequential_write_pending,
+        prior_failed_before_completion=False,
+        recent_product_failure_class=None,
+        recent_probe_failure_class=recent_probe_failure_class_from_feedback_window(
+            prior_session.feedback_window
+        ),
+        recent_warning_bearing_success_present=recent_warning_bearing_success_present(
+            prior_session.feedback_window,
+            failed_before_completion=False,
+        ),
+        preservation_active=False,
     )
-    executive_signal_summary = build_executive_signal_summary(
-        build_runtime_executive_signal_summary_inputs(
-            executive_state=executive_state,
-            dispatch_decision=dispatch_decision,
-            active_track_ref=provisional_session.active_track_ref,
-            pending_goal_refs=provisional_session.pending_goal_refs,
-            continuity_warnings=continuity_warnings,
-            continuity_reminders=continuity_reminders,
-            approval_required=approval_required,
-            evidence_gap=evidence_gap,
-            consequential_write_pending=consequential_write_pending,
-            prior_failed_before_completion=False,
-            recent_product_failure_class=None,
-            recent_probe_failure_class=recent_probe_failure_class_from_feedback_window(
-                prior_session.feedback_window
-            ),
-            recent_warning_bearing_success_present=recent_warning_bearing_success_present(
-                prior_session.feedback_window,
-                failed_before_completion=False,
-            ),
-            preservation_active=False,
-        )
-    )
+    executive_signal_summary = build_executive_signal_summary(executive_summary_inputs)
     executive_modulator_update = update_executive_modulators(
         executive_signal_summary,
         previous=prior_session.executive_modulator_memory,
@@ -780,6 +824,15 @@ def run_gemini_runtime_step(
         executive_signal_summary,
         executive_modulator_update.state,
         chi_t=selection.chi_t,
+    )
+    operator_task_state = build_runtime_operator_task_state(
+        summary_inputs=executive_summary_inputs,
+        executive_state=executive_state,
+    )
+    operator_route = select_operator_route_with_policy(
+        operator_task_state,
+        executive_modulator_update,
+        executive_policy_view,
     )
     closure_reason_tags_value = closure_reason_tags(
         active_track_ref=provisional_session.active_track_ref,
@@ -820,6 +873,8 @@ def run_gemini_runtime_step(
         executive_signal_summary=executive_signal_summary,
         executive_modulator_state=executive_modulator_update.state,
         executive_policy_view=executive_policy_view,
+        operator_task_state=operator_task_state,
+        operator_route=operator_route,
         closure_required=closure_required,
         closure_reason_tags=closure_reason_tags_value,
         warnings=warnings,

@@ -48,7 +48,6 @@ from cortex.sre.branching import BranchOperation
 from cortex.sre.brake import BrakeState
 from cortex.sre.executive_summary import (
     ExecutiveSignalSummary,
-    ExecutiveSignalSummaryInputs,
     build_executive_signal_summary,
 )
 from cortex.sre.families import SoftControlFamily
@@ -59,9 +58,14 @@ from cortex.sre.feedback import (
     summarize_reference_feedback_window,
 )
 from cortex.hosts._executive_closure import (
+    build_runtime_executive_signal_summary_inputs,
+    build_runtime_operator_task_state,
     closure_reason_tags as shared_closure_reason_tags,
+    public_posture_for_task_mode,
 )
 from cortex.hosts._executive_closure import recent_probe_failure_class as recent_probe_failure_class_from_feedback_window
+from cortex.hosts._executive_closure import recent_warning_bearing_success_present
+from cortex.hosts._executive_closure import task_mode_for_runtime
 from cortex.hosts._executive_closure import verification_state_for_runtime
 from cortex.sre.modulators import (
     ExecutiveModulatorMemory,
@@ -69,7 +73,12 @@ from cortex.sre.modulators import (
     update_executive_modulators,
 )
 from cortex.sre.goals import make_resume_reminder
-from cortex.sre.operator_routing import OperatorTaskMode
+from cortex.sre.operator_routing import (
+    OperatorRouteDecision,
+    OperatorTaskState,
+    build_operator_route_diagnostics,
+    select_operator_route_with_policy,
+)
 from cortex.sre.opportunities import BoundedProbeContract, HostNativeOpportunity
 from cortex.sre.policy_view import ExecutivePolicyView, build_executive_policy_view
 from cortex.sre.preservation import (
@@ -621,6 +630,8 @@ class OpenAIRuntimeStepResult:
             verification_intensity=0.30,
         )
     )
+    operator_task_state: OperatorTaskState | None = None
+    operator_route: OperatorRouteDecision | None = None
     closure_required: bool = False
     closure_reason_tags: tuple[str, ...] = field(default_factory=tuple)
     warnings: tuple[str, ...] = field(default_factory=tuple)
@@ -711,6 +722,18 @@ class OpenAIRuntimeStepResult:
                 "OpenAIRuntimeStepResult.executive_policy_view must be "
                 f"ExecutivePolicyView, got {actual_type}."
             )
+        if not isinstance(self.operator_task_state, OperatorTaskState):
+            actual_type = type(self.operator_task_state).__name__
+            raise TypeError(
+                "OpenAIRuntimeStepResult.operator_task_state must be "
+                f"OperatorTaskState, got {actual_type}."
+            )
+        if not isinstance(self.operator_route, OperatorRouteDecision):
+            actual_type = type(self.operator_route).__name__
+            raise TypeError(
+                "OpenAIRuntimeStepResult.operator_route must be "
+                f"OperatorRouteDecision, got {actual_type}."
+            )
         if not isinstance(self.closure_required, bool):
             actual_type = type(self.closure_required).__name__
             raise TypeError(
@@ -770,6 +793,9 @@ class OpenAIRuntimeStepResult:
     @property
     def executive_state_summary(self) -> dict[str, Any]:
         return {
+            "posture": public_posture_for_task_mode(
+                self.executive_state.mode_and_gating.task_mode
+            ),
             "mode_tag": self.executive_state.mode_and_gating.mode_tag,
             "family_mask": sorted(
                 family.value for family in self.executive_state.mode_and_gating.family_mask
@@ -815,6 +841,13 @@ class OpenAIRuntimeStepResult:
     @property
     def executive_policy_view_payload(self) -> dict[str, Any]:
         return self.executive_policy_view.as_payload()
+
+    @property
+    def operator_route_payload(self) -> dict[str, Any]:
+        return build_operator_route_diagnostics(
+            self.operator_task_state,
+            self.operator_route,
+        )
 
 
 def run_openai_runtime_step(
@@ -908,6 +941,12 @@ def run_openai_runtime_step(
     )
     carried_failure_class = failure_class if failure_class is not None else prior_session.last_failure_class
     carried_preservation_state = prior_session.preservation_state
+    consequential_write_pending = bool(normalized_payload.get("externally_consequential"))
+    approval_required = dispatch_decision.lane is not DispatchLane.CHEAP
+    evidence_gap = (
+        consequential_write_pending
+        and _first_concrete_artifact_ref(normalized_payload) is None
+    )
     provisional_session = OpenAIRuntimeSession(
         session_id=session_id,
         event_index=prior_session.event_index + 1,
@@ -938,6 +977,17 @@ def run_openai_runtime_step(
         reminders=continuity_reminders,
     )
     opportunities = _openai_host_native_opportunities(bound_event)
+    runtime_task_mode = task_mode_for_runtime(
+        dispatch_decision=dispatch_decision,
+        active_track_ref=provisional_session.active_track_ref,
+        pending_goal_refs=provisional_session.pending_goal_refs,
+        continuity_warnings=continuity_warnings,
+        continuity_reminders=continuity_reminders,
+        approval_required=approval_required,
+        evidence_gap=evidence_gap,
+        consequential_write_pending=consequential_write_pending,
+        preservation_active=carried_preservation_state is not None,
+    )
     executive_state = build_reference_executive_state(
         bound_event.observation,
         support_snapshot,
@@ -945,6 +995,7 @@ def run_openai_runtime_step(
         provisional_session,
         opportunities=opportunities,
         audit_intensity=audit_intensity,
+        task_mode=runtime_task_mode,
     )
     selection = select_reference_soft_control(
         executive_state,
@@ -1007,25 +1058,29 @@ def run_openai_runtime_step(
         allocation_diagnostics=allocation_diagnostics,
         audit_projection=audit_projection,
     )
-    consequential_write_pending = bool(normalized_payload.get("externally_consequential"))
-    approval_required = dispatch_decision.lane is not DispatchLane.CHEAP
-    evidence_gap = (
-        consequential_write_pending
-        and _first_concrete_artifact_ref(normalized_payload) is None
+    executive_summary_inputs = build_runtime_executive_signal_summary_inputs(
+        executive_state=executive_state,
+        dispatch_decision=dispatch_decision,
+        active_track_ref=provisional_session.active_track_ref,
+        pending_goal_refs=provisional_session.pending_goal_refs,
+        continuity_warnings=continuity_warnings,
+        continuity_reminders=continuity_reminders,
+        approval_required=approval_required,
+        evidence_gap=evidence_gap,
+        consequential_write_pending=consequential_write_pending,
+        prior_failed_before_completion=prior_session.last_failure_class is not None,
+        recent_product_failure_class=prior_session.last_failure_class,
+        recent_probe_failure_class=recent_probe_failure_class_from_feedback_window(
+            prior_session.feedback_window
+        ),
+        recent_warning_bearing_success_present=recent_warning_bearing_success_present(
+            prior_session.feedback_window,
+            failed_before_completion=prior_session.last_failure_class is not None,
+        ),
+        preservation_active=carried_preservation_state is not None,
     )
     executive_signal_summary = build_executive_signal_summary(
-        _build_executive_signal_summary_inputs(
-            prior_session=prior_session,
-            executive_state=executive_state,
-            dispatch_decision=dispatch_decision,
-            active_track_ref=provisional_session.active_track_ref,
-            pending_goal_refs=provisional_session.pending_goal_refs,
-            continuity_warnings=continuity_warnings,
-            continuity_reminders=continuity_reminders,
-            approval_required=dispatch_decision.lane is not DispatchLane.CHEAP,
-            evidence_gap=evidence_gap,
-            consequential_write_pending=consequential_write_pending,
-        )
+        executive_summary_inputs
     )
     executive_modulator_update = update_executive_modulators(
         executive_signal_summary,
@@ -1035,6 +1090,15 @@ def run_openai_runtime_step(
         executive_signal_summary,
         executive_modulator_update.state,
         chi_t=selection.chi_t,
+    )
+    operator_task_state = build_runtime_operator_task_state(
+        summary_inputs=executive_summary_inputs,
+        executive_state=executive_state,
+    )
+    operator_route = select_operator_route_with_policy(
+        operator_task_state,
+        executive_modulator_update,
+        executive_policy_view,
     )
     decision = _decide_action(
         consequential_write_pending=consequential_write_pending,
@@ -1121,6 +1185,8 @@ def run_openai_runtime_step(
         executive_signal_summary=executive_signal_summary,
         executive_modulator_state=executive_modulator_update.state,
         executive_policy_view=executive_policy_view,
+        operator_task_state=operator_task_state,
+        operator_route=operator_route,
         closure_required=closure_required,
         closure_reason_tags=closure_reason_tags,
         warnings=warnings,
@@ -1552,125 +1618,6 @@ def _action_for_realized_family(
             return "stop"
         return "check"
     return "check"
-
-
-def _build_executive_signal_summary_inputs(
-    *,
-    prior_session: OpenAIRuntimeSession,
-    executive_state: ReferenceExecutiveState,
-    dispatch_decision: DispatchDecision,
-    active_track_ref: str,
-    pending_goal_refs: tuple[str, ...],
-    continuity_warnings: tuple[str, ...],
-    continuity_reminders: tuple[str, ...],
-    approval_required: bool,
-    evidence_gap: bool,
-    consequential_write_pending: bool,
-) -> ExecutiveSignalSummaryInputs:
-    return ExecutiveSignalSummaryInputs(
-        task_mode=_task_mode_for_runtime(
-            active_track_ref=active_track_ref,
-            pending_goal_refs=pending_goal_refs,
-            continuity_warnings=continuity_warnings,
-            continuity_reminders=continuity_reminders,
-        ),
-        uncertainty=_max_uncertainty_level(executive_state),
-        quota_pressure=_quota_pressure_for_budget_band(
-            executive_state.control_allocation.budget_band
-        ),
-        continuity_demand=_continuity_demand(
-            active_track_ref=active_track_ref,
-            pending_goal_refs=pending_goal_refs,
-            continuity_warnings=continuity_warnings,
-            continuity_reminders=continuity_reminders,
-        ),
-        previous_same_host_run_failed_before_completion=prior_session.last_failure_class is not None,
-        recent_product_failure_class=prior_session.last_failure_class,
-        recent_probe_failure_class=recent_probe_failure_class_from_feedback_window(
-            prior_session.feedback_window
-        ),
-        recent_warning_bearing_success_present=_recent_warning_bearing_success_present(
-            prior_session
-        ),
-        verification_required=(
-            dispatch_decision.lane is not DispatchLane.CHEAP
-            or approval_required
-            or evidence_gap
-            or consequential_write_pending
-            or prior_session.preservation_state is not None
-        ),
-    )
-
-
-def _task_mode_for_runtime(
-    *,
-    active_track_ref: str,
-    pending_goal_refs: tuple[str, ...],
-    continuity_warnings: tuple[str, ...],
-    continuity_reminders: tuple[str, ...],
-) -> OperatorTaskMode:
-    if (
-        active_track_ref != "main"
-        or pending_goal_refs
-        or continuity_reminders
-        or any(
-            warning.startswith("continuity-rejected:")
-            for warning in continuity_warnings
-        )
-    ):
-        return OperatorTaskMode.RESUME_EXECUTE
-    return OperatorTaskMode.EXECUTE
-
-
-def _max_uncertainty_level(executive_state: ReferenceExecutiveState) -> float:
-    return max(
-        (
-            float(estimate.level)
-            for estimate in executive_state.uncertainty_monitoring.classwise_uncertainty
-        ),
-        default=0.0,
-    )
-
-
-def _quota_pressure_for_budget_band(budget_band: str) -> float:
-    if budget_band == "low":
-        return 0.25
-    if budget_band == "medium":
-        return 0.50
-    return 0.75
-
-
-def _continuity_demand(
-    *,
-    active_track_ref: str,
-    pending_goal_refs: tuple[str, ...],
-    continuity_warnings: tuple[str, ...],
-    continuity_reminders: tuple[str, ...],
-) -> float:
-    if (
-        pending_goal_refs
-        or continuity_reminders
-        or any(
-            warning.startswith("continuity-rejected:")
-            for warning in continuity_warnings
-        )
-    ):
-        return 1.0
-    if active_track_ref != "main":
-        return 0.7
-    return 0.0
-
-
-def _recent_warning_bearing_success_present(
-    prior_session: OpenAIRuntimeSession,
-) -> bool:
-    latest_feedback = prior_session.feedback_window.entries[-1] if prior_session.feedback_window.entries else None
-    return bool(
-        latest_feedback is not None
-        and latest_feedback.warning_codes
-        and prior_session.last_failure_class is None
-    )
-
 
 def _next_recommended_move_for_step(decision: str, *, closure_required: bool) -> str:
     if decision != "continue":

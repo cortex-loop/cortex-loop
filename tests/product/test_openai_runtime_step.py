@@ -301,7 +301,12 @@ def test_openai_runtime_step_cheap_seek_context_pressure_now_checks() -> None:
         "failure_class": None,
     }
     assert result.executive_signal_summary_payload["quota_pressure"] == 0.25
-    assert result.executive_policy_view_payload["switch_margin"] == pytest.approx(0.053)
+    assert result.executive_state_summary["posture"] == "inspect"
+    assert result.executive_policy_view_payload["switch_margin"] == pytest.approx(0.045)
+    assert result.executive_policy_view_payload["allow_extra_read_pass"] is True
+    assert result.operator_route_payload["route_profile"] == "inspect_light"
+    assert result.operator_route_payload["route_budget"]["allow_extra_read_pass"] is True
+    assert result.operator_route_payload["route_budget"]["max_retries"] == 1
     assert result.closure_required is False
     assert result.closure_reason_tags == ()
     assert result.session.next_recommended_move == "check"

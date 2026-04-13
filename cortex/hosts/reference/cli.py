@@ -32,6 +32,7 @@ _OUTPUT_KEYS = (
     "executive_signal_summary",
     "executive_modulator_state",
     "executive_policy_view",
+    "operator_route",
     "closure_required",
     "closure_reason_tags",
 )
@@ -60,6 +61,7 @@ def build_reference_cli_record(step_result: ReferenceRuntimeStepResult) -> dict[
         "executive_signal_summary": step_result.executive_signal_summary_payload,
         "executive_modulator_state": step_result.executive_modulator_state_payload,
         "executive_policy_view": step_result.executive_policy_view_payload,
+        "operator_route": step_result.operator_route_payload,
         "closure_required": step_result.closure_required,
         "closure_reason_tags": list(step_result.closure_reason_tags),
     }

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from numbers import Real
+from typing import TYPE_CHECKING
 
 from .brake import BrakeState
 from .families import SoftControlFamily
@@ -11,10 +12,19 @@ from .goals import GoalContinuityView
 from .opportunities import PROBE_RESULT_CLASSES
 from .uncertainty import UncertaintyEstimate
 
+if TYPE_CHECKING:
+    from .operator_routing import OperatorTaskMode
+
 _EXPLAINABILITY_PROFILES = frozenset({"minimal", "focused", "structured"})
 _PROBE_PATH_STATES = frozenset({"available", "unavailable", "absent"})
 
 ReferenceGoalContinuityView = GoalContinuityView
+
+
+def _default_task_mode() -> "OperatorTaskMode":
+    from .operator_routing import OperatorTaskMode
+
+    return OperatorTaskMode.EXECUTE
 
 
 @dataclass(frozen=True, slots=True)
@@ -41,9 +51,18 @@ class ReferenceUncertaintyMonitoringView:
 @dataclass(frozen=True, slots=True)
 class ReferenceModeAndGatingView:
     mode_tag: str
+    task_mode: "OperatorTaskMode" = field(default_factory=_default_task_mode)
     family_mask: frozenset[SoftControlFamily] = field(default_factory=frozenset)
 
     def __post_init__(self) -> None:
+        from .operator_routing import OperatorTaskMode
+
+        if not isinstance(self.task_mode, OperatorTaskMode):
+            actual_type = type(self.task_mode).__name__
+            raise TypeError(
+                "ReferenceModeAndGatingView.task_mode must be OperatorTaskMode, "
+                f"got {actual_type}."
+            )
         if not self.mode_tag.strip():
             raise ValueError(
                 "ReferenceModeAndGatingView.mode_tag must be non-empty after trimming."

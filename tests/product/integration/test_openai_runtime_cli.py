@@ -29,6 +29,7 @@ EXPECTED_RECORD_KEYS = (
     "executive_signal_summary",
     "executive_modulator_state",
     "executive_policy_view",
+    "operator_route",
     "closure_required",
     "closure_reason_tags",
     "commitment_result_kind",
@@ -76,8 +77,10 @@ def test_openai_runtime_cli_reads_documented_raw_events_and_preserves_host_name(
     assert records[0]["control_ledger"]["budget_band"] == "low"
     assert records[0]["feedback_window_summary"]["window_size"] == 0
     assert records[0]["executive_signal_summary"]["quota_pressure"] == 0.25
-    assert records[0]["executive_modulator_state"]["explore_gain"] == 0.3375
-    assert records[0]["executive_policy_view"]["switch_margin"] == 0.053
+    assert records[0]["executive_modulator_state"]["explore_gain"] == 0.4375
+    assert records[0]["executive_policy_view"]["switch_margin"] == 0.045
+    assert records[0]["executive_state"]["posture"] == "inspect"
+    assert records[0]["operator_route"]["route_profile"] == "inspect_light"
     assert records[0]["closure_required"] is False
     assert records[0]["closure_reason_tags"] == []
     assert records[-1]["journal"]["confirmed_artifact_refs"] == ["oa-artifact-1"]

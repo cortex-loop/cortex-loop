@@ -21,6 +21,7 @@ from .goals import (
     is_authoritative_resume_reminder,
     parse_resume_reminder_track,
 )
+from .operator_routing import OperatorTaskMode
 from .opportunities import HostNativeOpportunity, PROBE_FAILURE_CLASSES
 from .state import (
     ReferenceBrakeView,
@@ -61,6 +62,7 @@ def build_reference_executive_state(
     prior_session: PriorReferenceRuntimeSessionLike | None = None,
     opportunities: Sequence[HostNativeOpportunity] = (),
     audit_intensity: str = "minimal",
+    task_mode: OperatorTaskMode = OperatorTaskMode.EXECUTE,
 ) -> ReferenceExecutiveState:
     if not isinstance(observation, ObservationBundle):
         actual_type = type(observation).__name__
@@ -84,6 +86,12 @@ def build_reference_executive_state(
         raise ValueError(
             "build_reference_executive_state.audit_intensity must be one of "
             "['minimal', 'focused', 'structured']."
+        )
+    if not isinstance(task_mode, OperatorTaskMode):
+        actual_type = type(task_mode).__name__
+        raise TypeError(
+            "build_reference_executive_state.task_mode must be OperatorTaskMode, "
+            f"got {actual_type}."
         )
 
     branch_registry = _branch_registry(support_snapshot, prior_session)
@@ -180,6 +188,7 @@ def build_reference_executive_state(
         requested_audit_intensity=audit_intensity,
     )
     mode_and_gating = ReferenceModeAndGatingView(
+        task_mode=task_mode,
         mode_tag=_mode_tag_for_event(
             observation.event.native_event_name,
             brake_evaluation.state,

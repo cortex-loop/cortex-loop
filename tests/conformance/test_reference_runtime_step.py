@@ -64,8 +64,11 @@ def test_reference_runtime_step_result_surfaces_cheap_reference_event_without_co
     assert result.selected_family is SoftControlFamily.SEEK_CONTEXT
     assert result.realized_family is SoftControlFamily.SEEK_CONTEXT
     assert result.brake_state is BrakeState.GUARDED
+    assert result.executive_state_summary["posture"] == "inspect"
     assert result.executive_state_summary["mode_tag"] == "guarded_review"
     assert result.executive_state_summary["budget_band"] == "low"
+    assert result.operator_route_payload["route_profile"] == "inspect_light"
+    assert result.operator_route_payload["route_budget"]["allow_extra_read_pass"] is True
     assert result.control_ledger_summary["event_class"] == "cheap"
     assert result.control_ledger_summary["admissible_families"] == [
         "neutral",
@@ -418,6 +421,7 @@ def test_reference_runtime_step_uses_unaugmented_snapshot_for_executive_state_an
         *,
         opportunities=(),
         audit_intensity="minimal",
+        task_mode=None,
     ):
         captured["executive_state_support_snapshot"] = support_snapshot
         return original_builder(
@@ -427,6 +431,7 @@ def test_reference_runtime_step_uses_unaugmented_snapshot_for_executive_state_an
             provisional_session,
             opportunities=opportunities,
             audit_intensity=audit_intensity,
+            task_mode=task_mode,
         )
 
     def augment_wrapper(snapshot, publication):
