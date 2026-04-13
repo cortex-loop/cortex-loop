@@ -86,7 +86,20 @@ def test_openai_runtime_step_keeps_hard_product_guards_ahead_of_reference_contro
     assert result.realized_family.value == "seek-context"
     assert result.brake_state.value == "guarded"
     assert result.executive_state_summary["active_track_ref"] == "main"
+    assert result.executive_state_summary["probe_path_state"] == "unavailable"
+    assert (
+        result.executive_state_summary["probe_unavailable_reason"]
+        == "documented-probe-surface-unavailable"
+    )
     assert result.control_ledger_summary["budget_band"] == "high"
+    assert result.control_ledger_summary["allocation_diagnostics"]["probe_path_state"] == (
+        "unavailable"
+    )
+    assert (
+        result.control_ledger_summary["allocation_diagnostics"]["probe_unavailable_reason"]
+        == "documented-probe-surface-unavailable"
+    )
+    assert result.control_ledger_summary["allocation_diagnostics"]["probe_result_class"] is None
     assert result.feedback_window_summary_payload["window_size"] == 0
     assert result.executive_signal_summary_payload == {
         "uncertainty": 0.55,
@@ -157,6 +170,32 @@ def test_openai_runtime_step_keeps_hard_product_guards_ahead_of_reference_contro
         "last_failure_class": None,
         "next_recommended_move": "check",
     }
+
+
+def test_openai_runtime_step_surfaces_typed_probe_unavailability_without_probe_result() -> None:
+    result = run_openai_runtime_step(
+        "response.output_text.delta",
+        {
+            "session_id": "oa-probe-unavailable",
+            "response_id": "resp-probe-unavailable",
+            "delta": "hello",
+        },
+        OpenAIRuntimeSession(session_id="oa-probe-unavailable"),
+    )
+
+    assert result.executive_state_summary["probe_path_state"] == "unavailable"
+    assert (
+        result.executive_state_summary["probe_unavailable_reason"]
+        == "documented-probe-surface-unavailable"
+    )
+    assert result.control_ledger_summary["allocation_diagnostics"]["probe_path_state"] == (
+        "unavailable"
+    )
+    assert (
+        result.control_ledger_summary["allocation_diagnostics"]["probe_unavailable_reason"]
+        == "documented-probe-surface-unavailable"
+    )
+    assert result.control_ledger_summary["allocation_diagnostics"]["probe_result_class"] is None
 
 
 def test_openai_runtime_session_canonicalizes_executive_modulator_memory_at_session_truth_boundary() -> None:

@@ -180,6 +180,8 @@ def test_reference_runtime_cli_reads_event_file_and_emits_one_record_per_event()
         "selected_delta_over_neutral",
         "chi_t",
         "rejected_cheaper_families",
+        "probe_path_state",
+        "probe_unavailable_reason",
         "probe_result_class",
         "verification_state",
         "explainability_profile",
@@ -195,6 +197,15 @@ def test_reference_runtime_cli_reads_event_file_and_emits_one_record_per_event()
         record["control_ledger"]["allocation_diagnostics"]["activation_threshold"]
         for record in records
     ] == [0.36999999999999994, 0.31999999999999995, 0.22999999999999995]
+    assert [record["executive_state_summary"]["probe_path_state"] for record in records] == [
+        "available",
+        "available",
+        "available",
+    ]
+    assert [
+        record["control_ledger"]["allocation_diagnostics"]["probe_unavailable_reason"]
+        for record in records
+    ] == [None, None, None]
     assert records[1]["control_ledger"]["allocation_diagnostics"]["scores"][0]["allocated_score"] != records[1]["control_ledger"]["allocation_diagnostics"]["scores"][0]["online_score"]
     assert records[2]["control_ledger"]["allocation_diagnostics"]["scores"][0]["allocated_score"] != records[2]["control_ledger"]["allocation_diagnostics"]["scores"][0]["online_score"]
     for record in records:
@@ -334,6 +345,8 @@ def test_reference_runtime_cli_record_shape_stays_locked_under_explicit_offline_
         "selected_delta_over_neutral",
         "chi_t",
         "rejected_cheaper_families",
+        "probe_path_state",
+        "probe_unavailable_reason",
         "probe_result_class",
         "verification_state",
         "explainability_profile",

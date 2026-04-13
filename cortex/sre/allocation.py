@@ -118,6 +118,8 @@ def build_allocation_diagnostics_payload(
     applied_activation_threshold: float,
     chi_t: float,
     rejected_cheaper_families: tuple[str, ...] = (),
+    probe_path_state: str = "absent",
+    probe_unavailable_reason: str | None = None,
     probe_result_class: str | None = None,
     verification_state: str = "not-required",
     explainability_profile: str = "minimal",
@@ -154,6 +156,28 @@ def build_allocation_diagnostics_payload(
         raise ValueError(
             "build_allocation_diagnostics_payload.rejected_cheaper_families must contain only non-empty strings."
         )
+    if probe_path_state not in {"available", "unavailable", "absent"}:
+        raise ValueError(
+            "build_allocation_diagnostics_payload.probe_path_state must be one of "
+            "['absent', 'available', 'unavailable']."
+        )
+    if probe_unavailable_reason is not None and not (
+        isinstance(probe_unavailable_reason, str) and probe_unavailable_reason.strip()
+    ):
+        raise ValueError(
+            "build_allocation_diagnostics_payload.probe_unavailable_reason must be "
+            "non-empty after trimming when provided."
+        )
+    if probe_path_state == "unavailable" and probe_unavailable_reason is None:
+        raise ValueError(
+            "build_allocation_diagnostics_payload.probe_unavailable_reason is required "
+            "when probe_path_state is `unavailable`."
+        )
+    if probe_path_state != "unavailable" and probe_unavailable_reason is not None:
+        raise ValueError(
+            "build_allocation_diagnostics_payload.probe_unavailable_reason is only valid "
+            "when probe_path_state is `unavailable`."
+        )
     if probe_result_class is not None and not (
         isinstance(probe_result_class, str) and probe_result_class.strip()
     ):
@@ -180,6 +204,8 @@ def build_allocation_diagnostics_payload(
         "selected_delta_over_neutral": float(selected_delta_over_neutral),
         "chi_t": float(chi_t),
         "rejected_cheaper_families": list(rejected_cheaper_families),
+        "probe_path_state": probe_path_state,
+        "probe_unavailable_reason": probe_unavailable_reason,
         "probe_result_class": probe_result_class,
         "verification_state": verification_state,
         "explainability_profile": explainability_profile,

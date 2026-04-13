@@ -68,11 +68,18 @@ def test_gemini_ingress_cli_reads_documented_raw_transcript_fixture() -> None:
         "selected_delta_over_neutral",
         "chi_t",
         "rejected_cheaper_families",
+        "probe_path_state",
+        "probe_unavailable_reason",
         "probe_result_class",
         "verification_state",
         "explainability_profile",
         "scores",
     )
+    assert [record["executive_state_summary"]["probe_path_state"] for record in records] == [
+        "unavailable",
+        "unavailable",
+        "unavailable",
+    ]
 
 
 def test_gemini_ingress_cli_load_save_works(tmp_path: Path) -> None:

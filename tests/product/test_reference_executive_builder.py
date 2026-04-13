@@ -21,6 +21,7 @@ from cortex.sre.brake import BrakeState
 from cortex.sre.feedback import ReferenceRealizationFeedback
 from cortex.sre.feedback import ReferenceRealizationFeedbackWindow
 from cortex.sre.families import SoftControlFamily
+from cortex.sre.opportunities import BoundedProbeContract, HostNativeOpportunity
 from cortex.sre.reference_builder import build_reference_executive_state
 
 
@@ -150,6 +151,103 @@ def test_build_reference_executive_state_keeps_seek_context_closed_under_generic
     assert state.brake.brake_state is BrakeState.GUARDED
     assert SoftControlFamily.SEEK_CONTEXT not in state.mode_and_gating.family_mask
     assert SoftControlFamily.SEEK_CONTEXT not in state.control_allocation.top_family_set
+
+
+def test_build_reference_executive_state_prefers_probe_availability_over_tag_only_host_friction() -> None:
+    state = build_reference_executive_state(
+        observe_reference_host_event(
+            "ContextLoad",
+            {"session_id": "runtime-probe-available"},
+        ).observation,
+        SupportSnapshot(
+            trace=SupportTraceState(),
+            session=SupportSessionState(branch_registry=("main",)),
+            host=SupportHostState(constraint_tags=frozenset({"single-process-limit"})),
+            exec_memory_pub=SupportExecMemoryState(),
+        ),
+        ExecutiveEnvironmentView(
+            available_query_kinds=frozenset({EXECUTION_TRACE}),
+            host_capability_tags=frozenset({"reference-local"}),
+        ),
+        ReferenceRuntimeSession(
+            session_id="runtime-probe-available",
+            event_index=1,
+            active_track_ref="main",
+            budget_history=("shell-low",),
+            brake_history=("quiescent",),
+            last_selected_family=SoftControlFamily.NEUTRAL,
+        ),
+        opportunities=(
+            HostNativeOpportunity(
+                opportunity_ref="reference.runtime.probe.seek-context",
+                supported_families=frozenset({SoftControlFamily.SEEK_CONTEXT}),
+                clearly_superior=True,
+                probe_contract=BoundedProbeContract(
+                    uncertainty_target="host-capability",
+                    allowed_family=SoftControlFamily.SEEK_CONTEXT,
+                    timeout_seconds=2,
+                    output_cap=256,
+                    failure_classes=frozenset({"degraded", "timed-out", "unsupported"}),
+                ),
+            ),
+        ),
+    )
+
+    assert state.control_allocation.probe_path_state == "available"
+    assert state.control_allocation.probe_unavailable_reason is None
+    assert state.control_allocation.host_friction_level == 0.0
+
+
+def test_build_reference_executive_state_marks_unavailable_probe_paths_without_fake_probe_evidence() -> None:
+    state = build_reference_executive_state(
+        observe_reference_host_event(
+            "ContextLoad",
+            {"session_id": "runtime-probe-unavailable"},
+        ).observation,
+        SupportSnapshot(
+            trace=SupportTraceState(),
+            session=SupportSessionState(branch_registry=("main",)),
+            host=SupportHostState(constraint_tags=frozenset({"single-process-limit"})),
+            exec_memory_pub=SupportExecMemoryState(),
+        ),
+        ExecutiveEnvironmentView(
+            available_query_kinds=frozenset({EXECUTION_TRACE}),
+            host_capability_tags=frozenset({"reference-local"}),
+        ),
+        ReferenceRuntimeSession(
+            session_id="runtime-probe-unavailable",
+            event_index=1,
+            active_track_ref="main",
+            budget_history=("shell-low",),
+            brake_history=("quiescent",),
+            last_selected_family=SoftControlFamily.NEUTRAL,
+        ),
+        opportunities=(
+            HostNativeOpportunity(
+                opportunity_ref="reference.runtime.probe.seek-context",
+                supported_families=frozenset({SoftControlFamily.SEEK_CONTEXT}),
+                clearly_superior=True,
+                realizable=False,
+                degradation_reason="host-capability-probe-unavailable",
+                safer_fallback_family=SoftControlFamily.NEUTRAL,
+                probe_contract=BoundedProbeContract(
+                    uncertainty_target="host-capability",
+                    allowed_family=SoftControlFamily.SEEK_CONTEXT,
+                    timeout_seconds=2,
+                    output_cap=256,
+                    failure_classes=frozenset({"degraded", "timed-out", "unsupported"}),
+                ),
+            ),
+        ),
+    )
+
+    assert state.control_allocation.probe_path_state == "unavailable"
+    assert (
+        state.control_allocation.probe_unavailable_reason
+        == "host-capability-probe-unavailable"
+    )
+    assert state.control_allocation.recent_probe_result_class is None
+    assert state.control_allocation.host_friction_level > 0.0
 
 
 def test_build_reference_executive_state_for_candidate_bearing_event_surfaces_review_mode() -> None:
