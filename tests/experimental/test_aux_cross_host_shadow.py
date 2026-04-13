@@ -66,7 +66,13 @@ def test_evaluate_aux_cross_host_shadow_reports_remaining_branch_gap_and_claim_l
     assert isinstance(result, AuxCrossHostShadowEvaluationResult)
     assert result.acceptance_passed is False
     assert result.claim_mode == "reference_plus_shared_non_reference_shell"
-    assert result.host_aliasing_detected is True
+    assert result.non_reference_evidence_mode == "host_distinct"
+    assert result.host_aliasing_detected is False
+    assert "fresh_contradiction_invalidation" in result.distinct_signature_classes
+    assert any(
+        scenario_class in result.distinct_signature_classes
+        for scenario_class in ("retrieval_reuse", "branch_resume", "check_review")
+    )
     assert dict(result.per_host_positive_case_counts) == {
         "claude": 4,
         "gemini": 4,
@@ -89,11 +95,9 @@ def test_evaluate_aux_cross_host_shadow_reports_remaining_branch_gap_and_claim_l
         "missing_repeat_stable_host_lift",
         "missing_branch_family_lift",
         "host_local_branch_basis_insufficient",
-        "host_aliasing_detected",
     )
     assert any("branch-family lift" in reason for reason in result.failure_reasons)
     assert any("local continuity basis weakness" in reason for reason in result.failure_reasons)
-    assert any("shared documented non-reference shell" in reason for reason in result.failure_reasons)
 
     case_map = {(case.host_name, case.scenario_id): case for case in result.case_results}
     claude_retrieval = case_map[("claude", "claude-retrieval-reuse")]
@@ -163,6 +167,7 @@ def test_aux_cross_host_shadow_case_results_carry_host_truth_reliability_delta_a
     assert claude_retrieval.host_signature
     assert "continuity-basis:not_applicable" in claude_retrieval.host_signature
     assert any(entry.startswith("family-mask:") for entry in claude_retrieval.host_signature)
+    assert any(entry.startswith("trace-struct:") for entry in claude_retrieval.host_signature)
     assert "aux/cross-host-shadow" in claude_retrieval.publication.publication_tags
 
     assert gemini_invalidation.host_name == "gemini"
@@ -241,7 +246,7 @@ def test_evaluate_aux_cross_host_shadow_emits_machine_readable_failure_labels_fo
     }
 
 
-def test_evaluate_aux_cross_host_shadow_detects_non_reference_host_aliasing_and_forces_claim_limitation() -> None:
+def test_evaluate_aux_cross_host_shadow_earns_host_distinct_non_reference_evidence_from_trace_structure() -> None:
     result = evaluate_aux_cross_host_shadow(make_aux_cross_host_shadow_corpus())
 
     claude_signatures = {
@@ -254,10 +259,29 @@ def test_evaluate_aux_cross_host_shadow_detects_non_reference_host_aliasing_and_
         for case in result.case_results
         if case.host_name == "gemini"
     }
+    reduced_claude_signatures = {
+        key: tuple(
+            entry for entry in signature if not entry.startswith("trace-struct:")
+        )
+        for key, signature in claude_signatures.items()
+    }
+    reduced_gemini_signatures = {
+        key: tuple(
+            entry for entry in signature if not entry.startswith("trace-struct:")
+        )
+        for key, signature in gemini_signatures.items()
+    }
 
-    assert claude_signatures == gemini_signatures
-    assert result.host_aliasing_detected is True
-    assert "host_aliasing_detected" in result.failure_labels
+    assert claude_signatures != gemini_signatures
+    assert reduced_claude_signatures == reduced_gemini_signatures
+    assert result.non_reference_evidence_mode == "host_distinct"
+    assert result.host_aliasing_detected is False
+    assert "host_aliasing_detected" not in result.failure_labels
+    assert "fresh_contradiction_invalidation" in result.distinct_signature_classes
+    assert any(
+        scenario_class in result.distinct_signature_classes
+        for scenario_class in ("retrieval_reuse", "branch_resume", "check_review")
+    )
     assert result.acceptance_passed is False
 
 

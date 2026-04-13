@@ -239,18 +239,18 @@ def test_status_registry_is_complete_and_stable() -> None:
         "reference": "reference_cli",
     }
     assert status["conformance_summary"]["shipping_default"] == "openai:operator_cli"
-    assert status["work_today"]["slug"] == "next-train-selection-after-live-regression"
+    assert status["work_today"]["slug"] == "non-reference-host-local-continuity-basis"
+    assert "Lawful host-distinct non-reference evidence is now earned" in status["work_today"]["note"]
     assert "reference_plus_shared_non_reference_shell" in status["work_today"]["note"]
-    assert "staged no-spend live regression after bounded audit is now current" in status["work_today"]["note"]
-    assert "Fast bookmarks conformance still returns `promote`" in status["work_today"]["note"]
-    assert "auth-blocked lanes remain explicit" in status["work_today"]["note"]
-    assert status["next_product_train"]["slug"] == "host-distinct-non-reference-evidence"
+    assert "host-local branch continuity still fails" in status["work_today"]["note"]
+    assert status["next_product_train"]["slug"] == "next-train-selection-after-non-reference-host-local-continuity-basis"
     assert status["next_product_train"]["surface"] == "experimental + internal"
-    assert "lawful host-distinct non-reference lift" in status["next_product_train"]["executive_benefit"]
-    assert "live regression gate is now refreshed" in status["next_product_train"]["why_now"]
-    assert "keep reference_plus_shared_non_reference_shell narrow" in status["next_product_train"]["primary_metric"]
+    assert "next narrowest seam" in status["next_product_train"]["executive_benefit"]
+    assert "host-local branch continuity" in status["next_product_train"]["why_now"]
+    assert "repair host-local branch continuity" in status["next_product_train"]["primary_metric"]
     assert "Keep the bounded audit surface compact and truthful" in status["where_to_work"][0]
     assert "no-spend live evidence current and explicit" in status["where_to_work"][1]
+    assert "lawful host-distinct evidence is earned" in status["where_to_work"][2]
     assert "reference_plus_shared_non_reference_shell" in status["where_to_work"][2]
     closure_gates = {gate["id"]: gate for gate in status["closure_gates"]}
     assert closure_gates["main_synced"]["status"] == "required"
@@ -280,18 +280,17 @@ def test_generated_status_doc_includes_system_map_and_next_product_train() -> No
     assert "Active quality/risk focus" in text
     assert "## Packet To Code" in text
     assert "## Next Product Train" in text
-    assert "`host-distinct-non-reference-evidence`" in text
-    assert "lawful host-distinct non-reference lift" in text
+    assert "`next-train-selection-after-non-reference-host-local-continuity-basis`" in text
+    assert "next narrowest seam" in text
     assert "Shipping Product Lane\\nopenai:operator_cli" in text or "Shipping Product Lane" in text
     assert "Shipping default: `openai:operator_cli`" in text
     assert "Workflow gates marked `required` are contractual gates checked by `repo_workflow.py`" in text
     assert "| `main_synced` | `required` |" in text
     assert "| `cleanup_report` | `required` |" in text
-    assert "`next-train-selection-after-live-regression`" in text
+    assert "`non-reference-host-local-continuity-basis`" in text
+    assert "Lawful host-distinct non-reference evidence is now earned" in text
     assert "reference_plus_shared_non_reference_shell" in text
-    assert "staged no-spend live regression after bounded audit is now current" in text
-    assert "Fast bookmarks conformance still returns `promote`" in text
-    assert "auth-blocked lanes remain explicit rather than stale" in text
+    assert "host-local branch continuity still fails" in text
 
 
 def test_front_door_surfaces_point_to_one_command_managed_closeout() -> None:

@@ -31,6 +31,7 @@ _SCENARIO_CLASSES = (
 )
 _CONTINUITY_BASES = ("host_local", "reference_projected", "not_applicable")
 _CLAIM_MODES = ("full_cross_host", "reference_plus_shared_non_reference_shell")
+_NON_REFERENCE_EVIDENCE_MODES = ("host_distinct", "shared_shell")
 _FAILURE_LABEL_ORDER = (
     "missing_repeat_stable_host_lift",
     "single_host_only_lift",
@@ -124,6 +125,11 @@ def _validate_claim_mode(value: str, *, field_name: str) -> None:
         raise ValueError(f"{field_name} must be one of {_CLAIM_MODES!r}.")
 
 
+def _validate_non_reference_evidence_mode(value: str, *, field_name: str) -> None:
+    if value not in _NON_REFERENCE_EVIDENCE_MODES:
+        raise ValueError(f"{field_name} must be one of {_NON_REFERENCE_EVIDENCE_MODES!r}.")
+
+
 def _validate_host_count_rows(
     rows: tuple[tuple[str, int], ...],
     *,
@@ -162,6 +168,39 @@ def _count_rows(counts: dict[str, int]) -> tuple[tuple[str, int], ...]:
     return tuple((host_name, counts.get(host_name, 0)) for host_name in _HOST_NAMES)
 
 
+def _metadata_value(
+    metadata: tuple[MetadataField, ...],
+    key: str,
+) -> str:
+    for field in metadata:
+        if field.key == key and isinstance(field.value, str):
+            return field.value
+    return ""
+
+
+def _trace_structural_signature(target_snapshot: SupportSnapshot) -> tuple[str, ...]:
+    trace_entries: list[str] = []
+    for index, event in enumerate(target_snapshot.trace.recent_events):
+        payload_kind = (
+            event.payload_handle.payload_kind
+            if event.payload_handle is not None
+            else "none"
+        )
+        raw_host_event_name = _metadata_value(
+            event.payload_metadata,
+            "raw_host_event_name",
+        ) or "none"
+        payload_metadata_keys = ",".join(
+            sorted(field.key for field in event.payload_metadata)
+        ) or "none"
+        trace_entries.append(
+            "trace-struct:"
+            f"{index}:{event.native_event_name}|{payload_kind}|"
+            f"{raw_host_event_name}|{payload_metadata_keys}"
+        )
+    return tuple(trace_entries)
+
+
 def _host_signature(
     *,
     scenario_class: str,
@@ -196,12 +235,13 @@ def _host_signature(
         "constraint-tags:" + ",".join(sorted(target_snapshot.host.constraint_tags)),
         f"baseline-preferred-score:{baseline_preferred_score:.6f}",
         f"replay-preferred-score:{replay_preferred_score:.6f}",
+        *_trace_structural_signature(target_snapshot),
     )
 
 
-def _non_reference_hosts_alias(
+def _non_reference_scenario_signatures(
     case_results: tuple["AuxCrossHostShadowCaseResult", ...],
-) -> bool:
+) -> dict[tuple[str, str], dict[str, tuple[str, ...]]]:
     scenario_signatures: dict[tuple[str, str], dict[str, tuple[str, ...]]] = {}
     for result in case_results:
         if result.host_name not in {"claude", "gemini"}:
@@ -212,6 +252,13 @@ def _non_reference_hosts_alias(
         )[
             result.host_name
         ] = result.host_signature
+    return scenario_signatures
+
+
+def _non_reference_hosts_alias(
+    case_results: tuple["AuxCrossHostShadowCaseResult", ...],
+) -> bool:
+    scenario_signatures = _non_reference_scenario_signatures(case_results)
     expected_keys = {
         ("retrieval_reuse", "not_applicable"),
         ("branch_resume", "host_local"),
@@ -226,6 +273,28 @@ def _non_reference_hosts_alias(
         signatures.get("claude") == signatures.get("gemini")
         for signatures in scenario_signatures.values()
     )
+
+
+def _distinct_non_reference_signature_classes(
+    case_results: tuple["AuxCrossHostShadowCaseResult", ...],
+) -> tuple[str, ...]:
+    scenario_signatures = _non_reference_scenario_signatures(case_results)
+    expected_keys = {
+        ("retrieval_reuse", "not_applicable"),
+        ("branch_resume", "host_local"),
+        ("branch_resume", "reference_projected"),
+        ("check_review", "not_applicable"),
+        ("weighted_burden_counterexample", "not_applicable"),
+        ("fresh_contradiction_invalidation", "not_applicable"),
+    }
+    if set(scenario_signatures) != expected_keys:
+        return ()
+    distinct_classes = {
+        scenario_class
+        for (scenario_class, _continuity_basis), signatures in scenario_signatures.items()
+        if signatures.get("claude") != signatures.get("gemini")
+    }
+    return tuple(sorted(distinct_classes))
 
 
 def _choose_dominant_failure_label(counts: dict[str, int]) -> str | None:
@@ -507,6 +576,8 @@ class AuxCrossHostShadowEvaluationResult:
     counterexample_case_count: int
     acceptance_passed: bool
     claim_mode: str = "reference_plus_shared_non_reference_shell"
+    non_reference_evidence_mode: str = "shared_shell"
+    distinct_signature_classes: tuple[str, ...] = field(default_factory=tuple)
     host_aliasing_detected: bool = False
     dominant_failure_label: str | None = None
     failure_labels: tuple[str, ...] = field(default_factory=tuple)
@@ -550,6 +621,15 @@ class AuxCrossHostShadowEvaluationResult:
             self.claim_mode,
             field_name="AuxCrossHostShadowEvaluationResult.claim_mode",
         )
+        _validate_non_reference_evidence_mode(
+            self.non_reference_evidence_mode,
+            field_name="AuxCrossHostShadowEvaluationResult.non_reference_evidence_mode",
+        )
+        for value in self.distinct_signature_classes:
+            _validate_scenario_class(
+                value,
+                field_name="AuxCrossHostShadowEvaluationResult.distinct_signature_classes",
+            )
         if not isinstance(self.host_aliasing_detected, bool):
             actual_type = type(self.host_aliasing_detected).__name__
             raise TypeError(
@@ -740,6 +820,9 @@ def evaluate_aux_cross_host_shadow(
     missing_reliability_active_check_lift = False
     failure_reasons: list[str] = []
     host_aliasing_detected = _non_reference_hosts_alias(case_results_tuple)
+    distinct_signature_classes = _distinct_non_reference_signature_classes(
+        case_results_tuple
+    )
 
     for host_name in _HOST_NAMES:
         host_positive_cases = tuple(
@@ -901,6 +984,18 @@ def evaluate_aux_cross_host_shadow(
         if acceptance_passed
         else "reference_plus_shared_non_reference_shell"
     )
+    non_reference_evidence_mode = (
+        "host_distinct"
+        if (
+            len(distinct_signature_classes) >= 2
+            and "fresh_contradiction_invalidation" in distinct_signature_classes
+            and any(
+                scenario_class in distinct_signature_classes
+                for scenario_class in ("retrieval_reuse", "branch_resume", "check_review")
+            )
+        )
+        else "shared_shell"
+    )
     dominant_failure_label = _choose_dominant_failure_label(
         failure_counts
     )
@@ -914,6 +1009,8 @@ def evaluate_aux_cross_host_shadow(
         counterexample_case_count=counterexample_case_count,
         acceptance_passed=acceptance_passed,
         claim_mode=claim_mode,
+        non_reference_evidence_mode=non_reference_evidence_mode,
+        distinct_signature_classes=distinct_signature_classes,
         host_aliasing_detected=host_aliasing_detected,
         dominant_failure_label=dominant_failure_label,
         failure_labels=failure_labels,

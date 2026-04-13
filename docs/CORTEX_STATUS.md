@@ -50,9 +50,9 @@ Answering stance:
 
 ## Current Focus
 
-- Current tracked train: `next-train-selection-after-live-regression`
-- Active quality/risk focus: Cross-host shadow closure remains stabilized at `reference_plus_shared_non_reference_shell`, bounded executive audit ingress is landed on the shipped lane, and the staged no-spend live regression after bounded audit is now current. Fast bookmarks conformance still returns `promote`, no shipped regression was found, and non-shipping watchlist caveats such as auth-blocked lanes remain explicit rather than stale.
-- Next product train after the current focus: `host-distinct-non-reference-evidence`
+- Current tracked train: `non-reference-host-local-continuity-basis`
+- Active quality/risk focus: Lawful host-distinct non-reference evidence is now earned on the AUX shadow surface from structural runtime trace observables already present in runtime-derived support snapshots. The broader cross-host shadow claim remains narrowed at `reference_plus_shared_non_reference_shell` because host-local branch continuity still fails while `reference_projected` branch continuity passes, so the active blocker is non-reference host-local continuity-basis repair rather than host-distinctness or shipped-lane stability.
+- Next product train after the current focus: `next-train-selection-after-non-reference-host-local-continuity-basis`
 
 ## Bio-To-Code Matrix
 
@@ -62,10 +62,10 @@ Answering stance:
 | Bounded correction and verified-work preservation | Error repair without losing the main task thread | `landed` | `15` | `cortex/runtime`, `cortex/sre`, `cortex/hosts/openai` | `tests/product` | Keep preservation-state repair stable while support-side experiments stay removable and off the shipping critical path. |
 | Uncertainty handling and brake | Hesitation and uncertainty-aware inhibition | `landed` | `13` | `cortex/sre` | `tests/product`, `tests/experimental` | Keep reference-derived brake and uncertainty control stable while AUX remains advisory and runtime-off-by-default. |
 | Branch continuity, suspend/resume, and truthful closure | Working memory across interruptions plus truthful closure | `landed` | `15` | `cortex/sre`, `cortex/hosts/openai` | `tests/product`, `tests/conformance` | Keep suspend/resume and truthful closure stable while any future support memory remains explicit, optional, and non-binding. |
-| Intervention pricing versus neutrality | Deciding when to intervene, stay neutral, or stop | `landed` | `10` | `cortex/sre`, `cortex/aux` | `tests/product`, `tests/experimental` | Hold calibrated reference-side intervention pricing stable now that the earned shadow result is `reference_plus_shared_non_reference_shell`; keep bounded audit compact on the shipped lane, and focus next on earning or falsifying lawful host-distinct evidence before any broader non-reference Q_mem ingress or shipping-default change. |
+| Intervention pricing versus neutrality | Deciding when to intervene, stay neutral, or stop | `landed` | `10` | `cortex/sre`, `cortex/aux` | `tests/product`, `tests/experimental` | Hold calibrated reference-side intervention pricing stable now that lawful host-distinct non-reference evidence is earned on the AUX shadow surface; keep the broader shadow claim narrow at `reference_plus_shared_non_reference_shell` until host-local continuity-basis repair is earned, and keep bounded audit compact on the shipped lane. |
 | Blocker surfacing and goal-debt management | Noticing unresolved blockers and unfinished intentions | `landed` | `10` | `cortex/sre`, `cortex/hosts/openai`, `cortex/hosts/claude`, `cortex/hosts/gemini`, `cortex/hosts/reference` | `tests/product`, `tests/conformance` | Keep typed goal-debt and closure-pressure state stable across hosts while support-side augmentation remains explicit and non-sovereign. |
 | Multi-host executive continuity | One executive across different brains and contexts | `landed` | `15` | `cortex/hosts/openai`, `cortex/hosts/claude`, `cortex/hosts/gemini`, `cortex/hosts/reference` | `tests/product`, `tests/conformance` | Hold one Cortex law across OpenAI, Claude, Gemini, and reference without flattening host-native realization. |
-| Offline consolidation and support geometry | Sleep-like consolidation and support systems | `landed` | `10` | `cortex/aux` | `tests/experimental`, `tests/archive`, `tests/conformance` | Keep offline publication explicit, removable, and non-sovereign now that cross-host shadow closure has settled on `reference_plus_shared_non_reference_shell`; future support-memory lift must either produce lawful host-distinct evidence or remain intentionally narrow. |
+| Offline consolidation and support geometry | Sleep-like consolidation and support systems | `landed` | `10` | `cortex/aux` | `tests/experimental`, `tests/archive`, `tests/conformance` | Keep offline publication explicit, removable, and non-sovereign now that lawful host-distinct non-reference evidence is earned on the AUX shadow surface; broader non-reference shadow lift stays intentionally narrow until host-local continuity-basis repair is earned. |
 
 ## Math To Code Rules
 
@@ -155,19 +155,19 @@ Workflow gates marked `required` are contractual gates checked by `repo_workflow
 
 ## Next Product Train
 
-- Train: `host-distinct-non-reference-evidence`
+- Train: `next-train-selection-after-non-reference-host-local-continuity-basis`
 - Surface: `experimental + internal`
-- Executive benefit: Prove or falsify lawful host-distinct non-reference lift instead of leaving the non-reference claim permanently narrow by default after the live gate is current.
-- Why now: The bounded-audit live regression gate is now refreshed on current no-spend evidence, so the highest-leverage remaining gap is the narrow non-reference claim boundary rather than shipped-lane stability.
-- Primary metric: `either earn lawful host-distinct non-reference evidence or keep reference_plus_shared_non_reference_shell narrow with explicit blocker truth`
-- Guardrail: `no host hacks, no fabricated divergence, and no shipping-default widening`
-- Kill rule: `cut any seam that manufactures host difference without lawful observables`
+- Executive benefit: Select the next narrowest seam after resolving or freezing the non-reference host-local continuity-basis blocker without widening shipping truth.
+- Why now: Lawful host-distinct non-reference evidence is now earned from runtime-derived trace structure, so the active blocker has moved to host-local branch continuity rather than host-distinctness itself.
+- Primary metric: `either repair host-local branch continuity without host hacks or keep the broader cross-host shadow claim narrow with explicit blocker truth`
+- Guardrail: `no runtime-law widening, no fabricated host difference, and no shipping-default change`
+- Kill rule: `cut any seam that tries to fix non-reference host-local continuity with host-specific policy forks or synthetic continuity markers`
 
 ## Where To Work Next
 
 - Keep the bounded audit surface compact and truthful on the shipped lane: selected versus realized family, uncertainty, threshold, delta, verification, and probe truth only.
 - Keep the no-spend live evidence current and explicit: fast conformance is green, the deeper directionality and host-native watchlists are refreshed, and non-shipping auth or env caveats must stay explicit instead of silently stale.
-- Keep the shadow-memory claim narrow and removable: `reference_plus_shared_non_reference_shell` remains the earned non-reference truth until lawful host-distinct evidence exists.
+- Keep host-distinct non-reference evidence explicit and the broader shadow claim narrow: lawful host-distinct evidence is earned, but `reference_plus_shared_non_reference_shell` remains the overall shadow claim until host-local continuity-basis repair is earned.
 
 ## Canonical Proof
 

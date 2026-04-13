@@ -126,7 +126,7 @@
         "tests/product",
         "tests/experimental"
       ],
-      "next_move": "Hold calibrated reference-side intervention pricing stable now that the earned shadow result is `reference_plus_shared_non_reference_shell`; keep bounded audit compact on the shipped lane, and focus next on earning or falsifying lawful host-distinct evidence before any broader non-reference Q_mem ingress or shipping-default change."
+      "next_move": "Hold calibrated reference-side intervention pricing stable now that lawful host-distinct non-reference evidence is earned on the AUX shadow surface; keep the broader shadow claim narrow at `reference_plus_shared_non_reference_shell` until host-local continuity-basis repair is earned, and keep bounded audit compact on the shipped lane."
     },
     {
       "skill": "Blocker surfacing and goal-debt management",
@@ -176,7 +176,7 @@
         "tests/archive",
         "tests/conformance"
       ],
-      "next_move": "Keep offline publication explicit, removable, and non-sovereign now that cross-host shadow closure has settled on `reference_plus_shared_non_reference_shell`; future support-memory lift must either produce lawful host-distinct evidence or remain intentionally narrow."
+      "next_move": "Keep offline publication explicit, removable, and non-sovereign now that lawful host-distinct non-reference evidence is earned on the AUX shadow surface; broader non-reference shadow lift stays intentionally narrow until host-local continuity-basis repair is earned."
     }
   ],
   "math_to_code_rules": {
@@ -189,17 +189,17 @@
     "law_revision_rule": "The current math is binding landing law until live evidence disproves or narrows it. When that happens, revise the law explicitly and update the code and proof surfaces in the same seam; do not silently patch around stale math in implementation."
   },
   "work_today": {
-    "slug": "next-train-selection-after-live-regression",
-    "note": "Cross-host shadow closure remains stabilized at `reference_plus_shared_non_reference_shell`, bounded executive audit ingress is landed on the shipped lane, and the staged no-spend live regression after bounded audit is now current. Fast bookmarks conformance still returns `promote`, no shipped regression was found, and non-shipping watchlist caveats such as auth-blocked lanes remain explicit rather than stale."
+    "slug": "non-reference-host-local-continuity-basis",
+    "note": "Lawful host-distinct non-reference evidence is now earned on the AUX shadow surface from structural runtime trace observables already present in runtime-derived support snapshots. The broader cross-host shadow claim remains narrowed at `reference_plus_shared_non_reference_shell` because host-local branch continuity still fails while `reference_projected` branch continuity passes, so the active blocker is non-reference host-local continuity-basis repair rather than host-distinctness or shipped-lane stability."
   },
   "next_product_train": {
-    "slug": "host-distinct-non-reference-evidence",
+    "slug": "next-train-selection-after-non-reference-host-local-continuity-basis",
     "surface": "experimental + internal",
-    "executive_benefit": "Prove or falsify lawful host-distinct non-reference lift instead of leaving the non-reference claim permanently narrow by default after the live gate is current.",
-    "why_now": "The bounded-audit live regression gate is now refreshed on current no-spend evidence, so the highest-leverage remaining gap is the narrow non-reference claim boundary rather than shipped-lane stability.",
-    "primary_metric": "either earn lawful host-distinct non-reference evidence or keep reference_plus_shared_non_reference_shell narrow with explicit blocker truth",
-    "guardrail": "no host hacks, no fabricated divergence, and no shipping-default widening",
-    "kill_rule": "cut any seam that manufactures host difference without lawful observables"
+    "executive_benefit": "Select the next narrowest seam after resolving or freezing the non-reference host-local continuity-basis blocker without widening shipping truth.",
+    "why_now": "Lawful host-distinct non-reference evidence is now earned from runtime-derived trace structure, so the active blocker has moved to host-local branch continuity rather than host-distinctness itself.",
+    "primary_metric": "either repair host-local branch continuity without host hacks or keep the broader cross-host shadow claim narrow with explicit blocker truth",
+    "guardrail": "no runtime-law widening, no fabricated host difference, and no shipping-default change",
+    "kill_rule": "cut any seam that tries to fix non-reference host-local continuity with host-specific policy forks or synthetic continuity markers"
   },
   "system_map": {
     "nodes": [
@@ -492,7 +492,7 @@
   "where_to_work": [
     "Keep the bounded audit surface compact and truthful on the shipped lane: selected versus realized family, uncertainty, threshold, delta, verification, and probe truth only.",
     "Keep the no-spend live evidence current and explicit: fast conformance is green, the deeper directionality and host-native watchlists are refreshed, and non-shipping auth or env caveats must stay explicit instead of silently stale.",
-    "Keep the shadow-memory claim narrow and removable: `reference_plus_shared_non_reference_shell` remains the earned non-reference truth until lawful host-distinct evidence exists."
+    "Keep host-distinct non-reference evidence explicit and the broader shadow claim narrow: lawful host-distinct evidence is earned, but `reference_plus_shared_non_reference_shell` remains the overall shadow claim until host-local continuity-basis repair is earned."
   ],
   "blocked_moves": [
     "Do not let archived docs or train notes act as live truth.",
