@@ -3,16 +3,26 @@ AGENT ?= codex
 SLUG ?= session
 MESSAGE ?= docs: update internal workflow
 REPO_WORKFLOW ?= workflow/repo_workflow.py
+MODE ?= close-session
 
-.PHONY: test closeout-test sync-main start-session close-session finalize preserve-worktree audit-branches cleanup-report
+.PHONY: test closeout-test closeout-init closeout-render closeout-validate sync-main start-session close-session finalize preserve-worktree audit-branches cleanup-report
 
 test:
-	$(PYTHON) -m pytest ../tests/internal -q
+	PYTHONPATH=.. $(PYTHON) -m pytest ../tests/internal -q
 
 closeout-test:
 	$(PYTHON) ../internal/truth/generate_status.py --check
 	$(PYTHON) ../internal/archive/generate_archive_index.py --check
-	$(PYTHON) -m pytest ../tests/internal -q
+	PYTHONPATH=.. $(PYTHON) -m pytest ../tests/internal -q
+
+closeout-init:
+	$(PYTHON) ../internal/closeout/contract.py init --mode $(MODE)
+
+closeout-render:
+	$(PYTHON) ../internal/closeout/contract.py render
+
+closeout-validate:
+	$(PYTHON) ../internal/closeout/contract.py validate --mode $(MODE)
 
 sync-main:
 	$(PYTHON) $(REPO_WORKFLOW) sync-main

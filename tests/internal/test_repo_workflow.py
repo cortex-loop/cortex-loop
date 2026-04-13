@@ -8,6 +8,8 @@ from pathlib import Path
 
 import pytest
 
+from internal.closeout import contract as closeout_contract
+
 
 ROOT = Path(__file__).resolve().parents[2]
 
@@ -41,8 +43,9 @@ def _prepare_repo(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
     _git(repo, "init", "-b", "main")
     _git(repo, "config", "user.name", "Cortex Test")
     _git(repo, "config", "user.email", "cortex@example.com")
+    (repo / ".gitignore").write_text(".cortex/closeout_contract/\n", encoding="utf-8")
     (repo / "README.md").write_text("base\n", encoding="utf-8")
-    _git(repo, "add", "README.md")
+    _git(repo, "add", ".gitignore", "README.md")
     _git(repo, "commit", "-m", "repo: initialize temp repo")
     _git(repo, "remote", "add", "origin", remote.as_uri())
     _git(repo, "push", "-u", "origin", "main")
@@ -56,6 +59,68 @@ def _prepare_repo(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
     module = _load_repo_workflow_module()
     monkeypatch.setenv(module.ROOT_ENV_VAR, str(repo))
     return repo, remote, module
+
+
+def _write_closeout_contract(
+    repo: Path,
+    *,
+    branch: str,
+    mode: str,
+    reviewed_paths: list[str],
+    surface: str = "internal",
+    profile_override: str | None = None,
+) -> None:
+    payload = closeout_contract.scaffold_payload(branch=branch, mode=mode, reviewed_paths=reviewed_paths)
+    if profile_override is not None:
+        payload["profile"] = profile_override
+        if profile_override == "standard":
+            payload.pop("governing_locks", None)
+            payload.pop("law_to_code_completeness", None)
+    payload["seam"] = {
+        "slug": "closeout-enforcement",
+        "surface": surface,
+        "executive_benefit": "Prevent overclaiming at closeout.",
+        "why_now": "The workflow must gate S-tier closure rigor mechanically.",
+    }
+    payload["residuals"] = {
+        "fixed_now": ["Workflow closeout rigor is explicit."],
+        "intentionally_deferred": ["No broader runtime or doctrine change."],
+        "still_underfit": ["No residual issue remains in this test fixture."],
+        "zeroed_or_stubbed_terms": [],
+    }
+    payload["hostile_review"] = {
+        "engineer": "No material workflow hole remains.",
+        "mathematician": "The gate is explicit and typed.",
+        "neuroscientist": "No false executive claim is introduced.",
+    }
+    payload["claims"] = {
+        "earned_now": ["This closeout is reviewable and bounded."],
+        "forbidden_still": ["No broader product lift is claimed from workflow alone."],
+    }
+    payload["north_light_audit"] = {
+        "microkernel_boundary": {"status": "pass", "note": "No product policy moved into core."},
+        "repo_governance_leakage": {"status": "pass", "note": "Internal workflow remains internal."},
+        "host_specific_policy_fork": {"status": "pass", "note": "No host behavior changed."},
+        "generic_bloat": {"status": "pass", "note": "The gate only applies at closure."},
+    }
+    if payload["profile"] == "load_bearing":
+        payload["governing_locks"] = {
+            "governing_principle": "Truthful closure outranks local confidence.",
+            "executive_skill": "Residual rigor.",
+            "product_metric": "No substantive closeout bypasses residual accounting.",
+            "guardrail": "No second operational truth surface.",
+            "kill_rule": "Cut any path that permits silent overclaiming.",
+        }
+        payload["law_to_code_completeness"] = [
+            {
+                "term": "workflow closeout rigor",
+                "state": "implemented",
+                "code_refs": [reviewed_paths[0]],
+                "proof_refs": ["tests/internal/test_repo_workflow.py"],
+                "note": "Representative row for the touched path set.",
+            }
+        ]
+    closeout_contract.write_artifacts(repo, payload)
 
 
 def _make_remote_commit(remote: Path, tmp_path: Path, filename: str, contents: str, message: str) -> None:
@@ -126,6 +191,7 @@ def test_close_session_returns_to_main_and_deletes_branch(
     module.cmd_start_session("codex", "closeout")
     branch = _git_output(repo, "branch", "--show-current")
     (repo / "README.md").write_text("changed\n", encoding="utf-8")
+    _write_closeout_contract(repo, branch=branch, mode="close-session", reviewed_paths=["README.md"])
 
     def fake_publish_merge_sync_session(
         session_branch: str, title: str, verification_commands: tuple[str, ...]
@@ -214,6 +280,7 @@ def test_close_session_keeps_session_branch_when_publication_fails(
     module.cmd_start_session("codex", "gh-fail")
     branch = _git_output(repo, "branch", "--show-current")
     (repo / "README.md").write_text("changed\n", encoding="utf-8")
+    _write_closeout_contract(repo, branch=branch, mode="close-session", reviewed_paths=["README.md"])
 
     def fail_publish_merge_sync_session(_branch: str, _title: str, _verification_commands: tuple[str, ...]) -> dict[str, object]:
         raise SystemExit("gh auth status failed")
@@ -245,6 +312,7 @@ def test_close_session_with_existing_unique_commit_still_publishes_when_tree_is_
     (repo / "README.md").write_text("changed\n", encoding="utf-8")
     _git(repo, "add", "README.md")
     _git(repo, "commit", "-m", "docs: preexisting session commit")
+    _write_closeout_contract(repo, branch=branch, mode="close-session", reviewed_paths=["README.md"])
 
     calls: list[tuple[str, object]] = []
     verification_paths: list[list[str]] = []
@@ -302,6 +370,7 @@ def test_close_session_keeps_session_branch_when_pr_creation_fails_after_push(
     module.cmd_start_session("codex", "pr-fail")
     branch = _git_output(repo, "branch", "--show-current")
     (repo / "README.md").write_text("changed\n", encoding="utf-8")
+    _write_closeout_contract(repo, branch=branch, mode="close-session", reviewed_paths=["README.md"])
 
     def fail_after_push(session_branch: str, _title: str, _verification_commands: tuple[str, ...]) -> dict[str, object]:
         _git(repo, "push", "-u", "origin", session_branch)
@@ -345,11 +414,66 @@ def test_finalize_commits_manual_branch_without_touching_main(
     _git(repo, "switch", "-c", "maint/manual-work")
     monkeypatch.setattr(module, "_run_verification_for_paths", lambda _paths: ("git diff --check", "make product-test"))
     (repo / "manual.txt").write_text("manual\n", encoding="utf-8")
+    _write_closeout_contract(repo, branch="maint/manual-work", mode="finalize", reviewed_paths=["manual.txt"])
 
     module.cmd_finalize("docs: finalize manual branch", manual_exception=True)
 
     assert _git_output(repo, "branch", "--show-current") == "maint/manual-work"
     assert _git_output(repo, "log", "-1", "--pretty=%s") == "docs: finalize manual branch"
+
+
+def test_finalize_requires_valid_closeout_contract_before_commit(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    repo, _remote, module = _prepare_repo(tmp_path, monkeypatch)
+    _git(repo, "switch", "-c", "maint/manual-work")
+    monkeypatch.setattr(module, "_run_verification_for_paths", lambda _paths: ("git diff --check", "make product-test"))
+    (repo / "manual.txt").write_text("manual\n", encoding="utf-8")
+
+    with pytest.raises(SystemExit, match="Closeout contract is missing"):
+        module.cmd_finalize("docs: finalize manual branch", manual_exception=True)
+
+    assert _git_output(repo, "branch", "--show-current") == "maint/manual-work"
+    assert _git_output(repo, "log", "-1", "--pretty=%s") == "repo: initialize temp repo"
+
+
+def test_close_session_requires_valid_closeout_contract_before_commit(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    repo, _remote, module = _prepare_repo(tmp_path, monkeypatch)
+    monkeypatch.setattr(module, "_session_timestamp", lambda: "20260329-010203")
+    monkeypatch.setattr(module, "_managed_publication_required", lambda: True)
+    module.cmd_start_session("codex", "closeout-rigor")
+    branch = _git_output(repo, "branch", "--show-current")
+    (repo / "README.md").write_text("changed\n", encoding="utf-8")
+
+    with pytest.raises(SystemExit, match="Closeout contract is missing"):
+        module.cmd_close_session("docs: closeout rigor")
+
+    assert _git_output(repo, "branch", "--show-current") == branch
+    assert _git_output(repo, "log", "main", "-1", "--pretty=%s") == "repo: initialize temp repo"
+
+
+def test_close_session_load_bearing_paths_require_load_bearing_profile(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    repo, _remote, module = _prepare_repo(tmp_path, monkeypatch)
+    _git(repo, "switch", "-c", "maint/load-bearing")
+    monkeypatch.setattr(module, "_run_verification_for_paths", lambda _paths: ("git diff --check", "make product-test"))
+    target = repo / "cortex" / "sre" / "persistence.py"
+    target.parent.mkdir(parents=True, exist_ok=True)
+    target.write_text("pass\n", encoding="utf-8")
+    _write_closeout_contract(
+        repo,
+        branch="maint/load-bearing",
+        mode="finalize",
+        reviewed_paths=["cortex/sre/persistence.py"],
+        surface="product",
+        profile_override="standard",
+    )
+
+    with pytest.raises(SystemExit, match="profile mismatch: expected 'load_bearing'"):
+        module.cmd_finalize("docs: finalize manual branch", manual_exception=True)
 
 
 def test_publish_merge_sync_session_reuses_existing_open_pr(

@@ -79,6 +79,14 @@ def test_agents_records_mission_lock_and_single_truth_bootstrap() -> None:
     assert "This root `AGENTS.md` is the only agent contract in the repo." in text
     assert "Do not run paid service-lane commands unless the user explicitly approves spend in the current chat." in text
     assert "Do not set `CORTEX_LIVE_SERVICE_SPEND_APPROVED`" in text
+    assert ".cortex/closeout_contract/" in text
+    assert "Fixed now" in text
+    assert "Intentionally deferred" in text
+    assert "Still underfit" in text
+    assert "Zeroed or stubbed terms" in text
+    assert "Hostile reviewer critiques" in text
+    assert "Claim earned now" in text
+    assert "Claim still forbidden" in text
     assert "CORTEX_V2_ACTIVE_WORKSTREAM" not in text
     assert "CORTEX_V2_PHASE_GATES_2" not in text
     assert "CORTEX_V2_MATH_TO_CODE_CORRESPONDENCE" not in text
@@ -101,6 +109,9 @@ def test_public_docs_point_to_status_and_keep_archive_out_of_the_front_door() ->
     assert "internal/truth/cortex_status.json" in boundary
     assert "paid OpenAI service-lane proof is never part of the default bundle" in workflow
     assert "requires explicit user approval in the current chat" in workflow
+    assert "closeout contract artifact" in workflow
+    assert "load_bearing" in workflow
+    assert "hard-fails" in workflow
     for text in (readme, docs_index, charter, boundary):
         assert "CORTEX_V2_ACTIVE_WORKSTREAM" not in text
         assert "CORTEX_V2_PHASE_GATES_2" not in text

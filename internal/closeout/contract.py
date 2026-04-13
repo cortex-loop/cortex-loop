@@ -1,0 +1,514 @@
+#!/usr/bin/env python3
+from __future__ import annotations
+
+import argparse
+import json
+import os
+import re
+import shutil
+import subprocess
+from pathlib import Path
+from typing import Any
+
+ROOT_ENV_VAR = "CORTEX_REPO_WORKFLOW_ROOT"
+DEFAULT_ROOT = Path(__file__).resolve().parents[2]
+SCHEMA_VERSION = 1
+VALID_MODES = {"close-session", "finalize"}
+VALID_PROFILES = {"standard", "load_bearing"}
+VALID_SURFACES = {"product", "experimental", "lab", "internal"}
+VALID_AUDIT_STATUSES = {"pass", "fail"}
+VALID_COMPLETENESS_STATES = {"implemented", "explicit_zero", "future_not_active"}
+LOAD_BEARING_PACKET_DOC_RE = re.compile(r"^docs/CORTEX_V2_[^/]+\.md$")
+MANAGED_SESSION_BRANCH_RE = re.compile(
+    r"^(codex|claude|maint)/(?P<stamp>\d{8}-\d{6})-(?P<slug>[a-z0-9]+(?:-[a-z0-9]+)*)$"
+)
+
+
+def _root() -> Path:
+    configured = os.environ.get(ROOT_ENV_VAR)
+    if configured:
+        return Path(configured).resolve()
+    return DEFAULT_ROOT
+
+
+def _capture_optional(cmd: list[str], *, cwd: Path | None = None) -> str | None:
+    proc = subprocess.run(
+        cmd,
+        cwd=cwd or _root(),
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+    if proc.returncode != 0:
+        return None
+    return proc.stdout.strip() or None
+
+
+def _current_branch(*, cwd: Path | None = None) -> str:
+    output = _capture_optional(["git", "branch", "--show-current"], cwd=cwd)
+    if not output:
+        raise SystemExit("Unable to determine the current git branch for closeout contract handling.")
+    return output
+
+
+def _staged_paths(*, cwd: Path | None = None) -> list[str]:
+    output = _capture_optional(["git", "diff", "--cached", "--name-only"], cwd=cwd)
+    if not output:
+        return []
+    return [line.strip() for line in output.splitlines() if line.strip()]
+
+
+def _worktree_paths(*, cwd: Path | None = None) -> list[str]:
+    proc = subprocess.run(
+        ["git", "status", "--porcelain=1", "--untracked-files=all"],
+        cwd=cwd or _root(),
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+    if proc.returncode != 0 or not proc.stdout:
+        return []
+    paths: list[str] = []
+    for line in proc.stdout.splitlines():
+        if len(line) < 4:
+            continue
+        path = line[3:].strip()
+        if " -> " in path:
+            path = path.split(" -> ", 1)[1].strip()
+        if path:
+            paths.append(path)
+    return paths
+
+
+def _changed_paths_between(base_ref: str, head_ref: str, *, cwd: Path | None = None) -> list[str]:
+    output = _capture_optional(["git", "diff", "--name-only", f"{base_ref}..{head_ref}"], cwd=cwd)
+    if not output:
+        return []
+    return [line.strip() for line in output.splitlines() if line.strip()]
+
+
+def _origin_main_exists(*, cwd: Path | None = None) -> bool:
+    return _capture_optional(["git", "rev-parse", "--verify", "origin/main"], cwd=cwd) is not None
+
+
+def _is_managed_session_branch(branch: str) -> bool:
+    return MANAGED_SESSION_BRANCH_RE.fullmatch(branch) is not None
+
+
+def _normalize_paths(paths: list[str]) -> list[str]:
+    return sorted({path.strip() for path in paths if path.strip()})
+
+
+def is_load_bearing_path(path: str) -> bool:
+    normalized = path.strip()
+    if not normalized:
+        return False
+    if normalized.startswith(("cortex/", "lab/")):
+        return True
+    if normalized in {"internal/truth/cortex_status.json", "docs/CORTEX_STATUS.md"}:
+        return True
+    return LOAD_BEARING_PACKET_DOC_RE.fullmatch(normalized) is not None
+
+
+def infer_profile(reviewed_paths: list[str]) -> str:
+    return "load_bearing" if any(is_load_bearing_path(path) for path in reviewed_paths) else "standard"
+
+
+def expected_reviewed_paths(
+    *,
+    mode: str,
+    branch: str | None = None,
+    base_ref: str | None = None,
+    cwd: Path | None = None,
+) -> list[str]:
+    if mode not in VALID_MODES:
+        raise SystemExit(f"Unsupported closeout contract mode '{mode}'.")
+    cwd = cwd or _root()
+    branch = branch or _current_branch(cwd=cwd)
+    if mode == "finalize":
+        staged = _normalize_paths(_staged_paths(cwd=cwd))
+        return staged or _normalize_paths(_worktree_paths(cwd=cwd))
+    staged = _normalize_paths(_staged_paths(cwd=cwd))
+    if staged:
+        return staged
+    worktree = _normalize_paths(_worktree_paths(cwd=cwd))
+    if worktree:
+        return worktree
+    if base_ref is None:
+        base_ref = "origin/main" if _is_managed_session_branch(branch) and _origin_main_exists(cwd=cwd) else "main"
+    return _normalize_paths(_changed_paths_between(base_ref, branch, cwd=cwd))
+
+
+def scaffold_payload(*, branch: str, mode: str, reviewed_paths: list[str]) -> dict[str, Any]:
+    profile = infer_profile(reviewed_paths)
+    payload: dict[str, Any] = {
+        "schema_version": SCHEMA_VERSION,
+        "branch": branch,
+        "mode": mode,
+        "profile": profile,
+        "reviewed_paths": _normalize_paths(reviewed_paths),
+        "seam": {
+            "slug": "",
+            "surface": "",
+            "executive_benefit": "",
+            "why_now": "",
+        },
+        "residuals": {
+            "fixed_now": [],
+            "intentionally_deferred": [],
+            "still_underfit": [],
+            "zeroed_or_stubbed_terms": [],
+        },
+        "hostile_review": {
+            "engineer": "",
+            "mathematician": "",
+            "neuroscientist": "",
+        },
+        "claims": {
+            "earned_now": [],
+            "forbidden_still": [],
+        },
+        "north_light_audit": {
+            "microkernel_boundary": {"status": "", "note": ""},
+            "repo_governance_leakage": {"status": "", "note": ""},
+            "host_specific_policy_fork": {"status": "", "note": ""},
+            "generic_bloat": {"status": "", "note": ""},
+        },
+    }
+    if profile == "load_bearing":
+        payload["governing_locks"] = {
+            "governing_principle": "",
+            "executive_skill": "",
+            "product_metric": "",
+            "guardrail": "",
+            "kill_rule": "",
+        }
+        payload["law_to_code_completeness"] = []
+    return payload
+
+
+def _artifact_dir(root: Path, branch: str) -> Path:
+    return root / ".cortex" / "closeout_contract" / Path(*branch.split("/"))
+
+
+def resolve_artifact_paths(root: Path, branch: str) -> dict[str, Path]:
+    branch_dir = _artifact_dir(root, branch)
+    root_dir = root / ".cortex" / "closeout_contract"
+    return {
+        "branch_dir": branch_dir,
+        "json_path": branch_dir / "closeout.json",
+        "markdown_path": branch_dir / "closeout.md",
+        "latest_json_path": root_dir / "latest.json",
+        "latest_markdown_path": root_dir / "latest.md",
+    }
+
+
+def _load_payload(path: Path) -> dict[str, Any]:
+    try:
+        return json.loads(path.read_text(encoding="utf-8"))
+    except FileNotFoundError as exc:
+        raise SystemExit(f"Closeout contract is missing at {path}.") from exc
+    except json.JSONDecodeError as exc:
+        raise SystemExit(f"Closeout contract at {path} is not valid JSON: {exc}.") from exc
+
+
+def _write_json(path: Path, payload: dict[str, Any]) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+
+
+def render_markdown(payload: dict[str, Any]) -> str:
+    lines = [
+        "# Closeout Contract",
+        "",
+        f"- Branch: `{payload['branch']}`",
+        f"- Mode: `{payload['mode']}`",
+        f"- Profile: `{payload['profile']}`",
+        "",
+        "## Seam",
+        "",
+        f"- Slug: `{payload['seam']['slug']}`",
+        f"- Surface: `{payload['seam']['surface']}`",
+        f"- Executive Benefit: {payload['seam']['executive_benefit'] or '<fill me>'}",
+        f"- Why This Beats Direct Product Work Now: {payload['seam']['why_now'] or '<fill me>'}",
+        "",
+        "## Reviewed Paths",
+        "",
+    ]
+    if payload["reviewed_paths"]:
+        lines.extend(f"- `{path}`" for path in payload["reviewed_paths"])
+    else:
+        lines.append("- `<none>`")
+    residuals = payload["residuals"]
+    lines.extend(
+        [
+            "",
+            "## Residuals",
+            "",
+            "### Fixed Now",
+            "",
+        ]
+    )
+    lines.extend(f"- {item}" for item in residuals["fixed_now"]) if residuals["fixed_now"] else lines.append("- `<fill me>`")
+    lines.extend(["", "### Intentionally Deferred", ""])
+    lines.extend(f"- {item}" for item in residuals["intentionally_deferred"]) if residuals["intentionally_deferred"] else lines.append("- `<none>`")
+    lines.extend(["", "### Still Underfit", ""])
+    lines.extend(f"- {item}" for item in residuals["still_underfit"]) if residuals["still_underfit"] else lines.append("- `<none>`")
+    lines.extend(["", "### Zeroed Or Stubbed Terms", ""])
+    lines.extend(f"- {item}" for item in residuals["zeroed_or_stubbed_terms"]) if residuals["zeroed_or_stubbed_terms"] else lines.append("- `<none>`")
+    lines.extend(["", "## Hostile Review", ""])
+    for lens in ("engineer", "mathematician", "neuroscientist"):
+        lines.append(f"- {lens.title()}: {payload['hostile_review'][lens] or '<fill me>'}")
+    lines.extend(["", "## Claims", ""])
+    earned = payload["claims"]["earned_now"]
+    forbidden = payload["claims"]["forbidden_still"]
+    lines.extend(f"- Earned: {item}" for item in earned) if earned else lines.append("- Earned: `<fill me>`")
+    lines.extend(f"- Forbidden: {item}" for item in forbidden) if forbidden else lines.append("- Forbidden: `<fill me>`")
+    lines.extend(["", "## North Light Audit", ""])
+    for key, entry in payload["north_light_audit"].items():
+        label = key.replace("_", " ").title()
+        lines.append(f"- {label}: `{entry['status'] or 'unset'}` — {entry['note'] or '<fill me>'}")
+    if payload["profile"] == "load_bearing":
+        lines.extend(["", "## Governing Locks", ""])
+        for key, value in payload["governing_locks"].items():
+            label = key.replace("_", " ").title()
+            lines.append(f"- {label}: {value or '<fill me>'}")
+        lines.extend(["", "## Law To Code Completeness", ""])
+        rows = payload.get("law_to_code_completeness", [])
+        if not rows:
+            lines.append("- `<none recorded>`")
+        for row in rows:
+            lines.append(
+                f"- `{row['term']}`: `{row['state']}`; code={', '.join(row['code_refs']) or '<none>'}; proof={', '.join(row['proof_refs']) or '<none>'}; note={row['note']}"
+            )
+    return "\n".join(lines) + "\n"
+
+
+def write_artifacts(root: Path, payload: dict[str, Any]) -> dict[str, Path]:
+    paths = resolve_artifact_paths(root, str(payload["branch"]))
+    _write_json(paths["json_path"], payload)
+    markdown = render_markdown(payload)
+    paths["markdown_path"].parent.mkdir(parents=True, exist_ok=True)
+    paths["markdown_path"].write_text(markdown, encoding="utf-8")
+    paths["latest_json_path"].parent.mkdir(parents=True, exist_ok=True)
+    shutil.copyfile(paths["json_path"], paths["latest_json_path"])
+    shutil.copyfile(paths["markdown_path"], paths["latest_markdown_path"])
+    return paths
+
+
+def _require_string(value: Any, field_name: str) -> None:
+    if not isinstance(value, str) or not value.strip():
+        raise SystemExit(f"Closeout contract field '{field_name}' must be a non-empty string.")
+
+
+def _require_string_list(value: Any, field_name: str, *, allow_empty: bool = True) -> None:
+    if not isinstance(value, list):
+        raise SystemExit(f"Closeout contract field '{field_name}' must be a list of non-empty strings.")
+    if not allow_empty and not value:
+        raise SystemExit(f"Closeout contract field '{field_name}' must not be empty.")
+    for item in value:
+        if not isinstance(item, str) or not item.strip():
+            raise SystemExit(f"Closeout contract field '{field_name}' must contain only non-empty strings.")
+
+
+def validate_payload(
+    payload: dict[str, Any],
+    *,
+    expected_mode: str,
+    expected_branch: str,
+    expected_reviewed_paths: list[str],
+) -> dict[str, Any]:
+    if payload.get("schema_version") != SCHEMA_VERSION:
+        raise SystemExit(f"Closeout contract schema_version must be {SCHEMA_VERSION}.")
+    if payload.get("mode") != expected_mode:
+        raise SystemExit(
+            f"Closeout contract mode mismatch: expected '{expected_mode}', found '{payload.get('mode', '')}'."
+        )
+    if payload.get("branch") != expected_branch:
+        raise SystemExit(
+            f"Closeout contract branch mismatch: expected '{expected_branch}', found '{payload.get('branch', '')}'."
+        )
+    actual_paths = _normalize_paths(payload.get("reviewed_paths", []))
+    expected_paths = _normalize_paths(expected_reviewed_paths)
+    if actual_paths != expected_paths:
+        raise SystemExit(
+            "Closeout contract reviewed_paths are stale or incomplete: "
+            f"expected {expected_paths}, found {actual_paths}."
+        )
+    expected_profile = infer_profile(expected_paths)
+    profile = payload.get("profile")
+    if profile not in VALID_PROFILES:
+        raise SystemExit(f"Closeout contract profile must be one of {sorted(VALID_PROFILES)}.")
+    if profile != expected_profile:
+        raise SystemExit(
+            f"Closeout contract profile mismatch: expected '{expected_profile}', found '{profile}'."
+        )
+
+    seam = payload.get("seam")
+    if not isinstance(seam, dict):
+        raise SystemExit("Closeout contract seam must be an object.")
+    _require_string(seam.get("slug"), "seam.slug")
+    surface = seam.get("surface")
+    if surface not in VALID_SURFACES:
+        raise SystemExit(f"Closeout contract seam.surface must be one of {sorted(VALID_SURFACES)}.")
+    _require_string(seam.get("executive_benefit"), "seam.executive_benefit")
+    _require_string(seam.get("why_now"), "seam.why_now")
+
+    residuals = payload.get("residuals")
+    if not isinstance(residuals, dict):
+        raise SystemExit("Closeout contract residuals must be an object.")
+    _require_string_list(residuals.get("fixed_now"), "residuals.fixed_now", allow_empty=False)
+    _require_string_list(
+        residuals.get("intentionally_deferred"), "residuals.intentionally_deferred", allow_empty=True
+    )
+    _require_string_list(residuals.get("still_underfit"), "residuals.still_underfit", allow_empty=True)
+    _require_string_list(
+        residuals.get("zeroed_or_stubbed_terms"), "residuals.zeroed_or_stubbed_terms", allow_empty=True
+    )
+
+    hostile_review = payload.get("hostile_review")
+    if not isinstance(hostile_review, dict):
+        raise SystemExit("Closeout contract hostile_review must be an object.")
+    for lens in ("engineer", "mathematician", "neuroscientist"):
+        _require_string(hostile_review.get(lens), f"hostile_review.{lens}")
+
+    claims = payload.get("claims")
+    if not isinstance(claims, dict):
+        raise SystemExit("Closeout contract claims must be an object.")
+    _require_string_list(claims.get("earned_now"), "claims.earned_now", allow_empty=False)
+    _require_string_list(claims.get("forbidden_still"), "claims.forbidden_still", allow_empty=False)
+
+    north_light_audit = payload.get("north_light_audit")
+    if not isinstance(north_light_audit, dict):
+        raise SystemExit("Closeout contract north_light_audit must be an object.")
+    for key in (
+        "microkernel_boundary",
+        "repo_governance_leakage",
+        "host_specific_policy_fork",
+        "generic_bloat",
+    ):
+        entry = north_light_audit.get(key)
+        if not isinstance(entry, dict):
+            raise SystemExit(f"Closeout contract north_light_audit.{key} must be an object.")
+        if entry.get("status") not in VALID_AUDIT_STATUSES:
+            raise SystemExit(
+                f"Closeout contract north_light_audit.{key}.status must be one of {sorted(VALID_AUDIT_STATUSES)}."
+            )
+        _require_string(entry.get("note"), f"north_light_audit.{key}.note")
+
+    if profile == "load_bearing":
+        governing_locks = payload.get("governing_locks")
+        if not isinstance(governing_locks, dict):
+            raise SystemExit("Load-bearing closeout contracts must include governing_locks.")
+        for key in ("governing_principle", "executive_skill", "product_metric", "guardrail", "kill_rule"):
+            _require_string(governing_locks.get(key), f"governing_locks.{key}")
+        law_to_code = payload.get("law_to_code_completeness")
+        if not isinstance(law_to_code, list):
+            raise SystemExit("Load-bearing closeout contracts must include law_to_code_completeness as a list.")
+        for index, row in enumerate(law_to_code):
+            if not isinstance(row, dict):
+                raise SystemExit("Each law_to_code_completeness entry must be an object.")
+            _require_string(row.get("term"), f"law_to_code_completeness[{index}].term")
+            if row.get("state") not in VALID_COMPLETENESS_STATES:
+                raise SystemExit(
+                    "law_to_code_completeness entries must use state one of "
+                    f"{sorted(VALID_COMPLETENESS_STATES)}."
+                )
+            _require_string_list(
+                row.get("code_refs"), f"law_to_code_completeness[{index}].code_refs", allow_empty=False
+            )
+            _require_string_list(
+                row.get("proof_refs"), f"law_to_code_completeness[{index}].proof_refs", allow_empty=False
+            )
+            _require_string(row.get("note"), f"law_to_code_completeness[{index}].note")
+
+    return payload
+
+
+def validate_contract(
+    *,
+    root: Path,
+    mode: str,
+    branch: str,
+    reviewed_paths: list[str],
+) -> dict[str, Any]:
+    paths = resolve_artifact_paths(root, branch)
+    payload = _load_payload(paths["json_path"])
+    return validate_payload(
+        payload,
+        expected_mode=mode,
+        expected_branch=branch,
+        expected_reviewed_paths=reviewed_paths,
+    )
+
+
+def init_contract(*, root: Path, mode: str, branch: str | None = None) -> dict[str, Any]:
+    branch = branch or _current_branch(cwd=root)
+    reviewed_paths = expected_reviewed_paths(mode=mode, branch=branch, cwd=root)
+    payload = scaffold_payload(branch=branch, mode=mode, reviewed_paths=reviewed_paths)
+    paths = write_artifacts(root, payload)
+    return {
+        "branch": branch,
+        "mode": mode,
+        "profile": payload["profile"],
+        "reviewed_paths": payload["reviewed_paths"],
+        "json_path": str(paths["json_path"].relative_to(root)),
+        "markdown_path": str(paths["markdown_path"].relative_to(root)),
+    }
+
+
+def render_contract(*, root: Path, branch: str | None = None) -> dict[str, Any]:
+    branch = branch or _current_branch(cwd=root)
+    paths = resolve_artifact_paths(root, branch)
+    payload = _load_payload(paths["json_path"])
+    rendered_paths = write_artifacts(root, payload)
+    return {
+        "branch": branch,
+        "json_path": str(rendered_paths["json_path"].relative_to(root)),
+        "markdown_path": str(rendered_paths["markdown_path"].relative_to(root)),
+    }
+
+
+def cli_validate(*, root: Path, mode: str, branch: str | None = None) -> dict[str, Any]:
+    branch = branch or _current_branch(cwd=root)
+    reviewed_paths = expected_reviewed_paths(mode=mode, branch=branch, cwd=root)
+    payload = validate_contract(root=root, mode=mode, branch=branch, reviewed_paths=reviewed_paths)
+    return {
+        "branch": branch,
+        "mode": mode,
+        "profile": payload["profile"],
+        "reviewed_paths": payload["reviewed_paths"],
+    }
+
+
+def main(argv: list[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(description="Manage the internal closeout contract artifact.")
+    subparsers = parser.add_subparsers(dest="command", required=True)
+
+    init_parser = subparsers.add_parser("init", help="Scaffold a closeout contract for the current branch.")
+    init_parser.add_argument("--mode", choices=sorted(VALID_MODES), required=True)
+    init_parser.add_argument("--branch")
+
+    render_parser = subparsers.add_parser("render", help="Render markdown from an existing closeout contract.")
+    render_parser.add_argument("--branch")
+
+    validate_parser = subparsers.add_parser("validate", help="Validate the current branch closeout contract.")
+    validate_parser.add_argument("--mode", choices=sorted(VALID_MODES), required=True)
+    validate_parser.add_argument("--branch")
+
+    args = parser.parse_args(argv)
+    root = _root()
+    if args.command == "init":
+        print(json.dumps(init_contract(root=root, mode=args.mode, branch=args.branch), indent=2, sort_keys=True))
+        return 0
+    if args.command == "render":
+        print(json.dumps(render_contract(root=root, branch=args.branch), indent=2, sort_keys=True))
+        return 0
+    if args.command == "validate":
+        print(json.dumps(cli_validate(root=root, mode=args.mode, branch=args.branch), indent=2, sort_keys=True))
+        return 0
+    raise SystemExit(f"Unhandled closeout contract command: {args.command}")
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
