@@ -176,7 +176,7 @@
         "tests/archive",
         "tests/conformance"
       ],
-      "next_move": "Keep durable support-memory distillation explicit, removable, and non-sovereign now that the bounded AUX shadow surface earns `full_cross_host`; raw SQLite episodes stay support-side only, and the next leverage is posture-sensitive online control rather than widening live `Q_mem`."
+      "next_move": "Keep durable support-memory distillation explicit, removable, and non-sovereign now that the bounded AUX shadow surface earns `full_cross_host`; raw SQLite episodes stay support-side only, episode windows stay absolute-time correct, and positive priors must require repeated matched support rather than a generic second episode."
     }
   ],
   "math_to_code_rules": {
@@ -190,7 +190,7 @@
   },
   "work_today": {
     "slug": "inspect-execute-resume-posture-control",
-    "note": "The bounded AUX shadow surface still earns `full_cross_host`, and durable support-memory distillation is now landed support-side and removable: bounded AUX episodes persist in SQLite, offline distillation preserves replay/shadow lift and negative stability, and raw episodes may not drive runtime selection directly. Shipping and conformance still keep `Q_mem = 0`, and the next highest-leverage gap is posture-sensitive online control so inspect, execute, and resume can alter verification intensity, read allowance, and stop thresholds without mode churn."
+    "note": "The bounded AUX shadow surface still earns `full_cross_host`, and durable support-memory distillation is now landed support-side and removable: bounded AUX episodes persist in SQLite with deterministic connection ownership and absolute-time filtering, offline distillation preserves replay/shadow lift and negative stability, positive priors require repeated matched support rather than a generic second episode, and raw episodes may not drive runtime selection directly. Shipping and conformance still keep `Q_mem = 0`, and the next highest-leverage gap is posture-sensitive online control so inspect, execute, and resume can alter verification intensity, read allowance, and stop thresholds without mode churn."
   },
   "next_product_train": {
     "slug": "selective-anti-thrash-with-creativity-budget",
@@ -493,13 +493,14 @@
   "where_to_work": [
     "Keep the bounded audit surface compact and truthful on the shipped lane: selected versus realized family, uncertainty, threshold, delta, verification, and probe truth only.",
     "Keep the no-spend live evidence current and explicit: fast conformance is green, the deeper directionality and host-native watchlists are refreshed, and non-shipping auth or env caveats must stay explicit instead of silently stale.",
-    "Keep AUX memory and posture law explicit and removable now that durable support-memory distillation is landed: raw SQLite episodes stay support-side only, distilled publications remain the only re-entry path, and live `Q_mem` stays zero on shipping and conformance lanes while posture control becomes the active train."
+    "Keep AUX memory and posture law explicit and removable now that durable support-memory distillation is landed: raw SQLite episodes stay support-side only, episode windows stay absolute-time correct, distilled publications remain the only re-entry path, matched support must repeat before positive priors publish, and live `Q_mem` stays zero on shipping and conformance lanes while posture control becomes the active train."
   ],
   "blocked_moves": [
     "Do not let archived docs or train notes act as live truth.",
     "Do not treat lab or evaluation output as product progress unless shipped runtime behavior changes.",
     "Do not hide Claude or Gemini behind backlog language when reporting conformance.",
     "Do not route raw AUX SQLite episodes directly into runtime action selection; only distilled removable publications may re-enter.",
+    "Do not let a generic second unrelated episode smuggle a positive AUX prior into retrieval, branch, memory-summary, or uncertainty output.",
     "Do not introduce host-specific policy forks to force donor coherence.",
     "Do not let generic pending-goal debt, plain-English reminder text, or generic `resume*` wake cues act as branch-specific continuity anchors."
   ],

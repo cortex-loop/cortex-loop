@@ -331,6 +331,7 @@ It is still not on the critical path for first working v2 runtime behavior, and 
 Offline publication may write only to support-side public objects.
 Raw persisted episodes may exist only as bounded support-side projections.
 They may not contain raw task text, payload text, session transcript text, or direct runtime-selection policy.
+Durable episode storage must normalize timestamps to absolute UTC time before horizon filtering or legacy backfill; lexical timestamp comparison is forbidden.
 It may not publish directly into:
 - certifier state,
 - hard-boundary state,
@@ -359,6 +360,7 @@ Any future nonzero support-conditioned priors intended to influence `Q_t^{mem}(a
 must be published only as support-side public objects and must re-enter runtime support
 only through explicit AUX augmentation.
 Positive priors should require repeated supporting episodes rather than single stale anecdotes, and contradiction-heavy or burden-heavy windows may suppress positive priors instead of hardening them into superstition.
+That repeated-support rule must be pattern-scoped: matched retrieval or memory clusters, exact branch tracks, and exact wake/brake signals may earn support; a generic second unrelated episode may not.
 
 They may not come from:
 - hidden host memory,

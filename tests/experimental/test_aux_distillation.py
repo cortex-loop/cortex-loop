@@ -53,8 +53,22 @@ def test_distillation_requires_two_supporting_episodes_for_positive_priors() -> 
         source_label="tests/experimental/test_aux_distillation",
     )
 
-    assert two_episode_publication.retrieval_prior_refs
-    assert two_episode_publication.published_memory_summary_refs
+    assert {
+        (reference.reference_kind, reference.reference_id)
+        for reference in two_episode_publication.retrieval_prior_refs
+    } == {
+        ("memory", "normalize-port-memo"),
+        ("artifact", "normalize-port-artifact"),
+        ("memory", "normalize-port-checklist"),
+        ("artifact", "normalize-port-result"),
+    }
+    assert {
+        (reference.reference_kind, reference.reference_id)
+        for reference in two_episode_publication.published_memory_summary_refs
+    } == {
+        ("memory", "normalize-port-memo"),
+        ("memory", "normalize-port-checklist"),
+    }
     assert any(field.key == "episode_count" and field.value == 2 for field in two_episode_publication.metadata)
 
 
@@ -95,6 +109,131 @@ def test_distillation_suppresses_positive_priors_for_burden_heavy_window() -> No
     )
     assert appendix.active is False
     assert "q_mem-penalty:burden" in appendix.score_for(SoftControlFamily.CHECK).reason_tags
+
+
+def test_distillation_does_not_publish_unrelated_retrieval_or_memory_summary_refs() -> None:
+    store = SqliteSupportMemoryStore(":memory:")
+    for snapshot_id, memory_ref, artifact_ref in (
+        ("source-unrelated-a", "normalize-port-memo", "normalize-port-artifact"),
+        ("source-unrelated-b", "totally-unrelated-memo", "totally-unrelated-artifact"),
+    ):
+        store.insert_episode(
+            episode_from_support_snapshot(
+                make_temporal_support_snapshot(
+                    snapshot_id,
+                    published_memory_refs=(memory_ref,),
+                    artifact_refs=(artifact_ref,),
+                ),
+                host_name="reference",
+                source_label="tests/experimental/test_aux_distillation",
+            )
+        )
+
+    publication = distill_offline_support_publication(
+        store=store,
+        host_name="reference",
+        source_label="tests/experimental/test_aux_distillation",
+    )
+
+    assert publication.retrieval_prior_refs == ()
+    assert publication.published_memory_summary_refs == ()
+
+
+def test_distillation_requires_exact_branch_repeat_for_branch_priors() -> None:
+    store = SqliteSupportMemoryStore(":memory:")
+    for snapshot_id, branch_ref in (
+        ("source-branch-a", "review-track"),
+        ("source-branch-b", "deploy-track"),
+    ):
+        store.insert_episode(
+            episode_from_support_snapshot(
+                make_temporal_support_snapshot(
+                    snapshot_id,
+                    branch_registry=("main", branch_ref),
+                ),
+                host_name="reference",
+                source_label="tests/experimental/test_aux_distillation",
+            )
+        )
+
+    publication = distill_offline_support_publication(
+        store=store,
+        host_name="reference",
+        source_label="tests/experimental/test_aux_distillation",
+    )
+    assert publication.branch_prior_refs == ()
+
+    store.insert_episode(
+        episode_from_support_snapshot(
+            make_temporal_support_snapshot(
+                "source-branch-c",
+                branch_registry=("main", "review-track"),
+                published_memory_refs=("review-track-second-pass",),
+            ),
+            host_name="reference",
+            source_label="tests/experimental/test_aux_distillation",
+        )
+    )
+    repeated_publication = distill_offline_support_publication(
+        store=store,
+        host_name="reference",
+        source_label="tests/experimental/test_aux_distillation",
+    )
+    assert {
+        (reference.reference_kind, reference.reference_id)
+        for reference in repeated_publication.branch_prior_refs
+    } == {("branch", "review-track")}
+
+
+def test_distillation_requires_exact_wake_and_brake_repeat_for_uncertainty_refs() -> None:
+    store = SqliteSupportMemoryStore(":memory:")
+    for snapshot_id, wake_reason, brake_entry in (
+        ("source-uncertainty-a", "resume-needed", "guarded"),
+        ("source-uncertainty-b", "review-needed", "latched"),
+    ):
+        store.insert_episode(
+            episode_from_support_snapshot(
+                make_temporal_support_snapshot(
+                    snapshot_id,
+                    wake_reason_tags=(wake_reason,),
+                    brake_history=(brake_entry,),
+                ),
+                host_name="reference",
+                source_label="tests/experimental/test_aux_distillation",
+            )
+        )
+
+    publication = distill_offline_support_publication(
+        store=store,
+        host_name="reference",
+        source_label="tests/experimental/test_aux_distillation",
+    )
+    assert publication.uncertainty_calibration_refs == ()
+
+    store.insert_episode(
+        episode_from_support_snapshot(
+            make_temporal_support_snapshot(
+                "source-uncertainty-c",
+                wake_reason_tags=("resume-needed",),
+                brake_history=("guarded",),
+                published_memory_refs=("guarded-review-second-pass",),
+            ),
+            host_name="reference",
+            source_label="tests/experimental/test_aux_distillation",
+        )
+    )
+    repeated_publication = distill_offline_support_publication(
+        store=store,
+        host_name="reference",
+        source_label="tests/experimental/test_aux_distillation",
+    )
+    assert {
+        (reference.reference_kind, reference.reference_id)
+        for reference in repeated_publication.uncertainty_calibration_refs
+    } == {
+        ("uncertainty", "guarded"),
+        ("wake", "resume-needed"),
+    }
 
 
 def test_distillation_empty_window_keeps_baseline_inactive() -> None:

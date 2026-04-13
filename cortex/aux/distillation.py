@@ -8,12 +8,17 @@ from datetime import datetime
 from cortex.core.envelopes import MetadataField
 from cortex.core.support import SupportReference, SupportSnapshot
 
+from ._support_match import _match_score, _reference_tokens
 from .persistence import (
     SqliteSupportMemoryStore,
     SupportMemoryEpisode,
     episode_from_support_snapshot,
 )
 from .publication import OfflineSupportPublication
+
+_GENERIC_CLUSTER_TOKENS = frozenset(
+    {"artifact", "memory", "memo", "result", "summary", "checklist", "prior"}
+)
 
 
 def _dedupe_refs(references: tuple[SupportReference, ...]) -> tuple[SupportReference, ...]:
@@ -40,12 +45,22 @@ def _merge_notes(*groups: tuple[str, ...]) -> tuple[str, ...]:
     return tuple(ordered)
 
 
-def _has_positive_support(
-    episodes: tuple[SupportMemoryEpisode, ...],
-    predicate,
-) -> bool:
-    supporting_count = sum(1 for episode in episodes if predicate(episode))
-    return supporting_count >= 2
+def _normalized_candidate(reference: SupportReference) -> SupportReference:
+    normalized_kind = {
+        "retrieval-prior": "memory",
+        "memory-summary": "memory",
+        "branch-prior": "branch",
+        "contradiction-summary": "contradiction",
+        "uncertainty-calibration": "uncertainty",
+    }.get(reference.reference_kind, reference.reference_kind)
+    if normalized_kind == reference.reference_kind:
+        return reference
+    return SupportReference(
+        normalized_kind,
+        reference.reference_id,
+        tags=reference.tags,
+        metadata=reference.metadata,
+    )
 
 
 def _reason_tokens(episode: SupportMemoryEpisode) -> set[str]:
@@ -96,15 +111,70 @@ def _ref_from_projection(reference) -> SupportReference:
     return reference.as_support_reference()
 
 
+@dataclass(frozen=True, slots=True)
+class _EpisodeReference:
+    episode_fingerprint: str
+    reference: SupportReference
+
+
+def _semantic_match(source_ref: SupportReference, candidate_ref: SupportReference) -> bool:
+    normalized_source = _normalized_candidate(source_ref)
+    normalized_candidate = _normalized_candidate(candidate_ref)
+    overlap = _reference_tokens(normalized_source) & _reference_tokens(normalized_candidate)
+    overlap -= {
+        normalized_source.reference_kind,
+        normalized_candidate.reference_kind,
+        *_GENERIC_CLUSTER_TOKENS,
+    }
+    if not overlap:
+        return False
+    return _match_score(normalized_source, normalized_candidate, base_score=0.0) >= 0.35
+
+
+def _cluster_supported_refs(
+    episode_refs: tuple[_EpisodeReference, ...],
+) -> tuple[SupportReference, ...]:
+    supported: list[SupportReference] = []
+    for item in episode_refs:
+        supporting_episodes = {
+            other.episode_fingerprint
+            for other in episode_refs
+            if _semantic_match(item.reference, other.reference)
+        }
+        if len(supporting_episodes) < 2:
+            continue
+        supported.append(item.reference)
+    return _dedupe_refs(tuple(supported))
+
+
+def _exact_repeat_refs(
+    episodes: tuple[SupportMemoryEpisode, ...],
+    *,
+    values_for_episode,
+    make_reference,
+) -> tuple[SupportReference, ...]:
+    supporting_episodes: dict[str, set[str]] = {}
+    ordered_values: list[str] = []
+    for episode in episodes:
+        for value in values_for_episode(episode):
+            if value not in supporting_episodes:
+                supporting_episodes[value] = set()
+                ordered_values.append(value)
+            supporting_episodes[value].add(episode.episode_fingerprint)
+    return tuple(
+        make_reference(value)
+        for value in ordered_values
+        if len(supporting_episodes[value]) >= 2
+    )
+
+
 def _distilled_retrieval_refs(episodes: tuple[SupportMemoryEpisode, ...]) -> tuple[SupportReference, ...]:
-    if not _has_positive_support(
-        episodes,
-        lambda episode: bool(episode.published_memory_refs or episode.artifact_refs),
-    ):
-        return ()
-    return _dedupe_refs(
+    return _cluster_supported_refs(
         tuple(
-            _ref_from_projection(reference)
+            _EpisodeReference(
+                episode.episode_fingerprint,
+                _ref_from_projection(reference),
+            )
             for episode in episodes
             for reference in episode.published_memory_refs + episode.artifact_refs
         )
@@ -112,18 +182,18 @@ def _distilled_retrieval_refs(episodes: tuple[SupportMemoryEpisode, ...]) -> tup
 
 
 def _distilled_branch_refs(episodes: tuple[SupportMemoryEpisode, ...]) -> tuple[SupportReference, ...]:
-    if not _has_positive_support(
+    return _exact_repeat_refs(
         episodes,
-        lambda episode: any(branch_ref != "main" for branch_ref in episode.branch_registry),
-    ):
-        return ()
-    return _dedupe_refs(
-        tuple(
-            SupportReference("branch", branch_ref, tags=frozenset({"branch-prior"}))
-            for episode in episodes
+        values_for_episode=lambda episode: tuple(
+            branch_ref
             for branch_ref in episode.branch_registry
             if branch_ref != "main"
-        )
+        ),
+        make_reference=lambda value: SupportReference(
+            "branch",
+            value,
+            tags=frozenset({"branch-prior"}),
+        ),
     )
 
 
@@ -150,36 +220,36 @@ def _distilled_contradiction_refs(
 def _distilled_uncertainty_refs(
     episodes: tuple[SupportMemoryEpisode, ...],
 ) -> tuple[SupportReference, ...]:
-    if not _has_positive_support(
+    uncertainty_refs = _exact_repeat_refs(
         episodes,
-        lambda episode: bool(episode.brake_history or episode.wake_reason_tags),
-    ):
-        return ()
-    return _dedupe_refs(
-        tuple(
-            SupportReference("uncertainty", brake_entry, tags=frozenset({"brake-history"}))
-            for episode in episodes
-            for brake_entry in episode.brake_history
-        )
-        + tuple(
-            SupportReference("wake", reason_tag, tags=frozenset({"wake-receipt"}))
-            for episode in episodes
-            for reason_tag in episode.wake_reason_tags
-        )
+        values_for_episode=lambda episode: episode.brake_history,
+        make_reference=lambda value: SupportReference(
+            "uncertainty",
+            value,
+            tags=frozenset({"brake-history"}),
+        ),
     )
+    wake_refs = _exact_repeat_refs(
+        episodes,
+        values_for_episode=lambda episode: episode.wake_reason_tags,
+        make_reference=lambda value: SupportReference(
+            "wake",
+            value,
+            tags=frozenset({"wake-receipt"}),
+        ),
+    )
+    return _dedupe_refs(uncertainty_refs + wake_refs)
 
 
 def _distilled_memory_summary_refs(
     episodes: tuple[SupportMemoryEpisode, ...],
 ) -> tuple[SupportReference, ...]:
-    if not _has_positive_support(
-        episodes,
-        lambda episode: bool(episode.published_memory_refs),
-    ):
-        return ()
-    return _dedupe_refs(
+    return _cluster_supported_refs(
         tuple(
-            _ref_from_projection(reference)
+            _EpisodeReference(
+                episode.episode_fingerprint,
+                _ref_from_projection(reference),
+            )
             for episode in episodes
             for reference in episode.published_memory_refs
         )

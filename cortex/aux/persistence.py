@@ -2,12 +2,14 @@
 
 from __future__ import annotations
 
+from contextlib import contextmanager
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta, timezone
 import hashlib
 import json
 from pathlib import Path
 import sqlite3
+from typing import Iterator
 
 from cortex.core.envelopes import MetadataField
 from cortex.core.support import SupportReference, SupportSnapshot
@@ -20,14 +22,11 @@ _EPISODE_SCHEMA = """
 CREATE TABLE IF NOT EXISTS episodes (
     episode_fingerprint TEXT PRIMARY KEY,
     recorded_at TEXT NOT NULL,
+    recorded_at_epoch INTEGER,
     host_name TEXT NOT NULL,
     source_label TEXT NOT NULL,
     payload_json TEXT NOT NULL
 );
-CREATE INDEX IF NOT EXISTS idx_episodes_host_recorded_at
-ON episodes(host_name, recorded_at);
-CREATE INDEX IF NOT EXISTS idx_episodes_source_recorded_at
-ON episodes(source_label, recorded_at);
 """
 
 
@@ -57,6 +56,31 @@ def _dedupe_ordered(values: tuple[str, ...]) -> tuple[str, ...]:
 
 def _metadata_keys(metadata: tuple[MetadataField, ...]) -> tuple[str, ...]:
     return tuple(sorted({field.key for field in metadata}))
+
+
+def _normalized_recorded_at_fields(
+    value: str,
+    *,
+    field_name: str,
+) -> tuple[str, int]:
+    text = _require_text(value, field_name=field_name)
+    try:
+        parsed = datetime.fromisoformat(text.replace("Z", "+00:00"))
+    except ValueError as exc:
+        raise ValueError(f"{field_name} must be ISO-8601 timestamp text.") from exc
+    if parsed.tzinfo is None or parsed.utcoffset() is None:
+        raise ValueError(f"{field_name} must be timezone-aware.")
+    normalized = parsed.astimezone(timezone.utc).replace(microsecond=0)
+    return normalized.isoformat(timespec="seconds"), int(normalized.timestamp())
+
+
+def _require_aware_datetime(value: datetime, *, field_name: str) -> datetime:
+    if not isinstance(value, datetime):
+        actual_type = type(value).__name__
+        raise TypeError(f"{field_name} must be datetime, got {actual_type}.")
+    if value.tzinfo is None or value.utcoffset() is None:
+        raise ValueError(f"{field_name} must be timezone-aware.")
+    return value.astimezone(timezone.utc).replace(microsecond=0)
 
 
 def _bounded_reminders(reminders: tuple[str, ...]) -> tuple[str, ...]:
@@ -155,10 +179,11 @@ class SupportMemoryEpisode:
             self.episode_fingerprint,
             field_name="SupportMemoryEpisode.episode_fingerprint",
         )
-        _require_text(
+        normalized_recorded_at, _ = _normalized_recorded_at_fields(
             self.recorded_at,
             field_name="SupportMemoryEpisode.recorded_at",
         )
+        object.__setattr__(self, "recorded_at", normalized_recorded_at)
         _require_text(
             self.host_name,
             field_name="SupportMemoryEpisode.host_name",
@@ -371,40 +396,61 @@ def _episode_payload_dict(
         for contradiction in record.contradiction_records
         for tag in contradiction.evidence_tags
     )
-    return SupportMemoryEpisode(
-        episode_fingerprint="placeholder",
-        recorded_at="placeholder",
-        host_name="placeholder",
-        source_label="placeholder",
-        event_signatures=event_signatures,
-        candidate_refs=_dedupe_ordered(snapshot.trace.candidate_refs),
-        wake_reason_tags=_dedupe_ordered(
-            tuple(receipt.reason_tag for receipt in snapshot.trace.wake_receipts)
+    published_memory_refs = tuple(
+        _reference_projection(reference)
+        for reference in snapshot.exec_memory_pub.published_memory_refs
+    )
+    artifact_refs = tuple(
+        _reference_projection(reference)
+        for reference in snapshot.exec_memory_pub.artifact_refs
+    )
+    return {
+        "event_signatures": [
+            {
+                "native_event_name": event.native_event_name,
+                "payload_kind": event.payload_kind,
+                "payload_metadata_keys": list(event.payload_metadata_keys),
+            }
+            for event in event_signatures
+        ],
+        "candidate_refs": list(_dedupe_ordered(snapshot.trace.candidate_refs)),
+        "wake_reason_tags": list(
+            _dedupe_ordered(tuple(receipt.reason_tag for receipt in snapshot.trace.wake_receipts))
         ),
-        degradation_reason_codes=_dedupe_ordered(
-            tuple(record.reason_code for record in snapshot.trace.degradation_records)
+        "degradation_reason_codes": list(
+            _dedupe_ordered(tuple(record.reason_code for record in snapshot.trace.degradation_records))
         ),
-        contradiction_source_tags=_dedupe_ordered(contradiction_source_tags),
-        contradiction_evidence_tags=_dedupe_ordered(contradiction_evidence_tags),
-        branch_registry=_dedupe_ordered(snapshot.session.branch_registry),
-        pending_goal_refs=_dedupe_ordered(snapshot.session.pending_goal_refs),
-        role_view_tags=tuple(sorted(snapshot.session.role_view_tags)),
-        budget_history=_dedupe_ordered(snapshot.session.budget_history),
-        brake_history=_dedupe_ordered(snapshot.session.brake_history),
-        reminders=_bounded_reminders(snapshot.session.reminders),
-        host_affordance_tags=tuple(sorted(snapshot.host.affordance_tags)),
-        host_approval_boundary_tags=tuple(sorted(snapshot.host.approval_boundary_tags)),
-        host_constraint_tags=tuple(sorted(snapshot.host.constraint_tags)),
-        host_metadata_keys=_metadata_keys(snapshot.host.metadata),
-        published_memory_refs=tuple(
-            _reference_projection(reference)
-            for reference in snapshot.exec_memory_pub.published_memory_refs
-        ),
-        artifact_refs=tuple(
-            _reference_projection(reference)
-            for reference in snapshot.exec_memory_pub.artifact_refs
-        ),
-    ).payload_dict()
+        "contradiction_source_tags": list(_dedupe_ordered(contradiction_source_tags)),
+        "contradiction_evidence_tags": list(_dedupe_ordered(contradiction_evidence_tags)),
+        "branch_registry": list(_dedupe_ordered(snapshot.session.branch_registry)),
+        "pending_goal_refs": list(_dedupe_ordered(snapshot.session.pending_goal_refs)),
+        "role_view_tags": list(tuple(sorted(snapshot.session.role_view_tags))),
+        "budget_history": list(_dedupe_ordered(snapshot.session.budget_history)),
+        "brake_history": list(_dedupe_ordered(snapshot.session.brake_history)),
+        "reminders": list(_bounded_reminders(snapshot.session.reminders)),
+        "host_affordance_tags": list(tuple(sorted(snapshot.host.affordance_tags))),
+        "host_approval_boundary_tags": list(tuple(sorted(snapshot.host.approval_boundary_tags))),
+        "host_constraint_tags": list(tuple(sorted(snapshot.host.constraint_tags))),
+        "host_metadata_keys": list(_metadata_keys(snapshot.host.metadata)),
+        "published_memory_refs": [
+            {
+                "reference_kind": reference.reference_kind,
+                "reference_id": reference.reference_id,
+                "tags": list(reference.tags),
+                "metadata_keys": list(reference.metadata_keys),
+            }
+            for reference in published_memory_refs
+        ],
+        "artifact_refs": [
+            {
+                "reference_kind": reference.reference_kind,
+                "reference_id": reference.reference_id,
+                "tags": list(reference.tags),
+                "metadata_keys": list(reference.metadata_keys),
+            }
+            for reference in artifact_refs
+        ],
+    }
 
 
 def episode_from_support_snapshot(
@@ -449,21 +495,94 @@ class SqliteSupportMemoryStore:
 
     def __init__(self, path: str | Path = DEFAULT_SUPPORT_MEMORY_STORE_PATH) -> None:
         self.path = path if isinstance(path, str) else Path(path)
+        self._path_text = str(self.path)
         self._connection: sqlite3.Connection | None = None
-        if self.path == ":memory:":
+        if self._path_text == ":memory:":
             self._connection = sqlite3.connect(":memory:")
             self._connection.row_factory = sqlite3.Row
-            self._connection.executescript(_EPISODE_SCHEMA)
+            self._ensure_schema(self._connection)
+
+    def _ensure_schema(self, connection: sqlite3.Connection) -> None:
+        connection.executescript(_EPISODE_SCHEMA)
+        columns = {
+            str(row["name"])
+            for row in connection.execute("PRAGMA table_info(episodes)")
+        }
+        if "recorded_at_epoch" not in columns:
+            connection.execute("ALTER TABLE episodes ADD COLUMN recorded_at_epoch INTEGER")
+        backfill_rows = tuple(
+            connection.execute(
+                """
+                SELECT episode_fingerprint, recorded_at
+                FROM episodes
+                WHERE recorded_at_epoch IS NULL
+                """
+            )
+        )
+        for row in backfill_rows:
+            normalized_recorded_at, recorded_at_epoch = _normalized_recorded_at_fields(
+                str(row["recorded_at"]),
+                field_name=(
+                    "SqliteSupportMemoryStore.legacy_recorded_at"
+                    f"[{row['episode_fingerprint']}]"
+                ),
+            )
+            connection.execute(
+                """
+                UPDATE episodes
+                SET recorded_at = ?, recorded_at_epoch = ?
+                WHERE episode_fingerprint = ?
+                """,
+                (
+                    normalized_recorded_at,
+                    recorded_at_epoch,
+                    str(row["episode_fingerprint"]),
+                ),
+            )
+        connection.execute(
+            """
+            CREATE INDEX IF NOT EXISTS idx_episodes_host_recorded_at_epoch
+            ON episodes(host_name, recorded_at_epoch)
+            """
+        )
+        connection.execute(
+            """
+            CREATE INDEX IF NOT EXISTS idx_episodes_source_recorded_at_epoch
+            ON episodes(source_label, recorded_at_epoch)
+            """
+        )
+        connection.commit()
 
     def _connect(self) -> sqlite3.Connection:
         if self._connection is not None:
             return self._connection
-        if self.path != ":memory:":
-            Path(self.path).parent.mkdir(parents=True, exist_ok=True)
-        connection = sqlite3.connect(str(self.path))
+        if self._path_text != ":memory:":
+            Path(self._path_text).parent.mkdir(parents=True, exist_ok=True)
+        connection = sqlite3.connect(self._path_text)
         connection.row_factory = sqlite3.Row
-        connection.executescript(_EPISODE_SCHEMA)
+        self._ensure_schema(connection)
         return connection
+
+    @contextmanager
+    def _connection_context(self) -> Iterator[sqlite3.Connection]:
+        connection = self._connect()
+        try:
+            yield connection
+        finally:
+            if self._connection is None:
+                connection.close()
+
+    def close(self) -> None:
+        if self._connection is None:
+            return
+        self._connection.close()
+        self._connection = None
+
+    def __enter__(self) -> "SqliteSupportMemoryStore":
+        return self
+
+    def __exit__(self, exc_type, exc, tb) -> None:
+        self.close()
 
     def insert_episode(self, episode: SupportMemoryEpisode) -> bool:
         if not isinstance(episode, SupportMemoryEpisode):
@@ -472,20 +591,26 @@ class SqliteSupportMemoryStore:
                 "SqliteSupportMemoryStore.insert_episode() requires SupportMemoryEpisode, "
                 f"got {actual_type}.",
             )
-        with self._connect() as connection:
+        _, recorded_at_epoch = _normalized_recorded_at_fields(
+            episode.recorded_at,
+            field_name="SqliteSupportMemoryStore.insert_episode.recorded_at",
+        )
+        with self._connection_context() as connection:
             cursor = connection.execute(
                 """
                 INSERT OR IGNORE INTO episodes(
                     episode_fingerprint,
                     recorded_at,
+                    recorded_at_epoch,
                     host_name,
                     source_label,
                     payload_json
-                ) VALUES (?, ?, ?, ?, ?)
+                ) VALUES (?, ?, ?, ?, ?, ?)
                 """,
                 (
                     episode.episode_fingerprint,
                     episode.recorded_at,
+                    recorded_at_epoch,
                     episode.host_name,
                     episode.source_label,
                     json.dumps(
@@ -519,20 +644,27 @@ class SqliteSupportMemoryStore:
             raise ValueError(
                 "SqliteSupportMemoryStore.load_episodes.horizon_hours must be positive int."
             )
-        current_time = now or datetime.now(timezone.utc)
-        since = current_time - timedelta(hours=horizon_hours)
-        params: list[object] = [host_name, since.isoformat(timespec="seconds")]
+        current_time = (
+            _require_aware_datetime(
+                now,
+                field_name="SqliteSupportMemoryStore.load_episodes.now",
+            )
+            if now is not None
+            else datetime.now(timezone.utc).replace(microsecond=0)
+        )
+        since_epoch = int((current_time - timedelta(hours=horizon_hours)).timestamp())
+        params: list[object] = [host_name, since_epoch]
         query = """
             SELECT episode_fingerprint, recorded_at, host_name, source_label, payload_json
             FROM episodes
-            WHERE host_name = ? AND recorded_at >= ?
+            WHERE host_name = ? AND recorded_at_epoch >= ?
         """
         if source_label is not None:
             query += " AND source_label = ?"
             params.append(source_label)
-        query += " ORDER BY recorded_at DESC LIMIT ?"
+        query += " ORDER BY recorded_at_epoch DESC, recorded_at DESC, episode_fingerprint DESC LIMIT ?"
         params.append(limit)
-        with self._connect() as connection:
+        with self._connection_context() as connection:
             rows = tuple(connection.execute(query, tuple(params)))
         episodes = [
             SupportMemoryEpisode.from_payload(

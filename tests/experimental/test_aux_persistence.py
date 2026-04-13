@@ -4,6 +4,10 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 import json
+import os
+import sqlite3
+
+import pytest
 
 from cortex.aux.persistence import (
     SqliteSupportMemoryStore,
@@ -156,3 +160,128 @@ def test_sqlite_support_memory_store_memory_path_persists_within_store_instance(
     assert store.load_episodes(host_name="reference", source_label="tests/in-memory") == (
         episode,
     )
+    store.close()
+    store.close()
+
+
+def test_episode_from_support_snapshot_rejects_naive_recorded_at() -> None:
+    with pytest.raises(ValueError, match="timezone-aware"):
+        episode_from_support_snapshot(
+            make_temporal_support_snapshot(
+                "naive-recorded-at",
+                published_memory_refs=("memo-a",),
+            ),
+            host_name="reference",
+            source_label="tests/naive-recorded-at",
+            recorded_at="2026-04-14T00:00:00",
+        )
+
+
+def test_sqlite_support_memory_store_uses_absolute_time_for_offset_timestamps(tmp_path) -> None:
+    store = SqliteSupportMemoryStore(tmp_path / "support_memory.sqlite3")
+    episode = episode_from_support_snapshot(
+        make_temporal_support_snapshot(
+            "offset-support",
+            published_memory_refs=("memo-a",),
+        ),
+        host_name="reference",
+        source_label="tests/offset",
+        recorded_at="2026-04-14T08:00:00+09:00",
+    )
+
+    assert episode.recorded_at == "2026-04-13T23:00:00+00:00"
+    assert store.insert_episode(episode) is True
+
+    assert store.load_episodes(
+        host_name="reference",
+        source_label="tests/offset",
+        horizon_hours=12,
+        now=datetime(2026, 4, 14, 12, 0, tzinfo=timezone.utc),
+    ) == ()
+    assert store.load_episodes(
+        host_name="reference",
+        source_label="tests/offset",
+        horizon_hours=14,
+        now=datetime(2026, 4, 14, 12, 0, tzinfo=timezone.utc),
+    ) == (episode,)
+
+
+def test_sqlite_support_memory_store_backfills_legacy_recorded_at_epoch(tmp_path) -> None:
+    path = tmp_path / "legacy_support_memory.sqlite3"
+    episode = episode_from_support_snapshot(
+        make_temporal_support_snapshot(
+            "legacy-offset-support",
+            published_memory_refs=("memo-a",),
+        ),
+        host_name="reference",
+        source_label="tests/legacy",
+    )
+    connection = sqlite3.connect(path)
+    connection.execute(
+        """
+        CREATE TABLE episodes (
+            episode_fingerprint TEXT PRIMARY KEY,
+            recorded_at TEXT NOT NULL,
+            host_name TEXT NOT NULL,
+            source_label TEXT NOT NULL,
+            payload_json TEXT NOT NULL
+        )
+        """
+    )
+    connection.execute(
+        """
+        INSERT INTO episodes(
+            episode_fingerprint,
+            recorded_at,
+            host_name,
+            source_label,
+            payload_json
+        ) VALUES (?, ?, ?, ?, ?)
+        """,
+        (
+            episode.episode_fingerprint,
+            "2026-04-14T08:00:00+09:00",
+            episode.host_name,
+            episode.source_label,
+            json.dumps(episode.payload_dict(), sort_keys=True, separators=(",", ":")),
+        ),
+    )
+    connection.commit()
+    connection.close()
+
+    store = SqliteSupportMemoryStore(path)
+    loaded = store.load_episodes(
+        host_name="reference",
+        source_label="tests/legacy",
+        horizon_hours=14,
+        now=datetime(2026, 4, 14, 12, 0, tzinfo=timezone.utc),
+    )
+
+    assert len(loaded) == 1
+    assert loaded[0].recorded_at == "2026-04-13T23:00:00+00:00"
+
+    connection = sqlite3.connect(path)
+    row = connection.execute(
+        "SELECT recorded_at, recorded_at_epoch FROM episodes"
+    ).fetchone()
+    connection.close()
+    assert row == ("2026-04-13T23:00:00+00:00", 1776121200)
+
+
+def test_sqlite_support_memory_store_closes_on_disk_connections_per_operation(tmp_path) -> None:
+    store = SqliteSupportMemoryStore(tmp_path / "support_memory.sqlite3")
+    episode = episode_from_support_snapshot(
+        make_temporal_support_snapshot(
+            "fd-support",
+            published_memory_refs=("memo-a",),
+        ),
+        host_name="reference",
+        source_label="tests/fd",
+    )
+    baseline_fd_count = len(os.listdir("/dev/fd"))
+
+    for _ in range(10):
+        store.insert_episode(episode)
+        store.load_episodes(host_name="reference", source_label="tests/fd")
+
+    assert len(os.listdir("/dev/fd")) == baseline_fd_count

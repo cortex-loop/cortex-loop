@@ -242,6 +242,8 @@ def test_status_registry_is_complete_and_stable() -> None:
     assert status["work_today"]["slug"] == "inspect-execute-resume-posture-control"
     assert "full_cross_host" in status["work_today"]["note"]
     assert "durable support-memory distillation is now landed" in status["work_today"]["note"].lower()
+    assert "absolute-time filtering" in status["work_today"]["note"]
+    assert "repeated matched support" in status["work_today"]["note"]
     assert "Q_mem = 0" in status["work_today"]["note"]
     assert status["next_product_train"]["slug"] == "selective-anti-thrash-with-creativity-budget"
     assert status["next_product_train"]["surface"] == "experimental"
@@ -251,6 +253,8 @@ def test_status_registry_is_complete_and_stable() -> None:
     assert "Keep the bounded audit surface compact and truthful" in status["where_to_work"][0]
     assert "no-spend live evidence current and explicit" in status["where_to_work"][1]
     assert "durable support-memory distillation is landed" in status["where_to_work"][2]
+    assert "absolute-time correct" in status["where_to_work"][2]
+    assert "matched support must repeat" in status["where_to_work"][2]
     assert "live `Q_mem` stays zero" in status["where_to_work"][2]
     closure_gates = {gate["id"]: gate for gate in status["closure_gates"]}
     assert closure_gates["main_synced"]["status"] == "required"
@@ -290,6 +294,8 @@ def test_generated_status_doc_includes_system_map_and_next_product_train() -> No
     assert "`inspect-execute-resume-posture-control`" in text
     assert "full_cross_host" in text
     assert "durable support-memory distillation is now landed" in text.lower()
+    assert "absolute-time filtering" in text
+    assert "repeated matched support" in text
 
 
 def test_front_door_surfaces_point_to_local_first_and_explicit_publish_closeout() -> None:
