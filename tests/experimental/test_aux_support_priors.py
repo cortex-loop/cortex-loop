@@ -15,6 +15,7 @@ from cortex.aux.support_priors import (
     _build_signal_profile,
     build_support_memory_prior_appendix,
 )
+from cortex.sre.memory_priors import HostReliabilityPrior
 from cortex.core.support import SupportState
 from cortex.sre.families import SoftControlFamily
 
@@ -87,6 +88,54 @@ def test_support_memory_signal_profile_applies_burden_penalties_without_creating
     assert appendix.score_for(SoftControlFamily.CHECK).score == 0.0
     assert appendix.score_for(SoftControlFamily.BRANCH).score == 0.0
     assert "q_mem-penalty:burden" in appendix.score_for(SoftControlFamily.CHECK).reason_tags
+
+
+def test_build_support_memory_prior_appendix_applies_reliability_weight_to_host_dependent_family_scores() -> None:
+    augmented = _augmented_temporal_case("branch-resume-recovery")
+
+    appendix = build_support_memory_prior_appendix(augmented)
+
+    branch_score = appendix.score_for(SoftControlFamily.BRANCH)
+    assert appendix.host_reliability_prior is not None
+    assert appendix.host_reliability_prior.capability_availability == pytest.approx(1.0)
+    assert "q_mem-host:reliability-active" in branch_score.reason_tags
+    assert branch_score.score > 0.0
+
+
+def test_build_support_memory_prior_appendix_invalidates_reliability_weight_on_fresh_contradiction() -> None:
+    augmented = _augmented_temporal_case("contradiction-review")
+
+    appendix = build_support_memory_prior_appendix(augmented)
+
+    check_score = appendix.score_for(SoftControlFamily.CHECK)
+    assert appendix.host_reliability_prior is not None
+    assert appendix.host_reliability_prior.contradiction_counter > 0
+    assert "q_mem-host:contradiction-invalidated" in check_score.reason_tags
+    assert "q_mem-host:reliability-active" not in check_score.reason_tags
+
+
+def test_build_support_memory_prior_appendix_zeroes_reliability_weight_when_ttl_expires(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    augmented = _augmented_temporal_case("branch-resume-recovery")
+
+    monkeypatch.setattr(
+        "cortex.aux.support_priors._host_reliability_prior",
+        lambda snapshot, signal_profile: HostReliabilityPrior(
+            timeout_rate=0.0,
+            degradation_rate=0.0,
+            capability_availability=1.0,
+            contradiction_counter=0,
+            ttl_hours=1,
+            last_validated_at="2000-01-01T00:00:00+00:00",
+        ),
+    )
+
+    appendix = build_support_memory_prior_appendix(augmented)
+
+    branch_score = appendix.score_for(SoftControlFamily.BRANCH)
+    assert "q_mem-host:ttl-expired" in branch_score.reason_tags
+    assert "q_mem-host:reliability-active" not in branch_score.reason_tags
 
 
 def _augmented_temporal_case(scenario_id: str):

@@ -363,6 +363,10 @@ They may not come from:
 
 Until that publication path exists and earns retention, shipping and conformance lanes
 may keep `Q_t^{mem}(a)=0` while AUX remains removable and runtime-off-by-default.
+AUX owns the bounded `claude|gemini|reference` cross-host shadow evaluator over that
+explicit publication path.
+Fresh contradiction must invalidate any reliability-derived shadow lift before the next
+selection pass; stale host confidence may not outrank current contradiction evidence.
 
 ---
 

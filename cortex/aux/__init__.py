@@ -2,6 +2,13 @@
 
 from .augmentation import AugmentedSupportSnapshot, AuxiliarySupportAppendix, augment_snapshot
 from .cost import AuxBurdenReport
+from .cross_host_shadow import (
+    AUX_CROSS_HOST_SHADOW_FAILURE_LABELS,
+    AuxCrossHostShadowCaseResult,
+    AuxCrossHostShadowEvaluationResult,
+    AuxCrossHostShadowScenario,
+    evaluate_aux_cross_host_shadow,
+)
 from .geometry import (
     AuxContradictionCluster,
     AuxGeometryReport,
@@ -39,11 +46,15 @@ from .reference_replay import (
 from .support_priors import build_support_memory_prior_appendix
 
 __all__ = [
+    "AUX_CROSS_HOST_SHADOW_FAILURE_LABELS",
     "AUX_LIFT_DIRECTIONS",
     "AUX_REFERENCE_REPLAY_FAILURE_LABELS",
     "AugmentedSupportSnapshot",
     "AuxBurdenReport",
     "AuxContradictionCluster",
+    "AuxCrossHostShadowCaseResult",
+    "AuxCrossHostShadowEvaluationResult",
+    "AuxCrossHostShadowScenario",
     "AuxCorpusCaseResult",
     "AuxCorpusEvaluationResult",
     "AuxCorpusMetricSummary",
@@ -64,6 +75,7 @@ __all__ = [
     "build_aux_lift_report",
     "build_offline_support_publication",
     "build_support_memory_prior_appendix",
+    "evaluate_aux_cross_host_shadow",
     "evaluate_aux_reference_q_mem_replay",
     "evaluate_aux_support_corpus",
     "evaluate_aux_support_snapshot",
