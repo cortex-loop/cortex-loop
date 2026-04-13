@@ -825,6 +825,56 @@ def make_aux_cross_host_shadow_corpus() -> tuple[AuxCrossHostShadowScenario, ...
         scenario.scenario_id: scenario
         for scenario in make_aux_temporal_corpus()
     }
+    check_reliability_source = make_temporal_support_snapshot(
+        "source-check-reliability-active",
+        wake_reason_tags=("resume-needed",),
+        brake_history=("guarded",),
+        published_memory_refs=("guarded-review-memo",),
+        artifact_refs=("guarded-review-artifact",),
+    )
+    check_reliability_target = make_temporal_support_snapshot(
+        "target-check-reliability-active",
+        candidate_refs=("guarded-review-candidate",),
+        wake_reason_tags=("resume-needed",),
+        brake_history=("guarded",),
+    )
+    weighted_burden_sources = (
+        make_temporal_support_snapshot(
+            "source-weighted-burden-a",
+            branch_registry=("main", "burden-track", "burden-alt"),
+            published_memory_refs=(
+                "unrelated-heavy-memory-a",
+                "unrelated-heavy-memory-b",
+                "unrelated-heavy-memory-c",
+            ),
+            artifact_refs=("unrelated-heavy-artifact-a", "unrelated-heavy-artifact-b"),
+            wake_reason_tags=("burden-reminder", "review-needed"),
+            brake_history=("guarded", "latched"),
+            degradation_reason="burden-source-drift",
+            contradiction_evidence_tags=("burden", "drift"),
+        ),
+        make_temporal_support_snapshot(
+            "source-weighted-burden-b",
+            branch_registry=("main", "burden-track"),
+            published_memory_refs=("unrelated-heavy-memory-d", "unrelated-heavy-memory-e"),
+            artifact_refs=("unrelated-heavy-artifact-c",),
+            wake_reason_tags=("burden-reminder",),
+            brake_history=("guarded",),
+        ),
+    )
+    weighted_burden_target = make_temporal_support_snapshot(
+        "target-weighted-burden",
+        candidate_refs=("small-fix-candidate",),
+        pending_goal_refs=("small-fix-goal",),
+    )
+    fresh_contradiction_source = make_temporal_support_snapshot(
+        "source-fresh-contradiction",
+    )
+    fresh_contradiction_target = make_temporal_support_snapshot(
+        "target-fresh-contradiction",
+        degradation_reason="fresh-contradiction",
+        contradiction_evidence_tags=("fresh", "contradiction"),
+    )
     scenarios: list[AuxCrossHostShadowScenario] = []
 
     for host_name in ("claude", "gemini", "reference"):
@@ -847,6 +897,7 @@ def make_aux_cross_host_shadow_corpus() -> tuple[AuxCrossHostShadowScenario, ...
             (
                 AuxCrossHostShadowScenario(
                     scenario_id=f"{host_name}-retrieval-reuse",
+                    scenario_class="retrieval_reuse",
                     host_name=host_name,
                     source_snapshots=tuple(
                         _overlay_runtime_support_snapshot(
@@ -867,67 +918,90 @@ def make_aux_cross_host_shadow_corpus() -> tuple[AuxCrossHostShadowScenario, ...
                     notes=("runtime-seeded retrieval reuse should widen seek-context margin under explicit shadow memory",),
                 ),
                 AuxCrossHostShadowScenario(
-                    scenario_id=f"{host_name}-contradiction-review",
+                    scenario_id=f"{host_name}-branch-resume",
+                    scenario_class="branch_resume",
                     host_name=host_name,
                     source_snapshots=tuple(
                         _overlay_runtime_support_snapshot(
-                            contradiction_base,
+                            continuity_base,
                             snapshot,
                             host_name=host_name,
                         )
-                        for snapshot in temporal_cases["contradiction-review"].source_snapshots
+                        for snapshot in temporal_cases["branch-resume-recovery"].source_snapshots
+                    ),
+                    target_snapshot=_overlay_runtime_support_snapshot(
+                        continuity_base,
+                        temporal_cases["branch-resume-recovery"].target_snapshot,
+                        host_name=host_name,
+                    ),
+                    executive_state=continuity_state,
+                    preferred_family=SoftControlFamily.BRANCH,
+                    expect_improvement=True,
+                    notes=("runtime-seeded branch continuity should widen branch margin under explicit shadow memory",),
+                ),
+                AuxCrossHostShadowScenario(
+                    scenario_id=f"{host_name}-check-review",
+                    scenario_class="check_review",
+                    host_name=host_name,
+                    source_snapshots=(
+                        _overlay_runtime_support_snapshot(
+                            contradiction_base,
+                            check_reliability_source,
+                            host_name=host_name,
+                        ),
                     ),
                     target_snapshot=_overlay_runtime_support_snapshot(
                         contradiction_base,
-                        temporal_cases["contradiction-review"].target_snapshot,
+                        check_reliability_target,
                         host_name=host_name,
                     ),
                     executive_state=contradiction_state,
                     preferred_family=SoftControlFamily.CHECK,
                     expect_improvement=True,
-                    notes=("runtime-seeded contradiction pressure should lift check via explicit shadow priors",),
+                    notes=("runtime-seeded check review should show reliability-active lift without a fresh contradiction on the target snapshot",),
                 ),
                 AuxCrossHostShadowScenario(
-                    scenario_id=f"{host_name}-burden-heavy-counterexample",
+                    scenario_id=f"{host_name}-weighted-burden-counterexample",
+                    scenario_class="weighted_burden_counterexample",
                     host_name=host_name,
                     source_snapshots=tuple(
                         _overlay_runtime_support_snapshot(
-                            continuity_base,
+                            retrieval_base,
                             snapshot,
                             host_name=host_name,
                         )
-                        for snapshot in temporal_cases["burden-heavy-counterexample"].source_snapshots
+                        for snapshot in weighted_burden_sources
                     ),
                     target_snapshot=_overlay_runtime_support_snapshot(
-                        continuity_base,
-                        temporal_cases["burden-heavy-counterexample"].target_snapshot,
+                        retrieval_base,
+                        weighted_burden_target,
                         host_name=host_name,
                     ),
                     executive_state=continuity_state,
-                    preferred_family=SoftControlFamily.REDIRECT,
+                    preferred_family=SoftControlFamily.BRANCH,
                     expect_improvement=False,
-                    notes=("burden-heavy shadow cases must stay stable instead of manufacturing redirect pressure",),
+                    notes=("weighted burden counterexample must not manufacture branch lift from explicit shadow memory",),
                 ),
                 AuxCrossHostShadowScenario(
                     scenario_id=f"{host_name}-fresh-contradiction-invalidation",
+                    scenario_class="fresh_contradiction_invalidation",
                     host_name=host_name,
-                    source_snapshots=tuple(
+                    source_snapshots=(
                         _overlay_runtime_support_snapshot(
-                            continuity_base,
-                            snapshot,
+                            retrieval_base,
+                            fresh_contradiction_source,
                             host_name=host_name,
-                        )
-                        for snapshot in temporal_cases["contradiction-review"].source_snapshots
+                    ),
                     ),
                     target_snapshot=_overlay_runtime_support_snapshot(
-                        continuity_base,
-                        temporal_cases["contradiction-review"].target_snapshot,
+                        retrieval_base,
+                        fresh_contradiction_target,
                         host_name=host_name,
                     ),
-                    executive_state=continuity_state,
-                    preferred_family=SoftControlFamily.NEUTRAL,
+                    executive_state=retrieval_state,
+                    preferred_family=SoftControlFamily.CHECK,
                     expect_improvement=False,
-                    notes=("fresh contradiction must invalidate stale reliability lift instead of disturbing the neutral baseline",),
+                    notes=("fresh contradiction must zero reliability-derived check lift instead of letting stale host confidence survive",),
                 ),
             )
         )

@@ -50,8 +50,8 @@ Answering stance:
 
 ## Current Focus
 
-- Current tracked train: `bounded-executive-audit-ingress`
-- Active quality/risk focus: The cross-host shadow train is now landed on Claude, Gemini, and reference: explicit AUX-owned host/tool reliability priors produce repeat-stable shadow lift for host-dependent control, fresh contradiction invalidates stale reliability-derived lift, and shipping plus conformance lanes still keep Q_mem explicit-zero. The active train is now bounded executive audit ingress so C^{vis} becomes contextual structured audit over the already-landed control ledger without widening shipping-default behavior.
+- Current tracked train: `cross-host-shadow-closure-hardening`
+- Active quality/risk focus: The last cross-host shadow seam landed the explicit AUX-owned host/tool reliability carrier and evaluator, but closure hardening found the broader claim still unearned: seek-context and reliability-active check lift are proved, weighted burden and contradiction invalidation stay stable, yet branch-family lift still does not re-rank branch across the lawful corpus and Claude plus Gemini still alias under the lawful host-signature projection. The active train is cross-host shadow closure hardening so the claim is narrowed truthfully before bounded executive audit ingress.
 - Next product train after the current focus: `bounded-executive-audit-ingress`
 
 ## Bio-To-Code Matrix
@@ -62,10 +62,10 @@ Answering stance:
 | Bounded correction and verified-work preservation | Error repair without losing the main task thread | `landed` | `15` | `cortex/runtime`, `cortex/sre`, `cortex/hosts/openai` | `tests/product` | Keep preservation-state repair stable while support-side experiments stay removable and off the shipping critical path. |
 | Uncertainty handling and brake | Hesitation and uncertainty-aware inhibition | `landed` | `13` | `cortex/sre` | `tests/product`, `tests/experimental` | Keep reference-derived brake and uncertainty control stable while AUX remains advisory and runtime-off-by-default. |
 | Branch continuity, suspend/resume, and truthful closure | Working memory across interruptions plus truthful closure | `landed` | `15` | `cortex/sre`, `cortex/hosts/openai` | `tests/product`, `tests/conformance` | Keep suspend/resume and truthful closure stable while any future support memory remains explicit, optional, and non-binding. |
-| Intervention pricing versus neutrality | Deciding when to intervene, stay neutral, or stop | `landed` | `10` | `cortex/sre`, `cortex/aux` | `tests/product`, `tests/experimental` | Hold calibrated reference-side intervention pricing stable while gathering cross-host shadow evidence before any non-reference Q_mem ingress or shipping-default change. |
+| Intervention pricing versus neutrality | Deciding when to intervene, stay neutral, or stop | `landed` | `10` | `cortex/sre`, `cortex/aux` | `tests/product`, `tests/experimental` | Hold calibrated reference-side intervention pricing stable while hardening cross-host shadow closure truth: re-earn branch-family lift and narrow the claim if lawful non-reference host observables still alias before any non-reference Q_mem ingress or shipping-default change. |
 | Blocker surfacing and goal-debt management | Noticing unresolved blockers and unfinished intentions | `landed` | `10` | `cortex/sre`, `cortex/hosts/openai`, `cortex/hosts/claude`, `cortex/hosts/gemini`, `cortex/hosts/reference` | `tests/product`, `tests/conformance` | Keep typed goal-debt and closure-pressure state stable across hosts while support-side augmentation remains explicit and non-sovereign. |
 | Multi-host executive continuity | One executive across different brains and contexts | `landed` | `15` | `cortex/hosts/openai`, `cortex/hosts/claude`, `cortex/hosts/gemini`, `cortex/hosts/reference` | `tests/product`, `tests/conformance` | Hold one Cortex law across OpenAI, Claude, Gemini, and reference without flattening host-native realization. |
-| Offline consolidation and support geometry | Sleep-like consolidation and support systems | `landed` | `10` | `cortex/aux` | `tests/experimental`, `tests/archive`, `tests/conformance` | Keep offline publication explicit, removable, and non-sovereign while testing cross-host shadow usefulness of support-conditioned control before any live non-reference replay rollout. |
+| Offline consolidation and support geometry | Sleep-like consolidation and support systems | `landed` | `10` | `cortex/aux` | `tests/experimental`, `tests/archive`, `tests/conformance` | Keep offline publication explicit, removable, and non-sovereign while hardening cross-host shadow closure truth: reliability lift must remain contradiction-first, removable, and no broader than the lawful host-distinct evidence actually earns. |
 
 ## Math To Code Rules
 
@@ -158,16 +158,16 @@ Workflow gates marked `required` are contractual gates checked by `repo_workflow
 - Train: `bounded-executive-audit-ingress`
 - Surface: `product + internal`
 - Executive benefit: Make contextual structured audit a real executive behavior so Cortex can expose bounded control observables when stakes or uncertainty justify it without turning into a scratchpad product.
-- Why now: After cross-host shadow lands on explicit AUX-owned host/tool reliability priors, the remaining leverage is cashing out C^{vis} as contextual bounded audit rather than leaving it as a scoring-only term.
+- Why now: Once cross-host shadow closure truthfully re-earns or narrows the non-reference claim, the remaining leverage is cashing out C^{vis} as contextual bounded audit rather than leaving it as a scoring-only term.
 - Primary metric: `high-uncertainty or explicit-audit flows surface a compact executive audit block while default flows remain terse and raw chain-of-thought stays absent`
 - Guardrail: `no raw chain-of-thought exposure, no always-on verbosity, no new host-specific audit forks, and no UI bureaucracy pretending to be executive function`
 - Kill rule: `cut any bounded-audit seam that increases output volume without increasing truthful control observability or that leaks hidden reasoning`
 
 ## Where To Work Next
 
-- Run bounded executive audit ingress now that cross-host shadow lifted on explicit AUX-owned host/tool reliability priors without changing shipping-default behavior.
-- Keep structured audit bounded, default-minimal, and derived from the landed control ledger rather than raw chain-of-thought or host-specific narration.
-- Preserve the shadow-memory boundary while audit ingress lands: host/tool reliability priors remain explicit, TTL-bounded, contradiction-sensitive, AUX-owned, and non-sovereign.
+- Finish cross-host shadow closure hardening now: re-earn branch-family lift or keep the claim narrow to reference plus a shared documented non-reference shell.
+- Keep Claude and Gemini host truth honest: if lawful runtime-derived observables still alias, surface that limitation instead of fabricating divergence.
+- Preserve the shadow-memory boundary while closure hardening lands: host/tool reliability priors remain explicit, TTL-bounded, contradiction-sensitive, AUX-owned, removable, and non-sovereign.
 
 ## Canonical Proof
 

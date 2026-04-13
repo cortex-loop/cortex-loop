@@ -417,6 +417,9 @@ On those bounded shadow surfaces, reliability priors may modulate host-dependent
 `Q_t^{mem}(a)` lift for `check`, native `seek-context`, and `branch` only.
 Fresh contradiction, explicit probe-failure class evidence, or expired TTL must zero the
 reliability-derived component rather than letting stale host confidence survive.
+Any broader cross-host claim about that shadow lift is earned only to the extent that
+lawful host-distinct evidence exists; if non-reference hosts alias under lawful
+observables, the claim must narrow instead of pretending distinct lift was proved.
 
 ### 6.5 Combined score
 

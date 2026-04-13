@@ -411,11 +411,19 @@ def _reason_tags(
 
 def build_support_memory_prior_appendix(
     snapshot: AugmentedSupportSnapshot,
+    *,
+    enable_host_reliability: bool = True,
 ) -> SupportMemoryPriorAppendix:
     if not isinstance(snapshot, AugmentedSupportSnapshot):
         actual_type = type(snapshot).__name__
         raise TypeError(
             "build_support_memory_prior_appendix() requires AugmentedSupportSnapshot, "
+            f"got {actual_type}.",
+        )
+    if not isinstance(enable_host_reliability, bool):
+        actual_type = type(enable_host_reliability).__name__
+        raise TypeError(
+            "build_support_memory_prior_appendix().enable_host_reliability must be bool, "
             f"got {actual_type}.",
         )
 
@@ -445,13 +453,16 @@ def build_support_memory_prior_appendix(
         include_retrieval=True,
         include_branch=True,
     )
-    branch_score, branch_reason_tags = _apply_host_reliability_weight(
-        SoftControlFamily.BRANCH,
-        base_score=branch_base_score,
-        reason_tags=branch_reason_tags,
-        profile=signal_profile,
-        reliability_prior=reliability_prior,
-    )
+    if enable_host_reliability:
+        branch_score, branch_reason_tags = _apply_host_reliability_weight(
+            SoftControlFamily.BRANCH,
+            base_score=branch_base_score,
+            reason_tags=branch_reason_tags,
+            profile=signal_profile,
+            reliability_prior=reliability_prior,
+        )
+    else:
+        branch_score = branch_base_score
 
     check_base_score = _clip_prior_score(
         (0.50 * signal_profile.contradiction_review_signal)
@@ -465,13 +476,16 @@ def build_support_memory_prior_appendix(
         include_contradiction=True,
         include_uncertainty=True,
     )
-    check_score, check_reason_tags = _apply_host_reliability_weight(
-        SoftControlFamily.CHECK,
-        base_score=check_base_score,
-        reason_tags=check_reason_tags,
-        profile=signal_profile,
-        reliability_prior=reliability_prior,
-    )
+    if enable_host_reliability:
+        check_score, check_reason_tags = _apply_host_reliability_weight(
+            SoftControlFamily.CHECK,
+            base_score=check_base_score,
+            reason_tags=check_reason_tags,
+            profile=signal_profile,
+            reliability_prior=reliability_prior,
+        )
+    else:
+        check_score = check_base_score
 
     seek_context_base_score = _clip_prior_score(
         (0.35 * signal_profile.retrieval_reuse_signal)
@@ -483,13 +497,16 @@ def build_support_memory_prior_appendix(
         include_retrieval=True,
         include_uncertainty=True,
     )
-    seek_context_score, seek_context_reason_tags = _apply_host_reliability_weight(
-        SoftControlFamily.SEEK_CONTEXT,
-        base_score=seek_context_base_score,
-        reason_tags=seek_context_reason_tags,
-        profile=signal_profile,
-        reliability_prior=reliability_prior,
-    )
+    if enable_host_reliability:
+        seek_context_score, seek_context_reason_tags = _apply_host_reliability_weight(
+            SoftControlFamily.SEEK_CONTEXT,
+            base_score=seek_context_base_score,
+            reason_tags=seek_context_reason_tags,
+            profile=signal_profile,
+            reliability_prior=reliability_prior,
+        )
+    else:
+        seek_context_score = seek_context_base_score
 
     scores = (
         SupportMemoryPriorScore(

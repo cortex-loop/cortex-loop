@@ -138,6 +138,27 @@ def test_build_support_memory_prior_appendix_zeroes_reliability_weight_when_ttl_
     assert "q_mem-host:reliability-active" not in branch_score.reason_tags
 
 
+def test_build_support_memory_prior_appendix_can_disable_host_reliability_without_changing_support_signals() -> None:
+    augmented = _augmented_temporal_case("branch-resume-recovery")
+
+    appendix = build_support_memory_prior_appendix(augmented)
+    appendix_without_reliability = build_support_memory_prior_appendix(
+        augmented,
+        enable_host_reliability=False,
+    )
+
+    branch_score = appendix.score_for(SoftControlFamily.BRANCH)
+    branch_score_without_reliability = appendix_without_reliability.score_for(
+        SoftControlFamily.BRANCH
+    )
+
+    assert appendix.host_reliability_prior == appendix_without_reliability.host_reliability_prior
+    assert branch_score.score > branch_score_without_reliability.score
+    assert "q_mem-host:reliability-active" in branch_score.reason_tags
+    assert "q_mem-host:reliability-active" not in branch_score_without_reliability.reason_tags
+    assert "q_mem-signal:branch" in branch_score_without_reliability.reason_tags
+
+
 def _augmented_temporal_case(scenario_id: str):
     scenario = {
         scenario.scenario_id: scenario
