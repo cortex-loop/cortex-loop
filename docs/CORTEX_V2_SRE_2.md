@@ -338,6 +338,9 @@ Here:
 
 The explicit visible-burden term is deliberate.
 One of v1’s main failures was that visible proof/control burden could become the task.
+`C^{host}` should prefer measured bounded-probe evidence when a cheap lawful probe exists,
+and only fall back to host-friction heuristics when no probe evidence is available.
+`C^{vis}` is a contextual structured-audit cost, not a flat demand for silence.
 
 ### 6.2 Primary discrete realization
 
@@ -349,8 +352,8 @@ A lawful implementation may produce, for each family `a`:
 - a goal-continuity band,
 - a stability band,
 - a control-burden band,
-- a host-friction band,
-- a visible-burden band,
+- a host-friction band, preferably backed by bounded-probe outcomes when available,
+- a visible-burden band, scaled by the active explainability profile,
 
 and then combine them using:
 - a bounded weighted sum,
@@ -380,8 +383,8 @@ Interpretation:
 - `q_t^{stability}` = protection against pathological oscillation and fake churn while
   preserving productive messy search,
 - `c_t^{ctrl}` = control burden,
-- `c_t^{host}` = host mismatch / friction,
-- `c_t^{vis}` = visible burden.
+- `c_t^{host}` = host mismatch / friction, preferably measured by bounded probes,
+- `c_t^{vis}` = contextual structured-audit burden.
 
 This equation is a reference semantics, not a demand for an online oracle.
 
@@ -407,6 +410,8 @@ carrier, while explicit AUX-owned support memory remains lawful on bounded repla
 surfaces. Any nonzero `Q_t^{mem}(a)` must enter only through explicit AUX support-side
 augmentation/publication rather than hidden host memory, prompt heuristics, runtime caches,
 or softened closure logic.
+Explicit host/tool reliability priors remain lawful only on bounded AUX and experimental
+shadow surfaces until a separate seam proves broader ingress.
 
 ### 6.5 Combined score
 
@@ -544,6 +549,8 @@ A lawful reference realization may compute brake using:
 - or bounded host-friction indicators.
 
 The brake update may therefore be implemented as a compact decision table rather than a continuous differential law.
+The preferred discrete realization uses hysteresis: guarded and latched may have separate
+enter and exit thresholds, while contradiction and latching spikes remain immediate.
 
 ### 7.6 No-threshold-collapse law
 

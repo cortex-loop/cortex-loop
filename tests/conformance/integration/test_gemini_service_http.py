@@ -45,6 +45,10 @@ def test_gemini_service_health_and_documented_event_flow() -> None:
             "activation_threshold",
             "selected_delta_over_neutral",
             "chi_t",
+            "rejected_cheaper_families",
+            "probe_result_class",
+            "verification_state",
+            "explainability_profile",
             "scores",
         )
 
@@ -142,6 +146,10 @@ def test_gemini_service_undocumented_raw_event_warns_without_fabricating_parity(
             "activation_threshold",
             "selected_delta_over_neutral",
             "chi_t",
+            "rejected_cheaper_families",
+            "probe_result_class",
+            "verification_state",
+            "explainability_profile",
             "scores",
         )
 

@@ -67,6 +67,10 @@ def test_gemini_ingress_cli_reads_documented_raw_transcript_fixture() -> None:
         "activation_threshold",
         "selected_delta_over_neutral",
         "chi_t",
+        "rejected_cheaper_families",
+        "probe_result_class",
+        "verification_state",
+        "explainability_profile",
         "scores",
     )
 

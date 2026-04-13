@@ -3,11 +3,13 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from datetime import datetime, timezone
 
 from cortex.core.envelopes import MetadataField
 from cortex.core.support import SupportReference
 from cortex.sre.families import SoftControlFamily
 from cortex.sre.memory_priors import (
+    HostReliabilityPrior,
     SupportMemoryPriorAppendix,
     SupportMemoryPriorScore,
 )
@@ -136,6 +138,54 @@ def _target_uncertainty_refs(snapshot: AugmentedSupportSnapshot) -> tuple[Suppor
 
 def _has_token(signal_tokens: frozenset[str], token: str) -> bool:
     return token in signal_tokens
+
+
+def _host_reliability_prior(
+    snapshot: AugmentedSupportSnapshot,
+    signal_profile: SupportMemorySignalProfile,
+) -> HostReliabilityPrior:
+    degradation_records = snapshot.core_snapshot.trace.degradation_records
+    contradiction_counter = sum(
+        len(record.contradiction_records) for record in degradation_records
+    )
+    reason_code_tokens = {
+        token
+        for record in degradation_records
+        for token in record.reason_code.replace("-", "_").split("_")
+    }
+    constraint_tags = snapshot.core_snapshot.host.constraint_tags
+    timeout_rate = 1.0 if "timeout" in reason_code_tokens else 0.0
+    degradation_rate = _clip_unit(
+        (0.20 * len(degradation_records))
+        + (0.15 if constraint_tags else 0.0)
+        + (0.10 * signal_profile.burden_penalty)
+    )
+    capability_availability = 1.0
+    if "missing-capability" in constraint_tags:
+        capability_availability = 0.35
+    elif constraint_tags:
+        capability_availability = 0.65
+    failure_classes: list[str] = []
+    if timeout_rate > 0.0:
+        failure_classes.append("timed-out")
+    if degradation_records:
+        failure_classes.append("degraded")
+    if "missing-capability" in constraint_tags:
+        failure_classes.append("unsupported")
+    source_snapshot_count = _metadata_int(
+        snapshot.auxiliary_support.metadata,
+        "source_snapshot_count",
+    )
+    ttl_hours = 72 if source_snapshot_count > 1 else 24
+    return HostReliabilityPrior(
+        timeout_rate=timeout_rate,
+        degradation_rate=degradation_rate,
+        capability_availability=capability_availability,
+        contradiction_counter=contradiction_counter,
+        ttl_hours=ttl_hours,
+        last_validated_at=datetime.now(timezone.utc).isoformat(timespec="seconds"),
+        probe_failure_classes=tuple(sorted(set(failure_classes))),
+    )
 
 
 @dataclass(frozen=True, slots=True)
@@ -387,8 +437,13 @@ def build_support_memory_prior_appendix(
     return SupportMemoryPriorAppendix(
         scores=scores,
         appendix_tags=appendix.derived_tags | frozenset({"q_mem:explicit-aux"}),
-        notes=appendix.notes + ("memory-conditioned priors derived from AUX offline publication",),
+        notes=appendix.notes
+        + (
+            "memory-conditioned priors derived from AUX offline publication",
+            "host/tool reliability prior remains explicit, removable, and shadow-only",
+        ),
         metadata=(MetadataField("source", "aux/support-priors"),) + appendix.metadata,
+        host_reliability_prior=_host_reliability_prior(snapshot, signal_profile),
     )
 
 

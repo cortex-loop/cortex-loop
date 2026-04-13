@@ -124,6 +124,7 @@ def test_reference_runtime_step_result_surfaces_cheap_reference_event_without_co
         "commitment_result_kind": None,
         "warning_codes": [],
         "host_friction_tags": ["capability-view-missing"],
+        "probe_result_class": "succeeded",
         "evidence_state_moved": False,
         "continuity_improved": False,
     }
@@ -372,6 +373,10 @@ def test_reference_runtime_step_replay_publication_can_lift_check_allocation_wit
         "activation_threshold",
         "selected_delta_over_neutral",
         "chi_t",
+        "rejected_cheaper_families",
+        "probe_result_class",
+        "verification_state",
+        "explainability_profile",
         "scores",
         "mediation",
     )
@@ -387,13 +392,21 @@ def test_reference_runtime_step_uses_unaugmented_snapshot_for_executive_state_an
     original_prior_builder = aux_support_priors.build_support_memory_prior_appendix
     captured: dict[str, object] = {}
 
-    def builder_wrapper(observation, support_snapshot, environment_view, provisional_session):
+    def builder_wrapper(
+        observation,
+        support_snapshot,
+        environment_view,
+        provisional_session,
+        *,
+        opportunities=(),
+    ):
         captured["executive_state_support_snapshot"] = support_snapshot
         return original_builder(
             observation,
             support_snapshot,
             environment_view,
             provisional_session,
+            opportunities=opportunities,
         )
 
     def augment_wrapper(snapshot, publication):
@@ -1177,6 +1190,10 @@ def _assert_allocation_diagnostics_shape(
         "activation_threshold",
         "selected_delta_over_neutral",
         "chi_t",
+        "rejected_cheaper_families",
+        "probe_result_class",
+        "verification_state",
+        "explainability_profile",
         "scores",
         "mediation",
     )
@@ -1184,6 +1201,18 @@ def _assert_allocation_diagnostics_shape(
     assert payload["activation_threshold"] == pytest.approx(activation_threshold)
     assert isinstance(payload["selected_delta_over_neutral"], float)
     assert isinstance(payload["chi_t"], float)
+    assert isinstance(payload["rejected_cheaper_families"], list)
+    assert all(
+        isinstance(family, str) and family
+        for family in payload["rejected_cheaper_families"]
+    )
+    probe_result_class = payload["probe_result_class"]
+    assert probe_result_class is None or (
+        isinstance(probe_result_class, str) and probe_result_class
+    )
+    assert isinstance(payload["verification_state"], str)
+    assert payload["verification_state"]
+    assert payload["explainability_profile"] in {"minimal", "focused", "structured"}
     scores = payload["scores"]
     assert isinstance(scores, list)
     assert [score["family"] for score in scores] == [
@@ -1201,6 +1230,7 @@ def _assert_allocation_diagnostics_shape(
     else:
         assert any(score["allocated_score"] != score["online_score"] for score in scores)
     for score in scores:
+        assert isinstance(score["activation_threshold"], float)
         reason_tags = score["reason_tags"]
         assert isinstance(reason_tags, list)
         if "goal-branch-coupled" in reason_tags:

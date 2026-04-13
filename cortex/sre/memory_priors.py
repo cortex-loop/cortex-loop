@@ -10,6 +10,7 @@ from cortex.core.envelopes import MetadataField
 from cortex.core.support import SupportReference
 
 from .families import SoftControlFamily
+from .opportunities import PROBE_FAILURE_CLASSES
 
 
 def _validate_unit_score(value: float, *, field_name: str) -> None:
@@ -74,11 +75,62 @@ class SupportMemoryPriorScore:
 
 
 @dataclass(frozen=True, slots=True)
+class HostReliabilityPrior:
+    timeout_rate: float = 0.0
+    degradation_rate: float = 0.0
+    capability_availability: float = 1.0
+    contradiction_counter: int = 0
+    ttl_hours: int = 24
+    last_validated_at: str | None = None
+    probe_failure_classes: tuple[str, ...] = field(default_factory=tuple)
+
+    def __post_init__(self) -> None:
+        for field_name in (
+            "timeout_rate",
+            "degradation_rate",
+            "capability_availability",
+        ):
+            _validate_unit_score(
+                getattr(self, field_name),
+                field_name=f"HostReliabilityPrior.{field_name}",
+            )
+        if isinstance(self.contradiction_counter, bool) or not isinstance(
+            self.contradiction_counter,
+            int,
+        ):
+            raise TypeError(
+                "HostReliabilityPrior.contradiction_counter must be a non-negative integer."
+            )
+        if self.contradiction_counter < 0:
+            raise ValueError(
+                "HostReliabilityPrior.contradiction_counter must be non-negative."
+            )
+        if isinstance(self.ttl_hours, bool) or not isinstance(self.ttl_hours, int):
+            raise TypeError("HostReliabilityPrior.ttl_hours must be a positive integer.")
+        if self.ttl_hours <= 0:
+            raise ValueError("HostReliabilityPrior.ttl_hours must be positive.")
+        if self.last_validated_at is not None and not (
+            isinstance(self.last_validated_at, str) and self.last_validated_at.strip()
+        ):
+            raise ValueError(
+                "HostReliabilityPrior.last_validated_at must be non-empty after trimming when provided."
+            )
+        if any(
+            not isinstance(failure_class, str) or failure_class not in PROBE_FAILURE_CLASSES
+            for failure_class in self.probe_failure_classes
+        ):
+            raise ValueError(
+                "HostReliabilityPrior.probe_failure_classes must contain only canonical probe failure classes."
+            )
+
+
+@dataclass(frozen=True, slots=True)
 class SupportMemoryPriorAppendix:
     scores: tuple[SupportMemoryPriorScore, ...] = field(default_factory=tuple)
     appendix_tags: frozenset[str] = field(default_factory=frozenset)
     notes: tuple[str, ...] = field(default_factory=tuple)
     metadata: tuple[MetadataField, ...] = field(default_factory=tuple)
+    host_reliability_prior: HostReliabilityPrior | None = None
 
     def __post_init__(self) -> None:
         if any(not isinstance(score, SupportMemoryPriorScore) for score in self.scores):
@@ -104,6 +156,15 @@ class SupportMemoryPriorAppendix:
             self.metadata,
             field_name="SupportMemoryPriorAppendix.metadata",
         )
+        if self.host_reliability_prior is not None and not isinstance(
+            self.host_reliability_prior,
+            HostReliabilityPrior,
+        ):
+            actual_type = type(self.host_reliability_prior).__name__
+            raise TypeError(
+                "SupportMemoryPriorAppendix.host_reliability_prior must be "
+                f"HostReliabilityPrior | None, got {actual_type}."
+            )
 
     def score_for(self, family: SoftControlFamily) -> SupportMemoryPriorScore:
         if not isinstance(family, SoftControlFamily):
@@ -123,6 +184,7 @@ class SupportMemoryPriorAppendix:
 
 
 __all__ = [
+    "HostReliabilityPrior",
     "SupportMemoryPriorAppendix",
     "SupportMemoryPriorScore",
 ]

@@ -5,10 +5,13 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from numbers import Real
 
-from .families import SoftControlFamily
 from .brake import BrakeState
+from .families import SoftControlFamily
 from .goals import GoalContinuityView
+from .opportunities import PROBE_RESULT_CLASSES
 from .uncertainty import UncertaintyEstimate
+
+_EXPLAINABILITY_PROFILES = frozenset({"minimal", "focused", "structured"})
 
 ReferenceGoalContinuityView = GoalContinuityView
 
@@ -57,8 +60,13 @@ class ReferenceControlAllocationView:
     top_family_set: frozenset[SoftControlFamily] = field(default_factory=frozenset)
     host_friction_tags: frozenset[str] = field(default_factory=frozenset)
     feedback_pressure_tags: frozenset[str] = field(default_factory=frozenset)
+    probe_backed_families: frozenset[SoftControlFamily] = field(default_factory=frozenset)
     productive_exploration_bonus: float = 0.0
     oscillation_penalty: float = 0.0
+    host_friction_level: float = 0.0
+    visible_burden_scale: float = 1.0
+    explainability_profile: str = "minimal"
+    recent_probe_result_class: str | None = None
 
     def __post_init__(self) -> None:
         if not self.budget_band.strip():
@@ -80,7 +88,20 @@ class ReferenceControlAllocationView:
                 "ReferenceControlAllocationView.feedback_pressure_tags must contain only "
                 "non-empty values after trimming."
             )
-        for field_name in ("productive_exploration_bonus", "oscillation_penalty"):
+        if any(
+            not isinstance(family, SoftControlFamily)
+            for family in self.probe_backed_families
+        ):
+            raise TypeError(
+                "ReferenceControlAllocationView.probe_backed_families must contain only "
+                "SoftControlFamily instances."
+            )
+        for field_name in (
+            "productive_exploration_bonus",
+            "oscillation_penalty",
+            "host_friction_level",
+            "visible_burden_scale",
+        ):
             value = getattr(self, field_name)
             if not isinstance(value, Real):
                 actual_type = type(value).__name__
@@ -92,6 +113,18 @@ class ReferenceControlAllocationView:
                 raise ValueError(
                     f"ReferenceControlAllocationView.{field_name} must be between 0.0 and 1.0."
                 )
+        if self.explainability_profile not in _EXPLAINABILITY_PROFILES:
+            raise ValueError(
+                "ReferenceControlAllocationView.explainability_profile must be one of "
+                f"{sorted(_EXPLAINABILITY_PROFILES)!r}."
+            )
+        if (
+            self.recent_probe_result_class is not None
+            and self.recent_probe_result_class not in PROBE_RESULT_CLASSES
+        ):
+            raise ValueError(
+                "ReferenceControlAllocationView.recent_probe_result_class must be a canonical probe result class or None."
+            )
 
 
 @dataclass(frozen=True, slots=True)

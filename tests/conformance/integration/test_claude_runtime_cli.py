@@ -84,6 +84,10 @@ def test_claude_runtime_cli_reads_documented_raw_events_and_preserves_host_name(
         "activation_threshold",
         "selected_delta_over_neutral",
         "chi_t",
+        "rejected_cheaper_families",
+        "probe_result_class",
+        "verification_state",
+        "explainability_profile",
         "scores",
     )
 

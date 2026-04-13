@@ -40,7 +40,9 @@ from cortex.hosts._executive_closure import (
     build_runtime_executive_signal_summary_inputs,
     canonicalize_executive_modulator_memory,
     closure_reason_tags,
+    recent_probe_failure_class as recent_probe_failure_class_from_feedback_window,
     recent_warning_bearing_success_present,
+    verification_state_for_runtime,
 )
 from cortex.sre.allocation import build_allocation_diagnostics_payload
 from cortex.sre.branching import BranchOperation
@@ -56,7 +58,7 @@ from cortex.sre.modulators import (
     ExecutiveModulatorState,
     update_executive_modulators,
 )
-from cortex.sre.opportunities import HostNativeOpportunity
+from cortex.sre.opportunities import BoundedProbeContract, HostNativeOpportunity
 from cortex.sre.policy_view import ExecutivePolicyView, build_executive_policy_view
 from cortex.sre.reference_builder import build_reference_executive_state
 from cortex.sre.feedback import (
@@ -64,6 +66,9 @@ from cortex.sre.feedback import (
     ReferenceRealizationFeedback,
     ReferenceRealizationFeedbackWindow,
     summarize_reference_feedback_window,
+)
+from cortex.sre.reference_scoring import (
+    rejected_cheaper_families as scorecard_rejected_cheaper_families,
 )
 from cortex.sre.reference_scoring import select_reference_soft_control
 from cortex.sre.state import ReferenceExecutiveState
@@ -609,6 +614,7 @@ def run_reference_runtime_step(
         warnings=warnings,
         reminders=continuity_reminders,
     )
+    opportunities = _reference_host_native_opportunities(bound_event)
     executive_state = build_reference_executive_state(
         bound_event.observation,
         support_snapshot,
@@ -617,6 +623,7 @@ def run_reference_runtime_step(
             normalized_payload=normalized_payload,
         ),
         provisional_session,
+        opportunities=opportunities,
     )
     memory_priors = None
     if offline_publication is not None:
@@ -638,7 +645,6 @@ def run_reference_runtime_step(
                 offline_publication,
             )
         )
-    opportunities = _reference_host_native_opportunities(bound_event)
     selection = select_reference_soft_control(
         executive_state,
         mediation_mode=mediation_mode,
@@ -672,6 +678,20 @@ def run_reference_runtime_step(
             selected_delta_over_neutral=selection.neutral_dominance.margin_over_neutral,
             applied_activation_threshold=selection.neutral_dominance.activation_threshold,
             chi_t=selection.chi_t,
+            rejected_cheaper_families=scorecard_rejected_cheaper_families(
+                selection.scorecard,
+                selected_family=selected_family,
+            ),
+            probe_result_class=_probe_result_class(
+                selected_family=selected_family,
+                realized_family=realized_family,
+                opportunities=opportunities,
+            ),
+            verification_state=verification_state_for_runtime(
+                dispatch_decision=dispatch_decision,
+                commitment_result_kind=commitment_result_kind,
+            ),
+            explainability_profile=executive_state.control_allocation.explainability_profile,
             mediation_payload=selection.mediation_finalization.as_payload(),
         ),
     )
@@ -692,6 +712,11 @@ def run_reference_runtime_step(
         continuity_improved=_continuity_improved(
             prior_session=prior_session,
             provisional_session=provisional_session,
+        ),
+        probe_result_class=_probe_result_class(
+            selected_family=selected_family,
+            realized_family=realized_family,
+            opportunities=opportunities,
         ),
     )
     updated_session = ReferenceRuntimeSession(
@@ -730,6 +755,9 @@ def run_reference_runtime_step(
             consequential_write_pending=consequential_write_pending,
             prior_failed_before_completion=False,
             recent_product_failure_class=None,
+            recent_probe_failure_class=recent_probe_failure_class_from_feedback_window(
+                prior_session.feedback_window
+            ),
             recent_warning_bearing_success_present=recent_warning_bearing_success_present(
                 prior_session.feedback_window,
                 failed_before_completion=False,
@@ -1061,10 +1089,32 @@ def _reference_host_native_opportunities(
     if "mcp.query" in bound_event.lifecycle_surface.mcp_affordances:
         opportunities.append(
             HostNativeOpportunity(
+                opportunity_ref="mcp.query.probe",
+                supported_families=frozenset({SoftControlFamily.CHECK}),
+                clearly_superior=True,
+                native_surface_tags=frozenset({"mcp", "bounded-probe"}),
+                probe_contract=BoundedProbeContract(
+                    uncertainty_target="environment",
+                    allowed_family=SoftControlFamily.CHECK,
+                    timeout_seconds=2,
+                    output_cap=64,
+                    failure_classes=frozenset({"timed-out", "degraded", "unsupported"}),
+                ),
+            )
+        )
+        opportunities.append(
+            HostNativeOpportunity(
                 opportunity_ref="mcp.query",
                 supported_families=frozenset({SoftControlFamily.SEEK_CONTEXT}),
                 clearly_superior=True,
                 native_surface_tags=frozenset({"mcp", "structured-query"}),
+                probe_contract=BoundedProbeContract(
+                    uncertainty_target="host-capability",
+                    allowed_family=SoftControlFamily.SEEK_CONTEXT,
+                    timeout_seconds=5,
+                    output_cap=256,
+                    failure_classes=frozenset({"timed-out", "degraded", "unsupported"}),
+                ),
             )
         )
     return tuple(opportunities)
@@ -1327,6 +1377,34 @@ def _has_realizable_seek_context_opportunity(
     )
 
 
+def _probe_result_class(
+    *,
+    selected_family: SoftControlFamily,
+    realized_family: SoftControlFamily,
+    opportunities: tuple[HostNativeOpportunity, ...],
+) -> str | None:
+    if realized_family not in {
+        SoftControlFamily.CHECK,
+        SoftControlFamily.SEEK_CONTEXT,
+    }:
+        return None
+    for opportunity in opportunities:
+        if opportunity.probe_contract is None:
+            continue
+        if opportunity.probe_contract.allowed_family is not realized_family:
+            continue
+        if opportunity.realizable:
+            return "succeeded"
+        if opportunity.degradation_reason and "timeout" in opportunity.degradation_reason:
+            return "timed-out"
+        if opportunity.degradation_reason is not None:
+            return "degraded"
+        return "unsupported"
+    if selected_family is realized_family:
+        return None
+    return None
+
+
 def _evidence_state_moved(
     *,
     dispatch_decision: DispatchDecision,
@@ -1377,6 +1455,10 @@ _ALLOCATION_DIAGNOSTICS_KEYS = (
     "activation_threshold",
     "selected_delta_over_neutral",
     "chi_t",
+    "rejected_cheaper_families",
+    "probe_result_class",
+    "verification_state",
+    "explainability_profile",
     "scores",
     "mediation",
 )
@@ -1413,6 +1495,30 @@ def _validate_allocation_diagnostics_payload(payload: dict[str, Any], label: str
         if isinstance(value, bool) or not isinstance(value, (int, float)):
             actual_type = type(value).__name__
             raise TypeError(f"{label}.{key} must be numeric, got {actual_type}.")
+    rejected_cheaper_families = payload["rejected_cheaper_families"]
+    if not isinstance(rejected_cheaper_families, list):
+        actual_type = type(rejected_cheaper_families).__name__
+        raise TypeError(
+            f"{label}.rejected_cheaper_families must be list[str], got {actual_type}."
+        )
+    if any(
+        not (isinstance(family, str) and family.strip())
+        for family in rejected_cheaper_families
+    ):
+        raise ValueError(
+            f"{label}.rejected_cheaper_families must contain only non-empty strings."
+        )
+    probe_result_class = payload["probe_result_class"]
+    if probe_result_class is not None and not (
+        isinstance(probe_result_class, str) and probe_result_class.strip()
+    ):
+        raise ValueError(
+            f"{label}.probe_result_class must be non-empty after trimming when provided."
+        )
+    for key in ("verification_state", "explainability_profile"):
+        value = payload[key]
+        if not (isinstance(value, str) and value.strip()):
+            raise ValueError(f"{label}.{key} must be non-empty after trimming.")
     scores = payload["scores"]
     if not isinstance(scores, list):
         actual_type = type(scores).__name__
@@ -1500,12 +1606,17 @@ def _copy_allocation_diagnostics_payload(payload: dict[str, Any]) -> dict[str, A
         "activation_threshold": payload["activation_threshold"],
         "selected_delta_over_neutral": payload["selected_delta_over_neutral"],
         "chi_t": payload["chi_t"],
+        "rejected_cheaper_families": list(payload["rejected_cheaper_families"]),
+        "probe_result_class": payload["probe_result_class"],
+        "verification_state": payload["verification_state"],
+        "explainability_profile": payload["explainability_profile"],
         "scores": [
             {
                 "family": score["family"],
                 "online_score": score["online_score"],
                 "memory_score": score["memory_score"],
                 "allocated_score": score["allocated_score"],
+                "activation_threshold": score["activation_threshold"],
                 "admissible": score["admissible"],
                 "reason_tags": list(score["reason_tags"]),
             }

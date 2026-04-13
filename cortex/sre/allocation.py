@@ -117,6 +117,10 @@ def build_allocation_diagnostics_payload(
     selected_delta_over_neutral: float,
     applied_activation_threshold: float,
     chi_t: float,
+    rejected_cheaper_families: tuple[str, ...] = (),
+    probe_result_class: str | None = None,
+    verification_state: str = "not-required",
+    explainability_profile: str = "minimal",
     mediation_payload: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     if not isinstance(scorecard, AllocationScorecard):
@@ -143,6 +147,27 @@ def build_allocation_diagnostics_payload(
             "build_allocation_diagnostics_payload.chi_t must be numeric, "
             f"got {actual_type}."
         )
+    if any(
+        not (isinstance(family, str) and family.strip())
+        for family in rejected_cheaper_families
+    ):
+        raise ValueError(
+            "build_allocation_diagnostics_payload.rejected_cheaper_families must contain only non-empty strings."
+        )
+    if probe_result_class is not None and not (
+        isinstance(probe_result_class, str) and probe_result_class.strip()
+    ):
+        raise ValueError(
+            "build_allocation_diagnostics_payload.probe_result_class must be non-empty after trimming when provided."
+        )
+    if not (isinstance(verification_state, str) and verification_state.strip()):
+        raise ValueError(
+            "build_allocation_diagnostics_payload.verification_state must be non-empty after trimming."
+        )
+    if not (isinstance(explainability_profile, str) and explainability_profile.strip()):
+        raise ValueError(
+            "build_allocation_diagnostics_payload.explainability_profile must be non-empty after trimming."
+        )
     if mediation_payload is not None and not isinstance(mediation_payload, dict):
         actual_type = type(mediation_payload).__name__
         raise TypeError(
@@ -154,6 +179,10 @@ def build_allocation_diagnostics_payload(
         "activation_threshold": float(applied_activation_threshold),
         "selected_delta_over_neutral": float(selected_delta_over_neutral),
         "chi_t": float(chi_t),
+        "rejected_cheaper_families": list(rejected_cheaper_families),
+        "probe_result_class": probe_result_class,
+        "verification_state": verification_state,
+        "explainability_profile": explainability_profile,
         "scores": [score.as_summary() for score in scorecard.scores],
     }
     if mediation_payload is not None:
