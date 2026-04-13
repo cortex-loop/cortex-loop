@@ -12,6 +12,7 @@ from .opportunities import PROBE_RESULT_CLASSES
 from .uncertainty import UncertaintyEstimate
 
 _EXPLAINABILITY_PROFILES = frozenset({"minimal", "focused", "structured"})
+_PROBE_PATH_STATES = frozenset({"available", "unavailable", "absent"})
 
 ReferenceGoalContinuityView = GoalContinuityView
 
@@ -66,6 +67,8 @@ class ReferenceControlAllocationView:
     host_friction_level: float = 0.0
     visible_burden_scale: float = 1.0
     explainability_profile: str = "minimal"
+    probe_path_state: str = "absent"
+    probe_unavailable_reason: str | None = None
     recent_probe_result_class: str | None = None
 
     def __post_init__(self) -> None:
@@ -117,6 +120,29 @@ class ReferenceControlAllocationView:
             raise ValueError(
                 "ReferenceControlAllocationView.explainability_profile must be one of "
                 f"{sorted(_EXPLAINABILITY_PROFILES)!r}."
+            )
+        if self.probe_path_state not in _PROBE_PATH_STATES:
+            raise ValueError(
+                "ReferenceControlAllocationView.probe_path_state must be one of "
+                f"{sorted(_PROBE_PATH_STATES)!r}."
+            )
+        if self.probe_unavailable_reason is not None and not (
+            isinstance(self.probe_unavailable_reason, str)
+            and self.probe_unavailable_reason.strip()
+        ):
+            raise ValueError(
+                "ReferenceControlAllocationView.probe_unavailable_reason must be "
+                "non-empty after trimming when provided."
+            )
+        if self.probe_path_state == "unavailable" and self.probe_unavailable_reason is None:
+            raise ValueError(
+                "ReferenceControlAllocationView.probe_unavailable_reason is required "
+                "when probe_path_state is `unavailable`."
+            )
+        if self.probe_path_state != "unavailable" and self.probe_unavailable_reason is not None:
+            raise ValueError(
+                "ReferenceControlAllocationView.probe_unavailable_reason is only valid "
+                "when probe_path_state is `unavailable`."
             )
         if (
             self.recent_probe_result_class is not None

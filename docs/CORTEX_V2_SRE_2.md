@@ -339,7 +339,8 @@ Here:
 The explicit visible-burden term is deliberate.
 One of v1’s main failures was that visible proof/control burden could become the task.
 `C^{host}` should prefer measured bounded-probe evidence when a cheap lawful probe exists,
-and only fall back to host-friction heuristics when no probe evidence is available.
+surface explicit probe-unavailable truth when no lawful probe path exists,
+and only fall back to host-friction heuristics when probe evidence is unavailable.
 `C^{vis}` is a contextual structured-audit cost, not a flat demand for silence.
 
 ### 6.2 Primary discrete realization

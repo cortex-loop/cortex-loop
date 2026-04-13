@@ -239,20 +239,18 @@ def test_status_registry_is_complete_and_stable() -> None:
         "reference": "reference_cli",
     }
     assert status["conformance_summary"]["shipping_default"] == "openai:operator_cli"
-    assert status["work_today"]["slug"] == "measured-friction-stable-brake-and-bounded-ledger"
-    assert "finishing the executive substrate before cross-host shadow" in status["work_today"]["note"]
-    assert "host friction should be measured with bounded probes" in status["work_today"]["note"]
-    assert "guarded/latched brake transitions should use hysteresis" in status["work_today"]["note"]
-    assert "bounded executive ledger" in status["work_today"]["note"]
-    assert status["next_product_train"]["slug"] == "support-conditioned-intervention-pricing-cross-host-shadow"
-    assert status["next_product_train"]["surface"] == "experimental"
-    assert "support-conditioned intervention pricing" in status["next_product_train"]["executive_benefit"]
-    assert "After the measured-friction, stable-brake, and bounded-ledger substrate lands" in status["next_product_train"]["why_now"]
-    assert "without widening Q_mem" in status["next_product_train"]["why_now"]
-    assert "shadow evaluation across Claude, Gemini, and reference" in status["next_product_train"]["primary_metric"]
-    assert "Finish the measured-friction substrate" in status["where_to_work"][0]
-    assert "Land hysteresis on guarded and latched brake transitions" in status["where_to_work"][1]
-    assert "Keep explicit AUX-owned Q_mem reference-only and removable" in status["where_to_work"][2]
+    assert status["work_today"]["slug"] == "support-conditioned-intervention-pricing-cross-host-shadow"
+    assert "host-sensing parity substrate is now landed" in status["work_today"]["note"]
+    assert "explicit probe-unavailable truth" in status["work_today"]["note"]
+    assert "shadow-only cross-host support-conditioned intervention pricing" in status["work_today"]["note"]
+    assert status["next_product_train"]["slug"] == "bounded-executive-audit-ingress"
+    assert status["next_product_train"]["surface"] == "product + internal"
+    assert "contextual structured audit" in status["next_product_train"]["executive_benefit"]
+    assert "After host-sensing parity lands and cross-host shadow earns or falsifies explicit reliability memory" in status["next_product_train"]["why_now"]
+    assert "compact executive audit block" in status["next_product_train"]["primary_metric"]
+    assert "Run the restored cross-host shadow train" in status["where_to_work"][0]
+    assert "Keep host/tool reliability priors AUX-owned" in status["where_to_work"][1]
+    assert "Queue bounded executive audit ingress" in status["where_to_work"][2]
     closure_gates = {gate["id"]: gate for gate in status["closure_gates"]}
     assert closure_gates["main_synced"]["status"] == "required"
     assert closure_gates["cleanup_report"]["status"] == "required"
@@ -281,18 +279,18 @@ def test_generated_status_doc_includes_system_map_and_next_product_train() -> No
     assert "Active quality/risk focus" in text
     assert "## Packet To Code" in text
     assert "## Next Product Train" in text
-    assert "`measured-friction-stable-brake-and-bounded-ledger`" in text
     assert "`support-conditioned-intervention-pricing-cross-host-shadow`" in text
+    assert "`bounded-executive-audit-ingress`" in text
     assert "support-conditioned intervention pricing" in text
+    assert "contextual structured audit" in text
     assert "Shipping Product Lane\\nopenai:operator_cli" in text or "Shipping Product Lane" in text
     assert "Shipping default: `openai:operator_cli`" in text
     assert "Workflow gates marked `required` are contractual gates checked by `repo_workflow.py`" in text
     assert "| `main_synced` | `required` |" in text
     assert "| `cleanup_report` | `required` |" in text
-    assert "finishing the executive substrate before cross-host shadow" in text
-    assert "host friction should be measured with bounded probes" in text
-    assert "guarded/latched brake transitions should use hysteresis" in text
-    assert "bounded executive ledger" in text
+    assert "host-sensing parity substrate is now landed" in text
+    assert "explicit probe-unavailable truth" in text
+    assert "shadow-only cross-host support-conditioned intervention pricing" in text
     assert "proves support-side lift" not in text
 
 

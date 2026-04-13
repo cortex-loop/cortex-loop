@@ -82,11 +82,15 @@ def test_reference_runtime_step_result_surfaces_cheap_reference_event_without_co
     assert result.control_ledger_summary["brake_state"] == "guarded"
     assert result.control_ledger_summary["budget_band"] == "low"
     assert result.control_ledger_summary["primary_reason"] is None
+    assert result.executive_state_summary["probe_path_state"] == "available"
+    assert result.executive_state_summary["probe_unavailable_reason"] is None
     _assert_allocation_diagnostics_shape(
         result.control_ledger_summary["allocation_diagnostics"],
         activation_threshold=0.37,
         expected_alpha=0.75,
         expect_allocated_equals_online=False,
+        expected_probe_path_state="available",
+        expected_probe_unavailable_reason=None,
         expected_mediation={
             "mediation_active": False,
             "mediation_identity": True,
@@ -165,11 +169,15 @@ def test_reference_runtime_step_selects_seek_context_when_capability_view_is_mis
     ]
     assert result.control_ledger_summary["selected_family"] == "seek-context"
     assert result.control_ledger_summary["realized_family"] == "seek-context"
+    assert result.executive_state_summary["probe_path_state"] == "available"
+    assert result.executive_state_summary["probe_unavailable_reason"] is None
     _assert_allocation_diagnostics_shape(
         result.control_ledger_summary["allocation_diagnostics"],
         activation_threshold=0.37,
         expected_alpha=0.75,
         expect_allocated_equals_online=False,
+        expected_probe_path_state="available",
+        expected_probe_unavailable_reason=None,
         expected_mediation={
             "mediation_active": False,
             "mediation_identity": True,
@@ -198,11 +206,15 @@ def test_reference_runtime_step_experimental_mediation_specializes_reference_mcp
 
     assert result.selected_family is SoftControlFamily.SEEK_CONTEXT
     assert result.realized_family is SoftControlFamily.SEEK_CONTEXT
+    assert result.executive_state_summary["probe_path_state"] == "available"
+    assert result.executive_state_summary["probe_unavailable_reason"] is None
     _assert_allocation_diagnostics_shape(
         result.control_ledger_summary["allocation_diagnostics"],
         activation_threshold=0.37,
         expected_alpha=0.75,
         expect_allocated_equals_online=False,
+        expected_probe_path_state="available",
+        expected_probe_unavailable_reason=None,
         expected_mediation={
             "mediation_active": True,
             "mediation_identity": False,
@@ -292,11 +304,15 @@ def test_reference_runtime_step_result_certifies_full_commitment_when_runtime_pa
     assert result.control_ledger_summary["brake_state"] == "guarded"
     assert result.control_ledger_summary["budget_band"] == "high"
     assert result.control_ledger_summary["primary_reason"] is None
+    assert result.executive_state_summary["probe_path_state"] == "available"
+    assert result.executive_state_summary["probe_unavailable_reason"] is None
     _assert_allocation_diagnostics_shape(
         result.control_ledger_summary["allocation_diagnostics"],
         activation_threshold=0.22,
         expected_alpha=0.75,
         expect_allocated_equals_online=False,
+        expected_probe_path_state="available",
+        expected_probe_unavailable_reason=None,
         expected_mediation={
             "mediation_active": False,
             "mediation_identity": True,
@@ -374,6 +390,8 @@ def test_reference_runtime_step_replay_publication_can_lift_check_allocation_wit
         "selected_delta_over_neutral",
         "chi_t",
         "rejected_cheaper_families",
+        "probe_path_state",
+        "probe_unavailable_reason",
         "probe_result_class",
         "verification_state",
         "explainability_profile",
@@ -1183,6 +1201,8 @@ def _assert_allocation_diagnostics_shape(
     activation_threshold: float,
     expected_alpha: float,
     expect_allocated_equals_online: bool,
+    expected_probe_path_state: str,
+    expected_probe_unavailable_reason: str | None,
     expected_mediation: dict[str, object],
 ) -> None:
     assert tuple(payload) == (
@@ -1191,6 +1211,8 @@ def _assert_allocation_diagnostics_shape(
         "selected_delta_over_neutral",
         "chi_t",
         "rejected_cheaper_families",
+        "probe_path_state",
+        "probe_unavailable_reason",
         "probe_result_class",
         "verification_state",
         "explainability_profile",
@@ -1206,6 +1228,8 @@ def _assert_allocation_diagnostics_shape(
         isinstance(family, str) and family
         for family in payload["rejected_cheaper_families"]
     )
+    assert payload["probe_path_state"] == expected_probe_path_state
+    assert payload["probe_unavailable_reason"] == expected_probe_unavailable_reason
     probe_result_class = payload["probe_result_class"]
     assert probe_result_class is None or (
         isinstance(probe_result_class, str) and probe_result_class

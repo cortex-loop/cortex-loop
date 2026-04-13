@@ -105,14 +105,17 @@ def build_reference_executive_state(
         host_friction_level=_host_friction_level(
             support_snapshot,
             executive_environment_view,
+            probe_path_state=_probe_path_state(opportunities),
             recent_probe_result_class=recent_probe_result_class,
         ),
         prior_state=prior_brake_state,
     )
+    probe_path_state = _probe_path_state(opportunities)
     probe_backed_families = _probe_backed_families(opportunities)
     host_friction_level = _host_friction_level(
         support_snapshot,
         executive_environment_view,
+        probe_path_state=probe_path_state,
         recent_probe_result_class=recent_probe_result_class,
     )
     host_friction_tags = _host_friction_tags(support_snapshot, executive_environment_view)
@@ -176,6 +179,8 @@ def build_reference_executive_state(
         host_friction_level=host_friction_level,
         visible_burden_scale=_visible_burden_scale(explainability_profile),
         explainability_profile=explainability_profile,
+        probe_path_state=probe_path_state,
+        probe_unavailable_reason=_probe_unavailable_reason(opportunities, probe_path_state),
         recent_probe_result_class=recent_probe_result_class,
     )
     brake_view = ReferenceBrakeView(
@@ -331,6 +336,7 @@ def _host_friction_level(
     support_snapshot: SupportSnapshot,
     executive_environment_view: ExecutiveEnvironmentView,
     *,
+    probe_path_state: str,
     recent_probe_result_class: str | None = None,
 ) -> float:
     heuristic_level = 0.0
@@ -346,6 +352,8 @@ def _host_friction_level(
         return max(heuristic_level, 0.8)
     if recent_probe_result_class in {"degraded", "unsupported"}:
         return max(heuristic_level, 0.65)
+    if probe_path_state == "available":
+        return 0.0
     return heuristic_level
 
 
@@ -534,6 +542,38 @@ def _probe_backed_families(
         for opportunity in opportunities
         if opportunity.realizable and opportunity.probe_contract is not None
     )
+
+
+def _probe_path_state(
+    opportunities: Sequence[HostNativeOpportunity],
+) -> str:
+    has_relevant_probe = any(
+        opportunity.probe_contract is not None for opportunity in opportunities
+    )
+    if not has_relevant_probe:
+        return "absent"
+    if any(
+        opportunity.probe_contract is not None and opportunity.realizable
+        for opportunity in opportunities
+    ):
+        return "available"
+    return "unavailable"
+
+
+def _probe_unavailable_reason(
+    opportunities: Sequence[HostNativeOpportunity],
+    probe_path_state: str,
+) -> str | None:
+    if probe_path_state != "unavailable":
+        return None
+    for opportunity in opportunities:
+        if (
+            opportunity.probe_contract is not None
+            and not opportunity.realizable
+            and opportunity.degradation_reason is not None
+        ):
+            return opportunity.degradation_reason
+    return None
 
 
 def _explainability_profile(

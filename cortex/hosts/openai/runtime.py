@@ -66,6 +66,7 @@ from cortex.sre.modulators import (
     update_executive_modulators,
 )
 from cortex.sre.operator_routing import OperatorTaskMode
+from cortex.sre.opportunities import BoundedProbeContract, HostNativeOpportunity
 from cortex.sre.policy_view import ExecutivePolicyView, build_executive_policy_view
 from cortex.sre.preservation import (
     PreservationState,
@@ -115,6 +116,8 @@ _ALLOCATION_DIAGNOSTICS_KEYS = (
     "selected_delta_over_neutral",
     "chi_t",
     "rejected_cheaper_families",
+    "probe_path_state",
+    "probe_unavailable_reason",
     "probe_result_class",
     "verification_state",
     "explainability_profile",
@@ -753,6 +756,10 @@ class OpenAIRuntimeStepResult:
             "feedback_pressure_tags": sorted(
                 self.executive_state.control_allocation.feedback_pressure_tags
             ),
+            "probe_path_state": self.executive_state.control_allocation.probe_path_state,
+            "probe_unavailable_reason": (
+                self.executive_state.control_allocation.probe_unavailable_reason
+            ),
             "active_track_ref": self.executive_state.goal_continuity.active_track_ref,
             "pending_goal_refs": list(self.executive_state.goal_continuity.pending_goal_refs),
             "resume_anchor_available": self.executive_state.goal_continuity.resume_anchor_available,
@@ -893,19 +900,25 @@ def run_openai_runtime_step(
         next_recommended_move=prior_session.next_recommended_move,
         preservation_state=carried_preservation_state,
     )
+    support_snapshot = _build_support_snapshot(
+        provisional_session=provisional_session,
+        bound_event=bound_event,
+        dispatch_decision=dispatch_decision,
+        warnings=warnings,
+        reminders=continuity_reminders,
+    )
+    opportunities = _openai_host_native_opportunities(bound_event)
     executive_state = build_reference_executive_state(
         bound_event.observation,
-        _build_support_snapshot(
-            provisional_session=provisional_session,
-            bound_event=bound_event,
-            dispatch_decision=dispatch_decision,
-            warnings=warnings,
-            reminders=continuity_reminders,
-        ),
+        support_snapshot,
         _build_executive_environment_view(normalized_payload),
         provisional_session,
+        opportunities=opportunities,
     )
-    selection = select_reference_soft_control(executive_state)
+    selection = select_reference_soft_control(
+        executive_state,
+        opportunities=opportunities,
+    )
     selected_family = selection.selected_family
     brake_state = executive_state.brake.brake_state
     dominant_uncertainty_sources = _dominant_uncertainty_sources(executive_state)
@@ -934,7 +947,15 @@ def run_openai_runtime_step(
                 selection.scorecard,
                 selected_family=selected_family,
             ),
-            probe_result_class=None,
+            probe_path_state=executive_state.control_allocation.probe_path_state,
+            probe_unavailable_reason=(
+                executive_state.control_allocation.probe_unavailable_reason
+            ),
+            probe_result_class=_probe_result_class(
+                realized_family=realized_family,
+                executive_state=executive_state,
+                opportunities=opportunities,
+            ),
             verification_state=verification_state_for_runtime(
                 dispatch_decision=dispatch_decision,
                 commitment_result_kind=commitment_result_kind,
@@ -1006,6 +1027,11 @@ def run_openai_runtime_step(
         warning_codes=tuple(warnings),
         host_friction_tags=tuple(
             sorted(executive_state.control_allocation.host_friction_tags)
+        ),
+        probe_result_class=_probe_result_class(
+            realized_family=realized_family,
+            executive_state=executive_state,
+            opportunities=opportunities,
         ),
     )
     next_recommended_move = _next_recommended_move_for_step(
@@ -1350,6 +1376,44 @@ def _build_support_snapshot(
             constraint_tags=constraint_tags,
         ),
         exec_memory_pub=SupportExecMemoryState(),
+    )
+
+
+def _openai_host_native_opportunities(
+    bound_event: BoundOpenAIHostEvent,
+) -> tuple[HostNativeOpportunity, ...]:
+    runtime_tag = bound_event.lifecycle_surface.runtime_name
+    return (
+        HostNativeOpportunity(
+            opportunity_ref="openai.runtime.probe.check",
+            supported_families=frozenset({SoftControlFamily.CHECK}),
+            realizable=False,
+            degradation_reason="documented-probe-surface-unavailable",
+            safer_fallback_family=SoftControlFamily.NEUTRAL,
+            native_surface_tags=frozenset({runtime_tag, "bounded-probe"}),
+            probe_contract=BoundedProbeContract(
+                uncertainty_target="environment",
+                allowed_family=SoftControlFamily.CHECK,
+                timeout_seconds=2,
+                output_cap=64,
+                failure_classes=frozenset({"timed-out", "degraded", "unsupported"}),
+            ),
+        ),
+        HostNativeOpportunity(
+            opportunity_ref="openai.runtime.probe.seek-context",
+            supported_families=frozenset({SoftControlFamily.SEEK_CONTEXT}),
+            realizable=False,
+            degradation_reason="documented-probe-surface-unavailable",
+            safer_fallback_family=SoftControlFamily.NEUTRAL,
+            native_surface_tags=frozenset({runtime_tag, "bounded-probe"}),
+            probe_contract=BoundedProbeContract(
+                uncertainty_target="host-capability",
+                allowed_family=SoftControlFamily.SEEK_CONTEXT,
+                timeout_seconds=5,
+                output_cap=256,
+                failure_classes=frozenset({"timed-out", "degraded", "unsupported"}),
+            ),
+        ),
     )
 
 
@@ -1815,6 +1879,24 @@ def _primary_reason(warnings: tuple[str, ...]) -> str | None:
     return warnings[0] if warnings else None
 
 
+def _probe_result_class(
+    *,
+    realized_family: SoftControlFamily,
+    executive_state: ReferenceExecutiveState,
+    opportunities: tuple[HostNativeOpportunity, ...],
+) -> str | None:
+    if realized_family not in executive_state.control_allocation.probe_backed_families:
+        return None
+    for opportunity in opportunities:
+        if (
+            opportunity.realizable
+            and opportunity.probe_contract is not None
+            and opportunity.probe_contract.allowed_family is realized_family
+        ):
+            return "succeeded"
+    return None
+
+
 def _validate_allocation_diagnostics_payload(payload: dict[str, Any], label: str) -> None:
     if not isinstance(payload, dict):
         actual_type = type(payload).__name__
@@ -1840,6 +1922,25 @@ def _validate_allocation_diagnostics_payload(payload: dict[str, Any], label: str
     ):
         raise ValueError(
             f"{label}.rejected_cheaper_families must contain only non-empty values after trimming."
+        )
+    if payload["probe_path_state"] not in {"available", "unavailable", "absent"}:
+        raise ValueError(
+            f"{label}.probe_path_state must be one of ['absent', 'available', 'unavailable']."
+        )
+    probe_unavailable_reason = payload["probe_unavailable_reason"]
+    if probe_unavailable_reason is not None and not (
+        isinstance(probe_unavailable_reason, str) and probe_unavailable_reason.strip()
+    ):
+        raise ValueError(
+            f"{label}.probe_unavailable_reason must be non-empty after trimming when provided."
+        )
+    if payload["probe_path_state"] == "unavailable" and probe_unavailable_reason is None:
+        raise ValueError(
+            f"{label}.probe_unavailable_reason is required when probe_path_state is `unavailable`."
+        )
+    if payload["probe_path_state"] != "unavailable" and probe_unavailable_reason is not None:
+        raise ValueError(
+            f"{label}.probe_unavailable_reason is only valid when probe_path_state is `unavailable`."
         )
     probe_result_class = payload["probe_result_class"]
     if probe_result_class is not None and not (
@@ -1963,6 +2064,8 @@ def _copy_allocation_diagnostics_payload(payload: dict[str, Any]) -> dict[str, A
         "selected_delta_over_neutral": payload["selected_delta_over_neutral"],
         "chi_t": payload["chi_t"],
         "rejected_cheaper_families": list(payload["rejected_cheaper_families"]),
+        "probe_path_state": payload["probe_path_state"],
+        "probe_unavailable_reason": payload["probe_unavailable_reason"],
         "probe_result_class": payload["probe_result_class"],
         "verification_state": payload["verification_state"],
         "explainability_profile": payload["explainability_profile"],

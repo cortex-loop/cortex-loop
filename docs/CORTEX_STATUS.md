@@ -50,9 +50,9 @@ Answering stance:
 
 ## Current Focus
 
-- Current tracked train: `measured-friction-stable-brake-and-bounded-ledger`
-- Active quality/risk focus: Cortex is finishing the executive substrate before cross-host shadow: host friction should be measured with bounded probes when lawful, guarded/latched brake transitions should use hysteresis instead of cliff-edge snapping, and the runtime should expose a bounded executive ledger rather than raw scratchpad narration. Cross-host shadow remains the next train after this substrate seam lands.
-- Next product train after the current focus: `support-conditioned-intervention-pricing-cross-host-shadow`
+- Current tracked train: `support-conditioned-intervention-pricing-cross-host-shadow`
+- Active quality/risk focus: The host-sensing parity substrate is now landed: reference can use bounded probe evidence for host friction, OpenAI/Claude/Gemini surface explicit probe-unavailable truth instead of silent fallback, and the stable-brake plus bounded-ledger substrate is in place. The active train is now shadow-only cross-host support-conditioned intervention pricing over explicit AUX-owned host/tool reliability priors without widening shipping-default behavior.
+- Next product train after the current focus: `bounded-executive-audit-ingress`
 
 ## Bio-To-Code Matrix
 
@@ -155,19 +155,19 @@ Workflow gates marked `required` are contractual gates checked by `repo_workflow
 
 ## Next Product Train
 
-- Train: `support-conditioned-intervention-pricing-cross-host-shadow`
-- Surface: `experimental`
-- Executive benefit: Gather non-shipping cross-host evidence that support-conditioned intervention pricing improves control quality beyond the reference seam before any broader Q_mem rollout.
-- Why now: After the measured-friction, stable-brake, and bounded-ledger substrate lands, the next leverage is testing whether support-conditioned control carries real value on non-shipping host surfaces without widening Q_mem beyond the explicit removable reference replay seam.
-- Primary metric: `shadow evaluation across Claude, Gemini, and reference shows repeat-stable support-conditioned intervention-pricing lift without changing commitment truth or shipping-default behavior`
-- Guardrail: `no non-reference Q_mem ingress, no shipping-default changes, no host-specific policy forks, and no hidden memory paths`
-- Kill rule: `cut any cross-host shadow seam that only shows lift through host-specific prompt tricks, contradiction smoothing, or changes to shipping-default behavior`
+- Train: `bounded-executive-audit-ingress`
+- Surface: `product + internal`
+- Executive benefit: Make contextual structured audit a real executive behavior so Cortex can expose bounded control observables when stakes or uncertainty justify it without turning into a scratchpad product.
+- Why now: After host-sensing parity lands and cross-host shadow earns or falsifies explicit reliability memory, the remaining leverage is cashing out C^{vis} as contextual bounded audit rather than leaving it as a scoring-only term.
+- Primary metric: `high-uncertainty or explicit-audit flows surface a compact executive audit block while default flows remain terse and raw chain-of-thought stays absent`
+- Guardrail: `no raw chain-of-thought exposure, no always-on verbosity, no new host-specific audit forks, and no UI bureaucracy pretending to be executive function`
+- Kill rule: `cut any bounded-audit seam that increases output volume without increasing truthful control observability or that leaks hidden reasoning`
 
 ## Where To Work Next
 
-- Finish the measured-friction substrate so bounded probes can back host-friction pricing instead of leaving C^{host} at guessed fallback values.
-- Land hysteresis on guarded and latched brake transitions while keeping contradiction spikes and minimum-burden latched relief honest.
-- Keep explicit AUX-owned Q_mem reference-only and removable until the restored cross-host shadow train tests host-reliability memory without widening hidden memory or shipping-default behavior.
+- Run the restored cross-host shadow train now that every host either has lawful bounded probes or explicit probe-unavailable truth instead of silent host-friction guessing.
+- Keep host/tool reliability priors AUX-owned, TTL-bounded, contradiction-sensitive, and shadow-only until repeat-stable lift is proved without changing shipping-default behavior.
+- Queue bounded executive audit ingress after the shadow train so C^{vis} becomes contextual structured audit rather than a scoring-only demand for silence.
 
 ## Canonical Proof
 

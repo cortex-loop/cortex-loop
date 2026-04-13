@@ -52,6 +52,8 @@ def test_gemini_host_control_action_endpoint_returns_ordered_g1_records_and_muta
         "selected_delta_over_neutral",
         "chi_t",
         "rejected_cheaper_families",
+        "probe_path_state",
+        "probe_unavailable_reason",
         "probe_result_class",
         "verification_state",
         "explainability_profile",
