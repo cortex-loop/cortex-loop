@@ -430,6 +430,9 @@ reliability-derived component rather than letting stale host confidence survive.
 Any broader cross-host claim about that shadow lift is earned only to the extent that
 lawful host-distinct evidence exists; if non-reference hosts alias under lawful
 observables, the claim must narrow instead of pretending distinct lift was proved.
+Accordingly, the bounded shadow proof must keep overall cross-host `claim_mode`
+separate from whether lawful non-reference host-distinct evidence exists; the latter can
+be earned before host-local branch continuity is repaired.
 
 ### 6.5 Combined score
 

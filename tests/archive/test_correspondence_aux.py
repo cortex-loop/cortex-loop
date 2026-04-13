@@ -310,7 +310,7 @@ EXPECTATIONS = (
                 test_file="tests/experimental/test_aux_cross_host_shadow.py",
                 test_names=(
                     "test_evaluate_aux_cross_host_shadow_reports_remaining_branch_gap_and_claim_limitation_truth",
-                    "test_evaluate_aux_cross_host_shadow_detects_non_reference_host_aliasing_and_forces_claim_limitation",
+                    "test_evaluate_aux_cross_host_shadow_earns_host_distinct_non_reference_evidence_from_trace_structure",
                 ),
             ),
         ),
@@ -384,5 +384,5 @@ def test_aux_correspondence_text_keeps_geometry_lift_and_publication_rows_explic
     assert "| reference-only replay runner over `OfflineSupportPublication -> augment_snapshot_with_offline_publication() -> build_support_memory_prior_appendix() -> select_reference_soft_control(memory_priors=...)` | `evaluate_aux_reference_q_mem_replay()` |" in correspondence_text
     assert "| cross-host shadow scenario over explicit AUX-owned offline publication, later target snapshot, canonical host name, fixed scenario class, and typed continuity basis for branch disambiguation | `AuxCrossHostShadowScenario` |" in correspondence_text
     assert "| cross-host shadow case result over merged publication, explicit support priors, full vs reliability-disabled vs removal comparisons, host signature truth, continuity-basis truth, deltas, and fixed failure labels | `AuxCrossHostShadowCaseResult` |" in correspondence_text
-    assert "| cross-host shadow aggregate result over per-host weighted-family coverage, stable negative cases, host-aliasing truth, blocker classification, and explicit claim mode | `AuxCrossHostShadowEvaluationResult` |" in correspondence_text
-    assert "| cross-host shadow runner over `OfflineSupportPublication -> augment_snapshot_with_offline_publication() -> build_support_memory_prior_appendix(full|reliability-disabled) -> select_reference_soft_control(memory_priors=...)` with host-local vs reference-projected branch disambiguation, contradiction-first invalidation, removal reversion, and claim-scope narrowing when lawful host observables alias | `evaluate_aux_cross_host_shadow()` |" in correspondence_text
+    assert "| cross-host shadow aggregate result over per-host weighted-family coverage, stable negative cases, distinct-signature-class truth, explicit non-reference evidence mode, blocker classification, and explicit claim mode | `AuxCrossHostShadowEvaluationResult` |" in correspondence_text
+    assert "| cross-host shadow runner over `OfflineSupportPublication -> augment_snapshot_with_offline_publication() -> build_support_memory_prior_appendix(full|reliability-disabled) -> select_reference_soft_control(memory_priors=...)` with host-local vs reference-projected branch disambiguation, contradiction-first invalidation, removal reversion, lawful trace-structural host distinction, and claim-scope narrowing when broader cross-host acceptance still fails | `evaluate_aux_cross_host_shadow()` |" in correspondence_text
