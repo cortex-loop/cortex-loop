@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from typing import Protocol
 
 from cortex.core.environment import CAPABILITY_VIEW, EXECUTION_TRACE, ExecutiveEnvironmentView
@@ -16,6 +17,7 @@ from .feedback import (
 )
 from .families import SoftControlFamily
 from .goals import GoalContinuityView
+from .opportunities import HostNativeOpportunity, PROBE_FAILURE_CLASSES
 from .state import (
     ReferenceBrakeView,
     ReferenceControlAllocationView,
@@ -49,6 +51,7 @@ def build_reference_executive_state(
     support_snapshot: SupportSnapshot,
     executive_environment_view: ExecutiveEnvironmentView,
     prior_session: PriorReferenceRuntimeSessionLike | None = None,
+    opportunities: Sequence[HostNativeOpportunity] = (),
 ) -> ReferenceExecutiveState:
     if not isinstance(observation, ObservationBundle):
         actual_type = type(observation).__name__
@@ -75,6 +78,8 @@ def build_reference_executive_state(
     active_track_ref = _active_track_ref(branch_registry, prior_session)
     main_goal_ref = pending_goal_refs[0] if pending_goal_refs else None
     prior_feedback_window_summary = _prior_feedback_window_summary(prior_session)
+    prior_brake_state = _prior_brake_state(prior_session)
+    recent_probe_result_class = _recent_probe_result_class(prior_session)
     contradiction_spike_flags = _contradiction_spike_flags(
         support_snapshot,
         missing_resume_anchor,
@@ -97,9 +102,25 @@ def build_reference_executive_state(
             + prior_feedback_window_summary.degradation_pressure_bonus
         ),
         missing_resume_anchor=missing_resume_anchor,
-        host_friction_level=_host_friction_level(support_snapshot, executive_environment_view),
+        host_friction_level=_host_friction_level(
+            support_snapshot,
+            executive_environment_view,
+            recent_probe_result_class=recent_probe_result_class,
+        ),
+        prior_state=prior_brake_state,
+    )
+    probe_backed_families = _probe_backed_families(opportunities)
+    host_friction_level = _host_friction_level(
+        support_snapshot,
+        executive_environment_view,
+        recent_probe_result_class=recent_probe_result_class,
     )
     host_friction_tags = _host_friction_tags(support_snapshot, executive_environment_view)
+    explainability_profile = _explainability_profile(
+        brake_state=brake_evaluation.state,
+        uncertainty_estimates=uncertainty_estimates,
+        recent_probe_result_class=recent_probe_result_class,
+    )
 
     goal_continuity = GoalContinuityView(
         main_goal_ref=main_goal_ref,
@@ -129,6 +150,7 @@ def build_reference_executive_state(
             brake_evaluation.state,
             host_friction_tags,
             uncertainty_estimates,
+            probe_backed_families=probe_backed_families,
         ),
     )
     control_allocation = ReferenceControlAllocationView(
@@ -139,13 +161,22 @@ def build_reference_executive_state(
             brake_state=brake_evaluation.state,
             host_friction_tags=host_friction_tags,
             uncertainty_estimates=uncertainty_estimates,
+            probe_backed_families=probe_backed_families,
         ),
         host_friction_tags=host_friction_tags,
-        feedback_pressure_tags=_feedback_pressure_tags(prior_feedback_window_summary),
+        feedback_pressure_tags=_feedback_pressure_tags(
+            prior_feedback_window_summary,
+            recent_probe_result_class=recent_probe_result_class,
+        ),
+        probe_backed_families=probe_backed_families,
         productive_exploration_bonus=_productive_exploration_bonus(
             prior_feedback_window_summary
         ),
         oscillation_penalty=_oscillation_penalty(prior_feedback_window_summary),
+        host_friction_level=host_friction_level,
+        visible_burden_scale=_visible_burden_scale(explainability_profile),
+        explainability_profile=explainability_profile,
+        recent_probe_result_class=recent_probe_result_class,
     )
     brake_view = ReferenceBrakeView(
         brake_state=brake_evaluation.state,
@@ -299,12 +330,23 @@ def _prior_feedback_window_summary(
 def _host_friction_level(
     support_snapshot: SupportSnapshot,
     executive_environment_view: ExecutiveEnvironmentView,
+    *,
+    recent_probe_result_class: str | None = None,
 ) -> float:
+    heuristic_level = 0.0
     if support_snapshot.host.constraint_tags:
-        return 0.65
+        heuristic_level = max(heuristic_level, 0.65)
     if CAPABILITY_VIEW not in executive_environment_view.available_query_kinds:
-        return 0.6
-    return 0.0
+        heuristic_level = max(heuristic_level, 0.6)
+    if EXECUTION_TRACE not in executive_environment_view.available_query_kinds:
+        heuristic_level = max(heuristic_level, 0.45)
+    if recent_probe_result_class == "succeeded":
+        return min(heuristic_level, 0.2) if heuristic_level > 0.0 else 0.1
+    if recent_probe_result_class == "timed-out":
+        return max(heuristic_level, 0.8)
+    if recent_probe_result_class in {"degraded", "unsupported"}:
+        return max(heuristic_level, 0.65)
+    return heuristic_level
 
 
 def _mode_tag_for_event(native_event_name: str, brake_state: BrakeState) -> str:
@@ -324,6 +366,8 @@ def _family_mask_for_state(
     brake_state: BrakeState,
     host_friction_tags: frozenset[str],
     uncertainty_estimates: tuple[UncertaintyEstimate, ...],
+    *,
+    probe_backed_families: frozenset[SoftControlFamily],
 ) -> frozenset[SoftControlFamily]:
     families = {
         SoftControlFamily.NEUTRAL,
@@ -337,6 +381,7 @@ def _family_mask_for_state(
         host_friction_tags,
         uncertainty_estimates=uncertainty_estimates,
         brake_state=brake_state,
+        probe_backed_families=probe_backed_families,
     ):
         families.add(SoftControlFamily.SEEK_CONTEXT)
     return frozenset(families)
@@ -362,6 +407,7 @@ def _top_family_set(
     brake_state: BrakeState,
     host_friction_tags: frozenset[str],
     uncertainty_estimates: tuple[UncertaintyEstimate, ...],
+    probe_backed_families: frozenset[SoftControlFamily],
 ) -> frozenset[SoftControlFamily]:
     families = {SoftControlFamily.NEUTRAL}
     if native_event_name == "approval/request":
@@ -374,6 +420,7 @@ def _top_family_set(
         host_friction_tags,
         uncertainty_estimates=uncertainty_estimates,
         brake_state=brake_state,
+        probe_backed_families=probe_backed_families,
     ):
         families.add(SoftControlFamily.SEEK_CONTEXT)
     return frozenset(families)
@@ -398,7 +445,17 @@ def _has_seek_context_pressure(
     *,
     uncertainty_estimates: tuple[UncertaintyEstimate, ...],
     brake_state: BrakeState,
+    probe_backed_families: frozenset[SoftControlFamily],
 ) -> bool:
+    if (
+        SoftControlFamily.SEEK_CONTEXT in probe_backed_families
+        and any(
+            estimate.class_tag in {"environment", "host-capability"}
+            and estimate.level >= 0.45
+            for estimate in uncertainty_estimates
+        )
+    ):
+        return True
     if not any(tag in _SEEK_CONTEXT_PRESSURE_TAGS for tag in host_friction_tags):
         return False
     if brake_state is not BrakeState.LATCHED:
@@ -424,6 +481,8 @@ def _allow_latched_seek_context_relief(
 
 def _feedback_pressure_tags(
     prior_feedback_window_summary: ReferenceFeedbackWindowSummary,
+    *,
+    recent_probe_result_class: str | None,
 ) -> frozenset[str]:
     tags: set[str] = set()
     if prior_feedback_window_summary.rejection_count >= 1:
@@ -441,7 +500,69 @@ def _feedback_pressure_tags(
         or prior_feedback_window_summary.continuity_improvement_count >= 1
     ):
         tags.add("feedback:productive-exploration")
+    if recent_probe_result_class in PROBE_FAILURE_CLASSES:
+        tags.add("feedback:probe-friction")
+    if recent_probe_result_class == "succeeded":
+        tags.add("feedback:probe-success")
     return frozenset(tags)
+
+
+def _prior_brake_state(
+    prior_session: PriorReferenceRuntimeSessionLike | None,
+) -> BrakeState | None:
+    if prior_session is None or not prior_session.brake_history:
+        return None
+    return BrakeState(prior_session.brake_history[-1])
+
+
+def _recent_probe_result_class(
+    prior_session: PriorReferenceRuntimeSessionLike | None,
+) -> str | None:
+    if prior_session is None:
+        return None
+    for feedback in reversed(prior_session.feedback_window.entries):
+        if feedback.probe_result_class is not None:
+            return feedback.probe_result_class
+    return None
+
+
+def _probe_backed_families(
+    opportunities: Sequence[HostNativeOpportunity],
+) -> frozenset[SoftControlFamily]:
+    return frozenset(
+        opportunity.probe_contract.allowed_family
+        for opportunity in opportunities
+        if opportunity.realizable and opportunity.probe_contract is not None
+    )
+
+
+def _explainability_profile(
+    *,
+    brake_state: BrakeState,
+    uncertainty_estimates: tuple[UncertaintyEstimate, ...],
+    recent_probe_result_class: str | None,
+) -> str:
+    max_uncertainty = max(
+        (estimate.level for estimate in uncertainty_estimates),
+        default=0.0,
+    )
+    if (
+        brake_state is BrakeState.LATCHED
+        or max_uncertainty >= 0.75
+        or recent_probe_result_class in PROBE_FAILURE_CLASSES
+    ):
+        return "structured"
+    if brake_state is BrakeState.GUARDED or max_uncertainty >= 0.55:
+        return "focused"
+    return "minimal"
+
+
+def _visible_burden_scale(profile: str) -> float:
+    if profile == "structured":
+        return 0.35
+    if profile == "focused":
+        return 0.65
+    return 1.0
 
 
 def _productive_exploration_bonus(

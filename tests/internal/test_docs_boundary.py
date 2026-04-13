@@ -239,21 +239,20 @@ def test_status_registry_is_complete_and_stable() -> None:
         "reference": "reference_cli",
     }
     assert status["conformance_summary"]["shipping_default"] == "openai:operator_cli"
-    assert status["work_today"]["slug"] == "support-conditioned-intervention-pricing-cross-host-shadow"
-    assert "doctrine/reference cleanup has landed" in status["work_today"]["note"]
-    assert "neutral is pass-through continuation" in status["work_today"]["note"]
-    assert "latched minimum-burden uncertainty relief is re-earned" in status["work_today"]["note"]
-    assert "branch governance is burden-first" in status["work_today"]["note"]
-    assert "explicit AUX-owned support memory remains lawful and removable" in status["work_today"]["note"]
+    assert status["work_today"]["slug"] == "measured-friction-stable-brake-and-bounded-ledger"
+    assert "finishing the executive substrate before cross-host shadow" in status["work_today"]["note"]
+    assert "host friction should be measured with bounded probes" in status["work_today"]["note"]
+    assert "guarded/latched brake transitions should use hysteresis" in status["work_today"]["note"]
+    assert "bounded executive ledger" in status["work_today"]["note"]
     assert status["next_product_train"]["slug"] == "support-conditioned-intervention-pricing-cross-host-shadow"
     assert status["next_product_train"]["surface"] == "experimental"
     assert "support-conditioned intervention pricing" in status["next_product_train"]["executive_benefit"]
-    assert "With doctrine/reference cleanup landed on the reference seam" in status["next_product_train"]["why_now"]
+    assert "After the measured-friction, stable-brake, and bounded-ledger substrate lands" in status["next_product_train"]["why_now"]
     assert "without widening Q_mem" in status["next_product_train"]["why_now"]
     assert "shadow evaluation across Claude, Gemini, and reference" in status["next_product_train"]["primary_metric"]
-    assert "Gather cross-host shadow evidence" in status["where_to_work"][0]
-    assert "Keep explicit AUX-owned Q_mem reference-only and removable" in status["where_to_work"][1]
-    assert "Hold family-sensitive thresholds" in status["where_to_work"][2]
+    assert "Finish the measured-friction substrate" in status["where_to_work"][0]
+    assert "Land hysteresis on guarded and latched brake transitions" in status["where_to_work"][1]
+    assert "Keep explicit AUX-owned Q_mem reference-only and removable" in status["where_to_work"][2]
     closure_gates = {gate["id"]: gate for gate in status["closure_gates"]}
     assert closure_gates["main_synced"]["status"] == "required"
     assert closure_gates["cleanup_report"]["status"] == "required"
@@ -282,7 +281,7 @@ def test_generated_status_doc_includes_system_map_and_next_product_train() -> No
     assert "Active quality/risk focus" in text
     assert "## Packet To Code" in text
     assert "## Next Product Train" in text
-    assert "`support-conditioned-intervention-pricing-cross-host-shadow`" in text
+    assert "`measured-friction-stable-brake-and-bounded-ledger`" in text
     assert "`support-conditioned-intervention-pricing-cross-host-shadow`" in text
     assert "support-conditioned intervention pricing" in text
     assert "Shipping Product Lane\\nopenai:operator_cli" in text or "Shipping Product Lane" in text
@@ -290,10 +289,10 @@ def test_generated_status_doc_includes_system_map_and_next_product_train() -> No
     assert "Workflow gates marked `required` are contractual gates checked by `repo_workflow.py`" in text
     assert "| `main_synced` | `required` |" in text
     assert "| `cleanup_report` | `required` |" in text
-    assert "doctrine/reference cleanup has landed" in text
-    assert "neutral is pass-through continuation" in text
-    assert "latched minimum-burden uncertainty relief is re-earned" in text
-    assert "branch governance is burden-first" in text
+    assert "finishing the executive substrate before cross-host shadow" in text
+    assert "host friction should be measured with bounded probes" in text
+    assert "guarded/latched brake transitions should use hysteresis" in text
+    assert "bounded executive ledger" in text
     assert "proves support-side lift" not in text
 
 

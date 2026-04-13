@@ -55,7 +55,11 @@ from cortex.sre.feedback import (
     ReferenceRealizationFeedbackWindow,
     summarize_reference_feedback_window,
 )
-from cortex.hosts._executive_closure import closure_reason_tags as shared_closure_reason_tags
+from cortex.hosts._executive_closure import (
+    closure_reason_tags as shared_closure_reason_tags,
+)
+from cortex.hosts._executive_closure import recent_probe_failure_class as recent_probe_failure_class_from_feedback_window
+from cortex.hosts._executive_closure import verification_state_for_runtime
 from cortex.sre.modulators import (
     ExecutiveModulatorMemory,
     ExecutiveModulatorState,
@@ -69,6 +73,9 @@ from cortex.sre.preservation import (
     derive_preservation_state,
 )
 from cortex.sre.reference_builder import build_reference_executive_state
+from cortex.sre.reference_scoring import (
+    rejected_cheaper_families as scorecard_rejected_cheaper_families,
+)
 from cortex.sre.reference_scoring import select_reference_soft_control
 from cortex.sre.state import ReferenceExecutiveState
 from cortex.sre.verified_work import VerificationOutcome, WorkContract
@@ -107,6 +114,10 @@ _ALLOCATION_DIAGNOSTICS_KEYS = (
     "activation_threshold",
     "selected_delta_over_neutral",
     "chi_t",
+    "rejected_cheaper_families",
+    "probe_result_class",
+    "verification_state",
+    "explainability_profile",
     "scores",
     "mediation",
 )
@@ -919,6 +930,16 @@ def run_openai_runtime_step(
             selected_delta_over_neutral=selection.neutral_dominance.margin_over_neutral,
             applied_activation_threshold=selection.neutral_dominance.activation_threshold,
             chi_t=selection.chi_t,
+            rejected_cheaper_families=scorecard_rejected_cheaper_families(
+                selection.scorecard,
+                selected_family=selected_family,
+            ),
+            probe_result_class=None,
+            verification_state=verification_state_for_runtime(
+                dispatch_decision=dispatch_decision,
+                commitment_result_kind=commitment_result_kind,
+            ),
+            explainability_profile=executive_state.control_allocation.explainability_profile,
             mediation_payload=selection.mediation_finalization.as_payload(),
         ),
     )
@@ -1457,7 +1478,9 @@ def _build_executive_signal_summary_inputs(
         ),
         previous_same_host_run_failed_before_completion=prior_session.last_failure_class is not None,
         recent_product_failure_class=prior_session.last_failure_class,
-        recent_probe_failure_class=None,
+        recent_probe_failure_class=recent_probe_failure_class_from_feedback_window(
+            prior_session.feedback_window
+        ),
         recent_warning_bearing_success_present=_recent_warning_bearing_success_present(
             prior_session
         ),
@@ -1805,6 +1828,29 @@ def _validate_allocation_diagnostics_payload(payload: dict[str, Any], label: str
         if isinstance(value, bool) or not isinstance(value, (int, float)):
             actual_type = type(value).__name__
             raise TypeError(f"{label}.{key} must be numeric, got {actual_type}.")
+    rejected_cheaper_families = payload["rejected_cheaper_families"]
+    if not isinstance(rejected_cheaper_families, list):
+        actual_type = type(rejected_cheaper_families).__name__
+        raise TypeError(
+            f"{label}.rejected_cheaper_families must be list[str], got {actual_type}."
+        )
+    if any(
+        not (isinstance(family, str) and family.strip())
+        for family in rejected_cheaper_families
+    ):
+        raise ValueError(
+            f"{label}.rejected_cheaper_families must contain only non-empty values after trimming."
+        )
+    probe_result_class = payload["probe_result_class"]
+    if probe_result_class is not None and not (
+        isinstance(probe_result_class, str) and probe_result_class.strip()
+    ):
+        raise ValueError(
+            f"{label}.probe_result_class must be non-empty after trimming when provided."
+        )
+    for key in ("verification_state", "explainability_profile"):
+        if not (isinstance(payload[key], str) and payload[key].strip()):
+            raise ValueError(f"{label}.{key} must be non-empty after trimming.")
     scores = payload["scores"]
     if not isinstance(scores, list):
         actual_type = type(scores).__name__
@@ -1890,6 +1936,7 @@ def _copy_allocation_diagnostics_payload(payload: dict[str, Any]) -> dict[str, A
             "online_score": score["online_score"],
             "memory_score": score["memory_score"],
             "allocated_score": score["allocated_score"],
+            "activation_threshold": score["activation_threshold"],
             "admissible": score["admissible"],
             "reason_tags": list(score["reason_tags"]),
         }
@@ -1915,6 +1962,10 @@ def _copy_allocation_diagnostics_payload(payload: dict[str, Any]) -> dict[str, A
         "activation_threshold": payload["activation_threshold"],
         "selected_delta_over_neutral": payload["selected_delta_over_neutral"],
         "chi_t": payload["chi_t"],
+        "rejected_cheaper_families": list(payload["rejected_cheaper_families"]),
+        "probe_result_class": payload["probe_result_class"],
+        "verification_state": payload["verification_state"],
+        "explainability_profile": payload["explainability_profile"],
         "scores": copied_scores,
         "mediation": copied_mediation,
     }

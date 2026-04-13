@@ -53,6 +53,7 @@ def evaluate_brake_state(
     repeated_degradations: int = 0,
     missing_resume_anchor: bool = False,
     host_friction_level: float = 0.0,
+    prior_state: BrakeState | None = None,
 ) -> BrakeEvaluation:
     for estimate in uncertainty_estimates:
         if not isinstance(estimate, UncertaintyEstimate):
@@ -67,6 +68,12 @@ def evaluate_brake_state(
         raise ValueError("repeated_degradations must be non-negative.")
     if not 0.0 <= host_friction_level <= 1.0:
         raise ValueError("host_friction_level must be between 0.0 and 1.0.")
+    if prior_state is not None and not isinstance(prior_state, BrakeState):
+        actual_type = type(prior_state).__name__
+        raise TypeError(
+            "evaluate_brake_state.prior_state must be BrakeState | None, "
+            f"got {actual_type}."
+        )
 
     max_estimate = _max_estimate(uncertainty_estimates)
     spike_tags = _all_spike_tags(uncertainty_estimates)
@@ -91,13 +98,36 @@ def evaluate_brake_state(
             spike_tags=spike_tags,
         )
 
-    if (
-        spike_tags
-        or repeated_failures == 1
-        or repeated_degradations == 1
-        or missing_resume_anchor
-        or host_friction_level >= 0.6
-        or max_estimate.level >= 0.55
+    if _should_stay_latched(
+        prior_state=prior_state,
+        spike_tags=spike_tags,
+        repeated_failures=repeated_failures,
+        repeated_degradations=repeated_degradations,
+        host_friction_level=host_friction_level,
+        max_uncertainty=max_estimate.level,
+    ):
+        return BrakeEvaluation(
+            state=BrakeState.LATCHED,
+            dominant_cause=_dominant_cause(
+                max_estimate=max_estimate,
+                spike_tags=spike_tags,
+                repeated_failures=repeated_failures,
+                repeated_degradations=repeated_degradations,
+                missing_resume_anchor=missing_resume_anchor,
+                host_friction_level=host_friction_level,
+            ),
+            max_uncertainty=max_estimate.level,
+            spike_tags=spike_tags,
+        )
+
+    if _should_be_guarded(
+        prior_state=prior_state,
+        spike_tags=spike_tags,
+        repeated_failures=repeated_failures,
+        repeated_degradations=repeated_degradations,
+        missing_resume_anchor=missing_resume_anchor,
+        host_friction_level=host_friction_level,
+        max_uncertainty=max_estimate.level,
     ):
         return BrakeEvaluation(
             state=BrakeState.GUARDED,
@@ -118,6 +148,48 @@ def evaluate_brake_state(
         dominant_cause=None,
         max_uncertainty=max_estimate.level,
         spike_tags=spike_tags,
+    )
+
+
+def _should_stay_latched(
+    *,
+    prior_state: BrakeState | None,
+    spike_tags: frozenset[str],
+    repeated_failures: int,
+    repeated_degradations: int,
+    host_friction_level: float,
+    max_uncertainty: float,
+) -> bool:
+    if prior_state is not BrakeState.LATCHED:
+        return False
+    return bool(
+        spike_tags & _LATCHING_SPIKES
+        or repeated_failures >= 2
+        or repeated_degradations >= 2
+        or host_friction_level >= 0.75
+        or max_uncertainty >= 0.70
+    )
+
+
+def _should_be_guarded(
+    *,
+    prior_state: BrakeState | None,
+    spike_tags: frozenset[str],
+    repeated_failures: int,
+    repeated_degradations: int,
+    missing_resume_anchor: bool,
+    host_friction_level: float,
+    max_uncertainty: float,
+) -> bool:
+    guarded_host_threshold = 0.55 if prior_state is BrakeState.GUARDED else 0.60
+    guarded_uncertainty_threshold = 0.45 if prior_state is BrakeState.GUARDED else 0.55
+    return bool(
+        spike_tags
+        or repeated_failures == 1
+        or repeated_degradations == 1
+        or missing_resume_anchor
+        or host_friction_level >= guarded_host_threshold
+        or max_uncertainty >= guarded_uncertainty_threshold
     )
 
 

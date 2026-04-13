@@ -498,6 +498,7 @@ def _feedback(value: Any, label: str) -> ReferenceRealizationFeedback:
     optional_feedback_keys = (
         "evidence_state_moved",
         "continuity_improved",
+        "probe_result_class",
     )
     expected_keys = set(required_feedback_keys) | set(optional_feedback_keys)
     actual_keys = set(value)
@@ -523,6 +524,10 @@ def _feedback(value: Any, label: str) -> ReferenceRealizationFeedback:
         continuity_improved=_optional_bool(
             value.get("continuity_improved"),
             f"{label}.continuity_improved",
+        ),
+        probe_result_class=_optional_non_empty_string(
+            value.get("probe_result_class"),
+            f"{label}.probe_result_class",
         ),
     )
 

@@ -50,8 +50,8 @@ Answering stance:
 
 ## Current Focus
 
-- Current tracked train: `support-conditioned-intervention-pricing-cross-host-shadow`
-- Active quality/risk focus: The doctrine/reference cleanup has landed: neutral is pass-through continuation, latched minimum-burden uncertainty relief is re-earned through check and native seek-context, branch governance is burden-first, and explicit AUX-owned support memory remains lawful and removable. The active leverage is now cross-host shadow evidence for support-conditioned intervention pricing without shipping-default change.
+- Current tracked train: `measured-friction-stable-brake-and-bounded-ledger`
+- Active quality/risk focus: Cortex is finishing the executive substrate before cross-host shadow: host friction should be measured with bounded probes when lawful, guarded/latched brake transitions should use hysteresis instead of cliff-edge snapping, and the runtime should expose a bounded executive ledger rather than raw scratchpad narration. Cross-host shadow remains the next train after this substrate seam lands.
 - Next product train after the current focus: `support-conditioned-intervention-pricing-cross-host-shadow`
 
 ## Bio-To-Code Matrix
@@ -158,16 +158,16 @@ Workflow gates marked `required` are contractual gates checked by `repo_workflow
 - Train: `support-conditioned-intervention-pricing-cross-host-shadow`
 - Surface: `experimental`
 - Executive benefit: Gather non-shipping cross-host evidence that support-conditioned intervention pricing improves control quality beyond the reference seam before any broader Q_mem rollout.
-- Why now: With doctrine/reference cleanup landed on the reference seam, the next leverage is testing whether the sharper support-conditioned control carries real value on non-shipping host surfaces without widening Q_mem beyond the explicit removable reference replay seam.
+- Why now: After the measured-friction, stable-brake, and bounded-ledger substrate lands, the next leverage is testing whether support-conditioned control carries real value on non-shipping host surfaces without widening Q_mem beyond the explicit removable reference replay seam.
 - Primary metric: `shadow evaluation across Claude, Gemini, and reference shows repeat-stable support-conditioned intervention-pricing lift without changing commitment truth or shipping-default behavior`
 - Guardrail: `no non-reference Q_mem ingress, no shipping-default changes, no host-specific policy forks, and no hidden memory paths`
 - Kill rule: `cut any cross-host shadow seam that only shows lift through host-specific prompt tricks, contradiction smoothing, or changes to shipping-default behavior`
 
 ## Where To Work Next
 
-- Gather cross-host shadow evidence for support-conditioned intervention pricing on Claude, Gemini, and reference while holding the landed doctrine/reference law stable on the reference seam.
-- Keep explicit AUX-owned Q_mem reference-only and removable in live product behavior; shadow evidence may inform control quality without widening hidden memory or shipping-default behavior.
-- Hold family-sensitive thresholds, check/native-seek-context latched relief, burden-first branch control, and productive-exploration versus oscillation proof stable while testing cross-host shadow continuity.
+- Finish the measured-friction substrate so bounded probes can back host-friction pricing instead of leaving C^{host} at guessed fallback values.
+- Land hysteresis on guarded and latched brake transitions while keeping contradiction spikes and minimum-burden latched relief honest.
+- Keep explicit AUX-owned Q_mem reference-only and removable until the restored cross-host shadow train tests host-reliability memory without widening hidden memory or shipping-default behavior.
 
 ## Canonical Proof
 

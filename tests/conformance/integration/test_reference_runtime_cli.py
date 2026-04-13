@@ -179,6 +179,10 @@ def test_reference_runtime_cli_reads_event_file_and_emits_one_record_per_event()
         "activation_threshold",
         "selected_delta_over_neutral",
         "chi_t",
+        "rejected_cheaper_families",
+        "probe_result_class",
+        "verification_state",
+        "explainability_profile",
         "scores",
         "mediation",
     )
@@ -190,7 +194,7 @@ def test_reference_runtime_cli_reads_event_file_and_emits_one_record_per_event()
     assert [
         record["control_ledger"]["allocation_diagnostics"]["activation_threshold"]
         for record in records
-    ] == [0.36999999999999994, 0.26999999999999996, 0.22999999999999995]
+    ] == [0.36999999999999994, 0.31999999999999995, 0.22999999999999995]
     assert records[1]["control_ledger"]["allocation_diagnostics"]["scores"][0]["allocated_score"] != records[1]["control_ledger"]["allocation_diagnostics"]["scores"][0]["online_score"]
     assert records[2]["control_ledger"]["allocation_diagnostics"]["scores"][0]["allocated_score"] != records[2]["control_ledger"]["allocation_diagnostics"]["scores"][0]["online_score"]
     for record in records:
@@ -329,6 +333,10 @@ def test_reference_runtime_cli_record_shape_stays_locked_under_explicit_offline_
         "activation_threshold",
         "selected_delta_over_neutral",
         "chi_t",
+        "rejected_cheaper_families",
+        "probe_result_class",
+        "verification_state",
+        "explainability_profile",
         "scores",
         "mediation",
     )
@@ -442,6 +450,7 @@ def test_reference_runtime_cli_save_session_does_not_change_jsonl_output(tmp_pat
                 ],
                 "evidence_state_moved": True,
                 "continuity_improved": False,
+                "probe_result_class": "succeeded",
             },
             "feedback_window": [
                 {
@@ -453,6 +462,7 @@ def test_reference_runtime_cli_save_session_does_not_change_jsonl_output(tmp_pat
                     "host_friction_tags": ["capability-view-missing"],
                     "evidence_state_moved": False,
                     "continuity_improved": False,
+                    "probe_result_class": "succeeded",
                 },
                 {
                     "selected_family": "seek-context",
@@ -466,6 +476,7 @@ def test_reference_runtime_cli_save_session_does_not_change_jsonl_output(tmp_pat
                     ],
                     "evidence_state_moved": True,
                     "continuity_improved": False,
+                    "probe_result_class": "succeeded",
                 },
                 {
                     "selected_family": "seek-context",
@@ -479,6 +490,7 @@ def test_reference_runtime_cli_save_session_does_not_change_jsonl_output(tmp_pat
                     ],
                     "evidence_state_moved": True,
                     "continuity_improved": False,
+                    "probe_result_class": "succeeded",
                 },
             ],
             "executive_modulator_memory": {

@@ -9,6 +9,7 @@ from cortex.sre.brake import BrakeState
 from cortex.sre.executive_summary import ExecutiveSignalSummaryInputs
 from cortex.sre.feedback import (
     ReferenceFeedbackWindowSummary,
+    ReferenceRealizationFeedback,
     ReferenceRealizationFeedbackWindow,
 )
 from cortex.sre.goal_debt import build_closure_pressure_state
@@ -30,6 +31,7 @@ def build_runtime_executive_signal_summary_inputs(
     consequential_write_pending: bool,
     prior_failed_before_completion: bool,
     recent_product_failure_class: str | None,
+    recent_probe_failure_class: str | None,
     recent_warning_bearing_success_present: bool,
     preservation_active: bool,
 ) -> ExecutiveSignalSummaryInputs:
@@ -71,7 +73,7 @@ def build_runtime_executive_signal_summary_inputs(
         ),
         previous_same_host_run_failed_before_completion=prior_failed_before_completion,
         recent_product_failure_class=recent_product_failure_class,
-        recent_probe_failure_class=None,
+        recent_probe_failure_class=recent_probe_failure_class,
         recent_warning_bearing_success_present=recent_warning_bearing_success_present,
         verification_required=(
             dispatch_decision.lane is not DispatchLane.CHEAP
@@ -172,6 +174,29 @@ def closure_reason_tags(
     ).closure_reason_tags
 
 
+def recent_probe_failure_class(
+    feedback_window: ReferenceRealizationFeedbackWindow,
+) -> str | None:
+    latest = _latest_probe_feedback(feedback_window)
+    if latest is None:
+        return None
+    if latest.probe_result_class == "succeeded":
+        return None
+    return latest.probe_result_class
+
+
+def verification_state_for_runtime(
+    *,
+    dispatch_decision: DispatchDecision,
+    commitment_result_kind: str | None,
+) -> str:
+    if commitment_result_kind is not None:
+        return "completed"
+    if dispatch_decision.lane is DispatchLane.CHEAP:
+        return "not-required"
+    return "required"
+
+
 def canonicalize_executive_modulator_memory(
     memory: ExecutiveModulatorMemory | None,
 ) -> ExecutiveModulatorMemory | None:
@@ -198,6 +223,15 @@ def _has_continuity_rejection(warnings: Sequence[str]) -> bool:
     return any(warning.startswith("continuity-rejected:") for warning in warnings)
 
 
+def _latest_probe_feedback(
+    feedback_window: ReferenceRealizationFeedbackWindow,
+) -> ReferenceRealizationFeedback | None:
+    for feedback in reversed(feedback_window.entries):
+        if feedback.probe_result_class is not None:
+            return feedback
+    return None
+
+
 __all__ = [
     "build_runtime_executive_signal_summary_inputs",
     "canonicalize_executive_modulator_memory",
@@ -206,6 +240,8 @@ __all__ = [
     "executive_modulator_memory_payload",
     "max_uncertainty_level",
     "quota_pressure_for_budget_band",
+    "recent_probe_failure_class",
     "recent_warning_bearing_success_present",
     "task_mode_for_runtime",
+    "verification_state_for_runtime",
 ]

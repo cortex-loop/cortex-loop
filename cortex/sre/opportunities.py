@@ -13,6 +13,57 @@ _SAFE_FALLBACK_FAMILIES = frozenset(
         SoftControlFamily.ESCALATE,
     }
 )
+_PROBE_FAMILIES = frozenset(
+    {
+        SoftControlFamily.CHECK,
+        SoftControlFamily.SEEK_CONTEXT,
+    }
+)
+_PROBE_UNCERTAINTY_TARGETS = frozenset({"evidence", "environment", "host-capability"})
+PROBE_RESULT_CLASSES = frozenset({"succeeded", "timed-out", "degraded", "unsupported"})
+PROBE_FAILURE_CLASSES = PROBE_RESULT_CLASSES - {"succeeded"}
+
+
+@dataclass(frozen=True, slots=True)
+class BoundedProbeContract:
+    uncertainty_target: str
+    allowed_family: SoftControlFamily
+    timeout_seconds: int
+    output_cap: int
+    failure_classes: frozenset[str] = field(default_factory=frozenset)
+
+    def __post_init__(self) -> None:
+        if self.uncertainty_target not in _PROBE_UNCERTAINTY_TARGETS:
+            raise ValueError(
+                "BoundedProbeContract.uncertainty_target must be one of "
+                f"{sorted(_PROBE_UNCERTAINTY_TARGETS)!r}."
+            )
+        if self.allowed_family not in _PROBE_FAMILIES:
+            raise ValueError(
+                "BoundedProbeContract.allowed_family must be check or seek-context."
+            )
+        for field_name in ("timeout_seconds", "output_cap"):
+            value = getattr(self, field_name)
+            if not isinstance(value, int):
+                actual_type = type(value).__name__
+                raise TypeError(
+                    f"BoundedProbeContract.{field_name} must be int, got {actual_type}."
+                )
+            if value <= 0:
+                raise ValueError(
+                    f"BoundedProbeContract.{field_name} must be positive."
+                )
+        if any(
+            not isinstance(failure_class, str) or failure_class not in PROBE_FAILURE_CLASSES
+            for failure_class in self.failure_classes
+        ):
+            raise ValueError(
+                "BoundedProbeContract.failure_classes must contain only canonical probe failure classes."
+            )
+        if any(not failure_class.strip() for failure_class in self.failure_classes):
+            raise ValueError(
+                "BoundedProbeContract.failure_classes must contain only non-empty values after trimming."
+            )
 
 
 @dataclass(frozen=True, slots=True)
@@ -24,6 +75,7 @@ class HostNativeOpportunity:
     degradation_reason: str | None = None
     safer_fallback_family: SoftControlFamily | None = None
     native_surface_tags: frozenset[str] = field(default_factory=frozenset)
+    probe_contract: BoundedProbeContract | None = None
 
     def __post_init__(self) -> None:
         if not self.opportunity_ref.strip():
@@ -42,8 +94,24 @@ class HostNativeOpportunity:
             raise ValueError(
                 "HostNativeOpportunity.native_surface_tags must contain only non-empty values after trimming."
             )
+        if self.probe_contract is not None and not isinstance(
+            self.probe_contract,
+            BoundedProbeContract,
+        ):
+            actual_type = type(self.probe_contract).__name__
+            raise TypeError(
+                "HostNativeOpportunity.probe_contract must be "
+                f"BoundedProbeContract | None, got {actual_type}."
+            )
         if not self.supported_families:
             raise ValueError("HostNativeOpportunity.supported_families must not be empty.")
+        if (
+            self.probe_contract is not None
+            and self.probe_contract.allowed_family not in self.supported_families
+        ):
+            raise ValueError(
+                "HostNativeOpportunity.probe_contract.allowed_family must be present in supported_families."
+            )
         if self.safer_fallback_family not in _SAFE_FALLBACK_FAMILIES | {None}:
             raise ValueError(
                 "HostNativeOpportunity.safer_fallback_family must be neutral, "
@@ -176,7 +244,10 @@ def _default_safer_fallback(
 
 
 __all__ = [
+    "BoundedProbeContract",
     "HostNativeOpportunity",
+    "PROBE_FAILURE_CLASSES",
+    "PROBE_RESULT_CLASSES",
     "OpportunitySpecializationResult",
     "specialize_host_native_opportunity",
 ]

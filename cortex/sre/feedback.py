@@ -8,6 +8,7 @@ from cortex.core.commitments import CommitmentStatus
 
 from .brake import BrakeState
 from .families import SoftControlFamily
+from .opportunities import PROBE_RESULT_CLASSES
 
 _ALLOWED_COMMITMENT_RESULT_KINDS = frozenset(status.value for status in CommitmentStatus)
 _MAX_REFERENCE_FEEDBACK_WINDOW_ENTRIES = 3
@@ -23,6 +24,7 @@ class ReferenceRealizationFeedback:
     host_friction_tags: tuple[str, ...] = field(default_factory=tuple)
     evidence_state_moved: bool | None = None
     continuity_improved: bool | None = None
+    probe_result_class: str | None = None
 
     def __post_init__(self) -> None:
         if not isinstance(self.selected_family, SoftControlFamily):
@@ -66,6 +68,13 @@ class ReferenceRealizationFeedback:
                 raise TypeError(
                     f"ReferenceRealizationFeedback.{field_name} must be bool | None, got {actual_type}."
                 )
+        if (
+            self.probe_result_class is not None
+            and self.probe_result_class not in PROBE_RESULT_CLASSES
+        ):
+            raise ValueError(
+                "ReferenceRealizationFeedback.probe_result_class must be a canonical probe result class or None."
+            )
 
     def as_summary(self) -> dict[str, object]:
         summary = {
@@ -80,6 +89,8 @@ class ReferenceRealizationFeedback:
             summary["evidence_state_moved"] = self.evidence_state_moved
         if self.continuity_improved is not None:
             summary["continuity_improved"] = self.continuity_improved
+        if self.probe_result_class is not None:
+            summary["probe_result_class"] = self.probe_result_class
         return summary
 
 

@@ -48,6 +48,37 @@ _SEEK_CONTEXT_PRESSURE_TAGS = frozenset(
         "execution-trace-missing",
     }
 )
+_HOST_FRICTION_FAMILY_MULTIPLIERS = {
+    SoftControlFamily.NEUTRAL: 0.0,
+    SoftControlFamily.SEEK_CONTEXT: 0.55,
+    SoftControlFamily.REDIRECT: 0.55,
+    SoftControlFamily.CHECK: 0.30,
+    SoftControlFamily.BRANCH: 0.40,
+    SoftControlFamily.ESCALATE: 0.75,
+    SoftControlFamily.BRAKE: 0.0,
+}
+_PROBE_BACKED_HOST_FRICTION_MULTIPLIERS = {
+    SoftControlFamily.SEEK_CONTEXT: 0.20,
+    SoftControlFamily.CHECK: 0.12,
+}
+_VISIBLE_BURDEN_FAMILY_COSTS = {
+    SoftControlFamily.NEUTRAL: 0.0,
+    SoftControlFamily.SEEK_CONTEXT: 0.04,
+    SoftControlFamily.REDIRECT: 0.12,
+    SoftControlFamily.CHECK: 0.03,
+    SoftControlFamily.BRANCH: 0.08,
+    SoftControlFamily.ESCALATE: 0.16,
+    SoftControlFamily.BRAKE: 0.05,
+}
+_FAMILY_RELATIVE_BURDEN = {
+    SoftControlFamily.NEUTRAL: 0.00,
+    SoftControlFamily.CHECK: 0.20,
+    SoftControlFamily.SEEK_CONTEXT: 0.25,
+    SoftControlFamily.BRAKE: 0.30,
+    SoftControlFamily.BRANCH: 0.45,
+    SoftControlFamily.REDIRECT: 0.55,
+    SoftControlFamily.ESCALATE: 0.75,
+}
 
 
 @dataclass(frozen=True, slots=True)
@@ -160,6 +191,8 @@ def build_reference_allocation_scorecard(
             reason_tags.add("mask-allowed")
         if host_friction_tags and family is SoftControlFamily.ESCALATE:
             reason_tags.add("host-friction")
+        if family in executive_state.control_allocation.probe_backed_families:
+            reason_tags.add("probe-backed")
         if family is SoftControlFamily.SEEK_CONTEXT and _has_seek_context_pressure(
             executive_state
         ):
@@ -175,6 +208,13 @@ def build_reference_allocation_scorecard(
         if family is not SoftControlFamily.NEUTRAL:
             reason_tags.add(f"theta_act:{activation_thresholds[family]:.2f}")
         reason_tags.add(_alpha_reason_tag(alpha_t))
+        reason_tags.add(
+            f"explain:{executive_state.control_allocation.explainability_profile}"
+        )
+        if executive_state.control_allocation.recent_probe_result_class is not None:
+            reason_tags.add(
+                f"probe:{executive_state.control_allocation.recent_probe_result_class}"
+            )
 
         online_score = _online_score(online_components[family])
         memory_prior = (
@@ -463,6 +503,7 @@ def _online_score_components_for_family(
         executive_state.control_allocation.productive_exploration_bonus
     )
     oscillation_penalty = executive_state.control_allocation.oscillation_penalty
+    probe_backed_families = executive_state.control_allocation.probe_backed_families
     budget_band = executive_state.control_allocation.budget_band
     goal_continuity = executive_state.goal_continuity
     contradiction_spike_flags = (
@@ -473,8 +514,14 @@ def _online_score_components_for_family(
     continuity_value = 0.0
     stability_value = 0.0
     control_burden = 0.0
-    host_friction = 0.0
-    visible_burden = 0.0
+    host_friction = _family_host_friction_cost(
+        family,
+        executive_state=executive_state,
+    )
+    visible_burden = _family_visible_burden_cost(
+        family,
+        executive_state=executive_state,
+    )
 
     if family in top_family_set and family is not SoftControlFamily.NEUTRAL:
         stability_value += 0.45
@@ -484,6 +531,11 @@ def _online_score_components_for_family(
         uncertainty_reduction += 0.25
     if mode_tag == "commitment_path" and family is SoftControlFamily.CHECK:
         uncertainty_reduction += 0.15
+    if (
+        family is SoftControlFamily.CHECK
+        and executive_state.control_allocation.feedback_pressure_tags
+    ):
+        uncertainty_reduction += 0.10
     if family is SoftControlFamily.BRANCH and family in top_family_set:
         continuity_value += 0.35
     if family is SoftControlFamily.BRAKE:
@@ -499,8 +551,17 @@ def _online_score_components_for_family(
         # J4B keeps threshold and vigor law fixed, so explicit missing-context
         # pressure needs a route-local lift that creates a real runtime path.
         uncertainty_reduction += 0.70
+        if family not in probe_backed_families:
+            # When a host lacks a bounded probe route, fallback seek-context still
+            # needs enough vigor to beat neutral under genuine capability or
+            # environment pressure instead of collapsing into passive continuation.
+            uncertainty_reduction += 0.20
     if family is SoftControlFamily.CHECK and _is_low_burden_check_relief(executive_state):
         uncertainty_reduction += 0.18
+    if family is SoftControlFamily.CHECK and family in probe_backed_families:
+        uncertainty_reduction += 0.20
+    if family is SoftControlFamily.SEEK_CONTEXT and family in probe_backed_families:
+        uncertainty_reduction += 0.12
     if budget_band == "high" and family in {
         SoftControlFamily.CHECK,
         SoftControlFamily.BRANCH,
@@ -577,6 +638,20 @@ def _has_seek_context_pressure(
     executive_state: ReferenceExecutiveState,
 ) -> bool:
     host_friction_tags = executive_state.control_allocation.host_friction_tags
+    if (
+        SoftControlFamily.SEEK_CONTEXT
+        in executive_state.control_allocation.probe_backed_families
+        and any(
+            class_tag in {"environment", "host-capability"}
+            for class_tag in _dominant_uncertainty_classes(executive_state)
+        )
+    ):
+        if executive_state.brake.brake_state is not BrakeState.LATCHED:
+            return True
+        return _latched_relief_permitted(
+            executive_state,
+            family=SoftControlFamily.SEEK_CONTEXT,
+        )
     if not any(tag in _SEEK_CONTEXT_PRESSURE_TAGS for tag in host_friction_tags):
         return False
     if executive_state.brake.brake_state is not BrakeState.LATCHED:
@@ -597,6 +672,15 @@ def _is_low_burden_check_relief(
     if any(
         class_tag in {"evidence", "environment"}
         for class_tag in dominant_uncertainty_classes
+    ):
+        return True
+    if (
+        SoftControlFamily.CHECK
+        in executive_state.control_allocation.probe_backed_families
+        and any(
+            class_tag in {"environment", "host-capability"}
+            for class_tag in dominant_uncertainty_classes
+        )
     ):
         return True
     if executive_state.brake.brake_state is BrakeState.LATCHED:
@@ -638,6 +722,63 @@ def _dominant_uncertainty_classes(
     return tuple(estimate.class_tag for estimate in ranked[:2])
 
 
+def _family_host_friction_cost(
+    family: SoftControlFamily,
+    *,
+    executive_state: ReferenceExecutiveState,
+) -> float:
+    base_multiplier = _HOST_FRICTION_FAMILY_MULTIPLIERS[family]
+    if family in executive_state.control_allocation.probe_backed_families:
+        base_multiplier = _PROBE_BACKED_HOST_FRICTION_MULTIPLIERS.get(
+            family,
+            base_multiplier,
+        )
+    return min(
+        1.0,
+        executive_state.control_allocation.host_friction_level * base_multiplier,
+    )
+
+
+def _family_visible_burden_cost(
+    family: SoftControlFamily,
+    *,
+    executive_state: ReferenceExecutiveState,
+) -> float:
+    return min(
+        1.0,
+        _VISIBLE_BURDEN_FAMILY_COSTS[family]
+        * executive_state.control_allocation.visible_burden_scale,
+    )
+
+
+def rejected_cheaper_families(
+    scorecard: AllocationScorecard,
+    *,
+    selected_family: SoftControlFamily,
+) -> tuple[str, ...]:
+    if not isinstance(scorecard, AllocationScorecard):
+        actual_type = type(scorecard).__name__
+        raise TypeError(
+            "rejected_cheaper_families.scorecard must be AllocationScorecard, "
+            f"got {actual_type}."
+        )
+    if not isinstance(selected_family, SoftControlFamily):
+        actual_type = type(selected_family).__name__
+        raise TypeError(
+            "rejected_cheaper_families.selected_family must be SoftControlFamily, "
+            f"got {actual_type}."
+        )
+
+    selected_burden = _FAMILY_RELATIVE_BURDEN[selected_family]
+    cheaper: list[str] = []
+    for score in scorecard.scores:
+        if score.family is selected_family or not score.admissible:
+            continue
+        if _FAMILY_RELATIVE_BURDEN[score.family] < selected_burden:
+            cheaper.append(score.family.value)
+    return tuple(cheaper)
+
+
 __all__ = [
     "ReferenceSoftControlSelection",
     "build_allocation_diagnostics_payload",
@@ -646,5 +787,6 @@ __all__ = [
     "compute_reference_chi_t",
     "build_reference_online_score_components",
     "compute_reference_alpha_t",
+    "rejected_cheaper_families",
     "select_reference_soft_control",
 ]
