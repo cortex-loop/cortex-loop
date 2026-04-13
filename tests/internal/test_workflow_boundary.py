@@ -22,6 +22,9 @@ def test_internal_workflow_surfaces_exist() -> None:
     assert "cleanup-report:" in internal_makefile
     assert "audit-branches:" in internal_makefile
     assert "closeout-test:" in internal_makefile
+    assert "closeout-init:" in internal_makefile
+    assert "closeout-render:" in internal_makefile
+    assert "closeout-validate:" in internal_makefile
     assert "finalize --manual-exception --message" in internal_makefile
     assert "scripts/repo_workflow.py is deprecated" in shim
     assert "internal/workflow/repo_workflow.py" in shim
@@ -31,6 +34,8 @@ def test_internal_workflow_surfaces_exist() -> None:
     assert 'GitHub CLI `gh` is required for managed close-session publication.' in canonical
     assert 'def _publish_merge_sync_session(' in canonical
     assert 'def _branch_has_unique_commits(' in canonical
+    assert 'from internal.closeout import contract as closeout_contract' in canonical
+    assert 'def _validate_closeout_contract_for_paths(' in canonical
     assert 'VERIFICATION_SCOPE_COMMANDS' in canonical
     assert 'def _verification_commands_for_paths(' in canonical
     assert 'def _run_verification_for_paths(' in canonical
@@ -44,6 +49,8 @@ def test_internal_workflow_surfaces_exist() -> None:
     assert '("make", "lab-test")' in canonical
     assert '["make", "-C", "internal", "closeout-test"]' in canonical
     assert 'help="Fail unless the repo is on clean synced main with no extra worktrees, non-main branches, or remote managed/review heads."' in canonical
+    assert "closeout contract" in workflow_doc.lower()
+    assert "no-op exemption" in workflow_doc.lower()
     assert "Remote publication remains separate" not in workflow_doc
     assert "publishes the session branch, merges it, adopts `origin/main`" in workflow_doc
     assert "smallest surface-aware verification bundle" in workflow_doc

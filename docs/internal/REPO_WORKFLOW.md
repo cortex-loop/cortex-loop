@@ -101,6 +101,24 @@ Audit local branch hygiene without mutating refs:
 python internal/workflow/repo_workflow.py audit-branches
 ```
 
+Scaffold the enforced closeout contract for the current branch:
+
+```bash
+python -m internal.closeout.contract init --mode close-session
+```
+
+Render the closeout contract markdown after editing the JSON:
+
+```bash
+python -m internal.closeout.contract render
+```
+
+Validate the closeout contract explicitly before closeout:
+
+```bash
+python -m internal.closeout.contract validate --mode close-session
+```
+
 Require the strict final-clean contract:
 
 ```bash
@@ -113,16 +131,18 @@ python internal/workflow/repo_workflow.py cleanup-report
 2. Run `python internal/workflow/repo_workflow.py sync-main` if needed.
 3. Run `python internal/workflow/repo_workflow.py start-session --agent <codex|claude|maint> [--slug <text>]`.
 4. Do the work on the managed session branch.
-5. End with `python internal/workflow/repo_workflow.py close-session --message "<scope>: <end-state summary>"`.
-6. After `close-session` succeeds, the repo is back on clean synced `main`, the merged session branch is gone locally and remotely, and no separate publication step remains.
+5. Scaffold or refresh the closeout contract with `python -m internal.closeout.contract init --mode close-session`, then fill the generated JSON under `.cortex/closeout_contract/<branch>/closeout.json`.
+6. End with `python internal/workflow/repo_workflow.py close-session --message "<scope>: <end-state summary>"`.
+7. After `close-session` succeeds, the repo is back on clean synced `main`, the merged session branch is gone locally and remotely, and no separate publication step remains.
 
 Manual/review branch workflow:
 
 1. Confirm the task explicitly requires staying on the current non-session branch.
 2. Do not run `start-session`.
 3. Do the work on that branch.
-4. End with `python internal/workflow/repo_workflow.py finalize --manual-exception --message "<scope>: <end-state summary>"`.
-5. Leave merge/reconciliation to the manual branch owner.
+4. Scaffold or refresh the closeout contract with `python -m internal.closeout.contract init --mode finalize`, then fill the generated JSON under `.cortex/closeout_contract/<branch>/closeout.json`.
+5. End with `python internal/workflow/repo_workflow.py finalize --manual-exception --message "<scope>: <end-state summary>"`.
+6. Leave merge/reconciliation to the manual branch owner.
 
 ## Rules
 
@@ -144,9 +164,14 @@ Manual/review branch workflow:
 `close-session`:
 
 - only works on managed session branches
+- hard-fails if a substantive closeout is missing a valid closeout contract artifact
 - runs the smallest surface-aware verification bundle for the staged or branch-unique paths before landing
+- validates the closeout contract against the exact reviewed path set that will be landed
+- infers `load_bearing` when reviewed paths touch `cortex/**`, `lab/**`, `docs/CORTEX_V2_*.md`, `internal/truth/cortex_status.json`, or `docs/CORTEX_STATUS.md`
+- hard-fails if the contract self-declares `standard` where reviewed paths require `load_bearing`
 - on the canonical repo, requires authenticated `gh` and a canonical `origin`
 - if the branch has no unique commits relative to `origin/main`, it still adopts `origin/main`, deletes the local session branch, and returns `status: "no_op"`
+- the no-op exemption is the only path that bypasses the closeout contract gate
 - publishes the same managed session branch to `origin`
 - creates or reuses a PR against `main`
 - merges with a merge commit and deletes the remote branch
@@ -158,8 +183,25 @@ Manual/review branch workflow:
 
 - only works on explicit non-session branches
 - requires `--manual-exception` so the exception path is always explicit
+- hard-fails if a substantive closeout is missing a valid closeout contract artifact
 - runs the smallest surface-aware verification bundle for the staged paths before committing
+- validates the closeout contract against the exact staged path set before verification and commit
 - leaves the branch in place for manual merge
+
+Closeout contract artifact:
+
+- lives under `.cortex/closeout_contract/<branch>/` with `closeout.json`, `closeout.md`, `latest.json`, and `latest.md`
+- is generated evidence only, not operational truth
+- always requires:
+  - seam identity and rationale
+  - residuals: fixed now, intentionally deferred, still underfit, zeroed or stubbed terms
+  - hostile review from engineer, mathematician, and neuroscientist lenses
+  - claims earned now and claims still forbidden
+  - north-light audit for microkernel boundary, repo-governance leakage, host-specific policy fork, and generic bloat
+- additionally requires for `load_bearing`:
+  - governing principle, executive skill, product metric, guardrail, and kill rule
+  - law-to-code completeness rows for active doctrinal or math terms touched
+- hard-fails on stale reviewed paths, missing forbidden claims, missing hostile-review coverage, or missing zeroed/stubbed-term review
 
 `preserve-worktree`:
 

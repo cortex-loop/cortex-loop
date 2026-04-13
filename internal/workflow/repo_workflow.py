@@ -13,6 +13,11 @@ from pathlib import Path
 
 ROOT_ENV_VAR = "CORTEX_REPO_WORKFLOW_ROOT"
 DEFAULT_ROOT = Path(__file__).resolve().parents[2]
+if str(DEFAULT_ROOT) not in sys.path:
+    sys.path.insert(0, str(DEFAULT_ROOT))
+
+from internal.closeout import contract as closeout_contract
+
 MANAGED_SESSION_AGENTS = ("codex", "claude", "maint")
 ALLOWED_SCOPES = ("repo", "docs", "kernel", "adapter", "pack", "eval", "tests", "build", "release")
 BANNED_SUBJECT_TOKENS = ("scrubbed", "final polish", "quick fix", "temp", "wip", "public-ready")
@@ -446,11 +451,22 @@ def _commit_has_staged_changes() -> bool:
     return proc.returncode == 1
 
 
-def _finalize_current_branch(message: str) -> tuple[str | None, tuple[str, ...]]:
+def _validate_closeout_contract_for_paths(mode: str, branch: str, reviewed_paths: list[str]) -> None:
+    closeout_contract.validate_contract(
+        root=_root(),
+        mode=mode,
+        branch=branch,
+        reviewed_paths=reviewed_paths,
+    )
+
+
+def _finalize_current_branch(message: str, *, mode: str, branch: str) -> tuple[str | None, tuple[str, ...]]:
     _run(["git", "add", "-A"])
     if not _commit_has_staged_changes():
         _ensure_clean_tree()
         return None, ()
+    reviewed_paths = _staged_paths()
+    _validate_closeout_contract_for_paths(mode, branch, reviewed_paths)
     verification_commands = _run_verification_for_paths(_staged_paths())
     _run(["git", "add", "-A"])
     if not _commit_has_staged_changes():
@@ -771,7 +787,7 @@ def cmd_finalize(message: str, manual_exception: bool) -> int:
     subject_error = validate_commit_subject(message)
     if subject_error is not None:
         raise SystemExit(subject_error)
-    commit_hash, _verification_commands = _finalize_current_branch(message)
+    commit_hash, _verification_commands = _finalize_current_branch(message, mode="finalize", branch=branch)
     if commit_hash is None:
         print("no-op clean tree")
         return 0
@@ -786,7 +802,7 @@ def cmd_close_session(message: str) -> int:
     subject_error = validate_commit_subject(message)
     if subject_error is not None:
         raise SystemExit(subject_error)
-    commit_hash, verification_commands = _finalize_current_branch(message)
+    commit_hash, verification_commands = _finalize_current_branch(message, mode="close-session", branch=branch)
     if _managed_publication_required():
         _ensure_canonical_origin()
         _fetch_origin(quiet=True)
@@ -808,7 +824,9 @@ def cmd_close_session(message: str) -> int:
                     )
                 )
                 return 0
-            verification_commands = _run_verification_for_paths(_changed_paths_between("origin/main", branch))
+            reviewed_paths = _changed_paths_between("origin/main", branch)
+            _validate_closeout_contract_for_paths("close-session", branch, reviewed_paths)
+            verification_commands = _run_verification_for_paths(reviewed_paths)
         result = _publish_merge_sync_session(branch, message, verification_commands)
         print(json.dumps(result, sort_keys=True))
         return 0
@@ -826,11 +844,13 @@ def cmd_close_session(message: str) -> int:
                         "main_head": _capture(["git", "rev-parse", "main"]).strip(),
                         "main_sync": _main_origin_state(),
                     },
-                    sort_keys=True,
+                        sort_keys=True,
+                    )
                 )
-            )
             return 0
-        verification_commands = _run_verification_for_paths(_changed_paths_between("main", branch))
+        reviewed_paths = _changed_paths_between("main", branch)
+        _validate_closeout_contract_for_paths("close-session", branch, reviewed_paths)
+        verification_commands = _run_verification_for_paths(reviewed_paths)
     landed_hash = _land_session_branch(branch)
     print(
         json.dumps(
