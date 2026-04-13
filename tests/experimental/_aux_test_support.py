@@ -2,6 +2,10 @@
 
 from __future__ import annotations
 
+import cortex.hosts.claude.runtime as claude_runtime
+import cortex.hosts.gemini.runtime as gemini_runtime
+import cortex.hosts.reference.runtime as reference_runtime
+from cortex.aux.cross_host_shadow import AuxCrossHostShadowScenario
 from cortex.aux.evaluation import AuxTemporalScenario
 from cortex.aux.reference_replay import AuxReferenceReplayScenario
 from cortex.core.envelopes import EventPayloadHandle, LifecycleEventEnvelope, MetadataField
@@ -658,3 +662,274 @@ def make_aux_reference_replay_corpus() -> tuple[AuxReferenceReplayScenario, ...]
             notes=("prune-burden-heavy should not create verification lift under burden penalties",),
         ),
     )
+
+
+def _merge_distinct(values: tuple[str, ...], extra: tuple[str, ...]) -> tuple[str, ...]:
+    ordered: list[str] = []
+    for value in values + extra:
+        if value in ordered:
+            continue
+        ordered.append(value)
+    return tuple(ordered)
+
+
+def _overlay_runtime_support_snapshot(
+    base_snapshot: SupportSnapshot,
+    overlay_snapshot: SupportSnapshot,
+    *,
+    host_name: str,
+) -> SupportSnapshot:
+    return SupportSnapshot(
+        trace=SupportTraceState(
+            recent_events=base_snapshot.trace.recent_events + overlay_snapshot.trace.recent_events,
+            candidate_refs=overlay_snapshot.trace.candidate_refs,
+            wake_receipts=overlay_snapshot.trace.wake_receipts,
+            degradation_records=overlay_snapshot.trace.degradation_records,
+        ),
+        session=SupportSessionState(
+            branch_registry=_merge_distinct(
+                base_snapshot.session.branch_registry,
+                overlay_snapshot.session.branch_registry,
+            ),
+            pending_goal_refs=_merge_distinct(
+                base_snapshot.session.pending_goal_refs,
+                overlay_snapshot.session.pending_goal_refs,
+            ),
+            budget_history=_merge_distinct(
+                base_snapshot.session.budget_history,
+                overlay_snapshot.session.budget_history,
+            ),
+            brake_history=_merge_distinct(
+                base_snapshot.session.brake_history,
+                overlay_snapshot.session.brake_history,
+            ),
+            reminders=overlay_snapshot.session.reminders,
+        ),
+        host=SupportHostState(
+            affordance_tags=base_snapshot.host.affordance_tags,
+            approval_boundary_tags=(
+                base_snapshot.host.approval_boundary_tags
+                | overlay_snapshot.host.approval_boundary_tags
+            ),
+            constraint_tags=base_snapshot.host.constraint_tags | overlay_snapshot.host.constraint_tags,
+            metadata=(
+                MetadataField("host_name", host_name),
+                MetadataField("shadow_source", "runtime-seed"),
+            )
+            + base_snapshot.host.metadata
+            + overlay_snapshot.host.metadata,
+        ),
+        exec_memory_pub=overlay_snapshot.exec_memory_pub,
+    )
+
+
+def _runtime_shadow_seed(
+    host_name: str,
+    *,
+    seeded_branch_state: bool,
+    contradiction_pressure: bool,
+) -> tuple[ReferenceExecutiveState, SupportSnapshot]:
+    if host_name == "claude":
+        session = claude_runtime.ClaudeRuntimeSession(
+            session_id="shadow-session",
+            branch_registry=("main", "review-track") if seeded_branch_state else ("main",),
+            active_track_ref="review-track" if seeded_branch_state else "main",
+            pending_goal_refs=("review-track-goal",) if seeded_branch_state else (),
+            budget_history=("shell-low",) if seeded_branch_state else (),
+            brake_history=("guarded",) if seeded_branch_state else (),
+        )
+        event_type = "message_stop" if contradiction_pressure else "content_block_delta"
+        payload = (
+            {
+                "session_id": "shadow-session",
+                "message_id": "shadow-message",
+                "commitment_id": "shadow-commitment",
+                "externally_consequential": True,
+                "result_artifact_ref": "shadow-artifact",
+            }
+            if contradiction_pressure
+            else {
+                "session_id": "shadow-session",
+                "message_id": "shadow-message",
+                "delta": "continue review",
+            }
+        )
+        result = claude_runtime.run_claude_runtime_step(event_type, payload, session)
+        support_snapshot = claude_runtime._build_support_snapshot(
+            provisional_session=result.session,
+            bound_event=result.bound_event,
+            dispatch_decision=result.dispatch_decision,
+            warnings=result.warnings,
+        )
+        return result.executive_state, support_snapshot
+    if host_name == "gemini":
+        session = gemini_runtime.GeminiRuntimeSession(
+            session_id="shadow-session",
+            branch_registry=("main", "review-track") if seeded_branch_state else ("main",),
+            active_track_ref="review-track" if seeded_branch_state else "main",
+            pending_goal_refs=("review-track-goal",) if seeded_branch_state else (),
+            budget_history=("shell-low",) if seeded_branch_state else (),
+            brake_history=("guarded",) if seeded_branch_state else (),
+        )
+        event_type = "interaction.complete" if contradiction_pressure else "content.delta"
+        payload = (
+            {
+                "session_id": "shadow-session",
+                "interaction_id": "shadow-interaction",
+                "commitment_id": "shadow-commitment",
+                "externally_consequential": True,
+                "result_artifact_ref": "shadow-artifact",
+            }
+            if contradiction_pressure
+            else {
+                "session_id": "shadow-session",
+                "interaction_id": "shadow-interaction",
+                "delta": "continue review",
+            }
+        )
+        result = gemini_runtime.run_gemini_runtime_step(event_type, payload, session)
+        support_snapshot = gemini_runtime._build_support_snapshot(
+            provisional_session=result.session,
+            bound_event=result.bound_event,
+            dispatch_decision=result.dispatch_decision,
+            warnings=result.warnings,
+        )
+        return result.executive_state, support_snapshot
+
+    session = reference_runtime.ReferenceRuntimeSession(
+        session_id="shadow-session",
+        branch_registry=("main", "review-track") if seeded_branch_state else ("main",),
+        active_track_ref="review-track" if seeded_branch_state else "main",
+        pending_goal_refs=("review-track-goal",) if seeded_branch_state else (),
+        budget_history=("shell-low",) if seeded_branch_state else (),
+        brake_history=("guarded",) if seeded_branch_state else (),
+    )
+    event_type = "TurnComplete" if contradiction_pressure else "ContextLoad"
+    payload = (
+        {"session_id": "shadow-session", "outcome": "needs-review"}
+        if contradiction_pressure
+        else {"session_id": "shadow-session"}
+    )
+    result = reference_runtime.run_reference_runtime_step(event_type, payload, session)
+    support_snapshot = reference_runtime._build_support_snapshot(
+        provisional_session=result.session,
+        bound_event=result.bound_event,
+        dispatch_decision=result.dispatch_decision,
+        warnings=result.warnings,
+    )
+    return result.executive_state, support_snapshot
+
+
+def make_aux_cross_host_shadow_corpus() -> tuple[AuxCrossHostShadowScenario, ...]:
+    temporal_cases = {
+        scenario.scenario_id: scenario
+        for scenario in make_aux_temporal_corpus()
+    }
+    scenarios: list[AuxCrossHostShadowScenario] = []
+
+    for host_name in ("claude", "gemini", "reference"):
+        retrieval_state, retrieval_base = _runtime_shadow_seed(
+            host_name,
+            seeded_branch_state=False,
+            contradiction_pressure=False,
+        )
+        continuity_state, continuity_base = _runtime_shadow_seed(
+            host_name,
+            seeded_branch_state=True,
+            contradiction_pressure=False,
+        )
+        contradiction_state, contradiction_base = _runtime_shadow_seed(
+            host_name,
+            seeded_branch_state=False,
+            contradiction_pressure=True,
+        )
+        scenarios.extend(
+            (
+                AuxCrossHostShadowScenario(
+                    scenario_id=f"{host_name}-retrieval-reuse",
+                    host_name=host_name,
+                    source_snapshots=tuple(
+                        _overlay_runtime_support_snapshot(
+                            retrieval_base,
+                            snapshot,
+                            host_name=host_name,
+                        )
+                        for snapshot in temporal_cases["retrieval-reuse"].source_snapshots
+                    ),
+                    target_snapshot=_overlay_runtime_support_snapshot(
+                        retrieval_base,
+                        temporal_cases["retrieval-reuse"].target_snapshot,
+                        host_name=host_name,
+                    ),
+                    executive_state=retrieval_state,
+                    preferred_family=SoftControlFamily.SEEK_CONTEXT,
+                    expect_improvement=True,
+                    notes=("runtime-seeded retrieval reuse should widen seek-context margin under explicit shadow memory",),
+                ),
+                AuxCrossHostShadowScenario(
+                    scenario_id=f"{host_name}-contradiction-review",
+                    host_name=host_name,
+                    source_snapshots=tuple(
+                        _overlay_runtime_support_snapshot(
+                            contradiction_base,
+                            snapshot,
+                            host_name=host_name,
+                        )
+                        for snapshot in temporal_cases["contradiction-review"].source_snapshots
+                    ),
+                    target_snapshot=_overlay_runtime_support_snapshot(
+                        contradiction_base,
+                        temporal_cases["contradiction-review"].target_snapshot,
+                        host_name=host_name,
+                    ),
+                    executive_state=contradiction_state,
+                    preferred_family=SoftControlFamily.CHECK,
+                    expect_improvement=True,
+                    notes=("runtime-seeded contradiction pressure should lift check via explicit shadow priors",),
+                ),
+                AuxCrossHostShadowScenario(
+                    scenario_id=f"{host_name}-burden-heavy-counterexample",
+                    host_name=host_name,
+                    source_snapshots=tuple(
+                        _overlay_runtime_support_snapshot(
+                            continuity_base,
+                            snapshot,
+                            host_name=host_name,
+                        )
+                        for snapshot in temporal_cases["burden-heavy-counterexample"].source_snapshots
+                    ),
+                    target_snapshot=_overlay_runtime_support_snapshot(
+                        continuity_base,
+                        temporal_cases["burden-heavy-counterexample"].target_snapshot,
+                        host_name=host_name,
+                    ),
+                    executive_state=continuity_state,
+                    preferred_family=SoftControlFamily.REDIRECT,
+                    expect_improvement=False,
+                    notes=("burden-heavy shadow cases must stay stable instead of manufacturing redirect pressure",),
+                ),
+                AuxCrossHostShadowScenario(
+                    scenario_id=f"{host_name}-fresh-contradiction-invalidation",
+                    host_name=host_name,
+                    source_snapshots=tuple(
+                        _overlay_runtime_support_snapshot(
+                            continuity_base,
+                            snapshot,
+                            host_name=host_name,
+                        )
+                        for snapshot in temporal_cases["contradiction-review"].source_snapshots
+                    ),
+                    target_snapshot=_overlay_runtime_support_snapshot(
+                        continuity_base,
+                        temporal_cases["contradiction-review"].target_snapshot,
+                        host_name=host_name,
+                    ),
+                    executive_state=continuity_state,
+                    preferred_family=SoftControlFamily.NEUTRAL,
+                    expect_improvement=False,
+                    notes=("fresh contradiction must invalidate stale reliability lift instead of disturbing the neutral baseline",),
+                ),
+            )
+        )
+
+    return tuple(scenarios)

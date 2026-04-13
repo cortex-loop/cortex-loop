@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 from cortex.core.envelopes import MetadataField
 from cortex.core.support import SupportReference
@@ -29,6 +29,17 @@ def _clip_unit(value: float) -> float:
 
 def _clip_prior_score(value: float) -> float:
     return max(0.0, min(0.75, float(value)))
+
+
+@dataclass(frozen=True, slots=True)
+class _HostReliabilityAdjustment:
+    weight: float
+    invalidated: bool = False
+    ttl_expired: bool = False
+
+    @property
+    def active(self) -> bool:
+        return self.weight > 0.0 and not self.invalidated and not self.ttl_expired
 
 
 def _refs_by_kind(
@@ -188,6 +199,89 @@ def _host_reliability_prior(
     )
 
 
+def _parse_validated_at(timestamp: str | None) -> datetime | None:
+    if timestamp is None:
+        return None
+    candidate = timestamp.replace("Z", "+00:00")
+    try:
+        parsed = datetime.fromisoformat(candidate)
+    except ValueError:
+        return None
+    if parsed.tzinfo is None:
+        return parsed.replace(tzinfo=timezone.utc)
+    return parsed.astimezone(timezone.utc)
+
+
+def _host_reliability_adjustment(
+    prior: HostReliabilityPrior,
+    *,
+    now: datetime | None = None,
+) -> _HostReliabilityAdjustment:
+    current_time = now or datetime.now(timezone.utc)
+    last_validated = _parse_validated_at(prior.last_validated_at)
+    if last_validated is not None:
+        if current_time - last_validated > timedelta(hours=prior.ttl_hours):
+            return _HostReliabilityAdjustment(weight=0.0, ttl_expired=True)
+
+    if prior.contradiction_counter > 0 or prior.probe_failure_classes:
+        return _HostReliabilityAdjustment(weight=0.0, invalidated=True)
+
+    weight = _clip_unit(
+        (0.70 * prior.capability_availability)
+        - (0.45 * prior.timeout_rate)
+        - (0.25 * prior.degradation_rate)
+    )
+    return _HostReliabilityAdjustment(weight=weight)
+
+
+def _reliability_signal_for_family(
+    profile: SupportMemorySignalProfile,
+    family: SoftControlFamily,
+) -> float:
+    if family is SoftControlFamily.BRANCH:
+        return max(profile.branch_resume_signal, profile.retrieval_reuse_signal * 0.40)
+    if family is SoftControlFamily.CHECK:
+        return max(
+            profile.contradiction_review_signal,
+            profile.uncertainty_calibration_signal * 0.60,
+        )
+    if family is SoftControlFamily.SEEK_CONTEXT:
+        return max(
+            profile.retrieval_reuse_signal,
+            profile.uncertainty_calibration_signal,
+        )
+    return 0.0
+
+
+def _apply_host_reliability_weight(
+    family: SoftControlFamily,
+    *,
+    base_score: float,
+    reason_tags: frozenset[str],
+    profile: SupportMemorySignalProfile,
+    reliability_prior: HostReliabilityPrior,
+) -> tuple[float, frozenset[str]]:
+    if family not in {
+        SoftControlFamily.BRANCH,
+        SoftControlFamily.CHECK,
+        SoftControlFamily.SEEK_CONTEXT,
+    }:
+        return base_score, reason_tags
+
+    signal_strength = _reliability_signal_for_family(profile, family)
+    adjustment = _host_reliability_adjustment(reliability_prior)
+    if adjustment.ttl_expired:
+        return base_score, reason_tags | frozenset({"q_mem-host:ttl-expired"})
+    if adjustment.invalidated:
+        return base_score, reason_tags | frozenset({"q_mem-host:contradiction-invalidated"})
+    if base_score <= 0.0 or signal_strength <= 0.0 or adjustment.weight <= 0.0:
+        return base_score, reason_tags | frozenset({"q_mem-host:reliability-zeroed"})
+
+    reliability_bonus = 0.36 * adjustment.weight * max(signal_strength, 0.20)
+    adjusted_score = _clip_prior_score(base_score + reliability_bonus)
+    return adjusted_score, reason_tags | frozenset({"q_mem-host:reliability-active"})
+
+
 @dataclass(frozen=True, slots=True)
 class SupportMemorySignalProfile:
     retrieval_reuse_signal: float
@@ -339,6 +433,63 @@ def build_support_memory_prior_appendix(
     contradiction_refs = _refs_by_kind(derived_refs, "contradiction")
     uncertainty_refs = _refs_by_kind(derived_refs, "uncertainty", "wake")
     signal_profile = _build_signal_profile(snapshot)
+    reliability_prior = _host_reliability_prior(snapshot, signal_profile)
+
+    branch_base_score = _clip_prior_score(
+        (0.55 * signal_profile.branch_resume_signal)
+        + (0.15 * signal_profile.retrieval_reuse_signal)
+        - (0.25 * signal_profile.burden_penalty)
+    )
+    branch_reason_tags = _reason_tags(
+        signal_profile,
+        include_retrieval=True,
+        include_branch=True,
+    )
+    branch_score, branch_reason_tags = _apply_host_reliability_weight(
+        SoftControlFamily.BRANCH,
+        base_score=branch_base_score,
+        reason_tags=branch_reason_tags,
+        profile=signal_profile,
+        reliability_prior=reliability_prior,
+    )
+
+    check_base_score = _clip_prior_score(
+        (0.50 * signal_profile.contradiction_review_signal)
+        + (0.20 * signal_profile.uncertainty_calibration_signal)
+        + (0.10 * signal_profile.retrieval_reuse_signal)
+        - (0.15 * signal_profile.burden_penalty)
+    )
+    check_reason_tags = _reason_tags(
+        signal_profile,
+        include_retrieval=True,
+        include_contradiction=True,
+        include_uncertainty=True,
+    )
+    check_score, check_reason_tags = _apply_host_reliability_weight(
+        SoftControlFamily.CHECK,
+        base_score=check_base_score,
+        reason_tags=check_reason_tags,
+        profile=signal_profile,
+        reliability_prior=reliability_prior,
+    )
+
+    seek_context_base_score = _clip_prior_score(
+        (0.35 * signal_profile.retrieval_reuse_signal)
+        + (0.25 * signal_profile.uncertainty_calibration_signal)
+        - (0.15 * signal_profile.burden_penalty)
+    )
+    seek_context_reason_tags = _reason_tags(
+        signal_profile,
+        include_retrieval=True,
+        include_uncertainty=True,
+    )
+    seek_context_score, seek_context_reason_tags = _apply_host_reliability_weight(
+        SoftControlFamily.SEEK_CONTEXT,
+        base_score=seek_context_base_score,
+        reason_tags=seek_context_reason_tags,
+        profile=signal_profile,
+        reliability_prior=reliability_prior,
+    )
 
     scores = (
         SupportMemoryPriorScore(
@@ -347,32 +498,14 @@ def build_support_memory_prior_appendix(
         ),
         SupportMemoryPriorScore(
             family=SoftControlFamily.BRANCH,
-            score=_clip_prior_score(
-                (0.55 * signal_profile.branch_resume_signal)
-                + (0.15 * signal_profile.retrieval_reuse_signal)
-                - (0.25 * signal_profile.burden_penalty)
-            ),
-            reason_tags=_reason_tags(
-                signal_profile,
-                include_retrieval=True,
-                include_branch=True,
-            ),
+            score=branch_score,
+            reason_tags=branch_reason_tags,
             support_refs=branch_refs + retrieval_refs[:2],
         ),
         SupportMemoryPriorScore(
             family=SoftControlFamily.CHECK,
-            score=_clip_prior_score(
-                (0.50 * signal_profile.contradiction_review_signal)
-                + (0.20 * signal_profile.uncertainty_calibration_signal)
-                + (0.10 * signal_profile.retrieval_reuse_signal)
-                - (0.15 * signal_profile.burden_penalty)
-            ),
-            reason_tags=_reason_tags(
-                signal_profile,
-                include_retrieval=True,
-                include_contradiction=True,
-                include_uncertainty=True,
-            ),
+            score=check_score,
+            reason_tags=check_reason_tags,
             support_refs=contradiction_refs + uncertainty_refs[:2],
         ),
         SupportMemoryPriorScore(
@@ -393,16 +526,8 @@ def build_support_memory_prior_appendix(
         ),
         SupportMemoryPriorScore(
             family=SoftControlFamily.SEEK_CONTEXT,
-            score=_clip_prior_score(
-                (0.35 * signal_profile.retrieval_reuse_signal)
-                + (0.25 * signal_profile.uncertainty_calibration_signal)
-                - (0.15 * signal_profile.burden_penalty)
-            ),
-            reason_tags=_reason_tags(
-                signal_profile,
-                include_retrieval=True,
-                include_uncertainty=True,
-            ),
+            score=seek_context_score,
+            reason_tags=seek_context_reason_tags,
             support_refs=uncertainty_refs[:2] + retrieval_refs[:1],
         ),
         SupportMemoryPriorScore(
@@ -440,10 +565,10 @@ def build_support_memory_prior_appendix(
         notes=appendix.notes
         + (
             "memory-conditioned priors derived from AUX offline publication",
-            "host/tool reliability prior remains explicit, removable, and shadow-only",
+            "host/tool reliability prior remains explicit, removable, shadow-only, and contradiction-first",
         ),
         metadata=(MetadataField("source", "aux/support-priors"),) + appendix.metadata,
-        host_reliability_prior=_host_reliability_prior(snapshot, signal_profile),
+        host_reliability_prior=reliability_prior,
     )
 
 

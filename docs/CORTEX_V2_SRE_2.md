@@ -413,6 +413,10 @@ augmentation/publication rather than hidden host memory, prompt heuristics, runt
 or softened closure logic.
 Explicit host/tool reliability priors remain lawful only on bounded AUX and experimental
 shadow surfaces until a separate seam proves broader ingress.
+On those bounded shadow surfaces, reliability priors may modulate host-dependent
+`Q_t^{mem}(a)` lift for `check`, native `seek-context`, and `branch` only.
+Fresh contradiction, explicit probe-failure class evidence, or expired TTL must zero the
+reliability-derived component rather than letting stale host confidence survive.
 
 ### 6.5 Combined score
 
