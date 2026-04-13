@@ -59,6 +59,11 @@ def test_internal_workflow_surfaces_exist() -> None:
     assert "Remote publication remains separate" not in workflow_doc
     assert "publishes the session branch, merges it, adopts `origin/main`" in workflow_doc
     assert "smallest surface-aware verification bundle" in workflow_doc
+    assert "Live CLI invocation contract" in workflow_doc
+    assert "use the repo harness entrypoints" in workflow_doc
+    assert "Gemini operator-lane auth defaults to `google_login`" in workflow_doc
+    assert '`gemini -p "<prompt>" -o stream-json --approval-mode yolo`' in workflow_doc
+    assert "interactive `gemini` only for sign-in or auth repair" in workflow_doc
     assert "--manual-exception" in workflow_doc
     assert 'no unique commits relative to `origin/main`' in workflow_doc
     assert 'repo is not back at resting truth' in workflow_doc
