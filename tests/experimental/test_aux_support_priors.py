@@ -4,8 +4,8 @@ from __future__ import annotations
 
 import pytest
 
-from cortex.aux._temporal_publication import _merge_temporal_publication
 from cortex.aux.augmentation import AuxiliarySupportAppendix, augment_snapshot
+from cortex.aux.distillation import _distill_offline_support_publication_from_snapshots
 from cortex.aux.publication import (
     augment_snapshot_with_offline_publication,
     build_offline_support_publication,
@@ -164,11 +164,12 @@ def _augmented_temporal_case(scenario_id: str):
         scenario.scenario_id: scenario
         for scenario in make_aux_temporal_corpus()
     }[scenario_id]
-    publication = _merge_temporal_publication(
+    publication = _distill_offline_support_publication_from_snapshots(
         scenario.source_snapshots,
+        host_name="test-support-priors",
         source_label="tests/experimental/test_aux_support_priors",
-        extra_tags=frozenset({"aux/offline-publication", "aux/reference-replay"}),
-        extra_notes=("test support-memory prior derivation",),
+        publication_tags=frozenset({"aux/offline-publication", "aux/reference-replay"}),
+        notes=("test support-memory prior derivation",),
     )
     return augment_snapshot_with_offline_publication(
         scenario.target_snapshot,

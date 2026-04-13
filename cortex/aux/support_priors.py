@@ -64,6 +64,19 @@ def _metadata_int(
     return 0
 
 
+def _metadata_str(
+    metadata: tuple[MetadataField, ...],
+    key: str,
+) -> str:
+    for field in metadata:
+        if field.key != key:
+            continue
+        if isinstance(field.value, str):
+            return field.value
+        return str(field.value)
+    return ""
+
+
 def _normalized_candidate(reference: SupportReference) -> SupportReference:
     normalized_kind = {
         "retrieval-prior": "memory",
@@ -370,12 +383,23 @@ def _build_signal_profile(snapshot: AugmentedSupportSnapshot) -> SupportMemorySi
         for token in _reference_tokens(reference)
     )
     source_snapshot_count = _metadata_int(appendix.metadata, "source_snapshot_count")
+    source_label = _metadata_str(appendix.metadata, "source")
+    positive_prior_state = _metadata_str(appendix.metadata, "positive_prior_state")
     fanout_penalty = max(0.0, 0.05 * (len(derived_refs) - 4))
-    source_penalty = max(0.0, 0.10 * (source_snapshot_count - 1))
+    source_penalty = 0.0
+    if source_label != "aux/distillation":
+        source_penalty = max(0.0, 0.10 * (source_snapshot_count - 1))
     burden_tag_penalty = 0.15 if _has_token(token_pool, "burden") else 0.0
     drift_tag_penalty = 0.10 if _has_token(token_pool, "drift") else 0.0
+    suppressed_burden_penalty = (
+        0.35 if "burden-heavy" in positive_prior_state else 0.0
+    )
     burden_penalty = _clip_unit(
-        fanout_penalty + source_penalty + burden_tag_penalty + drift_tag_penalty
+        fanout_penalty
+        + source_penalty
+        + burden_tag_penalty
+        + drift_tag_penalty
+        + suppressed_burden_penalty
     )
 
     return SupportMemorySignalProfile(

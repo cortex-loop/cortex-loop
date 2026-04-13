@@ -11,9 +11,9 @@ from cortex.core.support import SupportReference, SupportSnapshot
 from cortex.sre.memory_priors import SupportMemoryPriorAppendix
 
 from ._support_match import _match_score, _reference_tokens, _source_refs_for_retrieval
-from ._temporal_publication import _merge_temporal_publication
 from .augmentation import AugmentedSupportSnapshot
 from .cost import AuxBurdenReport
+from .distillation import _distill_offline_support_publication_from_snapshots
 from .geometry import (
     AuxContradictionCluster,
     AuxGeometryReport,
@@ -102,11 +102,12 @@ def _contradiction_quality(report: AuxGeometryReport) -> float:
 def _merge_publications(
     source_snapshots: tuple[SupportSnapshot, ...],
 ) -> OfflineSupportPublication:
-    return _merge_temporal_publication(
+    return _distill_offline_support_publication_from_snapshots(
         source_snapshots,
+        host_name="aux-temporal-corpus",
         source_label="aux/temporal-corpus",
-        extra_tags=frozenset({"aux/offline-publication", "aux/temporal-corpus"}),
-        extra_notes=("time-separated offline publication for later target evaluation",),
+        publication_tags=frozenset({"aux/offline-publication", "aux/temporal-corpus"}),
+        notes=("time-separated offline publication for later target evaluation",),
     )
 
 

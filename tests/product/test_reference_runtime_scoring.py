@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from cortex.aux._temporal_publication import _merge_temporal_publication
+from cortex.aux.distillation import _distill_offline_support_publication_from_snapshots
 from cortex.aux.publication import augment_snapshot_with_offline_publication
 from cortex.aux.support_priors import build_support_memory_prior_appendix
 from cortex.sre.brake import BrakeState
@@ -956,11 +956,12 @@ def _support_memory_priors_from_temporal_case(
         scenario.scenario_id: scenario
         for scenario in make_aux_temporal_corpus()
     }[scenario_id]
-    publication = _merge_temporal_publication(
+    publication = _distill_offline_support_publication_from_snapshots(
         temporal_case.source_snapshots,
+        host_name="reference",
         source_label="tests/product/test_reference_runtime_scoring",
-        extra_tags=frozenset({"aux/offline-publication", "aux/reference-replay"}),
-        extra_notes=("product scoring replay prior test",),
+        publication_tags=frozenset({"aux/offline-publication", "aux/reference-replay"}),
+        notes=("product scoring replay prior test",),
     )
     augmented = augment_snapshot_with_offline_publication(
         temporal_case.target_snapshot,

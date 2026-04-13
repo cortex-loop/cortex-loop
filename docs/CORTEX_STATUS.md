@@ -50,9 +50,9 @@ Answering stance:
 
 ## Current Focus
 
-- Current tracked train: `persistent-support-memory-distillation`
-- Active quality/risk focus: The bounded AUX cross-host shadow surface still earns `full_cross_host`, now under stricter branch-linked continuity law: Claude, Gemini, and reference all hold host-local and reference-projected branch continuity without generic pending-goal debt, generic reminder language, or generic `resume*` wake cues acting as branch-specific anchors; lawful non-reference host distinction remains explicit, and negative counterexamples stay stable. The next highest-leverage gap is durable support-memory distillation: store raw support-side episodes, publish compact removable priors offline, and keep `Q_mem = 0` on shipping and conformance lanes until live re-entry is separately earned.
-- Next product train after the current focus: `inspect-execute-resume-posture-control`
+- Current tracked train: `inspect-execute-resume-posture-control`
+- Active quality/risk focus: The bounded AUX shadow surface still earns `full_cross_host`, and durable support-memory distillation is now landed support-side and removable: bounded AUX episodes persist in SQLite, offline distillation preserves replay/shadow lift and negative stability, and raw episodes may not drive runtime selection directly. Shipping and conformance still keep `Q_mem = 0`, and the next highest-leverage gap is posture-sensitive online control so inspect, execute, and resume can alter verification intensity, read allowance, and stop thresholds without mode churn.
+- Next product train after the current focus: `selective-anti-thrash-with-creativity-budget`
 
 ## Bio-To-Code Matrix
 
@@ -62,10 +62,10 @@ Answering stance:
 | Bounded correction and verified-work preservation | Error repair without losing the main task thread | `landed` | `15` | `cortex/runtime`, `cortex/sre`, `cortex/hosts/openai` | `tests/product` | Keep preservation-state repair stable while support-side experiments stay removable and off the shipping critical path. |
 | Uncertainty handling and brake | Hesitation and uncertainty-aware inhibition | `landed` | `13` | `cortex/sre` | `tests/product`, `tests/experimental` | Keep reference-derived brake and uncertainty control stable while AUX remains advisory and runtime-off-by-default. |
 | Branch continuity, suspend/resume, and truthful closure | Working memory across interruptions plus truthful closure | `landed` | `15` | `cortex/sre`, `cortex/hosts/openai` | `tests/product`, `tests/conformance` | Keep suspend/resume and truthful closure stable now that host-local branch continuity is repaired across Claude, Gemini, and reference; branch-local continuity may reopen only from branch-linked cues, and any future support memory must remain explicit, optional, and non-binding. |
-| Intervention pricing versus neutrality | Deciding when to intervene, stay neutral, or stop | `landed` | `10` | `cortex/sre`, `cortex/aux` | `tests/product`, `tests/experimental` | Hold calibrated intervention pricing stable now that the bounded AUX shadow surface earns `full_cross_host`; keep bounded audit compact on the shipped lane while any future support-memory lift stays explicit and separately earned. |
+| Intervention pricing versus neutrality | Deciding when to intervene, stay neutral, or stop | `landed` | `10` | `cortex/sre`, `cortex/aux` | `tests/product`, `tests/experimental` | Hold calibrated intervention pricing stable now that the bounded AUX shadow surface earns `full_cross_host`; keep bounded audit compact on the shipped lane while posture-sensitive online control becomes the next active leverage. |
 | Blocker surfacing and goal-debt management | Noticing unresolved blockers and unfinished intentions | `landed` | `10` | `cortex/sre`, `cortex/hosts/openai`, `cortex/hosts/claude`, `cortex/hosts/gemini`, `cortex/hosts/reference` | `tests/product`, `tests/conformance` | Keep typed goal-debt and closure-pressure state stable across hosts while support-side augmentation remains explicit and non-sovereign. |
 | Multi-host executive continuity | One executive across different brains and contexts | `landed` | `15` | `cortex/hosts/openai`, `cortex/hosts/claude`, `cortex/hosts/gemini`, `cortex/hosts/reference` | `tests/product`, `tests/conformance` | Hold one Cortex law across OpenAI, Claude, Gemini, and reference without flattening host-native realization. |
-| Offline consolidation and support geometry | Sleep-like consolidation and support systems | `landed` | `10` | `cortex/aux` | `tests/experimental`, `tests/archive`, `tests/conformance` | Keep offline publication explicit, removable, and non-sovereign now that the bounded AUX shadow surface earns `full_cross_host`; the next leverage is durable support-memory distillation rather than widening live `Q_mem`. |
+| Offline consolidation and support geometry | Sleep-like consolidation and support systems | `landed` | `10` | `cortex/aux` | `tests/experimental`, `tests/archive`, `tests/conformance` | Keep durable support-memory distillation explicit, removable, and non-sovereign now that the bounded AUX shadow surface earns `full_cross_host`; raw SQLite episodes stay support-side only, and the next leverage is posture-sensitive online control rather than widening live `Q_mem`. |
 
 ## Math To Code Rules
 
@@ -155,19 +155,19 @@ Workflow gates marked `required` are contractual gates checked by `repo_workflow
 
 ## Next Product Train
 
-- Train: `inspect-execute-resume-posture-control`
-- Surface: `product + conformance + internal`
-- Executive benefit: Make Cortex use a compact inspect/execute/resume posture so verification intensity, read allowance, and stop thresholds match task state instead of one control profile everywhere.
-- Why now: Cross-host host-local continuity and the broader AUX shadow claim are now earned, so persistent support-memory distillation is the active train and posture-sensitive online control is the next queued leverage after durable support priors exist.
-- Primary metric: `inspect-heavy tasks request more verification, execute tasks stay compact, and resume tasks favor continuity reconstruction without posture churn`
-- Guardrail: `no large mode taxonomy, no host-specific posture semantics, and no verbosity inflation`
-- Kill rule: `cut any seam that adds posture bureaucracy without improving task-state-sensitive control allocation`
+- Train: `selective-anti-thrash-with-creativity-budget`
+- Surface: `experimental`
+- Executive benefit: Suppress repeated unchanged-condition loops without suppressing creative reframing or better outcomes.
+- Why now: Persistent support-memory distillation is now landed support-side and posture-sensitive online control is the active train, so anti-thrash stays queued until posture provides the context needed to tax repetition selectively rather than bluntly.
+- Primary metric: `fewer unchanged-condition loops while novel branches, stronger verification moves, and changed-evidence retries still clear the gate`
+- Guardrail: `no global retry ban, no creativity collapse, and no new soft-control family`
+- Kill rule: `cut any seam that makes Cortex safer-but-dumber or suppresses productive novelty`
 
 ## Where To Work Next
 
 - Keep the bounded audit surface compact and truthful on the shipped lane: selected versus realized family, uncertainty, threshold, delta, verification, and probe truth only.
 - Keep the no-spend live evidence current and explicit: fast conformance is green, the deeper directionality and host-native watchlists are refreshed, and non-shipping auth or env caveats must stay explicit instead of silently stale.
-- Keep the next AUX memory seam explicit and removable now that bounded cross-host shadow acceptance is earned under branch-linked continuity cues only: durable support-memory distillation may publish compact priors offline, but live `Q_mem` stays zero on shipping and conformance lanes until separate proof earns re-entry.
+- Keep AUX memory and posture law explicit and removable now that durable support-memory distillation is landed: raw SQLite episodes stay support-side only, distilled publications remain the only re-entry path, and live `Q_mem` stays zero on shipping and conformance lanes while posture control becomes the active train.
 
 ## Canonical Proof
 
@@ -209,7 +209,7 @@ Workflow gates marked `required` are contractual gates checked by `repo_workflow
 - Do not let archived docs or train notes act as live truth.
 - Do not treat lab or evaluation output as product progress unless shipped runtime behavior changes.
 - Do not hide Claude or Gemini behind backlog language when reporting conformance.
-- Do not route raw AUX persistence or future SQLite episodes directly into runtime action selection; only distilled removable publications may re-enter.
+- Do not route raw AUX SQLite episodes directly into runtime action selection; only distilled removable publications may re-enter.
 - Do not introduce host-specific policy forks to force donor coherence.
 - Do not let generic pending-goal debt, plain-English reminder text, or generic `resume*` wake cues act as branch-specific continuity anchors.
 

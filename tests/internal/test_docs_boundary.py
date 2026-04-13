@@ -239,18 +239,18 @@ def test_status_registry_is_complete_and_stable() -> None:
         "reference": "reference_cli",
     }
     assert status["conformance_summary"]["shipping_default"] == "openai:operator_cli"
-    assert status["work_today"]["slug"] == "persistent-support-memory-distillation"
+    assert status["work_today"]["slug"] == "inspect-execute-resume-posture-control"
     assert "full_cross_host" in status["work_today"]["note"]
-    assert "durable support-memory distillation" in status["work_today"]["note"]
+    assert "durable support-memory distillation is now landed" in status["work_today"]["note"].lower()
     assert "Q_mem = 0" in status["work_today"]["note"]
-    assert status["next_product_train"]["slug"] == "inspect-execute-resume-posture-control"
-    assert status["next_product_train"]["surface"] == "product + conformance + internal"
-    assert "inspect/execute/resume posture" in status["next_product_train"]["executive_benefit"]
-    assert "persistent support-memory distillation is the active train" in status["next_product_train"]["why_now"]
-    assert "resume tasks favor continuity reconstruction" in status["next_product_train"]["primary_metric"]
+    assert status["next_product_train"]["slug"] == "selective-anti-thrash-with-creativity-budget"
+    assert status["next_product_train"]["surface"] == "experimental"
+    assert "Suppress repeated unchanged-condition loops" in status["next_product_train"]["executive_benefit"]
+    assert "posture-sensitive online control is the active train" in status["next_product_train"]["why_now"]
+    assert "novel branches" in status["next_product_train"]["primary_metric"]
     assert "Keep the bounded audit surface compact and truthful" in status["where_to_work"][0]
     assert "no-spend live evidence current and explicit" in status["where_to_work"][1]
-    assert "bounded cross-host shadow acceptance is earned" in status["where_to_work"][2]
+    assert "durable support-memory distillation is landed" in status["where_to_work"][2]
     assert "live `Q_mem` stays zero" in status["where_to_work"][2]
     closure_gates = {gate["id"]: gate for gate in status["closure_gates"]}
     assert closure_gates["main_synced"]["status"] == "required"
@@ -280,16 +280,16 @@ def test_generated_status_doc_includes_system_map_and_next_product_train() -> No
     assert "Active quality/risk focus" in text
     assert "## Packet To Code" in text
     assert "## Next Product Train" in text
-    assert "`inspect-execute-resume-posture-control`" in text
-    assert "inspect/execute/resume posture" in text
+    assert "`selective-anti-thrash-with-creativity-budget`" in text
+    assert "Suppress repeated unchanged-condition loops" in text
     assert "Shipping Product Lane\\nopenai:operator_cli" in text or "Shipping Product Lane" in text
     assert "Shipping default: `openai:operator_cli`" in text
     assert "Workflow gates marked `required` are contractual gates checked by `repo_workflow.py`" in text
     assert "| `main_synced` | `required` |" in text
     assert "| `cleanup_report` | `required` |" in text
-    assert "`persistent-support-memory-distillation`" in text
+    assert "`inspect-execute-resume-posture-control`" in text
     assert "full_cross_host" in text
-    assert "durable support-memory distillation" in text
+    assert "durable support-memory distillation is now landed" in text.lower()
 
 
 def test_front_door_surfaces_point_to_local_first_and_explicit_publish_closeout() -> None:

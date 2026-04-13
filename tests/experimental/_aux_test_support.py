@@ -179,9 +179,14 @@ def make_aux_temporal_corpus() -> tuple[AuxTemporalScenario, ...]:
             scenario_id="retrieval-reuse",
             source_snapshots=(
                 make_temporal_support_snapshot(
-                    "source-retrieval",
+                    "source-retrieval-a",
                     published_memory_refs=("normalize-port-memo",),
                     artifact_refs=("normalize-port-artifact",),
+                ),
+                make_temporal_support_snapshot(
+                    "source-retrieval-b",
+                    published_memory_refs=("normalize-port-checklist",),
+                    artifact_refs=("normalize-port-result",),
                 ),
             ),
             target_snapshot=make_temporal_support_snapshot(
@@ -236,10 +241,16 @@ def make_aux_temporal_corpus() -> tuple[AuxTemporalScenario, ...]:
             scenario_id="uncertainty-brake-calibration",
             source_snapshots=(
                 make_temporal_support_snapshot(
-                    "source-uncertainty",
+                    "source-uncertainty-a",
                     wake_reason_tags=("resume-needed",),
                     brake_history=("guarded",),
                     published_memory_refs=("guarded-review-memo",),
+                ),
+                make_temporal_support_snapshot(
+                    "source-uncertainty-b",
+                    wake_reason_tags=("resume-needed",),
+                    brake_history=("guarded",),
+                    published_memory_refs=("guarded-review-checklist",),
                 ),
             ),
             target_snapshot=make_temporal_support_snapshot(
@@ -855,12 +866,21 @@ def make_aux_cross_host_shadow_corpus() -> tuple[AuxCrossHostShadowScenario, ...
         for scenario in make_aux_reference_replay_corpus()
         if scenario.scenario_id == "branch-resume-recovery"
     )
-    check_reliability_source = make_temporal_support_snapshot(
-        "source-check-reliability-active",
-        wake_reason_tags=("resume-needed",),
-        brake_history=("guarded",),
-        published_memory_refs=("guarded-review-memo",),
-        artifact_refs=("guarded-review-artifact",),
+    check_reliability_sources = (
+        make_temporal_support_snapshot(
+            "source-check-reliability-active-a",
+            wake_reason_tags=("resume-needed",),
+            brake_history=("guarded",),
+            published_memory_refs=("guarded-review-memo",),
+            artifact_refs=("guarded-review-artifact",),
+        ),
+        make_temporal_support_snapshot(
+            "source-check-reliability-active-b",
+            wake_reason_tags=("resume-needed",),
+            brake_history=("guarded",),
+            published_memory_refs=("guarded-review-checklist",),
+            artifact_refs=("guarded-review-runbook",),
+        ),
     )
     check_reliability_target = make_temporal_support_snapshot(
         "target-check-reliability-active",
@@ -897,8 +917,19 @@ def make_aux_cross_host_shadow_corpus() -> tuple[AuxCrossHostShadowScenario, ...
         candidate_refs=("small-fix-candidate",),
         pending_goal_refs=("small-fix-goal",),
     )
-    fresh_contradiction_source = make_temporal_support_snapshot(
-        "source-fresh-contradiction",
+    fresh_contradiction_sources = (
+        make_temporal_support_snapshot(
+            "source-fresh-contradiction-a",
+            wake_reason_tags=("resume-needed",),
+            brake_history=("guarded",),
+            published_memory_refs=("guarded-contradiction-memo",),
+        ),
+        make_temporal_support_snapshot(
+            "source-fresh-contradiction-b",
+            wake_reason_tags=("resume-needed",),
+            brake_history=("guarded",),
+            artifact_refs=("guarded-contradiction-artifact",),
+        ),
     )
     fresh_contradiction_target = make_temporal_support_snapshot(
         "target-fresh-contradiction",
@@ -999,12 +1030,13 @@ def make_aux_cross_host_shadow_corpus() -> tuple[AuxCrossHostShadowScenario, ...
                     scenario_id=f"{host_name}-check-review",
                     scenario_class="check_review",
                     host_name=host_name,
-                    source_snapshots=(
+                    source_snapshots=tuple(
                         _overlay_runtime_support_snapshot(
                             contradiction_base,
-                            check_reliability_source,
+                            snapshot,
                             host_name=host_name,
-                        ),
+                        )
+                        for snapshot in check_reliability_sources
                     ),
                     target_snapshot=_overlay_runtime_support_snapshot(
                         contradiction_base,
@@ -1044,12 +1076,13 @@ def make_aux_cross_host_shadow_corpus() -> tuple[AuxCrossHostShadowScenario, ...
                     scenario_id=f"{host_name}-fresh-contradiction-invalidation",
                     scenario_class="fresh_contradiction_invalidation",
                     host_name=host_name,
-                    source_snapshots=(
+                    source_snapshots=tuple(
                         _overlay_runtime_support_snapshot(
                             retrieval_base,
-                            fresh_contradiction_source,
+                            snapshot,
                             host_name=host_name,
-                    ),
+                        )
+                        for snapshot in fresh_contradiction_sources
                     ),
                     target_snapshot=_overlay_runtime_support_snapshot(
                         retrieval_base,

@@ -7,6 +7,7 @@ __pycache__/
 build/
 dist/
 .cortex/live_validation/
+.cortex/aux/
 .cortex/train_loops/
 .cortex/quality_audit/
 .cortex/closeout_contract/

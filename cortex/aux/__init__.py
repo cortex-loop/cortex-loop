@@ -9,6 +9,9 @@ from .cross_host_shadow import (
     AuxCrossHostShadowScenario,
     evaluate_aux_cross_host_shadow,
 )
+from .distillation import (
+    distill_offline_support_publication,
+)
 from .geometry import (
     AuxContradictionCluster,
     AuxGeometryReport,
@@ -35,6 +38,12 @@ from .publication import (
     OfflineSupportPublication,
     build_offline_support_publication,
     augment_snapshot_with_offline_publication,
+)
+from .persistence import (
+    SqliteSupportMemoryStore,
+    SupportEventSignature,
+    SupportMemoryEpisode,
+    episode_from_support_snapshot,
 )
 from .reference_replay import (
     AUX_REFERENCE_REPLAY_FAILURE_LABELS,
@@ -69,12 +78,17 @@ __all__ = [
     "AuxTemporalScenario",
     "AuxiliarySupportAppendix",
     "OfflineSupportPublication",
+    "SqliteSupportMemoryStore",
+    "SupportEventSignature",
+    "SupportMemoryEpisode",
     "augment_snapshot",
     "augment_snapshot_with_offline_publication",
     "build_aux_geometry_report",
     "build_aux_lift_report",
     "build_offline_support_publication",
     "build_support_memory_prior_appendix",
+    "distill_offline_support_publication",
+    "episode_from_support_snapshot",
     "evaluate_aux_cross_host_shadow",
     "evaluate_aux_reference_q_mem_replay",
     "evaluate_aux_support_corpus",
