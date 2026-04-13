@@ -252,15 +252,15 @@ def test_generated_status_doc_includes_system_map_and_next_product_train() -> No
     assert "## Identity And Research Stance" in text
     assert "## Live Product Truth" in text
     assert "## Current Focus" in text
-    assert "## Denominator / Completion Context" in text
     assert "## Bio-To-Code Matrix" in text
     assert "## Math To Code Rules" in text
     assert "human executive function" in text
-    assert text.index("## Live Product Truth") < text.index("## Denominator / Completion Context")
-    assert "Current full-executive completion: `100%`" in text
-    assert "Shippable threshold for the full executive: `85%`" in text
-    assert "When user asks where Cortex is at now:" in text
-    assert "background completion context" in text
+    assert text.index("## Live Product Truth") < text.index("## Bio-To-Code Matrix")
+    assert "## Denominator / Completion Context" not in text
+    assert "Current full-executive completion:" not in text
+    assert "Shippable threshold for the full executive:" not in text
+    assert "When user asks where Cortex is at now:" not in text
+    assert "background completion context" not in text
     assert "Active quality/risk focus" in text
     assert "## Packet To Code" in text
     assert "## Next Product Train" in text
@@ -285,6 +285,7 @@ def test_front_door_surfaces_point_to_one_command_managed_closeout() -> None:
 
     assert 'close-session --message "scope: end-state summary"' in status
     assert "cleanup-report" in status
+    assert "explicit denominator or progress-accounting questions" in agents
     assert "manual publication" not in agents.lower()
     assert "manual publication" not in status.lower()
     assert "separate publication step" not in status.lower()

@@ -39,7 +39,7 @@ Research stance:
 - Prefer brilliant concrete code when it cleanly realizes the intended executive skill; do not preserve a worse abstraction just because it matched an earlier local framing.
 
 Answering stance:
-- When describing Cortex, lead with shipping truth, conformance truth, the current train, and the active quality/risk focus; keep the full executive denominator as background context rather than the front-door headline.
+- When describing Cortex, lead with shipping truth, conformance truth, the current train, and the active quality/risk focus. Surface the executive-completion denominator only on explicit denominator or progress-accounting questions.
 - Always distinguish Cortex truth, shipping truth, conformance truth, and the current train.
 
 ## Live Product Truth
@@ -53,23 +53,6 @@ Answering stance:
 - Current tracked train: `support-conditioned-intervention-pricing-cross-host-shadow`
 - Active quality/risk focus: The doctrine/reference cleanup has landed: neutral is pass-through continuation, latched minimum-burden uncertainty relief is re-earned through check and native seek-context, branch governance is burden-first, and explicit AUX-owned support memory remains lawful and removable. The active leverage is now cross-host shadow evidence for support-conditioned intervention pricing without shipping-default change.
 - Next product train after the current focus: `support-conditioned-intervention-pricing-cross-host-shadow`
-
-## Denominator / Completion Context
-
-- Current full-executive completion: `100%`
-- Shippable threshold for the full executive: `85%`
-- Gap to shippable full-executive read: `0` points
-- Status mix: `8` landed, `0` partial, `0` north_star
-- Scoring rule: `landed=100%`, `partial=30%`, `north_star=0%`
-- This score measures progress toward the full executive denominator, not just the current shipping lane.
-
-When user asks where Cortex is at now:
-- Start with shipping truth, conformance truth, the current train, and the active quality/risk focus.
-- Then give the full-executive denominator as background completion context rather than the front-door headline.
-- Then summarize the bio-to-code matrix and the next highest-leverage quality or proof blockers without drifting from Cortex law.
-
-Denominator context from here:
-- `No remaining denominator row`: `+0` points if landed. The full executive denominator is already landed, so the active leverage is code-quality, proof-confidence, dead-weight elimination, and live-run reliability rather than score expansion.
 
 ## Bio-To-Code Matrix
 

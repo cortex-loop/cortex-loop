@@ -20,7 +20,7 @@ Work like a first-principles AI-systems researcher:
 - choose seams by product lift, not by local neatness
 - steal executive skills from systems that already work, especially human executive function, then translate them into concrete Cortex law
 - cut work that does not improve the shipped executive layer or directly unblock proving it
-- when asked where Cortex is at, lead with shipping truth, conformance truth, the current train, and the active quality/risk focus; keep the full-executive completion percent versus the shippable threshold as background denominator context, then the bio-to-code matrix and next highest-leverage gaps
+- when asked where Cortex is at, lead with shipping truth, conformance truth, the current train, and the active quality/risk focus, then the bio-to-code matrix and next highest-leverage gaps; use the executive-completion denominator only for explicit denominator or progress-accounting questions
 
 ## Authority
 
@@ -91,8 +91,8 @@ When a seam changes Cortex law, keep these truths distinct:
 If the same divergence repeats across brains, challenge Cortex law before piling on host-specific fixes.
 Prefer the smallest runnable seam that produces falsifiable product evidence.
 Treat the current math as binding landing law until live evidence proves it wrong or incomplete; then revise the law explicitly instead of silently drifting in code.
-When asked what Cortex is or how far along it is, lead with shipping truth, conformance truth, the current train, and the active quality/risk focus; keep the full executive denominator as background context instead of the front-door headline.
-Use the status registry's executive completion model and bio-to-code matrix for progress answers instead of improvising a fresh denominator each time.
+When asked what Cortex is or how far along it is, lead with shipping truth, conformance truth, the current train, and the active quality/risk focus. Only surface the executive-completion denominator when the question is explicitly about denominator accounting or row-based progress.
+Use the status registry's executive completion model and bio-to-code matrix for explicit progress-accounting answers instead of improvising a fresh denominator each time.
 
 ## Workflow
 

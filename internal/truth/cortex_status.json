@@ -28,7 +28,7 @@
       "Prefer brilliant concrete code when it cleanly realizes the intended executive skill; do not preserve a worse abstraction just because it matched an earlier local framing."
     ],
     "answering_stance": [
-      "When describing Cortex, lead with shipping truth, conformance truth, the current train, and the active quality/risk focus; keep the full executive denominator as background context rather than the front-door headline.",
+      "When describing Cortex, lead with shipping truth, conformance truth, the current train, and the active quality/risk focus. Surface the executive-completion denominator only on explicit denominator or progress-accounting questions.",
       "Always distinguish Cortex truth, shipping truth, conformance truth, and the current train."
     ]
   },
@@ -42,8 +42,8 @@
     "full_denominator_note": "This score measures progress toward the full executive denominator, not just the current shipping lane.",
     "answer_contract": [
       "Start with shipping truth, conformance truth, the current train, and the active quality/risk focus.",
-      "Then give the full-executive denominator as background completion context rather than the front-door headline.",
-      "Then summarize the bio-to-code matrix and the next highest-leverage quality or proof blockers without drifting from Cortex law."
+      "Then summarize the bio-to-code matrix and the next highest-leverage quality or proof blockers without drifting from Cortex law.",
+      "Only surface the executive-completion denominator when the question is explicitly about denominator accounting or row-based progress."
     ],
     "next_raise": [
       {
