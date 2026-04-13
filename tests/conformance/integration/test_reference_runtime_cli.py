@@ -190,7 +190,7 @@ def test_reference_runtime_cli_reads_event_file_and_emits_one_record_per_event()
     assert [
         record["control_ledger"]["allocation_diagnostics"]["activation_threshold"]
         for record in records
-    ] == [0.44999999999999996, 0.35, 0.30]
+    ] == [0.36999999999999994, 0.26999999999999996, 0.22999999999999995]
     assert records[1]["control_ledger"]["allocation_diagnostics"]["scores"][0]["allocated_score"] != records[1]["control_ledger"]["allocation_diagnostics"]["scores"][0]["online_score"]
     assert records[2]["control_ledger"]["allocation_diagnostics"]["scores"][0]["allocated_score"] != records[2]["control_ledger"]["allocation_diagnostics"]["scores"][0]["online_score"]
     for record in records:
@@ -358,6 +358,9 @@ def test_reference_runtime_cli_emits_feedback_window_summary_for_real_session_mi
         "override_count": 0,
         "latched_count": 0,
         "clean_success_streak": 0,
+        "evidence_state_move_count": 0,
+        "continuity_improvement_count": 0,
+        "family_change_without_evidence_count": 0,
         "goal_progress_floor": 0.55,
         "degradation_pressure_bonus": 1,
         "sustained_spike_flags": ["prior-session-mismatch"],
@@ -368,12 +371,16 @@ def test_reference_runtime_cli_emits_feedback_window_summary_for_real_session_mi
         "override_count": 1,
         "latched_count": 1,
         "clean_success_streak": 0,
+        "evidence_state_move_count": 0,
+        "continuity_improvement_count": 0,
+        "family_change_without_evidence_count": 1,
         "goal_progress_floor": 0.70,
         "degradation_pressure_bonus": 2,
         "sustained_spike_flags": [
             "prior-session-mismatch",
             "prior-enforcement-override",
             "sustained-feedback-disruption",
+            "prior-non-productive-family-switch",
         ],
     }
     assert tuple(records[-1]) == (
@@ -433,6 +440,8 @@ def test_reference_runtime_cli_save_session_does_not_change_jsonl_output(tmp_pat
                     "approval-boundary-present",
                     "capability-view-missing",
                 ],
+                "evidence_state_moved": True,
+                "continuity_improved": False,
             },
             "feedback_window": [
                 {
@@ -442,6 +451,8 @@ def test_reference_runtime_cli_save_session_does_not_change_jsonl_output(tmp_pat
                     "commitment_result_kind": None,
                     "warning_codes": [],
                     "host_friction_tags": ["capability-view-missing"],
+                    "evidence_state_moved": False,
+                    "continuity_improved": False,
                 },
                 {
                     "selected_family": "seek-context",
@@ -453,6 +464,8 @@ def test_reference_runtime_cli_save_session_does_not_change_jsonl_output(tmp_pat
                         "approval-boundary-present",
                         "capability-view-missing",
                     ],
+                    "evidence_state_moved": True,
+                    "continuity_improved": False,
                 },
                 {
                     "selected_family": "seek-context",
@@ -464,6 +477,8 @@ def test_reference_runtime_cli_save_session_does_not_change_jsonl_output(tmp_pat
                         "approval-boundary-present",
                         "capability-view-missing",
                     ],
+                    "evidence_state_moved": True,
+                    "continuity_improved": False,
                 },
             ],
             "executive_modulator_memory": {

@@ -15,6 +15,7 @@ class AllocationScore:
     score: float
     admissible: bool = True
     reason_tags: frozenset[str] = field(default_factory=frozenset)
+    activation_threshold: float = 0.0
     online_score: float | None = None
     memory_score: float = 0.0
     allocated_score: float | None = None
@@ -42,6 +43,12 @@ class AllocationScore:
             raise ValueError(
                 "AllocationScore.reason_tags must contain only non-empty values "
                 "after trimming."
+            )
+        if not isinstance(self.activation_threshold, Real):
+            actual_type = type(self.activation_threshold).__name__
+            raise TypeError(
+                "AllocationScore.activation_threshold must be numeric, "
+                f"got {actual_type}."
             )
         if self.online_score is not None and not isinstance(self.online_score, Real):
             actual_type = type(self.online_score).__name__
@@ -78,6 +85,7 @@ class AllocationScore:
             "online_score": self.online_score,
             "memory_score": float(self.memory_score),
             "allocated_score": self.allocated_score,
+            "activation_threshold": float(self.activation_threshold),
             "admissible": self.admissible,
             "reason_tags": sorted(self.reason_tags),
         }
@@ -86,19 +94,12 @@ class AllocationScore:
 @dataclass(frozen=True, slots=True)
 class AllocationScorecard:
     scores: tuple[AllocationScore, ...]
-    activation_threshold: float
     alpha_t: float = 1.0
 
     def __post_init__(self) -> None:
         if any(not isinstance(score, AllocationScore) for score in self.scores):
             raise TypeError(
                 "AllocationScorecard.scores must contain only AllocationScore instances."
-            )
-        if not isinstance(self.activation_threshold, Real):
-            actual_type = type(self.activation_threshold).__name__
-            raise TypeError(
-                "AllocationScorecard.activation_threshold must be numeric, "
-                f"got {actual_type}."
             )
         if not isinstance(self.alpha_t, Real):
             actual_type = type(self.alpha_t).__name__
@@ -114,6 +115,7 @@ def build_allocation_diagnostics_payload(
     scorecard: AllocationScorecard,
     *,
     selected_delta_over_neutral: float,
+    applied_activation_threshold: float,
     chi_t: float,
     mediation_payload: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
@@ -127,6 +129,12 @@ def build_allocation_diagnostics_payload(
         actual_type = type(selected_delta_over_neutral).__name__
         raise TypeError(
             "build_allocation_diagnostics_payload.selected_delta_over_neutral must be numeric, "
+            f"got {actual_type}."
+        )
+    if not isinstance(applied_activation_threshold, Real):
+        actual_type = type(applied_activation_threshold).__name__
+        raise TypeError(
+            "build_allocation_diagnostics_payload.applied_activation_threshold must be numeric, "
             f"got {actual_type}."
         )
     if not isinstance(chi_t, Real):
@@ -143,7 +151,7 @@ def build_allocation_diagnostics_payload(
         )
     payload = {
         "alpha_t": float(scorecard.alpha_t),
-        "activation_threshold": float(scorecard.activation_threshold),
+        "activation_threshold": float(applied_activation_threshold),
         "selected_delta_over_neutral": float(selected_delta_over_neutral),
         "chi_t": float(chi_t),
         "scores": [score.as_summary() for score in scorecard.scores],

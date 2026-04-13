@@ -628,6 +628,7 @@ def run_gemini_runtime_step(
         allocation_diagnostics=build_allocation_diagnostics_payload(
             selection.scorecard,
             selected_delta_over_neutral=selection.neutral_dominance.margin_over_neutral,
+            applied_activation_threshold=selection.neutral_dominance.activation_threshold,
             chi_t=selection.chi_t,
         ),
     )
@@ -1236,6 +1237,7 @@ _ALLOCATION_SCORE_KEYS = (
     "online_score",
     "memory_score",
     "allocated_score",
+    "activation_threshold",
     "admissible",
     "reason_tags",
 )
@@ -1269,7 +1271,7 @@ def _validate_allocation_diagnostics_payload(payload: dict[str, Any], label: str
             )
         if not (isinstance(score["family"], str) and score["family"].strip()):
             raise ValueError(f"{score_label}.family must be non-empty after trimming.")
-        for key in ("online_score", "memory_score", "allocated_score"):
+        for key in ("online_score", "memory_score", "allocated_score", "activation_threshold"):
             value = score[key]
             if isinstance(value, bool) or not isinstance(value, (int, float)):
                 actual_type = type(value).__name__

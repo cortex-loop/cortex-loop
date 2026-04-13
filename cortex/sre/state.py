@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from numbers import Real
 
 from .families import SoftControlFamily
 from .brake import BrakeState
@@ -56,6 +57,8 @@ class ReferenceControlAllocationView:
     top_family_set: frozenset[SoftControlFamily] = field(default_factory=frozenset)
     host_friction_tags: frozenset[str] = field(default_factory=frozenset)
     feedback_pressure_tags: frozenset[str] = field(default_factory=frozenset)
+    productive_exploration_bonus: float = 0.0
+    oscillation_penalty: float = 0.0
 
     def __post_init__(self) -> None:
         if not self.budget_band.strip():
@@ -77,6 +80,18 @@ class ReferenceControlAllocationView:
                 "ReferenceControlAllocationView.feedback_pressure_tags must contain only "
                 "non-empty values after trimming."
             )
+        for field_name in ("productive_exploration_bonus", "oscillation_penalty"):
+            value = getattr(self, field_name)
+            if not isinstance(value, Real):
+                actual_type = type(value).__name__
+                raise TypeError(
+                    f"ReferenceControlAllocationView.{field_name} must be numeric, "
+                    f"got {actual_type}."
+                )
+            if not 0.0 <= float(value) <= 1.0:
+                raise ValueError(
+                    f"ReferenceControlAllocationView.{field_name} must be between 0.0 and 1.0."
+                )
 
 
 @dataclass(frozen=True, slots=True)

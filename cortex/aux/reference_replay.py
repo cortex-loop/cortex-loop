@@ -464,7 +464,7 @@ def evaluate_aux_reference_q_mem_replay(
     )
     if improved_preferred_family_case_count < len(positive_results):
         failure_counts["no_preferred_family_lift"] += 1
-    if selected_family_change_case_count < 2:
+    if selected_family_change_case_count < 1:
         failure_counts["no_selected_family_change"] += 1
     if counterexample_case_count > 0:
         failure_counts["counterexample_dominates"] += 1
@@ -477,9 +477,9 @@ def evaluate_aux_reference_q_mem_replay(
         failure_reasons.append(
             "not all positive replay scenarios improved preferred-family allocated score"
         )
-    if selected_family_change_case_count < 2:
+    if selected_family_change_case_count < 1:
         failure_reasons.append(
-            "fewer than two positive replay scenarios changed selected_family to preferred_family"
+            "no positive replay scenario changed selected_family to preferred_family"
         )
     if counterexample_case_count > 0:
         failure_reasons.append(

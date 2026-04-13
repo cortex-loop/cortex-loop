@@ -317,6 +317,7 @@ def test_allocation_score_defaults_online_and_allocated_to_score() -> None:
         "online_score": 1.25,
         "memory_score": 0.0,
         "allocated_score": 1.25,
+        "activation_threshold": 0.0,
         "admissible": True,
         "reason_tags": ["top-family"],
     }
@@ -358,42 +359,21 @@ def test_allocation_score_requires_non_empty_reason_tags() -> None:
 
 
 def test_allocation_scorecard_requires_typed_scores() -> None:
-    scorecard = AllocationScorecard(
-        scores=(AllocationScore(SoftControlFamily.NEUTRAL, 1.0),),
-        activation_threshold=0.1,
-    )
+    scorecard = AllocationScorecard(scores=(AllocationScore(SoftControlFamily.NEUTRAL, 1.0),))
 
     assert len(scorecard.scores) == 1
+    assert not hasattr(scorecard, "activation_threshold")
 
     with pytest.raises(
         TypeError,
         match="AllocationScorecard.scores must contain only AllocationScore instances.",
     ):
-        AllocationScorecard(scores=("not-score",), activation_threshold=0.1)
-
-
-def test_allocation_scorecard_requires_numeric_activation_threshold() -> None:
-    scorecard = AllocationScorecard(
-        scores=(AllocationScore(SoftControlFamily.NEUTRAL, 1.0),),
-        activation_threshold=0.1,
-    )
-
-    assert scorecard.activation_threshold == 0.1
-
-    with pytest.raises(
-        TypeError,
-        match="AllocationScorecard.activation_threshold must be numeric",
-    ):
-        AllocationScorecard(
-            scores=(AllocationScore(SoftControlFamily.NEUTRAL, 1.0),),
-            activation_threshold="0.1",
-        )
+        AllocationScorecard(scores=("not-score",))
 
 
 def test_allocation_scorecard_requires_alpha_in_unit_interval() -> None:
     scorecard = AllocationScorecard(
         scores=(AllocationScore(SoftControlFamily.NEUTRAL, 1.0),),
-        activation_threshold=0.1,
         alpha_t=1.0,
     )
 
@@ -405,7 +385,6 @@ def test_allocation_scorecard_requires_alpha_in_unit_interval() -> None:
     ):
         AllocationScorecard(
             scores=(AllocationScore(SoftControlFamily.NEUTRAL, 1.0),),
-            activation_threshold=0.1,
             alpha_t="1.0",
         )
 
@@ -415,7 +394,6 @@ def test_allocation_scorecard_requires_alpha_in_unit_interval() -> None:
     ):
         AllocationScorecard(
             scores=(AllocationScore(SoftControlFamily.NEUTRAL, 1.0),),
-            activation_threshold=0.1,
             alpha_t=1.5,
         )
 
@@ -427,7 +405,6 @@ def test_neutral_dominance_decision_requires_typed_selected_family() -> None:
                 AllocationScore(SoftControlFamily.NEUTRAL, 1.0),
                 AllocationScore(SoftControlFamily.CHECK, 1.2),
             ),
-            activation_threshold=0.1,
         )
     )
 
@@ -532,16 +509,24 @@ def test_neutral_dominance_returns_neutral_when_margin_is_below_threshold() -> N
         AllocationScorecard(
             scores=(
                 AllocationScore(SoftControlFamily.NEUTRAL, 1.0),
-                AllocationScore(SoftControlFamily.CHECK, 1.19),
-                AllocationScore(SoftControlFamily.SEEK_CONTEXT, 0.8),
+                AllocationScore(
+                    SoftControlFamily.CHECK,
+                    1.19,
+                    activation_threshold=0.2,
+                ),
+                AllocationScore(
+                    SoftControlFamily.SEEK_CONTEXT,
+                    0.8,
+                    activation_threshold=0.1,
+                ),
             ),
-            activation_threshold=0.2,
         )
     )
 
     assert decision.selected_family is SoftControlFamily.NEUTRAL
     assert decision.neutral_selected is True
     assert abs(decision.margin_over_neutral - 0.19) < 1e-12
+    assert decision.activation_threshold == pytest.approx(0.2)
 
 
 def test_neutral_dominance_keeps_neutral_on_exact_threshold_tie() -> None:
@@ -549,9 +534,12 @@ def test_neutral_dominance_keeps_neutral_on_exact_threshold_tie() -> None:
         AllocationScorecard(
             scores=(
                 AllocationScore(SoftControlFamily.NEUTRAL, 1.0),
-                AllocationScore(SoftControlFamily.CHECK, 1.0),
+                AllocationScore(
+                    SoftControlFamily.CHECK,
+                    1.0,
+                    activation_threshold=0.0,
+                ),
             ),
-            activation_threshold=0.0,
         )
     )
 
@@ -583,7 +571,6 @@ def test_neutral_dominance_ranks_by_allocated_score_not_raw_online_score() -> No
                     allocated_score=1.08,
                 ),
             ),
-            activation_threshold=0.05,
             alpha_t=0.75,
         )
     )
@@ -608,9 +595,9 @@ def test_neutral_dominance_uses_allocated_margin_for_threshold() -> None:
                     1.04,
                     online_score=1.4,
                     allocated_score=1.04,
+                    activation_threshold=0.05,
                 ),
             ),
-            activation_threshold=0.05,
             alpha_t=0.75,
         )
     )
@@ -625,16 +612,24 @@ def test_neutral_dominance_returns_strongest_non_neutral_when_threshold_is_met()
         AllocationScorecard(
             scores=(
                 AllocationScore(SoftControlFamily.NEUTRAL, 1.0),
-                AllocationScore(SoftControlFamily.CHECK, 1.25),
-                AllocationScore(SoftControlFamily.REDIRECT, 1.4),
+                AllocationScore(
+                    SoftControlFamily.CHECK,
+                    1.25,
+                    activation_threshold=0.2,
+                ),
+                AllocationScore(
+                    SoftControlFamily.REDIRECT,
+                    1.4,
+                    activation_threshold=0.2,
+                ),
             ),
-            activation_threshold=0.2,
         )
     )
 
     assert decision.selected_family is SoftControlFamily.REDIRECT
     assert decision.neutral_selected is False
     assert abs(decision.margin_over_neutral - 0.4) < 1e-12
+    assert decision.activation_threshold == pytest.approx(0.2)
 
 
 def test_neutral_path_law_rejects_scorecards_that_omit_neutral() -> None:
@@ -642,7 +637,6 @@ def test_neutral_path_law_rejects_scorecards_that_omit_neutral() -> None:
         neutral_dominance_decision(
             AllocationScorecard(
                 scores=(AllocationScore(SoftControlFamily.CHECK, 1.0),),
-                activation_threshold=0.1,
             )
         )
     except ValueError as exc:

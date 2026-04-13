@@ -90,7 +90,17 @@ def build_reference_goal_branch_coupling(
     pending_goal_count = len(goal_continuity.pending_goal_refs)
     active_branch = goal_continuity.active_track_ref not in (None, "main")
     has_resume_anchor = goal_continuity.resume_anchor_available
+    open_branch_count = goal_continuity.open_branch_count
+    resume_anchor_quality = goal_continuity.resume_anchor_quality
+    merge_confidence = goal_continuity.merge_confidence
     continuity_debt = active_branch or pending_goal_count > 0
+    branch_burden = 0.0
+    if open_branch_count > 1:
+        branch_burden += min(0.24, 0.08 * (open_branch_count - 1))
+    if active_branch:
+        branch_burden += max(0.0, 0.20 * (1.0 - resume_anchor_quality))
+    if active_branch and not has_resume_anchor:
+        branch_burden += 0.12
 
     weight = 0.0
     if continuity_debt:
@@ -100,13 +110,16 @@ def build_reference_goal_branch_coupling(
         if pending_goal_count:
             weight += min(0.10, 0.04 * pending_goal_count)
         if has_resume_anchor:
-            weight += 0.05
+            weight += 0.03 + (0.05 * resume_anchor_quality)
         elif active_branch:
             weight += 0.03
+        if active_branch:
+            weight += 0.10 * merge_confidence
         if brake_state is BrakeState.GUARDED:
             weight += 0.04
         elif brake_state is BrakeState.LATCHED:
             weight += 0.02
+        weight -= 0.20 * branch_burden
     weight = _clip_weight(weight)
 
     branch_score = 0.0
@@ -119,6 +132,8 @@ def build_reference_goal_branch_coupling(
         branch_score += 0.60
         neutral_score -= 0.22
         reason_tags.add("active-track")
+        if open_branch_count > 1:
+            reason_tags.add("multi-branch-burden")
     if pending_goal_count:
         branch_score += min(0.18, 0.06 * pending_goal_count)
         redirect_score += min(0.22, 0.08 * pending_goal_count)
@@ -126,12 +141,21 @@ def build_reference_goal_branch_coupling(
         neutral_score -= min(0.10, 0.03 * pending_goal_count)
         reason_tags.add("pending-goal-debt")
     if has_resume_anchor:
-        branch_score += 0.10
+        branch_score += 0.06 + (0.18 * resume_anchor_quality)
         reason_tags.add("resume-anchor-available")
     elif active_branch:
         branch_score -= 0.12
         check_score += 0.18
         reason_tags.add("resume-anchor-missing")
+    if active_branch:
+        branch_score += 0.16 * merge_confidence
+        redirect_score += 0.08 * merge_confidence
+        if merge_confidence > 0.0:
+            reason_tags.add("merge-confidence")
+        branch_score -= branch_burden
+        redirect_score += 0.30 * branch_burden
+        check_score += 0.20 * branch_burden
+        neutral_score += 0.10 * branch_burden
     if brake_state is BrakeState.GUARDED:
         branch_score -= 0.08
         check_score += 0.06

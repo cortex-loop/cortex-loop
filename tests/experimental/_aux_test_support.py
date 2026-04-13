@@ -349,8 +349,13 @@ def make_reference_executive_state(
     pending_goal_refs: tuple[str, ...] = (),
     active_track_ref: str = "main",
     resume_anchor_available: bool = False,
+    open_branch_count: int = 0,
+    resume_anchor_quality: float = 0.0,
+    merge_confidence: float = 0.0,
     host_friction_tags: frozenset[str] = frozenset(),
     feedback_pressure_tags: frozenset[str] = frozenset(),
+    productive_exploration_bonus: float = 0.0,
+    oscillation_penalty: float = 0.0,
     contradiction_spike_flags: frozenset[str] = frozenset(),
     uncertainty_levels: tuple[tuple[str, float], ...] = (),
 ) -> ReferenceExecutiveState:
@@ -360,6 +365,9 @@ def make_reference_executive_state(
             active_track_ref=active_track_ref,
             pending_goal_refs=pending_goal_refs,
             resume_anchor_available=resume_anchor_available,
+            open_branch_count=open_branch_count,
+            resume_anchor_quality=resume_anchor_quality,
+            merge_confidence=merge_confidence,
         ),
         uncertainty_monitoring=ReferenceUncertaintyMonitoringView(
             classwise_uncertainty=tuple(
@@ -377,6 +385,8 @@ def make_reference_executive_state(
             top_family_set=top_family_set,
             host_friction_tags=host_friction_tags,
             feedback_pressure_tags=feedback_pressure_tags,
+            productive_exploration_bonus=productive_exploration_bonus,
+            oscillation_penalty=oscillation_penalty,
         ),
         brake=ReferenceBrakeView(brake_state=brake_state),
     )
@@ -450,6 +460,9 @@ def make_aux_reference_replay_corpus() -> tuple[AuxReferenceReplayScenario, ...]
                 pending_goal_refs=("review-track-goal",),
                 active_track_ref="review-track",
                 resume_anchor_available=True,
+                open_branch_count=1,
+                resume_anchor_quality=0.85,
+                merge_confidence=0.70,
                 host_friction_tags=frozenset({"single-process-limit"}),
                 uncertainty_levels=(
                     ("goal-progress", 0.20),

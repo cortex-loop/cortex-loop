@@ -31,6 +31,7 @@ from cortex.sre.state import (
     ReferenceModeAndGatingView,
     ReferenceUncertaintyMonitoringView,
 )
+from cortex.sre.uncertainty import UncertaintyEstimate
 from tests.experimental._aux_test_support import make_aux_reference_replay_corpus, make_aux_temporal_corpus
 
 
@@ -103,11 +104,12 @@ def test_reference_scoring_selects_seek_context_under_missing_capability_pressur
         seek_context_score.allocated_score - neutral_score.allocated_score
     )
     assert "seek-context-pressure" in seek_context_score.reason_tags
+    assert seek_context_score.activation_threshold == pytest.approx(0.37)
     assert (
         selection.neutral_dominance.margin_over_neutral
         > selection.neutral_dominance.activation_threshold
     )
-    assert selection.neutral_dominance.activation_threshold == pytest.approx(0.45)
+    assert selection.neutral_dominance.activation_threshold == pytest.approx(0.37)
     assert selection.selected_family is SoftControlFamily.SEEK_CONTEXT
     assert selection.neutral_dominance.neutral_selected is False
 
@@ -277,6 +279,9 @@ def test_reference_scoring_promotes_branch_under_branch_pressure() -> None:
         brake_state=BrakeState.QUIESCENT,
         active_track_ref="review-track",
         resume_anchor_available=True,
+        open_branch_count=1,
+        resume_anchor_quality=0.85,
+        merge_confidence=0.70,
     )
     selection = select_reference_soft_control(state)
     scorecard = build_reference_allocation_scorecard(state)
@@ -293,7 +298,8 @@ def test_reference_scoring_promotes_branch_under_branch_pressure() -> None:
     assert "allocation:online-plus-goal-branch" in branch_score.reason_tags
     assert "allocation:online-only" not in branch_score.reason_tags
     assert "goal-branch-coupled" in branch_score.reason_tags
-    assert "lambda_G:0.35" in branch_score.reason_tags
+    assert "merge-confidence" in branch_score.reason_tags
+    assert any(tag.startswith("lambda_G:") for tag in branch_score.reason_tags)
     assert "allocation:online-plus-goal-branch" in neutral_score.reason_tags
     assert "allocation:online-only" not in neutral_score.reason_tags
     unaffected_score = next(
@@ -369,6 +375,175 @@ def test_reference_scoring_keeps_brake_selected_under_latched_pressure() -> None
 
     assert selection.selected_family is SoftControlFamily.BRAKE
     assert selection.neutral_dominance.neutral_selected is False
+
+
+def test_reference_scoring_uses_family_sensitive_thresholds_for_probe_relief_vs_branching() -> None:
+    state = _state(
+        mode_tag="guarded_review",
+        family_mask=frozenset(
+            {
+                SoftControlFamily.NEUTRAL,
+                SoftControlFamily.CHECK,
+                SoftControlFamily.SEEK_CONTEXT,
+                SoftControlFamily.BRANCH,
+                SoftControlFamily.ESCALATE,
+            }
+        ),
+        budget_band="low",
+        top_family_set=frozenset(
+            {
+                SoftControlFamily.NEUTRAL,
+                SoftControlFamily.SEEK_CONTEXT,
+            }
+        ),
+        brake_state=BrakeState.GUARDED,
+        host_friction_tags=frozenset({"missing-capability", "capability-view-missing"}),
+    )
+    evidence_relief_state = _state(
+        mode_tag="review_pending",
+        family_mask=frozenset(
+            {
+                SoftControlFamily.NEUTRAL,
+                SoftControlFamily.CHECK,
+                SoftControlFamily.BRANCH,
+            }
+        ),
+        budget_band="high",
+        top_family_set=frozenset(
+            {
+                SoftControlFamily.NEUTRAL,
+                SoftControlFamily.CHECK,
+            }
+        ),
+        brake_state=BrakeState.GUARDED,
+        uncertainty_levels=(("evidence", 0.75),),
+    )
+
+    assert compute_reference_activation_threshold(state) == pytest.approx(0.45)
+    assert compute_reference_activation_threshold(
+        state,
+        family=SoftControlFamily.CHECK,
+    ) == pytest.approx(0.45)
+    assert compute_reference_activation_threshold(
+        state,
+        family=SoftControlFamily.SEEK_CONTEXT,
+    ) == pytest.approx(0.37)
+    assert compute_reference_activation_threshold(
+        state,
+        family=SoftControlFamily.BRANCH,
+    ) == pytest.approx(0.53)
+    assert compute_reference_activation_threshold(
+        state,
+        family=SoftControlFamily.ESCALATE,
+    ) == pytest.approx(0.55)
+    assert compute_reference_activation_threshold(
+        evidence_relief_state,
+        family=SoftControlFamily.CHECK,
+    ) == pytest.approx(0.20)
+
+
+def test_reference_scoring_rewards_anchored_branch_work_and_penalizes_orphaned_branch_trees() -> None:
+    anchored = _state(
+        mode_tag="review_pending",
+        family_mask=frozenset(
+            {
+                SoftControlFamily.NEUTRAL,
+                SoftControlFamily.BRANCH,
+                SoftControlFamily.CHECK,
+                SoftControlFamily.REDIRECT,
+            }
+        ),
+        budget_band="low",
+        top_family_set=frozenset(
+            {
+                SoftControlFamily.NEUTRAL,
+                SoftControlFamily.BRANCH,
+            }
+        ),
+        brake_state=BrakeState.GUARDED,
+        active_track_ref="review-track",
+        resume_anchor_available=True,
+        open_branch_count=1,
+        resume_anchor_quality=0.85,
+        merge_confidence=0.70,
+    )
+    orphaned = _state(
+        mode_tag="review_pending",
+        family_mask=anchored.mode_and_gating.family_mask,
+        budget_band="low",
+        top_family_set=anchored.control_allocation.top_family_set,
+        brake_state=BrakeState.GUARDED,
+        active_track_ref="review-track",
+        resume_anchor_available=False,
+        open_branch_count=3,
+        resume_anchor_quality=0.0,
+        merge_confidence=0.0,
+    )
+
+    anchored_branch = next(
+        score
+        for score in build_reference_allocation_scorecard(anchored).scores
+        if score.family is SoftControlFamily.BRANCH
+    )
+    orphaned_branch = next(
+        score
+        for score in build_reference_allocation_scorecard(orphaned).scores
+        if score.family is SoftControlFamily.BRANCH
+    )
+
+    assert anchored_branch.allocated_score > orphaned_branch.allocated_score
+    assert "merge-confidence" in anchored_branch.reason_tags
+    assert "multi-branch-burden" in orphaned_branch.reason_tags
+    assert "resume-anchor-missing" in orphaned_branch.reason_tags
+
+
+def test_reference_scoring_distinguishes_productive_exploration_from_oscillation() -> None:
+    baseline = _state(
+        mode_tag="review_pending",
+        family_mask=frozenset(
+            {
+                SoftControlFamily.NEUTRAL,
+                SoftControlFamily.CHECK,
+                SoftControlFamily.SEEK_CONTEXT,
+                SoftControlFamily.BRANCH,
+                SoftControlFamily.REDIRECT,
+            }
+        ),
+        budget_band="medium",
+        top_family_set=frozenset(
+            {
+                SoftControlFamily.NEUTRAL,
+                SoftControlFamily.CHECK,
+            }
+        ),
+        brake_state=BrakeState.GUARDED,
+        host_friction_tags=frozenset({"missing-capability", "capability-view-missing"}),
+    )
+    feedback_shaped = _state(
+        mode_tag=baseline.mode_and_gating.mode_tag,
+        family_mask=baseline.mode_and_gating.family_mask,
+        budget_band=baseline.control_allocation.budget_band,
+        top_family_set=baseline.control_allocation.top_family_set,
+        brake_state=baseline.brake.brake_state,
+        host_friction_tags=baseline.control_allocation.host_friction_tags,
+        productive_exploration_bonus=0.08,
+        oscillation_penalty=0.12,
+    )
+
+    assert compute_reference_activation_threshold(
+        feedback_shaped,
+        family=SoftControlFamily.CHECK,
+    ) < compute_reference_activation_threshold(
+        baseline,
+        family=SoftControlFamily.CHECK,
+    )
+    assert compute_reference_activation_threshold(
+        feedback_shaped,
+        family=SoftControlFamily.BRANCH,
+    ) > compute_reference_activation_threshold(
+        baseline,
+        family=SoftControlFamily.BRANCH,
+    )
 
 
 def test_reference_scoring_exposes_explicit_online_allocation_diagnostics() -> None:
@@ -697,13 +872,29 @@ def _state(
     feedback_pressure_tags: frozenset[str] = frozenset(),
     active_track_ref: str = "main",
     resume_anchor_available: bool = False,
+    open_branch_count: int = 0,
+    resume_anchor_quality: float = 0.0,
+    merge_confidence: float = 0.0,
+    productive_exploration_bonus: float = 0.0,
+    oscillation_penalty: float = 0.0,
+    uncertainty_levels: tuple[tuple[str, float], ...] = (),
+    contradiction_spike_flags: frozenset[str] = frozenset(),
 ) -> ReferenceExecutiveState:
     return ReferenceExecutiveState(
         goal_continuity=ReferenceGoalContinuityView(
             active_track_ref=active_track_ref,
             resume_anchor_available=resume_anchor_available,
+            open_branch_count=open_branch_count,
+            resume_anchor_quality=resume_anchor_quality,
+            merge_confidence=merge_confidence,
         ),
-        uncertainty_monitoring=ReferenceUncertaintyMonitoringView(),
+        uncertainty_monitoring=ReferenceUncertaintyMonitoringView(
+            classwise_uncertainty=tuple(
+                UncertaintyEstimate(class_tag=class_tag, level=level)
+                for class_tag, level in uncertainty_levels
+            ),
+            contradiction_spike_flags=contradiction_spike_flags,
+        ),
         mode_and_gating=ReferenceModeAndGatingView(
             mode_tag=mode_tag,
             family_mask=family_mask,
@@ -713,6 +904,8 @@ def _state(
             top_family_set=top_family_set,
             host_friction_tags=host_friction_tags,
             feedback_pressure_tags=feedback_pressure_tags,
+            productive_exploration_bonus=productive_exploration_bonus,
+            oscillation_penalty=oscillation_penalty,
         ),
         brake=ReferenceBrakeView(brake_state=brake_state),
     )

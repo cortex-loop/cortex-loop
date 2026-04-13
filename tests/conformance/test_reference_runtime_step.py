@@ -84,7 +84,7 @@ def test_reference_runtime_step_result_surfaces_cheap_reference_event_without_co
     assert result.control_ledger_summary["primary_reason"] is None
     _assert_allocation_diagnostics_shape(
         result.control_ledger_summary["allocation_diagnostics"],
-        activation_threshold=0.45,
+        activation_threshold=0.37,
         expected_alpha=0.75,
         expect_allocated_equals_online=False,
         expected_mediation={
@@ -102,6 +102,9 @@ def test_reference_runtime_step_result_surfaces_cheap_reference_event_without_co
         "override_count": 0,
         "latched_count": 0,
         "clean_success_streak": 0,
+        "evidence_state_move_count": 0,
+        "continuity_improvement_count": 0,
+        "family_change_without_evidence_count": 0,
         "goal_progress_floor": 0.0,
         "degradation_pressure_bonus": 0,
         "sustained_spike_flags": [],
@@ -121,6 +124,8 @@ def test_reference_runtime_step_result_surfaces_cheap_reference_event_without_co
         "commitment_result_kind": None,
         "warning_codes": [],
         "host_friction_tags": ["capability-view-missing"],
+        "evidence_state_moved": False,
+        "continuity_improved": False,
     }
     assert result.session.feedback_window.entries == (result.session.last_realization_feedback,)
     assert result.session_summary["feedback_window_size"] == 1
@@ -161,7 +166,7 @@ def test_reference_runtime_step_selects_seek_context_when_capability_view_is_mis
     assert result.control_ledger_summary["realized_family"] == "seek-context"
     _assert_allocation_diagnostics_shape(
         result.control_ledger_summary["allocation_diagnostics"],
-        activation_threshold=0.45,
+        activation_threshold=0.37,
         expected_alpha=0.75,
         expect_allocated_equals_online=False,
         expected_mediation={
@@ -194,7 +199,7 @@ def test_reference_runtime_step_experimental_mediation_specializes_reference_mcp
     assert result.realized_family is SoftControlFamily.SEEK_CONTEXT
     _assert_allocation_diagnostics_shape(
         result.control_ledger_summary["allocation_diagnostics"],
-        activation_threshold=0.45,
+        activation_threshold=0.37,
         expected_alpha=0.75,
         expect_allocated_equals_online=False,
         expected_mediation={
@@ -288,7 +293,7 @@ def test_reference_runtime_step_result_certifies_full_commitment_when_runtime_pa
     assert result.control_ledger_summary["primary_reason"] is None
     _assert_allocation_diagnostics_shape(
         result.control_ledger_summary["allocation_diagnostics"],
-        activation_threshold=0.30,
+        activation_threshold=0.22,
         expected_alpha=0.75,
         expect_allocated_equals_online=False,
         expected_mediation={
@@ -308,7 +313,7 @@ def test_reference_runtime_step_result_certifies_full_commitment_when_runtime_pa
     assert result.session.feedback_window.entries[-1] == result.session.last_realization_feedback
 
 
-def test_reference_runtime_step_replay_publication_can_flip_selected_family_without_changing_commitment_truth(
+def test_reference_runtime_step_replay_publication_can_lift_check_allocation_without_changing_commitment_truth(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     case_result = _reference_replay_case_result("contradiction-review")
@@ -345,7 +350,7 @@ def test_reference_runtime_step_replay_publication_can_flip_selected_family_with
     )
 
     assert baseline.commitment_result_kind == replay.commitment_result_kind == "certified"
-    assert baseline.selected_family is SoftControlFamily.NEUTRAL
+    assert baseline.selected_family is SoftControlFamily.CHECK
     assert replay.selected_family is SoftControlFamily.CHECK
     baseline_check = _score_payload_for_family(
         baseline.control_ledger_summary["allocation_diagnostics"]["scores"],
@@ -745,6 +750,9 @@ def test_reference_runtime_step_normalizes_last_only_prior_session_and_preserves
         "override_count": 0,
         "latched_count": 0,
         "clean_success_streak": 0,
+        "evidence_state_move_count": 0,
+        "continuity_improvement_count": 0,
+        "family_change_without_evidence_count": 0,
         "goal_progress_floor": 0.55,
         "degradation_pressure_bonus": 1,
         "sustained_spike_flags": ["prior-session-mismatch"],
@@ -874,6 +882,9 @@ def test_reference_runtime_step_reports_prior_window_summary_for_single_rejectio
         "override_count": 0,
         "latched_count": 0,
         "clean_success_streak": 0,
+        "evidence_state_move_count": 0,
+        "continuity_improvement_count": 0,
+        "family_change_without_evidence_count": 0,
         "goal_progress_floor": 0.55,
         "degradation_pressure_bonus": 1,
         "sustained_spike_flags": ["prior-session-mismatch"],
@@ -910,12 +921,16 @@ def test_reference_runtime_step_reports_prior_window_summary_for_repeated_reject
         "override_count": 1,
         "latched_count": 1,
         "clean_success_streak": 0,
+        "evidence_state_move_count": 0,
+        "continuity_improvement_count": 0,
+        "family_change_without_evidence_count": 1,
         "goal_progress_floor": 0.70,
         "degradation_pressure_bonus": 2,
         "sustained_spike_flags": [
             "prior-session-mismatch",
             "prior-enforcement-override",
             "sustained-feedback-disruption",
+            "prior-non-productive-family-switch",
         ],
     }
     assert fifth.session_summary["feedback_window_size"] == 3
@@ -1063,6 +1078,33 @@ def test_reference_runtime_step_enforces_latched_brake_to_neutral_without_eviden
     assert result.control_ledger_summary["primary_reason"] == "latched-brake-enforced:escalate:neutral"
     assert result.session.last_realization_feedback is not None
     assert result.session.last_realization_feedback.realized_family is SoftControlFamily.NEUTRAL
+
+
+def test_reference_runtime_step_allows_latched_seek_context_when_native_host_capability_relief_is_directly_justified(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(
+        reference_runtime,
+        "build_reference_executive_state",
+        _latched_state_with_host_capability_gap,
+    )
+    monkeypatch.setattr(
+        reference_runtime,
+        "select_reference_soft_control",
+        lambda executive_state, *args, **kwargs: _selection(SoftControlFamily.SEEK_CONTEXT),
+    )
+
+    result = run_reference_runtime_step(
+        "ContextLoad",
+        {"session_id": "session-latched-seek-context"},
+    )
+
+    assert result.selected_family is SoftControlFamily.SEEK_CONTEXT
+    assert result.realized_family is SoftControlFamily.SEEK_CONTEXT
+    assert result.warnings == ()
+    assert result.control_ledger_summary["selected_family"] == "seek-context"
+    assert result.control_ledger_summary["realized_family"] == "seek-context"
+    assert result.control_ledger_summary["primary_reason"] is None
 
 
 def test_reference_runtime_step_enforces_guarded_feedback_pressure_to_check_when_evidence_dominates(
@@ -1297,6 +1339,46 @@ def _latched_state_without_evidence(*args: object, **kwargs: object) -> Referenc
                 }
             ),
             host_friction_tags=frozenset({"single-process-limit"}),
+        ),
+        brake=ReferenceBrakeView(brake_state=BrakeState.LATCHED),
+    )
+
+
+def _latched_state_with_host_capability_gap(
+    *args: object,
+    **kwargs: object,
+) -> ReferenceExecutiveState:
+    return ReferenceExecutiveState(
+        goal_continuity=ReferenceGoalContinuityView(active_track_ref="main"),
+        uncertainty_monitoring=ReferenceUncertaintyMonitoringView(
+            classwise_uncertainty=(
+                UncertaintyEstimate(class_tag="host-capability", level=0.92),
+                UncertaintyEstimate(class_tag="environment", level=0.74),
+                UncertaintyEstimate(class_tag="goal-progress", level=0.35),
+                UncertaintyEstimate(class_tag="evidence", level=0.10),
+            )
+        ),
+        mode_and_gating=ReferenceModeAndGatingView(
+            mode_tag="latched_review",
+            family_mask=frozenset(
+                {
+                    SoftControlFamily.NEUTRAL,
+                    SoftControlFamily.CHECK,
+                    SoftControlFamily.SEEK_CONTEXT,
+                    SoftControlFamily.BRAKE,
+                }
+            ),
+        ),
+        control_allocation=ReferenceControlAllocationView(
+            budget_band="medium",
+            top_family_set=frozenset(
+                {
+                    SoftControlFamily.NEUTRAL,
+                    SoftControlFamily.SEEK_CONTEXT,
+                    SoftControlFamily.BRAKE,
+                }
+            ),
+            host_friction_tags=frozenset({"missing-capability", "capability-view-missing"}),
         ),
         brake=ReferenceBrakeView(brake_state=BrakeState.LATCHED),
     )

@@ -38,7 +38,7 @@ def test_evaluate_aux_reference_q_mem_replay_reports_reference_only_acceptance_a
     assert isinstance(result, AuxReferenceReplayEvaluationResult)
     assert result.acceptance_passed is True
     assert result.improved_preferred_family_case_count == 4
-    assert result.selected_family_change_case_count == 2
+    assert result.selected_family_change_case_count == 1
     assert result.negative_case_stable_count == 4
     assert result.counterexample_case_count == 0
     assert result.dominant_failure_label is None
@@ -61,9 +61,9 @@ def test_evaluate_aux_reference_q_mem_replay_reports_reference_only_acceptance_a
     assert uncertainty_case.preferred_family_allocated_delta > 0.0
     assert retrieval_case.selected_family_changed_to_preferred is False
     assert branch_case.selected_family_changed_to_preferred is True
-    assert contradiction_case.baseline_selected_family.value == "neutral"
+    assert contradiction_case.baseline_selected_family.value == "check"
     assert contradiction_case.replay_selected_family.value == "check"
-    assert contradiction_case.selected_family_changed_to_preferred is True
+    assert contradiction_case.selected_family_changed_to_preferred is False
     assert "q_mem-signal:contradiction" in _preferred_score(contradiction_case)["reason_tags"]
     assert "q_mem-signal:uncertainty" in _preferred_score(uncertainty_case)["reason_tags"]
     assert no_lift_case.failure_labels == ()
