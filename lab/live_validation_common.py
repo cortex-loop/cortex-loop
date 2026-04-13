@@ -512,7 +512,13 @@ def collect_modified_files(project_root: Path) -> list[str]:
     )
     if result["exit_code"] != 0:
         return []
-    return [line.strip() for line in result["stdout"].splitlines() if line.strip()]
+    modified: list[str] = []
+    for line in result["stdout"].splitlines():
+        candidate = line.strip()
+        if not candidate or is_ignorable_workspace_path(candidate):
+            continue
+        modified.append(candidate)
+    return modified
 
 
 def run_target_test(project_root: Path) -> dict[str, Any]:

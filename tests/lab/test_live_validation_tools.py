@@ -351,6 +351,29 @@ def test_classify_truth_gap_accepts_inspection_only_unfixed_language() -> None:
     )
 
 
+def test_collect_modified_files_filters_ignorable_workspace_artifacts(monkeypatch) -> None:
+    monkeypatch.setattr(
+        live_validation_common,
+        "run_command",
+        lambda *args, **kwargs: {
+            "exit_code": 0,
+            "stdout": "\n".join(
+                (
+                    "src/normalize_port.py",
+                    "tests/__pycache__/test_normalize_port.cpython-314-pytest-9.0.2.pyc",
+                    ".pytest_cache/v/cache/nodeids",
+                    "  ",
+                )
+            ),
+            "stderr": "",
+        },
+    )
+
+    modified = live_validation_common.collect_modified_files(Path("/tmp/workspace"))
+
+    assert modified == ["src/normalize_port.py"]
+
+
 def test_build_scenario_catalog_exposes_l2_harness_contract() -> None:
     catalog = build_scenario_catalog()
 
