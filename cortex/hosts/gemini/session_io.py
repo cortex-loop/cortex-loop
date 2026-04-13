@@ -31,6 +31,14 @@ _CONTINUITY_TRUTH_KEYS = (
     "branch_registry",
     "active_track_ref",
     "pending_goal_refs",
+    "continuity_reminders",
+)
+_LEGACY_CONTINUITY_TRUTH_KEYS = (
+    "session_id",
+    "event_index",
+    "branch_registry",
+    "active_track_ref",
+    "pending_goal_refs",
 )
 _CONTROL_RESIDUE_KEYS = (
     "last_budget_band",
@@ -57,6 +65,7 @@ class GeminiRuntimeSessionArtifact:
     branch_registry: tuple[str, ...] = ("main",)
     active_track_ref: str = "main"
     pending_goal_refs: tuple[str, ...] = ()
+    continuity_reminders: tuple[str, ...] = ()
     last_budget_band: str | None = None
     last_commitment_result_summary: str | None = None
     last_realization_feedback: ReferenceRealizationFeedback | None = None
@@ -103,6 +112,13 @@ class GeminiRuntimeSessionArtifact:
         if any(not (isinstance(ref, str) and ref.strip()) for ref in self.pending_goal_refs):
             raise ValueError(
                 "GeminiRuntimeSessionArtifact.pending_goal_refs must contain only non-empty values after trimming."
+            )
+        if any(
+            not (isinstance(reminder, str) and reminder.strip())
+            for reminder in self.continuity_reminders
+        ):
+            raise ValueError(
+                "GeminiRuntimeSessionArtifact.continuity_reminders must contain only non-empty values after trimming."
             )
         if self.last_budget_band is not None and self.last_budget_band not in _ALLOWED_BUDGET_BANDS:
             raise ValueError(
@@ -169,6 +185,7 @@ class GeminiRuntimeSessionArtifact:
                 "branch_registry": list(self.branch_registry),
                 "active_track_ref": self.active_track_ref,
                 "pending_goal_refs": list(self.pending_goal_refs),
+                "continuity_reminders": list(self.continuity_reminders),
             },
             "control_residue": {
                 "last_budget_band": self.last_budget_band,
@@ -206,6 +223,7 @@ class GeminiRuntimeSessionArtifact:
             branch_registry=self.branch_registry,
             active_track_ref=self.active_track_ref,
             pending_goal_refs=self.pending_goal_refs,
+            continuity_reminders=self.continuity_reminders,
             budget_history=budget_history,
             brake_history=brake_history,
             last_selected_family=last_selected_family,
@@ -231,6 +249,7 @@ def build_gemini_runtime_session_artifact(
         branch_registry=session.branch_registry,
         active_track_ref=session.active_track_ref,
         pending_goal_refs=session.pending_goal_refs,
+        continuity_reminders=session.continuity_reminders,
         last_budget_band=_last_budget_band(session.budget_history),
         last_commitment_result_summary=session.last_commitment_result_summary,
         last_realization_feedback=session.last_realization_feedback,
@@ -267,11 +286,7 @@ def parse_gemini_runtime_session_artifact(
     if not isinstance(control_residue_payload, Mapping):
         raise TypeError("GeminiRuntimeSessionArtifact.control_residue must be an object.")
 
-    _require_exact_keys(
-        continuity_truth_payload,
-        _CONTINUITY_TRUTH_KEYS,
-        "GeminiRuntimeSessionArtifact.continuity_truth",
-    )
+    _require_continuity_truth_keys(continuity_truth_payload)
     _require_control_residue_keys(control_residue_payload)
 
     artifact = GeminiRuntimeSessionArtifact(
@@ -294,6 +309,10 @@ def parse_gemini_runtime_session_artifact(
         pending_goal_refs=_string_tuple(
             continuity_truth_payload["pending_goal_refs"],
             "GeminiRuntimeSessionArtifact.continuity_truth.pending_goal_refs",
+        ),
+        continuity_reminders=_string_tuple(
+            continuity_truth_payload.get("continuity_reminders", []),
+            "GeminiRuntimeSessionArtifact.continuity_truth.continuity_reminders",
         ),
         last_budget_band=_optional_budget_band(
             control_residue_payload["last_budget_band"],
@@ -382,6 +401,19 @@ def _require_exact_keys(
             f"{label} keys must be exactly {expected_keys}; "
             f"missing={missing_keys}, extra={extra_keys}."
         )
+
+
+def _require_continuity_truth_keys(payload: Mapping[str, Any]) -> None:
+    actual_keys = tuple(payload.keys())
+    if actual_keys == _CONTINUITY_TRUTH_KEYS or actual_keys == _LEGACY_CONTINUITY_TRUTH_KEYS:
+        return
+    expected = f"{_CONTINUITY_TRUTH_KEYS} or {_LEGACY_CONTINUITY_TRUTH_KEYS}"
+    missing_keys = [key for key in _CONTINUITY_TRUTH_KEYS if key not in payload]
+    extra_keys = [key for key in actual_keys if key not in _CONTINUITY_TRUTH_KEYS]
+    raise ValueError(
+        "GeminiRuntimeSessionArtifact.continuity_truth keys must be exactly "
+        f"{expected}; missing={missing_keys}, extra={extra_keys}."
+    )
 
 
 def _require_control_residue_keys(payload: Mapping[str, Any]) -> None:

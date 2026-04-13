@@ -16,7 +16,7 @@ from .feedback import (
     summarize_reference_feedback_window,
 )
 from .families import SoftControlFamily
-from .goals import GoalContinuityView
+from .goals import GoalContinuityView, parse_resume_reminder_track
 from .opportunities import HostNativeOpportunity, PROBE_FAILURE_CLASSES
 from .state import (
     ReferenceBrakeView,
@@ -34,12 +34,16 @@ _SEEK_CONTEXT_PRESSURE_TAGS = frozenset(
         "execution-trace-missing",
     }
 )
+_CONTINUITY_RELIEF_HOST_FRICTION_TAGS = frozenset(
+    {"capability-view-missing", "execution-trace-missing", "runtime-warning"}
+)
 
 
 class PriorReferenceRuntimeSessionLike(Protocol):
     branch_registry: tuple[str, ...]
     active_track_ref: str
     pending_goal_refs: tuple[str, ...]
+    continuity_reminders: tuple[str, ...]
     budget_history: tuple[str, ...]
     brake_history: tuple[str, ...]
     last_selected_family: SoftControlFamily | None
@@ -91,6 +95,45 @@ def build_reference_executive_state(
         missing_resume_anchor,
         prior_feedback_window_summary.sustained_spike_flags,
     )
+    anchor_source, anchor_freshness, branch_intent_present = _continuity_signals(
+        support_snapshot=support_snapshot,
+        active_track_ref=active_track_ref,
+        pending_goal_refs=pending_goal_refs,
+        missing_resume_anchor=missing_resume_anchor,
+        prior_feedback_window_summary=prior_feedback_window_summary,
+    )
+    goal_continuity = GoalContinuityView(
+        main_goal_ref=main_goal_ref,
+        active_track_ref=active_track_ref,
+        pending_goal_refs=pending_goal_refs,
+        resume_anchor_available=(
+            active_track_ref is not None
+            and active_track_ref != "main"
+            and branch_intent_present
+            and anchor_freshness != "absent"
+        ),
+        anchor_source=anchor_source,
+        anchor_freshness=anchor_freshness,
+        branch_intent_present=branch_intent_present,
+        open_branch_count=_open_branch_count(branch_registry),
+        resume_anchor_quality=_resume_anchor_quality(
+            active_track_ref=active_track_ref,
+            anchor_source=anchor_source,
+            anchor_freshness=anchor_freshness,
+            branch_intent_present=branch_intent_present,
+            prior_feedback_window_summary=prior_feedback_window_summary,
+        ),
+        merge_confidence=_merge_confidence(
+            active_track_ref=active_track_ref,
+            anchor_source=anchor_source,
+            anchor_freshness=anchor_freshness,
+            branch_intent_present=branch_intent_present,
+            prior_feedback_window_summary=prior_feedback_window_summary,
+        ),
+    )
+    probe_path_state = _probe_path_state(opportunities)
+    probe_backed_families = _probe_backed_families(opportunities)
+    host_friction_tags = _host_friction_tags(support_snapshot, executive_environment_view)
 
     uncertainty_estimates = _uncertainty_estimates(
         native_event_name=observation.event.native_event_name,
@@ -111,55 +154,39 @@ def build_reference_executive_state(
         host_friction_level=_host_friction_level(
             support_snapshot,
             executive_environment_view,
+            goal_continuity=goal_continuity,
+            host_friction_tags=host_friction_tags,
             probe_path_state=_probe_path_state(opportunities),
             recent_probe_result_class=recent_probe_result_class,
         ),
         prior_state=prior_brake_state,
     )
-    probe_path_state = _probe_path_state(opportunities)
-    probe_backed_families = _probe_backed_families(opportunities)
     host_friction_level = _host_friction_level(
         support_snapshot,
         executive_environment_view,
+        goal_continuity=goal_continuity,
+        host_friction_tags=host_friction_tags,
         probe_path_state=probe_path_state,
         recent_probe_result_class=recent_probe_result_class,
     )
-    host_friction_tags = _host_friction_tags(support_snapshot, executive_environment_view)
     explainability_profile = _resolve_explainability_profile(
         brake_state=brake_evaluation.state,
         uncertainty_estimates=uncertainty_estimates,
         recent_probe_result_class=recent_probe_result_class,
         requested_audit_intensity=audit_intensity,
     )
-
-    goal_continuity = GoalContinuityView(
-        main_goal_ref=main_goal_ref,
-        active_track_ref=active_track_ref,
-        pending_goal_refs=pending_goal_refs,
-        resume_anchor_available=(
-            active_track_ref is not None
-            and active_track_ref != "main"
-            and not missing_resume_anchor
-        ),
-        open_branch_count=_open_branch_count(branch_registry),
-        resume_anchor_quality=_resume_anchor_quality(
-            active_track_ref=active_track_ref,
-            missing_resume_anchor=missing_resume_anchor,
-            prior_feedback_window_summary=prior_feedback_window_summary,
-        ),
-        merge_confidence=_merge_confidence(
-            active_track_ref=active_track_ref,
-            missing_resume_anchor=missing_resume_anchor,
-            prior_feedback_window_summary=prior_feedback_window_summary,
-        ),
-    )
     mode_and_gating = ReferenceModeAndGatingView(
-        mode_tag=_mode_tag_for_event(observation.event.native_event_name, brake_evaluation.state),
+        mode_tag=_mode_tag_for_event(
+            observation.event.native_event_name,
+            brake_evaluation.state,
+            goal_continuity,
+        ),
         family_mask=_family_mask_for_state(
             branch_registry,
             brake_evaluation.state,
             host_friction_tags,
             uncertainty_estimates,
+            goal_continuity=goal_continuity,
             probe_backed_families=probe_backed_families,
         ),
     )
@@ -171,6 +198,7 @@ def build_reference_executive_state(
             brake_state=brake_evaluation.state,
             host_friction_tags=host_friction_tags,
             uncertainty_estimates=uncertainty_estimates,
+            goal_continuity=goal_continuity,
             probe_backed_families=probe_backed_families,
         ),
         host_friction_tags=host_friction_tags,
@@ -254,6 +282,67 @@ def _active_track_ref(
 
 def _open_branch_count(branch_registry: tuple[str, ...]) -> int:
     return sum(1 for branch_ref in branch_registry if branch_ref != "main")
+
+
+def _continuity_signals(
+    *,
+    support_snapshot: SupportSnapshot,
+    active_track_ref: str,
+    pending_goal_refs: tuple[str, ...],
+    missing_resume_anchor: bool,
+    prior_feedback_window_summary: ReferenceFeedbackWindowSummary,
+) -> tuple[str, str, bool]:
+    if active_track_ref in (None, "main"):
+        return "none", "absent", False
+
+    reminder_track_refs = _resume_reminder_track_refs(support_snapshot.session.reminders)
+    wake_receipt_resume_present = any(
+        receipt.reason_tag.startswith("resume")
+        for receipt in support_snapshot.trace.wake_receipts
+    )
+    branch_intent_present = (
+        active_track_ref in pending_goal_refs
+        or bool(pending_goal_refs)
+        or active_track_ref in reminder_track_refs
+        or (bool(reminder_track_refs) and len(reminder_track_refs) == 1)
+        or wake_receipt_resume_present
+    )
+
+    anchor_source = "branch_registry_only"
+    if active_track_ref in pending_goal_refs:
+        anchor_source = "pending_goal"
+    elif active_track_ref in reminder_track_refs or (
+        reminder_track_refs and len(reminder_track_refs) == 1
+    ):
+        anchor_source = "continuity_reminder"
+    elif wake_receipt_resume_present:
+        anchor_source = "trace_wake"
+
+    if missing_resume_anchor:
+        anchor_freshness = "stale"
+    elif anchor_source in {"pending_goal", "continuity_reminder", "trace_wake"}:
+        anchor_freshness = "fresh"
+    else:
+        anchor_freshness = "stale" if branch_intent_present else "absent"
+
+    if (
+        anchor_freshness == "fresh"
+        and "prior-continuity-rejection" in prior_feedback_window_summary.sustained_spike_flags
+    ):
+        anchor_freshness = "stale"
+
+    if not branch_intent_present:
+        return "none", "absent", False
+    return anchor_source, anchor_freshness, True
+
+
+def _resume_reminder_track_refs(reminders: tuple[str, ...]) -> frozenset[str]:
+    track_refs = {
+        track_ref
+        for reminder in reminders
+        if (track_ref := parse_resume_reminder_track(reminder)) is not None
+    }
+    return frozenset(track_refs)
 
 
 def _contradiction_spike_flags(
@@ -343,6 +432,8 @@ def _host_friction_level(
     support_snapshot: SupportSnapshot,
     executive_environment_view: ExecutiveEnvironmentView,
     *,
+    goal_continuity: GoalContinuityView,
+    host_friction_tags: frozenset[str],
     probe_path_state: str,
     recent_probe_result_class: str | None = None,
 ) -> float:
@@ -359,20 +450,34 @@ def _host_friction_level(
         return max(heuristic_level, 0.8)
     if recent_probe_result_class in {"degraded", "unsupported"}:
         return max(heuristic_level, 0.65)
+    if (
+        _continuity_relief_active(goal_continuity)
+        and not support_snapshot.host.constraint_tags
+        and recent_probe_result_class is None
+        and probe_path_state == "unavailable"
+        and host_friction_tags <= _CONTINUITY_RELIEF_HOST_FRICTION_TAGS
+    ):
+        return 0.0
     if probe_path_state == "available":
         return 0.0
     return heuristic_level
 
 
-def _mode_tag_for_event(native_event_name: str, brake_state: BrakeState) -> str:
+def _mode_tag_for_event(
+    native_event_name: str,
+    brake_state: BrakeState,
+    goal_continuity: GoalContinuityView,
+) -> str:
     if brake_state is BrakeState.LATCHED:
         return "latched_review"
-    if brake_state is BrakeState.GUARDED:
-        return "guarded_review"
     if native_event_name == "approval/request":
         return "review_pending"
     if native_event_name == "approval/result":
         return "commitment_path"
+    if _continuity_relief_active(goal_continuity):
+        return "review_pending"
+    if brake_state is BrakeState.GUARDED:
+        return "guarded_review"
     return "pass_through"
 
 
@@ -382,6 +487,7 @@ def _family_mask_for_state(
     host_friction_tags: frozenset[str],
     uncertainty_estimates: tuple[UncertaintyEstimate, ...],
     *,
+    goal_continuity: GoalContinuityView,
     probe_backed_families: frozenset[SoftControlFamily],
 ) -> frozenset[SoftControlFamily]:
     families = {
@@ -390,12 +496,14 @@ def _family_mask_for_state(
     }
     if any(branch_ref != "main" for branch_ref in branch_registry):
         families.add(SoftControlFamily.BRANCH)
+        families.add(SoftControlFamily.REDIRECT)
     if brake_state is not BrakeState.QUIESCENT:
         families.add(SoftControlFamily.BRAKE)
     if _has_seek_context_pressure(
         host_friction_tags,
         uncertainty_estimates=uncertainty_estimates,
         brake_state=brake_state,
+        goal_continuity=goal_continuity,
         probe_backed_families=probe_backed_families,
     ):
         families.add(SoftControlFamily.SEEK_CONTEXT)
@@ -422,6 +530,7 @@ def _top_family_set(
     brake_state: BrakeState,
     host_friction_tags: frozenset[str],
     uncertainty_estimates: tuple[UncertaintyEstimate, ...],
+    goal_continuity: GoalContinuityView,
     probe_backed_families: frozenset[SoftControlFamily],
 ) -> frozenset[SoftControlFamily]:
     families = {SoftControlFamily.NEUTRAL}
@@ -429,12 +538,16 @@ def _top_family_set(
         families.add(SoftControlFamily.CHECK)
     if any(branch_ref != "main" for branch_ref in branch_registry):
         families.add(SoftControlFamily.BRANCH)
+    if _stale_anchor_redirect(goal_continuity):
+        families.add(SoftControlFamily.REDIRECT)
+        families.add(SoftControlFamily.CHECK)
     if brake_state is not BrakeState.QUIESCENT:
         families.add(SoftControlFamily.BRAKE)
     if _has_seek_context_pressure(
         host_friction_tags,
         uncertainty_estimates=uncertainty_estimates,
         brake_state=brake_state,
+        goal_continuity=goal_continuity,
         probe_backed_families=probe_backed_families,
     ):
         families.add(SoftControlFamily.SEEK_CONTEXT)
@@ -460,8 +573,15 @@ def _has_seek_context_pressure(
     *,
     uncertainty_estimates: tuple[UncertaintyEstimate, ...],
     brake_state: BrakeState,
+    goal_continuity: GoalContinuityView,
     probe_backed_families: frozenset[SoftControlFamily],
 ) -> bool:
+    if (
+        _continuity_relief_active(goal_continuity)
+        and host_friction_tags
+        and host_friction_tags <= _CONTINUITY_RELIEF_HOST_FRICTION_TAGS
+    ):
+        return False
     if (
         SoftControlFamily.SEEK_CONTEXT in probe_backed_families
         and any(
@@ -476,6 +596,25 @@ def _has_seek_context_pressure(
     if brake_state is not BrakeState.LATCHED:
         return True
     return _allow_latched_seek_context_relief(uncertainty_estimates)
+
+
+def _continuity_relief_active(goal_continuity: GoalContinuityView) -> bool:
+    return (
+        goal_continuity.active_track_ref not in (None, "main")
+        and goal_continuity.branch_intent_present
+        and goal_continuity.anchor_freshness == "fresh"
+        and goal_continuity.resume_anchor_quality >= 0.7
+    )
+
+
+def _stale_anchor_redirect(goal_continuity: GoalContinuityView) -> bool:
+    return (
+        goal_continuity.active_track_ref not in (None, "main")
+        and (
+            not goal_continuity.branch_intent_present
+            or goal_continuity.anchor_freshness == "stale"
+        )
+    )
 
 
 def _allow_latched_seek_context_relief(
@@ -657,12 +796,27 @@ def _oscillation_penalty(
 def _resume_anchor_quality(
     *,
     active_track_ref: str,
-    missing_resume_anchor: bool,
+    anchor_source: str,
+    anchor_freshness: str,
+    branch_intent_present: bool,
     prior_feedback_window_summary: ReferenceFeedbackWindowSummary,
 ) -> float:
     if active_track_ref in (None, "main"):
         return 0.0
-    quality = 0.25 if missing_resume_anchor else 0.80
+    quality = {
+        "fresh": 0.82,
+        "stale": 0.45,
+        "absent": 0.20,
+    }[anchor_freshness]
+    quality += {
+        "pending_goal": 0.05,
+        "continuity_reminder": 0.04,
+        "trace_wake": 0.02,
+        "branch_registry_only": -0.05,
+        "none": -0.10,
+    }[anchor_source]
+    if branch_intent_present and anchor_freshness != "absent":
+        quality += 0.03
     if prior_feedback_window_summary.rejection_count >= 1:
         quality -= 0.10
     if "prior-continuity-rejection" in prior_feedback_window_summary.sustained_spike_flags:
@@ -673,12 +827,27 @@ def _resume_anchor_quality(
 def _merge_confidence(
     *,
     active_track_ref: str,
-    missing_resume_anchor: bool,
+    anchor_source: str,
+    anchor_freshness: str,
+    branch_intent_present: bool,
     prior_feedback_window_summary: ReferenceFeedbackWindowSummary,
 ) -> float:
     if active_track_ref in (None, "main"):
         return 0.0
-    confidence = 0.35 if missing_resume_anchor else 0.65
+    confidence = {
+        "fresh": 0.70,
+        "stale": 0.42,
+        "absent": 0.18,
+    }[anchor_freshness]
+    confidence += {
+        "pending_goal": 0.04,
+        "continuity_reminder": 0.03,
+        "trace_wake": 0.02,
+        "branch_registry_only": -0.04,
+        "none": -0.08,
+    }[anchor_source]
+    if branch_intent_present and anchor_freshness != "absent":
+        confidence += 0.02
     if prior_feedback_window_summary.override_count >= 1:
         confidence -= 0.10
     if "prior-continuity-rejection" in prior_feedback_window_summary.sustained_spike_flags:

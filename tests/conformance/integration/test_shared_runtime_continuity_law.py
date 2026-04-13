@@ -108,7 +108,7 @@ _HOSTS: dict[str, _RuntimeHostSpec] = {
                 "pending_goal_refs": ["branch-alpha"],
                 "feedback_window_summary": _FIRST_FEEDBACK_WINDOW,
                 "closure_required": True,
-                "closure_reason_tags": ["pending_goal_debt"],
+                "closure_reason_tags": ["continuity_reminder", "pending_goal_debt"],
             },
             {
                 "selected_family": "seek-context",
@@ -194,7 +194,7 @@ _HOSTS: dict[str, _RuntimeHostSpec] = {
                 "pending_goal_refs": ["branch-alpha"],
                 "feedback_window_summary": _FIRST_FEEDBACK_WINDOW,
                 "closure_required": True,
-                "closure_reason_tags": ["pending_goal_debt"],
+                "closure_reason_tags": ["continuity_reminder", "pending_goal_debt"],
             },
             {
                 "selected_family": "seek-context",
@@ -280,7 +280,7 @@ _HOSTS: dict[str, _RuntimeHostSpec] = {
                 "pending_goal_refs": ["branch-alpha"],
                 "feedback_window_summary": _FIRST_FEEDBACK_WINDOW,
                 "closure_required": True,
-                "closure_reason_tags": ["pending_goal_debt"],
+                "closure_reason_tags": ["continuity_reminder", "pending_goal_debt"],
             },
             {
                 "selected_family": "seek-context",
@@ -358,15 +358,15 @@ _HOSTS: dict[str, _RuntimeHostSpec] = {
                 "closure_reason_tags": [],
             },
             {
-                "selected_family": "seek-context",
-                "realized_family": "seek-context",
+                "selected_family": "check",
+                "realized_family": "check",
                 "brake_state": "guarded",
                 "continuity_warnings": [],
                 "active_track_ref": "main",
                 "pending_goal_refs": ["branch-alpha"],
                 "feedback_window_summary": _FIRST_FEEDBACK_WINDOW,
                 "closure_required": True,
-                "closure_reason_tags": ["pending_goal_debt"],
+                "closure_reason_tags": ["continuity_reminder", "pending_goal_debt"],
             },
             {
                 "selected_family": "seek-context",

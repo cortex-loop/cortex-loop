@@ -198,7 +198,10 @@ def _assert_locked_continuity_flow(records: list[dict[str, object]]) -> None:
         False,
     ]
     assert records[0]["closure_reason_tags"] == []
-    assert records[1]["closure_reason_tags"] == ["pending_goal_debt"]
+    assert records[1]["closure_reason_tags"] == [
+        "continuity_reminder",
+        "pending_goal_debt",
+    ]
     assert records[2]["closure_reason_tags"] == []
     assert records[3]["closure_reason_tags"] == []
     assert records[0]["journal"]["active_track_ref"] == "branch-alpha"

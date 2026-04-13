@@ -375,8 +375,9 @@ must narrow the earned claim to a shared documented non-reference shell rather t
 fabricating host-distinct lift.
 That evaluator must keep the overall shadow `claim_mode` separate from
 `non_reference_evidence_mode`: lawful non-reference host distinction may be earned from
-bounded structural trace observables even while the broader cross-host shadow claim stays
-narrow because host-local continuity still fails.
+bounded structural trace observables before broader acceptance is earned, and the broader
+cross-host shadow claim may graduate to `full_cross_host` only when host-local continuity,
+positive lift, and negative stability all hold on the bounded shadow surface.
 
 ---
 

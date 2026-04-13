@@ -48,8 +48,9 @@ def test_goal_branch_coupling_shifts_toward_check_without_resume_anchor() -> Non
 
     assert coupling.weight > 0.0
     assert coupling.score_for(SoftControlFamily.CHECK).score > 0.0
-    assert coupling.score_for(SoftControlFamily.BRANCH).score > 0.0
+    assert coupling.score_for(SoftControlFamily.BRANCH).score < 0.0
     assert "resume-anchor-missing" in coupling.score_for(SoftControlFamily.CHECK).reason_tags
+    assert "branch-intent-missing" in coupling.score_for(SoftControlFamily.BRANCH).reason_tags
 
 
 def test_goal_branch_coupling_reduces_branch_score_under_latched_brake() -> None:

@@ -252,6 +252,73 @@ def test_build_reference_executive_state_marks_unavailable_probe_paths_without_f
     assert state.control_allocation.host_friction_level > 0.0
 
 
+def test_build_reference_executive_state_relieves_generic_probe_friction_for_fresh_continuity_resume() -> None:
+    state = build_reference_executive_state(
+        observe_reference_host_event(
+            "ContextLoad",
+            {"session_id": "runtime-continuity-relief"},
+        ).observation,
+        SupportSnapshot(
+            trace=SupportTraceState(),
+            session=SupportSessionState(
+                branch_registry=("main", "review-track"),
+                pending_goal_refs=("review-track-goal",),
+                reminders=("resume review-track after review",),
+            ),
+            host=SupportHostState(),
+            exec_memory_pub=SupportExecMemoryState(),
+        ),
+        ExecutiveEnvironmentView(
+            available_query_kinds=frozenset({EXECUTION_TRACE}),
+            host_capability_tags=frozenset({"reference-local"}),
+        ),
+        ReferenceRuntimeSession(
+            session_id="runtime-continuity-relief",
+            event_index=2,
+            branch_registry=("main", "review-track"),
+            active_track_ref="review-track",
+            pending_goal_refs=("review-track-goal",),
+            budget_history=("shell-low",),
+            brake_history=("guarded",),
+            last_selected_family=SoftControlFamily.BRANCH,
+        ),
+        opportunities=(
+            HostNativeOpportunity(
+                opportunity_ref="reference.runtime.probe.seek-context",
+                supported_families=frozenset({SoftControlFamily.SEEK_CONTEXT}),
+                clearly_superior=True,
+                realizable=False,
+                degradation_reason="documented-probe-surface-unavailable",
+                safer_fallback_family=SoftControlFamily.NEUTRAL,
+                probe_contract=BoundedProbeContract(
+                    uncertainty_target="host-capability",
+                    allowed_family=SoftControlFamily.SEEK_CONTEXT,
+                    timeout_seconds=2,
+                    output_cap=256,
+                    failure_classes=frozenset({"degraded", "timed-out", "unsupported"}),
+                ),
+            ),
+        ),
+    )
+
+    assert state.goal_continuity.anchor_source == "continuity_reminder"
+    assert state.goal_continuity.anchor_freshness == "fresh"
+    assert state.goal_continuity.branch_intent_present is True
+    assert state.mode_and_gating.mode_tag == "review_pending"
+    assert state.control_allocation.probe_path_state == "unavailable"
+    assert state.control_allocation.host_friction_tags == frozenset({"capability-view-missing"})
+    assert state.control_allocation.host_friction_level == 0.0
+    assert SoftControlFamily.SEEK_CONTEXT not in state.mode_and_gating.family_mask
+    assert SoftControlFamily.REDIRECT in state.mode_and_gating.family_mask
+    assert state.control_allocation.top_family_set == frozenset(
+        {
+            SoftControlFamily.NEUTRAL,
+            SoftControlFamily.BRANCH,
+            SoftControlFamily.BRAKE,
+        }
+    )
+
+
 def test_build_reference_executive_state_for_candidate_bearing_event_surfaces_review_mode() -> None:
     state = build_reference_executive_state(
         observe_reference_host_event(
@@ -378,9 +445,13 @@ def test_build_reference_executive_state_surfaces_guarded_brake_when_snapshot_ha
             SoftControlFamily.CHECK,
             SoftControlFamily.BRANCH,
             SoftControlFamily.BRAKE,
+            SoftControlFamily.REDIRECT,
             SoftControlFamily.SEEK_CONTEXT,
         }
     )
+    assert state.goal_continuity.anchor_source == "none"
+    assert state.goal_continuity.anchor_freshness == "absent"
+    assert state.goal_continuity.branch_intent_present is False
     assert "environment-drift" in state.uncertainty_monitoring.contradiction_spike_flags
     assert "resume-anchor-missing" in state.uncertainty_monitoring.contradiction_spike_flags
     assert state.control_allocation.host_friction_tags == frozenset(
@@ -392,8 +463,10 @@ def test_build_reference_executive_state_surfaces_guarded_brake_when_snapshot_ha
     assert state.control_allocation.top_family_set == frozenset(
         {
             SoftControlFamily.NEUTRAL,
+            SoftControlFamily.CHECK,
             SoftControlFamily.BRANCH,
             SoftControlFamily.BRAKE,
+            SoftControlFamily.REDIRECT,
             SoftControlFamily.SEEK_CONTEXT,
         }
     )

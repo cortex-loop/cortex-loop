@@ -5,6 +5,39 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from numbers import Real
 
+_ANCHOR_SOURCES = frozenset(
+    {
+        "none",
+        "pending_goal",
+        "continuity_reminder",
+        "trace_wake",
+        "branch_registry_only",
+    }
+)
+_ANCHOR_FRESHNESS = frozenset({"absent", "fresh", "stale"})
+
+
+def make_resume_reminder(track_ref: str) -> str:
+    if not (isinstance(track_ref, str) and track_ref.strip()):
+        raise ValueError("make_resume_reminder.track_ref must be non-empty after trimming.")
+    return f"resume {track_ref} after review"
+
+
+def parse_resume_reminder_track(reminder: str) -> str | None:
+    if not (isinstance(reminder, str) and reminder.strip()):
+        raise ValueError(
+            "parse_resume_reminder_track.reminder must be non-empty after trimming."
+        )
+    normalized = reminder.strip()
+    if not normalized.startswith("resume "):
+        return None
+    body = normalized.removeprefix("resume ")
+    for delimiter in (" after ", " before "):
+        if delimiter in body:
+            track_ref = body.split(delimiter, 1)[0].strip()
+            return track_ref or None
+    return None
+
 
 @dataclass(frozen=True, slots=True)
 class GoalContinuityView:
@@ -12,6 +45,9 @@ class GoalContinuityView:
     active_track_ref: str | None = None
     pending_goal_refs: tuple[str, ...] = field(default_factory=tuple)
     resume_anchor_available: bool = False
+    anchor_source: str = "none"
+    anchor_freshness: str = "absent"
+    branch_intent_present: bool = False
     open_branch_count: int = 0
     resume_anchor_quality: float = 0.0
     merge_confidence: float = 0.0
@@ -35,6 +71,22 @@ class GoalContinuityView:
                 "GoalContinuityView.resume_anchor_available must be bool, "
                 f"got {actual_type}."
             )
+        if self.anchor_source not in _ANCHOR_SOURCES:
+            raise ValueError(
+                "GoalContinuityView.anchor_source must be one of "
+                f"{sorted(_ANCHOR_SOURCES)!r}."
+            )
+        if self.anchor_freshness not in _ANCHOR_FRESHNESS:
+            raise ValueError(
+                "GoalContinuityView.anchor_freshness must be one of "
+                f"{sorted(_ANCHOR_FRESHNESS)!r}."
+            )
+        if not isinstance(self.branch_intent_present, bool):
+            actual_type = type(self.branch_intent_present).__name__
+            raise TypeError(
+                "GoalContinuityView.branch_intent_present must be bool, "
+                f"got {actual_type}."
+            )
         if isinstance(self.open_branch_count, bool) or not isinstance(self.open_branch_count, int):
             actual_type = type(self.open_branch_count).__name__
             raise TypeError(
@@ -56,4 +108,4 @@ class GoalContinuityView:
                 )
 
 
-__all__ = ["GoalContinuityView"]
+__all__ = ["GoalContinuityView", "make_resume_reminder", "parse_resume_reminder_track"]

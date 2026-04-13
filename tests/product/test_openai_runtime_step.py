@@ -380,7 +380,10 @@ def test_openai_runtime_step_suspend_surfaces_pending_goal_debt() -> None:
     assert suspended.session.pending_goal_refs == ("branch-alpha",)
     assert suspended.executive_signal_summary_payload["continuity_demand"] == 1.0
     assert suspended.closure_required is True
-    assert suspended.closure_reason_tags == ("pending_goal_debt",)
+    assert suspended.closure_reason_tags == (
+        "continuity_reminder",
+        "pending_goal_debt",
+    )
     assert suspended.session.next_recommended_move == "check"
 
 

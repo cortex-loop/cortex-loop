@@ -353,6 +353,9 @@ def make_reference_executive_state(
     pending_goal_refs: tuple[str, ...] = (),
     active_track_ref: str = "main",
     resume_anchor_available: bool = False,
+    anchor_source: str = "none",
+    anchor_freshness: str = "absent",
+    branch_intent_present: bool = False,
     open_branch_count: int = 0,
     resume_anchor_quality: float = 0.0,
     merge_confidence: float = 0.0,
@@ -369,6 +372,9 @@ def make_reference_executive_state(
             active_track_ref=active_track_ref,
             pending_goal_refs=pending_goal_refs,
             resume_anchor_available=resume_anchor_available,
+            anchor_source=anchor_source,
+            anchor_freshness=anchor_freshness,
+            branch_intent_present=branch_intent_present,
             open_branch_count=open_branch_count,
             resume_anchor_quality=resume_anchor_quality,
             merge_confidence=merge_confidence,
@@ -464,6 +470,9 @@ def make_aux_reference_replay_corpus() -> tuple[AuxReferenceReplayScenario, ...]
                 pending_goal_refs=("review-track-goal",),
                 active_track_ref="review-track",
                 resume_anchor_available=True,
+                anchor_source="continuity_reminder",
+                anchor_freshness="fresh",
+                branch_intent_present=True,
                 open_branch_count=1,
                 resume_anchor_quality=0.85,
                 merge_confidence=0.70,
@@ -728,6 +737,7 @@ def _runtime_shadow_seed(
     *,
     seeded_branch_state: bool,
     contradiction_pressure: bool,
+    continuity_reminders: tuple[str, ...] = (),
 ) -> tuple[ReferenceExecutiveState, SupportSnapshot]:
     if host_name == "claude":
         session = claude_runtime.ClaudeRuntimeSession(
@@ -735,6 +745,7 @@ def _runtime_shadow_seed(
             branch_registry=("main", "review-track") if seeded_branch_state else ("main",),
             active_track_ref="review-track" if seeded_branch_state else "main",
             pending_goal_refs=("review-track-goal",) if seeded_branch_state else (),
+            continuity_reminders=continuity_reminders,
             budget_history=("shell-low",) if seeded_branch_state else (),
             brake_history=("guarded",) if seeded_branch_state else (),
         )
@@ -768,6 +779,7 @@ def _runtime_shadow_seed(
             branch_registry=("main", "review-track") if seeded_branch_state else ("main",),
             active_track_ref="review-track" if seeded_branch_state else "main",
             pending_goal_refs=("review-track-goal",) if seeded_branch_state else (),
+            continuity_reminders=continuity_reminders,
             budget_history=("shell-low",) if seeded_branch_state else (),
             brake_history=("guarded",) if seeded_branch_state else (),
         )
@@ -801,6 +813,7 @@ def _runtime_shadow_seed(
         branch_registry=("main", "review-track") if seeded_branch_state else ("main",),
         active_track_ref="review-track" if seeded_branch_state else "main",
         pending_goal_refs=("review-track-goal",) if seeded_branch_state else (),
+        continuity_reminders=continuity_reminders,
         budget_history=("shell-low",) if seeded_branch_state else (),
         brake_history=("guarded",) if seeded_branch_state else (),
     )
@@ -818,6 +831,17 @@ def _runtime_shadow_seed(
         warnings=result.warnings,
     )
     return result.executive_state, support_snapshot
+
+
+def _runtime_branch_resume_shadow_seed(
+    host_name: str,
+) -> tuple[ReferenceExecutiveState, SupportSnapshot]:
+    return _runtime_shadow_seed(
+        host_name,
+        seeded_branch_state=True,
+        contradiction_pressure=False,
+        continuity_reminders=("resume review-track after review",),
+    )
 
 
 def make_aux_cross_host_shadow_corpus() -> tuple[AuxCrossHostShadowScenario, ...]:
@@ -893,6 +917,7 @@ def make_aux_cross_host_shadow_corpus() -> tuple[AuxCrossHostShadowScenario, ...
             seeded_branch_state=True,
             contradiction_pressure=False,
         )
+        branch_resume_state, branch_resume_base = _runtime_branch_resume_shadow_seed(host_name)
         contradiction_state, contradiction_base = _runtime_shadow_seed(
             host_name,
             seeded_branch_state=False,
@@ -929,18 +954,18 @@ def make_aux_cross_host_shadow_corpus() -> tuple[AuxCrossHostShadowScenario, ...
                     host_name=host_name,
                     source_snapshots=tuple(
                         _overlay_runtime_support_snapshot(
-                            continuity_base,
+                            branch_resume_base,
                             snapshot,
                             host_name=host_name,
                         )
                         for snapshot in temporal_cases["branch-resume-recovery"].source_snapshots
                     ),
                     target_snapshot=_overlay_runtime_support_snapshot(
-                        continuity_base,
+                        branch_resume_base,
                         temporal_cases["branch-resume-recovery"].target_snapshot,
                         host_name=host_name,
                     ),
-                    executive_state=continuity_state,
+                    executive_state=branch_resume_state,
                     preferred_family=SoftControlFamily.BRANCH,
                     expect_improvement=True,
                     continuity_basis="host_local",
@@ -952,14 +977,14 @@ def make_aux_cross_host_shadow_corpus() -> tuple[AuxCrossHostShadowScenario, ...
                     host_name=host_name,
                     source_snapshots=tuple(
                         _overlay_runtime_support_snapshot(
-                            continuity_base,
+                            branch_resume_base,
                             snapshot,
                             host_name=host_name,
                         )
                         for snapshot in temporal_cases["branch-resume-recovery"].source_snapshots
                     ),
                     target_snapshot=_overlay_runtime_support_snapshot(
-                        continuity_base,
+                        branch_resume_base,
                         temporal_cases["branch-resume-recovery"].target_snapshot,
                         host_name=host_name,
                     ),
@@ -967,7 +992,7 @@ def make_aux_cross_host_shadow_corpus() -> tuple[AuxCrossHostShadowScenario, ...
                     preferred_family=SoftControlFamily.BRANCH,
                     expect_improvement=True,
                     continuity_basis="reference_projected",
-                    notes=("reference-projected branch continuity should separate shared shadow lift from host-local continuity weakness under the same support snapshots",),
+                    notes=("reference-projected branch continuity should verify host-local parity under the same support snapshots once the local continuity basis is repaired",),
                 ),
                 AuxCrossHostShadowScenario(
                     scenario_id=f"{host_name}-check-review",

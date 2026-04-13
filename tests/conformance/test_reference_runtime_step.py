@@ -249,7 +249,7 @@ def test_reference_runtime_step_result_keeps_candidate_bearing_event_candidate_o
     assert second.session.active_track_ref == "main"
     assert second.session.budget_history == ("shell-low", "shell-medium")
     assert second.session.brake_history == ("guarded", "guarded")
-    assert second.executive_state_summary["mode_tag"] == "guarded_review"
+    assert second.executive_state_summary["mode_tag"] == "review_pending"
     assert second.executive_state_summary["budget_band"] == "medium"
     assert second.control_ledger_summary["event_class"] == "candidate-bearing"
     assert second.control_ledger_summary["admissible_families"] == [
@@ -286,7 +286,7 @@ def test_reference_runtime_step_result_certifies_full_commitment_when_runtime_pa
     assert result.selected_family is SoftControlFamily.SEEK_CONTEXT
     assert result.realized_family is SoftControlFamily.SEEK_CONTEXT
     assert result.brake_state is BrakeState.GUARDED
-    assert result.executive_state_summary["mode_tag"] == "guarded_review"
+    assert result.executive_state_summary["mode_tag"] == "commitment_path"
     assert result.executive_state_summary["budget_band"] == "high"
     assert result.control_ledger_summary["event_class"] == "full-commitment"
     assert result.control_ledger_summary["admissible_families"] == [
