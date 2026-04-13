@@ -638,11 +638,12 @@ def run_reference_runtime_step(
                 offline_publication,
             )
         )
+    opportunities = _reference_host_native_opportunities(bound_event)
     selection = select_reference_soft_control(
         executive_state,
         mediation_mode=mediation_mode,
         memory_priors=memory_priors,
-        opportunities=_reference_host_native_opportunities(bound_event),
+        opportunities=opportunities,
     )
     selected_family = selection.selected_family
     brake_state = executive_state.brake.brake_state
@@ -652,6 +653,9 @@ def run_reference_runtime_step(
         brake_state=brake_state,
         dominant_uncertainty_sources=dominant_uncertainty_sources,
         feedback_pressure_tags=executive_state.control_allocation.feedback_pressure_tags,
+        seek_context_opportunity_available=_has_realizable_seek_context_opportunity(
+            opportunities
+        ),
     )
     warnings = merge_warnings(warnings, enforcement_warnings)
     control_ledger = ReferenceControlLedger(
@@ -666,6 +670,7 @@ def run_reference_runtime_step(
         allocation_diagnostics=build_allocation_diagnostics_payload(
             selection.scorecard,
             selected_delta_over_neutral=selection.neutral_dominance.margin_over_neutral,
+            applied_activation_threshold=selection.neutral_dominance.activation_threshold,
             chi_t=selection.chi_t,
             mediation_payload=selection.mediation_finalization.as_payload(),
         ),
@@ -678,6 +683,15 @@ def run_reference_runtime_step(
         warning_codes=tuple(warnings),
         host_friction_tags=tuple(
             sorted(executive_state.control_allocation.host_friction_tags)
+        ),
+        evidence_state_moved=_evidence_state_moved(
+            dispatch_decision=dispatch_decision,
+            normalized_payload=normalized_payload,
+            commitment_result_kind=commitment_result_kind,
+        ),
+        continuity_improved=_continuity_improved(
+            prior_session=prior_session,
+            provisional_session=provisional_session,
         ),
     )
     updated_session = ReferenceRuntimeSession(
@@ -1241,6 +1255,7 @@ def _realize_family(
     brake_state: BrakeState,
     dominant_uncertainty_sources: tuple[str, ...],
     feedback_pressure_tags: frozenset[str],
+    seek_context_opportunity_available: bool,
 ) -> tuple[SoftControlFamily, tuple[str, ...]]:
     if selected_family in {
         SoftControlFamily.NEUTRAL,
@@ -1268,6 +1283,15 @@ def _realize_family(
     if brake_state is not BrakeState.LATCHED:
         return selected_family, ()
 
+    if (
+        selected_family is SoftControlFamily.SEEK_CONTEXT
+        and seek_context_opportunity_available
+        and any(
+            source in {"evidence", "environment", "host-capability"}
+            for source in dominant_uncertainty_sources
+        )
+    ):
+        return selected_family, ()
     if any(source in {"evidence", "environment"} for source in dominant_uncertainty_sources):
         realized_family = SoftControlFamily.CHECK
     else:
@@ -1289,6 +1313,53 @@ def _has_guarded_feedback_enforcement_pressure(
             "feedback:rejection-pressure",
         }
         & feedback_pressure_tags
+    )
+
+
+def _has_realizable_seek_context_opportunity(
+    opportunities: tuple[HostNativeOpportunity, ...],
+) -> bool:
+    return any(
+        opportunity.realizable
+        and opportunity.clearly_superior
+        and SoftControlFamily.SEEK_CONTEXT in opportunity.supported_families
+        for opportunity in opportunities
+    )
+
+
+def _evidence_state_moved(
+    *,
+    dispatch_decision: DispatchDecision,
+    normalized_payload: Mapping[str, Any],
+    commitment_result_kind: str | None,
+) -> bool:
+    return bool(
+        commitment_result_kind is not None
+        or dispatch_decision.lane is not DispatchLane.CHEAP
+        or _first_concrete_artifact_ref(normalized_payload) is not None
+        or _as_non_empty_string(normalized_payload.get("external_record_ref")) is not None
+        or _as_non_empty_string(normalized_payload.get("candidate_id")) is not None
+    )
+
+
+def _continuity_improved(
+    *,
+    prior_session: ReferenceRuntimeSession,
+    provisional_session: ReferenceRuntimeSession,
+) -> bool:
+    prior_open_branch_count = sum(
+        1 for branch_ref in prior_session.branch_registry if branch_ref != "main"
+    )
+    next_open_branch_count = sum(
+        1 for branch_ref in provisional_session.branch_registry if branch_ref != "main"
+    )
+    return bool(
+        next_open_branch_count < prior_open_branch_count
+        or len(provisional_session.pending_goal_refs) < len(prior_session.pending_goal_refs)
+        or (
+            prior_session.active_track_ref != "main"
+            and provisional_session.active_track_ref == "main"
+        )
     )
 
 
@@ -1314,6 +1385,7 @@ _ALLOCATION_SCORE_KEYS = (
     "online_score",
     "memory_score",
     "allocated_score",
+    "activation_threshold",
     "admissible",
     "reason_tags",
 )
@@ -1356,7 +1428,7 @@ def _validate_allocation_diagnostics_payload(payload: dict[str, Any], label: str
             )
         if not (isinstance(score["family"], str) and score["family"].strip()):
             raise ValueError(f"{score_label}.family must be non-empty after trimming.")
-        for key in ("online_score", "memory_score", "allocated_score"):
+        for key in ("online_score", "memory_score", "allocated_score", "activation_threshold"):
             value = score[key]
             if isinstance(value, bool) or not isinstance(value, (int, float)):
                 actual_type = type(value).__name__

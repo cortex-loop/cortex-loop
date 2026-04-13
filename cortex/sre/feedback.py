@@ -21,6 +21,8 @@ class ReferenceRealizationFeedback:
     commitment_result_kind: str | None = None
     warning_codes: tuple[str, ...] = field(default_factory=tuple)
     host_friction_tags: tuple[str, ...] = field(default_factory=tuple)
+    evidence_state_moved: bool | None = None
+    continuity_improved: bool | None = None
 
     def __post_init__(self) -> None:
         if not isinstance(self.selected_family, SoftControlFamily):
@@ -57,9 +59,16 @@ class ReferenceRealizationFeedback:
             raise ValueError(
                 "ReferenceRealizationFeedback.host_friction_tags must contain only non-empty values after trimming."
             )
+        for field_name in ("evidence_state_moved", "continuity_improved"):
+            value = getattr(self, field_name)
+            if value is not None and not isinstance(value, bool):
+                actual_type = type(value).__name__
+                raise TypeError(
+                    f"ReferenceRealizationFeedback.{field_name} must be bool | None, got {actual_type}."
+                )
 
     def as_summary(self) -> dict[str, object]:
-        return {
+        summary = {
             "selected_family": self.selected_family.value,
             "realized_family": self.realized_family.value,
             "brake_state": self.brake_state.value,
@@ -67,6 +76,11 @@ class ReferenceRealizationFeedback:
             "warning_codes": list(self.warning_codes),
             "host_friction_tags": list(self.host_friction_tags),
         }
+        if self.evidence_state_moved is not None:
+            summary["evidence_state_moved"] = self.evidence_state_moved
+        if self.continuity_improved is not None:
+            summary["continuity_improved"] = self.continuity_improved
+        return summary
 
 
 @dataclass(frozen=True, slots=True)
@@ -106,6 +120,9 @@ class ReferenceFeedbackWindowSummary:
     override_count: int = 0
     latched_count: int = 0
     clean_success_streak: int = 0
+    evidence_state_move_count: int = 0
+    continuity_improvement_count: int = 0
+    family_change_without_evidence_count: int = 0
     goal_progress_floor: float = 0.0
     degradation_pressure_bonus: int = 0
     sustained_spike_flags: tuple[str, ...] = ()
@@ -120,6 +137,9 @@ class ReferenceFeedbackWindowSummary:
             "override_count",
             "latched_count",
             "clean_success_streak",
+            "evidence_state_move_count",
+            "continuity_improvement_count",
+            "family_change_without_evidence_count",
             "degradation_pressure_bonus",
         ):
             value = getattr(self, field_name)
@@ -143,6 +163,9 @@ class ReferenceFeedbackWindowSummary:
             "override_count": self.override_count,
             "latched_count": self.latched_count,
             "clean_success_streak": self.clean_success_streak,
+            "evidence_state_move_count": self.evidence_state_move_count,
+            "continuity_improvement_count": self.continuity_improvement_count,
+            "family_change_without_evidence_count": self.family_change_without_evidence_count,
             "goal_progress_floor": self.goal_progress_floor,
             "degradation_pressure_bonus": self.degradation_pressure_bonus,
             "sustained_spike_flags": list(self.sustained_spike_flags),
@@ -165,6 +188,15 @@ def summarize_reference_feedback_window(
         1 for entry in entries if entry.realized_family is not entry.selected_family
     )
     latched_count = sum(1 for entry in entries if entry.brake_state is BrakeState.LATCHED)
+    evidence_state_move_count = sum(1 for entry in entries if entry.evidence_state_moved is True)
+    continuity_improvement_count = sum(1 for entry in entries if entry.continuity_improved is True)
+    family_change_without_evidence_count = sum(
+        1
+        for previous, current in zip(entries, entries[1:])
+        if previous.selected_family is not current.selected_family
+        and current.evidence_state_moved is False
+        and current.continuity_improved is False
+    )
 
     clean_success_streak = 0
     for entry in reversed(entries):
@@ -195,8 +227,15 @@ def summarize_reference_feedback_window(
         or (rejection_count >= 1 and override_count >= 1)
     ):
         degradation_pressure_bonus = 2
-    elif rejection_count == 1 or override_count >= 1 or latched_count == 1:
+    elif (
+        rejection_count == 1
+        or override_count >= 1
+        or latched_count == 1
+        or family_change_without_evidence_count >= 1
+    ):
         degradation_pressure_bonus = 1
+    if family_change_without_evidence_count >= 2:
+        degradation_pressure_bonus = max(degradation_pressure_bonus, 2)
 
     sustained_spike_flags: list[str] = []
     if any(
@@ -217,6 +256,10 @@ def summarize_reference_feedback_window(
         sustained_spike_flags.append("sustained-feedback-disruption")
     if latched_count >= 2:
         sustained_spike_flags.append("sustained-latched-brake")
+    if family_change_without_evidence_count >= 1:
+        sustained_spike_flags.append("prior-non-productive-family-switch")
+    if family_change_without_evidence_count >= 2:
+        sustained_spike_flags.append("sustained-oscillation")
 
     return ReferenceFeedbackWindowSummary(
         window_size=len(entries),
@@ -224,6 +267,9 @@ def summarize_reference_feedback_window(
         override_count=override_count,
         latched_count=latched_count,
         clean_success_streak=clean_success_streak,
+        evidence_state_move_count=evidence_state_move_count,
+        continuity_improvement_count=continuity_improvement_count,
+        family_change_without_evidence_count=family_change_without_evidence_count,
         goal_progress_floor=max(rejection_floor, override_floor),
         degradation_pressure_bonus=degradation_pressure_bonus,
         sustained_spike_flags=tuple(sustained_spike_flags),

@@ -483,7 +483,7 @@ def _feedback(value: Any, label: str) -> ReferenceRealizationFeedback:
     if not isinstance(value, Mapping):
         actual_type = type(value).__name__
         raise TypeError(f"{label} must be an object, got {actual_type}.")
-    feedback_keys = (
+    required_feedback_keys = (
         "selected_family",
         "realized_family",
         "brake_state",
@@ -491,7 +491,14 @@ def _feedback(value: Any, label: str) -> ReferenceRealizationFeedback:
         "warning_codes",
         "host_friction_tags",
     )
-    _require_exact_keys(value, feedback_keys, label)
+    optional_feedback_keys = (
+        "evidence_state_moved",
+        "continuity_improved",
+    )
+    expected_keys = set(required_feedback_keys) | set(optional_feedback_keys)
+    actual_keys = set(value)
+    if not set(required_feedback_keys) <= actual_keys or actual_keys - expected_keys:
+        _require_exact_keys(value, required_feedback_keys, label)
 
     def _family(raw: Any, field_label: str) -> SoftControlFamily:
         if not isinstance(raw, str):
@@ -535,6 +542,14 @@ def _feedback(value: Any, label: str) -> ReferenceRealizationFeedback:
             value["host_friction_tags"],
             f"{label}.host_friction_tags",
         ),
+        evidence_state_moved=_optional_bool(
+            value.get("evidence_state_moved"),
+            f"{label}.evidence_state_moved",
+        ),
+        continuity_improved=_optional_bool(
+            value.get("continuity_improved"),
+            f"{label}.continuity_improved",
+        ),
     )
 
 
@@ -566,6 +581,15 @@ def _unit_float(value: Any, label: str) -> float:
     if not 0.0 <= parsed <= 1.0:
         raise ValueError(f"{label} must be between 0.0 and 1.0.")
     return parsed
+
+
+def _optional_bool(value: Any, label: str) -> bool | None:
+    if value is None:
+        return None
+    if not isinstance(value, bool):
+        actual_type = type(value).__name__
+        raise TypeError(f"{label} must be bool | null, got {actual_type}.")
+    return value
 
 
 def _last_budget_band(budget_history: tuple[str, ...]) -> str | None:

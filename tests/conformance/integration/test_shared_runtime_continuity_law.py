@@ -28,6 +28,9 @@ _ZERO_FEEDBACK_WINDOW = {
     "override_count": 0,
     "latched_count": 0,
     "clean_success_streak": 0,
+    "evidence_state_move_count": 0,
+    "continuity_improvement_count": 0,
+    "family_change_without_evidence_count": 0,
     "goal_progress_floor": 0.0,
     "degradation_pressure_bonus": 0,
     "sustained_spike_flags": [],
@@ -38,6 +41,9 @@ _FIRST_FEEDBACK_WINDOW = {
     "override_count": 0,
     "latched_count": 0,
     "clean_success_streak": 0,
+    "evidence_state_move_count": 0,
+    "continuity_improvement_count": 0,
+    "family_change_without_evidence_count": 0,
     "goal_progress_floor": 0.0,
     "degradation_pressure_bonus": 0,
     "sustained_spike_flags": [],
@@ -48,6 +54,9 @@ _SECOND_FEEDBACK_WINDOW = {
     "override_count": 0,
     "latched_count": 0,
     "clean_success_streak": 0,
+    "evidence_state_move_count": 0,
+    "continuity_improvement_count": 0,
+    "family_change_without_evidence_count": 0,
     "goal_progress_floor": 0.0,
     "degradation_pressure_bonus": 0,
     "sustained_spike_flags": [],
@@ -58,6 +67,9 @@ _THIRD_FEEDBACK_WINDOW = {
     "override_count": 0,
     "latched_count": 0,
     "clean_success_streak": 0,
+    "evidence_state_move_count": 0,
+    "continuity_improvement_count": 0,
+    "family_change_without_evidence_count": 0,
     "goal_progress_floor": 0.0,
     "degradation_pressure_bonus": 0,
     "sustained_spike_flags": [],
@@ -363,7 +375,11 @@ _HOSTS: dict[str, _RuntimeHostSpec] = {
                 "continuity_warnings": [],
                 "active_track_ref": "branch-alpha",
                 "pending_goal_refs": [],
-                "feedback_window_summary": _SECOND_FEEDBACK_WINDOW,
+                "feedback_window_summary": {
+                    **_SECOND_FEEDBACK_WINDOW,
+                    "evidence_state_move_count": 1,
+                    "continuity_improvement_count": 1,
+                },
                 "closure_required": False,
                 "closure_reason_tags": [],
             },
@@ -374,7 +390,11 @@ _HOSTS: dict[str, _RuntimeHostSpec] = {
                 "continuity_warnings": [],
                 "active_track_ref": "main",
                 "pending_goal_refs": [],
-                "feedback_window_summary": _THIRD_FEEDBACK_WINDOW,
+                "feedback_window_summary": {
+                    **_THIRD_FEEDBACK_WINDOW,
+                    "evidence_state_move_count": 1,
+                    "continuity_improvement_count": 2,
+                },
                 "closure_required": False,
                 "closure_reason_tags": [],
             },
@@ -428,7 +448,9 @@ def test_runtime_continuity_fixtures_lock_shared_session_truth_and_host_control_
         {
                 "active_track_ref": record["active_track_ref"],
                 "pending_goal_refs": record["pending_goal_refs"],
-                "feedback_window_summary": record["feedback_window_summary"],
+                "feedback_window_summary": _common_feedback_window_summary(
+                    record["feedback_window_summary"]
+                ),
                 "closure_required": record["closure_required"],
                 "closure_reason_tags": record["closure_reason_tags"],
             }
@@ -440,7 +462,9 @@ def test_runtime_continuity_fixtures_lock_shared_session_truth_and_host_control_
             {
                 "active_track_ref": record["active_track_ref"],
                 "pending_goal_refs": record["pending_goal_refs"],
-                "feedback_window_summary": record["feedback_window_summary"],
+                "feedback_window_summary": _common_feedback_window_summary(
+                    record["feedback_window_summary"]
+                ),
                 "closure_required": record["closure_required"],
                 "closure_reason_tags": record["closure_reason_tags"],
             }
@@ -464,7 +488,9 @@ def test_runtime_continuity_missing_resume_anchor_lock_preserves_cross_host_reje
         {
                 "active_track_ref": record["active_track_ref"],
                 "pending_goal_refs": record["pending_goal_refs"],
-                "feedback_window_summary": record["feedback_window_summary"],
+                "feedback_window_summary": _common_feedback_window_summary(
+                    record["feedback_window_summary"]
+                ),
                 "closure_required": record["closure_required"],
                 "closure_reason_tags": record["closure_reason_tags"],
             }
@@ -477,7 +503,9 @@ def test_runtime_continuity_missing_resume_anchor_lock_preserves_cross_host_reje
             {
                 "active_track_ref": record["active_track_ref"],
                 "pending_goal_refs": record["pending_goal_refs"],
-                "feedback_window_summary": record["feedback_window_summary"],
+                "feedback_window_summary": _common_feedback_window_summary(
+                    record["feedback_window_summary"]
+                ),
                 "closure_required": record["closure_required"],
                 "closure_reason_tags": record["closure_reason_tags"],
             }
@@ -526,4 +554,17 @@ def _project_record(record: dict[str, object]) -> dict[str, object]:
         "feedback_window_summary": record["feedback_window_summary"],
         "closure_required": record["closure_required"],
         "closure_reason_tags": record["closure_reason_tags"],
+    }
+
+
+def _common_feedback_window_summary(summary: dict[str, object]) -> dict[str, object]:
+    return {
+        "window_size": summary["window_size"],
+        "rejection_count": summary["rejection_count"],
+        "override_count": summary["override_count"],
+        "latched_count": summary["latched_count"],
+        "clean_success_streak": summary["clean_success_streak"],
+        "goal_progress_floor": summary["goal_progress_floor"],
+        "degradation_pressure_bonus": summary["degradation_pressure_bonus"],
+        "sustained_spike_flags": summary["sustained_spike_flags"],
     }

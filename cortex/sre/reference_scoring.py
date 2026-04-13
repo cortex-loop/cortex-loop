@@ -136,10 +136,16 @@ def build_reference_allocation_scorecard(
     host_friction_tags = executive_state.control_allocation.host_friction_tags
     brake_state = executive_state.brake.brake_state
     mode_tag = executive_state.mode_and_gating.mode_tag
-    activation_threshold = compute_reference_activation_threshold(executive_state)
     alpha_t = compute_reference_alpha_t(executive_state)
     online_components = build_reference_online_score_components(executive_state)
     goal_branch_coupling = build_reference_goal_branch_coupling(executive_state)
+    activation_thresholds = {
+        family: compute_reference_activation_threshold(
+            executive_state,
+            family=family,
+        )
+        for family in SoftControlFamily
+    }
 
     scores: list[AllocationScore] = []
     for family in SoftControlFamily:
@@ -155,14 +161,19 @@ def build_reference_allocation_scorecard(
         if host_friction_tags and family is SoftControlFamily.ESCALATE:
             reason_tags.add("host-friction")
         if family is SoftControlFamily.SEEK_CONTEXT and _has_seek_context_pressure(
-            host_friction_tags,
-            brake_state=brake_state,
+            executive_state
         ):
             reason_tags.add("seek-context-pressure")
+        if family is SoftControlFamily.CHECK and _is_low_burden_check_relief(
+            executive_state
+        ):
+            reason_tags.add("check-relief")
         if not admissible and family is not SoftControlFamily.NEUTRAL:
             reason_tags.add("masked")
         if brake_state is not BrakeState.QUIESCENT and family is SoftControlFamily.BRAKE:
             reason_tags.add(f"brake:{brake_state.value}")
+        if family is not SoftControlFamily.NEUTRAL:
+            reason_tags.add(f"theta_act:{activation_thresholds[family]:.2f}")
         reason_tags.add(_alpha_reason_tag(alpha_t))
 
         online_score = _online_score(online_components[family])
@@ -202,6 +213,7 @@ def build_reference_allocation_scorecard(
                 score=allocated_score,
                 admissible=admissible,
                 reason_tags=frozenset(reason_tags),
+                activation_threshold=activation_thresholds[family],
                 online_score=online_score,
                 memory_score=memory_score,
                 allocated_score=allocated_score,
@@ -210,7 +222,6 @@ def build_reference_allocation_scorecard(
 
     return AllocationScorecard(
         scores=tuple(scores),
-        activation_threshold=activation_threshold,
         alpha_t=alpha_t,
     )
 
@@ -280,6 +291,8 @@ def compute_reference_alpha_t(
 
 def compute_reference_activation_threshold(
     executive_state: ReferenceExecutiveState,
+    *,
+    family: SoftControlFamily | None = None,
 ) -> float:
     if not isinstance(executive_state, ReferenceExecutiveState):
         actual_type = type(executive_state).__name__
@@ -300,7 +313,39 @@ def compute_reference_activation_threshold(
         threshold += 0.05
     if executive_state.control_allocation.feedback_pressure_tags:
         threshold += 0.05
-    return min(0.45, max(0.20, threshold))
+    threshold = min(0.45, max(0.20, threshold))
+    if family is None:
+        return threshold
+    if not isinstance(family, SoftControlFamily):
+        actual_type = type(family).__name__
+        raise TypeError(
+            "compute_reference_activation_threshold.family must be "
+            f"SoftControlFamily | None, got {actual_type}."
+        )
+    if family is SoftControlFamily.NEUTRAL:
+        return 0.0
+
+    if family is SoftControlFamily.CHECK and _is_low_burden_check_relief(executive_state):
+        threshold -= 0.10
+    elif family is SoftControlFamily.SEEK_CONTEXT and _has_seek_context_pressure(executive_state):
+        threshold -= 0.08
+    elif family is SoftControlFamily.BRANCH:
+        threshold += 0.08
+    elif family is SoftControlFamily.REDIRECT:
+        threshold += 0.05
+    elif family is SoftControlFamily.ESCALATE:
+        threshold += 0.10
+
+    if family in {SoftControlFamily.CHECK, SoftControlFamily.SEEK_CONTEXT}:
+        threshold -= executive_state.control_allocation.productive_exploration_bonus
+    if family in {
+        SoftControlFamily.BRANCH,
+        SoftControlFamily.REDIRECT,
+        SoftControlFamily.ESCALATE,
+    }:
+        threshold += executive_state.control_allocation.oscillation_penalty
+
+    return min(0.60, max(0.05, threshold))
 
 
 def compute_reference_chi_t(
@@ -414,6 +459,10 @@ def _online_score_components_for_family(
     mode_tag = executive_state.mode_and_gating.mode_tag
     brake_state = executive_state.brake.brake_state
     host_friction_tags = executive_state.control_allocation.host_friction_tags
+    productive_exploration_bonus = (
+        executive_state.control_allocation.productive_exploration_bonus
+    )
+    oscillation_penalty = executive_state.control_allocation.oscillation_penalty
     budget_band = executive_state.control_allocation.budget_band
     goal_continuity = executive_state.goal_continuity
     contradiction_spike_flags = (
@@ -442,15 +491,16 @@ def _online_score_components_for_family(
             stability_value += 0.45
         if brake_state is BrakeState.LATCHED:
             stability_value += 0.75
+        if oscillation_penalty > 0.0:
+            stability_value += 0.5 * oscillation_penalty
     if family is SoftControlFamily.ESCALATE and host_friction_tags:
         stability_value += 0.25
-    if family is SoftControlFamily.SEEK_CONTEXT and _has_seek_context_pressure(
-        host_friction_tags,
-        brake_state=brake_state,
-    ):
+    if family is SoftControlFamily.SEEK_CONTEXT and _has_seek_context_pressure(executive_state):
         # J4B keeps threshold and vigor law fixed, so explicit missing-context
         # pressure needs a route-local lift that creates a real runtime path.
         uncertainty_reduction += 0.70
+    if family is SoftControlFamily.CHECK and _is_low_burden_check_relief(executive_state):
+        uncertainty_reduction += 0.18
     if budget_band == "high" and family in {
         SoftControlFamily.CHECK,
         SoftControlFamily.BRANCH,
@@ -469,6 +519,14 @@ def _online_score_components_for_family(
             uncertainty_reduction += 0.05
         if family is SoftControlFamily.BRAKE:
             stability_value += 0.05
+    if family in {SoftControlFamily.CHECK, SoftControlFamily.SEEK_CONTEXT}:
+        stability_value += productive_exploration_bonus
+    if family in {
+        SoftControlFamily.BRANCH,
+        SoftControlFamily.REDIRECT,
+        SoftControlFamily.ESCALATE,
+    }:
+        control_burden += oscillation_penalty
 
     if family is SoftControlFamily.BRANCH:
         if brake_state is BrakeState.GUARDED:
@@ -516,13 +574,68 @@ def _goal_branch_weight_reason_tag(weight: float) -> str:
 
 
 def _has_seek_context_pressure(
-    host_friction_tags: frozenset[str],
-    *,
-    brake_state: BrakeState,
+    executive_state: ReferenceExecutiveState,
 ) -> bool:
-    if brake_state is BrakeState.LATCHED:
+    host_friction_tags = executive_state.control_allocation.host_friction_tags
+    if not any(tag in _SEEK_CONTEXT_PRESSURE_TAGS for tag in host_friction_tags):
         return False
-    return any(tag in _SEEK_CONTEXT_PRESSURE_TAGS for tag in host_friction_tags)
+    if executive_state.brake.brake_state is not BrakeState.LATCHED:
+        return True
+    return _latched_relief_permitted(
+        executive_state,
+        family=SoftControlFamily.SEEK_CONTEXT,
+    )
+
+
+def _is_low_burden_check_relief(
+    executive_state: ReferenceExecutiveState,
+) -> bool:
+    dominant_uncertainty_classes = _dominant_uncertainty_classes(executive_state)
+    contradiction_spike_flags = executive_state.uncertainty_monitoring.contradiction_spike_flags
+    if contradiction_spike_flags:
+        return True
+    if any(
+        class_tag in {"evidence", "environment"}
+        for class_tag in dominant_uncertainty_classes
+    ):
+        return True
+    if executive_state.brake.brake_state is BrakeState.LATCHED:
+        return _latched_relief_permitted(
+            executive_state,
+            family=SoftControlFamily.CHECK,
+        )
+    return False
+
+
+def _latched_relief_permitted(
+    executive_state: ReferenceExecutiveState,
+    *,
+    family: SoftControlFamily,
+) -> bool:
+    if executive_state.brake.brake_state is not BrakeState.LATCHED:
+        return True
+    dominant_uncertainty_classes = _dominant_uncertainty_classes(executive_state)
+    if family is SoftControlFamily.CHECK:
+        return any(
+            class_tag in {"evidence", "environment"}
+            for class_tag in dominant_uncertainty_classes
+        )
+    if family is SoftControlFamily.SEEK_CONTEXT:
+        return any(
+            class_tag in {"evidence", "environment", "host-capability"}
+            for class_tag in dominant_uncertainty_classes
+        )
+    return False
+
+
+def _dominant_uncertainty_classes(
+    executive_state: ReferenceExecutiveState,
+) -> tuple[str, ...]:
+    ranked = sorted(
+        executive_state.uncertainty_monitoring.classwise_uncertainty,
+        key=lambda estimate: (-estimate.level, estimate.class_tag),
+    )
+    return tuple(estimate.class_tag for estimate in ranked[:2])
 
 
 __all__ = [

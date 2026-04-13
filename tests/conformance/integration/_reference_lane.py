@@ -230,10 +230,13 @@ def reference_neutral_scorecard() -> AllocationScorecard:
     return AllocationScorecard(
         scores=(
             AllocationScore(SoftControlFamily.NEUTRAL, 1.0),
-            AllocationScore(SoftControlFamily.CHECK, 1.05),
+            AllocationScore(
+                SoftControlFamily.CHECK,
+                1.05,
+                activation_threshold=0.1,
+            ),
             AllocationScore(SoftControlFamily.SEEK_CONTEXT, 0.9),
         ),
-        activation_threshold=0.1,
     )
 
 

@@ -237,7 +237,8 @@ Whenever the host allows ordinary continuation at the current lifecycle event,
 
 must remain available.
 
-The executive must always retain a path where it chooses to spend no additional control.
+The executive must always retain a pass-through path where it chooses to spend no
+additional executive control while still allowing ordinary task continuation.
 
 ### 4.3 Default pass-through law
 
@@ -249,6 +250,8 @@ If:
 
 then `neutral` is the mandatory default.
 
+Here `neutral` means pass-through continuation without extra executive intervention,
+not inactivity or silent surrender.
 The SRE is a governor, not a scheduler searching for excuses to intervene.
 
 ---
@@ -374,7 +377,8 @@ Interpretation:
 - `q_t^{task}` = expected task-progress value,
 - `q_t^{uncert}` = expected uncertainty reduction or uncertainty-sensitive stabilization,
 - `q_t^{goal}` = preservation of main-goal and pending-goal continuity,
-- `q_t^{stability}` = drift/thrash reduction,
+- `q_t^{stability}` = protection against pathological oscillation and fake churn while
+  preserving productive messy search,
 - `c_t^{ctrl}` = control burden,
 - `c_t^{host}` = host mismatch / friction,
 - `c_t^{vis}` = visible burden.
@@ -394,11 +398,13 @@ where support-memory entries `i` provide prior realized returns for family `a`.
 
 If no usable support memory exists, set `Q_t^{mem}(a)=0` and surface that fact in diagnostics.
 
+Hidden memory is forbidden.
 Current landing law: on the active shipping and conformance lanes, `Q_t^{mem}(a)` remains
 explicitly zero-valued until lawful AUX support-memory publication exists.
-The current runtime may surface `memory_score = 0.0` as a consumer/diagnostic carrier,
-but nonzero memory-conditioned influence is not yet part of the landed shipping lane.
-Any future nonzero `Q_t^{mem}(a)` must enter through explicit AUX support-side
+That is a deployment choice for the active shipping and conformance lanes, not conceptual
+amnesia. The current runtime may surface `memory_score = 0.0` as a consumer/diagnostic
+carrier, while explicit AUX-owned support memory remains lawful on bounded replay/evaluation
+surfaces. Any nonzero `Q_t^{mem}(a)` must enter only through explicit AUX support-side
 augmentation/publication rather than hidden host memory, prompt heuristics, runtime caches,
 or softened closure logic.
 
@@ -424,19 +430,19 @@ Let
 \Delta_t(a) = Q_t^{alloc}(a) - Q_t^{alloc}(\text{neutral})
 \]
 
-for `a \neq neutral`, and
+for `a \neq neutral`.
+
+Then non-neutral intervention is justified only if there exists an admissible family `a`
+such that
 
 \[
-\Delta_t^\star = \max_{a \neq neutral}\Delta_t(a).
+\Delta_t(a) \ge \theta_t^{act}(a).
 \]
 
-Then non-neutral intervention is justified only if
-
-\[
-\Delta_t^\star \ge \theta_t^{act}.
-\]
-
-If no family beats `neutral` by the required margin, the SRE should continue without extra intervention.
+The activation gate is family-sensitive. Low-burden uncertainty-relief moves such as
+`check` and native `seek-context` may use lower thresholds than more disruptive actions
+like `branch`, visible `redirect`, or `escalate`.
+If no family beats `neutral` by its required margin, the SRE should continue without extra intervention.
 
 ### 6.7 Budget and vigor
 
@@ -558,7 +564,13 @@ When the brake is `latched`, the SRE may not choose any family that:
 - adds speculative retrieval,
 - or increases visible intervention burden
 
-unless the chosen action is the cheapest lawful move to reduce the very uncertainty that caused the latch.
+unless the chosen action is the minimum-burden lawful move that directly reduces the
+dominant uncertainty source that caused the latch.
+
+The currently landed relief action set is limited to `check` and native `seek-context`
+when either is the cheapest lawful route to reduce the dominant uncertainty. A bounded
+branch-resume/inspection move remains a future admissible realization, but it must be
+implemented and separately proved before it becomes active doctrine.
 
 ---
 
@@ -603,10 +615,10 @@ A host may realize these through:
 ### 8.4 Branch budget law
 
 Branch expansion is never free.
-A lawful SRE must apply at least:
-- a branch-count limit,
-- a branch-depth limit,
-- or an equivalent branch-burden penalty.
+The preferred realization is an explicit branch-burden penalty based on active branch
+count, resume-anchor quality, merge confidence, and pending-goal debt.
+Count and depth limits are fallback safety mechanisms when richer burden evidence is
+unavailable, not the preferred executive realization.
 
 ### 8.5 Goal-branch score
 

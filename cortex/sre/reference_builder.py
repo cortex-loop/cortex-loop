@@ -110,6 +110,17 @@ def build_reference_executive_state(
             and active_track_ref != "main"
             and not missing_resume_anchor
         ),
+        open_branch_count=_open_branch_count(branch_registry),
+        resume_anchor_quality=_resume_anchor_quality(
+            active_track_ref=active_track_ref,
+            missing_resume_anchor=missing_resume_anchor,
+            prior_feedback_window_summary=prior_feedback_window_summary,
+        ),
+        merge_confidence=_merge_confidence(
+            active_track_ref=active_track_ref,
+            missing_resume_anchor=missing_resume_anchor,
+            prior_feedback_window_summary=prior_feedback_window_summary,
+        ),
     )
     mode_and_gating = ReferenceModeAndGatingView(
         mode_tag=_mode_tag_for_event(observation.event.native_event_name, brake_evaluation.state),
@@ -117,6 +128,7 @@ def build_reference_executive_state(
             branch_registry,
             brake_evaluation.state,
             host_friction_tags,
+            uncertainty_estimates,
         ),
     )
     control_allocation = ReferenceControlAllocationView(
@@ -126,9 +138,14 @@ def build_reference_executive_state(
             branch_registry=branch_registry,
             brake_state=brake_evaluation.state,
             host_friction_tags=host_friction_tags,
+            uncertainty_estimates=uncertainty_estimates,
         ),
         host_friction_tags=host_friction_tags,
         feedback_pressure_tags=_feedback_pressure_tags(prior_feedback_window_summary),
+        productive_exploration_bonus=_productive_exploration_bonus(
+            prior_feedback_window_summary
+        ),
+        oscillation_penalty=_oscillation_penalty(prior_feedback_window_summary),
     )
     brake_view = ReferenceBrakeView(
         brake_state=brake_evaluation.state,
@@ -190,6 +207,10 @@ def _active_track_ref(
         if branch_ref != "main":
             return branch_ref
     return "main"
+
+
+def _open_branch_count(branch_registry: tuple[str, ...]) -> int:
+    return sum(1 for branch_ref in branch_registry if branch_ref != "main")
 
 
 def _contradiction_spike_flags(
@@ -302,6 +323,7 @@ def _family_mask_for_state(
     branch_registry: tuple[str, ...],
     brake_state: BrakeState,
     host_friction_tags: frozenset[str],
+    uncertainty_estimates: tuple[UncertaintyEstimate, ...],
 ) -> frozenset[SoftControlFamily]:
     families = {
         SoftControlFamily.NEUTRAL,
@@ -311,7 +333,11 @@ def _family_mask_for_state(
         families.add(SoftControlFamily.BRANCH)
     if brake_state is not BrakeState.QUIESCENT:
         families.add(SoftControlFamily.BRAKE)
-    if _has_seek_context_pressure(host_friction_tags, brake_state=brake_state):
+    if _has_seek_context_pressure(
+        host_friction_tags,
+        uncertainty_estimates=uncertainty_estimates,
+        brake_state=brake_state,
+    ):
         families.add(SoftControlFamily.SEEK_CONTEXT)
     return frozenset(families)
 
@@ -335,6 +361,7 @@ def _top_family_set(
     branch_registry: tuple[str, ...],
     brake_state: BrakeState,
     host_friction_tags: frozenset[str],
+    uncertainty_estimates: tuple[UncertaintyEstimate, ...],
 ) -> frozenset[SoftControlFamily]:
     families = {SoftControlFamily.NEUTRAL}
     if native_event_name == "approval/request":
@@ -343,7 +370,11 @@ def _top_family_set(
         families.add(SoftControlFamily.BRANCH)
     if brake_state is not BrakeState.QUIESCENT:
         families.add(SoftControlFamily.BRAKE)
-    if _has_seek_context_pressure(host_friction_tags, brake_state=brake_state):
+    if _has_seek_context_pressure(
+        host_friction_tags,
+        uncertainty_estimates=uncertainty_estimates,
+        brake_state=brake_state,
+    ):
         families.add(SoftControlFamily.SEEK_CONTEXT)
     return frozenset(families)
 
@@ -365,11 +396,30 @@ def _host_friction_tags(
 def _has_seek_context_pressure(
     host_friction_tags: frozenset[str],
     *,
+    uncertainty_estimates: tuple[UncertaintyEstimate, ...],
     brake_state: BrakeState,
 ) -> bool:
-    if brake_state is BrakeState.LATCHED:
+    if not any(tag in _SEEK_CONTEXT_PRESSURE_TAGS for tag in host_friction_tags):
         return False
-    return any(tag in _SEEK_CONTEXT_PRESSURE_TAGS for tag in host_friction_tags)
+    if brake_state is not BrakeState.LATCHED:
+        return True
+    return _allow_latched_seek_context_relief(uncertainty_estimates)
+
+
+def _allow_latched_seek_context_relief(
+    uncertainty_estimates: tuple[UncertaintyEstimate, ...],
+) -> bool:
+    dominant_classes = tuple(
+        estimate.class_tag
+        for estimate in sorted(
+            uncertainty_estimates,
+            key=lambda estimate: (-estimate.level, estimate.class_tag),
+        )[:2]
+    )
+    return any(
+        class_tag in {"evidence", "environment", "host-capability"}
+        for class_tag in dominant_classes
+    )
 
 
 def _feedback_pressure_tags(
@@ -384,7 +434,71 @@ def _feedback_pressure_tags(
         tags.add("feedback:latched-history")
     if prior_feedback_window_summary.degradation_pressure_bonus >= 1:
         tags.add("feedback:degradation-pressure")
+    if prior_feedback_window_summary.family_change_without_evidence_count >= 1:
+        tags.add("feedback:oscillation-pressure")
+    if (
+        prior_feedback_window_summary.evidence_state_move_count >= 1
+        or prior_feedback_window_summary.continuity_improvement_count >= 1
+    ):
+        tags.add("feedback:productive-exploration")
     return frozenset(tags)
+
+
+def _productive_exploration_bonus(
+    prior_feedback_window_summary: ReferenceFeedbackWindowSummary,
+) -> float:
+    bonus = 0.0
+    bonus += min(0.08, 0.04 * prior_feedback_window_summary.evidence_state_move_count)
+    bonus += min(0.08, 0.04 * prior_feedback_window_summary.continuity_improvement_count)
+    if prior_feedback_window_summary.clean_success_streak >= 2:
+        bonus += 0.02
+    return min(0.12, bonus)
+
+
+def _oscillation_penalty(
+    prior_feedback_window_summary: ReferenceFeedbackWindowSummary,
+) -> float:
+    penalty = min(
+        0.18,
+        0.07 * prior_feedback_window_summary.family_change_without_evidence_count,
+    )
+    if prior_feedback_window_summary.override_count >= 2:
+        penalty += 0.04
+    return min(0.20, penalty)
+
+
+def _resume_anchor_quality(
+    *,
+    active_track_ref: str,
+    missing_resume_anchor: bool,
+    prior_feedback_window_summary: ReferenceFeedbackWindowSummary,
+) -> float:
+    if active_track_ref in (None, "main"):
+        return 0.0
+    quality = 0.25 if missing_resume_anchor else 0.80
+    if prior_feedback_window_summary.rejection_count >= 1:
+        quality -= 0.10
+    if "prior-continuity-rejection" in prior_feedback_window_summary.sustained_spike_flags:
+        quality -= 0.15
+    return max(0.0, min(1.0, quality))
+
+
+def _merge_confidence(
+    *,
+    active_track_ref: str,
+    missing_resume_anchor: bool,
+    prior_feedback_window_summary: ReferenceFeedbackWindowSummary,
+) -> float:
+    if active_track_ref in (None, "main"):
+        return 0.0
+    confidence = 0.35 if missing_resume_anchor else 0.65
+    if prior_feedback_window_summary.override_count >= 1:
+        confidence -= 0.10
+    if "prior-continuity-rejection" in prior_feedback_window_summary.sustained_spike_flags:
+        confidence -= 0.15
+    if prior_feedback_window_summary.continuity_improvement_count >= 1:
+        confidence += 0.05
+    return max(0.0, min(1.0, confidence))
 
 
 def _event_base_uncertainty(native_event_name: str) -> float:
