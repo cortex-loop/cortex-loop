@@ -104,7 +104,8 @@ Do not create a second operational truth surface.
 Keep fast-changing state in `internal/truth/cortex_status.json` and regenerate `docs/CORTEX_STATUS.md` when that state changes.
 Do not recreate old workstream, phase-gate, correspondence, or implementation-ledger doctrine in new prose files.
 For any non-no-op `close-session` or `finalize`, maintain a generated closeout contract at `.cortex/closeout_contract/<branch>/closeout.json`; scaffold it with `python3 -m internal.closeout.contract init --mode <close-session|finalize>` and re-render it after edits.
-The workflow hard-fails if reviewed paths, residuals, hostile-review coverage, or forbidden claims are missing or stale; load-bearing closeouts must also include governing locks and law-to-code completeness rows.
+Workflow-law seams are load-bearing too: `AGENTS.md`, `docs/internal/REPO_WORKFLOW.md`, `internal/workflow/**`, `internal/closeout/**`, and `internal/Makefile` must not close as `standard`.
+The workflow hard-fails if reviewed paths, residuals, hostile-review coverage, or forbidden claims are missing or stale; it revalidates reviewed-path exactness after verification as well as before it. Load-bearing closeouts must also include governing locks and at least one law-to-code completeness row.
 The closeout contract is generated evidence only and does not replace operational truth.
 
 ## Codex App Dogfood Mode
@@ -168,7 +169,7 @@ Every final summary must include:
 - `Status registry touched:` keys changed in `internal/truth/cortex_status.json` or `none`
 - `Status doc regenerated:` yes|no
 
-Every substantive final summary must also mirror the enforced closeout contract with `Fixed now`, `Intentionally deferred`, `Still underfit`, `Zeroed or stubbed terms`, `Hostile reviewer critiques`, `Claim earned now`, and `Claim still forbidden`.
+Every substantive final summary must mirror the rendered `Final Handoff Mirror` block from the enforced closeout contract rather than paraphrasing it ad hoc, with `Fixed now`, `Intentionally deferred`, `Still underfit`, `Zeroed or stubbed terms`, `Hostile reviewer critiques`, `Claim earned now`, and `Claim still forbidden`.
 
 `PHILOSOPHY_AUDIT`
 

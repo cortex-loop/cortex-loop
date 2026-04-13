@@ -167,7 +167,8 @@ Manual/review branch workflow:
 - hard-fails if a substantive closeout is missing a valid closeout contract artifact
 - runs the smallest surface-aware verification bundle for the staged or branch-unique paths before landing
 - validates the closeout contract against the exact reviewed path set that will be landed
-- infers `load_bearing` when reviewed paths touch `cortex/**`, `lab/**`, `docs/CORTEX_V2_*.md`, `internal/truth/cortex_status.json`, or `docs/CORTEX_STATUS.md`
+- revalidates the closeout contract after verification so tracked-path drift during verification cannot slip through to publication or landing
+- infers `load_bearing` when reviewed paths touch `cortex/**`, `lab/**`, `docs/CORTEX_V2_*.md`, `internal/truth/cortex_status.json`, `docs/CORTEX_STATUS.md`, `AGENTS.md`, `docs/internal/REPO_WORKFLOW.md`, `internal/workflow/**`, `internal/closeout/**`, or `internal/Makefile`
 - hard-fails if the contract self-declares `standard` where reviewed paths require `load_bearing`
 - on the canonical repo, requires authenticated `gh` and a canonical `origin`
 - if the branch has no unique commits relative to `origin/main`, it still adopts `origin/main`, deletes the local session branch, and returns `status: "no_op"`
@@ -186,6 +187,7 @@ Manual/review branch workflow:
 - hard-fails if a substantive closeout is missing a valid closeout contract artifact
 - runs the smallest surface-aware verification bundle for the staged paths before committing
 - validates the closeout contract against the exact staged path set before verification and commit
+- revalidates the closeout contract after verification and restaging so tracked-path drift cannot slip into the committed closeout
 - leaves the branch in place for manual merge
 
 Closeout contract artifact:
@@ -200,8 +202,9 @@ Closeout contract artifact:
   - north-light audit for microkernel boundary, repo-governance leakage, host-specific policy fork, and generic bloat
 - additionally requires for `load_bearing`:
   - governing principle, executive skill, product metric, guardrail, and kill rule
-  - law-to-code completeness rows for active doctrinal or math terms touched
-- hard-fails on stale reviewed paths, missing forbidden claims, missing hostile-review coverage, or missing zeroed/stubbed-term review
+  - non-empty law-to-code completeness rows for active doctrinal, math, or workflow-law terms touched
+- hard-fails on stale reviewed paths, reviewed-path drift during verification, missing forbidden claims, missing hostile-review coverage, or missing zeroed/stubbed-term review
+- renders one deterministic `Final Handoff Mirror` section; agents should mirror that block in the final chat handoff instead of paraphrasing it ad hoc
 
 `preserve-worktree`:
 
