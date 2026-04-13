@@ -295,7 +295,7 @@ EXPECTATIONS = (
             PromisedTestSurface(
                 test_file="tests/experimental/test_aux_cross_host_shadow.py",
                 test_names=(
-                    "test_aux_cross_host_shadow_case_results_carry_host_truth_and_reversion_flags",
+                    "test_aux_cross_host_shadow_case_results_carry_host_truth_reliability_delta_and_signature",
                 ),
             ),
         ),
@@ -308,7 +308,7 @@ EXPECTATIONS = (
             PromisedTestSurface(
                 test_file="tests/experimental/test_aux_cross_host_shadow.py",
                 test_names=(
-                    "test_evaluate_aux_cross_host_shadow_reports_repeat_stable_host_lift_and_invalidation_truth",
+                    "test_evaluate_aux_cross_host_shadow_reports_remaining_branch_gap_and_claim_limitation_truth",
                 ),
             ),
         ),
@@ -321,7 +321,7 @@ EXPECTATIONS = (
             PromisedTestSurface(
                 test_file="tests/experimental/test_aux_cross_host_shadow.py",
                 test_names=(
-                    "test_evaluate_aux_cross_host_shadow_reports_repeat_stable_host_lift_and_invalidation_truth",
+                    "test_evaluate_aux_cross_host_shadow_reports_remaining_branch_gap_and_claim_limitation_truth",
                     "test_evaluate_aux_cross_host_shadow_validates_input_shape",
                 ),
             ),
@@ -373,13 +373,13 @@ def test_aux_correspondence_text_keeps_geometry_lift_and_publication_rows_explic
     assert "| time-separated AUX corpus result over casewise lift, aggregate metric passes, burden totals, and retention | `AuxCorpusEvaluationResult` |" in correspondence_text
     assert "| time-separated AUX corpus runner over source publication and later target evaluation | `evaluate_aux_support_corpus()` |" in correspondence_text
     assert "| deterministic support-only offline publication builder over lawful public support state | `build_offline_support_publication()` |" in correspondence_text
-    assert "| AUX-to-SRE explicit support-memory prior appendix over support-only offline publication plus shadow-only host/tool reliability weighting | `build_support_memory_prior_appendix()` |" in correspondence_text
+    assert "| AUX-to-SRE explicit support-memory prior appendix over support-only offline publication plus shadow-only host/tool reliability weighting and a reliability-disabled comparison path | `build_support_memory_prior_appendix()` |" in correspondence_text
     assert "| `W_t^{pub+} = Augment^{aux}(W_t^{pub}, M_t^{offline})` support-only offline publication contract and augmentation-only re-entry | `OfflineSupportPublication` + `augment_snapshot_with_offline_publication()` |" in correspondence_text
     assert "| reference-only replay scenario over explicit AUX-owned offline publication, later target snapshot, and fixed preferred-family acceptance | `AuxReferenceReplayScenario` |" in correspondence_text
     assert "| reference-only replay case result over merged publication, explicit support priors, baseline vs replay scorecards, and fixed failure labels | `AuxReferenceReplayCaseResult` |" in correspondence_text
     assert "| reference-only replay aggregate result over preferred-family lift, bounded selected-family correction count, stable negative cases, and truthful cut reasons | `AuxReferenceReplayEvaluationResult` |" in correspondence_text
     assert "| reference-only replay runner over `OfflineSupportPublication -> augment_snapshot_with_offline_publication() -> build_support_memory_prior_appendix() -> select_reference_soft_control(memory_priors=...)` | `evaluate_aux_reference_q_mem_replay()` |" in correspondence_text
-    assert "| cross-host shadow scenario over explicit AUX-owned offline publication, later target snapshot, canonical host name, and fixed preferred-family acceptance | `AuxCrossHostShadowScenario` |" in correspondence_text
-    assert "| cross-host shadow case result over merged publication, explicit support priors, baseline vs replay scorecards, host truth, and fixed failure labels | `AuxCrossHostShadowCaseResult` |" in correspondence_text
-    assert "| cross-host shadow aggregate result over per-host lift counts, stable negative cases, repeat-stable hosts, and truthful cut reasons | `AuxCrossHostShadowEvaluationResult` |" in correspondence_text
-    assert "| cross-host shadow runner over `OfflineSupportPublication -> augment_snapshot_with_offline_publication() -> build_support_memory_prior_appendix() -> select_reference_soft_control(memory_priors=...)` with contradiction-first invalidation and removal reversion checks | `evaluate_aux_cross_host_shadow()` |" in correspondence_text
+    assert "| cross-host shadow scenario over explicit AUX-owned offline publication, later target snapshot, canonical host name, fixed scenario class, and preferred-family acceptance | `AuxCrossHostShadowScenario` |" in correspondence_text
+    assert "| cross-host shadow case result over merged publication, explicit support priors, full vs reliability-disabled vs removal comparisons, host signature truth, deltas, and fixed failure labels | `AuxCrossHostShadowCaseResult` |" in correspondence_text
+    assert "| cross-host shadow aggregate result over per-host weighted-family coverage, stable negative cases, host-aliasing truth, and claim-limitation cut reasons | `AuxCrossHostShadowEvaluationResult` |" in correspondence_text
+    assert "| cross-host shadow runner over `OfflineSupportPublication -> augment_snapshot_with_offline_publication() -> build_support_memory_prior_appendix(full|reliability-disabled) -> select_reference_soft_control(memory_priors=...)` with contradiction-first invalidation, removal reversion, and claim-scope narrowing when lawful host observables alias | `evaluate_aux_cross_host_shadow()` |" in correspondence_text

@@ -367,6 +367,9 @@ AUX owns the bounded `claude|gemini|reference` cross-host shadow evaluator over 
 explicit publication path.
 Fresh contradiction must invalidate any reliability-derived shadow lift before the next
 selection pass; stale host confidence may not outrank current contradiction evidence.
+If lawful non-reference host observables still alias on that bounded shadow surface, AUX
+must narrow the earned claim to a shared documented non-reference shell rather than
+fabricating host-distinct lift.
 
 ---
 

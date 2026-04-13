@@ -239,18 +239,18 @@ def test_status_registry_is_complete_and_stable() -> None:
         "reference": "reference_cli",
     }
     assert status["conformance_summary"]["shipping_default"] == "openai:operator_cli"
-    assert status["work_today"]["slug"] == "bounded-executive-audit-ingress"
-    assert "cross-host shadow train is now landed on Claude, Gemini, and reference" in status["work_today"]["note"]
-    assert "fresh contradiction invalidates stale reliability-derived lift" in status["work_today"]["note"]
+    assert status["work_today"]["slug"] == "cross-host-shadow-closure-hardening"
+    assert "branch-family lift still does not re-rank branch" in status["work_today"]["note"]
+    assert "Claude plus Gemini still alias under the lawful host-signature projection" in status["work_today"]["note"]
     assert "bounded executive audit ingress" in status["work_today"]["note"]
     assert status["next_product_train"]["slug"] == "bounded-executive-audit-ingress"
     assert status["next_product_train"]["surface"] == "product + internal"
     assert "contextual structured audit" in status["next_product_train"]["executive_benefit"]
-    assert "After cross-host shadow lands on explicit AUX-owned host/tool reliability priors" in status["next_product_train"]["why_now"]
+    assert "Once cross-host shadow closure truthfully re-earns or narrows the non-reference claim" in status["next_product_train"]["why_now"]
     assert "compact executive audit block" in status["next_product_train"]["primary_metric"]
-    assert "Run bounded executive audit ingress now" in status["where_to_work"][0]
-    assert "default-minimal" in status["where_to_work"][1]
-    assert "Preserve the shadow-memory boundary while audit ingress lands" in status["where_to_work"][2]
+    assert "Finish cross-host shadow closure hardening now" in status["where_to_work"][0]
+    assert "Claude and Gemini host truth honest" in status["where_to_work"][1]
+    assert "Preserve the shadow-memory boundary while closure hardening lands" in status["where_to_work"][2]
     closure_gates = {gate["id"]: gate for gate in status["closure_gates"]}
     assert closure_gates["main_synced"]["status"] == "required"
     assert closure_gates["cleanup_report"]["status"] == "required"
@@ -286,8 +286,9 @@ def test_generated_status_doc_includes_system_map_and_next_product_train() -> No
     assert "Workflow gates marked `required` are contractual gates checked by `repo_workflow.py`" in text
     assert "| `main_synced` | `required` |" in text
     assert "| `cleanup_report` | `required` |" in text
-    assert "cross-host shadow train is now landed on Claude, Gemini, and reference" in text
-    assert "fresh contradiction invalidates stale reliability-derived lift" in text
+    assert "`cross-host-shadow-closure-hardening`" in text
+    assert "branch-family lift still does not re-rank branch" in text
+    assert "Claude plus Gemini still alias under the lawful host-signature projection" in text
     assert "bounded executive audit ingress" in text
     assert "host/tool reliability priors" in text
 
