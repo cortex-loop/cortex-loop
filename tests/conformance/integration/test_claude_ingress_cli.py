@@ -67,6 +67,10 @@ def test_claude_ingress_cli_reads_documented_raw_transcript_fixture() -> None:
         "budget_band",
         "primary_reason",
         "allocation_diagnostics",
+        "audit_projection",
+    )
+    assert records[-1]["control_ledger"]["audit_projection"]["selected_family"] == (
+        records[-1]["control_ledger"]["selected_family"]
     )
     assert tuple(records[-1]["control_ledger"]["allocation_diagnostics"]) == (
         "alpha_t",

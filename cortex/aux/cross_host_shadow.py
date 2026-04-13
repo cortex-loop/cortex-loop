@@ -29,6 +29,8 @@ _SCENARIO_CLASSES = (
     "weighted_burden_counterexample",
     "fresh_contradiction_invalidation",
 )
+_CONTINUITY_BASES = ("host_local", "reference_projected", "not_applicable")
+_CLAIM_MODES = ("full_cross_host", "reference_plus_shared_non_reference_shell")
 _FAILURE_LABEL_ORDER = (
     "missing_repeat_stable_host_lift",
     "single_host_only_lift",
@@ -36,6 +38,8 @@ _FAILURE_LABEL_ORDER = (
     "stale_prior_survives_contradiction",
     "memory_removal_not_reverting",
     "missing_branch_family_lift",
+    "host_local_branch_basis_insufficient",
+    "shared_branch_lift_insufficient",
     "missing_reliability_active_check_lift",
     "weighted_counterexample_dominates",
     "host_aliasing_detected",
@@ -110,6 +114,16 @@ def _validate_scenario_class(value: str, *, field_name: str) -> None:
         raise ValueError(f"{field_name} must be one of {_SCENARIO_CLASSES!r}.")
 
 
+def _validate_continuity_basis(value: str, *, field_name: str) -> None:
+    if value not in _CONTINUITY_BASES:
+        raise ValueError(f"{field_name} must be one of {_CONTINUITY_BASES!r}.")
+
+
+def _validate_claim_mode(value: str, *, field_name: str) -> None:
+    if value not in _CLAIM_MODES:
+        raise ValueError(f"{field_name} must be one of {_CLAIM_MODES!r}.")
+
+
 def _validate_host_count_rows(
     rows: tuple[tuple[str, int], ...],
     *,
@@ -151,6 +165,7 @@ def _count_rows(counts: dict[str, int]) -> tuple[tuple[str, int], ...]:
 def _host_signature(
     *,
     scenario_class: str,
+    continuity_basis: str,
     target_snapshot: SupportSnapshot,
     executive_state: ReferenceExecutiveState,
     baseline_preferred_score: float,
@@ -158,6 +173,7 @@ def _host_signature(
 ) -> tuple[str, ...]:
     return (
         f"scenario-class:{scenario_class}",
+        f"continuity-basis:{continuity_basis}",
         "family-mask:" + ",".join(
             sorted(
                 family.value
@@ -186,14 +202,25 @@ def _host_signature(
 def _non_reference_hosts_alias(
     case_results: tuple["AuxCrossHostShadowCaseResult", ...],
 ) -> bool:
-    scenario_signatures: dict[str, dict[str, tuple[str, ...]]] = {}
+    scenario_signatures: dict[tuple[str, str], dict[str, tuple[str, ...]]] = {}
     for result in case_results:
         if result.host_name not in {"claude", "gemini"}:
             continue
-        scenario_signatures.setdefault(result.scenario_class, {})[
+        scenario_signatures.setdefault(
+            (result.scenario_class, result.continuity_basis),
+            {},
+        )[
             result.host_name
         ] = result.host_signature
-    if set(scenario_signatures) != set(_SCENARIO_CLASSES):
+    expected_keys = {
+        ("retrieval_reuse", "not_applicable"),
+        ("branch_resume", "host_local"),
+        ("branch_resume", "reference_projected"),
+        ("check_review", "not_applicable"),
+        ("weighted_burden_counterexample", "not_applicable"),
+        ("fresh_contradiction_invalidation", "not_applicable"),
+    }
+    if set(scenario_signatures) != expected_keys:
         return False
     return all(
         signatures.get("claude") == signatures.get("gemini")
@@ -205,7 +232,11 @@ def _choose_dominant_failure_label(counts: dict[str, int]) -> str | None:
     active = {label: count for label, count in counts.items() if count > 0}
     if not active:
         return None
-    return max(sorted(active), key=lambda label: active[label])
+    order = {label: index for index, label in enumerate(_FAILURE_LABEL_ORDER)}
+    return max(
+        active,
+        key=lambda label: (active[label], -order.get(label, len(_FAILURE_LABEL_ORDER))),
+    )
 
 
 def _case_failure_labels(
@@ -275,6 +306,7 @@ class AuxCrossHostShadowScenario:
     executive_state: ReferenceExecutiveState
     preferred_family: SoftControlFamily
     expect_improvement: bool
+    continuity_basis: str = "not_applicable"
     notes: tuple[str, ...] = field(default_factory=tuple)
     metadata: tuple[MetadataField, ...] = field(default_factory=tuple)
 
@@ -288,6 +320,10 @@ class AuxCrossHostShadowScenario:
         _validate_host_name(
             self.host_name,
             field_name="AuxCrossHostShadowScenario.host_name",
+        )
+        _validate_continuity_basis(
+            self.continuity_basis,
+            field_name="AuxCrossHostShadowScenario.continuity_basis",
         )
         if not isinstance(self.source_snapshots, tuple):
             actual_type = type(self.source_snapshots).__name__
@@ -338,6 +374,7 @@ class AuxCrossHostShadowCaseResult:
     scenario_id: str
     scenario_class: str
     host_name: str
+    continuity_basis: str
     publication: OfflineSupportPublication
     support_memory_priors: SupportMemoryPriorAppendix
     baseline_scorecard: AllocationScorecard
@@ -369,6 +406,10 @@ class AuxCrossHostShadowCaseResult:
         _validate_host_name(
             self.host_name,
             field_name="AuxCrossHostShadowCaseResult.host_name",
+        )
+        _validate_continuity_basis(
+            self.continuity_basis,
+            field_name="AuxCrossHostShadowCaseResult.continuity_basis",
         )
         if not isinstance(self.publication, OfflineSupportPublication):
             actual_type = type(self.publication).__name__
@@ -465,6 +506,7 @@ class AuxCrossHostShadowEvaluationResult:
     repeat_stable_hosts: tuple[str, ...]
     counterexample_case_count: int
     acceptance_passed: bool
+    claim_mode: str = "reference_plus_shared_non_reference_shell"
     host_aliasing_detected: bool = False
     dominant_failure_label: str | None = None
     failure_labels: tuple[str, ...] = field(default_factory=tuple)
@@ -504,6 +546,10 @@ class AuxCrossHostShadowEvaluationResult:
                 "AuxCrossHostShadowEvaluationResult.acceptance_passed must be bool, "
                 f"got {actual_type}.",
             )
+        _validate_claim_mode(
+            self.claim_mode,
+            field_name="AuxCrossHostShadowEvaluationResult.claim_mode",
+        )
         if not isinstance(self.host_aliasing_detected, bool):
             actual_type = type(self.host_aliasing_detected).__name__
             raise TypeError(
@@ -550,10 +596,6 @@ def evaluate_aux_cross_host_shadow(
     positive_case_counts = {host_name: 0 for host_name in _HOST_NAMES}
     improved_case_counts = {host_name: 0 for host_name in _HOST_NAMES}
     negative_stable_counts = {host_name: 0 for host_name in _HOST_NAMES}
-    blocking_failure_labels = AUX_CROSS_HOST_SHADOW_FAILURE_LABELS - frozenset(
-        {"host_aliasing_detected"}
-    )
-
     for scenario in scenarios:
         publication = _merge_temporal_publication(
             scenario.source_snapshots,
@@ -622,6 +664,7 @@ def evaluate_aux_cross_host_shadow(
         )
         host_signature = _host_signature(
             scenario_class=scenario.scenario_class,
+            continuity_basis=scenario.continuity_basis,
             target_snapshot=scenario.target_snapshot,
             executive_state=scenario.executive_state,
             baseline_preferred_score=baseline_preferred_score,
@@ -642,6 +685,7 @@ def evaluate_aux_cross_host_shadow(
             scenario_id=scenario.scenario_id,
             scenario_class=scenario.scenario_class,
             host_name=scenario.host_name,
+            continuity_basis=scenario.continuity_basis,
             publication=publication,
             support_memory_priors=support_memory_priors,
             baseline_scorecard=baseline_selection.scorecard,
@@ -691,6 +735,8 @@ def evaluate_aux_cross_host_shadow(
         not result.memory_removal_reverts_to_baseline for result in case_results_tuple
     )
     missing_branch_family_lift = False
+    host_local_branch_basis_insufficient = False
+    shared_branch_lift_insufficient = False
     missing_reliability_active_check_lift = False
     failure_reasons: list[str] = []
     host_aliasing_detected = _non_reference_hosts_alias(case_results_tuple)
@@ -708,11 +754,21 @@ def evaluate_aux_cross_host_shadow(
         )
         positive_classes = {result.scenario_class for result in host_positive_cases}
         negative_classes = {result.scenario_class for result in host_negative_cases}
-        branch_case = next(
+        branch_host_local_case = next(
             (
                 result
                 for result in host_positive_cases
                 if result.scenario_class == "branch_resume"
+                and result.continuity_basis == "host_local"
+            ),
+            None,
+        )
+        branch_reference_projected_case = next(
+            (
+                result
+                for result in host_positive_cases
+                if result.scenario_class == "branch_resume"
+                and result.continuity_basis == "reference_projected"
             ),
             None,
         )
@@ -745,8 +801,20 @@ def evaluate_aux_cross_host_shadow(
             for result in host_negative_cases
         ):
             stale_prior_survives_contradiction = True
-        if branch_case is None or not _positive_case_switch_or_margin(branch_case):
+        host_local_branch_passed = (
+            branch_host_local_case is not None
+            and _positive_case_switch_or_margin(branch_host_local_case)
+        )
+        reference_projected_branch_passed = (
+            branch_reference_projected_case is not None
+            and _positive_case_switch_or_margin(branch_reference_projected_case)
+        )
+        if not host_local_branch_passed or not reference_projected_branch_passed:
             missing_branch_family_lift = True
+        if not host_local_branch_passed and reference_projected_branch_passed:
+            host_local_branch_basis_insufficient = True
+        elif not host_local_branch_passed and not reference_projected_branch_passed:
+            shared_branch_lift_insufficient = True
         if (
             check_case is None
             or not check_case.reliability_component_active
@@ -754,7 +822,7 @@ def evaluate_aux_cross_host_shadow(
         ):
             missing_reliability_active_check_lift = True
         if (
-            len(host_positive_cases) == 3
+            len(host_positive_cases) == 4
             and len(host_negative_cases) == 2
             and positive_classes
             == {"retrieval_reuse", "branch_resume", "check_review"}
@@ -762,8 +830,8 @@ def evaluate_aux_cross_host_shadow(
             == {"weighted_burden_counterexample", "fresh_contradiction_invalidation"}
             and improved_case_counts[host_name] == len(host_positive_cases)
             and negative_stable_counts[host_name] == len(host_negative_cases)
-            and branch_case is not None
-            and _positive_case_switch_or_margin(branch_case)
+            and host_local_branch_passed
+            and reference_projected_branch_passed
             and check_case is not None
             and check_case.reliability_component_active
             and check_case.preferred_family_reliability_delta > 0.0
@@ -803,7 +871,17 @@ def evaluate_aux_cross_host_shadow(
     if missing_branch_family_lift:
         failure_counts["missing_branch_family_lift"] += 1
         failure_reasons.append(
-            "at least one host failed to produce branch-family lift on the positive branch resume case"
+            "at least one host failed to produce branch-family lift on the positive branch-resume comparisons"
+        )
+    if host_local_branch_basis_insufficient:
+        failure_counts["host_local_branch_basis_insufficient"] += 1
+        failure_reasons.append(
+            "at least one host improved under reference-projected branch continuity but not under host-local continuity, so the blocker is a local continuity basis weakness rather than shared shadow law alone"
+        )
+    if shared_branch_lift_insufficient:
+        failure_counts["shared_branch_lift_insufficient"] += 1
+        failure_reasons.append(
+            "at least one host failed branch-family lift under both host-local and reference-projected continuity bases, so the blocker remains a shared shadow insufficiency"
         )
     if missing_reliability_active_check_lift:
         failure_counts["missing_reliability_active_check_lift"] += 1
@@ -817,15 +895,14 @@ def evaluate_aux_cross_host_shadow(
         )
 
     failure_labels = tuple(label for label in _FAILURE_LABEL_ORDER if failure_counts[label] > 0)
-    acceptance_passed = all(
-        failure_counts[label] == 0 for label in blocking_failure_labels
+    acceptance_passed = not failure_labels
+    claim_mode = (
+        "full_cross_host"
+        if acceptance_passed
+        else "reference_plus_shared_non_reference_shell"
     )
     dominant_failure_label = _choose_dominant_failure_label(
-        {
-            label: count
-            for label, count in failure_counts.items()
-            if label in blocking_failure_labels
-        }
+        failure_counts
     )
 
     return AuxCrossHostShadowEvaluationResult(
@@ -836,6 +913,7 @@ def evaluate_aux_cross_host_shadow(
         repeat_stable_hosts=tuple(repeat_stable_hosts),
         counterexample_case_count=counterexample_case_count,
         acceptance_passed=acceptance_passed,
+        claim_mode=claim_mode,
         host_aliasing_detected=host_aliasing_detected,
         dominant_failure_label=dominant_failure_label,
         failure_labels=failure_labels,

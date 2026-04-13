@@ -138,6 +138,8 @@ EXPECTATIONS = (
                     "test_build_reference_executive_state_for_candidate_bearing_event_surfaces_review_mode",
                     "test_build_reference_executive_state_for_full_commitment_event_preserves_high_budget_band",
                     "test_build_reference_executive_state_surfaces_guarded_brake_when_snapshot_has_degradation",
+                    "test_build_reference_executive_state_honors_explicit_audit_intensity_without_new_policy_surface",
+                    "test_build_reference_executive_state_rejects_invalid_audit_intensity",
                 ),
             ),
         ),

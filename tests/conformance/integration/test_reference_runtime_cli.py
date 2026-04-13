@@ -173,6 +173,13 @@ def test_reference_runtime_cli_reads_event_file_and_emits_one_record_per_event()
         "budget_band",
         "primary_reason",
         "allocation_diagnostics",
+        "audit_projection",
+    )
+    assert records[-1]["control_ledger"]["audit_projection"]["selected_family"] == (
+        records[-1]["control_ledger"]["selected_family"]
+    )
+    assert records[-1]["control_ledger"]["audit_projection"]["realized_family"] == (
+        records[-1]["control_ledger"]["realized_family"]
     )
     assert tuple(records[-1]["control_ledger"]["allocation_diagnostics"]) == (
         "alpha_t",

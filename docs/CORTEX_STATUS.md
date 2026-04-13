@@ -50,9 +50,9 @@ Answering stance:
 
 ## Current Focus
 
-- Current tracked train: `cross-host-shadow-closure-hardening`
-- Active quality/risk focus: The last cross-host shadow seam landed the explicit AUX-owned host/tool reliability carrier and evaluator, but closure hardening found the broader claim still unearned: seek-context and reliability-active check lift are proved, weighted burden and contradiction invalidation stay stable, yet branch-family lift still does not re-rank branch across the lawful corpus and Claude plus Gemini still alias under the lawful host-signature projection. The active train is cross-host shadow closure hardening so the claim is narrowed truthfully before bounded executive audit ingress.
-- Next product train after the current focus: `bounded-executive-audit-ingress`
+- Current tracked train: `staged-live-regression-after-bounded-audit`
+- Active quality/risk focus: Cross-host shadow closure is now stabilized at `reference_plus_shared_non_reference_shell`, and bounded executive audit ingress is the landed shipped-lane seam. The no-spend fast bookmarks conformance sweep still returns `promote`; the active quality gate is the deeper staged live regression after bounded audit, where operator directionality and host-native product-path sweeps remain watchlist work and spend-gated active runs still require explicit approval.
+- Next product train after the current focus: `post-live-regression-fix-train`
 
 ## Bio-To-Code Matrix
 
@@ -62,10 +62,10 @@ Answering stance:
 | Bounded correction and verified-work preservation | Error repair without losing the main task thread | `landed` | `15` | `cortex/runtime`, `cortex/sre`, `cortex/hosts/openai` | `tests/product` | Keep preservation-state repair stable while support-side experiments stay removable and off the shipping critical path. |
 | Uncertainty handling and brake | Hesitation and uncertainty-aware inhibition | `landed` | `13` | `cortex/sre` | `tests/product`, `tests/experimental` | Keep reference-derived brake and uncertainty control stable while AUX remains advisory and runtime-off-by-default. |
 | Branch continuity, suspend/resume, and truthful closure | Working memory across interruptions plus truthful closure | `landed` | `15` | `cortex/sre`, `cortex/hosts/openai` | `tests/product`, `tests/conformance` | Keep suspend/resume and truthful closure stable while any future support memory remains explicit, optional, and non-binding. |
-| Intervention pricing versus neutrality | Deciding when to intervene, stay neutral, or stop | `landed` | `10` | `cortex/sre`, `cortex/aux` | `tests/product`, `tests/experimental` | Hold calibrated reference-side intervention pricing stable while hardening cross-host shadow closure truth: re-earn branch-family lift and narrow the claim if lawful non-reference host observables still alias before any non-reference Q_mem ingress or shipping-default change. |
+| Intervention pricing versus neutrality | Deciding when to intervene, stay neutral, or stop | `landed` | `10` | `cortex/sre`, `cortex/aux` | `tests/product`, `tests/experimental` | Hold calibrated reference-side intervention pricing stable now that the earned shadow result is `reference_plus_shared_non_reference_shell`; keep bounded audit compact on the shipped lane, and wait for lawful host-distinct evidence plus live regression confidence before any broader non-reference Q_mem ingress or shipping-default change. |
 | Blocker surfacing and goal-debt management | Noticing unresolved blockers and unfinished intentions | `landed` | `10` | `cortex/sre`, `cortex/hosts/openai`, `cortex/hosts/claude`, `cortex/hosts/gemini`, `cortex/hosts/reference` | `tests/product`, `tests/conformance` | Keep typed goal-debt and closure-pressure state stable across hosts while support-side augmentation remains explicit and non-sovereign. |
 | Multi-host executive continuity | One executive across different brains and contexts | `landed` | `15` | `cortex/hosts/openai`, `cortex/hosts/claude`, `cortex/hosts/gemini`, `cortex/hosts/reference` | `tests/product`, `tests/conformance` | Hold one Cortex law across OpenAI, Claude, Gemini, and reference without flattening host-native realization. |
-| Offline consolidation and support geometry | Sleep-like consolidation and support systems | `landed` | `10` | `cortex/aux` | `tests/experimental`, `tests/archive`, `tests/conformance` | Keep offline publication explicit, removable, and non-sovereign while hardening cross-host shadow closure truth: reliability lift must remain contradiction-first, removable, and no broader than the lawful host-distinct evidence actually earns. |
+| Offline consolidation and support geometry | Sleep-like consolidation and support systems | `landed` | `10` | `cortex/aux` | `tests/experimental`, `tests/archive`, `tests/conformance` | Keep offline publication explicit, removable, and non-sovereign now that cross-host shadow closure has settled on `reference_plus_shared_non_reference_shell`; future support-memory lift must either produce lawful host-distinct evidence or remain intentionally narrow. |
 
 ## Math To Code Rules
 
@@ -155,19 +155,19 @@ Workflow gates marked `required` are contractual gates checked by `repo_workflow
 
 ## Next Product Train
 
-- Train: `bounded-executive-audit-ingress`
-- Surface: `product + internal`
-- Executive benefit: Make contextual structured audit a real executive behavior so Cortex can expose bounded control observables when stakes or uncertainty justify it without turning into a scratchpad product.
-- Why now: Once cross-host shadow closure truthfully re-earns or narrows the non-reference claim, the remaining leverage is cashing out C^{vis} as contextual bounded audit rather than leaving it as a scoring-only term.
-- Primary metric: `high-uncertainty or explicit-audit flows surface a compact executive audit block while default flows remain terse and raw chain-of-thought stays absent`
-- Guardrail: `no raw chain-of-thought exposure, no always-on verbosity, no new host-specific audit forks, and no UI bureaucracy pretending to be executive function`
-- Kill rule: `cut any bounded-audit seam that increases output volume without increasing truthful control observability or that leaks hidden reasoning`
+- Train: `post-live-regression-fix-train`
+- Surface: `product + lab + internal`
+- Executive benefit: Translate staged live regression findings after bounded audit into one minimal repair seam if the shipped operator lane or conformance truth regresses, instead of guessing at the next product change in advance.
+- Why now: Cross-host shadow closure is truthful and bounded audit is landed, so the next shipped seam should be chosen by live falsification rather than more theory-first queueing.
+- Primary metric: `the no-spend live sweep either stays green or yields one minimal fix seam that restores accepted next decisions, truth_gap honesty, restart continuity, and terse default behavior`
+- Guardrail: `no paid live commands without approval, no product-law rewrites to satisfy watchlist noise, and no audit verbosity drift on default operator flows`
+- Kill rule: `cut any follow-on that chases lab-only artifacts without showing shipped operator or conformance lift`
 
 ## Where To Work Next
 
-- Finish cross-host shadow closure hardening now: re-earn branch-family lift or keep the claim narrow to reference plus a shared documented non-reference shell.
-- Keep Claude and Gemini host truth honest: if lawful runtime-derived observables still alias, surface that limitation instead of fabricating divergence.
-- Preserve the shadow-memory boundary while closure hardening lands: host/tool reliability priors remain explicit, TTL-bounded, contradiction-sensitive, AUX-owned, removable, and non-sovereign.
+- Keep the bounded audit surface compact and truthful on the shipped lane: selected versus realized family, uncertainty, threshold, delta, verification, and probe truth only.
+- Use staged no-spend live regression as the current quality gate: fast conformance is still green, and the deeper directionality plus host-native sweeps remain the watchlist work that should drive any next repair seam.
+- Keep the shadow-memory claim narrow and removable: `reference_plus_shared_non_reference_shell` remains the earned non-reference truth until lawful host-distinct evidence exists.
 
 ## Canonical Proof
 

@@ -239,18 +239,19 @@ def test_status_registry_is_complete_and_stable() -> None:
         "reference": "reference_cli",
     }
     assert status["conformance_summary"]["shipping_default"] == "openai:operator_cli"
-    assert status["work_today"]["slug"] == "cross-host-shadow-closure-hardening"
-    assert "branch-family lift still does not re-rank branch" in status["work_today"]["note"]
-    assert "Claude plus Gemini still alias under the lawful host-signature projection" in status["work_today"]["note"]
-    assert "bounded executive audit ingress" in status["work_today"]["note"]
-    assert status["next_product_train"]["slug"] == "bounded-executive-audit-ingress"
-    assert status["next_product_train"]["surface"] == "product + internal"
-    assert "contextual structured audit" in status["next_product_train"]["executive_benefit"]
-    assert "Once cross-host shadow closure truthfully re-earns or narrows the non-reference claim" in status["next_product_train"]["why_now"]
-    assert "compact executive audit block" in status["next_product_train"]["primary_metric"]
-    assert "Finish cross-host shadow closure hardening now" in status["where_to_work"][0]
-    assert "Claude and Gemini host truth honest" in status["where_to_work"][1]
-    assert "Preserve the shadow-memory boundary while closure hardening lands" in status["where_to_work"][2]
+    assert status["work_today"]["slug"] == "staged-live-regression-after-bounded-audit"
+    assert "reference_plus_shared_non_reference_shell" in status["work_today"]["note"]
+    assert "staged live regression after bounded audit" in status["work_today"]["note"]
+    assert "fast bookmarks conformance sweep still returns `promote`" in status["work_today"]["note"]
+    assert "watchlist work" in status["work_today"]["note"]
+    assert status["next_product_train"]["slug"] == "post-live-regression-fix-train"
+    assert status["next_product_train"]["surface"] == "product + lab + internal"
+    assert "Translate staged live regression findings" in status["next_product_train"]["executive_benefit"]
+    assert "bounded audit is landed" in status["next_product_train"]["why_now"]
+    assert "no-spend live sweep either stays green or yields one minimal fix seam" in status["next_product_train"]["primary_metric"]
+    assert "Keep the bounded audit surface compact and truthful" in status["where_to_work"][0]
+    assert "staged no-spend live regression" in status["where_to_work"][1]
+    assert "reference_plus_shared_non_reference_shell" in status["where_to_work"][2]
     closure_gates = {gate["id"]: gate for gate in status["closure_gates"]}
     assert closure_gates["main_synced"]["status"] == "required"
     assert closure_gates["cleanup_report"]["status"] == "required"
@@ -279,18 +280,18 @@ def test_generated_status_doc_includes_system_map_and_next_product_train() -> No
     assert "Active quality/risk focus" in text
     assert "## Packet To Code" in text
     assert "## Next Product Train" in text
-    assert "`bounded-executive-audit-ingress`" in text
-    assert "contextual structured audit" in text
+    assert "`post-live-regression-fix-train`" in text
+    assert "staged live regression findings after bounded audit" in text
     assert "Shipping Product Lane\\nopenai:operator_cli" in text or "Shipping Product Lane" in text
     assert "Shipping default: `openai:operator_cli`" in text
     assert "Workflow gates marked `required` are contractual gates checked by `repo_workflow.py`" in text
     assert "| `main_synced` | `required` |" in text
     assert "| `cleanup_report` | `required` |" in text
-    assert "`cross-host-shadow-closure-hardening`" in text
-    assert "branch-family lift still does not re-rank branch" in text
-    assert "Claude plus Gemini still alias under the lawful host-signature projection" in text
-    assert "bounded executive audit ingress" in text
-    assert "host/tool reliability priors" in text
+    assert "`staged-live-regression-after-bounded-audit`" in text
+    assert "reference_plus_shared_non_reference_shell" in text
+    assert "staged live regression after bounded audit" in text
+    assert "fast bookmarks conformance sweep still returns `promote`" in text
+    assert "watchlist work" in text
 
 
 def test_front_door_surfaces_point_to_one_command_managed_closeout() -> None:

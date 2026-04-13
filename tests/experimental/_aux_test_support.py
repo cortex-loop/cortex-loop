@@ -825,6 +825,11 @@ def make_aux_cross_host_shadow_corpus() -> tuple[AuxCrossHostShadowScenario, ...
         scenario.scenario_id: scenario
         for scenario in make_aux_temporal_corpus()
     }
+    reference_branch_state = next(
+        scenario.executive_state
+        for scenario in make_aux_reference_replay_corpus()
+        if scenario.scenario_id == "branch-resume-recovery"
+    )
     check_reliability_source = make_temporal_support_snapshot(
         "source-check-reliability-active",
         wake_reason_tags=("resume-needed",),
@@ -915,10 +920,11 @@ def make_aux_cross_host_shadow_corpus() -> tuple[AuxCrossHostShadowScenario, ...
                     executive_state=retrieval_state,
                     preferred_family=SoftControlFamily.SEEK_CONTEXT,
                     expect_improvement=True,
+                    continuity_basis="not_applicable",
                     notes=("runtime-seeded retrieval reuse should widen seek-context margin under explicit shadow memory",),
                 ),
                 AuxCrossHostShadowScenario(
-                    scenario_id=f"{host_name}-branch-resume",
+                    scenario_id=f"{host_name}-branch-resume-host-local",
                     scenario_class="branch_resume",
                     host_name=host_name,
                     source_snapshots=tuple(
@@ -937,7 +943,31 @@ def make_aux_cross_host_shadow_corpus() -> tuple[AuxCrossHostShadowScenario, ...
                     executive_state=continuity_state,
                     preferred_family=SoftControlFamily.BRANCH,
                     expect_improvement=True,
+                    continuity_basis="host_local",
                     notes=("runtime-seeded branch continuity should widen branch margin under explicit shadow memory",),
+                ),
+                AuxCrossHostShadowScenario(
+                    scenario_id=f"{host_name}-branch-resume-reference-projected",
+                    scenario_class="branch_resume",
+                    host_name=host_name,
+                    source_snapshots=tuple(
+                        _overlay_runtime_support_snapshot(
+                            continuity_base,
+                            snapshot,
+                            host_name=host_name,
+                        )
+                        for snapshot in temporal_cases["branch-resume-recovery"].source_snapshots
+                    ),
+                    target_snapshot=_overlay_runtime_support_snapshot(
+                        continuity_base,
+                        temporal_cases["branch-resume-recovery"].target_snapshot,
+                        host_name=host_name,
+                    ),
+                    executive_state=reference_branch_state,
+                    preferred_family=SoftControlFamily.BRANCH,
+                    expect_improvement=True,
+                    continuity_basis="reference_projected",
+                    notes=("reference-projected branch continuity should separate shared shadow lift from host-local continuity weakness under the same support snapshots",),
                 ),
                 AuxCrossHostShadowScenario(
                     scenario_id=f"{host_name}-check-review",
@@ -958,6 +988,7 @@ def make_aux_cross_host_shadow_corpus() -> tuple[AuxCrossHostShadowScenario, ...
                     executive_state=contradiction_state,
                     preferred_family=SoftControlFamily.CHECK,
                     expect_improvement=True,
+                    continuity_basis="not_applicable",
                     notes=("runtime-seeded check review should show reliability-active lift without a fresh contradiction on the target snapshot",),
                 ),
                 AuxCrossHostShadowScenario(
@@ -980,6 +1011,7 @@ def make_aux_cross_host_shadow_corpus() -> tuple[AuxCrossHostShadowScenario, ...
                     executive_state=continuity_state,
                     preferred_family=SoftControlFamily.BRANCH,
                     expect_improvement=False,
+                    continuity_basis="not_applicable",
                     notes=("weighted burden counterexample must not manufacture branch lift from explicit shadow memory",),
                 ),
                 AuxCrossHostShadowScenario(
@@ -1001,6 +1033,7 @@ def make_aux_cross_host_shadow_corpus() -> tuple[AuxCrossHostShadowScenario, ...
                     executive_state=retrieval_state,
                     preferred_family=SoftControlFamily.CHECK,
                     expect_improvement=False,
+                    continuity_basis="not_applicable",
                     notes=("fresh contradiction must zero reliability-derived check lift instead of letting stale host confidence survive",),
                 ),
             )

@@ -44,6 +44,26 @@ from lab.live_validation_common import (
 )
 
 
+@pytest.mark.parametrize(
+    ("script_relpath", "needle"),
+    (
+        ("lab/live_operator_directionality.py", "Run paired raw-vs-Cortex operator directionality comparisons."),
+        ("lab/live_host_native_product_paths.py", "Run signed-in host-native product-path validations"),
+    ),
+)
+def test_live_scripts_support_direct_repo_root_invocation(script_relpath: str, needle: str) -> None:
+    completed = subprocess.run(
+        [sys.executable, script_relpath, "--help"],
+        cwd=live_validation_common.REPO_ROOT,
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+
+    assert completed.returncode == 0, completed.stderr
+    assert needle in completed.stdout
+
+
 def test_redact_claude_auth_payload_omits_private_identity_fields() -> None:
     payload = {
         "loggedIn": True,

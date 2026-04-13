@@ -6,11 +6,16 @@ import argparse
 import json
 import os
 import shutil
+import sys
 import tempfile
 import time
 from contextlib import contextmanager, nullcontext
 from pathlib import Path
 from typing import Any, Iterator
+
+ROOT = Path(__file__).resolve().parents[1]
+if str(ROOT) not in sys.path:  # pragma: no cover - direct script entrypoint support.
+    sys.path.insert(0, str(ROOT))
 
 from cortex.sre.executive_summary import build_executive_signal_summary
 from cortex.sre.modulators import ExecutiveModulatorMemory, update_executive_modulators

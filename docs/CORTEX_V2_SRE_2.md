@@ -342,6 +342,16 @@ One of v1’s main failures was that visible proof/control burden could become t
 surface explicit probe-unavailable truth when no lawful probe path exists,
 and only fall back to host-friction heuristics when probe evidence is unavailable.
 `C^{vis}` is a contextual structured-audit cost, not a flat demand for silence.
+Operationally, runtime surfaces may accept
+`audit_intensity \in {minimal, focused, structured}`.
+`minimal` is the default.
+The runtime may raise the effective explainability profile to `focused` when brake is
+`guarded` or `latched`, when uncertainty is high, or when audit is explicitly requested.
+When the effective profile is non-minimal, the runtime may emit one compact audit
+projection derived from the existing control ledger only: selected family, realized
+family, dominant uncertainty, activation threshold, selected delta over neutral,
+rejected cheaper families, verification state, explainability profile, and probe truth.
+Raw reasoning text remains forbidden.
 
 ### 6.2 Primary discrete realization
 

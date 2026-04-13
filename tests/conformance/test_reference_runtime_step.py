@@ -417,6 +417,7 @@ def test_reference_runtime_step_uses_unaugmented_snapshot_for_executive_state_an
         provisional_session,
         *,
         opportunities=(),
+        audit_intensity="minimal",
     ):
         captured["executive_state_support_snapshot"] = support_snapshot
         return original_builder(
@@ -425,6 +426,7 @@ def test_reference_runtime_step_uses_unaugmented_snapshot_for_executive_state_an
             environment_view,
             provisional_session,
             opportunities=opportunities,
+            audit_intensity=audit_intensity,
         )
 
     def augment_wrapper(snapshot, publication):

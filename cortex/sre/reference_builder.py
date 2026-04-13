@@ -52,6 +52,7 @@ def build_reference_executive_state(
     executive_environment_view: ExecutiveEnvironmentView,
     prior_session: PriorReferenceRuntimeSessionLike | None = None,
     opportunities: Sequence[HostNativeOpportunity] = (),
+    audit_intensity: str = "minimal",
 ) -> ReferenceExecutiveState:
     if not isinstance(observation, ObservationBundle):
         actual_type = type(observation).__name__
@@ -70,6 +71,11 @@ def build_reference_executive_state(
         raise TypeError(
             "build_reference_executive_state.executive_environment_view must be "
             f"ExecutiveEnvironmentView, got {actual_type}."
+        )
+    if audit_intensity not in {"minimal", "focused", "structured"}:
+        raise ValueError(
+            "build_reference_executive_state.audit_intensity must be one of "
+            "['minimal', 'focused', 'structured']."
         )
 
     branch_registry = _branch_registry(support_snapshot, prior_session)
@@ -119,10 +125,11 @@ def build_reference_executive_state(
         recent_probe_result_class=recent_probe_result_class,
     )
     host_friction_tags = _host_friction_tags(support_snapshot, executive_environment_view)
-    explainability_profile = _explainability_profile(
+    explainability_profile = _resolve_explainability_profile(
         brake_state=brake_evaluation.state,
         uncertainty_estimates=uncertainty_estimates,
         recent_probe_result_class=recent_probe_result_class,
+        requested_audit_intensity=audit_intensity,
     )
 
     goal_continuity = GoalContinuityView(
@@ -595,6 +602,25 @@ def _explainability_profile(
     if brake_state is BrakeState.GUARDED or max_uncertainty >= 0.55:
         return "focused"
     return "minimal"
+
+
+def _resolve_explainability_profile(
+    *,
+    brake_state: BrakeState,
+    uncertainty_estimates: tuple[UncertaintyEstimate, ...],
+    recent_probe_result_class: str | None,
+    requested_audit_intensity: str,
+) -> str:
+    automatic_profile = _explainability_profile(
+        brake_state=brake_state,
+        uncertainty_estimates=uncertainty_estimates,
+        recent_probe_result_class=recent_probe_result_class,
+    )
+    order = {"minimal": 0, "focused": 1, "structured": 2}
+    return max(
+        (automatic_profile, requested_audit_intensity),
+        key=lambda profile: order[profile],
+    )
 
 
 def _visible_burden_scale(profile: str) -> float:

@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import pytest
+
 from cortex.core.environment import (
     CAPABILITY_VIEW,
     EXECUTION_TRACE,
@@ -689,3 +691,57 @@ def test_build_reference_executive_state_clean_window_does_not_raise_pressure() 
     assert state.brake.brake_state is BrakeState.QUIESCENT
     assert not state.uncertainty_monitoring.contradiction_spike_flags
     assert not state.control_allocation.feedback_pressure_tags
+
+
+def test_build_reference_executive_state_honors_explicit_audit_intensity_without_new_policy_surface() -> None:
+    state = build_reference_executive_state(
+        observe_reference_host_event("ContextLoad", {"session_id": "runtime-audit"}).observation,
+        SupportSnapshot(
+            trace=SupportTraceState(),
+            session=SupportSessionState(branch_registry=("main",)),
+            host=SupportHostState(),
+            exec_memory_pub=SupportExecMemoryState(),
+        ),
+        ExecutiveEnvironmentView(
+            available_query_kinds=frozenset({CAPABILITY_VIEW, EXECUTION_TRACE}),
+            host_capability_tags=frozenset({"reference-local"}),
+        ),
+        ReferenceRuntimeSession(
+            session_id="runtime-audit",
+            event_index=1,
+            active_track_ref="main",
+            budget_history=("shell-low",),
+            brake_history=("quiescent",),
+            last_selected_family=SoftControlFamily.NEUTRAL,
+        ),
+        audit_intensity="structured",
+    )
+
+    assert state.control_allocation.explainability_profile == "structured"
+    assert state.control_allocation.visible_burden_scale == 0.35
+
+
+def test_build_reference_executive_state_rejects_invalid_audit_intensity() -> None:
+    with pytest.raises(ValueError, match="audit_intensity must be one of"):
+        build_reference_executive_state(
+            observe_reference_host_event("ContextLoad", {"session_id": "runtime-bad-audit"}).observation,
+            SupportSnapshot(
+                trace=SupportTraceState(),
+                session=SupportSessionState(branch_registry=("main",)),
+                host=SupportHostState(),
+                exec_memory_pub=SupportExecMemoryState(),
+            ),
+            ExecutiveEnvironmentView(
+                available_query_kinds=frozenset({CAPABILITY_VIEW, EXECUTION_TRACE}),
+                host_capability_tags=frozenset({"reference-local"}),
+            ),
+            ReferenceRuntimeSession(
+                session_id="runtime-bad-audit",
+                event_index=1,
+                active_track_ref="main",
+                budget_history=("shell-low",),
+                brake_history=("quiescent",),
+                last_selected_family=SoftControlFamily.NEUTRAL,
+            ),
+            audit_intensity="maximal",
+        )

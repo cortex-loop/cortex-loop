@@ -37,8 +37,10 @@ _REQUEST_KEYS = frozenset(
         "max_output_tokens",
         "stream",
         "work_contract",
+        "audit_intensity",
     }
 )
+_AUDIT_INTENSITIES = frozenset({"minimal", "focused", "structured"})
 _WORK_CONTRACT_KEYS = frozenset(
     {
         "allowed_write_paths",
@@ -60,6 +62,7 @@ class OpenAIHostControlRequest:
     metadata: dict[str, Any] = field(default_factory=dict)
     max_output_tokens: int | None = None
     work_contract: WorkContract | None = None
+    audit_intensity: str = "minimal"
 
     def __post_init__(self) -> None:
         if self.action_tag != _ACTION_TAG:
@@ -110,6 +113,11 @@ class OpenAIHostControlRequest:
                 "OpenAIHostControlRequest.work_contract must be WorkContract | None, "
                 f"got {actual_type}."
             )
+        if self.audit_intensity not in _AUDIT_INTENSITIES:
+            raise ValueError(
+                "OpenAIHostControlRequest.audit_intensity must be one of "
+                f"{sorted(_AUDIT_INTENSITIES)!r}."
+            )
     def as_payload(self) -> dict[str, Any]:
         request_payload: dict[str, Any] = {
             "model": self.model,
@@ -123,6 +131,8 @@ class OpenAIHostControlRequest:
             request_payload["max_output_tokens"] = self.max_output_tokens
         if self.work_contract is not None:
             request_payload["work_contract"] = self.work_contract.as_payload()
+        if self.audit_intensity != "minimal":
+            request_payload["audit_intensity"] = self.audit_intensity
         return {
             "action_tag": self.action_tag,
             "request": request_payload,
@@ -235,6 +245,7 @@ def run_openai_host_control(
         metadata=request.metadata,
         max_output_tokens=request.max_output_tokens,
         work_contract=request.work_contract,
+        audit_intensity=request.audit_intensity,
     )
     raw_events, records, current_session, result_text = _run_openai_host_control_attempt(
         verified_request,
@@ -285,6 +296,7 @@ def run_openai_host_control(
             metadata=request.metadata,
             max_output_tokens=request.max_output_tokens,
             work_contract=repair_contract,
+            audit_intensity=request.audit_intensity,
         )
         repair_events, repair_records, repair_session, repair_result_text = _run_openai_host_control_attempt(
             repair_request,
@@ -421,6 +433,7 @@ def _run_openai_host_control_attempt(
                 envelope.event_type,
                 envelope.payload,
                 current_session,
+                audit_intensity=request.audit_intensity,
             )
         except (TypeError, ValueError) as exc:
             raise OpenAIResponseStreamTransportError(
@@ -527,6 +540,10 @@ def _coerce_openai_host_control_request(
         request_payload.get("work_contract"),
         "OpenAI host control request `request.work_contract`",
     )
+    audit_intensity = _audit_intensity(
+        request_payload.get("audit_intensity"),
+        "OpenAI host control request `request.audit_intensity`",
+    )
     if work_contract is not None and instructions is not None:
         raise ValueError(
             "OpenAIHostControlRequest.instructions must be omitted when work_contract is present because verified-work instructions are fixed."
@@ -543,6 +560,7 @@ def _coerce_openai_host_control_request(
         metadata=metadata,
         max_output_tokens=max_output_tokens,
         work_contract=work_contract,
+        audit_intensity=audit_intensity,
     )
 
 
@@ -583,6 +601,18 @@ def _optional_positive_int(value: Any, label: str) -> int | None:
     if value <= 0:
         raise ValueError(f"{label} must be positive when provided.")
     return value
+
+
+def _audit_intensity(value: Any, label: str) -> str:
+    if value is None:
+        return "minimal"
+    if not isinstance(value, str):
+        actual_type = type(value).__name__
+        raise TypeError(f"{label} must be a string, got {actual_type}.")
+    normalized = value.strip()
+    if normalized not in _AUDIT_INTENSITIES:
+        raise ValueError(f"{label} must be one of {sorted(_AUDIT_INTENSITIES)!r}.")
+    return normalized
 
 
 def _metadata_dict(value: Any) -> dict[str, Any]:

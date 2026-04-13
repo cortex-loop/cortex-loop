@@ -40,7 +40,10 @@ from cortex.drivers.openai_host import (
     observe_openai_host_event,
 )
 from cortex.drivers.openai_host_commitment import bind_openai_host_candidate
-from cortex.sre.allocation import build_allocation_diagnostics_payload
+from cortex.sre.allocation import (
+    build_allocation_diagnostics_payload,
+    build_audit_projection_payload,
+)
 from cortex.sre.branching import BranchOperation
 from cortex.sre.brake import BrakeState
 from cortex.sre.executive_summary import (
@@ -123,6 +126,19 @@ _ALLOCATION_DIAGNOSTICS_KEYS = (
     "explainability_profile",
     "scores",
     "mediation",
+)
+_AUDIT_PROJECTION_KEYS = (
+    "selected_family",
+    "realized_family",
+    "dominant_uncertainty_sources",
+    "activation_threshold",
+    "selected_delta_over_neutral",
+    "rejected_cheaper_families",
+    "verification_state",
+    "explainability_profile",
+    "probe_path_state",
+    "probe_result_class",
+    "probe_unavailable_reason",
 )
 _ALLOCATION_SCORE_KEYS = (
     "family",
@@ -481,6 +497,7 @@ class OpenAIControlLedger:
     budget_band: str
     primary_reason: str | None = None
     allocation_diagnostics: dict[str, Any] = field(default_factory=dict)
+    audit_projection: dict[str, Any] | None = None
 
     def __post_init__(self) -> None:
         if not (isinstance(self.event_class, str) and self.event_class.strip()):
@@ -534,9 +551,14 @@ class OpenAIControlLedger:
             self.allocation_diagnostics,
             "OpenAIControlLedger.allocation_diagnostics",
         )
+        if self.audit_projection is not None:
+            _validate_audit_projection_payload(
+                self.audit_projection,
+                "OpenAIControlLedger.audit_projection",
+            )
 
     def as_summary(self) -> dict[str, Any]:
-        return {
+        payload = {
             "event_class": self.event_class,
             "admissible_families": [
                 family.value for family in self.admissible_families
@@ -551,6 +573,11 @@ class OpenAIControlLedger:
                 self.allocation_diagnostics
             ),
         }
+        if self.audit_projection is not None:
+            payload["audit_projection"] = _copy_audit_projection_payload(
+                self.audit_projection
+            )
+        return payload
 
 
 @dataclass(frozen=True, slots=True)
@@ -793,6 +820,8 @@ def run_openai_runtime_step(
     raw_event_name: str,
     raw_payload: Mapping[str, Any] | None,
     session: OpenAIRuntimeSession | None = None,
+    *,
+    audit_intensity: str = "minimal",
 ) -> OpenAIRuntimeStepResult:
     if not is_raw_openai_host_event_name(raw_event_name):
         raise ValueError(
@@ -914,6 +943,7 @@ def run_openai_runtime_step(
         _build_executive_environment_view(normalized_payload),
         provisional_session,
         opportunities=opportunities,
+        audit_intensity=audit_intensity,
     )
     selection = select_reference_soft_control(
         executive_state,
@@ -929,6 +959,41 @@ def run_openai_runtime_step(
         feedback_pressure_tags=executive_state.control_allocation.feedback_pressure_tags,
     )
     warnings = merge_warnings(warnings, enforcement_warnings)
+    allocation_diagnostics = build_allocation_diagnostics_payload(
+        selection.scorecard,
+        selected_delta_over_neutral=selection.neutral_dominance.margin_over_neutral,
+        applied_activation_threshold=selection.neutral_dominance.activation_threshold,
+        chi_t=selection.chi_t,
+        rejected_cheaper_families=scorecard_rejected_cheaper_families(
+            selection.scorecard,
+            selected_family=selected_family,
+        ),
+        probe_path_state=executive_state.control_allocation.probe_path_state,
+        probe_unavailable_reason=(
+            executive_state.control_allocation.probe_unavailable_reason
+        ),
+        probe_result_class=_probe_result_class(
+            realized_family=realized_family,
+            executive_state=executive_state,
+            opportunities=opportunities,
+        ),
+        verification_state=verification_state_for_runtime(
+            dispatch_decision=dispatch_decision,
+            commitment_result_kind=commitment_result_kind,
+        ),
+        explainability_profile=executive_state.control_allocation.explainability_profile,
+        mediation_payload=selection.mediation_finalization.as_payload(),
+    )
+    audit_projection = None
+    if _should_emit_audit_projection(
+        executive_state.control_allocation.explainability_profile
+    ):
+        audit_projection = build_audit_projection_payload(
+            selected_family=selected_family,
+            realized_family=realized_family,
+            dominant_uncertainty_sources=dominant_uncertainty_sources,
+            allocation_diagnostics=allocation_diagnostics,
+        )
     control_ledger = OpenAIControlLedger(
         event_class=dispatch_decision.lane.value,
         admissible_families=_admissible_families(executive_state),
@@ -938,31 +1003,8 @@ def run_openai_runtime_step(
         brake_state=brake_state,
         budget_band=executive_state.control_allocation.budget_band,
         primary_reason=_primary_reason(warnings),
-        allocation_diagnostics=build_allocation_diagnostics_payload(
-            selection.scorecard,
-            selected_delta_over_neutral=selection.neutral_dominance.margin_over_neutral,
-            applied_activation_threshold=selection.neutral_dominance.activation_threshold,
-            chi_t=selection.chi_t,
-            rejected_cheaper_families=scorecard_rejected_cheaper_families(
-                selection.scorecard,
-                selected_family=selected_family,
-            ),
-            probe_path_state=executive_state.control_allocation.probe_path_state,
-            probe_unavailable_reason=(
-                executive_state.control_allocation.probe_unavailable_reason
-            ),
-            probe_result_class=_probe_result_class(
-                realized_family=realized_family,
-                executive_state=executive_state,
-                opportunities=opportunities,
-            ),
-            verification_state=verification_state_for_runtime(
-                dispatch_decision=dispatch_decision,
-                commitment_result_kind=commitment_result_kind,
-            ),
-            explainability_profile=executive_state.control_allocation.explainability_profile,
-            mediation_payload=selection.mediation_finalization.as_payload(),
-        ),
+        allocation_diagnostics=allocation_diagnostics,
+        audit_projection=audit_projection,
     )
     consequential_write_pending = bool(normalized_payload.get("externally_consequential"))
     approval_required = dispatch_decision.lane is not DispatchLane.CHEAP
@@ -2026,6 +2068,74 @@ def _validate_allocation_diagnostics_payload(payload: dict[str, Any], label: str
         )
 
 
+def _validate_audit_projection_payload(payload: dict[str, Any], label: str) -> None:
+    if not isinstance(payload, dict):
+        actual_type = type(payload).__name__
+        raise TypeError(f"{label} must be dict[str, Any], got {actual_type}.")
+    if tuple(payload) != _AUDIT_PROJECTION_KEYS:
+        raise ValueError(
+            f"{label} must preserve the locked key order {_AUDIT_PROJECTION_KEYS!r}."
+        )
+    for key in (
+        "selected_family",
+        "realized_family",
+        "verification_state",
+        "explainability_profile",
+        "probe_path_state",
+    ):
+        if not (isinstance(payload[key], str) and payload[key].strip()):
+            raise ValueError(f"{label}.{key} must be non-empty after trimming.")
+    if payload["probe_path_state"] not in {"available", "unavailable", "absent"}:
+        raise ValueError(
+            f"{label}.probe_path_state must be one of ['absent', 'available', 'unavailable']."
+        )
+    for key in ("activation_threshold", "selected_delta_over_neutral"):
+        value = payload[key]
+        if isinstance(value, bool) or not isinstance(value, (int, float)):
+            actual_type = type(value).__name__
+            raise TypeError(f"{label}.{key} must be numeric, got {actual_type}.")
+    dominant_uncertainty_sources = payload["dominant_uncertainty_sources"]
+    if not isinstance(dominant_uncertainty_sources, list):
+        actual_type = type(dominant_uncertainty_sources).__name__
+        raise TypeError(
+            f"{label}.dominant_uncertainty_sources must be list[str], got {actual_type}."
+        )
+    if any(
+        not (isinstance(source, str) and source.strip())
+        for source in dominant_uncertainty_sources
+    ):
+        raise ValueError(
+            f"{label}.dominant_uncertainty_sources must contain only non-empty values after trimming."
+        )
+    rejected_cheaper_families = payload["rejected_cheaper_families"]
+    if not isinstance(rejected_cheaper_families, list):
+        actual_type = type(rejected_cheaper_families).__name__
+        raise TypeError(
+            f"{label}.rejected_cheaper_families must be list[str], got {actual_type}."
+        )
+    if any(
+        not (isinstance(family, str) and family.strip())
+        for family in rejected_cheaper_families
+    ):
+        raise ValueError(
+            f"{label}.rejected_cheaper_families must contain only non-empty values after trimming."
+        )
+    probe_result_class = payload["probe_result_class"]
+    if probe_result_class is not None and not (
+        isinstance(probe_result_class, str) and probe_result_class.strip()
+    ):
+        raise ValueError(
+            f"{label}.probe_result_class must be non-empty after trimming when provided."
+        )
+    probe_unavailable_reason = payload["probe_unavailable_reason"]
+    if probe_unavailable_reason is not None and not (
+        isinstance(probe_unavailable_reason, str) and probe_unavailable_reason.strip()
+    ):
+        raise ValueError(
+            f"{label}.probe_unavailable_reason must be non-empty after trimming when provided."
+        )
+
+
 def _copy_allocation_diagnostics_payload(payload: dict[str, Any]) -> dict[str, Any]:
     _validate_allocation_diagnostics_payload(
         payload,
@@ -2072,6 +2182,30 @@ def _copy_allocation_diagnostics_payload(payload: dict[str, Any]) -> dict[str, A
         "scores": copied_scores,
         "mediation": copied_mediation,
     }
+
+
+def _copy_audit_projection_payload(payload: dict[str, Any]) -> dict[str, Any]:
+    _validate_audit_projection_payload(
+        payload,
+        "_copy_audit_projection_payload.payload",
+    )
+    return {
+        "selected_family": payload["selected_family"],
+        "realized_family": payload["realized_family"],
+        "dominant_uncertainty_sources": list(payload["dominant_uncertainty_sources"]),
+        "activation_threshold": payload["activation_threshold"],
+        "selected_delta_over_neutral": payload["selected_delta_over_neutral"],
+        "rejected_cheaper_families": list(payload["rejected_cheaper_families"]),
+        "verification_state": payload["verification_state"],
+        "explainability_profile": payload["explainability_profile"],
+        "probe_path_state": payload["probe_path_state"],
+        "probe_result_class": payload["probe_result_class"],
+        "probe_unavailable_reason": payload["probe_unavailable_reason"],
+    }
+
+
+def _should_emit_audit_projection(explainability_profile: str) -> bool:
+    return explainability_profile in {"focused", "structured"}
 
 
 def _executive_modulator_memory_summary(
