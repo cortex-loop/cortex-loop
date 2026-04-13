@@ -177,7 +177,7 @@ def test_start_session_refuses_when_main_diverges(tmp_path: Path, monkeypatch: p
         module.cmd_start_session("codex", "diverged")
 
 
-def test_close_session_returns_to_main_and_deletes_branch(
+def test_close_session_checkpoint_keeps_session_branch_and_main_unchanged(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     repo, _remote, module = _prepare_repo(tmp_path, monkeypatch)
@@ -187,40 +187,18 @@ def test_close_session_returns_to_main_and_deletes_branch(
         "_run_verification_for_paths",
         lambda _paths: ("git diff --check", "python3 internal/truth/generate_status.py --check"),
     )
-    monkeypatch.setattr(module, "_managed_publication_required", lambda: True)
     module.cmd_start_session("codex", "closeout")
     branch = _git_output(repo, "branch", "--show-current")
     (repo / "README.md").write_text("changed\n", encoding="utf-8")
     _write_closeout_contract(repo, branch=branch, mode="close-session", reviewed_paths=["README.md"])
 
-    def fake_publish_merge_sync_session(
-        session_branch: str, title: str, verification_commands: tuple[str, ...]
-    ) -> dict[str, object]:
-        assert session_branch == branch
-        assert title == "docs: land managed session"
-        assert verification_commands
-        _git(repo, "push", "-u", "origin", session_branch)
-        _git(repo, "switch", "main")
-        _git(repo, "merge", "--ff-only", session_branch)
-        _git(repo, "push", "origin", "main")
-        _git(repo, "branch", "-D", session_branch)
-        return {
-            "status": "merged",
-            "published_branch": session_branch,
-            "pr_number": 22,
-            "pr_url": "https://example.test/pr/22",
-            "main_head": _git_output(repo, "rev-parse", "main"),
-            "main_sync": "synced",
-        }
+    module.cmd_close_session("docs: land managed session", publish=False)
 
-    monkeypatch.setattr(module, "_publish_merge_sync_session", fake_publish_merge_sync_session)
-
-    module.cmd_close_session("docs: land managed session")
-
-    assert _git_output(repo, "branch", "--show-current") == "main"
-    assert _git_output(repo, "branch", "--list", branch) == ""
+    assert _git_output(repo, "branch", "--show-current") == branch
+    assert branch in _git_output(repo, "branch", "--list", branch)
     assert _git_output(repo, "log", "-1", "--pretty=%s") == "docs: land managed session"
-    assert _git_output(repo, "rev-list", "--left-right", "--count", "main...origin/main") == "0\t0"
+    assert _git_output(repo, "log", "main", "-1", "--pretty=%s") == "repo: initialize temp repo"
+    assert _git_output(repo, "rev-list", "--left-right", "--count", f"{branch}...origin/main") == "1\t0"
 
 
 def test_close_session_noop_deletes_empty_session_branch_without_publication(
@@ -228,12 +206,10 @@ def test_close_session_noop_deletes_empty_session_branch_without_publication(
 ) -> None:
     repo, _remote, module = _prepare_repo(tmp_path, monkeypatch)
     monkeypatch.setattr(module, "_session_timestamp", lambda: "20260329-010203")
-    monkeypatch.setattr(module, "_managed_publication_required", lambda: True)
-    monkeypatch.setattr(module, "_ensure_canonical_origin", lambda: None)
     module.cmd_start_session("codex", "noop")
     branch = _git_output(repo, "branch", "--show-current")
 
-    module.cmd_close_session("docs: noop closeout")
+    module.cmd_close_session("docs: noop closeout", publish=False)
 
     payload = json.loads(capsys.readouterr().out.strip().splitlines()[-1])
     assert payload["status"] == "no_op"
@@ -242,19 +218,17 @@ def test_close_session_noop_deletes_empty_session_branch_without_publication(
     assert _git_output(repo, "branch", "--list", branch) == ""
 
 
-def test_close_session_canonical_noop_adopts_origin_main_when_upstream_advanced(
+def test_close_session_noop_adopts_origin_main_when_upstream_advanced(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
 ) -> None:
     repo, remote, module = _prepare_repo(tmp_path, monkeypatch)
     monkeypatch.setattr(module, "_session_timestamp", lambda: "20260329-010203")
-    monkeypatch.setattr(module, "_managed_publication_required", lambda: True)
-    monkeypatch.setattr(module, "_ensure_canonical_origin", lambda: None)
     module.cmd_start_session("codex", "noop-upstream")
     branch = _git_output(repo, "branch", "--show-current")
 
     _make_remote_commit(remote, tmp_path, "remote.txt", "remote\n", "docs: remote update")
 
-    module.cmd_close_session("docs: noop closeout")
+    module.cmd_close_session("docs: noop closeout", publish=False)
 
     payload = json.loads(capsys.readouterr().out.strip().splitlines()[-1])
     assert payload["status"] == "no_op"
@@ -276,7 +250,7 @@ def test_close_session_keeps_session_branch_when_publication_fails(
         "_run_verification_for_paths",
         lambda _paths: ("git diff --check", "python3 internal/truth/generate_status.py --check"),
     )
-    monkeypatch.setattr(module, "_managed_publication_required", lambda: True)
+    monkeypatch.setattr(module, "_managed_publication_allowed", lambda: True)
     module.cmd_start_session("codex", "gh-fail")
     branch = _git_output(repo, "branch", "--show-current")
     (repo / "README.md").write_text("changed\n", encoding="utf-8")
@@ -288,14 +262,14 @@ def test_close_session_keeps_session_branch_when_publication_fails(
     monkeypatch.setattr(module, "_publish_merge_sync_session", fail_publish_merge_sync_session)
 
     with pytest.raises(SystemExit, match="gh auth status failed"):
-        module.cmd_close_session("docs: publication fail")
+        module.cmd_close_session("docs: publication fail", publish=True)
 
     assert _git_output(repo, "branch", "--show-current") == branch
     assert _git_output(repo, "log", "main", "-1", "--pretty=%s") == "repo: initialize temp repo"
     assert _git_output(repo, "log", "HEAD", "-1", "--pretty=%s") == "docs: publication fail"
 
 
-def test_close_session_with_existing_unique_commit_still_publishes_when_tree_is_clean(
+def test_close_session_with_existing_unique_commit_checkpoints_locally_when_tree_is_clean(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
 ) -> None:
     repo, _remote, module = _prepare_repo(tmp_path, monkeypatch)
@@ -305,8 +279,6 @@ def test_close_session_with_existing_unique_commit_still_publishes_when_tree_is_
         "_run_verification_for_paths",
         lambda _paths: ("git diff --check", "python3 internal/truth/generate_status.py --check"),
     )
-    monkeypatch.setattr(module, "_managed_publication_required", lambda: True)
-    monkeypatch.setattr(module, "_ensure_canonical_origin", lambda: None)
     module.cmd_start_session("codex", "existing-commit")
     branch = _git_output(repo, "branch", "--show-current")
     (repo / "README.md").write_text("changed\n", encoding="utf-8")
@@ -314,7 +286,6 @@ def test_close_session_with_existing_unique_commit_still_publishes_when_tree_is_
     _git(repo, "commit", "-m", "docs: preexisting session commit")
     _write_closeout_contract(repo, branch=branch, mode="close-session", reviewed_paths=["README.md"])
 
-    calls: list[tuple[str, object]] = []
     verification_paths: list[list[str]] = []
 
     monkeypatch.setattr(
@@ -322,38 +293,30 @@ def test_close_session_with_existing_unique_commit_still_publishes_when_tree_is_
         "_run_verification_for_paths",
         lambda paths: verification_paths.append(paths) or ("git diff --check", "python3 internal/truth/generate_status.py --check"),
     )
+    monkeypatch.setattr(
+        module,
+        "_fetch_origin",
+        lambda *args, **kwargs: (_ for _ in ()).throw(AssertionError("default checkpoint should not fetch origin")),
+    )
+    monkeypatch.setattr(
+        module,
+        "_publish_merge_sync_session",
+        lambda *_args, **_kwargs: (_ for _ in ()).throw(
+            AssertionError("default checkpoint should not publish managed sessions")
+        ),
+    )
 
-    def fake_publish_merge_sync_session(
-        session_branch: str, title: str, verification_commands: tuple[str, ...]
-    ) -> dict[str, object]:
-        calls.append(("publish", session_branch))
-        assert session_branch == branch
-        assert title == "docs: close existing session commit"
-        assert verification_commands == ("git diff --check", "python3 internal/truth/generate_status.py --check")
-        _git(repo, "push", "-u", "origin", session_branch)
-        _git(repo, "switch", "main")
-        _git(repo, "merge", "--ff-only", session_branch)
-        _git(repo, "push", "origin", "main")
-        _git(repo, "branch", "-D", session_branch)
-        return {
-            "status": "merged",
-            "published_branch": session_branch,
-            "pr_number": 24,
-            "pr_url": "https://example.test/pr/24",
-            "main_head": _git_output(repo, "rev-parse", "main"),
-            "main_sync": "synced",
-        }
-
-    monkeypatch.setattr(module, "_publish_merge_sync_session", fake_publish_merge_sync_session)
-
-    module.cmd_close_session("docs: close existing session commit")
+    module.cmd_close_session("docs: close existing session commit", publish=False)
 
     payload = json.loads(capsys.readouterr().out.strip().splitlines()[-1])
-    assert payload["status"] == "merged"
-    assert ("publish", branch) in calls
+    assert payload["status"] == "checkpointed_local"
+    assert payload["published_branch"] is None
+    assert payload["pr_number"] is None
+    assert payload["pr_url"] is None
     assert verification_paths == [["README.md"]]
-    assert _git_output(repo, "branch", "--show-current") == "main"
-    assert _git_output(repo, "branch", "--list", branch) == ""
+    assert _git_output(repo, "branch", "--show-current") == branch
+    assert branch in _git_output(repo, "branch", "--list", branch)
+    assert payload["main_head"] == _git_output(repo, "rev-parse", "main")
 
 
 def test_close_session_keeps_session_branch_when_pr_creation_fails_after_push(
@@ -366,7 +329,7 @@ def test_close_session_keeps_session_branch_when_pr_creation_fails_after_push(
         "_run_verification_for_paths",
         lambda _paths: ("git diff --check", "python3 internal/truth/generate_status.py --check"),
     )
-    monkeypatch.setattr(module, "_managed_publication_required", lambda: True)
+    monkeypatch.setattr(module, "_managed_publication_allowed", lambda: True)
     module.cmd_start_session("codex", "pr-fail")
     branch = _git_output(repo, "branch", "--show-current")
     (repo / "README.md").write_text("changed\n", encoding="utf-8")
@@ -379,7 +342,7 @@ def test_close_session_keeps_session_branch_when_pr_creation_fails_after_push(
     monkeypatch.setattr(module, "_publish_merge_sync_session", fail_after_push)
 
     with pytest.raises(SystemExit, match="PR creation failed"):
-        module.cmd_close_session("docs: pr creation fail")
+        module.cmd_close_session("docs: pr creation fail", publish=True)
 
     assert _git_output(repo, "branch", "--show-current") == branch
     assert _git_output(repo, "log", "main", "-1", "--pretty=%s") == "repo: initialize temp repo"
@@ -442,13 +405,12 @@ def test_close_session_requires_valid_closeout_contract_before_commit(
 ) -> None:
     repo, _remote, module = _prepare_repo(tmp_path, monkeypatch)
     monkeypatch.setattr(module, "_session_timestamp", lambda: "20260329-010203")
-    monkeypatch.setattr(module, "_managed_publication_required", lambda: True)
     module.cmd_start_session("codex", "closeout-rigor")
     branch = _git_output(repo, "branch", "--show-current")
     (repo / "README.md").write_text("changed\n", encoding="utf-8")
 
     with pytest.raises(SystemExit, match="Closeout contract is missing"):
-        module.cmd_close_session("docs: closeout rigor")
+        module.cmd_close_session("docs: closeout rigor", publish=False)
 
     assert _git_output(repo, "branch", "--show-current") == branch
     assert _git_output(repo, "log", "main", "-1", "--pretty=%s") == "repo: initialize temp repo"
@@ -538,15 +500,15 @@ def test_close_session_with_existing_unique_commit_revalidates_after_verificatio
     monkeypatch.setattr(module, "_validate_closeout_contract_for_paths", record_validate)
     monkeypatch.setattr(module, "_run_verification_for_paths", lambda _paths: ("git diff --check",))
 
-    module.cmd_close_session("docs: close existing session commit")
+    module.cmd_close_session("docs: close existing session commit", publish=False)
 
     payload = json.loads(capsys.readouterr().out.strip().splitlines()[-1])
-    assert payload["status"] == "local_only"
+    assert payload["status"] == "checkpointed_local"
     assert calls == [
         ("close-session", branch, ("README.md",)),
         ("close-session", branch, ("README.md",)),
     ]
-    assert _git_output(repo, "branch", "--show-current") == "main"
+    assert _git_output(repo, "branch", "--show-current") == branch
 
 
 def test_close_session_existing_unique_commit_fails_when_verification_dirties_tree(
@@ -568,7 +530,7 @@ def test_close_session_existing_unique_commit_fails_when_verification_dirties_tr
     monkeypatch.setattr(module, "_run_verification_for_paths", mutate_tree)
 
     with pytest.raises(SystemExit, match="verification changed tracked paths after closeout contract validation"):
-        module.cmd_close_session("docs: close existing session commit")
+        module.cmd_close_session("docs: close existing session commit", publish=False)
 
     assert _git_output(repo, "branch", "--show-current") == branch
 
@@ -623,6 +585,70 @@ def test_publish_merge_sync_session_reuses_existing_open_pr(
     assert ("push", "codex/20260329-010203-test") in calls
     assert ("merge", 11) in calls
     assert not any(call[0] == "create" for call in calls)
+
+
+def test_close_session_publish_preserves_current_remote_merge_flow(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    repo, _remote, module = _prepare_repo(tmp_path, monkeypatch)
+    monkeypatch.setattr(module, "_session_timestamp", lambda: "20260329-010203")
+    monkeypatch.setattr(
+        module,
+        "_run_verification_for_paths",
+        lambda _paths: ("git diff --check", "python3 internal/truth/generate_status.py --check"),
+    )
+    monkeypatch.setattr(module, "_managed_publication_allowed", lambda: True)
+    module.cmd_start_session("codex", "publish-closeout")
+    branch = _git_output(repo, "branch", "--show-current")
+    (repo / "README.md").write_text("changed\n", encoding="utf-8")
+    _write_closeout_contract(repo, branch=branch, mode="close-session", reviewed_paths=["README.md"])
+
+    def fake_publish_merge_sync_session(
+        session_branch: str, title: str, verification_commands: tuple[str, ...]
+    ) -> dict[str, object]:
+        assert session_branch == branch
+        assert title == "docs: publish managed session"
+        assert verification_commands
+        _git(repo, "push", "-u", "origin", session_branch)
+        _git(repo, "switch", "main")
+        _git(repo, "merge", "--ff-only", session_branch)
+        _git(repo, "push", "origin", "main")
+        _git(repo, "branch", "-D", session_branch)
+        return {
+            "status": "merged",
+            "published_branch": session_branch,
+            "pr_number": 22,
+            "pr_url": "https://example.test/pr/22",
+            "main_head": _git_output(repo, "rev-parse", "main"),
+            "main_sync": "synced",
+        }
+
+    monkeypatch.setattr(module, "_publish_merge_sync_session", fake_publish_merge_sync_session)
+
+    module.cmd_close_session("docs: publish managed session", publish=True)
+
+    payload = json.loads(capsys.readouterr().out.strip().splitlines()[-1])
+    assert payload["status"] == "merged"
+    assert _git_output(repo, "branch", "--show-current") == "main"
+    assert _git_output(repo, "branch", "--list", branch) == ""
+
+
+def test_close_session_publish_requires_canonical_origin(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    repo, _remote, module = _prepare_repo(tmp_path, monkeypatch)
+    monkeypatch.setattr(module, "_session_timestamp", lambda: "20260329-010203")
+    monkeypatch.setattr(module, "_managed_publication_allowed", lambda: False)
+    monkeypatch.setattr(module, "_run_verification_for_paths", lambda _paths: ("git diff --check",))
+    module.cmd_start_session("codex", "publish-gate")
+    branch = _git_output(repo, "branch", "--show-current")
+    (repo / "README.md").write_text("changed\n", encoding="utf-8")
+    _write_closeout_contract(repo, branch=branch, mode="close-session", reviewed_paths=["README.md"])
+
+    with pytest.raises(SystemExit, match="requires the canonical repo origin"):
+        module.cmd_close_session("docs: publish managed session", publish=True)
+
+    assert _git_output(repo, "branch", "--show-current") == branch
 
 
 def test_publish_merge_sync_session_creates_pr_when_missing(

@@ -180,7 +180,7 @@ def _publication_repo_slug() -> str:
     raise SystemExit("Unable to determine repo slug from remote `origin`.")
 
 
-def _managed_publication_required() -> bool:
+def _managed_publication_allowed() -> bool:
     return _repo_slug_from_remote(_origin_url()) == CANONICAL_REPO_SLUG
 
 
@@ -574,9 +574,10 @@ def _merge_session_pull_request(number: int) -> None:
     _gh_run(["pr", "merge", str(number), "--repo", _publication_repo_slug(), "--merge", "--delete-branch"])
 
 
-def _adopt_origin_main() -> str:
+def _adopt_origin_main(*, require_canonical: bool = True) -> str:
     _ensure_clean_tree()
-    _ensure_canonical_origin()
+    if require_canonical:
+        _ensure_canonical_origin()
     _fetch_origin()
     if not _origin_main_exists():
         raise SystemExit("Remote `origin/main` does not exist.")
@@ -824,7 +825,7 @@ def cmd_finalize(message: str, manual_exception: bool) -> int:
     return 0
 
 
-def cmd_close_session(message: str) -> int:
+def cmd_close_session(message: str, publish: bool) -> int:
     branch = _current_branch()
     if not is_managed_session_branch(branch):
         raise SystemExit(f"Current branch '{branch}' is not a managed session branch.")
@@ -832,7 +833,12 @@ def cmd_close_session(message: str) -> int:
     if subject_error is not None:
         raise SystemExit(subject_error)
     commit_hash, verification_commands = _finalize_current_branch(message, mode="close-session", branch=branch)
-    if _managed_publication_required():
+    if publish:
+        if not _managed_publication_allowed():
+            raise SystemExit(
+                "Managed close-session publication requires the canonical repo origin; "
+                "use default close-session for a local checkpoint on this repo."
+            )
         _ensure_canonical_origin()
         _fetch_origin(quiet=True)
         if commit_hash is None:
@@ -868,8 +874,8 @@ def cmd_close_session(message: str) -> int:
         print(json.dumps(result, sort_keys=True))
         return 0
     if commit_hash is None:
-        if not _branch_has_unique_commits(branch, "main"):
-            _switch_to_main()
+        if not _branch_has_unique_commits(branch, "origin/main"):
+            main_head = _adopt_origin_main(require_canonical=False)
             _delete_branch(branch)
             print(
                 json.dumps(
@@ -878,14 +884,14 @@ def cmd_close_session(message: str) -> int:
                         "published_branch": None,
                         "pr_number": None,
                         "pr_url": None,
-                        "main_head": _capture(["git", "rev-parse", "main"]).strip(),
+                        "main_head": main_head,
                         "main_sync": _main_origin_state(),
                     },
-                        sort_keys=True,
-                    )
+                    sort_keys=True,
                 )
+            )
             return 0
-        base_ref = "main"
+        base_ref = "origin/main"
         reviewed_paths = _changed_paths_between(base_ref, branch)
         _validate_closeout_contract_for_paths("close-session", branch, reviewed_paths)
         verification_commands = _run_verification_for_paths(reviewed_paths)
@@ -896,15 +902,19 @@ def cmd_close_session(message: str) -> int:
             reviewed_paths,
             _changed_paths_between(base_ref, branch),
         )
-    landed_hash = _land_session_branch(branch)
+    current_branch = _current_branch()
+    if current_branch != branch:
+        raise SystemExit(
+            "Default close-session checkpointing must leave the managed session branch checked out."
+        )
     print(
         json.dumps(
             {
-                "status": "local_only",
+                "status": "checkpointed_local",
                 "published_branch": None,
                 "pr_number": None,
                 "pr_url": None,
-                "main_head": landed_hash,
+                "main_head": _capture(["git", "rev-parse", "main"]).strip(),
                 "main_sync": _main_origin_state(),
             },
             sort_keys=True,
@@ -1027,9 +1037,14 @@ def main(argv: list[str] | None = None) -> int:
 
     close_parser = subparsers.add_parser(
         "close-session",
-        help="Verify, publish, merge, sync main, and delete a managed session branch.",
+        help="Checkpoint a managed session locally by default; add --publish to publish, merge, sync main, and delete the branch.",
     )
     close_parser.add_argument("--message", required=True)
+    close_parser.add_argument(
+        "--publish",
+        action="store_true",
+        help="Publish, merge, sync main, and delete the managed session branch instead of keeping a local checkpoint.",
+    )
 
     subparsers.add_parser("audit-branches", help="Report local branch hygiene state without mutating refs.")
     subparsers.add_parser(
@@ -1051,7 +1066,7 @@ def main(argv: list[str] | None = None) -> int:
     if args.command == "finalize":
         return cmd_finalize(args.message, args.manual_exception)
     if args.command == "close-session":
-        return cmd_close_session(args.message)
+        return cmd_close_session(args.message, args.publish)
     if args.command == "audit-branches":
         return cmd_audit_branches()
     if args.command == "cleanup-report":

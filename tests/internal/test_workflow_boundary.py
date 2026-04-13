@@ -30,9 +30,10 @@ def test_internal_workflow_surfaces_exist() -> None:
     assert "internal/workflow/repo_workflow.py" in shim
     assert 'DEFAULT_ROOT = Path(__file__).resolve().parents[2]' in canonical
     assert 'help="Verify and commit the current manual/review branch; requires --manual-exception."' in canonical
-    assert 'help="Verify, publish, merge, sync main, and delete a managed session branch."' in canonical
+    assert 'help="Checkpoint a managed session locally by default; add --publish to publish, merge, sync main, and delete the branch."' in canonical
     assert 'GitHub CLI `gh` is required for managed close-session publication.' in canonical
     assert 'def _publish_merge_sync_session(' in canonical
+    assert 'def _managed_publication_allowed(' in canonical
     assert 'def _branch_has_unique_commits(' in canonical
     assert 'from internal.closeout import contract as closeout_contract' in canonical
     assert 'def _validate_closeout_contract_for_paths(' in canonical
@@ -57,7 +58,13 @@ def test_internal_workflow_surfaces_exist() -> None:
     assert "Final Handoff Mirror" in workflow_doc
     assert "`AGENTS.md`, `docs/internal/REPO_WORKFLOW.md`, `internal/workflow/**`, `internal/closeout/**`, or `internal/Makefile`" in workflow_doc
     assert "Remote publication remains separate" not in workflow_doc
-    assert "publishes the session branch, merges it, adopts `origin/main`" in workflow_doc
+    assert "Checkpoint a managed session locally and keep the session branch open" in workflow_doc
+    assert "close-session --publish" in workflow_doc
+    assert 'returns `status: "checkpointed_local"`' in workflow_doc
+    assert "Default to local-first checkpointing and make publication explicit." in workflow_doc
+    assert "[skip ci]" in workflow_doc
+    assert "skipped `push` or `pull_request` workflows can leave required checks pending and block merges" in workflow_doc
+    assert "publishes the session branch, merges it, adopts `origin/main`" not in workflow_doc
     assert "smallest surface-aware verification bundle" in workflow_doc
     assert "Live CLI invocation contract" in workflow_doc
     assert "use the repo harness entrypoints" in workflow_doc
