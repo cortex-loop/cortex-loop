@@ -36,6 +36,8 @@ def test_internal_workflow_surfaces_exist() -> None:
     assert 'def _branch_has_unique_commits(' in canonical
     assert 'from internal.closeout import contract as closeout_contract' in canonical
     assert 'def _validate_closeout_contract_for_paths(' in canonical
+    assert 'def _revalidate_closeout_contract_after_verification(' in canonical
+    assert 'def _ensure_clean_tree_after_verification(' in canonical
     assert 'VERIFICATION_SCOPE_COMMANDS' in canonical
     assert 'def _verification_commands_for_paths(' in canonical
     assert 'def _run_verification_for_paths(' in canonical
@@ -51,6 +53,9 @@ def test_internal_workflow_surfaces_exist() -> None:
     assert 'help="Fail unless the repo is on clean synced main with no extra worktrees, non-main branches, or remote managed/review heads."' in canonical
     assert "closeout contract" in workflow_doc.lower()
     assert "no-op exemption" in workflow_doc.lower()
+    assert "reviewed-path drift during verification" in workflow_doc
+    assert "Final Handoff Mirror" in workflow_doc
+    assert "`AGENTS.md`, `docs/internal/REPO_WORKFLOW.md`, `internal/workflow/**`, `internal/closeout/**`, or `internal/Makefile`" in workflow_doc
     assert "Remote publication remains separate" not in workflow_doc
     assert "publishes the session branch, merges it, adopts `origin/main`" in workflow_doc
     assert "smallest surface-aware verification bundle" in workflow_doc

@@ -105,6 +105,12 @@ def is_load_bearing_path(path: str) -> bool:
         return False
     if normalized.startswith(("cortex/", "lab/")):
         return True
+    if normalized == "AGENTS.md":
+        return True
+    if normalized in {"docs/internal/REPO_WORKFLOW.md", "internal/Makefile"}:
+        return True
+    if normalized.startswith(("internal/workflow/", "internal/closeout/")):
+        return True
     if normalized in {"internal/truth/cortex_status.json", "docs/CORTEX_STATUS.md"}:
         return True
     return LOAD_BEARING_PACKET_DOC_RE.fullmatch(normalized) is not None
@@ -218,6 +224,12 @@ def _write_json(path: Path, payload: dict[str, Any]) -> None:
 
 
 def render_markdown(payload: dict[str, Any]) -> str:
+    def append_items(lines: list[str], items: list[str], *, empty: str) -> None:
+        if items:
+            lines.extend(f"- {item}" for item in items)
+            return
+        lines.append(f"- {empty}")
+
     lines = [
         "# Closeout Contract",
         "",
@@ -249,13 +261,13 @@ def render_markdown(payload: dict[str, Any]) -> str:
             "",
         ]
     )
-    lines.extend(f"- {item}" for item in residuals["fixed_now"]) if residuals["fixed_now"] else lines.append("- `<fill me>`")
+    append_items(lines, residuals["fixed_now"], empty="`<fill me>`")
     lines.extend(["", "### Intentionally Deferred", ""])
-    lines.extend(f"- {item}" for item in residuals["intentionally_deferred"]) if residuals["intentionally_deferred"] else lines.append("- `<none>`")
+    append_items(lines, residuals["intentionally_deferred"], empty="`<none>`")
     lines.extend(["", "### Still Underfit", ""])
-    lines.extend(f"- {item}" for item in residuals["still_underfit"]) if residuals["still_underfit"] else lines.append("- `<none>`")
+    append_items(lines, residuals["still_underfit"], empty="`<none>`")
     lines.extend(["", "### Zeroed Or Stubbed Terms", ""])
-    lines.extend(f"- {item}" for item in residuals["zeroed_or_stubbed_terms"]) if residuals["zeroed_or_stubbed_terms"] else lines.append("- `<none>`")
+    append_items(lines, residuals["zeroed_or_stubbed_terms"], empty="`<none>`")
     lines.extend(["", "## Hostile Review", ""])
     for lens in ("engineer", "mathematician", "neuroscientist"):
         lines.append(f"- {lens.title()}: {payload['hostile_review'][lens] or '<fill me>'}")
@@ -281,6 +293,22 @@ def render_markdown(payload: dict[str, Any]) -> str:
             lines.append(
                 f"- `{row['term']}`: `{row['state']}`; code={', '.join(row['code_refs']) or '<none>'}; proof={', '.join(row['proof_refs']) or '<none>'}; note={row['note']}"
             )
+    lines.extend(["", "## Final Handoff Mirror", ""])
+    lines.extend(["### Fixed now", ""])
+    append_items(lines, residuals["fixed_now"], empty="`<fill me>`")
+    lines.extend(["", "### Intentionally deferred", ""])
+    append_items(lines, residuals["intentionally_deferred"], empty="`<none>`")
+    lines.extend(["", "### Still underfit", ""])
+    append_items(lines, residuals["still_underfit"], empty="`<none>`")
+    lines.extend(["", "### Zeroed or stubbed terms", ""])
+    append_items(lines, residuals["zeroed_or_stubbed_terms"], empty="`<none>`")
+    lines.extend(["", "### Hostile reviewer critiques", ""])
+    for lens in ("engineer", "mathematician", "neuroscientist"):
+        lines.append(f"- {lens.title()}: {payload['hostile_review'][lens] or '<fill me>'}")
+    lines.extend(["", "### Claim earned now", ""])
+    append_items(lines, payload["claims"]["earned_now"], empty="`<fill me>`")
+    lines.extend(["", "### Claim still forbidden", ""])
+    append_items(lines, payload["claims"]["forbidden_still"], empty="`<fill me>`")
     return "\n".join(lines) + "\n"
 
 
@@ -405,6 +433,8 @@ def validate_payload(
         law_to_code = payload.get("law_to_code_completeness")
         if not isinstance(law_to_code, list):
             raise SystemExit("Load-bearing closeout contracts must include law_to_code_completeness as a list.")
+        if not law_to_code:
+            raise SystemExit("Load-bearing closeout contracts must include at least one law_to_code_completeness row.")
         for index, row in enumerate(law_to_code):
             if not isinstance(row, dict):
                 raise SystemExit("Each law_to_code_completeness entry must be an object.")

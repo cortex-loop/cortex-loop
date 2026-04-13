@@ -476,6 +476,103 @@ def test_close_session_load_bearing_paths_require_load_bearing_profile(
         module.cmd_finalize("docs: finalize manual branch", manual_exception=True)
 
 
+def test_finalize_workflow_law_paths_require_load_bearing_profile(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    repo, _remote, module = _prepare_repo(tmp_path, monkeypatch)
+    _git(repo, "switch", "-c", "maint/workflow-law")
+    monkeypatch.setattr(module, "_run_verification_for_paths", lambda _paths: ("git diff --check", "make -C internal test"))
+    (repo / "AGENTS.md").write_text("workflow law\n", encoding="utf-8")
+    _write_closeout_contract(
+        repo,
+        branch="maint/workflow-law",
+        mode="finalize",
+        reviewed_paths=["AGENTS.md"],
+        profile_override="standard",
+    )
+
+    with pytest.raises(SystemExit, match="profile mismatch: expected 'load_bearing'"):
+        module.cmd_finalize("docs: finalize manual branch", manual_exception=True)
+
+
+def test_finalize_fails_when_verification_changes_reviewed_paths(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    repo, _remote, module = _prepare_repo(tmp_path, monkeypatch)
+    _git(repo, "switch", "-c", "maint/manual-work")
+    (repo / "manual.txt").write_text("manual\n", encoding="utf-8")
+    _write_closeout_contract(repo, branch="maint/manual-work", mode="finalize", reviewed_paths=["manual.txt"])
+
+    def mutate_paths(_paths: list[str]) -> tuple[str, ...]:
+        (repo / "verification.txt").write_text("drift\n", encoding="utf-8")
+        return ("git diff --check",)
+
+    monkeypatch.setattr(module, "_run_verification_for_paths", mutate_paths)
+
+    with pytest.raises(SystemExit, match="verification changed tracked paths after closeout contract validation"):
+        module.cmd_finalize("docs: finalize manual branch", manual_exception=True)
+
+    assert _git_output(repo, "branch", "--show-current") == "maint/manual-work"
+    assert _git_output(repo, "log", "-1", "--pretty=%s") == "repo: initialize temp repo"
+
+
+def test_close_session_with_existing_unique_commit_revalidates_after_verification(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    repo, _remote, module = _prepare_repo(tmp_path, monkeypatch)
+    monkeypatch.setattr(module, "_session_timestamp", lambda: "20260329-010203")
+    module.cmd_start_session("codex", "revalidate-existing-commit")
+    branch = _git_output(repo, "branch", "--show-current")
+    (repo / "README.md").write_text("changed\n", encoding="utf-8")
+    _git(repo, "add", "README.md")
+    _git(repo, "commit", "-m", "docs: preexisting session commit")
+    _write_closeout_contract(repo, branch=branch, mode="close-session", reviewed_paths=["README.md"])
+
+    calls: list[tuple[str, str, tuple[str, ...]]] = []
+    original_validate = module._validate_closeout_contract_for_paths
+
+    def record_validate(mode: str, branch_name: str, reviewed_paths: list[str]) -> None:
+        calls.append((mode, branch_name, tuple(reviewed_paths)))
+        original_validate(mode, branch_name, reviewed_paths)
+
+    monkeypatch.setattr(module, "_validate_closeout_contract_for_paths", record_validate)
+    monkeypatch.setattr(module, "_run_verification_for_paths", lambda _paths: ("git diff --check",))
+
+    module.cmd_close_session("docs: close existing session commit")
+
+    payload = json.loads(capsys.readouterr().out.strip().splitlines()[-1])
+    assert payload["status"] == "local_only"
+    assert calls == [
+        ("close-session", branch, ("README.md",)),
+        ("close-session", branch, ("README.md",)),
+    ]
+    assert _git_output(repo, "branch", "--show-current") == "main"
+
+
+def test_close_session_existing_unique_commit_fails_when_verification_dirties_tree(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    repo, _remote, module = _prepare_repo(tmp_path, monkeypatch)
+    monkeypatch.setattr(module, "_session_timestamp", lambda: "20260329-010203")
+    module.cmd_start_session("codex", "verification-drift")
+    branch = _git_output(repo, "branch", "--show-current")
+    (repo / "README.md").write_text("changed\n", encoding="utf-8")
+    _git(repo, "add", "README.md")
+    _git(repo, "commit", "-m", "docs: preexisting session commit")
+    _write_closeout_contract(repo, branch=branch, mode="close-session", reviewed_paths=["README.md"])
+
+    def mutate_tree(_paths: list[str]) -> tuple[str, ...]:
+        (repo / "verification.txt").write_text("drift\n", encoding="utf-8")
+        return ("git diff --check",)
+
+    monkeypatch.setattr(module, "_run_verification_for_paths", mutate_tree)
+
+    with pytest.raises(SystemExit, match="verification changed tracked paths after closeout contract validation"):
+        module.cmd_close_session("docs: close existing session commit")
+
+    assert _git_output(repo, "branch", "--show-current") == branch
+
+
 def test_publish_merge_sync_session_reuses_existing_open_pr(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:

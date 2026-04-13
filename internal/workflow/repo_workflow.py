@@ -126,10 +126,22 @@ def _staged_paths() -> list[str]:
     return [line.strip() for line in output.splitlines() if line.strip()]
 
 
+def _normalize_paths(paths: list[str]) -> list[str]:
+    return sorted({path.strip() for path in paths if path.strip()})
+
+
 def _ensure_clean_tree() -> None:
     lines = _tracked_status_lines()
     if lines:
         raise SystemExit("Working tree is not clean:\n" + "\n".join(lines))
+
+
+def _ensure_clean_tree_after_verification() -> None:
+    lines = _tracked_status_lines()
+    if lines:
+        raise SystemExit(
+            "verification changed tracked paths after closeout contract validation:\n" + "\n".join(lines)
+        )
 
 
 def _origin_url() -> str | None:
@@ -460,6 +472,22 @@ def _validate_closeout_contract_for_paths(mode: str, branch: str, reviewed_paths
     )
 
 
+def _revalidate_closeout_contract_after_verification(
+    mode: str,
+    branch: str,
+    reviewed_paths: list[str],
+    current_reviewed_paths: list[str],
+) -> None:
+    expected = _normalize_paths(reviewed_paths)
+    current = _normalize_paths(current_reviewed_paths)
+    if current != expected:
+        raise SystemExit(
+            "verification changed tracked paths after closeout contract validation:\n"
+            f"reviewed_paths drifted during verification: expected {expected}, found {current}."
+        )
+    _validate_closeout_contract_for_paths(mode, branch, current_reviewed_paths)
+
+
 def _finalize_current_branch(message: str, *, mode: str, branch: str) -> tuple[str | None, tuple[str, ...]]:
     _run(["git", "add", "-A"])
     if not _commit_has_staged_changes():
@@ -467,8 +495,9 @@ def _finalize_current_branch(message: str, *, mode: str, branch: str) -> tuple[s
         return None, ()
     reviewed_paths = _staged_paths()
     _validate_closeout_contract_for_paths(mode, branch, reviewed_paths)
-    verification_commands = _run_verification_for_paths(_staged_paths())
+    verification_commands = _run_verification_for_paths(reviewed_paths)
     _run(["git", "add", "-A"])
+    _revalidate_closeout_contract_after_verification(mode, branch, reviewed_paths, _staged_paths())
     if not _commit_has_staged_changes():
         _ensure_clean_tree()
         return None, verification_commands
@@ -824,9 +853,17 @@ def cmd_close_session(message: str) -> int:
                     )
                 )
                 return 0
-            reviewed_paths = _changed_paths_between("origin/main", branch)
+            base_ref = "origin/main"
+            reviewed_paths = _changed_paths_between(base_ref, branch)
             _validate_closeout_contract_for_paths("close-session", branch, reviewed_paths)
             verification_commands = _run_verification_for_paths(reviewed_paths)
+            _ensure_clean_tree_after_verification()
+            _revalidate_closeout_contract_after_verification(
+                "close-session",
+                branch,
+                reviewed_paths,
+                _changed_paths_between(base_ref, branch),
+            )
         result = _publish_merge_sync_session(branch, message, verification_commands)
         print(json.dumps(result, sort_keys=True))
         return 0
@@ -848,9 +885,17 @@ def cmd_close_session(message: str) -> int:
                     )
                 )
             return 0
-        reviewed_paths = _changed_paths_between("main", branch)
+        base_ref = "main"
+        reviewed_paths = _changed_paths_between(base_ref, branch)
         _validate_closeout_contract_for_paths("close-session", branch, reviewed_paths)
         verification_commands = _run_verification_for_paths(reviewed_paths)
+        _ensure_clean_tree_after_verification()
+        _revalidate_closeout_contract_after_verification(
+            "close-session",
+            branch,
+            reviewed_paths,
+            _changed_paths_between(base_ref, branch),
+        )
     landed_hash = _land_session_branch(branch)
     print(
         json.dumps(

@@ -75,13 +75,13 @@ def _init_repo(tmp_path: Path) -> Path:
 
 
 def test_validate_payload_accepts_valid_standard_contract() -> None:
-    payload = _filled_payload("maint/manual-work", "finalize", ["AGENTS.md"])
+    payload = _filled_payload("maint/manual-work", "finalize", ["README.md"])
 
     validated = closeout_contract.validate_payload(
         payload,
         expected_mode="finalize",
         expected_branch="maint/manual-work",
-        expected_reviewed_paths=["AGENTS.md"],
+        expected_reviewed_paths=["README.md"],
     )
 
     assert validated["profile"] == "standard"
@@ -105,7 +105,7 @@ def test_validate_payload_accepts_valid_load_bearing_contract() -> None:
 
 
 def test_validate_payload_rejects_missing_forbidden_claims() -> None:
-    payload = _filled_payload("maint/manual-work", "finalize", ["AGENTS.md"])
+    payload = _filled_payload("maint/manual-work", "finalize", ["README.md"])
     payload["claims"]["forbidden_still"] = []
 
     with pytest.raises(SystemExit, match="claims.forbidden_still"):
@@ -113,12 +113,12 @@ def test_validate_payload_rejects_missing_forbidden_claims() -> None:
             payload,
             expected_mode="finalize",
             expected_branch="maint/manual-work",
-            expected_reviewed_paths=["AGENTS.md"],
+            expected_reviewed_paths=["README.md"],
         )
 
 
 def test_validate_payload_rejects_missing_zeroed_or_stubbed_terms() -> None:
-    payload = _filled_payload("maint/manual-work", "finalize", ["AGENTS.md"])
+    payload = _filled_payload("maint/manual-work", "finalize", ["README.md"])
     del payload["residuals"]["zeroed_or_stubbed_terms"]
 
     with pytest.raises(SystemExit, match="residuals.zeroed_or_stubbed_terms"):
@@ -126,12 +126,12 @@ def test_validate_payload_rejects_missing_zeroed_or_stubbed_terms() -> None:
             payload,
             expected_mode="finalize",
             expected_branch="maint/manual-work",
-            expected_reviewed_paths=["AGENTS.md"],
+            expected_reviewed_paths=["README.md"],
         )
 
 
 def test_validate_payload_rejects_missing_hostile_review_lens() -> None:
-    payload = _filled_payload("maint/manual-work", "finalize", ["AGENTS.md"])
+    payload = _filled_payload("maint/manual-work", "finalize", ["README.md"])
     payload["hostile_review"]["mathematician"] = ""
 
     with pytest.raises(SystemExit, match="hostile_review.mathematician"):
@@ -139,20 +139,29 @@ def test_validate_payload_rejects_missing_hostile_review_lens() -> None:
             payload,
             expected_mode="finalize",
             expected_branch="maint/manual-work",
-            expected_reviewed_paths=["AGENTS.md"],
+            expected_reviewed_paths=["README.md"],
         )
 
 
 def test_validate_payload_rejects_stale_reviewed_paths() -> None:
-    payload = _filled_payload("maint/manual-work", "finalize", ["AGENTS.md"])
+    payload = _filled_payload("maint/manual-work", "finalize", ["README.md"])
 
     with pytest.raises(SystemExit, match="reviewed_paths are stale or incomplete"):
         closeout_contract.validate_payload(
             payload,
             expected_mode="finalize",
             expected_branch="maint/manual-work",
-            expected_reviewed_paths=["AGENTS.md", "README.md"],
+            expected_reviewed_paths=["README.md", "notes.txt"],
         )
+
+
+def test_workflow_law_paths_infer_load_bearing() -> None:
+    assert closeout_contract.infer_profile(["AGENTS.md"]) == "load_bearing"
+    assert closeout_contract.infer_profile(["docs/internal/REPO_WORKFLOW.md"]) == "load_bearing"
+    assert closeout_contract.infer_profile(["internal/workflow/repo_workflow.py"]) == "load_bearing"
+    assert closeout_contract.infer_profile(["internal/closeout/contract.py"]) == "load_bearing"
+    assert closeout_contract.infer_profile(["internal/Makefile"]) == "load_bearing"
+    assert closeout_contract.infer_profile(["tests/internal/test_repo_workflow.py"]) == "standard"
 
 
 def test_validate_payload_rejects_invalid_law_to_code_state() -> None:
@@ -172,16 +181,82 @@ def test_validate_payload_rejects_invalid_law_to_code_state() -> None:
         )
 
 
+def test_validate_payload_rejects_missing_governing_locks() -> None:
+    payload = _filled_payload(
+        "codex/20260413-000000-load-bearing",
+        "close-session",
+        ["internal/workflow/repo_workflow.py"],
+    )
+    del payload["governing_locks"]
+
+    with pytest.raises(SystemExit, match="must include governing_locks"):
+        closeout_contract.validate_payload(
+            payload,
+            expected_mode="close-session",
+            expected_branch="codex/20260413-000000-load-bearing",
+            expected_reviewed_paths=["internal/workflow/repo_workflow.py"],
+        )
+
+
+def test_validate_payload_rejects_empty_law_to_code_completeness() -> None:
+    payload = _filled_payload(
+        "codex/20260413-000000-load-bearing",
+        "close-session",
+        ["internal/workflow/repo_workflow.py"],
+    )
+    payload["law_to_code_completeness"] = []
+
+    with pytest.raises(SystemExit, match="at least one law_to_code_completeness row"):
+        closeout_contract.validate_payload(
+            payload,
+            expected_mode="close-session",
+            expected_branch="codex/20260413-000000-load-bearing",
+            expected_reviewed_paths=["internal/workflow/repo_workflow.py"],
+        )
+
+
+def test_validate_payload_rejects_missing_completeness_refs_or_note() -> None:
+    payload = _filled_payload(
+        "codex/20260413-000000-load-bearing",
+        "close-session",
+        ["internal/workflow/repo_workflow.py"],
+    )
+    payload["law_to_code_completeness"][0]["proof_refs"] = []
+
+    with pytest.raises(SystemExit, match="law_to_code_completeness\\[0\\]\\.proof_refs"):
+        closeout_contract.validate_payload(
+            payload,
+            expected_mode="close-session",
+            expected_branch="codex/20260413-000000-load-bearing",
+            expected_reviewed_paths=["internal/workflow/repo_workflow.py"],
+        )
+
+
+def test_render_markdown_includes_final_handoff_mirror() -> None:
+    payload = _filled_payload("maint/manual-work", "finalize", ["README.md"])
+
+    rendered = closeout_contract.render_markdown(payload)
+
+    assert "## Final Handoff Mirror" in rendered
+    assert "### Fixed now" in rendered
+    assert "### Intentionally deferred" in rendered
+    assert "### Still underfit" in rendered
+    assert "### Zeroed or stubbed terms" in rendered
+    assert "### Hostile reviewer critiques" in rendered
+    assert "### Claim earned now" in rendered
+    assert "### Claim still forbidden" in rendered
+
+
 def test_init_contract_writes_branch_and_latest_artifacts(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     repo = _init_repo(tmp_path)
     _git(repo, "switch", "-c", "maint/manual-work")
-    (repo / "AGENTS.md").write_text("notes\n", encoding="utf-8")
-    _git(repo, "add", "AGENTS.md")
+    (repo / "notes.txt").write_text("notes\n", encoding="utf-8")
+    _git(repo, "add", "notes.txt")
     monkeypatch.setenv(closeout_contract.ROOT_ENV_VAR, str(repo))
 
     result = closeout_contract.init_contract(root=repo, mode="finalize", branch="maint/manual-work")
 
-    assert result["reviewed_paths"] == ["AGENTS.md"]
+    assert result["reviewed_paths"] == ["notes.txt"]
     paths = closeout_contract.resolve_artifact_paths(repo, "maint/manual-work")
     assert paths["json_path"].exists()
     assert paths["markdown_path"].exists()
@@ -194,9 +269,9 @@ def test_init_contract_uses_dirty_worktree_paths_when_nothing_is_staged(
 ) -> None:
     repo = _init_repo(tmp_path)
     _git(repo, "switch", "-c", "maint/manual-work")
-    (repo / "AGENTS.md").write_text("notes\n", encoding="utf-8")
+    (repo / "notes.txt").write_text("notes\n", encoding="utf-8")
     monkeypatch.setenv(closeout_contract.ROOT_ENV_VAR, str(repo))
 
     result = closeout_contract.init_contract(root=repo, mode="finalize", branch="maint/manual-work")
 
-    assert result["reviewed_paths"] == ["AGENTS.md"]
+    assert result["reviewed_paths"] == ["notes.txt"]

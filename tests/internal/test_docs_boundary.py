@@ -80,6 +80,9 @@ def test_agents_records_mission_lock_and_single_truth_bootstrap() -> None:
     assert "Do not run paid service-lane commands unless the user explicitly approves spend in the current chat." in text
     assert "Do not set `CORTEX_LIVE_SERVICE_SPEND_APPROVED`" in text
     assert ".cortex/closeout_contract/" in text
+    assert "Workflow-law seams are load-bearing too" in text
+    assert "revalidates reviewed-path exactness after verification" in text
+    assert "at least one law-to-code completeness row" in text
     assert "Fixed now" in text
     assert "Intentionally deferred" in text
     assert "Still underfit" in text
@@ -87,6 +90,7 @@ def test_agents_records_mission_lock_and_single_truth_bootstrap() -> None:
     assert "Hostile reviewer critiques" in text
     assert "Claim earned now" in text
     assert "Claim still forbidden" in text
+    assert "Final Handoff Mirror" in text
     assert "CORTEX_V2_ACTIVE_WORKSTREAM" not in text
     assert "CORTEX_V2_PHASE_GATES_2" not in text
     assert "CORTEX_V2_MATH_TO_CODE_CORRESPONDENCE" not in text
@@ -112,6 +116,9 @@ def test_public_docs_point_to_status_and_keep_archive_out_of_the_front_door() ->
     assert "closeout contract artifact" in workflow
     assert "load_bearing" in workflow
     assert "hard-fails" in workflow
+    assert "workflow-law terms touched" in workflow
+    assert "reviewed-path drift during verification" in workflow
+    assert "Final Handoff Mirror" in workflow
     for text in (readme, docs_index, charter, boundary):
         assert "CORTEX_V2_ACTIVE_WORKSTREAM" not in text
         assert "CORTEX_V2_PHASE_GATES_2" not in text
