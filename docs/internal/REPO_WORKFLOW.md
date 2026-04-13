@@ -241,6 +241,13 @@ Managed verification is purpose-first and surface-aware:
 - paid OpenAI service-lane proof is never part of the default bundle
 - any command that relies on `CORTEX_LIVE_SERVICE_SPEND_APPROVED` requires explicit user approval in the current chat; agents may not set that opt-in on their own initiative
 
+Live CLI invocation contract:
+
+- For `operator_cli` watchlist validation, use the repo harness entrypoints such as `python3 lab/live_operator_directionality.py`, `python3 lab/live_host_native_product_paths.py`, and `python3 lab/cortex_conformance.py` instead of hand-rolled direct CLI calls.
+- Gemini operator-lane auth defaults to `google_login`; `api_key` operator mode requires an explicit `CORTEX_GEMINI_LIVE_AUTH_MODE=api_key` override.
+- If a direct headless Gemini operator probe is truly necessary, match the harness shape: `gemini -p "<prompt>" -o stream-json --approval-mode yolo`, adding `-m <model>` only when the model is not `auto`.
+- Use interactive `gemini` only for sign-in or auth repair, not as the normal live watchlist execution path.
+
 ## Commit Message Contract
 
 Commit subject format:
