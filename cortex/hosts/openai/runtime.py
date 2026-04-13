@@ -68,6 +68,7 @@ from cortex.sre.modulators import (
     ExecutiveModulatorState,
     update_executive_modulators,
 )
+from cortex.sre.goals import make_resume_reminder
 from cortex.sre.operator_routing import OperatorTaskMode
 from cortex.sre.opportunities import BoundedProbeContract, HostNativeOpportunity
 from cortex.sre.policy_view import ExecutivePolicyView, build_executive_policy_view
@@ -1266,6 +1267,7 @@ def _apply_continuity_update(
             tuple(pending_goal_refs),
             (branch_track_ref, *payload_goal_refs),
         )
+        reminders = (make_resume_reminder(branch_track_ref),)
     elif operation is BranchOperation.RESUME:
         if branch_track_ref is None or branch_track_ref not in branch_registry:
             warnings = (_continuity_warning("missing-active-branch", branch_track_ref),)

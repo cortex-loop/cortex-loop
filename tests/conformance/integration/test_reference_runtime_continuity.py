@@ -32,7 +32,7 @@ def test_reference_runtime_cli_preserves_open_suspend_resume_merge_continuity_in
     assert [record["event_index"] for record in records] == [1, 2, 3, 4]
     assert [record["selected_family"] for record in records] == [
         "seek-context",
-        "seek-context",
+        "check",
         "seek-context",
         "seek-context",
     ]
@@ -51,7 +51,7 @@ def test_reference_runtime_cli_preserves_open_suspend_resume_merge_continuity_in
     assert [
         record["control_ledger"]["allocation_diagnostics"]["activation_threshold"]
         for record in records
-    ] == pytest.approx([0.37, 0.32, 0.29, 0.15])
+    ] == pytest.approx([0.37, 0.30, 0.29, 0.15])
     assert [record["session_summary"]["branch_registry"] for record in records] == [
         ["main", "branch-alpha"],
         ["main", "branch-alpha"],
@@ -90,7 +90,7 @@ def test_reference_runtime_cli_preserves_open_suspend_resume_merge_continuity_in
     ]
     assert [record["closure_reason_tags"] for record in records] == [
         [],
-        ["pending_goal_debt"],
+        ["continuity_reminder", "pending_goal_debt"],
         [],
         [],
     ]

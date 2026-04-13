@@ -34,6 +34,7 @@ def test_reference_runtime_session_artifact_roundtrips_empty_session() -> None:
             "branch_registry": ["main"],
             "active_track_ref": "main",
             "pending_goal_refs": [],
+            "continuity_reminders": [],
         },
         "control_residue": {
             "last_budget_band": None,
@@ -53,6 +54,7 @@ def test_reference_runtime_session_artifact_roundtrips_populated_continuity_trut
         branch_registry=("main", "branch-alpha"),
         active_track_ref="branch-alpha",
         pending_goal_refs=("goal-extra",),
+        continuity_reminders=("resume branch-alpha after review",),
     )
 
     restored = parse_reference_runtime_session_artifact(
@@ -64,6 +66,7 @@ def test_reference_runtime_session_artifact_roundtrips_populated_continuity_trut
     assert restored.branch_registry == ("main", "branch-alpha")
     assert restored.active_track_ref == "branch-alpha"
     assert restored.pending_goal_refs == ("goal-extra",)
+    assert restored.continuity_reminders == ("resume branch-alpha after review",)
     assert restored.budget_history == ()
     assert restored.brake_history == ()
 
@@ -225,6 +228,7 @@ def _base_payload() -> dict[str, object]:
             "branch_registry": ["main"],
             "active_track_ref": "main",
             "pending_goal_refs": [],
+            "continuity_reminders": [],
         },
         "control_residue": {
             "last_budget_band": None,

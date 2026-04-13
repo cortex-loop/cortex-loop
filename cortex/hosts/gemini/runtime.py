@@ -58,6 +58,7 @@ from cortex.sre.executive_summary import (
     build_executive_signal_summary,
 )
 from cortex.sre.families import SoftControlFamily
+from cortex.sre.goals import make_resume_reminder, parse_resume_reminder_track
 from cortex.sre.feedback import (
     ReferenceFeedbackWindowSummary,
     ReferenceRealizationFeedback,
@@ -88,6 +89,7 @@ class GeminiRuntimeSession:
     branch_registry: tuple[str, ...] = ("main",)
     active_track_ref: str = "main"
     pending_goal_refs: tuple[str, ...] = ()
+    continuity_reminders: tuple[str, ...] = ()
     budget_history: tuple[str, ...] = ()
     brake_history: tuple[str, ...] = ()
     last_selected_family: SoftControlFamily | None = None
@@ -128,6 +130,13 @@ class GeminiRuntimeSession:
         if any(not (isinstance(ref, str) and ref.strip()) for ref in self.pending_goal_refs):
             raise ValueError(
                 "GeminiRuntimeSession.pending_goal_refs must contain only non-empty values after trimming."
+            )
+        if any(
+            not (isinstance(reminder, str) and reminder.strip())
+            for reminder in self.continuity_reminders
+        ):
+            raise ValueError(
+                "GeminiRuntimeSession.continuity_reminders must contain only non-empty values after trimming."
             )
         if any(not (isinstance(entry, str) and entry.strip()) for entry in self.budget_history):
             raise ValueError(
@@ -509,6 +518,11 @@ class GeminiRuntimeStepResult:
             ),
             "active_track_ref": self.executive_state.goal_continuity.active_track_ref,
             "pending_goal_refs": list(self.executive_state.goal_continuity.pending_goal_refs),
+            "anchor_source": self.executive_state.goal_continuity.anchor_source,
+            "anchor_freshness": self.executive_state.goal_continuity.anchor_freshness,
+            "branch_intent_present": (
+                self.executive_state.goal_continuity.branch_intent_present
+            ),
         }
 
     @property
@@ -611,6 +625,7 @@ def run_gemini_runtime_step(
         branch_registry=next_branch_registry,
         active_track_ref=next_active_track_ref,
         pending_goal_refs=next_pending_goal_refs,
+        continuity_reminders=continuity_reminders,
         budget_history=prior_session.budget_history
         + (_budget_entry_for_lane(dispatch_decision.lane),),
         brake_history=prior_session.brake_history,
@@ -716,6 +731,7 @@ def run_gemini_runtime_step(
         branch_registry=provisional_session.branch_registry,
         active_track_ref=provisional_session.active_track_ref,
         pending_goal_refs=provisional_session.pending_goal_refs,
+        continuity_reminders=provisional_session.continuity_reminders,
         budget_history=provisional_session.budget_history,
         brake_history=prior_session.brake_history + (brake_state.value,),
         last_selected_family=selected_family,
@@ -780,6 +796,7 @@ def run_gemini_runtime_step(
         branch_registry=updated_session.branch_registry,
         active_track_ref=updated_session.active_track_ref,
         pending_goal_refs=updated_session.pending_goal_refs,
+        continuity_reminders=updated_session.continuity_reminders,
         budget_history=updated_session.budget_history,
         brake_history=updated_session.brake_history,
         last_selected_family=updated_session.last_selected_family,
@@ -846,10 +863,10 @@ def _apply_continuity_update(
     branch_registry = list(prior_session.branch_registry)
     active_track_ref = prior_session.active_track_ref
     pending_goal_refs = list(prior_session.pending_goal_refs)
+    continuity_reminders = list(prior_session.continuity_reminders)
     branch_track_ref = _continuity_track_ref(normalized_payload)
     payload_goal_refs = _pending_goal_refs_from_payload(normalized_payload)
     warnings: tuple[str, ...] = ()
-    reminders: tuple[str, ...] = ()
 
     if operation is None:
         if payload_goal_refs:
@@ -859,7 +876,7 @@ def _apply_continuity_update(
             active_track_ref,
             tuple(pending_goal_refs),
             warnings,
-            reminders,
+            tuple(continuity_reminders),
         )
 
     if operation is BranchOperation.OPEN:
@@ -870,11 +887,14 @@ def _apply_continuity_update(
                 prior_session.active_track_ref,
                 tuple(prior_session.pending_goal_refs),
                 warnings,
-                reminders,
+                tuple(prior_session.continuity_reminders),
             )
         if branch_track_ref not in branch_registry:
             branch_registry.append(branch_track_ref)
         active_track_ref = branch_track_ref
+        continuity_reminders = list(
+            _without_track_reminders(continuity_reminders, branch_track_ref)
+        )
         pending_goal_refs = [
             goal_ref for goal_ref in pending_goal_refs if goal_ref != branch_track_ref
         ]
@@ -891,9 +911,15 @@ def _apply_continuity_update(
                 prior_session.active_track_ref,
                 tuple(prior_session.pending_goal_refs),
                 warnings,
-                reminders,
+                tuple(prior_session.continuity_reminders),
             )
         active_track_ref = "main"
+        continuity_reminders = list(
+            _merge_distinct_strings(
+                _without_track_reminders(continuity_reminders, branch_track_ref),
+                (make_resume_reminder(branch_track_ref),),
+            )
+        )
         pending_goal_refs = _merge_unique_refs(
             tuple(pending_goal_refs),
             (branch_track_ref, *payload_goal_refs),
@@ -906,19 +932,27 @@ def _apply_continuity_update(
                 prior_session.active_track_ref,
                 tuple(prior_session.pending_goal_refs),
                 warnings,
-                reminders,
+                tuple(prior_session.continuity_reminders),
             )
         if branch_track_ref not in pending_goal_refs:
             warnings = (_continuity_warning("missing-resume-anchor", branch_track_ref),)
-            reminders = ("resume-anchor-missing",)
+            continuity_reminders = list(
+                _merge_distinct_strings(
+                    _without_track_reminders(continuity_reminders, branch_track_ref),
+                    (make_resume_reminder(branch_track_ref), "resume-anchor-missing"),
+                )
+            )
             return (
                 tuple(prior_session.branch_registry),
                 prior_session.active_track_ref,
                 tuple(prior_session.pending_goal_refs),
                 warnings,
-                reminders,
+                tuple(continuity_reminders),
             )
         active_track_ref = branch_track_ref
+        continuity_reminders = list(
+            _without_track_reminders(continuity_reminders, branch_track_ref)
+        )
         pending_goal_refs = [
             goal_ref for goal_ref in pending_goal_refs if goal_ref != branch_track_ref
         ]
@@ -931,7 +965,7 @@ def _apply_continuity_update(
                 prior_session.active_track_ref,
                 tuple(prior_session.pending_goal_refs),
                 warnings,
-                reminders,
+                tuple(prior_session.continuity_reminders),
             )
         merge_target_ref = _merge_target_ref(normalized_payload)
         if (
@@ -945,7 +979,7 @@ def _apply_continuity_update(
                 prior_session.active_track_ref,
                 tuple(prior_session.pending_goal_refs),
                 warnings,
-                reminders,
+                tuple(prior_session.continuity_reminders),
             )
         if branch_track_ref in pending_goal_refs or active_track_ref != branch_track_ref:
             warnings = (
@@ -959,7 +993,7 @@ def _apply_continuity_update(
                 prior_session.active_track_ref,
                 tuple(prior_session.pending_goal_refs),
                 warnings,
-                reminders,
+                tuple(prior_session.continuity_reminders),
             )
         branch_registry = [
             branch_ref for branch_ref in branch_registry if branch_ref != branch_track_ref
@@ -967,6 +1001,9 @@ def _apply_continuity_update(
         if not branch_registry:
             branch_registry = ["main"]
         active_track_ref = merge_target_ref or "main"
+        continuity_reminders = list(
+            _without_track_reminders(continuity_reminders, branch_track_ref)
+        )
         pending_goal_refs = [
             goal_ref for goal_ref in pending_goal_refs if goal_ref != branch_track_ref
         ]
@@ -979,7 +1016,34 @@ def _apply_continuity_update(
         active_track_ref,
         tuple(pending_goal_refs),
         warnings,
-        reminders,
+        tuple(continuity_reminders),
+    )
+
+
+def _merge_distinct_strings(
+    existing: tuple[str, ...],
+    additions: tuple[str, ...],
+) -> tuple[str, ...]:
+    ordered = list(existing)
+    for value in additions:
+        if value not in ordered:
+            ordered.append(value)
+    return tuple(ordered)
+
+
+def _without_track_reminders(
+    reminders: list[str],
+    track_ref: str | None,
+) -> tuple[str, ...]:
+    if track_ref is None:
+        return tuple(
+            reminder for reminder in reminders if reminder != "resume-anchor-missing"
+        )
+    return tuple(
+        reminder
+        for reminder in reminders
+        if reminder != "resume-anchor-missing"
+        and parse_resume_reminder_track(reminder) != track_ref
     )
 
 

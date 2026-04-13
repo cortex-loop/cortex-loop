@@ -98,8 +98,8 @@ def test_reference_runtime_cli_reads_event_file_and_emits_one_record_per_event()
     ]
     assert [record["executive_state_summary"]["mode_tag"] for record in records] == [
         "guarded_review",
-        "guarded_review",
-        "guarded_review",
+        "review_pending",
+        "commitment_path",
     ]
     assert [record["executive_state_summary"]["budget_band"] for record in records] == [
         "low",
@@ -454,6 +454,7 @@ def test_reference_runtime_cli_save_session_does_not_change_jsonl_output(tmp_pat
             "branch_registry": ["main"],
             "active_track_ref": "main",
             "pending_goal_refs": [],
+            "continuity_reminders": [],
         },
         "control_residue": {
             "last_budget_band": "high",

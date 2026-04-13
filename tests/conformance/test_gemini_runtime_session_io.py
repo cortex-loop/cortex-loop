@@ -25,6 +25,7 @@ def test_gemini_runtime_session_artifact_roundtrips_bounded_residue() -> None:
         branch_registry=("main", "branch-alpha"),
         active_track_ref="branch-alpha",
         pending_goal_refs=("goal-extra",),
+        continuity_reminders=("resume branch-alpha after review",),
         budget_history=("shell-low", "shell-medium"),
         brake_history=("quiescent", "guarded"),
         last_selected_family=SoftControlFamily.CHECK,
@@ -45,6 +46,7 @@ def test_gemini_runtime_session_artifact_roundtrips_bounded_residue() -> None:
     assert restored.budget_history == ("shell-medium",)
     assert restored.brake_history == ("guarded",)
     assert restored.last_selected_family is SoftControlFamily.CHECK
+    assert restored.continuity_reminders == ("resume branch-alpha after review",)
     assert restored.feedback_window.entries[-1] == restored.last_realization_feedback
 
 
@@ -123,6 +125,7 @@ def _base_payload() -> dict[str, object]:
             "branch_registry": ["main"],
             "active_track_ref": "main",
             "pending_goal_refs": [],
+            "continuity_reminders": [],
         },
         "control_residue": {
             "last_budget_band": None,
