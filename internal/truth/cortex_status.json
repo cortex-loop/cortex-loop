@@ -111,7 +111,7 @@
         "tests/product",
         "tests/conformance"
       ],
-      "next_move": "Keep suspend/resume and truthful closure stable now that host-local branch continuity is repaired across Claude, Gemini, and reference; any future support memory must remain explicit, optional, and non-binding."
+      "next_move": "Keep suspend/resume and truthful closure stable now that host-local branch continuity is repaired across Claude, Gemini, and reference; branch-local continuity may reopen only from branch-linked cues, and any future support memory must remain explicit, optional, and non-binding."
     },
     {
       "skill": "Intervention pricing versus neutrality",
@@ -190,7 +190,7 @@
   },
   "work_today": {
     "slug": "persistent-support-memory-distillation",
-    "note": "The bounded AUX cross-host shadow surface now earns `full_cross_host`: Claude, Gemini, and reference all hold host-local and reference-projected branch continuity, lawful non-reference host distinction remains explicit, and negative counterexamples stay stable. The next highest-leverage gap is durable support-memory distillation: store raw support-side episodes, publish compact removable priors offline, and keep `Q_mem = 0` on shipping and conformance lanes until live re-entry is separately earned."
+    "note": "The bounded AUX cross-host shadow surface still earns `full_cross_host`, now under stricter branch-linked continuity law: Claude, Gemini, and reference all hold host-local and reference-projected branch continuity without generic pending-goal debt, generic reminder language, or generic `resume*` wake cues acting as branch-specific anchors; lawful non-reference host distinction remains explicit, and negative counterexamples stay stable. The next highest-leverage gap is durable support-memory distillation: store raw support-side episodes, publish compact removable priors offline, and keep `Q_mem = 0` on shipping and conformance lanes until live re-entry is separately earned."
   },
   "next_product_train": {
     "slug": "inspect-execute-resume-posture-control",
@@ -464,6 +464,7 @@
       "python3 internal/workflow/repo_workflow.py sync-main",
       "python3 internal/workflow/repo_workflow.py start-session --agent codex --slug task-name",
       "python3 internal/workflow/repo_workflow.py close-session --message \"scope: end-state summary\"",
+      "python3 internal/workflow/repo_workflow.py close-session --publish --message \"scope: end-state summary\"",
       "python3 internal/workflow/repo_workflow.py cleanup-report"
     ]
   },
@@ -492,14 +493,15 @@
   "where_to_work": [
     "Keep the bounded audit surface compact and truthful on the shipped lane: selected versus realized family, uncertainty, threshold, delta, verification, and probe truth only.",
     "Keep the no-spend live evidence current and explicit: fast conformance is green, the deeper directionality and host-native watchlists are refreshed, and non-shipping auth or env caveats must stay explicit instead of silently stale.",
-    "Keep the next AUX memory seam explicit and removable now that bounded cross-host shadow acceptance is earned: durable support-memory distillation may publish compact priors offline, but live `Q_mem` stays zero on shipping and conformance lanes until separate proof earns re-entry."
+    "Keep the next AUX memory seam explicit and removable now that bounded cross-host shadow acceptance is earned under branch-linked continuity cues only: durable support-memory distillation may publish compact priors offline, but live `Q_mem` stays zero on shipping and conformance lanes until separate proof earns re-entry."
   ],
   "blocked_moves": [
     "Do not let archived docs or train notes act as live truth.",
     "Do not treat lab or evaluation output as product progress unless shipped runtime behavior changes.",
     "Do not hide Claude or Gemini behind backlog language when reporting conformance.",
     "Do not route raw AUX persistence or future SQLite episodes directly into runtime action selection; only distilled removable publications may re-enter.",
-    "Do not introduce host-specific policy forks to force donor coherence."
+    "Do not introduce host-specific policy forks to force donor coherence.",
+    "Do not let generic pending-goal debt, plain-English reminder text, or generic `resume*` wake cues act as branch-specific continuity anchors."
   ],
   "active_docs": [
     "docs/README.md",

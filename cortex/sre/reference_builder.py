@@ -16,7 +16,11 @@ from .feedback import (
     summarize_reference_feedback_window,
 )
 from .families import SoftControlFamily
-from .goals import GoalContinuityView, parse_resume_reminder_track
+from .goals import (
+    GoalContinuityView,
+    is_authoritative_resume_reminder,
+    parse_resume_reminder_track,
+)
 from .opportunities import HostNativeOpportunity, PROBE_FAILURE_CLASSES
 from .state import (
     ReferenceBrakeView,
@@ -296,34 +300,23 @@ def _continuity_signals(
         return "none", "absent", False
 
     reminder_track_refs = _resume_reminder_track_refs(support_snapshot.session.reminders)
-    wake_receipt_resume_present = any(
-        receipt.reason_tag.startswith("resume")
-        for receipt in support_snapshot.trace.wake_receipts
-    )
     branch_intent_present = (
         active_track_ref in pending_goal_refs
-        or bool(pending_goal_refs)
         or active_track_ref in reminder_track_refs
-        or (bool(reminder_track_refs) and len(reminder_track_refs) == 1)
-        or wake_receipt_resume_present
     )
 
-    anchor_source = "branch_registry_only"
+    anchor_source = "none"
     if active_track_ref in pending_goal_refs:
         anchor_source = "pending_goal"
-    elif active_track_ref in reminder_track_refs or (
-        reminder_track_refs and len(reminder_track_refs) == 1
-    ):
+    elif active_track_ref in reminder_track_refs:
         anchor_source = "continuity_reminder"
-    elif wake_receipt_resume_present:
-        anchor_source = "trace_wake"
 
     if missing_resume_anchor:
         anchor_freshness = "stale"
-    elif anchor_source in {"pending_goal", "continuity_reminder", "trace_wake"}:
+    elif anchor_source in {"pending_goal", "continuity_reminder"}:
         anchor_freshness = "fresh"
     else:
-        anchor_freshness = "stale" if branch_intent_present else "absent"
+        anchor_freshness = "absent"
 
     if (
         anchor_freshness == "fresh"
@@ -340,7 +333,8 @@ def _resume_reminder_track_refs(reminders: tuple[str, ...]) -> frozenset[str]:
     track_refs = {
         track_ref
         for reminder in reminders
-        if (track_ref := parse_resume_reminder_track(reminder)) is not None
+        if is_authoritative_resume_reminder(reminder)
+        and (track_ref := parse_resume_reminder_track(reminder)) is not None
     }
     return frozenset(track_refs)
 
@@ -811,8 +805,6 @@ def _resume_anchor_quality(
     quality += {
         "pending_goal": 0.05,
         "continuity_reminder": 0.04,
-        "trace_wake": 0.02,
-        "branch_registry_only": -0.05,
         "none": -0.10,
     }[anchor_source]
     if branch_intent_present and anchor_freshness != "absent":
@@ -842,8 +834,6 @@ def _merge_confidence(
     confidence += {
         "pending_goal": 0.04,
         "continuity_reminder": 0.03,
-        "trace_wake": 0.02,
-        "branch_registry_only": -0.04,
         "none": -0.08,
     }[anchor_source]
     if branch_intent_present and anchor_freshness != "absent":

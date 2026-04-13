@@ -14,6 +14,7 @@ from cortex.hosts._executive_closure import (
     executive_modulator_memory_payload,
 )
 from cortex.sre.feedback import ReferenceRealizationFeedback, ReferenceRealizationFeedbackWindow
+from cortex.sre.goals import normalize_continuity_reminder
 from cortex.hosts.reference.runtime import ReferenceRuntimeSession
 from cortex.sre.modulators import ExecutiveModulatorMemory
 
@@ -317,7 +318,7 @@ def parse_reference_runtime_session_artifact(
             continuity_truth_payload["pending_goal_refs"],
             "ReferenceRuntimeSessionArtifact.continuity_truth.pending_goal_refs",
         ),
-        continuity_reminders=_string_tuple(
+        continuity_reminders=_continuity_reminders_tuple(
             continuity_truth_payload.get("continuity_reminders", []),
             "ReferenceRuntimeSessionArtifact.continuity_truth.continuity_reminders",
         ),
@@ -421,6 +422,17 @@ def _require_continuity_truth_keys(payload: Mapping[str, Any]) -> None:
         "ReferenceRuntimeSessionArtifact.continuity_truth keys must be exactly "
         f"{expected}; missing={missing_keys}, extra={extra_keys}."
     )
+
+
+def _continuity_reminders_tuple(value: Any, label: str) -> tuple[str, ...]:
+    reminders = _string_tuple(value, label)
+    normalized: list[str] = []
+    for reminder in reminders:
+        if (canonical := normalize_continuity_reminder(reminder)) is None:
+            continue
+        if canonical not in normalized:
+            normalized.append(canonical)
+    return tuple(normalized)
 
 
 def _require_control_residue_keys(payload: Mapping[str, Any]) -> None:

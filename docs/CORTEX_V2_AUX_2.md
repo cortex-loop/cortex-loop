@@ -378,6 +378,9 @@ That evaluator must keep the overall shadow `claim_mode` separate from
 bounded structural trace observables before broader acceptance is earned, and the broader
 cross-host shadow claim may graduate to `full_cross_host` only when host-local continuity,
 positive lift, and negative stability all hold on the bounded shadow surface.
+Host-local continuity on that bounded shadow surface may only reopen from branch-linked
+pending-goal or machine continuity-reminder evidence; generic debt, generic reminder
+language, or generic `resume*` wake signals may not fabricate branch-specific continuity.
 
 ---
 

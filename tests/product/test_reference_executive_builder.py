@@ -16,6 +16,7 @@ from cortex.core.support import (
     SupportSessionState,
     SupportSnapshot,
     SupportTraceState,
+    WakeReceipt,
 )
 from cortex.drivers.reference_host import observe_reference_host_event
 from cortex.hosts.reference.runtime import ReferenceRuntimeSession
@@ -23,8 +24,47 @@ from cortex.sre.brake import BrakeState
 from cortex.sre.feedback import ReferenceRealizationFeedback
 from cortex.sre.feedback import ReferenceRealizationFeedbackWindow
 from cortex.sre.families import SoftControlFamily
+from cortex.sre.goals import make_resume_reminder
 from cortex.sre.opportunities import BoundedProbeContract, HostNativeOpportunity
 from cortex.sre.reference_builder import build_reference_executive_state
+
+
+def _build_branch_resume_state(
+    *,
+    reminders: tuple[str, ...] = (),
+    pending_goal_refs: tuple[str, ...] = (),
+    wake_receipts: tuple[WakeReceipt, ...] = (),
+) -> object:
+    return build_reference_executive_state(
+        observe_reference_host_event(
+            "ContextLoad",
+            {"session_id": "runtime-branch-resume"},
+        ).observation,
+        SupportSnapshot(
+            trace=SupportTraceState(wake_receipts=wake_receipts),
+            session=SupportSessionState(
+                branch_registry=("main", "review-track"),
+                pending_goal_refs=pending_goal_refs,
+                reminders=reminders,
+            ),
+            host=SupportHostState(),
+            exec_memory_pub=SupportExecMemoryState(),
+        ),
+        ExecutiveEnvironmentView(
+            available_query_kinds=frozenset({CAPABILITY_VIEW, EXECUTION_TRACE}),
+            host_capability_tags=frozenset({"reference-local"}),
+        ),
+        ReferenceRuntimeSession(
+            session_id="runtime-branch-resume",
+            event_index=2,
+            branch_registry=("main", "review-track"),
+            active_track_ref="review-track",
+            pending_goal_refs=pending_goal_refs,
+            budget_history=("shell-low",),
+            brake_history=("quiescent",),
+            last_selected_family=SoftControlFamily.BRANCH,
+        ),
+    )
 
 
 def test_build_reference_executive_state_for_cheap_event_stays_pass_through_and_low_budget() -> None:
@@ -263,7 +303,7 @@ def test_build_reference_executive_state_relieves_generic_probe_friction_for_fre
             session=SupportSessionState(
                 branch_registry=("main", "review-track"),
                 pending_goal_refs=("review-track-goal",),
-                reminders=("resume review-track after review",),
+                reminders=(make_resume_reminder("review-track"),),
             ),
             host=SupportHostState(),
             exec_memory_pub=SupportExecMemoryState(),
@@ -317,6 +357,49 @@ def test_build_reference_executive_state_relieves_generic_probe_friction_for_fre
             SoftControlFamily.BRAKE,
         }
     )
+
+
+def test_build_reference_executive_state_does_not_treat_unrelated_pending_goal_as_branch_intent() -> None:
+    state = _build_branch_resume_state(pending_goal_refs=("other-goal",))
+
+    assert state.goal_continuity.anchor_source == "none"
+    assert state.goal_continuity.anchor_freshness == "absent"
+    assert state.goal_continuity.branch_intent_present is False
+    assert state.goal_continuity.resume_anchor_available is False
+    assert SoftControlFamily.REDIRECT in state.control_allocation.top_family_set
+    assert SoftControlFamily.CHECK in state.control_allocation.top_family_set
+
+
+def test_build_reference_executive_state_does_not_treat_plain_english_reminder_as_authoritative() -> None:
+    state = _build_branch_resume_state(reminders=("resume deployment after review",))
+
+    assert state.goal_continuity.anchor_source == "none"
+    assert state.goal_continuity.anchor_freshness == "absent"
+    assert state.goal_continuity.branch_intent_present is False
+    assert state.goal_continuity.resume_anchor_available is False
+    assert SoftControlFamily.REDIRECT in state.control_allocation.top_family_set
+
+
+def test_build_reference_executive_state_does_not_treat_wrong_track_reminder_as_authoritative() -> None:
+    state = _build_branch_resume_state(reminders=(make_resume_reminder("branch-beta"),))
+
+    assert state.goal_continuity.anchor_source == "none"
+    assert state.goal_continuity.anchor_freshness == "absent"
+    assert state.goal_continuity.branch_intent_present is False
+    assert state.goal_continuity.resume_anchor_available is False
+    assert SoftControlFamily.REDIRECT in state.control_allocation.top_family_set
+
+
+def test_build_reference_executive_state_does_not_treat_generic_resume_wake_as_branch_intent() -> None:
+    state = _build_branch_resume_state(
+        wake_receipts=(WakeReceipt(reason_tag="resume-needed", event_name="turn/complete"),)
+    )
+
+    assert state.goal_continuity.anchor_source == "none"
+    assert state.goal_continuity.anchor_freshness == "absent"
+    assert state.goal_continuity.branch_intent_present is False
+    assert state.goal_continuity.resume_anchor_available is False
+    assert SoftControlFamily.REDIRECT in state.control_allocation.top_family_set
 
 
 def test_build_reference_executive_state_for_candidate_bearing_event_surfaces_review_mode() -> None:

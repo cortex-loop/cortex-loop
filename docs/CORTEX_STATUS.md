@@ -51,7 +51,7 @@ Answering stance:
 ## Current Focus
 
 - Current tracked train: `persistent-support-memory-distillation`
-- Active quality/risk focus: The bounded AUX cross-host shadow surface now earns `full_cross_host`: Claude, Gemini, and reference all hold host-local and reference-projected branch continuity, lawful non-reference host distinction remains explicit, and negative counterexamples stay stable. The next highest-leverage gap is durable support-memory distillation: store raw support-side episodes, publish compact removable priors offline, and keep `Q_mem = 0` on shipping and conformance lanes until live re-entry is separately earned.
+- Active quality/risk focus: The bounded AUX cross-host shadow surface still earns `full_cross_host`, now under stricter branch-linked continuity law: Claude, Gemini, and reference all hold host-local and reference-projected branch continuity without generic pending-goal debt, generic reminder language, or generic `resume*` wake cues acting as branch-specific anchors; lawful non-reference host distinction remains explicit, and negative counterexamples stay stable. The next highest-leverage gap is durable support-memory distillation: store raw support-side episodes, publish compact removable priors offline, and keep `Q_mem = 0` on shipping and conformance lanes until live re-entry is separately earned.
 - Next product train after the current focus: `inspect-execute-resume-posture-control`
 
 ## Bio-To-Code Matrix
@@ -61,7 +61,7 @@ Answering stance:
 | Truth-preserving commitments and bounded certification | Truth maintenance and reality binding | `landed` | `12` | `cortex/core`, `cortex/drivers` | `tests/product`, `tests/conformance` | Keep this foundation stable while richer executive control builds on top. |
 | Bounded correction and verified-work preservation | Error repair without losing the main task thread | `landed` | `15` | `cortex/runtime`, `cortex/sre`, `cortex/hosts/openai` | `tests/product` | Keep preservation-state repair stable while support-side experiments stay removable and off the shipping critical path. |
 | Uncertainty handling and brake | Hesitation and uncertainty-aware inhibition | `landed` | `13` | `cortex/sre` | `tests/product`, `tests/experimental` | Keep reference-derived brake and uncertainty control stable while AUX remains advisory and runtime-off-by-default. |
-| Branch continuity, suspend/resume, and truthful closure | Working memory across interruptions plus truthful closure | `landed` | `15` | `cortex/sre`, `cortex/hosts/openai` | `tests/product`, `tests/conformance` | Keep suspend/resume and truthful closure stable now that host-local branch continuity is repaired across Claude, Gemini, and reference; any future support memory must remain explicit, optional, and non-binding. |
+| Branch continuity, suspend/resume, and truthful closure | Working memory across interruptions plus truthful closure | `landed` | `15` | `cortex/sre`, `cortex/hosts/openai` | `tests/product`, `tests/conformance` | Keep suspend/resume and truthful closure stable now that host-local branch continuity is repaired across Claude, Gemini, and reference; branch-local continuity may reopen only from branch-linked cues, and any future support memory must remain explicit, optional, and non-binding. |
 | Intervention pricing versus neutrality | Deciding when to intervene, stay neutral, or stop | `landed` | `10` | `cortex/sre`, `cortex/aux` | `tests/product`, `tests/experimental` | Hold calibrated intervention pricing stable now that the bounded AUX shadow surface earns `full_cross_host`; keep bounded audit compact on the shipped lane while any future support-memory lift stays explicit and separately earned. |
 | Blocker surfacing and goal-debt management | Noticing unresolved blockers and unfinished intentions | `landed` | `10` | `cortex/sre`, `cortex/hosts/openai`, `cortex/hosts/claude`, `cortex/hosts/gemini`, `cortex/hosts/reference` | `tests/product`, `tests/conformance` | Keep typed goal-debt and closure-pressure state stable across hosts while support-side augmentation remains explicit and non-sovereign. |
 | Multi-host executive continuity | One executive across different brains and contexts | `landed` | `15` | `cortex/hosts/openai`, `cortex/hosts/claude`, `cortex/hosts/gemini`, `cortex/hosts/reference` | `tests/product`, `tests/conformance` | Hold one Cortex law across OpenAI, Claude, Gemini, and reference without flattening host-native realization. |
@@ -167,7 +167,7 @@ Workflow gates marked `required` are contractual gates checked by `repo_workflow
 
 - Keep the bounded audit surface compact and truthful on the shipped lane: selected versus realized family, uncertainty, threshold, delta, verification, and probe truth only.
 - Keep the no-spend live evidence current and explicit: fast conformance is green, the deeper directionality and host-native watchlists are refreshed, and non-shipping auth or env caveats must stay explicit instead of silently stale.
-- Keep the next AUX memory seam explicit and removable now that bounded cross-host shadow acceptance is earned: durable support-memory distillation may publish compact priors offline, but live `Q_mem` stays zero on shipping and conformance lanes until separate proof earns re-entry.
+- Keep the next AUX memory seam explicit and removable now that bounded cross-host shadow acceptance is earned under branch-linked continuity cues only: durable support-memory distillation may publish compact priors offline, but live `Q_mem` stays zero on shipping and conformance lanes until separate proof earns re-entry.
 
 ## Canonical Proof
 
@@ -189,6 +189,7 @@ Workflow gates marked `required` are contractual gates checked by `repo_workflow
 - `python3 internal/workflow/repo_workflow.py sync-main`
 - `python3 internal/workflow/repo_workflow.py start-session --agent codex --slug task-name`
 - `python3 internal/workflow/repo_workflow.py close-session --message "scope: end-state summary"`
+- `python3 internal/workflow/repo_workflow.py close-session --publish --message "scope: end-state summary"`
 - `python3 internal/workflow/repo_workflow.py cleanup-report`
 
 ## Retained Data
@@ -210,6 +211,7 @@ Workflow gates marked `required` are contractual gates checked by `repo_workflow
 - Do not hide Claude or Gemini behind backlog language when reporting conformance.
 - Do not route raw AUX persistence or future SQLite episodes directly into runtime action selection; only distilled removable publications may re-enter.
 - Do not introduce host-specific policy forks to force donor coherence.
+- Do not let generic pending-goal debt, plain-English reminder text, or generic `resume*` wake cues act as branch-specific continuity anchors.
 
 ## Active Docs
 

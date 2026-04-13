@@ -16,6 +16,7 @@ from cortex.hosts.claude.session_io import (
 from cortex.sre.brake import BrakeState
 from cortex.sre.feedback import ReferenceRealizationFeedback, ReferenceRealizationFeedbackWindow
 from cortex.sre.families import SoftControlFamily
+from cortex.sre.goals import make_resume_reminder
 
 
 def test_claude_runtime_session_artifact_roundtrips_bounded_residue() -> None:
@@ -25,7 +26,7 @@ def test_claude_runtime_session_artifact_roundtrips_bounded_residue() -> None:
         branch_registry=("main", "branch-alpha"),
         active_track_ref="branch-alpha",
         pending_goal_refs=("goal-extra",),
-        continuity_reminders=("resume branch-alpha after review",),
+        continuity_reminders=(make_resume_reminder("branch-alpha"),),
         budget_history=("shell-low", "shell-medium"),
         brake_history=("quiescent", "guarded"),
         last_selected_family=SoftControlFamily.CHECK,
@@ -46,8 +47,26 @@ def test_claude_runtime_session_artifact_roundtrips_bounded_residue() -> None:
     assert restored.budget_history == ("shell-medium",)
     assert restored.brake_history == ("guarded",)
     assert restored.last_selected_family is SoftControlFamily.CHECK
-    assert restored.continuity_reminders == ("resume branch-alpha after review",)
+    assert restored.continuity_reminders == (make_resume_reminder("branch-alpha"),)
     assert restored.feedback_window.entries[-1] == restored.last_realization_feedback
+
+
+def test_claude_runtime_session_artifact_normalizes_legacy_continuity_reminders() -> None:
+    payload = _base_payload()
+    payload["continuity_truth"]["continuity_reminders"] = ["resume branch-alpha after review"]
+
+    restored = parse_claude_runtime_session_artifact(payload)
+
+    assert restored.continuity_reminders == (make_resume_reminder("branch-alpha"),)
+
+
+def test_claude_runtime_session_artifact_accepts_legacy_continuity_truth_shape() -> None:
+    payload = _base_payload()
+    del payload["continuity_truth"]["continuity_reminders"]
+
+    restored = parse_claude_runtime_session_artifact(payload)
+
+    assert restored.continuity_reminders == ()
 
 
 def test_claude_runtime_session_artifact_rejects_unknown_keys_and_invalid_enums() -> None:
