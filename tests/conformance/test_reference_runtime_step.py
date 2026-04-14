@@ -1,5 +1,7 @@
 """Unit tests for the first reference-host runtime step kernel."""
 
+from dataclasses import replace
+
 import pytest
 
 import cortex.aux.publication as aux_publication
@@ -19,6 +21,7 @@ from cortex.sre.mediation import (
     ReferenceMediationMode,
     finalize_reference_soft_control,
 )
+from cortex.sre.operator_routing import OperatorTaskMode
 from cortex.sre.policy import neutral_dominance_decision
 from cortex.sre.reference_scoring import build_reference_allocation_scorecard
 from cortex.sre.state import (
@@ -137,6 +140,26 @@ def test_reference_runtime_step_result_surfaces_cheap_reference_event_without_co
     }
     assert result.session.feedback_window.entries == (result.session.last_realization_feedback,)
     assert result.session_summary["feedback_window_size"] == 1
+
+
+def test_reference_runtime_step_cheap_continuity_debt_surfaces_resume_posture() -> None:
+    result = run_reference_runtime_step(
+        "ContextLoad",
+        {
+            "session_id": "session-reference-resume-posture",
+            "branch_operation": "open",
+            "branch_track_ref": "branch-alpha",
+        },
+    )
+
+    assert result.executive_state.mode_and_gating.task_mode is OperatorTaskMode.RESUME_EXECUTE
+    assert result.executive_signal_summary.task_mode is OperatorTaskMode.RESUME_EXECUTE
+    assert result.executive_state_summary["posture"] == "resume"
+    assert result.operator_route_payload["route_profile"] == "continuity_standard"
+    assert result.operator_route_payload["route_budget"]["allow_resume"] is True
+    assert result.operator_route_payload["visible_burden_sensitivity"] == pytest.approx(
+        result.executive_state.control_allocation.visible_burden_scale
+    )
 
 
 def test_reference_runtime_step_selects_seek_context_when_capability_view_is_missing() -> None:
@@ -341,7 +364,10 @@ def test_reference_runtime_step_replay_publication_can_lift_check_allocation_wit
     monkeypatch.setattr(
         reference_runtime,
         "build_reference_executive_state",
-        lambda *args, **kwargs: scenario.executive_state,
+        lambda *args, **kwargs: _scenario_executive_state_with_task_mode(
+            scenario,
+            kwargs["task_mode"],
+        ),
     )
     monkeypatch.setattr(
         reference_runtime,
@@ -479,7 +505,10 @@ def test_reference_runtime_step_replay_publication_can_lift_branch_allocation_wi
     monkeypatch.setattr(
         reference_runtime,
         "build_reference_executive_state",
-        lambda *args, **kwargs: scenario.executive_state,
+        lambda *args, **kwargs: _scenario_executive_state_with_task_mode(
+            scenario,
+            kwargs["task_mode"],
+        ),
     )
     monkeypatch.setattr(
         reference_runtime,
@@ -523,7 +552,10 @@ def test_reference_runtime_step_replay_publication_can_lift_retrieval_reuse_with
     monkeypatch.setattr(
         reference_runtime,
         "build_reference_executive_state",
-        lambda *args, **kwargs: scenario.executive_state,
+        lambda *args, **kwargs: _scenario_executive_state_with_task_mode(
+            scenario,
+            kwargs["task_mode"],
+        ),
     )
     monkeypatch.setattr(
         reference_runtime,
@@ -571,7 +603,10 @@ def test_reference_runtime_step_replay_negative_case_keeps_payload_shape_and_com
     monkeypatch.setattr(
         reference_runtime,
         "build_reference_executive_state",
-        lambda *args, **kwargs: scenario.executive_state,
+        lambda *args, **kwargs: _scenario_executive_state_with_task_mode(
+            scenario,
+            kwargs["task_mode"],
+        ),
     )
     monkeypatch.setattr(
         reference_runtime,
@@ -610,7 +645,10 @@ def test_reference_runtime_step_burden_heavy_replay_case_does_not_create_false_p
     monkeypatch.setattr(
         reference_runtime,
         "build_reference_executive_state",
-        lambda *args, **kwargs: scenario.executive_state,
+        lambda *args, **kwargs: _scenario_executive_state_with_task_mode(
+            scenario,
+            kwargs["task_mode"],
+        ),
     )
     monkeypatch.setattr(
         reference_runtime,
@@ -1322,6 +1360,19 @@ def _reference_replay_case_result(scenario_id: str):
     return evaluate_aux_reference_q_mem_replay((scenario,)).case_results[0]
 
 
+def _scenario_executive_state_with_task_mode(
+    scenario,
+    task_mode: OperatorTaskMode,
+) -> ReferenceExecutiveState:
+    return replace(
+        scenario.executive_state,
+        mode_and_gating=replace(
+            scenario.executive_state.mode_and_gating,
+            task_mode=task_mode,
+        ),
+    )
+
+
 def _score_payload_for_family(
     scores: list[dict[str, object]],
     family: str,
@@ -1345,6 +1396,7 @@ def _latched_state_with_evidence(*args: object, **kwargs: object) -> ReferenceEx
         ),
         mode_and_gating=ReferenceModeAndGatingView(
             mode_tag="latched_review",
+            task_mode=_task_mode_from_kwargs(kwargs),
             family_mask=frozenset(
                 {
                     SoftControlFamily.NEUTRAL,
@@ -1381,6 +1433,7 @@ def _latched_state_without_evidence(*args: object, **kwargs: object) -> Referenc
         ),
         mode_and_gating=ReferenceModeAndGatingView(
             mode_tag="latched_review",
+            task_mode=_task_mode_from_kwargs(kwargs),
             family_mask=frozenset(
                 {
                     SoftControlFamily.NEUTRAL,
@@ -1421,6 +1474,7 @@ def _latched_state_with_host_capability_gap(
         ),
         mode_and_gating=ReferenceModeAndGatingView(
             mode_tag="latched_review",
+            task_mode=_task_mode_from_kwargs(kwargs),
             family_mask=frozenset(
                 {
                     SoftControlFamily.NEUTRAL,
@@ -1462,6 +1516,7 @@ def _guarded_state_with_feedback_pressure(
         ),
         mode_and_gating=ReferenceModeAndGatingView(
             mode_tag="guarded_review",
+            task_mode=_task_mode_from_kwargs(kwargs),
             family_mask=frozenset(
                 {
                     SoftControlFamily.NEUTRAL,
@@ -1496,6 +1551,7 @@ def _state_with_ordered_family_mask(*args: object, **kwargs: object) -> Referenc
         ),
         mode_and_gating=ReferenceModeAndGatingView(
             mode_tag="ordered_mask",
+            task_mode=_task_mode_from_kwargs(kwargs),
             family_mask=frozenset(
                 {
                     SoftControlFamily.ESCALATE,
@@ -1529,6 +1585,7 @@ def _state_with_tied_uncertainty_sources(
         ),
         mode_and_gating=ReferenceModeAndGatingView(
             mode_tag="tied_sources",
+            task_mode=_task_mode_from_kwargs(kwargs),
             family_mask=frozenset(
                 {
                     SoftControlFamily.NEUTRAL,
@@ -1542,3 +1599,9 @@ def _state_with_tied_uncertainty_sources(
         ),
         brake=ReferenceBrakeView(brake_state=BrakeState.QUIESCENT),
     )
+
+
+def _task_mode_from_kwargs(kwargs: dict[str, object]) -> OperatorTaskMode:
+    task_mode = kwargs.get("task_mode", OperatorTaskMode.EXECUTE)
+    assert isinstance(task_mode, OperatorTaskMode)
+    return task_mode

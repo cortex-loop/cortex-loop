@@ -58,6 +58,7 @@ from cortex.sre.feedback import (
     summarize_reference_feedback_window,
 )
 from cortex.hosts._executive_closure import (
+    assert_runtime_posture_alignment,
     build_runtime_executive_signal_summary_inputs,
     build_runtime_operator_task_state,
     closure_reason_tags as shared_closure_reason_tags,
@@ -1059,6 +1060,7 @@ def run_openai_runtime_step(
         audit_projection=audit_projection,
     )
     executive_summary_inputs = build_runtime_executive_signal_summary_inputs(
+        task_mode=runtime_task_mode,
         executive_state=executive_state,
         dispatch_decision=dispatch_decision,
         active_track_ref=provisional_session.active_track_ref,
@@ -1079,8 +1081,11 @@ def run_openai_runtime_step(
         ),
         preservation_active=carried_preservation_state is not None,
     )
-    executive_signal_summary = build_executive_signal_summary(
-        executive_summary_inputs
+    executive_signal_summary = build_executive_signal_summary(executive_summary_inputs)
+    assert_runtime_posture_alignment(
+        runtime_task_mode=runtime_task_mode,
+        executive_state=executive_state,
+        executive_signal_summary=executive_signal_summary,
     )
     executive_modulator_update = update_executive_modulators(
         executive_signal_summary,

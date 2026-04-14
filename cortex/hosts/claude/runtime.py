@@ -40,6 +40,7 @@ from cortex.drivers.claude_host import (
 )
 from cortex.drivers.claude_host_commitment import bind_claude_host_candidate
 from cortex.hosts._executive_closure import (
+    assert_runtime_posture_alignment,
     build_runtime_operator_task_state,
     build_runtime_executive_signal_summary_inputs,
     canonicalize_executive_modulator_memory,
@@ -795,6 +796,7 @@ def run_claude_runtime_step(
         executive_modulator_memory=prior_session.executive_modulator_memory,
     )
     executive_summary_inputs = build_runtime_executive_signal_summary_inputs(
+        task_mode=runtime_task_mode,
         executive_state=executive_state,
         dispatch_decision=dispatch_decision,
         active_track_ref=provisional_session.active_track_ref,
@@ -816,6 +818,11 @@ def run_claude_runtime_step(
         preservation_active=False,
     )
     executive_signal_summary = build_executive_signal_summary(executive_summary_inputs)
+    assert_runtime_posture_alignment(
+        runtime_task_mode=runtime_task_mode,
+        executive_state=executive_state,
+        executive_signal_summary=executive_signal_summary,
+    )
     executive_modulator_update = update_executive_modulators(
         executive_signal_summary,
         previous=prior_session.executive_modulator_memory,

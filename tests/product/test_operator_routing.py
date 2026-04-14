@@ -141,6 +141,7 @@ def test_build_operator_route_diagnostics_exposes_state_and_budget() -> None:
     assert payload["route_profile"] == "inspect_light"
     assert payload["state_vector"] == [0.2, 0.0, 0.0, 0.35, 0.0, 0.0]
     assert payload["quota_pressure"] == 0.0
+    assert payload["visible_burden_sensitivity"] == 0.8
     assert payload["blocked_reason"] is None
     assert payload["route_budget"]["max_turns"] == 1
     assert payload["modulator_state"] == {

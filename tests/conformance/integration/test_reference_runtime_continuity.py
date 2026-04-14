@@ -76,6 +76,24 @@ def test_reference_runtime_cli_preserves_open_suspend_resume_merge_continuity_in
         "branch-alpha",
         "main",
     ]
+    assert [record["executive_state_summary"]["posture"] for record in records] == [
+        "resume",
+        "resume",
+        "resume",
+        "execute",
+    ]
+    assert [record["operator_route"]["route_profile"] for record in records] == [
+        "continuity_standard",
+        "continuity_standard",
+        "continuity_standard",
+        "execute_standard",
+    ]
+    assert [record["operator_route"]["route_budget"]["allow_resume"] for record in records] == [
+        True,
+        True,
+        True,
+        False,
+    ]
     assert [record["executive_state_summary"]["pending_goal_refs"] for record in records] == [
         [],
         ["branch-alpha"],

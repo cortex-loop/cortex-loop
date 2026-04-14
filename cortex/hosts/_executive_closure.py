@@ -20,6 +20,7 @@ from cortex.sre.state import ReferenceExecutiveState
 
 def build_runtime_executive_signal_summary_inputs(
     *,
+    task_mode: OperatorTaskMode,
     executive_state: ReferenceExecutiveState,
     dispatch_decision: DispatchDecision,
     active_track_ref: str,
@@ -35,6 +36,12 @@ def build_runtime_executive_signal_summary_inputs(
     recent_warning_bearing_success_present: bool,
     preservation_active: bool,
 ) -> ExecutiveSignalSummaryInputs:
+    if not isinstance(task_mode, OperatorTaskMode):
+        actual_type = type(task_mode).__name__
+        raise TypeError(
+            "build_runtime_executive_signal_summary_inputs.task_mode must be "
+            f"OperatorTaskMode, got {actual_type}."
+        )
     closure_pressure_state = build_closure_pressure_state(
         active_track_ref=active_track_ref,
         pending_goal_refs=pending_goal_refs,
@@ -50,17 +57,6 @@ def build_runtime_executive_signal_summary_inputs(
             executive_state.control_allocation.budget_band
         ),
         brake_state=executive_state.brake.brake_state,
-    )
-    task_mode = task_mode_for_runtime(
-        dispatch_decision=dispatch_decision,
-        active_track_ref=active_track_ref,
-        pending_goal_refs=pending_goal_refs,
-        continuity_warnings=continuity_warnings,
-        continuity_reminders=continuity_reminders,
-        approval_required=approval_required,
-        evidence_gap=evidence_gap,
-        consequential_write_pending=consequential_write_pending,
-        preservation_active=preservation_active,
     )
     return ExecutiveSignalSummaryInputs(
         task_mode=task_mode,
@@ -89,6 +85,57 @@ def build_runtime_executive_signal_summary_inputs(
             or preservation_active
         ),
     )
+
+
+def assert_runtime_posture_alignment(
+    *,
+    runtime_task_mode: OperatorTaskMode,
+    executive_state: ReferenceExecutiveState,
+    executive_signal_summary,
+) -> None:
+    from cortex.sre.executive_summary import ExecutiveSignalSummary
+
+    if not isinstance(runtime_task_mode, OperatorTaskMode):
+        actual_type = type(runtime_task_mode).__name__
+        raise TypeError(
+            "assert_runtime_posture_alignment.runtime_task_mode must be "
+            f"OperatorTaskMode, got {actual_type}."
+        )
+    if not isinstance(executive_state, ReferenceExecutiveState):
+        actual_type = type(executive_state).__name__
+        raise TypeError(
+            "assert_runtime_posture_alignment.executive_state must be "
+            f"ReferenceExecutiveState, got {actual_type}."
+        )
+    if not isinstance(executive_signal_summary, ExecutiveSignalSummary):
+        actual_type = type(executive_signal_summary).__name__
+        raise TypeError(
+            "assert_runtime_posture_alignment.executive_signal_summary must be "
+            f"ExecutiveSignalSummary, got {actual_type}."
+        )
+    executive_task_mode = executive_state.mode_and_gating.task_mode
+    summary_task_mode = executive_signal_summary.task_mode
+    public_posture = public_posture_for_task_mode(runtime_task_mode)
+    if executive_task_mode is not runtime_task_mode:
+        raise ValueError(
+            "runtime posture drift: executive_state.mode_and_gating.task_mode "
+            f"{executive_task_mode.value!r} != runtime_task_mode {runtime_task_mode.value!r}."
+        )
+    if summary_task_mode is not runtime_task_mode:
+        raise ValueError(
+            "runtime posture drift: executive_signal_summary.task_mode "
+            f"{summary_task_mode.value!r} != runtime_task_mode {runtime_task_mode.value!r}."
+        )
+    if public_posture_for_task_mode(executive_task_mode) != public_posture:
+        raise ValueError(
+            "runtime posture drift: executive_state public posture "
+            f"{public_posture_for_task_mode(executive_task_mode)!r} != runtime public posture {public_posture!r}."
+        )
+    if public_posture_for_task_mode(summary_task_mode) != public_posture:
+        raise ValueError(
+            "runtime posture drift: executive_signal_summary public posture "
+            f"{public_posture_for_task_mode(summary_task_mode)!r} != runtime public posture {public_posture!r}."
+        )
 
 
 def task_mode_for_runtime(
@@ -303,6 +350,7 @@ def _latest_probe_feedback(
 
 
 __all__ = [
+    "assert_runtime_posture_alignment",
     "build_runtime_operator_task_state",
     "build_runtime_executive_signal_summary_inputs",
     "canonicalize_executive_modulator_memory",

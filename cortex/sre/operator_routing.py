@@ -505,6 +505,9 @@ def build_operator_route_diagnostics(
         "state_vector": [round(value, 4) for value in state.as_vector()],
         "quota_pressure": round(float(state.quota_pressure), 4),
         "host_friction": round(float(state.host_friction), 4),
+        "visible_burden_sensitivity": round(
+            float(state.visible_burden_sensitivity), 4
+        ),
         "blocked_reason": decision.blocked_reason,
         "modulator_summary": decision.summary.as_payload(),
         "modulator_memory": decision.modulator_memory.as_payload(),

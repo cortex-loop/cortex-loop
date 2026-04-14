@@ -207,6 +207,24 @@ def _assert_locked_continuity_flow(records: list[dict[str, object]]) -> None:
     assert records[3]["closure_reason_tags"] == []
     assert records[0]["journal"]["active_track_ref"] == "branch-alpha"
     assert records[0]["journal"]["active_goal_ref"] == "branch-alpha"
+    assert [record["executive_state"]["posture"] for record in records] == [
+        "resume",
+        "resume",
+        "resume",
+        "execute",
+    ]
+    assert [record["operator_route"]["route_profile"] for record in records] == [
+        "continuity_standard",
+        "continuity_standard",
+        "continuity_standard",
+        "execute_guarded",
+    ]
+    assert [record["operator_route"]["route_budget"]["allow_resume"] for record in records] == [
+        True,
+        True,
+        True,
+        False,
+    ]
     assert "continuity-debt:pending-goals" in records[1]["warnings"]
     assert records[1]["journal"]["active_track_ref"] == "main"
     assert records[1]["journal"]["pending_goal_refs"] == ["branch-alpha"]

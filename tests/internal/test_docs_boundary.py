@@ -241,19 +241,23 @@ def test_status_registry_is_complete_and_stable() -> None:
     assert status["conformance_summary"]["shipping_default"] == "openai:operator_cli"
     assert status["work_today"]["slug"] == "selective-anti-thrash-with-creativity-budget"
     assert "full_cross_host" in status["work_today"]["note"]
-    assert "posture-sensitive online control is now landed" in status["work_today"]["note"].lower()
+    assert "posture-sensitive online control is now s-tier closed" in status["work_today"]["note"].lower()
     assert "cheap non-debt events recover `inspect`" in status["work_today"]["note"]
     assert "bounded operator-route truth" in status["work_today"]["note"]
+    assert "`visible_burden_sensitivity` surfaced outside the 6-axis geometry vector" in status["work_today"]["note"]
     assert "Q_mem = 0" in status["work_today"]["note"]
     assert status["next_product_train"]["slug"] == "bounded-live-support-memory-reentry"
     assert status["next_product_train"]["surface"] == "experimental + product"
     assert "explicit distilled support priors" in status["next_product_train"]["executive_benefit"]
+    assert "single-owner posture truth" in status["next_product_train"]["why_now"]
     assert "anti-thrash becomes the current train" in status["next_product_train"]["why_now"]
     assert "contradiction and TTL invalidation" in status["next_product_train"]["primary_metric"]
     assert "Keep the bounded audit surface compact and truthful" in status["where_to_work"][0]
     assert "no-spend live evidence current and explicit" in status["where_to_work"][1]
-    assert "posture-sensitive online control is landed" in status["where_to_work"][2]
+    assert "posture-sensitive online control is s-tier closed" in status["where_to_work"][2].lower()
     assert "inspect is live on cheap non-debt events" in status["where_to_work"][2]
+    assert "posture truth is single-owned" in status["where_to_work"][2]
+    assert "6-axis geometry term" in status["where_to_work"][2]
     assert "route truth stays bounded and non-sovereign" in status["where_to_work"][2]
     assert "live `Q_mem` stays zero" in status["where_to_work"][2]
     closure_gates = {gate["id"]: gate for gate in status["closure_gates"]}
@@ -293,9 +297,10 @@ def test_generated_status_doc_includes_system_map_and_next_product_train() -> No
     assert "| `cleanup_report` | `required` |" in text
     assert "`selective-anti-thrash-with-creativity-budget`" in text
     assert "full_cross_host" in text
-    assert "posture-sensitive online control is now landed" in text.lower()
+    assert "posture-sensitive online control is now s-tier closed" in text.lower()
     assert "cheap non-debt events recover `inspect`" in text
     assert "bounded operator-route truth" in text
+    assert "`visible_burden_sensitivity`" in text
 
 
 def test_front_door_surfaces_point_to_local_first_and_explicit_publish_closeout() -> None:

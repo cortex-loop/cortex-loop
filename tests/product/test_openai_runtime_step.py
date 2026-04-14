@@ -2,6 +2,10 @@
 
 from __future__ import annotations
 
+from cortex.hosts._executive_closure import (
+    public_posture_for_task_mode,
+    task_mode_for_runtime,
+)
 import pytest
 
 import cortex.hosts.openai.runtime as openai_runtime
@@ -15,6 +19,7 @@ from cortex.sre.goals import GoalContinuityView
 from cortex.sre.executive_summary import ExecutiveSignalSummary
 from cortex.sre.families import SoftControlFamily
 from cortex.sre.modulators import ExecutiveModulatorMemory
+from cortex.sre.operator_routing import OperatorTaskMode
 from cortex.sre.policy_view import ExecutivePolicyView
 from cortex.sre.state import (
     ReferenceBrakeView,
@@ -307,6 +312,22 @@ def test_openai_runtime_step_cheap_seek_context_pressure_now_checks() -> None:
     assert result.operator_route_payload["route_profile"] == "inspect_light"
     assert result.operator_route_payload["route_budget"]["allow_extra_read_pass"] is True
     assert result.operator_route_payload["route_budget"]["max_retries"] == 1
+    assert result.executive_state.mode_and_gating.task_mode is OperatorTaskMode.INSPECT
+    assert result.executive_signal_summary.task_mode is OperatorTaskMode.INSPECT
+    assert result.executive_state_summary["posture"] == public_posture_for_task_mode(
+        result.executive_signal_summary.task_mode
+    )
+    assert task_mode_for_runtime(
+        dispatch_decision=result.dispatch_decision,
+        active_track_ref=result.executive_state.goal_continuity.active_track_ref,
+        pending_goal_refs=result.executive_state.goal_continuity.pending_goal_refs,
+        continuity_warnings=result.warnings,
+        continuity_reminders=(),
+        approval_required=False,
+        evidence_gap=False,
+        consequential_write_pending=False,
+        preservation_active=False,
+    ) is result.executive_signal_summary.task_mode
     assert result.closure_required is False
     assert result.closure_reason_tags == ()
     assert result.session.next_recommended_move == "check"
@@ -390,6 +411,43 @@ def test_openai_runtime_step_suspend_surfaces_pending_goal_debt() -> None:
         "pending_goal_debt",
     )
     assert suspended.session.next_recommended_move == "check"
+
+
+def test_openai_runtime_step_cheap_continuity_debt_surfaces_resume_posture_and_alignment() -> None:
+    result = run_openai_runtime_step(
+        "response.output_text.delta",
+        {
+            "session_id": "oa-resume-posture",
+            "response_id": "resp-resume-posture",
+            "branch_operation": "open",
+            "branch_track_ref": "branch-alpha",
+            "delta": "open",
+        },
+        OpenAIRuntimeSession(session_id="oa-resume-posture"),
+    )
+
+    assert result.executive_state.mode_and_gating.task_mode is OperatorTaskMode.RESUME_EXECUTE
+    assert result.executive_signal_summary.task_mode is OperatorTaskMode.RESUME_EXECUTE
+    assert result.executive_state_summary["posture"] == "resume"
+    assert result.executive_state_summary["posture"] == public_posture_for_task_mode(
+        result.executive_signal_summary.task_mode
+    )
+    assert task_mode_for_runtime(
+        dispatch_decision=result.dispatch_decision,
+        active_track_ref=result.executive_state.goal_continuity.active_track_ref,
+        pending_goal_refs=result.executive_state.goal_continuity.pending_goal_refs,
+        continuity_warnings=result.warnings,
+        continuity_reminders=(),
+        approval_required=False,
+        evidence_gap=False,
+        consequential_write_pending=False,
+        preservation_active=False,
+    ) is result.executive_signal_summary.task_mode
+    assert result.operator_route_payload["route_profile"] == "continuity_standard"
+    assert result.operator_route_payload["route_budget"]["allow_resume"] is True
+    assert result.operator_route_payload["visible_burden_sensitivity"] == pytest.approx(
+        result.executive_state.control_allocation.visible_burden_scale
+    )
 
 
 def test_openai_runtime_step_resume_without_anchor_rejects_and_forces_check() -> None:
@@ -483,6 +541,7 @@ def test_openai_runtime_step_latched_brake_requires_closure_even_when_product_de
                 }
             ),
             top_family_set=frozenset({SoftControlFamily.NEUTRAL}),
+            task_mode=kwargs.get("task_mode", OperatorTaskMode.EXECUTE),
         ),
     )
 
@@ -500,6 +559,37 @@ def test_openai_runtime_step_latched_brake_requires_closure_even_when_product_de
     assert result.closure_required is True
     assert result.closure_reason_tags == ("latched_brake",)
     assert result.session.next_recommended_move == "check"
+
+
+def test_openai_runtime_step_blocked_route_remains_non_sovereign_and_surfaces_burden_diagnostics() -> None:
+    result = run_openai_runtime_step(
+        "response.completed",
+        {
+            "session_id": "oa-blocked-route",
+            "response_id": "resp-blocked-route",
+            "commitment_id": "oa-blocked-route-commit",
+            "externally_consequential": True,
+            "result_artifact_ref": "oa-blocked-route-artifact",
+        },
+        OpenAIRuntimeSession(session_id="oa-blocked-route"),
+    )
+
+    assert result.operator_route_payload["route_profile"] == "blocked"
+    assert result.operator_route_payload["blocked_reason"] == (
+        "blocked_by_modulator_stop_pressure"
+    )
+    assert result.operator_route_payload["visible_burden_sensitivity"] == pytest.approx(
+        result.executive_state.control_allocation.visible_burden_scale
+    )
+    assert result.product_decision.as_summary() == {
+        "decision": "check",
+        "consequential_write_pending": True,
+        "approval_required": True,
+        "evidence_gap": False,
+        "continuation_debt": False,
+        "failure_class": None,
+    }
+    assert result.commitment_result_kind == "certified"
 
 
 def test_openai_runtime_step_degradation_pressure_requires_closure_without_new_warning_strings() -> None:
@@ -671,6 +761,7 @@ def _reference_state(
     uncertainty_levels: tuple[tuple[str, float], ...],
     family_mask: frozenset[SoftControlFamily],
     top_family_set: frozenset[SoftControlFamily],
+    task_mode: OperatorTaskMode = OperatorTaskMode.EXECUTE,
 ) -> ReferenceExecutiveState:
     return ReferenceExecutiveState(
         goal_continuity=GoalContinuityView(active_track_ref="main"),
@@ -683,6 +774,7 @@ def _reference_state(
         ),
         mode_and_gating=ReferenceModeAndGatingView(
             mode_tag="pass_through",
+            task_mode=task_mode,
             family_mask=family_mask,
         ),
         control_allocation=ReferenceControlAllocationView(

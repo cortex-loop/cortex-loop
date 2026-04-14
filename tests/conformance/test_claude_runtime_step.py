@@ -3,6 +3,7 @@
 import pytest
 
 from cortex.hosts.claude.runtime import run_claude_runtime_step
+from cortex.sre.operator_routing import OperatorTaskMode
 
 
 def test_claude_runtime_step_rejects_canonical_cortex_event_name_before_runtime_processing() -> None:
@@ -74,3 +75,22 @@ def test_claude_runtime_step_can_raise_audit_projection_from_explicit_request() 
     assert projection["probe_path_state"] == "unavailable"
     assert projection["probe_result_class"] is None
     assert projection["probe_unavailable_reason"] == "documented-probe-surface-unavailable"
+
+
+def test_claude_runtime_step_cheap_continuity_debt_surfaces_resume_posture() -> None:
+    result = run_claude_runtime_step(
+        "content_block_delta",
+        {
+            "session_id": "cl-resume-posture",
+            "message_id": "cl-msg-resume-posture",
+            "branch_operation": "open",
+            "branch_track_ref": "branch-alpha",
+            "delta": "open",
+        },
+    )
+
+    assert result.executive_state.mode_and_gating.task_mode is OperatorTaskMode.RESUME_EXECUTE
+    assert result.executive_signal_summary.task_mode is OperatorTaskMode.RESUME_EXECUTE
+    assert result.executive_state_summary["posture"] == "resume"
+    assert result.operator_route_payload["route_profile"] == "continuity_standard"
+    assert result.operator_route_payload["route_budget"]["allow_resume"] is True
