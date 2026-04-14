@@ -8,6 +8,22 @@ from typing import Any
 
 from cortex.drivers.openai_host import is_raw_openai_host_event_name
 
+_RESERVED_ACTION_REQUEST_KEYS = frozenset(
+    {
+        "action_tag",
+        "request",
+        "model",
+        "input",
+        "instructions",
+        "metadata",
+        "max_output_tokens",
+        "stream",
+        "work_contract",
+        "offline_publication",
+        "audit_intensity",
+    }
+)
+
 
 @dataclass(frozen=True, slots=True)
 class OpenAIHostEventEnvelope:
@@ -58,6 +74,13 @@ def parse_openai_host_event_envelope(record: Mapping[str, Any]) -> OpenAIHostEve
         raise ValueError(
             "Raw OpenAI host transcript record `type` must be a raw OpenAI host event name, "
             "not a canonical Cortex event name."
+        )
+    reserved_keys = sorted(set(record) & _RESERVED_ACTION_REQUEST_KEYS)
+    if reserved_keys:
+        raise ValueError(
+            "Raw OpenAI host transcript record must not include response-stream control keys; "
+            f"found unsupported transcript baggage: {', '.join(reserved_keys)}. "
+            "Use `/v1/actions/response-stream` for explicit control payloads."
         )
 
     payload = {key: value for key, value in record.items() if key != "type"}

@@ -143,6 +143,8 @@ def test_gemini_runtime_session_artifact_roundtrips_feedback_task_mode_and_probe
         task_mode=OperatorTaskMode.INSPECT,
         commitment_result_kind="certified",
         host_friction_tags=("approval-boundary-present",),
+        evidence_progress_class="artifact",
+        continuity_progress_class="none",
         probe_result_class="succeeded",
     )
     payload = _base_payload()

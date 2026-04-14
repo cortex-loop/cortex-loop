@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import pytest
 
+from cortex.aux.publication import offline_support_publication_as_payload
+from cortex.core.envelopes import MetadataField
 from tests.product._verified_work_fixtures import VALID_FILE_MAP, render_full_files_result
 
 from cortex.hosts.openai.runtime import OpenAIRuntimeSession
@@ -16,6 +18,7 @@ from cortex.hosts.openai.service import (
     handle_openai_service_request,
     import_openai_service_session,
 )
+from tests.experimental._aux_test_support import make_support_ref
 
 
 def test_openai_service_state_constructs_cleanly() -> None:
@@ -109,6 +112,44 @@ def test_openai_service_action_roundtrips_records_with_fake_transport() -> None:
     assert state.session_loaded is True
 
 
+def test_openai_service_action_roundtrips_memory_reentry_diagnostics_with_explicit_publication() -> None:
+    payload = {
+        "action_tag": "openai-response-stream",
+        "request": {
+            "model": "gpt-5.4",
+            "input": "hello",
+            "offline_publication": offline_support_publication_as_payload(
+                _offline_publication()
+            ),
+        },
+    }
+    state = OpenAIServiceState()
+
+    result = handle_openai_service_action(
+        payload,
+        state,
+        outbound_transport=lambda _: [
+            {
+                "type": "response.created",
+                "session_id": "oa-service-memory",
+                "response_id": "resp-service-memory-1",
+            },
+            {
+                "type": "response.output_text.delta",
+                "session_id": "oa-service-memory",
+                "response_id": "resp-service-memory-1",
+                "delta": "hello",
+            },
+        ],
+    )
+
+    memory_reentry = result["records"][0]["control_ledger"]["allocation_diagnostics"][
+        "memory_reentry"
+    ]
+    assert memory_reentry["target_host_name"] == "openai"
+    assert memory_reentry["state"] in {"active", "inactive"}
+
+
 def test_openai_service_action_roundtrips_verified_work_payload(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -174,3 +215,17 @@ def test_openai_service_action_roundtrips_verified_work_payload(
     assert state.session.next_recommended_move == "continue"
     assert state.session.executive_modulator_memory is not None
     assert state.session_loaded is True
+
+
+def _offline_publication():
+    from cortex.aux.publication import OfflineSupportPublication
+
+    return OfflineSupportPublication(
+        contradiction_summary_refs=(make_support_ref("contradiction", "host-degraded"),),
+        publication_tags=frozenset({"aux/offline-publication"}),
+        notes=("support-side only",),
+        metadata=(
+            MetadataField("source", "aux/distillation"),
+            MetadataField("host_name", "openai"),
+        ),
+    )

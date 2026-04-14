@@ -37,14 +37,15 @@ from cortex.drivers._commitment_common import (
 from cortex.drivers.reference_host import BoundReferenceHostEvent, observe_reference_host_event
 from cortex.drivers.reference_host_commitment import bind_reference_host_candidate
 from cortex.hosts._executive_closure import (
+    assert_post_step_feedback_window_alignment,
     assert_runtime_posture_alignment,
     build_shared_realization_feedback,
     build_runtime_operator_task_state,
     build_runtime_executive_signal_summary_inputs,
     canonicalize_executive_modulator_memory,
+    classify_runtime_progress_signal,
     closure_reason_tags,
-    continuity_improved_for_runtime,
-    evidence_state_moved_for_runtime,
+    probe_result_class_for_runtime,
     public_posture_for_task_mode,
     recent_probe_failure_class as recent_probe_failure_class_from_feedback_window,
     recent_warning_bearing_success_present,
@@ -779,7 +780,7 @@ def run_reference_runtime_step(
         probe_unavailable_reason=(
             executive_state.control_allocation.probe_unavailable_reason
         ),
-        probe_result_class=_probe_result_class(
+        probe_result_class=probe_result_class_for_runtime(
             realized_family=realized_family,
             executive_state=executive_state,
             opportunities=opportunities,
@@ -842,6 +843,13 @@ def run_reference_runtime_step(
         allocation_diagnostics=allocation_diagnostics,
         audit_projection=audit_projection,
     )
+    progress_signal = classify_runtime_progress_signal(
+        dispatch_decision=dispatch_decision,
+        normalized_payload=normalized_payload,
+        commitment_result_kind=commitment_result_kind,
+        prior_session=prior_session,
+        provisional_session=provisional_session,
+    )
     realization_feedback = build_shared_realization_feedback(
         task_mode=runtime_task_mode,
         selected_family=selected_family,
@@ -852,16 +860,8 @@ def run_reference_runtime_step(
         host_friction_tags=tuple(
             sorted(executive_state.control_allocation.host_friction_tags)
         ),
-        evidence_state_moved=evidence_state_moved_for_runtime(
-            dispatch_decision=dispatch_decision,
-            normalized_payload=normalized_payload,
-            commitment_result_kind=commitment_result_kind,
-        ),
-        continuity_improved=continuity_improved_for_runtime(
-            prior_session=prior_session,
-            provisional_session=provisional_session,
-        ),
-        probe_result_class=_probe_result_class(
+        progress_signal=progress_signal,
+        probe_result_class=probe_result_class_for_runtime(
             realized_family=realized_family,
             executive_state=executive_state,
             opportunities=opportunities,
@@ -955,6 +955,14 @@ def run_reference_runtime_step(
             executive_modulator_update.next_memory
         ),
     )
+    post_feedback_window_summary = summarize_reference_feedback_window(
+        updated_session.feedback_window
+    )
+    assert_post_step_feedback_window_alignment(
+        feedback_window=updated_session.feedback_window,
+        last_realization_feedback=updated_session.last_realization_feedback,
+        feedback_window_summary=post_feedback_window_summary,
+    )
     return ReferenceRuntimeStepResult(
         event_index=updated_session.event_index,
         bound_event=bound_event,
@@ -964,7 +972,7 @@ def run_reference_runtime_step(
         realized_family=realized_family,
         brake_state=brake_state,
         control_ledger=control_ledger,
-        feedback_window_summary=prior_feedback_window_summary,
+        feedback_window_summary=post_feedback_window_summary,
         executive_signal_summary=executive_signal_summary,
         executive_modulator_state=executive_modulator_update.state,
         executive_policy_view=executive_policy_view,
@@ -1580,24 +1588,6 @@ def _has_realizable_seek_context_opportunity(
         and SoftControlFamily.SEEK_CONTEXT in opportunity.supported_families
         for opportunity in opportunities
     )
-
-
-def _probe_result_class(
-    *,
-    realized_family: SoftControlFamily,
-    executive_state: ReferenceExecutiveState,
-    opportunities: tuple[HostNativeOpportunity, ...],
-) -> str | None:
-    if realized_family not in executive_state.control_allocation.probe_backed_families:
-        return None
-    for opportunity in opportunities:
-        if (
-            opportunity.realizable
-            and opportunity.probe_contract is not None
-            and opportunity.probe_contract.allowed_family is realized_family
-        ):
-            return "succeeded"
-    return None
 
 
 def _primary_reason(warnings: tuple[str, ...]) -> str | None:

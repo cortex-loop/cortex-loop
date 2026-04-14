@@ -6,6 +6,11 @@ import json
 
 import pytest
 
+from cortex.aux.publication import (
+    OfflineSupportPublication,
+    offline_support_publication_as_payload,
+)
+from cortex.core.envelopes import MetadataField
 from cortex.hosts.openai.runtime import OpenAIRuntimeSession, run_openai_runtime_step
 from cortex.hosts.openai.cli import build_openai_cli_record
 from cortex.hosts.openai.host_control import (
@@ -27,6 +32,7 @@ from tests.product._verified_work_fixtures import (
     VALID_NORMALIZE_PORT_FILE_MAP,
     render_full_files_result,
 )
+from tests.experimental._aux_test_support import make_support_ref
 
 
 def test_openai_host_control_request_constructs_strict_text_only_payload() -> None:
@@ -134,6 +140,37 @@ def test_openai_host_control_request_emits_non_minimal_audit_intensity_only_when
     assert focused_request.as_payload()["request"]["audit_intensity"] == "focused"
 
 
+def test_openai_host_control_request_emits_offline_publication_only_when_requested() -> None:
+    request = OpenAIHostControlRequest(
+        action_tag="openai-response-stream",
+        model="gpt-5.4",
+        input_text="resume",
+        max_output_tokens=64,
+        work_contract=WorkContract(
+            allowed_write_paths=tuple(VALID_FILE_MAP),
+            verification_profile="python_workspace_pytest_v1",
+            output_carrier="full_files",
+            max_repair_turns=1,
+        ),
+        offline_publication=_offline_publication(),
+        audit_intensity="focused",
+    )
+
+    payload = request.as_payload()
+
+    assert tuple(payload["request"]) == (
+        "model",
+        "input",
+        "max_output_tokens",
+        "work_contract",
+        "offline_publication",
+        "audit_intensity",
+    )
+    assert payload["request"]["offline_publication"] == offline_support_publication_as_payload(
+        _offline_publication()
+    )
+
+
 def test_openai_host_control_result_rejects_wrong_action_tag() -> None:
     with pytest.raises(ValueError, match="openai-response-stream"):
         OpenAIHostControlResult(action_tag="bad", records=())
@@ -158,6 +195,43 @@ def test_openai_host_control_service_boundary_rejects_out_of_scope_keys() -> Non
 
     assert status_code == 400
     assert "strict text-only whitelist" in payload["error"]
+
+
+def test_openai_host_control_service_boundary_accepts_offline_publication_payload() -> None:
+    publication_payload = offline_support_publication_as_payload(_offline_publication())
+    status_code, payload = handle_openai_service_request(
+        "POST",
+        "/v1/actions/response-stream",
+        OpenAIServiceState(),
+        json.dumps(
+            {
+                "action_tag": "openai-response-stream",
+                "request": {
+                    "model": "gpt-5.4",
+                    "input": "hello",
+                    "offline_publication": publication_payload,
+                },
+            }
+        ).encode("utf-8"),
+        outbound_transport=lambda _: [
+            {
+                "type": "response.created",
+                "session_id": "oa-offline-publication",
+                "response_id": "resp-offline-publication-1",
+            },
+            {
+                "type": "response.output_text.delta",
+                "session_id": "oa-offline-publication",
+                "response_id": "resp-offline-publication-1",
+                "delta": "hello",
+            },
+        ],
+    )
+
+    assert status_code == 200
+    assert payload["records"][0]["control_ledger"]["allocation_diagnostics"]["memory_reentry"][
+        "target_host_name"
+    ] == "openai"
 
 
 def test_openai_host_control_service_boundary_rejects_unknown_work_contract_keys() -> None:
@@ -323,6 +397,52 @@ def test_run_openai_host_control_matches_manual_o1_runtime_projection() -> None:
             envelope.event_type,
             envelope.payload,
             current_session,
+        )
+        expected_records.append(build_openai_cli_record(step_result))
+        current_session = step_result.session
+
+    assert result.as_payload() == {
+        "action_tag": "openai-response-stream",
+        "records": expected_records,
+        "result_text": "hello",
+    }
+    assert final_session == current_session
+
+
+def test_run_openai_host_control_matches_manual_o1_runtime_projection_with_offline_publication() -> None:
+    raw_events = [
+        {
+            "type": "response.created",
+            "session_id": "oa-control-memory",
+            "response_id": "resp-memory-1",
+        },
+        {
+            "type": "response.output_text.delta",
+            "session_id": "oa-control-memory",
+            "response_id": "resp-memory-1",
+            "delta": "hello",
+        },
+    ]
+    request = OpenAIHostControlRequest(
+        action_tag="openai-response-stream",
+        model="gpt-5.4",
+        input_text="hello",
+        offline_publication=_offline_publication(),
+    )
+    result, final_session = run_openai_host_control(
+        request,
+        transport=lambda _: list(raw_events),
+    )
+
+    expected_records = []
+    current_session = OpenAIRuntimeSession()
+    for raw_event in raw_events:
+        envelope = parse_openai_host_event_envelope(raw_event)
+        step_result = run_openai_runtime_step(
+            envelope.event_type,
+            envelope.payload,
+            current_session,
+            offline_publication=request.offline_publication,
         )
         expected_records.append(build_openai_cli_record(step_result))
         current_session = step_result.session
@@ -1047,3 +1167,17 @@ def test_run_openai_host_control_verified_work_feature_flags_repairs_once(
     assert final_session.next_recommended_move == "continue"
     assert final_session.executive_modulator_memory is not None
     assert "=== CONTEXT FILE:" not in str(calls[1]["input_text_override"])
+
+
+def _offline_publication() -> OfflineSupportPublication:
+    return OfflineSupportPublication(
+        contradiction_summary_refs=(
+            make_support_ref("contradiction", "host-degraded"),
+        ),
+        publication_tags=frozenset({"aux/offline-publication"}),
+        notes=("support-side only",),
+        metadata=(
+            MetadataField("source", "aux/distillation"),
+            MetadataField("host_name", "openai"),
+        ),
+    )

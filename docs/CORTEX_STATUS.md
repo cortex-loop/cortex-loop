@@ -50,9 +50,9 @@ Answering stance:
 
 ## Current Focus
 
-- Current tracked train: `bounded-live-support-memory-reentry`
-- Active quality/risk focus: The bounded AUX shadow surface still earns `full_cross_host`, durable support-memory distillation remains explicit and removable, posture-sensitive online control is now S-tier closed on the live runtime path, anti-thrash is landed as an exact-family unchanged-condition repetition tax with posture/host-friction/evidence/probe reopen so repeated low-yield loops can be priced without suppressing stronger verification or novelty, and reference-first explicit live support-memory re-entry is now earned through the existing offline-publication seam: live memory stays score-only, host-matched, family-scoped, and contradiction/TTL/probe invalidation stays stronger than stale priors with explicit runtime diagnostics and no raw SQLite ingress. Shipping and conformance still keep `Q_mem = 0` on their default lanes, route blockedness remains non-sovereign, raw SQLite episodes remain support-side only, and the next highest-leverage gap is OpenAI explicit memory-reentry promotion without changing the default-off path.
-- Next product train after the current focus: `bounded-live-support-memory-reentry`
+- Current tracked train: `host-reliability-and-affordance-priors`
+- Active quality/risk focus: The bounded AUX shadow surface still earns `full_cross_host`, durable support-memory distillation remains explicit and removable, posture-sensitive online control is S-tier closed on the live runtime path, anti-thrash remains an exact-family unchanged-condition repetition tax with bounded reopen, bounded live support-memory re-entry is now S-tier closed on both the reference and OpenAI explicit-publication lanes with host-match, family-scoped invalidation, transcript-only raw `/v1/events`, locked `memory_reentry` diagnostics, shared conformance parity, and explicit proof that runtime use stays publication-only without AUX persistence or distillation, and evidence-progress/probe calibration is now S-tier closed: all four hosts share typed evidence-progress and continuity-progress classification, public `feedback_window_summary` reflects the just-realized step rather than the prior window, current-step probe results distinguish real probe success from family-local bounded unsupported surfaces, and stream-only churn stays visible but non-epistemic. The active train is now host reliability and affordance priors: the next live leverage is bounded host/tool reliability and affordance priors that bias control pricing through host-scoped, capability-scoped score modifiers, decay under fresh success, and never harden into host myths or hidden policy forks. Shipping and conformance default lanes still keep `Q_mem = 0`, default shipping behavior remains memory-off when no publication is supplied, live memory remains publication-only and score-only, raw SQLite episodes remain support-side only, route blockedness remains non-sovereign, and the next active leverage after this train is asymmetric error cost and tonic hysteresis.
+- Next product train after the current focus: `asymmetric-error-cost-and-tonic-hysteresis`
 
 ## Bio-To-Code Matrix
 
@@ -65,7 +65,7 @@ Answering stance:
 | Intervention pricing versus neutrality | Deciding when to intervene, stay neutral, or stop | `landed` | `10` | `cortex/sre`, `cortex/aux` | `tests/product`, `tests/experimental` | Hold calibrated intervention pricing stable now that posture-sensitive online control is S-tier closed and anti-thrash is landed on the live runtime path: posture truth is single-owned, the 6-axis route geometry stays bounded, `visible_burden_sensitivity` is surfaced as a separate utility scalar, unchanged-condition repetition is taxed only at the exact-family level with bounded reopen, and any later live memory re-entry must remain explicit, bounded, and separately earned. |
 | Blocker surfacing and goal-debt management | Noticing unresolved blockers and unfinished intentions | `landed` | `10` | `cortex/sre`, `cortex/hosts/openai`, `cortex/hosts/claude`, `cortex/hosts/gemini`, `cortex/hosts/reference` | `tests/product`, `tests/conformance` | Keep typed goal-debt and closure-pressure state stable across hosts while support-side augmentation remains explicit and non-sovereign. |
 | Multi-host executive continuity | One executive across different brains and contexts | `landed` | `15` | `cortex/hosts/openai`, `cortex/hosts/claude`, `cortex/hosts/gemini`, `cortex/hosts/reference` | `tests/product`, `tests/conformance` | Hold one Cortex law across OpenAI, Claude, Gemini, and reference without flattening host-native realization. |
-| Offline consolidation and support geometry | Sleep-like consolidation and support systems | `landed` | `10` | `cortex/aux` | `tests/experimental`, `tests/archive`, `tests/conformance` | Keep durable support-memory distillation explicit, removable, and non-sovereign now that reference-first live support-memory re-entry is earned through the explicit offline-publication seam: raw SQLite episodes stay support-side only, live memory stays score-only and host-matched, TTL/probe/contradiction invalidation stays stronger than stale priors, and the next product lift is OpenAI explicit promotion without changing the default-off path. |
+| Offline consolidation and support geometry | Sleep-like consolidation and support systems | `landed` | `10` | `cortex/aux` | `tests/experimental`, `tests/archive`, `tests/conformance` | Keep durable support-memory distillation explicit, removable, and non-sovereign now that reference and OpenAI both earn explicit publication-shaped live re-entry with host-match, family-scoped invalidation, publication-only runtime-boundary proof, and S-tier evidence/probe calibration; default no-publication paths must stay memory-off, raw SQLite episodes must stay support-side only, and the next leverage is host-scoped reliability and affordance priors so repeated host/tool friction can bias control pricing without hardening into cross-host myths. |
 
 ## Math To Code Rules
 
@@ -155,19 +155,21 @@ Workflow gates marked `required` are contractual gates checked by `repo_workflow
 
 ## Next Product Train
 
-- Train: `bounded-live-support-memory-reentry`
-- Surface: `experimental + product`
-- Executive benefit: Promote explicit distilled support priors from the earned reference-first live-memory seam toward the shipped OpenAI lane without changing the default no-memory path.
-- Why now: Reference-first live support-memory re-entry is now earned with host-match, family-scoped invalidation, and explicit diagnostics, and posture-sensitive online control is already S-tier closed with single-owner posture truth while anti-thrash is now landed as bounded exact-family repetition tax with novelty reopen, so the next real lift inside this train is OpenAI parity without widening ingress or making memory default-on.
-- Primary metric: `OpenAI explicit-publication runs improve bounded tasks while default no-publication behavior stays unchanged and contradiction and TTL invalidation still dominate stale memory`
-- Guardrail: `no automatic AUX loading, no raw SQLite ingress, no OpenAI-specific memory scoring fork, and no nonzero shipping/conformance `Q_mem` without separate proof`
-- Kill rule: `cut any promotion that makes operator_cli memory-dependent by default, hides which priors fired, or weakens contradiction-first invalidation`
+- Train: `asymmetric-error-cost-and-tonic-hysteresis`
+- Surface: `product + conformance`
+- Executive benefit: Make control allocation better balanced over time by pricing false-positive versus false-negative checking costs and adding bounded guarded entry/exit hysteresis.
+- Why now: Once host-scoped reliability priors are earned, Cortex can safely sharpen risk-sensitive control allocation and tonic hysteresis without building on noisy host friction or progress denominators.
+- Primary metric: `high-risk flows become more verification-seeking, low-risk flows stay compact, and hysteresis reduces churn without sticky guardedness`
+- Guardrail: `keep thresholds bounded and profile-derived, add no new memory carrier or host-specific policy fork, and do not let caution become default-on or moral theater`
+- Kill rule: `cut the seam if it only works by making Cortex stickily guarded, broadly overchecking, or materially suppressing productive low-risk momentum`
 
 ## Where To Work Next
 
 - Keep the bounded audit surface compact and truthful on the shipped lane: selected versus realized family, uncertainty, threshold, delta, verification, and probe truth only.
 - Keep the no-spend live evidence current and explicit: fast conformance is green, the deeper directionality and host-native watchlists are refreshed, and non-shipping auth or env caveats must stay explicit instead of silently stale.
-- Keep posture and AUX memory law explicit and removable now that posture-sensitive online control is S-tier closed, anti-thrash is landed, and reference-first live support-memory re-entry is earned: inspect is live on cheap non-debt events, resume stays continuity-conditioned, posture truth is single-owned, the route state vector stays the bounded 6-axis geometry term while `visible_burden_sensitivity` remains a separate utility scalar, route truth stays bounded and non-sovereign, unchanged-condition repetition is taxed only at the exact-family level with bounded reopen, live memory stays score-only and host-matched through explicit publication on the reference lane, raw SQLite episodes stay support-side only, and live `Q_mem` stays zero on shipping and conformance default lanes.
+- Keep posture and AUX memory law explicit and removable now that posture-sensitive online control is S-tier closed, anti-thrash is landed, bounded live support-memory re-entry is earned on reference and the OpenAI operator lane, and evidence/probe calibration is S-tier closed: inspect is live on cheap non-debt events, resume stays continuity-conditioned, posture truth is single-owned, the route state vector stays the bounded 6-axis geometry term while `visible_burden_sensitivity` remains a separate utility scalar, route truth stays bounded and non-sovereign, unchanged-condition repetition is taxed only at the exact-family level with bounded reopen, public feedback-window summaries reflect the just-realized step, family-local bounded probe limits surface as `unsupported` without leaking host-global unavailability across families, stream-only churn stays non-epistemic, live memory stays score-only and host-matched through explicit publication, live `Q_mem` stays zero on shipping and conformance default lanes, and raw SQLite episodes stay support-side only.
+- Work the active host-reliability and affordance-priors seam as bounded host-scoped, capability-scoped score modifiers only: repeated host/tool friction should bias control pricing, fresh success should reopen stale negatives, and no host-wide superstition or host-specific policy fork should be allowed to form.
+- Queue asymmetric error cost and tonic hysteresis behind host-reliability only after the current train is earned: the next code lift should make high-risk flows more verification-seeking, keep low-risk flows compact, and reduce churn without creating sticky guardedness.
 
 ## Canonical Proof
 
@@ -215,7 +217,8 @@ Workflow gates marked `required` are contractual gates checked by `repo_workflow
 - Do not silently widen the 6-axis operator-route geometry vector or hide utility inputs that affect route selection.
 - Do not introduce host-specific policy forks to force donor coherence.
 - Do not let generic pending-goal debt, plain-English reminder text, or generic `resume*` wake cues act as branch-specific continuity anchors.
-- Do not let reference-first live memory re-entry drift into cross-host projected reuse, background AUX loading, or default-on operator behavior.
+- Do not let live memory re-entry drift into cross-host projected reuse, background AUX loading, raw `/v1/events` transcript widening, or default-on operator behavior.
+- Do not let stale branch or redirect replay survive fresh contradiction or degradation on the same active resume context.
 
 ## Active Docs
 

@@ -524,8 +524,31 @@ def _live_context_refs_for_family(
             _target_branch_refs_for_snapshot(snapshot)
             + _source_refs_for_retrieval(snapshot)
             + _target_contradiction_refs_for_snapshot(snapshot)
-        )
+    )
     return ()
+
+
+def _live_degradation_invalidation_tag(snapshot: SupportSnapshot) -> str | None:
+    if any(record.contradiction_records for record in snapshot.trace.degradation_records):
+        return "q_mem-live:invalidated:contradiction"
+    if snapshot.trace.degradation_records:
+        return "q_mem-live:invalidated:degradation"
+    return None
+
+
+def _live_resume_context_invalidation_tag(
+    snapshot: SupportSnapshot,
+    score: SupportMemoryPriorScore,
+) -> str | None:
+    if score.family not in {SoftControlFamily.BRANCH, SoftControlFamily.REDIRECT}:
+        return None
+    branch_context_refs = _target_branch_refs_for_snapshot(snapshot)
+    if not branch_context_refs or not _support_ref_overlap(
+        branch_context_refs,
+        score.support_refs,
+    ):
+        return None
+    return _live_degradation_invalidation_tag(snapshot)
 
 
 def _live_reentry_reason_tags(
@@ -557,17 +580,12 @@ def _live_reentry_reason_tags(
     ):
         tags.add("q_mem-live:invalidated:probe-failure")
 
-    branch_context_overlap = _support_ref_overlap(
-        _target_branch_refs_for_snapshot(snapshot),
-        score.support_refs,
+    resume_context_invalidation_tag = _live_resume_context_invalidation_tag(
+        snapshot,
+        score,
     )
-    if score.family is SoftControlFamily.BRANCH and branch_context_overlap:
-        if any(
-            record.contradiction_records for record in snapshot.trace.degradation_records
-        ):
-            tags.add("q_mem-live:invalidated:contradiction")
-        elif snapshot.trace.degradation_records:
-            tags.add("q_mem-live:invalidated:degradation")
+    if resume_context_invalidation_tag is not None:
+        tags.add(resume_context_invalidation_tag)
 
     if not tags:
         tags.add("q_mem-live:eligible")

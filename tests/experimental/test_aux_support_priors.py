@@ -236,7 +236,7 @@ def test_filter_live_support_memory_prior_appendix_zeroes_ttl_expired_family_on_
     assert live_appendix.score_for(SoftControlFamily.REDIRECT).score > 0.0
 
 
-def test_filter_live_support_memory_prior_appendix_invalidates_branch_on_fresh_contradiction() -> None:
+def test_filter_live_support_memory_prior_appendix_invalidates_resume_context_families_on_fresh_contradiction() -> None:
     augmented = _augmented_temporal_case("branch-resume-recovery")
     appendix = build_support_memory_prior_appendix(augmented)
     contradiction_trace = replace(
@@ -255,10 +255,17 @@ def test_filter_live_support_memory_prior_appendix_invalidates_branch_on_fresh_c
     )
 
     assert live_appendix.score_for(SoftControlFamily.BRANCH).score == 0.0
+    assert live_appendix.score_for(SoftControlFamily.REDIRECT).score == 0.0
+    assert live_appendix.score_for(SoftControlFamily.SEEK_CONTEXT).score > 0.0
     assert "q_mem-live:invalidated:contradiction" in live_appendix.score_for(
         SoftControlFamily.BRANCH
     ).reason_tags
-    assert live_appendix.score_for(SoftControlFamily.REDIRECT).score >= 0.0
+    assert "q_mem-live:invalidated:contradiction" in live_appendix.score_for(
+        SoftControlFamily.REDIRECT
+    ).reason_tags
+    assert "q_mem-live:eligible" in live_appendix.score_for(
+        SoftControlFamily.SEEK_CONTEXT
+    ).reason_tags
 
 
 def test_filter_live_support_memory_prior_appendix_invalidates_uncertainty_families_after_probe_failure() -> None:

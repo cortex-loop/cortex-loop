@@ -4,6 +4,8 @@ from dataclasses import replace
 
 import pytest
 
+import cortex.aux.distillation as aux_distillation
+import cortex.aux.persistence as aux_persistence
 import cortex.aux.publication as aux_publication
 from cortex.aux.reference_replay import evaluate_aux_reference_q_mem_replay
 import cortex.aux.support_priors as aux_support_priors
@@ -111,18 +113,22 @@ def test_reference_runtime_step_result_surfaces_cheap_reference_event_without_co
         },
     )
     assert result.feedback_window_summary_payload == {
-        "window_size": 0,
+        "window_size": 1,
         "rejection_count": 0,
         "override_count": 0,
         "latched_count": 0,
         "clean_success_streak": 0,
         "evidence_state_move_count": 0,
+        "meaningful_evidence_progress_count": 0,
+        "stream_only_progress_count": 0,
         "continuity_improvement_count": 0,
         "family_change_without_evidence_count": 0,
         "same_family_no_progress_count": 0,
         "same_context_retry_count": 0,
         "goal_progress_floor": 0.0,
         "degradation_pressure_bonus": 0,
+        "recent_evidence_progress_class": "none",
+        "recent_continuity_progress_class": "none",
         "sustained_spike_flags": [],
     }
     assert result.commitment_result_kind is None
@@ -141,12 +147,22 @@ def test_reference_runtime_step_result_surfaces_cheap_reference_event_without_co
         "commitment_result_kind": None,
         "warning_codes": [],
         "host_friction_tags": ["capability-view-missing"],
+        "evidence_progress_class": "none",
         "probe_result_class": "succeeded",
         "evidence_state_moved": False,
+        "continuity_progress_class": "none",
         "continuity_improved": False,
     }
     assert result.session.feedback_window.entries == (result.session.last_realization_feedback,)
     assert result.session_summary["feedback_window_size"] == 1
+    assert (
+        result.feedback_window_summary_payload["recent_evidence_progress_class"]
+        == result.session.last_realization_feedback.evidence_progress_class
+    )
+    assert (
+        result.feedback_window_summary_payload["recent_continuity_progress_class"]
+        == result.session.last_realization_feedback.continuity_progress_class
+    )
 
 
 def test_reference_runtime_step_cheap_continuity_debt_surfaces_resume_posture() -> None:
@@ -757,7 +773,7 @@ def test_reference_runtime_step_replay_publication_blocks_cross_host_live_memory
     }
 
 
-def test_reference_runtime_step_live_memory_reentry_invalidates_branch_when_fresh_contradiction_overlaps_resume_context(
+def test_reference_runtime_step_live_memory_reentry_invalidates_resume_context_families_when_fresh_contradiction_overlaps_resume_context(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     case_result = _reference_replay_case_result("branch-resume-recovery")
@@ -798,10 +814,74 @@ def test_reference_runtime_step_live_memory_reentry_invalidates_branch_when_fres
         "redirect",
     )
     assert branch_score["memory_score"] == 0.0
-    assert redirect_score["memory_score"] >= 0.0
+    assert redirect_score["memory_score"] == 0.0
     assert replay.control_ledger_summary["allocation_diagnostics"]["memory_reentry"][
         "invalidated_families"
-    ] == ["branch"]
+    ] == ["branch", "redirect"]
+
+
+def test_reference_runtime_step_with_explicit_publication_stays_publication_only_without_persistence_or_distillation(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    case_result = _reference_replay_case_result("branch-resume-recovery")
+    scenario = _reference_replay_scenario("branch-resume-recovery")
+    original_augment = aux_publication.augment_snapshot_with_offline_publication
+    original_prior_builder = aux_support_priors.build_support_memory_prior_appendix
+    captured: dict[str, bool] = {
+        "augment_called": False,
+        "prior_builder_called": False,
+    }
+
+    def augment_wrapper(snapshot, publication):
+        captured["augment_called"] = True
+        return original_augment(snapshot, publication)
+
+    def prior_builder_wrapper(snapshot):
+        captured["prior_builder_called"] = True
+        return original_prior_builder(snapshot)
+
+    def forbidden_distill(*args, **kwargs):
+        raise AssertionError(
+            "Reference runtime live memory re-entry must not call AUX distillation on the runtime path."
+        )
+
+    class ForbiddenStore:
+        def __init__(self, *args, **kwargs) -> None:
+            raise AssertionError(
+                "Reference runtime live memory re-entry must not instantiate SqliteSupportMemoryStore on the runtime path."
+            )
+
+    monkeypatch.setattr(
+        reference_runtime,
+        "build_reference_executive_state",
+        lambda *args, **kwargs: _scenario_executive_state_with_task_mode(
+            scenario,
+            kwargs["task_mode"],
+        ),
+    )
+    monkeypatch.setattr(
+        reference_runtime,
+        "_build_support_snapshot",
+        lambda **kwargs: scenario.target_snapshot,
+    )
+    monkeypatch.setattr(aux_publication, "augment_snapshot_with_offline_publication", augment_wrapper)
+    monkeypatch.setattr(aux_support_priors, "build_support_memory_prior_appendix", prior_builder_wrapper)
+    monkeypatch.setattr(aux_distillation, "distill_offline_support_publication", forbidden_distill)
+    monkeypatch.setattr(aux_persistence, "SqliteSupportMemoryStore", ForbiddenStore)
+
+    replay = run_reference_runtime_step(
+        "ContextLoad",
+        {"session_id": "session-reference-replay-publication-only"},
+        offline_publication=case_result.publication,
+    )
+
+    assert captured == {
+        "augment_called": True,
+        "prior_builder_called": True,
+    }
+    assert replay.control_ledger_summary["allocation_diagnostics"]["memory_reentry"][
+        "state"
+    ] == "active"
 
 
 def test_reference_runtime_step_without_offline_publication_makes_no_aux_calls_and_keeps_memory_priors_absent(
@@ -943,19 +1023,28 @@ def test_reference_runtime_step_normalizes_last_only_prior_session_and_preserves
     )
 
     assert follow_up.feedback_window_summary_payload == {
-        "window_size": 1,
+        "window_size": 2,
         "rejection_count": 1,
-        "override_count": 0,
+        "override_count": 1,
         "latched_count": 0,
         "clean_success_streak": 0,
         "evidence_state_move_count": 0,
+        "meaningful_evidence_progress_count": 0,
+        "stream_only_progress_count": 0,
         "continuity_improvement_count": 0,
-        "family_change_without_evidence_count": 0,
+        "family_change_without_evidence_count": 1,
         "same_family_no_progress_count": 0,
         "same_context_retry_count": 0,
         "goal_progress_floor": 0.55,
-        "degradation_pressure_bonus": 1,
-        "sustained_spike_flags": ["prior-session-mismatch"],
+        "degradation_pressure_bonus": 2,
+        "recent_evidence_progress_class": "none",
+        "recent_continuity_progress_class": "none",
+        "sustained_spike_flags": [
+            "prior-session-mismatch",
+            "prior-enforcement-override",
+            "sustained-feedback-disruption",
+            "prior-non-productive-family-switch",
+        ],
     }
     assert _goal_progress_level(follow_up) == 0.55
     assert (
@@ -1077,19 +1166,27 @@ def test_reference_runtime_step_reports_prior_window_summary_for_single_rejectio
     )
 
     assert third.feedback_window_summary_payload == {
-        "window_size": 2,
+        "window_size": 3,
         "rejection_count": 1,
-        "override_count": 0,
+        "override_count": 1,
         "latched_count": 0,
         "clean_success_streak": 0,
         "evidence_state_move_count": 0,
+        "meaningful_evidence_progress_count": 0,
+        "stream_only_progress_count": 0,
         "continuity_improvement_count": 0,
         "family_change_without_evidence_count": 0,
         "same_family_no_progress_count": 1,
         "same_context_retry_count": 0,
         "goal_progress_floor": 0.55,
-        "degradation_pressure_bonus": 1,
-        "sustained_spike_flags": ["prior-session-mismatch"],
+        "degradation_pressure_bonus": 2,
+        "recent_evidence_progress_class": "none",
+        "recent_continuity_progress_class": "none",
+        "sustained_spike_flags": [
+            "prior-session-mismatch",
+            "prior-enforcement-override",
+            "sustained-feedback-disruption",
+        ],
     }
     assert third.session_summary["feedback_window_size"] == 3
 
@@ -1119,22 +1216,26 @@ def test_reference_runtime_step_reports_prior_window_summary_for_repeated_reject
 
     assert fifth.feedback_window_summary_payload == {
         "window_size": 3,
-        "rejection_count": 2,
+        "rejection_count": 1,
         "override_count": 1,
-        "latched_count": 1,
+        "latched_count": 2,
         "clean_success_streak": 0,
         "evidence_state_move_count": 0,
+        "meaningful_evidence_progress_count": 0,
+        "stream_only_progress_count": 0,
         "continuity_improvement_count": 0,
-        "family_change_without_evidence_count": 1,
-        "same_family_no_progress_count": 1,
+        "family_change_without_evidence_count": 0,
+        "same_family_no_progress_count": 0,
         "same_context_retry_count": 0,
-        "goal_progress_floor": 0.70,
+        "goal_progress_floor": 0.55,
         "degradation_pressure_bonus": 2,
+        "recent_evidence_progress_class": "none",
+        "recent_continuity_progress_class": "none",
         "sustained_spike_flags": [
             "prior-session-mismatch",
             "prior-enforcement-override",
             "sustained-feedback-disruption",
-            "prior-non-productive-family-switch",
+            "sustained-latched-brake",
         ],
     }
     assert fifth.session_summary["feedback_window_size"] == 3

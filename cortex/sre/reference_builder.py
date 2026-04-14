@@ -230,7 +230,8 @@ def build_reference_executive_state(
         ),
         probe_backed_families=probe_backed_families,
         productive_exploration_bonus=_productive_exploration_bonus(
-            prior_feedback_window_summary
+            prior_feedback_window_summary,
+            recent_probe_result_class=recent_probe_result_class,
         ),
         oscillation_penalty=_oscillation_penalty(prior_feedback_window_summary),
         anti_thrash_state=anti_thrash_state,
@@ -666,8 +667,9 @@ def _feedback_pressure_tags(
     if prior_feedback_window_summary.family_change_without_evidence_count >= 1:
         tags.add("feedback:oscillation-pressure")
     if (
-        prior_feedback_window_summary.evidence_state_move_count >= 1
+        prior_feedback_window_summary.meaningful_evidence_progress_count >= 1
         or prior_feedback_window_summary.continuity_improvement_count >= 1
+        or recent_probe_result_class == "succeeded"
     ):
         tags.add("feedback:productive-exploration")
     if recent_probe_result_class in PROBE_FAILURE_CLASSES:
@@ -788,10 +790,17 @@ def _visible_burden_scale(profile: str) -> float:
 
 def _productive_exploration_bonus(
     prior_feedback_window_summary: ReferenceFeedbackWindowSummary,
+    *,
+    recent_probe_result_class: str | None,
 ) -> float:
     bonus = 0.0
-    bonus += min(0.08, 0.04 * prior_feedback_window_summary.evidence_state_move_count)
+    bonus += min(
+        0.08,
+        0.04 * prior_feedback_window_summary.meaningful_evidence_progress_count,
+    )
     bonus += min(0.08, 0.04 * prior_feedback_window_summary.continuity_improvement_count)
+    if recent_probe_result_class == "succeeded":
+        bonus += 0.04
     if prior_feedback_window_summary.clean_success_streak >= 2:
         bonus += 0.02
     return min(0.12, bonus)

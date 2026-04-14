@@ -38,7 +38,25 @@ def test_gemini_runtime_step_surfaces_probe_unavailability_honestly() -> None:
         result.control_ledger_summary["allocation_diagnostics"]["probe_unavailable_reason"]
         == "documented-probe-surface-unavailable"
     )
-    assert result.control_ledger_summary["allocation_diagnostics"]["probe_result_class"] is None
+    assert (
+        result.control_ledger_summary["allocation_diagnostics"]["probe_result_class"]
+        == "unsupported"
+    )
+    assert result.feedback_window_summary_payload["window_size"] == 1
+    assert result.feedback_window_summary_payload["recent_evidence_progress_class"] == (
+        "token-stream"
+    )
+    assert result.feedback_window_summary_payload["recent_continuity_progress_class"] == (
+        "none"
+    )
+    assert (
+        result.feedback_window_summary_payload["recent_evidence_progress_class"]
+        == result.session.last_realization_feedback.evidence_progress_class
+    )
+    assert (
+        result.feedback_window_summary_payload["recent_continuity_progress_class"]
+        == result.session.last_realization_feedback.continuity_progress_class
+    )
     assert tuple(result.control_ledger_summary["audit_projection"]) == (
         "selected_family",
         "realized_family",
@@ -73,7 +91,7 @@ def test_gemini_runtime_step_can_raise_audit_projection_from_explicit_request() 
     assert projection["verification_state"] == "not-required"
     assert projection["explainability_profile"] == "structured"
     assert projection["probe_path_state"] == "unavailable"
-    assert projection["probe_result_class"] is None
+    assert projection["probe_result_class"] == "unsupported"
     assert projection["probe_unavailable_reason"] == "documented-probe-surface-unavailable"
 
 

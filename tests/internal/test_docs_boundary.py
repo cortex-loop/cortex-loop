@@ -239,18 +239,18 @@ def test_status_registry_is_complete_and_stable() -> None:
         "reference": "reference_cli",
     }
     assert status["conformance_summary"]["shipping_default"] == "openai:operator_cli"
-    assert status["work_today"]["slug"] == "bounded-live-support-memory-reentry"
+    assert status["work_today"]["slug"] == "host-reliability-and-affordance-priors"
     assert "full_cross_host" in status["work_today"]["note"]
-    assert "posture-sensitive online control is now s-tier closed" in status["work_today"]["note"].lower()
+    assert "posture-sensitive online control is s-tier closed" in status["work_today"]["note"].lower()
     assert "exact-family unchanged-condition repetition tax" in status["work_today"]["note"]
-    assert "stronger verification or novelty" in status["work_today"]["note"]
+    assert "reference and openai explicit-publication lanes" in status["work_today"]["note"].lower()
+    assert "memory-off when no publication is supplied" in status["work_today"]["note"]
     assert "Q_mem = 0" in status["work_today"]["note"]
-    assert status["next_product_train"]["slug"] == "bounded-live-support-memory-reentry"
-    assert status["next_product_train"]["surface"] == "experimental + product"
-    assert "explicit distilled support priors" in status["next_product_train"]["executive_benefit"]
-    assert "single-owner posture truth" in status["next_product_train"]["why_now"]
-    assert "anti-thrash is now landed" in status["next_product_train"]["why_now"]
-    assert "contradiction and TTL invalidation" in status["next_product_train"]["primary_metric"]
+    assert status["next_product_train"]["slug"] == "asymmetric-error-cost-and-tonic-hysteresis"
+    assert status["next_product_train"]["surface"] == "product + conformance"
+    assert "false-positive versus false-negative checking costs" in status["next_product_train"]["executive_benefit"].lower()
+    assert "host-scoped reliability priors are earned" in status["next_product_train"]["why_now"].lower()
+    assert "high-risk flows become more verification-seeking" in status["next_product_train"]["primary_metric"].lower()
     assert "Keep the bounded audit surface compact and truthful" in status["where_to_work"][0]
     assert "no-spend live evidence current and explicit" in status["where_to_work"][1]
     assert "posture-sensitive online control is s-tier closed" in status["where_to_work"][2].lower()
@@ -259,6 +259,8 @@ def test_status_registry_is_complete_and_stable() -> None:
     assert "6-axis geometry term" in status["where_to_work"][2]
     assert "route truth stays bounded and non-sovereign" in status["where_to_work"][2]
     assert "live `Q_mem` stays zero" in status["where_to_work"][2]
+    assert "host-reliability and affordance-priors seam" in status["where_to_work"][3]
+    assert "asymmetric error cost and tonic hysteresis" in status["where_to_work"][4]
     closure_gates = {gate["id"]: gate for gate in status["closure_gates"]}
     assert closure_gates["main_synced"]["status"] == "required"
     assert closure_gates["cleanup_report"]["status"] == "required"
@@ -287,8 +289,9 @@ def test_generated_status_doc_includes_system_map_and_next_product_train() -> No
     assert "Active quality/risk focus" in text
     assert "## Packet To Code" in text
     assert "## Next Product Train" in text
-    assert "`bounded-live-support-memory-reentry`" in text
-    assert "explicit distilled support priors" in text
+    assert "`host-reliability-and-affordance-priors`" in text
+    assert "`asymmetric-error-cost-and-tonic-hysteresis`" in text
+    assert "memory-off when no publication is supplied" in text
     assert "Shipping Product Lane\\nopenai:operator_cli" in text or "Shipping Product Lane" in text
     assert "Shipping default: `openai:operator_cli`" in text
     assert "Workflow gates marked `required` are contractual gates checked by `repo_workflow.py`" in text
@@ -296,8 +299,8 @@ def test_generated_status_doc_includes_system_map_and_next_product_train() -> No
     assert "| `cleanup_report` | `required` |" in text
     assert "exact-family unchanged-condition repetition tax" in text
     assert "full_cross_host" in text
-    assert "posture-sensitive online control is now s-tier closed" in text.lower()
-    assert "stronger verification or novelty" in text
+    assert "posture-sensitive online control is s-tier closed" in text.lower()
+    assert "stream-only churn stays visible but non-epistemic" in text
     assert "`visible_burden_sensitivity`" in text
 
 

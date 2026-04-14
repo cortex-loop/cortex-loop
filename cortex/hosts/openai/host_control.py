@@ -2,10 +2,10 @@
 
 from __future__ import annotations
 
+import importlib
 from collections.abc import Callable, Mapping
 from dataclasses import dataclass, field
 from typing import Any
-
 from cortex.runtime.verified_work_runtime import (
     build_verified_work_input_text,
     build_verified_work_instructions,
@@ -37,6 +37,7 @@ _REQUEST_KEYS = frozenset(
         "max_output_tokens",
         "stream",
         "work_contract",
+        "offline_publication",
         "audit_intensity",
     }
 )
@@ -62,6 +63,7 @@ class OpenAIHostControlRequest:
     metadata: dict[str, Any] = field(default_factory=dict)
     max_output_tokens: int | None = None
     work_contract: WorkContract | None = None
+    offline_publication: "OfflineSupportPublication | None" = None
     audit_intensity: str = "minimal"
 
     def __post_init__(self) -> None:
@@ -113,6 +115,15 @@ class OpenAIHostControlRequest:
                 "OpenAIHostControlRequest.work_contract must be WorkContract | None, "
                 f"got {actual_type}."
             )
+        if self.offline_publication is not None and not isinstance(
+            self.offline_publication,
+            _offline_publication_type(),
+        ):
+            actual_type = type(self.offline_publication).__name__
+            raise TypeError(
+                "OpenAIHostControlRequest.offline_publication must be OfflineSupportPublication | None, "
+                f"got {actual_type}."
+            )
         if self.audit_intensity not in _AUDIT_INTENSITIES:
             raise ValueError(
                 "OpenAIHostControlRequest.audit_intensity must be one of "
@@ -131,6 +142,10 @@ class OpenAIHostControlRequest:
             request_payload["max_output_tokens"] = self.max_output_tokens
         if self.work_contract is not None:
             request_payload["work_contract"] = self.work_contract.as_payload()
+        if self.offline_publication is not None:
+            request_payload["offline_publication"] = _aux_publication_module().offline_support_publication_as_payload(
+                self.offline_publication
+            )
         if self.audit_intensity != "minimal":
             request_payload["audit_intensity"] = self.audit_intensity
         return {
@@ -245,6 +260,7 @@ def run_openai_host_control(
         metadata=request.metadata,
         max_output_tokens=request.max_output_tokens,
         work_contract=request.work_contract,
+        offline_publication=request.offline_publication,
         audit_intensity=request.audit_intensity,
     )
     raw_events, records, current_session, result_text = _run_openai_host_control_attempt(
@@ -296,6 +312,7 @@ def run_openai_host_control(
             metadata=request.metadata,
             max_output_tokens=request.max_output_tokens,
             work_contract=repair_contract,
+            offline_publication=request.offline_publication,
             audit_intensity=request.audit_intensity,
         )
         repair_events, repair_records, repair_session, repair_result_text = _run_openai_host_control_attempt(
@@ -434,6 +451,7 @@ def _run_openai_host_control_attempt(
                 envelope.payload,
                 current_session,
                 audit_intensity=request.audit_intensity,
+                offline_publication=request.offline_publication,
             )
         except (TypeError, ValueError) as exc:
             raise OpenAIResponseStreamTransportError(
@@ -540,6 +558,10 @@ def _coerce_openai_host_control_request(
         request_payload.get("work_contract"),
         "OpenAI host control request `request.work_contract`",
     )
+    offline_publication = _offline_publication(
+        request_payload.get("offline_publication"),
+        "OpenAI host control request `request.offline_publication`",
+    )
     audit_intensity = _audit_intensity(
         request_payload.get("audit_intensity"),
         "OpenAI host control request `request.audit_intensity`",
@@ -560,6 +582,7 @@ def _coerce_openai_host_control_request(
         metadata=metadata,
         max_output_tokens=max_output_tokens,
         work_contract=work_contract,
+        offline_publication=offline_publication,
         audit_intensity=audit_intensity,
     )
 
@@ -665,6 +688,26 @@ def _work_contract(value: Any, label: str) -> WorkContract | None:
         output_carrier=output_carrier,
         max_repair_turns=max_repair_turns,
     )
+
+
+def _offline_publication(value: Any, label: str) -> "OfflineSupportPublication | None":
+    if value is None:
+        return None
+    if not isinstance(value, Mapping):
+        actual_type = type(value).__name__
+        raise TypeError(f"{label} must be an object, got {actual_type}.")
+    try:
+        return _aux_publication_module().parse_offline_support_publication_payload(value)
+    except (TypeError, ValueError) as exc:
+        raise type(exc)(f"{label} is invalid: {exc}") from exc
+
+
+def _offline_publication_type():
+    return _aux_publication_module().OfflineSupportPublication
+
+
+def _aux_publication_module():
+    return importlib.import_module("cortex.aux.publication")
 
 
 __all__ = [

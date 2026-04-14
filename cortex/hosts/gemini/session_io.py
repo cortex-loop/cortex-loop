@@ -538,7 +538,9 @@ def _feedback(value: Any, label: str) -> ReferenceRealizationFeedback:
     )
     optional_feedback_keys = (
         "task_mode",
+        "evidence_progress_class",
         "evidence_state_moved",
+        "continuity_progress_class",
         "continuity_improved",
         "probe_result_class",
     )
@@ -590,9 +592,17 @@ def _feedback(value: Any, label: str) -> ReferenceRealizationFeedback:
             value["host_friction_tags"],
             f"{label}.host_friction_tags",
         ),
+        evidence_progress_class=_optional_non_empty_string(
+            value.get("evidence_progress_class"),
+            f"{label}.evidence_progress_class",
+        ),
         evidence_state_moved=_optional_bool(
             value.get("evidence_state_moved"),
             f"{label}.evidence_state_moved",
+        ),
+        continuity_progress_class=_optional_non_empty_string(
+            value.get("continuity_progress_class"),
+            f"{label}.continuity_progress_class",
         ),
         continuity_improved=_optional_bool(
             value.get("continuity_improved"),
