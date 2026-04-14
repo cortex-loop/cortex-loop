@@ -57,6 +57,7 @@ def test_gemini_host_control_action_endpoint_returns_ordered_g1_records_and_muta
         "probe_result_class",
         "verification_state",
         "explainability_profile",
+        "anti_thrash",
         "scores",
     )
     assert export_status == 200

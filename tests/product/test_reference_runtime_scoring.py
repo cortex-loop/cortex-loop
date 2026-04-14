@@ -15,6 +15,7 @@ from cortex.sre.memory_priors import (
     SupportMemoryPriorScore,
 )
 from cortex.sre.opportunities import HostNativeOpportunity
+from cortex.sre.operator_routing import OperatorTaskMode
 from cortex.sre.reference_scoring import (
     build_reference_allocation_scorecard,
     build_reference_online_score_components,
@@ -257,6 +258,103 @@ def test_reference_scoring_tightens_to_neutral_when_guarded_pressure_is_present(
 
     assert selection.selected_family is SoftControlFamily.NEUTRAL
     assert selection.neutral_dominance.neutral_selected is True
+
+
+def test_reference_scoring_applies_anti_thrash_tax_only_to_repeated_family() -> None:
+    taxed = _state(
+        mode_tag="guarded_review",
+        family_mask=frozenset(
+            {
+                SoftControlFamily.NEUTRAL,
+                SoftControlFamily.CHECK,
+                SoftControlFamily.SEEK_CONTEXT,
+            }
+        ),
+        budget_band="low",
+        top_family_set=frozenset(
+            {
+                SoftControlFamily.NEUTRAL,
+                SoftControlFamily.CHECK,
+                SoftControlFamily.SEEK_CONTEXT,
+            }
+        ),
+        brake_state=BrakeState.GUARDED,
+        anti_thrash_state="taxed",
+        repetition_tax=0.16,
+        repetition_target_family=SoftControlFamily.CHECK,
+        anti_thrash_reason_tags=frozenset({"same-context-repeat"}),
+        task_mode=OperatorTaskMode.INSPECT,
+        host_friction_tags=frozenset({"capability-view-missing"}),
+    )
+    untaxed = _state(
+        mode_tag="guarded_review",
+        family_mask=taxed.mode_and_gating.family_mask,
+        budget_band="low",
+        top_family_set=taxed.control_allocation.top_family_set,
+        brake_state=BrakeState.GUARDED,
+        task_mode=OperatorTaskMode.INSPECT,
+        host_friction_tags=frozenset({"capability-view-missing"}),
+    )
+
+    taxed_components = build_reference_online_score_components(taxed)
+    untaxed_components = build_reference_online_score_components(untaxed)
+    taxed_scorecard = build_reference_allocation_scorecard(taxed)
+
+    assert taxed_components[SoftControlFamily.CHECK]["control_burden"] == pytest.approx(
+        untaxed_components[SoftControlFamily.CHECK]["control_burden"] + 0.16
+    )
+    assert taxed_components[SoftControlFamily.SEEK_CONTEXT]["control_burden"] == pytest.approx(
+        untaxed_components[SoftControlFamily.SEEK_CONTEXT]["control_burden"]
+    )
+    check_score = next(
+        score for score in taxed_scorecard.scores if score.family is SoftControlFamily.CHECK
+    )
+    seek_context_score = next(
+        score
+        for score in taxed_scorecard.scores
+        if score.family is SoftControlFamily.SEEK_CONTEXT
+    )
+    assert "anti-thrash:taxed" in check_score.reason_tags
+    assert "anti-thrash:taxed" not in seek_context_score.reason_tags
+
+
+def test_reference_scoring_reopened_state_clears_tax_and_preserves_stronger_verification_path() -> None:
+    reopened = _state(
+        mode_tag="guarded_review",
+        family_mask=frozenset(
+            {
+                SoftControlFamily.NEUTRAL,
+                SoftControlFamily.CHECK,
+                SoftControlFamily.SEEK_CONTEXT,
+            }
+        ),
+        budget_band="low",
+        top_family_set=frozenset(
+            {
+                SoftControlFamily.NEUTRAL,
+                SoftControlFamily.CHECK,
+                SoftControlFamily.SEEK_CONTEXT,
+            }
+        ),
+        brake_state=BrakeState.GUARDED,
+        anti_thrash_state="reopened",
+        repetition_target_family=SoftControlFamily.CHECK,
+        anti_thrash_reason_tags=frozenset({"reopened:posture-shift"}),
+        task_mode=OperatorTaskMode.EXECUTE,
+        host_friction_tags=frozenset({"capability-view-missing"}),
+    )
+
+    components = build_reference_online_score_components(reopened)
+    selection = select_reference_soft_control(reopened)
+    check_score = next(
+        score
+        for score in build_reference_allocation_scorecard(reopened).scores
+        if score.family is SoftControlFamily.CHECK
+    )
+
+    assert components[SoftControlFamily.CHECK]["control_burden"] >= 0.0
+    assert "anti-thrash:reopened" in check_score.reason_tags
+    assert selection.selected_family is SoftControlFamily.SEEK_CONTEXT
 
 
 def test_reference_scoring_promotes_branch_under_branch_pressure() -> None:
@@ -868,6 +966,7 @@ def _state(
     budget_band: str,
     top_family_set: frozenset[SoftControlFamily],
     brake_state: BrakeState,
+    task_mode: OperatorTaskMode = OperatorTaskMode.EXECUTE,
     host_friction_tags: frozenset[str] = frozenset(),
     feedback_pressure_tags: frozenset[str] = frozenset(),
     active_track_ref: str = "main",
@@ -877,6 +976,10 @@ def _state(
     merge_confidence: float = 0.0,
     productive_exploration_bonus: float = 0.0,
     oscillation_penalty: float = 0.0,
+    anti_thrash_state: str = "inactive",
+    repetition_tax: float = 0.0,
+    repetition_target_family: SoftControlFamily | None = None,
+    anti_thrash_reason_tags: frozenset[str] = frozenset(),
     uncertainty_levels: tuple[tuple[str, float], ...] = (),
     contradiction_spike_flags: frozenset[str] = frozenset(),
 ) -> ReferenceExecutiveState:
@@ -896,6 +999,7 @@ def _state(
             contradiction_spike_flags=contradiction_spike_flags,
         ),
         mode_and_gating=ReferenceModeAndGatingView(
+            task_mode=task_mode,
             mode_tag=mode_tag,
             family_mask=family_mask,
         ),
@@ -906,6 +1010,10 @@ def _state(
             feedback_pressure_tags=feedback_pressure_tags,
             productive_exploration_bonus=productive_exploration_bonus,
             oscillation_penalty=oscillation_penalty,
+            anti_thrash_state=anti_thrash_state,
+            repetition_tax=repetition_tax,
+            repetition_target_family=repetition_target_family,
+            anti_thrash_reason_tags=anti_thrash_reason_tags,
         ),
         brake=ReferenceBrakeView(brake_state=brake_state),
     )

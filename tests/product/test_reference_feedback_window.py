@@ -13,6 +13,7 @@ from cortex.sre.feedback import (
     summarize_reference_feedback_window,
 )
 from cortex.sre.families import SoftControlFamily
+from cortex.sre.operator_routing import OperatorTaskMode
 
 
 def test_reference_realization_feedback_window_starts_empty() -> None:
@@ -171,6 +172,51 @@ def test_summarize_reference_feedback_window_reports_mixed_rejection_and_overrid
         "prior-enforcement-override",
         "sustained-feedback-disruption",
     )
+
+
+def test_summarize_reference_feedback_window_counts_same_context_retry_only_for_repeated_signed_feedback() -> None:
+    summary = summarize_reference_feedback_window(
+        ReferenceRealizationFeedbackWindow(
+            entries=(
+                ReferenceRealizationFeedback(
+                    selected_family=SoftControlFamily.CHECK,
+                    realized_family=SoftControlFamily.CHECK,
+                    brake_state=BrakeState.GUARDED,
+                    task_mode=OperatorTaskMode.INSPECT,
+                    host_friction_tags=("capability-view-missing",),
+                    evidence_state_moved=False,
+                    continuity_improved=False,
+                ),
+                ReferenceRealizationFeedback(
+                    selected_family=SoftControlFamily.CHECK,
+                    realized_family=SoftControlFamily.CHECK,
+                    brake_state=BrakeState.GUARDED,
+                    task_mode=OperatorTaskMode.INSPECT,
+                    host_friction_tags=("capability-view-missing",),
+                    evidence_state_moved=False,
+                    continuity_improved=False,
+                ),
+            )
+        )
+    )
+
+    assert summary.same_family_no_progress_count == 1
+    assert summary.same_context_retry_count == 1
+    assert summary.degradation_pressure_bonus == 1
+
+
+def test_summarize_reference_feedback_window_does_not_count_unsigned_legacy_feedback_as_same_context_retry() -> None:
+    summary = summarize_reference_feedback_window(
+        ReferenceRealizationFeedbackWindow(
+            entries=(
+                _feedback("clean-a", selected=SoftControlFamily.CHECK),
+                _feedback("clean-b", selected=SoftControlFamily.CHECK),
+            )
+        )
+    )
+
+    assert summary.same_family_no_progress_count == 0
+    assert summary.same_context_retry_count == 0
 
 
 def _feedback(

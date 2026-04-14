@@ -51,6 +51,7 @@ def test_gemini_service_health_and_documented_event_flow() -> None:
             "probe_result_class",
             "verification_state",
             "explainability_profile",
+            "anti_thrash",
             "scores",
         )
 
@@ -154,6 +155,7 @@ def test_gemini_service_undocumented_raw_event_warns_without_fabricating_parity(
             "probe_result_class",
             "verification_state",
             "explainability_profile",
+            "anti_thrash",
             "scores",
         )
 

@@ -126,7 +126,7 @@
         "tests/product",
         "tests/experimental"
       ],
-      "next_move": "Hold calibrated intervention pricing stable now that posture-sensitive online control is S-tier closed on the live runtime path: posture truth is single-owned, the 6-axis route geometry stays bounded, `visible_burden_sensitivity` is surfaced as a separate utility scalar, anti-thrash is the next active leverage, and any later live memory re-entry must remain explicit, bounded, and separately earned."
+      "next_move": "Hold calibrated intervention pricing stable now that posture-sensitive online control is S-tier closed and anti-thrash is landed on the live runtime path: posture truth is single-owned, the 6-axis route geometry stays bounded, `visible_burden_sensitivity` is surfaced as a separate utility scalar, unchanged-condition repetition is taxed only at the exact-family level with bounded reopen, and any later live memory re-entry must remain explicit, bounded, and separately earned."
     },
     {
       "skill": "Blocker surfacing and goal-debt management",
@@ -189,14 +189,14 @@
     "law_revision_rule": "The current math is binding landing law until live evidence disproves or narrows it. When that happens, revise the law explicitly and update the code and proof surfaces in the same seam; do not silently patch around stale math in implementation."
   },
   "work_today": {
-    "slug": "selective-anti-thrash-with-creativity-budget",
-    "note": "The bounded AUX shadow surface still earns `full_cross_host`, durable support-memory distillation remains explicit and removable, and posture-sensitive online control is now S-tier closed on the live runtime path: cheap non-debt events recover `inspect`, continuity debt keeps `resume`, non-cheap non-debt paths default to `execute`, posture truth is single-owned across runtime/executive/summary surfaces, and reference/OpenAI/Claude/Gemini now expose bounded operator-route truth with `visible_burden_sensitivity` surfaced outside the 6-axis geometry vector without widening runtime ingress. Shipping and conformance still keep `Q_mem = 0`, route blockedness remains non-sovereign, and the next highest-leverage gap is selective anti-thrash so unchanged-condition repetition can be taxed without suppressing novelty."
+    "slug": "bounded-live-support-memory-reentry",
+    "note": "The bounded AUX shadow surface still earns `full_cross_host`, durable support-memory distillation remains explicit and removable, posture-sensitive online control is now S-tier closed on the live runtime path, and anti-thrash is landed as an exact-family unchanged-condition repetition tax with posture/host-friction/evidence/probe reopen so repeated low-yield loops can be priced without suppressing stronger verification or novelty. Shipping and conformance still keep `Q_mem = 0`, route blockedness remains non-sovereign, raw SQLite episodes remain support-side only, and the next highest-leverage gap is bounded live support-memory re-entry through explicit distilled priors only."
   },
   "next_product_train": {
     "slug": "bounded-live-support-memory-reentry",
     "surface": "experimental + product",
     "executive_benefit": "Test whether explicit distilled support priors can safely influence narrow live control lanes without hidden policy or stale-memory superstition.",
-    "why_now": "Durable support-memory distillation is landed, posture-sensitive online control is now S-tier closed with single-owner posture truth and complete bounded route diagnostics, and anti-thrash becomes the current train; only after that control envelope is explicit should a separate seam test whether any live `Q_mem` re-entry is worth earning.",
+    "why_now": "Durable support-memory distillation is landed, posture-sensitive online control is now S-tier closed with single-owner posture truth and complete bounded route diagnostics, and anti-thrash is now landed as bounded exact-family repetition tax with novelty reopen; only after that control envelope is explicit should a separate seam test whether any live `Q_mem` re-entry is worth earning.",
     "primary_metric": "bounded live tasks improve only when explicit distilled priors are injected, while contradiction and TTL invalidation still dominate stale memory",
     "guardrail": "no raw SQLite ingress, no hidden memory path, no truth mutation, and no nonzero shipping/conformance `Q_mem` without separate proof",
     "kill_rule": "cut any seam that needs generic reward learning, host myths, or silent memory influence to show lift"
@@ -493,7 +493,7 @@
   "where_to_work": [
     "Keep the bounded audit surface compact and truthful on the shipped lane: selected versus realized family, uncertainty, threshold, delta, verification, and probe truth only.",
     "Keep the no-spend live evidence current and explicit: fast conformance is green, the deeper directionality and host-native watchlists are refreshed, and non-shipping auth or env caveats must stay explicit instead of silently stale.",
-    "Keep posture and AUX memory law explicit and removable now that posture-sensitive online control is S-tier closed: inspect is live on cheap non-debt events, resume stays continuity-conditioned, posture truth is single-owned, the route state vector stays the bounded 6-axis geometry term while `visible_burden_sensitivity` remains a separate utility scalar, route truth stays bounded and non-sovereign, raw SQLite episodes stay support-side only, and any anti-thrash seam must tax unchanged-condition repetition without collapsing creativity while live `Q_mem` stays zero on shipping and conformance lanes."
+    "Keep posture and AUX memory law explicit and removable now that posture-sensitive online control is S-tier closed and anti-thrash is landed: inspect is live on cheap non-debt events, resume stays continuity-conditioned, posture truth is single-owned, the route state vector stays the bounded 6-axis geometry term while `visible_burden_sensitivity` remains a separate utility scalar, route truth stays bounded and non-sovereign, unchanged-condition repetition is taxed only at the exact-family level with bounded reopen, raw SQLite episodes stay support-side only, and live `Q_mem` stays zero on shipping and conformance lanes."
   ],
   "blocked_moves": [
     "Do not let archived docs or train notes act as live truth.",

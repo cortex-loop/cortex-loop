@@ -123,6 +123,10 @@ def build_allocation_diagnostics_payload(
     probe_result_class: str | None = None,
     verification_state: str = "not-required",
     explainability_profile: str = "minimal",
+    anti_thrash_state: str = "inactive",
+    repetition_target_family: SoftControlFamily | None = None,
+    repetition_tax: float = 0.0,
+    anti_thrash_reason_tags: frozenset[str] = frozenset(),
     mediation_payload: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     if not isinstance(scorecard, AllocationScorecard):
@@ -192,6 +196,45 @@ def build_allocation_diagnostics_payload(
         raise ValueError(
             "build_allocation_diagnostics_payload.explainability_profile must be non-empty after trimming."
         )
+    if anti_thrash_state not in {"inactive", "taxed", "reopened"}:
+        raise ValueError(
+            "build_allocation_diagnostics_payload.anti_thrash_state must be one of "
+            "['inactive', 'taxed', 'reopened']."
+        )
+    if repetition_target_family is not None and not isinstance(
+        repetition_target_family, SoftControlFamily
+    ):
+        actual_type = type(repetition_target_family).__name__
+        raise TypeError(
+            "build_allocation_diagnostics_payload.repetition_target_family must be "
+            f"SoftControlFamily | None, got {actual_type}."
+        )
+    if isinstance(repetition_tax, bool) or not isinstance(repetition_tax, Real):
+        actual_type = type(repetition_tax).__name__
+        raise TypeError(
+            "build_allocation_diagnostics_payload.repetition_tax must be numeric, "
+            f"got {actual_type}."
+        )
+    if float(repetition_tax) < 0.0:
+        raise ValueError(
+            "build_allocation_diagnostics_payload.repetition_tax must be non-negative."
+        )
+    if any(not tag.strip() for tag in anti_thrash_reason_tags):
+        raise ValueError(
+            "build_allocation_diagnostics_payload.anti_thrash_reason_tags must contain only non-empty values after trimming."
+        )
+    if anti_thrash_state == "taxed" and float(repetition_tax) <= 0.0:
+        raise ValueError(
+            "build_allocation_diagnostics_payload.repetition_tax must be positive when anti_thrash_state is `taxed`."
+        )
+    if anti_thrash_state == "taxed" and repetition_target_family is None:
+        raise ValueError(
+            "build_allocation_diagnostics_payload.repetition_target_family is required when anti_thrash_state is `taxed`."
+        )
+    if anti_thrash_state in {"inactive", "reopened"} and float(repetition_tax) != 0.0:
+        raise ValueError(
+            "build_allocation_diagnostics_payload.repetition_tax must be 0.0 unless anti_thrash_state is `taxed`."
+        )
     if mediation_payload is not None and not isinstance(mediation_payload, dict):
         actual_type = type(mediation_payload).__name__
         raise TypeError(
@@ -209,6 +252,16 @@ def build_allocation_diagnostics_payload(
         "probe_result_class": probe_result_class,
         "verification_state": verification_state,
         "explainability_profile": explainability_profile,
+        "anti_thrash": {
+            "state": anti_thrash_state,
+            "target_family": (
+                repetition_target_family.value
+                if repetition_target_family is not None
+                else None
+            ),
+            "repetition_tax": float(repetition_tax),
+            "reason_tags": sorted(anti_thrash_reason_tags),
+        },
         "scores": [score.as_summary() for score in scorecard.scores],
     }
     if mediation_payload is not None:

@@ -159,24 +159,30 @@ def test_openai_runtime_step_keeps_hard_product_guards_ahead_of_reference_contro
             "selected_family": "seek-context",
             "realized_family": "seek-context",
             "brake_state": "guarded",
+            "task_mode": "execute",
             "commitment_result_kind": "certified",
             "warning_codes": [],
             "host_friction_tags": [
                 "approval-boundary-present",
                 "capability-view-missing",
             ],
+            "evidence_state_moved": True,
+            "continuity_improved": False,
         },
         "feedback_window": [
             {
                 "selected_family": "seek-context",
                 "realized_family": "seek-context",
                 "brake_state": "guarded",
+                "task_mode": "execute",
                 "commitment_result_kind": "certified",
                 "warning_codes": [],
                 "host_friction_tags": [
                     "approval-boundary-present",
                     "capability-view-missing",
                 ],
+                "evidence_state_moved": True,
+                "continuity_improved": False,
             }
         ],
         "executive_modulator_memory": {

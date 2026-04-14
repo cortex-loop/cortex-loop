@@ -12,6 +12,7 @@ from typing import Any, Mapping
 from cortex.hosts.openai.runtime import OpenAIRuntimeSession
 from cortex.sre.feedback import ReferenceRealizationFeedback, ReferenceRealizationFeedbackWindow
 from cortex.sre.families import SoftControlFamily
+from cortex.sre.operator_routing import OperatorTaskMode
 from cortex.sre.brake import BrakeState
 from cortex.sre.modulators import ExecutiveModulatorMemory
 from cortex.sre.preservation import PreservationState
@@ -564,8 +565,10 @@ def _feedback(value: Any, label: str) -> ReferenceRealizationFeedback:
         "host_friction_tags",
     )
     optional_feedback_keys = (
+        "task_mode",
         "evidence_state_moved",
         "continuity_improved",
+        "probe_result_class",
     )
     expected_keys = set(required_feedback_keys) | set(optional_feedback_keys)
     actual_keys = set(value)
@@ -575,6 +578,7 @@ def _feedback(value: Any, label: str) -> ReferenceRealizationFeedback:
         selected_family=_soft_control_family(value["selected_family"], f"{label}.selected_family"),
         realized_family=_soft_control_family(value["realized_family"], f"{label}.realized_family"),
         brake_state=_brake_state(value["brake_state"], f"{label}.brake_state"),
+        task_mode=_optional_task_mode(value.get("task_mode"), f"{label}.task_mode"),
         commitment_result_kind=_optional_commitment_result_kind(
             value["commitment_result_kind"],
             f"{label}.commitment_result_kind",
@@ -592,6 +596,10 @@ def _feedback(value: Any, label: str) -> ReferenceRealizationFeedback:
             value.get("continuity_improved"),
             f"{label}.continuity_improved",
         ),
+        probe_result_class=_optional_non_empty_string(
+            value.get("probe_result_class"),
+            f"{label}.probe_result_class",
+        ),
     )
 
 
@@ -605,6 +613,18 @@ def _optional_commitment_result_kind(value: Any, label: str) -> str | None:
     if stripped not in {"certified", "uncertified", "blocked"}:
         raise ValueError(f"{label} must be a canonical commitment status when provided.")
     return stripped
+
+
+def _optional_task_mode(value: Any, label: str) -> OperatorTaskMode | None:
+    if value is None:
+        return None
+    if not isinstance(value, str):
+        actual_type = type(value).__name__
+        raise TypeError(f"{label} must be str | null, got {actual_type}.")
+    try:
+        return OperatorTaskMode(value.strip())
+    except ValueError as exc:
+        raise ValueError(f"{label} must be a canonical operator task mode when provided.") from exc
 
 
 def _optional_bool(value: Any, label: str) -> bool | None:

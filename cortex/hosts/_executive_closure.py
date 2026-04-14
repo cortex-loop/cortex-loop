@@ -2,7 +2,8 @@
 
 from __future__ import annotations
 
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
+from typing import Any, Protocol
 
 from cortex.core.dispatch import DispatchDecision, DispatchLane
 from cortex.sre.brake import BrakeState
@@ -12,10 +13,17 @@ from cortex.sre.feedback import (
     ReferenceRealizationFeedback,
     ReferenceRealizationFeedbackWindow,
 )
+from cortex.sre.families import SoftControlFamily
 from cortex.sre.goal_debt import build_closure_pressure_state
 from cortex.sre.modulators import ExecutiveModulatorMemory
 from cortex.sre.operator_routing import OperatorTaskMode, OperatorTaskState
 from cortex.sre.state import ReferenceExecutiveState
+
+
+class RuntimeContinuityProgressSessionLike(Protocol):
+    branch_registry: tuple[str, ...]
+    active_track_ref: str
+    pending_goal_refs: tuple[str, ...]
 
 
 def build_runtime_executive_signal_summary_inputs(
@@ -216,6 +224,71 @@ def continuity_demand(
     return 0.0
 
 
+def evidence_state_moved_for_runtime(
+    *,
+    dispatch_decision: DispatchDecision,
+    normalized_payload: Mapping[str, Any],
+    commitment_result_kind: str | None,
+) -> bool:
+    return bool(
+        commitment_result_kind is not None
+        or dispatch_decision.lane is not DispatchLane.CHEAP
+        or _first_concrete_artifact_ref(normalized_payload) is not None
+        or _as_non_empty_string(normalized_payload.get("external_record_ref")) is not None
+        or _as_non_empty_string(normalized_payload.get("candidate_id")) is not None
+        or _has_output_progress(normalized_payload)
+        or _first_stop_field_progress_id(normalized_payload) is not None
+    )
+
+
+def continuity_improved_for_runtime(
+    *,
+    prior_session: RuntimeContinuityProgressSessionLike,
+    provisional_session: RuntimeContinuityProgressSessionLike,
+) -> bool:
+    prior_open_branch_count = sum(
+        1 for branch_ref in prior_session.branch_registry if branch_ref != "main"
+    )
+    next_open_branch_count = sum(
+        1 for branch_ref in provisional_session.branch_registry if branch_ref != "main"
+    )
+    return bool(
+        next_open_branch_count < prior_open_branch_count
+        or len(provisional_session.pending_goal_refs) < len(prior_session.pending_goal_refs)
+        or (
+            prior_session.active_track_ref != "main"
+            and provisional_session.active_track_ref == "main"
+        )
+    )
+
+
+def build_shared_realization_feedback(
+    *,
+    task_mode: OperatorTaskMode,
+    selected_family: SoftControlFamily,
+    realized_family: SoftControlFamily,
+    brake_state: BrakeState,
+    commitment_result_kind: str | None,
+    warning_codes: tuple[str, ...],
+    host_friction_tags: frozenset[str],
+    probe_result_class: str | None,
+    evidence_state_moved: bool | None,
+    continuity_improved: bool | None,
+) -> ReferenceRealizationFeedback:
+    return ReferenceRealizationFeedback(
+        selected_family=selected_family,
+        realized_family=realized_family,
+        brake_state=brake_state,
+        task_mode=task_mode,
+        commitment_result_kind=commitment_result_kind,
+        warning_codes=warning_codes,
+        host_friction_tags=tuple(sorted(host_friction_tags)),
+        evidence_state_moved=evidence_state_moved,
+        continuity_improved=continuity_improved,
+        probe_result_class=probe_result_class,
+    )
+
+
 def build_runtime_operator_task_state(
     *,
     summary_inputs: ExecutiveSignalSummaryInputs,
@@ -258,6 +331,44 @@ def recent_warning_bearing_success_present(
         and latest_feedback.warning_codes
         and not failed_before_completion
     )
+
+
+def _first_concrete_artifact_ref(normalized_payload: Mapping[str, Any]) -> str | None:
+    for key in ("result_artifact_ref", "artifact_ref", "verified_work_ref"):
+        value = _as_non_empty_string(normalized_payload.get(key))
+        if value is not None:
+            return value
+    return None
+
+
+def _as_non_empty_string(value: Any) -> str | None:
+    if not isinstance(value, str):
+        return None
+    stripped = value.strip()
+    return stripped or None
+
+
+def _has_output_progress(normalized_payload: Mapping[str, Any]) -> bool:
+    direct_delta = normalized_payload.get("delta")
+    if _as_non_empty_string(direct_delta) is not None:
+        return True
+    if isinstance(direct_delta, Mapping):
+        if _as_non_empty_string(direct_delta.get("text")) is not None:
+            return True
+        if _as_non_empty_string(direct_delta.get("partial_json")) is not None:
+            return True
+    return _as_non_empty_string(normalized_payload.get("partial_json")) is not None
+
+
+def _first_stop_field_progress_id(normalized_payload: Mapping[str, Any]) -> str | None:
+    raw = normalized_payload.get("stop_fields")
+    if not isinstance(raw, Mapping):
+        return None
+    for key in ("candidate_id", "claim_id", "commitment_id"):
+        value = _as_non_empty_string(raw.get(key))
+        if value is not None:
+            return value
+    return None
 
 
 def closure_reason_tags(
@@ -351,11 +462,14 @@ def _latest_probe_feedback(
 
 __all__ = [
     "assert_runtime_posture_alignment",
+    "build_shared_realization_feedback",
     "build_runtime_operator_task_state",
     "build_runtime_executive_signal_summary_inputs",
     "canonicalize_executive_modulator_memory",
     "closure_reason_tags",
     "continuity_demand",
+    "continuity_improved_for_runtime",
+    "evidence_state_moved_for_runtime",
     "executive_modulator_memory_payload",
     "max_uncertainty_level",
     "public_posture_for_task_mode",

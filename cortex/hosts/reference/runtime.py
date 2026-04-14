@@ -38,10 +38,13 @@ from cortex.drivers.reference_host import BoundReferenceHostEvent, observe_refer
 from cortex.drivers.reference_host_commitment import bind_reference_host_candidate
 from cortex.hosts._executive_closure import (
     assert_runtime_posture_alignment,
+    build_shared_realization_feedback,
     build_runtime_operator_task_state,
     build_runtime_executive_signal_summary_inputs,
     canonicalize_executive_modulator_memory,
     closure_reason_tags,
+    continuity_improved_for_runtime,
+    evidence_state_moved_for_runtime,
     public_posture_for_task_mode,
     recent_probe_failure_class as recent_probe_failure_class_from_feedback_window,
     recent_warning_bearing_success_present,
@@ -535,6 +538,7 @@ class ReferenceRuntimeStepResult:
             "posture": public_posture_for_task_mode(
                 self.executive_state.mode_and_gating.task_mode
             ),
+            "anti_thrash_state": self.executive_state.control_allocation.anti_thrash_state,
             "mode_tag": self.executive_state.mode_and_gating.mode_tag,
             "family_mask": sorted(
                 family.value for family in self.executive_state.mode_and_gating.family_mask
@@ -774,6 +778,14 @@ def run_reference_runtime_step(
             commitment_result_kind=commitment_result_kind,
         ),
         explainability_profile=executive_state.control_allocation.explainability_profile,
+        anti_thrash_state=executive_state.control_allocation.anti_thrash_state,
+        repetition_target_family=(
+            executive_state.control_allocation.repetition_target_family
+        ),
+        repetition_tax=executive_state.control_allocation.repetition_tax,
+        anti_thrash_reason_tags=(
+            executive_state.control_allocation.anti_thrash_reason_tags
+        ),
         mediation_payload=selection.mediation_finalization.as_payload(),
     )
     audit_projection = None
@@ -798,7 +810,8 @@ def run_reference_runtime_step(
         allocation_diagnostics=allocation_diagnostics,
         audit_projection=audit_projection,
     )
-    realization_feedback = ReferenceRealizationFeedback(
+    realization_feedback = build_shared_realization_feedback(
+        task_mode=runtime_task_mode,
         selected_family=selected_family,
         realized_family=realized_family,
         brake_state=brake_state,
@@ -807,12 +820,12 @@ def run_reference_runtime_step(
         host_friction_tags=tuple(
             sorted(executive_state.control_allocation.host_friction_tags)
         ),
-        evidence_state_moved=_evidence_state_moved(
+        evidence_state_moved=evidence_state_moved_for_runtime(
             dispatch_decision=dispatch_decision,
             normalized_payload=normalized_payload,
             commitment_result_kind=commitment_result_kind,
         ),
-        continuity_improved=_continuity_improved(
+        continuity_improved=continuity_improved_for_runtime(
             prior_session=prior_session,
             provisional_session=provisional_session,
         ),
@@ -1557,42 +1570,6 @@ def _probe_result_class(
     return None
 
 
-def _evidence_state_moved(
-    *,
-    dispatch_decision: DispatchDecision,
-    normalized_payload: Mapping[str, Any],
-    commitment_result_kind: str | None,
-) -> bool:
-    return bool(
-        commitment_result_kind is not None
-        or dispatch_decision.lane is not DispatchLane.CHEAP
-        or _first_concrete_artifact_ref(normalized_payload) is not None
-        or _as_non_empty_string(normalized_payload.get("external_record_ref")) is not None
-        or _as_non_empty_string(normalized_payload.get("candidate_id")) is not None
-    )
-
-
-def _continuity_improved(
-    *,
-    prior_session: ReferenceRuntimeSession,
-    provisional_session: ReferenceRuntimeSession,
-) -> bool:
-    prior_open_branch_count = sum(
-        1 for branch_ref in prior_session.branch_registry if branch_ref != "main"
-    )
-    next_open_branch_count = sum(
-        1 for branch_ref in provisional_session.branch_registry if branch_ref != "main"
-    )
-    return bool(
-        next_open_branch_count < prior_open_branch_count
-        or len(provisional_session.pending_goal_refs) < len(prior_session.pending_goal_refs)
-        or (
-            prior_session.active_track_ref != "main"
-            and provisional_session.active_track_ref == "main"
-        )
-    )
-
-
 def _primary_reason(warnings: tuple[str, ...]) -> str | None:
     for warning in warnings:
         if warning.startswith(
@@ -1613,8 +1590,15 @@ _ALLOCATION_DIAGNOSTICS_KEYS = (
     "probe_result_class",
     "verification_state",
     "explainability_profile",
+    "anti_thrash",
     "scores",
     "mediation",
+)
+_ANTI_THRASH_DIAGNOSTICS_KEYS = (
+    "state",
+    "target_family",
+    "repetition_tax",
+    "reason_tags",
 )
 _ALLOCATION_SCORE_KEYS = (
     "family",
@@ -1705,6 +1689,41 @@ def _validate_allocation_diagnostics_payload(payload: dict[str, Any], label: str
         value = payload[key]
         if not (isinstance(value, str) and value.strip()):
             raise ValueError(f"{label}.{key} must be non-empty after trimming.")
+    anti_thrash = payload["anti_thrash"]
+    if not isinstance(anti_thrash, dict):
+        actual_type = type(anti_thrash).__name__
+        raise TypeError(f"{label}.anti_thrash must be dict[str, Any], got {actual_type}.")
+    if tuple(anti_thrash) != _ANTI_THRASH_DIAGNOSTICS_KEYS:
+        raise ValueError(
+            f"{label}.anti_thrash must preserve the locked key order {_ANTI_THRASH_DIAGNOSTICS_KEYS!r}."
+        )
+    if anti_thrash["state"] not in {"inactive", "taxed", "reopened"}:
+        raise ValueError(
+            f"{label}.anti_thrash.state must be one of ['inactive', 'taxed', 'reopened']."
+        )
+    target_family = anti_thrash["target_family"]
+    if target_family is not None and not (
+        isinstance(target_family, str) and target_family.strip()
+    ):
+        raise ValueError(
+            f"{label}.anti_thrash.target_family must be non-empty after trimming when provided."
+        )
+    repetition_tax = anti_thrash["repetition_tax"]
+    if isinstance(repetition_tax, bool) or not isinstance(repetition_tax, (int, float)):
+        actual_type = type(repetition_tax).__name__
+        raise TypeError(
+            f"{label}.anti_thrash.repetition_tax must be numeric, got {actual_type}."
+        )
+    reason_tags = anti_thrash["reason_tags"]
+    if not isinstance(reason_tags, list):
+        actual_type = type(reason_tags).__name__
+        raise TypeError(
+            f"{label}.anti_thrash.reason_tags must be list[str], got {actual_type}."
+        )
+    if any(not (isinstance(tag, str) and tag.strip()) for tag in reason_tags):
+        raise ValueError(
+            f"{label}.anti_thrash.reason_tags must contain only non-empty values after trimming."
+        )
     scores = payload["scores"]
     if not isinstance(scores, list):
         actual_type = type(scores).__name__
@@ -1867,6 +1886,12 @@ def _copy_allocation_diagnostics_payload(payload: dict[str, Any]) -> dict[str, A
         "probe_result_class": payload["probe_result_class"],
         "verification_state": payload["verification_state"],
         "explainability_profile": payload["explainability_profile"],
+        "anti_thrash": {
+            "state": payload["anti_thrash"]["state"],
+            "target_family": payload["anti_thrash"]["target_family"],
+            "repetition_tax": payload["anti_thrash"]["repetition_tax"],
+            "reason_tags": list(payload["anti_thrash"]["reason_tags"]),
+        },
         "scores": [
             {
                 "family": score["family"],

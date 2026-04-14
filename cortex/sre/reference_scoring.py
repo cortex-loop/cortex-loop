@@ -215,6 +215,16 @@ def build_reference_allocation_scorecard(
             reason_tags.add(
                 f"probe:{executive_state.control_allocation.recent_probe_result_class}"
             )
+        if (
+            executive_state.control_allocation.anti_thrash_state == "taxed"
+            and executive_state.control_allocation.repetition_target_family is family
+        ):
+            reason_tags.add("anti-thrash:taxed")
+        if (
+            executive_state.control_allocation.anti_thrash_state == "reopened"
+            and executive_state.control_allocation.repetition_target_family is family
+        ):
+            reason_tags.add("anti-thrash:reopened")
 
         online_score = _online_score(online_components[family])
         memory_prior = (
@@ -503,6 +513,10 @@ def _online_score_components_for_family(
         executive_state.control_allocation.productive_exploration_bonus
     )
     oscillation_penalty = executive_state.control_allocation.oscillation_penalty
+    repetition_tax = executive_state.control_allocation.repetition_tax
+    repetition_target_family = (
+        executive_state.control_allocation.repetition_target_family
+    )
     probe_backed_families = executive_state.control_allocation.probe_backed_families
     budget_band = executive_state.control_allocation.budget_band
     goal_continuity = executive_state.goal_continuity
@@ -588,6 +602,8 @@ def _online_score_components_for_family(
         SoftControlFamily.ESCALATE,
     }:
         control_burden += oscillation_penalty
+    if family is repetition_target_family:
+        control_burden += repetition_tax
 
     if family is SoftControlFamily.BRANCH:
         if brake_state is BrakeState.GUARDED:

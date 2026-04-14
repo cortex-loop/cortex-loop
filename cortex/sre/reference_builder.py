@@ -13,6 +13,7 @@ from .brake import BrakeState, evaluate_brake_state
 from .feedback import (
     ReferenceFeedbackWindowSummary,
     ReferenceRealizationFeedbackWindow,
+    latest_same_context_retry_feedback,
     summarize_reference_feedback_window,
 )
 from .families import SoftControlFamily
@@ -187,6 +188,14 @@ def build_reference_executive_state(
         recent_probe_result_class=recent_probe_result_class,
         requested_audit_intensity=audit_intensity,
     )
+    anti_thrash_state, repetition_tax, repetition_target_family, anti_thrash_reason_tags = (
+        _anti_thrash_state(
+            prior_session=prior_session,
+            task_mode=task_mode,
+            host_friction_tags=host_friction_tags,
+            prior_feedback_window_summary=prior_feedback_window_summary,
+        )
+    )
     mode_and_gating = ReferenceModeAndGatingView(
         task_mode=task_mode,
         mode_tag=_mode_tag_for_event(
@@ -224,6 +233,10 @@ def build_reference_executive_state(
             prior_feedback_window_summary
         ),
         oscillation_penalty=_oscillation_penalty(prior_feedback_window_summary),
+        anti_thrash_state=anti_thrash_state,
+        repetition_tax=repetition_tax,
+        repetition_target_family=repetition_target_family,
+        anti_thrash_reason_tags=anti_thrash_reason_tags,
         host_friction_level=host_friction_level,
         visible_burden_scale=_visible_burden_scale(explainability_profile),
         explainability_profile=explainability_profile,
@@ -794,6 +807,50 @@ def _oscillation_penalty(
     if prior_feedback_window_summary.override_count >= 2:
         penalty += 0.04
     return min(0.20, penalty)
+
+
+def _anti_thrash_state(
+    *,
+    prior_session: PriorReferenceRuntimeSessionLike | None,
+    task_mode: OperatorTaskMode,
+    host_friction_tags: frozenset[str],
+    prior_feedback_window_summary: ReferenceFeedbackWindowSummary,
+) -> tuple[str, float, SoftControlFamily | None, frozenset[str]]:
+    if prior_session is None:
+        return "inactive", 0.0, None, frozenset()
+    prior_feedback_window = prior_session.feedback_window
+    latest_retry_feedback = latest_same_context_retry_feedback(prior_feedback_window)
+    if latest_retry_feedback is None:
+        return "inactive", 0.0, None, frozenset()
+    latest_feedback = prior_feedback_window.entries[-1]
+    assert latest_feedback is latest_retry_feedback
+    reopen_reasons: set[str] = set()
+    if latest_feedback.task_mode is not None and task_mode is not latest_feedback.task_mode:
+        reopen_reasons.add("reopened:posture-shift")
+    if tuple(sorted(host_friction_tags)) != tuple(sorted(latest_feedback.host_friction_tags)):
+        reopen_reasons.add("reopened:host-friction-shift")
+    if latest_feedback.evidence_state_moved is True:
+        reopen_reasons.add("reopened:evidence-moved")
+    if latest_feedback.continuity_improved is True:
+        reopen_reasons.add("reopened:continuity-improved")
+    if latest_feedback.probe_result_class == "succeeded":
+        reopen_reasons.add("reopened:probe-success")
+    if reopen_reasons:
+        return (
+            "reopened",
+            0.0,
+            latest_feedback.selected_family,
+            frozenset(sorted(reopen_reasons)),
+        )
+    repetition_tax = (
+        0.16 if prior_feedback_window_summary.same_context_retry_count >= 2 else 0.08
+    )
+    return (
+        "taxed",
+        repetition_tax,
+        latest_feedback.selected_family,
+        frozenset({"same-context-repeat"}),
+    )
 
 
 def _resume_anchor_quality(

@@ -115,6 +115,8 @@ def test_reference_runtime_step_result_surfaces_cheap_reference_event_without_co
         "evidence_state_move_count": 0,
         "continuity_improvement_count": 0,
         "family_change_without_evidence_count": 0,
+        "same_family_no_progress_count": 0,
+        "same_context_retry_count": 0,
         "goal_progress_floor": 0.0,
         "degradation_pressure_bonus": 0,
         "sustained_spike_flags": [],
@@ -131,6 +133,7 @@ def test_reference_runtime_step_result_surfaces_cheap_reference_event_without_co
         "selected_family": "seek-context",
         "realized_family": "seek-context",
         "brake_state": "guarded",
+        "task_mode": "inspect",
         "commitment_result_kind": None,
         "warning_codes": [],
         "host_friction_tags": ["capability-view-missing"],
@@ -424,6 +427,7 @@ def test_reference_runtime_step_replay_publication_can_lift_check_allocation_wit
         "probe_result_class",
         "verification_state",
         "explainability_profile",
+        "anti_thrash",
         "scores",
         "mediation",
     )
@@ -829,6 +833,8 @@ def test_reference_runtime_step_normalizes_last_only_prior_session_and_preserves
         "evidence_state_move_count": 0,
         "continuity_improvement_count": 0,
         "family_change_without_evidence_count": 0,
+        "same_family_no_progress_count": 0,
+        "same_context_retry_count": 0,
         "goal_progress_floor": 0.55,
         "degradation_pressure_bonus": 1,
         "sustained_spike_flags": ["prior-session-mismatch"],
@@ -961,6 +967,8 @@ def test_reference_runtime_step_reports_prior_window_summary_for_single_rejectio
         "evidence_state_move_count": 0,
         "continuity_improvement_count": 0,
         "family_change_without_evidence_count": 0,
+        "same_family_no_progress_count": 1,
+        "same_context_retry_count": 0,
         "goal_progress_floor": 0.55,
         "degradation_pressure_bonus": 1,
         "sustained_spike_flags": ["prior-session-mismatch"],
@@ -1000,6 +1008,8 @@ def test_reference_runtime_step_reports_prior_window_summary_for_repeated_reject
         "evidence_state_move_count": 0,
         "continuity_improvement_count": 0,
         "family_change_without_evidence_count": 1,
+        "same_family_no_progress_count": 1,
+        "same_context_retry_count": 0,
         "goal_progress_floor": 0.70,
         "degradation_pressure_bonus": 2,
         "sustained_spike_flags": [
@@ -1261,6 +1271,7 @@ def _assert_allocation_diagnostics_shape(
         "probe_result_class",
         "verification_state",
         "explainability_profile",
+        "anti_thrash",
         "scores",
         "mediation",
     )
@@ -1282,6 +1293,12 @@ def _assert_allocation_diagnostics_shape(
     assert isinstance(payload["verification_state"], str)
     assert payload["verification_state"]
     assert payload["explainability_profile"] in {"minimal", "focused", "structured"}
+    assert payload["anti_thrash"] == {
+        "state": "inactive",
+        "target_family": None,
+        "repetition_tax": 0.0,
+        "reason_tags": [],
+    }
     scores = payload["scores"]
     assert isinstance(scores, list)
     assert [score["family"] for score in scores] == [

@@ -89,6 +89,7 @@ def test_gemini_runtime_cli_reads_documented_raw_events_and_preserves_host_name(
         "probe_result_class",
         "verification_state",
         "explainability_profile",
+        "anti_thrash",
         "scores",
     )
     assert [record["executive_state_summary"]["probe_path_state"] for record in records] == [

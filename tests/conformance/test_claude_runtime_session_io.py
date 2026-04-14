@@ -17,6 +17,7 @@ from cortex.sre.brake import BrakeState
 from cortex.sre.feedback import ReferenceRealizationFeedback, ReferenceRealizationFeedbackWindow
 from cortex.sre.families import SoftControlFamily
 from cortex.sre.goals import make_resume_reminder
+from cortex.sre.operator_routing import OperatorTaskMode
 
 
 def test_claude_runtime_session_artifact_roundtrips_bounded_residue() -> None:
@@ -132,6 +133,26 @@ def test_claude_runtime_session_artifact_same_path_overwrite_safety(tmp_path) ->
 
     assert updated_payload["continuity_truth"]["event_index"] == 2
     assert updated_payload["control_residue"]["last_budget_band"] == "medium"
+
+
+def test_claude_runtime_session_artifact_roundtrips_feedback_task_mode_and_probe_result_class() -> None:
+    feedback = ReferenceRealizationFeedback(
+        selected_family=SoftControlFamily.CHECK,
+        realized_family=SoftControlFamily.CHECK,
+        brake_state=BrakeState.GUARDED,
+        task_mode=OperatorTaskMode.INSPECT,
+        commitment_result_kind="certified",
+        host_friction_tags=("approval-boundary-present",),
+        probe_result_class="succeeded",
+    )
+    payload = _base_payload()
+    payload["control_residue"]["last_realization_feedback"] = feedback.as_summary()
+    payload["control_residue"]["feedback_window"] = [feedback.as_summary()]
+
+    restored = parse_claude_runtime_session_artifact(payload)
+
+    assert restored.last_realization_feedback == feedback
+    assert restored.feedback_window.entries == (feedback,)
 
 
 def _base_payload() -> dict[str, object]:
