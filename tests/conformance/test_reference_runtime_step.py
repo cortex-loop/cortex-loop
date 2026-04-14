@@ -8,6 +8,7 @@ import cortex.aux.publication as aux_publication
 from cortex.aux.reference_replay import evaluate_aux_reference_q_mem_replay
 import cortex.aux.support_priors as aux_support_priors
 import cortex.hosts.reference.runtime as reference_runtime
+from cortex.core.envelopes import MetadataField
 from cortex.core.environment import EXECUTION_TRACE, ExecutiveEnvironmentView
 from cortex.core.dispatch import DispatchLane
 from cortex.hosts.reference.runtime import (
@@ -34,7 +35,10 @@ from cortex.sre.state import (
 )
 from cortex.sre.uncertainty import UncertaintyEstimate
 
-from tests.experimental._aux_test_support import make_aux_reference_replay_corpus
+from tests.experimental._aux_test_support import (
+    make_aux_reference_replay_corpus,
+    make_support_snapshot,
+)
 
 
 def test_reference_runtime_session_tracks_minimum_live_state() -> None:
@@ -416,6 +420,23 @@ def test_reference_runtime_step_replay_publication_can_lift_check_allocation_wit
         "allocation:online-plus-memory" in replay_check["reason_tags"]
         or "allocation:full-mixed" in replay_check["reason_tags"]
     )
+    memory_reentry = replay.control_ledger_summary["allocation_diagnostics"]["memory_reentry"]
+    assert memory_reentry["state"] == "active"
+    assert memory_reentry["source_host_name"] == "reference"
+    assert memory_reentry["target_host_name"] == "reference"
+    assert memory_reentry["eligible_families"] == [
+        "check",
+        "seek-context",
+        "branch",
+        "redirect",
+    ]
+    assert memory_reentry["invalidated_families"] == []
+    assert memory_reentry["selected_family_support_refs"] == [
+        {"reference_kind": "contradiction", "reference_id": "host-degraded"},
+    ]
+    assert memory_reentry["selected_family_memory_score"] == pytest.approx(
+        replay_check["memory_score"]
+    )
     assert tuple(replay.control_ledger_summary["allocation_diagnostics"]) == (
         "alpha_t",
         "activation_threshold",
@@ -428,6 +449,7 @@ def test_reference_runtime_step_replay_publication_can_lift_check_allocation_wit
         "verification_state",
         "explainability_profile",
         "anti_thrash",
+        "memory_reentry",
         "scores",
         "mediation",
     )
@@ -684,6 +706,102 @@ def test_reference_runtime_step_burden_heavy_replay_case_does_not_create_false_p
     assert replay_check["memory_score"] == 0.0
     assert replay_check["allocated_score"] == pytest.approx(baseline_check["allocated_score"])
     assert "allocation:online-plus-memory" not in replay_check["reason_tags"]
+
+
+def test_reference_runtime_step_replay_publication_blocks_cross_host_live_memory_reentry(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    case_result = _reference_replay_case_result("branch-resume-recovery")
+    scenario = _reference_replay_scenario("branch-resume-recovery")
+    monkeypatch.setattr(
+        reference_runtime,
+        "build_reference_executive_state",
+        lambda *args, **kwargs: _scenario_executive_state_with_task_mode(
+            scenario,
+            kwargs["task_mode"],
+        ),
+    )
+    monkeypatch.setattr(
+        reference_runtime,
+        "_build_support_snapshot",
+        lambda **kwargs: scenario.target_snapshot,
+    )
+
+    mismatched_publication = replace(
+        case_result.publication,
+        metadata=tuple(
+            MetadataField("host_name", "claude") if field.key == "host_name" else field
+            for field in case_result.publication.metadata
+        ),
+    )
+
+    replay = run_reference_runtime_step(
+        "ContextLoad",
+        {"session_id": "session-reference-replay-host-mismatch"},
+        offline_publication=mismatched_publication,
+    )
+
+    branch_score = _score_payload_for_family(
+        replay.control_ledger_summary["allocation_diagnostics"]["scores"],
+        "branch",
+    )
+    assert branch_score["memory_score"] == 0.0
+    assert replay.control_ledger_summary["allocation_diagnostics"]["memory_reentry"] == {
+        "state": "host-mismatch",
+        "source_host_name": "claude",
+        "target_host_name": "reference",
+        "eligible_families": ["check", "seek-context", "branch", "redirect"],
+        "invalidated_families": ["branch", "check", "redirect", "seek-context"],
+        "selected_family_support_refs": [],
+        "selected_family_memory_score": 0.0,
+    }
+
+
+def test_reference_runtime_step_live_memory_reentry_invalidates_branch_when_fresh_contradiction_overlaps_resume_context(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    case_result = _reference_replay_case_result("branch-resume-recovery")
+    scenario = _reference_replay_scenario("branch-resume-recovery")
+    contradiction_snapshot = replace(
+        scenario.target_snapshot,
+        trace=replace(
+            scenario.target_snapshot.trace,
+            degradation_records=make_support_snapshot().trace.degradation_records,
+        ),
+    )
+    monkeypatch.setattr(
+        reference_runtime,
+        "build_reference_executive_state",
+        lambda *args, **kwargs: _scenario_executive_state_with_task_mode(
+            scenario,
+            kwargs["task_mode"],
+        ),
+    )
+    monkeypatch.setattr(
+        reference_runtime,
+        "_build_support_snapshot",
+        lambda **kwargs: contradiction_snapshot,
+    )
+
+    replay = run_reference_runtime_step(
+        "ContextLoad",
+        {"session_id": "session-reference-replay-branch-contradiction"},
+        offline_publication=case_result.publication,
+    )
+
+    branch_score = _score_payload_for_family(
+        replay.control_ledger_summary["allocation_diagnostics"]["scores"],
+        "branch",
+    )
+    redirect_score = _score_payload_for_family(
+        replay.control_ledger_summary["allocation_diagnostics"]["scores"],
+        "redirect",
+    )
+    assert branch_score["memory_score"] == 0.0
+    assert redirect_score["memory_score"] >= 0.0
+    assert replay.control_ledger_summary["allocation_diagnostics"]["memory_reentry"][
+        "invalidated_families"
+    ] == ["branch"]
 
 
 def test_reference_runtime_step_without_offline_publication_makes_no_aux_calls_and_keeps_memory_priors_absent(
@@ -1272,6 +1390,7 @@ def _assert_allocation_diagnostics_shape(
         "verification_state",
         "explainability_profile",
         "anti_thrash",
+        "memory_reentry",
         "scores",
         "mediation",
     )
@@ -1298,6 +1417,15 @@ def _assert_allocation_diagnostics_shape(
         "target_family": None,
         "repetition_tax": 0.0,
         "reason_tags": [],
+    }
+    assert payload["memory_reentry"] == {
+        "state": "inactive",
+        "source_host_name": None,
+        "target_host_name": "reference",
+        "eligible_families": [],
+        "invalidated_families": [],
+        "selected_family_support_refs": [],
+        "selected_family_memory_score": 0.0,
     }
     scores = payload["scores"]
     assert isinstance(scores, list)

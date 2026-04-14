@@ -205,6 +205,7 @@ def test_reference_runtime_cli_reads_event_file_and_emits_one_record_per_event()
         "verification_state",
         "explainability_profile",
         "anti_thrash",
+        "memory_reentry",
         "scores",
         "mediation",
     )
@@ -372,6 +373,7 @@ def test_reference_runtime_cli_record_shape_stays_locked_under_explicit_offline_
         "verification_state",
         "explainability_profile",
         "anti_thrash",
+        "memory_reentry",
         "scores",
         "mediation",
     )

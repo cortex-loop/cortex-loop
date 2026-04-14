@@ -10,7 +10,10 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 _RUNTIME_REPLAY_IMPORTER = "cortex/hosts/reference/runtime.py"
 _EXPECTED_RUNTIME_REPLAY_IMPORTS = {
     ("cortex.aux.publication", ("OfflineSupportPublication", "augment_snapshot_with_offline_publication")),
-    ("cortex.aux.support_priors", ("build_support_memory_prior_appendix",)),
+    (
+        "cortex.aux.support_priors",
+        ("build_support_memory_prior_appendix", "filter_live_support_memory_prior_appendix"),
+    ),
 }
 
 

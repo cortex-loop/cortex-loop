@@ -716,13 +716,19 @@ def run_reference_runtime_step(
         audit_intensity=audit_intensity,
         task_mode=runtime_task_mode,
     )
+    recent_probe_failure_class = recent_probe_failure_class_from_feedback_window(
+        prior_session.feedback_window
+    )
     memory_priors = None
     if offline_publication is not None:
         from cortex.aux.publication import (
             OfflineSupportPublication as _OfflineSupportPublication,
             augment_snapshot_with_offline_publication,
         )
-        from cortex.aux.support_priors import build_support_memory_prior_appendix
+        from cortex.aux.support_priors import (
+            build_support_memory_prior_appendix,
+            filter_live_support_memory_prior_appendix,
+        )
 
         if not isinstance(offline_publication, _OfflineSupportPublication):
             actual_type = type(offline_publication).__name__
@@ -730,11 +736,16 @@ def run_reference_runtime_step(
                 "run_reference_runtime_step.offline_publication must be "
                 f"OfflineSupportPublication | None, got {actual_type}."
             )
-        memory_priors = build_support_memory_prior_appendix(
-            augment_snapshot_with_offline_publication(
-                support_snapshot,
-                offline_publication,
-            )
+        memory_priors = filter_live_support_memory_prior_appendix(
+            support_snapshot,
+            build_support_memory_prior_appendix(
+                augment_snapshot_with_offline_publication(
+                    support_snapshot,
+                    offline_publication,
+                )
+            ),
+            target_host_name="reference",
+            recent_probe_failure_class=recent_probe_failure_class,
         )
     selection = select_reference_soft_control(
         executive_state,
@@ -788,6 +799,27 @@ def run_reference_runtime_step(
         ),
         mediation_payload=selection.mediation_finalization.as_payload(),
     )
+    allocation_diagnostics = {
+        "alpha_t": allocation_diagnostics["alpha_t"],
+        "activation_threshold": allocation_diagnostics["activation_threshold"],
+        "selected_delta_over_neutral": allocation_diagnostics["selected_delta_over_neutral"],
+        "chi_t": allocation_diagnostics["chi_t"],
+        "rejected_cheaper_families": allocation_diagnostics["rejected_cheaper_families"],
+        "probe_path_state": allocation_diagnostics["probe_path_state"],
+        "probe_unavailable_reason": allocation_diagnostics["probe_unavailable_reason"],
+        "probe_result_class": allocation_diagnostics["probe_result_class"],
+        "verification_state": allocation_diagnostics["verification_state"],
+        "explainability_profile": allocation_diagnostics["explainability_profile"],
+        "anti_thrash": allocation_diagnostics["anti_thrash"],
+        "memory_reentry": _build_memory_reentry_diagnostics_payload(
+            memory_priors,
+            selected_family=selected_family,
+            allocation_diagnostics=allocation_diagnostics,
+            target_host_name="reference",
+        ),
+        "scores": allocation_diagnostics["scores"],
+        "mediation": allocation_diagnostics["mediation"],
+    }
     audit_projection = None
     if _should_emit_audit_projection(
         executive_state.control_allocation.explainability_profile
@@ -866,9 +898,7 @@ def run_reference_runtime_step(
         consequential_write_pending=consequential_write_pending,
         prior_failed_before_completion=False,
         recent_product_failure_class=None,
-        recent_probe_failure_class=recent_probe_failure_class_from_feedback_window(
-            prior_session.feedback_window
-        ),
+        recent_probe_failure_class=recent_probe_failure_class,
         recent_warning_bearing_success_present=recent_warning_bearing_success_present(
             prior_session.feedback_window,
             failed_before_completion=False,
@@ -1579,6 +1609,101 @@ def _primary_reason(warnings: tuple[str, ...]) -> str | None:
     return warnings[0] if warnings else None
 
 
+def _metadata_str_from_fields(
+    metadata: tuple[Any, ...],
+    key: str,
+) -> str | None:
+    for field in metadata:
+        if getattr(field, "key", None) != key:
+            continue
+        value = getattr(field, "value", None)
+        if value is None:
+            return None
+        return str(value)
+    return None
+
+
+def _score_memory_value(
+    allocation_diagnostics: dict[str, Any],
+    family: SoftControlFamily,
+) -> float:
+    for score in allocation_diagnostics["scores"]:
+        if score["family"] == family.value:
+            return float(score["memory_score"])
+    raise KeyError(f"Missing allocation score for family {family.value!r}.")
+
+
+def _support_ref_payload(
+    memory_priors: Any,
+    selected_family: SoftControlFamily,
+) -> list[dict[str, str]]:
+    if memory_priors is None:
+        return []
+    score = memory_priors.score_for(selected_family)
+    if float(score.score) <= 0.0:
+        return []
+    return [
+        {
+            "reference_kind": reference.reference_kind,
+            "reference_id": reference.reference_id,
+        }
+        for reference in score.support_refs
+    ]
+
+
+def _build_memory_reentry_diagnostics_payload(
+    memory_priors: Any,
+    *,
+    selected_family: SoftControlFamily,
+    allocation_diagnostics: dict[str, Any],
+    target_host_name: str,
+) -> dict[str, Any]:
+    if memory_priors is None:
+        return {
+            "state": "inactive",
+            "source_host_name": None,
+            "target_host_name": target_host_name,
+            "eligible_families": [],
+            "invalidated_families": [],
+            "selected_family_support_refs": [],
+            "selected_family_memory_score": 0.0,
+        }
+
+    state = _metadata_str_from_fields(memory_priors.metadata, "live_reentry_state")
+    source_host_name = _metadata_str_from_fields(
+        memory_priors.metadata,
+        "live_source_host_name",
+    )
+    invalidated_families = sorted(
+        score.family.value
+        for score in memory_priors.scores
+        if any(
+            tag.startswith("q_mem-live:invalidated:")
+            for tag in score.reason_tags
+        )
+    )
+    return {
+        "state": state or ("active" if memory_priors.active else "inactive"),
+        "source_host_name": source_host_name,
+        "target_host_name": target_host_name,
+        "eligible_families": [
+            SoftControlFamily.CHECK.value,
+            SoftControlFamily.SEEK_CONTEXT.value,
+            SoftControlFamily.BRANCH.value,
+            SoftControlFamily.REDIRECT.value,
+        ],
+        "invalidated_families": invalidated_families,
+        "selected_family_support_refs": _support_ref_payload(
+            memory_priors,
+            selected_family,
+        ),
+        "selected_family_memory_score": _score_memory_value(
+            allocation_diagnostics,
+            selected_family,
+        ),
+    }
+
+
 _ALLOCATION_DIAGNOSTICS_KEYS = (
     "alpha_t",
     "activation_threshold",
@@ -1591,6 +1716,7 @@ _ALLOCATION_DIAGNOSTICS_KEYS = (
     "verification_state",
     "explainability_profile",
     "anti_thrash",
+    "memory_reentry",
     "scores",
     "mediation",
 )
@@ -1600,6 +1726,16 @@ _ANTI_THRASH_DIAGNOSTICS_KEYS = (
     "repetition_tax",
     "reason_tags",
 )
+_MEMORY_REENTRY_DIAGNOSTICS_KEYS = (
+    "state",
+    "source_host_name",
+    "target_host_name",
+    "eligible_families",
+    "invalidated_families",
+    "selected_family_support_refs",
+    "selected_family_memory_score",
+)
+_MEMORY_REENTRY_REF_KEYS = ("reference_kind", "reference_id")
 _ALLOCATION_SCORE_KEYS = (
     "family",
     "online_score",
@@ -1723,6 +1859,77 @@ def _validate_allocation_diagnostics_payload(payload: dict[str, Any], label: str
     if any(not (isinstance(tag, str) and tag.strip()) for tag in reason_tags):
         raise ValueError(
             f"{label}.anti_thrash.reason_tags must contain only non-empty values after trimming."
+        )
+    memory_reentry = payload["memory_reentry"]
+    if not isinstance(memory_reentry, dict):
+        actual_type = type(memory_reentry).__name__
+        raise TypeError(
+            f"{label}.memory_reentry must be dict[str, Any], got {actual_type}."
+        )
+    if tuple(memory_reentry) != _MEMORY_REENTRY_DIAGNOSTICS_KEYS:
+        raise ValueError(
+            f"{label}.memory_reentry must preserve the locked key order "
+            f"{_MEMORY_REENTRY_DIAGNOSTICS_KEYS!r}."
+        )
+    if memory_reentry["state"] not in {"inactive", "active", "host-mismatch"}:
+        raise ValueError(
+            f"{label}.memory_reentry.state must be one of ['active', 'host-mismatch', 'inactive']."
+        )
+    source_host_name = memory_reentry["source_host_name"]
+    if source_host_name is not None and not (
+        isinstance(source_host_name, str) and source_host_name.strip()
+    ):
+        raise ValueError(
+            f"{label}.memory_reentry.source_host_name must be non-empty after trimming when provided."
+        )
+    target_host_name = memory_reentry["target_host_name"]
+    if not (isinstance(target_host_name, str) and target_host_name.strip()):
+        raise ValueError(
+            f"{label}.memory_reentry.target_host_name must be non-empty after trimming."
+        )
+    for key in ("eligible_families", "invalidated_families"):
+        value = memory_reentry[key]
+        if not isinstance(value, list):
+            actual_type = type(value).__name__
+            raise TypeError(
+                f"{label}.memory_reentry.{key} must be list[str], got {actual_type}."
+            )
+        if any(not (isinstance(entry, str) and entry.strip()) for entry in value):
+            raise ValueError(
+                f"{label}.memory_reentry.{key} must contain only non-empty strings."
+            )
+    selected_family_support_refs = memory_reentry["selected_family_support_refs"]
+    if not isinstance(selected_family_support_refs, list):
+        actual_type = type(selected_family_support_refs).__name__
+        raise TypeError(
+            f"{label}.memory_reentry.selected_family_support_refs must be list[dict[str, str]], got {actual_type}."
+        )
+    for index, reference_payload in enumerate(selected_family_support_refs):
+        reference_label = f"{label}.memory_reentry.selected_family_support_refs[{index}]"
+        if not isinstance(reference_payload, dict):
+            actual_type = type(reference_payload).__name__
+            raise TypeError(
+                f"{reference_label} must be dict[str, str], got {actual_type}."
+            )
+        if tuple(reference_payload) != _MEMORY_REENTRY_REF_KEYS:
+            raise ValueError(
+                f"{reference_label} must preserve the locked key order "
+                f"{_MEMORY_REENTRY_REF_KEYS!r}."
+            )
+        for ref_key in _MEMORY_REENTRY_REF_KEYS:
+            ref_value = reference_payload[ref_key]
+            if not (isinstance(ref_value, str) and ref_value.strip()):
+                raise ValueError(
+                    f"{reference_label}.{ref_key} must be non-empty after trimming."
+                )
+    selected_family_memory_score = memory_reentry["selected_family_memory_score"]
+    if isinstance(selected_family_memory_score, bool) or not isinstance(
+        selected_family_memory_score,
+        (int, float),
+    ):
+        actual_type = type(selected_family_memory_score).__name__
+        raise TypeError(
+            f"{label}.memory_reentry.selected_family_memory_score must be numeric, got {actual_type}."
         )
     scores = payload["scores"]
     if not isinstance(scores, list):
@@ -1891,6 +2098,23 @@ def _copy_allocation_diagnostics_payload(payload: dict[str, Any]) -> dict[str, A
             "target_family": payload["anti_thrash"]["target_family"],
             "repetition_tax": payload["anti_thrash"]["repetition_tax"],
             "reason_tags": list(payload["anti_thrash"]["reason_tags"]),
+        },
+        "memory_reentry": {
+            "state": payload["memory_reentry"]["state"],
+            "source_host_name": payload["memory_reentry"]["source_host_name"],
+            "target_host_name": payload["memory_reentry"]["target_host_name"],
+            "eligible_families": list(payload["memory_reentry"]["eligible_families"]),
+            "invalidated_families": list(payload["memory_reentry"]["invalidated_families"]),
+            "selected_family_support_refs": [
+                {
+                    "reference_kind": reference["reference_kind"],
+                    "reference_id": reference["reference_id"],
+                }
+                for reference in payload["memory_reentry"]["selected_family_support_refs"]
+            ],
+            "selected_family_memory_score": payload["memory_reentry"][
+                "selected_family_memory_score"
+            ],
         },
         "scores": [
             {

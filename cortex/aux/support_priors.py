@@ -6,13 +6,14 @@ from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 
 from cortex.core.envelopes import MetadataField
-from cortex.core.support import SupportReference
+from cortex.core.support import SupportReference, SupportSnapshot
 from cortex.sre.families import SoftControlFamily
 from cortex.sre.memory_priors import (
     HostReliabilityPrior,
     SupportMemoryPriorAppendix,
     SupportMemoryPriorScore,
 )
+from cortex.sre.opportunities import PROBE_FAILURE_CLASSES
 
 from ._support_match import (
     _dedupe_support_refs,
@@ -21,6 +22,22 @@ from ._support_match import (
     _source_refs_for_retrieval,
 )
 from .augmentation import AugmentedSupportSnapshot
+
+_LIVE_MEMORY_ELIGIBLE_FAMILIES = frozenset(
+    {
+        SoftControlFamily.CHECK,
+        SoftControlFamily.SEEK_CONTEXT,
+        SoftControlFamily.BRANCH,
+        SoftControlFamily.REDIRECT,
+    }
+)
+_LIVE_MEMORY_METADATA_KEYS = frozenset(
+    {
+        "live_reentry_state",
+        "live_source_host_name",
+        "live_target_host_name",
+    }
+)
 
 
 def _clip_unit(value: float) -> float:
@@ -116,25 +133,37 @@ def _best_match_signal(
 
 
 def _target_branch_refs(snapshot: AugmentedSupportSnapshot) -> tuple[SupportReference, ...]:
+    return _target_branch_refs_for_snapshot(snapshot.core_snapshot)
+
+
+def _target_branch_refs_for_snapshot(
+    snapshot: SupportSnapshot,
+) -> tuple[SupportReference, ...]:
     branch_refs = tuple(
         SupportReference("branch", branch_ref, tags=frozenset({"resume-track"}))
-        for branch_ref in snapshot.core_snapshot.session.branch_registry
+        for branch_ref in snapshot.session.branch_registry
         if branch_ref != "main"
     )
     reminder_refs = tuple(
         SupportReference("reminder", reminder, tags=frozenset({"continuity-reminder"}))
-        for reminder in snapshot.core_snapshot.session.reminders
+        for reminder in snapshot.session.reminders
     )
     goal_refs = tuple(
         SupportReference("goal", goal_ref, tags=frozenset({"pending-goal"}))
-        for goal_ref in snapshot.core_snapshot.session.pending_goal_refs
+        for goal_ref in snapshot.session.pending_goal_refs
     )
     return _dedupe_support_refs(branch_refs + reminder_refs + goal_refs)
 
 
 def _target_contradiction_refs(snapshot: AugmentedSupportSnapshot) -> tuple[SupportReference, ...]:
+    return _target_contradiction_refs_for_snapshot(snapshot.core_snapshot)
+
+
+def _target_contradiction_refs_for_snapshot(
+    snapshot: SupportSnapshot,
+) -> tuple[SupportReference, ...]:
     refs: list[SupportReference] = []
-    for record in snapshot.core_snapshot.trace.degradation_records:
+    for record in snapshot.trace.degradation_records:
         tags = set(record.capability_tags | {record.reason_code})
         for contradiction in record.contradiction_records:
             tags.add(contradiction.source_tag)
@@ -150,12 +179,18 @@ def _target_contradiction_refs(snapshot: AugmentedSupportSnapshot) -> tuple[Supp
 
 
 def _target_uncertainty_refs(snapshot: AugmentedSupportSnapshot) -> tuple[SupportReference, ...]:
+    return _target_uncertainty_refs_for_snapshot(snapshot.core_snapshot)
+
+
+def _target_uncertainty_refs_for_snapshot(
+    snapshot: SupportSnapshot,
+) -> tuple[SupportReference, ...]:
     refs = tuple(
         SupportReference("uncertainty", brake_entry, tags=frozenset({"brake-history"}))
-        for brake_entry in snapshot.core_snapshot.session.brake_history
+        for brake_entry in snapshot.session.brake_history
     ) + tuple(
         SupportReference("wake", receipt.reason_tag, tags=frozenset({"wake-receipt"}))
-        for receipt in snapshot.core_snapshot.trace.wake_receipts
+        for receipt in snapshot.trace.wake_receipts
     )
     return _dedupe_support_refs(refs)
 
@@ -433,6 +468,219 @@ def _reason_tags(
     return frozenset(tags)
 
 
+def _replace_live_metadata(
+    metadata: tuple[MetadataField, ...],
+    *,
+    state: str,
+    source_host_name: str,
+    target_host_name: str,
+) -> tuple[MetadataField, ...]:
+    retained = tuple(
+        field for field in metadata if field.key not in _LIVE_MEMORY_METADATA_KEYS
+    )
+    return (
+        MetadataField("live_reentry_state", state),
+        MetadataField("live_source_host_name", source_host_name),
+        MetadataField("live_target_host_name", target_host_name),
+    ) + retained
+
+
+def _support_ref_overlap(
+    source_refs: tuple[SupportReference, ...],
+    candidate_refs: tuple[SupportReference, ...],
+    *,
+    threshold: float = 0.25,
+) -> bool:
+    for source_ref in source_refs:
+        for candidate_ref in candidate_refs:
+            normalized_candidate = _normalized_candidate(candidate_ref)
+            if _match_score(
+                source_ref,
+                normalized_candidate,
+                base_score=0.0,
+            ) >= threshold:
+                return True
+    return False
+
+
+def _live_context_refs_for_family(
+    snapshot: SupportSnapshot,
+    family: SoftControlFamily,
+) -> tuple[SupportReference, ...]:
+    if family is SoftControlFamily.BRANCH:
+        return _target_branch_refs_for_snapshot(snapshot)
+    if family is SoftControlFamily.CHECK:
+        return _dedupe_support_refs(
+            _target_contradiction_refs_for_snapshot(snapshot)
+            + _target_uncertainty_refs_for_snapshot(snapshot)
+        )
+    if family is SoftControlFamily.SEEK_CONTEXT:
+        return _dedupe_support_refs(
+            _source_refs_for_retrieval(snapshot)
+            + _target_uncertainty_refs_for_snapshot(snapshot)
+        )
+    if family is SoftControlFamily.REDIRECT:
+        return _dedupe_support_refs(
+            _target_branch_refs_for_snapshot(snapshot)
+            + _source_refs_for_retrieval(snapshot)
+            + _target_contradiction_refs_for_snapshot(snapshot)
+        )
+    return ()
+
+
+def _live_reentry_reason_tags(
+    *,
+    snapshot: SupportSnapshot,
+    score: SupportMemoryPriorScore,
+    recent_probe_failure_class: str | None,
+) -> frozenset[str]:
+    tags: set[str] = set()
+    if score.family not in _LIVE_MEMORY_ELIGIBLE_FAMILIES:
+        tags.add("q_mem-live:family-ineligible")
+        return frozenset(tags)
+
+    context_refs = _live_context_refs_for_family(snapshot, score.family)
+    if not context_refs or not _support_ref_overlap(context_refs, score.support_refs):
+        tags.add("q_mem-live:context-miss")
+        return frozenset(tags)
+
+    if "q_mem-host:ttl-expired" in score.reason_tags:
+        tags.add("q_mem-live:invalidated:ttl-expired")
+
+    if (
+        recent_probe_failure_class in PROBE_FAILURE_CLASSES
+        and score.family in {SoftControlFamily.CHECK, SoftControlFamily.SEEK_CONTEXT}
+        and _support_ref_overlap(
+            _target_uncertainty_refs_for_snapshot(snapshot),
+            score.support_refs,
+        )
+    ):
+        tags.add("q_mem-live:invalidated:probe-failure")
+
+    branch_context_overlap = _support_ref_overlap(
+        _target_branch_refs_for_snapshot(snapshot),
+        score.support_refs,
+    )
+    if score.family is SoftControlFamily.BRANCH and branch_context_overlap:
+        if any(
+            record.contradiction_records for record in snapshot.trace.degradation_records
+        ):
+            tags.add("q_mem-live:invalidated:contradiction")
+        elif snapshot.trace.degradation_records:
+            tags.add("q_mem-live:invalidated:degradation")
+
+    if not tags:
+        tags.add("q_mem-live:eligible")
+    return frozenset(tags)
+
+
+def filter_live_support_memory_prior_appendix(
+    snapshot: SupportSnapshot,
+    appendix: SupportMemoryPriorAppendix,
+    *,
+    target_host_name: str,
+    recent_probe_failure_class: str | None = None,
+) -> SupportMemoryPriorAppendix:
+    if not isinstance(snapshot, SupportSnapshot):
+        actual_type = type(snapshot).__name__
+        raise TypeError(
+            "filter_live_support_memory_prior_appendix() requires SupportSnapshot, "
+            f"got {actual_type}.",
+        )
+    if not isinstance(appendix, SupportMemoryPriorAppendix):
+        actual_type = type(appendix).__name__
+        raise TypeError(
+            "filter_live_support_memory_prior_appendix() requires SupportMemoryPriorAppendix, "
+            f"got {actual_type}.",
+        )
+    if not (isinstance(target_host_name, str) and target_host_name.strip()):
+        raise ValueError(
+            "filter_live_support_memory_prior_appendix().target_host_name must be non-empty after trimming."
+        )
+    if (
+        recent_probe_failure_class is not None
+        and recent_probe_failure_class not in PROBE_FAILURE_CLASSES
+    ):
+        raise ValueError(
+            "filter_live_support_memory_prior_appendix().recent_probe_failure_class must be a canonical probe failure class or None."
+        )
+
+    source_host_name = _metadata_str(appendix.metadata, "host_name")
+    host_match = source_host_name == target_host_name
+    filtered_scores: list[SupportMemoryPriorScore] = []
+
+    for score in appendix.scores:
+        live_tags = set(score.reason_tags)
+        if not host_match:
+            if (
+                score.family in _LIVE_MEMORY_ELIGIBLE_FAMILIES
+                and score.score > 0.0
+            ):
+                live_tags.add("q_mem-live:invalidated:host-mismatch")
+            elif score.family not in _LIVE_MEMORY_ELIGIBLE_FAMILIES:
+                live_tags.add("q_mem-live:family-ineligible")
+            filtered_scores.append(
+                SupportMemoryPriorScore(
+                    family=score.family,
+                    score=0.0,
+                    reason_tags=frozenset(live_tags),
+                    support_refs=score.support_refs,
+                    metadata=score.metadata,
+                )
+            )
+            continue
+
+        live_reentry_tags = _live_reentry_reason_tags(
+            snapshot=snapshot,
+            score=score,
+            recent_probe_failure_class=recent_probe_failure_class,
+        )
+        live_tags.update(live_reentry_tags)
+        zero_score = any(
+            tag.startswith("q_mem-live:invalidated:")
+            for tag in live_reentry_tags
+        ) or "q_mem-live:family-ineligible" in live_reentry_tags or (
+            "q_mem-live:context-miss" in live_reentry_tags
+        )
+        filtered_scores.append(
+            SupportMemoryPriorScore(
+                family=score.family,
+                score=0.0 if zero_score else score.score,
+                reason_tags=frozenset(live_tags),
+                support_refs=score.support_refs,
+                metadata=score.metadata,
+            )
+        )
+
+    state = "host-mismatch"
+    if host_match:
+        state = (
+            "active"
+            if any(
+                score.family in _LIVE_MEMORY_ELIGIBLE_FAMILIES and score.score > 0.0
+                for score in filtered_scores
+            )
+            else "inactive"
+        )
+
+    return SupportMemoryPriorAppendix(
+        scores=tuple(filtered_scores),
+        appendix_tags=appendix.appendix_tags
+        | frozenset({"q_mem-live:runtime-boundary", f"q_mem-live:{state}"}),
+        notes=appendix.notes
+        + (
+            "live support-memory re-entry stays explicit, score-only, host-matched, and family-scoped",
+        ),
+        metadata=_replace_live_metadata(
+            appendix.metadata,
+            state=state,
+            source_host_name=source_host_name,
+            target_host_name=target_host_name,
+        ),
+        host_reliability_prior=appendix.host_reliability_prior,
+    )
+
+
 def build_support_memory_prior_appendix(
     snapshot: AugmentedSupportSnapshot,
     *,
@@ -613,4 +861,7 @@ def build_support_memory_prior_appendix(
     )
 
 
-__all__ = ["build_support_memory_prior_appendix"]
+__all__ = [
+    "build_support_memory_prior_appendix",
+    "filter_live_support_memory_prior_appendix",
+]

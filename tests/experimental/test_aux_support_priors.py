@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from dataclasses import replace
+
 import pytest
 
 from cortex.aux.augmentation import AuxiliarySupportAppendix, augment_snapshot
@@ -14,6 +16,7 @@ from cortex.aux.support_priors import (
     SupportMemorySignalProfile,
     _build_signal_profile,
     build_support_memory_prior_appendix,
+    filter_live_support_memory_prior_appendix,
 )
 from cortex.sre.memory_priors import HostReliabilityPrior
 from cortex.core.support import SupportState
@@ -157,6 +160,123 @@ def test_build_support_memory_prior_appendix_can_disable_host_reliability_withou
     assert "q_mem-host:reliability-active" in branch_score.reason_tags
     assert "q_mem-host:reliability-active" not in branch_score_without_reliability.reason_tags
     assert "q_mem-signal:branch" in branch_score_without_reliability.reason_tags
+
+
+def test_filter_live_support_memory_prior_appendix_keeps_only_reference_first_eligible_families() -> None:
+    augmented = _augmented_temporal_case("branch-resume-recovery")
+    appendix = build_support_memory_prior_appendix(augmented)
+
+    live_appendix = filter_live_support_memory_prior_appendix(
+        augmented.core_snapshot,
+        appendix,
+        target_host_name="test-support-priors",
+    )
+
+    assert live_appendix.active is True
+    assert live_appendix.score_for(SoftControlFamily.BRANCH).score > 0.0
+    assert live_appendix.score_for(SoftControlFamily.CHECK).score == 0.0
+    assert live_appendix.score_for(SoftControlFamily.BRAKE).score == 0.0
+    assert "q_mem-live:family-ineligible" in live_appendix.score_for(
+        SoftControlFamily.BRAKE
+    ).reason_tags
+    assert "q_mem-live:eligible" in live_appendix.score_for(
+        SoftControlFamily.BRANCH
+    ).reason_tags
+
+
+def test_filter_live_support_memory_prior_appendix_blocks_host_mismatch() -> None:
+    augmented = _augmented_temporal_case("branch-resume-recovery")
+    appendix = build_support_memory_prior_appendix(augmented)
+
+    live_appendix = filter_live_support_memory_prior_appendix(
+        augmented.core_snapshot,
+        appendix,
+        target_host_name="reference",
+    )
+
+    assert live_appendix.active is False
+    assert live_appendix.score_for(SoftControlFamily.BRANCH).score == 0.0
+    assert "q_mem-live:invalidated:host-mismatch" in live_appendix.score_for(
+        SoftControlFamily.BRANCH
+    ).reason_tags
+    assert any(
+        field.key == "live_reentry_state" and field.value == "host-mismatch"
+        for field in live_appendix.metadata
+    )
+
+
+def test_filter_live_support_memory_prior_appendix_zeroes_ttl_expired_family_on_live_path(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    augmented = _augmented_temporal_case("branch-resume-recovery")
+
+    monkeypatch.setattr(
+        "cortex.aux.support_priors._host_reliability_prior",
+        lambda snapshot, signal_profile: HostReliabilityPrior(
+            timeout_rate=0.0,
+            degradation_rate=0.0,
+            capability_availability=1.0,
+            contradiction_counter=0,
+            ttl_hours=1,
+            last_validated_at="2000-01-01T00:00:00+00:00",
+        ),
+    )
+    appendix = build_support_memory_prior_appendix(augmented)
+
+    live_appendix = filter_live_support_memory_prior_appendix(
+        augmented.core_snapshot,
+        appendix,
+        target_host_name="test-support-priors",
+    )
+
+    assert live_appendix.score_for(SoftControlFamily.BRANCH).score == 0.0
+    assert "q_mem-live:invalidated:ttl-expired" in live_appendix.score_for(
+        SoftControlFamily.BRANCH
+    ).reason_tags
+    assert live_appendix.score_for(SoftControlFamily.REDIRECT).score > 0.0
+
+
+def test_filter_live_support_memory_prior_appendix_invalidates_branch_on_fresh_contradiction() -> None:
+    augmented = _augmented_temporal_case("branch-resume-recovery")
+    appendix = build_support_memory_prior_appendix(augmented)
+    contradiction_trace = replace(
+        augmented.core_snapshot.trace,
+        degradation_records=make_support_snapshot().trace.degradation_records,
+    )
+    contradiction_snapshot = replace(
+        augmented.core_snapshot,
+        trace=contradiction_trace,
+    )
+
+    live_appendix = filter_live_support_memory_prior_appendix(
+        contradiction_snapshot,
+        appendix,
+        target_host_name="test-support-priors",
+    )
+
+    assert live_appendix.score_for(SoftControlFamily.BRANCH).score == 0.0
+    assert "q_mem-live:invalidated:contradiction" in live_appendix.score_for(
+        SoftControlFamily.BRANCH
+    ).reason_tags
+    assert live_appendix.score_for(SoftControlFamily.REDIRECT).score >= 0.0
+
+
+def test_filter_live_support_memory_prior_appendix_invalidates_uncertainty_families_after_probe_failure() -> None:
+    augmented = _augmented_temporal_case("uncertainty-brake-calibration")
+    appendix = build_support_memory_prior_appendix(augmented)
+
+    live_appendix = filter_live_support_memory_prior_appendix(
+        augmented.core_snapshot,
+        appendix,
+        target_host_name="test-support-priors",
+        recent_probe_failure_class="timed-out",
+    )
+
+    assert live_appendix.score_for(SoftControlFamily.CHECK).score == 0.0
+    assert live_appendix.score_for(SoftControlFamily.SEEK_CONTEXT).score == 0.0
+    assert "q_mem-live:invalidated:probe-failure" in live_appendix.score_for(
+        SoftControlFamily.SEEK_CONTEXT
+    ).reason_tags
 
 
 def _augmented_temporal_case(scenario_id: str):
