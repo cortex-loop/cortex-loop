@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field
+from math import isfinite
 from typing import TYPE_CHECKING, Any
 
 from cortex.core.certification import certify_commitment
@@ -743,7 +744,8 @@ def run_reference_runtime_step(
                 augment_snapshot_with_offline_publication(
                     support_snapshot,
                     offline_publication,
-                )
+                ),
+                recent_probe_failure_class=recent_probe_failure_class,
             ),
             target_host_name="reference",
             recent_probe_failure_class=recent_probe_failure_class,
@@ -1657,6 +1659,7 @@ def _build_memory_reentry_diagnostics_payload(
             "invalidated_families": [],
             "selected_family_support_refs": [],
             "selected_family_memory_score": 0.0,
+            "selected_family_reliability_delta": 0.0,
         }
 
     state = _metadata_str_from_fields(memory_priors.metadata, "live_reentry_state")
@@ -1691,7 +1694,28 @@ def _build_memory_reentry_diagnostics_payload(
             allocation_diagnostics,
             selected_family,
         ),
+        "selected_family_reliability_delta": _reliability_delta_for_family(
+            memory_priors,
+            selected_family,
+        ),
     }
+
+
+def _reliability_delta_for_family(
+    memory_priors: Any,
+    family: SoftControlFamily,
+) -> float:
+    for score in memory_priors.scores:
+        if score.family is not family:
+            continue
+        for field in score.metadata:
+            if field.key != "q_mem-host:reliability_delta":
+                continue
+            try:
+                return float(field.value)
+            except (TypeError, ValueError):
+                return 0.0
+    return 0.0
 
 
 _ALLOCATION_DIAGNOSTICS_KEYS = (
@@ -1724,6 +1748,7 @@ _MEMORY_REENTRY_DIAGNOSTICS_KEYS = (
     "invalidated_families",
     "selected_family_support_refs",
     "selected_family_memory_score",
+    "selected_family_reliability_delta",
 )
 _MEMORY_REENTRY_REF_KEYS = ("reference_kind", "reference_id")
 _ALLOCATION_SCORE_KEYS = (
@@ -1921,6 +1946,19 @@ def _validate_allocation_diagnostics_payload(payload: dict[str, Any], label: str
         raise TypeError(
             f"{label}.memory_reentry.selected_family_memory_score must be numeric, got {actual_type}."
         )
+    selected_family_reliability_delta = memory_reentry["selected_family_reliability_delta"]
+    if isinstance(selected_family_reliability_delta, bool) or not isinstance(
+        selected_family_reliability_delta,
+        (int, float),
+    ):
+        actual_type = type(selected_family_reliability_delta).__name__
+        raise TypeError(
+            f"{label}.memory_reentry.selected_family_reliability_delta must be numeric, got {actual_type}."
+        )
+    if not isfinite(float(selected_family_reliability_delta)):
+        raise ValueError(
+            f"{label}.memory_reentry.selected_family_reliability_delta must be finite."
+        )
     scores = payload["scores"]
     if not isinstance(scores, list):
         actual_type = type(scores).__name__
@@ -2104,6 +2142,9 @@ def _copy_allocation_diagnostics_payload(payload: dict[str, Any]) -> dict[str, A
             ],
             "selected_family_memory_score": payload["memory_reentry"][
                 "selected_family_memory_score"
+            ],
+            "selected_family_reliability_delta": payload["memory_reentry"][
+                "selected_family_reliability_delta"
             ],
         },
         "scores": [

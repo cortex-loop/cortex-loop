@@ -6,6 +6,7 @@ from dataclasses import dataclass, field
 
 from cortex.core.envelopes import MetadataField
 from cortex.core.support import SupportReference, SupportSnapshot
+from cortex.sre.memory_priors import HostReliabilityPrior
 
 
 @dataclass(frozen=True, slots=True)
@@ -14,6 +15,7 @@ class AuxiliarySupportAppendix:
     derived_tags: frozenset[str] = field(default_factory=frozenset)
     notes: tuple[str, ...] = field(default_factory=tuple)
     metadata: tuple[MetadataField, ...] = field(default_factory=tuple)
+    published_host_reliability_prior: HostReliabilityPrior | None = None
 
     def __post_init__(self) -> None:
         if any(
@@ -34,6 +36,15 @@ class AuxiliarySupportAppendix:
         if any(not isinstance(field, MetadataField) for field in self.metadata):
             raise TypeError(
                 "AuxiliarySupportAppendix.metadata must contain only MetadataField instances.",
+            )
+        if self.published_host_reliability_prior is not None and not isinstance(
+            self.published_host_reliability_prior,
+            HostReliabilityPrior,
+        ):
+            actual_type = type(self.published_host_reliability_prior).__name__
+            raise TypeError(
+                "AuxiliarySupportAppendix.published_host_reliability_prior must be "
+                f"HostReliabilityPrior | None, got {actual_type}.",
             )
 
 

@@ -508,9 +508,9 @@ def test_reference_runtime_step_uses_unaugmented_snapshot_for_executive_state_an
         captured["augmented_snapshot"] = augmented
         return augmented
 
-    def prior_builder_wrapper(snapshot):
+    def prior_builder_wrapper(snapshot, **kwargs):
         captured["prior_builder_snapshot"] = snapshot
-        return original_prior_builder(snapshot)
+        return original_prior_builder(snapshot, **kwargs)
 
     def select_wrapper(executive_state, *args, **kwargs):
         captured["selection_memory_priors"] = kwargs.get("memory_priors")
@@ -635,6 +635,143 @@ def test_reference_runtime_step_replay_publication_can_lift_retrieval_reuse_with
     assert tuple(baseline.control_ledger_summary["allocation_diagnostics"]) == tuple(
         replay.control_ledger_summary["allocation_diagnostics"]
     )
+
+
+def test_reference_runtime_step_publication_carried_reliability_prior_lifts_selected_family_delta(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    case_result = _reference_replay_case_result("branch-resume-recovery")
+    scenario = _reference_replay_scenario("branch-resume-recovery")
+    assert case_result.publication.host_reliability_prior is not None
+    monkeypatch.setattr(
+        reference_runtime,
+        "build_reference_executive_state",
+        lambda *args, **kwargs: _scenario_executive_state_with_task_mode(
+            scenario,
+            kwargs["task_mode"],
+        ),
+    )
+    monkeypatch.setattr(
+        reference_runtime,
+        "_build_support_snapshot",
+        lambda **kwargs: scenario.target_snapshot,
+    )
+
+    replay = run_reference_runtime_step(
+        "ContextLoad",
+        {"session_id": "session-reference-reliability-delta-active"},
+        offline_publication=case_result.publication,
+    )
+
+    assert replay.selected_family is SoftControlFamily.BRANCH
+    memory_reentry = replay.control_ledger_summary["allocation_diagnostics"]["memory_reentry"]
+    assert memory_reentry["state"] == "active"
+    assert memory_reentry["selected_family_reliability_delta"] > 0.0
+    branch_score = _score_payload_for_family(
+        replay.control_ledger_summary["allocation_diagnostics"]["scores"],
+        "branch",
+    )
+    assert "q_mem-host:reliability-active" in branch_score["reason_tags"]
+
+
+def test_reference_runtime_step_without_publication_keeps_reliability_delta_zero() -> None:
+    result = run_reference_runtime_step(
+        "ContextLoad",
+        {"session_id": "session-reference-no-publication-delta"},
+    )
+
+    memory_reentry = result.control_ledger_summary["allocation_diagnostics"]["memory_reentry"]
+    assert memory_reentry["state"] == "inactive"
+    assert memory_reentry["selected_family_reliability_delta"] == 0.0
+
+
+def test_reference_runtime_step_affordance_mismatch_zeros_reliability_delta_on_seek_context(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    case_result = _reference_replay_case_result("retrieval-reuse")
+    scenario = _reference_replay_scenario("retrieval-reuse")
+    assert case_result.publication.host_reliability_prior is not None
+    disjoint_prior = replace(
+        case_result.publication.host_reliability_prior,
+        affordance_scope_tags=("restricted-op",),
+    )
+    publication = replace(
+        case_result.publication,
+        host_reliability_prior=disjoint_prior,
+    )
+    monkeypatch.setattr(
+        reference_runtime,
+        "build_reference_executive_state",
+        lambda *args, **kwargs: _scenario_executive_state_with_task_mode(
+            scenario,
+            kwargs["task_mode"],
+        ),
+    )
+    monkeypatch.setattr(
+        reference_runtime,
+        "_build_support_snapshot",
+        lambda **kwargs: scenario.target_snapshot,
+    )
+
+    replay = run_reference_runtime_step(
+        "ContextLoad",
+        {"session_id": "session-reference-reliability-affordance-mismatch"},
+        offline_publication=publication,
+    )
+
+    memory_reentry = replay.control_ledger_summary["allocation_diagnostics"]["memory_reentry"]
+    assert memory_reentry["selected_family_reliability_delta"] == 0.0
+    seek_score = _score_payload_for_family(
+        replay.control_ledger_summary["allocation_diagnostics"]["scores"],
+        "seek-context",
+    )
+    assert "q_mem-host:affordance-mismatch" in seek_score["reason_tags"]
+    assert "q_mem-host:reliability-active" not in seek_score["reason_tags"]
+
+
+def test_reference_runtime_step_ttl_expired_zeros_reliability_delta(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    case_result = _reference_replay_case_result("branch-resume-recovery")
+    scenario = _reference_replay_scenario("branch-resume-recovery")
+    assert case_result.publication.host_reliability_prior is not None
+    expired_prior = replace(
+        case_result.publication.host_reliability_prior,
+        ttl_hours=1,
+        last_validated_at="2000-01-01T00:00:00+00:00",
+    )
+    publication = replace(
+        case_result.publication,
+        host_reliability_prior=expired_prior,
+    )
+    monkeypatch.setattr(
+        reference_runtime,
+        "build_reference_executive_state",
+        lambda *args, **kwargs: _scenario_executive_state_with_task_mode(
+            scenario,
+            kwargs["task_mode"],
+        ),
+    )
+    monkeypatch.setattr(
+        reference_runtime,
+        "_build_support_snapshot",
+        lambda **kwargs: scenario.target_snapshot,
+    )
+
+    replay = run_reference_runtime_step(
+        "ContextLoad",
+        {"session_id": "session-reference-reliability-ttl-expired"},
+        offline_publication=publication,
+    )
+
+    memory_reentry = replay.control_ledger_summary["allocation_diagnostics"]["memory_reentry"]
+    assert memory_reentry["selected_family_reliability_delta"] == 0.0
+    branch_score = _score_payload_for_family(
+        replay.control_ledger_summary["allocation_diagnostics"]["scores"],
+        "branch",
+    )
+    assert branch_score["memory_score"] == 0.0
+    assert "q_mem-host:reliability-active" not in branch_score["reason_tags"]
 
 
 def test_reference_runtime_step_replay_negative_case_keeps_payload_shape_and_commitment_truthful(
@@ -770,6 +907,7 @@ def test_reference_runtime_step_replay_publication_blocks_cross_host_live_memory
         "invalidated_families": ["branch", "check", "redirect", "seek-context"],
         "selected_family_support_refs": [],
         "selected_family_memory_score": 0.0,
+        "selected_family_reliability_delta": 0.0,
     }
 
 
@@ -836,9 +974,9 @@ def test_reference_runtime_step_with_explicit_publication_stays_publication_only
         captured["augment_called"] = True
         return original_augment(snapshot, publication)
 
-    def prior_builder_wrapper(snapshot):
+    def prior_builder_wrapper(snapshot, **kwargs):
         captured["prior_builder_called"] = True
-        return original_prior_builder(snapshot)
+        return original_prior_builder(snapshot, **kwargs)
 
     def forbidden_distill(*args, **kwargs):
         raise AssertionError(
@@ -1527,6 +1665,7 @@ def _assert_allocation_diagnostics_shape(
         "invalidated_families": [],
         "selected_family_support_refs": [],
         "selected_family_memory_score": 0.0,
+        "selected_family_reliability_delta": 0.0,
     }
     scores = payload["scores"]
     assert isinstance(scores, list)

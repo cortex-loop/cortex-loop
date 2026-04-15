@@ -734,7 +734,7 @@ def evaluate_aux_cross_host_shadow(
             "q_mem-host:reliability-active" in replay_reason_tags
         )
         contradiction_invalidated_prior = (
-            "q_mem-host:contradiction-invalidated" in replay_reason_tags
+            "q_mem-host:current-contradiction-invalidated" in replay_reason_tags
         )
         memory_removal_reverts_to_baseline = (
             removed_selection.selected_family is baseline_selection.selected_family

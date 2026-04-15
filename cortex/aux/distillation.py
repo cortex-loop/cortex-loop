@@ -3,10 +3,11 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, timezone
 
 from cortex.core.envelopes import MetadataField
 from cortex.core.support import SupportReference, SupportSnapshot
+from cortex.sre.memory_priors import HostReliabilityPrior
 
 from ._support_match import _match_score, _reference_tokens
 from .persistence import (
@@ -256,6 +257,62 @@ def _distilled_memory_summary_refs(
     )
 
 
+def _distilled_host_reliability_prior(
+    episodes: tuple[SupportMemoryEpisode, ...],
+) -> HostReliabilityPrior | None:
+    if not episodes:
+        return None
+    episode_count = len(episodes)
+    timeout_episode_count = sum(
+        1 for episode in episodes if "timeout" in _reason_tokens(episode)
+    )
+    degradation_episode_count = sum(
+        1
+        for episode in episodes
+        if episode.degradation_reason_codes or episode.host_constraint_tags
+    )
+    missing_capability_count = sum(
+        1
+        for episode in episodes
+        if "missing-capability" in episode.host_constraint_tags
+    )
+    timeout_rate = timeout_episode_count / episode_count
+    degradation_rate = degradation_episode_count / episode_count
+    capability_availability = 1.0 - (missing_capability_count / episode_count)
+    contradiction_counter = sum(
+        len(episode.degradation_reason_codes) for episode in episodes
+    )
+    probe_failure_class_set: set[str] = set()
+    if timeout_episode_count:
+        probe_failure_class_set.add("timed-out")
+    if any(episode.degradation_reason_codes for episode in episodes):
+        probe_failure_class_set.add("degraded")
+    if missing_capability_count:
+        probe_failure_class_set.add("unsupported")
+    probe_failure_classes = tuple(sorted(probe_failure_class_set))
+    if episode_count == 1:
+        affordance_scope_tags = tuple(
+            sorted(frozenset(episodes[0].host_affordance_tags))
+        )
+    else:
+        intersected: frozenset[str] = frozenset(episodes[0].host_affordance_tags)
+        for episode in episodes[1:]:
+            intersected = intersected & frozenset(episode.host_affordance_tags)
+        affordance_scope_tags = tuple(sorted(intersected))
+    ttl_hours = 72 if episode_count > 1 else 24
+    last_validated_at = datetime.now(timezone.utc).isoformat(timespec="seconds")
+    return HostReliabilityPrior(
+        timeout_rate=timeout_rate,
+        degradation_rate=degradation_rate,
+        capability_availability=capability_availability,
+        contradiction_counter=contradiction_counter,
+        ttl_hours=ttl_hours,
+        last_validated_at=last_validated_at,
+        probe_failure_classes=probe_failure_classes,
+        affordance_scope_tags=affordance_scope_tags,
+    )
+
+
 @dataclass(frozen=True, slots=True)
 class _DistillationWindow:
     episodes: tuple[SupportMemoryEpisode, ...]
@@ -362,6 +419,7 @@ def distill_offline_support_publication(
         publication_tags=merged_tags,
         notes=merged_notes,
         metadata=metadata,
+        host_reliability_prior=_distilled_host_reliability_prior(episodes),
     )
 
 

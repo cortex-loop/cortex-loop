@@ -7,6 +7,7 @@ from typing import Any, Mapping
 
 from cortex.core.envelopes import MetadataField
 from cortex.core.support import SupportReference, SupportSnapshot
+from cortex.sre.memory_priors import HostReliabilityPrior
 
 from .augmentation import AuxiliarySupportAppendix, AugmentedSupportSnapshot, augment_snapshot
 
@@ -151,6 +152,124 @@ def _string_list_payload(
     return sorted(values) if isinstance(values, frozenset) else list(values)
 
 
+_HOST_RELIABILITY_PRIOR_PAYLOAD_KEYS: tuple[str, ...] = (
+    "timeout_rate",
+    "degradation_rate",
+    "capability_availability",
+    "contradiction_counter",
+    "ttl_hours",
+    "last_validated_at",
+    "probe_failure_classes",
+    "affordance_scope_tags",
+)
+
+
+def _host_reliability_prior_as_payload(
+    prior: HostReliabilityPrior | None,
+) -> dict[str, Any] | None:
+    if prior is None:
+        return None
+    if not isinstance(prior, HostReliabilityPrior):
+        actual_type = type(prior).__name__
+        raise TypeError(
+            "offline_support_publication_as_payload() host_reliability_prior must be "
+            f"HostReliabilityPrior | None, got {actual_type}."
+        )
+    return {
+        "timeout_rate": prior.timeout_rate,
+        "degradation_rate": prior.degradation_rate,
+        "capability_availability": prior.capability_availability,
+        "contradiction_counter": prior.contradiction_counter,
+        "ttl_hours": prior.ttl_hours,
+        "last_validated_at": prior.last_validated_at,
+        "probe_failure_classes": sorted(prior.probe_failure_classes),
+        "affordance_scope_tags": sorted(prior.affordance_scope_tags),
+    }
+
+
+def _parse_host_reliability_prior_payload(
+    value: Any,
+    *,
+    label: str,
+) -> HostReliabilityPrior | None:
+    if value is None:
+        return None
+    if not isinstance(value, Mapping):
+        actual_type = type(value).__name__
+        raise TypeError(f"{label} must be an object or null, got {actual_type}.")
+    if tuple(value) != _HOST_RELIABILITY_PRIOR_PAYLOAD_KEYS:
+        raise ValueError(
+            f"{label} must preserve the locked key order "
+            f"{_HOST_RELIABILITY_PRIOR_PAYLOAD_KEYS!r}."
+        )
+    timeout_rate = value.get("timeout_rate")
+    if isinstance(timeout_rate, bool) or not isinstance(timeout_rate, (int, float)):
+        actual_type = type(timeout_rate).__name__
+        raise TypeError(f"{label}.timeout_rate must be numeric, got {actual_type}.")
+    degradation_rate = value.get("degradation_rate")
+    if isinstance(degradation_rate, bool) or not isinstance(degradation_rate, (int, float)):
+        actual_type = type(degradation_rate).__name__
+        raise TypeError(f"{label}.degradation_rate must be numeric, got {actual_type}.")
+    capability_availability = value.get("capability_availability")
+    if isinstance(capability_availability, bool) or not isinstance(
+        capability_availability, (int, float)
+    ):
+        actual_type = type(capability_availability).__name__
+        raise TypeError(
+            f"{label}.capability_availability must be numeric, got {actual_type}."
+        )
+    contradiction_counter = value.get("contradiction_counter")
+    if isinstance(contradiction_counter, bool) or not isinstance(contradiction_counter, int):
+        actual_type = type(contradiction_counter).__name__
+        raise TypeError(
+            f"{label}.contradiction_counter must be an integer, got {actual_type}."
+        )
+    ttl_hours = value.get("ttl_hours")
+    if isinstance(ttl_hours, bool) or not isinstance(ttl_hours, int):
+        actual_type = type(ttl_hours).__name__
+        raise TypeError(f"{label}.ttl_hours must be an integer, got {actual_type}.")
+    last_validated_at = value.get("last_validated_at")
+    if last_validated_at is not None and not isinstance(last_validated_at, str):
+        actual_type = type(last_validated_at).__name__
+        raise TypeError(
+            f"{label}.last_validated_at must be a string or null, got {actual_type}."
+        )
+    probe_failure_classes = value.get("probe_failure_classes")
+    if not isinstance(probe_failure_classes, list):
+        actual_type = type(probe_failure_classes).__name__
+        raise TypeError(
+            f"{label}.probe_failure_classes must be a list[str], got {actual_type}."
+        )
+    affordance_scope_tags = value.get("affordance_scope_tags")
+    if not isinstance(affordance_scope_tags, list):
+        actual_type = type(affordance_scope_tags).__name__
+        raise TypeError(
+            f"{label}.affordance_scope_tags must be a list[str], got {actual_type}."
+        )
+    return HostReliabilityPrior(
+        timeout_rate=float(timeout_rate),
+        degradation_rate=float(degradation_rate),
+        capability_availability=float(capability_availability),
+        contradiction_counter=contradiction_counter,
+        ttl_hours=ttl_hours,
+        last_validated_at=last_validated_at,
+        probe_failure_classes=tuple(
+            _required_payload_string(
+                item,
+                label=f"{label}.probe_failure_classes[{index}]",
+            )
+            for index, item in enumerate(probe_failure_classes)
+        ),
+        affordance_scope_tags=tuple(
+            _required_payload_string(
+                item,
+                label=f"{label}.affordance_scope_tags[{index}]",
+            )
+            for index, item in enumerate(affordance_scope_tags)
+        ),
+    )
+
+
 @dataclass(frozen=True, slots=True)
 class OfflineSupportPublication:
     retrieval_prior_refs: tuple[SupportReference, ...] = field(default_factory=tuple)
@@ -161,6 +280,7 @@ class OfflineSupportPublication:
     publication_tags: frozenset[str] = field(default_factory=frozenset)
     notes: tuple[str, ...] = field(default_factory=tuple)
     metadata: tuple[MetadataField, ...] = field(default_factory=tuple)
+    host_reliability_prior: HostReliabilityPrior | None = None
 
     def __post_init__(self) -> None:
         _validate_refs(
@@ -195,6 +315,15 @@ class OfflineSupportPublication:
             self.metadata,
             field_name="OfflineSupportPublication.metadata",
         )
+        if self.host_reliability_prior is not None and not isinstance(
+            self.host_reliability_prior,
+            HostReliabilityPrior,
+        ):
+            actual_type = type(self.host_reliability_prior).__name__
+            raise TypeError(
+                "OfflineSupportPublication.host_reliability_prior must be "
+                f"HostReliabilityPrior | None, got {actual_type}.",
+            )
 
     def support_refs(self) -> tuple[SupportReference, ...]:
         return _dedupe_refs(
@@ -248,6 +377,9 @@ def offline_support_publication_as_payload(
             _metadata_field_as_payload(field)
             for field in publication.metadata
         ],
+        "host_reliability_prior": _host_reliability_prior_as_payload(
+            publication.host_reliability_prior,
+        ),
     }
 
 
@@ -269,6 +401,7 @@ def parse_offline_support_publication_payload(
         "publication_tags",
         "notes",
         "metadata",
+        "host_reliability_prior",
     )
     if tuple(payload) != required_keys:
         raise ValueError(
@@ -321,6 +454,10 @@ def parse_offline_support_publication_payload(
         metadata=tuple(
             _parse_metadata_field_payload(item, label=f"offline_publication.metadata[{index}]")
             for index, item in enumerate(metadata)
+        ),
+        host_reliability_prior=_parse_host_reliability_prior_payload(
+            payload.get("host_reliability_prior"),
+            label="offline_publication.host_reliability_prior",
         ),
     )
 
@@ -413,6 +550,7 @@ def augment_snapshot_with_offline_publication(
             derived_tags=frozenset({"aux/offline-publication"}) | publication.publication_tags,
             notes=publication.notes,
             metadata=publication.metadata,
+            published_host_reliability_prior=publication.host_reliability_prior,
         ),
     )
 

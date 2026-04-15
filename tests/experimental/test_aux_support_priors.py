@@ -111,20 +111,17 @@ def test_build_support_memory_prior_appendix_invalidates_reliability_weight_on_f
     appendix = build_support_memory_prior_appendix(augmented)
 
     check_score = appendix.score_for(SoftControlFamily.CHECK)
+    assert len(augmented.core_snapshot.trace.degradation_records) > 0
     assert appendix.host_reliability_prior is not None
-    assert appendix.host_reliability_prior.contradiction_counter > 0
-    assert "q_mem-host:contradiction-invalidated" in check_score.reason_tags
+    assert "q_mem-host:current-contradiction-invalidated" in check_score.reason_tags
     assert "q_mem-host:reliability-active" not in check_score.reason_tags
 
 
-def test_build_support_memory_prior_appendix_zeroes_reliability_weight_when_ttl_expires(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
+def test_build_support_memory_prior_appendix_zeroes_reliability_weight_when_ttl_expires() -> None:
     augmented = _augmented_temporal_case("branch-resume-recovery")
-
-    monkeypatch.setattr(
-        "cortex.aux.support_priors._host_reliability_prior",
-        lambda snapshot, signal_profile: HostReliabilityPrior(
+    augmented = _replace_published_reliability_prior(
+        augmented,
+        HostReliabilityPrior(
             timeout_rate=0.0,
             degradation_rate=0.0,
             capability_availability=1.0,
@@ -205,14 +202,11 @@ def test_filter_live_support_memory_prior_appendix_blocks_host_mismatch() -> Non
     )
 
 
-def test_filter_live_support_memory_prior_appendix_zeroes_ttl_expired_family_on_live_path(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
+def test_filter_live_support_memory_prior_appendix_zeroes_ttl_expired_family_on_live_path() -> None:
     augmented = _augmented_temporal_case("branch-resume-recovery")
-
-    monkeypatch.setattr(
-        "cortex.aux.support_priors._host_reliability_prior",
-        lambda snapshot, signal_profile: HostReliabilityPrior(
+    augmented = _replace_published_reliability_prior(
+        augmented,
+        HostReliabilityPrior(
             timeout_rate=0.0,
             degradation_rate=0.0,
             capability_availability=1.0,
@@ -286,6 +280,192 @@ def test_filter_live_support_memory_prior_appendix_invalidates_uncertainty_famil
     ).reason_tags
 
 
+def test_historical_contradiction_alone_no_longer_auto_zeros() -> None:
+    augmented = _augmented_temporal_case("branch-resume-recovery")
+    historical_prior = HostReliabilityPrior(
+        timeout_rate=0.0,
+        degradation_rate=0.0,
+        capability_availability=1.0,
+        contradiction_counter=3,
+        ttl_hours=72,
+        last_validated_at="2026-04-15T00:00:00+00:00",
+        probe_failure_classes=("timed-out",),
+    )
+    augmented = _replace_published_reliability_prior(augmented, historical_prior)
+
+    appendix = build_support_memory_prior_appendix(augmented)
+
+    branch_score = appendix.score_for(SoftControlFamily.BRANCH)
+    assert branch_score.score > 0.0
+    assert "q_mem-host:reliability-active" in branch_score.reason_tags
+    assert "q_mem-host:success-reopened" in branch_score.reason_tags
+
+
+def test_host_reliability_prior_published_from_publication_wins_over_synthesis() -> None:
+    augmented = _augmented_temporal_case("branch-resume-recovery")
+    published_prior = HostReliabilityPrior(
+        timeout_rate=0.0,
+        degradation_rate=0.0,
+        capability_availability=0.5,
+        contradiction_counter=0,
+        ttl_hours=72,
+        last_validated_at="2026-04-15T00:00:00+00:00",
+    )
+    augmented_with_published = _replace_published_reliability_prior(
+        augmented,
+        published_prior,
+    )
+
+    appendix = build_support_memory_prior_appendix(augmented_with_published)
+
+    assert appendix.host_reliability_prior is published_prior
+    assert appendix.host_reliability_prior.capability_availability == pytest.approx(0.5)
+
+
+def test_affordance_gating_mismatch_emits_tag_and_zeros_bonus() -> None:
+    augmented = _augmented_temporal_case("contradiction-review")
+    # Use a clean target snapshot (without degradation records) so the
+    # current-contradiction gate does not mask the affordance gate.
+    clean_trace = replace(
+        augmented.core_snapshot.trace,
+        degradation_records=(),
+    )
+    clean_core = replace(augmented.core_snapshot, trace=clean_trace)
+    augmented = replace(augmented, core_snapshot=clean_core)
+    augmented = _replace_host_affordance_tags(augmented, {"read-files"})
+    augmented = _replace_published_reliability_prior(
+        augmented,
+        HostReliabilityPrior(
+            timeout_rate=0.0,
+            degradation_rate=0.0,
+            capability_availability=1.0,
+            contradiction_counter=0,
+            ttl_hours=72,
+            last_validated_at="2026-04-15T00:00:00+00:00",
+            affordance_scope_tags=("write-files",),
+        ),
+    )
+
+    appendix = build_support_memory_prior_appendix(augmented)
+
+    check_score = appendix.score_for(SoftControlFamily.CHECK)
+    seek_score = appendix.score_for(SoftControlFamily.SEEK_CONTEXT)
+    assert "q_mem-host:affordance-mismatch" in check_score.reason_tags
+    assert "q_mem-host:affordance-mismatch" in seek_score.reason_tags
+    assert "q_mem-host:reliability-active" not in check_score.reason_tags
+    assert "q_mem-host:reliability-active" not in seek_score.reason_tags
+
+
+def test_affordance_gating_overlap_passes_through() -> None:
+    augmented = _augmented_temporal_case("branch-resume-recovery")
+    augmented = _replace_host_affordance_tags(
+        augmented,
+        {"tool/intercept", "write-files"},
+    )
+    augmented = _replace_published_reliability_prior(
+        augmented,
+        HostReliabilityPrior(
+            timeout_rate=0.0,
+            degradation_rate=0.0,
+            capability_availability=1.0,
+            contradiction_counter=0,
+            ttl_hours=72,
+            last_validated_at="2026-04-15T00:00:00+00:00",
+            affordance_scope_tags=("write-files",),
+        ),
+    )
+
+    appendix = build_support_memory_prior_appendix(augmented)
+
+    branch_score = appendix.score_for(SoftControlFamily.BRANCH)
+    assert "q_mem-host:affordance-mismatch" not in branch_score.reason_tags
+    assert "q_mem-host:reliability-active" in branch_score.reason_tags
+
+
+def test_affordance_empty_scope_is_transparent() -> None:
+    augmented = _augmented_temporal_case("branch-resume-recovery")
+    augmented = _replace_published_reliability_prior(
+        augmented,
+        HostReliabilityPrior(
+            timeout_rate=0.0,
+            degradation_rate=0.0,
+            capability_availability=1.0,
+            contradiction_counter=0,
+            ttl_hours=72,
+            last_validated_at="2026-04-15T00:00:00+00:00",
+            affordance_scope_tags=(),
+        ),
+    )
+
+    appendix = build_support_memory_prior_appendix(augmented)
+
+    branch_score = appendix.score_for(SoftControlFamily.BRANCH)
+    assert "q_mem-host:affordance-mismatch" not in branch_score.reason_tags
+    assert "q_mem-host:reliability-active" in branch_score.reason_tags
+
+
+def test_affordance_gate_skipped_for_branch() -> None:
+    augmented = _augmented_temporal_case("branch-resume-recovery")
+    augmented = _replace_host_affordance_tags(augmented, {"read-files"})
+    augmented = _replace_published_reliability_prior(
+        augmented,
+        HostReliabilityPrior(
+            timeout_rate=0.0,
+            degradation_rate=0.0,
+            capability_availability=1.0,
+            contradiction_counter=0,
+            ttl_hours=72,
+            last_validated_at="2026-04-15T00:00:00+00:00",
+            affordance_scope_tags=("write-files",),
+        ),
+    )
+
+    appendix = build_support_memory_prior_appendix(augmented)
+
+    branch_score = appendix.score_for(SoftControlFamily.BRANCH)
+    assert "q_mem-host:affordance-mismatch" not in branch_score.reason_tags
+    assert "q_mem-host:reliability-active" in branch_score.reason_tags
+
+
+def test_recent_probe_failure_invalidates_check_and_seek_context_only() -> None:
+    augmented = _augmented_temporal_case("branch-resume-recovery")
+
+    appendix = build_support_memory_prior_appendix(
+        augmented,
+        recent_probe_failure_class="timed-out",
+    )
+
+    branch_score = appendix.score_for(SoftControlFamily.BRANCH)
+    check_score = appendix.score_for(SoftControlFamily.CHECK)
+    seek_score = appendix.score_for(SoftControlFamily.SEEK_CONTEXT)
+    assert "q_mem-host:recent-probe-failure-invalidated" in check_score.reason_tags
+    assert "q_mem-host:recent-probe-failure-invalidated" in seek_score.reason_tags
+    assert (
+        "q_mem-host:recent-probe-failure-invalidated"
+        not in branch_score.reason_tags
+    )
+
+
+def test_reliability_delta_recorded_in_score_metadata() -> None:
+    augmented = _augmented_temporal_case("branch-resume-recovery")
+
+    appendix = build_support_memory_prior_appendix(augmented)
+
+    for family in (
+        SoftControlFamily.BRANCH,
+        SoftControlFamily.CHECK,
+        SoftControlFamily.SEEK_CONTEXT,
+    ):
+        score = appendix.score_for(family)
+        delta_fields = [
+            field
+            for field in score.metadata
+            if field.key == "q_mem-host:reliability_delta"
+        ]
+        assert len(delta_fields) == 1
+        assert isinstance(delta_fields[0].value, float)
+
+
 def _augmented_temporal_case(scenario_id: str):
     scenario = {
         scenario.scenario_id: scenario
@@ -302,3 +482,22 @@ def _augmented_temporal_case(scenario_id: str):
         scenario.target_snapshot,
         publication,
     )
+
+
+def _replace_published_reliability_prior(augmented, prior):
+    return replace(
+        augmented,
+        auxiliary_support=replace(
+            augmented.auxiliary_support,
+            published_host_reliability_prior=prior,
+        ),
+    )
+
+
+def _replace_host_affordance_tags(augmented, affordance_tags):
+    new_host = replace(
+        augmented.core_snapshot.host,
+        affordance_tags=frozenset(affordance_tags),
+    )
+    new_core = replace(augmented.core_snapshot, host=new_host)
+    return replace(augmented, core_snapshot=new_core)

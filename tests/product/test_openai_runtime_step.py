@@ -859,6 +859,7 @@ def test_openai_runtime_step_without_offline_publication_makes_no_aux_calls_and_
         "invalidated_families": [],
         "selected_family_support_refs": [],
         "selected_family_memory_score": 0.0,
+        "selected_family_reliability_delta": 0.0,
     }
     assert all(
         score["memory_score"] == 0.0
@@ -969,6 +970,7 @@ def test_openai_runtime_step_replay_publication_blocks_cross_host_live_memory_re
         "invalidated_families": ["branch", "check", "redirect", "seek-context"],
         "selected_family_support_refs": [],
         "selected_family_memory_score": 0.0,
+        "selected_family_reliability_delta": 0.0,
     }
 
 
@@ -1028,6 +1030,16 @@ def test_openai_runtime_step_live_memory_reentry_zeroes_ttl_expired_branch_famil
 ) -> None:
     case_result = _openai_replay_case_result("branch-resume-recovery")
     scenario = _reference_replay_scenario("branch-resume-recovery")
+    assert case_result.publication.host_reliability_prior is not None
+    expired_prior = replace(
+        case_result.publication.host_reliability_prior,
+        ttl_hours=1,
+        last_validated_at="2000-01-01T00:00:00+00:00",
+    )
+    publication = replace(
+        case_result.publication,
+        host_reliability_prior=expired_prior,
+    )
     monkeypatch.setattr(
         openai_runtime,
         "build_reference_executive_state",
@@ -1041,22 +1053,11 @@ def test_openai_runtime_step_live_memory_reentry_zeroes_ttl_expired_branch_famil
         "_build_support_snapshot",
         lambda **kwargs: scenario.target_snapshot,
     )
-    monkeypatch.setattr(
-        "cortex.aux.support_priors._host_reliability_prior",
-        lambda snapshot, signal_profile: aux_support_priors.HostReliabilityPrior(
-            timeout_rate=0.0,
-            degradation_rate=0.0,
-            capability_availability=1.0,
-            contradiction_counter=0,
-            ttl_hours=1,
-            last_validated_at="2000-01-01T00:00:00+00:00",
-        ),
-    )
 
     replay = run_openai_runtime_step(
         "response.output_text.delta",
         {"session_id": "oa-replay-ttl", "response_id": "resp-replay-ttl", "delta": "hello"},
-        offline_publication=case_result.publication,
+        offline_publication=publication,
     )
 
     branch_score = _score_payload_for_family(
@@ -1072,6 +1073,112 @@ def test_openai_runtime_step_live_memory_reentry_zeroes_ttl_expired_branch_famil
     assert replay.control_ledger_summary["allocation_diagnostics"]["memory_reentry"][
         "invalidated_families"
     ] == ["branch", "seek-context"]
+    memory_reentry = replay.control_ledger_summary["allocation_diagnostics"]["memory_reentry"]
+    assert memory_reentry["selected_family_reliability_delta"] == 0.0
+
+
+def test_openai_runtime_step_publication_carried_reliability_prior_lifts_selected_family_delta(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    case_result = _openai_replay_case_result("branch-resume-recovery")
+    scenario = _reference_replay_scenario("branch-resume-recovery")
+    assert case_result.publication.host_reliability_prior is not None
+    monkeypatch.setattr(
+        openai_runtime,
+        "build_reference_executive_state",
+        lambda *args, **kwargs: _scenario_executive_state_with_task_mode(
+            scenario,
+            kwargs["task_mode"],
+        ),
+    )
+    monkeypatch.setattr(
+        openai_runtime,
+        "_build_support_snapshot",
+        lambda **kwargs: scenario.target_snapshot,
+    )
+
+    replay = run_openai_runtime_step(
+        "response.output_text.delta",
+        {
+            "session_id": "oa-reliability-delta-active",
+            "response_id": "resp-reliability-delta-active",
+            "delta": "hello",
+        },
+        offline_publication=case_result.publication,
+    )
+
+    assert replay.selected_family is SoftControlFamily.BRANCH
+    memory_reentry = replay.control_ledger_summary["allocation_diagnostics"]["memory_reentry"]
+    assert memory_reentry["state"] == "active"
+    assert memory_reentry["selected_family_reliability_delta"] > 0.0
+    branch_score = _score_payload_for_family(
+        replay.control_ledger_summary["allocation_diagnostics"]["scores"],
+        "branch",
+    )
+    assert "q_mem-host:reliability-active" in branch_score["reason_tags"]
+
+
+def test_openai_runtime_step_without_publication_keeps_reliability_delta_zero() -> None:
+    result = run_openai_runtime_step(
+        "response.output_text.delta",
+        {
+            "session_id": "oa-no-publication-delta",
+            "response_id": "resp-no-publication-delta",
+            "delta": "hello",
+        },
+    )
+
+    memory_reentry = result.control_ledger_summary["allocation_diagnostics"]["memory_reentry"]
+    assert memory_reentry["state"] == "inactive"
+    assert memory_reentry["selected_family_reliability_delta"] == 0.0
+
+
+def test_openai_runtime_step_affordance_mismatch_zeros_reliability_delta_on_seek_context(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    case_result = _openai_replay_case_result("retrieval-reuse")
+    scenario = _reference_replay_scenario("retrieval-reuse")
+    assert case_result.publication.host_reliability_prior is not None
+    disjoint_prior = replace(
+        case_result.publication.host_reliability_prior,
+        affordance_scope_tags=("restricted-op",),
+    )
+    publication = replace(
+        case_result.publication,
+        host_reliability_prior=disjoint_prior,
+    )
+    monkeypatch.setattr(
+        openai_runtime,
+        "build_reference_executive_state",
+        lambda *args, **kwargs: _scenario_executive_state_with_task_mode(
+            scenario,
+            kwargs["task_mode"],
+        ),
+    )
+    monkeypatch.setattr(
+        openai_runtime,
+        "_build_support_snapshot",
+        lambda **kwargs: scenario.target_snapshot,
+    )
+
+    replay = run_openai_runtime_step(
+        "response.output_text.delta",
+        {
+            "session_id": "oa-reliability-affordance-mismatch",
+            "response_id": "resp-reliability-affordance-mismatch",
+            "delta": "hello",
+        },
+        offline_publication=publication,
+    )
+
+    memory_reentry = replay.control_ledger_summary["allocation_diagnostics"]["memory_reentry"]
+    assert memory_reentry["selected_family_reliability_delta"] == 0.0
+    seek_score = _score_payload_for_family(
+        replay.control_ledger_summary["allocation_diagnostics"]["scores"],
+        "seek-context",
+    )
+    assert "q_mem-host:affordance-mismatch" in seek_score["reason_tags"]
+    assert "q_mem-host:reliability-active" not in seek_score["reason_tags"]
 
 
 def test_openai_runtime_step_live_memory_reentry_invalidates_uncertainty_families_after_probe_failure(
@@ -1149,9 +1256,9 @@ def test_openai_runtime_step_with_explicit_publication_stays_publication_only_wi
         captured["augment_called"] = True
         return original_augment(snapshot, publication)
 
-    def prior_builder_wrapper(snapshot):
+    def prior_builder_wrapper(snapshot, **kwargs):
         captured["prior_builder_called"] = True
-        return original_prior_builder(snapshot)
+        return original_prior_builder(snapshot, **kwargs)
 
     def filter_wrapper(snapshot, appendix, **kwargs):
         captured["filter_called"] = True
