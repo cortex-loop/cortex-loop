@@ -48,6 +48,14 @@ _CONTROL_RESIDUE_KEYS = (
     "last_realization_feedback",
     "feedback_window",
     "executive_modulator_memory",
+    "brake_tonic_history",
+)
+_PRE_TONIC_HISTORY_CONTROL_RESIDUE_KEYS = (
+    "last_budget_band",
+    "last_commitment_result_summary",
+    "last_realization_feedback",
+    "feedback_window",
+    "executive_modulator_memory",
 )
 _PRE_MODULATOR_CONTROL_RESIDUE_KEYS = (
     "last_budget_band",
@@ -75,6 +83,7 @@ class GeminiRuntimeSessionArtifact:
         default_factory=ReferenceRealizationFeedbackWindow
     )
     executive_modulator_memory: ExecutiveModulatorMemory | None = None
+    brake_tonic_history: tuple[float, ...] = ()
 
     def __post_init__(self) -> None:
         if self.artifact_kind != _ARTIFACT_KIND:
@@ -158,6 +167,18 @@ class GeminiRuntimeSessionArtifact:
                 "GeminiRuntimeSessionArtifact.executive_modulator_memory must be "
                 f"ExecutiveModulatorMemory | None, got {actual_type}."
             )
+        for entry in self.brake_tonic_history:
+            if isinstance(entry, bool) or not isinstance(entry, (int, float)):
+                actual_type = type(entry).__name__
+                raise TypeError(
+                    "GeminiRuntimeSessionArtifact.brake_tonic_history must contain only "
+                    f"numeric values in [0.0, 1.0], got {actual_type}."
+                )
+            if not 0.0 <= float(entry) <= 1.0:
+                raise ValueError(
+                    "GeminiRuntimeSessionArtifact.brake_tonic_history entries must be "
+                    "between 0.0 and 1.0."
+                )
         if (
             self.last_realization_feedback is not None
             and self.feedback_window.entries
@@ -205,6 +226,7 @@ class GeminiRuntimeSessionArtifact:
                     if self.executive_modulator_memory is not None
                     else None
                 ),
+                "brake_tonic_history": [float(entry) for entry in self.brake_tonic_history],
             },
         }
 
@@ -228,6 +250,7 @@ class GeminiRuntimeSessionArtifact:
             continuity_reminders=self.continuity_reminders,
             budget_history=budget_history,
             brake_history=brake_history,
+            brake_tonic_history=self.brake_tonic_history,
             last_selected_family=last_selected_family,
             last_commitment_result_summary=self.last_commitment_result_summary,
             last_realization_feedback=self.last_realization_feedback,
@@ -257,6 +280,7 @@ def build_gemini_runtime_session_artifact(
         last_realization_feedback=session.last_realization_feedback,
         feedback_window=session.feedback_window,
         executive_modulator_memory=session.executive_modulator_memory,
+        brake_tonic_history=session.brake_tonic_history,
     )
 
 
@@ -335,6 +359,10 @@ def parse_gemini_runtime_session_artifact(
         executive_modulator_memory=_optional_executive_modulator_memory(
             control_residue_payload.get("executive_modulator_memory"),
             "GeminiRuntimeSessionArtifact.control_residue.executive_modulator_memory",
+        ),
+        brake_tonic_history=_brake_tonic_history_tuple(
+            control_residue_payload.get("brake_tonic_history", []),
+            "GeminiRuntimeSessionArtifact.control_residue.brake_tonic_history",
         ),
     )
     return artifact.to_session()
@@ -431,9 +459,16 @@ def _continuity_reminders_tuple(value: Any, label: str) -> tuple[str, ...]:
 
 def _require_control_residue_keys(payload: Mapping[str, Any]) -> None:
     actual_keys = tuple(payload.keys())
-    if actual_keys == _CONTROL_RESIDUE_KEYS or actual_keys == _PRE_MODULATOR_CONTROL_RESIDUE_KEYS:
+    if actual_keys in (
+        _CONTROL_RESIDUE_KEYS,
+        _PRE_TONIC_HISTORY_CONTROL_RESIDUE_KEYS,
+        _PRE_MODULATOR_CONTROL_RESIDUE_KEYS,
+    ):
         return
-    expected = f"{_CONTROL_RESIDUE_KEYS} or {_PRE_MODULATOR_CONTROL_RESIDUE_KEYS}"
+    expected = (
+        f"{_CONTROL_RESIDUE_KEYS}, {_PRE_TONIC_HISTORY_CONTROL_RESIDUE_KEYS}, "
+        f"or {_PRE_MODULATOR_CONTROL_RESIDUE_KEYS}"
+    )
     missing_keys = [key for key in _CONTROL_RESIDUE_KEYS if key not in payload]
     extra_keys = [key for key in actual_keys if key not in _CONTROL_RESIDUE_KEYS]
     raise ValueError(
@@ -664,6 +699,24 @@ def _optional_bool(value: Any, label: str) -> bool | None:
         actual_type = type(value).__name__
         raise TypeError(f"{label} must be bool | null, got {actual_type}.")
     return value
+
+
+def _brake_tonic_history_tuple(value: Any, label: str) -> tuple[float, ...]:
+    if not isinstance(value, list):
+        actual_type = type(value).__name__
+        raise TypeError(f"{label} must be a JSON array, got {actual_type}.")
+    parsed: list[float] = []
+    for item in value:
+        if isinstance(item, bool) or not isinstance(item, (int, float)):
+            actual_type = type(item).__name__
+            raise TypeError(
+                f"{label} must contain only numeric values in [0.0, 1.0], got {actual_type}."
+            )
+        entry = float(item)
+        if not 0.0 <= entry <= 1.0:
+            raise ValueError(f"{label} entries must be between 0.0 and 1.0.")
+        parsed.append(entry)
+    return tuple(parsed)
 
 
 def _last_budget_band(budget_history: tuple[str, ...]) -> str | None:

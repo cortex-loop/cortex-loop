@@ -78,6 +78,7 @@ def test_openai_runtime_session_artifact_roundtrips_compact_product_journal() ->
             "confirmed_artifact_refs": ["artifact-a", "artifact-b"],
             "budget_history": [],
             "brake_history": [],
+            "brake_tonic_history": [],
             "last_selected_family": None,
             "last_commitment_result_summary": None,
             "last_realization_feedback": None,
@@ -275,6 +276,104 @@ def test_openai_runtime_session_artifact_roundtrips_feedback_task_mode_and_probe
     assert restored.last_realization_feedback == feedback
     assert restored.feedback_window == ReferenceRealizationFeedbackWindow(entries=(feedback,))
     assert roundtripped["journal"]["last_realization_feedback"] == feedback.as_summary()
+
+
+def test_openai_runtime_session_artifact_preserves_brake_tonic_history_across_round_trip() -> None:
+    # SRE_2 §7.5: the OpenAI lane persists brake_tonic_history so the
+    # tonic_pressure EMA survives provider-hop resumes and does not regress to
+    # cold start on every step. The history field is locked between
+    # brake_history and last_selected_family in the journal key order.
+    session = OpenAIRuntimeSession(
+        session_id="oa-tonic",
+        event_index=3,
+        brake_tonic_history=(0.12, 0.24, 0.30, 0.36),
+    )
+
+    payload = build_openai_runtime_session_artifact(session).as_payload()
+
+    journal = payload["journal"]
+    assert journal["brake_tonic_history"] == [0.12, 0.24, 0.30, 0.36]
+    # Verify the key lands in the locked position (brake_history → brake_tonic_history → last_selected_family).
+    keys = tuple(journal.keys())
+    idx_brake = keys.index("brake_history")
+    idx_tonic = keys.index("brake_tonic_history")
+    idx_last = keys.index("last_selected_family")
+    assert idx_brake < idx_tonic < idx_last
+
+    restored = parse_openai_runtime_session_artifact(payload)
+    assert restored.brake_tonic_history == (0.12, 0.24, 0.30, 0.36)
+
+
+def test_openai_runtime_session_artifact_accepts_pre_tonic_history_journal_shape() -> None:
+    # Backward-compat: a journal written before brake_tonic_history existed must
+    # still parse cleanly with an empty tonic history. This matches the accepted
+    # shape _PRE_TONIC_HISTORY_JOURNAL_KEYS (no brake_tonic_history entry).
+    payload = {
+        "artifact_kind": "openai_product_journal",
+        "artifact_version": 1,
+        "journal": {
+            "session_id": "oa-pre-tonic",
+            "event_index": 2,
+            "branch_registry": ["main"],
+            "active_track_ref": "main",
+            "active_goal_ref": None,
+            "pending_goal_refs": [],
+            "confirmed_artifact_refs": [],
+            "budget_history": [],
+            "brake_history": [],
+            "last_selected_family": None,
+            "last_commitment_result_summary": None,
+            "last_realization_feedback": None,
+            "feedback_window": [],
+            "executive_modulator_memory": None,
+            "last_failure_class": None,
+            "next_recommended_move": "continue",
+        },
+    }
+
+    restored = parse_openai_runtime_session_artifact(payload)
+
+    assert restored.brake_tonic_history == ()
+
+
+def test_openai_runtime_session_artifact_rejects_invalid_brake_tonic_history_entries() -> None:
+    # Validation must reject non-numeric, bool, and out-of-range entries before
+    # the value reaches the live executive brake gate.
+    def _canonical_payload_with_history(history: list[object]) -> dict[str, object]:
+        return {
+            "artifact_kind": "openai_product_journal",
+            "artifact_version": 1,
+            "journal": {
+                "session_id": "oa-invalid-tonic",
+                "event_index": 1,
+                "branch_registry": ["main"],
+                "active_track_ref": "main",
+                "active_goal_ref": None,
+                "pending_goal_refs": [],
+                "confirmed_artifact_refs": [],
+                "budget_history": [],
+                "brake_history": [],
+                "brake_tonic_history": history,
+                "last_selected_family": None,
+                "last_commitment_result_summary": None,
+                "last_realization_feedback": None,
+                "feedback_window": [],
+                "executive_modulator_memory": None,
+                "last_failure_class": None,
+                "next_recommended_move": "continue",
+            },
+        }
+
+    with pytest.raises(TypeError, match="brake_tonic_history"):
+        parse_openai_runtime_session_artifact(
+            _canonical_payload_with_history(["not-a-float"])
+        )
+
+    with pytest.raises(TypeError, match="brake_tonic_history"):
+        parse_openai_runtime_session_artifact(_canonical_payload_with_history([True]))
+
+    with pytest.raises(ValueError, match="brake_tonic_history"):
+        parse_openai_runtime_session_artifact(_canonical_payload_with_history([1.5]))
 
 
 def _base_payload() -> dict[str, object]:

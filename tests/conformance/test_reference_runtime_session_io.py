@@ -44,6 +44,7 @@ def test_reference_runtime_session_artifact_roundtrips_empty_session() -> None:
             "last_realization_feedback": None,
             "feedback_window": [],
             "executive_modulator_memory": None,
+            "brake_tonic_history": [],
         },
     }
     assert restored == session
@@ -131,6 +132,7 @@ def test_reference_runtime_session_artifact_roundtrips_bounded_residue_without_f
             warning_feedback.as_summary(),
         ],
         "executive_modulator_memory": None,
+        "brake_tonic_history": [],
     }
     assert "budget_history" not in payload["control_residue"]
     assert "brake_history" not in payload["control_residue"]
@@ -267,6 +269,65 @@ def test_reference_runtime_session_artifact_roundtrips_feedback_task_mode_and_pr
 
     assert restored.last_realization_feedback == feedback
     assert restored.feedback_window.entries == (feedback,)
+
+
+def test_reference_runtime_session_artifact_preserves_brake_tonic_history_across_round_trip() -> None:
+    # SRE_2 §7.5: tonic_pressure EMA must survive a hard restart so the gate does
+    # not regress to cold start on every resume. This guards the reference lane,
+    # which is the primary evaluation target for the hysteresis train.
+    session = ReferenceRuntimeSession(
+        session_id="ref-tonic",
+        event_index=5,
+        brake_tonic_history=(0.15, 0.25, 0.32, 0.37, 0.40),
+    )
+
+    payload = build_reference_runtime_session_artifact(session).as_payload()
+
+    assert payload["control_residue"]["brake_tonic_history"] == [
+        0.15,
+        0.25,
+        0.32,
+        0.37,
+        0.40,
+    ]
+    restored = parse_reference_runtime_session_artifact(payload)
+    assert restored.brake_tonic_history == (0.15, 0.25, 0.32, 0.37, 0.40)
+
+
+def test_reference_runtime_session_artifact_accepts_pre_tonic_history_legacy_payload() -> None:
+    # Backward-compat: payloads written before brake_tonic_history existed must
+    # still parse cleanly and default to an empty tonic history rather than hit
+    # the strict locked-key validator.
+    payload = _base_payload()
+
+    restored = parse_reference_runtime_session_artifact(payload)
+
+    assert restored.brake_tonic_history == ()
+
+
+def test_reference_runtime_session_artifact_rejects_invalid_brake_tonic_history_entries() -> None:
+    # Validation must reject non-numeric, bool, and out-of-range entries before
+    # the value reaches the live executive brake gate.
+    def _canonical_payload_with_history(history: list[object]) -> dict[str, object]:
+        payload = _base_payload()
+        payload["control_residue"]["executive_modulator_memory"] = None
+        payload["control_residue"]["brake_tonic_history"] = history
+        return payload
+
+    with pytest.raises(TypeError, match="brake_tonic_history"):
+        parse_reference_runtime_session_artifact(
+            _canonical_payload_with_history(["not-a-float"])
+        )
+
+    with pytest.raises(TypeError, match="brake_tonic_history"):
+        parse_reference_runtime_session_artifact(
+            _canonical_payload_with_history([True])
+        )
+
+    with pytest.raises(ValueError, match="brake_tonic_history"):
+        parse_reference_runtime_session_artifact(
+            _canonical_payload_with_history([1.01])
+        )
 
 
 def _base_payload() -> dict[str, object]:

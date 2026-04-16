@@ -108,6 +108,7 @@ class ReferenceRuntimeSession:
     continuity_reminders: tuple[str, ...] = ()
     budget_history: tuple[str, ...] = ()
     brake_history: tuple[str, ...] = ()
+    brake_tonic_history: tuple[float, ...] = ()
     last_selected_family: SoftControlFamily | None = None
     last_commitment_result_summary: str | None = None
     last_realization_feedback: ReferenceRealizationFeedback | None = None
@@ -162,6 +163,17 @@ class ReferenceRuntimeSession:
             raise ValueError(
                 "ReferenceRuntimeSession.brake_history must contain only non-empty values after trimming."
             )
+        for entry in self.brake_tonic_history:
+            if isinstance(entry, bool) or not isinstance(entry, (int, float)):
+                actual_type = type(entry).__name__
+                raise TypeError(
+                    "ReferenceRuntimeSession.brake_tonic_history must contain only "
+                    f"numeric values in [0.0, 1.0], got {actual_type}."
+                )
+            if not 0.0 <= float(entry) <= 1.0:
+                raise ValueError(
+                    "ReferenceRuntimeSession.brake_tonic_history entries must be between 0.0 and 1.0."
+                )
         if self.last_selected_family is not None and not isinstance(
             self.last_selected_family,
             SoftControlFamily,
@@ -682,6 +694,7 @@ def run_reference_runtime_step(
         continuity_reminders=continuity_reminders,
         budget_history=prior_session.budget_history + (_budget_entry_for_lane(dispatch_decision.lane),),
         brake_history=prior_session.brake_history,
+        brake_tonic_history=prior_session.brake_tonic_history,
         last_selected_family=prior_session.last_selected_family,
         last_commitment_result_summary=prior_session.last_commitment_result_summary,
         last_realization_feedback=prior_session.last_realization_feedback,
@@ -801,12 +814,16 @@ def run_reference_runtime_step(
             executive_state.control_allocation.anti_thrash_reason_tags
         ),
         mediation_payload=selection.mediation_finalization.as_payload(),
+        risk_weight=executive_state.control_allocation.risk_weight,
+        brake_tonic=executive_state.brake.tonic,
     )
     allocation_diagnostics = {
         "alpha_t": allocation_diagnostics["alpha_t"],
         "activation_threshold": allocation_diagnostics["activation_threshold"],
         "selected_delta_over_neutral": allocation_diagnostics["selected_delta_over_neutral"],
         "chi_t": allocation_diagnostics["chi_t"],
+        "risk_weight": allocation_diagnostics["risk_weight"],
+        "brake_tonic": allocation_diagnostics["brake_tonic"],
         "rejected_cheaper_families": allocation_diagnostics["rejected_cheaper_families"],
         "probe_path_state": allocation_diagnostics["probe_path_state"],
         "probe_unavailable_reason": allocation_diagnostics["probe_unavailable_reason"],
@@ -878,6 +895,9 @@ def run_reference_runtime_step(
         continuity_reminders=provisional_session.continuity_reminders,
         budget_history=provisional_session.budget_history,
         brake_history=prior_session.brake_history + (brake_state.value,),
+        brake_tonic_history=_bounded_tonic_history(
+            prior_session.brake_tonic_history, executive_state.brake.tonic
+        ),
         last_selected_family=selected_family,
         last_commitment_result_summary=_commitment_summary_for_lane(
             dispatch_decision.lane,
@@ -949,6 +969,7 @@ def run_reference_runtime_step(
         continuity_reminders=updated_session.continuity_reminders,
         budget_history=updated_session.budget_history,
         brake_history=updated_session.brake_history,
+        brake_tonic_history=updated_session.brake_tonic_history,
         last_selected_family=updated_session.last_selected_family,
         last_commitment_result_summary=updated_session.last_commitment_result_summary,
         last_realization_feedback=updated_session.last_realization_feedback,
@@ -1394,6 +1415,21 @@ def _budget_entry_for_lane(lane: DispatchLane) -> str:
     return "shell-high"
 
 
+_MAX_TONIC_HISTORY = 16
+
+
+def _bounded_tonic_history(
+    prior: tuple[float, ...],
+    tonic: "BrakeTonic | None",
+) -> tuple[float, ...]:
+    from cortex.sre.brake import BrakeTonic
+
+    if tonic is None or not isinstance(tonic, BrakeTonic):
+        return prior[-_MAX_TONIC_HISTORY:] if len(prior) > _MAX_TONIC_HISTORY else prior
+    updated = prior + (tonic.tonic_pressure,)
+    return updated[-_MAX_TONIC_HISTORY:]
+
+
 def _commitment_summary_for_lane(
     lane: DispatchLane,
     commitment_result_kind: str | None,
@@ -1723,6 +1759,8 @@ _ALLOCATION_DIAGNOSTICS_KEYS = (
     "activation_threshold",
     "selected_delta_over_neutral",
     "chi_t",
+    "risk_weight",
+    "brake_tonic",
     "rejected_cheaper_families",
     "probe_path_state",
     "probe_unavailable_reason",
@@ -1733,6 +1771,16 @@ _ALLOCATION_DIAGNOSTICS_KEYS = (
     "memory_reentry",
     "scores",
     "mediation",
+)
+_RISK_WEIGHT_DIAGNOSTICS_KEYS = (
+    "fn_cost_weight",
+    "fp_cost_weight",
+    "adjustment_sign",
+    "dominant_risk_source",
+)
+_BRAKE_TONIC_DIAGNOSTICS_KEYS = (
+    "tonic_pressure",
+    "tonic_quiescence",
 )
 _ANTI_THRASH_DIAGNOSTICS_KEYS = (
     "state",
@@ -1784,6 +1832,55 @@ _AUDIT_PROJECTION_KEYS = (
 )
 
 
+def _validate_risk_weight_diagnostics_payload(
+    payload: dict[str, Any], label: str
+) -> None:
+    if not isinstance(payload, dict):
+        actual_type = type(payload).__name__
+        raise TypeError(f"{label} must be dict[str, Any], got {actual_type}.")
+    if tuple(payload) != _RISK_WEIGHT_DIAGNOSTICS_KEYS:
+        raise ValueError(
+            f"{label} must preserve the locked key order {_RISK_WEIGHT_DIAGNOSTICS_KEYS!r}."
+        )
+    for key in ("fn_cost_weight", "fp_cost_weight"):
+        value = payload[key]
+        if isinstance(value, bool) or not isinstance(value, (int, float)):
+            actual_type = type(value).__name__
+            raise TypeError(f"{label}.{key} must be numeric, got {actual_type}.")
+        if not 0.0 <= float(value) <= 1.0:
+            raise ValueError(f"{label}.{key} must be in [0.0, 1.0].")
+    if payload["adjustment_sign"] not in {"balanced", "fn-heavy", "fp-heavy"}:
+        raise ValueError(
+            f"{label}.adjustment_sign must be one of ['balanced', 'fn-heavy', 'fp-heavy']."
+        )
+    dominant = payload["dominant_risk_source"]
+    if dominant is not None and not (isinstance(dominant, str) and dominant.strip()):
+        raise ValueError(
+            f"{label}.dominant_risk_source must be non-empty after trimming when provided."
+        )
+
+
+def _validate_brake_tonic_diagnostics_payload(
+    payload: dict[str, Any] | None, label: str
+) -> None:
+    if payload is None:
+        return
+    if not isinstance(payload, dict):
+        actual_type = type(payload).__name__
+        raise TypeError(f"{label} must be dict[str, Any] | None, got {actual_type}.")
+    if tuple(payload) != _BRAKE_TONIC_DIAGNOSTICS_KEYS:
+        raise ValueError(
+            f"{label} must preserve the locked key order {_BRAKE_TONIC_DIAGNOSTICS_KEYS!r}."
+        )
+    for key in ("tonic_pressure", "tonic_quiescence"):
+        value = payload[key]
+        if isinstance(value, bool) or not isinstance(value, (int, float)):
+            actual_type = type(value).__name__
+            raise TypeError(f"{label}.{key} must be numeric, got {actual_type}.")
+        if not 0.0 <= float(value) <= 1.0:
+            raise ValueError(f"{label}.{key} must be in [0.0, 1.0].")
+
+
 def _validate_allocation_diagnostics_payload(payload: dict[str, Any], label: str) -> None:
     if not isinstance(payload, dict):
         actual_type = type(payload).__name__
@@ -1797,6 +1894,8 @@ def _validate_allocation_diagnostics_payload(payload: dict[str, Any], label: str
         if isinstance(value, bool) or not isinstance(value, (int, float)):
             actual_type = type(value).__name__
             raise TypeError(f"{label}.{key} must be numeric, got {actual_type}.")
+    _validate_risk_weight_diagnostics_payload(payload["risk_weight"], f"{label}.risk_weight")
+    _validate_brake_tonic_diagnostics_payload(payload["brake_tonic"], f"{label}.brake_tonic")
     rejected_cheaper_families = payload["rejected_cheaper_families"]
     if not isinstance(rejected_cheaper_families, list):
         actual_type = type(rejected_cheaper_families).__name__
@@ -2110,11 +2209,27 @@ def _validate_audit_projection_payload(payload: dict[str, Any], label: str) -> N
 
 
 def _copy_allocation_diagnostics_payload(payload: dict[str, Any]) -> dict[str, Any]:
+    risk_weight_payload = payload["risk_weight"]
+    brake_tonic_payload = payload["brake_tonic"]
     return {
         "alpha_t": payload["alpha_t"],
         "activation_threshold": payload["activation_threshold"],
         "selected_delta_over_neutral": payload["selected_delta_over_neutral"],
         "chi_t": payload["chi_t"],
+        "risk_weight": {
+            "fn_cost_weight": risk_weight_payload["fn_cost_weight"],
+            "fp_cost_weight": risk_weight_payload["fp_cost_weight"],
+            "adjustment_sign": risk_weight_payload["adjustment_sign"],
+            "dominant_risk_source": risk_weight_payload["dominant_risk_source"],
+        },
+        "brake_tonic": (
+            None
+            if brake_tonic_payload is None
+            else {
+                "tonic_pressure": brake_tonic_payload["tonic_pressure"],
+                "tonic_quiescence": brake_tonic_payload["tonic_quiescence"],
+            }
+        ),
         "rejected_cheaper_families": list(payload["rejected_cheaper_families"]),
         "probe_path_state": payload["probe_path_state"],
         "probe_unavailable_reason": payload["probe_unavailable_reason"],

@@ -239,18 +239,19 @@ def test_status_registry_is_complete_and_stable() -> None:
         "reference": "reference_cli",
     }
     assert status["conformance_summary"]["shipping_default"] == "openai:operator_cli"
-    assert status["work_today"]["slug"] == "asymmetric-error-cost-and-tonic-hysteresis"
+    assert status["work_today"]["slug"] == "brake-tonic-quiescence-exit-reconciliation"
     assert "full_cross_host" in status["work_today"]["note"]
     assert "posture-sensitive online control is s-tier closed" in status["work_today"]["note"].lower()
     assert "exact-family unchanged-condition repetition tax" in status["work_today"]["note"]
     assert "reference and openai explicit-publication lanes" in status["work_today"]["note"].lower()
     assert "memory-off when no publication is supplied" in status["work_today"]["note"]
     assert "Q_mem = 0" in status["work_today"]["note"]
-    assert status["next_product_train"]["slug"] == "asymmetric-error-cost-and-tonic-hysteresis"
+    assert "asymmetric error cost and tonic hysteresis are now earned" in status["work_today"]["note"].lower()
+    assert status["next_product_train"]["slug"] == "brake-tonic-quiescence-exit-reconciliation"
     assert status["next_product_train"]["surface"] == "product + conformance"
-    assert "false-positive versus false-negative checking costs" in status["next_product_train"]["executive_benefit"].lower()
-    assert "host-scoped reliability priors are earned" in status["next_product_train"]["why_now"].lower()
-    assert "high-risk flows become more verification-seeking" in status["next_product_train"]["primary_metric"].lower()
+    assert "brake exit hysteresis" in status["next_product_train"]["executive_benefit"].lower()
+    assert "asymmetric error cost and tonic hysteresis are earned" in status["next_product_train"]["why_now"].lower()
+    assert "no dead telemetry remains" in status["next_product_train"]["primary_metric"].lower()
     assert "Keep the bounded audit surface compact and truthful" in status["where_to_work"][0]
     assert "no-spend live evidence current and explicit" in status["where_to_work"][1]
     assert "posture-sensitive online control is s-tier closed" in status["where_to_work"][2].lower()
@@ -260,7 +261,7 @@ def test_status_registry_is_complete_and_stable() -> None:
     assert "route truth stays bounded and non-sovereign" in status["where_to_work"][2]
     assert "live `Q_mem` stays zero" in status["where_to_work"][2]
     assert "host/tool reliability and affordance priors are earned" in status["where_to_work"][2]
-    assert "active asymmetric error cost and tonic hysteresis seam" in status["where_to_work"][3]
+    assert "active brake tonic quiescence exit reconciliation seam" in status["where_to_work"][3]
     closure_gates = {gate["id"]: gate for gate in status["closure_gates"]}
     assert closure_gates["main_synced"]["status"] == "required"
     assert closure_gates["cleanup_report"]["status"] == "required"
@@ -289,8 +290,8 @@ def test_generated_status_doc_includes_system_map_and_next_product_train() -> No
     assert "Active quality/risk focus" in text
     assert "## Packet To Code" in text
     assert "## Next Product Train" in text
-    assert "host/tool reliability and affordance priors are now earned" in text
-    assert "`asymmetric-error-cost-and-tonic-hysteresis`" in text
+    assert "host/tool reliability and affordance priors are earned" in text
+    assert "`brake-tonic-quiescence-exit-reconciliation`" in text
     assert "memory-off when no publication is supplied" in text
     assert "Shipping Product Lane\\nopenai:operator_cli" in text or "Shipping Product Lane" in text
     assert "Shipping default: `openai:operator_cli`" in text

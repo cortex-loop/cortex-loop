@@ -6,7 +6,7 @@ from dataclasses import dataclass, field
 from numbers import Real
 from typing import TYPE_CHECKING
 
-from .brake import BrakeState
+from .brake import BrakeState, BrakeTonic
 from .families import SoftControlFamily
 from .goals import GoalContinuityView
 from .opportunities import PROBE_RESULT_CLASSES
@@ -18,8 +18,43 @@ if TYPE_CHECKING:
 _EXPLAINABILITY_PROFILES = frozenset({"minimal", "focused", "structured"})
 _PROBE_PATH_STATES = frozenset({"available", "unavailable", "absent"})
 _ANTI_THRASH_STATES = frozenset({"inactive", "taxed", "reopened"})
+_RISK_ADJUSTMENT_SIGNS = frozenset({"fn-heavy", "fp-heavy", "balanced"})
 
 ReferenceGoalContinuityView = GoalContinuityView
+
+
+@dataclass(frozen=True, slots=True)
+class RiskWeight:
+    """Bounded asymmetric-cost carrier for false-negative vs false-positive checking."""
+
+    fn_cost_weight: float = 0.0
+    fp_cost_weight: float = 0.0
+    dominant_risk_source: str | None = None
+    adjustment_sign: str = "balanced"
+
+    def __post_init__(self) -> None:
+        for field_name in ("fn_cost_weight", "fp_cost_weight"):
+            value = getattr(self, field_name)
+            if not isinstance(value, Real):
+                actual_type = type(value).__name__
+                raise TypeError(
+                    f"RiskWeight.{field_name} must be numeric, got {actual_type}."
+                )
+            if not 0.0 <= float(value) <= 1.0:
+                raise ValueError(
+                    f"RiskWeight.{field_name} must be between 0.0 and 1.0."
+                )
+        if self.adjustment_sign not in _RISK_ADJUSTMENT_SIGNS:
+            raise ValueError(
+                f"RiskWeight.adjustment_sign must be one of {sorted(_RISK_ADJUSTMENT_SIGNS)!r}."
+            )
+        if self.dominant_risk_source is not None and not (
+            isinstance(self.dominant_risk_source, str)
+            and self.dominant_risk_source.strip()
+        ):
+            raise ValueError(
+                "RiskWeight.dominant_risk_source must be non-empty after trimming when provided."
+            )
 
 
 def _default_task_mode() -> "OperatorTaskMode":
@@ -94,6 +129,7 @@ class ReferenceControlAllocationView:
     probe_path_state: str = "absent"
     probe_unavailable_reason: str | None = None
     recent_probe_result_class: str | None = None
+    risk_weight: RiskWeight = field(default_factory=RiskWeight)
 
     def __post_init__(self) -> None:
         if not self.budget_band.strip():
@@ -205,12 +241,19 @@ class ReferenceControlAllocationView:
             raise ValueError(
                 "ReferenceControlAllocationView.recent_probe_result_class must be a canonical probe result class or None."
             )
+        if not isinstance(self.risk_weight, RiskWeight):
+            actual_type = type(self.risk_weight).__name__
+            raise TypeError(
+                "ReferenceControlAllocationView.risk_weight must be RiskWeight, "
+                f"got {actual_type}."
+            )
 
 
 @dataclass(frozen=True, slots=True)
 class ReferenceBrakeView:
     brake_state: BrakeState
     dominant_cause_family: SoftControlFamily | None = None
+    tonic: BrakeTonic | None = None
 
     def __post_init__(self) -> None:
         if not isinstance(self.brake_state, BrakeState):
@@ -226,6 +269,11 @@ class ReferenceBrakeView:
             raise TypeError(
                 "ReferenceBrakeView.dominant_cause_family must be SoftControlFamily "
                 f"when provided, got {actual_type}."
+            )
+        if self.tonic is not None and not isinstance(self.tonic, BrakeTonic):
+            actual_type = type(self.tonic).__name__
+            raise TypeError(
+                f"ReferenceBrakeView.tonic must be BrakeTonic when provided, got {actual_type}."
             )
 
 
@@ -283,4 +331,5 @@ __all__ = [
     "ReferenceGoalContinuityView",
     "ReferenceModeAndGatingView",
     "ReferenceUncertaintyMonitoringView",
+    "RiskWeight",
 ]

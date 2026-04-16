@@ -83,6 +83,8 @@ def test_gemini_runtime_cli_reads_documented_raw_events_and_preserves_host_name(
         "activation_threshold",
         "selected_delta_over_neutral",
         "chi_t",
+        "risk_weight",
+        "brake_tonic",
         "rejected_cheaper_families",
         "probe_path_state",
         "probe_unavailable_reason",

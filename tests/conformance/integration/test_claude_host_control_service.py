@@ -57,6 +57,8 @@ def test_claude_host_control_action_endpoint_returns_ordered_g1_records_and_muta
         "activation_threshold",
         "selected_delta_over_neutral",
         "chi_t",
+        "risk_weight",
+        "brake_tonic",
         "rejected_cheaper_families",
         "probe_path_state",
         "probe_unavailable_reason",

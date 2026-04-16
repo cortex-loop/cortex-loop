@@ -9,7 +9,7 @@ from cortex.core.environment import CAPABILITY_VIEW, EXECUTION_TRACE, ExecutiveE
 from cortex.core.observation import ObservationBundle
 from cortex.core.support import SupportSnapshot
 
-from .brake import BrakeState, evaluate_brake_state
+from .brake import BrakeState, BrakeTonic, evaluate_brake_state
 from .feedback import (
     ReferenceFeedbackWindowSummary,
     ReferenceRealizationFeedbackWindow,
@@ -30,6 +30,7 @@ from .state import (
     ReferenceExecutiveState,
     ReferenceModeAndGatingView,
     ReferenceUncertaintyMonitoringView,
+    RiskWeight,
 )
 from .uncertainty import UncertaintyEstimate
 
@@ -52,6 +53,7 @@ class PriorReferenceRuntimeSessionLike(Protocol):
     continuity_reminders: tuple[str, ...]
     budget_history: tuple[str, ...]
     brake_history: tuple[str, ...]
+    brake_tonic_history: tuple[float, ...]
     last_selected_family: SoftControlFamily | None
     feedback_window: ReferenceRealizationFeedbackWindow
 
@@ -102,6 +104,7 @@ def build_reference_executive_state(
     main_goal_ref = pending_goal_refs[0] if pending_goal_refs else None
     prior_feedback_window_summary = _prior_feedback_window_summary(prior_session)
     prior_brake_state = _prior_brake_state(prior_session)
+    prior_brake_tonic = _prior_brake_tonic(prior_session)
     recent_probe_result_class = _recent_probe_result_class(prior_session)
     contradiction_spike_flags = _contradiction_spike_flags(
         support_snapshot,
@@ -173,6 +176,7 @@ def build_reference_executive_state(
             recent_probe_result_class=recent_probe_result_class,
         ),
         prior_state=prior_brake_state,
+        prior_tonic=prior_brake_tonic,
     )
     host_friction_level = _host_friction_level(
         support_snapshot,
@@ -212,6 +216,16 @@ def build_reference_executive_state(
             probe_backed_families=probe_backed_families,
         ),
     )
+    risk_weight = _derive_risk_weight(
+        support_snapshot=support_snapshot,
+        pending_goal_refs=pending_goal_refs,
+        budget_band=_budget_band_for_state(observation.event.native_event_name, prior_session),
+        contradiction_spike_flags=contradiction_spike_flags,
+        productive_exploration_bonus=_productive_exploration_bonus(
+            prior_feedback_window_summary,
+            recent_probe_result_class=recent_probe_result_class,
+        ),
+    )
     control_allocation = ReferenceControlAllocationView(
         budget_band=_budget_band_for_state(observation.event.native_event_name, prior_session),
         top_family_set=_top_family_set(
@@ -244,6 +258,7 @@ def build_reference_executive_state(
         probe_path_state=probe_path_state,
         probe_unavailable_reason=_probe_unavailable_reason(opportunities, probe_path_state),
         recent_probe_result_class=recent_probe_result_class,
+        risk_weight=risk_weight,
     )
     brake_view = ReferenceBrakeView(
         brake_state=brake_evaluation.state,
@@ -252,6 +267,7 @@ def build_reference_executive_state(
             if brake_evaluation.state is not BrakeState.QUIESCENT
             else None
         ),
+        tonic=brake_evaluation.tonic,
     )
     return ReferenceExecutiveState(
         goal_continuity=goal_continuity,
@@ -685,6 +701,112 @@ def _prior_brake_state(
     if prior_session is None or not prior_session.brake_history:
         return None
     return BrakeState(prior_session.brake_history[-1])
+
+
+def _prior_brake_tonic(
+    prior_session: PriorReferenceRuntimeSessionLike | None,
+) -> BrakeTonic | None:
+    if prior_session is None or not prior_session.brake_tonic_history:
+        return None
+    return BrakeTonic(
+        tonic_pressure=max(0.0, min(1.0, prior_session.brake_tonic_history[-1])),
+        tonic_quiescence=0.0,
+    )
+
+
+def _derive_risk_weight(
+    *,
+    support_snapshot: SupportSnapshot,
+    pending_goal_refs: tuple[str, ...],
+    budget_band: str,
+    contradiction_spike_flags: frozenset[str],
+    productive_exploration_bonus: float,
+) -> RiskWeight:
+    degradation_reason_codes = support_snapshot.trace.degradation_records
+    host_reliability_prior = getattr(
+        getattr(support_snapshot, "auxiliary_support", None),
+        "published_host_reliability_prior",
+        None,
+    )
+
+    fn_signal = 0.0
+    fp_signal = 0.0
+    dominant_fn_source: str | None = None
+    dominant_fp_source: str | None = None
+
+    # fn-weight inputs: positive indicators that missing an issue is costly.
+    if host_reliability_prior is not None and (
+        host_reliability_prior.contradiction_counter > 0
+        or host_reliability_prior.probe_failure_classes
+    ):
+        fn_signal += 0.40
+        dominant_fn_source = "host-reliability"
+    if host_reliability_prior is not None and host_reliability_prior.timeout_rate > 0.15:
+        fn_signal += 0.25
+        if dominant_fn_source is None:
+            dominant_fn_source = "host-reliability"
+    if pending_goal_refs:
+        fn_signal += 0.15 * min(1.0, len(pending_goal_refs) / 3.0)
+        if dominant_fn_source is None:
+            dominant_fn_source = "pending-goal-depth"
+    if degradation_reason_codes:
+        fn_signal += 0.20
+        if dominant_fn_source is None:
+            dominant_fn_source = "degradation"
+    if contradiction_spike_flags:
+        fn_signal += 0.10
+        if dominant_fn_source is None:
+            dominant_fn_source = "contradiction"
+    if budget_band == "high":
+        fn_signal += 0.10
+
+    # fp-weight inputs: positive indicators that overchecking is costly.
+    # Only "absence of danger" terms fire when productive flow is confirmed,
+    # not on empty/cold state (guardrail: default zero = balanced).
+    # budget_band == "low" is gated on productive flow so a fresh session
+    # (which defaults to "low") stays balanced.
+    if productive_exploration_bonus > 0.0:
+        if budget_band == "low":
+            fp_signal += 0.30
+            dominant_fp_source = "budget-depleted"
+        fp_signal += 0.30 * min(1.0, productive_exploration_bonus / 0.20)
+        if dominant_fp_source is None:
+            dominant_fp_source = "quiet-productive-flow"
+        # Conditional on productive flow: absence of danger signals counts.
+        if not degradation_reason_codes and not contradiction_spike_flags:
+            fp_signal += 0.20
+        if not pending_goal_refs:
+            fp_signal += 0.15
+    if (
+        host_reliability_prior is not None
+        and not host_reliability_prior.probe_failure_classes
+        and host_reliability_prior.capability_availability >= 0.85
+    ):
+        fp_signal += 0.10
+        if dominant_fp_source is None:
+            dominant_fp_source = "host-reliability"
+
+    fn_signal = max(0.0, min(1.0, fn_signal))
+    fp_signal = max(0.0, min(1.0, fp_signal))
+
+    # Dead-band: require 0.10 margin to avoid micro-churn.
+    diff = fn_signal - fp_signal
+    if diff > 0.10:
+        adjustment_sign = "fn-heavy"
+        dominant_source = dominant_fn_source
+    elif diff < -0.10:
+        adjustment_sign = "fp-heavy"
+        dominant_source = dominant_fp_source
+    else:
+        adjustment_sign = "balanced"
+        dominant_source = None
+
+    return RiskWeight(
+        fn_cost_weight=fn_signal,
+        fp_cost_weight=fp_signal,
+        dominant_risk_source=dominant_source,
+        adjustment_sign=adjustment_sign,
+    )
 
 
 def _recent_probe_result_class(

@@ -458,6 +458,8 @@ def test_reference_runtime_step_replay_publication_can_lift_check_allocation_wit
         "activation_threshold",
         "selected_delta_over_neutral",
         "chi_t",
+        "risk_weight",
+        "brake_tonic",
         "rejected_cheaper_families",
         "probe_path_state",
         "probe_unavailable_reason",
@@ -1622,6 +1624,8 @@ def _assert_allocation_diagnostics_shape(
         "activation_threshold",
         "selected_delta_over_neutral",
         "chi_t",
+        "risk_weight",
+        "brake_tonic",
         "rejected_cheaper_families",
         "probe_path_state",
         "probe_unavailable_reason",
@@ -1637,6 +1641,28 @@ def _assert_allocation_diagnostics_shape(
     assert payload["activation_threshold"] == pytest.approx(activation_threshold)
     assert isinstance(payload["selected_delta_over_neutral"], float)
     assert isinstance(payload["chi_t"], float)
+    risk_weight = payload["risk_weight"]
+    assert tuple(risk_weight) == (
+        "fn_cost_weight",
+        "fp_cost_weight",
+        "adjustment_sign",
+        "dominant_risk_source",
+    )
+    assert 0.0 <= float(risk_weight["fn_cost_weight"]) <= 1.0
+    assert 0.0 <= float(risk_weight["fp_cost_weight"]) <= 1.0
+    assert risk_weight["adjustment_sign"] in {"balanced", "fn-heavy", "fp-heavy"}
+    assert risk_weight["dominant_risk_source"] is None or (
+        isinstance(risk_weight["dominant_risk_source"], str)
+        and risk_weight["dominant_risk_source"]
+    )
+    brake_tonic = payload["brake_tonic"]
+    assert brake_tonic is None or tuple(brake_tonic) == (
+        "tonic_pressure",
+        "tonic_quiescence",
+    )
+    if brake_tonic is not None:
+        assert 0.0 <= float(brake_tonic["tonic_pressure"]) <= 1.0
+        assert 0.0 <= float(brake_tonic["tonic_quiescence"]) <= 1.0
     assert isinstance(payload["rejected_cheaper_families"], list)
     assert all(
         isinstance(family, str) and family
@@ -1990,3 +2016,59 @@ def _task_mode_from_kwargs(kwargs: dict[str, object]) -> OperatorTaskMode:
     task_mode = kwargs.get("task_mode", OperatorTaskMode.EXECUTE)
     assert isinstance(task_mode, OperatorTaskMode)
     return task_mode
+
+
+def test_reference_runtime_step_threads_brake_tonic_history_from_prior_session_live() -> None:
+    # SRE_2 §7.5: the provisional_session handed to build_reference_executive_state
+    # must preserve prior_session.brake_tonic_history so _prior_brake_tonic can
+    # reconstruct BrakeTonic(tonic_pressure=prior[-1], ...) for EMA carryover.
+    # Without this threading, every step cold-starts the tonic gate even when a
+    # warm history exists — silently breaking hysteresis on the live path.
+
+    # Cold start: no prior tonic history; the brake evaluation seeds the EMA
+    # from the current sample directly.
+    cold_result = run_reference_runtime_step(
+        "ContextLoad",
+        {"session_id": "s-cold"},
+    )
+    assert cold_result.session.brake_tonic_history == (0.55,)
+
+    # Warm start: prior session carries a nonzero tonic_pressure. The new EMA
+    # value must be rho*prior + (1-rho)*current = 0.60*0.30 + 0.40*0.55 = 0.40,
+    # and the prior entry must be preserved in history.
+    warm_prior = ReferenceRuntimeSession(
+        session_id="s-warm",
+        brake_tonic_history=(0.30,),
+    )
+    warm_result = run_reference_runtime_step(
+        "ContextLoad",
+        {"session_id": "s-warm"},
+        warm_prior,
+    )
+
+    assert warm_result.session.brake_tonic_history == (0.30, 0.40)
+    # Regression guard: the warm last entry must differ from the cold last
+    # entry — if provisional_session wiped the prior, both would equal 0.55.
+    assert (
+        warm_result.session.brake_tonic_history[-1]
+        != cold_result.session.brake_tonic_history[-1]
+    )
+
+
+def test_reference_runtime_step_brake_tonic_history_bounds_to_sixteen_entries() -> None:
+    # The tonic history window is bounded so it cannot grow without limit across
+    # a long-running session. The live path caps at 16 entries.
+    long_history = tuple(0.2 + 0.01 * idx for idx in range(16))
+    prior = ReferenceRuntimeSession(
+        session_id="s-bounded",
+        brake_tonic_history=long_history,
+    )
+    result = run_reference_runtime_step(
+        "ContextLoad",
+        {"session_id": "s-bounded"},
+        prior,
+    )
+
+    assert len(result.session.brake_tonic_history) == 16
+    # The oldest entry drops off; the newest entry is the EMA-computed value.
+    assert result.session.brake_tonic_history[0] == pytest.approx(long_history[1])

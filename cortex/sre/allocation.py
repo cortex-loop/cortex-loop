@@ -6,7 +6,9 @@ from dataclasses import dataclass, field
 from numbers import Real
 from typing import Any, Mapping
 
+from .brake import BrakeTonic
 from .families import SoftControlFamily
+from .state import RiskWeight
 
 
 @dataclass(frozen=True, slots=True)
@@ -128,6 +130,8 @@ def build_allocation_diagnostics_payload(
     repetition_tax: float = 0.0,
     anti_thrash_reason_tags: frozenset[str] = frozenset(),
     mediation_payload: dict[str, Any] | None = None,
+    risk_weight: RiskWeight | None = None,
+    brake_tonic: BrakeTonic | None = None,
 ) -> dict[str, Any]:
     if not isinstance(scorecard, AllocationScorecard):
         actual_type = type(scorecard).__name__
@@ -241,11 +245,38 @@ def build_allocation_diagnostics_payload(
             "build_allocation_diagnostics_payload.mediation_payload must be "
             f"dict[str, Any] | None, got {actual_type}."
         )
+    if risk_weight is not None and not isinstance(risk_weight, RiskWeight):
+        actual_type = type(risk_weight).__name__
+        raise TypeError(
+            "build_allocation_diagnostics_payload.risk_weight must be "
+            f"RiskWeight | None, got {actual_type}."
+        )
+    if brake_tonic is not None and not isinstance(brake_tonic, BrakeTonic):
+        actual_type = type(brake_tonic).__name__
+        raise TypeError(
+            "build_allocation_diagnostics_payload.brake_tonic must be "
+            f"BrakeTonic | None, got {actual_type}."
+        )
+    resolved_risk_weight = risk_weight if risk_weight is not None else RiskWeight()
     payload = {
         "alpha_t": float(scorecard.alpha_t),
         "activation_threshold": float(applied_activation_threshold),
         "selected_delta_over_neutral": float(selected_delta_over_neutral),
         "chi_t": float(chi_t),
+        "risk_weight": {
+            "fn_cost_weight": float(resolved_risk_weight.fn_cost_weight),
+            "fp_cost_weight": float(resolved_risk_weight.fp_cost_weight),
+            "adjustment_sign": resolved_risk_weight.adjustment_sign,
+            "dominant_risk_source": resolved_risk_weight.dominant_risk_source,
+        },
+        "brake_tonic": (
+            {
+                "tonic_pressure": float(brake_tonic.tonic_pressure),
+                "tonic_quiescence": float(brake_tonic.tonic_quiescence),
+            }
+            if brake_tonic is not None
+            else None
+        ),
         "rejected_cheaper_families": list(rejected_cheaper_families),
         "probe_path_state": probe_path_state,
         "probe_unavailable_reason": probe_unavailable_reason,

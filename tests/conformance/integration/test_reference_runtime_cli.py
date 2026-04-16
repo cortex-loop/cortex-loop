@@ -202,6 +202,8 @@ def test_reference_runtime_cli_reads_event_file_and_emits_one_record_per_event()
         "activation_threshold",
         "selected_delta_over_neutral",
         "chi_t",
+        "risk_weight",
+        "brake_tonic",
         "rejected_cheaper_families",
         "probe_path_state",
         "probe_unavailable_reason",
@@ -221,7 +223,7 @@ def test_reference_runtime_cli_reads_event_file_and_emits_one_record_per_event()
     assert [
         record["control_ledger"]["allocation_diagnostics"]["activation_threshold"]
         for record in records
-    ] == [0.36999999999999994, 0.27999999999999997, 0.18999999999999995]
+    ] == [0.36999999999999994, 0.32099999999999995, 0.22699999999999995]
     assert [record["executive_state_summary"]["probe_path_state"] for record in records] == [
         "available",
         "available",
@@ -370,6 +372,8 @@ def test_reference_runtime_cli_record_shape_stays_locked_under_explicit_offline_
         "activation_threshold",
         "selected_delta_over_neutral",
         "chi_t",
+        "risk_weight",
+        "brake_tonic",
         "rejected_cheaper_families",
         "probe_path_state",
         "probe_unavailable_reason",
@@ -570,6 +574,7 @@ def test_reference_runtime_cli_save_session_does_not_change_jsonl_output(tmp_pat
                 "stop_tonic": 0.3698,
                 "update_tonic": 0.4455,
             },
+            "brake_tonic_history": [0.55, 0.55, 0.55],
         },
     }
 
