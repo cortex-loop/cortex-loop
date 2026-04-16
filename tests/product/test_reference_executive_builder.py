@@ -901,3 +901,125 @@ def test_build_reference_executive_state_rejects_invalid_audit_intensity() -> No
             ),
             audit_intensity="maximal",
         )
+
+
+def test_build_reference_executive_state_risk_weight_defaults_balanced_on_cold_fresh_session() -> None:
+    # SRE_2 §6.6.1 guardrail: a fresh session with no degradation / no pending goals
+    # / no productive-flow evidence must produce a balanced RiskWeight (zero shift).
+    state = build_reference_executive_state(
+        observe_reference_host_event(
+            "ContextLoad", {"session_id": "runtime-risk-cold"}
+        ).observation,
+        SupportSnapshot(
+            trace=SupportTraceState(),
+            session=SupportSessionState(branch_registry=("main",)),
+            host=SupportHostState(),
+            exec_memory_pub=SupportExecMemoryState(),
+        ),
+        ExecutiveEnvironmentView(
+            available_query_kinds=frozenset({CAPABILITY_VIEW, EXECUTION_TRACE}),
+            host_capability_tags=frozenset({"reference-local"}),
+        ),
+        ReferenceRuntimeSession(
+            session_id="runtime-risk-cold",
+            event_index=1,
+            active_track_ref="main",
+            budget_history=("shell-low",),
+            brake_history=("quiescent",),
+            last_selected_family=SoftControlFamily.NEUTRAL,
+        ),
+    )
+
+    risk_weight = state.control_allocation.risk_weight
+    assert risk_weight.adjustment_sign == "balanced"
+    assert risk_weight.dominant_risk_source is None
+    assert risk_weight.fn_cost_weight == pytest.approx(0.0)
+    assert risk_weight.fp_cost_weight == pytest.approx(0.0)
+
+
+def test_build_reference_executive_state_risk_weight_fn_heavy_under_degradation_with_pending_goals() -> None:
+    # SRE_2 §6.6.1: degradation + pending-goal depth must produce fn-heavy pricing.
+    state = build_reference_executive_state(
+        observe_reference_host_event(
+            "ContextLoad", {"session_id": "runtime-risk-fn-heavy"}
+        ).observation,
+        SupportSnapshot(
+            trace=SupportTraceState(
+                degradation_records=(
+                    DegradationRecord(
+                        reason_code="host-friction-spike",
+                        contradiction_records=(
+                            ContradictionRecord(
+                                source_tag="environment-drift",
+                                summary="host environment drifted",
+                            ),
+                        ),
+                    ),
+                ),
+            ),
+            session=SupportSessionState(
+                branch_registry=("main", "review-track"),
+                pending_goal_refs=("goal-a", "goal-b", "goal-c"),
+            ),
+            host=SupportHostState(),
+            exec_memory_pub=SupportExecMemoryState(),
+        ),
+        ExecutiveEnvironmentView(
+            available_query_kinds=frozenset({CAPABILITY_VIEW, EXECUTION_TRACE}),
+            host_capability_tags=frozenset({"reference-local"}),
+        ),
+        ReferenceRuntimeSession(
+            session_id="runtime-risk-fn-heavy",
+            event_index=3,
+            branch_registry=("main", "review-track"),
+            active_track_ref="main",
+            pending_goal_refs=("goal-a", "goal-b", "goal-c"),
+            budget_history=("shell-low", "shell-medium"),
+            brake_history=("quiescent", "guarded"),
+            last_selected_family=SoftControlFamily.CHECK,
+        ),
+    )
+
+    risk_weight = state.control_allocation.risk_weight
+    assert risk_weight.adjustment_sign == "fn-heavy"
+    assert risk_weight.dominant_risk_source is not None
+    assert risk_weight.fn_cost_weight > risk_weight.fp_cost_weight
+    # Dead-band of 0.10 must be crossed.
+    assert (risk_weight.fn_cost_weight - risk_weight.fp_cost_weight) > 0.10
+
+
+def test_build_reference_executive_state_risk_weight_dead_band_keeps_balanced_near_parity() -> None:
+    # SRE_2 §6.6.1 dead-band: if fn and fp signals are within 0.10, remain balanced.
+    state = build_reference_executive_state(
+        observe_reference_host_event(
+            "ContextLoad", {"session_id": "runtime-risk-dead-band"}
+        ).observation,
+        SupportSnapshot(
+            trace=SupportTraceState(),
+            session=SupportSessionState(
+                branch_registry=("main",),
+                pending_goal_refs=("goal-a",),
+            ),
+            host=SupportHostState(),
+            exec_memory_pub=SupportExecMemoryState(),
+        ),
+        ExecutiveEnvironmentView(
+            available_query_kinds=frozenset({CAPABILITY_VIEW, EXECUTION_TRACE}),
+            host_capability_tags=frozenset({"reference-local"}),
+        ),
+        ReferenceRuntimeSession(
+            session_id="runtime-risk-dead-band",
+            event_index=2,
+            active_track_ref="main",
+            pending_goal_refs=("goal-a",),
+            budget_history=("shell-low",),
+            brake_history=("quiescent",),
+            last_selected_family=SoftControlFamily.NEUTRAL,
+        ),
+    )
+
+    risk_weight = state.control_allocation.risk_weight
+    # A single pending goal adds ~0.05 fn_signal, cold session => 0.0 fp_signal.
+    # Difference < 0.10 dead-band → must remain balanced.
+    assert risk_weight.adjustment_sign == "balanced"
+    assert risk_weight.dominant_risk_source is None

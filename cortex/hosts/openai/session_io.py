@@ -39,6 +39,25 @@ _JOURNAL_KEYS = (
     "confirmed_artifact_refs",
     "budget_history",
     "brake_history",
+    "brake_tonic_history",
+    "last_selected_family",
+    "last_commitment_result_summary",
+    "last_realization_feedback",
+    "feedback_window",
+    "executive_modulator_memory",
+    "last_failure_class",
+    "next_recommended_move",
+)
+_PRE_TONIC_HISTORY_JOURNAL_KEYS = (
+    "session_id",
+    "event_index",
+    "branch_registry",
+    "active_track_ref",
+    "active_goal_ref",
+    "pending_goal_refs",
+    "confirmed_artifact_refs",
+    "budget_history",
+    "brake_history",
     "last_selected_family",
     "last_commitment_result_summary",
     "last_realization_feedback",
@@ -81,6 +100,7 @@ class OpenAIRuntimeSessionArtifact:
     confirmed_artifact_refs: tuple[str, ...] = ()
     budget_history: tuple[str, ...] = ()
     brake_history: tuple[str, ...] = ()
+    brake_tonic_history: tuple[float, ...] = ()
     last_selected_family: SoftControlFamily | None = None
     last_commitment_result_summary: str | None = None
     last_realization_feedback: ReferenceRealizationFeedback | None = None
@@ -111,6 +131,7 @@ class OpenAIRuntimeSessionArtifact:
             confirmed_artifact_refs=self.confirmed_artifact_refs,
             budget_history=self.budget_history,
             brake_history=self.brake_history,
+            brake_tonic_history=self.brake_tonic_history,
             last_selected_family=self.last_selected_family,
             last_commitment_result_summary=self.last_commitment_result_summary,
             last_realization_feedback=self.last_realization_feedback,
@@ -132,6 +153,7 @@ class OpenAIRuntimeSessionArtifact:
             "confirmed_artifact_refs": list(self.confirmed_artifact_refs),
             "budget_history": list(self.budget_history),
             "brake_history": list(self.brake_history),
+            "brake_tonic_history": [float(entry) for entry in self.brake_tonic_history],
             "last_selected_family": (
                 self.last_selected_family.value
                 if self.last_selected_family is not None
@@ -173,6 +195,7 @@ class OpenAIRuntimeSessionArtifact:
             confirmed_artifact_refs=self.confirmed_artifact_refs,
             budget_history=self.budget_history,
             brake_history=self.brake_history,
+            brake_tonic_history=self.brake_tonic_history,
             last_selected_family=self.last_selected_family,
             last_commitment_result_summary=self.last_commitment_result_summary,
             last_realization_feedback=self.last_realization_feedback,
@@ -203,6 +226,7 @@ def build_openai_runtime_session_artifact(
         confirmed_artifact_refs=session.confirmed_artifact_refs,
         budget_history=session.budget_history,
         brake_history=session.brake_history,
+        brake_tonic_history=session.brake_tonic_history,
         last_selected_family=session.last_selected_family,
         last_commitment_result_summary=session.last_commitment_result_summary,
         last_realization_feedback=session.last_realization_feedback,
@@ -323,6 +347,10 @@ def parse_openai_runtime_session_artifact(
             journal_payload["brake_history"],
             "OpenAIRuntimeSessionArtifact.journal.brake_history",
         ),
+        brake_tonic_history=_brake_tonic_history(
+            journal_payload.get("brake_tonic_history", []),
+            "OpenAIRuntimeSessionArtifact.journal.brake_tonic_history",
+        ),
         last_selected_family=_optional_soft_control_family(
             journal_payload["last_selected_family"],
             "OpenAIRuntimeSessionArtifact.journal.last_selected_family",
@@ -421,6 +449,8 @@ def _require_journal_keys(payload: Mapping[str, Any]) -> None:
         _LEGACY_JOURNAL_KEYS + _OPTIONAL_JOURNAL_KEY_SUFFIX,
         _PRE_MODULATOR_JOURNAL_KEYS,
         _PRE_MODULATOR_JOURNAL_KEYS + _OPTIONAL_JOURNAL_KEY_SUFFIX,
+        _PRE_TONIC_HISTORY_JOURNAL_KEYS,
+        _PRE_TONIC_HISTORY_JOURNAL_KEYS + _OPTIONAL_JOURNAL_KEY_SUFFIX,
         _JOURNAL_KEYS,
         _JOURNAL_KEYS + _OPTIONAL_JOURNAL_KEY_SUFFIX,
     }
@@ -497,6 +527,26 @@ def _budget_history(value: Any, label: str) -> tuple[str, ...]:
                 f"{label} only supports shell budget entries for {_ALLOWED_BUDGET_BANDS!r}."
             )
     return entries
+
+
+def _brake_tonic_history(value: Any, label: str) -> tuple[float, ...]:
+    if not isinstance(value, list):
+        actual_type = type(value).__name__
+        raise TypeError(f"{label} must be a JSON array, got {actual_type}.")
+    parsed: list[float] = []
+    for item in value:
+        if isinstance(item, bool) or not isinstance(item, (int, float)):
+            actual_type = type(item).__name__
+            raise TypeError(
+                f"{label} must contain only numeric values in [0.0, 1.0], got {actual_type}."
+            )
+        coerced = float(item)
+        if not 0.0 <= coerced <= 1.0:
+            raise ValueError(
+                f"{label} entries must be between 0.0 and 1.0, got {coerced}."
+            )
+        parsed.append(coerced)
+    return tuple(parsed)
 
 
 def _optional_soft_control_family(value: Any, label: str) -> SoftControlFamily | None:

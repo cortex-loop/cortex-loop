@@ -157,6 +157,55 @@ def test_gemini_runtime_session_artifact_roundtrips_feedback_task_mode_and_probe
     assert restored.feedback_window.entries == (feedback,)
 
 
+def test_gemini_runtime_session_artifact_preserves_brake_tonic_history_across_round_trip() -> None:
+    # SRE_2 §7.5: Gemini lane is shadow-only for reliability but still obeys the
+    # same tonic-hysteresis gate; persisting tonic_pressure EMA avoids spurious
+    # cold-start guarded re-entries on shadow replays.
+    session = GeminiRuntimeSession(
+        session_id="gm-tonic",
+        event_index=4,
+        brake_tonic_history=(0.22, 0.31, 0.40, 0.48),
+    )
+
+    payload = build_gemini_runtime_session_artifact(session).as_payload()
+
+    assert payload["control_residue"]["brake_tonic_history"] == [0.22, 0.31, 0.40, 0.48]
+    restored = parse_gemini_runtime_session_artifact(payload)
+    assert restored.brake_tonic_history == (0.22, 0.31, 0.40, 0.48)
+
+
+def test_gemini_runtime_session_artifact_accepts_pre_tonic_history_legacy_payload() -> None:
+    # Backward-compat path: a 4-key (pre-modulator) control_residue must still
+    # parse and yield an empty tonic history. This preserves prod continuity when
+    # the brake_tonic_history field ships ahead of a doctrine-wide artifact bump.
+    payload = _base_payload()
+
+    restored = parse_gemini_runtime_session_artifact(payload)
+
+    assert restored.brake_tonic_history == ()
+
+
+def test_gemini_runtime_session_artifact_rejects_invalid_brake_tonic_history_entries() -> None:
+    # Validation must reject non-numeric, bool, and out-of-range entries before
+    # the value reaches the live executive brake.
+    def _canonical_payload_with_history(history: list[object]) -> dict[str, object]:
+        payload = _base_payload()
+        payload["control_residue"]["executive_modulator_memory"] = None
+        payload["control_residue"]["brake_tonic_history"] = history
+        return payload
+
+    with pytest.raises(TypeError, match="brake_tonic_history"):
+        parse_gemini_runtime_session_artifact(
+            _canonical_payload_with_history(["not-a-float"])
+        )
+
+    with pytest.raises(TypeError, match="brake_tonic_history"):
+        parse_gemini_runtime_session_artifact(_canonical_payload_with_history([False]))
+
+    with pytest.raises(ValueError, match="brake_tonic_history"):
+        parse_gemini_runtime_session_artifact(_canonical_payload_with_history([-0.1]))
+
+
 def _base_payload() -> dict[str, object]:
     return {
         "artifact_kind": "gemini-runtime-session",

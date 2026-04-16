@@ -470,6 +470,29 @@ The activation gate is family-sensitive. Low-burden uncertainty-relief moves suc
 like `branch`, visible `redirect`, or `escalate`.
 If no family beats `neutral` by its required margin, the SRE should continue without extra intervention.
 
+### 6.6.1 Asymmetric error cost and activation shift
+
+Real runtime events carry an asymmetric error cost: overchecking a compact, productive flow
+(false positive on "needs verification") and missing a real uncertainty in a risk-laden flow
+(false negative on "needs verification") are not symmetric failures. A lawful reference
+realization may carry a bounded `RiskWeight` scalar with:
+- `fn_cost_weight \in [0,1]` = pricing for missing a real issue (favor more verification),
+- `fp_cost_weight \in [0,1]` = pricing for overchecking (favor lighter verification),
+- `adjustment_sign \in \{\text{balanced},\text{fn-heavy},\text{fp-heavy}\}`,
+- `dominant_risk_source` = bounded, non-None only when the sign is non-balanced.
+
+When `adjustment_sign` is non-balanced, the family-sensitive activation threshold for
+low-burden verification families (`check`, native `seek-context`) may shift by a bounded
+amount proportional to `(fp_cost_weight - fn_cost_weight)`: fn-heavy shifts the threshold
+down (cheaper to verify), fp-heavy shifts it up (more expensive to verify). The shift must
+be bounded (e.g. at most `\pm 0.10`), must never flip neutral-dominance into vacuous
+admission, and must never apply to `branch`, `redirect`, or `escalate`.
+
+A balanced `RiskWeight` must produce zero threshold shift. A dead-band on the
+fn/fp signal prevents micro-churn at the sign boundary. `RiskWeight` biases threshold
+pricing only; it does not change which families are admissible, does not change posture
+law, does not add a new memory carrier, and does not harden into host-wide policy.
+
 ### 6.7 Budget and vigor
 
 A reference intervention budget is represented at minimum by a bounded budget band:
@@ -572,6 +595,19 @@ A lawful reference realization may compute brake using:
 The brake update may therefore be implemented as a compact decision table rather than a continuous differential law.
 The preferred discrete realization uses hysteresis: guarded and latched may have separate
 enter and exit thresholds, while contradiction and latching spikes remain immediate.
+
+Guarded entry/exit hysteresis may be carried by a bounded brake tonic summary with:
+- `tonic_pressure \in [0,1]` = smoothed pressure-side evidence for `guarded`,
+- `tonic_quiescence \in [0,1]` = smoothed rest-side evidence for `quiescent`.
+
+The tonic is an EMA-style smoothing of per-tick brake evidence over a bounded history,
+not a new latent state. Its only role is to damp single-tick `quiescent`/`guarded` flips:
+entering `guarded` requires `tonic_pressure` to cross a bounded enter threshold, and
+exiting back to `quiescent` requires sustained quiescence rather than a single clean tick.
+Contradiction, host-capability failure, and latching spikes must still flip brake state
+immediately; the tonic never overrides a spike. The tonic carries no route authority, no
+posture authority, no new memory, and no cross-host sharing: it is an explicit, bounded,
+removable summary over recent same-host brake evidence.
 
 ### 7.6 No-threshold-collapse law
 
@@ -758,7 +794,9 @@ Tunable:
 - uncertainty thresholds,
 - host-friction penalties,
 - visible-burden penalties,
-- memory-reliance mixing.
+- memory-reliance mixing,
+- asymmetric-error-cost pricing (`RiskWeight` fn/fp weights and dead-band),
+- brake tonic smoothing rate and guarded entry/exit thresholds.
 
 Not tunable here:
 - commitment truth,
@@ -769,7 +807,10 @@ Not tunable here:
 The bounded operator-route geometry remains six-dimensional.
 Any additional scalar that affects route utility, such as visible burden sensitivity,
 must stay explicit in diagnostics as a separate bounded input rather than silently
-changing the route geometry or blockedness law.
+changing the route geometry or blockedness law. `RiskWeight` and `BrakeTonic` are bounded
+inputs in this sense: both must surface explicitly in the allocation diagnostics surface
+with a locked key order, and neither may silently change neutral dominance, route geometry,
+or brake-state law.
 
 ### 11.3 Cheap-by-default law
 

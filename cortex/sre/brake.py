@@ -22,12 +22,37 @@ class BrakeState(str, Enum):
     LATCHED = "latched"
 
 
+_TONIC_DECAY_RHO = 0.60
+_TONIC_ENTER_GUARDED = 0.35
+
+
+def _clip_unit(value: float) -> float:
+    return max(0.0, min(1.0, float(value)))
+
+
+@dataclass(frozen=True, slots=True)
+class BrakeTonic:
+    """Smoothed EMA baseline for brake pressure across steps."""
+
+    tonic_pressure: float = 0.0
+    tonic_quiescence: float = 0.0
+
+    def __post_init__(self) -> None:
+        if not 0.0 <= float(self.tonic_pressure) <= 1.0:
+            raise ValueError("BrakeTonic.tonic_pressure must be between 0.0 and 1.0.")
+        if not 0.0 <= float(self.tonic_quiescence) <= 1.0:
+            raise ValueError(
+                "BrakeTonic.tonic_quiescence must be between 0.0 and 1.0."
+            )
+
+
 @dataclass(frozen=True, slots=True)
 class BrakeEvaluation:
     state: BrakeState
     dominant_cause: str | None = None
     max_uncertainty: float = 0.0
     spike_tags: frozenset[str] = field(default_factory=frozenset)
+    tonic: BrakeTonic | None = None
 
     def __post_init__(self) -> None:
         if not isinstance(self.state, BrakeState):
@@ -44,6 +69,11 @@ class BrakeEvaluation:
             raise ValueError(
                 "BrakeEvaluation.dominant_cause must be non-empty after trimming when provided."
             )
+        if self.tonic is not None and not isinstance(self.tonic, BrakeTonic):
+            actual_type = type(self.tonic).__name__
+            raise TypeError(
+                f"BrakeEvaluation.tonic must be BrakeTonic when provided, got {actual_type}."
+            )
 
 
 def evaluate_brake_state(
@@ -54,6 +84,7 @@ def evaluate_brake_state(
     missing_resume_anchor: bool = False,
     host_friction_level: float = 0.0,
     prior_state: BrakeState | None = None,
+    prior_tonic: BrakeTonic | None = None,
 ) -> BrakeEvaluation:
     for estimate in uncertainty_estimates:
         if not isinstance(estimate, UncertaintyEstimate):
@@ -74,9 +105,22 @@ def evaluate_brake_state(
             "evaluate_brake_state.prior_state must be BrakeState | None, "
             f"got {actual_type}."
         )
+    if prior_tonic is not None and not isinstance(prior_tonic, BrakeTonic):
+        actual_type = type(prior_tonic).__name__
+        raise TypeError(
+            f"evaluate_brake_state.prior_tonic must be BrakeTonic | None, got {actual_type}."
+        )
 
     max_estimate = _max_estimate(uncertainty_estimates)
     spike_tags = _all_spike_tags(uncertainty_estimates)
+    next_tonic = _update_brake_tonic(
+        prior_tonic=prior_tonic,
+        max_uncertainty=max_estimate.level,
+        host_friction_level=host_friction_level,
+        spike_tags=spike_tags,
+        repeated_failures=repeated_failures,
+        repeated_degradations=repeated_degradations,
+    )
 
     if (
         spike_tags & _LATCHING_SPIKES
@@ -96,6 +140,7 @@ def evaluate_brake_state(
             ),
             max_uncertainty=max_estimate.level,
             spike_tags=spike_tags,
+            tonic=next_tonic,
         )
 
     if _should_stay_latched(
@@ -118,6 +163,7 @@ def evaluate_brake_state(
             ),
             max_uncertainty=max_estimate.level,
             spike_tags=spike_tags,
+            tonic=next_tonic,
         )
 
     if _should_be_guarded(
@@ -128,6 +174,7 @@ def evaluate_brake_state(
         missing_resume_anchor=missing_resume_anchor,
         host_friction_level=host_friction_level,
         max_uncertainty=max_estimate.level,
+        next_tonic=next_tonic,
     ):
         return BrakeEvaluation(
             state=BrakeState.GUARDED,
@@ -141,6 +188,7 @@ def evaluate_brake_state(
             ),
             max_uncertainty=max_estimate.level,
             spike_tags=spike_tags,
+            tonic=next_tonic,
         )
 
     return BrakeEvaluation(
@@ -148,6 +196,7 @@ def evaluate_brake_state(
         dominant_cause=None,
         max_uncertainty=max_estimate.level,
         spike_tags=spike_tags,
+        tonic=next_tonic,
     )
 
 
@@ -180,16 +229,67 @@ def _should_be_guarded(
     missing_resume_anchor: bool,
     host_friction_level: float,
     max_uncertainty: float,
+    next_tonic: BrakeTonic,
 ) -> bool:
+    # Immediate phasic entry: spike tags, contradiction, missing anchor.
+    if spike_tags or missing_resume_anchor:
+        return True
+    # Repeated failure/degradation remain immediate (already counter-bounded).
+    if repeated_failures >= 1 or repeated_degradations >= 1:
+        return True
+    # Soft-pressure paths: friction or uncertainty cross threshold.
     guarded_host_threshold = 0.55 if prior_state is BrakeState.GUARDED else 0.60
     guarded_uncertainty_threshold = 0.45 if prior_state is BrakeState.GUARDED else 0.55
-    return bool(
-        spike_tags
-        or repeated_failures == 1
-        or repeated_degradations == 1
-        or missing_resume_anchor
-        or host_friction_level >= guarded_host_threshold
+    phasic_soft_pressure = (
+        host_friction_level >= guarded_host_threshold
         or max_uncertainty >= guarded_uncertainty_threshold
+    )
+    if not phasic_soft_pressure:
+        return False
+    # Already guarded — stay on phasic evidence alone (exit-side hysteresis).
+    if prior_state is BrakeState.GUARDED:
+        return True
+    # Entry from quiescent: require tonic confirmation so a single noisy tick
+    # does not flip brake state (SRE_2 §7.5 tonic-pressure gate).
+    return next_tonic.tonic_pressure >= _TONIC_ENTER_GUARDED
+
+
+def _update_brake_tonic(
+    *,
+    prior_tonic: BrakeTonic | None,
+    max_uncertainty: float,
+    host_friction_level: float,
+    spike_tags: frozenset[str],
+    repeated_failures: int,
+    repeated_degradations: int,
+) -> BrakeTonic:
+    current_pressure = _clip_unit(
+        max(
+            max_uncertainty,
+            host_friction_level,
+            0.6 if (spike_tags & _LATCHING_SPIKES) else 0.0,
+            0.5 if repeated_failures >= 1 else 0.0,
+            0.5 if repeated_degradations >= 1 else 0.0,
+        )
+    )
+    current_quiescence = _clip_unit(1.0 - current_pressure) if not spike_tags else 0.0
+
+    if prior_tonic is None:
+        next_pressure = current_pressure
+        next_quiescence = current_quiescence
+    else:
+        next_pressure = _clip_unit(
+            (_TONIC_DECAY_RHO * prior_tonic.tonic_pressure)
+            + ((1.0 - _TONIC_DECAY_RHO) * current_pressure)
+        )
+        next_quiescence = _clip_unit(
+            (_TONIC_DECAY_RHO * prior_tonic.tonic_quiescence)
+            + ((1.0 - _TONIC_DECAY_RHO) * current_quiescence)
+        )
+
+    return BrakeTonic(
+        tonic_pressure=next_pressure,
+        tonic_quiescence=next_quiescence,
     )
 
 
@@ -234,4 +334,4 @@ def _dominant_cause(
     return f"uncertainty:{max_estimate.class_tag}"
 
 
-__all__ = ["BrakeEvaluation", "BrakeState", "evaluate_brake_state"]
+__all__ = ["BrakeEvaluation", "BrakeState", "BrakeTonic", "evaluate_brake_state"]

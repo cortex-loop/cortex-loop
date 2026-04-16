@@ -7,7 +7,7 @@ import pytest
 from cortex.aux.distillation import _distill_offline_support_publication_from_snapshots
 from cortex.aux.publication import augment_snapshot_with_offline_publication
 from cortex.aux.support_priors import build_support_memory_prior_appendix
-from cortex.sre.brake import BrakeState
+from cortex.sre.brake import BrakeState, BrakeTonic
 from cortex.sre.families import SoftControlFamily
 from cortex.sre.mediation import ReferenceMediationMode
 from cortex.sre.memory_priors import (
@@ -31,6 +31,7 @@ from cortex.sre.state import (
     ReferenceGoalContinuityView,
     ReferenceModeAndGatingView,
     ReferenceUncertaintyMonitoringView,
+    RiskWeight,
 )
 from cortex.sre.uncertainty import UncertaintyEstimate
 from tests.experimental._aux_test_support import make_aux_reference_replay_corpus, make_aux_temporal_corpus
@@ -540,6 +541,175 @@ def test_reference_scoring_uses_family_sensitive_thresholds_for_probe_relief_vs_
     ) == pytest.approx(0.20)
 
 
+def test_reference_scoring_balanced_risk_weight_produces_zero_threshold_shift() -> None:
+    # SRE_2 §6.6.1 backward-compat lock: balanced RiskWeight must leave CHECK/SEEK_CONTEXT
+    # thresholds identical to the pre-train baseline.
+    family_mask = frozenset(
+        {
+            SoftControlFamily.NEUTRAL,
+            SoftControlFamily.CHECK,
+            SoftControlFamily.SEEK_CONTEXT,
+        }
+    )
+    baseline = _state(
+        mode_tag="review_pending",
+        family_mask=family_mask,
+        budget_band="medium",
+        top_family_set=frozenset({SoftControlFamily.NEUTRAL, SoftControlFamily.CHECK}),
+        brake_state=BrakeState.QUIESCENT,
+        uncertainty_levels=(("evidence", 0.55),),
+    )
+    balanced = _state(
+        mode_tag="review_pending",
+        family_mask=family_mask,
+        budget_band="medium",
+        top_family_set=frozenset({SoftControlFamily.NEUTRAL, SoftControlFamily.CHECK}),
+        brake_state=BrakeState.QUIESCENT,
+        uncertainty_levels=(("evidence", 0.55),),
+        risk_weight=RiskWeight(
+            fn_cost_weight=0.40,
+            fp_cost_weight=0.40,
+            adjustment_sign="balanced",
+        ),
+    )
+    for family in (SoftControlFamily.CHECK, SoftControlFamily.SEEK_CONTEXT):
+        assert compute_reference_activation_threshold(
+            balanced, family=family
+        ) == pytest.approx(
+            compute_reference_activation_threshold(baseline, family=family)
+        )
+
+
+def test_reference_scoring_fn_heavy_risk_weight_lowers_check_and_seek_context_thresholds() -> None:
+    # SRE_2 §6.6.1: missing real uncertainty is expensive → cheaper to verify.
+    family_mask = frozenset(
+        {
+            SoftControlFamily.NEUTRAL,
+            SoftControlFamily.CHECK,
+            SoftControlFamily.SEEK_CONTEXT,
+            SoftControlFamily.BRANCH,
+        }
+    )
+    baseline = _state(
+        mode_tag="review_pending",
+        family_mask=family_mask,
+        budget_band="medium",
+        top_family_set=frozenset({SoftControlFamily.NEUTRAL, SoftControlFamily.CHECK}),
+        brake_state=BrakeState.QUIESCENT,
+        uncertainty_levels=(("evidence", 0.70),),
+    )
+    fn_heavy = _state(
+        mode_tag="review_pending",
+        family_mask=family_mask,
+        budget_band="medium",
+        top_family_set=frozenset({SoftControlFamily.NEUTRAL, SoftControlFamily.CHECK}),
+        brake_state=BrakeState.QUIESCENT,
+        uncertainty_levels=(("evidence", 0.70),),
+        risk_weight=RiskWeight(
+            fn_cost_weight=0.80,
+            fp_cost_weight=0.10,
+            adjustment_sign="fn-heavy",
+            dominant_risk_source="evidence-contradiction-spike",
+        ),
+    )
+    for family in (SoftControlFamily.CHECK, SoftControlFamily.SEEK_CONTEXT):
+        assert compute_reference_activation_threshold(
+            fn_heavy, family=family
+        ) < compute_reference_activation_threshold(baseline, family=family)
+    # Non-verification families must not shift under fn-heavy.
+    assert compute_reference_activation_threshold(
+        fn_heavy, family=SoftControlFamily.BRANCH
+    ) == pytest.approx(
+        compute_reference_activation_threshold(baseline, family=SoftControlFamily.BRANCH)
+    )
+
+
+def test_reference_scoring_fp_heavy_risk_weight_raises_check_and_seek_context_thresholds() -> None:
+    # SRE_2 §6.6.1: overchecking a productive flow is expensive → stay compact.
+    family_mask = frozenset(
+        {
+            SoftControlFamily.NEUTRAL,
+            SoftControlFamily.CHECK,
+            SoftControlFamily.SEEK_CONTEXT,
+            SoftControlFamily.BRANCH,
+        }
+    )
+    baseline = _state(
+        mode_tag="review_pending",
+        family_mask=family_mask,
+        budget_band="medium",
+        top_family_set=frozenset({SoftControlFamily.NEUTRAL, SoftControlFamily.CHECK}),
+        brake_state=BrakeState.QUIESCENT,
+        uncertainty_levels=(("evidence", 0.20),),
+    )
+    fp_heavy = _state(
+        mode_tag="review_pending",
+        family_mask=family_mask,
+        budget_band="medium",
+        top_family_set=frozenset({SoftControlFamily.NEUTRAL, SoftControlFamily.CHECK}),
+        brake_state=BrakeState.QUIESCENT,
+        uncertainty_levels=(("evidence", 0.20),),
+        risk_weight=RiskWeight(
+            fn_cost_weight=0.10,
+            fp_cost_weight=0.70,
+            adjustment_sign="fp-heavy",
+            dominant_risk_source="productive-flow",
+        ),
+    )
+    for family in (SoftControlFamily.CHECK, SoftControlFamily.SEEK_CONTEXT):
+        assert compute_reference_activation_threshold(
+            fp_heavy, family=family
+        ) > compute_reference_activation_threshold(baseline, family=family)
+    assert compute_reference_activation_threshold(
+        fp_heavy, family=SoftControlFamily.BRANCH
+    ) == pytest.approx(
+        compute_reference_activation_threshold(baseline, family=SoftControlFamily.BRANCH)
+    )
+
+
+def test_reference_scoring_risk_weight_shift_stays_within_bounded_range() -> None:
+    # SRE_2 §6.6.1: shift is bounded by the (fp - fn) * 0.10 cap and the 0.05..0.60 clip.
+    family_mask = frozenset(
+        {
+            SoftControlFamily.NEUTRAL,
+            SoftControlFamily.CHECK,
+            SoftControlFamily.SEEK_CONTEXT,
+        }
+    )
+    maximum_fn_heavy = _state(
+        mode_tag="review_pending",
+        family_mask=family_mask,
+        budget_band="medium",
+        top_family_set=frozenset({SoftControlFamily.NEUTRAL, SoftControlFamily.CHECK}),
+        brake_state=BrakeState.QUIESCENT,
+        uncertainty_levels=(("evidence", 0.50),),
+        risk_weight=RiskWeight(
+            fn_cost_weight=1.0,
+            fp_cost_weight=0.0,
+            adjustment_sign="fn-heavy",
+            dominant_risk_source="hard-fn-bound",
+        ),
+    )
+    maximum_fp_heavy = _state(
+        mode_tag="review_pending",
+        family_mask=family_mask,
+        budget_band="medium",
+        top_family_set=frozenset({SoftControlFamily.NEUTRAL, SoftControlFamily.CHECK}),
+        brake_state=BrakeState.QUIESCENT,
+        uncertainty_levels=(("evidence", 0.50),),
+        risk_weight=RiskWeight(
+            fn_cost_weight=0.0,
+            fp_cost_weight=1.0,
+            adjustment_sign="fp-heavy",
+            dominant_risk_source="hard-fp-bound",
+        ),
+    )
+    for family in (SoftControlFamily.CHECK, SoftControlFamily.SEEK_CONTEXT):
+        low = compute_reference_activation_threshold(maximum_fn_heavy, family=family)
+        high = compute_reference_activation_threshold(maximum_fp_heavy, family=family)
+        assert 0.05 <= low <= high <= 0.60
+
+
 def test_reference_scoring_rewards_anchored_branch_work_and_penalizes_orphaned_branch_trees() -> None:
     anchored = _state(
         mode_tag="review_pending",
@@ -982,6 +1152,8 @@ def _state(
     anti_thrash_reason_tags: frozenset[str] = frozenset(),
     uncertainty_levels: tuple[tuple[str, float], ...] = (),
     contradiction_spike_flags: frozenset[str] = frozenset(),
+    risk_weight: RiskWeight | None = None,
+    brake_tonic: BrakeTonic | None = None,
 ) -> ReferenceExecutiveState:
     return ReferenceExecutiveState(
         goal_continuity=ReferenceGoalContinuityView(
@@ -1014,8 +1186,9 @@ def _state(
             repetition_tax=repetition_tax,
             repetition_target_family=repetition_target_family,
             anti_thrash_reason_tags=anti_thrash_reason_tags,
+            risk_weight=risk_weight if risk_weight is not None else RiskWeight(),
         ),
-        brake=ReferenceBrakeView(brake_state=brake_state),
+        brake=ReferenceBrakeView(brake_state=brake_state, tonic=brake_tonic),
     )
 
 

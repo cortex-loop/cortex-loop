@@ -388,6 +388,13 @@ def compute_reference_activation_threshold(
 
     if family in {SoftControlFamily.CHECK, SoftControlFamily.SEEK_CONTEXT}:
         threshold -= executive_state.control_allocation.productive_exploration_bonus
+        # Asymmetric-cost activation adjustment (SRE_2 §6.6.1):
+        # fn-heavy → negative shift (easier to verify), fp-heavy → positive shift (stay compact).
+        # Zero shift when risk is balanced (within dead-band) → backward-compat exact.
+        risk = executive_state.control_allocation.risk_weight
+        if risk.adjustment_sign != "balanced":
+            asymmetric_shift = (risk.fp_cost_weight - risk.fn_cost_weight) * 0.10
+            threshold += asymmetric_shift
     if family in {
         SoftControlFamily.BRANCH,
         SoftControlFamily.REDIRECT,

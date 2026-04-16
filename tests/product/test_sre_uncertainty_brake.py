@@ -1,6 +1,8 @@
 """Focused unit tests for SRE uncertainty and brake."""
 
-from cortex.sre.brake import BrakeEvaluation, BrakeState, evaluate_brake_state
+import pytest
+
+from cortex.sre.brake import BrakeEvaluation, BrakeState, BrakeTonic, evaluate_brake_state
 from cortex.sre.uncertainty import REFERENCE_UNCERTAINTY_CLASSES, UncertaintyEstimate
 
 
@@ -225,3 +227,177 @@ def test_brake_evaluation_returns_latched_for_strong_spike_or_failure_pressure()
     assert evaluation.state is BrakeState.LATCHED
     assert evaluation.dominant_cause == "environment-inconsistency"
     assert evaluation.spike_tags == frozenset({"environment-inconsistency"})
+
+
+def test_brake_tonic_requires_bounded_values() -> None:
+    # BrakeTonic carriers must keep pressure/quiescence inside [0, 1].
+    for kwargs in (
+        {"tonic_pressure": -0.01, "tonic_quiescence": 0.5},
+        {"tonic_pressure": 1.01, "tonic_quiescence": 0.5},
+        {"tonic_pressure": 0.5, "tonic_quiescence": -0.01},
+        {"tonic_pressure": 0.5, "tonic_quiescence": 1.01},
+    ):
+        try:
+            BrakeTonic(**kwargs)
+        except ValueError as exc:
+            assert "between 0.0 and 1.0" in str(exc)
+        else:
+            raise AssertionError(f"Expected ValueError for {kwargs!r}")
+
+
+def test_brake_evaluation_carries_tonic_summary() -> None:
+    # Tonic must surface on the evaluation as a bounded summary the host can thread.
+    evaluation = evaluate_brake_state(
+        (UncertaintyEstimate(class_tag="evidence", level=0.10),),
+    )
+
+    assert evaluation.tonic is not None
+    assert 0.0 <= evaluation.tonic.tonic_pressure <= 1.0
+    assert 0.0 <= evaluation.tonic.tonic_quiescence <= 1.0
+
+
+def test_brake_tonic_single_noisy_tick_does_not_enter_guarded_from_quiescent() -> None:
+    # SRE_2 §7.5 tonic gate: from an established quiescent tonic, one borderline
+    # soft-pressure tick must not flip into guarded — the pressure EMA has to cross
+    # the enter threshold first.
+    quiescent_prior = BrakeTonic(tonic_pressure=0.0, tonic_quiescence=1.0)
+    evaluation = evaluate_brake_state(
+        (UncertaintyEstimate(class_tag="evidence", level=0.56),),
+        prior_state=BrakeState.QUIESCENT,
+        prior_tonic=quiescent_prior,
+    )
+
+    assert evaluation.state is BrakeState.QUIESCENT
+    assert evaluation.tonic is not None
+    # EMA with rho=0.60: next = 0.60*0.0 + 0.40*0.56 = 0.224 < 0.35 enter gate.
+    assert evaluation.tonic.tonic_pressure < 0.35
+
+
+def test_brake_tonic_sustained_pressure_eventually_enters_guarded() -> None:
+    # Sustained soft pressure (without spikes) should clear the tonic enter gate.
+    tonic: BrakeTonic | None = None
+    state: BrakeState = BrakeState.QUIESCENT
+    for _tick in range(8):
+        evaluation = evaluate_brake_state(
+            (UncertaintyEstimate(class_tag="evidence", level=0.58),),
+            prior_state=state,
+            prior_tonic=tonic,
+        )
+        tonic = evaluation.tonic
+        state = evaluation.state
+        if state is BrakeState.GUARDED:
+            break
+
+    assert state is BrakeState.GUARDED
+    assert tonic is not None
+    assert tonic.tonic_pressure >= 0.35
+
+
+def test_brake_tonic_spike_flips_immediately_regardless_of_tonic() -> None:
+    # Contradiction/latching spikes must not wait for tonic confirmation.
+    evaluation = evaluate_brake_state(
+        (
+            UncertaintyEstimate(
+                class_tag="environment",
+                level=0.60,
+                spike_tags=frozenset({"contradiction"}),
+            ),
+        ),
+        prior_state=BrakeState.QUIESCENT,
+        prior_tonic=BrakeTonic(tonic_pressure=0.0, tonic_quiescence=1.0),
+    )
+
+    assert evaluation.state in {BrakeState.GUARDED, BrakeState.LATCHED}
+    assert evaluation.tonic is not None
+
+
+def test_brake_tonic_rejects_non_tonic_prior() -> None:
+    try:
+        evaluate_brake_state(
+            (UncertaintyEstimate(class_tag="evidence", level=0.10),),
+            prior_tonic="not-a-tonic",  # type: ignore[arg-type]
+        )
+    except TypeError as exc:
+        assert "BrakeTonic | None" in str(exc)
+    else:
+        raise AssertionError("Expected TypeError for non-BrakeTonic prior_tonic")
+
+
+def test_brake_tonic_pressure_ema_uses_locked_zero_point_six_rho_coefficient() -> None:
+    # SRE_2 §7.5 coefficient lock: the tonic-pressure EMA must use rho = 0.60.
+    # A 0.80 prior with current_pressure = 0.00 must yield next = 0.60 * 0.80 +
+    # 0.40 * 0.00 = 0.48. Any drift in the decay coefficient would shift this
+    # to a different value — this test is a unit-level regression guard that
+    # ignores the enter/exit thresholds and focuses purely on the EMA math.
+    prior = BrakeTonic(tonic_pressure=0.80, tonic_quiescence=0.20)
+    evaluation = evaluate_brake_state(
+        (UncertaintyEstimate(class_tag="evidence", level=0.0),),
+        prior_state=BrakeState.GUARDED,
+        prior_tonic=prior,
+    )
+
+    assert evaluation.tonic is not None
+    # next = 0.60 * 0.80 + 0.40 * 0.00 = 0.48
+    assert evaluation.tonic.tonic_pressure == pytest.approx(0.48)
+    # quiescence EMA is the parallel mirror; current_quiescence = 1.0 - 0.0 = 1.0
+    # next = 0.60 * 0.20 + 0.40 * 1.00 = 0.52
+    assert evaluation.tonic.tonic_quiescence == pytest.approx(0.52)
+
+
+def test_brake_tonic_decays_toward_quiescence_after_sustained_calm() -> None:
+    # SRE_2 §7.5 kill-rule-e: the tonic gate must not harden. A guarded burst
+    # must decay back to quiescent once sustained calm returns, otherwise the
+    # brake layer accumulates dead weight and the agent stops being productive.
+    # Start from an elevated tonic pressure in the guarded state, then apply
+    # sustained low-uncertainty ticks with no spikes, and assert the tonic
+    # pressure decays below the exit threshold and the state returns to
+    # quiescent within a bounded number of ticks.
+    tonic: BrakeTonic | None = BrakeTonic(tonic_pressure=0.80, tonic_quiescence=0.20)
+    state: BrakeState = BrakeState.GUARDED
+    ticks_to_decay = 0
+    for _tick in range(24):
+        evaluation = evaluate_brake_state(
+            (UncertaintyEstimate(class_tag="evidence", level=0.00),),
+            prior_state=state,
+            prior_tonic=tonic,
+        )
+        tonic = evaluation.tonic
+        state = evaluation.state
+        ticks_to_decay += 1
+        if state is BrakeState.QUIESCENT and tonic is not None and tonic.tonic_pressure < 0.10:
+            break
+
+    assert state is BrakeState.QUIESCENT, (
+        "tonic gate must decay to quiescent under sustained calm; "
+        f"stuck at {state!r} after {ticks_to_decay} ticks"
+    )
+    assert tonic is not None
+    assert tonic.tonic_pressure < 0.10
+    # The 0.60 rho means decay is bounded — must not need more than ~16 ticks.
+    assert ticks_to_decay <= 16
+
+
+def test_brake_tonic_quiet_productive_flow_does_not_raise_tonic_pressure() -> None:
+    # SRE_2 §7.5 kill-rule-e orthogonality: the tonic gate is driven by
+    # uncertainty and spike signals, not by risk-weight posture. A quiet
+    # productive flow (low uncertainty, no spikes, fresh prior) must keep the
+    # tonic pressure well below the enter threshold regardless of how many
+    # steps run. This prevents the tonic gate from slowly ramping up on its
+    # own during healthy execution.
+    tonic: BrakeTonic | None = None
+    state: BrakeState = BrakeState.QUIESCENT
+    pressure_peak = 0.0
+    for _tick in range(16):
+        evaluation = evaluate_brake_state(
+            (UncertaintyEstimate(class_tag="evidence", level=0.10),),
+            prior_state=state,
+            prior_tonic=tonic,
+        )
+        tonic = evaluation.tonic
+        state = evaluation.state
+        if tonic is not None:
+            pressure_peak = max(pressure_peak, tonic.tonic_pressure)
+
+    assert state is BrakeState.QUIESCENT
+    # Must stay strictly below the 0.35 enter threshold across the full run.
+    assert pressure_peak < 0.35

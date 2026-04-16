@@ -157,6 +157,57 @@ def test_claude_runtime_session_artifact_roundtrips_feedback_task_mode_and_probe
     assert restored.feedback_window.entries == (feedback,)
 
 
+def test_claude_runtime_session_artifact_preserves_brake_tonic_history_across_round_trip() -> None:
+    # SRE_2 §7.5: tonic_pressure EMA must survive a hard restart so the gate does
+    # not regress to cold start on every resume. Without this threading the live
+    # lane keeps re-entering guarded for one extra tick after every process hop.
+    session = ClaudeRuntimeSession(
+        session_id="cl-tonic",
+        event_index=2,
+        brake_tonic_history=(0.18, 0.27, 0.33),
+    )
+
+    payload = build_claude_runtime_session_artifact(session).as_payload()
+
+    assert payload["control_residue"]["brake_tonic_history"] == [0.18, 0.27, 0.33]
+    restored = parse_claude_runtime_session_artifact(payload)
+    assert restored.brake_tonic_history == (0.18, 0.27, 0.33)
+
+
+def test_claude_runtime_session_artifact_accepts_pre_tonic_history_legacy_payload() -> None:
+    # Backward-compat: a payload written before brake_tonic_history existed (i.e.
+    # five control_residue keys through executive_modulator_memory) must still
+    # parse cleanly and yield an empty tonic history rather than blowing up on
+    # strict key validation.
+    payload = _base_payload()
+
+    restored = parse_claude_runtime_session_artifact(payload)
+
+    assert restored.brake_tonic_history == ()
+
+
+def test_claude_runtime_session_artifact_rejects_invalid_brake_tonic_history_entries() -> None:
+    # Validation lives on both the artifact and the session; non-numeric, bool,
+    # and out-of-range entries must be rejected at parse time so they never
+    # reach the live executive.
+    def _canonical_payload_with_history(history: list[object]) -> dict[str, object]:
+        payload = _base_payload()
+        payload["control_residue"]["executive_modulator_memory"] = None
+        payload["control_residue"]["brake_tonic_history"] = history
+        return payload
+
+    with pytest.raises(TypeError, match="brake_tonic_history"):
+        parse_claude_runtime_session_artifact(
+            _canonical_payload_with_history(["not-a-float"])
+        )
+
+    with pytest.raises(TypeError, match="brake_tonic_history"):
+        parse_claude_runtime_session_artifact(_canonical_payload_with_history([True]))
+
+    with pytest.raises(ValueError, match="brake_tonic_history"):
+        parse_claude_runtime_session_artifact(_canonical_payload_with_history([1.5]))
+
+
 def _base_payload() -> dict[str, object]:
     return {
         "artifact_kind": "claude-runtime-session",
