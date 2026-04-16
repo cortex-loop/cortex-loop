@@ -14,7 +14,7 @@ from cortex.sre.memory_priors import SupportMemoryPriorAppendix
 from cortex.sre.reference_scoring import select_reference_soft_control
 from cortex.sre.state import ReferenceExecutiveState
 
-from ._temporal_publication import _merge_temporal_publication
+from .distillation import _distill_offline_support_publication_from_snapshots
 from .publication import (
     OfflineSupportPublication,
     augment_snapshot_with_offline_publication,
@@ -377,11 +377,12 @@ def evaluate_aux_reference_q_mem_replay(
     failure_counts = {label: 0 for label in AUX_REFERENCE_REPLAY_FAILURE_LABELS}
 
     for scenario in scenarios:
-        publication = _merge_temporal_publication(
+        publication = _distill_offline_support_publication_from_snapshots(
             scenario.source_snapshots,
+            host_name="reference",
             source_label="aux/reference-replay",
-            extra_tags=frozenset({"aux/offline-publication", "aux/reference-replay"}),
-            extra_notes=("offline publication replayed into reference-only Q_mem evaluation",),
+            publication_tags=frozenset({"aux/offline-publication", "aux/reference-replay"}),
+            notes=("offline publication replayed into reference-only Q_mem evaluation",),
         )
         augmented_target = augment_snapshot_with_offline_publication(
             scenario.target_snapshot,

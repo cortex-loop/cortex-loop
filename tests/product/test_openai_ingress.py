@@ -72,3 +72,22 @@ def test_missing_type_and_non_object_record_are_rejected() -> None:
 
     with pytest.raises(TypeError, match="must be a mapping"):
         parse_openai_host_event_envelope(["not-an-object"])
+
+
+@pytest.mark.parametrize("reserved_key", ["offline_publication", "request"])
+def test_action_only_control_baggage_is_rejected_on_raw_transcript_ingress(
+    reserved_key: str,
+) -> None:
+    with pytest.raises(
+        ValueError,
+        match="must not include response-stream control keys",
+    ):
+        parse_openai_host_event_envelope(
+            {
+                "type": "response.output_text.delta",
+                "session_id": "oa-ingress",
+                "response_id": "resp-1",
+                "delta": "hello",
+                reserved_key: {"unexpected": True},
+            }
+        )

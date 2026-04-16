@@ -17,6 +17,7 @@ from cortex.sre.brake import BrakeState
 from cortex.sre.feedback import ReferenceRealizationFeedback, ReferenceRealizationFeedbackWindow
 from cortex.sre.families import SoftControlFamily
 from cortex.sre.goals import make_resume_reminder
+from cortex.sre.operator_routing import OperatorTaskMode
 
 
 def test_reference_runtime_session_artifact_roundtrips_empty_session() -> None:
@@ -244,6 +245,28 @@ def test_reference_runtime_session_artifact_read_write_roundtrip_uses_json_file(
     assert restored.session_id == "session-file"
     assert restored.budget_history == ("shell-high",)
     assert restored.brake_history == ("guarded",)
+
+
+def test_reference_runtime_session_artifact_roundtrips_feedback_task_mode_and_probe_result_class() -> None:
+    feedback = ReferenceRealizationFeedback(
+        selected_family=SoftControlFamily.CHECK,
+        realized_family=SoftControlFamily.CHECK,
+        brake_state=BrakeState.GUARDED,
+        task_mode=OperatorTaskMode.RESUME_EXECUTE,
+        commitment_result_kind="certified",
+        host_friction_tags=("approval-boundary-present",),
+        evidence_progress_class="artifact",
+        continuity_progress_class="none",
+        probe_result_class="succeeded",
+    )
+    payload = _base_payload()
+    payload["control_residue"]["last_realization_feedback"] = feedback.as_summary()
+    payload["control_residue"]["feedback_window"] = [feedback.as_summary()]
+
+    restored = parse_reference_runtime_session_artifact(payload)
+
+    assert restored.last_realization_feedback == feedback
+    assert restored.feedback_window.entries == (feedback,)
 
 
 def _base_payload() -> dict[str, object]:

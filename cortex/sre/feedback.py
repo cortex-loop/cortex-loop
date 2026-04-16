@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from typing import TYPE_CHECKING
 
 from cortex.core.commitments import CommitmentStatus
 
@@ -10,8 +11,31 @@ from .brake import BrakeState
 from .families import SoftControlFamily
 from .opportunities import PROBE_RESULT_CLASSES
 
+if TYPE_CHECKING:
+    from .operator_routing import OperatorTaskMode
+
 _ALLOWED_COMMITMENT_RESULT_KINDS = frozenset(status.value for status in CommitmentStatus)
 _MAX_REFERENCE_FEEDBACK_WINDOW_ENTRIES = 3
+EVIDENCE_PROGRESS_CLASSES = frozenset(
+    {
+        "none",
+        "token-stream",
+        "structured-stream",
+        "candidate",
+        "artifact",
+        "external-record",
+        "commitment",
+    }
+)
+MEANINGFUL_EVIDENCE_PROGRESS_CLASSES = frozenset(
+    {"candidate", "artifact", "external-record", "commitment"}
+)
+STREAM_ONLY_EVIDENCE_PROGRESS_CLASSES = frozenset(
+    {"token-stream", "structured-stream"}
+)
+CONTINUITY_PROGRESS_CLASSES = frozenset(
+    {"none", "pending-goals-reduced", "branch-closed", "returned-to-main"}
+)
 
 
 @dataclass(frozen=True, slots=True)
@@ -19,10 +43,13 @@ class ReferenceRealizationFeedback:
     selected_family: SoftControlFamily
     realized_family: SoftControlFamily
     brake_state: BrakeState
+    task_mode: "OperatorTaskMode | None" = None
     commitment_result_kind: str | None = None
     warning_codes: tuple[str, ...] = field(default_factory=tuple)
     host_friction_tags: tuple[str, ...] = field(default_factory=tuple)
+    evidence_progress_class: str | None = None
     evidence_state_moved: bool | None = None
+    continuity_progress_class: str | None = None
     continuity_improved: bool | None = None
     probe_result_class: str | None = None
 
@@ -45,6 +72,15 @@ class ReferenceRealizationFeedback:
                 "ReferenceRealizationFeedback.brake_state must be BrakeState, "
                 f"got {actual_type}."
             )
+        if self.task_mode is not None:
+            from .operator_routing import OperatorTaskMode
+
+            if not isinstance(self.task_mode, OperatorTaskMode):
+                actual_type = type(self.task_mode).__name__
+                raise TypeError(
+                    "ReferenceRealizationFeedback.task_mode must be "
+                    f"OperatorTaskMode | None, got {actual_type}."
+                )
         if (
             self.commitment_result_kind is not None
             and self.commitment_result_kind not in _ALLOWED_COMMITMENT_RESULT_KINDS
@@ -61,6 +97,13 @@ class ReferenceRealizationFeedback:
             raise ValueError(
                 "ReferenceRealizationFeedback.host_friction_tags must contain only non-empty values after trimming."
             )
+        if (
+            self.evidence_progress_class is not None
+            and self.evidence_progress_class not in EVIDENCE_PROGRESS_CLASSES
+        ):
+            raise ValueError(
+                "ReferenceRealizationFeedback.evidence_progress_class must be a canonical evidence progress class or None."
+            )
         for field_name in ("evidence_state_moved", "continuity_improved"):
             value = getattr(self, field_name)
             if value is not None and not isinstance(value, bool):
@@ -69,11 +112,48 @@ class ReferenceRealizationFeedback:
                     f"ReferenceRealizationFeedback.{field_name} must be bool | None, got {actual_type}."
                 )
         if (
+            self.continuity_progress_class is not None
+            and self.continuity_progress_class not in CONTINUITY_PROGRESS_CLASSES
+        ):
+            raise ValueError(
+                "ReferenceRealizationFeedback.continuity_progress_class must be a canonical continuity progress class or None."
+            )
+        if (
             self.probe_result_class is not None
             and self.probe_result_class not in PROBE_RESULT_CLASSES
         ):
             raise ValueError(
                 "ReferenceRealizationFeedback.probe_result_class must be a canonical probe result class or None."
+            )
+        if self.evidence_progress_class is not None:
+            derived_evidence_state_moved = (
+                self.evidence_progress_class in MEANINGFUL_EVIDENCE_PROGRESS_CLASSES
+            )
+            if (
+                self.evidence_state_moved is not None
+                and self.evidence_state_moved is not derived_evidence_state_moved
+            ):
+                raise ValueError(
+                    "ReferenceRealizationFeedback.evidence_state_moved must match the derived value from evidence_progress_class when both are provided."
+                )
+            object.__setattr__(
+                self,
+                "evidence_state_moved",
+                derived_evidence_state_moved,
+            )
+        if self.continuity_progress_class is not None:
+            derived_continuity_improved = self.continuity_progress_class != "none"
+            if (
+                self.continuity_improved is not None
+                and self.continuity_improved is not derived_continuity_improved
+            ):
+                raise ValueError(
+                    "ReferenceRealizationFeedback.continuity_improved must match the derived value from continuity_progress_class when both are provided."
+                )
+            object.__setattr__(
+                self,
+                "continuity_improved",
+                derived_continuity_improved,
             )
 
     def as_summary(self) -> dict[str, object]:
@@ -85,8 +165,14 @@ class ReferenceRealizationFeedback:
             "warning_codes": list(self.warning_codes),
             "host_friction_tags": list(self.host_friction_tags),
         }
+        if self.task_mode is not None:
+            summary["task_mode"] = self.task_mode.value
+        if self.evidence_progress_class is not None:
+            summary["evidence_progress_class"] = self.evidence_progress_class
         if self.evidence_state_moved is not None:
             summary["evidence_state_moved"] = self.evidence_state_moved
+        if self.continuity_progress_class is not None:
+            summary["continuity_progress_class"] = self.continuity_progress_class
         if self.continuity_improved is not None:
             summary["continuity_improved"] = self.continuity_improved
         if self.probe_result_class is not None:
@@ -132,10 +218,16 @@ class ReferenceFeedbackWindowSummary:
     latched_count: int = 0
     clean_success_streak: int = 0
     evidence_state_move_count: int = 0
+    meaningful_evidence_progress_count: int = 0
+    stream_only_progress_count: int = 0
     continuity_improvement_count: int = 0
     family_change_without_evidence_count: int = 0
+    same_family_no_progress_count: int = 0
+    same_context_retry_count: int = 0
     goal_progress_floor: float = 0.0
     degradation_pressure_bonus: int = 0
+    recent_evidence_progress_class: str | None = None
+    recent_continuity_progress_class: str | None = None
     sustained_spike_flags: tuple[str, ...] = ()
 
     def __post_init__(self) -> None:
@@ -149,8 +241,12 @@ class ReferenceFeedbackWindowSummary:
             "latched_count",
             "clean_success_streak",
             "evidence_state_move_count",
+            "meaningful_evidence_progress_count",
+            "stream_only_progress_count",
             "continuity_improvement_count",
             "family_change_without_evidence_count",
+            "same_family_no_progress_count",
+            "same_context_retry_count",
             "degradation_pressure_bonus",
         ):
             value = getattr(self, field_name)
@@ -161,6 +257,20 @@ class ReferenceFeedbackWindowSummary:
         if not 0.0 <= self.goal_progress_floor <= 1.0:
             raise ValueError(
                 "ReferenceFeedbackWindowSummary.goal_progress_floor must be between 0.0 and 1.0."
+            )
+        if (
+            self.recent_evidence_progress_class is not None
+            and self.recent_evidence_progress_class not in EVIDENCE_PROGRESS_CLASSES
+        ):
+            raise ValueError(
+                "ReferenceFeedbackWindowSummary.recent_evidence_progress_class must be a canonical evidence progress class or None."
+            )
+        if (
+            self.recent_continuity_progress_class is not None
+            and self.recent_continuity_progress_class not in CONTINUITY_PROGRESS_CLASSES
+        ):
+            raise ValueError(
+                "ReferenceFeedbackWindowSummary.recent_continuity_progress_class must be a canonical continuity progress class or None."
             )
         if any(not (isinstance(flag, str) and flag.strip()) for flag in self.sustained_spike_flags):
             raise ValueError(
@@ -175,10 +285,16 @@ class ReferenceFeedbackWindowSummary:
             "latched_count": self.latched_count,
             "clean_success_streak": self.clean_success_streak,
             "evidence_state_move_count": self.evidence_state_move_count,
+            "meaningful_evidence_progress_count": self.meaningful_evidence_progress_count,
+            "stream_only_progress_count": self.stream_only_progress_count,
             "continuity_improvement_count": self.continuity_improvement_count,
             "family_change_without_evidence_count": self.family_change_without_evidence_count,
+            "same_family_no_progress_count": self.same_family_no_progress_count,
+            "same_context_retry_count": self.same_context_retry_count,
             "goal_progress_floor": self.goal_progress_floor,
             "degradation_pressure_bonus": self.degradation_pressure_bonus,
+            "recent_evidence_progress_class": self.recent_evidence_progress_class,
+            "recent_continuity_progress_class": self.recent_continuity_progress_class,
             "sustained_spike_flags": list(self.sustained_spike_flags),
         }
 
@@ -200,13 +316,27 @@ def summarize_reference_feedback_window(
     )
     latched_count = sum(1 for entry in entries if entry.brake_state is BrakeState.LATCHED)
     evidence_state_move_count = sum(1 for entry in entries if entry.evidence_state_moved is True)
+    meaningful_evidence_progress_count = sum(
+        1 for entry in entries if _has_meaningful_evidence_progress(entry)
+    )
+    stream_only_progress_count = sum(1 for entry in entries if _has_stream_only_progress(entry))
     continuity_improvement_count = sum(1 for entry in entries if entry.continuity_improved is True)
     family_change_without_evidence_count = sum(
         1
         for previous, current in zip(entries, entries[1:])
         if previous.selected_family is not current.selected_family
-        and current.evidence_state_moved is False
-        and current.continuity_improved is False
+        and _lacks_progress(current)
+    )
+    same_family_no_progress_count = sum(
+        1
+        for previous, current in zip(entries, entries[1:])
+        if previous.selected_family is current.selected_family
+        and _lacks_progress(current)
+    )
+    same_context_retry_count = sum(
+        1
+        for previous, current in zip(entries, entries[1:])
+        if _is_same_context_retry(previous, current)
     )
 
     clean_success_streak = 0
@@ -231,6 +361,12 @@ def summarize_reference_feedback_window(
     elif override_count == 1:
         override_floor = 0.45
 
+    typed_no_progress_floor = 0.0
+    if entries and _is_low_progress_feedback(entries[-1]):
+        typed_no_progress_floor = 0.30
+    if len(entries) >= 2 and _is_same_context_low_progress_pair(entries[-2], entries[-1]):
+        typed_no_progress_floor = 0.45
+
     degradation_pressure_bonus = 0
     if (
         rejection_count >= 2
@@ -243,9 +379,12 @@ def summarize_reference_feedback_window(
         or override_count >= 1
         or latched_count == 1
         or family_change_without_evidence_count >= 1
+        or same_context_retry_count >= 1
     ):
         degradation_pressure_bonus = 1
     if family_change_without_evidence_count >= 2:
+        degradation_pressure_bonus = max(degradation_pressure_bonus, 2)
+    if same_context_retry_count >= 2:
         degradation_pressure_bonus = max(degradation_pressure_bonus, 2)
 
     sustained_spike_flags: list[str] = []
@@ -279,12 +418,154 @@ def summarize_reference_feedback_window(
         latched_count=latched_count,
         clean_success_streak=clean_success_streak,
         evidence_state_move_count=evidence_state_move_count,
+        meaningful_evidence_progress_count=meaningful_evidence_progress_count,
+        stream_only_progress_count=stream_only_progress_count,
         continuity_improvement_count=continuity_improvement_count,
         family_change_without_evidence_count=family_change_without_evidence_count,
-        goal_progress_floor=max(rejection_floor, override_floor),
+        same_family_no_progress_count=same_family_no_progress_count,
+        same_context_retry_count=same_context_retry_count,
+        goal_progress_floor=max(rejection_floor, override_floor, typed_no_progress_floor),
         degradation_pressure_bonus=degradation_pressure_bonus,
+        recent_evidence_progress_class=(
+            entries[-1].evidence_progress_class if entries else None
+        ),
+        recent_continuity_progress_class=(
+            entries[-1].continuity_progress_class if entries else None
+        ),
         sustained_spike_flags=tuple(sustained_spike_flags),
     )
+
+
+def _lacks_progress(entry: ReferenceRealizationFeedback) -> bool:
+    has_signature = bool(
+        entry.task_mode is not None
+        or entry.evidence_progress_class is not None
+        or entry.evidence_state_moved is not None
+        or entry.continuity_progress_class is not None
+        or entry.continuity_improved is not None
+        or entry.probe_result_class is not None
+    )
+    return has_signature and not _has_meaningful_progress(entry)
+
+
+def _has_meaningful_evidence_progress(entry: ReferenceRealizationFeedback) -> bool:
+    return bool(
+        entry.evidence_progress_class in MEANINGFUL_EVIDENCE_PROGRESS_CLASSES
+        or entry.evidence_state_moved is True
+    )
+
+
+def _has_continuity_progress(entry: ReferenceRealizationFeedback) -> bool:
+    return bool(
+        entry.continuity_progress_class is not None
+        and entry.continuity_progress_class != "none"
+    ) or entry.continuity_improved is True
+
+
+def _has_probe_success(entry: ReferenceRealizationFeedback) -> bool:
+    return entry.probe_result_class == "succeeded"
+
+
+def _has_meaningful_progress(entry: ReferenceRealizationFeedback) -> bool:
+    return bool(
+        _has_meaningful_evidence_progress(entry)
+        or _has_continuity_progress(entry)
+        or _has_probe_success(entry)
+    )
+
+
+def _has_stream_only_progress(entry: ReferenceRealizationFeedback) -> bool:
+    return bool(
+        entry.evidence_progress_class in STREAM_ONLY_EVIDENCE_PROGRESS_CLASSES
+        and not _has_meaningful_progress(entry)
+    )
+
+
+def _is_low_progress_feedback(entry: ReferenceRealizationFeedback) -> bool:
+    if _has_meaningful_progress(entry):
+        return False
+    if entry.evidence_progress_class in {"none", *STREAM_ONLY_EVIDENCE_PROGRESS_CLASSES}:
+        return True
+    return (
+        entry.evidence_progress_class is None
+        and (
+            entry.evidence_state_moved is False
+            or entry.continuity_improved is False
+            or entry.task_mode is not None
+            or entry.probe_result_class is not None
+        )
+    )
+
+
+def _warning_bucket(entry: ReferenceRealizationFeedback) -> str:
+    if not entry.warning_codes:
+        return "clean"
+    if any(code.startswith("continuity-rejected:") for code in entry.warning_codes):
+        return "continuity-rejection"
+    if any(code.startswith("session-rejected:") for code in entry.warning_codes):
+        return "session-rejection"
+    if any(code.startswith("guarded-feedback-enforced:") for code in entry.warning_codes):
+        return "guarded-enforcement"
+    if any(code.startswith("latched-brake-enforced:") for code in entry.warning_codes):
+        return "latched-enforcement"
+    return "other-warning"
+
+
+def _probe_bucket(entry: ReferenceRealizationFeedback) -> str:
+    return entry.probe_result_class if entry.probe_result_class is not None else "none"
+
+
+def _is_same_context_retry(
+    previous: ReferenceRealizationFeedback,
+    current: ReferenceRealizationFeedback,
+) -> bool:
+    return bool(
+        previous.selected_family is current.selected_family
+        and previous.task_mode is not None
+        and current.task_mode is not None
+        and previous.task_mode is current.task_mode
+        and tuple(sorted(previous.host_friction_tags))
+        == tuple(sorted(current.host_friction_tags))
+        and _warning_bucket(previous) == _warning_bucket(current)
+        and _probe_bucket(previous) == _probe_bucket(current)
+        and _lacks_progress(current)
+    )
+
+
+def _is_same_context_low_progress_pair(
+    previous: ReferenceRealizationFeedback,
+    current: ReferenceRealizationFeedback,
+) -> bool:
+    return bool(
+        previous.selected_family is current.selected_family
+        and previous.task_mode is not None
+        and current.task_mode is not None
+        and previous.task_mode is current.task_mode
+        and tuple(sorted(previous.host_friction_tags))
+        == tuple(sorted(current.host_friction_tags))
+        and _warning_bucket(previous) == _warning_bucket(current)
+        and _probe_bucket(previous) == _probe_bucket(current)
+        and _is_low_progress_feedback(previous)
+        and _is_low_progress_feedback(current)
+    )
+
+
+def latest_same_context_retry_feedback(
+    window: ReferenceRealizationFeedbackWindow,
+) -> ReferenceRealizationFeedback | None:
+    if not isinstance(window, ReferenceRealizationFeedbackWindow):
+        actual_type = type(window).__name__
+        raise TypeError(
+            "latest_same_context_retry_feedback.window must be "
+            f"ReferenceRealizationFeedbackWindow, got {actual_type}."
+        )
+    entries = window.entries
+    if len(entries) < 2:
+        return None
+    previous, current = entries[-2], entries[-1]
+    if _is_same_context_retry(previous, current):
+        return current
+    return None
 
 
 def _has_rejection_warning(entry: ReferenceRealizationFeedback) -> bool:
@@ -295,8 +576,13 @@ def _has_rejection_warning(entry: ReferenceRealizationFeedback) -> bool:
 
 
 __all__ = [
+    "CONTINUITY_PROGRESS_CLASSES",
+    "EVIDENCE_PROGRESS_CLASSES",
+    "MEANINGFUL_EVIDENCE_PROGRESS_CLASSES",
     "ReferenceFeedbackWindowSummary",
     "ReferenceRealizationFeedback",
     "ReferenceRealizationFeedbackWindow",
+    "STREAM_ONLY_EVIDENCE_PROGRESS_CLASSES",
+    "latest_same_context_retry_feedback",
     "summarize_reference_feedback_window",
 ]

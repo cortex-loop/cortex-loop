@@ -29,6 +29,7 @@ EXPECTED_RECORD_KEYS = (
     "executive_signal_summary",
     "executive_modulator_state",
     "executive_policy_view",
+    "operator_route",
     "closure_required",
     "closure_reason_tags",
     "commitment_result_kind",
@@ -57,6 +58,8 @@ def test_openai_ingress_cli_reads_documented_raw_transcript_fixture() -> None:
     assert records[0]["selected_family"] == "seek-context"
     assert records[0]["realized_family"] == "seek-context"
     assert records[0]["brake_state"] == "guarded"
+    assert records[0]["executive_state"]["posture"] == "inspect"
+    assert records[0]["operator_route"]["route_profile"] == "inspect_light"
     assert records[0]["closure_required"] is False
     assert records[0]["closure_reason_tags"] == []
     assert records[-1]["journal"]["confirmed_artifact_refs"] == ["oa-ingress-artifact-1"]

@@ -318,7 +318,8 @@ It does not exist to mutate commitment truth.
 
 ### 5.2 Runtime deferral law
 
-Offline support publication may be evaluated and retained on the support side now.
+Offline support publication may be evaluated, retained, and durably distilled on the support side now.
+The current landed seam is a bounded episode store plus on-demand distillation back into `OfflineSupportPublication`.
 It is still not on the critical path for first working v2 runtime behavior, and runtime use should remain deferred until:
 - the core event loop is stable,
 - the active SRE loop is stable,
@@ -328,6 +329,9 @@ It is still not on the critical path for first working v2 runtime behavior, and 
 ### 5.3 Support-only publication law
 
 Offline publication may write only to support-side public objects.
+Raw persisted episodes may exist only as bounded support-side projections.
+They may not contain raw task text, payload text, session transcript text, or direct runtime-selection policy.
+Durable episode storage must normalize timestamps to absolute UTC time before horizon filtering or legacy backfill; lexical timestamp comparison is forbidden.
 It may not publish directly into:
 - certifier state,
 - hard-boundary state,
@@ -346,6 +350,8 @@ When offline outputs are reintroduced into runtime support, they must do so thro
 W_t^{pub+} = \operatorname{Augment}^{aux}(W_t^{pub}, M_t^{offline})
 \]
 
+Only distilled `OfflineSupportPublication` may re-enter through that path.
+Raw episode storage, including SQLite-backed storage, may not drive runtime selection directly.
 They may not redefine core observation or commitment semantics.
 
 ### 5.6 SRE handoff law
@@ -353,6 +359,8 @@ They may not redefine core observation or commitment semantics.
 Any future nonzero support-conditioned priors intended to influence `Q_t^{mem}(a)`
 must be published only as support-side public objects and must re-enter runtime support
 only through explicit AUX augmentation.
+Positive priors should require repeated supporting episodes rather than single stale anecdotes, and contradiction-heavy or burden-heavy windows may suppress positive priors instead of hardening them into superstition.
+That repeated-support rule must be pattern-scoped: matched retrieval or memory clusters, exact branch tracks, and exact wake/brake signals may earn support; a generic second unrelated episode may not.
 
 They may not come from:
 - hidden host memory,

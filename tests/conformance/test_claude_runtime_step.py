@@ -3,6 +3,7 @@
 import pytest
 
 from cortex.hosts.claude.runtime import run_claude_runtime_step
+from cortex.sre.operator_routing import OperatorTaskMode
 
 
 def test_claude_runtime_step_rejects_canonical_cortex_event_name_before_runtime_processing() -> None:
@@ -22,11 +23,14 @@ def test_claude_runtime_step_surfaces_probe_unavailability_honestly() -> None:
         {"session_id": "cl-probe", "message_id": "cl-msg-1", "delta": "hello"},
     )
 
+    assert result.executive_state_summary["posture"] == "inspect"
     assert result.executive_state_summary["probe_path_state"] == "unavailable"
     assert (
         result.executive_state_summary["probe_unavailable_reason"]
         == "documented-probe-surface-unavailable"
     )
+    assert result.operator_route_payload["route_profile"] == "inspect_light"
+    assert result.operator_route_payload["route_budget"]["allow_extra_read_pass"] is True
     assert result.control_ledger_summary["allocation_diagnostics"]["probe_path_state"] == (
         "unavailable"
     )
@@ -34,7 +38,25 @@ def test_claude_runtime_step_surfaces_probe_unavailability_honestly() -> None:
         result.control_ledger_summary["allocation_diagnostics"]["probe_unavailable_reason"]
         == "documented-probe-surface-unavailable"
     )
-    assert result.control_ledger_summary["allocation_diagnostics"]["probe_result_class"] is None
+    assert (
+        result.control_ledger_summary["allocation_diagnostics"]["probe_result_class"]
+        == "unsupported"
+    )
+    assert result.feedback_window_summary_payload["window_size"] == 1
+    assert result.feedback_window_summary_payload["recent_evidence_progress_class"] == (
+        "token-stream"
+    )
+    assert result.feedback_window_summary_payload["recent_continuity_progress_class"] == (
+        "none"
+    )
+    assert (
+        result.feedback_window_summary_payload["recent_evidence_progress_class"]
+        == result.session.last_realization_feedback.evidence_progress_class
+    )
+    assert (
+        result.feedback_window_summary_payload["recent_continuity_progress_class"]
+        == result.session.last_realization_feedback.continuity_progress_class
+    )
     assert tuple(result.control_ledger_summary["audit_projection"]) == (
         "selected_family",
         "realized_family",
@@ -69,5 +91,24 @@ def test_claude_runtime_step_can_raise_audit_projection_from_explicit_request() 
     assert projection["verification_state"] == "not-required"
     assert projection["explainability_profile"] == "structured"
     assert projection["probe_path_state"] == "unavailable"
-    assert projection["probe_result_class"] is None
+    assert projection["probe_result_class"] == "unsupported"
     assert projection["probe_unavailable_reason"] == "documented-probe-surface-unavailable"
+
+
+def test_claude_runtime_step_cheap_continuity_debt_surfaces_resume_posture() -> None:
+    result = run_claude_runtime_step(
+        "content_block_delta",
+        {
+            "session_id": "cl-resume-posture",
+            "message_id": "cl-msg-resume-posture",
+            "branch_operation": "open",
+            "branch_track_ref": "branch-alpha",
+            "delta": "open",
+        },
+    )
+
+    assert result.executive_state.mode_and_gating.task_mode is OperatorTaskMode.RESUME_EXECUTE
+    assert result.executive_signal_summary.task_mode is OperatorTaskMode.RESUME_EXECUTE
+    assert result.executive_state_summary["posture"] == "resume"
+    assert result.operator_route_payload["route_profile"] == "continuity_standard"
+    assert result.operator_route_payload["route_budget"]["allow_resume"] is True

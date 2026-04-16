@@ -40,11 +40,19 @@ from cortex.drivers.gemini_host import (
 )
 from cortex.drivers.gemini_host_commitment import bind_gemini_host_candidate
 from cortex.hosts._executive_closure import (
+    assert_post_step_feedback_window_alignment,
+    assert_runtime_posture_alignment,
+    build_shared_realization_feedback,
+    build_runtime_operator_task_state,
     build_runtime_executive_signal_summary_inputs,
     canonicalize_executive_modulator_memory,
+    classify_runtime_progress_signal,
     closure_reason_tags,
+    probe_result_class_for_runtime,
+    public_posture_for_task_mode,
     recent_probe_failure_class as recent_probe_failure_class_from_feedback_window,
     recent_warning_bearing_success_present,
+    task_mode_for_runtime,
     verification_state_for_runtime,
 )
 from cortex.sre.allocation import (
@@ -69,6 +77,12 @@ from cortex.sre.modulators import (
     ExecutiveModulatorMemory,
     ExecutiveModulatorState,
     update_executive_modulators,
+)
+from cortex.sre.operator_routing import (
+    OperatorRouteDecision,
+    OperatorTaskState,
+    build_operator_route_diagnostics,
+    select_operator_route_with_policy,
 )
 from cortex.sre.opportunities import BoundedProbeContract, HostNativeOpportunity
 from cortex.sre.policy_view import ExecutivePolicyView, build_executive_policy_view
@@ -377,6 +391,8 @@ class GeminiRuntimeStepResult:
             verification_intensity=0.30,
         )
     )
+    operator_task_state: OperatorTaskState | None = None
+    operator_route: OperatorRouteDecision | None = None
     closure_required: bool = False
     closure_reason_tags: tuple[str, ...] = field(default_factory=tuple)
     warnings: tuple[str, ...] = field(default_factory=tuple)
@@ -458,6 +474,18 @@ class GeminiRuntimeStepResult:
                 "GeminiRuntimeStepResult.executive_policy_view must be "
                 f"ExecutivePolicyView, got {actual_type}."
             )
+        if not isinstance(self.operator_task_state, OperatorTaskState):
+            actual_type = type(self.operator_task_state).__name__
+            raise TypeError(
+                "GeminiRuntimeStepResult.operator_task_state must be "
+                f"OperatorTaskState, got {actual_type}."
+            )
+        if not isinstance(self.operator_route, OperatorRouteDecision):
+            actual_type = type(self.operator_route).__name__
+            raise TypeError(
+                "GeminiRuntimeStepResult.operator_route must be "
+                f"OperatorRouteDecision, got {actual_type}."
+            )
         if not isinstance(self.closure_required, bool):
             actual_type = type(self.closure_required).__name__
             raise TypeError(
@@ -501,6 +529,10 @@ class GeminiRuntimeStepResult:
     @property
     def executive_state_summary(self) -> dict[str, Any]:
         return {
+            "posture": public_posture_for_task_mode(
+                self.executive_state.mode_and_gating.task_mode
+            ),
+            "anti_thrash_state": self.executive_state.control_allocation.anti_thrash_state,
             "mode_tag": self.executive_state.mode_and_gating.mode_tag,
             "family_mask": sorted(
                 family.value for family in self.executive_state.mode_and_gating.family_mask
@@ -544,6 +576,13 @@ class GeminiRuntimeStepResult:
     @property
     def executive_policy_view_payload(self) -> dict[str, Any]:
         return self.executive_policy_view.as_payload()
+
+    @property
+    def operator_route_payload(self) -> dict[str, Any]:
+        return build_operator_route_diagnostics(
+            self.operator_task_state,
+            self.operator_route,
+        )
 
 
 def run_gemini_runtime_step(
@@ -619,6 +658,12 @@ def run_gemini_runtime_step(
         continuity_reminders,
     ) = _apply_continuity_update(prior_session, normalized_payload)
     warnings = merge_warnings(warnings, continuity_warnings)
+    consequential_write_pending = bool(normalized_payload.get("externally_consequential"))
+    approval_required = dispatch_decision.lane is not DispatchLane.CHEAP
+    evidence_gap = (
+        consequential_write_pending
+        and _first_concrete_artifact_ref(normalized_payload) is None
+    )
     provisional_session = GeminiRuntimeSession(
         session_id=session_id,
         event_index=prior_session.event_index + 1,
@@ -642,6 +687,17 @@ def run_gemini_runtime_step(
         reminders=continuity_reminders,
     )
     opportunities = _gemini_host_native_opportunities(bound_event)
+    runtime_task_mode = task_mode_for_runtime(
+        dispatch_decision=dispatch_decision,
+        active_track_ref=provisional_session.active_track_ref,
+        pending_goal_refs=provisional_session.pending_goal_refs,
+        continuity_warnings=continuity_warnings,
+        continuity_reminders=continuity_reminders,
+        approval_required=approval_required,
+        evidence_gap=evidence_gap,
+        consequential_write_pending=consequential_write_pending,
+        preservation_active=False,
+    )
     executive_state = build_reference_executive_state(
         bound_event.observation,
         support_snapshot,
@@ -649,6 +705,7 @@ def run_gemini_runtime_step(
         provisional_session,
         opportunities=opportunities,
         audit_intensity=audit_intensity,
+        task_mode=runtime_task_mode,
     )
     selection = select_reference_soft_control(
         executive_state,
@@ -677,7 +734,7 @@ def run_gemini_runtime_step(
         probe_unavailable_reason=(
             executive_state.control_allocation.probe_unavailable_reason
         ),
-        probe_result_class=_probe_result_class(
+        probe_result_class=probe_result_class_for_runtime(
             realized_family=realized_family,
             executive_state=executive_state,
             opportunities=opportunities,
@@ -687,6 +744,14 @@ def run_gemini_runtime_step(
             commitment_result_kind=commitment_result_kind,
         ),
         explainability_profile=executive_state.control_allocation.explainability_profile,
+        anti_thrash_state=executive_state.control_allocation.anti_thrash_state,
+        repetition_target_family=(
+            executive_state.control_allocation.repetition_target_family
+        ),
+        repetition_tax=executive_state.control_allocation.repetition_tax,
+        anti_thrash_reason_tags=(
+            executive_state.control_allocation.anti_thrash_reason_tags
+        ),
     )
     audit_projection = None
     if _should_emit_audit_projection(
@@ -710,7 +775,15 @@ def run_gemini_runtime_step(
         allocation_diagnostics=allocation_diagnostics,
         audit_projection=audit_projection,
     )
-    realization_feedback = ReferenceRealizationFeedback(
+    progress_signal = classify_runtime_progress_signal(
+        dispatch_decision=dispatch_decision,
+        normalized_payload=normalized_payload,
+        commitment_result_kind=commitment_result_kind,
+        prior_session=prior_session,
+        provisional_session=provisional_session,
+    )
+    realization_feedback = build_shared_realization_feedback(
+        task_mode=runtime_task_mode,
         selected_family=selected_family,
         realized_family=realized_family,
         brake_state=brake_state,
@@ -719,7 +792,8 @@ def run_gemini_runtime_step(
         host_friction_tags=tuple(
             sorted(executive_state.control_allocation.host_friction_tags)
         ),
-        probe_result_class=_probe_result_class(
+        progress_signal=progress_signal,
+        probe_result_class=probe_result_class_for_runtime(
             realized_family=realized_family,
             executive_state=executive_state,
             opportunities=opportunities,
@@ -743,34 +817,33 @@ def run_gemini_runtime_step(
         feedback_window=prior_session.feedback_window.append(realization_feedback),
         executive_modulator_memory=prior_session.executive_modulator_memory,
     )
-    consequential_write_pending = bool(normalized_payload.get("externally_consequential"))
-    approval_required = dispatch_decision.lane is not DispatchLane.CHEAP
-    evidence_gap = (
-        consequential_write_pending
-        and _first_concrete_artifact_ref(normalized_payload) is None
+    executive_summary_inputs = build_runtime_executive_signal_summary_inputs(
+        task_mode=runtime_task_mode,
+        executive_state=executive_state,
+        dispatch_decision=dispatch_decision,
+        active_track_ref=provisional_session.active_track_ref,
+        pending_goal_refs=provisional_session.pending_goal_refs,
+        continuity_warnings=continuity_warnings,
+        continuity_reminders=continuity_reminders,
+        approval_required=approval_required,
+        evidence_gap=evidence_gap,
+        consequential_write_pending=consequential_write_pending,
+        prior_failed_before_completion=False,
+        recent_product_failure_class=None,
+        recent_probe_failure_class=recent_probe_failure_class_from_feedback_window(
+            prior_session.feedback_window
+        ),
+        recent_warning_bearing_success_present=recent_warning_bearing_success_present(
+            prior_session.feedback_window,
+            failed_before_completion=False,
+        ),
+        preservation_active=False,
     )
-    executive_signal_summary = build_executive_signal_summary(
-        build_runtime_executive_signal_summary_inputs(
-            executive_state=executive_state,
-            dispatch_decision=dispatch_decision,
-            active_track_ref=provisional_session.active_track_ref,
-            pending_goal_refs=provisional_session.pending_goal_refs,
-            continuity_warnings=continuity_warnings,
-            continuity_reminders=continuity_reminders,
-            approval_required=approval_required,
-            evidence_gap=evidence_gap,
-            consequential_write_pending=consequential_write_pending,
-            prior_failed_before_completion=False,
-            recent_product_failure_class=None,
-            recent_probe_failure_class=recent_probe_failure_class_from_feedback_window(
-                prior_session.feedback_window
-            ),
-            recent_warning_bearing_success_present=recent_warning_bearing_success_present(
-                prior_session.feedback_window,
-                failed_before_completion=False,
-            ),
-            preservation_active=False,
-        )
+    executive_signal_summary = build_executive_signal_summary(executive_summary_inputs)
+    assert_runtime_posture_alignment(
+        runtime_task_mode=runtime_task_mode,
+        executive_state=executive_state,
+        executive_signal_summary=executive_signal_summary,
     )
     executive_modulator_update = update_executive_modulators(
         executive_signal_summary,
@@ -780,6 +853,15 @@ def run_gemini_runtime_step(
         executive_signal_summary,
         executive_modulator_update.state,
         chi_t=selection.chi_t,
+    )
+    operator_task_state = build_runtime_operator_task_state(
+        summary_inputs=executive_summary_inputs,
+        executive_state=executive_state,
+    )
+    operator_route = select_operator_route_with_policy(
+        operator_task_state,
+        executive_modulator_update,
+        executive_policy_view,
     )
     closure_reason_tags_value = closure_reason_tags(
         active_track_ref=provisional_session.active_track_ref,
@@ -807,6 +889,14 @@ def run_gemini_runtime_step(
             executive_modulator_update.next_memory
         ),
     )
+    post_feedback_window_summary = summarize_reference_feedback_window(
+        updated_session.feedback_window
+    )
+    assert_post_step_feedback_window_alignment(
+        feedback_window=updated_session.feedback_window,
+        last_realization_feedback=updated_session.last_realization_feedback,
+        feedback_window_summary=post_feedback_window_summary,
+    )
     return GeminiRuntimeStepResult(
         event_index=updated_session.event_index,
         bound_event=bound_event,
@@ -816,10 +906,12 @@ def run_gemini_runtime_step(
         realized_family=realized_family,
         brake_state=brake_state,
         control_ledger=control_ledger,
-        feedback_window_summary=prior_feedback_window_summary,
+        feedback_window_summary=post_feedback_window_summary,
         executive_signal_summary=executive_signal_summary,
         executive_modulator_state=executive_modulator_update.state,
         executive_policy_view=executive_policy_view,
+        operator_task_state=operator_task_state,
+        operator_route=operator_route,
         closure_required=closure_required,
         closure_reason_tags=closure_reason_tags_value,
         warnings=warnings,
@@ -1398,24 +1490,6 @@ def _primary_reason(warnings: tuple[str, ...]) -> str | None:
     return warnings[0] if warnings else None
 
 
-def _probe_result_class(
-    *,
-    realized_family: SoftControlFamily,
-    executive_state: ReferenceExecutiveState,
-    opportunities: tuple[HostNativeOpportunity, ...],
-) -> str | None:
-    if realized_family not in executive_state.control_allocation.probe_backed_families:
-        return None
-    for opportunity in opportunities:
-        if (
-            opportunity.realizable
-            and opportunity.probe_contract is not None
-            and opportunity.probe_contract.allowed_family is realized_family
-        ):
-            return "succeeded"
-    return None
-
-
 _ALLOCATION_DIAGNOSTICS_KEYS = (
     "alpha_t",
     "activation_threshold",
@@ -1427,7 +1501,14 @@ _ALLOCATION_DIAGNOSTICS_KEYS = (
     "probe_result_class",
     "verification_state",
     "explainability_profile",
+    "anti_thrash",
     "scores",
+)
+_ANTI_THRASH_DIAGNOSTICS_KEYS = (
+    "state",
+    "target_family",
+    "repetition_tax",
+    "reason_tags",
 )
 _AUDIT_PROJECTION_KEYS = (
     "selected_family",
@@ -1508,6 +1589,41 @@ def _validate_allocation_diagnostics_payload(payload: dict[str, Any], label: str
     for key in ("verification_state", "explainability_profile"):
         if not (isinstance(payload[key], str) and payload[key].strip()):
             raise ValueError(f"{label}.{key} must be non-empty after trimming.")
+    anti_thrash = payload["anti_thrash"]
+    if not isinstance(anti_thrash, dict):
+        actual_type = type(anti_thrash).__name__
+        raise TypeError(f"{label}.anti_thrash must be dict[str, Any], got {actual_type}.")
+    if tuple(anti_thrash) != _ANTI_THRASH_DIAGNOSTICS_KEYS:
+        raise ValueError(
+            f"{label}.anti_thrash must preserve the locked key order {_ANTI_THRASH_DIAGNOSTICS_KEYS!r}."
+        )
+    if anti_thrash["state"] not in {"inactive", "taxed", "reopened"}:
+        raise ValueError(
+            f"{label}.anti_thrash.state must be one of ['inactive', 'taxed', 'reopened']."
+        )
+    target_family = anti_thrash["target_family"]
+    if target_family is not None and not (
+        isinstance(target_family, str) and target_family.strip()
+    ):
+        raise ValueError(
+            f"{label}.anti_thrash.target_family must be non-empty after trimming when provided."
+        )
+    repetition_tax = anti_thrash["repetition_tax"]
+    if isinstance(repetition_tax, bool) or not isinstance(repetition_tax, (int, float)):
+        actual_type = type(repetition_tax).__name__
+        raise TypeError(
+            f"{label}.anti_thrash.repetition_tax must be numeric, got {actual_type}."
+        )
+    reason_tags = anti_thrash["reason_tags"]
+    if not isinstance(reason_tags, list):
+        actual_type = type(reason_tags).__name__
+        raise TypeError(
+            f"{label}.anti_thrash.reason_tags must be list[str], got {actual_type}."
+        )
+    if any(not (isinstance(tag, str) and tag.strip()) for tag in reason_tags):
+        raise ValueError(
+            f"{label}.anti_thrash.reason_tags must contain only non-empty values after trimming."
+        )
     scores = payload["scores"]
     if not isinstance(scores, list):
         actual_type = type(scores).__name__
@@ -1619,6 +1735,12 @@ def _copy_allocation_diagnostics_payload(payload: dict[str, Any]) -> dict[str, A
         "probe_result_class": payload["probe_result_class"],
         "verification_state": payload["verification_state"],
         "explainability_profile": payload["explainability_profile"],
+        "anti_thrash": {
+            "state": payload["anti_thrash"]["state"],
+            "target_family": payload["anti_thrash"]["target_family"],
+            "repetition_tax": payload["anti_thrash"]["repetition_tax"],
+            "reason_tags": list(payload["anti_thrash"]["reason_tags"]),
+        },
         "scores": [
             {
                 "family": score["family"],

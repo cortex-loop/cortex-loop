@@ -50,9 +50,9 @@ Answering stance:
 
 ## Current Focus
 
-- Current tracked train: `persistent-support-memory-distillation`
-- Active quality/risk focus: The bounded AUX cross-host shadow surface still earns `full_cross_host`, now under stricter branch-linked continuity law: Claude, Gemini, and reference all hold host-local and reference-projected branch continuity without generic pending-goal debt, generic reminder language, or generic `resume*` wake cues acting as branch-specific anchors; lawful non-reference host distinction remains explicit, and negative counterexamples stay stable. The next highest-leverage gap is durable support-memory distillation: store raw support-side episodes, publish compact removable priors offline, and keep `Q_mem = 0` on shipping and conformance lanes until live re-entry is separately earned.
-- Next product train after the current focus: `inspect-execute-resume-posture-control`
+- Current tracked train: `asymmetric-error-cost-and-tonic-hysteresis`
+- Active quality/risk focus: The bounded AUX shadow surface still earns `full_cross_host`, durable support-memory distillation remains explicit and removable, posture-sensitive online control is S-tier closed on the live runtime path, anti-thrash remains an exact-family unchanged-condition repetition tax with bounded reopen, bounded live support-memory re-entry is S-tier closed on both the reference and OpenAI explicit-publication lanes with host-match, family-scoped invalidation, transcript-only raw `/v1/events`, locked `memory_reentry` diagnostics, shared conformance parity, and explicit proof that runtime use stays publication-only without AUX persistence or distillation, evidence-progress/probe calibration is S-tier closed with typed evidence-progress and continuity-progress classification across all four hosts, public `feedback_window_summary` reflecting the just-realized step, real probe success distinguished from family-local bounded unsupported surfaces, and stream-only churn stays visible but non-epistemic, and bounded host/tool reliability and affordance priors are now earned on the reference and OpenAI explicit-publication live lanes as explicit, offline-distilled, capability-scoped score modifiers carried on `OfflineSupportPublication.host_reliability_prior` with a single-site six-tag `q_mem-host:*` surface, stale-negative reopen under fresh success, locked `memory_reentry.selected_family_reliability_delta` diagnostics, and Claude/Gemini kept shadow-proof only. The active train is now asymmetric error cost and tonic hysteresis: price false-positive versus false-negative checking costs and add bounded guarded entry/exit hysteresis so high-risk flows become more verification-seeking, low-risk flows stay compact, and churn reduces without sticky guardedness, default-on caution, or a new memory carrier. Shipping and conformance default lanes still keep `Q_mem = 0`, default shipping behavior remains memory-off when no publication is supplied, live memory remains publication-only and score-only, raw SQLite episodes remain support-side only, route blockedness remains non-sovereign, and reliability priors bias score pricing only — never route, posture, selection, or brake law, and never harden into host myths or hidden policy forks.
+- Next product train after the current focus: `asymmetric-error-cost-and-tonic-hysteresis`
 
 ## Bio-To-Code Matrix
 
@@ -62,10 +62,10 @@ Answering stance:
 | Bounded correction and verified-work preservation | Error repair without losing the main task thread | `landed` | `15` | `cortex/runtime`, `cortex/sre`, `cortex/hosts/openai` | `tests/product` | Keep preservation-state repair stable while support-side experiments stay removable and off the shipping critical path. |
 | Uncertainty handling and brake | Hesitation and uncertainty-aware inhibition | `landed` | `13` | `cortex/sre` | `tests/product`, `tests/experimental` | Keep reference-derived brake and uncertainty control stable while AUX remains advisory and runtime-off-by-default. |
 | Branch continuity, suspend/resume, and truthful closure | Working memory across interruptions plus truthful closure | `landed` | `15` | `cortex/sre`, `cortex/hosts/openai` | `tests/product`, `tests/conformance` | Keep suspend/resume and truthful closure stable now that host-local branch continuity is repaired across Claude, Gemini, and reference; branch-local continuity may reopen only from branch-linked cues, and any future support memory must remain explicit, optional, and non-binding. |
-| Intervention pricing versus neutrality | Deciding when to intervene, stay neutral, or stop | `landed` | `10` | `cortex/sre`, `cortex/aux` | `tests/product`, `tests/experimental` | Hold calibrated intervention pricing stable now that the bounded AUX shadow surface earns `full_cross_host`; keep bounded audit compact on the shipped lane while any future support-memory lift stays explicit and separately earned. |
+| Intervention pricing versus neutrality | Deciding when to intervene, stay neutral, or stop | `landed` | `10` | `cortex/sre`, `cortex/aux` | `tests/product`, `tests/experimental` | Hold calibrated intervention pricing stable now that posture-sensitive online control is S-tier closed and anti-thrash is landed on the live runtime path: posture truth is single-owned, the 6-axis route geometry stays bounded, `visible_burden_sensitivity` is surfaced as a separate utility scalar, unchanged-condition repetition is taxed only at the exact-family level with bounded reopen, and any later live memory re-entry must remain explicit, bounded, and separately earned. |
 | Blocker surfacing and goal-debt management | Noticing unresolved blockers and unfinished intentions | `landed` | `10` | `cortex/sre`, `cortex/hosts/openai`, `cortex/hosts/claude`, `cortex/hosts/gemini`, `cortex/hosts/reference` | `tests/product`, `tests/conformance` | Keep typed goal-debt and closure-pressure state stable across hosts while support-side augmentation remains explicit and non-sovereign. |
 | Multi-host executive continuity | One executive across different brains and contexts | `landed` | `15` | `cortex/hosts/openai`, `cortex/hosts/claude`, `cortex/hosts/gemini`, `cortex/hosts/reference` | `tests/product`, `tests/conformance` | Hold one Cortex law across OpenAI, Claude, Gemini, and reference without flattening host-native realization. |
-| Offline consolidation and support geometry | Sleep-like consolidation and support systems | `landed` | `10` | `cortex/aux` | `tests/experimental`, `tests/archive`, `tests/conformance` | Keep offline publication explicit, removable, and non-sovereign now that the bounded AUX shadow surface earns `full_cross_host`; the next leverage is durable support-memory distillation rather than widening live `Q_mem`. |
+| Offline consolidation and support geometry | Sleep-like consolidation and support systems | `landed` | `10` | `cortex/aux` | `tests/experimental`, `tests/archive`, `tests/conformance` | Keep durable support-memory distillation explicit, removable, and non-sovereign now that reference and OpenAI both earn explicit publication-shaped live re-entry with host-match, family-scoped invalidation, publication-only runtime-boundary proof, S-tier evidence/probe calibration, and bounded host/tool reliability and affordance priors that bias control pricing through host-scoped, capability-scoped score modifiers only, decay under fresh success, and never harden into host-wide superstition, cross-host projected reuse, or default-on memory; default no-publication paths must stay memory-off, raw SQLite episodes must stay support-side only, live `Q_mem` stays zero on shipping and conformance default lanes, and the next active leverage now moves outside this skill into asymmetric error cost and tonic hysteresis in the shared executive. |
 
 ## Math To Code Rules
 
@@ -155,19 +155,20 @@ Workflow gates marked `required` are contractual gates checked by `repo_workflow
 
 ## Next Product Train
 
-- Train: `inspect-execute-resume-posture-control`
-- Surface: `product + conformance + internal`
-- Executive benefit: Make Cortex use a compact inspect/execute/resume posture so verification intensity, read allowance, and stop thresholds match task state instead of one control profile everywhere.
-- Why now: Cross-host host-local continuity and the broader AUX shadow claim are now earned, so persistent support-memory distillation is the active train and posture-sensitive online control is the next queued leverage after durable support priors exist.
-- Primary metric: `inspect-heavy tasks request more verification, execute tasks stay compact, and resume tasks favor continuity reconstruction without posture churn`
-- Guardrail: `no large mode taxonomy, no host-specific posture semantics, and no verbosity inflation`
-- Kill rule: `cut any seam that adds posture bureaucracy without improving task-state-sensitive control allocation`
+- Train: `asymmetric-error-cost-and-tonic-hysteresis`
+- Surface: `product + conformance`
+- Executive benefit: Make control allocation better balanced over time by pricing false-positive versus false-negative checking costs and adding bounded guarded entry/exit hysteresis.
+- Why now: Now that host-scoped reliability priors are earned, Cortex can safely sharpen risk-sensitive control allocation and tonic hysteresis without building on noisy host friction or progress denominators.
+- Primary metric: `high-risk flows become more verification-seeking, low-risk flows stay compact, and hysteresis reduces churn without sticky guardedness`
+- Guardrail: `keep thresholds bounded and profile-derived, add no new memory carrier or host-specific policy fork, and do not let caution become default-on or moral theater`
+- Kill rule: `cut the seam if it only works by making Cortex stickily guarded, broadly overchecking, or materially suppressing productive low-risk momentum`
 
 ## Where To Work Next
 
 - Keep the bounded audit surface compact and truthful on the shipped lane: selected versus realized family, uncertainty, threshold, delta, verification, and probe truth only.
 - Keep the no-spend live evidence current and explicit: fast conformance is green, the deeper directionality and host-native watchlists are refreshed, and non-shipping auth or env caveats must stay explicit instead of silently stale.
-- Keep the next AUX memory seam explicit and removable now that bounded cross-host shadow acceptance is earned under branch-linked continuity cues only: durable support-memory distillation may publish compact priors offline, but live `Q_mem` stays zero on shipping and conformance lanes until separate proof earns re-entry.
+- Keep posture, AUX memory, and host-reliability law explicit and removable now that posture-sensitive online control is S-tier closed, anti-thrash is landed, bounded live support-memory re-entry is earned on reference and the OpenAI operator lane, evidence/probe calibration is S-tier closed, and host/tool reliability and affordance priors are earned as bounded host-scoped, capability-scoped score modifiers on `OfflineSupportPublication.host_reliability_prior` with a single-site six-tag `q_mem-host:*` surface and stale-negative reopen under fresh success: inspect is live on cheap non-debt events, resume stays continuity-conditioned, posture truth is single-owned, the route state vector stays the bounded 6-axis geometry term while `visible_burden_sensitivity` remains a separate utility scalar, route truth stays bounded and non-sovereign, unchanged-condition repetition is taxed only at the exact-family level with bounded reopen, public feedback-window summaries reflect the just-realized step, family-local bounded probe limits surface as `unsupported` without leaking host-global unavailability across families, stream-only churn stays non-epistemic, live memory stays score-only and host-matched through explicit publication, live `Q_mem` stays zero on shipping and conformance default lanes, raw SQLite episodes stay support-side only, reliability priors bias score pricing only and never route, posture, selection, or brake law, and Claude and Gemini remain shadow-proof only for reliability promotion.
+- Work the active asymmetric error cost and tonic hysteresis seam as bounded, profile-derived thresholds only: high-risk flows should become more verification-seeking, low-risk flows should stay compact, and bounded guarded entry/exit hysteresis should reduce churn without creating sticky guardedness, default-on caution, a new memory carrier, or a host-specific policy fork.
 
 ## Canonical Proof
 
@@ -209,9 +210,15 @@ Workflow gates marked `required` are contractual gates checked by `repo_workflow
 - Do not let archived docs or train notes act as live truth.
 - Do not treat lab or evaluation output as product progress unless shipped runtime behavior changes.
 - Do not hide Claude or Gemini behind backlog language when reporting conformance.
-- Do not route raw AUX persistence or future SQLite episodes directly into runtime action selection; only distilled removable publications may re-enter.
+- Do not route raw AUX SQLite episodes directly into runtime action selection; only distilled removable publications may re-enter.
+- Do not let a generic second unrelated episode smuggle a positive AUX prior into retrieval, branch, memory-summary, or uncertainty output.
+- Do not let anti-thrash become a global retry ban or a creativity collapse.
+- Do not silently widen the 6-axis operator-route geometry vector or hide utility inputs that affect route selection.
 - Do not introduce host-specific policy forks to force donor coherence.
 - Do not let generic pending-goal debt, plain-English reminder text, or generic `resume*` wake cues act as branch-specific continuity anchors.
+- Do not let live memory re-entry drift into cross-host projected reuse, background AUX loading, raw `/v1/events` transcript widening, or default-on operator behavior.
+- Do not let stale branch or redirect replay survive fresh contradiction or degradation on the same active resume context.
+- Do not let host/tool reliability priors harden into host-wide superstition, cross-host projected reuse, default-on memory behavior, hidden policy forks, or route/posture/brake law drift; reliability must stay explicit, host-matched, capability-scoped, contradiction-first, and removable, biasing score pricing only.
 
 ## Active Docs
 

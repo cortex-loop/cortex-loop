@@ -2,12 +2,18 @@
 
 from __future__ import annotations
 
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, dataclass, field
 from numbers import Real
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from .operator_routing import OperatorTaskMode
+
+
+def _default_task_mode() -> "OperatorTaskMode":
+    from .operator_routing import OperatorTaskMode
+
+    return OperatorTaskMode.EXECUTE
 
 
 @dataclass(frozen=True, slots=True)
@@ -70,9 +76,25 @@ class ExecutiveSignalSummary:
     continuity_demand: float
     novelty_pressure: float
     verification_conflict_pressure: float
+    task_mode: "OperatorTaskMode" = field(default_factory=_default_task_mode)
 
     def __post_init__(self) -> None:
-        for field_name in asdict(self):
+        from .operator_routing import OperatorTaskMode
+
+        if not isinstance(self.task_mode, OperatorTaskMode):
+            actual_type = type(self.task_mode).__name__
+            raise TypeError(
+                "ExecutiveSignalSummary.task_mode must be OperatorTaskMode, "
+                f"got {actual_type}."
+            )
+        for field_name in (
+            "uncertainty",
+            "repeated_failure_pressure",
+            "quota_pressure",
+            "continuity_demand",
+            "novelty_pressure",
+            "verification_conflict_pressure",
+        ):
             value = getattr(self, field_name)
             if not isinstance(value, Real):
                 actual_type = type(value).__name__
@@ -98,6 +120,7 @@ class ExecutiveSignalSummary:
         return {
             field_name: round(float(value), 4)
             for field_name, value in asdict(self).items()
+            if field_name != "task_mode"
         }
 
 
@@ -150,6 +173,7 @@ def build_executive_signal_summary(
         else 0.0
     )
     return ExecutiveSignalSummary(
+        task_mode=inputs.task_mode,
         uncertainty=float(inputs.uncertainty),
         repeated_failure_pressure=float(repeated_failure_pressure),
         quota_pressure=float(inputs.quota_pressure),

@@ -208,6 +208,74 @@ EXPECTATIONS = (
         ),
     ),
     AuxCorrespondenceExpectation(
+        row_label="SupportEventSignature",
+        module_path="cortex.aux.persistence",
+        symbol_name="SupportEventSignature",
+        promised_surfaces=(
+            PromisedTestSurface(
+                test_file="tests/experimental/test_aux_persistence.py",
+                test_names=(
+                    "test_episode_from_support_snapshot_excludes_payload_text_and_metadata_values",
+                ),
+            ),
+        ),
+    ),
+    AuxCorrespondenceExpectation(
+        row_label="SupportMemoryEpisode",
+        module_path="cortex.aux.persistence",
+        symbol_name="SupportMemoryEpisode",
+        promised_surfaces=(
+            PromisedTestSurface(
+                test_file="tests/experimental/test_aux_persistence.py",
+                test_names=(
+                    "test_episode_from_support_snapshot_excludes_payload_text_and_metadata_values",
+                ),
+            ),
+        ),
+    ),
+    AuxCorrespondenceExpectation(
+        row_label="SqliteSupportMemoryStore",
+        module_path="cortex.aux.persistence",
+        symbol_name="SqliteSupportMemoryStore",
+        promised_surfaces=(
+            PromisedTestSurface(
+                test_file="tests/experimental/test_aux_persistence.py",
+                test_names=(
+                    "test_sqlite_support_memory_store_round_trips_dedupes_and_filters",
+                    "test_sqlite_support_memory_store_memory_path_persists_within_store_instance",
+                ),
+            ),
+        ),
+    ),
+    AuxCorrespondenceExpectation(
+        row_label="episode_from_support_snapshot",
+        module_path="cortex.aux.persistence",
+        symbol_name="episode_from_support_snapshot",
+        promised_surfaces=(
+            PromisedTestSurface(
+                test_file="tests/experimental/test_aux_persistence.py",
+                test_names=(
+                    "test_episode_from_support_snapshot_excludes_payload_text_and_metadata_values",
+                ),
+            ),
+        ),
+    ),
+    AuxCorrespondenceExpectation(
+        row_label="distill_offline_support_publication",
+        module_path="cortex.aux.distillation",
+        symbol_name="distill_offline_support_publication",
+        promised_surfaces=(
+            PromisedTestSurface(
+                test_file="tests/experimental/test_aux_distillation.py",
+                test_names=(
+                    "test_distillation_requires_two_supporting_episodes_for_positive_priors",
+                    "test_distillation_suppresses_positive_priors_for_burden_heavy_window",
+                    "test_distillation_empty_window_keeps_baseline_inactive",
+                ),
+            ),
+        ),
+    ),
+    AuxCorrespondenceExpectation(
         row_label="build_support_memory_prior_appendix",
         module_path="cortex.aux.support_priors",
         symbol_name="build_support_memory_prior_appendix",
@@ -374,15 +442,19 @@ def test_aux_correspondence_text_keeps_geometry_lift_and_publication_rows_explic
     assert "| time-separated AUX corpus casewise result over offline publication, augmented target, support priors, geometry, lift, and failure carriage | `AuxCorpusCaseResult` |" in correspondence_text
     assert "| time-separated AUX corpus aggregate metric summary over improved/regressed case accounting and fixed-metric coverage | `AuxCorpusMetricSummary` |" in correspondence_text
     assert "| time-separated AUX corpus result over casewise lift, aggregate metric passes, burden totals, and retention | `AuxCorpusEvaluationResult` |" in correspondence_text
-    assert "| time-separated AUX corpus runner over source publication and later target evaluation | `evaluate_aux_support_corpus()` |" in correspondence_text
+    assert "| time-separated AUX corpus runner over store-distilled source publication and later target evaluation | `evaluate_aux_support_corpus()` |" in correspondence_text
     assert "| deterministic support-only offline publication builder over lawful public support state | `build_offline_support_publication()` |" in correspondence_text
+    assert "| bounded event-signature projection over support trace events without payload-value storage | `SupportEventSignature` |" in correspondence_text
+    assert "| bounded durable support-memory episode over support snapshot projection plus privacy-preserving reminder and ref normalization | `SupportMemoryEpisode` + `episode_from_support_snapshot()` |" in correspondence_text
+    assert "| AUX-only SQLite episode store over bounded support-memory episodes with deterministic connection ownership, UTC-normalized/backfilled time filtering, and fingerprint dedupe | `SqliteSupportMemoryStore` |" in correspondence_text
+    assert "| host-scoped offline distillation over bounded stored episodes back into explicit offline publication with pattern-scoped positive support and contradiction/burden suppression | `distill_offline_support_publication()` |" in correspondence_text
     assert "| AUX-to-SRE explicit support-memory prior appendix over support-only offline publication plus shadow-only host/tool reliability weighting and a reliability-disabled comparison path | `build_support_memory_prior_appendix()` |" in correspondence_text
     assert "| `W_t^{pub+} = Augment^{aux}(W_t^{pub}, M_t^{offline})` support-only offline publication contract and augmentation-only re-entry | `OfflineSupportPublication` + `augment_snapshot_with_offline_publication()` |" in correspondence_text
     assert "| reference-only replay scenario over explicit AUX-owned offline publication, later target snapshot, and fixed preferred-family acceptance | `AuxReferenceReplayScenario` |" in correspondence_text
     assert "| reference-only replay case result over merged publication, explicit support priors, baseline vs replay scorecards, and fixed failure labels | `AuxReferenceReplayCaseResult` |" in correspondence_text
     assert "| reference-only replay aggregate result over preferred-family lift, bounded selected-family correction count, stable negative cases, and truthful cut reasons | `AuxReferenceReplayEvaluationResult` |" in correspondence_text
-    assert "| reference-only replay runner over `OfflineSupportPublication -> augment_snapshot_with_offline_publication() -> build_support_memory_prior_appendix() -> select_reference_soft_control(memory_priors=...)` | `evaluate_aux_reference_q_mem_replay()` |" in correspondence_text
+    assert "| reference-only replay runner over `SqliteSupportMemoryStore -> distill_offline_support_publication() -> augment_snapshot_with_offline_publication() -> build_support_memory_prior_appendix() -> select_reference_soft_control(memory_priors=...)` | `evaluate_aux_reference_q_mem_replay()` |" in correspondence_text
     assert "| cross-host shadow scenario over explicit AUX-owned offline publication, later target snapshot, canonical host name, fixed scenario class, and typed continuity basis for branch disambiguation | `AuxCrossHostShadowScenario` |" in correspondence_text
     assert "| cross-host shadow case result over merged publication, explicit support priors, full vs reliability-disabled vs removal comparisons, host signature truth, continuity-basis truth, deltas, and fixed failure labels | `AuxCrossHostShadowCaseResult` |" in correspondence_text
     assert "| cross-host shadow aggregate result over per-host weighted-family coverage, stable negative cases, distinct-signature-class truth, explicit non-reference evidence mode, blocker classification, and explicit claim mode | `AuxCrossHostShadowEvaluationResult` |" in correspondence_text
-    assert "| cross-host shadow runner over `OfflineSupportPublication -> augment_snapshot_with_offline_publication() -> build_support_memory_prior_appendix(full|reliability-disabled) -> select_reference_soft_control(memory_priors=...)` with host-local vs reference-projected branch disambiguation, branch-linked continuity-anchor truth only, contradiction-first invalidation, removal reversion, lawful trace-structural host distinction, and explicit claim-mode truth for either narrowed or full cross-host acceptance | `evaluate_aux_cross_host_shadow()` |" in correspondence_text
+    assert "| cross-host shadow runner over `SqliteSupportMemoryStore -> distill_offline_support_publication() -> augment_snapshot_with_offline_publication() -> build_support_memory_prior_appendix(full|reliability-disabled) -> select_reference_soft_control(memory_priors=...)` with host-local vs reference-projected branch disambiguation, branch-linked continuity-anchor truth only, contradiction-first invalidation, removal reversion, lawful trace-structural host distinction, and explicit claim-mode truth for either narrowed or full cross-host acceptance | `evaluate_aux_cross_host_shadow()` |" in correspondence_text

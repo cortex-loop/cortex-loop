@@ -7,6 +7,13 @@ import subprocess
 import sys
 from pathlib import Path
 
+from cortex.aux.publication import (
+    OfflineSupportPublication,
+    offline_support_publication_as_payload,
+)
+from cortex.core.envelopes import MetadataField
+from cortex.hosts.openai.runtime import run_openai_runtime_step
+from tests.experimental._aux_test_support import make_support_ref
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
 FIXTURE_PATH = (
@@ -29,6 +36,7 @@ EXPECTED_RECORD_KEYS = (
     "executive_signal_summary",
     "executive_modulator_state",
     "executive_policy_view",
+    "operator_route",
     "closure_required",
     "closure_reason_tags",
     "commitment_result_kind",
@@ -74,10 +82,18 @@ def test_openai_runtime_cli_reads_documented_raw_events_and_preserves_host_name(
     assert records[0]["realized_family"] == "seek-context"
     assert records[0]["brake_state"] == "guarded"
     assert records[0]["control_ledger"]["budget_band"] == "low"
-    assert records[0]["feedback_window_summary"]["window_size"] == 0
+    assert records[0]["feedback_window_summary"]["window_size"] == 1
+    assert records[0]["feedback_window_summary"]["recent_evidence_progress_class"] == (
+        "token-stream"
+    )
+    assert records[0]["feedback_window_summary"]["recent_continuity_progress_class"] == (
+        "none"
+    )
     assert records[0]["executive_signal_summary"]["quota_pressure"] == 0.25
-    assert records[0]["executive_modulator_state"]["explore_gain"] == 0.3375
-    assert records[0]["executive_policy_view"]["switch_margin"] == 0.053
+    assert records[0]["executive_modulator_state"]["explore_gain"] == 0.4375
+    assert records[0]["executive_policy_view"]["switch_margin"] == 0.045
+    assert records[0]["executive_state"]["posture"] == "inspect"
+    assert records[0]["operator_route"]["route_profile"] == "inspect_light"
     assert records[0]["closure_required"] is False
     assert records[0]["closure_reason_tags"] == []
     assert records[-1]["journal"]["confirmed_artifact_refs"] == ["oa-artifact-1"]
@@ -120,6 +136,71 @@ def test_openai_runtime_cli_rejects_canonical_cortex_event_names() -> None:
     assert (
         completed.stderr
         == "openai_cli error: line 1: event_name must be a raw OpenAI host event name, not a canonical Cortex event name.\n"
+    )
+
+
+def test_openai_runtime_cli_offline_publication_file_matches_direct_runtime_projection(
+    tmp_path: Path,
+) -> None:
+    publication_path = tmp_path / "offline-publication.json"
+    publication_path.write_text(
+        json.dumps(offline_support_publication_as_payload(_offline_publication())),
+        encoding="utf-8",
+    )
+    input_text = (
+        '{"event_name":"response.output_text.delta","payload":{"session_id":"oa-memory-cli","response_id":"resp-memory-cli","delta":"hello"}}\n'
+    )
+
+    completed = _run_openai_cli(
+        "--offline-publication-file",
+        str(publication_path),
+        input_text=input_text,
+    )
+
+    assert completed.returncode == 0, completed.stderr
+    records = _parse_jsonl_output(completed.stdout)
+    direct = run_openai_runtime_step(
+        "response.output_text.delta",
+        {
+            "session_id": "oa-memory-cli",
+            "response_id": "resp-memory-cli",
+            "delta": "hello",
+        },
+        offline_publication=_offline_publication(),
+    )
+
+    assert records[0]["control_ledger"]["allocation_diagnostics"]["memory_reentry"] == direct.control_ledger_summary["allocation_diagnostics"]["memory_reentry"]
+
+
+def test_openai_runtime_cli_rejects_malformed_offline_publication_file(tmp_path: Path) -> None:
+    publication_path = tmp_path / "broken-publication.json"
+    publication_path.write_text("{not-json\n", encoding="utf-8")
+
+    completed = _run_openai_cli(
+        "--offline-publication-file",
+        str(publication_path),
+        input_text='{"event_name":"response.output_text.delta","payload":{"session_id":"oa-broken-publication","response_id":"resp-broken-publication","delta":"hello"}}\n',
+    )
+
+    assert completed.returncode == 1
+    assert completed.stdout == ""
+    assert completed.stderr.startswith("openai_cli error: offline publication file")
+
+
+def test_openai_runtime_cli_rejects_missing_offline_publication_file(tmp_path: Path) -> None:
+    publication_path = tmp_path / "missing-publication.json"
+
+    completed = _run_openai_cli(
+        "--offline-publication-file",
+        str(publication_path),
+        input_text='{"event_name":"response.output_text.delta","payload":{"session_id":"oa-missing-publication","response_id":"resp-missing-publication","delta":"hello"}}\n',
+    )
+
+    assert completed.returncode == 1
+    assert completed.stdout == ""
+    assert (
+        completed.stderr
+        == f"openai_cli error: offline publication file {publication_path} does not exist.\n"
     )
 
 
@@ -181,3 +262,15 @@ def _parse_jsonl_output(stdout: str) -> list[dict[str, object]]:
 
 def _parse_session_artifact(path: Path) -> dict[str, object]:
     return json.loads(path.read_text(encoding="utf-8"))
+
+
+def _offline_publication() -> OfflineSupportPublication:
+    return OfflineSupportPublication(
+        contradiction_summary_refs=(make_support_ref("contradiction", "host-degraded"),),
+        publication_tags=frozenset({"aux/offline-publication"}),
+        notes=("support-side only",),
+        metadata=(
+            MetadataField("source", "aux/distillation"),
+            MetadataField("host_name", "openai"),
+        ),
+    )

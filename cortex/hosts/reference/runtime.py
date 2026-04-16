@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field
+from math import isfinite
 from typing import TYPE_CHECKING, Any
 
 from cortex.core.certification import certify_commitment
@@ -37,11 +38,19 @@ from cortex.drivers._commitment_common import (
 from cortex.drivers.reference_host import BoundReferenceHostEvent, observe_reference_host_event
 from cortex.drivers.reference_host_commitment import bind_reference_host_candidate
 from cortex.hosts._executive_closure import (
+    assert_post_step_feedback_window_alignment,
+    assert_runtime_posture_alignment,
+    build_shared_realization_feedback,
+    build_runtime_operator_task_state,
     build_runtime_executive_signal_summary_inputs,
     canonicalize_executive_modulator_memory,
+    classify_runtime_progress_signal,
     closure_reason_tags,
+    probe_result_class_for_runtime,
+    public_posture_for_task_mode,
     recent_probe_failure_class as recent_probe_failure_class_from_feedback_window,
     recent_warning_bearing_success_present,
+    task_mode_for_runtime,
     verification_state_for_runtime,
 )
 from cortex.sre.allocation import (
@@ -61,6 +70,12 @@ from cortex.sre.modulators import (
     ExecutiveModulatorMemory,
     ExecutiveModulatorState,
     update_executive_modulators,
+)
+from cortex.sre.operator_routing import (
+    OperatorRouteDecision,
+    OperatorTaskState,
+    build_operator_route_diagnostics,
+    select_operator_route_with_policy,
 )
 from cortex.sre.opportunities import BoundedProbeContract, HostNativeOpportunity
 from cortex.sre.policy_view import ExecutivePolicyView, build_executive_policy_view
@@ -384,6 +399,8 @@ class ReferenceRuntimeStepResult:
             verification_intensity=0.30,
         )
     )
+    operator_task_state: OperatorTaskState | None = None
+    operator_route: OperatorRouteDecision | None = None
     closure_required: bool = False
     closure_reason_tags: tuple[str, ...] = field(default_factory=tuple)
     warnings: tuple[str, ...] = field(default_factory=tuple)
@@ -465,6 +482,18 @@ class ReferenceRuntimeStepResult:
                 "ReferenceRuntimeStepResult.executive_policy_view must be "
                 f"ExecutivePolicyView, got {actual_type}."
             )
+        if not isinstance(self.operator_task_state, OperatorTaskState):
+            actual_type = type(self.operator_task_state).__name__
+            raise TypeError(
+                "ReferenceRuntimeStepResult.operator_task_state must be "
+                f"OperatorTaskState, got {actual_type}."
+            )
+        if not isinstance(self.operator_route, OperatorRouteDecision):
+            actual_type = type(self.operator_route).__name__
+            raise TypeError(
+                "ReferenceRuntimeStepResult.operator_route must be "
+                f"OperatorRouteDecision, got {actual_type}."
+            )
         if not isinstance(self.closure_required, bool):
             actual_type = type(self.closure_required).__name__
             raise TypeError(
@@ -508,6 +537,10 @@ class ReferenceRuntimeStepResult:
     @property
     def executive_state_summary(self) -> dict[str, Any]:
         return {
+            "posture": public_posture_for_task_mode(
+                self.executive_state.mode_and_gating.task_mode
+            ),
+            "anti_thrash_state": self.executive_state.control_allocation.anti_thrash_state,
             "mode_tag": self.executive_state.mode_and_gating.mode_tag,
             "family_mask": sorted(
                 family.value for family in self.executive_state.mode_and_gating.family_mask
@@ -552,6 +585,13 @@ class ReferenceRuntimeStepResult:
     def executive_policy_view_payload(self) -> dict[str, Any]:
         return self.executive_policy_view.as_payload()
 
+    @property
+    def operator_route_payload(self) -> dict[str, Any]:
+        return build_operator_route_diagnostics(
+            self.operator_task_state,
+            self.operator_route,
+        )
+
 
 def run_reference_runtime_step(
     raw_event_name: str,
@@ -588,6 +628,12 @@ def run_reference_runtime_step(
     warnings = merge_warnings(warnings, session_id_warnings)
     prior_feedback_window_summary = summarize_reference_feedback_window(
         prior_session.feedback_window
+    )
+    consequential_write_pending = bool(normalized_payload.get("externally_consequential"))
+    approval_required = dispatch_decision.lane is not DispatchLane.CHEAP
+    evidence_gap = (
+        consequential_write_pending
+        and _first_concrete_artifact_ref(normalized_payload) is None
     )
 
     candidate = None
@@ -649,6 +695,17 @@ def run_reference_runtime_step(
         reminders=continuity_reminders,
     )
     opportunities = _reference_host_native_opportunities(bound_event)
+    runtime_task_mode = task_mode_for_runtime(
+        dispatch_decision=dispatch_decision,
+        active_track_ref=provisional_session.active_track_ref,
+        pending_goal_refs=provisional_session.pending_goal_refs,
+        continuity_warnings=continuity_warnings,
+        continuity_reminders=continuity_reminders,
+        approval_required=approval_required,
+        evidence_gap=evidence_gap,
+        consequential_write_pending=consequential_write_pending,
+        preservation_active=False,
+    )
     executive_state = build_reference_executive_state(
         bound_event.observation,
         support_snapshot,
@@ -659,6 +716,10 @@ def run_reference_runtime_step(
         provisional_session,
         opportunities=opportunities,
         audit_intensity=audit_intensity,
+        task_mode=runtime_task_mode,
+    )
+    recent_probe_failure_class = recent_probe_failure_class_from_feedback_window(
+        prior_session.feedback_window
     )
     memory_priors = None
     if offline_publication is not None:
@@ -666,7 +727,10 @@ def run_reference_runtime_step(
             OfflineSupportPublication as _OfflineSupportPublication,
             augment_snapshot_with_offline_publication,
         )
-        from cortex.aux.support_priors import build_support_memory_prior_appendix
+        from cortex.aux.support_priors import (
+            build_support_memory_prior_appendix,
+            filter_live_support_memory_prior_appendix,
+        )
 
         if not isinstance(offline_publication, _OfflineSupportPublication):
             actual_type = type(offline_publication).__name__
@@ -674,11 +738,17 @@ def run_reference_runtime_step(
                 "run_reference_runtime_step.offline_publication must be "
                 f"OfflineSupportPublication | None, got {actual_type}."
             )
-        memory_priors = build_support_memory_prior_appendix(
-            augment_snapshot_with_offline_publication(
-                support_snapshot,
-                offline_publication,
-            )
+        memory_priors = filter_live_support_memory_prior_appendix(
+            support_snapshot,
+            build_support_memory_prior_appendix(
+                augment_snapshot_with_offline_publication(
+                    support_snapshot,
+                    offline_publication,
+                ),
+                recent_probe_failure_class=recent_probe_failure_class,
+            ),
+            target_host_name="reference",
+            recent_probe_failure_class=recent_probe_failure_class,
         )
     selection = select_reference_soft_control(
         executive_state,
@@ -712,7 +782,7 @@ def run_reference_runtime_step(
         probe_unavailable_reason=(
             executive_state.control_allocation.probe_unavailable_reason
         ),
-        probe_result_class=_probe_result_class(
+        probe_result_class=probe_result_class_for_runtime(
             realized_family=realized_family,
             executive_state=executive_state,
             opportunities=opportunities,
@@ -722,8 +792,37 @@ def run_reference_runtime_step(
             commitment_result_kind=commitment_result_kind,
         ),
         explainability_profile=executive_state.control_allocation.explainability_profile,
+        anti_thrash_state=executive_state.control_allocation.anti_thrash_state,
+        repetition_target_family=(
+            executive_state.control_allocation.repetition_target_family
+        ),
+        repetition_tax=executive_state.control_allocation.repetition_tax,
+        anti_thrash_reason_tags=(
+            executive_state.control_allocation.anti_thrash_reason_tags
+        ),
         mediation_payload=selection.mediation_finalization.as_payload(),
     )
+    allocation_diagnostics = {
+        "alpha_t": allocation_diagnostics["alpha_t"],
+        "activation_threshold": allocation_diagnostics["activation_threshold"],
+        "selected_delta_over_neutral": allocation_diagnostics["selected_delta_over_neutral"],
+        "chi_t": allocation_diagnostics["chi_t"],
+        "rejected_cheaper_families": allocation_diagnostics["rejected_cheaper_families"],
+        "probe_path_state": allocation_diagnostics["probe_path_state"],
+        "probe_unavailable_reason": allocation_diagnostics["probe_unavailable_reason"],
+        "probe_result_class": allocation_diagnostics["probe_result_class"],
+        "verification_state": allocation_diagnostics["verification_state"],
+        "explainability_profile": allocation_diagnostics["explainability_profile"],
+        "anti_thrash": allocation_diagnostics["anti_thrash"],
+        "memory_reentry": _build_memory_reentry_diagnostics_payload(
+            memory_priors,
+            selected_family=selected_family,
+            allocation_diagnostics=allocation_diagnostics,
+            target_host_name="reference",
+        ),
+        "scores": allocation_diagnostics["scores"],
+        "mediation": allocation_diagnostics["mediation"],
+    }
     audit_projection = None
     if _should_emit_audit_projection(
         executive_state.control_allocation.explainability_profile
@@ -746,7 +845,15 @@ def run_reference_runtime_step(
         allocation_diagnostics=allocation_diagnostics,
         audit_projection=audit_projection,
     )
-    realization_feedback = ReferenceRealizationFeedback(
+    progress_signal = classify_runtime_progress_signal(
+        dispatch_decision=dispatch_decision,
+        normalized_payload=normalized_payload,
+        commitment_result_kind=commitment_result_kind,
+        prior_session=prior_session,
+        provisional_session=provisional_session,
+    )
+    realization_feedback = build_shared_realization_feedback(
+        task_mode=runtime_task_mode,
         selected_family=selected_family,
         realized_family=realized_family,
         brake_state=brake_state,
@@ -755,16 +862,8 @@ def run_reference_runtime_step(
         host_friction_tags=tuple(
             sorted(executive_state.control_allocation.host_friction_tags)
         ),
-        evidence_state_moved=_evidence_state_moved(
-            dispatch_decision=dispatch_decision,
-            normalized_payload=normalized_payload,
-            commitment_result_kind=commitment_result_kind,
-        ),
-        continuity_improved=_continuity_improved(
-            prior_session=prior_session,
-            provisional_session=provisional_session,
-        ),
-        probe_result_class=_probe_result_class(
+        progress_signal=progress_signal,
+        probe_result_class=probe_result_class_for_runtime(
             realized_family=realized_family,
             executive_state=executive_state,
             opportunities=opportunities,
@@ -788,34 +887,31 @@ def run_reference_runtime_step(
         feedback_window=prior_session.feedback_window.append(realization_feedback),
         executive_modulator_memory=prior_session.executive_modulator_memory,
     )
-    consequential_write_pending = bool(normalized_payload.get("externally_consequential"))
-    approval_required = dispatch_decision.lane is not DispatchLane.CHEAP
-    evidence_gap = (
-        consequential_write_pending
-        and _first_concrete_artifact_ref(normalized_payload) is None
+    executive_summary_inputs = build_runtime_executive_signal_summary_inputs(
+        task_mode=runtime_task_mode,
+        executive_state=executive_state,
+        dispatch_decision=dispatch_decision,
+        active_track_ref=provisional_session.active_track_ref,
+        pending_goal_refs=provisional_session.pending_goal_refs,
+        continuity_warnings=continuity_warnings,
+        continuity_reminders=continuity_reminders,
+        approval_required=approval_required,
+        evidence_gap=evidence_gap,
+        consequential_write_pending=consequential_write_pending,
+        prior_failed_before_completion=False,
+        recent_product_failure_class=None,
+        recent_probe_failure_class=recent_probe_failure_class,
+        recent_warning_bearing_success_present=recent_warning_bearing_success_present(
+            prior_session.feedback_window,
+            failed_before_completion=False,
+        ),
+        preservation_active=False,
     )
-    executive_signal_summary = build_executive_signal_summary(
-        build_runtime_executive_signal_summary_inputs(
-            executive_state=executive_state,
-            dispatch_decision=dispatch_decision,
-            active_track_ref=provisional_session.active_track_ref,
-            pending_goal_refs=provisional_session.pending_goal_refs,
-            continuity_warnings=continuity_warnings,
-            continuity_reminders=continuity_reminders,
-            approval_required=approval_required,
-            evidence_gap=evidence_gap,
-            consequential_write_pending=consequential_write_pending,
-            prior_failed_before_completion=False,
-            recent_product_failure_class=None,
-            recent_probe_failure_class=recent_probe_failure_class_from_feedback_window(
-                prior_session.feedback_window
-            ),
-            recent_warning_bearing_success_present=recent_warning_bearing_success_present(
-                prior_session.feedback_window,
-                failed_before_completion=False,
-            ),
-            preservation_active=False,
-        )
+    executive_signal_summary = build_executive_signal_summary(executive_summary_inputs)
+    assert_runtime_posture_alignment(
+        runtime_task_mode=runtime_task_mode,
+        executive_state=executive_state,
+        executive_signal_summary=executive_signal_summary,
     )
     executive_modulator_update = update_executive_modulators(
         executive_signal_summary,
@@ -825,6 +921,15 @@ def run_reference_runtime_step(
         executive_signal_summary,
         executive_modulator_update.state,
         chi_t=selection.chi_t,
+    )
+    operator_task_state = build_runtime_operator_task_state(
+        summary_inputs=executive_summary_inputs,
+        executive_state=executive_state,
+    )
+    operator_route = select_operator_route_with_policy(
+        operator_task_state,
+        executive_modulator_update,
+        executive_policy_view,
     )
     closure_reason_tags_value = closure_reason_tags(
         active_track_ref=provisional_session.active_track_ref,
@@ -852,6 +957,14 @@ def run_reference_runtime_step(
             executive_modulator_update.next_memory
         ),
     )
+    post_feedback_window_summary = summarize_reference_feedback_window(
+        updated_session.feedback_window
+    )
+    assert_post_step_feedback_window_alignment(
+        feedback_window=updated_session.feedback_window,
+        last_realization_feedback=updated_session.last_realization_feedback,
+        feedback_window_summary=post_feedback_window_summary,
+    )
     return ReferenceRuntimeStepResult(
         event_index=updated_session.event_index,
         bound_event=bound_event,
@@ -861,10 +974,12 @@ def run_reference_runtime_step(
         realized_family=realized_family,
         brake_state=brake_state,
         control_ledger=control_ledger,
-        feedback_window_summary=prior_feedback_window_summary,
+        feedback_window_summary=post_feedback_window_summary,
         executive_signal_summary=executive_signal_summary,
         executive_modulator_state=executive_modulator_update.state,
         executive_policy_view=executive_policy_view,
+        operator_task_state=operator_task_state,
+        operator_route=operator_route,
         closure_required=closure_required,
         closure_reason_tags=closure_reason_tags_value,
         warnings=warnings,
@@ -1477,60 +1592,6 @@ def _has_realizable_seek_context_opportunity(
     )
 
 
-def _probe_result_class(
-    *,
-    realized_family: SoftControlFamily,
-    executive_state: ReferenceExecutiveState,
-    opportunities: tuple[HostNativeOpportunity, ...],
-) -> str | None:
-    if realized_family not in executive_state.control_allocation.probe_backed_families:
-        return None
-    for opportunity in opportunities:
-        if (
-            opportunity.realizable
-            and opportunity.probe_contract is not None
-            and opportunity.probe_contract.allowed_family is realized_family
-        ):
-            return "succeeded"
-    return None
-
-
-def _evidence_state_moved(
-    *,
-    dispatch_decision: DispatchDecision,
-    normalized_payload: Mapping[str, Any],
-    commitment_result_kind: str | None,
-) -> bool:
-    return bool(
-        commitment_result_kind is not None
-        or dispatch_decision.lane is not DispatchLane.CHEAP
-        or _first_concrete_artifact_ref(normalized_payload) is not None
-        or _as_non_empty_string(normalized_payload.get("external_record_ref")) is not None
-        or _as_non_empty_string(normalized_payload.get("candidate_id")) is not None
-    )
-
-
-def _continuity_improved(
-    *,
-    prior_session: ReferenceRuntimeSession,
-    provisional_session: ReferenceRuntimeSession,
-) -> bool:
-    prior_open_branch_count = sum(
-        1 for branch_ref in prior_session.branch_registry if branch_ref != "main"
-    )
-    next_open_branch_count = sum(
-        1 for branch_ref in provisional_session.branch_registry if branch_ref != "main"
-    )
-    return bool(
-        next_open_branch_count < prior_open_branch_count
-        or len(provisional_session.pending_goal_refs) < len(prior_session.pending_goal_refs)
-        or (
-            prior_session.active_track_ref != "main"
-            and provisional_session.active_track_ref == "main"
-        )
-    )
-
-
 def _primary_reason(warnings: tuple[str, ...]) -> str | None:
     for warning in warnings:
         if warning.startswith(
@@ -1538,6 +1599,123 @@ def _primary_reason(warnings: tuple[str, ...]) -> str | None:
         ):
             return warning
     return warnings[0] if warnings else None
+
+
+def _metadata_str_from_fields(
+    metadata: tuple[Any, ...],
+    key: str,
+) -> str | None:
+    for field in metadata:
+        if getattr(field, "key", None) != key:
+            continue
+        value = getattr(field, "value", None)
+        if value is None:
+            return None
+        return str(value)
+    return None
+
+
+def _score_memory_value(
+    allocation_diagnostics: dict[str, Any],
+    family: SoftControlFamily,
+) -> float:
+    for score in allocation_diagnostics["scores"]:
+        if score["family"] == family.value:
+            return float(score["memory_score"])
+    raise KeyError(f"Missing allocation score for family {family.value!r}.")
+
+
+def _support_ref_payload(
+    memory_priors: Any,
+    selected_family: SoftControlFamily,
+) -> list[dict[str, str]]:
+    if memory_priors is None:
+        return []
+    score = memory_priors.score_for(selected_family)
+    if float(score.score) <= 0.0:
+        return []
+    return [
+        {
+            "reference_kind": reference.reference_kind,
+            "reference_id": reference.reference_id,
+        }
+        for reference in score.support_refs
+    ]
+
+
+def _build_memory_reentry_diagnostics_payload(
+    memory_priors: Any,
+    *,
+    selected_family: SoftControlFamily,
+    allocation_diagnostics: dict[str, Any],
+    target_host_name: str,
+) -> dict[str, Any]:
+    if memory_priors is None:
+        return {
+            "state": "inactive",
+            "source_host_name": None,
+            "target_host_name": target_host_name,
+            "eligible_families": [],
+            "invalidated_families": [],
+            "selected_family_support_refs": [],
+            "selected_family_memory_score": 0.0,
+            "selected_family_reliability_delta": 0.0,
+        }
+
+    state = _metadata_str_from_fields(memory_priors.metadata, "live_reentry_state")
+    source_host_name = _metadata_str_from_fields(
+        memory_priors.metadata,
+        "live_source_host_name",
+    )
+    invalidated_families = sorted(
+        score.family.value
+        for score in memory_priors.scores
+        if any(
+            tag.startswith("q_mem-live:invalidated:")
+            for tag in score.reason_tags
+        )
+    )
+    return {
+        "state": state or ("active" if memory_priors.active else "inactive"),
+        "source_host_name": source_host_name,
+        "target_host_name": target_host_name,
+        "eligible_families": [
+            SoftControlFamily.CHECK.value,
+            SoftControlFamily.SEEK_CONTEXT.value,
+            SoftControlFamily.BRANCH.value,
+            SoftControlFamily.REDIRECT.value,
+        ],
+        "invalidated_families": invalidated_families,
+        "selected_family_support_refs": _support_ref_payload(
+            memory_priors,
+            selected_family,
+        ),
+        "selected_family_memory_score": _score_memory_value(
+            allocation_diagnostics,
+            selected_family,
+        ),
+        "selected_family_reliability_delta": _reliability_delta_for_family(
+            memory_priors,
+            selected_family,
+        ),
+    }
+
+
+def _reliability_delta_for_family(
+    memory_priors: Any,
+    family: SoftControlFamily,
+) -> float:
+    for score in memory_priors.scores:
+        if score.family is not family:
+            continue
+        for field in score.metadata:
+            if field.key != "q_mem-host:reliability_delta":
+                continue
+            try:
+                return float(field.value)
+            except (TypeError, ValueError):
+                return 0.0
+    return 0.0
 
 
 _ALLOCATION_DIAGNOSTICS_KEYS = (
@@ -1551,9 +1729,28 @@ _ALLOCATION_DIAGNOSTICS_KEYS = (
     "probe_result_class",
     "verification_state",
     "explainability_profile",
+    "anti_thrash",
+    "memory_reentry",
     "scores",
     "mediation",
 )
+_ANTI_THRASH_DIAGNOSTICS_KEYS = (
+    "state",
+    "target_family",
+    "repetition_tax",
+    "reason_tags",
+)
+_MEMORY_REENTRY_DIAGNOSTICS_KEYS = (
+    "state",
+    "source_host_name",
+    "target_host_name",
+    "eligible_families",
+    "invalidated_families",
+    "selected_family_support_refs",
+    "selected_family_memory_score",
+    "selected_family_reliability_delta",
+)
+_MEMORY_REENTRY_REF_KEYS = ("reference_kind", "reference_id")
 _ALLOCATION_SCORE_KEYS = (
     "family",
     "online_score",
@@ -1643,6 +1840,125 @@ def _validate_allocation_diagnostics_payload(payload: dict[str, Any], label: str
         value = payload[key]
         if not (isinstance(value, str) and value.strip()):
             raise ValueError(f"{label}.{key} must be non-empty after trimming.")
+    anti_thrash = payload["anti_thrash"]
+    if not isinstance(anti_thrash, dict):
+        actual_type = type(anti_thrash).__name__
+        raise TypeError(f"{label}.anti_thrash must be dict[str, Any], got {actual_type}.")
+    if tuple(anti_thrash) != _ANTI_THRASH_DIAGNOSTICS_KEYS:
+        raise ValueError(
+            f"{label}.anti_thrash must preserve the locked key order {_ANTI_THRASH_DIAGNOSTICS_KEYS!r}."
+        )
+    if anti_thrash["state"] not in {"inactive", "taxed", "reopened"}:
+        raise ValueError(
+            f"{label}.anti_thrash.state must be one of ['inactive', 'taxed', 'reopened']."
+        )
+    target_family = anti_thrash["target_family"]
+    if target_family is not None and not (
+        isinstance(target_family, str) and target_family.strip()
+    ):
+        raise ValueError(
+            f"{label}.anti_thrash.target_family must be non-empty after trimming when provided."
+        )
+    repetition_tax = anti_thrash["repetition_tax"]
+    if isinstance(repetition_tax, bool) or not isinstance(repetition_tax, (int, float)):
+        actual_type = type(repetition_tax).__name__
+        raise TypeError(
+            f"{label}.anti_thrash.repetition_tax must be numeric, got {actual_type}."
+        )
+    reason_tags = anti_thrash["reason_tags"]
+    if not isinstance(reason_tags, list):
+        actual_type = type(reason_tags).__name__
+        raise TypeError(
+            f"{label}.anti_thrash.reason_tags must be list[str], got {actual_type}."
+        )
+    if any(not (isinstance(tag, str) and tag.strip()) for tag in reason_tags):
+        raise ValueError(
+            f"{label}.anti_thrash.reason_tags must contain only non-empty values after trimming."
+        )
+    memory_reentry = payload["memory_reentry"]
+    if not isinstance(memory_reentry, dict):
+        actual_type = type(memory_reentry).__name__
+        raise TypeError(
+            f"{label}.memory_reentry must be dict[str, Any], got {actual_type}."
+        )
+    if tuple(memory_reentry) != _MEMORY_REENTRY_DIAGNOSTICS_KEYS:
+        raise ValueError(
+            f"{label}.memory_reentry must preserve the locked key order "
+            f"{_MEMORY_REENTRY_DIAGNOSTICS_KEYS!r}."
+        )
+    if memory_reentry["state"] not in {"inactive", "active", "host-mismatch"}:
+        raise ValueError(
+            f"{label}.memory_reentry.state must be one of ['active', 'host-mismatch', 'inactive']."
+        )
+    source_host_name = memory_reentry["source_host_name"]
+    if source_host_name is not None and not (
+        isinstance(source_host_name, str) and source_host_name.strip()
+    ):
+        raise ValueError(
+            f"{label}.memory_reentry.source_host_name must be non-empty after trimming when provided."
+        )
+    target_host_name = memory_reentry["target_host_name"]
+    if not (isinstance(target_host_name, str) and target_host_name.strip()):
+        raise ValueError(
+            f"{label}.memory_reentry.target_host_name must be non-empty after trimming."
+        )
+    for key in ("eligible_families", "invalidated_families"):
+        value = memory_reentry[key]
+        if not isinstance(value, list):
+            actual_type = type(value).__name__
+            raise TypeError(
+                f"{label}.memory_reentry.{key} must be list[str], got {actual_type}."
+            )
+        if any(not (isinstance(entry, str) and entry.strip()) for entry in value):
+            raise ValueError(
+                f"{label}.memory_reentry.{key} must contain only non-empty strings."
+            )
+    selected_family_support_refs = memory_reentry["selected_family_support_refs"]
+    if not isinstance(selected_family_support_refs, list):
+        actual_type = type(selected_family_support_refs).__name__
+        raise TypeError(
+            f"{label}.memory_reentry.selected_family_support_refs must be list[dict[str, str]], got {actual_type}."
+        )
+    for index, reference_payload in enumerate(selected_family_support_refs):
+        reference_label = f"{label}.memory_reentry.selected_family_support_refs[{index}]"
+        if not isinstance(reference_payload, dict):
+            actual_type = type(reference_payload).__name__
+            raise TypeError(
+                f"{reference_label} must be dict[str, str], got {actual_type}."
+            )
+        if tuple(reference_payload) != _MEMORY_REENTRY_REF_KEYS:
+            raise ValueError(
+                f"{reference_label} must preserve the locked key order "
+                f"{_MEMORY_REENTRY_REF_KEYS!r}."
+            )
+        for ref_key in _MEMORY_REENTRY_REF_KEYS:
+            ref_value = reference_payload[ref_key]
+            if not (isinstance(ref_value, str) and ref_value.strip()):
+                raise ValueError(
+                    f"{reference_label}.{ref_key} must be non-empty after trimming."
+                )
+    selected_family_memory_score = memory_reentry["selected_family_memory_score"]
+    if isinstance(selected_family_memory_score, bool) or not isinstance(
+        selected_family_memory_score,
+        (int, float),
+    ):
+        actual_type = type(selected_family_memory_score).__name__
+        raise TypeError(
+            f"{label}.memory_reentry.selected_family_memory_score must be numeric, got {actual_type}."
+        )
+    selected_family_reliability_delta = memory_reentry["selected_family_reliability_delta"]
+    if isinstance(selected_family_reliability_delta, bool) or not isinstance(
+        selected_family_reliability_delta,
+        (int, float),
+    ):
+        actual_type = type(selected_family_reliability_delta).__name__
+        raise TypeError(
+            f"{label}.memory_reentry.selected_family_reliability_delta must be numeric, got {actual_type}."
+        )
+    if not isfinite(float(selected_family_reliability_delta)):
+        raise ValueError(
+            f"{label}.memory_reentry.selected_family_reliability_delta must be finite."
+        )
     scores = payload["scores"]
     if not isinstance(scores, list):
         actual_type = type(scores).__name__
@@ -1805,6 +2121,32 @@ def _copy_allocation_diagnostics_payload(payload: dict[str, Any]) -> dict[str, A
         "probe_result_class": payload["probe_result_class"],
         "verification_state": payload["verification_state"],
         "explainability_profile": payload["explainability_profile"],
+        "anti_thrash": {
+            "state": payload["anti_thrash"]["state"],
+            "target_family": payload["anti_thrash"]["target_family"],
+            "repetition_tax": payload["anti_thrash"]["repetition_tax"],
+            "reason_tags": list(payload["anti_thrash"]["reason_tags"]),
+        },
+        "memory_reentry": {
+            "state": payload["memory_reentry"]["state"],
+            "source_host_name": payload["memory_reentry"]["source_host_name"],
+            "target_host_name": payload["memory_reentry"]["target_host_name"],
+            "eligible_families": list(payload["memory_reentry"]["eligible_families"]),
+            "invalidated_families": list(payload["memory_reentry"]["invalidated_families"]),
+            "selected_family_support_refs": [
+                {
+                    "reference_kind": reference["reference_kind"],
+                    "reference_id": reference["reference_id"],
+                }
+                for reference in payload["memory_reentry"]["selected_family_support_refs"]
+            ],
+            "selected_family_memory_score": payload["memory_reentry"][
+                "selected_family_memory_score"
+            ],
+            "selected_family_reliability_delta": payload["memory_reentry"][
+                "selected_family_reliability_delta"
+            ],
+        },
         "scores": [
             {
                 "family": score["family"],

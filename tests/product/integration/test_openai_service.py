@@ -1,7 +1,6 @@
 """Integration tests for the loopback OpenAI service shell."""
 
 from __future__ import annotations
-
 from pathlib import Path
 
 from cortex.hosts.openai.runtime import OpenAIRuntimeSession
@@ -100,6 +99,44 @@ def test_openai_service_rejects_canonical_wrapper_and_mixed_records() -> None:
 
         assert mixed_status == 400
         assert "wrapper and mixed wrapper/transcript" in mixed_payload["error"]
+
+
+def test_openai_service_rejects_offline_publication_baggage_on_raw_transcript_ingress() -> None:
+    with run_openai_service() as service:
+        status_code, payload = service.request(
+            "POST",
+            "/v1/events",
+            {
+                "type": "response.output_text.delta",
+                "session_id": "oa-bad",
+                "response_id": "resp-1",
+                "delta": "hello",
+                "offline_publication": {"unexpected": True},
+            },
+        )
+
+    assert status_code == 400
+    assert "must not include response-stream control keys" in payload["error"]
+    assert "offline_publication" in payload["error"]
+
+
+def test_openai_service_rejects_request_baggage_on_raw_transcript_ingress() -> None:
+    with run_openai_service() as service:
+        status_code, payload = service.request(
+            "POST",
+            "/v1/events",
+            {
+                "type": "response.output_text.delta",
+                "session_id": "oa-bad",
+                "response_id": "resp-1",
+                "delta": "hello",
+                "request": {"model": "gpt-5.4"},
+            },
+        )
+
+    assert status_code == 400
+    assert "must not include response-stream control keys" in payload["error"]
+    assert "request" in payload["error"]
 
 
 def test_openai_service_unknown_path_and_wrong_method_return_json_errors() -> None:

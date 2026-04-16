@@ -313,6 +313,30 @@ def test_evaluate_aux_cross_host_shadow_validates_input_shape(
         evaluate_aux_cross_host_shadow(value)  # type: ignore[arg-type]
 
 
+def test_aux_cross_host_shadow_fresh_contradiction_scenario_emits_current_contradiction_tag() -> None:
+    result = evaluate_aux_cross_host_shadow(make_aux_cross_host_shadow_corpus())
+    invalidation_cases = [
+        case
+        for case in result.case_results
+        if case.scenario_class == "fresh_contradiction_invalidation"
+    ]
+
+    assert invalidation_cases
+    for case in invalidation_cases:
+        assert case.contradiction_invalidated_prior is True
+        preferred_reason_tags = _preferred_score(case)["reason_tags"]
+        assert "q_mem-host:current-contradiction-invalidated" in preferred_reason_tags
+        assert "q_mem-host:reliability-active" not in preferred_reason_tags
+
+
+def test_aux_cross_host_shadow_distilled_publications_carry_reliability_prior_for_non_empty_scenarios() -> None:
+    result = evaluate_aux_cross_host_shadow(make_aux_cross_host_shadow_corpus())
+
+    for case in result.case_results:
+        assert case.publication.host_reliability_prior is not None
+        assert case.publication.host_reliability_prior.ttl_hours > 0
+
+
 def _preferred_score(case_result: AuxCrossHostShadowCaseResult) -> dict[str, object]:
     for score in case_result.replay_scorecard.scores:
         if score.family is case_result.preferred_family:

@@ -13,6 +13,7 @@ from cortex.sre.feedback import (
     summarize_reference_feedback_window,
 )
 from cortex.sre.families import SoftControlFamily
+from cortex.sre.operator_routing import OperatorTaskMode
 
 
 def test_reference_realization_feedback_window_starts_empty() -> None:
@@ -93,8 +94,12 @@ def test_summarize_reference_feedback_window_reports_zero_pressure_for_clean_win
         override_count=0,
         latched_count=0,
         clean_success_streak=3,
+        meaningful_evidence_progress_count=0,
+        stream_only_progress_count=0,
         goal_progress_floor=0.0,
         degradation_pressure_bonus=0,
+        recent_evidence_progress_class=None,
+        recent_continuity_progress_class=None,
         sustained_spike_flags=(),
     )
 
@@ -171,6 +176,118 @@ def test_summarize_reference_feedback_window_reports_mixed_rejection_and_overrid
         "prior-enforcement-override",
         "sustained-feedback-disruption",
     )
+
+
+def test_summarize_reference_feedback_window_counts_same_context_retry_only_for_repeated_signed_feedback() -> None:
+    summary = summarize_reference_feedback_window(
+        ReferenceRealizationFeedbackWindow(
+            entries=(
+                ReferenceRealizationFeedback(
+                    selected_family=SoftControlFamily.CHECK,
+                    realized_family=SoftControlFamily.CHECK,
+                    brake_state=BrakeState.GUARDED,
+                    task_mode=OperatorTaskMode.INSPECT,
+                    host_friction_tags=("capability-view-missing",),
+                    evidence_state_moved=False,
+                    continuity_improved=False,
+                ),
+                ReferenceRealizationFeedback(
+                    selected_family=SoftControlFamily.CHECK,
+                    realized_family=SoftControlFamily.CHECK,
+                    brake_state=BrakeState.GUARDED,
+                    task_mode=OperatorTaskMode.INSPECT,
+                    host_friction_tags=("capability-view-missing",),
+                    evidence_state_moved=False,
+                    continuity_improved=False,
+                ),
+            )
+        )
+    )
+
+    assert summary.same_family_no_progress_count == 1
+    assert summary.same_context_retry_count == 1
+    assert summary.degradation_pressure_bonus == 1
+
+
+def test_summarize_reference_feedback_window_treats_stream_only_output_as_no_progress() -> None:
+    summary = summarize_reference_feedback_window(
+        ReferenceRealizationFeedbackWindow(
+            entries=(
+                ReferenceRealizationFeedback(
+                    selected_family=SoftControlFamily.CHECK,
+                    realized_family=SoftControlFamily.CHECK,
+                    brake_state=BrakeState.GUARDED,
+                    task_mode=OperatorTaskMode.INSPECT,
+                    host_friction_tags=("capability-view-missing",),
+                    evidence_progress_class="token-stream",
+                    continuity_progress_class="none",
+                ),
+                ReferenceRealizationFeedback(
+                    selected_family=SoftControlFamily.CHECK,
+                    realized_family=SoftControlFamily.CHECK,
+                    brake_state=BrakeState.GUARDED,
+                    task_mode=OperatorTaskMode.INSPECT,
+                    host_friction_tags=("capability-view-missing",),
+                    evidence_progress_class="structured-stream",
+                    continuity_progress_class="none",
+                ),
+            )
+        )
+    )
+
+    assert summary.stream_only_progress_count == 2
+    assert summary.same_family_no_progress_count == 1
+    assert summary.same_context_retry_count == 1
+    assert summary.goal_progress_floor == 0.45
+    assert summary.recent_evidence_progress_class == "structured-stream"
+    assert summary.recent_continuity_progress_class == "none"
+
+
+def test_summarize_reference_feedback_window_treats_probe_success_as_productive_progress() -> None:
+    summary = summarize_reference_feedback_window(
+        ReferenceRealizationFeedbackWindow(
+            entries=(
+                ReferenceRealizationFeedback(
+                    selected_family=SoftControlFamily.SEEK_CONTEXT,
+                    realized_family=SoftControlFamily.SEEK_CONTEXT,
+                    brake_state=BrakeState.GUARDED,
+                    task_mode=OperatorTaskMode.INSPECT,
+                    host_friction_tags=("capability-view-missing",),
+                    evidence_progress_class="none",
+                    continuity_progress_class="none",
+                    probe_result_class="succeeded",
+                ),
+                ReferenceRealizationFeedback(
+                    selected_family=SoftControlFamily.SEEK_CONTEXT,
+                    realized_family=SoftControlFamily.SEEK_CONTEXT,
+                    brake_state=BrakeState.GUARDED,
+                    task_mode=OperatorTaskMode.INSPECT,
+                    host_friction_tags=("capability-view-missing",),
+                    evidence_progress_class="none",
+                    continuity_progress_class="none",
+                    probe_result_class="succeeded",
+                ),
+            )
+        )
+    )
+
+    assert summary.same_family_no_progress_count == 0
+    assert summary.same_context_retry_count == 0
+    assert summary.goal_progress_floor == 0.0
+
+
+def test_summarize_reference_feedback_window_does_not_count_unsigned_legacy_feedback_as_same_context_retry() -> None:
+    summary = summarize_reference_feedback_window(
+        ReferenceRealizationFeedbackWindow(
+            entries=(
+                _feedback("clean-a", selected=SoftControlFamily.CHECK),
+                _feedback("clean-b", selected=SoftControlFamily.CHECK),
+            )
+        )
+    )
+
+    assert summary.same_family_no_progress_count == 0
+    assert summary.same_context_retry_count == 0
 
 
 def _feedback(

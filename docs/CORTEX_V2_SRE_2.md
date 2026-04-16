@@ -595,10 +595,13 @@ When the brake is `latched`, the SRE may not choose any family that:
 unless the chosen action is the minimum-burden lawful move that directly reduces the
 dominant uncertainty source that caused the latch.
 
-The currently landed relief action set is limited to `check` and native `seek-context`
-when either is the cheapest lawful route to reduce the dominant uncertainty. A bounded
-branch-resume/inspection move remains a future admissible realization, but it must be
-implemented and separately proved before it becomes active doctrine.
+The currently landed relief action set includes `check`, native `seek-context`, and a
+bounded `inspect` posture on cheap non-debt runtime events when that posture only changes
+verification/read control and does not alter certification or blockedness law. Branch
+resume remains continuity-conditioned and may not be fabricated from generic debt cues.
+On the live runtime path, posture truth must be single-owned: the recovered task mode must
+flow unchanged into bounded executive state, executive summary, and public posture rather
+than being recomputed by host-local heuristics.
 
 ---
 
@@ -762,6 +765,11 @@ Not tunable here:
 - provenance sufficiency,
 - hard boundaries,
 - blockedness law.
+
+The bounded operator-route geometry remains six-dimensional.
+Any additional scalar that affects route utility, such as visible burden sensitivity,
+must stay explicit in diagnostics as a separate bounded input rather than silently
+changing the route geometry or blockedness law.
 
 ### 11.3 Cheap-by-default law
 

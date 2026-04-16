@@ -83,6 +83,7 @@ class HostReliabilityPrior:
     ttl_hours: int = 24
     last_validated_at: str | None = None
     probe_failure_classes: tuple[str, ...] = field(default_factory=tuple)
+    affordance_scope_tags: tuple[str, ...] = field(default_factory=tuple)
 
     def __post_init__(self) -> None:
         for field_name in (
@@ -122,6 +123,16 @@ class HostReliabilityPrior:
             raise ValueError(
                 "HostReliabilityPrior.probe_failure_classes must contain only canonical probe failure classes."
             )
+        if not isinstance(self.affordance_scope_tags, tuple):
+            actual_type = type(self.affordance_scope_tags).__name__
+            raise TypeError(
+                "HostReliabilityPrior.affordance_scope_tags must be tuple[str, ...], "
+                f"got {actual_type}."
+            )
+        _validate_text_values(
+            self.affordance_scope_tags,
+            field_name="HostReliabilityPrior.affordance_scope_tags",
+        )
 
 
 @dataclass(frozen=True, slots=True)

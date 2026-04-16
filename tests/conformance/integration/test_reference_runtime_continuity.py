@@ -51,7 +51,7 @@ def test_reference_runtime_cli_preserves_open_suspend_resume_merge_continuity_in
     assert [
         record["control_ledger"]["allocation_diagnostics"]["activation_threshold"]
         for record in records
-    ] == pytest.approx([0.37, 0.30, 0.29, 0.15])
+    ] == pytest.approx([0.37, 0.26, 0.25, 0.15])
     assert [record["session_summary"]["branch_registry"] for record in records] == [
         ["main", "branch-alpha"],
         ["main", "branch-alpha"],
@@ -75,6 +75,24 @@ def test_reference_runtime_cli_preserves_open_suspend_resume_merge_continuity_in
         "main",
         "branch-alpha",
         "main",
+    ]
+    assert [record["executive_state_summary"]["posture"] for record in records] == [
+        "resume",
+        "resume",
+        "resume",
+        "execute",
+    ]
+    assert [record["operator_route"]["route_profile"] for record in records] == [
+        "continuity_standard",
+        "continuity_standard",
+        "continuity_standard",
+        "execute_standard",
+    ]
+    assert [record["operator_route"]["route_budget"]["allow_resume"] for record in records] == [
+        True,
+        True,
+        True,
+        False,
     ]
     assert [record["executive_state_summary"]["pending_goal_refs"] for record in records] == [
         [],

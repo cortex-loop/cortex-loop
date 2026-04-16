@@ -13,7 +13,11 @@ from cortex.hosts.openai.session_io import (
     read_openai_runtime_session_artifact,
     write_openai_runtime_session_artifact,
 )
+from cortex.sre.brake import BrakeState
+from cortex.sre.feedback import ReferenceRealizationFeedback, ReferenceRealizationFeedbackWindow
+from cortex.sre.families import SoftControlFamily
 from cortex.sre.modulators import ExecutiveModulatorMemory
+from cortex.sre.operator_routing import OperatorTaskMode
 from cortex.sre.preservation import (
     FalsifiedStructure,
     InterventionBudget,
@@ -239,6 +243,38 @@ def test_openai_runtime_session_artifact_canonicalizes_noisy_modulator_memory_va
         "stop_tonic": 0.6,
         "update_tonic": 0.4025,
     }
+
+
+def test_openai_runtime_session_artifact_roundtrips_feedback_task_mode_and_probe_result_class() -> None:
+    feedback = ReferenceRealizationFeedback(
+        selected_family=SoftControlFamily.CHECK,
+        realized_family=SoftControlFamily.CHECK,
+        brake_state=BrakeState.GUARDED,
+        task_mode=OperatorTaskMode.EXECUTE,
+        commitment_result_kind="certified",
+        host_friction_tags=("approval-boundary-present",),
+        evidence_progress_class="artifact",
+        continuity_progress_class="none",
+        probe_result_class="succeeded",
+    )
+    session = OpenAIRuntimeSession(
+        session_id="oa-session-feedback",
+        event_index=1,
+        budget_history=("shell-low",),
+        brake_history=("guarded",),
+        last_selected_family=SoftControlFamily.CHECK,
+        last_commitment_result_summary="certified",
+        last_realization_feedback=feedback,
+        feedback_window=ReferenceRealizationFeedbackWindow(entries=(feedback,)),
+    )
+    payload = build_openai_runtime_session_artifact(session).as_payload()
+
+    restored = parse_openai_runtime_session_artifact(payload)
+    roundtripped = build_openai_runtime_session_artifact(restored).as_payload()
+
+    assert restored.last_realization_feedback == feedback
+    assert restored.feedback_window == ReferenceRealizationFeedbackWindow(entries=(feedback,))
+    assert roundtripped["journal"]["last_realization_feedback"] == feedback.as_summary()
 
 
 def _base_payload() -> dict[str, object]:

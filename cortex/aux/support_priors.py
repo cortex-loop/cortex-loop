@@ -6,13 +6,14 @@ from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 
 from cortex.core.envelopes import MetadataField
-from cortex.core.support import SupportReference
+from cortex.core.support import SupportReference, SupportSnapshot
 from cortex.sre.families import SoftControlFamily
 from cortex.sre.memory_priors import (
     HostReliabilityPrior,
     SupportMemoryPriorAppendix,
     SupportMemoryPriorScore,
 )
+from cortex.sre.opportunities import PROBE_FAILURE_CLASSES
 
 from ._support_match import (
     _dedupe_support_refs,
@@ -21,6 +22,22 @@ from ._support_match import (
     _source_refs_for_retrieval,
 )
 from .augmentation import AugmentedSupportSnapshot
+
+_LIVE_MEMORY_ELIGIBLE_FAMILIES = frozenset(
+    {
+        SoftControlFamily.CHECK,
+        SoftControlFamily.SEEK_CONTEXT,
+        SoftControlFamily.BRANCH,
+        SoftControlFamily.REDIRECT,
+    }
+)
+_LIVE_MEMORY_METADATA_KEYS = frozenset(
+    {
+        "live_reentry_state",
+        "live_source_host_name",
+        "live_target_host_name",
+    }
+)
 
 
 def _clip_unit(value: float) -> float:
@@ -34,12 +51,11 @@ def _clip_prior_score(value: float) -> float:
 @dataclass(frozen=True, slots=True)
 class _HostReliabilityAdjustment:
     weight: float
-    invalidated: bool = False
     ttl_expired: bool = False
 
     @property
     def active(self) -> bool:
-        return self.weight > 0.0 and not self.invalidated and not self.ttl_expired
+        return self.weight > 0.0 and not self.ttl_expired
 
 
 def _refs_by_kind(
@@ -62,6 +78,19 @@ def _metadata_int(
         except (TypeError, ValueError):
             return 0
     return 0
+
+
+def _metadata_str(
+    metadata: tuple[MetadataField, ...],
+    key: str,
+) -> str:
+    for field in metadata:
+        if field.key != key:
+            continue
+        if isinstance(field.value, str):
+            return field.value
+        return str(field.value)
+    return ""
 
 
 def _normalized_candidate(reference: SupportReference) -> SupportReference:
@@ -103,25 +132,37 @@ def _best_match_signal(
 
 
 def _target_branch_refs(snapshot: AugmentedSupportSnapshot) -> tuple[SupportReference, ...]:
+    return _target_branch_refs_for_snapshot(snapshot.core_snapshot)
+
+
+def _target_branch_refs_for_snapshot(
+    snapshot: SupportSnapshot,
+) -> tuple[SupportReference, ...]:
     branch_refs = tuple(
         SupportReference("branch", branch_ref, tags=frozenset({"resume-track"}))
-        for branch_ref in snapshot.core_snapshot.session.branch_registry
+        for branch_ref in snapshot.session.branch_registry
         if branch_ref != "main"
     )
     reminder_refs = tuple(
         SupportReference("reminder", reminder, tags=frozenset({"continuity-reminder"}))
-        for reminder in snapshot.core_snapshot.session.reminders
+        for reminder in snapshot.session.reminders
     )
     goal_refs = tuple(
         SupportReference("goal", goal_ref, tags=frozenset({"pending-goal"}))
-        for goal_ref in snapshot.core_snapshot.session.pending_goal_refs
+        for goal_ref in snapshot.session.pending_goal_refs
     )
     return _dedupe_support_refs(branch_refs + reminder_refs + goal_refs)
 
 
 def _target_contradiction_refs(snapshot: AugmentedSupportSnapshot) -> tuple[SupportReference, ...]:
+    return _target_contradiction_refs_for_snapshot(snapshot.core_snapshot)
+
+
+def _target_contradiction_refs_for_snapshot(
+    snapshot: SupportSnapshot,
+) -> tuple[SupportReference, ...]:
     refs: list[SupportReference] = []
-    for record in snapshot.core_snapshot.trace.degradation_records:
+    for record in snapshot.trace.degradation_records:
         tags = set(record.capability_tags | {record.reason_code})
         for contradiction in record.contradiction_records:
             tags.add(contradiction.source_tag)
@@ -137,12 +178,18 @@ def _target_contradiction_refs(snapshot: AugmentedSupportSnapshot) -> tuple[Supp
 
 
 def _target_uncertainty_refs(snapshot: AugmentedSupportSnapshot) -> tuple[SupportReference, ...]:
+    return _target_uncertainty_refs_for_snapshot(snapshot.core_snapshot)
+
+
+def _target_uncertainty_refs_for_snapshot(
+    snapshot: SupportSnapshot,
+) -> tuple[SupportReference, ...]:
     refs = tuple(
         SupportReference("uncertainty", brake_entry, tags=frozenset({"brake-history"}))
-        for brake_entry in snapshot.core_snapshot.session.brake_history
+        for brake_entry in snapshot.session.brake_history
     ) + tuple(
         SupportReference("wake", receipt.reason_tag, tags=frozenset({"wake-receipt"}))
-        for receipt in snapshot.core_snapshot.trace.wake_receipts
+        for receipt in snapshot.trace.wake_receipts
     )
     return _dedupe_support_refs(refs)
 
@@ -223,9 +270,6 @@ def _host_reliability_adjustment(
         if current_time - last_validated > timedelta(hours=prior.ttl_hours):
             return _HostReliabilityAdjustment(weight=0.0, ttl_expired=True)
 
-    if prior.contradiction_counter > 0 or prior.probe_failure_classes:
-        return _HostReliabilityAdjustment(weight=0.0, invalidated=True)
-
     weight = _clip_unit(
         (0.70 * prior.capability_availability)
         - (0.45 * prior.timeout_rate)
@@ -260,26 +304,69 @@ def _apply_host_reliability_weight(
     reason_tags: frozenset[str],
     profile: SupportMemorySignalProfile,
     reliability_prior: HostReliabilityPrior,
-) -> tuple[float, frozenset[str]]:
+    host_affordance_tags: frozenset[str],
+    current_contradiction_active: bool,
+    recent_probe_failure_class: str | None,
+) -> tuple[float, frozenset[str], float]:
     if family not in {
         SoftControlFamily.BRANCH,
         SoftControlFamily.CHECK,
         SoftControlFamily.SEEK_CONTEXT,
     }:
-        return base_score, reason_tags
+        return base_score, reason_tags, 0.0
 
-    signal_strength = _reliability_signal_for_family(profile, family)
     adjustment = _host_reliability_adjustment(reliability_prior)
     if adjustment.ttl_expired:
-        return base_score, reason_tags | frozenset({"q_mem-host:ttl-expired"})
-    if adjustment.invalidated:
-        return base_score, reason_tags | frozenset({"q_mem-host:contradiction-invalidated"})
+        return (
+            base_score,
+            reason_tags | frozenset({"q_mem-host:ttl-expired"}),
+            0.0,
+        )
+
+    if (
+        family in {SoftControlFamily.CHECK, SoftControlFamily.SEEK_CONTEXT}
+        and reliability_prior.affordance_scope_tags
+        and not (
+            set(host_affordance_tags) & set(reliability_prior.affordance_scope_tags)
+        )
+    ):
+        return (
+            base_score,
+            reason_tags | frozenset({"q_mem-host:affordance-mismatch"}),
+            0.0,
+        )
+
+    if current_contradiction_active:
+        return (
+            base_score,
+            reason_tags | frozenset({"q_mem-host:current-contradiction-invalidated"}),
+            0.0,
+        )
+
+    if (
+        family in {SoftControlFamily.CHECK, SoftControlFamily.SEEK_CONTEXT}
+        and recent_probe_failure_class in PROBE_FAILURE_CLASSES
+    ):
+        return (
+            base_score,
+            reason_tags | frozenset({"q_mem-host:recent-probe-failure-invalidated"}),
+            0.0,
+        )
+
+    signal_strength = _reliability_signal_for_family(profile, family)
     if base_score <= 0.0 or signal_strength <= 0.0 or adjustment.weight <= 0.0:
-        return base_score, reason_tags | frozenset({"q_mem-host:reliability-zeroed"})
+        return base_score, reason_tags, 0.0
 
     reliability_bonus = 0.36 * adjustment.weight * max(signal_strength, 0.20)
     adjusted_score = _clip_prior_score(base_score + reliability_bonus)
-    return adjusted_score, reason_tags | frozenset({"q_mem-host:reliability-active"})
+    delta = adjusted_score - base_score
+    updated_tags = reason_tags | frozenset({"q_mem-host:reliability-active"})
+    if (
+        reliability_prior.contradiction_counter > 0
+        or reliability_prior.probe_failure_classes
+    ):
+        updated_tags = updated_tags | frozenset({"q_mem-host:success-reopened"})
+    return adjusted_score, updated_tags, delta
 
 
 @dataclass(frozen=True, slots=True)
@@ -370,12 +457,23 @@ def _build_signal_profile(snapshot: AugmentedSupportSnapshot) -> SupportMemorySi
         for token in _reference_tokens(reference)
     )
     source_snapshot_count = _metadata_int(appendix.metadata, "source_snapshot_count")
+    source_label = _metadata_str(appendix.metadata, "source")
+    positive_prior_state = _metadata_str(appendix.metadata, "positive_prior_state")
     fanout_penalty = max(0.0, 0.05 * (len(derived_refs) - 4))
-    source_penalty = max(0.0, 0.10 * (source_snapshot_count - 1))
+    source_penalty = 0.0
+    if source_label != "aux/distillation":
+        source_penalty = max(0.0, 0.10 * (source_snapshot_count - 1))
     burden_tag_penalty = 0.15 if _has_token(token_pool, "burden") else 0.0
     drift_tag_penalty = 0.10 if _has_token(token_pool, "drift") else 0.0
+    suppressed_burden_penalty = (
+        0.35 if "burden-heavy" in positive_prior_state else 0.0
+    )
     burden_penalty = _clip_unit(
-        fanout_penalty + source_penalty + burden_tag_penalty + drift_tag_penalty
+        fanout_penalty
+        + source_penalty
+        + burden_tag_penalty
+        + drift_tag_penalty
+        + suppressed_burden_penalty
     )
 
     return SupportMemorySignalProfile(
@@ -409,10 +507,242 @@ def _reason_tags(
     return frozenset(tags)
 
 
+def _replace_live_metadata(
+    metadata: tuple[MetadataField, ...],
+    *,
+    state: str,
+    source_host_name: str,
+    target_host_name: str,
+) -> tuple[MetadataField, ...]:
+    retained = tuple(
+        field for field in metadata if field.key not in _LIVE_MEMORY_METADATA_KEYS
+    )
+    return (
+        MetadataField("live_reentry_state", state),
+        MetadataField("live_source_host_name", source_host_name),
+        MetadataField("live_target_host_name", target_host_name),
+    ) + retained
+
+
+def _support_ref_overlap(
+    source_refs: tuple[SupportReference, ...],
+    candidate_refs: tuple[SupportReference, ...],
+    *,
+    threshold: float = 0.25,
+) -> bool:
+    for source_ref in source_refs:
+        for candidate_ref in candidate_refs:
+            normalized_candidate = _normalized_candidate(candidate_ref)
+            if _match_score(
+                source_ref,
+                normalized_candidate,
+                base_score=0.0,
+            ) >= threshold:
+                return True
+    return False
+
+
+def _live_context_refs_for_family(
+    snapshot: SupportSnapshot,
+    family: SoftControlFamily,
+) -> tuple[SupportReference, ...]:
+    if family is SoftControlFamily.BRANCH:
+        return _target_branch_refs_for_snapshot(snapshot)
+    if family is SoftControlFamily.CHECK:
+        return _dedupe_support_refs(
+            _target_contradiction_refs_for_snapshot(snapshot)
+            + _target_uncertainty_refs_for_snapshot(snapshot)
+        )
+    if family is SoftControlFamily.SEEK_CONTEXT:
+        return _dedupe_support_refs(
+            _source_refs_for_retrieval(snapshot)
+            + _target_uncertainty_refs_for_snapshot(snapshot)
+        )
+    if family is SoftControlFamily.REDIRECT:
+        return _dedupe_support_refs(
+            _target_branch_refs_for_snapshot(snapshot)
+            + _source_refs_for_retrieval(snapshot)
+            + _target_contradiction_refs_for_snapshot(snapshot)
+    )
+    return ()
+
+
+def _live_degradation_invalidation_tag(snapshot: SupportSnapshot) -> str | None:
+    if any(record.contradiction_records for record in snapshot.trace.degradation_records):
+        return "q_mem-live:invalidated:contradiction"
+    if snapshot.trace.degradation_records:
+        return "q_mem-live:invalidated:degradation"
+    return None
+
+
+def _live_resume_context_invalidation_tag(
+    snapshot: SupportSnapshot,
+    score: SupportMemoryPriorScore,
+) -> str | None:
+    if score.family not in {SoftControlFamily.BRANCH, SoftControlFamily.REDIRECT}:
+        return None
+    branch_context_refs = _target_branch_refs_for_snapshot(snapshot)
+    if not branch_context_refs or not _support_ref_overlap(
+        branch_context_refs,
+        score.support_refs,
+    ):
+        return None
+    return _live_degradation_invalidation_tag(snapshot)
+
+
+def _live_reentry_reason_tags(
+    *,
+    snapshot: SupportSnapshot,
+    score: SupportMemoryPriorScore,
+    recent_probe_failure_class: str | None,
+) -> frozenset[str]:
+    tags: set[str] = set()
+    if score.family not in _LIVE_MEMORY_ELIGIBLE_FAMILIES:
+        tags.add("q_mem-live:family-ineligible")
+        return frozenset(tags)
+
+    context_refs = _live_context_refs_for_family(snapshot, score.family)
+    if not context_refs or not _support_ref_overlap(context_refs, score.support_refs):
+        tags.add("q_mem-live:context-miss")
+        return frozenset(tags)
+
+    if "q_mem-host:ttl-expired" in score.reason_tags:
+        tags.add("q_mem-live:invalidated:ttl-expired")
+
+    if (
+        recent_probe_failure_class in PROBE_FAILURE_CLASSES
+        and score.family in {SoftControlFamily.CHECK, SoftControlFamily.SEEK_CONTEXT}
+        and _support_ref_overlap(
+            _target_uncertainty_refs_for_snapshot(snapshot),
+            score.support_refs,
+        )
+    ):
+        tags.add("q_mem-live:invalidated:probe-failure")
+
+    resume_context_invalidation_tag = _live_resume_context_invalidation_tag(
+        snapshot,
+        score,
+    )
+    if resume_context_invalidation_tag is not None:
+        tags.add(resume_context_invalidation_tag)
+
+    if not tags:
+        tags.add("q_mem-live:eligible")
+    return frozenset(tags)
+
+
+def filter_live_support_memory_prior_appendix(
+    snapshot: SupportSnapshot,
+    appendix: SupportMemoryPriorAppendix,
+    *,
+    target_host_name: str,
+    recent_probe_failure_class: str | None = None,
+) -> SupportMemoryPriorAppendix:
+    if not isinstance(snapshot, SupportSnapshot):
+        actual_type = type(snapshot).__name__
+        raise TypeError(
+            "filter_live_support_memory_prior_appendix() requires SupportSnapshot, "
+            f"got {actual_type}.",
+        )
+    if not isinstance(appendix, SupportMemoryPriorAppendix):
+        actual_type = type(appendix).__name__
+        raise TypeError(
+            "filter_live_support_memory_prior_appendix() requires SupportMemoryPriorAppendix, "
+            f"got {actual_type}.",
+        )
+    if not (isinstance(target_host_name, str) and target_host_name.strip()):
+        raise ValueError(
+            "filter_live_support_memory_prior_appendix().target_host_name must be non-empty after trimming."
+        )
+    if (
+        recent_probe_failure_class is not None
+        and recent_probe_failure_class not in PROBE_FAILURE_CLASSES
+    ):
+        raise ValueError(
+            "filter_live_support_memory_prior_appendix().recent_probe_failure_class must be a canonical probe failure class or None."
+        )
+
+    source_host_name = _metadata_str(appendix.metadata, "host_name")
+    host_match = source_host_name == target_host_name
+    filtered_scores: list[SupportMemoryPriorScore] = []
+
+    for score in appendix.scores:
+        live_tags = set(score.reason_tags)
+        if not host_match:
+            if (
+                score.family in _LIVE_MEMORY_ELIGIBLE_FAMILIES
+                and score.score > 0.0
+            ):
+                live_tags.add("q_mem-live:invalidated:host-mismatch")
+            elif score.family not in _LIVE_MEMORY_ELIGIBLE_FAMILIES:
+                live_tags.add("q_mem-live:family-ineligible")
+            filtered_scores.append(
+                SupportMemoryPriorScore(
+                    family=score.family,
+                    score=0.0,
+                    reason_tags=frozenset(live_tags),
+                    support_refs=score.support_refs,
+                    metadata=score.metadata,
+                )
+            )
+            continue
+
+        live_reentry_tags = _live_reentry_reason_tags(
+            snapshot=snapshot,
+            score=score,
+            recent_probe_failure_class=recent_probe_failure_class,
+        )
+        live_tags.update(live_reentry_tags)
+        zero_score = any(
+            tag.startswith("q_mem-live:invalidated:")
+            for tag in live_reentry_tags
+        ) or "q_mem-live:family-ineligible" in live_reentry_tags or (
+            "q_mem-live:context-miss" in live_reentry_tags
+        )
+        filtered_scores.append(
+            SupportMemoryPriorScore(
+                family=score.family,
+                score=0.0 if zero_score else score.score,
+                reason_tags=frozenset(live_tags),
+                support_refs=score.support_refs,
+                metadata=score.metadata,
+            )
+        )
+
+    state = "host-mismatch"
+    if host_match:
+        state = (
+            "active"
+            if any(
+                score.family in _LIVE_MEMORY_ELIGIBLE_FAMILIES and score.score > 0.0
+                for score in filtered_scores
+            )
+            else "inactive"
+        )
+
+    return SupportMemoryPriorAppendix(
+        scores=tuple(filtered_scores),
+        appendix_tags=appendix.appendix_tags
+        | frozenset({"q_mem-live:runtime-boundary", f"q_mem-live:{state}"}),
+        notes=appendix.notes
+        + (
+            "live support-memory re-entry stays explicit, score-only, host-matched, and family-scoped",
+        ),
+        metadata=_replace_live_metadata(
+            appendix.metadata,
+            state=state,
+            source_host_name=source_host_name,
+            target_host_name=target_host_name,
+        ),
+        host_reliability_prior=appendix.host_reliability_prior,
+    )
+
+
 def build_support_memory_prior_appendix(
     snapshot: AugmentedSupportSnapshot,
     *,
     enable_host_reliability: bool = True,
+    recent_probe_failure_class: str | None = None,
 ) -> SupportMemoryPriorAppendix:
     if not isinstance(snapshot, AugmentedSupportSnapshot):
         actual_type = type(snapshot).__name__
@@ -425,6 +755,13 @@ def build_support_memory_prior_appendix(
         raise TypeError(
             "build_support_memory_prior_appendix().enable_host_reliability must be bool, "
             f"got {actual_type}.",
+        )
+    if (
+        recent_probe_failure_class is not None
+        and recent_probe_failure_class not in PROBE_FAILURE_CLASSES
+    ):
+        raise ValueError(
+            "build_support_memory_prior_appendix().recent_probe_failure_class must be a canonical probe failure class or None."
         )
 
     appendix = snapshot.auxiliary_support
@@ -441,7 +778,13 @@ def build_support_memory_prior_appendix(
     contradiction_refs = _refs_by_kind(derived_refs, "contradiction")
     uncertainty_refs = _refs_by_kind(derived_refs, "uncertainty", "wake")
     signal_profile = _build_signal_profile(snapshot)
-    reliability_prior = _host_reliability_prior(snapshot, signal_profile)
+    reliability_prior = appendix.published_host_reliability_prior
+    if reliability_prior is None:
+        reliability_prior = _host_reliability_prior(snapshot, signal_profile)
+    host_affordance_tags = snapshot.core_snapshot.host.affordance_tags
+    current_contradiction_active = bool(
+        snapshot.core_snapshot.trace.degradation_records
+    )
 
     branch_base_score = _clip_prior_score(
         (0.55 * signal_profile.branch_resume_signal)
@@ -454,15 +797,19 @@ def build_support_memory_prior_appendix(
         include_branch=True,
     )
     if enable_host_reliability:
-        branch_score, branch_reason_tags = _apply_host_reliability_weight(
+        branch_score, branch_reason_tags, branch_delta = _apply_host_reliability_weight(
             SoftControlFamily.BRANCH,
             base_score=branch_base_score,
             reason_tags=branch_reason_tags,
             profile=signal_profile,
             reliability_prior=reliability_prior,
+            host_affordance_tags=host_affordance_tags,
+            current_contradiction_active=current_contradiction_active,
+            recent_probe_failure_class=recent_probe_failure_class,
         )
     else:
         branch_score = branch_base_score
+        branch_delta = 0.0
 
     check_base_score = _clip_prior_score(
         (0.50 * signal_profile.contradiction_review_signal)
@@ -477,15 +824,19 @@ def build_support_memory_prior_appendix(
         include_uncertainty=True,
     )
     if enable_host_reliability:
-        check_score, check_reason_tags = _apply_host_reliability_weight(
+        check_score, check_reason_tags, check_delta = _apply_host_reliability_weight(
             SoftControlFamily.CHECK,
             base_score=check_base_score,
             reason_tags=check_reason_tags,
             profile=signal_profile,
             reliability_prior=reliability_prior,
+            host_affordance_tags=host_affordance_tags,
+            current_contradiction_active=current_contradiction_active,
+            recent_probe_failure_class=recent_probe_failure_class,
         )
     else:
         check_score = check_base_score
+        check_delta = 0.0
 
     seek_context_base_score = _clip_prior_score(
         (0.35 * signal_profile.retrieval_reuse_signal)
@@ -498,15 +849,23 @@ def build_support_memory_prior_appendix(
         include_uncertainty=True,
     )
     if enable_host_reliability:
-        seek_context_score, seek_context_reason_tags = _apply_host_reliability_weight(
+        (
+            seek_context_score,
+            seek_context_reason_tags,
+            seek_context_delta,
+        ) = _apply_host_reliability_weight(
             SoftControlFamily.SEEK_CONTEXT,
             base_score=seek_context_base_score,
             reason_tags=seek_context_reason_tags,
             profile=signal_profile,
             reliability_prior=reliability_prior,
+            host_affordance_tags=host_affordance_tags,
+            current_contradiction_active=current_contradiction_active,
+            recent_probe_failure_class=recent_probe_failure_class,
         )
     else:
         seek_context_score = seek_context_base_score
+        seek_context_delta = 0.0
 
     scores = (
         SupportMemoryPriorScore(
@@ -518,12 +877,18 @@ def build_support_memory_prior_appendix(
             score=branch_score,
             reason_tags=branch_reason_tags,
             support_refs=branch_refs + retrieval_refs[:2],
+            metadata=(
+                MetadataField("q_mem-host:reliability_delta", branch_delta),
+            ),
         ),
         SupportMemoryPriorScore(
             family=SoftControlFamily.CHECK,
             score=check_score,
             reason_tags=check_reason_tags,
             support_refs=contradiction_refs + uncertainty_refs[:2],
+            metadata=(
+                MetadataField("q_mem-host:reliability_delta", check_delta),
+            ),
         ),
         SupportMemoryPriorScore(
             family=SoftControlFamily.REDIRECT,
@@ -546,6 +911,9 @@ def build_support_memory_prior_appendix(
             score=seek_context_score,
             reason_tags=seek_context_reason_tags,
             support_refs=uncertainty_refs[:2] + retrieval_refs[:1],
+            metadata=(
+                MetadataField("q_mem-host:reliability_delta", seek_context_delta),
+            ),
         ),
         SupportMemoryPriorScore(
             family=SoftControlFamily.BRAKE,
@@ -582,11 +950,14 @@ def build_support_memory_prior_appendix(
         notes=appendix.notes
         + (
             "memory-conditioned priors derived from AUX offline publication",
-            "host/tool reliability prior remains explicit, removable, shadow-only, and contradiction-first",
+            "host/tool reliability prior remains explicit, host-matched, capability-scoped, removable, and contradiction-first",
         ),
         metadata=(MetadataField("source", "aux/support-priors"),) + appendix.metadata,
         host_reliability_prior=reliability_prior,
     )
 
 
-__all__ = ["build_support_memory_prior_appendix"]
+__all__ = [
+    "build_support_memory_prior_appendix",
+    "filter_live_support_memory_prior_appendix",
+]

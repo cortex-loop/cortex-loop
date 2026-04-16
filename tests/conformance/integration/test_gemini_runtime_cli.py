@@ -28,6 +28,7 @@ EXPECTED_RECORD_KEYS = (
     "executive_signal_summary",
     "executive_modulator_state",
     "executive_policy_view",
+    "operator_route",
     "closure_required",
     "closure_reason_tags",
 )
@@ -88,12 +89,28 @@ def test_gemini_runtime_cli_reads_documented_raw_events_and_preserves_host_name(
         "probe_result_class",
         "verification_state",
         "explainability_profile",
+        "anti_thrash",
         "scores",
     )
     assert [record["executive_state_summary"]["probe_path_state"] for record in records] == [
         "unavailable",
         "unavailable",
         "unavailable",
+    ]
+    assert [record["executive_state_summary"]["posture"] for record in records] == [
+        "inspect",
+        "execute",
+        "execute",
+    ]
+    assert records[0]["operator_route"]["route_profile"] == "inspect_light"
+    assert [
+        record["operator_route"]["route_profile"].startswith("execute_")
+        for record in records[1:]
+    ] == [True, True]
+    assert [record["operator_route"]["route_budget"]["allow_extra_read_pass"] for record in records] == [
+        True,
+        False,
+        False,
     ]
 
 

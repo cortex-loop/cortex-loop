@@ -3,12 +3,12 @@
 from __future__ import annotations
 
 import argparse
+import importlib
 import json
 import sys
 from collections.abc import Iterable, Iterator, Sequence
 from pathlib import Path
 from typing import Any
-
 from cortex.drivers.openai_host import is_raw_openai_host_event_name
 
 from .runtime import OpenAIRuntimeSession, OpenAIRuntimeStepResult, run_openai_runtime_step
@@ -34,6 +34,7 @@ _OUTPUT_KEYS = (
     "executive_signal_summary",
     "executive_modulator_state",
     "executive_policy_view",
+    "operator_route",
     "closure_required",
     "closure_reason_tags",
     "commitment_result_kind",
@@ -67,6 +68,7 @@ def build_openai_cli_record(step_result: OpenAIRuntimeStepResult) -> dict[str, A
         "executive_signal_summary": step_result.executive_signal_summary_payload,
         "executive_modulator_state": step_result.executive_modulator_state_payload,
         "executive_policy_view": step_result.executive_policy_view_payload,
+        "operator_route": step_result.operator_route_payload,
         "closure_required": step_result.closure_required,
         "closure_reason_tags": list(step_result.closure_reason_tags),
         "commitment_result_kind": step_result.commitment_result_kind,
@@ -93,6 +95,11 @@ def main(argv: Sequence[str] | None = None) -> int:
         type=Path,
         help="Persist the final OpenAI runtime session to an artifact file.",
     )
+    parser.add_argument(
+        "--offline-publication-file",
+        type=Path,
+        help="Load an explicit offline support publication JSON payload and apply it to each event in this run.",
+    )
     args = parser.parse_args(argv)
 
     try:
@@ -102,7 +109,16 @@ def main(argv: Sequence[str] | None = None) -> int:
             if args.load_session is not None
             else OpenAIRuntimeSession()
         )
-        records, final_session = _run_openai_cli_lines_with_session(lines, initial_session)
+        offline_publication = (
+            _read_offline_publication(args.offline_publication_file)
+            if args.offline_publication_file is not None
+            else None
+        )
+        records, final_session = _run_openai_cli_lines_with_session(
+            lines,
+            initial_session,
+            offline_publication=offline_publication,
+        )
         if args.save_session is not None:
             write_openai_runtime_session_artifact(args.save_session, final_session)
         for record in records:
@@ -121,12 +137,19 @@ def _run_openai_cli_lines(lines: Iterable[str]) -> list[dict[str, Any]]:
 def _run_openai_cli_lines_with_session(
     lines: Iterable[str],
     session: OpenAIRuntimeSession | None = None,
+    *,
+    offline_publication: "OfflineSupportPublication | None" = None,
 ) -> tuple[list[dict[str, Any]], OpenAIRuntimeSession]:
     records: list[dict[str, Any]] = []
     current_session = _coerce_cli_session(session)
 
     for event_name, payload in _iter_openai_cli_events(lines):
-        step_result = run_openai_runtime_step(event_name, payload, current_session)
+        step_result = run_openai_runtime_step(
+            event_name,
+            payload,
+            current_session,
+            offline_publication=offline_publication,
+        )
         record = build_openai_cli_record(step_result)
         if tuple(record) != _OUTPUT_KEYS:
             raise ValueError("OpenAI CLI record must preserve the locked output field order.")
@@ -179,6 +202,29 @@ def _coerce_cli_session(session: OpenAIRuntimeSession | None) -> OpenAIRuntimeSe
             f"got {actual_type}."
         )
     return session
+
+
+def _read_offline_publication(path: Path) -> "OfflineSupportPublication":
+    try:
+        payload_text = path.read_text(encoding="utf-8")
+    except FileNotFoundError as exc:
+        raise ValueError(f"offline publication file {path} does not exist.") from exc
+    except OSError as exc:
+        raise ValueError(f"offline publication file {path} could not be read.") from exc
+    try:
+        payload = json.loads(payload_text)
+    except json.JSONDecodeError as exc:
+        raise ValueError(
+            f"offline publication file {path} must contain valid JSON."
+        ) from exc
+    if not isinstance(payload, dict):
+        actual_type = type(payload).__name__
+        raise TypeError(
+            f"offline publication file {path} must decode to a JSON object, got {actual_type}."
+        )
+    return importlib.import_module("cortex.aux.publication").parse_offline_support_publication_payload(
+        payload
+    )
 
 
 if __name__ == "__main__":

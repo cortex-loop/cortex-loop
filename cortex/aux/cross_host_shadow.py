@@ -14,7 +14,7 @@ from cortex.sre.memory_priors import SupportMemoryPriorAppendix
 from cortex.sre.reference_scoring import select_reference_soft_control
 from cortex.sre.state import ReferenceExecutiveState
 
-from ._temporal_publication import _merge_temporal_publication
+from .distillation import _distill_offline_support_publication_from_snapshots
 from .publication import (
     OfflineSupportPublication,
     augment_snapshot_with_offline_publication,
@@ -677,11 +677,12 @@ def evaluate_aux_cross_host_shadow(
     improved_case_counts = {host_name: 0 for host_name in _HOST_NAMES}
     negative_stable_counts = {host_name: 0 for host_name in _HOST_NAMES}
     for scenario in scenarios:
-        publication = _merge_temporal_publication(
+        publication = _distill_offline_support_publication_from_snapshots(
             scenario.source_snapshots,
+            host_name=scenario.host_name,
             source_label="aux/cross-host-shadow",
-            extra_tags=frozenset({"aux/offline-publication", "aux/cross-host-shadow"}),
-            extra_notes=("offline publication replayed into cross-host shadow-only Q_mem evaluation",),
+            publication_tags=frozenset({"aux/offline-publication", "aux/cross-host-shadow"}),
+            notes=("offline publication replayed into cross-host shadow-only Q_mem evaluation",),
         )
         augmented_target = augment_snapshot_with_offline_publication(
             scenario.target_snapshot,
@@ -733,7 +734,7 @@ def evaluate_aux_cross_host_shadow(
             "q_mem-host:reliability-active" in replay_reason_tags
         )
         contradiction_invalidated_prior = (
-            "q_mem-host:contradiction-invalidated" in replay_reason_tags
+            "q_mem-host:current-contradiction-invalidated" in replay_reason_tags
         )
         memory_removal_reverts_to_baseline = (
             removed_selection.selected_family is baseline_selection.selected_family

@@ -17,6 +17,7 @@ from cortex.sre.feedback import ReferenceRealizationFeedback, ReferenceRealizati
 from cortex.sre.goals import normalize_continuity_reminder
 from cortex.hosts.reference.runtime import ReferenceRuntimeSession
 from cortex.sre.modulators import ExecutiveModulatorMemory
+from cortex.sre.operator_routing import OperatorTaskMode
 
 _ARTIFACT_KIND = "reference-runtime-session"
 _ARTIFACT_VERSION = 1
@@ -540,7 +541,10 @@ def _feedback(value: Any, label: str) -> ReferenceRealizationFeedback:
         "host_friction_tags",
     )
     optional_feedback_keys = (
+        "task_mode",
+        "evidence_progress_class",
         "evidence_state_moved",
+        "continuity_progress_class",
         "continuity_improved",
         "probe_result_class",
     )
@@ -552,6 +556,7 @@ def _feedback(value: Any, label: str) -> ReferenceRealizationFeedback:
         selected_family=_soft_control_family(value["selected_family"], f"{label}.selected_family"),
         realized_family=_soft_control_family(value["realized_family"], f"{label}.realized_family"),
         brake_state=_brake_state(value["brake_state"], f"{label}.brake_state"),
+        task_mode=_optional_task_mode(value.get("task_mode"), f"{label}.task_mode"),
         commitment_result_kind=_optional_commitment_result_kind(
             value["commitment_result_kind"],
             f"{label}.commitment_result_kind",
@@ -561,9 +566,17 @@ def _feedback(value: Any, label: str) -> ReferenceRealizationFeedback:
             value["host_friction_tags"],
             f"{label}.host_friction_tags",
         ),
+        evidence_progress_class=_optional_non_empty_string(
+            value.get("evidence_progress_class"),
+            f"{label}.evidence_progress_class",
+        ),
         evidence_state_moved=_optional_bool(
             value.get("evidence_state_moved"),
             f"{label}.evidence_state_moved",
+        ),
+        continuity_progress_class=_optional_non_empty_string(
+            value.get("continuity_progress_class"),
+            f"{label}.continuity_progress_class",
         ),
         continuity_improved=_optional_bool(
             value.get("continuity_improved"),
@@ -594,6 +607,18 @@ def _executive_modulator_memory(value: Any, label: str) -> ExecutiveModulatorMem
         update_tonic=_unit_float(value["update_tonic"], f"{label}.update_tonic"),
     )
     return canonicalize_executive_modulator_memory(memory)
+
+
+def _optional_task_mode(value: Any, label: str) -> OperatorTaskMode | None:
+    if value is None:
+        return None
+    if not isinstance(value, str):
+        actual_type = type(value).__name__
+        raise TypeError(f"{label} must be str | null, got {actual_type}.")
+    try:
+        return OperatorTaskMode(value.strip())
+    except ValueError as exc:
+        raise ValueError(f"{label} must be a canonical operator task mode when provided.") from exc
 
 
 def _unit_float(value: Any, label: str) -> float:

@@ -59,6 +59,7 @@ EXPECTED_RECORD_KEYS = (
     "executive_signal_summary",
     "executive_modulator_state",
     "executive_policy_view",
+    "operator_route",
     "closure_required",
     "closure_reason_tags",
 )
@@ -101,6 +102,11 @@ def test_reference_runtime_cli_reads_event_file_and_emits_one_record_per_event()
         "review_pending",
         "commitment_path",
     ]
+    assert [record["executive_state_summary"]["posture"] for record in records] == [
+        "inspect",
+        "execute",
+        "execute",
+    ]
     assert [record["executive_state_summary"]["budget_band"] for record in records] == [
         "low",
         "medium",
@@ -131,7 +137,11 @@ def test_reference_runtime_cli_reads_event_file_and_emits_one_record_per_event()
         None,
         "certified",
     ]
-    assert [record["feedback_window_summary"]["window_size"] for record in records] == [0, 1, 2]
+    assert [record["feedback_window_summary"]["window_size"] for record in records] == [1, 2, 3]
+    assert records[0]["feedback_window_summary"]["recent_evidence_progress_class"] == "none"
+    assert records[0]["feedback_window_summary"]["recent_continuity_progress_class"] == (
+        "none"
+    )
     assert all(record["warnings"] == [] for record in records)
     assert records[-1]["session_summary"]["event_index"] == 3
     assert records[-1]["session_summary"]["budget_history"] == [
@@ -160,9 +170,15 @@ def test_reference_runtime_cli_reads_event_file_and_emits_one_record_per_event()
         "executive_signal_summary",
         "executive_modulator_state",
         "executive_policy_view",
+        "operator_route",
         "closure_required",
         "closure_reason_tags",
     )
+    assert [record["operator_route"]["route_profile"] for record in records] == [
+        "inspect_light",
+        "execute_standard",
+        "execute_standard",
+    ]
     assert tuple(records[-1]["control_ledger"]) == (
         "event_class",
         "admissible_families",
@@ -192,6 +208,8 @@ def test_reference_runtime_cli_reads_event_file_and_emits_one_record_per_event()
         "probe_result_class",
         "verification_state",
         "explainability_profile",
+        "anti_thrash",
+        "memory_reentry",
         "scores",
         "mediation",
     )
@@ -203,7 +221,7 @@ def test_reference_runtime_cli_reads_event_file_and_emits_one_record_per_event()
     assert [
         record["control_ledger"]["allocation_diagnostics"]["activation_threshold"]
         for record in records
-    ] == [0.36999999999999994, 0.31999999999999995, 0.22999999999999995]
+    ] == [0.36999999999999994, 0.27999999999999997, 0.18999999999999995]
     assert [record["executive_state_summary"]["probe_path_state"] for record in records] == [
         "available",
         "available",
@@ -302,6 +320,7 @@ def test_reference_runtime_cli_in_process_surfaces_selected_vs_realized_divergen
         "executive_signal_summary",
         "executive_modulator_state",
         "executive_policy_view",
+        "operator_route",
         "closure_required",
         "closure_reason_tags",
     )
@@ -313,7 +332,7 @@ def test_reference_runtime_cli_in_process_surfaces_selected_vs_realized_divergen
         "latched-brake-enforced:branch:check"
     )
     assert records[0]["commitment_result_kind"] == "certified"
-    assert records[0]["feedback_window_summary"]["window_size"] == 0
+    assert records[0]["feedback_window_summary"]["window_size"] == 1
 
 
 def test_reference_runtime_cli_record_shape_stays_locked_under_explicit_offline_publication(
@@ -357,6 +376,8 @@ def test_reference_runtime_cli_record_shape_stays_locked_under_explicit_offline_
         "probe_result_class",
         "verification_state",
         "explainability_profile",
+        "anti_thrash",
+        "memory_reentry",
         "scores",
         "mediation",
     )
@@ -381,34 +402,50 @@ def test_reference_runtime_cli_emits_feedback_window_summary_for_real_session_mi
         3,
     ]
     assert records[2]["feedback_window_summary"] == {
-        "window_size": 2,
+        "window_size": 3,
         "rejection_count": 1,
-        "override_count": 0,
+        "override_count": 1,
         "latched_count": 0,
         "clean_success_streak": 0,
         "evidence_state_move_count": 0,
+        "meaningful_evidence_progress_count": 0,
+        "stream_only_progress_count": 0,
         "continuity_improvement_count": 0,
         "family_change_without_evidence_count": 0,
+        "same_family_no_progress_count": 1,
+        "same_context_retry_count": 0,
         "goal_progress_floor": 0.55,
-        "degradation_pressure_bonus": 1,
-        "sustained_spike_flags": ["prior-session-mismatch"],
-    }
-    assert records[4]["feedback_window_summary"] == {
-        "window_size": 3,
-        "rejection_count": 2,
-        "override_count": 1,
-        "latched_count": 1,
-        "clean_success_streak": 0,
-        "evidence_state_move_count": 0,
-        "continuity_improvement_count": 0,
-        "family_change_without_evidence_count": 1,
-        "goal_progress_floor": 0.70,
         "degradation_pressure_bonus": 2,
+        "recent_evidence_progress_class": "none",
+        "recent_continuity_progress_class": "none",
         "sustained_spike_flags": [
             "prior-session-mismatch",
             "prior-enforcement-override",
             "sustained-feedback-disruption",
-            "prior-non-productive-family-switch",
+        ],
+    }
+    assert records[4]["feedback_window_summary"] == {
+        "window_size": 3,
+        "rejection_count": 1,
+        "override_count": 1,
+        "latched_count": 2,
+        "clean_success_streak": 0,
+        "evidence_state_move_count": 0,
+        "meaningful_evidence_progress_count": 0,
+        "stream_only_progress_count": 0,
+        "continuity_improvement_count": 0,
+        "family_change_without_evidence_count": 0,
+        "same_family_no_progress_count": 0,
+        "same_context_retry_count": 0,
+        "goal_progress_floor": 0.55,
+        "degradation_pressure_bonus": 2,
+        "recent_evidence_progress_class": "none",
+        "recent_continuity_progress_class": "none",
+        "sustained_spike_flags": [
+            "prior-session-mismatch",
+            "prior-enforcement-override",
+            "sustained-feedback-disruption",
+            "sustained-latched-brake",
         ],
     }
     assert tuple(records[-1]) == (
@@ -426,6 +463,7 @@ def test_reference_runtime_cli_emits_feedback_window_summary_for_real_session_mi
         "executive_signal_summary",
         "executive_modulator_state",
         "executive_policy_view",
+        "operator_route",
         "closure_required",
         "closure_reason_tags",
     )
@@ -463,13 +501,16 @@ def test_reference_runtime_cli_save_session_does_not_change_jsonl_output(tmp_pat
                 "selected_family": "seek-context",
                 "realized_family": "seek-context",
                 "brake_state": "guarded",
+                "task_mode": "execute",
                 "commitment_result_kind": "certified",
                 "warning_codes": [],
                 "host_friction_tags": [
                     "approval-boundary-present",
                     "capability-view-missing",
                 ],
+                "evidence_progress_class": "commitment",
                 "evidence_state_moved": True,
+                "continuity_progress_class": "none",
                 "continuity_improved": False,
                 "probe_result_class": "succeeded",
             },
@@ -478,10 +519,13 @@ def test_reference_runtime_cli_save_session_does_not_change_jsonl_output(tmp_pat
                     "selected_family": "seek-context",
                     "realized_family": "seek-context",
                     "brake_state": "guarded",
+                    "task_mode": "inspect",
                     "commitment_result_kind": None,
                     "warning_codes": [],
                     "host_friction_tags": ["capability-view-missing"],
+                    "evidence_progress_class": "none",
                     "evidence_state_moved": False,
+                    "continuity_progress_class": "none",
                     "continuity_improved": False,
                     "probe_result_class": "succeeded",
                 },
@@ -489,13 +533,16 @@ def test_reference_runtime_cli_save_session_does_not_change_jsonl_output(tmp_pat
                     "selected_family": "seek-context",
                     "realized_family": "seek-context",
                     "brake_state": "guarded",
+                    "task_mode": "execute",
                     "commitment_result_kind": None,
                     "warning_codes": [],
                     "host_friction_tags": [
                         "approval-boundary-present",
                         "capability-view-missing",
                     ],
+                    "evidence_progress_class": "candidate",
                     "evidence_state_moved": True,
+                    "continuity_progress_class": "none",
                     "continuity_improved": False,
                     "probe_result_class": "succeeded",
                 },
@@ -503,22 +550,25 @@ def test_reference_runtime_cli_save_session_does_not_change_jsonl_output(tmp_pat
                     "selected_family": "seek-context",
                     "realized_family": "seek-context",
                     "brake_state": "guarded",
+                    "task_mode": "execute",
                     "commitment_result_kind": "certified",
                     "warning_codes": [],
                     "host_friction_tags": [
                         "approval-boundary-present",
                         "capability-view-missing",
                     ],
+                    "evidence_progress_class": "commitment",
                     "evidence_state_moved": True,
+                    "continuity_progress_class": "none",
                     "continuity_improved": False,
                     "probe_result_class": "succeeded",
                 },
             ],
             "executive_modulator_memory": {
                 "focus_tonic": 0.0,
-                "explore_tonic": 0.3375,
+                "explore_tonic": 0.3678,
                 "stop_tonic": 0.3698,
-                "update_tonic": 0.3949,
+                "update_tonic": 0.4455,
             },
         },
     }

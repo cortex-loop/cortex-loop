@@ -58,6 +58,22 @@ def test_gemini_runtime_split_session_is_g1_equivalent_to_uninterrupted_run(tmp_
         _parse_session_artifact(one_process_artifact),
         _parse_session_artifact(split_final_artifact),
     )
+    assert [record["executive_state_summary"]["posture"] for record in one_process_records] == [
+        "resume",
+        "resume",
+        "resume",
+        "execute",
+    ]
+    assert [record["operator_route"]["route_profile"] for record in one_process_records] == [
+        "continuity_standard",
+        "continuity_standard",
+        "continuity_standard",
+        "execute_guarded",
+    ]
+    assert [
+        record["operator_route"]["route_budget"]["allow_resume"]
+        for record in one_process_records
+    ] == [True, True, True, False]
     assert (
         one_process_records[-1]["session_summary"]["budget_history"]
         != split_records[-1]["session_summary"]["budget_history"]

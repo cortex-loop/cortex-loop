@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from numbers import Real
+from typing import TYPE_CHECKING
 
 from .brake import BrakeState
 from .families import SoftControlFamily
@@ -11,10 +12,20 @@ from .goals import GoalContinuityView
 from .opportunities import PROBE_RESULT_CLASSES
 from .uncertainty import UncertaintyEstimate
 
+if TYPE_CHECKING:
+    from .operator_routing import OperatorTaskMode
+
 _EXPLAINABILITY_PROFILES = frozenset({"minimal", "focused", "structured"})
 _PROBE_PATH_STATES = frozenset({"available", "unavailable", "absent"})
+_ANTI_THRASH_STATES = frozenset({"inactive", "taxed", "reopened"})
 
 ReferenceGoalContinuityView = GoalContinuityView
+
+
+def _default_task_mode() -> "OperatorTaskMode":
+    from .operator_routing import OperatorTaskMode
+
+    return OperatorTaskMode.EXECUTE
 
 
 @dataclass(frozen=True, slots=True)
@@ -41,9 +52,18 @@ class ReferenceUncertaintyMonitoringView:
 @dataclass(frozen=True, slots=True)
 class ReferenceModeAndGatingView:
     mode_tag: str
+    task_mode: "OperatorTaskMode" = field(default_factory=_default_task_mode)
     family_mask: frozenset[SoftControlFamily] = field(default_factory=frozenset)
 
     def __post_init__(self) -> None:
+        from .operator_routing import OperatorTaskMode
+
+        if not isinstance(self.task_mode, OperatorTaskMode):
+            actual_type = type(self.task_mode).__name__
+            raise TypeError(
+                "ReferenceModeAndGatingView.task_mode must be OperatorTaskMode, "
+                f"got {actual_type}."
+            )
         if not self.mode_tag.strip():
             raise ValueError(
                 "ReferenceModeAndGatingView.mode_tag must be non-empty after trimming."
@@ -66,6 +86,10 @@ class ReferenceControlAllocationView:
     oscillation_penalty: float = 0.0
     host_friction_level: float = 0.0
     visible_burden_scale: float = 1.0
+    anti_thrash_state: str = "inactive"
+    repetition_tax: float = 0.0
+    repetition_target_family: SoftControlFamily | None = None
+    anti_thrash_reason_tags: frozenset[str] = field(default_factory=frozenset)
     explainability_profile: str = "minimal"
     probe_path_state: str = "absent"
     probe_unavailable_reason: str | None = None
@@ -104,6 +128,7 @@ class ReferenceControlAllocationView:
             "oscillation_penalty",
             "host_friction_level",
             "visible_burden_scale",
+            "repetition_tax",
         ):
             value = getattr(self, field_name)
             if not isinstance(value, Real):
@@ -116,6 +141,35 @@ class ReferenceControlAllocationView:
                 raise ValueError(
                     f"ReferenceControlAllocationView.{field_name} must be between 0.0 and 1.0."
                 )
+        if self.anti_thrash_state not in _ANTI_THRASH_STATES:
+            raise ValueError(
+                "ReferenceControlAllocationView.anti_thrash_state must be one of "
+                f"{sorted(_ANTI_THRASH_STATES)!r}."
+            )
+        if self.repetition_target_family is not None and not isinstance(
+            self.repetition_target_family, SoftControlFamily
+        ):
+            raise TypeError(
+                "ReferenceControlAllocationView.repetition_target_family must contain only "
+                "SoftControlFamily instances when provided."
+            )
+        if any(not tag.strip() for tag in self.anti_thrash_reason_tags):
+            raise ValueError(
+                "ReferenceControlAllocationView.anti_thrash_reason_tags must contain only "
+                "non-empty values after trimming."
+            )
+        if self.anti_thrash_state == "taxed" and self.repetition_tax <= 0.0:
+            raise ValueError(
+                "ReferenceControlAllocationView.repetition_tax must be positive when anti_thrash_state is `taxed`."
+            )
+        if self.anti_thrash_state in {"inactive", "reopened"} and self.repetition_tax != 0.0:
+            raise ValueError(
+                "ReferenceControlAllocationView.repetition_tax must be 0.0 when anti_thrash_state is not `taxed`."
+            )
+        if self.repetition_tax > 0.0 and self.repetition_target_family is None:
+            raise ValueError(
+                "ReferenceControlAllocationView.repetition_target_family is required when repetition_tax is positive."
+            )
         if self.explainability_profile not in _EXPLAINABILITY_PROFILES:
             raise ValueError(
                 "ReferenceControlAllocationView.explainability_profile must be one of "
