@@ -51,6 +51,13 @@ def _format_path_list(paths: list[str]) -> str:
     return ", ".join(f"`{path}`" for path in paths)
 
 
+def _next_product_train_slug_display(next_product_train: dict[str, object]) -> str:
+    slug = next_product_train.get("slug")
+    if slug is None:
+        return "none queued yet"
+    return f"`{slug}`"
+
+
 def render_status(data: dict[str, object]) -> str:
     resting_state = data["resting_state"]
     bootstrap = data["bootstrap"]
@@ -136,7 +143,7 @@ def render_status(data: dict[str, object]) -> str:
             "",
             f"- Current tracked train: `{work_today['slug']}`",
             f"- Active quality/risk focus: {work_today['note']}",
-            f"- Next product train after the current focus: `{next_product_train['slug']}`",
+            f"- Next product train after the current focus: {_next_product_train_slug_display(next_product_train)}",
         ]
     )
     lines.extend(
@@ -234,8 +241,8 @@ def render_status(data: dict[str, object]) -> str:
             "",
             "## Next Product Train",
             "",
-            f"- Train: `{next_product_train['slug']}`",
-            f"- Surface: `{next_product_train['surface']}`",
+            f"- Train: {_next_product_train_slug_display(next_product_train)}",
+            f"- Surface: {next_product_train['surface']}",
             f"- Executive benefit: {next_product_train['executive_benefit']}",
             f"- Why now: {next_product_train['why_now']}",
             f"- Primary metric: {next_product_train['primary_metric']}",

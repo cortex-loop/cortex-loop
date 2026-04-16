@@ -239,6 +239,8 @@ def test_status_registry_is_complete_and_stable() -> None:
         "reference": "reference_cli",
     }
     assert status["conformance_summary"]["shipping_default"] == "openai:operator_cli"
+    next_train_slug = status["next_product_train"]["slug"]
+    assert next_train_slug is None or next_train_slug != status["work_today"]["slug"]
     assert status["work_today"]["slug"] == "brake-tonic-quiescence-exit-reconciliation"
     assert "full_cross_host" in status["work_today"]["note"]
     assert "posture-sensitive online control is s-tier closed" in status["work_today"]["note"].lower()
@@ -247,11 +249,11 @@ def test_status_registry_is_complete_and_stable() -> None:
     assert "memory-off when no publication is supplied" in status["work_today"]["note"]
     assert "Q_mem = 0" in status["work_today"]["note"]
     assert "asymmetric error cost and tonic hysteresis are now earned" in status["work_today"]["note"].lower()
-    assert status["next_product_train"]["slug"] == "brake-tonic-quiescence-exit-reconciliation"
-    assert status["next_product_train"]["surface"] == "product + conformance"
-    assert "brake exit hysteresis" in status["next_product_train"]["executive_benefit"].lower()
-    assert "asymmetric error cost and tonic hysteresis are earned" in status["next_product_train"]["why_now"].lower()
-    assert "no dead telemetry remains" in status["next_product_train"]["primary_metric"].lower()
+    assert status["next_product_train"]["slug"] is None
+    assert status["next_product_train"]["surface"] == "pending selection"
+    assert "no successor train is queued yet" in status["next_product_train"]["executive_benefit"].lower()
+    assert "queue truth must not duplicate the active train" in status["next_product_train"]["why_now"].lower()
+    assert "no longer silently duplicate" in status["next_product_train"]["primary_metric"].lower()
     assert "Keep the bounded audit surface compact and truthful" in status["where_to_work"][0]
     assert "no-spend live evidence current and explicit" in status["where_to_work"][1]
     assert "posture-sensitive online control is s-tier closed" in status["where_to_work"][2].lower()
@@ -292,6 +294,8 @@ def test_generated_status_doc_includes_system_map_and_next_product_train() -> No
     assert "## Next Product Train" in text
     assert "host/tool reliability and affordance priors are earned" in text
     assert "`brake-tonic-quiescence-exit-reconciliation`" in text
+    assert "- Next product train after the current focus: none queued yet" in text
+    assert "- Train: none queued yet" in text
     assert "memory-off when no publication is supplied" in text
     assert "Shipping Product Lane\\nopenai:operator_cli" in text or "Shipping Product Lane" in text
     assert "Shipping default: `openai:operator_cli`" in text
@@ -326,6 +330,12 @@ def test_next_product_train_sentence_fields_render_without_outer_backtick_wrap()
             f"Drop the outer wrap in internal/truth/generate_status.py so this "
             f"field matches the executive_benefit / why_now pattern."
         )
+
+
+def test_next_product_train_truth_never_silently_duplicates_current_train() -> None:
+    status = _load_status()
+    next_train_slug = status["next_product_train"]["slug"]
+    assert next_train_slug is None or next_train_slug != status["work_today"]["slug"]
 
 
 def test_front_door_surfaces_point_to_local_first_and_explicit_publish_closeout() -> None:
