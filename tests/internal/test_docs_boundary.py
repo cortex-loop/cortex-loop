@@ -305,6 +305,29 @@ def test_generated_status_doc_includes_system_map_and_next_product_train() -> No
     assert "`visible_burden_sensitivity`" in text
 
 
+def test_next_product_train_sentence_fields_render_without_outer_backtick_wrap() -> None:
+    """Render-quality pin: ``primary_metric``, ``guardrail``, and ``kill_rule`` are
+    sentence-form fields whose values may contain inner backticks for inline code
+    spans (for example, ``\\`tonic_quiescence\\```). Wrapping the entire value in
+    outer backticks would create nested code spans that Markdown renders as
+    alternating and reversed code regions (the inverse of intent). The renderer
+    at ``internal/truth/generate_status.py`` must emit these three fields without
+    an outer backtick wrap, matching the ``executive_benefit`` and ``why_now``
+    pattern. Bare-identifier fields (``slug``, ``surface``) stay wrapped."""
+    text = _read(STATUS_DOC_PATH)
+    lines = text.splitlines()
+    for prefix in ("- Primary metric: ", "- Guardrail: ", "- Kill rule: "):
+        line = next((line for line in lines if line.startswith(prefix)), None)
+        assert line is not None, f"missing {prefix!r} line in CORTEX_STATUS.md"
+        first_char = line[len(prefix) : len(prefix) + 1]
+        assert first_char != "`", (
+            f"render regression: {prefix!r} line is outer-backtick-wrapped, which "
+            f"creates nested code spans when the value contains inner backticks. "
+            f"Drop the outer wrap in internal/truth/generate_status.py so this "
+            f"field matches the executive_benefit / why_now pattern."
+        )
+
+
 def test_front_door_surfaces_point_to_local_first_and_explicit_publish_closeout() -> None:
     agents = _read(AGENTS_PATH)
     status = _read(STATUS_DOC_PATH)
