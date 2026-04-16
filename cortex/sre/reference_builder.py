@@ -216,18 +216,20 @@ def build_reference_executive_state(
             probe_backed_families=probe_backed_families,
         ),
     )
+    budget_band = _budget_band_for_state(observation.event.native_event_name, prior_session)
+    productive_exploration_bonus = _productive_exploration_bonus(
+        prior_feedback_window_summary,
+        recent_probe_result_class=recent_probe_result_class,
+    )
     risk_weight = _derive_risk_weight(
         support_snapshot=support_snapshot,
         pending_goal_refs=pending_goal_refs,
-        budget_band=_budget_band_for_state(observation.event.native_event_name, prior_session),
+        budget_band=budget_band,
         contradiction_spike_flags=contradiction_spike_flags,
-        productive_exploration_bonus=_productive_exploration_bonus(
-            prior_feedback_window_summary,
-            recent_probe_result_class=recent_probe_result_class,
-        ),
+        productive_exploration_bonus=productive_exploration_bonus,
     )
     control_allocation = ReferenceControlAllocationView(
-        budget_band=_budget_band_for_state(observation.event.native_event_name, prior_session),
+        budget_band=budget_band,
         top_family_set=_top_family_set(
             native_event_name=observation.event.native_event_name,
             branch_registry=branch_registry,
@@ -243,10 +245,7 @@ def build_reference_executive_state(
             recent_probe_result_class=recent_probe_result_class,
         ),
         probe_backed_families=probe_backed_families,
-        productive_exploration_bonus=_productive_exploration_bonus(
-            prior_feedback_window_summary,
-            recent_probe_result_class=recent_probe_result_class,
-        ),
+        productive_exploration_bonus=productive_exploration_bonus,
         oscillation_penalty=_oscillation_penalty(prior_feedback_window_summary),
         anti_thrash_state=anti_thrash_state,
         repetition_tax=repetition_tax,
