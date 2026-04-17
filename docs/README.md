@@ -11,6 +11,7 @@ Active docs:
 - [CORTEX Core](CORTEX_V2_CORE_2.md)
 - [CORTEX SRE](CORTEX_V2_SRE_2.md)
 - [CORTEX AUX](CORTEX_V2_AUX_2.md)
+- [CORTEX V3 Incubation](v3/README.md)
 - [Repo Workflow](internal/REPO_WORKFLOW.md)
 
 Historical runtime, lab, and governance material now lives under [archive/](archive/).

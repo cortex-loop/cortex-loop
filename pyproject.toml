@@ -17,5 +17,5 @@ cortex-openai-service = "cortex.hosts.openai.service:main"
 include-package-data = false
 
 [tool.setuptools.packages.find]
-include = ["cortex", "cortex.*"]
+include = ["cortex", "cortex.*", "cortex_v3", "cortex_v3.*"]
 exclude = ["experimental", "experimental.*", "lab", "lab.*", "internal", "internal.*", "tests", "tests.*"]

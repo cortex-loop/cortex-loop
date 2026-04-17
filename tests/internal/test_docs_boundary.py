@@ -140,8 +140,9 @@ def test_active_doc_allowlist_matches_status_registry() -> None:
 def test_docs_directory_only_exposes_archive_and_workflow_subtrees() -> None:
     subdirs = sorted(path.name for path in DOCS_ROOT.iterdir() if path.is_dir())
 
-    assert subdirs == ["archive", "internal"]
+    assert subdirs == ["archive", "internal", "v3"]
     assert [path.name for path in (DOCS_ROOT / "internal").iterdir()] == ["REPO_WORKFLOW.md"]
+    assert [path.name for path in (DOCS_ROOT / "v3").iterdir()] == ["README.md"]
 
 
 def test_generated_status_doc_is_current() -> None:
@@ -256,14 +257,17 @@ def test_status_registry_is_complete_and_stable() -> None:
     assert "no longer silently duplicate" in status["next_product_train"]["primary_metric"].lower()
     assert "Keep the bounded audit surface compact and truthful" in status["where_to_work"][0]
     assert "no-spend live evidence current and explicit" in status["where_to_work"][1]
-    assert "posture-sensitive online control is s-tier closed" in status["where_to_work"][2].lower()
-    assert "anti-thrash is landed" in status["where_to_work"][2]
-    assert "posture truth is single-owned" in status["where_to_work"][2]
-    assert "6-axis geometry term" in status["where_to_work"][2]
-    assert "route truth stays bounded and non-sovereign" in status["where_to_work"][2]
-    assert "live `Q_mem` stays zero" in status["where_to_work"][2]
-    assert "host/tool reliability and affordance priors are earned" in status["where_to_work"][2]
-    assert "active brake tonic quiescence exit reconciliation seam" in status["where_to_work"][3]
+    assert "cortex_v3" in status["where_to_work"][2]
+    assert "parallel verified-work library" in status["where_to_work"][2].lower()
+    assert "thin openai/claude/gemini adapters" in status["where_to_work"][2].lower()
+    assert "posture-sensitive online control is s-tier closed" in status["where_to_work"][3].lower()
+    assert "anti-thrash is landed" in status["where_to_work"][3]
+    assert "posture truth is single-owned" in status["where_to_work"][3]
+    assert "6-axis geometry term" in status["where_to_work"][3]
+    assert "route truth stays bounded and non-sovereign" in status["where_to_work"][3]
+    assert "live `Q_mem` stays zero" in status["where_to_work"][3]
+    assert "host/tool reliability and affordance priors are earned" in status["where_to_work"][3]
+    assert "active brake tonic quiescence exit reconciliation seam" in status["where_to_work"][4]
     closure_gates = {gate["id"]: gate for gate in status["closure_gates"]}
     assert closure_gates["main_synced"]["status"] == "required"
     assert closure_gates["cleanup_report"]["status"] == "required"
