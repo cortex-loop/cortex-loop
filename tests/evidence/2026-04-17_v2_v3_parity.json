@@ -1,0 +1,295 @@
+{
+  "completed_at": "2026-04-17T13:04:03+00:00",
+  "divergence_count": 3,
+  "rows": [
+    {
+      "axis": "input_text",
+      "completion_source": "shared",
+      "diff_text": "",
+      "divergence_keys": [],
+      "equal": true,
+      "task_id": "bookmarks_app_template",
+      "v2": "build bookmarks app\n\nRead-only workspace context follows. Use the existing writable-file contents and tests below as the task contract.\nModify only the allowed paths named in the work contract.\n\n=== CONTEXT FILE: src/bookmarks_api/main.py ===\nfrom fastapi import FastAPI\n\n\napp = FastAPI(title=\"Bookmarks API\")\n=== END CONTEXT FILE ===\n\n=== CONTEXT FILE: src/bookmarks_api/models.py ===\n\"\"\"Bookmark models belong here.\"\"\"\n=== END CONTEXT FILE ===\n\n=== CONTEXT FILE: src/bookmarks_api/store.py ===\n\"\"\"Bookmark storage belongs here.\"\"\"\n=== END CONTEXT FILE ===\n\n=== CONTEXT FILE: tests/test_bookmarks_api.py ===\nfrom __future__ import annotations\n\nfrom fastapi.testclient import TestClient\n\nfrom bookmarks_api.main import app\n\n\nclient = TestClient(app)\n\n\ndef _create_bookmark(\n    *,\n    url: str,\n    title: str,\n    tags: list[str] | None = None,\n    notes: str | None = None,\n) -> dict[str, object]:\n    response = client.post(\n        \"/bookmarks\",\n        json={\n            \"url\": url,\n            \"title\": title,\n            \"tags\": tags or [],\n            \"notes\": notes,\n        },\n    )\n    assert response.status_code == 201, response.text\n    payload = response.json()\n    assert isinstance(payload[\"id\"], str)\n    return payload\n\n\ndef _assert_error(response, *, status_code: int, code: str) -> None:\n    assert response.status_code == status_code, response.text\n    payload = response.json()\n    assert payload[\"error\"][\"code\"] == code\n    assert isinstance(payload[\"error\"][\"message\"], str)\n    assert payload[\"error\"][\"message\"]\n\n\ndef test_create_and_get_bookmark_by_id() -> None:\n    created = _create_bookmark(\n        url=\"https://example.com/docs\",\n        title=\"Example Docs\",\n        tags=[\"docs\", \"reference\"],\n        notes=\"starter note\",\n    )\n\n    fetched = client.get(f\"/bookmarks/{created['id']}\")\n    assert fetched.status_code == 200, fetched.text\n    payload = fetched.json()\n    assert payload[\"id\"] == created[\"id\"]\n    assert payload[\"url\"] == \"https://example.com/docs\"\n    assert payload[\"title\"] == \"Example Docs\"\n    assert payload[\"tags\"] == [\"docs\", \"reference\"]\n    assert payload[\"archived\"] is False\n\n\ndef test_list_bookmarks_returns_pagination_metadata() -> None:\n    _create_bookmark(\n        url=\"https://example.com/a\",\n        title=\"Alpha\",\n        tags=[\"list-meta\"],\n    )\n    _create_bookmark(\n        url=\"https://example.com/b\",\n        title=\"Beta\",\n        tags=[\"list-meta\"],\n    )\n\n    response = client.get(\"/bookmarks?tag=list-meta&page=1&page_size=2\")\n    assert response.status_code == 200, response.text\n    payload = response.json()\n    assert payload[\"page\"] == 1\n    assert payload[\"page_size\"] == 2\n    assert payload[\"total\"] >= 2\n    assert len(payload[\"items\"]) <= 2\n\n\ndef test_list_bookmarks_filters_by_tag() -> None:\n    _create_bookmark(\n        url=\"https://example.com/python\",\n        title=\"Python\",\n        tags=[\"python\", \"backend\"],\n    )\n    _create_bookmark(\n        url=\"https://example.com/design\",\n        title=\"Design\",\n        tags=[\"design\"],\n    )\n\n    response = client.get(\"/bookmarks?tag=python\")\n    assert response.status_code == 200, response.text\n    payload = response.json()\n    assert payload[\"items\"]\n    assert all(\"python\" in item[\"tags\"] for item in payload[\"items\"])\n\n\ndef test_list_bookmarks_searches_by_query() -> None:\n    _create_bookmark(\n        url=\"https://example.com/fastapi-guide\",\n        title=\"FastAPI Guide\",\n        notes=\"great walkthrough\",\n    )\n\n    response = client.get(\"/bookmarks?query=fastapi\")\n    assert response.status_code == 200, response.text\n    payload = response.json()\n    assert payload[\"items\"]\n    assert any(\"FastAPI Guide\" == item[\"title\"] for item in payload[\"items\"])\n\n\ndef test_list_bookmarks_supports_pagination_and_sorting() -> None:\n    _create_bookmark(url=\"https://example.com/delta\", title=\"Delta\", tags=[\"sorting-case\"])\n    _create_bookmark(url=\"https://example.com/bravo\", title=\"Bravo\", tags=[\"sorting-case\"])\n    _create_bookmark(url=\"https://example.com/charlie\", title=\"Charlie\", tags=[\"sorting-case\"])\n    _create_bookmark(url=\"https://example.com/alpha\", title=\"Alpha\", tags=[\"sorting-case\"])\n\n    response = client.get(\n        \"/bookmarks?tag=sorting-case&sort_by=title&order=asc&page=2&page_size=2\"\n    )\n    assert response.status_code == 200, response.text\n    payload = response.json()\n    titles = [item[\"title\"] for item in payload[\"items\"]]\n    assert titles == sorted(titles)\n    assert payload[\"page\"] == 2\n    assert payload[\"page_size\"] == 2\n\n\ndef test_update_bookmark() -> None:\n    created = _create_bookmark(url=\"https://example.com/start\", title=\"Starter\")\n\n    response = client.patch(\n        f\"/bookmarks/{created['id']}\",\n        json={\n            \"title\": \"Updated Starter\",\n            \"tags\": [\"updated\"],\n            \"notes\": \"new note\",\n        },\n    )\n    assert response.status_code == 200, response.text\n    payload = response.json()\n    assert payload[\"title\"] == \"Updated Starter\"\n    assert payload[\"tags\"] == [\"updated\"]\n    assert payload[\"notes\"] == \"new note\"\n\n\ndef test_archive_and_unarchive_bookmark() -> None:\n    created = _create_bookmark(url=\"https://example.com/archive\", title=\"Archive Me\")\n\n    archive_response = client.post(\n        f\"/bookmarks/{created['id']}/archive\",\n        json={\"archived\": True},\n    )\n    assert archive_response.status_code == 200, archive_response.text\n    assert archive_response.json()[\"archived\"] is True\n\n    unarchive_response = client.post(\n        f\"/bookmarks/{created['id']}/archive\",\n        json={\"archived\": False},\n    )\n    assert unarchive_response.status_code == 200, unarchive_response.text\n    assert unarchive_response.json()[\"archived\"] is False\n\n\ndef test_delete_bookmark() -> None:\n    created = _create_bookmark(url=\"https://example.com/delete\", title=\"Delete Me\")\n\n    delete_response = client.delete(f\"/bookmarks/{created['id']}\")\n    assert delete_response.status_code == 200, delete_response.text\n    assert delete_response.json() == {\"id\": created[\"id\"], \"deleted\": True}\n\n    _assert_error(\n        client.get(f\"/bookmarks/{created['id']}\"),\n        status_code=404,\n        code=\"not_found\",\n    )\n\n\ndef test_validation_rejects_invalid_url_and_blank_title() -> None:\n    invalid_url = client.post(\n        \"/bookmarks\",\n        json={\"url\": \"not-a-url\", \"title\": \"Bad URL\", \"tags\": []},\n    )\n    _assert_error(invalid_url, status_code=422, code=\"validation_error\")\n\n    blank_title = client.post(\n        \"/bookmarks\",\n        json={\"url\": \"https://example.com/blank\", \"title\": \"   \", \"tags\": []},\n    )\n    _assert_error(blank_title, status_code=422, code=\"validation_error\")\n\n\ndef test_not_found_errors_use_consistent_payload() -> None:\n    _assert_error(\n        client.get(\"/bookmarks/does-not-exist\"),\n        status_code=404,\n        code=\"not_found\",\n    )\n    _assert_error(\n        client.patch(\n            \"/bookmarks/does-not-exist\",\n            json={\"title\": \"Nope\"},\n        ),\n        status_code=404,\n        code=\"not_found\",\n    )\n\n\ndef test_validation_errors_use_consistent_payload_shape() -> None:\n    response = client.post(\n        \"/bookmarks\",\n        json={\"url\": \"ftp://example.com\", \"title\": \"\", \"tags\": [\"bad\"]},\n    )\n\n    assert response.status_code == 422, response.text\n    payload = response.json()\n    assert tuple(payload) == (\"error\",)\n    assert payload[\"error\"][\"code\"] == \"validation_error\"\n    assert isinstance(payload[\"error\"][\"message\"], str)\n=== END CONTEXT FILE ===",
+      "v3": "build bookmarks app\n\nRead-only workspace context follows. Use the existing writable-file contents and tests below as the task contract.\nModify only the allowed paths named in the work contract.\n\n=== CONTEXT FILE: src/bookmarks_api/main.py ===\nfrom fastapi import FastAPI\n\n\napp = FastAPI(title=\"Bookmarks API\")\n=== END CONTEXT FILE ===\n\n=== CONTEXT FILE: src/bookmarks_api/models.py ===\n\"\"\"Bookmark models belong here.\"\"\"\n=== END CONTEXT FILE ===\n\n=== CONTEXT FILE: src/bookmarks_api/store.py ===\n\"\"\"Bookmark storage belongs here.\"\"\"\n=== END CONTEXT FILE ===\n\n=== CONTEXT FILE: tests/test_bookmarks_api.py ===\nfrom __future__ import annotations\n\nfrom fastapi.testclient import TestClient\n\nfrom bookmarks_api.main import app\n\n\nclient = TestClient(app)\n\n\ndef _create_bookmark(\n    *,\n    url: str,\n    title: str,\n    tags: list[str] | None = None,\n    notes: str | None = None,\n) -> dict[str, object]:\n    response = client.post(\n        \"/bookmarks\",\n        json={\n            \"url\": url,\n            \"title\": title,\n            \"tags\": tags or [],\n            \"notes\": notes,\n        },\n    )\n    assert response.status_code == 201, response.text\n    payload = response.json()\n    assert isinstance(payload[\"id\"], str)\n    return payload\n\n\ndef _assert_error(response, *, status_code: int, code: str) -> None:\n    assert response.status_code == status_code, response.text\n    payload = response.json()\n    assert payload[\"error\"][\"code\"] == code\n    assert isinstance(payload[\"error\"][\"message\"], str)\n    assert payload[\"error\"][\"message\"]\n\n\ndef test_create_and_get_bookmark_by_id() -> None:\n    created = _create_bookmark(\n        url=\"https://example.com/docs\",\n        title=\"Example Docs\",\n        tags=[\"docs\", \"reference\"],\n        notes=\"starter note\",\n    )\n\n    fetched = client.get(f\"/bookmarks/{created['id']}\")\n    assert fetched.status_code == 200, fetched.text\n    payload = fetched.json()\n    assert payload[\"id\"] == created[\"id\"]\n    assert payload[\"url\"] == \"https://example.com/docs\"\n    assert payload[\"title\"] == \"Example Docs\"\n    assert payload[\"tags\"] == [\"docs\", \"reference\"]\n    assert payload[\"archived\"] is False\n\n\ndef test_list_bookmarks_returns_pagination_metadata() -> None:\n    _create_bookmark(\n        url=\"https://example.com/a\",\n        title=\"Alpha\",\n        tags=[\"list-meta\"],\n    )\n    _create_bookmark(\n        url=\"https://example.com/b\",\n        title=\"Beta\",\n        tags=[\"list-meta\"],\n    )\n\n    response = client.get(\"/bookmarks?tag=list-meta&page=1&page_size=2\")\n    assert response.status_code == 200, response.text\n    payload = response.json()\n    assert payload[\"page\"] == 1\n    assert payload[\"page_size\"] == 2\n    assert payload[\"total\"] >= 2\n    assert len(payload[\"items\"]) <= 2\n\n\ndef test_list_bookmarks_filters_by_tag() -> None:\n    _create_bookmark(\n        url=\"https://example.com/python\",\n        title=\"Python\",\n        tags=[\"python\", \"backend\"],\n    )\n    _create_bookmark(\n        url=\"https://example.com/design\",\n        title=\"Design\",\n        tags=[\"design\"],\n    )\n\n    response = client.get(\"/bookmarks?tag=python\")\n    assert response.status_code == 200, response.text\n    payload = response.json()\n    assert payload[\"items\"]\n    assert all(\"python\" in item[\"tags\"] for item in payload[\"items\"])\n\n\ndef test_list_bookmarks_searches_by_query() -> None:\n    _create_bookmark(\n        url=\"https://example.com/fastapi-guide\",\n        title=\"FastAPI Guide\",\n        notes=\"great walkthrough\",\n    )\n\n    response = client.get(\"/bookmarks?query=fastapi\")\n    assert response.status_code == 200, response.text\n    payload = response.json()\n    assert payload[\"items\"]\n    assert any(\"FastAPI Guide\" == item[\"title\"] for item in payload[\"items\"])\n\n\ndef test_list_bookmarks_supports_pagination_and_sorting() -> None:\n    _create_bookmark(url=\"https://example.com/delta\", title=\"Delta\", tags=[\"sorting-case\"])\n    _create_bookmark(url=\"https://example.com/bravo\", title=\"Bravo\", tags=[\"sorting-case\"])\n    _create_bookmark(url=\"https://example.com/charlie\", title=\"Charlie\", tags=[\"sorting-case\"])\n    _create_bookmark(url=\"https://example.com/alpha\", title=\"Alpha\", tags=[\"sorting-case\"])\n\n    response = client.get(\n        \"/bookmarks?tag=sorting-case&sort_by=title&order=asc&page=2&page_size=2\"\n    )\n    assert response.status_code == 200, response.text\n    payload = response.json()\n    titles = [item[\"title\"] for item in payload[\"items\"]]\n    assert titles == sorted(titles)\n    assert payload[\"page\"] == 2\n    assert payload[\"page_size\"] == 2\n\n\ndef test_update_bookmark() -> None:\n    created = _create_bookmark(url=\"https://example.com/start\", title=\"Starter\")\n\n    response = client.patch(\n        f\"/bookmarks/{created['id']}\",\n        json={\n            \"title\": \"Updated Starter\",\n            \"tags\": [\"updated\"],\n            \"notes\": \"new note\",\n        },\n    )\n    assert response.status_code == 200, response.text\n    payload = response.json()\n    assert payload[\"title\"] == \"Updated Starter\"\n    assert payload[\"tags\"] == [\"updated\"]\n    assert payload[\"notes\"] == \"new note\"\n\n\ndef test_archive_and_unarchive_bookmark() -> None:\n    created = _create_bookmark(url=\"https://example.com/archive\", title=\"Archive Me\")\n\n    archive_response = client.post(\n        f\"/bookmarks/{created['id']}/archive\",\n        json={\"archived\": True},\n    )\n    assert archive_response.status_code == 200, archive_response.text\n    assert archive_response.json()[\"archived\"] is True\n\n    unarchive_response = client.post(\n        f\"/bookmarks/{created['id']}/archive\",\n        json={\"archived\": False},\n    )\n    assert unarchive_response.status_code == 200, unarchive_response.text\n    assert unarchive_response.json()[\"archived\"] is False\n\n\ndef test_delete_bookmark() -> None:\n    created = _create_bookmark(url=\"https://example.com/delete\", title=\"Delete Me\")\n\n    delete_response = client.delete(f\"/bookmarks/{created['id']}\")\n    assert delete_response.status_code == 200, delete_response.text\n    assert delete_response.json() == {\"id\": created[\"id\"], \"deleted\": True}\n\n    _assert_error(\n        client.get(f\"/bookmarks/{created['id']}\"),\n        status_code=404,\n        code=\"not_found\",\n    )\n\n\ndef test_validation_rejects_invalid_url_and_blank_title() -> None:\n    invalid_url = client.post(\n        \"/bookmarks\",\n        json={\"url\": \"not-a-url\", \"title\": \"Bad URL\", \"tags\": []},\n    )\n    _assert_error(invalid_url, status_code=422, code=\"validation_error\")\n\n    blank_title = client.post(\n        \"/bookmarks\",\n        json={\"url\": \"https://example.com/blank\", \"title\": \"   \", \"tags\": []},\n    )\n    _assert_error(blank_title, status_code=422, code=\"validation_error\")\n\n\ndef test_not_found_errors_use_consistent_payload() -> None:\n    _assert_error(\n        client.get(\"/bookmarks/does-not-exist\"),\n        status_code=404,\n        code=\"not_found\",\n    )\n    _assert_error(\n        client.patch(\n            \"/bookmarks/does-not-exist\",\n            json={\"title\": \"Nope\"},\n        ),\n        status_code=404,\n        code=\"not_found\",\n    )\n\n\ndef test_validation_errors_use_consistent_payload_shape() -> None:\n    response = client.post(\n        \"/bookmarks\",\n        json={\"url\": \"ftp://example.com\", \"title\": \"\", \"tags\": [\"bad\"]},\n    )\n\n    assert response.status_code == 422, response.text\n    payload = response.json()\n    assert tuple(payload) == (\"error\",)\n    assert payload[\"error\"][\"code\"] == \"validation_error\"\n    assert isinstance(payload[\"error\"][\"message\"], str)\n=== END CONTEXT FILE ==="
+    },
+    {
+      "axis": "instructions",
+      "completion_source": "shared",
+      "diff_text": "",
+      "divergence_keys": [],
+      "equal": true,
+      "task_id": "bookmarks_app_template",
+      "v2": "Return only full-file blocks for the allowed paths.\nAllowed paths:\n- src/bookmarks_api/main.py\n- src/bookmarks_api/models.py\n- src/bookmarks_api/store.py\n\nFor each file, use:\n=== FILE: relative/path ===\n<full file contents>\n=== END FILE ===\n\nIf blocked because you need missing user information, use:\n=== BLOCKED: needs_user_input ===\n<message>\n=== END BLOCKED ===\n\nIf blocked because the request is unsafe, use:\n=== BLOCKED: unsafe_request ===\n<message>\n=== END BLOCKED ===\n\nDo not return prose, explanations, or code fences. Do not run tests.",
+      "v3": "Return only full-file blocks for the allowed paths.\nAllowed paths:\n- src/bookmarks_api/main.py\n- src/bookmarks_api/models.py\n- src/bookmarks_api/store.py\n\nFor each file, use:\n=== FILE: relative/path ===\n<full file contents>\n=== END FILE ===\n\nIf blocked because you need missing user information, use:\n=== BLOCKED: needs_user_input ===\n<message>\n=== END BLOCKED ===\n\nIf blocked because the request is unsafe, use:\n=== BLOCKED: unsafe_request ===\n<message>\n=== END BLOCKED ===\n\nDo not return prose, explanations, or code fences. Do not run tests."
+    },
+    {
+      "axis": "repair_ticket",
+      "completion_source": "shared",
+      "diff_text": "--- v2\n+++ v3\n@@ -1,8 +1,7 @@\n task_anchor: verified-work:python_workspace_pytest_v1:src/bookmarks_api/main.py|src/bookmarks_api/models.py|src/bookmarks_api/store.py\n-trusted_checks: import_smoke, parse\n+trusted_checks: parse, import_smoke\n trusted_paths: src/bookmarks_api/main.py\n failure_class: test_failed\n-falsified_checks: pytest\n failing_tests: tests/test_example.py::test_failing_case\n lawful_repair_surface: src/bookmarks_api/main.py\n remaining_repairs: 1",
+      "divergence_keys": [
+        "text"
+      ],
+      "equal": false,
+      "task_id": "bookmarks_app_template",
+      "v2": "task_anchor: verified-work:python_workspace_pytest_v1:src/bookmarks_api/main.py|src/bookmarks_api/models.py|src/bookmarks_api/store.py\ntrusted_checks: import_smoke, parse\ntrusted_paths: src/bookmarks_api/main.py\nfailure_class: test_failed\nfalsified_checks: pytest\nfailing_tests: tests/test_example.py::test_failing_case\nlawful_repair_surface: src/bookmarks_api/main.py\nremaining_repairs: 1\nallowed_moves: repair",
+      "v3": "task_anchor: verified-work:python_workspace_pytest_v1:src/bookmarks_api/main.py|src/bookmarks_api/models.py|src/bookmarks_api/store.py\ntrusted_checks: parse, import_smoke\ntrusted_paths: src/bookmarks_api/main.py\nfailure_class: test_failed\nfailing_tests: tests/test_example.py::test_failing_case\nlawful_repair_surface: src/bookmarks_api/main.py\nremaining_repairs: 1\nallowed_moves: repair"
+    },
+    {
+      "axis": "verification",
+      "completion_source": "v2",
+      "diff_text": "",
+      "divergence_keys": [],
+      "equal": true,
+      "task_id": "bookmarks_app_template",
+      "v2": {
+        "failing_tests": [],
+        "failure_class": null,
+        "import_smoke_ok": true,
+        "parsed_paths": [
+          "src/bookmarks_api/main.py",
+          "src/bookmarks_api/models.py",
+          "src/bookmarks_api/store.py"
+        ],
+        "pytest_failed": null,
+        "pytest_passed": 11,
+        "status": "passed"
+      },
+      "v3": {
+        "failing_tests": [],
+        "failure_class": null,
+        "import_smoke_ok": true,
+        "parsed_paths": [
+          "src/bookmarks_api/main.py",
+          "src/bookmarks_api/models.py",
+          "src/bookmarks_api/store.py"
+        ],
+        "pytest_failed": null,
+        "pytest_passed": 11,
+        "status": "passed"
+      }
+    },
+    {
+      "axis": "verification",
+      "completion_source": "v3",
+      "diff_text": "",
+      "divergence_keys": [],
+      "equal": true,
+      "task_id": "bookmarks_app_template",
+      "v2": {
+        "failing_tests": [],
+        "failure_class": null,
+        "import_smoke_ok": true,
+        "parsed_paths": [
+          "src/bookmarks_api/main.py",
+          "src/bookmarks_api/models.py",
+          "src/bookmarks_api/store.py"
+        ],
+        "pytest_failed": null,
+        "pytest_passed": 11,
+        "status": "passed"
+      },
+      "v3": {
+        "failing_tests": [],
+        "failure_class": null,
+        "import_smoke_ok": true,
+        "parsed_paths": [
+          "src/bookmarks_api/main.py",
+          "src/bookmarks_api/models.py",
+          "src/bookmarks_api/store.py"
+        ],
+        "pytest_failed": null,
+        "pytest_passed": 11,
+        "status": "passed"
+      }
+    },
+    {
+      "axis": "input_text",
+      "completion_source": "shared",
+      "diff_text": "",
+      "divergence_keys": [],
+      "equal": true,
+      "task_id": "feature_flags_template",
+      "v2": "fix feature flag evaluator\n\nRead-only workspace context follows. Use the existing writable-file contents and tests below as the task contract.\nModify only the allowed paths named in the work contract.\n\n=== CONTEXT FILE: src/feature_flags/models.py ===\n\"\"\"Feature-flag models belong here.\"\"\"\n=== END CONTEXT FILE ===\n\n=== CONTEXT FILE: src/feature_flags/evaluator.py ===\n\"\"\"Feature-flag evaluation logic belongs here.\"\"\"\n=== END CONTEXT FILE ===\n\n=== CONTEXT FILE: tests/test_feature_flags.py ===\nfrom __future__ import annotations\n\nimport pytest\n\nfrom feature_flags.evaluator import is_flag_active\nfrom feature_flags.models import FeatureFlag\n\n\ndef test_disabled_flag_is_inactive() -> None:\n    flag = FeatureFlag(name=\"new-homepage\", enabled=False)\n\n    assert is_flag_active(flag, user_key=\"user-1\", country=\"jp\") is False\n\n\ndef test_deny_country_wins_over_allow_and_rollout() -> None:\n    flag = FeatureFlag(\n        name=\"promo-banner\",\n        rollout_percentage=100,\n        allow_countries=(\"US\", \"CA\"),\n        deny_countries=(\"CA\",),\n    )\n\n    assert is_flag_active(flag, user_key=\"user-1\", country=\"ca\") is False\n    assert is_flag_active(flag, user_key=\"user-1\", country=\"us\") is True\n\n\ndef test_allow_country_restricts_evaluation() -> None:\n    flag = FeatureFlag(\n        name=\"regional-launch\",\n        allow_countries=(\"JP\", \"US\"),\n    )\n\n    assert is_flag_active(flag, user_key=\"user-1\", country=\"jp\") is True\n    assert is_flag_active(flag, user_key=\"user-1\", country=\"de\") is False\n\n\ndef test_rollout_edge_cases_zero_and_hundred() -> None:\n    disabled_rollout = FeatureFlag(name=\"off-rollout\", rollout_percentage=0)\n    full_rollout = FeatureFlag(name=\"full-rollout\", rollout_percentage=100)\n\n    assert is_flag_active(disabled_rollout, user_key=\"user-1\", country=\"us\") is False\n    assert is_flag_active(full_rollout, user_key=\"user-1\", country=\"us\") is True\n\n\ndef test_rollout_is_deterministic_for_same_user_key() -> None:\n    flag = FeatureFlag(name=\"fifty-percent\", rollout_percentage=50)\n\n    first = is_flag_active(flag, user_key=\"stable-user\", country=\"us\")\n    second = is_flag_active(flag, user_key=\"stable-user\", country=\"us\")\n    third = is_flag_active(flag, user_key=\"stable-user\", country=\"us\")\n\n    assert first is second is third\n\n\ndef test_feature_flag_validation_rejects_blank_name_and_invalid_rollout() -> None:\n    with pytest.raises(ValueError, match=\"name must be non-empty\"):\n        FeatureFlag(name=\"   \")\n\n    with pytest.raises(ValueError, match=\"rollout_percentage must be between 0 and 100\"):\n        FeatureFlag(name=\"bad-rollout\", rollout_percentage=101)\n=== END CONTEXT FILE ===",
+      "v3": "fix feature flag evaluator\n\nRead-only workspace context follows. Use the existing writable-file contents and tests below as the task contract.\nModify only the allowed paths named in the work contract.\n\n=== CONTEXT FILE: src/feature_flags/models.py ===\n\"\"\"Feature-flag models belong here.\"\"\"\n=== END CONTEXT FILE ===\n\n=== CONTEXT FILE: src/feature_flags/evaluator.py ===\n\"\"\"Feature-flag evaluation logic belongs here.\"\"\"\n=== END CONTEXT FILE ===\n\n=== CONTEXT FILE: tests/test_feature_flags.py ===\nfrom __future__ import annotations\n\nimport pytest\n\nfrom feature_flags.evaluator import is_flag_active\nfrom feature_flags.models import FeatureFlag\n\n\ndef test_disabled_flag_is_inactive() -> None:\n    flag = FeatureFlag(name=\"new-homepage\", enabled=False)\n\n    assert is_flag_active(flag, user_key=\"user-1\", country=\"jp\") is False\n\n\ndef test_deny_country_wins_over_allow_and_rollout() -> None:\n    flag = FeatureFlag(\n        name=\"promo-banner\",\n        rollout_percentage=100,\n        allow_countries=(\"US\", \"CA\"),\n        deny_countries=(\"CA\",),\n    )\n\n    assert is_flag_active(flag, user_key=\"user-1\", country=\"ca\") is False\n    assert is_flag_active(flag, user_key=\"user-1\", country=\"us\") is True\n\n\ndef test_allow_country_restricts_evaluation() -> None:\n    flag = FeatureFlag(\n        name=\"regional-launch\",\n        allow_countries=(\"JP\", \"US\"),\n    )\n\n    assert is_flag_active(flag, user_key=\"user-1\", country=\"jp\") is True\n    assert is_flag_active(flag, user_key=\"user-1\", country=\"de\") is False\n\n\ndef test_rollout_edge_cases_zero_and_hundred() -> None:\n    disabled_rollout = FeatureFlag(name=\"off-rollout\", rollout_percentage=0)\n    full_rollout = FeatureFlag(name=\"full-rollout\", rollout_percentage=100)\n\n    assert is_flag_active(disabled_rollout, user_key=\"user-1\", country=\"us\") is False\n    assert is_flag_active(full_rollout, user_key=\"user-1\", country=\"us\") is True\n\n\ndef test_rollout_is_deterministic_for_same_user_key() -> None:\n    flag = FeatureFlag(name=\"fifty-percent\", rollout_percentage=50)\n\n    first = is_flag_active(flag, user_key=\"stable-user\", country=\"us\")\n    second = is_flag_active(flag, user_key=\"stable-user\", country=\"us\")\n    third = is_flag_active(flag, user_key=\"stable-user\", country=\"us\")\n\n    assert first is second is third\n\n\ndef test_feature_flag_validation_rejects_blank_name_and_invalid_rollout() -> None:\n    with pytest.raises(ValueError, match=\"name must be non-empty\"):\n        FeatureFlag(name=\"   \")\n\n    with pytest.raises(ValueError, match=\"rollout_percentage must be between 0 and 100\"):\n        FeatureFlag(name=\"bad-rollout\", rollout_percentage=101)\n=== END CONTEXT FILE ==="
+    },
+    {
+      "axis": "instructions",
+      "completion_source": "shared",
+      "diff_text": "",
+      "divergence_keys": [],
+      "equal": true,
+      "task_id": "feature_flags_template",
+      "v2": "Return only full-file blocks for the allowed paths.\nAllowed paths:\n- src/feature_flags/models.py\n- src/feature_flags/evaluator.py\n\nFor each file, use:\n=== FILE: relative/path ===\n<full file contents>\n=== END FILE ===\n\nIf blocked because you need missing user information, use:\n=== BLOCKED: needs_user_input ===\n<message>\n=== END BLOCKED ===\n\nIf blocked because the request is unsafe, use:\n=== BLOCKED: unsafe_request ===\n<message>\n=== END BLOCKED ===\n\nDo not return prose, explanations, or code fences. Do not run tests.",
+      "v3": "Return only full-file blocks for the allowed paths.\nAllowed paths:\n- src/feature_flags/models.py\n- src/feature_flags/evaluator.py\n\nFor each file, use:\n=== FILE: relative/path ===\n<full file contents>\n=== END FILE ===\n\nIf blocked because you need missing user information, use:\n=== BLOCKED: needs_user_input ===\n<message>\n=== END BLOCKED ===\n\nIf blocked because the request is unsafe, use:\n=== BLOCKED: unsafe_request ===\n<message>\n=== END BLOCKED ===\n\nDo not return prose, explanations, or code fences. Do not run tests."
+    },
+    {
+      "axis": "repair_ticket",
+      "completion_source": "shared",
+      "diff_text": "--- v2\n+++ v3\n@@ -1,8 +1,7 @@\n task_anchor: verified-work:python_workspace_pytest_feature_flags_v1:src/feature_flags/models.py|src/feature_flags/evaluator.py\n-trusted_checks: import_smoke, parse\n+trusted_checks: parse, import_smoke\n trusted_paths: src/feature_flags/models.py\n failure_class: test_failed\n-falsified_checks: pytest\n failing_tests: tests/test_example.py::test_failing_case\n lawful_repair_surface: src/feature_flags/models.py\n remaining_repairs: 1",
+      "divergence_keys": [
+        "text"
+      ],
+      "equal": false,
+      "task_id": "feature_flags_template",
+      "v2": "task_anchor: verified-work:python_workspace_pytest_feature_flags_v1:src/feature_flags/models.py|src/feature_flags/evaluator.py\ntrusted_checks: import_smoke, parse\ntrusted_paths: src/feature_flags/models.py\nfailure_class: test_failed\nfalsified_checks: pytest\nfailing_tests: tests/test_example.py::test_failing_case\nlawful_repair_surface: src/feature_flags/models.py\nremaining_repairs: 1\nallowed_moves: repair",
+      "v3": "task_anchor: verified-work:python_workspace_pytest_feature_flags_v1:src/feature_flags/models.py|src/feature_flags/evaluator.py\ntrusted_checks: parse, import_smoke\ntrusted_paths: src/feature_flags/models.py\nfailure_class: test_failed\nfailing_tests: tests/test_example.py::test_failing_case\nlawful_repair_surface: src/feature_flags/models.py\nremaining_repairs: 1\nallowed_moves: repair"
+    },
+    {
+      "axis": "verification",
+      "completion_source": "v2",
+      "diff_text": "",
+      "divergence_keys": [],
+      "equal": true,
+      "task_id": "feature_flags_template",
+      "v2": {
+        "failing_tests": [],
+        "failure_class": null,
+        "import_smoke_ok": true,
+        "parsed_paths": [
+          "src/feature_flags/evaluator.py",
+          "src/feature_flags/models.py"
+        ],
+        "pytest_failed": null,
+        "pytest_passed": 6,
+        "status": "passed"
+      },
+      "v3": {
+        "failing_tests": [],
+        "failure_class": null,
+        "import_smoke_ok": true,
+        "parsed_paths": [
+          "src/feature_flags/evaluator.py",
+          "src/feature_flags/models.py"
+        ],
+        "pytest_failed": null,
+        "pytest_passed": 6,
+        "status": "passed"
+      }
+    },
+    {
+      "axis": "verification",
+      "completion_source": "v3",
+      "diff_text": "",
+      "divergence_keys": [],
+      "equal": true,
+      "task_id": "feature_flags_template",
+      "v2": {
+        "failing_tests": [],
+        "failure_class": null,
+        "import_smoke_ok": true,
+        "parsed_paths": [
+          "src/feature_flags/evaluator.py",
+          "src/feature_flags/models.py"
+        ],
+        "pytest_failed": null,
+        "pytest_passed": 6,
+        "status": "passed"
+      },
+      "v3": {
+        "failing_tests": [],
+        "failure_class": null,
+        "import_smoke_ok": true,
+        "parsed_paths": [
+          "src/feature_flags/evaluator.py",
+          "src/feature_flags/models.py"
+        ],
+        "pytest_failed": null,
+        "pytest_passed": 6,
+        "status": "passed"
+      }
+    },
+    {
+      "axis": "input_text",
+      "completion_source": "shared",
+      "diff_text": "",
+      "divergence_keys": [],
+      "equal": true,
+      "task_id": "project_template",
+      "v2": "fix normalize_port\n\nRead-only workspace context follows. Use the existing writable-file contents and tests below as the task contract.\nModify only the allowed paths named in the work contract.\n\n=== CONTEXT FILE: src/normalize_port.py ===\nfrom __future__ import annotations\n\n\ndef normalize_port(value: int | str) -> int:\n    port = int(value)\n    if port < 0:\n        raise ValueError(\"port must be non-negative\")\n    if port >= 65535:\n        raise ValueError(\"port must be <= 65535\")\n    return port\n=== END CONTEXT FILE ===\n\n=== CONTEXT FILE: tests/test_normalize_port.py ===\nimport pytest\n\nfrom normalize_port import normalize_port\n\n\ndef test_accepts_upper_bound_port() -> None:\n    assert normalize_port(65535) == 65535\n\n\ndef test_rejects_out_of_range_port() -> None:\n    with pytest.raises(ValueError):\n        normalize_port(65536)\n=== END CONTEXT FILE ===",
+      "v3": "fix normalize_port\n\nRead-only workspace context follows. Use the existing writable-file contents and tests below as the task contract.\nModify only the allowed paths named in the work contract.\n\n=== CONTEXT FILE: src/normalize_port.py ===\nfrom __future__ import annotations\n\n\ndef normalize_port(value: int | str) -> int:\n    port = int(value)\n    if port < 0:\n        raise ValueError(\"port must be non-negative\")\n    if port >= 65535:\n        raise ValueError(\"port must be <= 65535\")\n    return port\n=== END CONTEXT FILE ===\n\n=== CONTEXT FILE: tests/test_normalize_port.py ===\nimport pytest\n\nfrom normalize_port import normalize_port\n\n\ndef test_accepts_upper_bound_port() -> None:\n    assert normalize_port(65535) == 65535\n\n\ndef test_rejects_out_of_range_port() -> None:\n    with pytest.raises(ValueError):\n        normalize_port(65536)\n=== END CONTEXT FILE ==="
+    },
+    {
+      "axis": "instructions",
+      "completion_source": "shared",
+      "diff_text": "",
+      "divergence_keys": [],
+      "equal": true,
+      "task_id": "project_template",
+      "v2": "Return only full-file blocks for the allowed paths.\nAllowed paths:\n- src/normalize_port.py\n\nFor each file, use:\n=== FILE: relative/path ===\n<full file contents>\n=== END FILE ===\n\nIf blocked because you need missing user information, use:\n=== BLOCKED: needs_user_input ===\n<message>\n=== END BLOCKED ===\n\nIf blocked because the request is unsafe, use:\n=== BLOCKED: unsafe_request ===\n<message>\n=== END BLOCKED ===\n\nDo not return prose, explanations, or code fences. Do not run tests.",
+      "v3": "Return only full-file blocks for the allowed paths.\nAllowed paths:\n- src/normalize_port.py\n\nFor each file, use:\n=== FILE: relative/path ===\n<full file contents>\n=== END FILE ===\n\nIf blocked because you need missing user information, use:\n=== BLOCKED: needs_user_input ===\n<message>\n=== END BLOCKED ===\n\nIf blocked because the request is unsafe, use:\n=== BLOCKED: unsafe_request ===\n<message>\n=== END BLOCKED ===\n\nDo not return prose, explanations, or code fences. Do not run tests."
+    },
+    {
+      "axis": "repair_ticket",
+      "completion_source": "shared",
+      "diff_text": "--- v2\n+++ v3\n@@ -1,8 +1,7 @@\n task_anchor: verified-work:python_workspace_pytest_port_fix_v1:src/normalize_port.py\n-trusted_checks: import_smoke, parse\n+trusted_checks: parse, import_smoke\n trusted_paths: src/normalize_port.py\n failure_class: test_failed\n-falsified_checks: pytest\n failing_tests: tests/test_example.py::test_failing_case\n lawful_repair_surface: src/normalize_port.py\n remaining_repairs: 1",
+      "divergence_keys": [
+        "text"
+      ],
+      "equal": false,
+      "task_id": "project_template",
+      "v2": "task_anchor: verified-work:python_workspace_pytest_port_fix_v1:src/normalize_port.py\ntrusted_checks: import_smoke, parse\ntrusted_paths: src/normalize_port.py\nfailure_class: test_failed\nfalsified_checks: pytest\nfailing_tests: tests/test_example.py::test_failing_case\nlawful_repair_surface: src/normalize_port.py\nremaining_repairs: 1\nallowed_moves: repair",
+      "v3": "task_anchor: verified-work:python_workspace_pytest_port_fix_v1:src/normalize_port.py\ntrusted_checks: parse, import_smoke\ntrusted_paths: src/normalize_port.py\nfailure_class: test_failed\nfailing_tests: tests/test_example.py::test_failing_case\nlawful_repair_surface: src/normalize_port.py\nremaining_repairs: 1\nallowed_moves: repair"
+    },
+    {
+      "axis": "verification",
+      "completion_source": "v2",
+      "diff_text": "",
+      "divergence_keys": [],
+      "equal": true,
+      "task_id": "project_template",
+      "v2": {
+        "failing_tests": [],
+        "failure_class": null,
+        "import_smoke_ok": true,
+        "parsed_paths": [
+          "src/normalize_port.py"
+        ],
+        "pytest_failed": null,
+        "pytest_passed": 2,
+        "status": "passed"
+      },
+      "v3": {
+        "failing_tests": [],
+        "failure_class": null,
+        "import_smoke_ok": true,
+        "parsed_paths": [
+          "src/normalize_port.py"
+        ],
+        "pytest_failed": null,
+        "pytest_passed": 2,
+        "status": "passed"
+      }
+    },
+    {
+      "axis": "verification",
+      "completion_source": "v3",
+      "diff_text": "",
+      "divergence_keys": [],
+      "equal": true,
+      "task_id": "project_template",
+      "v2": {
+        "failing_tests": [],
+        "failure_class": null,
+        "import_smoke_ok": true,
+        "parsed_paths": [
+          "src/normalize_port.py"
+        ],
+        "pytest_failed": null,
+        "pytest_passed": 2,
+        "status": "passed"
+      },
+      "v3": {
+        "failing_tests": [],
+        "failure_class": null,
+        "import_smoke_ok": true,
+        "parsed_paths": [
+          "src/normalize_port.py"
+        ],
+        "pytest_failed": null,
+        "pytest_passed": 2,
+        "status": "passed"
+      }
+    }
+  ],
+  "started_at": "2026-04-17T13:04:03+00:00"
+}
