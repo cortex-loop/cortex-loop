@@ -3,7 +3,7 @@
 ## Surface under test
 3 template surfaces × 5 checks = 15 parity rows.
 
-Verification runs twice per template: once with V2's known-good fixture and once with V3's known-good fixture. Instruction, input-text, and repair-ticket axes run once per template because they are completion-independent.
+Verification runs twice per template: once with the lab-owned V2 known-good completion and once with the lab-owned V3 known-good completion. Instruction and input-text axes run once per template because they are completion-independent. Repair-ticket runs once per template from a shared lab-owned broken completion that is verified on both sides before the ticket is built.
 
 ## Pre-registered analysis
 - If `divergence_count == 0`: V3 has earned drop-in parity claim on the deterministic fixture-level surface. The next sprint may proceed to live measurement without first closing any parity gap.
@@ -41,11 +41,14 @@ Verification runs twice per template: once with V2's known-good fixture and once
 ## Actual outcome
 `divergence_count = 3`.
 
-All three divergences are on the `repair_ticket` axis: `bookmarks_app_template`, `project_template`, and `feature_flags_template`. The JSON diffs show the same two differences in every case:
-- V2 emits `falsified_checks: pytest` and V3 omits that line.
-- V2 orders `trusted_checks` as `import_smoke, parse` while V3 orders them as `parse, import_smoke`.
+All three divergences are on the `repair_ticket` axis: `bookmarks_app_template`, `project_template`, and `feature_flags_template`. They are now earned from real template-grounded failing completions, not a synthetic failure state.
 
-No instruction, input-text, or verification row diverged. Both verifiers produced the same normalized outcomes on both V2 and V3 known-good fixture completions for all three template surfaces.
+The per-template diffs are:
+- `bookmarks_app_template`: V2 emits `falsified_checks: import_smoke` and V3 omits that line. The remaining repair-ticket lines match.
+- `project_template`: V2 emits `falsified_checks: pytest` and orders `trusted_checks` as `import_smoke, parse`; V3 omits `falsified_checks` and orders `trusted_checks` as `parse, import_smoke`.
+- `feature_flags_template`: V2 emits `falsified_checks: pytest`, orders `trusted_checks` and `trusted_paths` differently, and lists the same failing tests in a different order from V3.
+
+No instruction, input-text, or verification row diverged. Both verifiers produced the same normalized outcomes on both lab-owned passing completions for all three template surfaces.
 
 ## Recommendation for next sprint
 `v3-close-divergence-repair_ticket`

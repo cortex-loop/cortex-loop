@@ -27,12 +27,10 @@ from cortex_v3.verifier import (
     build_verified_work_repair_ticket as v3_build_repair_ticket,
     verify_verified_work_result as v3_verify,
 )
-from lab.v3.fixture_payloads import fixture_payload_for_task
-from tests.product._verified_work_fixtures import (
-    VALID_FEATURE_FLAG_FILE_MAP,
-    VALID_FILE_MAP,
-    VALID_NORMALIZE_PORT_FILE_MAP,
-    render_full_files_result,
+from lab.v3.parity_oracle import (
+    broken_payload_for_task,
+    v2_passing_payload_for_task,
+    v3_passing_payload_for_task,
 )
 
 
@@ -86,30 +84,33 @@ _TASK_SPECS = (
         _BOOKMARKS_V2_CONTRACT,
         _BOOKMARKS_V3_CONTRACT,
         "build bookmarks app",
-        render_full_files_result(VALID_FILE_MAP),
-        fixture_payload_for_task("bookmarks_app_template"),
+        v2_passing_payload_for_task("bookmarks_app_template"),
+        v3_passing_payload_for_task("bookmarks_app_template"),
+        broken_payload_for_task("bookmarks_app_template"),
     ),
     (
         "project_template",
         _PROJECT_V2_CONTRACT,
         _PROJECT_V3_CONTRACT,
         "fix normalize_port",
-        render_full_files_result(VALID_NORMALIZE_PORT_FILE_MAP),
-        fixture_payload_for_task("project_template"),
+        v2_passing_payload_for_task("project_template"),
+        v3_passing_payload_for_task("project_template"),
+        broken_payload_for_task("project_template"),
     ),
     (
         "feature_flags_template",
         _FEATURE_FLAGS_V2_CONTRACT,
         _FEATURE_FLAGS_V3_CONTRACT,
         "fix feature flag evaluator",
-        render_full_files_result(VALID_FEATURE_FLAG_FILE_MAP),
-        fixture_payload_for_task("feature_flags_template"),
+        v2_passing_payload_for_task("feature_flags_template"),
+        v3_passing_payload_for_task("feature_flags_template"),
+        broken_payload_for_task("feature_flags_template"),
     ),
 )
 
 
-def compare_instructions(task: tuple[str, V2WorkContract, V3WorkContract, str, str, str]) -> dict[str, Any]:
-    task_id, v2_contract, v3_contract, _task_prompt, _v2_completion_text, _v3_completion_text = task
+def compare_instructions(task: tuple[str, V2WorkContract, V3WorkContract, str, str, str, str]) -> dict[str, Any]:
+    task_id, v2_contract, v3_contract, _task_prompt, _v2_completion_text, _v3_completion_text, _broken_completion_text = task
     v2_value = v2_build_instructions(v2_contract)
     v3_value = v3_build_instructions(v3_contract)
     return _string_row(
@@ -121,8 +122,8 @@ def compare_instructions(task: tuple[str, V2WorkContract, V3WorkContract, str, s
     )
 
 
-def compare_input_text(task: tuple[str, V2WorkContract, V3WorkContract, str, str, str]) -> dict[str, Any]:
-    task_id, v2_contract, v3_contract, task_prompt, _v2_completion_text, _v3_completion_text = task
+def compare_input_text(task: tuple[str, V2WorkContract, V3WorkContract, str, str, str, str]) -> dict[str, Any]:
+    task_id, v2_contract, v3_contract, task_prompt, _v2_completion_text, _v3_completion_text, _broken_completion_text = task
     v2_value = v2_build_input_text(task_prompt, v2_contract)
     v3_value = v3_build_input_text(task_prompt, v3_contract)
     return _string_row(
@@ -134,37 +135,16 @@ def compare_input_text(task: tuple[str, V2WorkContract, V3WorkContract, str, str
     )
 
 
-def compare_repair_ticket(task: tuple[str, V2WorkContract, V3WorkContract, str, str, str]) -> dict[str, Any]:
-    task_id, v2_contract, v3_contract, _task_prompt, _v2_completion_text, _v3_completion_text = task
-    parsed_paths = v2_contract.allowed_write_paths[:1]
-    v2_outcome = V2VerificationOutcome(
-        status="failed",
-        failure_class="test_failed",
-        parsed_paths=parsed_paths,
-        import_smoke_ok=True,
-        pytest_ok=False,
-        pytest_exit_code=1,
-        pytest_passed=3,
-        pytest_failed=1,
-        failing_tests=("tests/test_example.py::test_failing_case",),
-        first_failure_excerpt="AssertionError: expected fixed output",
-    )
-    v3_outcome = V3VerificationOutcome(
-        status="failed",
-        failure_class="test_failed",
-        parsed_paths=parsed_paths,
-        import_smoke_ok=True,
-        pytest_ok=False,
-        pytest_exit_code=1,
-        pytest_passed=3,
-        pytest_failed=1,
-        failing_tests=("tests/test_example.py::test_failing_case",),
-        first_failure_excerpt="AssertionError: expected fixed output",
-    )
+def compare_repair_ticket(task: tuple[str, V2WorkContract, V3WorkContract, str, str, str, str]) -> dict[str, Any]:
+    task_id, v2_contract, v3_contract, _task_prompt, _v2_completion_text, _v3_completion_text, broken_completion_text = task
+    _v2_file_map, v2_outcome = v2_verify(broken_completion_text, v2_contract)
+    _v3_file_map, v3_outcome = v3_verify(broken_completion_text, v3_contract)
+    _require_repairable_failure(task_id, "v2", v2_outcome)
+    _require_repairable_failure(task_id, "v3", v3_outcome)
     v2_state = v2_derive_preservation_state(
         None,
         v2_contract,
-        parsed_paths,
+        v2_outcome.parsed_paths,
         v2_outcome,
         remaining_repairs=1,
     )
@@ -184,11 +164,11 @@ def compare_repair_ticket(task: tuple[str, V2WorkContract, V3WorkContract, str, 
 
 
 def compare_verification(
-    task: tuple[str, V2WorkContract, V3WorkContract, str, str, str],
+    task: tuple[str, V2WorkContract, V3WorkContract, str, str, str, str],
     *,
     completion_source: str,
 ) -> dict[str, Any]:
-    task_id, v2_contract, v3_contract, _task_prompt, v2_completion_text, v3_completion_text = task
+    task_id, v2_contract, v3_contract, _task_prompt, v2_completion_text, v3_completion_text, _broken_completion_text = task
     completion_text = v2_completion_text if completion_source == "v2" else v3_completion_text
     _v2_file_map, v2_outcome = v2_verify(completion_text, v2_contract)
     _v3_file_map, v3_outcome = v3_verify(completion_text, v3_contract)
@@ -224,11 +204,12 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--output", required=True)
     args = parser.parse_args(argv)
 
+    started_at = _timestamp()
     rows = run_all_checks()
     rows.sort(key=lambda row: (row["task_id"], row["axis"], row["completion_source"]))
     divergence_count = sum(1 for row in rows if not row["equal"])
     payload = {
-        "started_at": _timestamp(),
+        "started_at": started_at,
         "completed_at": _timestamp(),
         "rows": rows,
         "divergence_count": divergence_count,
@@ -271,6 +252,14 @@ def _normalize_outcome(outcome: Any) -> dict[str, Any]:
         "pytest_failed": outcome.pytest_failed,
         "failing_tests": sorted(outcome.failing_tests),
     }
+
+
+def _require_repairable_failure(task_id: str, side: str, outcome: Any) -> None:
+    if outcome.status != "failed" or outcome.failure_class not in {"import_smoke_failed", "test_failed"}:
+        raise RuntimeError(
+            f"Parity oracle for {task_id!r} did not produce a repairable {side} outcome: "
+            f"status={outcome.status!r} failure_class={outcome.failure_class!r}."
+        )
 
 
 def _diff_text(v2_value: str, v3_value: str) -> str:

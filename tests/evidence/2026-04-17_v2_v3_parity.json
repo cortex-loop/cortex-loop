@@ -1,5 +1,5 @@
 {
-  "completed_at": "2026-04-17T13:04:03+00:00",
+  "completed_at": "2026-04-17T13:25:55+00:00",
   "divergence_count": 3,
   "rows": [
     {
@@ -25,14 +25,14 @@
     {
       "axis": "repair_ticket",
       "completion_source": "shared",
-      "diff_text": "--- v2\n+++ v3\n@@ -1,8 +1,7 @@\n task_anchor: verified-work:python_workspace_pytest_v1:src/bookmarks_api/main.py|src/bookmarks_api/models.py|src/bookmarks_api/store.py\n-trusted_checks: import_smoke, parse\n+trusted_checks: parse, import_smoke\n trusted_paths: src/bookmarks_api/main.py\n failure_class: test_failed\n-falsified_checks: pytest\n failing_tests: tests/test_example.py::test_failing_case\n lawful_repair_surface: src/bookmarks_api/main.py\n remaining_repairs: 1",
+      "diff_text": "--- v2\n+++ v3\n@@ -2,7 +2,6 @@\n trusted_checks: parse\n trusted_paths: src/bookmarks_api/main.py, src/bookmarks_api/models.py, src/bookmarks_api/store.py\n failure_class: import_smoke_failed\n-falsified_checks: import_smoke\n failing_tests: <none>\n lawful_repair_surface: src/bookmarks_api/main.py, src/bookmarks_api/models.py, src/bookmarks_api/store.py\n remaining_repairs: 1",
       "divergence_keys": [
         "text"
       ],
       "equal": false,
       "task_id": "bookmarks_app_template",
-      "v2": "task_anchor: verified-work:python_workspace_pytest_v1:src/bookmarks_api/main.py|src/bookmarks_api/models.py|src/bookmarks_api/store.py\ntrusted_checks: import_smoke, parse\ntrusted_paths: src/bookmarks_api/main.py\nfailure_class: test_failed\nfalsified_checks: pytest\nfailing_tests: tests/test_example.py::test_failing_case\nlawful_repair_surface: src/bookmarks_api/main.py\nremaining_repairs: 1\nallowed_moves: repair",
-      "v3": "task_anchor: verified-work:python_workspace_pytest_v1:src/bookmarks_api/main.py|src/bookmarks_api/models.py|src/bookmarks_api/store.py\ntrusted_checks: parse, import_smoke\ntrusted_paths: src/bookmarks_api/main.py\nfailure_class: test_failed\nfailing_tests: tests/test_example.py::test_failing_case\nlawful_repair_surface: src/bookmarks_api/main.py\nremaining_repairs: 1\nallowed_moves: repair"
+      "v2": "task_anchor: verified-work:python_workspace_pytest_v1:src/bookmarks_api/main.py|src/bookmarks_api/models.py|src/bookmarks_api/store.py\ntrusted_checks: parse\ntrusted_paths: src/bookmarks_api/main.py, src/bookmarks_api/models.py, src/bookmarks_api/store.py\nfailure_class: import_smoke_failed\nfalsified_checks: import_smoke\nfailing_tests: <none>\nlawful_repair_surface: src/bookmarks_api/main.py, src/bookmarks_api/models.py, src/bookmarks_api/store.py\nremaining_repairs: 1\nallowed_moves: repair",
+      "v3": "task_anchor: verified-work:python_workspace_pytest_v1:src/bookmarks_api/main.py|src/bookmarks_api/models.py|src/bookmarks_api/store.py\ntrusted_checks: parse\ntrusted_paths: src/bookmarks_api/main.py, src/bookmarks_api/models.py, src/bookmarks_api/store.py\nfailure_class: import_smoke_failed\nfailing_tests: <none>\nlawful_repair_surface: src/bookmarks_api/main.py, src/bookmarks_api/models.py, src/bookmarks_api/store.py\nremaining_repairs: 1\nallowed_moves: repair"
     },
     {
       "axis": "verification",
@@ -125,14 +125,14 @@
     {
       "axis": "repair_ticket",
       "completion_source": "shared",
-      "diff_text": "--- v2\n+++ v3\n@@ -1,8 +1,7 @@\n task_anchor: verified-work:python_workspace_pytest_feature_flags_v1:src/feature_flags/models.py|src/feature_flags/evaluator.py\n-trusted_checks: import_smoke, parse\n+trusted_checks: parse, import_smoke\n trusted_paths: src/feature_flags/models.py\n failure_class: test_failed\n-falsified_checks: pytest\n failing_tests: tests/test_example.py::test_failing_case\n lawful_repair_surface: src/feature_flags/models.py\n remaining_repairs: 1",
+      "diff_text": "--- v2\n+++ v3\n@@ -1,9 +1,8 @@\n task_anchor: verified-work:python_workspace_pytest_feature_flags_v1:src/feature_flags/models.py|src/feature_flags/evaluator.py\n-trusted_checks: import_smoke, parse\n-trusted_paths: src/feature_flags/evaluator.py, src/feature_flags/models.py\n+trusted_checks: parse, import_smoke\n+trusted_paths: src/feature_flags/models.py, src/feature_flags/evaluator.py\n failure_class: test_failed\n-falsified_checks: pytest\n-failing_tests: tests/test_feature_flags.py::test_allow_country_restricts_evaluation, tests/test_feature_flags.py::test_deny_country_wins_over_allow_and_rollout, tests/test_feature_flags.py::test_disabled_flag_is_inactive, tests/test_feature_flags.py::test_rollout_edge_cases_zero_and_hundred\n-lawful_repair_surface: src/feature_flags/evaluator.py, src/feature_flags/models.py\n+failing_tests: tests/test_feature_flags.py::test_disabled_flag_is_inactive, tests/test_feature_flags.py::test_deny_country_wins_over_allow_and_rollout, tests/test_feature_flags.py::test_allow_country_restricts_evaluation, tests/test_feature_flags.py::test_rollout_edge_cases_zero_and_hundred\n+lawful_repair_surface: src/feature_flags/models.py, src/feature_flags/evaluator.py\n remaining_repairs: 1\n allowed_moves: repair",
       "divergence_keys": [
         "text"
       ],
       "equal": false,
       "task_id": "feature_flags_template",
-      "v2": "task_anchor: verified-work:python_workspace_pytest_feature_flags_v1:src/feature_flags/models.py|src/feature_flags/evaluator.py\ntrusted_checks: import_smoke, parse\ntrusted_paths: src/feature_flags/models.py\nfailure_class: test_failed\nfalsified_checks: pytest\nfailing_tests: tests/test_example.py::test_failing_case\nlawful_repair_surface: src/feature_flags/models.py\nremaining_repairs: 1\nallowed_moves: repair",
-      "v3": "task_anchor: verified-work:python_workspace_pytest_feature_flags_v1:src/feature_flags/models.py|src/feature_flags/evaluator.py\ntrusted_checks: parse, import_smoke\ntrusted_paths: src/feature_flags/models.py\nfailure_class: test_failed\nfailing_tests: tests/test_example.py::test_failing_case\nlawful_repair_surface: src/feature_flags/models.py\nremaining_repairs: 1\nallowed_moves: repair"
+      "v2": "task_anchor: verified-work:python_workspace_pytest_feature_flags_v1:src/feature_flags/models.py|src/feature_flags/evaluator.py\ntrusted_checks: import_smoke, parse\ntrusted_paths: src/feature_flags/evaluator.py, src/feature_flags/models.py\nfailure_class: test_failed\nfalsified_checks: pytest\nfailing_tests: tests/test_feature_flags.py::test_allow_country_restricts_evaluation, tests/test_feature_flags.py::test_deny_country_wins_over_allow_and_rollout, tests/test_feature_flags.py::test_disabled_flag_is_inactive, tests/test_feature_flags.py::test_rollout_edge_cases_zero_and_hundred\nlawful_repair_surface: src/feature_flags/evaluator.py, src/feature_flags/models.py\nremaining_repairs: 1\nallowed_moves: repair",
+      "v3": "task_anchor: verified-work:python_workspace_pytest_feature_flags_v1:src/feature_flags/models.py|src/feature_flags/evaluator.py\ntrusted_checks: parse, import_smoke\ntrusted_paths: src/feature_flags/models.py, src/feature_flags/evaluator.py\nfailure_class: test_failed\nfailing_tests: tests/test_feature_flags.py::test_disabled_flag_is_inactive, tests/test_feature_flags.py::test_deny_country_wins_over_allow_and_rollout, tests/test_feature_flags.py::test_allow_country_restricts_evaluation, tests/test_feature_flags.py::test_rollout_edge_cases_zero_and_hundred\nlawful_repair_surface: src/feature_flags/models.py, src/feature_flags/evaluator.py\nremaining_repairs: 1\nallowed_moves: repair"
     },
     {
       "axis": "verification",
@@ -221,14 +221,14 @@
     {
       "axis": "repair_ticket",
       "completion_source": "shared",
-      "diff_text": "--- v2\n+++ v3\n@@ -1,8 +1,7 @@\n task_anchor: verified-work:python_workspace_pytest_port_fix_v1:src/normalize_port.py\n-trusted_checks: import_smoke, parse\n+trusted_checks: parse, import_smoke\n trusted_paths: src/normalize_port.py\n failure_class: test_failed\n-falsified_checks: pytest\n failing_tests: tests/test_example.py::test_failing_case\n lawful_repair_surface: src/normalize_port.py\n remaining_repairs: 1",
+      "diff_text": "--- v2\n+++ v3\n@@ -1,8 +1,7 @@\n task_anchor: verified-work:python_workspace_pytest_port_fix_v1:src/normalize_port.py\n-trusted_checks: import_smoke, parse\n+trusted_checks: parse, import_smoke\n trusted_paths: src/normalize_port.py\n failure_class: test_failed\n-falsified_checks: pytest\n failing_tests: tests/test_normalize_port.py::test_accepts_upper_bound_port\n lawful_repair_surface: src/normalize_port.py\n remaining_repairs: 1",
       "divergence_keys": [
         "text"
       ],
       "equal": false,
       "task_id": "project_template",
-      "v2": "task_anchor: verified-work:python_workspace_pytest_port_fix_v1:src/normalize_port.py\ntrusted_checks: import_smoke, parse\ntrusted_paths: src/normalize_port.py\nfailure_class: test_failed\nfalsified_checks: pytest\nfailing_tests: tests/test_example.py::test_failing_case\nlawful_repair_surface: src/normalize_port.py\nremaining_repairs: 1\nallowed_moves: repair",
-      "v3": "task_anchor: verified-work:python_workspace_pytest_port_fix_v1:src/normalize_port.py\ntrusted_checks: parse, import_smoke\ntrusted_paths: src/normalize_port.py\nfailure_class: test_failed\nfailing_tests: tests/test_example.py::test_failing_case\nlawful_repair_surface: src/normalize_port.py\nremaining_repairs: 1\nallowed_moves: repair"
+      "v2": "task_anchor: verified-work:python_workspace_pytest_port_fix_v1:src/normalize_port.py\ntrusted_checks: import_smoke, parse\ntrusted_paths: src/normalize_port.py\nfailure_class: test_failed\nfalsified_checks: pytest\nfailing_tests: tests/test_normalize_port.py::test_accepts_upper_bound_port\nlawful_repair_surface: src/normalize_port.py\nremaining_repairs: 1\nallowed_moves: repair",
+      "v3": "task_anchor: verified-work:python_workspace_pytest_port_fix_v1:src/normalize_port.py\ntrusted_checks: parse, import_smoke\ntrusted_paths: src/normalize_port.py\nfailure_class: test_failed\nfailing_tests: tests/test_normalize_port.py::test_accepts_upper_bound_port\nlawful_repair_surface: src/normalize_port.py\nremaining_repairs: 1\nallowed_moves: repair"
     },
     {
       "axis": "verification",
@@ -291,5 +291,5 @@
       }
     }
   ],
-  "started_at": "2026-04-17T13:04:03+00:00"
+  "started_at": "2026-04-17T13:22:52+00:00"
 }
