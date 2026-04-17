@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from time import perf_counter
 
 from cortex_v3.contracts import VerifiedTurnRequest, WorkContract
 from cortex_v3.engine import run_verified_turn
@@ -25,12 +26,16 @@ class ReplayTask:
 class ReplayOutcome:
     task_id: str
     provider: str
+    model: str
     arm: str
     attempt_count: int
     decision: str
     verification_status: str | None
     failure_class: str | None
+    pytest_passed: int | None
+    pytest_failed: int | None
     parsed_paths: tuple[str, ...]
+    duration_seconds: float
     warnings: tuple[str, ...]
 
 
@@ -40,6 +45,7 @@ def run_replay_case(
     *,
     arm: str,
 ) -> ReplayOutcome:
+    started_at = perf_counter()
     if arm == "verified_first_attempt":
         request = _clone_request_with_repairs(task.request, max_repair_turns=0)
         result = run_verified_turn(adapter, request)
@@ -49,16 +55,21 @@ def run_replay_case(
         result = _run_plain_feedback_turn(adapter, task.request)
     else:
         raise ValueError("run_replay_case.arm must be accepted.")
+    duration_seconds = perf_counter() - started_at
     verification = result.verification
     return ReplayOutcome(
         task_id=task.task_id,
         provider=result.provider,
+        model=task.request.model,
         arm=arm,
         attempt_count=result.attempt_count,
         decision=result.decision,
         verification_status=None if verification is None else verification.status,
         failure_class=None if verification is None else verification.failure_class,
+        pytest_passed=None if verification is None else verification.pytest_passed,
+        pytest_failed=None if verification is None else verification.pytest_failed,
         parsed_paths=result.parsed_paths,
+        duration_seconds=duration_seconds,
         warnings=result.warnings,
     )
 
