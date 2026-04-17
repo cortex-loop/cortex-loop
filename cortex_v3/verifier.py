@@ -142,6 +142,35 @@ def build_verified_work_input_text(
     )
 
 
+# Canonical repair-ticket format for Cortex v3.
+#
+# Properties:
+#   P1. task_anchor, failure_class, remaining_repairs, and allowed_moves are
+#       emitted as-is (single values).
+#   P2. trusted_checks, trusted_paths, failing_tests, and lawful_repair_surface
+#       are emitted alphabetically sorted. Rationale: regression stability
+#       across re-orderings of upstream computation.
+#   P3. falsified_checks is derived from failure_class via _falsified_checks()
+#       and emitted between failure_class and failing_tests. Rationale: the
+#       line is a distinct information channel from failure_class that
+#       generalizes cleanly if a future verifier falsifies multiple checks
+#       at once.
+#   P4. Field order is fixed: task_anchor, trusted_checks, trusted_paths,
+#       failure_class, falsified_checks, failing_tests, lawful_repair_surface,
+#       remaining_repairs, allowed_moves.
+#   P5. Empty list fields render as "<none>".
+def _falsified_checks(failure_class: str | None) -> tuple[str, ...]:
+    if failure_class == "output_invalid":
+        return ("parse",)
+    if failure_class == "import_smoke_failed":
+        return ("import_smoke",)
+    if failure_class == "test_failed":
+        return ("pytest",)
+    if failure_class in {"blocked_missing_info", "blocked_unsafe"}:
+        return ("blocked",)
+    return ()
+
+
 def build_verified_work_repair_ticket(preservation_state: PreservationState) -> str:
     if not isinstance(preservation_state, PreservationState):
         actual_type = type(preservation_state).__name__
@@ -149,16 +178,20 @@ def build_verified_work_repair_ticket(preservation_state: PreservationState) -> 
             "build_verified_work_repair_ticket.preservation_state must be PreservationState, "
             f"got {actual_type}."
         )
-    trusted_checks = ", ".join(preservation_state.trusted_checks) or "<none>"
-    trusted_paths = ", ".join(preservation_state.trusted_paths) or "<none>"
-    failing_tests = ", ".join(preservation_state.failing_tests) or "<none>"
-    repair_surface = ", ".join(preservation_state.lawful_repair_surface) or "<none>"
-    allowed_moves = ", ".join(preservation_state.allowed_moves)
+    trusted_checks = ", ".join(sorted(preservation_state.trusted_checks)) or "<none>"
+    trusted_paths = ", ".join(sorted(preservation_state.trusted_paths)) or "<none>"
+    falsified_checks = ", ".join(
+        sorted(_falsified_checks(preservation_state.failure_class))
+    ) or "<none>"
+    failing_tests = ", ".join(sorted(preservation_state.failing_tests)) or "<none>"
+    repair_surface = ", ".join(sorted(preservation_state.lawful_repair_surface)) or "<none>"
+    allowed_moves = ", ".join(sorted(preservation_state.allowed_moves))
     return (
         f"task_anchor: {preservation_state.task_anchor}\n"
         f"trusted_checks: {trusted_checks}\n"
         f"trusted_paths: {trusted_paths}\n"
         f"failure_class: {preservation_state.failure_class or '<none>'}\n"
+        f"falsified_checks: {falsified_checks}\n"
         f"failing_tests: {failing_tests}\n"
         f"lawful_repair_surface: {repair_surface}\n"
         f"remaining_repairs: {preservation_state.remaining_repairs}\n"

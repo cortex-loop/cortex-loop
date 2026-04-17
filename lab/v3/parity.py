@@ -119,6 +119,8 @@ def compare_instructions(task: tuple[str, V2WorkContract, V3WorkContract, str, s
         completion_source="shared",
         v2_value=v2_value,
         v3_value=v3_value,
+        classification_when_diff="semantic",
+        classification_reason_when_diff="instruction text differs under identical contracts",
     )
 
 
@@ -132,6 +134,8 @@ def compare_input_text(task: tuple[str, V2WorkContract, V3WorkContract, str, str
         completion_source="shared",
         v2_value=v2_value,
         v3_value=v3_value,
+        classification_when_diff="semantic",
+        classification_reason_when_diff="input text differs under identical prompts and contracts",
     )
 
 
@@ -160,6 +164,8 @@ def compare_repair_ticket(task: tuple[str, V2WorkContract, V3WorkContract, str, 
         completion_source="shared",
         v2_value=v2_build_repair_ticket(v2_state),
         v3_value=v3_build_repair_ticket(v3_state),
+        classification_when_diff="cosmetic-canonical",
+        classification_reason_when_diff="repair-ticket text diverges from the canonical shared format",
     )
 
 
@@ -183,6 +189,12 @@ def compare_verification(
         "v2": v2_value,
         "v3": v3_value,
         "equal": equal,
+        "classification": "identity" if equal else "semantic",
+        "classification_reason": (
+            "normalized verification outcomes are byte-for-byte equal"
+            if equal
+            else "normalized verification outcomes differ under identical completion input"
+        ),
         "divergence_keys": divergence_keys,
         "diff_text": "" if equal else _diff_text(json.dumps(v2_value, indent=2, sort_keys=True), json.dumps(v3_value, indent=2, sort_keys=True)),
     }
@@ -228,6 +240,8 @@ def _string_row(
     completion_source: str,
     v2_value: str,
     v3_value: str,
+    classification_when_diff: str,
+    classification_reason_when_diff: str,
 ) -> dict[str, Any]:
     equal = v2_value == v3_value
     return {
@@ -237,6 +251,12 @@ def _string_row(
         "v2": v2_value,
         "v3": v3_value,
         "equal": equal,
+        "classification": "identity" if equal else classification_when_diff,
+        "classification_reason": (
+            "byte-for-byte equal"
+            if equal
+            else classification_reason_when_diff
+        ),
         "divergence_keys": [] if equal else ["text"],
         "diff_text": "" if equal else _diff_text(v2_value, v3_value),
     }

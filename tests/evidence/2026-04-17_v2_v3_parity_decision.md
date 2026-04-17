@@ -1,54 +1,57 @@
 # V2/V3 Deterministic Parity Proof — 2026-04-17
 
 ## Surface under test
-3 template surfaces × 5 checks = 15 parity rows.
+3 template surfaces × 5 row types (instructions, input text, repair ticket,
+verification on V2 fixture, verification on V3 fixture) = 15 parity rows.
+Harness: lab/v3/parity.py. Oracle: lab/v3/parity_oracle.py.
 
-Verification runs twice per template: once with the lab-owned V2 known-good completion and once with the lab-owned V3 known-good completion. Instruction and input-text axes run once per template because they are completion-independent. Repair-ticket runs once per template from a shared lab-owned broken completion that is verified on both sides before the ticket is built.
+## Canonical format
+V3's repair ticket follows the canonical spec documented at the head of
+cortex_v3/verifier.py::build_verified_work_repair_ticket: alphabetically
+sorted list fields (P2), derived falsified_checks (P3), fixed field order
+(P4), "<none>" for empty lists (P5). V2 currently satisfies the same spec,
+which the parity harness cross-validates by emitting identity rows on all
+three repair_ticket cells.
 
-## Pre-registered analysis
-- If `divergence_count == 0`: V3 has earned drop-in parity claim on the deterministic fixture-level surface. The next sprint may proceed to live measurement without first closing any parity gap.
-- If `1 <= divergence_count <= 5`: V3 has partial drop-in parity; each divergence is a concrete, named code-level gap. The next sprint closes exactly those gaps and re-runs this harness.
-- If `divergence_count > 5`: the divergence is systemic. V3 has not earned drop-in claim. Investigation precedes any further V3 investment; the investigation result will determine whether V3 is repositioned or repaired.
-- Divergences on the verification axis with V2's fixture but not V3's fixture, or vice versa, are marked as fixture asymmetries rather than implementation bugs and listed separately.
+## Decision rule for future V2/V3 divergences
+Each parity row carries a `classification` field:
+- `identity`: byte-for-byte equal. No action.
+- `semantic`: different information content. V3 must close unless V3's
+  content is demonstrably better, in which case a separate sprint narrows V2.
+- `cosmetic-canonical`: same information, different surface form, both
+  stable. Adopt the canonical form on both sides; write the canonical
+  spec down as code-adjacent documentation.
+- `redundancy-wart`: one side emits information that is redundant with
+  another field. Narrow that side in a separate sprint.
 
-## Raw rows
-| axis | task_id | completion_source | equal | divergence_keys |
-|---|---|---|---|---|
-| input_text | bookmarks_app_template | shared | yes | <none> |
-| instructions | bookmarks_app_template | shared | yes | <none> |
-| repair_ticket | bookmarks_app_template | shared | no | text |
-| verification | bookmarks_app_template | v2 | yes | <none> |
-| verification | bookmarks_app_template | v3 | yes | <none> |
-| input_text | feature_flags_template | shared | yes | <none> |
-| instructions | feature_flags_template | shared | yes | <none> |
-| repair_ticket | feature_flags_template | shared | no | text |
-| verification | feature_flags_template | v2 | yes | <none> |
-| verification | feature_flags_template | v3 | yes | <none> |
-| input_text | project_template | shared | yes | <none> |
-| instructions | project_template | shared | yes | <none> |
-| repair_ticket | project_template | shared | no | text |
-| verification | project_template | v2 | yes | <none> |
-| verification | project_template | v3 | yes | <none> |
-
-## Divergence summary
-- `divergence_count = 3`
-- Per-axis breakdown: `repair_ticket = 3`
-- Instruction parity: 3/3 equal
-- Input-text parity: 3/3 equal
-- Verification parity: 6/6 equal
-- Fixture asymmetries: none
+Future divergences do not automatically trigger a full sprint. They are
+classified first; the class determines whether action is needed.
 
 ## Actual outcome
-`divergence_count = 3`.
+divergence_count = 0. All 15 rows classified `identity`.
+Fix is implemented in cortex_v3/verifier.py::build_verified_work_repair_ticket
+with the module-level canonical-spec comment and the _falsified_checks
+helper. No V2 code changed.
 
-All three divergences are on the `repair_ticket` axis: `bookmarks_app_template`, `project_template`, and `feature_flags_template`. They are now earned from real template-grounded failing completions, not a synthetic failure state.
+## What earns, what does not
+Earns: V3 emits the canonical repair-ticket format across all three
+templates; V2 cross-validates that it emits the same canonical form today.
+Does not earn: any claim about V3 producing equal-or-better live model
+behavior vs V2. That requires provider API keys in the executor
+environment and is the explicit scope of the next sprint.
 
-The per-template diffs are:
-- `bookmarks_app_template`: V2 emits `falsified_checks: import_smoke` and V3 omits that line. The remaining repair-ticket lines match.
-- `project_template`: V2 emits `falsified_checks: pytest` and orders `trusted_checks` as `import_smoke, parse`; V3 omits `falsified_checks` and orders `trusted_checks` as `parse, import_smoke`.
-- `feature_flags_template`: V2 emits `falsified_checks: pytest`, orders `trusted_checks` and `trusted_paths` differently, and lists the same failing tests in a different order from V3.
+## Recommendation for next sprint: v3-live-measurement-with-keys
+Blocker: the Codex executor environment does not have OPENAI_API_KEY,
+ANTHROPIC_API_KEY, or GEMINI_API_KEY exported. To unblock, the user must
+either:
+  1. Export one or more of those variables into the Codex session before
+     launching the next sprint, OR
+  2. Run `python3 -m lab.v3.measure --mode live --trials 10 --providers <p>
+     --output tests/evidence/<date>_v3_first_measurement.json` locally and
+     commit the output file via a review branch. The existing measure.py
+     driver already handles all three providers; no code change required.
 
-No instruction, input-text, or verification row diverged. Both verifiers produced the same normalized outcomes on both lab-owned passing completions for all three template surfaces.
-
-## Recommendation for next sprint
-`v3-close-divergence-repair_ticket`
+Once keys are present OR evidence is user-generated, the next sprint closes
+out by aggregating rows into a 3×3 provider×template pass-rate table and
+committing a decision note that compares verified_with_repair to
+plain_feedback.

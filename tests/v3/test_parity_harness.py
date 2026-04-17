@@ -29,12 +29,15 @@ def test_run_all_checks_can_report_full_match(monkeypatch) -> None:
             "v2",
             "v3",
             "equal",
+            "classification",
+            "classification_reason",
             "divergence_keys",
             "diff_text",
         }
         for row in rows
     )
     assert all(row["equal"] for row in rows)
+    assert all(row["classification"] == "identity" for row in rows)
 
 
 def test_run_all_checks_localizes_repair_ticket_only_divergence(monkeypatch) -> None:
@@ -60,6 +63,8 @@ def test_run_all_checks_localizes_repair_ticket_only_divergence(monkeypatch) -> 
             "v2": "repair-ticket",
             "v3": "repair-ticket::divergent",
             "equal": False,
+            "classification": "cosmetic-canonical",
+            "classification_reason": "repair-ticket text diverges from the canonical shared format",
             "divergence_keys": ["text"],
             "diff_text": "--- v2\n+++ v3\n@@ -1 +1 @@\n-repair-ticket\n+repair-ticket::divergent",
         }

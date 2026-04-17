@@ -16,12 +16,14 @@ from cortex.runtime.verified_work_runtime import (
 from cortex.sre.preservation import derive_preservation_state as derive_v2_preservation_state
 from cortex.sre.verified_work import VerificationOutcome as V2VerificationOutcome
 from cortex.sre.verified_work import WorkContract as V2WorkContract
-from cortex_v3.contracts import VerificationOutcome, WorkContract
+from cortex_v3.contracts import PreservationState, VerificationOutcome, WorkContract
 from cortex_v3.preservation import derive_preservation_state
 from cortex_v3.verifier import (
     build_verified_work_input_text,
     build_verified_work_instructions,
+    build_verified_work_repair_ticket,
     build_verified_work_repair_prompt,
+    _falsified_checks,
     verify_verified_work_result,
 )
 from tests.product._verified_work_fixtures import (
@@ -177,6 +179,59 @@ def test_v3_build_verified_work_repair_prompt_keeps_peer_files_visible_and_write
     assert "=== CONTEXT FILE: src/bookmarks_api/store.py ===" in prompt
     assert "=== CONTEXT FILE: tests/test_bookmarks_api.py ===" in prompt
     assert broken_main.strip() in prompt
+
+
+def test_v3_build_verified_work_repair_ticket_follows_canonical_spec() -> None:
+    state = PreservationState(
+        task_anchor="verified-work:test:src/example.py",
+        trusted_checks=("pytest", "parse", "import_smoke"),
+        trusted_paths=("src/zeta.py", "src/alpha.py"),
+        failure_class="test_failed",
+        failing_tests=("tests/test_zeta.py::test_two", "tests/test_alpha.py::test_one"),
+        blocked_message=None,
+        lawful_repair_surface=("src/zeta.py", "src/alpha.py"),
+        allowed_moves=("repair", "check"),
+        remaining_repairs=1,
+    )
+
+    ticket = build_verified_work_repair_ticket(state)
+
+    assert ticket.splitlines() == [
+        "task_anchor: verified-work:test:src/example.py",
+        "trusted_checks: import_smoke, parse, pytest",
+        "trusted_paths: src/alpha.py, src/zeta.py",
+        "failure_class: test_failed",
+        "falsified_checks: pytest",
+        "failing_tests: tests/test_alpha.py::test_one, tests/test_zeta.py::test_two",
+        "lawful_repair_surface: src/alpha.py, src/zeta.py",
+        "remaining_repairs: 1",
+        "allowed_moves: check, repair",
+    ]
+    assert _falsified_checks("import_smoke_failed") == ("import_smoke",)
+    assert _falsified_checks("blocked_missing_info") == ("blocked",)
+    assert _falsified_checks(None) == ()
+
+
+def test_v3_build_verified_work_repair_ticket_renders_none_for_empty_list_fields() -> None:
+    state = PreservationState(
+        task_anchor="verified-work:test:src/example.py",
+        trusted_checks=(),
+        trusted_paths=(),
+        failure_class=None,
+        failing_tests=(),
+        blocked_message=None,
+        lawful_repair_surface=(),
+        allowed_moves=("continue",),
+        remaining_repairs=0,
+    )
+
+    ticket = build_verified_work_repair_ticket(state)
+
+    assert "trusted_checks: <none>" in ticket
+    assert "trusted_paths: <none>" in ticket
+    assert "falsified_checks: <none>" in ticket
+    assert "failing_tests: <none>" in ticket
+    assert "lawful_repair_surface: <none>" in ticket
 
 
 def test_v3_preservation_state_matches_v2_law_for_repairable_failure() -> None:
