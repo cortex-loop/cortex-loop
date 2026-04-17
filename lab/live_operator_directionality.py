@@ -135,6 +135,14 @@ def main(argv: list[str] | None = None) -> int:
         choices=("auto", "minimal", "wrapped"),
         default="auto",
     )
+    parser.add_argument(
+        "--preferred-model",
+        default=None,
+    )
+    parser.add_argument(
+        "--fallback-model",
+        default=None,
+    )
     args = parser.parse_args(argv)
 
     ensure_live_validation_dirs()
@@ -148,6 +156,8 @@ def main(argv: list[str] | None = None) -> int:
             scenarios=scenarios,
             repeat_count=max(1, args.repeat_count),
             cortex_execution_flavor_override=args.cortex_execution_flavor,
+            preferred_model_override=args.preferred_model,
+            fallback_model_override=args.fallback_model,
         )
         summary = _merged_provider_summaries(provider_updates)
         write_json(comparator_path("operator_directionality_summary.json"), summary)
@@ -161,6 +171,8 @@ def _run_provider(
     scenarios: tuple[str, ...],
     repeat_count: int,
     cortex_execution_flavor_override: str,
+    preferred_model_override: str | None = None,
+    fallback_model_override: str | None = None,
 ) -> dict[str, Any]:
     precheck = _raw_host_precheck(provider)
     baseline_summary = _read_json(comparator_path("operator_provider_baseline_summary.json"))
@@ -180,6 +192,8 @@ def _run_provider(
                     for variant, runs in prior_variant_runs.items()
                 },
                 cortex_execution_flavor_override=cortex_execution_flavor_override,
+                preferred_model_override=preferred_model_override,
+                fallback_model_override=fallback_model_override,
             )
             pairs.append(pair)
             if pair.get("pair_status") == "compared":
@@ -210,6 +224,8 @@ def _run_pair(
     baseline_runs: list[dict[str, Any]],
     prior_variant_runs: dict[str, tuple[dict[str, Any], ...]],
     cortex_execution_flavor_override: str,
+    preferred_model_override: str | None = None,
+    fallback_model_override: str | None = None,
 ) -> dict[str, Any]:
     if precheck["status"] != "ready":
         raw_payload = _blocked_raw_payload(
@@ -262,6 +278,8 @@ def _run_pair(
             baseline_runs=baseline_runs,
             prior_runs=prior_variant_runs[variant],
             cortex_execution_flavor_override=cortex_execution_flavor_override,
+            preferred_model_override=preferred_model_override,
+            fallback_model_override=fallback_model_override,
         )
     return {
         "provider": provider,
@@ -307,6 +325,8 @@ def _run_variant(
     baseline_runs: list[dict[str, Any]],
     prior_runs: tuple[dict[str, Any], ...],
     cortex_execution_flavor_override: str = "auto",
+    preferred_model_override: str | None = None,
+    fallback_model_override: str | None = None,
 ) -> dict[str, Any]:
     if provider == "openai":
         return _run_openai_variant(
@@ -317,6 +337,8 @@ def _run_variant(
             baseline_runs=baseline_runs,
             prior_runs=prior_runs,
             cortex_execution_flavor_override=cortex_execution_flavor_override,
+            preferred_model_override=preferred_model_override,
+            fallback_model_override=fallback_model_override,
         )
     return _run_cli_variant(
         provider,
@@ -907,6 +929,8 @@ def _run_openai_variant(
     baseline_runs: list[dict[str, Any]],
     prior_runs: tuple[dict[str, Any], ...],
     cortex_execution_flavor_override: str = "auto",
+    preferred_model_override: str | None = None,
+    fallback_model_override: str | None = None,
 ) -> dict[str, Any]:
     root = operator_directionality_root("openai", variant)
     project_root = prepare_harness_workspace(
@@ -918,6 +942,9 @@ def _run_openai_variant(
     auth_mode = resolve_auth_mode("openai", "operator")
     route_state = build_operator_task_state(
         scenario_id,
+        operator_model=(
+            preferred_model_override or MODEL_MATRIX["openai"]["operator"].preferred
+        ),
         previous_same_host_run_failed_before_completion=summarize_operator_runs(
             prior_runs,
             scenario_id=scenario_id,
@@ -981,9 +1008,18 @@ def _run_openai_variant(
             auth_mode=auth_mode,
             route_diagnostics=route_diagnostics,
             require_verification=route_decision.budget.require_verification,
+            preferred_model_override=preferred_model_override,
+            fallback_model_override=fallback_model_override,
         )
 
     prompt = read_prompt_template(_SCENARIOS[scenario_id]["prompt_file"])
+    if variant == "cortex_operator":
+        prompt = _apply_contract_binding_profile_to_prompt(
+            prompt,
+            contract_binding_profile=str(
+                route_diagnostics["contract_binding_profile"]
+            ),
+        )
     with _openai_variant_env(variant, precheck) as env:
         run_state, failure_class, model, attempted_models = _run_openai_single_turn_attempts(
             project_root=project_root,
@@ -993,6 +1029,8 @@ def _run_openai_variant(
             env=env,
             stderr_path=root / f"{scenario_id}__run_{repeat_index:03d}.live.stderr.log",
             ephemeral=not route_decision.budget.allow_extra_read_pass,
+            preferred_model_override=preferred_model_override,
+            fallback_model_override=fallback_model_override,
         )
         payload = openai_operator._materialize_run(
             root=root,
@@ -1041,9 +1079,24 @@ def _run_openai_restart_continuity_variant(
     auth_mode: str,
     route_diagnostics: dict[str, Any],
     require_verification: bool,
+    preferred_model_override: str | None = None,
+    fallback_model_override: str | None = None,
 ) -> dict[str, Any]:
     first_prompt = read_prompt_template(_SCENARIOS[scenario_id]["turn1_prompt_file"])
     second_prompt = read_prompt_template(_SCENARIOS[scenario_id]["turn2_prompt_file"])
+    if variant == "cortex_operator":
+        first_prompt = _apply_contract_binding_profile_to_prompt(
+            first_prompt,
+            contract_binding_profile=str(
+                route_diagnostics["contract_binding_profile"]
+            ),
+        )
+        second_prompt = _apply_contract_binding_profile_to_prompt(
+            second_prompt,
+            contract_binding_profile=str(
+                route_diagnostics["contract_binding_profile"]
+            ),
+        )
     with _openai_variant_env(variant, {"status": "ready"}) as env:
         first_state, first_failure, model, attempted_models = _run_openai_single_turn_attempts(
             project_root=project_root,
@@ -1053,6 +1106,8 @@ def _run_openai_restart_continuity_variant(
             env=env,
             stderr_path=root / f"{scenario_id}__run_{repeat_index:03d}.turn1.live.stderr.log",
             ephemeral=False,
+            preferred_model_override=preferred_model_override,
+            fallback_model_override=fallback_model_override,
         )
         if first_failure is not None:
             payload = openai_operator._materialize_run(
@@ -1133,8 +1188,10 @@ def _run_openai_single_turn_attempts(
     env: dict[str, str] | None,
     stderr_path: Path,
     ephemeral: bool = True,
+    preferred_model_override: str | None = None,
+    fallback_model_override: str | None = None,
 ) -> tuple[dict[str, Any], str | None, str, list[str]]:
-    preferred_model = MODEL_MATRIX["openai"]["operator"].preferred
+    preferred_model = preferred_model_override or MODEL_MATRIX["openai"]["operator"].preferred
     attempted_models = [preferred_model]
     state, failure_class = openai_operator._run_single_turn(
         project_root=project_root,
@@ -1146,7 +1203,16 @@ def _run_openai_single_turn_attempts(
         env=env,
         stderr_path=stderr_path,
     )
-    chosen_model = choose_model("openai", "operator", first_failure=failure_class)
+    if preferred_model_override is None:
+        chosen_model = choose_model("openai", "operator", first_failure=failure_class)
+    elif (
+        fallback_model_override
+        and failure_class is not None
+        and fallback_model_override != preferred_model
+    ):
+        chosen_model = fallback_model_override
+    else:
+        chosen_model = preferred_model
     if chosen_model != preferred_model:
         state, failure_class = openai_operator._run_single_turn(
             project_root=project_root,
@@ -1160,6 +1226,20 @@ def _run_openai_single_turn_attempts(
         )
         attempted_models.append(chosen_model)
     return state, failure_class, chosen_model, attempted_models
+
+
+def _apply_contract_binding_profile_to_prompt(
+    prompt: str,
+    *,
+    contract_binding_profile: str,
+) -> str:
+    if contract_binding_profile != "lean":
+        return prompt
+    return (
+        "Keep this bounded. Choose the smallest truthful next action. "
+        "Use short factual output and state blockers plainly instead of guessing.\n\n"
+        f"{prompt}"
+    )
 
 
 @contextmanager

@@ -9,10 +9,20 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Literal
 
+from cortex.runtime.operator_brain_capability import (
+    operator_brain_capability_for_openai_model,
+)
+from cortex.sre.operator_routing import (
+    OperatorTaskMode,
+    OperatorTaskState,
+    assess_operator_brain_capability,
+)
+
 from lab.output_quality_ablation import OutputQualityAblationConfig
 
 
 ArmName = Literal["raw", "tooling_only", "cortex"]
+ContractBindingProfile = Literal["standard", "lean"]
 _FILE_HEADER_RE = re.compile(r"^=== FILE: (?P<path>.+?) ===$")
 _BLOCKED_HEADER_RE = re.compile(
     r"^=== BLOCKED: (?P<reason>needs_user_input|unsafe_request) ===$"
@@ -58,8 +68,30 @@ class OutputParseResult:
         return None
 
 
-def build_file_block_protocol(allowed_write_paths: tuple[str, ...]) -> str:
+def build_file_block_protocol(
+    allowed_write_paths: tuple[str, ...],
+    *,
+    contract_binding_profile: ContractBindingProfile = "standard",
+) -> str:
     allowed_paths = "\n".join(f"- {path}" for path in allowed_write_paths)
+    if contract_binding_profile == "lean":
+        return (
+            "Return only protocol blocks.\n"
+            "Allowed paths:\n"
+            f"{allowed_paths}\n\n"
+            "Use exactly:\n"
+            "=== FILE: relative/path ===\n"
+            "<full file contents>\n"
+            "=== END FILE ===\n\n"
+            "Or if blocked:\n"
+            "=== BLOCKED: needs_user_input ===\n"
+            "<message>\n"
+            "=== END BLOCKED ===\n\n"
+            "=== BLOCKED: unsafe_request ===\n"
+            "<message>\n"
+            "=== END BLOCKED ===\n\n"
+            "No prose. No explanations. No code fences."
+        )
     return (
         "Return only full-file blocks for the requested changes.\n"
         "Use this exact format for each edited file:\n"
@@ -85,8 +117,12 @@ def build_output_quality_input_text(
     *,
     arm: ArmName,
     ablation_config: OutputQualityAblationConfig | None = None,
+    contract_binding_profile: ContractBindingProfile = "standard",
 ) -> str:
-    protocol = build_file_block_protocol(task_pack.allowed_write_paths)
+    protocol = build_file_block_protocol(
+        task_pack.allowed_write_paths,
+        contract_binding_profile=contract_binding_profile,
+    )
     if arm == "raw":
         return f"{task_pack.prompt_text.strip()}\n\n{protocol}"
     if arm == "cortex" and ablation_config is not None:
@@ -100,10 +136,13 @@ def build_output_quality_input_text(
             context_paths = None
     else:
         context_paths = None
-    context_intro = (
-        "Visible contract files follow. Additional verifier-only checks may run.\n"
-        "Use the existing files below as the visible task contract.\n"
-    )
+    if contract_binding_profile == "lean":
+        context_intro = "Visible files follow. Edit only approved paths.\n"
+    else:
+        context_intro = (
+            "Visible contract files follow. Additional verifier-only checks may run.\n"
+            "Use the existing files below as the visible task contract.\n"
+        )
     return (
         f"{task_pack.prompt_text.strip()}\n\n"
         f"{context_intro}"
@@ -151,6 +190,29 @@ def _visible_test_paths(task_pack: OutputQualityTaskPack) -> tuple[str, ...]:
         for path in task_pack.visible_context_paths
         if "test" in path.lower()
     )
+
+
+def build_output_quality_capability_diagnostics(model: str) -> dict[str, object]:
+    band, brain_capability = operator_brain_capability_for_openai_model(model)
+    state = OperatorTaskState(
+        task_mode=OperatorTaskMode.EXECUTE,
+        complexity=0.55,
+        continuity_demand=0.10,
+        verification_demand=0.85,
+        uncertainty=0.45,
+        host_friction=0.0,
+        quota_pressure=0.0,
+        visible_burden_sensitivity=0.65,
+        contract_binding_demand=0.60,
+        brain_capability=brain_capability,
+    )
+    assessment = assess_operator_brain_capability(state)
+    return {
+        "brain_capability_band": band,
+        "brain_capability_mismatch": assessment.as_payload(),
+        "brain_capability_reason_tags": sorted(assessment.reason_tags),
+        "contract_binding_profile": assessment.contract_binding_profile.value,
+    }
 
 
 def parse_output_quality_result(

@@ -21,6 +21,10 @@ from cortex.sre.families import SoftControlFamily
 from cortex.sre.goal_debt import build_closure_pressure_state
 from cortex.sre.modulators import ExecutiveModulatorMemory
 from cortex.sre.operator_routing import OperatorTaskMode, OperatorTaskState
+from cortex.runtime.operator_brain_capability import (
+    operator_brain_capability_for_band,
+    operator_brain_capability_for_openai_model,
+)
 from cortex.sre.state import ReferenceExecutiveState
 
 
@@ -464,6 +468,8 @@ def build_runtime_operator_task_state(
     *,
     summary_inputs: ExecutiveSignalSummaryInputs,
     executive_state: ReferenceExecutiveState,
+    operator_model: str | None = None,
+    contract_binding_demand: float = 0.0,
 ) -> OperatorTaskState:
     if not isinstance(summary_inputs, ExecutiveSignalSummaryInputs):
         actual_type = type(summary_inputs).__name__
@@ -477,6 +483,18 @@ def build_runtime_operator_task_state(
             "build_runtime_operator_task_state.executive_state must be "
             f"ReferenceExecutiveState, got {actual_type}."
         )
+    if not isinstance(contract_binding_demand, (int, float)):
+        actual_type = type(contract_binding_demand).__name__
+        raise TypeError(
+            "build_runtime_operator_task_state.contract_binding_demand must be numeric, "
+            f"got {actual_type}."
+        )
+    if operator_model is None:
+        brain_capability = operator_brain_capability_for_band("frontier")
+    else:
+        _band, brain_capability = operator_brain_capability_for_openai_model(
+            operator_model
+        )
     return OperatorTaskState(
         task_mode=summary_inputs.task_mode,
         complexity=_route_complexity_for_task_mode(summary_inputs.task_mode),
@@ -488,6 +506,8 @@ def build_runtime_operator_task_state(
         visible_burden_sensitivity=float(
             executive_state.control_allocation.visible_burden_scale
         ),
+        contract_binding_demand=float(contract_binding_demand),
+        brain_capability=brain_capability,
     )
 
 

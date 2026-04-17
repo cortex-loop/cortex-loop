@@ -908,6 +908,8 @@ def run_openai_runtime_step(
     *,
     audit_intensity: str = "minimal",
     offline_publication: "OfflineSupportPublication | None" = None,
+    operator_model: str | None = None,
+    contract_binding_demand: float = 0.0,
 ) -> OpenAIRuntimeStepResult:
     if not is_raw_openai_host_event_name(raw_event_name):
         raise ValueError(
@@ -1211,6 +1213,8 @@ def run_openai_runtime_step(
     operator_task_state = build_runtime_operator_task_state(
         summary_inputs=executive_summary_inputs,
         executive_state=executive_state,
+        operator_model=operator_model,
+        contract_binding_demand=contract_binding_demand,
     )
     operator_route = select_operator_route_with_policy(
         operator_task_state,

@@ -40,6 +40,7 @@ VerifiedWorkContextMode = Literal[
     "writable_files_plus_visible_tests",
 ]
 VerifiedWorkRepairTicketStyle = Literal["factual", "minimal"]
+VerifiedWorkContractBindingProfile = Literal["standard", "lean"]
 
 
 @dataclass(frozen=True, slots=True)
@@ -93,8 +94,33 @@ _VERIFIED_WORK_PROFILE_REGISTRY = {
 }
 
 
-def build_verified_work_instructions(work_contract: WorkContract) -> str:
+def build_verified_work_instructions(
+    work_contract: WorkContract,
+    *,
+    contract_binding_profile: VerifiedWorkContractBindingProfile = "standard",
+) -> str:
+    if contract_binding_profile not in {"standard", "lean"}:
+        raise ValueError(
+            "build_verified_work_instructions.contract_binding_profile must be accepted."
+        )
     allowed_paths = "\n".join(f"- {path}" for path in work_contract.allowed_write_paths)
+    if contract_binding_profile == "lean":
+        return (
+            "Return only protocol blocks for the allowed paths.\n"
+            "Allowed paths:\n"
+            f"{allowed_paths}\n\n"
+            "Use exactly one of:\n"
+            "=== FILE: relative/path ===\n"
+            "<full file contents>\n"
+            "=== END FILE ===\n\n"
+            "=== BLOCKED: needs_user_input ===\n"
+            "<message>\n"
+            "=== END BLOCKED ===\n\n"
+            "=== BLOCKED: unsafe_request ===\n"
+            "<message>\n"
+            "=== END BLOCKED ===\n\n"
+            "No prose. No code fences. Do not run tests."
+        )
     return (
         "Return only full-file blocks for the allowed paths.\n"
         "Allowed paths:\n"
@@ -120,6 +146,7 @@ def build_verified_work_input_text(
     work_contract: WorkContract,
     *,
     context_mode: VerifiedWorkContextMode = "default",
+    contract_binding_profile: VerifiedWorkContractBindingProfile = "standard",
 ) -> str:
     if not (isinstance(task_prompt, str) and task_prompt.strip()):
         raise ValueError(
@@ -132,12 +159,23 @@ def build_verified_work_input_text(
         "writable_files_plus_visible_tests",
     }:
         raise ValueError("build_verified_work_input_text.context_mode must be accepted.")
+    if contract_binding_profile not in {"standard", "lean"}:
+        raise ValueError(
+            "build_verified_work_input_text.contract_binding_profile must be accepted."
+        )
     if context_mode == "off":
         return task_prompt.strip()
-    return (
-        f"{task_prompt.strip()}\n\n"
+    context_intro = (
         "Read-only workspace context follows. Use the existing writable-file contents and tests below as the task contract.\n"
         "Modify only the allowed paths named in the work contract.\n\n"
+    )
+    if contract_binding_profile == "lean":
+        context_intro = (
+            "Workspace context follows. Edit only allowed paths.\n\n"
+        )
+    return (
+        f"{task_prompt.strip()}\n\n"
+        f"{context_intro}"
         f"{_build_verified_work_context_bundle(work_contract, context_mode=context_mode)}"
     )
 
@@ -146,7 +184,14 @@ def build_verified_work_repair_ticket(
     preservation_state: PreservationState,
     *,
     style: VerifiedWorkRepairTicketStyle = "factual",
+    contract_binding_profile: VerifiedWorkContractBindingProfile = "standard",
 ) -> str:
+    if contract_binding_profile not in {"standard", "lean"}:
+        raise ValueError(
+            "build_verified_work_repair_ticket.contract_binding_profile must be accepted."
+        )
+    if contract_binding_profile == "lean":
+        style = "minimal"
     if style not in {"factual", "minimal"}:
         raise ValueError("build_verified_work_repair_ticket.style must be accepted.")
     if not isinstance(preservation_state, PreservationState):
