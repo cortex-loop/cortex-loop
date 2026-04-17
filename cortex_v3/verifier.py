@@ -145,9 +145,10 @@ def build_verified_work_input_text(
 # Canonical repair-ticket format for Cortex v3.
 #
 # Properties:
-#   P1. task_anchor, failure_class, remaining_repairs, and allowed_moves are
-#       emitted as-is (single values).
-#   P2. trusted_checks, trusted_paths, failing_tests, and lawful_repair_surface
+#   P1. task_anchor, failure_class, and remaining_repairs are emitted as-is
+#       (single values).
+#   P2. trusted_checks, trusted_paths, falsified_checks, failing_tests,
+#       lawful_repair_surface, and allowed_moves
 #       are emitted alphabetically sorted. Rationale: regression stability
 #       across re-orderings of upstream computation.
 #   P3. falsified_checks is derived from failure_class via _falsified_checks()

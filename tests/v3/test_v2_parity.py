@@ -31,3 +31,16 @@ def test_v2_v3_parity_evidence_matches_the_committed_result() -> None:
             "divergence_keys",
             "diff_text",
         }
+
+
+def test_v2_v3_parity_decision_note_bounds_the_next_step_to_v3_experimental_work() -> None:
+    decision_note = Path("tests/evidence/2026-04-17_v2_v3_parity_decision.md").read_text(
+        encoding="utf-8"
+    )
+
+    assert "## Recommendation for next V3 experimental sprint: v3-live-measurement-with-keys" in decision_note
+    assert "The repo's active train remains the V2 brake-tonic quiescence exit reconciliation." in decision_note
+    assert "OPENAI_API_KEY" in decision_note
+    assert "ANTHROPIC_API_KEY" in decision_note
+    assert "GEMINI_API_KEY" in decision_note
+    assert "next experimental follow-up for this seam" in decision_note

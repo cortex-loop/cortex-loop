@@ -212,6 +212,24 @@ def test_v3_build_verified_work_repair_ticket_follows_canonical_spec() -> None:
     assert _falsified_checks(None) == ()
 
 
+def test_v3_build_verified_work_repair_ticket_documents_sorted_allowed_moves() -> None:
+    state = PreservationState(
+        task_anchor="verified-work:test:src/example.py",
+        trusted_checks=("parse",),
+        trusted_paths=("src/example.py",),
+        failure_class="test_failed",
+        failing_tests=("tests/test_example.py::test_case",),
+        blocked_message=None,
+        lawful_repair_surface=("src/example.py",),
+        allowed_moves=("repair", "check", "continue"),
+        remaining_repairs=1,
+    )
+
+    ticket = build_verified_work_repair_ticket(state)
+
+    assert ticket.splitlines()[-1] == "allowed_moves: check, continue, repair"
+
+
 def test_v3_build_verified_work_repair_ticket_renders_none_for_empty_list_fields() -> None:
     state = PreservationState(
         task_anchor="verified-work:test:src/example.py",

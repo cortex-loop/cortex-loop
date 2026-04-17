@@ -38,9 +38,10 @@ Earns: V3 emits the canonical repair-ticket format across all three
 templates; V2 cross-validates that it emits the same canonical form today.
 Does not earn: any claim about V3 producing equal-or-better live model
 behavior vs V2. That requires provider API keys in the executor
-environment and is the explicit scope of the next sprint.
+environment and is only the next experimental follow-up for this seam.
+The repo's active train remains the V2 brake-tonic quiescence exit reconciliation.
 
-## Recommendation for next sprint: v3-live-measurement-with-keys
+## Recommendation for next V3 experimental sprint: v3-live-measurement-with-keys
 Blocker: the Codex executor environment does not have OPENAI_API_KEY,
 ANTHROPIC_API_KEY, or GEMINI_API_KEY exported. To unblock, the user must
 either:
@@ -51,7 +52,7 @@ either:
      commit the output file via a review branch. The existing measure.py
      driver already handles all three providers; no code change required.
 
-Once keys are present OR evidence is user-generated, the next sprint closes
-out by aggregating rows into a 3×3 provider×template pass-rate table and
-committing a decision note that compares verified_with_repair to
-plain_feedback.
+Once keys are present OR evidence is user-generated, the next V3 experimental
+sprint closes out by aggregating rows into a 3×3 provider×template pass-rate
+table and committing a decision note that compares verified_with_repair to
+plain_feedback. This does not supersede the repo-wide active train.
