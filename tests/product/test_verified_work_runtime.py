@@ -58,6 +58,43 @@ def test_build_verified_work_instructions_lists_allowed_paths() -> None:
     assert "src/bookmarks_api/main.py" in instructions
 
 
+def test_build_verified_work_contract_binding_lean_shortens_instructions_and_repair_ticket() -> None:
+    instructions = build_verified_work_instructions(
+        _work_contract(),
+        contract_binding_profile="lean",
+    )
+
+    assert "Return only protocol blocks for the allowed paths." in instructions
+    assert "Do not return prose" not in instructions
+
+    state = derive_preservation_state(
+        None,
+        _work_contract(),
+        ("src/bookmarks_api/main.py",),
+        VerificationOutcome(
+            status="failed",
+            failure_class="test_failed",
+            parsed_paths=("src/bookmarks_api/main.py",),
+            import_smoke_ok=True,
+            pytest_ok=False,
+            pytest_exit_code=1,
+            pytest_passed=3,
+            pytest_failed=1,
+            failing_tests=("tests/test_bookmarks_api.py::test_create_and_get_bookmark_by_id",),
+            first_failure_excerpt="FAILED tests/test_bookmarks_api.py::test_create_and_get_bookmark_by_id",
+        ),
+        remaining_repairs=1,
+    )
+
+    ticket = build_verified_work_repair_ticket(
+        state,
+        contract_binding_profile="lean",
+    )
+
+    assert "trusted_checks:" not in ticket
+    assert "failure_class: test_failed" in ticket
+
+
 def test_build_verified_work_input_text_attaches_workspace_context() -> None:
     input_text = build_verified_work_input_text("build bookmarks app", _work_contract())
 
@@ -108,6 +145,21 @@ def test_build_verified_work_input_text_can_disable_or_narrow_context() -> None:
     assert no_context == "build bookmarks app"
     assert "=== CONTEXT FILE: tests/test_bookmarks_api.py ===" not in writable_only
     assert "=== CONTEXT FILE: src/bookmarks_api/main.py ===" in writable_only
+
+
+def test_build_verified_work_input_text_lean_uses_shorter_context_intro() -> None:
+    input_text = build_verified_work_input_text(
+        "build bookmarks app",
+        _work_contract(),
+        context_mode="writable_files_only",
+        contract_binding_profile="lean",
+    )
+
+    assert input_text.startswith("build bookmarks app")
+    assert "Workspace context follows. Edit only allowed paths." in input_text
+    assert "Read-only workspace context follows." not in input_text
+    assert "=== CONTEXT FILE: src/bookmarks_api/main.py ===" in input_text
+    assert "=== CONTEXT FILE: tests/test_bookmarks_api.py ===" not in input_text
 
 
 def test_verify_verified_work_result_rejects_unapproved_path() -> None:

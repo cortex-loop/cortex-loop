@@ -7,7 +7,9 @@ from pathlib import Path
 from lab.output_quality_ablation import OutputQualityAblationConfig
 from lab.output_quality_common import (
     OutputQualityTaskPack,
+    build_output_quality_capability_diagnostics,
     build_output_quality_input_text,
+    build_file_block_protocol,
     parse_output_quality_result,
 )
 
@@ -72,6 +74,24 @@ def test_build_output_quality_input_text_supports_ablation_variants(tmp_path: Pa
     assert "=== CONTEXT FILE: src/app.ts ===" in writable_only
     assert "=== CONTEXT FILE: README_TASK.md ===" not in writable_only
     assert "=== CONTEXT FILE: tests/visible.spec.ts ===" not in writable_only
+
+
+def test_build_file_block_protocol_supports_lean_contract_profile() -> None:
+    protocol = build_file_block_protocol(
+        ("src/app.ts",),
+        contract_binding_profile="lean",
+    )
+
+    assert "Return only protocol blocks." in protocol
+    assert "Do not include explanations" not in protocol
+
+
+def test_build_output_quality_capability_diagnostics_marks_spark_as_bounded_and_lean() -> None:
+    diagnostics = build_output_quality_capability_diagnostics("gpt-5.3-codex-spark")
+
+    assert diagnostics["brain_capability_band"] == "bounded"
+    assert diagnostics["brain_capability_mismatch"]["level"] == "degrade"
+    assert diagnostics["contract_binding_profile"] == "lean"
 
 
 def test_parse_output_quality_result_accepts_full_file_blocks() -> None:

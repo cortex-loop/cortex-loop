@@ -397,6 +397,7 @@ def test_run_openai_host_control_matches_manual_o1_runtime_projection() -> None:
             envelope.event_type,
             envelope.payload,
             current_session,
+            operator_model=request.model,
         )
         expected_records.append(build_openai_cli_record(step_result))
         current_session = step_result.session
@@ -443,6 +444,7 @@ def test_run_openai_host_control_matches_manual_o1_runtime_projection_with_offli
             envelope.payload,
             current_session,
             offline_publication=request.offline_publication,
+            operator_model=request.model,
         )
         expected_records.append(build_openai_cli_record(step_result))
         current_session = step_result.session
@@ -601,6 +603,89 @@ def test_run_openai_host_control_verified_work_attaches_workspace_context_to_fir
     assert "=== CONTEXT FILE: src/bookmarks_api/main.py ===" in seen["input_text"]
     assert seen["instructions"] is not None
     assert "Do not return prose, explanations, or code fences. Do not run tests." in seen["instructions"]
+
+
+def test_run_openai_host_control_uses_lean_verified_work_contract_for_bounded_brain(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    work_contract = WorkContract(
+        allowed_write_paths=tuple(VALID_FILE_MAP),
+        verification_profile="python_workspace_pytest_v1",
+        output_carrier="full_files",
+        max_repair_turns=1,
+    )
+    rendered = render_full_files_result(VALID_FILE_MAP)
+    seen: dict[str, object] = {}
+
+    def transport(
+        request: OpenAIHostControlRequest,
+        *,
+        previous_response_id: str | None = None,
+        input_text_override: str | None = None,
+    ) -> list[dict[str, object]]:
+        assert previous_response_id is None
+        assert input_text_override is None
+        seen["input_text"] = request.input_text
+        seen["instructions"] = request.instructions
+        seen["max_repair_turns"] = (
+            request.work_contract.max_repair_turns if request.work_contract is not None else None
+        )
+        return [
+            {
+                "type": "response.created",
+                "session_id": "oa-verified-lean",
+                "response_id": "resp-verified-lean-1",
+            },
+            {
+                "type": "response.output_text.delta",
+                "session_id": "oa-verified-lean",
+                "response_id": "resp-verified-lean-1",
+                "delta": rendered,
+            },
+            {
+                "type": "response.completed",
+                "session_id": "oa-verified-lean",
+                "response_id": "resp-verified-lean-1",
+            },
+        ]
+
+    monkeypatch.setattr(
+        "cortex.hosts.openai.host_control.verify_verified_work_result",
+        lambda result_text, contract, **kwargs: (
+            VALID_FILE_MAP,
+            VerificationOutcome(
+                status="passed",
+                failure_class=None,
+                parsed_paths=tuple(VALID_FILE_MAP),
+                import_smoke_ok=True,
+                pytest_ok=True,
+                pytest_exit_code=0,
+                pytest_passed=11,
+                pytest_failed=0,
+            ),
+        ),
+    )
+    request = OpenAIHostControlRequest(
+        action_tag="openai-response-stream",
+        model="gpt-5.3-codex-spark",
+        input_text="build bookmarks app",
+        max_output_tokens=4096,
+        work_contract=work_contract,
+    )
+
+    result, _final_session = run_openai_host_control(
+        request,
+        transport=transport,
+    )
+
+    assert result.attempt_count == 1
+    assert seen["max_repair_turns"] == 0
+    assert "=== CONTEXT FILE: src/bookmarks_api/main.py ===" in str(seen["input_text"])
+    assert "=== CONTEXT FILE: tests/test_bookmarks_api.py ===" not in str(seen["input_text"])
+    assert "Return only protocol blocks for the allowed paths." in str(
+        seen["instructions"]
+    )
+    assert result.records[0]["operator_route"]["contract_binding_profile"] == "lean"
 
 
 def test_run_openai_host_control_verified_work_repairs_once_from_runtime_signal(

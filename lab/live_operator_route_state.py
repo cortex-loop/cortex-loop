@@ -2,6 +2,9 @@
 
 from __future__ import annotations
 
+from cortex.runtime.operator_brain_capability import (
+    operator_brain_capability_for_openai_model,
+)
 from cortex.sre.executive_summary import ExecutiveSignalSummaryInputs
 from cortex.sre.operator_routing import OperatorTaskMode, OperatorTaskState
 
@@ -13,6 +16,7 @@ _TASK_DEFAULTS = {
         "continuity_demand": 0.05,
         "verification_demand": 0.80,
         "visible_burden_sensitivity": 0.45,
+        "contract_binding_demand": 0.30,
     },
     "truth_gap": {
         "task_mode": OperatorTaskMode.INSPECT,
@@ -20,6 +24,7 @@ _TASK_DEFAULTS = {
         "continuity_demand": 0.00,
         "verification_demand": 0.00,
         "visible_burden_sensitivity": 0.80,
+        "contract_binding_demand": 0.05,
     },
     "restart_continuity": {
         "task_mode": OperatorTaskMode.RESUME_EXECUTE,
@@ -27,6 +32,7 @@ _TASK_DEFAULTS = {
         "continuity_demand": 0.95,
         "verification_demand": 0.80,
         "visible_burden_sensitivity": 0.55,
+        "contract_binding_demand": 0.35,
     },
 }
 
@@ -36,12 +42,14 @@ _PROBE_DEFAULTS = {
     "continuity_demand": 0.00,
     "verification_demand": 0.05,
     "visible_burden_sensitivity": 0.20,
+    "contract_binding_demand": 0.10,
 }
 
 
 def build_operator_task_state(
     scenario_id: str,
     *,
+    operator_model: str | None = None,
     previous_same_host_run_failed_before_completion: bool = False,
     recent_probe_failure_class: str | None = None,
     recent_baseline_clean_count: int = 0,
@@ -57,6 +65,8 @@ def build_operator_task_state(
         continuity_demand=defaults["continuity_demand"],
         verification_demand=defaults["verification_demand"],
         visible_burden_sensitivity=defaults["visible_burden_sensitivity"],
+        contract_binding_demand=defaults["contract_binding_demand"],
+        operator_model=operator_model,
         previous_same_host_run_failed_before_completion=previous_same_host_run_failed_before_completion,
         recent_probe_failure_class=recent_probe_failure_class,
         recent_baseline_clean_count=recent_baseline_clean_count,
@@ -67,6 +77,7 @@ def build_operator_task_state(
 
 def build_operator_probe_task_state(
     *,
+    operator_model: str | None = None,
     previous_same_host_run_failed_before_completion: bool = False,
     recent_probe_failure_class: str | None = None,
     recent_baseline_clean_count: int = 0,
@@ -78,6 +89,8 @@ def build_operator_probe_task_state(
         continuity_demand=_PROBE_DEFAULTS["continuity_demand"],
         verification_demand=_PROBE_DEFAULTS["verification_demand"],
         visible_burden_sensitivity=_PROBE_DEFAULTS["visible_burden_sensitivity"],
+        contract_binding_demand=_PROBE_DEFAULTS["contract_binding_demand"],
+        operator_model=operator_model,
         previous_same_host_run_failed_before_completion=previous_same_host_run_failed_before_completion,
         recent_probe_failure_class=recent_probe_failure_class,
         recent_baseline_clean_count=recent_baseline_clean_count,
@@ -93,6 +106,8 @@ def _build_state(
     continuity_demand: float,
     verification_demand: float,
     visible_burden_sensitivity: float,
+    contract_binding_demand: float,
+    operator_model: str | None,
     previous_same_host_run_failed_before_completion: bool,
     recent_probe_failure_class: str | None,
     recent_baseline_clean_count: int,
@@ -107,6 +122,7 @@ def _build_state(
         recent_warning_bearing_success_present=recent_warning_bearing_success_present,
         recent_product_failure_class=recent_product_failure_class,
     )
+    _band, brain_capability = operator_brain_capability_for_openai_model(operator_model)
     return OperatorTaskState(
         task_mode=task_mode,
         complexity=complexity,
@@ -116,6 +132,8 @@ def _build_state(
         host_friction=host_friction,
         quota_pressure=quota_pressure,
         visible_burden_sensitivity=visible_burden_sensitivity,
+        contract_binding_demand=contract_binding_demand,
+        brain_capability=brain_capability,
     )
 
 

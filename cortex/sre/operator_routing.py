@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from dataclasses import asdict, dataclass, replace
+from dataclasses import asdict, dataclass, field, replace
 from enum import Enum
 from numbers import Real
 
@@ -31,6 +31,114 @@ class OperatorRouteProfile(str, Enum):
     BLOCKED = "blocked"
 
 
+class OperatorContractBindingProfile(str, Enum):
+    STANDARD = "standard"
+    LEAN = "lean"
+
+
+class OperatorBrainCapabilityMismatchLevel(str, Enum):
+    NONE = "none"
+    DEGRADE = "degrade"
+    UNSUPPORTED = "unsupported"
+
+
+@dataclass(frozen=True, slots=True)
+class OperatorBrainCapabilityEnvelope:
+    continuity_tolerance: float
+    verification_tolerance: float
+    output_contract_tolerance: float
+
+    def __post_init__(self) -> None:
+        for field_name in (
+            "continuity_tolerance",
+            "verification_tolerance",
+            "output_contract_tolerance",
+        ):
+            value = getattr(self, field_name)
+            if not isinstance(value, Real):
+                actual_type = type(value).__name__
+                raise TypeError(
+                    f"OperatorBrainCapabilityEnvelope.{field_name} must be numeric, "
+                    f"got {actual_type}."
+                )
+            if not 0.0 <= float(value) <= 1.0:
+                raise ValueError(
+                    f"OperatorBrainCapabilityEnvelope.{field_name} must be between 0.0 and 1.0."
+                )
+
+    def as_payload(self) -> dict[str, float]:
+        return {
+            "continuity_tolerance": round(float(self.continuity_tolerance), 4),
+            "verification_tolerance": round(float(self.verification_tolerance), 4),
+            "output_contract_tolerance": round(
+                float(self.output_contract_tolerance), 4
+            ),
+        }
+
+
+@dataclass(frozen=True, slots=True)
+class OperatorBrainCapabilityAssessment:
+    continuity_mismatch: float
+    verification_mismatch: float
+    contract_mismatch: float
+    level: OperatorBrainCapabilityMismatchLevel
+    contract_binding_profile: OperatorContractBindingProfile
+    fallback_family: str | None = None
+    reason_tags: frozenset[str] = field(default_factory=frozenset)
+
+    def __post_init__(self) -> None:
+        for field_name in (
+            "continuity_mismatch",
+            "verification_mismatch",
+            "contract_mismatch",
+        ):
+            value = getattr(self, field_name)
+            if not isinstance(value, Real):
+                actual_type = type(value).__name__
+                raise TypeError(
+                    f"OperatorBrainCapabilityAssessment.{field_name} must be numeric, "
+                    f"got {actual_type}."
+                )
+            if not 0.0 <= float(value) <= 1.0:
+                raise ValueError(
+                    f"OperatorBrainCapabilityAssessment.{field_name} must be between 0.0 and 1.0."
+                )
+        if not isinstance(
+            self.level, OperatorBrainCapabilityMismatchLevel
+        ):
+            actual_type = type(self.level).__name__
+            raise TypeError(
+                "OperatorBrainCapabilityAssessment.level must be "
+                f"OperatorBrainCapabilityMismatchLevel, got {actual_type}."
+            )
+        if not isinstance(
+            self.contract_binding_profile,
+            OperatorContractBindingProfile,
+        ):
+            actual_type = type(self.contract_binding_profile).__name__
+            raise TypeError(
+                "OperatorBrainCapabilityAssessment.contract_binding_profile must be "
+                f"OperatorContractBindingProfile, got {actual_type}."
+            )
+        if self.fallback_family is not None and not self.fallback_family.strip():
+            raise ValueError(
+                "OperatorBrainCapabilityAssessment.fallback_family must be non-empty after trimming when provided."
+            )
+        if any(not tag.strip() for tag in self.reason_tags):
+            raise ValueError(
+                "OperatorBrainCapabilityAssessment.reason_tags must contain only non-empty values after trimming."
+            )
+
+    def as_payload(self) -> dict[str, object]:
+        return {
+            "continuity": round(float(self.continuity_mismatch), 4),
+            "verification": round(float(self.verification_mismatch), 4),
+            "contract_binding": round(float(self.contract_mismatch), 4),
+            "level": self.level.value,
+            "fallback_family": self.fallback_family,
+        }
+
+
 @dataclass(frozen=True, slots=True)
 class OperatorTaskState:
     task_mode: OperatorTaskMode
@@ -41,6 +149,14 @@ class OperatorTaskState:
     host_friction: float
     quota_pressure: float
     visible_burden_sensitivity: float
+    contract_binding_demand: float = 0.0
+    brain_capability: OperatorBrainCapabilityEnvelope = field(
+        default_factory=lambda: OperatorBrainCapabilityEnvelope(
+            continuity_tolerance=0.75,
+            verification_tolerance=0.75,
+            output_contract_tolerance=0.65,
+        )
+    )
 
     def __post_init__(self) -> None:
         if not isinstance(self.task_mode, OperatorTaskMode):
@@ -53,6 +169,7 @@ class OperatorTaskState:
             "complexity",
             "continuity_demand",
             "verification_demand",
+            "contract_binding_demand",
             "uncertainty",
             "host_friction",
             "quota_pressure",
@@ -68,6 +185,12 @@ class OperatorTaskState:
                 raise ValueError(
                     f"OperatorTaskState.{field_name} must be between 0.0 and 1.0."
                 )
+        if not isinstance(self.brain_capability, OperatorBrainCapabilityEnvelope):
+            actual_type = type(self.brain_capability).__name__
+            raise TypeError(
+                "OperatorTaskState.brain_capability must be "
+                f"OperatorBrainCapabilityEnvelope, got {actual_type}."
+            )
 
     def as_vector(self) -> tuple[float, ...]:
         return (
@@ -132,6 +255,15 @@ class OperatorRouteDecision:
     modulator_state: ExecutiveModulatorState
     modulator_reason_tags: frozenset[str]
     policy_view: ExecutivePolicyView
+    brain_capability_assessment: OperatorBrainCapabilityAssessment = field(
+        default_factory=lambda: OperatorBrainCapabilityAssessment(
+            continuity_mismatch=0.0,
+            verification_mismatch=0.0,
+            contract_mismatch=0.0,
+            level=OperatorBrainCapabilityMismatchLevel.NONE,
+            contract_binding_profile=OperatorContractBindingProfile.STANDARD,
+        )
+    )
     blocked_reason: str | None = None
 
     def __post_init__(self) -> None:
@@ -170,6 +302,14 @@ class OperatorRouteDecision:
             raise TypeError(
                 "OperatorRouteDecision.policy_view must be ExecutivePolicyView, "
                 f"got {actual_type}."
+            )
+        if not isinstance(
+            self.brain_capability_assessment, OperatorBrainCapabilityAssessment
+        ):
+            actual_type = type(self.brain_capability_assessment).__name__
+            raise TypeError(
+                "OperatorRouteDecision.brain_capability_assessment must be "
+                f"OperatorBrainCapabilityAssessment, got {actual_type}."
             )
         for field_name in ("selected_margin", "neutral_margin"):
             value = getattr(self, field_name)
@@ -385,6 +525,7 @@ def select_operator_route_with_policy(
 
     admissible_profiles = _ADMISSIBLE_PROFILES_BY_MODE[state.task_mode]
     default_profile = _DEFAULT_PROFILE_BY_MODE[state.task_mode]
+    brain_capability_assessment = assess_operator_brain_capability(state)
     utilities = {
         profile: _route_utility(profile, state)
         + _policy_profile_adjustment(
@@ -427,6 +568,27 @@ def select_operator_route_with_policy(
     else:
         reason_tags.add("gate:non-default-profile")
 
+    if (
+        brain_capability_assessment.level
+        is OperatorBrainCapabilityMismatchLevel.UNSUPPORTED
+    ):
+        reason_tags.update(brain_capability_assessment.reason_tags)
+        reason_tags.add("blocked:brain-capability")
+        return OperatorRouteDecision(
+            profile=OperatorRouteProfile.BLOCKED,
+            budget=_BUDGET_PROFILES[OperatorRouteProfile.BLOCKED],
+            selected_margin=selected_utility,
+            neutral_margin=neutral_margin,
+            reason_tags=frozenset(reason_tags),
+            summary=modulator_update.summary,
+            modulator_memory=modulator_update.next_memory,
+            modulator_state=modulator_update.state,
+            modulator_reason_tags=modulator_update.reason_tags,
+            policy_view=policy_view,
+            brain_capability_assessment=brain_capability_assessment,
+            blocked_reason="brain_capability_mismatch",
+        )
+
     if modulator_update.state.stop_pressure >= policy_view.stop_threshold and selected_profile is not OperatorRouteProfile.INSPECT_LIGHT:
         reason_tags.add("blocked:modulator-stop-pressure")
         return OperatorRouteDecision(
@@ -440,6 +602,7 @@ def select_operator_route_with_policy(
             modulator_state=modulator_update.state,
             modulator_reason_tags=modulator_update.reason_tags,
             policy_view=policy_view,
+            brain_capability_assessment=brain_capability_assessment,
             blocked_reason="blocked_by_modulator_stop_pressure",
         )
 
@@ -456,13 +619,21 @@ def select_operator_route_with_policy(
             modulator_state=modulator_update.state,
             modulator_reason_tags=modulator_update.reason_tags,
             policy_view=policy_view,
+            brain_capability_assessment=brain_capability_assessment,
             blocked_reason="blocked_by_quota_pressure",
         )
 
+    selected_profile = _apply_brain_capability_profile_downshift(
+        selected_profile,
+        state=state,
+        assessment=brain_capability_assessment,
+        reason_tags=reason_tags,
+    )
     budget = _apply_policy_to_budget(
         _BUDGET_PROFILES[selected_profile],
         state=state,
         policy_view=policy_view,
+        assessment=brain_capability_assessment,
         reason_tags=reason_tags,
     )
 
@@ -477,6 +648,72 @@ def select_operator_route_with_policy(
         modulator_state=modulator_update.state,
         modulator_reason_tags=modulator_update.reason_tags,
         policy_view=policy_view,
+        brain_capability_assessment=brain_capability_assessment,
+    )
+
+
+def assess_operator_brain_capability(
+    state: OperatorTaskState,
+) -> OperatorBrainCapabilityAssessment:
+    if not isinstance(state, OperatorTaskState):
+        actual_type = type(state).__name__
+        raise TypeError(
+            "assess_operator_brain_capability.state must be OperatorTaskState, "
+            f"got {actual_type}."
+        )
+    continuity_mismatch = max(
+        0.0,
+        float(state.continuity_demand)
+        - float(state.brain_capability.continuity_tolerance),
+    )
+    verification_mismatch = max(
+        0.0,
+        float(state.verification_demand)
+        - float(state.brain_capability.verification_tolerance),
+    )
+    contract_mismatch = max(
+        0.0,
+        float(state.contract_binding_demand)
+        - float(state.brain_capability.output_contract_tolerance),
+    )
+    max_mismatch = max(
+        continuity_mismatch,
+        verification_mismatch,
+        contract_mismatch,
+    )
+    if max_mismatch >= 0.50:
+        level = OperatorBrainCapabilityMismatchLevel.UNSUPPORTED
+    elif max_mismatch >= 0.20:
+        level = OperatorBrainCapabilityMismatchLevel.DEGRADE
+    else:
+        level = OperatorBrainCapabilityMismatchLevel.NONE
+
+    reason_tags: set[str] = set()
+    if level is not OperatorBrainCapabilityMismatchLevel.NONE:
+        if contract_mismatch > 0.0:
+            reason_tags.add("brain-capability:contract-mismatch")
+        if verification_mismatch > 0.0:
+            reason_tags.add("brain-capability:verification-downshift")
+    fallback_family = None
+    if level is OperatorBrainCapabilityMismatchLevel.UNSUPPORTED:
+        reason_tags.add("brain-capability:unsupported-floor")
+        fallback_family = _brain_capability_fallback_family(
+            state,
+            continuity_mismatch=continuity_mismatch,
+            verification_mismatch=verification_mismatch,
+        )
+    return OperatorBrainCapabilityAssessment(
+        continuity_mismatch=continuity_mismatch,
+        verification_mismatch=verification_mismatch,
+        contract_mismatch=contract_mismatch,
+        level=level,
+        contract_binding_profile=(
+            OperatorContractBindingProfile.LEAN
+            if level is OperatorBrainCapabilityMismatchLevel.DEGRADE
+            else OperatorContractBindingProfile.STANDARD
+        ),
+        fallback_family=fallback_family,
+        reason_tags=frozenset(reason_tags),
     )
 
 
@@ -496,6 +733,7 @@ def build_operator_route_diagnostics(
             "build_operator_route_diagnostics.decision must be OperatorRouteDecision, "
             f"got {actual_type}."
         )
+    brain_capability_band = _brain_capability_band_for_state(state)
     return {
         "route_profile": decision.profile.value,
         "route_budget": decision.budget.as_payload(),
@@ -507,6 +745,18 @@ def build_operator_route_diagnostics(
         "host_friction": round(float(state.host_friction), 4),
         "visible_burden_sensitivity": round(
             float(state.visible_burden_sensitivity), 4
+        ),
+        "contract_binding_demand": round(float(state.contract_binding_demand), 4),
+        "brain_capability": state.brain_capability.as_payload(),
+        "brain_capability_band": brain_capability_band,
+        "brain_capability_mismatch": (
+            decision.brain_capability_assessment.as_payload()
+        ),
+        "brain_capability_reason_tags": sorted(
+            decision.brain_capability_assessment.reason_tags
+        ),
+        "contract_binding_profile": (
+            decision.brain_capability_assessment.contract_binding_profile.value
         ),
         "blocked_reason": decision.blocked_reason,
         "modulator_summary": decision.summary.as_payload(),
@@ -566,8 +816,19 @@ def _apply_policy_to_budget(
     *,
     state: OperatorTaskState,
     policy_view: ExecutivePolicyView,
+    assessment: OperatorBrainCapabilityAssessment,
     reason_tags: set[str],
 ) -> OperatorBudgetProfile:
+    if (
+        assessment.level is OperatorBrainCapabilityMismatchLevel.DEGRADE
+        and (budget.allow_extra_read_pass or budget.max_retries > 0)
+    ):
+        reason_tags.add("budget:brain-capability-suppressed")
+        return replace(
+            budget,
+            max_retries=0,
+            allow_extra_read_pass=False,
+        )
     if state.task_mode is OperatorTaskMode.INSPECT and policy_view.allow_extra_read_pass:
         reason_tags.add("budget:extra-read-pass")
         return replace(
@@ -578,12 +839,60 @@ def _apply_policy_to_budget(
     return budget
 
 
+def _apply_brain_capability_profile_downshift(
+    selected_profile: OperatorRouteProfile,
+    *,
+    state: OperatorTaskState,
+    assessment: OperatorBrainCapabilityAssessment,
+    reason_tags: set[str],
+) -> OperatorRouteProfile:
+    if assessment.level is not OperatorBrainCapabilityMismatchLevel.DEGRADE:
+        reason_tags.update(assessment.reason_tags)
+        return selected_profile
+    reason_tags.update(assessment.reason_tags)
+    if selected_profile in {
+        OperatorRouteProfile.CONTINUITY_STANDARD,
+        OperatorRouteProfile.CONTINUITY_GUARDED,
+    }:
+        reason_tags.add("brain-capability:continuity-downshift")
+        if state.task_mode is OperatorTaskMode.RESUME_EXECUTE:
+            return OperatorRouteProfile.EXECUTE_STANDARD
+        return OperatorRouteProfile.INSPECT_LIGHT
+    return selected_profile
+
+
+def _brain_capability_fallback_family(
+    state: OperatorTaskState,
+    *,
+    continuity_mismatch: float,
+    verification_mismatch: float,
+) -> str:
+    if state.task_mode is OperatorTaskMode.INSPECT:
+        return "inspect"
+    if verification_mismatch >= continuity_mismatch or state.verification_demand >= 0.5:
+        return "check"
+    return "manual_escalation"
+
+
+def _brain_capability_band_for_state(state: OperatorTaskState) -> str:
+    from cortex.runtime.operator_brain_capability import (
+        brain_capability_band_for_envelope,
+    )
+
+    return brain_capability_band_for_envelope(state.brain_capability)
+
+
 __all__ = [
+    "OperatorBrainCapabilityAssessment",
+    "OperatorBrainCapabilityEnvelope",
     "OperatorBudgetProfile",
+    "OperatorContractBindingProfile",
     "OperatorRouteDecision",
     "OperatorRouteProfile",
+    "OperatorBrainCapabilityMismatchLevel",
     "OperatorTaskMode",
     "OperatorTaskState",
+    "assess_operator_brain_capability",
     "build_operator_route_diagnostics",
     "select_operator_route_with_policy",
     "select_operator_route_with_modulators",

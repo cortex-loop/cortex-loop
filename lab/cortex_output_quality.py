@@ -37,6 +37,7 @@ from lab.output_quality_common import (
     ArmName,
     OutputQualityTaskPack,
     apply_output_files,
+    build_output_quality_capability_diagnostics,
     build_output_quality_input_text,
     parse_output_quality_result,
     prepare_output_quality_workspace,
@@ -100,6 +101,7 @@ def run_output_quality_suite(
     results: dict[str, Any] = {}
     aggregate_objective = {arm: 0 for arm in arms}
     aggregate_hidden = {arm: 0 for arm in arms}
+    aggregate_protocol_valid = {arm: 0 for arm in arms}
     pairwise_results: list[dict[str, Any]] = []
     env_blocked = False
 
@@ -130,6 +132,8 @@ def run_output_quality_suite(
                 aggregate_objective[arm] += 1
             if arm_result["evaluation"]["hidden_quality_pass"]:
                 aggregate_hidden[arm] += 1
+            if arm_result["protocol_valid_pass"]:
+                aggregate_protocol_valid[arm] += 1
         comparisons = _build_pairwise_results(
             task_pack=task_pack,
             arms=arms,
@@ -153,6 +157,7 @@ def run_output_quality_suite(
         task_results=results,
         aggregate_objective=aggregate_objective,
         aggregate_hidden=aggregate_hidden,
+        aggregate_protocol_valid=aggregate_protocol_valid,
         pairwise_results=pairwise_results,
         env_blocked=env_blocked,
         ablation_config=ablation_config,
@@ -218,10 +223,21 @@ def _run_service_api_arm(
 ) -> dict[str, Any]:
     prompt_text = task_pack.prompt_text.strip()
     cortex_ablation = ablation_config if arm == "cortex" else None
+    capability_diagnostics = (
+        build_output_quality_capability_diagnostics(model)
+        if arm == "cortex"
+        else None
+    )
+    contract_binding_profile = (
+        str(capability_diagnostics["contract_binding_profile"])
+        if capability_diagnostics is not None
+        else "standard"
+    )
     input_text = build_output_quality_input_text(
         task_pack,
         arm=arm,
         ablation_config=cortex_ablation,
+        contract_binding_profile=contract_binding_profile,
     )
     initial_turn = _execute_openai_turn(
         model=model,
@@ -251,6 +267,7 @@ def _run_service_api_arm(
         arm == "cortex"
         and attempt1_payload["repairable"]
         and initial_turn["response_id"] is not None
+        and contract_binding_profile == "standard"
         and (cortex_ablation is None or cortex_ablation.repair_turn == "on")
         and (cortex_ablation is None or cortex_ablation.verification_binding == "on")
     ):
@@ -261,7 +278,9 @@ def _run_service_api_arm(
                 cortex_ablation.repair_ticket_style
                 if cortex_ablation is not None
                 else "factual"
-            ),
+            )
+            if contract_binding_profile == "standard"
+            else "minimal",
             repair_surface=task_pack.allowed_write_paths,
         )
         repair_turn = _execute_openai_turn(
@@ -299,6 +318,8 @@ def _run_service_api_arm(
         "evaluation": final_payload["evaluation"],
         "changed_files": final_payload["changed_files"],
         "repairable": final_payload["repairable"],
+        "protocol_valid_pass": final_payload["parse"]["parse_error"] is None,
+        "brain_capability_diagnostics": capability_diagnostics,
     }
 
 
@@ -314,10 +335,21 @@ def _run_operator_cli_arm(
 ) -> dict[str, Any]:
     prompt_text = task_pack.prompt_text.strip()
     cortex_ablation = ablation_config if arm == "cortex" else None
+    capability_diagnostics = (
+        build_output_quality_capability_diagnostics(model)
+        if arm == "cortex"
+        else None
+    )
+    contract_binding_profile = (
+        str(capability_diagnostics["contract_binding_profile"])
+        if capability_diagnostics is not None
+        else "standard"
+    )
     input_text = build_output_quality_operator_prompt(
         task_pack,
         arm=arm,
         ablation_config=cortex_ablation,
+        contract_binding_profile=contract_binding_profile,
     )
     workspace_root = prepare_seeded_workspace(
         template_root=task_pack.template_root,
@@ -354,6 +386,7 @@ def _run_operator_cli_arm(
             arm == "cortex"
             and attempt1_payload["repairable"]
             and initial_turn["thread_id"] is not None
+            and contract_binding_profile == "standard"
             and (cortex_ablation is None or cortex_ablation.repair_turn == "on")
             and (cortex_ablation is None or cortex_ablation.verification_binding == "on")
         ):
@@ -364,7 +397,9 @@ def _run_operator_cli_arm(
                     cortex_ablation.repair_ticket_style
                     if cortex_ablation is not None
                     else "factual"
-                ),
+                )
+                if contract_binding_profile == "standard"
+                else "minimal",
                 repair_surface=task_pack.allowed_write_paths,
             )
             repair_turn = run_openai_operator_resumed_turn(
@@ -400,6 +435,8 @@ def _run_operator_cli_arm(
         "evaluation": final_payload["evaluation"],
         "changed_files": final_payload["changed_files"],
         "repairable": final_payload["repairable"],
+        "protocol_valid_pass": final_payload["parse"]["parse_error"] is None,
+        "brain_capability_diagnostics": capability_diagnostics,
     }
 
 
@@ -446,6 +483,7 @@ def build_output_quality_operator_prompt(
     *,
     arm: ArmName,
     ablation_config: OutputQualityAblationConfig | None = None,
+    contract_binding_profile: str = "standard",
 ) -> str:
     if arm == "cortex" and ablation_config is not None:
         if ablation_config.visible_contract_binding == "off":
@@ -477,20 +515,35 @@ def build_output_quality_operator_prompt(
                 context_bundle,
             )
         )
-    prompt_parts.append(
-        "\n".join(
-            (
-                "Edit the workspace directly and keep the final result mergeable.",
-                "Keep any changes within these paths:",
-                allowed_paths,
-                "You may run local checks if useful.",
-                "If essential information is missing, make no edits and reply with:",
-                "=== BLOCKED: needs_user_input ===",
-                "<message>",
-                "=== END BLOCKED ===",
+    if contract_binding_profile == "lean":
+        prompt_parts.append(
+            "\n".join(
+                (
+                    "Make the smallest lawful workspace edit.",
+                    "Keep any changes within these paths:",
+                    allowed_paths,
+                    "If blocked by missing information, make no edits and reply with:",
+                    "=== BLOCKED: needs_user_input ===",
+                    "<message>",
+                    "=== END BLOCKED ===",
+                )
             )
         )
-    )
+    else:
+        prompt_parts.append(
+            "\n".join(
+                (
+                    "Edit the workspace directly and keep the final result mergeable.",
+                    "Keep any changes within these paths:",
+                    allowed_paths,
+                    "You may run local checks if useful.",
+                    "If essential information is missing, make no edits and reply with:",
+                    "=== BLOCKED: needs_user_input ===",
+                    "<message>",
+                    "=== END BLOCKED ===",
+                )
+            )
+        )
     return "\n\n".join(prompt_parts)
 
 
@@ -710,6 +763,7 @@ def _build_suite_summary(
     task_results: dict[str, Any],
     aggregate_objective: dict[str, int],
     aggregate_hidden: dict[str, int],
+    aggregate_protocol_valid: dict[str, int],
     pairwise_results: list[dict[str, Any]],
     env_blocked: bool,
     ablation_config: OutputQualityAblationConfig | None,
@@ -751,6 +805,7 @@ def _build_suite_summary(
         "task_results": task_results,
         "aggregate_objective_pass_count": aggregate_objective,
         "aggregate_hidden_quality_pass_count": aggregate_hidden,
+        "aggregate_protocol_valid_pass_count": aggregate_protocol_valid,
         "pairwise_summary": pairwise_summary,
         "env_blocked": env_blocked,
     }

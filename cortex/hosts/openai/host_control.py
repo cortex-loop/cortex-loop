@@ -6,11 +6,20 @@ import importlib
 from collections.abc import Callable, Mapping
 from dataclasses import dataclass, field
 from typing import Any
+from cortex.runtime.operator_brain_capability import (
+    operator_brain_capability_for_openai_model,
+)
 from cortex.runtime.verified_work_runtime import (
     build_verified_work_input_text,
     build_verified_work_instructions,
     build_verified_work_repair_ticket,
     verify_verified_work_result,
+)
+from cortex.sre.operator_routing import (
+    OperatorContractBindingProfile,
+    OperatorTaskMode,
+    OperatorTaskState,
+    assess_operator_brain_capability,
 )
 from cortex.sre.verified_work import VerificationOutcome, WorkContract
 
@@ -237,10 +246,13 @@ def run_openai_host_control(
             f"got {actual_type}."
         )
     if request.work_contract is None:
+        contract_binding_demand = _contract_binding_demand_for_work_contract(None)
         raw_events, records, current_session, result_text = _run_openai_host_control_attempt(
             request,
             current_session,
             transport_callable=transport_callable,
+            operator_model=request.model,
+            contract_binding_demand=contract_binding_demand,
         )
         return OpenAIHostControlResult(
             action_tag=request.action_tag,
@@ -248,18 +260,40 @@ def run_openai_host_control(
             result_text=result_text,
         ), current_session
 
-    current_session = _activate_verified_work_anchor(current_session, request.work_contract)
+    capability_assessment = _brain_capability_assessment_for_request(request)
+    effective_work_contract = _effective_work_contract_for_capability(
+        request.work_contract,
+        capability_assessment.contract_binding_profile,
+    )
+    contract_binding_profile = capability_assessment.contract_binding_profile.value
+    context_mode = (
+        "writable_files_only"
+        if capability_assessment.contract_binding_profile
+        is OperatorContractBindingProfile.LEAN
+        else "default"
+    )
+    contract_binding_demand = _contract_binding_demand_for_work_contract(
+        effective_work_contract
+    )
+    current_session = _activate_verified_work_anchor(
+        current_session, effective_work_contract
+    )
     verified_request = OpenAIHostControlRequest(
         action_tag=request.action_tag,
         model=request.model,
         input_text=build_verified_work_input_text(
             request.input_text,
-            request.work_contract,
+            effective_work_contract,
+            context_mode=context_mode,
+            contract_binding_profile=contract_binding_profile,
         ),
-        instructions=build_verified_work_instructions(request.work_contract),
+        instructions=build_verified_work_instructions(
+            effective_work_contract,
+            contract_binding_profile=contract_binding_profile,
+        ),
         metadata=request.metadata,
         max_output_tokens=request.max_output_tokens,
-        work_contract=request.work_contract,
+        work_contract=effective_work_contract,
         offline_publication=request.offline_publication,
         audit_intensity=request.audit_intensity,
     )
@@ -267,11 +301,13 @@ def run_openai_host_control(
         verified_request,
         current_session,
         transport_callable=transport_callable,
+        operator_model=request.model,
+        contract_binding_demand=contract_binding_demand,
     )
     try:
         first_file_map, verification = verify_verified_work_result(
             result_text,
-            request.work_contract,
+            effective_work_contract,
         )
     except RuntimeError as exc:
         raise OpenAIResponseStreamTransportError(
@@ -280,13 +316,13 @@ def run_openai_host_control(
     current_session = run_openai_runtime_verification_step(
         verification,
         current_session,
-        work_contract=request.work_contract,
-        remaining_repairs=request.work_contract.max_repair_turns,
+        work_contract=effective_work_contract,
+        remaining_repairs=effective_work_contract.max_repair_turns,
     )
     attempt_count = 1
     final_result_text = result_text
     if (
-        request.work_contract.max_repair_turns > 0
+        effective_work_contract.max_repair_turns > 0
         and current_session.next_recommended_move == "repair"
     ):
         preservation_state = current_session.preservation_state
@@ -300,15 +336,21 @@ def run_openai_host_control(
                 "OpenAI verified-work continuation requires a response_id on the first attempt."
             )
         repair_contract = _narrowed_repair_contract(
-            request.work_contract,
+            effective_work_contract,
             preservation_state.lawful_repair_surface,
         )
-        repair_ticket = build_verified_work_repair_ticket(preservation_state)
+        repair_ticket = build_verified_work_repair_ticket(
+            preservation_state,
+            contract_binding_profile=contract_binding_profile,
+        )
         repair_request = OpenAIHostControlRequest(
             action_tag=request.action_tag,
             model=request.model,
             input_text=verified_request.input_text,
-            instructions=build_verified_work_instructions(repair_contract),
+            instructions=build_verified_work_instructions(
+                repair_contract,
+                contract_binding_profile=contract_binding_profile,
+            ),
             metadata=request.metadata,
             max_output_tokens=request.max_output_tokens,
             work_contract=repair_contract,
@@ -321,6 +363,8 @@ def run_openai_host_control(
             transport_callable=transport_callable,
             previous_response_id=response_id,
             input_text_override=repair_ticket,
+            operator_model=request.model,
+            contract_binding_demand=contract_binding_demand,
         )
         records.extend(repair_records)
         final_result_text = repair_result_text
@@ -329,7 +373,7 @@ def run_openai_host_control(
                 repair_result_text,
                 repair_contract,
                 preserved_file_map=first_file_map,
-                verifier_contract=request.work_contract,
+                verifier_contract=effective_work_contract,
             )
         except RuntimeError as exc:
             raise OpenAIResponseStreamTransportError(
@@ -338,7 +382,7 @@ def run_openai_host_control(
         current_session = run_openai_runtime_verification_step(
             verification,
             repair_session,
-            work_contract=request.work_contract,
+            work_contract=effective_work_contract,
             remaining_repairs=0,
         )
         attempt_count = 2
@@ -423,6 +467,8 @@ def _run_openai_host_control_attempt(
     transport_callable: Callable[..., list[dict[str, Any]]],
     previous_response_id: str | None = None,
     input_text_override: str | None = None,
+    operator_model: str | None = None,
+    contract_binding_demand: float = 0.0,
 ) -> tuple[list[dict[str, Any]], list[dict[str, Any]], OpenAIRuntimeSession, str | None]:
     raw_events = _call_transport_turn(
         transport_callable,
@@ -452,6 +498,8 @@ def _run_openai_host_control_attempt(
                 current_session,
                 audit_intensity=request.audit_intensity,
                 offline_publication=request.offline_publication,
+                operator_model=operator_model,
+                contract_binding_demand=contract_binding_demand,
             )
         except (TypeError, ValueError) as exc:
             raise OpenAIResponseStreamTransportError(
@@ -460,6 +508,47 @@ def _run_openai_host_control_attempt(
         records.append(build_openai_cli_record(step_result))
         current_session = step_result.session
     return raw_events, records, current_session, _extract_response_output_text(raw_events)
+
+
+def _contract_binding_demand_for_work_contract(
+    work_contract: WorkContract | None,
+) -> float:
+    return 0.60 if work_contract is not None else 0.0
+
+
+def _effective_work_contract_for_capability(
+    work_contract: WorkContract,
+    contract_binding_profile: OperatorContractBindingProfile,
+) -> WorkContract:
+    if contract_binding_profile is OperatorContractBindingProfile.STANDARD:
+        return work_contract
+    return WorkContract(
+        allowed_write_paths=work_contract.allowed_write_paths,
+        verification_profile=work_contract.verification_profile,
+        output_carrier=work_contract.output_carrier,
+        max_repair_turns=0,
+    )
+
+
+def _brain_capability_assessment_for_request(
+    request: OpenAIHostControlRequest,
+):
+    _band, brain_capability = operator_brain_capability_for_openai_model(request.model)
+    state = OperatorTaskState(
+        task_mode=OperatorTaskMode.EXECUTE,
+        complexity=0.45,
+        continuity_demand=0.10,
+        verification_demand=0.80 if request.work_contract is not None else 0.0,
+        uncertainty=0.45,
+        host_friction=0.0,
+        quota_pressure=0.0,
+        visible_burden_sensitivity=0.45,
+        contract_binding_demand=_contract_binding_demand_for_work_contract(
+            request.work_contract
+        ),
+        brain_capability=brain_capability,
+    )
+    return assess_operator_brain_capability(state)
 
 
 def _call_transport_turn(
