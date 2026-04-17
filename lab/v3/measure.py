@@ -15,11 +15,10 @@ from cortex_v3.providers.base import ProviderAdapter
 from cortex_v3.providers.claude import ClaudeAdapter
 from cortex_v3.providers.gemini import GeminiAdapter
 from cortex_v3.providers.openai import OpenAIAdapter
-from cortex_v3.verifier import verified_work_profile_spec
+from lab.v3.fixture_payloads import fixture_payload_for_task
 from lab.v3.replay import ReplayTask, run_replay_case
 
 
-REPO_ROOT = Path(__file__).resolve().parents[2]
 _DEFAULT_TRIALS = 10
 _DEFAULT_MAX_TOKENS = 4096
 _ARMS = ("verified_with_repair", "plain_feedback")
@@ -158,7 +157,7 @@ def main(argv: list[str] | None = None) -> int:
                         adapter = _build_adapter(
                             mode=args.mode,
                             provider=provider,
-                            work_contract=task_spec.work_contract,
+                            task_id=task_spec.task_id,
                         )
                         outcome = run_replay_case(adapter, task, arm=arm)
                     except Exception as exc:  # noqa: BLE001
@@ -182,7 +181,12 @@ def main(argv: list[str] | None = None) -> int:
                             "verification_status": outcome.verification_status,
                             "failure_class": outcome.failure_class,
                             "pytest_passed": outcome.pytest_passed,
-                            "pytest_failed": outcome.pytest_failed,
+                            "pytest_failed": (
+                                0
+                                if outcome.verification_status == "passed"
+                                and outcome.pytest_failed is None
+                                else outcome.pytest_failed
+                            ),
                             "attempt_count": outcome.attempt_count,
                             "decision": outcome.decision,
                             "duration_seconds": outcome.duration_seconds,
@@ -215,12 +219,12 @@ def _build_adapter(
     *,
     mode: str,
     provider: str,
-    work_contract: WorkContract,
+    task_id: str,
 ) -> ProviderAdapter:
     if mode == "fixture":
         return _FixtureAdapter(
             provider=provider,
-            output_text=_render_valid_result(work_contract),
+            output_text=fixture_payload_for_task(task_id),
         )
     if provider == "openai":
         return OpenAIAdapter()
@@ -229,17 +233,6 @@ def _build_adapter(
     if provider == "gemini":
         return GeminiAdapter()
     raise ValueError(f"Unsupported provider: {provider}")
-
-
-def _render_valid_result(work_contract: WorkContract) -> str:
-    profile = verified_work_profile_spec(work_contract)
-    blocks: list[str] = []
-    for relative_path in work_contract.allowed_write_paths:
-        content = (profile.template_root / relative_path).read_text(encoding="utf-8")
-        blocks.append(f"=== FILE: {relative_path} ===")
-        blocks.append(content)
-        blocks.append("=== END FILE ===")
-    return "\n".join(blocks)
 
 
 def _parsed_providers(raw_value: str) -> tuple[str, ...]:

@@ -42,7 +42,9 @@
 - If any provider column is all-NA due to missing key: that provider's row marked `unmeasured`; next sprint is a re-run with keys present. No architectural conclusion is drawn from a missing-key row.
 
 ## Actual outcome
-All 18 cells are `NA`. The live artifact contains 180 rows, but every row is marked `error=missing_api_key` because `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, and `GEMINI_API_KEY` were all absent in this environment at run time. No provider produced a usable measurement, so no pass-rate or delta claim is earned from this sprint.
+The dry run now proves two narrow things only: the driver walks the full 18-cell grid deterministically, and the fixture-mode payloads execute as passing verified-work outputs on all three providers in the queue-backed sweep. It does **not** prove any live provider pass rate or repair lift.
+
+The live denominator is still unmeasured in this environment. The live artifact contains 180 rows, but every row is marked `error=missing_api_key` because `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, and `GEMINI_API_KEY` were all absent at run time. No provider produced a usable live measurement, so no pass-rate or delta claim is earned from this sprint.
 
 ## Recommendation for next sprint
 `rerun-with-full-keys`
