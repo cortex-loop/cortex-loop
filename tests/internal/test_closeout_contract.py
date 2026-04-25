@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import subprocess
 from pathlib import Path
 
@@ -74,6 +75,35 @@ def _init_repo(tmp_path: Path) -> Path:
     return repo
 
 
+def _write_loop_guard_report(
+    repo: Path,
+    *,
+    relpath: str = ".cortex/live_validation/agent_loop_guard/gates.latest.json",
+    status: str = "pass",
+    include_evidence: bool = True,
+) -> str:
+    path = repo / relpath
+    path.parent.mkdir(parents=True, exist_ok=True)
+    gate = {
+        "gate_id": "v2_packet_communication_inventory_complete",
+        "status": status,
+        "reason": f"gate is {status}",
+        "next_action": "none",
+    }
+    if include_evidence:
+        gate["evidence"] = "bounded transcript-backed evidence"
+    path.write_text(
+        json.dumps(
+            {
+                "required_gates": ["v2_packet_communication_inventory_complete"],
+                "gates": [gate],
+            }
+        ),
+        encoding="utf-8",
+    )
+    return relpath
+
+
 def test_validate_payload_accepts_valid_standard_contract() -> None:
     payload = _filled_payload("maint/manual-work", "finalize", ["README.md"])
 
@@ -115,6 +145,66 @@ def test_validate_payload_rejects_missing_forbidden_claims() -> None:
             expected_branch="maint/manual-work",
             expected_reviewed_paths=["README.md"],
         )
+
+
+def test_validate_payload_rejects_full_communication_claim_without_loop_guard() -> None:
+    payload = _filled_payload("maint/manual-work", "finalize", ["README.md"])
+    payload["claims"]["earned_now"] = ["Full V2 communication closure is proven."]
+
+    with pytest.raises(SystemExit, match="completion claims require agent_loop_guard"):
+        closeout_contract.validate_payload(
+            payload,
+            expected_mode="finalize",
+            expected_branch="maint/manual-work",
+            expected_reviewed_paths=["README.md"],
+        )
+
+
+def test_validate_payload_rejects_full_communication_claim_with_pending_loop_gate(
+    tmp_path: Path,
+) -> None:
+    repo = tmp_path / "repo"
+    repo.mkdir()
+    report_path = _write_loop_guard_report(repo, status="missing", include_evidence=False)
+    payload = _filled_payload("maint/manual-work", "finalize", ["README.md"])
+    payload["claims"]["earned_now"] = ["Full V2 communication closure is proven."]
+    payload["agent_loop_guard"] = {
+        "report_path": report_path,
+        "require_full_communication_closure": True,
+    }
+
+    with pytest.raises(SystemExit, match="not closed"):
+        closeout_contract.validate_payload(
+            payload,
+            expected_mode="finalize",
+            expected_branch="maint/manual-work",
+            expected_reviewed_paths=["README.md"],
+            root=repo,
+        )
+
+
+def test_validate_payload_accepts_full_communication_claim_with_passing_loop_gate(
+    tmp_path: Path,
+) -> None:
+    repo = tmp_path / "repo"
+    repo.mkdir()
+    report_path = _write_loop_guard_report(repo)
+    payload = _filled_payload("maint/manual-work", "finalize", ["README.md"])
+    payload["claims"]["earned_now"] = ["Full V2 communication closure is proven."]
+    payload["agent_loop_guard"] = {
+        "report_path": report_path,
+        "require_full_communication_closure": True,
+    }
+
+    validated = closeout_contract.validate_payload(
+        payload,
+        expected_mode="finalize",
+        expected_branch="maint/manual-work",
+        expected_reviewed_paths=["README.md"],
+        root=repo,
+    )
+
+    assert validated["agent_loop_guard"]["report_path"] == report_path
 
 
 def test_validate_payload_rejects_missing_zeroed_or_stubbed_terms() -> None:

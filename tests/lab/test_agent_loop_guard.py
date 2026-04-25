@@ -7,6 +7,8 @@ import json
 import sys
 from pathlib import Path
 
+import pytest
+
 from lab import agent_loop_guard
 
 
@@ -317,6 +319,82 @@ def test_evaluate_command_can_emit_hook_json(tmp_path: Path, capsys) -> None:
     assert "codex_live_watchlist_evidence" in payload["reason"]
 
 
+def test_assert_closure_rejects_pending_full_communication_report() -> None:
+    report = agent_loop_guard.default_gate_report()
+
+    status = agent_loop_guard.closure_status(report)
+
+    assert status.verdict == "pending"
+    assert status.pending_gates[0].gate_id == "active_train_reconciled"
+    with pytest.raises(SystemExit, match="full V2 communication closure is not proven"):
+        agent_loop_guard.assert_closure(report)
+
+
+def test_assert_closure_allows_only_when_required_gates_pass(tmp_path: Path, capsys) -> None:
+    report_path = tmp_path / "gates.json"
+    report = _report(
+        gates=[
+            _gate(gate_id, "pass", evidence=f"bounded evidence for {gate_id}")
+            for gate_id in agent_loop_guard.DEFAULT_REQUIRED_GATES
+        ],
+        required_gates=agent_loop_guard.DEFAULT_REQUIRED_GATES,
+    )
+    report_path.write_text(json.dumps(report.as_payload()), encoding="utf-8")
+
+    assert (
+        agent_loop_guard.main(
+            [
+                "assert-closure",
+                "--report",
+                str(report_path),
+                "--format",
+                "json",
+            ]
+        )
+        == 0
+    )
+
+    payload = json.loads(capsys.readouterr().out)
+    assert payload["verdict"] == "pass"
+    assert payload["pending_gates"] == []
+
+
+def test_assert_closure_can_classify_operator_blocked_stop(tmp_path: Path, capsys) -> None:
+    report_path = tmp_path / "gates.json"
+    gates = [
+        _gate(gate_id, "pass", evidence=f"bounded evidence for {gate_id}")
+        for gate_id in agent_loop_guard.DEFAULT_REQUIRED_GATES
+        if gate_id != "claude_live_watchlist_evidence"
+    ]
+    gates.append(
+        _gate(
+            "claude_live_watchlist_evidence",
+            "blocked",
+            reason="Claude auth requires operator sign-in",
+            next_action="operator signs in to Claude CLI",
+        )
+    )
+    report = _report(
+        gates=gates,
+        required_gates=agent_loop_guard.DEFAULT_REQUIRED_GATES,
+    )
+    report_path.write_text(json.dumps(report.as_payload()), encoding="utf-8")
+
+    assert (
+        agent_loop_guard.main(
+            [
+                "assert-closure",
+                "--report",
+                str(report_path),
+                "--allow-blocked",
+            ]
+        )
+        == 0
+    )
+
+    assert "blocked: full V2 communication closure is operator-blocked" in capsys.readouterr().out
+
+
 def _report(
     *,
     gates: list[agent_loop_guard.GateResult],
@@ -338,10 +416,12 @@ def _gate(
     *,
     reason: str | None = None,
     next_action: str | None = None,
+    evidence: str | None = None,
 ) -> agent_loop_guard.GateResult:
     return agent_loop_guard.GateResult(
         gate_id=gate_id,
         status=status,
         reason=reason or f"{gate_id} is {status}",
         next_action=next_action or f"work the {gate_id} gate",
+        evidence=evidence,
     )

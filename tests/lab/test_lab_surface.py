@@ -55,3 +55,4 @@ def test_agent_loop_guard_is_lab_watchlist_only_and_bounded() -> None:
     assert "agent-loop-guard-plan" in makefile
     assert "agent-loop-guard-init" in makefile
     assert "agent-loop-guard-evaluate" in makefile
+    assert "agent-loop-guard-assert-closure" in makefile

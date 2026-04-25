@@ -16,6 +16,7 @@ from lab.live_validation_common import LOCAL_LIVE_ROOT, now_utc_iso, write_json
 HostSurface = Literal["codex", "claude"]
 GateStatus = Literal["pass", "fail", "missing", "blocked", "unknown"]
 LoopGuardAction = Literal["allow_stop", "continue", "stop_for_operator"]
+LoopClosureVerdict = Literal["pass", "blocked", "pending"]
 
 LOOP_GUARD_ROOT = LOCAL_LIVE_ROOT / "agent_loop_guard"
 LOOP_GUARD_LATEST_PATH = LOOP_GUARD_ROOT / "gates.latest.json"
@@ -553,6 +554,28 @@ class LoopGuardDecision:
         }
 
 
+@dataclass(frozen=True, slots=True)
+class LoopClosureStatus:
+    verdict: LoopClosureVerdict
+    reason: str
+    pending_gates: tuple[GateResult, ...] = field(default_factory=tuple)
+    blocked_gates: tuple[GateResult, ...] = field(default_factory=tuple)
+
+    def __post_init__(self) -> None:
+        if self.verdict not in {"pass", "blocked", "pending"}:
+            raise ValueError("LoopClosureStatus.verdict must be pass, blocked, or pending.")
+        if not self.reason.strip():
+            raise ValueError("LoopClosureStatus.reason must be non-empty after trimming.")
+
+    def as_payload(self) -> dict[str, Any]:
+        return {
+            "verdict": self.verdict,
+            "reason": self.reason,
+            "pending_gates": [gate.as_payload() for gate in self.pending_gates],
+            "blocked_gates": [gate.as_payload() for gate in self.blocked_gates],
+        }
+
+
 def default_gate_report(
     *,
     profile: str = DEFAULT_PROFILE,
@@ -676,6 +699,59 @@ def decide_loop_guard(
     )
 
 
+def closure_status(report: LoopGateReport) -> LoopClosureStatus:
+    normalized_gates = report.normalized_gates()
+    status_pending = tuple(
+        gate for gate in normalized_gates if gate.status in {"fail", "missing", "unknown"}
+    )
+    evidence_missing = tuple(
+        gate for gate in normalized_gates if gate.status == "pass" and gate.evidence is None
+    )
+    pending = status_pending + evidence_missing
+    blocked = tuple(gate for gate in normalized_gates if gate.status == "blocked")
+    if pending:
+        first = pending[0]
+        if first.status == "pass":
+            reason = f"gate `{first.gate_id}` is `pass` but has no evidence field"
+        else:
+            reason = f"gate `{first.gate_id}` is `{first.status}`: {first.reason}"
+        return LoopClosureStatus(
+            verdict="pending",
+            reason=(
+                f"full V2 communication closure is not proven; {reason}"
+            ),
+            pending_gates=pending,
+            blocked_gates=blocked,
+        )
+    if blocked:
+        first = blocked[0]
+        return LoopClosureStatus(
+            verdict="blocked",
+            reason=(
+                f"full V2 communication closure is operator-blocked at gate "
+                f"`{first.gate_id}`: {first.reason}"
+            ),
+            blocked_gates=blocked,
+        )
+    return LoopClosureStatus(
+        verdict="pass",
+        reason="all required full V2 communication loop gates passed",
+    )
+
+
+def assert_closure(
+    report: LoopGateReport,
+    *,
+    allow_blocked: bool = False,
+) -> LoopClosureStatus:
+    status = closure_status(report)
+    if status.verdict == "pass":
+        return status
+    if allow_blocked and status.verdict == "blocked":
+        return status
+    raise SystemExit(status.reason)
+
+
 def render_hook_config(*, host: HostSurface, report_path: Path = LOOP_GUARD_LATEST_PATH) -> str:
     command = f"python3 -m lab.agent_loop_guard hook --host {host} --report {report_path}"
     return json.dumps(
@@ -733,6 +809,15 @@ def main(argv: list[str] | None = None) -> int:
     plan_parser = subparsers.add_parser("render-plan")
     plan_parser.add_argument("--format", choices=("markdown", "json"), default="markdown")
 
+    closure_parser = subparsers.add_parser("assert-closure")
+    closure_parser.add_argument("--report", type=Path, default=LOOP_GUARD_LATEST_PATH)
+    closure_parser.add_argument(
+        "--allow-blocked",
+        action="store_true",
+        help="Allow explicitly blocked gates so the caller can stop for operator action.",
+    )
+    closure_parser.add_argument("--format", choices=("summary", "json"), default="summary")
+
     args = parser.parse_args(argv)
     if args.command == "init-report":
         report = default_gate_report(
@@ -752,6 +837,17 @@ def main(argv: list[str] | None = None) -> int:
             print(json.dumps(render_plan_payload(), indent=2, sort_keys=True))
         else:
             print(render_plan_markdown())
+        return 0
+
+    if args.command == "assert-closure":
+        status = assert_closure(
+            read_gate_report(args.report),
+            allow_blocked=args.allow_blocked,
+        )
+        if args.format == "json":
+            print(json.dumps(status.as_payload(), indent=2, sort_keys=True))
+        else:
+            print(f"{status.verdict}: {status.reason}")
         return 0
 
     hook_input = _read_stdin_json() if args.command == "hook" else {}

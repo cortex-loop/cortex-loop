@@ -18,6 +18,14 @@ VALID_PROFILES = {"standard", "load_bearing"}
 VALID_SURFACES = {"product", "experimental", "lab", "internal"}
 VALID_AUDIT_STATUSES = {"pass", "fail"}
 VALID_COMPLETENESS_STATES = {"implemented", "explicit_zero", "future_not_active"}
+DEFAULT_LOOP_GUARD_REPORT_PATH = ".cortex/live_validation/agent_loop_guard/gates.latest.json"
+FULL_COMMUNICATION_COMPLETION_CLAIM_PATTERNS = (
+    re.compile(r"\bfull v2 communication(?: closure)? (?:is )?(?:proven|passed|complete|closed)\b"),
+    re.compile(r"\bfully communicat(?:es|ed|ing)\b"),
+    re.compile(r"\b(?:closed|closes|closing) the (?:v2 )?communication gap\b"),
+    re.compile(r"\b(?:claude|codex) cli live watchlist (?:gate|gates) (?:has |have )?passed\b"),
+    re.compile(r"\bfully model-visible\b"),
+)
 LOAD_BEARING_PACKET_DOC_RE = re.compile(r"^docs/CORTEX_V2_[^/]+\.md$")
 MANAGED_SESSION_BRANCH_RE = re.compile(
     r"^(codex|claude|maint)/(?P<stamp>\d{8}-\d{6})-(?P<slug>[a-z0-9]+(?:-[a-z0-9]+)*)$"
@@ -293,6 +301,18 @@ def render_markdown(payload: dict[str, Any]) -> str:
             lines.append(
                 f"- `{row['term']}`: `{row['state']}`; code={', '.join(row['code_refs']) or '<none>'}; proof={', '.join(row['proof_refs']) or '<none>'}; note={row['note']}"
             )
+    if "agent_loop_guard" in payload:
+        loop_guard = payload["agent_loop_guard"]
+        lines.extend(["", "## Agent Loop Guard", ""])
+        if isinstance(loop_guard, dict):
+            lines.append(f"- Report Path: `{loop_guard.get('report_path', DEFAULT_LOOP_GUARD_REPORT_PATH)}`")
+            lines.append(
+                "- Require Full Communication Closure: "
+                f"`{bool(loop_guard.get('require_full_communication_closure', False))}`"
+            )
+            lines.append(f"- Allow Blocked: `{bool(loop_guard.get('allow_blocked', False))}`")
+        else:
+            lines.append("- `<invalid agent_loop_guard payload>`")
     lines.extend(["", "## Final Handoff Mirror", ""])
     lines.extend(["### Fixed now", ""])
     append_items(lines, residuals["fixed_now"], empty="`<fill me>`")
@@ -339,12 +359,124 @@ def _require_string_list(value: Any, field_name: str, *, allow_empty: bool = Tru
             raise SystemExit(f"Closeout contract field '{field_name}' must contain only non-empty strings.")
 
 
+def _full_communication_completion_claim_present(payload: dict[str, Any]) -> bool:
+    residuals = payload.get("residuals") if isinstance(payload.get("residuals"), dict) else {}
+    claims = payload.get("claims") if isinstance(payload.get("claims"), dict) else {}
+    claim_texts: list[str] = []
+    for field_name in ("fixed_now",):
+        values = residuals.get(field_name, [])
+        if isinstance(values, list):
+            claim_texts.extend(str(value).lower() for value in values)
+    for field_name in ("earned_now",):
+        values = claims.get(field_name, [])
+        if isinstance(values, list):
+            claim_texts.extend(str(value).lower() for value in values)
+    return any(
+        pattern.search(text)
+        for text in claim_texts
+        for pattern in FULL_COMMUNICATION_COMPLETION_CLAIM_PATTERNS
+    )
+
+
+def _validate_agent_loop_guard_claims(
+    payload: dict[str, Any],
+    *,
+    root: Path | None,
+) -> None:
+    completion_claim = _full_communication_completion_claim_present(payload)
+    guard_config = payload.get("agent_loop_guard")
+    if guard_config is None:
+        if completion_claim:
+            raise SystemExit(
+                "Full V2 communication completion claims require agent_loop_guard "
+                "with a passing report."
+            )
+        return
+    if not isinstance(guard_config, dict):
+        raise SystemExit("Closeout contract field 'agent_loop_guard' must be an object when provided.")
+    require_closure = bool(
+        guard_config.get("require_full_communication_closure", completion_claim)
+    )
+    if not require_closure:
+        return
+    allow_blocked = bool(guard_config.get("allow_blocked", False))
+    if completion_claim and allow_blocked:
+        raise SystemExit(
+            "Full V2 communication completion claims cannot allow blocked loop gates."
+        )
+    if root is None:
+        raise SystemExit("Agent loop guard validation requires a repo root.")
+    report_path_value = guard_config.get("report_path", DEFAULT_LOOP_GUARD_REPORT_PATH)
+    if not isinstance(report_path_value, str) or not report_path_value.strip():
+        raise SystemExit("agent_loop_guard.report_path must be a non-empty string.")
+    report_path = Path(report_path_value)
+    if not report_path.is_absolute():
+        report_path = root / report_path
+    try:
+        report_payload = json.loads(report_path.read_text(encoding="utf-8"))
+    except FileNotFoundError as exc:
+        raise SystemExit(f"Agent loop guard report is missing at {report_path}.") from exc
+    except json.JSONDecodeError as exc:
+        raise SystemExit(f"Agent loop guard report at {report_path} is not valid JSON: {exc}.") from exc
+    _validate_loop_guard_report_closed(
+        report_payload,
+        allow_blocked=allow_blocked,
+        report_path=report_path,
+    )
+
+
+def _validate_loop_guard_report_closed(
+    report_payload: Any,
+    *,
+    allow_blocked: bool,
+    report_path: Path,
+) -> None:
+    if not isinstance(report_payload, dict):
+        raise SystemExit(f"Agent loop guard report at {report_path} must be a JSON object.")
+    required_gates = report_payload.get("required_gates")
+    if not isinstance(required_gates, list) or not required_gates:
+        raise SystemExit("Agent loop guard report required_gates must be a non-empty list.")
+    required_gate_ids: list[str] = []
+    for item in required_gates:
+        if not isinstance(item, str) or not item.strip():
+            raise SystemExit("Agent loop guard report required_gates must contain non-empty strings.")
+        required_gate_ids.append(item.strip())
+    gate_payloads = report_payload.get("gates")
+    if not isinstance(gate_payloads, list):
+        raise SystemExit("Agent loop guard report gates must be a list.")
+    gates: dict[str, dict[str, Any]] = {}
+    for gate in gate_payloads:
+        if not isinstance(gate, dict):
+            raise SystemExit("Agent loop guard report gates must contain only objects.")
+        gate_id = gate.get("gate_id")
+        if isinstance(gate_id, str) and gate_id.strip():
+            gates[gate_id.strip()] = gate
+    for gate_id in required_gate_ids:
+        gate = gates.get(gate_id)
+        if gate is None:
+            raise SystemExit(f"Agent loop guard gate '{gate_id}' is missing from {report_path}.")
+        status = gate.get("status")
+        if status == "pass":
+            evidence = gate.get("evidence")
+            if not isinstance(evidence, str) or not evidence.strip():
+                raise SystemExit(
+                    f"Agent loop guard gate '{gate_id}' is pass but lacks evidence."
+                )
+            continue
+        if allow_blocked and status == "blocked":
+            continue
+        raise SystemExit(
+            f"Agent loop guard gate '{gate_id}' is not closed: status={status!r}."
+        )
+
+
 def validate_payload(
     payload: dict[str, Any],
     *,
     expected_mode: str,
     expected_branch: str,
     expected_reviewed_paths: list[str],
+    root: Path | None = None,
 ) -> dict[str, Any]:
     if payload.get("schema_version") != SCHEMA_VERSION:
         raise SystemExit(f"Closeout contract schema_version must be {SCHEMA_VERSION}.")
@@ -452,6 +584,8 @@ def validate_payload(
             )
             _require_string(row.get("note"), f"law_to_code_completeness[{index}].note")
 
+    _validate_agent_loop_guard_claims(payload, root=root)
+
     return payload
 
 
@@ -469,6 +603,7 @@ def validate_contract(
         expected_mode=mode,
         expected_branch=branch,
         expected_reviewed_paths=reviewed_paths,
+        root=root,
     )
 
 
