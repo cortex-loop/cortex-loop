@@ -36,10 +36,29 @@ DEFAULT_REQUIRED_GATES = (
     "claude_guidance_fixture_passed",
     "codex_guidance_fixture_passed",
     "strict_research_review_passed",
+    "s_tier_audit_protocol_locked",
     "claude_live_watchlist_evidence",
     "codex_live_watchlist_evidence",
     "forbidden_claims_absent",
 )
+
+S_TIER_AUDIT_EXPECTATIONS = {
+    "expected_runtime_minutes": "180-240",
+    "runtime_rule": (
+        "Wall-clock duration is not proof, but a sub-120-minute run is a "
+        "short-run anomaly unless the live transcript matrix and hostile "
+        "review explicitly explain why the full audit finished faster."
+    ),
+    "required_live_artifacts": (
+        "Claude CLI preflight/auth result",
+        "Codex CLI/App preflight/auth result",
+        "Claude model-visible transcript/event artifact",
+        "Codex model-visible transcript/event artifact",
+        "per-row Core/SRE/AUX guidance visibility matrix",
+        "next-turn effect notes for the rows meant to constrain behavior",
+        "hostile reviewer pass/fail notes after live evidence",
+    ),
+}
 
 V2_COMMUNICATION_DENOMINATOR = (
     "Core lifecycle dispatch, commitment extraction, provenance, certification, environment split, realization, and degradation law",
@@ -224,12 +243,37 @@ V2_EXECUTIVE_GUIDANCE_PLAN: tuple[GatePlanStep, ...] = (
         ),
     ),
     GatePlanStep(
+        gate_id="s_tier_audit_protocol_locked",
+        title="Lock the S-tier live audit protocol",
+        pass_criteria=(
+            "Before live Claude/Codex evidence is collected or any closeout is attempted, "
+            "the session records the live audit protocol: spend/no-spend resolution, "
+            "expected 180-240 minute audit budget, required live artifact matrix, "
+            "per-row Core/SRE/AUX coverage, and the short-run anomaly rule."
+        ),
+        evidence_required=(
+            "explicit spend approval or no-spend live transcript route for both Claude and Codex",
+            "artifact plan covering preflight, model-visible transcript/event evidence, per-row visibility, next-turn effect, and hostile review",
+            "short-run anomaly note if the live audit completes in under 120 minutes",
+        ),
+        next_action=(
+            "lock the live audit protocol and operator authorization state before "
+            "running or closing the V2 communication audit"
+        ),
+        stop_rule=(
+            "If spend/no-spend authorization, live artifact scope, or short-run "
+            "anomaly handling is unresolved, keep the loop open or stop for the "
+            "operator; do not checkpoint as closure."
+        ),
+    ),
+    GatePlanStep(
         gate_id="claude_live_watchlist_evidence",
         title="Run bounded Claude CLI live watchlist",
         pass_criteria=(
             "No-spend or explicitly approved Claude CLI/operator evidence proves the "
             "V2 communication contract is visible to Claude for the required rows, "
-            "changes or constrains the next turn where intended, and closes truthfully."
+            "changes or constrains the next turn where intended, includes per-row "
+            "Core/SRE/AUX visibility notes, and closes truthfully."
         ),
         evidence_required=(
             "preflight/auth result for Claude CLI/operator lane",
@@ -251,7 +295,8 @@ V2_EXECUTIVE_GUIDANCE_PLAN: tuple[GatePlanStep, ...] = (
         pass_criteria=(
             "Codex CLI/App evidence proves the V2 communication contract is visible "
             "to Codex for the required rows, changes or constrains the next turn where "
-            "intended, and the loop guard does not stop early while gates are pending."
+            "intended, includes per-row Core/SRE/AUX visibility notes, and the loop "
+            "guard does not stop early while gates are pending."
         ),
         evidence_required=(
             "Codex preflight/auth result",
@@ -320,6 +365,10 @@ def render_plan_payload(
         "evidence_role": "watchlist",
         "communication_denominator": list(V2_COMMUNICATION_DENOMINATOR),
         "required_gates": [step.gate_id for step in plan_steps],
+        "s_tier_audit_expectations": {
+            key: list(value) if isinstance(value, tuple) else value
+            for key, value in S_TIER_AUDIT_EXPECTATIONS.items()
+        },
         "plan_steps": [step.as_payload() for step in plan_steps],
     }
 
@@ -332,10 +381,19 @@ def render_plan_markdown(
         "",
         "Surface: lab",
         "Evidence role: watchlist",
-        "Stop condition: every required gate is pass, or a blocked/max-continuation gate stops for the operator.",
+        "Stop condition: every required gate is pass. A blocked/max-continuation gate may stop for an operator, but it cannot close the audit.",
         "",
         "Full V2 communication denominator:",
         *[f"- {item}" for item in V2_COMMUNICATION_DENOMINATOR],
+        "",
+        "S-tier live audit expectations:",
+        f"- Expected runtime: {S_TIER_AUDIT_EXPECTATIONS['expected_runtime_minutes']} minutes",
+        f"- Runtime rule: {S_TIER_AUDIT_EXPECTATIONS['runtime_rule']}",
+        "- Required live artifacts:",
+        *[
+            f"  - {item}"
+            for item in S_TIER_AUDIT_EXPECTATIONS["required_live_artifacts"]
+        ],
         "",
     ]
     for index, step in enumerate(plan_steps, start=1):
@@ -452,6 +510,10 @@ class LoopGateReport:
             "max_continuations": self.max_continuations,
             "communication_denominator": list(V2_COMMUNICATION_DENOMINATOR),
             "required_gates": list(self.required_gates),
+            "s_tier_audit_expectations": {
+                key: list(value) if isinstance(value, tuple) else value
+                for key, value in S_TIER_AUDIT_EXPECTATIONS.items()
+            },
             "gates": [gate.as_payload() for gate in self.gates],
             "plan_steps": [step.as_payload() for step in self.plan_steps],
         }
@@ -748,7 +810,11 @@ def assert_closure(
     if status.verdict == "pass":
         return status
     if allow_blocked and status.verdict == "blocked":
-        return status
+        raise SystemExit(
+            f"{status.reason}; blocked gates cannot satisfy closure. "
+            "Use `evaluate` or the Stop hook to stop for operator action, "
+            "then resume the loop after evidence is available."
+        )
     raise SystemExit(status.reason)
 
 
@@ -814,7 +880,10 @@ def main(argv: list[str] | None = None) -> int:
     closure_parser.add_argument(
         "--allow-blocked",
         action="store_true",
-        help="Allow explicitly blocked gates so the caller can stop for operator action.",
+        help=(
+            "Deprecated compatibility flag. Blocked gates are reported but never "
+            "satisfy closure; use evaluate/hook for operator stops."
+        ),
     )
     closure_parser.add_argument("--format", choices=("summary", "json"), default="summary")
 

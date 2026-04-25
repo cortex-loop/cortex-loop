@@ -394,15 +394,17 @@ def _validate_agent_loop_guard_claims(
         return
     if not isinstance(guard_config, dict):
         raise SystemExit("Closeout contract field 'agent_loop_guard' must be an object when provided.")
-    require_closure = bool(
-        guard_config.get("require_full_communication_closure", completion_claim)
-    )
-    if not require_closure:
-        return
-    allow_blocked = bool(guard_config.get("allow_blocked", False))
-    if completion_claim and allow_blocked:
+    require_closure = guard_config.get("require_full_communication_closure", True)
+    if require_closure is not True:
         raise SystemExit(
-            "Full V2 communication completion claims cannot allow blocked loop gates."
+            "agent_loop_guard.require_full_communication_closure must be true; "
+            "guarded V2 communication closeouts may not opt out of closure validation."
+        )
+    allow_blocked = bool(guard_config.get("allow_blocked", False))
+    if allow_blocked:
+        raise SystemExit(
+            "agent_loop_guard.allow_blocked is forbidden for closeout; blocked live "
+            "gates require operator action and cannot satisfy closure."
         )
     if root is None:
         raise SystemExit("Agent loop guard validation requires a repo root.")
@@ -420,7 +422,7 @@ def _validate_agent_loop_guard_claims(
         raise SystemExit(f"Agent loop guard report at {report_path} is not valid JSON: {exc}.") from exc
     _validate_loop_guard_report_closed(
         report_payload,
-        allow_blocked=allow_blocked,
+        allow_blocked=False,
         report_path=report_path,
     )
 

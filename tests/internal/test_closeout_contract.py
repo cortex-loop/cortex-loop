@@ -207,6 +207,51 @@ def test_validate_payload_accepts_full_communication_claim_with_passing_loop_gat
     assert validated["agent_loop_guard"]["report_path"] == report_path
 
 
+def test_validate_payload_rejects_loop_guard_closure_opt_out(
+    tmp_path: Path,
+) -> None:
+    repo = tmp_path / "repo"
+    repo.mkdir()
+    report_path = _write_loop_guard_report(repo)
+    payload = _filled_payload("maint/manual-work", "finalize", ["README.md"])
+    payload["agent_loop_guard"] = {
+        "report_path": report_path,
+        "require_full_communication_closure": False,
+    }
+
+    with pytest.raises(SystemExit, match="must be true"):
+        closeout_contract.validate_payload(
+            payload,
+            expected_mode="finalize",
+            expected_branch="maint/manual-work",
+            expected_reviewed_paths=["README.md"],
+            root=repo,
+        )
+
+
+def test_validate_payload_rejects_loop_guard_allow_blocked(
+    tmp_path: Path,
+) -> None:
+    repo = tmp_path / "repo"
+    repo.mkdir()
+    report_path = _write_loop_guard_report(repo)
+    payload = _filled_payload("maint/manual-work", "finalize", ["README.md"])
+    payload["agent_loop_guard"] = {
+        "report_path": report_path,
+        "require_full_communication_closure": True,
+        "allow_blocked": True,
+    }
+
+    with pytest.raises(SystemExit, match="allow_blocked is forbidden"):
+        closeout_contract.validate_payload(
+            payload,
+            expected_mode="finalize",
+            expected_branch="maint/manual-work",
+            expected_reviewed_paths=["README.md"],
+            root=repo,
+        )
+
+
 def test_validate_payload_rejects_missing_zeroed_or_stubbed_terms() -> None:
     payload = _filled_payload("maint/manual-work", "finalize", ["README.md"])
     del payload["residuals"]["zeroed_or_stubbed_terms"]

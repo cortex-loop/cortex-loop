@@ -250,8 +250,13 @@ def test_init_report_and_render_hook_config_cli(tmp_path: Path, capsys) -> None:
         payload["plan_steps"][1]["title"]
         == "Inventory the full V2 communication denominator"
     )
+    assert (
+        payload["plan_steps"][6]["title"]
+        == "Lock the S-tier live audit protocol"
+    )
+    assert payload["s_tier_audit_expectations"]["expected_runtime_minutes"] == "180-240"
     assert "Core lifecycle dispatch" in payload["communication_denominator"][0]
-    assert "Do not mark pass from stale transcripts" in payload["plan_steps"][6]["stop_rule"]
+    assert "Do not mark pass from stale transcripts" in payload["plan_steps"][7]["stop_rule"]
 
     assert (
         agent_loop_guard.main(
@@ -276,7 +281,12 @@ def test_render_plan_cli_includes_ordered_gate_requirements(capsys) -> None:
         "2. `v2_packet_communication_inventory_complete` - "
         "Inventory the full V2 communication denominator"
     ) in output
-    assert "8. `codex_live_watchlist_evidence` - Run bounded Codex CLI live watchlist" in output
+    assert (
+        "7. `s_tier_audit_protocol_locked` - Lock the S-tier live audit protocol"
+        in output
+    )
+    assert "9. `codex_live_watchlist_evidence` - Run bounded Codex CLI live watchlist" in output
+    assert "Expected runtime: 180-240 minutes" in output
     assert "unapproved paid service-lane calls" in output
 
 
@@ -289,6 +299,7 @@ def test_render_plan_cli_can_emit_json(capsys) -> None:
     assert "Claude CLI" in payload["communication_denominator"][3]
     assert payload["required_gates"] == list(agent_loop_guard.DEFAULT_REQUIRED_GATES)
     assert payload["plan_steps"][4]["gate_id"] == "codex_guidance_fixture_passed"
+    assert "short-run anomaly" in payload["s_tier_audit_expectations"]["runtime_rule"]
 
 
 def test_evaluate_command_can_emit_hook_json(tmp_path: Path, capsys) -> None:
@@ -359,7 +370,9 @@ def test_assert_closure_allows_only_when_required_gates_pass(tmp_path: Path, cap
     assert payload["pending_gates"] == []
 
 
-def test_assert_closure_can_classify_operator_blocked_stop(tmp_path: Path, capsys) -> None:
+def test_assert_closure_rejects_operator_blocked_stop_even_with_compat_flag(
+    tmp_path: Path,
+) -> None:
     report_path = tmp_path / "gates.json"
     gates = [
         _gate(gate_id, "pass", evidence=f"bounded evidence for {gate_id}")
@@ -380,7 +393,7 @@ def test_assert_closure_can_classify_operator_blocked_stop(tmp_path: Path, capsy
     )
     report_path.write_text(json.dumps(report.as_payload()), encoding="utf-8")
 
-    assert (
+    with pytest.raises(SystemExit, match="blocked gates cannot satisfy closure"):
         agent_loop_guard.main(
             [
                 "assert-closure",
@@ -389,10 +402,6 @@ def test_assert_closure_can_classify_operator_blocked_stop(tmp_path: Path, capsy
                 "--allow-blocked",
             ]
         )
-        == 0
-    )
-
-    assert "blocked: full V2 communication closure is operator-blocked" in capsys.readouterr().out
 
 
 def _report(
