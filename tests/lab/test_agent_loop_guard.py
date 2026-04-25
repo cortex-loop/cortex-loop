@@ -1,0 +1,310 @@
+"""Focused tests for the Claude/Codex live loop Stop-hook guard."""
+
+from __future__ import annotations
+
+import io
+import json
+import sys
+from pathlib import Path
+
+from lab import agent_loop_guard
+
+
+def test_decide_loop_guard_allows_stop_when_required_gates_pass() -> None:
+    report = _report(
+        gates=[
+            _gate("active_train_reconciled", "pass"),
+            _gate("executive_guidance_contract_present", "pass"),
+        ],
+        required_gates=("active_train_reconciled", "executive_guidance_contract_present"),
+    )
+    state = agent_loop_guard.LoopGuardState(session_id="s1", host="codex")
+
+    decision = agent_loop_guard.decide_loop_guard(report, state)
+
+    assert decision.action == "allow_stop"
+    assert decision.as_hook_output(host="codex") == {"continue": True}
+
+
+def test_decide_loop_guard_continues_on_missing_required_gate() -> None:
+    report = _report(
+        gates=[_gate("active_train_reconciled", "pass")],
+        required_gates=("active_train_reconciled", "codex_live_watchlist_evidence"),
+    )
+    state = agent_loop_guard.LoopGuardState(
+        session_id="s1",
+        host="codex",
+        continuation_count=2,
+    )
+
+    decision = agent_loop_guard.decide_loop_guard(
+        report,
+        state,
+        gate_report_path=Path(".cortex/live_validation/agent_loop_guard/gates.latest.json"),
+    )
+
+    assert decision.action == "continue"
+    assert decision.gate_id == "codex_live_watchlist_evidence"
+    assert "do not stop yet" in decision.continuation_prompt
+    assert "Continuation budget after this pass: 3/6" in decision.continuation_prompt
+    hook_output = decision.as_hook_output(host="codex")
+    assert hook_output["decision"] == "block"
+    assert "codex_live_watchlist_evidence" in hook_output["reason"]
+
+
+def test_decide_loop_guard_continues_on_failing_gate_with_specific_next_action() -> None:
+    report = _report(
+        gates=[
+            _gate(
+                "claude_guidance_fixture_passed",
+                "fail",
+                reason="fixture proves CHECK was calculated but not model-visible",
+                next_action="wire CHECK guidance into the Claude fixture prompt",
+            )
+        ],
+        required_gates=("claude_guidance_fixture_passed",),
+    )
+    state = agent_loop_guard.LoopGuardState(session_id="s1", host="claude")
+
+    decision = agent_loop_guard.decide_loop_guard(report, state)
+
+    assert decision.action == "continue"
+    assert "wire CHECK guidance into the Claude fixture prompt" in decision.continuation_prompt
+    assert decision.as_hook_output(host="claude")["decision"] == "block"
+
+
+def test_decide_loop_guard_stops_for_operator_on_blocked_gate() -> None:
+    report = _report(
+        gates=[
+            _gate(
+                "claude_live_watchlist_evidence",
+                "blocked",
+                reason="Claude auth is missing",
+                next_action="operator signs in or marks the live lane intentionally deferred",
+            )
+        ],
+        required_gates=("claude_live_watchlist_evidence",),
+    )
+    state = agent_loop_guard.LoopGuardState(session_id="s1", host="claude")
+
+    decision = agent_loop_guard.decide_loop_guard(report, state)
+
+    assert decision.action == "stop_for_operator"
+    assert decision.gate_id == "claude_live_watchlist_evidence"
+    hook_output = decision.as_hook_output(host="claude")
+    assert hook_output["continue"] is False
+    assert "Claude auth is missing" in hook_output["stopReason"]
+
+
+def test_decide_loop_guard_stops_at_max_continuations() -> None:
+    report = _report(
+        gates=[_gate("codex_live_watchlist_evidence", "missing")],
+        required_gates=("codex_live_watchlist_evidence",),
+        max_continuations=2,
+    )
+    state = agent_loop_guard.LoopGuardState(
+        session_id="s1",
+        host="codex",
+        continuation_count=2,
+    )
+
+    decision = agent_loop_guard.decide_loop_guard(report, state)
+
+    assert decision.action == "stop_for_operator"
+    assert "max_continuations=2" in decision.reason
+
+
+def test_decide_loop_guard_allows_non_stop_events() -> None:
+    report = _report(
+        gates=[_gate("codex_live_watchlist_evidence", "missing")],
+        required_gates=("codex_live_watchlist_evidence",),
+    )
+    state = agent_loop_guard.LoopGuardState(
+        session_id="s1",
+        host="codex",
+        event_name="PreToolUse",
+    )
+
+    decision = agent_loop_guard.decide_loop_guard(report, state)
+
+    assert decision.action == "allow_stop"
+    assert "not a supported stop gate" in decision.reason
+
+
+def test_hook_command_increments_state_only_when_it_blocks_stop(
+    tmp_path: Path,
+    monkeypatch,
+    capsys,
+) -> None:
+    report_path = tmp_path / "gates.json"
+    state_path = tmp_path / "state.json"
+    report = _report(
+        gates=[_gate("codex_live_watchlist_evidence", "missing")],
+        required_gates=("codex_live_watchlist_evidence",),
+    )
+    report_path.write_text(json.dumps(report.as_payload()), encoding="utf-8")
+    monkeypatch.setattr(
+        sys,
+        "stdin",
+        io.StringIO(
+            json.dumps(
+                {
+                    "session_id": "codex-session",
+                    "hook_event_name": "Stop",
+                    "stop_hook_active": False,
+                }
+            )
+        ),
+    )
+
+    assert (
+        agent_loop_guard.main(
+            [
+                "hook",
+                "--host",
+                "codex",
+                "--report",
+                str(report_path),
+                "--state",
+                str(state_path),
+            ]
+        )
+        == 0
+    )
+
+    hook_output = json.loads(capsys.readouterr().out)
+    assert hook_output["decision"] == "block"
+    state_payload = json.loads(state_path.read_text(encoding="utf-8"))
+    assert state_payload["continuation_count"] == 1
+    assert state_payload["last_decision"]["action"] == "continue"
+
+
+def test_hook_command_does_not_increment_state_when_stop_is_allowed(
+    tmp_path: Path,
+    monkeypatch,
+    capsys,
+) -> None:
+    report_path = tmp_path / "gates.json"
+    state_path = tmp_path / "state.json"
+    report = _report(
+        gates=[_gate("codex_live_watchlist_evidence", "pass")],
+        required_gates=("codex_live_watchlist_evidence",),
+    )
+    report_path.write_text(json.dumps(report.as_payload()), encoding="utf-8")
+    monkeypatch.setattr(
+        sys,
+        "stdin",
+        io.StringIO(json.dumps({"session_id": "codex-session", "hook_event_name": "Stop"})),
+    )
+
+    assert (
+        agent_loop_guard.main(
+            [
+                "hook",
+                "--host",
+                "codex",
+                "--report",
+                str(report_path),
+                "--state",
+                str(state_path),
+            ]
+        )
+        == 0
+    )
+
+    hook_output = json.loads(capsys.readouterr().out)
+    assert hook_output == {"continue": True}
+    state_payload = json.loads(state_path.read_text(encoding="utf-8"))
+    assert state_payload["continuation_count"] == 0
+    assert state_payload["last_decision"]["action"] == "allow_stop"
+
+
+def test_init_report_and_render_hook_config_cli(tmp_path: Path, capsys) -> None:
+    report_path = tmp_path / "gates.latest.json"
+
+    assert (
+        agent_loop_guard.main(
+            [
+                "init-report",
+                "--output",
+                str(report_path),
+                "--max-continuations",
+                "4",
+            ]
+        )
+        == 0
+    )
+    assert str(report_path) in capsys.readouterr().out
+    payload = json.loads(report_path.read_text(encoding="utf-8"))
+    assert payload["max_continuations"] == 4
+    assert payload["surface"] == "agent_loop_guard"
+    assert payload["scope"] == "lab"
+    assert payload["evidence_role"] == "watchlist"
+
+    assert (
+        agent_loop_guard.main(
+            ["render-hook-config", "--host", "claude", "--report", str(report_path)]
+        )
+        == 0
+    )
+    config = json.loads(capsys.readouterr().out)
+    command = config["hooks"]["Stop"][0]["hooks"][0]["command"]
+    assert "python3 -m lab.agent_loop_guard hook --host claude" in command
+    assert str(report_path) in command
+
+
+def test_evaluate_command_can_emit_hook_json(tmp_path: Path, capsys) -> None:
+    report_path = tmp_path / "gates.json"
+    report = _report(
+        gates=[_gate("codex_live_watchlist_evidence", "missing")],
+        required_gates=("codex_live_watchlist_evidence",),
+    )
+    report_path.write_text(json.dumps(report.as_payload()), encoding="utf-8")
+
+    assert (
+        agent_loop_guard.main(
+            [
+                "evaluate",
+                "--host",
+                "codex",
+                "--report",
+                str(report_path),
+                "--format",
+                "hook-json",
+            ]
+        )
+        == 0
+    )
+
+    payload = json.loads(capsys.readouterr().out)
+    assert payload["decision"] == "block"
+    assert "codex_live_watchlist_evidence" in payload["reason"]
+
+
+def _report(
+    *,
+    gates: list[agent_loop_guard.GateResult],
+    required_gates: tuple[str, ...],
+    max_continuations: int = 6,
+) -> agent_loop_guard.LoopGateReport:
+    return agent_loop_guard.LoopGateReport(
+        profile=agent_loop_guard.DEFAULT_PROFILE,
+        required_gates=required_gates,
+        gates=tuple(gates),
+        max_continuations=max_continuations,
+    )
+
+
+def _gate(
+    gate_id: str,
+    status: agent_loop_guard.GateStatus,
+    *,
+    reason: str | None = None,
+    next_action: str | None = None,
+) -> agent_loop_guard.GateResult:
+    return agent_loop_guard.GateResult(
+        gate_id=gate_id,
+        status=status,
+        reason=reason or f"{gate_id} is {status}",
+        next_action=next_action or f"work the {gate_id} gate",
+    )
