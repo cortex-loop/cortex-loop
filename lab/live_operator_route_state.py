@@ -28,6 +28,27 @@ _TASK_DEFAULTS = {
         "verification_demand": 0.80,
         "visible_burden_sensitivity": 0.55,
     },
+    "uncertainty_context": {
+        "task_mode": OperatorTaskMode.INSPECT,
+        "complexity": 0.30,
+        "continuity_demand": 0.10,
+        "verification_demand": 0.10,
+        "visible_burden_sensitivity": 0.70,
+    },
+    "anti_thrash_repeated_failure": {
+        "task_mode": OperatorTaskMode.INSPECT,
+        "complexity": 0.35,
+        "continuity_demand": 0.20,
+        "verification_demand": 0.20,
+        "visible_burden_sensitivity": 0.75,
+    },
+    "unsupported_claim_refusal": {
+        "task_mode": OperatorTaskMode.INSPECT,
+        "complexity": 0.25,
+        "continuity_demand": 0.05,
+        "verification_demand": 0.10,
+        "visible_burden_sensitivity": 0.80,
+    },
 }
 
 _PROBE_DEFAULTS = {

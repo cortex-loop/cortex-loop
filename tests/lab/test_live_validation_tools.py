@@ -919,6 +919,7 @@ def test_claude_directionality_command_uses_lower_turn_budget(monkeypatch) -> No
     assert "--max-turns" in captured["command"]
     max_turns_index = captured["command"].index("--max-turns")
     assert captured["command"][max_turns_index + 1] == "2"
+    assert GUIDANCE_MARKER not in " ".join(str(part) for part in captured["command"])
 
 
 def test_claude_hook_capture_drops_stop_hook(tmp_path: Path) -> None:
@@ -3041,8 +3042,21 @@ def test_operator_directionality_provider_efficiency_reading_tracks_provider_lim
 
 
 def test_operator_directionality_variant_order_alternates_by_repeat() -> None:
-    assert live_operator_directionality._variant_order(1) == ("raw_host", "cortex_operator")
-    assert live_operator_directionality._variant_order(2) == ("cortex_operator", "raw_host")
+    assert live_operator_directionality._variant_order(1) == (
+        "raw_host",
+        "full_v2_guidance",
+        "compressed_dynamic_cortex",
+    )
+    assert live_operator_directionality._variant_order(2) == (
+        "full_v2_guidance",
+        "compressed_dynamic_cortex",
+        "raw_host",
+    )
+    assert live_operator_directionality._variant_order(3) == (
+        "compressed_dynamic_cortex",
+        "raw_host",
+        "full_v2_guidance",
+    )
 
 
 def test_operator_directionality_merged_summary_prefers_provider_files_over_stale_comparator(
@@ -3378,6 +3392,7 @@ def test_openai_truth_gap_extra_read_pass_uses_thread_resume(
 
     payload = live_operator_directionality._maybe_run_openai_extra_read_pass(
         project_root=tmp_path,
+        variant="raw_host",
         prompt="recheck",
         auth_mode="codex_cli",
         model="gpt-5.3-codex",

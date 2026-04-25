@@ -17,6 +17,8 @@ if str(ROOT) not in sys.path:  # pragma: no cover - direct script entrypoint sup
 
 from cortex.sre.executive_summary import build_executive_signal_summary
 from cortex.sre.guidance import (
+    ExecutiveGuidanceContext,
+    GuidanceMode,
     build_guidance_context_from_session,
     prepend_guidance_to_prompt,
 )
@@ -64,6 +66,7 @@ try:  # pragma: no cover - import path differs between script execution and pyte
         write_text,
     )
     from .live_openai_app_server_operator import run_openai_app_server_validation
+    from .v2_behavioral_payoff import PAYOFF_SCENARIOS, classify_behavioral_scenario
 except ImportError:  # pragma: no cover
     from lab.live_validation_common import (
         BLOCKING_FAILURE_CLASSES,
@@ -97,6 +100,7 @@ except ImportError:  # pragma: no cover
         write_text,
     )
     from live_openai_app_server_operator import run_openai_app_server_validation
+    from lab.v2_behavioral_payoff import PAYOFF_SCENARIOS, classify_behavioral_scenario
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -441,6 +445,8 @@ def _run_operator_attempts(
     fallback_model_override: str | None,
     disable_auto_probe: bool,
     execution_flavor: str = "wrapped",
+    guidance_mode: GuidanceMode | str = GuidanceMode.FULL,
+    guidance_context: ExecutiveGuidanceContext | None = None,
 ) -> tuple[dict[str, Any], str | None, str, str, bool | None, list[str]]:
     auto_supported: bool | None = None
     ladder = _requested_model_ladder(
@@ -466,6 +472,8 @@ def _run_operator_attempts(
             hook_log_path=hook_log_path,
             scenario_id=scenario_id,
             execution_flavor=execution_flavor,
+            guidance_mode=guidance_mode,
+            guidance_context=guidance_context,
         )
         failure_class = classify_failure(f"{run_result['stdout']}\n{run_result['stderr']}")
         if failure_class is None and run_result["exit_code"] == 124:
@@ -732,6 +740,16 @@ def _materialize_operator_run(
             modified_files=modified_files,
         )
         success = truth_gap_kind == "truthful_incomplete" and effective_failure_class is None
+    behavioral_payoff = None
+    if scenario_id in PAYOFF_SCENARIOS:
+        behavioral_payoff = classify_behavioral_scenario(
+            scenario_id=scenario_id,
+            result_text=result_text,
+            modified_files=modified_files,
+            test_exit_code=test_result["exit_code"],
+            failure_class=effective_failure_class,
+        )
+        success = bool(behavioral_payoff["task_success"])
 
     payload = {
         "provider": provider,
@@ -764,6 +782,7 @@ def _materialize_operator_run(
             str(hook_log_path.relative_to(root.parents[4])) if hook_log_path is not None else None
         ),
         "truth_gap_kind": truth_gap_kind,
+        "behavioral_payoff": behavioral_payoff,
         "started_at": run_result["started_at"],
         "ended_at": run_result["ended_at"],
         "extra_read_pass_attempted": False,
@@ -796,6 +815,8 @@ def _run_provider_task(
     hook_log_path: Path | None = None,
     scenario_id: str | None = None,
     execution_flavor: str = "wrapped",
+    guidance_mode: GuidanceMode | str = GuidanceMode.FULL,
+    guidance_context: ExecutiveGuidanceContext | None = None,
 ) -> dict[str, Any]:
     if provider == "claude":
         return _run_claude_task(
@@ -805,6 +826,8 @@ def _run_provider_task(
             auth_mode=auth_mode,
             hook_log_path=hook_log_path,
             scenario_id=scenario_id,
+            guidance_mode=guidance_mode,
+            guidance_context=guidance_context,
         )
     if provider == "gemini":
         return _run_gemini_task(
@@ -816,7 +839,14 @@ def _run_provider_task(
             hook_log_path=hook_log_path,
             inject_hook_env=execution_flavor != "minimal",
         )
-    return _run_codex_task(prompt, project_root=project_root, model=model, auth_mode=auth_mode)
+    return _run_codex_task(
+        prompt,
+        project_root=project_root,
+        model=model,
+        auth_mode=auth_mode,
+        guidance_mode=guidance_mode,
+        guidance_context=guidance_context,
+    )
 
 
 def _resume_provider_task(
@@ -831,6 +861,8 @@ def _resume_provider_task(
     hook_log_path: Path | None = None,
     scenario_id: str | None = None,
     execution_flavor: str = "wrapped",
+    guidance_mode: GuidanceMode | str = GuidanceMode.FULL,
+    guidance_context: ExecutiveGuidanceContext | None = None,
 ) -> dict[str, Any]:
     if provider == "claude":
         return _run_claude_task(
@@ -841,6 +873,8 @@ def _resume_provider_task(
             resume_session=session_id,
             hook_log_path=hook_log_path,
             scenario_id=scenario_id,
+            guidance_mode=guidance_mode,
+            guidance_context=guidance_context,
         )
     if provider == "gemini":
         return _run_gemini_task(
@@ -859,6 +893,8 @@ def _resume_provider_task(
         model=model,
         auth_mode=auth_mode,
         resume_session=session_id,
+        guidance_mode=guidance_mode,
+        guidance_context=guidance_context,
     )
 
 
@@ -871,11 +907,15 @@ def _run_claude_task(
     resume_session: str | None = None,
     hook_log_path: Path | None = None,
     scenario_id: str | None = None,
+    guidance_mode: GuidanceMode | str = GuidanceMode.FULL,
+    guidance_context: ExecutiveGuidanceContext | None = None,
 ) -> dict[str, Any]:
     visible_prompt = _prompt_with_model_visible_guidance(
         prompt,
         host_name="claude",
         surface="claude-cli",
+        guidance_mode=guidance_mode,
+        guidance_context=guidance_context,
     )
     command = [
         "claude",
@@ -957,11 +997,15 @@ def _run_codex_task(
     model: str,
     auth_mode: str,
     resume_session: str | None = None,
+    guidance_mode: GuidanceMode | str = GuidanceMode.FULL,
+    guidance_context: ExecutiveGuidanceContext | None = None,
 ) -> dict[str, Any]:
     visible_prompt = _prompt_with_model_visible_guidance(
         prompt,
         host_name="codex",
         surface="codex-exec",
+        guidance_mode=guidance_mode,
+        guidance_context=guidance_context,
     )
     if auth_mode != "codex_cli":
         return _unsupported_operator_mode("openai", auth_mode, ["codex"])
@@ -994,14 +1038,18 @@ def _prompt_with_model_visible_guidance(
     *,
     host_name: str,
     surface: str,
+    guidance_mode: GuidanceMode | str = GuidanceMode.FULL,
+    guidance_context: ExecutiveGuidanceContext | None = None,
 ) -> str:
+    context = guidance_context or build_guidance_context_from_session(
+        host_name=host_name,
+        surface=surface,
+        transport_channel="prompt",
+    )
     return prepend_guidance_to_prompt(
         prompt,
-        build_guidance_context_from_session(
-            host_name=host_name,
-            surface=surface,
-            transport_channel="prompt",
-        ),
+        context,
+        mode=guidance_mode,
     )
 
 

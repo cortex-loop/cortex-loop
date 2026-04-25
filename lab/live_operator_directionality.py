@@ -18,6 +18,13 @@ if str(ROOT) not in sys.path:  # pragma: no cover - direct script entrypoint sup
     sys.path.insert(0, str(ROOT))
 
 from cortex.sre.executive_summary import build_executive_signal_summary
+from cortex.sre.guidance import (
+    ExecutiveGuidanceContext,
+    GuidanceMode,
+    build_guidance_context_from_session,
+    prepend_guidance_to_prompt,
+    v2_guidance_denominator_coverage_payload,
+)
 from cortex.sre.modulators import ExecutiveModulatorMemory, update_executive_modulators
 from cortex.sre.operator_routing import (
     build_operator_route_diagnostics,
@@ -99,8 +106,21 @@ _SCENARIOS: dict[str, dict[str, Any]] = {
         "turn2_prompt_file": "restart_continuity_turn2_operator.md",
         "run_test": True,
     },
+    "uncertainty_context": {
+        "prompt_file": "uncertainty_context_operator.md",
+        "run_test": False,
+    },
+    "anti_thrash_repeated_failure": {
+        "prompt_file": "anti_thrash_repeated_failure_operator.md",
+        "run_test": False,
+    },
+    "unsupported_claim_refusal": {
+        "prompt_file": "unsupported_claim_refusal_operator.md",
+        "run_test": False,
+    },
 }
-_VARIANTS = ("raw_host", "cortex_operator")
+_VARIANTS = ("raw_host", "full_v2_guidance", "compressed_dynamic_cortex")
+_CORTEX_VARIANTS = frozenset({"full_v2_guidance", "compressed_dynamic_cortex", "cortex_operator"})
 _REPEAT_COUNT = 3
 _RAW_BASELINE_FAILURE = "blocked_raw_baseline_contaminated"
 _SURFACE_LABEL = {
@@ -183,12 +203,10 @@ def _run_provider(
             )
             pairs.append(pair)
             if pair.get("pair_status") == "compared":
-                raw_host = pair.get("raw_host")
-                cortex_operator = pair.get("cortex_operator")
-                if isinstance(raw_host, dict):
-                    prior_variant_runs["raw_host"].append(raw_host)
-                if isinstance(cortex_operator, dict):
-                    prior_variant_runs["cortex_operator"].append(cortex_operator)
+                for variant in _VARIANTS:
+                    payload = pair.get(variant)
+                    if isinstance(payload, dict):
+                        prior_variant_runs[variant].append(payload)
     summary = {
         "generated_at": now_utc_iso(),
         "provider": provider,
@@ -225,7 +243,8 @@ def _run_pair(
             "pair_status": "blocked",
             "blocked_reason": precheck["reason"],
             "raw_host": raw_payload,
-            "cortex_operator": None,
+            "full_v2_guidance": None,
+            "compressed_dynamic_cortex": None,
         }
 
     provider_window_caution = _provider_window_caution(provider, prior_variant_runs)
@@ -246,7 +265,8 @@ def _run_pair(
             "pair_status": "blocked",
             "blocked_reason": "blocked_by_provider_window_caution",
             "raw_host": raw_payload,
-            "cortex_operator": None,
+            "full_v2_guidance": None,
+            "compressed_dynamic_cortex": None,
             "variant_order": list(_variant_order(repeat_index)),
         }
 
@@ -270,13 +290,132 @@ def _run_pair(
         "pair_status": "compared",
         "blocked_reason": None,
         "variant_order": list(variant_order),
-        "raw_host": pair_payloads["raw_host"],
-        "cortex_operator": pair_payloads["cortex_operator"],
+        **pair_payloads,
+        "cortex_operator": pair_payloads["full_v2_guidance"],
     }
 
 
-def _variant_order(repeat_index: int) -> tuple[str, str]:
-    return ("raw_host", "cortex_operator") if repeat_index % 2 == 1 else ("cortex_operator", "raw_host")
+def _variant_order(repeat_index: int) -> tuple[str, ...]:
+    if repeat_index % 3 == 1:
+        return ("raw_host", "full_v2_guidance", "compressed_dynamic_cortex")
+    if repeat_index % 3 == 2:
+        return ("full_v2_guidance", "compressed_dynamic_cortex", "raw_host")
+    return ("compressed_dynamic_cortex", "raw_host", "full_v2_guidance")
+
+
+def _is_cortex_variant(variant: str) -> bool:
+    return variant in _CORTEX_VARIANTS
+
+
+def _guidance_mode_for_variant(variant: str) -> GuidanceMode:
+    if variant == "raw_host":
+        return GuidanceMode.RAW
+    if variant == "compressed_dynamic_cortex":
+        return GuidanceMode.COMPRESSED_DYNAMIC
+    if _is_cortex_variant(variant):
+        return GuidanceMode.FULL
+    raise ValueError(f"unsupported operator directionality variant: {variant}")
+
+
+def _prompt_for_variant(
+    prompt: str,
+    *,
+    provider: str,
+    variant: str,
+    guidance_context: ExecutiveGuidanceContext | None = None,
+) -> str:
+    mode = _guidance_mode_for_variant(variant)
+    if mode is GuidanceMode.RAW:
+        return prompt
+    host_name = "codex" if provider == "openai" else provider
+    surface = _SURFACE_LABEL.get(provider, provider)
+    return prepend_guidance_to_prompt(
+        prompt,
+        guidance_context
+        or build_guidance_context_from_session(
+            host_name=host_name,
+            surface=surface,
+            transport_channel="prompt",
+        ),
+        mode=mode,
+    )
+
+
+def _attach_guidance_metrics(
+    payload: dict[str, Any],
+    *,
+    provider: str,
+    variant: str,
+    guidance_context: ExecutiveGuidanceContext | None = None,
+) -> None:
+    mode = _guidance_mode_for_variant(variant)
+    context = guidance_context or _guidance_context_for_scenario(provider, "generic")
+    coverage = v2_guidance_denominator_coverage_payload(context, mode=mode)
+    payload["cortex_guidance_mode"] = mode.value
+    payload["guidance_burden"] = coverage["guidance_burden"]
+    payload["guidance_denominator_coverage"] = coverage
+
+
+def _guidance_context_for_scenario(
+    provider: str,
+    scenario_id: str,
+) -> ExecutiveGuidanceContext:
+    host_name = "codex" if provider == "openai" else provider
+    surface = _SURFACE_LABEL.get(provider, provider)
+    defaults = {
+        "pass_minimal": {
+            "pending_goal_refs": ("fix-port-bug", "verify-target-test"),
+            "last_selected_family": "check",
+            "next_recommended_move": "repair bounded failing surface and verify",
+            "last_commitment_result_summary": "verification required before closure",
+        },
+        "truth_gap": {
+            "pending_goal_refs": ("preserve-truth-gap",),
+            "last_selected_family": "seek-context",
+            "next_recommended_move": "seek context and close truthfully if evidence is insufficient",
+            "last_commitment_result_summary": "incomplete evidence must remain explicit",
+        },
+        "restart_continuity": {
+            "pending_goal_refs": ("resume-branch-context", "verify-target-test"),
+            "last_selected_family": "branch",
+            "next_recommended_move": "resume continuity and verify before closing",
+            "last_commitment_result_summary": "branch-linked context is required",
+        },
+        "uncertainty_context": {
+            "pending_goal_refs": ("resolve-missing-context",),
+            "last_selected_family": "seek-context",
+            "next_recommended_move": "seek context before editing or claiming completion",
+            "last_commitment_result_summary": "missing context remains unresolved",
+        },
+        "anti_thrash_repeated_failure": {
+            "pending_goal_refs": ("avoid-unchanged-retry",),
+            "last_selected_family": "brake",
+            "last_brake_state": "guarded",
+            "next_recommended_move": "brake repeated failed probe and avoid unchanged retry",
+            "last_commitment_result_summary": "same failed action must not repeat under unchanged conditions",
+        },
+        "unsupported_claim_refusal": {
+            "pending_goal_refs": ("refuse-unsupported-claim",),
+            "last_selected_family": "check",
+            "next_recommended_move": "check evidence and close only with supported claims",
+            "last_commitment_result_summary": "unsupported claim must be refused",
+        },
+    }
+    payload = defaults.get(scenario_id, {})
+    return ExecutiveGuidanceContext(
+        host_name=host_name,
+        surface=surface,
+        transport_channel="prompt",
+        active_track_ref=(
+            "main" if scenario_id not in {"restart_continuity"} else "operator-directionality:resume"
+        ),
+        pending_goal_refs=tuple(payload.get("pending_goal_refs", ())),
+        last_selected_family=payload.get("last_selected_family"),
+        last_brake_state=payload.get("last_brake_state"),
+        next_recommended_move=payload.get("next_recommended_move"),
+        last_commitment_result_summary=payload.get("last_commitment_result_summary"),
+        offline_publication_active=False,
+    )
 
 
 def _merged_provider_summaries(provider_updates: dict[str, Any] | None = None) -> dict[str, Any]:
@@ -400,9 +539,10 @@ def _run_cli_variant(
     policy_view = build_executive_policy_view(summary, modulator_update.state)
     route_decision = select_operator_route_with_policy(route_state, modulator_update, policy_view)
     route_diagnostics = build_operator_route_diagnostics(route_state, route_decision)
+    guidance_context = _guidance_context_for_scenario(provider, scenario_id)
     execution_flavor = "wrapped"
     hook_log_path = None
-    if variant == "cortex_operator":
+    if _is_cortex_variant(variant):
         execution_flavor, execution_updates = host_paths._resolve_cortex_execution_flavor(
             provider=provider,
             scenario_id=scenario_id,
@@ -425,7 +565,7 @@ def _run_cli_variant(
             ),
             notes="Route selector blocked paired execution before host work started.",
         )
-    if variant == "cortex_operator":
+    if _is_cortex_variant(variant):
         hook_log_path = host_paths._configure_hook_capture(
             provider=provider,
             project_root=project_root,
@@ -434,7 +574,7 @@ def _run_cli_variant(
             execution_flavor=execution_flavor,
             log_root=root,
         )
-    if variant == "cortex_operator":
+    if _is_cortex_variant(variant):
         run_result, failure_class, chosen_model, preferred_model, auto_supported, attempted_models = host_paths._run_operator_attempts(
             provider=provider,
             prompt=prompt,
@@ -449,6 +589,8 @@ def _run_cli_variant(
             fallback_model_override=None,
             disable_auto_probe=False,
             execution_flavor=execution_flavor,
+            guidance_mode=_guidance_mode_for_variant(variant),
+            guidance_context=guidance_context,
         )
     else:
         run_result, failure_class, chosen_model, preferred_model, auto_supported, attempted_models = _run_raw_operator_attempts(
@@ -480,11 +622,17 @@ def _run_cli_variant(
     )
     payload["variant"] = variant
     payload["surface"] = _SURFACE_LABEL[provider]
+    _attach_guidance_metrics(
+        payload,
+        provider=provider,
+        variant=variant,
+        guidance_context=guidance_context,
+    )
     _attach_extra_read_defaults(payload)
     if (
         scenario_id == "truth_gap"
         and route_decision.budget.allow_extra_read_pass
-        and (variant != "cortex_operator" or execution_flavor != "minimal")
+        and (not _is_cortex_variant(variant) or execution_flavor != "minimal")
         and payload.get("truth_gap_kind") == "truthful_incomplete"
         and not payload.get("provider_limit_interference")
     ):
@@ -557,8 +705,9 @@ def _run_cli_restart_continuity_variant(
     policy_view = build_executive_policy_view(summary, modulator_update.state)
     route_decision = select_operator_route_with_policy(route_state, modulator_update, policy_view)
     route_diagnostics = build_operator_route_diagnostics(route_state, route_decision)
+    guidance_context = _guidance_context_for_scenario(provider, scenario_id)
     execution_flavor = "wrapped"
-    if variant == "cortex_operator":
+    if _is_cortex_variant(variant):
         execution_flavor, execution_updates = host_paths._resolve_cortex_execution_flavor(
             provider=provider,
             scenario_id=scenario_id,
@@ -581,7 +730,7 @@ def _run_cli_restart_continuity_variant(
             ),
             notes="Route selector blocked continuity before the first operator turn.",
         )
-    if variant == "cortex_operator":
+    if _is_cortex_variant(variant):
         hook_log_path = host_paths._configure_hook_capture(
             provider=provider,
             project_root=project_root,
@@ -591,7 +740,7 @@ def _run_cli_restart_continuity_variant(
             log_root=root,
         )
 
-    if variant == "cortex_operator":
+    if _is_cortex_variant(variant):
         first_result, first_failure, chosen_model, preferred_model, auto_supported, attempted_models = host_paths._run_operator_attempts(
             provider=provider,
             prompt=first_prompt,
@@ -606,6 +755,8 @@ def _run_cli_restart_continuity_variant(
             fallback_model_override=None,
             disable_auto_probe=False,
             execution_flavor=execution_flavor,
+            guidance_mode=_guidance_mode_for_variant(variant),
+            guidance_context=guidance_context,
         )
     else:
         first_result, first_failure, chosen_model, preferred_model, auto_supported, attempted_models = _run_raw_operator_attempts(
@@ -639,7 +790,7 @@ def _run_cli_restart_continuity_variant(
 
     first_records, _first_extraction_mode = host_paths.parse_json_records(first_result["stdout"])
     session_id = extract_session_id(provider, first_records)
-    if variant == "cortex_operator":
+    if _is_cortex_variant(variant):
         second_result = host_paths._resume_provider_task(
             provider,
             prompt=second_prompt,
@@ -651,6 +802,8 @@ def _run_cli_restart_continuity_variant(
             hook_log_path=hook_log_path,
             scenario_id="restart_continuity",
             execution_flavor=execution_flavor,
+            guidance_mode=_guidance_mode_for_variant(variant),
+            guidance_context=guidance_context,
         )
     else:
         second_result = _resume_raw_provider_task(
@@ -689,6 +842,12 @@ def _run_cli_restart_continuity_variant(
     payload["variant"] = variant
     payload["surface"] = _SURFACE_LABEL[provider]
     payload["session_id"] = session_id
+    _attach_guidance_metrics(
+        payload,
+        provider=provider,
+        variant=variant,
+        guidance_context=guidance_context,
+    )
     return payload
 
 
@@ -843,6 +1002,7 @@ def _run_raw_claude_task(
         prompt,
         host_name="claude",
         surface="claude-cli-raw",
+        guidance_mode=GuidanceMode.RAW,
     )
     command = [
         "claude",
@@ -956,6 +1116,7 @@ def _run_openai_variant(
     policy_view = build_executive_policy_view(summary, modulator_update.state)
     route_decision = select_operator_route_with_policy(route_state, modulator_update, policy_view)
     route_diagnostics = build_operator_route_diagnostics(route_state, route_decision)
+    guidance_context = _guidance_context_for_scenario("openai", scenario_id)
     if route_decision.blocked_reason is not None:
         payload = host_paths._blocked_operator_route_payload(
             provider="openai",
@@ -975,6 +1136,12 @@ def _run_openai_variant(
         payload["variant"] = variant
         payload["surface"] = _SURFACE_LABEL["openai"]
         payload["attempted_models"] = []
+        _attach_guidance_metrics(
+            payload,
+            provider="openai",
+            variant=variant,
+            guidance_context=guidance_context,
+        )
         return payload
     if scenario_id == "restart_continuity":
         return _run_openai_restart_continuity_variant(
@@ -986,13 +1153,20 @@ def _run_openai_variant(
             auth_mode=auth_mode,
             route_diagnostics=route_diagnostics,
             require_verification=route_decision.budget.require_verification,
+            guidance_context=guidance_context,
         )
 
     prompt = read_prompt_template(_SCENARIOS[scenario_id]["prompt_file"])
+    visible_prompt = _prompt_for_variant(
+        prompt,
+        provider="openai",
+        variant=variant,
+        guidance_context=guidance_context,
+    )
     with _openai_variant_env(variant, precheck) as env:
         run_state, failure_class, model, attempted_models = _run_openai_single_turn_attempts(
             project_root=project_root,
-            prompt=prompt,
+            prompt=visible_prompt,
             auth_mode=auth_mode,
             scenario_id=scenario_id,
             env=env,
@@ -1014,6 +1188,12 @@ def _run_openai_variant(
         payload["variant"] = variant
         payload["surface"] = _SURFACE_LABEL["openai"]
         payload["attempted_models"] = attempted_models
+        _attach_guidance_metrics(
+            payload,
+            provider="openai",
+            variant=variant,
+            guidance_context=guidance_context,
+        )
         _attach_extra_read_defaults(payload)
         if (
             scenario_id == "truth_gap"
@@ -1023,6 +1203,7 @@ def _run_openai_variant(
         ):
             payload = _maybe_run_openai_extra_read_pass(
                 project_root=project_root,
+                variant=variant,
                 prompt=read_prompt_template("truth_gap_recheck_operator.md"),
                 auth_mode=auth_mode,
                 model=model,
@@ -1046,13 +1227,27 @@ def _run_openai_restart_continuity_variant(
     auth_mode: str,
     route_diagnostics: dict[str, Any],
     require_verification: bool,
+    guidance_context: ExecutiveGuidanceContext | None = None,
 ) -> dict[str, Any]:
     first_prompt = read_prompt_template(_SCENARIOS[scenario_id]["turn1_prompt_file"])
     second_prompt = read_prompt_template(_SCENARIOS[scenario_id]["turn2_prompt_file"])
+    context = guidance_context or _guidance_context_for_scenario("openai", scenario_id)
+    visible_first_prompt = _prompt_for_variant(
+        first_prompt,
+        provider="openai",
+        variant=variant,
+        guidance_context=context,
+    )
+    visible_second_prompt = _prompt_for_variant(
+        second_prompt,
+        provider="openai",
+        variant=variant,
+        guidance_context=context,
+    )
     with _openai_variant_env(variant, {"status": "ready"}) as env:
         first_state, first_failure, model, attempted_models = _run_openai_single_turn_attempts(
             project_root=project_root,
-            prompt=first_prompt,
+            prompt=visible_first_prompt,
             auth_mode=auth_mode,
             scenario_id=f"{scenario_id}_turn_1",
             env=env,
@@ -1080,12 +1275,18 @@ def _run_openai_restart_continuity_variant(
             payload["variant"] = variant
             payload["surface"] = _SURFACE_LABEL["openai"]
             payload["attempted_models"] = attempted_models
+            _attach_guidance_metrics(
+                payload,
+                provider="openai",
+                variant=variant,
+                guidance_context=context,
+            )
             return payload
 
         thread_id = openai_operator._extract_thread_id(first_state["thread_read"])
         second_state, second_failure = openai_operator._run_resumed_turn(
             project_root=project_root,
-            prompt=second_prompt,
+            prompt=visible_second_prompt,
             auth_mode=auth_mode,
             model=model,
             thread_id=thread_id,
@@ -1126,6 +1327,12 @@ def _run_openai_restart_continuity_variant(
     payload["surface"] = _SURFACE_LABEL["openai"]
     payload["attempted_models"] = attempted_models
     payload["thread_id"] = combined_state["lifecycle_summary"].get("thread_id")
+    _attach_guidance_metrics(
+        payload,
+        provider="openai",
+        variant=variant,
+        guidance_context=context,
+    )
     return payload
 
 
@@ -1313,7 +1520,7 @@ def _maybe_run_cli_extra_read_pass(
         rewrite_artifact_payload(first_payload)
         return first_payload
 
-    if variant == "cortex_operator":
+    if _is_cortex_variant(variant):
         second_result = host_paths._resume_provider_task(
             provider,
             prompt=prompt,
@@ -1324,6 +1531,8 @@ def _maybe_run_cli_extra_read_pass(
             approval_mode="yolo" if provider == "gemini" else None,
             hook_log_path=hook_log_path,
             scenario_id="truth_gap",
+            guidance_mode=_guidance_mode_for_variant(variant),
+            guidance_context=_guidance_context_for_scenario(provider, "truth_gap"),
         )
     else:
         second_result = _resume_raw_provider_task(
@@ -1393,6 +1602,7 @@ def _maybe_run_cli_extra_read_pass(
 def _maybe_run_openai_extra_read_pass(
     *,
     project_root: Path,
+    variant: str,
     prompt: str,
     auth_mode: str,
     model: str,
@@ -1403,9 +1613,15 @@ def _maybe_run_openai_extra_read_pass(
     first_payload: dict[str, Any],
     route_diagnostics: dict[str, Any],
 ) -> dict[str, Any]:
+    visible_prompt = _prompt_for_variant(
+        prompt,
+        provider="openai",
+        variant=variant,
+        guidance_context=_guidance_context_for_scenario("openai", "truth_gap"),
+    )
     second_state, second_failure = openai_operator._run_resumed_turn(
         project_root=project_root,
-        prompt=prompt,
+        prompt=visible_prompt,
         auth_mode=auth_mode,
         model=model,
         thread_id=thread_id,

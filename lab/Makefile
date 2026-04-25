@@ -220,6 +220,9 @@ live-operator-directionality:
 live-operator-directionality-audit:
 	$(ROOT_PYTHON) lab/live_operator_directionality_audit.py
 
+v2-guidance-optimization-audit:
+	$(ROOT_PYTHON) -m lab.v2_guidance_optimization_audit
+
 revalidate-reference-packet:
 	$(ROOT_PYTEST) tests/archive/legacy_integration/test_reference_lane_packet_example.py
 

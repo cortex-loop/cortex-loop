@@ -10,13 +10,17 @@ import pytest
 from cortex.hosts.openai.runtime import OpenAIRuntimeSession
 from cortex.sre.families import SoftControlFamily
 from cortex.sre.guidance import (
+    ExecutiveGuidanceContext,
     GUIDANCE_MARKER,
+    GuidanceMode,
     V2_EXECUTIVE_GUIDANCE_ROWS,
     append_guidance_to_channel,
     assert_status_bio_to_code_coverage,
+    build_intervention_intent_view,
     build_guidance_context_from_session,
     prepend_guidance_to_prompt,
     render_executive_guidance,
+    v2_guidance_denominator_coverage_payload,
 )
 
 
@@ -155,3 +159,68 @@ def test_guidance_rejects_empty_prompt_channels() -> None:
 
     with pytest.raises(ValueError, match="prompt must be non-empty"):
         prepend_guidance_to_prompt("   ", context)
+
+
+def test_compressed_dynamic_guidance_preserves_denominator_with_lower_burden() -> None:
+    session = OpenAIRuntimeSession(
+        session_id="oa-guidance",
+        event_index=7,
+        active_track_ref="verified-work:2-paths",
+        pending_goal_refs=("repair-port", "verify-test"),
+        brake_history=("guarded",),
+        last_selected_family=SoftControlFamily.CHECK,
+        next_recommended_move="repair",
+        last_commitment_result_summary="verification failed on target test",
+    )
+    context = build_guidance_context_from_session(
+        host_name="codex",
+        surface="codex-exec",
+        transport_channel="prompt",
+        session=session,
+    )
+
+    full = render_executive_guidance(context, mode=GuidanceMode.FULL)
+    compressed = render_executive_guidance(context, mode=GuidanceMode.COMPRESSED_DYNAMIC)
+    raw = prepend_guidance_to_prompt("Do the task.", context, mode=GuidanceMode.RAW)
+    coverage = v2_guidance_denominator_coverage_payload(context)
+
+    assert raw == "Do the task."
+    assert compressed.startswith(GUIDANCE_MARKER)
+    assert "mode: compressed_dynamic" in compressed
+    assert "contract_rows:" not in compressed
+    assert "runtime.verified_work_repair" in compressed
+    assert len(compressed) < len(full)
+    assert coverage["row_denominator_count"] == len(V2_EXECUTIVE_GUIDANCE_ROWS)
+    assert coverage["missing_row_ids"] == []
+    assert coverage["guidance_burden"]["mode_is_smaller_than_full"] is True
+    statuses = {row["row_id"]: row["status"] for row in coverage["coverage"]}
+    assert statuses["core.commitment_certification"] == "always_on"
+    assert statuses["runtime.verified_work_repair"] == "dynamic_triggered"
+    assert statuses["host.gemini_reference_conformance"] == "silent_with_reason"
+
+
+def test_intervention_intent_view_maps_repair_close_and_neutral_without_expanding_family_law() -> None:
+    repair_context = build_guidance_context_from_session(
+        host_name="codex",
+        surface="codex-exec",
+        transport_channel="prompt",
+        session=OpenAIRuntimeSession(
+            last_selected_family=SoftControlFamily.CHECK,
+            next_recommended_move="repair",
+        ),
+    )
+    close_context = ExecutiveGuidanceContext(
+        host_name="claude",
+        surface="claude-cli",
+        transport_channel="prompt",
+        next_recommended_move="close truthfully with blockers explicit",
+    )
+    neutral_context = build_guidance_context_from_session(
+        host_name="claude",
+        surface="claude-cli",
+        transport_channel="prompt",
+    )
+
+    assert build_intervention_intent_view(repair_context).intent.value == "REPAIR"
+    assert build_intervention_intent_view(close_context).intent.value == "CLOSE"
+    assert build_intervention_intent_view(neutral_context).intent.value == "CONTINUE"

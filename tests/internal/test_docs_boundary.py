@@ -239,19 +239,19 @@ def test_status_registry_is_complete_and_stable() -> None:
         "reference": "reference_cli",
     }
     assert status["conformance_summary"]["shipping_default"] == "openai:operator_cli"
-    assert status["work_today"]["slug"] == "v2-full-communication-closure"
-    assert "brake tonic quiescence-exit mismatch is closed" in status["work_today"]["note"]
-    assert "V2 full communication closure" in status["work_today"]["note"]
-    assert "Claude CLI and Codex CLI" in status["work_today"]["note"]
-    assert "paid API service-lane commands remain blocked" in status["work_today"]["note"]
-    assert "subscription CLI lanes are no-API-spend" in status["work_today"]["note"]
-    assert "Q_mem = 0" in status["work_today"]["note"]
-    assert status["next_product_train"]["slug"] == "v2-communication-optimization"
+    assert status["work_today"]["slug"] == "v2-communication-optimization"
+    assert "Initial V2 communication optimization is landed" in status["work_today"]["note"]
+    assert "`raw`, `full`, and `compressed_dynamic` modes" in status["work_today"]["note"]
+    assert "Claude and Codex CLI with all 17 rows visible" in status["work_today"]["note"]
+    assert "provider-scoped causal payoff gate" in status["work_today"]["note"]
+    assert "not Cortex perfection" in status["work_today"]["note"]
+    assert "app-server/operator harness rather than the Codex CLI" in status["work_today"]["note"]
+    assert status["next_product_train"]["slug"] == "v2-intervention-policy-tuning"
     assert status["next_product_train"]["surface"] == "product + conformance + lab"
-    assert "now-communicated V2 executive guidance" in status["next_product_train"]["executive_benefit"]
-    assert "under-optimized communication quality" in status["next_product_train"]["why_now"]
-    assert "optimization evidence bundle" in status["next_product_train"]["primary_metric"]
-    assert "17-row denominator remains visible" in status["next_product_train"]["primary_metric"]
+    assert "CHECK, SEEK_CONTEXT, BRAKE, REPAIR, CONTINUE, or CLOSE" in status["next_product_train"]["executive_benefit"]
+    assert "mistimed intervention" in status["next_product_train"]["why_now"]
+    assert "unnecessary-intervention rate" in status["next_product_train"]["primary_metric"]
+    assert "app-server watchlist behavior as Codex CLI behavioral proof" in status["next_product_train"]["guardrail"]
     assert "Keep the bounded audit surface compact and truthful" in status["where_to_work"][0]
     assert "no-spend live evidence current and explicit" in status["where_to_work"][1]
     assert "posture-sensitive online control is s-tier closed" in status["where_to_work"][2].lower()
@@ -261,8 +261,8 @@ def test_status_registry_is_complete_and_stable() -> None:
     assert "route truth stays bounded and non-sovereign" in status["where_to_work"][2]
     assert "live `Q_mem` stays zero" in status["where_to_work"][2]
     assert "host/tool reliability and affordance priors are earned" in status["where_to_work"][2]
-    assert "Optimize the now-closed V2 communication seam" in status["where_to_work"][3]
-    assert "visible where required" in status["where_to_work"][3]
+    assert "Tune the now-live compressed/dynamic V2 communication seam" in status["where_to_work"][3]
+    assert "17-row denominator coverage artifact" in status["where_to_work"][3]
     closure_gates = {gate["id"]: gate for gate in status["closure_gates"]}
     assert closure_gates["main_synced"]["status"] == "required"
     assert closure_gates["cleanup_report"]["status"] == "required"
@@ -292,19 +292,19 @@ def test_generated_status_doc_includes_system_map_and_next_product_train() -> No
     assert "## Packet To Code" in text
     assert "## Next Product Train" in text
     assert "host/tool reliability and affordance priors are earned" in text
-    assert "`v2-full-communication-closure`" in text
     assert "`v2-communication-optimization`" in text
-    assert "paid API service-lane command may run without explicit spend approval" in text
-    assert "subscription CLI commands are the default no-API-spend watchlist route" in text
+    assert "`v2-intervention-policy-tuning`" in text
+    assert "Claude and Codex CLI with all 17 rows visible" in text
+    assert "app-server/operator harness rather than the Codex CLI" in text
     assert "Shipping Product Lane\\nopenai:operator_cli" in text or "Shipping Product Lane" in text
     assert "Shipping default: `openai:operator_cli`" in text
     assert "Workflow gates marked `required` are contractual gates checked by `repo_workflow.py`" in text
     assert "| `main_synced` | `required` |" in text
     assert "| `cleanup_report` | `required` |" in text
     assert "unchanged-condition repetition is taxed only at the exact-family level" in text
-    assert "Claude CLI and Codex CLI" in text
+    assert "Claude/OpenAI behavioral matrices" in text
     assert "posture-sensitive online control is s-tier closed" in text.lower()
-    assert "model-facing guidance" in text
+    assert "compressed/dynamic guidance" in text
     assert "`visible_burden_sensitivity`" in text
 
 
