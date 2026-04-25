@@ -377,9 +377,15 @@ def render_executive_guidance(context: ExecutiveGuidanceContext) -> str:
         "contract_rows:",
     ]
     for row in V2_EXECUTIVE_GUIDANCE_ROWS:
-        lines.append(
-            f"- {row.row_id} [{row.packet}/{row.visibility.value}]: "
-            f"{row.model_guidance} Reason: {row.reason}"
+        lines.extend(
+            [
+                f"- row_id: {row.row_id}",
+                f"  packet: {row.packet}",
+                f"  responsibility: {row.responsibility}",
+                f"  visibility: {row.visibility.value}",
+                f"  model_guidance: {row.model_guidance}",
+                f"  reason: {row.reason}",
+            ]
         )
     lines.extend(
         [
@@ -394,7 +400,7 @@ def render_executive_guidance(context: ExecutiveGuidanceContext) -> str:
 def prepend_guidance_to_prompt(prompt: str, context: ExecutiveGuidanceContext) -> str:
     prompt_text = _required_text(prompt, "prompt")
     guidance = render_executive_guidance(context)
-    if GUIDANCE_MARKER in prompt_text:
+    if _has_rendered_guidance_block(prompt_text):
         return prompt_text
     return f"{guidance}\n\nUSER_TASK\n{prompt_text}"
 
@@ -406,7 +412,7 @@ def append_guidance_to_channel(
     guidance = render_executive_guidance(context)
     if existing_text is not None:
         base = _required_text(existing_text, "existing_text")
-        if GUIDANCE_MARKER in base:
+        if _has_rendered_guidance_block(base):
             return base
         return f"{base.rstrip()}\n\n{guidance}"
     return guidance
@@ -488,6 +494,15 @@ def _last_string(values: Any) -> str | None:
 
 def _display(value: str | None) -> str:
     return value if value is not None else "none"
+
+
+def _has_rendered_guidance_block(value: str) -> bool:
+    marker_index = value.find(GUIDANCE_MARKER)
+    if marker_index == -1:
+        return False
+    contract_index = value.find("\ncontract_rows:", marker_index)
+    next_rule_index = value.find("\nnext_turn_rule:", marker_index)
+    return contract_index != -1 and next_rule_index != -1
 
 
 def _required_text(value: str, label: str) -> str:

@@ -172,6 +172,9 @@ agent-loop-guard-evaluate:
 agent-loop-guard-assert-closure:
 	$(ROOT_PYTHON) -m lab.agent_loop_guard assert-closure
 
+live-v2-communication-audit:
+	$(ROOT_PYTHON) -m lab.v2_live_communication_audit --update-gates
+
 live-preflight:
 	$(ROOT_PYTHON) lab/live_preflight.py --skip-updates
 

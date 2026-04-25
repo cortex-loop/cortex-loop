@@ -246,12 +246,12 @@ def test_status_registry_is_complete_and_stable() -> None:
     assert "paid API service-lane commands remain blocked" in status["work_today"]["note"]
     assert "subscription CLI lanes are no-API-spend" in status["work_today"]["note"]
     assert "Q_mem = 0" in status["work_today"]["note"]
-    assert status["next_product_train"]["slug"] == "v2-full-communication-closure"
+    assert status["next_product_train"]["slug"] == "v2-communication-optimization"
     assert status["next_product_train"]["surface"] == "product + conformance + lab"
-    assert "Core/SRE/AUX packet denominator" in status["next_product_train"]["executive_benefit"]
-    assert "partial calculations" in status["next_product_train"]["why_now"]
-    assert "agent-loop-guard closure report" in status["next_product_train"]["primary_metric"]
-    assert "Claude live/watchlist evidence present" in status["next_product_train"]["primary_metric"]
+    assert "now-communicated V2 executive guidance" in status["next_product_train"]["executive_benefit"]
+    assert "under-optimized communication quality" in status["next_product_train"]["why_now"]
+    assert "optimization evidence bundle" in status["next_product_train"]["primary_metric"]
+    assert "17-row denominator remains visible" in status["next_product_train"]["primary_metric"]
     assert "Keep the bounded audit surface compact and truthful" in status["where_to_work"][0]
     assert "no-spend live evidence current and explicit" in status["where_to_work"][1]
     assert "posture-sensitive online control is s-tier closed" in status["where_to_work"][2].lower()
@@ -261,8 +261,8 @@ def test_status_registry_is_complete_and_stable() -> None:
     assert "route truth stays bounded and non-sovereign" in status["where_to_work"][2]
     assert "live `Q_mem` stays zero" in status["where_to_work"][2]
     assert "host/tool reliability and affordance priors are earned" in status["where_to_work"][2]
-    assert "active V2 full communication closure seam" in status["where_to_work"][3]
-    assert "model-facing guidance" in status["where_to_work"][3]
+    assert "Optimize the now-closed V2 communication seam" in status["where_to_work"][3]
+    assert "visible where required" in status["where_to_work"][3]
     closure_gates = {gate["id"]: gate for gate in status["closure_gates"]}
     assert closure_gates["main_synced"]["status"] == "required"
     assert closure_gates["cleanup_report"]["status"] == "required"
@@ -293,6 +293,7 @@ def test_generated_status_doc_includes_system_map_and_next_product_train() -> No
     assert "## Next Product Train" in text
     assert "host/tool reliability and affordance priors are earned" in text
     assert "`v2-full-communication-closure`" in text
+    assert "`v2-communication-optimization`" in text
     assert "paid API service-lane command may run without explicit spend approval" in text
     assert "subscription CLI commands are the default no-API-spend watchlist route" in text
     assert "Shipping Product Lane\\nopenai:operator_cli" in text or "Shipping Product Lane" in text

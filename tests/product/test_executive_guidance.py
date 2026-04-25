@@ -75,6 +75,9 @@ def test_render_executive_guidance_surfaces_dynamic_runtime_state_and_negative_r
     assert "last_selected_family: check" in rendered
     assert "last_brake_state: guarded" in rendered
     assert "next_recommended_move: check" in rendered
+    assert "- row_id: core.lifecycle_dispatch" in rendered
+    assert "  packet: core" in rendered
+    assert "  visibility: model-visible" in rendered
     assert "negative.forbidden_shortcuts" in rendered
     assert "diagnostics-only output, one file, one host" in rendered
 
@@ -118,6 +121,29 @@ def test_guidance_channel_helpers_preserve_existing_text_and_are_idempotent() ->
     assert GUIDANCE_MARKER in appended
     assert prepend_guidance_to_prompt(prompted, context) == prompted
     assert append_guidance_to_channel(appended, context) == appended
+
+
+def test_guidance_helpers_do_not_treat_marker_mentions_as_rendered_guidance() -> None:
+    context = build_guidance_context_from_session(
+        host_name="codex",
+        surface="codex-exec",
+        transport_channel="prompt",
+    )
+
+    prompted = prepend_guidance_to_prompt(
+        f"Return the {GUIDANCE_MARKER} marker if you see guidance.",
+        context,
+    )
+    appended = append_guidance_to_channel(
+        f"Policy note mentions {GUIDANCE_MARKER} but has no contract rows.",
+        context,
+    )
+
+    assert prompted.startswith(GUIDANCE_MARKER)
+    assert "USER_TASK\nReturn the CORTEX_V2_EXECUTIVE_GUIDANCE marker" in prompted
+    assert "core.lifecycle_dispatch" in prompted
+    assert appended.count(GUIDANCE_MARKER) == 2
+    assert "contract_rows:" in appended
 
 
 def test_guidance_rejects_empty_prompt_channels() -> None:
