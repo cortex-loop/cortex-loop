@@ -6,6 +6,8 @@ from collections.abc import Callable, Mapping
 from dataclasses import dataclass, field
 from typing import Any
 
+from cortex.sre.guidance import append_guidance_to_channel, build_guidance_context_from_session
+
 from .runtime import ClaudeRuntimeSession, run_claude_runtime_step
 from .cli import build_claude_cli_record
 from .ingress import parse_claude_host_event_envelope
@@ -154,7 +156,8 @@ def run_claude_host_control(
             f"got {actual_type}."
         )
 
-    raw_events = transport_callable(request)
+    visible_request = _request_with_model_visible_guidance(request, current_session)
+    raw_events = transport_callable(visible_request)
     if not raw_events:
         raise ClaudeMessageStreamTransportError(
             "Claude interaction stream returned zero host events."
@@ -265,6 +268,27 @@ def _coerce_claude_host_control_request(
         system=system,
         metadata=metadata,
         audit_intensity=audit_intensity,
+    )
+
+
+def _request_with_model_visible_guidance(
+    request: ClaudeHostControlRequest,
+    session: ClaudeRuntimeSession,
+) -> ClaudeHostControlRequest:
+    guidance_context = build_guidance_context_from_session(
+        host_name="claude",
+        surface="claude-message-stream",
+        transport_channel="system",
+        session=session,
+    )
+    return ClaudeHostControlRequest(
+        action_tag=request.action_tag,
+        model=request.model,
+        input_text=request.input_text,
+        max_output_tokens=request.max_output_tokens,
+        system=append_guidance_to_channel(request.system, guidance_context),
+        metadata=request.metadata,
+        audit_intensity=request.audit_intensity,
     )
 
 

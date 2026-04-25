@@ -26,7 +26,7 @@ from cortex.sre.feedback import ReferenceRealizationFeedbackWindow
 from cortex.sre.families import SoftControlFamily
 from cortex.sre.goals import make_resume_reminder
 from cortex.sre.opportunities import BoundedProbeContract, HostNativeOpportunity
-from cortex.sre.reference_builder import build_reference_executive_state
+from cortex.sre.reference_builder import _prior_brake_tonic, build_reference_executive_state
 
 
 def _build_branch_resume_state(
@@ -96,6 +96,22 @@ def test_build_reference_executive_state_for_cheap_event_stays_pass_through_and_
     assert state.control_allocation.budget_band == "low"
     assert state.control_allocation.top_family_set == frozenset({SoftControlFamily.NEUTRAL})
     assert state.brake.brake_state is BrakeState.QUIESCENT
+
+
+def test_prior_brake_tonic_reconstructs_quiescence_from_persisted_pressure_tail() -> None:
+    # SRE_2 §7.5 persists only tonic_pressure. Resume must recover the
+    # rest-side exit gate without adding a second memory carrier.
+    prior_session = ReferenceRuntimeSession(
+        session_id="runtime-tonic-resume",
+        event_index=3,
+        brake_tonic_history=(0.30,),
+    )
+
+    tonic = _prior_brake_tonic(prior_session)
+
+    assert tonic is not None
+    assert tonic.tonic_pressure == pytest.approx(0.30)
+    assert tonic.tonic_quiescence == pytest.approx(0.70)
 
 
 def test_build_reference_executive_state_admits_seek_context_under_missing_capability_pressure() -> None:

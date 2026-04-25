@@ -344,6 +344,46 @@ def test_brake_tonic_pressure_ema_uses_locked_zero_point_six_rho_coefficient() -
     assert evaluation.tonic.tonic_quiescence == pytest.approx(0.52)
 
 
+def test_brake_tonic_single_clean_tick_does_not_exit_guarded_without_sustained_quiescence() -> None:
+    # SRE_2 §7.5 exit-side gate: a guarded state with elevated tonic pressure
+    # needs sustained rest-side evidence before returning to quiescent.
+    prior = BrakeTonic(tonic_pressure=0.80, tonic_quiescence=0.20)
+    evaluation = evaluate_brake_state(
+        (UncertaintyEstimate(class_tag="evidence", level=0.0),),
+        prior_state=BrakeState.GUARDED,
+        prior_tonic=prior,
+    )
+
+    assert evaluation.state is BrakeState.GUARDED
+    assert evaluation.tonic is not None
+    assert evaluation.tonic.tonic_pressure == pytest.approx(0.48)
+    assert evaluation.tonic.tonic_quiescence == pytest.approx(0.52)
+
+
+def test_brake_tonic_sustained_quiescence_exits_guarded() -> None:
+    # The rest-side EMA must be load-bearing without hardening into sticky
+    # guardedness: sustained calm exits once tonic_quiescence clears the gate.
+    tonic: BrakeTonic | None = BrakeTonic(tonic_pressure=0.80, tonic_quiescence=0.20)
+    state: BrakeState = BrakeState.GUARDED
+    ticks_to_exit = 0
+    for _tick in range(8):
+        evaluation = evaluate_brake_state(
+            (UncertaintyEstimate(class_tag="evidence", level=0.0),),
+            prior_state=state,
+            prior_tonic=tonic,
+        )
+        tonic = evaluation.tonic
+        state = evaluation.state
+        ticks_to_exit += 1
+        if state is BrakeState.QUIESCENT:
+            break
+
+    assert state is BrakeState.QUIESCENT
+    assert tonic is not None
+    assert tonic.tonic_quiescence >= 0.65
+    assert ticks_to_exit <= 4
+
+
 def test_brake_tonic_decays_toward_quiescence_after_sustained_calm() -> None:
     # SRE_2 §7.5 kill-rule-e: the tonic gate must not harden. A guarded burst
     # must decay back to quiescent once sustained calm returns, otherwise the

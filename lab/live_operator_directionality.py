@@ -839,10 +839,15 @@ def _run_raw_claude_task(
     resume_session: str | None = None,
     scenario_id: str | None = None,
 ) -> dict[str, Any]:
+    visible_prompt = host_paths._prompt_with_model_visible_guidance(
+        prompt,
+        host_name="claude",
+        surface="claude-cli-raw",
+    )
     command = [
         "claude",
         "-p",
-        prompt,
+        visible_prompt,
         "--model",
         model,
         "--output-format",

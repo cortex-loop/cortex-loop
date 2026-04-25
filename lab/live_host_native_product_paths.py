@@ -16,6 +16,10 @@ if str(ROOT) not in sys.path:  # pragma: no cover - direct script entrypoint sup
     sys.path.insert(0, str(ROOT))
 
 from cortex.sre.executive_summary import build_executive_signal_summary
+from cortex.sre.guidance import (
+    build_guidance_context_from_session,
+    prepend_guidance_to_prompt,
+)
 from cortex.sre.modulators import ExecutiveModulatorMemory, update_executive_modulators
 from cortex.sre.operator_routing import (
     build_operator_route_diagnostics,
@@ -868,10 +872,15 @@ def _run_claude_task(
     hook_log_path: Path | None = None,
     scenario_id: str | None = None,
 ) -> dict[str, Any]:
+    visible_prompt = _prompt_with_model_visible_guidance(
+        prompt,
+        host_name="claude",
+        surface="claude-cli",
+    )
     command = [
         "claude",
         "-p",
-        prompt,
+        visible_prompt,
         "--model",
         model,
         "--output-format",
@@ -949,6 +958,11 @@ def _run_codex_task(
     auth_mode: str,
     resume_session: str | None = None,
 ) -> dict[str, Any]:
+    visible_prompt = _prompt_with_model_visible_guidance(
+        prompt,
+        host_name="codex",
+        surface="codex-exec",
+    )
     if auth_mode != "codex_cli":
         return _unsupported_operator_mode("openai", auth_mode, ["codex"])
     if resume_session:
@@ -959,7 +973,7 @@ def _run_codex_task(
             "--json",
             "--full-auto",
             resume_session,
-            prompt,
+            visible_prompt,
         ]
     else:
         command = [
@@ -970,9 +984,25 @@ def _run_codex_task(
             "--skip-git-repo-check",
             "-m",
             model,
-            prompt,
+            visible_prompt,
         ]
     return _run_timed_command(command, cwd=project_root, timeout_seconds=120.0)
+
+
+def _prompt_with_model_visible_guidance(
+    prompt: str,
+    *,
+    host_name: str,
+    surface: str,
+) -> str:
+    return prepend_guidance_to_prompt(
+        prompt,
+        build_guidance_context_from_session(
+            host_name=host_name,
+            surface=surface,
+            transport_channel="prompt",
+        ),
+    )
 
 
 def _run_timed_command(

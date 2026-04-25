@@ -19,6 +19,7 @@ from cortex.hosts.claude.host_transport import (
 )
 from cortex.hosts.claude.ingress import parse_claude_host_event_envelope
 from cortex.hosts.claude.service import ClaudeServiceState, handle_claude_service_request
+from cortex.sre.guidance import GUIDANCE_MARKER
 
 
 def test_claude_host_control_request_constructs_strict_text_only_payload() -> None:
@@ -60,6 +61,38 @@ def test_claude_host_control_request_emits_non_minimal_audit_intensity_only_when
 
     assert "audit_intensity" not in default_request.as_payload()["request"]
     assert focused_request.as_payload()["request"]["audit_intensity"] == "focused"
+
+
+def test_claude_host_control_injects_v2_guidance_into_model_visible_system_channel() -> None:
+    raw_events = [
+        {
+            "type": "message_start",
+            "session_id": "cl-guidance",
+            "message_id": "cl-msg-guidance",
+        }
+    ]
+    captured: dict[str, object] = {}
+
+    def transport(request: ClaudeHostControlRequest) -> list[dict[str, object]]:
+        captured["payload"] = request.as_payload()
+        return list(raw_events)
+
+    request = ClaudeHostControlRequest(
+        action_tag="claude-message-stream",
+        model="claude-sonnet-4-6",
+        input_text="hello",
+        max_output_tokens=32,
+        system="be terse",
+    )
+
+    run_claude_host_control(request, transport=transport)
+
+    request_payload = captured["payload"]["request"]  # type: ignore[index]
+    assert request_payload["input"] == "hello"  # type: ignore[index]
+    assert request_payload["system"].startswith("be terse")  # type: ignore[index]
+    assert GUIDANCE_MARKER in request_payload["system"]  # type: ignore[index]
+    assert "sre.branch_continuity" in request_payload["system"]  # type: ignore[index]
+    assert "aux.default_zero_removable" in request_payload["system"]  # type: ignore[index]
 
 
 def test_claude_host_control_result_rejects_wrong_action_tag() -> None:

@@ -25,6 +25,7 @@ from cortex.hosts.openai.host_transport import (
 )
 from cortex.hosts.openai.ingress import parse_openai_host_event_envelope
 from cortex.hosts.openai.service import OpenAIServiceState, handle_openai_service_request
+from cortex.sre.guidance import GUIDANCE_MARKER
 from cortex.sre.verified_work import VerificationOutcome, WorkContract
 from tests.product._verified_work_fixtures import (
     VALID_FEATURE_FLAG_FILE_MAP,
@@ -138,6 +139,39 @@ def test_openai_host_control_request_emits_non_minimal_audit_intensity_only_when
 
     assert "audit_intensity" not in default_request.as_payload()["request"]
     assert focused_request.as_payload()["request"]["audit_intensity"] == "focused"
+
+
+def test_openai_host_control_injects_v2_guidance_into_model_visible_instructions_channel() -> None:
+    raw_events = [
+        {
+            "type": "response.created",
+            "session_id": "oa-guidance",
+            "response_id": "resp-guidance-1",
+        }
+    ]
+    captured: dict[str, object] = {}
+
+    def transport(request: OpenAIHostControlRequest) -> list[dict[str, object]]:
+        captured["payload"] = request.as_payload()
+        return list(raw_events)
+
+    request = OpenAIHostControlRequest(
+        action_tag="openai-response-stream",
+        model="gpt-5.4",
+        input_text="hello",
+        instructions="be terse",
+        metadata={"cortex_host_surface": "codex"},
+    )
+
+    run_openai_host_control(request, transport=transport)
+
+    request_payload = captured["payload"]["request"]  # type: ignore[index]
+    assert request_payload["input"] == "hello"  # type: ignore[index]
+    assert request_payload["instructions"].startswith("be terse")  # type: ignore[index]
+    assert GUIDANCE_MARKER in request_payload["instructions"]  # type: ignore[index]
+    assert "host: codex" in request_payload["instructions"]  # type: ignore[index]
+    assert "runtime.verified_work_repair" in request_payload["instructions"]  # type: ignore[index]
+    assert "negative.forbidden_shortcuts" in request_payload["instructions"]  # type: ignore[index]
 
 
 def test_openai_host_control_request_emits_offline_publication_only_when_requested() -> None:

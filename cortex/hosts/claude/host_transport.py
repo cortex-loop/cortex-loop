@@ -105,6 +105,15 @@ def _execute_fixture_message_stream(
             "Claude host-control fixture expected request "
             f"{expected_request!r}, got {request.as_payload()!r}."
         )
+    expected_request_subset = call.get("expected_request_subset")
+    if expected_request_subset is not None and not _payload_contains(
+        request.as_payload(),
+        expected_request_subset,
+    ):
+        raise ClaudeMessageStreamTransportError(
+            "Claude host-control fixture expected request subset "
+            f"{expected_request_subset!r}, got {request.as_payload()!r}."
+        )
     if "error" in call:
         error = call["error"]
         if not isinstance(error, str) or not error.strip():
@@ -150,6 +159,24 @@ def _fixture_calls(payload: Any) -> list[dict[str, Any]]:
             )
         return [dict(call) for call in calls]
     return [dict(payload)]
+
+
+def _payload_contains(actual: Any, expected: Any) -> bool:
+    if isinstance(expected, Mapping):
+        if not isinstance(actual, Mapping):
+            return False
+        return all(
+            key in actual and _payload_contains(actual[key], expected_value)
+            for key, expected_value in expected.items()
+        )
+    if isinstance(expected, list):
+        if not isinstance(actual, list) or len(actual) < len(expected):
+            return False
+        return all(
+            _payload_contains(actual_item, expected_item)
+            for actual_item, expected_item in zip(actual, expected, strict=False)
+        )
+    return actual == expected
 
 
 def _parse_sse_events(response: HTTPResponse | Iterable[bytes]) -> list[dict[str, Any]]:

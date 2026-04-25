@@ -6,6 +6,7 @@ import importlib
 from collections.abc import Callable, Mapping
 from dataclasses import dataclass, field
 from typing import Any
+from cortex.sre.guidance import append_guidance_to_channel, build_guidance_context_from_session
 from cortex.runtime.verified_work_runtime import (
     build_verified_work_input_text,
     build_verified_work_instructions,
@@ -237,8 +238,12 @@ def run_openai_host_control(
             f"got {actual_type}."
         )
     if request.work_contract is None:
-        raw_events, records, current_session, result_text = _run_openai_host_control_attempt(
+        visible_request = _request_with_model_visible_guidance(
             request,
+            current_session,
+        )
+        raw_events, records, current_session, result_text = _run_openai_host_control_attempt(
+            visible_request,
             current_session,
             transport_callable=transport_callable,
         )
@@ -264,7 +269,10 @@ def run_openai_host_control(
         audit_intensity=request.audit_intensity,
     )
     raw_events, records, current_session, result_text = _run_openai_host_control_attempt(
-        verified_request,
+        _request_with_model_visible_guidance(
+            verified_request,
+            current_session,
+        ),
         current_session,
         transport_callable=transport_callable,
     )
@@ -316,7 +324,10 @@ def run_openai_host_control(
             audit_intensity=request.audit_intensity,
         )
         repair_events, repair_records, repair_session, repair_result_text = _run_openai_host_control_attempt(
-            repair_request,
+            _request_with_model_visible_guidance(
+                repair_request,
+                current_session,
+            ),
             current_session,
             transport_callable=transport_callable,
             previous_response_id=response_id,
@@ -400,6 +411,37 @@ def _narrowed_repair_contract(
         output_carrier=work_contract.output_carrier,
         max_repair_turns=0,
     )
+
+
+def _request_with_model_visible_guidance(
+    request: OpenAIHostControlRequest,
+    session: OpenAIRuntimeSession,
+) -> OpenAIHostControlRequest:
+    guidance_context = build_guidance_context_from_session(
+        host_name=_guidance_host_name(request),
+        surface="openai-response-stream",
+        transport_channel="instructions",
+        session=session,
+        offline_publication_active=request.offline_publication is not None,
+    )
+    return OpenAIHostControlRequest(
+        action_tag=request.action_tag,
+        model=request.model,
+        input_text=request.input_text,
+        instructions=append_guidance_to_channel(request.instructions, guidance_context),
+        metadata=request.metadata,
+        max_output_tokens=request.max_output_tokens,
+        work_contract=request.work_contract,
+        offline_publication=request.offline_publication,
+        audit_intensity=request.audit_intensity,
+    )
+
+
+def _guidance_host_name(request: OpenAIHostControlRequest) -> str:
+    surface = request.metadata.get("cortex_host_surface")
+    if isinstance(surface, str) and surface.strip() in {"codex", "openai"}:
+        return surface.strip()
+    return "openai/codex"
 
 
 def _extract_response_output_text(raw_events: list[dict[str, Any]]) -> str | None:

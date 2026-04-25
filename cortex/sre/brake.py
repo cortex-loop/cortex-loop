@@ -24,6 +24,7 @@ class BrakeState(str, Enum):
 
 _TONIC_DECAY_RHO = 0.60
 _TONIC_ENTER_GUARDED = 0.35
+_TONIC_EXIT_QUIESCENT = 0.65
 
 
 def _clip_unit(value: float) -> float:
@@ -245,8 +246,11 @@ def _should_be_guarded(
         or max_uncertainty >= guarded_uncertainty_threshold
     )
     if not phasic_soft_pressure:
+        if prior_state is BrakeState.GUARDED:
+            return next_tonic.tonic_quiescence < _TONIC_EXIT_QUIESCENT
         return False
-    # Already guarded — stay on phasic evidence alone (exit-side hysteresis).
+    # Already guarded — stay on phasic evidence; calm exit is gated above by
+    # sustained rest-side tonic quiescence (SRE_2 §7.5).
     if prior_state is BrakeState.GUARDED:
         return True
     # Entry from quiescent: require tonic confirmation so a single noisy tick

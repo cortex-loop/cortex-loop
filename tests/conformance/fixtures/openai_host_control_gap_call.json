@@ -1,7 +1,7 @@
 {
   "calls": [
     {
-      "expected_request": {
+      "expected_request_subset": {
         "action_tag": "openai-response-stream",
         "request": {
           "model": "gpt-5.4",

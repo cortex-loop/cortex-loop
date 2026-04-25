@@ -13,6 +13,7 @@ import json
 
 import pytest
 
+from cortex.sre.guidance import GUIDANCE_MARKER
 from lab import live_cortex_host_control as live_host_control
 from lab import live_compare as live_compare
 from lab import live_host_native_product_paths as live_host_native_product_paths
@@ -1011,6 +1012,68 @@ def test_gemini_task_preserves_hook_env_for_wrapped_execution(monkeypatch, tmp_p
 
     assert captured["env"]["CORTEX_LIVE_HOOK_PROVIDER"] == "gemini"
     assert captured["env"]["CORTEX_LIVE_HOOK_LOG_PATH"] == str(hook_log_path)
+
+
+def test_claude_live_task_prompt_carries_v2_guidance(monkeypatch) -> None:
+    captured: dict[str, object] = {}
+
+    def fake_timed_command(command, **kwargs):
+        captured["command"] = command
+        return {
+            "command": command,
+            "exit_code": 0,
+            "stdout": "",
+            "stderr": "",
+            "started_at": "2026-03-30T00:00:00+00:00",
+            "ended_at": "2026-03-30T00:00:00+00:00",
+        }
+
+    monkeypatch.setattr(live_host_native_product_paths, "_run_timed_command", fake_timed_command)
+
+    live_host_native_product_paths._run_claude_task(
+        "Respond exactly with OK.",
+        project_root=Path("/tmp"),
+        model="claude-sonnet-4-6",
+        auth_mode="claude_code",
+    )
+
+    command = captured["command"]
+    prompt = command[command.index("-p") + 1]  # type: ignore[union-attr]
+    assert prompt.startswith(GUIDANCE_MARKER)
+    assert "host: claude" in prompt
+    assert "sre.uncertainty_brake" in prompt
+    assert "USER_TASK\nRespond exactly with OK." in prompt
+
+
+def test_codex_live_task_prompt_carries_v2_guidance(monkeypatch) -> None:
+    captured: dict[str, object] = {}
+
+    def fake_timed_command(command, **kwargs):
+        captured["command"] = command
+        return {
+            "command": command,
+            "exit_code": 0,
+            "stdout": "",
+            "stderr": "",
+            "started_at": "2026-03-30T00:00:00+00:00",
+            "ended_at": "2026-03-30T00:00:00+00:00",
+        }
+
+    monkeypatch.setattr(live_host_native_product_paths, "_run_timed_command", fake_timed_command)
+
+    live_host_native_product_paths._run_codex_task(
+        "Respond exactly with OK.",
+        project_root=Path("/tmp"),
+        model="gpt-5.3-codex",
+        auth_mode="codex_cli",
+    )
+
+    prompt = captured["command"][-1]  # type: ignore[index]
+    assert prompt.startswith(GUIDANCE_MARKER)
+    assert "host: codex" in prompt
+    assert "host.codex_cli" in prompt
+    assert "negative.forbidden_shortcuts" in prompt
+    assert "USER_TASK\nRespond exactly with OK." in prompt
 
 
 def test_live_hook_recorder_emits_no_stdout_when_logging(capsys, monkeypatch, tmp_path: Path) -> None:
