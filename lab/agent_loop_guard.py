@@ -30,12 +30,23 @@ SUPPORTED_STOP_EVENTS = frozenset(
 )
 DEFAULT_REQUIRED_GATES = (
     "active_train_reconciled",
+    "v2_packet_communication_inventory_complete",
     "executive_guidance_contract_present",
     "claude_guidance_fixture_passed",
     "codex_guidance_fixture_passed",
+    "strict_research_review_passed",
     "claude_live_watchlist_evidence",
     "codex_live_watchlist_evidence",
     "forbidden_claims_absent",
+)
+
+V2_COMMUNICATION_DENOMINATOR = (
+    "Core lifecycle dispatch, commitment extraction, provenance, certification, environment split, realization, and degradation law",
+    "Shared runtime kernels for verified-work preservation and bounded repair",
+    "SRE executive families for branching, resume, closure, brake, uncertainty, intervention pricing, evidence/probe, blocker/goal-debt, anti-thrash, risk weighting, and tonic hysteresis",
+    "Host wiring for OpenAI/Codex, Claude CLI, Gemini, and reference without flattening host-native differences",
+    "AUX outputs only where explicit, removable, support-side, contradiction-preserving, and runtime-off/default-zero unless separately published",
+    "Operational truth distinctions across Cortex truth, shipping truth, conformance truth, active train, and blocked moves",
 )
 
 
@@ -100,21 +111,45 @@ V2_EXECUTIVE_GUIDANCE_PLAN: tuple[GatePlanStep, ...] = (
         ),
     ),
     GatePlanStep(
-        gate_id="executive_guidance_contract_present",
-        title="Define the V2 executive-guidance contract",
+        gate_id="v2_packet_communication_inventory_complete",
+        title="Inventory the full V2 communication denominator",
         pass_criteria=(
-            "A typed V2 contract maps realized SRE families and operator-route state "
-            "to bounded model-visible guidance, host-native action, explicit no-op, "
-            "or unsupported-with-reason."
+            "Every active V2 packet responsibility and bio-to-code executive skill is "
+            "classified as model-visible guidance, host-native action, internal-only "
+            "with reason, or unsupported with reason before any full-communication "
+            "claim is allowed."
+        ),
+        evidence_required=(
+            "coverage matrix generated from docs/CORTEX_V2_CORE_2.md, docs/CORTEX_V2_SRE_2.md, docs/CORTEX_V2_AUX_2.md, and internal/truth/cortex_status.json",
+            "rows for Core, shared runtime, SRE, host wiring, AUX constraints, operational truth, and every bio-to-code matrix skill",
+            "negative rows proving diagnostics-only, V3-only, raw AUX memory, and generic reminders cannot count as communication",
+        ),
+        next_action=(
+            "build the V2 communication coverage matrix before implementing or testing "
+            "host-specific guidance"
+        ),
+        stop_rule=(
+            "If any active V2 responsibility is unmapped or only implicitly covered by "
+            "one file/family, mark the gate fail and continue the inventory."
+        ),
+    ),
+    GatePlanStep(
+        gate_id="executive_guidance_contract_present",
+        title="Define the full V2 communication contract",
+        pass_criteria=(
+            "A typed V2 contract maps every covered Cortex row to bounded "
+            "model-visible guidance, host-native action, explicit internal-only/no-op, "
+            "or unsupported-with-reason, and the mapped guidance is capable of "
+            "changing the model's next turn when communication is required."
         ),
         evidence_required=(
             "typed contract in active V2 code, not V3",
-            "tests proving CHECK, SEEK_CONTEXT, BRAKE, BRANCH/continuity, VERIFY/REPAIR, and CLOSURE mappings",
+            "tests proving Core truth/commitment boundaries, SRE CHECK, SEEK_CONTEXT, BRAKE, BRANCH/continuity, VERIFY/REPAIR, CLOSURE, blocker/goal-debt, risk-weight/tonic, and AUX-removability mappings",
             "negative tests proving no raw AUX memory, certification drift, or hidden policy fork",
         ),
         next_action=(
-            "add the smallest V2 executive-guidance carrier and fixture tests before "
-            "touching live host loops"
+            "add the smallest V2 communication carrier and contract tests that cover "
+            "the inventory denominator before touching live host loops"
         ),
         stop_rule=(
             "If the mapping only adds diagnostics and cannot affect a model turn, "
@@ -123,35 +158,37 @@ V2_EXECUTIVE_GUIDANCE_PLAN: tuple[GatePlanStep, ...] = (
     ),
     GatePlanStep(
         gate_id="claude_guidance_fixture_passed",
-        title="Prove Claude model-visible guidance in fixtures",
+        title="Prove Claude CLI model-visible communication in fixtures",
         pass_criteria=(
-            "Claude host-control or operator fixture evidence shows Cortex guidance "
-            "changes the next Claude turn for the required executive families."
+            "Claude CLI/operator fixture evidence shows the full V2 communication "
+            "contract reaches the next Claude turn where model-visible guidance is "
+            "required, and host-native/internal-only rows degrade explicitly."
         ),
         evidence_required=(
-            "fixture or mocked Claude operator transcript with model-visible guidance",
-            "assertions for family-specific next-turn text/action",
+            "fixture or mocked Claude CLI/operator transcript with model-visible guidance",
+            "assertions for every model-visible contract family and explicit exclusions for internal-only rows",
             "tests proving unsupported host surfaces degrade to explicit reasons",
         ),
         next_action=(
-            "wire Claude-facing prompt or hook guidance for the first failing family "
-            "and update the fixture evidence"
+            "wire Claude CLI-facing prompt or hook guidance for the first failing "
+            "contract row and update fixture evidence"
         ),
         stop_rule=(
-            "If Claude auth or live access is unavailable, keep this fixture gate "
-            "separate from the later live gate."
+            "If the fixture proves only that Cortex calculated a value, not that "
+            "Claude received usable next-turn guidance, mark the gate fail."
         ),
     ),
     GatePlanStep(
         gate_id="codex_guidance_fixture_passed",
-        title="Prove Codex CLI model-visible guidance in fixtures",
+        title="Prove Codex CLI model-visible communication in fixtures",
         pass_criteria=(
-            "Codex CLI/app-server fixture evidence shows Cortex guidance reaches the "
-            "next Codex turn through instructions, prompt context, or Stop-hook continuation."
+            "Codex CLI/app-server fixture evidence shows the full V2 communication "
+            "contract reaches the next Codex turn through instructions, prompt "
+            "context, or Stop-hook continuation wherever model-visible guidance is required."
         ),
         evidence_required=(
             "fixture or mocked `codex exec --json`/hook transcript",
-            "assertions that continuation prompts include the unmet gate and bounded next action",
+            "assertions that every model-visible contract family appears in Codex-visible context or an explicit host-native/internal-only reason",
             "tests proving the guard does not continue after all gates pass",
         ),
         next_action=(
@@ -164,40 +201,64 @@ V2_EXECUTIVE_GUIDANCE_PLAN: tuple[GatePlanStep, ...] = (
         ),
     ),
     GatePlanStep(
-        gate_id="claude_live_watchlist_evidence",
-        title="Run bounded Claude live watchlist",
+        gate_id="strict_research_review_passed",
+        title="Pass strict falsification review",
         pass_criteria=(
-            "No-spend or explicitly approved Claude operator evidence passes the V2 "
-            "guidance watchlist with truthful closure and no approval/safety violations."
+            "A hostile technical review can trace every full-communication claim from "
+            "packet law to typed contract, fixture evidence, and live/watchlist "
+            "evidence without relying on a README, final-message assertion, or one-file slice."
         ),
         evidence_required=(
-            "preflight/auth result for Claude operator lane",
-            "live or approved watchlist artifact covering guidance visibility and closure",
+            "review matrix with code refs, proof refs, residual risks, and falsifying negative cases",
+            "explicit answers to calculated-but-not-communicated, one-file-only, diagnostics-only, and V3-successor critiques",
+            "proof that no hidden approval, spend, raw AUX, host-policy fork, or product-truth widening is needed for the claim",
+        ),
+        next_action=(
+            "run an adversarial review of the communication matrix and host evidence, "
+            "then fix the first falsified row"
+        ),
+        stop_rule=(
+            "If a reviewer cannot tell what reached the model and how it changed the "
+            "next turn, the session continues or stops as blocked; it may not close as pass."
+        ),
+    ),
+    GatePlanStep(
+        gate_id="claude_live_watchlist_evidence",
+        title="Run bounded Claude CLI live watchlist",
+        pass_criteria=(
+            "No-spend or explicitly approved Claude CLI/operator evidence proves the "
+            "V2 communication contract is visible to Claude for the required rows, "
+            "changes or constrains the next turn where intended, and closes truthfully."
+        ),
+        evidence_required=(
+            "preflight/auth result for Claude CLI/operator lane",
+            "live or approved CLI transcript/event artifact covering guidance visibility, next-turn effect, and closure",
             "explicit classification for auth, budget, or host-capability blocks",
         ),
         next_action=(
-            "run the repo live harness for Claude guidance watchlist, or mark blocked "
+            "run the repo live harness for Claude CLI communication watchlist, or mark blocked "
             "with a concrete operator action if auth/capacity is unavailable"
         ),
         stop_rule=(
-            "Do not mark pass from stale transcripts, unavailable auth, or unapproved "
-            "paid service-lane calls."
+            "Do not mark pass from stale transcripts, unavailable auth, final-message "
+            "claims, or unapproved paid service-lane calls."
         ),
     ),
     GatePlanStep(
         gate_id="codex_live_watchlist_evidence",
         title="Run bounded Codex CLI live watchlist",
         pass_criteria=(
-            "Codex CLI/App evidence passes the V2 guidance watchlist and the loop guard "
-            "does not stop early while required gates are pending."
+            "Codex CLI/App evidence proves the V2 communication contract is visible "
+            "to Codex for the required rows, changes or constrains the next turn where "
+            "intended, and the loop guard does not stop early while gates are pending."
         ),
         evidence_required=(
             "Codex preflight/auth result",
-            "`codex exec --json` or app-server evidence showing guidance affects the run",
+            "`codex exec --json` or app-server transcript/event evidence showing communication affects the run",
             "loop-guard state showing bounded continuation and eventual pass/blocked stop",
         ),
         next_action=(
-            "run the Codex guidance watchlist through the repo harness and update the "
+            "run the Codex communication watchlist through the repo harness and update the "
             "gate report with artifact paths"
         ),
         stop_rule=(
@@ -256,6 +317,7 @@ def render_plan_payload(
         "surface": "agent_loop_guard",
         "scope": "lab",
         "evidence_role": "watchlist",
+        "communication_denominator": list(V2_COMMUNICATION_DENOMINATOR),
         "required_gates": [step.gate_id for step in plan_steps],
         "plan_steps": [step.as_payload() for step in plan_steps],
     }
@@ -270,6 +332,9 @@ def render_plan_markdown(
         "Surface: lab",
         "Evidence role: watchlist",
         "Stop condition: every required gate is pass, or a blocked/max-continuation gate stops for the operator.",
+        "",
+        "Full V2 communication denominator:",
+        *[f"- {item}" for item in V2_COMMUNICATION_DENOMINATOR],
         "",
     ]
     for index, step in enumerate(plan_steps, start=1):
@@ -384,6 +449,7 @@ class LoopGateReport:
             "evidence_role": self.evidence_role,
             "generated_at": self.generated_at,
             "max_continuations": self.max_continuations,
+            "communication_denominator": list(V2_COMMUNICATION_DENOMINATOR),
             "required_gates": list(self.required_gates),
             "gates": [gate.as_payload() for gate in self.gates],
             "plan_steps": [step.as_payload() for step in self.plan_steps],

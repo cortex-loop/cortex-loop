@@ -244,7 +244,12 @@ def test_init_report_and_render_hook_config_cli(tmp_path: Path, capsys) -> None:
     assert payload["evidence_role"] == "watchlist"
     assert [step["gate_id"] for step in payload["plan_steps"]] == payload["required_gates"]
     assert payload["plan_steps"][0]["title"] == "Close the active brake-tonic reconciliation"
-    assert "Do not mark pass from stale transcripts" in payload["plan_steps"][4]["stop_rule"]
+    assert (
+        payload["plan_steps"][1]["title"]
+        == "Inventory the full V2 communication denominator"
+    )
+    assert "Core lifecycle dispatch" in payload["communication_denominator"][0]
+    assert "Do not mark pass from stale transcripts" in payload["plan_steps"][6]["stop_rule"]
 
     assert (
         agent_loop_guard.main(
@@ -264,7 +269,12 @@ def test_render_plan_cli_includes_ordered_gate_requirements(capsys) -> None:
     output = capsys.readouterr().out
     assert "# V2 Executive Guidance Loop Plan" in output
     assert "1. `active_train_reconciled` - Close the active brake-tonic reconciliation" in output
-    assert "6. `codex_live_watchlist_evidence` - Run bounded Codex CLI live watchlist" in output
+    assert "Full V2 communication denominator:" in output
+    assert (
+        "2. `v2_packet_communication_inventory_complete` - "
+        "Inventory the full V2 communication denominator"
+    ) in output
+    assert "8. `codex_live_watchlist_evidence` - Run bounded Codex CLI live watchlist" in output
     assert "unapproved paid service-lane calls" in output
 
 
@@ -274,8 +284,9 @@ def test_render_plan_cli_can_emit_json(capsys) -> None:
     payload = json.loads(capsys.readouterr().out)
     assert payload["scope"] == "lab"
     assert payload["evidence_role"] == "watchlist"
+    assert "Claude CLI" in payload["communication_denominator"][3]
     assert payload["required_gates"] == list(agent_loop_guard.DEFAULT_REQUIRED_GATES)
-    assert payload["plan_steps"][3]["gate_id"] == "codex_guidance_fixture_passed"
+    assert payload["plan_steps"][4]["gate_id"] == "codex_guidance_fixture_passed"
 
 
 def test_evaluate_command_can_emit_hook_json(tmp_path: Path, capsys) -> None:
