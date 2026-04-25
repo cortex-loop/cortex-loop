@@ -243,7 +243,8 @@ def test_status_registry_is_complete_and_stable() -> None:
     assert "brake tonic quiescence-exit mismatch is closed" in status["work_today"]["note"]
     assert "V2 full communication closure" in status["work_today"]["note"]
     assert "Claude CLI and Codex CLI" in status["work_today"]["note"]
-    assert "paid service-lane commands remain blocked" in status["work_today"]["note"]
+    assert "paid API service-lane commands remain blocked" in status["work_today"]["note"]
+    assert "subscription CLI lanes are no-API-spend" in status["work_today"]["note"]
     assert "Q_mem = 0" in status["work_today"]["note"]
     assert status["next_product_train"]["slug"] == "v2-full-communication-closure"
     assert status["next_product_train"]["surface"] == "product + conformance + lab"
@@ -292,7 +293,8 @@ def test_generated_status_doc_includes_system_map_and_next_product_train() -> No
     assert "## Next Product Train" in text
     assert "host/tool reliability and affordance priors are earned" in text
     assert "`v2-full-communication-closure`" in text
-    assert "paid service-lane command may run without explicit spend approval" in text
+    assert "paid API service-lane command may run without explicit spend approval" in text
+    assert "subscription CLI commands are the default no-API-spend watchlist route" in text
     assert "Shipping Product Lane\\nopenai:operator_cli" in text or "Shipping Product Lane" in text
     assert "Shipping default: `openai:operator_cli`" in text
     assert "Workflow gates marked `required` are contractual gates checked by `repo_workflow.py`" in text

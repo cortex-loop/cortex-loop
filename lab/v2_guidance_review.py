@@ -20,6 +20,7 @@ from cortex.sre.guidance import (
 from internal.truth.status import STATUS_SOURCE
 from lab.agent_loop_guard import LOOP_GUARD_ROOT
 from lab.live_validation_common import now_utc_iso, write_json
+from lab.v2_subscription_cli_preflight import DEFAULT_PREFLIGHT_PATH
 
 DEFAULT_REVIEW_PATH = LOOP_GUARD_ROOT / "v2_guidance_review.latest.json"
 
@@ -30,6 +31,8 @@ def build_v2_guidance_review() -> dict[str, Any]:
     inventory_rows = v2_guidance_inventory_payload()
     row_ids = {row["row_id"] for row in inventory_rows}
     _assert_required_rows(row_ids)
+    subscription_preflight = _subscription_cli_preflight_summary()
+    live_watchlist_status = _live_watchlist_status(subscription_preflight)
     return {
         "surface": "lab",
         "evidence_role": "watchlist",
@@ -115,16 +118,16 @@ def build_v2_guidance_review() -> dict[str, Any]:
             {
                 "critique": "live-proof-overclaim",
                 "answer": (
-                    "Live Claude/Codex service-lane proof is not marked pass here; it remains "
-                    "blocked unless no-spend evidence or explicit spend approval exists."
+                    "Live Claude/Codex proof is not marked pass here. Claude/Codex "
+                    "subscription CLI lanes are no-API-spend watchlist lanes when "
+                    "their subscription preflight is ready, but closure still requires "
+                    "live transcript/event evidence."
                 ),
-                "status": "blocked-not-overclaimed",
+                "status": "not-overclaimed",
             },
         ],
-        "live_watchlist_status": {
-            "claude_live_watchlist_evidence": "blocked_without_explicit_spend_or_no_spend_transcript",
-            "codex_live_watchlist_evidence": "blocked_without_explicit_spend_or_no_spend_transcript",
-        },
+        "subscription_cli_preflight": subscription_preflight,
+        "live_watchlist_status": live_watchlist_status,
     }
 
 
@@ -173,6 +176,56 @@ def _assert_required_rows(row_ids: set[str]) -> None:
 
 def _row_ids_with_prefix(row_ids: set[str], prefix: str) -> list[str]:
     return sorted(row_id for row_id in row_ids if row_id.startswith(prefix))
+
+
+def _subscription_cli_preflight_summary() -> dict[str, Any]:
+    if not DEFAULT_PREFLIGHT_PATH.exists():
+        return {
+            "path": str(DEFAULT_PREFLIGHT_PATH),
+            "available": False,
+            "ready_for_live_watchlist": False,
+            "status": "pending_subscription_cli_preflight",
+        }
+    try:
+        payload = json.loads(DEFAULT_PREFLIGHT_PATH.read_text(encoding="utf-8"))
+    except json.JSONDecodeError:
+        return {
+            "path": str(DEFAULT_PREFLIGHT_PATH),
+            "available": False,
+            "ready_for_live_watchlist": False,
+            "status": "invalid_subscription_cli_preflight_json",
+        }
+    ready = payload.get("ready_for_live_watchlist") is True
+    return {
+        "path": str(DEFAULT_PREFLIGHT_PATH),
+        "available": True,
+        "ready_for_live_watchlist": ready,
+        "spend_state": payload.get("spend_state"),
+        "claude_subscription_no_api_spend": (
+            payload.get("claude_cli", {}).get("subscription_no_api_spend") is True
+        ),
+        "codex_subscription_no_api_spend": (
+            payload.get("codex_cli", {}).get("subscription_no_api_spend") is True
+        ),
+        "smoke_present": isinstance(payload.get("smoke"), dict),
+        "status": (
+            "ready_for_subscription_cli_live_transcript"
+            if ready
+            else "pending_subscription_cli_preflight"
+        ),
+    }
+
+
+def _live_watchlist_status(subscription_preflight: dict[str, Any]) -> dict[str, str]:
+    if subscription_preflight.get("ready_for_live_watchlist") is True:
+        status = "ready_for_subscription_cli_live_transcript"
+    else:
+        status = "pending_subscription_cli_preflight"
+    return {
+        "s_tier_audit_protocol_locked": status,
+        "claude_live_watchlist_evidence": status,
+        "codex_live_watchlist_evidence": status,
+    }
 
 
 if __name__ == "__main__":

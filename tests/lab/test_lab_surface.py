@@ -49,7 +49,8 @@ def test_agent_loop_guard_is_lab_watchlist_only_and_bounded() -> None:
     assert 'scope: str = "lab"' in text
     assert 'evidence_role: str = "watchlist"' in text
     assert "DEFAULT_MAX_CONTINUATIONS = 6" in text
-    assert "Do not run paid service-lane commands" in text
+    assert "Do not run paid API service-lane commands" in text
+    assert "subscription CLI lanes are the no-API-spend watchlist route" in text
     assert "do not reactivate V3 as product truth" in text
     assert "render-plan" in text
     assert "agent-loop-guard-plan" in makefile

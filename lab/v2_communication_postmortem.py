@@ -86,18 +86,17 @@ FINDINGS: tuple[PostmortemFinding, ...] = (
         finding_id="pm-003-live-spend-ambiguity",
         severity="high",
         failure=(
-            "The session treated the lack of explicit paid-service approval as a "
-            "reason to defer live testing, instead of making that an operator block "
-            "that prevents closure."
+            "The session treated Claude/Codex CLI runs as paid-service ambiguous "
+            "instead of checking the subscription CLI no-API-spend route first."
         ),
         evidence=(
             "Repo policy correctly forbids unapproved paid service-lane commands, "
-            "but the loop failed to convert that policy into a hard stop before "
-            "closeout."
+            "but Claude Code and Codex CLI subscription auth can be validated as a "
+            "no-API-spend watchlist route."
         ),
         corrective_action=(
-            "The S-tier audit protocol gate must lock spend approval or a no-spend "
-            "transcript route before live evidence gates can pass."
+            "The S-tier audit protocol gate must lock subscription CLI preflight "
+            "or an explicit paid-service exception before live evidence gates can pass."
         ),
     ),
     PostmortemFinding(
@@ -136,6 +135,11 @@ def render_postmortem_payload(*, generated_at: str | None = None) -> dict[str, A
         "minimum_next_session_bar": {
             "closeout_requires": "all agent-loop guard gates pass with evidence",
             "blocked_gate_policy": "operator block only; never closure",
+            "subscription_cli_preflight": (
+                "Claude Code and Codex CLI subscription auth are the default "
+                "no-API-spend route; API-key service lanes still require explicit "
+                "paid-spend approval."
+            ),
             "expected_runtime_minutes": "180-240",
             "short_run_anomaly_rule": (
                 "If the live audit finishes in under 120 minutes, the report must "

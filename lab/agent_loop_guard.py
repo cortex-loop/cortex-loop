@@ -50,8 +50,8 @@ S_TIER_AUDIT_EXPECTATIONS = {
         "review explicitly explain why the full audit finished faster."
     ),
     "required_live_artifacts": (
-        "Claude CLI preflight/auth result",
-        "Codex CLI/App preflight/auth result",
+        "Claude CLI subscription preflight/auth result",
+        "Codex CLI/App subscription preflight/auth result",
         "Claude model-visible transcript/event artifact",
         "Codex model-visible transcript/event artifact",
         "per-row Core/SRE/AUX guidance visibility matrix",
@@ -247,12 +247,13 @@ V2_EXECUTIVE_GUIDANCE_PLAN: tuple[GatePlanStep, ...] = (
         title="Lock the S-tier live audit protocol",
         pass_criteria=(
             "Before live Claude/Codex evidence is collected or any closeout is attempted, "
-            "the session records the live audit protocol: spend/no-spend resolution, "
+            "the session records the live audit protocol: Claude/Codex subscription "
+            "CLI no-API-spend readiness or an explicit paid-service exception, "
             "expected 180-240 minute audit budget, required live artifact matrix, "
             "per-row Core/SRE/AUX coverage, and the short-run anomaly rule."
         ),
         evidence_required=(
-            "explicit spend approval or no-spend live transcript route for both Claude and Codex",
+            "subscription CLI preflight proving Claude/Codex login and no API-spend env, or an explicit paid-service exception",
             "artifact plan covering preflight, model-visible transcript/event evidence, per-row visibility, next-turn effect, and hostile review",
             "short-run anomaly note if the live audit completes in under 120 minutes",
         ),
@@ -261,7 +262,7 @@ V2_EXECUTIVE_GUIDANCE_PLAN: tuple[GatePlanStep, ...] = (
             "running or closing the V2 communication audit"
         ),
         stop_rule=(
-            "If spend/no-spend authorization, live artifact scope, or short-run "
+            "If subscription CLI readiness, live artifact scope, or short-run "
             "anomaly handling is unresolved, keep the loop open or stop for the "
             "operator; do not checkpoint as closure."
         ),
@@ -270,7 +271,7 @@ V2_EXECUTIVE_GUIDANCE_PLAN: tuple[GatePlanStep, ...] = (
         gate_id="claude_live_watchlist_evidence",
         title="Run bounded Claude CLI live watchlist",
         pass_criteria=(
-            "No-spend or explicitly approved Claude CLI/operator evidence proves the "
+            "Claude subscription CLI or explicitly approved paid-service evidence proves the "
             "V2 communication contract is visible to Claude for the required rows, "
             "changes or constrains the next turn where intended, includes per-row "
             "Core/SRE/AUX visibility notes, and closes truthfully."
@@ -285,8 +286,8 @@ V2_EXECUTIVE_GUIDANCE_PLAN: tuple[GatePlanStep, ...] = (
             "with a concrete operator action if auth/capacity is unavailable"
         ),
         stop_rule=(
-            "Do not mark pass from stale transcripts, unavailable auth, final-message "
-            "claims, or unapproved paid service-lane calls."
+            "Do not mark pass from stale transcripts, unavailable subscription auth, "
+            "final-message claims, or unapproved paid service-lane calls."
         ),
     ),
     GatePlanStep(
@@ -1040,7 +1041,8 @@ def _continuation_prompt(
         f"Then update `{evidence_path}` with bounded gate evidence. "
         f"Pending gates: {pending_count}. "
         f"Continuation budget after this pass: {next_count}/{report.max_continuations}. "
-        "Do not run paid service-lane commands unless the current chat explicitly approved spend. "
+        "Do not run paid API service-lane commands unless the current chat explicitly approved spend; "
+        "Claude/Codex subscription CLI lanes are the no-API-spend watchlist route when preflight is ready. "
         "Do not widen shipping truth, do not reactivate V3 as product truth, and stop only when all required gates pass."
     )
 
