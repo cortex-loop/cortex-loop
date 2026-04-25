@@ -40,6 +40,253 @@ DEFAULT_REQUIRED_GATES = (
 
 
 @dataclass(frozen=True, slots=True)
+class GatePlanStep:
+    gate_id: str
+    title: str
+    pass_criteria: str
+    evidence_required: tuple[str, ...]
+    next_action: str
+    stop_rule: str
+
+    def __post_init__(self) -> None:
+        for field_name in (
+            "gate_id",
+            "title",
+            "pass_criteria",
+            "next_action",
+            "stop_rule",
+        ):
+            if not getattr(self, field_name).strip():
+                raise ValueError(f"GatePlanStep.{field_name} must be non-empty.")
+        if not self.evidence_required or any(
+            not item.strip() for item in self.evidence_required
+        ):
+            raise ValueError(
+                "GatePlanStep.evidence_required must contain non-empty entries."
+            )
+
+    def as_payload(self) -> dict[str, Any]:
+        return {
+            "gate_id": self.gate_id,
+            "title": self.title,
+            "pass_criteria": self.pass_criteria,
+            "evidence_required": list(self.evidence_required),
+            "next_action": self.next_action,
+            "stop_rule": self.stop_rule,
+        }
+
+
+V2_EXECUTIVE_GUIDANCE_PLAN: tuple[GatePlanStep, ...] = (
+    GatePlanStep(
+        gate_id="active_train_reconciled",
+        title="Close the active brake-tonic reconciliation",
+        pass_criteria=(
+            "The current brake-tonic quiescence exit train is either implemented "
+            "in code and tests or explicitly narrowed in doctrine/status before any "
+            "successor train is claimed."
+        ),
+        evidence_required=(
+            "updated SRE brake law or explicit doctrine narrowing",
+            "targeted SRE/runtime tests proving no sticky guardedness under sustained calm",
+            "status truth remains single-owned by internal/truth/cortex_status.json",
+        ),
+        next_action=(
+            "finish or explicitly replace `brake-tonic-quiescence-exit-reconciliation` "
+            "before opening the V2 guidance train"
+        ),
+        stop_rule=(
+            "If authority surfaces disagree, stop for operator reconciliation instead "
+            "of continuing implementation."
+        ),
+    ),
+    GatePlanStep(
+        gate_id="executive_guidance_contract_present",
+        title="Define the V2 executive-guidance contract",
+        pass_criteria=(
+            "A typed V2 contract maps realized SRE families and operator-route state "
+            "to bounded model-visible guidance, host-native action, explicit no-op, "
+            "or unsupported-with-reason."
+        ),
+        evidence_required=(
+            "typed contract in active V2 code, not V3",
+            "tests proving CHECK, SEEK_CONTEXT, BRAKE, BRANCH/continuity, VERIFY/REPAIR, and CLOSURE mappings",
+            "negative tests proving no raw AUX memory, certification drift, or hidden policy fork",
+        ),
+        next_action=(
+            "add the smallest V2 executive-guidance carrier and fixture tests before "
+            "touching live host loops"
+        ),
+        stop_rule=(
+            "If the mapping only adds diagnostics and cannot affect a model turn, "
+            "mark the gate fail and revise the contract."
+        ),
+    ),
+    GatePlanStep(
+        gate_id="claude_guidance_fixture_passed",
+        title="Prove Claude model-visible guidance in fixtures",
+        pass_criteria=(
+            "Claude host-control or operator fixture evidence shows Cortex guidance "
+            "changes the next Claude turn for the required executive families."
+        ),
+        evidence_required=(
+            "fixture or mocked Claude operator transcript with model-visible guidance",
+            "assertions for family-specific next-turn text/action",
+            "tests proving unsupported host surfaces degrade to explicit reasons",
+        ),
+        next_action=(
+            "wire Claude-facing prompt or hook guidance for the first failing family "
+            "and update the fixture evidence"
+        ),
+        stop_rule=(
+            "If Claude auth or live access is unavailable, keep this fixture gate "
+            "separate from the later live gate."
+        ),
+    ),
+    GatePlanStep(
+        gate_id="codex_guidance_fixture_passed",
+        title="Prove Codex CLI model-visible guidance in fixtures",
+        pass_criteria=(
+            "Codex CLI/app-server fixture evidence shows Cortex guidance reaches the "
+            "next Codex turn through instructions, prompt context, or Stop-hook continuation."
+        ),
+        evidence_required=(
+            "fixture or mocked `codex exec --json`/hook transcript",
+            "assertions that continuation prompts include the unmet gate and bounded next action",
+            "tests proving the guard does not continue after all gates pass",
+        ),
+        next_action=(
+            "wire Codex-facing guidance through the narrowest prompt/hook path and "
+            "record fixture evidence"
+        ),
+        stop_rule=(
+            "If Codex only receives a generic reminder rather than family-specific "
+            "guidance, mark the gate fail."
+        ),
+    ),
+    GatePlanStep(
+        gate_id="claude_live_watchlist_evidence",
+        title="Run bounded Claude live watchlist",
+        pass_criteria=(
+            "No-spend or explicitly approved Claude operator evidence passes the V2 "
+            "guidance watchlist with truthful closure and no approval/safety violations."
+        ),
+        evidence_required=(
+            "preflight/auth result for Claude operator lane",
+            "live or approved watchlist artifact covering guidance visibility and closure",
+            "explicit classification for auth, budget, or host-capability blocks",
+        ),
+        next_action=(
+            "run the repo live harness for Claude guidance watchlist, or mark blocked "
+            "with a concrete operator action if auth/capacity is unavailable"
+        ),
+        stop_rule=(
+            "Do not mark pass from stale transcripts, unavailable auth, or unapproved "
+            "paid service-lane calls."
+        ),
+    ),
+    GatePlanStep(
+        gate_id="codex_live_watchlist_evidence",
+        title="Run bounded Codex CLI live watchlist",
+        pass_criteria=(
+            "Codex CLI/App evidence passes the V2 guidance watchlist and the loop guard "
+            "does not stop early while required gates are pending."
+        ),
+        evidence_required=(
+            "Codex preflight/auth result",
+            "`codex exec --json` or app-server evidence showing guidance affects the run",
+            "loop-guard state showing bounded continuation and eventual pass/blocked stop",
+        ),
+        next_action=(
+            "run the Codex guidance watchlist through the repo harness and update the "
+            "gate report with artifact paths"
+        ),
+        stop_rule=(
+            "Do not pass on final-message claims alone; require event or transcript "
+            "evidence that the guidance was visible."
+        ),
+    ),
+    GatePlanStep(
+        gate_id="forbidden_claims_absent",
+        title="Close with product-truth discipline",
+        pass_criteria=(
+            "Closeout/status text claims only what shipped runtime behavior or direct "
+            "product blockers prove, keeps V3 non-product unless separately archived, "
+            "and preserves shipping/conformance distinction."
+        ),
+        evidence_required=(
+            "closeout contract forbidden claims reviewed",
+            "status registry/doc regeneration check when status changes",
+            "tests or grep proving no V3 cutover or live-pass overclaim is introduced",
+        ),
+        next_action=(
+            "audit final handoff, status text, and closeout claims before allowing the "
+            "agent to stop"
+        ),
+        stop_rule=(
+            "If any final text claims full communication, live pass, or V3 archive "
+            "without evidence, continue or stop for operator correction."
+        ),
+    ),
+)
+
+if tuple(step.gate_id for step in V2_EXECUTIVE_GUIDANCE_PLAN) != DEFAULT_REQUIRED_GATES:
+    raise RuntimeError("V2_EXECUTIVE_GUIDANCE_PLAN must match DEFAULT_REQUIRED_GATES.")
+
+
+def gate_plan_step(
+    gate_id: str,
+    plan_steps: tuple[GatePlanStep, ...] = V2_EXECUTIVE_GUIDANCE_PLAN,
+) -> GatePlanStep:
+    gate_id = _non_empty_string(gate_id, None)
+    for step in plan_steps:
+        if step.gate_id == gate_id:
+            return step
+    return _generic_gate_plan_step(gate_id)
+
+
+def plan_steps_for_required_gates(required_gates: tuple[str, ...]) -> tuple[GatePlanStep, ...]:
+    return tuple(gate_plan_step(gate_id) for gate_id in required_gates)
+
+
+def render_plan_payload(
+    plan_steps: tuple[GatePlanStep, ...] = V2_EXECUTIVE_GUIDANCE_PLAN,
+) -> dict[str, Any]:
+    return {
+        "profile": DEFAULT_PROFILE,
+        "surface": "agent_loop_guard",
+        "scope": "lab",
+        "evidence_role": "watchlist",
+        "required_gates": [step.gate_id for step in plan_steps],
+        "plan_steps": [step.as_payload() for step in plan_steps],
+    }
+
+
+def render_plan_markdown(
+    plan_steps: tuple[GatePlanStep, ...] = V2_EXECUTIVE_GUIDANCE_PLAN,
+) -> str:
+    lines = [
+        "# V2 Executive Guidance Loop Plan",
+        "",
+        "Surface: lab",
+        "Evidence role: watchlist",
+        "Stop condition: every required gate is pass, or a blocked/max-continuation gate stops for the operator.",
+        "",
+    ]
+    for index, step in enumerate(plan_steps, start=1):
+        lines.extend(
+            [
+                f"{index}. `{step.gate_id}` - {step.title}",
+                f"   Pass: {step.pass_criteria}",
+                f"   Evidence: {'; '.join(step.evidence_required)}",
+                f"   Next: {step.next_action}",
+                f"   Stop: {step.stop_rule}",
+                "",
+            ]
+        )
+    return "\n".join(lines).rstrip()
+
+
+@dataclass(frozen=True, slots=True)
 class GateResult:
     gate_id: str
     status: GateStatus
@@ -83,6 +330,7 @@ class LoopGateReport:
     surface: str = "agent_loop_guard"
     scope: str = "lab"
     evidence_role: str = "watchlist"
+    plan_steps: tuple[GatePlanStep, ...] = V2_EXECUTIVE_GUIDANCE_PLAN
 
     def __post_init__(self) -> None:
         if not self.profile.strip():
@@ -101,9 +349,17 @@ class LoopGateReport:
             raise ValueError("LoopGateReport.scope must be lab.")
         if self.evidence_role != "watchlist":
             raise ValueError("LoopGateReport.evidence_role must be watchlist.")
+        plan_gate_ids = tuple(step.gate_id for step in self.plan_steps)
+        if plan_gate_ids != self.required_gates:
+            raise ValueError(
+                "LoopGateReport.plan_steps must match required_gates in order."
+            )
 
     def gate_map(self) -> dict[str, GateResult]:
         return {gate.gate_id: gate for gate in self.gates}
+
+    def plan_step(self, gate_id: str) -> GatePlanStep:
+        return gate_plan_step(gate_id, self.plan_steps)
 
     def normalized_gates(self) -> tuple[GateResult, ...]:
         gate_map = self.gate_map()
@@ -115,7 +371,7 @@ class LoopGateReport:
                     gate_id=gate_id,
                     status="missing",
                     reason="required gate has no evidence yet",
-                    next_action=f"produce bounded evidence for `{gate_id}`",
+                    next_action=self.plan_step(gate_id).next_action,
                 )
             normalized.append(gate)
         return tuple(normalized)
@@ -130,6 +386,7 @@ class LoopGateReport:
             "max_continuations": self.max_continuations,
             "required_gates": list(self.required_gates),
             "gates": [gate.as_payload() for gate in self.gates],
+            "plan_steps": [step.as_payload() for step in self.plan_steps],
         }
 
 
@@ -237,12 +494,12 @@ def default_gate_report(
 ) -> LoopGateReport:
     gates = tuple(
         GateResult(
-            gate_id=gate_id,
+            gate_id=step.gate_id,
             status="missing",
-            reason="required gate has not been proven yet",
-            next_action=f"produce and record bounded evidence for `{gate_id}`",
+            reason=f"{step.title} has not been proven yet",
+            next_action=step.next_action,
         )
-        for gate_id in DEFAULT_REQUIRED_GATES
+        for step in V2_EXECUTIVE_GUIDANCE_PLAN
     )
     return LoopGateReport(
         profile=profile,
@@ -250,6 +507,7 @@ def default_gate_report(
         gates=gates,
         max_continuations=max_continuations,
         generated_at=now_utc_iso(),
+        plan_steps=V2_EXECUTIVE_GUIDANCE_PLAN,
     )
 
 
@@ -267,6 +525,7 @@ def loop_gate_report_from_payload(payload: dict[str, Any]) -> LoopGateReport:
     if not isinstance(gate_payloads, list):
         raise TypeError("loop gate report `gates` must be a list.")
     gates = tuple(_gate_result_from_payload(gate_payload) for gate_payload in gate_payloads)
+    plan_steps = _coerce_plan_steps(payload.get("plan_steps"), required_gates)
     return LoopGateReport(
         profile=profile,
         required_gates=required_gates,
@@ -276,6 +535,7 @@ def loop_gate_report_from_payload(payload: dict[str, Any]) -> LoopGateReport:
         surface=_non_empty_string(payload.get("surface"), "agent_loop_guard"),
         scope=_non_empty_string(payload.get("scope"), "lab"),
         evidence_role=_non_empty_string(payload.get("evidence_role"), "watchlist"),
+        plan_steps=plan_steps,
     )
 
 
@@ -404,6 +664,9 @@ def main(argv: list[str] | None = None) -> int:
     config_parser.add_argument("--host", choices=("codex", "claude"), required=True)
     config_parser.add_argument("--report", type=Path, default=LOOP_GUARD_LATEST_PATH)
 
+    plan_parser = subparsers.add_parser("render-plan")
+    plan_parser.add_argument("--format", choices=("markdown", "json"), default="markdown")
+
     args = parser.parse_args(argv)
     if args.command == "init-report":
         report = default_gate_report(
@@ -416,6 +679,13 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.command == "render-hook-config":
         print(render_hook_config(host=args.host, report_path=args.report))
+        return 0
+
+    if args.command == "render-plan":
+        if args.format == "json":
+            print(json.dumps(render_plan_payload(), indent=2, sort_keys=True))
+        else:
+            print(render_plan_markdown())
         return 0
 
     hook_input = _read_stdin_json() if args.command == "hook" else {}
@@ -527,10 +797,15 @@ def _continuation_prompt(
 ) -> str:
     evidence_path = str(gate_report_path or LOOP_GUARD_LATEST_PATH)
     next_count = state.continuation_count + 1
+    plan_step = report.plan_step(gate.gate_id)
     return (
         "Cortex loop guard: do not stop yet. "
-        f"The next unmet gate is `{gate.gate_id}` with status `{gate.status}`: "
-        f"{gate.reason}. Take only this next action: {gate.next_action}. "
+        f"The next unmet gate is `{gate.gate_id}` ({plan_step.title}) with status "
+        f"`{gate.status}`: {gate.reason}. "
+        f"Pass criteria: {plan_step.pass_criteria}. "
+        f"Required evidence: {'; '.join(plan_step.evidence_required)}. "
+        f"Take only this next action: {gate.next_action}. "
+        f"Gate stop rule: {plan_step.stop_rule}. "
         f"Then update `{evidence_path}` with bounded gate evidence. "
         f"Pending gates: {pending_count}. "
         f"Continuation budget after this pass: {next_count}/{report.max_continuations}. "
@@ -584,6 +859,38 @@ def _gate_result_from_payload(payload: Any) -> GateResult:
         ),
         evidence=_optional_string(payload.get("evidence")),
     )
+
+
+def _gate_plan_step_from_payload(payload: Any) -> GatePlanStep:
+    if not isinstance(payload, dict):
+        raise TypeError("each gate plan step must be an object.")
+    evidence_payload = payload.get("evidence_required")
+    if not isinstance(evidence_payload, list):
+        raise TypeError("gate plan step `evidence_required` must be a list.")
+    return GatePlanStep(
+        gate_id=_non_empty_string(payload.get("gate_id"), None),
+        title=_non_empty_string(payload.get("title"), None),
+        pass_criteria=_non_empty_string(payload.get("pass_criteria"), None),
+        evidence_required=tuple(
+            _non_empty_string(item, None) for item in evidence_payload
+        ),
+        next_action=_non_empty_string(payload.get("next_action"), None),
+        stop_rule=_non_empty_string(payload.get("stop_rule"), None),
+    )
+
+
+def _coerce_plan_steps(
+    value: Any,
+    required_gates: tuple[str, ...],
+) -> tuple[GatePlanStep, ...]:
+    if value is None:
+        return plan_steps_for_required_gates(required_gates)
+    if not isinstance(value, list):
+        raise TypeError("plan_steps must be a list when provided.")
+    plan_steps = tuple(_gate_plan_step_from_payload(item) for item in value)
+    if not plan_steps:
+        raise ValueError("plan_steps must be non-empty when provided.")
+    return plan_steps
 
 
 def _coerce_required_gates(value: Any) -> tuple[str, ...]:
@@ -647,6 +954,26 @@ def _session_id_from_hook_input(hook_input: dict[str, Any]) -> str:
 
 def _session_state_path(session_id: str, *, host: HostSurface) -> Path:
     return LOOP_GUARD_SESSIONS_ROOT / f"{host}-{_slug(session_id)}.json"
+
+
+def _generic_gate_plan_step(gate_id: str) -> GatePlanStep:
+    return GatePlanStep(
+        gate_id=gate_id,
+        title=f"Complete `{gate_id}`",
+        pass_criteria=(
+            f"The `{gate_id}` gate has bounded evidence and passes according to its "
+            "owning harness or operator report."
+        ),
+        evidence_required=(
+            f"bounded evidence for `{gate_id}`",
+            "updated gate report with pass, fail, blocked, or unknown classification",
+        ),
+        next_action=f"produce and record bounded evidence for `{gate_id}`",
+        stop_rule=(
+            f"If `{gate_id}` is blocked by authorization, capacity, or unclear scope, "
+            "stop for operator classification instead of marking pass."
+        ),
+    )
 
 
 def _slug(value: str) -> str:

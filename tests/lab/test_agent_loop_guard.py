@@ -46,6 +46,8 @@ def test_decide_loop_guard_continues_on_missing_required_gate() -> None:
     assert decision.action == "continue"
     assert decision.gate_id == "codex_live_watchlist_evidence"
     assert "do not stop yet" in decision.continuation_prompt
+    assert "Run bounded Codex CLI live watchlist" in decision.continuation_prompt
+    assert "Required evidence:" in decision.continuation_prompt
     assert "Continuation budget after this pass: 3/6" in decision.continuation_prompt
     hook_output = decision.as_hook_output(host="codex")
     assert hook_output["decision"] == "block"
@@ -240,6 +242,9 @@ def test_init_report_and_render_hook_config_cli(tmp_path: Path, capsys) -> None:
     assert payload["surface"] == "agent_loop_guard"
     assert payload["scope"] == "lab"
     assert payload["evidence_role"] == "watchlist"
+    assert [step["gate_id"] for step in payload["plan_steps"]] == payload["required_gates"]
+    assert payload["plan_steps"][0]["title"] == "Close the active brake-tonic reconciliation"
+    assert "Do not mark pass from stale transcripts" in payload["plan_steps"][4]["stop_rule"]
 
     assert (
         agent_loop_guard.main(
@@ -251,6 +256,26 @@ def test_init_report_and_render_hook_config_cli(tmp_path: Path, capsys) -> None:
     command = config["hooks"]["Stop"][0]["hooks"][0]["command"]
     assert "python3 -m lab.agent_loop_guard hook --host claude" in command
     assert str(report_path) in command
+
+
+def test_render_plan_cli_includes_ordered_gate_requirements(capsys) -> None:
+    assert agent_loop_guard.main(["render-plan"]) == 0
+
+    output = capsys.readouterr().out
+    assert "# V2 Executive Guidance Loop Plan" in output
+    assert "1. `active_train_reconciled` - Close the active brake-tonic reconciliation" in output
+    assert "6. `codex_live_watchlist_evidence` - Run bounded Codex CLI live watchlist" in output
+    assert "unapproved paid service-lane calls" in output
+
+
+def test_render_plan_cli_can_emit_json(capsys) -> None:
+    assert agent_loop_guard.main(["render-plan", "--format", "json"]) == 0
+
+    payload = json.loads(capsys.readouterr().out)
+    assert payload["scope"] == "lab"
+    assert payload["evidence_role"] == "watchlist"
+    assert payload["required_gates"] == list(agent_loop_guard.DEFAULT_REQUIRED_GATES)
+    assert payload["plan_steps"][3]["gate_id"] == "codex_guidance_fixture_passed"
 
 
 def test_evaluate_command_can_emit_hook_json(tmp_path: Path, capsys) -> None:
@@ -292,6 +317,7 @@ def _report(
         required_gates=required_gates,
         gates=tuple(gates),
         max_continuations=max_continuations,
+        plan_steps=agent_loop_guard.plan_steps_for_required_gates(required_gates),
     )
 
 
