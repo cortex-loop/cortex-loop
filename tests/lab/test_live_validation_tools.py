@@ -1041,8 +1041,10 @@ def test_claude_live_task_prompt_carries_v2_guidance(monkeypatch) -> None:
     command = captured["command"]
     prompt = command[command.index("-p") + 1]  # type: ignore[union-attr]
     assert prompt.startswith(GUIDANCE_MARKER)
+    assert "mode: compressed_dynamic" in prompt
     assert "host: claude" in prompt
-    assert "sre.uncertainty_brake" in prompt
+    assert "denominator_rule:" in prompt
+    assert "contract_rows:" not in prompt
     assert "USER_TASK\nRespond exactly with OK." in prompt
 
 
@@ -1071,6 +1073,7 @@ def test_codex_live_task_prompt_carries_v2_guidance(monkeypatch) -> None:
 
     prompt = captured["command"][-1]  # type: ignore[index]
     assert prompt.startswith(GUIDANCE_MARKER)
+    assert "mode: compressed_dynamic" in prompt
     assert "host: codex" in prompt
     assert "host.codex_cli" in prompt
     assert "negative.forbidden_shortcuts" in prompt
@@ -2822,6 +2825,59 @@ def test_operator_directionality_raw_precheck_uses_isolated_codex_home_when_auth
     assert payload["isolation_mode"] == "isolated_codex_home_auth_only"
 
 
+def test_operator_directionality_raw_precheck_supports_codex_cli_provider(tmp_path, monkeypatch) -> None:
+    fake_home = tmp_path / "home"
+    codex_root = fake_home / ".codex"
+    codex_root.mkdir(parents=True)
+    (codex_root / "auth.json").write_text("{}", encoding="utf-8")
+    monkeypatch.setattr(live_operator_directionality.Path, "home", lambda: fake_home)
+
+    payload = live_operator_directionality._raw_host_precheck("codex")
+
+    assert payload["status"] == "ready"
+    assert "codex exec" in payload["note"]
+
+
+def test_operator_directionality_raw_codex_task_uses_isolated_codex_home(tmp_path, monkeypatch) -> None:
+    fake_home = tmp_path / "home"
+    codex_root = fake_home / ".codex"
+    codex_root.mkdir(parents=True)
+    (codex_root / "auth.json").write_text("{}", encoding="utf-8")
+    captured: dict[str, object] = {}
+
+    monkeypatch.setattr(live_operator_directionality.Path, "home", lambda: fake_home)
+
+    def fake_timed_command(command, **kwargs):
+        captured["command"] = command
+        captured["env"] = kwargs["env"]
+        return {
+            "command": command,
+            "exit_code": 0,
+            "stdout": "",
+            "stderr": "",
+            "started_at": "2026-03-30T00:00:00+00:00",
+            "ended_at": "2026-03-30T00:00:00+00:00",
+        }
+
+    monkeypatch.setattr(
+        live_operator_directionality.host_paths,
+        "_run_timed_command",
+        fake_timed_command,
+    )
+
+    live_operator_directionality._run_raw_codex_task(
+        "Respond exactly OK.",
+        project_root=tmp_path,
+        model="gpt-5.3-codex",
+        auth_mode="codex_cli",
+        precheck={"status": "ready"},
+    )
+
+    assert captured["command"][:3] == ["codex", "exec", "--json"]
+    assert captured["command"][-1] == "Respond exactly OK."
+    assert "CODEX_HOME" in captured["env"]  # type: ignore[operator]
+
+
 def test_operator_directionality_audit_blocks_pairs_with_blocked_raw_host() -> None:
     audited = live_operator_directionality_audit._audit_pair(
         {
@@ -3130,9 +3186,10 @@ def test_operator_directionality_main_merges_provider_summaries(tmp_path, monkey
 
     assert live_operator_directionality.main(["--provider", "claude"]) == 0
     assert live_operator_directionality.main(["--provider", "openai"]) == 0
+    assert live_operator_directionality.main(["--provider", "codex"]) == 0
 
     merged = json.loads((comparator_root / "operator_directionality_summary.json").read_text())
-    assert sorted(merged["providers"]) == ["claude", "openai"]
+    assert sorted(merged["providers"]) == ["claude", "codex", "openai"]
 
 
 def test_openai_directionality_variant_applies_route_diagnostics(monkeypatch, tmp_path: Path) -> None:

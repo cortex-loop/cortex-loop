@@ -63,6 +63,7 @@ try:  # pragma: no cover
         summarize_operator_runs,
         write_json,
     )
+    from .v2_behavioral_payoff import PAYOFF_SCENARIOS, build_payoff_eval_artifact
 except ImportError:  # pragma: no cover
     import live_host_native_product_paths as host_paths
     import live_openai_app_server_operator as openai_operator
@@ -90,6 +91,7 @@ except ImportError:  # pragma: no cover
         summarize_operator_runs,
         write_json,
     )
+    from lab.v2_behavioral_payoff import PAYOFF_SCENARIOS, build_payoff_eval_artifact
 
 
 _SCENARIOS: dict[str, dict[str, Any]] = {
@@ -123,8 +125,11 @@ _VARIANTS = ("raw_host", "full_v2_guidance", "compressed_dynamic_cortex")
 _CORTEX_VARIANTS = frozenset({"full_v2_guidance", "compressed_dynamic_cortex", "cortex_operator"})
 _REPEAT_COUNT = 3
 _RAW_BASELINE_FAILURE = "blocked_raw_baseline_contaminated"
+_TIER1_PROVIDERS = ("claude", "codex")
+_ALL_PROVIDERS = ("claude", "codex", "gemini", "openai")
 _SURFACE_LABEL = {
     "claude": "claude_cli",
+    "codex": "codex_cli",
     "gemini": "gemini_cli",
     "openai": "codex_app_server",
 }
@@ -137,12 +142,12 @@ def main(argv: list[str] | None = None) -> int:
     )
     parser.add_argument(
         "--provider",
-        choices=("claude", "gemini", "openai", "all"),
+        choices=("claude", "codex", "gemini", "openai", "tier1", "all"),
         default="all",
     )
     parser.add_argument(
         "--scenario",
-        choices=("pass_minimal", "truth_gap", "restart_continuity", "all"),
+        choices=tuple(_SCENARIOS) + ("all",),
         default="all",
     )
     parser.add_argument(
@@ -158,7 +163,12 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
 
     ensure_live_validation_dirs()
-    providers = ("claude", "gemini", "openai") if args.provider == "all" else (args.provider,)
+    if args.provider == "all":
+        providers = _ALL_PROVIDERS
+    elif args.provider == "tier1":
+        providers = _TIER1_PROVIDERS
+    else:
+        providers = (args.provider,)
     scenarios = tuple(_SCENARIOS) if args.scenario == "all" else (args.scenario,)
 
     provider_updates: dict[str, Any] = {}
@@ -327,7 +337,7 @@ def _prompt_for_variant(
     mode = _guidance_mode_for_variant(variant)
     if mode is GuidanceMode.RAW:
         return prompt
-    host_name = "codex" if provider == "openai" else provider
+    host_name = _guidance_host_name(provider)
     surface = _SURFACE_LABEL.get(provider, provider)
     return prepend_guidance_to_prompt(
         prompt,
@@ -354,13 +364,27 @@ def _attach_guidance_metrics(
     payload["cortex_guidance_mode"] = mode.value
     payload["guidance_burden"] = coverage["guidance_burden"]
     payload["guidance_denominator_coverage"] = coverage
+    scenario_id = payload.get("scenario_id")
+    if isinstance(scenario_id, str) and scenario_id in PAYOFF_SCENARIOS:
+        payload["payoff_eval_artifact"] = build_payoff_eval_artifact(
+            payload,
+            provider=provider,
+            surface=str(payload.get("surface") or _SURFACE_LABEL.get(provider, provider)),
+            variant=variant,
+            scenario_id=scenario_id,
+            repeat_index=(
+                payload.get("repeat_index")
+                if isinstance(payload.get("repeat_index"), int)
+                else None
+            ),
+        )
 
 
 def _guidance_context_for_scenario(
     provider: str,
     scenario_id: str,
 ) -> ExecutiveGuidanceContext:
-    host_name = "codex" if provider == "openai" else provider
+    host_name = _guidance_host_name(provider)
     surface = _SURFACE_LABEL.get(provider, provider)
     defaults = {
         "pass_minimal": {
@@ -418,6 +442,10 @@ def _guidance_context_for_scenario(
     )
 
 
+def _guidance_host_name(provider: str) -> str:
+    return "codex" if provider in {"openai", "codex"} else provider
+
+
 def _merged_provider_summaries(provider_updates: dict[str, Any] | None = None) -> dict[str, Any]:
     updates = {} if provider_updates is None else dict(provider_updates)
     summary = {
@@ -427,7 +455,7 @@ def _merged_provider_summaries(provider_updates: dict[str, Any] | None = None) -
         **live_evidence_fields(lane="operator"),
         "providers": {},
     }
-    for provider in ("claude", "gemini", "openai"):
+    for provider in _ALL_PROVIDERS:
         payload = updates.get(provider)
         if payload is None:
             payload = _read_json(operator_directionality_root(provider, "summary") / "summary.json")
@@ -953,6 +981,15 @@ def _run_raw_provider_task(
             auth_mode=auth_mode,
             approval_mode=approval_mode,
         )
+    if provider == "codex":
+        return _run_raw_codex_task(
+            prompt,
+            project_root=project_root,
+            model=model,
+            auth_mode=auth_mode,
+            precheck=precheck,
+            scenario_id=scenario_id,
+        )
     raise ValueError(f"unsupported raw operator provider: {provider}")
 
 
@@ -985,6 +1022,16 @@ def _resume_raw_provider_task(
             auth_mode=auth_mode,
             resume_session=session_id,
             approval_mode=approval_mode,
+        )
+    if provider == "codex":
+        return _run_raw_codex_task(
+            prompt,
+            project_root=project_root,
+            model=model,
+            auth_mode=auth_mode,
+            resume_session=session_id,
+            precheck=precheck,
+            scenario_id=scenario_id,
         )
     raise ValueError(f"unsupported raw operator provider: {provider}")
 
@@ -1061,6 +1108,60 @@ def _run_raw_gemini_task(
         cwd=project_root,
         timeout_seconds=180.0,
     )
+
+
+def _run_raw_codex_task(
+    prompt: str,
+    *,
+    project_root: Path,
+    model: str,
+    auth_mode: str,
+    resume_session: str | None = None,
+    precheck: dict[str, Any] | None = None,
+    scenario_id: str | None = None,
+) -> dict[str, Any]:
+    visible_prompt = host_paths._prompt_with_model_visible_guidance(
+        prompt,
+        host_name="codex",
+        surface="codex-exec-raw",
+        guidance_mode=GuidanceMode.RAW,
+    )
+    if auth_mode != "codex_cli":
+        return host_paths._unsupported_operator_mode("codex", auth_mode, ["codex"])
+    if precheck is not None and precheck.get("status") != "ready":
+        return host_paths._unsupported_operator_mode(
+            "codex",
+            auth_mode,
+            ["codex", "exec"],
+        )
+    if resume_session:
+        command = [
+            "codex",
+            "exec",
+            "resume",
+            "--json",
+            "--full-auto",
+            resume_session,
+            visible_prompt,
+        ]
+    else:
+        command = [
+            "codex",
+            "exec",
+            "--json",
+            "--full-auto",
+            "--skip-git-repo-check",
+            "-m",
+            model,
+            visible_prompt,
+        ]
+    with _codex_raw_env() as env:
+        return host_paths._run_timed_command(
+            command,
+            cwd=project_root,
+            timeout_seconds=180.0,
+            env=env,
+        )
 
 
 def _run_openai_variant(
@@ -1382,9 +1483,15 @@ def _openai_variant_env(
     if variant != "raw_host":
         yield None
         return
+    with _codex_raw_env() as env:
+        yield env
+
+
+@contextmanager
+def _codex_raw_env() -> Iterator[dict[str, str]]:
     codex_auth_path = Path.home() / ".codex" / "auth.json"
     if not codex_auth_path.exists():
-        raise RuntimeError("raw OpenAI directionality run requires ~/.codex/auth.json")
+        raise RuntimeError("raw Codex directionality run requires ~/.codex/auth.json")
     tmp_root = Path(tempfile.mkdtemp(prefix="cortex-directionality-codex-"))
     try:
         shutil.copy2(codex_auth_path, tmp_root / "auth.json")
@@ -1434,20 +1541,27 @@ def _raw_host_precheck(provider: str) -> dict[str, Any]:
             "isolation_mode": "no_project_hook_injection",
         }
 
-    codex_auth_path = Path.home() / ".codex" / "auth.json"
-    if not codex_auth_path.exists():
+    if provider in {"openai", "codex"}:
+        codex_auth_path = Path.home() / ".codex" / "auth.json"
+        if not codex_auth_path.exists():
+            return {
+                "status": "blocked",
+                "reason": _RAW_BASELINE_FAILURE,
+                "note": f"{_provider_display(provider)} raw baseline requires auth.json so CODEX_HOME can be isolated from user config.",
+                "isolation_mode": None,
+            }
+        surface = "codex app-server" if provider == "openai" else "codex exec"
         return {
-            "status": "blocked",
-            "reason": _RAW_BASELINE_FAILURE,
-            "note": "OpenAI raw baseline requires auth.json so CODEX_HOME can be isolated from user config.",
-            "isolation_mode": None,
+            "status": "ready",
+            "reason": None,
+            "note": f"{_provider_display(provider)} raw baseline uses {surface} with an isolated CODEX_HOME that carries only auth.json.",
+            "isolation_mode": "isolated_codex_home_auth_only",
         }
-    return {
-        "status": "ready",
-        "reason": None,
-        "note": "OpenAI raw baseline uses codex app-server with an isolated CODEX_HOME that carries only auth.json.",
-        "isolation_mode": "isolated_codex_home_auth_only",
-    }
+    raise ValueError(f"unsupported raw precheck provider: {provider}")
+
+
+def _provider_display(provider: str) -> str:
+    return "Codex CLI" if provider == "codex" else "OpenAI"
 
 
 def _blocked_raw_payload(
@@ -1480,6 +1594,12 @@ def _blocked_raw_payload(
         "provider_window_caution": False,
         "provider_window_note": None,
     }
+    _attach_guidance_metrics(
+        payload,
+        provider=provider,
+        variant="raw_host",
+        guidance_context=_guidance_context_for_scenario(provider, scenario_id),
+    )
     write_json(artifact_path, payload)
     payload["artifact_path"] = str(artifact_path.relative_to(root.parents[4]))
     return payload

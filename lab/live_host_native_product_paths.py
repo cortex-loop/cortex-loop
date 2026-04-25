@@ -17,6 +17,7 @@ if str(ROOT) not in sys.path:  # pragma: no cover - direct script entrypoint sup
 
 from cortex.sre.executive_summary import build_executive_signal_summary
 from cortex.sre.guidance import (
+    DEFAULT_PRODUCT_GUIDANCE_MODE,
     ExecutiveGuidanceContext,
     GuidanceMode,
     build_guidance_context_from_session,
@@ -66,7 +67,11 @@ try:  # pragma: no cover - import path differs between script execution and pyte
         write_text,
     )
     from .live_openai_app_server_operator import run_openai_app_server_validation
-    from .v2_behavioral_payoff import PAYOFF_SCENARIOS, classify_behavioral_scenario
+    from .v2_behavioral_payoff import (
+        PAYOFF_SCENARIOS,
+        build_payoff_eval_artifact,
+        classify_behavioral_scenario,
+    )
 except ImportError:  # pragma: no cover
     from lab.live_validation_common import (
         BLOCKING_FAILURE_CLASSES,
@@ -100,7 +105,11 @@ except ImportError:  # pragma: no cover
         write_text,
     )
     from live_openai_app_server_operator import run_openai_app_server_validation
-    from lab.v2_behavioral_payoff import PAYOFF_SCENARIOS, classify_behavioral_scenario
+    from lab.v2_behavioral_payoff import (
+        PAYOFF_SCENARIOS,
+        build_payoff_eval_artifact,
+        classify_behavioral_scenario,
+    )
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -110,7 +119,7 @@ def main(argv: list[str] | None = None) -> int:
     )
     parser.add_argument(
         "--provider",
-        choices=("claude", "gemini", "openai", "all"),
+        choices=("claude", "codex", "gemini", "openai", "all"),
         default="all",
     )
     parser.add_argument(
@@ -152,7 +161,7 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
 
     ensure_live_validation_dirs()
-    providers = ("claude", "gemini", "openai") if args.provider == "all" else (args.provider,)
+    providers = ("claude", "codex", "gemini", "openai") if args.provider == "all" else (args.provider,)
     summary_name = (
         "host_native_product_paths_summary__exploratory.json"
         if args.exploratory_probe
@@ -445,7 +454,7 @@ def _run_operator_attempts(
     fallback_model_override: str | None,
     disable_auto_probe: bool,
     execution_flavor: str = "wrapped",
-    guidance_mode: GuidanceMode | str = GuidanceMode.FULL,
+    guidance_mode: GuidanceMode | str = DEFAULT_PRODUCT_GUIDANCE_MODE,
     guidance_context: ExecutiveGuidanceContext | None = None,
 ) -> tuple[dict[str, Any], str | None, str, str, bool | None, list[str]]:
     auto_supported: bool | None = None
@@ -797,6 +806,15 @@ def _materialize_operator_run(
             result_text=result_text,
         ),
     }
+    if scenario_id in PAYOFF_SCENARIOS:
+        payload["payoff_eval_artifact"] = build_payoff_eval_artifact(
+            payload,
+            provider=provider,
+            surface="product_paths",
+            variant="compressed_dynamic_cortex",
+            scenario_id=scenario_id,
+            repeat_index=repeat_index,
+        )
     if route_diagnostics is not None:
         payload.update(route_diagnostics)
     write_json(metadata_path, payload)
@@ -815,7 +833,7 @@ def _run_provider_task(
     hook_log_path: Path | None = None,
     scenario_id: str | None = None,
     execution_flavor: str = "wrapped",
-    guidance_mode: GuidanceMode | str = GuidanceMode.FULL,
+    guidance_mode: GuidanceMode | str = DEFAULT_PRODUCT_GUIDANCE_MODE,
     guidance_context: ExecutiveGuidanceContext | None = None,
 ) -> dict[str, Any]:
     if provider == "claude":
@@ -861,7 +879,7 @@ def _resume_provider_task(
     hook_log_path: Path | None = None,
     scenario_id: str | None = None,
     execution_flavor: str = "wrapped",
-    guidance_mode: GuidanceMode | str = GuidanceMode.FULL,
+    guidance_mode: GuidanceMode | str = DEFAULT_PRODUCT_GUIDANCE_MODE,
     guidance_context: ExecutiveGuidanceContext | None = None,
 ) -> dict[str, Any]:
     if provider == "claude":
@@ -907,7 +925,7 @@ def _run_claude_task(
     resume_session: str | None = None,
     hook_log_path: Path | None = None,
     scenario_id: str | None = None,
-    guidance_mode: GuidanceMode | str = GuidanceMode.FULL,
+    guidance_mode: GuidanceMode | str = DEFAULT_PRODUCT_GUIDANCE_MODE,
     guidance_context: ExecutiveGuidanceContext | None = None,
 ) -> dict[str, Any]:
     visible_prompt = _prompt_with_model_visible_guidance(
@@ -997,7 +1015,7 @@ def _run_codex_task(
     model: str,
     auth_mode: str,
     resume_session: str | None = None,
-    guidance_mode: GuidanceMode | str = GuidanceMode.FULL,
+    guidance_mode: GuidanceMode | str = DEFAULT_PRODUCT_GUIDANCE_MODE,
     guidance_context: ExecutiveGuidanceContext | None = None,
 ) -> dict[str, Any]:
     visible_prompt = _prompt_with_model_visible_guidance(
@@ -1008,7 +1026,7 @@ def _run_codex_task(
         guidance_context=guidance_context,
     )
     if auth_mode != "codex_cli":
-        return _unsupported_operator_mode("openai", auth_mode, ["codex"])
+        return _unsupported_operator_mode("codex", auth_mode, ["codex"])
     if resume_session:
         command = [
             "codex",
@@ -1038,7 +1056,7 @@ def _prompt_with_model_visible_guidance(
     *,
     host_name: str,
     surface: str,
-    guidance_mode: GuidanceMode | str = GuidanceMode.FULL,
+    guidance_mode: GuidanceMode | str = DEFAULT_PRODUCT_GUIDANCE_MODE,
     guidance_context: ExecutiveGuidanceContext | None = None,
 ) -> str:
     context = guidance_context or build_guidance_context_from_session(

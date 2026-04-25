@@ -239,19 +239,19 @@ def test_status_registry_is_complete_and_stable() -> None:
         "reference": "reference_cli",
     }
     assert status["conformance_summary"]["shipping_default"] == "openai:operator_cli"
-    assert status["work_today"]["slug"] == "v2-communication-optimization"
-    assert "Initial V2 communication optimization is landed" in status["work_today"]["note"]
-    assert "`raw`, `full`, and `compressed_dynamic` modes" in status["work_today"]["note"]
-    assert "Claude and Codex CLI with all 17 rows visible" in status["work_today"]["note"]
-    assert "provider-scoped causal payoff gate" in status["work_today"]["note"]
-    assert "not Cortex perfection" in status["work_today"]["note"]
-    assert "app-server/operator harness rather than the Codex CLI" in status["work_today"]["note"]
-    assert status["next_product_train"]["slug"] == "v2-intervention-policy-tuning"
+    assert status["work_today"]["slug"] == "v2-intervention-policy-tuning"
+    assert "V2 communication optimization is now the baseline" in status["work_today"]["note"]
+    assert "stable shape covering host, surface, task pack" in status["work_today"]["note"]
+    assert "Claude CLI plus true Codex CLI" in status["work_today"]["note"]
+    assert "product default profile is `normal`" in status["work_today"]["note"]
+    assert "35% median guidance-burden reduction" in status["work_today"]["note"]
+    assert "2:1 adoption preference evidence" in status["work_today"]["note"]
+    assert status["next_product_train"]["slug"] == "v2-adoption-closed-alpha"
     assert status["next_product_train"]["surface"] == "product + conformance + lab"
-    assert "CHECK, SEEK_CONTEXT, BRAKE, REPAIR, CONTINUE, or CLOSE" in status["next_product_train"]["executive_benefit"]
-    assert "mistimed intervention" in status["next_product_train"]["why_now"]
-    assert "unnecessary-intervention rate" in status["next_product_train"]["primary_metric"]
-    assert "app-server watchlist behavior as Codex CLI behavioral proof" in status["next_product_train"]["guardrail"]
+    assert "expert-user adoption evidence" in status["next_product_train"]["executive_benefit"]
+    assert "Tier 1 subscription CLI lanes" in status["next_product_train"]["why_now"]
+    assert "2:1 margin" in status["next_product_train"]["primary_metric"]
+    assert "causal payoff and adoption gates" in status["next_product_train"]["guardrail"]
     assert "Keep the bounded audit surface compact and truthful" in status["where_to_work"][0]
     assert "no-spend live evidence current and explicit" in status["where_to_work"][1]
     assert "posture-sensitive online control is s-tier closed" in status["where_to_work"][2].lower()
@@ -292,17 +292,17 @@ def test_generated_status_doc_includes_system_map_and_next_product_train() -> No
     assert "## Packet To Code" in text
     assert "## Next Product Train" in text
     assert "host/tool reliability and affordance priors are earned" in text
-    assert "`v2-communication-optimization`" in text
     assert "`v2-intervention-policy-tuning`" in text
-    assert "Claude and Codex CLI with all 17 rows visible" in text
-    assert "app-server/operator harness rather than the Codex CLI" in text
+    assert "`v2-adoption-closed-alpha`" in text
+    assert "Claude CLI plus true Codex CLI" in text
+    assert "OpenAI app-server/operator evidence remains support evidence" in text
     assert "Shipping Product Lane\\nopenai:operator_cli" in text or "Shipping Product Lane" in text
     assert "Shipping default: `openai:operator_cli`" in text
     assert "Workflow gates marked `required` are contractual gates checked by `repo_workflow.py`" in text
     assert "| `main_synced` | `required` |" in text
     assert "| `cleanup_report` | `required` |" in text
     assert "unchanged-condition repetition is taxed only at the exact-family level" in text
-    assert "Claude/OpenAI behavioral matrices" in text
+    assert "Claude CLI plus true Codex CLI behavioral matrices" in text
     assert "posture-sensitive online control is s-tier closed" in text.lower()
     assert "compressed/dynamic guidance" in text
     assert "`visible_burden_sensitivity`" in text

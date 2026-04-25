@@ -24,6 +24,12 @@ class GuidanceMode(str, Enum):
     COMPRESSED_DYNAMIC = "compressed_dynamic"
 
 
+class GuidanceProfile(str, Enum):
+    NORMAL = "normal"
+    AUDIT_FULL = "audit_full"
+    EVAL_RAW = "eval_raw"
+
+
 class GuidanceCoverageStatus(str, Enum):
     ALWAYS_ON = "always_on"
     DYNAMIC_TRIGGERED = "dynamic_triggered"
@@ -37,6 +43,10 @@ class ExecutiveInterventionIntent(str, Enum):
     REPAIR = "REPAIR"
     CONTINUE = "CONTINUE"
     CLOSE = "CLOSE"
+
+
+DEFAULT_GUIDANCE_PROFILE = GuidanceProfile.NORMAL
+DEFAULT_PRODUCT_GUIDANCE_MODE = GuidanceMode.COMPRESSED_DYNAMIC
 
 
 @dataclass(frozen=True, slots=True)
@@ -476,6 +486,17 @@ def render_executive_guidance(
     return _render_full_guidance(context)
 
 
+def guidance_mode_for_profile(profile: GuidanceProfile | str) -> GuidanceMode:
+    guidance_profile = _coerce_guidance_profile(profile)
+    if guidance_profile is GuidanceProfile.NORMAL:
+        return DEFAULT_PRODUCT_GUIDANCE_MODE
+    if guidance_profile is GuidanceProfile.AUDIT_FULL:
+        return GuidanceMode.FULL
+    if guidance_profile is GuidanceProfile.EVAL_RAW:
+        return GuidanceMode.RAW
+    raise ValueError(f"unsupported guidance profile: {profile}")
+
+
 def _render_full_guidance(context: ExecutiveGuidanceContext) -> str:
     lines = [
         GUIDANCE_MARKER,
@@ -901,6 +922,18 @@ def _coerce_guidance_mode(value: GuidanceMode | str) -> GuidanceMode:
             raise ValueError(f"unsupported guidance mode: {value}") from exc
     actual_type = type(value).__name__
     raise TypeError(f"guidance mode must be GuidanceMode or str, got {actual_type}.")
+
+
+def _coerce_guidance_profile(value: GuidanceProfile | str) -> GuidanceProfile:
+    if isinstance(value, GuidanceProfile):
+        return value
+    if isinstance(value, str):
+        try:
+            return GuidanceProfile(value)
+        except ValueError as exc:
+            raise ValueError(f"unsupported guidance profile: {value}") from exc
+    actual_type = type(value).__name__
+    raise TypeError(f"guidance profile must be GuidanceProfile or str, got {actual_type}.")
 
 
 def _optional_string(value: Any) -> str | None:

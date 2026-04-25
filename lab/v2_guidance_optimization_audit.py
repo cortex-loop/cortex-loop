@@ -24,7 +24,12 @@ from lab.live_validation_common import (
     now_utc_iso,
     write_json,
 )
-from lab.v2_behavioral_payoff import summarize_causal_payoff
+from lab.v2_behavioral_payoff import (
+    PAYOFF_TASK_PACKS,
+    PAYOFF_VARIANTS,
+    TIER1_PAYOFF_PROVIDERS,
+    summarize_causal_payoff,
+)
 from lab.v2_live_communication_audit import DEFAULT_AUDIT_PATH
 
 
@@ -37,7 +42,7 @@ def build_v2_guidance_optimization_audit(
     *,
     directionality_summary_path: Path | None = None,
     communication_audit_path: Path = DEFAULT_AUDIT_PATH,
-    provider_names: tuple[str, ...] = ("claude", "openai"),
+    provider_names: tuple[str, ...] = TIER1_PAYOFF_PROVIDERS,
 ) -> dict[str, Any]:
     contexts = _sample_contexts()
     coverage_reports = {
@@ -81,13 +86,20 @@ def build_v2_guidance_optimization_audit(
         "generated_at": now_utc_iso(),
         "surface": "lab",
         "evidence_role": "watchlist",
-        "train": "v2-communication-optimization",
+        "train": "v2-intervention-policy-tuning",
         "guidance_modes": ["raw", "full", "compressed_dynamic"],
-        "variant_matrix": ["raw_host", "full_v2_guidance", "compressed_dynamic_cortex"],
+        "default_product_profile": "normal",
+        "default_product_guidance_mode": "compressed_dynamic",
+        "variant_matrix": list(PAYOFF_VARIANTS),
+        "task_packs": list(PAYOFF_TASK_PACKS),
         "provider_scope": list(provider_names),
+        "tier1_provider_scope": list(TIER1_PAYOFF_PROVIDERS),
+        "support_provider_scope": ["openai"],
         "compression_integrity_pass": compression_integrity_pass,
         "full_communication_non_regression": full_communication_non_regression,
         "causal_payoff_gate": causal_payoff["package_gate"],
+        "promotion_gate": causal_payoff["promotion_gate"],
+        "research_product_gates": causal_payoff["research_product_gates"],
         "coverage_reports": coverage_reports,
         "guidance_lengths": {
             name: {
@@ -102,7 +114,9 @@ def build_v2_guidance_optimization_audit(
             "row_dropped": "failed if any compressed coverage report has missing_row_ids",
             "raw_aux_hidden_memory": "AUX default-zero remains always-on and publication-only is dynamic",
             "single_host_overclaim": "full communication non-regression requires Claude and Codex only and does not claim all-host optimization",
+            "codex_cli_gap": "OpenAI app-server evidence remains support evidence unless a separate codex provider run passes on codex exec",
             "audit_transcript_bloat": "compressed_dynamic omits contract_rows and records denominator detail in artifact coverage",
+            "adoption_overclaim": "broad product usefulness remains forbidden until human or dogfood-equivalent preference evidence reaches the 2:1 adoption gate",
         },
     }
 
@@ -117,7 +131,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--communication-audit", type=Path, default=DEFAULT_AUDIT_PATH)
     parser.add_argument(
         "--provider",
-        choices=("claude", "openai"),
+        choices=("claude", "codex", "openai"),
         action="append",
         default=None,
     )
@@ -127,7 +141,7 @@ def main(argv: list[str] | None = None) -> int:
     payload = build_v2_guidance_optimization_audit(
         directionality_summary_path=args.directionality_summary,
         communication_audit_path=args.communication_audit,
-        provider_names=tuple(args.provider or ("claude", "openai")),
+        provider_names=tuple(args.provider or TIER1_PAYOFF_PROVIDERS),
     )
     write_json(args.output, payload)
     print(str(args.output))

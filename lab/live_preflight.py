@@ -175,6 +175,7 @@ def _operator_probe_summary() -> dict[str, Any]:
         "claude": _probe_claude_operator(),
         "gemini": _probe_gemini_operator(),
         "openai": _probe_openai_operator(),
+        "codex": _probe_codex_operator(),
     }
 
 
@@ -242,6 +243,23 @@ def _probe_openai_operator() -> dict[str, Any]:
         failure_class = classify_failure(f"{probe['stdout']}\n{probe['stderr']}")
     return {
         "auth_mode": resolve_auth_mode("openai", "operator"),
+        "preferred_model": preferred,
+        "model": chosen_model,
+        "failure_class": failure_class,
+        "command": probe["command"],
+    }
+
+
+def _probe_codex_operator() -> dict[str, Any]:
+    preferred = MODEL_MATRIX["codex"]["operator"].preferred
+    probe = _run_codex_probe(preferred)
+    failure_class = classify_failure(f"{probe['stdout']}\n{probe['stderr']}")
+    chosen_model = choose_model("codex", "operator", first_failure=failure_class)
+    if chosen_model != preferred:
+        probe = _run_codex_probe(chosen_model)
+        failure_class = classify_failure(f"{probe['stdout']}\n{probe['stderr']}")
+    return {
+        "auth_mode": resolve_auth_mode("codex", "operator"),
         "preferred_model": preferred,
         "model": chosen_model,
         "failure_class": failure_class,

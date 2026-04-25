@@ -11,13 +11,16 @@ from cortex.hosts.openai.runtime import OpenAIRuntimeSession
 from cortex.sre.families import SoftControlFamily
 from cortex.sre.guidance import (
     ExecutiveGuidanceContext,
+    DEFAULT_PRODUCT_GUIDANCE_MODE,
     GUIDANCE_MARKER,
     GuidanceMode,
+    GuidanceProfile,
     V2_EXECUTIVE_GUIDANCE_ROWS,
     append_guidance_to_channel,
     assert_status_bio_to_code_coverage,
     build_intervention_intent_view,
     build_guidance_context_from_session,
+    guidance_mode_for_profile,
     prepend_guidance_to_prompt,
     render_executive_guidance,
     v2_guidance_denominator_coverage_payload,
@@ -125,6 +128,13 @@ def test_guidance_channel_helpers_preserve_existing_text_and_are_idempotent() ->
     assert GUIDANCE_MARKER in appended
     assert prepend_guidance_to_prompt(prompted, context) == prompted
     assert append_guidance_to_channel(appended, context) == appended
+
+
+def test_normal_guidance_profile_uses_compressed_dynamic_as_product_default() -> None:
+    assert DEFAULT_PRODUCT_GUIDANCE_MODE is GuidanceMode.COMPRESSED_DYNAMIC
+    assert guidance_mode_for_profile(GuidanceProfile.NORMAL) is GuidanceMode.COMPRESSED_DYNAMIC
+    assert guidance_mode_for_profile("audit_full") is GuidanceMode.FULL
+    assert guidance_mode_for_profile("eval_raw") is GuidanceMode.RAW
 
 
 def test_guidance_helpers_do_not_treat_marker_mentions_as_rendered_guidance() -> None:

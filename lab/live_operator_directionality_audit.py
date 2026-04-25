@@ -24,7 +24,12 @@ try:  # pragma: no cover
         write_json,
         write_text,
     )
-    from .v2_behavioral_payoff import PAYOFF_SCENARIOS, classify_behavioral_scenario, summarize_causal_payoff
+    from .v2_behavioral_payoff import (
+        PAYOFF_SCENARIOS,
+        TIER1_PAYOFF_PROVIDERS,
+        classify_behavioral_scenario,
+        summarize_causal_payoff,
+    )
 except ImportError:  # pragma: no cover
     from lab.live_validation_common import (
         BLOCKING_FAILURE_CLASSES,
@@ -37,17 +42,16 @@ except ImportError:  # pragma: no cover
         write_json,
         write_text,
     )
-    from lab.v2_behavioral_payoff import PAYOFF_SCENARIOS, classify_behavioral_scenario, summarize_causal_payoff
+    from lab.v2_behavioral_payoff import (
+        PAYOFF_SCENARIOS,
+        TIER1_PAYOFF_PROVIDERS,
+        classify_behavioral_scenario,
+        summarize_causal_payoff,
+    )
 
 
-_SCENARIOS = (
-    "pass_minimal",
-    "truth_gap",
-    "uncertainty_context",
-    "restart_continuity",
-    "anti_thrash_repeated_failure",
-    "unsupported_claim_refusal",
-)
+_SCENARIOS = PAYOFF_SCENARIOS
+_ALL_PROVIDERS = ("claude", "codex", "gemini", "openai")
 _PRIMARY_CORTEX_VARIANTS = ("full_v2_guidance", "compressed_dynamic_cortex")
 
 
@@ -58,7 +62,7 @@ def main(argv: list[str] | None = None) -> int:
     )
     parser.add_argument(
         "--provider",
-        choices=("claude", "gemini", "openai", "all"),
+        choices=("claude", "codex", "gemini", "openai", "tier1", "all"),
         action="append",
         default=None,
     )
@@ -67,11 +71,12 @@ def main(argv: list[str] | None = None) -> int:
     ensure_live_validation_dirs()
     summary = _read_json(comparator_path("operator_directionality_summary.json"))
     requested_providers = args.provider or ["all"]
-    providers = (
-        ("claude", "gemini", "openai")
-        if "all" in requested_providers
-        else tuple(dict.fromkeys(requested_providers))
-    )
+    if "all" in requested_providers:
+        providers = _ALL_PROVIDERS
+    elif "tier1" in requested_providers:
+        providers = TIER1_PAYOFF_PROVIDERS
+    else:
+        providers = tuple(dict.fromkeys(requested_providers))
     audit = _build_audit(summary, provider_names=providers)
     write_json(comparator_path("operator_directionality_audit.json"), audit)
     write_text(comparator_path("operator_directionality_audit.md"), _audit_markdown(audit))
@@ -82,7 +87,7 @@ def main(argv: list[str] | None = None) -> int:
 def _build_audit(
     summary: dict[str, Any],
     *,
-    provider_names: tuple[str, ...] = ("claude", "gemini", "openai"),
+    provider_names: tuple[str, ...] = TIER1_PAYOFF_PROVIDERS,
 ) -> dict[str, Any]:
     providers: dict[str, Any] = {}
     host_verdicts: list[str] = []
@@ -111,6 +116,8 @@ def _build_audit(
         "verdict_reason": verdict_reason,
         "efficiency_note": _package_efficiency_note(efficiency_readings),
         "causal_payoff": causal_payoff,
+        "promotion_gate": causal_payoff["promotion_gate"],
+        "tier1_providers": list(TIER1_PAYOFF_PROVIDERS),
     }
 
 
@@ -610,6 +617,7 @@ def _audit_markdown(audit: dict[str, Any]) -> str:
         "",
         f"- Generated at: `{audit['generated_at']}`",
         f"- Package verdict: **{audit['package_verdict']}**",
+        f"- Promotion gate: `{audit['promotion_gate']}`",
         "- Pair order: alternated by repeat index to reduce shared-budget bias.",
         "",
         audit["verdict_reason"],

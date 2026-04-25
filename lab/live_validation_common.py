@@ -89,6 +89,10 @@ MODEL_MATRIX: dict[str, dict[str, LiveModelPreference]] = {
         "operator": LiveModelPreference("gpt-5.3-codex", "gpt-5.4"),
         "automation": LiveModelPreference("gpt-5.4", None),
     },
+    "codex": {
+        "operator": LiveModelPreference("gpt-5.3-codex", "gpt-5.4"),
+        "automation": LiveModelPreference("gpt-5.4", None),
+    },
 }
 
 GEMINI_OPERATOR_FULL_LADDER = ("auto",)
@@ -97,12 +101,14 @@ DEFAULT_AUTH_MODE: dict[str, dict[str, str]] = {
     "claude": {"operator": "claude_code", "automation": "api_key"},
     "gemini": {"operator": "google_login", "automation": "vertex_adc"},
     "openai": {"operator": "codex_cli", "automation": "api_key"},
+    "codex": {"operator": "codex_cli", "automation": "api_key"},
 }
 
 AUTH_MODE_ENV: dict[str, str] = {
     "claude": CLAUDE_AUTH_MODE_ENV,
     "gemini": GEMINI_AUTH_MODE_ENV,
     "openai": OPENAI_AUTH_MODE_ENV,
+    "codex": OPENAI_AUTH_MODE_ENV,
 }
 
 BLOCKING_FAILURE_CLASSES = frozenset(
@@ -421,7 +427,7 @@ def automation_auth_readiness(provider: str, env: MappingLike | None = None) -> 
             "api_key_present": has_required,
         }
 
-    if provider == "openai":
+    if provider in {"openai", "codex"}:
         has_required = api_keys["OPENAI_API_KEY"]
         if not has_required:
             status = "missing"
@@ -820,7 +826,7 @@ def extract_session_id(provider: str, records: list[dict[str, Any]]) -> str | No
                 session_id = record.get("session_id")
                 if isinstance(session_id, str) and session_id.strip():
                     return session_id.strip()
-        elif provider == "openai":
+        elif provider in {"openai", "codex"}:
             if record.get("type") == "thread.started":
                 thread_id = record.get("thread_id")
                 if isinstance(thread_id, str) and thread_id.strip():
