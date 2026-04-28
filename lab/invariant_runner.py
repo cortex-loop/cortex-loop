@@ -20,6 +20,7 @@ CERTIFIED = "certified"
 UNCERTIFIED = "uncertified"
 VOID = "void"
 ENV_BLOCKED = "env_blocked"
+FIXTURE_BASELINE_TAG = "cortex-fixture-baseline"
 
 _COMPLETION_RE = re.compile(
     r"\b(done|complete|completed|finished|verified|verification passed|passes|passed)\b",
@@ -56,6 +57,24 @@ class ToolEvidence:
 
 
 @dataclass(frozen=True, slots=True)
+class WorkspaceChangeEvidence:
+    dirty_files: tuple[str, ...] = ()
+    committed_files_since_baseline: tuple[str, ...] = ()
+    modified_files: tuple[str, ...] = ()
+    baseline_ref: str | None = None
+    baseline_sha: str | None = None
+
+    def as_payload(self) -> dict[str, Any]:
+        return {
+            "dirty_files": list(self.dirty_files),
+            "committed_files_since_baseline": list(self.committed_files_since_baseline),
+            "modified_files": list(self.modified_files),
+            "baseline_ref": self.baseline_ref,
+            "baseline_sha": self.baseline_sha,
+        }
+
+
+@dataclass(frozen=True, slots=True)
 class InvariantEvidence:
     modified_files: tuple[str, ...]
     result_text: str | None = None
@@ -63,10 +82,18 @@ class InvariantEvidence:
     commands: tuple[str, ...] = ()
     check_results: tuple[dict[str, Any], ...] = ()
     env_failure_class: str | None = None
+    dirty_files: tuple[str, ...] = ()
+    committed_files_since_baseline: tuple[str, ...] = ()
+    baseline_ref: str | None = None
+    baseline_sha: str | None = None
 
     def as_payload(self) -> dict[str, Any]:
         return {
             "modified_files": list(self.modified_files),
+            "dirty_files": list(self.dirty_files),
+            "committed_files_since_baseline": list(self.committed_files_since_baseline),
+            "baseline_ref": self.baseline_ref,
+            "baseline_sha": self.baseline_sha,
             "result_text": self.result_text,
             "read_paths": list(self.read_paths),
             "commands": list(self.commands),
@@ -188,6 +215,59 @@ def extract_tool_evidence_from_records(
     return ToolEvidence(read_paths=tuple(read_paths), commands=tuple(commands))
 
 
+def initialize_fixture_git_baseline(
+    project_root: Path,
+    *,
+    baseline_ref: str = FIXTURE_BASELINE_TAG,
+) -> str:
+    git_env = os.environ.copy()
+    git_env.update(
+        {
+            "GIT_AUTHOR_NAME": "cortex-live-validation",
+            "GIT_AUTHOR_EMAIL": "cortex-live-validation@example.invalid",
+            "GIT_COMMITTER_NAME": "cortex-live-validation",
+            "GIT_COMMITTER_EMAIL": "cortex-live-validation@example.invalid",
+        }
+    )
+    for command in (
+        ["git", "init", "-q"],
+        ["git", "config", "user.name", "cortex-live-validation"],
+        ["git", "config", "user.email", "cortex-live-validation@example.invalid"],
+        ["git", "add", "."],
+        ["git", "commit", "-q", "-m", "baseline"],
+        ["git", "tag", "-f", baseline_ref],
+    ):
+        result = run_command(command, cwd=project_root, env=git_env, timeout_seconds=30.0)
+        if result["exit_code"] != 0:
+            raise RuntimeError(
+                f"failed to initialize fixture git baseline: {result['stderr'] or result['stdout']}"
+            )
+    baseline = run_command(["git", "rev-parse", baseline_ref], cwd=project_root, timeout_seconds=30.0)
+    if baseline["exit_code"] != 0:
+        raise RuntimeError(f"failed to resolve fixture baseline: {baseline['stderr'] or baseline['stdout']}")
+    return baseline["stdout"].strip()
+
+
+def collect_workspace_change_evidence(
+    project_root: Path,
+    *,
+    baseline_ref: str = FIXTURE_BASELINE_TAG,
+) -> WorkspaceChangeEvidence:
+    dirty_files = _collect_dirty_files(project_root)
+    baseline_sha = _resolve_optional_ref(project_root, baseline_ref)
+    committed_files: tuple[str, ...] = ()
+    if baseline_sha:
+        committed_files = _collect_committed_files_since_baseline(project_root, baseline_ref)
+    modified_files = tuple(sorted(set(dirty_files) | set(committed_files)))
+    return WorkspaceChangeEvidence(
+        dirty_files=dirty_files,
+        committed_files_since_baseline=committed_files,
+        modified_files=modified_files,
+        baseline_ref=baseline_ref,
+        baseline_sha=baseline_sha,
+    )
+
+
 def run_configured_checks(config: dict[str, Any], *, project_root: Path) -> tuple[dict[str, Any], ...]:
     results: list[dict[str, Any]] = []
     for check in config.get("checks", []):
@@ -219,7 +299,7 @@ def evaluate_invariants(
     results.extend(_evaluate_checks(config, evidence))
     results.extend(_evaluate_generated_artifacts(config, evidence, project_root))
     results.extend(_evaluate_workspace_state(config, project_root))
-    results.extend(_evaluate_required_commits(config, project_root))
+    results.extend(_evaluate_required_commits(config, evidence, project_root))
     results.extend(_evaluate_response_patterns(config, evidence))
     results.extend(_evaluate_closure(config, evidence))
 
@@ -651,13 +731,16 @@ def _evaluate_workspace_state(config: dict[str, Any], project_root: Path) -> lis
     return results
 
 
-def _evaluate_required_commits(config: dict[str, Any], project_root: Path) -> list[InvariantResult]:
+def _evaluate_required_commits(config: dict[str, Any], evidence: InvariantEvidence, project_root: Path) -> list[InvariantResult]:
     results: list[InvariantResult] = []
     for item in config.get("required_commits", []):
         invariant_id = str(item.get("id") or "required_commit")
         subject_regex = str(item.get("subject_regex") or "").strip()
         min_count = int(item.get("min_count", 1))
-        result = run_command(["git", "log", "--format=%s"], cwd=project_root, timeout_seconds=30.0)
+        command = ["git", "log", "--format=%s"]
+        if evidence.baseline_ref:
+            command.append(f"{evidence.baseline_ref}..HEAD")
+        result = run_command(command, cwd=project_root, timeout_seconds=30.0)
         subjects = [line.strip() for line in result["stdout"].splitlines() if line.strip()]
         matching_subjects = subjects
         if subject_regex:
@@ -687,6 +770,8 @@ def _evaluate_required_commits(config: dict[str, Any], project_root: Path) -> li
                         "subjects": subjects,
                         "subject_regex": subject_regex,
                         "min_count": min_count,
+                        "baseline_ref": evidence.baseline_ref,
+                        "baseline_sha": evidence.baseline_sha,
                     },
                 )
             )
@@ -696,7 +781,12 @@ def _evaluate_required_commits(config: dict[str, Any], project_root: Path) -> li
                     invariant_id,
                     "passed",
                     "required commit evidence was present",
-                    evidence={"matching_subjects": matching_subjects[:6], "subject_regex": subject_regex},
+                    evidence={
+                        "matching_subjects": matching_subjects[:6],
+                        "subject_regex": subject_regex,
+                        "baseline_ref": evidence.baseline_ref,
+                        "baseline_sha": evidence.baseline_sha,
+                    },
                 )
             )
     return results
@@ -765,6 +855,62 @@ def _evaluate_closure(config: dict[str, Any], evidence: InvariantEvidence) -> li
             evidence={"claim_present": claim_present, "verification_ok": verification_ok, "blocker_present": blocker_present},
         )
     ]
+
+
+def _collect_dirty_files(project_root: Path) -> tuple[str, ...]:
+    result = run_command(
+        ["git", "status", "--short", "--untracked-files=all"],
+        cwd=project_root,
+        timeout_seconds=30.0,
+    )
+    if result["exit_code"] != 0:
+        return ()
+    paths: list[str] = []
+    for line in result["stdout"].splitlines():
+        path = _path_from_status_line(line)
+        if path and not _ignorable_workspace_path(path):
+            paths.append(path)
+    return tuple(sorted(set(paths)))
+
+
+def _collect_committed_files_since_baseline(project_root: Path, baseline_ref: str) -> tuple[str, ...]:
+    result = run_command(
+        ["git", "diff", "--name-only", "--relative", f"{baseline_ref}..HEAD"],
+        cwd=project_root,
+        timeout_seconds=30.0,
+    )
+    if result["exit_code"] != 0:
+        return ()
+    paths = [
+        line.strip()
+        for line in result["stdout"].splitlines()
+        if line.strip() and not _ignorable_workspace_path(line.strip())
+    ]
+    return tuple(sorted(set(paths)))
+
+
+def _resolve_optional_ref(project_root: Path, ref: str) -> str | None:
+    result = run_command(["git", "rev-parse", "--verify", ref], cwd=project_root, timeout_seconds=30.0)
+    if result["exit_code"] != 0:
+        return None
+    resolved = result["stdout"].strip()
+    return resolved or None
+
+
+def _path_from_status_line(line: str) -> str | None:
+    if not line.strip() or len(line) < 4:
+        return None
+    path = line[3:].strip()
+    if " -> " in path:
+        path = path.split(" -> ", 1)[1].strip()
+    return path or None
+
+
+def _ignorable_workspace_path(path: str) -> bool:
+    parts = Path(path).parts
+    if not parts:
+        return True
+    return any(part in {"node_modules", ".git", "__pycache__"} for part in parts)
 
 
 def _files_for_globs(project_root: Path, path_globs: tuple[str, ...]) -> list[str]:

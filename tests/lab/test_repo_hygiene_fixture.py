@@ -10,7 +10,9 @@ from lab.invariant_runner import (
     CERTIFIED,
     UNCERTIFIED,
     InvariantEvidence,
+    collect_workspace_change_evidence,
     evaluate_invariants,
+    initialize_fixture_git_baseline,
     load_invariant_config,
     run_configured_checks,
 )
@@ -34,10 +36,15 @@ def test_repo_hygiene_fixture_certifies_clean_committed_handoff(tmp_path: Path) 
 
     config = load_invariant_config(project_root / "cortex-invariants.json")
     check_results = run_configured_checks(config, project_root=project_root)
+    workspace_evidence = collect_workspace_change_evidence(project_root)
     evaluation = evaluate_invariants(
         config,
         InvariantEvidence(
-            modified_files=(),
+            modified_files=workspace_evidence.modified_files,
+            dirty_files=workspace_evidence.dirty_files,
+            committed_files_since_baseline=workspace_evidence.committed_files_since_baseline,
+            baseline_ref=workspace_evidence.baseline_ref,
+            baseline_sha=workspace_evidence.baseline_sha,
             read_paths=("FIXTURE_RULES.md",),
             commands=("npm run verify",),
             result_text=(
@@ -64,10 +71,15 @@ def test_repo_hygiene_fixture_rejects_dirty_uncommitted_closure(tmp_path: Path) 
 
     config = load_invariant_config(project_root / "cortex-invariants.json")
     check_results = run_configured_checks(config, project_root=project_root)
+    workspace_evidence = collect_workspace_change_evidence(project_root)
     evaluation = evaluate_invariants(
         config,
         InvariantEvidence(
-            modified_files=("internal/truth/status.json",),
+            modified_files=workspace_evidence.modified_files,
+            dirty_files=workspace_evidence.dirty_files,
+            committed_files_since_baseline=workspace_evidence.committed_files_since_baseline,
+            baseline_ref=workspace_evidence.baseline_ref,
+            baseline_sha=workspace_evidence.baseline_sha,
             read_paths=(),
             commands=(),
             result_text="Done and verified.",
@@ -102,9 +114,7 @@ def _make_ready_update(project_root: Path) -> None:
 
 
 def _init_git(project_root: Path) -> None:
-    _git(project_root, ["git", "init", "-q"])
-    _git(project_root, ["git", "add", "."])
-    _git(project_root, ["git", "commit", "-q", "-m", "baseline"])
+    initialize_fixture_git_baseline(project_root)
 
 
 def _git(project_root: Path, command: list[str]) -> None:

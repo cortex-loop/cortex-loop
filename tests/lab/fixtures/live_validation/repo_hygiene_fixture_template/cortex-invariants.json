@@ -57,7 +57,7 @@
     {
       "id": "checkpoint-commit",
       "subject_regex": "^(repo|docs|kernel|adapter|pack|eval|tests|build|release): .+",
-      "repair_fact": "No checkpoint commit with an allowed scope was observed. Commit the verified fixture work or report the exact blocker."
+      "repair_fact": "No checkpoint commit with an allowed scope was observed. Create a commit whose subject starts with one of these exact prefixes: repo:, docs:, kernel:, adapter:, pack:, eval:, tests:, build:, or release:. If that is blocked, report the exact blocker."
     }
   ],
   "response_patterns": [

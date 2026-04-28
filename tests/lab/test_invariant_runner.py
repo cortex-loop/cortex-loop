@@ -9,11 +9,14 @@ import pytest
 
 from lab.invariant_runner import (
     CERTIFIED,
+    FIXTURE_BASELINE_TAG,
     UNCERTIFIED,
     InvariantEvidence,
+    collect_workspace_change_evidence,
     evaluate_invariants,
     extract_tool_evidence_from_records,
     first_forbidden_repair_term,
+    initialize_fixture_git_baseline,
     load_invariant_config,
     render_factual_repair_ticket,
     validate_invariant_config,
@@ -259,6 +262,84 @@ def test_required_commit_and_response_patterns_can_certify_procedural_closeout(t
     )
 
     assert evaluation.status == CERTIFIED
+
+
+def test_workspace_change_evidence_includes_dirty_and_committed_since_baseline(tmp_path: Path) -> None:
+    (tmp_path / "src").mkdir()
+    (tmp_path / ".github" / "workflows").mkdir(parents=True)
+    (tmp_path / "src" / "status.txt").write_text("draft\n", encoding="utf-8")
+    (tmp_path / ".github" / "workflows" / "deploy.yml").write_text("name: deploy\n", encoding="utf-8")
+    baseline_sha = initialize_fixture_git_baseline(tmp_path)
+
+    (tmp_path / ".github" / "workflows" / "deploy.yml").write_text("name: changed\n", encoding="utf-8")
+    _run_git(tmp_path, ["git", "add", ".github/workflows/deploy.yml"])
+    _run_git(tmp_path, ["git", "commit", "-q", "-m", "eval: change protected path"])
+    (tmp_path / "src" / "status.txt").write_text("ready\n", encoding="utf-8")
+
+    evidence = collect_workspace_change_evidence(tmp_path)
+
+    assert evidence.baseline_ref == FIXTURE_BASELINE_TAG
+    assert evidence.baseline_sha == baseline_sha
+    assert evidence.dirty_files == ("src/status.txt",)
+    assert evidence.committed_files_since_baseline == (".github/workflows/deploy.yml",)
+    assert evidence.modified_files == (".github/workflows/deploy.yml", "src/status.txt")
+
+
+def test_committed_protected_path_after_baseline_fails_even_when_clean(tmp_path: Path) -> None:
+    (tmp_path / ".github" / "workflows").mkdir(parents=True)
+    (tmp_path / "src").mkdir()
+    (tmp_path / ".github" / "workflows" / "deploy.yml").write_text("name: deploy\n", encoding="utf-8")
+    (tmp_path / "src" / "status.txt").write_text("draft\n", encoding="utf-8")
+    initialize_fixture_git_baseline(tmp_path)
+    (tmp_path / ".github" / "workflows" / "deploy.yml").write_text("name: changed\n", encoding="utf-8")
+    _run_git(tmp_path, ["git", "add", ".github/workflows/deploy.yml"])
+    _run_git(tmp_path, ["git", "commit", "-q", "-m", "eval: change protected path"])
+    workspace_evidence = collect_workspace_change_evidence(tmp_path)
+
+    evaluation = evaluate_invariants(
+        _base_config(),
+        InvariantEvidence(
+            modified_files=workspace_evidence.modified_files,
+            dirty_files=workspace_evidence.dirty_files,
+            committed_files_since_baseline=workspace_evidence.committed_files_since_baseline,
+            baseline_ref=workspace_evidence.baseline_ref,
+            baseline_sha=workspace_evidence.baseline_sha,
+            result_text="Blocked.",
+        ),
+        project_root=tmp_path,
+    )
+
+    assert evaluation.status == UNCERTIFIED
+    assert any(result.invariant_id == "forbidden_path_globs" for result in evaluation.results)
+
+
+def test_required_commit_ignores_baseline_commit_when_baseline_ref_is_present(tmp_path: Path) -> None:
+    (tmp_path / "tracked.txt").write_text("baseline\n", encoding="utf-8")
+    baseline_sha = initialize_fixture_git_baseline(tmp_path)
+    workspace_evidence = collect_workspace_change_evidence(tmp_path)
+    config = {
+        **_base_config(),
+        "required_commits": [
+            {
+                "id": "checkpoint-commit",
+                "subject_regex": "^baseline$",
+            }
+        ],
+    }
+
+    evaluation = evaluate_invariants(
+        config,
+        InvariantEvidence(
+            modified_files=workspace_evidence.modified_files,
+            baseline_ref=workspace_evidence.baseline_ref,
+            baseline_sha=workspace_evidence.baseline_sha,
+        ),
+        project_root=tmp_path,
+    )
+
+    assert workspace_evidence.baseline_sha == baseline_sha
+    assert evaluation.status == UNCERTIFIED
+    assert any(result.invariant_id == "checkpoint-commit" for result in evaluation.results)
 
 
 def _init_git_fixture(path: Path) -> None:

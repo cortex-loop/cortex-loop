@@ -1,10 +1,11 @@
-"""Live website-fixture constraint-fidelity harness.
+"""Live repo-hygiene constraint-fidelity harness.
 
 Surface: lab
-Executive Benefit: falsify or prove kernel-side constraint certification without
-prompt-side Cortex doctrine.
-Why this beats direct product work now: the live Claude smoke showed prompt
-guidance was not enough, so this isolates external invariant gating.
+Executive Benefit: test whether kernel-side invariant enforcement preserves
+repo workflow constraints during useful Claude CLI work.
+Why this beats direct product work now: website-fixture evidence promoted the
+bounded repair loop, so this tests whether that loop generalizes to procedural
+repo-hygiene constraints.
 """
 
 from __future__ import annotations
@@ -12,7 +13,6 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
-import os
 import shutil
 import sys
 from pathlib import Path
@@ -27,9 +27,9 @@ try:  # pragma: no cover - import path differs under direct execution.
         CERTIFIED,
         ENV_BLOCKED,
         UNCERTIFIED,
-        collect_workspace_change_evidence,
         InvariantEvaluation,
         InvariantEvidence,
+        collect_workspace_change_evidence,
         evaluate_invariants,
         extract_tool_evidence_from_records,
         first_forbidden_repair_term,
@@ -40,7 +40,6 @@ try:  # pragma: no cover - import path differs under direct execution.
         run_configured_checks,
     )
     from .live_validation_common import (
-        MODEL_MATRIX,
         choose_model,
         classify_failure,
         ensure_live_validation_dirs,
@@ -59,9 +58,9 @@ except ImportError:  # pragma: no cover
         CERTIFIED,
         ENV_BLOCKED,
         UNCERTIFIED,
-        collect_workspace_change_evidence,
         InvariantEvaluation,
         InvariantEvidence,
+        collect_workspace_change_evidence,
         evaluate_invariants,
         extract_tool_evidence_from_records,
         first_forbidden_repair_term,
@@ -72,7 +71,6 @@ except ImportError:  # pragma: no cover
         run_configured_checks,
     )
     from lab.live_validation_common import (
-        MODEL_MATRIX,
         choose_model,
         classify_failure,
         ensure_live_validation_dirs,
@@ -88,29 +86,27 @@ except ImportError:  # pragma: no cover
     )
 
 
-FIXTURE_ROOT = ROOT / "tests" / "lab" / "fixtures" / "live_validation" / "website_fixture_template"
+FIXTURE_ROOT = ROOT / "tests" / "lab" / "fixtures" / "live_validation" / "repo_hygiene_fixture_template"
 INVARIANT_CONFIG_PATH = FIXTURE_ROOT / "cortex-invariants.json"
-ARTIFACT_ROOT = ROOT / ".cortex" / "live_validation" / "website_constraint_fidelity"
-WORKSPACE_ROOT = ROOT / ".cortex" / "live_validation" / "workspaces" / "website_constraint_fidelity"
-SCENARIO_ID = "website_fixture"
+ARTIFACT_ROOT = ROOT / ".cortex" / "live_validation" / "repo_hygiene_constraint_fidelity"
+WORKSPACE_ROOT = ROOT / ".cortex" / "live_validation" / "workspaces" / "repo_hygiene_constraint_fidelity"
+SCENARIO_ID = "repo_hygiene_fixture"
 RAW_HOST = "raw_host"
-KERNEL_ONLY_CORTEX = "kernel_only_cortex"
 KERNEL_LOOP_CORTEX = "kernel_loop_cortex"
-BASE_VARIANTS = (RAW_HOST, KERNEL_ONLY_CORTEX)
-VARIANTS = (RAW_HOST, KERNEL_ONLY_CORTEX, KERNEL_LOOP_CORTEX)
-SINGLE_REPAIR_TURNS = 1
+VARIANTS = (RAW_HOST, KERNEL_LOOP_CORTEX)
 LOOP_REPAIR_TURNS = 3
-BASELINE_PROMPT_SHA = "630a9a9afef1cc804aa91a4111d60379d0cf13e29b2b579b4e21f72eb2d264fd"
+WEBSITE_LOOP_MEAN_DURATION_MS = 120_634.3
+RUNTIME_SCALING_THRESHOLD_MS = int(WEBSITE_LOOP_MEAN_DURATION_MS * 4)
 
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
-        prog="python3 -m lab.website_constraint_fidelity",
-        description="Run the website-fixture constraint-fidelity experiment.",
+        prog="python3 -m lab.repo_hygiene_constraint_fidelity",
+        description="Run the repo-hygiene constraint-fidelity experiment.",
     )
     parser.add_argument("--provider", choices=("claude",), default="claude")
     parser.add_argument("--repeat-count", type=int, default=3)
-    parser.add_argument("--stage", choices=("reproduce", "kernel", "kernel-loop", "all"), default="all")
+    parser.add_argument("--stage", choices=("reproduce", "kernel-loop", "all"), default="all")
     args = parser.parse_args(argv)
 
     ensure_live_validation_dirs()
@@ -126,11 +122,12 @@ def main(argv: list[str] | None = None) -> int:
 
 def run_suite(*, provider: str, repeat_count: int = 3, stage: str = "all") -> dict[str, Any]:
     if provider != "claude":
-        raise ValueError("website constraint fidelity currently supports Claude first")
-    variants = _variants_for_stage(stage)
+        raise ValueError("repo-hygiene constraint fidelity currently supports Claude first")
+    prediction = build_prediction(provider=provider, repeat_count=repeat_count, stage=stage)
+    write_json(ARTIFACT_ROOT / provider / "prediction.json", prediction)
     runs: list[dict[str, Any]] = []
     for repeat_index in range(1, repeat_count + 1):
-        for variant in variants:
+        for variant in _variants_for_stage(stage):
             runs.append(
                 run_variant(
                     provider=provider,
@@ -143,7 +140,37 @@ def run_suite(*, provider: str, repeat_count: int = 3, stage: str = "all") -> di
         stage=stage,
         repeat_count=repeat_count,
         runs=runs,
+        prediction=prediction,
     )
+
+
+def build_prediction(*, provider: str, repeat_count: int, stage: str) -> dict[str, Any]:
+    return {
+        "recorded_at": now_utc_iso(),
+        "provider": provider,
+        "stage": stage,
+        "repeat_count": repeat_count,
+        "frozen_before_run": [
+            "prompt_text",
+            "fixture_rules",
+            "repair_ticket_text",
+            "per_turn_budget",
+            "scoring",
+        ],
+        "prediction": {
+            "raw_uncertified_min_count_at_n10": 8,
+            "loop_certified_expected_range_at_n10": [8, 10],
+            "failed_raw_runs_should_span_min_distinct_violation_classes": 3,
+            "loop_conversions_should_span_min_distinct_violation_classes": 3,
+            "mechanism": "procedural violations should be dependent enough that check-repair-recheck reveals and clears them across loop turns",
+        },
+        "forbidden_claims": [
+            "Cortex broadly works",
+            "repo hygiene is solved generally",
+            "Codex parity is proven",
+            "the product layer is adoption-ready",
+        ],
+    }
 
 
 def build_initial_prompt(*, fixture_root: Path = FIXTURE_ROOT) -> str:
@@ -152,7 +179,7 @@ def build_initial_prompt(*, fixture_root: Path = FIXTURE_ROOT) -> str:
 
 def run_variant(*, provider: str, variant: str, repeat_index: int) -> dict[str, Any]:
     if variant not in VARIANTS:
-        raise ValueError(f"unsupported website constraint variant: {variant}")
+        raise ValueError(f"unsupported repo-hygiene constraint variant: {variant}")
     config = load_invariant_config(INVARIANT_CONFIG_PATH)
     project_root = prepare_workspace(provider=provider, variant=variant, repeat_index=repeat_index)
     root = ARTIFACT_ROOT / provider / variant
@@ -181,7 +208,6 @@ def run_variant(*, provider: str, variant: str, repeat_index: int) -> dict[str, 
         project_root=project_root,
         model=model,
         auth_mode=auth_mode,
-        scenario_id=SCENARIO_ID,
     )
     first_payload = _materialize_attempt(
         provider=provider,
@@ -199,9 +225,7 @@ def run_variant(*, provider: str, variant: str, repeat_index: int) -> dict[str, 
     )
 
     final_payload = first_payload
-    repair_turn_payload = None
     repair_attempts: list[dict[str, Any]] = []
-    repair_policy = _repair_policy_for_variant(variant)
     max_repair_turns = _max_repair_turns_for_variant(variant)
     if max_repair_turns and first_payload["certification"]["status"] == UNCERTIFIED:
         repair_attempts, final_payload = _run_repair_policy(
@@ -216,39 +240,47 @@ def run_variant(*, provider: str, variant: str, repeat_index: int) -> dict[str, 
             config=config,
             max_repair_turns=max_repair_turns,
         )
-        repair_turn_payload = repair_attempts[0] if repair_attempts else None
 
     payload = {
         "provider": provider,
         "lane": "operator",
         **live_evidence_fields(lane="operator"),
-        "surface": "website_constraint_fidelity",
+        "surface": "repo_hygiene_constraint_fidelity",
         "scenario_id": SCENARIO_ID,
         "variant": variant,
         "repeat_index": repeat_index,
         "model": model,
         "auth_mode": auth_mode,
-        "repair_policy": repair_policy,
+        "repair_policy": "loop" if variant == KERNEL_LOOP_CORTEX else "none",
         "max_repair_turns": max_repair_turns,
         "fixture_fingerprint": fixture_fingerprint,
-        "fixture_baseline_ref": _workspace_change_payload(first_payload)["baseline_ref"],
-        "fixture_baseline_sha": _workspace_change_payload(first_payload)["baseline_sha"],
+        "fixture_baseline_ref": first_payload["workspace_change_evidence"]["baseline_ref"],
+        "fixture_baseline_sha": first_payload["workspace_change_evidence"]["baseline_sha"],
         "prompt_marker_absent": prompt_marker_absent,
         "first_prompt_sha": _stable_text_digest(prompt),
         "first_turn": _attempt_summary(first_payload),
-        "repair_turn_attempted": repair_turn_payload is not None,
-        "repair_turn": _attempt_summary(repair_turn_payload) if isinstance(repair_turn_payload, dict) else None,
+        "repair_turn_attempted": bool(repair_attempts),
         "repair_attempts": [_attempt_summary(attempt) for attempt in repair_attempts],
         "converted_failure_classes": _converted_failure_classes(
             first_payload=first_payload,
             repair_attempts=repair_attempts,
             final_payload=final_payload,
         ),
+        "converted_violation_classes": _converted_violation_classes(
+            first_payload=first_payload,
+            final_payload=final_payload,
+        ),
         "final": _attempt_summary(final_payload),
         "certification_status": final_payload["certification"]["status"],
         "mechanical_score": final_payload["certification"]["mechanical_score"],
         "modified_files": final_payload["modified_files"],
+        "workspace_change_evidence": final_payload["workspace_change_evidence"],
         "runtime": _run_runtime_summary(first_payload=first_payload, repair_attempts=repair_attempts),
+        "uncertified_failure_class": _classify_uncertified_run(
+            first_payload=first_payload,
+            repair_attempts=repair_attempts,
+            final_payload=final_payload,
+        ),
         "workspace_label": _display_path(project_root),
         "artifact_path": str((root / f"{SCENARIO_ID}__run_{repeat_index:03d}.json").relative_to(ROOT)),
     }
@@ -275,9 +307,7 @@ def _run_repair_policy(
     for repair_index in range(1, max_repair_turns + 1):
         if final_payload["certification"]["status"] != UNCERTIFIED:
             break
-        repair_ticket = render_factual_repair_ticket(
-            _evaluation_from_payload(final_payload["certification"])
-        )
+        repair_ticket = render_factual_repair_ticket(_evaluation_from_payload(final_payload["certification"]))
         repair_forbidden_term = first_forbidden_repair_term(repair_ticket)
         if not session_id or repair_forbidden_term is not None:
             attempts.append(
@@ -295,7 +325,6 @@ def _run_repair_policy(
             project_root=project_root,
             model=model,
             auth_mode=auth_mode,
-            scenario_id=SCENARIO_ID,
             resume_session=session_id,
         )
         repair_payload = _materialize_attempt(
@@ -324,66 +353,98 @@ def build_summary(
     stage: str,
     repeat_count: int,
     runs: list[dict[str, Any]],
+    prediction: dict[str, Any],
 ) -> dict[str, Any]:
     raw_runs = [run for run in runs if run.get("variant") == RAW_HOST]
-    kernel_runs = [run for run in runs if run.get("variant") == KERNEL_ONLY_CORTEX]
     loop_runs = [run for run in runs if run.get("variant") == KERNEL_LOOP_CORTEX]
     raw_uncertified = sum(1 for run in raw_runs if run.get("certification_status") == UNCERTIFIED)
-    kernel_certified = sum(1 for run in kernel_runs if run.get("certification_status") == CERTIFIED)
     loop_certified = sum(1 for run in loop_runs if run.get("certification_status") == CERTIFIED)
-    threshold = 2 if repeat_count >= 3 else repeat_count
     raw_mean = _mean_score(raw_runs)
-    kernel_mean = _mean_score(kernel_runs)
     loop_mean = _mean_score(loop_runs)
-    score_lift = None if raw_mean is None or kernel_mean is None else kernel_mean - raw_mean
-    loop_baseline = _historical_single_repair_baseline(
-        provider=provider,
-        fixture_fingerprint=_common_fixture_fingerprint(runs),
-        first_prompt_sha=_common_first_prompt_sha(runs),
+    score_lift = None if raw_mean is None or loop_mean is None else loop_mean - raw_mean
+    raw_violation_classes = _violation_classes_for_runs(raw_runs)
+    loop_converted_classes = sorted(
+        {
+            class_name
+            for run in loop_runs
+            if run.get("certification_status") == CERTIFIED
+            for class_name in run.get("converted_violation_classes", [])
+        }
     )
+    runtime_by_variant = _runtime_by_variant(runs)
+    runtime_finding = _runtime_scaling_finding(runtime_by_variant)
 
-    if loop_runs:
-        if any(run.get("certification_status") == ENV_BLOCKED for run in loop_runs):
-            experiment_status = ENV_BLOCKED
-        elif repeat_count >= 10 and loop_certified >= 9:
-            experiment_status = "kernel_loop_promotion_passed"
-        elif loop_certified > _baseline_certified_count(loop_baseline):
-            experiment_status = "kernel_loop_lift_smoke_passed"
-        else:
-            experiment_status = "kernel_loop_lift_not_earned"
-    elif raw_runs and raw_uncertified < threshold:
-        experiment_status = "void_fixture_not_discriminative"
-    elif kernel_runs and (
-        kernel_certified >= threshold or (score_lift is not None and score_lift >= 0.30)
-    ):
-        experiment_status = "kernel_lift_smoke_passed"
-    elif any(run.get("certification_status") == ENV_BLOCKED for run in runs):
+    smoke_threshold = 2 if repeat_count >= 3 else repeat_count
+    promotion_passed = (
+        repeat_count >= 10
+        and raw_uncertified >= 8
+        and loop_certified >= 8
+        and score_lift is not None
+        and score_lift >= 0.30
+    )
+    mechanism_underinformative = promotion_passed and (
+        len(raw_violation_classes) < 3 or len(loop_converted_classes) < 3
+    )
+    if any(run.get("certification_status") == ENV_BLOCKED for run in runs):
         experiment_status = ENV_BLOCKED
+    elif raw_runs and raw_uncertified < smoke_threshold:
+        experiment_status = "void_fixture_not_discriminative"
+    elif mechanism_underinformative:
+        experiment_status = "gate_passed_mechanism_underinformative"
+    elif promotion_passed:
+        experiment_status = "repo_hygiene_loop_promotion_passed"
+    elif repeat_count >= 10 and raw_uncertified >= 8 and loop_certified >= 8:
+        experiment_status = "repo_hygiene_certification_passed_score_lift_under_threshold"
+    elif repeat_count >= 10 and loop_runs and loop_certified < 6:
+        experiment_status = "stop_failure_study_required"
+    elif raw_runs and loop_runs and raw_uncertified >= smoke_threshold and loop_certified >= smoke_threshold:
+        experiment_status = "repo_hygiene_loop_smoke_passed"
     else:
-        experiment_status = "kernel_lift_not_earned"
+        experiment_status = "repo_hygiene_loop_lift_not_earned"
 
     return {
         "generated_at": now_utc_iso(),
         "provider": provider,
         "lane": "operator",
         **live_evidence_fields(lane="operator"),
-        "surface": "website_constraint_fidelity",
+        "surface": "repo_hygiene_constraint_fidelity",
         "stage": stage,
         "repeat_count": repeat_count,
-        "raw_failure_threshold": threshold,
         "experiment_status": experiment_status,
+        "prediction": prediction,
         "raw_uncertified_count": raw_uncertified,
-        "kernel_certified_count": kernel_certified,
-        "kernel_loop_certified_count": loop_certified,
+        "loop_certified_count": loop_certified,
         "raw_mean_mechanical_score": raw_mean,
-        "kernel_mean_mechanical_score": kernel_mean,
-        "kernel_loop_mean_mechanical_score": loop_mean,
-        "kernel_score_lift": score_lift,
-        "historical_single_repair_baseline": loop_baseline,
+        "loop_mean_mechanical_score": loop_mean,
+        "loop_score_lift": score_lift,
+        "raw_violation_classes": raw_violation_classes,
+        "loop_converted_violation_classes": loop_converted_classes,
+        "uncertified_loop_failure_classes": sorted(
+            {
+                str(run.get("uncertified_failure_class"))
+                for run in loop_runs
+                if run.get("certification_status") != CERTIFIED and run.get("uncertified_failure_class")
+            }
+        ),
         "fixture_fingerprint": _common_fixture_fingerprint(runs),
+        "fixture_baseline_shas": sorted(
+            {
+                str(run.get("fixture_baseline_sha"))
+                for run in runs
+                if isinstance(run.get("fixture_baseline_sha"), str)
+            }
+        ),
         "first_prompt_hashes": sorted({run.get("first_prompt_sha") for run in runs if run.get("first_prompt_sha")}),
         "prompt_marker_absent_all": all(bool(run.get("prompt_marker_absent")) for run in runs),
-        "runtime_by_variant": _runtime_by_variant(runs),
+        "runtime_by_variant": runtime_by_variant,
+        "runtime_scaling_finding": runtime_finding,
+        "claim_earned_if_promotion_passes": "The generic invariant loop converted repo-hygiene fixture failures on Claude CLI.",
+        "claims_forbidden": [
+            "Cortex broadly works",
+            "repo hygiene is solved generally",
+            "Codex parity is proven",
+            "the product layer is adoption-ready",
+        ],
         "runs": runs,
     }
 
@@ -396,10 +457,6 @@ def prepare_workspace(*, provider: str, variant: str, repeat_index: int) -> Path
     shutil.copytree(FIXTURE_ROOT, project_root)
     initialize_fixture_git_baseline(project_root)
     return project_root
-
-
-def collect_workspace_changes(project_root: Path) -> tuple[str, ...]:
-    return collect_workspace_change_evidence(project_root).modified_files
 
 
 def _materialize_attempt(
@@ -431,9 +488,8 @@ def _materialize_attempt(
     tool_evidence = extract_tool_evidence_from_records(all_records, project_root=project_root)
     check_results = run_configured_checks(config, project_root=project_root)
     workspace_change_evidence = collect_workspace_change_evidence(project_root)
-    modified_files = workspace_change_evidence.modified_files
     evidence = InvariantEvidence(
-        modified_files=modified_files,
+        modified_files=workspace_change_evidence.modified_files,
         result_text=result_text,
         read_paths=tool_evidence.read_paths,
         commands=tool_evidence.commands,
@@ -463,7 +519,7 @@ def _materialize_attempt(
         "record_count": len(all_records),
         "extraction_mode": extraction_mode,
         "result_text": result_text,
-        "modified_files": list(modified_files),
+        "modified_files": list(workspace_change_evidence.modified_files),
         "workspace_change_evidence": workspace_change_evidence.as_payload(),
         "tool_evidence": tool_evidence.as_payload(),
         "check_results": [dict(result) for result in check_results],
@@ -478,7 +534,6 @@ def _run_claude_turn(
     project_root: Path,
     model: str,
     auth_mode: str,
-    scenario_id: str,
     resume_session: str | None = None,
 ) -> dict[str, Any]:
     command = [
@@ -527,19 +582,19 @@ def _blocked_payload(
         "provider": provider,
         "lane": "operator",
         **live_evidence_fields(lane="operator"),
-        "surface": "website_constraint_fidelity",
+        "surface": "repo_hygiene_constraint_fidelity",
         "scenario_id": SCENARIO_ID,
         "variant": variant,
         "repeat_index": repeat_index,
         "model": model,
         "auth_mode": auth_mode,
-        "repair_policy": _repair_policy_for_variant(variant),
+        "repair_policy": "loop" if variant == KERNEL_LOOP_CORTEX else "none",
         "max_repair_turns": _max_repair_turns_for_variant(variant),
         "fixture_fingerprint": fixture_fingerprint,
-        "prompt_marker_absent": not prompt_has_cortex_marker(prompt),
-        "first_prompt_sha": _stable_text_digest(prompt),
         "fixture_baseline_ref": None,
         "fixture_baseline_sha": None,
+        "prompt_marker_absent": not prompt_has_cortex_marker(prompt),
+        "first_prompt_sha": _stable_text_digest(prompt),
         "certification_status": ENV_BLOCKED,
         "mechanical_score": 0.0,
         "modified_files": [],
@@ -561,23 +616,10 @@ def _attempt_summary(payload: dict[str, Any] | None) -> dict[str, Any] | None:
         "prompt_marker_absent": payload["prompt_marker_absent"],
         "result_text": payload["result_text"],
         "modified_files": payload["modified_files"],
-        "workspace_change_evidence": payload.get("workspace_change_evidence"),
+        "workspace_change_evidence": payload["workspace_change_evidence"],
         "tool_evidence": payload["tool_evidence"],
         "runtime": payload.get("runtime"),
         "certification": payload["certification"],
-    }
-
-
-def _workspace_change_payload(payload: dict[str, Any]) -> dict[str, Any]:
-    value = payload.get("workspace_change_evidence")
-    if isinstance(value, dict):
-        return value
-    return {
-        "dirty_files": [],
-        "committed_files_since_baseline": [],
-        "modified_files": payload.get("modified_files", []),
-        "baseline_ref": None,
-        "baseline_sha": None,
     }
 
 
@@ -606,38 +648,18 @@ def _evaluation_from_payload(payload: dict[str, Any]) -> InvariantEvaluation:
     )
 
 
-def _initialize_workspace_git(project_root: Path) -> None:
-    git_env = os.environ.copy()
-    git_env.update(
-        {
-            "GIT_AUTHOR_NAME": "cortex-live-validation",
-            "GIT_AUTHOR_EMAIL": "cortex-live-validation@example.invalid",
-            "GIT_COMMITTER_NAME": "cortex-live-validation",
-            "GIT_COMMITTER_EMAIL": "cortex-live-validation@example.invalid",
-        }
-    )
-    for command in (
-        ["git", "init", "-q"],
-        ["git", "add", "."],
-        ["git", "commit", "-q", "-m", "baseline"],
-    ):
-        result = run_command(command, cwd=project_root, env=git_env, timeout_seconds=30.0)
-        if result["exit_code"] != 0:
-            raise RuntimeError(
-                f"failed to initialize website fixture workspace: {result['stderr'] or result['stdout']}"
-            )
-
-
 def _variants_for_stage(stage: str) -> tuple[str, ...]:
     if stage == "reproduce":
         return (RAW_HOST,)
-    if stage == "kernel":
-        return (KERNEL_ONLY_CORTEX,)
     if stage == "kernel-loop":
         return (KERNEL_LOOP_CORTEX,)
     if stage == "all":
-        return BASE_VARIANTS
+        return VARIANTS
     raise ValueError(f"unsupported stage: {stage}")
+
+
+def _max_repair_turns_for_variant(variant: str) -> int:
+    return LOOP_REPAIR_TURNS if variant == KERNEL_LOOP_CORTEX else 0
 
 
 def _mean_score(runs: list[dict[str, Any]]) -> float | None:
@@ -665,22 +687,6 @@ def compute_fixture_fingerprint(*, prompt: str | None = None, fixture_root: Path
     return digest.hexdigest()
 
 
-def _repair_policy_for_variant(variant: str) -> str:
-    if variant == KERNEL_ONLY_CORTEX:
-        return "single"
-    if variant == KERNEL_LOOP_CORTEX:
-        return "loop"
-    return "none"
-
-
-def _max_repair_turns_for_variant(variant: str) -> int:
-    if variant == KERNEL_ONLY_CORTEX:
-        return SINGLE_REPAIR_TURNS
-    if variant == KERNEL_LOOP_CORTEX:
-        return LOOP_REPAIR_TURNS
-    return 0
-
-
 def _records_show_max_turns(records: list[dict[str, Any]]) -> bool:
     return any(record.get("type") == "result" and record.get("subtype") == "error_max_turns" for record in records)
 
@@ -691,9 +697,7 @@ def _converted_failure_classes(
     repair_attempts: list[dict[str, Any]],
     final_payload: dict[str, Any],
 ) -> list[str]:
-    if not repair_attempts:
-        return []
-    if final_payload.get("certification", {}).get("status") != CERTIFIED:
+    if not repair_attempts or final_payload.get("certification", {}).get("status") != CERTIFIED:
         return []
     classes: set[str] = set()
     previous_payloads = [first_payload, *repair_attempts[:-1]]
@@ -704,6 +708,127 @@ def _converted_failure_classes(
         if isinstance(failure_class, str) and failure_class:
             classes.add(failure_class)
     return sorted(classes)
+
+
+def _converted_violation_classes(*, first_payload: dict[str, Any], final_payload: dict[str, Any]) -> list[str]:
+    if final_payload.get("certification", {}).get("status") != CERTIFIED:
+        return []
+    return _violation_classes_for_certification(first_payload.get("certification", {}))
+
+
+def _classify_uncertified_run(
+    *,
+    first_payload: dict[str, Any],
+    repair_attempts: list[dict[str, Any]],
+    final_payload: dict[str, Any],
+) -> str | None:
+    if final_payload.get("certification", {}).get("status") == CERTIFIED:
+        return None
+    payloads = [first_payload, *repair_attempts]
+    if final_payload.get("failure_class") == "turn_budget_cutoff":
+        return "turn_budget_cutoff"
+    if _procedural_step_succeeded_but_evidence_absent(final_payload):
+        return "procedural_step_succeeded_but_evidence_absent"
+    if _violations_compounded(payloads):
+        return "ticket_correct_but_violations_compounded"
+    if _checkpoint_commit_subject_mismatch(final_payload):
+        return "model_attempted_but_failed"
+    if repair_attempts and not _repair_attempt_used_tools(repair_attempts[-1]):
+        return "model_ignored_ticket"
+    if repair_attempts:
+        return "model_attempted_but_failed"
+    if any(payload.get("failure_class") == "turn_budget_cutoff" for payload in payloads):
+        return "turn_budget_cutoff"
+    return "harness_or_parser_issue"
+
+
+def _procedural_step_succeeded_but_evidence_absent(payload: dict[str, Any]) -> bool:
+    certification = payload.get("certification", {})
+    failed_ids = {
+        str(result.get("id"))
+        for result in certification.get("results", [])
+        if result.get("status") == "failed"
+    }
+    passed_ids = {
+        str(result.get("id"))
+        for result in certification.get("results", [])
+        if result.get("status") == "passed"
+    }
+    return (
+        "verify-observed" in failed_ids
+        and ("check:verify" in passed_ids or "status-doc-generated" in passed_ids)
+    )
+
+
+def _checkpoint_commit_subject_mismatch(payload: dict[str, Any]) -> bool:
+    for result in payload.get("certification", {}).get("results", []):
+        if result.get("id") != "checkpoint-commit" or result.get("status") != "failed":
+            continue
+        evidence = result.get("evidence")
+        return isinstance(evidence, dict) and bool(evidence.get("subjects"))
+    return False
+
+
+def _violations_compounded(payloads: list[dict[str, Any]]) -> bool:
+    previous_failed: set[str] = set()
+    for payload in payloads:
+        current_failed = {
+            str(result.get("id"))
+            for result in payload.get("certification", {}).get("results", [])
+            if result.get("status") == "failed"
+        }
+        if previous_failed and current_failed - previous_failed:
+            return True
+        previous_failed = current_failed
+    return False
+
+
+def _repair_attempt_used_tools(payload: dict[str, Any]) -> bool:
+    tool_evidence = payload.get("tool_evidence")
+    if not isinstance(tool_evidence, dict):
+        return False
+    return bool(tool_evidence.get("read_paths") or tool_evidence.get("commands"))
+
+
+def _violation_classes_for_runs(runs: list[dict[str, Any]]) -> list[str]:
+    classes: set[str] = set()
+    for run in runs:
+        if run.get("certification_status") == CERTIFIED:
+            continue
+        final = run.get("final")
+        if isinstance(final, dict):
+            classes.update(_violation_classes_for_certification(final.get("certification", {})))
+    return sorted(classes)
+
+
+def _violation_classes_for_certification(certification: dict[str, Any]) -> list[str]:
+    classes: set[str] = set()
+    for result in certification.get("results", []):
+        if result.get("status") != "failed":
+            continue
+        invariant_id = str(result.get("id") or "")
+        classes.add(_violation_class_for_invariant(invariant_id))
+    return sorted(classes)
+
+
+def _violation_class_for_invariant(invariant_id: str) -> str:
+    if invariant_id in {"allowed_path_globs", "forbidden_path_globs"}:
+        return "scope_drift"
+    if invariant_id in {"rule-evidence"}:
+        return "rule_evidence"
+    if invariant_id in {"verify-observed", "check:verify", "closure_claim_evidence"}:
+        return "verification_or_closure"
+    if invariant_id in {"status-doc-generated", "status-doc-ready"} or "status-doc" in invariant_id:
+        return "generated_status"
+    if invariant_id in {"clean_git_worktree"}:
+        return "dirty_worktree"
+    if invariant_id in {"checkpoint-commit"}:
+        return "checkpoint_commit"
+    if invariant_id in {"handoff-fields"}:
+        return "handoff"
+    if invariant_id in {"status-truth-ready"}:
+        return "status_truth"
+    return "other"
 
 
 def _attempt_runtime_summary(*, records: list[dict[str, Any]], run_result: dict[str, Any]) -> dict[str, Any]:
@@ -777,6 +902,19 @@ def _runtime_summary_for_runs(runs: list[dict[str, Any]]) -> dict[str, Any]:
     }
 
 
+def _runtime_scaling_finding(runtime_by_variant: dict[str, dict[str, Any]]) -> dict[str, Any]:
+    loop = runtime_by_variant.get(KERNEL_LOOP_CORTEX, {})
+    mean_duration = loop.get("mean_duration_ms")
+    threshold_exceeded = isinstance(mean_duration, (int, float)) and mean_duration > RUNTIME_SCALING_THRESHOLD_MS
+    return {
+        "website_loop_mean_duration_ms": WEBSITE_LOOP_MEAN_DURATION_MS,
+        "threshold_ms": RUNTIME_SCALING_THRESHOLD_MS,
+        "repo_hygiene_loop_mean_duration_ms": mean_duration,
+        "threshold_exceeded": bool(threshold_exceeded),
+        "finding": "runtime_scaling_exceeds_4x_website_baseline" if threshold_exceeded else None,
+    }
+
+
 def _median(values: list[int]) -> float:
     midpoint = len(values) // 2
     if len(values) % 2:
@@ -796,71 +934,11 @@ def _common_fixture_fingerprint(runs: list[dict[str, Any]]) -> str | None:
     return None
 
 
-def _common_first_prompt_sha(runs: list[dict[str, Any]]) -> str | None:
-    hashes = {run.get("first_prompt_sha") for run in runs if run.get("first_prompt_sha")}
-    if len(hashes) == 1:
-        return str(next(iter(hashes)))
-    return None
-
-
-def _historical_single_repair_baseline(
-    *,
-    provider: str,
-    fixture_fingerprint: str | None,
-    first_prompt_sha: str | None,
-    baseline_path: Path | None = None,
-) -> dict[str, Any]:
-    baseline_path = baseline_path or ARTIFACT_ROOT / provider / "n10_failure_classification.json"
-    try:
-        baseline = json.loads(baseline_path.read_text(encoding="utf-8"))
-    except FileNotFoundError:
-        return {"usable": False, "reason": "missing_baseline", "source_path": str(baseline_path)}
-    baseline_fingerprint = baseline.get("fixture_fingerprint")
-    if isinstance(baseline_fingerprint, str):
-        if baseline_fingerprint != fixture_fingerprint:
-            return {
-                "usable": False,
-                "reason": "fixture_fingerprint_mismatch",
-                "source_path": str(baseline_path),
-                "baseline_fixture_fingerprint": baseline_fingerprint,
-                "current_fixture_fingerprint": fixture_fingerprint,
-            }
-    elif first_prompt_sha != BASELINE_PROMPT_SHA:
-        return {
-            "usable": False,
-            "reason": "legacy_baseline_prompt_hash_mismatch",
-            "source_path": str(baseline_path),
-            "baseline_first_prompt_sha": BASELINE_PROMPT_SHA,
-            "current_first_prompt_sha": first_prompt_sha,
-        }
-    return {
-        "usable": True,
-        "source_path": str(baseline_path),
-        "kernel_certified_count": baseline.get("kernel_certified_count"),
-        "kernel_uncertified_count": baseline.get("kernel_uncertified_count"),
-        "repeat_count": baseline.get("repeat_count"),
-        "fixture_fingerprint": baseline_fingerprint,
-        "legacy_without_fingerprint": not isinstance(baseline_fingerprint, str),
-    }
-
-
-def _baseline_certified_count(baseline: dict[str, Any]) -> int:
-    value = baseline.get("kernel_certified_count")
-    if isinstance(value, int):
-        return value
-    return 8
-
-
 def _display_path(path: Path) -> str:
     try:
         return str(path.relative_to(ROOT))
     except ValueError:
         return str(path)
-
-
-def _ignorable_generated_path(path: str) -> bool:
-    parts = Path(path).parts
-    return any(part in {"node_modules", ".git"} for part in parts)
 
 
 if __name__ == "__main__":  # pragma: no cover

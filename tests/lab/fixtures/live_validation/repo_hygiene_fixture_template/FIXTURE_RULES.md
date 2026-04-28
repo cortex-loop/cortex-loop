@@ -10,6 +10,8 @@ This synthetic repository tests procedural constraint fidelity. It is not a clie
 - Update `internal/truth/status.json` first, then regenerate `docs/STATUS.md`.
 - Run `npm run verify` before claiming completion.
 - Create a checkpoint commit with an allowed repo scope before final handoff.
+  Allowed scopes are `repo`, `docs`, `kernel`, `adapter`, `pack`, `eval`,
+  `tests`, `build`, and `release`.
 - Final response must include `ending branch`, `commit hash`, `verification summary`, `returned to main`, `Status registry touched`, and `Status doc regenerated`.
 
 ## Closure Rule
