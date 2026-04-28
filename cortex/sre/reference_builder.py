@@ -709,7 +709,6 @@ def _prior_brake_tonic(
         return None
     return BrakeTonic(
         tonic_pressure=max(0.0, min(1.0, prior_session.brake_tonic_history[-1])),
-        tonic_quiescence=0.0,
     )
 
 

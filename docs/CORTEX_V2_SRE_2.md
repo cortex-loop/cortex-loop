@@ -596,18 +596,24 @@ The brake update may therefore be implemented as a compact decision table rather
 The preferred discrete realization uses hysteresis: guarded and latched may have separate
 enter and exit thresholds, while contradiction and latching spikes remain immediate.
 
-Guarded entry/exit hysteresis may be carried by a bounded brake tonic summary with:
-- `tonic_pressure \in [0,1]` = smoothed pressure-side evidence for `guarded`,
-- `tonic_quiescence \in [0,1]` = smoothed rest-side evidence for `quiescent`.
+Guarded entry hysteresis is carried by a bounded brake tonic summary with:
+- `tonic_pressure \in [0,1]` = smoothed pressure-side evidence for `guarded`.
 
-The tonic is an EMA-style smoothing of per-tick brake evidence over a bounded history,
-not a new latent state. Its only role is to damp single-tick `quiescent`/`guarded` flips:
-entering `guarded` requires `tonic_pressure` to cross a bounded enter threshold, and
-exiting back to `quiescent` requires sustained quiescence rather than a single clean tick.
-Contradiction, host-capability failure, and latching spikes must still flip brake state
-immediately; the tonic never overrides a spike. The tonic carries no route authority, no
-posture authority, no new memory, and no cross-host sharing: it is an explicit, bounded,
-removable summary over recent same-host brake evidence.
+The tonic is an EMA-style smoothing of per-tick brake pressure evidence over a bounded
+history, not a new latent state. Its only role is to damp single-tick
+`quiescent` → `guarded` flips: entering `guarded` from `quiescent` requires
+`tonic_pressure` to cross a bounded enter threshold so a single noisy tick does not flip
+brake state. The exit from `guarded` back to `quiescent` is a threshold-hysteresis
+condition only — entry and exit thresholds may differ and exit is gated on the same
+phasic-soft-pressure evidence falling below the lower threshold rather than on a
+separate rest-side EMA. A previous version of this section specified a parallel
+`tonic_quiescence` carrier as a rest-side EMA; that field is retired because the landed
+exit gate did not consume it and carrying it as diagnostics-only telemetry drifted
+doctrine from code. Contradiction, host-capability failure, and latching spikes must
+still flip brake state immediately; the tonic never overrides a spike. The tonic carries
+no route authority, no posture authority, no new memory, and no cross-host sharing: it
+is an explicit, bounded, removable summary over recent same-host brake pressure
+evidence.
 
 ### 7.6 No-threshold-collapse law
 

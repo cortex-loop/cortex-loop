@@ -230,12 +230,12 @@ def test_brake_evaluation_returns_latched_for_strong_spike_or_failure_pressure()
 
 
 def test_brake_tonic_requires_bounded_values() -> None:
-    # BrakeTonic carriers must keep pressure/quiescence inside [0, 1].
+    # BrakeTonic carriers must keep pressure inside [0, 1]. Per SRE_2 §7.5,
+    # the rest-side EMA (tonic_quiescence) is retired; the brake exit gate
+    # uses threshold hysteresis only.
     for kwargs in (
-        {"tonic_pressure": -0.01, "tonic_quiescence": 0.5},
-        {"tonic_pressure": 1.01, "tonic_quiescence": 0.5},
-        {"tonic_pressure": 0.5, "tonic_quiescence": -0.01},
-        {"tonic_pressure": 0.5, "tonic_quiescence": 1.01},
+        {"tonic_pressure": -0.01},
+        {"tonic_pressure": 1.01},
     ):
         try:
             BrakeTonic(**kwargs)
@@ -253,14 +253,13 @@ def test_brake_evaluation_carries_tonic_summary() -> None:
 
     assert evaluation.tonic is not None
     assert 0.0 <= evaluation.tonic.tonic_pressure <= 1.0
-    assert 0.0 <= evaluation.tonic.tonic_quiescence <= 1.0
 
 
 def test_brake_tonic_single_noisy_tick_does_not_enter_guarded_from_quiescent() -> None:
     # SRE_2 §7.5 tonic gate: from an established quiescent tonic, one borderline
     # soft-pressure tick must not flip into guarded — the pressure EMA has to cross
     # the enter threshold first.
-    quiescent_prior = BrakeTonic(tonic_pressure=0.0, tonic_quiescence=1.0)
+    quiescent_prior = BrakeTonic(tonic_pressure=0.0)
     evaluation = evaluate_brake_state(
         (UncertaintyEstimate(class_tag="evidence", level=0.56),),
         prior_state=BrakeState.QUIESCENT,
@@ -304,7 +303,7 @@ def test_brake_tonic_spike_flips_immediately_regardless_of_tonic() -> None:
             ),
         ),
         prior_state=BrakeState.QUIESCENT,
-        prior_tonic=BrakeTonic(tonic_pressure=0.0, tonic_quiescence=1.0),
+        prior_tonic=BrakeTonic(tonic_pressure=0.0),
     )
 
     assert evaluation.state in {BrakeState.GUARDED, BrakeState.LATCHED}
@@ -329,7 +328,7 @@ def test_brake_tonic_pressure_ema_uses_locked_zero_point_six_rho_coefficient() -
     # 0.40 * 0.00 = 0.48. Any drift in the decay coefficient would shift this
     # to a different value — this test is a unit-level regression guard that
     # ignores the enter/exit thresholds and focuses purely on the EMA math.
-    prior = BrakeTonic(tonic_pressure=0.80, tonic_quiescence=0.20)
+    prior = BrakeTonic(tonic_pressure=0.80)
     evaluation = evaluate_brake_state(
         (UncertaintyEstimate(class_tag="evidence", level=0.0),),
         prior_state=BrakeState.GUARDED,
@@ -339,9 +338,6 @@ def test_brake_tonic_pressure_ema_uses_locked_zero_point_six_rho_coefficient() -
     assert evaluation.tonic is not None
     # next = 0.60 * 0.80 + 0.40 * 0.00 = 0.48
     assert evaluation.tonic.tonic_pressure == pytest.approx(0.48)
-    # quiescence EMA is the parallel mirror; current_quiescence = 1.0 - 0.0 = 1.0
-    # next = 0.60 * 0.20 + 0.40 * 1.00 = 0.52
-    assert evaluation.tonic.tonic_quiescence == pytest.approx(0.52)
 
 
 def test_brake_tonic_decays_toward_quiescence_after_sustained_calm() -> None:
@@ -352,7 +348,7 @@ def test_brake_tonic_decays_toward_quiescence_after_sustained_calm() -> None:
     # sustained low-uncertainty ticks with no spikes, and assert the tonic
     # pressure decays below the exit threshold and the state returns to
     # quiescent within a bounded number of ticks.
-    tonic: BrakeTonic | None = BrakeTonic(tonic_pressure=0.80, tonic_quiescence=0.20)
+    tonic: BrakeTonic | None = BrakeTonic(tonic_pressure=0.80)
     state: BrakeState = BrakeState.GUARDED
     ticks_to_decay = 0
     for _tick in range(24):

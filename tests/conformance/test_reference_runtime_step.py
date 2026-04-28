@@ -1656,13 +1656,9 @@ def _assert_allocation_diagnostics_shape(
         and risk_weight["dominant_risk_source"]
     )
     brake_tonic = payload["brake_tonic"]
-    assert brake_tonic is None or tuple(brake_tonic) == (
-        "tonic_pressure",
-        "tonic_quiescence",
-    )
+    assert brake_tonic is None or tuple(brake_tonic) == ("tonic_pressure",)
     if brake_tonic is not None:
         assert 0.0 <= float(brake_tonic["tonic_pressure"]) <= 1.0
-        assert 0.0 <= float(brake_tonic["tonic_quiescence"]) <= 1.0
     assert isinstance(payload["rejected_cheaper_families"], list)
     assert all(
         isinstance(family, str) and family
