@@ -32,18 +32,19 @@ def _clip_unit(value: float) -> float:
 
 @dataclass(frozen=True, slots=True)
 class BrakeTonic:
-    """Smoothed EMA baseline for brake pressure across steps."""
+    """Smoothed EMA baseline for brake pressure across steps.
+
+    SRE_2 §7.5 narrows the brake exit to threshold-hysteresis-only; the
+    rest-side EMA (`tonic_quiescence`) is retired because the landed exit
+    gate did not consume it and carrying it as diagnostics-only telemetry
+    drifted doctrine from code.
+    """
 
     tonic_pressure: float = 0.0
-    tonic_quiescence: float = 0.0
 
     def __post_init__(self) -> None:
         if not 0.0 <= float(self.tonic_pressure) <= 1.0:
             raise ValueError("BrakeTonic.tonic_pressure must be between 0.0 and 1.0.")
-        if not 0.0 <= float(self.tonic_quiescence) <= 1.0:
-            raise ValueError(
-                "BrakeTonic.tonic_quiescence must be between 0.0 and 1.0."
-            )
 
 
 @dataclass(frozen=True, slots=True)
@@ -272,25 +273,16 @@ def _update_brake_tonic(
             0.5 if repeated_degradations >= 1 else 0.0,
         )
     )
-    current_quiescence = _clip_unit(1.0 - current_pressure) if not spike_tags else 0.0
 
     if prior_tonic is None:
         next_pressure = current_pressure
-        next_quiescence = current_quiescence
     else:
         next_pressure = _clip_unit(
             (_TONIC_DECAY_RHO * prior_tonic.tonic_pressure)
             + ((1.0 - _TONIC_DECAY_RHO) * current_pressure)
         )
-        next_quiescence = _clip_unit(
-            (_TONIC_DECAY_RHO * prior_tonic.tonic_quiescence)
-            + ((1.0 - _TONIC_DECAY_RHO) * current_quiescence)
-        )
 
-    return BrakeTonic(
-        tonic_pressure=next_pressure,
-        tonic_quiescence=next_quiescence,
-    )
+    return BrakeTonic(tonic_pressure=next_pressure)
 
 
 def _max_estimate(

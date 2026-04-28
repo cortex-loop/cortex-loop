@@ -156,7 +156,6 @@ _RISK_WEIGHT_DIAGNOSTICS_KEYS = (
 )
 _BRAKE_TONIC_DIAGNOSTICS_KEYS = (
     "tonic_pressure",
-    "tonic_quiescence",
 )
 _ANTI_THRASH_DIAGNOSTICS_KEYS = (
     "state",
@@ -2063,7 +2062,7 @@ def _validate_brake_tonic_diagnostics_payload(
         raise ValueError(
             f"{label} must preserve the locked key order {_BRAKE_TONIC_DIAGNOSTICS_KEYS!r}."
         )
-    for key in ("tonic_pressure", "tonic_quiescence"):
+    for key in ("tonic_pressure",):
         value = payload[key]
         if isinstance(value, bool) or not isinstance(value, (int, float)):
             actual_type = type(value).__name__
@@ -2440,7 +2439,6 @@ def _copy_allocation_diagnostics_payload(payload: dict[str, Any]) -> dict[str, A
             if brake_tonic_payload is None
             else {
                 "tonic_pressure": brake_tonic_payload["tonic_pressure"],
-                "tonic_quiescence": brake_tonic_payload["tonic_quiescence"],
             }
         ),
         "rejected_cheaper_families": list(payload["rejected_cheaper_families"]),

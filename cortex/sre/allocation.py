@@ -272,7 +272,6 @@ def build_allocation_diagnostics_payload(
         "brake_tonic": (
             {
                 "tonic_pressure": float(brake_tonic.tonic_pressure),
-                "tonic_quiescence": float(brake_tonic.tonic_quiescence),
             }
             if brake_tonic is not None
             else None
