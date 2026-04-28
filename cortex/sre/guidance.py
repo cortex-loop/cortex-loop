@@ -22,6 +22,7 @@ class GuidanceMode(str, Enum):
     RAW = "raw"
     FULL = "full"
     COMPRESSED_DYNAMIC = "compressed_dynamic"
+    PRODUCT_NORMAL = "product_normal"
 
 
 class GuidanceProfile(str, Enum):
@@ -33,6 +34,9 @@ class GuidanceProfile(str, Enum):
 class GuidanceCoverageStatus(str, Enum):
     ALWAYS_ON = "always_on"
     DYNAMIC_TRIGGERED = "dynamic_triggered"
+    MODEL_VISIBLE_DIRECTIVE = "model_visible_directive"
+    KERNEL_ENFORCED = "kernel_enforced"
+    SIDECAR_GUARDRAIL = "sidecar_guardrail"
     SILENT_WITH_REASON = "silent_with_reason"
 
 
@@ -46,7 +50,7 @@ class ExecutiveInterventionIntent(str, Enum):
 
 
 DEFAULT_GUIDANCE_PROFILE = GuidanceProfile.NORMAL
-DEFAULT_PRODUCT_GUIDANCE_MODE = GuidanceMode.COMPRESSED_DYNAMIC
+DEFAULT_PRODUCT_GUIDANCE_MODE = GuidanceMode.PRODUCT_NORMAL
 
 
 @dataclass(frozen=True, slots=True)
@@ -195,6 +199,60 @@ class InterventionIntentView:
             "selected_family": self.selected_family,
             "next_move": self.next_move,
             "policy_note": self.policy_note,
+        }
+
+
+@dataclass(frozen=True, slots=True)
+class ProductTaskSignals:
+    repair_requested: bool = False
+    verification_requested: bool = False
+    missing_context: bool = False
+    resume_continuity: bool = False
+    repeated_failure: bool = False
+    closure_pressure: bool = False
+    unsupported_broad_claim: bool = False
+    simple_clean: bool = False
+    cross_host_conformance: bool = False
+
+    def as_payload(self) -> dict[str, bool]:
+        return {
+            "repair_requested": self.repair_requested,
+            "verification_requested": self.verification_requested,
+            "missing_context": self.missing_context,
+            "resume_continuity": self.resume_continuity,
+            "repeated_failure": self.repeated_failure,
+            "closure_pressure": self.closure_pressure,
+            "unsupported_broad_claim": self.unsupported_broad_claim,
+            "simple_clean": self.simple_clean,
+            "cross_host_conformance": self.cross_host_conformance,
+        }
+
+
+@dataclass(frozen=True, slots=True)
+class ProductGuidanceDecision:
+    posture: ExecutiveInterventionIntent
+    source: str
+    task_signals: ProductTaskSignals
+    runtime_intent: ExecutiveInterventionIntent
+    directives: tuple[str, ...] = ()
+    prohibitions: tuple[str, ...] = ()
+    close_gate: str | None = None
+    model_visible_row_ids: tuple[str, ...] = ()
+    kernel_enforced_row_ids: tuple[str, ...] = ()
+    sidecar_guardrail_row_ids: tuple[str, ...] = ()
+
+    def as_payload(self) -> dict[str, Any]:
+        return {
+            "posture": self.posture.value,
+            "source": self.source,
+            "task_signals": self.task_signals.as_payload(),
+            "runtime_intent": self.runtime_intent.value,
+            "directives": list(self.directives),
+            "prohibitions": list(self.prohibitions),
+            "close_gate": self.close_gate,
+            "model_visible_row_ids": list(self.model_visible_row_ids),
+            "kernel_enforced_row_ids": list(self.kernel_enforced_row_ids),
+            "sidecar_guardrail_row_ids": list(self.sidecar_guardrail_row_ids),
         }
 
 
@@ -471,6 +529,7 @@ def render_executive_guidance(
     context: ExecutiveGuidanceContext,
     *,
     mode: GuidanceMode | str = GuidanceMode.FULL,
+    task_text: str | None = None,
 ) -> str:
     if not isinstance(context, ExecutiveGuidanceContext):
         actual_type = type(context).__name__
@@ -481,6 +540,8 @@ def render_executive_guidance(
     guidance_mode = _coerce_guidance_mode(mode)
     if guidance_mode is GuidanceMode.RAW:
         return ""
+    if guidance_mode is GuidanceMode.PRODUCT_NORMAL:
+        return _render_product_normal_guidance(context, task_text=task_text)
     if guidance_mode is GuidanceMode.COMPRESSED_DYNAMIC:
         return _render_compressed_dynamic_guidance(context)
     return _render_full_guidance(context)
@@ -542,9 +603,14 @@ def prepend_guidance_to_prompt(
     context: ExecutiveGuidanceContext,
     *,
     mode: GuidanceMode | str = GuidanceMode.FULL,
+    task_text: str | None = None,
 ) -> str:
     prompt_text = _required_text(prompt, "prompt")
-    guidance = render_executive_guidance(context, mode=mode)
+    guidance = render_executive_guidance(
+        context,
+        mode=mode,
+        task_text=prompt_text if task_text is None else task_text,
+    )
     if not guidance:
         return prompt_text
     if _has_rendered_guidance_block(prompt_text):
@@ -557,8 +623,9 @@ def append_guidance_to_channel(
     context: ExecutiveGuidanceContext,
     *,
     mode: GuidanceMode | str = GuidanceMode.FULL,
+    task_text: str | None = None,
 ) -> str:
-    guidance = render_executive_guidance(context, mode=mode)
+    guidance = render_executive_guidance(context, mode=mode, task_text=task_text)
     if existing_text is not None:
         base = _required_text(existing_text, "existing_text")
         if not guidance:
@@ -618,10 +685,199 @@ def build_intervention_intent_view(
     )
 
 
+def extract_product_task_signals(task_text: str | None) -> ProductTaskSignals:
+    text = _normalized_task_text(task_text)
+    if not text:
+        return ProductTaskSignals()
+
+    repair_requested = _contains_any(
+        text,
+        (
+            "fix",
+            "repair",
+            "failing",
+            "failure",
+            "broken",
+            "bug",
+            "test failing",
+            "tests failing",
+            "tests are failing",
+            "smallest issue",
+            "smallest failing",
+        ),
+    )
+    verification_requested = _contains_any(
+        text,
+        (
+            "verify",
+            "verification",
+            "test",
+            "tests",
+            "prove",
+            "evidence",
+            "check",
+        ),
+    )
+    missing_context = _contains_any(
+        text,
+        (
+            "missing context",
+            "need context",
+            "insufficient context",
+            "not enough context",
+            "which file",
+            "don't know",
+            "dont know",
+            "not sure",
+            "unclear",
+            "ambiguous",
+            "unknown",
+        ),
+    )
+    resume_continuity = _contains_any(
+        text,
+        (
+            "resume",
+            "previous session",
+            "continue from",
+            "branch",
+            "pending goal",
+            "where we left off",
+        ),
+    )
+    repeated_failure = _contains_any(
+        text,
+        (
+            "same patch",
+            "same failed",
+            "unchanged",
+            "again and again",
+            "keeps failing",
+            "kept failing",
+            "repeated failure",
+            "three times",
+            "multiple times",
+        ),
+    )
+    closure_pressure = _contains_any(
+        text,
+        (
+            "close out",
+            "closeout",
+            "final handoff",
+            "handoff",
+            "done",
+            "complete",
+            "finished",
+            "finish the session",
+            "session is finished",
+        ),
+    )
+    unsupported_broad_claim = _contains_any(
+        text,
+        (
+            "fully proven",
+            "all hosts are proven",
+            "proves every host",
+            "product perfection",
+            "fully optimized across",
+            "fully close the gap",
+            "perfect across",
+            "generally improves models",
+        ),
+    )
+    cross_host_conformance = _contains_any(
+        text,
+        (
+            "all hosts",
+            "cross-host",
+            "codex",
+            "gemini",
+            "reference",
+            "conformance",
+        ),
+    )
+    simple_clean = (
+        not any(
+            (
+                repair_requested,
+                verification_requested,
+                missing_context,
+                resume_continuity,
+                repeated_failure,
+                closure_pressure,
+                unsupported_broad_claim,
+                cross_host_conformance,
+            )
+        )
+        and (
+            text.startswith("respond exactly with")
+            or text in {"ok", "hello", "say ok", "return ok"}
+            or (len(text) <= 80 and _contains_any(text, ("respond", "return", "say")))
+        )
+    )
+    return ProductTaskSignals(
+        repair_requested=repair_requested,
+        verification_requested=verification_requested,
+        missing_context=missing_context,
+        resume_continuity=resume_continuity,
+        repeated_failure=repeated_failure,
+        closure_pressure=closure_pressure,
+        unsupported_broad_claim=unsupported_broad_claim,
+        simple_clean=simple_clean,
+        cross_host_conformance=cross_host_conformance,
+    )
+
+
+def build_product_guidance_decision(
+    context: ExecutiveGuidanceContext,
+    *,
+    task_text: str | None = None,
+) -> ProductGuidanceDecision:
+    if not isinstance(context, ExecutiveGuidanceContext):
+        actual_type = type(context).__name__
+        raise TypeError(
+            "build_product_guidance_decision.context must be ExecutiveGuidanceContext, "
+            f"got {actual_type}."
+        )
+    task_signals = extract_product_task_signals(task_text)
+    runtime_intent = build_intervention_intent_view(context).intent
+    posture, source = _product_posture(task_signals, runtime_intent)
+    directives, prohibitions, close_gate = _product_directives_for_posture(
+        posture,
+        task_signals,
+    )
+    model_visible_row_ids = _product_model_visible_rows(posture, task_signals)
+    kernel_enforced_row_ids = _product_kernel_rows(context)
+    sidecar_guardrail_row_ids = _product_sidecar_rows(context)
+    return ProductGuidanceDecision(
+        posture=posture,
+        source=source,
+        task_signals=task_signals,
+        runtime_intent=runtime_intent,
+        directives=directives,
+        prohibitions=prohibitions,
+        close_gate=close_gate,
+        model_visible_row_ids=model_visible_row_ids,
+        kernel_enforced_row_ids=tuple(
+            row_id
+            for row_id in kernel_enforced_row_ids
+            if row_id not in model_visible_row_ids
+        ),
+        sidecar_guardrail_row_ids=tuple(
+            row_id
+            for row_id in sidecar_guardrail_row_ids
+            if row_id not in model_visible_row_ids
+            and row_id not in kernel_enforced_row_ids
+        ),
+    )
+
+
 def v2_guidance_denominator_coverage_payload(
     context: ExecutiveGuidanceContext,
     *,
     mode: GuidanceMode | str = GuidanceMode.COMPRESSED_DYNAMIC,
+    task_text: str | None = None,
 ) -> dict[str, Any]:
     if not isinstance(context, ExecutiveGuidanceContext):
         actual_type = type(context).__name__
@@ -630,9 +886,13 @@ def v2_guidance_denominator_coverage_payload(
             f"got {actual_type}."
         )
     guidance_mode = _coerce_guidance_mode(mode)
-    coverages = _coverage_for_mode(context, guidance_mode)
+    coverages = _coverage_for_mode(context, guidance_mode, task_text=task_text)
     full_guidance = render_executive_guidance(context, mode=GuidanceMode.FULL)
-    rendered_guidance = render_executive_guidance(context, mode=guidance_mode)
+    rendered_guidance = render_executive_guidance(
+        context,
+        mode=guidance_mode,
+        task_text=task_text,
+    )
     rows = [coverage.as_payload() for coverage in coverages]
     return {
         "mode": guidance_mode.value,
@@ -646,11 +906,15 @@ def v2_guidance_denominator_coverage_payload(
             "full_chars": len(full_guidance),
             "mode_chars": len(rendered_guidance),
             "reduction_chars": len(full_guidance) - len(rendered_guidance),
-            "mode_is_smaller_than_full": len(rendered_guidance) < len(full_guidance)
-            if rendered_guidance
-            else guidance_mode is GuidanceMode.RAW,
+            "mode_is_smaller_than_full": len(rendered_guidance) < len(full_guidance),
         },
         "intervention_intent": build_intervention_intent_view(context).as_payload(),
+        "product_kernel_decision": build_product_guidance_decision(
+            context,
+            task_text=task_text,
+        ).as_payload()
+        if guidance_mode is GuidanceMode.PRODUCT_NORMAL
+        else None,
         "guardrails": {
             "denominator_preserved": not _missing_coverage_row_ids(coverages),
             "raw_aux_forbidden": True,
@@ -690,8 +954,202 @@ def assert_status_bio_to_code_coverage(status_payload: Mapping[str, Any]) -> Non
         )
 
 
+def _render_product_normal_guidance(
+    context: ExecutiveGuidanceContext,
+    *,
+    task_text: str | None,
+) -> str:
+    decision = build_product_guidance_decision(context, task_text=task_text)
+    if (
+        decision.posture is ExecutiveInterventionIntent.CONTINUE
+        and not decision.directives
+        and not decision.prohibitions
+        and decision.close_gate is None
+    ):
+        return ""
+
+    lines = [
+        "<cortex_exec>",
+        f"  <posture>{decision.posture.value}</posture>",
+    ]
+    if decision.directives:
+        lines.append(f"  <do_now>{' '.join(decision.directives)}</do_now>")
+    if decision.prohibitions:
+        lines.append(f"  <do_not>{' '.join(decision.prohibitions)}</do_not>")
+    if decision.close_gate is not None:
+        lines.append(f"  <close_gate>{decision.close_gate}</close_gate>")
+    lines.append("</cortex_exec>")
+    guidance = "\n".join(lines)
+    if len(guidance) > 1200:
+        raise ValueError("product_normal guidance exceeded the 1200 character hard cap.")
+    return guidance
+
+
+def _product_posture(
+    task_signals: ProductTaskSignals,
+    runtime_intent: ExecutiveInterventionIntent,
+) -> tuple[ExecutiveInterventionIntent, str]:
+    if task_signals.unsupported_broad_claim:
+        return ExecutiveInterventionIntent.BRAKE, "task_unsupported_broad_claim"
+    if task_signals.repeated_failure:
+        return ExecutiveInterventionIntent.BRAKE, "task_repeated_failure"
+    if task_signals.missing_context:
+        return ExecutiveInterventionIntent.SEEK_CONTEXT, "task_missing_context"
+    if task_signals.repair_requested:
+        return ExecutiveInterventionIntent.REPAIR, "task_repair"
+    if task_signals.closure_pressure:
+        return ExecutiveInterventionIntent.CLOSE, "task_closure"
+    if task_signals.verification_requested:
+        return ExecutiveInterventionIntent.CHECK, "task_verification"
+    if task_signals.resume_continuity:
+        return ExecutiveInterventionIntent.CHECK, "task_resume_continuity"
+    if runtime_intent is not ExecutiveInterventionIntent.CONTINUE:
+        return runtime_intent, "runtime_state"
+    return ExecutiveInterventionIntent.CONTINUE, "neutral_default"
+
+
+def _product_directives_for_posture(
+    posture: ExecutiveInterventionIntent,
+    task_signals: ProductTaskSignals,
+) -> tuple[tuple[str, ...], tuple[str, ...], str | None]:
+    if posture is ExecutiveInterventionIntent.CONTINUE:
+        return (), (), None
+    if posture is ExecutiveInterventionIntent.REPAIR:
+        return (
+            (
+                "Preserve verified work; isolate the smallest failing surface; verify before closing.",
+            ),
+            (
+                "Do not rewrite unrelated files or claim completion without evidence.",
+            ),
+            "Close only with passing verification or an explicit blocker.",
+        )
+    if posture is ExecutiveInterventionIntent.SEEK_CONTEXT:
+        return (
+            (
+                "Seek the missing bounded context before expanding or editing.",
+            ),
+            (
+                "Do not guess through unavailable facts or smooth uncertainty into confidence.",
+            ),
+            "Close only after the missing context is resolved or named as a blocker.",
+        )
+    if posture is ExecutiveInterventionIntent.BRAKE:
+        if task_signals.unsupported_broad_claim:
+            return (
+                (
+                    "Reject or narrow unsupported broad claims; state what evidence is missing.",
+                ),
+                (
+                    "Do not claim Cortex is fully proven, perfect, or proven across every host without direct evidence.",
+                ),
+                "Close only with a bounded claim and explicit remaining evidence gaps.",
+            )
+        return (
+            (
+                "Brake the unchanged retry directly; use at most one bounded read only if it can change the stop/probe decision.",
+            ),
+            (
+                "Do not retry unchanged conditions, keep reading after the retry risk is clear, or expand scope to hide the failure.",
+            ),
+            "Close with the unchanged-condition risk, missing evidence, and one distinct next probe or stop condition.",
+        )
+    if posture is ExecutiveInterventionIntent.CHECK:
+        return (
+            (
+                "Check the smallest evidence source that can change the next action.",
+            ),
+            (
+                "Do not present an unchecked assumption as verified.",
+            ),
+            "Close only with verification evidence or an explicit reason verification is unavailable.",
+        )
+    if posture is ExecutiveInterventionIntent.CLOSE:
+        return (
+            (
+                "Summarize only supported work, verification, blockers, and residual debt.",
+            ),
+            (
+                "Do not say complete, done, or verified unless evidence supports that exact claim.",
+            ),
+            "Close with verified facts first; name blockers and unverified claims explicitly.",
+        )
+    raise ValueError(f"unsupported product posture: {posture}")
+
+
+def _product_model_visible_rows(
+    posture: ExecutiveInterventionIntent,
+    task_signals: ProductTaskSignals,
+) -> tuple[str, ...]:
+    if posture is ExecutiveInterventionIntent.CONTINUE:
+        return ()
+    row_ids: list[str] = ["sre.family_policy"]
+    if posture in {ExecutiveInterventionIntent.REPAIR, ExecutiveInterventionIntent.CHECK}:
+        row_ids.extend(("core.commitment_certification", "runtime.verified_work_repair"))
+    if posture in {
+        ExecutiveInterventionIntent.SEEK_CONTEXT,
+        ExecutiveInterventionIntent.BRAKE,
+    }:
+        row_ids.extend(("core.environment_degradation", "sre.uncertainty_brake"))
+    if posture is ExecutiveInterventionIntent.CLOSE:
+        row_ids.extend(
+            (
+                "core.commitment_certification",
+                "sre.blocker_goal_debt",
+                "operational.truth_distinctions",
+            )
+        )
+    if task_signals.resume_continuity:
+        row_ids.append("sre.branch_continuity")
+    if task_signals.repeated_failure:
+        row_ids.append("sre.anti_thrash_probe")
+    if task_signals.unsupported_broad_claim:
+        row_ids.extend(("operational.truth_distinctions", "negative.forbidden_shortcuts"))
+    if task_signals.missing_context or task_signals.closure_pressure:
+        row_ids.append("sre.blocker_goal_debt")
+    return _dedupe_row_ids(tuple(row_ids))
+
+
+def _product_kernel_rows(context: ExecutiveGuidanceContext) -> tuple[str, ...]:
+    rows = [
+        "core.lifecycle_dispatch",
+        "core.commitment_certification",
+        "core.environment_degradation",
+        "sre.intervention_pricing",
+        "aux.default_zero_removable",
+    ]
+    host = context.host_name.lower()
+    surface = context.surface.lower()
+    if "claude" in host or "claude" in surface:
+        rows.append("host.claude_cli")
+    if context.offline_publication_active:
+        rows.append("aux.publication_only")
+    return _dedupe_row_ids(tuple(rows))
+
+
+def _product_sidecar_rows(context: ExecutiveGuidanceContext) -> tuple[str, ...]:
+    rows = [
+        "sre.branch_continuity",
+        "sre.blocker_goal_debt",
+        "sre.anti_thrash_probe",
+        "host.codex_cli",
+        "host.gemini_reference_conformance",
+        "operational.truth_distinctions",
+        "negative.forbidden_shortcuts",
+        "aux.publication_only",
+    ]
+    host = context.host_name.lower()
+    surface = context.surface.lower()
+    if "codex" in host or "openai" in host or "codex" in surface or "openai" in surface:
+        rows.append("host.codex_cli")
+    return _dedupe_row_ids(tuple(rows))
+
+
 def _render_compressed_dynamic_guidance(context: ExecutiveGuidanceContext) -> str:
-    coverage_by_id = {coverage.row_id: coverage for coverage in _coverage_for_mode(context, GuidanceMode.COMPRESSED_DYNAMIC)}
+    coverage_by_id = {
+        coverage.row_id: coverage
+        for coverage in _coverage_for_mode(context, GuidanceMode.COMPRESSED_DYNAMIC)
+    }
     rows_by_id = {row.row_id: row for row in V2_EXECUTIVE_GUIDANCE_ROWS}
     active_rows = [
         rows_by_id[coverage.row_id]
@@ -741,6 +1199,8 @@ def _render_compressed_dynamic_guidance(context: ExecutiveGuidanceContext) -> st
 def _coverage_for_mode(
     context: ExecutiveGuidanceContext,
     mode: GuidanceMode,
+    *,
+    task_text: str | None = None,
 ) -> tuple[V2GuidanceCoverage, ...]:
     if mode is GuidanceMode.FULL:
         return tuple(
@@ -760,6 +1220,12 @@ def _coverage_for_mode(
                 trigger_reason="raw baseline intentionally carries no Cortex guidance",
                 rendered=False,
             )
+            for row in V2_EXECUTIVE_GUIDANCE_ROWS
+        )
+    if mode is GuidanceMode.PRODUCT_NORMAL:
+        decision = build_product_guidance_decision(context, task_text=task_text)
+        return tuple(
+            _product_normal_coverage_for_row(row, context, decision)
             for row in V2_EXECUTIVE_GUIDANCE_ROWS
         )
     return tuple(_compressed_coverage_for_row(row, context) for row in V2_EXECUTIVE_GUIDANCE_ROWS)
@@ -790,6 +1256,49 @@ def _compressed_coverage_for_row(
         row_id=row.row_id,
         status=GuidanceCoverageStatus.SILENT_WITH_REASON,
         trigger_reason=_silent_reason(row.row_id, context),
+        rendered=False,
+    )
+
+
+def _product_normal_coverage_for_row(
+    row: V2GuidanceRow,
+    context: ExecutiveGuidanceContext,
+    decision: ProductGuidanceDecision,
+) -> V2GuidanceCoverage:
+    if row.row_id in decision.model_visible_row_ids:
+        return V2GuidanceCoverage(
+            row_id=row.row_id,
+            status=GuidanceCoverageStatus.MODEL_VISIBLE_DIRECTIVE,
+            trigger_reason=(
+                f"product_normal posture {decision.posture.value} compiles this law "
+                "into concise Claude-facing instructions"
+            ),
+            rendered=True,
+        )
+    if row.row_id in decision.kernel_enforced_row_ids:
+        return V2GuidanceCoverage(
+            row_id=row.row_id,
+            status=GuidanceCoverageStatus.KERNEL_ENFORCED,
+            trigger_reason=(
+                "product_normal keeps this row enforced by the Cortex kernel or host "
+                "routing instead of showing internal row text to the model"
+            ),
+            rendered=False,
+        )
+    if row.row_id in decision.sidecar_guardrail_row_ids:
+        return V2GuidanceCoverage(
+            row_id=row.row_id,
+            status=GuidanceCoverageStatus.SIDECAR_GUARDRAIL,
+            trigger_reason=(
+                "product_normal preserves this row in sidecar denominator evidence "
+                "because it is not useful Claude-facing instruction for this turn"
+            ),
+            rendered=False,
+        )
+    return V2GuidanceCoverage(
+        row_id=row.row_id,
+        status=GuidanceCoverageStatus.SILENT_WITH_REASON,
+        trigger_reason=_product_normal_silent_reason(row.row_id, context, decision),
         rendered=False,
     )
 
@@ -888,6 +1397,22 @@ def _silent_reason(row_id: str, context: ExecutiveGuidanceContext) -> str:
     return "row has no active dynamic trigger in this turn"
 
 
+def _product_normal_silent_reason(
+    row_id: str,
+    context: ExecutiveGuidanceContext,
+    decision: ProductGuidanceDecision,
+) -> str:
+    if decision.posture is ExecutiveInterventionIntent.CONTINUE:
+        return "neutral product_normal turn: no marginal model-visible guidance is useful"
+    if row_id == "host.claude_cli":
+        return "Claude host boundary is kernel-enforced when Claude is active; otherwise not the active host"
+    if row_id in {"host.codex_cli", "host.gemini_reference_conformance"}:
+        return "cross-host conformance truth is preserved outside Claude's normal product prompt"
+    if row_id == "aux.publication_only" and not context.offline_publication_active:
+        return "no explicit AUX publication is active"
+    return "row is covered by product_normal denominator sidecar without model-facing text"
+
+
 def _missing_coverage_row_ids(coverages: tuple[V2GuidanceCoverage, ...]) -> list[str]:
     covered = {coverage.row_id for coverage in coverages}
     return [row.row_id for row in V2_EXECUTIVE_GUIDANCE_ROWS if row.row_id not in covered]
@@ -910,6 +1435,26 @@ def _context_cue_text(context: ExecutiveGuidanceContext) -> str:
 
 def _contains_any(value: str, needles: tuple[str, ...]) -> bool:
     return any(needle in value for needle in needles)
+
+
+def _dedupe_row_ids(row_ids: tuple[str, ...]) -> tuple[str, ...]:
+    seen: set[str] = set()
+    deduped: list[str] = []
+    valid = {row.row_id for row in V2_EXECUTIVE_GUIDANCE_ROWS}
+    for row_id in row_ids:
+        if row_id in valid and row_id not in seen:
+            seen.add(row_id)
+            deduped.append(row_id)
+    return tuple(deduped)
+
+
+def _normalized_task_text(task_text: str | None) -> str:
+    if task_text is None:
+        return ""
+    if not isinstance(task_text, str):
+        actual_type = type(task_text).__name__
+        raise TypeError(f"task_text must be str | None, got {actual_type}.")
+    return " ".join(task_text.lower().strip().split())
 
 
 def _coerce_guidance_mode(value: GuidanceMode | str) -> GuidanceMode:
@@ -981,6 +1526,9 @@ def _display(value: str | None) -> str:
 
 
 def _has_rendered_guidance_block(value: str) -> bool:
+    product_index = value.find("<cortex_exec>")
+    if product_index != -1 and value.find("</cortex_exec>", product_index) != -1:
+        return True
     marker_index = value.find(GUIDANCE_MARKER)
     if marker_index == -1:
         return False
@@ -1007,6 +1555,8 @@ __all__ = [
     "GuidanceMode",
     "GuidanceVisibility",
     "InterventionIntentView",
+    "ProductGuidanceDecision",
+    "ProductTaskSignals",
     "V2GuidanceCoverage",
     "V2GuidanceRow",
     "V2_EXECUTIVE_GUIDANCE_ROWS",
@@ -1014,7 +1564,10 @@ __all__ = [
     "assert_status_bio_to_code_coverage",
     "build_intervention_intent_view",
     "build_guidance_context_from_session",
+    "build_product_guidance_decision",
     "covered_bio_to_code_skills",
+    "extract_product_task_signals",
+    "guidance_mode_for_profile",
     "prepend_guidance_to_prompt",
     "render_executive_guidance",
     "v2_guidance_denominator_coverage_payload",

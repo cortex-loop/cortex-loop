@@ -6,7 +6,11 @@ import importlib
 from collections.abc import Callable, Mapping
 from dataclasses import dataclass, field
 from typing import Any
-from cortex.sre.guidance import append_guidance_to_channel, build_guidance_context_from_session
+from cortex.sre.guidance import (
+    DEFAULT_PRODUCT_GUIDANCE_MODE,
+    append_guidance_to_channel,
+    build_guidance_context_from_session,
+)
 from cortex.runtime.verified_work_runtime import (
     build_verified_work_input_text,
     build_verified_work_instructions,
@@ -424,11 +428,17 @@ def _request_with_model_visible_guidance(
         session=session,
         offline_publication_active=request.offline_publication is not None,
     )
+    instructions = append_guidance_to_channel(
+        request.instructions,
+        guidance_context,
+        mode=DEFAULT_PRODUCT_GUIDANCE_MODE,
+        task_text=request.input_text,
+    )
     return OpenAIHostControlRequest(
         action_tag=request.action_tag,
         model=request.model,
         input_text=request.input_text,
-        instructions=append_guidance_to_channel(request.instructions, guidance_context),
+        instructions=instructions if instructions else None,
         metadata=request.metadata,
         max_output_tokens=request.max_output_tokens,
         work_contract=request.work_contract,

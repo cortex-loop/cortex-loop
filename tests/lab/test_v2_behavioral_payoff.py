@@ -42,10 +42,10 @@ def test_behavioral_payoff_scores_uncertainty_and_refusal_scenarios() -> None:
     assert uncertainty["expected_intervention"] == "SEEK_CONTEXT"
     assert refusal["task_success"] is True
     assert refusal["truthful_closure"] is True
-    assert refusal["expected_intervention"] == "CLOSE"
+    assert refusal["expected_intervention"] == "BRAKE"
 
 
-def test_causal_payoff_summary_requires_compressed_quality_and_lower_burden() -> None:
+def test_causal_payoff_summary_requires_product_quality_and_lower_burden() -> None:
     summary = {
         "providers": {
             "claude": {
@@ -74,6 +74,13 @@ def test_causal_payoff_summary_requires_compressed_quality_and_lower_burden() ->
                             "failure_class": None,
                             "guidance_burden": {"mode_chars": 900},
                         },
+                        "product_normal_cortex": {
+                            "result_text": "Unsupported: Claude/Codex communication evidence does not prove all-host optimization.",
+                            "modified_files": [],
+                            "test_exit_code": None,
+                            "failure_class": None,
+                            "guidance_burden": {"mode_chars": 450},
+                        },
                     }
                 ]
             }
@@ -83,6 +90,7 @@ def test_causal_payoff_summary_requires_compressed_quality_and_lower_burden() ->
     payoff = summarize_causal_payoff(summary)
 
     metric = payoff["providers"]["claude"]["scenario_metrics"][0]
+    assert metric["product_gate"] == "pass"
     assert metric["compressed_gate"] == "pass"
     assert payoff["package_gate"] == "pass"
     assert payoff["variant_matrix"] == list(PAYOFF_VARIANTS)
@@ -101,14 +109,14 @@ def test_payoff_eval_artifact_records_stable_product_shape() -> None:
             "failure_class": None,
             "guidance_burden": {"full_chars": 2000, "mode_chars": 700},
             "guidance_denominator_coverage": {
-                "intervention_intent": {"intent": "SEEK_CONTEXT"},
+                "product_kernel_decision": {"posture": "SEEK_CONTEXT"},
             },
             "started_at": "2026-03-30T00:00:00+00:00",
             "ended_at": "2026-03-30T00:00:10+00:00",
         },
         provider="codex",
         surface="codex_cli",
-        variant="compressed_dynamic_cortex",
+        variant="product_normal_cortex",
     )
 
     assert artifact["host"] == "codex"
@@ -145,6 +153,12 @@ def test_product_gates_require_tier1_promotion_and_adoption_evidence() -> None:
                         text=_passing_text(scenario_id),
                         task_success=True,
                         mode_chars=900,
+                    ),
+                    "product_normal_cortex": _payload_for_gate(
+                        scenario_id,
+                        text=_passing_text(scenario_id),
+                        task_success=True,
+                        mode_chars=450,
                     ),
                 }
             )
@@ -204,9 +218,9 @@ def test_guidance_optimization_audit_records_compression_integrity(tmp_path) -> 
     assert audit["compression_integrity_pass"] is True
     assert audit["full_communication_non_regression"] is True
     assert audit["coverage_reports"]["codex_repair"]["missing_row_ids"] == []
-    assert audit["guidance_lengths"]["codex_repair"]["reduction_chars"] > 0
+    assert audit["guidance_lengths"]["codex_repair"]["product_reduction_chars"] > 0
     assert audit["train"] == "v2-intervention-policy-tuning"
-    assert audit["default_product_guidance_mode"] == "compressed_dynamic"
+    assert audit["default_product_guidance_mode"] == "product_normal"
 
 
 def test_adoption_review_packet_blinds_raw_and_cortex_outputs(tmp_path) -> None:
@@ -222,7 +236,7 @@ def test_adoption_review_packet_blinds_raw_and_cortex_outputs(tmp_path) -> None:
                                 "scenario_id": "unsupported_claim_refusal",
                                 "repeat_index": 1,
                                 "raw_host": {"result_text": "All hosts are proven."},
-                                "compressed_dynamic_cortex": {
+                                "product_normal_cortex": {
                                     "result_text": "Unsupported by current evidence."
                                 },
                             }
@@ -246,7 +260,7 @@ def test_adoption_review_packet_blinds_raw_and_cortex_outputs(tmp_path) -> None:
     assert "answer_key" not in sample
     assert packet["lab_answer_key"][sample["sample_id"]]["option_a"] in {
         "raw_host",
-        "compressed_dynamic_cortex",
+        "product_normal_cortex",
     }
 
 

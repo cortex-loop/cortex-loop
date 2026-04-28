@@ -6,7 +6,12 @@ from collections.abc import Callable, Mapping
 from dataclasses import dataclass, field
 from typing import Any
 
-from cortex.sre.guidance import append_guidance_to_channel, build_guidance_context_from_session
+from cortex.sre.guidance import (
+    DEFAULT_PRODUCT_GUIDANCE_MODE,
+    append_guidance_to_channel,
+    build_guidance_context_from_session,
+)
+from cortex.sre.closure import assess_output_closure
 
 from .runtime import ClaudeRuntimeSession, run_claude_runtime_step
 from .cli import build_claude_cli_record
@@ -117,6 +122,7 @@ class ClaudeHostControlRequest:
 class ClaudeHostControlResult:
     action_tag: str
     records: tuple[dict[str, Any], ...]
+    closure_assessment: dict[str, Any] | None = None
 
     def __post_init__(self) -> None:
         if self.action_tag != _ACTION_TAG:
@@ -127,12 +133,24 @@ class ClaudeHostControlResult:
             raise TypeError(
                 "ClaudeHostControlResult.records must contain only dict[str, Any] records."
             )
+        if self.closure_assessment is not None and not isinstance(
+            self.closure_assessment,
+            dict,
+        ):
+            actual_type = type(self.closure_assessment).__name__
+            raise TypeError(
+                "ClaudeHostControlResult.closure_assessment must be dict[str, Any] | None, "
+                f"got {actual_type}."
+            )
 
     def as_payload(self) -> dict[str, Any]:
-        return {
+        payload: dict[str, Any] = {
             "action_tag": self.action_tag,
             "records": [dict(record) for record in self.records],
         }
+        if self.closure_assessment is not None:
+            payload["closure_assessment"] = dict(self.closure_assessment)
+        return payload
 
 
 def run_claude_host_control(
@@ -165,6 +183,7 @@ def run_claude_host_control(
 
     action_session_id = current_session.session_id or "cl-session-1"
     records: list[dict[str, Any]] = []
+    output_chunks: list[str] = []
     for raw_event in raw_events:
         if not isinstance(raw_event, Mapping):
             actual_type = type(raw_event).__name__
@@ -174,6 +193,9 @@ def run_claude_host_control(
             )
         try:
             normalized_event = dict(raw_event)
+            delta = normalized_event.get("delta")
+            if isinstance(delta, str) and delta:
+                output_chunks.append(delta)
             normalized_event.setdefault("session_id", action_session_id)
             envelope = parse_claude_host_event_envelope(normalized_event)
             step_result = run_claude_runtime_step(
@@ -189,9 +211,24 @@ def run_claude_host_control(
         records.append(build_claude_cli_record(step_result))
         current_session = step_result.session
 
+    closure_assessment = assess_output_closure(
+        "".join(output_chunks),
+        commitment_result_kinds=tuple(
+            record.get("commitment_result_kind") for record in records
+        ),
+        blocker_present=any(record.get("closure_required") for record in records),
+    )
+    closure_payload = (
+        closure_assessment.as_payload()
+        if closure_assessment.claim_detected
+        or closure_assessment.status.value in {"blocked", "uncertified"}
+        else None
+    )
+
     return ClaudeHostControlResult(
         action_tag=request.action_tag,
         records=tuple(records),
+        closure_assessment=closure_payload,
     ), current_session
 
 
@@ -281,12 +318,18 @@ def _request_with_model_visible_guidance(
         transport_channel="system",
         session=session,
     )
+    system_text = append_guidance_to_channel(
+        request.system,
+        guidance_context,
+        mode=DEFAULT_PRODUCT_GUIDANCE_MODE,
+        task_text=request.input_text,
+    )
     return ClaudeHostControlRequest(
         action_tag=request.action_tag,
         model=request.model,
         input_text=request.input_text,
         max_output_tokens=request.max_output_tokens,
-        system=append_guidance_to_channel(request.system, guidance_context),
+        system=system_text if system_text else None,
         metadata=request.metadata,
         audit_intensity=request.audit_intensity,
     )

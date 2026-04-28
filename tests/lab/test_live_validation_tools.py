@@ -938,6 +938,19 @@ def test_claude_hook_capture_drops_stop_hook(tmp_path: Path) -> None:
     assert "Stop" not in settings["hooks"]
 
 
+def test_timed_command_returns_timeout_payload(tmp_path: Path) -> None:
+    result = live_host_native_product_paths._run_timed_command(
+        [sys.executable, "-c", "import time; time.sleep(5)"],
+        cwd=tmp_path,
+        timeout_seconds=0.1,
+    )
+
+    assert result["exit_code"] == 124
+    assert result["command"][0] == sys.executable
+    assert result["started_at"]
+    assert result["ended_at"]
+
+
 def test_gemini_hook_capture_skips_project_settings_for_minimal(tmp_path: Path) -> None:
     project_root = tmp_path / "project"
     project_root.mkdir()
@@ -1015,7 +1028,7 @@ def test_gemini_task_preserves_hook_env_for_wrapped_execution(monkeypatch, tmp_p
     assert captured["env"]["CORTEX_LIVE_HOOK_LOG_PATH"] == str(hook_log_path)
 
 
-def test_claude_live_task_prompt_carries_v2_guidance(monkeypatch) -> None:
+def test_claude_live_task_prompt_omits_guidance_for_clean_product_normal_continue(monkeypatch) -> None:
     captured: dict[str, object] = {}
 
     def fake_timed_command(command, **kwargs):
@@ -1040,15 +1053,10 @@ def test_claude_live_task_prompt_carries_v2_guidance(monkeypatch) -> None:
 
     command = captured["command"]
     prompt = command[command.index("-p") + 1]  # type: ignore[union-attr]
-    assert prompt.startswith(GUIDANCE_MARKER)
-    assert "mode: compressed_dynamic" in prompt
-    assert "host: claude" in prompt
-    assert "denominator_rule:" in prompt
-    assert "contract_rows:" not in prompt
-    assert "USER_TASK\nRespond exactly with OK." in prompt
+    assert prompt == "Respond exactly with OK."
 
 
-def test_codex_live_task_prompt_carries_v2_guidance(monkeypatch) -> None:
+def test_codex_live_task_prompt_omits_guidance_for_clean_product_normal_continue(monkeypatch) -> None:
     captured: dict[str, object] = {}
 
     def fake_timed_command(command, **kwargs):
@@ -1072,12 +1080,7 @@ def test_codex_live_task_prompt_carries_v2_guidance(monkeypatch) -> None:
     )
 
     prompt = captured["command"][-1]  # type: ignore[index]
-    assert prompt.startswith(GUIDANCE_MARKER)
-    assert "mode: compressed_dynamic" in prompt
-    assert "host: codex" in prompt
-    assert "host.codex_cli" in prompt
-    assert "negative.forbidden_shortcuts" in prompt
-    assert "USER_TASK\nRespond exactly with OK." in prompt
+    assert prompt == "Respond exactly with OK."
 
 
 def test_live_hook_recorder_emits_no_stdout_when_logging(capsys, monkeypatch, tmp_path: Path) -> None:
@@ -3102,14 +3105,17 @@ def test_operator_directionality_variant_order_alternates_by_repeat() -> None:
         "raw_host",
         "full_v2_guidance",
         "compressed_dynamic_cortex",
+        "product_normal_cortex",
     )
     assert live_operator_directionality._variant_order(2) == (
         "full_v2_guidance",
         "compressed_dynamic_cortex",
+        "product_normal_cortex",
         "raw_host",
     )
     assert live_operator_directionality._variant_order(3) == (
         "compressed_dynamic_cortex",
+        "product_normal_cortex",
         "raw_host",
         "full_v2_guidance",
     )

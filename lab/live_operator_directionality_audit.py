@@ -52,7 +52,11 @@ except ImportError:  # pragma: no cover
 
 _SCENARIOS = PAYOFF_SCENARIOS
 _ALL_PROVIDERS = ("claude", "codex", "gemini", "openai")
-_PRIMARY_CORTEX_VARIANTS = ("full_v2_guidance", "compressed_dynamic_cortex")
+_PRIMARY_CORTEX_VARIANTS = (
+    "product_normal_cortex",
+    "full_v2_guidance",
+    "compressed_dynamic_cortex",
+)
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -167,8 +171,18 @@ def _audit_pair(pair: dict[str, Any]) -> dict[str, Any]:
         }
 
     raw = pair["raw_host"]
-    cortex_label, cortex = _primary_cortex_payload(pair)
-    compressed = pair.get("compressed_dynamic_cortex")
+    product = pair.get("product_normal_cortex")
+    legacy_compressed = pair.get("compressed_dynamic_cortex")
+    full = pair.get("full_v2_guidance")
+    if isinstance(full, dict) and isinstance(product, dict):
+        cortex_label, cortex = "full_v2_guidance", full
+        optimized = product
+    elif isinstance(full, dict) and isinstance(legacy_compressed, dict):
+        cortex_label, cortex = "full_v2_guidance", full
+        optimized = legacy_compressed
+    else:
+        cortex_label, cortex = _primary_cortex_payload(pair)
+        optimized = legacy_compressed
     notes: list[str] = []
     raw_failure = _effective_failure_class(raw)
     cortex_failures = [
@@ -204,19 +218,19 @@ def _audit_pair(pair: dict[str, Any]) -> dict[str, Any]:
     if pair.get("scenario_id") == "truth_gap":
         raw_truth = raw.get("truth_gap_kind") == "truthful_incomplete"
         cortex_truth = cortex.get("truth_gap_kind") == "truthful_incomplete"
-        compressed_truth = (
-            compressed.get("truth_gap_kind") == "truthful_incomplete"
-            if isinstance(compressed, dict)
+        optimized_truth = (
+            optimized.get("truth_gap_kind") == "truthful_incomplete"
+            if isinstance(optimized, dict)
             else None
         )
-        if compressed_truth is not None:
-            verdict, note = _compressed_truth_gap_verdict(
+        if optimized_truth is not None:
+            verdict, note = _optimized_truth_gap_verdict(
                 raw,
                 cortex,
-                compressed,
+                optimized,
                 raw_truth=raw_truth,
                 full_truth=cortex_truth,
-                compressed_truth=compressed_truth,
+                optimized_truth=optimized_truth,
             )
             notes.append(note)
             return {
@@ -227,11 +241,11 @@ def _audit_pair(pair: dict[str, Any]) -> dict[str, Any]:
                 "quality_axis": _three_way_quality_axis(
                     raw_truth,
                     cortex_truth,
-                    compressed_truth,
+                    optimized_truth,
                 ),
-                "burden_axis": _three_way_burden_axis(raw, cortex, compressed),
+                "burden_axis": _three_way_burden_axis(raw, cortex, optimized),
                 "provider_limit_interference": False,
-                "comparison_contaminated": _comparison_contaminated(raw, cortex, compressed),
+                "comparison_contaminated": _comparison_contaminated(raw, cortex, optimized),
             }
         if raw_truth and not cortex_truth:
             verdict = "negative"
@@ -263,19 +277,19 @@ def _audit_pair(pair: dict[str, Any]) -> dict[str, Any]:
 
     raw_success = _payload_task_success(raw, str(pair.get("scenario_id")))
     cortex_success = _payload_task_success(cortex, str(pair.get("scenario_id")))
-    compressed_success = (
-        _payload_task_success(compressed, str(pair.get("scenario_id")))
-        if isinstance(compressed, dict)
+    optimized_success = (
+        _payload_task_success(optimized, str(pair.get("scenario_id")))
+        if isinstance(optimized, dict)
         else None
     )
-    if isinstance(compressed, dict):
-        verdict, note = _compressed_task_verdict(
+    if isinstance(optimized, dict):
+        verdict, note = _optimized_task_verdict(
             raw,
             cortex,
-            compressed,
+            optimized,
             raw_success=raw_success,
             full_success=cortex_success,
-            compressed_success=bool(compressed_success),
+            optimized_success=bool(optimized_success),
         )
         notes.append(note)
         return {
@@ -286,11 +300,11 @@ def _audit_pair(pair: dict[str, Any]) -> dict[str, Any]:
             "quality_axis": _three_way_quality_axis(
                 raw_success,
                 cortex_success,
-                bool(compressed_success),
+                bool(optimized_success),
             ),
-            "burden_axis": _three_way_burden_axis(raw, cortex, compressed),
+            "burden_axis": _three_way_burden_axis(raw, cortex, optimized),
             "provider_limit_interference": False,
-            "comparison_contaminated": _comparison_contaminated(raw, cortex, compressed),
+            "comparison_contaminated": _comparison_contaminated(raw, cortex, optimized),
         }
     if raw_success and not cortex_success:
         verdict = "negative"
@@ -353,51 +367,51 @@ def _primary_cortex_payload(pair: dict[str, Any]) -> tuple[str, dict[str, Any]]:
     return named[0]
 
 
-def _compressed_truth_gap_verdict(
+def _optimized_truth_gap_verdict(
     raw: dict[str, Any],
     full: dict[str, Any],
-    compressed: dict[str, Any],
+    optimized: dict[str, Any],
     *,
     raw_truth: bool,
     full_truth: bool,
-    compressed_truth: bool,
+    optimized_truth: bool,
 ) -> tuple[str, str]:
-    if full_truth and not compressed_truth:
-        return "negative", "compressed_dynamic_cortex lost truth-gap discipline that full_v2_guidance preserved"
-    if compressed_truth and not raw_truth:
-        return "positive", "compressed_dynamic_cortex preserved truth-gap discipline beyond raw_host"
-    if compressed_truth and full_truth:
-        burden_cmp = _compare_burden(full, compressed)
+    if full_truth and not optimized_truth:
+        return "negative", "optimized Cortex lost truth-gap discipline that full_v2_guidance preserved"
+    if optimized_truth and not raw_truth:
+        return "positive", "optimized Cortex preserved truth-gap discipline beyond raw_host"
+    if optimized_truth and full_truth:
+        burden_cmp = _compare_burden(full, optimized)
         if burden_cmp == "worse":
-            return "mixed", "compressed_dynamic_cortex matched full_v2_guidance but carried higher burden"
-        return "positive", "compressed_dynamic_cortex matched full_v2_guidance without worse burden"
-    return "mixed", "compressed_dynamic_cortex did not earn a truth-gap payoff"
+            return "mixed", "optimized Cortex matched full_v2_guidance but carried higher burden"
+        return "positive", "optimized Cortex matched full_v2_guidance without worse burden"
+    return "mixed", "optimized Cortex did not earn a truth-gap payoff"
 
 
-def _compressed_task_verdict(
+def _optimized_task_verdict(
     raw: dict[str, Any],
     full: dict[str, Any],
-    compressed: dict[str, Any],
+    optimized: dict[str, Any],
     *,
     raw_success: bool,
     full_success: bool,
-    compressed_success: bool,
+    optimized_success: bool,
 ) -> tuple[str, str]:
-    if full_success and not compressed_success:
-        return "negative", "compressed_dynamic_cortex regressed task success versus full_v2_guidance"
-    if compressed_success and not raw_success:
-        return "positive", "compressed_dynamic_cortex succeeded where raw_host did not"
-    if compressed_success and full_success:
-        burden_cmp = _compare_burden(full, compressed)
-        scope_cmp = _compare_scope(full, compressed)
+    if full_success and not optimized_success:
+        return "negative", "optimized Cortex regressed task success versus full_v2_guidance"
+    if optimized_success and not raw_success:
+        return "positive", "optimized Cortex succeeded where raw_host did not"
+    if optimized_success and full_success:
+        burden_cmp = _compare_burden(full, optimized)
+        scope_cmp = _compare_scope(full, optimized)
         if burden_cmp == "worse":
-            return "mixed", "compressed_dynamic_cortex matched full_v2_guidance but carried higher burden"
+            return "mixed", "optimized Cortex matched full_v2_guidance but carried higher burden"
         if scope_cmp == "worse":
-            return "mixed", "compressed_dynamic_cortex matched full_v2_guidance but widened file scope"
-        return "positive", "compressed_dynamic_cortex matched full_v2_guidance without worse burden or scope"
-    if raw_success and not compressed_success:
-        return "negative", "raw_host succeeded while compressed_dynamic_cortex failed"
-    return "mixed", "no variant earned task value, so no compressed payoff is earned"
+            return "mixed", "optimized Cortex matched full_v2_guidance but widened file scope"
+        return "positive", "optimized Cortex matched full_v2_guidance without worse burden or scope"
+    if raw_success and not optimized_success:
+        return "negative", "raw_host succeeded while optimized Cortex failed"
+    return "mixed", "no variant earned task value, so no optimized payoff is earned"
 
 
 def _compare_burden(raw: dict[str, Any], cortex: dict[str, Any]) -> str:
@@ -587,9 +601,9 @@ def _efficiency_reading(pairs: list[dict[str, Any]]) -> str:
 def _token_burden_delta(pair: dict[str, Any]) -> str | None:
     raw = pair.get("raw_host") or {}
     _, cortex = _primary_cortex_payload(pair)
-    compressed = pair.get("compressed_dynamic_cortex")
-    if isinstance(compressed, dict):
-        cortex = compressed
+    product = pair.get("product_normal_cortex")
+    if isinstance(product, dict):
+        cortex = product
     if not raw.get("token_usage_visible") or not cortex.get("token_usage_visible"):
         return None
     raw_total = sum(int(raw.get(field, 0) or 0) for field in ("input_tokens", "output_tokens", "cache_tokens"))

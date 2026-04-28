@@ -158,7 +158,7 @@ def test_openai_host_control_injects_v2_guidance_into_model_visible_instructions
     request = OpenAIHostControlRequest(
         action_tag="openai-response-stream",
         model="gpt-5.4",
-        input_text="hello",
+        input_text="Tests are failing; fix the smallest issue and verify before closing.",
         instructions="be terse",
         metadata={"cortex_host_surface": "codex"},
     )
@@ -166,12 +166,12 @@ def test_openai_host_control_injects_v2_guidance_into_model_visible_instructions
     run_openai_host_control(request, transport=transport)
 
     request_payload = captured["payload"]["request"]  # type: ignore[index]
-    assert request_payload["input"] == "hello"  # type: ignore[index]
+    assert request_payload["input"] == "Tests are failing; fix the smallest issue and verify before closing."  # type: ignore[index]
     assert request_payload["instructions"].startswith("be terse")  # type: ignore[index]
-    assert GUIDANCE_MARKER in request_payload["instructions"]  # type: ignore[index]
-    assert "host: codex" in request_payload["instructions"]  # type: ignore[index]
-    assert "runtime.verified_work_repair" in request_payload["instructions"]  # type: ignore[index]
-    assert "negative.forbidden_shortcuts" in request_payload["instructions"]  # type: ignore[index]
+    assert "<cortex_exec>" in request_payload["instructions"]  # type: ignore[index]
+    assert "<posture>REPAIR</posture>" in request_payload["instructions"]  # type: ignore[index]
+    assert GUIDANCE_MARKER not in request_payload["instructions"]  # type: ignore[index]
+    assert "row_id" not in request_payload["instructions"]  # type: ignore[index]
 
 
 def test_openai_host_control_request_emits_offline_publication_only_when_requested() -> None:

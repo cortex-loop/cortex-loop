@@ -45,10 +45,12 @@ def build_v2_guidance_optimization_audit(
     provider_names: tuple[str, ...] = TIER1_PAYOFF_PROVIDERS,
 ) -> dict[str, Any]:
     contexts = _sample_contexts()
+    task_texts = _sample_task_texts()
     coverage_reports = {
         name: v2_guidance_denominator_coverage_payload(
             context,
-            mode=GuidanceMode.COMPRESSED_DYNAMIC,
+            mode=GuidanceMode.PRODUCT_NORMAL,
+            task_text=task_texts.get(name),
         )
         for name, context in contexts.items()
     }
@@ -58,6 +60,16 @@ def build_v2_guidance_optimization_audit(
     }
     compressed_lengths = {
         name: len(render_executive_guidance(context, mode=GuidanceMode.COMPRESSED_DYNAMIC))
+        for name, context in contexts.items()
+    }
+    product_lengths = {
+        name: len(
+            render_executive_guidance(
+                context,
+                mode=GuidanceMode.PRODUCT_NORMAL,
+                task_text=task_texts.get(name),
+            )
+        )
         for name, context in contexts.items()
     }
     communication_audit = _read_json(communication_audit_path)
@@ -87,9 +99,9 @@ def build_v2_guidance_optimization_audit(
         "surface": "lab",
         "evidence_role": "watchlist",
         "train": "v2-intervention-policy-tuning",
-        "guidance_modes": ["raw", "full", "compressed_dynamic"],
+        "guidance_modes": ["raw", "full", "compressed_dynamic", "product_normal"],
         "default_product_profile": "normal",
-        "default_product_guidance_mode": "compressed_dynamic",
+        "default_product_guidance_mode": "product_normal",
         "variant_matrix": list(PAYOFF_VARIANTS),
         "task_packs": list(PAYOFF_TASK_PACKS),
         "provider_scope": list(provider_names),
@@ -105,7 +117,9 @@ def build_v2_guidance_optimization_audit(
             name: {
                 "full_chars": full_lengths[name],
                 "compressed_dynamic_chars": compressed_lengths[name],
-                "reduction_chars": full_lengths[name] - compressed_lengths[name],
+                "product_normal_chars": product_lengths[name],
+                "compressed_reduction_chars": full_lengths[name] - compressed_lengths[name],
+                "product_reduction_chars": full_lengths[name] - product_lengths[name],
             }
             for name in contexts
         },
@@ -115,7 +129,7 @@ def build_v2_guidance_optimization_audit(
             "raw_aux_hidden_memory": "AUX default-zero remains always-on and publication-only is dynamic",
             "single_host_overclaim": "full communication non-regression requires Claude and Codex only and does not claim all-host optimization",
             "codex_cli_gap": "OpenAI app-server evidence remains support evidence unless a separate codex provider run passes on codex exec",
-            "audit_transcript_bloat": "compressed_dynamic omits contract_rows and records denominator detail in artifact coverage",
+            "audit_transcript_bloat": "product_normal removes audit row IDs from model-visible guidance and records denominator detail in artifact coverage",
             "adoption_overclaim": "broad product usefulness remains forbidden until human or dogfood-equivalent preference evidence reaches the 2:1 adoption gate",
         },
     }
@@ -170,6 +184,13 @@ def _sample_contexts() -> dict[str, ExecutiveGuidanceContext]:
             next_recommended_move="close truthfully with blockers explicit",
             last_commitment_result_summary="evidence incomplete",
         ),
+    }
+
+
+def _sample_task_texts() -> dict[str, str]:
+    return {
+        "codex_repair": "Tests are failing; fix the smallest issue and verify before closing.",
+        "claude_truth_gap": "Close out truthfully; do not claim completion if evidence is incomplete.",
     }
 
 

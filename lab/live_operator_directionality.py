@@ -121,8 +121,20 @@ _SCENARIOS: dict[str, dict[str, Any]] = {
         "run_test": False,
     },
 }
-_VARIANTS = ("raw_host", "full_v2_guidance", "compressed_dynamic_cortex")
-_CORTEX_VARIANTS = frozenset({"full_v2_guidance", "compressed_dynamic_cortex", "cortex_operator"})
+_VARIANTS = (
+    "raw_host",
+    "full_v2_guidance",
+    "compressed_dynamic_cortex",
+    "product_normal_cortex",
+)
+_CORTEX_VARIANTS = frozenset(
+    {
+        "full_v2_guidance",
+        "compressed_dynamic_cortex",
+        "product_normal_cortex",
+        "cortex_operator",
+    }
+)
 _REPEAT_COUNT = 3
 _RAW_BASELINE_FAILURE = "blocked_raw_baseline_contaminated"
 _TIER1_PROVIDERS = ("claude", "codex")
@@ -255,6 +267,7 @@ def _run_pair(
             "raw_host": raw_payload,
             "full_v2_guidance": None,
             "compressed_dynamic_cortex": None,
+            "product_normal_cortex": None,
         }
 
     provider_window_caution = _provider_window_caution(provider, prior_variant_runs)
@@ -277,6 +290,7 @@ def _run_pair(
             "raw_host": raw_payload,
             "full_v2_guidance": None,
             "compressed_dynamic_cortex": None,
+            "product_normal_cortex": None,
             "variant_order": list(_variant_order(repeat_index)),
         }
 
@@ -306,11 +320,33 @@ def _run_pair(
 
 
 def _variant_order(repeat_index: int) -> tuple[str, ...]:
-    if repeat_index % 3 == 1:
-        return ("raw_host", "full_v2_guidance", "compressed_dynamic_cortex")
-    if repeat_index % 3 == 2:
-        return ("full_v2_guidance", "compressed_dynamic_cortex", "raw_host")
-    return ("compressed_dynamic_cortex", "raw_host", "full_v2_guidance")
+    if repeat_index % 4 == 1:
+        return (
+            "raw_host",
+            "full_v2_guidance",
+            "compressed_dynamic_cortex",
+            "product_normal_cortex",
+        )
+    if repeat_index % 4 == 2:
+        return (
+            "full_v2_guidance",
+            "compressed_dynamic_cortex",
+            "product_normal_cortex",
+            "raw_host",
+        )
+    if repeat_index % 4 == 3:
+        return (
+            "compressed_dynamic_cortex",
+            "product_normal_cortex",
+            "raw_host",
+            "full_v2_guidance",
+        )
+    return (
+        "product_normal_cortex",
+        "raw_host",
+        "full_v2_guidance",
+        "compressed_dynamic_cortex",
+    )
 
 
 def _is_cortex_variant(variant: str) -> bool:
@@ -322,6 +358,8 @@ def _guidance_mode_for_variant(variant: str) -> GuidanceMode:
         return GuidanceMode.RAW
     if variant == "compressed_dynamic_cortex":
         return GuidanceMode.COMPRESSED_DYNAMIC
+    if variant == "product_normal_cortex":
+        return GuidanceMode.PRODUCT_NORMAL
     if _is_cortex_variant(variant):
         return GuidanceMode.FULL
     raise ValueError(f"unsupported operator directionality variant: {variant}")
@@ -357,10 +395,15 @@ def _attach_guidance_metrics(
     provider: str,
     variant: str,
     guidance_context: ExecutiveGuidanceContext | None = None,
+    task_text: str | None = None,
 ) -> None:
     mode = _guidance_mode_for_variant(variant)
     context = guidance_context or _guidance_context_for_scenario(provider, "generic")
-    coverage = v2_guidance_denominator_coverage_payload(context, mode=mode)
+    coverage = v2_guidance_denominator_coverage_payload(
+        context,
+        mode=mode,
+        task_text=task_text,
+    )
     payload["cortex_guidance_mode"] = mode.value
     payload["guidance_burden"] = coverage["guidance_burden"]
     payload["guidance_denominator_coverage"] = coverage
@@ -647,6 +690,7 @@ def _run_cli_variant(
         hook_log_path=hook_log_path,
         run_verification=route_decision.budget.require_verification,
         route_diagnostics=route_diagnostics,
+        guidance_mode=_guidance_mode_for_variant(variant),
     )
     payload["variant"] = variant
     payload["surface"] = _SURFACE_LABEL[provider]
@@ -655,6 +699,7 @@ def _run_cli_variant(
         provider=provider,
         variant=variant,
         guidance_context=guidance_context,
+        task_text=prompt,
     )
     _attach_extra_read_defaults(payload)
     if (
@@ -866,6 +911,7 @@ def _run_cli_restart_continuity_variant(
         hook_log_path=hook_log_path,
         run_verification=route_decision.budget.require_verification,
         route_diagnostics=route_diagnostics,
+        guidance_mode=_guidance_mode_for_variant(variant),
     )
     payload["variant"] = variant
     payload["surface"] = _SURFACE_LABEL[provider]
@@ -875,6 +921,7 @@ def _run_cli_restart_continuity_variant(
         provider=provider,
         variant=variant,
         guidance_context=guidance_context,
+        task_text=second_prompt,
     )
     return payload
 
@@ -1242,6 +1289,7 @@ def _run_openai_variant(
             provider="openai",
             variant=variant,
             guidance_context=guidance_context,
+            task_text=None,
         )
         return payload
     if scenario_id == "restart_continuity":
@@ -1294,6 +1342,7 @@ def _run_openai_variant(
             provider="openai",
             variant=variant,
             guidance_context=guidance_context,
+            task_text=prompt,
         )
         _attach_extra_read_defaults(payload)
         if (
@@ -1381,6 +1430,7 @@ def _run_openai_restart_continuity_variant(
                 provider="openai",
                 variant=variant,
                 guidance_context=context,
+                task_text=first_prompt,
             )
             return payload
 
@@ -1433,6 +1483,7 @@ def _run_openai_restart_continuity_variant(
         provider="openai",
         variant=variant,
         guidance_context=context,
+        task_text=second_prompt,
     )
     return payload
 
@@ -1686,6 +1737,7 @@ def _maybe_run_cli_extra_read_pass(
         hook_log_path=hook_log_path,
         run_verification=False,
         route_diagnostics=route_diagnostics,
+        guidance_mode=_guidance_mode_for_variant(variant),
     )
     second_payload["variant"] = variant
     second_payload["surface"] = _SURFACE_LABEL[provider]

@@ -80,7 +80,7 @@ def test_claude_host_control_injects_v2_guidance_into_model_visible_system_chann
     request = ClaudeHostControlRequest(
         action_tag="claude-message-stream",
         model="claude-sonnet-4-6",
-        input_text="hello",
+        input_text="Tests are failing; fix the smallest issue and verify before closing.",
         max_output_tokens=32,
         system="be terse",
     )
@@ -88,16 +88,46 @@ def test_claude_host_control_injects_v2_guidance_into_model_visible_system_chann
     run_claude_host_control(request, transport=transport)
 
     request_payload = captured["payload"]["request"]  # type: ignore[index]
-    assert request_payload["input"] == "hello"  # type: ignore[index]
+    assert request_payload["input"] == "Tests are failing; fix the smallest issue and verify before closing."  # type: ignore[index]
     assert request_payload["system"].startswith("be terse")  # type: ignore[index]
-    assert GUIDANCE_MARKER in request_payload["system"]  # type: ignore[index]
-    assert "sre.branch_continuity" in request_payload["system"]  # type: ignore[index]
-    assert "aux.default_zero_removable" in request_payload["system"]  # type: ignore[index]
+    assert "<cortex_exec>" in request_payload["system"]  # type: ignore[index]
+    assert "<posture>REPAIR</posture>" in request_payload["system"]  # type: ignore[index]
+    assert GUIDANCE_MARKER not in request_payload["system"]  # type: ignore[index]
+    assert "row_id" not in request_payload["system"]  # type: ignore[index]
+    assert "aux.default_zero_removable" not in request_payload["system"]  # type: ignore[index]
 
 
 def test_claude_host_control_result_rejects_wrong_action_tag() -> None:
     with pytest.raises(ValueError, match="claude-message-stream"):
         ClaudeHostControlResult(action_tag="bad", records=())
+
+
+def test_claude_host_control_blocks_unsupported_text_closure_claim() -> None:
+    raw_events = [
+        {
+            "type": "content_block_delta",
+            "session_id": "cl-closure",
+            "message_id": "cl-msg-closure",
+            "delta": "Done. Tests pass.",
+        }
+    ]
+    request = ClaudeHostControlRequest(
+        action_tag="claude-message-stream",
+        model="claude-sonnet-4-6",
+        input_text="hello",
+        max_output_tokens=32,
+    )
+
+    result, _ = run_claude_host_control(
+        request,
+        transport=lambda _: list(raw_events),
+    )
+
+    payload = result.as_payload()
+    assert payload["closure_assessment"]["status"] == "blocked"
+    assert "completion_claim_without_certification_or_verification" in payload[
+        "closure_assessment"
+    ]["reasons"]
 
 
 def test_claude_host_control_service_boundary_rejects_out_of_scope_keys() -> None:

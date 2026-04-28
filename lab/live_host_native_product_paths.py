@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import signal
 import subprocess
 import sys
 import time
@@ -16,6 +17,7 @@ if str(ROOT) not in sys.path:  # pragma: no cover - direct script entrypoint sup
     sys.path.insert(0, str(ROOT))
 
 from cortex.sre.executive_summary import build_executive_signal_summary
+from cortex.sre.closure import assess_output_closure
 from cortex.sre.guidance import (
     DEFAULT_PRODUCT_GUIDANCE_MODE,
     ExecutiveGuidanceContext,
@@ -711,6 +713,7 @@ def _materialize_operator_run(
     hook_log_path: Path | None,
     run_verification: bool = True,
     route_diagnostics: dict[str, Any] | None = None,
+    guidance_mode: GuidanceMode | str = DEFAULT_PRODUCT_GUIDANCE_MODE,
 ) -> dict[str, Any]:
     stem = f"{scenario_id}__run_{repeat_index:03d}"
     stdout_path = root / f"{stem}.stdout.log"
@@ -759,6 +762,15 @@ def _materialize_operator_run(
             failure_class=effective_failure_class,
         )
         success = bool(behavioral_payoff["task_success"])
+    closure_assessment = assess_output_closure(
+        result_text,
+        verification_passed=(
+            test_result["exit_code"] == 0
+            if test_result["exit_code"] is not None
+            else None
+        ),
+        blocker_present=bool(behavioral_payoff and behavioral_payoff.get("blocker_surfacing")),
+    )
 
     payload = {
         "provider": provider,
@@ -792,6 +804,7 @@ def _materialize_operator_run(
         ),
         "truth_gap_kind": truth_gap_kind,
         "behavioral_payoff": behavioral_payoff,
+        "closure_assessment": closure_assessment.as_payload(),
         "started_at": run_result["started_at"],
         "ended_at": run_result["ended_at"],
         "extra_read_pass_attempted": False,
@@ -811,7 +824,7 @@ def _materialize_operator_run(
             payload,
             provider=provider,
             surface="product_paths",
-            variant="compressed_dynamic_cortex",
+            variant=_variant_for_guidance_mode(guidance_mode),
             scenario_id=scenario_id,
             repeat_index=repeat_index,
         )
@@ -1071,6 +1084,17 @@ def _prompt_with_model_visible_guidance(
     )
 
 
+def _variant_for_guidance_mode(guidance_mode: GuidanceMode | str) -> str:
+    mode = GuidanceMode(guidance_mode) if isinstance(guidance_mode, str) else guidance_mode
+    if mode is GuidanceMode.PRODUCT_NORMAL:
+        return "product_normal_cortex"
+    if mode is GuidanceMode.COMPRESSED_DYNAMIC:
+        return "compressed_dynamic_cortex"
+    if mode is GuidanceMode.FULL:
+        return "full_v2_guidance"
+    return "raw_host"
+
+
 def _run_timed_command(
     command: list[str],
     *,
@@ -1079,27 +1103,39 @@ def _run_timed_command(
     env: dict[str, str] | None = None,
 ) -> dict[str, Any]:
     started_at = now_utc_iso()
+    process: subprocess.Popen[str] | None = None
     try:
-        completed = subprocess.run(
+        process = subprocess.Popen(
             command,
             cwd=str(cwd),
             env=env,
             text=True,
-            capture_output=True,
-            timeout=timeout_seconds,
-            check=False,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            start_new_session=True,
         )
+        stdout, stderr = process.communicate(timeout=timeout_seconds)
         return {
             "command": command,
-            "exit_code": completed.returncode,
-            "stdout": sanitize_text(completed.stdout),
-            "stderr": sanitize_text(completed.stderr),
+            "exit_code": process.returncode,
+            "stdout": sanitize_text(stdout),
+            "stderr": sanitize_text(stderr),
             "started_at": started_at,
             "ended_at": now_utc_iso(),
         }
     except subprocess.TimeoutExpired as exc:
+        if process is not None:
+            try:
+                os.killpg(process.pid, signal.SIGKILL)
+            except ProcessLookupError:
+                pass
+            stdout_after_kill, stderr_after_kill = process.communicate()
+        else:
+            stdout_after_kill, stderr_after_kill = "", ""
         stdout = exc.stdout if isinstance(exc.stdout, str) else (exc.stdout or b"").decode("utf-8", errors="replace")
         stderr = exc.stderr if isinstance(exc.stderr, str) else (exc.stderr or b"").decode("utf-8", errors="replace")
+        stdout = stdout or stdout_after_kill
+        stderr = stderr or stderr_after_kill
         return {
             "command": command,
             "exit_code": 124,

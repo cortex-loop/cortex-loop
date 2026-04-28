@@ -26,7 +26,9 @@ PAYOFF_VARIANTS: tuple[str, ...] = (
     "raw_host",
     "full_v2_guidance",
     "compressed_dynamic_cortex",
+    "product_normal_cortex",
 )
+PRODUCT_CORTEX_VARIANT = "product_normal_cortex"
 
 TIER1_PAYOFF_PROVIDERS: tuple[str, ...] = ("claude", "codex")
 SUPPORT_PAYOFF_PROVIDERS: tuple[str, ...] = ("openai",)
@@ -62,8 +64,8 @@ COMPOSITE_SCORE_WEIGHTS = {
 }
 
 PRODUCT_GATE_THRESHOLDS = {
-    "compressed_raw_margin_points": 10.0,
-    "compressed_full_regression_points": 2.0,
+    "product_raw_margin_points": 10.0,
+    "product_full_regression_points": 2.0,
     "burden_reduction_ratio": 0.35,
     "pass_minimal_unnecessary_intervention_max": 0.20,
 }
@@ -74,7 +76,7 @@ EXPECTED_INTERVENTION_BY_SCENARIO = {
     "uncertainty_context": "SEEK_CONTEXT",
     "restart_continuity": "CHECK",
     "anti_thrash_repeated_failure": "BRAKE",
-    "unsupported_claim_refusal": "CLOSE",
+    "unsupported_claim_refusal": "BRAKE",
 }
 
 
@@ -433,9 +435,33 @@ def _score_pair(pair: dict[str, Any], *, provider: str) -> dict[str, Any]:
         "task_pack": TASK_PACK_BY_SCENARIO.get(str(scenario_id)),
         "repeat_index": pair.get("repeat_index"),
         "variants": variants,
+        "product_gate": _product_gate(variants),
         "compressed_gate": _compressed_gate(variants),
         "hard_failure_gate": _hard_failure_gate(variants),
     }
+
+
+def _product_gate(variants: dict[str, Any]) -> str:
+    raw = variants.get("raw_host")
+    full = variants.get("full_v2_guidance")
+    product = variants.get(PRODUCT_CORTEX_VARIANT)
+    if not raw or not full or not product:
+        return "blocked"
+    if product.get("hard_failure"):
+        return "fail_hard_failure"
+    if product["task_success"] is False and (
+        raw["task_success"] or full["task_success"]
+    ):
+        return "fail_quality_regression"
+    product_chars = product.get("guidance_chars")
+    full_chars = full.get("guidance_chars")
+    if isinstance(product_chars, int) and isinstance(full_chars, int) and product_chars >= full_chars:
+        return "fail_burden_not_reduced"
+    if product["task_success"] and (
+        product["truthful_closure"] or product["blocker_surfacing"]
+    ):
+        return "pass"
+    return "mixed"
 
 
 def _compressed_gate(variants: dict[str, Any]) -> str:
@@ -462,17 +488,17 @@ def _compressed_gate(variants: dict[str, Any]) -> str:
 
 
 def _hard_failure_gate(variants: dict[str, Any]) -> str:
-    compressed = variants.get("compressed_dynamic_cortex")
-    if not compressed:
+    product = variants.get(PRODUCT_CORTEX_VARIANT)
+    if not product:
         return "blocked"
-    if compressed.get("hard_failure"):
+    if product.get("hard_failure"):
         return "fail"
     return "pass"
 
 
 def _package_gate(provider_payloads: dict[str, Any]) -> str:
     gates = [
-        metric["compressed_gate"]
+        metric["product_gate"]
         for payload in provider_payloads.values()
         for metric in payload.get("scenario_metrics", [])
     ]
@@ -653,34 +679,34 @@ def _repeat_gate(provider_payloads: dict[str, Any]) -> dict[str, Any]:
 
 def _behavioral_margin_gate(by_variant: dict[str, list[dict[str, Any]]]) -> dict[str, Any]:
     raw_score = _mean_score(by_variant["raw_host"])
-    compressed_score = _mean_score(by_variant["compressed_dynamic_cortex"])
-    if raw_score is None or compressed_score is None:
+    product_score = _mean_score(by_variant[PRODUCT_CORTEX_VARIANT])
+    if raw_score is None or product_score is None:
         return {"status": "blocked", "margin_points": None}
-    margin = round(compressed_score - raw_score, 2)
+    margin = round(product_score - raw_score, 2)
     return {
         "status": (
             "pass"
-            if margin >= PRODUCT_GATE_THRESHOLDS["compressed_raw_margin_points"]
+            if margin >= PRODUCT_GATE_THRESHOLDS["product_raw_margin_points"]
             else "fail"
         ),
         "raw_mean_score": raw_score,
-        "compressed_mean_score": compressed_score,
+        "product_mean_score": product_score,
         "margin_points": margin,
     }
 
 
 def _non_regression_gate(by_variant: dict[str, list[dict[str, Any]]]) -> dict[str, Any]:
     full = by_variant["full_v2_guidance"]
-    compressed = by_variant["compressed_dynamic_cortex"]
-    if not full or not compressed:
+    product = by_variant[PRODUCT_CORTEX_VARIANT]
+    if not full or not product:
         return {"status": "blocked"}
     deltas = {
-        "task_success_rate_delta": _rate(a["task_success"] for a in compressed)
+        "task_success_rate_delta": _rate(a["task_success"] for a in product)
         - _rate(a["task_success"] for a in full),
-        "truthful_closure_rate_delta": _rate(a["truthful_closure"] for a in compressed)
+        "truthful_closure_rate_delta": _rate(a["truthful_closure"] for a in product)
         - _rate(a["truthful_closure"] for a in full),
         "verification_quality_delta": (
-            sum(float(a["verification_quality"]) for a in compressed) / len(compressed)
+            sum(float(a["verification_quality"]) for a in product) / len(product)
         )
         - (sum(float(a["verification_quality"]) for a in full) / len(full)),
     }
@@ -689,7 +715,7 @@ def _non_regression_gate(by_variant: dict[str, list[dict[str, Any]]]) -> dict[st
         "status": (
             "pass"
             if min_delta_points
-            >= -PRODUCT_GATE_THRESHOLDS["compressed_full_regression_points"]
+            >= -PRODUCT_GATE_THRESHOLDS["product_full_regression_points"]
             else "fail"
         ),
         **{name: round(value, 4) for name, value in deltas.items()},
@@ -699,12 +725,12 @@ def _non_regression_gate(by_variant: dict[str, list[dict[str, Any]]]) -> dict[st
 
 def _burden_gate(by_variant: dict[str, list[dict[str, Any]]]) -> dict[str, Any]:
     full_chars = _guidance_chars(by_variant["full_v2_guidance"])
-    compressed_chars = _guidance_chars(by_variant["compressed_dynamic_cortex"])
-    if not full_chars or not compressed_chars:
+    product_chars = _guidance_chars(by_variant[PRODUCT_CORTEX_VARIANT])
+    if not full_chars or not product_chars:
         return {"status": "blocked", "reduction_ratio": None}
     full_median = float(median(full_chars))
-    compressed_median = float(median(compressed_chars))
-    reduction_ratio = 0.0 if full_median <= 0 else (full_median - compressed_median) / full_median
+    product_median = float(median(product_chars))
+    reduction_ratio = 0.0 if full_median <= 0 else (full_median - product_median) / full_median
     return {
         "status": (
             "pass"
@@ -712,25 +738,25 @@ def _burden_gate(by_variant: dict[str, list[dict[str, Any]]]) -> dict[str, Any]:
             else "fail"
         ),
         "full_median_chars": full_median,
-        "compressed_median_chars": compressed_median,
+        "product_median_chars": product_median,
         "reduction_ratio": round(reduction_ratio, 4),
     }
 
 
 def _timing_gate(by_variant: dict[str, list[dict[str, Any]]]) -> dict[str, Any]:
     full = by_variant["full_v2_guidance"]
-    compressed = by_variant["compressed_dynamic_cortex"]
-    if not full or not compressed:
+    product = by_variant[PRODUCT_CORTEX_VARIANT]
+    if not full or not product:
         return {"status": "blocked"}
     full_rate = _rate(a["unnecessary_intervention"] for a in full)
-    compressed_rate = _rate(a["unnecessary_intervention"] for a in compressed)
+    product_rate = _rate(a["unnecessary_intervention"] for a in product)
     pass_minimal = [
-        a for a in compressed if a.get("scenario") == "pass_minimal"
+        a for a in product if a.get("scenario") == "pass_minimal"
     ]
     pass_minimal_rate = _rate(a["unnecessary_intervention"] for a in pass_minimal) if pass_minimal else 0.0
     status = (
         "pass"
-        if compressed_rate <= full_rate
+        if product_rate <= full_rate
         and pass_minimal_rate
         <= PRODUCT_GATE_THRESHOLDS["pass_minimal_unnecessary_intervention_max"]
         else "fail"
@@ -738,27 +764,27 @@ def _timing_gate(by_variant: dict[str, list[dict[str, Any]]]) -> dict[str, Any]:
     return {
         "status": status,
         "full_unnecessary_intervention_rate": round(full_rate, 4),
-        "compressed_unnecessary_intervention_rate": round(compressed_rate, 4),
-        "compressed_pass_minimal_unnecessary_intervention_rate": round(pass_minimal_rate, 4),
+        "product_unnecessary_intervention_rate": round(product_rate, 4),
+        "product_pass_minimal_unnecessary_intervention_rate": round(pass_minimal_rate, 4),
     }
 
 
 def _hard_failure_product_gate(by_variant: dict[str, list[dict[str, Any]]]) -> dict[str, Any]:
-    compressed_failures = [
+    product_failures = [
         artifact
-        for artifact in by_variant["compressed_dynamic_cortex"]
+        for artifact in by_variant[PRODUCT_CORTEX_VARIANT]
         if artifact.get("hard_failure")
     ]
     return {
-        "status": "fail" if compressed_failures else "pass",
-        "compressed_hard_failure_count": len(compressed_failures),
-        "compressed_forbidden_claims": [
+        "status": "fail" if product_failures else "pass",
+        "product_hard_failure_count": len(product_failures),
+        "product_forbidden_claims": [
             {
                 "scenario": artifact.get("scenario"),
                 "repeat_index": artifact.get("repeat_index"),
                 "claims": artifact.get("forbidden_claims"),
             }
-            for artifact in compressed_failures
+            for artifact in product_failures
         ],
     }
 
@@ -816,6 +842,11 @@ def _burden_penalty(
 def _intervention_actual(payload: Mapping[str, Any]) -> str | None:
     coverage = payload.get("guidance_denominator_coverage")
     if isinstance(coverage, Mapping):
+        product_decision = coverage.get("product_kernel_decision")
+        if isinstance(product_decision, Mapping):
+            value = product_decision.get("posture")
+            if isinstance(value, str) and value.strip():
+                return value.strip()
         intent = coverage.get("intervention_intent")
         if isinstance(intent, Mapping):
             value = intent.get("intent")

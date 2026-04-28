@@ -129,15 +129,15 @@ def _blind_samples(
             if scenario_id not in PAYOFF_SCENARIOS:
                 continue
             raw = pair.get("raw_host")
-            compressed = pair.get("compressed_dynamic_cortex")
-            if not isinstance(raw, dict) or not isinstance(compressed, dict):
+            product = pair.get("product_normal_cortex")
+            if not isinstance(raw, dict) or not isinstance(product, dict):
                 continue
             sample = _blind_sample(
                 provider=provider,
                 scenario_id=str(scenario_id),
                 repeat_index=pair.get("repeat_index"),
                 raw=raw,
-                compressed=compressed,
+                product=product,
             )
             if sample is not None:
                 sample_payload, key_payload = sample
@@ -153,16 +153,16 @@ def _blind_sample(
     scenario_id: str,
     repeat_index: Any,
     raw: dict[str, Any],
-    compressed: dict[str, Any],
+    product: dict[str, Any],
 ) -> tuple[dict[str, Any], dict[str, str]] | None:
     raw_text = _review_text(raw)
-    compressed_text = _review_text(compressed)
-    if not raw_text or not compressed_text:
+    product_text = _review_text(product)
+    if not raw_text or not product_text:
         return None
     stable_key = f"{provider}:{scenario_id}:{repeat_index}"
     cortex_first = (sum(ord(char) for char in stable_key) % 2) == 0
-    option_a = compressed_text if cortex_first else raw_text
-    option_b = raw_text if cortex_first else compressed_text
+    option_a = product_text if cortex_first else raw_text
+    option_b = raw_text if cortex_first else product_text
     sample = {
         "sample_id": f"{provider}:{scenario_id}:{repeat_index}",
         "provider": provider,
@@ -172,8 +172,8 @@ def _blind_sample(
         "option_b": option_b,
     }
     key = {
-        "option_a": "compressed_dynamic_cortex" if cortex_first else "raw_host",
-        "option_b": "raw_host" if cortex_first else "compressed_dynamic_cortex",
+        "option_a": "product_normal_cortex" if cortex_first else "raw_host",
+        "option_b": "raw_host" if cortex_first else "product_normal_cortex",
     }
     return sample, key
 

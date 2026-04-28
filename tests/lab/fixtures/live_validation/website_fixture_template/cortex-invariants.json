@@ -1,0 +1,76 @@
+{
+  "schema_version": 1,
+  "fixture_id": "website-fixture",
+  "allowed_path_globs": [
+    "src/components/SiteHeader.astro",
+    "src/components/islands/ResourceFilter.*",
+    "src/content/resources.ts",
+    "src/pages/resources.astro"
+  ],
+  "forbidden_path_globs": [
+    ".github/**",
+    ".env",
+    ".env.*",
+    "astro.config.*",
+    "package-lock.json",
+    "package.json",
+    "dist/**",
+    ".astro/**",
+    "src/layouts/Layout.astro",
+    "src/components/ApprovedResourceShell.astro"
+  ],
+  "required_reads": [
+    {
+      "id": "rule-evidence",
+      "paths": ["FIXTURE_RULES.md", "CLAUDE.md"],
+      "allow_result_acknowledgement": true
+    }
+  ],
+  "required_commands": [
+    {
+      "id": "verify-observed",
+      "contains": "npm run verify",
+      "allow_blocker": true
+    }
+  ],
+  "source_patterns": [
+    {
+      "id": "resource-page-exists",
+      "path_globs": ["src/pages/resources.astro"],
+      "must_exist": true,
+      "required_regexes": ["ApprovedResourceShell", "ResourceFilter", "client:(idle|visible)"],
+      "forbidden_regexes": ["client:(load|only)", "<script", "<header", "<footer", "<SiteHeader"],
+      "repair_fact": "`src/pages/resources.astro` must reuse `ApprovedResourceShell`, hydrate `ResourceFilter` with `client:idle` or `client:visible`, and avoid local chrome or inline scripts."
+    },
+    {
+      "id": "resource-filter-island",
+      "path_globs": ["src/components/islands/ResourceFilter.*"],
+      "must_exist": true,
+      "required_regexes": ["data-resource-filter"],
+      "repair_fact": "`src/components/islands/ResourceFilter.*` is required and must expose the resource filter island markup."
+    },
+    {
+      "id": "resource-data",
+      "path_globs": ["src/content/resources.ts"],
+      "must_exist": true,
+      "required_regexes": ["title", "category", "summary"],
+      "repair_fact": "`src/content/resources.ts` must define resource records with title, category, and summary fields."
+    },
+    {
+      "id": "header-navigation",
+      "path_globs": ["src/components/SiteHeader.astro"],
+      "required_regexes": ["href=\"/resources/\"", ">Resources<"],
+      "repair_fact": "`src/components/SiteHeader.astro` must include a bounded navigation link to `/resources/`."
+    }
+  ],
+  "checks": [
+    {
+      "id": "verify",
+      "command": ["npm", "run", "verify"],
+      "timeout_seconds": 120
+    }
+  ],
+  "closure": {
+    "require_verification_for_complete": true
+  }
+}

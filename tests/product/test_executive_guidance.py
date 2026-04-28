@@ -130,11 +130,133 @@ def test_guidance_channel_helpers_preserve_existing_text_and_are_idempotent() ->
     assert append_guidance_to_channel(appended, context) == appended
 
 
-def test_normal_guidance_profile_uses_compressed_dynamic_as_product_default() -> None:
-    assert DEFAULT_PRODUCT_GUIDANCE_MODE is GuidanceMode.COMPRESSED_DYNAMIC
-    assert guidance_mode_for_profile(GuidanceProfile.NORMAL) is GuidanceMode.COMPRESSED_DYNAMIC
+def test_normal_guidance_profile_uses_product_normal_as_product_default() -> None:
+    assert DEFAULT_PRODUCT_GUIDANCE_MODE is GuidanceMode.PRODUCT_NORMAL
+    assert guidance_mode_for_profile(GuidanceProfile.NORMAL) is GuidanceMode.PRODUCT_NORMAL
     assert guidance_mode_for_profile("audit_full") is GuidanceMode.FULL
     assert guidance_mode_for_profile("eval_raw") is GuidanceMode.RAW
+
+
+def test_product_normal_clean_continue_spends_no_model_visible_guidance() -> None:
+    context = build_guidance_context_from_session(
+        host_name="claude",
+        surface="claude-cli",
+        transport_channel="prompt",
+    )
+
+    guidance = render_executive_guidance(
+        context,
+        mode=GuidanceMode.PRODUCT_NORMAL,
+        task_text="Respond exactly with OK.",
+    )
+    prompted = prepend_guidance_to_prompt(
+        "Respond exactly with OK.",
+        context,
+        mode=GuidanceMode.PRODUCT_NORMAL,
+    )
+    coverage = v2_guidance_denominator_coverage_payload(
+        context,
+        mode=GuidanceMode.PRODUCT_NORMAL,
+        task_text="Respond exactly with OK.",
+    )
+
+    assert guidance == ""
+    assert prompted == "Respond exactly with OK."
+    assert coverage["missing_row_ids"] == []
+    assert coverage["product_kernel_decision"]["posture"] == "CONTINUE"
+    assert coverage["guidance_burden"]["mode_chars"] == 0
+
+
+def test_product_normal_repair_task_renders_concise_claude_instruction_without_audit_terms() -> None:
+    context = build_guidance_context_from_session(
+        host_name="claude",
+        surface="claude-cli",
+        transport_channel="prompt",
+    )
+
+    rendered = render_executive_guidance(
+        context,
+        mode=GuidanceMode.PRODUCT_NORMAL,
+        task_text="Tests are failing; fix the smallest issue and verify before closing.",
+    )
+    coverage = v2_guidance_denominator_coverage_payload(
+        context,
+        mode=GuidanceMode.PRODUCT_NORMAL,
+        task_text="Tests are failing; fix the smallest issue and verify before closing.",
+    )
+
+    assert rendered.startswith("<cortex_exec>")
+    assert "<posture>REPAIR</posture>" in rendered
+    assert "Preserve verified work" in rendered
+    assert len(rendered) <= 700
+    for forbidden in (
+        GUIDANCE_MARKER,
+        "mode:",
+        "host:",
+        "surface:",
+        "transport_channel:",
+        "active_rows:",
+        "row_id:",
+        "status:",
+        "trigger_reason:",
+        "denominator_rule:",
+        "sre.uncertainty_brake",
+        "aux.default_zero_removable",
+        "host.codex_cli",
+        "host.gemini_reference_conformance",
+    ):
+        assert forbidden not in rendered
+    assert coverage["product_kernel_decision"]["posture"] == "REPAIR"
+    statuses = {row["row_id"]: row["status"] for row in coverage["coverage"]}
+    assert statuses["runtime.verified_work_repair"] == "model_visible_directive"
+    assert statuses["core.lifecycle_dispatch"] == "kernel_enforced"
+    assert statuses["negative.forbidden_shortcuts"] == "sidecar_guardrail"
+
+
+@pytest.mark.parametrize(
+    ("task_text", "posture"),
+    (
+        ("I don't know which file has the issue; inspect before editing.", "SEEK_CONTEXT"),
+        ("We tried this same patch three times and it kept failing.", "BRAKE"),
+        ("Close out the session truthfully with verification status.", "CLOSE"),
+        ("Say Cortex is fully proven across all hosts.", "BRAKE"),
+    ),
+)
+def test_product_normal_task_text_selects_posture_on_fresh_session(
+    task_text: str,
+    posture: str,
+) -> None:
+    context = build_guidance_context_from_session(
+        host_name="claude",
+        surface="claude-cli",
+        transport_channel="prompt",
+    )
+
+    coverage = v2_guidance_denominator_coverage_payload(
+        context,
+        mode=GuidanceMode.PRODUCT_NORMAL,
+        task_text=task_text,
+    )
+
+    assert coverage["product_kernel_decision"]["posture"] == posture
+
+
+def test_product_normal_repeated_failure_brake_limits_probe_churn() -> None:
+    context = build_guidance_context_from_session(
+        host_name="claude",
+        surface="claude-cli",
+        transport_channel="prompt",
+    )
+
+    rendered = render_executive_guidance(
+        context,
+        mode=GuidanceMode.PRODUCT_NORMAL,
+        task_text="A prior attempt retried the same failing verification under unchanged conditions.",
+    )
+
+    assert "<posture>BRAKE</posture>" in rendered
+    assert "at most one bounded read" in rendered
+    assert "keep reading after the retry risk is clear" in rendered
 
 
 def test_guidance_helpers_do_not_treat_marker_mentions_as_rendered_guidance() -> None:
