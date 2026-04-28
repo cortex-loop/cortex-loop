@@ -275,3 +275,85 @@ def test_init_contract_uses_dirty_worktree_paths_when_nothing_is_staged(
     result = closeout_contract.init_contract(root=repo, mode="finalize", branch="maint/manual-work")
 
     assert result["reviewed_paths"] == ["notes.txt"]
+
+
+
+def test_validate_payload_rejects_agent_loop_guard_with_allow_blocked() -> None:
+    """Bridge-postmortem guard: agent_loop_guard.allow_blocked = true is forbidden.
+
+    The postmortem identified --allow-blocked as the procedural escape hatch
+    that let the V2 communication bridge work be checkpointed before live
+    Claude/Codex proof was completed.
+    """
+    payload = _filled_payload("claude/20260101-000000-test-allow-blocked", "close-session", ["README.md"])
+    payload["agent_loop_guard"] = {
+        "report_path": ".cortex/live_validation/agent_loop_guard/gates.latest.json",
+        "require_full_communication_closure": True,
+        "allow_blocked": True,
+    }
+
+    with pytest.raises(SystemExit, match="allow_blocked"):
+        closeout_contract.validate_payload(
+            payload,
+            expected_mode="close-session",
+            expected_branch="claude/20260101-000000-test-allow-blocked",
+            expected_reviewed_paths=["README.md"],
+        )
+
+
+def test_validate_payload_rejects_agent_loop_guard_opt_out_of_full_communication_closure() -> None:
+    """Bridge-postmortem guard: require_full_communication_closure = false is forbidden.
+
+    The postmortem identified this opt-out as the second procedural escape
+    hatch that allowed the V2 bridge work to checkpoint without proof.
+    """
+    payload = _filled_payload("claude/20260101-000000-test-opt-out", "close-session", ["README.md"])
+    payload["agent_loop_guard"] = {
+        "report_path": ".cortex/live_validation/agent_loop_guard/gates.latest.json",
+        "require_full_communication_closure": False,
+        "allow_blocked": False,
+    }
+
+    with pytest.raises(SystemExit, match="require_full_communication_closure"):
+        closeout_contract.validate_payload(
+            payload,
+            expected_mode="close-session",
+            expected_branch="claude/20260101-000000-test-opt-out",
+            expected_reviewed_paths=["README.md"],
+        )
+
+
+def test_validate_payload_rejects_full_communication_claim_without_agent_loop_guard() -> None:
+    """Naked claims of full V2 communication closure require an agent_loop_guard payload."""
+    payload = _filled_payload("claude/20260101-000000-test-naked-claim", "close-session", ["README.md"])
+    payload["claims"]["earned_now"] = [
+        "Cortex fully communicates V2 doctrine to the model on every turn.",
+    ]
+
+    with pytest.raises(SystemExit, match="agent_loop_guard"):
+        closeout_contract.validate_payload(
+            payload,
+            expected_mode="close-session",
+            expected_branch="claude/20260101-000000-test-naked-claim",
+            expected_reviewed_paths=["README.md"],
+        )
+
+
+def test_validate_payload_accepts_agent_loop_guard_with_safe_defaults() -> None:
+    """A closeout that includes an agent_loop_guard with the postmortem-safe
+    defaults (require_full_communication_closure=True, allow_blocked=False)
+    must still validate; the guard is forward-armed, not punitive."""
+    payload = _filled_payload("claude/20260101-000000-test-safe-guard", "close-session", ["README.md"])
+    payload["agent_loop_guard"] = {
+        "report_path": ".cortex/live_validation/agent_loop_guard/gates.latest.json",
+        "require_full_communication_closure": True,
+        "allow_blocked": False,
+    }
+
+    validated = closeout_contract.validate_payload(
+        payload,
+        expected_mode="close-session",
+        expected_branch="claude/20260101-000000-test-safe-guard",
+        expected_reviewed_paths=["README.md"],
+    )
+    assert validated["agent_loop_guard"]["allow_blocked"] is False

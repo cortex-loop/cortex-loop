@@ -18,6 +18,20 @@ VALID_PROFILES = {"standard", "load_bearing"}
 VALID_SURFACES = {"product", "experimental", "lab", "internal"}
 VALID_AUDIT_STATUSES = {"pass", "fail"}
 VALID_COMPLETENESS_STATES = {"implemented", "explicit_zero", "future_not_active"}
+# The patterns below detect closeout claims of "full V2 communication"
+# closure; they exist because the V2 communication bridge postmortem
+# (preserved at origin/archive/v2-bridge-and-constraint-fidelity-loop)
+# identified that closeouts were claiming closure without an
+# agent_loop_guard payload + a passing report. Any closeout that asserts
+# one of these claims must declare an agent_loop_guard subobject; without
+# one the claim is rejected.
+FULL_COMMUNICATION_COMPLETION_CLAIM_PATTERNS = (
+    re.compile(r"\bfull v2 communication(?: closure)? (?:is )?(?:proven|passed|complete|closed)\b"),
+    re.compile(r"\bfully communicat(?:es|ed|ing)\b"),
+    re.compile(r"\b(?:closed|closes|closing) the (?:v2 )?communication gap\b"),
+    re.compile(r"\b(?:claude|codex) cli live watchlist (?:gate|gates) (?:has |have )?passed\b"),
+    re.compile(r"\bfully model-visible\b"),
+)
 LOAD_BEARING_PACKET_DOC_RE = re.compile(r"^docs/CORTEX_V2_[^/]+\.md$")
 MANAGED_SESSION_BRANCH_RE = re.compile(
     r"^(codex|claude|maint)/(?P<stamp>\d{8}-\d{6})-(?P<slug>[a-z0-9]+(?:-[a-z0-9]+)*)$"
@@ -452,7 +466,89 @@ def validate_payload(
             )
             _require_string(row.get("note"), f"law_to_code_completeness[{index}].note")
 
+    _validate_agent_loop_guard_claims(payload)
+
     return payload
+
+
+def _full_communication_completion_claim_present(payload: dict[str, Any]) -> bool:
+    """Detect closeout claims of full V2 communication closure.
+
+    Searches `residuals.fixed_now` and `claims.earned_now` for any phrasing
+    that asserts the V2 model-visible communication bridge has fully passed
+    or been closed. The specific patterns are recovered from the bridge
+    postmortem; the postmortem identified that closeouts were claiming
+    closure without the agent_loop_guard payload that would have proved
+    live evidence.
+    """
+    residuals = payload.get("residuals") if isinstance(payload.get("residuals"), dict) else {}
+    claims = payload.get("claims") if isinstance(payload.get("claims"), dict) else {}
+    claim_texts: list[str] = []
+    for field_name in ("fixed_now",):
+        values = residuals.get(field_name, [])
+        if isinstance(values, list):
+            claim_texts.extend(str(value).lower() for value in values)
+    for field_name in ("earned_now",):
+        values = claims.get(field_name, [])
+        if isinstance(values, list):
+            claim_texts.extend(str(value).lower() for value in values)
+    return any(
+        pattern.search(text)
+        for text in claim_texts
+        for pattern in FULL_COMMUNICATION_COMPLETION_CLAIM_PATTERNS
+    )
+
+
+def _validate_agent_loop_guard_claims(payload: dict[str, Any]) -> None:
+    """Forward-armed bridge-postmortem guard.
+
+    The closeout contract validates against the procedural shortcuts
+    identified in the V2 communication bridge postmortem (preserved at
+    origin/archive/v2-bridge-and-constraint-fidelity-loop). Specifically:
+
+    - A closeout payload that introduces an `agent_loop_guard` subobject
+      must have `require_full_communication_closure: true` and may not
+      have `allow_blocked: true`.
+    - A closeout that claims "full V2 communication closure",
+      "fully model-visible", or "live watchlist passed" without an
+      `agent_loop_guard` subobject is rejected.
+
+    These constraints exist because their absence let the V2 bridge work
+    be checkpointed before the live evidence that would have graduated it.
+    See AGENTS.md `## Anti-Drift` and CLAUDE.md for the discipline.
+    """
+    completion_claim = _full_communication_completion_claim_present(payload)
+    guard_config = payload.get("agent_loop_guard")
+    if guard_config is None:
+        if completion_claim:
+            raise SystemExit(
+                "Closeout contract: full V2 communication completion claims "
+                "require an `agent_loop_guard` subobject with a passing report; "
+                "the bridge postmortem identified naked completion claims as a "
+                "procedural escape hatch. See AGENTS.md `## Anti-Drift`."
+            )
+        return
+    if not isinstance(guard_config, dict):
+        raise SystemExit(
+            "Closeout contract field 'agent_loop_guard' must be an object when provided."
+        )
+    require_closure = guard_config.get("require_full_communication_closure", True)
+    if require_closure is not True:
+        raise SystemExit(
+            "Closeout contract: `agent_loop_guard.require_full_communication_closure` "
+            "must be true; the bridge postmortem identified opt-out via this field "
+            "as a procedural escape hatch. Guarded V2 communication closeouts may "
+            "not opt out of closure validation."
+        )
+    allow_blocked = bool(guard_config.get("allow_blocked", False))
+    if allow_blocked:
+        raise SystemExit(
+            "Closeout contract: `agent_loop_guard.allow_blocked` is forbidden "
+            "for closeout. Blocked live gates require operator action and cannot "
+            "satisfy closure; the bridge postmortem identified --allow-blocked "
+            "as the procedural escape hatch that let the V2 bridge work be "
+            "checkpointed before live Claude/Codex proof was completed."
+        )
 
 
 def validate_contract(

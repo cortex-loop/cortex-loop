@@ -249,6 +249,28 @@ def render_status(data: dict[str, object]) -> str:
             f"- Guardrail: {next_product_train['guardrail']}",
             f"- Kill rule: {next_product_train['kill_rule']}",
             "",
+            "## Research Lines Under Evaluation",
+            "",
+        ]
+    )
+    research_lines = data.get("research_lines_under_evaluation", [])
+    if not research_lines:
+        lines.append(
+            "- `<none>` — no research lines are currently under evaluation. "
+            "Per AGENTS.md Anti-Drift, every research line that has produced "
+            "code or doctrine must be in exactly one of four states at "
+            "session close: earned (landed), queued (next_product_train), "
+            "retired (archive manifest), or under-evaluation (this list)."
+        )
+    else:
+        for entry in research_lines:
+            lines.append(
+                f"- `{entry['slug']}` ({entry['stage']}): {entry['summary']} "
+                f"Next step: {entry['next_step']}"
+            )
+    lines.extend(
+        [
+            "",
             "## Where To Work Next",
             "",
         ]

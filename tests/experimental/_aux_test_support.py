@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from datetime import datetime, timedelta, timezone
+
 import cortex.hosts.claude.runtime as claude_runtime
 import cortex.hosts.gemini.runtime as gemini_runtime
 import cortex.hosts.reference.runtime as reference_runtime
@@ -1099,3 +1101,20 @@ def make_aux_cross_host_shadow_corpus() -> tuple[AuxCrossHostShadowScenario, ...
         )
 
     return tuple(scenarios)
+
+
+def fresh_validated_at_iso(*, hours_ago: float = 1.0) -> str:
+    """Return an ISO-8601 UTC timestamp `hours_ago` hours before now.
+
+    Test fixtures that exercise reliability-prior or capability-envelope
+    paths needing a fresh `last_validated_at` (i.e. inside the carrier's
+    `ttl_hours` window) MUST use this helper rather than a hardcoded
+    timestamp. Hardcoded fixture timestamps drift past TTL as wall-clock
+    time advances and silently break tests; see CLAUDE.md and AGENTS.md
+    Anti-Drift section for the rule.
+
+    For tests that explicitly want stale (TTL-expired) data, hardcode an
+    obviously old timestamp (e.g. `"2000-01-01T00:00:00+00:00"`); do not
+    use this helper for that case.
+    """
+    return (datetime.now(timezone.utc) - timedelta(hours=hours_ago)).isoformat()

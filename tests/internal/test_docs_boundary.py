@@ -53,7 +53,10 @@ def test_agents_records_mission_lock_and_single_truth_bootstrap() -> None:
     all_agents = _find_repo_files("AGENTS.md")
 
     assert all_agents == ["AGENTS.md"]
-    assert len(lines) <= 180
+    # The Anti-Drift section was added in 2026-04 to codify the rules whose
+    # absence produced visible drift in earlier work; keeping the line cap
+    # generous-but-bounded prevents AGENTS.md from sprawling into a wiki.
+    assert len(lines) <= 280
     assert sections == [
         "## Mission",
         "## Authority",
@@ -62,6 +65,7 @@ def test_agents_records_mission_lock_and_single_truth_bootstrap() -> None:
         "## Workflow",
         "## Codex App Dogfood Mode",
         "## Handoff",
+        "## Anti-Drift",
     ]
     assert "rich multi-host executive layer" in text
     assert "installable executive layer" in text
@@ -241,6 +245,13 @@ def test_status_registry_is_complete_and_stable() -> None:
     assert status["conformance_summary"]["shipping_default"] == "openai:operator_cli"
     next_train_slug = status["next_product_train"]["slug"]
     assert next_train_slug is None or next_train_slug != status["work_today"]["slug"]
+    assert "research_lines_under_evaluation" in status
+    assert isinstance(status["research_lines_under_evaluation"], list)
+    for entry in status["research_lines_under_evaluation"]:
+        assert isinstance(entry, dict)
+        assert {"slug", "stage", "summary", "next_step"} <= set(entry)
+        assert entry["slug"] != status["work_today"]["slug"]
+        assert entry["slug"] != status["next_product_train"]["slug"]
     assert status["work_today"]["slug"] == "brain-capability-aware-routing"
     assert "full_cross_host" in status["work_today"]["note"]
     assert "posture-sensitive online control is s-tier closed" in status["work_today"]["note"].lower()
@@ -294,6 +305,7 @@ def test_generated_status_doc_includes_system_map_and_next_product_train() -> No
     assert "Active quality/risk focus" in text
     assert "## Packet To Code" in text
     assert "## Next Product Train" in text
+    assert "## Research Lines Under Evaluation" in text
     assert "host/tool reliability and affordance priors are earned" in text
     assert "`brain-capability-aware-routing`" in text
     assert "- Next product train after the current focus: `brain-capability-observation-and-inference`" in text
