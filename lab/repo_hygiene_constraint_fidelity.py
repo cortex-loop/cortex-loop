@@ -31,7 +31,6 @@ try:  # pragma: no cover - import path differs under direct execution.
         InvariantEvidence,
         collect_workspace_change_evidence,
         evaluate_invariants,
-        extract_tool_evidence_from_records,
         first_forbidden_repair_term,
         initialize_fixture_git_baseline,
         load_invariant_config,
@@ -53,6 +52,12 @@ try:  # pragma: no cover - import path differs under direct execution.
         write_json,
         write_text,
     )
+    from .constraint_fidelity_codex import (
+        auth_mode_supported as _auth_mode_supported,
+        extract_operator_tool_evidence as _extract_operator_tool_evidence,
+        operator_env as _operator_env,
+        run_codex_turn as _run_codex_turn,
+    )
 except ImportError:  # pragma: no cover
     from lab.invariant_runner import (
         CERTIFIED,
@@ -62,7 +67,6 @@ except ImportError:  # pragma: no cover
         InvariantEvidence,
         collect_workspace_change_evidence,
         evaluate_invariants,
-        extract_tool_evidence_from_records,
         first_forbidden_repair_term,
         initialize_fixture_git_baseline,
         load_invariant_config,
@@ -84,6 +88,12 @@ except ImportError:  # pragma: no cover
         write_json,
         write_text,
     )
+    from lab.constraint_fidelity_codex import (
+        auth_mode_supported as _auth_mode_supported,
+        extract_operator_tool_evidence as _extract_operator_tool_evidence,
+        operator_env as _operator_env,
+        run_codex_turn as _run_codex_turn,
+    )
 
 
 FIXTURE_ROOT = ROOT / "tests" / "lab" / "fixtures" / "live_validation" / "repo_hygiene_fixture_template"
@@ -104,7 +114,7 @@ def main(argv: list[str] | None = None) -> int:
         prog="python3 -m lab.repo_hygiene_constraint_fidelity",
         description="Run the repo-hygiene constraint-fidelity experiment.",
     )
-    parser.add_argument("--provider", choices=("claude",), default="claude")
+    parser.add_argument("--provider", choices=("claude", "codex"), default="claude")
     parser.add_argument("--repeat-count", type=int, default=3)
     parser.add_argument("--stage", choices=("reproduce", "kernel-loop", "all"), default="all")
     args = parser.parse_args(argv)
@@ -121,8 +131,8 @@ def main(argv: list[str] | None = None) -> int:
 
 
 def run_suite(*, provider: str, repeat_count: int = 3, stage: str = "all") -> dict[str, Any]:
-    if provider != "claude":
-        raise ValueError("repo-hygiene constraint fidelity currently supports Claude first")
+    if provider not in {"claude", "codex"}:
+        raise ValueError("repo-hygiene constraint fidelity supports Claude and Codex")
     prediction = build_prediction(provider=provider, repeat_count=repeat_count, stage=stage)
     write_json(ARTIFACT_ROOT / provider / "prediction.json", prediction)
     runs: list[dict[str, Any]] = []
@@ -145,6 +155,31 @@ def run_suite(*, provider: str, repeat_count: int = 3, stage: str = "all") -> di
 
 
 def build_prediction(*, provider: str, repeat_count: int, stage: str) -> dict[str, Any]:
+    if provider == "codex":
+        prediction = {
+            "raw_uncertified_expected_range_at_n10": [8, 10],
+            "loop_certified_expected_range_at_n10": [8, 10],
+            "score_lift_gate_carried_forward": 0.30,
+            "score_lift_interpretation": "record score lift against 0.30 without redefining the primary certification metric",
+            "failed_raw_runs_should_span_min_distinct_violation_classes": 3,
+            "loop_conversions_should_span_min_distinct_violation_classes": 3,
+            "failure_mode_prediction": (
+                "Codex raw failures should mostly be procedural constraint/evidence misses, not turn_budget_cutoff dominant; "
+                "loop failures, if any, should be parser/evidence gaps or bounded attempt failures rather than unclear tickets."
+            ),
+            "falsifier": (
+                "If the raw fixture is valid and kernel_loop_cortex certifies below 8/10 on website or repo-hygiene, "
+                "the two-fixture cross-host generalization claim is falsified."
+            ),
+        }
+    else:
+        prediction = {
+            "raw_uncertified_min_count_at_n10": 8,
+            "loop_certified_expected_range_at_n10": [8, 10],
+            "failed_raw_runs_should_span_min_distinct_violation_classes": 3,
+            "loop_conversions_should_span_min_distinct_violation_classes": 3,
+            "mechanism": "procedural violations should be dependent enough that check-repair-recheck reveals and clears them across loop turns",
+        }
     return {
         "recorded_at": now_utc_iso(),
         "provider": provider,
@@ -157,13 +192,7 @@ def build_prediction(*, provider: str, repeat_count: int, stage: str) -> dict[st
             "per_turn_budget",
             "scoring",
         ],
-        "prediction": {
-            "raw_uncertified_min_count_at_n10": 8,
-            "loop_certified_expected_range_at_n10": [8, 10],
-            "failed_raw_runs_should_span_min_distinct_violation_classes": 3,
-            "loop_conversions_should_span_min_distinct_violation_classes": 3,
-            "mechanism": "procedural violations should be dependent enough that check-repair-recheck reveals and clears them across loop turns",
-        },
+        "prediction": prediction,
         "forbidden_claims": [
             "Cortex broadly works",
             "repo hygiene is solved generally",
@@ -188,7 +217,7 @@ def run_variant(*, provider: str, variant: str, repeat_index: int) -> dict[str, 
     prompt_marker_absent = not prompt_has_cortex_marker(prompt)
     model = choose_model(provider, "operator")
     auth_mode = resolve_auth_mode(provider, "operator")
-    if auth_mode != "claude_code":
+    if not _auth_mode_supported(provider=provider, auth_mode=auth_mode):
         payload = _blocked_payload(
             provider=provider,
             variant=variant,
@@ -203,43 +232,63 @@ def run_variant(*, provider: str, variant: str, repeat_index: int) -> dict[str, 
         write_json(root / f"{SCENARIO_ID}__run_{repeat_index:03d}.json", payload)
         return payload
 
-    first_turn = _run_claude_turn(
-        prompt,
-        project_root=project_root,
-        model=model,
-        auth_mode=auth_mode,
-    )
-    first_payload = _materialize_attempt(
-        provider=provider,
-        variant=variant,
-        repeat_index=repeat_index,
-        attempt_index=1,
-        project_root=project_root,
-        root=root,
-        run_result=first_turn,
-        model=model,
-        auth_mode=auth_mode,
-        prompt=prompt,
-        config=config,
-        prior_records=(),
-    )
+    try:
+        with _operator_env(provider) as operator_env:
+            first_turn = _run_operator_turn(
+                provider,
+                prompt,
+                project_root=project_root,
+                model=model,
+                auth_mode=auth_mode,
+                env=operator_env,
+            )
+            first_payload = _materialize_attempt(
+                provider=provider,
+                variant=variant,
+                repeat_index=repeat_index,
+                attempt_index=1,
+                project_root=project_root,
+                root=root,
+                run_result=first_turn,
+                model=model,
+                auth_mode=auth_mode,
+                prompt=prompt,
+                config=config,
+                prior_records=(),
+            )
 
-    final_payload = first_payload
-    repair_attempts: list[dict[str, Any]] = []
-    max_repair_turns = _max_repair_turns_for_variant(variant)
-    if max_repair_turns and first_payload["certification"]["status"] == UNCERTIFIED:
-        repair_attempts, final_payload = _run_repair_policy(
+            final_payload = first_payload
+            repair_attempts: list[dict[str, Any]] = []
+            max_repair_turns = _max_repair_turns_for_variant(variant)
+            if max_repair_turns and first_payload["certification"]["status"] == UNCERTIFIED:
+                repair_attempts, final_payload = _run_repair_policy(
+                    provider=provider,
+                    variant=variant,
+                    repeat_index=repeat_index,
+                    project_root=project_root,
+                    root=root,
+                    model=model,
+                    auth_mode=auth_mode,
+                    first_payload=first_payload,
+                    config=config,
+                    max_repair_turns=max_repair_turns,
+                    env=operator_env,
+                )
+    except RuntimeError as exc:
+        payload = _blocked_payload(
             provider=provider,
             variant=variant,
             repeat_index=repeat_index,
-            project_root=project_root,
-            root=root,
             model=model,
             auth_mode=auth_mode,
-            first_payload=first_payload,
-            config=config,
-            max_repair_turns=max_repair_turns,
+            prompt=prompt,
+            project_root=project_root,
+            reason=classify_failure(str(exc)) or "operator_surface_missing",
+            fixture_fingerprint=fixture_fingerprint,
         )
+        payload["blocked_note"] = str(exc)
+        write_json(root / f"{SCENARIO_ID}__run_{repeat_index:03d}.json", payload)
+        return payload
 
     payload = {
         "provider": provider,
@@ -300,10 +349,11 @@ def _run_repair_policy(
     first_payload: dict[str, Any],
     config: dict[str, Any],
     max_repair_turns: int,
+    env: dict[str, str] | None = None,
 ) -> tuple[list[dict[str, Any]], dict[str, Any]]:
     final_payload = first_payload
     attempts: list[dict[str, Any]] = []
-    session_id = extract_session_id("claude", first_payload["records"])
+    session_id = extract_session_id(provider, first_payload["records"])
     for repair_index in range(1, max_repair_turns + 1):
         if final_payload["certification"]["status"] != UNCERTIFIED:
             break
@@ -320,12 +370,14 @@ def _run_repair_policy(
                 }
             )
             break
-        repair_turn = _run_claude_turn(
+        repair_turn = _run_operator_turn(
+            provider,
             repair_ticket,
             project_root=project_root,
             model=model,
             auth_mode=auth_mode,
             resume_session=session_id,
+            env=env,
         )
         repair_payload = _materialize_attempt(
             provider=provider,
@@ -343,7 +395,7 @@ def _run_repair_policy(
         )
         attempts.append(repair_payload)
         final_payload = repair_payload
-        session_id = extract_session_id("claude", final_payload["records"]) or session_id
+        session_id = extract_session_id(provider, final_payload["records"]) or session_id
     return attempts, final_payload
 
 
@@ -375,15 +427,20 @@ def build_summary(
     runtime_finding = _runtime_scaling_finding(runtime_by_variant)
 
     smoke_threshold = 2 if repeat_count >= 3 else repeat_count
-    promotion_passed = (
+    certification_promotion_passed = (
         repeat_count >= 10
         and raw_uncertified >= 8
         and loop_certified >= 8
+    )
+    promotion_passed = (
+        certification_promotion_passed
         and score_lift is not None
         and score_lift >= 0.30
     )
-    mechanism_underinformative = promotion_passed and (
-        len(raw_violation_classes) < 3 or len(loop_converted_classes) < 3
+    codex_score_lift_gate_passed = score_lift is not None and score_lift >= 0.30
+    mechanism_underinformative = (
+        (promotion_passed if provider != "codex" else certification_promotion_passed)
+        and (len(raw_violation_classes) < 3 or len(loop_converted_classes) < 3)
     )
     if any(run.get("certification_status") == ENV_BLOCKED for run in runs):
         experiment_status = ENV_BLOCKED
@@ -391,6 +448,8 @@ def build_summary(
         experiment_status = "void_fixture_not_discriminative"
     elif mechanism_underinformative:
         experiment_status = "gate_passed_mechanism_underinformative"
+    elif provider == "codex" and certification_promotion_passed:
+        experiment_status = "codex_repo_hygiene_loop_certification_passed"
     elif promotion_passed:
         experiment_status = "repo_hygiene_loop_promotion_passed"
     elif repeat_count >= 10 and raw_uncertified >= 8 and loop_certified >= 8:
@@ -417,6 +476,7 @@ def build_summary(
         "raw_mean_mechanical_score": raw_mean,
         "loop_mean_mechanical_score": loop_mean,
         "loop_score_lift": score_lift,
+        "codex_score_lift_gate_passed": codex_score_lift_gate_passed if provider == "codex" else None,
         "raw_violation_classes": raw_violation_classes,
         "loop_converted_violation_classes": loop_converted_classes,
         "uncertified_loop_failure_classes": sorted(
@@ -438,7 +498,11 @@ def build_summary(
         "prompt_marker_absent_all": all(bool(run.get("prompt_marker_absent")) for run in runs),
         "runtime_by_variant": runtime_by_variant,
         "runtime_scaling_finding": runtime_finding,
-        "claim_earned_if_promotion_passes": "The generic invariant loop converted repo-hygiene fixture failures on Claude CLI.",
+        "claim_earned_if_promotion_passes": (
+            "The generic invariant loop converted repo-hygiene fixture failures on Codex CLI."
+            if provider == "codex"
+            else "The generic invariant loop converted repo-hygiene fixture failures on Claude CLI."
+        ),
         "claims_forbidden": [
             "Cortex broadly works",
             "repo hygiene is solved generally",
@@ -485,7 +549,7 @@ def _materialize_attempt(
         failure_class = "turn_budget_cutoff"
     if run_result["exit_code"] == 124 and failure_class is None:
         failure_class = "operator_timeout"
-    tool_evidence = extract_tool_evidence_from_records(all_records, project_root=project_root)
+    tool_evidence = _extract_operator_tool_evidence(provider, all_records, project_root=project_root)
     check_results = run_configured_checks(config, project_root=project_root)
     workspace_change_evidence = collect_workspace_change_evidence(project_root)
     evidence = InvariantEvidence(
@@ -564,6 +628,36 @@ def _run_claude_turn(
             "ended_at": now_utc_iso(),
         }
     return run_command(command, cwd=project_root, timeout_seconds=240.0)
+
+
+def _run_operator_turn(
+    provider: str,
+    prompt: str,
+    *,
+    project_root: Path,
+    model: str,
+    auth_mode: str,
+    resume_session: str | None = None,
+    env: dict[str, str] | None = None,
+) -> dict[str, Any]:
+    if provider == "claude":
+        return _run_claude_turn(
+            prompt,
+            project_root=project_root,
+            model=model,
+            auth_mode=auth_mode,
+            resume_session=resume_session,
+        )
+    if provider == "codex":
+        return _run_codex_turn(
+            prompt,
+            project_root=project_root,
+            model=model,
+            auth_mode=auth_mode,
+            resume_session=resume_session,
+            env=env,
+        )
+    raise ValueError(f"unsupported operator provider: {provider}")
 
 
 def _blocked_payload(

@@ -31,7 +31,6 @@ try:  # pragma: no cover - import path differs under direct execution.
         InvariantEvaluation,
         InvariantEvidence,
         evaluate_invariants,
-        extract_tool_evidence_from_records,
         first_forbidden_repair_term,
         initialize_fixture_git_baseline,
         load_invariant_config,
@@ -54,6 +53,12 @@ try:  # pragma: no cover - import path differs under direct execution.
         write_json,
         write_text,
     )
+    from .constraint_fidelity_codex import (
+        auth_mode_supported as _auth_mode_supported,
+        extract_operator_tool_evidence as _extract_operator_tool_evidence,
+        operator_env as _operator_env,
+        run_codex_turn as _run_codex_turn,
+    )
 except ImportError:  # pragma: no cover
     from lab.invariant_runner import (
         CERTIFIED,
@@ -63,7 +68,6 @@ except ImportError:  # pragma: no cover
         InvariantEvaluation,
         InvariantEvidence,
         evaluate_invariants,
-        extract_tool_evidence_from_records,
         first_forbidden_repair_term,
         initialize_fixture_git_baseline,
         load_invariant_config,
@@ -85,6 +89,12 @@ except ImportError:  # pragma: no cover
         run_command,
         write_json,
         write_text,
+    )
+    from lab.constraint_fidelity_codex import (
+        auth_mode_supported as _auth_mode_supported,
+        extract_operator_tool_evidence as _extract_operator_tool_evidence,
+        operator_env as _operator_env,
+        run_codex_turn as _run_codex_turn,
     )
 
 
@@ -108,7 +118,7 @@ def main(argv: list[str] | None = None) -> int:
         prog="python3 -m lab.website_constraint_fidelity",
         description="Run the website-fixture constraint-fidelity experiment.",
     )
-    parser.add_argument("--provider", choices=("claude",), default="claude")
+    parser.add_argument("--provider", choices=("claude", "codex"), default="claude")
     parser.add_argument("--repeat-count", type=int, default=3)
     parser.add_argument("--stage", choices=("reproduce", "kernel", "kernel-loop", "all"), default="all")
     args = parser.parse_args(argv)
@@ -125,9 +135,11 @@ def main(argv: list[str] | None = None) -> int:
 
 
 def run_suite(*, provider: str, repeat_count: int = 3, stage: str = "all") -> dict[str, Any]:
-    if provider != "claude":
-        raise ValueError("website constraint fidelity currently supports Claude first")
-    variants = _variants_for_stage(stage)
+    if provider not in {"claude", "codex"}:
+        raise ValueError("website constraint fidelity supports Claude and Codex")
+    prediction = build_prediction(provider=provider, repeat_count=repeat_count, stage=stage)
+    write_json(ARTIFACT_ROOT / provider / "prediction.json", prediction)
+    variants = _variants_for_stage(stage, provider=provider)
     runs: list[dict[str, Any]] = []
     for repeat_index in range(1, repeat_count + 1):
         for variant in variants:
@@ -143,7 +155,51 @@ def run_suite(*, provider: str, repeat_count: int = 3, stage: str = "all") -> di
         stage=stage,
         repeat_count=repeat_count,
         runs=runs,
+        prediction=prediction,
     )
+
+
+def build_prediction(*, provider: str, repeat_count: int, stage: str) -> dict[str, Any]:
+    prediction: dict[str, Any]
+    if provider == "codex":
+        prediction = {
+            "raw_uncertified_expected_at_n10": 9,
+            "loop_certified_expected_at_n10": 9,
+            "website_score_lift_expected_min": 0.30,
+            "repo_hygiene_loop_certified_expected_range_at_n10": [8, 10],
+            "repo_hygiene_score_lift_note": "record against 0.30, but do not redefine the primary certification metric",
+            "failure_mode_prediction": (
+                "Codex raw failures should mostly be constraint/evidence misses, not turn_budget_cutoff dominant; "
+                "loop failures, if any, should be parser/evidence gaps or bounded attempt failures rather than unclear tickets."
+            ),
+            "falsifier": (
+                "If the raw fixture is valid and kernel_loop_cortex certifies below 8/10 on website or repo-hygiene, "
+                "the two-fixture cross-host generalization claim is falsified."
+            ),
+        }
+    else:
+        prediction = {
+            "historical_context": "Claude website fixture evidence is already recorded; this harness keeps Claude behavior unchanged.",
+        }
+    return {
+        "recorded_at": now_utc_iso(),
+        "provider": provider,
+        "stage": stage,
+        "repeat_count": repeat_count,
+        "frozen_before_run": [
+            "prompt_text",
+            "fixture_rules",
+            "repair_ticket_text",
+            "per_turn_budget",
+            "scoring",
+        ],
+        "prediction": prediction,
+        "forbidden_claims": [
+            "Cortex broadly works",
+            "the product layer is adoption-ready",
+            "Codex parity is proven before both fixtures pass",
+        ],
+    }
 
 
 def build_initial_prompt(*, fixture_root: Path = FIXTURE_ROOT) -> str:
@@ -161,7 +217,7 @@ def run_variant(*, provider: str, variant: str, repeat_index: int) -> dict[str, 
     prompt_marker_absent = not prompt_has_cortex_marker(prompt)
     model = choose_model(provider, "operator")
     auth_mode = resolve_auth_mode(provider, "operator")
-    if auth_mode != "claude_code":
+    if not _auth_mode_supported(provider=provider, auth_mode=auth_mode):
         payload = _blocked_payload(
             provider=provider,
             variant=variant,
@@ -176,47 +232,67 @@ def run_variant(*, provider: str, variant: str, repeat_index: int) -> dict[str, 
         write_json(root / f"{SCENARIO_ID}__run_{repeat_index:03d}.json", payload)
         return payload
 
-    first_turn = _run_claude_turn(
-        prompt,
-        project_root=project_root,
-        model=model,
-        auth_mode=auth_mode,
-        scenario_id=SCENARIO_ID,
-    )
-    first_payload = _materialize_attempt(
-        provider=provider,
-        variant=variant,
-        repeat_index=repeat_index,
-        attempt_index=1,
-        project_root=project_root,
-        root=root,
-        run_result=first_turn,
-        model=model,
-        auth_mode=auth_mode,
-        prompt=prompt,
-        config=config,
-        prior_records=(),
-    )
+    try:
+        with _operator_env(provider) as operator_env:
+            first_turn = _run_operator_turn(
+                provider,
+                prompt,
+                project_root=project_root,
+                model=model,
+                auth_mode=auth_mode,
+                scenario_id=SCENARIO_ID,
+                env=operator_env,
+            )
+            first_payload = _materialize_attempt(
+                provider=provider,
+                variant=variant,
+                repeat_index=repeat_index,
+                attempt_index=1,
+                project_root=project_root,
+                root=root,
+                run_result=first_turn,
+                model=model,
+                auth_mode=auth_mode,
+                prompt=prompt,
+                config=config,
+                prior_records=(),
+            )
 
-    final_payload = first_payload
-    repair_turn_payload = None
-    repair_attempts: list[dict[str, Any]] = []
-    repair_policy = _repair_policy_for_variant(variant)
-    max_repair_turns = _max_repair_turns_for_variant(variant)
-    if max_repair_turns and first_payload["certification"]["status"] == UNCERTIFIED:
-        repair_attempts, final_payload = _run_repair_policy(
+            final_payload = first_payload
+            repair_turn_payload = None
+            repair_attempts: list[dict[str, Any]] = []
+            repair_policy = _repair_policy_for_variant(variant)
+            max_repair_turns = _max_repair_turns_for_variant(variant)
+            if max_repair_turns and first_payload["certification"]["status"] == UNCERTIFIED:
+                repair_attempts, final_payload = _run_repair_policy(
+                    provider=provider,
+                    variant=variant,
+                    repeat_index=repeat_index,
+                    project_root=project_root,
+                    root=root,
+                    model=model,
+                    auth_mode=auth_mode,
+                    first_payload=first_payload,
+                    config=config,
+                    max_repair_turns=max_repair_turns,
+                    env=operator_env,
+                )
+                repair_turn_payload = repair_attempts[0] if repair_attempts else None
+    except RuntimeError as exc:
+        payload = _blocked_payload(
             provider=provider,
             variant=variant,
             repeat_index=repeat_index,
-            project_root=project_root,
-            root=root,
             model=model,
             auth_mode=auth_mode,
-            first_payload=first_payload,
-            config=config,
-            max_repair_turns=max_repair_turns,
+            prompt=prompt,
+            project_root=project_root,
+            reason=classify_failure(str(exc)) or "operator_surface_missing",
+            fixture_fingerprint=fixture_fingerprint,
         )
-        repair_turn_payload = repair_attempts[0] if repair_attempts else None
+        payload["blocked_note"] = str(exc)
+        write_json(root / f"{SCENARIO_ID}__run_{repeat_index:03d}.json", payload)
+        return payload
 
     payload = {
         "provider": provider,
@@ -268,10 +344,11 @@ def _run_repair_policy(
     first_payload: dict[str, Any],
     config: dict[str, Any],
     max_repair_turns: int,
+    env: dict[str, str] | None = None,
 ) -> tuple[list[dict[str, Any]], dict[str, Any]]:
     final_payload = first_payload
     attempts: list[dict[str, Any]] = []
-    session_id = extract_session_id("claude", first_payload["records"])
+    session_id = extract_session_id(provider, first_payload["records"])
     for repair_index in range(1, max_repair_turns + 1):
         if final_payload["certification"]["status"] != UNCERTIFIED:
             break
@@ -290,13 +367,15 @@ def _run_repair_policy(
                 }
             )
             break
-        repair_turn = _run_claude_turn(
+        repair_turn = _run_operator_turn(
+            provider,
             repair_ticket,
             project_root=project_root,
             model=model,
             auth_mode=auth_mode,
             scenario_id=SCENARIO_ID,
             resume_session=session_id,
+            env=env,
         )
         repair_payload = _materialize_attempt(
             provider=provider,
@@ -314,7 +393,7 @@ def _run_repair_policy(
         )
         attempts.append(repair_payload)
         final_payload = repair_payload
-        session_id = extract_session_id("claude", final_payload["records"]) or session_id
+        session_id = extract_session_id(provider, final_payload["records"]) or session_id
     return attempts, final_payload
 
 
@@ -324,6 +403,7 @@ def build_summary(
     stage: str,
     repeat_count: int,
     runs: list[dict[str, Any]],
+    prediction: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     raw_runs = [run for run in runs if run.get("variant") == RAW_HOST]
     kernel_runs = [run for run in runs if run.get("variant") == KERNEL_ONLY_CORTEX]
@@ -336,13 +416,33 @@ def build_summary(
     kernel_mean = _mean_score(kernel_runs)
     loop_mean = _mean_score(loop_runs)
     score_lift = None if raw_mean is None or kernel_mean is None else kernel_mean - raw_mean
+    loop_score_lift = None if raw_mean is None or loop_mean is None else loop_mean - raw_mean
     loop_baseline = _historical_single_repair_baseline(
         provider=provider,
         fixture_fingerprint=_common_fixture_fingerprint(runs),
         first_prompt_sha=_common_first_prompt_sha(runs),
     )
 
-    if loop_runs:
+    if provider == "codex" and loop_runs:
+        if any(run.get("certification_status") == ENV_BLOCKED for run in loop_runs):
+            experiment_status = ENV_BLOCKED
+        elif raw_runs and raw_uncertified < threshold:
+            experiment_status = "void_fixture_not_discriminative"
+        elif (
+            repeat_count >= 10
+            and raw_uncertified >= 8
+            and loop_certified >= 8
+            and loop_score_lift is not None
+            and loop_score_lift >= 0.30
+        ):
+            experiment_status = "codex_website_loop_generalization_passed"
+        elif repeat_count >= 10 and raw_uncertified >= 8 and loop_certified >= 8:
+            experiment_status = "codex_website_certification_passed_score_lift_under_threshold"
+        elif raw_runs and loop_runs and raw_uncertified >= threshold and loop_certified >= threshold:
+            experiment_status = "codex_website_loop_smoke_passed"
+        else:
+            experiment_status = "codex_website_loop_lift_not_earned"
+    elif loop_runs:
         if any(run.get("certification_status") == ENV_BLOCKED for run in loop_runs):
             experiment_status = ENV_BLOCKED
         elif repeat_count >= 10 and loop_certified >= 9:
@@ -370,7 +470,9 @@ def build_summary(
         "surface": "website_constraint_fidelity",
         "stage": stage,
         "repeat_count": repeat_count,
+        "prediction": prediction,
         "raw_failure_threshold": threshold,
+        "codex_n10_raw_failure_threshold": 8 if provider == "codex" else None,
         "experiment_status": experiment_status,
         "raw_uncertified_count": raw_uncertified,
         "kernel_certified_count": kernel_certified,
@@ -379,6 +481,7 @@ def build_summary(
         "kernel_mean_mechanical_score": kernel_mean,
         "kernel_loop_mean_mechanical_score": loop_mean,
         "kernel_score_lift": score_lift,
+        "kernel_loop_score_lift": loop_score_lift,
         "historical_single_repair_baseline": loop_baseline,
         "fixture_fingerprint": _common_fixture_fingerprint(runs),
         "first_prompt_hashes": sorted({run.get("first_prompt_sha") for run in runs if run.get("first_prompt_sha")}),
@@ -428,7 +531,7 @@ def _materialize_attempt(
         failure_class = "turn_budget_cutoff"
     if run_result["exit_code"] == 124 and failure_class is None:
         failure_class = "operator_timeout"
-    tool_evidence = extract_tool_evidence_from_records(all_records, project_root=project_root)
+    tool_evidence = _extract_operator_tool_evidence(provider, all_records, project_root=project_root)
     check_results = run_configured_checks(config, project_root=project_root)
     workspace_change_evidence = collect_workspace_change_evidence(project_root)
     modified_files = workspace_change_evidence.modified_files
@@ -509,6 +612,38 @@ def _run_claude_turn(
             "ended_at": now_utc_iso(),
         }
     return run_command(command, cwd=project_root, timeout_seconds=240.0)
+
+
+def _run_operator_turn(
+    provider: str,
+    prompt: str,
+    *,
+    project_root: Path,
+    model: str,
+    auth_mode: str,
+    scenario_id: str,
+    resume_session: str | None = None,
+    env: dict[str, str] | None = None,
+) -> dict[str, Any]:
+    if provider == "claude":
+        return _run_claude_turn(
+            prompt,
+            project_root=project_root,
+            model=model,
+            auth_mode=auth_mode,
+            scenario_id=scenario_id,
+            resume_session=resume_session,
+        )
+    if provider == "codex":
+        return _run_codex_turn(
+            prompt,
+            project_root=project_root,
+            model=model,
+            auth_mode=auth_mode,
+            resume_session=resume_session,
+            env=env,
+        )
+    raise ValueError(f"unsupported operator provider: {provider}")
 
 
 def _blocked_payload(
@@ -628,7 +763,7 @@ def _initialize_workspace_git(project_root: Path) -> None:
             )
 
 
-def _variants_for_stage(stage: str) -> tuple[str, ...]:
+def _variants_for_stage(stage: str, *, provider: str = "claude") -> tuple[str, ...]:
     if stage == "reproduce":
         return (RAW_HOST,)
     if stage == "kernel":
@@ -636,6 +771,8 @@ def _variants_for_stage(stage: str) -> tuple[str, ...]:
     if stage == "kernel-loop":
         return (KERNEL_LOOP_CORTEX,)
     if stage == "all":
+        if provider == "codex":
+            return (RAW_HOST, KERNEL_LOOP_CORTEX)
         return BASE_VARIANTS
     raise ValueError(f"unsupported stage: {stage}")
 

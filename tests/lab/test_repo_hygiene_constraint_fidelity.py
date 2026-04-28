@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from contextlib import nullcontext
 from pathlib import Path
 
 from lab import repo_hygiene_constraint_fidelity as harness
@@ -10,6 +11,92 @@ def test_initial_prompt_has_no_marker() -> None:
 
     assert not harness.prompt_has_cortex_marker(prompt)
     assert "CORTEX" not in prompt
+
+
+def test_codex_records_extract_session_command_read_and_result_text(tmp_path: Path) -> None:
+    (tmp_path / "FIXTURE_RULES.md").write_text("rules\n", encoding="utf-8")
+    text = "\n".join(
+        (
+            '{"type":"thread.started","thread_id":"thread-1"}',
+            '{"type":"item.completed","item":{"type":"command_execution","command":["cat","FIXTURE_RULES.md"]}}',
+            '{"type":"item.completed","item":{"type":"command_execution","command":"npm run verify"}}',
+            '{"type":"item.completed","item":{"type":"agent_message","text":"ending branch: test\\ncommit hash: abc\\nverification summary: npm run verify passed\\nreturned to main: no\\nStatus registry touched: none\\nStatus doc regenerated: yes"}}',
+        )
+    )
+
+    records, extraction_mode = harness.parse_json_records(text)
+    evidence = harness._extract_operator_tool_evidence("codex", records, project_root=tmp_path)
+
+    assert extraction_mode == "jsonl"
+    assert harness.extract_session_id("codex", records) == "thread-1"
+    assert "FIXTURE_RULES.md" in evidence.read_paths
+    assert "npm run verify" in evidence.commands
+    assert "verification summary" in (harness.extract_result_text(records, text) or "")
+
+
+def test_codex_raw_and_loop_first_prompts_are_identical(tmp_path: Path, monkeypatch) -> None:
+    prompts: list[tuple[str, str]] = []
+
+    monkeypatch.setattr(harness, "load_invariant_config", lambda _path: {"schema_version": 1, "fixture_id": "x"})
+    monkeypatch.setattr(harness, "prepare_workspace", lambda **_kwargs: tmp_path)
+    monkeypatch.setattr(harness, "choose_model", lambda *_args, **_kwargs: "gpt-5.3-codex")
+    monkeypatch.setattr(harness, "resolve_auth_mode", lambda *_args, **_kwargs: "codex_cli")
+    monkeypatch.setattr(harness, "_operator_env", lambda _provider: nullcontext({"CODEX_HOME": str(tmp_path)}))
+    monkeypatch.setattr(harness, "write_json", lambda *_args, **_kwargs: None)
+    monkeypatch.setattr(harness, "write_text", lambda *_args, **_kwargs: None)
+
+    def fake_run(provider: str, prompt: str, **_kwargs):
+        prompts.append((provider, prompt))
+        return {
+            "stdout": '{"type":"thread.started","thread_id":"thread-1"}\n',
+            "stderr": "",
+            "exit_code": 0,
+            "command": ["codex"],
+            "started_at": "t1",
+            "ended_at": "t2",
+        }
+
+    def fake_materialize(*, attempt_index: int, prompt: str, **_kwargs):
+        return {
+            "attempt_index": attempt_index,
+            "exit_code": 0,
+            "failure_class": None,
+            "prompt": prompt,
+            "prompt_marker_absent": not harness.prompt_has_cortex_marker(prompt),
+            "records": [{"type": "thread.started", "thread_id": "thread-1"}],
+            "result_text": "Verification: passed",
+            "modified_files": [],
+            "workspace_change_evidence": {
+                "dirty_files": [],
+                "committed_files_since_baseline": [],
+                "modified_files": [],
+                "baseline_ref": "cortex-fixture-baseline",
+                "baseline_sha": "abc123",
+            },
+            "tool_evidence": {"read_paths": [], "commands": []},
+            "runtime": {"duration_ms": 100, "num_turns": 1},
+            "certification": {
+                "status": "certified",
+                "mechanical_score": 1.0,
+                "required_pass_count": 1,
+                "required_count": 1,
+                "failed_repair_facts": [],
+                "env_failure_class": None,
+                "results": [],
+            },
+        }
+
+    monkeypatch.setattr(harness, "_run_operator_turn", fake_run)
+    monkeypatch.setattr(harness, "_materialize_attempt", fake_materialize)
+
+    raw = harness.run_variant(provider="codex", variant="raw_host", repeat_index=1)
+    loop = harness.run_variant(provider="codex", variant="kernel_loop_cortex", repeat_index=1)
+
+    assert raw["first_prompt_sha"] == loop["first_prompt_sha"]
+    assert prompts == [
+        ("codex", harness.build_initial_prompt()),
+        ("codex", harness.build_initial_prompt()),
+    ]
 
 
 def test_summary_accepts_repo_hygiene_promotion_with_distinct_violation_classes() -> None:
@@ -102,6 +189,41 @@ def test_summary_marks_score_lift_under_threshold_when_certification_counts_pass
 
     assert summary["experiment_status"] == "repo_hygiene_certification_passed_score_lift_under_threshold"
     assert summary["loop_score_lift"] == 0.25
+
+
+def test_codex_summary_uses_certification_as_primary_and_records_score_lift() -> None:
+    raw_runs = [
+        _run(
+            "raw_host",
+            "uncertified",
+            0.75,
+            failed_ids=("rule-evidence", "verify-observed", "checkpoint-commit", "handoff-fields"),
+        )
+        for _ in range(10)
+    ]
+    loop_runs = [
+        _run(
+            "kernel_loop_cortex",
+            "certified",
+            1.0,
+            failed_ids=("rule-evidence", "verify-observed", "checkpoint-commit", "handoff-fields"),
+            converted_classes=["rule_evidence", "verification_or_closure", "checkpoint_commit", "handoff"],
+        )
+        for _ in range(10)
+    ]
+
+    summary = harness.build_summary(
+        provider="codex",
+        stage="all",
+        repeat_count=10,
+        runs=raw_runs + loop_runs,
+        prediction=harness.build_prediction(provider="codex", repeat_count=10, stage="all"),
+    )
+
+    assert summary["experiment_status"] == "codex_repo_hygiene_loop_certification_passed"
+    assert summary["loop_certified_count"] == 10
+    assert summary["loop_score_lift"] == 0.25
+    assert summary["codex_score_lift_gate_passed"] is False
 
 
 def test_kernel_loop_repeats_repair_until_certified(tmp_path: Path, monkeypatch) -> None:

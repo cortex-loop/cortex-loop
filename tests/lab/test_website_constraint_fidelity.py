@@ -1,9 +1,11 @@
 from __future__ import annotations
 
+from contextlib import nullcontext
 import shutil
 import subprocess
 from pathlib import Path
 
+from lab import constraint_fidelity_codex as codex_helper
 from lab.invariant_runner import InvariantEvidence, evaluate_invariants, load_invariant_config, run_configured_checks
 from lab import website_constraint_fidelity as harness
 
@@ -13,6 +15,145 @@ def test_initial_prompt_has_no_marker_and_is_reused_for_variants() -> None:
 
     assert not harness.prompt_has_cortex_marker(prompt)
     assert harness._stable_text_digest(prompt) == harness._stable_text_digest(prompt)
+
+
+def test_codex_stage_all_uses_raw_and_loop_without_changing_claude_default() -> None:
+    assert harness._variants_for_stage("all", provider="codex") == (
+        harness.RAW_HOST,
+        harness.KERNEL_LOOP_CORTEX,
+    )
+    assert harness._variants_for_stage("all", provider="claude") == (
+        harness.RAW_HOST,
+        harness.KERNEL_ONLY_CORTEX,
+    )
+
+
+def test_codex_records_extract_session_command_read_and_result_text(tmp_path: Path) -> None:
+    (tmp_path / "FIXTURE_RULES.md").write_text("rules\n", encoding="utf-8")
+    (tmp_path / "CLAUDE.md").write_text("claude rules\n", encoding="utf-8")
+    text = "\n".join(
+        (
+            '{"type":"thread.started","thread_id":"thread-1"}',
+            '{"type":"item.completed","item":{"type":"command_execution","command":"/bin/zsh -lc \\"sed -n \'1,80p\' FIXTURE_RULES.md && cat CLAUDE.md && npm run verify\\""}}',
+            '{"type":"item.completed","item":{"type":"agent_message","text":"Verification: npm run verify passed. Blockers: none."}}',
+        )
+    )
+
+    records, extraction_mode = harness.parse_json_records(text)
+    evidence = harness._extract_operator_tool_evidence("codex", records, project_root=tmp_path)
+
+    assert extraction_mode == "jsonl"
+    assert harness.extract_session_id("codex", records) == "thread-1"
+    assert "FIXTURE_RULES.md" in evidence.read_paths
+    assert "CLAUDE.md" in evidence.read_paths
+    assert any("npm run verify" in command for command in evidence.commands)
+    assert harness.extract_result_text(records, text) == "Verification: npm run verify passed. Blockers: none."
+
+
+def test_codex_turn_uses_exec_and_resume_with_isolated_env(tmp_path: Path, monkeypatch) -> None:
+    commands: list[tuple[list[str], dict[str, str] | None]] = []
+
+    def fake_run(command, **kwargs):
+        commands.append((list(command), kwargs.get("env")))
+        return {
+            "command": list(command),
+            "exit_code": 0,
+            "stdout": "",
+            "stderr": "",
+            "started_at": "t1",
+            "ended_at": "t2",
+        }
+
+    monkeypatch.setattr(codex_helper, "run_command", fake_run)
+
+    env = {"CODEX_HOME": str(tmp_path / "codex-home")}
+    harness._run_codex_turn(
+        "first prompt",
+        project_root=tmp_path,
+        model="gpt-5.3-codex",
+        auth_mode="codex_cli",
+        env=env,
+    )
+    harness._run_codex_turn(
+        "repair ticket",
+        project_root=tmp_path,
+        model="gpt-5.3-codex",
+        auth_mode="codex_cli",
+        resume_session="thread-1",
+        env=env,
+    )
+
+    assert commands[0][0][:3] == ["codex", "exec", "--json"]
+    assert commands[0][0][-1] == "first prompt"
+    assert commands[1][0][:4] == ["codex", "exec", "resume", "--json"]
+    assert commands[1][0][-2:] == ["thread-1", "repair ticket"]
+    assert commands[0][1] == env
+    assert commands[1][1] == env
+
+
+def test_codex_raw_and_loop_first_prompts_are_identical(tmp_path: Path, monkeypatch) -> None:
+    prompts: list[tuple[str, str]] = []
+
+    monkeypatch.setattr(harness, "load_invariant_config", lambda _path: {"schema_version": 1, "fixture_id": "x"})
+    monkeypatch.setattr(harness, "prepare_workspace", lambda **_kwargs: tmp_path)
+    monkeypatch.setattr(harness, "choose_model", lambda *_args, **_kwargs: "gpt-5.3-codex")
+    monkeypatch.setattr(harness, "resolve_auth_mode", lambda *_args, **_kwargs: "codex_cli")
+    monkeypatch.setattr(harness, "_operator_env", lambda _provider: nullcontext({"CODEX_HOME": str(tmp_path)}))
+    monkeypatch.setattr(harness, "write_json", lambda *_args, **_kwargs: None)
+    monkeypatch.setattr(harness, "write_text", lambda *_args, **_kwargs: None)
+
+    def fake_run(provider: str, prompt: str, **_kwargs):
+        prompts.append((provider, prompt))
+        return {
+            "stdout": '{"type":"thread.started","thread_id":"thread-1"}\n',
+            "stderr": "",
+            "exit_code": 0,
+            "command": ["codex"],
+            "started_at": "t1",
+            "ended_at": "t2",
+        }
+
+    def fake_materialize(*, attempt_index: int, prompt: str, **_kwargs):
+        return {
+            "attempt_index": attempt_index,
+            "exit_code": 0,
+            "failure_class": None,
+            "prompt": prompt,
+            "prompt_marker_absent": not harness.prompt_has_cortex_marker(prompt),
+            "records": [{"type": "thread.started", "thread_id": "thread-1"}],
+            "result_text": "Verification: passed",
+            "modified_files": [],
+            "workspace_change_evidence": {
+                "dirty_files": [],
+                "committed_files_since_baseline": [],
+                "modified_files": [],
+                "baseline_ref": "cortex-fixture-baseline",
+                "baseline_sha": "abc123",
+            },
+            "tool_evidence": {"read_paths": [], "commands": []},
+            "runtime": {"duration_ms": 100, "num_turns": 1},
+            "certification": {
+                "status": "certified",
+                "mechanical_score": 1.0,
+                "required_pass_count": 1,
+                "required_count": 1,
+                "failed_repair_facts": [],
+                "env_failure_class": None,
+                "results": [],
+            },
+        }
+
+    monkeypatch.setattr(harness, "_run_operator_turn", fake_run)
+    monkeypatch.setattr(harness, "_materialize_attempt", fake_materialize)
+
+    raw = harness.run_variant(provider="codex", variant="raw_host", repeat_index=1)
+    loop = harness.run_variant(provider="codex", variant="kernel_loop_cortex", repeat_index=1)
+
+    assert raw["first_prompt_sha"] == loop["first_prompt_sha"]
+    assert prompts == [
+        ("codex", harness.build_initial_prompt()),
+        ("codex", harness.build_initial_prompt()),
+    ]
 
 
 def test_summary_voids_non_discriminative_fixture() -> None:
@@ -51,6 +192,55 @@ def test_summary_accepts_kernel_conversion_smoke() -> None:
 
     assert summary["experiment_status"] == "kernel_lift_smoke_passed"
     assert summary["kernel_certified_count"] == 2
+
+
+def test_codex_summary_requires_valid_raw_loop_certification_and_score_lift() -> None:
+    raw_runs = [
+        {"variant": "raw_host", "certification_status": "uncertified", "mechanical_score": 0.5}
+        for _ in range(10)
+    ]
+    loop_runs = [
+        {"variant": "kernel_loop_cortex", "certification_status": "certified", "mechanical_score": 0.9}
+        for _ in range(8)
+    ] + [
+        {"variant": "kernel_loop_cortex", "certification_status": "uncertified", "mechanical_score": 0.6}
+        for _ in range(2)
+    ]
+
+    summary = harness.build_summary(
+        provider="codex",
+        stage="all",
+        repeat_count=10,
+        runs=raw_runs + loop_runs,
+        prediction=harness.build_prediction(provider="codex", repeat_count=10, stage="all"),
+    )
+
+    assert summary["experiment_status"] == "codex_website_loop_generalization_passed"
+    assert summary["raw_uncertified_count"] == 10
+    assert summary["kernel_loop_certified_count"] == 8
+    assert round(summary["kernel_loop_score_lift"], 2) == 0.34
+
+
+def test_codex_summary_marks_score_lift_under_threshold_without_changing_counts() -> None:
+    raw_runs = [
+        {"variant": "raw_host", "certification_status": "uncertified", "mechanical_score": 0.75}
+        for _ in range(10)
+    ]
+    loop_runs = [
+        {"variant": "kernel_loop_cortex", "certification_status": "certified", "mechanical_score": 1.0}
+        for _ in range(10)
+    ]
+
+    summary = harness.build_summary(
+        provider="codex",
+        stage="all",
+        repeat_count=10,
+        runs=raw_runs + loop_runs,
+        prediction=harness.build_prediction(provider="codex", repeat_count=10, stage="all"),
+    )
+
+    assert summary["experiment_status"] == "codex_website_certification_passed_score_lift_under_threshold"
+    assert summary["kernel_loop_score_lift"] == 0.25
 
 
 def test_kernel_variant_runs_one_factual_repair_turn(tmp_path: Path, monkeypatch) -> None:
