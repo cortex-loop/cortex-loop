@@ -97,8 +97,10 @@ Use the status registry's executive completion model and bio-to-code matrix for 
 ## Workflow
 
 This root `AGENTS.md` is the only agent contract in the repo.
-Use `python3 internal/workflow/repo_workflow.py sync-main`, `start-session`, and `close-session` for normal work on clean synced `main`.
+Use `python3 internal/workflow/repo_workflow.py sync-main`, `start-session`, `resume-session`, and `close-session` for normal work on clean synced `main`.
 Detailed command semantics live only in `docs/internal/REPO_WORKFLOW.md`.
+
+`start-session` refuses if any local managed session branch is not yet merged into `origin/main`. Resolve the existing branch first: `close-session --publish` to merge it, `resume-session --slug <slug>` to continue working on it, or `git branch -D` if the work is genuinely abandoned. The override `start-session --allow-stacked --stacked-reason "<text>"` is permitted only for emergency parallel work; the reason is recorded on the new session's closeout contract under `stacked_session_reason` so the override leaves an audit trail.
 
 Do not create a second operational truth surface.
 Keep fast-changing state in `internal/truth/cortex_status.json` and regenerate `docs/CORTEX_STATUS.md` when that state changes.
@@ -199,6 +201,13 @@ bundled onto a `claude-era-hostile-audit-and-recovery` branch whose slug
 named only the audit. Bundling makes the work invisible to future agents
 reading the branch list.
 
+This rule is mechanically enforced by `start-session`: the gate refuses
+when any unmerged managed session branch exists. Use `resume-session` to
+continue an existing branch (the legitimate path for multi-session work
+on one concern). The `--allow-stacked --stacked-reason "<text>"` override
+exists for emergency parallel work and logs the reason on the new
+session's closeout contract.
+
 ### Audit-verdict landing
 
 Any audit verdict authored in a session must land its fix in the same
@@ -208,6 +217,10 @@ session if not. An audit verdict on a side branch that nobody promotes is
 the same drift pattern as a research line nobody retires. The Claude-era
 queue-truth dedup audit sat on a side branch for 11 days because of this
 gap.
+
+The branch-hygiene gate above mechanically catches this pattern too: an
+audit verdict that lands on a managed session branch and is not merged
+or resumed will block the next `start-session` until resolved.
 
 ### Research line management
 

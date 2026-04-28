@@ -966,3 +966,224 @@ def test_preserve_worktree_refuses_when_attached_worktree_paths_are_already_trac
 
     with pytest.raises(SystemExit, match="attached worktree paths are already tracked"):
         module.cmd_preserve_worktree("nested")
+
+
+# ---------------------------------------------------------------------------
+# Branch-hygiene gate: start-session blocks on unmerged managed branches;
+# resume-session is the legitimate continuation path. See AGENTS.md
+# `## Anti-Drift` for the historical context.
+# ---------------------------------------------------------------------------
+
+
+def test_start_session_blocks_when_an_unmerged_managed_branch_exists(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    repo, _remote, module = _prepare_repo(tmp_path, monkeypatch)
+    # Pre-create a managed session branch with unique work so it is not an
+    # ancestor of origin/main.
+    _git(repo, "switch", "-c", "claude/20260101-010101-prior-work")
+    (repo / "prior.txt").write_text("prior\n", encoding="utf-8")
+    _git(repo, "add", "prior.txt")
+    _git(repo, "commit", "-m", "tests: stage prior session artifact")
+    _git(repo, "switch", "main")
+
+    with pytest.raises(SystemExit) as excinfo:
+        module.cmd_start_session("codex", "fresh-work")
+
+    message = str(excinfo.value)
+    assert "Cannot start a new session" in message
+    assert "claude/20260101-010101-prior-work" in message
+    assert "resume-session" in message
+    assert "--allow-stacked" in message
+    assert _git_output(repo, "branch", "--show-current") == "main"
+
+
+def test_start_session_succeeds_on_clean_main_with_no_unmerged_branches(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    repo, _remote, module = _prepare_repo(tmp_path, monkeypatch)
+    monkeypatch.setattr(module, "_session_timestamp", lambda: "20260601-010203")
+
+    module.cmd_start_session("codex", "clean-start")
+
+    assert _git_output(repo, "branch", "--show-current") == "codex/20260601-010203-clean-start"
+
+
+def test_start_session_excludes_current_branch_when_already_on_managed_branch(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """When the agent is already on a merged managed branch, start-session's
+    existing path (switch to main, delete the branch, start fresh) must not
+    block on the branch the agent is leaving."""
+    repo, _remote, module = _prepare_repo(tmp_path, monkeypatch)
+    monkeypatch.setattr(module, "_session_timestamp", lambda: "20260601-010204")
+    # Create + merge a managed branch so it is an ancestor of origin/main.
+    _git(repo, "switch", "-c", "claude/20260101-020202-merged-prior")
+    (repo / "merged.txt").write_text("merged\n", encoding="utf-8")
+    _git(repo, "add", "merged.txt")
+    _git(repo, "commit", "-m", "tests: prior merged work")
+    _git(repo, "switch", "main")
+    _git(repo, "merge", "--ff-only", "claude/20260101-020202-merged-prior")
+    _git(repo, "push", "origin", "main")
+    _git(repo, "switch", "claude/20260101-020202-merged-prior")
+
+    module.cmd_start_session("codex", "fresh-after-merged")
+
+    assert _git_output(repo, "branch", "--show-current") == "codex/20260601-010204-fresh-after-merged"
+
+
+def test_start_session_allow_stacked_requires_stacked_reason(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    repo, _remote, module = _prepare_repo(tmp_path, monkeypatch)
+
+    with pytest.raises(SystemExit, match="--stacked-reason"):
+        module.cmd_start_session(
+            "codex",
+            "stacked-without-reason",
+            allow_stacked=True,
+            stacked_reason=None,
+        )
+
+    assert _git_output(repo, "branch", "--show-current") == "main"
+
+
+def test_start_session_allow_stacked_with_reason_bypasses_block_and_records_marker(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    repo, _remote, module = _prepare_repo(tmp_path, monkeypatch)
+    monkeypatch.setattr(module, "_session_timestamp", lambda: "20260601-010205")
+    _git(repo, "switch", "-c", "claude/20260101-030303-blocking-prior")
+    (repo / "blocker.txt").write_text("blocker\n", encoding="utf-8")
+    _git(repo, "add", "blocker.txt")
+    _git(repo, "commit", "-m", "tests: blocking prior work")
+    _git(repo, "switch", "main")
+
+    module.cmd_start_session(
+        "codex",
+        "emergency-hotfix",
+        allow_stacked=True,
+        stacked_reason="emergency hotfix while investigation is in flight",
+    )
+
+    branch = "codex/20260601-010205-emergency-hotfix"
+    assert _git_output(repo, "branch", "--show-current") == branch
+    marker = (
+        repo
+        / ".cortex"
+        / "closeout_contract"
+        / Path(*branch.split("/"))
+        / "stacked_session_reason.txt"
+    )
+    assert marker.exists()
+    assert "emergency hotfix while investigation is in flight" in marker.read_text(encoding="utf-8")
+
+
+def test_resume_session_requires_slug_or_branch(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    _repo, _remote, module = _prepare_repo(tmp_path, monkeypatch)
+
+    with pytest.raises(SystemExit, match="--slug"):
+        module.cmd_resume_session(None, None)
+
+
+def test_resume_session_checks_out_unique_slug_match(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    repo, _remote, module = _prepare_repo(tmp_path, monkeypatch)
+    _git(repo, "switch", "-c", "claude/20260101-040404-resume-target")
+    (repo / "resume.txt").write_text("resume\n", encoding="utf-8")
+    _git(repo, "add", "resume.txt")
+    _git(repo, "commit", "-m", "tests: resume-target work")
+    _git(repo, "switch", "main")
+
+    module.cmd_resume_session("resume-target", None)
+
+    assert _git_output(repo, "branch", "--show-current") == "claude/20260101-040404-resume-target"
+    captured = capsys.readouterr().out
+    assert "Resumed: claude/20260101-040404-resume-target" in captured
+    assert "commit(s) ahead of origin/main" in captured
+    assert "closeout contract:" in captured
+
+
+def test_resume_session_lists_available_when_slug_not_found(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    repo, _remote, module = _prepare_repo(tmp_path, monkeypatch)
+    _git(repo, "switch", "-c", "claude/20260101-050505-existing")
+    (repo / "existing.txt").write_text("existing\n", encoding="utf-8")
+    _git(repo, "add", "existing.txt")
+    _git(repo, "commit", "-m", "tests: existing work")
+    _git(repo, "switch", "main")
+
+    with pytest.raises(SystemExit) as excinfo:
+        module.cmd_resume_session("nonexistent-slug", None)
+
+    message = str(excinfo.value)
+    assert "No managed session branch found with slug 'nonexistent-slug'" in message
+    assert "claude/20260101-050505-existing" in message
+
+
+def test_resume_session_disambiguates_when_multiple_slug_matches(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    repo, _remote, module = _prepare_repo(tmp_path, monkeypatch)
+    for stamp in ("20260101-060601", "20260201-060602"):
+        branch = f"claude/{stamp}-shared-slug"
+        _git(repo, "switch", "-c", branch, "main")
+        (repo / f"{stamp}.txt").write_text(f"{stamp}\n", encoding="utf-8")
+        _git(repo, "add", f"{stamp}.txt")
+        _git(repo, "commit", "-m", f"tests: {stamp} work")
+    _git(repo, "switch", "main")
+
+    with pytest.raises(SystemExit) as excinfo:
+        module.cmd_resume_session("shared-slug", None)
+
+    message = str(excinfo.value)
+    assert "Multiple managed session branches match slug 'shared-slug'" in message
+    assert "--branch <full-name>" in message
+
+
+def test_resume_session_with_explicit_branch_flag_bypasses_slug_matching(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    repo, _remote, module = _prepare_repo(tmp_path, monkeypatch)
+    _git(repo, "switch", "-c", "claude/20260101-070707-explicit-target")
+    (repo / "explicit.txt").write_text("explicit\n", encoding="utf-8")
+    _git(repo, "add", "explicit.txt")
+    _git(repo, "commit", "-m", "tests: explicit-target work")
+    _git(repo, "switch", "main")
+
+    module.cmd_resume_session(None, "claude/20260101-070707-explicit-target")
+
+    assert _git_output(repo, "branch", "--show-current") == "claude/20260101-070707-explicit-target"
+
+
+def test_resume_session_rejects_non_managed_branch_name(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    repo, _remote, module = _prepare_repo(tmp_path, monkeypatch)
+    _git(repo, "switch", "-c", "review/some-branch")
+    (repo / "review.txt").write_text("review\n", encoding="utf-8")
+    _git(repo, "add", "review.txt")
+    _git(repo, "commit", "-m", "tests: review work")
+    _git(repo, "switch", "main")
+
+    with pytest.raises(SystemExit, match="not a managed session branch"):
+        module.cmd_resume_session(None, "review/some-branch")
+
+
+def test_resume_session_refuses_dirty_worktree(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    repo, _remote, module = _prepare_repo(tmp_path, monkeypatch)
+    _git(repo, "switch", "-c", "claude/20260101-080808-resume-dirty")
+    (repo / "drift.txt").write_text("drift\n", encoding="utf-8")
+    _git(repo, "add", "drift.txt")
+    _git(repo, "commit", "-m", "tests: target work")
+    _git(repo, "switch", "main")
+    (repo / "README.md").write_text("dirty\n", encoding="utf-8")
+
+    with pytest.raises(SystemExit, match="Working tree is not clean"):
+        module.cmd_resume_session("resume-dirty", None)

@@ -357,3 +357,73 @@ def test_validate_payload_accepts_agent_loop_guard_with_safe_defaults() -> None:
         expected_reviewed_paths=["README.md"],
     )
     assert validated["agent_loop_guard"]["allow_blocked"] is False
+
+
+def test_validate_payload_accepts_optional_stacked_session_reason() -> None:
+    """The stacked_session_reason field is recorded on closeouts whose
+    session was started with start-session --allow-stacked. It is optional
+    (most sessions don't use the override); when present it must be a
+    non-empty string."""
+    payload = _filled_payload(
+        "claude/20260601-010205-stacked-test",
+        "close-session",
+        ["README.md"],
+    )
+    payload["stacked_session_reason"] = "emergency hotfix while investigation in flight"
+
+    validated = closeout_contract.validate_payload(
+        payload,
+        expected_mode="close-session",
+        expected_branch="claude/20260601-010205-stacked-test",
+        expected_reviewed_paths=["README.md"],
+    )
+    assert (
+        validated["stacked_session_reason"]
+        == "emergency hotfix while investigation in flight"
+    )
+
+
+def test_validate_payload_rejects_empty_stacked_session_reason() -> None:
+    """If stacked_session_reason is present, it must be non-empty.
+    A blank string is meaningless as an audit trail."""
+    payload = _filled_payload(
+        "claude/20260601-010206-stacked-empty",
+        "close-session",
+        ["README.md"],
+    )
+    payload["stacked_session_reason"] = ""
+
+    with pytest.raises(SystemExit, match="stacked_session_reason"):
+        closeout_contract.validate_payload(
+            payload,
+            expected_mode="close-session",
+            expected_branch="claude/20260601-010206-stacked-empty",
+            expected_reviewed_paths=["README.md"],
+        )
+
+
+def test_scaffold_payload_seeds_stacked_session_reason_from_marker(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """When start-session --allow-stacked writes the marker file, the
+    closeout scaffold reads it back and seeds stacked_session_reason
+    automatically. The agent should never need to copy the reason
+    manually into the closeout JSON."""
+    repo = _init_repo(tmp_path)
+    monkeypatch.setenv(closeout_contract.ROOT_ENV_VAR, str(repo))
+    branch = "claude/20260601-010207-stacked-marker"
+    marker_dir = repo / ".cortex" / "closeout_contract" / Path(*branch.split("/"))
+    marker_dir.mkdir(parents=True, exist_ok=True)
+    marker = marker_dir / "stacked_session_reason.txt"
+    marker.write_text(
+        "investigation in flight; need parallel hotfix branch", encoding="utf-8"
+    )
+
+    payload = closeout_contract.scaffold_payload(
+        branch=branch, mode="close-session", reviewed_paths=["README.md"]
+    )
+
+    assert (
+        payload["stacked_session_reason"]
+        == "investigation in flight; need parallel hotfix branch"
+    )

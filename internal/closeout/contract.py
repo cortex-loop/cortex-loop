@@ -204,7 +204,34 @@ def scaffold_payload(*, branch: str, mode: str, reviewed_paths: list[str]) -> di
             "kill_rule": "",
         }
         payload["law_to_code_completeness"] = []
+    stacked_reason = _read_stacked_session_reason(branch)
+    if stacked_reason is not None:
+        payload["stacked_session_reason"] = stacked_reason
     return payload
+
+
+def _read_stacked_session_reason(branch: str) -> str | None:
+    """Read the marker file written by start-session --allow-stacked.
+
+    The marker is branch-scoped at
+    `.cortex/closeout_contract/<branch>/stacked_session_reason.txt`.
+    Returns None if the marker does not exist (the common case — most
+    sessions do not use --allow-stacked).
+    """
+    marker = (
+        _root()
+        / ".cortex"
+        / "closeout_contract"
+        / Path(*branch.split("/"))
+        / "stacked_session_reason.txt"
+    )
+    if not marker.exists():
+        return None
+    try:
+        text = marker.read_text(encoding="utf-8").strip()
+    except OSError:
+        return None
+    return text or None
 
 
 def _artifact_dir(root: Path, branch: str) -> Path:
@@ -467,6 +494,17 @@ def validate_payload(
             _require_string(row.get("note"), f"law_to_code_completeness[{index}].note")
 
     _validate_agent_loop_guard_claims(payload)
+
+    if "stacked_session_reason" in payload:
+        reason = payload["stacked_session_reason"]
+        if reason is not None and not (isinstance(reason, str) and reason.strip()):
+            raise SystemExit(
+                "Closeout contract field 'stacked_session_reason' must be a "
+                "non-empty string when present. The reason is recorded by "
+                "start-session --allow-stacked --stacked-reason \"<text>\" "
+                "to leave an audit trail of why parallel session work was "
+                "necessary."
+            )
 
     return payload
 
