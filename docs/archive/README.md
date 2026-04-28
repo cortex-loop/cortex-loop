@@ -25,6 +25,12 @@ This archive is reference-only. It does not define live Cortex truth.
 - `V2 model-visible communication bridge and constraint-fidelity kernel loop evidence` -> `archive/v2-bridge-and-constraint-fidelity-loop`
   Purpose: Preserved reference-only evidence for two retired research lines: the V2 model-visible executive guidance bridge (live Claude smoke indicated prompt guidance was insufficient) and the constraint-fidelity kernel loop (synthetic-fixture conversion only, deliberately bypassed Cortex doctrine to isolate external invariant gating). Neither was promoted to product; the loop branch also carries the Codex parity smoke that voided on a non-discriminative website fixture.
   Restore: `git fetch origin archive/v2-bridge-and-constraint-fidelity-loop:review/v2-bridge-and-constraint-fidelity-loop`
+- `Extracted Cortex incubation bank (V3 first cross-provider measurement)` -> `archive/extracted-cortex-incubation-bank`
+  Purpose: Preserved reference-only evidence for the V3 incubation banking step: the provider-neutral verified-work incubation track, the grid measurement driver and fixture dry run, and the V3 first cross-provider measurement decision note (all 18 cells returned `error=missing_api_key` because the run environment lacked OPENAI_API_KEY/ANTHROPIC_API_KEY/GEMINI_API_KEY at run time, so no pass-rate or delta claim was earned). Branch also carries the operator_brain_capability commit (e90ac64) whose retire-vs-promote decision is still deferred to a separate session.
+  Restore: `git fetch origin archive/extracted-cortex-incubation-bank:review/extracted-cortex-incubation-bank`
+- `Extracted Cortex measurement proof closure (V3 deterministic parity proof)` -> `archive/extracted-cortex-measurement-proof-closure`
+  Purpose: Preserved reference-only evidence for the V3 measurement proof closure: the V2/V3 deterministic parity proof, the deterministic parity oracle hardening, the V3 repair-ticket canonical format and parity classification, and the V3 north-light closure contract. Builds on the incubation-bank history; the live proof loop never produced a graduating cross-provider measurement.
+  Restore: `git fetch origin archive/extracted-cortex-measurement-proof-closure:review/extracted-cortex-measurement-proof-closure`
 
 ## Archived Branch Ledger
 
@@ -76,6 +82,12 @@ This archive is reference-only. It does not define live Cortex truth.
 - `codex/20260425-033950-loop-guard` @ `abe3f888844142c3346902d89146ba5f95a61d23`
   Purpose: eval: V2 model-visible communication bridge live audit, constraint-fidelity kernel loop on website and repo-hygiene fixtures, plus Codex parity smoke
   Disposition: Published to origin/archive/v2-bridge-and-constraint-fidelity-loop, then deleted locally. Live evidence indicated prompt guidance was insufficient on Claude smoke; the constraint-fidelity loop converted synthetic-fixture failures only and did not test Cortex doctrine. Both lines remain evidence-only until a separate seam re-earns shipped proof.
+- `archive/extracted-cortex-incubation-bank` @ `e7bd4b360696d2ba5f56e43aed7481d7cb5ae930`
+  Purpose: v3: bank provider-neutral verified-work incubation track, grid measurement driver + fixture dry run, and V3 first cross-provider measurement decision note (all 18 cells NA on missing API keys at run time)
+  Disposition: Published to origin/archive/extracted-cortex-incubation-bank, then deleted locally. The V3 measurement evidence is preserved as reference-only: the live measurement run produced no usable pass-rate because all three provider API keys were absent at run time; the next sprint's pre-registered recommendation is `rerun-with-full-keys`. Branch also carries the operator_brain_capability commit (e90ac64) whose retire-vs-promote decision is still deferred.
+- `archive/extracted-cortex-measurement-proof-closure` @ `7adf33fab23fcf2bd5fbfdcfe2db3eedb3371e10`
+  Purpose: eval: V3 deterministic parity oracle, V2/V3 deterministic parity proof, V3 repair-ticket canonical format and parity classification, and V3 north-light parity closure contract
+  Disposition: Published to origin/archive/extracted-cortex-measurement-proof-closure, then deleted locally. Builds on the incubation-bank history; preserves the V3 measurement closure work as reference-only evidence. The live proof loop never produced a graduating cross-provider measurement, so no broader V3 product claim is earned.
 - `origin/review/e19-cli-causal-map-rehome` @ `f60ea38025f060748ca74d7ab6c3c451e671b9a2`
   Purpose: eval: add operator-cli output-quality bridge
   Disposition: Pruned stale remote-tracking review ref during repo-truth closeout after the remote head was already absent.
