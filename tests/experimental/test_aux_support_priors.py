@@ -3,8 +3,20 @@
 from __future__ import annotations
 
 from dataclasses import replace
+from datetime import datetime, timedelta, timezone
 
 import pytest
+
+
+def _fresh_validated_at() -> str:
+    """Return an ISO-8601 UTC timestamp one hour before now.
+
+    Tests that exercise the active reliability prior path need a
+    `last_validated_at` that stays inside the prior's `ttl_hours` window.
+    Hardcoded fixture timestamps drift past the TTL as wall-clock time
+    advances; this helper keeps the prior fresh on every test run.
+    """
+    return (datetime.now(timezone.utc) - timedelta(hours=1)).isoformat()
 
 from cortex.aux.augmentation import AuxiliarySupportAppendix, augment_snapshot
 from cortex.aux.distillation import _distill_offline_support_publication_from_snapshots
@@ -288,7 +300,7 @@ def test_historical_contradiction_alone_no_longer_auto_zeros() -> None:
         capability_availability=1.0,
         contradiction_counter=3,
         ttl_hours=72,
-        last_validated_at="2026-04-15T00:00:00+00:00",
+        last_validated_at=_fresh_validated_at(),
         probe_failure_classes=("timed-out",),
     )
     augmented = _replace_published_reliability_prior(augmented, historical_prior)
@@ -309,7 +321,7 @@ def test_host_reliability_prior_published_from_publication_wins_over_synthesis()
         capability_availability=0.5,
         contradiction_counter=0,
         ttl_hours=72,
-        last_validated_at="2026-04-15T00:00:00+00:00",
+        last_validated_at=_fresh_validated_at(),
     )
     augmented_with_published = _replace_published_reliability_prior(
         augmented,
@@ -341,7 +353,7 @@ def test_affordance_gating_mismatch_emits_tag_and_zeros_bonus() -> None:
             capability_availability=1.0,
             contradiction_counter=0,
             ttl_hours=72,
-            last_validated_at="2026-04-15T00:00:00+00:00",
+            last_validated_at=_fresh_validated_at(),
             affordance_scope_tags=("write-files",),
         ),
     )
@@ -370,7 +382,7 @@ def test_affordance_gating_overlap_passes_through() -> None:
             capability_availability=1.0,
             contradiction_counter=0,
             ttl_hours=72,
-            last_validated_at="2026-04-15T00:00:00+00:00",
+            last_validated_at=_fresh_validated_at(),
             affordance_scope_tags=("write-files",),
         ),
     )
@@ -392,7 +404,7 @@ def test_affordance_empty_scope_is_transparent() -> None:
             capability_availability=1.0,
             contradiction_counter=0,
             ttl_hours=72,
-            last_validated_at="2026-04-15T00:00:00+00:00",
+            last_validated_at=_fresh_validated_at(),
             affordance_scope_tags=(),
         ),
     )
@@ -415,7 +427,7 @@ def test_affordance_gate_skipped_for_branch() -> None:
             capability_availability=1.0,
             contradiction_counter=0,
             ttl_hours=72,
-            last_validated_at="2026-04-15T00:00:00+00:00",
+            last_validated_at=_fresh_validated_at(),
             affordance_scope_tags=("write-files",),
         ),
     )
