@@ -16,7 +16,11 @@ from cortex.core.envelopes import MetadataField
 from cortex.core.support import SupportState
 from cortex.sre.memory_priors import HostReliabilityPrior
 
-from ._aux_test_support import make_support_ref, make_support_snapshot
+from ._aux_test_support import (
+    fresh_validated_at_iso,
+    make_support_ref,
+    make_support_snapshot,
+)
 
 
 def test_offline_support_publication_augments_snapshot_only_through_explicit_aux_appendix() -> None:
@@ -140,7 +144,7 @@ def test_offline_publication_payload_always_includes_host_reliability_prior_key(
             capability_availability=0.9,
             contradiction_counter=1,
             ttl_hours=48,
-            last_validated_at="2026-04-15T00:00:00+00:00",
+            last_validated_at=fresh_validated_at_iso(),
             probe_failure_classes=("timed-out",),
             affordance_scope_tags=("tool/intercept",),
         ),
@@ -163,7 +167,7 @@ def test_offline_publication_payload_round_trips_reliability_prior_with_affordan
             capability_availability=0.75,
             contradiction_counter=3,
             ttl_hours=72,
-            last_validated_at="2026-04-15T12:30:00+00:00",
+            last_validated_at=fresh_validated_at_iso(),
             probe_failure_classes=("degraded", "timed-out"),
             affordance_scope_tags=("retrieval/read", "tool/intercept"),
         ),
@@ -243,7 +247,7 @@ def test_augment_snapshot_threads_published_reliability_prior_onto_auxiliary_sup
         capability_availability=0.85,
         contradiction_counter=1,
         ttl_hours=48,
-        last_validated_at="2026-04-15T00:00:00+00:00",
+        last_validated_at=fresh_validated_at_iso(),
         probe_failure_classes=("timed-out",),
         affordance_scope_tags=("tool/intercept",),
     )

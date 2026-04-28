@@ -163,6 +163,10 @@ Workflow gates marked `required` are contractual gates checked by `repo_workflow
 - Guardrail: Capability inference must publish through AUX support side per AUX_2 claim-conservative law; observations must not mutate routing directly. TTL must expire stale observations under fresh contradiction (matching the `q_mem-host:reliability-active` vs `ttl-expired` pattern). The cold-start prior must remain the static band-name registry until sufficient samples accumulate.
 - Kill rule: Cut the seam if observed inference admits a route that should have been BLOCKED, lowers commitment certification standards, drifts away from the static band prior under low sample counts, or hardens a capability into a host-wide superstition that fresh contradiction cannot widen.
 
+## Research Lines Under Evaluation
+
+- `<none>` — no research lines are currently under evaluation. Per AGENTS.md Anti-Drift, every research line that has produced code or doctrine must be in exactly one of four states at session close: earned (landed), queued (next_product_train), retired (archive manifest), or under-evaluation (this list).
+
 ## Where To Work Next
 
 - Keep the bounded audit surface compact and truthful on the shipped lane: selected versus realized family, uncertainty, threshold, delta, verification, and probe truth only.

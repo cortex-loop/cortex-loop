@@ -3,20 +3,10 @@
 from __future__ import annotations
 
 from dataclasses import replace
-from datetime import datetime, timedelta, timezone
 
 import pytest
 
-
-def _fresh_validated_at() -> str:
-    """Return an ISO-8601 UTC timestamp one hour before now.
-
-    Tests that exercise the active reliability prior path need a
-    `last_validated_at` that stays inside the prior's `ttl_hours` window.
-    Hardcoded fixture timestamps drift past the TTL as wall-clock time
-    advances; this helper keeps the prior fresh on every test run.
-    """
-    return (datetime.now(timezone.utc) - timedelta(hours=1)).isoformat()
+from ._aux_test_support import fresh_validated_at_iso as _fresh_validated_at
 
 from cortex.aux.augmentation import AuxiliarySupportAppendix, augment_snapshot
 from cortex.aux.distillation import _distill_offline_support_publication_from_snapshots

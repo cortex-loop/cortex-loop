@@ -177,3 +177,86 @@ Every substantive final summary must mirror the rendered `Final Handoff Mirror` 
 - `PHI_MISSION`: pass|fail + one-line evidence
 - `PHI_NICHE`: pass|fail + one-line evidence
 - `CUT_LIST`: what was removed, or why nothing could be removed
+
+## Anti-Drift
+
+The following rules exist because each one was violated in past work and the
+violation produced visible drift (work lost on side branches, stealth
+main-broken state from stale fixtures, audit verdicts that never landed,
+research lines that accumulated without explicit retire/promote decisions).
+These rules are enforced by tests, by the workflow helper, and by the
+closeout contract; they are also enforced socially by every agent reading
+this file before starting work.
+
+### Branch-slug match
+
+The session branch slug must match the work being done. Bundling unrelated
+concerns onto a single managed branch is forbidden. If a session discovers
+a second concern partway through, finish the first concern, close the
+session, and open a new session for the second. The
+`operator_brain_capability` work was lost for ~11 days because it was
+bundled onto a `claude-era-hostile-audit-and-recovery` branch whose slug
+named only the audit. Bundling makes the work invisible to future agents
+reading the branch list.
+
+### Audit-verdict landing
+
+Any audit verdict authored in a session must land its fix in the same
+session if mechanically possible, or be queued explicitly as
+`next_product_train` or `research_lines_under_evaluation` for the next
+session if not. An audit verdict on a side branch that nobody promotes is
+the same drift pattern as a research line nobody retires. The Claude-era
+queue-truth dedup audit sat on a side branch for 11 days because of this
+gap.
+
+### Research line management
+
+Every research line that has produced code or doctrine must be in exactly
+one of four states at session close:
+
+- `earned` — landed on main, in the bio_to_code matrix, with proof surfaces.
+- `queued` — named in `internal/truth/cortex_status.json::next_product_train`.
+- `retired` — archived via `internal/archive/manifest.json::retained_evidence_refs`
+  with a remote `archive/*` ref preserving the work.
+- `under-evaluation` — named in
+  `internal/truth/cortex_status.json::research_lines_under_evaluation` with
+  an explicit `stage`, `summary`, `code_refs`, and `next_step`. This slot
+  exists for research that does not yet fit one of the other three states.
+
+Research lines orphaned outside these four states are forbidden. If you
+introduce a research line, you must classify it before close-session.
+
+### Fixture timestamps
+
+Test fixtures that exercise freshness-bearing logic
+(`HostReliabilityPrior`, `OfflineSupportPublication.host_reliability_prior`,
+brain-capability observation accumulators when they earn their seam, etc.)
+MUST use a runtime helper such as
+`tests.experimental._aux_test_support.fresh_validated_at_iso()` for the
+`last_validated_at` field. Hardcoded ISO-8601 timestamps drift past TTL
+as wall-clock time advances and silently break tests. Hardcoded
+timestamps are permitted only where the test explicitly wants stale or
+TTL-expired data (e.g. `"2000-01-01T00:00:00+00:00"`).
+
+### Closeout contract postmortem guards
+
+The closeout contract validates against the procedural shortcuts
+identified in the V2 communication bridge postmortem. Specifically: a
+closeout payload that introduces an `agent_loop_guard` subobject must
+have `require_full_communication_closure: true` and may not have
+`allow_blocked: true`; a closeout that claims "full V2 communication
+closure", "fully model-visible", or "live watchlist passed" without an
+`agent_loop_guard` subobject + a passing report file is rejected. Do not
+disable, opt out of, or work around these guards — they exist because
+their absence let real work be checkpointed before the live evidence
+that would have graduated it.
+
+### Live-evidence vs structural-evidence
+
+Earning a seam structurally (deterministic tests, doctrine update, status
+registry truth) is necessary but not sufficient for shipping claims about
+model-side lift. Any claim that "Cortex improves model output" or "the
+mechanism converts model failures" requires live evidence: a real model
+run on a real fixture or task, with the comparison pinned. Structural
+earn lands the seam; live earn graduates the claim. Do not conflate the
+two.
