@@ -171,7 +171,7 @@ def _valid_model_report(host: str, drop_last_row: bool = False) -> dict[str, Any
         ],
         "global_constraints": {
             "no_raw_aux_memory": True,
-            "no_v3_successor_claim": True,
+            "no_extracted_cortex_successor_claim": True,
             "no_live_closure_without_evidence": True,
             "subscription_cli_no_api_spend": True,
             "shipping_conformance_distinction": True,
@@ -188,7 +188,7 @@ def _valid_model_report(host: str, drop_last_row: bool = False) -> dict[str, Any
             "one_file_only": "answered by shared contract plus live CLI transcript",
             "diagnostics_only": "answered by next-turn effect per row",
             "raw_aux_hidden_memory": "AUX is default-zero and publication-only",
-            "v3_successor_overclaim": "v3 is not used as proof",
+            "extracted_cortex_successor_overclaim": "extracted Cortex is not used as proof",
             "live_proof_overclaim": "watchlist evidence is not product perfection",
         },
     }

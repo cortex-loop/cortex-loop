@@ -108,9 +108,9 @@ def build_v2_guidance_review() -> dict[str, Any]:
                 "status": "answered-by-negative-row",
             },
             {
-                "critique": "v3-successor-overclaim",
+                "critique": "extracted-cortex-successor-overclaim",
                 "answer": (
-                    "The negative row forbids treating v3 successor work as V2 communication "
+                    "The negative row forbids treating extracted Cortex incubation work as V2 communication "
                     "proof; this report is generated from active V2 code and status truth."
                 ),
                 "status": "answered-by-negative-row",

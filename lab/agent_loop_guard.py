@@ -142,7 +142,7 @@ V2_EXECUTIVE_GUIDANCE_PLAN: tuple[GatePlanStep, ...] = (
         evidence_required=(
             "coverage matrix generated from docs/CORTEX_V2_CORE_2.md, docs/CORTEX_V2_SRE_2.md, docs/CORTEX_V2_AUX_2.md, and internal/truth/cortex_status.json",
             "rows for Core, shared runtime, SRE, host wiring, AUX constraints, operational truth, and every bio-to-code matrix skill",
-            "negative rows proving diagnostics-only, V3-only, raw AUX memory, and generic reminders cannot count as communication",
+            "negative rows proving diagnostics-only, extracted-Cortex-only, raw AUX memory, and generic reminders cannot count as communication",
         ),
         next_action=(
             "build the V2 communication coverage matrix before implementing or testing "
@@ -163,7 +163,7 @@ V2_EXECUTIVE_GUIDANCE_PLAN: tuple[GatePlanStep, ...] = (
             "changing the model's next turn when communication is required."
         ),
         evidence_required=(
-            "typed contract in active V2 code, not V3",
+            "typed contract in active V2 code, not extracted Cortex incubation evidence",
             "tests proving Core truth/commitment boundaries, SRE CHECK, SEEK_CONTEXT, BRAKE, BRANCH/continuity, VERIFY/REPAIR, CLOSURE, blocker/goal-debt, risk-weight/tonic, and AUX-removability mappings",
             "negative tests proving no raw AUX memory, certification drift, or hidden policy fork",
         ),
@@ -230,7 +230,7 @@ V2_EXECUTIVE_GUIDANCE_PLAN: tuple[GatePlanStep, ...] = (
         ),
         evidence_required=(
             "review matrix with code refs, proof refs, residual risks, and falsifying negative cases",
-            "explicit answers to calculated-but-not-communicated, one-file-only, diagnostics-only, and V3-successor critiques",
+            "explicit answers to calculated-but-not-communicated, one-file-only, diagnostics-only, and extracted-Cortex-successor critiques",
             "proof that no hidden approval, spend, raw AUX, host-policy fork, or product-truth widening is needed for the claim",
         ),
         next_action=(
@@ -318,20 +318,20 @@ V2_EXECUTIVE_GUIDANCE_PLAN: tuple[GatePlanStep, ...] = (
         title="Close with product-truth discipline",
         pass_criteria=(
             "Closeout/status text claims only what shipped runtime behavior or direct "
-            "product blockers prove, keeps V3 non-product unless separately archived, "
+            "product blockers prove, keeps extracted Cortex incubation evidence non-product and archive-labelled, "
             "and preserves shipping/conformance distinction."
         ),
         evidence_required=(
             "closeout contract forbidden claims reviewed",
             "status registry/doc regeneration check when status changes",
-            "tests or grep proving no V3 cutover or live-pass overclaim is introduced",
+            "tests or grep proving no extracted Cortex cutover or live-pass overclaim is introduced",
         ),
         next_action=(
             "audit final handoff, status text, and closeout claims before allowing the "
             "agent to stop"
         ),
         stop_rule=(
-            "If any final text claims full communication, live pass, or V3 archive "
+            "If any final text claims full communication, live pass, or extracted Cortex archive "
             "without evidence, continue or stop for operator correction."
         ),
     ),
@@ -1043,7 +1043,7 @@ def _continuation_prompt(
         f"Continuation budget after this pass: {next_count}/{report.max_continuations}. "
         "Do not run paid API service-lane commands unless the current chat explicitly approved spend; "
         "Claude/Codex subscription CLI lanes are the no-API-spend watchlist route when preflight is ready. "
-        "Do not widen shipping truth, do not reactivate V3 as product truth, and stop only when all required gates pass."
+        "Do not widen shipping truth, do not reactivate extracted Cortex incubation evidence as product truth, and stop only when all required gates pass."
     )
 
 

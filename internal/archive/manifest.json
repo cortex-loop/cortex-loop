@@ -23,6 +23,12 @@
       "ref": "archive/e23-preservation-state-machine",
       "purpose": "Preserved review evidence for extracting the E23 preservation-state product kernel without reviving the broader maintainer-only trains.",
       "restore_hint": "git fetch origin archive/e23-preservation-state-machine:review/e23-preservation-state-machine"
+    },
+    {
+      "label": "Extracted Cortex incubation evidence",
+      "ref": "archive/extracted-cortex-measurement-proof-closure",
+      "purpose": "Preserved reference-only evidence for the retired extracted-Cortex incubation experiment; it does not define live Cortex product truth.",
+      "restore_hint": "git checkout archive/extracted-cortex-measurement-proof-closure"
     }
   ],
   "retired_branches": [

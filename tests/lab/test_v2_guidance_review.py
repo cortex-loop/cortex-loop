@@ -25,7 +25,7 @@ def test_v2_guidance_review_covers_inventory_and_hostile_critiques() -> None:
         "one-file-only",
         "diagnostics-only",
         "raw-aux-or-hidden-memory",
-        "v3-successor-overclaim",
+        "extracted-cortex-successor-overclaim",
         "live-proof-overclaim",
     }
     assert report["subscription_cli_preflight"]["status"] in {

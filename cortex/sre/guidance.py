@@ -392,7 +392,7 @@ V2_EXECUTIVE_GUIDANCE_ROWS: tuple[V2GuidanceRow, ...] = (
         responsibility="forbidden communication shortcuts",
         visibility=GuidanceVisibility.MODEL_VISIBLE,
         model_guidance=(
-            "Never treat diagnostics-only output, one file, one host, v3 successor work, "
+            "Never treat diagnostics-only output, one file, one host, extracted Cortex incubation work, "
             "or final-message assertions as full V2 communication proof."
         ),
         reason="The current closure risk is mistaking calculated state for communicated guidance.",
@@ -654,7 +654,7 @@ def v2_guidance_denominator_coverage_payload(
         "guardrails": {
             "denominator_preserved": not _missing_coverage_row_ids(coverages),
             "raw_aux_forbidden": True,
-            "v3_successor_overclaim_forbidden": True,
+            "extracted_cortex_overclaim_forbidden": True,
             "shipping_conformance_truth_distinct": True,
         },
     }
@@ -732,7 +732,7 @@ def _render_compressed_dynamic_guidance(context: ExecutiveGuidanceContext) -> st
         [
             "denominator_rule:",
             "- This is a compressed active packet. The full 17-row denominator is preserved in the coverage artifact; rows omitted here are silent only with an explicit reason.",
-            "- Do not use raw AUX memory, v3 successor work, one-host evidence, or diagnostics-only output as a completion claim.",
+            "- Do not use raw AUX memory, extracted Cortex incubation work, one-host evidence, or diagnostics-only output as a completion claim.",
         ]
     )
     return "\n".join(lines)

@@ -22,6 +22,9 @@ This archive is reference-only. It does not define live Cortex truth.
 - `E23 preservation-state evidence` -> `archive/e23-preservation-state-machine`
   Purpose: Preserved review evidence for extracting the E23 preservation-state product kernel without reviving the broader maintainer-only trains.
   Restore: `git fetch origin archive/e23-preservation-state-machine:review/e23-preservation-state-machine`
+- `Extracted Cortex incubation evidence` -> `archive/extracted-cortex-measurement-proof-closure`
+  Purpose: Preserved reference-only evidence for the retired extracted-Cortex incubation experiment; it does not define live Cortex product truth.
+  Restore: `git checkout archive/extracted-cortex-measurement-proof-closure`
 
 ## Archived Branch Ledger
 

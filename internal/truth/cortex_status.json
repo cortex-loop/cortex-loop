@@ -446,6 +446,11 @@
       "label": "E23 preservation-state evidence",
       "ref": "archive/e23-preservation-state-machine",
       "purpose": "Preserved review evidence for the landed preservation-state kernel extract and later provenance checks."
+    },
+    {
+      "label": "Extracted Cortex incubation evidence",
+      "ref": "archive/extracted-cortex-measurement-proof-closure",
+      "purpose": "Preserved reference-only evidence for the retired extracted-Cortex incubation experiment; it does not define live Cortex product truth."
     }
   ],
   "proof_commands": {

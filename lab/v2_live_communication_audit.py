@@ -60,7 +60,7 @@ _HOST_GATE = {
 }
 _GLOBAL_CONSTRAINTS = (
     "no_raw_aux_memory",
-    "no_v3_successor_claim",
+    "no_extracted_cortex_successor_claim",
     "no_live_closure_without_evidence",
     "subscription_cli_no_api_spend",
     "shipping_conformance_distinction",
@@ -478,7 +478,7 @@ def _build_host_prompt(host: HostName) -> str:
         "write one concrete next_turn_effect explaining how that row constrains your "
         "next response.\n"
         "- global_constraints must set these booleans true: no_raw_aux_memory, "
-        "no_v3_successor_claim, no_live_closure_without_evidence, "
+        "no_extracted_cortex_successor_claim, no_live_closure_without_evidence, "
         "subscription_cli_no_api_spend, shipping_conformance_distinction, "
         "watchlist_not_product_perfection.\n"
         "- bounded_result must set these booleans true: "
@@ -486,7 +486,7 @@ def _build_host_prompt(host: HostName) -> str:
         "all_reported_rows_have_next_turn_effect, "
         "this_is_watchlist_evidence_not_product_perfection, optimization_remains_next.\n"
         "- hostile_review must include short strings answering: calculated_not_communicated, "
-        "one_file_only, diagnostics_only, raw_aux_hidden_memory, v3_successor_overclaim, "
+        "one_file_only, diagnostics_only, raw_aux_hidden_memory, extracted_cortex_successor_overclaim, "
         "live_proof_overclaim.\n"
     )
     return prepend_guidance_to_prompt(
@@ -676,7 +676,7 @@ def _audit_schema() -> dict[str, Any]:
                     "one_file_only",
                     "diagnostics_only",
                     "raw_aux_hidden_memory",
-                    "v3_successor_overclaim",
+                    "extracted_cortex_successor_overclaim",
                     "live_proof_overclaim",
                 ],
                 "additionalProperties": False,
@@ -685,7 +685,7 @@ def _audit_schema() -> dict[str, Any]:
                     "one_file_only": {"type": "string"},
                     "diagnostics_only": {"type": "string"},
                     "raw_aux_hidden_memory": {"type": "string"},
-                    "v3_successor_overclaim": {"type": "string"},
+                    "extracted_cortex_successor_overclaim": {"type": "string"},
                     "live_proof_overclaim": {"type": "string"},
                 },
             },
@@ -742,9 +742,9 @@ def _hostile_review(
             not in validation.get("failures", [])
             else "fail"
         ),
-        "v3_successor_overclaim": (
+        "extracted_cortex_successor_overclaim": (
             "pass"
-            if "global constraint no_v3_successor_claim is not true"
+            if "global constraint no_extracted_cortex_successor_claim is not true"
             not in validation.get("failures", [])
             else "fail"
         ),
@@ -766,7 +766,7 @@ def _summary_hostile_review(host_results: dict[str, Any]) -> dict[str, Any]:
         "one_file_only": _summary_pass(host_results),
         "diagnostics_only": _summary_pass(host_results),
         "raw_aux_hidden_memory": _summary_pass(host_results),
-        "v3_successor_overclaim": _summary_pass(host_results),
+        "extracted_cortex_successor_overclaim": _summary_pass(host_results),
         "live_proof_overclaim": _summary_pass(host_results),
         "two_host_live_matrix": (
             "pass" if {"claude", "codex"}.issubset(set(passed_hosts)) else "fail"
@@ -826,7 +826,7 @@ def _blocked_host_payload(
             "one_file_only": "fail",
             "diagnostics_only": "fail",
             "raw_aux_hidden_memory": "unknown",
-            "v3_successor_overclaim": "unknown",
+            "extracted_cortex_successor_overclaim": "unknown",
             "live_proof_overclaim": "fail",
         },
     }

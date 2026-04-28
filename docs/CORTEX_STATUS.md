@@ -204,6 +204,8 @@ Workflow gates marked `required` are contractual gates checked by `repo_workflow
 
 - `E23 preservation-state evidence` -> `archive/e23-preservation-state-machine`
   Purpose: Preserved review evidence for the landed preservation-state kernel extract and later provenance checks.
+- `Extracted Cortex incubation evidence` -> `archive/extracted-cortex-measurement-proof-closure`
+  Purpose: Preserved reference-only evidence for the retired extracted-Cortex incubation experiment; it does not define live Cortex product truth.
 
 ## Blocked Moves
 
