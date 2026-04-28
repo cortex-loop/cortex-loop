@@ -77,6 +77,35 @@ Start a fresh managed session from clean synced `main`:
 python internal/workflow/repo_workflow.py start-session --agent codex --slug task-name
 ```
 
+The branch-hygiene gate refuses `start-session` if any unmerged managed
+session branch (`codex/*`, `claude/*`, `maint/*` matching the managed
+session pattern) is not yet an ancestor of `origin/main`. The error names
+the offending branches and points at three legitimate resolutions:
+`close-session --publish` to merge, `resume-session` to continue, or
+`git branch -D` to delete an abandoned branch.
+
+For genuine emergency parallel work (e.g. a hotfix during an in-flight
+investigation):
+
+```bash
+python internal/workflow/repo_workflow.py start-session --agent codex --slug task-name --allow-stacked --stacked-reason "emergency hotfix while investigation in flight"
+```
+
+The reason is recorded on the new session's closeout contract under
+`stacked_session_reason`, leaving an explicit audit trail of the
+override.
+
+Resume an existing managed session branch instead of starting a new one:
+
+```bash
+python internal/workflow/repo_workflow.py resume-session --slug task-name
+```
+
+If multiple branches share the slug suffix, disambiguate with `--branch
+<full-name>`. Resume prints a one-line summary (commits ahead of
+`origin/main`, files changed, closeout contract status) so the agent
+inheriting the branch sees what state they are continuing.
+
 Checkpoint a managed session locally and keep the session branch open:
 
 ```bash

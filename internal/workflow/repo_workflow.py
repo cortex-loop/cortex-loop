@@ -362,6 +362,61 @@ def _branch_merged_into_main(branch: str) -> bool:
 
 
 def _branch_merged_into_origin_main(branch: str) -> bool:
+    """Return True iff `branch` is an ancestor of `origin/main`.
+
+    The honest "merged" definition for branch-hygiene gating: a branch is
+    merged when its tip is reachable from `origin/main` (i.e. its work is
+    actually shipped on origin), not merely when it is an ancestor of the
+    local `main` (which may be ahead of origin in unpublished local
+    history). This makes `start-session` refuse new sessions while a
+    pushed-but-unmerged branch with an open PR still represents in-flight
+    work.
+    """
+    proc = subprocess.run(
+        ["git", "merge-base", "--is-ancestor", branch, "origin/main"],
+        cwd=_root(),
+        check=False,
+    )
+    return proc.returncode == 0
+
+
+def _list_unmerged_managed_branches() -> list[str]:
+    """Local managed session branches whose tip is not on origin/main.
+
+    A managed session branch matches `MANAGED_SESSION_BRANCH_RE`. The branch
+    is considered unmerged when it is not an ancestor of `origin/main`;
+    branches whose work is fully shipped on origin do not appear here.
+
+    The current branch is included if applicable; callers that want to
+    exclude themselves must filter by current branch.
+    """
+    return [
+        branch
+        for branch in _branch_heads()
+        if is_managed_session_branch(branch)
+        and not _branch_merged_into_origin_main(branch)
+    ]
+
+
+def _find_managed_branches_by_slug(slug: str) -> list[str]:
+    """Local managed session branches whose name ends with `-<slug>`.
+
+    Used by `resume-session` to disambiguate; the branch name format is
+    `<agent>/<timestamp>-<slug>`, so anchoring at end-of-name on
+    `-<slug>` matches all sessions with the same slug regardless of
+    timestamp.
+    """
+    if not slug.strip():
+        return []
+    suffix = f"-{slug.strip()}"
+    return sorted(
+        branch
+        for branch in _branch_heads()
+        if is_managed_session_branch(branch) and branch.endswith(suffix)
+    )
+
+
+def _branch_merged_into_origin_main(branch: str) -> bool:
     proc = subprocess.run(["git", "merge-base", "--is-ancestor", branch, "origin/main"], cwd=_root(), check=False)
     return proc.returncode == 0
 
@@ -785,25 +840,203 @@ def cmd_sync_main(adopt_origin: bool) -> int:
     raise SystemExit(_sync_guidance(state))
 
 
-def cmd_start_session(agent: str, slug: str | None) -> int:
+def _format_unmerged_block_message(unmerged: list[str]) -> str:
+    """Branch-hygiene block message for start-session.
+
+    Surfaces every unmerged managed session branch by name, points the agent
+    at the three legitimate resolutions (merge / resume / delete), and
+    explains why this gate exists. See AGENTS.md `## Anti-Drift` for the
+    historical context: bridge work, audit verdicts, and operator-brain
+    work all drifted because unmerged managed branches accumulated across
+    sessions; this gate blocks that pattern at session-start time.
+    """
+    plural = "es" if len(unmerged) != 1 else ""
+    lines = [
+        f"Cannot start a new session: {len(unmerged)} unmerged managed session "
+        f"branch{plural} exist:",
+        "",
+    ]
+    for branch in unmerged:
+        lines.append(f"  - {branch}")
+    lines.extend(
+        [
+            "",
+            "Resolve one of:",
+            "  - Merge:   python3 internal/workflow/repo_workflow.py "
+            "close-session --publish --message \"<scope>: <end-state>\"",
+            "  - Resume:  python3 internal/workflow/repo_workflow.py "
+            "resume-session <slug>",
+            "  - Delete:  git branch -D <branch-name>  (only if abandoned)",
+            "",
+            "If you genuinely need parallel work (e.g. emergency hotfix during",
+            "an in-flight investigation), use:",
+            "  start-session --agent <agent> --slug <slug> --allow-stacked "
+            "--stacked-reason \"<text>\"",
+            "The `--stacked-reason` is recorded on the closeout contract for",
+            "the new session so the override leaves an explicit audit trail.",
+            "",
+            "See AGENTS.md `## Anti-Drift` and CLAUDE.md for the discipline.",
+        ]
+    )
+    return "\n".join(lines)
+
+
+def cmd_start_session(
+    agent: str,
+    slug: str | None,
+    *,
+    allow_stacked: bool = False,
+    stacked_reason: str | None = None,
+) -> int:
+    if allow_stacked and not (stacked_reason and stacked_reason.strip()):
+        raise SystemExit(
+            "start-session --allow-stacked requires --stacked-reason "
+            "\"<text>\". The reason is recorded on the new session's "
+            "closeout contract so the override leaves an audit trail."
+        )
+
     branch = _current_branch()
     _ensure_clean_tree()
     if branch == "main":
         _ensure_startable_main()
+        if not allow_stacked:
+            unmerged = [
+                candidate
+                for candidate in _list_unmerged_managed_branches()
+                if candidate != branch
+            ]
+            if unmerged:
+                raise SystemExit(_format_unmerged_block_message(unmerged))
         next_branch = _session_branch_name(agent, slug)
         _run(["git", "switch", "-c", next_branch])
+        if allow_stacked:
+            _record_stacked_session_reason(next_branch, stacked_reason or "")
         print(next_branch)
         return 0
     if is_managed_session_branch(branch) and _branch_merged_into_main(branch):
         _switch_to_main()
         _delete_branch(branch)
         _ensure_startable_main()
+        if not allow_stacked:
+            unmerged = [
+                candidate
+                for candidate in _list_unmerged_managed_branches()
+                if candidate != branch
+            ]
+            if unmerged:
+                raise SystemExit(_format_unmerged_block_message(unmerged))
         next_branch = _session_branch_name(agent, slug)
         _run(["git", "switch", "-c", next_branch])
+        if allow_stacked:
+            _record_stacked_session_reason(next_branch, stacked_reason or "")
         print(next_branch)
         return 0
     raise SystemExit(
         f"Current branch '{branch}' is not clean synced main. Reconcile it manually before starting a managed session."
+    )
+
+
+def _record_stacked_session_reason(branch: str, reason: str) -> None:
+    """Persist a `--stacked-reason` to a marker file under .cortex/closeout_contract/.
+
+    The closeout contract `init` step picks this up automatically and seeds
+    `stacked_session_reason` into the scaffolded payload. The marker is
+    branch-scoped so concurrent stacked sessions cannot overwrite each
+    other's reasons.
+    """
+    root = _root()
+    branch_dir = root / ".cortex" / "closeout_contract" / Path(*branch.split("/"))
+    branch_dir.mkdir(parents=True, exist_ok=True)
+    marker = branch_dir / "stacked_session_reason.txt"
+    marker.write_text(reason.strip() + "\n", encoding="utf-8")
+
+
+def cmd_resume_session(slug: str | None, branch_name: str | None) -> int:
+    """Check out an existing managed session branch by slug.
+
+    Resolution order:
+      1. If `branch_name` is provided, use it directly (must be a managed
+         session branch and must exist locally).
+      2. Otherwise, find local managed branches whose name ends with
+         `-<slug>`. If exactly one matches, check it out. If zero or
+         multiple match, surface a clear error message.
+
+    A non-clean working tree blocks resume; the existing
+    `_ensure_clean_tree` provides that check.
+    """
+    if not branch_name and not slug:
+        raise SystemExit(
+            "resume-session requires either --slug <slug> or --branch <full-name>."
+        )
+    _ensure_clean_tree()
+    if branch_name:
+        target = branch_name.strip()
+        if not is_managed_session_branch(target):
+            raise SystemExit(
+                f"Branch '{target}' is not a managed session branch. "
+                "resume-session targets `<agent>/<timestamp>-<slug>` branches only."
+            )
+        heads = _branch_heads()
+        if target not in heads:
+            raise SystemExit(
+                f"Branch '{target}' does not exist locally. "
+                "Available unmerged managed branches:\n"
+                + "\n".join(f"  - {b}" for b in _list_unmerged_managed_branches())
+            )
+        candidates = [target]
+    else:
+        candidates = _find_managed_branches_by_slug(slug or "")
+        if not candidates:
+            available = _list_unmerged_managed_branches()
+            available_lines = (
+                "\n".join(f"  - {b}" for b in available)
+                if available
+                else "  (none)"
+            )
+            raise SystemExit(
+                f"No managed session branch found with slug '{slug}'.\n"
+                f"Available unmerged managed branches:\n{available_lines}"
+            )
+        if len(candidates) > 1:
+            candidate_lines = "\n".join(f"  - {b}" for b in candidates)
+            raise SystemExit(
+                f"Multiple managed session branches match slug '{slug}':\n"
+                f"{candidate_lines}\n"
+                "Specify the full branch name with --branch <full-name>."
+            )
+
+    target = candidates[0]
+    _run(["git", "switch", target])
+    print(_resume_session_summary(target))
+    return 0
+
+
+def _resume_session_summary(branch: str) -> str:
+    """One-line + counted summary: branch name, commits ahead of origin/main,
+    files changed, and closeout contract status (none / partial / valid).
+    Non-blocking; informational only.
+    """
+    ahead_count = _capture_optional(
+        ["git", "rev-list", "--count", f"origin/main..{branch}"]
+    ) or "?"
+    files_changed = _capture_optional(
+        ["git", "diff", "--name-only", f"origin/main...{branch}"]
+    ) or ""
+    file_count = len([line for line in files_changed.splitlines() if line.strip()])
+
+    closeout_path = (
+        _root() / ".cortex" / "closeout_contract" / Path(*branch.split("/")) / "closeout.json"
+    )
+    if closeout_path.exists():
+        closeout_status = "present (run `python3 -m internal.closeout.contract validate --mode close-session` to verify)"
+    else:
+        closeout_status = "none (run `python3 -m internal.closeout.contract init --mode close-session` when ready to close)"
+
+    return (
+        f"Resumed: {branch}\n"
+        f"  - {ahead_count} commit(s) ahead of origin/main\n"
+        f"  - {file_count} file(s) changed since origin/main\n"
+        f"  - closeout contract: {closeout_status}"
     )
 
 
@@ -1023,6 +1256,49 @@ def main(argv: list[str] | None = None) -> int:
     start_parser = subparsers.add_parser("start-session", help="Create a fresh managed session branch.")
     start_parser.add_argument("--agent", choices=MANAGED_SESSION_AGENTS, required=True)
     start_parser.add_argument("--slug")
+    start_parser.add_argument(
+        "--allow-stacked",
+        action="store_true",
+        help=(
+            "Override the branch-hygiene gate: start a new session while "
+            "other unmerged managed branches exist. Requires --stacked-reason. "
+            "The reason is recorded on the new session's closeout contract."
+        ),
+    )
+    start_parser.add_argument(
+        "--stacked-reason",
+        help=(
+            "Required when --allow-stacked is used. Explains why parallel "
+            "session work is necessary (e.g. emergency hotfix during an "
+            "in-flight investigation). Logged to the closeout contract."
+        ),
+    )
+
+    resume_parser = subparsers.add_parser(
+        "resume-session",
+        help=(
+            "Check out an existing managed session branch instead of starting "
+            "a new one. Used when the branch-hygiene gate blocks start-session "
+            "because in-flight work needs to continue."
+        ),
+    )
+    resume_parser.add_argument(
+        "--slug",
+        help=(
+            "Match by slug-suffix; the branch name format is "
+            "<agent>/<timestamp>-<slug>, so --slug <slug> selects the unique "
+            "managed branch ending in -<slug>. If multiple match, --branch "
+            "is required."
+        ),
+    )
+    resume_parser.add_argument(
+        "--branch",
+        dest="branch_name",
+        help=(
+            "Resolve directly by full branch name; required when multiple "
+            "managed branches share a slug suffix."
+        ),
+    )
 
     finalize_parser = subparsers.add_parser(
         "finalize",
@@ -1062,7 +1338,14 @@ def main(argv: list[str] | None = None) -> int:
     if args.command == "sync-main":
         return cmd_sync_main(args.adopt_origin)
     if args.command == "start-session":
-        return cmd_start_session(args.agent, args.slug)
+        return cmd_start_session(
+            args.agent,
+            args.slug,
+            allow_stacked=args.allow_stacked,
+            stacked_reason=args.stacked_reason,
+        )
+    if args.command == "resume-session":
+        return cmd_resume_session(args.slug, args.branch_name)
     if args.command == "finalize":
         return cmd_finalize(args.message, args.manual_exception)
     if args.command == "close-session":

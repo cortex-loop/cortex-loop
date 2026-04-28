@@ -32,6 +32,24 @@ checklist.
    branch slug must match the work; bundling unrelated changes onto a
    single branch is the drift pattern the bridge work fell into and has
    been added to AGENTS.md as a forbidden move.
+
+   **Branch-hygiene gate**: `start-session` refuses if any unmerged
+   managed session branch exists. The error message lists the offending
+   branch(es) and shows the three legitimate resolutions:
+   - **Merge** the existing branch:
+     `close-session --publish --message "<scope>: <end-state>"`.
+   - **Resume** the existing branch:
+     `resume-session --slug <slug>` (continues that work instead of
+     starting fresh; this is the right path for multi-session work on
+     one concern).
+   - **Delete** if the work is genuinely abandoned: `git branch -D`.
+
+   For the rare emergency case where parallel session work is genuinely
+   needed (e.g. emergency hotfix during a long investigation), use
+   `start-session --allow-stacked --stacked-reason "<text>"`. The reason
+   is recorded on the new session's closeout contract under
+   `stacked_session_reason` so the override leaves an audit trail.
+
 3. Make the change.
 4. Run the verification suite relevant to the reviewed paths (see
    `internal/Makefile` and `docs/CORTEX_STATUS.md` for the canonical
@@ -74,7 +92,9 @@ If you observe any of these patterns in your work, stop and re-plan:
 
 - A single session branch bundling multiple unrelated concerns. Bundling
   is what caused the operator_brain_capability work to be lost on the
-  hostile-audit branch.
+  hostile-audit branch. (Mechanically caught: `start-session` refuses
+  when unmerged managed branches exist; use `resume-session` to continue
+  the existing branch instead of bundling.)
 - A test fixture using a hardcoded ISO-8601 timestamp to test
   freshness-bearing logic. Use a runtime helper that returns a value
   relative to `datetime.now()`. The TTL drift in
