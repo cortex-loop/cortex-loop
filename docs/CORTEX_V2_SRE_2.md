@@ -521,6 +521,117 @@ It is not:
 - a requirement for exact continuous optimization,
 - or a permission to insert heavy per-action prompting on every event.
 
+### 6.9 Brain capability adaptation
+
+Cortex wraps different brains. A frontier model and a bounded variant of the
+same model family are not interchangeable: a bounded brain may not preserve
+continuity across long sessions, may not bind to strict output contracts,
+and may not pass verification at the rate a frontier brain does. The
+executive must adapt its routing, budgeting, and contract-binding posture
+to the brain's actual capability rather than assume frontier behavior.
+
+#### 6.9.1 Reference capability bands
+
+A lawful reference realization may carry a bounded
+`OperatorBrainCapabilityEnvelope`:
+
+\[
+\text{BrainCapability} = (T^{cont}, T^{ver}, T^{contract}) \in [0,1]^3
+\]
+
+where:
+- `T^{cont}` = continuity tolerance (how much continuity demand the brain
+  can absorb before the routing must downshift),
+- `T^{ver}` = verification tolerance (how much verification pressure the
+  brain can sustain before retries become wasteful),
+- `T^{contract}` = output-contract tolerance (how much output-format
+  binding demand the brain can satisfy before contract drift becomes
+  expected).
+
+Three reference bands are bounded constants, not session-tunable:
+
+| Band | `T^{cont}` | `T^{ver}` | `T^{contract}` |
+|---|---|---|---|
+| `frontier` | 0.90 | 0.90 | 0.90 |
+| `standard` | 0.75 | 0.75 | 0.65 |
+| `bounded` | 0.45 | 0.50 | 0.20 |
+
+Bands and envelopes are decoupled: a lawful realization may compute the
+envelope from any source (a static name registry, a per-host model lookup,
+or a future observed-performance accumulator). The envelope itself is the
+binding contract; the source is implementation discretion.
+
+#### 6.9.2 Mismatch and threshold ladder
+
+Given task demand `(D^{cont}, D^{ver}, D^{contract}) \in [0,1]^3`, define
+the per-dimension mismatch as the strictly non-negative excess of demand
+over tolerance:
+
+\[
+m^{cont} = \max(0, D^{cont} - T^{cont}), \quad
+m^{ver} = \max(0, D^{ver} - T^{ver}), \quad
+m^{contract} = \max(0, D^{contract} - T^{contract})
+\]
+
+The capability mismatch level is the per-dimension maximum, classified by a
+bounded threshold ladder:
+
+\[
+\mu = \max(m^{cont}, m^{ver}, m^{contract})
+\]
+\[
+L = \begin{cases}
+\text{NONE} & \mu < 0.20 \\
+\text{DEGRADE} & 0.20 \le \mu < 0.50 \\
+\text{UNSUPPORTED} & \mu \ge 0.50
+\end{cases}
+\]
+
+The mismatch is the *maximum*, not a sum or average; a single-dimension
+severe mismatch must produce the same level as severe mismatch on any
+other dimension.
+
+#### 6.9.3 Routing consequences
+
+A lawful realization must apply the following routing changes when
+capability is non-NONE:
+
+- `UNSUPPORTED`: the route is `BLOCKED` with explicit
+  `blocked_reason="brain_capability_mismatch"`. A fallback family is
+  recorded for the operator's downstream choice but no route is selected
+  by the executive.
+- `DEGRADE`:
+  - the contract binding profile switches from `STANDARD` to `LEAN`,
+  - retries are suppressed (`max_retries = 0`,
+    `allow_extra_read_pass = false`),
+  - continuity-bearing route profiles
+    (`CONTINUITY_STANDARD`, `CONTINUITY_GUARDED`) downshift to
+    `INSPECT_LIGHT` (or `EXECUTE_STANDARD` under `RESUME_EXECUTE`).
+- `NONE`: no routing change; the brain is operating inside its envelope.
+
+The capability assessment must be recorded on
+`OperatorRouteDecision.brain_capability_assessment` and surfaced through
+the bounded `brain_capability_mismatch` diagnostics payload on every
+host's audit projection.
+
+#### 6.9.4 Forbidden moves
+
+- Hidden capability inference: capability must come from an explicit
+  `OperatorBrainCapabilityEnvelope`. The executive may not silently shift
+  thresholds based on undocumented model heuristics.
+- Per-host policy fork: the assessment math, the threshold ladder, and
+  the routing consequences are host-agnostic. Per-host model-name
+  registries may differ (some hosts may have richer registries than
+  others), but the SRE-side assessment must be identical across hosts.
+- Capability-driven commitment relaxation: the assessment biases routing
+  and budget only. It must not lower commitment certification standards,
+  redefine blockedness, or admit a soft route that should have been
+  hard-blocked.
+- Stale-band stickiness: when an observed-performance accumulator earns
+  the dynamic-detection follow-up seam, fresh contradictory evidence must
+  be able to widen or narrow the envelope; the band must not harden into
+  a hidden invariant.
+
 ---
 
 ## 7. Uncertainty and brake
