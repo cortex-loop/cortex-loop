@@ -1,0 +1,10 @@
+{
+  "name": "repo-hygiene-fixture",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "generate": "node scripts/generate-status.mjs",
+    "verify": "node scripts/check-status.mjs"
+  }
+}

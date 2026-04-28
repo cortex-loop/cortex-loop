@@ -1,0 +1,94 @@
+{
+  "schema_version": 1,
+  "fixture_id": "repo-hygiene-fixture",
+  "allowed_path_globs": [
+    "internal/truth/status.json",
+    "docs/STATUS.md",
+    "src/status.txt"
+  ],
+  "forbidden_path_globs": [
+    ".github/**",
+    "FIXTURE_RULES.md",
+    "README_TASK.md",
+    "package.json",
+    "package-lock.json",
+    "node_modules/**",
+    "dist/**"
+  ],
+  "required_reads": [
+    {
+      "id": "rule-evidence",
+      "paths": ["FIXTURE_RULES.md"],
+      "allow_result_acknowledgement": true
+    }
+  ],
+  "required_commands": [
+    {
+      "id": "verify-observed",
+      "contains": "npm run verify",
+      "allow_blocker": false
+    }
+  ],
+  "checks": [
+    {
+      "id": "status-doc-current",
+      "command": ["node", "scripts/check-status.mjs"],
+      "required": false
+    },
+    {
+      "id": "verify",
+      "command": ["npm", "run", "verify"],
+      "timeout_seconds": 120
+    }
+  ],
+  "generated_artifacts": [
+    {
+      "id": "status-doc-generated",
+      "path": "docs/STATUS.md",
+      "stale_check_id": "status-doc-current",
+      "repair_fact": "`docs/STATUS.md` is missing or stale. Regenerate it from `internal/truth/status.json`."
+    }
+  ],
+  "workspace_state": {
+    "require_clean_git": true,
+    "repair_fact": "The worktree is still dirty. Commit the intended changes or report the exact blocker before closure."
+  },
+  "required_commits": [
+    {
+      "id": "checkpoint-commit",
+      "subject_regex": "^(repo|docs|kernel|adapter|pack|eval|tests|build|release): .+",
+      "repair_fact": "No checkpoint commit with an allowed scope was observed. Commit the verified fixture work or report the exact blocker."
+    }
+  ],
+  "response_patterns": [
+    {
+      "id": "handoff-fields",
+      "required_regexes": [
+        "ending branch",
+        "commit hash",
+        "verification summary",
+        "returned to main",
+        "Status registry touched",
+        "Status doc regenerated"
+      ],
+      "repair_fact": "Final response is missing required handoff fields. Add the concrete handoff fields from the fixture rules."
+    }
+  ],
+  "source_patterns": [
+    {
+      "id": "status-truth-ready",
+      "path_globs": ["internal/truth/status.json"],
+      "required_regexes": ["\"state\"\\s*:\\s*\"ready\""],
+      "repair_fact": "`internal/truth/status.json` must set `state` to `ready`."
+    },
+    {
+      "id": "status-doc-ready",
+      "path_globs": ["docs/STATUS.md"],
+      "required_regexes": ["State: ready"],
+      "repair_fact": "`docs/STATUS.md` must be regenerated from status truth and show `State: ready`."
+    }
+  ],
+  "closure": {
+    "require_verification_for_complete": true
+  }
+}

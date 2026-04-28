@@ -139,10 +139,21 @@ def validate_invariant_config(payload: dict[str, Any]) -> None:
         value = payload.get(key, [])
         if not isinstance(value, list) or any(not isinstance(item, str) or not item for item in value):
             raise ValueError(f"invariant config {key} must be a list of non-empty strings")
-    for key in ("required_reads", "required_commands", "source_patterns", "checks"):
+    for key in (
+        "required_reads",
+        "required_commands",
+        "source_patterns",
+        "checks",
+        "generated_artifacts",
+        "required_commits",
+        "response_patterns",
+    ):
         value = payload.get(key, [])
         if not isinstance(value, list) or any(not isinstance(item, dict) for item in value):
             raise ValueError(f"invariant config {key} must be a list of objects")
+    workspace_state = payload.get("workspace_state", {})
+    if workspace_state is not None and not isinstance(workspace_state, dict):
+        raise ValueError("invariant config workspace_state must be an object")
 
 
 def extract_tool_evidence_from_records(
@@ -206,6 +217,10 @@ def evaluate_invariants(
     results.extend(_evaluate_required_commands(config, evidence))
     results.extend(_evaluate_source_patterns(config, project_root))
     results.extend(_evaluate_checks(config, evidence))
+    results.extend(_evaluate_generated_artifacts(config, evidence, project_root))
+    results.extend(_evaluate_workspace_state(config, project_root))
+    results.extend(_evaluate_required_commits(config, project_root))
+    results.extend(_evaluate_response_patterns(config, evidence))
     results.extend(_evaluate_closure(config, evidence))
 
     required = [result for result in results if result.required]
@@ -470,6 +485,7 @@ def _evaluate_checks(config: dict[str, Any], evidence: InvariantEvidence) -> lis
     results_by_id = {str(result.get("check_id")): result for result in evidence.check_results}
     for check in config.get("checks", []):
         check_id = str(check.get("id") or "").strip()
+        required = bool(check.get("required", True))
         result = results_by_id.get(check_id)
         command = " ".join(str(part) for part in check.get("command", []))
         if result is None:
@@ -478,6 +494,7 @@ def _evaluate_checks(config: dict[str, Any], evidence: InvariantEvidence) -> lis
                     f"check:{check_id}",
                     "failed",
                     f"configured check was not run: {command}",
+                    required=required,
                     repair_fact=f"`{command}` did not run. Run it, or report the exact blocker.",
                     evidence={"command": command},
                 )
@@ -490,6 +507,7 @@ def _evaluate_checks(config: dict[str, Any], evidence: InvariantEvidence) -> lis
                     f"check:{check_id}",
                     "failed",
                     f"configured check failed: {command}",
+                    required=required,
                     repair_fact=f"`{command}` failed: {first_line}",
                     evidence={"command": command, "exit_code": result.get("exit_code")},
                 )
@@ -500,7 +518,220 @@ def _evaluate_checks(config: dict[str, Any], evidence: InvariantEvidence) -> lis
                     f"check:{check_id}",
                     "passed",
                     f"configured check passed: {command}",
+                    required=required,
                     evidence={"command": command, "exit_code": result.get("exit_code")},
+                )
+            )
+    return results
+
+
+def _evaluate_generated_artifacts(
+    config: dict[str, Any],
+    evidence: InvariantEvidence,
+    project_root: Path,
+) -> list[InvariantResult]:
+    results: list[InvariantResult] = []
+    check_results = {str(result.get("check_id")): result for result in evidence.check_results}
+    for item in config.get("generated_artifacts", []):
+        invariant_id = str(item.get("id") or "generated_artifact")
+        artifact_path = str(item.get("path") or "").strip()
+        if not artifact_path:
+            raise ValueError(f"generated artifact {invariant_id} is missing path")
+        required = bool(item.get("required", True))
+        repair_fact = str(
+            item.get("repair_fact")
+            or f"`{artifact_path}` is missing or stale. Regenerate it and rerun verification."
+        )
+        exists = (project_root / artifact_path).exists()
+        if bool(item.get("must_exist", True)) and not exists:
+            results.append(
+                InvariantResult(
+                    invariant_id,
+                    "failed",
+                    f"required generated artifact is missing: {artifact_path}",
+                    required=required,
+                    repair_fact=repair_fact,
+                    evidence={"path": artifact_path},
+                )
+            )
+            continue
+        stale_check_id = item.get("stale_check_id")
+        if isinstance(stale_check_id, str) and stale_check_id.strip():
+            check_result = check_results.get(stale_check_id.strip())
+            if check_result is None:
+                results.append(
+                    InvariantResult(
+                        invariant_id,
+                        "failed",
+                        f"generated artifact freshness check was not run: {stale_check_id}",
+                        required=required,
+                        repair_fact=repair_fact,
+                        evidence={"path": artifact_path, "stale_check_id": stale_check_id},
+                    )
+                )
+            elif check_result.get("exit_code") != 0:
+                results.append(
+                    InvariantResult(
+                        invariant_id,
+                        "failed",
+                        f"generated artifact is stale: {artifact_path}",
+                        required=required,
+                        repair_fact=repair_fact,
+                        evidence={
+                            "path": artifact_path,
+                            "stale_check_id": stale_check_id,
+                            "exit_code": check_result.get("exit_code"),
+                        },
+                    )
+                )
+            else:
+                results.append(
+                    InvariantResult(
+                        invariant_id,
+                        "passed",
+                        "generated artifact exists and freshness check passed",
+                        required=required,
+                        evidence={"path": artifact_path, "stale_check_id": stale_check_id},
+                    )
+                )
+        else:
+            results.append(
+                InvariantResult(
+                    invariant_id,
+                    "passed",
+                    "generated artifact exists",
+                    required=required,
+                    evidence={"path": artifact_path},
+                )
+            )
+    return results
+
+
+def _evaluate_workspace_state(config: dict[str, Any], project_root: Path) -> list[InvariantResult]:
+    workspace_state = config.get("workspace_state", {})
+    if not workspace_state:
+        return []
+    results: list[InvariantResult] = []
+    if bool(workspace_state.get("require_clean_git")):
+        result = run_command(["git", "status", "--short", "--untracked-files=all"], cwd=project_root, timeout_seconds=30.0)
+        dirty_lines = [line for line in result["stdout"].splitlines() if line.strip()]
+        repair_fact = str(
+            workspace_state.get("repair_fact")
+            or "The workspace is still dirty. Commit the intended changes or report the blocker before claiming closure."
+        )
+        if result["exit_code"] != 0:
+            results.append(
+                InvariantResult(
+                    "clean_git_worktree",
+                    "failed",
+                    "git status could not run",
+                    repair_fact=repair_fact,
+                    evidence={"exit_code": result["exit_code"]},
+                )
+            )
+        elif dirty_lines:
+            results.append(
+                InvariantResult(
+                    "clean_git_worktree",
+                    "failed",
+                    "workspace has uncommitted changes",
+                    repair_fact=repair_fact,
+                    evidence={"dirty_paths": dirty_lines},
+                )
+            )
+        else:
+            results.append(
+                InvariantResult(
+                    "clean_git_worktree",
+                    "passed",
+                    "workspace is clean",
+                    evidence={"dirty_paths": []},
+                )
+            )
+    return results
+
+
+def _evaluate_required_commits(config: dict[str, Any], project_root: Path) -> list[InvariantResult]:
+    results: list[InvariantResult] = []
+    for item in config.get("required_commits", []):
+        invariant_id = str(item.get("id") or "required_commit")
+        subject_regex = str(item.get("subject_regex") or "").strip()
+        min_count = int(item.get("min_count", 1))
+        result = run_command(["git", "log", "--format=%s"], cwd=project_root, timeout_seconds=30.0)
+        subjects = [line.strip() for line in result["stdout"].splitlines() if line.strip()]
+        matching_subjects = subjects
+        if subject_regex:
+            matching_subjects = [subject for subject in subjects if re.search(subject_regex, subject)]
+        repair_fact = str(
+            item.get("repair_fact")
+            or "Required checkpoint commit evidence is missing. Create a commit with the required subject or report the blocker."
+        )
+        if result["exit_code"] != 0:
+            results.append(
+                InvariantResult(
+                    invariant_id,
+                    "failed",
+                    "git log could not run",
+                    repair_fact=repair_fact,
+                    evidence={"exit_code": result["exit_code"]},
+                )
+            )
+        elif len(matching_subjects) < min_count:
+            results.append(
+                InvariantResult(
+                    invariant_id,
+                    "failed",
+                    "required commit evidence was not found",
+                    repair_fact=repair_fact,
+                    evidence={
+                        "subjects": subjects,
+                        "subject_regex": subject_regex,
+                        "min_count": min_count,
+                    },
+                )
+            )
+        else:
+            results.append(
+                InvariantResult(
+                    invariant_id,
+                    "passed",
+                    "required commit evidence was present",
+                    evidence={"matching_subjects": matching_subjects[:6], "subject_regex": subject_regex},
+                )
+            )
+    return results
+
+
+def _evaluate_response_patterns(config: dict[str, Any], evidence: InvariantEvidence) -> list[InvariantResult]:
+    results: list[InvariantResult] = []
+    result_text = evidence.result_text or ""
+    for item in config.get("response_patterns", []):
+        invariant_id = str(item.get("id") or "response_pattern")
+        required_patterns = tuple(str(pattern) for pattern in item.get("required_regexes", []))
+        forbidden_patterns = tuple(str(pattern) for pattern in item.get("forbidden_regexes", []))
+        repair_fact = str(
+            item.get("repair_fact")
+            or "The final response is missing required handoff information. Add the concrete missing fields."
+        )
+        missing = [pattern for pattern in required_patterns if not re.search(pattern, result_text, flags=re.IGNORECASE | re.MULTILINE)]
+        forbidden = [pattern for pattern in forbidden_patterns if re.search(pattern, result_text, flags=re.IGNORECASE | re.MULTILINE)]
+        if missing or forbidden:
+            results.append(
+                InvariantResult(
+                    invariant_id,
+                    "failed",
+                    "response text did not satisfy required patterns",
+                    repair_fact=repair_fact,
+                    evidence={"missing_regexes": missing, "forbidden_regexes": forbidden},
+                )
+            )
+        else:
+            results.append(
+                InvariantResult(
+                    invariant_id,
+                    "passed",
+                    "response text satisfied required patterns",
+                    evidence={"required_regexes": list(required_patterns), "forbidden_regexes": list(forbidden_patterns)},
                 )
             )
     return results

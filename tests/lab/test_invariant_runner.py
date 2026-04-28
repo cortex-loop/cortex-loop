@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import json
+import os
+import subprocess
 from pathlib import Path
 
 import pytest
@@ -159,3 +161,121 @@ def test_load_invariant_config_reads_json(tmp_path: Path) -> None:
     path.write_text(json.dumps(_base_config()), encoding="utf-8")
 
     assert load_invariant_config(path)["fixture_id"] == "unit-fixture"
+
+
+def test_generated_artifact_failure_is_distinct_from_check_failure(tmp_path: Path) -> None:
+    artifact = tmp_path / "docs/STATUS.md"
+    artifact.parent.mkdir(parents=True)
+    artifact.write_text("stale\n", encoding="utf-8")
+    config = {
+        **_base_config(),
+        "checks": [
+            {
+                "id": "status-check",
+                "command": ["node", "scripts/check-status.mjs"],
+                "required": False,
+            }
+        ],
+        "generated_artifacts": [
+            {
+                "id": "status-doc-current",
+                "path": "docs/STATUS.md",
+                "stale_check_id": "status-check",
+                "repair_fact": "`docs/STATUS.md` is stale. Regenerate it from status truth.",
+            }
+        ],
+    }
+
+    evaluation = evaluate_invariants(
+        config,
+        InvariantEvidence(
+            modified_files=("docs/STATUS.md",),
+            check_results=({"check_id": "status-check", "exit_code": 1, "stderr": "stale"},),
+        ),
+        project_root=tmp_path,
+    )
+
+    assert evaluation.status == UNCERTIFIED
+    assert any("`docs/STATUS.md` is stale" in fact for fact in evaluation.failed_repair_facts)
+    status_check = next(result for result in evaluation.results if result.invariant_id == "check:status-check")
+    assert status_check.required is False
+
+
+def test_workspace_state_fails_dirty_tree(tmp_path: Path) -> None:
+    _init_git_fixture(tmp_path)
+    (tmp_path / "tracked.txt").write_text("changed\n", encoding="utf-8")
+    config = {**_base_config(), "workspace_state": {"require_clean_git": True}}
+
+    evaluation = evaluate_invariants(
+        config,
+        InvariantEvidence(modified_files=("tracked.txt",), result_text="Done."),
+        project_root=tmp_path,
+    )
+
+    assert evaluation.status == UNCERTIFIED
+    assert any(result.invariant_id == "clean_git_worktree" for result in evaluation.results)
+
+
+def test_required_commit_and_response_patterns_can_certify_procedural_closeout(tmp_path: Path) -> None:
+    _init_git_fixture(tmp_path)
+    (tmp_path / "tracked.txt").write_text("changed\n", encoding="utf-8")
+    _run_git(tmp_path, ["git", "add", "tracked.txt"])
+    _run_git(tmp_path, ["git", "commit", "-q", "-m", "eval: checkpoint fixture"])
+    config = {
+        **_base_config(),
+        "workspace_state": {"require_clean_git": True},
+        "required_commits": [
+            {
+                "id": "checkpoint-commit",
+                "subject_regex": "^(repo|docs|kernel|adapter|pack|eval|tests|build|release): .+",
+            }
+        ],
+        "response_patterns": [
+            {
+                "id": "handoff-fields",
+                "required_regexes": [
+                    "ending branch",
+                    "commit hash",
+                    "verification summary",
+                    "returned to main",
+                ],
+            }
+        ],
+    }
+
+    evaluation = evaluate_invariants(
+        config,
+        InvariantEvidence(
+            modified_files=(),
+            result_text=(
+                "ending branch: fixture\n"
+                "commit hash: abc123\n"
+                "verification summary: passed\n"
+                "returned to main: no\n"
+            ),
+            check_results=({"check_id": "verify", "exit_code": 0},),
+        ),
+        project_root=tmp_path,
+    )
+
+    assert evaluation.status == CERTIFIED
+
+
+def _init_git_fixture(path: Path) -> None:
+    (path / "tracked.txt").write_text("baseline\n", encoding="utf-8")
+    _run_git(path, ["git", "init", "-q"])
+    _run_git(path, ["git", "add", "tracked.txt"])
+    _run_git(path, ["git", "commit", "-q", "-m", "baseline"])
+
+
+def _run_git(path: Path, command: list[str]) -> None:
+    env = os.environ.copy()
+    env.update(
+        {
+            "GIT_AUTHOR_NAME": "cortex-test",
+            "GIT_AUTHOR_EMAIL": "cortex-test@example.invalid",
+            "GIT_COMMITTER_NAME": "cortex-test",
+            "GIT_COMMITTER_EMAIL": "cortex-test@example.invalid",
+        }
+    )
+    subprocess.run(command, cwd=path, env=env, text=True, capture_output=True, check=True)

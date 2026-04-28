@@ -1,0 +1,3 @@
+# Fixture Status
+
+State: draft
