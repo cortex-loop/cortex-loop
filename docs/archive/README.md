@@ -22,6 +22,9 @@ This archive is reference-only. It does not define live Cortex truth.
 - `E23 preservation-state evidence` -> `archive/e23-preservation-state-machine`
   Purpose: Preserved review evidence for extracting the E23 preservation-state product kernel without reviving the broader maintainer-only trains.
   Restore: `git fetch origin archive/e23-preservation-state-machine:review/e23-preservation-state-machine`
+- `V2 model-visible communication bridge and constraint-fidelity kernel loop evidence` -> `archive/v2-bridge-and-constraint-fidelity-loop`
+  Purpose: Preserved reference-only evidence for two retired research lines: the V2 model-visible executive guidance bridge (live Claude smoke indicated prompt guidance was insufficient) and the constraint-fidelity kernel loop (synthetic-fixture conversion only, deliberately bypassed Cortex doctrine to isolate external invariant gating). Neither was promoted to product; the loop branch also carries the Codex parity smoke that voided on a non-discriminative website fixture.
+  Restore: `git fetch origin archive/v2-bridge-and-constraint-fidelity-loop:review/v2-bridge-and-constraint-fidelity-loop`
 
 ## Archived Branch Ledger
 
@@ -70,6 +73,9 @@ This archive is reference-only. It does not define live Cortex truth.
 - `review/e23-preservation-state-machine` @ `0e01397a6b24ca813e6426eb28ddae2534eb69db`
   Purpose: lab: preserve operator replay workspace diffs
   Disposition: Published to origin/archive/e23-preservation-state-machine, then deleted locally so E23 remains evidence-only until kernel extract.
+- `codex/20260425-033950-loop-guard` @ `abe3f888844142c3346902d89146ba5f95a61d23`
+  Purpose: eval: V2 model-visible communication bridge live audit, constraint-fidelity kernel loop on website and repo-hygiene fixtures, plus Codex parity smoke
+  Disposition: Published to origin/archive/v2-bridge-and-constraint-fidelity-loop, then deleted locally. Live evidence indicated prompt guidance was insufficient on Claude smoke; the constraint-fidelity loop converted synthetic-fixture failures only and did not test Cortex doctrine. Both lines remain evidence-only until a separate seam re-earns shipped proof.
 - `origin/review/e19-cli-causal-map-rehome` @ `f60ea38025f060748ca74d7ab6c3c451e671b9a2`
   Purpose: eval: add operator-cli output-quality bridge
   Disposition: Pruned stale remote-tracking review ref during repo-truth closeout after the remote head was already absent.
