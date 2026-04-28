@@ -241,7 +241,7 @@ def test_status_registry_is_complete_and_stable() -> None:
     assert status["conformance_summary"]["shipping_default"] == "openai:operator_cli"
     next_train_slug = status["next_product_train"]["slug"]
     assert next_train_slug is None or next_train_slug != status["work_today"]["slug"]
-    assert status["work_today"]["slug"] == "brake-tonic-quiescence-exit-reconciliation"
+    assert status["work_today"]["slug"] == "brain-capability-aware-routing"
     assert "full_cross_host" in status["work_today"]["note"]
     assert "posture-sensitive online control is s-tier closed" in status["work_today"]["note"].lower()
     assert "exact-family unchanged-condition repetition tax" in status["work_today"]["note"]
@@ -249,11 +249,13 @@ def test_status_registry_is_complete_and_stable() -> None:
     assert "memory-off when no publication is supplied" in status["work_today"]["note"]
     assert "Q_mem = 0" in status["work_today"]["note"]
     assert "asymmetric error cost and tonic hysteresis are now earned" in status["work_today"]["note"].lower()
-    assert status["next_product_train"]["slug"] is None
-    assert status["next_product_train"]["surface"] == "pending selection"
-    assert "no successor train is queued yet" in status["next_product_train"]["executive_benefit"].lower()
-    assert "queue truth must not duplicate the active train" in status["next_product_train"]["why_now"].lower()
-    assert "no longer silently duplicate" in status["next_product_train"]["primary_metric"].lower()
+    assert "brain-capability-aware routing is now earned" in status["work_today"]["note"].lower()
+    assert "operatorbraincapabilityenvelope" in status["work_today"]["note"].lower()
+    assert status["next_product_train"]["slug"] == "brain-capability-observation-and-inference"
+    assert "product + experimental + aux" == status["next_product_train"]["surface"]
+    assert "observed-performance accumulator" in status["next_product_train"]["executive_benefit"].lower()
+    assert "publish through aux support side" in status["next_product_train"]["guardrail"].lower()
+    assert "ttl must expire stale observations" in status["next_product_train"]["guardrail"].lower()
     assert "Keep the bounded audit surface compact and truthful" in status["where_to_work"][0]
     assert "no-spend live evidence current and explicit" in status["where_to_work"][1]
     assert "posture-sensitive online control is s-tier closed" in status["where_to_work"][2].lower()
@@ -263,7 +265,7 @@ def test_status_registry_is_complete_and_stable() -> None:
     assert "route truth stays bounded and non-sovereign" in status["where_to_work"][2]
     assert "live `Q_mem` stays zero" in status["where_to_work"][2]
     assert "host/tool reliability and affordance priors are earned" in status["where_to_work"][2]
-    assert "brake tonic quiescence exit reconciliation seam is closed" in status["where_to_work"][3]
+    assert "brain-capability-aware-routing seam is the active focus" in status["where_to_work"][3]
     closure_gates = {gate["id"]: gate for gate in status["closure_gates"]}
     assert closure_gates["main_synced"]["status"] == "required"
     assert closure_gates["cleanup_report"]["status"] == "required"
@@ -293,9 +295,9 @@ def test_generated_status_doc_includes_system_map_and_next_product_train() -> No
     assert "## Packet To Code" in text
     assert "## Next Product Train" in text
     assert "host/tool reliability and affordance priors are earned" in text
-    assert "`brake-tonic-quiescence-exit-reconciliation`" in text
-    assert "- Next product train after the current focus: none queued yet" in text
-    assert "- Train: none queued yet" in text
+    assert "`brain-capability-aware-routing`" in text
+    assert "- Next product train after the current focus: `brain-capability-observation-and-inference`" in text
+    assert "- Train: `brain-capability-observation-and-inference`" in text
     assert "memory-off when no publication is supplied" in text
     assert "Shipping Product Lane\\nopenai:operator_cli" in text or "Shipping Product Lane" in text
     assert "Shipping default: `openai:operator_cli`" in text

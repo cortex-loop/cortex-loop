@@ -86,6 +86,7 @@ def test_build_suite_summary_counts_pairwise_wins() -> None:
         task_results={},
         aggregate_objective={"raw": 0, "tooling_only": 1, "cortex": 1},
         aggregate_hidden={"raw": 0, "tooling_only": 1, "cortex": 1},
+        aggregate_protocol_valid={"raw": 0, "tooling_only": 1, "cortex": 1},
         pairwise_results=[
             {
                 "task_id": "astro_docs_site_v1",
@@ -113,6 +114,7 @@ def test_build_suite_summary_counts_pairwise_wins() -> None:
     assert summary["pairwise_summary"]["cortex_vs_raw"]["wins"] == 1
     assert summary["pairwise_summary"]["cortex_vs_raw"]["win_rate"] == 1.0
     assert summary["pairwise_summary"]["cortex_vs_tooling_only"]["ties"] == 1
+    assert summary["aggregate_protocol_valid_pass_count"]["cortex"] == 1
     assert summary["ablation_config"]["verification_binding"] == "off"
     assert summary["surface"] == "service_api"
 
@@ -125,6 +127,19 @@ def test_build_output_quality_operator_prompt_uses_workspace_editing_not_file_bl
     assert "Edit the workspace directly" in prompt
     assert "=== FILE:" not in prompt
     assert "Visible contract files follow." in prompt
+
+
+def test_build_output_quality_operator_prompt_supports_lean_contract_profile() -> None:
+    task_pack = output_quality.task_pack_by_name("astro_docs_site_v1")
+
+    prompt = output_quality.build_output_quality_operator_prompt(
+        task_pack,
+        arm="cortex",
+        contract_binding_profile="lean",
+    )
+
+    assert "Make the smallest lawful workspace edit." in prompt
+    assert "You may run local checks if useful." not in prompt
 
 
 def test_run_arm_skips_repair_when_verification_binding_is_off(
@@ -284,3 +299,77 @@ def test_run_arm_operator_cli_skips_repair_when_verification_binding_is_off(
 
     assert result["attempt_count"] == 1
     assert len(operator_calls) == 1
+
+
+def test_run_arm_operator_cli_uses_lean_contract_and_skips_repair_for_bounded_brain(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    task_pack = output_quality.task_pack_by_name("astro_docs_site_v1")
+    operator_calls: list[dict[str, object]] = []
+
+    @contextmanager
+    def _fake_env():
+        yield {}
+
+    monkeypatch.setattr(output_quality, "isolated_codex_home_env", _fake_env)
+    monkeypatch.setattr(
+        output_quality,
+        "prepare_seeded_workspace",
+        lambda **_kwargs: tmp_path,
+    )
+    monkeypatch.setattr(
+        output_quality,
+        "run_openai_operator_single_turn",
+        lambda **kwargs: operator_calls.append(kwargs) or {
+            "failure_class": None,
+            "model": "gpt-5.3-codex-spark",
+            "attempted_models": ["gpt-5.3-codex-spark"],
+            "thread_id": "thread-1",
+            "output_text": "done",
+        },
+    )
+    monkeypatch.setattr(
+        output_quality,
+        "_evaluate_operator_turn_output",
+        lambda **_kwargs: {
+            "evaluation": {
+                "status": "failed",
+                "failure_class": "hidden_test_failed",
+                "objective_pass": True,
+                "hidden_quality_pass": False,
+                "failing_checks": ["hidden_test"],
+                "first_failure_excerpt": "missing hidden integration",
+                "checks": [],
+            },
+            "changed_files": {},
+            "repairable": True,
+            "parse": {
+                "parse_error": None,
+                "blocked_reason": None,
+                "blocked_message": None,
+                "parsed_paths": [],
+            },
+        },
+    )
+    monkeypatch.setattr(output_quality, "write_json", lambda *_args, **_kwargs: None)
+
+    result = output_quality._run_arm(
+        task_pack=task_pack,
+        arm="cortex",
+        model="gpt-5.3-codex-spark",
+        surface="operator_cli",
+        task_root=tmp_path,
+        seed_workspace=tmp_path,
+        shared_install_result={"exit_code": 0, "stdout": "", "stderr": ""},
+        ablation_config=OutputQualityAblationConfig(
+            verification_binding="on",
+            repair_turn="on",
+        ),
+    )
+
+    assert result["attempt_count"] == 1
+    assert len(operator_calls) == 1
+    assert result["brain_capability_diagnostics"]["contract_binding_profile"] == "lean"
+    assert result["protocol_valid_pass"] is True
+    assert "Make the smallest lawful workspace edit." in operator_calls[0]["prompt"]

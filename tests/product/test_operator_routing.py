@@ -2,7 +2,11 @@ from __future__ import annotations
 
 import pytest
 
+from cortex.runtime.operator_brain_capability import (
+    operator_brain_capability_for_openai_model,
+)
 from cortex.sre.operator_routing import (
+    OperatorBrainCapabilityMismatchLevel,
     OperatorRouteProfile,
     OperatorTaskMode,
     OperatorTaskState,
@@ -142,6 +146,10 @@ def test_build_operator_route_diagnostics_exposes_state_and_budget() -> None:
     assert payload["state_vector"] == [0.2, 0.0, 0.0, 0.35, 0.0, 0.0]
     assert payload["quota_pressure"] == 0.0
     assert payload["visible_burden_sensitivity"] == 0.8
+    assert payload["contract_binding_demand"] == 0.0
+    assert payload["brain_capability_band"] == "standard"
+    assert payload["brain_capability_mismatch"]["level"] == "none"
+    assert payload["contract_binding_profile"] == "standard"
     assert payload["blocked_reason"] is None
     assert payload["route_budget"]["max_turns"] == 1
     assert payload["modulator_state"] == {
@@ -151,3 +159,62 @@ def test_build_operator_route_diagnostics_exposes_state_and_budget() -> None:
         "update_pressure": 0.0,
     }
     assert payload["modulator_reason_tags"] == []
+
+
+def test_select_operator_route_downshifts_continuity_for_bounded_brain_degrade() -> None:
+    _band, bounded = operator_brain_capability_for_openai_model(
+        "gpt-5.3-codex-spark"
+    )
+    state = OperatorTaskState(
+        task_mode=OperatorTaskMode.RESUME_EXECUTE,
+        complexity=0.55,
+        continuity_demand=0.85,
+        verification_demand=0.80,
+        uncertainty=0.45,
+        host_friction=0.0,
+        quota_pressure=0.0,
+        visible_burden_sensitivity=0.55,
+        contract_binding_demand=0.30,
+        brain_capability=bounded,
+    )
+
+    decision = select_operator_route(state)
+
+    assert decision.profile is OperatorRouteProfile.EXECUTE_STANDARD
+    assert (
+        decision.brain_capability_assessment.level
+        is OperatorBrainCapabilityMismatchLevel.DEGRADE
+    )
+    assert decision.brain_capability_assessment.contract_binding_profile.value == "lean"
+    assert "brain-capability:continuity-downshift" in decision.reason_tags
+    assert decision.budget.allow_extra_read_pass is False
+    assert decision.blocked_reason is None
+
+
+def test_select_operator_route_blocks_when_bounded_brain_mismatch_is_over_floor() -> None:
+    _band, bounded = operator_brain_capability_for_openai_model(
+        "gpt-5.3-codex-spark"
+    )
+    state = OperatorTaskState(
+        task_mode=OperatorTaskMode.EXECUTE,
+        complexity=0.45,
+        continuity_demand=0.10,
+        verification_demand=0.90,
+        uncertainty=0.45,
+        host_friction=0.0,
+        quota_pressure=0.0,
+        visible_burden_sensitivity=0.45,
+        contract_binding_demand=0.80,
+        brain_capability=bounded,
+    )
+
+    decision = select_operator_route(state)
+
+    assert decision.profile is OperatorRouteProfile.BLOCKED
+    assert decision.blocked_reason == "brain_capability_mismatch"
+    assert (
+        decision.brain_capability_assessment.level
+        is OperatorBrainCapabilityMismatchLevel.UNSUPPORTED
+    )
+    assert decision.brain_capability_assessment.fallback_family == "check"
+    assert "brain-capability:unsupported-floor" in decision.reason_tags
