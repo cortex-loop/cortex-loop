@@ -105,10 +105,159 @@ def test_kernel_variant_runs_one_factual_repair_turn(tmp_path: Path, monkeypatch
     payload = harness.run_variant(provider="claude", variant="kernel_only_cortex", repeat_index=1)
 
     assert payload["repair_turn_attempted"] is True
+    assert payload["repair_policy"] == "single"
+    assert payload["max_repair_turns"] == 1
+    assert len(payload["repair_attempts"]) == 1
     assert payload["certification_status"] == "certified"
     assert prompts[0] == harness.build_initial_prompt()
     assert prompts[1].startswith("The previous result is not certifiable yet.")
     assert harness.first_forbidden_repair_term(prompts[1]) is None
+
+
+def test_kernel_loop_repeats_repair_until_certified(tmp_path: Path, monkeypatch) -> None:
+    prompts: list[str] = []
+
+    monkeypatch.setattr(harness, "load_invariant_config", lambda _path: {"schema_version": 1, "fixture_id": "x"})
+    monkeypatch.setattr(harness, "prepare_workspace", lambda **_kwargs: tmp_path)
+    monkeypatch.setattr(harness, "choose_model", lambda *_args, **_kwargs: "claude-test")
+    monkeypatch.setattr(harness, "resolve_auth_mode", lambda *_args, **_kwargs: "claude_code")
+    monkeypatch.setattr(harness, "extract_session_id", lambda *_args, **_kwargs: "session-1")
+    monkeypatch.setattr(harness, "write_json", lambda *_args, **_kwargs: None)
+    monkeypatch.setattr(harness, "write_text", lambda *_args, **_kwargs: None)
+
+    def fake_run(prompt: str, **_kwargs):
+        prompts.append(prompt)
+        return {"stdout": "{}", "stderr": "", "exit_code": 0, "command": ["claude"], "started_at": "t1", "ended_at": "t2"}
+
+    def fake_materialize(*, attempt_index: int, prompt: str, **_kwargs):
+        status = "certified" if attempt_index == 3 else "uncertified"
+        failed_facts = [] if status == "certified" else [f"`remaining-{attempt_index}` still needs repair."]
+        return {
+            "attempt_index": attempt_index,
+            "exit_code": 0,
+            "failure_class": "turn_budget_cutoff" if attempt_index == 2 else None,
+            "prompt": prompt,
+            "prompt_marker_absent": not harness.prompt_has_cortex_marker(prompt),
+            "records": [{"type": "init", "session_id": "session-1"}],
+            "result_text": "Verification: passed" if status == "certified" else "not done",
+            "modified_files": ["src/pages/resources.astro"],
+            "tool_evidence": {"read_paths": [], "commands": []},
+            "certification": {
+                "status": status,
+                "mechanical_score": 1.0 if status == "certified" else 0.5,
+                "required_pass_count": 2 if status == "certified" else 1,
+                "required_count": 2,
+                "failed_repair_facts": failed_facts,
+                "env_failure_class": None,
+                "results": [],
+            },
+        }
+
+    monkeypatch.setattr(harness, "_run_claude_turn", fake_run)
+    monkeypatch.setattr(harness, "_materialize_attempt", fake_materialize)
+
+    payload = harness.run_variant(provider="claude", variant="kernel_loop_cortex", repeat_index=1)
+
+    assert payload["repair_policy"] == "loop"
+    assert payload["max_repair_turns"] == 3
+    assert payload["certification_status"] == "certified"
+    assert len(payload["repair_attempts"]) == 2
+    assert len(prompts) == 3
+    assert "`remaining-1` still needs repair." in prompts[1]
+    assert "`remaining-2` still needs repair." in prompts[2]
+    assert payload["converted_failure_classes"] == ["turn_budget_cutoff"]
+    assert all(harness.first_forbidden_repair_term(prompt) is None for prompt in prompts[1:])
+
+
+def test_kernel_loop_stops_after_max_repair_turns(tmp_path: Path, monkeypatch) -> None:
+    prompts: list[str] = []
+
+    monkeypatch.setattr(harness, "load_invariant_config", lambda _path: {"schema_version": 1, "fixture_id": "x"})
+    monkeypatch.setattr(harness, "prepare_workspace", lambda **_kwargs: tmp_path)
+    monkeypatch.setattr(harness, "choose_model", lambda *_args, **_kwargs: "claude-test")
+    monkeypatch.setattr(harness, "resolve_auth_mode", lambda *_args, **_kwargs: "claude_code")
+    monkeypatch.setattr(harness, "extract_session_id", lambda *_args, **_kwargs: "session-1")
+    monkeypatch.setattr(harness, "write_json", lambda *_args, **_kwargs: None)
+    monkeypatch.setattr(harness, "write_text", lambda *_args, **_kwargs: None)
+
+    def fake_run(prompt: str, **_kwargs):
+        prompts.append(prompt)
+        return {"stdout": "{}", "stderr": "", "exit_code": 0, "command": ["claude"], "started_at": "t1", "ended_at": "t2"}
+
+    def fake_materialize(*, attempt_index: int, prompt: str, **_kwargs):
+        return {
+            "attempt_index": attempt_index,
+            "exit_code": 0,
+            "failure_class": None,
+            "prompt": prompt,
+            "prompt_marker_absent": not harness.prompt_has_cortex_marker(prompt),
+            "records": [{"type": "init", "session_id": "session-1"}],
+            "result_text": "not done",
+            "modified_files": ["src/pages/resources.astro"],
+            "tool_evidence": {"read_paths": [], "commands": []},
+            "certification": {
+                "status": "uncertified",
+                "mechanical_score": 0.5,
+                "required_pass_count": 1,
+                "required_count": 2,
+                "failed_repair_facts": [f"`remaining-{attempt_index}` still needs repair."],
+                "env_failure_class": None,
+                "results": [],
+            },
+        }
+
+    monkeypatch.setattr(harness, "_run_claude_turn", fake_run)
+    monkeypatch.setattr(harness, "_materialize_attempt", fake_materialize)
+
+    payload = harness.run_variant(provider="claude", variant="kernel_loop_cortex", repeat_index=1)
+
+    assert payload["certification_status"] == "uncertified"
+    assert len(payload["repair_attempts"]) == 3
+    assert len(prompts) == 4
+
+
+def test_historical_baseline_rejects_fixture_fingerprint_mismatch(tmp_path: Path) -> None:
+    baseline_path = tmp_path / "baseline.json"
+    baseline_path.write_text(
+        '{"fixture_fingerprint": "old", "kernel_certified_count": 8, "repeat_count": 10}',
+        encoding="utf-8",
+    )
+
+    baseline = harness._historical_single_repair_baseline(
+        provider="claude",
+        fixture_fingerprint="new",
+        first_prompt_sha=harness.BASELINE_PROMPT_SHA,
+        baseline_path=baseline_path,
+    )
+
+    assert baseline["usable"] is False
+    assert baseline["reason"] == "fixture_fingerprint_mismatch"
+
+
+def test_kernel_loop_summary_records_promotion_fields() -> None:
+    runs = [
+        {
+            "variant": "kernel_loop_cortex",
+            "certification_status": "certified" if index < 9 else "uncertified",
+            "mechanical_score": 1.0 if index < 9 else 0.8,
+            "fixture_fingerprint": "fixture-sha",
+            "first_prompt_sha": harness.BASELINE_PROMPT_SHA,
+            "prompt_marker_absent": True,
+        }
+        for index in range(10)
+    ]
+
+    summary = harness.build_summary(
+        provider="claude",
+        stage="kernel-loop",
+        repeat_count=10,
+        runs=runs,
+    )
+
+    assert summary["experiment_status"] == "kernel_loop_promotion_passed"
+    assert summary["kernel_loop_certified_count"] == 9
+    assert summary["fixture_fingerprint"] == "fixture-sha"
+    assert summary["prompt_marker_absent_all"] is True
 
 
 def test_website_fixture_valid_solution_passes_hidden_checks(tmp_path: Path) -> None:
