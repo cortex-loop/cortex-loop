@@ -899,6 +899,19 @@ def test_cleanup_report_passes_on_clean_synced_main(
             "filled_graph_allows_stop": True,
         },
     )
+    monkeypatch.setattr(
+        module,
+        "_codex_app_hook_health_payload",
+        lambda: {
+            "ok": True,
+            "failures": [],
+            "codex_hooks_feature_enabled": True,
+            "shared_validator_ok": True,
+            "known_bad_blocks": True,
+            "filled_graph_allows_stop": True,
+            "missing_last_assistant_message_fails_open": True,
+        },
+    )
 
     result = module.cmd_cleanup_report()
 

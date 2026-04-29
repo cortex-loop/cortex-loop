@@ -232,17 +232,34 @@ These fail-open paths exist to prevent infrastructure-caused
 conversation locks; they do not provide an escape from the gate when
 the agent could comply.
 
-**Codex parity (validator + doctrine, not chat-boundary hard gate).**
-Codex does not support Stop hooks. On Codex, the agent validates the
-filled final graph with:
+**Codex App chat-boundary enforcement.** Codex App for Mac uses
+repo-local `.codex/config.toml` with `[features].codex_hooks = true`
+and a Stop hook at
+`.codex/hooks/cortex_mission_reflection_stop_hook.py`. Codex supplies
+the latest assistant output as `last_assistant_message`; the hook runs
+`grid` and `reflection-check`, validates that message with the same
+`internal/workflow/mission_reflection.py` contract, and returns
+`decision: block` on missing/underfit graph output.
+
+Verify Codex App hook config and behavior with:
+
+```bash
+python internal/workflow/repo_workflow.py codex-app-hook-health
+```
+
+If this fails, do not start Cortex product work in Codex App until the
+hook/config/runtime issue is fixed.
+
+**Codex fallback surfaces.** Codex surfaces that do not load repo-local
+hooks still validate the filled final graph with:
 
 ```bash
 python internal/workflow/repo_workflow.py grid-validate --stdin
 ```
 
 Non-no-op Codex closeouts must record this in
-`mission_reflection_graph`. This is session-boundary evidence, not a
-Claude-equivalent chat-boundary hard gate.
+`mission_reflection_graph`. This fallback is session-boundary evidence,
+not chat-boundary parity.
 
 Verify Claude Code hook wiring and shared graph validation with:
 
@@ -251,8 +268,9 @@ python internal/workflow/repo_workflow.py hook-health
 ```
 
 `cleanup-report` includes docs coherence checks, closeout tests, hook
-health, Codex validator availability, clean synced `main`, and dangling
-worktree detection. Product work should not start while it fails.
+health for Claude Code and Codex App, Codex validator availability,
+clean synced `main`, and dangling worktree detection. Product work
+should not start while it fails.
 
 Scaffold the enforced closeout contract for the current branch:
 

@@ -56,9 +56,11 @@ These fail-open paths exist to prevent infrastructure-caused
 conversation locks. Persistent agent non-compliance with the grid
 contract is intentionally locked.
 
-**Codex parity.** Codex does not support hooks. On Codex, the shared
-`grid-validate` command plus closeout evidence is the honest fallback;
-this hook does nothing there.
+**Codex App parity.** Codex App uses a separate repo-local Stop hook at
+``.codex/hooks/cortex_mission_reflection_stop_hook.py`` because Codex
+Stop hooks provide ``last_assistant_message`` directly rather than a
+Claude transcript path. Both hooks share
+``internal.workflow.mission_reflection`` as the graph contract.
 """
 
 from __future__ import annotations
