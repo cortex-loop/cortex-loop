@@ -164,7 +164,9 @@ stale `2000-01-01` form).
 
 Compose the per-turn Cortex Repo Hygiene Grid (the **single closure
 artifact** for every chat — all closure / handoff material lives in
-one two-column markdown table under `## Cortex Repo Hygiene Grid`):
+one two-column markdown table under `## Cortex Repo Hygiene Grid`).
+The artifact is Cortex Mission Reflection, not a static progress
+dashboard:
 
 ```bash
 python internal/workflow/repo_workflow.py grid
@@ -175,20 +177,27 @@ Required shape:
 - `## Cortex Repo Hygiene Grid` header
 - exactly one `| Field | Value |` table header
 - exactly one `|---|---|` separator
-- one row per closure/state aspect
-- row prefixes: `State:`, `Progress:`, `Goals:`, `Mech:`, `Work:`,
-  `Std:`, `Mirror:`, optional `Dogfood:`, and `Verdict`
+- required rows: `Repo: State`, `Repo: Gates`, the
+  `Mission:*`/`Reflection:*`/`Evidence:*`/`Decision:*` mission
+  reflection rows, `Closure: Metadata`, and `Verdict`
+- optional `Dogfood:*` rows only when Codex App dogfood mode is active
 - no `###` subsections inside the grid
 - no second table inside the grid
 
-Mechanical-check rows are always shown so the visual shape is stable.
-Work-reflection rows are shown only when work was performed.
+Stale dashboard rows are forbidden in end-of-chat output. Do not emit
+fixed rows for `Progress:*`, `bio_to_code matrix`, hosts, shipping
+default, current train, next train, or research-line counts. Registry
+facts may appear only inside a mission/reflection row when they support
+the causal argument.
 
 **Workflow:** the agent runs `grid`, pastes the markdown skeleton, and
-edits the skeleton in place — replacing each Goals Analysis bracketed
-prompt with substantive prose (≥48 chars, citing a repo surface) and
-each `<fill: …>` placeholder in `Std:*`, `Mirror:*`, and active
-`Dogfood:*` rows with the actual value.
+edits the skeleton in place. Each Cortex Mission Reflection row must
+replace `mission reflection —` with at least 120 characters of causal,
+repo-grounded judgment and a citation to `docs/CORTEX.md`,
+`internal/truth/cortex_status.json`, `cortex/**`, `tests/**`, or a
+`CORTEX_V2_*` packet. `Closure: Metadata` must replace
+`closure metadata —` with ending branch, commit/no commit, verification,
+returned-to-main, and registry/doc-regeneration facts.
 Normal response prose may precede the grid; nothing closure-shaped
 may appear before or after it. On `FAIL` verdict the agent MUST
 continue working in the same chat until the grid clears.
@@ -201,19 +210,19 @@ of these gates:
 
 1. Missing required one-table shape: `## Cortex Repo Hygiene Grid`,
    exactly one `| Field | Value |`, exactly one `|---|---|`,
-   required row labels (`State: Branch`, `Progress: bio_to_code
-   matrix`, `Goals: Plan → implementation`, `Std: Ending branch`,
-   `Mirror: Fixed now`, `Verdict`), and no `###` subsection inside
-   the grid.
+   required mission-reflection row labels, and no `###` subsection
+   inside the grid.
 2. Closure-shaped substrings (`Ending branch`, `Verification summary`,
    `Fixed now`, `Claim earned now`, `Status registry touched`,
-   `Final Handoff Mirror`) appearing in prose **before** the grid
+   `Closure: Metadata`) appearing in prose **before** the grid
    header.
-3. Per-field unfilled Goals Analysis prompt (each of the five fields
-   is checked individually; one unfilled field blocks).
-4. `<fill` placeholder substring remaining anywhere in `Std:*`,
-   `Mirror:*`, or active `Dogfood:*` rows.
-5. `reflection-check --json` returns verdict `FAIL`.
+3. Stale dashboard row present (`Progress:*`, `bio_to_code matrix`,
+   hosts, shipping default, current train, next train, or research-line
+   counts as fixed rows).
+4. Any Cortex Mission Reflection row still contains the template token,
+   is shorter than the threshold, or lacks a repo-grounding citation.
+5. `Closure: Metadata` still contains a template token or `<fill`.
+6. `reflection-check --json` returns verdict `FAIL`.
 
 The hook does **not** short-circuit on `stop_hook_active` — every stop
 attempt re-runs every gate. Persistent agent non-compliance keeps
@@ -334,7 +343,9 @@ Closeout contract artifact:
   - governing principle, executive skill, product metric, guardrail, and kill rule
   - non-empty law-to-code completeness rows for active doctrinal, math, or workflow-law terms touched
 - hard-fails on stale reviewed paths, reviewed-path drift during verification, missing forbidden claims, missing hostile-review coverage, or missing zeroed/stubbed-term review
-- renders one deterministic `Final Handoff Mirror` section; agents use those values to fill the grid's `Mirror:*` rows instead of emitting a separate final handoff block
+- renders one deterministic closeout mirror; agents use those values to fill
+  the grid's mission reflection and `Closure: Metadata` row instead of
+  emitting a separate final handoff block
 
 `preserve-worktree`:
 

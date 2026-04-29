@@ -1395,17 +1395,23 @@ def test_grid_emits_full_consolidated_grid_when_work_performed(
     assert module.GRID_FORBIDDEN_SECTION_MARKER not in out
     for label in module.REQUIRED_GRID_ROW_LABELS:
         assert f"**{label}**" in out
-    # Closure rows live inside the same table (single-grid rule).
-    for closure_label, _ in module.STANDARD_METADATA_FIELDS:
-        assert f"**Std: {closure_label}**" in out
-    for mirror_label, _ in module.FINAL_HANDOFF_MIRROR_FIELDS:
-        assert f"**Mirror: {mirror_label}**" in out
-    # Goals Analysis fields expected (5 substantive prompts).
-    for label, _ in module.GOALS_ANALYSIS_FIELDS:
-        assert f"**Goals: {label}**" in out
-    # Mechanical rows are always present; work rows appear when work was performed.
-    assert "**Mech: Closeout schema**" in out
-    assert "**Work: Smallness**" in out
+    # Cortex Mission Reflection rows replace stale progress dashboards.
+    for label, _ in module.MISSION_REFLECTION_FIELDS:
+        assert f"**{label}**" in out
+    assert "**Closure: Metadata**" in out
+    assert "mission reflection —" in out
+    assert "closure metadata —" in out
+    # Stale dashboard / old closure rows must not appear.
+    assert "Progress:" not in out
+    assert "bio_to_code matrix" not in out
+    assert "shipping default" not in out
+    assert "current train" not in out
+    assert "next train" not in out
+    assert "**Std:" not in out
+    assert "**Mirror:" not in out
+    assert "**Goals:" not in out
+    assert "**Mech:" not in out
+    assert "**Work:" not in out
     # No box-drawing chars from the prior format.
     assert "═══" not in out
     assert "▌" not in out
@@ -1428,9 +1434,14 @@ def test_grid_emits_consolidated_grid_with_closure_sections_when_no_work(
     assert module.GRID_FORBIDDEN_SECTION_MARKER not in out
     for label in module.REQUIRED_GRID_ROW_LABELS:
         assert f"**{label}**" in out
-    # Mechanical rows are always present; work rows are omitted on no-work turns.
-    assert "**Mech: Closeout schema**" in out
-    assert "**Work: Smallness**" not in out
+    # The no-work grid keeps the same mission-reflection shape without
+    # falling back to stale status rows.
+    assert "**Repo: Gates**" in out
+    assert "**Mission: Cortex target**" in out
+    assert "Progress:" not in out
+    assert "bio_to_code matrix" not in out
+    assert "**Mech:" not in out
+    assert "**Work:" not in out
 
 
 def test_grid_signature_markers_are_distinct_constants() -> None:
@@ -1440,35 +1451,39 @@ def test_grid_signature_markers_are_distinct_constants() -> None:
     assert module.GRID_TABLE_HEADER_MARKER == "| Field | Value |"
     assert module.GRID_TABLE_SEPARATOR_MARKER == "|---|---|"
     assert module.GRID_FORBIDDEN_SECTION_MARKER == "### "
-    assert "State: Branch" in module.REQUIRED_GRID_ROW_LABELS
-    assert "Std: Ending branch" in module.REQUIRED_GRID_ROW_LABELS
-    assert "Mirror: Fixed now" in module.REQUIRED_GRID_ROW_LABELS
+    assert "Repo: State" in module.REQUIRED_GRID_ROW_LABELS
+    assert "Repo: Gates" in module.REQUIRED_GRID_ROW_LABELS
+    assert "Mission: Cortex target" in module.REQUIRED_GRID_ROW_LABELS
+    assert "Closure: Metadata" in module.REQUIRED_GRID_ROW_LABELS
     assert "Verdict" in module.REQUIRED_GRID_ROW_LABELS
 
 
-def test_standard_metadata_and_mirror_fields_have_fill_placeholders() -> None:
-    """Fields must use `<fill` placeholders so the hook can detect unfilled cells."""
+def test_closure_metadata_and_leak_markers_are_compact() -> None:
+    """Closure lives in one compact row; old mirror/std rows stay retired."""
     module = _load_repo_workflow_module()
-    for _, placeholder in module.STANDARD_METADATA_FIELDS:
-        assert placeholder.startswith("<fill")
-    for _, placeholder in module.FINAL_HANDOFF_MIRROR_FIELDS:
-        assert placeholder.startswith("<fill")
     # Closure-leak markers MUST be enumerated for the hook to use.
     assert "Ending branch" in module.CLOSURE_LEAK_MARKERS
     assert "Fixed now" in module.CLOSURE_LEAK_MARKERS
     assert "Claim earned now" in module.CLOSURE_LEAK_MARKERS
+    assert "Closure: Metadata" in module.CLOSURE_LEAK_MARKERS
+    assert "Final Handoff Mirror" not in module.CLOSURE_LEAK_MARKERS
 
 
-def test_goals_analysis_fields_demand_substantive_prompts() -> None:
-    """Goals Analysis must enumerate the five depth-prompt fields."""
+def test_mission_reflection_fields_demand_causal_prompts() -> None:
+    """Cortex Mission Reflection must enumerate the mission-aware rows."""
     module = _load_repo_workflow_module()
-    labels = [label for label, _ in module.GOALS_ANALYSIS_FIELDS]
+    labels = [label for label, _ in module.MISSION_REFLECTION_FIELDS]
     assert labels == [
-        "Plan → implementation",
-        "Quality assessment",
-        "Iteration moments this session",
-        "Forward-looking confidence",
-        "Tied to Cortex goals",
+        "Mission: Cortex target",
+        "Mission: Boundary judgment",
+        "Mission: Theory of improvement",
+        "Mission: Model I/O path",
+        "Reflection: Plan vs actual",
+        "Reflection: Quality judgment",
+        "Reflection: Iteration evidence",
+        "Evidence: Earned",
+        "Evidence: Not earned / forbidden",
+        "Decision: Next ownership move",
     ]
 
 

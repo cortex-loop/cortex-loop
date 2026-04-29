@@ -5,7 +5,8 @@ The grid is the single closure artifact for every chat: all closure /
 handoff material must live inside one markdown table under the
 ``## Cortex Repo Hygiene Grid`` header. The hook is the chat-boundary
 mechanical gate that prevents an agent from stopping the turn without
-producing canonical grid output with all required rows filled.
+producing the Cortex Mission Reflection rows with substantive,
+repo-grounded content.
 
 Hook behavior (mechanical gates, in order):
 
@@ -16,19 +17,21 @@ Hook behavior (mechanical gates, in order):
    ``## Cortex Repo Hygiene Grid``, exactly one ``| Field | Value |``
    table header, exactly one ``|---|---|`` separator, no ``###``
    subsections inside the grid, and required row labels such as
-   ``State: Branch``, ``Std: Ending branch``, ``Mirror: Fixed now``,
-   and ``Verdict``. Missing any → block.
+   ``Repo: State``, ``Mission: Cortex target``, ``Closure: Metadata``,
+   and ``Verdict``. Missing any → block. Stale dashboard rows such as
+   ``Progress:*`` or a fixed ``bio_to_code matrix`` row also block.
 4. Check that closure-shaped substrings (``Ending branch``,
    ``Verification summary``, ``Fixed now``, ``Claim earned now``,
-   ``Status registry touched``, ``Final Handoff Mirror``) appear
+   ``Status registry touched``, ``Closure: Metadata``) appear
    ONLY inside the grid block, not in prose before the grid header.
    Closure outside the grid → block.
-5. Check that each Goals Analysis bracketed prompt has been replaced
-   per-field. Any field whose body still contains the literal
-   ``≥48 chars + cite a repo surface —`` template substring → block.
-6. Check that Standard Metadata and Final Handoff Mirror rows have
-   been filled (no remaining ``<fill`` placeholder substrings) → block
-   if any unfilled.
+5. Check that each Cortex Mission Reflection row has been replaced
+   per-field. Any row whose body still contains the literal
+   ``mission reflection —`` template substring or lacks a repo-grounding
+   citation or is too short → block.
+6. Check that closure metadata has been filled (no remaining
+   ``closure metadata —`` template or ``<fill`` placeholder substrings)
+   → block if unfilled.
 7. Run ``reflection-check --json`` for the verdict. Verdict ``FAIL``
    → block with the failures list.
 
@@ -75,11 +78,16 @@ GRID_TABLE_SEPARATOR_MARKER = "|---|---|"
 GRID_FORBIDDEN_SECTION_MARKER = "### "
 
 REQUIRED_GRID_ROW_LABELS: tuple[str, ...] = (
-    "State: Branch",
-    "Progress: bio_to_code matrix",
-    "Goals: Plan → implementation",
-    "Std: Ending branch",
-    "Mirror: Fixed now",
+    "Repo: State",
+    "Repo: Gates",
+    "Mission: Cortex target",
+    "Mission: Boundary judgment",
+    "Mission: Model I/O path",
+    "Reflection: Quality judgment",
+    "Evidence: Earned",
+    "Evidence: Not earned / forbidden",
+    "Decision: Next ownership move",
+    "Closure: Metadata",
     "Verdict",
 )
 
@@ -93,29 +101,48 @@ CLOSURE_LEAK_MARKERS: tuple[str, ...] = (
     "Fixed now",
     "Claim earned now",
     "Status registry touched",
-    "Final Handoff Mirror",
+    "Closure: Metadata",
 )
 
-# Goals Analysis field labels — must match
-# repo_workflow.py::GOALS_ANALYSIS_FIELDS. The hook checks per-field
-# that each field's body does NOT still contain the literal template
-# substring.
-GOALS_ANALYSIS_FIELD_LABELS: tuple[str, ...] = (
-    "Plan → implementation",
-    "Quality assessment",
-    "Iteration moments this session",
-    "Forward-looking confidence",
-    "Tied to Cortex goals",
+# Cortex Mission Reflection labels — must match
+# repo_workflow.py::MISSION_REFLECTION_FIELDS. The hook checks per-row
+# that each field is filled with a substantive, repo-grounded answer.
+MISSION_REFLECTION_ROW_LABELS: tuple[str, ...] = (
+    "Mission: Cortex target",
+    "Mission: Boundary judgment",
+    "Mission: Theory of improvement",
+    "Mission: Model I/O path",
+    "Reflection: Plan vs actual",
+    "Reflection: Quality judgment",
+    "Reflection: Iteration evidence",
+    "Evidence: Earned",
+    "Evidence: Not earned / forbidden",
+    "Decision: Next ownership move",
 )
 
-# The bracketed template substring inside every Goals Analysis prompt.
-# An unfilled field still contains this substring; a filled field has
-# replaced it with substantive prose.
-GOALS_ANALYSIS_TEMPLATE_TOKEN = "≥48 chars + cite a repo surface —"
+# Template substrings. An unfilled reflection row still contains the
+# mission token; unfilled closure still contains the closure token.
+MISSION_REFLECTION_TEMPLATE_TOKEN = "mission reflection —"
+CLOSURE_METADATA_TEMPLATE_TOKEN = "closure metadata —"
 
-# `<fill` placeholder substring that appears in Standard Metadata and
-# Final Handoff Mirror cells until the agent replaces them in place.
+MISSION_REFLECTION_MIN_CHARS = 120
+
+REPO_CITATION_PATTERN = re.compile(
+    r"(docs/CORTEX\.md|internal/truth/cortex_status\.json|cortex/|tests/|CORTEX_V2_)"
+)
+
+# `<fill` placeholder substring should not appear in filled output.
 FILL_PLACEHOLDER_TOKEN = "<fill"
+
+STALE_DASHBOARD_ROW_PREFIX = "Progress:"
+STALE_DASHBOARD_ROW_LABELS: tuple[str, ...] = (
+    "bio_to_code matrix",
+    "hosts",
+    "shipping default",
+    "current train",
+    "next train",
+    "research lines u/eval",
+)
 
 
 def _allow_stop() -> None:
@@ -204,6 +231,36 @@ def _grid_shape_errors(text: str) -> list[str]:
     return errors
 
 
+def _table_rows(text: str) -> dict[str, str]:
+    """Parse the one-table grid into {row_label: cell_text}."""
+    grid_text = _grid_text(text)
+    if grid_text is None:
+        return {}
+    rows: dict[str, str] = {}
+    pattern = re.compile(r"^\| \*\*(?P<label>.*?)\*\* \| (?P<body>.*?) \|$", re.MULTILINE)
+    for match in pattern.finditer(grid_text):
+        rows[match.group("label")] = match.group("body")
+    return rows
+
+
+def _clean_cell_text(text: str) -> str:
+    """Normalize markdown-table cell text for validation checks."""
+    text = text.replace("<br>", " ")
+    text = text.replace("\\|", "|")
+    text = re.sub(r"[_`*]", "", text)
+    return " ".join(text.split())
+
+
+def _stale_dashboard_rows(rows: dict[str, str]) -> list[str]:
+    stale: list[str] = []
+    for label in rows:
+        if label.startswith(STALE_DASHBOARD_ROW_PREFIX):
+            stale.append(label)
+        if any(label.endswith(item) for item in STALE_DASHBOARD_ROW_LABELS):
+            stale.append(label)
+    return sorted(set(stale))
+
+
 def _closure_leak_before_grid(text: str) -> list[str]:
     """Return closure markers that appear before the grid header."""
     grid_pos = text.find(GRID_HEADER_MARKER)
@@ -213,40 +270,41 @@ def _closure_leak_before_grid(text: str) -> list[str]:
     return [marker for marker in CLOSURE_LEAK_MARKERS if marker in prefix]
 
 
-def _unfilled_goals_analysis_fields(text: str) -> list[str]:
-    """Return Goals Analysis field labels whose body still contains the template.
-
-    The one-table grid renders these rows as
-    ``| **Goals: {label}** | value |``. If the row is missing or the
-    value still contains the template token, the field is unfilled.
-    """
+def _mission_reflection_errors(rows: dict[str, str]) -> list[str]:
+    """Return Mission Reflection rows that are missing, short, uncited, or templated."""
     unfilled: list[str] = []
-    for label in GOALS_ANALYSIS_FIELD_LABELS:
-        row_pattern = re.compile(
-            rf"^\| \*\*Goals: {re.escape(label)}\*\* \| (?P<body>.*?) \|$",
-            re.MULTILINE,
-        )
-        match = row_pattern.search(text)
-        if not match:
-            unfilled.append(label)
+    for label in MISSION_REFLECTION_ROW_LABELS:
+        body = rows.get(label)
+        if body is None:
+            unfilled.append(f"{label}: missing")
             continue
-        body = match.group("body")
-        if GOALS_ANALYSIS_TEMPLATE_TOKEN in body:
-            unfilled.append(label)
+        clean_body = _clean_cell_text(body)
+        if MISSION_REFLECTION_TEMPLATE_TOKEN in body:
+            unfilled.append(f"{label}: template still present")
+            continue
+        if len(clean_body) < MISSION_REFLECTION_MIN_CHARS:
+            unfilled.append(
+                f"{label}: too short ({len(clean_body)} chars; minimum {MISSION_REFLECTION_MIN_CHARS})"
+            )
+        if not REPO_CITATION_PATTERN.search(body):
+            unfilled.append(f"{label}: missing repo-grounding citation")
     return unfilled
 
 
-def _unfilled_metadata_or_mirror(text: str) -> bool:
-    """Return True if any Standard Metadata or Final Handoff Mirror cell still has `<fill`.
+def _unfilled_metadata_or_mirror(rows: dict[str, str]) -> bool:
+    """Return True if closure rows still have template placeholders.
 
-    The agent is supposed to replace each ``<fill: ...>`` placeholder
-    with the actual value in place. If any placeholder remains, the
-    closure block was not filled.
+    The agent is supposed to replace each closure placeholder with the
+    actual value in place. If any placeholder remains, the closure row
+    was not filled.
     """
-    grid_text = _grid_text(text)
-    if grid_text is None:
+    closure = rows.get("Closure: Metadata")
+    if closure is None:
         return True
-    return FILL_PLACEHOLDER_TOKEN in grid_text
+    return (
+        FILL_PLACEHOLDER_TOKEN in closure
+        or CLOSURE_METADATA_TEMPLATE_TOKEN in closure
+    )
 
 
 def _run_grid(repo_root: Path) -> str | None:
@@ -350,6 +408,23 @@ def main() -> None:
         ]
         _block("\n".join(reason_parts))
 
+    rows = _table_rows(last_text)
+
+    # Gate 1b: stale dashboard rows are forbidden.
+    stale_rows = _stale_dashboard_rows(rows)
+    if stale_rows:
+        reason_parts = [
+            "Cortex hygiene grid contains stale dashboard rows. The"
+            " closing artifact is now Cortex Mission Reflection, not"
+            " a status dashboard. Remove fixed `Progress:*` rows and"
+            " use registry facts only inside causal reflection when"
+            " they support an argument.",
+            "",
+            "Stale rows detected:",
+            *(f"- {item}" for item in stale_rows),
+        ]
+        _block("\n".join(reason_parts))
+
     # Gate 2: closure markers must not appear before the grid header.
     leaks = _closure_leak_before_grid(last_text)
     if leaks:
@@ -364,35 +439,35 @@ def main() -> None:
             "",
             f"Closure markers detected before the grid header: {', '.join(leaks)}",
             "",
-            "Move that content into the appropriate `Std:*` and"
-            " `Mirror:*` rows (filling each `<fill>` placeholder in"
-            " place) and re-respond.",
+            "Move that content into the appropriate mission reflection"
+            " or `Closure: Metadata` row and re-respond.",
         ]
         _block("\n".join(reason_parts))
 
-    # Gate 3: each Goals Analysis field must be filled per-field.
-    unfilled_ga = _unfilled_goals_analysis_fields(last_text)
-    if unfilled_ga:
+    # Gate 3: each Cortex Mission Reflection row must be substantive.
+    reflection_errors = _mission_reflection_errors(rows)
+    if reflection_errors:
         reason_parts = [
-            "Goals Analysis has unfilled bracketed templates. Each"
-            " field must replace its `[≥48 chars + cite a repo surface"
-            " — ...]` template with substantive prose citing at least"
-            " one repo surface (`docs/CORTEX.md`,"
+            "Cortex Mission Reflection rows are not substantive enough."
+            " Each mission/reflection/evidence/decision row must replace"
+            " the template, be at least"
+            f" {MISSION_REFLECTION_MIN_CHARS} characters, and cite at"
+            " least one repo surface (`docs/CORTEX.md`,"
             " `internal/truth/cortex_status.json`, `cortex/**`,"
             " `tests/**`, or `CORTEX_V2_*`).",
             "",
-            f"Fields still showing the unfilled template: {', '.join(unfilled_ga)}",
+            "Rows to fix:",
+            *(f"- {item}" for item in reflection_errors),
         ]
         _block("\n".join(reason_parts))
 
-    # Gate 4: Standard Metadata and Final Handoff Mirror rows filled.
-    if _unfilled_metadata_or_mirror(last_text):
+    # Gate 4: compact closure metadata row filled.
+    if _unfilled_metadata_or_mirror(rows):
         reason_parts = [
-            "Standard Metadata or Final Handoff Mirror rows have unfilled"
-            " `<fill: ...>` placeholders. Replace each placeholder in"
-            " place with the actual value (use `n/a` or"
-            " `n/a (no work this turn)` where appropriate, but do not"
-            " leave `<fill>` brackets in the rendered grid).",
+            "Closure metadata still has an unfilled template. Replace"
+            " the `Closure: Metadata` row in place with ending branch,"
+            " commit/no commit, verification summary, returned-to-main,"
+            " and registry/doc regeneration facts.",
         ]
         _block("\n".join(reason_parts))
 

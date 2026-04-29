@@ -367,25 +367,31 @@ eventually wraps. They are doctrine, not product. They live under
 `internal/**` (and surfaces that AGENTS.md owns) and they may not be
 imported by `cortex/**`. Confusing the two is the next drift shape.
 
-**Per-turn enforcement: the single closure grid.** The standard of
+**Per-turn enforcement: Cortex Mission Reflection.** The standard of
 care is enforced end-of-turn by the Cortex Repo Hygiene Grid produced
 by `python3 internal/workflow/repo_workflow.py grid`. The grid is the
 **single closure artifact** for every chat: one two-column markdown
-table under `## Cortex Repo Hygiene Grid`. State, Cortex progress,
-goals analysis, mechanical checks, work reflection, standard metadata,
-final mirror, optional dogfood signal, and verdict are rows in that
-one table. There are no subsection headings and no second table inside
-the grid. Normal response prose may precede the grid; nothing
-closure-shaped may appear before or after it. On verdict `FAIL` the
-agent continues working until the grid clears.
+table under `## Cortex Repo Hygiene Grid`. Its purpose is not to recite
+static progress. It forces Cortex Mission Reflection: target executive
+function, boundary judgment, theory of improvement, model I/O path,
+plan-vs-actual reflection, quality judgment, iteration evidence,
+earned/not-earned evidence, next ownership move, compact closure
+metadata, and verdict. There are no subsection headings and no second
+table inside the grid. Normal response prose may precede the grid;
+nothing closure-shaped may appear before or after it. On verdict
+`FAIL` the agent continues working until the grid clears.
 
 **Workflow: paste the skeleton, fill brackets in place.** The agent
 runs `grid`, pastes the generated markdown skeleton, and edits the
-skeleton in place — replacing each `Goals:*` bracketed prompt with
-substantive prose and each `<fill: …>` placeholder in `Std:*`,
-`Mirror:*`, and active `Dogfood:*` rows with the actual value. The
-skeleton is verbatim from the command; the agent's edits stay inside
-the skeleton. No separate closure section follows the grid.
+skeleton in place. Every mission/reflection/evidence/decision row
+replaces the `mission reflection —` template with substantive causal
+prose (at least 120 characters) and a repo-grounding citation such as
+`docs/CORTEX.md`, `internal/truth/cortex_status.json`, `cortex/**`,
+`tests/**`, or a `CORTEX_V2_*` packet. The `Closure: Metadata` row
+replaces the `closure metadata —` template with branch, commit/no
+commit, verification, returned-to-main, and registry/doc-regeneration
+facts. The skeleton is verbatim from the command; the agent's edits
+stay inside the skeleton. No separate closure section follows the grid.
 
 **Chat-boundary enforcement (Claude Code only).** A Stop hook at
 `.claude/settings.json` runs
@@ -395,24 +401,25 @@ itself, and blocks the stop on (1) missing one-table shape
 (`## Cortex Repo Hygiene Grid`, exactly one `| Field | Value |`
 header, exactly one `|---|---|` separator, required row labels, and
 no `###` subsections inside the grid), (2) closure-shaped substrings
-appearing before the grid header, (3) any per-field unfilled
-Goals Analysis prompt, (4) any unfilled `<fill>` placeholder in
-`Std:*`, `Mirror:*`, or active `Dogfood:*` rows, or
-(5) `reflection-check` verdict `FAIL`. The hook
-does not short-circuit on `stop_hook_active` — persistent
-non-compliance keeps blocking. The hook fails open only on
-infrastructure failures (missing transcript, command crash). On
-Codex, the contract is doctrinal-only; the hard-gate enforcement is
+appearing before the grid header, (3) stale dashboard rows such as
+`Progress:*`, `bio_to_code matrix`, hosts, shipping default, current
+train, next train, or research-lines counts as fixed rows, (4) any
+mission-reflection row that is templated, too short, or uncited, (5)
+unfilled `Closure: Metadata`, or (6) `reflection-check` verdict
+`FAIL`. The hook does not short-circuit on `stop_hook_active` —
+persistent non-compliance keeps blocking. The hook fails open only on
+infrastructure failures (missing transcript, command crash). On Codex,
+the contract is doctrinal-only; the hard-gate enforcement is
 Claude-only and AGENTS.md compliance is the only mechanism.
 
 **No-mimicry rule.** Composing markdown that resembles grid content
 but is not actual `grid` command output is a violation. Ad-hoc
 audit-shaped markdown headers (e.g. an "Audit Findings" block, a
-separate Standard Metadata block following the grid, a Final Handoff
-Mirror written from scratch) do not satisfy the contract because they
-bypass the consolidated single-closure structure. This rule exists
-because in practice, agents that run inspection commands and compose
-their own closure-shaped markdown are a documented bypass pattern.
+separate metadata block following the grid, or a handoff mirror written
+from scratch) do not satisfy the contract because they bypass the
+consolidated single-closure structure. This rule exists because in
+practice, agents that run inspection commands and compose their own
+closure-shaped markdown are a documented bypass pattern.
 
 **Connectivity-trace closeout field.** Load-bearing seams that touch
 `cortex/**` must populate `connectivity_trace = {claim, path[],
