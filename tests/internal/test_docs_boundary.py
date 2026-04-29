@@ -12,19 +12,48 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 AGENTS_PATH = REPO_ROOT / "AGENTS.md"
+CLAUDE_PATH = REPO_ROOT / "CLAUDE.md"
+CORTEX_DOC_PATH = REPO_ROOT / "docs" / "CORTEX.md"
 README_PATH = REPO_ROOT / "README.md"
 DOCS_INDEX_PATH = REPO_ROOT / "docs" / "README.md"
-PRODUCT_CHARTER_PATH = REPO_ROOT / "docs" / "CORTEX_PRODUCT_CHARTER.md"
-PRODUCT_BOUNDARY_PATH = REPO_ROOT / "docs" / "CORTEX_PRODUCT_BOUNDARY.md"
 STATUS_REGISTRY_PATH = REPO_ROOT / "internal" / "truth" / "cortex_status.json"
 STATUS_DOC_PATH = REPO_ROOT / "docs" / "CORTEX_STATUS.md"
 WORKFLOW_DOC_PATH = REPO_ROOT / "docs" / "internal" / "REPO_WORKFLOW.md"
 ARCHIVE_MANIFEST_PATH = REPO_ROOT / "internal" / "archive" / "manifest.json"
 ARCHIVE_INDEX_PATH = REPO_ROOT / "docs" / "archive" / "README.md"
+ARCHIVED_CHARTER_PATH = REPO_ROOT / "docs" / "archive" / "product" / "CORTEX_PRODUCT_CHARTER.md"
+ARCHIVED_BOUNDARY_PATH = REPO_ROOT / "docs" / "archive" / "product" / "CORTEX_PRODUCT_BOUNDARY.md"
 PYPROJECT_PATH = REPO_ROOT / "pyproject.toml"
 ROOT_MAKEFILE_PATH = REPO_ROOT / "Makefile"
 DOCS_ROOT = REPO_ROOT / "docs"
 SKIP_WALK_DIRS = {".git", ".cortex", ".claude", "node_modules", "__pycache__"}
+
+# The AGENTS.md and CLAUDE.md agent briefing block must be byte-equal so
+# Claude Code and Codex see the same instructions; the briefing replaces
+# the v1-era PHI-label decision loop and the PHILOSOPHY_AUDIT handoff
+# block. Drift between the two would re-create the original asymmetry.
+AGENT_BRIEFING_TEXT = """## Agent Briefing
+
+Read this first, every session.
+
+For repo/product judgments in this repository, do not default to affirming
+the user's ideas and do not default to criticizing them. Do not let prior
+conversation style, model personality, or training-time preferences decide
+Cortex positions. Use only the repo's recorded goals and current proof.
+
+Form positions from observable repo truth: `docs/CORTEX.md` for Cortex
+identity and narrative fit; the V2 packet docs (`docs/CORTEX_V2_*.md`)
+for packet law; `internal/truth/cortex_status.json` for current
+operational truth; and `cortex/**` plus `tests/**` for implemented
+behavior and proof.
+
+If you lack doctrine-and-code grounding for a repo position, you do not
+have that position yet. Read the specific missing surface, or say "I
+don't know yet; I need to check X." Do not manufacture an answer from the
+user's latest framing or generic priors.
+
+Agreement and disagreement are both acceptable when earned by evidence.
+Unearned agreement and ungrounded criticism are both failures."""
 
 
 def _read(path: Path) -> str:
@@ -53,11 +82,13 @@ def test_agents_records_mission_lock_and_single_truth_bootstrap() -> None:
     all_agents = _find_repo_files("AGENTS.md")
 
     assert all_agents == ["AGENTS.md"]
-    # The Anti-Drift section was added in 2026-04 to codify the rules whose
-    # absence produced visible drift in earlier work; keeping the line cap
-    # generous-but-bounded prevents AGENTS.md from sprawling into a wiki.
-    assert len(lines) <= 280
+    # AGENTS.md grew when the Agent Briefing block was added (2026-04) to
+    # replace the v1-era PHI-label decision loop and the PHILOSOPHY_AUDIT
+    # handoff ritual. The cap stays bounded so AGENTS.md does not sprawl
+    # into a wiki; the narrative now lives in docs/CORTEX.md.
+    assert len(lines) <= 360
     assert sections == [
+        "## Agent Briefing",
         "## Mission",
         "## Authority",
         "## Non-Negotiables",
@@ -67,26 +98,36 @@ def test_agents_records_mission_lock_and_single_truth_bootstrap() -> None:
         "## Handoff",
         "## Anti-Drift",
     ]
+    # Briefing block must be present verbatim; CLAUDE.md's copy is
+    # byte-equal so Claude Code and Codex see the same instructions.
+    assert AGENT_BRIEFING_TEXT in text
+    # Mission and identity anchors that downstream agents rely on.
     assert "rich multi-host executive layer" in text
     assert "installable executive layer" in text
     assert "human executive function" in text
     assert "live evidence" in text
     assert "lead with shipping truth, conformance truth, the current train, and the active quality/risk focus" in text
     assert "bio-to-code matrix" in text
+    # Authority surfaces named including CORTEX.md as narrative authority.
+    assert "docs/CORTEX.md" in text
     assert "internal/truth/cortex_status.json" in text
     assert "docs/CORTEX_STATUS.md" in text
     assert "AGENTS.md" in text
+    # Bootstrap reads include CORTEX.md as the second read.
     assert "git branch --show-current" in text
     assert "git status --short --untracked-files=all" in text
+    # Truth distinctions kept explicit.
     assert "shipping truth" in text
     assert "conformance truth" in text
     assert "This root `AGENTS.md` is the only agent contract in the repo." in text
+    # Non-negotiables (live-spend lock and registry-truth-discipline).
     assert "Do not run paid service-lane commands unless the user explicitly approves spend in the current chat." in text
     assert "Do not set `CORTEX_LIVE_SERVICE_SPEND_APPROVED`" in text
     assert ".cortex/closeout_contract/" in text
     assert "Workflow-law seams are load-bearing too" in text
     assert "revalidates reviewed-path exactness after verification" in text
     assert "at least one law-to-code completeness row" in text
+    # Final Handoff Mirror block fields preserved.
     assert "Fixed now" in text
     assert "Intentionally deferred" in text
     assert "Still underfit" in text
@@ -95,6 +136,13 @@ def test_agents_records_mission_lock_and_single_truth_bootstrap() -> None:
     assert "Claim earned now" in text
     assert "Claim still forbidden" in text
     assert "Final Handoff Mirror" in text
+    # PHI-label decision loop and PHILOSOPHY_AUDIT block must be retired.
+    # Their content moved into docs/CORTEX.md §6 and the agent briefing.
+    assert "PHI_MINIFY" not in text
+    assert "PHI_MISSION" not in text
+    assert "PHI_NICHE" not in text
+    assert "PHILOSOPHY_AUDIT" not in text
+    # Old retired doctrine names must not creep back.
     assert "CORTEX_V2_ACTIVE_WORKSTREAM" not in text
     assert "CORTEX_V2_PHASE_GATES_2" not in text
     assert "CORTEX_V2_MATH_TO_CODE_CORRESPONDENCE" not in text
@@ -102,19 +150,142 @@ def test_agents_records_mission_lock_and_single_truth_bootstrap() -> None:
     assert "V1_CODE_PORT_DETERMINATION" not in text
 
 
+def test_claude_md_carries_briefing_and_redirects_to_agents() -> None:
+    text = _read(CLAUDE_PATH)
+    lines = text.splitlines()
+    # CLAUDE.md must stay short enough to be a redirect carrying only the
+    # agent briefing and bootstrap reads. Drift back into duplication of
+    # AGENTS.md content is the failure mode this cap exists to prevent.
+    assert len(lines) <= 60
+    # Briefing must be byte-equal to AGENTS.md briefing so Claude Code
+    # and Codex see identical instructions.
+    assert AGENT_BRIEFING_TEXT in text
+    assert "AGENTS.md" in text
+    assert "canonical agent contract" in text
+    assert "docs/CORTEX.md" in text
+    assert "docs/CORTEX_STATUS.md" in text
+    assert "git branch --show-current" in text
+    assert "git status --short --untracked-files=all" in text
+    # No anti-drift duplication; CLAUDE.md does not own anti-drift rules.
+    assert "## Anti-Drift" not in text
+    assert "PHI_MINIFY" not in text
+
+
+def test_cortex_doc_is_canonical_narrative_with_required_sections() -> None:
+    text = _read(CORTEX_DOC_PATH)
+    lines = text.splitlines()
+    sections = [line for line in lines if line.startswith("## ")]
+    # CORTEX.md is the canonical narrative authority. The cap prevents
+    # the document from drifting into per-session noise; the narrative
+    # is meant to evolve only when major learnings warrant.
+    assert len(lines) <= 700
+    assert sections == [
+        "## 1. Identity",
+        "## 2. Failure Modes Cortex Addresses",
+        "## 3. V1 → V2 Evolution and Lessons",
+        "## 4. Math → Code → Proof Map",
+        "## 5. Current State and Strategy",
+        "## 6. Implementation Discipline",
+        "## 7. How to Use This Document",
+    ]
+    # Identity anchors: post-training boundary + four failure-mode anchors.
+    assert "post-training" in text
+    assert "no one is home" in text
+    assert "Alzheimer's analog" in text
+    assert "ADHD analog" in text
+    assert "limited-empathy analog" in text
+    # Connectivity discipline (closed-loop drift trap) is named.
+    assert "closed-loop drift" in text
+    assert "trace a path from the change" in text
+    # V1 → V2 lessons are carried.
+    assert "lifecycle-first" in text.lower()
+    assert "microkernel boundary" in text.lower() or "microkernel" in text.lower()
+    assert "claim-conservative" in text.lower()
+    assert "postmortem" in text.lower()
+    # Generated fences must be present so generate_cortex_doc.py can splice.
+    assert "<!-- BEGIN GENERATED: failure-modes-coverage -->" in text
+    assert "<!-- END GENERATED: failure-modes-coverage -->" in text
+    assert "<!-- BEGIN GENERATED: math-to-code-map -->" in text
+    assert "<!-- END GENERATED: math-to-code-map -->" in text
+    assert "<!-- BEGIN GENERATED: current-state-and-strategy -->" in text
+    assert "<!-- END GENERATED: current-state-and-strategy -->" in text
+
+
+def test_generated_cortex_doc_is_current() -> None:
+    proc = subprocess.run(
+        [sys.executable, "internal/truth/generate_cortex_doc.py", "--check"],
+        cwd=REPO_ROOT,
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+    assert proc.returncode == 0, proc.stderr or proc.stdout
+    assert CORTEX_DOC_PATH.exists()
+
+
+def test_math_to_code_map_schema() -> None:
+    status = _load_status()
+    math_map = status.get("math_to_code_map")
+    # The math_to_code_map is the structural ledger for load-bearing math
+    # objects. Each entry must have id, label, packet_ref, code_refs,
+    # proof_refs, status; closeout law_to_code_completeness rows can
+    # reference an entry via math_object_id for a mechanical join.
+    assert isinstance(math_map, list) and math_map, "math_to_code_map must be a non-empty list"
+    valid_states = {"implemented", "explicit_zero", "future_not_active"}
+    seen_ids: set[str] = set()
+    for entry in math_map:
+        assert isinstance(entry, dict)
+        assert {"id", "label", "packet_ref", "code_refs", "proof_refs", "status"} <= set(entry)
+        assert isinstance(entry["id"], str) and entry["id"].strip()
+        assert entry["id"] not in seen_ids, f"duplicate math_to_code_map id: {entry['id']}"
+        seen_ids.add(entry["id"])
+        assert isinstance(entry["label"], str) and entry["label"].strip()
+        assert isinstance(entry["packet_ref"], str) and entry["packet_ref"].strip()
+        assert isinstance(entry["code_refs"], list) and entry["code_refs"]
+        assert all(isinstance(ref, str) and ref.strip() for ref in entry["code_refs"])
+        assert isinstance(entry["proof_refs"], list) and entry["proof_refs"]
+        assert all(isinstance(ref, str) and ref.strip() for ref in entry["proof_refs"])
+        assert entry["status"] in valid_states
+    # Keystone objects every load-bearing seam may reference must be present
+    # so closeout law_to_code rows can join via math_object_id.
+    keystones = {
+        "operator_brain_capability_envelope",
+        "risk_weight",
+        "host_reliability_prior",
+        "preservation_state",
+        "goal_debt_state",
+    }
+    assert keystones <= seen_ids
+
+
+def test_charter_and_boundary_are_archived_under_product() -> None:
+    # CORTEX_PRODUCT_CHARTER.md and CORTEX_PRODUCT_BOUNDARY.md were
+    # subsumed by docs/CORTEX.md and moved to docs/archive/product/ so
+    # the existing archive taxonomy stays preserved (charter and boundary
+    # are product-surface docs, hence archive/product/, not archive root).
+    assert ARCHIVED_CHARTER_PATH.exists()
+    assert ARCHIVED_BOUNDARY_PATH.exists()
+    assert not (REPO_ROOT / "docs" / "CORTEX_PRODUCT_CHARTER.md").exists()
+    assert not (REPO_ROOT / "docs" / "CORTEX_PRODUCT_BOUNDARY.md").exists()
+
+
 def test_public_docs_point_to_status_and_keep_archive_out_of_the_front_door() -> None:
     readme = _read(README_PATH)
     docs_index = _read(DOCS_INDEX_PATH)
-    charter = _read(PRODUCT_CHARTER_PATH)
-    boundary = _read(PRODUCT_BOUNDARY_PATH)
+    cortex_doc = _read(CORTEX_DOC_PATH)
     workflow = _read(WORKFLOW_DOC_PATH)
 
     assert "docs/CORTEX_STATUS.md" in readme
     assert "OpenAI product runtime on the CLI lane, with the direct service kept as a non-default backup surface" in readme
+    assert "docs/CORTEX.md" in readme
     assert "Current Status" in docs_index
     assert "archive/" in docs_index
-    assert "active workstream ledger" in charter
-    assert "internal/truth/cortex_status.json" in boundary
+    assert "CORTEX.md" in docs_index
+    # CORTEX.md content anchors the previously-fragmented charter and
+    # boundary identity material in one canonical surface.
+    assert "executive-function layer that wraps a model after" in cortex_doc
+    assert "internal/truth/cortex_status.json" in cortex_doc
+    # Workflow rules unchanged.
     assert "paid OpenAI service-lane proof is never part of the default bundle" in workflow
     assert "requires explicit user approval in the current chat" in workflow
     assert "closeout contract artifact" in workflow
@@ -123,7 +294,7 @@ def test_public_docs_point_to_status_and_keep_archive_out_of_the_front_door() ->
     assert "workflow-law terms touched" in workflow
     assert "reviewed-path drift during verification" in workflow
     assert "Final Handoff Mirror" in workflow
-    for text in (readme, docs_index, charter, boundary):
+    for text in (readme, docs_index, cortex_doc):
         assert "CORTEX_V2_ACTIVE_WORKSTREAM" not in text
         assert "CORTEX_V2_PHASE_GATES_2" not in text
         assert "CORTEX_V2_MATH_TO_CODE_CORRESPONDENCE" not in text

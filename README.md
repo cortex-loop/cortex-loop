@@ -26,7 +26,6 @@ Those supporting surfaces still exist in this repository, but they live in expli
 - `docs/archive/` for historical runtime, lab, and governance material
 
 Start here:
+- [CORTEX](docs/CORTEX.md) — what Cortex is, where it came from, where it is going
 - [Current Status](docs/CORTEX_STATUS.md)
-- [Product Charter](docs/CORTEX_PRODUCT_CHARTER.md)
-- [Product Boundary](docs/CORTEX_PRODUCT_BOUNDARY.md)
 - [Docs Index](docs/README.md)
