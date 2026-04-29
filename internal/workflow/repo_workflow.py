@@ -1796,12 +1796,113 @@ def _format_verdict(check_payload: dict[str, object]) -> str:
 
 # Distinctive markdown signature lines used by the Stop hook to detect
 # whether the assistant's last message contained the canonical grid
-# output. The hook checks for all three; missing any → block the stop
-# with the canonical grid markdown injected as the reason. Keep these
-# stable; tests pin the exact strings.
+# output. All five required markers must be present; missing any → block
+# the stop with the canonical grid markdown injected as the reason. Tests
+# pin both this list and the hook's parallel constants byte-equal so
+# format drift between the grid and the gate is structurally prevented.
 GRID_HEADER_MARKER = "## Cortex Repo Hygiene Grid"
 GRID_STATE_MARKER = "### State"
+GRID_STANDARD_METADATA_MARKER = "### Standard Metadata"
+GRID_FINAL_HANDOFF_MIRROR_MARKER = "### Final Handoff Mirror"
 GRID_VERDICT_MARKER = "### Verdict"
+
+# Closure markers — these substrings must appear ONLY inside the grid
+# block (after GRID_HEADER_MARKER). If they appear before the grid
+# header, the agent has emitted closure-shaped prose outside the
+# consolidated grid, which violates the "single grid contains all
+# closure" rule. The hook checks the prefix portion of the message
+# (text before GRID_HEADER_MARKER) for these substrings.
+CLOSURE_LEAK_MARKERS = (
+    "Ending branch",
+    "Verification summary",
+    "Fixed now",
+    "Claim earned now",
+    "Status registry touched",
+    "Final Handoff Mirror",
+)
+
+
+# Standard Metadata fields with `<fill: ...>` placeholders. The agent
+# replaces each placeholder with the actual value in place; the hook
+# rejects any field still containing the literal `<fill` substring.
+STANDARD_METADATA_FIELDS: tuple[tuple[str, str], ...] = (
+    ("Ending branch", "<fill: branch name where this turn ends>"),
+    ("Commit hash", "<fill: commit hash or `no commit`>"),
+    ("Verification summary", "<fill: which test bundles ran with what results, or `no verification this turn`>"),
+    ("Returned to main", "<fill: yes or no>"),
+    ("Status registry touched", "<fill: keys changed in cortex_status.json or `none`>"),
+    ("Status doc regenerated", "<fill: yes or no>"),
+    ("CORTEX.md regenerated", "<fill: yes or no>"),
+)
+
+
+# Final Handoff Mirror fields. The agent replaces each `<fill>`
+# placeholder in place. Hostile reviewer is one cell rendered as a
+# nested list with three lenses; the hook checks the cell does not
+# still contain the placeholder.
+FINAL_HANDOFF_MIRROR_FIELDS: tuple[tuple[str, str], ...] = (
+    ("Fixed now", "<fill: what landed this turn, or `n/a (no work this turn)`>"),
+    ("Intentionally deferred", "<fill: what was scoped out with rationale, or `n/a`>"),
+    ("Still underfit", "<fill: known limitations of what landed, or `n/a`>"),
+    ("Zeroed or stubbed terms", "<fill: what was retired or stubbed, or `n/a`>"),
+    (
+        "Hostile reviewer critiques",
+        "<fill: engineer / mathematician / neuroscientist — one critique each, or `n/a` for non-work turns>",
+    ),
+    ("Claim earned now", "<fill: what is structurally earned this turn, or `n/a`>"),
+    ("Claim still forbidden", "<fill: what cannot be claimed yet, or `n/a`>"),
+)
+
+
+def _dogfood_active() -> bool:
+    """Return True when Codex App dogfood mode is currently active.
+
+    Reads ``.cortex/live_validation/dogfood/latest.json`` and checks
+    ``mode_status``. Inactive (or missing file) returns False so the
+    grid omits the Dogfood Signal section by default.
+    """
+    latest = _root() / ".cortex" / "live_validation" / "dogfood" / "latest.json"
+    if not latest.exists():
+        return False
+    try:
+        payload = json.loads(latest.read_text(encoding="utf-8"))
+    except (json.JSONDecodeError, OSError):
+        return False
+    if not isinstance(payload, dict):
+        return False
+    return payload.get("mode_status") in {"active", "refreshed"}
+
+
+def _format_standard_metadata_table() -> str:
+    """Render the Standard Metadata table with `<fill>` placeholders."""
+    lines = ["| Field | Value |", "|---|---|"]
+    for label, placeholder in STANDARD_METADATA_FIELDS:
+        lines.append(f"| **{label}** | {placeholder} |")
+    return "\n".join(lines)
+
+
+def _format_final_handoff_mirror_md() -> str:
+    """Render the Final Handoff Mirror section with `<fill>` placeholders."""
+    parts: list[str] = []
+    for label, placeholder in FINAL_HANDOFF_MIRROR_FIELDS:
+        parts.append(f"**{label}:** {placeholder}")
+    return "\n\n".join(parts)
+
+
+def _format_dogfood_signal_md() -> str:
+    """Render the Dogfood Signal section template (only when dogfood active)."""
+    fields = (
+        ("continuity_helped", "yes|no"),
+        ("blocker_surfaced", "yes|no"),
+        ("uncertainty_or_brake_used", "yes|no"),
+        ("truthful_closure", "yes|no"),
+        ("cortex_changed_next_action", "yes|no"),
+        ("note", "<one sentence>"),
+    )
+    lines = ["| Field | Value |", "|---|---|"]
+    for label, placeholder in fields:
+        lines.append(f"| **`{label}`** | <fill: {placeholder}> |")
+    return "\n".join(lines)
 
 
 def _format_grid_markdown(
@@ -1811,14 +1912,25 @@ def _format_grid_markdown(
 ) -> str:
     """Render the per-turn Cortex Repo Hygiene Grid as one markdown block.
 
-    Always-present sections: ``## Cortex Repo Hygiene Grid`` header,
-    ``### State`` table, ``### Cortex Progress`` table, ``### Goals
-    Analysis`` prompts, ``### Verdict`` line. When the session has
-    performed work (tracked-file changes since session start), the grid
-    additionally renders ``### Mechanical Checks`` and ``### Work
-    Reflection`` sections. The verdict reflects ``reflection-check``
-    output even on no-work turns so drift signals (stale next_train,
-    dirty main, dangling closeout) still surface.
+    The grid is the **single closure artifact** for every chat: all
+    closure / handoff material must live inside this block. Sections:
+
+    - ``## Cortex Repo Hygiene Grid`` header (required)
+    - ``### State`` table (required)
+    - ``### Cortex Progress`` table (always emitted)
+    - ``### Goals Analysis`` substantive prompts (always emitted)
+    - ``### Mechanical Checks`` table (only when work was performed)
+    - ``### Work Reflection`` prompts (only when work was performed)
+    - ``### Standard Metadata`` table (required; closure metadata)
+    - ``### Final Handoff Mirror`` (required; closure mirror)
+    - ``### Dogfood Signal`` (only when dogfood mode is active)
+    - ``### Verdict`` line (required)
+
+    Bracketed ``<fill: ...>`` placeholders are filled in place by the
+    agent. The Stop hook rejects any field still containing ``<fill``
+    or any unmodified Goals Analysis bracket. The verdict reflects
+    ``reflection-check`` output even on no-work turns so drift signals
+    (stale next_train, dirty main, dangling closeout) still surface.
     """
     registry = _registry_payload() or {}
     sections: list[str] = []
@@ -1846,6 +1958,19 @@ def _format_grid_markdown(
         sections.append("### Work Reflection  _(substantive — fill before sending)_")
         sections.append("")
         sections.append(_format_work_reflection_template_md())
+        sections.append("")
+    sections.append(GRID_STANDARD_METADATA_MARKER)
+    sections.append("")
+    sections.append(_format_standard_metadata_table())
+    sections.append("")
+    sections.append(GRID_FINAL_HANDOFF_MIRROR_MARKER)
+    sections.append("")
+    sections.append(_format_final_handoff_mirror_md())
+    sections.append("")
+    if _dogfood_active():
+        sections.append("### Dogfood Signal  _(dogfood mode active; fill before sending)_")
+        sections.append("")
+        sections.append(_format_dogfood_signal_md())
         sections.append("")
     sections.append(GRID_VERDICT_MARKER)
     sections.append("")

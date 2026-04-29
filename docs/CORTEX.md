@@ -367,42 +367,50 @@ eventually wraps. They are doctrine, not product. They live under
 `internal/**` (and surfaces that AGENTS.md owns) and they may not be
 imported by `cortex/**`. Confusing the two is the next drift shape.
 
-**Per-turn enforcement: the grid.** The standard of care is enforced
-end-of-turn by the Cortex Repo Hygiene Grid produced by
-`python3 internal/workflow/repo_workflow.py grid`. The grid renders as
-one consolidated markdown block (state and progress tables, goals
-analysis prompts, mechanical checks and work reflection when work was
-performed, verdict line). On Loop Decision `FAIL` (any mechanical gate
-failed), the agent continues working until the grid clears —
-close-session is blocked. The grid replaces the v1 self-rated handoff
-ritual with mechanical verdict-from-state. See `AGENTS.md` `## Handoff`
-for the contract and `docs/internal/REPO_WORKFLOW.md` for the command
-details.
+**Per-turn enforcement: the single closure grid.** The standard of
+care is enforced end-of-turn by the Cortex Repo Hygiene Grid produced
+by `python3 internal/workflow/repo_workflow.py grid`. The grid is the
+**single closure artifact** for every chat: it consolidates state,
+Cortex progress, goals analysis, mechanical checks, work reflection,
+**Standard Metadata**, **Final Handoff Mirror**, optional Dogfood
+Signal, and verdict — all inside one `## Cortex Repo Hygiene Grid`
+markdown block. Normal response prose may precede the grid; nothing
+closure-shaped may appear before or after it. On verdict `FAIL` the
+agent continues working until the grid clears.
 
-**Chat-boundary enforcement.** On Claude Code, a Stop hook configured
-at `.claude/settings.json` runs `.claude/hooks/cortex_grid_stop_hook.py`
-on turn-completion. The hook reads the assistant's last message from
-the transcript, runs `grid` itself to obtain the canonical markdown,
-and blocks the stop if the assistant message is missing the grid
-signature markers (`## Cortex Repo Hygiene Grid`, `### State`,
-`### Verdict`), if the Goals Analysis bracketed templates were not
-filled, or if the verdict is `FAIL`. The conversation cannot end
-without compliance. Hooks cannot append to the assistant message — the
-agent must paste; the hook validates that the paste happened. On
-Codex (no hooks), the contract is doctrinal; the markdown table format
-is distinctive enough that mimicry is visually obvious to the user.
+**Workflow: paste the skeleton, fill brackets in place.** The agent
+runs `grid`, pastes the generated markdown skeleton, and edits the
+skeleton in place — replacing each Goals Analysis bracketed prompt
+with substantive prose and each `<fill: …>` placeholder in Standard
+Metadata / Final Handoff Mirror with the actual value. The skeleton
+is verbatim from the command; the agent's edits stay inside the
+skeleton. No separate closure section follows the grid.
+
+**Chat-boundary enforcement (Claude Code only).** A Stop hook at
+`.claude/settings.json` runs
+`.claude/hooks/cortex_grid_stop_hook.py` on turn-completion. The hook
+reads the assistant's last message from the transcript, runs `grid`
+itself, and blocks the stop on (1) missing required markers
+(`## Cortex Repo Hygiene Grid`, `### State`,
+`### Standard Metadata`, `### Final Handoff Mirror`, `### Verdict`),
+(2) closure-shaped substrings appearing before the grid header,
+(3) any per-field unfilled Goals Analysis prompt,
+(4) any unfilled `<fill>` placeholder in Standard Metadata or Final
+Handoff Mirror, or (5) `reflection-check` verdict `FAIL`. The hook
+does not short-circuit on `stop_hook_active` — persistent
+non-compliance keeps blocking. The hook fails open only on
+infrastructure failures (missing transcript, command crash). On
+Codex, the contract is doctrinal-only; the hard-gate enforcement is
+Claude-only and AGENTS.md compliance is the only mechanism.
 
 **No-mimicry rule.** Composing markdown that resembles grid content
-but is not actual `grid` command output is a violation. The grid
-output is verbatim from the command — the agent runs the command,
-pastes the stdout, fills in the substantive prompt fields. Ad-hoc
-audit-shaped markdown headers do not satisfy this contract even if
-their content is correct, because they bypass the mechanical state
-derivation that makes the verdict trustworthy. This rule exists
-because in practice, agents that run `status-snapshot` and
-`reflection-check` for inspection while composing their own audit
-markdown are a documented bypass pattern; the rule and the Stop hook
-together close it.
+but is not actual `grid` command output is a violation. Ad-hoc
+audit-shaped markdown headers (e.g. an "Audit Findings" block, a
+separate Standard Metadata block following the grid, a Final Handoff
+Mirror written from scratch) do not satisfy the contract because they
+bypass the consolidated single-closure structure. This rule exists
+because in practice, agents that run inspection commands and compose
+their own closure-shaped markdown are a documented bypass pattern.
 
 **Connectivity-trace closeout field.** Load-bearing seams that touch
 `cortex/**` must populate `connectivity_trace = {claim, path[],

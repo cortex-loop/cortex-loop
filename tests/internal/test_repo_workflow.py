@@ -1374,13 +1374,12 @@ def test_reflection_check_warns_on_warn_threshold_next_train(
     )
 
 
-def test_grid_emits_markdown_with_full_sections_when_work_performed(
+def test_grid_emits_full_consolidated_grid_when_work_performed(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
 ) -> None:
     repo, _remote, module = _prepare_repo(tmp_path, monkeypatch)
     _seed_registry(repo)
     _seed_generate_scripts(repo)
-    # Switch to a session branch and create a change so the grid detects work.
     monkeypatch.setattr(module, "_session_timestamp", lambda: "20260429-100000")
     module.cmd_start_session("codex", "grid-work")
     (repo / "README.md").write_text("session change\n", encoding="utf-8")
@@ -1388,11 +1387,18 @@ def test_grid_emits_markdown_with_full_sections_when_work_performed(
     module.cmd_grid()
     out = capsys.readouterr().out
 
-    # Canonical signature markers (also pinned by the Stop hook).
+    # All 5 required markers must be present (Stop hook requires them).
     assert module.GRID_HEADER_MARKER in out
     assert module.GRID_STATE_MARKER in out
+    assert module.GRID_STANDARD_METADATA_MARKER in out
+    assert module.GRID_FINAL_HANDOFF_MIRROR_MARKER in out
     assert module.GRID_VERDICT_MARKER in out
-    # Markdown styling: the state and progress are 2-column tables.
+    # Closure sections live INSIDE the grid (single-grid rule).
+    for closure_label, _ in module.STANDARD_METADATA_FIELDS:
+        assert f"**{closure_label}**" in out
+    for mirror_label, _ in module.FINAL_HANDOFF_MIRROR_FIELDS:
+        assert f"**{mirror_label}:**" in out
+    # Markdown styling: tables.
     assert "| Field | Value |" in out
     assert "|---|---|" in out
     assert "### Cortex Progress" in out
@@ -1407,7 +1413,7 @@ def test_grid_emits_markdown_with_full_sections_when_work_performed(
     assert "▌" not in out
 
 
-def test_grid_emits_markdown_minimal_when_no_work_performed(
+def test_grid_emits_consolidated_grid_with_closure_sections_when_no_work(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
 ) -> None:
     repo, _remote, module = _prepare_repo(tmp_path, monkeypatch)
@@ -1417,17 +1423,17 @@ def test_grid_emits_markdown_minimal_when_no_work_performed(
     module.cmd_grid()
     out = capsys.readouterr().out
 
-    # Always-on sections present.
+    # All 5 required markers MUST be present even on no-work turns.
     assert module.GRID_HEADER_MARKER in out
     assert module.GRID_STATE_MARKER in out
+    assert module.GRID_STANDARD_METADATA_MARKER in out
+    assert module.GRID_FINAL_HANDOFF_MIRROR_MARKER in out
+    assert module.GRID_VERDICT_MARKER in out
     assert "### Cortex Progress" in out
     assert "### Goals Analysis" in out
-    assert module.GRID_VERDICT_MARKER in out
     # Work-only sections must NOT appear when no tracked-file changes exist.
     assert "### Mechanical Checks" not in out
     assert "### Work Reflection" not in out
-    # The verdict is still emitted (PASS by default on clean main).
-    assert "PASS" in out or "GAPS" in out or "FAIL" in out
 
 
 def test_grid_signature_markers_are_distinct_constants() -> None:
@@ -1435,7 +1441,22 @@ def test_grid_signature_markers_are_distinct_constants() -> None:
     module = _load_repo_workflow_module()
     assert module.GRID_HEADER_MARKER == "## Cortex Repo Hygiene Grid"
     assert module.GRID_STATE_MARKER == "### State"
+    assert module.GRID_STANDARD_METADATA_MARKER == "### Standard Metadata"
+    assert module.GRID_FINAL_HANDOFF_MIRROR_MARKER == "### Final Handoff Mirror"
     assert module.GRID_VERDICT_MARKER == "### Verdict"
+
+
+def test_standard_metadata_and_mirror_fields_have_fill_placeholders() -> None:
+    """Fields must use `<fill` placeholders so the hook can detect unfilled cells."""
+    module = _load_repo_workflow_module()
+    for _, placeholder in module.STANDARD_METADATA_FIELDS:
+        assert placeholder.startswith("<fill")
+    for _, placeholder in module.FINAL_HANDOFF_MIRROR_FIELDS:
+        assert placeholder.startswith("<fill")
+    # Closure-leak markers MUST be enumerated for the hook to use.
+    assert "Ending branch" in module.CLOSURE_LEAK_MARKERS
+    assert "Fixed now" in module.CLOSURE_LEAK_MARKERS
+    assert "Claim earned now" in module.CLOSURE_LEAK_MARKERS
 
 
 def test_goals_analysis_fields_demand_substantive_prompts() -> None:

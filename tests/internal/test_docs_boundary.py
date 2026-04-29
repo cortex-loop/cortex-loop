@@ -82,13 +82,14 @@ def test_agents_records_mission_lock_and_single_truth_bootstrap() -> None:
     all_agents = _find_repo_files("AGENTS.md")
 
     assert all_agents == ["AGENTS.md"]
-    # AGENTS.md grew when the Agent Briefing block was added (2026-04) to
-    # replace the v1-era PHI-label decision loop and the PHILOSOPHY_AUDIT
-    # handoff ritual; it grew further when the Stop hook discipline and
-    # no-mimicry rule landed in §Handoff. The cap stays bounded so
-    # AGENTS.md does not sprawl into a wiki; the narrative lives in
-    # docs/CORTEX.md.
-    assert len(lines) <= 410
+    # AGENTS.md grew when the Agent Briefing block was added (2026-04)
+    # to replace the v1-era PHI-label decision loop and the
+    # PHILOSOPHY_AUDIT handoff ritual; further when the Stop hook
+    # discipline and no-mimicry rule landed; further when the
+    # single-grid-closure rule consolidated metadata + mirror inside the
+    # grid (Session 4). The cap stays bounded so AGENTS.md does not
+    # sprawl into a wiki; the narrative lives in docs/CORTEX.md.
+    assert len(lines) <= 420
     assert sections == [
         "## Agent Briefing",
         "## Mission",
@@ -129,14 +130,11 @@ def test_agents_records_mission_lock_and_single_truth_bootstrap() -> None:
     assert "Workflow-law seams are load-bearing too" in text
     assert "revalidates reviewed-path exactness after verification" in text
     assert "at least one law-to-code completeness row" in text
-    # Final Handoff Mirror block fields preserved.
-    assert "Fixed now" in text
-    assert "Intentionally deferred" in text
-    assert "Still underfit" in text
-    assert "Zeroed or stubbed terms" in text
-    assert "Hostile reviewer critiques" in text
-    assert "Claim earned now" in text
-    assert "Claim still forbidden" in text
+    # Final Handoff Mirror is referenced by name (the field labels
+    # themselves are emitted by `grid` from
+    # `repo_workflow.py::FINAL_HANDOFF_MIRROR_FIELDS`; they no longer
+    # need to be duplicated in AGENTS.md since the single-grid-closure
+    # rule consolidates closure inside the grid skeleton).
     assert "Final Handoff Mirror" in text
     # PHI-label decision loop and PHILOSOPHY_AUDIT block must be retired.
     # Their content moved into docs/CORTEX.md §6 and the agent briefing.
@@ -158,8 +156,23 @@ def test_agents_records_mission_lock_and_single_truth_bootstrap() -> None:
     assert "## Cortex Repo Hygiene Grid" in text
     assert "### State" in text
     assert "### Verdict" in text
-    # Codex fallback acknowledged.
-    assert "Codex" in text and "no hooks" in text.lower()
+    # Codex fallback acknowledged. Session 4 wording: "Codex does not
+    # support Stop hooks" (parallel to the prior "no hooks" phrasing).
+    assert "Codex" in text
+    assert "does not support Stop hooks" in text or "no hooks" in text.lower()
+    # Session 4: single-grid-closure rule. Standard Metadata and Final
+    # Handoff Mirror live INSIDE the grid; closure must not be emitted
+    # outside the grid; the doctrine-vs-code contradiction (paste
+    # verbatim AND fill below) is replaced by paste-skeleton-fill-in-place.
+    assert "Single-grid rule" in text
+    assert "### Standard Metadata" in text
+    assert "### Final Handoff Mirror" in text
+    assert "fill brackets in place" in text or "edits the skeleton in place" in text
+    # The hard-gate honesty: stop_hook_active no longer short-circuits.
+    assert "stop_hook_active" in text
+    # The old separate-block doctrine must NOT remain.
+    assert "Every final summary must include the grid output plus the" not in text
+    assert "Every substantive final summary must mirror the rendered" not in text
     # Old retired doctrine names must not creep back.
     assert "CORTEX_V2_ACTIVE_WORKSTREAM" not in text
     assert "CORTEX_V2_PHASE_GATES_2" not in text
