@@ -154,19 +154,22 @@ def test_agents_records_mission_lock_and_single_truth_bootstrap() -> None:
     assert ".claude/hooks/cortex_grid_stop_hook.py" in text
     assert ".claude/settings.json" in text
     assert "## Cortex Repo Hygiene Grid" in text
-    assert "### State" in text
-    assert "### Verdict" in text
+    assert "| Field | Value |" in text
+    assert "State: Branch" in text
+    assert "Verdict" in text
     # Codex fallback acknowledged. Session 4 wording: "Codex does not
     # support Stop hooks" (parallel to the prior "no hooks" phrasing).
     assert "Codex" in text
     assert "does not support Stop hooks" in text or "no hooks" in text.lower()
-    # Session 4: single-grid-closure rule. Standard Metadata and Final
-    # Handoff Mirror live INSIDE the grid; closure must not be emitted
-    # outside the grid; the doctrine-vs-code contradiction (paste
-    # verbatim AND fill below) is replaced by paste-skeleton-fill-in-place.
+    # Single-table closure rule. Standard Metadata and Final Handoff
+    # Mirror live as Std:* and Mirror:* rows inside one table; closure
+    # must not be emitted outside the grid; the doctrine-vs-code
+    # contradiction (paste verbatim AND fill below) is replaced by
+    # paste-skeleton-fill-in-place.
     assert "Single-grid rule" in text
-    assert "### Standard Metadata" in text
-    assert "### Final Handoff Mirror" in text
+    assert "Std: Ending branch" in text
+    assert "Mirror: Fixed now" in text
+    assert "no `###` subsections inside the grid" in text
     assert "fill brackets in place" in text or "edits the skeleton in place" in text
     # The hard-gate honesty: stop_hook_active no longer short-circuits.
     assert "stop_hook_active" in text

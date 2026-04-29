@@ -1436,8 +1436,8 @@ def _status_snapshot_payload() -> dict[str, object]:
     }
 
 
-def _format_state_table(payload: dict[str, object]) -> str:
-    """Render the state snapshot as a 2-column markdown table."""
+def _state_rows(payload: dict[str, object]) -> list[tuple[str, str]]:
+    """Return state snapshot rows for markdown-table renderers."""
     closeout = payload["closeout"]
     profile = closeout.get("profile")
     closeout_value = closeout["present"]
@@ -1445,13 +1445,18 @@ def _format_state_table(payload: dict[str, object]) -> str:
         closeout_value = f"{closeout_value} (`{profile}`)"
     drift = payload.get("drift_signals", [])
     drift_value = "none" if not drift else "; ".join(drift)
-    rows = [
+    return [
         ("Branch", f"`{payload['branch']}`"),
         ("vs origin/main", f"+{payload['ahead']} / -{payload['behind']}"),
         ("Worktree", str(payload["worktree"])),
         ("Closeout", closeout_value),
         ("Drift signals", drift_value),
     ]
+
+
+def _format_state_table(payload: dict[str, object]) -> str:
+    """Render the state snapshot as a 2-column markdown table."""
+    rows = _state_rows(payload)
     lines = ["| Field | Value |", "|---|---|"]
     for label, value in rows:
         lines.append(f"| **{label}** | {value} |")
@@ -1582,8 +1587,8 @@ def _reflection_check_payload() -> dict[str, object]:
     }
 
 
-def _format_mechanical_checks_table(check_payload: dict[str, object]) -> str:
-    """Render the mechanical-gate results as a 2-column markdown table.
+def _mechanical_check_rows(check_payload: dict[str, object]) -> list[tuple[str, str]]:
+    """Return mechanical-gate rows for markdown-table renderers.
 
     Each gate is named explicitly with its current status so the agent
     cannot fabricate the table from memory; the entries are derived from
@@ -1622,19 +1627,19 @@ def _format_mechanical_checks_table(check_payload: dict[str, object]) -> str:
         ("`next_train` freshness", freshness),
         ("Fixture timestamp drift", _gate("Fixtures", ("fixture",), ("fixture",))),
     ]
+    if failures:
+        rows.append(("Failures", "<br>".join(failures)))
+    if gaps:
+        rows.append(("Gaps", "<br>".join(gaps)))
+    return rows
+
+
+def _format_mechanical_checks_table(check_payload: dict[str, object]) -> str:
+    """Render the mechanical-gate results as a 2-column markdown table."""
+    rows = _mechanical_check_rows(check_payload)
     lines = ["| Gate | Status |", "|---|---|"]
     for label, status in rows:
         lines.append(f"| {label} | {status} |")
-    if failures:
-        lines.append("")
-        lines.append("**Failures:**")
-        for item in failures:
-            lines.append(f"- {item}")
-    if gaps:
-        lines.append("")
-        lines.append("**Gaps:**")
-        for item in gaps:
-            lines.append(f"- {item}")
     return "\n".join(lines)
 
 
@@ -1661,8 +1666,8 @@ def cmd_reflection_check(emit_json: bool) -> int:
     return 0 if payload["verdict"] == "PASS" else (1 if payload["verdict"] == "FAIL" else 0)
 
 
-def _format_progress_table(registry: dict[str, object]) -> str:
-    """Render the Cortex progress dashboard as a 2-column markdown table."""
+def _progress_rows(registry: dict[str, object]) -> list[tuple[str, str]]:
+    """Return Cortex progress rows for markdown-table renderers."""
     matrix = registry.get("bio_to_code_matrix") or []
     completion = registry.get("executive_completion") or {}
     hosts = registry.get("hosts") or []
@@ -1704,7 +1709,12 @@ def _format_progress_table(registry: dict[str, object]) -> str:
         first = where_to_work[0]
         truncated = first if len(first) <= 110 else first[:107] + "..."
         rows.append(("active leverage", truncated))
+    return rows
 
+
+def _format_progress_table(registry: dict[str, object]) -> str:
+    """Render the Cortex progress dashboard as a 2-column markdown table."""
+    rows = _progress_rows(registry)
     lines = ["| Field | Value |", "|---|---|"]
     for label, value in rows:
         lines.append(f"| **{label}** | {value} |")
@@ -1752,26 +1762,30 @@ def _format_goals_analysis_template_md() -> str:
     return "\n\n".join(parts)
 
 
+WORK_REFLECTION_FIELDS: tuple[tuple[str, str], ...] = (
+    ("Smallness", "what was cut, what was kept, why"),
+    ("Mission alignment", "did this advance the shipped executive layer or unblock proof?"),
+    ("Cortex-specificity", "Cortex-specific or generic bloat / v1 carryover?"),
+    (
+        "Connectivity trace",
+        "change → file → host adapter → model output (or 'lab/experimental, no model reach')",
+    ),
+    ("Truth distinctions changed", "cortex / wiring / conformance / shipping — what moved"),
+    ("Hostile reviewer (engineer)", "one critique"),
+    ("Hostile reviewer (mathematician)", "one critique or n/a-with-reason"),
+    ("Hostile reviewer (neuroscientist)", "one critique or n/a-with-reason"),
+    ("Live vs structural", "what's earned by tests vs needs model run"),
+    (
+        "Anti-drift sweep",
+        "branch slug, audit landed, research classified, fixtures, postmortem patterns",
+    ),
+)
+
+
 def _format_work_reflection_template_md() -> str:
-    fields = (
-        ("Smallness", "what was cut, what was kept, why"),
-        ("Mission alignment", "did this advance the shipped executive layer or unblock proof?"),
-        ("Cortex-specificity", "Cortex-specific or generic bloat / v1 carryover?"),
-        (
-            "Connectivity trace",
-            "change → file → host adapter → model output (or 'lab/experimental, no model reach')",
-        ),
-        ("Truth distinctions changed", "cortex / wiring / conformance / shipping — what moved"),
-        ("Hostile reviewer (engineer)", "one critique"),
-        ("Hostile reviewer (mathematician)", "one critique or n/a-with-reason"),
-        ("Hostile reviewer (neuroscientist)", "one critique or n/a-with-reason"),
-        ("Live vs structural", "what's earned by tests vs needs model run"),
-        (
-            "Anti-drift sweep",
-            "branch slug, audit landed, research classified, fixtures, postmortem patterns",
-        ),
+    return "\n\n".join(
+        f"**{label}:** _[{prompt}]_" for label, prompt in WORK_REFLECTION_FIELDS
     )
-    return "\n\n".join(f"**{label}:** _[{prompt}]_" for label, prompt in fields)
 
 
 def _format_verdict(check_payload: dict[str, object]) -> str:
@@ -1796,15 +1810,23 @@ def _format_verdict(check_payload: dict[str, object]) -> str:
 
 # Distinctive markdown signature lines used by the Stop hook to detect
 # whether the assistant's last message contained the canonical grid
-# output. All five required markers must be present; missing any → block
-# the stop with the canonical grid markdown injected as the reason. Tests
-# pin both this list and the hook's parallel constants byte-equal so
-# format drift between the grid and the gate is structurally prevented.
+# output. The grid is literally one table under the header: no ``###``
+# subsections and no second table. Tests pin the hook's parallel
+# constants byte-equal so format drift between the grid and the gate is
+# structurally prevented.
 GRID_HEADER_MARKER = "## Cortex Repo Hygiene Grid"
-GRID_STATE_MARKER = "### State"
-GRID_STANDARD_METADATA_MARKER = "### Standard Metadata"
-GRID_FINAL_HANDOFF_MIRROR_MARKER = "### Final Handoff Mirror"
-GRID_VERDICT_MARKER = "### Verdict"
+GRID_TABLE_HEADER_MARKER = "| Field | Value |"
+GRID_TABLE_SEPARATOR_MARKER = "|---|---|"
+GRID_FORBIDDEN_SECTION_MARKER = "### "
+
+REQUIRED_GRID_ROW_LABELS: tuple[str, ...] = (
+    "State: Branch",
+    "Progress: bio_to_code matrix",
+    "Goals: Plan → implementation",
+    "Std: Ending branch",
+    "Mirror: Fixed now",
+    "Verdict",
+)
 
 # Closure markers — these substrings must appear ONLY inside the grid
 # block (after GRID_HEADER_MARKER). If they appear before the grid
@@ -1882,7 +1904,7 @@ def _format_standard_metadata_table() -> str:
 
 
 def _format_final_handoff_mirror_md() -> str:
-    """Render the Final Handoff Mirror section with `<fill>` placeholders."""
+    """Render legacy Final Handoff Mirror prose with `<fill>` placeholders."""
     parts: list[str] = []
     for label, placeholder in FINAL_HANDOFF_MIRROR_FIELDS:
         parts.append(f"**{label}:** {placeholder}")
@@ -1905,26 +1927,52 @@ def _format_dogfood_signal_md() -> str:
     return "\n".join(lines)
 
 
+def _table_cell(value: object) -> str:
+    """Normalize a value for a single markdown table cell."""
+    text = str(value)
+    text = text.replace("\r\n", "\n").replace("\r", "\n")
+    text = text.replace("\n", "<br>")
+    return text.replace("|", "\\|")
+
+
+def _grid_table(rows: list[tuple[str, str]]) -> str:
+    lines = [GRID_TABLE_HEADER_MARKER, GRID_TABLE_SEPARATOR_MARKER]
+    for label, value in rows:
+        lines.append(f"| **{_table_cell(label)}** | {_table_cell(value)} |")
+    return "\n".join(lines)
+
+
+def _dogfood_signal_rows() -> list[tuple[str, str]]:
+    return [
+        ("continuity_helped", "<fill: yes|no>"),
+        ("blocker_surfaced", "<fill: yes|no>"),
+        ("uncertainty_or_brake_used", "<fill: yes|no>"),
+        ("truthful_closure", "<fill: yes|no>"),
+        ("cortex_changed_next_action", "<fill: yes|no>"),
+        ("note", "<fill: one sentence>"),
+    ]
+
+
 def _format_grid_markdown(
     snapshot: dict[str, object],
     check_payload: dict[str, object],
     work_performed: bool,
 ) -> str:
-    """Render the per-turn Cortex Repo Hygiene Grid as one markdown block.
+    """Render the per-turn Cortex Repo Hygiene Grid as one table.
 
     The grid is the **single closure artifact** for every chat: all
-    closure / handoff material must live inside this block. Sections:
+    closure / handoff material lives as rows inside the one markdown
+    table under ``## Cortex Repo Hygiene Grid``. There are no ``###``
+    subsections and no additional tables inside the grid.
 
-    - ``## Cortex Repo Hygiene Grid`` header (required)
-    - ``### State`` table (required)
-    - ``### Cortex Progress`` table (always emitted)
-    - ``### Goals Analysis`` substantive prompts (always emitted)
-    - ``### Mechanical Checks`` table (only when work was performed)
-    - ``### Work Reflection`` prompts (only when work was performed)
-    - ``### Standard Metadata`` table (required; closure metadata)
-    - ``### Final Handoff Mirror`` (required; closure mirror)
-    - ``### Dogfood Signal`` (only when dogfood mode is active)
-    - ``### Verdict`` line (required)
+    Row groups:
+    - ``State:*`` and ``Progress:*`` always emitted.
+    - ``Goals:*`` always emitted and filled in place by the agent.
+    - ``Mech:*`` always emitted for a stable visual shape.
+    - ``Work:*`` emitted only when work was performed.
+    - ``Std:*`` and ``Mirror:*`` always emitted and filled in place.
+    - ``Dogfood:*`` emitted only when dogfood mode is active.
+    - ``Verdict`` always emitted.
 
     Bracketed ``<fill: ...>`` placeholders are filled in place by the
     agent. The Stop hook rejects any field still containing ``<fill``
@@ -1933,49 +1981,40 @@ def _format_grid_markdown(
     (stale next_train, dirty main, dangling closeout) still surface.
     """
     registry = _registry_payload() or {}
-    sections: list[str] = []
-    sections.append(GRID_HEADER_MARKER)
-    sections.append("")
-    sections.append(GRID_STATE_MARKER)
-    sections.append("")
-    sections.append(_format_state_table(snapshot))
-    sections.append("")
-    sections.append("### Cortex Progress")
-    sections.append("")
-    sections.append(_format_progress_table(registry))
-    sections.append("")
-    sections.append(
-        "### Goals Analysis  _(substantive — fill each field ≥48 chars; cite at least one of `docs/CORTEX.md` / `internal/truth/cortex_status.json` / `cortex/**` / `tests/**` / `CORTEX_V2_*`)_"
+    rows: list[tuple[str, str]] = []
+    rows.extend((f"State: {label}", value) for label, value in _state_rows(snapshot))
+    rows.extend(
+        (f"Progress: {label}", value) for label, value in _progress_rows(registry)
     )
-    sections.append("")
-    sections.append(_format_goals_analysis_template_md())
-    sections.append("")
+    for label, prompt in GOALS_ANALYSIS_FIELDS:
+        rows.append(
+            (
+                f"Goals: {label}",
+                f"_[≥48 chars + cite a repo surface — {prompt}]_",
+            )
+        )
+    rows.extend(
+        (f"Mech: {label}", value)
+        for label, value in _mechanical_check_rows(check_payload)
+    )
     if work_performed:
-        sections.append("### Mechanical Checks")
-        sections.append("")
-        sections.append(_format_mechanical_checks_table(check_payload))
-        sections.append("")
-        sections.append("### Work Reflection  _(substantive — fill before sending)_")
-        sections.append("")
-        sections.append(_format_work_reflection_template_md())
-        sections.append("")
-    sections.append(GRID_STANDARD_METADATA_MARKER)
-    sections.append("")
-    sections.append(_format_standard_metadata_table())
-    sections.append("")
-    sections.append(GRID_FINAL_HANDOFF_MIRROR_MARKER)
-    sections.append("")
-    sections.append(_format_final_handoff_mirror_md())
-    sections.append("")
+        for label, prompt in WORK_REFLECTION_FIELDS:
+            rows.append((f"Work: {label}", f"_[{prompt}]_"))
+    rows.extend(
+        (f"Std: {label}", placeholder)
+        for label, placeholder in STANDARD_METADATA_FIELDS
+    )
+    rows.extend(
+        (f"Mirror: {label}", placeholder)
+        for label, placeholder in FINAL_HANDOFF_MIRROR_FIELDS
+    )
     if _dogfood_active():
-        sections.append("### Dogfood Signal  _(dogfood mode active; fill before sending)_")
-        sections.append("")
-        sections.append(_format_dogfood_signal_md())
-        sections.append("")
-    sections.append(GRID_VERDICT_MARKER)
-    sections.append("")
-    sections.append(_format_verdict(check_payload))
-    return "\n".join(sections)
+        rows.extend(
+            (f"Dogfood: {label}", placeholder)
+            for label, placeholder in _dogfood_signal_rows()
+        )
+    rows.append(("Verdict", _format_verdict(check_payload)))
+    return "\n\n".join([GRID_HEADER_MARKER, _grid_table(rows)])
 
 
 def cmd_grid() -> int:

@@ -1,22 +1,23 @@
 #!/usr/bin/env python3
 """Claude Code Stop hook that enforces the Cortex Repo Hygiene Grid.
 
-The grid is the single closure artifact for every chat: all
-closure / handoff material must live inside the
-``## Cortex Repo Hygiene Grid`` markdown block. The hook is the
-chat-boundary mechanical gate that prevents an agent from stopping
-the turn without producing canonical grid output with all required
-sections filled.
+The grid is the single closure artifact for every chat: all closure /
+handoff material must live inside one markdown table under the
+``## Cortex Repo Hygiene Grid`` header. The hook is the chat-boundary
+mechanical gate that prevents an agent from stopping the turn without
+producing canonical grid output with all required rows filled.
 
 Hook behavior (mechanical gates, in order):
 
 1. Read the assistant's most recent message from the transcript JSONL.
 2. Run ``grid`` itself to obtain the canonical markdown for injection
    into block reasons.
-3. Check the assistant message for the five canonical signature
-   markers: ``## Cortex Repo Hygiene Grid``, ``### State``,
-   ``### Standard Metadata``, ``### Final Handoff Mirror``,
-   ``### Verdict``. Missing any → block.
+3. Check the assistant message for the canonical one-table shape:
+   ``## Cortex Repo Hygiene Grid``, exactly one ``| Field | Value |``
+   table header, exactly one ``|---|---|`` separator, no ``###``
+   subsections inside the grid, and required row labels such as
+   ``State: Branch``, ``Std: Ending branch``, ``Mirror: Fixed now``,
+   and ``Verdict``. Missing any → block.
 4. Check that closure-shaped substrings (``Ending branch``,
    ``Verification summary``, ``Fixed now``, ``Claim earned now``,
    ``Status registry touched``, ``Final Handoff Mirror``) appear
@@ -25,7 +26,7 @@ Hook behavior (mechanical gates, in order):
 5. Check that each Goals Analysis bracketed prompt has been replaced
    per-field. Any field whose body still contains the literal
    ``≥48 chars + cite a repo surface —`` template substring → block.
-6. Check that Standard Metadata and Final Handoff Mirror fields have
+6. Check that Standard Metadata and Final Handoff Mirror rows have
    been filled (no remaining ``<fill`` placeholder substrings) → block
    if any unfilled.
 7. Run ``reflection-check --json`` for the verdict. Verdict ``FAIL``
@@ -65,21 +66,21 @@ import sys
 from pathlib import Path
 
 # Signature markers — MUST match internal/workflow/repo_workflow.py
-# constants ``GRID_HEADER_MARKER``, ``GRID_STATE_MARKER``,
-# ``GRID_STANDARD_METADATA_MARKER``, ``GRID_FINAL_HANDOFF_MIRROR_MARKER``,
-# ``GRID_VERDICT_MARKER``. Tests pin both sides byte-equal.
+# constants ``GRID_HEADER_MARKER``, ``GRID_TABLE_HEADER_MARKER``,
+# ``GRID_TABLE_SEPARATOR_MARKER``, ``GRID_FORBIDDEN_SECTION_MARKER``,
+# and ``REQUIRED_GRID_ROW_LABELS``. Tests pin both sides byte-equal.
 GRID_HEADER_MARKER = "## Cortex Repo Hygiene Grid"
-GRID_STATE_MARKER = "### State"
-GRID_STANDARD_METADATA_MARKER = "### Standard Metadata"
-GRID_FINAL_HANDOFF_MIRROR_MARKER = "### Final Handoff Mirror"
-GRID_VERDICT_MARKER = "### Verdict"
+GRID_TABLE_HEADER_MARKER = "| Field | Value |"
+GRID_TABLE_SEPARATOR_MARKER = "|---|---|"
+GRID_FORBIDDEN_SECTION_MARKER = "### "
 
-REQUIRED_MARKERS: tuple[str, ...] = (
-    GRID_HEADER_MARKER,
-    GRID_STATE_MARKER,
-    GRID_STANDARD_METADATA_MARKER,
-    GRID_FINAL_HANDOFF_MIRROR_MARKER,
-    GRID_VERDICT_MARKER,
+REQUIRED_GRID_ROW_LABELS: tuple[str, ...] = (
+    "State: Branch",
+    "Progress: bio_to_code matrix",
+    "Goals: Plan → implementation",
+    "Std: Ending branch",
+    "Mirror: Fixed now",
+    "Verdict",
 )
 
 # Substrings that, if they appear in the message BEFORE
@@ -178,8 +179,29 @@ def _content_to_text(content: object) -> str:
     return ""
 
 
-def _missing_required_markers(text: str) -> list[str]:
-    return [marker for marker in REQUIRED_MARKERS if marker not in text]
+def _grid_text(text: str) -> str | None:
+    grid_pos = text.find(GRID_HEADER_MARKER)
+    if grid_pos == -1:
+        return None
+    return text[grid_pos:]
+
+
+def _grid_shape_errors(text: str) -> list[str]:
+    """Return missing or forbidden one-table-grid shape elements."""
+    grid_text = _grid_text(text)
+    if grid_text is None:
+        return [GRID_HEADER_MARKER]
+    errors: list[str] = []
+    if f"\n{GRID_FORBIDDEN_SECTION_MARKER}" in grid_text:
+        errors.append("forbidden `###` subsection inside grid")
+    if grid_text.count(GRID_TABLE_HEADER_MARKER) != 1:
+        errors.append(f"expected exactly one `{GRID_TABLE_HEADER_MARKER}` table header")
+    if grid_text.count(GRID_TABLE_SEPARATOR_MARKER) != 1:
+        errors.append(f"expected exactly one `{GRID_TABLE_SEPARATOR_MARKER}` table separator")
+    for label in REQUIRED_GRID_ROW_LABELS:
+        if f"**{label}**" not in grid_text:
+            errors.append(f"missing row `{label}`")
+    return errors
 
 
 def _closure_leak_before_grid(text: str) -> list[str]:
@@ -194,31 +216,21 @@ def _closure_leak_before_grid(text: str) -> list[str]:
 def _unfilled_goals_analysis_fields(text: str) -> list[str]:
     """Return Goals Analysis field labels whose body still contains the template.
 
-    For each field, we look at the substring between
-    ``**{label}:**`` and the next ``\n\n`` boundary (or the next bold
-    label, whichever comes first). If that substring contains the
-    template token, the field is unfilled.
+    The one-table grid renders these rows as
+    ``| **Goals: {label}** | value |``. If the row is missing or the
+    value still contains the template token, the field is unfilled.
     """
     unfilled: list[str] = []
     for label in GOALS_ANALYSIS_FIELD_LABELS:
-        marker = f"**{label}:**"
-        idx = text.find(marker)
-        if idx == -1:
-            # Field label missing entirely — count as unfilled.
+        row_pattern = re.compile(
+            rf"^\| \*\*Goals: {re.escape(label)}\*\* \| (?P<body>.*?) \|$",
+            re.MULTILINE,
+        )
+        match = row_pattern.search(text)
+        if not match:
             unfilled.append(label)
             continue
-        body_start = idx + len(marker)
-        # Find the end of this field's body: next double-newline OR next
-        # bold-label OR next section header. Take the earliest.
-        candidates: list[int] = []
-        next_blank = text.find("\n\n", body_start)
-        if next_blank != -1:
-            candidates.append(next_blank)
-        next_section = text.find("\n###", body_start)
-        if next_section != -1:
-            candidates.append(next_section)
-        body_end = min(candidates) if candidates else len(text)
-        body = text[body_start:body_end]
+        body = match.group("body")
         if GOALS_ANALYSIS_TEMPLATE_TOKEN in body:
             unfilled.append(label)
     return unfilled
@@ -231,10 +243,9 @@ def _unfilled_metadata_or_mirror(text: str) -> bool:
     with the actual value in place. If any placeholder remains, the
     closure block was not filled.
     """
-    grid_pos = text.find(GRID_HEADER_MARKER)
-    if grid_pos == -1:
+    grid_text = _grid_text(text)
+    if grid_text is None:
         return True
-    grid_text = text[grid_pos:]
     return FILL_PLACEHOLDER_TOKEN in grid_text
 
 
@@ -318,18 +329,20 @@ def main() -> None:
         )
         return
 
-    # Gate 1: required signature markers must all be present.
-    missing = _missing_required_markers(last_text)
-    if missing:
+    # Gate 1: one-table grid shape must be present.
+    grid_shape_errors = _grid_shape_errors(last_text)
+    if grid_shape_errors:
         reason_parts = [
-            "Cortex hygiene grid output is incomplete in your last message.",
+            "Cortex hygiene grid output is not the required one-table shape.",
             "Per AGENTS.md `## Handoff`, every chat must end with the grid"
             " produced by"
             " `python3 internal/workflow/repo_workflow.py grid`,"
-            " with all required sections present and bracketed prompts"
-            " filled in place.",
+            " as exactly one markdown table under"
+            " `## Cortex Repo Hygiene Grid`. No `###` subsections are"
+            " allowed inside the grid.",
             "",
-            f"Missing required markers: {', '.join(missing)}",
+            "Shape errors:",
+            *(f"- {item}" for item in grid_shape_errors),
             "",
             "Canonical grid output for this turn:",
             "",
@@ -343,16 +356,17 @@ def main() -> None:
         reason_parts = [
             "Closure-shaped content appears outside the grid in your"
             " last message. All closure / handoff material must live"
-            " inside the single `## Cortex Repo Hygiene Grid` block at"
-            " the bottom of the response. Normal response prose may"
-            " precede the grid; closure content (Standard Metadata,"
-            " Final Handoff Mirror, etc.) may NOT.",
+            " inside the single table under"
+            " `## Cortex Repo Hygiene Grid` at the bottom of the"
+            " response. Normal response prose may precede the grid;"
+            " closure content (standard metadata, final mirror, etc.)"
+            " may NOT.",
             "",
             f"Closure markers detected before the grid header: {', '.join(leaks)}",
             "",
-            "Move that content into the grid's `### Standard Metadata`"
-            " and `### Final Handoff Mirror` sections (filling each"
-            " bracketed `<fill>` placeholder in place) and re-respond.",
+            "Move that content into the appropriate `Std:*` and"
+            " `Mirror:*` rows (filling each `<fill>` placeholder in"
+            " place) and re-respond.",
         ]
         _block("\n".join(reason_parts))
 
@@ -371,10 +385,10 @@ def main() -> None:
         ]
         _block("\n".join(reason_parts))
 
-    # Gate 4: Standard Metadata and Final Handoff Mirror fields filled.
+    # Gate 4: Standard Metadata and Final Handoff Mirror rows filled.
     if _unfilled_metadata_or_mirror(last_text):
         reason_parts = [
-            "Standard Metadata or Final Handoff Mirror has unfilled"
+            "Standard Metadata or Final Handoff Mirror rows have unfilled"
             " `<fill: ...>` placeholders. Replace each placeholder in"
             " place with the actual value (use `n/a` or"
             " `n/a (no work this turn)` where appropriate, but do not"
