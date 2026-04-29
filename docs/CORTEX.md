@@ -495,6 +495,15 @@ the filled final graph, and non-no-op Codex closeouts record that pass
 in `mission_reflection_graph`. This is session-boundary evidence, not
 chat-boundary parity.
 
+**Runtime-context bridge evaluation.** The feedback-window runtime
+context bridge has three pre-live eval artifacts under
+`docs/runtime_context/`: `EVAL_RUBRIC.md` operationalizes the
+baseline-vs-shaped scoring axes, `BASELINE_SHAPED_EXAMPLES.md` records
+the win/loss/neutral worked examples, and `CROSS_HOST_SKETCH.md` pins
+the Claude/Gemini placement sketch. These documents are eval artifacts,
+not mission authority; use them to judge whether `CORTEX_RUNTIME_CONTEXT_V1`
+earns model-visible output lift before making live claims.
+
 **No-mimicry rule.** Composing markdown that resembles grid content
 but is not actual `grid` command output is a violation. Ad-hoc
 audit-shaped markdown headers (e.g. an "Audit Findings" block, a

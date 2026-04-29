@@ -237,3 +237,6 @@ Workflow gates marked `required` are contractual gates checked by `repo_workflow
 - `docs/CORTEX_V2_AUX_2.md`
 - `docs/CORTEX_STATUS.md`
 - `docs/internal/REPO_WORKFLOW.md`
+- `docs/runtime_context/EVAL_RUBRIC.md`
+- `docs/runtime_context/BASELINE_SHAPED_EXAMPLES.md`
+- `docs/runtime_context/CROSS_HOST_SKETCH.md`
