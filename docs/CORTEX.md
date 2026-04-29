@@ -368,18 +368,21 @@ eventually wraps. They are doctrine, not product. They live under
 imported by `cortex/**`. Confusing the two is the next drift shape.
 
 **Per-turn enforcement: Cortex Mission Reflection.** The standard of
-care is enforced end-of-turn by the Cortex Repo Hygiene Grid produced
-by `python3 internal/workflow/repo_workflow.py grid`. The grid is the
-**single closure artifact** for every chat: one two-column markdown
-table under `## Cortex Repo Hygiene Grid`. Its purpose is not to recite
-static progress. It forces Cortex Mission Reflection: target executive
+care is enforced end-of-turn by the graph produced by
+`python3 internal/workflow/repo_workflow.py grid`. The command name
+stays `grid` for workflow compatibility, but the rendered artifact is
+the **single closure artifact** for every chat: one two-column markdown
+table under `## Cortex Mission Reflection`. Its purpose is not to recite
+static progress. It forces mission reflection: target executive
 function, boundary judgment, theory of improvement, model I/O path,
 plan-vs-actual reflection, quality judgment, iteration evidence,
 earned/not-earned evidence, next ownership move, compact closure
 metadata, and verdict. There are no subsection headings and no second
 table inside the grid. Normal response prose may precede the grid;
 nothing closure-shaped may appear before or after it. On verdict
-`FAIL` the agent continues working until the grid clears.
+`FAIL` the agent continues working until the graph clears. The verdict
+cell separates turn verdict from close-session eligibility so a clean
+no-closeout turn cannot imply it is publish-ready.
 
 **Workflow: paste the skeleton, fill brackets in place.** The agent
 runs `grid`, pastes the generated markdown skeleton, and edits the
@@ -398,7 +401,7 @@ stay inside the skeleton. No separate closure section follows the grid.
 `.claude/hooks/cortex_grid_stop_hook.py` on turn-completion. The hook
 reads the assistant's last message from the transcript, runs `grid`
 itself, and blocks the stop on (1) missing one-table shape
-(`## Cortex Repo Hygiene Grid`, exactly one `| Field | Value |`
+(`## Cortex Mission Reflection`, exactly one `| Field | Value |`
 header, exactly one `|---|---|` separator, required row labels, and
 no `###` subsections inside the grid), (2) closure-shaped substrings
 appearing before the grid header, (3) stale dashboard rows such as
@@ -408,9 +411,17 @@ mission-reflection row that is templated, too short, or uncited, (5)
 unfilled `Closure: Metadata`, or (6) `reflection-check` verdict
 `FAIL`. The hook does not short-circuit on `stop_hook_active` —
 persistent non-compliance keeps blocking. The hook fails open only on
-infrastructure failures (missing transcript, command crash). On Codex,
-the contract is doctrinal-only; the hard-gate enforcement is
-Claude-only and AGENTS.md compliance is the only mechanism.
+infrastructure failures (missing transcript, command crash). The hook
+and `grid-validate` both use `internal/workflow/mission_reflection.py`
+as the shared graph contract, so Claude and Codex are validating the
+same rows and thresholds.
+
+**Codex parity.** Codex does not support Stop hooks in this repo. Its
+fallback is validator + doctrine: the agent runs
+`python3 internal/workflow/repo_workflow.py grid-validate --stdin` on
+the filled final graph, and non-no-op Codex closeouts record that pass
+in `mission_reflection_graph`. This is honest session-boundary evidence,
+not a Claude-equivalent chat-boundary hard gate.
 
 **No-mimicry rule.** Composing markdown that resembles grid content
 but is not actual `grid` command output is a violation. Ad-hoc

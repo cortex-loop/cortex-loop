@@ -9,6 +9,7 @@ import re
 import shutil
 import subprocess
 import sys
+import tempfile
 from pathlib import Path
 
 ROOT_ENV_VAR = "CORTEX_REPO_WORKFLOW_ROOT"
@@ -17,6 +18,7 @@ if str(DEFAULT_ROOT) not in sys.path:
     sys.path.insert(0, str(DEFAULT_ROOT))
 
 from internal.closeout import contract as closeout_contract
+from internal.workflow import mission_reflection
 
 MANAGED_SESSION_AGENTS = ("codex", "claude", "maint")
 ALLOWED_SCOPES = ("repo", "docs", "kernel", "adapter", "pack", "eval", "tests", "build", "release")
@@ -1186,15 +1188,25 @@ def cmd_cleanup_report() -> int:
         failures["remote_review_heads"] = payload["remote_review_heads"]
 
     if not failures:
-        proc = subprocess.run(
-            ["make", "-C", "internal", "closeout-test"],
-            cwd=_root(),
-            check=False,
-            capture_output=True,
-            text=True,
+        readiness_commands = (
+            (["python3", "internal/truth/generate_status.py", "--check"], "status_doc_check"),
+            (["python3", "internal/truth/generate_cortex_doc.py", "--check"], "cortex_doc_check"),
+            (["python3", "internal/archive/generate_archive_index.py", "--check"], "archive_index_check"),
+            (["make", "-C", "internal", "closeout-test"], "closeout_test"),
         )
-        if proc.returncode != 0:
-            failures["closeout_test"] = (proc.stderr or proc.stdout).strip()
+        for command, label in readiness_commands:
+            proc = subprocess.run(
+                command,
+                cwd=_root(),
+                check=False,
+                capture_output=True,
+                text=True,
+            )
+            if proc.returncode != 0:
+                failures[label] = (proc.stderr or proc.stdout).strip()
+        hook_health = _hook_health_payload()
+        if not hook_health["ok"]:
+            failures["mission_reflection_hook_health"] = hook_health["failures"]
 
     report = {
         "ok": not failures,
@@ -1214,20 +1226,15 @@ def cmd_cleanup_report() -> int:
 
 
 # ---------------------------------------------------------------------------
-# Hygiene grid: status-snapshot, reflection-check, grid
+# Mission reflection graph: status-snapshot, reflection-check, grid
 # ---------------------------------------------------------------------------
 #
 # These commands implement the per-turn hygiene discipline described in
-# AGENTS.md `## Handoff` and docs/CORTEX.md §6. The grid surfaces the
-# repo state, the Cortex progress dashboard, and a substantive reflection
-# prompt at the end of every chat. When work has been performed in the
-# turn (tracked-file changes since session start), the grid additionally
-# surfaces mechanical checks (closeout schema, branch-slug match, etc.)
-# and a Loop Decision: any FAIL or unresolved gap blocks close-session.
-#
-# The substantive validators (handwave detection, minimum length) are
-# imported from internal.closeout.contract so the grid and the closeout
-# share one definition.
+# AGENTS.md `## Handoff` and docs/CORTEX.md §6. The `grid` command now
+# renders the shared Cortex Mission Reflection graph: repo state/gates,
+# mission reflection, evidence distinctions, next ownership, compact
+# closure metadata, and a turn verdict separate from close-session
+# eligibility.
 
 DRIFT_SIGNAL_STALE_NEXT_TRAIN_DAYS_WARN = 30
 DRIFT_SIGNAL_STALE_NEXT_TRAIN_DAYS_FAIL = 60
@@ -1666,156 +1673,16 @@ def cmd_reflection_check(emit_json: bool) -> int:
     return 0 if payload["verdict"] == "PASS" else (1 if payload["verdict"] == "FAIL" else 0)
 
 
-# Cortex Mission Reflection prompt structure. These rows replace the
-# stale dashboard-style progress rows and the weaker goals brief. Each
-# filled answer should be causal and grounded: what Cortex
-# mission goal this turn served, why the work was the right boundary,
-# how the implementation fit the theory, what evidence was actually
-# earned, and what remains forbidden.
-MISSION_REFLECTION_FIELDS: tuple[tuple[str, str], ...] = (
-    (
-        "Mission: Cortex target",
-        "which Cortex executive-function goal this turn served: continuity, focus, context adoption, brake, truthful closure, or capability-aware routing. Cite the mission surface.",
-    ),
-    (
-        "Mission: Boundary judgment",
-        "classify the turn as product Cortex, internal doctrine, lab/proof, monitor/scaffolding, or post-training territory, and justify why that boundary is correct.",
-    ),
-    (
-        "Mission: Theory of improvement",
-        "why this work should improve Cortex development or model behavior rather than merely changing repo machinery.",
-    ),
-    (
-        "Mission: Model I/O path",
-        "exact path to model input/output, or explicit 'none: internal/lab/governance only' with why that is acceptable.",
-    ),
-    (
-        "Reflection: Plan vs actual",
-        "planned intention mapped to realized implementation or analysis, with evidence from touched code/tests/docs when work happened.",
-    ),
-    (
-        "Reflection: Quality judgment",
-        "whether this was the best implementation, including tradeoffs and what would have made it better.",
-    ),
-    (
-        "Reflection: Iteration evidence",
-        "what failed, was caught, changed, or was corrected this turn; if nothing changed, explain why no iteration was needed.",
-    ),
-    (
-        "Evidence: Earned",
-        "structural or live evidence earned this turn, explicitly separating live-vs-structural claims.",
-    ),
-    (
-        "Evidence: Not earned / forbidden",
-        "claims still forbidden, especially model-output lift or product progress not actually earned.",
-    ),
-    (
-        "Decision: Next ownership move",
-        "continue, stop, split, revise, or return to product work, with reason.",
-    ),
-)
-
-
-def _format_verdict(check_payload: dict[str, object]) -> str:
-    verdict = check_payload.get("verdict")
-    failures = [str(f) for f in check_payload.get("failures", [])]
-    gaps = [str(g) for g in check_payload.get("gaps", [])]
-    if verdict == "FAIL":
-        items = "\n".join(f"- {item}" for item in (failures + gaps)[:10])
-        return (
-            "❌ **FAIL** — DO NOT close-session. Continue work on:\n\n"
-            + items
-        )
-    if verdict == "GAPS":
-        items = "\n".join(f"- {item}" for item in gaps[:10])
-        return (
-            "⚠️ **GAPS** — review; either resolve in this session or move "
-            "to `intentionally_deferred` with rationale:\n\n"
-            + items
-        )
-    return "✅ **PASS** — cleared for close-session."
-
-
-# Distinctive markdown signature lines used by the Stop hook to detect
-# whether the assistant's last message contained the canonical grid
-# output. The grid is literally one table under the header: no ``###``
-# subsections and no second table. Tests pin the hook's parallel
-# constants byte-equal so format drift between the grid and the gate is
-# structurally prevented.
-GRID_HEADER_MARKER = "## Cortex Repo Hygiene Grid"
-GRID_TABLE_HEADER_MARKER = "| Field | Value |"
-GRID_TABLE_SEPARATOR_MARKER = "|---|---|"
-GRID_FORBIDDEN_SECTION_MARKER = "### "
-
-REQUIRED_GRID_ROW_LABELS: tuple[str, ...] = (
-    "Repo: State",
-    "Repo: Gates",
-    "Mission: Cortex target",
-    "Mission: Boundary judgment",
-    "Mission: Model I/O path",
-    "Reflection: Quality judgment",
-    "Evidence: Earned",
-    "Evidence: Not earned / forbidden",
-    "Decision: Next ownership move",
-    "Closure: Metadata",
-    "Verdict",
-)
-
-# Closure markers — these substrings must appear ONLY inside the grid
-# block (after GRID_HEADER_MARKER). If they appear before the grid
-# header, the agent has emitted closure-shaped prose outside the
-# consolidated grid, which violates the "single grid contains all
-# closure" rule. The hook checks the prefix portion of the message
-# (text before GRID_HEADER_MARKER) for these substrings.
-CLOSURE_LEAK_MARKERS = (
-    "Ending branch",
-    "Verification summary",
-    "Fixed now",
-    "Claim earned now",
-    "Status registry touched",
-    "Closure: Metadata",
-)
-
-
-def _compact_repo_state(snapshot: dict[str, object]) -> str:
-    """Return branch/worktree/closeout/drift in one compact cell."""
-    closeout = snapshot["closeout"]
-    closeout_value = str(closeout.get("present"))
-    profile = closeout.get("profile")
-    if profile and closeout_value != "absent":
-        closeout_value = f"{closeout_value} ({profile})"
-    drift = snapshot.get("drift_signals", [])
-    drift_value = "none" if not drift else "; ".join(str(item) for item in drift)
-    return (
-        f"branch `{snapshot['branch']}`; vs origin/main +{snapshot['ahead']} / "
-        f"-{snapshot['behind']}; worktree {snapshot['worktree']}; "
-        f"closeout {closeout_value}; drift {drift_value}"
-    )
-
-
-def _compact_repo_gates(check_payload: dict[str, object]) -> str:
-    """Return reflection-check verdict plus failures/gaps when present."""
-    verdict = check_payload.get("verdict", "?")
-    failures = [str(f) for f in check_payload.get("failures", [])]
-    gaps = [str(g) for g in check_payload.get("gaps", [])]
-    parts = [f"reflection-check `{verdict}`"]
-    if failures:
-        parts.append("failures: " + "; ".join(failures[:5]))
-    if gaps:
-        parts.append("gaps: " + "; ".join(gaps[:5]))
-    if not failures and not gaps:
-        parts.append("failures/gaps none")
-    return "; ".join(parts)
-
-
-def _closure_metadata_template(snapshot: dict[str, object]) -> str:
-    """Return a compact metadata prompt for the agent to fill in place."""
-    return (
-        f"_[closure metadata — ending branch `{snapshot['branch']}`; commit hash "
-        "or `no commit`; verification summary; returned to main yes/no; "
-        "status registry touched keys or none; status doc regenerated yes/no; "
-        "CORTEX.md regenerated yes/no]_"
-    )
+# Re-export graph-contract constants from the shared module so existing
+# tests and callers can assert against repo_workflow.py while the hook
+# imports the same source of truth.
+MISSION_REFLECTION_FIELDS = mission_reflection.MISSION_REFLECTION_FIELDS
+GRID_HEADER_MARKER = mission_reflection.GRAPH_HEADER_MARKER
+GRID_TABLE_HEADER_MARKER = mission_reflection.TABLE_HEADER_MARKER
+GRID_TABLE_SEPARATOR_MARKER = mission_reflection.TABLE_SEPARATOR_MARKER
+GRID_FORBIDDEN_SECTION_MARKER = mission_reflection.FORBIDDEN_SECTION_MARKER
+REQUIRED_GRID_ROW_LABELS = mission_reflection.REQUIRED_GRAPH_ROW_LABELS
+CLOSURE_LEAK_MARKERS = mission_reflection.CLOSURE_LEAK_MARKERS
 
 
 def _dogfood_active() -> bool:
@@ -1837,85 +1704,18 @@ def _dogfood_active() -> bool:
     return payload.get("mode_status") in {"active", "refreshed"}
 
 
-def _format_dogfood_signal_md() -> str:
-    """Render the Dogfood Signal section template (only when dogfood active)."""
-    fields = (
-        ("continuity_helped", "yes|no"),
-        ("blocker_surfaced", "yes|no"),
-        ("uncertainty_or_brake_used", "yes|no"),
-        ("truthful_closure", "yes|no"),
-        ("cortex_changed_next_action", "yes|no"),
-        ("note", "<one sentence>"),
-    )
-    lines = ["| Field | Value |", "|---|---|"]
-    for label, placeholder in fields:
-        lines.append(f"| **`{label}`** | <fill: {placeholder}> |")
-    return "\n".join(lines)
-
-
-def _table_cell(value: object) -> str:
-    """Normalize a value for a single markdown table cell."""
-    text = str(value)
-    text = text.replace("\r\n", "\n").replace("\r", "\n")
-    text = text.replace("\n", "<br>")
-    return text.replace("|", "\\|")
-
-
-def _grid_table(rows: list[tuple[str, str]]) -> str:
-    lines = [GRID_TABLE_HEADER_MARKER, GRID_TABLE_SEPARATOR_MARKER]
-    for label, value in rows:
-        lines.append(f"| **{_table_cell(label)}** | {_table_cell(value)} |")
-    return "\n".join(lines)
-
-
-def _dogfood_signal_rows() -> list[tuple[str, str]]:
-    return [
-        ("continuity_helped", "<fill: yes|no>"),
-        ("blocker_surfaced", "<fill: yes|no>"),
-        ("uncertainty_or_brake_used", "<fill: yes|no>"),
-        ("truthful_closure", "<fill: yes|no>"),
-        ("cortex_changed_next_action", "<fill: yes|no>"),
-        ("note", "<fill: one sentence>"),
-    ]
-
-
 def _format_grid_markdown(
     snapshot: dict[str, object],
     check_payload: dict[str, object],
     work_performed: bool,
 ) -> str:
-    """Render the per-turn Cortex Repo Hygiene Grid as one table.
-
-    The grid is the **single closure artifact** for every chat: all
-    closure / handoff material lives as rows inside the one markdown
-    table under ``## Cortex Repo Hygiene Grid``. There are no ``###``
-    subsections and no additional tables inside the grid.
-
-    Row groups:
-    - ``Repo:*`` rows summarize mechanical state without stale dashboards.
-    - ``Mission:*``, ``Reflection:*``, ``Evidence:*``, and ``Decision:*``
-      rows force causal mission ownership and are filled in place.
-    - ``Closure: Metadata`` is the compact closure metadata row.
-    - ``Dogfood:*`` rows are emitted only when dogfood mode is active.
-    - ``Verdict`` always emitted.
-
-    Bracketed reflection prompts are filled in place by the agent. The
-    Stop hook rejects unmodified prompts, short or uncited mission rows,
-    stale ``Progress:*`` rows, ``<fill`` placeholders, and FAIL verdicts.
-    """
-    rows: list[tuple[str, str]] = []
-    rows.append(("Repo: State", _compact_repo_state(snapshot)))
-    rows.append(("Repo: Gates", _compact_repo_gates(check_payload)))
-    for label, prompt in MISSION_REFLECTION_FIELDS:
-        rows.append((label, f"_[mission reflection — {prompt}]_"))
-    rows.append(("Closure: Metadata", _closure_metadata_template(snapshot)))
-    if _dogfood_active():
-        rows.extend(
-            (f"Dogfood: {label}", placeholder)
-            for label, placeholder in _dogfood_signal_rows()
-        )
-    rows.append(("Verdict", _format_verdict(check_payload)))
-    return "\n\n".join([GRID_HEADER_MARKER, _grid_table(rows)])
+    """Render the shared Cortex Mission Reflection graph."""
+    _ = work_performed  # Shape is intentionally stable on no-work turns.
+    return mission_reflection.render_graph(
+        snapshot=snapshot,
+        check_payload=check_payload,
+        dogfood_active=_dogfood_active(),
+    )
 
 
 def cmd_grid() -> int:
@@ -1926,6 +1726,180 @@ def cmd_grid() -> int:
     check_payload = _reflection_check_payload()
     print(_format_grid_markdown(snapshot, check_payload, work_performed))
     return 0
+
+
+def _current_grid_for_validation() -> tuple[str, dict[str, object]]:
+    snapshot = _status_snapshot_payload()
+    check_payload = _reflection_check_payload()
+    return (
+        _format_grid_markdown(
+            snapshot,
+            check_payload,
+            bool(_branch_changed_paths(snapshot["branch"])),
+        ),
+        check_payload,
+    )
+
+
+def cmd_grid_validate(message_file: str | None, emit_json: bool) -> int:
+    """Validate a filled Cortex Mission Reflection graph.
+
+    Codex has no repo-visible Stop hook. This command is the shared
+    validator Codex can run against its final response before sending;
+    closeout doctrine records that limitation honestly rather than
+    pretending Codex has Claude's chat-boundary hard gate.
+    """
+    if message_file:
+        text = Path(message_file).read_text(encoding="utf-8")
+    else:
+        text = sys.stdin.read()
+    check_payload = _reflection_check_payload()
+    result = mission_reflection.validate_graph_text(
+        text,
+        check_payload=check_payload,
+        require_filled=True,
+    )
+    payload = {
+        "ok": result.ok,
+        "errors": list(result.errors),
+        "rows": sorted(result.rows),
+        "verdict": check_payload.get("verdict"),
+    }
+    if emit_json:
+        print(json.dumps(payload, indent=2, sort_keys=True))
+    elif result.ok:
+        print("Cortex Mission Reflection graph validates.")
+    else:
+        print("Cortex Mission Reflection graph validation failed:")
+        for error in result.errors:
+            print(f"- {error}")
+    return 0 if result.ok else 1
+
+
+def _claude_stop_hook_configured() -> tuple[bool, str]:
+    settings_path = _root() / ".claude" / "settings.json"
+    try:
+        settings = json.loads(settings_path.read_text(encoding="utf-8"))
+    except FileNotFoundError:
+        return False, ".claude/settings.json missing"
+    except json.JSONDecodeError as exc:
+        return False, f".claude/settings.json is invalid JSON: {exc}"
+    stop_hooks = settings.get("hooks", {}).get("Stop", [])
+    if not isinstance(stop_hooks, list):
+        return False, ".claude/settings.json hooks.Stop is not a list"
+    for entry in stop_hooks:
+        if not isinstance(entry, dict):
+            continue
+        hooks = entry.get("hooks", [])
+        if not isinstance(hooks, list):
+            continue
+        for hook in hooks:
+            if not isinstance(hook, dict):
+                continue
+            command = str(hook.get("command", ""))
+            if hook.get("type") == "command" and "cortex_grid_stop_hook.py" in command:
+                return True, command
+    return False, "Stop hook for cortex_grid_stop_hook.py not declared"
+
+
+def _run_stop_hook_with_transcript(text: str) -> tuple[int, str, str]:
+    hook_path = _root() / ".claude" / "hooks" / "cortex_grid_stop_hook.py"
+    transcript_entry = {
+        "type": "assistant",
+        "message": {"role": "assistant", "content": text},
+    }
+    with tempfile.NamedTemporaryFile("w", suffix=".jsonl", delete=False) as handle:
+        transcript_path = Path(handle.name)
+        handle.write(json.dumps(transcript_entry) + "\n")
+    try:
+        proc = subprocess.run(
+            [sys.executable, str(hook_path)],
+            cwd=_root(),
+            input=json.dumps(
+                {
+                    "transcript_path": str(transcript_path),
+                    "cwd": str(_root()),
+                    "stop_hook_active": False,
+                }
+            ),
+            check=False,
+            capture_output=True,
+            text=True,
+            timeout=180,
+        )
+        return proc.returncode, proc.stdout, proc.stderr
+    finally:
+        try:
+            transcript_path.unlink()
+        except OSError:
+            pass
+
+
+def _hook_health_payload() -> dict[str, object]:
+    configured, config_detail = _claude_stop_hook_configured()
+    graph, check_payload = _current_grid_for_validation()
+    filled_graph = mission_reflection.filled_example_graph(graph)
+    validator_result = mission_reflection.validate_graph_text(
+        filled_graph,
+        check_payload=check_payload,
+        require_filled=True,
+    )
+
+    failures: list[str] = []
+    if not configured:
+        failures.append(config_detail)
+    if not validator_result.ok:
+        failures.append(
+            "shared graph validator rejects filled example: "
+            + "; ".join(validator_result.errors)
+        )
+
+    bad_code, bad_stdout, bad_stderr = _run_stop_hook_with_transcript(
+        "Plain assistant message without the mission graph."
+    )
+    if bad_code != 0:
+        failures.append(f"Stop hook returned non-zero on bad transcript: {bad_code}")
+    else:
+        try:
+            bad_payload = json.loads(bad_stdout)
+        except json.JSONDecodeError:
+            bad_payload = {}
+        if bad_payload.get("decision") != "block":
+            failures.append(
+                "Stop hook did not block known-bad transcript"
+                + (f"; stderr={bad_stderr.strip()}" if bad_stderr.strip() else "")
+            )
+
+    good_code, good_stdout, good_stderr = _run_stop_hook_with_transcript(filled_graph)
+    if good_code != 0:
+        failures.append(f"Stop hook returned non-zero on valid transcript: {good_code}")
+    if good_stdout.strip():
+        failures.append("Stop hook blocked filled valid graph")
+    if good_stderr.strip():
+        failures.append(f"Stop hook emitted stderr on valid graph: {good_stderr.strip()}")
+
+    return {
+        "ok": not failures,
+        "failures": failures,
+        "settings": config_detail,
+        "codex_grid_validate_available": True,
+        "shared_validator_ok": validator_result.ok,
+        "known_bad_blocks": not bad_stdout.strip() == "",
+        "filled_graph_allows_stop": not good_stdout.strip(),
+    }
+
+
+def cmd_hook_health(emit_json: bool) -> int:
+    payload = _hook_health_payload()
+    if emit_json:
+        print(json.dumps(payload, indent=2, sort_keys=True))
+    elif payload["ok"]:
+        print("Cortex Mission Reflection hook health PASS")
+    else:
+        print("Cortex Mission Reflection hook health FAIL")
+        for failure in payload["failures"]:
+            print(f"- {failure}")
+    return 0 if payload["ok"] else 1
 
 
 def cmd_preserve_worktree(slug: str | None) -> int:
@@ -2083,12 +2057,39 @@ def main(argv: list[str] | None = None) -> int:
     subparsers.add_parser(
         "grid",
         help=(
-            "Compose the per-turn Cortex Repo Hygiene Grid: state "
-            "snapshot, Cortex progress dashboard, goals-analysis prompt, "
-            "and (when work has been performed in the session) the "
-            "mechanical reflection-check + work-reflection prompts + "
-            "loop decision. Run before final handoff every chat."
+            "Compose the per-turn Cortex Mission Reflection graph: one "
+            "two-column table with repo state/gates, mission reflection, "
+            "closure metadata, and turn verdict. Run before final handoff "
+            "every chat."
         ),
+    )
+    validate_grid_parser = subparsers.add_parser(
+        "grid-validate",
+        help=(
+            "Validate a filled Cortex Mission Reflection graph from stdin "
+            "or --message-file. Used by Codex as the honest no-hook parity "
+            "check before emitting final closure."
+        ),
+    )
+    validate_grid_parser.add_argument("--message-file")
+    validate_grid_parser.add_argument(
+        "--json",
+        action="store_true",
+        dest="grid_validate_json",
+        help="Emit JSON instead of human-readable text.",
+    )
+    hook_health_parser = subparsers.add_parser(
+        "hook-health",
+        help=(
+            "Verify the shared graph validator and Claude Code Stop hook "
+            "configuration by simulating known-bad and valid transcripts."
+        ),
+    )
+    hook_health_parser.add_argument(
+        "--json",
+        action="store_true",
+        dest="hook_health_json",
+        help="Emit JSON instead of human-readable text.",
     )
 
     args = parser.parse_args(argv)
@@ -2119,6 +2120,10 @@ def main(argv: list[str] | None = None) -> int:
         return cmd_reflection_check(args.reflection_json)
     if args.command == "grid":
         return cmd_grid()
+    if args.command == "grid-validate":
+        return cmd_grid_validate(args.message_file, args.grid_validate_json)
+    if args.command == "hook-health":
+        return cmd_hook_health(args.hook_health_json)
     raise SystemExit(f"Unhandled command: {args.command}")
 
 

@@ -203,29 +203,19 @@ When dogfood mode is active, keep the normal repo workflow and handoff
 unchanged. Treat every dogfood artifact as current-worktree
 `lab` / `watchlist` evidence. For routine checkpointing use
 `python3 internal/workflow/repo_workflow.py close-session --message "scope: end-state summary"`
-and append `DOGFOOD_SIGNAL` after the normal handoff; use `--publish` only
-when explicitly requested. For a full dogfood closeout, run
-`python3 -m lab.codex_dogfood_session close` and persist the handoff
-summary, verification summary, and the `DOGFOOD_SIGNAL`.
-
-Append this exact block after the normal final handoff:
-
-`DOGFOOD_SIGNAL`
-`continuity_helped: yes|no`
-`blocker_surfaced: yes|no`
-`uncertainty_or_brake_used: yes|no`
-`truthful_closure: yes|no`
-`cortex_changed_next_action: yes|no`
-`note: <one sentence>`
+and fill the optional `Dogfood:*` rows that `grid` emits; use `--publish`
+only when explicitly requested. For a full dogfood closeout, run
+`python3 -m lab.codex_dogfood_session close` and persist the handoff,
+verification, and dogfood signal values inside Cortex Mission Reflection.
 
 Kill rule: cut the mode if two dogfood sessions in a row fail to change a
 concrete design or implementation decision beyond the normal workflow.
 
 ## Handoff
 
-**Cortex Mission Reflection.** Every chat ends with the Cortex Repo
-Hygiene Grid as the single closure artifact, but the point of the grid
-is mission reflection, not status recitation. The agent must prove it
+**Cortex Mission Reflection.** Every chat ends with Cortex Mission
+Reflection as the single closure artifact. The point is mission
+reflection, not status recitation. The agent must prove it
 understands Cortex as a post-training executive-function layer and is
 judging whether the turn advanced that mission. Normal response prose
 may precede the grid; nothing closure-shaped may follow it or appear
@@ -238,7 +228,7 @@ python3 internal/workflow/repo_workflow.py grid
 ```
 
 It renders as exactly one two-column markdown table under the
-`## Cortex Repo Hygiene Grid` header. Required rows:
+`## Cortex Mission Reflection` header. Required rows:
 
 - `Repo: State` — branch, worktree, closeout, drift in one compact cell.
 - `Repo: Gates` — `reflection-check` verdict; failures/gaps only when present.
@@ -274,7 +264,7 @@ verification, returned-to-main, and registry/doc-regeneration facts.
 Do not paste a verbatim skeleton with brackets remaining; do not write
 a separate closure section outside the grid.
 
-**No-mimicry rule.** Composing markdown that resembles grid content
+**No-mimicry rule.** Composing markdown that resembles graph content
 but is not actual `grid` command output is a violation. The skeleton
 is verbatim from the command; the agent's edits stay inside the
 skeleton. Ad-hoc audit-shaped markdown headers (e.g. an "Audit
@@ -287,10 +277,10 @@ on turn-completion. The hook reads the assistant's most recent message
 from the transcript JSONL, runs `grid` itself, and blocks the stop
 when any of the following hold:
 
-1. Required one-table shape missing: `## Cortex Repo Hygiene Grid`,
+1. Required one-table shape missing: `## Cortex Mission Reflection`,
    exactly one `| Field | Value |` table header, exactly one
    `|---|---|` separator, no `###` subsection inside the grid, and
-   required mission-reflection row labels.
+   all required mission-reflection row labels.
 2. Closure-shaped substrings (`Ending branch`, `Verification summary`,
    `Fixed now`, `Claim earned now`, `Status registry touched`,
    `Closure: Metadata`) appear in prose **before** the grid header.
@@ -314,22 +304,33 @@ missing transcript, malformed hook input, or `grid` /
 the assistant message; the agent must paste; the hook validates the
 paste happened correctly.
 
-**Codex parity (doctrinal-only).** Codex does not support Stop hooks.
-On Codex, the entire contract is doctrinal: the agent runs `grid`,
-edits the skeleton in place, and pastes it as the single closure
-artifact. The hard-gate enforcement is Claude-only; Codex compliance
-relies on AGENTS.md adherence and the visual distinctiveness of the
-markdown table format.
+**Codex parity (validator + doctrine, not chat-boundary hard gate).**
+Codex does not support Stop hooks. On Codex, the agent runs `grid`,
+edits the skeleton in place, validates the final response graph with
+`python3 internal/workflow/repo_workflow.py grid-validate --stdin`, and
+pastes that same graph as the single closure artifact. Non-no-op Codex
+closeouts must record the validator pass in `mission_reflection_graph`.
+This is session-boundary evidence, not a Claude-equivalent chat-boundary
+hard gate.
 
-**Grid auto-loop rule.** On verdict `FAIL` (any mechanical gate
+**Hook health / seamless handoff readiness.** Before product work after
+doctrine changes, run `python3 internal/workflow/repo_workflow.py
+hook-health` and `python3 internal/workflow/repo_workflow.py
+cleanup-report`. Product work should not start while hook health fails
+or cleanup-report shows dangling worktrees, dirty main, unsynced main,
+doc-generation drift, or missing graph validation.
+
+**Grid auto-loop rule.** On turn verdict `FAIL` (any mechanical gate
 failed) or unresolved gaps that cannot be moved to
 `intentionally_deferred` with rationale, the agent MUST continue
 working in the same chat until the grid clears. Do not close-session,
-finalize, or publish on `FAIL`. Handwave answers (e.g. "fine", "looks
-good", "no issues") are rejected by `reflection-check`'s
-substantive-content rule on close-session; the Stop hook raises the
-per-turn floor by requiring mission-aware, cited, 120-character row
-answers before Claude Code can stop.
+finalize, or publish on `FAIL`. The `Verdict` row separates turn verdict
+from close-session eligibility; a no-closeout turn can pass without
+claiming it is eligible to close-session. Handwave answers (e.g.
+"fine", "looks good", "no issues") are rejected by
+`reflection-check`'s substantive-content rule on close-session; the
+Stop hook raises the per-turn floor by requiring mission-aware, cited,
+120-character row answers before Claude Code can stop.
 
 ## Anti-Drift
 

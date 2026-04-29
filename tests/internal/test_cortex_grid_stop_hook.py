@@ -1,8 +1,8 @@
 """Tests for the Cortex Mission Reflection Stop hook.
 
 The hook lives at ``.claude/hooks/cortex_grid_stop_hook.py`` and is the
-Claude Code chat-boundary gate for the per-turn Cortex Repo Hygiene Grid.
-The grid is one markdown table, but its semantic job is not status
+Claude Code chat-boundary gate for the per-turn Cortex Mission Reflection.
+The graph is one markdown table, but its semantic job is not status
 recitation: it must force grounded Cortex Mission Reflection.
 """
 
@@ -105,8 +105,9 @@ def test_hook_blocks_when_message_missing_grid_header(tmp_path: Path) -> None:
     assert returncode == 0
     payload = json.loads(stdout)
     assert payload["decision"] == "block"
-    assert "one-table shape" in payload["reason"].lower()
-    assert "## Cortex Repo Hygiene Grid" in payload["reason"]
+    assert "shared graph validator" in payload["reason"].lower()
+    assert "missing graph header" in payload["reason"]
+    assert "## Cortex Mission Reflection" in payload["reason"]
 
 
 def test_hook_blocks_when_required_mission_row_missing(tmp_path: Path) -> None:
@@ -173,7 +174,7 @@ def test_hook_blocks_when_closure_marker_appears_before_grid(tmp_path: Path) -> 
     assert returncode == 0
     payload = json.loads(stdout)
     assert payload["decision"] == "block"
-    assert "outside the grid" in payload["reason"].lower() or "before the grid" in payload["reason"].lower()
+    assert "closure-shaped content before graph header" in payload["reason"].lower()
 
 
 def test_hook_blocks_when_one_mission_reflection_row_unfilled(tmp_path: Path) -> None:
@@ -236,7 +237,7 @@ def test_hook_blocks_when_closure_metadata_unfilled(tmp_path: Path) -> None:
     assert returncode == 0
     payload = json.loads(stdout)
     assert payload["decision"] == "block"
-    assert "Closure metadata" in payload["reason"]
+    assert "Closure: Metadata" in payload["reason"]
 
 
 def test_hook_allows_stop_when_all_gates_pass(tmp_path: Path) -> None:
@@ -281,18 +282,6 @@ def test_hook_fails_open_when_hook_input_missing_transcript_field() -> None:
 
 
 def test_hook_signature_markers_match_repo_workflow_constants() -> None:
-    text = HOOK_SCRIPT.read_text(encoding="utf-8")
-    constants = {}
-    for name in (
-        "GRID_HEADER_MARKER",
-        "GRID_TABLE_HEADER_MARKER",
-        "GRID_TABLE_SEPARATOR_MARKER",
-        "GRID_FORBIDDEN_SECTION_MARKER",
-    ):
-        match = re.search(rf'{name}\s*=\s*"([^"]+)"', text)
-        assert match, f"hook script missing constant {name}"
-        constants[name] = match.group(1)
-
     sys.path.insert(0, str(REPO_ROOT / "internal" / "workflow"))
     try:
         import importlib.util
@@ -307,19 +296,10 @@ def test_hook_signature_markers_match_repo_workflow_constants() -> None:
     finally:
         sys.path.remove(str(REPO_ROOT / "internal" / "workflow"))
 
-    for name, hook_value in constants.items():
-        assert hook_value == getattr(module, name), (
-            f"{name} differs between hook and repo_workflow"
-        )
-
-    labels_match = re.search(
-        r"REQUIRED_GRID_ROW_LABELS: tuple\[str, \.\.\.\] = \((.*?)\)",
-        text,
-        re.DOTALL,
-    )
-    assert labels_match, "hook script missing REQUIRED_GRID_ROW_LABELS"
-    hook_labels = re.findall(r'"([^"]+)"', labels_match.group(1))
-    assert tuple(hook_labels) == module.REQUIRED_GRID_ROW_LABELS
+    hook_text = HOOK_SCRIPT.read_text(encoding="utf-8")
+    assert "from internal.workflow import mission_reflection" in hook_text
+    assert module.GRID_HEADER_MARKER == "## Cortex Mission Reflection"
+    assert module.REQUIRED_GRID_ROW_LABELS == module.mission_reflection.REQUIRED_GRAPH_ROW_LABELS
 
 
 def test_settings_json_declares_stop_hook() -> None:
@@ -334,3 +314,19 @@ def test_settings_json_declares_stop_hook() -> None:
             if hook.get("type") == "command" and "cortex_grid_stop_hook" in hook.get("command", ""):
                 found_grid_hook = True
     assert found_grid_hook
+
+
+def test_repo_workflow_hook_health_command_passes() -> None:
+    proc = subprocess.run(
+        [sys.executable, "internal/workflow/repo_workflow.py", "hook-health", "--json"],
+        cwd=str(REPO_ROOT),
+        check=True,
+        capture_output=True,
+        text=True,
+        timeout=180,
+    )
+    payload = json.loads(proc.stdout)
+    assert payload["ok"] is True
+    assert payload["codex_grid_validate_available"] is True
+    assert payload["known_bad_blocks"] is True
+    assert payload["filled_graph_allows_stop"] is True

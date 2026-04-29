@@ -162,11 +162,10 @@ freshness (`>=30d` warn, `>=60d` fail); and a hardcoded-fixture-timestamp
 grep on changed test files (warn unless the fixture is the explicit
 stale `2000-01-01` form).
 
-Compose the per-turn Cortex Repo Hygiene Grid (the **single closure
+Compose the per-turn Cortex Mission Reflection graph (the **single closure
 artifact** for every chat — all closure / handoff material lives in
-one two-column markdown table under `## Cortex Repo Hygiene Grid`).
-The artifact is Cortex Mission Reflection, not a static progress
-dashboard:
+one two-column markdown table under `## Cortex Mission Reflection`).
+The command name remains `grid` for workflow compatibility:
 
 ```bash
 python internal/workflow/repo_workflow.py grid
@@ -174,7 +173,7 @@ python internal/workflow/repo_workflow.py grid
 
 Required shape:
 
-- `## Cortex Repo Hygiene Grid` header
+- `## Cortex Mission Reflection` header
 - exactly one `| Field | Value |` table header
 - exactly one `|---|---|` separator
 - required rows: `Repo: State`, `Repo: Gates`, the
@@ -208,7 +207,7 @@ on turn-completion. The hook reads the assistant's last message from
 the transcript JSONL, runs `grid` itself, and blocks the stop on any
 of these gates:
 
-1. Missing required one-table shape: `## Cortex Repo Hygiene Grid`,
+1. Missing required one-table shape: `## Cortex Mission Reflection`,
    exactly one `| Field | Value |`, exactly one `|---|---|`,
    required mission-reflection row labels, and no `###` subsection
    inside the grid.
@@ -233,9 +232,27 @@ These fail-open paths exist to prevent infrastructure-caused
 conversation locks; they do not provide an escape from the gate when
 the agent could comply.
 
-**Codex parity (doctrinal-only).** Codex does not support Stop hooks.
-On Codex, the entire contract is doctrinal. The hard-gate enforcement
-is Claude-only.
+**Codex parity (validator + doctrine, not chat-boundary hard gate).**
+Codex does not support Stop hooks. On Codex, the agent validates the
+filled final graph with:
+
+```bash
+python internal/workflow/repo_workflow.py grid-validate --stdin
+```
+
+Non-no-op Codex closeouts must record this in
+`mission_reflection_graph`. This is session-boundary evidence, not a
+Claude-equivalent chat-boundary hard gate.
+
+Verify Claude Code hook wiring and shared graph validation with:
+
+```bash
+python internal/workflow/repo_workflow.py hook-health
+```
+
+`cleanup-report` includes docs coherence checks, closeout tests, hook
+health, Codex validator availability, clean synced `main`, and dangling
+worktree detection. Product work should not start while it fails.
 
 Scaffold the enforced closeout contract for the current branch:
 

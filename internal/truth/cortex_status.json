@@ -5,6 +5,7 @@
   },
   "bootstrap": [
     "AGENTS.md",
+    "docs/CORTEX.md",
     "docs/CORTEX_STATUS.md",
     "git branch --show-current",
     "git status --short --untracked-files=all"
