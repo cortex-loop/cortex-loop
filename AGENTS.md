@@ -223,33 +223,69 @@ concrete design or implementation decision beyond the normal workflow.
 
 ## Handoff
 
-Every chat ends with the Cortex Repo Hygiene Grid. The grid is produced
-unconditionally by:
+Every chat ends with the Cortex Repo Hygiene Grid pasted verbatim from:
 
 ```
 python3 internal/workflow/repo_workflow.py grid
 ```
 
-The grid auto-detects whether work was performed in the session
-(tracked-file changes since session start). When no work was performed,
-it emits the always-on blocks: state snapshot, Cortex progress
-dashboard, and goals-analysis prompts. When work was performed, it
-additionally emits the mechanical reflection-check verdict, the
-work-reflection prompts, and a Loop Decision.
+The grid renders as one consolidated markdown block (header `## Cortex
+Repo Hygiene Grid`; `### State` and `### Cortex Progress` tables;
+`### Goals Analysis` substantive prompts; `### Mechanical Checks` and
+`### Work Reflection` when work was performed; `### Verdict` line). The
+grid auto-detects whether work was performed and adapts its sections
+accordingly. The verdict reflects mechanical state from
+`reflection-check`, not the agent's self-report.
 
-**Grid auto-loop rule.** If the Loop Decision is `FAIL` (any mechanical
-gate failed) or has unresolved gaps that cannot be moved to
-`intentionally_deferred` with rationale, the agent MUST continue working
-in the same chat until the grid clears. Do not close-session, finalize,
-or publish on `FAIL`. The grid produces its verdict from mechanical
-state, not from an agent's self-report; this is the structural fix that
+**No-mimicry rule.** Composing markdown that resembles grid content but
+is not actual `grid` command output is a violation. The grid output is
+verbatim from the command — the agent runs the command, pastes the
+stdout, fills in the substantive prompt fields. Ad-hoc audit-shaped
+markdown headers (e.g. an "Audit Findings" or "Goals Analysis" block
+written from scratch) do not satisfy this contract even if their
+content is correct, because they bypass the mechanical state derivation
+that makes the verdict trustworthy.
+
+**Chat-boundary enforcement (Claude Code).** A Stop hook configured at
+`.claude/settings.json` runs `.claude/hooks/cortex_grid_stop_hook.py` on
+turn-completion. The hook:
+
+1. Reads the assistant's most recent message from the transcript JSONL.
+2. Runs `grid` itself to get the canonical markdown.
+3. Checks the assistant message for the three signature markers
+   (`## Cortex Repo Hygiene Grid`, `### State`, `### Verdict`).
+4. Checks that the Goals Analysis bracketed templates have been
+   replaced with substantive answers (template-only paste is rejected).
+5. Runs `reflection-check --json` for the verdict. On `FAIL`, blocks the
+   stop with the failures listed; on missing signature, blocks the stop
+   with the canonical grid markdown injected as the reason.
+
+When the hook blocks, Claude Code re-prompts the agent with the reason
+as feedback context; the agent must continue and produce another
+response that includes the grid. The conversation cannot end without
+compliance. Hooks cannot append to the assistant message — the agent
+pastes the grid; the hook validates that the paste happened.
+
+**Codex (no hooks).** Codex does not support Stop hooks. The contract
+is doctrinal: paste actual `grid` output verbatim. The visual format
+(markdown tables with specific row labels) makes mimicry obvious to
+the user reading the chat. AGENTS.md compliance is the only mechanism
+on Codex; the doctrine and the distinctive markdown structure are
+together the enforcement.
+
+**Grid auto-loop rule.** If the verdict is `FAIL` (any mechanical gate
+failed) or has unresolved gaps that cannot be moved to
+`intentionally_deferred` with rationale, the agent MUST continue
+working in the same chat until the grid clears. Do not close-session,
+finalize, or publish on `FAIL`. This is the structural fix that
 replaces the v1 self-rated handoff ritual.
 
-The grid's Goals Analysis section requires a substantive answer with at
-least one repo-surface citation (`docs/CORTEX.md`, a
-`cortex_status.json` field, a `cortex/**` path, a V2 packet section, a
-test file). Handwave answers (e.g. "fine", "looks good", "no issues")
-are rejected by `reflection-check`'s substantive-content rule.
+The grid's Goals Analysis section requires a substantive answer (each
+field ≥48 chars) with at least one repo-surface citation
+(`docs/CORTEX.md`, `internal/truth/cortex_status.json`, a `cortex/**`
+path, a V2 packet section, a test file). Handwave answers (e.g. "fine",
+"looks good", "no issues") are rejected by `reflection-check`'s
+substantive-content rule.
 
 Every final summary must include the grid output plus the standard
 metadata block:

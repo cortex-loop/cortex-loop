@@ -84,9 +84,11 @@ def test_agents_records_mission_lock_and_single_truth_bootstrap() -> None:
     assert all_agents == ["AGENTS.md"]
     # AGENTS.md grew when the Agent Briefing block was added (2026-04) to
     # replace the v1-era PHI-label decision loop and the PHILOSOPHY_AUDIT
-    # handoff ritual. The cap stays bounded so AGENTS.md does not sprawl
-    # into a wiki; the narrative now lives in docs/CORTEX.md.
-    assert len(lines) <= 360
+    # handoff ritual; it grew further when the Stop hook discipline and
+    # no-mimicry rule landed in §Handoff. The cap stays bounded so
+    # AGENTS.md does not sprawl into a wiki; the narrative lives in
+    # docs/CORTEX.md.
+    assert len(lines) <= 410
     assert sections == [
         "## Agent Briefing",
         "## Mission",
@@ -149,6 +151,15 @@ def test_agents_records_mission_lock_and_single_truth_bootstrap() -> None:
     assert "Grid auto-loop rule" in text
     assert "do not close-session" in text.lower() or "DO NOT close-session" in text
     assert "substantive" in text.lower()
+    # No-mimicry rule and Stop hook discipline — Session 3 additions.
+    assert "No-mimicry rule" in text
+    assert ".claude/hooks/cortex_grid_stop_hook.py" in text
+    assert ".claude/settings.json" in text
+    assert "## Cortex Repo Hygiene Grid" in text
+    assert "### State" in text
+    assert "### Verdict" in text
+    # Codex fallback acknowledged.
+    assert "Codex" in text and "no hooks" in text.lower()
     # Old retired doctrine names must not creep back.
     assert "CORTEX_V2_ACTIVE_WORKSTREAM" not in text
     assert "CORTEX_V2_PHASE_GATES_2" not in text
@@ -204,6 +215,10 @@ def test_cortex_doc_is_canonical_narrative_with_required_sections() -> None:
     # Connectivity discipline (closed-loop drift trap) is named.
     assert "closed-loop drift" in text
     assert "trace a path from the change" in text
+    # Per-turn enforcement (Session 3): Stop hook + markdown grid + no-mimicry rule.
+    assert "Stop hook" in text
+    assert "No-mimicry rule" in text
+    assert "Chat-boundary enforcement" in text
     # V1 → V2 lessons are carried.
     assert "lifecycle-first" in text.lower()
     assert "microkernel boundary" in text.lower() or "microkernel" in text.lower()

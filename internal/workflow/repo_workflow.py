@@ -1436,33 +1436,31 @@ def _status_snapshot_payload() -> dict[str, object]:
     }
 
 
-def _format_status_snapshot(payload: dict[str, object]) -> str:
-    lines = ["▌ STATE SNAPSHOT"]
-    lines.append(f"  branch          {payload['branch']}")
-    lines.append(
-        f"  vs origin/main  +{payload['ahead']} / -{payload['behind']}"
-    )
-    lines.append(f"  worktree        {payload['worktree']}")
+def _format_state_table(payload: dict[str, object]) -> str:
+    """Render the state snapshot as a 2-column markdown table."""
     closeout = payload["closeout"]
     profile = closeout.get("profile")
-    profile_text = f" ({profile})" if profile else ""
-    lines.append(f"  closeout        {closeout['present']}{profile_text}")
-    if payload.get("work_today_slug"):
-        lines.append(f"  work_today      {payload['work_today_slug']}")
-    if payload.get("next_train_slug"):
-        days = payload.get("next_train_reviewed_days_ago")
-        days_text = f" (reviewed {days}d ago)" if days is not None else ""
-        lines.append(
-            f"  next_train      {payload['next_train_slug']}{days_text}"
-        )
+    closeout_value = closeout["present"]
+    if profile and closeout_value != "absent":
+        closeout_value = f"{closeout_value} (`{profile}`)"
     drift = payload.get("drift_signals", [])
-    if drift:
-        lines.append("  drift signals   " + drift[0])
-        for signal in drift[1:]:
-            lines.append(f"                  {signal}")
-    else:
-        lines.append("  drift signals   none")
+    drift_value = "none" if not drift else "; ".join(drift)
+    rows = [
+        ("Branch", f"`{payload['branch']}`"),
+        ("vs origin/main", f"+{payload['ahead']} / -{payload['behind']}"),
+        ("Worktree", str(payload["worktree"])),
+        ("Closeout", closeout_value),
+        ("Drift signals", drift_value),
+    ]
+    lines = ["| Field | Value |", "|---|---|"]
+    for label, value in rows:
+        lines.append(f"| **{label}** | {value} |")
     return "\n".join(lines)
+
+
+def _format_status_snapshot_markdown(payload: dict[str, object]) -> str:
+    """Standalone markdown for status-snapshot command output."""
+    return "## Cortex Repo State\n\n" + _format_state_table(payload)
 
 
 def cmd_status_snapshot(emit_json: bool) -> int:
@@ -1470,7 +1468,7 @@ def cmd_status_snapshot(emit_json: bool) -> int:
     if emit_json:
         print(json.dumps(payload, indent=2, sort_keys=True))
     else:
-        print(_format_status_snapshot(payload))
+        print(_format_status_snapshot_markdown(payload))
     return 0
 
 
@@ -1584,23 +1582,73 @@ def _reflection_check_payload() -> dict[str, object]:
     }
 
 
-def _format_reflection_check(payload: dict[str, object]) -> str:
-    lines = ["▌ REFLECTION-CHECK"]
-    lines.append(f"  verdict         {payload['verdict']}")
-    failures = payload.get("failures", [])
-    gaps = payload.get("gaps", [])
+def _format_mechanical_checks_table(check_payload: dict[str, object]) -> str:
+    """Render the mechanical-gate results as a 2-column markdown table.
+
+    Each gate is named explicitly with its current status so the agent
+    cannot fabricate the table from memory; the entries are derived from
+    the failures/gaps lists in the reflection-check payload.
+    """
+    failures = [str(f) for f in check_payload.get("failures", [])]
+    gaps = [str(g) for g in check_payload.get("gaps", [])]
+    snapshot = check_payload.get("snapshot") or {}
+
+    def _gate(label: str, fail_keywords: tuple[str, ...], gap_keywords: tuple[str, ...] = ()) -> str:
+        if any(any(k in f.lower() for k in fail_keywords) for f in failures):
+            return "❌ fail — see failures list"
+        if gap_keywords and any(
+            any(k in g.lower() for k in gap_keywords) for g in gaps
+        ):
+            return "⚠️ gap — see gaps list"
+        return "✅"
+
+    days = snapshot.get("next_train_reviewed_days_ago") if isinstance(snapshot, dict) else None
+    if isinstance(days, int):
+        if any("next_product_train" in f for f in failures):
+            freshness = f"❌ {days}d (>= 60d fail)"
+        elif any("next_product_train" in g for g in gaps):
+            freshness = f"⚠️ {days}d (>= 30d warn)"
+        else:
+            freshness = f"✅ {days}d"
+    else:
+        freshness = "n/a"
+
+    rows = [
+        ("Closeout schema", _gate("Closeout schema", ("closeout",))),
+        ("`generate_status.py --check`", _gate("status check", ("generate_status",))),
+        ("`generate_cortex_doc.py --check`", _gate("cortex doc check", ("generate_cortex_doc",))),
+        ("`generate_archive_index.py --check`", _gate("archive index", ("generate_archive_index",))),
+        ("Bundling heuristic", _gate("Bundling", ("bundle", "surface group"), ("surface group",))),
+        ("`next_train` freshness", freshness),
+        ("Fixture timestamp drift", _gate("Fixtures", ("fixture",), ("fixture",))),
+    ]
+    lines = ["| Gate | Status |", "|---|---|"]
+    for label, status in rows:
+        lines.append(f"| {label} | {status} |")
     if failures:
-        lines.append(f"  failures ({len(failures)}):")
+        lines.append("")
+        lines.append("**Failures:**")
         for item in failures:
-            lines.append(f"    - {item}")
-    else:
-        lines.append("  failures        none")
+            lines.append(f"- {item}")
     if gaps:
-        lines.append(f"  gaps ({len(gaps)}):")
+        lines.append("")
+        lines.append("**Gaps:**")
         for item in gaps:
-            lines.append(f"    - {item}")
-    else:
-        lines.append("  gaps            none")
+            lines.append(f"- {item}")
+    return "\n".join(lines)
+
+
+def _format_reflection_check_markdown(payload: dict[str, object]) -> str:
+    """Standalone markdown for reflection-check command output."""
+    verdict = payload.get("verdict", "?")
+    emoji = {"PASS": "✅", "GAPS": "⚠️", "FAIL": "❌"}.get(str(verdict), "❔")
+    lines = [
+        "## Cortex Reflection-Check",
+        "",
+        f"**Verdict:** {emoji} `{verdict}`",
+        "",
+        _format_mechanical_checks_table(payload),
+    ]
     return "\n".join(lines)
 
 
@@ -1609,13 +1657,12 @@ def cmd_reflection_check(emit_json: bool) -> int:
     if emit_json:
         print(json.dumps(payload, indent=2, sort_keys=True))
     else:
-        print(_format_reflection_check(payload))
+        print(_format_reflection_check_markdown(payload))
     return 0 if payload["verdict"] == "PASS" else (1 if payload["verdict"] == "FAIL" else 0)
 
 
-def _cortex_progress_dashboard() -> str:
-    """Render the always-on Cortex progress block from registry truth."""
-    registry = _registry_payload() or {}
+def _format_progress_table(registry: dict[str, object]) -> str:
+    """Render the Cortex progress dashboard as a 2-column markdown table."""
     matrix = registry.get("bio_to_code_matrix") or []
     completion = registry.get("executive_completion") or {}
     hosts = registry.get("hosts") or []
@@ -1624,130 +1671,195 @@ def _cortex_progress_dashboard() -> str:
     next_train = registry.get("next_product_train") or {}
     research = registry.get("research_lines_under_evaluation") or []
     where_to_work = registry.get("where_to_work") or []
+
     landed = sum(1 for entry in matrix if entry.get("status") == "landed")
     weight_total = sum(int(entry.get("weight", 0)) for entry in matrix)
     threshold = completion.get("shippable_threshold_percent")
 
-    lines = ["▌ CORTEX PROGRESS DASHBOARD"]
-    lines.append(
-        f"  bio_to_code     {landed}/{len(matrix)} landed "
-        f"(weight total {weight_total}; shippable threshold {threshold}%)"
+    rows: list[tuple[str, str]] = []
+    rows.append(
+        (
+            "bio_to_code matrix",
+            f"{landed}/{len(matrix)} landed ({weight_total}/100; shippable threshold {threshold}%)",
+        )
     )
     if hosts:
-        host_summary = ", ".join(
-            f"{h.get('name', '?')}={h.get('conformance', '?')}" for h in hosts
+        conformant = sum(1 for h in hosts if h.get("conformance") == "conformant")
+        host_names = ", ".join(
+            f"`{h.get('name', '?')}`={h.get('conformance', '?')}" for h in hosts
         )
-        lines.append(f"  hosts           {host_summary}")
+        rows.append(("hosts", f"{conformant}/{len(hosts)} conformant ({host_names})"))
     if conformance:
-        lines.append(
-            f"  shipping        {conformance.get('shipping_default', '?')}"
-        )
+        rows.append(("shipping default", f"`{conformance.get('shipping_default', '?')}`"))
     work_today_slug = work_today.get("slug")
     if work_today_slug:
-        lines.append(f"  current train   {work_today_slug}")
+        rows.append(("current train", f"`{work_today_slug}`"))
     next_train_slug = next_train.get("slug")
     if next_train_slug:
         days = _next_train_freshness_days(registry)
-        days_text = f", reviewed {days}d ago" if days is not None else ""
-        lines.append(f"  next train      {next_train_slug}{days_text}")
-    lines.append(f"  research u/eval {len(research)}")
+        days_text = f" (reviewed {days}d ago)" if days is not None else ""
+        rows.append(("next train", f"`{next_train_slug}`{days_text}"))
+    rows.append(("research lines u/eval", str(len(research))))
     if where_to_work:
         first = where_to_work[0]
-        truncated = first if len(first) <= 100 else first[:97] + "..."
-        lines.append(f"  active leverage {truncated}")
+        truncated = first if len(first) <= 110 else first[:107] + "..."
+        rows.append(("active leverage", truncated))
+
+    lines = ["| Field | Value |", "|---|---|"]
+    for label, value in rows:
+        lines.append(f"| **{label}** | {value} |")
     return "\n".join(lines)
 
 
-def _goals_analysis_template() -> str:
-    return "\n".join(
-        [
-            "▌ GOALS ANALYSIS  (substantive — fill before sending; cite at least one repo surface)",
-            "  Where are we vs Cortex's underlying goals?",
-            "    [fill: 2–4 sentences citing CORTEX.md / cortex_status.json field / cortex/** path / V2 packet section]",
-            "  Highest-leverage gap or risk right now?",
-            "    [fill: specific, with evidence]",
-            "  Is the current train still the right move?",
-            "    [fill: confirm with reasoning, or flag for revision with reasoning]",
-        ]
+# Goals Analysis prompt structure. The five fields below replace the
+# v1 self-rated PHILOSOPHY_AUDIT block: each one demands substantive
+# answer that maps the session's plan to its implementation, names
+# specific iteration moments, declares forward-looking confidence, and
+# ties the work back to Cortex's underlying goals from `docs/CORTEX.md`
+# §1. Each filled answer must be ≥48 characters and must reference at
+# least one of `docs/CORTEX.md`, `internal/truth/cortex_status.json`,
+# `cortex/**`, `tests/**`, or `CORTEX_V2_*`. The substantive validator
+# (see `internal.closeout.contract.is_handwave_phrase`) catches
+# rubber-stamp answers; the citation regex catches ungrounded prose.
+GOALS_ANALYSIS_FIELDS: tuple[tuple[str, str], ...] = (
+    (
+        "Plan → implementation",
+        "what the plan said this turn would do, mapped to what the implementation actually delivered. Cite the surface that backs each claim.",
+    ),
+    (
+        "Quality assessment",
+        "was this the best possible implementation? Why? Cite the evidence that justifies your answer (or names what would change it).",
+    ),
+    (
+        "Iteration moments this session",
+        "specific points where you hit a gap and corrected. If none, say so with reasoning. No handwave.",
+    ),
+    (
+        "Forward-looking confidence",
+        "what does this change about future Cortex work, on what basis, and what would still need to land for full confidence?",
+    ),
+    (
+        "Tied to Cortex goals",
+        "how does this advance continuity / focused persistence / context adoption / brake / truthful closure / capability-aware routing per `docs/CORTEX.md` §1?",
+    ),
+)
+
+
+def _format_goals_analysis_template_md() -> str:
+    parts: list[str] = []
+    for label, prompt in GOALS_ANALYSIS_FIELDS:
+        parts.append(f"**{label}:** _[≥48 chars + cite a repo surface — {prompt}]_")
+    return "\n\n".join(parts)
+
+
+def _format_work_reflection_template_md() -> str:
+    fields = (
+        ("Smallness", "what was cut, what was kept, why"),
+        ("Mission alignment", "did this advance the shipped executive layer or unblock proof?"),
+        ("Cortex-specificity", "Cortex-specific or generic bloat / v1 carryover?"),
+        (
+            "Connectivity trace",
+            "change → file → host adapter → model output (or 'lab/experimental, no model reach')",
+        ),
+        ("Truth distinctions changed", "cortex / wiring / conformance / shipping — what moved"),
+        ("Hostile reviewer (engineer)", "one critique"),
+        ("Hostile reviewer (mathematician)", "one critique or n/a-with-reason"),
+        ("Hostile reviewer (neuroscientist)", "one critique or n/a-with-reason"),
+        ("Live vs structural", "what's earned by tests vs needs model run"),
+        (
+            "Anti-drift sweep",
+            "branch slug, audit landed, research classified, fixtures, postmortem patterns",
+        ),
     )
+    return "\n\n".join(f"**{label}:** _[{prompt}]_" for label, prompt in fields)
 
 
-def _work_reflection_template() -> str:
-    return "\n".join(
-        [
-            "▌ WORK REFLECTION  (substantive — fill before sending)",
-            "  Smallness                  [fill: what was cut, what was kept, why]",
-            "  Mission alignment          [fill: did this advance the shipped executive layer or unblock proof?]",
-            "  Cortex-specificity         [fill: Cortex-specific or generic bloat / v1 carryover?]",
-            "  Connectivity trace         [fill: change → file → host adapter → model output (or 'monitoring/instrumentation, surface=lab/experimental')]",
-            "  Truth distinctions changed [fill: cortex / wiring / conformance / shipping — what moved]",
-            "  Hostile reviewer (eng)     [fill: one critique]",
-            "  Hostile reviewer (math)    [fill: one critique or n/a-with-reason]",
-            "  Hostile reviewer (neuro)   [fill: one critique or n/a-with-reason]",
-            "  Live vs structural         [fill: what's earned by tests vs needs model run]",
-            "  Anti-drift sweep           [fill: branch slug, audit landed, research classified, fixtures, postmortem patterns]",
-        ]
-    )
-
-
-def _format_loop_decision(check_payload: dict[str, object]) -> str:
-    verdict = check_payload["verdict"]
-    failures = check_payload.get("failures", [])
-    gaps = check_payload.get("gaps", [])
-    lines = ["▌ LOOP DECISION"]
+def _format_verdict(check_payload: dict[str, object]) -> str:
+    verdict = check_payload.get("verdict")
+    failures = [str(f) for f in check_payload.get("failures", [])]
+    gaps = [str(g) for g in check_payload.get("gaps", [])]
     if verdict == "FAIL":
-        lines.append("  verdict                       FAIL")
-        lines.append(f"  failures: {len(failures)}; gaps: {len(gaps)}")
-        lines.append("  → CONTINUING WORK on:")
-        for item in (failures + gaps)[:8]:
-            lines.append(f"    - {item}")
-        lines.append("  → DO NOT close-session")
-    elif verdict == "GAPS":
-        lines.append("  verdict                       GAPS")
-        lines.append(f"  failures: 0; gaps: {len(gaps)}")
-        lines.append("  → review and either resolve or move to intentionally_deferred:")
-        for item in gaps[:8]:
-            lines.append(f"    - {item}")
-    else:
-        lines.append("  verdict                       PASS")
-        lines.append("  → CLEARED for close-session")
-    return "\n".join(lines)
+        items = "\n".join(f"- {item}" for item in (failures + gaps)[:10])
+        return (
+            "❌ **FAIL** — DO NOT close-session. Continue work on:\n\n"
+            + items
+        )
+    if verdict == "GAPS":
+        items = "\n".join(f"- {item}" for item in gaps[:10])
+        return (
+            "⚠️ **GAPS** — review; either resolve in this session or move "
+            "to `intentionally_deferred` with rationale:\n\n"
+            + items
+        )
+    return "✅ **PASS** — cleared for close-session."
+
+
+# Distinctive markdown signature lines used by the Stop hook to detect
+# whether the assistant's last message contained the canonical grid
+# output. The hook checks for all three; missing any → block the stop
+# with the canonical grid markdown injected as the reason. Keep these
+# stable; tests pin the exact strings.
+GRID_HEADER_MARKER = "## Cortex Repo Hygiene Grid"
+GRID_STATE_MARKER = "### State"
+GRID_VERDICT_MARKER = "### Verdict"
+
+
+def _format_grid_markdown(
+    snapshot: dict[str, object],
+    check_payload: dict[str, object],
+    work_performed: bool,
+) -> str:
+    """Render the per-turn Cortex Repo Hygiene Grid as one markdown block.
+
+    Always-present sections: ``## Cortex Repo Hygiene Grid`` header,
+    ``### State`` table, ``### Cortex Progress`` table, ``### Goals
+    Analysis`` prompts, ``### Verdict`` line. When the session has
+    performed work (tracked-file changes since session start), the grid
+    additionally renders ``### Mechanical Checks`` and ``### Work
+    Reflection`` sections. The verdict reflects ``reflection-check``
+    output even on no-work turns so drift signals (stale next_train,
+    dirty main, dangling closeout) still surface.
+    """
+    registry = _registry_payload() or {}
+    sections: list[str] = []
+    sections.append(GRID_HEADER_MARKER)
+    sections.append("")
+    sections.append(GRID_STATE_MARKER)
+    sections.append("")
+    sections.append(_format_state_table(snapshot))
+    sections.append("")
+    sections.append("### Cortex Progress")
+    sections.append("")
+    sections.append(_format_progress_table(registry))
+    sections.append("")
+    sections.append(
+        "### Goals Analysis  _(substantive — fill each field ≥48 chars; cite at least one of `docs/CORTEX.md` / `internal/truth/cortex_status.json` / `cortex/**` / `tests/**` / `CORTEX_V2_*`)_"
+    )
+    sections.append("")
+    sections.append(_format_goals_analysis_template_md())
+    sections.append("")
+    if work_performed:
+        sections.append("### Mechanical Checks")
+        sections.append("")
+        sections.append(_format_mechanical_checks_table(check_payload))
+        sections.append("")
+        sections.append("### Work Reflection  _(substantive — fill before sending)_")
+        sections.append("")
+        sections.append(_format_work_reflection_template_md())
+        sections.append("")
+    sections.append(GRID_VERDICT_MARKER)
+    sections.append("")
+    sections.append(_format_verdict(check_payload))
+    return "\n".join(sections)
 
 
 def cmd_grid() -> int:
     snapshot = _status_snapshot_payload()
-    snapshot_block = _format_status_snapshot(snapshot)
-    dashboard_block = _cortex_progress_dashboard()
-    goals_block = _goals_analysis_template()
-
     work_performed = bool(_branch_changed_paths(snapshot["branch"]))
-    blocks = [
-        "═══════════════════════════════════════════════════════════════════",
-        "  CORTEX REPO HYGIENE GRID",
-        "═══════════════════════════════════════════════════════════════════",
-        "",
-        snapshot_block,
-        "",
-        dashboard_block,
-        "",
-        goals_block,
-    ]
-    if work_performed:
-        check_payload = _reflection_check_payload()
-        blocks.extend(
-            [
-                "",
-                "─────── work performed this session ───────",
-                "",
-                _format_reflection_check(check_payload),
-                "",
-                _work_reflection_template(),
-                "",
-                _format_loop_decision(check_payload),
-            ]
-        )
-    blocks.append("═══════════════════════════════════════════════════════════════════")
-    print("\n".join(blocks))
+    # Always run reflection-check so drift signals surface in verdict
+    # even on no-work turns (stale next_train, dirty main, etc.).
+    check_payload = _reflection_check_payload()
+    print(_format_grid_markdown(snapshot, check_payload, work_performed))
     return 0
 
 
