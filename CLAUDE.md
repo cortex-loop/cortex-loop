@@ -4,6 +4,12 @@
 any work. Apply it identically to how Codex applies it. This file does
 not override any AGENTS.md rule.
 
+Claude Code must also satisfy the repo-local Stop hook in
+`.claude/settings.json`: every final response must end with the filled
+`## Cortex Mission Reflection` graph produced by
+`python3 internal/workflow/repo_workflow.py grid`. If the hook blocks,
+continue work and re-emit the graph; do not route around it.
+
 ## Agent Briefing
 
 Read this first, every session.

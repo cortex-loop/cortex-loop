@@ -12,6 +12,7 @@ _Generated from `internal/truth/cortex_status.json`. Edit the registry, then run
 ## Bootstrap
 
 - `AGENTS.md`
+- `docs/CORTEX.md`
 - `docs/CORTEX_STATUS.md`
 - `git branch --show-current`
 - `git status --short --untracked-files=all`

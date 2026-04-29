@@ -31,6 +31,12 @@ def _filled_payload(branch: str, mode: str, reviewed_paths: list[str]) -> dict[s
         "earned_now": ["Closeout rigor is enforced for this seam."],
         "forbidden_still": ["No claim of broader product lift from this helper alone."],
     }
+    if branch.startswith("codex/"):
+        payload["mission_reflection_graph"] = {
+            "validator": closeout_contract.CODEX_MISSION_GRAPH_VALIDATOR_COMMAND,
+            "validated": True,
+            "note": "Codex final graph validator was run on the closure draft.",
+        }
     payload["north_light_audit"] = {
         "microkernel_boundary": {"status": "pass", "note": "No core policy moved."},
         "repo_governance_leakage": {"status": "pass", "note": "This is internal workflow only."},
@@ -129,6 +135,40 @@ def test_validate_payload_rejects_missing_forbidden_claims() -> None:
             payload,
             expected_mode="finalize",
             expected_branch="maint/manual-work",
+            expected_reviewed_paths=["README.md"],
+        )
+
+
+def test_validate_payload_requires_codex_mission_graph_validation() -> None:
+    payload = _filled_payload(
+        "codex/20260429-000000-grid-validation",
+        "close-session",
+        ["README.md"],
+    )
+    del payload["mission_reflection_graph"]
+
+    with pytest.raises(SystemExit, match="mission_reflection_graph"):
+        closeout_contract.validate_payload(
+            payload,
+            expected_mode="close-session",
+            expected_branch="codex/20260429-000000-grid-validation",
+            expected_reviewed_paths=["README.md"],
+        )
+
+
+def test_validate_payload_rejects_unvalidated_codex_mission_graph() -> None:
+    payload = _filled_payload(
+        "codex/20260429-000000-grid-unvalidated",
+        "close-session",
+        ["README.md"],
+    )
+    payload["mission_reflection_graph"]["validated"] = False
+
+    with pytest.raises(SystemExit, match="validated must be true"):
+        closeout_contract.validate_payload(
+            payload,
+            expected_mode="close-session",
+            expected_branch="codex/20260429-000000-grid-unvalidated",
             expected_reviewed_paths=["README.md"],
         )
 

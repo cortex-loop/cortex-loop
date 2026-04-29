@@ -18,6 +18,9 @@ VALID_PROFILES = {"standard", "load_bearing"}
 VALID_SURFACES = {"product", "experimental", "lab", "internal"}
 VALID_AUDIT_STATUSES = {"pass", "fail"}
 VALID_COMPLETENESS_STATES = {"implemented", "explicit_zero", "future_not_active"}
+CODEX_MISSION_GRAPH_VALIDATOR_COMMAND = (
+    "python3 internal/workflow/repo_workflow.py grid-validate --stdin"
+)
 # The patterns below detect closeout claims of "full V2 communication"
 # closure; they exist because the V2 communication bridge postmortem
 # (preserved at origin/archive/v2-bridge-and-constraint-fidelity-loop)
@@ -243,6 +246,12 @@ def scaffold_payload(*, branch: str, mode: str, reviewed_paths: list[str]) -> di
                 "path": [],
                 "if_empty_why": None,
             }
+    if branch.startswith("codex/") and reviewed_paths:
+        payload["mission_reflection_graph"] = {
+            "validator": CODEX_MISSION_GRAPH_VALIDATOR_COMMAND,
+            "validated": False,
+            "note": "",
+        }
     stacked_reason = _read_stacked_session_reason(branch)
     if stacked_reason is not None:
         payload["stacked_session_reason"] = stacked_reason
@@ -356,6 +365,12 @@ def render_markdown(payload: dict[str, Any]) -> str:
     forbidden = payload["claims"]["forbidden_still"]
     lines.extend(f"- Earned: {item}" for item in earned) if earned else lines.append("- Earned: `<fill me>`")
     lines.extend(f"- Forbidden: {item}" for item in forbidden) if forbidden else lines.append("- Forbidden: `<fill me>`")
+    graph = payload.get("mission_reflection_graph")
+    if isinstance(graph, dict):
+        lines.extend(["", "## Mission Reflection Graph", ""])
+        lines.append(f"- Validator: `{graph.get('validator') or '<fill me>'}`")
+        lines.append(f"- Validated: `{graph.get('validated')}`")
+        lines.append(f"- Note: {graph.get('note') or '<fill me>'}")
     lines.extend(["", "## North Light Audit", ""])
     for key, entry in payload["north_light_audit"].items():
         label = key.replace("_", " ").title()
@@ -552,6 +567,28 @@ def validate_payload(
     _require_string_list(claims.get("forbidden_still"), "claims.forbidden_still", allow_empty=False)
     _require_substantive_list_items(claims.get("earned_now"), "claims.earned_now")
     _require_substantive_list_items(claims.get("forbidden_still"), "claims.forbidden_still")
+
+    if expected_branch.startswith("codex/") and expected_paths:
+        graph = payload.get("mission_reflection_graph")
+        if not isinstance(graph, dict):
+            raise SystemExit(
+                "Codex closeout contracts must include mission_reflection_graph "
+                "recording the mandatory `grid-validate` final-graph check. "
+                "Codex has no Stop hook, so this is the session-boundary "
+                "parity evidence."
+            )
+        if graph.get("validator") != CODEX_MISSION_GRAPH_VALIDATOR_COMMAND:
+            raise SystemExit(
+                "mission_reflection_graph.validator must be "
+                f"`{CODEX_MISSION_GRAPH_VALIDATOR_COMMAND}`."
+            )
+        if graph.get("validated") is not True:
+            raise SystemExit(
+                "mission_reflection_graph.validated must be true for Codex "
+                "closeouts. Run the final graph through grid-validate before "
+                "closing the session."
+            )
+        _require_substantive(graph.get("note"), "mission_reflection_graph.note")
 
     north_light_audit = payload.get("north_light_audit")
     if not isinstance(north_light_audit, dict):

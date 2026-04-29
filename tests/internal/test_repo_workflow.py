@@ -98,6 +98,12 @@ def _write_closeout_contract(
         "earned_now": ["This closeout is reviewable and bounded."],
         "forbidden_still": ["No broader product lift is claimed from workflow alone."],
     }
+    if branch.startswith("codex/"):
+        payload["mission_reflection_graph"] = {
+            "validator": closeout_contract.CODEX_MISSION_GRAPH_VALIDATOR_COMMAND,
+            "validated": True,
+            "note": "Codex final graph validator was run on this closeout fixture.",
+        }
     payload["north_light_audit"] = {
         "microkernel_boundary": {"status": "pass", "note": "No product policy moved into core."},
         "repo_governance_leakage": {"status": "pass", "note": "Internal workflow remains internal."},
@@ -870,11 +876,29 @@ def test_cleanup_report_passes_on_clean_synced_main(
 
     def run_with_closeout_stub(*args, **kwargs):
         command = args[0] if args else kwargs.get("args")
-        if command == ["make", "-C", "internal", "closeout-test"]:
+        command_tuple = tuple(command) if isinstance(command, list) else command
+        if command_tuple in {
+            ("python3", "internal/truth/generate_status.py", "--check"),
+            ("python3", "internal/truth/generate_cortex_doc.py", "--check"),
+            ("python3", "internal/archive/generate_archive_index.py", "--check"),
+            ("make", "-C", "internal", "closeout-test"),
+        }:
             return module.subprocess.CompletedProcess(command, 0, "", "")
         return real_run(*args, **kwargs)
 
     monkeypatch.setattr(module.subprocess, "run", run_with_closeout_stub)
+    monkeypatch.setattr(
+        module,
+        "_hook_health_payload",
+        lambda: {
+            "ok": True,
+            "failures": [],
+            "codex_grid_validate_available": True,
+            "shared_validator_ok": True,
+            "known_bad_blocks": True,
+            "filled_graph_allows_stop": True,
+        },
+    )
 
     result = module.cmd_cleanup_report()
 
@@ -1444,16 +1468,57 @@ def test_grid_emits_consolidated_grid_with_closure_sections_when_no_work(
     assert "**Work:" not in out
 
 
+def test_grid_validate_accepts_filled_graph(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    repo, _remote, module = _prepare_repo(tmp_path, monkeypatch)
+    _seed_registry(repo)
+    _seed_generate_scripts(repo)
+
+    module.cmd_grid()
+    graph = capsys.readouterr().out
+    filled = module.mission_reflection.filled_example_graph(graph)
+    message = repo / "filled_graph.md"
+    message.write_text(filled, encoding="utf-8")
+
+    assert module.cmd_grid_validate(str(message), False) == 0
+    assert "validates" in capsys.readouterr().out
+
+
+def test_grid_validate_rejects_stale_dashboard_row(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    repo, _remote, module = _prepare_repo(tmp_path, monkeypatch)
+    _seed_registry(repo)
+    _seed_generate_scripts(repo)
+
+    module.cmd_grid()
+    graph = capsys.readouterr().out
+    filled = module.mission_reflection.filled_example_graph(graph)
+    stale = filled.replace(
+        "| **Verdict** |",
+        "| **Progress: bio_to_code matrix** | stale dashboard row |\n| **Verdict** |",
+        1,
+    )
+    message = repo / "stale_graph.md"
+    message.write_text(stale, encoding="utf-8")
+
+    assert module.cmd_grid_validate(str(message), False) == 1
+    assert "stale dashboard" in capsys.readouterr().out
+
+
 def test_grid_signature_markers_are_distinct_constants() -> None:
     """The Stop hook regex relies on these exact strings; pin them."""
     module = _load_repo_workflow_module()
-    assert module.GRID_HEADER_MARKER == "## Cortex Repo Hygiene Grid"
+    assert module.GRID_HEADER_MARKER == "## Cortex Mission Reflection"
     assert module.GRID_TABLE_HEADER_MARKER == "| Field | Value |"
     assert module.GRID_TABLE_SEPARATOR_MARKER == "|---|---|"
     assert module.GRID_FORBIDDEN_SECTION_MARKER == "### "
     assert "Repo: State" in module.REQUIRED_GRID_ROW_LABELS
     assert "Repo: Gates" in module.REQUIRED_GRID_ROW_LABELS
     assert "Mission: Cortex target" in module.REQUIRED_GRID_ROW_LABELS
+    assert "Mission: Theory of improvement" in module.REQUIRED_GRID_ROW_LABELS
+    assert "Reflection: Plan vs actual" in module.REQUIRED_GRID_ROW_LABELS
     assert "Closure: Metadata" in module.REQUIRED_GRID_ROW_LABELS
     assert "Verdict" in module.REQUIRED_GRID_ROW_LABELS
 
@@ -1466,7 +1531,7 @@ def test_closure_metadata_and_leak_markers_are_compact() -> None:
     assert "Fixed now" in module.CLOSURE_LEAK_MARKERS
     assert "Claim earned now" in module.CLOSURE_LEAK_MARKERS
     assert "Closure: Metadata" in module.CLOSURE_LEAK_MARKERS
-    assert "Final Handoff Mirror" not in module.CLOSURE_LEAK_MARKERS
+    assert "Final Handoff Mirror" in module.CLOSURE_LEAK_MARKERS
 
 
 def test_mission_reflection_fields_demand_causal_prompts() -> None:

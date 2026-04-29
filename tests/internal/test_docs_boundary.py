@@ -140,10 +140,10 @@ def test_agents_records_mission_lock_and_single_truth_bootstrap() -> None:
     assert "PHI_MISSION" not in text
     assert "PHI_NICHE" not in text
     assert "PHILOSOPHY_AUDIT" not in text
-    # Hygiene-grid handoff anchors. Every chat ends with the grid; on
+    # Mission-reflection handoff anchors. Every chat ends with the grid; on
     # FAIL the agent continues working and does not close-session.
     assert "internal/workflow/repo_workflow.py grid" in text
-    assert "Cortex Repo Hygiene Grid" in text
+    assert "Cortex Mission Reflection" in text
     assert "Grid auto-loop rule" in text
     assert "do not close-session" in text.lower() or "DO NOT close-session" in text
     assert "substantive" in text.lower()
@@ -151,16 +151,17 @@ def test_agents_records_mission_lock_and_single_truth_bootstrap() -> None:
     assert "No-mimicry rule" in text
     assert ".claude/hooks/cortex_grid_stop_hook.py" in text
     assert ".claude/settings.json" in text
-    assert "## Cortex Repo Hygiene Grid" in text
+    assert "## Cortex Mission Reflection" in text
     assert "| Field | Value |" in text
     assert "Repo: State" in text
     assert "Mission: Cortex target" in text
     assert "Mission: Model I/O path" in text
     assert "Verdict" in text
-    # Codex fallback acknowledged. Session 4 wording: "Codex does not
-    # support Stop hooks" (parallel to the prior "no hooks" phrasing).
+    # Codex fallback acknowledged without pretending chat-boundary parity.
     assert "Codex" in text
-    assert "does not support Stop hooks" in text or "no hooks" in text.lower()
+    assert "does not support Stop hooks" in text
+    assert "grid-validate --stdin" in text
+    assert "mission_reflection_graph" in text
     # Single-table mission-reflection rule. Stale dashboard rows are
     # explicitly forbidden; mission rows must be cited and substantive.
     assert "Cortex Mission Reflection" in text
