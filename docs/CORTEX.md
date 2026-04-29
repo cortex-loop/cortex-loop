@@ -504,6 +504,14 @@ the Claude/Gemini placement sketch. These documents are eval artifacts,
 not mission authority; use them to judge whether `CORTEX_RUNTIME_CONTEXT_V1`
 earns model-visible output lift before making live claims.
 
+**Lifecycle-first surface reconnaissance.**
+`docs/recon/lifecycle_first_surface_matrix.md` maps the current
+OpenAI / Anthropic / Google API, CLI, and Mac app extension surfaces
+against Cortex's lifecycle-first needs. It is a sourced recon artifact,
+not mission authority and not an architecture plan. Use it before making
+surface-selection claims so API control, CLI/app hooks, MCP support, and
+consumer-app gaps are not flattened into fake portability.
+
 **No-mimicry rule.** Composing markdown that resembles grid content
 but is not actual `grid` command output is a violation. Ad-hoc
 audit-shaped markdown headers (e.g. an "Audit Findings" block, a

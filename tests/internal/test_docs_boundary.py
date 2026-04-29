@@ -23,6 +23,9 @@ RUNTIME_CONTEXT_EXAMPLES_PATH = (
 RUNTIME_CONTEXT_CROSS_HOST_PATH = (
     REPO_ROOT / "docs" / "runtime_context" / "CROSS_HOST_SKETCH.md"
 )
+LIFECYCLE_SURFACE_RECON_PATH = (
+    REPO_ROOT / "docs" / "recon" / "lifecycle_first_surface_matrix.md"
+)
 STATUS_REGISTRY_PATH = REPO_ROOT / "internal" / "truth" / "cortex_status.json"
 STATUS_DOC_PATH = REPO_ROOT / "docs" / "CORTEX_STATUS.md"
 WORKFLOW_DOC_PATH = REPO_ROOT / "docs" / "internal" / "REPO_WORKFLOW.md"
@@ -392,14 +395,17 @@ def test_public_docs_point_to_status_and_keep_archive_out_of_the_front_door() ->
     assert "runtime_context/EVAL_RUBRIC.md" in docs_index
     assert "runtime_context/BASELINE_SHAPED_EXAMPLES.md" in docs_index
     assert "runtime_context/CROSS_HOST_SKETCH.md" in docs_index
+    assert "recon/lifecycle_first_surface_matrix.md" in docs_index
     # CORTEX.md content anchors the previously-fragmented charter and
     # boundary identity material in one canonical surface.
     assert "executive-function layer that wraps a model after" in cortex_doc
     assert "internal/truth/cortex_status.json" in cortex_doc
     assert "docs/runtime_context/" in cortex_doc
+    assert "docs/recon/lifecycle_first_surface_matrix.md" in cortex_doc
     assert "EVAL_RUBRIC.md" in cortex_doc
     assert "BASELINE_SHAPED_EXAMPLES.md" in cortex_doc
     assert "CROSS_HOST_SKETCH.md" in cortex_doc
+    assert "lifecycle-first surface reconnaissance" in cortex_doc.lower()
     # Workflow rules unchanged.
     assert "paid OpenAI service-lane proof is never part of the default bundle" in workflow
     assert "requires explicit user approval in the current chat" in workflow
@@ -439,8 +445,11 @@ def test_active_doc_allowlist_matches_status_registry() -> None:
 def test_docs_directory_only_exposes_archive_and_workflow_subtrees() -> None:
     subdirs = sorted(path.name for path in DOCS_ROOT.iterdir() if path.is_dir())
 
-    assert subdirs == ["archive", "internal", "runtime_context"]
+    assert subdirs == ["archive", "internal", "recon", "runtime_context"]
     assert [path.name for path in (DOCS_ROOT / "internal").iterdir()] == ["REPO_WORKFLOW.md"]
+    assert sorted(path.name for path in (DOCS_ROOT / "recon").iterdir()) == [
+        "lifecycle_first_surface_matrix.md",
+    ]
     assert sorted(path.name for path in (DOCS_ROOT / "runtime_context").iterdir()) == [
         "BASELINE_SHAPED_EXAMPLES.md",
         "CROSS_HOST_SKETCH.md",
@@ -481,6 +490,52 @@ def test_runtime_context_eval_artifacts_are_documented_and_operationalized() -> 
     assert "GeminiHostControlRequest.instructions" in cross_host
     assert "systemInstruction" in cross_host
     assert "does not implement Claude or Gemini" in cross_host
+
+
+def test_lifecycle_surface_recon_has_required_matrix_and_caveats() -> None:
+    text = _read(LIFECYCLE_SURFACE_RECON_PATH)
+
+    assert "Surface: internal / recon" in text
+    assert "Retrieved: 2026-04-29" in text
+    assert "Target date: state of the world as of 2026-04-28" in text
+    assert "This is reconnaissance, not architecture" in text
+
+    for heading in [
+        "### OpenAI: API (Responses)",
+        "### OpenAI: Codex CLI",
+        "### OpenAI: Codex App for Mac",
+        "### Anthropic: API (Messages)",
+        "### Anthropic: Claude Code CLI",
+        "### Anthropic: Claude Code App for Mac",
+        "### Google: API (Gemini)",
+        "### Google: Gemini CLI",
+        "### Google: Gemini App for Mac",
+    ]:
+        assert heading in text
+
+    for phrase in [
+        "**Extension surfaces.**",
+        "**Mechanism strength.**",
+        "**Lifecycle-first fit.**",
+        "**Pros / cons.**",
+        "Where Verified-Work Preservation Survives",
+        "CLI / App Relationships",
+        "MCP Convergence",
+        "Realistic Shape of Cortex as an External Process",
+        "Questions Requiring Empirical Verification",
+        "Stale or Missing Documentation",
+        "## Sources",
+    ]:
+        assert phrase in text
+
+    assert "Codex `Stop` hooks expose `last_assistant_message`" in text
+    assert "Gemini CLI has recent hook documentation" in text
+    assert "full wrap" in text
+    assert "partial influence" in text
+    assert "observation-only" in text
+    assert "doesn't port" in text
+    assert "Retrieved" in text and "Last updated" in text
+    assert "older than six months" in text
 
 
 def test_generated_status_doc_is_current() -> None:

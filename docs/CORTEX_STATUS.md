@@ -240,3 +240,4 @@ Workflow gates marked `required` are contractual gates checked by `repo_workflow
 - `docs/runtime_context/EVAL_RUBRIC.md`
 - `docs/runtime_context/BASELINE_SHAPED_EXAMPLES.md`
 - `docs/runtime_context/CROSS_HOST_SKETCH.md`
+- `docs/recon/lifecycle_first_surface_matrix.md`
