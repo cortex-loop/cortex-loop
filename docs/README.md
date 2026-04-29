@@ -15,5 +15,7 @@ Active docs:
   [rubric](runtime_context/EVAL_RUBRIC.md),
   [baseline-vs-shaped examples](runtime_context/BASELINE_SHAPED_EXAMPLES.md),
   [cross-host sketch](runtime_context/CROSS_HOST_SKETCH.md)
+- [Lifecycle-first Surface Matrix Recon](recon/lifecycle_first_surface_matrix.md) —
+  current host/API/CLI/app extension-surface map
 
 Historical runtime, lab, and governance material now lives under [archive/](archive/).
