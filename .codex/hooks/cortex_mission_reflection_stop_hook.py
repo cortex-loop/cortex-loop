@@ -7,6 +7,11 @@ same shared graph contract used by ``grid``, ``grid-validate``, and the
 Claude Code Stop hook. Missing/underfit graph output returns
 ``{"decision": "block"}``, which asks Codex to continue the turn with
 the hook's reason as corrective context.
+
+Lifecycle scope: repo-local Codex hooks require ``[features].codex_hooks
+= true`` and a trusted project ``.codex/`` layer. Hook health proves this
+configuration and simulated Stop-payload behavior; it does not prove live
+model-output lift from Cortex product code.
 """
 
 from __future__ import annotations

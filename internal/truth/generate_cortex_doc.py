@@ -5,9 +5,9 @@ CORTEX.md is the canonical narrative authority for what Cortex is, where it
 came from, and where it is going. The narrative sections (Identity, V1 to V2
 evolution, Implementation discipline, How to use this document) are manually
 maintained because their job is to carry the project's voice. The dynamic
-sections — the failure-modes coverage table, the math to code map, and the
-current state and strategy block — are generated from
-``internal/truth/cortex_status.json`` so they cannot drift away from
+sections — the failure-modes coverage table, the math to code map, the
+current state and strategy block, and the V2 model-I/O audit — are generated
+from ``internal/truth/cortex_status.json`` so they cannot drift away from
 operational truth.
 
 Generated content lives between fenced markers of the form::
@@ -42,6 +42,7 @@ GENERATED_KEYS = (
     "failure-modes-coverage",
     "math-to-code-map",
     "current-state-and-strategy",
+    "v2-model-io-analysis",
 )
 
 
@@ -187,6 +188,87 @@ def _render_current_state(data: dict[str, Any]) -> str:
     return "\n".join(lines)
 
 
+def _join_refs(refs: list[str]) -> str:
+    return ", ".join(f"`{ref}`" for ref in refs)
+
+
+def _render_v2_model_io_analysis(data: dict[str, Any]) -> str:
+    audit = data.get("v2_model_io_analysis", {})
+    if not isinstance(audit, dict):
+        return "_No V2 model-I/O analysis recorded._"
+
+    lines: list[str] = []
+    source_note = audit.get("source_note")
+    if source_note:
+        lines.extend([str(source_note), ""])
+
+    lifecycle = audit.get("lifecycle_adapters", [])
+    if lifecycle:
+        lines.extend(
+            [
+                "### Lifecycle Adapter Facts",
+                "",
+                "| Adapter | Lifecycle input | Enforcement | Proof |",
+                "| --- | --- | --- | --- |",
+            ]
+        )
+        for entry in lifecycle:
+            proof = _join_refs(list(entry.get("proof_refs", [])))
+            lines.append(
+                f"| **{entry['adapter']}** | {entry['lifecycle_input']} | {entry['enforcement']} | {proof} |"
+            )
+        lines.append("")
+
+    side_a = audit.get("side_a_internal_logic", [])
+    lines.extend(
+        [
+            "### Side A — Internal Executive Logic",
+            "",
+            "| ID | Cortex goal | State owned | Decisions made | Code refs | Proof refs |",
+            "| --- | --- | --- | --- | --- | --- |",
+        ]
+    )
+    for entry in side_a:
+        lines.append(
+            f"| `{entry['id']}` | {entry['executive_goal']} | {entry['state_owned']} | "
+            f"{entry['decisions_made']} | {_join_refs(list(entry.get('code_refs', [])))} | "
+            f"{_join_refs(list(entry.get('proof_refs', [])))} |"
+        )
+
+    side_b = audit.get("side_b_model_visible_translation", [])
+    lines.extend(
+        [
+            "",
+            "### Side B — Model-Visible Translation",
+            "",
+            "| ID | Visibility class | Model I/O path | Reaches model as | Behavior effect | Gap / unearned claim |",
+            "| --- | --- | --- | --- | --- | --- |",
+        ]
+    )
+    for entry in side_b:
+        lines.append(
+            f"| `{entry['id']}` | `{entry['visibility_class']}` | {entry['model_io_path']} | "
+            f"{entry['reaches_model_as']} | {entry['behavior_effect']} | {entry['gap_or_unearned']} |"
+        )
+
+    synthesis = audit.get("synthesis_gap_boundary_decisions", [])
+    lines.extend(
+        [
+            "",
+            "### Synthesis — Gap / Boundary Decision",
+            "",
+            "| ID | Boundary judgment | Decision | Next action | Post-training line |",
+            "| --- | --- | --- | --- | --- |",
+        ]
+    )
+    for entry in synthesis:
+        lines.append(
+            f"| `{entry['id']}` | {entry['boundary_judgment']} | `{entry['decision']}` | "
+            f"{entry['next_action']} | {entry['post_training_boundary']} |"
+        )
+    return "\n".join(lines)
+
+
 def render_cortex_doc(data: dict[str, Any], existing: str) -> str:
     matrix = data["bio_to_code_matrix"]
     math_map = data.get("math_to_code_map", [])
@@ -194,6 +276,7 @@ def render_cortex_doc(data: dict[str, Any], existing: str) -> str:
         "failure-modes-coverage": _render_failure_modes_coverage(matrix),
         "math-to-code-map": _render_math_to_code_map(math_map),
         "current-state-and-strategy": _render_current_state(data),
+        "v2-model-io-analysis": _render_v2_model_io_analysis(data),
     }
     rendered = existing
     for key in GENERATED_KEYS:

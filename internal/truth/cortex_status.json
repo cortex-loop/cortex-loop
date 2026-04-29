@@ -384,6 +384,329 @@
       "status": "implemented"
     }
   ],
+  "v2_model_io_analysis": {
+    "source_note": "This audit is structural evidence only. It separates Cortex's internal executive logic from model-visible translation so closed-loop monitoring cannot masquerade as product Cortex. Codex App hook lifecycle facts are grounded in the official OpenAI Codex hooks documentation: https://developers.openai.com/codex/hooks.",
+    "lifecycle_adapters": [
+      {
+        "id": "claude_code",
+        "adapter": "Claude Code repo lifecycle adapter",
+        "lifecycle_input": "Stop hook reads `transcript_path` JSONL and extracts the latest assistant message.",
+        "enforcement": "`.claude/settings.json` runs `.claude/hooks/cortex_grid_stop_hook.py`; block decisions re-prompt Claude until the Cortex Mission Reflection graph validates; fail-open is limited to missing transcript, malformed hook input, or command crash.",
+        "proof_refs": [
+          ".claude/settings.json",
+          ".claude/hooks/cortex_grid_stop_hook.py",
+          "tests/internal/test_cortex_grid_stop_hook.py"
+        ]
+      },
+      {
+        "id": "codex_app",
+        "adapter": "Codex App repo lifecycle adapter",
+        "lifecycle_input": "Stop hook receives `last_assistant_message` directly; project-local hooks require trusted `.codex/` config and `[features].codex_hooks = true`.",
+        "enforcement": "`.codex/config.toml` runs `.codex/hooks/cortex_mission_reflection_stop_hook.py`; `decision: block` asks Codex App to continue with corrective context; `codex-app-hook-health` proves structural config/script behavior, not live model-side product lift.",
+        "proof_refs": [
+          ".codex/config.toml",
+          ".codex/hooks/cortex_mission_reflection_stop_hook.py",
+          "tests/internal/test_codex_app_stop_hook.py"
+        ]
+      }
+    ],
+    "side_a_internal_logic": [
+      {
+        "id": "event_dispatch_and_commitments",
+        "executive_goal": "truth-preserving commitments and bounded certification",
+        "state_owned": "event-local envelopes, observation bundles, commitment candidates, provenance manifests, certification firewall assessments, and wake/dispatch decisions",
+        "decisions_made": "normalizes raw host events, decides which commitment lane wakes, rejects malformed or provenance-breaking assertions, and projects dispatch/certification warnings",
+        "code_refs": [
+          "cortex/core/envelopes.py",
+          "cortex/core/observation.py",
+          "cortex/core/dispatch.py",
+          "cortex/core/commitments.py"
+        ],
+        "proof_refs": [
+          "tests/product/test_core_substrate.py",
+          "tests/product/test_dispatch.py",
+          "tests/product/test_certification_artifacts.py"
+        ]
+      },
+      {
+        "id": "goal_branch_continuity",
+        "executive_goal": "continuity, focused persistence, and truthful closure",
+        "state_owned": "branch registries, active track/goal references, pending goals, confirmed artifacts, goal-debt state, and closure-pressure summaries",
+        "decisions_made": "keeps the main task resumable across host events, prices unfinished goal debt, and surfaces closure pressure rather than silently treating incomplete work as done",
+        "code_refs": [
+          "cortex/sre/goals.py",
+          "cortex/sre/goal_branch.py",
+          "cortex/sre/goal_debt.py",
+          "cortex/hosts/openai/runtime.py"
+        ],
+        "proof_refs": [
+          "tests/product/test_sre_goals_branching.py",
+          "tests/product/test_sre_goal_branch.py",
+          "tests/product/test_openai_runtime_step.py",
+          "tests/conformance/integration/test_claude_runtime_continuity.py"
+        ]
+      },
+      {
+        "id": "brake_uncertainty_modulators",
+        "executive_goal": "uncertainty-aware brake and bounded correction",
+        "state_owned": "brake state, brake tonic history, executive signal summaries, modulation memory, risk weights, and policy views",
+        "decisions_made": "raises or lowers intervention pressure, damps single-tick flips with tonic hysteresis, and prevents contradiction or repeated failure from being treated as ordinary forward progress",
+        "code_refs": [
+          "cortex/sre/brake.py",
+          "cortex/sre/modulators.py",
+          "cortex/sre/executive_summary.py",
+          "cortex/sre/policy_view.py"
+        ],
+        "proof_refs": [
+          "tests/product/test_sre_uncertainty_brake.py",
+          "tests/product/test_sre_modulators.py",
+          "tests/product/test_sre_neutral_hinge.py"
+        ]
+      },
+      {
+        "id": "operator_routing_and_capability",
+        "executive_goal": "capability-aware routing and intervention pricing versus neutrality",
+        "state_owned": "operator task state, route profiles, route budgets, visible burden sensitivity, capability envelopes, mismatch assessment, and blocked reasons",
+        "decisions_made": "chooses execute versus inspect/guarded/blocked routes, downshifts continuity-heavy work under capability mismatch, and blocks unsupported model/task envelopes",
+        "code_refs": [
+          "cortex/sre/operator_routing.py",
+          "cortex/runtime/operator_brain_capability.py"
+        ],
+        "proof_refs": [
+          "tests/product/test_operator_routing.py",
+          "tests/product/test_brain_capability.py",
+          "tests/conformance/test_brain_capability_parity.py"
+        ]
+      },
+      {
+        "id": "aux_support_publications",
+        "executive_goal": "offline consolidation and support geometry without sovereign AUX claims",
+        "state_owned": "durable support-memory episodes, offline publications, host/tool reliability priors, auxiliary appendices, lift reports, and burden reports",
+        "decisions_made": "distills removable support evidence that may bias score pricing only through explicit publications; raw AUX episodes remain support-side and cannot directly mutate routing or blockedness",
+        "code_refs": [
+          "cortex/aux/persistence.py",
+          "cortex/aux/publication.py",
+          "cortex/aux/support_priors.py",
+          "cortex/sre/memory_priors.py"
+        ],
+        "proof_refs": [
+          "tests/experimental/test_aux_persistence.py",
+          "tests/experimental/test_aux_publication.py",
+          "tests/experimental/test_aux_support_priors.py"
+        ]
+      },
+      {
+        "id": "verified_work_preservation",
+        "executive_goal": "bounded correction and verified-work preservation",
+        "state_owned": "work contracts, contract binding profiles, verified-work instructions, preservation state, repair attempts, verification outcomes, and trusted-structure summaries",
+        "decisions_made": "attaches a bounded work contract to model calls, verifies output, preserves trusted structure, and scopes repair attempts instead of rerunning or discarding all work",
+        "code_refs": [
+          "cortex/runtime/verified_work_runtime.py",
+          "cortex/sre/preservation.py",
+          "cortex/hosts/openai/host_control.py"
+        ],
+        "proof_refs": [
+          "tests/product/test_verified_work_runtime.py",
+          "tests/product/test_preservation_state.py",
+          "tests/product/test_openai_host_control.py"
+        ]
+      },
+      {
+        "id": "feedback_window_realization",
+        "executive_goal": "context adoption, continuity progress, and truthful closure from realized outcomes",
+        "state_owned": "reference realization feedback, feedback windows, evidence-progress class, continuity-progress class, recent probe failure class, and just-realized public summaries",
+        "decisions_made": "classifies realized model progress, distinguishes stream-only churn from evidence progress, and feeds recent failures back into future routing/brake decisions",
+        "code_refs": [
+          "cortex/sre/feedback.py",
+          "cortex/hosts/_executive_closure.py",
+          "cortex/hosts/openai/runtime.py",
+          "cortex/hosts/reference/runtime.py"
+        ],
+        "proof_refs": [
+          "tests/product/test_reference_feedback_window.py",
+          "tests/product/test_openai_runtime_step.py",
+          "tests/conformance/integration/test_reference_runtime_cli.py"
+        ]
+      },
+      {
+        "id": "host_runtime_sessions",
+        "executive_goal": "multi-host executive continuity without flattening host differences",
+        "state_owned": "host-local runtime sessions for OpenAI, Claude, Gemini, and reference, including branch/goal state, budget/brake history, feedback windows, modulator memory, failure class, next recommended move, and preservation state",
+        "decisions_made": "carries Cortex state across events and process boundaries, serializes only accepted control residue, and keeps host-native realization separate from shared law",
+        "code_refs": [
+          "cortex/hosts/openai/runtime.py",
+          "cortex/hosts/claude/runtime.py",
+          "cortex/hosts/gemini/runtime.py",
+          "cortex/hosts/reference/runtime.py"
+        ],
+        "proof_refs": [
+          "tests/product/test_openai_runtime_session_io.py",
+          "tests/conformance/test_claude_runtime_session_io.py",
+          "tests/conformance/test_gemini_runtime_session_io.py",
+          "tests/conformance/test_reference_runtime_session_io.py"
+        ]
+      },
+      {
+        "id": "host_control_transports",
+        "executive_goal": "model I/O boundary where Cortex can actually wrap a model",
+        "state_owned": "strict host-control request objects, text/system/instructions fields, optional offline publications, audit intensity, and transport results",
+        "decisions_made": "coerces host-control requests, rejects out-of-scope keys, sends only host-legal request bodies, and updates session state from transport outputs",
+        "code_refs": [
+          "cortex/hosts/openai/host_control.py",
+          "cortex/hosts/openai/host_transport.py",
+          "cortex/hosts/claude/host_control.py",
+          "cortex/hosts/claude/host_transport.py",
+          "cortex/hosts/gemini/host_control.py",
+          "cortex/hosts/gemini/host_transport.py"
+        ],
+        "proof_refs": [
+          "tests/product/test_openai_host_control.py",
+          "tests/conformance/test_claude_host_control.py",
+          "tests/conformance/test_gemini_host_control.py",
+          "tests/conformance/integration/test_openai_host_control_service.py"
+        ]
+      }
+    ],
+    "side_b_model_visible_translation": [
+      {
+        "id": "event_dispatch_and_commitments",
+        "visibility_class": "decision_visible",
+        "model_io_path": "`cortex/core/*` → host runtime step → CLI/service records and closure/route decisions; direct prompt text only when downstream host-control uses the decision",
+        "reaches_model_as": "runtime decision state, warnings, and certification gates; not automatically prompt-visible by itself",
+        "behavior_effect": "can block, route, warn, or require closure before a model call proceeds through host control",
+        "gap_or_unearned": "Do not claim commitment diagnostics alone change model behavior unless a host-control path consumes them."
+      },
+      {
+        "id": "goal_branch_continuity",
+        "visibility_class": "decision_visible",
+        "model_io_path": "`cortex/sre/goals.py` + host runtime session → `operator_route.route_budget.allow_resume` / closure summaries → subsequent host-control selection",
+        "reaches_model_as": "route and budget constraints, session continuity state, and closure pressure; not as raw memory text by default",
+        "behavior_effect": "keeps resume/closure decisions stable across events and can alter whether the next call is inspect, continuity, or blocked",
+        "gap_or_unearned": "Raw branch registry is not model-visible unless converted into host-control input or route behavior."
+      },
+      {
+        "id": "brake_uncertainty_modulators",
+        "visibility_class": "decision_visible",
+        "model_io_path": "`cortex/sre/brake.py` / `modulators.py` → executive policy view → operator route / activation thresholds → host runtime result",
+        "reaches_model_as": "route pressure, threshold shifts, blocked/guarded decisions, and diagnostics; not natural-language self-talk",
+        "behavior_effect": "slows or blocks under contradiction and repeated failure, reducing unsupported forward motion before model output is requested",
+        "gap_or_unearned": "This is runtime control, not post-training reasoning improvement; live output-lift still requires model-run evidence."
+      },
+      {
+        "id": "operator_routing_and_capability",
+        "visibility_class": "decision_visible",
+        "model_io_path": "`select_operator_route*` → host runtime `operator_route_payload` → host-control route profile / verified-work contract binding",
+        "reaches_model_as": "DEGRADE/UNSUPPORTED routing, max retry suppression, lean contract binding, or blocked request",
+        "behavior_effect": "changes whether and how the model is asked to act when model/task capability mismatch is detected",
+        "gap_or_unearned": "Static OpenAI-only band registry remains a cold-start prior; observed capability inference is queued, not landed."
+      },
+      {
+        "id": "aux_support_publications",
+        "visibility_class": "support_only",
+        "model_io_path": "AUX episode stores → `OfflineSupportPublication` → explicit publication supplied to host-control/runtime scoring",
+        "reaches_model_as": "score-pricing priors and publication-only support; raw SQLite episodes do not reach the model",
+        "behavior_effect": "can bias control pricing when explicitly published, host-matched, and fresh; cannot directly route or certify",
+        "gap_or_unearned": "Default shipping/conformance lanes keep live `Q_mem = 0`; no default-on memory claim is earned."
+      },
+      {
+        "id": "verified_work_preservation",
+        "visibility_class": "direct_model_visible",
+        "model_io_path": "`OpenAIHostControlRequest(work_contract=...)` → fixed verified-work `instructions` + `input_text` → `execute_openai_response_stream_turn`",
+        "reaches_model_as": "explicit model instructions, workspace context, repair prompt, and response verification loop on the OpenAI host-control lane",
+        "behavior_effect": "changes model call content and bounded repair behavior directly; preserves trusted structure across one-shot and repair attempts",
+        "gap_or_unearned": "Strongest direct path is OpenAI shipping lane; Claude/Gemini parity is conformance-shaped and must not be overclaimed as default shipping."
+      },
+      {
+        "id": "feedback_window_realization",
+        "visibility_class": "decision_visible",
+        "model_io_path": "host output / realization feedback → feedback window → next runtime step policy and route selection",
+        "reaches_model_as": "future route/brake/closure decisions, not direct text unless a later host-control request translates it",
+        "behavior_effect": "prevents stream-only churn from counting as progress and raises pressure after repeated rejection/override/probe failure",
+        "gap_or_unearned": "Feedback windows are structural; live claim that they improve output needs pinned before/after model runs."
+      },
+      {
+        "id": "host_runtime_sessions",
+        "visibility_class": "state_to_decision_visible",
+        "model_io_path": "host session artifact → runtime step → route/closure/policy payload → host control request or CLI/service response",
+        "reaches_model_as": "carried state that influences later route and closure behavior; raw session JSON is not model input",
+        "behavior_effect": "maintains continuity across events and hosts without pretending all hosts expose the same transport affordances",
+        "gap_or_unearned": "Session state can be perfectly coherent internally while still failing to affect a model if no host-control path consumes it."
+      },
+      {
+        "id": "host_control_transports",
+        "visibility_class": "direct_model_visible",
+        "model_io_path": "`OpenAIHostControlRequest.input_text/instructions`, `ClaudeHostControlRequest.input_text/system`, `GeminiHostControlRequest.input_text/instructions` → respective live/fixture transport bodies",
+        "reaches_model_as": "provider request text/system/instructions; metadata and audit intensity are boundary/control fields, not assumed model-visible text",
+        "behavior_effect": "this is the main bridge where Cortex can change what the model receives or what output is accepted",
+        "gap_or_unearned": "Any internal logic not consumed here, or not converted into route/block behavior before here, remains monitoring/scaffolding rather than product Cortex."
+      }
+    ],
+    "synthesis_gap_boundary_decisions": [
+      {
+        "id": "event_dispatch_and_commitments",
+        "boundary_judgment": "product Cortex when consumed by host runtime/host-control gates; monitor-only if left as CLI diagnostics",
+        "decision": "bridge",
+        "next_action": "Keep commitment state as binding runtime law and require future commitment seams to name the host-control or route effect in closeout connectivity traces.",
+        "post_training_boundary": "Do not try to retrain general truthfulness at runtime; Cortex should enforce event-local commitment handling and certification boundaries."
+      },
+      {
+        "id": "goal_branch_continuity",
+        "boundary_judgment": "product Cortex when it changes resume/closure/route behavior; internal-only when it only serializes branch metadata",
+        "decision": "bridge",
+        "next_action": "Audit future continuity seams against model-visible resume or closure behavior, not just preserved branch state.",
+        "post_training_boundary": "General long-context memory quality is post-training; task-local lifecycle continuity after interruption is Cortex runtime territory."
+      },
+      {
+        "id": "brake_uncertainty_modulators",
+        "boundary_judgment": "product Cortex as bounded runtime brake/route control, not a replacement for model calibration",
+        "decision": "keep_runtime",
+        "next_action": "Keep proving that brake pressure changes route/block decisions and do not claim improved reasoning calibration without live evidence.",
+        "post_training_boundary": "Global confidence calibration belongs in post-training; per-turn contradiction and failure brakes belong in lifecycle-first runtime."
+      },
+      {
+        "id": "operator_routing_and_capability",
+        "boundary_judgment": "product Cortex because it changes route budgets and blockedness before the model call",
+        "decision": "return_to_product_train",
+        "next_action": "Next product work should land observed capability inference so routing no longer depends only on static model-name prior.",
+        "post_training_boundary": "Improving a model's inherent capability is post-training; detecting and routing around observed capability limits is Cortex."
+      },
+      {
+        "id": "aux_support_publications",
+        "boundary_judgment": "support-side product adjunct only when publication-shaped; raw memory stores are not product Cortex",
+        "decision": "keep_publication_only",
+        "next_action": "Keep AUX removable and publication-only; move any raw episode or default-on memory path back to lab/experimental or cut it.",
+        "post_training_boundary": "Broad factual memory and preference learning are post-training/product-memory territory; explicit removable support priors are Cortex support geometry."
+      },
+      {
+        "id": "verified_work_preservation",
+        "boundary_judgment": "product Cortex on OpenAI host-control lane because it directly changes instructions and repair loops",
+        "decision": "keep_and_prove_live",
+        "next_action": "Keep the OpenAI direct path as shipping truth; only graduate cross-host lift claims after equivalent host-control proof exists.",
+        "post_training_boundary": "Teaching a model to always preserve work is post-training; wrapping a concrete work contract and verifying repairs is Cortex runtime."
+      },
+      {
+        "id": "feedback_window_realization",
+        "boundary_judgment": "product Cortex when feedback changes next route/brake decision; monitor-only if retained only as a public summary",
+        "decision": "bridge",
+        "next_action": "For every new feedback signal, require a route/brake/closure consequence or classify it as lab telemetry.",
+        "post_training_boundary": "General learning from feedback is post-training; event-local realization feedback that alters the next runtime decision is Cortex."
+      },
+      {
+        "id": "host_runtime_sessions",
+        "boundary_judgment": "necessary product substrate, but only earned when state is consumed by runtime decisions",
+        "decision": "audit_consumption",
+        "next_action": "When adding session fields, add tests showing they survive serialization and change a route/closure/model-I/O decision, or mark them diagnostics.",
+        "post_training_boundary": "Persistent personality or broad memory is post-training/product memory; host-local executive state for a task lifecycle is Cortex."
+      },
+      {
+        "id": "host_control_transports",
+        "boundary_judgment": "the decisive product boundary where Cortex either reaches the model or does not",
+        "decision": "protect_boundary",
+        "next_action": "Treat any future product claim as unearned until it names the exact request field or route/block consequence at this boundary.",
+        "post_training_boundary": "Generic instruction-following lessons are post-training territory; encode only lifecycle-first control and verification signals that current host calls need."
+      }
+    ]
+  },
   "work_today": {
     "slug": "brain-capability-aware-routing",
     "note": "The bounded AUX shadow surface still earns `full_cross_host`, durable support-memory distillation remains explicit and removable, posture-sensitive online control is S-tier closed on the live runtime path, anti-thrash remains an exact-family unchanged-condition repetition tax with bounded reopen, bounded live support-memory re-entry is S-tier closed on both the reference and OpenAI explicit-publication lanes with host-match, family-scoped invalidation, transcript-only raw `/v1/events`, locked `memory_reentry` diagnostics, shared conformance parity, and explicit proof that runtime use stays publication-only without AUX persistence or distillation, evidence-progress/probe calibration is S-tier closed with typed evidence-progress and continuity-progress classification across all four hosts, public `feedback_window_summary` reflecting the just-realized step, real probe success distinguished from family-local bounded unsupported surfaces, and stream-only churn stays visible but non-epistemic, bounded host/tool reliability and affordance priors are earned on the reference and OpenAI explicit-publication live lanes as explicit, offline-distilled, capability-scoped score modifiers carried on `OfflineSupportPublication.host_reliability_prior` with a single-site six-tag `q_mem-host:*` surface, stale-negative reopen under fresh success, locked `memory_reentry.selected_family_reliability_delta` diagnostics, and Claude/Gemini kept shadow-proof only, and asymmetric error cost and tonic hysteresis are now earned on the shared executive as bounded score-pricing carriers: `RiskWeight(fn_cost_weight, fp_cost_weight, dominant_risk_source, adjustment_sign)` derives from pending-goal depth, degradation, contradiction, budget band, productive-exploration confirmation, and published host-reliability evidence with a `0.10` dead-band and fp-signal gated on `productive_exploration_bonus > 0.0` so cold starts stay balanced, the asymmetric activation shift `(fp - fn) * 0.10` applies to CHECK and SEEK_CONTEXT only and is clipped inside `[0.05, 0.60]`, the brake tonic EMA damps single-tick flips with a locked `rho = 0.60` decay and `tonic_pressure >= 0.35` enter gate while phasic contradiction, latching, missing-anchor, and repeated-failure signals still flip immediately, and `brake_tonic_history` persists the pressure tail across resume on all four host lanes with three-way backward-compat decoding. The brake-tonic-quiescence-exit-reconciliation train is closed via SRE_2 §7.5 path B: the doctrine is narrowed to threshold-hysteresis-only on the brake exit gate, and the rest-side EMA `tonic_quiescence` is retired from the BrakeTonic carrier, the SRE allocation diagnostics, and the host runtime serialization on all four host lanes (OpenAI, Claude, Gemini, reference); kill-rule-e remains green and no new memory carrier or host-specific exit policy fork was introduced. Brain-capability-aware routing is now earned as the active focus per SRE_2 §6.9: the executive carries an `OperatorBrainCapabilityEnvelope(continuity_tolerance, verification_tolerance, output_contract_tolerance)` and a bounded threshold ladder classifies the per-dimension max mismatch into NONE / DEGRADE / UNSUPPORTED; DEGRADE downshifts continuity-bearing profiles to inspect-light, zeroes max_retries and allow_extra_read_pass, and switches the contract binding profile to LEAN, while UNSUPPORTED routes to BLOCKED with `blocked_reason=brain_capability_mismatch`; the band registry is OpenAI-only at this landing and other hosts default to the standard envelope until per-host registries earn their own seam. The next product train is dynamic brain-capability inference from observed `ReferenceRealizationFeedback`: an observed-performance accumulator that publishes through AUX support side rather than mutating routing directly, replacing the static name-lookup with an evidence-backed envelope while keeping the same SRE assessment and routing math. Shipping and conformance default lanes still keep `Q_mem = 0`, default shipping behavior remains memory-off when no publication is supplied, live memory remains publication-only and score-only, raw SQLite episodes remain support-side only, route blockedness remains non-sovereign, reliability priors bias score pricing only and never harden into host myths or hidden policy forks, and risk_weight biases CHECK/SEEK_CONTEXT activation threshold only — never routing, posture, selection, certification, or blockedness law."
