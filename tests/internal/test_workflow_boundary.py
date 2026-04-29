@@ -55,7 +55,7 @@ def test_internal_workflow_surfaces_exist() -> None:
     assert "closeout contract" in workflow_doc.lower()
     assert "no-op exemption" in workflow_doc.lower()
     assert "reviewed-path drift during verification" in workflow_doc
-    assert "Final Handoff Mirror" in workflow_doc
+    assert "closeout mirror" in workflow_doc
     assert "`AGENTS.md`, `docs/internal/REPO_WORKFLOW.md`, `internal/workflow/**`, `internal/closeout/**`, or `internal/Makefile`" in workflow_doc
     assert "Remote publication remains separate" not in workflow_doc
     assert "Checkpoint a managed session locally and keep the session branch open" in workflow_doc

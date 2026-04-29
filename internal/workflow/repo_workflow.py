@@ -1666,126 +1666,54 @@ def cmd_reflection_check(emit_json: bool) -> int:
     return 0 if payload["verdict"] == "PASS" else (1 if payload["verdict"] == "FAIL" else 0)
 
 
-def _progress_rows(registry: dict[str, object]) -> list[tuple[str, str]]:
-    """Return Cortex progress rows for markdown-table renderers."""
-    matrix = registry.get("bio_to_code_matrix") or []
-    completion = registry.get("executive_completion") or {}
-    hosts = registry.get("hosts") or []
-    conformance = registry.get("conformance_summary") or {}
-    work_today = registry.get("work_today") or {}
-    next_train = registry.get("next_product_train") or {}
-    research = registry.get("research_lines_under_evaluation") or []
-    where_to_work = registry.get("where_to_work") or []
-
-    landed = sum(1 for entry in matrix if entry.get("status") == "landed")
-    weight_total = sum(int(entry.get("weight", 0)) for entry in matrix)
-    threshold = completion.get("shippable_threshold_percent")
-
-    rows: list[tuple[str, str]] = []
-    rows.append(
-        (
-            "bio_to_code matrix",
-            f"{landed}/{len(matrix)} landed ({weight_total}/100; shippable threshold {threshold}%)",
-        )
-    )
-    if hosts:
-        conformant = sum(1 for h in hosts if h.get("conformance") == "conformant")
-        host_names = ", ".join(
-            f"`{h.get('name', '?')}`={h.get('conformance', '?')}" for h in hosts
-        )
-        rows.append(("hosts", f"{conformant}/{len(hosts)} conformant ({host_names})"))
-    if conformance:
-        rows.append(("shipping default", f"`{conformance.get('shipping_default', '?')}`"))
-    work_today_slug = work_today.get("slug")
-    if work_today_slug:
-        rows.append(("current train", f"`{work_today_slug}`"))
-    next_train_slug = next_train.get("slug")
-    if next_train_slug:
-        days = _next_train_freshness_days(registry)
-        days_text = f" (reviewed {days}d ago)" if days is not None else ""
-        rows.append(("next train", f"`{next_train_slug}`{days_text}"))
-    rows.append(("research lines u/eval", str(len(research))))
-    if where_to_work:
-        first = where_to_work[0]
-        truncated = first if len(first) <= 110 else first[:107] + "..."
-        rows.append(("active leverage", truncated))
-    return rows
-
-
-def _format_progress_table(registry: dict[str, object]) -> str:
-    """Render the Cortex progress dashboard as a 2-column markdown table."""
-    rows = _progress_rows(registry)
-    lines = ["| Field | Value |", "|---|---|"]
-    for label, value in rows:
-        lines.append(f"| **{label}** | {value} |")
-    return "\n".join(lines)
-
-
-# Goals Analysis prompt structure. The five fields below replace the
-# v1 self-rated PHILOSOPHY_AUDIT block: each one demands substantive
-# answer that maps the session's plan to its implementation, names
-# specific iteration moments, declares forward-looking confidence, and
-# ties the work back to Cortex's underlying goals from `docs/CORTEX.md`
-# §1. Each filled answer must be ≥48 characters and must reference at
-# least one of `docs/CORTEX.md`, `internal/truth/cortex_status.json`,
-# `cortex/**`, `tests/**`, or `CORTEX_V2_*`. The substantive validator
-# (see `internal.closeout.contract.is_handwave_phrase`) catches
-# rubber-stamp answers; the citation regex catches ungrounded prose.
-GOALS_ANALYSIS_FIELDS: tuple[tuple[str, str], ...] = (
+# Cortex Mission Reflection prompt structure. These rows replace the
+# stale dashboard-style progress rows and the weaker goals brief. Each
+# filled answer should be causal and grounded: what Cortex
+# mission goal this turn served, why the work was the right boundary,
+# how the implementation fit the theory, what evidence was actually
+# earned, and what remains forbidden.
+MISSION_REFLECTION_FIELDS: tuple[tuple[str, str], ...] = (
     (
-        "Plan → implementation",
-        "what the plan said this turn would do, mapped to what the implementation actually delivered. Cite the surface that backs each claim.",
+        "Mission: Cortex target",
+        "which Cortex executive-function goal this turn served: continuity, focus, context adoption, brake, truthful closure, or capability-aware routing. Cite the mission surface.",
     ),
     (
-        "Quality assessment",
-        "was this the best possible implementation? Why? Cite the evidence that justifies your answer (or names what would change it).",
+        "Mission: Boundary judgment",
+        "classify the turn as product Cortex, internal doctrine, lab/proof, monitor/scaffolding, or post-training territory, and justify why that boundary is correct.",
     ),
     (
-        "Iteration moments this session",
-        "specific points where you hit a gap and corrected. If none, say so with reasoning. No handwave.",
+        "Mission: Theory of improvement",
+        "why this work should improve Cortex development or model behavior rather than merely changing repo machinery.",
     ),
     (
-        "Forward-looking confidence",
-        "what does this change about future Cortex work, on what basis, and what would still need to land for full confidence?",
+        "Mission: Model I/O path",
+        "exact path to model input/output, or explicit 'none: internal/lab/governance only' with why that is acceptable.",
     ),
     (
-        "Tied to Cortex goals",
-        "how does this advance continuity / focused persistence / context adoption / brake / truthful closure / capability-aware routing per `docs/CORTEX.md` §1?",
+        "Reflection: Plan vs actual",
+        "planned intention mapped to realized implementation or analysis, with evidence from touched code/tests/docs when work happened.",
+    ),
+    (
+        "Reflection: Quality judgment",
+        "whether this was the best implementation, including tradeoffs and what would have made it better.",
+    ),
+    (
+        "Reflection: Iteration evidence",
+        "what failed, was caught, changed, or was corrected this turn; if nothing changed, explain why no iteration was needed.",
+    ),
+    (
+        "Evidence: Earned",
+        "structural or live evidence earned this turn, explicitly separating live-vs-structural claims.",
+    ),
+    (
+        "Evidence: Not earned / forbidden",
+        "claims still forbidden, especially model-output lift or product progress not actually earned.",
+    ),
+    (
+        "Decision: Next ownership move",
+        "continue, stop, split, revise, or return to product work, with reason.",
     ),
 )
-
-
-def _format_goals_analysis_template_md() -> str:
-    parts: list[str] = []
-    for label, prompt in GOALS_ANALYSIS_FIELDS:
-        parts.append(f"**{label}:** _[≥48 chars + cite a repo surface — {prompt}]_")
-    return "\n\n".join(parts)
-
-
-WORK_REFLECTION_FIELDS: tuple[tuple[str, str], ...] = (
-    ("Smallness", "what was cut, what was kept, why"),
-    ("Mission alignment", "did this advance the shipped executive layer or unblock proof?"),
-    ("Cortex-specificity", "Cortex-specific or generic bloat / v1 carryover?"),
-    (
-        "Connectivity trace",
-        "change → file → host adapter → model output (or 'lab/experimental, no model reach')",
-    ),
-    ("Truth distinctions changed", "cortex / wiring / conformance / shipping — what moved"),
-    ("Hostile reviewer (engineer)", "one critique"),
-    ("Hostile reviewer (mathematician)", "one critique or n/a-with-reason"),
-    ("Hostile reviewer (neuroscientist)", "one critique or n/a-with-reason"),
-    ("Live vs structural", "what's earned by tests vs needs model run"),
-    (
-        "Anti-drift sweep",
-        "branch slug, audit landed, research classified, fixtures, postmortem patterns",
-    ),
-)
-
-
-def _format_work_reflection_template_md() -> str:
-    return "\n\n".join(
-        f"**{label}:** _[{prompt}]_" for label, prompt in WORK_REFLECTION_FIELDS
-    )
 
 
 def _format_verdict(check_payload: dict[str, object]) -> str:
@@ -1820,11 +1748,16 @@ GRID_TABLE_SEPARATOR_MARKER = "|---|---|"
 GRID_FORBIDDEN_SECTION_MARKER = "### "
 
 REQUIRED_GRID_ROW_LABELS: tuple[str, ...] = (
-    "State: Branch",
-    "Progress: bio_to_code matrix",
-    "Goals: Plan → implementation",
-    "Std: Ending branch",
-    "Mirror: Fixed now",
+    "Repo: State",
+    "Repo: Gates",
+    "Mission: Cortex target",
+    "Mission: Boundary judgment",
+    "Mission: Model I/O path",
+    "Reflection: Quality judgment",
+    "Evidence: Earned",
+    "Evidence: Not earned / forbidden",
+    "Decision: Next ownership move",
+    "Closure: Metadata",
     "Verdict",
 )
 
@@ -1840,40 +1773,49 @@ CLOSURE_LEAK_MARKERS = (
     "Fixed now",
     "Claim earned now",
     "Status registry touched",
-    "Final Handoff Mirror",
+    "Closure: Metadata",
 )
 
 
-# Standard Metadata fields with `<fill: ...>` placeholders. The agent
-# replaces each placeholder with the actual value in place; the hook
-# rejects any field still containing the literal `<fill` substring.
-STANDARD_METADATA_FIELDS: tuple[tuple[str, str], ...] = (
-    ("Ending branch", "<fill: branch name where this turn ends>"),
-    ("Commit hash", "<fill: commit hash or `no commit`>"),
-    ("Verification summary", "<fill: which test bundles ran with what results, or `no verification this turn`>"),
-    ("Returned to main", "<fill: yes or no>"),
-    ("Status registry touched", "<fill: keys changed in cortex_status.json or `none`>"),
-    ("Status doc regenerated", "<fill: yes or no>"),
-    ("CORTEX.md regenerated", "<fill: yes or no>"),
-)
+def _compact_repo_state(snapshot: dict[str, object]) -> str:
+    """Return branch/worktree/closeout/drift in one compact cell."""
+    closeout = snapshot["closeout"]
+    closeout_value = str(closeout.get("present"))
+    profile = closeout.get("profile")
+    if profile and closeout_value != "absent":
+        closeout_value = f"{closeout_value} ({profile})"
+    drift = snapshot.get("drift_signals", [])
+    drift_value = "none" if not drift else "; ".join(str(item) for item in drift)
+    return (
+        f"branch `{snapshot['branch']}`; vs origin/main +{snapshot['ahead']} / "
+        f"-{snapshot['behind']}; worktree {snapshot['worktree']}; "
+        f"closeout {closeout_value}; drift {drift_value}"
+    )
 
 
-# Final Handoff Mirror fields. The agent replaces each `<fill>`
-# placeholder in place. Hostile reviewer is one cell rendered as a
-# nested list with three lenses; the hook checks the cell does not
-# still contain the placeholder.
-FINAL_HANDOFF_MIRROR_FIELDS: tuple[tuple[str, str], ...] = (
-    ("Fixed now", "<fill: what landed this turn, or `n/a (no work this turn)`>"),
-    ("Intentionally deferred", "<fill: what was scoped out with rationale, or `n/a`>"),
-    ("Still underfit", "<fill: known limitations of what landed, or `n/a`>"),
-    ("Zeroed or stubbed terms", "<fill: what was retired or stubbed, or `n/a`>"),
-    (
-        "Hostile reviewer critiques",
-        "<fill: engineer / mathematician / neuroscientist — one critique each, or `n/a` for non-work turns>",
-    ),
-    ("Claim earned now", "<fill: what is structurally earned this turn, or `n/a`>"),
-    ("Claim still forbidden", "<fill: what cannot be claimed yet, or `n/a`>"),
-)
+def _compact_repo_gates(check_payload: dict[str, object]) -> str:
+    """Return reflection-check verdict plus failures/gaps when present."""
+    verdict = check_payload.get("verdict", "?")
+    failures = [str(f) for f in check_payload.get("failures", [])]
+    gaps = [str(g) for g in check_payload.get("gaps", [])]
+    parts = [f"reflection-check `{verdict}`"]
+    if failures:
+        parts.append("failures: " + "; ".join(failures[:5]))
+    if gaps:
+        parts.append("gaps: " + "; ".join(gaps[:5]))
+    if not failures and not gaps:
+        parts.append("failures/gaps none")
+    return "; ".join(parts)
+
+
+def _closure_metadata_template(snapshot: dict[str, object]) -> str:
+    """Return a compact metadata prompt for the agent to fill in place."""
+    return (
+        f"_[closure metadata — ending branch `{snapshot['branch']}`; commit hash "
+        "or `no commit`; verification summary; returned to main yes/no; "
+        "status registry touched keys or none; status doc regenerated yes/no; "
+        "CORTEX.md regenerated yes/no]_"
+    )
 
 
 def _dogfood_active() -> bool:
@@ -1893,22 +1835,6 @@ def _dogfood_active() -> bool:
     if not isinstance(payload, dict):
         return False
     return payload.get("mode_status") in {"active", "refreshed"}
-
-
-def _format_standard_metadata_table() -> str:
-    """Render the Standard Metadata table with `<fill>` placeholders."""
-    lines = ["| Field | Value |", "|---|---|"]
-    for label, placeholder in STANDARD_METADATA_FIELDS:
-        lines.append(f"| **{label}** | {placeholder} |")
-    return "\n".join(lines)
-
-
-def _format_final_handoff_mirror_md() -> str:
-    """Render legacy Final Handoff Mirror prose with `<fill>` placeholders."""
-    parts: list[str] = []
-    for label, placeholder in FINAL_HANDOFF_MIRROR_FIELDS:
-        parts.append(f"**{label}:** {placeholder}")
-    return "\n\n".join(parts)
 
 
 def _format_dogfood_signal_md() -> str:
@@ -1966,48 +1892,23 @@ def _format_grid_markdown(
     subsections and no additional tables inside the grid.
 
     Row groups:
-    - ``State:*`` and ``Progress:*`` always emitted.
-    - ``Goals:*`` always emitted and filled in place by the agent.
-    - ``Mech:*`` always emitted for a stable visual shape.
-    - ``Work:*`` emitted only when work was performed.
-    - ``Std:*`` and ``Mirror:*`` always emitted and filled in place.
-    - ``Dogfood:*`` emitted only when dogfood mode is active.
+    - ``Repo:*`` rows summarize mechanical state without stale dashboards.
+    - ``Mission:*``, ``Reflection:*``, ``Evidence:*``, and ``Decision:*``
+      rows force causal mission ownership and are filled in place.
+    - ``Closure: Metadata`` is the compact closure metadata row.
+    - ``Dogfood:*`` rows are emitted only when dogfood mode is active.
     - ``Verdict`` always emitted.
 
-    Bracketed ``<fill: ...>`` placeholders are filled in place by the
-    agent. The Stop hook rejects any field still containing ``<fill``
-    or any unmodified Goals Analysis bracket. The verdict reflects
-    ``reflection-check`` output even on no-work turns so drift signals
-    (stale next_train, dirty main, dangling closeout) still surface.
+    Bracketed reflection prompts are filled in place by the agent. The
+    Stop hook rejects unmodified prompts, short or uncited mission rows,
+    stale ``Progress:*`` rows, ``<fill`` placeholders, and FAIL verdicts.
     """
-    registry = _registry_payload() or {}
     rows: list[tuple[str, str]] = []
-    rows.extend((f"State: {label}", value) for label, value in _state_rows(snapshot))
-    rows.extend(
-        (f"Progress: {label}", value) for label, value in _progress_rows(registry)
-    )
-    for label, prompt in GOALS_ANALYSIS_FIELDS:
-        rows.append(
-            (
-                f"Goals: {label}",
-                f"_[≥48 chars + cite a repo surface — {prompt}]_",
-            )
-        )
-    rows.extend(
-        (f"Mech: {label}", value)
-        for label, value in _mechanical_check_rows(check_payload)
-    )
-    if work_performed:
-        for label, prompt in WORK_REFLECTION_FIELDS:
-            rows.append((f"Work: {label}", f"_[{prompt}]_"))
-    rows.extend(
-        (f"Std: {label}", placeholder)
-        for label, placeholder in STANDARD_METADATA_FIELDS
-    )
-    rows.extend(
-        (f"Mirror: {label}", placeholder)
-        for label, placeholder in FINAL_HANDOFF_MIRROR_FIELDS
-    )
+    rows.append(("Repo: State", _compact_repo_state(snapshot)))
+    rows.append(("Repo: Gates", _compact_repo_gates(check_payload)))
+    for label, prompt in MISSION_REFLECTION_FIELDS:
+        rows.append((label, f"_[mission reflection — {prompt}]_"))
+    rows.append(("Closure: Metadata", _closure_metadata_template(snapshot)))
     if _dogfood_active():
         rows.extend(
             (f"Dogfood: {label}", placeholder)

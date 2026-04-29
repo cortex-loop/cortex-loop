@@ -130,12 +130,10 @@ def test_agents_records_mission_lock_and_single_truth_bootstrap() -> None:
     assert "Workflow-law seams are load-bearing too" in text
     assert "revalidates reviewed-path exactness after verification" in text
     assert "at least one law-to-code completeness row" in text
-    # Final Handoff Mirror is referenced by name (the field labels
-    # themselves are emitted by `grid` from
-    # `repo_workflow.py::FINAL_HANDOFF_MIRROR_FIELDS`; they no longer
-    # need to be duplicated in AGENTS.md since the single-grid-closure
-    # rule consolidates closure inside the grid skeleton).
-    assert "Final Handoff Mirror" in text
+    # Closure is now compact metadata inside Cortex Mission Reflection,
+    # not a separate Final Handoff Mirror surface.
+    assert "Cortex Mission Reflection" in text
+    assert "Closure: Metadata" in text
     # PHI-label decision loop and PHILOSOPHY_AUDIT block must be retired.
     # Their content moved into docs/CORTEX.md §6 and the agent briefing.
     assert "PHI_MINIFY" not in text
@@ -155,27 +153,31 @@ def test_agents_records_mission_lock_and_single_truth_bootstrap() -> None:
     assert ".claude/settings.json" in text
     assert "## Cortex Repo Hygiene Grid" in text
     assert "| Field | Value |" in text
-    assert "State: Branch" in text
+    assert "Repo: State" in text
+    assert "Mission: Cortex target" in text
+    assert "Mission: Model I/O path" in text
     assert "Verdict" in text
     # Codex fallback acknowledged. Session 4 wording: "Codex does not
     # support Stop hooks" (parallel to the prior "no hooks" phrasing).
     assert "Codex" in text
     assert "does not support Stop hooks" in text or "no hooks" in text.lower()
-    # Single-table closure rule. Standard Metadata and Final Handoff
-    # Mirror live as Std:* and Mirror:* rows inside one table; closure
-    # must not be emitted outside the grid; the doctrine-vs-code
-    # contradiction (paste verbatim AND fill below) is replaced by
-    # paste-skeleton-fill-in-place.
-    assert "Single-grid rule" in text
-    assert "Std: Ending branch" in text
-    assert "Mirror: Fixed now" in text
-    assert "no `###` subsections inside the grid" in text
+    # Single-table mission-reflection rule. Stale dashboard rows are
+    # explicitly forbidden; mission rows must be cited and substantive.
+    assert "Cortex Mission Reflection" in text
+    assert "Do not emit fixed dashboard rows" in text
+    assert "mission reflection —" in text
+    assert "120" in text
+    assert "no `###` subsection inside the grid" in text
     assert "fill brackets in place" in text or "edits the skeleton in place" in text
     # The hard-gate honesty: stop_hook_active no longer short-circuits.
     assert "stop_hook_active" in text
     # The old separate-block doctrine must NOT remain.
     assert "Every final summary must include the grid output plus the" not in text
     assert "Every substantive final summary must mirror the rendered" not in text
+    assert "Goals Analysis" not in text
+    assert "State: Branch" not in text
+    assert "Std: Ending branch" not in text
+    assert "Mirror: Fixed now" not in text
     # Old retired doctrine names must not creep back.
     assert "CORTEX_V2_ACTIVE_WORKSTREAM" not in text
     assert "CORTEX_V2_PHASE_GATES_2" not in text
@@ -331,7 +333,10 @@ def test_public_docs_point_to_status_and_keep_archive_out_of_the_front_door() ->
     assert "hard-fails" in workflow
     assert "workflow-law terms touched" in workflow
     assert "reviewed-path drift during verification" in workflow
-    assert "Final Handoff Mirror" in workflow
+    assert "Cortex Mission Reflection" in workflow
+    assert "Closure: Metadata" in workflow
+    assert "fixed rows for `Progress:*`" in workflow
+    assert "Goals Analysis" not in workflow
     for text in (readme, docs_index, cortex_doc):
         assert "CORTEX_V2_ACTIVE_WORKSTREAM" not in text
         assert "CORTEX_V2_PHASE_GATES_2" not in text
