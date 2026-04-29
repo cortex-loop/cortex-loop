@@ -10,6 +10,7 @@ import shutil
 import subprocess
 import sys
 import tempfile
+import tomllib
 from pathlib import Path
 
 ROOT_ENV_VAR = "CORTEX_REPO_WORKFLOW_ROOT"
@@ -1207,6 +1208,9 @@ def cmd_cleanup_report() -> int:
         hook_health = _hook_health_payload()
         if not hook_health["ok"]:
             failures["mission_reflection_hook_health"] = hook_health["failures"]
+        codex_app_hook_health = _codex_app_hook_health_payload()
+        if not codex_app_hook_health["ok"]:
+            failures["codex_app_hook_health"] = codex_app_hook_health["failures"]
 
     report = {
         "ok": not failures,
@@ -1744,10 +1748,10 @@ def _current_grid_for_validation() -> tuple[str, dict[str, object]]:
 def cmd_grid_validate(message_file: str | None, emit_json: bool) -> int:
     """Validate a filled Cortex Mission Reflection graph.
 
-    Codex has no repo-visible Stop hook. This command is the shared
-    validator Codex can run against its final response before sending;
-    closeout doctrine records that limitation honestly rather than
-    pretending Codex has Claude's chat-boundary hard gate.
+    This command is the shared fallback validator for Codex surfaces
+    that do not load repo-local Stop hooks. Codex App for Mac also has
+    a Stop hook path, but closeout still records validator evidence so
+    session-boundary proof remains explicit.
     """
     if message_file:
         text = Path(message_file).read_text(encoding="utf-8")
@@ -1897,6 +1901,173 @@ def cmd_hook_health(emit_json: bool) -> int:
         print("Cortex Mission Reflection hook health PASS")
     else:
         print("Cortex Mission Reflection hook health FAIL")
+        for failure in payload["failures"]:
+            print(f"- {failure}")
+    return 0 if payload["ok"] else 1
+
+
+def _codex_app_stop_hook_configured() -> tuple[bool, str]:
+    """Return whether repo-local Codex App Stop hook config is present."""
+
+    config_path = _root() / ".codex" / "config.toml"
+    try:
+        config = tomllib.loads(config_path.read_text(encoding="utf-8"))
+    except FileNotFoundError:
+        return False, ".codex/config.toml missing"
+    except tomllib.TOMLDecodeError as exc:
+        return False, f".codex/config.toml is invalid TOML: {exc}"
+
+    features = config.get("features")
+    if not isinstance(features, dict) or features.get("codex_hooks") is not True:
+        return False, ".codex/config.toml must set [features].codex_hooks = true"
+
+    hooks = config.get("hooks")
+    if not isinstance(hooks, dict):
+        return False, ".codex/config.toml missing [hooks] table"
+    stop_hooks = hooks.get("Stop")
+    if not isinstance(stop_hooks, list) or not stop_hooks:
+        return False, ".codex/config.toml missing [[hooks.Stop]]"
+
+    for entry in stop_hooks:
+        if not isinstance(entry, dict):
+            continue
+        handlers = entry.get("hooks")
+        if not isinstance(handlers, list):
+            continue
+        for hook in handlers:
+            if not isinstance(hook, dict):
+                continue
+            command = str(hook.get("command", ""))
+            if (
+                hook.get("type") == "command"
+                and "cortex_mission_reflection_stop_hook.py" in command
+            ):
+                return True, command
+    return False, (
+        "Stop hook for .codex/hooks/cortex_mission_reflection_stop_hook.py "
+        "not declared"
+    )
+
+
+def _run_codex_app_stop_hook_with_message(text: str | None) -> tuple[int, str, str]:
+    """Simulate Codex App Stop hook input for health tests."""
+
+    hook_path = _root() / ".codex" / "hooks" / "cortex_mission_reflection_stop_hook.py"
+    hook_input: dict[str, object] = {
+        "cwd": str(_root()),
+        "turn_id": "codex-app-hook-health",
+        "stop_hook_active": False,
+    }
+    if text is not None:
+        hook_input["last_assistant_message"] = text
+    proc = subprocess.run(
+        [sys.executable, str(hook_path)],
+        cwd=_root(),
+        input=json.dumps(hook_input),
+        check=False,
+        capture_output=True,
+        text=True,
+        timeout=180,
+    )
+    return proc.returncode, proc.stdout, proc.stderr
+
+
+def _codex_app_hook_health_payload() -> dict[str, object]:
+    """Verify repo-local Codex App Stop hook config and behavior.
+
+    This does not prove the Mac app has fired the hook in a live UI turn;
+    it proves the repo-local config is present and the hook script blocks
+    known-bad ``last_assistant_message`` payloads using the shared graph
+    validator. If a Codex App build ignores repo-local hooks, this command
+    remains necessary but not sufficient; the visible live canary is the
+    final proof.
+    """
+
+    configured, config_detail = _codex_app_stop_hook_configured()
+    graph, check_payload = _current_grid_for_validation()
+    filled_graph = mission_reflection.filled_example_graph(graph)
+    validator_result = mission_reflection.validate_graph_text(
+        filled_graph,
+        check_payload=check_payload,
+        require_filled=True,
+    )
+
+    failures: list[str] = []
+    if not configured:
+        failures.append(config_detail)
+    if not validator_result.ok:
+        failures.append(
+            "shared graph validator rejects filled example: "
+            + "; ".join(validator_result.errors)
+        )
+
+    bad_code, bad_stdout, bad_stderr = _run_codex_app_stop_hook_with_message(
+        "Plain assistant message without the mission graph."
+    )
+    bad_blocks = False
+    if bad_code != 0:
+        failures.append(f"Codex App Stop hook returned non-zero on bad message: {bad_code}")
+    else:
+        try:
+            bad_payload = json.loads(bad_stdout)
+        except json.JSONDecodeError:
+            bad_payload = {}
+        bad_blocks = bad_payload.get("decision") == "block"
+        if not bad_blocks:
+            failures.append(
+                "Codex App Stop hook did not block known-bad last_assistant_message"
+                + (f"; stderr={bad_stderr.strip()}" if bad_stderr.strip() else "")
+            )
+
+    good_code, good_stdout, good_stderr = _run_codex_app_stop_hook_with_message(
+        filled_graph
+    )
+    good_allows = good_code == 0 and not good_stdout.strip() and not good_stderr.strip()
+    if good_code != 0:
+        failures.append(
+            f"Codex App Stop hook returned non-zero on valid graph: {good_code}"
+        )
+    if good_stdout.strip():
+        failures.append("Codex App Stop hook blocked filled valid graph")
+    if good_stderr.strip():
+        failures.append(
+            f"Codex App Stop hook emitted stderr on valid graph: {good_stderr.strip()}"
+        )
+
+    missing_code, missing_stdout, missing_stderr = _run_codex_app_stop_hook_with_message(
+        None
+    )
+    missing_message_fails_open = (
+        missing_code == 0
+        and not missing_stdout.strip()
+        and "last_assistant_message" in missing_stderr
+    )
+    if not missing_message_fails_open:
+        failures.append(
+            "Codex App Stop hook did not fail open visibly when "
+            "last_assistant_message was unavailable"
+        )
+
+    return {
+        "ok": not failures,
+        "failures": failures,
+        "settings": config_detail,
+        "codex_hooks_feature_enabled": configured,
+        "shared_validator_ok": validator_result.ok,
+        "known_bad_blocks": bad_blocks,
+        "filled_graph_allows_stop": good_allows,
+        "missing_last_assistant_message_fails_open": missing_message_fails_open,
+    }
+
+
+def cmd_codex_app_hook_health(emit_json: bool) -> int:
+    payload = _codex_app_hook_health_payload()
+    if emit_json:
+        print(json.dumps(payload, indent=2, sort_keys=True))
+    elif payload["ok"]:
+        print("Cortex Mission Reflection Codex App hook health PASS")
+    else:
+        print("Cortex Mission Reflection Codex App hook health FAIL")
         for failure in payload["failures"]:
             print(f"- {failure}")
     return 0 if payload["ok"] else 1
@@ -2067,8 +2238,8 @@ def main(argv: list[str] | None = None) -> int:
         "grid-validate",
         help=(
             "Validate a filled Cortex Mission Reflection graph from stdin "
-            "or --message-file. Used by Codex as the honest no-hook parity "
-            "check before emitting final closure."
+            "or --message-file. Used by Codex fallback surfaces and "
+            "Codex closeouts as explicit session-boundary evidence."
         ),
     )
     validate_grid_parser.add_argument("--message-file")
@@ -2089,6 +2260,19 @@ def main(argv: list[str] | None = None) -> int:
         "--json",
         action="store_true",
         dest="hook_health_json",
+        help="Emit JSON instead of human-readable text.",
+    )
+    codex_app_hook_health_parser = subparsers.add_parser(
+        "codex-app-hook-health",
+        help=(
+            "Verify repo-local Codex App Stop hook config and behavior by "
+            "simulating known-bad and valid last_assistant_message payloads."
+        ),
+    )
+    codex_app_hook_health_parser.add_argument(
+        "--json",
+        action="store_true",
+        dest="codex_app_hook_health_json",
         help="Emit JSON instead of human-readable text.",
     )
 
@@ -2124,6 +2308,8 @@ def main(argv: list[str] | None = None) -> int:
         return cmd_grid_validate(args.message_file, args.grid_validate_json)
     if args.command == "hook-health":
         return cmd_hook_health(args.hook_health_json)
+    if args.command == "codex-app-hook-health":
+        return cmd_codex_app_hook_health(args.codex_app_hook_health_json)
     raise SystemExit(f"Unhandled command: {args.command}")
 
 

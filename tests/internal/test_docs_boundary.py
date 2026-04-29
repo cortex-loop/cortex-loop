@@ -87,8 +87,9 @@ def test_agents_records_mission_lock_and_single_truth_bootstrap() -> None:
     # PHILOSOPHY_AUDIT handoff ritual; further when the Stop hook
     # discipline and no-mimicry rule landed; further when the
     # single-grid-closure rule consolidated metadata + mirror inside the
-    # grid (Session 4). The cap stays bounded so AGENTS.md does not
-    # sprawl into a wiki; the narrative lives in docs/CORTEX.md.
+    # grid, then Codex App hook parity landed. The cap stays bounded so
+    # AGENTS.md does not sprawl into a wiki; the narrative lives in
+    # docs/CORTEX.md.
     assert len(lines) <= 420
     assert sections == [
         "## Agent Briefing",
@@ -157,9 +158,11 @@ def test_agents_records_mission_lock_and_single_truth_bootstrap() -> None:
     assert "Mission: Cortex target" in text
     assert "Mission: Model I/O path" in text
     assert "Verdict" in text
-    # Codex fallback acknowledged without pretending chat-boundary parity.
+    # Codex App now has its own hook path; fallback surfaces remain honest.
     assert "Codex" in text
-    assert "does not support Stop hooks" in text
+    assert "Codex App chat-boundary enforcement" in text
+    assert ".codex/hooks/cortex_mission_reflection_stop_hook.py" in text
+    assert "codex-app-hook-health" in text
     assert "grid-validate --stdin" in text
     assert "mission_reflection_graph" in text
     # Single-table mission-reflection rule. Stale dashboard rows are
@@ -337,6 +340,8 @@ def test_public_docs_point_to_status_and_keep_archive_out_of_the_front_door() ->
     assert "Cortex Mission Reflection" in workflow
     assert "Closure: Metadata" in workflow
     assert "fixed rows for `Progress:*`" in workflow
+    assert "codex-app-hook-health" in workflow
+    assert ".codex/hooks/cortex_mission_reflection_stop_hook.py" in workflow
     assert "Goals Analysis" not in workflow
     for text in (readme, docs_index, cortex_doc):
         assert "CORTEX_V2_ACTIVE_WORKSTREAM" not in text

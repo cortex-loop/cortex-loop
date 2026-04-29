@@ -396,7 +396,7 @@ commit, verification, returned-to-main, and registry/doc-regeneration
 facts. The skeleton is verbatim from the command; the agent's edits
 stay inside the skeleton. No separate closure section follows the grid.
 
-**Chat-boundary enforcement (Claude Code only).** A Stop hook at
+**Chat-boundary enforcement (Claude Code and Codex App).** A Stop hook at
 `.claude/settings.json` runs
 `.claude/hooks/cortex_grid_stop_hook.py` on turn-completion. The hook
 reads the assistant's last message from the transcript, runs `grid`
@@ -416,12 +416,20 @@ and `grid-validate` both use `internal/workflow/mission_reflection.py`
 as the shared graph contract, so Claude and Codex are validating the
 same rows and thresholds.
 
-**Codex parity.** Codex does not support Stop hooks in this repo. Its
-fallback is validator + doctrine: the agent runs
+Codex App for Mac has its own repo-local Stop hook because Codex exposes
+`last_assistant_message` directly rather than a Claude transcript path:
+`.codex/config.toml` enables `[features].codex_hooks = true`, and
+`.codex/hooks/cortex_mission_reflection_stop_hook.py` applies the same
+shared validator. `codex-app-hook-health` simulates known-bad and valid
+Codex Stop payloads; if it fails, product work in Codex App must stop
+until the hook/config/runtime issue is fixed.
+
+**Codex fallback surfaces.** Codex surfaces that do not load repo-local
+hooks fall back to validator + doctrine: the agent runs
 `python3 internal/workflow/repo_workflow.py grid-validate --stdin` on
 the filled final graph, and non-no-op Codex closeouts record that pass
-in `mission_reflection_graph`. This is honest session-boundary evidence,
-not a Claude-equivalent chat-boundary hard gate.
+in `mission_reflection_graph`. This is session-boundary evidence, not
+chat-boundary parity.
 
 **No-mimicry rule.** Composing markdown that resembles grid content
 but is not actual `grid` command output is a violation. Ad-hoc
