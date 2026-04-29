@@ -16,6 +16,13 @@ CLAUDE_PATH = REPO_ROOT / "CLAUDE.md"
 CORTEX_DOC_PATH = REPO_ROOT / "docs" / "CORTEX.md"
 README_PATH = REPO_ROOT / "README.md"
 DOCS_INDEX_PATH = REPO_ROOT / "docs" / "README.md"
+RUNTIME_CONTEXT_RUBRIC_PATH = REPO_ROOT / "docs" / "runtime_context" / "EVAL_RUBRIC.md"
+RUNTIME_CONTEXT_EXAMPLES_PATH = (
+    REPO_ROOT / "docs" / "runtime_context" / "BASELINE_SHAPED_EXAMPLES.md"
+)
+RUNTIME_CONTEXT_CROSS_HOST_PATH = (
+    REPO_ROOT / "docs" / "runtime_context" / "CROSS_HOST_SKETCH.md"
+)
 STATUS_REGISTRY_PATH = REPO_ROOT / "internal" / "truth" / "cortex_status.json"
 STATUS_DOC_PATH = REPO_ROOT / "docs" / "CORTEX_STATUS.md"
 WORKFLOW_DOC_PATH = REPO_ROOT / "docs" / "internal" / "REPO_WORKFLOW.md"
@@ -382,10 +389,17 @@ def test_public_docs_point_to_status_and_keep_archive_out_of_the_front_door() ->
     assert "Current Status" in docs_index
     assert "archive/" in docs_index
     assert "CORTEX.md" in docs_index
+    assert "runtime_context/EVAL_RUBRIC.md" in docs_index
+    assert "runtime_context/BASELINE_SHAPED_EXAMPLES.md" in docs_index
+    assert "runtime_context/CROSS_HOST_SKETCH.md" in docs_index
     # CORTEX.md content anchors the previously-fragmented charter and
     # boundary identity material in one canonical surface.
     assert "executive-function layer that wraps a model after" in cortex_doc
     assert "internal/truth/cortex_status.json" in cortex_doc
+    assert "docs/runtime_context/" in cortex_doc
+    assert "EVAL_RUBRIC.md" in cortex_doc
+    assert "BASELINE_SHAPED_EXAMPLES.md" in cortex_doc
+    assert "CROSS_HOST_SKETCH.md" in cortex_doc
     # Workflow rules unchanged.
     assert "paid OpenAI service-lane proof is never part of the default bundle" in workflow
     assert "requires explicit user approval in the current chat" in workflow
@@ -425,8 +439,48 @@ def test_active_doc_allowlist_matches_status_registry() -> None:
 def test_docs_directory_only_exposes_archive_and_workflow_subtrees() -> None:
     subdirs = sorted(path.name for path in DOCS_ROOT.iterdir() if path.is_dir())
 
-    assert subdirs == ["archive", "internal"]
+    assert subdirs == ["archive", "internal", "runtime_context"]
     assert [path.name for path in (DOCS_ROOT / "internal").iterdir()] == ["REPO_WORKFLOW.md"]
+    assert sorted(path.name for path in (DOCS_ROOT / "runtime_context").iterdir()) == [
+        "BASELINE_SHAPED_EXAMPLES.md",
+        "CROSS_HOST_SKETCH.md",
+        "EVAL_RUBRIC.md",
+    ]
+
+
+def test_runtime_context_eval_artifacts_are_documented_and_operationalized() -> None:
+    rubric = _read(RUNTIME_CONTEXT_RUBRIC_PATH)
+    examples = _read(RUNTIME_CONTEXT_EXAMPLES_PATH)
+    cross_host = _read(RUNTIME_CONTEXT_CROSS_HOST_PATH)
+
+    assert "docs/CORTEX.md` remains" in rubric
+    assert "baseline-vs-shaped" in rubric
+    assert "Premature closure" in rubric
+    assert "Evidence recovery" in rubric
+    assert "Goal continuity" in rubric
+    assert "0 | 1 | 2 | 3" in rubric
+    assert "out of 9" in rubric
+    assert "at least 2 points higher" in rubric
+    assert "regresses by more than 1" in rubric
+    assert "route/block/closure changes" in rubric
+
+    assert "Example 1: Clear Shaped Win" in examples
+    assert "Example 2: Shaped Loss / Regression" in examples
+    assert "Example 3: Changed But Not Meaningful" in examples
+    assert "probe=unsupported" in examples
+    assert "over-constraint risk" in examples
+    assert "Baseline output" in examples
+    assert "Shaped output" in examples
+    assert "| Premature closure |" in examples
+    assert "Shaped wins by +7" in examples
+    assert "Shaped regresses by -3" in examples
+    assert "No score improvement" in examples
+
+    assert "OpenAIHostControlRequest.instructions" in cross_host
+    assert "ClaudeHostControlRequest.system" in cross_host
+    assert "GeminiHostControlRequest.instructions" in cross_host
+    assert "systemInstruction" in cross_host
+    assert "does not implement Claude or Gemini" in cross_host
 
 
 def test_generated_status_doc_is_current() -> None:
