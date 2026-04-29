@@ -519,11 +519,16 @@
         "code_refs": [
           "cortex/sre/feedback.py",
           "cortex/hosts/_executive_closure.py",
+          "cortex/hosts/runtime_context.py",
+          "cortex/hosts/openai/host_control.py",
           "cortex/hosts/openai/runtime.py",
           "cortex/hosts/reference/runtime.py"
         ],
         "proof_refs": [
           "tests/product/test_reference_feedback_window.py",
+          "tests/product/test_runtime_context_bridge.py",
+          "tests/product/test_runtime_context_eval_rubric.py",
+          "tests/product/test_openai_host_control.py",
           "tests/product/test_openai_runtime_step.py",
           "tests/conformance/integration/test_reference_runtime_cli.py"
         ]
@@ -618,11 +623,11 @@
       },
       {
         "id": "feedback_window_realization",
-        "visibility_class": "decision_visible",
-        "model_io_path": "host output / realization feedback → feedback window → next runtime step policy and route selection",
-        "reaches_model_as": "future route/brake/closure decisions, not direct text unless a later host-control request translates it",
-        "behavior_effect": "prevents stream-only churn from counting as progress and raises pressure after repeated rejection/override/probe failure",
-        "gap_or_unearned": "Feedback windows are structural; live claim that they improve output needs pinned before/after model runs."
+        "visibility_class": "conditional_model_visible_openai",
+        "model_io_path": "host output / last `ReferenceRealizationFeedback` → `runtime_context_from_last_feedback(...)` → OpenAI host-control `instructions` for ordinary calls or verified-work `input_text` before workspace context",
+        "reaches_model_as": "bounded `CORTEX_RUNTIME_CONTEXT_V1` text derived only from the immediately prior feedback entry; clean or absent feedback emits no block",
+        "behavior_effect": "shapes the next OpenAI call away from premature closure after stream-only, failed-probe, warning, friction, override, or braked realization without accumulating memory across turns",
+        "gap_or_unearned": "This is structural model-I/O shaping on OpenAI only; live output-quality lift and Claude/Gemini ports remain unearned until paired runs prove them."
       },
       {
         "id": "host_runtime_sessions",
@@ -686,9 +691,9 @@
       },
       {
         "id": "feedback_window_realization",
-        "boundary_judgment": "product Cortex when feedback changes next route/brake decision; monitor-only if retained only as a public summary",
-        "decision": "bridge",
-        "next_action": "For every new feedback signal, require a route/brake/closure consequence or classify it as lab telemetry.",
+        "boundary_judgment": "product Cortex on the OpenAI host-control lane when last-step feedback is translated into bounded model-visible runtime context; still monitor-only if retained only as a public summary",
+        "decision": "bridge_landed_openai_structural",
+        "next_action": "Keep the bridge last-feedback-only and run paired live baseline-vs-shaped evaluations before claiming output lift or porting the path to Claude/Gemini.",
         "post_training_boundary": "General learning from feedback is post-training; event-local realization feedback that alters the next runtime decision is Cortex."
       },
       {
