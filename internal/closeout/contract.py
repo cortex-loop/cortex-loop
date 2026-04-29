@@ -492,8 +492,37 @@ def validate_payload(
                 row.get("proof_refs"), f"law_to_code_completeness[{index}].proof_refs", allow_empty=False
             )
             _require_string(row.get("note"), f"law_to_code_completeness[{index}].note")
+            # Optional structural join into status registry math_to_code_map.
+            # Free-text `term` stays for display and historical compatibility;
+            # `math_object_id`, when present, must be a non-empty string and
+            # mechanically join to a math_to_code_map entry. Future seam-side
+            # validators can treat unknown IDs as drift; today the field is
+            # advisory but pinned in shape.
+            if "math_object_id" in row:
+                math_object_id = row["math_object_id"]
+                if math_object_id is not None and not (
+                    isinstance(math_object_id, str) and math_object_id.strip()
+                ):
+                    raise SystemExit(
+                        f"law_to_code_completeness[{index}].math_object_id must be a "
+                        "non-empty string when present."
+                    )
 
     _validate_agent_loop_guard_claims(payload)
+
+    if "lesson_for_cortex_doc" in payload:
+        lesson = payload["lesson_for_cortex_doc"]
+        # Optional channel for narrative-update candidates. When a session
+        # produces a load-bearing lesson worth landing in CORTEX.md §3
+        # (V1 → V2 evolution), the closeout records it here so the next
+        # narrative-update session can pick it up. The field is just a
+        # marker; the actual prose update is manual.
+        if lesson is not None and not (isinstance(lesson, str) and lesson.strip()):
+            raise SystemExit(
+                "Closeout contract field 'lesson_for_cortex_doc' must be a "
+                "non-empty string when present. Use it to mark a candidate "
+                "lesson for inclusion in CORTEX.md §3."
+            )
 
     if "stacked_session_reason" in payload:
         reason = payload["stacked_session_reason"]

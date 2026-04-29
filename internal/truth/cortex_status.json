@@ -190,6 +190,199 @@
     ],
     "law_revision_rule": "The current math is binding landing law until live evidence disproves or narrows it. When that happens, revise the law explicitly and update the code and proof surfaces in the same seam; do not silently patch around stale math in implementation."
   },
+  "math_to_code_map": [
+    {
+      "id": "lifecycle_event_envelope",
+      "label": "Lifecycle event envelope",
+      "packet_ref": "CORE_2 §4.1",
+      "code_refs": ["cortex/core/envelopes.py"],
+      "proof_refs": ["tests/product/test_core_substrate.py"],
+      "status": "implemented"
+    },
+    {
+      "id": "observation_bundle",
+      "label": "Event-local observation bundle",
+      "packet_ref": "CORE_2 §6.1",
+      "code_refs": ["cortex/core/observation.py"],
+      "proof_refs": ["tests/product/test_core_substrate.py"],
+      "status": "implemented"
+    },
+    {
+      "id": "split_environment_handles",
+      "label": "Executive vs commitment environment handles",
+      "packet_ref": "CORE_2 §6.2",
+      "code_refs": ["cortex/core/environment.py"],
+      "proof_refs": ["tests/product/test_core_substrate.py"],
+      "status": "implemented"
+    },
+    {
+      "id": "environment_query",
+      "label": "Generalized environment query",
+      "packet_ref": "CORE_2 §6.3",
+      "code_refs": ["cortex/core/environment.py"],
+      "proof_refs": ["tests/product/test_core_substrate.py"],
+      "status": "implemented"
+    },
+    {
+      "id": "commitment_candidate",
+      "label": "Commitment candidate and status lattice",
+      "packet_ref": "CORE_2 §7.1, §7.2",
+      "code_refs": ["cortex/core/commitments.py"],
+      "proof_refs": ["tests/product/test_certification_artifacts.py"],
+      "status": "implemented"
+    },
+    {
+      "id": "provenance_manifest",
+      "label": "Downward provenance dominance manifest",
+      "packet_ref": "CORE_2 §7.3",
+      "code_refs": ["cortex/core/commitments.py"],
+      "proof_refs": ["tests/product/test_certification_artifacts.py"],
+      "status": "implemented"
+    },
+    {
+      "id": "wake_decision",
+      "label": "Commitment wake decision and dispatch",
+      "packet_ref": "CORE_2 §5, §7.4",
+      "code_refs": ["cortex/core/dispatch.py"],
+      "proof_refs": ["tests/product/test_dispatch.py"],
+      "status": "implemented"
+    },
+    {
+      "id": "boundary_assessment",
+      "label": "Event-local certification firewall assessment",
+      "packet_ref": "CORE_2 §8.1, §11.1",
+      "code_refs": ["cortex/core/commitments.py"],
+      "proof_refs": ["tests/product/test_certification_artifacts.py"],
+      "status": "implemented"
+    },
+    {
+      "id": "support_state",
+      "label": "Recoverable executive role / support state",
+      "packet_ref": "CORE_2 §8.2",
+      "code_refs": ["cortex/core/support.py"],
+      "proof_refs": ["tests/product/test_core_substrate.py"],
+      "status": "implemented"
+    },
+    {
+      "id": "executive_signal_summary",
+      "label": "Minimal software-shaped executive role view",
+      "packet_ref": "SRE_2 §3.1",
+      "code_refs": ["cortex/sre/executive_summary.py"],
+      "proof_refs": ["tests/product/test_sre_uncertainty_brake.py"],
+      "status": "implemented"
+    },
+    {
+      "id": "neutral_dominance_decision",
+      "label": "Neutral-dominance arbitration",
+      "packet_ref": "SRE_2 §6.6",
+      "code_refs": ["cortex/sre/policy.py"],
+      "proof_refs": ["tests/product/test_sre_neutral_hinge.py"],
+      "status": "implemented"
+    },
+    {
+      "id": "risk_weight",
+      "label": "Asymmetric error-cost RiskWeight carrier",
+      "packet_ref": "SRE_2 §6.6.1",
+      "code_refs": ["cortex/sre/state.py"],
+      "proof_refs": ["tests/product/test_sre_neutral_hinge.py"],
+      "status": "implemented"
+    },
+    {
+      "id": "operator_brain_capability_envelope",
+      "label": "Operator brain capability envelope",
+      "packet_ref": "SRE_2 §6.9",
+      "code_refs": [
+        "cortex/sre/operator_routing.py",
+        "cortex/runtime/operator_brain_capability.py"
+      ],
+      "proof_refs": [
+        "tests/product/test_brain_capability.py",
+        "tests/conformance/test_brain_capability_parity.py"
+      ],
+      "status": "implemented"
+    },
+    {
+      "id": "executive_modulator_state",
+      "label": "Brake tonic EMA executive modulator state",
+      "packet_ref": "SRE_2 §7.4, §7.5",
+      "code_refs": ["cortex/sre/modulators.py", "cortex/sre/brake.py"],
+      "proof_refs": ["tests/product/test_sre_uncertainty_brake.py"],
+      "status": "implemented"
+    },
+    {
+      "id": "goal_debt_state",
+      "label": "Typed goal-debt and closure-pressure state",
+      "packet_ref": "SRE_2 §8.1",
+      "code_refs": ["cortex/sre/goal_debt.py", "cortex/sre/goals.py"],
+      "proof_refs": [
+        "tests/product/test_sre_goals_branching.py",
+        "tests/product/test_sre_goal_branch.py"
+      ],
+      "status": "implemented"
+    },
+    {
+      "id": "preservation_state",
+      "label": "Verified-work preservation and intervention budget",
+      "packet_ref": "SRE_2 §6.7 (budget); CORE recovery firewall",
+      "code_refs": ["cortex/sre/preservation.py"],
+      "proof_refs": ["tests/product/test_preservation_state.py"],
+      "status": "implemented"
+    },
+    {
+      "id": "host_reliability_prior",
+      "label": "Bounded host/tool reliability prior",
+      "packet_ref": "AUX_2 §4 (geometry/eval support); SRE_2 score-pricing",
+      "code_refs": [
+        "cortex/sre/memory_priors.py",
+        "cortex/aux/support_priors.py"
+      ],
+      "proof_refs": [
+        "tests/experimental/test_aux_support_priors.py",
+        "tests/experimental/test_aux_publication.py"
+      ],
+      "status": "implemented"
+    },
+    {
+      "id": "support_memory_episode",
+      "label": "Durable AUX support-memory episode",
+      "packet_ref": "AUX_2 §3 offline support memory",
+      "code_refs": ["cortex/aux/persistence.py"],
+      "proof_refs": ["tests/experimental/test_aux_persistence.py"],
+      "status": "implemented"
+    },
+    {
+      "id": "auxiliary_support_appendix",
+      "label": "AUX runtime augmentation appendix and re-entry",
+      "packet_ref": "AUX_2 §5 re-entry / SRE handoff",
+      "code_refs": ["cortex/aux/augmentation.py", "cortex/aux/publication.py"],
+      "proof_refs": ["tests/experimental/test_aux_publication.py"],
+      "status": "implemented"
+    },
+    {
+      "id": "aux_lift_metric",
+      "label": "AUX lift metric and evaluation report",
+      "packet_ref": "AUX_2 §4 evaluation-first",
+      "code_refs": ["cortex/aux/lift.py", "cortex/aux/evaluation.py"],
+      "proof_refs": ["tests/experimental/test_aux_lift.py"],
+      "status": "implemented"
+    },
+    {
+      "id": "aux_burden_report",
+      "label": "AUX cost-visible burden report",
+      "packet_ref": "AUX_2 §2.7",
+      "code_refs": ["cortex/aux/cost.py"],
+      "proof_refs": ["tests/experimental/test_aux_scaffolds.py"],
+      "status": "implemented"
+    },
+    {
+      "id": "verified_work_profile_spec",
+      "label": "Verified-work runtime profile specification",
+      "packet_ref": "SRE_2 §5 / runtime law",
+      "code_refs": ["cortex/runtime/verified_work_runtime.py"],
+      "proof_refs": ["tests/product/test_openai_runtime_session_io.py"],
+      "status": "implemented"
+    }
+  ],
   "work_today": {
     "slug": "brain-capability-aware-routing",
     "note": "The bounded AUX shadow surface still earns `full_cross_host`, durable support-memory distillation remains explicit and removable, posture-sensitive online control is S-tier closed on the live runtime path, anti-thrash remains an exact-family unchanged-condition repetition tax with bounded reopen, bounded live support-memory re-entry is S-tier closed on both the reference and OpenAI explicit-publication lanes with host-match, family-scoped invalidation, transcript-only raw `/v1/events`, locked `memory_reentry` diagnostics, shared conformance parity, and explicit proof that runtime use stays publication-only without AUX persistence or distillation, evidence-progress/probe calibration is S-tier closed with typed evidence-progress and continuity-progress classification across all four hosts, public `feedback_window_summary` reflecting the just-realized step, real probe success distinguished from family-local bounded unsupported surfaces, and stream-only churn stays visible but non-epistemic, bounded host/tool reliability and affordance priors are earned on the reference and OpenAI explicit-publication live lanes as explicit, offline-distilled, capability-scoped score modifiers carried on `OfflineSupportPublication.host_reliability_prior` with a single-site six-tag `q_mem-host:*` surface, stale-negative reopen under fresh success, locked `memory_reentry.selected_family_reliability_delta` diagnostics, and Claude/Gemini kept shadow-proof only, and asymmetric error cost and tonic hysteresis are now earned on the shared executive as bounded score-pricing carriers: `RiskWeight(fn_cost_weight, fp_cost_weight, dominant_risk_source, adjustment_sign)` derives from pending-goal depth, degradation, contradiction, budget band, productive-exploration confirmation, and published host-reliability evidence with a `0.10` dead-band and fp-signal gated on `productive_exploration_bonus > 0.0` so cold starts stay balanced, the asymmetric activation shift `(fp - fn) * 0.10` applies to CHECK and SEEK_CONTEXT only and is clipped inside `[0.05, 0.60]`, the brake tonic EMA damps single-tick flips with a locked `rho = 0.60` decay and `tonic_pressure >= 0.35` enter gate while phasic contradiction, latching, missing-anchor, and repeated-failure signals still flip immediately, and `brake_tonic_history` persists the pressure tail across resume on all four host lanes with three-way backward-compat decoding. The brake-tonic-quiescence-exit-reconciliation train is closed via SRE_2 §7.5 path B: the doctrine is narrowed to threshold-hysteresis-only on the brake exit gate, and the rest-side EMA `tonic_quiescence` is retired from the BrakeTonic carrier, the SRE allocation diagnostics, and the host runtime serialization on all four host lanes (OpenAI, Claude, Gemini, reference); kill-rule-e remains green and no new memory carrier or host-specific exit policy fork was introduced. Brain-capability-aware routing is now earned as the active focus per SRE_2 §6.9: the executive carries an `OperatorBrainCapabilityEnvelope(continuity_tolerance, verification_tolerance, output_contract_tolerance)` and a bounded threshold ladder classifies the per-dimension max mismatch into NONE / DEGRADE / UNSUPPORTED; DEGRADE downshifts continuity-bearing profiles to inspect-light, zeroes max_retries and allow_extra_read_pass, and switches the contract binding profile to LEAN, while UNSUPPORTED routes to BLOCKED with `blocked_reason=brain_capability_mismatch`; the band registry is OpenAI-only at this landing and other hosts default to the standard envelope until per-host registries earn their own seam. The next product train is dynamic brain-capability inference from observed `ReferenceRealizationFeedback`: an observed-performance accumulator that publishes through AUX support side rather than mutating routing directly, replacing the static name-lookup with an evidence-backed envelope while keeping the same SRE assessment and routing math. Shipping and conformance default lanes still keep `Q_mem = 0`, default shipping behavior remains memory-off when no publication is supplied, live memory remains publication-only and score-only, raw SQLite episodes remain support-side only, route blockedness remains non-sovereign, reliability priors bias score pricing only and never harden into host myths or hidden policy forks, and risk_weight biases CHECK/SEEK_CONTEXT activation threshold only — never routing, posture, selection, certification, or blockedness law."
@@ -518,8 +711,7 @@
   ],
   "active_docs": [
     "docs/README.md",
-    "docs/CORTEX_PRODUCT_CHARTER.md",
-    "docs/CORTEX_PRODUCT_BOUNDARY.md",
+    "docs/CORTEX.md",
     "docs/CORTEX_V2_CORE_2.md",
     "docs/CORTEX_V2_SRE_2.md",
     "docs/CORTEX_V2_AUX_2.md",

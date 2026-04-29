@@ -1,118 +1,36 @@
 # CLAUDE Code Bootstrap
 
-This file is the entry point for Claude Code sessions in this repository.
+`AGENTS.md` is the canonical agent contract. Read it in full before doing
+any work. Apply it identically to how Codex applies it. This file does
+not override any AGENTS.md rule.
 
-**The canonical agent contract is `AGENTS.md` at the repository root.** Read
-that file in full before doing any work. This file does not duplicate its
-content; it points at it and adds a small Claude Code–specific bootstrap
-checklist.
+## Agent Briefing
 
-## Bootstrap (read in order)
+Read this first, every session.
 
-1. `AGENTS.md` — the canonical agent contract: mission, authority order,
-   non-negotiables, working mode, seam declaration requirements, handoff
-   format, philosophy audit.
-2. `docs/CORTEX_STATUS.md` — the operational front door. Tells you what is
-   currently shipped, what the active train is, and what is queued next.
-3. `git branch --show-current` and
-   `git status --short --untracked-files=all` — confirm you are on a
-   managed session branch (or about to start one) and that the worktree is
-   clean.
-4. `internal/truth/cortex_status.json` — the machine-backed operational
-   truth that backs `docs/CORTEX_STATUS.md`. Edit this file (not the
-   generated doc) when registry truth changes; regenerate the doc with
-   `python3 internal/truth/generate_status.py`.
+For repo/product judgments in this repository, do not default to affirming
+the user's ideas and do not default to criticizing them. Do not let prior
+conversation style, model personality, or training-time preferences decide
+Cortex positions. Use only the repo's recorded goals and current proof.
 
-## Workflow For Any Non-Trivial Edit
+Form positions from observable repo truth: `docs/CORTEX.md` for Cortex
+identity and narrative fit; the V2 packet docs (`docs/CORTEX_V2_*.md`)
+for packet law; `internal/truth/cortex_status.json` for current
+operational truth; and `cortex/**` plus `tests/**` for implemented
+behavior and proof.
 
-1. `python3 internal/workflow/repo_workflow.py sync-main` — confirm clean
-   synced main is the resting state.
-2. `python3 internal/workflow/repo_workflow.py start-session --agent claude --slug <descriptive-slug>`
-   — open a managed session branch named to match the work being done. The
-   branch slug must match the work; bundling unrelated changes onto a
-   single branch is the drift pattern the bridge work fell into and has
-   been added to AGENTS.md as a forbidden move.
+If you lack doctrine-and-code grounding for a repo position, you do not
+have that position yet. Read the specific missing surface, or say "I
+don't know yet; I need to check X." Do not manufacture an answer from the
+user's latest framing or generic priors.
 
-   **Branch-hygiene gate**: `start-session` refuses if any unmerged
-   managed session branch exists. The error message lists the offending
-   branch(es) and shows the three legitimate resolutions:
-   - **Merge** the existing branch:
-     `close-session --publish --message "<scope>: <end-state>"`.
-   - **Resume** the existing branch:
-     `resume-session --slug <slug>` (continues that work instead of
-     starting fresh; this is the right path for multi-session work on
-     one concern).
-   - **Delete** if the work is genuinely abandoned: `git branch -D`.
+Agreement and disagreement are both acceptable when earned by evidence.
+Unearned agreement and ungrounded criticism are both failures.
 
-   For the rare emergency case where parallel session work is genuinely
-   needed (e.g. emergency hotfix during a long investigation), use
-   `start-session --allow-stacked --stacked-reason "<text>"`. The reason
-   is recorded on the new session's closeout contract under
-   `stacked_session_reason` so the override leaves an audit trail.
+## Bootstrap Reads
 
-3. Make the change.
-4. Run the verification suite relevant to the reviewed paths (see
-   `internal/Makefile` and `docs/CORTEX_STATUS.md` for the canonical
-   commands: `make product-test`, `make conformance-test`,
-   `make experimental-test`, `make -C internal test`, `make lab-test`,
-   plus `python3 internal/truth/generate_status.py --check` and
-   `python3 internal/archive/generate_archive_index.py --check`).
-5. Initialize and fill the closeout contract:
-   `python3 -m internal.closeout.contract init --mode close-session`,
-   then edit
-   `.cortex/closeout_contract/<branch>/closeout.json` to fill seam,
-   residuals, hostile_review (3 lenses), claims, north_light_audit (4
-   dimensions), and — for load-bearing changes — governing_locks and
-   law_to_code_completeness.
-6. `python3 -m internal.closeout.contract render` and
-   `python3 -m internal.closeout.contract validate --mode close-session`.
-7. `python3 internal/workflow/repo_workflow.py close-session --publish --message "<scope>: <end-state summary>"`
-   to merge to main, or omit `--publish` to checkpoint locally.
-
-## Handoff Format
-
-Every final summary must mirror the rendered `Final Handoff Mirror` block
-from the closeout contract: `Fixed now`, `Intentionally deferred`,
-`Still underfit`, `Zeroed or stubbed terms`, `Hostile reviewer critiques`,
-`Claim earned now`, `Claim still forbidden`. Plus the philosophy audit
-(`PHI_MINIFY`, `PHI_MISSION`, `PHI_NICHE`, `CUT_LIST`).
-
-## Cortex Identity Reminder
-
-Cortex is the shipped multi-host executive layer in this repository. It is
-NOT the benchmark harness, train loop, grader stack, lab tooling, or
-governance apparatus. Lab/eval/archive surfaces exist to falsify or prove
-product seams, not to become the product. When in doubt about whether a
-change is in scope: ask whether it makes the shipped Cortex executive
-layer better or directly unblocks proving it. If neither, cut it.
-
-## Anti-Drift Discipline (See AGENTS.md §Anti-Drift)
-
-If you observe any of these patterns in your work, stop and re-plan:
-
-- A single session branch bundling multiple unrelated concerns. Bundling
-  is what caused the operator_brain_capability work to be lost on the
-  hostile-audit branch. (Mechanically caught: `start-session` refuses
-  when unmerged managed branches exist; use `resume-session` to continue
-  the existing branch instead of bundling.)
-- A test fixture using a hardcoded ISO-8601 timestamp to test
-  freshness-bearing logic. Use a runtime helper that returns a value
-  relative to `datetime.now()`. The TTL drift in
-  `tests/experimental/test_aux_support_priors.py` was caused by exactly
-  this anti-pattern.
-- An audit verdict written but not landed in the same session, or in a
-  follow-up session within a session-pair. The Claude-era audit verdict
-  sat on a side branch for 11 days because of this gap.
-- A research line that exists in code but is neither active
-  (`work_today`), queued (`next_product_train`), retired (archive
-  manifest), nor under explicit evaluation
-  (`research_lines_under_evaluation`). All four states must be exhaustive;
-  no orphan research.
-- A closeout contract introducing an `agent_loop_guard` payload with
-  `allow_blocked: true` or `require_full_communication_closure: false`.
-  These are the procedural shortcuts the bridge postmortem identified;
-  the closeout contract validates against them.
-- Claiming "full V2 communication", "fully model-visible",
-  "live watchlist passed" without the agent_loop_guard payload + a
-  passing report. The closeout contract rejects these claims without
-  evidence.
+1. `AGENTS.md`
+2. `docs/CORTEX.md`
+3. `docs/CORTEX_STATUS.md`
+4. `git branch --show-current`
+5. `git status --short --untracked-files=all`
