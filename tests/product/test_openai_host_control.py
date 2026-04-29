@@ -11,6 +11,7 @@ from cortex.aux.publication import (
     offline_support_publication_as_payload,
 )
 from cortex.core.envelopes import MetadataField
+from cortex.hosts.runtime_context import runtime_context_from_last_feedback
 from cortex.hosts.openai.runtime import OpenAIRuntimeSession, run_openai_runtime_step
 from cortex.hosts.openai.cli import build_openai_cli_record
 from cortex.hosts.openai.host_control import (
@@ -25,6 +26,10 @@ from cortex.hosts.openai.host_transport import (
 )
 from cortex.hosts.openai.ingress import parse_openai_host_event_envelope
 from cortex.hosts.openai.service import OpenAIServiceState, handle_openai_service_request
+from cortex.sre.brake import BrakeState
+from cortex.sre.families import SoftControlFamily
+from cortex.sre.feedback import ReferenceRealizationFeedback
+from cortex.sre.operator_routing import OperatorTaskMode
 from cortex.sre.verified_work import VerificationOutcome, WorkContract
 from tests.product._verified_work_fixtures import (
     VALID_FEATURE_FLAG_FILE_MAP,
@@ -457,6 +462,129 @@ def test_run_openai_host_control_matches_manual_o1_runtime_projection_with_offli
     assert final_session == current_session
 
 
+def test_run_openai_host_control_adds_runtime_context_to_non_work_instructions() -> None:
+    feedback = _runtime_feedback(
+        brake_state=BrakeState.GUARDED,
+        evidence_progress_class="token-stream",
+        continuity_progress_class="none",
+        host_friction_tags=("capability-view-missing",),
+    )
+    seen: dict[str, str | None] = {}
+
+    def transport(
+        request: OpenAIHostControlRequest,
+        *,
+        previous_response_id: str | None = None,
+        input_text_override: str | None = None,
+    ) -> list[dict[str, object]]:
+        assert previous_response_id is None
+        assert input_text_override is None
+        seen["instructions"] = request.instructions
+        return _basic_response_events("oa-runtime-context", "resp-runtime-context")
+
+    request = OpenAIHostControlRequest(
+        action_tag="openai-response-stream",
+        model="gpt-5.4",
+        input_text="finish the migration plan and close if done",
+        instructions="be terse",
+    )
+
+    run_openai_host_control(
+        request,
+        session=OpenAIRuntimeSession(last_realization_feedback=feedback),
+        transport=transport,
+    )
+
+    assert seen["instructions"] is not None
+    assert seen["instructions"].startswith("be terse\n\nCORTEX_RUNTIME_CONTEXT_V1")
+    assert "source: last_feedback_only; no_accumulation=true" in seen["instructions"]
+    assert "Do not treat generated text as evidence" in seen["instructions"]
+
+
+def test_run_openai_host_control_clean_feedback_leaves_non_work_request_unchanged() -> None:
+    feedback = _runtime_feedback(evidence_progress_class="artifact")
+    seen: dict[str, str | None] = {}
+
+    def transport(
+        request: OpenAIHostControlRequest,
+        *,
+        previous_response_id: str | None = None,
+        input_text_override: str | None = None,
+    ) -> list[dict[str, object]]:
+        seen["instructions"] = request.instructions
+        return _basic_response_events(
+            "oa-runtime-context-clean",
+            "resp-runtime-context-clean",
+        )
+
+    request = OpenAIHostControlRequest(
+        action_tag="openai-response-stream",
+        model="gpt-5.4",
+        input_text="summarize the verified artifact",
+        instructions="be terse",
+    )
+
+    run_openai_host_control(
+        request,
+        session=OpenAIRuntimeSession(last_realization_feedback=feedback),
+        transport=transport,
+    )
+
+    assert seen["instructions"] == "be terse"
+
+
+def test_run_openai_host_control_fixture_body_contains_shaped_instructions(
+    tmp_path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    feedback = _runtime_feedback(
+        warning_codes=("continuity-rejected:missing-open-track-ref",),
+    )
+    context = runtime_context_from_last_feedback(feedback)
+    assert context is not None
+    fixture = tmp_path / "openai-runtime-context-fixture.json"
+    fixture.write_text(
+        json.dumps(
+            {
+                "calls": [
+                    {
+                        "expected_body": {
+                            "model": "gpt-5.4",
+                            "input": [
+                                {
+                                    "role": "user",
+                                    "content": "finish and close",
+                                }
+                            ],
+                            "stream": True,
+                            "instructions": f"be terse\n\n{context}",
+                        },
+                        "events": _basic_response_events(
+                            "oa-runtime-context-fixture",
+                            "resp-runtime-context-fixture",
+                        ),
+                    }
+                ]
+            }
+        ),
+        encoding="utf-8",
+    )
+    monkeypatch.setenv("CORTEX_OPENAI_HOST_CONTROL_FIXTURE_PATH", str(fixture))
+    request = OpenAIHostControlRequest(
+        action_tag="openai-response-stream",
+        model="gpt-5.4",
+        input_text="finish and close",
+        instructions="be terse",
+    )
+
+    result, _session = run_openai_host_control(
+        request,
+        session=OpenAIRuntimeSession(last_realization_feedback=feedback),
+    )
+
+    assert result.result_text == "ok"
+
+
 def test_run_openai_host_control_verified_work_one_shot_adds_verification(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -602,6 +730,93 @@ def test_run_openai_host_control_verified_work_attaches_workspace_context_to_fir
     assert "=== CONTEXT FILE: tests/test_bookmarks_api.py ===" in seen["input_text"]
     assert "=== CONTEXT FILE: src/bookmarks_api/main.py ===" in seen["input_text"]
     assert seen["instructions"] is not None
+    assert "Do not return prose, explanations, or code fences. Do not run tests." in seen["instructions"]
+
+
+def test_run_openai_host_control_verified_work_puts_runtime_context_in_input_not_instructions(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    work_contract = WorkContract(
+        allowed_write_paths=tuple(VALID_FILE_MAP),
+        verification_profile="python_workspace_pytest_v1",
+        output_carrier="full_files",
+        max_repair_turns=0,
+    )
+    feedback = _runtime_feedback(
+        warning_codes=("session-rejected:mismatched-session-id:runtime-a",),
+        evidence_progress_class="none",
+        continuity_progress_class="none",
+    )
+    rendered = render_full_files_result(VALID_FILE_MAP)
+    seen: dict[str, str | None] = {}
+
+    def transport(
+        request: OpenAIHostControlRequest,
+        *,
+        previous_response_id: str | None = None,
+        input_text_override: str | None = None,
+    ) -> list[dict[str, object]]:
+        assert previous_response_id is None
+        assert input_text_override is None
+        seen["input_text"] = request.input_text
+        seen["instructions"] = request.instructions
+        return [
+            {
+                "type": "response.created",
+                "session_id": "oa-verified-runtime-context",
+                "response_id": "resp-verified-runtime-context-1",
+            },
+            {
+                "type": "response.output_text.delta",
+                "session_id": "oa-verified-runtime-context",
+                "response_id": "resp-verified-runtime-context-1",
+                "delta": rendered,
+            },
+            {
+                "type": "response.completed",
+                "session_id": "oa-verified-runtime-context",
+                "response_id": "resp-verified-runtime-context-1",
+            },
+        ]
+
+    monkeypatch.setattr(
+        "cortex.hosts.openai.host_control.verify_verified_work_result",
+        lambda result_text, contract, **kwargs: (
+            VALID_FILE_MAP,
+            VerificationOutcome(
+                status="passed",
+                failure_class=None,
+                parsed_paths=tuple(VALID_FILE_MAP),
+                import_smoke_ok=True,
+                pytest_ok=True,
+                pytest_exit_code=0,
+                pytest_passed=11,
+                pytest_failed=0,
+            ),
+        ),
+    )
+    request = OpenAIHostControlRequest(
+        action_tag="openai-response-stream",
+        model="gpt-5.4",
+        input_text="build bookmarks app",
+        max_output_tokens=4096,
+        work_contract=work_contract,
+    )
+
+    result, _final_session = run_openai_host_control(
+        request,
+        session=OpenAIRuntimeSession(last_realization_feedback=feedback),
+        transport=transport,
+    )
+
+    assert result.attempt_count == 1
+    assert seen["input_text"] is not None
+    assert "build bookmarks app" in seen["input_text"]
+    assert "CORTEX_RUNTIME_CONTEXT_V1" in seen["input_text"]
+    assert "recover the missing continuity/session anchor" in seen["input_text"]
+    assert "=== CONTEXT FILE: tests/test_bookmarks_api.py ===" in seen["input_text"]
+    assert seen["instructions"] is not None
+    assert "CORTEX_RUNTIME_CONTEXT_V1" not in seen["instructions"]
     assert "Do not return prose, explanations, or code fences. Do not run tests." in seen["instructions"]
 
 
@@ -1265,4 +1480,49 @@ def _offline_publication() -> OfflineSupportPublication:
             MetadataField("source", "aux/distillation"),
             MetadataField("host_name", "openai"),
         ),
+    )
+
+
+def _basic_response_events(session_id: str, response_id: str) -> list[dict[str, object]]:
+    return [
+        {
+            "type": "response.created",
+            "session_id": session_id,
+            "response_id": response_id,
+        },
+        {
+            "type": "response.output_text.delta",
+            "session_id": session_id,
+            "response_id": response_id,
+            "delta": "ok",
+        },
+        {
+            "type": "response.completed",
+            "session_id": session_id,
+            "response_id": response_id,
+        },
+    ]
+
+
+def _runtime_feedback(
+    *,
+    selected: SoftControlFamily = SoftControlFamily.CHECK,
+    realized: SoftControlFamily = SoftControlFamily.CHECK,
+    brake_state: BrakeState = BrakeState.QUIESCENT,
+    warning_codes: tuple[str, ...] = (),
+    host_friction_tags: tuple[str, ...] = (),
+    evidence_progress_class: str | None = None,
+    continuity_progress_class: str | None = None,
+    probe_result_class: str | None = None,
+) -> ReferenceRealizationFeedback:
+    return ReferenceRealizationFeedback(
+        selected_family=selected,
+        realized_family=realized,
+        brake_state=brake_state,
+        task_mode=OperatorTaskMode.INSPECT,
+        warning_codes=warning_codes,
+        host_friction_tags=host_friction_tags,
+        evidence_progress_class=evidence_progress_class,
+        continuity_progress_class=continuity_progress_class,
+        probe_result_class=probe_result_class,
     )

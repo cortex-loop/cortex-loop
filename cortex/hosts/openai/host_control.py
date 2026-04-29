@@ -23,6 +23,8 @@ from cortex.sre.operator_routing import (
 )
 from cortex.sre.verified_work import VerificationOutcome, WorkContract
 
+from cortex.hosts.runtime_context import runtime_context_from_last_feedback
+
 from .runtime import (
     OpenAIRuntimeSession,
     run_openai_runtime_step,
@@ -238,6 +240,9 @@ def run_openai_host_control(
             f"got {actual_type}."
         )
     current_session = _coerce_session(session)
+    runtime_context = runtime_context_from_last_feedback(
+        current_session.last_realization_feedback
+    )
     transport_callable = transport if transport is not None else execute_openai_response_stream_turn
     if not callable(transport_callable):
         actual_type = type(transport_callable).__name__
@@ -247,11 +252,15 @@ def run_openai_host_control(
         )
     if request.work_contract is None:
         contract_binding_demand = _contract_binding_demand_for_work_contract(None)
-        raw_events, records, current_session, result_text = _run_openai_host_control_attempt(
+        host_request = _request_with_runtime_context_instructions(
             request,
+            runtime_context,
+        )
+        raw_events, records, current_session, result_text = _run_openai_host_control_attempt(
+            host_request,
             current_session,
             transport_callable=transport_callable,
-            operator_model=request.model,
+            operator_model=host_request.model,
             contract_binding_demand=contract_binding_demand,
         )
         return OpenAIHostControlResult(
@@ -282,7 +291,7 @@ def run_openai_host_control(
         action_tag=request.action_tag,
         model=request.model,
         input_text=build_verified_work_input_text(
-            request.input_text,
+            _input_text_with_runtime_context(request.input_text, runtime_context),
             effective_work_contract,
             context_mode=context_mode,
             contract_binding_profile=contract_binding_profile,
@@ -394,6 +403,39 @@ def run_openai_host_control(
         verification=verification,
         attempt_count=attempt_count,
     ), current_session
+
+
+def _request_with_runtime_context_instructions(
+    request: OpenAIHostControlRequest,
+    runtime_context: str | None,
+) -> OpenAIHostControlRequest:
+    if runtime_context is None:
+        return request
+    instructions = (
+        runtime_context
+        if request.instructions is None
+        else f"{request.instructions.strip()}\n\n{runtime_context}"
+    )
+    return OpenAIHostControlRequest(
+        action_tag=request.action_tag,
+        model=request.model,
+        input_text=request.input_text,
+        instructions=instructions,
+        metadata=request.metadata,
+        max_output_tokens=request.max_output_tokens,
+        work_contract=request.work_contract,
+        offline_publication=request.offline_publication,
+        audit_intensity=request.audit_intensity,
+    )
+
+
+def _input_text_with_runtime_context(
+    input_text: str,
+    runtime_context: str | None,
+) -> str:
+    if runtime_context is None:
+        return input_text
+    return f"{input_text.strip()}\n\n{runtime_context}"
 
 
 def _activate_verified_work_anchor(
