@@ -163,31 +163,32 @@ grep on changed test files (warn unless the fixture is the explicit
 stale `2000-01-01` form).
 
 Compose the per-turn Cortex Repo Hygiene Grid (the **single closure
-artifact** for every chat — all closure / handoff material lives
-inside one `## Cortex Repo Hygiene Grid` markdown block):
+artifact** for every chat — all closure / handoff material lives in
+one two-column markdown table under `## Cortex Repo Hygiene Grid`):
 
 ```bash
 python internal/workflow/repo_workflow.py grid
 ```
 
-Sections in the grid:
+Required shape:
 
-- `## Cortex Repo Hygiene Grid` (header, required)
-- `### State` (table, required)
-- `### Cortex Progress` (always emitted)
-- `### Goals Analysis` (5 substantive prompts, always emitted)
-- `### Mechanical Checks` (only when work was performed)
-- `### Work Reflection` (only when work was performed)
-- `### Standard Metadata` (table, required — closure metadata)
-- `### Final Handoff Mirror` (sections, required — closure mirror)
-- `### Dogfood Signal` (only when dogfood mode is active)
-- `### Verdict` (line, required)
+- `## Cortex Repo Hygiene Grid` header
+- exactly one `| Field | Value |` table header
+- exactly one `|---|---|` separator
+- one row per closure/state aspect
+- row prefixes: `State:`, `Progress:`, `Goals:`, `Mech:`, `Work:`,
+  `Std:`, `Mirror:`, optional `Dogfood:`, and `Verdict`
+- no `###` subsections inside the grid
+- no second table inside the grid
+
+Mechanical-check rows are always shown so the visual shape is stable.
+Work-reflection rows are shown only when work was performed.
 
 **Workflow:** the agent runs `grid`, pastes the markdown skeleton, and
 edits the skeleton in place — replacing each Goals Analysis bracketed
 prompt with substantive prose (≥48 chars, citing a repo surface) and
-each `<fill: …>` placeholder in Standard Metadata, Final Handoff
-Mirror, and (when active) Dogfood Signal with the actual value.
+each `<fill: …>` placeholder in `Std:*`, `Mirror:*`, and active
+`Dogfood:*` rows with the actual value.
 Normal response prose may precede the grid; nothing closure-shaped
 may appear before or after it. On `FAIL` verdict the agent MUST
 continue working in the same chat until the grid clears.
@@ -198,17 +199,20 @@ on turn-completion. The hook reads the assistant's last message from
 the transcript JSONL, runs `grid` itself, and blocks the stop on any
 of these gates:
 
-1. Missing required markers: `## Cortex Repo Hygiene Grid`,
-   `### State`, `### Standard Metadata`,
-   `### Final Handoff Mirror`, `### Verdict`.
+1. Missing required one-table shape: `## Cortex Repo Hygiene Grid`,
+   exactly one `| Field | Value |`, exactly one `|---|---|`,
+   required row labels (`State: Branch`, `Progress: bio_to_code
+   matrix`, `Goals: Plan → implementation`, `Std: Ending branch`,
+   `Mirror: Fixed now`, `Verdict`), and no `###` subsection inside
+   the grid.
 2. Closure-shaped substrings (`Ending branch`, `Verification summary`,
    `Fixed now`, `Claim earned now`, `Status registry touched`,
    `Final Handoff Mirror`) appearing in prose **before** the grid
    header.
 3. Per-field unfilled Goals Analysis prompt (each of the five fields
    is checked individually; one unfilled field blocks).
-4. `<fill` placeholder substring remaining anywhere in Standard
-   Metadata or Final Handoff Mirror.
+4. `<fill` placeholder substring remaining anywhere in `Std:*`,
+   `Mirror:*`, or active `Dogfood:*` rows.
 5. `reflection-check --json` returns verdict `FAIL`.
 
 The hook does **not** short-circuit on `stop_hook_active` — every stop
@@ -330,7 +334,7 @@ Closeout contract artifact:
   - governing principle, executive skill, product metric, guardrail, and kill rule
   - non-empty law-to-code completeness rows for active doctrinal, math, or workflow-law terms touched
 - hard-fails on stale reviewed paths, reviewed-path drift during verification, missing forbidden claims, missing hostile-review coverage, or missing zeroed/stubbed-term review
-- renders one deterministic `Final Handoff Mirror` section; agents should mirror that block in the final chat handoff instead of paraphrasing it ad hoc
+- renders one deterministic `Final Handoff Mirror` section; agents use those values to fill the grid's `Mirror:*` rows instead of emitting a separate final handoff block
 
 `preserve-worktree`:
 

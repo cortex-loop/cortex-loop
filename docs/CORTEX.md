@@ -370,33 +370,35 @@ imported by `cortex/**`. Confusing the two is the next drift shape.
 **Per-turn enforcement: the single closure grid.** The standard of
 care is enforced end-of-turn by the Cortex Repo Hygiene Grid produced
 by `python3 internal/workflow/repo_workflow.py grid`. The grid is the
-**single closure artifact** for every chat: it consolidates state,
-Cortex progress, goals analysis, mechanical checks, work reflection,
-**Standard Metadata**, **Final Handoff Mirror**, optional Dogfood
-Signal, and verdict — all inside one `## Cortex Repo Hygiene Grid`
-markdown block. Normal response prose may precede the grid; nothing
+**single closure artifact** for every chat: one two-column markdown
+table under `## Cortex Repo Hygiene Grid`. State, Cortex progress,
+goals analysis, mechanical checks, work reflection, standard metadata,
+final mirror, optional dogfood signal, and verdict are rows in that
+one table. There are no subsection headings and no second table inside
+the grid. Normal response prose may precede the grid; nothing
 closure-shaped may appear before or after it. On verdict `FAIL` the
 agent continues working until the grid clears.
 
 **Workflow: paste the skeleton, fill brackets in place.** The agent
 runs `grid`, pastes the generated markdown skeleton, and edits the
-skeleton in place — replacing each Goals Analysis bracketed prompt
-with substantive prose and each `<fill: …>` placeholder in Standard
-Metadata / Final Handoff Mirror with the actual value. The skeleton
-is verbatim from the command; the agent's edits stay inside the
-skeleton. No separate closure section follows the grid.
+skeleton in place — replacing each `Goals:*` bracketed prompt with
+substantive prose and each `<fill: …>` placeholder in `Std:*`,
+`Mirror:*`, and active `Dogfood:*` rows with the actual value. The
+skeleton is verbatim from the command; the agent's edits stay inside
+the skeleton. No separate closure section follows the grid.
 
 **Chat-boundary enforcement (Claude Code only).** A Stop hook at
 `.claude/settings.json` runs
 `.claude/hooks/cortex_grid_stop_hook.py` on turn-completion. The hook
 reads the assistant's last message from the transcript, runs `grid`
-itself, and blocks the stop on (1) missing required markers
-(`## Cortex Repo Hygiene Grid`, `### State`,
-`### Standard Metadata`, `### Final Handoff Mirror`, `### Verdict`),
-(2) closure-shaped substrings appearing before the grid header,
-(3) any per-field unfilled Goals Analysis prompt,
-(4) any unfilled `<fill>` placeholder in Standard Metadata or Final
-Handoff Mirror, or (5) `reflection-check` verdict `FAIL`. The hook
+itself, and blocks the stop on (1) missing one-table shape
+(`## Cortex Repo Hygiene Grid`, exactly one `| Field | Value |`
+header, exactly one `|---|---|` separator, required row labels, and
+no `###` subsections inside the grid), (2) closure-shaped substrings
+appearing before the grid header, (3) any per-field unfilled
+Goals Analysis prompt, (4) any unfilled `<fill>` placeholder in
+`Std:*`, `Mirror:*`, or active `Dogfood:*` rows, or
+(5) `reflection-check` verdict `FAIL`. The hook
 does not short-circuit on `stop_hook_active` — persistent
 non-compliance keeps blocking. The hook fails open only on
 infrastructure failures (missing transcript, command crash). On

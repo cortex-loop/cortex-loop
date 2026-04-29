@@ -1,14 +1,15 @@
-"""Tests for the Cortex grid Stop hook (single-closure-grid enforcement).
+"""Tests for the Cortex grid Stop hook (single-table-grid enforcement).
 
 The hook lives at ``.claude/hooks/cortex_grid_stop_hook.py`` and is the
 chat-boundary mechanical gate for the per-turn hygiene contract. Five
 gates run on every Stop event (the hook does NOT short-circuit on
 ``stop_hook_active``):
 
-1. Required signature markers all present:
-   ``## Cortex Repo Hygiene Grid``, ``### State``,
-   ``### Standard Metadata``, ``### Final Handoff Mirror``,
-   ``### Verdict``.
+1. One-table shape is present: ``## Cortex Repo Hygiene Grid``,
+   exactly one ``| Field | Value |`` header, exactly one
+   ``|---|---|`` separator, no ``###`` subsections inside the grid,
+   and required rows such as ``State: Branch``, ``Std: Ending branch``,
+   ``Mirror: Fixed now``, and ``Verdict``.
 2. Closure-shaped substrings (``Ending branch``, ``Fixed now``, etc.)
    do NOT appear before the grid header (closure must live inside the
    grid).
@@ -121,15 +122,15 @@ def test_hook_blocks_when_message_missing_grid_header(tmp_path: Path) -> None:
     assert returncode == 0
     payload = json.loads(stdout)
     assert payload["decision"] == "block"
-    assert "incomplete" in payload["reason"].lower() or "missing" in payload["reason"].lower()
+    assert "one-table shape" in payload["reason"].lower()
     # Canonical grid markdown is injected as the reason context.
     assert "## Cortex Repo Hygiene Grid" in payload["reason"]
 
 
-def test_hook_blocks_when_standard_metadata_marker_missing(tmp_path: Path) -> None:
+def test_hook_blocks_when_standard_metadata_row_missing(tmp_path: Path) -> None:
     canonical = _fully_filled_grid()
-    # Strip the Standard Metadata header so the gate fires.
-    mutated = canonical.replace("### Standard Metadata", "### NOT-METADATA")
+    # Strip the required Standard Metadata row so the gate fires.
+    mutated = canonical.replace("**Std: Ending branch**", "**NOT: Ending branch**")
     transcript = _write_transcript(tmp_path, mutated)
 
     returncode, stdout, _ = _run_hook(_hook_input(transcript))
@@ -137,12 +138,12 @@ def test_hook_blocks_when_standard_metadata_marker_missing(tmp_path: Path) -> No
     assert returncode == 0
     payload = json.loads(stdout)
     assert payload["decision"] == "block"
-    assert "Standard Metadata" in payload["reason"]
+    assert "Std: Ending branch" in payload["reason"]
 
 
-def test_hook_blocks_when_final_handoff_mirror_marker_missing(tmp_path: Path) -> None:
+def test_hook_blocks_when_final_handoff_mirror_row_missing(tmp_path: Path) -> None:
     canonical = _fully_filled_grid()
-    mutated = canonical.replace("### Final Handoff Mirror", "### NOT-MIRROR")
+    mutated = canonical.replace("**Mirror: Fixed now**", "**NOT: Fixed now**")
     transcript = _write_transcript(tmp_path, mutated)
 
     returncode, stdout, _ = _run_hook(_hook_input(transcript))
@@ -150,7 +151,20 @@ def test_hook_blocks_when_final_handoff_mirror_marker_missing(tmp_path: Path) ->
     assert returncode == 0
     payload = json.loads(stdout)
     assert payload["decision"] == "block"
-    assert "Final Handoff Mirror" in payload["reason"]
+    assert "Mirror: Fixed now" in payload["reason"]
+
+
+def test_hook_blocks_when_grid_contains_legacy_subsection(tmp_path: Path) -> None:
+    canonical = _fully_filled_grid()
+    mutated = canonical.replace("| Field | Value |", "### State\n\n| Field | Value |", 1)
+    transcript = _write_transcript(tmp_path, mutated)
+
+    returncode, stdout, _ = _run_hook(_hook_input(transcript))
+
+    assert returncode == 0
+    payload = json.loads(stdout)
+    assert payload["decision"] == "block"
+    assert "forbidden" in payload["reason"].lower()
 
 
 # ---------------------------------------------------------------------------
@@ -302,10 +316,9 @@ def test_hook_signature_markers_match_repo_workflow_constants() -> None:
     constants = {}
     for name in (
         "GRID_HEADER_MARKER",
-        "GRID_STATE_MARKER",
-        "GRID_STANDARD_METADATA_MARKER",
-        "GRID_FINAL_HANDOFF_MIRROR_MARKER",
-        "GRID_VERDICT_MARKER",
+        "GRID_TABLE_HEADER_MARKER",
+        "GRID_TABLE_SEPARATOR_MARKER",
+        "GRID_FORBIDDEN_SECTION_MARKER",
     ):
         match = re.search(rf'{name}\s*=\s*"([^"]+)"', text)
         assert match, f"hook script missing constant {name}"
@@ -329,6 +342,15 @@ def test_hook_signature_markers_match_repo_workflow_constants() -> None:
         assert hook_value == getattr(module, name), (
             f"{name} differs between hook and repo_workflow"
         )
+
+    labels_match = re.search(
+        r"REQUIRED_GRID_ROW_LABELS: tuple\[str, \.\.\.\] = \((.*?)\)",
+        text,
+        re.DOTALL,
+    )
+    assert labels_match, "hook script missing REQUIRED_GRID_ROW_LABELS"
+    hook_labels = re.findall(r'"([^"]+)"', labels_match.group(1))
+    assert tuple(hook_labels) == module.REQUIRED_GRID_ROW_LABELS
 
 
 def test_settings_json_declares_stop_hook() -> None:

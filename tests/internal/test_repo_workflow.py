@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import importlib.util
+import datetime as dt
 import json
 import subprocess
 import sys
@@ -1214,7 +1215,7 @@ def _seed_registry(repo: Path) -> None:
                 "work_today": {"slug": "active-train"},
                 "next_product_train": {
                     "slug": "queued-train",
-                    "last_reviewed_at": "2026-04-29T00:00:00+00:00",
+                    "last_reviewed_at": dt.datetime.now(dt.timezone.utc).isoformat(),
                 },
                 "research_lines_under_evaluation": [],
                 "executive_completion": {"shippable_threshold_percent": 85},
@@ -1340,7 +1341,7 @@ def test_reflection_check_fails_on_stale_next_train(
     # Override last_reviewed_at to >60 days ago.
     registry_path = repo / "internal" / "truth" / "cortex_status.json"
     data = json.loads(registry_path.read_text(encoding="utf-8"))
-    data["next_product_train"]["last_reviewed_at"] = "2025-01-01T00:00:00+00:00"
+    data["next_product_train"]["last_reviewed_at"] = "2000-01-01T00:00:00+00:00"
     registry_path.write_text(json.dumps(data), encoding="utf-8")
 
     payload = module._reflection_check_payload()
@@ -1387,27 +1388,24 @@ def test_grid_emits_full_consolidated_grid_when_work_performed(
     module.cmd_grid()
     out = capsys.readouterr().out
 
-    # All 5 required markers must be present (Stop hook requires them).
+    # The grid is literally one markdown table under the header.
     assert module.GRID_HEADER_MARKER in out
-    assert module.GRID_STATE_MARKER in out
-    assert module.GRID_STANDARD_METADATA_MARKER in out
-    assert module.GRID_FINAL_HANDOFF_MIRROR_MARKER in out
-    assert module.GRID_VERDICT_MARKER in out
-    # Closure sections live INSIDE the grid (single-grid rule).
+    assert out.count(module.GRID_TABLE_HEADER_MARKER) == 1
+    assert out.count(module.GRID_TABLE_SEPARATOR_MARKER) == 1
+    assert module.GRID_FORBIDDEN_SECTION_MARKER not in out
+    for label in module.REQUIRED_GRID_ROW_LABELS:
+        assert f"**{label}**" in out
+    # Closure rows live inside the same table (single-grid rule).
     for closure_label, _ in module.STANDARD_METADATA_FIELDS:
-        assert f"**{closure_label}**" in out
+        assert f"**Std: {closure_label}**" in out
     for mirror_label, _ in module.FINAL_HANDOFF_MIRROR_FIELDS:
-        assert f"**{mirror_label}:**" in out
-    # Markdown styling: tables.
-    assert "| Field | Value |" in out
-    assert "|---|---|" in out
-    assert "### Cortex Progress" in out
+        assert f"**Mirror: {mirror_label}**" in out
     # Goals Analysis fields expected (5 substantive prompts).
     for label, _ in module.GOALS_ANALYSIS_FIELDS:
-        assert f"**{label}:**" in out
-    # Work-performed-only sections should appear.
-    assert "### Mechanical Checks" in out
-    assert "### Work Reflection" in out
+        assert f"**Goals: {label}**" in out
+    # Mechanical rows are always present; work rows appear when work was performed.
+    assert "**Mech: Closeout schema**" in out
+    assert "**Work: Smallness**" in out
     # No box-drawing chars from the prior format.
     assert "═══" not in out
     assert "▌" not in out
@@ -1423,27 +1421,29 @@ def test_grid_emits_consolidated_grid_with_closure_sections_when_no_work(
     module.cmd_grid()
     out = capsys.readouterr().out
 
-    # All 5 required markers MUST be present even on no-work turns.
+    # Single-table shape is stable even on no-work turns.
     assert module.GRID_HEADER_MARKER in out
-    assert module.GRID_STATE_MARKER in out
-    assert module.GRID_STANDARD_METADATA_MARKER in out
-    assert module.GRID_FINAL_HANDOFF_MIRROR_MARKER in out
-    assert module.GRID_VERDICT_MARKER in out
-    assert "### Cortex Progress" in out
-    assert "### Goals Analysis" in out
-    # Work-only sections must NOT appear when no tracked-file changes exist.
-    assert "### Mechanical Checks" not in out
-    assert "### Work Reflection" not in out
+    assert out.count(module.GRID_TABLE_HEADER_MARKER) == 1
+    assert out.count(module.GRID_TABLE_SEPARATOR_MARKER) == 1
+    assert module.GRID_FORBIDDEN_SECTION_MARKER not in out
+    for label in module.REQUIRED_GRID_ROW_LABELS:
+        assert f"**{label}**" in out
+    # Mechanical rows are always present; work rows are omitted on no-work turns.
+    assert "**Mech: Closeout schema**" in out
+    assert "**Work: Smallness**" not in out
 
 
 def test_grid_signature_markers_are_distinct_constants() -> None:
     """The Stop hook regex relies on these exact strings; pin them."""
     module = _load_repo_workflow_module()
     assert module.GRID_HEADER_MARKER == "## Cortex Repo Hygiene Grid"
-    assert module.GRID_STATE_MARKER == "### State"
-    assert module.GRID_STANDARD_METADATA_MARKER == "### Standard Metadata"
-    assert module.GRID_FINAL_HANDOFF_MIRROR_MARKER == "### Final Handoff Mirror"
-    assert module.GRID_VERDICT_MARKER == "### Verdict"
+    assert module.GRID_TABLE_HEADER_MARKER == "| Field | Value |"
+    assert module.GRID_TABLE_SEPARATOR_MARKER == "|---|---|"
+    assert module.GRID_FORBIDDEN_SECTION_MARKER == "### "
+    assert "State: Branch" in module.REQUIRED_GRID_ROW_LABELS
+    assert "Std: Ending branch" in module.REQUIRED_GRID_ROW_LABELS
+    assert "Mirror: Fixed now" in module.REQUIRED_GRID_ROW_LABELS
+    assert "Verdict" in module.REQUIRED_GRID_ROW_LABELS
 
 
 def test_standard_metadata_and_mirror_fields_have_fill_placeholders() -> None:
