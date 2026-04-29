@@ -90,7 +90,7 @@ def test_agents_records_mission_lock_and_single_truth_bootstrap() -> None:
     # grid, then Codex App hook parity landed. The cap stays bounded so
     # AGENTS.md does not sprawl into a wiki; the narrative lives in
     # docs/CORTEX.md.
-    assert len(lines) <= 420
+    assert len(lines) <= 430
     assert sections == [
         "## Agent Briefing",
         "## Mission",
@@ -165,6 +165,9 @@ def test_agents_records_mission_lock_and_single_truth_bootstrap() -> None:
     assert "codex-app-hook-health" in text
     assert "grid-validate --stdin" in text
     assert "mission_reflection_graph" in text
+    assert "project layer is trusted" in text
+    assert "last_assistant_message" in text
+    assert "structural lifecycle evidence" in text
     # Single-table mission-reflection rule. Stale dashboard rows are
     # explicitly forbidden; mission rows must be cited and substantive.
     assert "Cortex Mission Reflection" in text
@@ -253,6 +256,19 @@ def test_cortex_doc_is_canonical_narrative_with_required_sections() -> None:
     assert "<!-- END GENERATED: math-to-code-map -->" in text
     assert "<!-- BEGIN GENERATED: current-state-and-strategy -->" in text
     assert "<!-- END GENERATED: current-state-and-strategy -->" in text
+    assert "<!-- BEGIN GENERATED: v2-model-io-analysis -->" in text
+    assert "<!-- END GENERATED: v2-model-io-analysis -->" in text
+    assert "### Side A — Internal Executive Logic" in text
+    assert "### Side B — Model-Visible Translation" in text
+    assert "### Synthesis — Gap / Boundary Decision" in text
+    assert text.index("### Side A — Internal Executive Logic") < text.index(
+        "### Side B — Model-Visible Translation"
+    )
+    assert text.index("### Side B — Model-Visible Translation") < text.index(
+        "### Synthesis — Gap / Boundary Decision"
+    )
+    assert "host_control_transports" in text
+    assert "direct_model_visible" in text
 
 
 def test_generated_cortex_doc_is_current() -> None:
@@ -302,6 +318,47 @@ def test_math_to_code_map_schema() -> None:
     assert keystones <= seen_ids
 
 
+def test_v2_model_io_analysis_is_two_sided_and_synthesized() -> None:
+    status = _load_status()
+    audit = status["v2_model_io_analysis"]
+
+    assert "structural evidence only" in audit["source_note"]
+    assert "https://developers.openai.com/codex/hooks" in audit["source_note"]
+    lifecycle = {entry["id"]: entry for entry in audit["lifecycle_adapters"]}
+    assert {"claude_code", "codex_app"} <= set(lifecycle)
+    assert "transcript_path" in lifecycle["claude_code"]["lifecycle_input"]
+    assert "last_assistant_message" in lifecycle["codex_app"]["lifecycle_input"]
+    assert "[features].codex_hooks = true" in lifecycle["codex_app"]["lifecycle_input"]
+    assert "trusted `.codex/`" in lifecycle["codex_app"]["lifecycle_input"]
+    assert "not live model-side product lift" in lifecycle["codex_app"]["enforcement"]
+
+    side_a = {entry["id"]: entry for entry in audit["side_a_internal_logic"]}
+    side_b = {entry["id"]: entry for entry in audit["side_b_model_visible_translation"]}
+    synthesis = {entry["id"]: entry for entry in audit["synthesis_gap_boundary_decisions"]}
+    assert side_a
+    assert set(side_a) == set(side_b) == set(synthesis)
+    assert {
+        "event_dispatch_and_commitments",
+        "goal_branch_continuity",
+        "brake_uncertainty_modulators",
+        "operator_routing_and_capability",
+        "aux_support_publications",
+        "verified_work_preservation",
+        "feedback_window_realization",
+        "host_runtime_sessions",
+        "host_control_transports",
+    } <= set(side_a)
+    assert side_b["host_control_transports"]["visibility_class"] == "direct_model_visible"
+    assert side_b["aux_support_publications"]["visibility_class"] == "support_only"
+    assert "post-training" in synthesis["host_control_transports"]["post_training_boundary"]
+
+    for entry in side_a.values():
+        assert entry["code_refs"]
+        assert entry["proof_refs"]
+        for ref in entry["code_refs"] + entry["proof_refs"]:
+            assert (REPO_ROOT / ref).exists(), ref
+
+
 def test_charter_and_boundary_are_archived_under_product() -> None:
     # CORTEX_PRODUCT_CHARTER.md and CORTEX_PRODUCT_BOUNDARY.md were
     # subsumed by docs/CORTEX.md and moved to docs/archive/product/ so
@@ -342,6 +399,10 @@ def test_public_docs_point_to_status_and_keep_archive_out_of_the_front_door() ->
     assert "fixed rows for `Progress:*`" in workflow
     assert "codex-app-hook-health" in workflow
     assert ".codex/hooks/cortex_mission_reflection_stop_hook.py" in workflow
+    assert "last_assistant_message" in workflow
+    assert "[features].codex_hooks = true" in workflow
+    assert "`.codex/` layer is trusted" in workflow
+    assert "structural lifecycle" in workflow
     assert "Goals Analysis" not in workflow
     for text in (readme, docs_index, cortex_doc):
         assert "CORTEX_V2_ACTIVE_WORKSTREAM" not in text
@@ -391,6 +452,7 @@ def test_status_registry_is_complete_and_stable() -> None:
         "executive_completion",
         "bio_to_code_matrix",
         "math_to_code_rules",
+        "v2_model_io_analysis",
         "work_today",
         "next_product_train",
         "system_map",

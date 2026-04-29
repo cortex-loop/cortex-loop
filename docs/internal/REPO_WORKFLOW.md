@@ -235,11 +235,15 @@ the agent could comply.
 **Codex App chat-boundary enforcement.** Codex App for Mac uses
 repo-local `.codex/config.toml` with `[features].codex_hooks = true`
 and a Stop hook at
-`.codex/hooks/cortex_mission_reflection_stop_hook.py`. Codex supplies
-the latest assistant output as `last_assistant_message`; the hook runs
-`grid` and `reflection-check`, validates that message with the same
+`.codex/hooks/cortex_mission_reflection_stop_hook.py`. Official Codex
+hook lifecycle docs say project-local hooks load only when the project
+`.codex/` layer is trusted; if that trust/config layer is absent, the
+repo hook is not a chat-boundary gate. Codex supplies the latest
+assistant output as `last_assistant_message`; the hook runs `grid` and
+`reflection-check`, validates that message with the same
 `internal/workflow/mission_reflection.py` contract, and returns
-`decision: block` on missing/underfit graph output.
+`decision: block` on missing/underfit graph output so Codex continues
+the turn with corrective context.
 
 Verify Codex App hook config and behavior with:
 
@@ -248,7 +252,9 @@ python internal/workflow/repo_workflow.py codex-app-hook-health
 ```
 
 If this fails, do not start Cortex product work in Codex App until the
-hook/config/runtime issue is fixed.
+hook/config/runtime issue is fixed. This is structural lifecycle
+evidence only; it proves config/script behavior and simulated Stop
+payload handling, not that Cortex has improved model output.
 
 **Codex fallback surfaces.** Codex surfaces that do not load repo-local
 hooks still validate the filled final graph with:

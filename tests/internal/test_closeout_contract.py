@@ -156,6 +156,14 @@ def test_validate_payload_requires_codex_mission_graph_validation() -> None:
         )
 
 
+def test_closeout_contract_does_not_claim_codex_has_no_stop_hook() -> None:
+    source = Path(closeout_contract.__file__).read_text(encoding="utf-8")
+
+    assert "Codex has no Stop hook" not in source
+    assert "Codex App has a repo-local Stop hook" in source
+    assert "trusted `.codex/`" in source
+
+
 def test_validate_payload_rejects_unvalidated_codex_mission_graph() -> None:
     payload = _filled_payload(
         "codex/20260429-000000-grid-unvalidated",

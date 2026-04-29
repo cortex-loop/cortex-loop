@@ -574,8 +574,9 @@ def validate_payload(
             raise SystemExit(
                 "Codex closeout contracts must include mission_reflection_graph "
                 "recording the mandatory `grid-validate` final-graph check. "
-                "Codex has no Stop hook, so this is the session-boundary "
-                "parity evidence."
+                "Codex App has a repo-local Stop hook when the trusted `.codex/` "
+                "layer loads, but non-hook Codex surfaces still need this "
+                "session-boundary validator evidence."
             )
         if graph.get("validator") != CODEX_MISSION_GRAPH_VALIDATOR_COMMAND:
             raise SystemExit(

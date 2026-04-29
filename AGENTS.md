@@ -299,12 +299,16 @@ paste happened correctly.
 
 **Codex App chat-boundary enforcement.** Codex App for Mac uses
 repo-local `.codex/config.toml` (`[features].codex_hooks = true`) and
-`.codex/hooks/cortex_mission_reflection_stop_hook.py`. The hook reads
-`last_assistant_message`, runs `grid`/`reflection-check`, applies
-`internal/workflow/mission_reflection.py`, and blocks on the same graph
-contract as Claude Code. Before Cortex product work in Codex App, run
+`.codex/hooks/cortex_mission_reflection_stop_hook.py`; per the official
+Codex hook lifecycle, project-local hooks load only when the `.codex/`
+project layer is trusted. The hook reads `last_assistant_message`, runs
+`grid`/`reflection-check`, applies `internal/workflow/mission_reflection.py`,
+and blocks on the same graph contract as Claude Code. Before Cortex
+product work in Codex App, run
 `python3 internal/workflow/repo_workflow.py codex-app-hook-health`; if
 it fails, fix hook/config/runtime health or use a healthy gated surface.
+Hook health is structural lifecycle evidence, not live evidence that
+Cortex improved model behavior.
 
 **Codex fallback surfaces.** Codex surfaces that do not load repo-local
 hooks still run `grid`, fill it in place, validate with

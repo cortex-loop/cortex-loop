@@ -10,6 +10,10 @@ Claude Code must also satisfy the repo-local Stop hook in
 `python3 internal/workflow/repo_workflow.py grid`. If the hook blocks,
 continue work and re-emit the graph; do not route around it.
 
+Codex App uses the sibling repo-local hook in `.codex/config.toml` when
+the project `.codex/` layer is trusted; both hooks validate the same
+mission-reflection graph contract.
+
 ## Agent Briefing
 
 Read this first, every session.

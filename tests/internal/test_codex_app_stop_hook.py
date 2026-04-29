@@ -140,6 +140,15 @@ def test_codex_config_declares_app_stop_hook() -> None:
     assert any("cortex_mission_reflection_stop_hook.py" in command for command in commands)
 
 
+def test_codex_hook_docstring_records_current_lifecycle_terms() -> None:
+    text = HOOK_SCRIPT.read_text(encoding="utf-8")
+
+    assert "last_assistant_message" in text
+    assert "[features].codex_hooks" in text
+    assert "trusted project" in text
+    assert "does not prove live" in text
+
+
 def test_repo_workflow_codex_app_hook_health_passes() -> None:
     proc = subprocess.run(
         [
