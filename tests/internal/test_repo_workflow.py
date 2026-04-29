@@ -1263,7 +1263,7 @@ def test_status_snapshot_returns_branch_state_and_drift_signals(
     assert payload["next_train_reviewed_days_ago"] >= 0
 
 
-def test_status_snapshot_emits_text_format(
+def test_status_snapshot_emits_markdown_format(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
 ) -> None:
     repo, _remote, module = _prepare_repo(tmp_path, monkeypatch)
@@ -1272,10 +1272,15 @@ def test_status_snapshot_emits_text_format(
     module.cmd_status_snapshot(False)
     out = capsys.readouterr().out
 
-    assert "▌ STATE SNAPSHOT" in out
-    assert "branch          main" in out
-    assert "worktree        clean" in out
-    assert "drift signals   none" in out
+    # Markdown styling (Session 3): header + 2-column table.
+    assert "## Cortex Repo State" in out
+    assert "| Field | Value |" in out
+    assert "|---|---|" in out
+    assert "| **Branch** | `main` |" in out
+    assert "| **Worktree** | clean |" in out
+    assert "| **Drift signals** | none |" in out
+    # Old box-drawing format must not appear.
+    assert "▌" not in out
 
 
 def test_status_snapshot_flags_dirty_main(
@@ -1369,7 +1374,7 @@ def test_reflection_check_warns_on_warn_threshold_next_train(
     )
 
 
-def test_grid_emits_full_template_with_reflection_when_work_performed(
+def test_grid_emits_markdown_with_full_sections_when_work_performed(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
 ) -> None:
     repo, _remote, module = _prepare_repo(tmp_path, monkeypatch)
@@ -1383,17 +1388,26 @@ def test_grid_emits_full_template_with_reflection_when_work_performed(
     module.cmd_grid()
     out = capsys.readouterr().out
 
-    assert "CORTEX REPO HYGIENE GRID" in out
-    assert "▌ STATE SNAPSHOT" in out
-    assert "▌ CORTEX PROGRESS DASHBOARD" in out
-    assert "▌ GOALS ANALYSIS" in out
-    # Work-performed-only blocks should be present.
-    assert "▌ REFLECTION-CHECK" in out
-    assert "▌ WORK REFLECTION" in out
-    assert "▌ LOOP DECISION" in out
+    # Canonical signature markers (also pinned by the Stop hook).
+    assert module.GRID_HEADER_MARKER in out
+    assert module.GRID_STATE_MARKER in out
+    assert module.GRID_VERDICT_MARKER in out
+    # Markdown styling: the state and progress are 2-column tables.
+    assert "| Field | Value |" in out
+    assert "|---|---|" in out
+    assert "### Cortex Progress" in out
+    # Goals Analysis fields expected (5 substantive prompts).
+    for label, _ in module.GOALS_ANALYSIS_FIELDS:
+        assert f"**{label}:**" in out
+    # Work-performed-only sections should appear.
+    assert "### Mechanical Checks" in out
+    assert "### Work Reflection" in out
+    # No box-drawing chars from the prior format.
+    assert "═══" not in out
+    assert "▌" not in out
 
 
-def test_grid_emits_minimal_template_on_clean_main(
+def test_grid_emits_markdown_minimal_when_no_work_performed(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
 ) -> None:
     repo, _remote, module = _prepare_repo(tmp_path, monkeypatch)
@@ -1403,13 +1417,38 @@ def test_grid_emits_minimal_template_on_clean_main(
     module.cmd_grid()
     out = capsys.readouterr().out
 
-    # Always-on blocks are present.
-    assert "▌ STATE SNAPSHOT" in out
-    assert "▌ CORTEX PROGRESS DASHBOARD" in out
-    assert "▌ GOALS ANALYSIS" in out
-    # Work-only blocks must NOT appear when no tracked-file changes exist.
-    assert "▌ WORK REFLECTION" not in out
-    assert "▌ LOOP DECISION" not in out
+    # Always-on sections present.
+    assert module.GRID_HEADER_MARKER in out
+    assert module.GRID_STATE_MARKER in out
+    assert "### Cortex Progress" in out
+    assert "### Goals Analysis" in out
+    assert module.GRID_VERDICT_MARKER in out
+    # Work-only sections must NOT appear when no tracked-file changes exist.
+    assert "### Mechanical Checks" not in out
+    assert "### Work Reflection" not in out
+    # The verdict is still emitted (PASS by default on clean main).
+    assert "PASS" in out or "GAPS" in out or "FAIL" in out
+
+
+def test_grid_signature_markers_are_distinct_constants() -> None:
+    """The Stop hook regex relies on these exact strings; pin them."""
+    module = _load_repo_workflow_module()
+    assert module.GRID_HEADER_MARKER == "## Cortex Repo Hygiene Grid"
+    assert module.GRID_STATE_MARKER == "### State"
+    assert module.GRID_VERDICT_MARKER == "### Verdict"
+
+
+def test_goals_analysis_fields_demand_substantive_prompts() -> None:
+    """Goals Analysis must enumerate the five depth-prompt fields."""
+    module = _load_repo_workflow_module()
+    labels = [label for label, _ in module.GOALS_ANALYSIS_FIELDS]
+    assert labels == [
+        "Plan → implementation",
+        "Quality assessment",
+        "Iteration moments this session",
+        "Forward-looking confidence",
+        "Tied to Cortex goals",
+    ]
 
 
 def test_bundling_surfaces_flags_unrelated_top_level_groups() -> None:

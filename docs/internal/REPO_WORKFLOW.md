@@ -162,18 +162,44 @@ freshness (`>=30d` warn, `>=60d` fail); and a hardcoded-fixture-timestamp
 grep on changed test files (warn unless the fixture is the explicit
 stale `2000-01-01` form).
 
-Compose the per-turn Cortex Repo Hygiene Grid (always-on state
-snapshot + Cortex progress dashboard + goals-analysis prompts; plus
-reflection-check verdict, work-reflection prompts, and Loop Decision
-when work has been performed in the session):
+Compose the per-turn Cortex Repo Hygiene Grid (one consolidated
+markdown block: `## Cortex Repo Hygiene Grid` header, `### State` and
+`### Cortex Progress` tables, `### Goals Analysis` substantive prompts,
+and `### Verdict` line; plus `### Mechanical Checks` and `### Work
+Reflection` sections when work has been performed in the session):
 
 ```bash
 python internal/workflow/repo_workflow.py grid
 ```
 
 The grid is mandatory at the end of every chat per `AGENTS.md` `## Handoff`.
-On Loop Decision `FAIL`, the agent MUST continue working in the same
-chat until the grid clears.
+The agent pastes the command stdout verbatim into the chat and fills in
+the bracketed Goals Analysis prompts with substantive answers (each
+≥48 chars, citing at least one repo surface). On `FAIL` verdict the
+agent MUST continue working in the same chat until the grid clears;
+close-session is structurally blocked.
+
+Chat-boundary enforcement on Claude Code: a Stop hook at
+`.claude/settings.json` runs `.claude/hooks/cortex_grid_stop_hook.py`
+on turn-completion. The hook reads the assistant's last message from
+the transcript JSONL, runs `grid` itself, and blocks the stop if any
+of the following hold:
+
+- the assistant message is missing the canonical grid signature markers
+  (`## Cortex Repo Hygiene Grid`, `### State`, `### Verdict`),
+- the Goals Analysis bracketed templates were pasted unmodified
+  (no substantive fill detected), or
+- `reflection-check --json` returns verdict `FAIL`.
+
+When blocked, Claude Code re-prompts the agent with the canonical grid
+markdown injected as feedback context. The agent then produces another
+response; the hook re-checks. The conversation cannot end until the
+gate clears. The hook fails open (allows the stop with a stderr
+diagnostic) on unexpected errors so the conversation cannot lock.
+
+Codex does not support Stop hooks; on Codex, the contract is
+doctrinal. The markdown table structure is distinctive enough that
+ad-hoc mimicry is visually obvious to the user reading the chat.
 
 Scaffold the enforced closeout contract for the current branch:
 

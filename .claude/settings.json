@@ -1,0 +1,15 @@
+{
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 .claude/hooks/cortex_grid_stop_hook.py",
+            "timeout": 180
+          }
+        ]
+      }
+    ]
+  }
+}
