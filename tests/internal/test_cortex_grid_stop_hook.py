@@ -1,21 +1,28 @@
-"""Tests for the Cortex grid Stop hook.
+"""Tests for the Cortex grid Stop hook (single-closure-grid enforcement).
 
-The hook lives at ``.claude/hooks/cortex_grid_stop_hook.py`` and is
-invoked by Claude Code when an agent attempts to stop the turn. It
-reads the assistant's most recent message from the transcript JSONL,
-runs ``grid`` itself, and:
+The hook lives at ``.claude/hooks/cortex_grid_stop_hook.py`` and is the
+chat-boundary mechanical gate for the per-turn hygiene contract. Five
+gates run on every Stop event (the hook does NOT short-circuit on
+``stop_hook_active``):
 
-- blocks the stop with the canonical grid markdown if the message is
-  missing the grid signature markers,
-- blocks the stop if the Goals Analysis bracketed templates were
-  pasted unmodified (no substantive fill),
-- blocks the stop with a failures list if ``reflection-check --json``
-  returns verdict ``FAIL``,
-- allows the stop otherwise.
+1. Required signature markers all present:
+   ``## Cortex Repo Hygiene Grid``, ``### State``,
+   ``### Standard Metadata``, ``### Final Handoff Mirror``,
+   ``### Verdict``.
+2. Closure-shaped substrings (``Ending branch``, ``Fixed now``, etc.)
+   do NOT appear before the grid header (closure must live inside the
+   grid).
+3. Each Goals Analysis field is filled per-field (not just "fewer
+   than 5 templates remain"); each field's body must NOT contain the
+   literal template substring.
+4. Standard Metadata and Final Handoff Mirror cells have no remaining
+   ``<fill`` placeholder.
+5. ``reflection-check --json`` returns verdict ``PASS`` or ``GAPS``
+   (FAIL blocks).
 
-The hook is the chat-boundary mechanical gate that closes the bypass
-pattern (``run grid for inspection, then compose ad-hoc audit-shaped
-markdown without the canonical signature``).
+Fail-open paths (intentional, infrastructure-only): missing transcript,
+malformed hook input, ``grid``/``reflection-check`` command crash. The
+``stop_hook_active`` short-circuit was removed in Session 4.
 """
 
 from __future__ import annotations
@@ -24,7 +31,6 @@ import json
 import re
 import subprocess
 import sys
-import tempfile
 from pathlib import Path
 
 import pytest
@@ -72,11 +78,11 @@ def _write_transcript(tmp_path: Path, assistant_text: str) -> Path:
     return transcript
 
 
-def _hook_input(transcript: Path) -> dict[str, object]:
+def _hook_input(transcript: Path, *, stop_hook_active: bool = False) -> dict[str, object]:
     return {
         "transcript_path": str(transcript),
         "cwd": str(REPO_ROOT),
-        "stop_hook_active": False,
+        "stop_hook_active": stop_hook_active,
     }
 
 
@@ -93,27 +99,104 @@ def _fill_goals_analysis(grid_markdown: str) -> str:
     )
 
 
-def test_hook_blocks_when_assistant_message_lacks_grid_signature(tmp_path: Path) -> None:
-    transcript = _write_transcript(
-        tmp_path,
-        "Just a plain assistant message without the grid signature.",
-    )
+def _fill_metadata_and_mirror(grid_markdown: str) -> str:
+    """Replace each `<fill: ...>` placeholder with `n/a` so cells render filled."""
+    return re.sub(r"<fill[^>]*>", "n/a (no work this turn)", grid_markdown)
+
+
+def _fully_filled_grid() -> str:
+    return _fill_metadata_and_mirror(_fill_goals_analysis(_canonical_grid()))
+
+
+# ---------------------------------------------------------------------------
+# Required-marker gate (Gate 1).
+# ---------------------------------------------------------------------------
+
+
+def test_hook_blocks_when_message_missing_grid_header(tmp_path: Path) -> None:
+    transcript = _write_transcript(tmp_path, "Plain assistant message; no grid.")
 
     returncode, stdout, _ = _run_hook(_hook_input(transcript))
 
-    assert returncode == 0  # hook exits 0 even when blocking
+    assert returncode == 0
     payload = json.loads(stdout)
     assert payload["decision"] == "block"
-    assert "grid output not detected" in payload["reason"].lower()
+    assert "incomplete" in payload["reason"].lower() or "missing" in payload["reason"].lower()
     # Canonical grid markdown is injected as the reason context.
     assert "## Cortex Repo Hygiene Grid" in payload["reason"]
 
 
-def test_hook_blocks_when_goals_analysis_template_unfilled(tmp_path: Path) -> None:
+def test_hook_blocks_when_standard_metadata_marker_missing(tmp_path: Path) -> None:
+    canonical = _fully_filled_grid()
+    # Strip the Standard Metadata header so the gate fires.
+    mutated = canonical.replace("### Standard Metadata", "### NOT-METADATA")
+    transcript = _write_transcript(tmp_path, mutated)
+
+    returncode, stdout, _ = _run_hook(_hook_input(transcript))
+
+    assert returncode == 0
+    payload = json.loads(stdout)
+    assert payload["decision"] == "block"
+    assert "Standard Metadata" in payload["reason"]
+
+
+def test_hook_blocks_when_final_handoff_mirror_marker_missing(tmp_path: Path) -> None:
+    canonical = _fully_filled_grid()
+    mutated = canonical.replace("### Final Handoff Mirror", "### NOT-MIRROR")
+    transcript = _write_transcript(tmp_path, mutated)
+
+    returncode, stdout, _ = _run_hook(_hook_input(transcript))
+
+    assert returncode == 0
+    payload = json.loads(stdout)
+    assert payload["decision"] == "block"
+    assert "Final Handoff Mirror" in payload["reason"]
+
+
+# ---------------------------------------------------------------------------
+# Closure-leak gate (Gate 2).
+# ---------------------------------------------------------------------------
+
+
+def test_hook_blocks_when_closure_marker_appears_before_grid(tmp_path: Path) -> None:
+    canonical = _fully_filled_grid()
+    # Prefix the response with a "Standard Metadata"-shaped block before
+    # the grid — exactly the bypass pattern this gate prevents.
+    leaked = "Ending branch: main\n\nFixed now: lots of stuff\n\n" + canonical
+    transcript = _write_transcript(tmp_path, leaked)
+
+    returncode, stdout, _ = _run_hook(_hook_input(transcript))
+
+    assert returncode == 0
+    payload = json.loads(stdout)
+    assert payload["decision"] == "block"
+    assert "outside the grid" in payload["reason"].lower() or "before the grid" in payload["reason"].lower()
+
+
+# ---------------------------------------------------------------------------
+# Per-field Goals Analysis gate (Gate 3).
+# ---------------------------------------------------------------------------
+
+
+def test_hook_blocks_when_one_goals_analysis_field_unfilled(tmp_path: Path) -> None:
     canonical = _canonical_grid()
-    # Paste canonical without filling in the Goals Analysis prompts —
-    # the bracketed template stays verbatim.
-    transcript = _write_transcript(tmp_path, canonical)
+    # Fill 4 of the 5 Goals Analysis prompts; leave one unfilled.
+    template_pattern = re.compile(r"_\[≥48 chars \+ cite a repo surface — [^\]]+\]_")
+    matches = list(template_pattern.finditer(canonical))
+    assert len(matches) == 5, "expected 5 Goals Analysis bracketed templates"
+    # Replace the first 4; leave the 5th unfilled.
+    filled = canonical
+    for match in matches[:4]:
+        filled = filled.replace(
+            match.group(0),
+            (
+                "Filled answer with citation — see "
+                "`docs/CORTEX.md` §1."
+            ),
+            1,
+        )
+    filled = _fill_metadata_and_mirror(filled)
+    transcript = _write_transcript(tmp_path, filled)
 
     returncode, stdout, _ = _run_hook(_hook_input(transcript))
 
@@ -121,13 +204,35 @@ def test_hook_blocks_when_goals_analysis_template_unfilled(tmp_path: Path) -> No
     payload = json.loads(stdout)
     assert payload["decision"] == "block"
     assert "Goals Analysis" in payload["reason"]
-    assert "bracketed template" in payload["reason"]
+    assert "unfilled" in payload["reason"].lower() or "still showing" in payload["reason"].lower()
 
 
-def test_hook_allows_stop_when_signature_present_and_goals_filled(tmp_path: Path) -> None:
-    canonical = _canonical_grid()
-    filled = _fill_goals_analysis(canonical)
-    transcript = _write_transcript(tmp_path, filled)
+# ---------------------------------------------------------------------------
+# Fill-placeholder gate (Gate 4) — Standard Metadata / Final Handoff Mirror.
+# ---------------------------------------------------------------------------
+
+
+def test_hook_blocks_when_metadata_has_unfilled_placeholder(tmp_path: Path) -> None:
+    # Goals Analysis filled but Standard Metadata still has `<fill>` cells.
+    canonical = _fill_goals_analysis(_canonical_grid())
+    transcript = _write_transcript(tmp_path, canonical)
+
+    returncode, stdout, _ = _run_hook(_hook_input(transcript))
+
+    assert returncode == 0
+    payload = json.loads(stdout)
+    assert payload["decision"] == "block"
+    assert "Standard Metadata" in payload["reason"] or "<fill" in payload["reason"]
+
+
+# ---------------------------------------------------------------------------
+# All-clear path: signature complete + closure inside grid + Goals Analysis
+# filled + no <fill> placeholders + verdict PASS → allow stop.
+# ---------------------------------------------------------------------------
+
+
+def test_hook_allows_stop_when_all_gates_pass(tmp_path: Path) -> None:
+    transcript = _write_transcript(tmp_path, _fully_filled_grid())
 
     returncode, stdout, _ = _run_hook(_hook_input(transcript))
 
@@ -136,9 +241,37 @@ def test_hook_allows_stop_when_signature_present_and_goals_filled(tmp_path: Path
     assert stdout.strip() == ""
 
 
+# ---------------------------------------------------------------------------
+# stop_hook_active no longer short-circuits (Session 4 hard-gate change).
+# ---------------------------------------------------------------------------
+
+
+def test_hook_does_not_short_circuit_on_stop_hook_active(tmp_path: Path) -> None:
+    """Session 4 removed the unconditional allow on stop_hook_active.
+
+    Persistent agent non-compliance must continue to block on every stop
+    attempt, not just the first. Infrastructure failures still fail open
+    via the diagnostic_exit paths.
+    """
+    transcript = _write_transcript(tmp_path, "no grid signature here")
+
+    returncode, stdout, _ = _run_hook(_hook_input(transcript, stop_hook_active=True))
+
+    assert returncode == 0
+    # Block, not allow — the hard gate still fires.
+    assert stdout.strip() != "", (
+        "stop_hook_active should NOT short-circuit; the hook must still block"
+    )
+    payload = json.loads(stdout)
+    assert payload["decision"] == "block"
+
+
+# ---------------------------------------------------------------------------
+# Fail-open paths (infrastructure failures only).
+# ---------------------------------------------------------------------------
+
+
 def test_hook_fails_open_on_missing_transcript_path(tmp_path: Path) -> None:
-    # transcript_path points to a file that does not exist; the hook
-    # must allow the stop so the conversation cannot lock.
     bogus = tmp_path / "missing.jsonl"
     hook_input = {"transcript_path": str(bogus), "cwd": str(REPO_ROOT)}
 
@@ -146,7 +279,6 @@ def test_hook_fails_open_on_missing_transcript_path(tmp_path: Path) -> None:
 
     assert returncode == 0
     assert stdout.strip() == ""
-    # Diagnostic should appear on stderr.
     assert "transcript" in stderr.lower() or "could not read" in stderr.lower()
 
 
@@ -160,34 +292,25 @@ def test_hook_fails_open_when_hook_input_missing_transcript_field() -> None:
     assert "transcript_path" in stderr.lower()
 
 
-def test_hook_short_circuits_when_already_in_stop_hook_loop(tmp_path: Path) -> None:
-    # ``stop_hook_active: true`` means Claude Code is already inside a
-    # re-prompt loop triggered by this hook; the hook must allow the
-    # stop to avoid infinite blocking when the agent cannot satisfy
-    # the gate.
-    transcript = _write_transcript(tmp_path, "no grid")
-    hook_input = {
-        "transcript_path": str(transcript),
-        "cwd": str(REPO_ROOT),
-        "stop_hook_active": True,
-    }
-
-    returncode, stdout, _ = _run_hook(hook_input)
-
-    assert returncode == 0
-    assert stdout.strip() == ""
+# ---------------------------------------------------------------------------
+# Constants pinning: hook + repo_workflow signature markers stay equal.
+# ---------------------------------------------------------------------------
 
 
 def test_hook_signature_markers_match_repo_workflow_constants() -> None:
-    """The hook's signature markers must equal repo_workflow's exports."""
-    # Read the hook source and parse out the constants.
     text = HOOK_SCRIPT.read_text(encoding="utf-8")
-    header_match = re.search(r'GRID_HEADER_MARKER\s*=\s*"([^"]+)"', text)
-    state_match = re.search(r'GRID_STATE_MARKER\s*=\s*"([^"]+)"', text)
-    verdict_match = re.search(r'GRID_VERDICT_MARKER\s*=\s*"([^"]+)"', text)
-    assert header_match and state_match and verdict_match
+    constants = {}
+    for name in (
+        "GRID_HEADER_MARKER",
+        "GRID_STATE_MARKER",
+        "GRID_STANDARD_METADATA_MARKER",
+        "GRID_FINAL_HANDOFF_MIRROR_MARKER",
+        "GRID_VERDICT_MARKER",
+    ):
+        match = re.search(rf'{name}\s*=\s*"([^"]+)"', text)
+        assert match, f"hook script missing constant {name}"
+        constants[name] = match.group(1)
 
-    # Import repo_workflow and compare to its constants.
     sys.path.insert(0, str(REPO_ROOT / "internal" / "workflow"))
     try:
         import importlib.util
@@ -202,13 +325,13 @@ def test_hook_signature_markers_match_repo_workflow_constants() -> None:
     finally:
         sys.path.remove(str(REPO_ROOT / "internal" / "workflow"))
 
-    assert header_match.group(1) == module.GRID_HEADER_MARKER
-    assert state_match.group(1) == module.GRID_STATE_MARKER
-    assert verdict_match.group(1) == module.GRID_VERDICT_MARKER
+    for name, hook_value in constants.items():
+        assert hook_value == getattr(module, name), (
+            f"{name} differs between hook and repo_workflow"
+        )
 
 
 def test_settings_json_declares_stop_hook() -> None:
-    """The repo's .claude/settings.json must wire the Stop hook."""
     settings_path = REPO_ROOT / ".claude" / "settings.json"
     assert settings_path.exists()
     settings = json.loads(settings_path.read_text(encoding="utf-8"))
@@ -219,7 +342,4 @@ def test_settings_json_declares_stop_hook() -> None:
         for hook in entry.get("hooks", []):
             if hook.get("type") == "command" and "cortex_grid_stop_hook" in hook.get("command", ""):
                 found_grid_hook = True
-    assert found_grid_hook, (
-        "Stop hook for cortex_grid_stop_hook.py must be declared in "
-        ".claude/settings.json"
-    )
+    assert found_grid_hook

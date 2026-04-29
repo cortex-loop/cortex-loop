@@ -162,44 +162,67 @@ freshness (`>=30d` warn, `>=60d` fail); and a hardcoded-fixture-timestamp
 grep on changed test files (warn unless the fixture is the explicit
 stale `2000-01-01` form).
 
-Compose the per-turn Cortex Repo Hygiene Grid (one consolidated
-markdown block: `## Cortex Repo Hygiene Grid` header, `### State` and
-`### Cortex Progress` tables, `### Goals Analysis` substantive prompts,
-and `### Verdict` line; plus `### Mechanical Checks` and `### Work
-Reflection` sections when work has been performed in the session):
+Compose the per-turn Cortex Repo Hygiene Grid (the **single closure
+artifact** for every chat — all closure / handoff material lives
+inside one `## Cortex Repo Hygiene Grid` markdown block):
 
 ```bash
 python internal/workflow/repo_workflow.py grid
 ```
 
-The grid is mandatory at the end of every chat per `AGENTS.md` `## Handoff`.
-The agent pastes the command stdout verbatim into the chat and fills in
-the bracketed Goals Analysis prompts with substantive answers (each
-≥48 chars, citing at least one repo surface). On `FAIL` verdict the
-agent MUST continue working in the same chat until the grid clears;
-close-session is structurally blocked.
+Sections in the grid:
 
-Chat-boundary enforcement on Claude Code: a Stop hook at
+- `## Cortex Repo Hygiene Grid` (header, required)
+- `### State` (table, required)
+- `### Cortex Progress` (always emitted)
+- `### Goals Analysis` (5 substantive prompts, always emitted)
+- `### Mechanical Checks` (only when work was performed)
+- `### Work Reflection` (only when work was performed)
+- `### Standard Metadata` (table, required — closure metadata)
+- `### Final Handoff Mirror` (sections, required — closure mirror)
+- `### Dogfood Signal` (only when dogfood mode is active)
+- `### Verdict` (line, required)
+
+**Workflow:** the agent runs `grid`, pastes the markdown skeleton, and
+edits the skeleton in place — replacing each Goals Analysis bracketed
+prompt with substantive prose (≥48 chars, citing a repo surface) and
+each `<fill: …>` placeholder in Standard Metadata, Final Handoff
+Mirror, and (when active) Dogfood Signal with the actual value.
+Normal response prose may precede the grid; nothing closure-shaped
+may appear before or after it. On `FAIL` verdict the agent MUST
+continue working in the same chat until the grid clears.
+
+**Chat-boundary enforcement (Claude Code).** A Stop hook at
 `.claude/settings.json` runs `.claude/hooks/cortex_grid_stop_hook.py`
 on turn-completion. The hook reads the assistant's last message from
-the transcript JSONL, runs `grid` itself, and blocks the stop if any
-of the following hold:
+the transcript JSONL, runs `grid` itself, and blocks the stop on any
+of these gates:
 
-- the assistant message is missing the canonical grid signature markers
-  (`## Cortex Repo Hygiene Grid`, `### State`, `### Verdict`),
-- the Goals Analysis bracketed templates were pasted unmodified
-  (no substantive fill detected), or
-- `reflection-check --json` returns verdict `FAIL`.
+1. Missing required markers: `## Cortex Repo Hygiene Grid`,
+   `### State`, `### Standard Metadata`,
+   `### Final Handoff Mirror`, `### Verdict`.
+2. Closure-shaped substrings (`Ending branch`, `Verification summary`,
+   `Fixed now`, `Claim earned now`, `Status registry touched`,
+   `Final Handoff Mirror`) appearing in prose **before** the grid
+   header.
+3. Per-field unfilled Goals Analysis prompt (each of the five fields
+   is checked individually; one unfilled field blocks).
+4. `<fill` placeholder substring remaining anywhere in Standard
+   Metadata or Final Handoff Mirror.
+5. `reflection-check --json` returns verdict `FAIL`.
 
-When blocked, Claude Code re-prompts the agent with the canonical grid
-markdown injected as feedback context. The agent then produces another
-response; the hook re-checks. The conversation cannot end until the
-gate clears. The hook fails open (allows the stop with a stderr
-diagnostic) on unexpected errors so the conversation cannot lock.
+The hook does **not** short-circuit on `stop_hook_active` — every stop
+attempt re-runs every gate. Persistent agent non-compliance keeps
+blocking. The hook fails open (allows the stop with a stderr
+diagnostic) only on infrastructure failures: missing transcript,
+malformed hook input, or `grid` / `reflection-check` command crash.
+These fail-open paths exist to prevent infrastructure-caused
+conversation locks; they do not provide an escape from the gate when
+the agent could comply.
 
-Codex does not support Stop hooks; on Codex, the contract is
-doctrinal. The markdown table structure is distinctive enough that
-ad-hoc mimicry is visually obvious to the user reading the chat.
+**Codex parity (doctrinal-only).** Codex does not support Stop hooks.
+On Codex, the entire contract is doctrinal. The hard-gate enforcement
+is Claude-only.
 
 Scaffold the enforced closeout contract for the current branch:
 
