@@ -45,10 +45,10 @@ VERIFICATION_SCOPE_COMMANDS: dict[str, tuple[tuple[str, ...], ...]] = {
 }
 SAFE_INTERNAL_PATHS = {
     "AGENTS.md",
+    "CLAUDE.md",
     "README.md",
     "docs/README.md",
-    "docs/CORTEX_PRODUCT_CHARTER.md",
-    "docs/CORTEX_PRODUCT_BOUNDARY.md",
+    "docs/CORTEX.md",
     "docs/CORTEX_V2_CORE_2.md",
     "docs/CORTEX_V2_SRE_2.md",
     "docs/CORTEX_V2_AUX_2.md",
@@ -1213,6 +1213,544 @@ def cmd_cleanup_report() -> int:
     return 0 if not failures else 1
 
 
+# ---------------------------------------------------------------------------
+# Hygiene grid: status-snapshot, reflection-check, grid
+# ---------------------------------------------------------------------------
+#
+# These commands implement the per-turn hygiene discipline described in
+# AGENTS.md `## Handoff` and docs/CORTEX.md §6. The grid surfaces the
+# repo state, the Cortex progress dashboard, and a substantive reflection
+# prompt at the end of every chat. When work has been performed in the
+# turn (tracked-file changes since session start), the grid additionally
+# surfaces mechanical checks (closeout schema, branch-slug match, etc.)
+# and a Loop Decision: any FAIL or unresolved gap blocks close-session.
+#
+# The substantive validators (handwave detection, minimum length) are
+# imported from internal.closeout.contract so the grid and the closeout
+# share one definition.
+
+DRIFT_SIGNAL_STALE_NEXT_TRAIN_DAYS_WARN = 30
+DRIFT_SIGNAL_STALE_NEXT_TRAIN_DAYS_FAIL = 60
+
+
+def _registry_payload() -> dict[str, object] | None:
+    path = _root() / "internal" / "truth" / "cortex_status.json"
+    if not path.exists():
+        return None
+    try:
+        return json.loads(path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError:
+        return None
+
+
+def _ahead_behind(branch: str) -> dict[str, int]:
+    """Return {ahead, behind} counts vs origin/main. Zero if unavailable."""
+    output = _capture_optional(
+        ["git", "rev-list", "--left-right", "--count", f"origin/main...{branch}"]
+    )
+    if not output:
+        return {"ahead": 0, "behind": 0}
+    parts = output.split()
+    if len(parts) != 2:
+        return {"ahead": 0, "behind": 0}
+    try:
+        behind, ahead = int(parts[0]), int(parts[1])
+    except ValueError:
+        return {"ahead": 0, "behind": 0}
+    return {"ahead": ahead, "behind": behind}
+
+
+def _closeout_state(branch: str) -> dict[str, object]:
+    """Inspect the closeout artifact directory for the current branch.
+
+    Returns a {present, profile, validates} payload. `present` is one of
+    'absent' | 'scaffolded' | 'rendered' | 'validated'. `validates` is a
+    boolean indicating close-session validation passes; `profile` is the
+    declared profile when known.
+    """
+    branch_dir = (
+        _root() / ".cortex" / "closeout_contract" / Path(*branch.split("/"))
+    )
+    json_path = branch_dir / "closeout.json"
+    md_path = branch_dir / "closeout.md"
+    if not json_path.exists():
+        return {"present": "absent", "profile": None, "validates": False}
+    try:
+        payload = json.loads(json_path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError:
+        return {"present": "scaffolded", "profile": None, "validates": False}
+    profile = payload.get("profile") if isinstance(payload, dict) else None
+    presence = "rendered" if md_path.exists() else "scaffolded"
+    validates = False
+    try:
+        closeout_contract.cli_validate(
+            root=_root(), mode="close-session", branch=branch
+        )
+        validates = True
+        presence = "validated"
+    except SystemExit:
+        validates = False
+    return {"present": presence, "profile": profile, "validates": validates}
+
+
+def _next_train_freshness_days(registry: dict[str, object] | None) -> int | None:
+    """Return days since next_product_train.last_reviewed_at, or None."""
+    if not registry:
+        return None
+    next_train = registry.get("next_product_train")
+    if not isinstance(next_train, dict):
+        return None
+    raw = next_train.get("last_reviewed_at")
+    if not isinstance(raw, str) or not raw.strip():
+        return None
+    try:
+        reviewed_at = dt.datetime.fromisoformat(raw.replace("Z", "+00:00"))
+    except ValueError:
+        return None
+    if reviewed_at.tzinfo is None:
+        reviewed_at = reviewed_at.replace(tzinfo=dt.timezone.utc)
+    now = dt.datetime.now(dt.timezone.utc)
+    delta = now - reviewed_at
+    return max(delta.days, 0)
+
+
+_BUNDLING_SURFACE_GROUPS: tuple[tuple[str, ...], ...] = (
+    ("cortex/core/",),
+    ("cortex/sre/",),
+    ("cortex/aux/",),
+    ("cortex/runtime/",),
+    ("cortex/hosts/",),
+    ("cortex/drivers/", "cortex/eval/"),
+    ("internal/workflow/", "internal/closeout/"),
+    ("internal/truth/",),
+    ("internal/archive/", "docs/archive/"),
+    ("docs/CORTEX_V2_",),
+    ("lab/",),
+    ("tests/product/",),
+    ("tests/conformance/",),
+    ("tests/experimental/",),
+    ("tests/lab/",),
+    ("tests/internal/",),
+)
+
+
+def _bundling_surfaces(paths: list[str]) -> list[str]:
+    """Return the named surface groups touched by the reviewed paths.
+
+    Used as a coarse bundling-detection heuristic: a single concern
+    typically touches one or two surface groups; when reviewed paths
+    span four or more unrelated groups, that is a bundling signal worth
+    surfacing as a gap. Doc / config / root files are intentionally
+    excluded because they almost always co-touch with real work.
+    """
+    touched: list[str] = []
+    for group in _BUNDLING_SURFACE_GROUPS:
+        if any(any(path.startswith(prefix) for prefix in group) for path in paths):
+            touched.append("|".join(group))
+    return touched
+
+
+def _drift_signals(branch: str, registry: dict[str, object] | None) -> list[str]:
+    signals: list[str] = []
+    # Stale next_train.
+    days = _next_train_freshness_days(registry)
+    if days is not None and days >= DRIFT_SIGNAL_STALE_NEXT_TRAIN_DAYS_FAIL:
+        signals.append(
+            f"next_product_train reviewed {days}d ago "
+            f"(>= {DRIFT_SIGNAL_STALE_NEXT_TRAIN_DAYS_FAIL}d fail threshold)"
+        )
+    elif days is not None and days >= DRIFT_SIGNAL_STALE_NEXT_TRAIN_DAYS_WARN:
+        signals.append(
+            f"next_product_train reviewed {days}d ago "
+            f"(>= {DRIFT_SIGNAL_STALE_NEXT_TRAIN_DAYS_WARN}d warn threshold)"
+        )
+    # Dirty main.
+    if branch == "main" and _tracked_status_lines():
+        signals.append("worktree dirty on main")
+    # Unmerged managed branches present (informational; the gate fires on
+    # start-session, but we surface here too so the user sees pending
+    # work without running audit-branches).
+    unmerged = _list_unmerged_managed_branches()
+    others = [name for name in unmerged if name != branch]
+    if others:
+        signals.append(
+            f"unmerged managed branches present: {', '.join(others[:3])}"
+            + ("" if len(others) <= 3 else f" (+{len(others) - 3} more)")
+        )
+    # Dangling closeout: closeout exists for a branch that is no longer
+    # checked out and is not main; the workflow keeps the artifact, but
+    # if the branch exists locally and has not been merged, surface it.
+    if branch != "main" and is_managed_session_branch(branch):
+        state = _closeout_state(branch)
+        if state["present"] == "scaffolded":
+            signals.append(
+                "closeout contract scaffolded but not validated for current branch"
+            )
+    return signals
+
+
+def _branch_changed_paths(branch: str) -> list[str]:
+    """Return paths changed by this session vs origin/main, plus dirty paths."""
+    if branch == "main":
+        return _normalize_paths(_tracked_status_lines_paths())
+    base = "origin/main" if _origin_main_exists() else "main"
+    paths = list(_changed_paths_between(base, branch))
+    paths.extend(_tracked_status_lines_paths())
+    return sorted({p for p in paths if p})
+
+
+def _tracked_status_lines_paths() -> list[str]:
+    """Strip status codes from `_tracked_status_lines` output."""
+    paths: list[str] = []
+    for line in _tracked_status_lines():
+        body = line[3:].strip() if len(line) >= 4 else ""
+        if " -> " in body:
+            body = body.split(" -> ", 1)[1].strip()
+        if body:
+            paths.append(body)
+    return paths
+
+
+def _status_snapshot_payload() -> dict[str, object]:
+    branch = _current_branch()
+    ahead_behind = _ahead_behind(branch) if branch != "main" else {"ahead": 0, "behind": 0}
+    if branch == "main":
+        ahead_behind = _ahead_behind("HEAD")
+    worktree_dirty = bool(_tracked_status_lines())
+    closeout = _closeout_state(branch)
+    registry = _registry_payload()
+    work_today = (registry or {}).get("work_today", {}) if isinstance(registry, dict) else {}
+    next_train = (registry or {}).get("next_product_train", {}) if isinstance(registry, dict) else {}
+    next_train_days = _next_train_freshness_days(registry)
+    drift = _drift_signals(branch, registry)
+    return {
+        "branch": branch,
+        "ahead": ahead_behind["ahead"],
+        "behind": ahead_behind["behind"],
+        "worktree": "dirty" if worktree_dirty else "clean",
+        "closeout": closeout,
+        "work_today_slug": (work_today or {}).get("slug"),
+        "next_train_slug": (next_train or {}).get("slug"),
+        "next_train_reviewed_days_ago": next_train_days,
+        "drift_signals": drift,
+    }
+
+
+def _format_status_snapshot(payload: dict[str, object]) -> str:
+    lines = ["▌ STATE SNAPSHOT"]
+    lines.append(f"  branch          {payload['branch']}")
+    lines.append(
+        f"  vs origin/main  +{payload['ahead']} / -{payload['behind']}"
+    )
+    lines.append(f"  worktree        {payload['worktree']}")
+    closeout = payload["closeout"]
+    profile = closeout.get("profile")
+    profile_text = f" ({profile})" if profile else ""
+    lines.append(f"  closeout        {closeout['present']}{profile_text}")
+    if payload.get("work_today_slug"):
+        lines.append(f"  work_today      {payload['work_today_slug']}")
+    if payload.get("next_train_slug"):
+        days = payload.get("next_train_reviewed_days_ago")
+        days_text = f" (reviewed {days}d ago)" if days is not None else ""
+        lines.append(
+            f"  next_train      {payload['next_train_slug']}{days_text}"
+        )
+    drift = payload.get("drift_signals", [])
+    if drift:
+        lines.append("  drift signals   " + drift[0])
+        for signal in drift[1:]:
+            lines.append(f"                  {signal}")
+    else:
+        lines.append("  drift signals   none")
+    return "\n".join(lines)
+
+
+def cmd_status_snapshot(emit_json: bool) -> int:
+    payload = _status_snapshot_payload()
+    if emit_json:
+        print(json.dumps(payload, indent=2, sort_keys=True))
+    else:
+        print(_format_status_snapshot(payload))
+    return 0
+
+
+def _reflection_check_payload() -> dict[str, object]:
+    """Run all reflection-check gates and return PASS/GAPS/FAIL with reasons."""
+    snapshot = _status_snapshot_payload()
+    branch = snapshot["branch"]
+    failures: list[str] = []
+    gaps: list[str] = []
+
+    # Mechanical gate 1: closeout schema validates (when artifact exists).
+    closeout_state = snapshot["closeout"]
+    if closeout_state["present"] != "absent":
+        try:
+            closeout_contract.cli_validate(
+                root=_root(), mode="close-session", branch=branch
+            )
+        except SystemExit as exc:
+            failures.append(f"closeout validate: {exc}")
+
+    # Mechanical gate 2: status doc + cortex doc + archive index --check.
+    for cmd, label in (
+        (
+            ["python3", "internal/truth/generate_status.py", "--check"],
+            "generate_status.py --check",
+        ),
+        (
+            ["python3", "internal/truth/generate_cortex_doc.py", "--check"],
+            "generate_cortex_doc.py --check",
+        ),
+        (
+            ["python3", "internal/archive/generate_archive_index.py", "--check"],
+            "generate_archive_index.py --check",
+        ),
+    ):
+        proc = subprocess.run(
+            cmd, cwd=_root(), check=False, capture_output=True, text=True
+        )
+        if proc.returncode != 0:
+            failures.append(f"{label}: {proc.stderr.strip() or proc.stdout.strip()}")
+
+    # Mechanical gate 3: bundling heuristic — flag when reviewed paths
+    # span four or more unrelated top-level surface groups, which is the
+    # shape that produced the operator-brain-capability bundling drift.
+    # A single concern typically touches one or two groups.
+    paths = _branch_changed_paths(branch)
+    surfaces = _bundling_surfaces(paths)
+    if len(surfaces) >= 4:
+        gaps.append(
+            f"reviewed paths span {len(surfaces)} top-level surface groups "
+            f"({', '.join(surfaces[:4])}{'...' if len(surfaces) > 4 else ''}); "
+            "possible bundling — confirm the slug describes one concern"
+        )
+
+    # Mechanical gate 4: next_train freshness drift signal.
+    days = snapshot.get("next_train_reviewed_days_ago")
+    if isinstance(days, int) and days >= DRIFT_SIGNAL_STALE_NEXT_TRAIN_DAYS_FAIL:
+        failures.append(
+            f"next_product_train reviewed {days}d ago "
+            f"(>= {DRIFT_SIGNAL_STALE_NEXT_TRAIN_DAYS_FAIL}d fail threshold); "
+            "refresh last_reviewed_at or update the queued slot"
+        )
+    elif isinstance(days, int) and days >= DRIFT_SIGNAL_STALE_NEXT_TRAIN_DAYS_WARN:
+        gaps.append(
+            f"next_product_train reviewed {days}d ago "
+            f"(>= {DRIFT_SIGNAL_STALE_NEXT_TRAIN_DAYS_WARN}d warn threshold)"
+        )
+
+    # Mechanical gate 5: hardcoded fixture timestamp grep on changed test files.
+    fixture_drift_paths: list[str] = []
+    for path in paths:
+        if not path.endswith(".py"):
+            continue
+        if not path.startswith("tests/"):
+            continue
+        full = _root() / path
+        if not full.exists():
+            continue
+        try:
+            text = full.read_text(encoding="utf-8")
+        except OSError:
+            continue
+        # Look for hardcoded ISO-8601 timestamps that are NOT explicitly
+        # the stale/expired fixture (2000-01-01) and are not produced by
+        # the fresh_validated_at_iso() helper.
+        suspicious = re.findall(
+            r"\"(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}[+\-]\d{2}:\d{2})\"", text
+        )
+        for stamp in suspicious:
+            if stamp.startswith("2000-01-01"):
+                continue
+            fixture_drift_paths.append(f"{path}: hardcoded ISO timestamp {stamp}")
+    if fixture_drift_paths:
+        gaps.append(
+            "fixture timestamp drift candidates (use fresh_validated_at_iso() "
+            "unless test wants stale data): " + "; ".join(fixture_drift_paths[:3])
+        )
+
+    if failures:
+        verdict = "FAIL"
+    elif gaps:
+        verdict = "GAPS"
+    else:
+        verdict = "PASS"
+    return {
+        "verdict": verdict,
+        "failures": failures,
+        "gaps": gaps,
+        "snapshot": snapshot,
+        "reviewed_paths": paths,
+    }
+
+
+def _format_reflection_check(payload: dict[str, object]) -> str:
+    lines = ["▌ REFLECTION-CHECK"]
+    lines.append(f"  verdict         {payload['verdict']}")
+    failures = payload.get("failures", [])
+    gaps = payload.get("gaps", [])
+    if failures:
+        lines.append(f"  failures ({len(failures)}):")
+        for item in failures:
+            lines.append(f"    - {item}")
+    else:
+        lines.append("  failures        none")
+    if gaps:
+        lines.append(f"  gaps ({len(gaps)}):")
+        for item in gaps:
+            lines.append(f"    - {item}")
+    else:
+        lines.append("  gaps            none")
+    return "\n".join(lines)
+
+
+def cmd_reflection_check(emit_json: bool) -> int:
+    payload = _reflection_check_payload()
+    if emit_json:
+        print(json.dumps(payload, indent=2, sort_keys=True))
+    else:
+        print(_format_reflection_check(payload))
+    return 0 if payload["verdict"] == "PASS" else (1 if payload["verdict"] == "FAIL" else 0)
+
+
+def _cortex_progress_dashboard() -> str:
+    """Render the always-on Cortex progress block from registry truth."""
+    registry = _registry_payload() or {}
+    matrix = registry.get("bio_to_code_matrix") or []
+    completion = registry.get("executive_completion") or {}
+    hosts = registry.get("hosts") or []
+    conformance = registry.get("conformance_summary") or {}
+    work_today = registry.get("work_today") or {}
+    next_train = registry.get("next_product_train") or {}
+    research = registry.get("research_lines_under_evaluation") or []
+    where_to_work = registry.get("where_to_work") or []
+    landed = sum(1 for entry in matrix if entry.get("status") == "landed")
+    weight_total = sum(int(entry.get("weight", 0)) for entry in matrix)
+    threshold = completion.get("shippable_threshold_percent")
+
+    lines = ["▌ CORTEX PROGRESS DASHBOARD"]
+    lines.append(
+        f"  bio_to_code     {landed}/{len(matrix)} landed "
+        f"(weight total {weight_total}; shippable threshold {threshold}%)"
+    )
+    if hosts:
+        host_summary = ", ".join(
+            f"{h.get('name', '?')}={h.get('conformance', '?')}" for h in hosts
+        )
+        lines.append(f"  hosts           {host_summary}")
+    if conformance:
+        lines.append(
+            f"  shipping        {conformance.get('shipping_default', '?')}"
+        )
+    work_today_slug = work_today.get("slug")
+    if work_today_slug:
+        lines.append(f"  current train   {work_today_slug}")
+    next_train_slug = next_train.get("slug")
+    if next_train_slug:
+        days = _next_train_freshness_days(registry)
+        days_text = f", reviewed {days}d ago" if days is not None else ""
+        lines.append(f"  next train      {next_train_slug}{days_text}")
+    lines.append(f"  research u/eval {len(research)}")
+    if where_to_work:
+        first = where_to_work[0]
+        truncated = first if len(first) <= 100 else first[:97] + "..."
+        lines.append(f"  active leverage {truncated}")
+    return "\n".join(lines)
+
+
+def _goals_analysis_template() -> str:
+    return "\n".join(
+        [
+            "▌ GOALS ANALYSIS  (substantive — fill before sending; cite at least one repo surface)",
+            "  Where are we vs Cortex's underlying goals?",
+            "    [fill: 2–4 sentences citing CORTEX.md / cortex_status.json field / cortex/** path / V2 packet section]",
+            "  Highest-leverage gap or risk right now?",
+            "    [fill: specific, with evidence]",
+            "  Is the current train still the right move?",
+            "    [fill: confirm with reasoning, or flag for revision with reasoning]",
+        ]
+    )
+
+
+def _work_reflection_template() -> str:
+    return "\n".join(
+        [
+            "▌ WORK REFLECTION  (substantive — fill before sending)",
+            "  Smallness                  [fill: what was cut, what was kept, why]",
+            "  Mission alignment          [fill: did this advance the shipped executive layer or unblock proof?]",
+            "  Cortex-specificity         [fill: Cortex-specific or generic bloat / v1 carryover?]",
+            "  Connectivity trace         [fill: change → file → host adapter → model output (or 'monitoring/instrumentation, surface=lab/experimental')]",
+            "  Truth distinctions changed [fill: cortex / wiring / conformance / shipping — what moved]",
+            "  Hostile reviewer (eng)     [fill: one critique]",
+            "  Hostile reviewer (math)    [fill: one critique or n/a-with-reason]",
+            "  Hostile reviewer (neuro)   [fill: one critique or n/a-with-reason]",
+            "  Live vs structural         [fill: what's earned by tests vs needs model run]",
+            "  Anti-drift sweep           [fill: branch slug, audit landed, research classified, fixtures, postmortem patterns]",
+        ]
+    )
+
+
+def _format_loop_decision(check_payload: dict[str, object]) -> str:
+    verdict = check_payload["verdict"]
+    failures = check_payload.get("failures", [])
+    gaps = check_payload.get("gaps", [])
+    lines = ["▌ LOOP DECISION"]
+    if verdict == "FAIL":
+        lines.append("  verdict                       FAIL")
+        lines.append(f"  failures: {len(failures)}; gaps: {len(gaps)}")
+        lines.append("  → CONTINUING WORK on:")
+        for item in (failures + gaps)[:8]:
+            lines.append(f"    - {item}")
+        lines.append("  → DO NOT close-session")
+    elif verdict == "GAPS":
+        lines.append("  verdict                       GAPS")
+        lines.append(f"  failures: 0; gaps: {len(gaps)}")
+        lines.append("  → review and either resolve or move to intentionally_deferred:")
+        for item in gaps[:8]:
+            lines.append(f"    - {item}")
+    else:
+        lines.append("  verdict                       PASS")
+        lines.append("  → CLEARED for close-session")
+    return "\n".join(lines)
+
+
+def cmd_grid() -> int:
+    snapshot = _status_snapshot_payload()
+    snapshot_block = _format_status_snapshot(snapshot)
+    dashboard_block = _cortex_progress_dashboard()
+    goals_block = _goals_analysis_template()
+
+    work_performed = bool(_branch_changed_paths(snapshot["branch"]))
+    blocks = [
+        "═══════════════════════════════════════════════════════════════════",
+        "  CORTEX REPO HYGIENE GRID",
+        "═══════════════════════════════════════════════════════════════════",
+        "",
+        snapshot_block,
+        "",
+        dashboard_block,
+        "",
+        goals_block,
+    ]
+    if work_performed:
+        check_payload = _reflection_check_payload()
+        blocks.extend(
+            [
+                "",
+                "─────── work performed this session ───────",
+                "",
+                _format_reflection_check(check_payload),
+                "",
+                _work_reflection_template(),
+                "",
+                _format_loop_decision(check_payload),
+            ]
+        )
+    blocks.append("═══════════════════════════════════════════════════════════════════")
+    print("\n".join(blocks))
+    return 0
+
+
 def cmd_preserve_worktree(slug: str | None) -> int:
     branch = _current_branch()
     if branch == "main":
@@ -1334,6 +1872,48 @@ def main(argv: list[str] | None = None) -> int:
     )
     preserve_parser.add_argument("--slug")
 
+    snapshot_parser = subparsers.add_parser(
+        "status-snapshot",
+        help=(
+            "Print the deterministic state-snapshot block: branch, "
+            "ahead/behind origin/main, worktree, closeout state, current "
+            "and queued trains, and any drift signals."
+        ),
+    )
+    snapshot_parser.add_argument(
+        "--json",
+        action="store_true",
+        dest="snapshot_json",
+        help="Emit JSON instead of human-readable text.",
+    )
+
+    reflection_parser = subparsers.add_parser(
+        "reflection-check",
+        help=(
+            "Run end-of-turn mechanical hygiene checks (closeout schema, "
+            "regen --check guards, branch-slug↔paths heuristic, next_train "
+            "freshness, hardcoded fixture timestamp grep) and return "
+            "PASS / GAPS / FAIL with enumerated reasons."
+        ),
+    )
+    reflection_parser.add_argument(
+        "--json",
+        action="store_true",
+        dest="reflection_json",
+        help="Emit JSON instead of human-readable text.",
+    )
+
+    subparsers.add_parser(
+        "grid",
+        help=(
+            "Compose the per-turn Cortex Repo Hygiene Grid: state "
+            "snapshot, Cortex progress dashboard, goals-analysis prompt, "
+            "and (when work has been performed in the session) the "
+            "mechanical reflection-check + work-reflection prompts + "
+            "loop decision. Run before final handoff every chat."
+        ),
+    )
+
     args = parser.parse_args(argv)
     if args.command == "sync-main":
         return cmd_sync_main(args.adopt_origin)
@@ -1356,6 +1936,12 @@ def main(argv: list[str] | None = None) -> int:
         return cmd_cleanup_report()
     if args.command == "preserve-worktree":
         return cmd_preserve_worktree(args.slug)
+    if args.command == "status-snapshot":
+        return cmd_status_snapshot(args.snapshot_json)
+    if args.command == "reflection-check":
+        return cmd_reflection_check(args.reflection_json)
+    if args.command == "grid":
+        return cmd_grid()
     raise SystemExit(f"Unhandled command: {args.command}")
 
 

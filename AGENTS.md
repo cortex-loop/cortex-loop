@@ -223,7 +223,36 @@ concrete design or implementation decision beyond the normal workflow.
 
 ## Handoff
 
-Every final summary must include:
+Every chat ends with the Cortex Repo Hygiene Grid. The grid is produced
+unconditionally by:
+
+```
+python3 internal/workflow/repo_workflow.py grid
+```
+
+The grid auto-detects whether work was performed in the session
+(tracked-file changes since session start). When no work was performed,
+it emits the always-on blocks: state snapshot, Cortex progress
+dashboard, and goals-analysis prompts. When work was performed, it
+additionally emits the mechanical reflection-check verdict, the
+work-reflection prompts, and a Loop Decision.
+
+**Grid auto-loop rule.** If the Loop Decision is `FAIL` (any mechanical
+gate failed) or has unresolved gaps that cannot be moved to
+`intentionally_deferred` with rationale, the agent MUST continue working
+in the same chat until the grid clears. Do not close-session, finalize,
+or publish on `FAIL`. The grid produces its verdict from mechanical
+state, not from an agent's self-report; this is the structural fix that
+replaces the v1 self-rated handoff ritual.
+
+The grid's Goals Analysis section requires a substantive answer with at
+least one repo-surface citation (`docs/CORTEX.md`, a
+`cortex_status.json` field, a `cortex/**` path, a V2 packet section, a
+test file). Handwave answers (e.g. "fine", "looks good", "no issues")
+are rejected by `reflection-check`'s substantive-content rule.
+
+Every final summary must include the grid output plus the standard
+metadata block:
 
 - ending branch
 - commit hash or `no commit`
