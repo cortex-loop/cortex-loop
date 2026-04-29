@@ -367,6 +367,26 @@ eventually wraps. They are doctrine, not product. They live under
 `internal/**` (and surfaces that AGENTS.md owns) and they may not be
 imported by `cortex/**`. Confusing the two is the next drift shape.
 
+**Per-turn enforcement: the grid.** The standard of care is enforced
+end-of-turn by the Cortex Repo Hygiene Grid produced by
+`python3 internal/workflow/repo_workflow.py grid`. The grid surfaces
+state snapshot, Cortex progress dashboard, and substantive goals
+analysis on every chat; when work was performed, it adds mechanical
+reflection-check, work reflection, and a Loop Decision. On Loop
+Decision `FAIL` (any mechanical gate failed), the agent continues
+working until the grid clears — close-session is blocked. The grid
+replaces the v1 PHILOSOPHY_AUDIT rubber-stamp with mechanical
+verdict-from-state. See `AGENTS.md` `## Handoff` for the contract and
+`docs/internal/REPO_WORKFLOW.md` for the command details.
+
+**Connectivity-trace closeout field.** Load-bearing seams that touch
+`cortex/**` must populate `connectivity_trace = {claim, path[],
+if_empty_why}` on the closeout contract. An empty `path` on a
+`product` surface is the closed-loop drift error and is rejected at
+validation. Surface `experimental` or `lab` is allowed to have an empty
+path, but `if_empty_why` must explain why monitoring or instrumentation
+is the correct framing rather than Cortex.
+
 **Form positions from doctrine and code, not from the latest framing.**
 This is the agent briefing made operational. If you are about to take a
 position on what Cortex should do and you cannot cite the surface that

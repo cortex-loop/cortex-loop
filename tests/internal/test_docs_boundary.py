@@ -142,6 +142,13 @@ def test_agents_records_mission_lock_and_single_truth_bootstrap() -> None:
     assert "PHI_MISSION" not in text
     assert "PHI_NICHE" not in text
     assert "PHILOSOPHY_AUDIT" not in text
+    # Hygiene-grid handoff anchors. Every chat ends with the grid; on
+    # FAIL the agent continues working and does not close-session.
+    assert "internal/workflow/repo_workflow.py grid" in text
+    assert "Cortex Repo Hygiene Grid" in text
+    assert "Grid auto-loop rule" in text
+    assert "do not close-session" in text.lower() or "DO NOT close-session" in text
+    assert "substantive" in text.lower()
     # Old retired doctrine names must not creep back.
     assert "CORTEX_V2_ACTIVE_WORKSTREAM" not in text
     assert "CORTEX_V2_PHASE_GATES_2" not in text

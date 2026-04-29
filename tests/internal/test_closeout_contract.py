@@ -54,6 +54,22 @@ def _filled_payload(branch: str, mode: str, reviewed_paths: list[str]) -> dict[s
                 "note": "Representative load-bearing row for the touched path.",
             }
         ]
+        # When the load-bearing seam touches cortex/**, the connectivity-
+        # trace contract requires articulation of the path from the change
+        # to the model's input or output. Default the fixture to a
+        # populated path so legacy tests continue to pass; tests that
+        # exercise the closed-loop drift gate override this explicitly.
+        if any(closeout_contract.is_cortex_path(path) for path in reviewed_paths):
+            payload["connectivity_trace"] = {
+                "claim": "Reference scoring updates flow into operator route decisions.",
+                "path": [
+                    "cortex/sre/reference_scoring.py::compute",
+                    "cortex/sre/operator_routing.py::OperatorRouteDecision",
+                    "cortex/hosts/openai/cli.py",
+                    "openai chat completion request",
+                ],
+                "if_empty_why": None,
+            }
     return payload
 
 
@@ -427,3 +443,225 @@ def test_scaffold_payload_seeds_stacked_session_reason_from_marker(
         payload["stacked_session_reason"]
         == "investigation in flight; need parallel hotfix branch"
     )
+
+
+# ---------------------------------------------------------------------------
+# Substantive-content rule: handwave detection + minimum length on the
+# load-bearing reflection fields. Replaces the v1 PHILOSOPHY_AUDIT
+# rubber-stamp that tolerated single-word answers.
+# ---------------------------------------------------------------------------
+
+
+def test_is_handwave_phrase_detects_known_patterns() -> None:
+    for phrase in (
+        "yes",
+        "no",
+        "n/a",
+        "N/A",
+        "none",
+        "fine",
+        "good",
+        "looks good",
+        "looks fine",
+        "looks clean",
+        "no issues",
+        "no concerns",
+        "nothing to add",
+        "see above",
+        "ditto",
+    ):
+        assert closeout_contract.is_handwave_phrase(phrase), phrase
+
+
+def test_is_handwave_phrase_accepts_substantive_answers() -> None:
+    for phrase in (
+        "Reference scoring threads commit-time decisions through SRE.",
+        "The connectivity path lands at the openai cli adapter.",
+        "No material critique remains because the seam is bounded.",
+    ):
+        assert not closeout_contract.is_handwave_phrase(phrase), phrase
+
+
+def test_validate_payload_rejects_handwave_in_hostile_review() -> None:
+    payload = _filled_payload(
+        "codex/20260429-000000-handwave-engineer",
+        "close-session",
+        ["cortex/sre/reference_scoring.py"],
+    )
+    payload["hostile_review"]["engineer"] = "looks good"
+
+    with pytest.raises(SystemExit, match="hostile_review.engineer.*handwave"):
+        closeout_contract.validate_payload(
+            payload,
+            expected_mode="close-session",
+            expected_branch="codex/20260429-000000-handwave-engineer",
+            expected_reviewed_paths=["cortex/sre/reference_scoring.py"],
+        )
+
+
+def test_validate_payload_rejects_short_north_light_note() -> None:
+    payload = _filled_payload(
+        "codex/20260429-000000-short-note",
+        "close-session",
+        ["cortex/sre/reference_scoring.py"],
+    )
+    payload["north_light_audit"]["microkernel_boundary"] = {
+        "status": "pass",
+        "note": "fine",
+    }
+
+    with pytest.raises(SystemExit, match="microkernel_boundary.note.*too short"):
+        closeout_contract.validate_payload(
+            payload,
+            expected_mode="close-session",
+            expected_branch="codex/20260429-000000-short-note",
+            expected_reviewed_paths=["cortex/sre/reference_scoring.py"],
+        )
+
+
+def test_validate_payload_rejects_handwave_governing_lock() -> None:
+    payload = _filled_payload(
+        "codex/20260429-000000-handwave-lock",
+        "close-session",
+        ["cortex/sre/reference_scoring.py"],
+    )
+    payload["governing_locks"]["kill_rule"] = "n/a"
+
+    with pytest.raises(SystemExit, match="governing_locks.kill_rule.*handwave"):
+        closeout_contract.validate_payload(
+            payload,
+            expected_mode="close-session",
+            expected_branch="codex/20260429-000000-handwave-lock",
+            expected_reviewed_paths=["cortex/sre/reference_scoring.py"],
+        )
+
+
+def test_validate_payload_rejects_handwave_in_residuals_fixed_now() -> None:
+    payload = _filled_payload(
+        "maint/manual-handwave",
+        "finalize",
+        ["README.md"],
+    )
+    payload["residuals"]["fixed_now"] = ["yes"]
+
+    with pytest.raises(SystemExit, match="residuals.fixed_now.*handwave"):
+        closeout_contract.validate_payload(
+            payload,
+            expected_mode="finalize",
+            expected_branch="maint/manual-handwave",
+            expected_reviewed_paths=["README.md"],
+        )
+
+
+# ---------------------------------------------------------------------------
+# Connectivity-trace rule: load-bearing seams that touch cortex/** must
+# articulate the path from the change to the model's input or output;
+# empty path on `product` surface is the closed-loop drift error and is
+# rejected. Empty path on `lab` or `experimental` is allowed but
+# requires `if_empty_why` to explain why monitoring/instrumentation is
+# the correct framing.
+# ---------------------------------------------------------------------------
+
+
+def test_scaffold_seeds_connectivity_trace_for_cortex_paths() -> None:
+    payload = closeout_contract.scaffold_payload(
+        branch="codex/20260429-000000-cortex-seam",
+        mode="close-session",
+        reviewed_paths=["cortex/sre/reference_scoring.py"],
+    )
+    assert "connectivity_trace" in payload
+    assert payload["connectivity_trace"]["claim"] == ""
+    assert payload["connectivity_trace"]["path"] == []
+    assert payload["connectivity_trace"]["if_empty_why"] is None
+
+
+def test_scaffold_omits_connectivity_trace_for_non_cortex_paths() -> None:
+    payload = closeout_contract.scaffold_payload(
+        branch="codex/20260429-000000-doc-seam",
+        mode="close-session",
+        reviewed_paths=["AGENTS.md", "internal/closeout/contract.py"],
+    )
+    assert "connectivity_trace" not in payload
+
+
+def test_validate_payload_rejects_missing_connectivity_trace_on_cortex_seam() -> None:
+    payload = _filled_payload(
+        "codex/20260429-000000-cortex-no-trace",
+        "close-session",
+        ["cortex/sre/reference_scoring.py"],
+    )
+    del payload["connectivity_trace"]
+
+    with pytest.raises(SystemExit, match="connectivity_trace"):
+        closeout_contract.validate_payload(
+            payload,
+            expected_mode="close-session",
+            expected_branch="codex/20260429-000000-cortex-no-trace",
+            expected_reviewed_paths=["cortex/sre/reference_scoring.py"],
+        )
+
+
+def test_validate_payload_rejects_empty_path_on_product_surface() -> None:
+    payload = _filled_payload(
+        "codex/20260429-000000-empty-path-product",
+        "close-session",
+        ["cortex/sre/reference_scoring.py"],
+    )
+    payload["seam"]["surface"] = "product"
+    payload["connectivity_trace"] = {
+        "claim": "We monitor reference scoring outputs from a sidecar.",
+        "path": [],
+        "if_empty_why": "It is purely diagnostic.",
+    }
+
+    with pytest.raises(SystemExit, match="closed-loop drift"):
+        closeout_contract.validate_payload(
+            payload,
+            expected_mode="close-session",
+            expected_branch="codex/20260429-000000-empty-path-product",
+            expected_reviewed_paths=["cortex/sre/reference_scoring.py"],
+        )
+
+
+def test_validate_payload_accepts_empty_path_on_lab_surface_with_reason() -> None:
+    payload = _filled_payload(
+        "codex/20260429-000000-empty-path-lab",
+        "close-session",
+        ["cortex/aux/evaluation.py"],
+    )
+    payload["seam"]["surface"] = "lab"
+    payload["connectivity_trace"] = {
+        "claim": "AUX evaluation collects offline lift metrics; it does not feed runtime.",
+        "path": [],
+        "if_empty_why": "Pure offline evaluation; no runtime reach is intended for this seam.",
+    }
+
+    validated = closeout_contract.validate_payload(
+        payload,
+        expected_mode="close-session",
+        expected_branch="codex/20260429-000000-empty-path-lab",
+        expected_reviewed_paths=["cortex/aux/evaluation.py"],
+    )
+    assert validated["connectivity_trace"]["path"] == []
+
+
+def test_validate_payload_rejects_empty_path_on_lab_without_reason() -> None:
+    payload = _filled_payload(
+        "codex/20260429-000000-empty-path-no-reason",
+        "close-session",
+        ["cortex/aux/evaluation.py"],
+    )
+    payload["seam"]["surface"] = "lab"
+    payload["connectivity_trace"] = {
+        "claim": "AUX evaluation collects offline lift metrics; it does not feed runtime.",
+        "path": [],
+        "if_empty_why": None,
+    }
+
+    with pytest.raises(SystemExit, match="if_empty_why"):
+        closeout_contract.validate_payload(
+            payload,
+            expected_mode="close-session",
+            expected_branch="codex/20260429-000000-empty-path-no-reason",
+            expected_reviewed_paths=["cortex/aux/evaluation.py"],
+        )

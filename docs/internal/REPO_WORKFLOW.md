@@ -136,6 +136,45 @@ Audit local branch hygiene without mutating refs:
 python internal/workflow/repo_workflow.py audit-branches
 ```
 
+Print the deterministic state-snapshot block (branch, ahead/behind
+origin/main, worktree, closeout state, current/queued trains, drift
+signals):
+
+```bash
+python internal/workflow/repo_workflow.py status-snapshot
+python internal/workflow/repo_workflow.py status-snapshot --json
+```
+
+Run end-of-turn mechanical hygiene checks and return PASS / GAPS / FAIL
+with enumerated reasons:
+
+```bash
+python internal/workflow/repo_workflow.py reflection-check
+python internal/workflow/repo_workflow.py reflection-check --json
+```
+
+`reflection-check` covers: closeout contract validation when an artifact
+is present; `generate_status.py --check`,
+`generate_cortex_doc.py --check`, and `generate_archive_index.py --check`
+as regen-drift guards; bundling heuristic (warn when reviewed paths span
+four or more unrelated top-level surface groups); next-product-train
+freshness (`>=30d` warn, `>=60d` fail); and a hardcoded-fixture-timestamp
+grep on changed test files (warn unless the fixture is the explicit
+stale `2000-01-01` form).
+
+Compose the per-turn Cortex Repo Hygiene Grid (always-on state
+snapshot + Cortex progress dashboard + goals-analysis prompts; plus
+reflection-check verdict, work-reflection prompts, and Loop Decision
+when work has been performed in the session):
+
+```bash
+python internal/workflow/repo_workflow.py grid
+```
+
+The grid is mandatory at the end of every chat per `AGENTS.md` `## Handoff`.
+On Loop Decision `FAIL`, the agent MUST continue working in the same
+chat until the grid clears.
+
 Scaffold the enforced closeout contract for the current branch:
 
 ```bash

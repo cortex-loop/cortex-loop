@@ -106,7 +106,7 @@ def _write_closeout_contract(
     if payload["profile"] == "load_bearing":
         payload["governing_locks"] = {
             "governing_principle": "Truthful closure outranks local confidence.",
-            "executive_skill": "Residual rigor.",
+            "executive_skill": "Residual rigor at workflow handoff is the load-bearing skill.",
             "product_metric": "No substantive closeout bypasses residual accounting.",
             "guardrail": "No second operational truth surface.",
             "kill_rule": "Cut any path that permits silent overclaiming.",
@@ -120,6 +120,16 @@ def _write_closeout_contract(
                 "note": "Representative row for the touched path set.",
             }
         ]
+        if any(closeout_contract.is_cortex_path(path) for path in reviewed_paths):
+            payload["connectivity_trace"] = {
+                "claim": "Workflow closeout rigor protects cortex/** seams from drift.",
+                "path": [
+                    reviewed_paths[0],
+                    "cortex/runtime adapter binding",
+                    "model request shaping",
+                ],
+                "if_empty_why": None,
+            }
     closeout_contract.write_artifacts(repo, payload)
 
 
@@ -1187,3 +1197,242 @@ def test_resume_session_refuses_dirty_worktree(
 
     with pytest.raises(SystemExit, match="Working tree is not clean"):
         module.cmd_resume_session("resume-dirty", None)
+
+
+# ---------------------------------------------------------------------------
+# Hygiene grid commands: status-snapshot / reflection-check / grid.
+# ---------------------------------------------------------------------------
+
+
+def _seed_registry(repo: Path) -> None:
+    """Write and commit a minimal cortex_status.json with grid-reading fields."""
+    registry_path = repo / "internal" / "truth" / "cortex_status.json"
+    registry_path.parent.mkdir(parents=True, exist_ok=True)
+    registry_path.write_text(
+        json.dumps(
+            {
+                "work_today": {"slug": "active-train"},
+                "next_product_train": {
+                    "slug": "queued-train",
+                    "last_reviewed_at": "2026-04-29T00:00:00+00:00",
+                },
+                "research_lines_under_evaluation": [],
+                "executive_completion": {"shippable_threshold_percent": 85},
+                "bio_to_code_matrix": [
+                    {
+                        "skill": "Truth-preserving commitments",
+                        "stolen_skill": "Truth maintenance",
+                        "status": "landed",
+                        "weight": 100,
+                        "code_homes": ["cortex/core"],
+                        "proof_surfaces": ["tests/product"],
+                        "next_move": "hold steady",
+                    }
+                ],
+                "hosts": [
+                    {"name": "openai", "conformance": "conformant", "shipping": "default", "strongest_surface": "operator_cli", "code_home": "cortex/hosts/openai"}
+                ],
+                "conformance_summary": {
+                    "shipping_default": "openai:operator_cli",
+                    "accepted_next_decision": "promote",
+                },
+                "where_to_work": ["Hold the shipped lane stable."],
+            }
+        ),
+        encoding="utf-8",
+    )
+    _git(repo, "add", "internal/truth/cortex_status.json")
+    _git(repo, "commit", "-m", "tests: seed registry for grid")
+    _git(repo, "push", "origin", "main")
+
+
+def test_status_snapshot_returns_branch_state_and_drift_signals(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    repo, _remote, module = _prepare_repo(tmp_path, monkeypatch)
+    _seed_registry(repo)
+
+    payload = module._status_snapshot_payload()
+
+    assert payload["branch"] == "main"
+    assert payload["worktree"] == "clean"
+    assert payload["closeout"]["present"] == "absent"
+    assert payload["work_today_slug"] == "active-train"
+    assert payload["next_train_slug"] == "queued-train"
+    assert isinstance(payload["next_train_reviewed_days_ago"], int)
+    assert payload["next_train_reviewed_days_ago"] >= 0
+
+
+def test_status_snapshot_emits_text_format(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    repo, _remote, module = _prepare_repo(tmp_path, monkeypatch)
+    _seed_registry(repo)
+
+    module.cmd_status_snapshot(False)
+    out = capsys.readouterr().out
+
+    assert "▌ STATE SNAPSHOT" in out
+    assert "branch          main" in out
+    assert "worktree        clean" in out
+    assert "drift signals   none" in out
+
+
+def test_status_snapshot_flags_dirty_main(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    repo, _remote, module = _prepare_repo(tmp_path, monkeypatch)
+    _seed_registry(repo)
+    (repo / "README.md").write_text("dirty\n", encoding="utf-8")
+
+    payload = module._status_snapshot_payload()
+
+    assert payload["worktree"] == "dirty"
+    assert any("dirty on main" in signal for signal in payload["drift_signals"])
+
+
+def test_reflection_check_returns_pass_on_clean_main(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    repo, _remote, module = _prepare_repo(tmp_path, monkeypatch)
+    _seed_registry(repo)
+    # Create stub generate scripts so reflection-check's --check guards pass.
+    _seed_generate_scripts(repo)
+
+    payload = module._reflection_check_payload()
+
+    assert payload["verdict"] == "PASS", payload
+    assert payload["failures"] == []
+
+
+def _seed_generate_scripts(repo: Path) -> None:
+    """Write and commit no-op generate_*.py --check stubs for reflection-check."""
+    truth_dir = repo / "internal" / "truth"
+    archive_dir = repo / "internal" / "archive"
+    truth_dir.mkdir(parents=True, exist_ok=True)
+    archive_dir.mkdir(parents=True, exist_ok=True)
+    stub = "import sys\nsys.exit(0)\n"
+    (truth_dir / "generate_status.py").write_text(stub, encoding="utf-8")
+    (truth_dir / "generate_cortex_doc.py").write_text(stub, encoding="utf-8")
+    (archive_dir / "generate_archive_index.py").write_text(stub, encoding="utf-8")
+    _git(
+        repo,
+        "add",
+        "internal/truth/generate_status.py",
+        "internal/truth/generate_cortex_doc.py",
+        "internal/archive/generate_archive_index.py",
+    )
+    _git(repo, "commit", "-m", "tests: seed generate stubs")
+    _git(repo, "push", "origin", "main")
+
+
+def test_reflection_check_fails_on_stale_next_train(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    repo, _remote, module = _prepare_repo(tmp_path, monkeypatch)
+    _seed_registry(repo)
+    _seed_generate_scripts(repo)
+    # Override last_reviewed_at to >60 days ago.
+    registry_path = repo / "internal" / "truth" / "cortex_status.json"
+    data = json.loads(registry_path.read_text(encoding="utf-8"))
+    data["next_product_train"]["last_reviewed_at"] = "2025-01-01T00:00:00+00:00"
+    registry_path.write_text(json.dumps(data), encoding="utf-8")
+
+    payload = module._reflection_check_payload()
+
+    assert payload["verdict"] == "FAIL"
+    assert any(
+        "next_product_train" in failure for failure in payload["failures"]
+    )
+
+
+def test_reflection_check_warns_on_warn_threshold_next_train(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    repo, _remote, module = _prepare_repo(tmp_path, monkeypatch)
+    _seed_registry(repo)
+    _seed_generate_scripts(repo)
+    # Override last_reviewed_at to >30 days ago but <60 days.
+    registry_path = repo / "internal" / "truth" / "cortex_status.json"
+    data = json.loads(registry_path.read_text(encoding="utf-8"))
+    import datetime as dt
+    data["next_product_train"]["last_reviewed_at"] = (
+        dt.datetime.now(dt.timezone.utc) - dt.timedelta(days=45)
+    ).isoformat()
+    registry_path.write_text(json.dumps(data), encoding="utf-8")
+
+    payload = module._reflection_check_payload()
+
+    assert payload["verdict"] == "GAPS"
+    assert any(
+        "next_product_train" in gap for gap in payload["gaps"]
+    )
+
+
+def test_grid_emits_full_template_with_reflection_when_work_performed(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    repo, _remote, module = _prepare_repo(tmp_path, monkeypatch)
+    _seed_registry(repo)
+    _seed_generate_scripts(repo)
+    # Switch to a session branch and create a change so the grid detects work.
+    monkeypatch.setattr(module, "_session_timestamp", lambda: "20260429-100000")
+    module.cmd_start_session("codex", "grid-work")
+    (repo / "README.md").write_text("session change\n", encoding="utf-8")
+
+    module.cmd_grid()
+    out = capsys.readouterr().out
+
+    assert "CORTEX REPO HYGIENE GRID" in out
+    assert "▌ STATE SNAPSHOT" in out
+    assert "▌ CORTEX PROGRESS DASHBOARD" in out
+    assert "▌ GOALS ANALYSIS" in out
+    # Work-performed-only blocks should be present.
+    assert "▌ REFLECTION-CHECK" in out
+    assert "▌ WORK REFLECTION" in out
+    assert "▌ LOOP DECISION" in out
+
+
+def test_grid_emits_minimal_template_on_clean_main(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    repo, _remote, module = _prepare_repo(tmp_path, monkeypatch)
+    _seed_registry(repo)
+    _seed_generate_scripts(repo)
+
+    module.cmd_grid()
+    out = capsys.readouterr().out
+
+    # Always-on blocks are present.
+    assert "▌ STATE SNAPSHOT" in out
+    assert "▌ CORTEX PROGRESS DASHBOARD" in out
+    assert "▌ GOALS ANALYSIS" in out
+    # Work-only blocks must NOT appear when no tracked-file changes exist.
+    assert "▌ WORK REFLECTION" not in out
+    assert "▌ LOOP DECISION" not in out
+
+
+def test_bundling_surfaces_flags_unrelated_top_level_groups() -> None:
+    module = _load_repo_workflow_module()
+    paths = [
+        "cortex/sre/foo.py",
+        "cortex/aux/bar.py",
+        "tests/lab/baz.py",
+        "lab/qux.py",
+        "tests/product/test_x.py",
+    ]
+    surfaces = module._bundling_surfaces(paths)
+    assert len(surfaces) >= 4
+
+
+def test_bundling_surfaces_does_not_flag_one_concern() -> None:
+    module = _load_repo_workflow_module()
+    paths = [
+        "cortex/sre/foo.py",
+        "tests/product/test_x.py",
+        "AGENTS.md",
+    ]
+    surfaces = module._bundling_surfaces(paths)
+    # AGENTS.md / docs are intentionally excluded from the surface list,
+    # so the result is at most 2 (cortex/sre + tests/product).
+    assert len(surfaces) <= 2

@@ -36,6 +36,33 @@ LOAD_BEARING_PACKET_DOC_RE = re.compile(r"^docs/CORTEX_V2_[^/]+\.md$")
 MANAGED_SESSION_BRANCH_RE = re.compile(
     r"^(codex|claude|maint)/(?P<stamp>\d{8}-\d{6})-(?P<slug>[a-z0-9]+(?:-[a-z0-9]+)*)$"
 )
+# Substantive-content threshold for load-bearing reflection fields. The
+# threshold replaces the v1 PHILOSOPHY_AUDIT rubber-stamp ritual: every
+# field that asks for substantive reflection must contain enough text to
+# carry an actual answer, and must not match the handwave patterns the
+# old ritual tolerated. The number is small enough not to penalize tight
+# writing but large enough to refuse "fine" / "n/a" / "looks good."
+MIN_SUBSTANTIVE_CHARS = 16
+HANDWAVE_PHRASE_PATTERNS = (
+    re.compile(r"^(?:yes|no|n/?a|none|fine|good|ok|okay|tbd|todo|unsure|maybe|sure|nope|yep)\.?$", re.IGNORECASE),
+    re.compile(r"^looks?\s+(?:good|fine|clean|great|right)\.?$", re.IGNORECASE),
+    re.compile(r"^(?:no\s+(?:issues?|concerns?|problems?|comments?))\.?$", re.IGNORECASE),
+    re.compile(r"^(?:nothing\s+(?:to\s+(?:add|note|report)|notable))\.?$", re.IGNORECASE),
+    re.compile(r"^(?:see\s+above|same\s+as\s+above|as\s+stated|as\s+above|ditto)\.?$", re.IGNORECASE),
+)
+
+
+def is_cortex_path(path: str) -> bool:
+    """Return True for paths that participate in the connectivity-trace contract.
+
+    The connectivity requirement is a Cortex-specific anti-drift rule:
+    every change to cortex/** must trace a path from the change to what
+    the model receives or does, otherwise it is closed-loop drift. The
+    rule applies to the cortex package only; lab/, internal/, tests/,
+    and doc surfaces have their own discipline and do not need a
+    connectivity_trace field.
+    """
+    return path.strip().startswith("cortex/")
 
 
 def _root() -> Path:
@@ -204,6 +231,18 @@ def scaffold_payload(*, branch: str, mode: str, reviewed_paths: list[str]) -> di
             "kill_rule": "",
         }
         payload["law_to_code_completeness"] = []
+        # Connectivity trace is required when a load-bearing seam touches
+        # any cortex/** path. The trace forces the agent to articulate
+        # the path from the change to what the model receives or does;
+        # an empty path on a `product` surface is the closed-loop drift
+        # error and is rejected by validation. For non-cortex/** load-
+        # bearing seams the field is scaffolded but stays optional.
+        if any(is_cortex_path(path) for path in reviewed_paths):
+            payload["connectivity_trace"] = {
+                "claim": "",
+                "path": [],
+                "if_empty_why": None,
+            }
     stacked_reason = _read_stacked_session_reason(branch)
     if stacked_reason is not None:
         payload["stacked_session_reason"] = stacked_reason
@@ -334,6 +373,22 @@ def render_markdown(payload: dict[str, Any]) -> str:
             lines.append(
                 f"- `{row['term']}`: `{row['state']}`; code={', '.join(row['code_refs']) or '<none>'}; proof={', '.join(row['proof_refs']) or '<none>'}; note={row['note']}"
             )
+        connectivity = payload.get("connectivity_trace")
+        if isinstance(connectivity, dict):
+            lines.extend(["", "## Connectivity Trace", ""])
+            lines.append(
+                f"- Claim: {connectivity.get('claim') or '<fill me>'}"
+            )
+            path_steps = connectivity.get("path", []) or []
+            if path_steps:
+                lines.append("- Path:")
+                for step in path_steps:
+                    lines.append(f"  - {step}")
+            else:
+                lines.append("- Path: `<empty>`")
+            if_empty_why = connectivity.get("if_empty_why")
+            if if_empty_why:
+                lines.append(f"- If empty why: {if_empty_why}")
     lines.extend(["", "## Final Handoff Mirror", ""])
     lines.extend(["### Fixed now", ""])
     append_items(lines, residuals["fixed_now"], empty="`<fill me>`")
@@ -378,6 +433,50 @@ def _require_string_list(value: Any, field_name: str, *, allow_empty: bool = Tru
     for item in value:
         if not isinstance(item, str) or not item.strip():
             raise SystemExit(f"Closeout contract field '{field_name}' must contain only non-empty strings.")
+
+
+def is_handwave_phrase(value: str) -> bool:
+    """Return True when value matches a known reflection-handwave pattern.
+
+    The patterns codify the failure modes the v1 PHILOSOPHY_AUDIT block
+    tolerated: single-word answers ("yes"/"none"), template fillers
+    ("looks good"/"no concerns"), and back-references ("see above").
+    Substantive reflection cannot pass through any of these.
+    """
+    text = value.strip()
+    return any(pattern.fullmatch(text) for pattern in HANDWAVE_PHRASE_PATTERNS)
+
+
+def _require_substantive(value: Any, field_name: str) -> None:
+    """Validate that a reflection field carries substantive content.
+
+    Combines _require_string's non-empty check with the substantive-content
+    rules: the value must be at least MIN_SUBSTANTIVE_CHARS long and must
+    not match any handwave-phrase pattern. Used for load-bearing
+    reflection fields (north-light notes, hostile-review lenses,
+    governing-locks fields, residuals.fixed_now items, claims).
+    """
+    if not isinstance(value, str) or not value.strip():
+        raise SystemExit(f"Closeout contract field '{field_name}' must be a non-empty string.")
+    text = value.strip()
+    if len(text) < MIN_SUBSTANTIVE_CHARS:
+        raise SystemExit(
+            f"Closeout contract field '{field_name}' is too short to carry "
+            f"substantive reflection: needs at least {MIN_SUBSTANTIVE_CHARS} "
+            f"characters, got {len(text)}. Replace handwave with a real answer."
+        )
+    if is_handwave_phrase(text):
+        raise SystemExit(
+            f"Closeout contract field '{field_name}' matches a handwave "
+            f"pattern ({text!r}); the v1 PHILOSOPHY_AUDIT ritual tolerated "
+            f"these but the substantive-content rule rejects them. Replace "
+            f"with a real answer that names specific evidence."
+        )
+
+
+def _require_substantive_list_items(value: list[Any], field_name: str) -> None:
+    for index, item in enumerate(value):
+        _require_substantive(item, f"{field_name}[{index}]")
 
 
 def validate_payload(
@@ -434,18 +533,25 @@ def validate_payload(
     _require_string_list(
         residuals.get("zeroed_or_stubbed_terms"), "residuals.zeroed_or_stubbed_terms", allow_empty=True
     )
+    # Substantive-content rule for fixed_now: each item must carry a real
+    # answer (>=MIN_SUBSTANTIVE_CHARS, no handwave patterns). Other
+    # residual buckets stay non-empty-string-only so deferred lists do
+    # not get penalized for legitimate brevity.
+    _require_substantive_list_items(residuals.get("fixed_now"), "residuals.fixed_now")
 
     hostile_review = payload.get("hostile_review")
     if not isinstance(hostile_review, dict):
         raise SystemExit("Closeout contract hostile_review must be an object.")
     for lens in ("engineer", "mathematician", "neuroscientist"):
-        _require_string(hostile_review.get(lens), f"hostile_review.{lens}")
+        _require_substantive(hostile_review.get(lens), f"hostile_review.{lens}")
 
     claims = payload.get("claims")
     if not isinstance(claims, dict):
         raise SystemExit("Closeout contract claims must be an object.")
     _require_string_list(claims.get("earned_now"), "claims.earned_now", allow_empty=False)
     _require_string_list(claims.get("forbidden_still"), "claims.forbidden_still", allow_empty=False)
+    _require_substantive_list_items(claims.get("earned_now"), "claims.earned_now")
+    _require_substantive_list_items(claims.get("forbidden_still"), "claims.forbidden_still")
 
     north_light_audit = payload.get("north_light_audit")
     if not isinstance(north_light_audit, dict):
@@ -463,14 +569,14 @@ def validate_payload(
             raise SystemExit(
                 f"Closeout contract north_light_audit.{key}.status must be one of {sorted(VALID_AUDIT_STATUSES)}."
             )
-        _require_string(entry.get("note"), f"north_light_audit.{key}.note")
+        _require_substantive(entry.get("note"), f"north_light_audit.{key}.note")
 
     if profile == "load_bearing":
         governing_locks = payload.get("governing_locks")
         if not isinstance(governing_locks, dict):
             raise SystemExit("Load-bearing closeout contracts must include governing_locks.")
         for key in ("governing_principle", "executive_skill", "product_metric", "guardrail", "kill_rule"):
-            _require_string(governing_locks.get(key), f"governing_locks.{key}")
+            _require_substantive(governing_locks.get(key), f"governing_locks.{key}")
         law_to_code = payload.get("law_to_code_completeness")
         if not isinstance(law_to_code, list):
             raise SystemExit("Load-bearing closeout contracts must include law_to_code_completeness as a list.")
@@ -506,6 +612,63 @@ def validate_payload(
                     raise SystemExit(
                         f"law_to_code_completeness[{index}].math_object_id must be a "
                         "non-empty string when present."
+                    )
+
+        # Connectivity-trace rule. When a load-bearing closeout touches
+        # any cortex/** path, the trace makes the agent articulate the
+        # path from the change to the model's input or output. An empty
+        # path on a `product` surface is the closed-loop drift error and
+        # is rejected; an empty path on `experimental` or `lab` is
+        # allowed but requires `if_empty_why` to explain why monitoring
+        # / instrumentation is the correct framing.
+        cortex_paths_present = any(is_cortex_path(path) for path in expected_paths)
+        connectivity = payload.get("connectivity_trace")
+        if cortex_paths_present:
+            if not isinstance(connectivity, dict):
+                raise SystemExit(
+                    "Load-bearing closeouts touching cortex/** must include "
+                    "a connectivity_trace object {claim, path, if_empty_why}. "
+                    "See AGENTS.md `## Anti-Drift` and docs/CORTEX.md §3 for "
+                    "the closed-loop drift discipline."
+                )
+            _require_substantive(
+                connectivity.get("claim"), "connectivity_trace.claim"
+            )
+            path = connectivity.get("path")
+            if not isinstance(path, list) or not all(
+                isinstance(step, str) and step.strip() for step in path
+            ):
+                raise SystemExit(
+                    "connectivity_trace.path must be a list of non-empty "
+                    "strings naming the path from the change to the model's "
+                    "input or output (e.g. file -> file -> host adapter -> "
+                    "model request)."
+                )
+            if not path:
+                if surface == "product":
+                    raise SystemExit(
+                        "connectivity_trace.path is empty on a `product` "
+                        "surface; this is closed-loop drift. Either trace a "
+                        "path from the change to the model, or downgrade "
+                        "seam.surface to `experimental` or `lab` and "
+                        "explain in connectivity_trace.if_empty_why why "
+                        "monitoring / instrumentation is the correct "
+                        "framing. See docs/CORTEX.md §3."
+                    )
+                _require_substantive(
+                    connectivity.get("if_empty_why"),
+                    "connectivity_trace.if_empty_why",
+                )
+            else:
+                # When path is non-empty, if_empty_why may be null or a
+                # supplementary note; do not require substantive content.
+                if connectivity.get("if_empty_why") is not None and not (
+                    isinstance(connectivity["if_empty_why"], str)
+                    and connectivity["if_empty_why"].strip()
+                ):
+                    raise SystemExit(
+                        "connectivity_trace.if_empty_why must be null or a "
+                        "non-empty string when path is populated."
                     )
 
     _validate_agent_loop_guard_claims(payload)
