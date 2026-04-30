@@ -524,6 +524,14 @@ assistant response. That finding is specific to Claude Code Desktop's Code tab,
 the Bash matcher, and `PreToolUse`; it must not be generalized to Claude Code
 CLI, Claude Desktop chat, other hook events, or product Cortex model-output
 lift.
+`docs/recon/claude_code_user_scope_plugin_pretooluse_probe.md` is the paired
+user-scope plugin finding: on the tested Mac app version, a user-scope plugin
+fired `PreToolUse:Bash` from `/Users/erikahoward/cortex-loop`, fired `Stop`
+from the same plugin, and showed that repeated `additionalContext`
+acknowledgement instructions can interact badly with a separate Stop validator.
+That finding does not prove user-scope plugin behavior inside a
+`.claude/worktrees/...` managed-worktree cwd and does not earn product Cortex
+model-output lift.
 
 **No-mimicry rule.** Composing markdown that resembles grid content
 but is not actual `grid` command output is a violation. Ad-hoc
