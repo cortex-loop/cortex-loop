@@ -73,6 +73,24 @@ The hook received one JSON object on stdin per Stop event. The first user
 subject turn produced two Stop events: one title-generation event and one
 actual assistant-message event.
 
+## Operational Considerations
+
+Codex App fires the project Stop hook for more than the visible assistant
+turn. In this probe, a user turn produced:
+
+- a title-generation Stop event with `model: "gpt-5.4-mini"`,
+  `transcript_path: null`, and `last_assistant_message` containing title JSON
+  such as `{"title":"Reply with ACKNOWLEDGED"}`;
+- the actual assistant-response Stop event with `model: "gpt-5.5"`, a real
+  `.codex/sessions/...jsonl` `transcript_path`, and `last_assistant_message`
+  containing the visible assistant text.
+
+Any Cortex Stop-hook handling on Codex App must filter out title-generation
+events, for example by requiring `transcript_path != null` or an equivalent
+assistant-turn predicate, before treating `last_assistant_message` as a
+closure artifact. Otherwise the hook will process title JSON as if it were an
+assistant turn and create noisy or false closure failures.
+
 ### Field Enumeration
 
 Public documentation reference: OpenAI Codex hooks docs, retrieved
@@ -145,6 +163,29 @@ Raw hook input from the reopened subject thread:
 
 The screenshot supplied by the user is local evidence at:
 `/Users/erikahoward/Downloads/Screenshot 2026-04-30 at 10.21.46.png`.
+
+## Discovered Behaviors
+
+Codex App appears to cache project Stop-hook configuration at the thread
+level. After the probe was cleaned up, `.codex/config.toml` had been restored
+to the normal Cortex Mission Reflection hook and the temporary probe hook file
+had been deleted. An already-open Codex App thread still attempted to run the
+old temporary command:
+
+```text
+/opt/homebrew/Cellar/python@3.14/3.14.3_1/Frameworks/Python.framework/Versions/3.14/Resources/Python.app/Contents/MacOS/Python: can't open file '/Users/erikahoward/cortex-loop/.codex/hooks/codex_app_probe_stop_hook.py': [Errno 2] No such file or directory
+```
+
+This indicates that an open thread may not refresh hook config or hook command
+paths when the underlying project config changes. A local compatibility shim
+was added at the old path and excluded from git so stale-cache thread
+invocations would delegate to the active Cortex Mission Reflection hook instead
+of failing. The tracked repo config remained restored throughout.
+
+Deployment implication: future Cortex deployment on Codex App must assume that
+updates to hook config or hook files require closing and reopening Codex App
+threads to take effect. Treat hot-reload of project hook config as unearned
+unless a separate probe proves it for the specific app version.
 
 ## Exact Temporary `.codex/config.toml`
 
