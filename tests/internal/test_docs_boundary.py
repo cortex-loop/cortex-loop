@@ -853,6 +853,11 @@ def test_claude_code_cortex_stop_closure_connectivity_probe_records_stop_finding
     for phrase in [
         "Stop x closure pressure",
         "Pass with content-shape caveat",
+        "manual subset confirmed",
+        "Manual Recalibration After Accessibility Confound",
+        "two non-clean paired Stop trials",
+        "entered manually by the user",
+        "cortex-manual-stop-recalibration-inline",
         "closure_reason_tags",
         "Stop hook feedback:",
         "hook_blocking_error",
@@ -869,6 +874,7 @@ def test_claude_code_cortex_stop_closure_connectivity_probe_records_stop_finding
         "Trial Matrix And Scores",
         "Cleanup Verification",
         "claude plugin list --json` no longer lists",
+        "cortex-manual-recalibration-probes",
         "This probe does not claim a Stop-primary plugin architecture",
     ]:
         assert phrase in text
