@@ -25,6 +25,9 @@ RUNTIME_CONTEXT_CROSS_HOST_PATH = (
 )
 CORTEX_PLUGIN_DESIGN_PATH = REPO_ROOT / "docs" / "cortex_plugin" / "DESIGN.md"
 CORTEX_PLUGIN_ADAPTER_PATH = REPO_ROOT / "docs" / "cortex_plugin" / "ADAPTER.md"
+CORTEX_PLUGIN_EVIDENCE_SYNTHESIS_PATH = (
+    REPO_ROOT / "docs" / "cortex_plugin" / "EVIDENCE_SYNTHESIS.md"
+)
 LIFECYCLE_SURFACE_RECON_PATH = (
     REPO_ROOT / "docs" / "recon" / "lifecycle_first_surface_matrix.md"
 )
@@ -412,6 +415,7 @@ def test_public_docs_point_to_status_and_keep_archive_out_of_the_front_door() ->
     assert "CORTEX.md" in docs_index
     assert "cortex_plugin/DESIGN.md" in docs_index
     assert "cortex_plugin/ADAPTER.md" in docs_index
+    assert "cortex_plugin/EVIDENCE_SYNTHESIS.md" in docs_index
     assert "runtime_context/EVAL_RUBRIC.md" in docs_index
     assert "runtime_context/BASELINE_SHAPED_EXAMPLES.md" in docs_index
     assert "runtime_context/CROSS_HOST_SKETCH.md" in docs_index
@@ -428,6 +432,7 @@ def test_public_docs_point_to_status_and_keep_archive_out_of_the_front_door() ->
     assert "internal/truth/cortex_status.json" in cortex_doc
     assert "docs/cortex_plugin/DESIGN.md" in cortex_doc
     assert "docs/cortex_plugin/ADAPTER.md" in cortex_doc
+    assert "docs/cortex_plugin/EVIDENCE_SYNTHESIS.md" in cortex_doc
     assert "docs/runtime_context/" in cortex_doc
     assert "docs/recon/lifecycle_first_surface_matrix.md" in cortex_doc
     assert "docs/recon/codex_app_hook_probe.md" in cortex_doc
@@ -489,6 +494,7 @@ def test_docs_directory_only_exposes_archive_and_workflow_subtrees() -> None:
     assert sorted(path.name for path in (DOCS_ROOT / "cortex_plugin").iterdir()) == [
         "ADAPTER.md",
         "DESIGN.md",
+        "EVIDENCE_SYNTHESIS.md",
     ]
     assert [path.name for path in (DOCS_ROOT / "internal").iterdir()] == ["REPO_WORKFLOW.md"]
     assert sorted(path.name for path in (DOCS_ROOT / "recon").iterdir()) == [
@@ -1026,6 +1032,33 @@ def test_cortex_plugin_adapter_preserves_host_adapter_boundaries() -> None:
     assert "cortex/hosts/claude_code_desktop/hook_control.py" in text
     assert "cortex_plugin/ADAPTER.md" in docs_index
     assert "docs/cortex_plugin/ADAPTER.md" in status["active_docs"]
+
+
+def test_cortex_plugin_evidence_synthesis_preserves_truth_boundaries() -> None:
+    text = _read(CORTEX_PLUGIN_EVIDENCE_SYNTHESIS_PATH)
+    docs_index = _read(DOCS_INDEX_PATH)
+    status = _load_status()
+
+    assert "Surface: internal / recon synthesis" in text
+    assert "does not run a new probe" in text
+    assert "does not change shipping truth" in text
+    assert "Hook Delivery Truth" in text
+    assert "Model-Visible Delivery Truth" in text
+    assert "Behavior-Lift Truth" in text
+    assert "Product / Shipping Truth" in text
+    assert "Codex cannot drive Claude Code" in text
+    assert "require the user" in text
+    assert "H x F lattice remains the right architecture" in text
+    assert "not proof that PreToolUse is the wrong lifecycle" in text
+    assert "Stop owns closure pressure, not the whole plugin" in text
+    assert "PostToolUseFailure" in text
+    assert "session_id+cwd" in text
+    assert "Codex may prepare plugin state" in text
+    assert "the user must enter the prompts" in text
+    assert "Product behavior lift would" in text
+    assert "later live paired evidence" in text
+    assert "cortex_plugin/EVIDENCE_SYNTHESIS.md" in docs_index
+    assert "docs/cortex_plugin/EVIDENCE_SYNTHESIS.md" in status["active_docs"]
 
 
 def test_generated_status_doc_is_current() -> None:
