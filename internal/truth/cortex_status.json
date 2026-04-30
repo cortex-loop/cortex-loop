@@ -306,18 +306,30 @@
       "id": "executive_modulator_state",
       "label": "Brake tonic EMA executive modulator state",
       "packet_ref": "SRE_2 §7.4, §7.5",
-      "code_refs": ["cortex/sre/modulators.py", "cortex/sre/brake.py"],
-      "proof_refs": ["tests/product/test_sre_uncertainty_brake.py"],
+      "code_refs": [
+        "cortex/sre/modulators.py",
+        "cortex/sre/brake.py",
+        "cortex/hosts/claude_code_desktop/runtime.py"
+      ],
+      "proof_refs": [
+        "tests/product/test_sre_uncertainty_brake.py",
+        "tests/conformance/test_claude_code_desktop_runtime_session_io.py"
+      ],
       "status": "implemented"
     },
     {
       "id": "goal_debt_state",
       "label": "Typed goal-debt and closure-pressure state",
       "packet_ref": "SRE_2 §8.1",
-      "code_refs": ["cortex/sre/goal_debt.py", "cortex/sre/goals.py"],
+      "code_refs": [
+        "cortex/sre/goal_debt.py",
+        "cortex/sre/goals.py",
+        "cortex/hosts/claude_code_desktop/runtime.py"
+      ],
       "proof_refs": [
         "tests/product/test_sre_goals_branching.py",
-        "tests/product/test_sre_goal_branch.py"
+        "tests/product/test_sre_goal_branch.py",
+        "tests/conformance/test_claude_code_desktop_runtime_session_io.py"
       ],
       "status": "implemented"
     },
@@ -325,8 +337,14 @@
       "id": "preservation_state",
       "label": "Verified-work preservation and intervention budget",
       "packet_ref": "SRE_2 §6.7 (budget); CORE recovery firewall",
-      "code_refs": ["cortex/sre/preservation.py"],
-      "proof_refs": ["tests/product/test_preservation_state.py"],
+      "code_refs": [
+        "cortex/sre/preservation.py",
+        "cortex/hosts/claude_code_desktop/runtime.py"
+      ],
+      "proof_refs": [
+        "tests/product/test_preservation_state.py",
+        "tests/conformance/test_claude_code_desktop_runtime_session_io.py"
+      ],
       "status": "implemented"
     },
     {
@@ -522,6 +540,8 @@
           "cortex/hosts/runtime_context.py",
           "cortex/hosts/openai/host_control.py",
           "cortex/hosts/openai/runtime.py",
+          "cortex/hosts/claude_code_desktop/runtime.py",
+          "cortex/hosts/claude_code_desktop/hook_control.py",
           "cortex/hosts/reference/runtime.py"
         ],
         "proof_refs": [
@@ -530,6 +550,7 @@
           "tests/product/test_runtime_context_eval_rubric.py",
           "tests/product/test_openai_host_control.py",
           "tests/product/test_openai_runtime_step.py",
+          "tests/conformance/test_claude_code_desktop_host_control.py",
           "tests/conformance/integration/test_reference_runtime_cli.py"
         ]
       },
@@ -541,12 +562,14 @@
         "code_refs": [
           "cortex/hosts/openai/runtime.py",
           "cortex/hosts/claude/runtime.py",
+          "cortex/hosts/claude_code_desktop/runtime.py",
           "cortex/hosts/gemini/runtime.py",
           "cortex/hosts/reference/runtime.py"
         ],
         "proof_refs": [
           "tests/product/test_openai_runtime_session_io.py",
           "tests/conformance/test_claude_runtime_session_io.py",
+          "tests/conformance/test_claude_code_desktop_runtime_session_io.py",
           "tests/conformance/test_gemini_runtime_session_io.py",
           "tests/conformance/test_reference_runtime_session_io.py"
         ]
@@ -561,12 +584,14 @@
           "cortex/hosts/openai/host_transport.py",
           "cortex/hosts/claude/host_control.py",
           "cortex/hosts/claude/host_transport.py",
+          "cortex/hosts/claude_code_desktop/hook_control.py",
           "cortex/hosts/gemini/host_control.py",
           "cortex/hosts/gemini/host_transport.py"
         ],
         "proof_refs": [
           "tests/product/test_openai_host_control.py",
           "tests/conformance/test_claude_host_control.py",
+          "tests/conformance/test_claude_code_desktop_host_control.py",
           "tests/conformance/test_gemini_host_control.py",
           "tests/conformance/integration/test_openai_host_control_service.py"
         ]
@@ -623,16 +648,16 @@
       },
       {
         "id": "feedback_window_realization",
-        "visibility_class": "conditional_model_visible_openai",
-        "model_io_path": "host output / last `ReferenceRealizationFeedback` → `runtime_context_from_last_feedback(...)` → OpenAI host-control `instructions` for ordinary calls or verified-work `input_text` before workspace context",
-        "reaches_model_as": "bounded `CORTEX_RUNTIME_CONTEXT_V1` text derived only from the immediately prior feedback entry; clean or absent feedback emits no block",
-        "behavior_effect": "shapes the next OpenAI call away from premature closure after stream-only, failed-probe, warning, friction, override, or braked realization without accumulating memory across turns",
-        "gap_or_unearned": "This is structural model-I/O shaping on OpenAI only; live output-quality lift and Claude/Gemini ports remain unearned until paired runs prove them."
+        "visibility_class": "conditional_model_visible_openai_and_claude_code_desktop_structural",
+        "model_io_path": "host output / last `ReferenceRealizationFeedback` → `runtime_context_from_last_feedback(...)` → OpenAI host-control `instructions` or verified-work `input_text`; Claude Code Desktop structural path maps prior feedback through `cortex/hosts/claude_code_desktop/runtime.py` to `hookSpecificOutput.additionalContext` for `PreToolUse:Bash`",
+        "reaches_model_as": "bounded `CORTEX_RUNTIME_CONTEXT_V1` text derived only from the immediately prior feedback entry; clean or absent feedback emits no block/context",
+        "behavior_effect": "shapes the next OpenAI call and, structurally, the next Claude Code Desktop Bash-tool assistant continuation away from premature closure after stream-only, failed-probe, warning, friction, override, or braked realization without accumulating memory across turns",
+        "gap_or_unearned": "OpenAI remains the direct shipping lane; Claude Code Desktop is structurally wired for `PreToolUse:Bash` only and still needs live paired output-quality evidence before shipping-lift claims."
       },
       {
         "id": "host_runtime_sessions",
         "visibility_class": "state_to_decision_visible",
-        "model_io_path": "host session artifact → runtime step → route/closure/policy payload → host control request or CLI/service response",
+        "model_io_path": "host session artifact → runtime step → route/closure/policy payload → host control request, CLI/service response, or Claude Code Desktop hook-control output",
         "reaches_model_as": "carried state that influences later route and closure behavior; raw session JSON is not model input",
         "behavior_effect": "maintains continuity across events and hosts without pretending all hosts expose the same transport affordances",
         "gap_or_unearned": "Session state can be perfectly coherent internally while still failing to affect a model if no host-control path consumes it."
@@ -640,8 +665,8 @@
       {
         "id": "host_control_transports",
         "visibility_class": "direct_model_visible",
-        "model_io_path": "`OpenAIHostControlRequest.input_text/instructions`, `ClaudeHostControlRequest.input_text/system`, `GeminiHostControlRequest.input_text/instructions` → respective live/fixture transport bodies",
-        "reaches_model_as": "provider request text/system/instructions; metadata and audit intensity are boundary/control fields, not assumed model-visible text",
+        "model_io_path": "`OpenAIHostControlRequest.input_text/instructions`, `ClaudeHostControlRequest.input_text/system`, `GeminiHostControlRequest.input_text/instructions`, and Claude Code Desktop `hookSpecificOutput.additionalContext` → respective live/fixture transport or hook outputs",
+        "reaches_model_as": "provider request text/system/instructions or Claude Code Desktop hook additional context; metadata and audit intensity are boundary/control fields, not assumed model-visible text",
         "behavior_effect": "this is the main bridge where Cortex can change what the model receives or what output is accepted",
         "gap_or_unearned": "Any internal logic not consumed here, or not converted into route/block behavior before here, remains monitoring/scaffolding rather than product Cortex."
       }
@@ -691,9 +716,9 @@
       },
       {
         "id": "feedback_window_realization",
-        "boundary_judgment": "product Cortex on the OpenAI host-control lane when last-step feedback is translated into bounded model-visible runtime context; still monitor-only if retained only as a public summary",
-        "decision": "bridge_landed_openai_structural",
-        "next_action": "Keep the bridge last-feedback-only and run paired live baseline-vs-shaped evaluations before claiming output lift or porting the path to Claude/Gemini.",
+        "boundary_judgment": "product Cortex on the OpenAI host-control lane when last-step feedback is translated into bounded model-visible runtime context; structurally product-shaped on Claude Code Desktop `PreToolUse:Bash` when the same bounded context reaches hook additionalContext; still monitor-only if retained only as a public summary",
+        "decision": "bridge_landed_openai_structural_claude_code_desktop_pretool_structural",
+        "next_action": "Keep the bridge last-feedback-only, extend Claude Code Desktop hook coverage one lifecycle event at a time, and run paired live baseline-vs-shaped evaluations before claiming output lift.",
         "post_training_boundary": "General learning from feedback is post-training; event-local realization feedback that alters the next runtime decision is Cortex."
       },
       {
@@ -1048,6 +1073,7 @@
     "docs/CORTEX_STATUS.md",
     "docs/internal/REPO_WORKFLOW.md",
     "docs/cortex_plugin/DESIGN.md",
+    "docs/cortex_plugin/ADAPTER.md",
     "docs/runtime_context/EVAL_RUBRIC.md",
     "docs/runtime_context/BASELINE_SHAPED_EXAMPLES.md",
     "docs/runtime_context/CROSS_HOST_SKETCH.md",

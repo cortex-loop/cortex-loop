@@ -1,0 +1,21 @@
+{
+  "name": "cortex-plugin-skeleton",
+  "owner": {
+    "name": "Cortex"
+  },
+  "metadata": {
+    "description": "Lab marketplace for the Cortex Claude Code Desktop plugin skeleton.",
+    "version": "0.1.0"
+  },
+  "plugins": [
+    {
+      "name": "cortex-claude-code-desktop",
+      "source": "./plugins/cortex-claude-code-desktop",
+      "description": "Cortex Claude Code Desktop lifecycle adapter skeleton.",
+      "version": "0.1.0",
+      "author": {
+        "name": "Cortex"
+      }
+    }
+  ]
+}

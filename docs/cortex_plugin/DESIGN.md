@@ -331,7 +331,11 @@ review logs, then opt into enforce mode per repo root.
 
 The plugin bundles the Cortex Python package. This is Option A: users installing
 the plugin do not need a `cortex-loop` checkout, and the hook scripts do not
-import from the host repo. The plugin distribution includes:
+import from the host repo. The build-phase refinement is that Claude Code
+Desktop is a first-class Cortex host adapter under
+`cortex/hosts/claude_code_desktop/`; plugin scripts are transport wires over
+that adapter, not plugin-side Cortex logic. See `docs/cortex_plugin/ADAPTER.md`
+for the adapter pattern. The plugin distribution includes:
 
 - `cortex/core/**`
 - `cortex/drivers/**`
@@ -359,6 +363,13 @@ package unless an explicit developer override is set.
 Plugin updates synchronize by shipping a new bundle with a Cortex version
 manifest. Session state includes `cortex_version`, `plugin_version`, and schema
 version; SessionStart performs schema migration only at event boundaries.
+
+The first structural build seam wires only `PreToolUse:Bash` end-to-end through
+`cortex/hosts/claude_code_desktop/ingress.py`,
+`cortex/hosts/claude_code_desktop/runtime.py`, and
+`cortex/hosts/claude_code_desktop/hook_control.py`. Other hook scripts may
+exist in the plugin skeleton as no-op transport stubs; they do not count as
+implemented Cortex behavior until their adapter paths and tests land.
 
 ## 7. Multi-Host Shipping Truth
 

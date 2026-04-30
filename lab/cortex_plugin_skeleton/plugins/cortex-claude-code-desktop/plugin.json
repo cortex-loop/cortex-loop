@@ -1,0 +1,8 @@
+{
+  "name": "cortex-claude-code-desktop",
+  "version": "0.1.0",
+  "description": "Cortex Claude Code Desktop lifecycle adapter skeleton.",
+  "author": {
+    "name": "Cortex"
+  }
+}
