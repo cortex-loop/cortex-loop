@@ -547,6 +547,14 @@ continuation context, but Gate 1 failed because shaped behavior was mixed
 (one win, one no-change, one regression, one neutral). That finding blocks
 the parked lifecycle-spine branch from merge until the model-visible runtime
 context is revised and revalidated.
+`docs/recon/claude_code_cortex_stop_closure_connectivity_probe.md` is the
+paired Stop closure-pressure finding: Cortex-derived `closure_reason_tags`
+returned through a `Stop` `decision: "block"` reason reached Claude Code
+Desktop as `Stop hook feedback:` and materially changed closure behavior in
+three non-clean trials, while clean and verified-artifact controls did not
+block. That finding validates the `Stop x closure pressure` cell only; it does
+not demote `PreToolUse`, prove a Stop-primary architecture, or earn broad
+product output lift.
 `docs/cortex_plugin/DESIGN.md` is the v1 Claude Code Desktop Cortex plugin
 design: it maps Claude Code Desktop lifecycle hooks onto the eight Cortex
 failure modes, keeps the Mission Reflection grid out of product packaging,
