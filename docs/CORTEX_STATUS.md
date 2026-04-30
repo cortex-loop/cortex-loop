@@ -247,3 +247,4 @@ Workflow gates marked `required` are contractual gates checked by `repo_workflow
 - `docs/recon/claude_code_desktop_pretooluse_probe.md`
 - `docs/recon/claude_code_user_scope_plugin_pretooluse_probe.md`
 - `docs/recon/claude_code_user_scope_plugin_managed_worktree_probe.md`
+- `docs/recon/claude_code_cortex_runtime_context_connectivity_probe.md`

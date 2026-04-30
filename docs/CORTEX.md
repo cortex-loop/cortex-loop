@@ -539,6 +539,14 @@ follow-up sandbox finding: a user-scope plugin fired `PreToolUse:Bash` in
 a `.claude/worktrees/...` path. That finding supports user-scope plugin reach
 for normal project-root Code-tab sessions but still does not prove an actual
 managed-worktree cwd case or product Cortex model-output lift.
+`docs/recon/claude_code_cortex_runtime_context_connectivity_probe.md` is the
+paired runtime-context finding: the merged Claude Code Desktop `PreToolUse:Bash`
+adapter did emit real `CORTEX_RUNTIME_CONTEXT_V1` into transcript
+`hook_additional_context`, and Stop `decision: "block"` reason text reached the
+continuation context, but Gate 1 failed because shaped behavior was mixed
+(one win, one no-change, one regression, one neutral). That finding blocks
+the parked lifecycle-spine branch from merge until the model-visible runtime
+context is revised and revalidated.
 `docs/cortex_plugin/DESIGN.md` is the v1 Claude Code Desktop Cortex plugin
 design: it maps Claude Code Desktop lifecycle hooks onto the eight Cortex
 failure modes, keeps the Mission Reflection grid out of product packaging,

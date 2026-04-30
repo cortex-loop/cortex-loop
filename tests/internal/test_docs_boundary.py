@@ -38,6 +38,9 @@ CLAUDE_CODE_USER_SCOPE_PLUGIN_PRETOOLUSE_PROBE_PATH = (
 CLAUDE_CODE_USER_SCOPE_PLUGIN_MANAGED_WORKTREE_PROBE_PATH = (
     REPO_ROOT / "docs" / "recon" / "claude_code_user_scope_plugin_managed_worktree_probe.md"
 )
+CLAUDE_CODE_CORTEX_RUNTIME_CONTEXT_CONNECTIVITY_PROBE_PATH = (
+    REPO_ROOT / "docs" / "recon" / "claude_code_cortex_runtime_context_connectivity_probe.md"
+)
 STATUS_REGISTRY_PATH = REPO_ROOT / "internal" / "truth" / "cortex_status.json"
 STATUS_DOC_PATH = REPO_ROOT / "docs" / "CORTEX_STATUS.md"
 WORKFLOW_DOC_PATH = REPO_ROOT / "docs" / "internal" / "REPO_WORKFLOW.md"
@@ -414,6 +417,7 @@ def test_public_docs_point_to_status_and_keep_archive_out_of_the_front_door() ->
     assert "recon/claude_code_desktop_pretooluse_probe.md" in docs_index
     assert "recon/claude_code_user_scope_plugin_pretooluse_probe.md" in docs_index
     assert "recon/claude_code_user_scope_plugin_managed_worktree_probe.md" in docs_index
+    assert "recon/claude_code_cortex_runtime_context_connectivity_probe.md" in docs_index
     # CORTEX.md content anchors the previously-fragmented charter and
     # boundary identity material in one canonical surface.
     assert "executive-function layer that wraps a model after" in cortex_doc
@@ -426,6 +430,7 @@ def test_public_docs_point_to_status_and_keep_archive_out_of_the_front_door() ->
     assert "docs/recon/claude_code_desktop_pretooluse_probe.md" in cortex_doc
     assert "docs/recon/claude_code_user_scope_plugin_pretooluse_probe.md" in cortex_doc
     assert "docs/recon/claude_code_user_scope_plugin_managed_worktree_probe.md" in cortex_doc
+    assert "docs/recon/claude_code_cortex_runtime_context_connectivity_probe.md" in cortex_doc
     assert "EVAL_RUBRIC.md" in cortex_doc
     assert "BASELINE_SHAPED_EXAMPLES.md" in cortex_doc
     assert "CROSS_HOST_SKETCH.md" in cortex_doc
@@ -433,6 +438,7 @@ def test_public_docs_point_to_status_and_keep_archive_out_of_the_front_door() ->
     assert "trusted project Stop hook loaded" in cortex_doc
     assert "PreToolUse` fired for Bash" in cortex_doc
     assert "user-scope plugin" in cortex_doc
+    assert "Gate 1 failed" in cortex_doc
     assert "Mission Reflection grid out of product packaging" in cortex_doc
     # Workflow rules unchanged.
     assert "paid OpenAI service-lane proof is never part of the default bundle" in workflow
@@ -480,6 +486,7 @@ def test_docs_directory_only_exposes_archive_and_workflow_subtrees() -> None:
     ]
     assert [path.name for path in (DOCS_ROOT / "internal").iterdir()] == ["REPO_WORKFLOW.md"]
     assert sorted(path.name for path in (DOCS_ROOT / "recon").iterdir()) == [
+        "claude_code_cortex_runtime_context_connectivity_probe.md",
         "claude_code_desktop_pretooluse_probe.md",
         "claude_code_user_scope_plugin_managed_worktree_probe.md",
         "claude_code_user_scope_plugin_pretooluse_probe.md",
@@ -772,6 +779,55 @@ def test_claude_code_user_scope_plugin_managed_worktree_probe_records_cwd_findin
         "tool_name",
         "tool_input",
         "tool_use_id",
+    ]:
+        assert f"`{key}`" in text
+
+
+def test_claude_code_cortex_runtime_context_connectivity_probe_records_gate_failure() -> None:
+    text = _read(CLAUDE_CODE_CORTEX_RUNTIME_CONTEXT_CONNECTIVITY_PROBE_PATH)
+
+    assert "Surface: internal / recon" in text
+    assert "Probe date: 2026-04-30" in text
+    assert "Claude Code Desktop Code tab" in text
+    assert "/Users/erikahoward/cortex-plugin-sandbox" in text
+    assert "1.5354.0" in text
+    assert "2.1.121" in text
+    assert "claude-opus-4-7" in text
+    assert "codex/20260430-155752-claude-code-desktop-lifecycle-spine" in text
+
+    for phrase in [
+        "Pre-flight A: session identity and persistence reality",
+        "Pre-flight B: Stop block mechanism",
+        "Gate 1: merged `PreToolUse:Bash` runtime-context foundation",
+        "**Fail**",
+        "Gate 2: PostToolUse feedback to next PreToolUse",
+        "**Not tested**",
+        "CORTEX_RUNTIME_CONTEXT_V1",
+        "hook_additional_context",
+        "TEST_BLOCK_REASON_2026_05_01",
+        "session-id-plus-cwd keying is thread-local",
+        "one shaped win, one no-change, one shaped regression, and one neutral",
+        "blocks the lifecycle-spine branch from merge",
+        "No sentinel or acknowledgement instruction was inserted into the Cortex runtime context",
+        "Raw Hook Input Examples",
+        "Field Enumeration",
+        "Cleanup Verification",
+        "claude plugin list --json` no longer lists",
+        "Product-lift truth: not earned",
+    ]:
+        assert phrase in text
+
+    for key in [
+        "session_id",
+        "transcript_path",
+        "cwd",
+        "permission_mode",
+        "hook_event_name",
+        "tool_name",
+        "tool_input",
+        "tool_use_id",
+        "last_assistant_message",
+        "stop_hook_active",
     ]:
         assert f"`{key}`" in text
 

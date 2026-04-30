@@ -29,5 +29,7 @@ Active docs:
   empirical user-scope plugin PreToolUse/Stop coexistence evidence
 - [Claude Code User-Scope Plugin Managed-Worktree Probe](recon/claude_code_user_scope_plugin_managed_worktree_probe.md) —
   empirical sandbox Code-tab cwd evidence for user-scope plugin hooks
+- [Claude Code Cortex Runtime-Context Connectivity Probe](recon/claude_code_cortex_runtime_context_connectivity_probe.md) —
+  empirical paired baseline-vs-shaped evidence for the merged runtime-context bridge
 
 Historical runtime, lab, and governance material now lives under [archive/](archive/).
