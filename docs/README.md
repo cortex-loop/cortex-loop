@@ -19,5 +19,7 @@ Active docs:
   current host/API/CLI/app extension-surface map
 - [Codex App Hook Probe](recon/codex_app_hook_probe.md) —
   empirical project Stop-hook load/fire/block evidence
+- [Claude Code Desktop PreToolUse Probe](recon/claude_code_desktop_pretooluse_probe.md) —
+  empirical Code-tab PreToolUse fire/additionalContext evidence
 
 Historical runtime, lab, and governance material now lives under [archive/](archive/).

@@ -242,3 +242,4 @@ Workflow gates marked `required` are contractual gates checked by `repo_workflow
 - `docs/runtime_context/CROSS_HOST_SKETCH.md`
 - `docs/recon/lifecycle_first_surface_matrix.md`
 - `docs/recon/codex_app_hook_probe.md`
+- `docs/recon/claude_code_desktop_pretooluse_probe.md`
