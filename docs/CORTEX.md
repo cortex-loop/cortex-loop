@@ -532,6 +532,13 @@ acknowledgement instructions can interact badly with a separate Stop validator.
 That finding does not prove user-scope plugin behavior inside a
 `.claude/worktrees/...` managed-worktree cwd and does not earn product Cortex
 model-output lift.
+`docs/recon/claude_code_user_scope_plugin_managed_worktree_probe.md` is the
+follow-up sandbox finding: a user-scope plugin fired `PreToolUse:Bash` in
+`/Users/erikahoward/cortex-plugin-sandbox`, a project with no repo-local
+`.claude/settings.json`, and the hook `cwd` was the sandbox root rather than
+a `.claude/worktrees/...` path. That finding supports user-scope plugin reach
+for normal project-root Code-tab sessions but still does not prove an actual
+managed-worktree cwd case or product Cortex model-output lift.
 
 **No-mimicry rule.** Composing markdown that resembles grid content
 but is not actual `grid` command output is a violation. Ad-hoc
