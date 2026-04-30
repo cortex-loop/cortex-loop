@@ -13,6 +13,8 @@ Active docs:
 - [Repo Workflow](internal/REPO_WORKFLOW.md)
 - [Claude Code Desktop Cortex Plugin Design](cortex_plugin/DESIGN.md) —
   v1 full-lifecycle plugin architecture for Claude Code Desktop's Code tab
+- [Claude Code Desktop Cortex Host Adapter](cortex_plugin/ADAPTER.md) —
+  structural host-adapter pattern for the plugin build
 - Runtime context bridge eval artifacts:
   [rubric](runtime_context/EVAL_RUBRIC.md),
   [baseline-vs-shaped examples](runtime_context/BASELINE_SHAPED_EXAMPLES.md),

@@ -24,6 +24,7 @@ RUNTIME_CONTEXT_CROSS_HOST_PATH = (
     REPO_ROOT / "docs" / "runtime_context" / "CROSS_HOST_SKETCH.md"
 )
 CORTEX_PLUGIN_DESIGN_PATH = REPO_ROOT / "docs" / "cortex_plugin" / "DESIGN.md"
+CORTEX_PLUGIN_ADAPTER_PATH = REPO_ROOT / "docs" / "cortex_plugin" / "ADAPTER.md"
 LIFECYCLE_SURFACE_RECON_PATH = (
     REPO_ROOT / "docs" / "recon" / "lifecycle_first_surface_matrix.md"
 )
@@ -404,6 +405,7 @@ def test_public_docs_point_to_status_and_keep_archive_out_of_the_front_door() ->
     assert "archive/" in docs_index
     assert "CORTEX.md" in docs_index
     assert "cortex_plugin/DESIGN.md" in docs_index
+    assert "cortex_plugin/ADAPTER.md" in docs_index
     assert "runtime_context/EVAL_RUBRIC.md" in docs_index
     assert "runtime_context/BASELINE_SHAPED_EXAMPLES.md" in docs_index
     assert "runtime_context/CROSS_HOST_SKETCH.md" in docs_index
@@ -417,6 +419,7 @@ def test_public_docs_point_to_status_and_keep_archive_out_of_the_front_door() ->
     assert "executive-function layer that wraps a model after" in cortex_doc
     assert "internal/truth/cortex_status.json" in cortex_doc
     assert "docs/cortex_plugin/DESIGN.md" in cortex_doc
+    assert "docs/cortex_plugin/ADAPTER.md" in cortex_doc
     assert "docs/runtime_context/" in cortex_doc
     assert "docs/recon/lifecycle_first_surface_matrix.md" in cortex_doc
     assert "docs/recon/codex_app_hook_probe.md" in cortex_doc
@@ -471,7 +474,10 @@ def test_docs_directory_only_exposes_archive_and_workflow_subtrees() -> None:
     subdirs = sorted(path.name for path in DOCS_ROOT.iterdir() if path.is_dir())
 
     assert subdirs == ["archive", "cortex_plugin", "internal", "recon", "runtime_context"]
-    assert [path.name for path in (DOCS_ROOT / "cortex_plugin").iterdir()] == ["DESIGN.md"]
+    assert sorted(path.name for path in (DOCS_ROOT / "cortex_plugin").iterdir()) == [
+        "ADAPTER.md",
+        "DESIGN.md",
+    ]
     assert [path.name for path in (DOCS_ROOT / "internal").iterdir()] == ["REPO_WORKFLOW.md"]
     assert sorted(path.name for path in (DOCS_ROOT / "recon").iterdir()) == [
         "claude_code_desktop_pretooluse_probe.md",
@@ -876,6 +882,35 @@ def test_cortex_plugin_design_preserves_scope_and_truth_boundaries() -> None:
         "background polling, timers, or hidden state mutation",
     ]:
         assert forbidden_non_feature in text
+
+
+def test_cortex_plugin_adapter_preserves_host_adapter_boundaries() -> None:
+    text = _read(CORTEX_PLUGIN_ADAPTER_PATH)
+    docs_index = _read(DOCS_INDEX_PATH)
+    status = _load_status()
+
+    assert "Surface: product adapter / structural" in text
+    assert "does not claim live model-output" in text
+    assert "shipping default" in text
+    assert "business logic" in text
+    assert "plugin is transport wire" in text
+    assert "does not introduce new math objects" in text
+    assert "Ownership stays with" in text
+    assert "math-to-code map" in text
+    assert "PreToolUse:Bash" in text
+    assert "hookSpecificOutput.additionalContext" in text
+    assert "CORTEX_RUNTIME_CONTEXT_V1" in text
+    assert "Clean prior feedback emits no context" in text
+    assert "hook events parse" in text
+    assert "no-op transport stubs" in text
+    assert "Shipping truth remains" in text
+    assert "openai:operator_cli" in text
+    assert "lab/cortex_plugin_skeleton/" in text
+    assert "cortex/hosts/claude_code_desktop/ingress.py" in text
+    assert "cortex/hosts/claude_code_desktop/runtime.py" in text
+    assert "cortex/hosts/claude_code_desktop/hook_control.py" in text
+    assert "cortex_plugin/ADAPTER.md" in docs_index
+    assert "docs/cortex_plugin/ADAPTER.md" in status["active_docs"]
 
 
 def test_generated_status_doc_is_current() -> None:
