@@ -516,6 +516,14 @@ finding: on the tested Mac app version, a trusted project Stop hook loaded,
 fired, exposed `last_assistant_message`, and routed a `decision: "block"`
 reason into the model-visible continuation. That finding is Codex App only
 and must not be generalized to other surfaces without their own probes.
+`docs/recon/claude_code_desktop_pretooluse_probe.md` is the paired empirical
+Claude Code Desktop Code-tab finding: on the tested Mac app version,
+`PreToolUse` fired for Bash in the effective Claude-managed worktree and
+`hookSpecificOutput.additionalContext` reached the next model-visible
+assistant response. That finding is specific to Claude Code Desktop's Code tab,
+the Bash matcher, and `PreToolUse`; it must not be generalized to Claude Code
+CLI, Claude Desktop chat, other hook events, or product Cortex model-output
+lift.
 
 **No-mimicry rule.** Composing markdown that resembles grid content
 but is not actual `grid` command output is a violation. Ad-hoc

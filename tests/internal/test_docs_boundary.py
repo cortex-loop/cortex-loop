@@ -27,6 +27,9 @@ LIFECYCLE_SURFACE_RECON_PATH = (
     REPO_ROOT / "docs" / "recon" / "lifecycle_first_surface_matrix.md"
 )
 CODEX_APP_HOOK_PROBE_PATH = REPO_ROOT / "docs" / "recon" / "codex_app_hook_probe.md"
+CLAUDE_CODE_DESKTOP_PRETOOLUSE_PROBE_PATH = (
+    REPO_ROOT / "docs" / "recon" / "claude_code_desktop_pretooluse_probe.md"
+)
 STATUS_REGISTRY_PATH = REPO_ROOT / "internal" / "truth" / "cortex_status.json"
 STATUS_DOC_PATH = REPO_ROOT / "docs" / "CORTEX_STATUS.md"
 WORKFLOW_DOC_PATH = REPO_ROOT / "docs" / "internal" / "REPO_WORKFLOW.md"
@@ -398,6 +401,7 @@ def test_public_docs_point_to_status_and_keep_archive_out_of_the_front_door() ->
     assert "runtime_context/CROSS_HOST_SKETCH.md" in docs_index
     assert "recon/lifecycle_first_surface_matrix.md" in docs_index
     assert "recon/codex_app_hook_probe.md" in docs_index
+    assert "recon/claude_code_desktop_pretooluse_probe.md" in docs_index
     # CORTEX.md content anchors the previously-fragmented charter and
     # boundary identity material in one canonical surface.
     assert "executive-function layer that wraps a model after" in cortex_doc
@@ -405,11 +409,13 @@ def test_public_docs_point_to_status_and_keep_archive_out_of_the_front_door() ->
     assert "docs/runtime_context/" in cortex_doc
     assert "docs/recon/lifecycle_first_surface_matrix.md" in cortex_doc
     assert "docs/recon/codex_app_hook_probe.md" in cortex_doc
+    assert "docs/recon/claude_code_desktop_pretooluse_probe.md" in cortex_doc
     assert "EVAL_RUBRIC.md" in cortex_doc
     assert "BASELINE_SHAPED_EXAMPLES.md" in cortex_doc
     assert "CROSS_HOST_SKETCH.md" in cortex_doc
     assert "lifecycle-first surface reconnaissance" in cortex_doc.lower()
     assert "trusted project Stop hook loaded" in cortex_doc
+    assert "PreToolUse` fired for Bash" in cortex_doc
     # Workflow rules unchanged.
     assert "paid OpenAI service-lane proof is never part of the default bundle" in workflow
     assert "requires explicit user approval in the current chat" in workflow
@@ -452,6 +458,7 @@ def test_docs_directory_only_exposes_archive_and_workflow_subtrees() -> None:
     assert subdirs == ["archive", "internal", "recon", "runtime_context"]
     assert [path.name for path in (DOCS_ROOT / "internal").iterdir()] == ["REPO_WORKFLOW.md"]
     assert sorted(path.name for path in (DOCS_ROOT / "recon").iterdir()) == [
+        "claude_code_desktop_pretooluse_probe.md",
         "codex_app_hook_probe.md",
         "lifecycle_first_surface_matrix.md",
     ]
@@ -597,6 +604,52 @@ def test_codex_app_hook_probe_records_empirical_findings_and_cleanup() -> None:
     assert "BASELINE" in text
     assert "REOPENED" in text
     assert "Stop - Codex App hook probe" in text
+
+
+def test_claude_code_desktop_pretooluse_probe_records_empirical_findings_and_cleanup() -> None:
+    text = _read(CLAUDE_CODE_DESKTOP_PRETOOLUSE_PROBE_PATH)
+
+    assert "Surface: internal / recon" in text
+    assert "Probe date: 2026-04-30" in text
+    assert "Claude Code Desktop Code tab" in text
+    assert "1.5354.0" in text
+    assert "2.1.121" in text
+    assert "claude-opus-4-7" in text
+    assert "CORTEX_PROBE_SENTINEL_CLAUDE_2026_04_30" in text
+
+    for phrase in [
+        "Q1: Does Claude Code Desktop load a project-level `.claude/settings.json` with a `PreToolUse` hook?",
+        "Q2: Does the `PreToolUse` hook fire, and what input shape does it receive?",
+        "Q3: Does `hookSpecificOutput.additionalContext` reach the model?",
+        "**Partial**",
+        "**Confirmed**",
+        "managed worktree",
+        "Trust persistence after closing and reopening the subject thread was not tested",
+        "Exact Temporary Settings",
+        "Exact Temporary Hook Script",
+        "Raw Hook Input",
+        "Field Enumeration",
+        "No undocumented top-level fields were observed",
+        "Actual Post-Tool Assistant Output",
+        "hook_additional_context",
+        "Cleanup Verification",
+        "Root `.claude/settings.json` restored",
+        "Temporary `.claude/hooks/claude_code_desktop_pretooluse_probe.py` removed",
+        "does not generalize to Claude Code CLI",
+    ]:
+        assert phrase in text
+
+    for key in [
+        "session_id",
+        "transcript_path",
+        "cwd",
+        "permission_mode",
+        "hook_event_name",
+        "tool_name",
+        "tool_input",
+        "tool_use_id",
+    ]:
+        assert f"`{key}`" in text
 
 
 def test_generated_status_doc_is_current() -> None:
