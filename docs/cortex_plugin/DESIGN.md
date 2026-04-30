@@ -21,46 +21,52 @@ The OpenAI host-control lane in `cortex/hosts/openai/host_control.py` compresses
 Cortex into request/response: bounded instructions and input text are the main
 model-visible surfaces. Claude Code Desktop exposes richer lifecycle events:
 `SessionStart`, `UserPromptSubmit`, `PreToolUse`, `PostToolUse`,
-`PreCompact`, `SubagentStop`, `Stop`, and `SessionEnd`. Those are the natural
-event boundaries for the lifecycle-first law in `docs/CORTEX.md` §3. The plugin
-therefore wires Claude Code Desktop events into existing `cortex/**` state and
-emits bounded hook outputs only when the Cortex state needs to change what the
-assistant sees, does, or is allowed to close.
+`PostToolUseFailure`, `PreCompact`, `SubagentStop`, `Stop`, and `SessionEnd`.
+Those are the natural event boundaries for the lifecycle-first law in
+`docs/CORTEX.md` §3. The plugin therefore wires Claude Code Desktop events into
+existing `cortex/**` state and emits bounded hook outputs only when the Cortex
+state needs to change what the assistant sees, does, or is allowed to close.
 
-This design establishes Claude Code Desktop as the intended v1 shipping Cortex
-surface parallel to the current OpenAI API/CLI lane. In short, it establishes
-Claude Code Desktop as the intended v1 shipping Cortex surface, but current operational truth
-remains unchanged until the build and live-eval seams land: `docs/CORTEX_STATUS.md`
-still names `openai:operator_cli` as the shipping default, while Claude remains
-conformant and non-default. Structural design earns the architecture; live paired evidence earns shipping lift.
+This design treats Claude Code Desktop as the intended v1 plugin surface
+parallel to the current OpenAI API/CLI lane, but current operational truth
+remains unchanged until build and live-eval seams land:
+`docs/CORTEX_STATUS.md` still names `openai:operator_cli` as the shipping
+default, while Claude remains conformant and non-default. Structural design
+earns architecture only; live paired evidence earns behavior lift.
 
 ## 2. The H x F Lattice
 
 Legend:
 
-- `ACTIVE: <trace>` means the hook contributes real v1 behavior for the failure
-  mode. The trace names the shortest path from hook input to Cortex state to
-  behavior.
-- `DEFERRED: <reason>` means the hook is installed in v1 but has only a stub or
-  metadata capture until a v2 promotion seam.
-- `N/A: <reason>` means the failure mode does not naturally manifest at that
-  hook; another hook covers the mode.
+- `ARCHITECTURAL OWNER: <trace>` means the hook is assigned responsibility for
+  the failure mode, but no Claude Code Desktop adapter behavior or paired live
+  behavior evidence exists for that cell yet.
+- `STRUCTURAL ADAPTER IMPLEMENTED: <trace>` means code exists under
+  `cortex/hosts/claude_code_desktop/` for that hook path, but paired live
+  behavior lift is not earned.
+- `LIVE BEHAVIOR VALIDATED: <trace>` means paired empirical evidence exists
+  that the Claude Code Desktop hook changed model behavior for that cell. This
+  is still not a shipping-product claim unless the product adapter path is also
+  built and promoted.
 
-| Failure mode from `docs/CORTEX.md` §2 | SessionStart | UserPromptSubmit | PreToolUse | PostToolUse | PreCompact | SubagentStop | Stop | SessionEnd |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| Truth-preserving commitments and bounded certification | ACTIVE: restore prior commitment summaries into `ClaudeRuntimeSession` for later certification. | ACTIVE: normalize prompt into event envelope and dispatch lane before model action. | ACTIVE: bind tool intent/provenance before execution; can block unsupported consequential action. | ACTIVE: bind tool result artifact/external record into commitment outcome. | DEFERRED: compaction provenance will need a packet-shaped summary in v2. | DEFERRED: subagent claims need separate provenance binding in v2. | ACTIVE: block closure that asserts unsupported or boundary-broken work. | ACTIVE: persist bounded commitment summaries, not raw transcript claims. |
-| Bounded correction and verified-work preservation | ACTIVE: restore active work-contract and preservation residue if present. | ACTIVE: detect task/repair intent and set verification demand. | ACTIVE: protect allowed write surface before a tool mutates files. | ACTIVE: classify result evidence and update preservation state from observed checks. | DEFERRED: compaction can damage repair context; v2 will summarize verified structure. | DEFERRED: subagent repair provenance is a v2 seam. | ACTIVE: block finalization when verification debt or preserved structure is unresolved. | ACTIVE: preserve trusted/falsified structure summaries for the next session. |
-| Uncertainty handling and brake | ACTIVE: restore brake tonic history and prior feedback pressure. | ACTIVE: price uncertainty from prompt context, missing anchors, and prior feedback. | ACTIVE: inject guarded constraints or block risky tool use under latched brake. | ACTIVE: update feedback window from tool failure, warning, or stream-only progress. | DEFERRED: compaction-time brake handoff needs live proof. | DEFERRED: subagent uncertainty import is v2. | ACTIVE: block closure or ask for evidence under guarded/latched brake. | ACTIVE: persist bounded brake history and discard raw uncertainty chatter. |
-| Branch continuity, suspend/resume, and truthful closure | ACTIVE: restore branch registry, active track, pending goals, and reminders. | ACTIVE: update branch/goal state from user intent and transcript cues. | ACTIVE: inject active-goal constraints before tools that could drift or close prematurely. | ACTIVE: mark continuity progress from artifacts, branch close, or returned-to-main signals. | DEFERRED: compaction is a continuity edge case; v2 will preserve active anchors. | DEFERRED: subagent results need parent-branch re-entry law. | ACTIVE: block "done" when branch or goal debt remains unresolved. | ACTIVE: consolidate open/closed/abandoned branch state. |
-| Intervention pricing versus neutrality | ACTIVE: restore budget, route, and modulator residue. | ACTIVE: choose inspect/execute/resume posture from user prompt plus state. | ACTIVE: route tool action as inspect, guarded execute, or blocked. | ACTIVE: feed host friction and evidence progress back into route pricing. | DEFERRED: compaction pricing is v2. | DEFERRED: subagent route pricing is v2. | ACTIVE: decide whether to allow stop, re-prompt, or require a check. | ACTIVE: publish only removable score-pricing support, never policy law. |
-| Blocker surfacing and goal-debt management | ACTIVE: restore pending goal refs and closure pressure inputs. | ACTIVE: create/update goal debt from unresolved user requests. | ACTIVE: block irreversible tools or inject missing-evidence constraints. | ACTIVE: classify whether evidence/continuity moved after tool use. | DEFERRED: compaction blocker summaries are v2. | DEFERRED: subagent blockers must be re-owned in v2. | ACTIVE: surface blockers through `decision: block` rather than fluent closure. | ACTIVE: preserve unresolved blockers as bounded session state. |
-| Multi-host executive continuity | ACTIVE: rehydrate a Claude host runtime session without flattening host differences. | ACTIVE: map Claude prompt event into shared Cortex runtime law. | ACTIVE: convert Claude hook affordance into Cortex route/brake behavior. | ACTIVE: convert Claude tool result into shared `ReferenceRealizationFeedback`. | DEFERRED: compaction semantics are host-specific and unearned. | DEFERRED: subagent semantics are host-specific and unearned. | ACTIVE: use Claude Stop semantics for Cortex closure pressure, not repo hygiene. | ACTIVE: persist host-local state in a portable Cortex shape. |
-| Offline consolidation and support geometry | ACTIVE: restore only explicit `OfflineSupportPublication` entries and support priors. | ACTIVE: allow published support priors to bias score pricing when host-matched and fresh. | ACTIVE: apply support priors only as score-pricing inputs for eligible families. | ACTIVE: collect support-memory episode candidates from public support snapshots. | DEFERRED: compaction-publication law is v2. | DEFERRED: subagent publication law is v2. | N/A: Stop validates the current closure; raw AUX memory never validates closure. | ACTIVE: build support-memory episodes/publications and keep raw AUX support-side only. |
+| Failure mode from `docs/CORTEX.md` §2 | SessionStart | UserPromptSubmit | PreToolUse | PostToolUse | PostToolUseFailure | PreCompact | SubagentStop | Stop | SessionEnd |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| Truth-preserving commitments and bounded certification | ARCHITECTURAL OWNER: would restore thread-local commitment summaries for later certification; no adapter code. | ARCHITECTURAL OWNER: would normalize the prompt into an event envelope before model action; no adapter code. | STRUCTURAL ADAPTER IMPLEMENTED: `PreToolUse:Bash` parses tool intent and can emit bounded runtime context; current content shape has no lift. | ARCHITECTURAL OWNER: would bind successful tool artifacts into commitment outcome; no adapter code. | ARCHITECTURAL OWNER: would bind failed tool results into falsified commitment state; no adapter code. | ARCHITECTURAL OWNER: compaction provenance remains a v2 stub. | ARCHITECTURAL OWNER: subagent claim provenance remains a v2 stub. | LIVE BEHAVIOR VALIDATED: manual Stop evidence corrected unsupported closure claims in non-clean trials. | ARCHITECTURAL OWNER: would persist bounded commitment summaries for the same thread and candidate resume state; no cross-thread proof. |
+| Bounded correction and verified-work preservation | ARCHITECTURAL OWNER: would restore active work-contract residue within a thread; no adapter code. | ARCHITECTURAL OWNER: would detect task/repair intent and set verification demand; no adapter code. | STRUCTURAL ADAPTER IMPLEMENTED: `PreToolUse:Bash` can inspect intended command before mutation; write-surface enforcement is not validated. | ARCHITECTURAL OWNER: would classify successful checks/artifacts into preservation state; no adapter code. | ARCHITECTURAL OWNER: would classify missing files, nonzero exit, stderr, and interrupted tools as preservation debt; no adapter code. | ARCHITECTURAL OWNER: compaction verified-structure handoff remains a v2 stub. | ARCHITECTURAL OWNER: subagent repair provenance remains a v2 stub. | LIVE BEHAVIOR VALIDATED: manual Stop evidence corrected a false "tests proven green" closure after no tests were run. | ARCHITECTURAL OWNER: would preserve trusted/falsified structure summaries for thread-local re-entry; no cross-thread proof. |
+| Uncertainty handling and brake | ARCHITECTURAL OWNER: would restore bounded brake history within the same thread; no adapter code. | ARCHITECTURAL OWNER: would price prompt uncertainty from missing anchors and prior feedback; no adapter code. | STRUCTURAL ADAPTER IMPLEMENTED: `PreToolUse:Bash` can emit a guarded last-feedback constraint; Gate 1 did not earn lift. | ARCHITECTURAL OWNER: would update feedback window from successful-but-warning tool results; no adapter code. | ARCHITECTURAL OWNER: would update feedback window from failed tool results and host friction; no adapter code. | ARCHITECTURAL OWNER: compaction-time brake handoff remains unearned. | ARCHITECTURAL OWNER: subagent uncertainty import remains unearned. | ARCHITECTURAL OWNER: guarded/latched-brake Stop behavior is assigned here but not live-validated in the trusted manual subset. | ARCHITECTURAL OWNER: would persist bounded brake summaries only; no adapter code. |
+| Branch continuity, suspend/resume, and truthful closure | ARCHITECTURAL OWNER: would restore thread-local branch/goal refs; cross-thread resume keying is open. | ARCHITECTURAL OWNER: would update branch/goal state from user intent; no adapter code. | STRUCTURAL ADAPTER IMPLEMENTED: `PreToolUse:Bash` can surface active-goal constraints before action; Gate 1 content shape failed behaviorally. | ARCHITECTURAL OWNER: would mark continuity progress after successful tools; no adapter code. | ARCHITECTURAL OWNER: would mark continuity debt after failed tools; no adapter code. | ARCHITECTURAL OWNER: compaction continuity is a v2 edge case. | ARCHITECTURAL OWNER: parent-branch re-entry from subagents remains a v2 seam. | LIVE BEHAVIOR VALIDATED: manual Stop evidence corrected pending-goal false closure. | ARCHITECTURAL OWNER: would consolidate thread-local open/closed/abandoned state; project-level resume is open. |
+| Intervention pricing versus neutrality | ARCHITECTURAL OWNER: would restore budget/route residue for a thread; no adapter code. | ARCHITECTURAL OWNER: would choose inspect/execute/resume posture from prompt plus state; no adapter code. | STRUCTURAL ADAPTER IMPLEMENTED: `PreToolUse:Bash` can carry route/brake pricing into hook output; no behavior lift earned. | ARCHITECTURAL OWNER: would feed successful evidence progress back into route pricing; no adapter code. | ARCHITECTURAL OWNER: would feed failed-tool friction and degradation into route pricing; no adapter code. | ARCHITECTURAL OWNER: compaction pricing is v2. | ARCHITECTURAL OWNER: subagent route pricing is v2. | ARCHITECTURAL OWNER: Stop allow/block pricing is assigned here, but only closure-pressure behavior is validated. | ARCHITECTURAL OWNER: would publish removable score-pricing support, never policy law; no adapter code. |
+| Blocker surfacing and goal-debt management | ARCHITECTURAL OWNER: would restore pending goal refs and closure pressure inputs; no adapter code. | ARCHITECTURAL OWNER: would create/update goal debt from unresolved user requests; no adapter code. | STRUCTURAL ADAPTER IMPLEMENTED: `PreToolUse:Bash` can inject missing-evidence constraints before action; Gate 1 did not earn lift. | ARCHITECTURAL OWNER: would classify evidence/continuity progress after successful tools; no adapter code. | ARCHITECTURAL OWNER: would classify evidence/continuity debt after failed tools; no adapter code. | ARCHITECTURAL OWNER: compaction blocker summaries are v2. | ARCHITECTURAL OWNER: subagent blockers must be re-owned in v2. | LIVE BEHAVIOR VALIDATED: manual Stop evidence surfaced pending-goal and missing-evidence blockers through block feedback. | ARCHITECTURAL OWNER: would preserve unresolved blockers as bounded state; no cross-thread proof. |
+| Multi-host executive continuity | ARCHITECTURAL OWNER: would initialize a Claude Code Desktop runtime session without flattening host differences; no adapter code. | ARCHITECTURAL OWNER: would map prompt events into shared Cortex law; no adapter code. | STRUCTURAL ADAPTER IMPLEMENTED: `PreToolUse:Bash` converts a Claude hook affordance into the shared runtime-context bridge. | ARCHITECTURAL OWNER: would convert successful Claude tool results into shared feedback; no adapter code. | ARCHITECTURAL OWNER: would convert failed Claude tool results into shared feedback; no adapter code. | ARCHITECTURAL OWNER: compaction semantics are host-specific and unearned. | ARCHITECTURAL OWNER: subagent semantics are host-specific and unearned. | LIVE BEHAVIOR VALIDATED: Claude Stop semantics can deliver closure pressure to the model; product adapter still open. | ARCHITECTURAL OWNER: would persist host-local state in portable Cortex shape; cross-thread resume is unearned. |
+| Offline consolidation and support geometry | ARCHITECTURAL OWNER: would restore explicit publications and support priors only after stable resume keying; no adapter code. | ARCHITECTURAL OWNER: would let fresh host-matched support priors bias score pricing; no adapter code. | STRUCTURAL ADAPTER IMPLEMENTED: `PreToolUse:Bash` can carry score-pricing context, but support-prior behavior is not validated. | ARCHITECTURAL OWNER: would collect publication candidates from successful public support snapshots; no adapter code. | ARCHITECTURAL OWNER: would collect degradation candidates from failed support snapshots; no adapter code. | ARCHITECTURAL OWNER: compaction-publication law is v2. | ARCHITECTURAL OWNER: subagent publication law is v2. | ARCHITECTURAL OWNER: Stop does not validate raw AUX memory; closure pressure must remain task-local. | ARCHITECTURAL OWNER: would build bounded episodes/publications while raw AUX stays support-side; no cross-thread proof. |
 
-Coverage result: every Cortex failure mode has at least one v1 `ACTIVE` hook
-with a named behavior path. `PreCompact` and `SubagentStop` are installed but
-stubbed because their lifecycle cases are not universal and their semantics
-need separate empirical proof. Their cells are not empty by accident.
+Coverage result: every Cortex failure mode has at least one assigned lifecycle
+owner, but assignment is not implementation and implementation is not behavior
+lift. Today only `PreToolUse:Bash` has a structural adapter path in
+`cortex/hosts/claude_code_desktop/`, and only `Stop` closure pressure has
+narrow paired manual behavior evidence. `PreCompact` and `SubagentStop` remain
+explicit v2 stubs; `PostToolUseFailure` is now a distinct v1 design event, not
+an alias for `PostToolUse`.
 
 ## 3. Hook-by-Hook Design
 
@@ -70,12 +76,15 @@ need separate empirical proof. Their cells are not empty by accident.
   preservation, uncertainty brake, branch continuity, intervention pricing,
   blocker surfacing, multi-host continuity, offline consolidation.
 - Input observation: `session_id`, `transcript_path`, `cwd`, model/version
-  fields when present, project root, plugin config, and persisted per-session
+  fields when present, project root, plugin config, and persisted thread-local
   state under `CLAUDE_PLUGIN_DATA`.
-- State transition: load or initialize `cortex/hosts/claude/runtime.py::ClaudeRuntimeSession`;
-  restore branch registry, pending goals, brake tonic history, feedback window,
-  preservation summaries, and explicit `OfflineSupportPublication` entries
-  parsed by `cortex/aux/publication.py`.
+- State transition: load or initialize `cortex/hosts/claude/runtime.py::ClaudeRuntimeSession`
+  for the current `session_id`. The runtime-context probe showed fresh Code-tab
+  threads in the same `cwd` can receive different `session_id` values, so this
+  hook must not claim cross-thread resume from `session_id+cwd` keying. It may
+  restore only bounded thread-local branch registry, pending goals, brake tonic
+  history, feedback window, preservation summaries, and explicit
+  `OfflineSupportPublication` entries parsed by `cortex/aux/publication.py`.
 - Model-visible output: observe mode emits nothing. Enforce mode may emit a
   bounded `CORTEX_SESSION_CONTEXT_V1` additional-context block only when
   restored state contains pending goal debt, a guarded/latched brake, or a
@@ -85,9 +94,11 @@ need separate empirical proof. Their cells are not empty by accident.
   restored state is clean, or when `hooks.SessionStart=false`. Observe mode
   performs the restore and logs the would-have-emitted reason without
   additional context.
-- Connectivity trace: `SessionStart` payload -> `ClaudeRuntimeSession` restore
-  -> later `UserPromptSubmit`/`PreToolUse` route and `Stop` closure decisions
-  -> additional context or block reason visible to the model.
+- Connectivity trace: `SessionStart` payload -> thread-local
+  `ClaudeRuntimeSession` restore -> later `UserPromptSubmit`/`PreToolUse` route
+  and `Stop` closure decisions -> additional context or block reason visible to
+  the model. Project-level resume requires a future fingerprinting probe before
+  it can be model-visible.
 - Bounded outputs: session context is capped by `max_context_chars`, redacts raw
   transcript text, and names only state classes, pending anchors, and bounded
   constraints. It never emits raw AUX episodes.
@@ -107,9 +118,10 @@ need separate empirical proof. Their cells are not empty by accident.
 - Model-visible output: enforce mode emits a bounded prompt-adjacent
   additional-context block only when Cortex has a non-clean constraint:
   unresolved goal debt, missing resume anchor, guarded brake, or immediate
-  verification demand. If the prior newest feedback is noisy, the block reuses
-  `cortex/hosts/runtime_context.py::runtime_context_from_last_feedback` so the
-  bridge stays last-feedback-only.
+  verification demand. If the prior newest feedback is noisy, prompt-adjacent
+  use of `cortex/hosts/runtime_context.py::runtime_context_from_last_feedback`
+  remains research-only until content shape earns lift at either
+  `PreToolUse` or `UserPromptSubmit`.
 - Kill switch / observe mode: clean prompt plus clean state emits no block.
   Observe mode updates state and logs route/closure pressure but leaves the
   prompt unshaped.
@@ -131,17 +143,21 @@ need separate empirical proof. Their cells are not empty by accident.
   for guarded/latched state, `cortex/runtime/operator_brain_capability.py` for
   capability envelope defaults, and support priors only through
   `OfflineSupportPublication` score-pricing inputs.
-- Model-visible output: enforce mode either allows the tool with
+- Model-visible output: enforce mode may allow the tool with
   `hookSpecificOutput.additionalContext` carrying a bounded route/brake
-  constraint, or blocks the tool when the route is `BLOCKED`, the tool would
-  violate a verified-work allowed write surface, or a latched brake requires
-  user/evidence recovery first.
+  constraint only when `runtime_context.pretooluse_model_visible=true`. That
+  flag may remain disabled by default because Gate 1 did not earn behavior
+  lift. Tool blocking remains a separate future enforcement path when the route
+  is `BLOCKED`, the tool would violate a verified-work allowed write surface,
+  or a latched brake requires user/evidence recovery first.
 - Kill switch / observe mode: emit nothing for low-risk inspect tools under
   clean state. Observe mode never blocks and records the would-have-blocked
   reason.
 - Connectivity trace: PreToolUse payload -> Cortex route/brake/preservation
-  assessment -> `additionalContext` or block decision -> the model's next
-  post-tool message changes or the tool is prevented.
+  assessment -> optional `additionalContext` or block decision -> the model's
+  next post-tool message changes or the tool is prevented. The optional
+  runtime-context branch is structural only until content-shape research earns
+  live lift.
 - Bounded outputs: context is imperative and local to the tool call, no
   acknowledgement requests, no generic advice, capped by `max_context_chars`.
 
@@ -150,11 +166,13 @@ need separate empirical proof. Their cells are not empty by accident.
 - Failure modes addressed: commitments, verified-work preservation, uncertainty
   brake, continuity/closure, intervention pricing, blockers, multi-host
   continuity, offline consolidation.
-- Input observation: `tool_name`, `tool_input`, tool result/status/stdout/stderr
-  when exposed, `tool_use_id`, `cwd`, `session_id`, and transcript pointer.
+- Input observation: `tool_name`, `tool_input`, successful tool
+  result/status/stdout/stderr when exposed, `tool_use_id`, `cwd`, `session_id`,
+  and transcript pointer.
 - State transition: classify concrete artifacts, external records, evidence
   progress, continuity progress, warning codes, host friction, and probe status
-  into `ReferenceRealizationFeedback`; append through
+  from successful or completed tool execution into `ReferenceRealizationFeedback`;
+  append through
   `ReferenceRealizationFeedbackWindow`; update `ClaudeRuntimeSession`,
   preservation summaries, and closure pressure.
 - Model-visible output: silent state update by default. If the hook output API
@@ -166,10 +184,38 @@ need separate empirical proof. Their cells are not empty by accident.
   evidence progress emits nothing. Observe mode records feedback but never
   injects or blocks.
 - Connectivity trace: PostToolUse result -> `ReferenceRealizationFeedback` ->
-  `runtime_context_from_last_feedback` or `Stop` closure pressure -> next
+  future content-shaped runtime context or `Stop` closure pressure -> next
   model-visible constraint/block.
 - Bounded outputs: newest feedback only; no accumulation beyond the three-entry
   internal window; raw stdout is not persisted unless user opts into raw logs.
+
+### PostToolUseFailure
+
+- Failure modes addressed: commitments, verified-work preservation, uncertainty
+  brake, continuity/closure, intervention pricing, blockers, multi-host
+  continuity, offline consolidation.
+- Input observation: `tool_name`, `tool_input`, failure status, stderr,
+  nonzero exit, missing-file signal, interruption/cancellation metadata,
+  `tool_use_id`, `cwd`, `session_id`, and transcript pointer when exposed by
+  Claude Code Desktop.
+- State transition: classify failed tool execution as distinct
+  `ReferenceRealizationFeedback`, not as a successful `PostToolUse` result.
+  Failure classification should record evidence degradation, continuity debt,
+  host friction, verification gaps, and preservation debt while keeping raw
+  stderr/output out of default persisted state.
+- Model-visible output: silent state update by default. Enforce mode should
+  prefer bounded consumption by a later `Stop` block or future content-shaped
+  `PreToolUse`/`UserPromptSubmit` signal. It must not produce conversational
+  acknowledgement demands.
+- Kill switch / observe mode: observe mode logs the failure classification and
+  would-have-blocked closure tags only. Enforce mode may become eligible after
+  the PostToolUseFailure -> feedback -> Stop loop has paired manual evidence.
+- Connectivity trace: PostToolUseFailure payload -> newest
+  `ReferenceRealizationFeedback` -> `Stop` closure pressure or a later
+  content-shaped pre-action signal -> model-visible recovery or truthful
+  blocked status.
+- Bounded outputs: newest feedback only, capped by `max_context_chars`; raw
+  stderr/output requires explicit raw developer logging.
 
 ### PreCompact
 
@@ -241,14 +287,15 @@ need separate empirical proof. Their cells are not empty by accident.
   through `cortex/aux/publication.py`; keep support priors in the publication
   shape used by `cortex/aux/support_priors.py`.
 - Model-visible output: silent state update only. The behavior change happens
-  when a later `SessionStart`, `UserPromptSubmit`, or `PreToolUse` consumes the
-  publication-shaped state.
+  only when a later event in the same thread or a future earned project-resume
+  key consumes the publication-shaped state.
 - Kill switch / observe mode: if the session has no meaningful state change,
   write no episode and no publication. Observe mode persists diagnostic state
   but does not make publications eligible for score pricing.
 - Connectivity trace: SessionEnd public support snapshot -> bounded episode /
-  `OfflineSupportPublication` -> next session score pricing or closure pressure
-  -> later additional context/block decision.
+  `OfflineSupportPublication` -> thread-local score pricing or closure pressure
+  -> later additional context/block decision. Cross-thread resume remains open
+  until project-fingerprint keying is tested.
 - Bounded outputs: raw transcripts are dropped by default; publication refs,
   tags, and metadata are bounded and redacted.
 
@@ -267,10 +314,14 @@ ${CLAUDE_PLUGIN_DATA}/cortex/
   logs/*.jsonl
 ```
 
-`project_fingerprint` is derived from the normalized project root and never
-from a managed worktree suffix alone. The managed-worktree probes show two
-realities that the build must handle: project-local settings can fire inside
-`.claude/worktrees/...`, while user-scope plugins in the sandbox saw the
+`session_id` is thread-local until proven otherwise. The runtime-context probe
+showed two fresh Code-tab threads in the same sandbox with different
+`session_id` values, so `session_id+cwd` is not a cross-thread resume key.
+`project_fingerprint` is a namespace for logs and candidate resume state, not a
+claim that resume is earned. It is derived from the normalized project root and
+never from a managed worktree suffix alone. The managed-worktree probes show
+two realities that the build must handle: project-local settings can fire
+inside `.claude/worktrees/...`, while user-scope plugins in the sandbox saw the
 project root as `cwd`. The plugin therefore normalizes the project root from
 the best available tuple: `cwd`, `transcript_path`, and configured repo root
 allowlist.
@@ -281,12 +332,16 @@ or opportunistic state mutation are allowed. `ReferenceRealizationFeedback`
 entries remain bounded to the newest internal window; model-visible runtime
 context uses only the newest feedback object.
 
-Across sessions, `SessionEnd` consolidates only bounded public support state:
-branch/goal refs, brake history summaries, commitment summaries, verified-work
-preservation summaries, support references, and publication tags. Raw
-transcript text, raw tool output, personal file contents, and raw AUX SQLite
-episodes are not model-visible and are not re-entered directly. `SessionStart`
-restores session state and publication-shaped support only; raw AUX memory remains support-side.
+Across threads, resume is an explicit open question, not a v1 claim. A future
+probe must earn a stable project fingerprint from `cwd`, `transcript_path`, and
+configured project root before `SessionStart` re-enters `SessionEnd` state from
+another thread. Until then, `SessionEnd` may consolidate only bounded candidate
+support state: branch/goal refs, brake history summaries, commitment summaries,
+verified-work preservation summaries, support references, and publication
+tags. Raw transcript text, raw tool output, personal file contents, and raw AUX
+SQLite episodes are not model-visible and are not re-entered directly.
+`SessionStart` restores only state whose thread-local or project-resume key is
+earned; raw AUX memory remains support-side.
 
 ## 5. User Configuration
 
@@ -300,6 +355,7 @@ The v1 config is intentionally small and defaults to observe-first:
     "UserPromptSubmit": true,
     "PreToolUse": true,
     "PostToolUse": true,
+    "PostToolUseFailure": true,
     "PreCompact": false,
     "SubagentStop": false,
     "Stop": true,
@@ -308,6 +364,9 @@ The v1 config is intentionally small and defaults to observe-first:
   "max_context_chars": 720,
   "logging_level": "redacted",
   "repo_roots": [],
+  "runtime_context": {
+    "pretooluse_model_visible": false
+  },
   "closure_validation": {
     "allowlist_repo_roots": [],
     "block_on_unresolved_goal_debt": true,
@@ -324,8 +383,33 @@ The v1 config is intentionally small and defaults to observe-first:
 
 `mode=observe` updates state, logs decisions, and reports would-have-blocked
 reasons without changing model behavior. `mode=enforce` allows bounded
-additional context and block decisions. Users should install in observe mode,
-review logs, then opt into enforce mode per repo root.
+additional context and block decisions, except that PreToolUse runtime-context
+emission may remain disabled by default through
+`runtime_context.pretooluse_model_visible=false` until content-shape research
+earns behavior lift. Users should install in observe mode, review logs, then
+opt into enforce mode per repo root.
+
+### Deployment Constraints
+
+- Hook config caching: Codex App and Claude Code Desktop evidence both show
+  that already-open threads can keep stale hook command paths after config or
+  plugin edits. Plugin updates must be restart-aware and must preserve old
+  entrypoints long enough for stale sessions to fail safely.
+- Configuration staleness: mode changes, hook enable/disable changes, and
+  plugin updates apply only to new or restarted sessions unless a specific
+  hot-reload probe proves otherwise. Every hook log should include plugin
+  version, Cortex version, schema version, mode, and runtime-context emission
+  flags.
+- Structured-output rejection loops: product hooks must not demand repo
+  workflow grids, exact markdown shapes, or acknowledgement strings. Stop
+  closure pressure is semantic and task-local; it blocks false closure,
+  unresolved evidence debt, or unsafe brake state without turning normal
+  conversation into a validator loop.
+- Codex/user operator split: Codex can prepare plugin files, arm modes, inspect
+  logs, and analyze evidence. Codex cannot drive Claude Code Desktop's GUI,
+  type into the Code tab, or observe model responses directly. Any Claude Code
+  Desktop behavior-lift probe requires the user to enter prompts manually and
+  preserve or report visible output.
 
 ## 6. Cortex Packaging Strategy
 
@@ -370,6 +454,9 @@ The first structural build seam wires only `PreToolUse:Bash` end-to-end through
 `cortex/hosts/claude_code_desktop/hook_control.py`. Other hook scripts may
 exist in the plugin skeleton as no-op transport stubs; they do not count as
 implemented Cortex behavior until their adapter paths and tests land.
+The trusted Stop closure-pressure behavior evidence came from temporary manual
+probe plugins, not from a product Stop adapter under
+`cortex/hosts/claude_code_desktop/`.
 
 ## 7. Multi-Host Shipping Truth
 
@@ -399,7 +486,7 @@ Truth distinctions from `docs/CORTEX.md` §3:
 
 Required evidence before any live shipping-lift claim:
 
-- structural hook tests for every active v1 hook;
+- structural hook tests for every hook claimed as implemented;
 - empirical proof that each model-visible emit reaches the Code-tab model;
 - paired baseline-vs-shaped tasks scored against premature closure, evidence
   recovery, and goal continuity;
@@ -434,9 +521,11 @@ feature.
    the project root, not `.claude/worktrees/...`; it therefore does not prove an actual managed-worktree cwd case. If a future Code-tab subject uses an actual managed-worktree cwd, the design changes by requiring stronger root normalization and state-key migration tests.
 2. Hook output semantics beyond `PreToolUse:Bash` and `Stop`. Empirical probes
    confirmed `PreToolUse` additional context and Stop block continuation. If
-   `SessionStart`, `UserPromptSubmit`, or `PostToolUse` cannot emit
-   additionalContext in practice, their v1 content remains state-update-only
-   and the model-visible path must route through `PreToolUse` and `Stop`.
+   `SessionStart`, `UserPromptSubmit`, `PostToolUse`, or
+   `PostToolUseFailure` cannot emit additionalContext in practice, their v1
+   content remains state-update-only and the model-visible path must route
+   through `PreToolUse`, `UserPromptSubmit`, or `Stop` only after those paths
+   are separately earned.
 3. Non-Bash tool coverage. Current probes exercised Bash. If other tools expose
    different payload shapes, the build must add per-tool observation adapters
    before enforcing on those tools.
@@ -446,6 +535,42 @@ feature.
 5. Live over-constraint risk. If runtime context causes correct outputs to be
    refused under irrelevant prior warnings, enforce mode must narrow emit
    predicates before any shipping-lift claim.
+6. Project-fingerprint resume keying. `session_id+cwd` does not earn
+   cross-thread resume. A future SessionStart/SessionEnd probe must establish
+   whether `cwd`, `transcript_path`, configured project root, or another stable
+   key can safely re-enter bounded state across fresh Code-tab threads.
+
+### PreToolUse Content Shape Research
+
+Gate 1 finding: real `CORTEX_RUNTIME_CONTEXT_V1` content reached Claude Code
+Desktop through `PreToolUse:Bash` additional context, but paired behavior was
+mixed: one shaped win, one no-change, one shaped regression, and one neutral.
+That is a content-shape failure for the current bridge, not proof that
+`PreToolUse` is the wrong lifecycle surface.
+
+Content-shape hypotheses worth testing before enabling PreToolUse runtime
+context by default:
+
+- Situated failure description versus generic constraint. A message that names
+  the specific failed command, missing artifact, or unverified claim may work
+  better than a generic route/brake schema.
+- Short pointed signal versus full schema. A compact one- or two-sentence
+  instruction may outperform the current multi-field `CORTEX_RUNTIME_CONTEXT_V1`
+  shape by reducing model distraction and harness leakage.
+- Conditional invocation only on strong prior signal. Runtime context may need
+  to emit only after high-confidence evidence degradation, missing-file output,
+  latched brake, or explicit continuity debt, not after every noisy feedback
+  object.
+- Possible relocation to `UserPromptSubmit`. If prompt-adjacent constraints are
+  easier for Claude Code Desktop to use than pre-tool constraints, the same
+  content family should be tested at `UserPromptSubmit` before concluding that
+  the content cannot lift behavior.
+
+v1 may need to ship with PreToolUse runtime context disabled by default, while
+still keeping the `PreToolUse:Bash` structural adapter available for observe
+logs, route/brake pricing, and future content-shape trials. Pending this
+research, Stop closure pressure is the only actively firing Claude Code
+Desktop bridge with paired behavior-lift evidence.
 
 ## 10. v2 Deferrals
 
@@ -496,13 +621,24 @@ failure-mode trace or be rejected as generic bloat or post-training territory.
 
 No plugin code should be written until this design passes these gates:
 
-- Every `ACTIVE` lattice cell has a connectivity trace from hook payload through
-  existing `cortex/**` state to model-visible additional context, block
-  decision, route behavior, or later lifecycle consumption.
-- Every failure mode in `docs/CORTEX.md` §2 has v1 coverage from at least one
-  active hook.
+- Every lattice cell uses exactly one evidence status:
+  `ARCHITECTURAL OWNER`, `STRUCTURAL ADAPTER IMPLEMENTED`, or
+  `LIVE BEHAVIOR VALIDATED`.
+- Every `STRUCTURAL ADAPTER IMPLEMENTED` cell names the
+  `cortex/hosts/claude_code_desktop/` path that makes it structural.
+- Every `LIVE BEHAVIOR VALIDATED` cell names the paired empirical evidence and
+  still avoids a shipping claim unless product adapter code also exists.
+- Every failure mode in `docs/CORTEX.md` §2 has at least one assigned lifecycle
+  owner, without confusing ownership for implementation.
+- `PostToolUseFailure` is treated as distinct from `PostToolUse`.
 - `PreCompact` and `SubagentStop` are explicitly stubbed with v2 promotion
   paths; no other hook is empty by accident.
+- Cross-thread resume is not claimed until project-fingerprint keying is
+  empirically earned.
+- Deployment constraints for hook caching, session restart, structured-output
+  loops, and the Codex/user operator split are named.
+- PreToolUse content-shape research is named, and PreToolUse runtime context is
+  allowed to remain disabled by default.
 - The design keeps live-evidence and structural-evidence claims separate.
 - The design does not update shipping truth before build/eval evidence.
 - AUX remains publication-only and score-pricing-only; raw AUX episodes do not reach the model and cannot mutate routing, certification, or blockedness.

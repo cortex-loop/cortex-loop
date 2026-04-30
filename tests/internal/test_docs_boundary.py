@@ -924,17 +924,19 @@ def test_cortex_plugin_design_preserves_scope_and_truth_boundaries() -> None:
     assert "not a package of \"PreToolUse and Stop bridges\"" in text
     assert "docs/CORTEX.md` §1" in text
     assert "docs/CORTEX.md` §3" in text
-    assert "Claude Code Desktop as the intended v1 shipping Cortex surface" in text
+    assert "Claude Code Desktop as the intended v1 plugin surface" in text
     assert "does not change current shipping truth" in text
     assert "`openai:operator_cli`" in text
-    assert "live paired evidence earns shipping lift" in text
+    assert "live paired evidence earns behavior lift" in text
 
-    # Eight hooks and eight failure modes are covered in the lattice.
+    # Hook events and failure modes are covered without conflating ownership,
+    # structural adapter code, and live behavior evidence.
     for hook in [
         "SessionStart",
         "UserPromptSubmit",
         "PreToolUse",
         "PostToolUse",
+        "PostToolUseFailure",
         "PreCompact",
         "SubagentStop",
         "Stop",
@@ -953,11 +955,21 @@ def test_cortex_plugin_design_preserves_scope_and_truth_boundaries() -> None:
         "Offline consolidation and support geometry",
     ]:
         assert failure_mode in text
-    assert text.count("ACTIVE:") >= 30
-    assert "DEFERRED: compaction" in text
-    assert "DEFERRED: subagent" in text
-    assert "N/A: Stop validates the current closure" in text
-    assert "not empty by accident" in text
+    assert "ACTIVE:" not in text
+    assert "DEFERRED:" not in text
+    assert "N/A:" not in text
+    assert "ARCHITECTURAL OWNER:" in text
+    assert "STRUCTURAL ADAPTER IMPLEMENTED:" in text
+    assert "LIVE BEHAVIOR VALIDATED:" in text
+    assert "Gate 1 did not earn lift" in text
+    assert "`Stop` closure pressure has" in text
+    assert "empty by accident" in text
+    assert "session_id+cwd` is not a cross-thread resume key" in text
+    assert "runtime_context.pretooluse_model_visible=false" in text
+    assert "PostToolUseFailure -> feedback -> Stop loop" in text
+    assert "PreToolUse Content Shape Research" in text
+    assert "Stop closure pressure is the only actively firing" in text
+    assert "Codex cannot drive Claude Code Desktop's GUI" in text
 
     # Existing Cortex modules are the source of law; the plugin is wiring.
     for ref in [
