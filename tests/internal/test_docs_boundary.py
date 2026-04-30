@@ -33,6 +33,9 @@ CLAUDE_CODE_DESKTOP_PRETOOLUSE_PROBE_PATH = (
 CLAUDE_CODE_USER_SCOPE_PLUGIN_PRETOOLUSE_PROBE_PATH = (
     REPO_ROOT / "docs" / "recon" / "claude_code_user_scope_plugin_pretooluse_probe.md"
 )
+CLAUDE_CODE_USER_SCOPE_PLUGIN_MANAGED_WORKTREE_PROBE_PATH = (
+    REPO_ROOT / "docs" / "recon" / "claude_code_user_scope_plugin_managed_worktree_probe.md"
+)
 STATUS_REGISTRY_PATH = REPO_ROOT / "internal" / "truth" / "cortex_status.json"
 STATUS_DOC_PATH = REPO_ROOT / "docs" / "CORTEX_STATUS.md"
 WORKFLOW_DOC_PATH = REPO_ROOT / "docs" / "internal" / "REPO_WORKFLOW.md"
@@ -406,6 +409,7 @@ def test_public_docs_point_to_status_and_keep_archive_out_of_the_front_door() ->
     assert "recon/codex_app_hook_probe.md" in docs_index
     assert "recon/claude_code_desktop_pretooluse_probe.md" in docs_index
     assert "recon/claude_code_user_scope_plugin_pretooluse_probe.md" in docs_index
+    assert "recon/claude_code_user_scope_plugin_managed_worktree_probe.md" in docs_index
     # CORTEX.md content anchors the previously-fragmented charter and
     # boundary identity material in one canonical surface.
     assert "executive-function layer that wraps a model after" in cortex_doc
@@ -415,6 +419,7 @@ def test_public_docs_point_to_status_and_keep_archive_out_of_the_front_door() ->
     assert "docs/recon/codex_app_hook_probe.md" in cortex_doc
     assert "docs/recon/claude_code_desktop_pretooluse_probe.md" in cortex_doc
     assert "docs/recon/claude_code_user_scope_plugin_pretooluse_probe.md" in cortex_doc
+    assert "docs/recon/claude_code_user_scope_plugin_managed_worktree_probe.md" in cortex_doc
     assert "EVAL_RUBRIC.md" in cortex_doc
     assert "BASELINE_SHAPED_EXAMPLES.md" in cortex_doc
     assert "CROSS_HOST_SKETCH.md" in cortex_doc
@@ -465,6 +470,7 @@ def test_docs_directory_only_exposes_archive_and_workflow_subtrees() -> None:
     assert [path.name for path in (DOCS_ROOT / "internal").iterdir()] == ["REPO_WORKFLOW.md"]
     assert sorted(path.name for path in (DOCS_ROOT / "recon").iterdir()) == [
         "claude_code_desktop_pretooluse_probe.md",
+        "claude_code_user_scope_plugin_managed_worktree_probe.md",
         "claude_code_user_scope_plugin_pretooluse_probe.md",
         "codex_app_hook_probe.md",
         "lifecycle_first_surface_matrix.md",
@@ -707,6 +713,54 @@ def test_claude_code_user_scope_plugin_pretooluse_probe_records_findings_and_cav
         "tool_use_id",
         "stop_hook_active",
         "last_assistant_message",
+    ]:
+        assert f"`{key}`" in text
+
+
+def test_claude_code_user_scope_plugin_managed_worktree_probe_records_cwd_finding() -> None:
+    text = _read(CLAUDE_CODE_USER_SCOPE_PLUGIN_MANAGED_WORKTREE_PROBE_PATH)
+
+    assert "Surface: internal / recon" in text
+    assert "Probe date: 2026-04-30" in text
+    assert "Claude Code Desktop Code tab" in text
+    assert "cortex-user-scope-worktree-probe" in text
+    assert "CORTEX_WORKTREE_PROBE_SENTINEL_2026_05_01" in text
+    assert "/Users/erikahoward/cortex-plugin-sandbox" in text
+    assert "1.5354.0" in text
+    assert "2.1.121" in text
+
+    for phrase in [
+        "Q1: Does the user-scope plugin fire in the sandbox Code-tab subject?",
+        "Q2: What `cwd` did the hook receive?",
+        "Q3: Does this prove user-scope plugin behavior inside a managed-worktree path?",
+        "**Confirmed**",
+        "**Confirmed: sandbox root**",
+        "**Negative for that exact condition**",
+        "This run did not observe a `.claude/worktrees/...` path",
+        "no repo-local `.claude/settings.json`",
+        "Evidence Files",
+        "/Users/erikahoward/.claude/plugins/data/cortex-user-scope-worktree-probe-inline/pretool_raw.jsonl",
+        "/Users/erikahoward/.claude/plugins/data/cortex-user-scope-worktree-probe-inline/summary.jsonl",
+        "Raw Hook Input",
+        "Field Enumeration",
+        "No undocumented top-level fields were observed",
+        "Actual Assistant Output",
+        "hook_additional_context",
+        "Cleanup Verification",
+        "does not prove behavior for a future Code-tab session whose effective `cwd` is actually a managed worktree",
+        "product Cortex model-output lift",
+    ]:
+        assert phrase in text
+
+    for key in [
+        "session_id",
+        "transcript_path",
+        "cwd",
+        "permission_mode",
+        "hook_event_name",
+        "tool_name",
+        "tool_input",
+        "tool_use_id",
     ]:
         assert f"`{key}`" in text
 
