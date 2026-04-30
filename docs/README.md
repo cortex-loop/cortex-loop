@@ -21,5 +21,7 @@ Active docs:
   empirical project Stop-hook load/fire/block evidence
 - [Claude Code Desktop PreToolUse Probe](recon/claude_code_desktop_pretooluse_probe.md) —
   empirical Code-tab PreToolUse fire/additionalContext evidence
+- [Claude Code User-Scope Plugin PreToolUse Probe](recon/claude_code_user_scope_plugin_pretooluse_probe.md) —
+  empirical user-scope plugin PreToolUse/Stop coexistence evidence
 
 Historical runtime, lab, and governance material now lives under [archive/](archive/).
