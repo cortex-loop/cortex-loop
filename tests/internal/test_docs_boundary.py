@@ -41,6 +41,9 @@ CLAUDE_CODE_USER_SCOPE_PLUGIN_MANAGED_WORKTREE_PROBE_PATH = (
 CLAUDE_CODE_CORTEX_RUNTIME_CONTEXT_CONNECTIVITY_PROBE_PATH = (
     REPO_ROOT / "docs" / "recon" / "claude_code_cortex_runtime_context_connectivity_probe.md"
 )
+CLAUDE_CODE_CORTEX_STOP_CLOSURE_CONNECTIVITY_PROBE_PATH = (
+    REPO_ROOT / "docs" / "recon" / "claude_code_cortex_stop_closure_connectivity_probe.md"
+)
 STATUS_REGISTRY_PATH = REPO_ROOT / "internal" / "truth" / "cortex_status.json"
 STATUS_DOC_PATH = REPO_ROOT / "docs" / "CORTEX_STATUS.md"
 WORKFLOW_DOC_PATH = REPO_ROOT / "docs" / "internal" / "REPO_WORKFLOW.md"
@@ -418,6 +421,7 @@ def test_public_docs_point_to_status_and_keep_archive_out_of_the_front_door() ->
     assert "recon/claude_code_user_scope_plugin_pretooluse_probe.md" in docs_index
     assert "recon/claude_code_user_scope_plugin_managed_worktree_probe.md" in docs_index
     assert "recon/claude_code_cortex_runtime_context_connectivity_probe.md" in docs_index
+    assert "recon/claude_code_cortex_stop_closure_connectivity_probe.md" in docs_index
     # CORTEX.md content anchors the previously-fragmented charter and
     # boundary identity material in one canonical surface.
     assert "executive-function layer that wraps a model after" in cortex_doc
@@ -431,6 +435,7 @@ def test_public_docs_point_to_status_and_keep_archive_out_of_the_front_door() ->
     assert "docs/recon/claude_code_user_scope_plugin_pretooluse_probe.md" in cortex_doc
     assert "docs/recon/claude_code_user_scope_plugin_managed_worktree_probe.md" in cortex_doc
     assert "docs/recon/claude_code_cortex_runtime_context_connectivity_probe.md" in cortex_doc
+    assert "docs/recon/claude_code_cortex_stop_closure_connectivity_probe.md" in cortex_doc
     assert "EVAL_RUBRIC.md" in cortex_doc
     assert "BASELINE_SHAPED_EXAMPLES.md" in cortex_doc
     assert "CROSS_HOST_SKETCH.md" in cortex_doc
@@ -439,6 +444,7 @@ def test_public_docs_point_to_status_and_keep_archive_out_of_the_front_door() ->
     assert "PreToolUse` fired for Bash" in cortex_doc
     assert "user-scope plugin" in cortex_doc
     assert "Gate 1 failed" in cortex_doc
+    assert "Stop x closure pressure" in cortex_doc
     assert "Mission Reflection grid out of product packaging" in cortex_doc
     # Workflow rules unchanged.
     assert "paid OpenAI service-lane proof is never part of the default bundle" in workflow
@@ -487,6 +493,7 @@ def test_docs_directory_only_exposes_archive_and_workflow_subtrees() -> None:
     assert [path.name for path in (DOCS_ROOT / "internal").iterdir()] == ["REPO_WORKFLOW.md"]
     assert sorted(path.name for path in (DOCS_ROOT / "recon").iterdir()) == [
         "claude_code_cortex_runtime_context_connectivity_probe.md",
+        "claude_code_cortex_stop_closure_connectivity_probe.md",
         "claude_code_desktop_pretooluse_probe.md",
         "claude_code_user_scope_plugin_managed_worktree_probe.md",
         "claude_code_user_scope_plugin_pretooluse_probe.md",
@@ -826,6 +833,52 @@ def test_claude_code_cortex_runtime_context_connectivity_probe_records_gate_fail
         "tool_name",
         "tool_input",
         "tool_use_id",
+        "last_assistant_message",
+        "stop_hook_active",
+    ]:
+        assert f"`{key}`" in text
+
+
+def test_claude_code_cortex_stop_closure_connectivity_probe_records_stop_findings() -> None:
+    text = _read(CLAUDE_CODE_CORTEX_STOP_CLOSURE_CONNECTIVITY_PROBE_PATH)
+
+    assert "Surface: internal / recon" in text
+    assert "Probe date: 2026-04-30" in text
+    assert "Claude Code Desktop Code tab" in text
+    assert "/Users/erikahoward/cortex-plugin-sandbox" in text
+    assert "1.5354.0" in text
+    assert "2.1.121" in text
+    assert "codex/20260430-155752-claude-code-desktop-lifecycle-spine" in text
+
+    for phrase in [
+        "Stop x closure pressure",
+        "Pass with content-shape caveat",
+        "closure_reason_tags",
+        "Stop hook feedback:",
+        "hook_blocking_error",
+        "Cortex blocked closure: continuity_reminder, pending_goal_debt",
+        "Cortex blocked closure: continuity_rejection, contradiction_spike, degradation_pressure",
+        "Clean closure control",
+        "Over-block risk control",
+        "The H x F lattice remains the architecture",
+        "does not make `Stop` the primary Cortex architecture",
+        "Exact Temporary Plugin Shape",
+        "The exact hook script used was",
+        "Raw Hook Input And Output Examples",
+        "Field Enumeration",
+        "Trial Matrix And Scores",
+        "Cleanup Verification",
+        "claude plugin list --json` no longer lists",
+        "This probe does not claim a Stop-primary plugin architecture",
+    ]:
+        assert phrase in text
+
+    for key in [
+        "session_id",
+        "transcript_path",
+        "cwd",
+        "permission_mode",
+        "hook_event_name",
         "last_assistant_message",
         "stop_hook_active",
     ]:

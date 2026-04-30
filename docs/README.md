@@ -31,5 +31,7 @@ Active docs:
   empirical sandbox Code-tab cwd evidence for user-scope plugin hooks
 - [Claude Code Cortex Runtime-Context Connectivity Probe](recon/claude_code_cortex_runtime_context_connectivity_probe.md) —
   empirical paired baseline-vs-shaped evidence for the merged runtime-context bridge
+- [Claude Code Cortex Stop Closure Connectivity Probe](recon/claude_code_cortex_stop_closure_connectivity_probe.md) —
+  empirical paired baseline-vs-shaped evidence for Cortex closure pressure through Stop block reasons
 
 Historical runtime, lab, and governance material now lives under [archive/](archive/).
