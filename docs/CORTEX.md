@@ -539,6 +539,12 @@ follow-up sandbox finding: a user-scope plugin fired `PreToolUse:Bash` in
 a `.claude/worktrees/...` path. That finding supports user-scope plugin reach
 for normal project-root Code-tab sessions but still does not prove an actual
 managed-worktree cwd case or product Cortex model-output lift.
+`docs/cortex_plugin/DESIGN.md` is the v1 Claude Code Desktop Cortex plugin
+design: it maps Claude Code Desktop lifecycle hooks onto the eight Cortex
+failure modes, keeps the Mission Reflection grid out of product packaging,
+and records the claim boundary that design/build can structurally establish
+Claude Code Desktop as a Cortex surface while live output-lift still requires
+paired evaluation evidence.
 
 **No-mimicry rule.** Composing markdown that resembles grid content
 but is not actual `grid` command output is a violation. Ad-hoc

@@ -23,6 +23,7 @@ RUNTIME_CONTEXT_EXAMPLES_PATH = (
 RUNTIME_CONTEXT_CROSS_HOST_PATH = (
     REPO_ROOT / "docs" / "runtime_context" / "CROSS_HOST_SKETCH.md"
 )
+CORTEX_PLUGIN_DESIGN_PATH = REPO_ROOT / "docs" / "cortex_plugin" / "DESIGN.md"
 LIFECYCLE_SURFACE_RECON_PATH = (
     REPO_ROOT / "docs" / "recon" / "lifecycle_first_surface_matrix.md"
 )
@@ -402,6 +403,7 @@ def test_public_docs_point_to_status_and_keep_archive_out_of_the_front_door() ->
     assert "Current Status" in docs_index
     assert "archive/" in docs_index
     assert "CORTEX.md" in docs_index
+    assert "cortex_plugin/DESIGN.md" in docs_index
     assert "runtime_context/EVAL_RUBRIC.md" in docs_index
     assert "runtime_context/BASELINE_SHAPED_EXAMPLES.md" in docs_index
     assert "runtime_context/CROSS_HOST_SKETCH.md" in docs_index
@@ -414,6 +416,7 @@ def test_public_docs_point_to_status_and_keep_archive_out_of_the_front_door() ->
     # boundary identity material in one canonical surface.
     assert "executive-function layer that wraps a model after" in cortex_doc
     assert "internal/truth/cortex_status.json" in cortex_doc
+    assert "docs/cortex_plugin/DESIGN.md" in cortex_doc
     assert "docs/runtime_context/" in cortex_doc
     assert "docs/recon/lifecycle_first_surface_matrix.md" in cortex_doc
     assert "docs/recon/codex_app_hook_probe.md" in cortex_doc
@@ -427,6 +430,7 @@ def test_public_docs_point_to_status_and_keep_archive_out_of_the_front_door() ->
     assert "trusted project Stop hook loaded" in cortex_doc
     assert "PreToolUse` fired for Bash" in cortex_doc
     assert "user-scope plugin" in cortex_doc
+    assert "Mission Reflection grid out of product packaging" in cortex_doc
     # Workflow rules unchanged.
     assert "paid OpenAI service-lane proof is never part of the default bundle" in workflow
     assert "requires explicit user approval in the current chat" in workflow
@@ -466,7 +470,8 @@ def test_active_doc_allowlist_matches_status_registry() -> None:
 def test_docs_directory_only_exposes_archive_and_workflow_subtrees() -> None:
     subdirs = sorted(path.name for path in DOCS_ROOT.iterdir() if path.is_dir())
 
-    assert subdirs == ["archive", "internal", "recon", "runtime_context"]
+    assert subdirs == ["archive", "cortex_plugin", "internal", "recon", "runtime_context"]
+    assert [path.name for path in (DOCS_ROOT / "cortex_plugin").iterdir()] == ["DESIGN.md"]
     assert [path.name for path in (DOCS_ROOT / "internal").iterdir()] == ["REPO_WORKFLOW.md"]
     assert sorted(path.name for path in (DOCS_ROOT / "recon").iterdir()) == [
         "claude_code_desktop_pretooluse_probe.md",
@@ -763,6 +768,114 @@ def test_claude_code_user_scope_plugin_managed_worktree_probe_records_cwd_findin
         "tool_use_id",
     ]:
         assert f"`{key}`" in text
+
+
+def test_cortex_plugin_design_preserves_scope_and_truth_boundaries() -> None:
+    text = _read(CORTEX_PLUGIN_DESIGN_PATH)
+    sections = [line for line in text.splitlines() if line.startswith("## ")]
+
+    assert "Surface: product design" in text
+    assert "structural design only" in text
+    assert "does not implement the plugin" in text
+    assert sections == [
+        "## 1. Identity",
+        "## 2. The H x F Lattice",
+        "## 3. Hook-by-Hook Design",
+        "## 4. State Persistence and Lifecycle",
+        "## 5. User Configuration",
+        "## 6. Cortex Packaging Strategy",
+        "## 7. Multi-Host Shipping Truth",
+        "## 8. Privacy, Logging, Observability",
+        "## 9. Known-Open Empirical Questions",
+        "## 10. v2 Deferrals",
+        "## 11. Closure-Line Discipline",
+        "## 12. Validation Gates Before Build Phase",
+    ]
+
+    # Identity and anti-generic-bloat boundary.
+    assert "not generic hook middleware" in text
+    assert "not a package of \"PreToolUse and Stop bridges\"" in text
+    assert "docs/CORTEX.md` §1" in text
+    assert "docs/CORTEX.md` §3" in text
+    assert "Claude Code Desktop as the intended v1 shipping Cortex surface" in text
+    assert "does not change current shipping truth" in text
+    assert "`openai:operator_cli`" in text
+    assert "live paired evidence earns shipping lift" in text
+
+    # Eight hooks and eight failure modes are covered in the lattice.
+    for hook in [
+        "SessionStart",
+        "UserPromptSubmit",
+        "PreToolUse",
+        "PostToolUse",
+        "PreCompact",
+        "SubagentStop",
+        "Stop",
+        "SessionEnd",
+    ]:
+        assert f"### {hook}" in text
+        assert hook in text
+    for failure_mode in [
+        "Truth-preserving commitments and bounded certification",
+        "Bounded correction and verified-work preservation",
+        "Uncertainty handling and brake",
+        "Branch continuity, suspend/resume, and truthful closure",
+        "Intervention pricing versus neutrality",
+        "Blocker surfacing and goal-debt management",
+        "Multi-host executive continuity",
+        "Offline consolidation and support geometry",
+    ]:
+        assert failure_mode in text
+    assert text.count("ACTIVE:") >= 30
+    assert "DEFERRED: compaction" in text
+    assert "DEFERRED: subagent" in text
+    assert "N/A: Stop validates the current closure" in text
+    assert "not empty by accident" in text
+
+    # Existing Cortex modules are the source of law; the plugin is wiring.
+    for ref in [
+        "cortex/hosts/claude/runtime.py",
+        "cortex/hosts/runtime_context.py::runtime_context_from_last_feedback",
+        "cortex/sre/operator_routing.py",
+        "cortex/sre/brake.py",
+        "cortex/sre/goal_debt.py",
+        "cortex/runtime/operator_brain_capability.py",
+        "cortex/aux/persistence.py",
+        "cortex/aux/publication.py",
+        "cortex/aux/support_priors.py",
+    ]:
+        assert ref in text
+
+    # Hygiene apparatus stays out of product packaging.
+    assert "does not bundle, invoke, or replicate the Cortex Mission Reflection" in text
+    assert "`grid-validate`" in text
+    assert "the hygiene apparatus is not Cortex" in text
+    assert "development workflow graph" in text
+
+    # AUX remains claim-conservative.
+    assert "OfflineSupportPublication" in text
+    assert "raw AUX memory remains support-side" in text
+    assert "AUX remains publication-only and score-pricing-only" in text
+    assert "raw AUX episodes do not reach the model" in text
+    assert "cannot mutate routing, certification, or blockedness" in text
+
+    # Managed-worktree findings stay conservative.
+    assert "managed-worktree" in text
+    assert "not `.claude/worktrees/...`" in text
+    assert "does not prove an actual managed-worktree cwd case" in text
+    assert "If a future Code-tab subject uses an actual managed-worktree cwd" in text
+
+    # Explicit non-features prevent future drift.
+    for forbidden_non_feature in [
+        "generic instruction-following improvements",
+        "politeness, tone, or general reasoning improvements",
+        "post-training calibration",
+        "closed-loop monitor",
+        "user-facing memory features",
+        "raw AUX memory re-entry",
+        "background polling, timers, or hidden state mutation",
+    ]:
+        assert forbidden_non_feature in text
 
 
 def test_generated_status_doc_is_current() -> None:
