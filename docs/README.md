@@ -11,6 +11,8 @@ Active docs:
 - [CORTEX SRE](CORTEX_V2_SRE_2.md)
 - [CORTEX AUX](CORTEX_V2_AUX_2.md)
 - [Repo Workflow](internal/REPO_WORKFLOW.md)
+- [Claude Code Desktop Cortex Plugin Design](cortex_plugin/DESIGN.md) —
+  v1 full-lifecycle plugin architecture for Claude Code Desktop's Code tab
 - Runtime context bridge eval artifacts:
   [rubric](runtime_context/EVAL_RUBRIC.md),
   [baseline-vs-shaped examples](runtime_context/BASELINE_SHAPED_EXAMPLES.md),
