@@ -26,6 +26,7 @@ RUNTIME_CONTEXT_CROSS_HOST_PATH = (
 LIFECYCLE_SURFACE_RECON_PATH = (
     REPO_ROOT / "docs" / "recon" / "lifecycle_first_surface_matrix.md"
 )
+CODEX_APP_HOOK_PROBE_PATH = REPO_ROOT / "docs" / "recon" / "codex_app_hook_probe.md"
 STATUS_REGISTRY_PATH = REPO_ROOT / "internal" / "truth" / "cortex_status.json"
 STATUS_DOC_PATH = REPO_ROOT / "docs" / "CORTEX_STATUS.md"
 WORKFLOW_DOC_PATH = REPO_ROOT / "docs" / "internal" / "REPO_WORKFLOW.md"
@@ -396,16 +397,19 @@ def test_public_docs_point_to_status_and_keep_archive_out_of_the_front_door() ->
     assert "runtime_context/BASELINE_SHAPED_EXAMPLES.md" in docs_index
     assert "runtime_context/CROSS_HOST_SKETCH.md" in docs_index
     assert "recon/lifecycle_first_surface_matrix.md" in docs_index
+    assert "recon/codex_app_hook_probe.md" in docs_index
     # CORTEX.md content anchors the previously-fragmented charter and
     # boundary identity material in one canonical surface.
     assert "executive-function layer that wraps a model after" in cortex_doc
     assert "internal/truth/cortex_status.json" in cortex_doc
     assert "docs/runtime_context/" in cortex_doc
     assert "docs/recon/lifecycle_first_surface_matrix.md" in cortex_doc
+    assert "docs/recon/codex_app_hook_probe.md" in cortex_doc
     assert "EVAL_RUBRIC.md" in cortex_doc
     assert "BASELINE_SHAPED_EXAMPLES.md" in cortex_doc
     assert "CROSS_HOST_SKETCH.md" in cortex_doc
     assert "lifecycle-first surface reconnaissance" in cortex_doc.lower()
+    assert "trusted project Stop hook loaded" in cortex_doc
     # Workflow rules unchanged.
     assert "paid OpenAI service-lane proof is never part of the default bundle" in workflow
     assert "requires explicit user approval in the current chat" in workflow
@@ -448,6 +452,7 @@ def test_docs_directory_only_exposes_archive_and_workflow_subtrees() -> None:
     assert subdirs == ["archive", "internal", "recon", "runtime_context"]
     assert [path.name for path in (DOCS_ROOT / "internal").iterdir()] == ["REPO_WORKFLOW.md"]
     assert sorted(path.name for path in (DOCS_ROOT / "recon").iterdir()) == [
+        "codex_app_hook_probe.md",
         "lifecycle_first_surface_matrix.md",
     ]
     assert sorted(path.name for path in (DOCS_ROOT / "runtime_context").iterdir()) == [
@@ -536,6 +541,56 @@ def test_lifecycle_surface_recon_has_required_matrix_and_caveats() -> None:
     assert "doesn't port" in text
     assert "Retrieved" in text and "Last updated" in text
     assert "older than six months" in text
+
+
+def test_codex_app_hook_probe_records_empirical_findings_and_cleanup() -> None:
+    text = _read(CODEX_APP_HOOK_PROBE_PATH)
+
+    assert "Surface: internal / recon" in text
+    assert "Probe date: 2026-04-30" in text
+    assert "Codex App for Mac" in text
+    assert "26.422.71525" in text
+    assert "2210" in text
+    assert "codex-cli 0.126.0-alpha.8" in text
+    assert "CORTEX_PROBE_SENTINEL_2026_04_30" in text
+
+    for phrase in [
+        "Q1: Does Codex App load trusted project-level `.codex/config.toml`, and does trust persist?",
+        "Q2: Does the Stop hook fire, and what input shape does it receive?",
+        "Q3: Does `decision: \"block\"` inject a sentinel reason into the next assistant turn?",
+        "**Confirmed**",
+        "Field Enumeration",
+        "Not found in public docs page",
+        "Raw Hook Input: Subject ACKNOWLEDGED",
+        "Actual next-assistant-turn output, byte-for-byte",
+        "Exact Temporary `.codex/config.toml`",
+        "Exact Temporary Hook Script",
+        "Cleanup Verification",
+        "Original `.codex/config.toml` restored: yes",
+        "Temporary probe hook active after cleanup: no",
+        "Active `.codex` config references `codex_app_probe_stop_hook.py`: no",
+        "Focused docs-boundary test green: yes",
+        "does not generalize to Claude Code",
+    ]:
+        assert phrase in text
+
+    for key in [
+        "session_id",
+        "turn_id",
+        "transcript_path",
+        "cwd",
+        "hook_event_name",
+        "model",
+        "permission_mode",
+        "stop_hook_active",
+        "last_assistant_message",
+    ]:
+        assert f"`{key}`" in text
+
+    assert "ACKNOWLEDGED" in text
+    assert "BASELINE" in text
+    assert "REOPENED" in text
+    assert "Stop - Codex App hook probe" in text
 
 
 def test_generated_status_doc_is_current() -> None:

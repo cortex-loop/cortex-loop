@@ -511,6 +511,11 @@ against Cortex's lifecycle-first needs. It is a sourced recon artifact,
 not mission authority and not an architecture plan. Use it before making
 surface-selection claims so API control, CLI/app hooks, MCP support, and
 consumer-app gaps are not flattened into fake portability.
+`docs/recon/codex_app_hook_probe.md` is the paired empirical Codex App
+finding: on the tested Mac app version, a trusted project Stop hook loaded,
+fired, exposed `last_assistant_message`, and routed a `decision: "block"`
+reason into the model-visible continuation. That finding is Codex App only
+and must not be generalized to other surfaces without their own probes.
 
 **No-mimicry rule.** Composing markdown that resembles grid content
 but is not actual `grid` command output is a violation. Ad-hoc

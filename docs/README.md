@@ -17,5 +17,7 @@ Active docs:
   [cross-host sketch](runtime_context/CROSS_HOST_SKETCH.md)
 - [Lifecycle-first Surface Matrix Recon](recon/lifecycle_first_surface_matrix.md) —
   current host/API/CLI/app extension-surface map
+- [Codex App Hook Probe](recon/codex_app_hook_probe.md) —
+  empirical project Stop-hook load/fire/block evidence
 
 Historical runtime, lab, and governance material now lives under [archive/](archive/).
