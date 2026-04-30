@@ -15,6 +15,8 @@ Active docs:
   v1 full-lifecycle plugin architecture for Claude Code Desktop's Code tab
 - [Claude Code Desktop Cortex Host Adapter](cortex_plugin/ADAPTER.md) —
   structural host-adapter pattern for the plugin build
+- [Claude Code Desktop Plugin Evidence Synthesis](cortex_plugin/EVIDENCE_SYNTHESIS.md) —
+  accounting of what Claude Code Desktop hook evidence has and has not earned
 - Runtime context bridge eval artifacts:
   [rubric](runtime_context/EVAL_RUBRIC.md),
   [baseline-vs-shaped examples](runtime_context/BASELINE_SHAPED_EXAMPLES.md),

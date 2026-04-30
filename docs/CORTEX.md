@@ -566,6 +566,10 @@ Claude Code Desktop is represented as a Cortex host adapter under
 `cortex/hosts/claude_code_desktop/`, while plugin scripts remain transport
 wire. It is structural adapter evidence only and does not promote Claude Code
 Desktop to shipping default or claim live output lift.
+`docs/cortex_plugin/EVIDENCE_SYNTHESIS.md` is the post-recon accounting
+surface for the Claude Code Desktop plugin effort: it separates hook delivery,
+model-visible delivery, behavior-lift, and shipping truth before any further
+plugin build or empirical probe work.
 
 **No-mimicry rule.** Composing markdown that resembles grid content
 but is not actual `grid` command output is a violation. Ad-hoc
