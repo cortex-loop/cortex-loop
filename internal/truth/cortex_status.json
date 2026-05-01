@@ -1088,6 +1088,7 @@
     "docs/recon/claude_code_cortex_runtime_context_connectivity_probe.md",
     "docs/recon/claude_code_cortex_stop_closure_connectivity_probe.md",
     "docs/recon/claude_code_cortex_headless_cli_equivalence_probe.md",
+    "docs/recon/claude_code_cortex_mac_pending_goal_divergence_retest.md",
     "docs/recon/claude_code_cortex_posttool_failure_to_stop_loop_probe.md",
     "docs/recon/claude_code_cortex_userpromptsubmit_verified_work_probe.md"
   ]
