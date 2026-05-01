@@ -1412,7 +1412,7 @@ def test_reflection_check_warns_on_warn_threshold_next_train(
     )
 
 
-def test_grid_emits_full_consolidated_grid_when_work_performed(
+def test_grid_emits_work_mode_grid_when_work_performed(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
 ) -> None:
     repo, _remote, module = _prepare_repo(tmp_path, monkeypatch)
@@ -1430,14 +1430,14 @@ def test_grid_emits_full_consolidated_grid_when_work_performed(
     assert out.count(module.GRID_TABLE_HEADER_MARKER) == 1
     assert out.count(module.GRID_TABLE_SEPARATOR_MARKER) == 1
     assert module.GRID_FORBIDDEN_SECTION_MARKER not in out
-    for label in module.REQUIRED_GRID_ROW_LABELS:
+    for label in module.mission_reflection.WORK_GRAPH_ROW_LABELS:
         assert f"**{label}**" in out
     # Cortex Mission Reflection rows replace stale progress dashboards.
     for label, _ in module.MISSION_REFLECTION_FIELDS:
         assert f"**{label}**" in out
-    assert "**Closure: Metadata**" in out
+    assert "**Closure: Metadata**" not in out
     assert "mission reflection —" in out
-    assert "closure metadata —" in out
+    assert "closure metadata —" not in out
     # Stale dashboard / old closure rows must not appear.
     assert "Progress:" not in out
     assert "bio_to_code matrix" not in out
@@ -1454,31 +1454,35 @@ def test_grid_emits_full_consolidated_grid_when_work_performed(
     assert "▌" not in out
 
 
-def test_grid_emits_consolidated_grid_with_closure_sections_when_no_work(
+def test_grid_emits_exploration_and_closeout_modes(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
 ) -> None:
     repo, _remote, module = _prepare_repo(tmp_path, monkeypatch)
     _seed_registry(repo)
     _seed_generate_scripts(repo)
 
-    module.cmd_grid()
-    out = capsys.readouterr().out
+    module.cmd_grid("exploration")
+    exploration = capsys.readouterr().out
 
-    # Single-table shape is stable even on no-work turns.
-    assert module.GRID_HEADER_MARKER in out
-    assert out.count(module.GRID_TABLE_HEADER_MARKER) == 1
-    assert out.count(module.GRID_TABLE_SEPARATOR_MARKER) == 1
-    assert module.GRID_FORBIDDEN_SECTION_MARKER not in out
-    for label in module.REQUIRED_GRID_ROW_LABELS:
-        assert f"**{label}**" in out
-    # The no-work grid keeps the same mission-reflection shape without
-    # falling back to stale status rows.
-    assert "**Repo: Gates**" in out
-    assert "**Mission: Cortex target**" in out
-    assert "Progress:" not in out
-    assert "bio_to_code matrix" not in out
-    assert "**Mech:" not in out
-    assert "**Work:" not in out
+    assert module.GRID_HEADER_MARKER in exploration
+    assert exploration.count(module.GRID_TABLE_HEADER_MARKER) == 1
+    assert exploration.count(module.GRID_TABLE_SEPARATOR_MARKER) == 1
+    for label in module.mission_reflection.EXPLORATION_GRAPH_ROW_LABELS:
+        assert f"**{label}**" in exploration
+    assert "**Repo: Gates**" not in exploration
+    assert "**Mission: Theory of improvement**" not in exploration
+    assert "**Closure: Metadata**" not in exploration
+
+    module.cmd_grid("closeout")
+    closeout = capsys.readouterr().out
+
+    for label in module.mission_reflection.CLOSEOUT_GRAPH_ROW_LABELS:
+        assert f"**{label}**" in closeout
+    assert "closure metadata —" in closeout
+    assert "Progress:" not in closeout
+    assert "bio_to_code matrix" not in closeout
+    assert "**Mech:" not in closeout
+    assert "**Work:" not in closeout
 
 
 def test_grid_validate_accepts_filled_graph(

@@ -65,10 +65,16 @@ def _diagnostic_exit(message: str) -> None:
     _allow_stop()
 
 
-def _run_grid(repo_root: Path) -> str | None:
+def _run_grid(repo_root: Path, mode: str) -> str | None:
     try:
         proc = subprocess.run(
-            [sys.executable, "internal/workflow/repo_workflow.py", "grid"],
+            [
+                sys.executable,
+                "internal/workflow/repo_workflow.py",
+                "grid",
+                "--mode",
+                mode,
+            ],
             cwd=str(repo_root),
             check=False,
             capture_output=True,
@@ -135,7 +141,8 @@ def main() -> None:
         _diagnostic_exit("missing last_assistant_message; allowing stop")
         return
 
-    grid_output = _run_grid(repo_root)
+    validation_mode = mission_reflection.infer_graph_mode(last_message)
+    grid_output = _run_grid(repo_root, validation_mode)
     check_payload = _run_reflection_check(repo_root)
     if grid_output is None or check_payload is None:
         _diagnostic_exit(
@@ -147,14 +154,16 @@ def main() -> None:
         last_message,
         check_payload=check_payload,
         require_filled=True,
+        mode=validation_mode,
     )
     if result.ok:
         _allow_stop()
 
     reason_parts = [
         "Cortex Mission Reflection did not pass the shared graph validator.",
-        "Per AGENTS.md `## Handoff`, every Codex App chat must end with the"
-        " graph produced by `python3 internal/workflow/repo_workflow.py grid`,"
+        "Per the mission-reflection contract, every Codex App chat must end with the"
+        " graph produced by `python3 internal/workflow/repo_workflow.py grid"
+        f" --mode {validation_mode}`,"
         " filled in place, as exactly one markdown table under"
         f" `{mission_reflection.GRAPH_HEADER_MARKER}`.",
         "",

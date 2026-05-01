@@ -19,7 +19,7 @@ VALID_SURFACES = {"product", "experimental", "lab", "internal"}
 VALID_AUDIT_STATUSES = {"pass", "fail"}
 VALID_COMPLETENESS_STATES = {"implemented", "explicit_zero", "future_not_active"}
 CODEX_MISSION_GRAPH_VALIDATOR_COMMAND = (
-    "python3 internal/workflow/repo_workflow.py grid-validate --stdin"
+    "python3 internal/workflow/repo_workflow.py grid-validate --mode closeout"
 )
 # The patterns below detect closeout claims of "full V2 communication"
 # closure; they exist because the V2 communication bridge postmortem

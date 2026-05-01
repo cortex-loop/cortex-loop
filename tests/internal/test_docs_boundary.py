@@ -50,6 +50,10 @@ CLAUDE_CODE_CORTEX_STOP_CLOSURE_CONNECTIVITY_PROBE_PATH = (
 STATUS_REGISTRY_PATH = REPO_ROOT / "internal" / "truth" / "cortex_status.json"
 STATUS_DOC_PATH = REPO_ROOT / "docs" / "CORTEX_STATUS.md"
 WORKFLOW_DOC_PATH = REPO_ROOT / "docs" / "internal" / "REPO_WORKFLOW.md"
+MISSION_REFLECTION_CONTRACT_PATH = (
+    REPO_ROOT / "docs" / "internal" / "MISSION_REFLECTION_CONTRACT.md"
+)
+ANTI_DRIFT_RULES_PATH = REPO_ROOT / "docs" / "internal" / "ANTI_DRIFT_RULES.md"
 ARCHIVE_MANIFEST_PATH = REPO_ROOT / "internal" / "archive" / "manifest.json"
 ARCHIVE_INDEX_PATH = REPO_ROOT / "docs" / "archive" / "README.md"
 ARCHIVED_CHARTER_PATH = REPO_ROOT / "docs" / "archive" / "product" / "CORTEX_PRODUCT_CHARTER.md"
@@ -73,15 +77,14 @@ conversation style, model personality, or training-time preferences decide
 Cortex positions. Use only the repo's recorded goals and current proof.
 
 Form positions from observable repo truth: `docs/CORTEX.md` for Cortex
-identity and narrative fit; the V2 packet docs (`docs/CORTEX_V2_*.md`)
-for packet law; `internal/truth/cortex_status.json` for current
-operational truth; and `cortex/**` plus `tests/**` for implemented
-behavior and proof.
+identity and narrative fit; the V2 packet docs (`docs/CORTEX_V2_*.md`) for
+packet law; `internal/truth/cortex_status.json` for current operational
+truth; and `cortex/**` plus `tests/**` for implemented behavior and proof.
 
 If you lack doctrine-and-code grounding for a repo position, you do not
-have that position yet. Read the specific missing surface, or say "I
-don't know yet; I need to check X." Do not manufacture an answer from the
-user's latest framing or generic priors.
+have that position yet. Read the specific missing surface, or say "I don't
+know yet; I need to check X." Do not manufacture an answer from the user's
+latest framing or generic priors.
 
 Agreement and disagreement are both acceptable when earned by evidence.
 Unearned agreement and ungrounded criticism are both failures."""
@@ -113,40 +116,38 @@ def test_agents_records_mission_lock_and_single_truth_bootstrap() -> None:
     all_agents = _find_repo_files("AGENTS.md")
 
     assert all_agents == ["AGENTS.md"]
-    # AGENTS.md grew when the Agent Briefing block was added (2026-04)
-    # to replace the v1-era PHI-label decision loop and the
-    # PHILOSOPHY_AUDIT handoff ritual; further when the Stop hook
-    # discipline and no-mimicry rule landed; further when the
-    # single-grid-closure rule consolidated metadata + mirror inside the
-    # grid, then Codex App hook parity landed. The cap stays bounded so
-    # AGENTS.md does not sprawl into a wiki; the narrative lives in
-    # docs/CORTEX.md.
-    assert len(lines) <= 430
+    # AGENTS.md is now orientation only; workflow mechanics, grid contract,
+    # and anti-drift history live in separate internal docs.
+    assert 90 <= len(lines) <= 160
     assert sections == [
         "## Agent Briefing",
+        "## Bootstrap",
+        "## Answer First",
         "## Mission",
         "## Authority",
         "## Non-Negotiables",
         "## Working Mode",
-        "## Workflow",
-        "## Codex App Dogfood Mode",
-        "## Handoff",
-        "## Anti-Drift",
+        "## Truth Distinctions",
+        "## Pointers",
     ]
     # Briefing block must be present verbatim; CLAUDE.md's copy is
     # byte-equal so Claude Code and Codex see the same instructions.
     assert AGENT_BRIEFING_TEXT in text
-    # Mission and identity anchors that downstream agents rely on.
+    # Mission and answer-shape anchors that downstream agents rely on.
     assert "rich multi-host executive layer" in text
     assert "installable executive layer" in text
     assert "human executive function" in text
     assert "live evidence" in text
-    assert "lead with shipping truth, conformance truth, the current train, and the active quality/risk focus" in text
-    assert "bio-to-code matrix" in text
+    assert "The substantive answer to the user's request is the primary deliverable." in text
+    assert "Bootstrap reads are preparation, not response content." in text
+    assert "The operator-split note belongs in turns that involve user empirical work" in text
     # Authority surfaces named including CORTEX.md as narrative authority.
     assert "docs/CORTEX.md" in text
     assert "internal/truth/cortex_status.json" in text
     assert "docs/CORTEX_STATUS.md" in text
+    assert "docs/internal/REPO_WORKFLOW.md" in text
+    assert "docs/internal/MISSION_REFLECTION_CONTRACT.md" in text
+    assert "docs/internal/ANTI_DRIFT_RULES.md" in text
     assert "AGENTS.md" in text
     # Bootstrap reads include CORTEX.md as the second read.
     assert "git branch --show-current" in text
@@ -156,59 +157,23 @@ def test_agents_records_mission_lock_and_single_truth_bootstrap() -> None:
     assert "conformance truth" in text
     assert "This root `AGENTS.md` is the only agent contract in the repo." in text
     # Non-negotiables (live-spend lock and registry-truth-discipline).
-    assert "Do not run paid service-lane commands unless the user explicitly approves spend in the current chat." in text
+    assert "Do not run paid service-lane commands" in text
+    assert "approves" in text and "spend in the current chat" in text
     assert "Do not set `CORTEX_LIVE_SERVICE_SPEND_APPROVED`" in text
-    assert ".cortex/closeout_contract/" in text
-    assert "Workflow-law seams are load-bearing too" in text
-    assert "revalidates reviewed-path exactness after verification" in text
-    assert "at least one law-to-code completeness row" in text
-    # Closure is now compact metadata inside Cortex Mission Reflection,
-    # not a separate Final Handoff Mirror surface.
-    assert "Cortex Mission Reflection" in text
-    assert "Closure: Metadata" in text
+    assert "Do not claim product progress unless shipped runtime behavior changed" in text
+    assert "Preserve the anti-drift rules" in text
     # PHI-label decision loop and PHILOSOPHY_AUDIT block must be retired.
     # Their content moved into docs/CORTEX.md §6 and the agent briefing.
     assert "PHI_MINIFY" not in text
     assert "PHI_MISSION" not in text
     assert "PHI_NICHE" not in text
     assert "PHILOSOPHY_AUDIT" not in text
-    # Mission-reflection handoff anchors. Every chat ends with the grid; on
-    # FAIL the agent continues working and does not close-session.
-    assert "internal/workflow/repo_workflow.py grid" in text
+    # Mission-reflection and workflow mechanics are referenced, not inlined.
     assert "Cortex Mission Reflection" in text
-    assert "Grid auto-loop rule" in text
-    assert "do not close-session" in text.lower() or "DO NOT close-session" in text
-    assert "substantive" in text.lower()
-    # No-mimicry rule and Stop hook discipline — Session 3 additions.
-    assert "No-mimicry rule" in text
-    assert ".claude/hooks/cortex_grid_stop_hook.py" in text
-    assert ".claude/settings.json" in text
-    assert "## Cortex Mission Reflection" in text
-    assert "| Field | Value |" in text
-    assert "Repo: State" in text
-    assert "Mission: Cortex target" in text
-    assert "Mission: Model I/O path" in text
-    assert "Verdict" in text
-    # Codex App now has its own hook path; fallback surfaces remain honest.
-    assert "Codex" in text
-    assert "Codex App chat-boundary enforcement" in text
-    assert ".codex/hooks/cortex_mission_reflection_stop_hook.py" in text
-    assert "codex-app-hook-health" in text
-    assert "grid-validate --stdin" in text
-    assert "mission_reflection_graph" in text
-    assert "project layer is trusted" in text
-    assert "last_assistant_message" in text
-    assert "structural lifecycle evidence" in text
-    # Single-table mission-reflection rule. Stale dashboard rows are
-    # explicitly forbidden; mission rows must be cited and substantive.
-    assert "Cortex Mission Reflection" in text
-    assert "Do not emit fixed dashboard rows" in text
-    assert "mission reflection —" in text
-    assert "120" in text
-    assert "no `###` subsection inside the grid" in text
-    assert "fill brackets in place" in text or "edits the skeleton in place" in text
-    # The hard-gate honesty: stop_hook_active no longer short-circuits.
-    assert "stop_hook_active" in text
+    assert "Mission reflection is administrative closure." in text
+    assert ".claude/hooks/cortex_grid_stop_hook.py" not in text
+    assert "No-mimicry rule" not in text
+    assert "grid-validate" not in text
     # The old separate-block doctrine must NOT remain.
     assert "Every final summary must include the grid output plus the" not in text
     assert "Every substantive final summary must mirror the rendered" not in text
@@ -406,6 +371,7 @@ def test_public_docs_point_to_status_and_keep_archive_out_of_the_front_door() ->
     docs_index = _read(DOCS_INDEX_PATH)
     cortex_doc = _read(CORTEX_DOC_PATH)
     workflow = _read(WORKFLOW_DOC_PATH)
+    mission_reflection = _read(MISSION_REFLECTION_CONTRACT_PATH)
 
     assert "docs/CORTEX_STATUS.md" in readme
     assert "OpenAI product runtime on the CLI lane, with the direct service kept as a non-default backup surface" in readme
@@ -413,6 +379,8 @@ def test_public_docs_point_to_status_and_keep_archive_out_of_the_front_door() ->
     assert "Current Status" in docs_index
     assert "archive/" in docs_index
     assert "CORTEX.md" in docs_index
+    assert "internal/MISSION_REFLECTION_CONTRACT.md" in docs_index
+    assert "internal/ANTI_DRIFT_RULES.md" in docs_index
     assert "cortex_plugin/DESIGN.md" in docs_index
     assert "cortex_plugin/ADAPTER.md" in docs_index
     assert "cortex_plugin/EVIDENCE_SYNTHESIS.md" in docs_index
@@ -461,7 +429,7 @@ def test_public_docs_point_to_status_and_keep_archive_out_of_the_front_door() ->
     assert "reviewed-path drift during verification" in workflow
     assert "Cortex Mission Reflection" in workflow
     assert "Closure: Metadata" in workflow
-    assert "fixed rows for `Progress:*`" in workflow
+    assert "fixed dashboard rows such as `Progress:*`" in mission_reflection
     assert "codex-app-hook-health" in workflow
     assert ".codex/hooks/cortex_mission_reflection_stop_hook.py" in workflow
     assert "last_assistant_message" in workflow
@@ -496,7 +464,11 @@ def test_docs_directory_only_exposes_archive_and_workflow_subtrees() -> None:
         "DESIGN.md",
         "EVIDENCE_SYNTHESIS.md",
     ]
-    assert [path.name for path in (DOCS_ROOT / "internal").iterdir()] == ["REPO_WORKFLOW.md"]
+    assert sorted(path.name for path in (DOCS_ROOT / "internal").iterdir()) == [
+        "ANTI_DRIFT_RULES.md",
+        "MISSION_REFLECTION_CONTRACT.md",
+        "REPO_WORKFLOW.md",
+    ]
     assert sorted(path.name for path in (DOCS_ROOT / "recon").iterdir()) == [
         "claude_code_cortex_runtime_context_connectivity_probe.md",
         "claude_code_cortex_stop_closure_connectivity_probe.md",
@@ -1285,8 +1257,9 @@ def test_front_door_surfaces_point_to_local_first_and_explicit_publish_closeout(
     assert 'close-session --message "scope: end-state summary"' in status
     assert 'close-session --publish --message "scope: end-state summary"' in status
     assert "cleanup-report" in status
-    assert "explicit denominator or progress-accounting questions" in agents
-    assert "close-session --publish" in agents
+    assert "The substantive answer to the user's request is the primary deliverable." in agents
+    assert "docs/internal/REPO_WORKFLOW.md" in agents
+    assert "close-session --publish" not in agents
     assert "manual publication" not in agents.lower()
     assert "manual publication" not in status.lower()
     assert "separate publication step" not in status.lower()

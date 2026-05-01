@@ -25,9 +25,9 @@ CLOSURE_FILL = (
 )
 
 
-def _canonical_grid() -> str:
+def _canonical_grid(mode: str = "closeout") -> str:
     proc = subprocess.run(
-        [sys.executable, "internal/workflow/repo_workflow.py", "grid"],
+        [sys.executable, "internal/workflow/repo_workflow.py", "grid", "--mode", mode],
         cwd=str(REPO_ROOT),
         check=True,
         capture_output=True,
@@ -110,6 +110,14 @@ def test_codex_app_hook_blocks_short_mission_row() -> None:
 
 def test_codex_app_hook_allows_filled_graph() -> None:
     returncode, stdout, stderr = _run_hook(_fill_graph(_canonical_grid()))
+
+    assert returncode == 0
+    assert stdout.strip() == ""
+    assert stderr.strip() == ""
+
+
+def test_codex_app_hook_allows_exploration_graph() -> None:
+    returncode, stdout, stderr = _run_hook(_fill_graph(_canonical_grid("exploration")))
 
     assert returncode == 0
     assert stdout.strip() == ""

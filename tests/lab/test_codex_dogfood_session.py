@@ -324,8 +324,8 @@ def test_prompt_contract_requires_fixed_signal_and_preserves_normal_handoff() ->
     assert "Do not replace the normal handoff with lab text." in closeout
 
 
-def test_agents_contract_stays_in_sync_with_helper_contract() -> None:
-    agents_section = codex_dogfood_session._read_agents_dogfood_contract()
+def test_dogfood_workflow_contract_stays_in_sync_with_helper_contract() -> None:
+    dogfood_section = codex_dogfood_session._read_dogfood_workflow_contract()
     profile = codex_dogfood_session._load_profile(codex_dogfood_session.DOGFOOD_PROFILE_NAME)
 
     for trigger in (
@@ -334,7 +334,7 @@ def test_agents_contract_stays_in_sync_with_helper_contract() -> None:
         codex_dogfood_session.DOGFOOD_STOP_TRIGGER,
         codex_dogfood_session.DOGFOOD_STATUS_TRIGGER,
     ):
-        assert f"`{trigger}`" in agents_section
+        assert f"`{trigger}`" in dogfood_section
 
     for command in (
         "python3 -m lab.codex_dogfood_session activate",
@@ -345,7 +345,7 @@ def test_agents_contract_stays_in_sync_with_helper_contract() -> None:
         profile["start_session_command"],
         profile["close_session_command"],
     ):
-        assert command in agents_section
+        assert command in dogfood_section
 
 
 def _configure_dogfood_contract(tmp_path: Path, monkeypatch) -> dict[str, Path]:
@@ -385,11 +385,12 @@ def _configure_dogfood_contract(tmp_path: Path, monkeypatch) -> dict[str, Path]:
         ),
         encoding="utf-8",
     )
-    agents_path = tmp_path / "AGENTS.md"
-    agents_path.write_text(
+    workflow_path = tmp_path / "docs" / "internal" / "REPO_WORKFLOW.md"
+    workflow_path.parent.mkdir(parents=True, exist_ok=True)
+    workflow_path.write_text(
         "\n".join(
             [
-                "# Test Contract",
+                "# Test Workflow",
                 "",
                 "## Workflow",
                 "workflow body",
@@ -421,7 +422,7 @@ def _configure_dogfood_contract(tmp_path: Path, monkeypatch) -> dict[str, Path]:
         ),
     }
     monkeypatch.setattr(codex_dogfood_session, "REPO_ROOT", tmp_path)
-    monkeypatch.setattr(codex_dogfood_session, "AGENTS_CONTRACT_PATH", agents_path)
+    monkeypatch.setattr(codex_dogfood_session, "WORKFLOW_CONTRACT_PATH", workflow_path)
     monkeypatch.setattr(codex_dogfood_session, "PROMPTS_ROOT", prompts_root)
     monkeypatch.setattr(codex_dogfood_session, "DOGFOOD_SESSIONS_ROOT", sessions_root)
     monkeypatch.setattr(codex_dogfood_session, "DOGFOOD_LATEST_PATH", latest_path)
@@ -442,7 +443,7 @@ def _configure_dogfood_contract(tmp_path: Path, monkeypatch) -> dict[str, Path]:
     )
     monkeypatch.setattr(codex_dogfood_session, "_new_dogfood_id", lambda: "dogfood-test")
     return {
-        "agents_path": agents_path,
+        "workflow_path": workflow_path,
         "session_start_prompt": session_start_prompt,
         "closeout_prompt": closeout_prompt,
         "sessions_root": sessions_root,

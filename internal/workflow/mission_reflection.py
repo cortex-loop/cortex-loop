@@ -16,6 +16,8 @@ GRAPH_HEADER_MARKER = "## Cortex Mission Reflection"
 TABLE_HEADER_MARKER = "| Field | Value |"
 TABLE_SEPARATOR_MARKER = "|---|---|"
 FORBIDDEN_SECTION_MARKER = "### "
+GRAPH_MODES: tuple[str, ...] = ("exploration", "work", "closeout")
+DEFAULT_GRAPH_MODE = "work"
 
 MISSION_REFLECTION_FIELDS: tuple[tuple[str, str], ...] = (
     (
@@ -61,13 +63,41 @@ MISSION_REFLECTION_FIELDS: tuple[tuple[str, str], ...] = (
 )
 
 MISSION_REFLECTION_ROW_LABELS = tuple(label for label, _prompt in MISSION_REFLECTION_FIELDS)
-REQUIRED_GRAPH_ROW_LABELS: tuple[str, ...] = (
+EXPLORATION_GRAPH_ROW_LABELS: tuple[str, ...] = (
+    "Repo: State",
+    "Mission: Cortex target",
+    "Mission: Boundary judgment",
+    "Decision: Next ownership move",
+    "Verdict",
+)
+WORK_GRAPH_ROW_LABELS: tuple[str, ...] = (
+    "Repo: State",
+    "Repo: Gates",
+    *MISSION_REFLECTION_ROW_LABELS,
+    "Verdict",
+)
+CLOSEOUT_GRAPH_ROW_LABELS: tuple[str, ...] = (
     "Repo: State",
     "Repo: Gates",
     *MISSION_REFLECTION_ROW_LABELS,
     "Closure: Metadata",
     "Verdict",
 )
+REQUIRED_GRAPH_ROW_LABELS = CLOSEOUT_GRAPH_ROW_LABELS
+REQUIRED_GRAPH_ROW_LABELS_BY_MODE: dict[str, tuple[str, ...]] = {
+    "exploration": EXPLORATION_GRAPH_ROW_LABELS,
+    "work": WORK_GRAPH_ROW_LABELS,
+    "closeout": CLOSEOUT_GRAPH_ROW_LABELS,
+}
+MISSION_ROW_LABELS_BY_MODE: dict[str, tuple[str, ...]] = {
+    "exploration": (
+        "Mission: Cortex target",
+        "Mission: Boundary judgment",
+        "Decision: Next ownership move",
+    ),
+    "work": MISSION_REFLECTION_ROW_LABELS,
+    "closeout": MISSION_REFLECTION_ROW_LABELS,
+}
 
 CLOSURE_LEAK_MARKERS: tuple[str, ...] = (
     "Ending branch",
@@ -84,6 +114,16 @@ MISSION_REFLECTION_TEMPLATE_TOKEN = "mission reflection —"
 CLOSURE_METADATA_TEMPLATE_TOKEN = "closure metadata —"
 FILL_PLACEHOLDER_TOKEN = "<fill"
 MISSION_REFLECTION_MIN_CHARS = 120
+MISSION_REFLECTION_MIN_CHARS_BY_MODE: dict[str, int] = {
+    "exploration": 60,
+    "work": MISSION_REFLECTION_MIN_CHARS,
+    "closeout": MISSION_REFLECTION_MIN_CHARS,
+}
+REQUIRED_REPO_CITATION_ROWS_BY_MODE: dict[str, int | str] = {
+    "exploration": 1,
+    "work": 3,
+    "closeout": "all",
+}
 
 REPO_CITATION_PATTERN = re.compile(
     r"(docs/CORTEX\.md|internal/truth/cortex_status\.json|cortex/|tests/|CORTEX_V2_)"
@@ -110,6 +150,7 @@ class GraphValidationResult:
     ok: bool
     errors: tuple[str, ...]
     rows: dict[str, str]
+    mode: str
 
     def reason(self) -> str:
         if self.ok:
@@ -133,6 +174,16 @@ def graph_table(rows: list[tuple[str, str]]) -> str:
     for label, value in rows:
         lines.append(f"| **{table_cell(label)}** | {table_cell(value)} |")
     return "\n".join(lines)
+
+
+def normalize_graph_mode(mode: str | None) -> str:
+    """Return a supported graph mode, defaulting to work."""
+
+    if mode is None:
+        return DEFAULT_GRAPH_MODE
+    if mode not in GRAPH_MODES:
+        raise ValueError(f"unsupported mission reflection mode: {mode}")
+    return mode
 
 
 def compact_repo_state(snapshot: dict[str, object]) -> str:
@@ -228,22 +279,31 @@ def dogfood_signal_rows() -> list[tuple[str, str]]:
     ]
 
 
+def _mission_fields_for_mode(mode: str) -> tuple[tuple[str, str], ...]:
+    labels = set(MISSION_ROW_LABELS_BY_MODE[mode])
+    return tuple((label, prompt) for label, prompt in MISSION_REFLECTION_FIELDS if label in labels)
+
+
 def render_graph(
     *,
     snapshot: dict[str, object],
     check_payload: dict[str, object],
+    mode: str = DEFAULT_GRAPH_MODE,
     dogfood_active: bool = False,
 ) -> str:
     """Render the per-turn Cortex Mission Reflection as one table."""
 
+    graph_mode = normalize_graph_mode(mode)
     rows: list[tuple[str, str]] = [
         ("Repo: State", compact_repo_state(snapshot)),
-        ("Repo: Gates", compact_repo_gates(check_payload)),
     ]
-    for label, prompt in MISSION_REFLECTION_FIELDS:
+    if graph_mode in {"work", "closeout"}:
+        rows.append(("Repo: Gates", compact_repo_gates(check_payload)))
+    for label, prompt in _mission_fields_for_mode(graph_mode):
         rows.append((label, f"_[{MISSION_REFLECTION_TEMPLATE_TOKEN} {prompt}]_"))
-    rows.append(("Closure: Metadata", closure_metadata_template(snapshot)))
-    if dogfood_active:
+    if graph_mode == "closeout":
+        rows.append(("Closure: Metadata", closure_metadata_template(snapshot)))
+    if dogfood_active and graph_mode in {"work", "closeout"}:
         rows.extend(dogfood_signal_rows())
     rows.append(("Verdict", format_verdict(check_payload)))
     return "\n\n".join([GRAPH_HEADER_MARKER, graph_table(rows)])
@@ -267,6 +327,27 @@ def parse_rows(text: str) -> dict[str, str]:
     for match in pattern.finditer(section):
         rows[match.group("label")] = match.group("body")
     return rows
+
+
+def infer_graph_mode(text: str) -> str:
+    """Infer validation mode from the rendered graph row set.
+
+    The hook cannot know the user's intent, so it infers only from the
+    assistant's own graph shape: closeout has Closure Metadata, work has
+    repo gates or full reflection rows, and exploration is the compact shape.
+    Missing or unparsable graphs fall back to work for a useful canonical
+    skeleton in block feedback.
+    """
+
+    rows = parse_rows(text)
+    if not rows:
+        return DEFAULT_GRAPH_MODE
+    if "Closure: Metadata" in rows or any("Metadata" in label for label in rows):
+        return "closeout"
+    work_only_labels = set(WORK_GRAPH_ROW_LABELS) - set(EXPLORATION_GRAPH_ROW_LABELS)
+    if "Repo: Gates" in rows or any(label in rows for label in work_only_labels):
+        return "work"
+    return "exploration"
 
 
 def clean_cell_text(text: str) -> str:
@@ -299,10 +380,10 @@ def _shape_errors(text: str) -> list[str]:
     return errors
 
 
-def _required_row_errors(rows: dict[str, str]) -> list[str]:
+def _required_row_errors(rows: dict[str, str], mode: str) -> list[str]:
     return [
         f"missing required row `{label}`"
-        for label in REQUIRED_GRAPH_ROW_LABELS
+        for label in REQUIRED_GRAPH_ROW_LABELS_BY_MODE[mode]
         if label not in rows
     ]
 
@@ -325,9 +406,12 @@ def _closure_leaks(text: str) -> list[str]:
     return [marker for marker in CLOSURE_LEAK_MARKERS if marker in prefix]
 
 
-def _mission_reflection_errors(rows: dict[str, str]) -> list[str]:
+def _mission_reflection_errors(rows: dict[str, str], mode: str) -> list[str]:
     errors: list[str] = []
-    for label in MISSION_REFLECTION_ROW_LABELS:
+    labels = MISSION_ROW_LABELS_BY_MODE[mode]
+    cited_rows = 0
+    min_chars = MISSION_REFLECTION_MIN_CHARS_BY_MODE[mode]
+    for label in labels:
         body = rows.get(label)
         if body is None:
             errors.append(f"{label}: missing")
@@ -336,24 +420,35 @@ def _mission_reflection_errors(rows: dict[str, str]) -> list[str]:
         if MISSION_REFLECTION_TEMPLATE_TOKEN in body:
             errors.append(f"{label}: template still present")
             continue
-        if len(clean_body) < MISSION_REFLECTION_MIN_CHARS:
+        if len(clean_body) < min_chars:
             errors.append(
-                f"{label}: too short ({len(clean_body)} chars; minimum {MISSION_REFLECTION_MIN_CHARS})"
+                f"{label}: too short ({len(clean_body)} chars; minimum {min_chars})"
             )
-        if not REPO_CITATION_PATTERN.search(body):
+        if REPO_CITATION_PATTERN.search(body):
+            cited_rows += 1
+        elif mode == "closeout":
             errors.append(f"{label}: missing repo-grounding citation")
+    citation_rule = REQUIRED_REPO_CITATION_ROWS_BY_MODE[mode]
+    if citation_rule != "all" and cited_rows < int(citation_rule):
+        errors.append(
+            f"{mode} mode: expected at least {citation_rule} repo-grounded "
+            f"mission/reflection row(s), found {cited_rows}"
+        )
     return errors
 
 
-def _placeholder_errors(rows: dict[str, str]) -> list[str]:
+def _placeholder_errors(rows: dict[str, str], mode: str) -> list[str]:
     errors: list[str] = []
     for label, body in rows.items():
         if FILL_PLACEHOLDER_TOKEN in body:
             errors.append(f"{label}: placeholder `<fill` still present")
     closure = rows.get("Closure: Metadata")
-    if closure is None:
-        errors.append("Closure: Metadata: missing")
-    elif CLOSURE_METADATA_TEMPLATE_TOKEN in closure:
+    if mode == "closeout":
+        if closure is None:
+            errors.append("Closure: Metadata: missing")
+        elif CLOSURE_METADATA_TEMPLATE_TOKEN in closure:
+            errors.append("Closure: Metadata: template still present")
+    elif closure is not None and CLOSURE_METADATA_TEMPLATE_TOKEN in closure:
         errors.append("Closure: Metadata: template still present")
     return errors
 
@@ -386,13 +481,15 @@ def validate_graph_text(
     *,
     check_payload: dict[str, object] | None = None,
     require_filled: bool = True,
+    mode: str | None = None,
 ) -> GraphValidationResult:
     """Validate a final assistant message containing the mission graph."""
 
+    graph_mode = normalize_graph_mode(mode) if mode is not None else infer_graph_mode(text)
     errors: list[str] = []
     errors.extend(_shape_errors(text))
     rows = parse_rows(text)
-    errors.extend(_required_row_errors(rows))
+    errors.extend(_required_row_errors(rows, graph_mode))
     stale_rows = _stale_dashboard_rows(rows)
     errors.extend(f"stale dashboard row `{row}`" for row in stale_rows)
     leaks = _closure_leaks(text)
@@ -401,10 +498,15 @@ def validate_graph_text(
             "closure-shaped content before graph header: " + ", ".join(leaks)
         )
     if require_filled:
-        errors.extend(_mission_reflection_errors(rows))
-        errors.extend(_placeholder_errors(rows))
+        errors.extend(_mission_reflection_errors(rows, graph_mode))
+        errors.extend(_placeholder_errors(rows, graph_mode))
     errors.extend(_verdict_errors(rows, check_payload))
-    return GraphValidationResult(ok=not errors, errors=tuple(errors), rows=rows)
+    return GraphValidationResult(
+        ok=not errors,
+        errors=tuple(errors),
+        rows=rows,
+        mode=graph_mode,
+    )
 
 
 def filled_example_graph(graph_markdown: str) -> str:

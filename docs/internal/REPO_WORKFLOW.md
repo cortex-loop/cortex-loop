@@ -16,14 +16,18 @@ Active development belongs in:
 This clone should treat `main` as the resting branch.
 In short: `main` is the resting branch.
 
+Related contracts:
+
+- `AGENTS.md` — first-read agent orientation.
+- `docs/internal/MISSION_REFLECTION_CONTRACT.md` — chat-boundary reflection
+  modes and validation.
+- `docs/internal/ANTI_DRIFT_RULES.md` — earned anti-drift rules and lesson
+  context.
+
 ## Bootstrap
 
-Every new session should start from exactly these four reads:
-
-1. `AGENTS.md`
-2. `docs/CORTEX_STATUS.md`
-3. `git branch --show-current`
-4. `git status --short --untracked-files=all`
+Every new session should start from the bootstrap reads listed in
+`AGENTS.md`. Those reads are preparation, not response content.
 
 ## Goal
 
@@ -162,88 +166,45 @@ freshness (`>=30d` warn, `>=60d` fail); and a hardcoded-fixture-timestamp
 grep on changed test files (warn unless the fixture is the explicit
 stale `2000-01-01` form).
 
-Compose the per-turn Cortex Mission Reflection graph (the **single closure
-artifact** for every chat — all closure / handoff material lives in
-one two-column markdown table under `## Cortex Mission Reflection`).
-The command name remains `grid` for workflow compatibility:
+Compose the per-turn Cortex Mission Reflection graph. The mode-aware contract
+lives in `docs/internal/MISSION_REFLECTION_CONTRACT.md`; this command owns the
+workflow entrypoint:
 
 ```bash
-python internal/workflow/repo_workflow.py grid
+python internal/workflow/repo_workflow.py grid --mode exploration
+python internal/workflow/repo_workflow.py grid --mode work
+python internal/workflow/repo_workflow.py grid --mode closeout
 ```
 
-Required shape:
+Modes:
 
-- `## Cortex Mission Reflection` header
-- exactly one `| Field | Value |` table header
-- exactly one `|---|---|` separator
-- required rows: `Repo: State`, `Repo: Gates`, the
-  `Mission:*`/`Reflection:*`/`Evidence:*`/`Decision:*` mission
-  reflection rows, `Closure: Metadata`, and `Verdict`
-- optional `Dogfood:*` rows only when Codex App dogfood mode is active
-- no `###` subsections inside the grid
-- no second table inside the grid
+- `exploration` — read-only synthesis, strategy, critique, and planning.
+- `work` — implementation, doc edits, probe setup, and ordinary verification.
+- `closeout` — `close-session`, `finalize`, publication, or any turn claiming
+  landable session closure.
 
-Stale dashboard rows are forbidden in end-of-chat output. Do not emit
-fixed rows for `Progress:*`, `bio_to_code matrix`, hosts, shipping
-default, current train, next train, or research-line counts. Registry
-facts may appear only inside a mission/reflection row when they support
-the causal argument.
+Validate a filled graph from stdin or a file:
 
-**Workflow:** the agent runs `grid`, pastes the markdown skeleton, and
-edits the skeleton in place. Each Cortex Mission Reflection row must
-replace `mission reflection —` with at least 120 characters of causal,
-repo-grounded judgment and a citation to `docs/CORTEX.md`,
-`internal/truth/cortex_status.json`, `cortex/**`, `tests/**`, or a
-`CORTEX_V2_*` packet. `Closure: Metadata` must replace
-`closure metadata —` with ending branch, commit/no commit, verification,
-returned-to-main, and registry/doc-regeneration facts.
-Normal response prose may precede the grid; nothing closure-shaped
-may appear before or after it. On `FAIL` verdict the agent MUST
-continue working in the same chat until the grid clears.
+```bash
+python internal/workflow/repo_workflow.py grid-validate --mode exploration
+python internal/workflow/repo_workflow.py grid-validate --mode work
+python internal/workflow/repo_workflow.py grid-validate --mode closeout
+python internal/workflow/repo_workflow.py grid-validate --message-file final.md
+```
 
-**Chat-boundary enforcement (Claude Code).** A Stop hook at
-`.claude/settings.json` runs `.claude/hooks/cortex_grid_stop_hook.py`
-on turn-completion. The hook reads the assistant's last message from
-the transcript JSONL, runs `grid` itself, and blocks the stop on any
-of these gates:
+Omitting `--mode` makes the validator infer mode from graph shape. Closeout
+mode is the strict legacy contract and remains required for managed session
+closure.
 
-1. Missing required one-table shape: `## Cortex Mission Reflection`,
-   exactly one `| Field | Value |`, exactly one `|---|---|`,
-   required mission-reflection row labels, and no `###` subsection
-   inside the grid.
-2. Closure-shaped substrings (`Ending branch`, `Verification summary`,
-   `Fixed now`, `Claim earned now`, `Status registry touched`,
-   `Closure: Metadata`) appearing in prose **before** the grid
-   header.
-3. Stale dashboard row present (`Progress:*`, `bio_to_code matrix`,
-   hosts, shipping default, current train, next train, or research-line
-   counts as fixed rows).
-4. Any Cortex Mission Reflection row still contains the template token,
-   is shorter than the threshold, or lacks a repo-grounding citation.
-5. `Closure: Metadata` still contains a template token or `<fill`.
-6. `reflection-check --json` returns verdict `FAIL`.
-
-The hook does **not** short-circuit on `stop_hook_active` — every stop
-attempt re-runs every gate. Persistent agent non-compliance keeps
-blocking. The hook fails open (allows the stop with a stderr
-diagnostic) only on infrastructure failures: missing transcript,
-malformed hook input, or `grid` / `reflection-check` command crash.
-These fail-open paths exist to prevent infrastructure-caused
-conversation locks; they do not provide an escape from the gate when
-the agent could comply.
-
-**Codex App chat-boundary enforcement.** Codex App for Mac uses
-repo-local `.codex/config.toml` with `[features].codex_hooks = true`
-and a Stop hook at
-`.codex/hooks/cortex_mission_reflection_stop_hook.py`. Official Codex
-hook lifecycle docs say project-local hooks load only when the project
-`.codex/` layer is trusted; if that trust/config layer is absent, the
-repo hook is not a chat-boundary gate. Codex supplies the latest
-assistant output as `last_assistant_message`; the hook runs `grid` and
-`reflection-check`, validates that message with the same
-`internal/workflow/mission_reflection.py` contract, and returns
-`decision: block` on missing/underfit graph output so Codex continues
-the turn with corrective context.
+Claude Code chat-boundary enforcement lives in `.claude/settings.json` and
+`.claude/hooks/cortex_grid_stop_hook.py`. Codex App chat-boundary enforcement
+lives in `.codex/config.toml` with `[features].codex_hooks = true` and
+`.codex/hooks/cortex_mission_reflection_stop_hook.py`; Codex supplies
+`last_assistant_message`, and repo-local hooks require a trusted `.codex/`
+project layer. In other words, the `.codex/` layer is trusted before the hook
+can act as a chat-boundary gate. Both hooks share
+`internal/workflow/mission_reflection.py` and the documentation in
+`docs/internal/MISSION_REFLECTION_CONTRACT.md`.
 
 Verify Codex App hook config and behavior with:
 
@@ -256,16 +217,10 @@ hook/config/runtime issue is fixed. This is structural lifecycle
 evidence only; it proves config/script behavior and simulated Stop
 payload handling, not that Cortex has improved model output.
 
-**Codex fallback surfaces.** Codex surfaces that do not load repo-local
-hooks still validate the filled final graph with:
-
-```bash
-python internal/workflow/repo_workflow.py grid-validate --stdin
-```
-
-Non-no-op Codex closeouts must record this in
-`mission_reflection_graph`. This fallback is session-boundary evidence,
-not chat-boundary parity.
+Codex fallback surfaces that do not load repo-local hooks still validate the
+filled final graph with `grid-validate` and record it in
+`mission_reflection_graph`. This fallback is session-boundary evidence, not
+chat-boundary parity.
 
 Verify Claude Code hook wiring and shared graph validation with:
 
@@ -301,6 +256,41 @@ Require the strict final-clean contract:
 ```bash
 python internal/workflow/repo_workflow.py cleanup-report
 ```
+
+## Codex App Dogfood Mode
+
+Dogfood mode is a lab/watchlist surface for bounded self-hosting evidence
+during real repo work. It never promotes Codex App into product truth.
+
+Chat triggers map to lab commands:
+
+- `start cortex dogfood mode` →
+  `python3 -m lab.codex_dogfood_session activate`
+- `refresh cortex dogfood mode` →
+  `python3 -m lab.codex_dogfood_session refresh`
+- `stop cortex dogfood mode` →
+  `python3 -m lab.codex_dogfood_session close --abort`
+- full dogfood closeout, only when explicitly requested →
+  `python3 -m lab.codex_dogfood_session close`
+- `show cortex dogfood status` →
+  `python3 -m lab.codex_dogfood_session status`
+
+Activation requires a managed `codex/...` session branch. On clean `main`,
+run:
+
+```bash
+python3 internal/workflow/repo_workflow.py sync-main
+python3 internal/workflow/repo_workflow.py start-session --agent codex --slug task-name
+```
+
+Do not run `make live-codex-dogfood` automatically from chat triggers because
+it is current-worktree-only. Routine dogfood checkpointing uses:
+
+```bash
+python3 internal/workflow/repo_workflow.py close-session --message "scope: end-state summary"
+```
+
+Use `--publish` only when explicitly requested.
 
 ## Session Workflow
 

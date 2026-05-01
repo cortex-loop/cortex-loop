@@ -1681,6 +1681,8 @@ def cmd_reflection_check(emit_json: bool) -> int:
 # tests and callers can assert against repo_workflow.py while the hook
 # imports the same source of truth.
 MISSION_REFLECTION_FIELDS = mission_reflection.MISSION_REFLECTION_FIELDS
+GRID_MODES = mission_reflection.GRAPH_MODES
+DEFAULT_GRID_MODE = mission_reflection.DEFAULT_GRAPH_MODE
 GRID_HEADER_MARKER = mission_reflection.GRAPH_HEADER_MARKER
 GRID_TABLE_HEADER_MARKER = mission_reflection.TABLE_HEADER_MARKER
 GRID_TABLE_SEPARATOR_MARKER = mission_reflection.TABLE_SEPARATOR_MARKER
@@ -1712,27 +1714,33 @@ def _format_grid_markdown(
     snapshot: dict[str, object],
     check_payload: dict[str, object],
     work_performed: bool,
+    mode: str = DEFAULT_GRID_MODE,
 ) -> str:
     """Render the shared Cortex Mission Reflection graph."""
-    _ = work_performed  # Shape is intentionally stable on no-work turns.
+    _ = work_performed  # Mode, not dirtiness, owns the rendered shape.
     return mission_reflection.render_graph(
         snapshot=snapshot,
         check_payload=check_payload,
+        mode=mode,
         dogfood_active=_dogfood_active(),
     )
 
 
-def cmd_grid() -> int:
+def cmd_grid(mode: str = DEFAULT_GRID_MODE) -> int:
+    graph_mode = mission_reflection.normalize_graph_mode(mode)
     snapshot = _status_snapshot_payload()
     work_performed = bool(_branch_changed_paths(snapshot["branch"]))
     # Always run reflection-check so drift signals surface in verdict
     # even on no-work turns (stale next_train, dirty main, etc.).
     check_payload = _reflection_check_payload()
-    print(_format_grid_markdown(snapshot, check_payload, work_performed))
+    print(_format_grid_markdown(snapshot, check_payload, work_performed, graph_mode))
     return 0
 
 
-def _current_grid_for_validation() -> tuple[str, dict[str, object]]:
+def _current_grid_for_validation(
+    mode: str = DEFAULT_GRID_MODE,
+) -> tuple[str, dict[str, object]]:
+    graph_mode = mission_reflection.normalize_graph_mode(mode)
     snapshot = _status_snapshot_payload()
     check_payload = _reflection_check_payload()
     return (
@@ -1740,12 +1748,17 @@ def _current_grid_for_validation() -> tuple[str, dict[str, object]]:
             snapshot,
             check_payload,
             bool(_branch_changed_paths(snapshot["branch"])),
+            graph_mode,
         ),
         check_payload,
     )
 
 
-def cmd_grid_validate(message_file: str | None, emit_json: bool) -> int:
+def cmd_grid_validate(
+    message_file: str | None,
+    emit_json: bool,
+    mode: str | None = None,
+) -> int:
     """Validate a filled Cortex Mission Reflection graph.
 
     This command is the shared fallback validator for Codex surfaces
@@ -1762,10 +1775,12 @@ def cmd_grid_validate(message_file: str | None, emit_json: bool) -> int:
         text,
         check_payload=check_payload,
         require_filled=True,
+        mode=mode,
     )
     payload = {
         "ok": result.ok,
         "errors": list(result.errors),
+        "mode": result.mode,
         "rows": sorted(result.rows),
         "verdict": check_payload.get("verdict"),
     }
@@ -2225,13 +2240,20 @@ def main(argv: list[str] | None = None) -> int:
         help="Emit JSON instead of human-readable text.",
     )
 
-    subparsers.add_parser(
+    grid_parser = subparsers.add_parser(
         "grid",
         help=(
-            "Compose the per-turn Cortex Mission Reflection graph: one "
-            "two-column table with repo state/gates, mission reflection, "
-            "closure metadata, and turn verdict. Run before final handoff "
-            "every chat."
+            "Compose the per-turn Cortex Mission Reflection graph in "
+            "exploration, work, or closeout mode."
+        ),
+    )
+    grid_parser.add_argument(
+        "--mode",
+        choices=GRID_MODES,
+        default=DEFAULT_GRID_MODE,
+        help=(
+            "Reflection mode: exploration for synthesis/strategy, work for "
+            "ordinary implementation turns, closeout for close-session/finalize."
         ),
     )
     validate_grid_parser = subparsers.add_parser(
@@ -2243,6 +2265,12 @@ def main(argv: list[str] | None = None) -> int:
         ),
     )
     validate_grid_parser.add_argument("--message-file")
+    validate_grid_parser.add_argument(
+        "--mode",
+        choices=GRID_MODES,
+        default=None,
+        help="Validate against an explicit mode; omit to infer from graph shape.",
+    )
     validate_grid_parser.add_argument(
         "--json",
         action="store_true",
@@ -2303,9 +2331,9 @@ def main(argv: list[str] | None = None) -> int:
     if args.command == "reflection-check":
         return cmd_reflection_check(args.reflection_json)
     if args.command == "grid":
-        return cmd_grid()
+        return cmd_grid(args.mode)
     if args.command == "grid-validate":
-        return cmd_grid_validate(args.message_file, args.grid_validate_json)
+        return cmd_grid_validate(args.message_file, args.grid_validate_json, args.mode)
     if args.command == "hook-health":
         return cmd_hook_health(args.hook_health_json)
     if args.command == "codex-app-hook-health":
