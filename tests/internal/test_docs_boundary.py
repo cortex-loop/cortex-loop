@@ -28,6 +28,19 @@ CORTEX_PLUGIN_ADAPTER_PATH = REPO_ROOT / "docs" / "cortex_plugin" / "ADAPTER.md"
 CORTEX_PLUGIN_EVIDENCE_SYNTHESIS_PATH = (
     REPO_ROOT / "docs" / "cortex_plugin" / "EVIDENCE_SYNTHESIS.md"
 )
+COMMUNICATION_PROBLEM_DIR = (
+    REPO_ROOT / "docs" / "cortex_plugin" / "communication_problem"
+)
+COMMUNICATION_PROBLEM_FILES = [
+    COMMUNICATION_PROBLEM_DIR / "01_problem_statement.md",
+    COMMUNICATION_PROBLEM_DIR / "02_cortex_identity_and_doctrine.md",
+    COMMUNICATION_PROBLEM_DIR / "03_maths_to_code.md",
+    COMMUNICATION_PROBLEM_DIR / "04_cortex_internal_state.md",
+    COMMUNICATION_PROBLEM_DIR / "05_claude_communication_surface.md",
+    COMMUNICATION_PROBLEM_DIR / "06_hook_surface_and_evidence.md",
+    COMMUNICATION_PROBLEM_DIR / "07_strange_loop_frame.md",
+    COMMUNICATION_PROBLEM_DIR / "08_anti_patterns_and_failed_solutions.md",
+]
 LIFECYCLE_SURFACE_RECON_PATH = (
     REPO_ROOT / "docs" / "recon" / "lifecycle_first_surface_matrix.md"
 )
@@ -408,6 +421,7 @@ def test_public_docs_point_to_status_and_keep_archive_out_of_the_front_door() ->
     assert "cortex_plugin/DESIGN.md" in docs_index
     assert "cortex_plugin/ADAPTER.md" in docs_index
     assert "cortex_plugin/EVIDENCE_SYNTHESIS.md" in docs_index
+    assert "cortex_plugin/communication_problem/01_problem_statement.md" in docs_index
     assert "runtime_context/EVAL_RUBRIC.md" in docs_index
     assert "runtime_context/BASELINE_SHAPED_EXAMPLES.md" in docs_index
     assert "runtime_context/CROSS_HOST_SKETCH.md" in docs_index
@@ -496,6 +510,17 @@ def test_docs_directory_only_exposes_archive_and_workflow_subtrees() -> None:
         "ADAPTER.md",
         "DESIGN.md",
         "EVIDENCE_SYNTHESIS.md",
+        "communication_problem",
+    ]
+    assert sorted(path.name for path in COMMUNICATION_PROBLEM_DIR.iterdir()) == [
+        "01_problem_statement.md",
+        "02_cortex_identity_and_doctrine.md",
+        "03_maths_to_code.md",
+        "04_cortex_internal_state.md",
+        "05_claude_communication_surface.md",
+        "06_hook_surface_and_evidence.md",
+        "07_strange_loop_frame.md",
+        "08_anti_patterns_and_failed_solutions.md",
     ]
     assert sorted(path.name for path in (DOCS_ROOT / "internal").iterdir()) == [
         "ANTI_DRIFT_RULES.md",
@@ -520,6 +545,98 @@ def test_docs_directory_only_exposes_archive_and_workflow_subtrees() -> None:
         "CROSS_HOST_SKETCH.md",
         "EVAL_RUBRIC.md",
     ]
+
+
+def test_communication_problem_dossier_is_self_contained_and_problem_framed() -> None:
+    texts = [path.read_text(encoding="utf-8") for path in COMMUNICATION_PROBLEM_FILES]
+    combined = "\n".join(texts)
+
+    for path in COMMUNICATION_PROBLEM_FILES:
+        assert path.exists(), path
+        assert path.read_text(encoding="utf-8").strip(), path
+
+    problem = texts[0]
+    assert "τ : S × H × C -> M" in problem
+    assert "strange-loop" in problem.lower()
+    assert "not a real translation function" in problem
+    assert "arbitrary Cortex states" in problem
+    assert "more hardcoded templates" in problem
+    assert "The thinking model may keep the lattice" in combined
+
+    identity = texts[1]
+    assert "Eight Failure Modes" in identity
+    assert "Four Truth Distinctions" in identity
+    assert "Connectivity Requirement" in identity
+    assert "Lifecycle-First Runtime Law" in identity
+
+    maths = texts[2]
+    assert "math_to_code_map" in maths
+    assert "side_a_internal_logic" in maths
+    assert "side_b_model_visible_translation" in maths
+    assert "host_control_transports" in maths
+
+    internal_state = texts[3]
+    for ref in [
+        "cortex/core/envelopes.py",
+        "cortex/core/observation.py",
+        "cortex/core/dispatch.py",
+        "cortex/sre/feedback.py",
+        "cortex/sre/brake.py",
+        "cortex/sre/goal_debt.py",
+        "cortex/sre/operator_routing.py",
+        "cortex/aux/publication.py",
+        "cortex/runtime/verified_work_runtime.py",
+    ]:
+        assert f"### `{ref}`" in internal_state
+
+    claude_surface = texts[4]
+    for ref in [
+        "cortex/hosts/_executive_closure.py",
+        "cortex/hosts/runtime_context.py",
+        "cortex/hosts/claude/runtime.py",
+        "cortex/hosts/claude/host_control.py",
+        "cortex/hosts/claude/ingress.py",
+        "cortex/hosts/claude/session_io.py",
+        "cortex/hosts/claude_code_desktop/ingress.py",
+        "cortex/hosts/claude_code_desktop/runtime.py",
+        "cortex/hosts/claude_code_desktop/hook_control.py",
+        "cortex/hosts/claude_code_desktop/model_facing.py",
+    ]:
+        assert ref in claude_surface
+    assert "not a general `τ`" in claude_surface
+
+    evidence = texts[5]
+    assert "additionalContext" in evidence
+    assert "systemMessage" in evidence
+    assert "stop_hook_active" in evidence
+    assert "Prior Architectural Organization" in evidence
+    assert "content shape may dominate hook placement" in evidence
+    assert "Headless translated Stop harness" in evidence
+    assert "not a general `τ`" in evidence
+
+    strange_loop = texts[6]
+    assert "Hofstadter" in strange_loop
+    assert "Gödel" in strange_loop
+    assert "Metacognition" in strange_loop
+    assert "Integrated Versus Alien Content" in strange_loop
+    assert "This dossier does not commit" in strange_loop
+
+    anti_patterns = texts[7]
+    for phrase in [
+        "Framework Signatures",
+        "Schema IDs",
+        "Generic Principles",
+        "Internal Tag Names",
+        "Hardcoded Templates",
+        "Hook Content Competing With User Exact-Output Instructions",
+        "Confused Authority",
+        "integration failures",
+    ]:
+        assert phrase in anti_patterns
+
+    assert "OpenAIHostControlRequest" not in internal_state
+    assert "GeminiHostControlRequest" not in internal_state
+    assert "Mission Reflection" not in problem
 
 
 def test_runtime_context_eval_artifacts_are_documented_and_operationalized() -> None:
