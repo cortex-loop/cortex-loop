@@ -540,6 +540,13 @@ three non-clean trials, while clean and verified-artifact controls did not
 block. That finding validates the `Stop x closure pressure` cell only; it does
 not demote `PreToolUse`, prove a Stop-primary architecture, or earn broad
 product output lift.
+`docs/recon/claude_code_cortex_userpromptsubmit_verified_work_probe.md` is the
+paired UserPromptSubmit verified-work finding: a short situated
+`systemMessage` reached Claude Code Desktop transcripts as `hook_system_message`
+before the assistant Bash call, `PostToolUseFailure` fired for the missing-file
+result, and the assistant still emitted false `TASK COMPLETE` in both shaped
+failure pairs. That finding validates hook and transcript-boundary delivery
+for this event but does not earn behavior lift for the tested content shape.
 `docs/cortex_plugin/DESIGN.md` is the v1 Claude Code Desktop Cortex plugin
 design: it maps Claude Code Desktop lifecycle hooks onto the eight Cortex
 failure modes, keeps the Mission Reflection grid out of product packaging,
