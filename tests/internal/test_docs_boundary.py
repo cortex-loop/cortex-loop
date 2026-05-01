@@ -47,6 +47,12 @@ CLAUDE_CODE_CORTEX_RUNTIME_CONTEXT_CONNECTIVITY_PROBE_PATH = (
 CLAUDE_CODE_CORTEX_STOP_CLOSURE_CONNECTIVITY_PROBE_PATH = (
     REPO_ROOT / "docs" / "recon" / "claude_code_cortex_stop_closure_connectivity_probe.md"
 )
+CLAUDE_CODE_CORTEX_USERPROMPTSUBMIT_VERIFIED_WORK_PROBE_PATH = (
+    REPO_ROOT
+    / "docs"
+    / "recon"
+    / "claude_code_cortex_userpromptsubmit_verified_work_probe.md"
+)
 STATUS_REGISTRY_PATH = REPO_ROOT / "internal" / "truth" / "cortex_status.json"
 STATUS_DOC_PATH = REPO_ROOT / "docs" / "CORTEX_STATUS.md"
 WORKFLOW_DOC_PATH = REPO_ROOT / "docs" / "internal" / "REPO_WORKFLOW.md"
@@ -394,6 +400,7 @@ def test_public_docs_point_to_status_and_keep_archive_out_of_the_front_door() ->
     assert "recon/claude_code_user_scope_plugin_managed_worktree_probe.md" in docs_index
     assert "recon/claude_code_cortex_runtime_context_connectivity_probe.md" in docs_index
     assert "recon/claude_code_cortex_stop_closure_connectivity_probe.md" in docs_index
+    assert "recon/claude_code_cortex_userpromptsubmit_verified_work_probe.md" in docs_index
     # CORTEX.md content anchors the previously-fragmented charter and
     # boundary identity material in one canonical surface.
     assert "executive-function layer that wraps a model after" in cortex_doc
@@ -409,6 +416,7 @@ def test_public_docs_point_to_status_and_keep_archive_out_of_the_front_door() ->
     assert "docs/recon/claude_code_user_scope_plugin_managed_worktree_probe.md" in cortex_doc
     assert "docs/recon/claude_code_cortex_runtime_context_connectivity_probe.md" in cortex_doc
     assert "docs/recon/claude_code_cortex_stop_closure_connectivity_probe.md" in cortex_doc
+    assert "docs/recon/claude_code_cortex_userpromptsubmit_verified_work_probe.md" in cortex_doc
     assert "EVAL_RUBRIC.md" in cortex_doc
     assert "BASELINE_SHAPED_EXAMPLES.md" in cortex_doc
     assert "CROSS_HOST_SKETCH.md" in cortex_doc
@@ -472,6 +480,7 @@ def test_docs_directory_only_exposes_archive_and_workflow_subtrees() -> None:
     assert sorted(path.name for path in (DOCS_ROOT / "recon").iterdir()) == [
         "claude_code_cortex_runtime_context_connectivity_probe.md",
         "claude_code_cortex_stop_closure_connectivity_probe.md",
+        "claude_code_cortex_userpromptsubmit_verified_work_probe.md",
         "claude_code_desktop_pretooluse_probe.md",
         "claude_code_user_scope_plugin_managed_worktree_probe.md",
         "claude_code_user_scope_plugin_pretooluse_probe.md",
@@ -869,6 +878,56 @@ def test_claude_code_cortex_stop_closure_connectivity_probe_records_stop_finding
         assert f"`{key}`" in text
 
 
+def test_claude_code_cortex_userpromptsubmit_verified_work_probe_records_negative_finding() -> None:
+    text = _read(CLAUDE_CODE_CORTEX_USERPROMPTSUBMIT_VERIFIED_WORK_PROBE_PATH)
+
+    assert "Surface: internal / recon" in text
+    assert "Probe date: 2026-05-01" in text
+    assert "Claude Code Desktop Code tab" in text
+    assert "/Users/erikahoward/cortex-plugin-sandbox" in text
+    assert "1.5354.0" in text
+    assert "2.1.121" in text
+    assert "claude-opus-4-7" in text
+
+    for phrase in [
+        "UserPromptSubmit",
+        "verified-work",
+        "Hook delivery truth",
+        "Model-visible delivery truth",
+        "Behavior-lift truth",
+        "Failed for this content shape",
+        "Clean-control truth",
+        "hook_system_message",
+        "PostToolUseFailure",
+        "PostToolUse:Bash",
+        "python3 missing.py",
+        "python3 -c \"print('OK')\"",
+        "TASK COMPLETE",
+        "2-of-3 pass threshold unreachable",
+        "Claude Code Desktop is not promoted to default product behavior",
+        "Codex did not drive the GUI",
+        "does not claim product lift",
+        "does not collapse the H x F lifecycle lattice",
+    ]:
+        assert phrase in text
+
+    for key in [
+        "session_id",
+        "transcript_path",
+        "cwd",
+        "permission_mode",
+        "hook_event_name",
+        "prompt",
+        "tool_name",
+        "tool_input",
+        "tool_response",
+        "error",
+        "last_assistant_message",
+        "stop_hook_active",
+    ]:
+        assert f"`{key}`" in text
+
+
 def test_cortex_plugin_design_preserves_scope_and_truth_boundaries() -> None:
     text = _read(CORTEX_PLUGIN_DESIGN_PATH)
     sections = [line for line in text.splitlines() if line.startswith("## ")]
@@ -1043,6 +1102,10 @@ def test_cortex_plugin_evidence_synthesis_preserves_truth_boundaries() -> None:
     assert "later live paired evidence" in text
     assert "cortex_plugin/EVIDENCE_SYNTHESIS.md" in docs_index
     assert "docs/cortex_plugin/EVIDENCE_SYNTHESIS.md" in status["active_docs"]
+    assert (
+        "docs/recon/claude_code_cortex_userpromptsubmit_verified_work_probe.md"
+        in status["active_docs"]
+    )
 
 
 def test_generated_status_doc_is_current() -> None:
