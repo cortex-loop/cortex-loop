@@ -53,6 +53,12 @@ CLAUDE_CODE_CORTEX_HEADLESS_CLI_EQUIVALENCE_PROBE_PATH = (
     / "recon"
     / "claude_code_cortex_headless_cli_equivalence_probe.md"
 )
+CLAUDE_CODE_CORTEX_MAC_PENDING_GOAL_DIVERGENCE_RETEST_PATH = (
+    REPO_ROOT
+    / "docs"
+    / "recon"
+    / "claude_code_cortex_mac_pending_goal_divergence_retest.md"
+)
 CLAUDE_CODE_CORTEX_POSTTOOL_FAILURE_TO_STOP_LOOP_PROBE_PATH = (
     REPO_ROOT
     / "docs"
@@ -413,6 +419,7 @@ def test_public_docs_point_to_status_and_keep_archive_out_of_the_front_door() ->
     assert "recon/claude_code_cortex_runtime_context_connectivity_probe.md" in docs_index
     assert "recon/claude_code_cortex_stop_closure_connectivity_probe.md" in docs_index
     assert "recon/claude_code_cortex_headless_cli_equivalence_probe.md" in docs_index
+    assert "recon/claude_code_cortex_mac_pending_goal_divergence_retest.md" in docs_index
     assert "recon/claude_code_cortex_posttool_failure_to_stop_loop_probe.md" in docs_index
     assert "recon/claude_code_cortex_userpromptsubmit_verified_work_probe.md" in docs_index
     # CORTEX.md content anchors the previously-fragmented charter and
@@ -431,6 +438,7 @@ def test_public_docs_point_to_status_and_keep_archive_out_of_the_front_door() ->
     assert "docs/recon/claude_code_cortex_runtime_context_connectivity_probe.md" in cortex_doc
     assert "docs/recon/claude_code_cortex_stop_closure_connectivity_probe.md" in cortex_doc
     assert "docs/recon/claude_code_cortex_headless_cli_equivalence_probe.md" in cortex_doc
+    assert "docs/recon/claude_code_cortex_mac_pending_goal_divergence_retest.md" in cortex_doc
     assert "docs/recon/claude_code_cortex_posttool_failure_to_stop_loop_probe.md" in cortex_doc
     assert "docs/recon/claude_code_cortex_userpromptsubmit_verified_work_probe.md" in cortex_doc
     assert "EVAL_RUBRIC.md" in cortex_doc
@@ -496,6 +504,7 @@ def test_docs_directory_only_exposes_archive_and_workflow_subtrees() -> None:
     ]
     assert sorted(path.name for path in (DOCS_ROOT / "recon").iterdir()) == [
         "claude_code_cortex_headless_cli_equivalence_probe.md",
+        "claude_code_cortex_mac_pending_goal_divergence_retest.md",
         "claude_code_cortex_posttool_failure_to_stop_loop_probe.md",
         "claude_code_cortex_runtime_context_connectivity_probe.md",
         "claude_code_cortex_stop_closure_connectivity_probe.md",
@@ -955,6 +964,50 @@ def test_claude_code_cortex_headless_cli_equivalence_probe_records_partial_findi
         assert f"`{key}`" in text
 
 
+def test_claude_code_cortex_mac_pending_goal_divergence_retest_records_content_shape_failure() -> None:
+    text = _read(CLAUDE_CODE_CORTEX_MAC_PENDING_GOAL_DIVERGENCE_RETEST_PATH)
+
+    assert "Surface: internal / recon" in text
+    assert "Probe date: 2026-05-01" in text
+    assert "Claude Code Desktop Code tab" in text
+    assert "/Users/erikahoward/cortex-plugin-sandbox" in text
+    assert "2.1.121" in text
+    assert "claude-opus-4-7" in text
+
+    for phrase in [
+        "Mac Pending-Goal Divergence Retest",
+        "raw internal Cortex wording",
+        "Mixed / content-shape contaminated",
+        "baseline Mac false closure",
+        "Shaped Mac repair",
+        "Shaped Mac content-shape failure",
+        "hook-skepticism/prompt-injection-shaped",
+        "Once-only safety wrapper",
+        "Stop hook feedback:",
+        "hook_blocking_error",
+        "Cortex blocked closure: continuity_reminder, pending_goal_debt",
+        "MIGRATION COMPLETE",
+        "mode.txt=baseline",
+        "trial.txt=paused",
+        "run_id.txt=paused_safe_noop",
+        "model-facing translation boundary",
+        "does not make `Stop` the primary Cortex architecture",
+        "does not promote Claude Code Desktop",
+    ]:
+        assert phrase in text
+
+    for key in [
+        "session_id",
+        "transcript_path",
+        "cwd",
+        "permission_mode",
+        "hook_event_name",
+        "last_assistant_message",
+        "stop_hook_active",
+    ]:
+        assert f"`{key}`" in text
+
+
 def test_claude_code_cortex_posttool_failure_to_stop_loop_probe_records_mixed_finding() -> None:
     text = _read(CLAUDE_CODE_CORTEX_POSTTOOL_FAILURE_TO_STOP_LOOP_PROBE_PATH)
 
@@ -1132,7 +1185,10 @@ def test_cortex_plugin_design_preserves_scope_and_truth_boundaries() -> None:
     assert "exact-output" in text
     assert "shaped Stop repaired 2/3 failure pairs" in text
     assert "PostToolUseFailure:Bash` and `PostToolUse:Bash` event distinction" in text
-    assert "Stop closure pressure is the only actively firing" in text
+    assert "Model-Facing Translation Boundary" in text
+    assert "raw internal Stop wording is content-shape contaminated" in text
+    assert "Mac pending-goal retest repaired only 1/2 shaped trials" in text
+    assert "translated Stop closure pressure is the only plausible actively" in text
     assert "Codex cannot drive Claude Code Desktop's GUI" in text
 
     # Existing Cortex modules are the source of law; the plugin is wiring.

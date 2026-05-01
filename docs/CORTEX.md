@@ -548,6 +548,12 @@ diverged on pending-goal because headless refused the false closure in baseline
 and treated the shaped Cortex hook framing skeptically. That finding supports
 lower-cost Stop-specific iteration in headless mode with Mac app validation
 reserved for final behavior claims.
+`docs/recon/claude_code_cortex_mac_pending_goal_divergence_retest.md` is the
+Mac app retest of that pending-goal divergence: two fresh baselines reproduced
+false `MIGRATION COMPLETE` closure, but raw internal Stop wording repaired only
+one of two shaped trials and caused hook-skepticism in the other. That finding
+does not invalidate the Stop lifecycle surface; it proves that internal Cortex
+tags must be translated into plain task facts before model-visible enforcement.
 `docs/recon/claude_code_cortex_posttool_failure_to_stop_loop_probe.md` is the
 paired PostToolUseFailure-to-Stop finding: failed Bash results fired
 `PostToolUseFailure`, persisted bounded `ReferenceRealizationFeedback`, and
