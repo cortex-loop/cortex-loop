@@ -25,7 +25,7 @@ from lab.live_validation_common import (
 )
 
 
-AGENTS_CONTRACT_PATH = REPO_ROOT / "AGENTS.md"
+WORKFLOW_CONTRACT_PATH = REPO_ROOT / "docs" / "internal" / "REPO_WORKFLOW.md"
 DOGFOOD_PROFILE_NAME = "repo_any_task"
 DOGFOOD_CONTRACT_HEADING = "## Codex App Dogfood Mode"
 DOGFOOD_START_TRIGGER = "start cortex dogfood mode"
@@ -334,10 +334,14 @@ def status_session(
 
 
 def compute_contract_revision_hash(contract_payload: dict[str, Any]) -> str:
+    dogfood_contract = contract_payload.get(
+        "dogfood_workflow_contract",
+        contract_payload.get("agents_dogfood_contract", ""),
+    )
     digest = hashlib.sha256(
         json.dumps(
             {
-                "agents_dogfood_contract": contract_payload["agents_dogfood_contract"],
+                "dogfood_workflow_contract": dogfood_contract,
                 "profile": contract_payload["profile"],
                 "session_start_prompt": contract_payload["session_start_prompt"]["text"],
                 "closeout_prompt": contract_payload["closeout_prompt"]["text"],
@@ -471,7 +475,7 @@ def _contract_payload(profile_name: str) -> dict[str, Any]:
     closeout_path = PROMPTS_ROOT / profile["closeout_prompt"]
     return {
         "profile": profile,
-        "agents_dogfood_contract": _read_agents_dogfood_contract(),
+        "dogfood_workflow_contract": _read_dogfood_workflow_contract(),
         "session_start_prompt": {
             "path": relative_repo_path(session_start_path),
             "text": session_start_path.read_text(encoding="utf-8"),
@@ -487,11 +491,17 @@ def _contract_payload(profile_name: str) -> dict[str, Any]:
     }
 
 
-def _read_agents_dogfood_contract() -> str:
+def _read_dogfood_workflow_contract() -> str:
     return _extract_level_2_section(
-        AGENTS_CONTRACT_PATH.read_text(encoding="utf-8"),
+        WORKFLOW_CONTRACT_PATH.read_text(encoding="utf-8"),
         DOGFOOD_CONTRACT_HEADING,
     )
+
+
+def _read_agents_dogfood_contract() -> str:
+    """Backward-compatible alias for older tests and payload readers."""
+
+    return _read_dogfood_workflow_contract()
 
 
 def _extract_level_2_section(text: str, heading: str) -> str:
@@ -502,7 +512,7 @@ def _extract_level_2_section(text: str, heading: str) -> str:
             start_index = index
             break
     if start_index is None:
-        raise ValueError(f"Missing required AGENTS contract heading: {heading}")
+        raise ValueError(f"Missing required workflow contract heading: {heading}")
 
     collected: list[str] = []
     for line in lines[start_index:]:

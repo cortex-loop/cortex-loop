@@ -11,6 +11,8 @@ Active docs:
 - [CORTEX SRE](CORTEX_V2_SRE_2.md)
 - [CORTEX AUX](CORTEX_V2_AUX_2.md)
 - [Repo Workflow](internal/REPO_WORKFLOW.md)
+- [Mission Reflection Contract](internal/MISSION_REFLECTION_CONTRACT.md)
+- [Anti-Drift Rules](internal/ANTI_DRIFT_RULES.md)
 - [Claude Code Desktop Cortex Plugin Design](cortex_plugin/DESIGN.md) —
   v1 full-lifecycle plugin architecture for Claude Code Desktop's Code tab
 - [Claude Code Desktop Cortex Host Adapter](cortex_plugin/ADAPTER.md) —

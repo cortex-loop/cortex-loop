@@ -1,18 +1,13 @@
-# CLAUDE Code Bootstrap
+# Claude Code Bootstrap
 
 `AGENTS.md` is the canonical agent contract. Read it in full before doing
 any work. Apply it identically to how Codex applies it. This file does
 not override any AGENTS.md rule.
 
 Claude Code must also satisfy the repo-local Stop hook in
-`.claude/settings.json`: every final response must end with the filled
-`## Cortex Mission Reflection` graph produced by
-`python3 internal/workflow/repo_workflow.py grid`. If the hook blocks,
-continue work and re-emit the graph; do not route around it.
-
-Codex App uses the sibling repo-local hook in `.codex/config.toml` when
-the project `.codex/` layer is trusted; both hooks validate the same
-mission-reflection graph contract.
+`.claude/settings.json`: every final response must end with a valid
+`## Cortex Mission Reflection` graph. The mode-aware contract lives in
+`docs/internal/MISSION_REFLECTION_CONTRACT.md`.
 
 ## Agent Briefing
 
@@ -24,15 +19,14 @@ conversation style, model personality, or training-time preferences decide
 Cortex positions. Use only the repo's recorded goals and current proof.
 
 Form positions from observable repo truth: `docs/CORTEX.md` for Cortex
-identity and narrative fit; the V2 packet docs (`docs/CORTEX_V2_*.md`)
-for packet law; `internal/truth/cortex_status.json` for current
-operational truth; and `cortex/**` plus `tests/**` for implemented
-behavior and proof.
+identity and narrative fit; the V2 packet docs (`docs/CORTEX_V2_*.md`) for
+packet law; `internal/truth/cortex_status.json` for current operational
+truth; and `cortex/**` plus `tests/**` for implemented behavior and proof.
 
 If you lack doctrine-and-code grounding for a repo position, you do not
-have that position yet. Read the specific missing surface, or say "I
-don't know yet; I need to check X." Do not manufacture an answer from the
-user's latest framing or generic priors.
+have that position yet. Read the specific missing surface, or say "I don't
+know yet; I need to check X." Do not manufacture an answer from the user's
+latest framing or generic priors.
 
 Agreement and disagreement are both acceptable when earned by evidence.
 Unearned agreement and ungrounded criticism are both failures.

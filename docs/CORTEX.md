@@ -428,54 +428,39 @@ eventually wraps. They are doctrine, not product. They live under
 `internal/**` (and surfaces that AGENTS.md owns) and they may not be
 imported by `cortex/**`. Confusing the two is the next drift shape.
 
-**Per-turn enforcement: Cortex Mission Reflection.** The standard of
-care is enforced end-of-turn by the graph produced by
-`python3 internal/workflow/repo_workflow.py grid`. The command name
-stays `grid` for workflow compatibility, but the rendered artifact is
-the **single closure artifact** for every chat: one two-column markdown
-table under `## Cortex Mission Reflection`. Its purpose is not to recite
-static progress. It forces mission reflection: target executive
-function, boundary judgment, theory of improvement, model I/O path,
-plan-vs-actual reflection, quality judgment, iteration evidence,
-earned/not-earned evidence, next ownership move, compact closure
-metadata, and verdict. There are no subsection headings and no second
-table inside the grid. Normal response prose may precede the grid;
-nothing closure-shaped may appear before or after it. On verdict
-`FAIL` the agent continues working until the graph clears. The verdict
-cell separates turn verdict from close-session eligibility so a clean
-no-closeout turn cannot imply it is publish-ready.
+**Per-turn enforcement: Cortex Mission Reflection.** End-of-turn
+reflection is produced by `python3 internal/workflow/repo_workflow.py
+grid --mode <exploration|work|closeout>`. The mode-aware contract lives
+in `docs/internal/MISSION_REFLECTION_CONTRACT.md` and is implemented by
+`internal/workflow/mission_reflection.py`. Its purpose is mission
+reflection, not static progress recitation, and it must not shape the
+substantive answer. Exploration mode is intentionally small for
+research-shaped turns; work mode preserves ordinary implementation
+discipline; closeout mode keeps the strict legacy grid with compact
+closure metadata for managed session closure. On `reflection-check`
+verdict `FAIL`, the agent continues working until the graph clears.
 
-**Workflow: paste the skeleton, fill brackets in place.** The agent
-runs `grid`, pastes the generated markdown skeleton, and edits the
-skeleton in place. Every mission/reflection/evidence/decision row
-replaces the `mission reflection —` template with substantive causal
-prose (at least 120 characters) and a repo-grounding citation such as
-`docs/CORTEX.md`, `internal/truth/cortex_status.json`, `cortex/**`,
-`tests/**`, or a `CORTEX_V2_*` packet. The `Closure: Metadata` row
-replaces the `closure metadata —` template with branch, commit/no
-commit, verification, returned-to-main, and registry/doc-regeneration
-facts. The skeleton is verbatim from the command; the agent's edits
-stay inside the skeleton. No separate closure section follows the grid.
+**Workflow: paste the skeleton, fill brackets in place.** The agent runs
+`grid --mode <mode>`, pastes the generated markdown skeleton, and edits
+the skeleton in place. Exploration mode requires a smaller grounded
+reflection, work mode requires broader mission/evidence reflection with
+at least three repo-grounded rows, and closeout mode requires every
+mission/reflection/evidence/decision row to be cited and at least 120
+characters. No separate closure section follows the grid.
 
 **Chat-boundary enforcement (Claude Code and Codex App).** A Stop hook at
-`.claude/settings.json` runs
-`.claude/hooks/cortex_grid_stop_hook.py` on turn-completion. The hook
-reads the assistant's last message from the transcript, runs `grid`
-itself, and blocks the stop on (1) missing one-table shape
-(`## Cortex Mission Reflection`, exactly one `| Field | Value |`
-header, exactly one `|---|---|` separator, required row labels, and
-no `###` subsections inside the grid), (2) closure-shaped substrings
-appearing before the grid header, (3) stale dashboard rows such as
-`Progress:*`, `bio_to_code matrix`, hosts, shipping default, current
-train, next train, or research-lines counts as fixed rows, (4) any
-mission-reflection row that is templated, too short, or uncited, (5)
-unfilled `Closure: Metadata`, or (6) `reflection-check` verdict
-`FAIL`. The hook does not short-circuit on `stop_hook_active` —
-persistent non-compliance keeps blocking. The hook fails open only on
-infrastructure failures (missing transcript, command crash). The hook
-and `grid-validate` both use `internal/workflow/mission_reflection.py`
-as the shared graph contract, so Claude and Codex are validating the
-same rows and thresholds.
+`.claude/settings.json` runs `.claude/hooks/cortex_grid_stop_hook.py` on
+turn-completion. The hook reads the assistant's last message from the
+transcript, infers graph mode from the row set, runs the matching
+`grid --mode <mode>` command for corrective output, and blocks on
+missing/underfit graph output. The hook still rejects stale dashboard
+rows, closure-shaped substrings before the graph, unfilled templates,
+under-length rows, missing citations required by the selected mode, and
+`reflection-check` verdict `FAIL`. The hook does not short-circuit on
+`stop_hook_active`; persistent non-compliance keeps blocking. The hook
+fails open only on infrastructure failures (missing transcript, command
+crash). The hook and `grid-validate` both use
+`internal/workflow/mission_reflection.py` as the shared graph contract.
 
 Codex App for Mac has its own repo-local Stop hook because Codex exposes
 `last_assistant_message` directly rather than a Claude transcript path:
@@ -490,8 +475,8 @@ evidence, not live evidence that Cortex improved model output.
 
 **Codex fallback surfaces.** Codex surfaces that do not load repo-local
 hooks fall back to validator + doctrine: the agent runs
-`python3 internal/workflow/repo_workflow.py grid-validate --stdin` on
-the filled final graph, and non-no-op Codex closeouts record that pass
+`python3 internal/workflow/repo_workflow.py grid-validate --mode <mode>`
+on the filled final graph, and non-no-op Codex closeouts record that pass
 in `mission_reflection_graph`. This is session-boundary evidence, not
 chat-boundary parity.
 

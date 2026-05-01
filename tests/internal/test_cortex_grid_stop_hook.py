@@ -43,9 +43,9 @@ def _run_hook(hook_input: dict[str, object]) -> tuple[int, str, str]:
     return proc.returncode, proc.stdout, proc.stderr
 
 
-def _canonical_grid() -> str:
+def _canonical_grid(mode: str = "closeout") -> str:
     proc = subprocess.run(
-        [sys.executable, "internal/workflow/repo_workflow.py", "grid"],
+        [sys.executable, "internal/workflow/repo_workflow.py", "grid", "--mode", mode],
         cwd=str(REPO_ROOT),
         check=True,
         capture_output=True,
@@ -95,6 +95,11 @@ def _fill_closure_metadata(grid_markdown: str) -> str:
 
 def _fully_filled_grid() -> str:
     return _fill_closure_metadata(_fill_mission_reflection(_canonical_grid()))
+
+
+def _filled_exploration_grid() -> str:
+    graph = _canonical_grid("exploration")
+    return _fill_mission_reflection(graph)
 
 
 def test_hook_blocks_when_message_missing_grid_header(tmp_path: Path) -> None:
@@ -242,6 +247,15 @@ def test_hook_blocks_when_closure_metadata_unfilled(tmp_path: Path) -> None:
 
 def test_hook_allows_stop_when_all_gates_pass(tmp_path: Path) -> None:
     transcript = _write_transcript(tmp_path, _fully_filled_grid())
+
+    returncode, stdout, _ = _run_hook(_hook_input(transcript))
+
+    assert returncode == 0
+    assert stdout.strip() == ""
+
+
+def test_hook_allows_exploration_mode_grid(tmp_path: Path) -> None:
+    transcript = _write_transcript(tmp_path, _filled_exploration_grid())
 
     returncode, stdout, _ = _run_hook(_hook_input(transcript))
 
