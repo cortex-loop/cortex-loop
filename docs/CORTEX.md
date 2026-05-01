@@ -540,6 +540,13 @@ three non-clean trials, while clean and verified-artifact controls did not
 block. That finding validates the `Stop x closure pressure` cell only; it does
 not demote `PreToolUse`, prove a Stop-primary architecture, or earn broad
 product output lift.
+`docs/recon/claude_code_cortex_posttool_failure_to_stop_loop_probe.md` is the
+paired PostToolUseFailure-to-Stop finding: failed Bash results fired
+`PostToolUseFailure`, persisted bounded `ReferenceRealizationFeedback`, and
+later Stop hooks read that state; shaped Stop repair improved two of three
+failure pairs while one shaped pair repeated false closure. That finding earns
+hook delivery and persistence, but only mixed behavior lift for the feedback
+to closure loop.
 `docs/recon/claude_code_cortex_userpromptsubmit_verified_work_probe.md` is the
 paired UserPromptSubmit verified-work finding: a short situated
 `systemMessage` reached Claude Code Desktop transcripts as `hook_system_message`

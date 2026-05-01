@@ -37,6 +37,8 @@ Active docs:
   empirical paired baseline-vs-shaped evidence for the merged runtime-context bridge
 - [Claude Code Cortex Stop Closure Connectivity Probe](recon/claude_code_cortex_stop_closure_connectivity_probe.md) —
   empirical paired baseline-vs-shaped evidence for Cortex closure pressure through Stop block reasons
+- [Claude Code Cortex PostToolUseFailure To Stop Loop Probe](recon/claude_code_cortex_posttool_failure_to_stop_loop_probe.md) —
+  empirical mixed evidence for failed-tool feedback persistence into Stop closure pressure
 - [Claude Code Cortex UserPromptSubmit Verified-Work Probe](recon/claude_code_cortex_userpromptsubmit_verified_work_probe.md) —
   empirical baseline-vs-shaped evidence for prompt-boundary verified-work contracts
 
