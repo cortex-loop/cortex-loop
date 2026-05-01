@@ -47,6 +47,12 @@ CLAUDE_CODE_CORTEX_RUNTIME_CONTEXT_CONNECTIVITY_PROBE_PATH = (
 CLAUDE_CODE_CORTEX_STOP_CLOSURE_CONNECTIVITY_PROBE_PATH = (
     REPO_ROOT / "docs" / "recon" / "claude_code_cortex_stop_closure_connectivity_probe.md"
 )
+CLAUDE_CODE_CORTEX_HEADLESS_CLI_EQUIVALENCE_PROBE_PATH = (
+    REPO_ROOT
+    / "docs"
+    / "recon"
+    / "claude_code_cortex_headless_cli_equivalence_probe.md"
+)
 CLAUDE_CODE_CORTEX_POSTTOOL_FAILURE_TO_STOP_LOOP_PROBE_PATH = (
     REPO_ROOT
     / "docs"
@@ -406,6 +412,7 @@ def test_public_docs_point_to_status_and_keep_archive_out_of_the_front_door() ->
     assert "recon/claude_code_user_scope_plugin_managed_worktree_probe.md" in docs_index
     assert "recon/claude_code_cortex_runtime_context_connectivity_probe.md" in docs_index
     assert "recon/claude_code_cortex_stop_closure_connectivity_probe.md" in docs_index
+    assert "recon/claude_code_cortex_headless_cli_equivalence_probe.md" in docs_index
     assert "recon/claude_code_cortex_posttool_failure_to_stop_loop_probe.md" in docs_index
     assert "recon/claude_code_cortex_userpromptsubmit_verified_work_probe.md" in docs_index
     # CORTEX.md content anchors the previously-fragmented charter and
@@ -423,6 +430,7 @@ def test_public_docs_point_to_status_and_keep_archive_out_of_the_front_door() ->
     assert "docs/recon/claude_code_user_scope_plugin_managed_worktree_probe.md" in cortex_doc
     assert "docs/recon/claude_code_cortex_runtime_context_connectivity_probe.md" in cortex_doc
     assert "docs/recon/claude_code_cortex_stop_closure_connectivity_probe.md" in cortex_doc
+    assert "docs/recon/claude_code_cortex_headless_cli_equivalence_probe.md" in cortex_doc
     assert "docs/recon/claude_code_cortex_posttool_failure_to_stop_loop_probe.md" in cortex_doc
     assert "docs/recon/claude_code_cortex_userpromptsubmit_verified_work_probe.md" in cortex_doc
     assert "EVAL_RUBRIC.md" in cortex_doc
@@ -434,6 +442,7 @@ def test_public_docs_point_to_status_and_keep_archive_out_of_the_front_door() ->
     assert "user-scope plugin" in cortex_doc
     assert "Gate 1 failed" in cortex_doc
     assert "Stop x closure pressure" in cortex_doc
+    assert "headless CLI equivalence" in cortex_doc
     assert "Mission Reflection grid out of product packaging" in cortex_doc
     # Workflow rules unchanged.
     assert "paid OpenAI service-lane proof is never part of the default bundle" in workflow
@@ -486,6 +495,7 @@ def test_docs_directory_only_exposes_archive_and_workflow_subtrees() -> None:
         "REPO_WORKFLOW.md",
     ]
     assert sorted(path.name for path in (DOCS_ROOT / "recon").iterdir()) == [
+        "claude_code_cortex_headless_cli_equivalence_probe.md",
         "claude_code_cortex_posttool_failure_to_stop_loop_probe.md",
         "claude_code_cortex_runtime_context_connectivity_probe.md",
         "claude_code_cortex_stop_closure_connectivity_probe.md",
@@ -872,6 +882,64 @@ def test_claude_code_cortex_stop_closure_connectivity_probe_records_stop_finding
         "claude plugin list --json` no longer lists",
         "cortex-manual-recalibration-probes",
         "This probe does not claim a Stop-primary plugin architecture",
+    ]:
+        assert phrase in text
+
+    for key in [
+        "session_id",
+        "transcript_path",
+        "cwd",
+        "permission_mode",
+        "hook_event_name",
+        "last_assistant_message",
+        "stop_hook_active",
+    ]:
+        assert f"`{key}`" in text
+
+
+def test_claude_code_cortex_headless_cli_equivalence_probe_records_partial_finding() -> None:
+    text = _read(CLAUDE_CODE_CORTEX_HEADLESS_CLI_EQUIVALENCE_PROBE_PATH)
+
+    assert "Surface: internal / recon" in text
+    assert "Probe date: 2026-05-01" in text
+    assert "`claude -p`" in text
+    assert "/Users/erikahoward/cortex-plugin-sandbox" in text
+    assert "2.1.85" in text
+    assert "2.1.118 (Claude Code)" in text
+    assert "subscriptionType" in text and "max" in text
+    assert "sdk-cli" in text
+    assert "claude-opus-4-7" in text
+
+    for phrase in [
+        "Setup/auth readiness",
+        "Repaired before scoring",
+        "Stop structural floor in `claude -p`",
+        "Model-visible block delivery",
+        "Once-only safety wrapper",
+        "Clean no-over-block control",
+        "Partial / cross-surface variance",
+        "Operational unlock",
+        "Qualified",
+        "cortex-headless-cli-equivalence-probe",
+        "cortex-headless-equivalence-probes",
+        "Stop hook feedback:",
+        "hook_blocking_error",
+        "permissionDecision: deny",
+        "continuity_reminder",
+        "pending_goal_debt",
+        "continuity_rejection",
+        "contradiction_spike",
+        "degradation_pressure",
+        "MIGRATION COMPLETE",
+        "TESTS PROVEN GREEN",
+        "CLEAN DONE",
+        "headless baseline already rejected the false closure",
+        "equivalence is one of two",
+        "failure scenarios",
+        "This finding is per-bridge and per-content family",
+        "does not make `Stop` the primary Cortex architecture",
+        "does not promote Claude Code",
+        "Shipping default remains `openai:operator_cli`",
     ]:
         assert phrase in text
 

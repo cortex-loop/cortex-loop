@@ -540,6 +540,14 @@ three non-clean trials, while clean and verified-artifact controls did not
 block. That finding validates the `Stop x closure pressure` cell only; it does
 not demote `PreToolUse`, prove a Stop-primary architecture, or earn broad
 product output lift.
+`docs/recon/claude_code_cortex_headless_cli_equivalence_probe.md` is the
+headless CLI equivalence finding for the same Stop bridge: `claude -p` fired
+Stop, surfaced `Stop hook feedback:` plus `hook_blocking_error`, matched the
+Mac app evidence-degradation repair and clean no-over-block control, but
+diverged on pending-goal because headless refused the false closure in baseline
+and treated the shaped Cortex hook framing skeptically. That finding supports
+lower-cost Stop-specific iteration in headless mode with Mac app validation
+reserved for final behavior claims.
 `docs/recon/claude_code_cortex_posttool_failure_to_stop_loop_probe.md` is the
 paired PostToolUseFailure-to-Stop finding: failed Bash results fired
 `PostToolUseFailure`, persisted bounded `ReferenceRealizationFeedback`, and
