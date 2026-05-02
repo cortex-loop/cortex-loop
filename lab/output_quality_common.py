@@ -3,8 +3,10 @@
 from __future__ import annotations
 
 import hashlib
+import os
 import re
 import shutil
+import subprocess
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Literal
@@ -334,6 +336,7 @@ def prepare_output_quality_workspace(*, template_root: Path, run_root: Path) -> 
         shutil.rmtree(run_root)
     project_root = run_root / "project_a"
     shutil.copytree(template_root, project_root)
+    _initialize_output_quality_workspace_git(project_root)
     return project_root
 
 
@@ -351,10 +354,44 @@ def prepare_seeded_workspace(
         project_root,
         ignore=shutil.ignore_patterns("node_modules", "dist", ".astro"),
     )
+    _initialize_output_quality_workspace_git(project_root)
     seed_node_modules = seed_workspace_root / "node_modules"
     if seed_node_modules.exists():
         (project_root / "node_modules").symlink_to(seed_node_modules)
     return project_root
+
+
+def _initialize_output_quality_workspace_git(project_root: Path) -> None:
+    """Make fixture workspaces their own repo so Codex does not inherit parent hooks."""
+
+    git_env = {
+        **dict(os.environ),
+        "GIT_AUTHOR_NAME": "cortex-output-quality",
+        "GIT_AUTHOR_EMAIL": "cortex-output-quality@example.invalid",
+        "GIT_COMMITTER_NAME": "cortex-output-quality",
+        "GIT_COMMITTER_EMAIL": "cortex-output-quality@example.invalid",
+    }
+    for command in (
+        ["git", "init", "-q"],
+        ["git", "add", "."],
+        ["git", "commit", "-q", "-m", "baseline"],
+    ):
+        completed = subprocess.run(
+            command,
+            cwd=project_root,
+            env=git_env,
+            text=True,
+            capture_output=True,
+            stdin=subprocess.DEVNULL,
+            timeout=30.0,
+            check=False,
+        )
+        if completed.returncode != 0:
+            detail = (completed.stderr or completed.stdout).strip()
+            raise RuntimeError(
+                "failed to initialize output-quality git workspace"
+                + (f": {detail}" if detail else "")
+            )
 
 
 def apply_output_files(*, project_root: Path, file_map: dict[str, str]) -> None:
