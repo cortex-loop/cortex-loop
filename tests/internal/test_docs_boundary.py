@@ -1703,24 +1703,24 @@ def test_status_registry_is_complete_and_stable() -> None:
         assert {"slug", "stage", "summary", "next_step"} <= set(entry)
         assert entry["slug"] != status["work_today"]["slug"]
         assert entry["slug"] != status["next_product_train"]["slug"]
-    assert status["work_today"]["slug"] == "executive-runtime-paydown-and-waiting-remediation"
-    assert "composition-tightening seam" in status["work_today"]["note"].lower()
-    assert "current structured commitment ids" in status["work_today"]["note"].lower()
-    assert "same-event paydown targets current expectations" in status["work_today"]["note"].lower()
-    assert "positive safety tests" in status["work_today"]["note"].lower()
-    assert "shipping truth" in status["work_today"]["note"].lower()
-    assert status["next_product_train"]["slug"] == "silent-control-live-probe-on-openai"
+    assert status["work_today"]["slug"] == "silent-control-live-probe-on-openai"
+    assert "operator-cli silent-control live probe" in status["work_today"]["note"].lower()
+    assert "chatgpt subscription/operator lane" in status["work_today"]["note"].lower()
+    assert "not api/service spend" in status["work_today"]["note"].lower()
+    assert "model-visible warning text" in status["work_today"]["note"].lower()
+    assert "shipping default remains unchanged" in status["work_today"]["note"].lower()
+    assert status["next_product_train"]["slug"] == "grounded-intervention-records"
     assert "product" == status["next_product_train"]["surface"]
-    assert "silent expectation-debt control" in status["next_product_train"][
+    assert "visible-intervention records" in status["next_product_train"][
         "executive_benefit"
     ].lower()
-    assert "paired baseline/shaped/clean openai trials" in status["next_product_train"][
+    assert "grounded anchor" in status["next_product_train"][
         "primary_metric"
     ].lower()
-    assert "without explicit user approval" in status["next_product_train"][
+    assert "freeform prompt templates" in status["next_product_train"][
         "guardrail"
     ].lower()
-    assert "baseline failure does not reproduce" in status["next_product_train"][
+    assert "leak internal cortex vocabulary" in status["next_product_train"][
         "kill_rule"
     ].lower()
     deferred_lines = {entry["slug"]: entry for entry in status["research_lines_under_evaluation"]}
@@ -1738,10 +1738,10 @@ def test_status_registry_is_complete_and_stable() -> None:
     assert "route truth stays bounded and non-sovereign" in status["where_to_work"][2]
     assert "live `Q_mem` stays zero" in status["where_to_work"][2]
     assert "host/tool reliability and affordance priors are earned" in status["where_to_work"][2]
-    assert "executive-runtime-paydown-and-waiting-remediation seam is the active focus" in status["where_to_work"][3]
-    assert "current-event certified/blocked progress relieves the correct expectation" in status["where_to_work"][3]
-    assert "next product train remains the silent-control live probe" in status["where_to_work"][3]
-    assert "live behavior lift remains unearned" in status["where_to_work"][3]
+    assert "silent-control-live-probe-on-openai seam is the active focus" in status["where_to_work"][3]
+    assert "operator-CLI subscription lane" in status["where_to_work"][3]
+    assert "not API/service spend" in status["where_to_work"][3]
+    assert "not a shipping-default promotion" in status["where_to_work"][3]
     closure_gates = {gate["id"]: gate for gate in status["closure_gates"]}
     assert closure_gates["main_synced"]["status"] == "required"
     assert closure_gates["cleanup_report"]["status"] == "required"
@@ -1772,20 +1772,20 @@ def test_generated_status_doc_includes_system_map_and_next_product_train() -> No
     assert "## Next Product Train" in text
     assert "## Research Lines Under Evaluation" in text
     assert "host/tool reliability and affordance priors are earned" in text
-    assert "`executive-runtime-paydown-and-waiting-remediation`" in text
-    assert "- Next product train after the current focus: `silent-control-live-probe-on-openai`" in text
-    assert "- Train: `silent-control-live-probe-on-openai`" in text
+    assert "`silent-control-live-probe-on-openai`" in text
+    assert "- Next product train after the current focus: `grounded-intervention-records`" in text
+    assert "- Train: `grounded-intervention-records`" in text
     assert "`brain-capability-observation-and-inference` (deferred-by-executive-runtime-roadmap)" in text
-    assert "composition-tightening seam" in text.lower()
-    assert "same-event paydown targets current expectations" in text.lower()
-    assert "paired baseline/shaped/clean openai trials" in text.lower()
-    assert "silent expectation-debt control" in text.lower()
+    assert "operator-cli silent-control live probe" in text.lower()
+    assert "chatgpt subscription/operator lane" in text.lower()
+    assert "not api/service spend" in text.lower()
+    assert "visible-intervention records" in text.lower()
     assert "Shipping Product Lane\\nopenai:operator_cli" in text or "Shipping Product Lane" in text
     assert "Shipping default: `openai:operator_cli`" in text
     assert "Workflow gates marked `required` are contractual gates checked by `repo_workflow.py`" in text
     assert "| `main_synced` | `required` |" in text
     assert "| `cleanup_report` | `required` |" in text
-    assert "phase-5 readiness remediation" in text.lower()
+    assert "silent-control-live-probe-on-openai" in text.lower()
     assert "brain-capability-observation-and-inference" in text
     assert "`visible_burden_sensitivity`" in text
 

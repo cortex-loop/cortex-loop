@@ -294,13 +294,13 @@ state, read `internal/truth/cortex_status.json` directly.
 
 ### Current Train
 
-- Slug: `executive-runtime-paydown-and-waiting-remediation`
+- Slug: `silent-control-live-probe-on-openai`
 
 ### Next Product Train
 
-- Slug: `silent-control-live-probe-on-openai`
+- Slug: `grounded-intervention-records`
 - Surface: `product`
-- Why now: After the structural ledger and debt-control coupling land, the next truth gap is live behavior: the shipping lane must show that silent control improves evidence recovery or continuity without useful-work slowdown or overblock.
+- Why now: After the silent-control live probe, the next question is whether high control pressure plus a grounded claim/evidence/obligation anchor should produce visible intervention rather than silent route/brake pressure alone.
 
 ### Research Lines Under Evaluation
 
@@ -321,7 +321,7 @@ state, read `internal/truth/cortex_status.json` directly.
 - Keep the bounded audit surface compact and truthful on the shipped lane: selected versus realized family, uncertainty, threshold, delta, verification, and probe truth only.
 - Keep the no-spend live evidence current and explicit: fast conformance is green, the deeper directionality and host-native watchlists are refreshed, and non-shipping auth or env caveats must stay explicit instead of silently stale.
 - Keep posture, AUX memory, host-reliability, and asymmetric-cost law explicit and removable now that posture-sensitive online control is S-tier closed, anti-thrash is landed, bounded live support-memory re-entry is earned on reference and the OpenAI operator lane, evidence/probe calibration is S-tier closed, host/tool reliability and affordance priors are earned as bounded host-scoped, capability-scoped score modifiers on `OfflineSupportPublication.host_reliability_prior` with a single-site six-tag `q_mem-host:*` surface and stale-negative reopen under fresh success, asymmetric error cost is earned as a bounded `RiskWeight` carrier whose CHECK/SEEK_CONTEXT activation shift is clipped inside `[0.05, 0.60]` with a `0.10` dead-band and productive-exploration gating, and the brake tonic EMA damps single-tick flips with a locked `rho = 0.60` decay and `tonic_pressure >= 0.35` enter gate while phasic spikes still flip immediately: inspect is live on cheap non-debt events, resume stays continuity-conditioned, posture truth is single-owned, the route state vector stays the bounded 6-axis geometry term while `visible_burden_sensitivity` remains a separate utility scalar, route truth stays bounded and non-sovereign, unchanged-condition repetition is taxed only at the exact-family level with bounded reopen, public feedback-window summaries reflect the just-realized step, family-local bounded probe limits surface as `unsupported` without leaking host-global unavailability across families, stream-only churn stays non-epistemic, live memory stays score-only and host-matched through explicit publication, live `Q_mem` stays zero on shipping and conformance default lanes, raw SQLite episodes stay support-side only, reliability priors bias score pricing only and never route, posture, selection, or brake law, Claude and Gemini remain shadow-proof only for reliability promotion, `risk_weight` biases CHECK/SEEK_CONTEXT activation threshold only and never routing, posture, selection, certification, or blockedness law, and `brake_tonic_history` persists the pressure tail across resume on all four host lanes with three-way backward-compat decoding.
-- The executive-runtime-paydown-and-waiting-remediation seam is the active focus from the executive-runtime roadmap: the shared expectation ledger and debt-control stack is being tightened so current-event certified/blocked progress relieves the correct expectation before paid OpenAI silent-control trials begin. This is structural/conformance truth only; live behavior lift remains unearned, and the next product train remains the silent-control live probe after this remediation merges.
+- The silent-control-live-probe-on-openai seam is the active focus from the executive-runtime roadmap: the remediated expectation ledger and debt-control stack now meets the OpenAI operator-CLI subscription lane to test whether silent route/brake pressure improves live evidence recovery or continuity without warning text. This is live behavior-lift evidence work on the current shipping lane, not API/service spend and not a shipping-default promotion.
 <!-- END GENERATED: current-state-and-strategy -->
 
 ### V2 Model-I/O Analysis
