@@ -4,6 +4,29 @@ This file extracts the structural math ledger from
 `internal/truth/cortex_status.json` so a reasoning model can see what formal
 objects Cortex already claims in code.
 
+## `τ`-Relevant State Algebra
+
+The full map below is intentionally complete. A solver should first compress it
+into the state families that can legitimately affect model-visible
+communication. This table is a reading map, not a replacement for the code or
+registry data.
+
+| State family | Cortex sources | Model-visible meaning `τ` may express | What must not leak |
+| --- | --- | --- | --- |
+| Claim state | `commitment_candidate`, `provenance_manifest`, `boundary_assessment`, last assistant message | The model made, refused, revised, or failed to support a specific claim. | Internal commitment ids, certification jargon, or provenance machinery names. |
+| Evidence state | `observation_bundle`, `ReferenceRealizationFeedback`, tool result summaries, verified-work runtime results | A concrete command, file, artifact, or observation supports or fails to support the claim. | Feedback class names, schema ids, raw JSON, or harness labels. |
+| Obligation state | `goal_debt_state`, branch/goal continuity records, closure-pressure state | A task, verification step, artifact, or user-requested goal remains unfinished. | Tags such as `pending_goal_debt`, closure-pressure internals, or branch-registry scaffolding. |
+| Inhibition state | `executive_modulator_state`, brake state, risk weights, neutral-dominance decisions | The next action should slow down, ask, verify, or avoid closure because uncertainty or contradiction is high. | Brake labels, tonic/phasic implementation terms, or hidden policy wording. |
+| Capability state | `operator_brain_capability_envelope`, operator routing, unsupported/degrade decisions | The requested task may exceed the current operator/tool affordance, so the model should narrow, ask, or route. | Model-band priors, route codes, or capability envelope identifiers. |
+| Continuity state | host runtime sessions, persisted host-local state, feedback windows | The current response should account for what happened earlier in this bounded task/session. | Raw session ids, transcript paths, persistence implementation details, or cross-thread resume claims not earned live. |
+| Support state | AUX publications, support priors, augmentation state | Published support evidence can bias a bounded decision when fresh, host-matched, and explicitly supplied. | Raw memory episodes, default-on memory implications, or support geometry internals. |
+| Host-affordance state | Claude Code hook event, output shape, block/additional-context/system-message channel | The message must fit what the host can legally deliver at this lifecycle boundary. | Fictional uniform middleware assumptions or claims that a structural hook path already earned behavior lift. |
+
+The function `τ` should map combinations of these families into task-local
+claim/evidence/obligation/uncertainty language. It should not map internal
+symbol names directly to the model. A candidate that cannot name which state
+families it consumes is not yet solving the communication problem.
+
 ## Full `math_to_code_map`
 
 ```json
@@ -325,6 +348,13 @@ Cortex can be structurally correct internally and still fail to change model
 behavior if Side B translation is wrong.
 
 ### Lifecycle adapters
+
+This subsection is copied from the status registry to illustrate the
+Side A/Side B boundary and lifecycle-adapter vocabulary. It includes
+repo-development adapters because they are in the registry, but those adapters
+are not the target Claude Code product communication surface. Do not import
+mission-reflection mechanics, repo closeout validators, or Codex App workflow
+rules into `τ`.
 
 ```json
 [

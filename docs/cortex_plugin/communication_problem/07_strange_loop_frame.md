@@ -55,6 +55,41 @@ The communication problem appears when Cortex's meta-level observation enters
 the model's context but remains marked as outside the speaker. The model then
 weighs it like any other external instruction, and may reject it under conflict.
 
+## Peano/Gödel Chain For This Dossier
+
+The mathematical frame should be read as a structural analogy, not as a proof
+about language models. The relevant chain is:
+
+1. Peano arithmetic has an object-language: formulas that speak about numbers
+   and arithmetic relations.
+2. A meta-language can speak about the formal system itself: which strings are
+   formulas, which sequences are proofs, and which formulas are provable.
+3. Gödel numbering encodes syntactic objects of the formal system as numbers,
+   allowing meta-level facts about formulas and proofs to be represented inside
+   arithmetic.
+4. Representability lets selected meta-level predicates, such as "is a proof
+   of," appear as arithmetic predicates.
+5. Diagonalization constructs a sentence that refers, through its Gödel number,
+   to itself.
+6. The resulting self-reference crosses levels: the formal system contains a
+   sentence whose meaning depends on a meta-level view of the formal system.
+7. Incompleteness follows under the relevant consistency and expressiveness
+   assumptions: the system cannot close over every truth about itself from
+   inside itself.
+
+The Cortex analogy is deliberately narrower. Cortex's internal state is a
+meta-level description of the model's task behavior. The model's next
+conversation turn is the object-level surface. `τ` is the proposed re-entry
+operator: it must encode the useful meta-level observation as object-level,
+task-local self-check content that the model can reason with from inside the
+conversation.
+
+This does not mean Claude Code is Peano arithmetic, that hooks prove
+incompleteness, or that Cortex establishes consciousness. It means the dossier
+uses the same structural distinction that matters in Gödel and Hofstadter:
+outside observations do not automatically become inside-the-system reasoning.
+The architectural work is the level crossing.
+
 ## Metacognition: Monitoring And Control
 
 Cognitive-science models of metacognition often distinguish monitoring from
@@ -92,6 +127,13 @@ The `I` must remain coherent. If Cortex introduces a second agent that claims to
 know the model's task better than the model does, the model may defend against
 it. If Cortex instead constructs a local mirror in which the model can see its
 own unsupported claim, the feedback can fold back into the model's self-model.
+
+Voice here is not decoration. A solution must not merely imitate first-person
+style. The requirement is epistemic integration: the content should expose a
+claim, missing evidence, uncertainty, or obligation that is already grounded in
+the model's own conversation state. The model-visible text may sound like
+self-correction only when the underlying state really supports that correction.
+Otherwise the strange-loop frame collapses into deceptive ventriloquism.
 
 ## Architectural Implication To Examine, Not Adopt
 

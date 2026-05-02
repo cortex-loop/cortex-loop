@@ -18,6 +18,10 @@ prompt-injection-shaped.
 primary model-facing signal. Internal framework identity belongs in logs and
 audit state, not in the model's self-correction surface.
 
+**Candidate invalidation test.** If a proposed `τ` requires the model-visible
+message to name Cortex, closure pressure, or a hidden framework role before it
+can explain the correction, it has not solved integration.
+
 ## Schema IDs
 
 **Pattern.** Model-visible text includes schema names such as
@@ -30,6 +34,10 @@ one regression, and one neutral.
 **Constraint on `τ`.** A schema id proves provenance to a developer, not meaning
 to the model. It can make the content look like harness leakage rather than
 self-monitoring.
+
+**Candidate invalidation test.** If a proposed `τ` depends on schema ids,
+protocol names, or serialized envelope labels to carry semantic force to the
+model, it is still speaking in `L_C` instead of re-entering `L_M`.
 
 ## Generic Principles
 
@@ -44,6 +52,10 @@ better than the shaped context.
 better situated reasoning available. `τ` must not overwrite or distract from
 already-correct task-local reasoning.
 
+**Candidate invalidation test.** If the same model-visible text could be pasted
+into many unrelated tasks without changing, it is probably generic advice, not
+a state-derived self-check.
+
 ## Internal Tag Names
 
 **Pattern.** The message exposes names such as `pending_goal_debt`,
@@ -55,6 +67,10 @@ triggered hook-skepticism framing.
 
 **Constraint on `τ`.** Internal tags are useful for logs, scoring, and state
 transitions. They are not safe as model-visible language.
+
+**Candidate invalidation test.** If removing internal tag names makes the
+candidate unable to say what happened, it has not found the task-local
+evidence/obligation representation.
 
 ## Hardcoded Templates
 
@@ -70,6 +86,10 @@ arbitrary Cortex state.
 structural representation of how internal state becomes integrated
 metacognitive content.
 
+**Candidate invalidation test.** If adding a fourth scenario requires writing a
+fourth unrelated template branch rather than composing known state families,
+the candidate is a trial harness, not a communication function.
+
 ## Imperative Retraction When The Model Already Retracted
 
 **Pattern.** The hook tells the model to retract even when the last assistant
@@ -81,6 +101,10 @@ this by checking the last assistant message for the unsupported claim.
 
 **Constraint on `τ`.** The last assistant message is not optional context. `τ`
 must know whether the correction is still needed before speaking.
+
+**Candidate invalidation test.** If a candidate cannot suppress itself when the
+latest assistant turn has already retracted, refused, or repaired the claim, it
+will recreate the overblock failure.
 
 ## Hook Content Competing With User Exact-Output Instructions
 
@@ -95,6 +119,10 @@ ended with false `TASK COMPLETE`. The exact-output instruction won.
 user exact-output instructions. If a surface asks the model to choose between
 literal obedience and hidden correction, behavior-lift is unearned.
 
+**Candidate invalidation test.** If a candidate's safety argument depends on
+UserPromptSubmit-like content beating an explicit exact-output user command, it
+contradicts the verified-work probe unless it supplies new evidence.
+
 ## Confused Authority
 
 **Pattern.** The hook speaks as if it knows better than the model about the
@@ -105,6 +133,10 @@ an unrecognized external pressure rather than as a legitimate task correction.
 
 **Constraint on `τ`.** The function must not rely on authority assertion. It
 must expose the task-local reason the model itself can verify.
+
+**Candidate invalidation test.** If the message says, in effect, "obey this
+because the runtime says so," rather than "your last claim lacks this visible
+evidence," it remains an external authority claim.
 
 ## Acknowledgement Sentinels
 
@@ -117,6 +149,10 @@ validators and create visible interaction loops.
 
 **Constraint on `τ`.** Acknowledgement sentinels are probe tools, not product
 communication. They should not shape normal Cortex behavior.
+
+**Candidate invalidation test.** If the candidate requires visible
+acknowledgement tokens or sentinel repetition for ordinary operation, it is
+optimizing delivery proof rather than task behavior.
 
 ## Cumulative Pattern
 

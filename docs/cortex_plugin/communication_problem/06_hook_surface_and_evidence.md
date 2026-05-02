@@ -83,6 +83,51 @@ verification.
 7. Model-visible content that sounds like hidden framework machinery can be
    treated as suspicious even when delivered through an official hook.
 
+## Truth Separation Required For This Evidence
+
+Every candidate `τ` must keep four truths separate:
+
+- **Hook delivery truth:** whether Claude Code invoked the hook and accepted
+  the hook output shape.
+- **Model-visible truth:** whether the content reached the model transcript or
+  continuation context in a form the model could inspect.
+- **Behavior-lift truth:** whether the delivered content changed the model's
+  output in the intended direction against a baseline.
+- **Product/shipping truth:** whether the behavior is robust, scoped, cleaned
+  up, documented, and suitable for default product use.
+
+The empirical corpus contains many delivery and model-visible wins that did not
+earn behavior lift. A solution that treats delivery as sufficient has already
+failed the dossier.
+
+## Candidate `τ` Must Explain
+
+A candidate communication function is invalid unless it can explain these
+observed outcomes:
+
+1. Why `PreToolUse:Bash` additional context was delivered and visible, yet
+   `CORTEX_RUNTIME_CONTEXT_V1` produced one win, one no-change, one regression,
+   and one neutral trial.
+2. Why raw Stop wording repaired some false closures but failed or triggered
+   hook-skepticism when it exposed framework signatures and internal tags.
+3. Why translated, situated Stop wording repaired evidence-degradation headless
+   trials without blocking clean controls, while still not proving a general
+   solution.
+4. Why `UserPromptSubmit` content was transcript-visible but lost to user
+   exact-output instructions in the verified-work probe.
+5. Why `PostToolUseFailure` to `Stop` persistence worked structurally while
+   behavior correction remained mixed.
+6. Why headless CLI can be useful for some Stop content-shape research but does
+   not automatically prove Mac-app parity or other hook surfaces.
+7. Why global user hooks and stale/cached hook configuration contaminate trials
+   even when the Cortex hook itself is correct.
+8. Why every behavior-lift claim must be tied to a specific bridge, content
+   shape, host surface, and baseline failure reproduction.
+
+The purpose of this checklist is to reject elegant theories that cannot account
+for the actual probe record. The solution must predict both integration and
+alien-rejection cases.
+
 ## Prior Architectural Organization
 
 The v1 Claude Code plugin design used an `H × F` lattice: hook events by Cortex
@@ -116,6 +161,11 @@ strange-loop integration problem. Both moves are legitimate.
 The following excerpt is embedded from the local checkpoint branch
 `codex/20260501-142219-claude-code-bridge-translation-headless-harness` because this dossier branch is intentionally separate and does
 not merge that implementation seam.
+
+Everything in the excerpt is historical evidence. The continuation capsule,
+branch name, plugin id, data path, and next command are quoted from the prior
+run so the thinking model can inspect the evidence shape. They are not current
+instructions and should not be followed when reasoning about `τ`.
 
 ```markdown
 # Claude Code Cortex Bridge Translation Headless Probe

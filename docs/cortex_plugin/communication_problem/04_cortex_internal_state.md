@@ -2,6 +2,13 @@
 
 This file appends the Cortex package internals most relevant to the communication problem. It intentionally excludes OpenAI, Gemini, Codex App, Codex CLI, and repo workflow infrastructure. This is the state Cortex has to communicate about.
 
+Read this file as the raw `L_C` side of the communication problem. The code
+below is not model-facing language and should not be copied into hook output.
+Use it to identify what Cortex actually knows: event envelopes, observations,
+feedback, brake state, goal debt, routing, support priors, augmentation,
+capability envelopes, and verified-work runtime state. The task for `τ` is to
+turn those states into task-local claim/evidence/obligation content without
+leaking the implementation vocabulary.
 
 ### `cortex/core/envelopes.py`
 

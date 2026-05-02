@@ -2,6 +2,14 @@
 
 This file appends only Claude-family host surfaces through which Cortex communicates to Claude. It excludes OpenAI and Gemini host adapters. It includes the prior local `model_facing.py` from branch `codex/20260501-142219-claude-code-bridge-translation-headless-harness` so the thinking model can see why that three-template switch is not a general `τ`.
 
+Read this file as the Claude host boundary for `τ`. The code below shows the
+legal and structural paths by which Cortex state can reach Claude, including
+runtime context, host control, hook control, and Claude Code Desktop session
+I/O. It should not be read as proof that any path has behavior lift. Delivery,
+model-visible reception, and behavior change remain separate empirical claims.
+The appended `model_facing.py` is included as a known inadequate local repair:
+it demonstrates why three situated templates are not a general re-entry
+operator.
 
 ### `cortex/hosts/_executive_closure.py`
 
