@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 from contextlib import contextmanager
+from datetime import UTC, datetime
 from pathlib import Path
 
 import pytest
@@ -19,6 +20,10 @@ def _work_contract() -> WorkContract:
         output_carrier="full_files",
         max_repair_turns=1,
     )
+
+
+def _fixed_utc_iso(hour: int, minute: int = 0) -> str:
+    return datetime(2026, 4, 8, hour, minute, tzinfo=UTC).isoformat()
 
 
 def test_train_charter_requires_all_fields() -> None:
@@ -377,11 +382,14 @@ def test_run_openai_operator_cli_conformance_skips_resume_after_pass(
     command, cwd, env = commands[0]
     assert command[:3] == ["codex", "exec", "--json"]
     prompt = command[-1]
-    assert "Read-only workspace context follows." in prompt
+    assert "Workspace context for the task follows." in prompt
     assert "=== CONTEXT FILE: src/bookmarks_api/main.py ===" in prompt
     assert "=== CONTEXT FILE: tests/test_bookmarks_api.py ===" in prompt
-    assert "Operate directly on the staged workspace." in prompt
-    assert "Do not run tests, compile checks, syntax checks, or other validation shell commands." in prompt
+    assert "The work happens directly on the staged workspace." in prompt
+    assert (
+        "Tests, compile checks, syntax checks, and other validation shell commands "
+        "are not part of this turn."
+    ) in prompt
     assert "Follow this exact output contract" not in prompt
     assert cwd is not None
     assert env == isolated_env
@@ -809,7 +817,7 @@ def test_run_gemini_cli_conformance_uses_locked_model_and_skips_resume_after_pas
     command, cwd = commands[0]
     assert command[:2] == ["gemini", "-p"]
     assert "Build me a small FastAPI app" in command[2]
-    assert "Follow this exact output contract" in command[2]
+    assert "The exact output contract follows:" in command[2]
     assert "-m" not in command
     assert cwd is not None
 
@@ -1337,7 +1345,7 @@ def test_run_active_conformance_does_not_publish_latest_for_targeted_runs(
     monkeypatch.setattr(
         conformance,
         "now_utc_iso",
-        lambda: "2026-04-08T08:00:00+00:00",
+        lambda: _fixed_utc_iso(8),
     )
     monkeypatch.setattr(
         conformance,
@@ -1384,7 +1392,7 @@ def test_run_active_conformance_records_openai_ablation_config(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     monkeypatch.setattr(conformance, "CONFORMANCE_ROOT", tmp_path)
-    monkeypatch.setattr(conformance, "now_utc_iso", lambda: "2026-04-08T08:30:00+00:00")
+    monkeypatch.setattr(conformance, "now_utc_iso", lambda: _fixed_utc_iso(8, 30))
     monkeypatch.setattr(conformance, "load_local_env_file", lambda: None)
     monkeypatch.setattr(
         conformance,
@@ -1428,7 +1436,7 @@ def test_run_active_conformance_reserves_unique_run_root_when_timestamp_repeats(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     monkeypatch.setattr(conformance, "CONFORMANCE_ROOT", tmp_path)
-    monkeypatch.setattr(conformance, "now_utc_iso", lambda: "2026-04-08T08:30:00+00:00")
+    monkeypatch.setattr(conformance, "now_utc_iso", lambda: _fixed_utc_iso(8, 30))
     monkeypatch.setattr(conformance, "load_local_env_file", lambda: None)
     monkeypatch.setattr(
         conformance,
@@ -1478,7 +1486,7 @@ def test_run_active_conformance_keeps_bookmarks_as_only_latest_summary_anchor(
     monkeypatch.setattr(
         conformance,
         "now_utc_iso",
-        lambda: "2026-04-08T08:00:00+00:00",
+        lambda: _fixed_utc_iso(8),
     )
     monkeypatch.setattr(conformance, "load_local_env_file", lambda: None)
     monkeypatch.setattr(
@@ -1539,7 +1547,7 @@ def test_run_active_conformance_does_not_publish_latest_for_backup_openai_servic
     monkeypatch.setattr(
         conformance,
         "now_utc_iso",
-        lambda: "2026-04-08T08:15:00+00:00",
+        lambda: _fixed_utc_iso(8, 15),
     )
     monkeypatch.setattr(conformance, "load_local_env_file", lambda: None)
     monkeypatch.setattr(
@@ -1598,7 +1606,7 @@ def test_run_active_conformance_does_not_publish_feature_flags_as_latest_summary
     monkeypatch.setattr(
         conformance,
         "now_utc_iso",
-        lambda: "2026-04-08T09:00:00+00:00",
+        lambda: _fixed_utc_iso(9),
     )
     monkeypatch.setattr(conformance, "load_local_env_file", lambda: None)
     monkeypatch.setattr(
@@ -1672,7 +1680,7 @@ def test_reconcile_latest_summary_prefers_newest_surviving_full_run_matching_ct2
             (run_dir / artifact_name).mkdir()
 
     older_summary = {
-        "generated_at": "2026-04-08T07:00:00+00:00",
+        "generated_at": _fixed_utc_iso(7),
         "results": [
             {
                 "brain": "openai",
@@ -1724,7 +1732,7 @@ def test_reconcile_latest_summary_prefers_newest_surviving_full_run_matching_ct2
         "contract_pack": conformance.active_contract_pack().as_payload(),
     }
     newer_summary = {
-        "generated_at": "2026-04-08T07:10:00+00:00",
+        "generated_at": _fixed_utc_iso(7, 10),
         "results": [
             {
                 "brain": "openai",
@@ -1780,7 +1788,7 @@ def test_reconcile_latest_summary_prefers_newest_surviving_full_run_matching_ct2
 
     reconciled = conformance.reconcile_latest_summary()
 
-    assert reconciled["generated_at"] == "2026-04-08T07:00:00+00:00"
+    assert reconciled["generated_at"] == _fixed_utc_iso(7)
     assert (tmp_path / "summary.latest.json").exists()
 
 
@@ -1810,7 +1818,7 @@ def test_reconcile_latest_summary_prefers_publishable_cli_anchor_over_newer_back
             (run_dir / artifact_name).mkdir()
 
     cli_summary = {
-        "generated_at": "2026-04-08T07:00:00+00:00",
+        "generated_at": _fixed_utc_iso(7),
         "results": [
             {
                 "brain": "openai",
@@ -1835,7 +1843,7 @@ def test_reconcile_latest_summary_prefers_publishable_cli_anchor_over_newer_back
         "contract_pack": conformance.active_contract_pack().as_payload(),
     }
     backup_summary = {
-        "generated_at": "2026-04-08T07:10:00+00:00",
+        "generated_at": _fixed_utc_iso(7, 10),
         "results": [
             {
                 "brain": "openai",
@@ -1864,7 +1872,7 @@ def test_reconcile_latest_summary_prefers_publishable_cli_anchor_over_newer_back
 
     reconciled = conformance.reconcile_latest_summary()
 
-    assert reconciled["generated_at"] == "2026-04-08T07:00:00+00:00"
+    assert reconciled["generated_at"] == _fixed_utc_iso(7)
     assert reconciled["results"][0]["surface"] == "operator_cli"
 
 
@@ -1890,7 +1898,7 @@ def test_reconcile_latest_summary_ignores_newer_non_anchor_pack_full_runs(
             (run_dir / artifact_name).mkdir()
 
     older_summary = {
-        "generated_at": "2026-04-08T07:00:00+00:00",
+        "generated_at": _fixed_utc_iso(7),
         "results": [
             {
                 "brain": "openai",
@@ -1915,7 +1923,7 @@ def test_reconcile_latest_summary_ignores_newer_non_anchor_pack_full_runs(
         "contract_pack": conformance.active_contract_pack().as_payload(),
     }
     newer_summary = {
-        "generated_at": "2026-04-08T08:00:00+00:00",
+        "generated_at": _fixed_utc_iso(8),
         "results": [
             {
                 "brain": "openai",
@@ -1964,7 +1972,7 @@ def test_reconcile_latest_summary_falls_back_to_newest_surviving_full_run_when_c
         (newer_run / artifact_name).mkdir()
 
     newer_summary = {
-        "generated_at": "2026-04-08T07:10:00+00:00",
+        "generated_at": _fixed_utc_iso(7, 10),
         "results": [
             {
                 "brain": "openai",
@@ -2019,7 +2027,7 @@ def test_reconcile_latest_summary_falls_back_to_newest_surviving_full_run_when_c
 
     reconciled = conformance.reconcile_latest_summary()
 
-    assert reconciled["generated_at"] == "2026-04-08T07:10:00+00:00"
+    assert reconciled["generated_at"] == _fixed_utc_iso(7, 10)
 
 
 def test_reconcile_latest_summary_fails_when_only_backup_lane_full_runs_survive(
@@ -2040,7 +2048,7 @@ def test_reconcile_latest_summary_fails_when_only_backup_lane_full_runs_survive(
         (run_dir / artifact_name).mkdir()
 
     backup_summary = {
-        "generated_at": "2026-04-08T07:10:00+00:00",
+        "generated_at": _fixed_utc_iso(7, 10),
         "results": [
             {
                 "brain": "openai",

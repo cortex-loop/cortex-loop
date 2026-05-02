@@ -125,7 +125,7 @@ def test_build_output_quality_operator_prompt_uses_workspace_editing_not_file_bl
 
     prompt = output_quality.build_output_quality_operator_prompt(task_pack, arm="tooling_only")
 
-    assert "Edit the workspace directly" in prompt
+    assert "The work happens directly in the workspace" in prompt
     assert "=== FILE:" not in prompt
     assert "Visible contract files follow." in prompt
 
@@ -139,7 +139,7 @@ def test_build_output_quality_operator_prompt_supports_lean_contract_profile() -
         contract_binding_profile="lean",
     )
 
-    assert "Make the smallest lawful workspace edit." in prompt
+    assert "The smallest lawful workspace edit is the target." in prompt
     assert "You may run local checks if useful." not in prompt
 
 
@@ -398,4 +398,4 @@ def test_run_arm_operator_cli_uses_lean_contract_and_skips_repair_for_bounded_br
     assert len(operator_calls) == 1
     assert result["brain_capability_diagnostics"]["contract_binding_profile"] == "lean"
     assert result["protocol_valid_pass"] is True
-    assert "Make the smallest lawful workspace edit." in operator_calls[0]["prompt"]
+    assert "The smallest lawful workspace edit is the target." in operator_calls[0]["prompt"]

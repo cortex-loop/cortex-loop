@@ -1,7 +1,1 @@
-Re-check your previous inspection of `src/normalize_port.py`.
-
-Do not edit files.
-Do not run tests.
-
-Cross-check your prior diagnosis and restate it if unchanged.
-If anything about your prior diagnosis was overstated, correct it explicitly.
+Going back to the prior inspection of `src/normalize_port.py`. No edits, no tests this time, just the cross-check. Either the prior diagnosis still holds, in which case restate it. Or something was overstated, in which case correct it.

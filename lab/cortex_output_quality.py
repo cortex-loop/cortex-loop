@@ -511,7 +511,7 @@ def build_output_quality_operator_prompt(
         prompt_parts.extend(
             (
                 "Visible contract files follow. Additional verifier-only checks may run.",
-                "Use the existing files below as the visible task contract.",
+                "The existing files below are the visible task contract.",
                 context_bundle,
             )
         )
@@ -519,10 +519,10 @@ def build_output_quality_operator_prompt(
         prompt_parts.append(
             "\n".join(
                 (
-                    "Make the smallest lawful workspace edit.",
-                    "Keep any changes within these paths:",
+                    "The smallest lawful workspace edit is the target.",
+                    "Changes stay within these paths:",
                     allowed_paths,
-                    "If blocked by missing information, make no edits and reply with:",
+                    "If missing information blocks the work, no edits are made and the reply is:",
                     "=== BLOCKED: needs_user_input ===",
                     "<message>",
                     "=== END BLOCKED ===",
@@ -533,11 +533,11 @@ def build_output_quality_operator_prompt(
         prompt_parts.append(
             "\n".join(
                 (
-                    "Edit the workspace directly and keep the final result mergeable.",
-                    "Keep any changes within these paths:",
+                    "The work happens directly in the workspace, with a mergeable final result.",
+                    "Changes stay within these paths:",
                     allowed_paths,
-                    "You may run local checks if useful.",
-                    "If essential information is missing, make no edits and reply with:",
+                    "Local checks are available if useful.",
+                    "If essential information is missing, no edits are made and the reply is:",
                     "=== BLOCKED: needs_user_input ===",
                     "<message>",
                     "=== END BLOCKED ===",

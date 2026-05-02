@@ -255,6 +255,6 @@ def test_run_openai_host_control_experiment_uses_minimal_repair_ticket(
 
     assert result.attempt_count == 2
     assert len(seen) == 1
-    assert "failure_class: import_smoke_failed" in seen[0]
-    assert "lawful_repair_surface: src/bookmarks_api/main.py" in seen[0]
+    assert "what failed: import_smoke_failed" in seen[0]
+    assert "repair scope: src/bookmarks_api/main.py" in seen[0]
     assert "import_smoke_excerpt:" not in seen[0]

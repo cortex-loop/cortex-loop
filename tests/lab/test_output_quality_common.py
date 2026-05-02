@@ -82,7 +82,7 @@ def test_build_file_block_protocol_supports_lean_contract_profile() -> None:
         contract_binding_profile="lean",
     )
 
-    assert "Return only protocol blocks." in protocol
+    assert "The output for this work is protocol blocks only." in protocol
     assert "Do not include explanations" not in protocol
 
 

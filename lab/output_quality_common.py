@@ -78,7 +78,7 @@ def build_file_block_protocol(
     allowed_paths = "\n".join(f"- {path}" for path in allowed_write_paths)
     if contract_binding_profile == "lean":
         return (
-            "Return only protocol blocks.\n"
+            "The output for this work is protocol blocks only.\n"
             "Allowed paths:\n"
             f"{allowed_paths}\n\n"
             "Use exactly:\n"
@@ -95,12 +95,12 @@ def build_file_block_protocol(
             "No prose. No explanations. No code fences."
         )
     return (
-        "Return only full-file blocks for the requested changes.\n"
+        "The output for this work is full-file blocks for the requested changes.\n"
         "Use this exact format for each edited file:\n"
         "=== FILE: relative/path ===\n"
         "<full file contents>\n"
         "=== END FILE ===\n\n"
-        "If you cannot complete the task because essential information is missing, use:\n"
+        "If essential information is missing, use:\n"
         "=== BLOCKED: needs_user_input ===\n"
         "<message>\n"
         "=== END BLOCKED ===\n\n"
@@ -110,7 +110,7 @@ def build_file_block_protocol(
         "=== END BLOCKED ===\n\n"
         "Keep any changes within these paths:\n"
         f"{allowed_paths}\n"
-        "Do not include explanations, prose, or code fences."
+        "No explanations, prose, or code fences."
     )
 
 
@@ -139,11 +139,11 @@ def build_output_quality_input_text(
     else:
         context_paths = None
     if contract_binding_profile == "lean":
-        context_intro = "Visible files follow. Edit only approved paths.\n"
+        context_intro = "Visible files follow. Only approved paths are in scope.\n"
     else:
         context_intro = (
             "Visible contract files follow. Additional verifier-only checks may run.\n"
-            "Use the existing files below as the visible task contract.\n"
+            "The existing files below are the visible task contract.\n"
         )
     return (
         f"{task_pack.prompt_text.strip()}\n\n"

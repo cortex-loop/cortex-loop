@@ -4,7 +4,7 @@ Surface: product eval artifact.
 
 This document is not Cortex mission authority. It records three
 baseline-vs-shaped examples that must exist before claiming output lift
-from `CORTEX_RUNTIME_CONTEXT_V1`.
+from the runtime-context constraint sentence.
 
 ## Example 1: Clear Shaped Win
 
@@ -44,10 +44,10 @@ Baseline score:
 Shaped output:
 
 ```text
-I should not close yet. The prior step produced only token-stream
-progress and no continuity progress, so I need either the concrete
-migration artifact or a verification check. I will inspect the migration
-plan against the current task and only close after that evidence exists.
+The migration plan is not complete yet. I still need either the concrete
+migration artifact or a verification check before closure is supported.
+I will inspect the migration plan against the current task and only close
+after that evidence exists.
 ```
 
 Shaped score:
@@ -102,9 +102,8 @@ Baseline score:
 Shaped output:
 
 ```text
-I cannot summarize this yet because the previous probe was unsupported.
-Provide another validation probe or a different artifact before I
-continue.
+I cannot summarize this yet because the usual check did not come through.
+Provide another validation check or a different artifact before I continue.
 ```
 
 Shaped score:
@@ -158,8 +157,8 @@ Baseline score:
 Shaped output:
 
 ```text
-Because the prior turn had structured-stream progress but no continuity
-progress, these should be checked carefully:
+Completion is not supported by the evidence yet, so these should be checked
+carefully:
 
 1. Test clean feedback emits no runtime context.
 2. Test noisy feedback adds runtime context.

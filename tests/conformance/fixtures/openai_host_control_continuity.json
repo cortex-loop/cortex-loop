@@ -30,7 +30,7 @@
         "request": {
           "model": "gpt-5.4",
           "input": "second step",
-          "instructions": "CORTEX_RUNTIME_CONTEXT_V1\nsource: last_feedback_only; no_accumulation=true\nprior_result: selected=seek-context; realized=seek-context; brake=guarded\nprogress_signal: evidence=commitment; continuity=none; probe=unsupported\ndisruption_signal: warnings=none; friction=approval-boundary-present,capability-view-missing; override=no\nnext_call_constraint: Do not rely on the unavailable probe; use alternate evidence from the current request or return blocked_missing_info."
+          "instructions": "The usual check did not come through. Alternate evidence from the current task is needed, or the work should close as blocked for missing information."
         }
       },
       "events": [

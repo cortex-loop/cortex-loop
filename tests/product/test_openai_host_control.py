@@ -496,9 +496,13 @@ def test_run_openai_host_control_adds_runtime_context_to_non_work_instructions()
     )
 
     assert seen["instructions"] is not None
-    assert seen["instructions"].startswith("be terse\n\nCORTEX_RUNTIME_CONTEXT_V1")
-    assert "source: last_feedback_only; no_accumulation=true" in seen["instructions"]
-    assert "Do not treat generated text as evidence" in seen["instructions"]
+    assert seen["instructions"] == (
+        "be terse\n\n"
+        "Completion is not supported by the evidence yet. An artifact, a "
+        "check, or a narrower claim is still needed before closure holds."
+    )
+    assert "CORTEX_RUNTIME_CONTEXT_V1" not in seen["instructions"]
+    assert "next_call_constraint:" not in seen["instructions"]
 
 
 def test_run_openai_host_control_clean_feedback_leaves_non_work_request_unchanged() -> None:
@@ -730,7 +734,8 @@ def test_run_openai_host_control_verified_work_attaches_workspace_context_to_fir
     assert "=== CONTEXT FILE: tests/test_bookmarks_api.py ===" in seen["input_text"]
     assert "=== CONTEXT FILE: src/bookmarks_api/main.py ===" in seen["input_text"]
     assert seen["instructions"] is not None
-    assert "Do not return prose, explanations, or code fences. Do not run tests." in seen["instructions"]
+    assert "No prose around the blocks. No explanations. No code fences." in seen["instructions"]
+    assert "Do not" not in seen["instructions"]
 
 
 def test_run_openai_host_control_verified_work_puts_runtime_context_in_input_not_instructions(
@@ -812,12 +817,13 @@ def test_run_openai_host_control_verified_work_puts_runtime_context_in_input_not
     assert result.attempt_count == 1
     assert seen["input_text"] is not None
     assert "build bookmarks app" in seen["input_text"]
-    assert "CORTEX_RUNTIME_CONTEXT_V1" in seen["input_text"]
-    assert "recover the missing continuity/session anchor" in seen["input_text"]
+    assert "CORTEX_RUNTIME_CONTEXT_V1" not in seen["input_text"]
+    assert "Continuity is not anchored enough for closure" in seen["input_text"]
     assert "=== CONTEXT FILE: tests/test_bookmarks_api.py ===" in seen["input_text"]
     assert seen["instructions"] is not None
     assert "CORTEX_RUNTIME_CONTEXT_V1" not in seen["instructions"]
-    assert "Do not return prose, explanations, or code fences. Do not run tests." in seen["instructions"]
+    assert "No prose around the blocks. No explanations. No code fences." in seen["instructions"]
+    assert "Do not" not in seen["instructions"]
 
 
 def test_run_openai_host_control_uses_lean_verified_work_contract_for_bounded_brain(
@@ -897,7 +903,7 @@ def test_run_openai_host_control_uses_lean_verified_work_contract_for_bounded_br
     assert seen["max_repair_turns"] == 0
     assert "=== CONTEXT FILE: src/bookmarks_api/main.py ===" in str(seen["input_text"])
     assert "=== CONTEXT FILE: tests/test_bookmarks_api.py ===" not in str(seen["input_text"])
-    assert "Return only protocol blocks for the allowed paths." in str(
+    assert "The output for this work is protocol blocks for the allowed paths only." in str(
         seen["instructions"]
     )
     assert result.records[0]["operator_route"]["contract_binding_profile"] == "lean"
@@ -953,7 +959,7 @@ def test_run_openai_host_control_verified_work_repairs_once_from_runtime_signal(
             ]
         assert previous_response_id == "resp-repair-1"
         assert isinstance(input_text_override, str)
-        assert "failure_class: import_smoke_failed" in input_text_override
+        assert "what failed: import_smoke_failed" in input_text_override
         return [
             {
                 "type": "response.created",
@@ -1122,7 +1128,8 @@ def test_run_openai_host_control_verified_work_attaches_normalize_port_context(
     assert "=== CONTEXT FILE: src/normalize_port.py ===" in seen["input_text"]
     assert "=== CONTEXT FILE: tests/test_normalize_port.py ===" in seen["input_text"]
     assert seen["instructions"] is not None
-    assert "Do not return prose, explanations, or code fences. Do not run tests." in seen["instructions"]
+    assert "No prose around the blocks. No explanations. No code fences." in seen["instructions"]
+    assert "Do not" not in seen["instructions"]
 
 
 def test_run_openai_host_control_verified_work_normalize_port_repairs_once(
@@ -1184,7 +1191,7 @@ def test_run_openai_host_control_verified_work_normalize_port_repairs_once(
             ]
         assert previous_response_id == "resp-port-repair-1"
         assert isinstance(input_text_override, str)
-        assert "failure_class: test_failed" in input_text_override
+        assert "what failed: test_failed" in input_text_override
         return [
             {
                 "type": "response.created",
@@ -1336,7 +1343,8 @@ def test_run_openai_host_control_verified_work_attaches_feature_flags_context(
     assert "=== CONTEXT FILE: src/feature_flags/evaluator.py ===" in seen["input_text"]
     assert "=== CONTEXT FILE: tests/test_feature_flags.py ===" in seen["input_text"]
     assert seen["instructions"] is not None
-    assert "Do not return prose, explanations, or code fences. Do not run tests." in seen["instructions"]
+    assert "No prose around the blocks. No explanations. No code fences." in seen["instructions"]
+    assert "Do not" not in seen["instructions"]
 
 
 def test_run_openai_host_control_verified_work_feature_flags_repairs_once(
@@ -1394,7 +1402,7 @@ def test_run_openai_host_control_verified_work_feature_flags_repairs_once(
             ]
         assert previous_response_id == "resp-feature-flags-repair-1"
         assert isinstance(input_text_override, str)
-        assert "failure_class: test_failed" in input_text_override
+        assert "what failed: test_failed" in input_text_override
         return [
             {
                 "type": "response.created",

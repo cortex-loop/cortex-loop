@@ -14,7 +14,6 @@ from cortex.hosts.claude_code_desktop.runtime import (
     ClaudeCodeDesktopRuntimeSession,
     run_claude_code_desktop_runtime_step,
 )
-from cortex.hosts.runtime_context import RUNTIME_CONTEXT_HEADER
 from cortex.sre.brake import BrakeState
 from cortex.sre.families import SoftControlFamily
 from cortex.sre.feedback import ReferenceRealizationFeedback, ReferenceRealizationFeedbackWindow
@@ -61,9 +60,12 @@ def test_pretool_bash_noisy_prior_feedback_emits_bounded_runtime_context() -> No
     assert hook_output["permissionDecisionReason"] == (
         "Cortex runtime context from prior realization feedback."
     )
-    assert hook_output["additionalContext"].startswith(RUNTIME_CONTEXT_HEADER)
-    assert len(hook_output["additionalContext"]) <= 720
-    assert "capability-view-missing" in hook_output["additionalContext"]
+    assert hook_output["additionalContext"] == (
+        "Completion is not supported by the evidence yet. An artifact, a "
+        "check, or a narrower claim is still needed before closure holds."
+    )
+    assert "CORTEX_RUNTIME_CONTEXT_V1" not in hook_output["additionalContext"]
+    assert "capability-view-missing" not in hook_output["additionalContext"]
     assert "acknowledge" not in hook_output["additionalContext"].lower()
     assert json.dumps(payload)
 

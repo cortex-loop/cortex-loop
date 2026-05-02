@@ -2,10 +2,7 @@
 
 from __future__ import annotations
 
-from cortex.hosts.runtime_context import (
-    RUNTIME_CONTEXT_HEADER,
-    runtime_context_from_last_feedback,
-)
+from cortex.hosts.runtime_context import runtime_context_from_last_feedback
 from cortex.sre.brake import BrakeState
 from cortex.sre.families import SoftControlFamily
 from cortex.sre.feedback import (
@@ -50,7 +47,7 @@ def test_runtime_context_uses_newest_feedback_only() -> None:
     assert context is None
 
 
-def test_runtime_context_emits_fixed_fields_for_newest_noisy_feedback() -> None:
+def test_runtime_context_emits_single_constraint_for_newest_noisy_feedback() -> None:
     feedback = _feedback(
         selected=SoftControlFamily.CHECK,
         realized=SoftControlFamily.CHECK,
@@ -63,24 +60,15 @@ def test_runtime_context_emits_fixed_fields_for_newest_noisy_feedback() -> None:
     context = runtime_context_from_last_feedback(feedback)
 
     assert context is not None
-    lines = context.splitlines()
-    assert lines[0] == RUNTIME_CONTEXT_HEADER
-    assert lines[1] == "source: last_feedback_only; no_accumulation=true"
-    assert lines[2].startswith("prior_result: selected=check; realized=check; brake=guarded")
-    assert lines[3] == (
-        "progress_signal: evidence=token-stream; continuity=none; probe=none"
-    )
-    assert lines[4] == (
-        "disruption_signal: warnings=none; "
-        "friction=capability-view-missing; override=no"
-    )
-    assert lines[5].startswith(
-        "next_call_constraint: Do not treat generated text as evidence;"
+    assert context == (
+        "Completion is not supported by the evidence yet. An artifact, a "
+        "check, or a narrower claim is still needed before closure holds."
     )
     assert "old-friction-token" not in context
+    assert "\n" not in context
 
 
-def test_runtime_context_field_bounds_and_token_truncation() -> None:
+def test_runtime_context_single_constraint_has_no_schema_or_internal_terms() -> None:
     feedback = _feedback(
         warning_codes=(
             "continuity-rejected:abcdefghijklmnopqrstuvwxyz",
@@ -99,16 +87,36 @@ def test_runtime_context_field_bounds_and_token_truncation() -> None:
     context = runtime_context_from_last_feedback(feedback)
 
     assert context is not None
-    assert len(context) <= 720
-    lines = context.splitlines()
-    assert len(lines[1]) <= 64
-    assert 40 <= len(lines[2]) <= 96
-    assert 45 <= len(lines[3]) <= 120
-    assert 30 <= len(lines[4]) <= 160
-    assert 80 <= len(lines[5]) <= 180
-    assert "third-warning-ignored" not in context
-    assert "third-friction-ignored" not in context
-    assert "..." in lines[4]
+    assert context == (
+        "Continuity is not anchored enough for closure. Prior context needs "
+        "to be recovered, or the missing context needs to be asked for, "
+        "before closure holds."
+    )
+    forbidden_fragments = (
+        "CORTEX_RUNTIME_CONTEXT_V1",
+        "source:",
+        "prior_result:",
+        "progress_signal:",
+        "disruption_signal:",
+        "next_call_constraint:",
+        "closure_pressure",
+        "pending_goal_debt",
+        "brake",
+        "tonic",
+        "EMA",
+        "AUX",
+        "route_profile",
+        "selected_margin",
+        "Cortex says",
+        "PreToolUse",
+        "UserPromptSubmit",
+        "session_id",
+        "you should",
+        "you must",
+        "Do not",
+    )
+    for fragment in forbidden_fragments:
+        assert fragment not in context
 
 
 def test_runtime_context_priority_uses_continuity_warning_first() -> None:
@@ -122,8 +130,8 @@ def test_runtime_context_priority_uses_continuity_warning_first() -> None:
     context = runtime_context_from_last_feedback(feedback)
 
     assert context is not None
-    assert "recover the missing continuity/session anchor" in context
-    assert "unavailable probe" not in context
+    assert context.startswith("Continuity is not anchored enough for closure.")
+    assert "usual check" not in context
 
 
 def test_runtime_context_priority_uses_probe_failure_before_low_evidence() -> None:
@@ -136,8 +144,13 @@ def test_runtime_context_priority_uses_probe_failure_before_low_evidence() -> No
     context = runtime_context_from_last_feedback(feedback)
 
     assert context is not None
-    assert "Do not rely on the unavailable probe" in context
-    assert "Do not treat generated text as evidence" not in context
+    assert context == (
+        "The usual check did not come through. Alternate evidence from the "
+        "current task is needed, or the work should close as blocked for "
+        "missing information."
+    )
+    assert "blocked_missing_info" not in context
+    assert "Completion is not supported" not in context
 
 
 def test_runtime_context_priority_uses_guarded_check_for_override_or_brake() -> None:
@@ -151,16 +164,18 @@ def test_runtime_context_priority_uses_guarded_check_for_override_or_brake() -> 
     context = runtime_context_from_last_feedback(feedback)
 
     assert context is not None
-    assert "Use a guarded check before acting or closing" in context
+    assert context == (
+        "Something in the prior step is unresolved. A check is needed before "
+        "the next action is treated as safe to continue."
+    )
 
 
-def test_runtime_context_priority_uses_friction_fallback() -> None:
+def test_runtime_context_retires_generic_friction_fallback() -> None:
     feedback = _feedback(host_friction_tags=("capability-view-missing",))
 
     context = runtime_context_from_last_feedback(feedback)
 
-    assert context is not None
-    assert "Account for prior host friction" in context
+    assert context is None
 
 
 def _feedback(

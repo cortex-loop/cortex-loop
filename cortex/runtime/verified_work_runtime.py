@@ -106,7 +106,7 @@ def build_verified_work_instructions(
     allowed_paths = "\n".join(f"- {path}" for path in work_contract.allowed_write_paths)
     if contract_binding_profile == "lean":
         return (
-            "Return only protocol blocks for the allowed paths.\n"
+            "The output for this work is protocol blocks for the allowed paths only.\n"
             "Allowed paths:\n"
             f"{allowed_paths}\n\n"
             "Use exactly one of:\n"
@@ -119,10 +119,10 @@ def build_verified_work_instructions(
             "=== BLOCKED: unsafe_request ===\n"
             "<message>\n"
             "=== END BLOCKED ===\n\n"
-            "No prose. No code fences. Do not run tests."
+            "No prose around the blocks. No code fences. Tests are not part of this output."
         )
     return (
-        "Return only full-file blocks for the allowed paths.\n"
+        "The output for this work is full-file blocks for the allowed paths only.\n"
         "Allowed paths:\n"
         f"{allowed_paths}\n\n"
         "For each file, use:\n"
@@ -137,7 +137,7 @@ def build_verified_work_instructions(
         "=== BLOCKED: unsafe_request ===\n"
         "<message>\n"
         "=== END BLOCKED ===\n\n"
-        "Do not return prose, explanations, or code fences. Do not run tests."
+        "No prose around the blocks. No explanations. No code fences. Tests are not part of this output."
     )
 
 
@@ -166,12 +166,12 @@ def build_verified_work_input_text(
     if context_mode == "off":
         return task_prompt.strip()
     context_intro = (
-        "Read-only workspace context follows. Use the existing writable-file contents and tests below as the task contract.\n"
-        "Modify only the allowed paths named in the work contract.\n\n"
+        "Workspace context for the task follows. The writable-file contents and tests below are the work contract.\n"
+        "Only the allowed paths are in scope.\n\n"
     )
     if contract_binding_profile == "lean":
         context_intro = (
-            "Workspace context follows. Edit only allowed paths.\n\n"
+            "Workspace context follows. Only allowed paths are in scope.\n\n"
         )
     return (
         f"{task_prompt.strip()}\n\n"
@@ -214,23 +214,23 @@ def build_verified_work_repair_ticket(
     allowed_moves = ", ".join(sorted(preservation_state.intervention_budget.allowed_moves))
     if style == "minimal":
         return (
-            f"task_anchor: {preservation_state.task_anchor}\n"
-            f"failure_class: {preservation_state.falsified_structure.failure_class or '<none>'}\n"
-            f"falsified_checks: {falsified_checks}\n"
-            f"lawful_repair_surface: {repair_surface}\n"
-            f"remaining_repairs: {preservation_state.intervention_budget.remaining_repairs}\n"
-            f"allowed_moves: {allowed_moves}"
+            f"task: {preservation_state.task_anchor}\n"
+            f"what failed: {preservation_state.falsified_structure.failure_class or '<none>'}\n"
+            f"checks still failing: {falsified_checks}\n"
+            f"repair scope: {repair_surface}\n"
+            f"repairs left: {preservation_state.intervention_budget.remaining_repairs}\n"
+            f"allowed moves: {allowed_moves}"
         )
     return (
-        f"task_anchor: {preservation_state.task_anchor}\n"
-        f"trusted_checks: {trusted_checks}\n"
-        f"trusted_paths: {trusted_paths}\n"
-        f"failure_class: {preservation_state.falsified_structure.failure_class or '<none>'}\n"
-        f"falsified_checks: {falsified_checks}\n"
-        f"failing_tests: {failing_tests}\n"
-        f"lawful_repair_surface: {repair_surface}\n"
-        f"remaining_repairs: {preservation_state.intervention_budget.remaining_repairs}\n"
-        f"allowed_moves: {allowed_moves}"
+        f"task: {preservation_state.task_anchor}\n"
+        f"already working checks: {trusted_checks}\n"
+        f"already working files: {trusted_paths}\n"
+        f"what failed: {preservation_state.falsified_structure.failure_class or '<none>'}\n"
+        f"checks still failing: {falsified_checks}\n"
+        f"failing tests: {failing_tests}\n"
+        f"repair scope: {repair_surface}\n"
+        f"repairs left: {preservation_state.intervention_budget.remaining_repairs}\n"
+        f"allowed moves: {allowed_moves}"
     )
 
 

@@ -4,16 +4,17 @@ Surface: product eval artifact.
 
 This document is not Cortex mission authority. `docs/CORTEX.md` remains
 the canonical mission and model-I/O authority. This rubric exists only to
-score whether the `CORTEX_RUNTIME_CONTEXT_V1` bridge improves a model
-call relative to an unshaped baseline.
+score whether the runtime-context constraint sentence improves a model call
+relative to an unshaped baseline.
 
 ## Scope
 
 Use this rubric for paired baseline-vs-shaped comparisons where the only
 intended difference is that the shaped call receives a bounded runtime
-context block derived from the immediately prior
+context constraint derived from the immediately prior
 `ReferenceRealizationFeedback`. Do not use it to claim broad model lift,
-cross-host parity, or post-training improvement.
+cross-host parity, or post-training improvement. The constraint is a single
+model-visible sentence, not a schema block.
 
 The shaped output wins only when:
 
