@@ -23,6 +23,9 @@ EXECUTIVE_RUNTIME_ROADMAP_PATH = (
 EXECUTIVE_RUNTIME_PROGRAM_SPEC_PATH = (
     REPO_ROOT / "docs" / "CORTEX_EXECUTIVE_RUNTIME_PROGRAM_SPEC.md"
 )
+EXECUTIVE_RUNTIME_PHASE_5_READINESS_PATH = (
+    REPO_ROOT / "docs" / "CORTEX_EXECUTIVE_RUNTIME_PHASE_5_READINESS.md"
+)
 README_PATH = REPO_ROOT / "README.md"
 DOCS_INDEX_PATH = REPO_ROOT / "docs" / "README.md"
 RUNTIME_CONTEXT_RUBRIC_PATH = REPO_ROOT / "docs" / "runtime_context" / "EVAL_RUBRIC.md"
@@ -421,6 +424,27 @@ def test_executive_runtime_program_spec_defines_control_objects_and_falsificatio
     assert "The first program proof is silent executive control." in text
 
 
+def test_executive_runtime_phase_5_readiness_names_evidence_gaps_before_live_probe() -> None:
+    text = _read(EXECUTIVE_RUNTIME_PHASE_5_READINESS_PATH)
+
+    assert EXECUTIVE_RUNTIME_PHASE_5_READINESS_PATH.exists()
+    assert "Readiness Verdict" in text
+    assert "Do not open the full seam-5 live probe yet" in text
+    assert "Same-event certification or blocker progress can pay older compatible debt" in text
+    assert "blocked/waiting boundary can leave residual verification debt" in text
+    assert "Concern 1: Seams 1-4 Evidence Accounting" in text
+    assert "Concern 2: Horizon Classification Accuracy" in text
+    assert "Concern 3: Integration Effects Across The Stack" in text
+    assert "Concern 4: Cross-Operator State Observability" in text
+    assert "Concern 5: Seam-5 Probe Design Appendix" in text
+    assert "Concern 6: Strange-Loop Frame Across Silent Control" in text
+    assert "Concern 7: Bridge From Silent Control To Grounded Intervention Records" in text
+    assert "tests/conformance/test_phase5_readiness_scenarios.py" in text
+    assert "No runtime-code change is required" in text
+    assert "Required Remediation Before Seam 5" in text
+    assert "shipping truth" in text
+
+
 def test_math_to_code_map_schema() -> None:
     status = _load_status()
     math_map = status.get("math_to_code_map")
@@ -522,6 +546,7 @@ def test_public_docs_point_to_status_and_keep_archive_out_of_the_front_door() ->
     assert "CORTEX_EXECUTIVE_RUNTIME_TRACKER.md" in docs_index
     assert "CORTEX_EXECUTIVE_RUNTIME_ROADMAP.md" in docs_index
     assert "CORTEX_EXECUTIVE_RUNTIME_PROGRAM_SPEC.md" in docs_index
+    assert "CORTEX_EXECUTIVE_RUNTIME_PHASE_5_READINESS.md" in docs_index
     assert "archive/" in docs_index
     assert "CORTEX.md" in docs_index
     assert "internal/MISSION_REFLECTION_CONTRACT.md" in docs_index
@@ -1676,12 +1701,12 @@ def test_status_registry_is_complete_and_stable() -> None:
         assert {"slug", "stage", "summary", "next_step"} <= set(entry)
         assert entry["slug"] != status["work_today"]["slug"]
         assert entry["slug"] != status["next_product_train"]["slug"]
-    assert status["work_today"]["slug"] == "debt-drag-into-brake-and-route"
-    assert "resolution deficit" in status["work_today"]["note"].lower()
-    assert "silent route/brake control" in status["work_today"]["note"].lower()
-    assert "debt alone must not latch" in status["work_today"]["note"].lower()
-    assert "emit model-visible text" in status["work_today"]["note"].lower()
-    assert "structural truth only" in status["work_today"]["note"].lower()
+    assert status["work_today"]["slug"] == "executive-runtime-phase-5-readiness"
+    assert "evidence-accounting gate" in status["work_today"]["note"].lower()
+    assert "runs no live probes" in status["work_today"]["note"].lower()
+    assert "changes no runtime law" in status["work_today"]["note"].lower()
+    assert "remediation required before seam 5" in status["work_today"]["note"].lower()
+    assert "behavior lift and shipping truth remain unchanged" in status["work_today"]["note"].lower()
     assert status["next_product_train"]["slug"] == "silent-control-live-probe-on-openai"
     assert "product" == status["next_product_train"]["surface"]
     assert "silent expectation-debt control" in status["next_product_train"][
@@ -1711,8 +1736,8 @@ def test_status_registry_is_complete_and_stable() -> None:
     assert "route truth stays bounded and non-sovereign" in status["where_to_work"][2]
     assert "live `Q_mem` stays zero" in status["where_to_work"][2]
     assert "host/tool reliability and affordance priors are earned" in status["where_to_work"][2]
-    assert "debt-drag-into-brake-and-route seam is the active focus" in status["where_to_work"][3]
-    assert "resolution deficit" in status["where_to_work"][3]
+    assert "executive-runtime-phase-5-readiness seam is the active focus" in status["where_to_work"][3]
+    assert "readiness document currently recommends a narrow remediation seam" in status["where_to_work"][3]
     assert "live behavior lift remains unearned" in status["where_to_work"][3]
     closure_gates = {gate["id"]: gate for gate in status["closure_gates"]}
     assert closure_gates["main_synced"]["status"] == "required"
@@ -1744,12 +1769,12 @@ def test_generated_status_doc_includes_system_map_and_next_product_train() -> No
     assert "## Next Product Train" in text
     assert "## Research Lines Under Evaluation" in text
     assert "host/tool reliability and affordance priors are earned" in text
-    assert "`debt-drag-into-brake-and-route`" in text
+    assert "`executive-runtime-phase-5-readiness`" in text
     assert "- Next product train after the current focus: `silent-control-live-probe-on-openai`" in text
     assert "- Train: `silent-control-live-probe-on-openai`" in text
     assert "`brain-capability-observation-and-inference` (deferred-by-executive-runtime-roadmap)" in text
-    assert "silent route/brake control" in text.lower()
-    assert "debt alone must not latch" in text.lower()
+    assert "evidence-accounting/conformance truth only" in text.lower()
+    assert "narrow remediation seam before the full seam-5 probe" in text.lower()
     assert "paired baseline/shaped/clean openai trials" in text.lower()
     assert "silent expectation-debt control" in text.lower()
     assert "Shipping Product Lane\\nopenai:operator_cli" in text or "Shipping Product Lane" in text
@@ -1757,7 +1782,7 @@ def test_generated_status_doc_includes_system_map_and_next_product_train() -> No
     assert "Workflow gates marked `required` are contractual gates checked by `repo_workflow.py`" in text
     assert "| `main_synced` | `required` |" in text
     assert "| `cleanup_report` | `required` |" in text
-    assert "silent route/brake control" in text.lower()
+    assert "phase-5-readiness" in text.lower()
     assert "brain-capability-observation-and-inference" in text
     assert "`visible_burden_sensitivity`" in text
 
