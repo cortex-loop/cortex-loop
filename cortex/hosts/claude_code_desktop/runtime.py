@@ -14,6 +14,7 @@ from cortex.sre.feedback import (
     ReferenceRealizationFeedback,
     ReferenceRealizationFeedbackWindow,
 )
+from cortex.sre.expectations import ExpectationLedger
 from cortex.sre.modulators import ExecutiveModulatorMemory
 
 from .hook_control import ClaudeCodeDesktopHookControlDirective
@@ -41,6 +42,7 @@ class ClaudeCodeDesktopRuntimeSession:
     feedback_window: ReferenceRealizationFeedbackWindow = field(
         default_factory=ReferenceRealizationFeedbackWindow
     )
+    expectation_ledger: ExpectationLedger = field(default_factory=ExpectationLedger)
     executive_modulator_memory: ExecutiveModulatorMemory | None = None
 
     def __post_init__(self) -> None:
@@ -66,6 +68,7 @@ class ClaudeCodeDesktopRuntimeSession:
             self, "last_realization_feedback", normalized.last_realization_feedback
         )
         object.__setattr__(self, "feedback_window", normalized.feedback_window)
+        object.__setattr__(self, "expectation_ledger", normalized.expectation_ledger)
         object.__setattr__(
             self,
             "executive_modulator_memory",
@@ -87,6 +90,7 @@ class ClaudeCodeDesktopRuntimeSession:
             last_commitment_result_summary=self.last_commitment_result_summary,
             last_realization_feedback=self.last_realization_feedback,
             feedback_window=self.feedback_window,
+            expectation_ledger=self.expectation_ledger,
             executive_modulator_memory=self.executive_modulator_memory,
         )
 
@@ -115,6 +119,7 @@ class ClaudeCodeDesktopRuntimeSession:
             last_commitment_result_summary=session.last_commitment_result_summary,
             last_realization_feedback=session.last_realization_feedback,
             feedback_window=session.feedback_window,
+            expectation_ledger=session.expectation_ledger,
             executive_modulator_memory=session.executive_modulator_memory,
         )
 

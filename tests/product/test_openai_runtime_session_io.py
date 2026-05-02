@@ -83,6 +83,7 @@ def test_openai_runtime_session_artifact_roundtrips_compact_product_journal() ->
             "last_commitment_result_summary": None,
             "last_realization_feedback": None,
             "feedback_window": [],
+            "expectation_ledger": {"active": [], "resolved": []},
             "executive_modulator_memory": {
                 "focus_tonic": 0.1,
                 "explore_tonic": 0.2,

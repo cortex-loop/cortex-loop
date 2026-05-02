@@ -11,6 +11,7 @@ from typing import Any, Mapping
 
 from cortex.hosts.openai.runtime import OpenAIRuntimeSession
 from cortex.sre.feedback import ReferenceRealizationFeedback, ReferenceRealizationFeedbackWindow
+from cortex.sre.expectations import ExpectationLedger
 from cortex.sre.families import SoftControlFamily
 from cortex.sre.operator_routing import OperatorTaskMode
 from cortex.sre.brake import BrakeState
@@ -30,6 +31,26 @@ _LEGACY_JOURNAL_KEYS = (
     "next_recommended_move",
 )
 _JOURNAL_KEYS = (
+    "session_id",
+    "event_index",
+    "branch_registry",
+    "active_track_ref",
+    "active_goal_ref",
+    "pending_goal_refs",
+    "confirmed_artifact_refs",
+    "budget_history",
+    "brake_history",
+    "brake_tonic_history",
+    "last_selected_family",
+    "last_commitment_result_summary",
+    "last_realization_feedback",
+    "feedback_window",
+    "expectation_ledger",
+    "executive_modulator_memory",
+    "last_failure_class",
+    "next_recommended_move",
+)
+_PRE_EXPECTATION_LEDGER_JOURNAL_KEYS = (
     "session_id",
     "event_index",
     "branch_registry",
@@ -107,6 +128,7 @@ class OpenAIRuntimeSessionArtifact:
     feedback_window: ReferenceRealizationFeedbackWindow = field(
         default_factory=ReferenceRealizationFeedbackWindow
     )
+    expectation_ledger: ExpectationLedger = field(default_factory=ExpectationLedger)
     executive_modulator_memory: ExecutiveModulatorMemory | None = None
     last_failure_class: str | None = None
     next_recommended_move: str = "continue"
@@ -136,6 +158,7 @@ class OpenAIRuntimeSessionArtifact:
             last_commitment_result_summary=self.last_commitment_result_summary,
             last_realization_feedback=self.last_realization_feedback,
             feedback_window=self.feedback_window,
+            expectation_ledger=self.expectation_ledger,
             executive_modulator_memory=self.executive_modulator_memory,
             last_failure_class=self.last_failure_class,
             next_recommended_move=self.next_recommended_move,
@@ -168,6 +191,7 @@ class OpenAIRuntimeSessionArtifact:
             "feedback_window": [
                 entry.as_summary() for entry in self.feedback_window.entries
             ],
+            "expectation_ledger": self.expectation_ledger.as_payload(),
             "executive_modulator_memory": (
                 _executive_modulator_memory_payload(self.executive_modulator_memory)
                 if self.executive_modulator_memory is not None
@@ -200,6 +224,7 @@ class OpenAIRuntimeSessionArtifact:
             last_commitment_result_summary=self.last_commitment_result_summary,
             last_realization_feedback=self.last_realization_feedback,
             feedback_window=self.feedback_window,
+            expectation_ledger=self.expectation_ledger,
             executive_modulator_memory=self.executive_modulator_memory,
             last_failure_class=self.last_failure_class,
             next_recommended_move=self.next_recommended_move,
@@ -231,6 +256,7 @@ def build_openai_runtime_session_artifact(
         last_commitment_result_summary=session.last_commitment_result_summary,
         last_realization_feedback=session.last_realization_feedback,
         feedback_window=session.feedback_window,
+        expectation_ledger=session.expectation_ledger,
         executive_modulator_memory=session.executive_modulator_memory,
         last_failure_class=session.last_failure_class,
         next_recommended_move=session.next_recommended_move,
@@ -367,6 +393,9 @@ def parse_openai_runtime_session_artifact(
             journal_payload["feedback_window"],
             "OpenAIRuntimeSessionArtifact.journal.feedback_window",
         ),
+        expectation_ledger=ExpectationLedger.from_payload(
+            journal_payload.get("expectation_ledger")
+        ),
         executive_modulator_memory=_optional_executive_modulator_memory(
             journal_payload.get("executive_modulator_memory"),
             "OpenAIRuntimeSessionArtifact.journal.executive_modulator_memory",
@@ -451,6 +480,8 @@ def _require_journal_keys(payload: Mapping[str, Any]) -> None:
         _PRE_MODULATOR_JOURNAL_KEYS + _OPTIONAL_JOURNAL_KEY_SUFFIX,
         _PRE_TONIC_HISTORY_JOURNAL_KEYS,
         _PRE_TONIC_HISTORY_JOURNAL_KEYS + _OPTIONAL_JOURNAL_KEY_SUFFIX,
+        _PRE_EXPECTATION_LEDGER_JOURNAL_KEYS,
+        _PRE_EXPECTATION_LEDGER_JOURNAL_KEYS + _OPTIONAL_JOURNAL_KEY_SUFFIX,
         _JOURNAL_KEYS,
         _JOURNAL_KEYS + _OPTIONAL_JOURNAL_KEY_SUFFIX,
     }
