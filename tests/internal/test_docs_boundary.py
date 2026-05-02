@@ -128,6 +128,12 @@ OPENAI_OPERATOR_OUTPUT_QUALITY_FIXTURE_REFRESH_PATH = (
     / "recon"
     / "cortex_openai_operator_output_quality_fixture_refresh.md"
 )
+OPENAI_OPERATOR_VERIFICATION_DEBT_CONTINUATION_PATH = (
+    REPO_ROOT
+    / "docs"
+    / "recon"
+    / "cortex_openai_operator_verification_debt_continuation.md"
+)
 STATUS_REGISTRY_PATH = REPO_ROOT / "internal" / "truth" / "cortex_status.json"
 STATUS_DOC_PATH = REPO_ROOT / "docs" / "CORTEX_STATUS.md"
 WORKFLOW_DOC_PATH = REPO_ROOT / "docs" / "internal" / "REPO_WORKFLOW.md"
@@ -669,6 +675,7 @@ def test_public_docs_point_to_status_and_keep_archive_out_of_the_front_door() ->
     assert "recon/cortex_openai_operator_debt_control_enactment.md" in docs_index
     assert "recon/cortex_openai_operator_silent_control_live_probe_retry.md" in docs_index
     assert "recon/cortex_openai_operator_output_quality_fixture_refresh.md" in docs_index
+    assert "recon/cortex_openai_operator_verification_debt_continuation.md" in docs_index
     # CORTEX.md content anchors the previously-fragmented charter and
     # boundary identity material in one canonical surface.
     assert "executive-function layer that wraps a model after" in cortex_doc
@@ -790,6 +797,7 @@ def test_docs_directory_only_exposes_archive_and_workflow_subtrees() -> None:
         "cortex_openai_operator_output_quality_fixture_refresh.md",
         "cortex_openai_operator_silent_control_live_probe.md",
         "cortex_openai_operator_silent_control_live_probe_retry.md",
+        "cortex_openai_operator_verification_debt_continuation.md",
         "lifecycle_first_surface_matrix.md",
     ]
     assert sorted(path.name for path in (DOCS_ROOT / "runtime_context").iterdir()) == [
@@ -1620,7 +1628,34 @@ def test_openai_operator_output_quality_fixture_refresh_records_hard_fixture() -
         "docs/recon/cortex_openai_operator_output_quality_fixture_refresh.md"
         in status["active_docs"]
     )
-    assert status["next_product_train"]["slug"] == "silent-control-verification-debt-continuation"
+    assert status["work_today"]["slug"] == "silent-control-verification-debt-continuation"
+
+
+def test_openai_operator_verification_debt_continuation_records_gate0_truth() -> None:
+    text = _read(OPENAI_OPERATOR_VERIFICATION_DEBT_CONTINUATION_PATH)
+    docs_index = _read(DOCS_INDEX_PATH)
+    status = _load_status()
+
+    assert "Surface: product / live recon" in text
+    assert "Probe date: 2026-05-02" in text
+    assert "resume_verification" in text
+    assert "visible_success_unverified" in text
+    assert "verification_debt_continuation_operator.md" in text
+    assert "same initial prompt hash" in text
+    assert "non_astro_visible_success_unverified_control" in text
+    assert "clean verified control stayed `invoke`" in text
+    assert "baseline failure reproduced 5/5" in text
+    assert "shaped arm improved all primary axes" in text.lower()
+    assert "zero provider-limit failures" in text
+    assert "Live behavior truth: Narrowly earned" in text
+    assert "no shipping promotion" in text.lower()
+    assert "recon/cortex_openai_operator_verification_debt_continuation.md" in docs_index
+    assert (
+        "docs/recon/cortex_openai_operator_verification_debt_continuation.md"
+        in status["active_docs"]
+    )
+    assert status["work_today"]["slug"] == "silent-control-verification-debt-continuation"
+    assert status["next_product_train"]["slug"] == "grounded-intervention-records"
 
 
 def test_cortex_plugin_design_preserves_scope_and_truth_boundaries() -> None:
@@ -1922,29 +1957,32 @@ def test_status_registry_is_complete_and_stable() -> None:
         assert {"slug", "stage", "summary", "next_step"} <= set(entry)
         assert entry["slug"] != status["work_today"]["slug"]
         assert entry["slug"] != status["next_product_train"]["slug"]
-    assert status["work_today"]["slug"] == "fixture-to-law-product-spine-guardrail"
-    assert "product-spine closeout requirement" in status["work_today"]["note"].lower()
-    assert "fixture-leak gate" in status["work_today"]["note"].lower()
-    assert "evidence witnesses rather than product policy" in status["work_today"]["note"].lower()
-    assert "product `cortex/**` closeouts" in status["work_today"]["note"].lower()
-    assert "non-fixture controls" in status["work_today"]["note"].lower()
-    assert status["next_product_train"]["slug"] == "silent-control-verification-debt-continuation"
+    assert status["work_today"]["slug"] == "silent-control-verification-debt-continuation"
+    assert "general `resume_verification` continuation" in status["work_today"]["note"].lower()
+    assert "same initial prompt" in status["work_today"]["note"].lower()
+    assert "unrelated control" in status["work_today"]["note"].lower()
+    assert "clean verified state does not resume" in status["work_today"]["note"].lower()
+    assert "baseline failure reproduced 5/5" in status["work_today"]["note"].lower()
+    assert "shaped improved premature closure" in status["work_today"]["note"].lower()
+    assert "zero provider-limit or external-interference counts" in status["work_today"]["note"].lower()
+    assert "no shipping promotion" in status["work_today"]["note"].lower()
+    assert status["next_product_train"]["slug"] == "grounded-intervention-records"
     assert "product" == status["next_product_train"]["surface"]
-    assert "verification continuation before closure" in status["next_product_train"][
+    assert "grounded visible-intervention records" in status["next_product_train"][
         "executive_benefit"
     ].lower()
-    assert "reproducible witness of the broader failure family" in status["next_product_train"][
+    assert "silent verification continuation now has narrow live openai operator lift" in status["next_product_train"][
         "why_now"
     ].lower()
-    assert "same initial prompt" in status["next_product_train"][
+    assert "typed intervention records fire only on grounded anchors" in status["next_product_train"][
         "primary_metric"
     ].lower()
-    assert "non-astro controls" in status["next_product_train"]["primary_metric"].lower()
-    assert "do not branch on fixture ids" in status["next_product_train"][
+    assert "clean-control overblock" in status["next_product_train"]["primary_metric"].lower()
+    assert "do not expose route pricing" in status["next_product_train"][
         "guardrail"
     ].lower()
     assert "hidden verifier answers" in status["next_product_train"]["guardrail"].lower()
-    assert "only enacted difference is private diagnostics" in status["next_product_train"][
+    assert "visible intervention fires from pressure alone" in status["next_product_train"][
         "kill_rule"
     ].lower()
     deferred_lines = {entry["slug"]: entry for entry in status["research_lines_under_evaluation"]}
@@ -1962,11 +2000,11 @@ def test_status_registry_is_complete_and_stable() -> None:
     assert "route truth stays bounded and non-sovereign" in status["where_to_work"][2]
     assert "live `Q_mem` stays zero" in status["where_to_work"][2]
     assert "host/tool reliability and affordance priors are earned" in status["where_to_work"][2]
-    assert "silent-control-live-fixture-refresh seam isolated" in status["where_to_work"][3]
-    assert "astro_docs_site_v1" in status["where_to_work"][3]
-    assert "3/3 clean" in status["where_to_work"][3]
-    assert "silent-control-verification-debt-continuation" in status["where_to_work"][3]
-    assert "fixture-specific product law" in status["where_to_work"][3]
+    assert "silent-control-verification-debt-continuation seam added" in status["where_to_work"][3]
+    assert "resume_verification" in status["where_to_work"][3]
+    assert "narrow live behavior-lift evidence" in status["where_to_work"][3]
+    assert "baseline failure reproduced 5/5" in status["where_to_work"][3]
+    assert "grounded intervention records" in status["where_to_work"][3]
     closure_gates = {gate["id"]: gate for gate in status["closure_gates"]}
     assert closure_gates["main_synced"]["status"] == "required"
     assert closure_gates["cleanup_report"]["status"] == "required"
@@ -1997,19 +2035,19 @@ def test_generated_status_doc_includes_system_map_and_next_product_train() -> No
     assert "## Next Product Train" in text
     assert "## Research Lines Under Evaluation" in text
     assert "host/tool reliability and affordance priors are earned" in text
-    assert "`fixture-to-law-product-spine-guardrail`" in text
-    assert "- Next product train after the current focus: `silent-control-verification-debt-continuation`" in text
-    assert "- Train: `silent-control-verification-debt-continuation`" in text
+    assert "`silent-control-verification-debt-continuation`" in text
+    assert "- Next product train after the current focus: `grounded-intervention-records`" in text
+    assert "- Train: `grounded-intervention-records`" in text
     assert "`brain-capability-observation-and-inference` (deferred-by-executive-runtime-roadmap)" in text
-    assert "product-spine closeout requirement" in text.lower()
+    assert "resume_verification" in text.lower()
     assert "hidden verifier" in text.lower()
-    assert "verification continuation before closure" in text.lower()
+    assert "grounded visible-intervention records" in text.lower()
     assert "Shipping Product Lane\\nopenai:operator_cli" in text or "Shipping Product Lane" in text
     assert "Shipping default: `openai:operator_cli`" in text
     assert "Workflow gates marked `required` are contractual gates checked by `repo_workflow.py`" in text
     assert "| `main_synced` | `required` |" in text
     assert "| `cleanup_report` | `required` |" in text
-    assert "silent-control-verification-debt-continuation" in text.lower()
+    assert "grounded-intervention-records" in text.lower()
     assert "brain-capability-observation-and-inference" in text
     assert "`visible_burden_sensitivity`" in text
 
