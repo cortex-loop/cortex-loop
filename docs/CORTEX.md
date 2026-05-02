@@ -71,6 +71,12 @@ surface, subordinate to this document and the status registry, that keeps
 the runtime executive loop visible without turning Claude hooks or
 model-facing translation into the product goal.
 
+### Model-Visible Cortex Output Law
+
+When Cortex output reaches a model, it must render Cortex state as a task-local executive constraint inside the model's own working frame, not as a person, plugin, monitor, policy engine, or hidden authority commenting from outside. The strange-loop goal is epistemic integration: the model receives the content as self-monitoring over its own claim, evidence, obligation, contradiction, closure condition, or next move.
+
+Good shape: "Closure is not warranted yet; the completion claim still needs evidence for each original requirement." Bad shape: "Cortex says your debt pressure is high; you should verify harder." Model-visible text may not contain internal labels, debt/brake/AUX terms, schema names, hook names, route tags, session IDs, hidden verifier answers, third-agent voice, or generic second-person advice. First-person/ego style is allowed only for same-thread resumed turns with a clear prior-act anchor and truthful self-check content; attached-context surfaces use impersonal executive-constraint language; all output must be built from claim/evidence/obligation/next-move structure and generalize beyond the motivating fixture.
+
 ## 2. Failure Modes Cortex Addresses
 
 The named bio-to-code skills are not a feature list. Each one is the

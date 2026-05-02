@@ -74,6 +74,17 @@ remain invisible executive control. The model does not need route pricing,
 brake EMA, support priors, session IDs, internal tags, schema names, or hook
 mechanics. It needs the behavioral consequence.
 
+When Cortex does speak, the model-visible surface must follow the
+Model-Visible Cortex Output Law in `docs/CORTEX.md`: no outside reviewer,
+no third-agent "Cortex says" voice, no generic second-person advice, no
+internal vocabulary, and no hidden verifier answer. The text must make an
+executive constraint explicit inside the model's own task frame: closure is
+not yet warranted, evidence is missing, an obligation remains open, or a
+bounded self-check follows from the model's prior act. Same-thread resumed
+turns may use first-person self-check only when there is a clear prior-act
+anchor; attached-context surfaces use impersonal executive-constraint
+language.
+
 ## Point A: Current State
 
 Current shipping truth remains `openai:operator_cli`. The OpenAI lane has the

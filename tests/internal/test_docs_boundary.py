@@ -391,6 +391,11 @@ def test_cortex_doc_is_canonical_narrative_with_required_sections() -> None:
     )
     assert "host_control_transports" in text
     assert "direct_model_visible" in text
+    assert "Model-Visible Cortex Output Law" in text
+    assert "task-local executive constraint" in text
+    assert "Cortex says your debt" in text
+    assert "First-person/ego style is allowed" in text
+    assert "claim/evidence/obligation/next-move" in text
 
 
 def test_generated_cortex_doc_is_current() -> None:
@@ -413,6 +418,10 @@ def test_executive_runtime_tracker_keeps_product_goal_and_live_truths_visible() 
     assert "post-training runtime executive-function layer" in text
     assert "Cortex should shape the model's behavior at runtime" in text
     assert "Communication is only the model-visible edge of Cortex." in text
+    assert "Model-Visible Cortex Output Law" in text
+    assert "outside person, plugin" in text
+    assert "\"Cortex says\" authority" in text
+    assert "first-person self-check reserved for same-thread" in text
     assert "model/host event" in text
     assert "task-state and executive-risk understanding" in text
     assert "improved next model behavior" in text
@@ -464,6 +473,10 @@ def test_executive_runtime_roadmap_names_path_from_now_to_goal() -> None:
     assert "expectation ledger" in text
     assert "not a Claude hook plugin" in text
     assert "communication is not the whole" in text
+    assert "no outside reviewer" in text
+    assert "no third-agent \"Cortex says\" voice" in text
+    assert "executive constraint explicit inside the model's own task frame" in text
+    assert "attached-context surfaces use impersonal executive-constraint" in text
     assert "no AUX, no model-visible text" in text
     assert "shipping truth" in text
     assert "What baseline failure must reproduce?" in text
@@ -493,6 +506,11 @@ def test_executive_runtime_program_spec_defines_control_objects_and_falsificatio
     assert "First Live Probe" in text
     assert "not \"Cortex can produce better warning messages.\"" in text
     assert "The first program proof is silent executive control." in text
+    assert "Model-Visible Output Contract" in text
+    assert "not an outside\n    person, plugin, or policy voice" in text
+    assert "no internal Cortex labels" in text
+    assert "same-thread resumed turns may use first-person self-check" in text
+    assert "not optimized only to the fixture" in text
 
 
 def test_executive_runtime_phase_5_readiness_names_evidence_gaps_before_live_probe() -> None:
