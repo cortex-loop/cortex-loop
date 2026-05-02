@@ -5,6 +5,7 @@ from __future__ import annotations
 from dataclasses import asdict, dataclass
 from numbers import Real
 
+from .debt_control import DebtControlPressure
 from .executive_summary import ExecutiveSignalSummary
 from .modulators import ExecutiveModulatorState
 
@@ -20,6 +21,9 @@ class ExecutivePolicyView:
     stop_threshold: float
     allow_extra_read_pass: bool
     verification_intensity: float
+    debt_guard_bias: float = 0.0
+    debt_default_penalty: float = 0.0
+    debt_verification_bias: float = 0.0
 
     def __post_init__(self) -> None:
         for field_name in (
@@ -27,6 +31,9 @@ class ExecutivePolicyView:
             "switch_margin",
             "stop_threshold",
             "verification_intensity",
+            "debt_guard_bias",
+            "debt_default_penalty",
+            "debt_verification_bias",
         ):
             value = getattr(self, field_name)
             if not isinstance(value, Real):
@@ -57,6 +64,7 @@ def build_executive_policy_view(
     modulators: ExecutiveModulatorState,
     *,
     chi_t: float = 0.0,
+    debt_control_pressure: DebtControlPressure | None = None,
 ) -> ExecutivePolicyView:
     if not isinstance(summary, ExecutiveSignalSummary):
         actual_type = type(summary).__name__
@@ -78,6 +86,14 @@ def build_executive_policy_view(
         )
     if not 0.0 <= float(chi_t) <= 1.0:
         raise ValueError("build_executive_policy_view.chi_t must be between 0.0 and 1.0.")
+    if debt_control_pressure is not None and not isinstance(
+        debt_control_pressure, DebtControlPressure
+    ):
+        actual_type = type(debt_control_pressure).__name__
+        raise TypeError(
+            "build_executive_policy_view.debt_control_pressure must be "
+            f"DebtControlPressure | None, got {actual_type}."
+        )
 
     default_profile_bonus = min(
         0.20,
@@ -105,11 +121,22 @@ def build_executive_policy_view(
         and summary.uncertainty >= 0.35
         and summary.quota_pressure < 0.60
     )
+    debt_pressure = (
+        debt_control_pressure.debt_pressure
+        if debt_control_pressure is not None
+        else 0.0
+    )
+    debt_verification_bias = (
+        debt_control_pressure.verification_relief_bias
+        if debt_control_pressure is not None
+        else 0.0
+    )
     verification_intensity = _clip_unit(
         0.30
         + (0.50 * modulators.focus_gain)
         + (0.20 * modulators.update_pressure)
         + (0.15 * float(chi_t))
+        + (0.20 * debt_verification_bias)
     )
     return ExecutivePolicyView(
         default_profile_bonus=default_profile_bonus,
@@ -117,6 +144,9 @@ def build_executive_policy_view(
         stop_threshold=stop_threshold,
         allow_extra_read_pass=allow_extra_read_pass,
         verification_intensity=verification_intensity,
+        debt_guard_bias=_clip_unit(0.16 * debt_pressure),
+        debt_default_penalty=_clip_unit(0.12 * debt_pressure),
+        debt_verification_bias=_clip_unit(debt_verification_bias),
     )
 
 

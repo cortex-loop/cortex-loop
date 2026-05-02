@@ -67,7 +67,7 @@ def test_gemini_runtime_split_session_is_g1_equivalent_to_uninterrupted_run(tmp_
     assert [record["operator_route"]["route_profile"] for record in one_process_records] == [
         "continuity_standard",
         "continuity_standard",
-        "continuity_standard",
+        "continuity_guarded",
         "execute_guarded",
     ]
     assert [

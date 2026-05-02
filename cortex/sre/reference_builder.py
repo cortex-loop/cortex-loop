@@ -10,6 +10,7 @@ from cortex.core.observation import ObservationBundle
 from cortex.core.support import SupportSnapshot
 
 from .brake import BrakeState, BrakeTonic, evaluate_brake_state
+from .debt_control import DebtControlPressure
 from .feedback import (
     ReferenceFeedbackWindowSummary,
     ReferenceRealizationFeedbackWindow,
@@ -66,6 +67,7 @@ def build_reference_executive_state(
     opportunities: Sequence[HostNativeOpportunity] = (),
     audit_intensity: str = "minimal",
     task_mode: OperatorTaskMode = OperatorTaskMode.EXECUTE,
+    debt_control_pressure: DebtControlPressure | None = None,
 ) -> ReferenceExecutiveState:
     if not isinstance(observation, ObservationBundle):
         actual_type = type(observation).__name__
@@ -95,6 +97,14 @@ def build_reference_executive_state(
         raise TypeError(
             "build_reference_executive_state.task_mode must be OperatorTaskMode, "
             f"got {actual_type}."
+        )
+    if debt_control_pressure is not None and not isinstance(
+        debt_control_pressure, DebtControlPressure
+    ):
+        actual_type = type(debt_control_pressure).__name__
+        raise TypeError(
+            "build_reference_executive_state.debt_control_pressure must be "
+            f"DebtControlPressure | None, got {actual_type}."
         )
 
     branch_registry = _branch_registry(support_snapshot, prior_session)
@@ -175,6 +185,7 @@ def build_reference_executive_state(
             probe_path_state=_probe_path_state(opportunities),
             recent_probe_result_class=recent_probe_result_class,
         ),
+        debt_control_pressure=debt_control_pressure,
         prior_state=prior_brake_state,
         prior_tonic=prior_brake_tonic,
     )
@@ -258,6 +269,11 @@ def build_reference_executive_state(
         probe_unavailable_reason=_probe_unavailable_reason(opportunities, probe_path_state),
         recent_probe_result_class=recent_probe_result_class,
         risk_weight=risk_weight,
+        debt_control=(
+            debt_control_pressure
+            if debt_control_pressure is not None
+            else DebtControlPressure()
+        ),
     )
     brake_view = ReferenceBrakeView(
         brake_state=brake_evaluation.state,

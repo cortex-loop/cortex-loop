@@ -7,6 +7,7 @@ from numbers import Real
 from typing import TYPE_CHECKING
 
 from .brake import BrakeState, BrakeTonic
+from .debt_control import DebtControlPressure
 from .families import SoftControlFamily
 from .goals import GoalContinuityView
 from .opportunities import PROBE_RESULT_CLASSES
@@ -130,6 +131,7 @@ class ReferenceControlAllocationView:
     probe_unavailable_reason: str | None = None
     recent_probe_result_class: str | None = None
     risk_weight: RiskWeight = field(default_factory=RiskWeight)
+    debt_control: DebtControlPressure = field(default_factory=DebtControlPressure)
 
     def __post_init__(self) -> None:
         if not self.budget_band.strip():
@@ -246,6 +248,12 @@ class ReferenceControlAllocationView:
             raise TypeError(
                 "ReferenceControlAllocationView.risk_weight must be RiskWeight, "
                 f"got {actual_type}."
+            )
+        if not isinstance(self.debt_control, DebtControlPressure):
+            actual_type = type(self.debt_control).__name__
+            raise TypeError(
+                "ReferenceControlAllocationView.debt_control must be "
+                f"DebtControlPressure, got {actual_type}."
             )
 
 

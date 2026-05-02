@@ -177,7 +177,7 @@ def test_reference_runtime_cli_reads_event_file_and_emits_one_record_per_event()
     assert [record["operator_route"]["route_profile"] for record in records] == [
         "inspect_light",
         "execute_standard",
-        "execute_standard",
+        "execute_guarded",
     ]
     assert tuple(records[-1]["control_ledger"]) == (
         "event_class",
@@ -202,9 +202,10 @@ def test_reference_runtime_cli_reads_event_file_and_emits_one_record_per_event()
         "activation_threshold",
         "selected_delta_over_neutral",
         "chi_t",
-        "risk_weight",
-        "brake_tonic",
-        "rejected_cheaper_families",
+            "risk_weight",
+            "brake_tonic",
+            "debt_control",
+            "rejected_cheaper_families",
         "probe_path_state",
         "probe_unavailable_reason",
         "probe_result_class",
@@ -372,9 +373,10 @@ def test_reference_runtime_cli_record_shape_stays_locked_under_explicit_offline_
         "activation_threshold",
         "selected_delta_over_neutral",
         "chi_t",
-        "risk_weight",
-        "brake_tonic",
-        "rejected_cheaper_families",
+            "risk_weight",
+            "brake_tonic",
+            "debt_control",
+            "rejected_cheaper_families",
         "probe_path_state",
         "probe_unavailable_reason",
         "probe_result_class",
@@ -568,13 +570,58 @@ def test_reference_runtime_cli_save_session_does_not_change_jsonl_output(tmp_pat
                     "probe_result_class": "succeeded",
                 },
             ],
+            "expectation_ledger": {
+                "active": [
+                    {
+                        "expectation_id": "reference:3:verification:expectation",
+                        "commitment_id": "reference:3:verification",
+                        "weight": 1.0,
+                        "horizon": "immediate",
+                        "satisfaction_classes": [
+                            "meaningful_evidence",
+                            "commitment_certified",
+                            "liability_retracted",
+                            "blocker_surfaced",
+                        ],
+                        "opened_at_step": 3,
+                        "due_at_step": 3,
+                        "suspension_state": "active",
+                        "remaining_weight": 0.19999999999999996,
+                        "evidence_refs": ["reference:3"],
+                        "deficit_kind": "verification",
+                        "resolution_class": None,
+                    }
+                ],
+                "resolved": [
+                    {
+                        "expectation_id": "reference:2:plan_commitment:expectation",
+                        "commitment_id": "reference:2:plan_commitment",
+                        "weight": 0.6,
+                        "horizon": "next_step",
+                        "satisfaction_classes": [
+                            "meaningful_evidence",
+                            "continuity_progress",
+                            "commitment_certified",
+                            "liability_retracted",
+                            "blocker_surfaced",
+                        ],
+                        "opened_at_step": 2,
+                        "due_at_step": 3,
+                        "suspension_state": "fulfilled",
+                        "remaining_weight": 0.0,
+                        "evidence_refs": ["reference:3"],
+                        "deficit_kind": "preservation",
+                        "resolution_class": "commitment_certified",
+                    }
+                ],
+            },
             "executive_modulator_memory": {
                 "focus_tonic": 0.0,
                 "explore_tonic": 0.3678,
                 "stop_tonic": 0.3698,
                 "update_tonic": 0.4455,
             },
-            "brake_tonic_history": [0.55, 0.55, 0.55],
+            "brake_tonic_history": [0.55, 0.55, 0.5700000000000001],
         },
     }
 

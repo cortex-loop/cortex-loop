@@ -5,6 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from enum import Enum
 
+from .debt_control import DebtControlPressure
 from .uncertainty import UncertaintyEstimate
 
 _LATCHING_SPIKES = frozenset(
@@ -84,6 +85,7 @@ def evaluate_brake_state(
     repeated_degradations: int = 0,
     missing_resume_anchor: bool = False,
     host_friction_level: float = 0.0,
+    debt_control_pressure: DebtControlPressure | None = None,
     prior_state: BrakeState | None = None,
     prior_tonic: BrakeTonic | None = None,
 ) -> BrakeEvaluation:
@@ -100,6 +102,14 @@ def evaluate_brake_state(
         raise ValueError("repeated_degradations must be non-negative.")
     if not 0.0 <= host_friction_level <= 1.0:
         raise ValueError("host_friction_level must be between 0.0 and 1.0.")
+    if debt_control_pressure is not None and not isinstance(
+        debt_control_pressure, DebtControlPressure
+    ):
+        actual_type = type(debt_control_pressure).__name__
+        raise TypeError(
+            "evaluate_brake_state.debt_control_pressure must be "
+            f"DebtControlPressure | None, got {actual_type}."
+        )
     if prior_state is not None and not isinstance(prior_state, BrakeState):
         actual_type = type(prior_state).__name__
         raise TypeError(
@@ -121,6 +131,11 @@ def evaluate_brake_state(
         spike_tags=spike_tags,
         repeated_failures=repeated_failures,
         repeated_degradations=repeated_degradations,
+        debt_tonic_pressure=(
+            debt_control_pressure.debt_pressure
+            if debt_control_pressure is not None
+            else 0.0
+        ),
     )
 
     if (
@@ -138,6 +153,7 @@ def evaluate_brake_state(
                 repeated_degradations=repeated_degradations,
                 missing_resume_anchor=missing_resume_anchor,
                 host_friction_level=host_friction_level,
+                debt_control_pressure=debt_control_pressure,
             ),
             max_uncertainty=max_estimate.level,
             spike_tags=spike_tags,
@@ -161,6 +177,7 @@ def evaluate_brake_state(
                 repeated_degradations=repeated_degradations,
                 missing_resume_anchor=missing_resume_anchor,
                 host_friction_level=host_friction_level,
+                debt_control_pressure=debt_control_pressure,
             ),
             max_uncertainty=max_estimate.level,
             spike_tags=spike_tags,
@@ -176,6 +193,11 @@ def evaluate_brake_state(
         host_friction_level=host_friction_level,
         max_uncertainty=max_estimate.level,
         next_tonic=next_tonic,
+        debt_tonic_pressure=(
+            debt_control_pressure.debt_pressure
+            if debt_control_pressure is not None
+            else 0.0
+        ),
     ):
         return BrakeEvaluation(
             state=BrakeState.GUARDED,
@@ -186,6 +208,7 @@ def evaluate_brake_state(
                 repeated_degradations=repeated_degradations,
                 missing_resume_anchor=missing_resume_anchor,
                 host_friction_level=host_friction_level,
+                debt_control_pressure=debt_control_pressure,
             ),
             max_uncertainty=max_estimate.level,
             spike_tags=spike_tags,
@@ -231,6 +254,7 @@ def _should_be_guarded(
     host_friction_level: float,
     max_uncertainty: float,
     next_tonic: BrakeTonic,
+    debt_tonic_pressure: float,
 ) -> bool:
     # Immediate phasic entry: spike tags, contradiction, missing anchor.
     if spike_tags or missing_resume_anchor:
@@ -245,7 +269,8 @@ def _should_be_guarded(
         host_friction_level >= guarded_host_threshold
         or max_uncertainty >= guarded_uncertainty_threshold
     )
-    if not phasic_soft_pressure:
+    debt_soft_pressure = debt_tonic_pressure >= _TONIC_ENTER_GUARDED
+    if not (phasic_soft_pressure or debt_soft_pressure):
         return False
     # Already guarded — stay on phasic evidence alone (exit-side hysteresis).
     if prior_state is BrakeState.GUARDED:
@@ -263,11 +288,13 @@ def _update_brake_tonic(
     spike_tags: frozenset[str],
     repeated_failures: int,
     repeated_degradations: int,
+    debt_tonic_pressure: float,
 ) -> BrakeTonic:
     current_pressure = _clip_unit(
         max(
             max_uncertainty,
             host_friction_level,
+            debt_tonic_pressure,
             0.6 if (spike_tags & _LATCHING_SPIKES) else 0.0,
             0.5 if repeated_failures >= 1 else 0.0,
             0.5 if repeated_degradations >= 1 else 0.0,
@@ -310,6 +337,7 @@ def _dominant_cause(
     repeated_degradations: int,
     missing_resume_anchor: bool,
     host_friction_level: float,
+    debt_control_pressure: DebtControlPressure | None,
 ) -> str:
     if spike_tags & _LATCHING_SPIKES:
         return sorted(spike_tags & _LATCHING_SPIKES)[0]
@@ -321,6 +349,11 @@ def _dominant_cause(
         return "missing-resume-anchor"
     if host_friction_level >= 0.6:
         return "host-friction"
+    if (
+        debt_control_pressure is not None
+        and debt_control_pressure.debt_pressure >= _TONIC_ENTER_GUARDED
+    ):
+        return "resolution-deficit"
     if spike_tags:
         return sorted(spike_tags)[0]
     return f"uncertainty:{max_estimate.class_tag}"

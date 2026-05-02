@@ -91,6 +91,7 @@ def test_claude_runtime_cli_reads_documented_raw_events_and_preserves_host_name(
         "chi_t",
         "risk_weight",
         "brake_tonic",
+        "debt_control",
         "rejected_cheaper_families",
         "probe_path_state",
         "probe_unavailable_reason",

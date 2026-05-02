@@ -542,6 +542,15 @@ def select_operator_route_with_policy(
         f"quota_pressure:{state.quota_pressure:.2f}",
         f"host_friction:{state.host_friction:.2f}",
     }
+    if policy_view.debt_guard_bias > 0.0:
+        reason_tags.add(f"debt-control:guard-bias:{policy_view.debt_guard_bias:.2f}")
+    if (
+        policy_view.debt_default_penalty > 0.0
+        and state.task_mode in {OperatorTaskMode.EXECUTE, OperatorTaskMode.RESUME_EXECUTE}
+    ):
+        reason_tags.add(
+            f"debt-control:default-penalty:{policy_view.debt_default_penalty:.2f}"
+        )
 
     if state.task_mode is OperatorTaskMode.RESUME_EXECUTE and state.host_friction >= 0.75:
         utilities[OperatorRouteProfile.CONTINUITY_GUARDED] += 0.10
@@ -567,6 +576,13 @@ def select_operator_route_with_policy(
         reason_tags.add("gate:default-profile")
     else:
         reason_tags.add("gate:non-default-profile")
+
+    selected_profile = _apply_debt_control_guard_bias(
+        selected_profile,
+        state=state,
+        policy_view=policy_view,
+        reason_tags=reason_tags,
+    )
 
     if (
         brain_capability_assessment.level
@@ -799,6 +815,17 @@ def _policy_profile_adjustment(
     adjustment = 0.0
     if profile is default_profile:
         adjustment += policy_view.default_profile_bonus
+        if profile in {
+            OperatorRouteProfile.EXECUTE_STANDARD,
+            OperatorRouteProfile.CONTINUITY_STANDARD,
+        }:
+            adjustment -= policy_view.debt_default_penalty
+    if profile in {
+        OperatorRouteProfile.EXECUTE_GUARDED,
+        OperatorRouteProfile.CONTINUITY_GUARDED,
+        OperatorRouteProfile.INSPECT_LIGHT,
+    }:
+        adjustment += policy_view.debt_guard_bias
     if state.task_mode is OperatorTaskMode.RESUME_EXECUTE and profile in {
         OperatorRouteProfile.CONTINUITY_STANDARD,
         OperatorRouteProfile.CONTINUITY_GUARDED,
@@ -837,6 +864,27 @@ def _apply_policy_to_budget(
             allow_extra_read_pass=True,
         )
     return budget
+
+
+def _apply_debt_control_guard_bias(
+    selected_profile: OperatorRouteProfile,
+    *,
+    state: OperatorTaskState,
+    policy_view: ExecutivePolicyView,
+    reason_tags: set[str],
+) -> OperatorRouteProfile:
+    if policy_view.debt_guard_bias < 0.08:
+        return selected_profile
+    if state.task_mode is OperatorTaskMode.EXECUTE and selected_profile is OperatorRouteProfile.EXECUTE_STANDARD:
+        reason_tags.add("debt-control:execute-guarded")
+        return OperatorRouteProfile.EXECUTE_GUARDED
+    if (
+        state.task_mode is OperatorTaskMode.RESUME_EXECUTE
+        and selected_profile is OperatorRouteProfile.CONTINUITY_STANDARD
+    ):
+        reason_tags.add("debt-control:continuity-guarded")
+        return OperatorRouteProfile.CONTINUITY_GUARDED
+    return selected_profile
 
 
 def _apply_brain_capability_profile_downshift(

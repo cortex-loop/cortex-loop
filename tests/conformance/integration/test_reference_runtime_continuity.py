@@ -85,7 +85,7 @@ def test_reference_runtime_cli_preserves_open_suspend_resume_merge_continuity_in
     assert [record["operator_route"]["route_profile"] for record in records] == [
         "continuity_standard",
         "continuity_standard",
-        "continuity_standard",
+        "continuity_guarded",
         "execute_standard",
     ]
     assert [record["operator_route"]["route_budget"]["allow_resume"] for record in records] == [

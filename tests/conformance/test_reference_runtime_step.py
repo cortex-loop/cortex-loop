@@ -460,6 +460,7 @@ def test_reference_runtime_step_replay_publication_can_lift_check_allocation_wit
         "chi_t",
         "risk_weight",
         "brake_tonic",
+        "debt_control",
         "rejected_cheaper_families",
         "probe_path_state",
         "probe_unavailable_reason",
@@ -492,6 +493,7 @@ def test_reference_runtime_step_uses_unaugmented_snapshot_for_executive_state_an
         opportunities=(),
         audit_intensity="minimal",
         task_mode=None,
+        debt_control_pressure=None,
     ):
         captured["executive_state_support_snapshot"] = support_snapshot
         return original_builder(
@@ -502,6 +504,7 @@ def test_reference_runtime_step_uses_unaugmented_snapshot_for_executive_state_an
             opportunities=opportunities,
             audit_intensity=audit_intensity,
             task_mode=task_mode,
+            debt_control_pressure=debt_control_pressure,
         )
 
     def augment_wrapper(snapshot, publication):
@@ -1626,6 +1629,7 @@ def _assert_allocation_diagnostics_shape(
         "chi_t",
         "risk_weight",
         "brake_tonic",
+        "debt_control",
         "rejected_cheaper_families",
         "probe_path_state",
         "probe_unavailable_reason",

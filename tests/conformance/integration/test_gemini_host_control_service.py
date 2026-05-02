@@ -53,6 +53,7 @@ def test_gemini_host_control_action_endpoint_returns_ordered_g1_records_and_muta
         "chi_t",
         "risk_weight",
         "brake_tonic",
+        "debt_control",
         "rejected_cheaper_families",
         "probe_path_state",
         "probe_unavailable_reason",
