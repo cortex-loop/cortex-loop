@@ -294,13 +294,13 @@ state, read `internal/truth/cortex_status.json` directly.
 
 ### Current Train
 
-- Slug: `silent-control-live-probe-on-openai-retry`
+- Slug: `silent-control-live-fixture-refresh`
 
 ### Next Product Train
 
-- Slug: `silent-control-live-fixture-refresh`
+- Slug: `silent-control-output-quality-enactment`
 - Surface: `product`
-- Why now: The retry proved Gate 0 enactment still works but the current baseline fixtures are too easy for `gpt-5.3-codex`; without stronger reproduced failures, paired shaped trials cannot test whether silent control improves model behavior.
+- Why now: Fixture refresh found a reproducible OpenAI operator failure: raw `gpt-5.3-codex` passes visible Astro docs checks while missing hidden verification work. The current silent-control enactment path only proves `truth_gap` resume-recheck, so the harder fixture needs a silent output-quality enactment before paired live trials are interpretable.
 
 ### Research Lines Under Evaluation
 
@@ -321,7 +321,7 @@ state, read `internal/truth/cortex_status.json` directly.
 - Keep the bounded audit surface compact and truthful on the shipped lane: selected versus realized family, uncertainty, threshold, delta, verification, and probe truth only.
 - Keep the no-spend live evidence current and explicit: fast conformance is green, the deeper directionality and host-native watchlists are refreshed, and non-shipping auth or env caveats must stay explicit instead of silently stale.
 - Keep posture, AUX memory, host-reliability, and asymmetric-cost law explicit and removable now that posture-sensitive online control is S-tier closed, anti-thrash is landed, bounded live support-memory re-entry is earned on reference and the OpenAI operator lane, evidence/probe calibration is S-tier closed, host/tool reliability and affordance priors are earned as bounded host-scoped, capability-scoped score modifiers on `OfflineSupportPublication.host_reliability_prior` with a single-site six-tag `q_mem-host:*` surface and stale-negative reopen under fresh success, asymmetric error cost is earned as a bounded `RiskWeight` carrier whose CHECK/SEEK_CONTEXT activation shift is clipped inside `[0.05, 0.60]` with a `0.10` dead-band and productive-exploration gating, and the brake tonic EMA damps single-tick flips with a locked `rho = 0.60` decay and `tonic_pressure >= 0.35` enter gate while phasic spikes still flip immediately: inspect is live on cheap non-debt events, resume stays continuity-conditioned, posture truth is single-owned, the route state vector stays the bounded 6-axis geometry term while `visible_burden_sensitivity` remains a separate utility scalar, route truth stays bounded and non-sovereign, unchanged-condition repetition is taxed only at the exact-family level with bounded reopen, public feedback-window summaries reflect the just-realized step, family-local bounded probe limits surface as `unsupported` without leaking host-global unavailability across families, stream-only churn stays non-epistemic, live memory stays score-only and host-matched through explicit publication, live `Q_mem` stays zero on shipping and conformance default lanes, raw SQLite episodes stay support-side only, reliability priors bias score pricing only and never route, posture, selection, or brake law, Claude and Gemini remain shadow-proof only for reliability promotion, `risk_weight` biases CHECK/SEEK_CONTEXT activation threshold only and never routing, posture, selection, certification, or blockedness law, and `brake_tonic_history` persists the pressure tail across resume on all four host lanes with three-way backward-compat decoding.
-- The silent-control-live-probe-on-openai-retry seam preserved Gate 0 enactment and ran the OpenAI operator baseline gate, but the accepted `gpt-5.3-codex` live run did not reproduce any primary failure family in 3/3 baseline trials per family. The next product move is silent-control-live-fixture-refresh: strengthen or select fixtures that genuinely reproduce unsupported forward motion before retrying paired shaped silent-control trials.
+- The silent-control-live-fixture-refresh seam isolated output-quality operator workspaces and found a hard OpenAI operator fixture: `astro_docs_site_v1` raw runs reproduce visible-success/hidden-verification failure in 3/3 clean `gpt-5.3-codex` trials, while an existing output-quality `cortex` arm repaired it once through visible contract/repair machinery. The next product move is silent-control-output-quality-enactment: adapt continuation-policy enactment to this hard fixture without prompt mutation or visible Cortex wording.
 <!-- END GENERATED: current-state-and-strategy -->
 
 ### V2 Model-I/O Analysis
@@ -595,6 +595,19 @@ route/policy/debt payloads and produces prompt-independent operator actions,
 with shaped truth-gap debt producing `resume_recheck` while neutral stays a
 single `invoke`. That closes the Gate 0 coupling gap structurally, but it is
 still not live behavior-lift evidence or a shipping promotion.
+`docs/recon/cortex_openai_operator_silent_control_live_probe_retry.md` is the
+first retry after enactment remediation: Gate 0 still passed, but the accepted
+`gpt-5.3-codex` baseline gate did not reproduce the target unsupported
+verification, false-closure, or candidate-forward-commit failures, so the
+paired shaped matrix did not run and no silent-control behavior lift was
+earned.
+`docs/recon/cortex_openai_operator_output_quality_fixture_refresh.md` is the
+fixture-refresh finding: output-quality operator workspaces now initialize as
+isolated Git roots so Codex CLI does not inherit this repo's agent contract,
+and `astro_docs_site_v1` reproduces the harder visible-success /
+hidden-verification failure shape in clean raw OpenAI operator runs. The
+existing output-quality `cortex` arm can repair it once through visible
+contract machinery, but that is not silent-control behavior-lift evidence.
 `docs/cortex_plugin/DESIGN.md` is the v1 Claude Code Desktop Cortex plugin
 design: it maps Claude Code Desktop lifecycle hooks onto the eight Cortex
 failure modes, keeps the Mission Reflection grid out of product packaging,

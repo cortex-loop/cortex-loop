@@ -67,5 +67,9 @@ Active docs:
 - [Cortex OpenAI Operator Silent-Control Live Probe Retry](recon/cortex_openai_operator_silent_control_live_probe_retry.md) —
   live OpenAI operator retry evidence: Gate 0 passed, but the accepted baseline
   gate did not reproduce the target failures, so shaped trials did not run
+- [Cortex OpenAI Operator Output-Quality Fixture Refresh](recon/cortex_openai_operator_output_quality_fixture_refresh.md) —
+  live OpenAI operator fixture-refresh evidence: isolated output-quality
+  workspaces and `astro_docs_site_v1` reproduces the hidden-verifier failure
+  shape needed before another silent-control retry
 
 Historical runtime, lab, and governance material now lives under [archive/](archive/).

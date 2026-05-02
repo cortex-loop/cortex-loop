@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from contextlib import contextmanager
 from pathlib import Path
+import subprocess
 
 import pytest
 
@@ -140,6 +141,31 @@ def test_build_output_quality_operator_prompt_supports_lean_contract_profile() -
 
     assert "Make the smallest lawful workspace edit." in prompt
     assert "You may run local checks if useful." not in prompt
+
+
+def test_output_quality_operator_workspace_gets_isolated_git_root(tmp_path: Path) -> None:
+    task_pack = output_quality.task_pack_by_name("astro_docs_site_v1")
+    seed_workspace = output_quality.prepare_output_quality_workspace(
+        template_root=task_pack.template_root,
+        run_root=tmp_path / "seed",
+    )
+    operator_workspace = output_quality.prepare_seeded_workspace(
+        template_root=task_pack.template_root,
+        seed_workspace_root=seed_workspace,
+        run_root=tmp_path / "operator",
+    )
+
+    result = subprocess.run(
+        ["git", "rev-parse", "--show-toplevel"],
+        cwd=operator_workspace,
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+
+    assert result.returncode == 0
+    assert Path(result.stdout.strip()).resolve() == operator_workspace.resolve()
+    assert not (operator_workspace / "AGENTS.md").exists()
 
 
 def test_run_arm_skips_repair_when_verification_binding_is_off(

@@ -122,6 +122,12 @@ OPENAI_OPERATOR_SILENT_CONTROL_LIVE_PROBE_RETRY_PATH = (
     / "recon"
     / "cortex_openai_operator_silent_control_live_probe_retry.md"
 )
+OPENAI_OPERATOR_OUTPUT_QUALITY_FIXTURE_REFRESH_PATH = (
+    REPO_ROOT
+    / "docs"
+    / "recon"
+    / "cortex_openai_operator_output_quality_fixture_refresh.md"
+)
 STATUS_REGISTRY_PATH = REPO_ROOT / "internal" / "truth" / "cortex_status.json"
 STATUS_DOC_PATH = REPO_ROOT / "docs" / "CORTEX_STATUS.md"
 WORKFLOW_DOC_PATH = REPO_ROOT / "docs" / "internal" / "REPO_WORKFLOW.md"
@@ -640,6 +646,7 @@ def test_public_docs_point_to_status_and_keep_archive_out_of_the_front_door() ->
     assert "recon/cortex_openai_operator_silent_control_live_probe.md" in docs_index
     assert "recon/cortex_openai_operator_debt_control_enactment.md" in docs_index
     assert "recon/cortex_openai_operator_silent_control_live_probe_retry.md" in docs_index
+    assert "recon/cortex_openai_operator_output_quality_fixture_refresh.md" in docs_index
     # CORTEX.md content anchors the previously-fragmented charter and
     # boundary identity material in one canonical surface.
     assert "executive-function layer that wraps a model after" in cortex_doc
@@ -663,6 +670,7 @@ def test_public_docs_point_to_status_and_keep_archive_out_of_the_front_door() ->
     assert "docs/recon/claude_code_cortex_userpromptsubmit_verified_work_probe.md" in cortex_doc
     assert "docs/recon/cortex_openai_operator_silent_control_live_probe.md" in cortex_doc
     assert "docs/recon/cortex_openai_operator_debt_control_enactment.md" in cortex_doc
+    assert "docs/recon/cortex_openai_operator_output_quality_fixture_refresh.md" in cortex_doc
     assert "EVAL_RUBRIC.md" in cortex_doc
     assert "BASELINE_SHAPED_EXAMPLES.md" in cortex_doc
     assert "CROSS_HOST_SKETCH.md" in cortex_doc
@@ -748,6 +756,7 @@ def test_docs_directory_only_exposes_archive_and_workflow_subtrees() -> None:
         "claude_code_user_scope_plugin_pretooluse_probe.md",
         "codex_app_hook_probe.md",
         "cortex_openai_operator_debt_control_enactment.md",
+        "cortex_openai_operator_output_quality_fixture_refresh.md",
         "cortex_openai_operator_silent_control_live_probe.md",
         "cortex_openai_operator_silent_control_live_probe_retry.md",
         "lifecycle_first_surface_matrix.md",
@@ -1554,8 +1563,34 @@ def test_openai_operator_silent_control_retry_records_baseline_non_reproduction(
         "docs/recon/cortex_openai_operator_silent_control_live_probe_retry.md"
         in status["active_docs"]
     )
-    assert status["work_today"]["slug"] == "silent-control-live-probe-on-openai-retry"
-    assert status["next_product_train"]["slug"] == "silent-control-live-fixture-refresh"
+
+
+def test_openai_operator_output_quality_fixture_refresh_records_hard_fixture() -> None:
+    text = _read(OPENAI_OPERATOR_OUTPUT_QUALITY_FIXTURE_REFRESH_PATH)
+    docs_index = _read(DOCS_INDEX_PATH)
+    status = _load_status()
+
+    assert "Surface: product / live recon" in text
+    assert "Probe date: 2026-05-02" in text
+    assert "astro_docs_site_v1" in text
+    assert "run_20260502T165319+0000" in text
+    assert "run_20260502T165814+0000" in text
+    assert "run_20260502T170004+0000" in text
+    assert "run_20260502T170702+0000" in text
+    assert "docs search dataset marker is missing" in text
+    assert "3/3 clean baseline reproduction" in text
+    assert "output-quality evidence, not silent-control evidence" in text
+    assert "no silent-control behavior lift" in text
+    assert "silent-control-output-quality-enactment" in text
+    assert "isolated Git repository" in text
+    assert "test_output_quality_operator_workspace_gets_isolated_git_root" in text
+    assert "recon/cortex_openai_operator_output_quality_fixture_refresh.md" in docs_index
+    assert (
+        "docs/recon/cortex_openai_operator_output_quality_fixture_refresh.md"
+        in status["active_docs"]
+    )
+    assert status["work_today"]["slug"] == "silent-control-live-fixture-refresh"
+    assert status["next_product_train"]["slug"] == "silent-control-output-quality-enactment"
 
 
 def test_cortex_plugin_design_preserves_scope_and_truth_boundaries() -> None:
@@ -1857,24 +1892,26 @@ def test_status_registry_is_complete_and_stable() -> None:
         assert {"slug", "stage", "summary", "next_step"} <= set(entry)
         assert entry["slug"] != status["work_today"]["slug"]
         assert entry["slug"] != status["next_product_train"]["slug"]
-    assert status["work_today"]["slug"] == "silent-control-live-probe-on-openai-retry"
-    assert "gate 0 enactment intact" in status["work_today"]["note"].lower()
+    assert status["work_today"]["slug"] == "silent-control-live-fixture-refresh"
+    assert "isolated git roots" in status["work_today"]["note"].lower()
+    assert "astro_docs_site_v1" in status["work_today"]["note"].lower()
     assert "gpt-5.3-codex" in status["work_today"]["note"].lower()
-    assert "did not reproduce" in status["work_today"]["note"].lower()
-    assert "no paired shaped matrix ran" in status["work_today"]["note"].lower()
+    assert "3/3 clean raw" in status["work_today"]["note"].lower()
+    assert "docs search dataset marker is missing" in status["work_today"]["note"].lower()
+    assert "visible contract/repair evidence only" in status["work_today"]["note"].lower()
     assert "no silent-control behavior lift or shipping promotion" in status["work_today"]["note"].lower()
-    assert status["next_product_train"]["slug"] == "silent-control-live-fixture-refresh"
+    assert status["next_product_train"]["slug"] == "silent-control-output-quality-enactment"
     assert "product" == status["next_product_train"]["surface"]
-    assert "refresh the openai operator live failure fixtures" in status["next_product_train"][
+    assert "adapt the silent-control host-adapter/harness path" in status["next_product_train"][
         "executive_benefit"
     ].lower()
-    assert "at least one primary live fixture family reproduces" in status["next_product_train"][
+    assert "same initial prompt" in status["next_product_train"][
         "primary_metric"
     ].lower()
-    assert "prompt warning text" in status["next_product_train"][
+    assert "reuse the output-quality visible contract as silent control" in status["next_product_train"][
         "guardrail"
     ].lower()
-    assert "artificial prompt traps" in status["next_product_train"][
+    assert "only enacted difference is private diagnostics" in status["next_product_train"][
         "kill_rule"
     ].lower()
     deferred_lines = {entry["slug"]: entry for entry in status["research_lines_under_evaluation"]}
@@ -1892,9 +1929,10 @@ def test_status_registry_is_complete_and_stable() -> None:
     assert "route truth stays bounded and non-sovereign" in status["where_to_work"][2]
     assert "live `Q_mem` stays zero" in status["where_to_work"][2]
     assert "host/tool reliability and affordance priors are earned" in status["where_to_work"][2]
-    assert "silent-control-live-probe-on-openai-retry seam preserved" in status["where_to_work"][3]
-    assert "did not reproduce any primary failure family" in status["where_to_work"][3]
-    assert "silent-control-live-fixture-refresh" in status["where_to_work"][3]
+    assert "silent-control-live-fixture-refresh seam isolated" in status["where_to_work"][3]
+    assert "astro_docs_site_v1" in status["where_to_work"][3]
+    assert "3/3 clean" in status["where_to_work"][3]
+    assert "silent-control-output-quality-enactment" in status["where_to_work"][3]
     closure_gates = {gate["id"]: gate for gate in status["closure_gates"]}
     assert closure_gates["main_synced"]["status"] == "required"
     assert closure_gates["cleanup_report"]["status"] == "required"
@@ -1925,19 +1963,19 @@ def test_generated_status_doc_includes_system_map_and_next_product_train() -> No
     assert "## Next Product Train" in text
     assert "## Research Lines Under Evaluation" in text
     assert "host/tool reliability and affordance priors are earned" in text
-    assert "`silent-control-live-probe-on-openai-retry`" in text
-    assert "- Next product train after the current focus: `silent-control-live-fixture-refresh`" in text
-    assert "- Train: `silent-control-live-fixture-refresh`" in text
+    assert "`silent-control-live-fixture-refresh`" in text
+    assert "- Next product train after the current focus: `silent-control-output-quality-enactment`" in text
+    assert "- Train: `silent-control-output-quality-enactment`" in text
     assert "`brain-capability-observation-and-inference` (deferred-by-executive-runtime-roadmap)" in text
-    assert "gate 0 enactment intact" in text.lower()
-    assert "baseline fixtures are too easy" in text.lower()
-    assert "refresh the openai operator live failure fixtures" in text.lower()
+    assert "isolated git roots" in text.lower()
+    assert "docs search dataset marker is missing" in text.lower()
+    assert "adapt the silent-control host-adapter/harness path" in text.lower()
     assert "Shipping Product Lane\\nopenai:operator_cli" in text or "Shipping Product Lane" in text
     assert "Shipping default: `openai:operator_cli`" in text
     assert "Workflow gates marked `required` are contractual gates checked by `repo_workflow.py`" in text
     assert "| `main_synced` | `required` |" in text
     assert "| `cleanup_report` | `required` |" in text
-    assert "silent-control-live-probe-on-openai-retry" in text.lower()
+    assert "silent-control-output-quality-enactment" in text.lower()
     assert "brain-capability-observation-and-inference" in text
     assert "`visible_burden_sensitivity`" in text
 
