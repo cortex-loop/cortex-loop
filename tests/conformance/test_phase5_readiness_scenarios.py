@@ -61,8 +61,8 @@ def test_horizon_boundary_table_documents_current_structural_coverage() -> None:
     assert compute_resolution_deficit(waiting, current_step=10).negative_prediction_error == 0.0
 
 
-def test_mixed_horizon_sequence_records_same_event_paydown_gap() -> None:
-    """Mixed old debt plus new certified work exposes a current readiness gap."""
+def test_mixed_horizon_sequence_targets_current_certification_before_old_debt() -> None:
+    """Mixed old debt plus new certified work resolves the current event first."""
 
     session = ReferenceRuntimeSession(
         session_id="phase5-readiness-mixed",
@@ -110,21 +110,32 @@ def test_mixed_horizon_sequence_records_same_event_paydown_gap() -> None:
     assert candidate.operator_route_payload["blocked_reason"] is None
     assert inspect.operator_route_payload["blocked_reason"] is None
 
-    # The certified event pays old compatible debt first, then leaves a fresh
-    # same-event verification expectation active. The readiness document names
-    # this as a remediation candidate before the live probe.
+    # Explicit current-event certification resolves the expectation opened by
+    # the same event before generic progress pays older compatible debt. Older
+    # unresolved plan debt may remain active, but the certified event no longer
+    # creates fresh verification noise for seam 5.
     assert {record.resolution_class for record in certified.session.expectation_ledger.resolved} == {
         "commitment_certified",
         "meaningful_evidence",
     }
     assert len(certified.session.expectation_ledger.active) == 1
-    assert certified.session.expectation_ledger.active[0].opened_at_step == certified.event_index
-    assert certified.session.expectation_ledger.active[0].deficit_kind == "verification"
+    assert certified.session.expectation_ledger.active[0].opened_at_step < certified.event_index
+    assert certified.session.expectation_ledger.active[0].deficit_kind == "preservation"
+    assert all(
+        record.opened_at_step != certified.event_index
+        for record in certified.session.expectation_ledger.active
+    )
+    assert any(
+        record.opened_at_step == certified.event_index
+        and record.deficit_kind == "verification"
+        and record.resolution_class == "commitment_certified"
+        for record in certified.session.expectation_ledger.resolved
+    )
     assert certified.resolution_deficit_payload["negative_prediction_error"] == 1.0
 
 
-def test_waiting_boundary_is_safe_in_pure_corpus_but_not_fully_proven_in_runtime() -> None:
-    """The structural warning-code path suspends debt; runtime blocked cases need tightening."""
+def test_waiting_boundary_relieves_blocker_without_residual_current_debt() -> None:
+    """Pure waiting suspends debt and runtime blockers leave no residual current debt."""
 
     pure_waiting = update_expectation_ledger_for_structured_step(
         ledger=ExpectationLedger(),
@@ -168,10 +179,18 @@ def test_waiting_boundary_is_safe_in_pure_corpus_but_not_fully_proven_in_runtime
         blocked.session,
     )
 
-    assert blocked.session.expectation_ledger.resolved[0].resolution_class == "blocker_surfaced"
-    assert len(blocked.session.expectation_ledger.active) == 1
-    assert blocked.session.expectation_ledger.active[0].remaining_weight == 0.19999999999999996
-    assert still_waiting.debt_control_payload["debt_pressure"] > 0.0
+    assert blocked.session.expectation_ledger.active == ()
+    assert {
+        record.resolution_class for record in blocked.session.expectation_ledger.resolved
+    } == {"blocker_surfaced", "meaningful_evidence"}
+    assert any(
+        record.opened_at_step == blocked.event_index
+        and record.deficit_kind == "verification"
+        and record.resolution_class == "blocker_surfaced"
+        and record.remaining_weight == 0.0
+        for record in blocked.session.expectation_ledger.resolved
+    )
+    assert still_waiting.debt_control_payload["debt_pressure"] == 0.0
     assert still_waiting.operator_route_payload["route_profile"] == "inspect_light"
     assert still_waiting.operator_route_payload["blocked_reason"] is None
 

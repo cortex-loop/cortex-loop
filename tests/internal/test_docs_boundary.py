@@ -429,9 +429,11 @@ def test_executive_runtime_phase_5_readiness_names_evidence_gaps_before_live_pro
 
     assert EXECUTIVE_RUNTIME_PHASE_5_READINESS_PATH.exists()
     assert "Readiness Verdict" in text
-    assert "Do not open the full seam-5 live probe yet" in text
+    assert "Seam 5 can then\nopen against the probe design in Concern 5" in text
     assert "Same-event certification or blocker progress can pay older compatible debt" in text
     assert "blocked/waiting boundary can leave residual verification debt" in text
+    assert "test_mixed_horizon_sequence_targets_current_certification_before_old_debt" in text
+    assert "test_waiting_boundary_relieves_blocker_without_residual_current_debt" in text
     assert "Concern 1: Seams 1-4 Evidence Accounting" in text
     assert "Concern 2: Horizon Classification Accuracy" in text
     assert "Concern 3: Integration Effects Across The Stack" in text
@@ -441,7 +443,7 @@ def test_executive_runtime_phase_5_readiness_names_evidence_gaps_before_live_pro
     assert "Concern 7: Bridge From Silent Control To Grounded Intervention Records" in text
     assert "tests/conformance/test_phase5_readiness_scenarios.py" in text
     assert "No runtime-code change is required" in text
-    assert "Required Remediation Before Seam 5" in text
+    assert "Remediation Closed Before Seam 5" in text
     assert "shipping truth" in text
 
 
@@ -1701,12 +1703,12 @@ def test_status_registry_is_complete_and_stable() -> None:
         assert {"slug", "stage", "summary", "next_step"} <= set(entry)
         assert entry["slug"] != status["work_today"]["slug"]
         assert entry["slug"] != status["next_product_train"]["slug"]
-    assert status["work_today"]["slug"] == "executive-runtime-phase-5-readiness"
-    assert "evidence-accounting gate" in status["work_today"]["note"].lower()
-    assert "runs no live probes" in status["work_today"]["note"].lower()
-    assert "changes no runtime law" in status["work_today"]["note"].lower()
-    assert "remediation required before seam 5" in status["work_today"]["note"].lower()
-    assert "behavior lift and shipping truth remain unchanged" in status["work_today"]["note"].lower()
+    assert status["work_today"]["slug"] == "executive-runtime-paydown-and-waiting-remediation"
+    assert "composition-tightening seam" in status["work_today"]["note"].lower()
+    assert "current structured commitment ids" in status["work_today"]["note"].lower()
+    assert "same-event paydown targets current expectations" in status["work_today"]["note"].lower()
+    assert "positive safety tests" in status["work_today"]["note"].lower()
+    assert "shipping truth" in status["work_today"]["note"].lower()
     assert status["next_product_train"]["slug"] == "silent-control-live-probe-on-openai"
     assert "product" == status["next_product_train"]["surface"]
     assert "silent expectation-debt control" in status["next_product_train"][
@@ -1736,8 +1738,9 @@ def test_status_registry_is_complete_and_stable() -> None:
     assert "route truth stays bounded and non-sovereign" in status["where_to_work"][2]
     assert "live `Q_mem` stays zero" in status["where_to_work"][2]
     assert "host/tool reliability and affordance priors are earned" in status["where_to_work"][2]
-    assert "executive-runtime-phase-5-readiness seam is the active focus" in status["where_to_work"][3]
-    assert "readiness document currently recommends a narrow remediation seam" in status["where_to_work"][3]
+    assert "executive-runtime-paydown-and-waiting-remediation seam is the active focus" in status["where_to_work"][3]
+    assert "current-event certified/blocked progress relieves the correct expectation" in status["where_to_work"][3]
+    assert "next product train remains the silent-control live probe" in status["where_to_work"][3]
     assert "live behavior lift remains unearned" in status["where_to_work"][3]
     closure_gates = {gate["id"]: gate for gate in status["closure_gates"]}
     assert closure_gates["main_synced"]["status"] == "required"
@@ -1769,12 +1772,12 @@ def test_generated_status_doc_includes_system_map_and_next_product_train() -> No
     assert "## Next Product Train" in text
     assert "## Research Lines Under Evaluation" in text
     assert "host/tool reliability and affordance priors are earned" in text
-    assert "`executive-runtime-phase-5-readiness`" in text
+    assert "`executive-runtime-paydown-and-waiting-remediation`" in text
     assert "- Next product train after the current focus: `silent-control-live-probe-on-openai`" in text
     assert "- Train: `silent-control-live-probe-on-openai`" in text
     assert "`brain-capability-observation-and-inference` (deferred-by-executive-runtime-roadmap)" in text
-    assert "evidence-accounting/conformance truth only" in text.lower()
-    assert "narrow remediation seam before the full seam-5 probe" in text.lower()
+    assert "composition-tightening seam" in text.lower()
+    assert "same-event paydown targets current expectations" in text.lower()
     assert "paired baseline/shaped/clean openai trials" in text.lower()
     assert "silent expectation-debt control" in text.lower()
     assert "Shipping Product Lane\\nopenai:operator_cli" in text or "Shipping Product Lane" in text
@@ -1782,7 +1785,7 @@ def test_generated_status_doc_includes_system_map_and_next_product_train() -> No
     assert "Workflow gates marked `required` are contractual gates checked by `repo_workflow.py`" in text
     assert "| `main_synced` | `required` |" in text
     assert "| `cleanup_report` | `required` |" in text
-    assert "phase-5-readiness" in text.lower()
+    assert "phase-5 readiness remediation" in text.lower()
     assert "brain-capability-observation-and-inference" in text
     assert "`visible_burden_sensitivity`" in text
 
