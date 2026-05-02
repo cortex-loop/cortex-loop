@@ -73,6 +73,18 @@ Rule: every Cortex product change traces a path from the change to the model's
 input or output. If the path is empty, the work is lab, experimental, or
 workflow support, not product Cortex.
 
+## Fixture-To-Law Product Spine
+
+Drift pattern: a hard fixture or task domain became the thing optimized,
+instead of the broad executive capability the fixture was supposed to witness.
+
+Rule: fixtures falsify Cortex; they do not define Cortex. Product seams
+touching `cortex/**` must translate the motivating evidence into the product
+spine: executive capability, state-law path, enforcement decision, host action,
+model I/O effect, fixture boundary, and non-fixture controls. Product code may
+not branch on lab fixture identities or hidden verifier terms. Those details
+belong in `lab/**`, `tests/**`, recon docs, or the closeout fixture boundary.
+
 ## Live Evidence Versus Structural Evidence
 
 Drift pattern: deterministic tests, doctrine updates, and structural wiring

@@ -251,6 +251,8 @@ def test_agents_records_mission_lock_and_single_truth_bootstrap() -> None:
     assert "approves" in text and "spend in the current chat" in text
     assert "Do not set `CORTEX_LIVE_SERVICE_SPEND_APPROVED`" in text
     assert "Do not claim product progress unless shipped runtime behavior changed" in text
+    assert "fixtures, task domains, hidden verifiers, or benchmarks" in text
+    assert "product_spine" in text
     assert "Preserve the anti-drift rules" in text
     # PHI-label decision loop and PHILOSOPHY_AUDIT block must be retired.
     # Their content moved into docs/CORTEX.md §6 and the agent briefing.
@@ -362,6 +364,8 @@ def test_cortex_doc_is_canonical_narrative_with_required_sections() -> None:
     # Connectivity discipline (closed-loop drift trap) is named.
     assert "closed-loop drift" in text
     assert "trace a path from the change" in text
+    assert "Fixtures falsify Cortex" in text
+    assert "product_spine" in text
     # Per-turn enforcement (Session 3): Stop hook + markdown grid + no-mimicry rule.
     assert "Stop hook" in text
     assert "No-mimicry rule" in text
@@ -734,6 +738,15 @@ def test_active_doc_allowlist_matches_status_registry() -> None:
     }
 
     assert actual == expected
+
+
+def test_anti_drift_rules_pin_fixture_to_law_product_spine() -> None:
+    text = _read(ANTI_DRIFT_RULES_PATH)
+
+    assert "## Fixture-To-Law Product Spine" in text
+    assert "fixtures falsify Cortex; they do not define Cortex" in text
+    assert "Product seams\ntouching `cortex/**`" in text
+    assert "Product code may\nnot branch on lab fixture identities" in text
 
 
 def test_docs_directory_only_exposes_archive_and_workflow_subtrees() -> None:
@@ -1607,8 +1620,7 @@ def test_openai_operator_output_quality_fixture_refresh_records_hard_fixture() -
         "docs/recon/cortex_openai_operator_output_quality_fixture_refresh.md"
         in status["active_docs"]
     )
-    assert status["work_today"]["slug"] == "silent-control-live-fixture-refresh"
-    assert status["next_product_train"]["slug"] == "silent-control-output-quality-enactment"
+    assert status["next_product_train"]["slug"] == "silent-control-verification-debt-continuation"
 
 
 def test_cortex_plugin_design_preserves_scope_and_truth_boundaries() -> None:
@@ -1910,25 +1922,28 @@ def test_status_registry_is_complete_and_stable() -> None:
         assert {"slug", "stage", "summary", "next_step"} <= set(entry)
         assert entry["slug"] != status["work_today"]["slug"]
         assert entry["slug"] != status["next_product_train"]["slug"]
-    assert status["work_today"]["slug"] == "silent-control-live-fixture-refresh"
-    assert "isolated git roots" in status["work_today"]["note"].lower()
-    assert "astro_docs_site_v1" in status["work_today"]["note"].lower()
-    assert "gpt-5.3-codex" in status["work_today"]["note"].lower()
-    assert "3/3 clean raw" in status["work_today"]["note"].lower()
-    assert "docs search dataset marker is missing" in status["work_today"]["note"].lower()
-    assert "visible contract/repair evidence only" in status["work_today"]["note"].lower()
-    assert "no silent-control behavior lift or shipping promotion" in status["work_today"]["note"].lower()
-    assert status["next_product_train"]["slug"] == "silent-control-output-quality-enactment"
+    assert status["work_today"]["slug"] == "fixture-to-law-product-spine-guardrail"
+    assert "product-spine closeout requirement" in status["work_today"]["note"].lower()
+    assert "fixture-leak gate" in status["work_today"]["note"].lower()
+    assert "evidence witnesses rather than product policy" in status["work_today"]["note"].lower()
+    assert "product `cortex/**` closeouts" in status["work_today"]["note"].lower()
+    assert "non-fixture controls" in status["work_today"]["note"].lower()
+    assert status["next_product_train"]["slug"] == "silent-control-verification-debt-continuation"
     assert "product" == status["next_product_train"]["surface"]
-    assert "adapt the silent-control host-adapter/harness path" in status["next_product_train"][
+    assert "verification continuation before closure" in status["next_product_train"][
         "executive_benefit"
+    ].lower()
+    assert "reproducible witness of the broader failure family" in status["next_product_train"][
+        "why_now"
     ].lower()
     assert "same initial prompt" in status["next_product_train"][
         "primary_metric"
     ].lower()
-    assert "reuse the output-quality visible contract as silent control" in status["next_product_train"][
+    assert "non-astro controls" in status["next_product_train"]["primary_metric"].lower()
+    assert "do not branch on fixture ids" in status["next_product_train"][
         "guardrail"
     ].lower()
+    assert "hidden verifier answers" in status["next_product_train"]["guardrail"].lower()
     assert "only enacted difference is private diagnostics" in status["next_product_train"][
         "kill_rule"
     ].lower()
@@ -1950,7 +1965,8 @@ def test_status_registry_is_complete_and_stable() -> None:
     assert "silent-control-live-fixture-refresh seam isolated" in status["where_to_work"][3]
     assert "astro_docs_site_v1" in status["where_to_work"][3]
     assert "3/3 clean" in status["where_to_work"][3]
-    assert "silent-control-output-quality-enactment" in status["where_to_work"][3]
+    assert "silent-control-verification-debt-continuation" in status["where_to_work"][3]
+    assert "fixture-specific product law" in status["where_to_work"][3]
     closure_gates = {gate["id"]: gate for gate in status["closure_gates"]}
     assert closure_gates["main_synced"]["status"] == "required"
     assert closure_gates["cleanup_report"]["status"] == "required"
@@ -1981,19 +1997,19 @@ def test_generated_status_doc_includes_system_map_and_next_product_train() -> No
     assert "## Next Product Train" in text
     assert "## Research Lines Under Evaluation" in text
     assert "host/tool reliability and affordance priors are earned" in text
-    assert "`silent-control-live-fixture-refresh`" in text
-    assert "- Next product train after the current focus: `silent-control-output-quality-enactment`" in text
-    assert "- Train: `silent-control-output-quality-enactment`" in text
+    assert "`fixture-to-law-product-spine-guardrail`" in text
+    assert "- Next product train after the current focus: `silent-control-verification-debt-continuation`" in text
+    assert "- Train: `silent-control-verification-debt-continuation`" in text
     assert "`brain-capability-observation-and-inference` (deferred-by-executive-runtime-roadmap)" in text
-    assert "isolated git roots" in text.lower()
-    assert "docs search dataset marker is missing" in text.lower()
-    assert "adapt the silent-control host-adapter/harness path" in text.lower()
+    assert "product-spine closeout requirement" in text.lower()
+    assert "hidden verifier" in text.lower()
+    assert "verification continuation before closure" in text.lower()
     assert "Shipping Product Lane\\nopenai:operator_cli" in text or "Shipping Product Lane" in text
     assert "Shipping default: `openai:operator_cli`" in text
     assert "Workflow gates marked `required` are contractual gates checked by `repo_workflow.py`" in text
     assert "| `main_synced` | `required` |" in text
     assert "| `cleanup_report` | `required` |" in text
-    assert "silent-control-output-quality-enactment" in text.lower()
+    assert "silent-control-verification-debt-continuation" in text.lower()
     assert "brain-capability-observation-and-inference" in text
     assert "`visible_burden_sensitivity`" in text
 

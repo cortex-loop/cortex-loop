@@ -137,6 +137,23 @@ def _write_closeout_contract(
                 ],
                 "if_empty_why": None,
             }
+            if surface == "product":
+                payload["product_spine"] = {
+                    "executive_capability": "Truthful closure across product code changes.",
+                    "state_law_path": [
+                        "changed product state",
+                        "runtime enforcement decision",
+                        "host model I/O boundary",
+                    ],
+                    "enforcement_decision": "The workflow requires an explicit product decision path.",
+                    "host_action": "The host adapter receives only abstract Cortex decisions.",
+                    "model_io_effect": "The model input or output boundary is named before closeout.",
+                    "fixture_boundary": "Fixtures may witness the failure but cannot define product behavior.",
+                    "non_fixture_controls": [
+                        "clean non-fixture control",
+                        "unrelated product-path control",
+                    ],
+                }
     closeout_contract.write_artifacts(repo, payload)
 
 

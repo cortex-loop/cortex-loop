@@ -76,6 +76,22 @@ def _filled_payload(branch: str, mode: str, reviewed_paths: list[str]) -> dict[s
                 ],
                 "if_empty_why": None,
             }
+            payload["product_spine"] = {
+                "executive_capability": "Truthful route selection from scored runtime evidence.",
+                "state_law_path": [
+                    "reference score state",
+                    "operator route decision",
+                    "host request shape",
+                ],
+                "enforcement_decision": "Route selection changes before model invocation.",
+                "host_action": "The OpenAI host adapter receives a different request shape.",
+                "model_io_effect": "The model receives host-control input selected by shared Cortex law.",
+                "fixture_boundary": "No motivating fixture identity is encoded in product code.",
+                "non_fixture_controls": [
+                    "clean reference-scoring control",
+                    "non-fixture route-selection control",
+                ],
+            }
     return payload
 
 
@@ -124,6 +140,40 @@ def test_validate_payload_accepts_valid_load_bearing_contract() -> None:
     )
 
     assert validated["profile"] == "load_bearing"
+
+
+def test_validate_payload_rejects_missing_product_spine_for_product_cortex_change() -> None:
+    payload = _filled_payload(
+        "codex/20260413-000000-load-bearing",
+        "close-session",
+        ["cortex/sre/reference_scoring.py"],
+    )
+    del payload["product_spine"]
+
+    with pytest.raises(SystemExit, match="Product closeouts touching cortex"):
+        closeout_contract.validate_payload(
+            payload,
+            expected_mode="close-session",
+            expected_branch="codex/20260413-000000-load-bearing",
+            expected_reviewed_paths=["cortex/sre/reference_scoring.py"],
+        )
+
+
+def test_validate_payload_requires_non_fixture_controls_in_product_spine() -> None:
+    payload = _filled_payload(
+        "codex/20260413-000000-load-bearing",
+        "close-session",
+        ["cortex/sre/reference_scoring.py"],
+    )
+    payload["product_spine"]["non_fixture_controls"] = []
+
+    with pytest.raises(SystemExit, match="product_spine.non_fixture_controls"):
+        closeout_contract.validate_payload(
+            payload,
+            expected_mode="close-session",
+            expected_branch="codex/20260413-000000-load-bearing",
+            expected_reviewed_paths=["cortex/sre/reference_scoring.py"],
+        )
 
 
 def test_validate_payload_rejects_missing_forbidden_claims() -> None:

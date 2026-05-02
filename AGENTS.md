@@ -1,8 +1,7 @@
 # Cortex v2 Repo Agent Contract
 
-This file applies to agents editing this repository. It does not define
-runtime policy for downstream Cortex users.
-This root `AGENTS.md` is the only agent contract in the repo.
+This file applies to agents editing this repository; it does not define
+runtime policy for downstream Cortex users. This root `AGENTS.md` is the only agent contract in the repo.
 
 ## Agent Briefing
 
@@ -88,6 +87,8 @@ question lives in:
 - Do not flatten host differences into fake runtime uniformity.
 - Do not let lab, eval, archive, governance, or workflow surfaces become
   Cortex product identity.
+- Do not let fixtures, task domains, hidden verifiers, or benchmarks become
+  product policy; product code implements abstract capability and state law.
 - Do not move active executive policy into the core.
 - Do not let shipping truth collapse conformance truth.
 - Do not run paid service-lane commands unless the user explicitly approves
@@ -146,6 +147,9 @@ seam, but claims that Cortex improves model output require live evidence:
 a real model run on a real fixture or task, with the comparison pinned.
 Every Cortex product change must trace to the model's input or output; if
 the trace is empty, the work is lab, experimental, or workflow support.
+
+Product `cortex/**` seams preserve the product spine: capability -> state law -> enforcement decision -> host action -> model I/O. Closeout records
+`product_spine`; fixture names and hidden verifier facts stay outside product code.
 
 ## Pointers
 
