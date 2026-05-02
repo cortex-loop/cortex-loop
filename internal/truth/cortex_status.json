@@ -196,96 +196,144 @@
       "id": "lifecycle_event_envelope",
       "label": "Lifecycle event envelope",
       "packet_ref": "CORE_2 §4.1",
-      "code_refs": ["cortex/core/envelopes.py"],
-      "proof_refs": ["tests/product/test_core_substrate.py"],
+      "code_refs": [
+        "cortex/core/envelopes.py"
+      ],
+      "proof_refs": [
+        "tests/product/test_core_substrate.py"
+      ],
       "status": "implemented"
     },
     {
       "id": "observation_bundle",
       "label": "Event-local observation bundle",
       "packet_ref": "CORE_2 §6.1",
-      "code_refs": ["cortex/core/observation.py"],
-      "proof_refs": ["tests/product/test_core_substrate.py"],
+      "code_refs": [
+        "cortex/core/observation.py"
+      ],
+      "proof_refs": [
+        "tests/product/test_core_substrate.py"
+      ],
       "status": "implemented"
     },
     {
       "id": "split_environment_handles",
       "label": "Executive vs commitment environment handles",
       "packet_ref": "CORE_2 §6.2",
-      "code_refs": ["cortex/core/environment.py"],
-      "proof_refs": ["tests/product/test_core_substrate.py"],
+      "code_refs": [
+        "cortex/core/environment.py"
+      ],
+      "proof_refs": [
+        "tests/product/test_core_substrate.py"
+      ],
       "status": "implemented"
     },
     {
       "id": "environment_query",
       "label": "Generalized environment query",
       "packet_ref": "CORE_2 §6.3",
-      "code_refs": ["cortex/core/environment.py"],
-      "proof_refs": ["tests/product/test_core_substrate.py"],
+      "code_refs": [
+        "cortex/core/environment.py"
+      ],
+      "proof_refs": [
+        "tests/product/test_core_substrate.py"
+      ],
       "status": "implemented"
     },
     {
       "id": "commitment_candidate",
       "label": "Commitment candidate and status lattice",
       "packet_ref": "CORE_2 §7.1, §7.2",
-      "code_refs": ["cortex/core/commitments.py"],
-      "proof_refs": ["tests/product/test_certification_artifacts.py"],
+      "code_refs": [
+        "cortex/core/commitments.py"
+      ],
+      "proof_refs": [
+        "tests/product/test_certification_artifacts.py"
+      ],
       "status": "implemented"
     },
     {
       "id": "provenance_manifest",
       "label": "Downward provenance dominance manifest",
       "packet_ref": "CORE_2 §7.3",
-      "code_refs": ["cortex/core/commitments.py"],
-      "proof_refs": ["tests/product/test_certification_artifacts.py"],
+      "code_refs": [
+        "cortex/core/commitments.py"
+      ],
+      "proof_refs": [
+        "tests/product/test_certification_artifacts.py"
+      ],
       "status": "implemented"
     },
     {
       "id": "wake_decision",
       "label": "Commitment wake decision and dispatch",
       "packet_ref": "CORE_2 §5, §7.4",
-      "code_refs": ["cortex/core/dispatch.py"],
-      "proof_refs": ["tests/product/test_dispatch.py"],
+      "code_refs": [
+        "cortex/core/dispatch.py"
+      ],
+      "proof_refs": [
+        "tests/product/test_dispatch.py"
+      ],
       "status": "implemented"
     },
     {
       "id": "boundary_assessment",
       "label": "Event-local certification firewall assessment",
       "packet_ref": "CORE_2 §8.1, §11.1",
-      "code_refs": ["cortex/core/commitments.py"],
-      "proof_refs": ["tests/product/test_certification_artifacts.py"],
+      "code_refs": [
+        "cortex/core/commitments.py"
+      ],
+      "proof_refs": [
+        "tests/product/test_certification_artifacts.py"
+      ],
       "status": "implemented"
     },
     {
       "id": "support_state",
       "label": "Recoverable executive role / support state",
       "packet_ref": "CORE_2 §8.2",
-      "code_refs": ["cortex/core/support.py"],
-      "proof_refs": ["tests/product/test_core_substrate.py"],
+      "code_refs": [
+        "cortex/core/support.py"
+      ],
+      "proof_refs": [
+        "tests/product/test_core_substrate.py"
+      ],
       "status": "implemented"
     },
     {
       "id": "executive_signal_summary",
       "label": "Minimal software-shaped executive role view",
       "packet_ref": "SRE_2 §3.1",
-      "code_refs": ["cortex/sre/executive_summary.py"],
-      "proof_refs": ["tests/product/test_sre_uncertainty_brake.py"],
+      "code_refs": [
+        "cortex/sre/executive_summary.py"
+      ],
+      "proof_refs": [
+        "tests/product/test_sre_uncertainty_brake.py"
+      ],
       "status": "implemented"
     },
     {
       "id": "neutral_dominance_decision",
       "label": "Neutral-dominance arbitration",
       "packet_ref": "SRE_2 §6.6",
-      "code_refs": ["cortex/sre/policy.py"],
-      "proof_refs": ["tests/product/test_sre_neutral_hinge.py"],
+      "code_refs": [
+        "cortex/sre/policy.py"
+      ],
+      "proof_refs": [
+        "tests/product/test_sre_neutral_hinge.py"
+      ],
       "status": "implemented"
     },
     {
       "id": "risk_weight",
       "label": "Asymmetric error-cost RiskWeight carrier",
       "packet_ref": "SRE_2 §6.6.1",
-      "code_refs": ["cortex/sre/state.py"],
-      "proof_refs": ["tests/product/test_sre_neutral_hinge.py"],
+      "code_refs": [
+        "cortex/sre/state.py"
+      ],
+      "proof_refs": [
+        "tests/product/test_sre_neutral_hinge.py"
+      ],
       "status": "implemented"
     },
     {
@@ -365,40 +413,62 @@
       "id": "support_memory_episode",
       "label": "Durable AUX support-memory episode",
       "packet_ref": "AUX_2 §3 offline support memory",
-      "code_refs": ["cortex/aux/persistence.py"],
-      "proof_refs": ["tests/experimental/test_aux_persistence.py"],
+      "code_refs": [
+        "cortex/aux/persistence.py"
+      ],
+      "proof_refs": [
+        "tests/experimental/test_aux_persistence.py"
+      ],
       "status": "implemented"
     },
     {
       "id": "auxiliary_support_appendix",
       "label": "AUX runtime augmentation appendix and re-entry",
       "packet_ref": "AUX_2 §5 re-entry / SRE handoff",
-      "code_refs": ["cortex/aux/augmentation.py", "cortex/aux/publication.py"],
-      "proof_refs": ["tests/experimental/test_aux_publication.py"],
+      "code_refs": [
+        "cortex/aux/augmentation.py",
+        "cortex/aux/publication.py"
+      ],
+      "proof_refs": [
+        "tests/experimental/test_aux_publication.py"
+      ],
       "status": "implemented"
     },
     {
       "id": "aux_lift_metric",
       "label": "AUX lift metric and evaluation report",
       "packet_ref": "AUX_2 §4 evaluation-first",
-      "code_refs": ["cortex/aux/lift.py", "cortex/aux/evaluation.py"],
-      "proof_refs": ["tests/experimental/test_aux_lift.py"],
+      "code_refs": [
+        "cortex/aux/lift.py",
+        "cortex/aux/evaluation.py"
+      ],
+      "proof_refs": [
+        "tests/experimental/test_aux_lift.py"
+      ],
       "status": "implemented"
     },
     {
       "id": "aux_burden_report",
       "label": "AUX cost-visible burden report",
       "packet_ref": "AUX_2 §2.7",
-      "code_refs": ["cortex/aux/cost.py"],
-      "proof_refs": ["tests/experimental/test_aux_scaffolds.py"],
+      "code_refs": [
+        "cortex/aux/cost.py"
+      ],
+      "proof_refs": [
+        "tests/experimental/test_aux_scaffolds.py"
+      ],
       "status": "implemented"
     },
     {
       "id": "verified_work_profile_spec",
       "label": "Verified-work runtime profile specification",
       "packet_ref": "SRE_2 §5 / runtime law",
-      "code_refs": ["cortex/runtime/verified_work_runtime.py"],
-      "proof_refs": ["tests/product/test_openai_runtime_session_io.py"],
+      "code_refs": [
+        "cortex/runtime/verified_work_runtime.py"
+      ],
+      "proof_refs": [
+        "tests/product/test_openai_runtime_session_io.py"
+      ],
       "status": "implemented"
     }
   ],
@@ -1077,6 +1147,14 @@
     "docs/cortex_plugin/DESIGN.md",
     "docs/cortex_plugin/ADAPTER.md",
     "docs/cortex_plugin/EVIDENCE_SYNTHESIS.md",
+    "docs/cortex_plugin/communication_problem/01_problem_statement.md",
+    "docs/cortex_plugin/communication_problem/02_cortex_identity_and_doctrine.md",
+    "docs/cortex_plugin/communication_problem/03_maths_to_code.md",
+    "docs/cortex_plugin/communication_problem/04_cortex_internal_state.md",
+    "docs/cortex_plugin/communication_problem/05_claude_communication_surface.md",
+    "docs/cortex_plugin/communication_problem/06_hook_surface_and_evidence.md",
+    "docs/cortex_plugin/communication_problem/07_strange_loop_frame.md",
+    "docs/cortex_plugin/communication_problem/08_anti_patterns_and_failed_solutions.md",
     "docs/runtime_context/EVAL_RUBRIC.md",
     "docs/runtime_context/BASELINE_SHAPED_EXAMPLES.md",
     "docs/runtime_context/CROSS_HOST_SKETCH.md",

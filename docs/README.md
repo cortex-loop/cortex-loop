@@ -19,6 +19,9 @@ Active docs:
   structural host-adapter pattern for the plugin build
 - [Claude Code Desktop Plugin Evidence Synthesis](cortex_plugin/EVIDENCE_SYNTHESIS.md) —
   accounting of what Claude Code Desktop hook evidence has and has not earned
+- [Cortex Communication Problem Dossier](cortex_plugin/communication_problem/01_problem_statement.md) —
+  research dossier framing the strange-loop communication problem and the
+  search for a general model-facing translation function
 - Runtime context bridge eval artifacts:
   [rubric](runtime_context/EVAL_RUBRIC.md),
   [baseline-vs-shaped examples](runtime_context/BASELINE_SHAPED_EXAMPLES.md),
