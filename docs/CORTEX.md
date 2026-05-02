@@ -300,13 +300,13 @@ state, read `internal/truth/cortex_status.json` directly.
 
 ### Current Train
 
-- Slug: `silent-control-live-fixture-refresh`
+- Slug: `fixture-to-law-product-spine-guardrail`
 
 ### Next Product Train
 
-- Slug: `silent-control-output-quality-enactment`
+- Slug: `silent-control-verification-debt-continuation`
 - Surface: `product`
-- Why now: Fixture refresh found a reproducible OpenAI operator failure: raw `gpt-5.3-codex` passes visible Astro docs checks while missing hidden verification work. The current silent-control enactment path only proves `truth_gap` resume-recheck, so the harder fixture needs a silent output-quality enactment before paired live trials are interpretable.
+- Why now: Fixture refresh found Astro as a reproducible witness of the broader failure family: raw `gpt-5.3-codex` can pass visible checks while missing hidden verification. The next seam should implement the abstract verification-debt continuation action and prove it on Astro plus unrelated controls.
 
 ### Research Lines Under Evaluation
 
@@ -327,7 +327,7 @@ state, read `internal/truth/cortex_status.json` directly.
 - Keep the bounded audit surface compact and truthful on the shipped lane: selected versus realized family, uncertainty, threshold, delta, verification, and probe truth only.
 - Keep the no-spend live evidence current and explicit: fast conformance is green, the deeper directionality and host-native watchlists are refreshed, and non-shipping auth or env caveats must stay explicit instead of silently stale.
 - Keep posture, AUX memory, host-reliability, and asymmetric-cost law explicit and removable now that posture-sensitive online control is S-tier closed, anti-thrash is landed, bounded live support-memory re-entry is earned on reference and the OpenAI operator lane, evidence/probe calibration is S-tier closed, host/tool reliability and affordance priors are earned as bounded host-scoped, capability-scoped score modifiers on `OfflineSupportPublication.host_reliability_prior` with a single-site six-tag `q_mem-host:*` surface and stale-negative reopen under fresh success, asymmetric error cost is earned as a bounded `RiskWeight` carrier whose CHECK/SEEK_CONTEXT activation shift is clipped inside `[0.05, 0.60]` with a `0.10` dead-band and productive-exploration gating, and the brake tonic EMA damps single-tick flips with a locked `rho = 0.60` decay and `tonic_pressure >= 0.35` enter gate while phasic spikes still flip immediately: inspect is live on cheap non-debt events, resume stays continuity-conditioned, posture truth is single-owned, the route state vector stays the bounded 6-axis geometry term while `visible_burden_sensitivity` remains a separate utility scalar, route truth stays bounded and non-sovereign, unchanged-condition repetition is taxed only at the exact-family level with bounded reopen, public feedback-window summaries reflect the just-realized step, family-local bounded probe limits surface as `unsupported` without leaking host-global unavailability across families, stream-only churn stays non-epistemic, live memory stays score-only and host-matched through explicit publication, live `Q_mem` stays zero on shipping and conformance default lanes, raw SQLite episodes stay support-side only, reliability priors bias score pricing only and never route, posture, selection, or brake law, Claude and Gemini remain shadow-proof only for reliability promotion, `risk_weight` biases CHECK/SEEK_CONTEXT activation threshold only and never routing, posture, selection, certification, or blockedness law, and `brake_tonic_history` persists the pressure tail across resume on all four host lanes with three-way backward-compat decoding.
-- The silent-control-live-fixture-refresh seam isolated output-quality operator workspaces and found a hard OpenAI operator fixture: `astro_docs_site_v1` raw runs reproduce visible-success/hidden-verification failure in 3/3 clean `gpt-5.3-codex` trials, while an existing output-quality `cortex` arm repaired it once through visible contract/repair machinery. The next product move is silent-control-output-quality-enactment: adapt continuation-policy enactment to this hard fixture without prompt mutation or visible Cortex wording.
+- The silent-control-live-fixture-refresh seam isolated output-quality operator workspaces and found a hard witness for visible-success / hidden-verification failure: `astro_docs_site_v1` raw runs failed hidden verification in 3/3 clean `gpt-5.3-codex` trials while an existing output-quality `cortex` arm repaired it once through visible contract/repair machinery. The next product move is silent-control-verification-debt-continuation: implement an abstract continuation action and prove it on that witness plus unrelated controls, without prompt mutation or fixture-specific product law.
 <!-- END GENERATED: current-state-and-strategy -->
 
 ### V2 Model-I/O Analysis
@@ -403,6 +403,12 @@ host adapter and the output it touches, you do not yet have a Cortex
 seam. You have an idea about Cortex. The closeout's `connectivity_trace`
 field is the place that articulation lands; the empty-path-with-product-surface
 case is the closed-loop drift error and is rejected.
+
+**Fixtures falsify Cortex; they do not define Cortex.** A hard task is a witness for a missing executive capability, not the capability itself.
+Product `cortex/**` changes must preserve the spine: capability -> state
+law -> enforcement decision -> host action -> model I/O effect -> evidence.
+Closeout records this in `product_spine`; fixture identities
+and hidden verifier facts must not become product policy.
 
 **The smallest seam that produces falsifiable product evidence is the
 right seam.** Larger seams are bundling. Bundling is what loses work to

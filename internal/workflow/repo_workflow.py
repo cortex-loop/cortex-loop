@@ -21,6 +21,7 @@ if str(DEFAULT_ROOT) not in sys.path:
 from internal.closeout import contract as closeout_contract
 from internal.truth.orientation import render_orientation_capsule
 from internal.workflow import mission_reflection
+from internal.workflow import product_spine
 
 MANAGED_SESSION_AGENTS = ("codex", "claude", "maint")
 ALLOWED_SCOPES = ("repo", "docs", "kernel", "adapter", "pack", "eval", "tests", "build", "release")
@@ -1610,6 +1611,21 @@ def _reflection_check_payload() -> dict[str, object]:
             "unless test wants stale data): " + "; ".join(fixture_drift_paths[:3])
         )
 
+    # Mechanical gate 6: fixture identity must not become product Cortex law.
+    # Lab fixtures falsify product seams; cortex/** code must encode the
+    # abstract executive capability/state law instead of branching on the
+    # motivating task identity or hidden verifier terms.
+    product_fixture_leaks = product_spine.find_product_fixture_leaks(_root())
+    if product_fixture_leaks:
+        examples = "; ".join(
+            f"{leak.path}: {leak.term}" for leak in product_fixture_leaks[:5]
+        )
+        failures.append(
+            "product Cortex fixture leakage: lab fixture identity or hidden "
+            f"verifier terms appear in cortex/** ({examples}). Translate the "
+            "fixture into abstract executive law before product implementation."
+        )
+
     if failures:
         verdict = "FAIL"
     elif gaps:
@@ -1664,6 +1680,7 @@ def _mechanical_check_rows(check_payload: dict[str, object]) -> list[tuple[str, 
         ("Bundling heuristic", _gate("Bundling", ("bundle", "surface group"), ("surface group",))),
         ("`next_train` freshness", freshness),
         ("Fixture timestamp drift", _gate("Fixtures", ("fixture",), ("fixture",))),
+        ("Product fixture leakage", _gate("Product spine", ("product cortex fixture leakage",))),
     ]
     if failures:
         rows.append(("Failures", "<br>".join(failures)))

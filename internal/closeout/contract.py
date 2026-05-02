@@ -246,6 +246,15 @@ def scaffold_payload(*, branch: str, mode: str, reviewed_paths: list[str]) -> di
                 "path": [],
                 "if_empty_why": None,
             }
+            payload["product_spine"] = {
+                "executive_capability": "",
+                "state_law_path": [],
+                "enforcement_decision": "",
+                "host_action": "",
+                "model_io_effect": "",
+                "fixture_boundary": "",
+                "non_fixture_controls": [],
+            }
     if branch.startswith("codex/") and reviewed_paths:
         payload["mission_reflection_graph"] = {
             "validator": CODEX_MISSION_GRAPH_VALIDATOR_COMMAND,
@@ -404,6 +413,36 @@ def render_markdown(payload: dict[str, Any]) -> str:
             if_empty_why = connectivity.get("if_empty_why")
             if if_empty_why:
                 lines.append(f"- If empty why: {if_empty_why}")
+        product_spine = payload.get("product_spine")
+        if isinstance(product_spine, dict):
+            lines.extend(["", "## Product Spine", ""])
+            lines.append(
+                f"- Executive Capability: {product_spine.get('executive_capability') or '<fill me>'}"
+            )
+            state_law_path = product_spine.get("state_law_path", []) or []
+            if state_law_path:
+                lines.append("- State Law Path:")
+                for step in state_law_path:
+                    lines.append(f"  - {step}")
+            else:
+                lines.append("- State Law Path: `<empty>`")
+            lines.append(
+                f"- Enforcement Decision: {product_spine.get('enforcement_decision') or '<fill me>'}"
+            )
+            lines.append(f"- Host Action: {product_spine.get('host_action') or '<fill me>'}")
+            lines.append(
+                f"- Model I/O Effect: {product_spine.get('model_io_effect') or '<fill me>'}"
+            )
+            lines.append(
+                f"- Fixture Boundary: {product_spine.get('fixture_boundary') or '<fill me>'}"
+            )
+            controls = product_spine.get("non_fixture_controls", []) or []
+            if controls:
+                lines.append("- Non-Fixture Controls:")
+                for control in controls:
+                    lines.append(f"  - {control}")
+            else:
+                lines.append("- Non-Fixture Controls: `<empty>`")
     lines.extend(["", "## Final Handoff Mirror", ""])
     lines.extend(["### Fixed now", ""])
     append_items(lines, residuals["fixed_now"], empty="`<fill me>`")
@@ -708,6 +747,48 @@ def validate_payload(
                         "connectivity_trace.if_empty_why must be null or a "
                         "non-empty string when path is populated."
                     )
+            if surface == "product":
+                product_spine = payload.get("product_spine")
+                if not isinstance(product_spine, dict):
+                    raise SystemExit(
+                        "Product closeouts touching cortex/** must include "
+                        "product_spine {executive_capability, state_law_path, "
+                        "enforcement_decision, host_action, model_io_effect, "
+                        "fixture_boundary, non_fixture_controls}. This keeps "
+                        "fixture evidence from becoming product Cortex policy."
+                    )
+                _require_substantive(
+                    product_spine.get("executive_capability"),
+                    "product_spine.executive_capability",
+                )
+                _require_string_list(
+                    product_spine.get("state_law_path"),
+                    "product_spine.state_law_path",
+                    allow_empty=False,
+                )
+                _require_substantive_list_items(
+                    product_spine.get("state_law_path"),
+                    "product_spine.state_law_path",
+                )
+                for key in (
+                    "enforcement_decision",
+                    "host_action",
+                    "model_io_effect",
+                    "fixture_boundary",
+                ):
+                    _require_substantive(
+                        product_spine.get(key),
+                        f"product_spine.{key}",
+                    )
+                _require_string_list(
+                    product_spine.get("non_fixture_controls"),
+                    "product_spine.non_fixture_controls",
+                    allow_empty=False,
+                )
+                _require_substantive_list_items(
+                    product_spine.get("non_fixture_controls"),
+                    "product_spine.non_fixture_controls",
+                )
 
     _validate_agent_loop_guard_claims(payload)
 

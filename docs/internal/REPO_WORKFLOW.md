@@ -381,7 +381,13 @@ Closeout contract artifact:
 - additionally requires for `load_bearing`:
   - governing principle, executive skill, product metric, guardrail, and kill rule
   - non-empty law-to-code completeness rows for active doctrinal, math, or workflow-law terms touched
+  - for product seams touching `cortex/**`, a `product_spine` record naming
+    the executive capability, state-law path, enforcement decision, host
+    action, model I/O effect, fixture boundary, and non-fixture controls
 - hard-fails on stale reviewed paths, reviewed-path drift during verification, missing forbidden claims, missing hostile-review coverage, or missing zeroed/stubbed-term review
+- hard-fails when lab fixture identities or hidden verifier terms appear in
+  product `cortex/**` code; fixture details stay in lab, tests, recon, or the
+  closeout fixture boundary
 - renders one deterministic closeout mirror; agents use those values to fill
   the grid's mission reflection and `Closure: Metadata` row instead of
   emitting a separate final handoff block
