@@ -695,14 +695,34 @@ def evidence_progress_from_feedback(
     evidence_progress_class: str | None,
     continuity_progress_class: str | None,
     commitment_result_kind: str | None,
+    current_commitment_id: str | None = None,
     warning_codes: tuple[str, ...] = (),
 ) -> tuple[EvidenceProgress, ...]:
     _require_non_empty_string(event_ref, "evidence_progress_from_feedback.event_ref")
+    if current_commitment_id is not None:
+        _require_non_empty_string(
+            current_commitment_id,
+            "evidence_progress_from_feedback.current_commitment_id",
+        )
     progress: list[EvidenceProgress] = []
     if commitment_result_kind == CommitmentStatus.CERTIFIED.value:
-        progress.append(EvidenceProgress("commitment_certified", event_ref, weight=1.0))
+        progress.append(
+            EvidenceProgress(
+                "commitment_certified",
+                event_ref,
+                weight=1.0,
+                commitment_id=current_commitment_id,
+            )
+        )
     elif commitment_result_kind == CommitmentStatus.BLOCKED.value:
-        progress.append(EvidenceProgress("blocker_surfaced", event_ref, weight=1.0))
+        progress.append(
+            EvidenceProgress(
+                "blocker_surfaced",
+                event_ref,
+                weight=1.0,
+                commitment_id=current_commitment_id,
+            )
+        )
 
     if evidence_progress_class in {"candidate", "artifact", "external-record"}:
         progress.append(EvidenceProgress("meaningful_evidence", event_ref, weight=0.8))
@@ -757,6 +777,7 @@ def update_expectation_ledger_for_structured_step(
         evidence_progress_class=evidence_progress_class,
         continuity_progress_class=continuity_progress_class,
         commitment_result_kind=commitment_result_kind,
+        current_commitment_id=commitment.commitment_id if commitment is not None else None,
         warning_codes=warning_codes,
     ):
         next_ledger = next_ledger.apply_progress(progress, current_step=current_step)

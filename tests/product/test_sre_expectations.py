@@ -159,6 +159,41 @@ def test_resolved_history_does_not_pay_unrelated_new_due_debt() -> None:
     assert deficit.negative_prediction_error == 1.0
 
 
+def test_targeted_progress_pays_current_commitment_before_older_compatible_debt() -> None:
+    older = open_expectation_from_forward_commitment(
+        ExpectationLedger(),
+        _commitment(
+            commitment_id="commit:old",
+            kind="verification",
+            assertiveness="high",
+            opened_at_step=1,
+        ),
+    )
+    mixed = open_expectation_from_forward_commitment(
+        older,
+        _commitment(
+            commitment_id="commit:current",
+            kind="verification",
+            assertiveness="high",
+            opened_at_step=2,
+        ),
+    )
+
+    paid = mixed.apply_progress(
+        EvidenceProgress(
+            "commitment_certified",
+            "event:current-certified",
+            weight=1.0,
+            commitment_id="commit:current",
+        ),
+        current_step=2,
+    )
+
+    assert tuple(record.commitment_id for record in paid.active) == ("commit:old",)
+    assert paid.resolved[0].commitment_id == "commit:current"
+    assert paid.resolved[0].resolution_class == "commitment_certified"
+
+
 def _commitment(
     *,
     kind: str,

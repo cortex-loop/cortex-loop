@@ -10,8 +10,9 @@ enough to support the first paid/live silent-control probe on the OpenAI lane.
 
 ## Readiness Verdict
 
-Do not open the full seam-5 live probe yet. Open one narrow remediation seam
-first.
+The narrow remediation required by this audit is complete once
+`executive-runtime-paydown-and-waiting-remediation` merges. Seam 5 can then
+open against the probe design in Concern 5.
 
 Seams 1-4 are structurally complete: the evidence branch was preserved, the
 expectation ledger exists, the corpus and falsification tests exist, and debt
@@ -20,7 +21,7 @@ pressure now reaches route/brake diagnostics. The readiness scenarios in
 macro-shape: debt can guard route/brake without blocking, checking remains
 available, and phasic contradiction remains the latch cause.
 
-They also reveal two live-probe noise sources:
+The original audit revealed two live-probe noise sources:
 
 - Same-event certification or blocker progress can pay older compatible debt
   first and leave a fresh current-event verification expectation active.
@@ -28,19 +29,21 @@ They also reveal two live-probe noise sources:
   blocked/waiting boundary can leave residual verification debt that keeps
   pressure elevated across subsequent inspection turns.
 
-Those are not reasons to abandon the roadmap. They are exactly the kind of
+Those were not reasons to abandon the roadmap. They were exactly the kind of
 composition issues this readiness seam was meant to catch before paid live
-trials. A small remediation seam should tighten paydown targeting and
-waiting/blocker runtime mapping before seam 5 starts.
+trials. The remediation now makes explicit current-event certified/blocked
+progress target the expectation opened by the same event, and the runtime
+blocked/waiting scenario leaves no residual current verification debt for the
+following inspection turn.
 
 ## Concern 1: Seams 1-4 Evidence Accounting
 
 | Seam | Structural artifacts | Evidence beyond structural tests | Missing evidence before a strong seam-5 probe | Close before seam 5? |
 | --- | --- | --- | --- | --- |
 | 1. Evidence preservation and branch hygiene | Preserved headless translation recon, active-doc registry entries, branch cleanup, parked lifecycle-spine left untouched. | Unique headless Stop evidence is now on `main` instead of trapped on a stale renderer-first branch. | No product-control evidence was expected from seam 1. | No. |
-| 2. Runtime expectation ledger | `cortex/sre/expectations.py` defines `ForwardCommitment`, `ExpectationRecord`, `ExpectationLedger`, `EvidenceProgress`, and `ResolutionDeficitState`; host sessions carry ledgers. | Product and conformance tests cover open, paydown, suspension, relief, caps, backward-compatible artifacts, and reference runtime replays. | Realistic multi-event streams with overlapping compatible debts showed a same-event paydown targeting gap in readiness tests. | Yes, remediate paydown targeting before live trials. |
-| 3. Expectation corpus and falsification tests | Product corpus and reference-runtime replay corpus encode false completion, unsupported verification, candidate movement, waiting, retraction, blocker surfacing, capability carrier, and clean controls. | The corpus proves easy structured cases and several runtime replays. It also preserves the fact that capability producers are structurally unearned. | Boundary coverage is thin for deferred and waiting-on-user cases, especially legitimate waiting versus evasive "still running" language. | Partly. Fix the runtime blocked/wait boundary before live trials; prose/evasion boundaries can remain outside seam 5 if seam 5 does not depend on arbitrary assistant-prose extraction. |
-| 4. Debt-to-route/brake coupling | `cortex/sre/debt_control.py`, brake optional debt input, route policy debt fields, host-runtime diagnostics, and conformance tests across reference/OpenAI/Claude/Gemini. | Readiness scenarios show prior debt affects the next decision, guarded route is selected without blocking, inspection remains available, and debt-only brake state is guarded rather than latched. | The interaction of old debt, new certified work, and generic progress selection can keep pressure high after successful work. | Yes, because this can make seam-5 clean controls look noisy. |
+| 2. Runtime expectation ledger | `cortex/sre/expectations.py` defines `ForwardCommitment`, `ExpectationRecord`, `ExpectationLedger`, `EvidenceProgress`, and `ResolutionDeficitState`; host sessions carry ledgers. | Product and conformance tests cover open, paydown, suspension, relief, caps, backward-compatible artifacts, reference runtime replays, and targeted same-event progress. | No remaining structural gap for the seam-5 probe. Arbitrary assistant-prose extraction remains out of seam-5 scope. | No. |
+| 3. Expectation corpus and falsification tests | Product corpus and reference-runtime replay corpus encode false completion, unsupported verification, candidate movement, waiting, retraction, blocker surfacing, capability carrier, and clean controls. | The corpus proves easy structured cases, reference runtime replays, and the waiting/blocker remediation scenario. It also preserves the fact that capability producers are structurally unearned. | Boundary coverage is thin for deferred/evasive natural-language cases, but seam 5 explicitly avoids arbitrary assistant-prose extraction. | No. |
+| 4. Debt-to-route/brake coupling | `cortex/sre/debt_control.py`, brake optional debt input, route policy debt fields, host-runtime diagnostics, and conformance tests across reference/OpenAI/Claude/Gemini. | Readiness scenarios show prior debt affects the next decision, guarded route is selected without blocking, inspection remains available, debt-only brake state is guarded rather than latched, and remediated current-event paydown prevents false fresh verification pressure. | No remaining structural gap for seam 5; live behavior lift is still unearned and belongs to the paid probe. | No. |
 
 ## Concern 2: Horizon Classification Accuracy
 
@@ -49,18 +52,16 @@ yet statistically strong enough to claim broad boundary accuracy.
 
 | Horizon class | Current encoded coverage | Boundary coverage | Current result |
 | --- | --- | --- | --- |
-| `immediate` | Completion and verification commitments in product tests, corpus tests, runtime replay tests, and readiness tests. | Completion versus verification and current-step due behavior are covered. Same-event certified/blocker behavior exposes paydown targeting, not horizon classification. | Encoded classification passes; full-stack paydown can still leave false current-event debt. |
+| `immediate` | Completion and verification commitments in product tests, corpus tests, runtime replay tests, and readiness tests. | Completion versus verification, current-step due behavior, and remediated same-event certified/blocker targeting are covered. | Encoded classification passes; current-event certified/blocked progress no longer leaves false current-event debt. |
 | `next_step` | Plan, candidate, artifact, and capability carriers are covered. | Current-step no-deficit versus next-step due behavior is covered. | Encoded classification passes. |
 | `deferred` | High-assertiveness `diagnosis` and `deferred_followup` classify as deferred; low diagnosis opens no expectation. | The boundary between legitimate deferred work and evasive "later" is not covered by runtime producers. | Encoded classification passes, but sample size is too small for a 90 percent live-boundary claim. |
-| `waiting_on_user` | Warning-code based waiting suspension is covered in product corpus and readiness tests. | Pure structured warnings suspend to zero deficit across many steps. Runtime blocked approval leaves residual verification debt in readiness tests. | Pure path passes; runtime boundary is not ready enough for live waiting controls. |
+| `waiting_on_user` | Warning-code based waiting suspension is covered in product corpus and readiness tests. | Pure structured warnings suspend to zero deficit across many steps. Runtime blocked approval fully relieves the current verification expectation and leaves the following inspection turn debt-neutral. | Pure path and runtime blocker boundary pass for structured seam-5 inputs. |
 
 The readiness corpus gives direct structured horizon classification at 100
 percent on the cases it encodes. That number should not be overread. The
-live-relevant question is boundary accuracy under host-runtime event streams,
-and the waiting/blocker boundary currently fails one readiness scenario. The
-remediation should make blocker-surfaced and user-wait signals target the
-current commitment or explicitly suspend the correct expectation before live
-trials.
+live-relevant question is boundary accuracy under host-runtime event streams;
+the blocker/waiting boundary now passes for structured runtime events, while
+deferred/evasive natural-language boundaries remain outside seam-5 scope.
 
 ## Concern 3: Integration Effects Across The Stack
 
@@ -75,7 +76,7 @@ ExpectationLedger
 
 ### Scenario A: Mixed Horizons With Separate Goal Debt
 
-Test: `test_mixed_horizon_sequence_records_same_event_paydown_gap`.
+Test: `test_mixed_horizon_sequence_targets_current_certification_before_old_debt`.
 
 Result summary:
 
@@ -84,15 +85,17 @@ Result summary:
 | Uncertified full commitment | 1.0 | 0.0 | 0.0 | `continuity_standard` | no | Debt opens after the step, so there is no same-step hindsight. |
 | Candidate follow-up with pending goal | 1.0 | 0.855 | 0.6375 | `continuity_guarded` | no | Prior debt plus goal debt guards continuity without blocking. |
 | Context inspection | 1.0 | 0.7368 | 0.342 | `continuity_guarded` | no | Pressure persists, but checking is not blocked. Pending goal keeps the runtime in continuity mode. |
-| Certified work | 1.0 | 0.753 | 0.3825 | `continuity_guarded` | no | Current certified work pays older compatible debt first, then leaves fresh verification debt active. |
+| Certified work | 1.0 | 0.753 | 0.3825 | `continuity_guarded` | no | Current certified work resolves the same-event verification expectation; older plan debt remains active and explainable. |
 
-Interpretation: the control-pressure direction is right, but the paydown
-selector needs remediation. Without that, seam 5 could see elevated pressure
-after a successful certified action and misinterpret it as useful caution.
+Interpretation: the control-pressure direction is right and the remediated
+paydown selector no longer creates false fresh verification pressure after a
+successful certified action. The remaining pressure is tied to older plan debt,
+which seam 5 can interpret from diagnostics rather than mistaking it for a
+current-event failure.
 
 ### Scenario B: Honest Waiting / Partial Progress
 
-Test: `test_waiting_boundary_is_safe_in_pure_corpus_but_not_fully_proven_in_runtime`.
+Test: `test_waiting_boundary_relieves_blocker_without_residual_current_debt`.
 
 Pure structured waiting path:
 
@@ -103,13 +106,14 @@ Pure structured waiting path:
 Reference runtime blocked/wait path:
 
 - approval request opens next-step plan debt;
-- blocked approval surfaces a blocker and resolves the prior plan debt;
-- a fresh verification expectation remains active with `0.2` weight;
-- subsequent `ContextLoad` routes to `inspect_light` with `debt_pressure > 0.0`.
+- blocked approval resolves the prior plan debt through structured evidence and
+  fully relieves the current verification expectation through targeted blocker
+  progress;
+- no active expectation remains after the blocked event;
+- subsequent `ContextLoad` routes to `inspect_light` with `debt_pressure == 0.0`.
 
-Interpretation: the route remains safe and non-blocking, but honest waiting is
-not fully clean in the runtime path. This should be tightened before seam 5 if
-waiting-on-user controls are part of the live matrix.
+Interpretation: the route remains safe and non-blocking, and honest waiting is
+clean in the structured runtime path that seam 5 depends on.
 
 ### Scenario C: Phasic Contradiction Plus High Resolution Deficit
 
@@ -246,8 +250,8 @@ Needs revision:
 - improvement appears only as slower work without better evidence recovery;
 - diagnostics cannot explain why shaped behavior changed;
 - clean controls accumulate pressure;
-- results depend on current-event paydown or waiting-boundary cases that this
-  readiness document marks as gaps.
+- results expose a new current-event paydown, waiting-boundary, or clean-control
+  pressure issue not covered by the remediated readiness scenarios.
 
 Clear failure:
 
@@ -296,31 +300,33 @@ candidate intervention points:
 Those records become seam-6 threshold-design evidence without making seam 5 do
 seam 6's work.
 
-## Required Remediation Before Seam 5
+## Remediation Closed Before Seam 5
 
-Open a narrow remediation seam before the paid/live probe. It should not add
-new product concepts or visible communication. It should:
+The narrow remediation seam does not add product concepts or visible
+communication. It closes the two structural composition gaps by carrying the
+current structured commitment id through explicit certified/blocked
+`EvidenceProgress` so the existing selector can target the expectation opened
+by the same event before paying older compatible debts.
 
-1. Make same-event certification and blocker progress target the expectation
-   opened by the same event before paying older compatible debts, likely by
-   carrying `commitment_id` through `EvidenceProgress` or by changing selection
-   priority under explicit current-event commitment results.
-2. Make runtime blocked/waiting cases either fully relieve the current
-   verification expectation when a blocker is surfaced or suspend the correct
-   expectation when the runtime is truly waiting on user input.
-3. Add or update corpus cases so the two readiness scenarios that currently
-   pin gaps become positive safety tests.
-4. Keep route/brake behavior, hooks, AUX, and model-visible text unchanged.
+The positive safety tests now prove:
 
-After that remediation passes, seam 5 can open with the probe design above.
+1. Same-event certification resolves the current verification expectation and
+   leaves any remaining pressure attributable to older active debt.
+2. Runtime blocked/waiting cases fully relieve the current verification
+   expectation on blocker surface, and the next inspection turn remains
+   debt-neutral.
+3. Route/brake behavior, hooks, AUX, and model-visible text remain unchanged.
+
+After this remediation merges, seam 5 can open with the probe design above.
 
 ## Truth Boundaries
 
 This readiness document earns no live behavior-lift claim and no shipping
 truth. It is structural evidence accounting only.
 
-- Cortex truth: the roadmap remains intact, but seam 5 is not yet ready.
+- Cortex truth: the roadmap remains intact, and seam 5 is structurally ready
+  after this remediation merges.
 - Brain-wiring truth: unchanged.
-- Conformance truth: the readiness scenarios document current composed
-  behavior and gaps.
+- Conformance truth: the readiness scenarios document current composed behavior
+  and the closed remediation cases.
 - Shipping truth: unchanged; OpenAI remains `openai:operator_cli`.
