@@ -61,5 +61,8 @@ Active docs:
 - [Cortex OpenAI Operator Silent-Control Live Probe](recon/cortex_openai_operator_silent_control_live_probe.md) —
   Gate 0 evidence that runtime debt control is structural but not yet enacted
   by the Codex operator live adapter
+- [Cortex OpenAI Operator Debt-Control Enactment](recon/cortex_openai_operator_debt_control_enactment.md) —
+  Gate 0 remediation evidence that the OpenAI host adapter now enacts SRE
+  debt-control decisions before the Codex CLI runner
 
 Historical runtime, lab, and governance material now lives under [archive/](archive/).

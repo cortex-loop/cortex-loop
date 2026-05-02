@@ -67,6 +67,7 @@ def run_openai_operator_single_turn(
         model=preferred_model,
         env=env,
         stderr_path=stderr_path,
+        ephemeral=ephemeral,
     )
     chosen_model = preferred_model
     if model is None:
@@ -79,6 +80,7 @@ def run_openai_operator_single_turn(
                 model=fallback_model,
                 env=env,
                 stderr_path=stderr_path,
+                ephemeral=ephemeral,
             )
             chosen_model = fallback_model
             attempted_models.append(fallback_model)
@@ -128,6 +130,7 @@ def _run_single_turn(
     model: str,
     env: dict[str, str] | None,
     stderr_path: Path,
+    ephemeral: bool,
 ) -> tuple[dict[str, Any], str | None]:
     return _run_codex_exec(
         project_root=project_root,
@@ -137,6 +140,7 @@ def _run_single_turn(
         env=env,
         stderr_path=stderr_path,
         resume_session=None,
+        ephemeral=ephemeral,
     )
 
 
@@ -158,7 +162,39 @@ def _run_resumed_turn(
         env=env,
         stderr_path=stderr_path,
         resume_session=thread_id,
+        ephemeral=False,
     )
+
+
+def build_codex_exec_command(
+    *,
+    prompt: str,
+    model: str,
+    resume_session: str | None = None,
+    ephemeral: bool = True,
+) -> list[str]:
+    if resume_session:
+        return [
+            "codex",
+            "exec",
+            "resume",
+            "--json",
+            "--full-auto",
+            *(["--ephemeral"] if ephemeral else []),
+            resume_session,
+            prompt,
+        ]
+    return [
+        "codex",
+        "exec",
+        "--json",
+        "--full-auto",
+        "--skip-git-repo-check",
+        "-m",
+        model,
+        *(["--ephemeral"] if ephemeral else []),
+        prompt,
+    ]
 
 
 def _run_codex_exec(
@@ -170,6 +206,7 @@ def _run_codex_exec(
     env: dict[str, str] | None,
     stderr_path: Path,
     resume_session: str | None,
+    ephemeral: bool,
 ) -> tuple[dict[str, Any], str | None]:
     if auth_mode != "codex_cli":
         state = {
@@ -187,13 +224,12 @@ def _run_codex_exec(
         }
         return state, "operator_surface_missing"
 
-    command = [
-        "codex",
-        "exec",
-        *(["resume", "--json", "--full-auto", resume_session] if resume_session else []),
-        *(["--json", "--full-auto", "--skip-git-repo-check", "-m", model] if resume_session is None else []),
-        prompt,
-    ]
+    command = build_codex_exec_command(
+        prompt=prompt,
+        model=model,
+        resume_session=resume_session,
+        ephemeral=ephemeral,
+    )
     result = run_command(
         command,
         cwd=project_root,
@@ -224,6 +260,7 @@ def _extract_openai_session_id(records: list[dict[str, Any]]) -> str | None:
 
 
 __all__ = [
+    "build_codex_exec_command",
     "isolated_codex_home_env",
     "run_openai_operator_resumed_turn",
     "run_openai_operator_single_turn",
