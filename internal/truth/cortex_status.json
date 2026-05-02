@@ -808,8 +808,8 @@
     ]
   },
   "work_today": {
-    "slug": "debt-drag-into-brake-and-route",
-    "note": "Roadmap Seam 4 is active: Cortex is wiring resolution deficit and persistence-weighted goal debt into silent route/brake control so unsupported forward motion becomes more guarded while inspection, verification, asking, and blocker-surfacing remain available. This train changes structural runtime control only: debt can raise tonic guardedness and route policy diagnostics, but debt alone must not latch, block, alter Claude hooks, emit model-visible text, invoke AUX publication, or change shipping truth. Truth earned by this train is Cortex/conformance structural truth only; live model behavior lift remains unearned until the OpenAI silent-control probe compares baseline, shaped, and clean controls."
+    "slug": "executive-runtime-phase-5-readiness",
+    "note": "Phase-5 readiness is active as an evidence-accounting gate between structural debt-control work and the OpenAI silent-control live probe. This train runs no live probes and changes no runtime law; it audits whether seams 1-4 are evidence-correct enough for paid live trials, pins composed ledger/deficit/debt-control/route-brake readiness scenarios, and names any remediation required before seam 5 opens. Truth earned by this train is conformance/evidence-accounting only; behavior lift and shipping truth remain unchanged."
   },
   "research_lines_under_evaluation": [
     {
@@ -1127,7 +1127,7 @@
     "Keep the bounded audit surface compact and truthful on the shipped lane: selected versus realized family, uncertainty, threshold, delta, verification, and probe truth only.",
     "Keep the no-spend live evidence current and explicit: fast conformance is green, the deeper directionality and host-native watchlists are refreshed, and non-shipping auth or env caveats must stay explicit instead of silently stale.",
     "Keep posture, AUX memory, host-reliability, and asymmetric-cost law explicit and removable now that posture-sensitive online control is S-tier closed, anti-thrash is landed, bounded live support-memory re-entry is earned on reference and the OpenAI operator lane, evidence/probe calibration is S-tier closed, host/tool reliability and affordance priors are earned as bounded host-scoped, capability-scoped score modifiers on `OfflineSupportPublication.host_reliability_prior` with a single-site six-tag `q_mem-host:*` surface and stale-negative reopen under fresh success, asymmetric error cost is earned as a bounded `RiskWeight` carrier whose CHECK/SEEK_CONTEXT activation shift is clipped inside `[0.05, 0.60]` with a `0.10` dead-band and productive-exploration gating, and the brake tonic EMA damps single-tick flips with a locked `rho = 0.60` decay and `tonic_pressure >= 0.35` enter gate while phasic spikes still flip immediately: inspect is live on cheap non-debt events, resume stays continuity-conditioned, posture truth is single-owned, the route state vector stays the bounded 6-axis geometry term while `visible_burden_sensitivity` remains a separate utility scalar, route truth stays bounded and non-sovereign, unchanged-condition repetition is taxed only at the exact-family level with bounded reopen, public feedback-window summaries reflect the just-realized step, family-local bounded probe limits surface as `unsupported` without leaking host-global unavailability across families, stream-only churn stays non-epistemic, live memory stays score-only and host-matched through explicit publication, live `Q_mem` stays zero on shipping and conformance default lanes, raw SQLite episodes stay support-side only, reliability priors bias score pricing only and never route, posture, selection, or brake law, Claude and Gemini remain shadow-proof only for reliability promotion, `risk_weight` biases CHECK/SEEK_CONTEXT activation threshold only and never routing, posture, selection, certification, or blockedness law, and `brake_tonic_history` persists the pressure tail across resume on all four host lanes with three-way backward-compat decoding.",
-    "The debt-drag-into-brake-and-route seam is the active focus from the executive-runtime roadmap: the shared runtime expectation ledger's resolution deficit is being connected to silent route/brake pressure so unsupported forward motion becomes more guarded while inspect, check, ask, and blocker-surfacing moves stay available. This is structural/conformance truth only; live behavior lift remains unearned until the OpenAI silent-control probe compares baseline, shaped, and clean controls."
+    "The executive-runtime-phase-5-readiness seam is the active focus from the executive-runtime roadmap: the shared expectation ledger and debt-control stack is being audited before paid OpenAI silent-control trials begin. This is evidence-accounting/conformance truth only; live behavior lift remains unearned, and the readiness document currently recommends a narrow remediation seam before the full seam-5 probe."
   ],
   "blocked_moves": [
     "Do not let archived docs or train notes act as live truth.",
@@ -1152,6 +1152,7 @@
     "docs/CORTEX_EXECUTIVE_RUNTIME_TRACKER.md",
     "docs/CORTEX_EXECUTIVE_RUNTIME_ROADMAP.md",
     "docs/CORTEX_EXECUTIVE_RUNTIME_PROGRAM_SPEC.md",
+    "docs/CORTEX_EXECUTIVE_RUNTIME_PHASE_5_READINESS.md",
     "docs/CORTEX_V2_CORE_2.md",
     "docs/CORTEX_V2_SRE_2.md",
     "docs/CORTEX_V2_AUX_2.md",

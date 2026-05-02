@@ -12,6 +12,8 @@ Active docs:
   point-A-to-point-B plan for reaching runtime executive-function behavior
 - [Cortex Executive Runtime Program Spec](CORTEX_EXECUTIVE_RUNTIME_PROGRAM_SPEC.md) —
   control-object, metric, and falsification spec for the first runtime program
+- [Cortex Executive Runtime Phase 5 Readiness](CORTEX_EXECUTIVE_RUNTIME_PHASE_5_READINESS.md) —
+  evidence-accounting gate before the OpenAI silent-control live probe
 - [Current Status](CORTEX_STATUS.md)
 - [CORTEX Core](CORTEX_V2_CORE_2.md)
 - [CORTEX SRE](CORTEX_V2_SRE_2.md)
