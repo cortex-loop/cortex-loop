@@ -17,6 +17,12 @@ CORTEX_DOC_PATH = REPO_ROOT / "docs" / "CORTEX.md"
 EXECUTIVE_RUNTIME_TRACKER_PATH = (
     REPO_ROOT / "docs" / "CORTEX_EXECUTIVE_RUNTIME_TRACKER.md"
 )
+EXECUTIVE_RUNTIME_ROADMAP_PATH = (
+    REPO_ROOT / "docs" / "CORTEX_EXECUTIVE_RUNTIME_ROADMAP.md"
+)
+EXECUTIVE_RUNTIME_PROGRAM_SPEC_PATH = (
+    REPO_ROOT / "docs" / "CORTEX_EXECUTIVE_RUNTIME_PROGRAM_SPEC.md"
+)
 README_PATH = REPO_ROOT / "README.md"
 DOCS_INDEX_PATH = REPO_ROOT / "docs" / "README.md"
 RUNTIME_CONTEXT_RUBRIC_PATH = REPO_ROOT / "docs" / "runtime_context" / "EVAL_RUBRIC.md"
@@ -323,6 +329,7 @@ def test_executive_runtime_tracker_keeps_product_goal_and_live_truths_visible() 
     text = _read(EXECUTIVE_RUNTIME_TRACKER_PATH)
 
     assert EXECUTIVE_RUNTIME_TRACKER_PATH.exists()
+    assert "docs/CORTEX_EXECUTIVE_RUNTIME_ROADMAP.md" in text
     assert "post-training runtime executive-function layer" in text
     assert "Cortex should shape the model's behavior at runtime" in text
     assert "Communication is only the model-visible edge of Cortex." in text
@@ -348,6 +355,63 @@ def test_executive_runtime_tracker_keeps_product_goal_and_live_truths_visible() 
     assert "AUX priors" in text
     assert "internal tags" in text
     assert "If the answer starts with \"which hook can we use?\"" in text
+
+
+def test_executive_runtime_roadmap_names_path_from_now_to_goal() -> None:
+    text = _read(EXECUTIVE_RUNTIME_ROADMAP_PATH)
+
+    assert EXECUTIVE_RUNTIME_ROADMAP_PATH.exists()
+    assert "docs/CORTEX_EXECUTIVE_RUNTIME_PROGRAM_SPEC.md" in text
+    assert "Point B: Product Goal" in text
+    assert "Point A: Current State" in text
+    assert "runtime executive-function layer for models" in text
+    assert "Cortex should shape the model's behavior at runtime" in text
+    assert "Model/host event happens" in text
+    assert "Phase 1: Runtime Expectation Debt" in text
+    assert "Phase 2: Debt Drag Into Brake And Route" in text
+    assert "Phase 3: Grounded Intervention Records" in text
+    assert "Phase 4: Claude Code Host Adapter From Runtime Law" in text
+    assert "Phase 5: AUX As Hidden Executive Bias" in text
+    assert "Phase 6: Cross-Host Graduation" in text
+    assert "Twelve-Seam Execution Contract" in text
+    assert "When the user asks to \"plan the next seam from 1 to 12,\" use this list." in text
+    assert "| 12 | Shipping decision and goal audit |" in text
+    assert "Cortex demonstrably makes model behavior more continuous" in text
+    assert "The plan reaches the goal only if seam 12 passes its audit." in text
+    assert "The next seam is seam 1" in text
+    assert "resolution_deficit" in text
+    assert "expectation ledger" in text
+    assert "not a Claude hook plugin" in text
+    assert "communication is not the whole" in text
+    assert "no AUX, no model-visible text" in text
+    assert "shipping truth" in text
+    assert "What baseline failure must reproduce?" in text
+
+
+def test_executive_runtime_program_spec_defines_control_objects_and_falsification() -> None:
+    text = _read(EXECUTIVE_RUNTIME_PROGRAM_SPEC_PATH)
+
+    assert EXECUTIVE_RUNTIME_PROGRAM_SPEC_PATH.exists()
+    assert "Program Claim" in text
+    assert "Formal Control Objects" in text
+    assert "`ForwardCommitment`" in text
+    assert "`ExpectationRecord`" in text
+    assert "`ExpectationLedger`" in text
+    assert "`ResolutionDeficitState`" in text
+    assert "`GoalDebtDrag`" in text
+    assert "`ControlPressure`" in text
+    assert "`InterventionDecision`" in text
+    assert "negative_prediction_error" in text
+    assert "control_pressure" in text
+    assert "Control-Law Invariants" in text
+    assert "Evaluation Suite" in text
+    assert "Minimum Thresholds" in text
+    assert "Falsification Tests" in text
+    assert "Implementation Dependency Graph" in text
+    assert "First Implementation Slice" in text
+    assert "First Live Probe" in text
+    assert "not \"Cortex can produce better warning messages.\"" in text
+    assert "The first program proof is silent executive control." in text
 
 
 def test_math_to_code_map_schema() -> None:
@@ -449,6 +513,8 @@ def test_public_docs_point_to_status_and_keep_archive_out_of_the_front_door() ->
     assert "docs/CORTEX.md" in readme
     assert "Current Status" in docs_index
     assert "CORTEX_EXECUTIVE_RUNTIME_TRACKER.md" in docs_index
+    assert "CORTEX_EXECUTIVE_RUNTIME_ROADMAP.md" in docs_index
+    assert "CORTEX_EXECUTIVE_RUNTIME_PROGRAM_SPEC.md" in docs_index
     assert "archive/" in docs_index
     assert "CORTEX.md" in docs_index
     assert "internal/MISSION_REFLECTION_CONTRACT.md" in docs_index

@@ -8,6 +8,10 @@ evidence. It is subordinate to `docs/CORTEX.md` for identity and to
 disagrees with either surface, the tracker is stale and must be corrected; it
 is not a second registry.
 
+The point-A-to-point-B execution plan lives in
+`docs/CORTEX_EXECUTIVE_RUNTIME_ROADMAP.md`. This tracker is the scoreboard;
+the roadmap is the ordered plan for reaching the runtime executive goal.
+
 ## North Star
 
 Cortex is a post-training runtime executive-function layer around models. It
