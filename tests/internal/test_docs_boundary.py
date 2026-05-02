@@ -17,6 +17,9 @@ CORTEX_DOC_PATH = REPO_ROOT / "docs" / "CORTEX.md"
 EXECUTIVE_RUNTIME_TRACKER_PATH = (
     REPO_ROOT / "docs" / "CORTEX_EXECUTIVE_RUNTIME_TRACKER.md"
 )
+EXECUTIVE_RUNTIME_ROADMAP_PATH = (
+    REPO_ROOT / "docs" / "CORTEX_EXECUTIVE_RUNTIME_ROADMAP.md"
+)
 README_PATH = REPO_ROOT / "README.md"
 DOCS_INDEX_PATH = REPO_ROOT / "docs" / "README.md"
 RUNTIME_CONTEXT_RUBRIC_PATH = REPO_ROOT / "docs" / "runtime_context" / "EVAL_RUBRIC.md"
@@ -323,6 +326,7 @@ def test_executive_runtime_tracker_keeps_product_goal_and_live_truths_visible() 
     text = _read(EXECUTIVE_RUNTIME_TRACKER_PATH)
 
     assert EXECUTIVE_RUNTIME_TRACKER_PATH.exists()
+    assert "docs/CORTEX_EXECUTIVE_RUNTIME_ROADMAP.md" in text
     assert "post-training runtime executive-function layer" in text
     assert "Cortex should shape the model's behavior at runtime" in text
     assert "Communication is only the model-visible edge of Cortex." in text
@@ -348,6 +352,30 @@ def test_executive_runtime_tracker_keeps_product_goal_and_live_truths_visible() 
     assert "AUX priors" in text
     assert "internal tags" in text
     assert "If the answer starts with \"which hook can we use?\"" in text
+
+
+def test_executive_runtime_roadmap_names_path_from_now_to_goal() -> None:
+    text = _read(EXECUTIVE_RUNTIME_ROADMAP_PATH)
+
+    assert EXECUTIVE_RUNTIME_ROADMAP_PATH.exists()
+    assert "Point B: Product Goal" in text
+    assert "Point A: Current State" in text
+    assert "runtime executive-function layer for models" in text
+    assert "Cortex should shape the model's behavior at runtime" in text
+    assert "Model/host event happens" in text
+    assert "Phase 1: Runtime Expectation Debt" in text
+    assert "Phase 2: Debt Drag Into Brake And Route" in text
+    assert "Phase 3: Grounded Intervention Records" in text
+    assert "Phase 4: Claude Code Host Adapter From Runtime Law" in text
+    assert "Phase 5: AUX As Hidden Executive Bias" in text
+    assert "Phase 6: Cross-Host Graduation" in text
+    assert "resolution_deficit" in text
+    assert "expectation ledger" in text
+    assert "not a Claude hook plugin" in text
+    assert "communication is not the whole" in text
+    assert "no AUX, no model-visible text" in text
+    assert "shipping truth" in text
+    assert "What baseline failure must reproduce?" in text
 
 
 def test_math_to_code_map_schema() -> None:
@@ -449,6 +477,7 @@ def test_public_docs_point_to_status_and_keep_archive_out_of_the_front_door() ->
     assert "docs/CORTEX.md" in readme
     assert "Current Status" in docs_index
     assert "CORTEX_EXECUTIVE_RUNTIME_TRACKER.md" in docs_index
+    assert "CORTEX_EXECUTIVE_RUNTIME_ROADMAP.md" in docs_index
     assert "archive/" in docs_index
     assert "CORTEX.md" in docs_index
     assert "internal/MISSION_REFLECTION_CONTRACT.md" in docs_index

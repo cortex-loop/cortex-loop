@@ -8,6 +8,8 @@ Active docs:
 - [CORTEX](CORTEX.md) — canonical narrative authority
 - [Cortex Executive Runtime Tracker](CORTEX_EXECUTIVE_RUNTIME_TRACKER.md) —
   product planning tracker for live-model executive-function achievement
+- [Cortex Executive Runtime Roadmap](CORTEX_EXECUTIVE_RUNTIME_ROADMAP.md) —
+  point-A-to-point-B plan for reaching runtime executive-function behavior
 - [Current Status](CORTEX_STATUS.md)
 - [CORTEX Core](CORTEX_V2_CORE_2.md)
 - [CORTEX SRE](CORTEX_V2_SRE_2.md)
