@@ -31,6 +31,13 @@ valid Cortex behavior when they improve or protect the next model step. The
 model should see only the behavioral consequence that belongs in its task
 state, never the internal executive machinery.
 
+When the behavioral consequence is model-visible text, it must obey the
+Model-Visible Cortex Output Law in `docs/CORTEX.md`: the text should not sound
+like an outside person, plugin, monitor, or "Cortex says" authority. It should
+make a claim/evidence/obligation/next-move constraint explicit inside the
+model's own task frame, with first-person self-check reserved for same-thread
+resumed turns that have a clear prior-act anchor.
+
 The target loop is:
 
 ```text

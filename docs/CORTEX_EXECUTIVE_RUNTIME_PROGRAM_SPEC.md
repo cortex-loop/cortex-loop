@@ -279,6 +279,26 @@ These invariants are required before live testing:
 8. Tonic/debt alone does not latch.
 9. Visible intervention requires a grounded anchor.
 10. Internal state never leaks model-visibly.
+11. Model-visible Cortex output obeys the Model-Visible Cortex Output Law:
+    it is an executive constraint in the model's task frame, not an outside
+    person, plugin, or policy voice commenting on the model.
+
+### Model-Visible Output Contract
+
+Any implementation that sends Cortex-derived text to a model must prove these
+properties structurally before live trials:
+
+- the text is generated from claim/evidence/obligation/next-move structure,
+  not a fixture-specific sentence;
+- it contains no internal Cortex labels, debt/brake/AUX terms, schema names,
+  hook names, route tags, session IDs, or hidden verifier answers;
+- it does not use "Cortex says", third-agent voice, or generic second-person
+  advice;
+- same-thread resumed turns may use first-person self-check only with a
+  prior-act anchor and truthful self-monitoring content;
+- attached-context surfaces use impersonal executive-constraint language;
+- tests include at least one different task family or clean control so the
+  output rule is not optimized only to the fixture that motivated the seam.
 
 ## Evaluation Suite
 
