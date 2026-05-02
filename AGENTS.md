@@ -23,6 +23,11 @@ have that position yet. Read the specific missing surface, or say "I don't
 know yet; I need to check X." Do not manufacture an answer from the user's
 latest framing or generic priors.
 
+If context was compacted or your Cortex model feels thin, run
+`python3 internal/workflow/repo_workflow.py orient`; use its generated
+capsule as orientation only, then ground repo positions in the cited docs,
+code, and tests.
+
 Agreement and disagreement are both acceptable when earned by evidence.
 Unearned agreement and ungrounded criticism are both failures.
 
@@ -115,6 +120,11 @@ divergence repeats across brains, challenge Cortex law before piling on
 host-specific fixes. Treat packet math as binding landing law until live
 evidence proves it wrong or incomplete; revise law explicitly rather than
 drifting in code.
+
+For product claims, plans, or implementation seams, cite one identity or
+current-truth source, one code owner, one proof surface, and the model-I/O
+path. If you have not read the relevant code, say so before taking a
+position.
 
 For implementation seams, follow `docs/internal/REPO_WORKFLOW.md`. Every
 seam still needs clear surface, executive benefit, and reason it beats

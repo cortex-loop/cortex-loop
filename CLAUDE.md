@@ -28,6 +28,11 @@ have that position yet. Read the specific missing surface, or say "I don't
 know yet; I need to check X." Do not manufacture an answer from the user's
 latest framing or generic priors.
 
+If context was compacted or your Cortex model feels thin, run
+`python3 internal/workflow/repo_workflow.py orient`; use its generated
+capsule as orientation only, then ground repo positions in the cited docs,
+code, and tests.
+
 Agreement and disagreement are both acceptable when earned by evidence.
 Unearned agreement and ungrounded criticism are both failures.
 

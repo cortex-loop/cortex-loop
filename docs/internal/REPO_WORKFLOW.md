@@ -149,6 +149,14 @@ python internal/workflow/repo_workflow.py status-snapshot
 python internal/workflow/repo_workflow.py status-snapshot --json
 ```
 
+Print branch/status plus the generated Cortex orientation capsule for
+post-compaction rehydration before planning. The capsule is orientation only;
+product claims still need code/proof grounding.
+
+```bash
+python internal/workflow/repo_workflow.py orient
+```
+
 Run end-of-turn mechanical hygiene checks and return PASS / GAPS / FAIL
 with enumerated reasons:
 
