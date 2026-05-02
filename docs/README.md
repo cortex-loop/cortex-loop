@@ -6,6 +6,8 @@ This directory index is product-first and single-truth-first.
 
 Active docs:
 - [CORTEX](CORTEX.md) — canonical narrative authority
+- [Cortex Executive Runtime Tracker](CORTEX_EXECUTIVE_RUNTIME_TRACKER.md) —
+  product planning tracker for live-model executive-function achievement
 - [Current Status](CORTEX_STATUS.md)
 - [CORTEX Core](CORTEX_V2_CORE_2.md)
 - [CORTEX SRE](CORTEX_V2_SRE_2.md)

@@ -14,6 +14,9 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 AGENTS_PATH = REPO_ROOT / "AGENTS.md"
 CLAUDE_PATH = REPO_ROOT / "CLAUDE.md"
 CORTEX_DOC_PATH = REPO_ROOT / "docs" / "CORTEX.md"
+EXECUTIVE_RUNTIME_TRACKER_PATH = (
+    REPO_ROOT / "docs" / "CORTEX_EXECUTIVE_RUNTIME_TRACKER.md"
+)
 README_PATH = REPO_ROOT / "README.md"
 DOCS_INDEX_PATH = REPO_ROOT / "docs" / "README.md"
 RUNTIME_CONTEXT_RUBRIC_PATH = REPO_ROOT / "docs" / "runtime_context" / "EVAL_RUBRIC.md"
@@ -316,6 +319,37 @@ def test_generated_cortex_doc_is_current() -> None:
     assert CORTEX_DOC_PATH.exists()
 
 
+def test_executive_runtime_tracker_keeps_product_goal_and_live_truths_visible() -> None:
+    text = _read(EXECUTIVE_RUNTIME_TRACKER_PATH)
+
+    assert EXECUTIVE_RUNTIME_TRACKER_PATH.exists()
+    assert "post-training runtime executive-function layer" in text
+    assert "Cortex should shape the model's behavior at runtime" in text
+    assert "Communication is only the model-visible edge of Cortex." in text
+    assert "model/host event" in text
+    assert "task-state and executive-risk understanding" in text
+    assert "improved next model behavior" in text
+    assert "Live-Model Achievement Matrix" in text
+    assert "Live Evidence Scoreboard" in text
+    assert "Cortex truth" in text
+    assert "brain-wiring truth" in text
+    assert "conformance truth" in text
+    assert "shipping truth" in text
+    assert "OpenAI remains shipping truth through `openai:operator_cli`" in text
+    assert "Claude Code Desktop, Claude Code headless CLI, and individual hook findings are recon only" in text
+    assert "Stop` closure pressure has narrow behavior-lift evidence" in text
+    assert "`PreToolUse` and `UserPromptSubmit` delivery are real" in text
+    assert "`PostToolUseFailure` and feedback persistence are real" in text
+    assert "resolution deficit" in text
+    assert "expectation debt" in text
+    assert "goal-debt drag" in text
+    assert "route pricing" in text
+    assert "brake EMA" in text
+    assert "AUX priors" in text
+    assert "internal tags" in text
+    assert "If the answer starts with \"which hook can we use?\"" in text
+
+
 def test_math_to_code_map_schema() -> None:
     status = _load_status()
     math_map = status.get("math_to_code_map")
@@ -414,6 +448,7 @@ def test_public_docs_point_to_status_and_keep_archive_out_of_the_front_door() ->
     assert "OpenAI product runtime on the CLI lane, with the direct service kept as a non-default backup surface" in readme
     assert "docs/CORTEX.md" in readme
     assert "Current Status" in docs_index
+    assert "CORTEX_EXECUTIVE_RUNTIME_TRACKER.md" in docs_index
     assert "archive/" in docs_index
     assert "CORTEX.md" in docs_index
     assert "internal/MISSION_REFLECTION_CONTRACT.md" in docs_index
@@ -439,6 +474,7 @@ def test_public_docs_point_to_status_and_keep_archive_out_of_the_front_door() ->
     # CORTEX.md content anchors the previously-fragmented charter and
     # boundary identity material in one canonical surface.
     assert "executive-function layer that wraps a model after" in cortex_doc
+    assert "docs/CORTEX_EXECUTIVE_RUNTIME_TRACKER.md" in cortex_doc
     assert "internal/truth/cortex_status.json" in cortex_doc
     assert "docs/cortex_plugin/DESIGN.md" in cortex_doc
     assert "docs/cortex_plugin/ADAPTER.md" in cortex_doc
