@@ -64,5 +64,8 @@ Active docs:
 - [Cortex OpenAI Operator Debt-Control Enactment](recon/cortex_openai_operator_debt_control_enactment.md) —
   Gate 0 remediation evidence that the OpenAI host adapter now enacts SRE
   debt-control decisions before the Codex CLI runner
+- [Cortex OpenAI Operator Silent-Control Live Probe Retry](recon/cortex_openai_operator_silent_control_live_probe_retry.md) —
+  live OpenAI operator retry evidence: Gate 0 passed, but the accepted baseline
+  gate did not reproduce the target failures, so shaped trials did not run
 
 Historical runtime, lab, and governance material now lives under [archive/](archive/).

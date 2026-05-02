@@ -57,7 +57,7 @@ Subsystem boundaries: Core owns commitment/provenance/dispatch truth; SRE owns r
 
 Grounding rule: any product claim, plan, or implementation seam must name identity/current truth, a code owner, a proof surface, and the model-I/O path. If the relevant code was not read, say so before taking a position.
 
-Current train: `openai-operator-debt-control-enactment`. Next train: `silent-control-live-probe-on-openai-retry`. Shipping default: `openai:operator_cli`. Keep Cortex truth, brain-wiring truth, conformance truth, shipping truth, and live behavior-lift claims separate; structural proof alone does not earn model-output lift.
+Current train: `silent-control-live-probe-on-openai-retry`. Next train: `silent-control-live-fixture-refresh`. Shipping default: `openai:operator_cli`. Keep Cortex truth, brain-wiring truth, conformance truth, shipping truth, and live behavior-lift claims separate; structural proof alone does not earn model-output lift.
 
 ## Live Product Truth
 
@@ -67,9 +67,9 @@ Current train: `openai-operator-debt-control-enactment`. Next train: `silent-con
 
 ## Current Focus
 
-- Current tracked train: `openai-operator-debt-control-enactment`
-- Active quality/risk focus: The OpenAI operator host adapter now consumes SRE route, policy, and debt-control payloads and enacts them as prompt-independent operator actions before the Codex CLI runner: Gate 0 passes structurally through a shaped resume-recheck action while neutral uses a single invoke, initial prompt hashes match, and internal debt/brake vocabulary stays out of model-visible fields. This earns product host-adapter and conformance truth only; no live behavior-lift or shipping promotion is claimed.
-- Next product train after the current focus: `silent-control-live-probe-on-openai-retry`
+- Current tracked train: `silent-control-live-probe-on-openai-retry`
+- Active quality/risk focus: The OpenAI operator silent-control retry ran with Gate 0 enactment intact: shaped debt still produces a model-bound resume-recheck action while neutral uses a single invoke and initial prompt hashes match. The accepted live baseline gate on `gpt-5.3-codex` did not reproduce unsupported-verification, false-closure, or candidate-forward-commit failures in 3/3 trials per family, so no paired shaped matrix ran. This earns live fixture-readiness evidence only; no silent-control behavior lift or shipping promotion is claimed.
+- Next product train after the current focus: `silent-control-live-fixture-refresh`
 
 ## Bio-To-Code Matrix
 
@@ -172,13 +172,13 @@ Workflow gates marked `required` are contractual gates checked by `repo_workflow
 
 ## Next Product Train
 
-- Train: `silent-control-live-probe-on-openai-retry`
+- Train: `silent-control-live-fixture-refresh`
 - Surface: product
-- Executive benefit: Run the paired OpenAI operator silent-control live probe now that the host adapter can enact SRE debt-control decisions without adding model-visible warning text.
-- Why now: The enactment remediation closes the prior Gate 0 coupling gap structurally: shaped debt can now produce a model-bound resume-recheck action while neutral stays a single invoke, making live trials interpretable.
-- Primary metric: Paired OpenAI operator trials show reduced premature closure and improved evidence recovery or goal continuity under shaped silent control, with matched clean controls showing no material slowdown or overblock.
-- Guardrail: Do not add grounded intervention records, prompt warning text, AUX behavior, Claude/Gemini parity, API/service spend, or shipping promotion; the retry must remain a subscription/operator-lane behavior probe.
-- Kill rule: Stop or downgrade to remediation if Gate 0 regresses, if baseline failures do not reproduce, if shaped behavior is merely slower, if clean controls accumulate pressure, or if diagnostics cannot trace behavior changes to host-adapter enactment.
+- Executive benefit: Refresh the OpenAI operator live failure fixtures so unsupported forward motion reproduces before shaped silent-control trials are attempted again.
+- Why now: The retry proved Gate 0 enactment still works but the current baseline fixtures are too easy for `gpt-5.3-codex`; without stronger reproduced failures, paired shaped trials cannot test whether silent control improves model behavior.
+- Primary metric: At least one primary live fixture family reproduces the target baseline failure in at least 2/3 OpenAI operator trials while clean controls remain non-failing and scorer rules do not misclassify honest partial progress.
+- Guardrail: Do not change runtime law, add prompt warning text, visible intervention records, AUX behavior, Claude/Gemini parity, API/service spend, or shipping promotion; this seam prepares evidence quality only.
+- Kill rule: Stop if stronger fixtures require artificial prompt traps, internal Cortex vocabulary, prompt-warning leakage, or scorer rules that classify honest incomplete work as failure.
 
 ## Research Lines Under Evaluation
 
@@ -189,7 +189,7 @@ Workflow gates marked `required` are contractual gates checked by `repo_workflow
 - Keep the bounded audit surface compact and truthful on the shipped lane: selected versus realized family, uncertainty, threshold, delta, verification, and probe truth only.
 - Keep the no-spend live evidence current and explicit: fast conformance is green, the deeper directionality and host-native watchlists are refreshed, and non-shipping auth or env caveats must stay explicit instead of silently stale.
 - Keep posture, AUX memory, host-reliability, and asymmetric-cost law explicit and removable now that posture-sensitive online control is S-tier closed, anti-thrash is landed, bounded live support-memory re-entry is earned on reference and the OpenAI operator lane, evidence/probe calibration is S-tier closed, host/tool reliability and affordance priors are earned as bounded host-scoped, capability-scoped score modifiers on `OfflineSupportPublication.host_reliability_prior` with a single-site six-tag `q_mem-host:*` surface and stale-negative reopen under fresh success, asymmetric error cost is earned as a bounded `RiskWeight` carrier whose CHECK/SEEK_CONTEXT activation shift is clipped inside `[0.05, 0.60]` with a `0.10` dead-band and productive-exploration gating, and the brake tonic EMA damps single-tick flips with a locked `rho = 0.60` decay and `tonic_pressure >= 0.35` enter gate while phasic spikes still flip immediately: inspect is live on cheap non-debt events, resume stays continuity-conditioned, posture truth is single-owned, the route state vector stays the bounded 6-axis geometry term while `visible_burden_sensitivity` remains a separate utility scalar, route truth stays bounded and non-sovereign, unchanged-condition repetition is taxed only at the exact-family level with bounded reopen, public feedback-window summaries reflect the just-realized step, family-local bounded probe limits surface as `unsupported` without leaking host-global unavailability across families, stream-only churn stays non-epistemic, live memory stays score-only and host-matched through explicit publication, live `Q_mem` stays zero on shipping and conformance default lanes, raw SQLite episodes stay support-side only, reliability priors bias score pricing only and never route, posture, selection, or brake law, Claude and Gemini remain shadow-proof only for reliability promotion, `risk_weight` biases CHECK/SEEK_CONTEXT activation threshold only and never routing, posture, selection, certification, or blockedness law, and `brake_tonic_history` persists the pressure tail across resume on all four host lanes with three-way backward-compat decoding.
-- The openai-operator-debt-control-enactment seam closes the prior Gate 0 coupling gap structurally: OpenAI host-adapter enactment consumes SRE route/policy/debt payloads and produces prompt-independent operator actions, with shaped truth-gap debt producing resume-recheck while neutral remains a single invoke. The next product move is silent-control-live-probe-on-openai-retry, a paired subscription/operator-lane behavior probe with no visible warnings and no shipping promotion.
+- The silent-control-live-probe-on-openai-retry seam preserved Gate 0 enactment and ran the OpenAI operator baseline gate, but the accepted `gpt-5.3-codex` live run did not reproduce any primary failure family in 3/3 baseline trials per family. The next product move is silent-control-live-fixture-refresh: strengthen or select fixtures that genuinely reproduce unsupported forward motion before retrying paired shaped silent-control trials.
 
 ## Canonical Proof
 
@@ -287,3 +287,4 @@ Workflow gates marked `required` are contractual gates checked by `repo_workflow
 - `docs/recon/claude_code_cortex_userpromptsubmit_verified_work_probe.md`
 - `docs/recon/cortex_openai_operator_silent_control_live_probe.md`
 - `docs/recon/cortex_openai_operator_debt_control_enactment.md`
+- `docs/recon/cortex_openai_operator_silent_control_live_probe_retry.md`
