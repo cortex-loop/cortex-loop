@@ -9,6 +9,8 @@ import sys
 import tomllib
 from pathlib import Path
 
+from internal.truth.orientation import MAX_ORIENTATION_WORDS
+
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 AGENTS_PATH = REPO_ROOT / "AGENTS.md"
@@ -153,6 +155,11 @@ have that position yet. Read the specific missing surface, or say "I don't
 know yet; I need to check X." Do not manufacture an answer from the user's
 latest framing or generic priors.
 
+If context was compacted or your Cortex model feels thin, run
+`python3 internal/workflow/repo_workflow.py orient`; use its generated
+capsule as orientation only, then ground repo positions in the cited docs,
+code, and tests.
+
 Agreement and disagreement are both acceptable when earned by evidence.
 Unearned agreement and ungrounded criticism are both failures."""
 
@@ -208,6 +215,10 @@ def test_agents_records_mission_lock_and_single_truth_bootstrap() -> None:
     assert "The substantive answer to the user's request is the primary deliverable." in text
     assert "Bootstrap reads are preparation, not response content." in text
     assert "The operator-split note belongs in turns that involve user empirical work" in text
+    assert "repo_workflow.py orient" in text
+    assert "generated\ncapsule as orientation only" in text
+    assert "For product claims, plans, or implementation seams" in text
+    assert "model-I/O\npath" in text
     # Authority surfaces named including CORTEX.md as narrative authority.
     assert "docs/CORTEX.md" in text
     assert "internal/truth/cortex_status.json" in text
@@ -272,9 +283,45 @@ def test_claude_md_carries_briefing_and_redirects_to_agents() -> None:
     assert "docs/CORTEX_STATUS.md" in text
     assert "git branch --show-current" in text
     assert "git status --short --untracked-files=all" in text
+    assert "repo_workflow.py orient" in text
+    assert "generated\ncapsule as orientation only" in text
     # No anti-drift duplication; CLAUDE.md does not own anti-drift rules.
     assert "## Anti-Drift" not in text
     assert "PHI_MINIFY" not in text
+
+
+def test_generated_orientation_capsule_stays_compact_and_subordinate() -> None:
+    text = _read(STATUS_DOC_PATH)
+    status = _load_status()
+    start = text.index("## Cortex Orientation Capsule")
+    end = text.index("## Live Product Truth")
+    capsule = text[start:end]
+    words = [part for part in capsule.replace("`", "").split() if part.strip()]
+
+    assert len(words) <= MAX_ORIENTATION_WORDS
+    assert "Generated orientation only" in capsule
+    assert "authority remains scoped" in capsule
+    assert "docs/CORTEX.md" in capsule
+    assert "internal/truth/cortex_status.json" in capsule
+    assert "post-training runtime executive-function layer" in capsule
+    assert "not a plugin, translation layer, monitor, middleware pile" in capsule
+    assert "Target loop: model/host event -> task-state and executive-risk understanding" in capsule
+    assert "Grounding rule:" in capsule
+    assert "model-I/O path" in capsule
+    assert "structural proof alone does not earn model-output lift" in capsule
+    assert "Core owns" in capsule
+    assert "SRE owns" in capsule
+    assert "AUX owns" in capsule
+    assert "host adapters consume" in capsule
+    assert "lab, eval, recon, archive, and workflow surfaces" in capsule
+    assert f"Current train: `{status['work_today']['slug']}`" in capsule
+    assert f"Next train: `{status['next_product_train']['slug']}`" in capsule
+    assert f"Shipping default: `{status['conformance_summary']['shipping_default']}`" in capsule
+    for entry in status["bio_to_code_matrix"]:
+        assert entry["skill"] in capsule
+    assert "Claude hook" not in capsule
+    assert "Claude Code" not in capsule
+    assert "client" not in capsule.lower()
 
 
 def test_cortex_doc_is_canonical_narrative_with_required_sections() -> None:

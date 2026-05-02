@@ -1321,6 +1321,29 @@ def test_status_snapshot_emits_markdown_format(
     assert "▌" not in out
 
 
+def test_orient_emits_status_and_generated_capsule(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    repo, _remote, module = _prepare_repo(tmp_path, monkeypatch)
+    _seed_registry(repo)
+
+    module.cmd_orient()
+    out = capsys.readouterr().out
+
+    assert "## Cortex Orientation" in out
+    assert "| Field | Value |" in out
+    assert "| **Branch** | `main` |" in out
+    assert "| **Worktree** | clean |" in out
+    assert "| **Current train** | `active-train` |" in out
+    assert "| **Next train** | `queued-train` |" in out
+    assert "## Cortex Orientation Capsule" in out
+    assert "Generated orientation only" in out
+    assert "Truth-preserving commitments" in out
+    assert "Grounding rule:" in out
+    assert "model-I/O path" in out
+    assert "structural proof alone does not earn model-output lift" in out
+
+
 def test_status_snapshot_flags_dirty_main(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:

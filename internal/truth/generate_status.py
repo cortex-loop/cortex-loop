@@ -10,6 +10,7 @@ ROOT = Path(__file__).resolve().parents[2]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
+from internal.truth.orientation import render_orientation_capsule
 from internal.truth.status import STATUS_DOC, load_status
 
 
@@ -132,6 +133,8 @@ def render_status(data: dict[str, object]) -> str:
     lines.extend(f"- {item}" for item in identity["answering_stance"])
     lines.extend(
         [
+            "",
+            render_orientation_capsule(data),
             "",
             "## Live Product Truth",
             "",

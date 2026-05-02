@@ -43,6 +43,22 @@ Answering stance:
 - When describing Cortex, lead with shipping truth, conformance truth, the current train, and the active quality/risk focus. Surface the executive-completion denominator only on explicit denominator or progress-accounting questions.
 - Always distinguish Cortex truth, shipping truth, conformance truth, and the current train.
 
+## Cortex Orientation Capsule
+
+_Generated orientation only; authority remains scoped to `docs/CORTEX.md`, the V2 packet docs, `internal/truth/cortex_status.json`, and code/proof surfaces._
+
+Cortex is a post-training runtime executive-function layer around models and CLI hosts. It is not a plugin, translation layer, monitor, middleware pile, or post-training replacement.
+
+Target loop: model/host event -> task-state and executive-risk understanding -> intervention decision -> control mode -> better next model behavior. Valid control modes include silence, route, degrade, block, preserve, recheck, ask, or grounded visible intervention when a model-integrable anchor exists.
+
+Capability families: Truth-preserving commitments and bounded certification; Bounded correction and verified-work preservation; Uncertainty handling and brake; Branch continuity, suspend/resume, and truthful closure; Intervention pricing versus neutrality; Blocker surfacing and goal-debt management; Multi-host executive continuity; Offline consolidation and support geometry.
+
+Subsystem boundaries: Core owns commitment/provenance/dispatch truth; SRE owns route, brake, expectation debt, goal debt, continuity, and policy pressure; AUX owns removable publication-only support priors; host adapters consume Core/SRE decisions in host-native I/O; lab, eval, recon, archive, and workflow surfaces prove or preserve evidence but are not product identity.
+
+Grounding rule: any product claim, plan, or implementation seam must name identity/current truth, a code owner, a proof surface, and the model-I/O path. If the relevant code was not read, say so before taking a position.
+
+Current train: `openai-operator-debt-control-enactment`. Next train: `silent-control-live-probe-on-openai-retry`. Shipping default: `openai:operator_cli`. Keep Cortex truth, brain-wiring truth, conformance truth, shipping truth, and live behavior-lift claims separate; structural proof alone does not earn model-output lift.
+
 ## Live Product Truth
 
 - Shipping default: `openai:operator_cli`

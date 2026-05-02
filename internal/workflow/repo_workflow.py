@@ -19,6 +19,7 @@ if str(DEFAULT_ROOT) not in sys.path:
     sys.path.insert(0, str(DEFAULT_ROOT))
 
 from internal.closeout import contract as closeout_contract
+from internal.truth.orientation import render_orientation_capsule
 from internal.workflow import mission_reflection
 
 MANAGED_SESSION_AGENTS = ("codex", "claude", "maint")
@@ -70,6 +71,11 @@ def _root() -> Path:
     if configured:
         return Path(configured).resolve()
     return DEFAULT_ROOT
+
+
+def _load_status_for_root() -> dict[str, object]:
+    status_path = _root() / "internal" / "truth" / "cortex_status.json"
+    return json.loads(status_path.read_text(encoding="utf-8"))
 
 
 def _run(cmd: list[str], *, cwd: Path | None = None) -> None:
@@ -1488,6 +1494,27 @@ def cmd_status_snapshot(emit_json: bool) -> int:
     return 0
 
 
+def cmd_orient() -> int:
+    snapshot = _status_snapshot_payload()
+    print("## Cortex Orientation")
+    print("")
+    print("| Field | Value |")
+    print("|---|---|")
+    print(f"| **Branch** | `{snapshot['branch']}` |")
+    print(f"| **Worktree** | {snapshot['worktree']} |")
+    print(f"| **Current train** | `{snapshot['work_today_slug']}` |")
+    print(f"| **Next train** | `{snapshot['next_train_slug']}` |")
+    drift = snapshot.get("drift_signals", [])
+    if drift:
+        drift_text = "; ".join(str(item) for item in drift)
+    else:
+        drift_text = "none"
+    print(f"| **Drift signals** | {drift_text} |")
+    print("")
+    print(render_orientation_capsule(_load_status_for_root()))
+    return 0
+
+
 def _reflection_check_payload() -> dict[str, object]:
     """Run all reflection-check gates and return PASS/GAPS/FAIL with reasons."""
     snapshot = _status_snapshot_payload()
@@ -2223,6 +2250,13 @@ def main(argv: list[str] | None = None) -> int:
         dest="snapshot_json",
         help="Emit JSON instead of human-readable text.",
     )
+    subparsers.add_parser(
+        "orient",
+        help=(
+            "Print branch/status plus the generated Cortex orientation capsule "
+            "for post-compaction rehydration before planning."
+        ),
+    )
 
     reflection_parser = subparsers.add_parser(
         "reflection-check",
@@ -2328,6 +2362,8 @@ def main(argv: list[str] | None = None) -> int:
         return cmd_preserve_worktree(args.slug)
     if args.command == "status-snapshot":
         return cmd_status_snapshot(args.snapshot_json)
+    if args.command == "orient":
+        return cmd_orient()
     if args.command == "reflection-check":
         return cmd_reflection_check(args.reflection_json)
     if args.command == "grid":
