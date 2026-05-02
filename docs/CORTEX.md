@@ -554,6 +554,14 @@ diverged on pending-goal because headless refused the false closure in baseline
 and treated the shaped Cortex hook framing skeptically. That finding supports
 lower-cost Stop-specific iteration in headless mode with Mac app validation
 reserved for final behavior claims.
+`docs/recon/claude_code_cortex_bridge_translation_headless_probe.md` preserves
+the later headless translated-Stop evidence from the retired renderer-first
+branch: isolated `claude -p` runs confirmed plugin-layout and global-hook
+setup constraints, translated evidence-degradation Stop repaired 3/3 scored
+headless false-closure trials, pending-goal remained unscored because headless
+baseline refused the false claim, and the finding stays scoped to translated
+`Stop x closure pressure` evidence rather than shipping truth or broad hook
+parity.
 `docs/recon/claude_code_cortex_mac_pending_goal_divergence_retest.md` is the
 Mac app retest of that pending-goal divergence: two fresh baselines reproduced
 false `MIGRATION COMPLETE` closure, but raw internal Stop wording repaired only

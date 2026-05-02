@@ -158,9 +158,11 @@ strange-loop integration problem. Both moves are legitimate.
 
 ## Prior Local Headless Translation Evidence Excerpt
 
-The following excerpt is embedded from the local checkpoint branch
-`codex/20260501-142219-claude-code-bridge-translation-headless-harness` because this dossier branch is intentionally separate and does
-not merge that implementation seam.
+The full tracked report now lives at
+`docs/recon/claude_code_cortex_bridge_translation_headless_probe.md`. The
+following excerpt was originally preserved from the local checkpoint branch
+`codex/20260501-142219-claude-code-bridge-translation-headless-harness`
+without merging that branch's renderer-first implementation seam.
 
 Everything in the excerpt is historical evidence. The continuation capsule,
 branch name, plugin id, data path, and next command are quoted from the prior

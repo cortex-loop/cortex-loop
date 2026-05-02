@@ -75,6 +75,12 @@ CLAUDE_CODE_CORTEX_HEADLESS_CLI_EQUIVALENCE_PROBE_PATH = (
     / "recon"
     / "claude_code_cortex_headless_cli_equivalence_probe.md"
 )
+CLAUDE_CODE_CORTEX_BRIDGE_TRANSLATION_HEADLESS_PROBE_PATH = (
+    REPO_ROOT
+    / "docs"
+    / "recon"
+    / "claude_code_cortex_bridge_translation_headless_probe.md"
+)
 CLAUDE_CODE_CORTEX_MAC_PENDING_GOAL_DIVERGENCE_RETEST_PATH = (
     REPO_ROOT
     / "docs"
@@ -534,6 +540,7 @@ def test_public_docs_point_to_status_and_keep_archive_out_of_the_front_door() ->
     assert "recon/claude_code_cortex_runtime_context_connectivity_probe.md" in docs_index
     assert "recon/claude_code_cortex_stop_closure_connectivity_probe.md" in docs_index
     assert "recon/claude_code_cortex_headless_cli_equivalence_probe.md" in docs_index
+    assert "recon/claude_code_cortex_bridge_translation_headless_probe.md" in docs_index
     assert "recon/claude_code_cortex_mac_pending_goal_divergence_retest.md" in docs_index
     assert "recon/claude_code_cortex_posttool_failure_to_stop_loop_probe.md" in docs_index
     assert "recon/claude_code_cortex_userpromptsubmit_verified_work_probe.md" in docs_index
@@ -554,6 +561,7 @@ def test_public_docs_point_to_status_and_keep_archive_out_of_the_front_door() ->
     assert "docs/recon/claude_code_cortex_runtime_context_connectivity_probe.md" in cortex_doc
     assert "docs/recon/claude_code_cortex_stop_closure_connectivity_probe.md" in cortex_doc
     assert "docs/recon/claude_code_cortex_headless_cli_equivalence_probe.md" in cortex_doc
+    assert "docs/recon/claude_code_cortex_bridge_translation_headless_probe.md" in cortex_doc
     assert "docs/recon/claude_code_cortex_mac_pending_goal_divergence_retest.md" in cortex_doc
     assert "docs/recon/claude_code_cortex_posttool_failure_to_stop_loop_probe.md" in cortex_doc
     assert "docs/recon/claude_code_cortex_userpromptsubmit_verified_work_probe.md" in cortex_doc
@@ -630,6 +638,7 @@ def test_docs_directory_only_exposes_archive_and_workflow_subtrees() -> None:
         "REPO_WORKFLOW.md",
     ]
     assert sorted(path.name for path in (DOCS_ROOT / "recon").iterdir()) == [
+        "claude_code_cortex_bridge_translation_headless_probe.md",
         "claude_code_cortex_headless_cli_equivalence_probe.md",
         "claude_code_cortex_mac_pending_goal_divergence_retest.md",
         "claude_code_cortex_posttool_failure_to_stop_loop_probe.md",
@@ -1168,6 +1177,47 @@ def test_claude_code_cortex_headless_cli_equivalence_probe_records_partial_findi
         "does not make `Stop` the primary Cortex architecture",
         "does not promote Claude Code",
         "Shipping default remains `openai:operator_cli`",
+    ]:
+        assert phrase in text
+
+    for key in [
+        "session_id",
+        "transcript_path",
+        "cwd",
+        "permission_mode",
+        "hook_event_name",
+        "last_assistant_message",
+        "stop_hook_active",
+    ]:
+        assert f"`{key}`" in text
+
+
+def test_claude_code_cortex_bridge_translation_headless_probe_records_preserved_evidence() -> None:
+    text = _read(CLAUDE_CODE_CORTEX_BRIDGE_TRANSLATION_HEADLESS_PROBE_PATH)
+
+    assert "Surface: internal / recon" in text
+    assert "Probe date: 2026-05-01" in text
+    assert "`claude -p`" in text
+    assert "/Users/erikahoward/cortex-plugin-sandbox" in text
+    assert "Preservation note" in text
+    assert "renderer-first" in text and "implementation is superseded" in text
+
+    for phrase in [
+        "translated evidence-degradation Stop repaired 3/3 scored headless",
+        "Baseline false closure reproduced 3/3",
+        "Pending-goal behavior lift",
+        "Unscored / cross-surface variance",
+        "Global user hooks contaminate probe behavior",
+        "Plugin layout is part of hook truth",
+        "evidence-degradation translated Stop text requires the last assistant",
+        "No translated Stop text is emitted when the assistant has already refused",
+        "does not make `Stop` the primary Cortex architecture",
+        "promote Claude Code or headless CLI to shipping default",
+        "does not validate",
+        "Product / shipping truth",
+        "Shipping truth remains `openai:operator_cli`",
+        "no broad headless equivalence claim",
+        "clean no-over-block passes",
     ]:
         assert phrase in text
 

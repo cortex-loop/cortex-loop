@@ -48,6 +48,8 @@ Active docs:
   empirical paired baseline-vs-shaped evidence for Cortex closure pressure through Stop block reasons
 - [Claude Code Cortex Headless CLI Equivalence Probe](recon/claude_code_cortex_headless_cli_equivalence_probe.md) —
   empirical partial-equivalence evidence for Stop closure pressure through `claude -p`
+- [Claude Code Cortex Bridge Translation Headless Probe](recon/claude_code_cortex_bridge_translation_headless_probe.md) —
+  preserved headless evidence for translated Stop closure-pressure behavior and setup constraints
 - [Claude Code Cortex Mac Pending-Goal Divergence Retest](recon/claude_code_cortex_mac_pending_goal_divergence_retest.md) —
   empirical Mac-app evidence that raw internal Stop wording is content-shape contaminated for pending-goal closure
 - [Claude Code Cortex PostToolUseFailure To Stop Loop Probe](recon/claude_code_cortex_posttool_failure_to_stop_loop_probe.md) —
