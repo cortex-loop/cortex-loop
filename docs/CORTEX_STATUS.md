@@ -51,9 +51,9 @@ Answering stance:
 
 ## Current Focus
 
-- Current tracked train: `executive-runtime-paydown-and-waiting-remediation`
-- Active quality/risk focus: The phase-5 readiness remediation is active as a bounded composition-tightening seam before the OpenAI silent-control live probe. This train carries current structured commitment ids through certified/blocked evidence progress so same-event paydown targets current expectations, and it turns the mixed-horizon and blocked/waiting readiness scenarios into positive safety tests. It changes no visible communication, hook wiring, AUX, shipping truth, or live behavior claim.
-- Next product train after the current focus: `silent-control-live-probe-on-openai`
+- Current tracked train: `silent-control-live-probe-on-openai`
+- Active quality/risk focus: The OpenAI operator-CLI silent-control live probe reached Gate 0 and stopped before live trials on the ChatGPT subscription/operator lane, not API/service spend: runtime debt control changes OpenAI route/policy diagnostics, but the current Codex operator adapter does not enact those diagnostics before invoking the model. The seam earns a product-connectivity finding, not behavior lift; model-visible warning text was not added, and shipping default remains unchanged.
+- Next product train after the current focus: `openai-operator-debt-control-enactment`
 
 ## Bio-To-Code Matrix
 
@@ -156,13 +156,13 @@ Workflow gates marked `required` are contractual gates checked by `repo_workflow
 
 ## Next Product Train
 
-- Train: `silent-control-live-probe-on-openai`
+- Train: `openai-operator-debt-control-enactment`
 - Surface: product
-- Executive benefit: Test whether the silent expectation-debt control path improves live OpenAI behavior without adding warning text, so Cortex earns evidence that route/brake pressure can improve the model's next action before visible intervention is needed.
-- Why now: After the structural ledger and debt-control coupling land, the next truth gap is live behavior: the shipping lane must show that silent control improves evidence recovery or continuity without useful-work slowdown or overblock.
-- Primary metric: Paired baseline/shaped/clean OpenAI trials where shaped silent control improves evidence recovery or goal continuity on reproduced unsupported-forward-motion failures while clean controls stay clean and no model-visible debt/brake text is emitted.
-- Guardrail: Do not approve paid service-lane spend without explicit user approval in the current chat; do not promote shipping truth from one probe; do not add visible warnings, AUX bias, Claude hooks, or renderer changes in the silent-control probe.
-- Kill rule: Cut or revise the seam if the baseline failure does not reproduce, shaped control slows or blocks useful verification, clean controls regress, improvement depends on model-visible text, or setup/auth/provider issues are mislabeled as empirical failures.
+- Executive benefit: Connect OpenAI runtime debt-control outputs to Codex operator invocation or continuation policy so silent executive pressure can reach live model behavior before the paired probe is retried.
+- Why now: The silent-control live probe's Gate 0 found that debt control changes runtime diagnostics but the current operator adapter does not consume those diagnostics before the model call, making live trials uninterpretable.
+- Primary metric: A deterministic Gate 0 replay proves baseline-neutral and shaped-debt conditions produce a model-bound difference in route, continuation, verification, or prompt-independent control while no debt/brake/internal vocabulary becomes model-visible.
+- Guardrail: Do not add visible warning text, grounded intervention records, AUX behavior, API/service spend, or product-law changes outside the OpenAI operator enactment path; the remediation must stay silent and bounded.
+- Kill rule: Cut or revise the seam if the adapter cannot enact debt-control output without model-visible warnings, if it changes clean controls, or if the new Gate 0 still cannot trace a shaped-vs-baseline difference to model input or continuation policy.
 
 ## Research Lines Under Evaluation
 
@@ -173,7 +173,7 @@ Workflow gates marked `required` are contractual gates checked by `repo_workflow
 - Keep the bounded audit surface compact and truthful on the shipped lane: selected versus realized family, uncertainty, threshold, delta, verification, and probe truth only.
 - Keep the no-spend live evidence current and explicit: fast conformance is green, the deeper directionality and host-native watchlists are refreshed, and non-shipping auth or env caveats must stay explicit instead of silently stale.
 - Keep posture, AUX memory, host-reliability, and asymmetric-cost law explicit and removable now that posture-sensitive online control is S-tier closed, anti-thrash is landed, bounded live support-memory re-entry is earned on reference and the OpenAI operator lane, evidence/probe calibration is S-tier closed, host/tool reliability and affordance priors are earned as bounded host-scoped, capability-scoped score modifiers on `OfflineSupportPublication.host_reliability_prior` with a single-site six-tag `q_mem-host:*` surface and stale-negative reopen under fresh success, asymmetric error cost is earned as a bounded `RiskWeight` carrier whose CHECK/SEEK_CONTEXT activation shift is clipped inside `[0.05, 0.60]` with a `0.10` dead-band and productive-exploration gating, and the brake tonic EMA damps single-tick flips with a locked `rho = 0.60` decay and `tonic_pressure >= 0.35` enter gate while phasic spikes still flip immediately: inspect is live on cheap non-debt events, resume stays continuity-conditioned, posture truth is single-owned, the route state vector stays the bounded 6-axis geometry term while `visible_burden_sensitivity` remains a separate utility scalar, route truth stays bounded and non-sovereign, unchanged-condition repetition is taxed only at the exact-family level with bounded reopen, public feedback-window summaries reflect the just-realized step, family-local bounded probe limits surface as `unsupported` without leaking host-global unavailability across families, stream-only churn stays non-epistemic, live memory stays score-only and host-matched through explicit publication, live `Q_mem` stays zero on shipping and conformance default lanes, raw SQLite episodes stay support-side only, reliability priors bias score pricing only and never route, posture, selection, or brake law, Claude and Gemini remain shadow-proof only for reliability promotion, `risk_weight` biases CHECK/SEEK_CONTEXT activation threshold only and never routing, posture, selection, certification, or blockedness law, and `brake_tonic_history` persists the pressure tail across resume on all four host lanes with three-way backward-compat decoding.
-- The executive-runtime-paydown-and-waiting-remediation seam is the active focus from the executive-runtime roadmap: the shared expectation ledger and debt-control stack is being tightened so current-event certified/blocked progress relieves the correct expectation before paid OpenAI silent-control trials begin. This is structural/conformance truth only; live behavior lift remains unearned, and the next product train remains the silent-control live probe after this remediation merges.
+- The silent-control-live-probe-on-openai seam reached Gate 0 and stopped: deterministic replay shows debt control changes OpenAI runtime route/policy diagnostics, but the Codex operator adapter does not enact those diagnostics before the model call. The next product move is openai-operator-debt-control-enactment, a bounded silent adapter remediation before any paired live behavior-lift probe is retried.
 
 ## Canonical Proof
 
@@ -269,3 +269,4 @@ Workflow gates marked `required` are contractual gates checked by `repo_workflow
 - `docs/recon/claude_code_cortex_mac_pending_goal_divergence_retest.md`
 - `docs/recon/claude_code_cortex_posttool_failure_to_stop_loop_probe.md`
 - `docs/recon/claude_code_cortex_userpromptsubmit_verified_work_probe.md`
+- `docs/recon/cortex_openai_operator_silent_control_live_probe.md`
