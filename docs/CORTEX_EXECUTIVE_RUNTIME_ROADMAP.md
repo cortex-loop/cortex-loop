@@ -401,10 +401,11 @@ roadmap with the failed assumption named.
 
 ## Immediate Next Seam
 
-The next seam is seam 1: preserve the unique headless translation-harness
-recon artifact and retire the stale renderer-first branch if preservation is
-complete. After that, seam 2 begins the real runtime-control implementation
-with the expectation ledger.
+The next seam after debt-to-route/brake coupling is seam 5: run the
+silent-control live probe on the OpenAI shipping lane. It should test whether
+the structural debt-control path improves evidence recovery or continuity
+without adding model-visible warning text, slowing useful verification, or
+overblocking clean controls.
 
 ## Stop Conditions
 

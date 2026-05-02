@@ -43,6 +43,7 @@ def test_reference_runtime_session_artifact_roundtrips_empty_session() -> None:
             "last_commitment_result_summary": None,
             "last_realization_feedback": None,
             "feedback_window": [],
+            "expectation_ledger": {"active": [], "resolved": []},
             "executive_modulator_memory": None,
             "brake_tonic_history": [],
         },
@@ -127,12 +128,13 @@ def test_reference_runtime_session_artifact_roundtrips_bounded_residue_without_f
         "last_budget_band": "medium",
         "last_commitment_result_summary": "candidate-only",
         "last_realization_feedback": warning_feedback.as_summary(),
-        "feedback_window": [
-            _feedback("warn-earlier").as_summary(),
-            warning_feedback.as_summary(),
-        ],
-        "executive_modulator_memory": None,
-        "brake_tonic_history": [],
+            "feedback_window": [
+                _feedback("warn-earlier").as_summary(),
+                warning_feedback.as_summary(),
+            ],
+            "expectation_ledger": {"active": [], "resolved": []},
+            "executive_modulator_memory": None,
+            "brake_tonic_history": [],
     }
     assert "budget_history" not in payload["control_residue"]
     assert "brake_history" not in payload["control_residue"]

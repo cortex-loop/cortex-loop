@@ -186,6 +186,9 @@ def test_openai_runtime_step_keeps_hard_product_guards_ahead_of_reference_contro
         "stop_threshold": 0.585,
         "allow_extra_read_pass": False,
         "verification_intensity": 0.3805,
+        "debt_guard_bias": 0.0,
+        "debt_default_penalty": 0.0,
+        "debt_verification_bias": 0.0,
     }
     assert result.closure_required is False
     assert result.closure_reason_tags == ()

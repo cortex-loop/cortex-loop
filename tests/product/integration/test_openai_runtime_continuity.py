@@ -216,7 +216,7 @@ def _assert_locked_continuity_flow(records: list[dict[str, object]]) -> None:
     assert [record["operator_route"]["route_profile"] for record in records] == [
         "continuity_standard",
         "continuity_standard",
-        "continuity_standard",
+        "continuity_guarded",
         "execute_guarded",
     ]
     assert [record["operator_route"]["route_budget"]["allow_resume"] for record in records] == [

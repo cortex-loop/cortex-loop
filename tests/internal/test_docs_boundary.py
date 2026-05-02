@@ -384,7 +384,8 @@ def test_executive_runtime_roadmap_names_path_from_now_to_goal() -> None:
     assert "| 12 | Shipping decision and goal audit |" in text
     assert "Cortex demonstrably makes model behavior more continuous" in text
     assert "The plan reaches the goal only if seam 12 passes its audit." in text
-    assert "The next seam is seam 1" in text
+    assert "The next seam after debt-to-route/brake coupling is seam 5" in text
+    assert "silent-control live probe on the OpenAI shipping lane" in text
     assert "resolution_deficit" in text
     assert "expectation ledger" in text
     assert "not a Claude hook plugin" in text
@@ -1675,18 +1676,26 @@ def test_status_registry_is_complete_and_stable() -> None:
         assert {"slug", "stage", "summary", "next_step"} <= set(entry)
         assert entry["slug"] != status["work_today"]["slug"]
         assert entry["slug"] != status["next_product_train"]["slug"]
-    assert status["work_today"]["slug"] == "expectation-corpus-falsification-tests"
-    assert "expectation-debt falsification corpus" in status["work_today"]["note"].lower()
-    assert "unsupported forward motion creates debt" in status["work_today"]["note"].lower()
-    assert "silent structural state only" in status["work_today"]["note"].lower()
-    assert "does not change brake law" in status["work_today"]["note"].lower()
-    assert "arbitrary assistant prose does not open debt" in status["work_today"]["note"].lower()
-    assert "capability/wait-release producer gaps" in status["work_today"]["note"].lower()
-    assert status["next_product_train"]["slug"] == "debt-drag-into-brake-and-route"
+    assert status["work_today"]["slug"] == "debt-drag-into-brake-and-route"
+    assert "resolution deficit" in status["work_today"]["note"].lower()
+    assert "silent route/brake control" in status["work_today"]["note"].lower()
+    assert "debt alone must not latch" in status["work_today"]["note"].lower()
+    assert "emit model-visible text" in status["work_today"]["note"].lower()
+    assert "structural truth only" in status["work_today"]["note"].lower()
+    assert status["next_product_train"]["slug"] == "silent-control-live-probe-on-openai"
     assert "product" == status["next_product_train"]["surface"]
-    assert "unpaid expectation debt" in status["next_product_train"]["executive_benefit"].lower()
-    assert "must not latch by itself" in status["next_product_train"]["guardrail"].lower()
-    assert "smuggles internal debt/brake terms" in status["next_product_train"]["kill_rule"].lower()
+    assert "silent expectation-debt control" in status["next_product_train"][
+        "executive_benefit"
+    ].lower()
+    assert "paired baseline/shaped/clean openai trials" in status["next_product_train"][
+        "primary_metric"
+    ].lower()
+    assert "without explicit user approval" in status["next_product_train"][
+        "guardrail"
+    ].lower()
+    assert "baseline failure does not reproduce" in status["next_product_train"][
+        "kill_rule"
+    ].lower()
     deferred_lines = {entry["slug"]: entry for entry in status["research_lines_under_evaluation"]}
     assert "brain-capability-observation-and-inference" in deferred_lines
     assert (
@@ -1702,9 +1711,9 @@ def test_status_registry_is_complete_and_stable() -> None:
     assert "route truth stays bounded and non-sovereign" in status["where_to_work"][2]
     assert "live `Q_mem` stays zero" in status["where_to_work"][2]
     assert "host/tool reliability and affordance priors are earned" in status["where_to_work"][2]
-    assert "expectation-corpus-falsification-tests seam is the active focus" in status["where_to_work"][3]
-    assert "false closure" in status["where_to_work"][3]
-    assert "before debt influences brake or route behavior" in status["where_to_work"][3]
+    assert "debt-drag-into-brake-and-route seam is the active focus" in status["where_to_work"][3]
+    assert "resolution deficit" in status["where_to_work"][3]
+    assert "live behavior lift remains unearned" in status["where_to_work"][3]
     closure_gates = {gate["id"]: gate for gate in status["closure_gates"]}
     assert closure_gates["main_synced"]["status"] == "required"
     assert closure_gates["cleanup_report"]["status"] == "required"
@@ -1735,20 +1744,20 @@ def test_generated_status_doc_includes_system_map_and_next_product_train() -> No
     assert "## Next Product Train" in text
     assert "## Research Lines Under Evaluation" in text
     assert "host/tool reliability and affordance priors are earned" in text
-    assert "`expectation-corpus-falsification-tests`" in text
-    assert "- Next product train after the current focus: `debt-drag-into-brake-and-route`" in text
-    assert "- Train: `debt-drag-into-brake-and-route`" in text
+    assert "`debt-drag-into-brake-and-route`" in text
+    assert "- Next product train after the current focus: `silent-control-live-probe-on-openai`" in text
+    assert "- Train: `silent-control-live-probe-on-openai`" in text
     assert "`brain-capability-observation-and-inference` (deferred-by-executive-runtime-roadmap)" in text
-    assert "expectation-debt falsification corpus" in text.lower()
-    assert "unsupported forward motion creates debt" in text.lower()
-    assert "silent structural state only" in text.lower()
-    assert "unpaid expectation debt" in text.lower()
+    assert "silent route/brake control" in text.lower()
+    assert "debt alone must not latch" in text.lower()
+    assert "paired baseline/shaped/clean openai trials" in text.lower()
+    assert "silent expectation-debt control" in text.lower()
     assert "Shipping Product Lane\\nopenai:operator_cli" in text or "Shipping Product Lane" in text
     assert "Shipping default: `openai:operator_cli`" in text
     assert "Workflow gates marked `required` are contractual gates checked by `repo_workflow.py`" in text
     assert "| `main_synced` | `required` |" in text
     assert "| `cleanup_report` | `required` |" in text
-    assert "arbitrary assistant prose does not open debt" in text
+    assert "silent route/brake control" in text.lower()
     assert "brain-capability-observation-and-inference" in text
     assert "`visible_burden_sensitivity`" in text
 

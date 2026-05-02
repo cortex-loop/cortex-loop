@@ -14,6 +14,7 @@ from cortex.hosts._executive_closure import (
     executive_modulator_memory_payload,
 )
 from cortex.sre.feedback import ReferenceRealizationFeedback, ReferenceRealizationFeedbackWindow
+from cortex.sre.expectations import ExpectationLedger
 from cortex.sre.goals import normalize_continuity_reminder
 from cortex.hosts.reference.runtime import ReferenceRuntimeSession
 from cortex.sre.modulators import ExecutiveModulatorMemory
@@ -43,6 +44,15 @@ _LEGACY_CONTINUITY_TRUTH_KEYS = (
     "pending_goal_refs",
 )
 _CONTROL_RESIDUE_KEYS = (
+    "last_budget_band",
+    "last_commitment_result_summary",
+    "last_realization_feedback",
+    "feedback_window",
+    "expectation_ledger",
+    "executive_modulator_memory",
+    "brake_tonic_history",
+)
+_PRE_EXPECTATION_CONTROL_RESIDUE_KEYS = (
     "last_budget_band",
     "last_commitment_result_summary",
     "last_realization_feedback",
@@ -82,6 +92,7 @@ class ReferenceRuntimeSessionArtifact:
     feedback_window: ReferenceRealizationFeedbackWindow = field(
         default_factory=ReferenceRealizationFeedbackWindow
     )
+    expectation_ledger: ExpectationLedger = field(default_factory=ExpectationLedger)
     executive_modulator_memory: ExecutiveModulatorMemory | None = None
     brake_tonic_history: tuple[float, ...] = ()
 
@@ -160,6 +171,12 @@ class ReferenceRuntimeSessionArtifact:
                 "ReferenceRuntimeSessionArtifact.feedback_window must be "
                 f"ReferenceRealizationFeedbackWindow, got {actual_type}."
             )
+        if not isinstance(self.expectation_ledger, ExpectationLedger):
+            actual_type = type(self.expectation_ledger).__name__
+            raise TypeError(
+                "ReferenceRuntimeSessionArtifact.expectation_ledger must be "
+                f"ExpectationLedger, got {actual_type}."
+            )
         if self.executive_modulator_memory is not None and not isinstance(
             self.executive_modulator_memory,
             ExecutiveModulatorMemory,
@@ -223,6 +240,7 @@ class ReferenceRuntimeSessionArtifact:
                 "feedback_window": [
                     entry.as_summary() for entry in self.feedback_window.entries
                 ],
+                "expectation_ledger": self.expectation_ledger.as_payload(),
                 "executive_modulator_memory": (
                     executive_modulator_memory_payload(self.executive_modulator_memory)
                     if self.executive_modulator_memory is not None
@@ -257,6 +275,7 @@ class ReferenceRuntimeSessionArtifact:
             last_commitment_result_summary=self.last_commitment_result_summary,
             last_realization_feedback=self.last_realization_feedback,
             feedback_window=self.feedback_window,
+            expectation_ledger=self.expectation_ledger,
             executive_modulator_memory=self.executive_modulator_memory,
         )
 
@@ -281,6 +300,7 @@ def build_reference_runtime_session_artifact(
         last_commitment_result_summary=session.last_commitment_result_summary,
         last_realization_feedback=session.last_realization_feedback,
         feedback_window=session.feedback_window,
+        expectation_ledger=session.expectation_ledger,
         executive_modulator_memory=session.executive_modulator_memory,
         brake_tonic_history=session.brake_tonic_history,
     )
@@ -362,6 +382,9 @@ def parse_reference_runtime_session_artifact(
         feedback_window=_feedback_window(
             control_residue_payload["feedback_window"],
             "ReferenceRuntimeSessionArtifact.control_residue.feedback_window",
+        ),
+        expectation_ledger=ExpectationLedger.from_payload(
+            control_residue_payload.get("expectation_ledger")
         ),
         executive_modulator_memory=_optional_executive_modulator_memory(
             control_residue_payload.get("executive_modulator_memory"),
@@ -468,13 +491,14 @@ def _require_control_residue_keys(payload: Mapping[str, Any]) -> None:
     actual_keys = tuple(payload.keys())
     if actual_keys in (
         _CONTROL_RESIDUE_KEYS,
+        _PRE_EXPECTATION_CONTROL_RESIDUE_KEYS,
         _PRE_TONIC_HISTORY_CONTROL_RESIDUE_KEYS,
         _PRE_MODULATOR_CONTROL_RESIDUE_KEYS,
     ):
         return
     expected = (
-        f"{_CONTROL_RESIDUE_KEYS}, {_PRE_TONIC_HISTORY_CONTROL_RESIDUE_KEYS}, or "
-        f"{_PRE_MODULATOR_CONTROL_RESIDUE_KEYS}"
+        f"{_CONTROL_RESIDUE_KEYS}, {_PRE_EXPECTATION_CONTROL_RESIDUE_KEYS}, "
+        f"{_PRE_TONIC_HISTORY_CONTROL_RESIDUE_KEYS}, or {_PRE_MODULATOR_CONTROL_RESIDUE_KEYS}"
     )
     missing_keys = [key for key in _CONTROL_RESIDUE_KEYS if key not in payload]
     extra_keys = [key for key in actual_keys if key not in _CONTROL_RESIDUE_KEYS]

@@ -61,6 +61,10 @@ from cortex.sre.allocation import (
 )
 from cortex.sre.branching import BranchOperation
 from cortex.sre.brake import BrakeState
+from cortex.sre.debt_control import (
+    DebtControlPressure,
+    build_runtime_debt_control_pressure,
+)
 from cortex.sre.executive_summary import (
     ExecutiveSignalSummary,
     build_executive_signal_summary,
@@ -392,6 +396,7 @@ class GeminiRuntimeStepResult:
     resolution_deficit: ResolutionDeficitState = field(
         default_factory=ResolutionDeficitState
     )
+    debt_control: DebtControlPressure = field(default_factory=DebtControlPressure)
     executive_signal_summary: ExecutiveSignalSummary = field(
         default_factory=lambda: ExecutiveSignalSummary(
             uncertainty=0.0,
@@ -489,6 +494,12 @@ class GeminiRuntimeStepResult:
             raise TypeError(
                 "GeminiRuntimeStepResult.resolution_deficit must be "
                 f"ResolutionDeficitState, got {actual_type}."
+            )
+        if not isinstance(self.debt_control, DebtControlPressure):
+            actual_type = type(self.debt_control).__name__
+            raise TypeError(
+                "GeminiRuntimeStepResult.debt_control must be "
+                f"DebtControlPressure, got {actual_type}."
             )
         if not isinstance(self.executive_signal_summary, ExecutiveSignalSummary):
             actual_type = type(self.executive_signal_summary).__name__
@@ -602,6 +613,10 @@ class GeminiRuntimeStepResult:
     @property
     def resolution_deficit_payload(self) -> dict[str, Any]:
         return self.resolution_deficit.as_payload()
+
+    @property
+    def debt_control_payload(self) -> dict[str, Any]:
+        return self.debt_control.as_payload()
 
     @property
     def executive_signal_summary_payload(self) -> dict[str, Any]:
@@ -738,6 +753,20 @@ def run_gemini_runtime_step(
         consequential_write_pending=consequential_write_pending,
         preservation_active=False,
     )
+    prior_resolution_deficit = prior_session.expectation_ledger.resolution_deficit(
+        current_step=provisional_session.event_index
+    )
+    debt_control = build_runtime_debt_control_pressure(
+        resolution_deficit=prior_resolution_deficit,
+        task_mode=runtime_task_mode,
+        active_track_ref=provisional_session.active_track_ref,
+        pending_goal_refs=provisional_session.pending_goal_refs,
+        continuity_warnings=continuity_warnings,
+        continuity_reminders=continuity_reminders,
+        degradation_pressure_bonus=prior_feedback_window_summary.degradation_pressure_bonus,
+        sustained_spike_flags=prior_feedback_window_summary.sustained_spike_flags,
+        prior_brake_state=_prior_runtime_brake_state(prior_session.brake_history),
+    )
     executive_state = build_reference_executive_state(
         bound_event.observation,
         support_snapshot,
@@ -746,6 +775,7 @@ def run_gemini_runtime_step(
         opportunities=opportunities,
         audit_intensity=audit_intensity,
         task_mode=runtime_task_mode,
+        debt_control_pressure=debt_control,
     )
     selection = select_reference_soft_control(
         executive_state,
@@ -795,6 +825,23 @@ def run_gemini_runtime_step(
         risk_weight=executive_state.control_allocation.risk_weight,
         brake_tonic=executive_state.brake.tonic,
     )
+    allocation_diagnostics = {
+        "alpha_t": allocation_diagnostics["alpha_t"],
+        "activation_threshold": allocation_diagnostics["activation_threshold"],
+        "selected_delta_over_neutral": allocation_diagnostics["selected_delta_over_neutral"],
+        "chi_t": allocation_diagnostics["chi_t"],
+        "risk_weight": allocation_diagnostics["risk_weight"],
+        "brake_tonic": allocation_diagnostics["brake_tonic"],
+        "debt_control": debt_control.as_payload(),
+        "rejected_cheaper_families": allocation_diagnostics["rejected_cheaper_families"],
+        "probe_path_state": allocation_diagnostics["probe_path_state"],
+        "probe_unavailable_reason": allocation_diagnostics["probe_unavailable_reason"],
+        "probe_result_class": allocation_diagnostics["probe_result_class"],
+        "verification_state": allocation_diagnostics["verification_state"],
+        "explainability_profile": allocation_diagnostics["explainability_profile"],
+        "anti_thrash": allocation_diagnostics["anti_thrash"],
+        "scores": allocation_diagnostics["scores"],
+    }
     audit_projection = None
     if _should_emit_audit_projection(
         executive_state.control_allocation.explainability_profile
@@ -910,6 +957,7 @@ def run_gemini_runtime_step(
         executive_signal_summary,
         executive_modulator_update.state,
         chi_t=selection.chi_t,
+        debt_control_pressure=debt_control,
     )
     operator_task_state = build_runtime_operator_task_state(
         summary_inputs=executive_summary_inputs,
@@ -970,6 +1018,7 @@ def run_gemini_runtime_step(
         control_ledger=control_ledger,
         feedback_window_summary=post_feedback_window_summary,
         resolution_deficit=resolution_deficit,
+        debt_control=debt_control,
         executive_signal_summary=executive_signal_summary,
         executive_modulator_state=executive_modulator_update.state,
         executive_policy_view=executive_policy_view,
@@ -1575,6 +1624,7 @@ _ALLOCATION_DIAGNOSTICS_KEYS = (
     "chi_t",
     "risk_weight",
     "brake_tonic",
+    "debt_control",
     "rejected_cheaper_families",
     "probe_path_state",
     "probe_unavailable_reason",
@@ -1592,6 +1642,15 @@ _RISK_WEIGHT_DIAGNOSTICS_KEYS = (
 )
 _BRAKE_TONIC_DIAGNOSTICS_KEYS = (
     "tonic_pressure",
+)
+_DEBT_CONTROL_DIAGNOSTICS_KEYS = (
+    "resolution_pressure",
+    "persistence",
+    "forward_commit_pressure",
+    "goal_drag",
+    "debt_pressure",
+    "verification_relief_bias",
+    "reason_tags",
 )
 _ANTI_THRASH_DIAGNOSTICS_KEYS = (
     "state",
@@ -1672,6 +1731,29 @@ def _validate_brake_tonic_diagnostics_payload(
             raise ValueError(f"{label}.{key} must be in [0.0, 1.0].")
 
 
+def _validate_debt_control_diagnostics_payload(payload: dict[str, Any], label: str) -> None:
+    if not isinstance(payload, dict):
+        actual_type = type(payload).__name__
+        raise TypeError(f"{label} must be dict[str, Any], got {actual_type}.")
+    if tuple(payload) != _DEBT_CONTROL_DIAGNOSTICS_KEYS:
+        raise ValueError(
+            f"{label} must preserve the locked key order {_DEBT_CONTROL_DIAGNOSTICS_KEYS!r}."
+        )
+    for key in _DEBT_CONTROL_DIAGNOSTICS_KEYS[:-1]:
+        value = payload[key]
+        if isinstance(value, bool) or not isinstance(value, (int, float)):
+            actual_type = type(value).__name__
+            raise TypeError(f"{label}.{key} must be numeric, got {actual_type}.")
+        if not 0.0 <= float(value) <= 1.0:
+            raise ValueError(f"{label}.{key} must be in [0.0, 1.0].")
+    reason_tags = payload["reason_tags"]
+    if not isinstance(reason_tags, list):
+        actual_type = type(reason_tags).__name__
+        raise TypeError(f"{label}.reason_tags must be list[str], got {actual_type}.")
+    if any(not (isinstance(tag, str) and tag.strip()) for tag in reason_tags):
+        raise ValueError(f"{label}.reason_tags must contain only non-empty strings.")
+
+
 def _validate_allocation_diagnostics_payload(payload: dict[str, Any], label: str) -> None:
     if not isinstance(payload, dict):
         actual_type = type(payload).__name__
@@ -1687,6 +1769,9 @@ def _validate_allocation_diagnostics_payload(payload: dict[str, Any], label: str
             raise TypeError(f"{label}.{key} must be numeric, got {actual_type}.")
     _validate_risk_weight_diagnostics_payload(payload["risk_weight"], f"{label}.risk_weight")
     _validate_brake_tonic_diagnostics_payload(payload["brake_tonic"], f"{label}.brake_tonic")
+    _validate_debt_control_diagnostics_payload(
+        payload["debt_control"], f"{label}.debt_control"
+    )
     rejected_cheaper_families = payload["rejected_cheaper_families"]
     if not isinstance(rejected_cheaper_families, list):
         actual_type = type(rejected_cheaper_families).__name__
@@ -1884,6 +1969,15 @@ def _copy_allocation_diagnostics_payload(payload: dict[str, Any]) -> dict[str, A
                 "tonic_pressure": brake_tonic_payload["tonic_pressure"],
             }
         ),
+        "debt_control": {
+            "resolution_pressure": payload["debt_control"]["resolution_pressure"],
+            "persistence": payload["debt_control"]["persistence"],
+            "forward_commit_pressure": payload["debt_control"]["forward_commit_pressure"],
+            "goal_drag": payload["debt_control"]["goal_drag"],
+            "debt_pressure": payload["debt_control"]["debt_pressure"],
+            "verification_relief_bias": payload["debt_control"]["verification_relief_bias"],
+            "reason_tags": list(payload["debt_control"]["reason_tags"]),
+        },
         "rejected_cheaper_families": list(payload["rejected_cheaper_families"]),
         "probe_path_state": payload["probe_path_state"],
         "probe_unavailable_reason": payload["probe_unavailable_reason"],
@@ -1933,6 +2027,12 @@ def _copy_audit_projection_payload(payload: dict[str, Any]) -> dict[str, Any]:
 
 def _should_emit_audit_projection(explainability_profile: str) -> bool:
     return explainability_profile in {"focused", "structured"}
+
+
+def _prior_runtime_brake_state(brake_history: tuple[str, ...]) -> BrakeState | None:
+    if not brake_history:
+        return None
+    return BrakeState(brake_history[-1])
 
 
 __all__ = [
