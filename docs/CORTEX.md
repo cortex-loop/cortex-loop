@@ -298,9 +298,9 @@ state, read `internal/truth/cortex_status.json` directly.
 
 ### Next Product Train
 
-- Slug: `grounded-intervention-records`
+- Slug: `openai-operator-debt-control-enactment`
 - Surface: `product`
-- Why now: After the silent-control live probe, the next question is whether high control pressure plus a grounded claim/evidence/obligation anchor should produce visible intervention rather than silent route/brake pressure alone.
+- Why now: The silent-control live probe's Gate 0 found that debt control changes runtime diagnostics but the current operator adapter does not consume those diagnostics before the model call, making live trials uninterpretable.
 
 ### Research Lines Under Evaluation
 
@@ -321,7 +321,7 @@ state, read `internal/truth/cortex_status.json` directly.
 - Keep the bounded audit surface compact and truthful on the shipped lane: selected versus realized family, uncertainty, threshold, delta, verification, and probe truth only.
 - Keep the no-spend live evidence current and explicit: fast conformance is green, the deeper directionality and host-native watchlists are refreshed, and non-shipping auth or env caveats must stay explicit instead of silently stale.
 - Keep posture, AUX memory, host-reliability, and asymmetric-cost law explicit and removable now that posture-sensitive online control is S-tier closed, anti-thrash is landed, bounded live support-memory re-entry is earned on reference and the OpenAI operator lane, evidence/probe calibration is S-tier closed, host/tool reliability and affordance priors are earned as bounded host-scoped, capability-scoped score modifiers on `OfflineSupportPublication.host_reliability_prior` with a single-site six-tag `q_mem-host:*` surface and stale-negative reopen under fresh success, asymmetric error cost is earned as a bounded `RiskWeight` carrier whose CHECK/SEEK_CONTEXT activation shift is clipped inside `[0.05, 0.60]` with a `0.10` dead-band and productive-exploration gating, and the brake tonic EMA damps single-tick flips with a locked `rho = 0.60` decay and `tonic_pressure >= 0.35` enter gate while phasic spikes still flip immediately: inspect is live on cheap non-debt events, resume stays continuity-conditioned, posture truth is single-owned, the route state vector stays the bounded 6-axis geometry term while `visible_burden_sensitivity` remains a separate utility scalar, route truth stays bounded and non-sovereign, unchanged-condition repetition is taxed only at the exact-family level with bounded reopen, public feedback-window summaries reflect the just-realized step, family-local bounded probe limits surface as `unsupported` without leaking host-global unavailability across families, stream-only churn stays non-epistemic, live memory stays score-only and host-matched through explicit publication, live `Q_mem` stays zero on shipping and conformance default lanes, raw SQLite episodes stay support-side only, reliability priors bias score pricing only and never route, posture, selection, or brake law, Claude and Gemini remain shadow-proof only for reliability promotion, `risk_weight` biases CHECK/SEEK_CONTEXT activation threshold only and never routing, posture, selection, certification, or blockedness law, and `brake_tonic_history` persists the pressure tail across resume on all four host lanes with three-way backward-compat decoding.
-- The silent-control-live-probe-on-openai seam is the active focus from the executive-runtime roadmap: the remediated expectation ledger and debt-control stack now meets the OpenAI operator-CLI subscription lane to test whether silent route/brake pressure improves live evidence recovery or continuity without warning text. This is live behavior-lift evidence work on the current shipping lane, not API/service spend and not a shipping-default promotion.
+- The silent-control-live-probe-on-openai seam reached Gate 0 and stopped: deterministic replay shows debt control changes OpenAI runtime route/policy diagnostics, but the Codex operator adapter does not enact those diagnostics before the model call. The next product move is openai-operator-debt-control-enactment, a bounded silent adapter remediation before any paired live behavior-lift probe is retried.
 <!-- END GENERATED: current-state-and-strategy -->
 
 ### V2 Model-I/O Analysis
@@ -582,6 +582,13 @@ before the assistant Bash call, `PostToolUseFailure` fired for the missing-file
 result, and the assistant still emitted false `TASK COMPLETE` in both shaped
 failure pairs. That finding validates hook and transcript-boundary delivery
 for this event but does not earn behavior lift for the tested content shape.
+`docs/recon/cortex_openai_operator_silent_control_live_probe.md` is the OpenAI
+operator silent-control Gate 0 finding: deterministic replay showed that
+runtime debt control changes OpenAI route/policy diagnostics, but the current
+Codex operator adapter does not enact those diagnostics before invoking the
+model. No live operator trials ran, no behavior-lift claim was earned, and the
+next product seam must connect debt-control outputs to model-bound operator
+invocation or continuation policy before retrying the paired probe.
 `docs/cortex_plugin/DESIGN.md` is the v1 Claude Code Desktop Cortex plugin
 design: it maps Claude Code Desktop lifecycle hooks onto the eight Cortex
 failure modes, keeps the Mission Reflection grid out of product packaging,

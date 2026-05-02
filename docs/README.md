@@ -58,5 +58,8 @@ Active docs:
   empirical mixed evidence for failed-tool feedback persistence into Stop closure pressure
 - [Claude Code Cortex UserPromptSubmit Verified-Work Probe](recon/claude_code_cortex_userpromptsubmit_verified_work_probe.md) —
   empirical baseline-vs-shaped evidence for prompt-boundary verified-work contracts
+- [Cortex OpenAI Operator Silent-Control Live Probe](recon/cortex_openai_operator_silent_control_live_probe.md) —
+  Gate 0 evidence that runtime debt control is structural but not yet enacted
+  by the Codex operator live adapter
 
 Historical runtime, lab, and governance material now lives under [archive/](archive/).
