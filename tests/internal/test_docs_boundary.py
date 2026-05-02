@@ -20,6 +20,9 @@ EXECUTIVE_RUNTIME_TRACKER_PATH = (
 EXECUTIVE_RUNTIME_ROADMAP_PATH = (
     REPO_ROOT / "docs" / "CORTEX_EXECUTIVE_RUNTIME_ROADMAP.md"
 )
+EXECUTIVE_RUNTIME_PROGRAM_SPEC_PATH = (
+    REPO_ROOT / "docs" / "CORTEX_EXECUTIVE_RUNTIME_PROGRAM_SPEC.md"
+)
 README_PATH = REPO_ROOT / "README.md"
 DOCS_INDEX_PATH = REPO_ROOT / "docs" / "README.md"
 RUNTIME_CONTEXT_RUBRIC_PATH = REPO_ROOT / "docs" / "runtime_context" / "EVAL_RUBRIC.md"
@@ -358,6 +361,7 @@ def test_executive_runtime_roadmap_names_path_from_now_to_goal() -> None:
     text = _read(EXECUTIVE_RUNTIME_ROADMAP_PATH)
 
     assert EXECUTIVE_RUNTIME_ROADMAP_PATH.exists()
+    assert "docs/CORTEX_EXECUTIVE_RUNTIME_PROGRAM_SPEC.md" in text
     assert "Point B: Product Goal" in text
     assert "Point A: Current State" in text
     assert "runtime executive-function layer for models" in text
@@ -376,6 +380,32 @@ def test_executive_runtime_roadmap_names_path_from_now_to_goal() -> None:
     assert "no AUX, no model-visible text" in text
     assert "shipping truth" in text
     assert "What baseline failure must reproduce?" in text
+
+
+def test_executive_runtime_program_spec_defines_control_objects_and_falsification() -> None:
+    text = _read(EXECUTIVE_RUNTIME_PROGRAM_SPEC_PATH)
+
+    assert EXECUTIVE_RUNTIME_PROGRAM_SPEC_PATH.exists()
+    assert "Program Claim" in text
+    assert "Formal Control Objects" in text
+    assert "`ForwardCommitment`" in text
+    assert "`ExpectationRecord`" in text
+    assert "`ExpectationLedger`" in text
+    assert "`ResolutionDeficitState`" in text
+    assert "`GoalDebtDrag`" in text
+    assert "`ControlPressure`" in text
+    assert "`InterventionDecision`" in text
+    assert "negative_prediction_error" in text
+    assert "control_pressure" in text
+    assert "Control-Law Invariants" in text
+    assert "Evaluation Suite" in text
+    assert "Minimum Thresholds" in text
+    assert "Falsification Tests" in text
+    assert "Implementation Dependency Graph" in text
+    assert "First Implementation Slice" in text
+    assert "First Live Probe" in text
+    assert "not \"Cortex can produce better warning messages.\"" in text
+    assert "The first program proof is silent executive control." in text
 
 
 def test_math_to_code_map_schema() -> None:
@@ -478,6 +508,7 @@ def test_public_docs_point_to_status_and_keep_archive_out_of_the_front_door() ->
     assert "Current Status" in docs_index
     assert "CORTEX_EXECUTIVE_RUNTIME_TRACKER.md" in docs_index
     assert "CORTEX_EXECUTIVE_RUNTIME_ROADMAP.md" in docs_index
+    assert "CORTEX_EXECUTIVE_RUNTIME_PROGRAM_SPEC.md" in docs_index
     assert "archive/" in docs_index
     assert "CORTEX.md" in docs_index
     assert "internal/MISSION_REFLECTION_CONTRACT.md" in docs_index

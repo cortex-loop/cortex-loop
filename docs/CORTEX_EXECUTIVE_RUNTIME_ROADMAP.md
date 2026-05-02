@@ -9,6 +9,11 @@ operational truth, and `docs/CORTEX_EXECUTIVE_RUNTIME_TRACKER.md` for the live
 achievement scoreboard. It is not a second registry and does not change
 shipping truth by itself.
 
+The detailed research and engineering contract for the first runtime-control
+program lives in `docs/CORTEX_EXECUTIVE_RUNTIME_PROGRAM_SPEC.md`. This roadmap
+orders the work; the program spec defines the first control objects,
+transitions, metrics, and falsification tests.
+
 ## Point B: Product Goal
 
 Cortex should be a runtime executive-function layer for models, not a Claude

@@ -10,6 +10,8 @@ Active docs:
   product planning tracker for live-model executive-function achievement
 - [Cortex Executive Runtime Roadmap](CORTEX_EXECUTIVE_RUNTIME_ROADMAP.md) —
   point-A-to-point-B plan for reaching runtime executive-function behavior
+- [Cortex Executive Runtime Program Spec](CORTEX_EXECUTIVE_RUNTIME_PROGRAM_SPEC.md) —
+  control-object, metric, and falsification spec for the first runtime program
 - [Current Status](CORTEX_STATUS.md)
 - [CORTEX Core](CORTEX_V2_CORE_2.md)
 - [CORTEX SRE](CORTEX_V2_SRE_2.md)

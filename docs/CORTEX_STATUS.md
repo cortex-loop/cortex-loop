@@ -234,6 +234,7 @@ Workflow gates marked `required` are contractual gates checked by `repo_workflow
 - `docs/CORTEX.md`
 - `docs/CORTEX_EXECUTIVE_RUNTIME_TRACKER.md`
 - `docs/CORTEX_EXECUTIVE_RUNTIME_ROADMAP.md`
+- `docs/CORTEX_EXECUTIVE_RUNTIME_PROGRAM_SPEC.md`
 - `docs/CORTEX_V2_CORE_2.md`
 - `docs/CORTEX_V2_SRE_2.md`
 - `docs/CORTEX_V2_AUX_2.md`
