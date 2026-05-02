@@ -43,6 +43,7 @@ def test_run_openai_operator_single_turn_uses_codex_exec_and_extracts_result(mon
         "--skip-git-repo-check",
         "-m",
         "gpt-5.3-codex-spark",
+        "--ephemeral",
         "Fix the file",
     ]
     assert recorded["cwd"] == tmp_path
@@ -88,3 +89,24 @@ def test_run_openai_operator_resumed_turn_uses_codex_resume(monkeypatch, tmp_pat
     assert result["failure_class"] is None
     assert result["thread_id"] == "sess-123"
     assert result["output_text"] == "done"
+
+
+def test_build_codex_exec_command_keeps_internal_terms_out_of_arguments() -> None:
+    command = openai_operator_cli.build_codex_exec_command(
+        prompt="Re-check the prior diagnosis without editing files.",
+        model="gpt-5.3-codex",
+        resume_session="sess-123",
+        ephemeral=False,
+    )
+
+    assert command == [
+        "codex",
+        "exec",
+        "resume",
+        "--json",
+        "--full-auto",
+        "sess-123",
+        "Re-check the prior diagnosis without editing files.",
+    ]
+    forbidden = ("Cortex", "debt_control", "debt-control", "resolution_deficit", "brake")
+    assert not any(term in arg for term in forbidden for arg in command)
