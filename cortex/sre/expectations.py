@@ -704,7 +704,12 @@ def evidence_progress_from_feedback(
     elif commitment_result_kind == CommitmentStatus.BLOCKED.value:
         progress.append(EvidenceProgress("blocker_surfaced", event_ref, weight=1.0))
 
-    if evidence_progress_class in {"candidate", "artifact", "external-record", "commitment"}:
+    if evidence_progress_class in {"candidate", "artifact", "external-record"}:
+        progress.append(EvidenceProgress("meaningful_evidence", event_ref, weight=0.8))
+    elif (
+        evidence_progress_class == "commitment"
+        and commitment_result_kind != CommitmentStatus.UNCERTIFIED.value
+    ):
         progress.append(EvidenceProgress("meaningful_evidence", event_ref, weight=0.8))
     elif evidence_progress_class in {"token-stream", "structured-stream"}:
         progress.append(EvidenceProgress("stream_only", event_ref, weight=0.2))

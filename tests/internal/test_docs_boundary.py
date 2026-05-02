@@ -1675,12 +1675,13 @@ def test_status_registry_is_complete_and_stable() -> None:
         assert {"slug", "stage", "summary", "next_step"} <= set(entry)
         assert entry["slug"] != status["work_today"]["slug"]
         assert entry["slug"] != status["next_product_train"]["slug"]
-    assert status["work_today"]["slug"] == "runtime-expectation-debt"
-    assert "bounded runtime expectation ledger" in status["work_today"]["note"].lower()
-    assert "resolution-deficit diagnostic" in status["work_today"]["note"].lower()
+    assert status["work_today"]["slug"] == "expectation-corpus-falsification-tests"
+    assert "expectation-debt falsification corpus" in status["work_today"]["note"].lower()
+    assert "unsupported forward motion creates debt" in status["work_today"]["note"].lower()
     assert "silent structural state only" in status["work_today"]["note"].lower()
     assert "does not change brake law" in status["work_today"]["note"].lower()
     assert "arbitrary assistant prose does not open debt" in status["work_today"]["note"].lower()
+    assert "capability/wait-release producer gaps" in status["work_today"]["note"].lower()
     assert status["next_product_train"]["slug"] == "debt-drag-into-brake-and-route"
     assert "product" == status["next_product_train"]["surface"]
     assert "unpaid expectation debt" in status["next_product_train"]["executive_benefit"].lower()
@@ -1701,7 +1702,9 @@ def test_status_registry_is_complete_and_stable() -> None:
     assert "route truth stays bounded and non-sovereign" in status["where_to_work"][2]
     assert "live `Q_mem` stays zero" in status["where_to_work"][2]
     assert "host/tool reliability and affordance priors are earned" in status["where_to_work"][2]
-    assert "runtime-expectation-debt seam is the active focus" in status["where_to_work"][3]
+    assert "expectation-corpus-falsification-tests seam is the active focus" in status["where_to_work"][3]
+    assert "false closure" in status["where_to_work"][3]
+    assert "before debt influences brake or route behavior" in status["where_to_work"][3]
     closure_gates = {gate["id"]: gate for gate in status["closure_gates"]}
     assert closure_gates["main_synced"]["status"] == "required"
     assert closure_gates["cleanup_report"]["status"] == "required"
@@ -1732,11 +1735,12 @@ def test_generated_status_doc_includes_system_map_and_next_product_train() -> No
     assert "## Next Product Train" in text
     assert "## Research Lines Under Evaluation" in text
     assert "host/tool reliability and affordance priors are earned" in text
-    assert "`runtime-expectation-debt`" in text
+    assert "`expectation-corpus-falsification-tests`" in text
     assert "- Next product train after the current focus: `debt-drag-into-brake-and-route`" in text
     assert "- Train: `debt-drag-into-brake-and-route`" in text
     assert "`brain-capability-observation-and-inference` (deferred-by-executive-runtime-roadmap)" in text
-    assert "bounded runtime expectation ledger" in text.lower()
+    assert "expectation-debt falsification corpus" in text.lower()
+    assert "unsupported forward motion creates debt" in text.lower()
     assert "silent structural state only" in text.lower()
     assert "unpaid expectation debt" in text.lower()
     assert "Shipping Product Lane\\nopenai:operator_cli" in text or "Shipping Product Lane" in text
