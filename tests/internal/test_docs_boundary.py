@@ -373,6 +373,12 @@ def test_executive_runtime_roadmap_names_path_from_now_to_goal() -> None:
     assert "Phase 4: Claude Code Host Adapter From Runtime Law" in text
     assert "Phase 5: AUX As Hidden Executive Bias" in text
     assert "Phase 6: Cross-Host Graduation" in text
+    assert "Twelve-Seam Execution Contract" in text
+    assert "When the user asks to \"plan the next seam from 1 to 12,\" use this list." in text
+    assert "| 12 | Shipping decision and goal audit |" in text
+    assert "Cortex demonstrably makes model behavior more continuous" in text
+    assert "The plan reaches the goal only if seam 12 passes its audit." in text
+    assert "The next seam is seam 1" in text
     assert "resolution_deficit" in text
     assert "expectation ledger" in text
     assert "not a Claude hook plugin" in text

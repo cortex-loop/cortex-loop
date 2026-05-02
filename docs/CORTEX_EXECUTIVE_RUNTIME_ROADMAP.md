@@ -368,24 +368,43 @@ Acceptance:
 - no host inherits another host's behavior-lift claim;
 - shipping default changes only through an explicit product seam.
 
-## Immediate Next Seams
+## Twelve-Seam Execution Contract
 
-1. **Evidence preservation seam.** Preserve the unique headless translation
-   harness recon artifact, then retire the stale renderer-first branch.
+When the user asks to "plan the next seam from 1 to 12," use this list. Do
+not improvise a new ordering unless a seam fails its gate and the roadmap is
+explicitly revised.
 
-2. **Runtime expectation debt seam.** Implement the bounded expectation ledger
-   and resolution-deficit summary with deterministic tests only. No AUX, no
-   renderer expansion, no live probe in the same branch.
+This is not a calendar promise. It is a completion contract: seam 12 only
+counts as complete if the live evidence shows that Cortex has become the
+runtime executive layer described in Point B. If an empirical gate fails,
+stop and revise instead of pretending the count reached the goal.
 
-3. **Debt-to-route seam.** Feed the signal into route/brake pressure and prove
-   that it biases away from unsupported execute/close while preserving
-   check/inspect/ask moves.
+| # | Seam | Objective | Required output | Gate to advance |
+| --- | --- | --- | --- | --- |
+| 1 | Evidence preservation and branch hygiene | Preserve the unique headless translation-harness recon artifact, retire the stale renderer-first branch if no longer load-bearing, and keep lifecycle-spine explicitly parked. | Tracked or archived recon evidence; cleanup-report contains only intentional parked work. | No unique evidence remains trapped on a stale branch; no merge can delete newer tracker/dossier/roadmap material. |
+| 2 | Runtime expectation ledger | Implement `ForwardCommitment`, `ExpectationRecord`, `ExpectationLedger`, and `ResolutionDeficitState` structurally. | Runtime/SRE state object plus deterministic tests for opening, paydown, suspension, and relief. | False closure and verification claims open expectations; honest partial progress and user questions do not create false debt. |
+| 3 | Expectation corpus and falsification tests | Build an annotated structural corpus for the executive cases before changing control behavior. | Test corpus covering false closure, unsupported verification, partial progress, waiting-on-user, retraction, blocker surfacing, verified work, capability mismatch, clean controls. | Corpus proves the ledger distinguishes unsupported forward motion from honest incomplete work. |
+| 4 | Debt-to-route/brake coupling | Feed `resolution_deficit` and `goal_drag` into route/brake pressure conservatively. | Route/brake implementation and diagnostics; tests for biasing away from execute/close and toward inspect/check/ask. | Debt does not latch by itself, does not freeze useful work, and makes evidence-gathering easier rather than harder. |
+| 5 | Silent-control live probe on OpenAI | Test whether runtime control improves behavior without adding warning text. | Paired live evidence on the shipping lane with baseline/shaped/clean controls. | Shaped condition improves evidence recovery or continuity without unacceptable useful-work slowdown or overblock. |
+| 6 | Grounded intervention records | Add typed visible-intervention records only for grounded anchors. | `InterventionRecord`-style objects for unsupported claim, overdue verification, unresolved goal, continuity gap, capability guard, preservation risk; leakage tests. | No visible output occurs without a grounded anchor; internal tags/schema/hook mechanics cannot leak. |
+| 7 | Visible-intervention live probe | Compare silent-only control against grounded visible self-correction. | Paired live trials measuring when speaking helps versus when silent routing is better. | Visible intervention improves a reproduced baseline failure and clean controls stay clean; result scoped by host/surface/content shape. |
+| 8 | Claude Code adapter from runtime law | Map the proven runtime loop onto Claude Code lifecycle hooks with thin plugin transport. | `cortex/hosts/claude_code_desktop/` host-adapter logic for SessionStart, UserPromptSubmit, PreToolUse, PostToolUse, PostToolUseFailure, Stop, SessionEnd where structurally earned. | Hook scripts stay thin; every wired event has structural delivery proof and no product/shipping overclaim. |
+| 9 | Claude Code live recon | Validate the runtime loop on Claude Code Mac/headless surfaces per hook and control mode. | Recon docs with raw hook I/O, transcripts, paired scoring, no-overblock controls, operator split, cache-staleness notes. | Brain-wiring truth is earned per bridge; no Claude result is treated as shipping truth. |
+| 10 | AUX hidden-bias program | Distill resolved executive geometry into hidden, removable support priors after runtime debt is safe. | AUX publication/update tests for abstract geometry only; hidden brake/route floor seeding; content-leak rejection tests. | AUX stays support-side, score-only, non-sovereign, and not model-visible by default. |
+| 11 | Cross-host conformance expansion | Apply the proven runtime law across OpenAI, Claude, Gemini, and reference without flattening host differences. | Conformance tests and host-specific adapters/diagnostics for native affordances. | Each host claim names exact control surface and evidence; no host inherits another host's behavior-lift result. |
+| 12 | Shipping decision and goal audit | Decide whether the executive-runtime loop has reached Point B and whether shipping truth changes. | Product audit comparing Point B behaviors against live evidence; status registry update only if earned; explicit decision on shipping default. | Cortex demonstrably makes model behavior more continuous, evidence-bound, task-faithful, self-correcting, and honest at closure across the intended shipping lane. |
 
-4. **Live runtime-control probe.** Run paired model trials where the expected
-   improvement is earlier checking/routing, not a better warning sentence.
+The plan reaches the goal only if seam 12 passes its audit. If seam 12 cannot
+truthfully say that Cortex improves the model's next behavior as an executive
+runtime layer, the correct output is not "goal reached"; it is a revised
+roadmap with the failed assumption named.
 
-5. **Grounded visible-intervention seam.** Extend model-visible intervention
-   only after upstream control pressure has a grounded anchor.
+## Immediate Next Seam
+
+The next seam is seam 1: preserve the unique headless translation-harness
+recon artifact and retire the stale renderer-first branch if preservation is
+complete. After that, seam 2 begins the real runtime-control implementation
+with the expectation ledger.
 
 ## Stop Conditions
 
