@@ -65,6 +65,12 @@ from the change to **the model's input or output**? If the trace is
 empty, the work is monitoring or instrumentation, not Cortex. Land it on
 `lab` or `experimental` surface or cut it.
 
+For live-model achievement tracking against this identity, see
+`docs/CORTEX_EXECUTIVE_RUNTIME_TRACKER.md`. It is a product planning
+surface, subordinate to this document and the status registry, that keeps
+the runtime executive loop visible without turning Claude hooks or
+model-facing translation into the product goal.
+
 ## 2. Failure Modes Cortex Addresses
 
 The named bio-to-code skills are not a feature list. Each one is the
