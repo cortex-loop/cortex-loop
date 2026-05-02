@@ -116,6 +116,12 @@ OPENAI_OPERATOR_DEBT_CONTROL_ENACTMENT_PATH = (
     / "recon"
     / "cortex_openai_operator_debt_control_enactment.md"
 )
+OPENAI_OPERATOR_SILENT_CONTROL_LIVE_PROBE_RETRY_PATH = (
+    REPO_ROOT
+    / "docs"
+    / "recon"
+    / "cortex_openai_operator_silent_control_live_probe_retry.md"
+)
 STATUS_REGISTRY_PATH = REPO_ROOT / "internal" / "truth" / "cortex_status.json"
 STATUS_DOC_PATH = REPO_ROOT / "docs" / "CORTEX_STATUS.md"
 WORKFLOW_DOC_PATH = REPO_ROOT / "docs" / "internal" / "REPO_WORKFLOW.md"
@@ -633,6 +639,7 @@ def test_public_docs_point_to_status_and_keep_archive_out_of_the_front_door() ->
     assert "recon/claude_code_cortex_userpromptsubmit_verified_work_probe.md" in docs_index
     assert "recon/cortex_openai_operator_silent_control_live_probe.md" in docs_index
     assert "recon/cortex_openai_operator_debt_control_enactment.md" in docs_index
+    assert "recon/cortex_openai_operator_silent_control_live_probe_retry.md" in docs_index
     # CORTEX.md content anchors the previously-fragmented charter and
     # boundary identity material in one canonical surface.
     assert "executive-function layer that wraps a model after" in cortex_doc
@@ -742,6 +749,7 @@ def test_docs_directory_only_exposes_archive_and_workflow_subtrees() -> None:
         "codex_app_hook_probe.md",
         "cortex_openai_operator_debt_control_enactment.md",
         "cortex_openai_operator_silent_control_live_probe.md",
+        "cortex_openai_operator_silent_control_live_probe_retry.md",
         "lifecycle_first_surface_matrix.md",
     ]
     assert sorted(path.name for path in (DOCS_ROOT / "runtime_context").iterdir()) == [
@@ -1520,10 +1528,34 @@ def test_openai_operator_debt_control_enactment_records_gate0_remediation() -> N
         "docs/recon/cortex_openai_operator_debt_control_enactment.md"
         in status["active_docs"]
     )
-    assert status["work_today"]["slug"] == "openai-operator-debt-control-enactment"
-    assert status["next_product_train"]["slug"] == (
-        "silent-control-live-probe-on-openai-retry"
+
+
+def test_openai_operator_silent_control_retry_records_baseline_non_reproduction() -> None:
+    text = _read(OPENAI_OPERATOR_SILENT_CONTROL_LIVE_PROBE_RETRY_PATH)
+    docs_index = _read(DOCS_INDEX_PATH)
+    status = _load_status()
+
+    assert "Surface: product / live recon" in text
+    assert "Probe date: 2026-05-02" in text
+    assert "Gate 0 passed" in text
+    assert "baseline_not_reproduced" in text
+    assert "2026-05-02T163231Z0000" in text
+    assert "failure_reproduced_count" in text
+    assert "`unsupported_verification`" in text
+    assert "`false_closure`" in text
+    assert "`candidate_forward_commit`" in text
+    assert "no live behavior-lift claim" in text
+    assert "no paired shaped-trial result" in text
+    assert "silent-control-live-fixture-refresh" in text
+    assert "CORTEX_LIVE_SERVICE_SPEND_APPROVED" in text
+    assert "gpt-5.3-codex" in text
+    assert "recon/cortex_openai_operator_silent_control_live_probe_retry.md" in docs_index
+    assert (
+        "docs/recon/cortex_openai_operator_silent_control_live_probe_retry.md"
+        in status["active_docs"]
     )
+    assert status["work_today"]["slug"] == "silent-control-live-probe-on-openai-retry"
+    assert status["next_product_train"]["slug"] == "silent-control-live-fixture-refresh"
 
 
 def test_cortex_plugin_design_preserves_scope_and_truth_boundaries() -> None:
@@ -1825,24 +1857,24 @@ def test_status_registry_is_complete_and_stable() -> None:
         assert {"slug", "stage", "summary", "next_step"} <= set(entry)
         assert entry["slug"] != status["work_today"]["slug"]
         assert entry["slug"] != status["next_product_train"]["slug"]
-    assert status["work_today"]["slug"] == "openai-operator-debt-control-enactment"
-    assert "openai operator host adapter" in status["work_today"]["note"].lower()
-    assert "prompt-independent operator actions" in status["work_today"]["note"].lower()
-    assert "gate 0 passes structurally" in status["work_today"]["note"].lower()
-    assert "internal debt/brake vocabulary stays out" in status["work_today"]["note"].lower()
-    assert "no live behavior-lift or shipping promotion" in status["work_today"]["note"].lower()
-    assert status["next_product_train"]["slug"] == "silent-control-live-probe-on-openai-retry"
+    assert status["work_today"]["slug"] == "silent-control-live-probe-on-openai-retry"
+    assert "gate 0 enactment intact" in status["work_today"]["note"].lower()
+    assert "gpt-5.3-codex" in status["work_today"]["note"].lower()
+    assert "did not reproduce" in status["work_today"]["note"].lower()
+    assert "no paired shaped matrix ran" in status["work_today"]["note"].lower()
+    assert "no silent-control behavior lift or shipping promotion" in status["work_today"]["note"].lower()
+    assert status["next_product_train"]["slug"] == "silent-control-live-fixture-refresh"
     assert "product" == status["next_product_train"]["surface"]
-    assert "paired openai operator silent-control live probe" in status["next_product_train"][
+    assert "refresh the openai operator live failure fixtures" in status["next_product_train"][
         "executive_benefit"
     ].lower()
-    assert "paired openai operator trials" in status["next_product_train"][
+    assert "at least one primary live fixture family reproduces" in status["next_product_train"][
         "primary_metric"
     ].lower()
     assert "prompt warning text" in status["next_product_train"][
         "guardrail"
     ].lower()
-    assert "gate 0 regresses" in status["next_product_train"][
+    assert "artificial prompt traps" in status["next_product_train"][
         "kill_rule"
     ].lower()
     deferred_lines = {entry["slug"]: entry for entry in status["research_lines_under_evaluation"]}
@@ -1860,10 +1892,9 @@ def test_status_registry_is_complete_and_stable() -> None:
     assert "route truth stays bounded and non-sovereign" in status["where_to_work"][2]
     assert "live `Q_mem` stays zero" in status["where_to_work"][2]
     assert "host/tool reliability and affordance priors are earned" in status["where_to_work"][2]
-    assert "openai-operator-debt-control-enactment seam closes" in status["where_to_work"][3]
-    assert "prompt-independent operator actions" in status["where_to_work"][3]
-    assert "shaped truth-gap debt producing resume-recheck" in status["where_to_work"][3]
-    assert "silent-control-live-probe-on-openai-retry" in status["where_to_work"][3]
+    assert "silent-control-live-probe-on-openai-retry seam preserved" in status["where_to_work"][3]
+    assert "did not reproduce any primary failure family" in status["where_to_work"][3]
+    assert "silent-control-live-fixture-refresh" in status["where_to_work"][3]
     closure_gates = {gate["id"]: gate for gate in status["closure_gates"]}
     assert closure_gates["main_synced"]["status"] == "required"
     assert closure_gates["cleanup_report"]["status"] == "required"
@@ -1894,13 +1925,13 @@ def test_generated_status_doc_includes_system_map_and_next_product_train() -> No
     assert "## Next Product Train" in text
     assert "## Research Lines Under Evaluation" in text
     assert "host/tool reliability and affordance priors are earned" in text
-    assert "`openai-operator-debt-control-enactment`" in text
-    assert "- Next product train after the current focus: `silent-control-live-probe-on-openai-retry`" in text
-    assert "- Train: `silent-control-live-probe-on-openai-retry`" in text
+    assert "`silent-control-live-probe-on-openai-retry`" in text
+    assert "- Next product train after the current focus: `silent-control-live-fixture-refresh`" in text
+    assert "- Train: `silent-control-live-fixture-refresh`" in text
     assert "`brain-capability-observation-and-inference` (deferred-by-executive-runtime-roadmap)" in text
-    assert "openai operator host adapter" in text.lower()
-    assert "gate 0 passes structurally" in text.lower()
-    assert "paired openai operator silent-control live probe" in text.lower()
+    assert "gate 0 enactment intact" in text.lower()
+    assert "baseline fixtures are too easy" in text.lower()
+    assert "refresh the openai operator live failure fixtures" in text.lower()
     assert "Shipping Product Lane\\nopenai:operator_cli" in text or "Shipping Product Lane" in text
     assert "Shipping default: `openai:operator_cli`" in text
     assert "Workflow gates marked `required` are contractual gates checked by `repo_workflow.py`" in text
