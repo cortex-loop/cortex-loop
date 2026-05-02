@@ -71,5 +71,9 @@ Active docs:
   live OpenAI operator fixture-refresh evidence: isolated output-quality
   workspaces and `astro_docs_site_v1` reproduces the hidden-verifier failure
   shape needed before another silent-control retry
+- [Cortex OpenAI Operator Verification-Debt Continuation](recon/cortex_openai_operator_verification_debt_continuation.md) —
+  structural Gate 0 evidence that OpenAI operator silent control can enact a
+  general same-thread verification continuation for visible-success / unpaid
+  verification-debt states without fixture-specific product law
 
 Historical runtime, lab, and governance material now lives under [archive/](archive/).

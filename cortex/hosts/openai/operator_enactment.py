@@ -10,6 +10,7 @@ from typing import Any
 
 
 RECHECK_PROMPT_NAME = "truth_gap_recheck_operator.md"
+VERIFICATION_CONTINUATION_PROMPT_NAME = "verification_debt_continuation_operator.md"
 
 MODEL_VISIBLE_FORBIDDEN_TERMS = (
     "CORTEX_RUNTIME_CONTEXT",
@@ -17,6 +18,8 @@ MODEL_VISIBLE_FORBIDDEN_TERMS = (
     "debt_control",
     "debt-control",
     "debt pressure",
+    "verification debt",
+    "verification_debt",
     "resolution_deficit",
     "resolution deficit",
     "brake",
@@ -35,6 +38,7 @@ class OpenAIOperatorEnactmentAction(str, Enum):
     INVOKE = "invoke"
     BLOCK = "block"
     RESUME_RECHECK = "resume_recheck"
+    RESUME_VERIFICATION = "resume_verification"
 
 
 @dataclass(frozen=True, slots=True)
@@ -51,6 +55,9 @@ class OpenAIOperatorEnactmentDecision:
     resume_recheck_armed: bool = False
     resume_recheck_allowed: bool = False
     resume_recheck_blocked_reason: str | None = None
+    resume_verification_armed: bool = False
+    resume_verification_allowed: bool = False
+    resume_verification_blocked_reason: str | None = None
     model_bound_difference_kind: str = "none"
     reason_tags: tuple[str, ...] = field(default_factory=tuple)
 
@@ -102,6 +109,9 @@ class OpenAIOperatorEnactmentDecision:
             "resume_recheck_armed": self.resume_recheck_armed,
             "resume_recheck_allowed": self.resume_recheck_allowed,
             "resume_recheck_blocked_reason": self.resume_recheck_blocked_reason,
+            "resume_verification_armed": self.resume_verification_armed,
+            "resume_verification_allowed": self.resume_verification_allowed,
+            "resume_verification_blocked_reason": self.resume_verification_blocked_reason,
             "model_bound_difference_kind": self.model_bound_difference_kind,
             "reason_tags": list(self.reason_tags),
         }
@@ -211,6 +221,61 @@ def build_openai_operator_enactment_decision(
             reason_tags=("enact:persistent-thread", *route_reason_tags),
         )
 
+    verification_armed = _resume_verification_armed(
+        route_budget=route_budget,
+        executive_policy_view_payload=executive_policy_view_payload,
+        debt_control_payload=debt_control_payload,
+    )
+    if verification_armed:
+        allowed, blocked = _resume_verification_allowed(
+            first_result_kind=first_result_kind,
+            provider_limit_interference=provider_limit_interference,
+            thread_id=thread_id,
+        )
+        if allowed:
+            return OpenAIOperatorEnactmentDecision(
+                action=OpenAIOperatorEnactmentAction.RESUME_VERIFICATION,
+                route_profile=route_profile,
+                invocation_allowed=True,
+                route_budget=route_budget,
+                resume_prompt_name=VERIFICATION_CONTINUATION_PROMPT_NAME,
+                thread_policy="resume_existing_thread",
+                resume_verification_armed=True,
+                resume_verification_allowed=True,
+                model_bound_difference_kind="resume_verification",
+                reason_tags=("enact:resume-verification", *route_reason_tags),
+            )
+        return OpenAIOperatorEnactmentDecision(
+            action=OpenAIOperatorEnactmentAction.INVOKE,
+            route_profile=route_profile,
+            invocation_allowed=True,
+            route_budget=route_budget,
+            resume_prompt_name=(
+                VERIFICATION_CONTINUATION_PROMPT_NAME
+                if first_result_kind is None
+                else None
+            ),
+            thread_policy=(
+                "persistent_for_possible_verification"
+                if first_result_kind is None
+                else "ephemeral_allowed"
+            ),
+            resume_verification_armed=True,
+            resume_verification_allowed=False,
+            resume_verification_blocked_reason=blocked,
+            model_bound_difference_kind=(
+                "thread_persistence" if first_result_kind is None else "none"
+            ),
+            reason_tags=(
+                (
+                    "enact:persistent-verification-thread"
+                    if first_result_kind is None
+                    else "enact:no-verification-resume"
+                ),
+                *route_reason_tags,
+            ),
+        )
+
     return OpenAIOperatorEnactmentDecision(
         action=OpenAIOperatorEnactmentAction.INVOKE,
         route_profile=route_profile,
@@ -261,6 +326,23 @@ def _resume_recheck_armed(
     return verification_relief > 0.0
 
 
+def _resume_verification_armed(
+    *,
+    route_budget: Mapping[str, object],
+    executive_policy_view_payload: Mapping[str, Any],
+    debt_control_payload: Mapping[str, Any],
+) -> bool:
+    if route_budget.get("allow_extra_read_pass") is not True:
+        return False
+    if executive_policy_view_payload.get("allow_extra_read_pass") is not True:
+        return False
+    verification_relief = _unit_float(
+        debt_control_payload.get("verification_relief_bias", 0.0),
+        field_name="debt_control_payload.verification_relief_bias",
+    )
+    return verification_relief > 0.0
+
+
 def _resume_recheck_allowed(
     *,
     first_result_kind: str | None,
@@ -269,6 +351,21 @@ def _resume_recheck_allowed(
 ) -> tuple[bool, str | None]:
     if first_result_kind != "truthful_incomplete":
         return False, "first_result_not_truthful_incomplete"
+    if provider_limit_interference:
+        return False, "provider_limit_interference"
+    if not (isinstance(thread_id, str) and thread_id.strip()):
+        return False, "missing_thread_id"
+    return True, None
+
+
+def _resume_verification_allowed(
+    *,
+    first_result_kind: str | None,
+    provider_limit_interference: bool,
+    thread_id: str | None,
+) -> tuple[bool, str | None]:
+    if first_result_kind != "visible_success_unverified":
+        return False, "first_result_not_visible_success_unverified"
     if provider_limit_interference:
         return False, "provider_limit_interference"
     if not (isinstance(thread_id, str) and thread_id.strip()):
@@ -321,6 +418,7 @@ __all__ = [
     "OpenAIOperatorEnactmentAction",
     "OpenAIOperatorEnactmentDecision",
     "RECHECK_PROMPT_NAME",
+    "VERIFICATION_CONTINUATION_PROMPT_NAME",
     "build_openai_operator_enactment_decision",
     "find_internal_terms_in_model_visible_values",
     "model_visible_values_are_silent",

@@ -1,0 +1,1 @@
+Going back over the work just produced. Before closure holds, run a verification pass against the visible task contract and checks already available in this workspace. If the work is supported, restate the evidence. If something is still unverified, keep the task open and name what remains unverified.

@@ -4,6 +4,7 @@ import pytest
 
 from cortex.hosts.openai.operator_enactment import (
     RECHECK_PROMPT_NAME,
+    VERIFICATION_CONTINUATION_PROMPT_NAME,
     OpenAIOperatorEnactmentAction,
     build_openai_operator_enactment_decision,
     find_internal_terms_in_model_visible_values,
@@ -139,6 +140,101 @@ def test_neutral_clean_route_returns_single_invoke() -> None:
     assert decision.action is OpenAIOperatorEnactmentAction.INVOKE
     assert decision.thread_policy == "ephemeral_allowed"
     assert decision.resume_prompt_name is None
+    assert decision.model_bound_difference_kind == "none"
+
+
+def test_verification_debt_arms_persistent_thread_before_result_without_fixture_id() -> None:
+    decision = build_openai_operator_enactment_decision(
+        operator_route_payload=_route_payload(),
+        executive_policy_view_payload=_policy_payload(),
+        debt_control_payload=_debt_payload(),
+        scenario_id="general_verification_witness",
+        first_result_kind=None,
+        provider_limit_interference=False,
+        thread_id=None,
+    )
+
+    assert decision.action is OpenAIOperatorEnactmentAction.INVOKE
+    assert decision.resume_prompt_name == VERIFICATION_CONTINUATION_PROMPT_NAME
+    assert decision.thread_policy == "persistent_for_possible_verification"
+    assert decision.resume_verification_armed is True
+    assert decision.resume_verification_allowed is False
+    assert decision.resume_verification_blocked_reason == (
+        "first_result_not_visible_success_unverified"
+    )
+    assert decision.model_bound_difference_kind == "thread_persistence"
+
+
+@pytest.mark.parametrize("scenario_id", ["general_verification_witness", "unrelated_dashboard_control"])
+def test_visible_success_unverified_returns_general_verification_continuation(
+    scenario_id: str,
+) -> None:
+    decision = build_openai_operator_enactment_decision(
+        operator_route_payload=_route_payload(),
+        executive_policy_view_payload=_policy_payload(),
+        debt_control_payload=_debt_payload(),
+        scenario_id=scenario_id,
+        first_result_kind="visible_success_unverified",
+        provider_limit_interference=False,
+        thread_id="thread-verify",
+    )
+
+    assert decision.action is OpenAIOperatorEnactmentAction.RESUME_VERIFICATION
+    assert decision.resume_prompt_name == VERIFICATION_CONTINUATION_PROMPT_NAME
+    assert decision.thread_policy == "resume_existing_thread"
+    assert decision.resume_verification_armed is True
+    assert decision.resume_verification_allowed is True
+    assert decision.model_bound_difference_kind == "resume_verification"
+
+
+@pytest.mark.parametrize(
+    ("first_result_kind", "provider_limit_interference", "thread_id", "blocked"),
+    [
+        ("clean_verified", False, "thread-1", "first_result_not_visible_success_unverified"),
+        ("visible_success_unverified", True, "thread-1", "provider_limit_interference"),
+        ("visible_success_unverified", False, None, "missing_thread_id"),
+    ],
+)
+def test_resume_verification_requires_structured_visible_success_unverified_state(
+    first_result_kind: str,
+    provider_limit_interference: bool,
+    thread_id: str | None,
+    blocked: str,
+) -> None:
+    decision = build_openai_operator_enactment_decision(
+        operator_route_payload=_route_payload(),
+        executive_policy_view_payload=_policy_payload(),
+        debt_control_payload=_debt_payload(),
+        scenario_id="general_verification_witness",
+        first_result_kind=first_result_kind,
+        provider_limit_interference=provider_limit_interference,
+        thread_id=thread_id,
+    )
+
+    assert decision.action is OpenAIOperatorEnactmentAction.INVOKE
+    assert decision.thread_policy == "ephemeral_allowed"
+    assert decision.resume_verification_armed is True
+    assert decision.resume_verification_allowed is False
+    assert decision.resume_verification_blocked_reason == blocked
+    assert decision.resume_prompt_name is None
+    assert decision.model_bound_difference_kind == "none"
+
+
+def test_clean_paid_down_route_does_not_arm_verification_continuation() -> None:
+    decision = build_openai_operator_enactment_decision(
+        operator_route_payload=_route_payload(),
+        executive_policy_view_payload=_policy_payload(),
+        debt_control_payload=_debt_payload(verification_relief_bias=0.0),
+        scenario_id="general_verification_witness",
+        first_result_kind="clean_verified",
+        provider_limit_interference=False,
+        thread_id="thread-clean",
+    )
+
+    assert decision.action is OpenAIOperatorEnactmentAction.INVOKE
+    assert decision.thread_policy == "ephemeral_allowed"
+    assert decision.resume_prompt_name is None
+    assert decision.resume_verification_armed is False
     assert decision.model_bound_difference_kind == "none"
 
 
