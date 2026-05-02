@@ -674,7 +674,7 @@ feature.
 
 ### PreToolUse Content Shape Research
 
-Gate 1 finding: real `CORTEX_RUNTIME_CONTEXT_V1` content reached Claude Code
+Gate 1 finding: real legacy runtime-context content reached Claude Code
 Desktop through `PreToolUse:Bash` additional context, but paired behavior was
 mixed: one shaped win, one no-change, one shaped regression, and one neutral.
 That is a content-shape failure for the current bridge, not proof that
@@ -686,9 +686,9 @@ context by default:
 - Situated failure description versus generic constraint. A message that names
   the specific failed command, missing artifact, or unverified claim may work
   better than a generic route/brake schema.
-- Short pointed signal versus full schema. A compact one- or two-sentence
-  instruction may outperform the current multi-field `CORTEX_RUNTIME_CONTEXT_V1`
-  shape by reducing model distraction and harness leakage.
+- Short pointed signal versus full schema. A compact constraint sentence may
+  outperform the prior multi-field runtime-context schema by reducing model
+  distraction and harness leakage.
 - Conditional invocation only on strong prior signal. Runtime context may need
   to emit only after high-confidence evidence degradation, missing-file output,
   latched brake, or explicit continuity debt, not after every noisy feedback

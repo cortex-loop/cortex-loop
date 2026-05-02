@@ -54,7 +54,8 @@ def test_build_verified_work_instructions_lists_allowed_paths() -> None:
     assert "=== FILE: relative/path ===" in instructions
     assert "=== BLOCKED: needs_user_input ===" in instructions
     assert "=== BLOCKED: unsafe_request ===" in instructions
-    assert "Do not return prose" in instructions
+    assert "No prose around the blocks." in instructions
+    assert "Do not" not in instructions
     assert "src/bookmarks_api/main.py" in instructions
 
 
@@ -64,7 +65,10 @@ def test_build_verified_work_contract_binding_lean_shortens_instructions_and_rep
         contract_binding_profile="lean",
     )
 
-    assert "Return only protocol blocks for the allowed paths." in instructions
+    assert (
+        "The output for this work is protocol blocks for the allowed paths only."
+        in instructions
+    )
     assert "Do not return prose" not in instructions
 
     state = derive_preservation_state(
@@ -91,15 +95,15 @@ def test_build_verified_work_contract_binding_lean_shortens_instructions_and_rep
         contract_binding_profile="lean",
     )
 
-    assert "trusted_checks:" not in ticket
-    assert "failure_class: test_failed" in ticket
+    assert "already working checks:" not in ticket
+    assert "what failed: test_failed" in ticket
 
 
 def test_build_verified_work_input_text_attaches_workspace_context() -> None:
     input_text = build_verified_work_input_text("build bookmarks app", _work_contract())
 
     assert input_text.startswith("build bookmarks app")
-    assert "Read-only workspace context follows." in input_text
+    assert "Workspace context for the task follows." in input_text
     assert "=== CONTEXT FILE: src/bookmarks_api/main.py ===" in input_text
     assert "=== CONTEXT FILE: tests/test_bookmarks_api.py ===" in input_text
     assert "app = FastAPI(title=\"Bookmarks API\")" in input_text
@@ -156,7 +160,7 @@ def test_build_verified_work_input_text_lean_uses_shorter_context_intro() -> Non
     )
 
     assert input_text.startswith("build bookmarks app")
-    assert "Workspace context follows. Edit only allowed paths." in input_text
+    assert "Workspace context follows. Only allowed paths are in scope." in input_text
     assert "Read-only workspace context follows." not in input_text
     assert "=== CONTEXT FILE: src/bookmarks_api/main.py ===" in input_text
     assert "=== CONTEXT FILE: tests/test_bookmarks_api.py ===" not in input_text
@@ -356,10 +360,12 @@ def test_build_verified_work_repair_ticket_is_factual_only() -> None:
 
     ticket = build_verified_work_repair_ticket(state)
 
-    assert "task_anchor: verified-work:python_workspace_pytest_v1:" in ticket
-    assert "failure_class: blocked_unsafe" in ticket
-    assert "falsified_checks: blocked" in ticket
-    assert "lawful_repair_surface: <none>" in ticket
+    assert "task: verified-work:python_workspace_pytest_v1:" in ticket
+    assert "what failed: blocked_unsafe" in ticket
+    assert "checks still failing: blocked" in ticket
+    assert "repair scope: <none>" in ticket
+    assert "task_anchor:" not in ticket
+    assert "lawful_repair_surface:" not in ticket
 
 
 def test_build_verified_work_repair_ticket_supports_minimal_style() -> None:
@@ -387,11 +393,11 @@ def test_build_verified_work_repair_ticket_supports_minimal_style() -> None:
         style="minimal",
     )
 
-    assert "task_anchor: verified-work:python_workspace_pytest_v1:" in ticket
-    assert "failure_class: test_failed" in ticket
-    assert "falsified_checks: pytest" in ticket
-    assert "lawful_repair_surface: src/bookmarks_api/main.py" in ticket
-    assert "remaining_repairs: 1" in ticket
+    assert "task: verified-work:python_workspace_pytest_v1:" in ticket
+    assert "what failed: test_failed" in ticket
+    assert "checks still failing: pytest" in ticket
+    assert "repair scope: src/bookmarks_api/main.py" in ticket
+    assert "repairs left: 1" in ticket
 
 
 def test_verify_verified_work_result_uses_profile_specific_verifier_targets(

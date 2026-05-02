@@ -720,8 +720,8 @@
         "id": "feedback_window_realization",
         "visibility_class": "conditional_model_visible_openai_and_claude_code_desktop_structural",
         "model_io_path": "host output / last `ReferenceRealizationFeedback` → `runtime_context_from_last_feedback(...)` → OpenAI host-control `instructions` or verified-work `input_text`; Claude Code Desktop structural path maps prior feedback through `cortex/hosts/claude_code_desktop/runtime.py` to `hookSpecificOutput.additionalContext` for `PreToolUse:Bash`",
-        "reaches_model_as": "bounded `CORTEX_RUNTIME_CONTEXT_V1` text derived only from the immediately prior feedback entry; clean or absent feedback emits no block/context",
-        "behavior_effect": "shapes the next OpenAI call and, structurally, the next Claude Code Desktop Bash-tool assistant continuation away from premature closure after stream-only, failed-probe, warning, friction, override, or braked realization without accumulating memory across turns",
+        "reaches_model_as": "a single task-local runtime-context constraint sentence derived only from the immediately prior feedback entry; clean or absent feedback emits no block/context",
+        "behavior_effect": "shapes the next OpenAI call and, structurally, the next Claude Code Desktop Bash-tool assistant continuation away from premature closure after stream-only, failed-probe, warning, override, or braked realization without accumulating memory across turns; generic friction now stays silent and relies on route/brake gates",
         "gap_or_unearned": "OpenAI remains the direct shipping lane; Claude Code Desktop is structurally wired for `PreToolUse:Bash` only and still needs live paired output-quality evidence before shipping-lift claims."
       },
       {

@@ -61,10 +61,10 @@ PreToolUse:Bash payload
 -> next assistant message after the Bash tool result
 ```
 
-Clean prior feedback emits no context. Noisy prior feedback emits a bounded
-`CORTEX_RUNTIME_CONTEXT_V1` block, capped at 720 characters and derived only
-from the immediately prior feedback object. Observe mode updates runtime state
-but emits no hook context.
+Clean prior feedback emits no context. Noisy prior feedback may emit a single
+task-local executive constraint sentence derived only from the immediately
+prior feedback object. Observe mode updates runtime state but emits no hook
+context.
 
 ## Plugin Skeleton
 

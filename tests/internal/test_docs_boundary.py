@@ -1756,7 +1756,7 @@ def test_cortex_plugin_adapter_preserves_host_adapter_boundaries() -> None:
     assert "math-to-code map" in text
     assert "PreToolUse:Bash" in text
     assert "hookSpecificOutput.additionalContext" in text
-    assert "CORTEX_RUNTIME_CONTEXT_V1" in text
+    assert "task-local executive constraint sentence" in text
     assert "Clean prior feedback emits no context" in text
     assert "hook events parse" in text
     assert "no-op transport stubs" in text

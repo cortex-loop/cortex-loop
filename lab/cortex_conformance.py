@@ -1560,7 +1560,7 @@ def _artifact_relpath(path: Path) -> str:
 def _render_combined_operator_prompt(*, task_prompt: str, instructions: str) -> str:
     return (
         f"{task_prompt}\n\n"
-        "Follow this exact output contract:\n"
+        "The exact output contract follows:\n"
         f"{instructions}"
     )
 
@@ -1577,13 +1577,13 @@ def _render_openai_native_operator_prompt(
     )
     return (
         f"{input_text}\n\n"
-        "Operate directly on the staged workspace.\n"
-        "Edit only the allowed paths named in the work contract.\n"
-        "Keep exploration minimal and stop once the allowed files are complete.\n"
-        "The target command and visible tests are verifier context only; do not execute them yourself.\n"
-        "Do not run tests, compile checks, syntax checks, or other validation shell commands.\n"
-        "When the allowed files are complete, stop immediately.\n\n"
-        "If blocked because you need missing user information, return:\n"
+        "The work happens directly on the staged workspace.\n"
+        "Only the allowed paths named in the work contract are in scope.\n"
+        "Exploration stays minimal and ends once the allowed files are complete.\n"
+        "The target command and visible tests are verifier context only, not commands for this turn.\n"
+        "Tests, compile checks, syntax checks, and other validation shell commands are not part of this turn.\n"
+        "When the allowed files are complete, the turn is complete.\n\n"
+        "If missing user information blocks the work, return:\n"
         "=== BLOCKED: needs_user_input ===\n"
         "<message>\n"
         "=== END BLOCKED ===\n\n"
@@ -1591,7 +1591,7 @@ def _render_openai_native_operator_prompt(
         "=== BLOCKED: unsafe_request ===\n"
         "<message>\n"
         "=== END BLOCKED ===\n\n"
-        "Do not return summaries, prose, or code fences."
+        "No summaries, prose, or code fences."
     )
 
 

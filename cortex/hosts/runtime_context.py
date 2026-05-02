@@ -11,21 +11,19 @@ from cortex.sre.feedback import (
 from cortex.sre.opportunities import PROBE_FAILURE_CLASSES
 
 
-RUNTIME_CONTEXT_HEADER = "CORTEX_RUNTIME_CONTEXT_V1"
-_SOURCE_LINE = "source: last_feedback_only; no_accumulation=true"
-_MAX_BLOCK_CHARS = 720
-_MAX_TOKEN_CHARS = 48
 _LOW_EVIDENCE_CLASSES = frozenset({"none"}) | STREAM_ONLY_EVIDENCE_PROGRESS_CLASSES
 
 
 def runtime_context_from_last_feedback(
     feedback: ReferenceRealizationFeedback | None,
 ) -> str | None:
-    """Translate the newest realization feedback into bounded model-visible text.
+    """Translate newest realization feedback into one model-visible constraint.
 
     The function deliberately accepts one feedback object, not a feedback window
     or host session, so callers cannot accidentally accumulate context across
-    turns.
+    turns. Returned text is an attached-context executive constraint in the
+    model's task frame, not a schema block, outside-person warning, or raw
+    Cortex diagnostic.
     """
     if feedback is None:
         return None
@@ -38,21 +36,7 @@ def runtime_context_from_last_feedback(
     if _is_clean_feedback(feedback):
         return None
 
-    lines = (
-        RUNTIME_CONTEXT_HEADER,
-        _SOURCE_LINE,
-        _prior_result_line(feedback),
-        _progress_signal_line(feedback),
-        _disruption_signal_line(feedback),
-        _next_call_constraint_line(feedback),
-    )
-    block = "\n".join(lines)
-    if len(block) > _MAX_BLOCK_CHARS:
-        raise RuntimeError(
-            "Cortex runtime context exceeded its fixed maximum length; "
-            f"got {len(block)} chars."
-        )
-    return block
+    return _next_call_constraint(feedback)
 
 
 def _is_clean_feedback(feedback: ReferenceRealizationFeedback) -> bool:
@@ -88,71 +72,34 @@ def _has_meaningful_progress(feedback: ReferenceRealizationFeedback) -> bool:
     )
 
 
-def _prior_result_line(feedback: ReferenceRealizationFeedback) -> str:
-    line = (
-        "prior_result: "
-        f"selected={feedback.selected_family.value}; "
-        f"realized={feedback.realized_family.value}; "
-        f"brake={feedback.brake_state.value}"
-    )
-    return _bounded_line(line, min_chars=40, max_chars=96)
-
-
-def _progress_signal_line(feedback: ReferenceRealizationFeedback) -> str:
-    line = (
-        "progress_signal: "
-        f"evidence={feedback.evidence_progress_class or 'unknown'}; "
-        f"continuity={feedback.continuity_progress_class or 'unknown'}; "
-        f"probe={feedback.probe_result_class or 'none'}"
-    )
-    return _bounded_line(line, min_chars=45, max_chars=120)
-
-
-def _disruption_signal_line(feedback: ReferenceRealizationFeedback) -> str:
-    line = (
-        "disruption_signal: "
-        f"warnings={_limited_tokens(feedback.warning_codes)}; "
-        f"friction={_limited_tokens(feedback.host_friction_tags)}; "
-        f"override={_yes_no(feedback.selected_family is not feedback.realized_family)}"
-    )
-    return _bounded_line(line, min_chars=30, max_chars=160)
-
-
-def _next_call_constraint_line(feedback: ReferenceRealizationFeedback) -> str:
+def _next_call_constraint(feedback: ReferenceRealizationFeedback) -> str | None:
     if _has_continuity_or_session_warning(feedback):
-        constraint = (
-            "Do not close this call; recover the missing continuity/session "
-            "anchor or ask for exact context before presenting completion."
+        return (
+            "Continuity is not anchored enough for closure. Prior context needs "
+            "to be recovered, or the missing context needs to be asked for, "
+            "before closure holds."
         )
     elif feedback.probe_result_class in PROBE_FAILURE_CLASSES:
-        constraint = (
-            "Do not rely on the unavailable probe; use alternate evidence from "
-            "the current request or return blocked_missing_info."
+        return (
+            "The usual check did not come through. Alternate evidence from the "
+            "current task is needed, or the work should close as blocked for "
+            "missing information."
         )
     elif _has_low_evidence_without_continuity(feedback):
-        constraint = (
-            "Do not treat generated text as evidence; produce or check a "
-            "concrete artifact, or ask for exact evidence before closure."
+        return (
+            "Completion is not supported by the evidence yet. An artifact, a "
+            "check, or a narrower claim is still needed before closure holds."
         )
     elif (
         feedback.selected_family is not feedback.realized_family
         or feedback.brake_state is not BrakeState.QUIESCENT
         or feedback.warning_codes
     ):
-        constraint = (
-            "Use a guarded check before acting or closing; verify the next step "
-            "because prior control was overridden, warned, or braked."
+        return (
+            "Something in the prior step is unresolved. A check is needed before "
+            "the next action is treated as safe to continue."
         )
-    else:
-        constraint = (
-            "Account for prior host friction and choose a lower-risk "
-            "inspect/check response; avoid irreversible action until resolved."
-        )
-    return _bounded_line(
-        f"next_call_constraint: {constraint}",
-        min_chars=80,
-        max_chars=180,
-    )
+    return None
 
 
 def _has_continuity_or_session_warning(feedback: ReferenceRealizationFeedback) -> bool:
@@ -182,35 +129,6 @@ def _has_continuity_progress(feedback: ReferenceRealizationFeedback) -> bool:
     )
 
 
-def _limited_tokens(values: tuple[str, ...]) -> str:
-    if not values:
-        return "none"
-    return ",".join(_truncate_token(value) for value in values[:2])
-
-
-def _truncate_token(value: str) -> str:
-    stripped = value.strip()
-    if len(stripped) <= _MAX_TOKEN_CHARS:
-        return stripped
-    return stripped[: _MAX_TOKEN_CHARS - 3] + "..."
-
-
-def _bounded_line(line: str, *, min_chars: int, max_chars: int) -> str:
-    if len(line) > max_chars:
-        line = line[: max_chars - 3] + "..."
-    if len(line) < min_chars:
-        raise RuntimeError(
-            "Cortex runtime context field underflow: "
-            f"{line!r} has {len(line)} chars, expected at least {min_chars}."
-        )
-    return line
-
-
-def _yes_no(value: bool) -> str:
-    return "yes" if value else "no"
-
-
 __all__ = [
-    "RUNTIME_CONTEXT_HEADER",
     "runtime_context_from_last_feedback",
 ]
