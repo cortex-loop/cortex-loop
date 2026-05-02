@@ -86,6 +86,11 @@ from cortex.sre.feedback import (
     ReferenceRealizationFeedbackWindow,
     summarize_reference_feedback_window,
 )
+from cortex.sre.expectations import (
+    ExpectationLedger,
+    ResolutionDeficitState,
+    update_expectation_ledger_for_structured_step,
+)
 from cortex.sre.reference_scoring import (
     rejected_cheaper_families as scorecard_rejected_cheaper_families,
 )
@@ -115,6 +120,7 @@ class ReferenceRuntimeSession:
     feedback_window: ReferenceRealizationFeedbackWindow = field(
         default_factory=ReferenceRealizationFeedbackWindow
     )
+    expectation_ledger: ExpectationLedger = field(default_factory=ExpectationLedger)
     executive_modulator_memory: ExecutiveModulatorMemory | None = None
 
     def __post_init__(self) -> None:
@@ -205,6 +211,12 @@ class ReferenceRuntimeSession:
                 "ReferenceRuntimeSession.feedback_window must be "
                 f"ReferenceRealizationFeedbackWindow, got {actual_type}."
             )
+        if not isinstance(self.expectation_ledger, ExpectationLedger):
+            actual_type = type(self.expectation_ledger).__name__
+            raise TypeError(
+                "ReferenceRuntimeSession.expectation_ledger must be "
+                f"ExpectationLedger, got {actual_type}."
+            )
         if self.executive_modulator_memory is not None and not isinstance(
             self.executive_modulator_memory,
             ExecutiveModulatorMemory,
@@ -272,6 +284,7 @@ class ReferenceRuntimeSession:
             "budget_history": list(self.budget_history),
             "brake_history": list(self.brake_history),
             "feedback_window_size": len(self.feedback_window.entries),
+            "expectation_ledger": self.expectation_ledger.as_payload(),
             "last_selected_family": (
                 self.last_selected_family.value
                 if self.last_selected_family is not None
@@ -384,6 +397,9 @@ class ReferenceRuntimeStepResult:
     feedback_window_summary: ReferenceFeedbackWindowSummary = field(
         default_factory=ReferenceFeedbackWindowSummary
     )
+    resolution_deficit: ResolutionDeficitState = field(
+        default_factory=ResolutionDeficitState
+    )
     executive_signal_summary: ExecutiveSignalSummary = field(
         default_factory=lambda: ExecutiveSignalSummary(
             uncertainty=0.0,
@@ -475,6 +491,12 @@ class ReferenceRuntimeStepResult:
             raise TypeError(
                 "ReferenceRuntimeStepResult.feedback_window_summary must be "
                 f"ReferenceFeedbackWindowSummary, got {actual_type}."
+            )
+        if not isinstance(self.resolution_deficit, ResolutionDeficitState):
+            actual_type = type(self.resolution_deficit).__name__
+            raise TypeError(
+                "ReferenceRuntimeStepResult.resolution_deficit must be "
+                f"ResolutionDeficitState, got {actual_type}."
             )
         if not isinstance(self.executive_signal_summary, ExecutiveSignalSummary):
             actual_type = type(self.executive_signal_summary).__name__
@@ -584,6 +606,10 @@ class ReferenceRuntimeStepResult:
     @property
     def feedback_window_summary_payload(self) -> dict[str, Any]:
         return self.feedback_window_summary.as_summary()
+
+    @property
+    def resolution_deficit_payload(self) -> dict[str, Any]:
+        return self.resolution_deficit.as_payload()
 
     @property
     def executive_signal_summary_payload(self) -> dict[str, Any]:
@@ -699,6 +725,7 @@ def run_reference_runtime_step(
         last_commitment_result_summary=prior_session.last_commitment_result_summary,
         last_realization_feedback=prior_session.last_realization_feedback,
         feedback_window=prior_session.feedback_window,
+        expectation_ledger=prior_session.expectation_ledger,
     )
     support_snapshot = _build_support_snapshot(
         provisional_session=provisional_session,
@@ -886,6 +913,17 @@ def run_reference_runtime_step(
             opportunities=opportunities,
         ),
     )
+    expectation_ledger = update_expectation_ledger_for_structured_step(
+        ledger=prior_session.expectation_ledger,
+        dispatch_decision=dispatch_decision,
+        current_step=provisional_session.event_index,
+        source_event_ref=f"reference:{provisional_session.event_index}",
+        evidence_progress_class=realization_feedback.evidence_progress_class,
+        continuity_progress_class=realization_feedback.continuity_progress_class,
+        commitment_result_kind=commitment_result_kind,
+        task_mode=runtime_task_mode.value,
+        warning_codes=tuple(warnings),
+    )
     updated_session = ReferenceRuntimeSession(
         session_id=provisional_session.session_id,
         event_index=provisional_session.event_index,
@@ -905,6 +943,7 @@ def run_reference_runtime_step(
         ),
         last_realization_feedback=realization_feedback,
         feedback_window=prior_session.feedback_window.append(realization_feedback),
+        expectation_ledger=expectation_ledger,
         executive_modulator_memory=prior_session.executive_modulator_memory,
     )
     executive_summary_inputs = build_runtime_executive_signal_summary_inputs(
@@ -974,12 +1013,16 @@ def run_reference_runtime_step(
         last_commitment_result_summary=updated_session.last_commitment_result_summary,
         last_realization_feedback=updated_session.last_realization_feedback,
         feedback_window=updated_session.feedback_window,
+        expectation_ledger=updated_session.expectation_ledger,
         executive_modulator_memory=canonicalize_executive_modulator_memory(
             executive_modulator_update.next_memory
         ),
     )
     post_feedback_window_summary = summarize_reference_feedback_window(
         updated_session.feedback_window
+    )
+    resolution_deficit = updated_session.expectation_ledger.resolution_deficit(
+        current_step=updated_session.event_index
     )
     assert_post_step_feedback_window_alignment(
         feedback_window=updated_session.feedback_window,
@@ -996,6 +1039,7 @@ def run_reference_runtime_step(
         brake_state=brake_state,
         control_ledger=control_ledger,
         feedback_window_summary=post_feedback_window_summary,
+        resolution_deficit=resolution_deficit,
         executive_signal_summary=executive_signal_summary,
         executive_modulator_state=executive_modulator_update.state,
         executive_policy_view=executive_policy_view,

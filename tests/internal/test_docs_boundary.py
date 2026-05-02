@@ -1675,21 +1675,23 @@ def test_status_registry_is_complete_and_stable() -> None:
         assert {"slug", "stage", "summary", "next_step"} <= set(entry)
         assert entry["slug"] != status["work_today"]["slug"]
         assert entry["slug"] != status["next_product_train"]["slug"]
-    assert status["work_today"]["slug"] == "brain-capability-aware-routing"
-    assert "full_cross_host" in status["work_today"]["note"]
-    assert "posture-sensitive online control is s-tier closed" in status["work_today"]["note"].lower()
-    assert "exact-family unchanged-condition repetition tax" in status["work_today"]["note"]
-    assert "reference and openai explicit-publication lanes" in status["work_today"]["note"].lower()
-    assert "memory-off when no publication is supplied" in status["work_today"]["note"]
-    assert "Q_mem = 0" in status["work_today"]["note"]
-    assert "asymmetric error cost and tonic hysteresis are now earned" in status["work_today"]["note"].lower()
-    assert "brain-capability-aware routing is now earned" in status["work_today"]["note"].lower()
-    assert "operatorbraincapabilityenvelope" in status["work_today"]["note"].lower()
-    assert status["next_product_train"]["slug"] == "brain-capability-observation-and-inference"
-    assert "product + experimental + aux" == status["next_product_train"]["surface"]
-    assert "observed-performance accumulator" in status["next_product_train"]["executive_benefit"].lower()
-    assert "publish through aux support side" in status["next_product_train"]["guardrail"].lower()
-    assert "ttl must expire stale observations" in status["next_product_train"]["guardrail"].lower()
+    assert status["work_today"]["slug"] == "runtime-expectation-debt"
+    assert "bounded runtime expectation ledger" in status["work_today"]["note"].lower()
+    assert "resolution-deficit diagnostic" in status["work_today"]["note"].lower()
+    assert "silent structural state only" in status["work_today"]["note"].lower()
+    assert "does not change brake law" in status["work_today"]["note"].lower()
+    assert "arbitrary assistant prose does not open debt" in status["work_today"]["note"].lower()
+    assert status["next_product_train"]["slug"] == "debt-drag-into-brake-and-route"
+    assert "product" == status["next_product_train"]["surface"]
+    assert "unpaid expectation debt" in status["next_product_train"]["executive_benefit"].lower()
+    assert "must not latch by itself" in status["next_product_train"]["guardrail"].lower()
+    assert "smuggles internal debt/brake terms" in status["next_product_train"]["kill_rule"].lower()
+    deferred_lines = {entry["slug"]: entry for entry in status["research_lines_under_evaluation"]}
+    assert "brain-capability-observation-and-inference" in deferred_lines
+    assert (
+        deferred_lines["brain-capability-observation-and-inference"]["stage"]
+        == "deferred-by-executive-runtime-roadmap"
+    )
     assert "Keep the bounded audit surface compact and truthful" in status["where_to_work"][0]
     assert "no-spend live evidence current and explicit" in status["where_to_work"][1]
     assert "posture-sensitive online control is s-tier closed" in status["where_to_work"][2].lower()
@@ -1699,7 +1701,7 @@ def test_status_registry_is_complete_and_stable() -> None:
     assert "route truth stays bounded and non-sovereign" in status["where_to_work"][2]
     assert "live `Q_mem` stays zero" in status["where_to_work"][2]
     assert "host/tool reliability and affordance priors are earned" in status["where_to_work"][2]
-    assert "brain-capability-aware-routing seam is the active focus" in status["where_to_work"][3]
+    assert "runtime-expectation-debt seam is the active focus" in status["where_to_work"][3]
     closure_gates = {gate["id"]: gate for gate in status["closure_gates"]}
     assert closure_gates["main_synced"]["status"] == "required"
     assert closure_gates["cleanup_report"]["status"] == "required"
@@ -1730,19 +1732,20 @@ def test_generated_status_doc_includes_system_map_and_next_product_train() -> No
     assert "## Next Product Train" in text
     assert "## Research Lines Under Evaluation" in text
     assert "host/tool reliability and affordance priors are earned" in text
-    assert "`brain-capability-aware-routing`" in text
-    assert "- Next product train after the current focus: `brain-capability-observation-and-inference`" in text
-    assert "- Train: `brain-capability-observation-and-inference`" in text
-    assert "memory-off when no publication is supplied" in text
+    assert "`runtime-expectation-debt`" in text
+    assert "- Next product train after the current focus: `debt-drag-into-brake-and-route`" in text
+    assert "- Train: `debt-drag-into-brake-and-route`" in text
+    assert "`brain-capability-observation-and-inference` (deferred-by-executive-runtime-roadmap)" in text
+    assert "bounded runtime expectation ledger" in text.lower()
+    assert "silent structural state only" in text.lower()
+    assert "unpaid expectation debt" in text.lower()
     assert "Shipping Product Lane\\nopenai:operator_cli" in text or "Shipping Product Lane" in text
     assert "Shipping default: `openai:operator_cli`" in text
     assert "Workflow gates marked `required` are contractual gates checked by `repo_workflow.py`" in text
     assert "| `main_synced` | `required` |" in text
     assert "| `cleanup_report` | `required` |" in text
-    assert "exact-family unchanged-condition repetition tax" in text
-    assert "full_cross_host" in text
-    assert "posture-sensitive online control is s-tier closed" in text.lower()
-    assert "stream-only churn stays visible but non-epistemic" in text
+    assert "arbitrary assistant prose does not open debt" in text
+    assert "brain-capability-observation-and-inference" in text
     assert "`visible_burden_sensitivity`" in text
 
 

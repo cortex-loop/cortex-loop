@@ -238,6 +238,30 @@ def test_openai_runtime_step_keeps_hard_product_guards_ahead_of_reference_contro
                 "probe_result_class": "unsupported",
             }
         ],
+        "expectation_ledger": {
+            "active": [],
+            "resolved": [
+                {
+                    "expectation_id": "openai:1:verification:expectation",
+                    "commitment_id": "openai:1:verification",
+                    "weight": 1.0,
+                    "horizon": "immediate",
+                    "satisfaction_classes": [
+                        "meaningful_evidence",
+                        "commitment_certified",
+                        "liability_retracted",
+                        "blocker_surfaced",
+                    ],
+                    "opened_at_step": 1,
+                    "due_at_step": 1,
+                    "suspension_state": "fulfilled",
+                    "remaining_weight": 0.0,
+                    "evidence_refs": ["openai:1"],
+                    "deficit_kind": "verification",
+                    "resolution_class": "commitment_certified",
+                }
+            ],
+        },
         "executive_modulator_memory": {
             "focus_tonic": 0.0,
             "explore_tonic": 0.3375,
@@ -1347,6 +1371,7 @@ def test_openai_runtime_verification_step_updates_runtime_truth_from_external_fa
         "last_commitment_result_summary": None,
         "last_realization_feedback": None,
         "feedback_window": [],
+        "expectation_ledger": {"active": [], "resolved": []},
         "executive_modulator_memory": None,
         "last_failure_class": "import_smoke_failed",
         "next_recommended_move": "repair",

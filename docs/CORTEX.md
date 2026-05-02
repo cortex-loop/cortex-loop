@@ -294,17 +294,17 @@ state, read `internal/truth/cortex_status.json` directly.
 
 ### Current Train
 
-- Slug: `brain-capability-aware-routing`
+- Slug: `runtime-expectation-debt`
 
 ### Next Product Train
 
-- Slug: `brain-capability-observation-and-inference`
-- Surface: `product + experimental + aux`
-- Why now: The static registry maps known model names to bands but cold-starts to standard for unknown models and never updates as a model's actual behavior drifts. An observed-performance accumulator (mirroring how `HostReliabilityPrior` works for host-tool reliability) lets the executive learn capability rather than assume it, and lets new model variants be detected automatically without registry edits.
+- Slug: `debt-drag-into-brake-and-route`
+- Surface: `product`
+- Why now: The expectation ledger is useful only if the next seam couples unresolved expectation debt into brake/modulator/route pressure without making Cortex speak generically or freeze helpful verification work.
 
 ### Research Lines Under Evaluation
 
-- _none_
+- `brain-capability-observation-and-inference` (`deferred-by-executive-runtime-roadmap`) — This was the previous next product train: replace the static name-based brain capability registry with observed-performance accumulation. It is explicitly deferred, not erased, because the executive-runtime roadmap prioritizes runtime expectation debt and debt-drag before AUX-backed capability inference.
 
 ### Hosts and Shipping Defaults
 
@@ -321,7 +321,7 @@ state, read `internal/truth/cortex_status.json` directly.
 - Keep the bounded audit surface compact and truthful on the shipped lane: selected versus realized family, uncertainty, threshold, delta, verification, and probe truth only.
 - Keep the no-spend live evidence current and explicit: fast conformance is green, the deeper directionality and host-native watchlists are refreshed, and non-shipping auth or env caveats must stay explicit instead of silently stale.
 - Keep posture, AUX memory, host-reliability, and asymmetric-cost law explicit and removable now that posture-sensitive online control is S-tier closed, anti-thrash is landed, bounded live support-memory re-entry is earned on reference and the OpenAI operator lane, evidence/probe calibration is S-tier closed, host/tool reliability and affordance priors are earned as bounded host-scoped, capability-scoped score modifiers on `OfflineSupportPublication.host_reliability_prior` with a single-site six-tag `q_mem-host:*` surface and stale-negative reopen under fresh success, asymmetric error cost is earned as a bounded `RiskWeight` carrier whose CHECK/SEEK_CONTEXT activation shift is clipped inside `[0.05, 0.60]` with a `0.10` dead-band and productive-exploration gating, and the brake tonic EMA damps single-tick flips with a locked `rho = 0.60` decay and `tonic_pressure >= 0.35` enter gate while phasic spikes still flip immediately: inspect is live on cheap non-debt events, resume stays continuity-conditioned, posture truth is single-owned, the route state vector stays the bounded 6-axis geometry term while `visible_burden_sensitivity` remains a separate utility scalar, route truth stays bounded and non-sovereign, unchanged-condition repetition is taxed only at the exact-family level with bounded reopen, public feedback-window summaries reflect the just-realized step, family-local bounded probe limits surface as `unsupported` without leaking host-global unavailability across families, stream-only churn stays non-epistemic, live memory stays score-only and host-matched through explicit publication, live `Q_mem` stays zero on shipping and conformance default lanes, raw SQLite episodes stay support-side only, reliability priors bias score pricing only and never route, posture, selection, or brake law, Claude and Gemini remain shadow-proof only for reliability promotion, `risk_weight` biases CHECK/SEEK_CONTEXT activation threshold only and never routing, posture, selection, certification, or blockedness law, and `brake_tonic_history` persists the pressure tail across resume on all four host lanes with three-way backward-compat decoding.
-- The brain-capability-aware-routing seam is the active focus per SRE_2 §6.9: the executive carries an `OperatorBrainCapabilityEnvelope` and a bounded threshold ladder classifies the per-dimension max mismatch into NONE / DEGRADE / UNSUPPORTED at 0.20 / 0.50; DEGRADE downshifts continuity-bearing profiles to inspect-light, suppresses retries, and switches contract binding to LEAN, while UNSUPPORTED routes to BLOCKED with `brain_capability_mismatch`. The mechanism is host-agnostic at the SRE layer; the band registry is OpenAI-only and other hosts default to standard until per-host registries earn their own seam. The brake-tonic-quiescence-exit-reconciliation seam (closed via SRE_2 §7.5 path B) is no longer active; doctrine and code agree on threshold-hysteresis-only on the brake exit gate, and the locked `rho = 0.60` EMA regression is preserved.
+- The runtime-expectation-debt seam is the active focus from the executive-runtime roadmap: the shared runtime gains bounded expectation records and resolution-deficit diagnostics from structured forward commitments only. This is structural state, not behavior lift; brake, route, hooks, AUX, and model-visible communication remain unchanged until a later debt-drag seam explicitly connects the diagnostic to model I/O.
 <!-- END GENERATED: current-state-and-strategy -->
 
 ### V2 Model-I/O Analysis
