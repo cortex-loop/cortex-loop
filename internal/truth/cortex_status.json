@@ -808,8 +808,8 @@
     ]
   },
   "work_today": {
-    "slug": "grounded-intervention-records",
-    "note": "The current focus is structural product work for the model-visible edge of Cortex: grounded intervention records may be selected only from high runtime pressure plus a product-runtime claim, evidence, obligation, continuity, capability, or preservation anchor. This seam proves typed selection, silence reasons, renderer law, and cross-host diagnostics only; it does not run live trials, change silent gates, use lab oracles as perception, or claim behavior lift."
+    "slug": "visible-intervention-live-probe",
+    "note": "The current focus has moved from structural grounded-intervention records into scoped OpenAI operator live evidence: product-rendered visible intervention reached the model boundary from runtime verification debt without fixture prompt text, improved all three primary average axes over silent-only on a reproduced hidden-verifier output-quality failure family, and kept clean controls neutral. This remains OpenAI operator evidence only; visible intervention repaired 1/5 visible trials and does not promote Claude, Gemini, AUX, hook, cross-host, or shipping-default truth."
   },
   "research_lines_under_evaluation": [
     {
@@ -825,13 +825,13 @@
     }
   ],
   "next_product_train": {
-    "slug": "visible-intervention-live-probe",
+    "slug": "claude-code-adapter-from-runtime-law",
     "surface": "product",
-    "executive_benefit": "Run the first live probe for grounded visible-intervention records after structural selector, silence, and renderer leak tests pass.",
-    "why_now": "Grounded intervention records are the lawful visible edge after silent control: the next question is whether model-visible reflection from product-runtime anchors improves behavior without external-auditor voice, clean-control overblock, or internal-term leakage.",
-    "primary_metric": "Paired live trials show visible intervention improves closure, evidence recovery, or continuity on reproduced baseline failures while clean controls remain neutral and diagnostics prove the record came from product runtime state, not task identity or lab prompt scaffolding.",
-    "guardrail": "Do not expose route pricing, brake EMA, debt-control diagnostics, AUX/support memory, schema names, hook mechanics, fixture IDs, hidden verifier answers, or generic Cortex authority language to the model.",
-    "kill_rule": "Stop if visible intervention fires from pressure alone, depends on task identity or lab oracle perception, speaks in external-auditor voice, reintroduces schema/internal vocabulary, degrades clean controls, or duplicates a silent gate that already solves the case.",
+    "executive_benefit": "Map the proven runtime loop onto Claude Code lifecycle hooks with thin transport instead of plugin-side middleware.",
+    "why_now": "OpenAI operator evidence now covers silent verification continuation and grounded visible intervention; the next highest-leverage product question is whether the same runtime law can drive Claude Code Desktop lifecycle events without host-specific prose or hook-local policy.",
+    "primary_metric": "Structural Claude Code adapter tests prove hook scripts call `cortex/hosts/claude_code_desktop/` runtime-law adapters, preserve delivery/model-visible/behavior-lift/shipping truth separately, and do not move product policy into plugin transport.",
+    "guardrail": "Do not treat Claude hook delivery as behavior lift, do not generalize OpenAI operator evidence to Claude, do not put SRE policy or fixture-specific text in hook scripts, and do not expose internal route/brake/debt/AUX/schema terms to the model.",
+    "kill_rule": "Stop if the Claude adapter becomes a hook plugin product, if hook scripts carry executive policy, if task identity drives product decisions, if model-visible text is not generated from grounded runtime anchors, or if cache/operator-split caveats are hidden.",
     "last_reviewed_at": "2026-05-03T00:00:00+00:00"
   },
   "system_map": {
@@ -1190,6 +1190,7 @@
     "docs/recon/cortex_openai_operator_debt_control_enactment.md",
     "docs/recon/cortex_openai_operator_silent_control_live_probe_retry.md",
     "docs/recon/cortex_openai_operator_output_quality_fixture_refresh.md",
-    "docs/recon/cortex_openai_operator_verification_debt_continuation.md"
+    "docs/recon/cortex_openai_operator_verification_debt_continuation.md",
+    "docs/recon/cortex_openai_operator_visible_intervention_live_probe.md"
   ]
 }
