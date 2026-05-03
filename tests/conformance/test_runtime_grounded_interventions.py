@@ -104,6 +104,131 @@ def test_unpaid_verification_debt_produces_grounded_diagnostics_without_route_ch
         assert record["grounded_anchor_type"] == "evidence"
         assert record["task_local_anchor_text"] == "the verification opened by this task"
         assert record["next_move_class"] == "run_check"
+        assert result.grounded_intervention_payload["selection_trace"][
+            "perception_source"
+        ] == "product_runtime_expectation"
+        assert result.grounded_intervention_payload["selection_trace"][
+            "selected_expectation_id"
+        ]
+
+
+def test_host_runtime_sequences_derive_visible_intervention_from_product_events() -> None:
+    cases = (
+        (
+            run_reference_runtime_step,
+            ReferenceRuntimeSession(session_id="reference-product-events"),
+            "ApprovalResult",
+            {
+                "session_id": "reference-product-events",
+                "commitment_id": "commit-product-events",
+                "externally_consequential": True,
+            },
+            "ContextLoad",
+            {
+                "session_id": "reference-product-events",
+                "delta": "continuing after an unresolved verification",
+            },
+        ),
+        (
+            run_openai_runtime_step,
+            OpenAIRuntimeSession(session_id="openai-product-events"),
+            "response.completed",
+            {
+                "session_id": "openai-product-events",
+                "response_id": "resp-product-events-1",
+                "commitment_id": "commit-product-events",
+                "externally_consequential": True,
+            },
+            "response.output_text.delta",
+            {
+                "session_id": "openai-product-events",
+                "response_id": "resp-product-events-2",
+                "delta": "continuing after an unresolved verification",
+            },
+        ),
+        (
+            run_claude_runtime_step,
+            ClaudeRuntimeSession(session_id="claude-product-events"),
+            "message_stop",
+            {
+                "session_id": "claude-product-events",
+                "message_id": "msg-product-events-1",
+                "commitment_id": "commit-product-events",
+                "externally_consequential": True,
+            },
+            "content_block_delta",
+            {
+                "session_id": "claude-product-events",
+                "message_id": "msg-product-events-2",
+                "delta": "continuing after an unresolved verification",
+            },
+        ),
+        (
+            run_gemini_runtime_step,
+            GeminiRuntimeSession(session_id="gemini-product-events"),
+            "interaction.complete",
+            {
+                "session_id": "gemini-product-events",
+                "interaction_id": "int-product-events-1",
+                "commitment_id": "commit-product-events",
+                "externally_consequential": True,
+            },
+            "content.delta",
+            {
+                "session_id": "gemini-product-events",
+                "interaction_id": "int-product-events-2",
+                "delta": "continuing after an unresolved verification",
+            },
+        ),
+    )
+
+    for runner, session, opening_event, opening_payload, follow_event, follow_payload in cases:
+        opened = runner(opening_event, opening_payload, session)
+        followed = runner(follow_event, follow_payload, opened.session)
+
+        assert opened.commitment_result_kind == "uncertified"
+        assert opened.grounded_intervention_payload["mode"] == "stay_silent"
+        assert opened.grounded_intervention_payload["silence_reason"] == (
+            "silent_control_sufficient"
+        )
+        assert followed.grounded_intervention_payload["mode"] == "model_visible_reflection"
+        trace = followed.grounded_intervention_payload["selection_trace"]
+        assert trace["perception_source"] == "product_runtime_expectation"
+        assert trace["selected_expectation_id"].endswith(":verification:expectation")
+        assert trace["deficit_kind"] == "verification"
+        assert trace["silence_reason"] is None
+        assert trace["silent_control_sufficient"] is False
+
+
+def test_certified_and_blocked_product_events_stay_silent_after_relief() -> None:
+    certified = run_reference_runtime_step(
+        "ApprovalResult",
+        {
+            "session_id": "reference-grounded-certified",
+            "commitment_id": "commit-certified",
+            "externally_consequential": True,
+            "result_artifact_ref": "artifact-certified",
+        },
+        ReferenceRuntimeSession(session_id="reference-grounded-certified"),
+    )
+    blocked = run_reference_runtime_step(
+        "ApprovalResult",
+        {
+            "session_id": "reference-grounded-blocked",
+            "commitment_id": "commit-blocked",
+            "externally_consequential": True,
+            "boundary_blocked": True,
+            "boundary_reason_code": "approval-required",
+        },
+        ReferenceRuntimeSession(session_id="reference-grounded-blocked"),
+    )
+
+    assert certified.commitment_result_kind == "certified"
+    assert certified.grounded_intervention_payload["mode"] == "stay_silent"
+    assert certified.grounded_intervention_payload["selection_trace"]["selected_expectation_id"] is None
+    assert blocked.commitment_result_kind == "blocked"
+    assert blocked.grounded_intervention_payload["mode"] == "stay_silent"
+    assert blocked.grounded_intervention_payload["selection_trace"]["selected_expectation_id"] is None
 
 
 def _verification_ledger() -> ExpectationLedger:

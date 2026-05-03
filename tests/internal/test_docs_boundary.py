@@ -140,6 +140,12 @@ OPENAI_OPERATOR_VISIBLE_INTERVENTION_LIVE_PROBE_PATH = (
     / "recon"
     / "cortex_openai_operator_visible_intervention_live_probe.md"
 )
+VISIBLE_INTERVENTION_PRODUCT_PERCEPTION_HARDENING_PATH = (
+    REPO_ROOT
+    / "docs"
+    / "recon"
+    / "cortex_visible_intervention_product_perception_hardening.md"
+)
 STATUS_REGISTRY_PATH = REPO_ROOT / "internal" / "truth" / "cortex_status.json"
 STATUS_DOC_PATH = REPO_ROOT / "docs" / "CORTEX_STATUS.md"
 WORKFLOW_DOC_PATH = REPO_ROOT / "docs" / "internal" / "REPO_WORKFLOW.md"
@@ -689,6 +695,7 @@ def test_public_docs_point_to_status_and_keep_archive_out_of_the_front_door() ->
     assert "recon/cortex_openai_operator_output_quality_fixture_refresh.md" in docs_index
     assert "recon/cortex_openai_operator_verification_debt_continuation.md" in docs_index
     assert "recon/cortex_openai_operator_visible_intervention_live_probe.md" in docs_index
+    assert "recon/cortex_visible_intervention_product_perception_hardening.md" in docs_index
     # CORTEX.md content anchors the previously-fragmented charter and
     # boundary identity material in one canonical surface.
     assert "executive-function layer that wraps a model after" in cortex_doc
@@ -816,6 +823,7 @@ def test_docs_directory_only_exposes_archive_and_workflow_subtrees() -> None:
         "cortex_openai_operator_silent_control_live_probe_retry.md",
         "cortex_openai_operator_verification_debt_continuation.md",
         "cortex_openai_operator_visible_intervention_live_probe.md",
+        "cortex_visible_intervention_product_perception_hardening.md",
         "lifecycle_first_surface_matrix.md",
     ]
     assert sorted(path.name for path in (DOCS_ROOT / "runtime_context").iterdir()) == [
@@ -1646,7 +1654,7 @@ def test_openai_operator_output_quality_fixture_refresh_records_hard_fixture() -
         "docs/recon/cortex_openai_operator_output_quality_fixture_refresh.md"
         in status["active_docs"]
     )
-    assert status["work_today"]["slug"] == "visible-intervention-live-probe"
+    assert status["work_today"]["slug"] == "visible-intervention-product-perception-hardening"
 
 
 def test_openai_operator_verification_debt_continuation_records_gate0_truth() -> None:
@@ -1672,7 +1680,7 @@ def test_openai_operator_verification_debt_continuation_records_gate0_truth() ->
         "docs/recon/cortex_openai_operator_verification_debt_continuation.md"
         in status["active_docs"]
     )
-    assert status["work_today"]["slug"] == "visible-intervention-live-probe"
+    assert status["work_today"]["slug"] == "visible-intervention-product-perception-hardening"
     assert status["next_product_train"]["slug"] == "claude-code-adapter-from-runtime-law"
 
 
@@ -1698,7 +1706,32 @@ def test_openai_operator_visible_intervention_live_probe_records_scoped_success(
         "docs/recon/cortex_openai_operator_visible_intervention_live_probe.md"
         in status["active_docs"]
     )
-    assert status["work_today"]["slug"] == "visible-intervention-live-probe"
+    assert status["work_today"]["slug"] == "visible-intervention-product-perception-hardening"
+    assert status["next_product_train"]["slug"] == "claude-code-adapter-from-runtime-law"
+
+
+def test_visible_intervention_product_perception_hardening_records_structural_gate() -> None:
+    text = _read(VISIBLE_INTERVENTION_PRODUCT_PERCEPTION_HARDENING_PATH)
+    docs_index = _read(DOCS_INDEX_PATH)
+    status = _load_status()
+
+    assert "Surface: product / structural recon" in text
+    assert (
+        "product event stream -> expectation ledger -> resolution deficit -> grounded anchor"
+        in text
+    )
+    assert "missing_product_expectation_anchor" in text
+    assert "Hidden verifier output remains scoring only" in text
+    assert "due product-runtime expectation record" in text
+    assert "same runtime state across Astro and non-Astro task identities" in text
+    assert "No new live behavior-lift claim" in text
+    assert "claude-code-adapter-from-runtime-law" in text
+    assert "recon/cortex_visible_intervention_product_perception_hardening.md" in docs_index
+    assert (
+        "docs/recon/cortex_visible_intervention_product_perception_hardening.md"
+        in status["active_docs"]
+    )
+    assert status["work_today"]["slug"] == "visible-intervention-product-perception-hardening"
     assert status["next_product_train"]["slug"] == "claude-code-adapter-from-runtime-law"
 
 
@@ -2001,13 +2034,14 @@ def test_status_registry_is_complete_and_stable() -> None:
         assert {"slug", "stage", "summary", "next_step"} <= set(entry)
         assert entry["slug"] != status["work_today"]["slug"]
         assert entry["slug"] != status["next_product_train"]["slug"]
-    assert status["work_today"]["slug"] == "visible-intervention-live-probe"
+    assert status["work_today"]["slug"] == "visible-intervention-product-perception-hardening"
     work_note = status["work_today"]["note"].lower()
-    assert "openai operator live evidence" in work_note
-    assert "product-rendered visible intervention" in work_note
-    assert "improved all three primary average axes" in work_note
-    assert "repaired 1/5 visible trials" in work_note
-    assert "does not promote claude" in work_note
+    assert "grounded visible-intervention perception path" in work_note
+    assert "due product-runtime expectation record" in work_note
+    assert "private selection trace" in work_note
+    assert "product event replay before hidden verifier scoring is read" in work_note
+    assert "does not add live behavior-lift" in work_note
+    assert "claude hook delivery" in work_note
     assert status["next_product_train"]["slug"] == "claude-code-adapter-from-runtime-law"
     assert "product" == status["next_product_train"]["surface"]
     assert "claude code lifecycle hooks" in status["next_product_train"][
@@ -2051,6 +2085,9 @@ def test_status_registry_is_complete_and_stable() -> None:
     assert "narrow live behavior-lift evidence" in status["where_to_work"][3]
     assert "baseline failure reproduced 5/5" in status["where_to_work"][3]
     assert "product-runtime anchor" in status["where_to_work"][3]
+    assert "product-perception hardening" in status["where_to_work"][3]
+    assert "due product-runtime expectation record" in status["where_to_work"][3]
+    assert "hidden verifier output scoring only" in status["where_to_work"][3]
     assert "last assistant move already narrowed" in status["where_to_work"][3]
     assert "claim, evidence, obligation" in status["where_to_work"][3]
     assert "grounded intervention records" in status["where_to_work"][3]
@@ -2084,13 +2121,15 @@ def test_generated_status_doc_includes_system_map_and_next_product_train() -> No
     assert "## Next Product Train" in text
     assert "## Research Lines Under Evaluation" in text
     assert "host/tool reliability and affordance priors are earned" in text
-    assert "`visible-intervention-live-probe`" in text
+    assert "`visible-intervention-product-perception-hardening`" in text
     assert "- Next product train after the current focus: `claude-code-adapter-from-runtime-law`" in text
     assert "- Train: `claude-code-adapter-from-runtime-law`" in text
     assert "`brain-capability-observation-and-inference` (deferred-by-executive-runtime-roadmap)" in text
     assert "resume_verification" in text.lower()
-    assert "hidden-verifier" in text.lower()
-    assert "product-rendered visible intervention" in text.lower()
+    assert "hidden verifier" in text.lower()
+    assert "due product-runtime expectation record" in text.lower()
+    assert "private selection trace" in text.lower()
+    assert "hidden verifier scoring" in text.lower()
     assert "Shipping Product Lane\\nopenai:operator_cli" in text or "Shipping Product Lane" in text
     assert "Shipping default: `openai:operator_cli`" in text
     assert "Workflow gates marked `required` are contractual gates checked by `repo_workflow.py`" in text

@@ -9,7 +9,7 @@ executive gap.
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from enum import Enum
 from numbers import Real
 from typing import Any
@@ -278,6 +278,56 @@ class GroundedInterventionRecord:
 
 
 @dataclass(frozen=True, slots=True)
+class GroundedInterventionSelectionTrace:
+    """Private diagnostic trace for why visible intervention did or did not fire."""
+
+    perception_source: str = "none"
+    selected_expectation_id: str | None = None
+    deficit_kind: str | None = None
+    pressure_tags: tuple[str, ...] = field(default_factory=tuple)
+    silence_reason: str | None = None
+    silent_control_sufficient: bool = False
+
+    def __post_init__(self) -> None:
+        if not isinstance(self.perception_source, str) or not self.perception_source.strip():
+            raise ValueError(
+                "GroundedInterventionSelectionTrace.perception_source must be non-empty."
+            )
+        if self.selected_expectation_id is not None and not self.selected_expectation_id.strip():
+            raise ValueError(
+                "GroundedInterventionSelectionTrace.selected_expectation_id must be non-empty when provided."
+            )
+        if self.deficit_kind is not None and not self.deficit_kind.strip():
+            raise ValueError(
+                "GroundedInterventionSelectionTrace.deficit_kind must be non-empty when provided."
+            )
+        if any(not (isinstance(tag, str) and tag.strip()) for tag in self.pressure_tags):
+            raise ValueError(
+                "GroundedInterventionSelectionTrace.pressure_tags must contain only non-empty strings."
+            )
+        if self.silence_reason is not None and not self.silence_reason.strip():
+            raise ValueError(
+                "GroundedInterventionSelectionTrace.silence_reason must be non-empty when provided."
+            )
+        if not isinstance(self.silent_control_sufficient, bool):
+            actual_type = type(self.silent_control_sufficient).__name__
+            raise TypeError(
+                "GroundedInterventionSelectionTrace.silent_control_sufficient must be "
+                f"bool, got {actual_type}."
+            )
+
+    def as_payload(self) -> dict[str, object]:
+        return {
+            "perception_source": self.perception_source,
+            "selected_expectation_id": self.selected_expectation_id,
+            "deficit_kind": self.deficit_kind,
+            "pressure_tags": list(self.pressure_tags),
+            "silence_reason": self.silence_reason,
+            "silent_control_sufficient": self.silent_control_sufficient,
+        }
+
+
+@dataclass(frozen=True, slots=True)
 class GroundedInterventionDecision:
     mode: GroundedInterventionMode = GroundedInterventionMode.STAY_SILENT
     record: GroundedInterventionRecord | None = None
@@ -285,6 +335,9 @@ class GroundedInterventionDecision:
         default_factory=GroundedInterventionPressure
     )
     silence_reason: str | None = "no_intervention_selected"
+    selection_trace: GroundedInterventionSelectionTrace = field(
+        default_factory=GroundedInterventionSelectionTrace
+    )
 
     def __post_init__(self) -> None:
         if not isinstance(self.mode, GroundedInterventionMode):
@@ -307,6 +360,12 @@ class GroundedInterventionDecision:
             raise TypeError(
                 "GroundedInterventionDecision.pressure_summary must be "
                 f"GroundedInterventionPressure, got {actual_type}."
+            )
+        if not isinstance(self.selection_trace, GroundedInterventionSelectionTrace):
+            actual_type = type(self.selection_trace).__name__
+            raise TypeError(
+                "GroundedInterventionDecision.selection_trace must be "
+                f"GroundedInterventionSelectionTrace, got {actual_type}."
             )
         if self.mode is GroundedInterventionMode.STAY_SILENT:
             if self.record is not None:
@@ -333,24 +392,37 @@ class GroundedInterventionDecision:
         reason: str = "no_intervention_selected",
         *,
         pressure_summary: GroundedInterventionPressure | None = None,
+        selection_trace: GroundedInterventionSelectionTrace | None = None,
     ) -> "GroundedInterventionDecision":
+        trace = replace(
+            selection_trace or GroundedInterventionSelectionTrace(),
+            silence_reason=reason,
+        )
         return cls(
             mode=GroundedInterventionMode.STAY_SILENT,
             record=None,
             pressure_summary=pressure_summary or GroundedInterventionPressure(),
             silence_reason=reason,
+            selection_trace=trace,
         )
 
     @classmethod
     def model_visible_reflection(
         cls,
         record: GroundedInterventionRecord,
+        *,
+        selection_trace: GroundedInterventionSelectionTrace | None = None,
     ) -> "GroundedInterventionDecision":
+        trace = replace(
+            selection_trace or GroundedInterventionSelectionTrace(),
+            silence_reason=None,
+        )
         return cls(
             mode=GroundedInterventionMode.MODEL_VISIBLE_REFLECTION,
             record=record,
             pressure_summary=record.pressure_summary,
             silence_reason=None,
+            selection_trace=trace,
         )
 
     def as_payload(self) -> dict[str, object]:
@@ -359,6 +431,7 @@ class GroundedInterventionDecision:
             "record": self.record.as_payload() if self.record is not None else None,
             "pressure_summary": self.pressure_summary.as_payload(),
             "silence_reason": self.silence_reason,
+            "selection_trace": self.selection_trace.as_payload(),
         }
 
 
@@ -371,6 +444,7 @@ def select_grounded_intervention(
     last_assistant_response: AssistantGapResponse = AssistantGapResponse.UNADDRESSED,
     relief_states: tuple[InterventionReliefState, ...] = (),
     silent_control_sufficient: bool = False,
+    selection_trace: GroundedInterventionSelectionTrace | None = None,
 ) -> GroundedInterventionDecision:
     """Select at most one grounded visible-intervention record.
 
@@ -421,27 +495,46 @@ def select_grounded_intervention(
             "select_grounded_intervention.silent_control_sufficient must be bool, "
             f"got {actual_type}."
         )
+    if selection_trace is not None and not isinstance(
+        selection_trace,
+        GroundedInterventionSelectionTrace,
+    ):
+        actual_type = type(selection_trace).__name__
+        raise TypeError(
+            "select_grounded_intervention.selection_trace must be "
+            f"GroundedInterventionSelectionTrace | None, got {actual_type}."
+        )
+
+    trace = _selection_trace_for_pressure(
+        selection_trace,
+        pressure=pressure,
+        silent_control_sufficient=silent_control_sufficient,
+    )
 
     if pressure.strongest_pressure < VISIBLE_INTERVENTION_PRESSURE_THRESHOLD:
         return GroundedInterventionDecision.stay_silent(
             "pressure_below_visible_threshold",
             pressure_summary=pressure,
+            selection_trace=trace,
         )
     if silent_control_sufficient:
         return GroundedInterventionDecision.stay_silent(
             "silent_control_sufficient",
             pressure_summary=pressure,
+            selection_trace=trace,
         )
     for state in relief_states:
         if state in _RELIEF_STATES:
             return GroundedInterventionDecision.stay_silent(
                 f"state_relieved:{state.value}",
                 pressure_summary=pressure,
+                selection_trace=trace,
             )
     if last_assistant_response in _SELF_REPAIR_RESPONSES:
         return GroundedInterventionDecision.stay_silent(
             f"already_addressed:{last_assistant_response.value}",
             pressure_summary=pressure,
+            selection_trace=trace,
         )
 
     product_anchors = tuple(
@@ -457,6 +550,7 @@ def select_grounded_intervention(
         return GroundedInterventionDecision.stay_silent(
             reason,
             pressure_summary=pressure,
+            selection_trace=trace,
         )
 
     anchor = product_anchors[0]
@@ -470,7 +564,10 @@ def select_grounded_intervention(
         pressure_summary=pressure,
         silence_reason=None,
     )
-    return GroundedInterventionDecision.model_visible_reflection(record)
+    return GroundedInterventionDecision.model_visible_reflection(
+        record,
+        selection_trace=trace,
+    )
 
 
 def render_grounded_intervention(
@@ -528,6 +625,21 @@ def find_forbidden_model_visible_terms(text: str) -> tuple[str, ...]:
         fragment
         for fragment in _INTERNAL_MODEL_VISIBLE_FRAGMENTS
         if fragment.lower() in lowered
+    )
+
+
+def _selection_trace_for_pressure(
+    selection_trace: GroundedInterventionSelectionTrace | None,
+    *,
+    pressure: GroundedInterventionPressure,
+    silent_control_sufficient: bool,
+) -> GroundedInterventionSelectionTrace:
+    trace = selection_trace or GroundedInterventionSelectionTrace()
+    pressure_tags = tuple(sorted({*trace.pressure_tags, *pressure.reason_tags}))
+    return replace(
+        trace,
+        pressure_tags=pressure_tags,
+        silent_control_sufficient=silent_control_sufficient,
     )
 
 
@@ -626,6 +738,8 @@ def build_runtime_grounded_intervention(
     resolution_deficit: Any,
     debt_control: Any,
     operator_route: Any,
+    expectation_ledger: Any,
+    current_step: int,
     closure_required: bool,
     closure_reason_tags: tuple[str, ...] = (),
     warnings: tuple[str, ...] = (),
@@ -663,23 +777,53 @@ def build_runtime_grounded_intervention(
         if getattr(resolution_deficit, "dominant_deficit_kind", None) == "preservation"
         else 0.0
     )
+    pressure_tags = _runtime_pressure_reason_tags(resolution_deficit, debt_control)
     pressure = GroundedInterventionPressure(
         control_pressure=control_pressure,
         verification_pressure=verification_pressure,
         continuity_pressure=continuity_pressure,
         capability_pressure=capability_pressure,
         preservation_pressure=preservation_pressure,
-        reason_tags=frozenset(_runtime_pressure_reason_tags(resolution_deficit, debt_control)),
+        reason_tags=frozenset(pressure_tags),
     )
     anchors: list[GroundedInterventionAnchor] = []
     preferred_kind: GroundedInterventionKind | None = None
     next_move: InterventionNextMoveClass | None = None
+    silent_control_sufficient = (
+        getattr(getattr(operator_route, "profile", None), "value", None) == "blocked"
+        or getattr(operator_route, "blocked_reason", None) is not None
+    )
+    selection_trace = GroundedInterventionSelectionTrace(
+        perception_source="product_runtime",
+        deficit_kind=getattr(resolution_deficit, "dominant_deficit_kind", None),
+        pressure_tags=pressure_tags,
+        silent_control_sufficient=silent_control_sufficient,
+    )
     if verification_pressure > 0.0:
+        expectation = _select_due_expectation_anchor(
+            expectation_ledger,
+            current_step=current_step,
+            deficit_kind="verification",
+        )
+        if expectation is None:
+            return GroundedInterventionDecision.stay_silent(
+                "missing_product_expectation_anchor",
+                pressure_summary=pressure,
+                selection_trace=replace(
+                    selection_trace,
+                    perception_source="product_runtime_no_due_expectation",
+                ),
+            )
         anchors.append(
             GroundedInterventionAnchor(
                 anchor_type=GroundedAnchorType.EVIDENCE,
                 text="the verification opened by this task",
             )
+        )
+        selection_trace = replace(
+            selection_trace,
+            perception_source="product_runtime_expectation",
+            selected_expectation_id=getattr(expectation, "expectation_id", None),
         )
         preferred_kind = GroundedInterventionKind.OVERDUE_VERIFICATION
         next_move = InterventionNextMoveClass.RUN_CHECK
@@ -719,10 +863,6 @@ def build_runtime_grounded_intervention(
         )
         preferred_kind = GroundedInterventionKind.PRESERVATION_RISK
         next_move = InterventionNextMoveClass.PRESERVE_VERIFIED_WORK
-    silent_control_sufficient = (
-        getattr(getattr(operator_route, "profile", None), "value", None) == "blocked"
-        or getattr(operator_route, "blocked_reason", None) is not None
-    )
     relief_states = _runtime_relief_states(resolution_deficit)
     return select_grounded_intervention(
         pressure=pressure,
@@ -731,7 +871,33 @@ def build_runtime_grounded_intervention(
         next_move_class=next_move,
         relief_states=relief_states,
         silent_control_sufficient=silent_control_sufficient,
+        selection_trace=selection_trace,
     )
+
+
+def _select_due_expectation_anchor(
+    expectation_ledger: Any,
+    *,
+    current_step: int,
+    deficit_kind: str,
+) -> Any | None:
+    if not isinstance(current_step, int) or current_step < 0:
+        return None
+    active = getattr(expectation_ledger, "active", ())
+    candidates = []
+    for index, record in enumerate(active):
+        if getattr(record, "deficit_kind", None) != deficit_kind:
+            continue
+        if _unit_float(getattr(record, "remaining_weight", 0.0)) == 0.0:
+            continue
+        is_due = getattr(record, "is_due", None)
+        if not callable(is_due) or not is_due(current_step):
+            continue
+        candidates.append((getattr(record, "due_at_step", current_step), index, record))
+    if not candidates:
+        return None
+    candidates.sort(key=lambda item: (item[0], item[1]))
+    return candidates[0][2]
 
 
 def _runtime_relief_states(resolution_deficit: Any) -> tuple[InterventionReliefState, ...]:
@@ -784,6 +950,7 @@ __all__ = [
     "GroundedInterventionMode",
     "GroundedInterventionPressure",
     "GroundedInterventionRecord",
+    "GroundedInterventionSelectionTrace",
     "InterventionNextMoveClass",
     "InterventionReliefState",
     "InterventionRenderSurface",
