@@ -1611,19 +1611,22 @@ def _reflection_check_payload() -> dict[str, object]:
             "unless test wants stale data): " + "; ".join(fixture_drift_paths[:3])
         )
 
-    # Mechanical gate 6: fixture identity must not become product Cortex law.
-    # Lab fixtures falsify product seams; cortex/** code must encode the
-    # abstract executive capability/state law instead of branching on the
-    # motivating task identity or hidden verifier terms.
-    product_fixture_leaks = product_spine.find_product_fixture_leaks(_root())
-    if product_fixture_leaks:
+    # Mechanical gate 6: task identity must not become product Cortex law.
+    # Lab fixtures, hidden verifier facts, and other task-identity examples
+    # may witness a missing executive capability; cortex/** code must encode
+    # the abstract executive state and decision law instead of branching on
+    # the motivating task identity.
+    product_task_identity_leaks = product_spine.find_product_task_identity_leaks(_root())
+    if product_task_identity_leaks:
         examples = "; ".join(
-            f"{leak.path}: {leak.term}" for leak in product_fixture_leaks[:5]
+            f"{leak.path}: {leak.term} [{leak.category}]"
+            for leak in product_task_identity_leaks[:5]
         )
         failures.append(
-            "product Cortex fixture leakage: lab fixture identity or hidden "
-            f"verifier terms appear in cortex/** ({examples}). Translate the "
-            "fixture into abstract executive law before product implementation."
+            "product Cortex task-identity leakage: task identity examples appear "
+            f"in cortex/** ({examples}). Product code may use task details as "
+            "grounded anchors, but product triggers must be abstract executive "
+            "state and decision law."
         )
 
     if failures:
@@ -1680,7 +1683,10 @@ def _mechanical_check_rows(check_payload: dict[str, object]) -> list[tuple[str, 
         ("Bundling heuristic", _gate("Bundling", ("bundle", "surface group"), ("surface group",))),
         ("`next_train` freshness", freshness),
         ("Fixture timestamp drift", _gate("Fixtures", ("fixture",), ("fixture",))),
-        ("Product fixture leakage", _gate("Product spine", ("product cortex fixture leakage",))),
+        (
+            "Product task-identity leakage",
+            _gate("Product spine", ("product cortex task-identity leakage",)),
+        ),
     ]
     if failures:
         rows.append(("Failures", "<br>".join(failures)))

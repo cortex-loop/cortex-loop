@@ -140,6 +140,7 @@ def _write_closeout_contract(
             if surface == "product":
                 payload["product_spine"] = {
                     "executive_capability": "Truthful closure across product code changes.",
+                    "executive_shape": "unsupported closure over unresolved product state",
                     "state_law_path": [
                         "changed product state",
                         "runtime enforcement decision",
@@ -149,10 +150,17 @@ def _write_closeout_contract(
                     "host_action": "The host adapter receives only abstract Cortex decisions.",
                     "model_io_effect": "The model input or output boundary is named before closeout.",
                     "fixture_boundary": "Fixtures may witness the failure but cannot define product behavior.",
+                    "fixture_witnesses": ["workflow closeout fixture"],
                     "non_fixture_controls": [
                         "clean non-fixture control",
                         "unrelated product-path control",
                     ],
+                    "perception_source": "product_runtime",
+                    "decision_source": "product",
+                    "action_source": "product",
+                    "rendering_source": "product_renderer",
+                    "claim_scope": "full_product_loop",
+                    "task_identity_examples_checked": True,
                 }
     closeout_contract.write_artifacts(repo, payload)
 
@@ -1449,6 +1457,30 @@ def test_reflection_check_warns_on_warn_threshold_next_train(
     assert payload["verdict"] == "GAPS"
     assert any(
         "next_product_train" in gap for gap in payload["gaps"]
+    )
+
+
+def test_reflection_check_fails_on_product_task_identity_leak(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    repo, _remote, module = _prepare_repo(tmp_path, monkeypatch)
+    _seed_registry(repo)
+    _seed_generate_scripts(repo)
+    product_file = repo / "cortex" / "hosts" / "openai" / "adapter.py"
+    product_file.parent.mkdir(parents=True)
+    product_file.write_text(
+        "def route(message):\n"
+        "    return 'docs search dataset marker' in message\n",
+        encoding="utf-8",
+    )
+
+    payload = module._reflection_check_payload()
+
+    assert payload["verdict"] == "FAIL"
+    assert any(
+        "product Cortex task-identity leakage" in failure
+        and "hidden_verifier_fact" in failure
+        for failure in payload["failures"]
     )
 
 
