@@ -82,5 +82,9 @@ Active docs:
 - [Cortex Visible-Intervention Product-Perception Hardening](recon/cortex_visible_intervention_product_perception_hardening.md) —
   structural evidence that grounded visible intervention now requires a due
   product-runtime expectation anchor before model-visible verification speech
+- [Cortex OpenAI Operator Visible-Intervention Hardened Rerun](recon/cortex_openai_operator_visible_intervention_hardened_rerun.md) —
+  live OpenAI operator evidence that the hardened visible-intervention path
+  remains product-grounded but current overdue-verification wording fails the
+  paired success criteria
 
 Historical runtime, lab, and governance material now lives under [archive/](archive/).
