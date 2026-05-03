@@ -52,6 +52,57 @@ def _format_path_list(paths: list[str]) -> str:
     return ", ".join(f"`{path}`" for path in paths)
 
 
+def _render_host_surface_taxonomy(taxonomy: dict[str, object] | None) -> list[str]:
+    if not taxonomy:
+        return []
+    lines: list[str] = [
+        "## Host Surface Taxonomy",
+        "",
+        str(taxonomy.get("summary", "")).strip(),
+        "",
+    ]
+    buckets = taxonomy.get("buckets", [])
+    if not isinstance(buckets, list):
+        return lines
+    for bucket in buckets:
+        if not isinstance(bucket, dict):
+            continue
+        label = str(bucket.get("label", "")).strip()
+        description = str(bucket.get("description", "")).strip()
+        if label:
+            lines.extend([f"### {label}", ""])
+        if description:
+            lines.extend([description, ""])
+        entries = bucket.get("entries", [])
+        if not isinstance(entries, list) or not entries:
+            continue
+        lines.extend(
+            [
+                "| Surface | Role | Current Actuator | Target Actuator | Evidence Boundary |",
+                "| --- | --- | --- | --- | --- |",
+            ]
+        )
+        for entry in entries:
+            if not isinstance(entry, dict):
+                continue
+            role = str(entry.get("role", "")).strip().rstrip(".")
+            lines.append(
+                "| "
+                f"`{entry.get('id', '')}`"
+                f" | {role}"
+                f" | `{entry.get('current_actuator', 'n/a')}`"
+                f" | `{entry.get('target_actuator', 'n/a')}`"
+                f" | {entry.get('evidence_boundary', '')}"
+                " |"
+            )
+        lines.append("")
+    naming_rules = taxonomy.get("naming_rules", [])
+    if isinstance(naming_rules, list) and naming_rules:
+        lines.extend(["Naming rules:", ""])
+        lines.extend(f"- {rule}" for rule in naming_rules)
+    return lines
+
+
 def _next_product_train_slug_display(next_product_train: dict[str, object]) -> str:
     slug = next_product_train.get("slug")
     if slug is None:
@@ -71,6 +122,7 @@ def render_status(data: dict[str, object]) -> str:
     system_map = data["system_map"]
     subsystems = data["subsystems"]
     packet_anchors = data["packet_to_code_anchors"]
+    host_surface_taxonomy = data.get("host_surface_taxonomy")
     hosts = data["hosts"]
     conformance_summary = data["conformance_summary"]
     closure_gates = data["closure_gates"]
@@ -179,6 +231,11 @@ def render_status(data: dict[str, object]) -> str:
         ]
     )
     lines.extend(_render_system_map(system_map["nodes"], system_map["edges"]))
+    taxonomy_lines = _render_host_surface_taxonomy(
+        host_surface_taxonomy if isinstance(host_surface_taxonomy, dict) else None
+    )
+    if taxonomy_lines:
+        lines.extend(["", *taxonomy_lines])
     lines.extend(
         [
             "",

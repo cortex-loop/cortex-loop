@@ -450,7 +450,7 @@ clean tasks.
 
 Probe shape:
 
-- OpenAI shipping lane first if the change affects shipping behavior.
+- OpenAI Codex App/CLI product target first if the change affects shipping behavior.
 - Claude Code can be a secondary recon lane after the host adapter maps the
   same state to lifecycle events.
 - Include false closure, unsupported verification, honest partial progress,

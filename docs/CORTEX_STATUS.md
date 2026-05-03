@@ -57,19 +57,19 @@ Subsystem boundaries: Core owns commitment/provenance/dispatch truth; SRE owns r
 
 Grounding rule: any product claim, plan, or implementation seam must name identity/current truth, a code owner, a proof surface, and the model-I/O path. If the relevant code was not read, say so before taking a position.
 
-Current train: `visible-intervention-live-rerun-after-hardening`. Next train: `visible-verification-rendering-remediation`. Shipping default: `openai:operator_cli`. Keep Cortex truth, brain-wiring truth, conformance truth, shipping truth, and live behavior-lift claims separate; structural proof alone does not earn model-output lift.
+Current train: `host-surface-taxonomy-cleanup`. Next train: `codex-app-cli-hook-native-adaptor`. Shipping default: `openai.codex_app_cli`. Keep Cortex truth, brain-wiring truth, conformance truth, shipping truth, and live behavior-lift claims separate; structural proof alone does not earn model-output lift.
 
 ## Live Product Truth
 
-- Shipping default: `openai:operator_cli`
+- Shipping default: `openai.codex_app_cli`
 - Conformance truth: `openai=conformant`, `claude=conformant`, `gemini=conformant`, `reference=conformant`
 - Accepted conformance next decision: `promote`
 
 ## Current Focus
 
-- Current tracked train: `visible-intervention-live-rerun-after-hardening`
-- Active quality/risk focus: The current focus reran the OpenAI visible-intervention live probe after product-perception hardening. Gate 0 stayed product-grounded and model-bound, baseline reproduced 3/3, and clean controls stayed healthy, but the visible arm failed: it improved only goal continuity, regressed premature-closure avoidance, did not improve evidence recovery over silent-only, and reproduced the failure 5/5. This earns negative OpenAI operator live evidence and queues visible-verification rendering remediation before Claude adapter work.
-- Next product train after the current focus: `visible-verification-rendering-remediation`
+- Current tracked train: `host-surface-taxonomy-cleanup`
+- Active quality/risk focus: The current focus clarifies Cortex host surfaces so product work no longer treats wrapper/resume probes, API conformance connectors, repo workflow hooks, and lab harnesses as interchangeable. OpenAI Codex App and Codex CLI are one product adaptor family, but their actuator evidence stays separate: Codex App Stop-hook proof, Codex CLI codex-exec wrapper evidence, and future hook-native product proof are not interchangeable.
+- Next product train after the current focus: `codex-app-cli-hook-native-adaptor`
 
 ## Bio-To-Code Matrix
 
@@ -96,12 +96,12 @@ Current train: `visible-intervention-live-rerun-after-hardening`. Next train: `v
 
 ```mermaid
 flowchart TD
-    hosts["Host Surfaces\nOpenAI / Claude / Gemini / Reference"]
+    hosts["Product Host Adaptors\nCodex App/CLI / Claude Code Desktop"]
     core["Core Microkernel\ncommitments / provenance / dispatch"]
     runtime["Shared Runtime Kernels\nverified-work runtime helpers"]
     sre["Shared Executive\nbranching / brake / reference policy"]
-    shipping["Shipping Product Lane\nopenai:operator_cli"]
-    lab["Proof And Data Tooling\nconformance / output-quality / train loops"]
+    shipping["Shipping Product Target\nopenai.codex_app_cli\ncurrent: codex_exec_wrapper_resume"]
+    lab["Non-Adaptor Support\nlab probes / workflow guardrails / recon"]
     archive["Archive Evidence\nhistorical docs / retired proof surfaces"]
     hosts --> core
     core --> runtime
@@ -126,6 +126,48 @@ flowchart TD
     class archive deferred;
 ```
 
+## Host Surface Taxonomy
+
+Cortex surfaces are grouped into three top-level buckets so product host adaptors are not confused with API conformance connectors, repo workflow guardrails, or lab proof harnesses.
+
+### Product Host Adaptors
+
+Installable Cortex host surfaces that can affect model I/O through host lifecycle control.
+
+| Surface | Role | Current Actuator | Target Actuator | Evidence Boundary |
+| --- | --- | --- | --- | --- |
+| `openai.codex_app_cli` | Primary OpenAI product adaptor family for Codex App and Codex CLI | `codex_exec_wrapper_resume` | `hook_native_product` | Codex App Stop-hook proof, Codex CLI codex-exec wrapper proof, and future hook-native product proof remain separate and may not be generalized across actuators. |
+| `claude.code_desktop` | Claude product adaptor target through Claude Code Desktop lifecycle hooks | `pretooluse_bash_structural` | `runtime_law_hook_client` | Claude Code Desktop hook findings are product-shaped but not the OpenAI shipping default and may not be collapsed into Codex App/CLI evidence. |
+
+### API / Conformance Adaptors
+
+Bounded provider API connectors and the reference runtime used for conformance, support, or frozen compatibility unless explicitly queued as product work.
+
+| Surface | Role | Current Actuator | Target Actuator | Evidence Boundary |
+| --- | --- | --- | --- | --- |
+| `openai.api` | OpenAI Responses API connector and verified-work support path | `responses_api_text_transport` | `frozen_conformance_support` | OpenAI API host-control and file-block verified-work text are not the Codex App/CLI product adaptor. |
+| `claude.api` | Claude API connector for conformance and parity checks | `messages_api_text_transport` | `conformance_support` | Claude API conformance cannot be used as Claude Code Desktop hook evidence. |
+| `gemini.api` | Gemini API connector for conformance and parity checks | `interaction_api_text_transport` | `conformance_support` | Gemini API conformance cannot be treated as a Gemini CLI or hook-native product adaptor. |
+| `reference.runtime` | Reference runtime for packet-law parity and deterministic conformance | `reference_runtime_cli` | `conformance_support` | Reference runtime proves law shape, not live host product lift. |
+
+### Non-Adaptor Support Surfaces
+
+Surfaces that prove, guard, or preserve Cortex work but are not product adaptors.
+
+| Surface | Role | Current Actuator | Target Actuator | Evidence Boundary |
+| --- | --- | --- | --- | --- |
+| `repo.workflow_guardrails` | Repo-agent discipline such as Mission Reflection hooks and closeout validation | `repo_stop_hooks` | `workflow_only` | Repo workflow hooks may block development-agent turns but are not Cortex product behavior for downstream users. |
+| `lab.probe_harnesses` | Live probes, fixtures, verifier packs, and codex-exec helpers that falsify or prove product seams | `lab_orchestration` | `proof_only` | Lab harnesses may score product behavior but must not become product identity or supply product-only perception. |
+| `recon.archive_evidence` | Historical findings, recon docs, and archived experiments | `evidence_record` | `evidence_only` | Recon and archive records preserve what was learned; they do not authorize current shipping claims by themselves. |
+
+Naming rules:
+
+- Adaptor means a Cortex product path that can affect model I/O through host lifecycle control.
+- API adaptor means a bounded provider API connector used for conformance or support unless explicitly promoted.
+- Guardrail means repo-agent workflow enforcement, never product Cortex.
+- Harness means proof or falsification machinery, never product Cortex.
+- No active docs or registry field may use unqualified `operator_cli` as the shipping or product surface.
+
 ## Subsystems
 
 | Subsystem | Status | Code Homes | Note |
@@ -149,14 +191,14 @@ flowchart TD
 
 | Host | Shipping | Conformance | Strongest Surface | Daily Iteration | Code Home |
 | --- | --- | --- | --- | --- | --- |
-| `openai` | `default` | `conformant` | `operator_cli` | `operator_cli` | `cortex/hosts/openai` |
-| `claude` | `non-default` | `conformant` | `operator_cli` | `operator_cli` | `cortex/hosts/claude` |
-| `gemini` | `non-default` | `conformant` | `operator_cli` | `operator_cli` | `cortex/hosts/gemini` |
-| `reference` | `non-product` | `conformant` | `reference_cli` | `reference_cli` | `cortex/hosts/reference` |
+| `openai` | `default` | `conformant` | `openai.codex_app_cli` | `codex_exec_wrapper_resume` | `cortex/hosts/openai` |
+| `claude` | `non-default` | `conformant` | `claude.code_desktop` | `api_conformance_support` | `cortex/hosts/claude_code_desktop` |
+| `gemini` | `non-default` | `conformant` | `gemini.api` | `api_conformance_support` | `cortex/hosts/gemini` |
+| `reference` | `non-product` | `conformant` | `reference.runtime` | `reference_runtime_cli` | `cortex/hosts/reference` |
 
 ## Shipping And Conformance Truth
 
-- Shipping default: `openai:operator_cli`
+- Shipping default: `openai.codex_app_cli`
 - Accepted conformance next decision: `promote`
 
 ## Closure Gates
@@ -172,13 +214,13 @@ Workflow gates marked `required` are contractual gates checked by `repo_workflow
 
 ## Next Product Train
 
-- Train: `visible-verification-rendering-remediation`
+- Train: `codex-app-cli-hook-native-adaptor`
 - Surface: product
-- Executive benefit: Repair the overdue-verification visible edge so Cortex does not turn unpaid verification debt into permission for weaker visible-only closure.
-- Why now: The hardened OpenAI rerun showed the current product-rendered text remains lawful and model-bound but fails behaviorally: the model repeatedly chose the weaker `narrower claim` path, leaving verification unpaid. Claude should not inherit that wording.
-- Primary metric: Product and lab tests prove overdue-verification rendering no longer offers a weaker narrower claim as equivalent to discharging verification debt, stays free of hidden answers and task identity, keeps clean controls silent, and remains Gate-0 model-bound from product runtime anchors.
-- Guardrail: Do not add task-specific prompts, hidden verifier facts, fixture IDs, second-person coaching, internal route/brake/debt/AUX/schema terms, or host-specific Claude/OpenAI policy forks.
-- Kill rule: Stop if remediation fixes Astro by naming Astro-specific checks, if hidden verifier output enters product perception or text, if clean/no-anchor controls speak, or if the renderer becomes an external auditor instead of task-local executive self-monitoring.
+- Executive benefit: Wire Cortex runtime law into the OpenAI Codex App/CLI lifecycle surface so Core/SRE decisions can gate or speak during the model turn instead of relying on after-the-fact wrapper/resume probes.
+- Why now: The taxonomy cleanup exposes the current codex-exec wrapper/resume path as transitional evidence machinery, not the intended Cortex actuator. The next highest-leverage product move is to build the hook-native Codex App/CLI adaptor before further rendering work or Claude mapping.
+- Primary metric: Product and internal tests prove Codex App/CLI hook handling consumes existing runtime decisions, filters non-assistant lifecycle events, preserves model-visible output law, separates App and CLI evidence scopes, and produces a model-I/O path before or at lifecycle closure rather than after a completed run.
+- Guardrail: Do not move API conformance connectors, repo workflow guardrails, lab fixtures, hidden verifier facts, or hand-written continuation prompts into product adaptor identity.
+- Kill rule: Stop if Codex App proof is generalized to Codex CLI without evidence, if wrapper/resume remains the claimed target actuator, if repo Mission Reflection hooks are treated as product Cortex, or if the seam cannot show a host lifecycle path to model input/output.
 
 ## Research Lines Under Evaluation
 
@@ -186,10 +228,10 @@ Workflow gates marked `required` are contractual gates checked by `repo_workflow
 
 ## Where To Work Next
 
-- Keep the bounded audit surface compact and truthful on the shipped lane: selected versus realized family, uncertainty, threshold, delta, verification, and probe truth only.
-- Keep the no-spend live evidence current and explicit: fast conformance is green, the deeper directionality and host-native watchlists are refreshed, and non-shipping auth or env caveats must stay explicit instead of silently stale.
-- Keep posture, AUX memory, host-reliability, and asymmetric-cost law explicit and removable now that posture-sensitive online control is S-tier closed, anti-thrash is landed, bounded live support-memory re-entry is earned on reference and the OpenAI operator lane, evidence/probe calibration is S-tier closed, host/tool reliability and affordance priors are earned as bounded host-scoped, capability-scoped score modifiers on `OfflineSupportPublication.host_reliability_prior` with a single-site six-tag `q_mem-host:*` surface and stale-negative reopen under fresh success, asymmetric error cost is earned as a bounded `RiskWeight` carrier whose CHECK/SEEK_CONTEXT activation shift is clipped inside `[0.05, 0.60]` with a `0.10` dead-band and productive-exploration gating, and the brake tonic EMA damps single-tick flips with a locked `rho = 0.60` decay and `tonic_pressure >= 0.35` enter gate while phasic spikes still flip immediately: inspect is live on cheap non-debt events, resume stays continuity-conditioned, posture truth is single-owned, the route state vector stays the bounded 6-axis geometry term while `visible_burden_sensitivity` remains a separate utility scalar, route truth stays bounded and non-sovereign, unchanged-condition repetition is taxed only at the exact-family level with bounded reopen, public feedback-window summaries reflect the just-realized step, family-local bounded probe limits surface as `unsupported` without leaking host-global unavailability across families, stream-only churn stays non-epistemic, live memory stays score-only and host-matched through explicit publication, live `Q_mem` stays zero on shipping and conformance default lanes, raw SQLite episodes stay support-side only, reliability priors bias score pricing only and never route, posture, selection, or brake law, Claude and Gemini remain shadow-proof only for reliability promotion, `risk_weight` biases CHECK/SEEK_CONTEXT activation threshold only and never routing, posture, selection, certification, or blockedness law, and `brake_tonic_history` persists the pressure tail across resume on all four host lanes with three-way backward-compat decoding.
-- The silent-control-verification-debt-continuation seam added a general OpenAI operator `resume_verification` action, proved Gate 0 structurally, and earned narrow live behavior-lift evidence on `openai:operator_cli`: baseline failure reproduced 5/5, shaped improved premature closure, evidence recovery, and goal continuity, and clean controls had zero provider-limit or external-interference counts. The grounded intervention records now keep the visible edge product-shaped: selectors require high pressure plus a product-runtime anchor, suppress when the last assistant move already narrowed, asked, blocked, retracted, repaired, or verified, and render only from claim, evidence, obligation, continuity, capability, or preservation structure. The product-perception hardening seam now requires a due product-runtime expectation record before verification speech, records private selection trace diagnostics, and keeps hidden verifier output scoring only. The hardened visible-intervention rerun earned negative live evidence: Gate 0 stayed lawful, baseline reproduced 3/3, clean controls stayed healthy, but visible intervention failed because the current overdue-verification wording let the model choose a weaker visible-check or narrower-claim path instead of recovering unpaid verification.
+- Keep host-surface names product-shaped: `openai.codex_app_cli` is the product target, `codex_exec_wrapper_resume` is the current transitional actuator, and `hook_native_product` is the queued actuator target.
+- Keep evidence scopes separate: Codex App Stop-hook proof, Codex CLI codex-exec wrapper proof, OpenAI API conformance, repo workflow hooks, and lab probes are distinct evidence surfaces even when they share provider or tooling names.
+- Keep posture, AUX memory, host-reliability, and asymmetric-cost law explicit and removable now that posture-sensitive online control is S-tier closed, anti-thrash is landed, bounded live support-memory re-entry is earned on reference and the OpenAI Codex App/CLI wrapper-resume evidence path, evidence/probe calibration is S-tier closed, host/tool reliability and affordance priors are earned as bounded host-scoped, capability-scoped score modifiers on `OfflineSupportPublication.host_reliability_prior` with a single-site six-tag `q_mem-host:*` surface and stale-negative reopen under fresh success, asymmetric error cost is earned as a bounded `RiskWeight` carrier whose CHECK/SEEK_CONTEXT activation shift is clipped inside `[0.05, 0.60]` with a `0.10` dead-band and productive-exploration gating, and the brake tonic EMA damps single-tick flips with a locked `rho = 0.60` decay and `tonic_pressure >= 0.35` enter gate while phasic spikes still flip immediately: inspect is live on cheap non-debt events, resume stays continuity-conditioned, posture truth is single-owned, the route state vector stays the bounded 6-axis geometry term while `visible_burden_sensitivity` remains a separate utility scalar, route truth stays bounded and non-sovereign, unchanged-condition repetition is taxed only at the exact-family level with bounded reopen, public feedback-window summaries reflect the just-realized step, family-local bounded probe limits surface as `unsupported` without leaking host-global unavailability across families, stream-only churn stays non-epistemic, live memory stays score-only and host-matched through explicit publication, live `Q_mem` stays zero on shipping and conformance default lanes, raw SQLite episodes stay support-side only, reliability priors bias score pricing only and never route, posture, selection, or brake law, Claude and Gemini remain shadow-proof only for reliability promotion, `risk_weight` biases CHECK/SEEK_CONTEXT activation threshold only and never routing, posture, selection, certification, or blockedness law, and `brake_tonic_history` persists the pressure tail across resume on all four host lanes with three-way backward-compat decoding.
+- The silent-control-verification-debt-continuation seam added a general OpenAI operator `resume_verification` action, proved Gate 0 structurally, and earned narrow live behavior-lift evidence on the OpenAI Codex App/CLI family through the `codex_exec_wrapper_resume` actuator: baseline failure reproduced 5/5, shaped improved premature closure, evidence recovery, and goal continuity, and clean controls had zero provider-limit or external-interference counts. The grounded intervention records now keep the visible edge product-shaped: selectors require high pressure plus a product-runtime anchor, suppress when the last assistant move already narrowed, asked, blocked, retracted, repaired, or verified, and render only from claim, evidence, obligation, continuity, capability, or preservation structure. The product-perception hardening seam now requires a due product-runtime expectation record before verification speech, records private selection trace diagnostics, and keeps hidden verifier output scoring only. The hardened visible-intervention rerun earned negative live evidence on the wrapper/resume actuator: Gate 0 stayed lawful, baseline reproduced 3/3, clean controls stayed healthy, but visible intervention failed because the current overdue-verification wording let the model choose a weaker visible-check or narrower-claim path instead of recovering unpaid verification.
 
 ## Canonical Proof
 

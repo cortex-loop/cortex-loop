@@ -78,5 +78,5 @@ without claiming all hooks are implemented:
 
 The skeleton remains a lab surface until a later empirical seam installs it in
 Claude Code Desktop and proves live hook behavior. Shipping truth remains
-`openai:operator_cli` until the status registry is explicitly changed by an
+`openai.codex_app_cli` until the status registry is explicitly changed by an
 earned promotion seam.

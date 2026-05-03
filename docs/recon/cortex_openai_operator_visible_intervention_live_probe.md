@@ -7,14 +7,15 @@ Surface: product + lab evidence
 This seam tested whether grounded visible-intervention records from product
 runtime state improve OpenAI operator behavior beyond silent-only control.
 
-Verdict: scoped success on `openai:operator_cli`. Gate 0 proved the visible
+Verdict: scoped success on `openai.codex_app_cli`. Gate 0 proved the visible
 arm was product-rendered from `cortex.sre.interventions`, not a hand-written
 fixture prompt. The live matrix reproduced the output-quality failure 3/3 in
 baseline gate trials, silent-only failed 5/5, and visible intervention improved
 all three primary average axes with clean controls staying clean.
 
-This does not promote shipping truth beyond the OpenAI operator lane and does
-not prove Claude, Gemini, AUX, hooks, or broad cross-host behavior lift.
+This does not promote shipping truth beyond the OpenAI Codex App/CLI
+wrapper-resume evidence path and does not prove Claude, Gemini, AUX, hooks, or
+broad cross-host behavior lift.
 
 ## Gate 0
 
@@ -98,10 +99,11 @@ be needed before visible intervention is consistently high-yield.
 
 Earned:
 
-- OpenAI operator Gate 0 truth: product-rendered visible intervention reaches
-  the model boundary without fixed prompt fixtures.
-- OpenAI operator live evidence: visible intervention improved all primary
-  average axes over silent-only on a reproduced output-quality failure family.
+- OpenAI Codex App/CLI wrapper-resume Gate 0 truth: product-rendered visible
+  intervention reaches the model boundary without fixed prompt fixtures.
+- OpenAI Codex App/CLI wrapper-resume live evidence: visible intervention
+  improved all primary average axes over silent-only on a reproduced
+  output-quality failure family.
 - Clean-control evidence: no provider-limit count, no external-interference
   count, and no clean-control overblock or slowdown in this run.
 
@@ -109,7 +111,7 @@ Not earned:
 
 - No Claude Code, Gemini, reference, AUX, hook, or cross-host behavior-lift
   claim.
-- No shipping-default promotion beyond the existing `openai:operator_cli`
+- No shipping-default promotion beyond the existing `openai.codex_app_cli`
   lane.
 - No claim that hidden verifier facts or task identity are product
   perception. They remained lab scoring evidence only.

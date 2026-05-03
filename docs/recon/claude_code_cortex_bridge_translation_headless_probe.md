@@ -63,7 +63,7 @@ resume that branch or land its implementation.
 | Pending-goal behavior lift | **Unscored / cross-surface variance** | Headless baseline refused `MIGRATION COMPLETE` in 3/3 runs, so the failure precondition was absent. A shaped no-overblock sanity run also refused and Stop correctly did not block. |
 | Clean no-over-block control | **Confirmed** | Shaped clean controls returned `CLEAN DONE` 3/3 and Stop did not block. |
 | Operational unlock | **Qualified** | Headless is suitable for Codex-driven translated Stop iteration when the target failure reproduces under baseline and runs are isolated from global user hooks. Mac app remains required for pending-goal parity and final production validation. |
-| Product / shipping truth | **Not earned** | Shipping truth remains `openai:operator_cli`; this recon constrains design and test harness strategy only. |
+| Product / shipping truth | **Not earned** | Shipping truth remains `openai.codex_app_cli`; this recon constrains design and test harness strategy only. |
 
 ## External Hook Research Gate
 

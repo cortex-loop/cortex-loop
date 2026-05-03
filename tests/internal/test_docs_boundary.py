@@ -465,7 +465,7 @@ def test_executive_runtime_tracker_keeps_product_goal_and_live_truths_visible() 
     assert "brain-wiring truth" in text
     assert "conformance truth" in text
     assert "shipping truth" in text
-    assert "OpenAI remains shipping truth through `openai:operator_cli`" in text
+    assert "OpenAI remains shipping truth through `openai.codex_app_cli`" in text
     assert "Claude Code Desktop, Claude Code headless CLI, and individual hook findings are recon only" in text
     assert "Stop` closure pressure has narrow behavior-lift evidence" in text
     assert "`PreToolUse` and `UserPromptSubmit` delivery are real" in text
@@ -502,7 +502,7 @@ def test_executive_runtime_roadmap_names_path_from_now_to_goal() -> None:
     assert "Cortex demonstrably makes model behavior more continuous" in text
     assert "The plan reaches the goal only if seam 12 passes its audit." in text
     assert "The next seam after debt-to-route/brake coupling is seam 5" in text
-    assert "silent-control live probe on the OpenAI shipping lane" in text
+    assert "silent-control live probe on the OpenAI Codex App/CLI" in text
     assert "resolution_deficit" in text
     assert "expectation ledger" in text
     assert "not a Claude hook plugin" in text
@@ -785,6 +785,31 @@ def test_anti_drift_rules_pin_fixture_to_law_product_spine() -> None:
     assert "Text classes stay separate" in text
     assert "Human prompts are ordinary task requests" in text
     assert "Lab prompt\nscaffolds are test apparatus" in text
+
+
+def test_anti_drift_rules_pin_host_surface_taxonomy() -> None:
+    text = _read(ANTI_DRIFT_RULES_PATH)
+
+    assert "## Host Surface Taxonomy" in text
+    assert "Product Host\nAdaptors, API / Conformance Adaptors, and Non-Adaptor Support Surfaces" in text
+    assert "one `openai.codex_app_cli` product adaptor family" in text
+    assert "Codex App Stop-hook proof" in text
+    assert "Codex CLI `codex exec` wrapper/resume proof" in text
+    assert "repo Mission Reflection hooks" in text
+    assert "Unqualified `operator_cli` must not appear as the active shipping" in text
+
+
+def test_active_truth_surfaces_do_not_use_old_openai_operator_cli_label() -> None:
+    status = _load_status()
+    active_docs = [
+        REPO_ROOT / doc
+        for doc in status["active_docs"]
+        if not doc.startswith("docs/archive/")
+    ]
+
+    for path in [STATUS_REGISTRY_PATH, *active_docs]:
+        text = _read(path)
+        assert "openai:operator_cli" not in text, str(path)
 
 
 def test_docs_directory_only_exposes_archive_and_workflow_subtrees() -> None:
@@ -1359,7 +1384,7 @@ def test_claude_code_cortex_headless_cli_equivalence_probe_records_partial_findi
         "This finding is per-bridge and per-content family",
         "does not make `Stop` the primary Cortex architecture",
         "does not promote Claude Code",
-        "Shipping default remains `openai:operator_cli`",
+        "Shipping default remains `openai.codex_app_cli`",
     ]:
         assert phrase in text
 
@@ -1398,7 +1423,7 @@ def test_claude_code_cortex_bridge_translation_headless_probe_records_preserved_
         "promote Claude Code or headless CLI to shipping default",
         "does not validate",
         "Product / shipping truth",
-        "Shipping truth remains `openai:operator_cli`",
+        "Shipping truth remains `openai.codex_app_cli`",
         "no broad headless equivalence claim",
         "clean no-over-block passes",
     ]:
@@ -1567,7 +1592,7 @@ def test_openai_operator_silent_control_probe_records_gate0_coupling_gap() -> No
     assert "Surface: product / recon" in text
     assert "Probe date: 2026-05-02" in text
     assert "Gate 0 failed" in text
-    assert "live OpenAI operator trials were not run" in text
+    assert "live OpenAI Codex App/CLI wrapper-resume trials were not run" in text
     assert "runtime debt control changes OpenAI route/policy diagnostics" in text
     assert "current Codex operator live adapter does not enact" in text
     assert "model_bound_debt_enactment_present == false" in text
@@ -1662,7 +1687,7 @@ def test_openai_operator_output_quality_fixture_refresh_records_hard_fixture() -
         "docs/recon/cortex_openai_operator_output_quality_fixture_refresh.md"
         in status["active_docs"]
     )
-    assert status["work_today"]["slug"] == "visible-intervention-live-rerun-after-hardening"
+    assert status["work_today"]["slug"] == "host-surface-taxonomy-cleanup"
 
 
 def test_openai_operator_verification_debt_continuation_records_gate0_truth() -> None:
@@ -1688,8 +1713,8 @@ def test_openai_operator_verification_debt_continuation_records_gate0_truth() ->
         "docs/recon/cortex_openai_operator_verification_debt_continuation.md"
         in status["active_docs"]
     )
-    assert status["work_today"]["slug"] == "visible-intervention-live-rerun-after-hardening"
-    assert status["next_product_train"]["slug"] == "visible-verification-rendering-remediation"
+    assert status["work_today"]["slug"] == "host-surface-taxonomy-cleanup"
+    assert status["next_product_train"]["slug"] == "codex-app-cli-hook-native-adaptor"
 
 
 def test_openai_operator_visible_intervention_live_probe_records_scoped_success() -> None:
@@ -1698,7 +1723,7 @@ def test_openai_operator_visible_intervention_live_probe_records_scoped_success(
     status = _load_status()
 
     assert "Surface: product + lab evidence" in text
-    assert "Verdict: scoped success on `openai:operator_cli`" in text
+    assert "Verdict: scoped success on `openai.codex_app_cli`" in text
     assert "Gate 0 passed" in text
     assert "product-rendered" in text
     assert "I have not verified the verification opened by this task yet" in text
@@ -1714,8 +1739,8 @@ def test_openai_operator_visible_intervention_live_probe_records_scoped_success(
         "docs/recon/cortex_openai_operator_visible_intervention_live_probe.md"
         in status["active_docs"]
     )
-    assert status["work_today"]["slug"] == "visible-intervention-live-rerun-after-hardening"
-    assert status["next_product_train"]["slug"] == "visible-verification-rendering-remediation"
+    assert status["work_today"]["slug"] == "host-surface-taxonomy-cleanup"
+    assert status["next_product_train"]["slug"] == "codex-app-cli-hook-native-adaptor"
 
 
 def test_visible_intervention_product_perception_hardening_records_structural_gate() -> None:
@@ -1739,8 +1764,8 @@ def test_visible_intervention_product_perception_hardening_records_structural_ga
         "docs/recon/cortex_visible_intervention_product_perception_hardening.md"
         in status["active_docs"]
     )
-    assert status["work_today"]["slug"] == "visible-intervention-live-rerun-after-hardening"
-    assert status["next_product_train"]["slug"] == "visible-verification-rendering-remediation"
+    assert status["work_today"]["slug"] == "host-surface-taxonomy-cleanup"
+    assert status["next_product_train"]["slug"] == "codex-app-cli-hook-native-adaptor"
 
 
 def test_openai_operator_visible_intervention_hardened_rerun_records_failure() -> None:
@@ -1763,8 +1788,8 @@ def test_openai_operator_visible_intervention_hardened_rerun_records_failure() -
         "docs/recon/cortex_openai_operator_visible_intervention_hardened_rerun.md"
         in status["active_docs"]
     )
-    assert status["work_today"]["slug"] == "visible-intervention-live-rerun-after-hardening"
-    assert status["next_product_train"]["slug"] == "visible-verification-rendering-remediation"
+    assert status["work_today"]["slug"] == "host-surface-taxonomy-cleanup"
+    assert status["next_product_train"]["slug"] == "codex-app-cli-hook-native-adaptor"
 
 
 def test_cortex_plugin_design_preserves_scope_and_truth_boundaries() -> None:
@@ -1796,8 +1821,8 @@ def test_cortex_plugin_design_preserves_scope_and_truth_boundaries() -> None:
     assert "docs/CORTEX.md` §1" in text
     assert "docs/CORTEX.md` §3" in text
     assert "Claude Code Desktop as the intended v1 plugin surface" in text
-    assert "does not change current shipping truth" in text
-    assert "`openai:operator_cli`" in text
+    assert "does not change current\nshipping truth" in text
+    assert "`openai.codex_app_cli`" in text
     assert "live paired evidence earns behavior lift" in text
 
     # Hook events and failure modes are covered without conflating ownership,
@@ -1917,7 +1942,7 @@ def test_cortex_plugin_adapter_preserves_host_adapter_boundaries() -> None:
     assert "hook events parse" in text
     assert "no-op transport stubs" in text
     assert "Shipping truth remains" in text
-    assert "openai:operator_cli" in text
+    assert "openai.codex_app_cli" in text
     assert "lab/cortex_plugin_skeleton/" in text
     assert "cortex/hosts/claude_code_desktop/ingress.py" in text
     assert "cortex/hosts/claude_code_desktop/runtime.py" in text
@@ -1990,6 +2015,7 @@ def test_status_registry_is_complete_and_stable() -> None:
         "system_map",
         "subsystems",
         "packet_to_code_anchors",
+        "host_surface_taxonomy",
         "hosts",
         "conformance_summary",
         "closure_gates",
@@ -2051,12 +2077,36 @@ def test_status_registry_is_complete_and_stable() -> None:
         "reference": "conformant",
     }
     assert host_surfaces == {
-        "openai": "operator_cli",
-        "claude": "operator_cli",
-        "gemini": "operator_cli",
-        "reference": "reference_cli",
+        "openai": "openai.codex_app_cli",
+        "claude": "claude.code_desktop",
+        "gemini": "gemini.api",
+        "reference": "reference.runtime",
     }
-    assert status["conformance_summary"]["shipping_default"] == "openai:operator_cli"
+    assert status["conformance_summary"]["shipping_default"] == "openai.codex_app_cli"
+    taxonomy = status["host_surface_taxonomy"]
+    assert taxonomy["summary"].startswith("Cortex surfaces are grouped into three top-level buckets")
+    taxonomy_buckets = {bucket["id"]: bucket for bucket in taxonomy["buckets"]}
+    assert set(taxonomy_buckets) == {
+        "product_host_adaptors",
+        "api_conformance_adaptors",
+        "non_adaptor_support_surfaces",
+    }
+    product_entries = {
+        entry["id"]: entry for entry in taxonomy_buckets["product_host_adaptors"]["entries"]
+    }
+    assert product_entries["openai.codex_app_cli"]["current_actuator"] == "codex_exec_wrapper_resume"
+    assert product_entries["openai.codex_app_cli"]["target_actuator"] == "hook_native_product"
+    assert "Codex App Stop-hook proof" in product_entries["openai.codex_app_cli"]["evidence_boundary"]
+    assert "Codex CLI codex-exec wrapper proof" in product_entries["openai.codex_app_cli"]["evidence_boundary"]
+    api_entries = {
+        entry["id"]: entry for entry in taxonomy_buckets["api_conformance_adaptors"]["entries"]
+    }
+    assert api_entries["openai.api"]["target_actuator"] == "frozen_conformance_support"
+    non_adaptor_entries = {
+        entry["id"]: entry for entry in taxonomy_buckets["non_adaptor_support_surfaces"]["entries"]
+    }
+    assert "repo.workflow_guardrails" in non_adaptor_entries
+    assert "lab.probe_harnesses" in non_adaptor_entries
     next_train_slug = status["next_product_train"]["slug"]
     assert next_train_slug is None or next_train_slug != status["work_today"]["slug"]
     assert "research_lines_under_evaluation" in status
@@ -2066,34 +2116,27 @@ def test_status_registry_is_complete_and_stable() -> None:
         assert {"slug", "stage", "summary", "next_step"} <= set(entry)
         assert entry["slug"] != status["work_today"]["slug"]
         assert entry["slug"] != status["next_product_train"]["slug"]
-    assert status["work_today"]["slug"] == "visible-intervention-live-rerun-after-hardening"
+    assert status["work_today"]["slug"] == "host-surface-taxonomy-cleanup"
     work_note = status["work_today"]["note"].lower()
-    assert "reran the openai visible-intervention live probe" in work_note
-    assert "gate 0 stayed product-grounded" in work_note
-    assert "baseline reproduced 3/3" in work_note
-    assert "visible arm failed" in work_note
-    assert "regressed premature-closure avoidance" in work_note
-    assert "queues visible-verification rendering remediation" in work_note
-    assert status["next_product_train"]["slug"] == "visible-verification-rendering-remediation"
+    assert "host surfaces" in work_note
+    assert "openai codex app and codex cli are one product adaptor family" in work_note
+    assert "future hook-native product proof are not interchangeable" in work_note
+    assert status["next_product_train"]["slug"] == "codex-app-cli-hook-native-adaptor"
     assert "product" == status["next_product_train"]["surface"]
-    assert "unpaid verification debt" in status["next_product_train"][
+    assert "codex app/cli lifecycle surface" in status["next_product_train"][
         "executive_benefit"
     ].lower()
-    assert "weaker `narrower claim` path" in status["next_product_train"][
+    assert "hook-native codex app/cli adaptor" in status["next_product_train"][
         "why_now"
     ].lower()
-    assert "claude should not inherit that wording" in status["next_product_train"]["why_now"].lower()
-    assert "overdue-verification rendering" in status["next_product_train"][
+    assert "separates app and cli evidence scopes" in status["next_product_train"][
         "primary_metric"
     ].lower()
-    assert "clean controls silent" in status["next_product_train"][
-        "primary_metric"
-    ].lower()
-    assert "do not add task-specific prompts" in status["next_product_train"][
+    assert "repo workflow guardrails" in status["next_product_train"][
         "guardrail"
     ].lower()
     assert "hidden verifier facts" in status["next_product_train"]["guardrail"].lower()
-    assert "fixes astro by naming astro-specific checks" in status["next_product_train"][
+    assert "codex app proof is generalized to codex cli without evidence" in status["next_product_train"][
         "kill_rule"
     ].lower()
     deferred_lines = {entry["slug"]: entry for entry in status["research_lines_under_evaluation"]}
@@ -2102,8 +2145,11 @@ def test_status_registry_is_complete_and_stable() -> None:
         deferred_lines["brain-capability-observation-and-inference"]["stage"]
         == "deferred-by-executive-runtime-roadmap"
     )
-    assert "Keep the bounded audit surface compact and truthful" in status["where_to_work"][0]
-    assert "no-spend live evidence current and explicit" in status["where_to_work"][1]
+    assert "openai.codex_app_cli" in status["where_to_work"][0]
+    assert "codex_exec_wrapper_resume" in status["where_to_work"][0]
+    assert "hook_native_product" in status["where_to_work"][0]
+    assert "evidence scopes separate" in status["where_to_work"][1]
+    assert "repo workflow hooks" in status["where_to_work"][1]
     assert "posture-sensitive online control is s-tier closed" in status["where_to_work"][2].lower()
     assert "anti-thrash is landed" in status["where_to_work"][2]
     assert "posture truth is single-owned" in status["where_to_work"][2]
@@ -2120,6 +2166,7 @@ def test_status_registry_is_complete_and_stable() -> None:
     assert "due product-runtime expectation record" in status["where_to_work"][3]
     assert "hidden verifier output scoring only" in status["where_to_work"][3]
     assert "hardened visible-intervention rerun earned negative live evidence" in status["where_to_work"][3]
+    assert "wrapper/resume actuator" in status["where_to_work"][3]
     assert "baseline reproduced 3/3" in status["where_to_work"][3]
     assert "visible intervention failed" in status["where_to_work"][3]
     assert "weaker visible-check or narrower-claim path" in status["where_to_work"][3]
@@ -2153,12 +2200,24 @@ def test_generated_status_doc_includes_system_map_and_next_product_train() -> No
     assert "background completion context" not in text
     assert "Active quality/risk focus" in text
     assert "## Packet To Code" in text
+    assert "## Host Surface Taxonomy" in text
+    assert "### Product Host Adaptors" in text
+    assert "### API / Conformance Adaptors" in text
+    assert "### Non-Adaptor Support Surfaces" in text
+    assert "`openai.codex_app_cli`" in text
+    assert "`codex_exec_wrapper_resume`" in text
+    assert "`hook_native_product`" in text
+    assert "Codex App Stop-hook proof" in text
+    assert "Codex CLI codex-exec wrapper proof" in text
+    assert "`openai.api`" in text
+    assert "`repo.workflow_guardrails`" in text
+    assert "`lab.probe_harnesses`" in text
     assert "## Next Product Train" in text
     assert "## Research Lines Under Evaluation" in text
     assert "host/tool reliability and affordance priors are earned" in text
-    assert "`visible-intervention-live-rerun-after-hardening`" in text
-    assert "- Next product train after the current focus: `visible-verification-rendering-remediation`" in text
-    assert "- Train: `visible-verification-rendering-remediation`" in text
+    assert "`host-surface-taxonomy-cleanup`" in text
+    assert "- Next product train after the current focus: `codex-app-cli-hook-native-adaptor`" in text
+    assert "- Train: `codex-app-cli-hook-native-adaptor`" in text
     assert "`brain-capability-observation-and-inference` (deferred-by-executive-runtime-roadmap)" in text
     assert "resume_verification" in text.lower()
     assert "hidden verifier" in text.lower()
@@ -2168,12 +2227,12 @@ def test_generated_status_doc_includes_system_map_and_next_product_train() -> No
     assert "negative live evidence" in text.lower()
     assert "visible intervention failed" in text.lower()
     assert "weaker visible-check or narrower-claim path" in text.lower()
-    assert "Shipping Product Lane\\nopenai:operator_cli" in text or "Shipping Product Lane" in text
-    assert "Shipping default: `openai:operator_cli`" in text
+    assert "Shipping Product Target\\nopenai.codex_app_cli" in text
+    assert "Shipping default: `openai.codex_app_cli`" in text
     assert "Workflow gates marked `required` are contractual gates checked by `repo_workflow.py`" in text
     assert "| `main_synced` | `required` |" in text
     assert "| `cleanup_report` | `required` |" in text
-    assert "visible-verification-rendering-remediation" in text.lower()
+    assert "codex-app-cli-hook-native-adaptor" in text.lower()
     assert "brain-capability-observation-and-inference" in text
     assert "`visible_burden_sensitivity`" in text
 

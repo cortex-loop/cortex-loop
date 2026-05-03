@@ -17,9 +17,10 @@ focused persistence, context adoption, uncertainty-aware brake, truthful
 closure, and capability-aware routing. The plugin is that identity expressed
 through Claude Code Desktop's Code-tab lifecycle events.
 
-The OpenAI host-control lane in `cortex/hosts/openai/host_control.py` compresses
+The OpenAI API support lane in `cortex/hosts/openai/host_control.py` compresses
 Cortex into request/response: bounded instructions and input text are the main
-model-visible surfaces. Claude Code Desktop exposes richer lifecycle events:
+model-visible surfaces. The OpenAI Codex App/CLI product target needs lifecycle
+control instead. Claude Code Desktop exposes richer lifecycle events:
 `SessionStart`, `UserPromptSubmit`, `PreToolUse`, `PostToolUse`,
 `PostToolUseFailure`, `PreCompact`, `SubagentStop`, `Stop`, and `SessionEnd`.
 Those are the natural event boundaries for the lifecycle-first law in
@@ -28,9 +29,10 @@ existing `cortex/**` state and emits bounded hook outputs only when the Cortex
 state needs to change what the assistant sees, does, or is allowed to close.
 
 This design treats Claude Code Desktop as the intended v1 plugin surface
-parallel to the current OpenAI API/CLI lane, but current operational truth
+parallel to the current OpenAI Codex App/CLI product target while keeping the
+OpenAI API connector as support/conformance, but current operational truth
 remains unchanged until build and live-eval seams land:
-`docs/CORTEX_STATUS.md` still names `openai:operator_cli` as the shipping
+`docs/CORTEX_STATUS.md` still names `openai.codex_app_cli` as the shipping
 default, while Claude remains conformant and non-default. Structural design
 earns architecture only; live paired evidence earns behavior lift.
 
@@ -534,9 +536,10 @@ The precise target claim after the build phase is:
 > mode.
 
 That would make Claude Code Desktop a shipping Cortex surface parallel to the
-OpenAI host-control lane. This design does not change current shipping truth:
+OpenAI Codex App/CLI product target. This design does not change current
+shipping truth:
 `internal/truth/cortex_status.json` and `docs/CORTEX_STATUS.md` still name
-`openai:operator_cli` as the shipping default. The build seam may earn
+`openai.codex_app_cli` as the shipping default. The build seam may earn
 structural shipping readiness; live shipping lift requires paired evaluation
 evidence showing Input A -> Cortex-shaped lifecycle -> improved Output B.
 Given the current evidence, v1 may need to ship with translated Stop closure

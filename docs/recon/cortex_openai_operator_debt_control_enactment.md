@@ -6,10 +6,10 @@ Probe date: 2026-05-02
 
 ## Verdict
 
-Gate 0 now passes structurally for the OpenAI operator lane. The OpenAI
-host adapter consumes already-computed SRE route, policy, and debt-control
-payloads and produces a model-bound continuation action before the low-level
-Codex CLI runner is called.
+Gate 0 now passes structurally for the OpenAI Codex App/CLI wrapper-resume
+path. The OpenAI host adapter consumes already-computed SRE route, policy, and
+debt-control payloads and produces a model-bound continuation action before
+the low-level Codex CLI runner is called.
 
 This earns host-adapter enactment truth only. It does not earn live behavior
 lift, shipping promotion, grounded visible intervention proof, Claude/Gemini

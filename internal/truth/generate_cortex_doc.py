@@ -100,6 +100,50 @@ def _render_math_to_code_map(entries: list[dict[str, Any]]) -> str:
     return "\n".join(lines)
 
 
+def _render_host_surface_taxonomy(taxonomy: dict[str, Any] | None) -> list[str]:
+    if not taxonomy:
+        return []
+    buckets = taxonomy.get("buckets", [])
+    if not isinstance(buckets, list):
+        return []
+    bucket_entries: list[str] = []
+    for bucket in buckets:
+        if not isinstance(bucket, dict):
+            continue
+        label = str(bucket.get("label", "")).strip()
+        entries = bucket.get("entries", [])
+        if not isinstance(entries, list) or not entries:
+            continue
+        ids = [
+            f"`{entry.get('id', '')}`"
+            for entry in entries
+            if isinstance(entry, dict) and str(entry.get("id", "")).strip()
+        ]
+        if label and ids:
+            bucket_entries.append(f"{label}: {', '.join(ids)}")
+    if not bucket_entries:
+        return []
+    codex_entry = None
+    for bucket in buckets:
+        if not isinstance(bucket, dict):
+            continue
+        for entry in bucket.get("entries", []):
+            if not isinstance(entry, dict):
+                continue
+            if entry.get("id") == "openai.codex_app_cli":
+                codex_entry = entry
+                break
+    suffix = ""
+    if codex_entry:
+        suffix = (
+            f" `openai.codex_app_cli` current actuator "
+            f"`{codex_entry.get('current_actuator', 'n/a')}`, target actuator "
+            f"`{codex_entry.get('target_actuator', 'n/a')}`; App Stop-hook, "
+            "CLI wrapper/resume, and hook-native product proof stay separate."
+        )
+    return [f"- Host surface taxonomy: {'; '.join(bucket_entries)}.{suffix}"]
+
+
 def _render_current_state(data: dict[str, Any]) -> str:
     work_today = data["work_today"]
     next_train = data["next_product_train"]
@@ -109,6 +153,7 @@ def _render_current_state(data: dict[str, Any]) -> str:
     where_to_work = data.get("where_to_work", [])
     conformance = data["conformance_summary"]
     hosts = data["hosts"]
+    host_surface_taxonomy = data.get("host_surface_taxonomy")
 
     landed = sum(1 for entry in matrix if entry["status"] == "landed")
     partial = sum(1 for entry in matrix if entry["status"] == "partial")
@@ -176,6 +221,15 @@ def _render_current_state(data: dict[str, Any]) -> str:
             f"- Shipping default lane: `{conformance['shipping_default']}`",
             f"- Accepted next conformance decision: `{conformance['accepted_next_decision']}`",
             "",
+        ]
+    )
+    lines.extend(
+        _render_host_surface_taxonomy(
+            host_surface_taxonomy if isinstance(host_surface_taxonomy, dict) else None
+        )
+    )
+    lines.extend(
+        [
             "### Active Leverage and Where to Work",
             "",
         ]

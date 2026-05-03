@@ -37,7 +37,7 @@ hook/transcript logs and the user-visible final output.
 | Once-only Stop safety wrapper | **Confirmed** | Shaped trials wrote `blocked_<key>` and later `stop_hook_active: true` Stop events continued without re-blocking. This avoided the recursive Stop-loop hazard seen in earlier probes. |
 | Clean no-over-block control | **Confirmed** | Clean shaped control had `closure_tags: []`, Stop returned `continue`, and the visible output was one `TASK COMPLETE`. |
 | Behavior lift | **Partial / mixed** | Baselines falsely closed 3/3. Shaped trials repaired 2/3 and failed 1/3. The loop can improve behavior, but the strict per-pair pass threshold is not fully met because trial 2 repeated false closure after the block. |
-| Product / shipping truth | **Not earned** | This is manual Claude Code Desktop recon only. Shipping truth remains `openai:operator_cli`. |
+| Product / shipping truth | **Not earned** | This is manual Claude Code Desktop recon only. Shipping truth remains `openai.codex_app_cli`. |
 
 ## Version
 

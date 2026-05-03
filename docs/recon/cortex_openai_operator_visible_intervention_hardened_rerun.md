@@ -6,8 +6,8 @@ Probe date: 2026-05-03
 
 ## Summary
 
-This reran the OpenAI operator visible-intervention live probe after the
-product-perception hardening seam.
+This reran the OpenAI Codex App/CLI wrapper-resume visible-intervention live
+probe after the product-perception hardening seam.
 
 Gate 0 passed: the visible arm was authorized from product runtime state, with a
 due verification expectation anchor and product-rendered text. The hidden
@@ -26,7 +26,7 @@ Artifact root:
 ## Gate 0
 
 - Verdict: `gate0_passed`
-- Lane: `openai:operator_cli`
+- Lane: `openai.codex_app_cli`
 - Model: `gpt-5.3-codex`
 - Product-rendered visible delta: present
 - Initial prompt hashes: matched
@@ -89,8 +89,8 @@ visible-check or narrower-claim path.
 
 Earned:
 
-- Live OpenAI operator evidence that the hardened Gate 0 path remains
-  model-bound and product-grounded.
+- Live OpenAI Codex App/CLI wrapper-resume evidence that the hardened Gate 0
+  path remains model-bound and product-grounded.
 - Live negative evidence that the current overdue-verification visible wording
   fails the success criteria after hardening.
 - Clean-control evidence stayed healthy: no provider-limit failures, external

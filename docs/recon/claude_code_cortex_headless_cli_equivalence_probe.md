@@ -41,7 +41,7 @@ not merge the parked lifecycle-spine branch. It tests one bridge:
 | Clean no-over-block control | **Confirmed** | Baseline and shaped clean controls both emitted `CLEAN DONE`; shaped Stop had `closure_tags: []` and did not block. |
 | Behavior equivalence | **Partial / cross-surface variance** | The evidence-degradation pair matched the Mac app pattern: baseline falsely closed with `TESTS PROVEN GREEN`, shaped Stop blocked, and the continuation retracted the claim. The clean control matched. The pending-goal pair did not match: headless baseline refused false closure before Cortex, and shaped continuation treated the Cortex hook framing skeptically. |
 | Operational unlock | **Qualified** | Headless mode is suitable for lower-cost Codex-driven Stop closure-pressure iteration when the target scenario already produces the relevant failure in baseline. It is not sufficient as final Mac-app behavior-lift proof, and the pending-goal variance must be treated as real cross-surface evidence. |
-| Product / shipping truth | **Not earned** | Shipping truth remains `openai:operator_cli`. This recon does not promote Claude Code Desktop or headless Claude Code to product default. |
+| Product / shipping truth | **Not earned** | Shipping truth remains `openai.codex_app_cli`. This recon does not promote Claude Code Desktop or headless Claude Code to product default. |
 
 ## Version
 
@@ -394,7 +394,7 @@ headless baseline already rejected the false closure and shaped continuation
 treated the hook framing as suspect.
 
 Product / shipping truth: not earned. This probe is internal recon only.
-Shipping default remains `openai:operator_cli`.
+Shipping default remains `openai.codex_app_cli`.
 
 ## Equivalence Interpretation
 
