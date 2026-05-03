@@ -18,6 +18,22 @@ VALID_PROFILES = {"standard", "load_bearing"}
 VALID_SURFACES = {"product", "experimental", "lab", "internal"}
 VALID_AUDIT_STATUSES = {"pass", "fail"}
 VALID_COMPLETENESS_STATES = {"implemented", "explicit_zero", "future_not_active"}
+VALID_PERCEPTION_SOURCES = {"product_runtime", "lab_oracle", "human_score", "not_tested"}
+VALID_DECISION_SOURCES = {"product", "lab", "not_tested"}
+VALID_ACTION_SOURCES = {"product", "lab", "not_tested"}
+VALID_RENDERING_SOURCES = {
+    "product_renderer",
+    "lab_prompt_scaffold",
+    "host_format_contract",
+    "none",
+}
+VALID_CLAIM_SCOPES = {
+    "full_product_loop",
+    "action_evidence_only",
+    "lab_assisted_live_evidence",
+    "product_renderer_evidence",
+    "structural_only",
+}
 CODEX_MISSION_GRAPH_VALIDATOR_COMMAND = (
     "python3 internal/workflow/repo_workflow.py grid-validate --mode closeout"
 )
@@ -248,12 +264,20 @@ def scaffold_payload(*, branch: str, mode: str, reviewed_paths: list[str]) -> di
             }
             payload["product_spine"] = {
                 "executive_capability": "",
+                "executive_shape": "",
                 "state_law_path": [],
                 "enforcement_decision": "",
                 "host_action": "",
                 "model_io_effect": "",
                 "fixture_boundary": "",
+                "fixture_witnesses": [],
                 "non_fixture_controls": [],
+                "perception_source": "",
+                "decision_source": "",
+                "action_source": "",
+                "rendering_source": "",
+                "claim_scope": "",
+                "task_identity_examples_checked": False,
             }
     if branch.startswith("codex/") and reviewed_paths:
         payload["mission_reflection_graph"] = {
@@ -419,6 +443,9 @@ def render_markdown(payload: dict[str, Any]) -> str:
             lines.append(
                 f"- Executive Capability: {product_spine.get('executive_capability') or '<fill me>'}"
             )
+            lines.append(
+                f"- Executive Shape: {product_spine.get('executive_shape') or '<fill me>'}"
+            )
             state_law_path = product_spine.get("state_law_path", []) or []
             if state_law_path:
                 lines.append("- State Law Path:")
@@ -436,6 +463,13 @@ def render_markdown(payload: dict[str, Any]) -> str:
             lines.append(
                 f"- Fixture Boundary: {product_spine.get('fixture_boundary') or '<fill me>'}"
             )
+            witnesses = product_spine.get("fixture_witnesses", []) or []
+            if witnesses:
+                lines.append("- Fixture Witnesses:")
+                for witness in witnesses:
+                    lines.append(f"  - {witness}")
+            else:
+                lines.append("- Fixture Witnesses: `<none>`")
             controls = product_spine.get("non_fixture_controls", []) or []
             if controls:
                 lines.append("- Non-Fixture Controls:")
@@ -443,6 +477,25 @@ def render_markdown(payload: dict[str, Any]) -> str:
                     lines.append(f"  - {control}")
             else:
                 lines.append("- Non-Fixture Controls: `<empty>`")
+            lines.append(
+                f"- Perception Source: `{product_spine.get('perception_source') or '<fill me>'}`"
+            )
+            lines.append(
+                f"- Decision Source: `{product_spine.get('decision_source') or '<fill me>'}`"
+            )
+            lines.append(
+                f"- Action Source: `{product_spine.get('action_source') or '<fill me>'}`"
+            )
+            lines.append(
+                f"- Rendering Source: `{product_spine.get('rendering_source') or '<fill me>'}`"
+            )
+            lines.append(
+                f"- Claim Scope: `{product_spine.get('claim_scope') or '<fill me>'}`"
+            )
+            lines.append(
+                "- Task Identity Examples Checked: "
+                f"`{product_spine.get('task_identity_examples_checked')}`"
+            )
     lines.extend(["", "## Final Handoff Mirror", ""])
     lines.extend(["### Fixed now", ""])
     append_items(lines, residuals["fixed_now"], empty="`<fill me>`")
@@ -752,14 +805,21 @@ def validate_payload(
                 if not isinstance(product_spine, dict):
                     raise SystemExit(
                         "Product closeouts touching cortex/** must include "
-                        "product_spine {executive_capability, state_law_path, "
-                        "enforcement_decision, host_action, model_io_effect, "
-                        "fixture_boundary, non_fixture_controls}. This keeps "
+                        "product_spine {executive_capability, executive_shape, "
+                        "state_law_path, enforcement_decision, host_action, "
+                        "model_io_effect, fixture_boundary, fixture_witnesses, "
+                        "non_fixture_controls, perception_source, decision_source, "
+                        "action_source, rendering_source, claim_scope, "
+                        "task_identity_examples_checked}. This keeps "
                         "fixture evidence from becoming product Cortex policy."
                     )
                 _require_substantive(
                     product_spine.get("executive_capability"),
                     "product_spine.executive_capability",
+                )
+                _require_substantive(
+                    product_spine.get("executive_shape"),
+                    "product_spine.executive_shape",
                 )
                 _require_string_list(
                     product_spine.get("state_law_path"),
@@ -781,6 +841,15 @@ def validate_payload(
                         f"product_spine.{key}",
                     )
                 _require_string_list(
+                    product_spine.get("fixture_witnesses"),
+                    "product_spine.fixture_witnesses",
+                    allow_empty=True,
+                )
+                _require_substantive_list_items(
+                    product_spine.get("fixture_witnesses"),
+                    "product_spine.fixture_witnesses",
+                )
+                _require_string_list(
                     product_spine.get("non_fixture_controls"),
                     "product_spine.non_fixture_controls",
                     allow_empty=False,
@@ -789,6 +858,55 @@ def validate_payload(
                     product_spine.get("non_fixture_controls"),
                     "product_spine.non_fixture_controls",
                 )
+                perception_source = product_spine.get("perception_source")
+                decision_source = product_spine.get("decision_source")
+                action_source = product_spine.get("action_source")
+                rendering_source = product_spine.get("rendering_source")
+                claim_scope = product_spine.get("claim_scope")
+                if perception_source not in VALID_PERCEPTION_SOURCES:
+                    raise SystemExit(
+                        "product_spine.perception_source must be one of "
+                        f"{sorted(VALID_PERCEPTION_SOURCES)}."
+                    )
+                if decision_source not in VALID_DECISION_SOURCES:
+                    raise SystemExit(
+                        "product_spine.decision_source must be one of "
+                        f"{sorted(VALID_DECISION_SOURCES)}."
+                    )
+                if action_source not in VALID_ACTION_SOURCES:
+                    raise SystemExit(
+                        "product_spine.action_source must be one of "
+                        f"{sorted(VALID_ACTION_SOURCES)}."
+                    )
+                if rendering_source not in VALID_RENDERING_SOURCES:
+                    raise SystemExit(
+                        "product_spine.rendering_source must be one of "
+                        f"{sorted(VALID_RENDERING_SOURCES)}."
+                    )
+                if claim_scope not in VALID_CLAIM_SCOPES:
+                    raise SystemExit(
+                        "product_spine.claim_scope must be one of "
+                        f"{sorted(VALID_CLAIM_SCOPES)}."
+                    )
+                if product_spine.get("task_identity_examples_checked") is not True:
+                    raise SystemExit(
+                        "product_spine.task_identity_examples_checked must be true "
+                        "after running the example-backed task-identity scanner."
+                    )
+                if perception_source == "lab_oracle" and claim_scope == "full_product_loop":
+                    raise SystemExit(
+                        "product_spine cannot claim full_product_loop when "
+                        "perception_source is lab_oracle; claim action or "
+                        "lab-assisted evidence instead."
+                    )
+                if (
+                    rendering_source == "lab_prompt_scaffold"
+                    and claim_scope in {"full_product_loop", "product_renderer_evidence"}
+                ):
+                    raise SystemExit(
+                        "product_spine cannot claim product rendering evidence when "
+                        "rendering_source is lab_prompt_scaffold."
+                    )
 
     _validate_agent_loop_guard_claims(payload)
 

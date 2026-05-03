@@ -80,10 +80,23 @@ instead of the broad executive capability the fixture was supposed to witness.
 
 Rule: fixtures falsify Cortex; they do not define Cortex. Product seams
 touching `cortex/**` must translate the motivating evidence into the product
-spine: executive capability, state-law path, enforcement decision, host action,
-model I/O effect, fixture boundary, and non-fixture controls. Product code may
-not branch on lab fixture identities or hidden verifier terms. Those details
-belong in `lab/**`, `tests/**`, recon docs, or the closeout fixture boundary.
+spine: executive shape, state-law path, enforcement decision, host action,
+model I/O effect, fixture boundary, non-fixture controls, perception source,
+decision source, action source, rendering source, and claim scope.
+
+Product Cortex may use task details as grounded anchors, but never as product
+triggers. Product behavior keys on executive state such as unsupported claim,
+unpaid verification, unresolved obligation, continuity gap, blocker surfaced,
+capability mismatch, contradiction pressure, or preservation risk. Task identity
+examples such as fixture IDs, file names, framework names, benchmark names,
+domain wording, and hidden verifier facts belong in `lab/**`, `tests/**`, recon
+docs, or the closeout fixture boundary.
+
+Text classes stay separate. Human prompts are ordinary task requests. Lab prompt
+scaffolds are test apparatus. Host format contracts are mechanical protocols.
+Cortex model-visible communication is the only class governed by the
+strange-loop output law, and it must be generated from grounded runtime anchors
+rather than hand-written fixture prompts.
 
 ## Live Evidence Versus Structural Evidence
 

@@ -87,8 +87,8 @@ question lives in:
 - Do not flatten host differences into fake runtime uniformity.
 - Do not let lab, eval, archive, governance, or workflow surfaces become
   Cortex product identity.
-- Do not let fixtures, task domains, hidden verifiers, or benchmarks become
-  product policy; product code implements abstract capability and state law.
+- Do not let task identity become product policy. Fixtures, task domains,
+  hidden verifiers, and benchmarks are examples; product code implements abstract capability and state law.
 - Do not move active executive policy into the core.
 - Do not let shipping truth collapse conformance truth.
 - Do not run paid service-lane commands unless the user explicitly approves
@@ -149,7 +149,7 @@ Every Cortex product change must trace to the model's input or output; if
 the trace is empty, the work is lab, experimental, or workflow support.
 
 Product `cortex/**` seams preserve the product spine: capability -> state law -> enforcement decision -> host action -> model I/O. Closeout records
-`product_spine`; fixture names and hidden verifier facts stay outside product code.
+`product_spine`; task-identity examples stay outside product triggers.
 
 ## Pointers
 

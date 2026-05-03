@@ -257,8 +257,10 @@ def test_agents_records_mission_lock_and_single_truth_bootstrap() -> None:
     assert "approves" in text and "spend in the current chat" in text
     assert "Do not set `CORTEX_LIVE_SERVICE_SPEND_APPROVED`" in text
     assert "Do not claim product progress unless shipped runtime behavior changed" in text
-    assert "fixtures, task domains, hidden verifiers, or benchmarks" in text
+    assert "Do not let task identity become product policy" in text
+    assert "Fixtures, task domains,\n  hidden verifiers, and benchmarks are examples" in text
     assert "product_spine" in text
+    assert "task-identity examples stay outside product triggers" in text
     assert "Preserve the anti-drift rules" in text
     # PHI-label decision loop and PHILOSOPHY_AUDIT block must be retired.
     # Their content moved into docs/CORTEX.md §6 and the agent briefing.
@@ -371,6 +373,10 @@ def test_cortex_doc_is_canonical_narrative_with_required_sections() -> None:
     assert "closed-loop drift" in text
     assert "trace a path from the change" in text
     assert "Fixtures falsify Cortex" in text
+    assert "Product Cortex may use task details as grounded anchors" in text
+    assert "but never as product triggers" in text
+    assert "Model-visible text classes are distinct" in text
+    assert "lab prompt scaffolds are test apparatus" in text
     assert "product_spine" in text
     # Per-turn enforcement (Session 3): Stop hook + markdown grid + no-mimicry rule.
     assert "Stop hook" in text
@@ -753,7 +759,11 @@ def test_anti_drift_rules_pin_fixture_to_law_product_spine() -> None:
     assert "## Fixture-To-Law Product Spine" in text
     assert "fixtures falsify Cortex; they do not define Cortex" in text
     assert "Product seams\ntouching `cortex/**`" in text
-    assert "Product code may\nnot branch on lab fixture identities" in text
+    assert "Product Cortex may use task details as grounded anchors" in text
+    assert "but never as product\ntriggers" in text
+    assert "Text classes stay separate" in text
+    assert "Human prompts are ordinary task requests" in text
+    assert "Lab prompt\nscaffolds are test apparatus" in text
 
 
 def test_docs_directory_only_exposes_archive_and_workflow_subtrees() -> None:
@@ -1628,7 +1638,7 @@ def test_openai_operator_output_quality_fixture_refresh_records_hard_fixture() -
         "docs/recon/cortex_openai_operator_output_quality_fixture_refresh.md"
         in status["active_docs"]
     )
-    assert status["work_today"]["slug"] == "silent-control-verification-debt-continuation"
+    assert status["work_today"]["slug"] == "executive-shape-evidence-gates"
 
 
 def test_openai_operator_verification_debt_continuation_records_gate0_truth() -> None:
@@ -1654,7 +1664,7 @@ def test_openai_operator_verification_debt_continuation_records_gate0_truth() ->
         "docs/recon/cortex_openai_operator_verification_debt_continuation.md"
         in status["active_docs"]
     )
-    assert status["work_today"]["slug"] == "silent-control-verification-debt-continuation"
+    assert status["work_today"]["slug"] == "executive-shape-evidence-gates"
     assert status["next_product_train"]["slug"] == "grounded-intervention-records"
 
 
@@ -1957,15 +1967,14 @@ def test_status_registry_is_complete_and_stable() -> None:
         assert {"slug", "stage", "summary", "next_step"} <= set(entry)
         assert entry["slug"] != status["work_today"]["slug"]
         assert entry["slug"] != status["next_product_train"]["slug"]
-    assert status["work_today"]["slug"] == "silent-control-verification-debt-continuation"
-    assert "general `resume_verification` continuation" in status["work_today"]["note"].lower()
-    assert "same initial prompt" in status["work_today"]["note"].lower()
-    assert "unrelated control" in status["work_today"]["note"].lower()
-    assert "clean verified state does not resume" in status["work_today"]["note"].lower()
-    assert "baseline failure reproduced 5/5" in status["work_today"]["note"].lower()
-    assert "shaped improved premature closure" in status["work_today"]["note"].lower()
-    assert "zero provider-limit or external-interference counts" in status["work_today"]["note"].lower()
-    assert "no shipping promotion" in status["work_today"]["note"].lower()
+    assert status["work_today"]["slug"] == "executive-shape-evidence-gates"
+    work_note = status["work_today"]["note"].lower()
+    assert "task details as grounded anchors" in work_note
+    assert "abstract executive state and decision law" in work_note
+    assert "task-identity examples" in work_note
+    assert "rather than a closed blacklist" in work_note
+    assert "resume_verification` live evidence" in work_note
+    assert "full product perception or renderer proof" in work_note
     assert status["next_product_train"]["slug"] == "grounded-intervention-records"
     assert "product" == status["next_product_train"]["surface"]
     assert "grounded visible-intervention records" in status["next_product_train"][
@@ -1974,6 +1983,8 @@ def test_status_registry_is_complete_and_stable() -> None:
     assert "silent verification continuation now has narrow live openai operator lift" in status["next_product_train"][
         "why_now"
     ].lower()
+    assert "executive-shape evidence gates" in status["next_product_train"]["why_now"].lower()
+    assert "lab prompts" in status["next_product_train"]["why_now"].lower()
     assert "typed intervention records fire only on grounded anchors" in status["next_product_train"][
         "primary_metric"
     ].lower()
@@ -2004,6 +2015,10 @@ def test_status_registry_is_complete_and_stable() -> None:
     assert "resume_verification" in status["where_to_work"][3]
     assert "narrow live behavior-lift evidence" in status["where_to_work"][3]
     assert "baseline failure reproduced 5/5" in status["where_to_work"][3]
+    assert "abstract executive state" in status["where_to_work"][3]
+    assert "perception, decision, action, rendering, and claim scope" in status[
+        "where_to_work"
+    ][3]
     assert "grounded intervention records" in status["where_to_work"][3]
     closure_gates = {gate["id"]: gate for gate in status["closure_gates"]}
     assert closure_gates["main_synced"]["status"] == "required"
@@ -2035,7 +2050,7 @@ def test_generated_status_doc_includes_system_map_and_next_product_train() -> No
     assert "## Next Product Train" in text
     assert "## Research Lines Under Evaluation" in text
     assert "host/tool reliability and affordance priors are earned" in text
-    assert "`silent-control-verification-debt-continuation`" in text
+    assert "`executive-shape-evidence-gates`" in text
     assert "- Next product train after the current focus: `grounded-intervention-records`" in text
     assert "- Train: `grounded-intervention-records`" in text
     assert "`brain-capability-observation-and-inference` (deferred-by-executive-runtime-roadmap)" in text
