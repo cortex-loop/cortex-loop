@@ -300,13 +300,13 @@ state, read `internal/truth/cortex_status.json` directly.
 
 ### Current Train
 
-- Slug: `grounded-intervention-records`
+- Slug: `visible-intervention-live-probe`
 
 ### Next Product Train
 
-- Slug: `visible-intervention-live-probe`
+- Slug: `claude-code-adapter-from-runtime-law`
 - Surface: `product`
-- Why now: Grounded intervention records are the lawful visible edge after silent control: the next question is whether model-visible reflection from product-runtime anchors improves behavior without external-auditor voice, clean-control overblock, or internal-term leakage.
+- Why now: OpenAI operator evidence now covers silent verification continuation and grounded visible intervention; the next highest-leverage product question is whether the same runtime law can drive Claude Code Desktop lifecycle events without host-specific prose or hook-local policy.
 
 ### Research Lines Under Evaluation
 

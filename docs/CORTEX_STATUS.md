@@ -57,7 +57,7 @@ Subsystem boundaries: Core owns commitment/provenance/dispatch truth; SRE owns r
 
 Grounding rule: any product claim, plan, or implementation seam must name identity/current truth, a code owner, a proof surface, and the model-I/O path. If the relevant code was not read, say so before taking a position.
 
-Current train: `grounded-intervention-records`. Next train: `visible-intervention-live-probe`. Shipping default: `openai:operator_cli`. Keep Cortex truth, brain-wiring truth, conformance truth, shipping truth, and live behavior-lift claims separate; structural proof alone does not earn model-output lift.
+Current train: `visible-intervention-live-probe`. Next train: `claude-code-adapter-from-runtime-law`. Shipping default: `openai:operator_cli`. Keep Cortex truth, brain-wiring truth, conformance truth, shipping truth, and live behavior-lift claims separate; structural proof alone does not earn model-output lift.
 
 ## Live Product Truth
 
@@ -67,9 +67,9 @@ Current train: `grounded-intervention-records`. Next train: `visible-interventio
 
 ## Current Focus
 
-- Current tracked train: `grounded-intervention-records`
-- Active quality/risk focus: The current focus is structural product work for the model-visible edge of Cortex: grounded intervention records may be selected only from high runtime pressure plus a product-runtime claim, evidence, obligation, continuity, capability, or preservation anchor. This seam proves typed selection, silence reasons, renderer law, and cross-host diagnostics only; it does not run live trials, change silent gates, use lab oracles as perception, or claim behavior lift.
-- Next product train after the current focus: `visible-intervention-live-probe`
+- Current tracked train: `visible-intervention-live-probe`
+- Active quality/risk focus: The current focus has moved from structural grounded-intervention records into scoped OpenAI operator live evidence: product-rendered visible intervention reached the model boundary from runtime verification debt without fixture prompt text, improved all three primary average axes over silent-only on a reproduced hidden-verifier output-quality failure family, and kept clean controls neutral. This remains OpenAI operator evidence only; visible intervention repaired 1/5 visible trials and does not promote Claude, Gemini, AUX, hook, cross-host, or shipping-default truth.
+- Next product train after the current focus: `claude-code-adapter-from-runtime-law`
 
 ## Bio-To-Code Matrix
 
@@ -172,13 +172,13 @@ Workflow gates marked `required` are contractual gates checked by `repo_workflow
 
 ## Next Product Train
 
-- Train: `visible-intervention-live-probe`
+- Train: `claude-code-adapter-from-runtime-law`
 - Surface: product
-- Executive benefit: Run the first live probe for grounded visible-intervention records after structural selector, silence, and renderer leak tests pass.
-- Why now: Grounded intervention records are the lawful visible edge after silent control: the next question is whether model-visible reflection from product-runtime anchors improves behavior without external-auditor voice, clean-control overblock, or internal-term leakage.
-- Primary metric: Paired live trials show visible intervention improves closure, evidence recovery, or continuity on reproduced baseline failures while clean controls remain neutral and diagnostics prove the record came from product runtime state, not task identity or lab prompt scaffolding.
-- Guardrail: Do not expose route pricing, brake EMA, debt-control diagnostics, AUX/support memory, schema names, hook mechanics, fixture IDs, hidden verifier answers, or generic Cortex authority language to the model.
-- Kill rule: Stop if visible intervention fires from pressure alone, depends on task identity or lab oracle perception, speaks in external-auditor voice, reintroduces schema/internal vocabulary, degrades clean controls, or duplicates a silent gate that already solves the case.
+- Executive benefit: Map the proven runtime loop onto Claude Code lifecycle hooks with thin transport instead of plugin-side middleware.
+- Why now: OpenAI operator evidence now covers silent verification continuation and grounded visible intervention; the next highest-leverage product question is whether the same runtime law can drive Claude Code Desktop lifecycle events without host-specific prose or hook-local policy.
+- Primary metric: Structural Claude Code adapter tests prove hook scripts call `cortex/hosts/claude_code_desktop/` runtime-law adapters, preserve delivery/model-visible/behavior-lift/shipping truth separately, and do not move product policy into plugin transport.
+- Guardrail: Do not treat Claude hook delivery as behavior lift, do not generalize OpenAI operator evidence to Claude, do not put SRE policy or fixture-specific text in hook scripts, and do not expose internal route/brake/debt/AUX/schema terms to the model.
+- Kill rule: Stop if the Claude adapter becomes a hook plugin product, if hook scripts carry executive policy, if task identity drives product decisions, if model-visible text is not generated from grounded runtime anchors, or if cache/operator-split caveats are hidden.
 
 ## Research Lines Under Evaluation
 
@@ -290,3 +290,4 @@ Workflow gates marked `required` are contractual gates checked by `repo_workflow
 - `docs/recon/cortex_openai_operator_silent_control_live_probe_retry.md`
 - `docs/recon/cortex_openai_operator_output_quality_fixture_refresh.md`
 - `docs/recon/cortex_openai_operator_verification_debt_continuation.md`
+- `docs/recon/cortex_openai_operator_visible_intervention_live_probe.md`

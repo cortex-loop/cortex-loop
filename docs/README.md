@@ -75,5 +75,9 @@ Active docs:
   structural Gate 0 evidence that OpenAI operator silent control can enact a
   general same-thread verification continuation for visible-success / unpaid
   verification-debt states without fixture-specific product law
+- [Cortex OpenAI Operator Visible-Intervention Live Probe](recon/cortex_openai_operator_visible_intervention_live_probe.md) —
+  live OpenAI operator evidence that product-rendered grounded visible
+  intervention can improve closure, evidence recovery, and continuity over
+  silent-only control on a reproduced output-quality failure family
 
 Historical runtime, lab, and governance material now lives under [archive/](archive/).
