@@ -76,3 +76,8 @@ Not earned:
 Proceed to `claude-code-adapter-from-runtime-law` with this hardening as a
 precondition: Claude hook transport should consume runtime-law decisions and
 product-rendered grounded text, not hook-local policy or fixture-shaped prompts.
+
+Subsequent live rerun evidence superseded that ordering: the hardened OpenAI
+visible-intervention rerun kept product perception intact but failed the paired
+success criteria, so `visible-verification-rendering-remediation` now comes
+before Claude adapter work.

@@ -57,7 +57,7 @@ Subsystem boundaries: Core owns commitment/provenance/dispatch truth; SRE owns r
 
 Grounding rule: any product claim, plan, or implementation seam must name identity/current truth, a code owner, a proof surface, and the model-I/O path. If the relevant code was not read, say so before taking a position.
 
-Current train: `visible-intervention-product-perception-hardening`. Next train: `claude-code-adapter-from-runtime-law`. Shipping default: `openai:operator_cli`. Keep Cortex truth, brain-wiring truth, conformance truth, shipping truth, and live behavior-lift claims separate; structural proof alone does not earn model-output lift.
+Current train: `visible-intervention-live-rerun-after-hardening`. Next train: `visible-verification-rendering-remediation`. Shipping default: `openai:operator_cli`. Keep Cortex truth, brain-wiring truth, conformance truth, shipping truth, and live behavior-lift claims separate; structural proof alone does not earn model-output lift.
 
 ## Live Product Truth
 
@@ -67,9 +67,9 @@ Current train: `visible-intervention-product-perception-hardening`. Next train: 
 
 ## Current Focus
 
-- Current tracked train: `visible-intervention-product-perception-hardening`
-- Active quality/risk focus: The current focus tightened the grounded visible-intervention perception path before Claude adapter work: verification speech now requires a due product-runtime expectation record, runtime payloads carry a private selection trace, and the OpenAI visible Gate 0 harness derives its shaped state from product event replay before hidden verifier scoring is read. This earns structural product-perception hardening only; it does not add live behavior-lift, Claude hook delivery, Gemini/AUX parity, or shipping-default truth.
-- Next product train after the current focus: `claude-code-adapter-from-runtime-law`
+- Current tracked train: `visible-intervention-live-rerun-after-hardening`
+- Active quality/risk focus: The current focus reran the OpenAI visible-intervention live probe after product-perception hardening. Gate 0 stayed product-grounded and model-bound, baseline reproduced 3/3, and clean controls stayed healthy, but the visible arm failed: it improved only goal continuity, regressed premature-closure avoidance, did not improve evidence recovery over silent-only, and reproduced the failure 5/5. This earns negative OpenAI operator live evidence and queues visible-verification rendering remediation before Claude adapter work.
+- Next product train after the current focus: `visible-verification-rendering-remediation`
 
 ## Bio-To-Code Matrix
 
@@ -172,13 +172,13 @@ Workflow gates marked `required` are contractual gates checked by `repo_workflow
 
 ## Next Product Train
 
-- Train: `claude-code-adapter-from-runtime-law`
+- Train: `visible-verification-rendering-remediation`
 - Surface: product
-- Executive benefit: Map the proven runtime loop onto Claude Code lifecycle hooks with thin transport instead of plugin-side middleware.
-- Why now: OpenAI operator evidence now covers silent verification continuation and grounded visible intervention; the next highest-leverage product question is whether the same runtime law can drive Claude Code Desktop lifecycle events without host-specific prose or hook-local policy.
-- Primary metric: Structural Claude Code adapter tests prove hook scripts call `cortex/hosts/claude_code_desktop/` runtime-law adapters, preserve delivery/model-visible/behavior-lift/shipping truth separately, and do not move product policy into plugin transport.
-- Guardrail: Do not treat Claude hook delivery as behavior lift, do not generalize OpenAI operator evidence to Claude, do not put SRE policy or fixture-specific text in hook scripts, and do not expose internal route/brake/debt/AUX/schema terms to the model.
-- Kill rule: Stop if the Claude adapter becomes a hook plugin product, if hook scripts carry executive policy, if task identity drives product decisions, if model-visible text is not generated from grounded runtime anchors, or if cache/operator-split caveats are hidden.
+- Executive benefit: Repair the overdue-verification visible edge so Cortex does not turn unpaid verification debt into permission for weaker visible-only closure.
+- Why now: The hardened OpenAI rerun showed the current product-rendered text remains lawful and model-bound but fails behaviorally: the model repeatedly chose the weaker `narrower claim` path, leaving verification unpaid. Claude should not inherit that wording.
+- Primary metric: Product and lab tests prove overdue-verification rendering no longer offers a weaker narrower claim as equivalent to discharging verification debt, stays free of hidden answers and task identity, keeps clean controls silent, and remains Gate-0 model-bound from product runtime anchors.
+- Guardrail: Do not add task-specific prompts, hidden verifier facts, fixture IDs, second-person coaching, internal route/brake/debt/AUX/schema terms, or host-specific Claude/OpenAI policy forks.
+- Kill rule: Stop if remediation fixes Astro by naming Astro-specific checks, if hidden verifier output enters product perception or text, if clean/no-anchor controls speak, or if the renderer becomes an external auditor instead of task-local executive self-monitoring.
 
 ## Research Lines Under Evaluation
 
@@ -189,7 +189,7 @@ Workflow gates marked `required` are contractual gates checked by `repo_workflow
 - Keep the bounded audit surface compact and truthful on the shipped lane: selected versus realized family, uncertainty, threshold, delta, verification, and probe truth only.
 - Keep the no-spend live evidence current and explicit: fast conformance is green, the deeper directionality and host-native watchlists are refreshed, and non-shipping auth or env caveats must stay explicit instead of silently stale.
 - Keep posture, AUX memory, host-reliability, and asymmetric-cost law explicit and removable now that posture-sensitive online control is S-tier closed, anti-thrash is landed, bounded live support-memory re-entry is earned on reference and the OpenAI operator lane, evidence/probe calibration is S-tier closed, host/tool reliability and affordance priors are earned as bounded host-scoped, capability-scoped score modifiers on `OfflineSupportPublication.host_reliability_prior` with a single-site six-tag `q_mem-host:*` surface and stale-negative reopen under fresh success, asymmetric error cost is earned as a bounded `RiskWeight` carrier whose CHECK/SEEK_CONTEXT activation shift is clipped inside `[0.05, 0.60]` with a `0.10` dead-band and productive-exploration gating, and the brake tonic EMA damps single-tick flips with a locked `rho = 0.60` decay and `tonic_pressure >= 0.35` enter gate while phasic spikes still flip immediately: inspect is live on cheap non-debt events, resume stays continuity-conditioned, posture truth is single-owned, the route state vector stays the bounded 6-axis geometry term while `visible_burden_sensitivity` remains a separate utility scalar, route truth stays bounded and non-sovereign, unchanged-condition repetition is taxed only at the exact-family level with bounded reopen, public feedback-window summaries reflect the just-realized step, family-local bounded probe limits surface as `unsupported` without leaking host-global unavailability across families, stream-only churn stays non-epistemic, live memory stays score-only and host-matched through explicit publication, live `Q_mem` stays zero on shipping and conformance default lanes, raw SQLite episodes stay support-side only, reliability priors bias score pricing only and never route, posture, selection, or brake law, Claude and Gemini remain shadow-proof only for reliability promotion, `risk_weight` biases CHECK/SEEK_CONTEXT activation threshold only and never routing, posture, selection, certification, or blockedness law, and `brake_tonic_history` persists the pressure tail across resume on all four host lanes with three-way backward-compat decoding.
-- The silent-control-verification-debt-continuation seam added a general OpenAI operator `resume_verification` action, proved Gate 0 structurally, and earned narrow live behavior-lift evidence on `openai:operator_cli`: baseline failure reproduced 5/5, shaped improved premature closure, evidence recovery, and goal continuity, and clean controls had zero provider-limit or external-interference counts. The grounded intervention records now keep the visible edge product-shaped: selectors require high pressure plus a product-runtime anchor, suppress when the last assistant move already narrowed, asked, blocked, retracted, repaired, or verified, and render only from claim, evidence, obligation, continuity, capability, or preservation structure. The product-perception hardening seam now requires a due product-runtime expectation record before verification speech, records private selection trace diagnostics, and keeps hidden verifier output scoring only.
+- The silent-control-verification-debt-continuation seam added a general OpenAI operator `resume_verification` action, proved Gate 0 structurally, and earned narrow live behavior-lift evidence on `openai:operator_cli`: baseline failure reproduced 5/5, shaped improved premature closure, evidence recovery, and goal continuity, and clean controls had zero provider-limit or external-interference counts. The grounded intervention records now keep the visible edge product-shaped: selectors require high pressure plus a product-runtime anchor, suppress when the last assistant move already narrowed, asked, blocked, retracted, repaired, or verified, and render only from claim, evidence, obligation, continuity, capability, or preservation structure. The product-perception hardening seam now requires a due product-runtime expectation record before verification speech, records private selection trace diagnostics, and keeps hidden verifier output scoring only. The hardened visible-intervention rerun earned negative live evidence: Gate 0 stayed lawful, baseline reproduced 3/3, clean controls stayed healthy, but visible intervention failed because the current overdue-verification wording let the model choose a weaker visible-check or narrower-claim path instead of recovering unpaid verification.
 
 ## Canonical Proof
 
@@ -292,3 +292,4 @@ Workflow gates marked `required` are contractual gates checked by `repo_workflow
 - `docs/recon/cortex_openai_operator_verification_debt_continuation.md`
 - `docs/recon/cortex_openai_operator_visible_intervention_live_probe.md`
 - `docs/recon/cortex_visible_intervention_product_perception_hardening.md`
+- `docs/recon/cortex_openai_operator_visible_intervention_hardened_rerun.md`
