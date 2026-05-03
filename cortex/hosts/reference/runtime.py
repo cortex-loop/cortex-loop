@@ -1077,6 +1077,8 @@ def run_reference_runtime_step(
         resolution_deficit=resolution_deficit,
         debt_control=debt_control,
         operator_route=operator_route,
+        expectation_ledger=updated_session.expectation_ledger,
+        current_step=updated_session.event_index,
         closure_required=closure_required,
         closure_reason_tags=closure_reason_tags_value,
         warnings=warnings,

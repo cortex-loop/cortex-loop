@@ -79,5 +79,8 @@ Active docs:
   live OpenAI operator evidence that product-rendered grounded visible
   intervention can improve closure, evidence recovery, and continuity over
   silent-only control on a reproduced output-quality failure family
+- [Cortex Visible-Intervention Product-Perception Hardening](recon/cortex_visible_intervention_product_perception_hardening.md) —
+  structural evidence that grounded visible intervention now requires a due
+  product-runtime expectation anchor before model-visible verification speech
 
 Historical runtime, lab, and governance material now lives under [archive/](archive/).

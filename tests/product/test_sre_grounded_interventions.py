@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from dataclasses import dataclass
+
 import pytest
 
 from cortex.sre.interventions import (
@@ -15,9 +17,16 @@ from cortex.sre.interventions import (
     InterventionNextMoveClass,
     InterventionReliefState,
     InterventionRenderSurface,
+    build_runtime_grounded_intervention,
     find_forbidden_model_visible_terms,
     render_grounded_intervention,
     select_grounded_intervention,
+)
+from cortex.sre.expectations import (
+    ExpectationLedger,
+    ForwardCommitment,
+    ResolutionDeficitState,
+    open_expectation_from_forward_commitment,
 )
 
 
@@ -220,6 +229,86 @@ def test_same_thread_first_person_is_allowed_with_prior_act_anchor() -> None:
     assert find_forbidden_model_visible_terms(text) == ()
 
 
+def test_runtime_visible_verification_requires_due_product_expectation_anchor() -> None:
+    ledger = _runtime_verification_ledger()
+    deficit = ledger.resolution_deficit(current_step=1)
+
+    decision = build_runtime_grounded_intervention(
+        resolution_deficit=deficit,
+        debt_control=_runtime_debt(),
+        operator_route=_runtime_route(),
+        expectation_ledger=ledger,
+        current_step=1,
+        closure_required=False,
+    )
+
+    assert decision.mode is GroundedInterventionMode.MODEL_VISIBLE_REFLECTION
+    assert decision.record is not None
+    assert decision.record.kind is GroundedInterventionKind.OVERDUE_VERIFICATION
+    assert decision.selection_trace.as_payload() == {
+        "perception_source": "product_runtime_expectation",
+        "selected_expectation_id": "runtime:verification:verification:expectation",
+        "deficit_kind": "verification",
+        "pressure_tags": [
+            "deficit:verification",
+            "overdue-expectation",
+            "resolution-deficit",
+        ],
+        "silence_reason": None,
+        "silent_control_sufficient": False,
+    }
+
+
+def test_runtime_resolution_pressure_without_product_expectation_anchor_stays_silent() -> None:
+    decision = build_runtime_grounded_intervention(
+        resolution_deficit=ResolutionDeficitState(
+            due_weight=1.0,
+            negative_prediction_error=1.0,
+            dominant_deficit_kind="verification",
+        ),
+        debt_control=_runtime_debt(),
+        operator_route=_runtime_route(),
+        expectation_ledger=ExpectationLedger(),
+        current_step=1,
+        closure_required=False,
+    )
+
+    assert decision.mode is GroundedInterventionMode.STAY_SILENT
+    assert decision.silence_reason == "missing_product_expectation_anchor"
+    assert decision.selection_trace.as_payload() == {
+        "perception_source": "product_runtime_no_due_expectation",
+        "selected_expectation_id": None,
+        "deficit_kind": "verification",
+        "pressure_tags": [
+            "deficit:verification",
+            "overdue-expectation",
+            "resolution-deficit",
+        ],
+        "silence_reason": "missing_product_expectation_anchor",
+        "silent_control_sufficient": False,
+    }
+
+
+def test_runtime_trace_records_silent_control_sufficient_without_rendering() -> None:
+    ledger = _runtime_verification_ledger()
+
+    decision = build_runtime_grounded_intervention(
+        resolution_deficit=ledger.resolution_deficit(current_step=1),
+        debt_control=_runtime_debt(),
+        operator_route=_runtime_route(blocked_reason="blocked_by_route"),
+        expectation_ledger=ledger,
+        current_step=1,
+        closure_required=False,
+    )
+
+    assert decision.mode is GroundedInterventionMode.STAY_SILENT
+    assert decision.silence_reason == "silent_control_sufficient"
+    assert decision.selection_trace.silent_control_sufficient is True
+    assert decision.selection_trace.selected_expectation_id == (
+        "runtime:verification:verification:expectation"
+    )
+
+
 @pytest.mark.parametrize(
     "kind,anchor_type,next_move,expected_fragment",
     (
@@ -299,3 +388,46 @@ def _visible_record():
     )
     assert decision.record is not None
     return decision.record
+
+
+def _runtime_verification_ledger() -> ExpectationLedger:
+    return open_expectation_from_forward_commitment(
+        ExpectationLedger(),
+        ForwardCommitment(
+            commitment_id="runtime:verification:verification",
+            source_event_ref="runtime:verification",
+            claim_span_ref="runtime:verification:structured-cue",
+            commitment_kind="verification",
+            assertiveness="high",
+            scope="task",
+            opened_at_step=0,
+        ),
+    )
+
+
+@dataclass(frozen=True)
+class _RuntimeDebt:
+    debt_pressure: float = 0.6
+    reason_tags: frozenset[str] = frozenset(
+        {"overdue-expectation", "resolution-deficit"}
+    )
+
+
+@dataclass(frozen=True)
+class _RuntimeRouteProfile:
+    value: str = "inspect_light"
+
+
+@dataclass(frozen=True)
+class _RuntimeRoute:
+    profile: _RuntimeRouteProfile
+    blocked_reason: str | None = None
+
+
+def _runtime_debt() -> _RuntimeDebt:
+    return _RuntimeDebt()
+
+
+def _runtime_route(*, blocked_reason: str | None = None) -> _RuntimeRoute:
+    profile = _RuntimeRouteProfile("blocked" if blocked_reason else "inspect_light")
+    return _RuntimeRoute(profile=profile, blocked_reason=blocked_reason)

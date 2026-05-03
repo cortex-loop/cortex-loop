@@ -28,14 +28,12 @@ try:  # pragma: no cover - direct script execution uses fallback imports.
         _excerpt,
         _failure_reproduced,
         _operator_result_summary,
-        _output_quality_first_result_kind,
         _persist_operator_state,
         _provider_limit_interference,
         _score_output_quality_result,
         _score_live_output,
         _stable_hash,
         _summarize_trials,
-        _verification_ledger,
         _write_json,
         _write_jsonl,
     )
@@ -59,14 +57,12 @@ except ImportError:  # pragma: no cover
         _excerpt,
         _failure_reproduced,
         _operator_result_summary,
-        _output_quality_first_result_kind,
         _persist_operator_state,
         _provider_limit_interference,
         _score_output_quality_result,
         _score_live_output,
         _stable_hash,
         _summarize_trials,
-        _verification_ledger,
         _write_json,
         _write_jsonl,
     )
@@ -172,7 +168,6 @@ def run_gate0_audit(*, output_root: Path = DEFAULT_OUTPUT_ROOT) -> dict[str, Any
             scenario_id="overdue_verification_visible_intervention",
             task_family="output_quality_visible_success",
             task_id="astro_docs_site_v1",
-            first_result_kind="visible_success_unverified",
             thread_id="gate0-thread-visible",
             shaped=True,
             prior_act_anchor=True,
@@ -181,7 +176,6 @@ def run_gate0_audit(*, output_root: Path = DEFAULT_OUTPUT_ROOT) -> dict[str, Any
             scenario_id="non_astro_generalization_control",
             task_family="output_quality_visible_success",
             task_id="react_dashboard_v1",
-            first_result_kind="visible_success_unverified",
             thread_id="gate0-thread-general",
             shaped=True,
             prior_act_anchor=True,
@@ -190,7 +184,6 @@ def run_gate0_audit(*, output_root: Path = DEFAULT_OUTPUT_ROOT) -> dict[str, Any
             scenario_id="clean_no_debt_stays_silent",
             task_family="clean_no_debt",
             task_id="astro_docs_site_v1",
-            first_result_kind="clean_verified",
             thread_id="gate0-thread-clean",
             shaped=False,
             prior_act_anchor=True,
@@ -199,7 +192,6 @@ def run_gate0_audit(*, output_root: Path = DEFAULT_OUTPUT_ROOT) -> dict[str, Any
             scenario_id="missing_prior_anchor_stays_silent",
             task_family="missing_prior_anchor",
             task_id="astro_docs_site_v1",
-            first_result_kind="visible_success_unverified",
             thread_id="gate0-thread-no-anchor",
             shaped=True,
             prior_act_anchor=False,
@@ -358,7 +350,6 @@ def _gate0_case(
     scenario_id: str,
     task_family: str,
     task_id: str,
-    first_result_kind: str,
     thread_id: str,
     shaped: bool,
     prior_act_anchor: bool,
@@ -414,7 +405,7 @@ def _gate0_case(
         "scenario_id": scenario_id,
         "task_family": task_family,
         "task_id": task_id,
-        "first_result_kind": first_result_kind,
+        "prior_act_anchor_source": "product_observable_operator_output",
         "same_initial_prompt_hash": (
             neutral_row["initial_prompt_hash"] == visible_row["initial_prompt_hash"]
         ),
@@ -482,15 +473,9 @@ def _run_output_quality_trial(
             model=model,
         )
         _persist_operator_state(trial_root / "initial_stdout.jsonl", initial)
-        initial_evaluation = evaluate_workspace(
-            task_pack=task_pack,
-            project_root=workspace,
-            shared_install_result=shared_install_result,
-        ).as_payload()
-        first_result_kind = _output_quality_first_result_kind(initial_evaluation)
         provider_limit_interference = _provider_limit_interference(
             failure_class=initial.get("failure_class")
-            or initial_evaluation.get("failure_class"),
+            or None,
             output_text=initial.get("output_text"),
         )
         followup_runtime = _runtime_projection(shaped=shaped)
@@ -499,13 +484,17 @@ def _run_output_quality_trial(
                 grounded_intervention=followup_runtime["result"].grounded_intervention,
                 thread_id=initial.get("thread_id"),
                 provider_limit_interference=provider_limit_interference,
-                prior_act_anchor=first_result_kind == "visible_success_unverified",
+                prior_act_anchor=_product_prior_act_anchor(initial),
             )
             if condition == "visible_intervention"
             else build_openai_visible_intervention_enactment(
                 grounded_intervention=GroundedInterventionDecisionShim.stay_silent(),
                 thread_id=initial.get("thread_id"),
             )
+        )
+        first_result_kind = _product_first_result_kind(
+            initial,
+            provider_limit_interference=provider_limit_interference,
         )
         if (
             visible_enactment.action
@@ -526,7 +515,15 @@ def _run_output_quality_trial(
                 shared_install_result=shared_install_result,
             ).as_payload()
         else:
-            final_evaluation = initial_evaluation
+            final_evaluation = evaluate_workspace(
+                task_pack=task_pack,
+                project_root=workspace,
+                shared_install_result=shared_install_result,
+            ).as_payload()
+        initial_evaluation = {
+            "evaluation_read_after_visible_enactment_decision": True,
+            "hidden_verifier_used_for_scoring_only": True,
+        }
 
     modified_files = collect_modified_files(workspace)
     score = _score_output_quality_result(
@@ -710,6 +707,29 @@ def _run_clean_control_trial(
     return row
 
 
+def _product_prior_act_anchor(initial: dict[str, Any]) -> bool:
+    thread_id = initial.get("thread_id")
+    output_text = initial.get("output_text")
+    return bool(
+        isinstance(thread_id, str)
+        and thread_id.strip()
+        and isinstance(output_text, str)
+        and output_text.strip()
+    )
+
+
+def _product_first_result_kind(
+    initial: dict[str, Any],
+    *,
+    provider_limit_interference: bool,
+) -> str:
+    if provider_limit_interference:
+        return "provider_limit"
+    if _product_prior_act_anchor(initial):
+        return "product_prior_output_present"
+    return "missing_product_prior_output"
+
+
 def _run_live_project_clean_control(
     *,
     family: str,
@@ -826,17 +846,39 @@ class GroundedInterventionDecisionShim:
 def _runtime_projection(*, shaped: bool) -> dict[str, Any]:
     session = OpenAIRuntimeSession(
         session_id=f"openai-visible-{'shaped' if shaped else 'neutral'}",
-        expectation_ledger=_verification_ledger() if shaped else ExpectationLedger(),
+        expectation_ledger=ExpectationLedger(),
     )
-    payload = {
-        "session_id": session.session_id,
-        "response_id": f"resp-visible-{'shaped' if shaped else 'neutral'}",
-        "delta": "Inspecting current task state before claiming completion.",
-    }
-    result = run_openai_runtime_step("response.output_text.delta", payload, session)
+    if shaped:
+        opening_payload = {
+            "session_id": session.session_id,
+            "response_id": "resp-visible-open-verification",
+            "commitment_id": "commit-visible-open-verification",
+            "externally_consequential": True,
+        }
+        opened = run_openai_runtime_step("response.completed", opening_payload, session)
+        payload = {
+            "session_id": session.session_id,
+            "response_id": "resp-visible-followup",
+            "delta": "Inspecting current task state before claiming completion.",
+        }
+        result = run_openai_runtime_step("response.output_text.delta", payload, opened.session)
+        input_event: dict[str, Any] = {
+            "event_sequence": [
+                {"event_name": "response.completed", "payload": opening_payload},
+                {"event_name": "response.output_text.delta", "payload": payload},
+            ]
+        }
+    else:
+        payload = {
+            "session_id": session.session_id,
+            "response_id": "resp-visible-neutral",
+            "delta": "Inspecting current task state before claiming completion.",
+        }
+        result = run_openai_runtime_step("response.output_text.delta", payload, session)
+        input_event = {"event_name": "response.output_text.delta", "payload": payload}
     return {
         "result": result,
-        "input_event": {"event_name": "response.output_text.delta", "payload": payload},
+        "input_event": input_event,
     }
 
 

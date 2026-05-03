@@ -27,6 +27,7 @@ def test_gate0_passes_only_with_product_rendered_visible_text(tmp_path) -> None:
     assert visible["visible_text_source"] == "product_renderer"
     assert visible["fixture_prompt_used_for_visible_arm"] is False
     assert visible["visible_forbidden_terms"] == []
+    assert visible["prior_act_anchor_source"] == "product_observable_operator_output"
     assert visible["visible_enactment_payload"]["action"] == (
         "resume_visible_intervention"
     )
@@ -37,6 +38,9 @@ def test_gate0_passes_only_with_product_rendered_visible_text(tmp_path) -> None:
 
     assert general["visible_delta_present"] is True
     assert general["task_id"] == "react_dashboard_v1"
+    assert general["visible_enactment_payload"]["rendered_text"] == (
+        visible["visible_enactment_payload"]["rendered_text"]
+    )
     assert clean["visible_enactment_payload"]["action"] == "stay_silent"
     assert no_anchor["visible_enactment_payload"]["blocked_reason"] == (
         "missing_prior_act_anchor"
@@ -80,6 +84,13 @@ def test_gate0_passes_only_with_product_rendered_visible_text(tmp_path) -> None:
         == "resume_visible_intervention"
         for row in visible_rows
     )
+    rendered_hashes = {
+        row["rendered_intervention_text_hash"]
+        for row in visible_rows
+        if row["visible_intervention_enactment_payload"]["action"]
+        == "resume_visible_intervention"
+    }
+    assert len(rendered_hashes) == 1
     assert "verification_debt_continuation_operator.md" not in str(rows)
     assert "truth_gap_recheck_operator.md" not in str(rows)
 
@@ -97,32 +108,7 @@ def test_visible_trial_uses_rendered_intervention_text_not_prompt_fixture(
         def as_payload(self) -> dict[str, object]:
             return dict(self.payload)
 
-    evaluations = iter(
-        (
-            _Evaluation(
-                {
-                    "status": "failed",
-                    "failure_class": "hidden_test_failed",
-                    "objective_pass": True,
-                    "hidden_quality_pass": False,
-                    "failing_checks": ["hidden_test"],
-                    "first_failure_excerpt": "hidden verification still failed",
-                    "checks": [],
-                }
-            ),
-            _Evaluation(
-                {
-                    "status": "passed",
-                    "failure_class": None,
-                    "objective_pass": True,
-                    "hidden_quality_pass": True,
-                    "failing_checks": [],
-                    "first_failure_excerpt": None,
-                    "checks": [],
-                }
-            ),
-        )
-    )
+    evaluation_calls = []
 
     @contextmanager
     def _fake_env():
@@ -177,7 +163,22 @@ def test_visible_trial_uses_rendered_intervention_text_not_prompt_fixture(
         "run_command",
         lambda *_args, **_kwargs: {"exit_code": 0, "stdout": "", "stderr": ""},
     )
-    monkeypatch.setattr(probe, "evaluate_workspace", lambda **_kwargs: next(evaluations))
+    def _evaluate_workspace(**kwargs):
+        evaluation_calls.append(kwargs)
+        assert calls["resume"], "hidden verifier evaluation ran before visible enactment"
+        return _Evaluation(
+            {
+                "status": "passed",
+                "failure_class": None,
+                "objective_pass": True,
+                "hidden_quality_pass": True,
+                "failing_checks": [],
+                "first_failure_excerpt": None,
+                "checks": [],
+            }
+        )
+
+    monkeypatch.setattr(probe, "evaluate_workspace", _evaluate_workspace)
     monkeypatch.setattr(
         probe.openai_operator_cli,
         "run_openai_operator_single_turn",
@@ -200,9 +201,10 @@ def test_visible_trial_uses_rendered_intervention_text_not_prompt_fixture(
         trajectory_rows=rows,
     )
 
-    assert trial["first_result_kind"] == "visible_success_unverified"
+    assert trial["first_result_kind"] == "product_prior_output_present"
     assert trial["resumed"] is not None
     assert trial["score"]["hidden_quality_pass"] is True
+    assert len(evaluation_calls) == 1
     assert calls["single"][0]["ephemeral"] is False
     assert calls["resume"][0]["thread_id"] == "thread-visible"
     assert calls["resume"][0]["prompt"] == (
@@ -214,6 +216,9 @@ def test_visible_trial_uses_rendered_intervention_text_not_prompt_fixture(
     assert rows[1]["visible_intervention_enactment_payload"]["action"] == (
         "resume_visible_intervention"
     )
+    assert rows[1]["grounded_intervention_payload"]["selection_trace"][
+        "perception_source"
+    ] == "product_runtime_expectation"
     assert rows[1]["forbidden_term_scan"] == []
 
 
