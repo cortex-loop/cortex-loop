@@ -98,6 +98,28 @@ Cortex model-visible communication is the only class governed by the
 strange-loop output law, and it must be generated from grounded runtime anchors
 rather than hand-written fixture prompts.
 
+## Host Surface Taxonomy
+
+Drift pattern: Codex App hooks, Codex CLI wrapper probes, provider API
+connectors, repo workflow hooks, and lab harnesses all got described as
+"the OpenAI lane" or `operator_cli`, which made product actuator truth hard to
+audit.
+
+Rule: active status and docs use the three-bucket taxonomy from
+`internal/truth/cortex_status.json::host_surface_taxonomy`: Product Host
+Adaptors, API / Conformance Adaptors, and Non-Adaptor Support Surfaces.
+Codex App and Codex CLI are one `openai.codex_app_cli` product adaptor family
+only at the product-target level; their actuator evidence stays separate.
+Codex App Stop-hook proof, Codex CLI `codex exec` wrapper/resume proof,
+OpenAI API conformance, repo Mission Reflection hooks, lab probes, and
+recon/archive records may not substitute for each other.
+
+Unqualified `operator_cli` must not appear as the active shipping or product
+surface in docs or registry truth. If historical evidence used that name,
+rewrite current-facing summaries to name the product family and actuator, for
+example `openai.codex_app_cli` with current actuator
+`codex_exec_wrapper_resume`.
+
 ## Live Evidence Versus Structural Evidence
 
 Drift pattern: deterministic tests, doctrine updates, and structural wiring

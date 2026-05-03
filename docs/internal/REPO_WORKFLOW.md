@@ -430,7 +430,7 @@ Managed verification is purpose-first and surface-aware:
 
 Live CLI invocation contract:
 
-- For `operator_cli` watchlist validation, use the repo harness entrypoints such as `python3 lab/live_operator_directionality.py`, `python3 lab/live_host_native_product_paths.py`, and `python3 lab/cortex_conformance.py` instead of hand-rolled direct CLI calls.
+- For Codex App/CLI wrapper-resume watchlist validation, use the repo harness entrypoints such as `python3 lab/live_operator_directionality.py`, `python3 lab/live_host_native_product_paths.py`, and `python3 lab/cortex_conformance.py` instead of hand-rolled direct CLI calls.
 - Gemini operator-lane auth defaults to `google_login`; `api_key` operator mode requires an explicit `CORTEX_GEMINI_LIVE_AUTH_MODE=api_key` override.
 - If a direct headless Gemini operator probe is truly necessary, match the harness shape: `gemini -p "<prompt>" -o stream-json --approval-mode yolo`, adding `-m <model>` only when the model is not `auto`.
 - Use interactive `gemini` only for sign-in or auth repair, not as the normal live watchlist execution path.

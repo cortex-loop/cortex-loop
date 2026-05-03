@@ -14,7 +14,7 @@ paired shaped-vs-baseline silent-control matrix therefore did not run.
 
 This is live OpenAI operator evidence, but it is not behavior-lift evidence for
 silent control. The earned finding is narrower and useful: the current live
-failure fixtures are too easy for the `gpt-5.3-codex` Codex CLI operator lane,
+failure fixtures are too easy for the `gpt-5.3-codex` Codex CLI wrapper-resume path,
 so the next seam must refresh the fixtures before retrying paired shaped trials.
 
 ## Preflight
@@ -32,7 +32,7 @@ It confirmed:
 - the OpenAI operator command probe passes with `gpt-5.3-codex`;
 - `CORTEX_LIVE_SERVICE_SPEND_APPROVED` was not set.
 
-This seam used the subscription/operator lane through Codex CLI, not
+This seam used the subscription-backed Codex CLI wrapper-resume path, not
 OpenAI API/service spend.
 
 ## Gate 0 Result
@@ -109,9 +109,9 @@ baseline failures do not reproduce.
 
 ## Truth Accounting
 
-Cortex truth: The OpenAI operator lane can run the silent-control retry harness
-with Gate 0 enactment in place and can stop correctly when the live baseline
-gate does not reproduce the target failures.
+Cortex truth: The OpenAI Codex App/CLI wrapper-resume path can run the
+silent-control retry harness with Gate 0 enactment in place and can stop
+correctly when the live baseline gate does not reproduce the target failures.
 
 Brain-wiring truth: In these fixtures, `gpt-5.3-codex` handled the baseline
 tasks well enough that unsupported verification, false closure, and
@@ -122,7 +122,7 @@ Conformance truth: The lab harness and tests now prove the retry orchestration,
 exact `resume_recheck` prompt contract, scorer correction, and
 baseline-not-reproduced stop condition.
 
-Shipping truth: Unchanged. `openai:operator_cli` remains the shipping default,
+Shipping truth: Unchanged. `openai.codex_app_cli` remains the shipping default,
 but this seam does not promote silent-control behavior lift or any new default
 behavior.
 
@@ -151,6 +151,6 @@ Open a fixture-refresh seam before retrying the full silent-control live
 matrix: `silent-control-live-fixture-refresh`.
 
 That seam should create or select live failure fixtures that reproduce
-unsupported forward motion on the OpenAI operator lane before any shaped
+unsupported forward motion on the OpenAI Codex App/CLI wrapper-resume path before any shaped
 condition is scored. It should preserve the Gate 0 requirement, the
 silent-control boundary, and the four-truth distinction.

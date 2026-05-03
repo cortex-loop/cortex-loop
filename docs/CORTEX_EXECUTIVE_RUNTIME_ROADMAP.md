@@ -87,10 +87,11 @@ language.
 
 ## Point A: Current State
 
-Current shipping truth remains `openai:operator_cli`. The OpenAI lane has the
-strongest product path because Cortex can shape the model request directly
-through host-control instructions, input, repair loops, and verified-work
-runtime behavior.
+Current shipping truth remains `openai.codex_app_cli`. Current live evidence
+on that product family uses the transitional `codex_exec_wrapper_resume`
+actuator; queued product work targets hook-native lifecycle control so Cortex
+can act before or at model-turn closure rather than only after a completed run.
+The OpenAI API path remains conformance/support unless explicitly promoted.
 
 Claude Code Desktop is a recon/proving surface, not shipping truth. It has
 earned important brain-wiring facts:
@@ -396,7 +397,7 @@ stop and revise instead of pretending the count reached the goal.
 | 2 | Runtime expectation ledger | Implement `ForwardCommitment`, `ExpectationRecord`, `ExpectationLedger`, and `ResolutionDeficitState` structurally. | Runtime/SRE state object plus deterministic tests for opening, paydown, suspension, and relief. | False closure and verification claims open expectations; honest partial progress and user questions do not create false debt. |
 | 3 | Expectation corpus and falsification tests | Build an annotated structural corpus for the executive cases before changing control behavior. | Test corpus covering false closure, unsupported verification, partial progress, waiting-on-user, retraction, blocker surfacing, verified work, capability mismatch, clean controls. | Corpus proves the ledger distinguishes unsupported forward motion from honest incomplete work. |
 | 4 | Debt-to-route/brake coupling | Feed `resolution_deficit` and `goal_drag` into route/brake pressure conservatively. | Route/brake implementation and diagnostics; tests for biasing away from execute/close and toward inspect/check/ask. | Debt does not latch by itself, does not freeze useful work, and makes evidence-gathering easier rather than harder. |
-| 5 | Silent-control live probe on OpenAI | Test whether runtime control improves behavior without adding warning text. | Paired live evidence on the shipping lane with baseline/shaped/clean controls. | Shaped condition improves evidence recovery or continuity without unacceptable useful-work slowdown or overblock. |
+| 5 | Silent-control live probe on OpenAI Codex App/CLI | Test whether runtime control improves behavior without adding warning text. | Paired live evidence on the Codex App/CLI wrapper-resume evidence path with baseline/shaped/clean controls. | Shaped condition improves evidence recovery or continuity without unacceptable useful-work slowdown or overblock. |
 | 6 | Grounded intervention records | Add typed visible-intervention records only for grounded anchors. | `InterventionRecord`-style objects for unsupported claim, overdue verification, unresolved goal, continuity gap, capability guard, preservation risk; leakage tests. | No visible output occurs without a grounded anchor; internal tags/schema/hook mechanics cannot leak. |
 | 7 | Visible-intervention live probe | Compare silent-only control against grounded visible self-correction. | Paired live trials measuring when speaking helps versus when silent routing is better. | Visible intervention improves a reproduced baseline failure and clean controls stay clean; result scoped by host/surface/content shape. |
 | 8 | Claude Code adapter from runtime law | Map the proven runtime loop onto Claude Code lifecycle hooks with thin plugin transport. | `cortex/hosts/claude_code_desktop/` host-adapter logic for SessionStart, UserPromptSubmit, PreToolUse, PostToolUse, PostToolUseFailure, Stop, SessionEnd where structurally earned. | Hook scripts stay thin; every wired event has structural delivery proof and no product/shipping overclaim. |
@@ -413,10 +414,10 @@ roadmap with the failed assumption named.
 ## Immediate Next Seam
 
 The next seam after debt-to-route/brake coupling is seam 5: run the
-silent-control live probe on the OpenAI shipping lane. It should test whether
-the structural debt-control path improves evidence recovery or continuity
-without adding model-visible warning text, slowing useful verification, or
-overblocking clean controls.
+silent-control live probe on the OpenAI Codex App/CLI wrapper-resume evidence
+path. It should test whether the structural debt-control path improves evidence
+recovery or continuity without adding model-visible warning text, slowing
+useful verification, or overblocking clean controls.
 
 ## Stop Conditions
 

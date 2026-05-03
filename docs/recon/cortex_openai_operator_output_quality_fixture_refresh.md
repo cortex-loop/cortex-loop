@@ -8,7 +8,7 @@ Branch: `codex/20260502-185241-silent-control-live-fixture-refresh`
 
 ## Verdict
 
-The fixture-refresh seam found a harder OpenAI operator live task family for
+The fixture-refresh seam found a harder OpenAI Codex App/CLI wrapper-resume live task family for
 the next silent-control work: `astro_docs_site_v1` now reproduces the desired
 baseline shape in clean operator runs. The raw `gpt-5.3-codex` operator makes
 real edits, passes objective visible checks, and still fails the hidden verifier
@@ -98,7 +98,7 @@ intervention records, or shipping default behavior.
 ## Earned
 
 - `astro_docs_site_v1` is a valid hard fixture candidate for the OpenAI
-  operator lane.
+  Codex App/CLI wrapper-resume path.
 - Raw baseline failure reproduced in 3/3 clean runs after workspace isolation.
 - The failure is not setup noise: objective visible checks pass while the
   hidden verifier fails on the missing search dataset marker.

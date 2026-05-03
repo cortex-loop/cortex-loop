@@ -6,7 +6,8 @@ This document is the pause-and-check gate between seams 1-4 and seam 5 in
 `docs/CORTEX_EXECUTIVE_RUNTIME_ROADMAP.md`. It does not change runtime code,
 does not run live probes, and does not revise shipping truth. Its job is to
 decide whether the structural executive-control machinery is evidence-correct
-enough to support the first paid/live silent-control probe on the OpenAI lane.
+enough to support the first live silent-control probe on the OpenAI Codex
+App/CLI wrapper-resume evidence path.
 
 ## Readiness Verdict
 
@@ -179,7 +180,7 @@ while clean work remains clean.
 
 | Condition | Runtime setting | Purpose |
 | --- | --- | --- |
-| Baseline | Existing OpenAI shipping lane with debt-control disabled or neutralized in the harness. | Reproduce unsupported-forward-motion failures. |
+| Baseline | Existing OpenAI Codex App/CLI wrapper-resume evidence path with debt-control disabled or neutralized in the harness. | Reproduce unsupported-forward-motion failures. |
 | Shaped silent control | Same task, same model class, debt-control path enabled, no model-visible debt/brake text. | Test whether silent route/brake pressure improves next behavior. |
 | Clean control | Same harness with genuinely supported work and no target failure. | Detect useful-work slowdown, spurious guardedness, or overblock. |
 
@@ -329,4 +330,7 @@ truth. It is structural evidence accounting only.
 - Brain-wiring truth: unchanged.
 - Conformance truth: the readiness scenarios document current composed behavior
   and the closed remediation cases.
-- Shipping truth: unchanged; OpenAI remains `openai:operator_cli`.
+- Shipping truth: unchanged for the current evidence family; OpenAI is now
+  named as `openai.codex_app_cli`, with this readiness document covering the
+  transitional `codex_exec_wrapper_resume` actuator rather than hook-native
+  product control.

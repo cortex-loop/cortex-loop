@@ -607,9 +607,9 @@ rules into `τ`.
     "id": "verified_work_preservation",
     "visibility_class": "direct_model_visible",
     "model_io_path": "`OpenAIHostControlRequest(work_contract=...)` → fixed verified-work `instructions` + `input_text` → `execute_openai_response_stream_turn`",
-    "reaches_model_as": "explicit model instructions, workspace context, repair prompt, and response verification loop on the OpenAI host-control lane",
+    "reaches_model_as": "explicit model instructions, workspace context, repair prompt, and response verification loop on the OpenAI API host-control support lane",
     "behavior_effect": "changes model call content and bounded repair behavior directly; preserves trusted structure across one-shot and repair attempts",
-    "gap_or_unearned": "Strongest direct path is OpenAI shipping lane; Claude/Gemini parity is conformance-shaped and must not be overclaimed as default shipping."
+    "gap_or_unearned": "Strongest direct path is the OpenAI Codex App/CLI product target; Claude/Gemini parity is conformance-shaped and must not be overclaimed as default shipping."
   },
   {
     "id": "feedback_window_realization",
@@ -617,7 +617,7 @@ rules into `τ`.
     "model_io_path": "host output / last `ReferenceRealizationFeedback` → `runtime_context_from_last_feedback(...)` → OpenAI host-control `instructions` or verified-work `input_text`; Claude Code Desktop structural path maps prior feedback through `cortex/hosts/claude_code_desktop/runtime.py` to `hookSpecificOutput.additionalContext` for `PreToolUse:Bash`",
     "reaches_model_as": "a single task-local runtime-context constraint sentence derived only from the immediately prior feedback entry; clean or absent feedback emits no block/context",
     "behavior_effect": "shapes the next OpenAI call and, structurally, the next Claude Code Desktop Bash-tool assistant continuation away from premature closure after stream-only, failed-probe, warning, override, or braked realization without accumulating memory across turns; generic friction now stays silent and relies on route/brake gates",
-    "gap_or_unearned": "OpenAI remains the direct shipping lane; Claude Code Desktop is structurally wired for `PreToolUse:Bash` only and still needs live paired output-quality evidence before shipping-lift claims."
+    "gap_or_unearned": "OpenAI API host-control remains support/conformance while openai.codex_app_cli is the product target; Claude Code Desktop is structurally wired for `PreToolUse:Bash` only and still needs live paired output-quality evidence before shipping-lift claims."
   },
   {
     "id": "host_runtime_sessions",
@@ -680,14 +680,14 @@ rules into `τ`.
   },
   {
     "id": "verified_work_preservation",
-    "boundary_judgment": "product Cortex on OpenAI host-control lane because it directly changes instructions and repair loops",
+    "boundary_judgment": "product Cortex on OpenAI API host-control support lane because it directly changes instructions and repair loops",
     "decision": "keep_and_prove_live",
-    "next_action": "Keep the OpenAI direct path as shipping truth; only graduate cross-host lift claims after equivalent host-control proof exists.",
+    "next_action": "Keep the OpenAI API connector frozen as support/conformance while product work moves to openai.codex_app_cli; only graduate cross-host lift claims after equivalent host-control proof exists.",
     "post_training_boundary": "Teaching a model to always preserve work is post-training; wrapping a concrete work contract and verifying repairs is Cortex runtime."
   },
   {
     "id": "feedback_window_realization",
-    "boundary_judgment": "product Cortex on the OpenAI host-control lane when last-step feedback is translated into bounded model-visible runtime context; structurally product-shaped on Claude Code Desktop `PreToolUse:Bash` when the same bounded context reaches hook additionalContext; still monitor-only if retained only as a public summary",
+    "boundary_judgment": "product Cortex on the OpenAI API host-control support lane when last-step feedback is translated into bounded model-visible runtime context; structurally product-shaped on Claude Code Desktop `PreToolUse:Bash` when the same bounded context reaches hook additionalContext; still monitor-only if retained only as a public summary",
     "decision": "bridge_landed_openai_structural_claude_code_desktop_pretool_structural",
     "next_action": "Keep the bridge last-feedback-only, extend Claude Code Desktop hook coverage one lifecycle event at a time, and run paired live baseline-vs-shaped evaluations before claiming output lift.",
     "post_training_boundary": "General learning from feedback is post-training; event-local realization feedback that alters the next runtime decision is Cortex."

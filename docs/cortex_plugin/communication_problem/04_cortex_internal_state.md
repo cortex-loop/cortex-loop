@@ -4955,7 +4955,7 @@ Currently only OpenAI has a populated band registry below; Claude, Gemini,
 and reference hosts return the standard envelope by default until per-host
 registries earn their own seam. This is intentional, not an oversight: the
 brain-capability-aware-routing seam earned the SRE-side mechanism on the
-OpenAI lane first, and the per-host registries are queued as a follow-up
+OpenAI product target first, and the per-host registries are queued as a follow-up
 under the same bio_to_code skill (Intervention pricing versus neutrality).
 
 The dynamic-detection follow-up seam

@@ -8,7 +8,7 @@ Branch: `codex/20260502-161134-silent-control-live-probe-on-openai`
 
 ## Verdict
 
-Gate 0 failed, so live OpenAI operator trials were not run. The specific
+Gate 0 failed, so live OpenAI Codex App/CLI wrapper-resume trials were not run. The specific
 finding is that runtime debt control changes OpenAI route/policy diagnostics,
 but the current Codex operator live adapter does not enact those diagnostics
 before the model call.
@@ -98,8 +98,8 @@ operator time was spent.
 ## Truth Accounting
 
 Cortex truth: The seam earned a negative product-connectivity finding for the
-OpenAI operator lane. Runtime debt control exists structurally, but live
-operator enactment is not wired.
+OpenAI Codex App/CLI wrapper-resume path. Runtime debt control exists
+structurally, but live operator enactment is not wired.
 
 Brain-wiring truth: No new model behavior evidence was earned. No live OpenAI
 operator trials ran.
@@ -107,9 +107,9 @@ operator trials ran.
 Conformance truth: The Gate 0 harness and tests pin the coupling audit. They
 do not change the runtime law from seams 1-4.
 
-Shipping truth: Unchanged. `openai:operator_cli` remains the current shipping
+Shipping truth: Unchanged. `openai.codex_app_cli` remains the current shipping
 default, but this seam does not prove silent-control behavior lift on that
-lane.
+product family.
 
 ## Next Seam
 

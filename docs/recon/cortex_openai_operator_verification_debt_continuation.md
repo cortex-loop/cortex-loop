@@ -8,12 +8,13 @@ Branch: `codex/20260502-215144-silent-control-verification-debt-continuation`
 
 ## Verdict
 
-The OpenAI operator host adapter now has a general verification-debt
-continuation action, and the paired live OpenAI operator matrix showed narrow
-behavior lift on the output-quality visible-success family. The action is not
-keyed to Astro, docs search, web design, or any hidden verifier answer. It is
-keyed to already-computed route/policy/debt payloads plus a structured result
-state: visible work appears successful, but verification remains unpaid.
+The OpenAI Codex App/CLI wrapper-resume host adapter now has a general
+verification-debt continuation action, and the paired live OpenAI Codex App/CLI
+wrapper-resume matrix showed narrow behavior lift on the output-quality
+visible-success family. The action is not keyed to Astro, docs search, web
+design, or any hidden verifier answer. It is keyed to already-computed
+route/policy/debt payloads plus a structured result state: visible work appears
+successful, but verification remains unpaid.
 
 Gate 0 passes structurally. Neutral and shaped conditions keep the same initial
 prompt hash. The same initial prompt hash is load-bearing evidence that shaped
@@ -22,7 +23,7 @@ continuation in the same Codex CLI thread. The resumed prompt is the generic
 `verification_debt_continuation_operator.md` prompt and contains no Cortex,
 debt, brake, AUX, route, fixture, or hidden-answer vocabulary.
 
-The live matrix then ran on `openai:operator_cli` with `gpt-5.3-codex`.
+The live matrix then ran on `openai.codex_app_cli` with `gpt-5.3-codex`.
 Baseline failure reproduced, shaped trials improved all three primary axes, and
 matched controls did not show provider-limit or external-interference failures.
 This earns narrow live behavior-lift evidence for silent verification
@@ -119,12 +120,12 @@ can authorize another checking pass before closure.
 Conformance truth: Product and lab tests prove the action is state-keyed,
 prompt-initial-hash preserving, leak-free, and non-Astro-specific at Gate 0.
 
-Live behavior truth: Narrowly earned for OpenAI operator silent verification
-continuation on the output-quality visible-success family. It is not evidence
-for visible interventions, Claude Code Desktop, Gemini, AUX, or broad task
-families.
+Live behavior truth: Narrowly earned for OpenAI Codex App/CLI wrapper-resume
+silent verification continuation on the output-quality visible-success family.
+It is not evidence for visible interventions, Claude Code Desktop, Gemini, AUX,
+or broad task families.
 
-Shipping truth: Unchanged. `openai:operator_cli` remains the shipping default
+Shipping truth: Unchanged. `openai.codex_app_cli` remains the shipping default
 lane, but this recon does not promote broader shipping claims.
 
 ## Not Earned
