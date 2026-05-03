@@ -7,6 +7,7 @@ __all__ = [
     "executive_summary",
     "families",
     "feedback",
+    "interventions",
     "goals",
     "goal_branch",
     "goal_debt",

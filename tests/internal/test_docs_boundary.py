@@ -1638,7 +1638,7 @@ def test_openai_operator_output_quality_fixture_refresh_records_hard_fixture() -
         "docs/recon/cortex_openai_operator_output_quality_fixture_refresh.md"
         in status["active_docs"]
     )
-    assert status["work_today"]["slug"] == "executive-shape-evidence-gates"
+    assert status["work_today"]["slug"] == "grounded-intervention-records"
 
 
 def test_openai_operator_verification_debt_continuation_records_gate0_truth() -> None:
@@ -1664,8 +1664,8 @@ def test_openai_operator_verification_debt_continuation_records_gate0_truth() ->
         "docs/recon/cortex_openai_operator_verification_debt_continuation.md"
         in status["active_docs"]
     )
-    assert status["work_today"]["slug"] == "executive-shape-evidence-gates"
-    assert status["next_product_train"]["slug"] == "grounded-intervention-records"
+    assert status["work_today"]["slug"] == "grounded-intervention-records"
+    assert status["next_product_train"]["slug"] == "visible-intervention-live-probe"
 
 
 def test_cortex_plugin_design_preserves_scope_and_truth_boundaries() -> None:
@@ -1967,33 +1967,35 @@ def test_status_registry_is_complete_and_stable() -> None:
         assert {"slug", "stage", "summary", "next_step"} <= set(entry)
         assert entry["slug"] != status["work_today"]["slug"]
         assert entry["slug"] != status["next_product_train"]["slug"]
-    assert status["work_today"]["slug"] == "executive-shape-evidence-gates"
+    assert status["work_today"]["slug"] == "grounded-intervention-records"
     work_note = status["work_today"]["note"].lower()
-    assert "task details as grounded anchors" in work_note
-    assert "abstract executive state and decision law" in work_note
-    assert "task-identity examples" in work_note
-    assert "rather than a closed blacklist" in work_note
-    assert "resume_verification` live evidence" in work_note
-    assert "full product perception or renderer proof" in work_note
-    assert status["next_product_train"]["slug"] == "grounded-intervention-records"
+    assert "model-visible edge of cortex" in work_note
+    assert "product-runtime" in work_note
+    assert "claim, evidence, obligation" in work_note
+    assert "typed selection" in work_note
+    assert "does not run live trials" in work_note
+    assert "lab oracles" in work_note
+    assert status["next_product_train"]["slug"] == "visible-intervention-live-probe"
     assert "product" == status["next_product_train"]["surface"]
-    assert "grounded visible-intervention records" in status["next_product_train"][
+    assert "live probe for grounded visible-intervention records" in status["next_product_train"][
         "executive_benefit"
     ].lower()
-    assert "silent verification continuation now has narrow live openai operator lift" in status["next_product_train"][
+    assert "lawful visible edge after silent control" in status["next_product_train"][
         "why_now"
     ].lower()
-    assert "executive-shape evidence gates" in status["next_product_train"]["why_now"].lower()
-    assert "lab prompts" in status["next_product_train"]["why_now"].lower()
-    assert "typed intervention records fire only on grounded anchors" in status["next_product_train"][
+    assert "product-runtime anchors" in status["next_product_train"]["why_now"].lower()
+    assert "external-auditor voice" in status["next_product_train"]["why_now"].lower()
+    assert "paired live trials show visible intervention improves" in status["next_product_train"][
         "primary_metric"
     ].lower()
-    assert "clean-control overblock" in status["next_product_train"]["primary_metric"].lower()
+    assert "not task identity or lab prompt scaffolding" in status["next_product_train"][
+        "primary_metric"
+    ].lower()
     assert "do not expose route pricing" in status["next_product_train"][
         "guardrail"
     ].lower()
     assert "hidden verifier answers" in status["next_product_train"]["guardrail"].lower()
-    assert "visible intervention fires from pressure alone" in status["next_product_train"][
+    assert "depends on task identity or lab oracle perception" in status["next_product_train"][
         "kill_rule"
     ].lower()
     deferred_lines = {entry["slug"]: entry for entry in status["research_lines_under_evaluation"]}
@@ -2015,10 +2017,9 @@ def test_status_registry_is_complete_and_stable() -> None:
     assert "resume_verification" in status["where_to_work"][3]
     assert "narrow live behavior-lift evidence" in status["where_to_work"][3]
     assert "baseline failure reproduced 5/5" in status["where_to_work"][3]
-    assert "abstract executive state" in status["where_to_work"][3]
-    assert "perception, decision, action, rendering, and claim scope" in status[
-        "where_to_work"
-    ][3]
+    assert "product-runtime anchor" in status["where_to_work"][3]
+    assert "last assistant move already narrowed" in status["where_to_work"][3]
+    assert "claim, evidence, obligation" in status["where_to_work"][3]
     assert "grounded intervention records" in status["where_to_work"][3]
     closure_gates = {gate["id"]: gate for gate in status["closure_gates"]}
     assert closure_gates["main_synced"]["status"] == "required"
@@ -2050,9 +2051,9 @@ def test_generated_status_doc_includes_system_map_and_next_product_train() -> No
     assert "## Next Product Train" in text
     assert "## Research Lines Under Evaluation" in text
     assert "host/tool reliability and affordance priors are earned" in text
-    assert "`executive-shape-evidence-gates`" in text
-    assert "- Next product train after the current focus: `grounded-intervention-records`" in text
-    assert "- Train: `grounded-intervention-records`" in text
+    assert "`grounded-intervention-records`" in text
+    assert "- Next product train after the current focus: `visible-intervention-live-probe`" in text
+    assert "- Train: `visible-intervention-live-probe`" in text
     assert "`brain-capability-observation-and-inference` (deferred-by-executive-runtime-roadmap)" in text
     assert "resume_verification" in text.lower()
     assert "hidden verifier" in text.lower()

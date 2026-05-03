@@ -68,6 +68,10 @@ from cortex.sre.expectations import (
     ResolutionDeficitState,
     update_expectation_ledger_for_structured_step,
 )
+from cortex.sre.interventions import (
+    GroundedInterventionDecision,
+    build_runtime_grounded_intervention,
+)
 from cortex.hosts._executive_closure import (
     assert_post_step_feedback_window_alignment,
     assert_runtime_posture_alignment,
@@ -683,6 +687,9 @@ class OpenAIRuntimeStepResult:
         default_factory=ResolutionDeficitState
     )
     debt_control: DebtControlPressure = field(default_factory=DebtControlPressure)
+    grounded_intervention: GroundedInterventionDecision = field(
+        default_factory=GroundedInterventionDecision.stay_silent
+    )
     executive_signal_summary: ExecutiveSignalSummary = field(
         default_factory=lambda: ExecutiveSignalSummary(
             uncertainty=0.0,
@@ -795,6 +802,12 @@ class OpenAIRuntimeStepResult:
             raise TypeError(
                 "OpenAIRuntimeStepResult.debt_control must be "
                 f"DebtControlPressure, got {actual_type}."
+            )
+        if not isinstance(self.grounded_intervention, GroundedInterventionDecision):
+            actual_type = type(self.grounded_intervention).__name__
+            raise TypeError(
+                "OpenAIRuntimeStepResult.grounded_intervention must be "
+                f"GroundedInterventionDecision, got {actual_type}."
             )
         if not isinstance(self.executive_signal_summary, ExecutiveSignalSummary):
             actual_type = type(self.executive_signal_summary).__name__
@@ -930,6 +943,10 @@ class OpenAIRuntimeStepResult:
     @property
     def debt_control_payload(self) -> dict[str, Any]:
         return self.debt_control.as_payload()
+
+    @property
+    def grounded_intervention_payload(self) -> dict[str, Any]:
+        return self.grounded_intervention.as_payload()
 
     @property
     def executive_signal_summary_payload(self) -> dict[str, Any]:
@@ -1391,6 +1408,14 @@ def run_openai_runtime_step(
     resolution_deficit = updated_session.expectation_ledger.resolution_deficit(
         current_step=updated_session.event_index
     )
+    grounded_intervention = build_runtime_grounded_intervention(
+        resolution_deficit=resolution_deficit,
+        debt_control=debt_control,
+        operator_route=operator_route,
+        closure_required=closure_required,
+        closure_reason_tags=closure_reason_tags,
+        warnings=warnings,
+    )
     assert_post_step_feedback_window_alignment(
         feedback_window=updated_session.feedback_window,
         last_realization_feedback=updated_session.last_realization_feedback,
@@ -1408,6 +1433,7 @@ def run_openai_runtime_step(
         feedback_window_summary=post_feedback_window_summary,
         resolution_deficit=resolution_deficit,
         debt_control=debt_control,
+        grounded_intervention=grounded_intervention,
         executive_signal_summary=executive_signal_summary,
         executive_modulator_state=executive_modulator_update.state,
         executive_policy_view=executive_policy_view,
