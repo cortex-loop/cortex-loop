@@ -98,5 +98,9 @@ Active docs:
   structural evidence that Codex App/CLI prompt, tool, failure, and Stop
   lifecycle payloads can derive grounded Stop intervention state without a
   runtime snapshot fixture
+- [Cortex Codex App/CLI Product Perception Live Probe](recon/cortex_codex_app_cli_product_perception_live_probe.md) —
+  live scoped-negative evidence that project-local Codex CLI hooks loaded but
+  exposed only Stop payloads, leaving no product task or tool events for
+  no-snapshot Stop perception
 
 Historical runtime, lab, and governance material now lives under [archive/](archive/).
