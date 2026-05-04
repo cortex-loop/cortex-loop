@@ -1,8 +1,9 @@
 """Stdin/stdout client for the Codex App/CLI product Stop hook.
 
-The client is intentionally thin: it decodes a caller-provided private runtime
-snapshot, calls the product hook coordinator, and maps the host response to the
-Codex hook JSON contract. It owns no SRE policy and no repo workflow guardrail.
+The client is intentionally thin: it decodes optional private runtime snapshot
+stimuli, lets the product hook coordinator derive state from lifecycle events
+when no snapshot is supplied, and maps the host response to the Codex hook JSON
+contract. It owns no SRE policy and no repo workflow guardrail.
 """
 
 from __future__ import annotations

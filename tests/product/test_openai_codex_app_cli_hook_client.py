@@ -61,6 +61,67 @@ def test_stop_with_product_snapshot_writes_exact_block_json(tmp_path: Path) -> N
     )
 
 
+def test_stop_without_snapshot_uses_product_perception_state(tmp_path: Path) -> None:
+    state_root = tmp_path / "state"
+    diagnostics_path = tmp_path / "diagnostics.jsonl"
+    stdout = io.StringIO()
+    stderr = io.StringIO()
+
+    first_exit = run_hook_client(
+        argv=[
+            "--state-root",
+            str(state_root),
+            "--diagnostics-path",
+            str(diagnostics_path),
+        ],
+        stdin=io.StringIO(
+            json.dumps(
+                _stop_payload(
+                    hook_event_name="UserPromptSubmit",
+                    prompt="Make the change and verify it.",
+                )
+            )
+        ),
+        stdout=stdout,
+        stderr=stderr,
+    )
+    second_stdout = io.StringIO()
+    second_stderr = io.StringIO()
+    second_exit = run_hook_client(
+        argv=[
+            "--state-root",
+            str(state_root),
+            "--diagnostics-path",
+            str(diagnostics_path),
+        ],
+        stdin=io.StringIO(json.dumps(_stop_payload(last_assistant_message="Done."))),
+        stdout=second_stdout,
+        stderr=second_stderr,
+    )
+
+    assert first_exit == 0
+    assert second_exit == 0
+    assert stdout.getvalue() == ""
+    assert stderr.getvalue() == ""
+    assert second_stdout.getvalue() == json.dumps(
+        {"decision": "block", "reason": OVERDUE_VERIFICATION_IDENTITY_TEXT},
+        separators=(",", ":"),
+    ) + "\n"
+    assert second_stderr.getvalue() == ""
+    rows = _jsonl_rows(diagnostics_path)
+    assert rows[-1]["runtime_snapshot_loaded"] is False
+    assert rows[-1]["stdout_payload"] == {
+        "decision": "block",
+        "reason": OVERDUE_VERIFICATION_IDENTITY_TEXT,
+    }
+    assert (
+        rows[-1]["coordinator"]["grounded_intervention"]["selection_trace"][
+            "perception_source"
+        ]
+        == "product_runtime_expectation"
+    )
+
+
 def test_title_generation_stop_stays_silent(tmp_path: Path) -> None:
     snapshot_path = tmp_path / "snapshot.json"
     snapshot_path.write_text(json.dumps(_verification_snapshot_payload()), encoding="utf-8")
@@ -274,3 +335,11 @@ def _only_jsonl_row(path: Path) -> dict[str, object]:
     ]
     assert len(rows) == 1
     return rows[0]
+
+
+def _jsonl_rows(path: Path) -> list[dict[str, object]]:
+    return [
+        json.loads(line)
+        for line in path.read_text(encoding="utf-8").splitlines()
+        if line.strip()
+    ]

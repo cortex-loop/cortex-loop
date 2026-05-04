@@ -12,6 +12,7 @@ from lab.codex_app_cli_stop_activation_probe import (
     LIVE_APPROVAL_ENV,
     run_gate0_probe,
     run_live_canary_probe,
+    run_product_perception_gate0_probe,
 )
 
 
@@ -86,6 +87,47 @@ def test_live_canary_refuses_without_explicit_approval(
     assert report["passed"] is False
     assert report["live_canary_ran"] is False
     assert report["blocked_reason"] == "live_canary_requires_explicit_current_turn_approval"
+
+
+def test_product_perception_gate0_derives_state_without_snapshot_fixture(
+    tmp_path: Path,
+) -> None:
+    root_config = Path(".codex/config.toml")
+    root_config_before = root_config.read_text(encoding="utf-8")
+
+    report = run_product_perception_gate0_probe(output_root=tmp_path)
+
+    assert report["passed"] is True
+    assert report["boundary_results"] == {
+        "root_config_unchanged": True,
+        "subject_config_product_hook_only": True,
+        "no_runtime_snapshot_fixture": True,
+    }
+    assert report["case_results"] == {
+        "product_prompt_then_closure_blocks": True,
+        "observed_check_then_closure_stays_silent": True,
+        "waiting_response_stays_silent": True,
+    }
+    assert root_config.read_text(encoding="utf-8") == root_config_before
+    rows = [
+        json.loads(line)
+        for line in Path(str(report["trajectory_path"]))
+        .read_text(encoding="utf-8")
+        .splitlines()
+        if line.strip()
+    ]
+    aggregate = {
+        row["case_id"]: row
+        for row in rows
+        if row["case_id"] in report["case_results"]
+    }
+    assert aggregate["product_prompt_then_closure_blocks"]["final_stdout_payload"] == {
+        "decision": "block",
+        "reason": EXPECTED_OVERDUE_VERIFICATION_TEXT,
+    }
+    assert aggregate["product_prompt_then_closure_blocks"][
+        "product_perception_without_runtime_snapshot"
+    ] is True
 
 
 def test_activation_harness_does_not_read_fixed_prompt_fixtures() -> None:

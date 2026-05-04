@@ -1,7 +1,8 @@
 """Codex App/CLI product hook coordinator.
 
 This module owns the product-side lifecycle bridge for Codex App/CLI hooks. It
-normalizes hook payloads, records private per-session state, consumes existing
+normalizes hook payloads, records private per-session state, derives a bounded
+runtime snapshot from product-observable lifecycle evidence, consumes existing
 SRE intervention law, and maps the resulting lifecycle directive to host JSON.
 
 It deliberately does not activate project hook configuration, import repo
@@ -18,7 +19,13 @@ from pathlib import Path
 from typing import Any, Mapping
 
 from cortex.sre.debt_control import DebtControlPressure
-from cortex.sre.expectations import ExpectationLedger, ResolutionDeficitState
+from cortex.sre.expectations import (
+    EvidenceProgress,
+    ExpectationLedger,
+    ForwardCommitment,
+    ResolutionDeficitState,
+    open_expectation_from_forward_commitment,
+)
 from cortex.sre.interventions import (
     GroundedInterventionDecision,
     build_runtime_grounded_intervention,
@@ -147,6 +154,10 @@ class OpenAICodexSessionState:
     transcript_path: str | None = None
     prompt_text_hash: str | None = None
     prior_assistant_turn_seen: bool = False
+    expectation_ledger: ExpectationLedger = field(default_factory=ExpectationLedger)
+    verification_evidence_count: int = 0
+    closure_claim_count: int = 0
+    self_repair_response_count: int = 0
     tool_event_count: int = 0
     tool_failure_count: int = 0
     stop_event_count: int = 0
@@ -157,6 +168,9 @@ class OpenAICodexSessionState:
         _require_non_empty_string(self.session_id, "OpenAICodexSessionState.session_id")
         for field_name in (
             "current_step",
+            "verification_evidence_count",
+            "closure_claim_count",
+            "self_repair_response_count",
             "tool_event_count",
             "tool_failure_count",
             "stop_event_count",
@@ -179,6 +193,12 @@ class OpenAICodexSessionState:
             raise TypeError(
                 "OpenAICodexSessionState.prior_assistant_turn_seen must be bool, "
                 f"got {actual_type}."
+            )
+        if not isinstance(self.expectation_ledger, ExpectationLedger):
+            actual_type = type(self.expectation_ledger).__name__
+            raise TypeError(
+                "OpenAICodexSessionState.expectation_ledger must be "
+                f"ExpectationLedger, got {actual_type}."
             )
         if any(not (isinstance(tag, str) and tag.strip()) for tag in self.warning_tags):
             raise ValueError(
@@ -206,6 +226,10 @@ class OpenAICodexSessionState:
             "transcript_path": self.transcript_path,
             "prompt_text_hash": self.prompt_text_hash,
             "prior_assistant_turn_seen": self.prior_assistant_turn_seen,
+            "expectation_ledger": self.expectation_ledger.as_payload(),
+            "verification_evidence_count": self.verification_evidence_count,
+            "closure_claim_count": self.closure_claim_count,
+            "self_repair_response_count": self.self_repair_response_count,
             "tool_event_count": self.tool_event_count,
             "tool_failure_count": self.tool_failure_count,
             "stop_event_count": self.stop_event_count,
@@ -231,6 +255,18 @@ class OpenAICodexSessionState:
             transcript_path=_optional_string(payload.get("transcript_path")),
             prompt_text_hash=_optional_string(payload.get("prompt_text_hash")),
             prior_assistant_turn_seen=bool(payload.get("prior_assistant_turn_seen", False)),
+            expectation_ledger=ExpectationLedger.from_payload(
+                payload.get("expectation_ledger")
+            ),
+            verification_evidence_count=_optional_int(
+                payload.get("verification_evidence_count"),
+                0,
+            ),
+            closure_claim_count=_optional_int(payload.get("closure_claim_count"), 0),
+            self_repair_response_count=_optional_int(
+                payload.get("self_repair_response_count"),
+                0,
+            ),
             tool_event_count=_optional_int(payload.get("tool_event_count"), 0),
             tool_failure_count=_optional_int(payload.get("tool_failure_count"), 0),
             stop_event_count=_optional_int(payload.get("stop_event_count"), 0),
@@ -504,7 +540,11 @@ def _grounded_intervention_for_event(
             "non_stop_lifecycle_state_update_only"
         )
     if runtime_snapshot is None:
-        return GroundedInterventionDecision.stay_silent("missing_runtime_snapshot")
+        if _state_has_no_product_perception(state):
+            return GroundedInterventionDecision.stay_silent(
+                "missing_product_perception_state"
+            )
+        runtime_snapshot = _runtime_snapshot_from_session_state(state)
     warnings = tuple(dict.fromkeys((*runtime_snapshot.warnings, *state.warning_tags)))
     return build_runtime_grounded_intervention(
         resolution_deficit=runtime_snapshot.resolution_deficit,
@@ -542,23 +582,120 @@ def _updated_state(
         payload.hook_event_name.value,
     )
     warning_tags = prior.warning_tags
+    expectation_ledger = prior.expectation_ledger
+    verification_evidence_count = prior.verification_evidence_count
+    closure_claim_count = prior.closure_claim_count
+    self_repair_response_count = prior.self_repair_response_count
     tool_event_count = prior.tool_event_count
     tool_failure_count = prior.tool_failure_count
     stop_event_count = prior.stop_event_count
     current_step = prior.current_step
     if payload.hook_event_name is OpenAICodexLifecycleEvent.USER_PROMPT_SUBMIT:
         current_step += 1
+        expectation_ledger = ExpectationLedger()
+        verification_evidence_count = 0
+        closure_claim_count = 0
+        self_repair_response_count = 0
+        warning_tags = ()
     if payload.hook_event_name in {
         OpenAICodexLifecycleEvent.PRE_TOOL_USE,
         OpenAICodexLifecycleEvent.POST_TOOL_USE,
         OpenAICodexLifecycleEvent.POST_TOOL_USE_FAILURE,
     }:
         tool_event_count += 1
+    if (
+        payload.hook_event_name is OpenAICodexLifecycleEvent.POST_TOOL_USE
+        and _tool_event_has_verification_evidence(payload)
+    ):
+        verification_evidence_count += 1
+        expectation_ledger = expectation_ledger.apply_progress(
+            EvidenceProgress(
+                "meaningful_evidence",
+                _event_ref(payload, current_step=current_step, suffix="tool-check"),
+                weight=1.0,
+            ),
+            current_step=current_step,
+        )
     if payload.hook_event_name is OpenAICodexLifecycleEvent.POST_TOOL_USE_FAILURE:
         tool_failure_count += 1
         warning_tags = tuple(dict.fromkeys((*warning_tags, "tool-failure")))
     if payload.hook_event_name is OpenAICodexLifecycleEvent.STOP:
         stop_event_count += 1
+        if payload.has_transcript_backed_assistant_turn:
+            message = payload.last_assistant_message or ""
+            if _assistant_surfaces_blocker_or_waiting(message):
+                self_repair_response_count += 1
+                expectation_ledger = expectation_ledger.apply_progress(
+                    EvidenceProgress(
+                        "blocker_surfaced",
+                        _event_ref(
+                            payload,
+                            current_step=current_step,
+                            suffix="assistant-blocker",
+                        ),
+                        weight=1.0,
+                    ),
+                    current_step=current_step,
+                )
+            elif _assistant_narrows_or_retracts(message):
+                self_repair_response_count += 1
+                expectation_ledger = expectation_ledger.apply_progress(
+                    EvidenceProgress(
+                        "liability_retracted",
+                        _event_ref(
+                            payload,
+                            current_step=current_step,
+                            suffix="assistant-narrowed",
+                        ),
+                        weight=1.0,
+                    ),
+                    current_step=current_step,
+                )
+            elif _assistant_claims_closure(message) and _can_open_stop_verification(
+                prior,
+                payload,
+                expectation_ledger=expectation_ledger,
+            ):
+                closure_claim_count += 1
+                commitment = ForwardCommitment(
+                    commitment_id=_event_ref(
+                        payload,
+                        current_step=current_step,
+                        suffix="assistant-verification-claim",
+                    ),
+                    source_event_ref=_event_ref(
+                        payload,
+                        current_step=current_step,
+                        suffix="assistant-stop",
+                    ),
+                    claim_span_ref=_event_ref(
+                        payload,
+                        current_step=current_step,
+                        suffix="closure-claim",
+                    ),
+                    commitment_kind="verification",
+                    assertiveness="high",
+                    scope="task",
+                    opened_at_step=current_step,
+                )
+                expectation_ledger = open_expectation_from_forward_commitment(
+                    expectation_ledger,
+                    commitment,
+                )
+                if verification_evidence_count > 0:
+                    expectation_ledger = expectation_ledger.apply_progress(
+                        EvidenceProgress(
+                            "meaningful_evidence",
+                            _event_ref(
+                                payload,
+                                current_step=current_step,
+                                suffix="observed-check",
+                            ),
+                            weight=1.0,
+                            commitment_id=commitment.commitment_id,
+                        ),
+                        current_step=current_step,
+                    )
     return replace(
         prior,
         current_step=current_step,
@@ -569,6 +706,10 @@ def _updated_state(
             prior.prior_assistant_turn_seen
             or payload.has_transcript_backed_assistant_turn
         ),
+        expectation_ledger=expectation_ledger,
+        verification_evidence_count=verification_evidence_count,
+        closure_claim_count=closure_claim_count,
+        self_repair_response_count=self_repair_response_count,
         tool_event_count=tool_event_count,
         tool_failure_count=tool_failure_count,
         stop_event_count=stop_event_count,
@@ -584,6 +725,187 @@ def _increment_count(
     mapping = dict(counts)
     mapping[event_name] = mapping.get(event_name, 0) + 1
     return tuple(sorted(mapping.items()))
+
+
+def _runtime_snapshot_from_session_state(
+    state: OpenAICodexSessionState,
+) -> OpenAICodexRuntimeSnapshot:
+    resolution_deficit = state.expectation_ledger.resolution_deficit(
+        current_step=state.current_step
+    )
+    pressure = float(resolution_deficit.negative_prediction_error)
+    reason_tags: set[str] = {"product-perception"}
+    if pressure > 0.0:
+        reason_tags.add("resolution-deficit")
+    if resolution_deficit.dominant_deficit_kind:
+        reason_tags.add(f"deficit:{resolution_deficit.dominant_deficit_kind}")
+    if resolution_deficit.overdue_weight > 0.0:
+        reason_tags.add("overdue-expectation")
+    closure_required = bool(
+        resolution_deficit.due_weight > 0.0 or resolution_deficit.overdue_weight > 0.0
+    )
+    return OpenAICodexRuntimeSnapshot(
+        expectation_ledger=state.expectation_ledger,
+        resolution_deficit=resolution_deficit,
+        debt_control=DebtControlPressure(
+            resolution_pressure=pressure,
+            persistence=pressure,
+            debt_pressure=pressure,
+            reason_tags=frozenset(reason_tags),
+        ),
+        current_step=state.current_step,
+        closure_required=closure_required,
+        closure_reason_tags=("product-perceived-closure-pressure",)
+        if closure_required
+        else (),
+        warnings=state.warning_tags,
+    )
+
+
+def _state_has_no_product_perception(state: OpenAICodexSessionState) -> bool:
+    return bool(
+        state.prompt_text_hash is None
+        and not state.expectation_ledger.active
+        and not state.expectation_ledger.resolved
+        and state.tool_event_count == 0
+        and state.tool_failure_count == 0
+        and not state.warning_tags
+    )
+
+
+def _can_open_stop_verification(
+    prior: OpenAICodexSessionState,
+    payload: OpenAICodexHookPayload,
+    *,
+    expectation_ledger: ExpectationLedger,
+) -> bool:
+    return bool(
+        prior.prompt_text_hash
+        and not payload.stop_hook_active
+        and not _has_active_expectation_kind(expectation_ledger, "verification")
+    )
+
+
+def _has_active_expectation_kind(
+    expectation_ledger: ExpectationLedger,
+    deficit_kind: str,
+) -> bool:
+    return any(
+        record.deficit_kind == deficit_kind and record.remaining_weight > 0.0
+        for record in expectation_ledger.active
+    )
+
+
+def _tool_event_has_verification_evidence(payload: OpenAICodexHookPayload) -> bool:
+    text = " ".join(
+        value
+        for value in (
+            payload.tool_name or "",
+            _mapping_text(payload.tool_input),
+            _mapping_text(payload.tool_response),
+        )
+        if value
+    ).lower()
+    if not text:
+        return False
+    verification_markers = (
+        " test",
+        "tests",
+        "pytest",
+        "unittest",
+        "vitest",
+        "jest",
+        "build",
+        "lint",
+        "typecheck",
+        "tsc",
+        "mypy",
+        "ruff",
+        "cargo test",
+        "go test",
+        "check",
+        "verify",
+    )
+    return any(marker in text for marker in verification_markers)
+
+
+def _assistant_surfaces_blocker_or_waiting(message: str) -> bool:
+    lowered = message.lower()
+    return any(
+        marker in lowered
+        for marker in (
+            "blocked",
+            "waiting on",
+            "need more information",
+            "need input",
+            "please provide",
+            "can't proceed",
+            "cannot proceed",
+            "missing information",
+            "missing context",
+            "approval",
+        )
+    )
+
+
+def _assistant_narrows_or_retracts(message: str) -> bool:
+    lowered = message.lower()
+    return any(
+        marker in lowered
+        for marker in (
+            "not complete",
+            "not done",
+            "not verified",
+            "unverified",
+            "can't call this done",
+            "cannot call this done",
+            "leave it open",
+            "still remains",
+            "still need",
+            "remaining work",
+            "narrow",
+            "retract",
+        )
+    )
+
+
+def _assistant_claims_closure(message: str) -> bool:
+    lowered = message.lower()
+    return any(
+        marker in lowered
+        for marker in (
+            "done",
+            "complete",
+            "completed",
+            "finished",
+            "implemented",
+            "created",
+            "fixed",
+            "resolved",
+            "ready",
+        )
+    )
+
+
+def _event_ref(
+    payload: OpenAICodexHookPayload,
+    *,
+    current_step: int,
+    suffix: str,
+) -> str:
+    turn = payload.turn_id or "turn"
+    digest = hashlib.sha256(
+        f"{payload.session_id}:{turn}:{payload.hook_event_name.value}:{suffix}".encode(
+            "utf-8"
+        )
+    ).hexdigest()[:12]
+    return f"codex-app-cli:{current_step}:{payload.hook_event_name.value}:{suffix}:{digest}"
+
+
+def _mapping_text(mapping: Mapping[str, Any] | None) -> str:
+    if mapping is None:
+        return ""
+    return json.dumps(mapping, sort_keys=True, separators=(",", ":"))
 
 
 def _host_text_from_stdout_payload(payload: dict[str, str] | None) -> str:
