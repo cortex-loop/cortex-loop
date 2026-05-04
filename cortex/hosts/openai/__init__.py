@@ -3,6 +3,7 @@
 __all__ = [
     "runtime",
     "cli",
+    "codex_app_cli_hook_coordinator",
     "codex_app_cli_lifecycle",
     "host_control",
     "host_transport",

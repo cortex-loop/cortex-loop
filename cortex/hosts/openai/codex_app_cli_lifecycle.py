@@ -21,10 +21,15 @@ from cortex.sre.interventions import (
 
 
 class OpenAICodexLifecycleEvent(str, Enum):
+    SESSION_START = "SessionStart"
     USER_PROMPT_SUBMIT = "UserPromptSubmit"
     PRE_TOOL_USE = "PreToolUse"
     POST_TOOL_USE = "PostToolUse"
+    POST_TOOL_USE_FAILURE = "PostToolUseFailure"
+    PRE_COMPACT = "PreCompact"
+    SUBAGENT_STOP = "SubagentStop"
     STOP = "Stop"
+    SESSION_END = "SessionEnd"
 
 
 class OpenAICodexLifecycleDirectiveAction(str, Enum):
