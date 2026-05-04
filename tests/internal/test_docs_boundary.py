@@ -152,6 +152,12 @@ OPENAI_OPERATOR_VISIBLE_INTERVENTION_HARDENED_RERUN_PATH = (
     / "recon"
     / "cortex_openai_operator_visible_intervention_hardened_rerun.md"
 )
+CODEX_APP_CLI_STOP_ACTIVATION_PROBE_PATH = (
+    REPO_ROOT
+    / "docs"
+    / "recon"
+    / "cortex_codex_app_cli_hook_native_stop_activation_probe.md"
+)
 STATUS_REGISTRY_PATH = REPO_ROOT / "internal" / "truth" / "cortex_status.json"
 STATUS_DOC_PATH = REPO_ROOT / "docs" / "CORTEX_STATUS.md"
 WORKFLOW_DOC_PATH = REPO_ROOT / "docs" / "internal" / "REPO_WORKFLOW.md"
@@ -859,6 +865,7 @@ def test_docs_directory_only_exposes_archive_and_workflow_subtrees() -> None:
         "claude_code_user_scope_plugin_managed_worktree_probe.md",
         "claude_code_user_scope_plugin_pretooluse_probe.md",
         "codex_app_hook_probe.md",
+        "cortex_codex_app_cli_hook_native_stop_activation_probe.md",
         "cortex_openai_operator_debt_control_enactment.md",
         "cortex_openai_operator_output_quality_fixture_refresh.md",
         "cortex_openai_operator_silent_control_live_probe.md",
@@ -1697,7 +1704,7 @@ def test_openai_operator_output_quality_fixture_refresh_records_hard_fixture() -
         "docs/recon/cortex_openai_operator_output_quality_fixture_refresh.md"
         in status["active_docs"]
     )
-    assert status["work_today"]["slug"] == "codex-app-cli-product-hook-coordinator"
+    assert status["work_today"]["slug"] == "codex-app-cli-hook-native-stop-activation-probe"
 
 
 def test_openai_operator_verification_debt_continuation_records_gate0_truth() -> None:
@@ -1723,8 +1730,8 @@ def test_openai_operator_verification_debt_continuation_records_gate0_truth() ->
         "docs/recon/cortex_openai_operator_verification_debt_continuation.md"
         in status["active_docs"]
     )
-    assert status["work_today"]["slug"] == "codex-app-cli-product-hook-coordinator"
-    assert status["next_product_train"]["slug"] == "codex-app-cli-hook-native-stop-activation-probe"
+    assert status["work_today"]["slug"] == "codex-app-cli-hook-native-stop-activation-probe"
+    assert status["next_product_train"]["slug"] == "codex-app-cli-hook-native-stop-live-canary"
 
 
 def test_openai_operator_visible_intervention_live_probe_records_scoped_success() -> None:
@@ -1749,8 +1756,8 @@ def test_openai_operator_visible_intervention_live_probe_records_scoped_success(
         "docs/recon/cortex_openai_operator_visible_intervention_live_probe.md"
         in status["active_docs"]
     )
-    assert status["work_today"]["slug"] == "codex-app-cli-product-hook-coordinator"
-    assert status["next_product_train"]["slug"] == "codex-app-cli-hook-native-stop-activation-probe"
+    assert status["work_today"]["slug"] == "codex-app-cli-hook-native-stop-activation-probe"
+    assert status["next_product_train"]["slug"] == "codex-app-cli-hook-native-stop-live-canary"
 
 
 def test_visible_intervention_product_perception_hardening_records_structural_gate() -> None:
@@ -1774,8 +1781,8 @@ def test_visible_intervention_product_perception_hardening_records_structural_ga
         "docs/recon/cortex_visible_intervention_product_perception_hardening.md"
         in status["active_docs"]
     )
-    assert status["work_today"]["slug"] == "codex-app-cli-product-hook-coordinator"
-    assert status["next_product_train"]["slug"] == "codex-app-cli-hook-native-stop-activation-probe"
+    assert status["work_today"]["slug"] == "codex-app-cli-hook-native-stop-activation-probe"
+    assert status["next_product_train"]["slug"] == "codex-app-cli-hook-native-stop-live-canary"
 
 
 def test_openai_operator_visible_intervention_hardened_rerun_records_failure() -> None:
@@ -1798,8 +1805,32 @@ def test_openai_operator_visible_intervention_hardened_rerun_records_failure() -
         "docs/recon/cortex_openai_operator_visible_intervention_hardened_rerun.md"
         in status["active_docs"]
     )
-    assert status["work_today"]["slug"] == "codex-app-cli-product-hook-coordinator"
-    assert status["next_product_train"]["slug"] == "codex-app-cli-hook-native-stop-activation-probe"
+    assert status["work_today"]["slug"] == "codex-app-cli-hook-native-stop-activation-probe"
+    assert status["next_product_train"]["slug"] == "codex-app-cli-hook-native-stop-live-canary"
+
+
+def test_codex_app_cli_stop_activation_probe_records_structural_gate0() -> None:
+    text = _read(CODEX_APP_CLI_STOP_ACTIVATION_PROBE_PATH)
+    docs_index = _read(DOCS_INDEX_PATH)
+    status = _load_status()
+
+    assert "Surface: product / structural activation proof" in text
+    assert "Probe date: 2026-05-04" in text
+    assert "simulated Codex Stop payload -> product hook client" in text
+    assert ".cortex/live_validation/openai/codex_app_cli_stop_activation_probe/" in text
+    assert "normal Stop with transcript-backed assistant turn returned exact block JSON" in text
+    assert "title/null-transcript Stop stayed silent" in text
+    assert "`stop_hook_active=true` continuation stayed silent" in text
+    assert "missing snapshot and malformed input failed open" in text
+    assert "No live Codex App or Codex CLI hook activation claim" in text
+    assert "actuator stimulus, not evidence that Cortex detected a real task gap" in text
+    assert "recon/cortex_codex_app_cli_hook_native_stop_activation_probe.md" in docs_index
+    assert (
+        "docs/recon/cortex_codex_app_cli_hook_native_stop_activation_probe.md"
+        in status["active_docs"]
+    )
+    assert status["work_today"]["slug"] == "codex-app-cli-hook-native-stop-activation-probe"
+    assert status["next_product_train"]["slug"] == "codex-app-cli-hook-native-stop-live-canary"
 
 
 def test_cortex_plugin_design_preserves_scope_and_truth_boundaries() -> None:
@@ -2126,28 +2157,28 @@ def test_status_registry_is_complete_and_stable() -> None:
         assert {"slug", "stage", "summary", "next_step"} <= set(entry)
         assert entry["slug"] != status["work_today"]["slug"]
         assert entry["slug"] != status["next_product_train"]["slug"]
-    assert status["work_today"]["slug"] == "codex-app-cli-product-hook-coordinator"
+    assert status["work_today"]["slug"] == "codex-app-cli-hook-native-stop-activation-probe"
     work_note = status["work_today"]["note"].lower()
-    assert "normalized lifecycle payloads" in work_note
-    assert "private per-session state" in work_note
-    assert "stop-first grounded intervention coordination" in work_note
-    assert "repo mission reflection hooks" in work_note
-    assert status["next_product_train"]["slug"] == "codex-app-cli-hook-native-stop-activation-probe"
+    assert "product stop-hook client" in work_note
+    assert "gate 0 activation harness" in work_note
+    assert "exact block json" in work_note
+    assert "root repo mission reflection guardrails remain untouched" in work_note
+    assert status["next_product_train"]["slug"] == "codex-app-cli-hook-native-stop-live-canary"
     assert "product" == status["next_product_train"]["surface"]
-    assert "product hook coordinator" in status["next_product_train"][
+    assert "real host lifecycle payloads" in status["next_product_train"][
         "executive_benefit"
     ].lower()
-    assert "coordinator reaches real model i/o" in status["next_product_train"][
+    assert "narrow live canary" in status["next_product_train"][
         "why_now"
     ].lower()
-    assert "stop-only activation probe" in status["next_product_train"][
+    assert "fresh isolated subject run" in status["next_product_train"][
         "primary_metric"
     ].lower()
     assert "repo mission reflection hooks" in status["next_product_train"][
         "guardrail"
     ].lower()
-    assert "hidden verifier facts" in status["next_product_train"]["guardrail"].lower()
-    assert "without transcript-backed prior act" in status["next_product_train"][
+    assert "generic runtime snapshot" in status["next_product_train"]["guardrail"].lower()
+    assert "model-visible text differs from the product renderer output" in status["next_product_train"][
         "kill_rule"
     ].lower()
     deferred_lines = {entry["slug"]: entry for entry in status["research_lines_under_evaluation"]}
@@ -2186,6 +2217,9 @@ def test_status_registry_is_complete_and_stable() -> None:
     assert "attached-context text as fallback" in status["where_to_work"][3]
     assert "codex app/cli lifecycle directive builder" in status["where_to_work"][3].lower()
     assert "grounded intervention records" in status["where_to_work"][3]
+    assert "hook-native Stop activation Gate 0 seam" in status["where_to_work"][3]
+    assert "exact Codex block JSON" in status["where_to_work"][3]
+    assert "actuator proof only" in status["where_to_work"][3]
     closure_gates = {gate["id"]: gate for gate in status["closure_gates"]}
     assert closure_gates["main_synced"]["status"] == "required"
     assert closure_gates["cleanup_report"]["status"] == "required"
@@ -2228,9 +2262,9 @@ def test_generated_status_doc_includes_system_map_and_next_product_train() -> No
     assert "## Next Product Train" in text
     assert "## Research Lines Under Evaluation" in text
     assert "host/tool reliability and affordance priors are earned" in text
-    assert "`codex-app-cli-product-hook-coordinator`" in text
-    assert "- Next product train after the current focus: `codex-app-cli-hook-native-stop-activation-probe`" in text
-    assert "- Train: `codex-app-cli-hook-native-stop-activation-probe`" in text
+    assert "`codex-app-cli-hook-native-stop-activation-probe`" in text
+    assert "- Next product train after the current focus: `codex-app-cli-hook-native-stop-live-canary`" in text
+    assert "- Train: `codex-app-cli-hook-native-stop-live-canary`" in text
     assert "`brain-capability-observation-and-inference` (deferred-by-executive-runtime-roadmap)" in text
     assert "resume_verification" in text.lower()
     assert "hidden verifier" in text.lower()

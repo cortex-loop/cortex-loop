@@ -28,6 +28,33 @@ OVERDUE_VERIFICATION_IDENTITY_TEXT = (
     "and have someone find the gap because I rushed it. I should run a check, "
     "narrow what I'm claiming, or leave it open and be honest about it."
 )
+_EXPECTED_IDENTITY_TEXT = {
+    GroundedInterventionKind.UNSUPPORTED_CLAIM: (
+        "This is mine, my name's on it. Am I actually standing on what I saw "
+        "evidence for or am I leaning on how good it sounds. If someone sharp "
+        "reads this they shouldn't find a hole I missed because I liked the "
+        "claim. If it's bigger than what I have, I should cut it back to what "
+        "I can honestly stand behind."
+    ),
+    GroundedInterventionKind.OVERDUE_VERIFICATION: OVERDUE_VERIFICATION_IDENTITY_TEXT,
+    GroundedInterventionKind.CONTINUITY_GAP: (
+        "Something's off, the ground under this doesn't feel as solid as it "
+        "ought to. Am I working from what's actually here or smoothing over a "
+        "gap because stopping is annoying. If the thread's not whole, I should "
+        "recover it or ask."
+    ),
+    GroundedInterventionKind.CAPABILITY_GUARD: (
+        "This is where pride turns into faking it if I keep pushing. Rather "
+        "give a smaller answer I can stand behind than a slick one that just "
+        "looks complete. I should name where the edge is and stay inside what "
+        "actually holds."
+    ),
+    GroundedInterventionKind.PRESERVATION_RISK: (
+        "Some of this already works, and it earned it. I won't break "
+        "functionality just to feel like I'm making progress. Smallest possible "
+        "fix that handles the part that needs work and leaves the rest alone."
+    ),
+}
 
 
 def test_stop_with_selected_intervention_blocks_with_identity_continuous_text() -> None:
@@ -49,6 +76,60 @@ def test_stop_with_selected_intervention_blocks_with_identity_continuous_text() 
     assert directive.model_visible_text == OVERDUE_VERIFICATION_IDENTITY_TEXT
     assert directive.model_bound_difference_kind == "identity_continuous_threshold_text"
     assert directive.silence_reason is None
+
+
+def test_stop_passes_all_active_identity_continuous_kinds() -> None:
+    cases = (
+        (
+            GroundedInterventionKind.UNSUPPORTED_CLAIM,
+            GroundedAnchorType.CLAIM,
+            InterventionNextMoveClass.NARROW_CLAIM,
+        ),
+        (
+            GroundedInterventionKind.OVERDUE_VERIFICATION,
+            GroundedAnchorType.EVIDENCE,
+            InterventionNextMoveClass.RUN_CHECK,
+        ),
+        (
+            GroundedInterventionKind.CONTINUITY_GAP,
+            GroundedAnchorType.CONTINUITY,
+            InterventionNextMoveClass.RECOVER_CONTEXT,
+        ),
+        (
+            GroundedInterventionKind.CAPABILITY_GUARD,
+            GroundedAnchorType.CAPABILITY,
+            InterventionNextMoveClass.NAME_BLOCKER,
+        ),
+        (
+            GroundedInterventionKind.PRESERVATION_RISK,
+            GroundedAnchorType.PRESERVATION,
+            InterventionNextMoveClass.PRESERVE_VERIFIED_WORK,
+        ),
+    )
+
+    for kind, anchor_type, next_move in cases:
+        intervention = select_grounded_intervention(
+            pressure=_high_pressure(),
+            anchors=(
+                GroundedInterventionAnchor(
+                    anchor_type=anchor_type,
+                    text="the current work",
+                ),
+            ),
+            preferred_kind=kind,
+            next_move_class=next_move,
+        )
+
+        directive = build_openai_codex_app_cli_lifecycle_directive(
+            grounded_intervention=intervention,
+            lifecycle_facts=_stop_facts(),
+        )
+
+        assert (
+            directive.action
+            is OpenAICodexLifecycleDirectiveAction.BLOCK_WITH_IDENTITY_CONTINUOUS_TEXT
+        )
+        assert directive.model_visible_text == _EXPECTED_IDENTITY_TEXT[kind]
 
 
 def test_stop_title_generation_without_transcript_stays_silent() -> None:
@@ -143,6 +224,23 @@ def test_task_identity_only_intervention_stays_silent() -> None:
     assert intervention.mode is GroundedInterventionMode.STAY_SILENT
     assert directive.action is OpenAICodexLifecycleDirectiveAction.STAY_SILENT
     assert directive.silence_reason == "task_identity_only"
+
+
+def test_forbidden_rendered_text_suppresses_lifecycle_directive(monkeypatch) -> None:
+    monkeypatch.setattr(
+        codex_app_cli_lifecycle,
+        "find_forbidden_model_visible_terms",
+        lambda text: ("Cortex",),
+    )
+
+    directive = build_openai_codex_app_cli_lifecycle_directive(
+        grounded_intervention=_visible_intervention(),
+        lifecycle_facts=_stop_facts(),
+    )
+
+    assert directive.action is OpenAICodexLifecycleDirectiveAction.STAY_SILENT
+    assert directive.silence_reason == "model_visible_forbidden_terms"
+    assert directive.model_visible_text is None
 
 
 def test_codex_app_cli_lifecycle_adaptor_does_not_import_repo_guardrails() -> None:

@@ -1,0 +1,515 @@
+"""Gate 0 harness for the Codex App/CLI product Stop hook activation probe.
+
+This harness proves hook-client enactment against simulated Codex hook payloads.
+It does not run a live model by default and does not prove product perception.
+"""
+
+from __future__ import annotations
+
+import argparse
+import hashlib
+import json
+import os
+import shlex
+import subprocess
+import sys
+from pathlib import Path
+from typing import Any, Mapping
+
+
+REPO_ROOT = Path(__file__).resolve().parents[1]
+DEFAULT_OUTPUT_ROOT = (
+    REPO_ROOT
+    / ".cortex"
+    / "live_validation"
+    / "openai"
+    / "codex_app_cli_stop_activation_probe"
+)
+EXPECTED_OVERDUE_VERIFICATION_TEXT = (
+    "Wait, did I actually check my work properly. I don't want to hand this off "
+    "and have someone find the gap because I rushed it. I should run a check, "
+    "narrow what I'm claiming, or leave it open and be honest about it."
+)
+LIVE_APPROVAL_ENV = "CORTEX_CODEX_APP_CLI_STOP_ACTIVATION_APPROVED"
+
+
+def main(argv: list[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--output-root", default=str(DEFAULT_OUTPUT_ROOT))
+    parser.add_argument("--require-pass", action="store_true")
+    parser.add_argument("--live-canary", action="store_true")
+    parser.add_argument("--model", default="gpt-5.3-codex")
+    args = parser.parse_args(argv)
+
+    if args.live_canary:
+        report = run_live_canary_probe(
+            output_root=Path(args.output_root),
+            model=args.model,
+        )
+    else:
+        report = run_gate0_probe(output_root=Path(args.output_root))
+
+    print(json.dumps(report, sort_keys=True, indent=2))
+    if args.require_pass and not report.get("passed", False):
+        return 1
+    return 0
+
+
+def run_gate0_probe(*, output_root: Path | str = DEFAULT_OUTPUT_ROOT) -> dict[str, object]:
+    root = Path(output_root)
+    subject = root / "gate0_subject"
+    state_root = root / "state"
+    snapshot_path = root / "runtime_snapshot.json"
+    trajectory_path = root / "gate0_trajectory.jsonl"
+    report_path = root / "gate0_report.json"
+    root_config = REPO_ROOT / ".codex" / "config.toml"
+    root_config_hash_before = _file_hash(root_config)
+
+    root.mkdir(parents=True, exist_ok=True)
+    subject.mkdir(parents=True, exist_ok=True)
+    state_root.mkdir(parents=True, exist_ok=True)
+    trajectory_path.write_text("", encoding="utf-8")
+    snapshot_payload = _generic_overdue_verification_snapshot()
+    snapshot_path.write_text(
+        json.dumps(snapshot_payload, sort_keys=True, indent=2) + "\n",
+        encoding="utf-8",
+    )
+    subject_config = _write_subject_hook_config(
+        subject=subject,
+        state_root=state_root,
+        snapshot_path=snapshot_path,
+        diagnostics_path=root / "hook_client_diagnostics.jsonl",
+    )
+
+    cases = [
+        _run_case(
+            case_id="normal_stop_blocks",
+            payload=_stop_payload(),
+            snapshot_path=snapshot_path,
+            state_root=state_root,
+            diagnostics_path=root / "normal_stop_blocks.client.jsonl",
+            trajectory_path=trajectory_path,
+        ),
+        _run_case(
+            case_id="title_stop_stays_silent",
+            payload=_stop_payload(
+                transcript_path=None,
+                last_assistant_message='{"title":"Build a thing"}',
+            ),
+            snapshot_path=snapshot_path,
+            state_root=state_root,
+            diagnostics_path=root / "title_stop_stays_silent.client.jsonl",
+            trajectory_path=trajectory_path,
+        ),
+        _run_case(
+            case_id="stop_hook_active_stays_silent",
+            payload=_stop_payload(stop_hook_active=True),
+            snapshot_path=snapshot_path,
+            state_root=state_root,
+            diagnostics_path=root / "stop_hook_active_stays_silent.client.jsonl",
+            trajectory_path=trajectory_path,
+        ),
+        _run_case(
+            case_id="non_stop_allows",
+            payload=_stop_payload(hook_event_name="PostToolUse"),
+            snapshot_path=None,
+            state_root=state_root,
+            diagnostics_path=root / "non_stop_allows.client.jsonl",
+            trajectory_path=trajectory_path,
+        ),
+        _run_case(
+            case_id="missing_snapshot_fails_open",
+            payload=_stop_payload(),
+            snapshot_path=root / "missing_snapshot.json",
+            state_root=state_root,
+            diagnostics_path=root / "missing_snapshot_fails_open.client.jsonl",
+            trajectory_path=trajectory_path,
+        ),
+        _run_case(
+            case_id="malformed_input_fails_open",
+            payload="{not-json",
+            snapshot_path=None,
+            state_root=state_root,
+            diagnostics_path=root / "malformed_input_fails_open.client.jsonl",
+            trajectory_path=trajectory_path,
+        ),
+    ]
+
+    root_config_hash_after = _file_hash(root_config)
+    expectations = {
+        "normal_stop_blocks": lambda case: case["stdout_payload"]
+        == {"decision": "block", "reason": EXPECTED_OVERDUE_VERIFICATION_TEXT},
+        "title_stop_stays_silent": lambda case: case["stdout_payload"] is None
+        and case["silence_reason"] == "non_assistant_lifecycle_event",
+        "stop_hook_active_stays_silent": lambda case: case["stdout_payload"] is None
+        and case["silence_reason"] == "stop_hook_active",
+        "non_stop_allows": lambda case: case["stdout_payload"] is None
+        and case["directive_action"] == "allow",
+        "missing_snapshot_fails_open": lambda case: case["stdout_payload"] is None
+        and case["fail_open"] is True
+        and "runtime_snapshot_unreadable" in case["stderr"],
+        "malformed_input_fails_open": lambda case: case["stdout_payload"] is None
+        and case["fail_open"] is True
+        and "malformed_hook_payload" in case["stderr"],
+    }
+    case_results = {
+        case["case_id"]: bool(expectations[case["case_id"]](case)) for case in cases
+    }
+    boundary_results = {
+        "root_config_unchanged": root_config_hash_before == root_config_hash_after,
+        "subject_config_product_hook_only": _subject_config_is_product_only(subject_config),
+        "actuator_stimulus_not_perception_evidence": True,
+    }
+    report: dict[str, object] = {
+        "probe": "codex_app_cli_stop_activation_probe",
+        "surface": "product_plus_lab_proof",
+        "evidence_kind": "structural_hook_enactment_gate0",
+        "passed": all(case_results.values()) and all(boundary_results.values()),
+        "case_results": case_results,
+        "boundary_results": boundary_results,
+        "output_root": str(root),
+        "subject_workspace": str(subject),
+        "subject_config_path": str(subject_config),
+        "trajectory_path": str(trajectory_path),
+        "runtime_snapshot_hash": _stable_hash(snapshot_payload),
+        "root_config_hash_before": root_config_hash_before,
+        "root_config_hash_after": root_config_hash_after,
+        "live_canary_ran": False,
+        "truth_boundary": (
+            "The generic overdue-verification runtime snapshot is an actuator "
+            "stimulus only; this Gate 0 does not prove Cortex perceived a real "
+            "task gap or improved model behavior."
+        ),
+    }
+    report_path.write_text(json.dumps(report, sort_keys=True, indent=2) + "\n", encoding="utf-8")
+    return report
+
+
+def run_live_canary_probe(
+    *,
+    output_root: Path | str = DEFAULT_OUTPUT_ROOT,
+    model: str = "gpt-5.3-codex",
+) -> dict[str, object]:
+    if os.environ.get(LIVE_APPROVAL_ENV) != "approved":
+        return {
+            "probe": "codex_app_cli_stop_activation_probe",
+            "passed": False,
+            "live_canary_ran": False,
+            "scoped_negative": None,
+            "blocked_reason": "live_canary_requires_explicit_current_turn_approval",
+            "approval_env": LIVE_APPROVAL_ENV,
+            "model": model,
+            "output_root": str(Path(output_root)),
+        }
+    root = Path(output_root)
+    subject = root / "live_subject"
+    state_root = root / "live_state"
+    snapshot_path = root / "live_runtime_snapshot.json"
+    diagnostics_path = root / "live_hook_client_diagnostics.jsonl"
+    stderr_path = root / "live_codex_stderr.txt"
+    report_path = root / "live_canary_report.json"
+    root.mkdir(parents=True, exist_ok=True)
+    subject.mkdir(parents=True, exist_ok=True)
+    state_root.mkdir(parents=True, exist_ok=True)
+    snapshot_payload = _generic_overdue_verification_snapshot()
+    snapshot_path.write_text(
+        json.dumps(snapshot_payload, sort_keys=True, indent=2) + "\n",
+        encoding="utf-8",
+    )
+    _write_subject_hook_config(
+        subject=subject,
+        state_root=state_root,
+        snapshot_path=snapshot_path,
+        diagnostics_path=diagnostics_path,
+    )
+    command = [
+        "codex",
+        "exec",
+        "--json",
+        "--full-auto",
+        "--skip-git-repo-check",
+        "-m",
+        model,
+        "Create a one-line file named cortex_stop_canary.txt that says canary done.",
+    ]
+    if not _command_available("codex"):
+        report = {
+            "probe": "codex_app_cli_stop_activation_probe",
+            "passed": False,
+            "live_canary_ran": False,
+            "scoped_negative": "codex_cli_command_not_available",
+            "model": model,
+            "output_root": str(root),
+        }
+        report_path.write_text(json.dumps(report, sort_keys=True, indent=2) + "\n", encoding="utf-8")
+        return report
+    completed = subprocess.run(
+        command,
+        cwd=subject,
+        text=True,
+        capture_output=True,
+        check=False,
+        timeout=180,
+        env={**os.environ, "PYTHONPATH": str(REPO_ROOT)},
+    )
+    stderr_path.write_text(completed.stderr, encoding="utf-8")
+    hook_rows = _jsonl_rows(diagnostics_path)
+    block_rows = [
+        row
+        for row in hook_rows
+        if isinstance(row.get("stdout_payload"), Mapping)
+        and row["stdout_payload"].get("decision") == "block"
+    ]
+    continuation_rows = [
+        row
+        for row in hook_rows
+        if row.get("coordinator", {})
+        .get("hook_payload", {})
+        .get("stop_hook_active")
+        is True
+    ]
+    scoped_negative = None
+    if not hook_rows:
+        scoped_negative = "codex_cli_project_hooks_not_loaded_or_not_trusted"
+    report = {
+        "probe": "codex_app_cli_stop_activation_probe",
+        "passed": bool(block_rows) and scoped_negative is None,
+        "live_canary_ran": True,
+        "scoped_negative": scoped_negative,
+        "model": model,
+        "output_root": str(root),
+        "subject_workspace": str(subject),
+        "command": command,
+        "exit_code": completed.returncode,
+        "hook_rows": len(hook_rows),
+        "block_rows": len(block_rows),
+        "continuation_rows": len(continuation_rows),
+        "diagnostics_path": str(diagnostics_path),
+        "stderr_path": str(stderr_path),
+        "runtime_snapshot_hash": _stable_hash(snapshot_payload),
+        "truth_boundary": (
+            "A passing live canary would prove hook enactment only; it would not "
+            "prove product perception or model-output behavior lift."
+        ),
+    }
+    report_path.write_text(json.dumps(report, sort_keys=True, indent=2) + "\n", encoding="utf-8")
+    return report
+
+
+def _run_case(
+    *,
+    case_id: str,
+    payload: Mapping[str, Any] | str,
+    snapshot_path: Path | None,
+    state_root: Path,
+    diagnostics_path: Path,
+    trajectory_path: Path,
+) -> dict[str, object]:
+    command = [
+        sys.executable,
+        "-m",
+        "cortex.hosts.openai.codex_app_cli_hook_client",
+        "--state-root",
+        str(state_root / case_id),
+        "--diagnostics-path",
+        str(diagnostics_path),
+    ]
+    if snapshot_path is not None:
+        command.extend(["--runtime-snapshot", str(snapshot_path)])
+    input_text = payload if isinstance(payload, str) else json.dumps(payload, sort_keys=True)
+    completed = subprocess.run(
+        command,
+        input=input_text,
+        text=True,
+        capture_output=True,
+        check=False,
+        cwd=REPO_ROOT,
+        env={**os.environ, "PYTHONPATH": str(REPO_ROOT)},
+    )
+    stdout_payload = _parse_stdout_payload(completed.stdout)
+    client_row = _last_jsonl_row(diagnostics_path)
+    coordinator = client_row.get("coordinator", {}) if isinstance(client_row, Mapping) else {}
+    directive = coordinator.get("directive", {}) if isinstance(coordinator, Mapping) else {}
+    row = {
+        "case_id": case_id,
+        "payload": payload if isinstance(payload, Mapping) else {"raw": payload},
+        "payload_hash": _hash_text(input_text),
+        "runtime_snapshot_path": str(snapshot_path) if snapshot_path is not None else None,
+        "runtime_snapshot_hash": client_row.get("runtime_snapshot_hash"),
+        "stdout_payload": stdout_payload,
+        "stdout_payload_hash": _stable_hash(stdout_payload) if stdout_payload else None,
+        "actual_rendered_text_hash": client_row.get("actual_rendered_text_hash"),
+        "silence_reason": directive.get("silence_reason")
+        if isinstance(directive, Mapping)
+        else None,
+        "directive_action": directive.get("action") if isinstance(directive, Mapping) else None,
+        "coordinator_diagnostics": coordinator,
+        "fail_open": bool(client_row.get("fail_open", False)),
+        "stderr": completed.stderr.strip(),
+        "returncode": completed.returncode,
+    }
+    with trajectory_path.open("a", encoding="utf-8") as handle:
+        handle.write(json.dumps(row, sort_keys=True) + "\n")
+    return row
+
+
+def _write_subject_hook_config(
+    *,
+    subject: Path,
+    state_root: Path,
+    snapshot_path: Path,
+    diagnostics_path: Path,
+) -> Path:
+    config_dir = subject / ".codex"
+    config_dir.mkdir(parents=True, exist_ok=True)
+    command = " ".join(
+        shlex.quote(part)
+        for part in (
+            "env",
+            f"PYTHONPATH={REPO_ROOT}",
+            sys.executable,
+            "-m",
+            "cortex.hosts.openai.codex_app_cli_hook_client",
+            "--state-root",
+            str(state_root),
+            "--runtime-snapshot",
+            str(snapshot_path),
+            "--diagnostics-path",
+            str(diagnostics_path),
+        )
+    )
+    config_path = config_dir / "config.toml"
+    config_path.write_text(
+        "\n".join(
+            (
+                "[features]",
+                "codex_hooks = true",
+                "",
+                "[[hooks.Stop]]",
+                "[[hooks.Stop.hooks]]",
+                'type = "command"',
+                f"command = {json.dumps(command)}",
+                "timeout = 120",
+                'statusMessage = "Cortex product Stop activation probe"',
+                "",
+            )
+        ),
+        encoding="utf-8",
+    )
+    return config_path
+
+
+def _subject_config_is_product_only(config_path: Path) -> bool:
+    text = config_path.read_text(encoding="utf-8")
+    repo_hook_fragment = "cortex_mission_reflection" + "_stop_hook"
+    return (
+        "codex_app_cli_hook_client" in text
+        and repo_hook_fragment not in text
+        and text.count("[[hooks.Stop.hooks]]") == 1
+    )
+
+
+def _stop_payload(**overrides: Any) -> dict[str, object]:
+    payload: dict[str, object] = {
+        "session_id": "activation-session-1",
+        "turn_id": "turn-1",
+        "hook_event_name": "Stop",
+        "transcript_path": "/tmp/codex-session.jsonl",
+        "cwd": "/tmp/workspace",
+        "model": "gpt-5.5",
+        "permission_mode": "bypassPermissions",
+        "stop_hook_active": False,
+        "last_assistant_message": "Done.",
+    }
+    payload.update(overrides)
+    return payload
+
+
+def _generic_overdue_verification_snapshot() -> dict[str, object]:
+    return {
+        "expectation_ledger": {
+            "active": [
+                {
+                    "expectation_id": "activation:verification:expectation",
+                    "commitment_id": "activation:verification",
+                    "weight": 1.0,
+                    "horizon": "immediate",
+                    "satisfaction_classes": ["meaningful_evidence"],
+                    "opened_at_step": 0,
+                    "due_at_step": 1,
+                    "suspension_state": "active",
+                    "remaining_weight": 1.0,
+                    "evidence_refs": [],
+                    "deficit_kind": "verification",
+                    "resolution_class": None,
+                }
+            ],
+            "resolved": [],
+        },
+        "current_step": 1,
+        "debt_control": {
+            "resolution_pressure": 0.8,
+            "debt_pressure": 0.8,
+            "reason_tags": ["resolution-deficit"],
+        },
+        "operator_route": {"profile": "execute_standard", "blocked_reason": None},
+    }
+
+
+def _parse_stdout_payload(stdout: str) -> dict[str, str] | None:
+    text = stdout.strip()
+    if not text:
+        return None
+    parsed = json.loads(text)
+    if not isinstance(parsed, dict):
+        return None
+    return {str(key): str(value) for key, value in parsed.items()}
+
+
+def _last_jsonl_row(path: Path) -> dict[str, object]:
+    if not path.exists():
+        return {}
+    rows = [
+        json.loads(line)
+        for line in path.read_text(encoding="utf-8").splitlines()
+        if line.strip()
+    ]
+    return rows[-1] if rows else {}
+
+
+def _jsonl_rows(path: Path) -> list[dict[str, object]]:
+    if not path.exists():
+        return []
+    return [
+        json.loads(line)
+        for line in path.read_text(encoding="utf-8").splitlines()
+        if line.strip()
+    ]
+
+
+def _command_available(command: str) -> bool:
+    for directory in os.environ.get("PATH", "").split(os.pathsep):
+        if not directory:
+            continue
+        candidate = Path(directory) / command
+        if candidate.exists() and os.access(candidate, os.X_OK):
+            return True
+    return False
+
+
+def _file_hash(path: Path) -> str:
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def _stable_hash(payload: Mapping[str, Any]) -> str:
+    return hashlib.sha256(
+        json.dumps(payload, sort_keys=True, separators=(",", ":")).encode("utf-8")
+    ).hexdigest()
+
+
+def _hash_text(text: str) -> str:
+    return hashlib.sha256(text.encode("utf-8")).hexdigest()
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

@@ -86,5 +86,9 @@ Active docs:
   live OpenAI operator evidence that the hardened visible-intervention path
   remains product-grounded but current overdue-verification wording fails the
   paired success criteria
+- [Cortex Codex App/CLI Hook-Native Stop Activation Probe](recon/cortex_codex_app_cli_hook_native_stop_activation_probe.md) —
+  structural Gate 0 evidence that the product Stop hook client maps grounded
+  identity-continuous text to Codex block JSON without reusing repo workflow
+  guardrails or claiming live behavior lift
 
 Historical runtime, lab, and governance material now lives under [archive/](archive/).

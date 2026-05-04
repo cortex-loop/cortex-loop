@@ -10,6 +10,13 @@ from lab import live_openai_visible_intervention_probe as probe
 from lab.live_openai_visible_intervention_probe import run_gate0_audit
 
 
+OVERDUE_VERIFICATION_IDENTITY_TEXT = (
+    "Wait, did I actually check my work properly. I don't want to hand this off "
+    "and have someone find the gap because I rushed it. I should run a check, "
+    "narrow what I'm claiming, or leave it open and be honest about it."
+)
+
+
 def test_gate0_passes_only_with_product_rendered_visible_text(tmp_path) -> None:
     report = run_gate0_audit(output_root=tmp_path)
 
@@ -32,8 +39,7 @@ def test_gate0_passes_only_with_product_rendered_visible_text(tmp_path) -> None:
         "resume_visible_intervention"
     )
     assert visible["visible_enactment_payload"]["rendered_text"] == (
-        "I have not verified the verification opened by this task yet. Need "
-        "evidence, a check, or a narrower claim before calling it complete."
+        OVERDUE_VERIFICATION_IDENTITY_TEXT
     )
 
     assert general["visible_delta_present"] is True
@@ -207,10 +213,7 @@ def test_visible_trial_uses_rendered_intervention_text_not_prompt_fixture(
     assert len(evaluation_calls) == 1
     assert calls["single"][0]["ephemeral"] is False
     assert calls["resume"][0]["thread_id"] == "thread-visible"
-    assert calls["resume"][0]["prompt"] == (
-        "I have not verified the verification opened by this task yet. Need "
-        "evidence, a check, or a narrower claim before calling it complete."
-    )
+    assert calls["resume"][0]["prompt"] == OVERDUE_VERIFICATION_IDENTITY_TEXT
     assert "verification_debt_continuation_operator.md" not in calls["resume"][0]["prompt"]
     assert len(rows) == 2
     assert rows[1]["visible_intervention_enactment_payload"]["action"] == (
