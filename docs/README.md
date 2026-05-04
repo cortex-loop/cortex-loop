@@ -90,5 +90,9 @@ Active docs:
   structural Gate 0 evidence that the product Stop hook client maps grounded
   identity-continuous text to Codex block JSON without reusing repo workflow
   guardrails or claiming live behavior lift
+- [Cortex Codex App/CLI Hook-Native Stop Live Canary](recon/cortex_codex_app_cli_hook_native_stop_live_canary.md) —
+  live actuator evidence that the product Stop hook client receives a real
+  Codex Stop payload and returns exact Cortex block JSON, without claiming
+  product perception or behavior lift
 
 Historical runtime, lab, and governance material now lives under [archive/](archive/).
