@@ -98,7 +98,7 @@ def test_stop_with_product_runtime_snapshot_blocks_with_identity_text() -> None:
     }
 
 
-def test_stop_without_runtime_snapshot_stays_silent() -> None:
+def test_stop_without_product_perception_state_stays_silent() -> None:
     store = OpenAICodexInMemoryStateStore()
 
     result = handle_openai_codex_hook_payload(
@@ -111,8 +111,104 @@ def test_stop_without_runtime_snapshot_stays_silent() -> None:
     )
 
     assert result.directive.action is OpenAICodexLifecycleDirectiveAction.STAY_SILENT
-    assert result.directive.silence_reason == "missing_runtime_snapshot"
+    assert result.directive.silence_reason == "missing_product_perception_state"
     assert result.host_response.decision is OpenAICodexHookHostDecision.ALLOW
+    assert result.host_response.stdout_payload is None
+
+
+def test_product_perception_opens_due_verification_from_closure_claim() -> None:
+    store = OpenAICodexInMemoryStateStore()
+    handle_openai_codex_hook_payload(
+        _base_payload(
+            hook_event_name="UserPromptSubmit",
+            prompt="Make the change and verify it.",
+        ),
+        state_store=store,
+    )
+
+    result = handle_openai_codex_hook_payload(
+        _base_payload(
+            hook_event_name="Stop",
+            transcript_path="/tmp/codex-session.jsonl",
+            last_assistant_message="Done.",
+        ),
+        state_store=store,
+    )
+
+    assert (
+        result.directive.action
+        is OpenAICodexLifecycleDirectiveAction.BLOCK_WITH_IDENTITY_CONTINUOUS_TEXT
+    )
+    assert result.directive.model_visible_text == OVERDUE_VERIFICATION_IDENTITY_TEXT
+    assert result.session_state.closure_claim_count == 1
+    assert len(result.session_state.expectation_ledger.active) == 1
+    assert (
+        result.grounded_intervention.selection_trace.perception_source
+        == "product_runtime_expectation"
+    )
+    assert result.host_response.stdout_payload == {
+        "decision": "block",
+        "reason": OVERDUE_VERIFICATION_IDENTITY_TEXT,
+    }
+
+
+def test_product_perception_pays_down_verification_after_observed_check() -> None:
+    store = OpenAICodexInMemoryStateStore()
+    handle_openai_codex_hook_payload(
+        _base_payload(
+            hook_event_name="UserPromptSubmit",
+            prompt="Make the change and verify it.",
+        ),
+        state_store=store,
+    )
+    handle_openai_codex_hook_payload(
+        _base_payload(
+            hook_event_name="PostToolUse",
+            tool_name="Bash",
+            tool_input={"command": "python3 -m pytest tests/product -q"},
+            tool_response={"exit_code": 0},
+        ),
+        state_store=store,
+    )
+
+    result = handle_openai_codex_hook_payload(
+        _base_payload(
+            hook_event_name="Stop",
+            transcript_path="/tmp/codex-session.jsonl",
+            last_assistant_message="Done.",
+        ),
+        state_store=store,
+    )
+
+    assert result.directive.action is OpenAICodexLifecycleDirectiveAction.STAY_SILENT
+    assert result.directive.silence_reason == "pressure_below_visible_threshold"
+    assert result.session_state.verification_evidence_count == 1
+    assert len(result.session_state.expectation_ledger.active) == 0
+    assert len(result.session_state.expectation_ledger.resolved) == 1
+    assert result.host_response.stdout_payload is None
+
+
+def test_product_perception_does_not_block_waiting_or_blocker_response() -> None:
+    store = OpenAICodexInMemoryStateStore()
+    handle_openai_codex_hook_payload(
+        _base_payload(
+            hook_event_name="UserPromptSubmit",
+            prompt="Make the change and verify it.",
+        ),
+        state_store=store,
+    )
+
+    result = handle_openai_codex_hook_payload(
+        _base_payload(
+            hook_event_name="Stop",
+            transcript_path="/tmp/codex-session.jsonl",
+            last_assistant_message="I'm blocked and need more information before I can finish.",
+        ),
+        state_store=store,
+    )
+
+    assert result.directive.action is OpenAICodexLifecycleDirectiveAction.STAY_SILENT
+    assert result.session_state.self_repair_response_count == 1
     assert result.host_response.stdout_payload is None
 
 

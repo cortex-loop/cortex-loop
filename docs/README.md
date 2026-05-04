@@ -94,5 +94,9 @@ Active docs:
   live actuator evidence that the product Stop hook client receives a real
   Codex Stop payload and returns exact Cortex block JSON, without claiming
   product perception or behavior lift
+- [Cortex Codex App/CLI Product Perception Loop](recon/cortex_codex_app_cli_product_perception_loop.md) —
+  structural evidence that Codex App/CLI prompt, tool, failure, and Stop
+  lifecycle payloads can derive grounded Stop intervention state without a
+  runtime snapshot fixture
 
 Historical runtime, lab, and governance material now lives under [archive/](archive/).

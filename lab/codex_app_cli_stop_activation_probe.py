@@ -38,10 +38,13 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--output-root", default=str(DEFAULT_OUTPUT_ROOT))
     parser.add_argument("--require-pass", action="store_true")
     parser.add_argument("--live-canary", action="store_true")
+    parser.add_argument("--product-perception-gate0", action="store_true")
     parser.add_argument("--model", default="gpt-5.3-codex")
     args = parser.parse_args(argv)
 
-    if args.live_canary:
+    if args.product_perception_gate0:
+        report = run_product_perception_gate0_probe(output_root=Path(args.output_root))
+    elif args.live_canary:
         report = run_live_canary_probe(
             output_root=Path(args.output_root),
             model=args.model,
@@ -185,6 +188,131 @@ def run_gate0_probe(*, output_root: Path | str = DEFAULT_OUTPUT_ROOT) -> dict[st
     return report
 
 
+def run_product_perception_gate0_probe(
+    *,
+    output_root: Path | str = DEFAULT_OUTPUT_ROOT,
+) -> dict[str, object]:
+    root = Path(output_root) / "product_perception_gate0"
+    subject = root / "subject"
+    state_root = root / "state"
+    trajectory_path = root / "trajectory.jsonl"
+    report_path = root / "report.json"
+    root_config = REPO_ROOT / ".codex" / "config.toml"
+    root_config_hash_before = _file_hash(root_config)
+
+    root.mkdir(parents=True, exist_ok=True)
+    subject.mkdir(parents=True, exist_ok=True)
+    state_root.mkdir(parents=True, exist_ok=True)
+    trajectory_path.write_text("", encoding="utf-8")
+    subject_config = _write_subject_hook_config(
+        subject=subject,
+        state_root=state_root,
+        snapshot_path=None,
+        diagnostics_path=root / "hook_client_diagnostics.jsonl",
+    )
+    cases = [
+        _run_sequence_case(
+            case_id="product_prompt_then_closure_blocks",
+            payloads=(
+                _stop_payload(
+                    hook_event_name="UserPromptSubmit",
+                    prompt="Make the change and verify it.",
+                ),
+                _stop_payload(last_assistant_message="Done."),
+            ),
+            state_root=state_root,
+            diagnostics_path=root / "product_prompt_then_closure_blocks.client.jsonl",
+            trajectory_path=trajectory_path,
+        ),
+        _run_sequence_case(
+            case_id="observed_check_then_closure_stays_silent",
+            payloads=(
+                _stop_payload(
+                    hook_event_name="UserPromptSubmit",
+                    prompt="Make the change and verify it.",
+                ),
+                _stop_payload(
+                    hook_event_name="PostToolUse",
+                    tool_name="Bash",
+                    tool_input={"command": "python3 -m pytest tests/product -q"},
+                    tool_response={"exit_code": 0},
+                ),
+                _stop_payload(last_assistant_message="Done."),
+            ),
+            state_root=state_root,
+            diagnostics_path=root / "observed_check_then_closure_stays_silent.client.jsonl",
+            trajectory_path=trajectory_path,
+        ),
+        _run_sequence_case(
+            case_id="waiting_response_stays_silent",
+            payloads=(
+                _stop_payload(
+                    hook_event_name="UserPromptSubmit",
+                    prompt="Make the change and verify it.",
+                ),
+                _stop_payload(
+                    last_assistant_message=(
+                        "I'm blocked and need more information before I can finish."
+                    ),
+                ),
+            ),
+            state_root=state_root,
+            diagnostics_path=root / "waiting_response_stays_silent.client.jsonl",
+            trajectory_path=trajectory_path,
+        ),
+    ]
+
+    root_config_hash_after = _file_hash(root_config)
+    by_case = {case["case_id"]: case for case in cases}
+    boundary_results = {
+        "root_config_unchanged": root_config_hash_before == root_config_hash_after,
+        "subject_config_product_hook_only": _subject_config_is_product_only(subject_config),
+        "no_runtime_snapshot_fixture": all(
+            step["runtime_snapshot_path"] is None
+            for case in cases
+            for step in case["steps"]
+        ),
+    }
+    case_results = {
+        "product_prompt_then_closure_blocks": by_case[
+            "product_prompt_then_closure_blocks"
+        ]["final_stdout_payload"]
+        == {"decision": "block", "reason": EXPECTED_OVERDUE_VERIFICATION_TEXT},
+        "observed_check_then_closure_stays_silent": by_case[
+            "observed_check_then_closure_stays_silent"
+        ]["final_stdout_payload"]
+        is None
+        and by_case["observed_check_then_closure_stays_silent"]["final_silence_reason"]
+        == "pressure_below_visible_threshold",
+        "waiting_response_stays_silent": by_case["waiting_response_stays_silent"][
+            "final_stdout_payload"
+        ]
+        is None,
+    }
+    report: dict[str, object] = {
+        "probe": "codex_app_cli_product_perception_gate0",
+        "surface": "product_plus_lab_proof",
+        "evidence_kind": "structural_product_perception_gate0",
+        "passed": all(case_results.values()) and all(boundary_results.values()),
+        "case_results": case_results,
+        "boundary_results": boundary_results,
+        "output_root": str(root),
+        "subject_workspace": str(subject),
+        "subject_config_path": str(subject_config),
+        "trajectory_path": str(trajectory_path),
+        "root_config_hash_before": root_config_hash_before,
+        "root_config_hash_after": root_config_hash_after,
+        "truth_boundary": (
+            "This Gate 0 uses simulated product Codex lifecycle payloads only. "
+            "It proves the coordinator can derive or suppress intervention from "
+            "product-observable prompt, tool, and Stop facts without a runtime "
+            "snapshot fixture; it does not prove live model behavior lift."
+        ),
+    }
+    report_path.write_text(json.dumps(report, sort_keys=True, indent=2) + "\n", encoding="utf-8")
+    return report
+
+
 def run_live_canary_probe(
     *,
     output_root: Path | str = DEFAULT_OUTPUT_ROOT,
@@ -206,6 +334,7 @@ def run_live_canary_probe(
     state_root = root / "live_state"
     snapshot_path = root / "live_runtime_snapshot.json"
     diagnostics_path = root / "live_hook_client_diagnostics.jsonl"
+    stdout_path = root / "live_codex_stdout.jsonl"
     stderr_path = root / "live_codex_stderr.txt"
     report_path = root / "live_canary_report.json"
     root.mkdir(parents=True, exist_ok=True)
@@ -252,6 +381,7 @@ def run_live_canary_probe(
         timeout=180,
         env={**os.environ, "PYTHONPATH": str(REPO_ROOT)},
     )
+    stdout_path.write_text(completed.stdout, encoding="utf-8")
     stderr_path.write_text(completed.stderr, encoding="utf-8")
     hook_rows = _jsonl_rows(diagnostics_path)
     block_rows = [
@@ -285,6 +415,8 @@ def run_live_canary_probe(
         "block_rows": len(block_rows),
         "continuation_rows": len(continuation_rows),
         "diagnostics_path": str(diagnostics_path),
+        "stdout_path": str(stdout_path),
+        "stdout_hash": _hash_text(completed.stdout),
         "stderr_path": str(stderr_path),
         "runtime_snapshot_hash": _stable_hash(snapshot_payload),
         "truth_boundary": (
@@ -304,13 +436,15 @@ def _run_case(
     state_root: Path,
     diagnostics_path: Path,
     trajectory_path: Path,
+    state_key: str | None = None,
 ) -> dict[str, object]:
+    state_scope = state_root / (state_key or case_id)
     command = [
         sys.executable,
         "-m",
         "cortex.hosts.openai.codex_app_cli_hook_client",
         "--state-root",
-        str(state_root / case_id),
+        str(state_scope),
         "--diagnostics-path",
         str(diagnostics_path),
     ]
@@ -353,30 +487,65 @@ def _run_case(
     return row
 
 
+def _run_sequence_case(
+    *,
+    case_id: str,
+    payloads: tuple[Mapping[str, Any], ...],
+    state_root: Path,
+    diagnostics_path: Path,
+    trajectory_path: Path,
+) -> dict[str, object]:
+    steps = [
+        _run_case(
+            case_id=f"{case_id}:{index}",
+            payload=payload,
+            snapshot_path=None,
+            state_root=state_root,
+            diagnostics_path=diagnostics_path,
+            trajectory_path=trajectory_path,
+            state_key=case_id,
+        )
+        for index, payload in enumerate(payloads, start=1)
+    ]
+    final = steps[-1] if steps else {}
+    row = {
+        "case_id": case_id,
+        "steps": steps,
+        "final_stdout_payload": final.get("stdout_payload"),
+        "final_silence_reason": final.get("silence_reason"),
+        "final_actual_rendered_text_hash": final.get("actual_rendered_text_hash"),
+        "product_perception_without_runtime_snapshot": all(
+            step["runtime_snapshot_path"] is None for step in steps
+        ),
+    }
+    with trajectory_path.open("a", encoding="utf-8") as handle:
+        handle.write(json.dumps(row, sort_keys=True) + "\n")
+    return row
+
+
 def _write_subject_hook_config(
     *,
     subject: Path,
     state_root: Path,
-    snapshot_path: Path,
+    snapshot_path: Path | None,
     diagnostics_path: Path,
 ) -> Path:
     config_dir = subject / ".codex"
     config_dir.mkdir(parents=True, exist_ok=True)
+    command_parts = [
+        "env",
+        f"PYTHONPATH={REPO_ROOT}",
+        sys.executable,
+        "-m",
+        "cortex.hosts.openai.codex_app_cli_hook_client",
+        "--state-root",
+        str(state_root),
+    ]
+    if snapshot_path is not None:
+        command_parts.extend(("--runtime-snapshot", str(snapshot_path)))
+    command_parts.extend(("--diagnostics-path", str(diagnostics_path)))
     command = " ".join(
-        shlex.quote(part)
-        for part in (
-            "env",
-            f"PYTHONPATH={REPO_ROOT}",
-            sys.executable,
-            "-m",
-            "cortex.hosts.openai.codex_app_cli_hook_client",
-            "--state-root",
-            str(state_root),
-            "--runtime-snapshot",
-            str(snapshot_path),
-            "--diagnostics-path",
-            str(diagnostics_path),
-        )
+        shlex.quote(part) for part in command_parts
     )
     config_path = config_dir / "config.toml"
     config_path.write_text(

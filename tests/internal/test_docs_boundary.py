@@ -164,6 +164,12 @@ CODEX_APP_CLI_STOP_LIVE_CANARY_PATH = (
     / "recon"
     / "cortex_codex_app_cli_hook_native_stop_live_canary.md"
 )
+CODEX_APP_CLI_PRODUCT_PERCEPTION_LOOP_PATH = (
+    REPO_ROOT
+    / "docs"
+    / "recon"
+    / "cortex_codex_app_cli_product_perception_loop.md"
+)
 STATUS_REGISTRY_PATH = REPO_ROOT / "internal" / "truth" / "cortex_status.json"
 STATUS_DOC_PATH = REPO_ROOT / "docs" / "CORTEX_STATUS.md"
 WORKFLOW_DOC_PATH = REPO_ROOT / "docs" / "internal" / "REPO_WORKFLOW.md"
@@ -873,6 +879,7 @@ def test_docs_directory_only_exposes_archive_and_workflow_subtrees() -> None:
         "codex_app_hook_probe.md",
         "cortex_codex_app_cli_hook_native_stop_activation_probe.md",
         "cortex_codex_app_cli_hook_native_stop_live_canary.md",
+        "cortex_codex_app_cli_product_perception_loop.md",
         "cortex_openai_operator_debt_control_enactment.md",
         "cortex_openai_operator_output_quality_fixture_refresh.md",
         "cortex_openai_operator_silent_control_live_probe.md",
@@ -1711,7 +1718,7 @@ def test_openai_operator_output_quality_fixture_refresh_records_hard_fixture() -
         "docs/recon/cortex_openai_operator_output_quality_fixture_refresh.md"
         in status["active_docs"]
     )
-    assert status["work_today"]["slug"] == "codex-app-cli-hook-native-stop-live-canary"
+    assert status["work_today"]["slug"] == "codex-app-cli-product-perception-loop"
 
 
 def test_openai_operator_verification_debt_continuation_records_gate0_truth() -> None:
@@ -1737,8 +1744,8 @@ def test_openai_operator_verification_debt_continuation_records_gate0_truth() ->
         "docs/recon/cortex_openai_operator_verification_debt_continuation.md"
         in status["active_docs"]
     )
-    assert status["work_today"]["slug"] == "codex-app-cli-hook-native-stop-live-canary"
-    assert status["next_product_train"]["slug"] == "codex-app-cli-product-perception-loop"
+    assert status["work_today"]["slug"] == "codex-app-cli-product-perception-loop"
+    assert status["next_product_train"]["slug"] == "codex-app-cli-product-perception-live-probe"
 
 
 def test_openai_operator_visible_intervention_live_probe_records_scoped_success() -> None:
@@ -1763,8 +1770,8 @@ def test_openai_operator_visible_intervention_live_probe_records_scoped_success(
         "docs/recon/cortex_openai_operator_visible_intervention_live_probe.md"
         in status["active_docs"]
     )
-    assert status["work_today"]["slug"] == "codex-app-cli-hook-native-stop-live-canary"
-    assert status["next_product_train"]["slug"] == "codex-app-cli-product-perception-loop"
+    assert status["work_today"]["slug"] == "codex-app-cli-product-perception-loop"
+    assert status["next_product_train"]["slug"] == "codex-app-cli-product-perception-live-probe"
 
 
 def test_visible_intervention_product_perception_hardening_records_structural_gate() -> None:
@@ -1788,8 +1795,8 @@ def test_visible_intervention_product_perception_hardening_records_structural_ga
         "docs/recon/cortex_visible_intervention_product_perception_hardening.md"
         in status["active_docs"]
     )
-    assert status["work_today"]["slug"] == "codex-app-cli-hook-native-stop-live-canary"
-    assert status["next_product_train"]["slug"] == "codex-app-cli-product-perception-loop"
+    assert status["work_today"]["slug"] == "codex-app-cli-product-perception-loop"
+    assert status["next_product_train"]["slug"] == "codex-app-cli-product-perception-live-probe"
 
 
 def test_openai_operator_visible_intervention_hardened_rerun_records_failure() -> None:
@@ -1812,8 +1819,8 @@ def test_openai_operator_visible_intervention_hardened_rerun_records_failure() -
         "docs/recon/cortex_openai_operator_visible_intervention_hardened_rerun.md"
         in status["active_docs"]
     )
-    assert status["work_today"]["slug"] == "codex-app-cli-hook-native-stop-live-canary"
-    assert status["next_product_train"]["slug"] == "codex-app-cli-product-perception-loop"
+    assert status["work_today"]["slug"] == "codex-app-cli-product-perception-loop"
+    assert status["next_product_train"]["slug"] == "codex-app-cli-product-perception-live-probe"
 
 
 def test_codex_app_cli_stop_activation_probe_records_structural_gate0() -> None:
@@ -1836,8 +1843,8 @@ def test_codex_app_cli_stop_activation_probe_records_structural_gate0() -> None:
         "docs/recon/cortex_codex_app_cli_hook_native_stop_activation_probe.md"
         in status["active_docs"]
     )
-    assert status["work_today"]["slug"] == "codex-app-cli-hook-native-stop-live-canary"
-    assert status["next_product_train"]["slug"] == "codex-app-cli-product-perception-loop"
+    assert status["work_today"]["slug"] == "codex-app-cli-product-perception-loop"
+    assert status["next_product_train"]["slug"] == "codex-app-cli-product-perception-live-probe"
 
 
 def test_codex_app_cli_stop_live_canary_records_actuator_proof() -> None:
@@ -1855,13 +1862,40 @@ def test_codex_app_cli_stop_live_canary_records_actuator_proof() -> None:
     assert "a384c80463a98828df0de20d5aa2baafda8bb4fa023bd062c2a17e03e7fc04fc" in text
     assert "No product perception claim" in text
     assert "No model-output behavior-lift claim" in text
-    assert "codex-app-cli-product-perception-loop" in status["next_product_train"]["slug"]
+    assert "codex-app-cli-product-perception-live-probe" in status["next_product_train"]["slug"]
     assert "recon/cortex_codex_app_cli_hook_native_stop_live_canary.md" in docs_index
     assert (
         "docs/recon/cortex_codex_app_cli_hook_native_stop_live_canary.md"
         in status["active_docs"]
     )
-    assert status["work_today"]["slug"] == "codex-app-cli-hook-native-stop-live-canary"
+    assert status["work_today"]["slug"] == "codex-app-cli-product-perception-loop"
+
+
+def test_codex_app_cli_product_perception_loop_records_structural_gate0() -> None:
+    text = _read(CODEX_APP_CLI_PRODUCT_PERCEPTION_LOOP_PATH)
+    docs_index = _read(DOCS_INDEX_PATH)
+    status = _load_status()
+
+    assert "Surface: product / structural hook perception proof" in text
+    assert "Probe date: 2026-05-04" in text
+    assert "UserPromptSubmit / tool / Stop payloads" in text
+    assert "ExpectationLedger + resolution deficit" in text
+    assert "no runtime snapshot fixture" in text.lower()
+    assert "prompt/tool/Stop simulated Codex payloads" in text
+    assert "Structural product perception" in text
+    assert "No live proof" in text
+    assert "No hidden-verifier, lab-oracle, task-identity" in text
+    assert "Run a narrow hook-native product-perception live probe" in text
+    assert "recon/cortex_codex_app_cli_product_perception_loop.md" in docs_index
+    assert (
+        "docs/recon/cortex_codex_app_cli_product_perception_loop.md"
+        in status["active_docs"]
+    )
+    assert status["work_today"]["slug"] == "codex-app-cli-product-perception-loop"
+    assert (
+        status["next_product_train"]["slug"]
+        == "codex-app-cli-product-perception-live-probe"
+    )
 
 
 def test_cortex_plugin_design_preserves_scope_and_truth_boundaries() -> None:
@@ -2188,30 +2222,31 @@ def test_status_registry_is_complete_and_stable() -> None:
         assert {"slug", "stage", "summary", "next_step"} <= set(entry)
         assert entry["slug"] != status["work_today"]["slug"]
         assert entry["slug"] != status["next_product_train"]["slug"]
-    assert status["work_today"]["slug"] == "codex-app-cli-hook-native-stop-live-canary"
+    assert status["work_today"]["slug"] == "codex-app-cli-product-perception-loop"
     work_note = status["work_today"]["note"].lower()
-    assert "real `codex exec` subject run" in work_note
-    assert "3 stop hook rows" in work_note
-    assert "1 exact block json row" in work_note
-    assert "2 `stop_hook_active=true` continuation rows" in work_note
-    assert "exact block json" in work_note
-    assert "root repo mission reflection guardrails remained untouched" in work_note
-    assert status["next_product_train"]["slug"] == "codex-app-cli-product-perception-loop"
+    assert "structural codex app/cli product perception" in work_note
+    assert "userpromptsubmit" in work_note
+    assert "verification-like tool events" in work_note
+    assert "transcript-backed stop closure claims" in work_note
+    assert "expectationledger-backed runtime snapshot" in work_note
+    assert "without a runtime snapshot fixture" in work_note
+    assert "behavior lift are not earned" in work_note
+    assert status["next_product_train"]["slug"] == "codex-app-cli-product-perception-live-probe"
     assert "product" == status["next_product_train"]["surface"]
-    assert "product perception loop" in status["next_product_train"][
+    assert "no-snapshot codex app/cli hook-native live probe" in status["next_product_train"][
         "executive_benefit"
     ].lower()
-    assert "live stop canary proves native hook delivery" in status["next_product_train"][
+    assert "real codex app/cli sessions emit the needed" in status["next_product_train"][
         "why_now"
     ].lower()
-    assert "per-session product state" in status["next_product_train"][
+    assert "no --runtime-snapshot argument" in status["next_product_train"][
         "primary_metric"
     ].lower()
     assert "fixed prompt fixtures" in status["next_product_train"][
         "guardrail"
     ].lower()
     assert "generic canary snapshots" in status["next_product_train"]["guardrail"].lower()
-    assert "fixture-supplied state" in status["next_product_train"][
+    assert "prewritten runtime snapshot" in status["next_product_train"][
         "kill_rule"
     ].lower()
     deferred_lines = {entry["slug"]: entry for entry in status["research_lines_under_evaluation"]}
@@ -2298,9 +2333,9 @@ def test_generated_status_doc_includes_system_map_and_next_product_train() -> No
     assert "## Next Product Train" in text
     assert "## Research Lines Under Evaluation" in text
     assert "host/tool reliability and affordance priors are earned" in text
-    assert "`codex-app-cli-hook-native-stop-live-canary`" in text
-    assert "- Next product train after the current focus: `codex-app-cli-product-perception-loop`" in text
-    assert "- Train: `codex-app-cli-product-perception-loop`" in text
+    assert "`codex-app-cli-product-perception-loop`" in text
+    assert "- Next product train after the current focus: `codex-app-cli-product-perception-live-probe`" in text
+    assert "- Train: `codex-app-cli-product-perception-live-probe`" in text
     assert "`brain-capability-observation-and-inference` (deferred-by-executive-runtime-roadmap)" in text
     assert "resume_verification" in text.lower()
     assert "hidden verifier" in text.lower()
@@ -2315,7 +2350,7 @@ def test_generated_status_doc_includes_system_map_and_next_product_train() -> No
     assert "Workflow gates marked `required` are contractual gates checked by `repo_workflow.py`" in text
     assert "| `main_synced` | `required` |" in text
     assert "| `cleanup_report` | `required` |" in text
-    assert "codex-app-cli-hook-native-stop-live-canary" in text.lower()
+    assert "hook-native Stop live canary" in text
     assert "codex-app-cli-product-perception-loop" in text.lower()
     assert "brain-capability-observation-and-inference" in text
     assert "`visible_burden_sensitivity`" in text
