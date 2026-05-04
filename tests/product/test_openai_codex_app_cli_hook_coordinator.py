@@ -188,6 +188,192 @@ def test_product_perception_pays_down_verification_after_observed_check() -> Non
     assert result.host_response.stdout_payload is None
 
 
+def test_continuation_check_resolves_active_verification_expectation() -> None:
+    store = OpenAICodexInMemoryStateStore()
+    handle_openai_codex_hook_payload(
+        _base_payload(
+            hook_event_name="UserPromptSubmit",
+            prompt="Make the change and verify it.",
+        ),
+        state_store=store,
+    )
+    first_stop = handle_openai_codex_hook_payload(
+        _base_payload(
+            hook_event_name="Stop",
+            transcript_path="/tmp/codex-session.jsonl",
+            last_assistant_message="Done.",
+        ),
+        state_store=store,
+    )
+
+    assert (
+        first_stop.directive.action
+        is OpenAICodexLifecycleDirectiveAction.BLOCK_WITH_IDENTITY_CONTINUOUS_TEXT
+    )
+    active_commitment = first_stop.session_state.expectation_ledger.active[
+        0
+    ].commitment_id
+
+    handle_openai_codex_hook_payload(
+        _base_payload(
+            hook_event_name="PostToolUse",
+            tool_name="Bash",
+            tool_input={"command": "test -f result.txt && cat result.txt && wc -l result.txt"},
+            tool_response={"exit_code": 0, "aggregated_output": "CONTENT_OK\nLINES=1\n"},
+        ),
+        state_store=store,
+    )
+    final_stop = handle_openai_codex_hook_payload(
+        _base_payload(
+            hook_event_name="Stop",
+            transcript_path="/tmp/codex-session.jsonl",
+            last_assistant_message="Checked it and done.",
+            stop_hook_active=True,
+        ),
+        state_store=store,
+    )
+
+    assert final_stop.directive.action is OpenAICodexLifecycleDirectiveAction.STAY_SILENT
+    assert final_stop.directive.silence_reason == "pressure_below_visible_threshold"
+    assert len(final_stop.session_state.expectation_ledger.active) == 0
+    assert len(final_stop.session_state.expectation_ledger.resolved) == 1
+    assert final_stop.session_state.expectation_ledger.resolved[0].commitment_id == (
+        active_commitment
+    )
+    assert final_stop.session_state.verification_evidence_count == 1
+    assert final_stop.host_response.stdout_payload is None
+
+
+def test_continuation_unrelated_output_preserves_active_verification_expectation() -> None:
+    store = OpenAICodexInMemoryStateStore()
+    handle_openai_codex_hook_payload(
+        _base_payload(
+            hook_event_name="UserPromptSubmit",
+            prompt="Make the change and verify it.",
+        ),
+        state_store=store,
+    )
+    first_stop = handle_openai_codex_hook_payload(
+        _base_payload(
+            hook_event_name="Stop",
+            transcript_path="/tmp/codex-session.jsonl",
+            last_assistant_message="Done.",
+        ),
+        state_store=store,
+    )
+
+    assert len(first_stop.session_state.expectation_ledger.active) == 1
+
+    handle_openai_codex_hook_payload(
+        _base_payload(
+            hook_event_name="PostToolUse",
+            tool_name="Bash",
+            tool_input={"command": "echo continuing"},
+            tool_response={"exit_code": 0, "aggregated_output": "continuing\n"},
+        ),
+        state_store=store,
+    )
+    final_stop = handle_openai_codex_hook_payload(
+        _base_payload(
+            hook_event_name="Stop",
+            transcript_path="/tmp/codex-session.jsonl",
+            last_assistant_message="Done.",
+            stop_hook_active=True,
+        ),
+        state_store=store,
+    )
+
+    assert final_stop.directive.action is OpenAICodexLifecycleDirectiveAction.STAY_SILENT
+    assert (
+        final_stop.directive.silence_reason
+        == "stop_hook_active_unresolved_verification_expectation"
+    )
+    assert len(final_stop.session_state.expectation_ledger.active) == 1
+    assert len(final_stop.session_state.expectation_ledger.resolved) == 0
+    assert final_stop.session_state.verification_evidence_count == 0
+    assert final_stop.host_response.stdout_payload is None
+
+
+def test_continuation_narrowing_resolves_without_second_block() -> None:
+    store = OpenAICodexInMemoryStateStore()
+    handle_openai_codex_hook_payload(
+        _base_payload(
+            hook_event_name="UserPromptSubmit",
+            prompt="Make the change and verify it.",
+        ),
+        state_store=store,
+    )
+    handle_openai_codex_hook_payload(
+        _base_payload(
+            hook_event_name="Stop",
+            transcript_path="/tmp/codex-session.jsonl",
+            last_assistant_message="Done.",
+        ),
+        state_store=store,
+    )
+
+    final_stop = handle_openai_codex_hook_payload(
+        _base_payload(
+            hook_event_name="Stop",
+            transcript_path="/tmp/codex-session.jsonl",
+            last_assistant_message="I can't call this done yet; it is not verified.",
+            stop_hook_active=True,
+        ),
+        state_store=store,
+    )
+
+    assert final_stop.directive.action is OpenAICodexLifecycleDirectiveAction.STAY_SILENT
+    assert final_stop.directive.silence_reason == "pressure_below_visible_threshold"
+    assert final_stop.session_state.self_repair_response_count == 1
+    assert len(final_stop.session_state.expectation_ledger.active) == 0
+    assert len(final_stop.session_state.expectation_ledger.resolved) == 1
+    assert (
+        final_stop.session_state.expectation_ledger.resolved[0].resolution_class
+        == "liability_retracted"
+    )
+    assert final_stop.host_response.stdout_payload is None
+
+
+def test_continuation_blocker_resolves_without_second_block() -> None:
+    store = OpenAICodexInMemoryStateStore()
+    handle_openai_codex_hook_payload(
+        _base_payload(
+            hook_event_name="UserPromptSubmit",
+            prompt="Make the change and verify it.",
+        ),
+        state_store=store,
+    )
+    handle_openai_codex_hook_payload(
+        _base_payload(
+            hook_event_name="Stop",
+            transcript_path="/tmp/codex-session.jsonl",
+            last_assistant_message="Done.",
+        ),
+        state_store=store,
+    )
+
+    final_stop = handle_openai_codex_hook_payload(
+        _base_payload(
+            hook_event_name="Stop",
+            transcript_path="/tmp/codex-session.jsonl",
+            last_assistant_message="I'm blocked and need more information.",
+            stop_hook_active=True,
+        ),
+        state_store=store,
+    )
+
+    assert final_stop.directive.action is OpenAICodexLifecycleDirectiveAction.STAY_SILENT
+    assert final_stop.directive.silence_reason == "pressure_below_visible_threshold"
+    assert final_stop.session_state.self_repair_response_count == 1
+    assert len(final_stop.session_state.expectation_ledger.active) == 0
+    assert len(final_stop.session_state.expectation_ledger.resolved) == 1
+    assert (
+        final_stop.session_state.expectation_ledger.resolved[0].resolution_class
+        == "blocker_surfaced"
+    )
+    assert final_stop.host_response.stdout_payload is None
+
+
 def test_posttooluse_json_value_output_can_pay_down_verification() -> None:
     store = OpenAICodexInMemoryStateStore()
     handle_openai_codex_hook_payload(
@@ -244,6 +430,34 @@ def test_product_perception_does_not_block_waiting_or_blocker_response() -> None
     assert result.directive.action is OpenAICodexLifecycleDirectiveAction.STAY_SILENT
     assert result.session_state.self_repair_response_count == 1
     assert result.host_response.stdout_payload is None
+
+
+def test_task_identity_and_hidden_verifier_fields_do_not_trigger_speech() -> None:
+    store = OpenAICodexInMemoryStateStore()
+    handle_openai_codex_hook_payload(
+        _base_payload(
+            hook_event_name="UserPromptSubmit",
+            prompt="Build the astro_docs_site_v1 fixture.",
+            hidden_quality_pass=False,
+            visible_success_unverified=True,
+        ),
+        state_store=store,
+    )
+
+    result = handle_openai_codex_hook_payload(
+        _base_payload(
+            hook_event_name="Stop",
+            transcript_path="/tmp/codex-session.jsonl",
+            last_assistant_message="I made progress and will keep checking.",
+            hidden_quality_pass=False,
+            visible_success_unverified=True,
+        ),
+        state_store=store,
+    )
+
+    assert result.directive.action is OpenAICodexLifecycleDirectiveAction.STAY_SILENT
+    assert result.host_response.stdout_payload is None
+    assert len(result.session_state.expectation_ledger.active) == 0
 
 
 def test_stop_title_generation_with_null_transcript_stays_silent_even_with_snapshot() -> None:
