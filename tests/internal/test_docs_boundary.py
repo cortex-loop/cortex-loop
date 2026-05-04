@@ -815,7 +815,17 @@ def test_active_truth_surfaces_do_not_use_old_openai_operator_cli_label() -> Non
 def test_docs_directory_only_exposes_archive_and_workflow_subtrees() -> None:
     subdirs = sorted(path.name for path in DOCS_ROOT.iterdir() if path.is_dir())
 
-    assert subdirs == ["archive", "cortex_plugin", "internal", "recon", "runtime_context"]
+    assert subdirs == [
+        "archive",
+        "audit",
+        "cortex_plugin",
+        "internal",
+        "recon",
+        "runtime_context",
+    ]
+    assert sorted(path.name for path in (DOCS_ROOT / "audit").iterdir()) == [
+        "runtime_context_vs_grounded_intervention.md",
+    ]
     assert sorted(path.name for path in (DOCS_ROOT / "cortex_plugin").iterdir()) == [
         "ADAPTER.md",
         "DESIGN.md",
