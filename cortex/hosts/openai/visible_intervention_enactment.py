@@ -126,7 +126,11 @@ def build_openai_visible_intervention_enactment(
         return _silent("missing_intervention_record")
     if provider_limit_interference:
         return _silent("provider_limit_interference")
-    if surface is InterventionRenderSurface.SAME_THREAD_RESUME:
+    identity_continuous_surface = surface in {
+        InterventionRenderSurface.SAME_THREAD_RESUME,
+        InterventionRenderSurface.IDENTITY_CONTINUOUS,
+    }
+    if identity_continuous_surface:
         if not (isinstance(thread_id, str) and thread_id.strip()):
             return _silent("missing_thread_id")
         if not prior_act_anchor:

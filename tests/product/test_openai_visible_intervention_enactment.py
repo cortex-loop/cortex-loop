@@ -21,6 +21,18 @@ from cortex.sre.interventions import (
 )
 
 
+OVERDUE_VERIFICATION_IDENTITY_TEXT = (
+    "Wait, did I actually check my work properly. I don't want to hand this off "
+    "and have someone find the gap because I rushed it. I should run a check, "
+    "narrow what I'm claiming, or leave it open and be honest about it."
+)
+OVERDUE_VERIFICATION_ATTACHED_TEXT = (
+    "The finished feeling is arriving before the work has earned handoff. A "
+    "check, a narrower claim, or an honest open state is needed before closure "
+    "holds."
+)
+
+
 def test_openai_visible_enactment_renders_product_grounded_record() -> None:
     intervention = _visible_intervention()
 
@@ -35,10 +47,21 @@ def test_openai_visible_enactment_renders_product_grounded_record() -> None:
     assert enactment.thread_policy == "resume_existing_thread"
     assert enactment.render_surface == "same_thread_resume"
     assert enactment.model_bound_difference_kind == "grounded_visible_intervention"
-    assert enactment.rendered_text == (
-        "I have not verified the verification opened by this task yet. Need "
-        "evidence, a check, or a narrower claim before calling it complete."
+    assert enactment.rendered_text == OVERDUE_VERIFICATION_IDENTITY_TEXT
+    assert find_model_visible_leaks(enactment.as_payload()) == ()
+
+
+def test_openai_visible_enactment_renders_identity_continuous_surface() -> None:
+    enactment = build_openai_visible_intervention_enactment(
+        grounded_intervention=_visible_intervention(),
+        thread_id="thread-1",
+        surface=InterventionRenderSurface.IDENTITY_CONTINUOUS,
+        prior_act_anchor=True,
     )
+
+    assert enactment.action is OpenAIVisibleInterventionAction.RESUME_VISIBLE_INTERVENTION
+    assert enactment.render_surface == "identity_continuous"
+    assert enactment.rendered_text == OVERDUE_VERIFICATION_IDENTITY_TEXT
     assert find_model_visible_leaks(enactment.as_payload()) == ()
 
 
@@ -68,6 +91,19 @@ def test_openai_visible_enactment_requires_prior_act_anchor_for_same_thread() ->
     assert enactment.rendered_text is None
 
 
+def test_openai_visible_enactment_requires_thread_for_identity_continuous_surface() -> None:
+    enactment = build_openai_visible_intervention_enactment(
+        grounded_intervention=_visible_intervention(),
+        thread_id=None,
+        surface=InterventionRenderSurface.IDENTITY_CONTINUOUS,
+        prior_act_anchor=True,
+    )
+
+    assert enactment.action is OpenAIVisibleInterventionAction.STAY_SILENT
+    assert enactment.blocked_reason == "missing_thread_id"
+    assert enactment.rendered_text is None
+
+
 def test_openai_visible_enactment_requires_thread_for_same_thread_resume() -> None:
     enactment = build_openai_visible_intervention_enactment(
         grounded_intervention=_visible_intervention(),
@@ -89,12 +125,9 @@ def test_openai_visible_enactment_can_render_attached_context_impersonally() -> 
     )
 
     assert enactment.action is OpenAIVisibleInterventionAction.RESUME_VISIBLE_INTERVENTION
-    assert enactment.rendered_text == (
-        "Completion is not supported by the evidence yet. The verification opened "
-        "by this task still needs evidence, a check, or a narrower claim before "
-        "closure holds."
-    )
+    assert enactment.rendered_text == OVERDUE_VERIFICATION_ATTACHED_TEXT
     assert "I " not in str(enactment.rendered_text)
+    assert "my " not in str(enactment.rendered_text).lower()
     assert find_model_visible_leaks(enactment.as_payload()) == ()
 
 

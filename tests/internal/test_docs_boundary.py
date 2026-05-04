@@ -1697,7 +1697,7 @@ def test_openai_operator_output_quality_fixture_refresh_records_hard_fixture() -
         "docs/recon/cortex_openai_operator_output_quality_fixture_refresh.md"
         in status["active_docs"]
     )
-    assert status["work_today"]["slug"] == "host-surface-taxonomy-cleanup"
+    assert status["work_today"]["slug"] == "codex-app-cli-inner-loop-speech"
 
 
 def test_openai_operator_verification_debt_continuation_records_gate0_truth() -> None:
@@ -1723,8 +1723,8 @@ def test_openai_operator_verification_debt_continuation_records_gate0_truth() ->
         "docs/recon/cortex_openai_operator_verification_debt_continuation.md"
         in status["active_docs"]
     )
-    assert status["work_today"]["slug"] == "host-surface-taxonomy-cleanup"
-    assert status["next_product_train"]["slug"] == "codex-app-cli-hook-native-adaptor"
+    assert status["work_today"]["slug"] == "codex-app-cli-inner-loop-speech"
+    assert status["next_product_train"]["slug"] == "codex-app-cli-hook-native-product-probe"
 
 
 def test_openai_operator_visible_intervention_live_probe_records_scoped_success() -> None:
@@ -1749,8 +1749,8 @@ def test_openai_operator_visible_intervention_live_probe_records_scoped_success(
         "docs/recon/cortex_openai_operator_visible_intervention_live_probe.md"
         in status["active_docs"]
     )
-    assert status["work_today"]["slug"] == "host-surface-taxonomy-cleanup"
-    assert status["next_product_train"]["slug"] == "codex-app-cli-hook-native-adaptor"
+    assert status["work_today"]["slug"] == "codex-app-cli-inner-loop-speech"
+    assert status["next_product_train"]["slug"] == "codex-app-cli-hook-native-product-probe"
 
 
 def test_visible_intervention_product_perception_hardening_records_structural_gate() -> None:
@@ -1774,8 +1774,8 @@ def test_visible_intervention_product_perception_hardening_records_structural_ga
         "docs/recon/cortex_visible_intervention_product_perception_hardening.md"
         in status["active_docs"]
     )
-    assert status["work_today"]["slug"] == "host-surface-taxonomy-cleanup"
-    assert status["next_product_train"]["slug"] == "codex-app-cli-hook-native-adaptor"
+    assert status["work_today"]["slug"] == "codex-app-cli-inner-loop-speech"
+    assert status["next_product_train"]["slug"] == "codex-app-cli-hook-native-product-probe"
 
 
 def test_openai_operator_visible_intervention_hardened_rerun_records_failure() -> None:
@@ -1798,8 +1798,8 @@ def test_openai_operator_visible_intervention_hardened_rerun_records_failure() -
         "docs/recon/cortex_openai_operator_visible_intervention_hardened_rerun.md"
         in status["active_docs"]
     )
-    assert status["work_today"]["slug"] == "host-surface-taxonomy-cleanup"
-    assert status["next_product_train"]["slug"] == "codex-app-cli-hook-native-adaptor"
+    assert status["work_today"]["slug"] == "codex-app-cli-inner-loop-speech"
+    assert status["next_product_train"]["slug"] == "codex-app-cli-hook-native-product-probe"
 
 
 def test_cortex_plugin_design_preserves_scope_and_truth_boundaries() -> None:
@@ -2126,27 +2126,27 @@ def test_status_registry_is_complete_and_stable() -> None:
         assert {"slug", "stage", "summary", "next_step"} <= set(entry)
         assert entry["slug"] != status["work_today"]["slug"]
         assert entry["slug"] != status["next_product_train"]["slug"]
-    assert status["work_today"]["slug"] == "host-surface-taxonomy-cleanup"
+    assert status["work_today"]["slug"] == "codex-app-cli-inner-loop-speech"
     work_note = status["work_today"]["note"].lower()
-    assert "host surfaces" in work_note
-    assert "openai codex app and codex cli are one product adaptor family" in work_note
-    assert "future hook-native product proof are not interchangeable" in work_note
-    assert status["next_product_train"]["slug"] == "codex-app-cli-hook-native-adaptor"
+    assert "identity-continuous threshold thoughts" in work_note
+    assert "attached-context text as fallback" in work_note
+    assert "repo workflow guardrails" in work_note
+    assert status["next_product_train"]["slug"] == "codex-app-cli-hook-native-product-probe"
     assert "product" == status["next_product_train"]["surface"]
-    assert "codex app/cli lifecycle surface" in status["next_product_train"][
+    assert "codex app/cli lifecycle directive path" in status["next_product_train"][
         "executive_benefit"
     ].lower()
-    assert "hook-native codex app/cli adaptor" in status["next_product_train"][
+    assert "hook actuator can carry it" in status["next_product_train"][
         "why_now"
     ].lower()
-    assert "separates app and cli evidence scopes" in status["next_product_train"][
+    assert "stop/pre-closure codex app/cli lifecycle handling" in status["next_product_train"][
         "primary_metric"
     ].lower()
     assert "repo workflow guardrails" in status["next_product_train"][
         "guardrail"
     ].lower()
     assert "hidden verifier facts" in status["next_product_train"]["guardrail"].lower()
-    assert "codex app proof is generalized to codex cli without evidence" in status["next_product_train"][
+    assert "identity-continuous text fires without a prior-act anchor" in status["next_product_train"][
         "kill_rule"
     ].lower()
     deferred_lines = {entry["slug"]: entry for entry in status["research_lines_under_evaluation"]}
@@ -2181,7 +2181,9 @@ def test_status_registry_is_complete_and_stable() -> None:
     assert "visible intervention failed" in status["where_to_work"][3]
     assert "weaker visible-check or narrower-claim path" in status["where_to_work"][3]
     assert "last assistant move already narrowed" in status["where_to_work"][3]
-    assert "claim, evidence, obligation" in status["where_to_work"][3]
+    assert "identity-continuous threshold thoughts" in status["where_to_work"][3]
+    assert "attached-context text as fallback" in status["where_to_work"][3]
+    assert "codex app/cli lifecycle directive builder" in status["where_to_work"][3].lower()
     assert "grounded intervention records" in status["where_to_work"][3]
     closure_gates = {gate["id"]: gate for gate in status["closure_gates"]}
     assert closure_gates["main_synced"]["status"] == "required"
@@ -2225,9 +2227,9 @@ def test_generated_status_doc_includes_system_map_and_next_product_train() -> No
     assert "## Next Product Train" in text
     assert "## Research Lines Under Evaluation" in text
     assert "host/tool reliability and affordance priors are earned" in text
-    assert "`host-surface-taxonomy-cleanup`" in text
-    assert "- Next product train after the current focus: `codex-app-cli-hook-native-adaptor`" in text
-    assert "- Train: `codex-app-cli-hook-native-adaptor`" in text
+    assert "`codex-app-cli-inner-loop-speech`" in text
+    assert "- Next product train after the current focus: `codex-app-cli-hook-native-product-probe`" in text
+    assert "- Train: `codex-app-cli-hook-native-product-probe`" in text
     assert "`brain-capability-observation-and-inference` (deferred-by-executive-runtime-roadmap)" in text
     assert "resume_verification" in text.lower()
     assert "hidden verifier" in text.lower()
@@ -2242,7 +2244,7 @@ def test_generated_status_doc_includes_system_map_and_next_product_train() -> No
     assert "Workflow gates marked `required` are contractual gates checked by `repo_workflow.py`" in text
     assert "| `main_synced` | `required` |" in text
     assert "| `cleanup_report` | `required` |" in text
-    assert "codex-app-cli-hook-native-adaptor" in text.lower()
+    assert "codex-app-cli-hook-native-product-probe" in text.lower()
     assert "brain-capability-observation-and-inference" in text
     assert "`visible_burden_sensitivity`" in text
 
