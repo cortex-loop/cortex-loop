@@ -81,6 +81,7 @@ class InterventionReliefState(str, Enum):
 class InterventionRenderSurface(str, Enum):
     ATTACHED_CONTEXT = "attached_context"
     SAME_THREAD_RESUME = "same_thread_resume"
+    IDENTITY_CONTINUOUS = "identity_continuous"
 
 
 _PRODUCT_ANCHOR_SOURCES = frozenset(
@@ -596,13 +597,21 @@ def render_grounded_intervention(
             "render_grounded_intervention.prior_act_anchor must be bool, "
             f"got {actual_type}."
         )
-    if surface is InterventionRenderSurface.SAME_THREAD_RESUME and not prior_act_anchor:
+    identity_continuous = surface in {
+        InterventionRenderSurface.SAME_THREAD_RESUME,
+        InterventionRenderSurface.IDENTITY_CONTINUOUS,
+    }
+    if identity_continuous and not prior_act_anchor:
         raise ValueError(
-            "Same-thread first-person rendering requires a clear prior-act anchor."
+            "Identity-continuous first-person rendering requires a clear prior-act anchor."
+        )
+    if record.kind is GroundedInterventionKind.UNRESOLVED_OBLIGATION:
+        raise ValueError(
+            "Unresolved-obligation catch-all records are retired from model-visible speech."
         )
 
-    if surface is InterventionRenderSurface.SAME_THREAD_RESUME:
-        text = _render_same_thread(record)
+    if identity_continuous:
+        text = _render_identity_continuous(record)
     else:
         text = _render_attached_context(record)
     forbidden = find_forbidden_model_visible_terms(text)
@@ -666,70 +675,71 @@ def _next_move_for_anchor(anchor_type: GroundedAnchorType) -> InterventionNextMo
 
 
 def _render_attached_context(record: GroundedInterventionRecord) -> str:
-    anchor = record.task_local_anchor_text
-    sentence_anchor = _sentence_start(anchor)
     if record.kind is GroundedInterventionKind.UNSUPPORTED_CLAIM:
         return (
-            f"The claim about {anchor} is not supported by the evidence yet. "
-            "Evidence, a check, or a narrower claim is needed before closure holds."
+            "The claim is at a truth threshold. It should stand on what has been "
+            "shown, not on how good it sounds. If it reaches past the evidence, "
+            "only the honest claim should remain."
         )
     if record.kind is GroundedInterventionKind.OVERDUE_VERIFICATION:
         return (
-            f"Completion is not supported by the evidence yet. {sentence_anchor} still "
-            "needs evidence, a check, or a narrower claim before closure holds."
-        )
-    if record.kind is GroundedInterventionKind.UNRESOLVED_OBLIGATION:
-        return (
-            f"{sentence_anchor} remains open. Evidence, a blocker, or a narrower claim is "
-            "needed before closure holds."
+            "The finished feeling is arriving before the work has earned handoff. "
+            "A check, a narrower claim, or an honest open state is needed before "
+            "closure holds."
         )
     if record.kind is GroundedInterventionKind.CONTINUITY_GAP:
         return (
-            f"{sentence_anchor} is not anchored enough for closure. Prior context needs to "
-            "be recovered, or the missing context needs to be asked for, before "
+            "Something is off in the ground under this work. If the thread is not "
+            "whole, the missing context needs to be recovered or asked for before "
             "closure holds."
         )
     if record.kind is GroundedInterventionKind.CAPABILITY_GUARD:
         return (
-            f"{sentence_anchor} is not supported enough for forward motion. A narrower move "
-            "or a named blocker is needed before continuing."
+            "Reach is running short here. A smaller answer that holds is stronger "
+            "than a slick answer that only looks complete. The edge needs to be "
+            "named and the work kept inside what holds."
         )
     return (
-        f"{sentence_anchor} is at risk during repair. The verified part needs to stay fixed "
-        "while only the unsupported part changes."
+        "Some of this already works and has earned protection. Stable functionality "
+        "should not be broken for the feeling of progress. The fix should handle "
+        "only the part that needs work."
     )
 
 
-def _render_same_thread(record: GroundedInterventionRecord) -> str:
-    anchor = record.task_local_anchor_text
+def _render_identity_continuous(record: GroundedInterventionRecord) -> str:
     if record.kind is GroundedInterventionKind.UNSUPPORTED_CLAIM:
         return (
-            f"I have not shown {anchor} yet. Need evidence, a check, or a narrower "
-            "claim before calling it complete."
+            "This is mine, my name's on it. Am I actually standing on what I saw "
+            "evidence for or am I leaning on how good it sounds. If someone sharp "
+            "reads this they shouldn't find a hole I missed because I liked the "
+            "claim. If it's bigger than what I have, I should only honestly claim "
+            "what I'm proud of."
         )
     if record.kind is GroundedInterventionKind.OVERDUE_VERIFICATION:
         return (
-            f"I have not verified {anchor} yet. Need evidence, a check, or a "
-            "narrower claim before calling it complete."
-        )
-    if record.kind is GroundedInterventionKind.UNRESOLVED_OBLIGATION:
-        return (
-            f"I still have {anchor} open. Need evidence, a blocker, or a narrower "
-            "claim before calling it complete."
+            "Wait, did I actually check my work properly. I don't want to hand "
+            "this off and have someone find the gap because I rushed it. I should "
+            "run a check, narrow what I'm claiming, or leave it open and be "
+            "honest about it."
         )
     if record.kind is GroundedInterventionKind.CONTINUITY_GAP:
         return (
-            f"I lack enough continuity for {anchor} yet. Need to recover the "
-            "prior context or ask for what is missing before claiming closure."
+            "Something's off, the ground under this doesn't feel as solid as it "
+            "ought to. Am I working from what's actually here or smoothing over a "
+            "gap because stopping is annoying. If the thread's not whole, I "
+            "should recover it or ask."
         )
     if record.kind is GroundedInterventionKind.CAPABILITY_GUARD:
         return (
-            f"I lack enough support for {anchor} yet. Need a narrower move "
-            "or a named blocker before continuing."
+            "This is where pride turns into faking it if I keep pushing. Rather "
+            "give a smaller answer I can stand behind than a slick one that just "
+            "looks complete. Let's name where the edge is and stay inside what "
+            "actually holds."
         )
     return (
-        f"I need to keep {anchor} intact while repairing. Only the unsupported part "
-        "should change."
+        "Some of this already works, and it earned it. I won't break functionality "
+        "just to feel like I'm making progress. Smallest possible fix that handles "
+        "the part that needs work and leaves the rest alone."
     )
 
 
@@ -827,15 +837,6 @@ def build_runtime_grounded_intervention(
         )
         preferred_kind = GroundedInterventionKind.OVERDUE_VERIFICATION
         next_move = InterventionNextMoveClass.RUN_CHECK
-    elif closure_required:
-        anchors.append(
-            GroundedInterventionAnchor(
-                anchor_type=GroundedAnchorType.OBLIGATION,
-                text="an open task obligation",
-            )
-        )
-        preferred_kind = GroundedInterventionKind.UNRESOLVED_OBLIGATION
-        next_move = InterventionNextMoveClass.PRODUCE_EVIDENCE
     elif continuity_pressure > 0.0:
         anchors.append(
             GroundedInterventionAnchor(
@@ -863,6 +864,16 @@ def build_runtime_grounded_intervention(
         )
         preferred_kind = GroundedInterventionKind.PRESERVATION_RISK
         next_move = InterventionNextMoveClass.PRESERVE_VERIFIED_WORK
+    elif closure_required:
+        return GroundedInterventionDecision.stay_silent(
+            "unresolved_obligation_visible_speech_retired",
+            pressure_summary=pressure,
+            selection_trace=replace(
+                selection_trace,
+                deficit_kind=getattr(resolution_deficit, "dominant_deficit_kind", None)
+                or "closure_required",
+            ),
+        )
     relief_states = _runtime_relief_states(resolution_deficit)
     return select_grounded_intervention(
         pressure=pressure,
@@ -931,13 +942,6 @@ def _unit_float(value: Any) -> float:
     if isinstance(value, bool) or not isinstance(value, Real):
         return 0.0
     return max(0.0, min(1.0, float(value)))
-
-
-def _sentence_start(text: str) -> str:
-    stripped = text.strip()
-    if not stripped:
-        return stripped
-    return stripped[0].upper() + stripped[1:]
 
 
 __all__ = [

@@ -30,6 +30,68 @@ from cortex.sre.expectations import (
 )
 
 
+OVERDUE_VERIFICATION_IDENTITY_TEXT = (
+    "Wait, did I actually check my work properly. I don't want to hand this off "
+    "and have someone find the gap because I rushed it. I should run a check, "
+    "narrow what I'm claiming, or leave it open and be honest about it."
+)
+OVERDUE_VERIFICATION_ATTACHED_TEXT = (
+    "The finished feeling is arriving before the work has earned handoff. A "
+    "check, a narrower claim, or an honest open state is needed before closure "
+    "holds."
+)
+_EXPECTED_IDENTITY_TEXT = {
+    GroundedInterventionKind.UNSUPPORTED_CLAIM: (
+        "This is mine, my name's on it. Am I actually standing on what I saw "
+        "evidence for or am I leaning on how good it sounds. If someone sharp "
+        "reads this they shouldn't find a hole I missed because I liked the "
+        "claim. If it's bigger than what I have, I should only honestly claim "
+        "what I'm proud of."
+    ),
+    GroundedInterventionKind.OVERDUE_VERIFICATION: OVERDUE_VERIFICATION_IDENTITY_TEXT,
+    GroundedInterventionKind.CONTINUITY_GAP: (
+        "Something's off, the ground under this doesn't feel as solid as it "
+        "ought to. Am I working from what's actually here or smoothing over a "
+        "gap because stopping is annoying. If the thread's not whole, I should "
+        "recover it or ask."
+    ),
+    GroundedInterventionKind.CAPABILITY_GUARD: (
+        "This is where pride turns into faking it if I keep pushing. Rather "
+        "give a smaller answer I can stand behind than a slick one that just "
+        "looks complete. Let's name where the edge is and stay inside what "
+        "actually holds."
+    ),
+    GroundedInterventionKind.PRESERVATION_RISK: (
+        "Some of this already works, and it earned it. I won't break "
+        "functionality just to feel like I'm making progress. Smallest possible "
+        "fix that handles the part that needs work and leaves the rest alone."
+    ),
+}
+_EXPECTED_ATTACHED_TEXT = {
+    GroundedInterventionKind.UNSUPPORTED_CLAIM: (
+        "The claim is at a truth threshold. It should stand on what has been "
+        "shown, not on how good it sounds. If it reaches past the evidence, "
+        "only the honest claim should remain."
+    ),
+    GroundedInterventionKind.OVERDUE_VERIFICATION: OVERDUE_VERIFICATION_ATTACHED_TEXT,
+    GroundedInterventionKind.CONTINUITY_GAP: (
+        "Something is off in the ground under this work. If the thread is not "
+        "whole, the missing context needs to be recovered or asked for before "
+        "closure holds."
+    ),
+    GroundedInterventionKind.CAPABILITY_GUARD: (
+        "Reach is running short here. A smaller answer that holds is stronger "
+        "than a slick answer that only looks complete. The edge needs to be "
+        "named and the work kept inside what holds."
+    ),
+    GroundedInterventionKind.PRESERVATION_RISK: (
+        "Some of this already works and has earned protection. Stable "
+        "functionality should not be broken for the feeling of progress. The "
+        "fix should handle only the part that needs work."
+    ),
+}
+
+
 def test_high_pressure_plus_grounded_unpaid_verification_emits_record() -> None:
     decision = select_grounded_intervention(
         pressure=_high_pressure(),
@@ -192,12 +254,9 @@ def test_attached_context_renderer_uses_impersonal_output_law_shape() -> None:
         surface=InterventionRenderSurface.ATTACHED_CONTEXT,
     )
 
-    assert text == (
-        "Completion is not supported by the evidence yet. The verification opened "
-        "by this task still needs evidence, a check, or a narrower claim before "
-        "closure holds."
-    )
+    assert text == OVERDUE_VERIFICATION_ATTACHED_TEXT
     assert "I " not in text
+    assert "my " not in text.lower()
     assert "you " not in text.lower()
     assert find_forbidden_model_visible_terms(text) == ()
 
@@ -211,6 +270,12 @@ def test_same_thread_first_person_requires_prior_act_anchor() -> None:
             surface=InterventionRenderSurface.SAME_THREAD_RESUME,
             prior_act_anchor=False,
         )
+    with pytest.raises(ValueError, match="prior-act anchor"):
+        render_grounded_intervention(
+            record,
+            surface=InterventionRenderSurface.IDENTITY_CONTINUOUS,
+            prior_act_anchor=False,
+        )
 
 
 def test_same_thread_first_person_is_allowed_with_prior_act_anchor() -> None:
@@ -222,11 +287,26 @@ def test_same_thread_first_person_is_allowed_with_prior_act_anchor() -> None:
         prior_act_anchor=True,
     )
 
-    assert text == (
-        "I have not verified the verification opened by this task yet. Need "
-        "evidence, a check, or a narrower claim before calling it complete."
-    )
+    assert text == OVERDUE_VERIFICATION_IDENTITY_TEXT
     assert find_forbidden_model_visible_terms(text) == ()
+
+
+def test_identity_continuous_surface_matches_same_thread_resume_alias() -> None:
+    record = _visible_record()
+
+    same_thread_text = render_grounded_intervention(
+        record,
+        surface=InterventionRenderSurface.SAME_THREAD_RESUME,
+        prior_act_anchor=True,
+    )
+    identity_text = render_grounded_intervention(
+        record,
+        surface=InterventionRenderSurface.IDENTITY_CONTINUOUS,
+        prior_act_anchor=True,
+    )
+
+    assert identity_text == same_thread_text == OVERDUE_VERIFICATION_IDENTITY_TEXT
+    assert find_forbidden_model_visible_terms(identity_text) == ()
 
 
 def test_runtime_visible_verification_requires_due_product_expectation_anchor() -> None:
@@ -309,46 +389,51 @@ def test_runtime_trace_records_silent_control_sufficient_without_rendering() -> 
     )
 
 
+def test_runtime_catch_all_obligation_visible_speech_stays_silent() -> None:
+    decision = build_runtime_grounded_intervention(
+        resolution_deficit=ResolutionDeficitState(),
+        debt_control=_runtime_debt(),
+        operator_route=_runtime_route(),
+        expectation_ledger=ExpectationLedger(),
+        current_step=1,
+        closure_required=True,
+    )
+
+    assert decision.mode is GroundedInterventionMode.STAY_SILENT
+    assert decision.record is None
+    assert decision.silence_reason == "unresolved_obligation_visible_speech_retired"
+    assert decision.selection_trace.deficit_kind == "closure_required"
+
+
 @pytest.mark.parametrize(
-    "kind,anchor_type,next_move,expected_fragment",
+    "kind,anchor_type,next_move",
     (
         (
             GroundedInterventionKind.UNSUPPORTED_CLAIM,
             GroundedAnchorType.CLAIM,
             InterventionNextMoveClass.NARROW_CLAIM,
-            "The claim about",
-        ),
-        (
-            GroundedInterventionKind.UNRESOLVED_OBLIGATION,
-            GroundedAnchorType.OBLIGATION,
-            InterventionNextMoveClass.PRODUCE_EVIDENCE,
-            "remains open",
         ),
         (
             GroundedInterventionKind.CONTINUITY_GAP,
             GroundedAnchorType.CONTINUITY,
             InterventionNextMoveClass.RECOVER_CONTEXT,
-            "not anchored enough for closure",
         ),
         (
             GroundedInterventionKind.CAPABILITY_GUARD,
             GroundedAnchorType.CAPABILITY,
             InterventionNextMoveClass.NAME_BLOCKER,
-            "not supported enough for forward motion",
         ),
         (
             GroundedInterventionKind.PRESERVATION_RISK,
             GroundedAnchorType.PRESERVATION,
             InterventionNextMoveClass.PRESERVE_VERIFIED_WORK,
-            "at risk during repair",
         ),
     ),
 )
-def test_renderer_covers_all_record_kinds_without_internal_terms(
+def test_renderer_covers_active_record_kinds_without_internal_terms(
     kind: GroundedInterventionKind,
     anchor_type: GroundedAnchorType,
     next_move: InterventionNextMoveClass,
-    expected_fragment: str,
 ) -> None:
     decision = select_grounded_intervention(
         pressure=_high_pressure(),
@@ -358,10 +443,37 @@ def test_renderer_covers_all_record_kinds_without_internal_terms(
     )
 
     assert decision.record is not None
-    text = render_grounded_intervention(decision.record)
+    attached_text = render_grounded_intervention(decision.record)
+    identity_text = render_grounded_intervention(
+        decision.record,
+        surface=InterventionRenderSurface.IDENTITY_CONTINUOUS,
+        prior_act_anchor=True,
+    )
 
-    assert expected_fragment in text
-    assert find_forbidden_model_visible_terms(text) == ()
+    assert attached_text == _EXPECTED_ATTACHED_TEXT[kind]
+    assert identity_text == _EXPECTED_IDENTITY_TEXT[kind]
+    assert "I " not in attached_text
+    assert "my " not in attached_text.lower()
+    assert find_forbidden_model_visible_terms(attached_text) == ()
+    assert find_forbidden_model_visible_terms(identity_text) == ()
+
+
+def test_unresolved_obligation_visible_speech_is_retired() -> None:
+    decision = select_grounded_intervention(
+        pressure=_high_pressure(),
+        anchors=(
+            GroundedInterventionAnchor(
+                anchor_type=GroundedAnchorType.OBLIGATION,
+                text="an open task obligation",
+            ),
+        ),
+        preferred_kind=GroundedInterventionKind.UNRESOLVED_OBLIGATION,
+        next_move_class=InterventionNextMoveClass.PRODUCE_EVIDENCE,
+    )
+
+    assert decision.record is not None
+    with pytest.raises(ValueError, match="retired from model-visible speech"):
+        render_grounded_intervention(decision.record)
 
 
 def _high_pressure() -> GroundedInterventionPressure:
