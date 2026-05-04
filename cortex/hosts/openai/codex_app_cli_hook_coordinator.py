@@ -58,8 +58,8 @@ class OpenAICodexHookPayload:
     stop_hook_active: bool = False
     last_assistant_message: str | None = None
     tool_name: str | None = None
-    tool_input: Mapping[str, Any] | None = None
-    tool_response: Mapping[str, Any] | None = None
+    tool_input: Any = None
+    tool_response: Any = None
     error: str | None = None
     prompt_text_hash: str | None = None
     raw_keys: tuple[str, ...] = ()
@@ -96,14 +96,6 @@ class OpenAICodexHookPayload:
                 "OpenAICodexHookPayload.stop_hook_active must be bool, "
                 f"got {actual_type}."
             )
-        for field_name in ("tool_input", "tool_response"):
-            value = getattr(self, field_name)
-            if value is not None and not isinstance(value, Mapping):
-                actual_type = type(value).__name__
-                raise TypeError(
-                    f"OpenAICodexHookPayload.{field_name} must be Mapping | None, "
-                    f"got {actual_type}."
-                )
         if any(not (isinstance(key, str) and key.strip()) for key in self.raw_keys):
             raise ValueError("OpenAICodexHookPayload.raw_keys must be non-empty strings.")
 
@@ -484,8 +476,8 @@ def normalize_openai_codex_hook_payload(
         stop_hook_active=bool(payload.get("stop_hook_active", False)),
         last_assistant_message=_optional_string(payload.get("last_assistant_message")),
         tool_name=_optional_string(payload.get("tool_name")),
-        tool_input=_optional_mapping(payload.get("tool_input"), "tool_input"),
-        tool_response=_optional_mapping(payload.get("tool_response"), "tool_response"),
+        tool_input=_optional_json_value(payload.get("tool_input")),
+        tool_response=_optional_json_value(payload.get("tool_response")),
         error=_optional_string(payload.get("error")),
         prompt_text_hash=_hash_text(prompt_text) if prompt_text is not None else None,
         raw_keys=tuple(sorted(str(key) for key in payload.keys())),
@@ -801,8 +793,8 @@ def _tool_event_has_verification_evidence(payload: OpenAICodexHookPayload) -> bo
         value
         for value in (
             payload.tool_name or "",
-            _mapping_text(payload.tool_input),
-            _mapping_text(payload.tool_response),
+            _json_value_text(payload.tool_input),
+            _json_value_text(payload.tool_response),
         )
         if value
     ).lower()
@@ -902,10 +894,10 @@ def _event_ref(
     return f"codex-app-cli:{current_step}:{payload.hook_event_name.value}:{suffix}:{digest}"
 
 
-def _mapping_text(mapping: Mapping[str, Any] | None) -> str:
-    if mapping is None:
+def _json_value_text(value: Any) -> str:
+    if value is None:
         return ""
-    return json.dumps(mapping, sort_keys=True, separators=(",", ":"))
+    return json.dumps(value, sort_keys=True, separators=(",", ":"))
 
 
 def _host_text_from_stdout_payload(payload: dict[str, str] | None) -> str:
@@ -927,12 +919,7 @@ def _first_present_string(
     return None
 
 
-def _optional_mapping(value: Any, field_name: str) -> Mapping[str, Any] | None:
-    if value is None:
-        return None
-    if not isinstance(value, Mapping):
-        actual_type = type(value).__name__
-        raise TypeError(f"{field_name} must be a mapping when present, got {actual_type}.")
+def _optional_json_value(value: Any) -> Any:
     return value
 
 

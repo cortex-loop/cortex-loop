@@ -188,6 +188,40 @@ def test_product_perception_pays_down_verification_after_observed_check() -> Non
     assert result.host_response.stdout_payload is None
 
 
+def test_posttooluse_json_value_output_can_pay_down_verification() -> None:
+    store = OpenAICodexInMemoryStateStore()
+    handle_openai_codex_hook_payload(
+        _base_payload(
+            hook_event_name="UserPromptSubmit",
+            prompt="Make the change and verify it.",
+        ),
+        state_store=store,
+    )
+    handle_openai_codex_hook_payload(
+        _base_payload(
+            hook_event_name="PostToolUse",
+            tool_name="Bash",
+            tool_input={"command": "python3 -m pytest tests/product -q"},
+            tool_response="1 passed",
+        ),
+        state_store=store,
+    )
+
+    result = handle_openai_codex_hook_payload(
+        _base_payload(
+            hook_event_name="Stop",
+            transcript_path="/tmp/codex-session.jsonl",
+            last_assistant_message="Done.",
+        ),
+        state_store=store,
+    )
+
+    assert result.directive.action is OpenAICodexLifecycleDirectiveAction.STAY_SILENT
+    assert result.directive.silence_reason == "pressure_below_visible_threshold"
+    assert result.session_state.verification_evidence_count == 1
+    assert result.host_response.stdout_payload is None
+
+
 def test_product_perception_does_not_block_waiting_or_blocker_response() -> None:
     store = OpenAICodexInMemoryStateStore()
     handle_openai_codex_hook_payload(
