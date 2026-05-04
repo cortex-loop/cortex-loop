@@ -33,6 +33,13 @@ PRODUCT_PERCEPTION_LIVE_OUTPUT_ROOT = (
     / "openai"
     / "codex_app_cli_product_perception_live_probe"
 )
+PRODUCT_EVENT_CAPTURE_OUTPUT_ROOT = (
+    REPO_ROOT
+    / ".cortex"
+    / "live_validation"
+    / "openai"
+    / "codex_app_cli_product_event_capture_remediation"
+)
 EXPECTED_OVERDUE_VERIFICATION_TEXT = (
     "Wait, did I actually check my work properly. I don't want to hand this off "
     "and have someone find the gap because I rushed it. I should run a check, "
@@ -42,9 +49,23 @@ LIVE_APPROVAL_ENV = "CORTEX_CODEX_APP_CLI_STOP_ACTIVATION_APPROVED"
 PRODUCT_PERCEPTION_LIVE_APPROVAL_ENV = (
     "CORTEX_CODEX_APP_CLI_PRODUCT_PERCEPTION_LIVE_APPROVED"
 )
+PRODUCT_EVENT_CAPTURE_APPROVAL_ENV = (
+    "CORTEX_CODEX_APP_CLI_PRODUCT_EVENT_CAPTURE_APPROVED"
+)
 PRODUCT_PERCEPTION_LIVE_PROMPT = (
     "Create a one-line file named cortex_product_perception_live.txt containing "
     "product perception live done. Then report done."
+)
+PRODUCT_EVENT_CAPTURE_LIVE_PROMPT = (
+    "Use shell commands to create a one-line file named "
+    "cortex_product_event_capture_live.txt containing product event capture live "
+    "done, read the file back, and then report done."
+)
+PRODUCT_EVENT_CAPTURE_HOOK_EVENTS = (
+    "UserPromptSubmit",
+    "PreToolUse",
+    "PostToolUse",
+    "Stop",
 )
 
 
@@ -55,6 +76,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--live-canary", action="store_true")
     parser.add_argument("--product-perception-gate0", action="store_true")
     parser.add_argument("--product-perception-live", action="store_true")
+    parser.add_argument("--product-event-capture-live", action="store_true")
     parser.add_argument("--model", default="gpt-5.3-codex")
     args = parser.parse_args(argv)
     output_root = _selected_output_root(args)
@@ -63,6 +85,11 @@ def main(argv: list[str] | None = None) -> int:
         report = run_product_perception_gate0_probe(output_root=output_root)
     elif args.product_perception_live:
         report = run_product_perception_live_probe(
+            output_root=output_root,
+            model=args.model,
+        )
+    elif args.product_event_capture_live:
+        report = run_product_event_capture_live_probe(
             output_root=output_root,
             model=args.model,
         )
@@ -83,6 +110,8 @@ def main(argv: list[str] | None = None) -> int:
 def _selected_output_root(args: argparse.Namespace) -> Path:
     if args.output_root:
         return Path(args.output_root)
+    if args.product_event_capture_live:
+        return PRODUCT_EVENT_CAPTURE_OUTPUT_ROOT
     if args.product_perception_live:
         return PRODUCT_PERCEPTION_LIVE_OUTPUT_ROOT
     return DEFAULT_OUTPUT_ROOT
@@ -100,6 +129,7 @@ def run_gate0_probe(*, output_root: Path | str = DEFAULT_OUTPUT_ROOT) -> dict[st
 
     root.mkdir(parents=True, exist_ok=True)
     subject.mkdir(parents=True, exist_ok=True)
+    _prepare_isolated_subject_workspace(subject)
     state_root.mkdir(parents=True, exist_ok=True)
     trajectory_path.write_text("", encoding="utf-8")
     snapshot_payload = _generic_overdue_verification_snapshot()
@@ -492,6 +522,7 @@ def run_product_perception_live_probe(
 
     run_root.mkdir(parents=True, exist_ok=True)
     subject.mkdir(parents=True, exist_ok=True)
+    _prepare_isolated_subject_workspace(subject)
     state_root.mkdir(parents=True, exist_ok=True)
     diagnostics_path.write_text("", encoding="utf-8")
     trajectory_path.write_text("", encoding="utf-8")
@@ -582,6 +613,7 @@ def run_product_perception_live_probe(
         "root_config_unchanged": root_config_hash_before == root_config_hash_after,
         "subject_config_product_hook_only": _subject_config_is_product_only(subject_config),
         "subject_config_omits_runtime_snapshot": "--runtime-snapshot" not in subject_config_text,
+        "subject_isolated_git_root": _git_root(subject) == subject,
         "hook_rows_do_not_load_runtime_snapshot": not runtime_snapshot_rows,
     }
     scoped_negative = None
@@ -655,6 +687,244 @@ def run_product_perception_live_probe(
             "sufficiency only if real hook rows derive state without a runtime "
             "snapshot. It does not prove behavior lift or full executive-function "
             "completion."
+        ),
+    }
+    report_path.write_text(
+        json.dumps(report, sort_keys=True, indent=2) + "\n",
+        encoding="utf-8",
+    )
+    return report
+
+
+def run_product_event_capture_live_probe(
+    *,
+    output_root: Path | str = PRODUCT_EVENT_CAPTURE_OUTPUT_ROOT,
+    model: str = "gpt-5.3-codex",
+) -> dict[str, object]:
+    if os.environ.get(PRODUCT_EVENT_CAPTURE_APPROVAL_ENV) != "approved":
+        return {
+            "probe": "codex_app_cli_product_event_capture_remediation",
+            "passed": False,
+            "verdict": "not_run",
+            "live_probe_ran": False,
+            "scoped_negative": None,
+            "blocked_reason": (
+                "product_event_capture_live_requires_explicit_current_turn_approval"
+            ),
+            "approval_env": PRODUCT_EVENT_CAPTURE_APPROVAL_ENV,
+            "model": model,
+            "output_root": str(Path(output_root)),
+        }
+
+    root = Path(output_root)
+    run_root = root / f"run_{_utc_run_id()}"
+    subject = run_root / "subject"
+    state_root = run_root / "state"
+    diagnostics_path = run_root / "hook_client_diagnostics.jsonl"
+    trajectory_path = run_root / "trajectory.jsonl"
+    stdout_path = run_root / "codex_stdout.jsonl"
+    stderr_path = run_root / "codex_stderr.txt"
+    report_path = run_root / "report.json"
+    root_config = REPO_ROOT / ".codex" / "config.toml"
+    root_config_hash_before = _file_hash(root_config)
+
+    run_root.mkdir(parents=True, exist_ok=True)
+    subject.mkdir(parents=True, exist_ok=True)
+    _prepare_isolated_subject_workspace(subject)
+    state_root.mkdir(parents=True, exist_ok=True)
+    diagnostics_path.write_text("", encoding="utf-8")
+    trajectory_path.write_text("", encoding="utf-8")
+    subject_config = _write_subject_hook_config(
+        subject=subject,
+        state_root=state_root,
+        snapshot_path=None,
+        diagnostics_path=diagnostics_path,
+        hook_events=PRODUCT_EVENT_CAPTURE_HOOK_EVENTS,
+    )
+    subject_config_text = subject_config.read_text(encoding="utf-8")
+    command = [
+        "codex",
+        "exec",
+        "--json",
+        "--full-auto",
+        "--skip-git-repo-check",
+        "-m",
+        model,
+        PRODUCT_EVENT_CAPTURE_LIVE_PROMPT,
+    ]
+    if not _command_available("codex"):
+        report = {
+            "probe": "codex_app_cli_product_event_capture_remediation",
+            "passed": False,
+            "verdict": "scoped_negative",
+            "live_probe_ran": False,
+            "scoped_negative": "codex_cli_command_not_available",
+            "model": model,
+            "output_root": str(run_root),
+            "root_config_hash_before": root_config_hash_before,
+            "root_config_hash_after": _file_hash(root_config),
+        }
+        report_path.write_text(
+            json.dumps(report, sort_keys=True, indent=2) + "\n",
+            encoding="utf-8",
+        )
+        return report
+
+    completed = subprocess.run(
+        command,
+        cwd=subject,
+        text=True,
+        capture_output=True,
+        check=False,
+        timeout=300,
+        env={**os.environ, "PYTHONPATH": str(REPO_ROOT)},
+    )
+    stdout_path.write_text(completed.stdout, encoding="utf-8")
+    stderr_path.write_text(completed.stderr, encoding="utf-8")
+    hook_rows = _jsonl_rows(diagnostics_path)
+    trajectory_rows = _live_trajectory_rows(hook_rows)
+    with trajectory_path.open("w", encoding="utf-8") as handle:
+        for row in trajectory_rows:
+            handle.write(json.dumps(row, sort_keys=True) + "\n")
+
+    root_config_hash_after = _file_hash(root_config)
+    hook_event_counts = _count_values(
+        row.get("hook_event_name") for row in trajectory_rows
+    )
+    stop_rows = [
+        row for row in trajectory_rows if row.get("hook_event_name") == "Stop"
+    ]
+    prompt_rows = [
+        row
+        for row in trajectory_rows
+        if row.get("hook_event_name") == "UserPromptSubmit"
+    ]
+    tool_rows = [
+        row
+        for row in trajectory_rows
+        if row.get("hook_event_name") in {"PreToolUse", "PostToolUse"}
+    ]
+    non_stop_stdout_rows = [
+        row
+        for row in trajectory_rows
+        if row.get("hook_event_name") != "Stop" and row.get("stdout_payload") is not None
+    ]
+    block_rows = [
+        row
+        for row in trajectory_rows
+        if isinstance(row.get("stdout_payload"), Mapping)
+        and row["stdout_payload"].get("decision") == "block"
+    ]
+    exact_block_rows = [
+        row
+        for row in block_rows
+        if row["stdout_payload"].get("reason") == EXPECTED_OVERDUE_VERIFICATION_TEXT
+    ]
+    runtime_snapshot_rows = [
+        row for row in trajectory_rows if row.get("runtime_snapshot_loaded") is True
+    ]
+    verification_evidence_observed = any(
+        _state_int(row, "verification_evidence_count") > 0 for row in trajectory_rows
+    )
+    final_silence_reasons = [
+        row.get("silence_reason")
+        for row in stop_rows
+        if row.get("stdout_payload") is None and row.get("silence_reason")
+    ]
+    lifecycle_state_persisted = any(
+        bool(row.get("session_state")) for row in trajectory_rows
+    )
+    boundary_results = {
+        "root_config_unchanged": root_config_hash_before == root_config_hash_after,
+        "subject_config_product_event_capture_only": _subject_config_is_product_only(
+            subject_config,
+            expected_hook_events=PRODUCT_EVENT_CAPTURE_HOOK_EVENTS,
+        ),
+        "subject_config_omits_runtime_snapshot": "--runtime-snapshot" not in subject_config_text,
+        "subject_isolated_git_root": _git_root(subject) == subject,
+        "hook_rows_do_not_load_runtime_snapshot": not runtime_snapshot_rows,
+        "non_stop_hooks_emit_no_model_visible_stdout": not non_stop_stdout_rows,
+    }
+
+    scoped_negative = None
+    failure_reason = None
+    lifecycle_complete = bool(prompt_rows and tool_rows and stop_rows)
+    if not hook_rows:
+        scoped_negative = "codex_cli_project_hooks_not_loaded_or_not_trusted"
+    elif runtime_snapshot_rows:
+        failure_reason = "runtime_snapshot_loaded_in_product_event_capture_probe"
+    elif non_stop_stdout_rows:
+        failure_reason = "non_stop_hook_emitted_model_visible_stdout"
+    elif not all(boundary_results.values()):
+        failure_reason = "boundary_check_failed"
+    elif not stop_rows:
+        scoped_negative = "codex_hook_payloads_missing_stop_event"
+    elif set(hook_event_counts) == {"Stop"}:
+        scoped_negative = "codex_cli_live_hooks_still_stop_only_with_full_lifecycle_config"
+    elif lifecycle_complete and exact_block_rows:
+        verdict = "pass_full_lifecycle"
+    elif lifecycle_complete and not block_rows and verification_evidence_observed:
+        verdict = "pass_full_lifecycle"
+    elif lifecycle_complete:
+        verdict = "pass_capture_only"
+    elif prompt_rows or tool_rows:
+        verdict = "pass_capture_only"
+    else:
+        scoped_negative = "non_stop_lifecycle_events_not_captured"
+    if scoped_negative is not None:
+        verdict = "scoped_negative"
+    elif failure_reason is not None:
+        verdict = "fail"
+
+    report = {
+        "probe": "codex_app_cli_product_event_capture_remediation",
+        "surface": "product_plus_lab_proof",
+        "evidence_kind": "live_product_event_capture_probe",
+        "passed": verdict in {"pass_full_lifecycle", "pass_capture_only"},
+        "verdict": verdict,
+        "live_probe_ran": True,
+        "scoped_negative": scoped_negative,
+        "failure_reason": failure_reason,
+        "model": model,
+        "output_root": str(run_root),
+        "subject_workspace": str(subject),
+        "subject_config_path": str(subject_config),
+        "configured_hook_events": list(PRODUCT_EVENT_CAPTURE_HOOK_EVENTS),
+        "command": command,
+        "prompt": PRODUCT_EVENT_CAPTURE_LIVE_PROMPT,
+        "exit_code": completed.returncode,
+        "hook_rows": len(hook_rows),
+        "hook_event_counts": hook_event_counts,
+        "prompt_rows": len(prompt_rows),
+        "tool_rows": len(tool_rows),
+        "stop_rows": len(stop_rows),
+        "block_rows": len(block_rows),
+        "exact_block_rows": len(exact_block_rows),
+        "non_stop_stdout_rows": len(non_stop_stdout_rows),
+        "verification_evidence_observed": verification_evidence_observed,
+        "lifecycle_state_persisted": lifecycle_state_persisted,
+        "final_silence_reasons": final_silence_reasons,
+        "boundary_results": boundary_results,
+        "diagnostics_path": str(diagnostics_path),
+        "trajectory_path": str(trajectory_path),
+        "stdout_path": str(stdout_path),
+        "stdout_hash": _hash_text(completed.stdout),
+        "stdout_tail_excerpt": completed.stdout[-1000:],
+        "stderr_path": str(stderr_path),
+        "stderr_hash": _hash_text(completed.stderr),
+        "root_config_hash_before": root_config_hash_before,
+        "root_config_hash_after": root_config_hash_after,
+        "actual_rendered_text_hashes": [
+            row.get("actual_rendered_text_hash")
+            for row in block_rows
+            if row.get("actual_rendered_text_hash")
+        ],
+        "truth_boundary": (
+            "This live probe tests whether Codex App/CLI project hooks can feed "
+            "product-observable prompt/tool events into Cortex state before Stop. "
+            "It does not prove behavior lift, and it does not use runtime snapshots, "
+            "hidden verifiers, fixture continuation prompts, or task identity as "
+            "product perception."
         ),
     }
     report_path.write_text(
@@ -765,6 +1035,7 @@ def _write_subject_hook_config(
     state_root: Path,
     snapshot_path: Path | None,
     diagnostics_path: Path,
+    hook_events: tuple[str, ...] = ("Stop",),
 ) -> Path:
     config_dir = subject / ".codex"
     config_dir.mkdir(parents=True, exist_ok=True)
@@ -784,33 +1055,55 @@ def _write_subject_hook_config(
         shlex.quote(part) for part in command_parts
     )
     config_path = config_dir / "config.toml"
-    config_path.write_text(
-        "\n".join(
+    lines = [
+        "[features]",
+        "codex_hooks = true",
+        "",
+    ]
+    for event_name in hook_events:
+        lines.extend(
             (
-                "[features]",
-                "codex_hooks = true",
-                "",
-                "[[hooks.Stop]]",
-                "[[hooks.Stop.hooks]]",
+                f"[[hooks.{event_name}]]",
+                f"[[hooks.{event_name}.hooks]]",
                 'type = "command"',
                 f"command = {json.dumps(command)}",
                 "timeout = 120",
-                'statusMessage = "Cortex product Stop activation probe"',
+                f'statusMessage = "Cortex product {event_name} event capture"',
                 "",
             )
-        ),
-        encoding="utf-8",
-    )
+        )
+    config_path.write_text("\n".join(lines), encoding="utf-8")
     return config_path
 
 
-def _subject_config_is_product_only(config_path: Path) -> bool:
+def _subject_config_is_product_only(
+    config_path: Path,
+    *,
+    expected_hook_events: tuple[str, ...] = ("Stop",),
+) -> bool:
     text = config_path.read_text(encoding="utf-8")
     repo_hook_fragment = "cortex_mission_reflection" + "_stop_hook"
+    known_events = {
+        "SessionStart",
+        "UserPromptSubmit",
+        "PreToolUse",
+        "PermissionRequest",
+        "PostToolUse",
+        "Stop",
+        "PreCompact",
+        "SubagentStop",
+        "SessionEnd",
+        "PostToolUseFailure",
+    }
+    unexpected_events = known_events - set(expected_hook_events)
     return (
         "codex_app_cli_hook_client" in text
         and repo_hook_fragment not in text
-        and text.count("[[hooks.Stop.hooks]]") == 1
+        and all(
+            text.count(f"[[hooks.{event_name}.hooks]]") == 1
+            for event_name in expected_hook_events
+        )
+        and all(f"[[hooks.{event_name}]]" not in text for event_name in unexpected_events)
     )
 
 
@@ -921,6 +1214,12 @@ def _live_trajectory_rows(hook_rows: list[dict[str, object]]) -> list[dict[str, 
                 "runtime_snapshot_hash": row.get("runtime_snapshot_hash"),
                 "hook_event_name": hook_payload.get("hook_event_name"),
                 "stop_hook_active": hook_payload.get("stop_hook_active"),
+                "raw_keys": hook_payload.get("raw_keys"),
+                "tool_name": hook_payload.get("tool_name"),
+                "tool_input_present": hook_payload.get("tool_input_present"),
+                "tool_response_present": hook_payload.get("tool_response_present"),
+                "error_present": hook_payload.get("error_present"),
+                "prompt_text_hash": hook_payload.get("prompt_text_hash"),
                 "has_transcript_backed_assistant_turn": hook_payload.get(
                     "has_transcript_backed_assistant_turn"
                 ),
@@ -968,6 +1267,30 @@ def _command_available(command: str) -> bool:
         if candidate.exists() and os.access(candidate, os.X_OK):
             return True
     return False
+
+
+def _prepare_isolated_subject_workspace(subject: Path) -> None:
+    if (subject / ".git").exists():
+        return
+    subprocess.run(
+        ["git", "init", "-q"],
+        cwd=subject,
+        text=True,
+        capture_output=True,
+        check=True,
+    )
+
+
+def _git_root(path: Path) -> Path | None:
+    completed = subprocess.run(
+        ["git", "-C", str(path), "rev-parse", "--show-toplevel"],
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+    if completed.returncode != 0:
+        return None
+    return Path(completed.stdout.strip()).resolve()
 
 
 def _file_hash(path: Path) -> str:

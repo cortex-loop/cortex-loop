@@ -191,6 +191,58 @@ def test_non_stop_event_allows_without_stdout(tmp_path: Path) -> None:
     assert stderr.getvalue() == ""
 
 
+def test_non_stop_lifecycle_events_update_private_state_without_stdout(
+    tmp_path: Path,
+) -> None:
+    state_root = tmp_path / "state"
+    diagnostics_path = tmp_path / "diagnostics.jsonl"
+    events = [
+        _stop_payload(
+            hook_event_name="UserPromptSubmit",
+            prompt="Make the change and verify it.",
+        ),
+        _stop_payload(
+            hook_event_name="PreToolUse",
+            tool_name="Bash",
+            tool_input={"command": "printf done > artifact.txt"},
+        ),
+        _stop_payload(
+            hook_event_name="PostToolUse",
+            tool_name="Bash",
+            tool_input={"command": "python3 -m pytest tests/product -q"},
+            tool_response={"exit_code": 0, "output": "1 passed"},
+        ),
+    ]
+
+    for payload in events:
+        stdout = io.StringIO()
+        stderr = io.StringIO()
+        exit_code = run_hook_client(
+            argv=[
+                "--state-root",
+                str(state_root),
+                "--diagnostics-path",
+                str(diagnostics_path),
+            ],
+            stdin=io.StringIO(json.dumps(payload)),
+            stdout=stdout,
+            stderr=stderr,
+        )
+        assert exit_code == 0
+        assert stdout.getvalue() == ""
+        assert stderr.getvalue() == ""
+
+    rows = _jsonl_rows(diagnostics_path)
+    assert [row["coordinator"]["hook_payload"]["hook_event_name"] for row in rows] == [
+        "UserPromptSubmit",
+        "PreToolUse",
+        "PostToolUse",
+    ]
+    assert rows[-1]["runtime_snapshot_loaded"] is False
+    assert rows[-1]["coordinator"]["session_state"]["tool_event_count"] == 2
+    assert rows[-1]["coordinator"]["session_state"]["verification_evidence_count"] == 1
+
+
 def test_missing_snapshot_fails_open_with_stderr(tmp_path: Path) -> None:
     stdout = io.StringIO()
     stderr = io.StringIO()

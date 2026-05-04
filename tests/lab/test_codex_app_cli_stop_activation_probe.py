@@ -10,11 +10,16 @@ from lab import codex_app_cli_stop_activation_probe
 from lab.codex_app_cli_stop_activation_probe import (
     EXPECTED_OVERDUE_VERIFICATION_TEXT,
     LIVE_APPROVAL_ENV,
+    PRODUCT_EVENT_CAPTURE_APPROVAL_ENV,
+    PRODUCT_EVENT_CAPTURE_HOOK_EVENTS,
+    PRODUCT_EVENT_CAPTURE_LIVE_PROMPT,
+    PRODUCT_EVENT_CAPTURE_OUTPUT_ROOT,
     PRODUCT_PERCEPTION_LIVE_APPROVAL_ENV,
     PRODUCT_PERCEPTION_LIVE_OUTPUT_ROOT,
     PRODUCT_PERCEPTION_LIVE_PROMPT,
     run_gate0_probe,
     run_live_canary_probe,
+    run_product_event_capture_live_probe,
     run_product_perception_gate0_probe,
     run_product_perception_live_probe,
 )
@@ -110,6 +115,23 @@ def test_product_perception_live_refuses_without_explicit_approval(
     assert report["approval_env"] == PRODUCT_PERCEPTION_LIVE_APPROVAL_ENV
 
 
+def test_product_event_capture_live_refuses_without_explicit_approval(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    monkeypatch.delenv(PRODUCT_EVENT_CAPTURE_APPROVAL_ENV, raising=False)
+
+    report = run_product_event_capture_live_probe(output_root=tmp_path)
+
+    assert report["passed"] is False
+    assert report["live_probe_ran"] is False
+    assert report["verdict"] == "not_run"
+    assert report["blocked_reason"] == (
+        "product_event_capture_live_requires_explicit_current_turn_approval"
+    )
+    assert report["approval_env"] == PRODUCT_EVENT_CAPTURE_APPROVAL_ENV
+
+
 def test_product_perception_gate0_derives_state_without_snapshot_fixture(
     tmp_path: Path,
 ) -> None:
@@ -163,6 +185,19 @@ def test_product_perception_live_uses_separate_no_snapshot_output_root() -> None
     assert "codex_app_cli_product_perception_live_probe" in str(selected_root)
 
 
+def test_product_event_capture_live_uses_separate_output_root() -> None:
+    selected_root = codex_app_cli_stop_activation_probe._selected_output_root(
+        SimpleArgs(
+            output_root=None,
+            product_perception_live=False,
+            product_event_capture_live=True,
+        )
+    )
+
+    assert selected_root == PRODUCT_EVENT_CAPTURE_OUTPUT_ROOT
+    assert "codex_app_cli_product_event_capture_remediation" in str(selected_root)
+
+
 def test_product_perception_live_subject_config_omits_runtime_snapshot(
     tmp_path: Path,
 ) -> None:
@@ -179,6 +214,40 @@ def test_product_perception_live_subject_config_omits_runtime_snapshot(
     assert "--runtime-snapshot" not in config
     assert "cortex_mission_reflection_stop_hook" not in config
     assert config.count("[[hooks.Stop.hooks]]") == 1
+
+
+def test_product_event_capture_subject_config_registers_all_product_hooks(
+    tmp_path: Path,
+) -> None:
+    subject = tmp_path / "subject"
+    config_path = codex_app_cli_stop_activation_probe._write_subject_hook_config(
+        subject=subject,
+        state_root=tmp_path / "state",
+        snapshot_path=None,
+        diagnostics_path=tmp_path / "diagnostics.jsonl",
+        hook_events=PRODUCT_EVENT_CAPTURE_HOOK_EVENTS,
+    )
+    config = config_path.read_text(encoding="utf-8")
+
+    assert "codex_app_cli_hook_client" in config
+    assert "--runtime-snapshot" not in config
+    assert "cortex_mission_reflection_stop_hook" not in config
+    for event_name in PRODUCT_EVENT_CAPTURE_HOOK_EVENTS:
+        assert config.count(f"[[hooks.{event_name}]]") == 1
+        assert config.count(f"[[hooks.{event_name}.hooks]]") == 1
+    assert "[[hooks.PermissionRequest]]" not in config
+    assert "[[hooks.PostToolUseFailure]]" not in config
+
+
+def test_live_subject_workspace_is_prepared_as_isolated_git_root(
+    tmp_path: Path,
+) -> None:
+    subject = tmp_path / "subject"
+    subject.mkdir()
+
+    codex_app_cli_stop_activation_probe._prepare_isolated_subject_workspace(subject)
+
+    assert codex_app_cli_stop_activation_probe._git_root(subject) == subject.resolve()
 
 
 def test_live_trajectory_rows_record_no_snapshot_product_state() -> None:
@@ -221,6 +290,12 @@ def test_live_trajectory_rows_record_no_snapshot_product_state() -> None:
             "fail_open": False,
             "has_transcript_backed_assistant_turn": True,
             "hook_event_name": "Stop",
+            "raw_keys": None,
+            "tool_name": None,
+            "tool_input_present": None,
+            "tool_response_present": None,
+            "error_present": None,
+            "prompt_text_hash": None,
             "perception_source": "product_runtime_expectation",
             "row_index": 1,
             "runtime_snapshot_hash": None,
@@ -268,11 +343,22 @@ def test_activation_harness_does_not_read_fixed_prompt_fixtures() -> None:
 
     assert "PRODUCT_PERCEPTION_LIVE_PROMPT" in source
     assert "cortex_product_perception_live.txt" in PRODUCT_PERCEPTION_LIVE_PROMPT
+    assert "PRODUCT_EVENT_CAPTURE_LIVE_PROMPT" in source
+    assert (
+        "cortex_product_event_capture_live.txt" in PRODUCT_EVENT_CAPTURE_LIVE_PROMPT
+    )
     assert "--runtime-snapshot" in source  # legacy actuator canary remains explicit
     assert "snapshot_path=None" in source
 
 
 class SimpleArgs:
-    def __init__(self, *, output_root, product_perception_live) -> None:
+    def __init__(
+        self,
+        *,
+        output_root,
+        product_perception_live,
+        product_event_capture_live=False,
+    ) -> None:
         self.output_root = output_root
         self.product_perception_live = product_perception_live
+        self.product_event_capture_live = product_event_capture_live

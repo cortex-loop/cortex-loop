@@ -102,5 +102,9 @@ Active docs:
   live scoped-negative evidence that project-local Codex CLI hooks loaded but
   exposed only Stop payloads, leaving no product task or tool events for
   no-snapshot Stop perception
+- [Cortex Codex App/CLI Product Event-Capture Remediation](recon/cortex_codex_app_cli_product_event_capture_remediation.md) —
+  live Codex CLI evidence that a full-lifecycle subject hook config captures
+  UserPromptSubmit, PreToolUse, PostToolUse, and Stop payloads before Stop
+  without runtime snapshots or parent repo workflow guardrails
 
 Historical runtime, lab, and governance material now lives under [archive/](archive/).
