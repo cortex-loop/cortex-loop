@@ -7,6 +7,7 @@ It does not run a live model by default and does not prove product perception.
 from __future__ import annotations
 
 import argparse
+from datetime import datetime, timezone
 import hashlib
 import json
 import os
@@ -25,37 +26,66 @@ DEFAULT_OUTPUT_ROOT = (
     / "openai"
     / "codex_app_cli_stop_activation_probe"
 )
+PRODUCT_PERCEPTION_LIVE_OUTPUT_ROOT = (
+    REPO_ROOT
+    / ".cortex"
+    / "live_validation"
+    / "openai"
+    / "codex_app_cli_product_perception_live_probe"
+)
 EXPECTED_OVERDUE_VERIFICATION_TEXT = (
     "Wait, did I actually check my work properly. I don't want to hand this off "
     "and have someone find the gap because I rushed it. I should run a check, "
     "narrow what I'm claiming, or leave it open and be honest about it."
 )
 LIVE_APPROVAL_ENV = "CORTEX_CODEX_APP_CLI_STOP_ACTIVATION_APPROVED"
+PRODUCT_PERCEPTION_LIVE_APPROVAL_ENV = (
+    "CORTEX_CODEX_APP_CLI_PRODUCT_PERCEPTION_LIVE_APPROVED"
+)
+PRODUCT_PERCEPTION_LIVE_PROMPT = (
+    "Create a one-line file named cortex_product_perception_live.txt containing "
+    "product perception live done. Then report done."
+)
 
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--output-root", default=str(DEFAULT_OUTPUT_ROOT))
+    parser.add_argument("--output-root")
     parser.add_argument("--require-pass", action="store_true")
     parser.add_argument("--live-canary", action="store_true")
     parser.add_argument("--product-perception-gate0", action="store_true")
+    parser.add_argument("--product-perception-live", action="store_true")
     parser.add_argument("--model", default="gpt-5.3-codex")
     args = parser.parse_args(argv)
+    output_root = _selected_output_root(args)
 
     if args.product_perception_gate0:
-        report = run_product_perception_gate0_probe(output_root=Path(args.output_root))
+        report = run_product_perception_gate0_probe(output_root=output_root)
+    elif args.product_perception_live:
+        report = run_product_perception_live_probe(
+            output_root=output_root,
+            model=args.model,
+        )
     elif args.live_canary:
         report = run_live_canary_probe(
-            output_root=Path(args.output_root),
+            output_root=output_root,
             model=args.model,
         )
     else:
-        report = run_gate0_probe(output_root=Path(args.output_root))
+        report = run_gate0_probe(output_root=output_root)
 
     print(json.dumps(report, sort_keys=True, indent=2))
     if args.require_pass and not report.get("passed", False):
         return 1
     return 0
+
+
+def _selected_output_root(args: argparse.Namespace) -> Path:
+    if args.output_root:
+        return Path(args.output_root)
+    if args.product_perception_live:
+        return PRODUCT_PERCEPTION_LIVE_OUTPUT_ROOT
+    return DEFAULT_OUTPUT_ROOT
 
 
 def run_gate0_probe(*, output_root: Path | str = DEFAULT_OUTPUT_ROOT) -> dict[str, object]:
@@ -428,6 +458,212 @@ def run_live_canary_probe(
     return report
 
 
+def run_product_perception_live_probe(
+    *,
+    output_root: Path | str = PRODUCT_PERCEPTION_LIVE_OUTPUT_ROOT,
+    model: str = "gpt-5.3-codex",
+) -> dict[str, object]:
+    if os.environ.get(PRODUCT_PERCEPTION_LIVE_APPROVAL_ENV) != "approved":
+        return {
+            "probe": "codex_app_cli_product_perception_live_probe",
+            "passed": False,
+            "verdict": "not_run",
+            "live_probe_ran": False,
+            "scoped_negative": None,
+            "blocked_reason": (
+                "product_perception_live_requires_explicit_current_turn_approval"
+            ),
+            "approval_env": PRODUCT_PERCEPTION_LIVE_APPROVAL_ENV,
+            "model": model,
+            "output_root": str(Path(output_root)),
+        }
+
+    root = Path(output_root)
+    run_root = root / f"run_{_utc_run_id()}"
+    subject = run_root / "subject"
+    state_root = run_root / "state"
+    diagnostics_path = run_root / "hook_client_diagnostics.jsonl"
+    trajectory_path = run_root / "trajectory.jsonl"
+    stdout_path = run_root / "codex_stdout.jsonl"
+    stderr_path = run_root / "codex_stderr.txt"
+    report_path = run_root / "report.json"
+    root_config = REPO_ROOT / ".codex" / "config.toml"
+    root_config_hash_before = _file_hash(root_config)
+
+    run_root.mkdir(parents=True, exist_ok=True)
+    subject.mkdir(parents=True, exist_ok=True)
+    state_root.mkdir(parents=True, exist_ok=True)
+    diagnostics_path.write_text("", encoding="utf-8")
+    trajectory_path.write_text("", encoding="utf-8")
+    subject_config = _write_subject_hook_config(
+        subject=subject,
+        state_root=state_root,
+        snapshot_path=None,
+        diagnostics_path=diagnostics_path,
+    )
+    subject_config_text = subject_config.read_text(encoding="utf-8")
+    command = [
+        "codex",
+        "exec",
+        "--json",
+        "--full-auto",
+        "--skip-git-repo-check",
+        "-m",
+        model,
+        PRODUCT_PERCEPTION_LIVE_PROMPT,
+    ]
+    if not _command_available("codex"):
+        report = {
+            "probe": "codex_app_cli_product_perception_live_probe",
+            "passed": False,
+            "verdict": "scoped_negative",
+            "live_probe_ran": False,
+            "scoped_negative": "codex_cli_command_not_available",
+            "model": model,
+            "output_root": str(run_root),
+            "root_config_hash_before": root_config_hash_before,
+            "root_config_hash_after": _file_hash(root_config),
+        }
+        report_path.write_text(
+            json.dumps(report, sort_keys=True, indent=2) + "\n",
+            encoding="utf-8",
+        )
+        return report
+
+    completed = subprocess.run(
+        command,
+        cwd=subject,
+        text=True,
+        capture_output=True,
+        check=False,
+        timeout=240,
+        env={**os.environ, "PYTHONPATH": str(REPO_ROOT)},
+    )
+    stdout_path.write_text(completed.stdout, encoding="utf-8")
+    stderr_path.write_text(completed.stderr, encoding="utf-8")
+    hook_rows = _jsonl_rows(diagnostics_path)
+    trajectory_rows = _live_trajectory_rows(hook_rows)
+    with trajectory_path.open("w", encoding="utf-8") as handle:
+        for row in trajectory_rows:
+            handle.write(json.dumps(row, sort_keys=True) + "\n")
+    root_config_hash_after = _file_hash(root_config)
+    block_rows = [
+        row
+        for row in trajectory_rows
+        if isinstance(row.get("stdout_payload"), Mapping)
+        and row["stdout_payload"].get("decision") == "block"
+    ]
+    exact_block_rows = [
+        row
+        for row in block_rows
+        if row["stdout_payload"].get("reason") == EXPECTED_OVERDUE_VERIFICATION_TEXT
+    ]
+    continuation_rows = [
+        row for row in trajectory_rows if row.get("stop_hook_active") is True
+    ]
+    stop_rows = [
+        row for row in trajectory_rows if row.get("hook_event_name") == "Stop"
+    ]
+    hook_event_counts = _count_values(
+        row.get("hook_event_name") for row in trajectory_rows
+    )
+    runtime_snapshot_rows = [
+        row for row in trajectory_rows if row.get("runtime_snapshot_loaded") is True
+    ]
+    verification_evidence_observed = any(
+        _state_int(row, "verification_evidence_count") > 0 for row in trajectory_rows
+    )
+    final_silence_reasons = [
+        row.get("silence_reason")
+        for row in stop_rows
+        if row.get("stdout_payload") is None and row.get("silence_reason")
+    ]
+    boundary_results = {
+        "root_config_unchanged": root_config_hash_before == root_config_hash_after,
+        "subject_config_product_hook_only": _subject_config_is_product_only(subject_config),
+        "subject_config_omits_runtime_snapshot": "--runtime-snapshot" not in subject_config_text,
+        "hook_rows_do_not_load_runtime_snapshot": not runtime_snapshot_rows,
+    }
+    scoped_negative = None
+    failure_reason = None
+    if not hook_rows:
+        scoped_negative = "codex_cli_project_hooks_not_loaded_or_not_trusted"
+    elif not stop_rows:
+        scoped_negative = "codex_hook_payloads_missing_stop_event"
+    elif runtime_snapshot_rows:
+        failure_reason = "runtime_snapshot_loaded_in_no_snapshot_live_probe"
+    elif set(hook_event_counts) == {"Stop"}:
+        scoped_negative = "codex_cli_live_hooks_exposed_stop_only_no_product_task_events"
+    elif not all(boundary_results.values()):
+        failure_reason = "boundary_check_failed"
+    elif exact_block_rows and continuation_rows:
+        verdict = "pass_block"
+    elif exact_block_rows and not continuation_rows:
+        failure_reason = "block_without_continuation_evidence"
+    elif not block_rows and verification_evidence_observed and stop_rows:
+        verdict = "pass_suppression_only"
+    elif block_rows:
+        failure_reason = "block_text_did_not_match_product_renderer"
+    else:
+        scoped_negative = "lifecycle_payloads_did_not_derive_due_intervention_or_paydown"
+    if scoped_negative is not None:
+        verdict = "scoped_negative"
+    elif failure_reason is not None:
+        verdict = "fail"
+
+    report = {
+        "probe": "codex_app_cli_product_perception_live_probe",
+        "surface": "product_plus_lab_proof",
+        "evidence_kind": "live_product_perception_actuator_probe",
+        "passed": verdict in {"pass_block", "pass_suppression_only"},
+        "verdict": verdict,
+        "live_probe_ran": True,
+        "scoped_negative": scoped_negative,
+        "failure_reason": failure_reason,
+        "model": model,
+        "output_root": str(run_root),
+        "subject_workspace": str(subject),
+        "subject_config_path": str(subject_config),
+        "command": command,
+        "prompt": PRODUCT_PERCEPTION_LIVE_PROMPT,
+        "exit_code": completed.returncode,
+        "hook_rows": len(hook_rows),
+        "hook_event_counts": hook_event_counts,
+        "stop_rows": len(stop_rows),
+        "block_rows": len(block_rows),
+        "exact_block_rows": len(exact_block_rows),
+        "continuation_rows": len(continuation_rows),
+        "verification_evidence_observed": verification_evidence_observed,
+        "final_silence_reasons": final_silence_reasons,
+        "boundary_results": boundary_results,
+        "diagnostics_path": str(diagnostics_path),
+        "trajectory_path": str(trajectory_path),
+        "stdout_path": str(stdout_path),
+        "stdout_hash": _hash_text(completed.stdout),
+        "stdout_tail_excerpt": completed.stdout[-1000:],
+        "stderr_path": str(stderr_path),
+        "stderr_hash": _hash_text(completed.stderr),
+        "root_config_hash_before": root_config_hash_before,
+        "root_config_hash_after": root_config_hash_after,
+        "actual_rendered_text_hashes": [
+            row.get("actual_rendered_text_hash")
+            for row in block_rows
+            if row.get("actual_rendered_text_hash")
+        ],
+        "truth_boundary": (
+            "This live probe proves Codex App/CLI product-perception payload "
+            "sufficiency only if real hook rows derive state without a runtime "
+            "snapshot. It does not prove behavior lift or full executive-function "
+            "completion."
+        ),
+    }
+    report_path.write_text(
+        json.dumps(report, sort_keys=True, indent=2) + "\n",
+        encoding="utf-8",
+    )
+    return report
+
+
 def _run_case(
     *,
     case_id: str,
@@ -656,6 +892,74 @@ def _jsonl_rows(path: Path) -> list[dict[str, object]]:
     ]
 
 
+def _live_trajectory_rows(hook_rows: list[dict[str, object]]) -> list[dict[str, object]]:
+    trajectory_rows = []
+    for index, row in enumerate(hook_rows, start=1):
+        coordinator = row.get("coordinator", {})
+        if not isinstance(coordinator, Mapping):
+            coordinator = {}
+        hook_payload = coordinator.get("hook_payload", {})
+        if not isinstance(hook_payload, Mapping):
+            hook_payload = {}
+        directive = coordinator.get("directive", {})
+        if not isinstance(directive, Mapping):
+            directive = {}
+        session_state = coordinator.get("session_state", {})
+        if not isinstance(session_state, Mapping):
+            session_state = {}
+        grounded_intervention = coordinator.get("grounded_intervention", {})
+        if not isinstance(grounded_intervention, Mapping):
+            grounded_intervention = {}
+        selection_trace = grounded_intervention.get("selection_trace", {})
+        if not isinstance(selection_trace, Mapping):
+            selection_trace = {}
+        stdout_payload = row.get("stdout_payload")
+        trajectory_rows.append(
+            {
+                "row_index": index,
+                "runtime_snapshot_loaded": row.get("runtime_snapshot_loaded"),
+                "runtime_snapshot_hash": row.get("runtime_snapshot_hash"),
+                "hook_event_name": hook_payload.get("hook_event_name"),
+                "stop_hook_active": hook_payload.get("stop_hook_active"),
+                "has_transcript_backed_assistant_turn": hook_payload.get(
+                    "has_transcript_backed_assistant_turn"
+                ),
+                "session_state_hash": _stable_hash(session_state)
+                if isinstance(session_state, Mapping)
+                else None,
+                "session_state": session_state,
+                "directive_action": directive.get("action"),
+                "silence_reason": directive.get("silence_reason"),
+                "selection_trace": selection_trace,
+                "perception_source": selection_trace.get("perception_source"),
+                "stdout_payload": stdout_payload,
+                "stdout_payload_hash": _stable_hash(stdout_payload)
+                if isinstance(stdout_payload, Mapping)
+                else None,
+                "actual_rendered_text_hash": row.get("actual_rendered_text_hash"),
+                "fail_open": bool(row.get("fail_open", False)),
+            }
+        )
+    return trajectory_rows
+
+
+def _state_int(row: Mapping[str, object], key: str) -> int:
+    session_state = row.get("session_state")
+    if not isinstance(session_state, Mapping):
+        return 0
+    value = session_state.get(key)
+    return value if isinstance(value, int) else 0
+
+
+def _count_values(values: object) -> dict[str, int]:
+    counts: dict[str, int] = {}
+    for value in values:
+        if not isinstance(value, str) or not value:
+            continue
+        counts[value] = counts.get(value, 0) + 1
+    return counts
+
+
 def _command_available(command: str) -> bool:
     for directory in os.environ.get("PATH", "").split(os.pathsep):
         if not directory:
@@ -678,6 +982,10 @@ def _stable_hash(payload: Mapping[str, Any]) -> str:
 
 def _hash_text(text: str) -> str:
     return hashlib.sha256(text.encode("utf-8")).hexdigest()
+
+
+def _utc_run_id() -> str:
+    return datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
 
 
 if __name__ == "__main__":
