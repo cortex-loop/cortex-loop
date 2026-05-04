@@ -109,5 +109,8 @@ Active docs:
 - [Cortex Codex App/CLI Stop Continuation Resolution Loop](recon/cortex_codex_app_cli_stop_continuation_resolution_loop.md) —
   live Codex CLI evidence that a post-block continuation check can resolve
   the exact active verification expectation from product-visible hook events
+- [Cortex Codex App/CLI Hook-Native Behavior Comparison](recon/cortex_codex_app_cli_hook_native_behavior_comparison.md) —
+  structural Gate 0 evidence for a paired silent-only versus hook-native
+  behavior comparison harness; live behavior lift remains unearned
 
 Historical runtime, lab, and governance material now lives under [archive/](archive/).

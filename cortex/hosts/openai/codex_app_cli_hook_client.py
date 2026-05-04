@@ -123,19 +123,36 @@ def _run_hook_client(
             {"error": f"{type(exc).__name__}: {exc}"},
         )
 
-    stdout_payload = result.host_response.stdout_payload
+    coordinator_stdout_payload = result.host_response.stdout_payload
+    stdout_payload = (
+        None if args.disable_model_visible_blocks else coordinator_stdout_payload
+    )
     rendered_text = (
         stdout_payload.get("reason")
         if isinstance(stdout_payload, Mapping)
         and isinstance(stdout_payload.get("reason"), str)
         else None
     )
+    suppressed_text = (
+        coordinator_stdout_payload.get("reason")
+        if args.disable_model_visible_blocks
+        and isinstance(coordinator_stdout_payload, Mapping)
+        and isinstance(coordinator_stdout_payload.get("reason"), str)
+        else None
+    )
     diagnostics_row = {
         "event": "codex_app_cli_product_hook_client",
         "fail_open": False,
+        "model_visible_blocks_disabled": bool(args.disable_model_visible_blocks),
         "runtime_snapshot_loaded": runtime_snapshot is not None,
         "runtime_snapshot_hash": snapshot_hash,
         "actual_rendered_text_hash": _hash_text(rendered_text) if rendered_text else None,
+        "suppressed_rendered_text_hash": (
+            _hash_text(suppressed_text) if suppressed_text else None
+        ),
+        "suppressed_stdout_payload": (
+            coordinator_stdout_payload if args.disable_model_visible_blocks else None
+        ),
         "stdout_payload": stdout_payload,
         "coordinator": result.as_diagnostics(),
     }
@@ -187,6 +204,7 @@ def _parse_args(argv: list[str] | None) -> argparse.Namespace:
     parser.add_argument("--state-root")
     parser.add_argument("--runtime-snapshot")
     parser.add_argument("--diagnostics-path")
+    parser.add_argument("--disable-model-visible-blocks", action="store_true")
     args, unknown = parser.parse_known_args(argv)
     if unknown:
         raise ValueError(f"unknown arguments: {' '.join(unknown)}")

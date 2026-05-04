@@ -1581,6 +1581,7 @@ def _write_subject_hook_config(
     snapshot_path: Path | None,
     diagnostics_path: Path,
     hook_events: tuple[str, ...] = ("Stop",),
+    disable_model_visible_blocks: bool = False,
 ) -> Path:
     config_dir = subject / ".codex"
     config_dir.mkdir(parents=True, exist_ok=True)
@@ -1595,6 +1596,8 @@ def _write_subject_hook_config(
     ]
     if snapshot_path is not None:
         command_parts.extend(("--runtime-snapshot", str(snapshot_path)))
+    if disable_model_visible_blocks:
+        command_parts.append("--disable-model-visible-blocks")
     command_parts.extend(("--diagnostics-path", str(diagnostics_path)))
     command = " ".join(
         shlex.quote(part) for part in command_parts
@@ -1784,6 +1787,13 @@ def _live_trajectory_rows(hook_rows: list[dict[str, object]]) -> list[dict[str, 
                 if isinstance(stdout_payload, Mapping)
                 else None,
                 "actual_rendered_text_hash": row.get("actual_rendered_text_hash"),
+                "model_visible_blocks_disabled": row.get(
+                    "model_visible_blocks_disabled"
+                ),
+                "suppressed_stdout_payload": row.get("suppressed_stdout_payload"),
+                "suppressed_rendered_text_hash": row.get(
+                    "suppressed_rendered_text_hash"
+                ),
                 "fail_open": bool(row.get("fail_open", False)),
             }
         )
