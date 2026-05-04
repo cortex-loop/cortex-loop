@@ -350,6 +350,25 @@ def test_stop_continuation_resolution_subject_config_registers_all_product_hooks
     assert "[[hooks.PostToolUseFailure]]" not in config
 
 
+def test_subject_config_can_disable_model_visible_blocks_for_silent_arm(
+    tmp_path: Path,
+) -> None:
+    subject = tmp_path / "subject"
+    config_path = codex_app_cli_stop_activation_probe._write_subject_hook_config(
+        subject=subject,
+        state_root=tmp_path / "state",
+        snapshot_path=None,
+        diagnostics_path=tmp_path / "diagnostics.jsonl",
+        hook_events=PRODUCT_EVENT_CAPTURE_HOOK_EVENTS,
+        disable_model_visible_blocks=True,
+    )
+    config = config_path.read_text(encoding="utf-8")
+
+    assert "--disable-model-visible-blocks" in config
+    assert "--runtime-snapshot" not in config
+    assert "cortex_mission_reflection_stop_hook" not in config
+
+
 def test_live_subject_workspace_is_prepared_as_isolated_git_root(
     tmp_path: Path,
 ) -> None:
@@ -398,6 +417,9 @@ def test_live_trajectory_rows_record_no_snapshot_product_state() -> None:
         {
             "active_expectation_ids": [],
             "actual_rendered_text_hash": "hash-1",
+            "model_visible_blocks_disabled": None,
+            "suppressed_rendered_text_hash": None,
+            "suppressed_stdout_payload": None,
             "directive_action": "block_with_identity_continuous_text",
             "expectation_evidence_refs": [],
             "fail_open": False,

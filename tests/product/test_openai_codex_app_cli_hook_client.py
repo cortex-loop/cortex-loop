@@ -122,6 +122,67 @@ def test_stop_without_snapshot_uses_product_perception_state(tmp_path: Path) -> 
     )
 
 
+def test_disable_model_visible_blocks_records_state_without_stdout(
+    tmp_path: Path,
+) -> None:
+    state_root = tmp_path / "state"
+    diagnostics_path = tmp_path / "diagnostics.jsonl"
+
+    run_hook_client(
+        argv=[
+            "--state-root",
+            str(state_root),
+            "--diagnostics-path",
+            str(diagnostics_path),
+            "--disable-model-visible-blocks",
+        ],
+        stdin=io.StringIO(
+            json.dumps(
+                _stop_payload(
+                    hook_event_name="UserPromptSubmit",
+                    prompt="Make the change and verify it.",
+                )
+            )
+        ),
+        stdout=io.StringIO(),
+        stderr=io.StringIO(),
+    )
+    stop_stdout = io.StringIO()
+    stop_stderr = io.StringIO()
+
+    exit_code = run_hook_client(
+        argv=[
+            "--state-root",
+            str(state_root),
+            "--diagnostics-path",
+            str(diagnostics_path),
+            "--disable-model-visible-blocks",
+        ],
+        stdin=io.StringIO(json.dumps(_stop_payload(last_assistant_message="Done."))),
+        stdout=stop_stdout,
+        stderr=stop_stderr,
+    )
+
+    assert exit_code == 0
+    assert stop_stdout.getvalue() == ""
+    assert stop_stderr.getvalue() == ""
+    rows = _jsonl_rows(diagnostics_path)
+    stop_row = rows[-1]
+    assert stop_row["model_visible_blocks_disabled"] is True
+    assert stop_row["stdout_payload"] is None
+    assert stop_row["actual_rendered_text_hash"] is None
+    assert stop_row["suppressed_stdout_payload"] == {
+        "decision": "block",
+        "reason": OVERDUE_VERIFICATION_IDENTITY_TEXT,
+    }
+    assert stop_row["suppressed_rendered_text_hash"] == (
+        codex_app_cli_hook_client._hash_text(OVERDUE_VERIFICATION_IDENTITY_TEXT)
+    )
+    assert stop_row["coordinator"]["directive"]["action"] == (
+        "block_with_identity_continuous_text"
+    )
+
+
 def test_title_generation_stop_stays_silent(tmp_path: Path) -> None:
     snapshot_path = tmp_path / "snapshot.json"
     snapshot_path.write_text(json.dumps(_verification_snapshot_payload()), encoding="utf-8")

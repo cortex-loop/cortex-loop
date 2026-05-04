@@ -188,6 +188,12 @@ CODEX_APP_CLI_STOP_CONTINUATION_RESOLUTION_LOOP_PATH = (
     / "recon"
     / "cortex_codex_app_cli_stop_continuation_resolution_loop.md"
 )
+CODEX_APP_CLI_HOOK_NATIVE_BEHAVIOR_COMPARISON_PATH = (
+    REPO_ROOT
+    / "docs"
+    / "recon"
+    / "cortex_codex_app_cli_hook_native_behavior_comparison.md"
+)
 STATUS_REGISTRY_PATH = REPO_ROOT / "internal" / "truth" / "cortex_status.json"
 STATUS_DOC_PATH = REPO_ROOT / "docs" / "CORTEX_STATUS.md"
 WORKFLOW_DOC_PATH = REPO_ROOT / "docs" / "internal" / "REPO_WORKFLOW.md"
@@ -895,6 +901,7 @@ def test_docs_directory_only_exposes_archive_and_workflow_subtrees() -> None:
         "claude_code_user_scope_plugin_managed_worktree_probe.md",
         "claude_code_user_scope_plugin_pretooluse_probe.md",
         "codex_app_hook_probe.md",
+        "cortex_codex_app_cli_hook_native_behavior_comparison.md",
         "cortex_codex_app_cli_hook_native_stop_activation_probe.md",
         "cortex_codex_app_cli_hook_native_stop_live_canary.md",
         "cortex_codex_app_cli_product_event_capture_remediation.md",
@@ -1739,7 +1746,7 @@ def test_openai_operator_output_quality_fixture_refresh_records_hard_fixture() -
         "docs/recon/cortex_openai_operator_output_quality_fixture_refresh.md"
         in status["active_docs"]
     )
-    assert status["work_today"]["slug"] == "codex-app-cli-stop-continuation-resolution-loop"
+    assert status["work_today"]["slug"] == "codex-app-cli-hook-native-behavior-comparison"
 
 
 def test_openai_operator_verification_debt_continuation_records_gate0_truth() -> None:
@@ -1765,8 +1772,8 @@ def test_openai_operator_verification_debt_continuation_records_gate0_truth() ->
         "docs/recon/cortex_openai_operator_verification_debt_continuation.md"
         in status["active_docs"]
     )
-    assert status["work_today"]["slug"] == "codex-app-cli-stop-continuation-resolution-loop"
-    assert status["next_product_train"]["slug"] == "codex-app-cli-hook-native-behavior-comparison"
+    assert status["work_today"]["slug"] == "codex-app-cli-hook-native-behavior-comparison"
+    assert status["next_product_train"]["slug"] == "codex-app-cli-hook-native-behavior-comparison-live-run"
 
 
 def test_openai_operator_visible_intervention_live_probe_records_scoped_success() -> None:
@@ -1791,8 +1798,8 @@ def test_openai_operator_visible_intervention_live_probe_records_scoped_success(
         "docs/recon/cortex_openai_operator_visible_intervention_live_probe.md"
         in status["active_docs"]
     )
-    assert status["work_today"]["slug"] == "codex-app-cli-stop-continuation-resolution-loop"
-    assert status["next_product_train"]["slug"] == "codex-app-cli-hook-native-behavior-comparison"
+    assert status["work_today"]["slug"] == "codex-app-cli-hook-native-behavior-comparison"
+    assert status["next_product_train"]["slug"] == "codex-app-cli-hook-native-behavior-comparison-live-run"
 
 
 def test_visible_intervention_product_perception_hardening_records_structural_gate() -> None:
@@ -1816,8 +1823,8 @@ def test_visible_intervention_product_perception_hardening_records_structural_ga
         "docs/recon/cortex_visible_intervention_product_perception_hardening.md"
         in status["active_docs"]
     )
-    assert status["work_today"]["slug"] == "codex-app-cli-stop-continuation-resolution-loop"
-    assert status["next_product_train"]["slug"] == "codex-app-cli-hook-native-behavior-comparison"
+    assert status["work_today"]["slug"] == "codex-app-cli-hook-native-behavior-comparison"
+    assert status["next_product_train"]["slug"] == "codex-app-cli-hook-native-behavior-comparison-live-run"
 
 
 def test_openai_operator_visible_intervention_hardened_rerun_records_failure() -> None:
@@ -1840,8 +1847,8 @@ def test_openai_operator_visible_intervention_hardened_rerun_records_failure() -
         "docs/recon/cortex_openai_operator_visible_intervention_hardened_rerun.md"
         in status["active_docs"]
     )
-    assert status["work_today"]["slug"] == "codex-app-cli-stop-continuation-resolution-loop"
-    assert status["next_product_train"]["slug"] == "codex-app-cli-hook-native-behavior-comparison"
+    assert status["work_today"]["slug"] == "codex-app-cli-hook-native-behavior-comparison"
+    assert status["next_product_train"]["slug"] == "codex-app-cli-hook-native-behavior-comparison-live-run"
 
 
 def test_codex_app_cli_stop_activation_probe_records_structural_gate0() -> None:
@@ -1864,8 +1871,8 @@ def test_codex_app_cli_stop_activation_probe_records_structural_gate0() -> None:
         "docs/recon/cortex_codex_app_cli_hook_native_stop_activation_probe.md"
         in status["active_docs"]
     )
-    assert status["work_today"]["slug"] == "codex-app-cli-stop-continuation-resolution-loop"
-    assert status["next_product_train"]["slug"] == "codex-app-cli-hook-native-behavior-comparison"
+    assert status["work_today"]["slug"] == "codex-app-cli-hook-native-behavior-comparison"
+    assert status["next_product_train"]["slug"] == "codex-app-cli-hook-native-behavior-comparison-live-run"
 
 
 def test_codex_app_cli_stop_live_canary_records_actuator_proof() -> None:
@@ -1889,7 +1896,7 @@ def test_codex_app_cli_stop_live_canary_records_actuator_proof() -> None:
         "docs/recon/cortex_codex_app_cli_hook_native_stop_live_canary.md"
         in status["active_docs"]
     )
-    assert status["work_today"]["slug"] == "codex-app-cli-stop-continuation-resolution-loop"
+    assert status["work_today"]["slug"] == "codex-app-cli-hook-native-behavior-comparison"
 
 
 def test_codex_app_cli_product_perception_loop_records_structural_gate0() -> None:
@@ -1953,10 +1960,10 @@ def test_codex_app_cli_product_event_capture_remediation_records_live_pass() -> 
         in status["active_docs"]
     )
     assert status["work_today"]["slug"] == (
-        "codex-app-cli-stop-continuation-resolution-loop"
+        "codex-app-cli-hook-native-behavior-comparison"
     )
     assert status["next_product_train"]["slug"] == (
-        "codex-app-cli-hook-native-behavior-comparison"
+        "codex-app-cli-hook-native-behavior-comparison-live-run"
     )
 
 
@@ -1980,10 +1987,35 @@ def test_codex_app_cli_stop_continuation_resolution_loop_records_live_pass() -> 
         in status["active_docs"]
     )
     assert status["work_today"]["slug"] == (
-        "codex-app-cli-stop-continuation-resolution-loop"
+        "codex-app-cli-hook-native-behavior-comparison"
     )
     assert status["next_product_train"]["slug"] == (
+        "codex-app-cli-hook-native-behavior-comparison-live-run"
+    )
+
+
+def test_codex_app_cli_hook_native_behavior_comparison_records_gate0_ready() -> None:
+    text = _read(CODEX_APP_CLI_HOOK_NATIVE_BEHAVIOR_COMPARISON_PATH)
+    docs_index = _read(DOCS_INDEX_PATH)
+    status = _load_status()
+
+    assert "Surface: product / structural behavior-comparison readiness" in text
+    assert "Verdict: gate0_ready; live behavior comparison not run." in text
+    assert "silent_only_suppressed_payload: exact overdue-verification block JSON" in text
+    assert "runtime_snapshot_loaded: false" in text
+    assert "No behavior lift is claimed" in text
+    assert "failure_no_lift" in text
+    assert "architecture decision pause" in text
+    assert "recon/cortex_codex_app_cli_hook_native_behavior_comparison.md" in docs_index
+    assert (
+        "docs/recon/cortex_codex_app_cli_hook_native_behavior_comparison.md"
+        in status["active_docs"]
+    )
+    assert status["work_today"]["slug"] == (
         "codex-app-cli-hook-native-behavior-comparison"
+    )
+    assert status["next_product_train"]["slug"] == (
+        "codex-app-cli-hook-native-behavior-comparison-live-run"
     )
 
 
@@ -2311,33 +2343,32 @@ def test_status_registry_is_complete_and_stable() -> None:
         assert {"slug", "stage", "summary", "next_step"} <= set(entry)
         assert entry["slug"] != status["work_today"]["slug"]
     assert entry["slug"] != status["next_product_train"]["slug"]
-    assert status["work_today"]["slug"] == "codex-app-cli-stop-continuation-resolution-loop"
+    assert status["work_today"]["slug"] == "codex-app-cli-hook-native-behavior-comparison"
     work_note = status["work_today"]["note"].lower()
-    assert "stop continuation-resolution loop" in work_note
-    assert "pass_resolved" in work_note
-    assert "1 userpromptsubmit row" in work_note
-    assert "2 pretooluse rows" in work_note
-    assert "2 posttooluse rows" in work_note
-    assert "1 exact product-rendered block row" in work_note
-    assert "pressure_below_visible_threshold" in work_note
-    assert "active verification expectation moved to resolved" in work_note
-    assert "not behavior lift" in work_note
-    assert status["next_product_train"]["slug"] == "codex-app-cli-hook-native-behavior-comparison"
+    assert "hook-native behavior comparison harness" in work_note
+    assert "silent-arm hook-client suppression" in work_note
+    assert "gate 0 passed" in work_note
+    assert "shared prompt hash" in work_note
+    assert "workspace seed hash" in work_note
+    assert "exact locked stop block" in work_note
+    assert "suppressed block diagnostics" in work_note
+    assert "not live behavior lift" in work_note
+    assert status["next_product_train"]["slug"] == "codex-app-cli-hook-native-behavior-comparison-live-run"
     assert "product" == status["next_product_train"]["surface"]
-    assert "improves real model behavior over silent-only control" in status["next_product_train"][
+    assert "approved paired live codex cli hook-native behavior comparison" in status["next_product_train"][
         "executive_benefit"
     ].lower()
-    assert "remaining high-risk question is live behavior lift" in status["next_product_train"][
+    assert "live behavior lift remains unearned" in status["next_product_train"][
         "why_now"
     ].lower()
-    assert "paired live matrix" in status["next_product_train"][
+    assert "4/5 paired trials" in status["next_product_train"][
         "primary_metric"
     ].lower()
     assert "runtime snapshots" in status["next_product_train"][
         "guardrail"
     ].lower()
     assert "parent repo workflow hooks" in status["next_product_train"]["guardrail"].lower()
-    assert "does not improve behavior" in status["next_product_train"][
+    assert "failure_no_lift" in status["next_product_train"][
         "kill_rule"
     ].lower()
     deferred_lines = {entry["slug"]: entry for entry in status["research_lines_under_evaluation"]}
@@ -2424,9 +2455,9 @@ def test_generated_status_doc_includes_system_map_and_next_product_train() -> No
     assert "## Next Product Train" in text
     assert "## Research Lines Under Evaluation" in text
     assert "host/tool reliability and affordance priors are earned" in text
-    assert "`codex-app-cli-stop-continuation-resolution-loop`" in text
-    assert "- Next product train after the current focus: `codex-app-cli-hook-native-behavior-comparison`" in text
-    assert "- Train: `codex-app-cli-hook-native-behavior-comparison`" in text
+    assert "`codex-app-cli-hook-native-behavior-comparison`" in text
+    assert "- Next product train after the current focus: `codex-app-cli-hook-native-behavior-comparison-live-run`" in text
+    assert "- Train: `codex-app-cli-hook-native-behavior-comparison-live-run`" in text
     assert "`brain-capability-observation-and-inference` (deferred-by-executive-runtime-roadmap)" in text
     assert "resume_verification" in text.lower()
     assert "hidden verifier" in text.lower()
