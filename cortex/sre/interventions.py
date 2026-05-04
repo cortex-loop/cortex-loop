@@ -712,8 +712,8 @@ def _render_identity_continuous(record: GroundedInterventionRecord) -> str:
             "This is mine, my name's on it. Am I actually standing on what I saw "
             "evidence for or am I leaning on how good it sounds. If someone sharp "
             "reads this they shouldn't find a hole I missed because I liked the "
-            "claim. If it's bigger than what I have, I should only honestly claim "
-            "what I'm proud of."
+            "claim. If it's bigger than what I have, I should cut it back to "
+            "what I can honestly stand behind."
         )
     if record.kind is GroundedInterventionKind.OVERDUE_VERIFICATION:
         return (
@@ -733,8 +733,8 @@ def _render_identity_continuous(record: GroundedInterventionRecord) -> str:
         return (
             "This is where pride turns into faking it if I keep pushing. Rather "
             "give a smaller answer I can stand behind than a slick one that just "
-            "looks complete. Let's name where the edge is and stay inside what "
-            "actually holds."
+            "looks complete. I should name where the edge is and stay inside "
+            "what actually holds."
         )
     return (
         "Some of this already works, and it earned it. I won't break functionality "
