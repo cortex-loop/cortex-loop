@@ -106,5 +106,8 @@ Active docs:
   live Codex CLI evidence that a full-lifecycle subject hook config captures
   UserPromptSubmit, PreToolUse, PostToolUse, and Stop payloads before Stop
   without runtime snapshots or parent repo workflow guardrails
+- [Cortex Codex App/CLI Stop Continuation Resolution Loop](recon/cortex_codex_app_cli_stop_continuation_resolution_loop.md) —
+  live Codex CLI evidence that a post-block continuation check can resolve
+  the exact active verification expectation from product-visible hook events
 
 Historical runtime, lab, and governance material now lives under [archive/](archive/).

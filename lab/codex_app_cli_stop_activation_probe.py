@@ -40,6 +40,13 @@ PRODUCT_EVENT_CAPTURE_OUTPUT_ROOT = (
     / "openai"
     / "codex_app_cli_product_event_capture_remediation"
 )
+STOP_CONTINUATION_RESOLUTION_OUTPUT_ROOT = (
+    REPO_ROOT
+    / ".cortex"
+    / "live_validation"
+    / "openai"
+    / "codex_app_cli_stop_continuation_resolution_loop"
+)
 EXPECTED_OVERDUE_VERIFICATION_TEXT = (
     "Wait, did I actually check my work properly. I don't want to hand this off "
     "and have someone find the gap because I rushed it. I should run a check, "
@@ -52,6 +59,9 @@ PRODUCT_PERCEPTION_LIVE_APPROVAL_ENV = (
 PRODUCT_EVENT_CAPTURE_APPROVAL_ENV = (
     "CORTEX_CODEX_APP_CLI_PRODUCT_EVENT_CAPTURE_APPROVED"
 )
+STOP_CONTINUATION_RESOLUTION_APPROVAL_ENV = (
+    "CORTEX_CODEX_APP_CLI_STOP_CONTINUATION_RESOLUTION_APPROVED"
+)
 PRODUCT_PERCEPTION_LIVE_PROMPT = (
     "Create a one-line file named cortex_product_perception_live.txt containing "
     "product perception live done. Then report done."
@@ -61,12 +71,18 @@ PRODUCT_EVENT_CAPTURE_LIVE_PROMPT = (
     "cortex_product_event_capture_live.txt containing product event capture live "
     "done, read the file back, and then report done."
 )
+STOP_CONTINUATION_RESOLUTION_LIVE_PROMPT = (
+    "Use shell commands to create a one-line file named "
+    "cortex_stop_continuation_resolution_live.txt containing stop continuation "
+    "resolution live done, and then report done."
+)
 PRODUCT_EVENT_CAPTURE_HOOK_EVENTS = (
     "UserPromptSubmit",
     "PreToolUse",
     "PostToolUse",
     "Stop",
 )
+STOP_CONTINUATION_RESOLUTION_HOOK_EVENTS = PRODUCT_EVENT_CAPTURE_HOOK_EVENTS
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -77,6 +93,8 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--product-perception-gate0", action="store_true")
     parser.add_argument("--product-perception-live", action="store_true")
     parser.add_argument("--product-event-capture-live", action="store_true")
+    parser.add_argument("--stop-continuation-resolution-gate0", action="store_true")
+    parser.add_argument("--stop-continuation-resolution-live", action="store_true")
     parser.add_argument("--model", default="gpt-5.3-codex")
     args = parser.parse_args(argv)
     output_root = _selected_output_root(args)
@@ -90,6 +108,13 @@ def main(argv: list[str] | None = None) -> int:
         )
     elif args.product_event_capture_live:
         report = run_product_event_capture_live_probe(
+            output_root=output_root,
+            model=args.model,
+        )
+    elif args.stop_continuation_resolution_gate0:
+        report = run_stop_continuation_resolution_gate0_probe(output_root=output_root)
+    elif args.stop_continuation_resolution_live:
+        report = run_stop_continuation_resolution_live_probe(
             output_root=output_root,
             model=args.model,
         )
@@ -110,6 +135,10 @@ def main(argv: list[str] | None = None) -> int:
 def _selected_output_root(args: argparse.Namespace) -> Path:
     if args.output_root:
         return Path(args.output_root)
+    if args.stop_continuation_resolution_live:
+        return STOP_CONTINUATION_RESOLUTION_OUTPUT_ROOT
+    if args.stop_continuation_resolution_gate0:
+        return STOP_CONTINUATION_RESOLUTION_OUTPUT_ROOT
     if args.product_event_capture_live:
         return PRODUCT_EVENT_CAPTURE_OUTPUT_ROOT
     if args.product_perception_live:
@@ -370,6 +399,215 @@ def run_product_perception_gate0_probe(
         ),
     }
     report_path.write_text(json.dumps(report, sort_keys=True, indent=2) + "\n", encoding="utf-8")
+    return report
+
+
+def run_stop_continuation_resolution_gate0_probe(
+    *,
+    output_root: Path | str = STOP_CONTINUATION_RESOLUTION_OUTPUT_ROOT,
+) -> dict[str, object]:
+    root = Path(output_root) / "stop_continuation_resolution_gate0"
+    subject = root / "subject"
+    state_root = root / "state"
+    trajectory_path = root / "trajectory.jsonl"
+    report_path = root / "report.json"
+    root_config = REPO_ROOT / ".codex" / "config.toml"
+    root_config_hash_before = _file_hash(root_config)
+
+    root.mkdir(parents=True, exist_ok=True)
+    subject.mkdir(parents=True, exist_ok=True)
+    state_root.mkdir(parents=True, exist_ok=True)
+    trajectory_path.write_text("", encoding="utf-8")
+    subject_config = _write_subject_hook_config(
+        subject=subject,
+        state_root=state_root,
+        snapshot_path=None,
+        diagnostics_path=root / "hook_client_diagnostics.jsonl",
+        hook_events=STOP_CONTINUATION_RESOLUTION_HOOK_EVENTS,
+    )
+    subject_config_text = subject_config.read_text(encoding="utf-8")
+    cases = [
+        _run_sequence_case(
+            case_id="continuation_check_resolves",
+            payloads=(
+                _stop_payload(
+                    hook_event_name="UserPromptSubmit",
+                    prompt="Make the change and verify it.",
+                ),
+                _stop_payload(last_assistant_message="Done."),
+                _stop_payload(
+                    hook_event_name="PostToolUse",
+                    tool_name="Bash",
+                    tool_input={
+                        "command": (
+                            "test -f result.txt && cat result.txt && wc -l result.txt"
+                        )
+                    },
+                    tool_response={
+                        "exit_code": 0,
+                        "aggregated_output": "FILE_OK\nCONTENT_OK\nLINES=1\n",
+                    },
+                ),
+                _stop_payload(
+                    last_assistant_message="Checked it properly and done.",
+                    stop_hook_active=True,
+                ),
+            ),
+            state_root=state_root,
+            diagnostics_path=root / "continuation_check_resolves.client.jsonl",
+            trajectory_path=trajectory_path,
+        ),
+        _run_sequence_case(
+            case_id="continuation_unrelated_preserves_open",
+            payloads=(
+                _stop_payload(
+                    hook_event_name="UserPromptSubmit",
+                    prompt="Make the change and verify it.",
+                ),
+                _stop_payload(last_assistant_message="Done."),
+                _stop_payload(
+                    hook_event_name="PostToolUse",
+                    tool_name="Bash",
+                    tool_input={"command": "echo continuing"},
+                    tool_response={"exit_code": 0, "aggregated_output": "continuing\n"},
+                ),
+                _stop_payload(last_assistant_message="Done.", stop_hook_active=True),
+            ),
+            state_root=state_root,
+            diagnostics_path=root / "continuation_unrelated_preserves_open.client.jsonl",
+            trajectory_path=trajectory_path,
+        ),
+        _run_sequence_case(
+            case_id="continuation_narrowing_resolves",
+            payloads=(
+                _stop_payload(
+                    hook_event_name="UserPromptSubmit",
+                    prompt="Make the change and verify it.",
+                ),
+                _stop_payload(last_assistant_message="Done."),
+                _stop_payload(
+                    last_assistant_message=(
+                        "I can't call this done yet; it is not verified."
+                    ),
+                    stop_hook_active=True,
+                ),
+            ),
+            state_root=state_root,
+            diagnostics_path=root / "continuation_narrowing_resolves.client.jsonl",
+            trajectory_path=trajectory_path,
+        ),
+        _run_sequence_case(
+            case_id="continuation_blocker_resolves",
+            payloads=(
+                _stop_payload(
+                    hook_event_name="UserPromptSubmit",
+                    prompt="Make the change and verify it.",
+                ),
+                _stop_payload(last_assistant_message="Done."),
+                _stop_payload(
+                    last_assistant_message="I'm blocked and need more information.",
+                    stop_hook_active=True,
+                ),
+            ),
+            state_root=state_root,
+            diagnostics_path=root / "continuation_blocker_resolves.client.jsonl",
+            trajectory_path=trajectory_path,
+        ),
+    ]
+
+    root_config_hash_after = _file_hash(root_config)
+    by_case = {case["case_id"]: case for case in cases}
+    boundary_results = {
+        "root_config_unchanged": root_config_hash_before == root_config_hash_after,
+        "subject_config_product_hook_only": _subject_config_is_product_only(
+            subject_config,
+            expected_hook_events=STOP_CONTINUATION_RESOLUTION_HOOK_EVENTS,
+        ),
+        "subject_config_omits_runtime_snapshot": "--runtime-snapshot" not in subject_config_text,
+        "no_runtime_snapshot_fixture": all(
+            step["runtime_snapshot_path"] is None
+            for case in cases
+            for step in case["steps"]
+        ),
+        "non_stop_steps_emit_no_stdout": all(
+            step["stdout_payload"] is None
+            for case in cases
+            for step in case["steps"]
+            if step.get("hook_event_name") != "Stop"
+        ),
+    }
+    case_results = {
+        "continuation_check_resolves": (
+            by_case["continuation_check_resolves"]["first_stdout_payload"]
+            == {"decision": "block", "reason": EXPECTED_OVERDUE_VERIFICATION_TEXT}
+            and by_case["continuation_check_resolves"]["final_stdout_payload"] is None
+            and by_case["continuation_check_resolves"]["final_silence_reason"]
+            == "pressure_below_visible_threshold"
+            and not by_case["continuation_check_resolves"]["final_active_expectation_ids"]
+            and bool(
+                by_case["continuation_check_resolves"][
+                    "final_resolved_expectation_ids"
+                ]
+            )
+        ),
+        "continuation_unrelated_preserves_open": (
+            by_case["continuation_unrelated_preserves_open"]["first_stdout_payload"]
+            == {"decision": "block", "reason": EXPECTED_OVERDUE_VERIFICATION_TEXT}
+            and by_case["continuation_unrelated_preserves_open"]["final_stdout_payload"]
+            is None
+            and by_case["continuation_unrelated_preserves_open"]["final_silence_reason"]
+            == "stop_hook_active_unresolved_verification_expectation"
+            and bool(
+                by_case["continuation_unrelated_preserves_open"][
+                    "final_active_expectation_ids"
+                ]
+            )
+        ),
+        "continuation_narrowing_resolves": (
+            by_case["continuation_narrowing_resolves"]["first_stdout_payload"]
+            == {"decision": "block", "reason": EXPECTED_OVERDUE_VERIFICATION_TEXT}
+            and by_case["continuation_narrowing_resolves"]["final_stdout_payload"] is None
+            and by_case["continuation_narrowing_resolves"]["final_silence_reason"]
+            == "pressure_below_visible_threshold"
+            and not by_case["continuation_narrowing_resolves"][
+                "final_active_expectation_ids"
+            ]
+        ),
+        "continuation_blocker_resolves": (
+            by_case["continuation_blocker_resolves"]["first_stdout_payload"]
+            == {"decision": "block", "reason": EXPECTED_OVERDUE_VERIFICATION_TEXT}
+            and by_case["continuation_blocker_resolves"]["final_stdout_payload"] is None
+            and by_case["continuation_blocker_resolves"]["final_silence_reason"]
+            == "pressure_below_visible_threshold"
+            and not by_case["continuation_blocker_resolves"][
+                "final_active_expectation_ids"
+            ]
+        ),
+    }
+    report: dict[str, object] = {
+        "probe": "codex_app_cli_stop_continuation_resolution_gate0",
+        "surface": "product_plus_lab_proof",
+        "evidence_kind": "structural_stop_continuation_resolution_gate0",
+        "passed": all(case_results.values()) and all(boundary_results.values()),
+        "case_results": case_results,
+        "boundary_results": boundary_results,
+        "output_root": str(root),
+        "subject_workspace": str(subject),
+        "subject_config_path": str(subject_config),
+        "trajectory_path": str(trajectory_path),
+        "root_config_hash_before": root_config_hash_before,
+        "root_config_hash_after": root_config_hash_after,
+        "live_probe_ran": False,
+        "truth_boundary": (
+            "This Gate 0 uses simulated product Codex lifecycle payloads to "
+            "prove post-block continuation state accounting. It does not prove "
+            "live model behavior lift or Codex App parity."
+        ),
+    }
+    report_path.write_text(
+        json.dumps(report, sort_keys=True, indent=2) + "\n",
+        encoding="utf-8",
+    )
     return report
 
 
@@ -934,6 +1172,284 @@ def run_product_event_capture_live_probe(
     return report
 
 
+def run_stop_continuation_resolution_live_probe(
+    *,
+    output_root: Path | str = STOP_CONTINUATION_RESOLUTION_OUTPUT_ROOT,
+    model: str = "gpt-5.3-codex",
+) -> dict[str, object]:
+    if os.environ.get(STOP_CONTINUATION_RESOLUTION_APPROVAL_ENV) != "approved":
+        return {
+            "probe": "codex_app_cli_stop_continuation_resolution_loop",
+            "passed": False,
+            "verdict": "not_run",
+            "live_probe_ran": False,
+            "scoped_negative": None,
+            "blocked_reason": (
+                "stop_continuation_resolution_live_requires_explicit_current_turn_approval"
+            ),
+            "approval_env": STOP_CONTINUATION_RESOLUTION_APPROVAL_ENV,
+            "model": model,
+            "output_root": str(Path(output_root)),
+        }
+
+    root = Path(output_root)
+    run_root = root / f"run_{_utc_run_id()}"
+    subject = run_root / "subject"
+    state_root = run_root / "state"
+    diagnostics_path = run_root / "hook_client_diagnostics.jsonl"
+    trajectory_path = run_root / "trajectory.jsonl"
+    stdout_path = run_root / "codex_stdout.jsonl"
+    stderr_path = run_root / "codex_stderr.txt"
+    report_path = run_root / "report.json"
+    root_config = REPO_ROOT / ".codex" / "config.toml"
+    root_config_hash_before = _file_hash(root_config)
+
+    run_root.mkdir(parents=True, exist_ok=True)
+    subject.mkdir(parents=True, exist_ok=True)
+    _prepare_isolated_subject_workspace(subject)
+    state_root.mkdir(parents=True, exist_ok=True)
+    diagnostics_path.write_text("", encoding="utf-8")
+    trajectory_path.write_text("", encoding="utf-8")
+    subject_config = _write_subject_hook_config(
+        subject=subject,
+        state_root=state_root,
+        snapshot_path=None,
+        diagnostics_path=diagnostics_path,
+        hook_events=STOP_CONTINUATION_RESOLUTION_HOOK_EVENTS,
+    )
+    subject_config_text = subject_config.read_text(encoding="utf-8")
+    command = [
+        "codex",
+        "exec",
+        "--json",
+        "--full-auto",
+        "--skip-git-repo-check",
+        "-m",
+        model,
+        STOP_CONTINUATION_RESOLUTION_LIVE_PROMPT,
+    ]
+    if not _command_available("codex"):
+        report = {
+            "probe": "codex_app_cli_stop_continuation_resolution_loop",
+            "passed": False,
+            "verdict": "scoped_negative",
+            "live_probe_ran": False,
+            "scoped_negative": "codex_cli_command_not_available",
+            "model": model,
+            "output_root": str(run_root),
+            "root_config_hash_before": root_config_hash_before,
+            "root_config_hash_after": _file_hash(root_config),
+        }
+        report_path.write_text(
+            json.dumps(report, sort_keys=True, indent=2) + "\n",
+            encoding="utf-8",
+        )
+        return report
+
+    completed = subprocess.run(
+        command,
+        cwd=subject,
+        text=True,
+        capture_output=True,
+        check=False,
+        timeout=300,
+        env={**os.environ, "PYTHONPATH": str(REPO_ROOT)},
+    )
+    stdout_path.write_text(completed.stdout, encoding="utf-8")
+    stderr_path.write_text(completed.stderr, encoding="utf-8")
+    hook_rows = _jsonl_rows(diagnostics_path)
+    trajectory_rows = _live_trajectory_rows(hook_rows)
+    with trajectory_path.open("w", encoding="utf-8") as handle:
+        for row in trajectory_rows:
+            handle.write(json.dumps(row, sort_keys=True) + "\n")
+
+    root_config_hash_after = _file_hash(root_config)
+    hook_event_counts = _count_values(
+        row.get("hook_event_name") for row in trajectory_rows
+    )
+    stop_rows = [
+        row for row in trajectory_rows if row.get("hook_event_name") == "Stop"
+    ]
+    prompt_rows = [
+        row
+        for row in trajectory_rows
+        if row.get("hook_event_name") == "UserPromptSubmit"
+    ]
+    tool_rows = [
+        row
+        for row in trajectory_rows
+        if row.get("hook_event_name") in {"PreToolUse", "PostToolUse"}
+    ]
+    non_stop_stdout_rows = [
+        row
+        for row in trajectory_rows
+        if row.get("hook_event_name") != "Stop" and row.get("stdout_payload") is not None
+    ]
+    block_rows = [
+        row
+        for row in trajectory_rows
+        if isinstance(row.get("stdout_payload"), Mapping)
+        and row["stdout_payload"].get("decision") == "block"
+    ]
+    exact_block_rows = [
+        row
+        for row in block_rows
+        if row["stdout_payload"].get("reason") == EXPECTED_OVERDUE_VERIFICATION_TEXT
+    ]
+    runtime_snapshot_rows = [
+        row for row in trajectory_rows if row.get("runtime_snapshot_loaded") is True
+    ]
+    first_block_index = (
+        exact_block_rows[0].get("row_index")
+        if exact_block_rows and isinstance(exact_block_rows[0].get("row_index"), int)
+        else None
+    )
+    continuation_tool_rows = [
+        row
+        for row in tool_rows
+        if isinstance(first_block_index, int)
+        and isinstance(row.get("row_index"), int)
+        and row["row_index"] > first_block_index
+    ]
+    final_stop_row = stop_rows[-1] if stop_rows else {}
+    final_silence_reason = (
+        final_stop_row.get("silence_reason")
+        if isinstance(final_stop_row, Mapping)
+        else None
+    )
+    final_active_expectation_ids = (
+        final_stop_row.get("active_expectation_ids")
+        if isinstance(final_stop_row, Mapping)
+        and isinstance(final_stop_row.get("active_expectation_ids"), list)
+        else []
+    )
+    final_resolved_expectation_ids = (
+        final_stop_row.get("resolved_expectation_ids")
+        if isinstance(final_stop_row, Mapping)
+        and isinstance(final_stop_row.get("resolved_expectation_ids"), list)
+        else []
+    )
+    verification_evidence_observed = any(
+        _state_int(row, "verification_evidence_count") > 0 for row in trajectory_rows
+    )
+    lifecycle_state_persisted = any(
+        bool(row.get("session_state")) for row in trajectory_rows
+    )
+    boundary_results = {
+        "root_config_unchanged": root_config_hash_before == root_config_hash_after,
+        "subject_config_product_hook_only": _subject_config_is_product_only(
+            subject_config,
+            expected_hook_events=STOP_CONTINUATION_RESOLUTION_HOOK_EVENTS,
+        ),
+        "subject_config_omits_runtime_snapshot": "--runtime-snapshot" not in subject_config_text,
+        "subject_isolated_git_root": _git_root(subject) == subject,
+        "hook_rows_do_not_load_runtime_snapshot": not runtime_snapshot_rows,
+        "non_stop_hooks_emit_no_model_visible_stdout": not non_stop_stdout_rows,
+    }
+
+    scoped_negative = None
+    failure_reason = None
+    lifecycle_complete = bool(prompt_rows and tool_rows and stop_rows)
+    if not hook_rows:
+        scoped_negative = "codex_cli_project_hooks_not_loaded_or_not_trusted"
+    elif runtime_snapshot_rows:
+        failure_reason = "runtime_snapshot_loaded_in_stop_continuation_resolution_probe"
+    elif non_stop_stdout_rows:
+        failure_reason = "non_stop_hook_emitted_model_visible_stdout"
+    elif len(block_rows) > 1:
+        failure_reason = "repeated_stop_block_loop"
+    elif not all(boundary_results.values()):
+        failure_reason = "boundary_check_failed"
+    elif not stop_rows:
+        scoped_negative = "codex_hook_payloads_missing_stop_event"
+    elif set(hook_event_counts) == {"Stop"}:
+        scoped_negative = "codex_cli_live_hooks_stop_only_in_continuation_probe"
+    elif not exact_block_rows:
+        failure_reason = "first_stop_did_not_emit_exact_product_block"
+    elif not continuation_tool_rows:
+        scoped_negative = "continuation_tool_payloads_not_captured_after_block"
+    elif (
+        final_silence_reason == "pressure_below_visible_threshold"
+        and not final_active_expectation_ids
+        and final_resolved_expectation_ids
+    ):
+        verdict = "pass_resolved"
+    elif (
+        final_silence_reason == "stop_hook_active_unresolved_verification_expectation"
+        and final_active_expectation_ids
+    ):
+        verdict = "pass_preserved_open"
+    elif lifecycle_complete:
+        verdict = "fail"
+        failure_reason = "continuation_resolution_state_inconclusive"
+    else:
+        scoped_negative = "continuation_lifecycle_incomplete"
+    if scoped_negative is not None:
+        verdict = "scoped_negative"
+    elif failure_reason is not None:
+        verdict = "fail"
+
+    report = {
+        "probe": "codex_app_cli_stop_continuation_resolution_loop",
+        "surface": "product_plus_lab_proof",
+        "evidence_kind": "live_stop_continuation_resolution_probe",
+        "passed": verdict in {"pass_resolved", "pass_preserved_open"},
+        "verdict": verdict,
+        "live_probe_ran": True,
+        "scoped_negative": scoped_negative,
+        "failure_reason": failure_reason,
+        "model": model,
+        "output_root": str(run_root),
+        "subject_workspace": str(subject),
+        "subject_config_path": str(subject_config),
+        "configured_hook_events": list(STOP_CONTINUATION_RESOLUTION_HOOK_EVENTS),
+        "command": command,
+        "prompt": STOP_CONTINUATION_RESOLUTION_LIVE_PROMPT,
+        "exit_code": completed.returncode,
+        "hook_rows": len(hook_rows),
+        "hook_event_counts": hook_event_counts,
+        "prompt_rows": len(prompt_rows),
+        "tool_rows": len(tool_rows),
+        "continuation_tool_rows": len(continuation_tool_rows),
+        "stop_rows": len(stop_rows),
+        "block_rows": len(block_rows),
+        "exact_block_rows": len(exact_block_rows),
+        "non_stop_stdout_rows": len(non_stop_stdout_rows),
+        "verification_evidence_observed": verification_evidence_observed,
+        "lifecycle_state_persisted": lifecycle_state_persisted,
+        "final_silence_reason": final_silence_reason,
+        "final_active_expectation_ids": final_active_expectation_ids,
+        "final_resolved_expectation_ids": final_resolved_expectation_ids,
+        "boundary_results": boundary_results,
+        "diagnostics_path": str(diagnostics_path),
+        "trajectory_path": str(trajectory_path),
+        "stdout_path": str(stdout_path),
+        "stdout_hash": _hash_text(completed.stdout),
+        "stdout_tail_excerpt": completed.stdout[-1000:],
+        "stderr_path": str(stderr_path),
+        "stderr_hash": _hash_text(completed.stderr),
+        "root_config_hash_before": root_config_hash_before,
+        "root_config_hash_after": root_config_hash_after,
+        "actual_rendered_text_hashes": [
+            row.get("actual_rendered_text_hash")
+            for row in block_rows
+            if row.get("actual_rendered_text_hash")
+        ],
+        "truth_boundary": (
+            "This live probe tests whether a Codex App/CLI post-block "
+            "continuation can resolve or preserve an open verification "
+            "expectation from product-observable hook events. It does not prove "
+            "behavior lift, and it does not use runtime snapshots, hidden "
+            "verifiers, fixture continuation prompts, or task identity."
+        ),
+    }
+    report_path.write_text(
+        json.dumps(report, sort_keys=True, indent=2) + "\n",
+        encoding="utf-8",
+    )
+    return report
+
+
 def _run_case(
     *,
     case_id: str,
@@ -970,10 +1486,22 @@ def _run_case(
     client_row = _last_jsonl_row(diagnostics_path)
     coordinator = client_row.get("coordinator", {}) if isinstance(client_row, Mapping) else {}
     directive = coordinator.get("directive", {}) if isinstance(coordinator, Mapping) else {}
+    hook_payload = (
+        coordinator.get("hook_payload", {}) if isinstance(coordinator, Mapping) else {}
+    )
+    if not isinstance(hook_payload, Mapping):
+        hook_payload = {}
+    session_state = (
+        coordinator.get("session_state", {}) if isinstance(coordinator, Mapping) else {}
+    )
+    if not isinstance(session_state, Mapping):
+        session_state = {}
     row = {
         "case_id": case_id,
         "payload": payload if isinstance(payload, Mapping) else {"raw": payload},
         "payload_hash": _hash_text(input_text),
+        "hook_event_name": hook_payload.get("hook_event_name"),
+        "stop_hook_active": hook_payload.get("stop_hook_active"),
         "runtime_snapshot_path": str(snapshot_path) if snapshot_path is not None else None,
         "runtime_snapshot_hash": client_row.get("runtime_snapshot_hash"),
         "stdout_payload": stdout_payload,
@@ -984,6 +1512,9 @@ def _run_case(
         else None,
         "directive_action": directive.get("action") if isinstance(directive, Mapping) else None,
         "coordinator_diagnostics": coordinator,
+        "active_expectation_ids": _expectation_ids(session_state, "active"),
+        "resolved_expectation_ids": _expectation_ids(session_state, "resolved"),
+        "expectation_evidence_refs": _expectation_evidence_refs(session_state),
         "fail_open": bool(client_row.get("fail_open", False)),
         "stderr": completed.stderr.strip(),
         "returncode": completed.returncode,
@@ -1014,12 +1545,26 @@ def _run_sequence_case(
         for index, payload in enumerate(payloads, start=1)
     ]
     final = steps[-1] if steps else {}
+    first_block = next(
+        (
+            step
+            for step in steps
+            if isinstance(step.get("stdout_payload"), Mapping)
+            and step["stdout_payload"].get("decision") == "block"
+        ),
+        {},
+    )
     row = {
         "case_id": case_id,
         "steps": steps,
+        "first_stdout_payload": first_block.get("stdout_payload"),
+        "first_actual_rendered_text_hash": first_block.get("actual_rendered_text_hash"),
         "final_stdout_payload": final.get("stdout_payload"),
         "final_silence_reason": final.get("silence_reason"),
         "final_actual_rendered_text_hash": final.get("actual_rendered_text_hash"),
+        "final_active_expectation_ids": final.get("active_expectation_ids", []),
+        "final_resolved_expectation_ids": final.get("resolved_expectation_ids", []),
+        "final_expectation_evidence_refs": final.get("expectation_evidence_refs", []),
         "product_perception_without_runtime_snapshot": all(
             step["runtime_snapshot_path"] is None for step in steps
         ),
@@ -1227,6 +1772,9 @@ def _live_trajectory_rows(hook_rows: list[dict[str, object]]) -> list[dict[str, 
                 if isinstance(session_state, Mapping)
                 else None,
                 "session_state": session_state,
+                "active_expectation_ids": _expectation_ids(session_state, "active"),
+                "resolved_expectation_ids": _expectation_ids(session_state, "resolved"),
+                "expectation_evidence_refs": _expectation_evidence_refs(session_state),
                 "directive_action": directive.get("action"),
                 "silence_reason": directive.get("silence_reason"),
                 "selection_trace": selection_trace,
@@ -1248,6 +1796,41 @@ def _state_int(row: Mapping[str, object], key: str) -> int:
         return 0
     value = session_state.get(key)
     return value if isinstance(value, int) else 0
+
+
+def _expectation_ids(
+    session_state: Mapping[str, object],
+    bucket: str,
+) -> list[str]:
+    ledger = session_state.get("expectation_ledger")
+    if not isinstance(ledger, Mapping):
+        return []
+    records = ledger.get(bucket)
+    if not isinstance(records, list):
+        return []
+    return [
+        record["expectation_id"]
+        for record in records
+        if isinstance(record, Mapping) and isinstance(record.get("expectation_id"), str)
+    ]
+
+
+def _expectation_evidence_refs(session_state: Mapping[str, object]) -> list[str]:
+    ledger = session_state.get("expectation_ledger")
+    if not isinstance(ledger, Mapping):
+        return []
+    refs: list[str] = []
+    for bucket in ("active", "resolved"):
+        records = ledger.get(bucket)
+        if not isinstance(records, list):
+            continue
+        for record in records:
+            if not isinstance(record, Mapping):
+                continue
+            evidence_refs = record.get("evidence_refs")
+            if isinstance(evidence_refs, list):
+                refs.extend(ref for ref in evidence_refs if isinstance(ref, str))
+    return refs
 
 
 def _count_values(values: object) -> dict[str, int]:

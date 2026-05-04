@@ -512,6 +512,11 @@ def handle_openai_codex_hook_payload(
         grounded_intervention=intervention,
         lifecycle_facts=hook_payload.lifecycle_facts(),
     )
+    directive = _accountable_continuation_directive(
+        directive,
+        hook_payload=hook_payload,
+        state=state,
+    )
     return OpenAICodexHookCoordinatorResult(
         hook_payload=hook_payload,
         session_state=state,
@@ -597,14 +602,25 @@ def _updated_state(
         tool_event_count += 1
     if (
         payload.hook_event_name is OpenAICodexLifecycleEvent.POST_TOOL_USE
-        and _tool_event_has_verification_evidence(payload)
+        and _tool_event_has_verification_evidence(
+            payload,
+            active_verification_expectation=_has_active_expectation_kind(
+                expectation_ledger,
+                "verification",
+            ),
+        )
     ):
         verification_evidence_count += 1
+        commitment_id = _active_expectation_commitment_id(
+            expectation_ledger,
+            "verification",
+        )
         expectation_ledger = expectation_ledger.apply_progress(
             EvidenceProgress(
                 "meaningful_evidence",
                 _event_ref(payload, current_step=current_step, suffix="tool-check"),
                 weight=1.0,
+                commitment_id=commitment_id,
             ),
             current_step=current_step,
         )
@@ -788,7 +804,55 @@ def _has_active_expectation_kind(
     )
 
 
-def _tool_event_has_verification_evidence(payload: OpenAICodexHookPayload) -> bool:
+def _active_expectation_commitment_id(
+    expectation_ledger: ExpectationLedger,
+    deficit_kind: str,
+) -> str | None:
+    for record in expectation_ledger.active:
+        if record.deficit_kind == deficit_kind and record.remaining_weight > 0.0:
+            return record.commitment_id
+    return None
+
+
+def _has_resolved_expectation_kind(
+    expectation_ledger: ExpectationLedger,
+    deficit_kind: str,
+) -> bool:
+    return any(record.deficit_kind == deficit_kind for record in expectation_ledger.resolved)
+
+
+def _accountable_continuation_directive(
+    directive: OpenAICodexLifecycleDirective,
+    *,
+    hook_payload: OpenAICodexHookPayload,
+    state: OpenAICodexSessionState,
+) -> OpenAICodexLifecycleDirective:
+    if (
+        hook_payload.hook_event_name is not OpenAICodexLifecycleEvent.STOP
+        or not hook_payload.stop_hook_active
+        or directive.silence_reason != "stop_hook_active"
+    ):
+        return directive
+    if _has_active_expectation_kind(state.expectation_ledger, "verification"):
+        reason = "stop_hook_active_unresolved_verification_expectation"
+    elif _has_resolved_expectation_kind(state.expectation_ledger, "verification"):
+        reason = "pressure_below_visible_threshold"
+    else:
+        reason = "stop_hook_active"
+    return OpenAICodexLifecycleDirective(
+        action=directive.action,
+        hook_event_name=directive.hook_event_name,
+        model_visible_text=directive.model_visible_text,
+        silence_reason=reason,
+        model_bound_difference_kind=directive.model_bound_difference_kind,
+    )
+
+
+def _tool_event_has_verification_evidence(
+    payload: OpenAICodexHookPayload,
+    *,
+    active_verification_expectation: bool = False,
+) -> bool:
     text = " ".join(
         value
         for value in (
@@ -817,8 +881,69 @@ def _tool_event_has_verification_evidence(payload: OpenAICodexHookPayload) -> bo
         "go test",
         "check",
         "verify",
+        "cat ",
+        "$(cat",
+        "\\\"cat",
+        " wc ",
+        "wc -l",
+        "\\\"wc",
+        "grep",
+        "stat ",
+        "\\\"stat",
+        "[ -f",
+        "test -f",
+        "file_ok",
+        "content_ok",
+        "content=",
+        "lines=",
+        "exists",
+        "matches exactly",
     )
-    return any(marker in text for marker in verification_markers)
+    if not any(marker in text for marker in verification_markers):
+        return False
+    if _tool_event_looks_failed(payload, text):
+        return False
+    return active_verification_expectation or _tool_event_looks_successful(payload, text)
+
+
+def _tool_event_looks_successful(payload: OpenAICodexHookPayload, text: str) -> bool:
+    if payload.hook_event_name is not OpenAICodexLifecycleEvent.POST_TOOL_USE:
+        return False
+    if "\"exit_code\":0" in text or "\"exit_code\": 0" in text:
+        return True
+    if "\"status\":\"completed\"" in text or "\"status\": \"completed\"" in text:
+        return True
+    return any(
+        marker in text
+        for marker in (
+            "file_ok",
+            "content_ok",
+            " passed",
+            "success",
+            "ok",
+            "matches exactly",
+        )
+    )
+
+
+def _tool_event_looks_failed(payload: OpenAICodexHookPayload, text: str) -> bool:
+    if payload.error:
+        return True
+    return any(
+        marker in text
+        for marker in (
+            "\"exit_code\":1",
+            "\"exit_code\": 1",
+            "\"exit_code\":2",
+            "\"exit_code\": 2",
+            "failed",
+            "failure",
+            "traceback",
+            "error:",
+            "content_mismatch",
+            "not found",
+        )
+    )
 
 
 def _assistant_surfaces_blocker_or_waiting(message: str) -> bool:

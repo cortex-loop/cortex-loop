@@ -182,6 +182,12 @@ CODEX_APP_CLI_PRODUCT_EVENT_CAPTURE_REMEDIATION_PATH = (
     / "recon"
     / "cortex_codex_app_cli_product_event_capture_remediation.md"
 )
+CODEX_APP_CLI_STOP_CONTINUATION_RESOLUTION_LOOP_PATH = (
+    REPO_ROOT
+    / "docs"
+    / "recon"
+    / "cortex_codex_app_cli_stop_continuation_resolution_loop.md"
+)
 STATUS_REGISTRY_PATH = REPO_ROOT / "internal" / "truth" / "cortex_status.json"
 STATUS_DOC_PATH = REPO_ROOT / "docs" / "CORTEX_STATUS.md"
 WORKFLOW_DOC_PATH = REPO_ROOT / "docs" / "internal" / "REPO_WORKFLOW.md"
@@ -894,6 +900,7 @@ def test_docs_directory_only_exposes_archive_and_workflow_subtrees() -> None:
         "cortex_codex_app_cli_product_event_capture_remediation.md",
         "cortex_codex_app_cli_product_perception_live_probe.md",
         "cortex_codex_app_cli_product_perception_loop.md",
+        "cortex_codex_app_cli_stop_continuation_resolution_loop.md",
         "cortex_openai_operator_debt_control_enactment.md",
         "cortex_openai_operator_output_quality_fixture_refresh.md",
         "cortex_openai_operator_silent_control_live_probe.md",
@@ -1732,7 +1739,7 @@ def test_openai_operator_output_quality_fixture_refresh_records_hard_fixture() -
         "docs/recon/cortex_openai_operator_output_quality_fixture_refresh.md"
         in status["active_docs"]
     )
-    assert status["work_today"]["slug"] == "codex-app-cli-product-event-capture-remediation"
+    assert status["work_today"]["slug"] == "codex-app-cli-stop-continuation-resolution-loop"
 
 
 def test_openai_operator_verification_debt_continuation_records_gate0_truth() -> None:
@@ -1758,8 +1765,8 @@ def test_openai_operator_verification_debt_continuation_records_gate0_truth() ->
         "docs/recon/cortex_openai_operator_verification_debt_continuation.md"
         in status["active_docs"]
     )
-    assert status["work_today"]["slug"] == "codex-app-cli-product-event-capture-remediation"
-    assert status["next_product_train"]["slug"] == "codex-app-cli-stop-continuation-resolution-loop"
+    assert status["work_today"]["slug"] == "codex-app-cli-stop-continuation-resolution-loop"
+    assert status["next_product_train"]["slug"] == "codex-app-cli-hook-native-behavior-comparison"
 
 
 def test_openai_operator_visible_intervention_live_probe_records_scoped_success() -> None:
@@ -1784,8 +1791,8 @@ def test_openai_operator_visible_intervention_live_probe_records_scoped_success(
         "docs/recon/cortex_openai_operator_visible_intervention_live_probe.md"
         in status["active_docs"]
     )
-    assert status["work_today"]["slug"] == "codex-app-cli-product-event-capture-remediation"
-    assert status["next_product_train"]["slug"] == "codex-app-cli-stop-continuation-resolution-loop"
+    assert status["work_today"]["slug"] == "codex-app-cli-stop-continuation-resolution-loop"
+    assert status["next_product_train"]["slug"] == "codex-app-cli-hook-native-behavior-comparison"
 
 
 def test_visible_intervention_product_perception_hardening_records_structural_gate() -> None:
@@ -1809,8 +1816,8 @@ def test_visible_intervention_product_perception_hardening_records_structural_ga
         "docs/recon/cortex_visible_intervention_product_perception_hardening.md"
         in status["active_docs"]
     )
-    assert status["work_today"]["slug"] == "codex-app-cli-product-event-capture-remediation"
-    assert status["next_product_train"]["slug"] == "codex-app-cli-stop-continuation-resolution-loop"
+    assert status["work_today"]["slug"] == "codex-app-cli-stop-continuation-resolution-loop"
+    assert status["next_product_train"]["slug"] == "codex-app-cli-hook-native-behavior-comparison"
 
 
 def test_openai_operator_visible_intervention_hardened_rerun_records_failure() -> None:
@@ -1833,8 +1840,8 @@ def test_openai_operator_visible_intervention_hardened_rerun_records_failure() -
         "docs/recon/cortex_openai_operator_visible_intervention_hardened_rerun.md"
         in status["active_docs"]
     )
-    assert status["work_today"]["slug"] == "codex-app-cli-product-event-capture-remediation"
-    assert status["next_product_train"]["slug"] == "codex-app-cli-stop-continuation-resolution-loop"
+    assert status["work_today"]["slug"] == "codex-app-cli-stop-continuation-resolution-loop"
+    assert status["next_product_train"]["slug"] == "codex-app-cli-hook-native-behavior-comparison"
 
 
 def test_codex_app_cli_stop_activation_probe_records_structural_gate0() -> None:
@@ -1857,8 +1864,8 @@ def test_codex_app_cli_stop_activation_probe_records_structural_gate0() -> None:
         "docs/recon/cortex_codex_app_cli_hook_native_stop_activation_probe.md"
         in status["active_docs"]
     )
-    assert status["work_today"]["slug"] == "codex-app-cli-product-event-capture-remediation"
-    assert status["next_product_train"]["slug"] == "codex-app-cli-stop-continuation-resolution-loop"
+    assert status["work_today"]["slug"] == "codex-app-cli-stop-continuation-resolution-loop"
+    assert status["next_product_train"]["slug"] == "codex-app-cli-hook-native-behavior-comparison"
 
 
 def test_codex_app_cli_stop_live_canary_records_actuator_proof() -> None:
@@ -1876,13 +1883,13 @@ def test_codex_app_cli_stop_live_canary_records_actuator_proof() -> None:
     assert "a384c80463a98828df0de20d5aa2baafda8bb4fa023bd062c2a17e03e7fc04fc" in text
     assert "No product perception claim" in text
     assert "No model-output behavior-lift claim" in text
-    assert "codex-app-cli-stop-continuation-resolution-loop" in status["next_product_train"]["slug"]
+    assert "codex-app-cli-hook-native-behavior-comparison" in status["next_product_train"]["slug"]
     assert "recon/cortex_codex_app_cli_hook_native_stop_live_canary.md" in docs_index
     assert (
         "docs/recon/cortex_codex_app_cli_hook_native_stop_live_canary.md"
         in status["active_docs"]
     )
-    assert status["work_today"]["slug"] == "codex-app-cli-product-event-capture-remediation"
+    assert status["work_today"]["slug"] == "codex-app-cli-stop-continuation-resolution-loop"
 
 
 def test_codex_app_cli_product_perception_loop_records_structural_gate0() -> None:
@@ -1946,10 +1953,37 @@ def test_codex_app_cli_product_event_capture_remediation_records_live_pass() -> 
         in status["active_docs"]
     )
     assert status["work_today"]["slug"] == (
-        "codex-app-cli-product-event-capture-remediation"
+        "codex-app-cli-stop-continuation-resolution-loop"
     )
     assert status["next_product_train"]["slug"] == (
+        "codex-app-cli-hook-native-behavior-comparison"
+    )
+
+
+def test_codex_app_cli_stop_continuation_resolution_loop_records_live_pass() -> None:
+    text = _read(CODEX_APP_CLI_STOP_CONTINUATION_RESOLUTION_LOOP_PATH)
+    docs_index = _read(DOCS_INDEX_PATH)
+    status = _load_status()
+
+    assert "Surface: product / live hook continuation proof" in text
+    assert "Verdict: pass_resolved on live Codex CLI Stop continuation resolution" in text
+    assert "hook_event_counts: {\"PostToolUse\": 2, \"PreToolUse\": 2, \"Stop\": 2, \"UserPromptSubmit\": 1}" in text
+    assert "runtime_snapshot_loaded: false on every row" in text
+    assert "final_silence_reason: pressure_below_visible_threshold" in text
+    assert "final_active_expectation_ids: []" in text
+    assert "verification_evidence_observed: true" in text
+    assert "No behavior lift is claimed" in text
+    assert "No hidden verifier" in text
+    assert "recon/cortex_codex_app_cli_stop_continuation_resolution_loop.md" in docs_index
+    assert (
+        "docs/recon/cortex_codex_app_cli_stop_continuation_resolution_loop.md"
+        in status["active_docs"]
+    )
+    assert status["work_today"]["slug"] == (
         "codex-app-cli-stop-continuation-resolution-loop"
+    )
+    assert status["next_product_train"]["slug"] == (
+        "codex-app-cli-hook-native-behavior-comparison"
     )
 
 
@@ -2276,32 +2310,34 @@ def test_status_registry_is_complete_and_stable() -> None:
         assert isinstance(entry, dict)
         assert {"slug", "stage", "summary", "next_step"} <= set(entry)
         assert entry["slug"] != status["work_today"]["slug"]
-        assert entry["slug"] != status["next_product_train"]["slug"]
-    assert status["work_today"]["slug"] == "codex-app-cli-product-event-capture-remediation"
+    assert entry["slug"] != status["next_product_train"]["slug"]
+    assert status["work_today"]["slug"] == "codex-app-cli-stop-continuation-resolution-loop"
     work_note = status["work_today"]["note"].lower()
-    assert "product event-capture path" in work_note
+    assert "stop continuation-resolution loop" in work_note
+    assert "pass_resolved" in work_note
     assert "1 userpromptsubmit row" in work_note
     assert "2 pretooluse rows" in work_note
     assert "2 posttooluse rows" in work_note
     assert "1 exact product-rendered block row" in work_note
-    assert "continuation repair loop remains open" in work_note
+    assert "pressure_below_visible_threshold" in work_note
+    assert "active verification expectation moved to resolved" in work_note
     assert "not behavior lift" in work_note
-    assert status["next_product_train"]["slug"] == "codex-app-cli-stop-continuation-resolution-loop"
+    assert status["next_product_train"]["slug"] == "codex-app-cli-hook-native-behavior-comparison"
     assert "product" == status["next_product_train"]["surface"]
-    assert "close the codex app/cli hook-native stop loop" in status["next_product_train"][
+    assert "improves real model behavior over silent-only control" in status["next_product_train"][
         "executive_benefit"
     ].lower()
-    assert "event-capture remediation proved real userpromptsubmit/tool/stop payloads" in status["next_product_train"][
+    assert "remaining high-risk question is live behavior lift" in status["next_product_train"][
         "why_now"
     ].lower()
-    assert "captures continuation tool evidence" in status["next_product_train"][
+    assert "paired live matrix" in status["next_product_train"][
         "primary_metric"
     ].lower()
     assert "runtime snapshots" in status["next_product_train"][
         "guardrail"
     ].lower()
     assert "parent repo workflow hooks" in status["next_product_train"]["guardrail"].lower()
-    assert "stop_hook_active discipline" in status["next_product_train"][
+    assert "does not improve behavior" in status["next_product_train"][
         "kill_rule"
     ].lower()
     deferred_lines = {entry["slug"]: entry for entry in status["research_lines_under_evaluation"]}
@@ -2388,9 +2424,9 @@ def test_generated_status_doc_includes_system_map_and_next_product_train() -> No
     assert "## Next Product Train" in text
     assert "## Research Lines Under Evaluation" in text
     assert "host/tool reliability and affordance priors are earned" in text
-    assert "`codex-app-cli-product-event-capture-remediation`" in text
-    assert "- Next product train after the current focus: `codex-app-cli-stop-continuation-resolution-loop`" in text
-    assert "- Train: `codex-app-cli-stop-continuation-resolution-loop`" in text
+    assert "`codex-app-cli-stop-continuation-resolution-loop`" in text
+    assert "- Next product train after the current focus: `codex-app-cli-hook-native-behavior-comparison`" in text
+    assert "- Train: `codex-app-cli-hook-native-behavior-comparison`" in text
     assert "`brain-capability-observation-and-inference` (deferred-by-executive-runtime-roadmap)" in text
     assert "resume_verification" in text.lower()
     assert "hidden verifier" in text.lower()
