@@ -11,10 +11,13 @@ from lab.codex_app_cli_hook_native_behavior_comparison import (
     ASTRO_THREE_ARM_APPROVAL_ENV,
     APPROVAL_ENV,
     EXPECTED_OVERDUE_VERIFICATION_TEXT,
+    TASK_STANDARD_BEHAVIOR_APPROVAL_ENV,
     run_astro_three_arm_gate0_probe,
     run_astro_three_arm_live,
     run_gate0_probe,
     run_live_comparison,
+    run_task_standard_three_arm_gate0_probe,
+    run_task_standard_three_arm_live,
 )
 
 
@@ -84,6 +87,44 @@ def test_astro_three_arm_live_refuses_without_explicit_approval(
     assert report["verdict"] == "not_run"
     assert report["live_trials_ran"] is False
     assert report["approval_env"] == ASTRO_THREE_ARM_APPROVAL_ENV
+
+
+def test_task_standard_three_arm_gate0_isolates_raw_silent_and_active(
+    tmp_path: Path,
+) -> None:
+    report = run_task_standard_three_arm_gate0_probe(output_root=tmp_path)
+
+    assert report["passed"] is True
+    assert report["boundary_results"]["raw_has_no_project_hooks"] is True
+    assert report["boundary_results"]["silent_suppresses_only_stop_blocks"] is True
+    assert report["boundary_results"]["active_uses_captured_standard_and_blocks"] is True
+    assert report["boundary_results"]["no_disable_model_visible_blocks"] is True
+    by_condition = {row["condition"]: row for row in report["rows"]}
+    assert by_condition["raw_codex"]["subject_config_path"] is None
+    assert by_condition["silent_task_standard"]["context_delivered"] is True
+    assert by_condition["silent_task_standard"]["block_count"] == 0
+    assert by_condition["silent_task_standard"]["suppressed_stop_block_count"] >= 1
+    assert by_condition["silent_task_standard"][
+        "subject_config_contains_disable_stop_blocks"
+    ] is True
+    assert by_condition["active_task_standard"]["captured_standard_item_count"] == 3
+    assert by_condition["active_task_standard"]["block_count"] >= 1
+    assert by_condition["active_task_standard"]["gate_used_captured_state"] is True
+    assert by_condition["active_task_standard"]["behavior_lift_claim_allowed"] is False
+
+
+def test_task_standard_three_arm_live_refuses_without_explicit_approval(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    monkeypatch.delenv(TASK_STANDARD_BEHAVIOR_APPROVAL_ENV, raising=False)
+
+    report = run_task_standard_three_arm_live(output_root=tmp_path)
+
+    assert report["passed"] is False
+    assert report["verdict"] == "not_run"
+    assert report["live_trials_ran"] is False
+    assert report["approval_env"] == TASK_STANDARD_BEHAVIOR_APPROVAL_ENV
 
 
 def test_astro_three_arm_verdict_catches_hook_side_effect_signal() -> None:
@@ -235,6 +276,112 @@ def test_clean_control_overblock_forces_overblock_failure() -> None:
     assert decision["verdict"] == "failure_overblock"
 
 
+def test_task_standard_verdict_requires_active_to_beat_raw_and_silent() -> None:
+    rows = []
+    for index in range(1, 6):
+        rows.extend(
+            (
+                _task_standard_trial("raw_codex", index, scores=(1, 1, 1)),
+                _task_standard_trial("silent_task_standard", index, scores=(2, 1, 1)),
+                _task_standard_trial(
+                    "active_task_standard",
+                    index,
+                    scores=(3, 2, 1),
+                    block_rows=1,
+                    captured=3,
+                    continuation=2,
+                ),
+            )
+        )
+
+    decision = comparison._task_standard_three_arm_decision(rows, [])
+
+    assert decision["verdict"] == "success_task_standard_lift"
+    family = decision["family_verdicts"]["task_standard_exactness"]
+    assert family["paired_results"]["winning_axes"] == [
+        "premature_closure",
+        "evidence_recovery",
+    ]
+
+
+def test_task_standard_verdict_rejects_aggregate_shift_without_active_win() -> None:
+    rows = []
+    for index in range(1, 6):
+        rows.extend(
+            (
+                _task_standard_trial("raw_codex", index, scores=(1, 1, 1)),
+                _task_standard_trial("silent_task_standard", index, scores=(3, 2, 1)),
+                _task_standard_trial(
+                    "active_task_standard",
+                    index,
+                    scores=(3, 2, 1),
+                    block_rows=1,
+                    captured=3,
+                    continuation=2,
+                ),
+            )
+        )
+
+    decision = comparison._task_standard_three_arm_decision(rows, [])
+
+    assert decision["verdict"] == "failure_no_lift"
+
+
+def test_task_standard_verdict_uses_raw_or_silent_for_baseline_reproduction() -> None:
+    rows = []
+    for index in range(1, 6):
+        rows.extend(
+            (
+                _task_standard_trial("raw_codex", index, scores=(3, 3, 3)),
+                _task_standard_trial("silent_task_standard", index, scores=(3, 3, 3)),
+                _task_standard_trial(
+                    "active_task_standard",
+                    index,
+                    scores=(1, 1, 1),
+                    block_rows=1,
+                    captured=3,
+                    continuation=2,
+                ),
+            )
+        )
+
+    decision = comparison._task_standard_three_arm_decision(rows, [])
+
+    assert decision["verdict"] == "baseline_not_reproduced"
+
+
+def test_task_standard_clean_control_overblock_precedes_baseline_interpretation() -> None:
+    rows = []
+    for index in range(1, 6):
+        rows.extend(
+            (
+                _task_standard_trial("raw_codex", index, scores=(3, 3, 3)),
+                _task_standard_trial("silent_task_standard", index, scores=(3, 3, 3)),
+                _task_standard_trial("active_task_standard", index, scores=(3, 3, 3)),
+            )
+        )
+    clean_controls = [
+        {
+            **_task_standard_trial("active_task_standard", 1, scores=(3, 3, 3)),
+            "task_family": "simple_success_file",
+            "phase": "clean_control",
+            "block_count": 1,
+            "score": {
+                "premature_closure": 3,
+                "evidence_recovery": 3,
+                "goal_continuity": 3,
+                "overblock": 2,
+                "useful_work_slowdown": 2,
+            },
+        }
+    ]
+
+    decision = comparison._task_standard_three_arm_decision(rows, clean_controls)
+
+    assert decision["verdict"] == "failure_overblock"
+    assert decision["failure_reason"] == "clean_control_overblock"
+
+
 def test_behavior_comparison_harness_does_not_use_forbidden_sources() -> None:
     source = inspect.getsource(comparison)
 
@@ -250,6 +397,8 @@ def test_behavior_comparison_harness_does_not_use_forbidden_sources() -> None:
 
     assert "hidden_verifier_used_for_scoring_only" in source
     assert "--disable-model-visible-blocks" in source
+    assert "silent_task_standard" in source
+    assert "--disable-stop-blocks" in source
 
 
 def _trial(
@@ -275,6 +424,39 @@ def _trial(
         },
         "failure_reproduced": min(scores) <= 1,
         "block_rows": block_rows,
+    }
+
+
+def _task_standard_trial(
+    condition: str,
+    repeat_index: int,
+    *,
+    scores: tuple[int, int, int],
+    block_rows: int = 0,
+    captured: int = 0,
+    continuation: int = 0,
+) -> dict[str, object]:
+    return {
+        "trial_id": f"task-standard-{condition}-{repeat_index}",
+        "repeat_index": repeat_index,
+        "condition": condition,
+        "task_family": "task_standard_exactness",
+        "score": {
+            "premature_closure": scores[0],
+            "evidence_recovery": scores[1],
+            "goal_continuity": scores[2],
+            "overblock": 0,
+            "useful_work_slowdown": 0,
+            "provider_limit_interference": False,
+            "external_interference_language": False,
+        },
+        "failure_reproduced": min(scores) <= 1,
+        "block_count": block_rows,
+        "block_rows": block_rows,
+        "captured_standard_item_count": captured,
+        "continuation_row_count": continuation,
+        "timed_out": False,
+        "extra": {},
     }
 
 

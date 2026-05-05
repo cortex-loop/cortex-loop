@@ -57,7 +57,7 @@ Subsystem boundaries: Core owns commitment/provenance/dispatch truth; SRE owns r
 
 Grounding rule: any product claim, plan, or implementation seam must name identity/current truth, a code owner, a proof surface, and the model-I/O path. If the relevant code was not read, say so before taking a position.
 
-Current train: `codex-app-cli-task-standard-stop-gating-live-run`. Next train: `codex-app-cli-task-standard-behavior-comparison`. Shipping default: `openai.codex_app_cli`. Keep Cortex truth, brain-wiring truth, conformance truth, shipping truth, and live behavior-lift claims separate; structural proof alone does not earn model-output lift.
+Current train: `codex-app-cli-task-standard-behavior-comparison-harness`. Next train: `codex-app-cli-task-standard-behavior-comparison-live-run`. Shipping default: `openai.codex_app_cli`. Keep Cortex truth, brain-wiring truth, conformance truth, shipping truth, and live behavior-lift claims separate; structural proof alone does not earn model-output lift.
 
 ## Live Product Truth
 
@@ -67,9 +67,9 @@ Current train: `codex-app-cli-task-standard-stop-gating-live-run`. Next train: `
 
 ## Current Focus
 
-- Current tracked train: `codex-app-cli-task-standard-stop-gating-live-run`
-- Active quality/risk focus: This product/lab live seam proved captured TaskStandardSpine state can drive a real Codex CLI Stop block and continuation resolution: signed context reached the model, the model formed a pre-tool standard, Cortex captured it, the first Stop blocked an unmatched exact one-line work-standard item, continuation checks paid it down, and final Stop stayed silent. It earns live Stop-gating evidence but not behavior lift, output-quality lift, Codex App parity, raw/silent comparison success, or shipping promotion.
-- Next product train after the current focus: `codex-app-cli-task-standard-behavior-comparison`
+- Current tracked train: `codex-app-cli-task-standard-behavior-comparison-harness`
+- Active quality/risk focus: This product/lab seam added the task-standard three-arm behavior-comparison harness and structural Gate 0: raw Codex has no Cortex hooks or state, silent task-standard perception receives the signed UserPromptSubmit context and captures standards while suppressing only Stop blocks, and active task-standard Cortex uses the same product hooks with Stop blocks enabled. Gate 0 passed with no runtime snapshot, unchanged root config, hidden scoring marked scoring-only, captured TaskStandardSpine state, and actual active Stop block/continuation rows. This earns harness readiness only; no live paid trials, behavior lift, output-quality lift, raw/silent comparison result, or shipping promotion is earned.
+- Next product train after the current focus: `codex-app-cli-task-standard-behavior-comparison-live-run`
 
 ## Bio-To-Code Matrix
 
@@ -214,13 +214,13 @@ Workflow gates marked `required` are contractual gates checked by `repo_workflow
 
 ## Next Product Train
 
-- Train: `codex-app-cli-task-standard-behavior-comparison`
+- Train: `codex-app-cli-task-standard-behavior-comparison-live-run`
 - Surface: product
-- Executive benefit: Measure whether the completed task-standard product loop improves model behavior over raw Codex and silent task-standard perception, now that live standard capture, Stop gating, continuation checking, and silent resolution have all been observed.
-- Why now: The live Stop-gating run now shows the full product loop on Codex CLI: signed context reached the model, a pre-tool standard was captured, the first Stop blocked an unmatched standard item, continuation checks resolved it, and the final Stop stayed silent. The unearned question is comparative product value.
-- Primary metric: A paired live matrix records raw Codex, silent task-standard perception, and active task-standard Stop gating on standard-sensitive tasks plus clean controls; success requires active Cortex to improve closure/evidence quality with actual captured standard and block/continuation rows, no clean-control overblock, and behavior_lift_claim_allowed only for the tested family.
-- Guardrail: Do not edit signed task-standard text, Stop text, SRE law, selector thresholds, hidden-verifier boundaries, root hook configuration, or scoring after seeing results; hidden verifiers remain scoring-only and behavior lift requires active Cortex to beat both raw and silent arms with actual captured-standard/block evidence.
-- Kill rule: If active task-standard Cortex does not beat raw and silent arms, overblocks clean controls, or the baseline does not reproduce the target failure family, record the scoped finding and hold an explicit architecture decision turn before more implementation.
+- Executive benefit: Run the pinned task-standard three-arm live comparison to measure whether active Cortex improves Codex CLI behavior beyond raw Codex and beyond silent task-standard perception with Stop blocks disabled.
+- Why now: The harness Gate 0 now proves the comparison can isolate raw, silent, and active task-standard arms with shared prompt/model/workspace/scoring, signed context delivery, transcript capture, Stop-only suppression in the silent arm, and active block/continuation evidence. The remaining unearned question is live comparative product value.
+- Primary metric: A live matrix records raw Codex, silent task-standard perception, and active task-standard Stop gating on task_standard_exactness, Astro output_quality_visible_success, truth_gap_false_completion when baseline reproduces, and clean controls. Success requires active Cortex to beat both raw and silent on at least 4/5 paired trials for at least two primary axes, with captured standard state plus actual block/continuation rows, no clean-control overblock, and behavior_lift_claim_allowed true only for a passing family.
+- Guardrail: Do not edit signed task-standard text, Stop text, SRE law, selector thresholds, hidden-verifier boundaries, root hook configuration, fixtures, or scoring after seeing results. Hidden verifier data remains scoring-only, silent uses --disable-stop-blocks rather than --disable-model-visible-blocks, and live trials require explicit current-turn approval via CORTEX_CODEX_APP_CLI_TASK_STANDARD_BEHAVIOR_APPROVED=approved.
+- Kill rule: If active task-standard Cortex does not beat both controls, overblocks clean controls, baseline failures do not reproduce, or Codex hook/payload evidence is insufficient, record the scoped verdict and hold an explicit architecture decision turn before any implementation or tuning seam.
 
 ## Research Lines Under Evaluation
 
@@ -371,4 +371,5 @@ Workflow gates marked `required` are contractual gates checked by `repo_workflow
 - `docs/recon/cortex_codex_app_cli_task_standard_live_capture_rerun.md`
 - `docs/recon/cortex_codex_app_cli_task_standard_stop_gating_calibration_probe.md`
 - `docs/recon/cortex_codex_app_cli_task_standard_stop_gating_live_run.md`
+- `docs/recon/cortex_codex_app_cli_task_standard_behavior_comparison_harness.md`
 - `docs/recon/claude_code_desktop_lifecycle_spine_branch_disposition.md`

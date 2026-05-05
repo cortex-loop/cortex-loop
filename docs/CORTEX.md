@@ -325,13 +325,13 @@ state, read `internal/truth/cortex_status.json` directly.
 
 ### Current Train
 
-- Slug: `codex-app-cli-task-standard-stop-gating-live-run`
+- Slug: `codex-app-cli-task-standard-behavior-comparison-harness`
 
 ### Next Product Train
 
-- Slug: `codex-app-cli-task-standard-behavior-comparison`
+- Slug: `codex-app-cli-task-standard-behavior-comparison-live-run`
 - Surface: `product`
-- Why now: The live Stop-gating run now shows the full product loop on Codex CLI: signed context reached the model, a pre-tool standard was captured, the first Stop blocked an unmatched standard item, continuation checks resolved it, and the final Stop stayed silent. The unearned question is comparative product value.
+- Why now: The harness Gate 0 now proves the comparison can isolate raw, silent, and active task-standard arms with shared prompt/model/workspace/scoring, signed context delivery, transcript capture, Stop-only suppression in the silent arm, and active block/continuation evidence. The remaining unearned question is live comparative product value.
 
 ### Research Lines Under Evaluation
 
