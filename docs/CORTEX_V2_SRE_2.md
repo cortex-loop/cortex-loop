@@ -791,6 +791,42 @@ evidence only when they align to the model's own task standard or closure claim.
 Hidden verifier facts, fixture-only signals, and domain-specific scoring rules may
 not enter this state.
 
+Reference semantics may write the task-standard state as:
+
+```text
+T_t = (O_t, S_t, M_t, C_t, E_t, U_t)
+```
+
+where:
+
+- `O_t` is the bounded set of visible task obligations;
+- `S_t` is the bounded set of model-derived work-standard items;
+- `M_t` is the bounded set of model-derived likely-miss items;
+- `C_t` is the bounded set of closure-evidence items and final closure claims;
+- `E_t` is the bounded set of product-visible evidence references;
+- `U_t` is the bounded set of unresolved standard or claimed items.
+
+For a standard item `i` and product-visible evidence reference `e`,
+`aligned(i,e)` is true only when the evidence is classified as
+`standard_aligned` or `claim_aligned` for that item. A `generic_check` may
+record that verification-shaped activity happened, but it must not satisfy `i`
+by itself.
+
+The standard-fit deficit may be summarized as:
+
+```text
+D_std(t) =
+  weighted_unresolved_claimed_or_required_standard_items
+  / max(1, weighted_claimed_or_required_standard_items)
+```
+
+`D_std(t)` is a verification-fit input to existing goal-continuity and
+expectation-ledger law. It may open or preserve verification pressure when a
+closure claim outruns aligned evidence, but it does not create a new speech
+surface, a new threshold family, or a host-specific override. If `D_std(t)` is
+high without a lawful model-visible anchor, the SRE must route, inspect,
+degrade, or stay silent rather than inventing generic advice.
+
 ### 8.3 Pending-goal discipline
 
 A branch-worthy subgoal must be:

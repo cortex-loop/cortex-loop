@@ -12,20 +12,21 @@ Cortex should help the model form and preserve a task-specific standard for exce
 
 ## What Changed
 
-- Added `cortex/sre/task_standard.py` with `TaskStandardSpine`, `TaskStandardItem`, `TaskStandardEvidence`, and the exact signed-off standard-formation text.
+- Added `cortex/sre/task_standard.py` with `TaskStandardSpine`, `TaskStandardItem`, `TaskStandardEvidence`, and the gated standard-formation text. Product activation still requires explicit final text signoff.
 - Extended `cortex/hosts/openai/codex_app_cli_hook_coordinator.py` so `UserPromptSubmit` initializes task-standard state, `PostToolUse` classifies evidence as `claim_aligned`, `standard_aligned`, `generic_check`, or `unrelated_activity`, and `Stop` can keep verification pressure open when closure claims outrun the stored standard/evidence relation.
 - Added an opt-in Codex hook-client flag, `--enable-task-standard-text`, so the new model-visible text is structurally gated and the silent-only arm can suppress it with `--disable-model-visible-blocks`.
 - Kept existing Stop identity-continuous texts unchanged.
 
-## Approved Model-Visible Text
+## Gated Model-Visible Text
 
-Only this new text was added:
+Only this structurally gated text was added, behind explicit activation flags:
 
 ```text
 Before work starts, name the standard this work has to meet in three compact lines: Work standard, Likely misses, Closure evidence. What is it really trying to become, what would make it strong, what would be embarrassing to miss, and what evidence would make closure honest. Work against that standard.
 ```
 
-No other new Cortex model-visible text was added.
+No other new Cortex model-visible text was added, and no live activation is
+earned without fresh explicit text signoff.
 
 ## Replay Evidence
 
@@ -43,7 +44,7 @@ The replay used existing traces that predate model-visible standard formation, s
 - Structural product evidence that task-standard state survives coordinator persistence and affects Stop closure pressure.
 - Product tests proving generic build/readback activity alone does not pay down standard items once a standard exists.
 - Product tests proving aligned evidence can pay down matching standard items.
-- Hook-client tests proving the signed-off text is opt-in and silent arms suppress it.
+- Hook-client tests proving the gated text is opt-in and silent arms suppress it.
 - Lab replay evidence that hidden verifier files and output remain outside Cortex perception.
 
 ## Not Earned
@@ -55,4 +56,8 @@ The replay used existing traces that predate model-visible standard formation, s
 
 ## Next Decision
 
-Queue `codex-app-cli-task-standard-live-probe`: prove the exact signed-off UserPromptSubmit text reaches a real Codex CLI model turn, that the model forms the compact standard, and that Cortex stores it from product-visible lifecycle evidence. If live context delivery or standard capture fails, remediate the actuator before any behavior comparison.
+Queue `codex-app-cli-task-standard-live-probe` only after explicit final text
+signoff: prove the signed-off UserPromptSubmit context reaches a real Codex CLI
+model turn, that the model forms the compact standard, and that Cortex stores it
+from product-visible lifecycle evidence. If live context delivery or standard
+capture fails, remediate the actuator before any behavior comparison.
