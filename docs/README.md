@@ -139,6 +139,10 @@ Active docs:
   structural evidence that UserPromptSubmit task-standard context now uses
   Codex-native `hookSpecificOutput.additionalContext`, with Stop blocks isolated
   for the next live capture rerun
+- [Cortex Codex App/CLI Task-Standard Context Live Rerun](recon/cortex_codex_app_cli_task_standard_context_live_rerun.md) —
+  live evidence that Codex-native task-standard context reached the model and
+  produced a pre-tool standard block, but Cortex did not capture it into
+  `TaskStandardSpine` from hook-visible state
 - [Claude Code Desktop Lifecycle Spine Branch Disposition](recon/claude_code_desktop_lifecycle_spine_branch_disposition.md) —
   branch-hygiene disposition preserving the parked Claude lifecycle spine head
   before retiring the stale managed branch
