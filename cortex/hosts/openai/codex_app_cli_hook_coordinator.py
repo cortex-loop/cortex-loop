@@ -704,6 +704,11 @@ def _updated_state(
         OpenAICodexLifecycleEvent.POST_TOOL_USE,
         OpenAICodexLifecycleEvent.POST_TOOL_USE_FAILURE,
     }:
+        task_standard_spine = _capture_pretool_transcript_standard(
+            task_standard_spine,
+            payload,
+            current_step=current_step,
+        )
         tool_event_count += 1
     if (
         payload.hook_event_name is OpenAICodexLifecycleEvent.POST_TOOL_USE
@@ -903,6 +908,117 @@ def _increment_count(
     mapping = dict(counts)
     mapping[event_name] = mapping.get(event_name, 0) + 1
     return tuple(sorted(mapping.items()))
+
+
+def _capture_pretool_transcript_standard(
+    spine: TaskStandardSpine,
+    payload: OpenAICodexHookPayload,
+    *,
+    current_step: int,
+) -> TaskStandardSpine:
+    if spine.standard_items or payload.hook_event_name not in {
+        OpenAICodexLifecycleEvent.PRE_TOOL_USE,
+        OpenAICodexLifecycleEvent.POST_TOOL_USE,
+    }:
+        return spine
+    for message in _pretool_assistant_messages_from_transcript(payload.transcript_path):
+        updated = store_assistant_standard_block(
+            spine,
+            message,
+            event_ref=_event_ref(
+                payload,
+                current_step=current_step,
+                suffix="pretool-transcript-standard",
+            ),
+        )
+        if updated.standard_items or (
+            updated.malformed_standard_block_count != spine.malformed_standard_block_count
+        ):
+            return updated
+    return spine
+
+
+def _pretool_assistant_messages_from_transcript(
+    transcript_path: str | None,
+) -> tuple[str, ...]:
+    if not isinstance(transcript_path, str) or not transcript_path.strip():
+        return ()
+    path = Path(transcript_path)
+    try:
+        lines = path.read_text(encoding="utf-8").splitlines()
+    except OSError:
+        return ()
+    messages: list[str] = []
+    for line in lines:
+        if not line.strip():
+            continue
+        try:
+            row = json.loads(line)
+        except json.JSONDecodeError:
+            return ()
+        if not isinstance(row, Mapping):
+            continue
+        payload = row.get("payload")
+        if not isinstance(payload, Mapping):
+            continue
+        if _transcript_row_is_tool_boundary(row_type=row.get("type"), payload=payload):
+            break
+        message = _assistant_text_from_transcript_row(
+            row_type=row.get("type"),
+            payload=payload,
+        )
+        if message:
+            messages.append(message)
+    return tuple(messages)
+
+
+def _transcript_row_is_tool_boundary(
+    *,
+    row_type: Any,
+    payload: Mapping[str, Any],
+) -> bool:
+    payload_type = payload.get("type")
+    if row_type == "response_item" and payload_type in {
+        "function_call",
+        "function_call_output",
+        "tool_call",
+        "tool_result",
+    }:
+        return True
+    if row_type == "event_msg" and payload_type in {
+        "tool_call",
+        "tool_result",
+        "tool_started",
+        "tool_completed",
+    }:
+        return True
+    return False
+
+
+def _assistant_text_from_transcript_row(
+    *,
+    row_type: Any,
+    payload: Mapping[str, Any],
+) -> str | None:
+    if row_type == "event_msg" and payload.get("type") == "agent_message":
+        message = payload.get("message")
+        return message.strip() if isinstance(message, str) and message.strip() else None
+    if row_type != "response_item" or payload.get("type") != "message":
+        return None
+    if payload.get("role") != "assistant":
+        return None
+    content = payload.get("content")
+    if not isinstance(content, list):
+        return None
+    parts: list[str] = []
+    for item in content:
+        if not isinstance(item, Mapping):
+            continue
+        text = item.get("text")
+        if isinstance(text, str) and text.strip():
+            parts.append(text.strip())
+    combined = "\n".join(parts).strip()
+    return combined or None
 
 
 def _runtime_snapshot_from_session_state(

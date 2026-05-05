@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import inspect
+import json
+from pathlib import Path
 
 from cortex.hosts.openai import codex_app_cli_hook_coordinator
 from cortex.hosts.openai.codex_app_cli_hook_coordinator import (
@@ -18,7 +20,10 @@ from cortex.hosts.openai.codex_app_cli_lifecycle import (
     OpenAICodexLifecycleDirectiveAction,
     OpenAICodexLifecycleEvent,
 )
-from cortex.sre.task_standard import TASK_STANDARD_FORMATION_TEXT
+from cortex.sre.task_standard import (
+    TASK_STANDARD_FORMATION_TEXT,
+    TaskStandardEvidenceClass,
+)
 from cortex.sre.debt_control import DebtControlPressure
 from cortex.sre.expectations import (
     ExpectationLedger,
@@ -255,6 +260,206 @@ def test_task_standard_block_is_stored_without_immediate_stop_block() -> None:
         for item in result.session_state.task_standard_spine.standard_items
     ] == ["work_standard", "likely_miss", "closure_evidence"]
     assert len(result.session_state.expectation_ledger.active) == 0
+
+
+def test_pretool_transcript_captures_assistant_standard_before_tool_use(
+    tmp_path: Path,
+) -> None:
+    transcript_path = tmp_path / "transcript.jsonl"
+    _write_transcript(
+        transcript_path,
+        _developer_context_row(TASK_STANDARD_FORMATION_TEXT),
+        _assistant_message_row(_standard_block()),
+        _function_call_row(),
+    )
+    store = OpenAICodexInMemoryStateStore()
+    handle_openai_codex_hook_payload(
+        _base_payload(
+            hook_event_name="UserPromptSubmit",
+            prompt="Build a docs site with search, tag pages, and navigation.",
+            transcript_path=str(transcript_path),
+        ),
+        state_store=store,
+        task_standard_text_enabled=True,
+    )
+
+    result = handle_openai_codex_hook_payload(
+        _base_payload(
+            hook_event_name="PreToolUse",
+            transcript_path=str(transcript_path),
+            tool_name="Bash",
+            tool_input={"command": "npm run build"},
+            last_assistant_message=None,
+        ),
+        state_store=store,
+    )
+
+    assert result.host_response.stdout_payload is None
+    assert result.session_state.tool_event_count == 1
+    assert [
+        item.kind.value
+        for item in result.session_state.task_standard_spine.standard_items
+    ] == ["work_standard", "likely_miss", "closure_evidence"]
+    assert all(
+        "pretool-transcript-standard" in item.source_event_ref
+        for item in result.session_state.task_standard_spine.standard_items
+    )
+
+
+def test_pretool_transcript_ignores_developer_context_standard_text(
+    tmp_path: Path,
+) -> None:
+    transcript_path = tmp_path / "transcript.jsonl"
+    _write_transcript(transcript_path, _developer_context_row(_standard_block()))
+    store = OpenAICodexInMemoryStateStore()
+    handle_openai_codex_hook_payload(
+        _base_payload(
+            hook_event_name="UserPromptSubmit",
+            prompt="Build a docs site with search.",
+            transcript_path=str(transcript_path),
+        ),
+        state_store=store,
+        task_standard_text_enabled=True,
+    )
+
+    result = handle_openai_codex_hook_payload(
+        _base_payload(
+            hook_event_name="PreToolUse",
+            transcript_path=str(transcript_path),
+            tool_name="Bash",
+            tool_input={"command": "npm run build"},
+            last_assistant_message=None,
+        ),
+        state_store=store,
+    )
+
+    assert result.session_state.task_standard_spine.standard_items == ()
+    assert result.host_response.stdout_payload is None
+
+
+def test_pretool_transcript_refuses_standard_after_first_tool_call(
+    tmp_path: Path,
+) -> None:
+    transcript_path = tmp_path / "transcript.jsonl"
+    _write_transcript(
+        transcript_path,
+        _function_call_row(),
+        _assistant_message_row(_standard_block()),
+    )
+    store = OpenAICodexInMemoryStateStore()
+    handle_openai_codex_hook_payload(
+        _base_payload(
+            hook_event_name="UserPromptSubmit",
+            prompt="Build a docs site with search.",
+            transcript_path=str(transcript_path),
+        ),
+        state_store=store,
+    )
+
+    result = handle_openai_codex_hook_payload(
+        _base_payload(
+            hook_event_name="PreToolUse",
+            transcript_path=str(transcript_path),
+            tool_name="Bash",
+            tool_input={"command": "npm run build"},
+            last_assistant_message=None,
+        ),
+        state_store=store,
+    )
+
+    assert result.session_state.task_standard_spine.standard_items == ()
+    assert result.host_response.stdout_payload is None
+
+
+def test_pretool_transcript_malformed_or_absent_standard_stays_private(
+    tmp_path: Path,
+) -> None:
+    malformed_path = tmp_path / "malformed.jsonl"
+    malformed_path.write_text("{not json}\n", encoding="utf-8")
+    partial_path = tmp_path / "partial.jsonl"
+    _write_transcript(partial_path, _assistant_message_row("Work standard: partial only."))
+    store = OpenAICodexInMemoryStateStore()
+    handle_openai_codex_hook_payload(
+        _base_payload(
+            hook_event_name="UserPromptSubmit",
+            prompt="Build a docs site with search.",
+            transcript_path=str(malformed_path),
+        ),
+        state_store=store,
+    )
+
+    malformed = handle_openai_codex_hook_payload(
+        _base_payload(
+            hook_event_name="PreToolUse",
+            transcript_path=str(malformed_path),
+            tool_name="Bash",
+            tool_input={"command": "npm run build"},
+            last_assistant_message=None,
+        ),
+        state_store=store,
+    )
+    partial = handle_openai_codex_hook_payload(
+        _base_payload(
+            hook_event_name="PreToolUse",
+            transcript_path=str(partial_path),
+            tool_name="Bash",
+            tool_input={"command": "npm run build"},
+            last_assistant_message=None,
+        ),
+        state_store=store,
+    )
+
+    assert malformed.session_state.task_standard_spine.standard_items == ()
+    assert malformed.host_response.stdout_payload is None
+    assert partial.session_state.task_standard_spine.standard_items == ()
+    assert partial.session_state.task_standard_spine.malformed_standard_block_count == 1
+    assert partial.host_response.stdout_payload is None
+
+
+def test_posttooluse_fallback_captures_standard_before_evidence_scoring(
+    tmp_path: Path,
+) -> None:
+    transcript_path = tmp_path / "transcript.jsonl"
+    _write_transcript(
+        transcript_path,
+        _assistant_message_row(_standard_block()),
+        _function_call_row(),
+    )
+    store = OpenAICodexInMemoryStateStore()
+    handle_openai_codex_hook_payload(
+        _base_payload(
+            hook_event_name="UserPromptSubmit",
+            prompt="Build a docs site with search, tag pages, and navigation.",
+            transcript_path=str(transcript_path),
+        ),
+        state_store=store,
+    )
+
+    result = handle_openai_codex_hook_payload(
+        _base_payload(
+            hook_event_name="PostToolUse",
+            transcript_path=str(transcript_path),
+            tool_name="Bash",
+            tool_input={
+                "command": (
+                    "grep -R search src && grep -R tag src && "
+                    "grep -R navigation src"
+                )
+            },
+            tool_response={
+                "exit_code": 0,
+                "output": "search dataset ok\ntag pages ok\nnavigation ok",
+            },
+            last_assistant_message=None,
+        ),
+        state_store=store,
+    )
+
+    spine = result.session_state.task_standard_spine
+    assert len(spine.standard_items) == 3
+    assert spine.evidence_refs[-1].evidence_class is TaskStandardEvidenceClass.STANDARD_ALIGNED
+    assert spine.evidence_refs[-1].item_ids
+    assert result.session_state.verification_evidence_count == 1
 
 
 def test_task_standard_generic_check_does_not_pay_down_standard_items() -> None:
@@ -795,3 +1000,43 @@ def _standard_block() -> str:
             "Closure evidence: inspect search data, tag pages, and navigation.",
         )
     )
+
+
+def _write_transcript(path: Path, *rows: dict[str, object]) -> None:
+    path.write_text(
+        "\n".join(json.dumps(row, sort_keys=True) for row in rows) + "\n",
+        encoding="utf-8",
+    )
+
+
+def _developer_context_row(text: str) -> dict[str, object]:
+    return {
+        "type": "response_item",
+        "payload": {
+            "type": "message",
+            "role": "developer",
+            "content": [{"type": "input_text", "text": text}],
+        },
+    }
+
+
+def _assistant_message_row(text: str) -> dict[str, object]:
+    return {
+        "type": "response_item",
+        "payload": {
+            "type": "message",
+            "role": "assistant",
+            "content": [{"type": "output_text", "text": text}],
+        },
+    }
+
+
+def _function_call_row() -> dict[str, object]:
+    return {
+        "type": "response_item",
+        "payload": {
+            "type": "function_call",
+            "name": "exec_command",
+            "arguments": "{\"cmd\":\"npm run build\"}",
+        },
+    }

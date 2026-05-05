@@ -33,6 +33,7 @@ from lab.codex_app_cli_stop_activation_probe import (
     run_product_perception_live_probe,
     run_stop_continuation_resolution_gate0_probe,
     run_stop_continuation_resolution_live_probe,
+    run_task_standard_pretool_transcript_replay,
     run_task_standard_live_gate0_probe,
     run_task_standard_live_probe,
 )
@@ -292,22 +293,29 @@ def test_task_standard_live_gate0_records_context_and_standard_capture(
     assert report["case_results"] == {
         "context_emits_exact_signed_text": True,
         "standard_block_captured": True,
-        "live_equivalent_pretool_capture_boundary_gap_recorded": True,
+        "live_equivalent_pretool_transcript_standard_captured": True,
+        "pretool_capture_happens_before_tool_evidence": True,
         "malformed_standard_diagnostic_only": True,
         "no_unexpected_model_visible_text": True,
     }
     assert report["boundary_evidence_ladder"] == {
         "host_stdout_contract_ok": True,
         "host_attached_context_observed": False,
-        "model_assimilation_observed": False,
+        "model_assimilation_observed": True,
         "state_capture_observed": True,
         "gate_used_captured_state": False,
         "behavior_lift_claim_allowed": False,
     }
-    capture_boundary_gap = report["capture_boundary_gap"]
-    assert Path(capture_boundary_gap["live_equivalent_pretool_transcript_path"]).exists()
-    assert capture_boundary_gap["pretool_standard_capture_observed"] is False
-    assert "pre-tool transcript ingestion is not implemented yet" in capture_boundary_gap[
+    capture_boundary_result = report["capture_boundary_result"]
+    assert Path(
+        capture_boundary_result["live_equivalent_pretool_transcript_path"]
+    ).exists()
+    assert capture_boundary_result["pretool_standard_capture_observed"] is True
+    assert all(
+        "pretool-transcript-standard" in ref
+        for ref in capture_boundary_result["pretool_standard_capture_source_refs"]
+    )
+    assert "before any tool evidence is scored" in capture_boundary_result[
         "reason"
     ]
     assert report["boundary_results"] == {
@@ -352,8 +360,107 @@ def test_task_standard_live_gate0_records_context_and_standard_capture(
     assert context_step["stdout_payload"] == TASK_STANDARD_CODEX_CONTEXT_PAYLOAD
     assert capture_step["task_standard_standard_item_count"] == 3
     assert pretool_step["hook_event_name"] == "PreToolUse"
-    assert pretool_step["task_standard_standard_item_count"] == 0
+    assert pretool_step["task_standard_standard_item_count"] == 3
+    assert pretool_step["task_standard_evidence_ref_count"] == 0
+    assert any(
+        "pretool-transcript-standard" in ref
+        for ref in pretool_step["task_standard_standard_item_source_refs"]
+    )
     assert malformed_step["task_standard_malformed_standard_block_count"] == 1
+
+
+def test_task_standard_pretool_transcript_replay_captures_prior_live_shape(
+    tmp_path: Path,
+) -> None:
+    artifact_root = tmp_path / "source_artifact"
+    artifact_root.mkdir()
+    transcript_path = artifact_root / "transcript.jsonl"
+    standard_block = "\n".join(
+        (
+            "Work standard: create the file with exact one-line content.",
+            "Likely misses: wrong filename, wrong content, or no readback.",
+            "Closure evidence: cat output shows the exact created file content.",
+        )
+    )
+    transcript_path.write_text(
+        "\n".join(
+            json.dumps(row, sort_keys=True)
+            for row in (
+                {
+                    "type": "response_item",
+                    "payload": {
+                        "type": "message",
+                        "role": "developer",
+                        "content": [
+                            {
+                                "type": "input_text",
+                                "text": TASK_STANDARD_FORMATION_TEXT,
+                            }
+                        ],
+                    },
+                },
+                {
+                    "type": "event_msg",
+                    "payload": {
+                        "type": "agent_message",
+                        "message": standard_block,
+                        "phase": "commentary",
+                    },
+                },
+                {
+                    "type": "response_item",
+                    "payload": {
+                        "type": "function_call",
+                        "name": "exec_command",
+                        "arguments": "{\"cmd\":\"cat file.txt\"}",
+                    },
+                },
+            )
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    (artifact_root / "report.json").write_text(
+        json.dumps({"prompt": TASK_STANDARD_LIVE_PROMPT}, sort_keys=True),
+        encoding="utf-8",
+    )
+    (artifact_root / "hook_client_diagnostics.jsonl").write_text(
+        json.dumps(
+            {
+                "stdout_payload": TASK_STANDARD_CODEX_CONTEXT_PAYLOAD,
+                "coordinator": {
+                    "hook_payload": {
+                        "hook_event_name": "UserPromptSubmit",
+                        "transcript_path": str(transcript_path),
+                    }
+                },
+            },
+            sort_keys=True,
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+    report = run_task_standard_pretool_transcript_replay(
+        output_root=tmp_path,
+        artifact_root=artifact_root,
+    )
+
+    assert report["passed"] is True
+    assert report["pretool_standard_capture_observed"] is True
+    assert report["standard_capture_item_count"] == 3
+    assert report["boundary_evidence_ladder"] == {
+        "host_stdout_contract_ok": True,
+        "host_attached_context_observed": True,
+        "model_assimilation_observed": True,
+        "state_capture_observed": True,
+        "gate_used_captured_state": False,
+        "behavior_lift_claim_allowed": False,
+    }
+    assert all(
+        "pretool-transcript-standard" in ref
+        for ref in report["standard_capture_source_refs"]
+    )
 
 
 def test_product_perception_live_uses_separate_no_snapshot_output_root() -> None:
@@ -630,6 +737,7 @@ def test_live_trajectory_rows_record_no_snapshot_product_state() -> None:
             "task_standard_final_closure_claim_count": 0,
             "task_standard_malformed_standard_block_count": 0,
             "task_standard_standard_item_count": 0,
+            "task_standard_standard_item_source_refs": [],
             "task_standard_unmatched_standard_item_ids": [],
             "task_standard_visible_obligation_count": 0,
         }

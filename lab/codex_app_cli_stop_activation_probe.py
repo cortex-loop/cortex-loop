@@ -131,6 +131,8 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--stop-continuation-resolution-live", action="store_true")
     parser.add_argument("--task-standard-live-gate0", action="store_true")
     parser.add_argument("--task-standard-live", action="store_true")
+    parser.add_argument("--task-standard-pretool-transcript-replay", action="store_true")
+    parser.add_argument("--replay-artifact-root")
     parser.add_argument("--model", default="gpt-5.3-codex")
     args = parser.parse_args(argv)
     output_root = _selected_output_root(args)
@@ -161,6 +163,11 @@ def main(argv: list[str] | None = None) -> int:
             output_root=output_root,
             model=args.model,
         )
+    elif args.task_standard_pretool_transcript_replay:
+        report = run_task_standard_pretool_transcript_replay(
+            output_root=output_root,
+            artifact_root=args.replay_artifact_root,
+        )
     elif args.live_canary:
         report = run_live_canary_probe(
             output_root=output_root,
@@ -178,17 +185,19 @@ def main(argv: list[str] | None = None) -> int:
 def _selected_output_root(args: argparse.Namespace) -> Path:
     if args.output_root:
         return Path(args.output_root)
-    if args.task_standard_live:
+    if getattr(args, "task_standard_pretool_transcript_replay", False):
         return TASK_STANDARD_LIVE_OUTPUT_ROOT
-    if args.task_standard_live_gate0:
+    if getattr(args, "task_standard_live", False):
         return TASK_STANDARD_LIVE_OUTPUT_ROOT
-    if args.stop_continuation_resolution_live:
+    if getattr(args, "task_standard_live_gate0", False):
+        return TASK_STANDARD_LIVE_OUTPUT_ROOT
+    if getattr(args, "stop_continuation_resolution_live", False):
         return STOP_CONTINUATION_RESOLUTION_OUTPUT_ROOT
-    if args.stop_continuation_resolution_gate0:
+    if getattr(args, "stop_continuation_resolution_gate0", False):
         return STOP_CONTINUATION_RESOLUTION_OUTPUT_ROOT
-    if args.product_event_capture_live:
+    if getattr(args, "product_event_capture_live", False):
         return PRODUCT_EVENT_CAPTURE_OUTPUT_ROOT
-    if args.product_perception_live:
+    if getattr(args, "product_perception_live", False):
         return PRODUCT_PERCEPTION_LIVE_OUTPUT_ROOT
     return DEFAULT_OUTPUT_ROOT
 
@@ -798,9 +807,18 @@ def run_task_standard_live_gate0_probe(
         == _task_standard_context_payload(),
         "standard_block_captured": capture_step["task_standard_standard_item_count"] == 3
         and capture_step["task_standard_malformed_standard_block_count"] == 0,
-        "live_equivalent_pretool_capture_boundary_gap_recorded": (
+        "live_equivalent_pretool_transcript_standard_captured": (
             pretool_final["hook_event_name"] == "PreToolUse"
-            and pretool_final["task_standard_standard_item_count"] == 0
+            and pretool_final["task_standard_standard_item_count"] == 3
+            and pretool_final["stdout_payload"] is None
+            and any(
+                "pretool-transcript-standard" in ref
+                for ref in pretool_final["task_standard_standard_item_source_refs"]
+            )
+        ),
+        "pretool_capture_happens_before_tool_evidence": (
+            pretool_final["task_standard_standard_item_count"] == 3
+            and pretool_final["task_standard_evidence_ref_count"] == 0
             and pretool_final["stdout_payload"] is None
         ),
         "malformed_standard_diagnostic_only": (
@@ -833,21 +851,33 @@ def run_task_standard_live_gate0_probe(
         "boundary_evidence_ladder": {
             "host_stdout_contract_ok": case_results["context_emits_exact_signed_text"],
             "host_attached_context_observed": False,
-            "model_assimilation_observed": False,
-            "state_capture_observed": case_results["standard_block_captured"],
+            "model_assimilation_observed": case_results[
+                "live_equivalent_pretool_transcript_standard_captured"
+            ],
+            "state_capture_observed": (
+                case_results["standard_block_captured"]
+                and case_results["live_equivalent_pretool_transcript_standard_captured"]
+            ),
             "gate_used_captured_state": False,
             "behavior_lift_claim_allowed": False,
         },
-        "capture_boundary_gap": {
+        "capture_boundary_result": {
             "live_equivalent_pretool_transcript_path": str(pretool_transcript_path),
-            "pretool_standard_capture_observed": False,
+            "pretool_standard_capture_observed": case_results[
+                "live_equivalent_pretool_transcript_standard_captured"
+            ],
+            "pretool_standard_capture_source_refs": pretool_final[
+                "task_standard_standard_item_source_refs"
+            ],
             "reason": (
-                "Gate 0 still captures the standard through Stop last_assistant_message; "
-                "the live-equivalent PreToolUse transcript case records that "
-                "pre-tool transcript ingestion is not implemented yet."
+                "Gate 0 captures the model-authored standard from a "
+                "live-equivalent PreToolUse transcript before any tool evidence "
+                "is scored."
             ),
         },
-        "standard_capture_item_count": capture_step["task_standard_standard_item_count"],
+        "standard_capture_item_count": pretool_final[
+            "task_standard_standard_item_count"
+        ],
         "malformed_standard_block_count": malformed_final[
             "task_standard_malformed_standard_block_count"
         ],
@@ -856,6 +886,130 @@ def run_task_standard_live_gate0_probe(
             "This Gate 0 uses simulated Codex lifecycle payloads to prove the "
             "signed-off task-standard context and standard-capture path. It "
             "does not prove live Codex delivery, behavior lift, or output quality."
+        ),
+    }
+    report_path.write_text(
+        json.dumps(report, sort_keys=True, indent=2) + "\n",
+        encoding="utf-8",
+    )
+    return report
+
+
+def run_task_standard_pretool_transcript_replay(
+    *,
+    output_root: Path | str = TASK_STANDARD_LIVE_OUTPUT_ROOT,
+    artifact_root: Path | str | None = None,
+) -> dict[str, object]:
+    root = Path(output_root) / "task_standard_pretool_transcript_replay"
+    state_root = root / "state"
+    trajectory_path = root / "trajectory.jsonl"
+    report_path = root / "report.json"
+    root.mkdir(parents=True, exist_ok=True)
+    state_root.mkdir(parents=True, exist_ok=True)
+    trajectory_path.write_text("", encoding="utf-8")
+
+    source_artifact_root = (
+        Path(artifact_root)
+        if artifact_root is not None
+        else _latest_task_standard_live_artifact_root()
+    )
+    report_payload = _json_object(source_artifact_root / "report.json")
+    hook_rows = _jsonl_rows(source_artifact_root / "hook_client_diagnostics.jsonl")
+    transcript_path = _first_transcript_path_from_hook_rows(hook_rows)
+    transcript_text = ""
+    if transcript_path is not None and transcript_path.is_file():
+        transcript_text = transcript_path.read_text(encoding="utf-8", errors="replace")
+    prompt_value = report_payload.get("prompt")
+    prompt = prompt_value if isinstance(prompt_value, str) and prompt_value else (
+        TASK_STANDARD_LIVE_PROMPT
+    )
+
+    cases: list[dict[str, object]] = []
+    if transcript_path is not None:
+        cases.append(
+            _run_sequence_case(
+                case_id="pretool_transcript_replay",
+                payloads=(
+                    _stop_payload(
+                        hook_event_name="UserPromptSubmit",
+                        prompt=prompt,
+                        transcript_path=str(transcript_path),
+                    ),
+                    _stop_payload(
+                        hook_event_name="PreToolUse",
+                        last_assistant_message=None,
+                        tool_name="Bash",
+                        tool_input={"command": "printf replay\\n > replay.txt"},
+                        transcript_path=str(transcript_path),
+                    ),
+                ),
+                state_root=state_root,
+                diagnostics_path=root / "pretool_transcript_replay.client.jsonl",
+                trajectory_path=trajectory_path,
+                enable_task_standard_text=True,
+            )
+        )
+
+    replay_final = cases[0]["steps"][-1] if cases else {}
+    source_context_observed = any(
+        row.get("stdout_payload") == _task_standard_context_payload()
+        for row in hook_rows
+    )
+    pretool_capture_observed = bool(
+        replay_final.get("task_standard_standard_item_count") == 3
+        and replay_final.get("task_standard_evidence_ref_count") == 0
+        and any(
+            "pretool-transcript-standard" in ref
+            for ref in replay_final.get(
+                "task_standard_standard_item_source_refs",
+                [],
+            )
+            if isinstance(ref, str)
+        )
+    )
+    boundary_evidence_ladder = _task_standard_live_boundary_ladder(
+        context_observed=source_context_observed,
+        stdout_text="",
+        transcript_text=transcript_text,
+        state_capture_observed=pretool_capture_observed,
+        prework_standard_capture=pretool_capture_observed,
+    )
+    report = {
+        "probe": "codex_app_cli_task_standard_pretool_transcript_replay",
+        "surface": "product_plus_lab_proof",
+        "evidence_kind": "replay_task_standard_pretool_transcript_capture",
+        "passed": bool(
+            source_artifact_root.exists()
+            and transcript_path is not None
+            and pretool_capture_observed
+            and not boundary_evidence_ladder["gate_used_captured_state"]
+            and not boundary_evidence_ladder["behavior_lift_claim_allowed"]
+        ),
+        "source_artifact_root": str(source_artifact_root),
+        "source_transcript_path": str(transcript_path) if transcript_path else None,
+        "source_context_observed": source_context_observed,
+        "source_transcript_standard_labels_observed": _standard_block_labels_observed(
+            transcript_text
+        ),
+        "pretool_standard_capture_observed": pretool_capture_observed,
+        "standard_capture_item_count": replay_final.get(
+            "task_standard_standard_item_count",
+            0,
+        ),
+        "standard_capture_source_refs": replay_final.get(
+            "task_standard_standard_item_source_refs",
+            [],
+        ),
+        "state_capture_observed": pretool_capture_observed,
+        "gate_used_captured_state": False,
+        "behavior_lift_claim_allowed": False,
+        "boundary_evidence_ladder": boundary_evidence_ladder,
+        "output_root": str(root),
+        "trajectory_path": str(trajectory_path),
+        "truth_boundary": (
+            "This replay reuses existing Codex transcript artifacts to prove "
+            "TaskStandardSpine can now ingest a model-authored pre-tool standard "
+            "without live spend. It does not prove behavior lift or later gate use."
         ),
     }
     report_path.write_text(
@@ -1007,11 +1161,25 @@ def run_task_standard_live_probe(
         ),
         default=None,
     )
+    first_standard_capture_row = next(
+        (
+            row
+            for row in standard_capture_rows
+            if row.get("row_index") == first_standard_capture_index
+        ),
+        {},
+    )
     prework_standard_capture = bool(
         isinstance(first_standard_capture_index, int)
         and (
             not isinstance(first_tool_index, int)
             or first_standard_capture_index < first_tool_index
+            or (
+                first_standard_capture_index == first_tool_index
+                and _row_has_pretool_transcript_standard_capture(
+                    first_standard_capture_row
+                )
+            )
         )
     )
     stdout_text = completed.stdout
@@ -2045,6 +2213,10 @@ def _run_case(
             session_state,
             "standard_items",
         ),
+        "task_standard_standard_item_source_refs": _task_standard_source_refs(
+            session_state,
+            "standard_items",
+        ),
         "task_standard_evidence_ref_count": _task_standard_count(
             session_state,
             "evidence_refs",
@@ -2285,6 +2457,48 @@ def _jsonl_rows(path: Path) -> list[dict[str, object]]:
     ]
 
 
+def _json_object(path: Path) -> dict[str, object]:
+    if not path.exists():
+        return {}
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError:
+        return {}
+    return payload if isinstance(payload, dict) else {}
+
+
+def _latest_task_standard_live_artifact_root() -> Path:
+    if not TASK_STANDARD_LIVE_OUTPUT_ROOT.exists():
+        return TASK_STANDARD_LIVE_OUTPUT_ROOT / "missing_live_artifact"
+    candidates = [
+        path
+        for path in TASK_STANDARD_LIVE_OUTPUT_ROOT.iterdir()
+        if path.is_dir()
+        and path.name.startswith("run_")
+        and (path / "report.json").exists()
+        and (path / "hook_client_diagnostics.jsonl").exists()
+    ]
+    return sorted(candidates)[-1] if candidates else (
+        TASK_STANDARD_LIVE_OUTPUT_ROOT / "missing_live_artifact"
+    )
+
+
+def _first_transcript_path_from_hook_rows(
+    rows: list[dict[str, object]],
+) -> Path | None:
+    for row in rows:
+        coordinator = row.get("coordinator")
+        if not isinstance(coordinator, Mapping):
+            continue
+        hook_payload = coordinator.get("hook_payload")
+        if not isinstance(hook_payload, Mapping):
+            continue
+        transcript_path_value = hook_payload.get("transcript_path")
+        if isinstance(transcript_path_value, str) and transcript_path_value:
+            return Path(transcript_path_value)
+    return None
+
+
 def _transcript_text_from_hook_rows(rows: list[dict[str, object]]) -> str:
     for row in rows:
         coordinator = row.get("coordinator")
@@ -2328,6 +2542,17 @@ def _standard_block_labels_observed(text: str) -> bool:
     return all(
         label in text
         for label in ("Work standard:", "Likely misses:", "Closure evidence:")
+    )
+
+
+def _row_has_pretool_transcript_standard_capture(row: Mapping[str, object]) -> bool:
+    return bool(
+        row.get("hook_event_name") == "PreToolUse"
+        and any(
+            "pretool-transcript-standard" in ref
+            for ref in row.get("task_standard_standard_item_source_refs", [])
+            if isinstance(ref, str)
+        )
     )
 
 
@@ -2381,6 +2606,10 @@ def _live_trajectory_rows(hook_rows: list[dict[str, object]]) -> list[dict[str, 
                     "visible_task_obligations",
                 ),
                 "task_standard_standard_item_count": _task_standard_count(
+                    session_state,
+                    "standard_items",
+                ),
+                "task_standard_standard_item_source_refs": _task_standard_source_refs(
                     session_state,
                     "standard_items",
                 ),
@@ -2445,6 +2674,30 @@ def _task_standard_count(row_or_state: Mapping[str, object], key: str) -> int:
     if isinstance(value, int):
         return value
     return 0
+
+
+def _task_standard_source_refs(
+    row_or_state: Mapping[str, object],
+    key: str,
+) -> list[str]:
+    spine = row_or_state.get("task_standard_spine")
+    if not isinstance(spine, Mapping):
+        session_state = row_or_state.get("session_state")
+        if isinstance(session_state, Mapping):
+            spine = session_state.get("task_standard_spine")
+    if not isinstance(spine, Mapping):
+        return []
+    value = spine.get(key)
+    if not isinstance(value, list):
+        return []
+    refs: list[str] = []
+    for item in value:
+        if not isinstance(item, Mapping):
+            continue
+        source_ref = item.get("source_event_ref")
+        if isinstance(source_ref, str) and source_ref:
+            refs.append(source_ref)
+    return refs
 
 
 def _task_standard_unmatched_ids(session_state: Mapping[str, object]) -> list[str]:

@@ -148,6 +148,10 @@ Active docs:
   proof-boundary failures across host contract, lifecycle config, temporal
   capture, Gate 0/live mismatch, and workflow-health coupling, not SRE doctrine
   failure
+- [Cortex Codex App/CLI Task-Standard PreTool Transcript Capture](recon/cortex_codex_app_cli_task_standard_pretool_transcript_capture.md) —
+  structural and replay evidence that assistant-authored pre-tool standard
+  blocks from Codex transcripts now populate `TaskStandardSpine` before tool
+  evidence is scored
 - [Claude Code Desktop Lifecycle Spine Branch Disposition](recon/claude_code_desktop_lifecycle_spine_branch_disposition.md) —
   branch-hygiene disposition preserving the parked Claude lifecycle spine head
   before retiring the stale managed branch

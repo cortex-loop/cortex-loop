@@ -64,6 +64,7 @@
     "docs/recon/cortex_codex_app_cli_hook_contract_capture_boundary_remediation.md",
     "docs/recon/cortex_codex_app_cli_task_standard_context_live_rerun.md",
     "docs/recon/cortex_codex_app_cli_communication_boundary_audit_and_hardening.md",
+    "docs/recon/cortex_codex_app_cli_task_standard_pretool_transcript_capture.md",
     "docs/recon/claude_code_desktop_lifecycle_spine_branch_disposition.md"
   ],
   "bio_to_code_matrix": [
@@ -208,7 +209,7 @@
     "Do not let stale branch or redirect replay survive fresh contradiction or degradation on the same active resume context.",
     "Do not let host/tool reliability priors harden into host-wide superstition, cross-host projected reuse, default-on memory behavior, hidden policy forks, or route/posture/brake law drift; reliability must stay explicit, host-matched, capability-scoped, contradiction-first, and removable, biasing score pricing only.",
     "Do not let asymmetric error cost widen beyond CHECK and SEEK_CONTEXT activation thresholds, shift outside the `[0.05, 0.60]` clip band, default caution on cold/fresh sessions, or route/posture/selection/certification/blockedness law drift through `RiskWeight`; risk-sensitive pricing must stay bounded, profile-derived, dead-band-protected, and backward-compat to zero-shift on balanced snapshots.",
-    "Do not let brake tonic hysteresis become sticky guardedness under sustained calm, drift the locked `rho = 0.60` EMA coefficient, gate phasic contradiction/latching/missing-anchor/repeated-failure spikes behind tonic smoothing, or introduce a host-specific brake policy fork; the tonic must stay a bounded damping of single-tick `quiescent`/`guarded` flips on `tonic_pressure` only, and a parallel rest-side EMA carrier (`tonic_quiescence`) must not be reintroduced under SRE_2 \u00a77.5 path B.",
+    "Do not let brake tonic hysteresis become sticky guardedness under sustained calm, drift the locked `rho = 0.60` EMA coefficient, gate phasic contradiction/latching/missing-anchor/repeated-failure spikes behind tonic smoothing, or introduce a host-specific brake policy fork; the tonic must stay a bounded damping of single-tick `quiescent`/`guarded` flips on `tonic_pressure` only, and a parallel rest-side EMA carrier (`tonic_quiescence`) must not be reintroduced under SRE_2 §7.5 path B.",
     "Do not let brain-capability adaptation become hidden inference (capability must come from an explicit `OperatorBrainCapabilityEnvelope`, not an undocumented model heuristic), a host-specific routing fork (the SRE-side assessment and threshold ladder must be host-agnostic; only per-host band registries may differ), a commitment-relaxation surface (the assessment biases routing and budget only; it must never lower commitment certification standards or admit a soft route that should have been hard-blocked), or a stale-band stickiness (when dynamic inference earns its seam, fresh contradictory evidence must be able to widen or narrow the envelope)."
   ],
   "bootstrap": [
@@ -414,7 +415,7 @@
       ],
       "id": "lifecycle_event_envelope",
       "label": "Lifecycle event envelope",
-      "packet_ref": "CORE_2 \u00a74.1",
+      "packet_ref": "CORE_2 §4.1",
       "proof_refs": [
         "tests/product/test_core_substrate.py"
       ],
@@ -426,7 +427,7 @@
       ],
       "id": "observation_bundle",
       "label": "Event-local observation bundle",
-      "packet_ref": "CORE_2 \u00a76.1",
+      "packet_ref": "CORE_2 §6.1",
       "proof_refs": [
         "tests/product/test_core_substrate.py"
       ],
@@ -438,7 +439,7 @@
       ],
       "id": "split_environment_handles",
       "label": "Executive vs commitment environment handles",
-      "packet_ref": "CORE_2 \u00a76.2",
+      "packet_ref": "CORE_2 §6.2",
       "proof_refs": [
         "tests/product/test_core_substrate.py"
       ],
@@ -450,7 +451,7 @@
       ],
       "id": "environment_query",
       "label": "Generalized environment query",
-      "packet_ref": "CORE_2 \u00a76.3",
+      "packet_ref": "CORE_2 §6.3",
       "proof_refs": [
         "tests/product/test_core_substrate.py"
       ],
@@ -462,7 +463,7 @@
       ],
       "id": "commitment_candidate",
       "label": "Commitment candidate and status lattice",
-      "packet_ref": "CORE_2 \u00a77.1, \u00a77.2",
+      "packet_ref": "CORE_2 §7.1, §7.2",
       "proof_refs": [
         "tests/product/test_certification_artifacts.py"
       ],
@@ -474,7 +475,7 @@
       ],
       "id": "provenance_manifest",
       "label": "Downward provenance dominance manifest",
-      "packet_ref": "CORE_2 \u00a77.3",
+      "packet_ref": "CORE_2 §7.3",
       "proof_refs": [
         "tests/product/test_certification_artifacts.py"
       ],
@@ -486,7 +487,7 @@
       ],
       "id": "wake_decision",
       "label": "Commitment wake decision and dispatch",
-      "packet_ref": "CORE_2 \u00a75, \u00a77.4",
+      "packet_ref": "CORE_2 §5, §7.4",
       "proof_refs": [
         "tests/product/test_dispatch.py"
       ],
@@ -498,7 +499,7 @@
       ],
       "id": "boundary_assessment",
       "label": "Event-local certification firewall assessment",
-      "packet_ref": "CORE_2 \u00a78.1, \u00a711.1",
+      "packet_ref": "CORE_2 §8.1, §11.1",
       "proof_refs": [
         "tests/product/test_certification_artifacts.py"
       ],
@@ -510,7 +511,7 @@
       ],
       "id": "support_state",
       "label": "Recoverable executive role / support state",
-      "packet_ref": "CORE_2 \u00a78.2",
+      "packet_ref": "CORE_2 §8.2",
       "proof_refs": [
         "tests/product/test_core_substrate.py"
       ],
@@ -522,7 +523,7 @@
       ],
       "id": "executive_signal_summary",
       "label": "Minimal software-shaped executive role view",
-      "packet_ref": "SRE_2 \u00a73.1",
+      "packet_ref": "SRE_2 §3.1",
       "proof_refs": [
         "tests/product/test_sre_uncertainty_brake.py"
       ],
@@ -534,7 +535,7 @@
       ],
       "id": "neutral_dominance_decision",
       "label": "Neutral-dominance arbitration",
-      "packet_ref": "SRE_2 \u00a76.6",
+      "packet_ref": "SRE_2 §6.6",
       "proof_refs": [
         "tests/product/test_sre_neutral_hinge.py"
       ],
@@ -546,7 +547,7 @@
       ],
       "id": "risk_weight",
       "label": "Asymmetric error-cost RiskWeight carrier",
-      "packet_ref": "SRE_2 \u00a76.6.1",
+      "packet_ref": "SRE_2 §6.6.1",
       "proof_refs": [
         "tests/product/test_sre_neutral_hinge.py"
       ],
@@ -559,7 +560,7 @@
       ],
       "id": "operator_brain_capability_envelope",
       "label": "Operator brain capability envelope",
-      "packet_ref": "SRE_2 \u00a76.9",
+      "packet_ref": "SRE_2 §6.9",
       "proof_refs": [
         "tests/product/test_brain_capability.py",
         "tests/conformance/test_brain_capability_parity.py"
@@ -574,7 +575,7 @@
       ],
       "id": "executive_modulator_state",
       "label": "Brake tonic EMA executive modulator state",
-      "packet_ref": "SRE_2 \u00a77.4, \u00a77.5",
+      "packet_ref": "SRE_2 §7.4, §7.5",
       "proof_refs": [
         "tests/product/test_sre_uncertainty_brake.py",
         "tests/conformance/test_claude_code_desktop_runtime_session_io.py"
@@ -589,7 +590,7 @@
       ],
       "id": "goal_debt_state",
       "label": "Typed goal-debt and closure-pressure state",
-      "packet_ref": "SRE_2 \u00a78.1",
+      "packet_ref": "SRE_2 §8.1",
       "proof_refs": [
         "tests/product/test_sre_goals_branching.py",
         "tests/product/test_sre_goal_branch.py",
@@ -603,7 +604,7 @@
       ],
       "id": "task_standard_spine",
       "label": "Task-local standard and evidence alignment state",
-      "packet_ref": "SRE_2 \u00a78.2",
+      "packet_ref": "SRE_2 §8.2",
       "proof_refs": [
         "tests/product/test_sre_task_standard_spine.py",
         "tests/product/test_openai_codex_app_cli_hook_coordinator.py"
@@ -617,7 +618,7 @@
       ],
       "id": "preservation_state",
       "label": "Verified-work preservation and intervention budget",
-      "packet_ref": "SRE_2 \u00a76.7 (budget); CORE recovery firewall",
+      "packet_ref": "SRE_2 §6.7 (budget); CORE recovery firewall",
       "proof_refs": [
         "tests/product/test_preservation_state.py",
         "tests/conformance/test_claude_code_desktop_runtime_session_io.py"
@@ -631,7 +632,7 @@
       ],
       "id": "host_reliability_prior",
       "label": "Bounded host/tool reliability prior",
-      "packet_ref": "AUX_2 \u00a74 (geometry/eval support); SRE_2 score-pricing",
+      "packet_ref": "AUX_2 §4 (geometry/eval support); SRE_2 score-pricing",
       "proof_refs": [
         "tests/experimental/test_aux_support_priors.py",
         "tests/experimental/test_aux_publication.py"
@@ -644,7 +645,7 @@
       ],
       "id": "support_memory_episode",
       "label": "Durable AUX support-memory episode",
-      "packet_ref": "AUX_2 \u00a73 offline support memory",
+      "packet_ref": "AUX_2 §3 offline support memory",
       "proof_refs": [
         "tests/experimental/test_aux_persistence.py"
       ],
@@ -657,7 +658,7 @@
       ],
       "id": "auxiliary_support_appendix",
       "label": "AUX runtime augmentation appendix and re-entry",
-      "packet_ref": "AUX_2 \u00a75 re-entry / SRE handoff",
+      "packet_ref": "AUX_2 §5 re-entry / SRE handoff",
       "proof_refs": [
         "tests/experimental/test_aux_publication.py"
       ],
@@ -670,7 +671,7 @@
       ],
       "id": "aux_lift_metric",
       "label": "AUX lift metric and evaluation report",
-      "packet_ref": "AUX_2 \u00a74 evaluation-first",
+      "packet_ref": "AUX_2 §4 evaluation-first",
       "proof_refs": [
         "tests/experimental/test_aux_lift.py"
       ],
@@ -682,7 +683,7 @@
       ],
       "id": "aux_burden_report",
       "label": "AUX cost-visible burden report",
-      "packet_ref": "AUX_2 \u00a72.7",
+      "packet_ref": "AUX_2 §2.7",
       "proof_refs": [
         "tests/experimental/test_aux_scaffolds.py"
       ],
@@ -694,7 +695,7 @@
       ],
       "id": "verified_work_profile_spec",
       "label": "Verified-work runtime profile specification",
-      "packet_ref": "SRE_2 \u00a75 / runtime law",
+      "packet_ref": "SRE_2 §5 / runtime law",
       "proof_refs": [
         "tests/product/test_openai_runtime_session_io.py"
       ],
@@ -711,14 +712,14 @@
     ]
   },
   "next_product_train": {
-    "executive_benefit": "Capture the model's pre-tool Work standard / Likely misses / Closure evidence block from product-visible Codex transcript state so `TaskStandardSpine` can hold the standard the model actually formed before tool use.",
-    "guardrail": "Do not change the signed task-standard text, Stop text, SRE law, selector thresholds, hidden-verifier boundaries, root hook configuration, or behavior-lift claims; use only product-visible Codex transcript_path or equivalent lifecycle evidence.",
-    "kill_rule": "If the Codex transcript is not available early enough during PreToolUse/PostToolUse to capture the assistant standard before tool decisions, stop and choose a host event-stream capture design rather than text tuning.",
+    "executive_benefit": "Run the task-standard live probe again with transcript capture in place so fresh Codex CLI evidence can show signed context delivery, model standard assimilation, and TaskStandardSpine state capture before tool use under the current product code.",
+    "guardrail": "Do not edit the signed task-standard text, Stop text, SRE law, selector thresholds, hidden-verifier boundaries, root hook configuration, or add behavior-lift claims; live approval is required in the implementation turn.",
+    "kill_rule": "If fresh live Codex evidence still cannot capture the standard before tool use, record a host timing/capture finding and choose a host event-stream or capture-boundary design instead of text tuning.",
     "last_reviewed_at": "2026-05-05T00:00:00+00:00",
-    "primary_metric": "A live or live-replay proof captures the three standard items from the Codex transcript before the first tool event, records source event refs, keeps no runtime snapshot/root mutation, and emits no new model-visible text.",
-    "slug": "codex-app-cli-task-standard-pretool-transcript-capture",
+    "primary_metric": "A live run records pass_prework_standard_capture with three standard items captured from product-visible transcript data before the first tool event, no runtime snapshot, unchanged root config, no unexpected model-visible text, gate_used_captured_state=false, and behavior_lift_claim_allowed=false.",
+    "slug": "codex-app-cli-task-standard-live-capture-rerun",
     "surface": "product",
-    "why_now": "The context live rerun proved Codex-native additionalContext reaches the model and the model emits the requested standard before the first command, but Cortex did not capture it because the hook coordinator only parses assistant standard text from Stop last_assistant_message."
+    "why_now": "Gate 0 and no-spend replay prove the prior live transcript shape is now ingestible, but shipping/product truth still needs a fresh live rerun before standard-to-gating integration can be claimed or queued."
   },
   "packet_to_code_anchors": [
     {
@@ -1175,7 +1176,7 @@
         "behavior_effect": "can block, route, warn, or require closure before a model call proceeds through host control",
         "gap_or_unearned": "Do not claim commitment diagnostics alone change model behavior unless a host-control path consumes them.",
         "id": "event_dispatch_and_commitments",
-        "model_io_path": "`cortex/core/*` \u2192 host runtime step \u2192 CLI/service records and closure/route decisions; direct prompt text only when downstream host-control uses the decision",
+        "model_io_path": "`cortex/core/*` → host runtime step → CLI/service records and closure/route decisions; direct prompt text only when downstream host-control uses the decision",
         "reaches_model_as": "runtime decision state, warnings, and certification gates; not automatically prompt-visible by itself",
         "visibility_class": "decision_visible"
       },
@@ -1183,7 +1184,7 @@
         "behavior_effect": "keeps resume/closure decisions stable across events and can alter whether the next call is inspect, continuity, or blocked",
         "gap_or_unearned": "Raw branch registry is not model-visible unless converted into host-control input or route behavior.",
         "id": "goal_branch_continuity",
-        "model_io_path": "`cortex/sre/goals.py` + host runtime session \u2192 `operator_route.route_budget.allow_resume` / closure summaries \u2192 subsequent host-control selection",
+        "model_io_path": "`cortex/sre/goals.py` + host runtime session → `operator_route.route_budget.allow_resume` / closure summaries → subsequent host-control selection",
         "reaches_model_as": "route and budget constraints, session continuity state, and closure pressure; not as raw memory text by default",
         "visibility_class": "decision_visible"
       },
@@ -1191,7 +1192,7 @@
         "behavior_effect": "slows or blocks under contradiction and repeated failure, reducing unsupported forward motion before model output is requested",
         "gap_or_unearned": "This is runtime control, not post-training reasoning improvement; live output-lift still requires model-run evidence.",
         "id": "brake_uncertainty_modulators",
-        "model_io_path": "`cortex/sre/brake.py` / `modulators.py` \u2192 executive policy view \u2192 operator route / activation thresholds \u2192 host runtime result",
+        "model_io_path": "`cortex/sre/brake.py` / `modulators.py` → executive policy view → operator route / activation thresholds → host runtime result",
         "reaches_model_as": "route pressure, threshold shifts, blocked/guarded decisions, and diagnostics; not natural-language self-talk",
         "visibility_class": "decision_visible"
       },
@@ -1199,7 +1200,7 @@
         "behavior_effect": "changes whether and how the model is asked to act when model/task capability mismatch is detected",
         "gap_or_unearned": "Static OpenAI-only band registry remains a cold-start prior; observed capability inference is queued, not landed.",
         "id": "operator_routing_and_capability",
-        "model_io_path": "`select_operator_route*` \u2192 host runtime `operator_route_payload` \u2192 host-control route profile / verified-work contract binding",
+        "model_io_path": "`select_operator_route*` → host runtime `operator_route_payload` → host-control route profile / verified-work contract binding",
         "reaches_model_as": "DEGRADE/UNSUPPORTED routing, max retry suppression, lean contract binding, or blocked request",
         "visibility_class": "decision_visible"
       },
@@ -1207,7 +1208,7 @@
         "behavior_effect": "can bias control pricing when explicitly published, host-matched, and fresh; cannot directly route or certify",
         "gap_or_unearned": "Default shipping/conformance lanes keep live `Q_mem = 0`; no default-on memory claim is earned.",
         "id": "aux_support_publications",
-        "model_io_path": "AUX episode stores \u2192 `OfflineSupportPublication` \u2192 explicit publication supplied to host-control/runtime scoring",
+        "model_io_path": "AUX episode stores → `OfflineSupportPublication` → explicit publication supplied to host-control/runtime scoring",
         "reaches_model_as": "score-pricing priors and publication-only support; raw SQLite episodes do not reach the model",
         "visibility_class": "support_only"
       },
@@ -1215,7 +1216,7 @@
         "behavior_effect": "changes model call content and bounded repair behavior directly; preserves trusted structure across one-shot and repair attempts",
         "gap_or_unearned": "OpenAI API host-control remains API/conformance support unless explicitly promoted; the active product target is `openai.codex_app_cli`.",
         "id": "verified_work_preservation",
-        "model_io_path": "`OpenAIHostControlRequest(work_contract=...)` \u2192 fixed verified-work `instructions` + `input_text` \u2192 `execute_openai_response_stream_turn`",
+        "model_io_path": "`OpenAIHostControlRequest(work_contract=...)` → fixed verified-work `instructions` + `input_text` → `execute_openai_response_stream_turn`",
         "reaches_model_as": "explicit model instructions, workspace context, repair prompt, and response verification loop on the OpenAI API host-control support lane",
         "visibility_class": "direct_model_visible"
       },
@@ -1223,7 +1224,7 @@
         "behavior_effect": "shapes the next OpenAI call and, structurally, the next Claude Code Desktop Bash-tool assistant continuation away from premature closure after stream-only, failed-probe, warning, override, or braked realization without accumulating memory across turns; generic friction now stays silent and relies on route/brake gates",
         "gap_or_unearned": "OpenAI API host-control remains support/conformance; `openai.codex_app_cli` is the product target, and Claude Code Desktop still needs live paired output-quality evidence before shipping-lift claims.",
         "id": "feedback_window_realization",
-        "model_io_path": "host output / last `ReferenceRealizationFeedback` \u2192 `runtime_context_from_last_feedback(...)` \u2192 OpenAI host-control `instructions` or verified-work `input_text`; Claude Code Desktop structural path maps prior feedback through `cortex/hosts/claude_code_desktop/runtime.py` to `hookSpecificOutput.additionalContext` for `PreToolUse:Bash`",
+        "model_io_path": "host output / last `ReferenceRealizationFeedback` → `runtime_context_from_last_feedback(...)` → OpenAI host-control `instructions` or verified-work `input_text`; Claude Code Desktop structural path maps prior feedback through `cortex/hosts/claude_code_desktop/runtime.py` to `hookSpecificOutput.additionalContext` for `PreToolUse:Bash`",
         "reaches_model_as": "a single task-local runtime-context constraint sentence derived only from the immediately prior feedback entry; clean or absent feedback emits no block/context",
         "visibility_class": "conditional_model_visible_openai_and_claude_code_desktop_structural"
       },
@@ -1231,7 +1232,7 @@
         "behavior_effect": "maintains continuity across events and hosts without pretending all hosts expose the same transport affordances",
         "gap_or_unearned": "Session state can be perfectly coherent internally while still failing to affect a model if no host-control path consumes it.",
         "id": "host_runtime_sessions",
-        "model_io_path": "host session artifact \u2192 runtime step \u2192 route/closure/policy payload \u2192 host control request, CLI/service response, or Claude Code Desktop hook-control output",
+        "model_io_path": "host session artifact → runtime step → route/closure/policy payload → host control request, CLI/service response, or Claude Code Desktop hook-control output",
         "reaches_model_as": "carried state that influences later route and closure behavior; raw session JSON is not model input",
         "visibility_class": "state_to_decision_visible"
       },
@@ -1239,7 +1240,7 @@
         "behavior_effect": "this is the main bridge where Cortex can change what the model receives or what output is accepted",
         "gap_or_unearned": "Any internal logic not consumed here, or not converted into route/block behavior before here, remains monitoring/scaffolding rather than product Cortex.",
         "id": "host_control_transports",
-        "model_io_path": "`OpenAIHostControlRequest.input_text/instructions`, `ClaudeHostControlRequest.input_text/system`, `GeminiHostControlRequest.input_text/instructions`, and Claude Code Desktop `hookSpecificOutput.additionalContext` \u2192 respective live/fixture transport or hook outputs",
+        "model_io_path": "`OpenAIHostControlRequest.input_text/instructions`, `ClaudeHostControlRequest.input_text/system`, `GeminiHostControlRequest.input_text/instructions`, and Claude Code Desktop `hookSpecificOutput.additionalContext` → respective live/fixture transport or hook outputs",
         "reaches_model_as": "provider request text/system/instructions or Claude Code Desktop hook additional context; metadata and audit intensity are boundary/control fields, not assumed model-visible text",
         "visibility_class": "direct_model_visible"
       }
@@ -1326,10 +1327,11 @@
     "The approved Codex App/CLI task-standard live run then produced a fail verdict, not a capture success: the isolated Codex CLI subject loaded project hooks, emitted the signed UserPromptSubmit text with hash `9021a0efef77eb6371eecf4996332d7fce31febae8462decf10b48056f6cf1a9` as a flat Cortex-internal `context` payload, recorded 7 hook rows with no runtime snapshot and unchanged root config, but the model skipped the requested Work standard / Likely misses / Closure evidence block and moved directly to tools. The first Stop row then emitted existing overdue-verification text with hash `a384c80463a98828df0de20d5aa2baafda8bb4fa023bd062c2a17e03e7fc04fc`, so no prework standard capture, behavior lift, or downstream gating integration is earned; the next product train is capture-boundary remediation rather than behavior comparison.",
     "The Codex App/CLI hook-contract remediation then fixed the structural host mismatch: UserPromptSubmit task-standard context now serializes as Codex-native `hookSpecificOutput.additionalContext` instead of the flat `context` shorthand, Stop blocks keep the proven `decision`/`reason` shape, diagnostics hash nested additionalContext text, and task-standard live subject configs can use `--disable-stop-blocks` to suppress Stop blocks without suppressing the signed UserPromptSubmit context. Structural Gate 0 passed with the same signed context hash, three simulated standard items captured, malformed standard blocks diagnostic-only, no runtime snapshot, and unchanged root guardrails. This earns host-contract structural proof only; no live prework standard capture or behavior lift is claimed.",
     "The Codex App/CLI task-standard context live rerun then produced `partial_delivery_only`: the isolated Codex CLI subject emitted Codex-native UserPromptSubmit `hookSpecificOutput.additionalContext` with signed context hash `9021a0efef77eb6371eecf4996332d7fce31febae8462decf10b48056f6cf1a9`, the model produced the requested Work standard / Likely misses / Closure evidence block before the first command in the Codex JSON stream and session transcript, root config stayed unchanged, no runtime snapshot loaded, and `--disable-stop-blocks` suppressed Stop stdout. Cortex still captured 0 standard items because the product coordinator only parses assistant standard text from Stop `last_assistant_message`, not from the pre-tool transcript path. This earns live context assimilation and capture-boundary evidence only; no task-standard state capture, gating integration, or behavior lift is claimed.",
-    "The Codex App/CLI communication-boundary audit then classified the recent trickle failures as a localized product proof-quality issue rather than SRE doctrine failure. It records five failure classes: host-contract mismatch, lifecycle-config mismatch, temporal capture mismatch, live-vs-Gate-0 mismatch, and workflow-health/closeout coupling. The task-standard evidence ladder now distinguishes host stdout, host-attached context, model assimilation, state capture, gate use, and behavior-lift permission; task-standard reports separate mechanical success from product-evidence success and mark `partial_delivery_only` as partial evidence only."
+    "The Codex App/CLI communication-boundary audit then classified the recent trickle failures as a localized product proof-quality issue rather than SRE doctrine failure. It records five failure classes: host-contract mismatch, lifecycle-config mismatch, temporal capture mismatch, live-vs-Gate-0 mismatch, and workflow-health/closeout coupling. The task-standard evidence ladder now distinguishes host stdout, host-attached context, model assimilation, state capture, gate use, and behavior-lift permission; task-standard reports separate mechanical success from product-evidence success and mark `partial_delivery_only` as partial evidence only.",
+    "The Codex App/CLI task-standard PreTool transcript-capture seam then repaired the live capture boundary without changing signed text, Stop text, SRE law, selector thresholds, root hook config, or behavior claims: the OpenAI Codex coordinator now reads product-visible `transcript_path` on PreToolUse with PostToolUse fallback, extracts assistant-authored `Work standard` / `Likely misses` / `Closure evidence` blocks before the first function/tool call, ignores developer context, user text, tool calls, tool outputs, hidden verifier data, and task identity, and stores the first valid block through `TaskStandardSpine`. Gate 0 now requires live-equivalent pre-tool transcript capture before tool evidence scoring, and the no-spend replay against `.cortex/live_validation/openai/codex_app_cli_task_standard_live_probe/run_20260505T195300Z` captured three standard items with state capture observed while gate use and behavior-lift permission remain false. This earns state-capture structural/replay proof only; a fresh live capture rerun and standard-to-gating integration remain unearned."
   ],
   "work_today": {
-    "slug": "codex-app-cli-communication-boundary-audit-and-hardening",
-    "note": "This structural audit hardened the Codex App/CLI proof boundary without changing product speech or SRE law: reports now separate host stdout, host-attached context, model assimilation, state capture, gate use, and behavior-lift permission, and `partial_delivery_only` is explicitly partial evidence rather than product success. The audit localizes the recurring failures to host-contract/lifecycle/capture/workflow proof boundaries and keeps the next product train focused on pre-tool transcript capture."
+    "note": "This product/lab seam fixed the missing capture boundary: Codex App/CLI now ingests assistant-authored pre-tool standard blocks from product-visible transcript_path into TaskStandardSpine before tool evidence is scored. Gate 0 and a no-spend replay of the prior live transcript now show host stdout, host-attached context, model assimilation, and state capture observed, while gate use and behavior-lift permission remain explicitly false.",
+    "slug": "codex-app-cli-task-standard-pretool-transcript-capture"
   }
 }
