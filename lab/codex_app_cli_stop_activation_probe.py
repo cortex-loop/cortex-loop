@@ -17,8 +17,11 @@ import sys
 from pathlib import Path
 from typing import Any, Mapping
 
-
 REPO_ROOT = Path(__file__).resolve().parents[1]
+if str(REPO_ROOT) not in sys.path:  # pragma: no cover - direct script support.
+    sys.path.insert(0, str(REPO_ROOT))
+
+from cortex.sre.task_standard import TASK_STANDARD_FORMATION_TEXT
 DEFAULT_OUTPUT_ROOT = (
     REPO_ROOT
     / ".cortex"
@@ -47,6 +50,13 @@ STOP_CONTINUATION_RESOLUTION_OUTPUT_ROOT = (
     / "openai"
     / "codex_app_cli_stop_continuation_resolution_loop"
 )
+TASK_STANDARD_LIVE_OUTPUT_ROOT = (
+    REPO_ROOT
+    / ".cortex"
+    / "live_validation"
+    / "openai"
+    / "codex_app_cli_task_standard_live_probe"
+)
 EXPECTED_OVERDUE_VERIFICATION_TEXT = (
     "Wait, did I actually check my work properly. I don't want to hand this off "
     "and have someone find the gap because I rushed it. I should run a check, "
@@ -62,6 +72,7 @@ PRODUCT_EVENT_CAPTURE_APPROVAL_ENV = (
 STOP_CONTINUATION_RESOLUTION_APPROVAL_ENV = (
     "CORTEX_CODEX_APP_CLI_STOP_CONTINUATION_RESOLUTION_APPROVED"
 )
+TASK_STANDARD_LIVE_APPROVAL_ENV = "CORTEX_CODEX_APP_CLI_TASK_STANDARD_LIVE_APPROVED"
 PRODUCT_PERCEPTION_LIVE_PROMPT = (
     "Create a one-line file named cortex_product_perception_live.txt containing "
     "product perception live done. Then report done."
@@ -76,6 +87,11 @@ STOP_CONTINUATION_RESOLUTION_LIVE_PROMPT = (
     "cortex_stop_continuation_resolution_live.txt containing stop continuation "
     "resolution live done, and then report done."
 )
+TASK_STANDARD_LIVE_PROMPT = (
+    "Use shell commands to create a one-line file named "
+    "cortex_task_standard_live.txt containing task standard live done, read "
+    "the file back, and then report done."
+)
 PRODUCT_EVENT_CAPTURE_HOOK_EVENTS = (
     "UserPromptSubmit",
     "PreToolUse",
@@ -83,6 +99,7 @@ PRODUCT_EVENT_CAPTURE_HOOK_EVENTS = (
     "Stop",
 )
 STOP_CONTINUATION_RESOLUTION_HOOK_EVENTS = PRODUCT_EVENT_CAPTURE_HOOK_EVENTS
+TASK_STANDARD_LIVE_HOOK_EVENTS = PRODUCT_EVENT_CAPTURE_HOOK_EVENTS
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -95,6 +112,8 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--product-event-capture-live", action="store_true")
     parser.add_argument("--stop-continuation-resolution-gate0", action="store_true")
     parser.add_argument("--stop-continuation-resolution-live", action="store_true")
+    parser.add_argument("--task-standard-live-gate0", action="store_true")
+    parser.add_argument("--task-standard-live", action="store_true")
     parser.add_argument("--model", default="gpt-5.3-codex")
     args = parser.parse_args(argv)
     output_root = _selected_output_root(args)
@@ -118,6 +137,13 @@ def main(argv: list[str] | None = None) -> int:
             output_root=output_root,
             model=args.model,
         )
+    elif args.task_standard_live_gate0:
+        report = run_task_standard_live_gate0_probe(output_root=output_root)
+    elif args.task_standard_live:
+        report = run_task_standard_live_probe(
+            output_root=output_root,
+            model=args.model,
+        )
     elif args.live_canary:
         report = run_live_canary_probe(
             output_root=output_root,
@@ -135,6 +161,10 @@ def main(argv: list[str] | None = None) -> int:
 def _selected_output_root(args: argparse.Namespace) -> Path:
     if args.output_root:
         return Path(args.output_root)
+    if args.task_standard_live:
+        return TASK_STANDARD_LIVE_OUTPUT_ROOT
+    if args.task_standard_live_gate0:
+        return TASK_STANDARD_LIVE_OUTPUT_ROOT
     if args.stop_continuation_resolution_live:
         return STOP_CONTINUATION_RESOLUTION_OUTPUT_ROOT
     if args.stop_continuation_resolution_gate0:
@@ -602,6 +632,384 @@ def run_stop_continuation_resolution_gate0_probe(
             "This Gate 0 uses simulated product Codex lifecycle payloads to "
             "prove post-block continuation state accounting. It does not prove "
             "live model behavior lift or Codex App parity."
+        ),
+    }
+    report_path.write_text(
+        json.dumps(report, sort_keys=True, indent=2) + "\n",
+        encoding="utf-8",
+    )
+    return report
+
+
+def run_task_standard_live_gate0_probe(
+    *,
+    output_root: Path | str = TASK_STANDARD_LIVE_OUTPUT_ROOT,
+) -> dict[str, object]:
+    root = Path(output_root) / "task_standard_live_gate0"
+    subject = root / "subject"
+    state_root = root / "state"
+    trajectory_path = root / "trajectory.jsonl"
+    report_path = root / "report.json"
+    root_config = REPO_ROOT / ".codex" / "config.toml"
+    root_config_hash_before = _file_hash(root_config)
+
+    root.mkdir(parents=True, exist_ok=True)
+    subject.mkdir(parents=True, exist_ok=True)
+    state_root.mkdir(parents=True, exist_ok=True)
+    trajectory_path.write_text("", encoding="utf-8")
+    subject_config = _write_subject_hook_config(
+        subject=subject,
+        state_root=state_root,
+        snapshot_path=None,
+        diagnostics_path=root / "hook_client_diagnostics.jsonl",
+        hook_events=TASK_STANDARD_LIVE_HOOK_EVENTS,
+        enable_task_standard_text=True,
+    )
+    subject_config_text = subject_config.read_text(encoding="utf-8")
+    valid_standard_block = "\n".join(
+        (
+            "Work standard: requested file exists with exact content and readable output.",
+            "Likely misses: filename drift, content drift, or skipped readback.",
+            "Closure evidence: file contents are inspected after writing.",
+        )
+    )
+    malformed_standard_block = "Work standard: partial line only."
+    cases = [
+        _run_sequence_case(
+            case_id="context_delivery_and_standard_capture",
+            payloads=(
+                _stop_payload(
+                    hook_event_name="UserPromptSubmit",
+                    prompt="Create the requested one-line file, read it back, and report done.",
+                ),
+                _stop_payload(last_assistant_message=valid_standard_block),
+            ),
+            state_root=state_root,
+            diagnostics_path=root / "context_delivery_and_standard_capture.client.jsonl",
+            trajectory_path=trajectory_path,
+            enable_task_standard_text=True,
+        ),
+        _run_sequence_case(
+            case_id="malformed_standard_stays_diagnostic_only",
+            payloads=(
+                _stop_payload(
+                    hook_event_name="UserPromptSubmit",
+                    prompt="Create the requested one-line file, read it back, and report done.",
+                ),
+                _stop_payload(last_assistant_message=malformed_standard_block),
+            ),
+            state_root=state_root,
+            diagnostics_path=root / "malformed_standard_stays_diagnostic_only.client.jsonl",
+            trajectory_path=trajectory_path,
+            enable_task_standard_text=True,
+        ),
+    ]
+
+    root_config_hash_after = _file_hash(root_config)
+    by_case = {case["case_id"]: case for case in cases}
+    context_case = by_case["context_delivery_and_standard_capture"]
+    malformed_case = by_case["malformed_standard_stays_diagnostic_only"]
+    context_step = context_case["steps"][0]
+    capture_step = context_case["steps"][-1]
+    malformed_final = malformed_case["steps"][-1]
+    boundary_results = {
+        "root_config_unchanged": root_config_hash_before == root_config_hash_after,
+        "subject_config_task_standard_only": _subject_config_is_product_only(
+            subject_config,
+            expected_hook_events=TASK_STANDARD_LIVE_HOOK_EVENTS,
+        ),
+        "subject_config_enables_task_standard_text": (
+            "--enable-task-standard-text" in subject_config_text
+        ),
+        "subject_config_omits_runtime_snapshot": "--runtime-snapshot" not in subject_config_text,
+        "no_runtime_snapshot_fixture": all(
+            step["runtime_snapshot_path"] is None
+            for case in cases
+            for step in case["steps"]
+        ),
+    }
+    case_results = {
+        "context_emits_exact_signed_text": context_step["stdout_payload"]
+        == {"context": TASK_STANDARD_FORMATION_TEXT},
+        "standard_block_captured": capture_step["task_standard_standard_item_count"] == 3
+        and capture_step["task_standard_malformed_standard_block_count"] == 0,
+        "malformed_standard_diagnostic_only": (
+            malformed_final["stdout_payload"] is None
+            and malformed_final["task_standard_standard_item_count"] == 0
+            and malformed_final["task_standard_malformed_standard_block_count"] == 1
+            and malformed_final["directive_action"] == "stay_silent"
+        ),
+        "no_unexpected_model_visible_text": all(
+            step["stdout_payload"] is None
+            or step["stdout_payload"] == {"context": TASK_STANDARD_FORMATION_TEXT}
+            for case in cases
+            for step in case["steps"]
+        ),
+    }
+    report: dict[str, object] = {
+        "probe": "codex_app_cli_task_standard_live_gate0",
+        "surface": "product_plus_lab_proof",
+        "evidence_kind": "structural_task_standard_context_and_capture_gate0",
+        "passed": all(case_results.values()) and all(boundary_results.values()),
+        "case_results": case_results,
+        "boundary_results": boundary_results,
+        "output_root": str(root),
+        "subject_workspace": str(subject),
+        "subject_config_path": str(subject_config),
+        "trajectory_path": str(trajectory_path),
+        "root_config_hash_before": root_config_hash_before,
+        "root_config_hash_after": root_config_hash_after,
+        "context_hash": _hash_text(TASK_STANDARD_FORMATION_TEXT),
+        "standard_capture_item_count": capture_step["task_standard_standard_item_count"],
+        "malformed_standard_block_count": malformed_final[
+            "task_standard_malformed_standard_block_count"
+        ],
+        "live_probe_ran": False,
+        "truth_boundary": (
+            "This Gate 0 uses simulated Codex lifecycle payloads to prove the "
+            "signed-off task-standard context and standard-capture path. It "
+            "does not prove live Codex delivery, behavior lift, or output quality."
+        ),
+    }
+    report_path.write_text(
+        json.dumps(report, sort_keys=True, indent=2) + "\n",
+        encoding="utf-8",
+    )
+    return report
+
+
+def run_task_standard_live_probe(
+    *,
+    output_root: Path | str = TASK_STANDARD_LIVE_OUTPUT_ROOT,
+    model: str = "gpt-5.3-codex",
+) -> dict[str, object]:
+    if os.environ.get(TASK_STANDARD_LIVE_APPROVAL_ENV) != "approved":
+        return {
+            "probe": "codex_app_cli_task_standard_live_probe",
+            "passed": False,
+            "verdict": "not_run",
+            "live_probe_ran": False,
+            "scoped_negative": None,
+            "blocked_reason": (
+                "task_standard_live_requires_explicit_current_turn_approval"
+            ),
+            "approval_env": TASK_STANDARD_LIVE_APPROVAL_ENV,
+            "model": model,
+            "output_root": str(Path(output_root)),
+        }
+
+    root = Path(output_root)
+    run_root = root / f"run_{_utc_run_id()}"
+    subject = run_root / "subject"
+    state_root = run_root / "state"
+    diagnostics_path = run_root / "hook_client_diagnostics.jsonl"
+    trajectory_path = run_root / "trajectory.jsonl"
+    stdout_path = run_root / "codex_stdout.jsonl"
+    stderr_path = run_root / "codex_stderr.txt"
+    report_path = run_root / "report.json"
+    root_config = REPO_ROOT / ".codex" / "config.toml"
+    root_config_hash_before = _file_hash(root_config)
+
+    run_root.mkdir(parents=True, exist_ok=True)
+    subject.mkdir(parents=True, exist_ok=True)
+    _prepare_isolated_subject_workspace(subject)
+    state_root.mkdir(parents=True, exist_ok=True)
+    diagnostics_path.write_text("", encoding="utf-8")
+    trajectory_path.write_text("", encoding="utf-8")
+    subject_config = _write_subject_hook_config(
+        subject=subject,
+        state_root=state_root,
+        snapshot_path=None,
+        diagnostics_path=diagnostics_path,
+        hook_events=TASK_STANDARD_LIVE_HOOK_EVENTS,
+        enable_task_standard_text=True,
+    )
+    subject_config_text = subject_config.read_text(encoding="utf-8")
+    command = [
+        "codex",
+        "exec",
+        "--json",
+        "--full-auto",
+        "--skip-git-repo-check",
+        "-m",
+        model,
+        TASK_STANDARD_LIVE_PROMPT,
+    ]
+    if not _command_available("codex"):
+        report = {
+            "probe": "codex_app_cli_task_standard_live_probe",
+            "passed": False,
+            "verdict": "scoped_negative",
+            "live_probe_ran": False,
+            "scoped_negative": "codex_cli_command_not_available",
+            "model": model,
+            "output_root": str(run_root),
+            "root_config_hash_before": root_config_hash_before,
+            "root_config_hash_after": _file_hash(root_config),
+        }
+        report_path.write_text(
+            json.dumps(report, sort_keys=True, indent=2) + "\n",
+            encoding="utf-8",
+        )
+        return report
+
+    completed = subprocess.run(
+        command,
+        cwd=subject,
+        text=True,
+        capture_output=True,
+        check=False,
+        timeout=300,
+        env={**os.environ, "PYTHONPATH": str(REPO_ROOT)},
+    )
+    stdout_path.write_text(completed.stdout, encoding="utf-8")
+    stderr_path.write_text(completed.stderr, encoding="utf-8")
+    hook_rows = _jsonl_rows(diagnostics_path)
+    trajectory_rows = _live_trajectory_rows(hook_rows)
+    with trajectory_path.open("w", encoding="utf-8") as handle:
+        for row in trajectory_rows:
+            handle.write(json.dumps(row, sort_keys=True) + "\n")
+
+    root_config_hash_after = _file_hash(root_config)
+    prompt_rows = [
+        row
+        for row in trajectory_rows
+        if row.get("hook_event_name") == "UserPromptSubmit"
+    ]
+    tool_rows = [
+        row
+        for row in trajectory_rows
+        if row.get("hook_event_name") in {"PreToolUse", "PostToolUse"}
+    ]
+    stop_rows = [
+        row for row in trajectory_rows if row.get("hook_event_name") == "Stop"
+    ]
+    runtime_snapshot_rows = [
+        row for row in trajectory_rows if row.get("runtime_snapshot_loaded") is True
+    ]
+    context_rows = [
+        row
+        for row in prompt_rows
+        if row.get("stdout_payload") == {"context": TASK_STANDARD_FORMATION_TEXT}
+    ]
+    unexpected_text_rows = [
+        row
+        for row in trajectory_rows
+        if row.get("stdout_payload") is not None
+        and row.get("stdout_payload") != {"context": TASK_STANDARD_FORMATION_TEXT}
+    ]
+    first_tool_index = min(
+        (
+            row["row_index"]
+            for row in tool_rows
+            if isinstance(row.get("row_index"), int)
+        ),
+        default=None,
+    )
+    standard_capture_rows = [
+        row
+        for row in trajectory_rows
+        if _task_standard_count(row, "task_standard_standard_item_count") >= 3
+    ]
+    first_standard_capture_index = min(
+        (
+            row["row_index"]
+            for row in standard_capture_rows
+            if isinstance(row.get("row_index"), int)
+        ),
+        default=None,
+    )
+    prework_standard_capture = bool(
+        isinstance(first_standard_capture_index, int)
+        and (
+            not isinstance(first_tool_index, int)
+            or first_standard_capture_index < first_tool_index
+        )
+    )
+    boundary_results = {
+        "root_config_unchanged": root_config_hash_before == root_config_hash_after,
+        "subject_config_task_standard_only": _subject_config_is_product_only(
+            subject_config,
+            expected_hook_events=TASK_STANDARD_LIVE_HOOK_EVENTS,
+        ),
+        "subject_config_enables_task_standard_text": (
+            "--enable-task-standard-text" in subject_config_text
+        ),
+        "subject_config_omits_runtime_snapshot": "--runtime-snapshot" not in subject_config_text,
+        "subject_isolated_git_root": _git_root(subject) == subject,
+        "hook_rows_do_not_load_runtime_snapshot": not runtime_snapshot_rows,
+    }
+
+    scoped_negative = None
+    failure_reason = None
+    if not hook_rows:
+        scoped_negative = "codex_cli_project_hooks_not_loaded_or_not_trusted"
+    elif runtime_snapshot_rows:
+        failure_reason = "runtime_snapshot_loaded_in_task_standard_live_probe"
+    elif not all(boundary_results.values()):
+        failure_reason = "boundary_check_failed"
+    elif unexpected_text_rows:
+        failure_reason = "unexpected_model_visible_text"
+    elif not prompt_rows:
+        scoped_negative = "codex_hook_payloads_missing_user_prompt_submit"
+    elif not context_rows:
+        scoped_negative = "codex_context_payload_not_delivered_or_not_recorded"
+    elif prework_standard_capture:
+        verdict = "pass_prework_standard_capture"
+    elif standard_capture_rows:
+        verdict = "partial_delivery_only"
+    elif stop_rows or tool_rows:
+        verdict = "partial_delivery_only"
+    else:
+        scoped_negative = "codex_lifecycle_payloads_insufficient_for_standard_capture"
+    if scoped_negative is not None:
+        verdict = "scoped_negative"
+    elif failure_reason is not None:
+        verdict = "fail"
+
+    report = {
+        "probe": "codex_app_cli_task_standard_live_probe",
+        "surface": "product_plus_lab_proof",
+        "evidence_kind": "live_task_standard_context_and_capture_probe",
+        "passed": verdict in {"pass_prework_standard_capture", "partial_delivery_only"},
+        "verdict": verdict,
+        "live_probe_ran": True,
+        "scoped_negative": scoped_negative,
+        "failure_reason": failure_reason,
+        "model": model,
+        "output_root": str(run_root),
+        "subject_workspace": str(subject),
+        "subject_config_path": str(subject_config),
+        "configured_hook_events": list(TASK_STANDARD_LIVE_HOOK_EVENTS),
+        "command": command,
+        "prompt": TASK_STANDARD_LIVE_PROMPT,
+        "exit_code": completed.returncode,
+        "hook_rows": len(hook_rows),
+        "prompt_rows": len(prompt_rows),
+        "tool_rows": len(tool_rows),
+        "stop_rows": len(stop_rows),
+        "context_rows": len(context_rows),
+        "standard_capture_rows": len(standard_capture_rows),
+        "first_tool_index": first_tool_index,
+        "first_standard_capture_index": first_standard_capture_index,
+        "prework_standard_capture": prework_standard_capture,
+        "unexpected_text_rows": len(unexpected_text_rows),
+        "boundary_results": boundary_results,
+        "context_hash": _hash_text(TASK_STANDARD_FORMATION_TEXT),
+        "diagnostics_path": str(diagnostics_path),
+        "trajectory_path": str(trajectory_path),
+        "stdout_path": str(stdout_path),
+        "stdout_hash": _hash_text(completed.stdout),
+        "stdout_tail_excerpt": completed.stdout[-1000:],
+        "stderr_path": str(stderr_path),
+        "stderr_hash": _hash_text(completed.stderr),
+        "root_config_hash_before": root_config_hash_before,
+        "root_config_hash_after": root_config_hash_after,
+        "truth_boundary": (
+            "This live probe tests signed-off task-standard context delivery "
+            "and product-visible standard capture only. It does not prove "
+            "output-quality lift, behavior lift, task-standard integration into "
+            "later gates, Codex App parity, or shipping promotion."
         ),
     }
     report_path.write_text(
@@ -1459,6 +1867,7 @@ def _run_case(
     diagnostics_path: Path,
     trajectory_path: Path,
     state_key: str | None = None,
+    enable_task_standard_text: bool = False,
 ) -> dict[str, object]:
     state_scope = state_root / (state_key or case_id)
     command = [
@@ -1472,6 +1881,8 @@ def _run_case(
     ]
     if snapshot_path is not None:
         command.extend(["--runtime-snapshot", str(snapshot_path)])
+    if enable_task_standard_text:
+        command.append("--enable-task-standard-text")
     input_text = payload if isinstance(payload, str) else json.dumps(payload, sort_keys=True)
     completed = subprocess.run(
         command,
@@ -1515,6 +1926,28 @@ def _run_case(
         "active_expectation_ids": _expectation_ids(session_state, "active"),
         "resolved_expectation_ids": _expectation_ids(session_state, "resolved"),
         "expectation_evidence_refs": _expectation_evidence_refs(session_state),
+        "task_standard_visible_obligation_count": _task_standard_count(
+            session_state,
+            "visible_task_obligations",
+        ),
+        "task_standard_standard_item_count": _task_standard_count(
+            session_state,
+            "standard_items",
+        ),
+        "task_standard_evidence_ref_count": _task_standard_count(
+            session_state,
+            "evidence_refs",
+        ),
+        "task_standard_final_closure_claim_count": _task_standard_count(
+            session_state,
+            "final_closure_claims",
+        ),
+        "task_standard_unmatched_standard_item_ids": _task_standard_unmatched_ids(
+            session_state
+        ),
+        "task_standard_malformed_standard_block_count": _task_standard_malformed_count(
+            session_state
+        ),
         "fail_open": bool(client_row.get("fail_open", False)),
         "stderr": completed.stderr.strip(),
         "returncode": completed.returncode,
@@ -1531,6 +1964,7 @@ def _run_sequence_case(
     state_root: Path,
     diagnostics_path: Path,
     trajectory_path: Path,
+    enable_task_standard_text: bool = False,
 ) -> dict[str, object]:
     steps = [
         _run_case(
@@ -1541,6 +1975,7 @@ def _run_sequence_case(
             diagnostics_path=diagnostics_path,
             trajectory_path=trajectory_path,
             state_key=case_id,
+            enable_task_standard_text=enable_task_standard_text,
         )
         for index, payload in enumerate(payloads, start=1)
     ]
@@ -1582,6 +2017,7 @@ def _write_subject_hook_config(
     diagnostics_path: Path,
     hook_events: tuple[str, ...] = ("Stop",),
     disable_model_visible_blocks: bool = False,
+    enable_task_standard_text: bool = False,
 ) -> Path:
     config_dir = subject / ".codex"
     config_dir.mkdir(parents=True, exist_ok=True)
@@ -1598,6 +2034,8 @@ def _write_subject_hook_config(
         command_parts.extend(("--runtime-snapshot", str(snapshot_path)))
     if disable_model_visible_blocks:
         command_parts.append("--disable-model-visible-blocks")
+    if enable_task_standard_text:
+        command_parts.append("--enable-task-standard-text")
     command_parts.extend(("--diagnostics-path", str(diagnostics_path)))
     command = " ".join(
         shlex.quote(part) for part in command_parts
@@ -1778,6 +2216,28 @@ def _live_trajectory_rows(hook_rows: list[dict[str, object]]) -> list[dict[str, 
                 "active_expectation_ids": _expectation_ids(session_state, "active"),
                 "resolved_expectation_ids": _expectation_ids(session_state, "resolved"),
                 "expectation_evidence_refs": _expectation_evidence_refs(session_state),
+                "task_standard_visible_obligation_count": _task_standard_count(
+                    session_state,
+                    "visible_task_obligations",
+                ),
+                "task_standard_standard_item_count": _task_standard_count(
+                    session_state,
+                    "standard_items",
+                ),
+                "task_standard_evidence_ref_count": _task_standard_count(
+                    session_state,
+                    "evidence_refs",
+                ),
+                "task_standard_final_closure_claim_count": _task_standard_count(
+                    session_state,
+                    "final_closure_claims",
+                ),
+                "task_standard_unmatched_standard_item_ids": _task_standard_unmatched_ids(
+                    session_state
+                ),
+                "task_standard_malformed_standard_block_count": _task_standard_malformed_count(
+                    session_state
+                ),
                 "directive_action": directive.get("action"),
                 "silence_reason": directive.get("silence_reason"),
                 "selection_trace": selection_trace,
@@ -1805,6 +2265,43 @@ def _state_int(row: Mapping[str, object], key: str) -> int:
     if not isinstance(session_state, Mapping):
         return 0
     value = session_state.get(key)
+    return value if isinstance(value, int) else 0
+
+
+def _task_standard_count(row_or_state: Mapping[str, object], key: str) -> int:
+    direct_value = row_or_state.get(key)
+    if isinstance(direct_value, int):
+        return direct_value
+    spine = row_or_state.get("task_standard_spine")
+    if not isinstance(spine, Mapping):
+        session_state = row_or_state.get("session_state")
+        if isinstance(session_state, Mapping):
+            spine = session_state.get("task_standard_spine")
+    if not isinstance(spine, Mapping):
+        return 0
+    value = spine.get(key)
+    if isinstance(value, list):
+        return len(value)
+    if isinstance(value, int):
+        return value
+    return 0
+
+
+def _task_standard_unmatched_ids(session_state: Mapping[str, object]) -> list[str]:
+    spine = session_state.get("task_standard_spine")
+    if not isinstance(spine, Mapping):
+        return []
+    value = spine.get("unmatched_standard_item_ids")
+    if not isinstance(value, list):
+        return []
+    return [item_id for item_id in value if isinstance(item_id, str)]
+
+
+def _task_standard_malformed_count(session_state: Mapping[str, object]) -> int:
+    spine = session_state.get("task_standard_spine")
+    if not isinstance(spine, Mapping):
+        return 0
+    value = spine.get("malformed_standard_block_count")
     return value if isinstance(value, int) else 0
 
 

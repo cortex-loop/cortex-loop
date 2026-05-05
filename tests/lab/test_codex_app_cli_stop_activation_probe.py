@@ -21,6 +21,11 @@ from lab.codex_app_cli_stop_activation_probe import (
     STOP_CONTINUATION_RESOLUTION_HOOK_EVENTS,
     STOP_CONTINUATION_RESOLUTION_LIVE_PROMPT,
     STOP_CONTINUATION_RESOLUTION_OUTPUT_ROOT,
+    TASK_STANDARD_FORMATION_TEXT,
+    TASK_STANDARD_LIVE_APPROVAL_ENV,
+    TASK_STANDARD_LIVE_HOOK_EVENTS,
+    TASK_STANDARD_LIVE_OUTPUT_ROOT,
+    TASK_STANDARD_LIVE_PROMPT,
     run_gate0_probe,
     run_live_canary_probe,
     run_product_event_capture_live_probe,
@@ -28,6 +33,8 @@ from lab.codex_app_cli_stop_activation_probe import (
     run_product_perception_live_probe,
     run_stop_continuation_resolution_gate0_probe,
     run_stop_continuation_resolution_live_probe,
+    run_task_standard_live_gate0_probe,
+    run_task_standard_live_probe,
 )
 
 
@@ -155,6 +162,23 @@ def test_stop_continuation_resolution_live_refuses_without_explicit_approval(
     assert report["approval_env"] == STOP_CONTINUATION_RESOLUTION_APPROVAL_ENV
 
 
+def test_task_standard_live_refuses_without_explicit_approval(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    monkeypatch.delenv(TASK_STANDARD_LIVE_APPROVAL_ENV, raising=False)
+
+    report = run_task_standard_live_probe(output_root=tmp_path)
+
+    assert report["passed"] is False
+    assert report["live_probe_ran"] is False
+    assert report["verdict"] == "not_run"
+    assert report["blocked_reason"] == (
+        "task_standard_live_requires_explicit_current_turn_approval"
+    )
+    assert report["approval_env"] == TASK_STANDARD_LIVE_APPROVAL_ENV
+
+
 def test_product_perception_gate0_derives_state_without_snapshot_fixture(
     tmp_path: Path,
 ) -> None:
@@ -248,6 +272,59 @@ def test_stop_continuation_resolution_gate0_records_expectation_state(
     assert preserved["final_resolved_expectation_ids"] == []
 
 
+def test_task_standard_live_gate0_records_context_and_standard_capture(
+    tmp_path: Path,
+) -> None:
+    root_config = Path(".codex/config.toml")
+    root_config_before = root_config.read_text(encoding="utf-8")
+
+    report = run_task_standard_live_gate0_probe(output_root=tmp_path)
+
+    assert report["passed"] is True
+    assert report["case_results"] == {
+        "context_emits_exact_signed_text": True,
+        "standard_block_captured": True,
+        "malformed_standard_diagnostic_only": True,
+        "no_unexpected_model_visible_text": True,
+    }
+    assert report["boundary_results"] == {
+        "root_config_unchanged": True,
+        "subject_config_task_standard_only": True,
+        "subject_config_enables_task_standard_text": True,
+        "subject_config_omits_runtime_snapshot": True,
+        "no_runtime_snapshot_fixture": True,
+    }
+    assert report["context_hash"] == codex_app_cli_stop_activation_probe._hash_text(
+        TASK_STANDARD_FORMATION_TEXT
+    )
+    assert root_config.read_text(encoding="utf-8") == root_config_before
+    rows = [
+        json.loads(line)
+        for line in Path(str(report["trajectory_path"]))
+        .read_text(encoding="utf-8")
+        .splitlines()
+        if line.strip()
+    ]
+    context_step = next(
+        row
+        for row in rows
+        if row["case_id"] == "context_delivery_and_standard_capture:1"
+    )
+    capture_step = next(
+        row
+        for row in rows
+        if row["case_id"] == "context_delivery_and_standard_capture:2"
+    )
+    malformed_step = next(
+        row
+        for row in rows
+        if row["case_id"] == "malformed_standard_stays_diagnostic_only:2"
+    )
+    assert context_step["stdout_payload"] == {"context": TASK_STANDARD_FORMATION_TEXT}
+    assert capture_step["task_standard_standard_item_count"] == 3
+    assert malformed_step["task_standard_malformed_standard_block_count"] == 1
+
+
 def test_product_perception_live_uses_separate_no_snapshot_output_root() -> None:
     selected_root = codex_app_cli_stop_activation_probe._selected_output_root(
         SimpleArgs(
@@ -284,6 +361,19 @@ def test_stop_continuation_resolution_uses_separate_output_root() -> None:
 
     assert selected_root == STOP_CONTINUATION_RESOLUTION_OUTPUT_ROOT
     assert "codex_app_cli_stop_continuation_resolution_loop" in str(selected_root)
+
+
+def test_task_standard_live_uses_separate_output_root() -> None:
+    selected_root = codex_app_cli_stop_activation_probe._selected_output_root(
+        SimpleArgs(
+            output_root=None,
+            product_perception_live=False,
+            task_standard_live=True,
+        )
+    )
+
+    assert selected_root == TASK_STANDARD_LIVE_OUTPUT_ROOT
+    assert "codex_app_cli_task_standard_live_probe" in str(selected_root)
 
 
 def test_product_perception_live_subject_config_omits_runtime_snapshot(
@@ -344,6 +434,31 @@ def test_stop_continuation_resolution_subject_config_registers_all_product_hooks
     assert "--runtime-snapshot" not in config
     assert "cortex_mission_reflection_stop_hook" not in config
     for event_name in STOP_CONTINUATION_RESOLUTION_HOOK_EVENTS:
+        assert config.count(f"[[hooks.{event_name}]]") == 1
+        assert config.count(f"[[hooks.{event_name}.hooks]]") == 1
+    assert "[[hooks.PermissionRequest]]" not in config
+    assert "[[hooks.PostToolUseFailure]]" not in config
+
+
+def test_task_standard_subject_config_registers_product_hooks_and_text_flag(
+    tmp_path: Path,
+) -> None:
+    subject = tmp_path / "subject"
+    config_path = codex_app_cli_stop_activation_probe._write_subject_hook_config(
+        subject=subject,
+        state_root=tmp_path / "state",
+        snapshot_path=None,
+        diagnostics_path=tmp_path / "diagnostics.jsonl",
+        hook_events=TASK_STANDARD_LIVE_HOOK_EVENTS,
+        enable_task_standard_text=True,
+    )
+    config = config_path.read_text(encoding="utf-8")
+
+    assert "codex_app_cli_hook_client" in config
+    assert "--enable-task-standard-text" in config
+    assert "--runtime-snapshot" not in config
+    assert "cortex_mission_reflection_stop_hook" not in config
+    for event_name in TASK_STANDARD_LIVE_HOOK_EVENTS:
         assert config.count(f"[[hooks.{event_name}]]") == 1
         assert config.count(f"[[hooks.{event_name}.hooks]]") == 1
     assert "[[hooks.PermissionRequest]]" not in config
@@ -459,6 +574,12 @@ def test_live_trajectory_rows_record_no_snapshot_product_state() -> None:
                 }
             ),
             "stop_hook_active": False,
+            "task_standard_evidence_ref_count": 0,
+            "task_standard_final_closure_claim_count": 0,
+            "task_standard_malformed_standard_block_count": 0,
+            "task_standard_standard_item_count": 0,
+            "task_standard_unmatched_standard_item_ids": [],
+            "task_standard_visible_obligation_count": 0,
         }
     ]
 
@@ -488,6 +609,8 @@ def test_activation_harness_does_not_read_fixed_prompt_fixtures() -> None:
         "cortex_stop_continuation_resolution_live.txt"
         in STOP_CONTINUATION_RESOLUTION_LIVE_PROMPT
     )
+    assert "TASK_STANDARD_LIVE_PROMPT" in source
+    assert "cortex_task_standard_live.txt" in TASK_STANDARD_LIVE_PROMPT
     assert "--runtime-snapshot" in source  # legacy actuator canary remains explicit
     assert "snapshot_path=None" in source
 
@@ -501,9 +624,13 @@ class SimpleArgs:
         product_event_capture_live=False,
         stop_continuation_resolution_gate0=False,
         stop_continuation_resolution_live=False,
+        task_standard_live_gate0=False,
+        task_standard_live=False,
     ) -> None:
         self.output_root = output_root
         self.product_perception_live = product_perception_live
         self.product_event_capture_live = product_event_capture_live
         self.stop_continuation_resolution_gate0 = stop_continuation_resolution_gate0
         self.stop_continuation_resolution_live = stop_continuation_resolution_live
+        self.task_standard_live_gate0 = task_standard_live_gate0
+        self.task_standard_live = task_standard_live

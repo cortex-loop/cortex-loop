@@ -57,7 +57,7 @@ Subsystem boundaries: Core owns commitment/provenance/dispatch truth; SRE owns r
 
 Grounding rule: any product claim, plan, or implementation seam must name identity/current truth, a code owner, a proof surface, and the model-I/O path. If the relevant code was not read, say so before taking a position.
 
-Current train: `task-standard-executive-doctrine-math-refinement`. Next train: `codex-app-cli-task-standard-live-probe`. Shipping default: `openai.codex_app_cli`. Keep Cortex truth, brain-wiring truth, conformance truth, shipping truth, and live behavior-lift claims separate; structural proof alone does not earn model-output lift.
+Current train: `codex-app-cli-task-standard-live-probe`. Next train: `codex-app-cli-task-standard-live-run`. Shipping default: `openai.codex_app_cli`. Keep Cortex truth, brain-wiring truth, conformance truth, shipping truth, and live behavior-lift claims separate; structural proof alone does not earn model-output lift.
 
 ## Live Product Truth
 
@@ -67,9 +67,9 @@ Current train: `task-standard-executive-doctrine-math-refinement`. Next train: `
 
 ## Current Focus
 
-- Current tracked train: `task-standard-executive-doctrine-math-refinement`
-- Active quality/risk focus: This doctrine/math seam reconciles task-standard formation with Cortex's product goal: a delivery-layer executive loop that forms a task-local standard, holds it online, detects mismatch, gates closure, and recalibrates from visible evidence. It updates docs/CORTEX.md, docs/CORTEX_V2_SRE_2.md, docs/CORTEX_EXECUTIVE_RUNTIME_TRACKER.md, and current-truth registry wording so `task_standard_spine` remains the SRE-owned code object while Codex App/CLI remains only the current host realization. No runtime behavior, selector law, model-visible text, hook configuration, product activation, or live behavior-lift claim changes.
-- Next product train after the current focus: `codex-app-cli-task-standard-live-probe`
+- Current tracked train: `codex-app-cli-task-standard-live-probe`
+- Active quality/risk focus: This product seam locks the explicitly signed-off prospective task-set text and adds the Codex App/CLI task-standard live-probe harness path. Gate 0 proves exact context emission, visible obligation initialization, transcript-backed standard-block capture, malformed-standard diagnostic-only handling, no runtime snapshot, and unchanged root guardrails. No live `codex exec` run, behavior lift, downstream gating integration, selector-law change, Stop-text change, hidden-verifier perception, or shipping promotion is earned without explicit live/spend approval.
+- Next product train after the current focus: `codex-app-cli-task-standard-live-run`
 
 ## Bio-To-Code Matrix
 
@@ -214,13 +214,13 @@ Workflow gates marked `required` are contractual gates checked by `repo_workflow
 
 ## Next Product Train
 
-- Train: `codex-app-cli-task-standard-live-probe`
+- Train: `codex-app-cli-task-standard-live-run`
 - Surface: product
-- Executive benefit: After explicit final text signoff, prove the gated task-standard UserPromptSubmit context reaches a real Codex CLI model turn and that Cortex can store the model's compact standard block from product-visible lifecycle evidence.
-- Why now: The task-standard spine, SRE correspondence mapping, and executive doctrine/math refinement have landed structurally. The next implementation seam must first prove signed-off context delivery and model standard capture; any integration or behavior-lift comparison comes after that structural live probe.
-- Primary metric: A live isolated Codex CLI run after explicit final text signoff shows the signed-off context text delivered, the three-line standard block captured, no hidden verifier perception, no root guardrail mutation, and no additional model-visible text.
-- Guardrail: Do not change Cortex speech, selector law, hidden-verifier boundaries, task-standard parsing, SRE correspondence law, or Stop thresholds during the live probe; if Codex does not accept the context payload, record an actuator finding instead of adding a workaround.
-- Kill rule: If live Codex App/CLI cannot deliver the explicitly signed-off UserPromptSubmit context payload or cannot expose the resulting standard block as product-visible lifecycle evidence, stop behavior-comparison planning and remediate the actuator boundary first.
+- Executive benefit: Run the already-built task-standard live probe with explicit approval to determine whether the signed-off UserPromptSubmit context reaches a real Codex CLI model turn and whether a prework standard block is product-visible before tool use.
+- Why now: The signed-off task-standard text and structural Gate 0 live-probe harness are now in place. The next step is empirical host delivery/capture evidence, not more implementation, and any integration or behavior-lift comparison comes after that live finding.
+- Primary metric: An explicitly approved live isolated Codex CLI run reports `pass_prework_standard_capture` or a scoped capture finding, with no runtime snapshot, no hidden verifier perception, no root guardrail mutation, and no additional model-visible text.
+- Guardrail: Do not change Cortex speech, selector law, hidden-verifier boundaries, task-standard parsing, SRE correspondence law, Stop thresholds, or hook configuration during the live run; record delivery or capture limits as evidence instead of adding a workaround.
+- Kill rule: If live Codex App/CLI cannot deliver the signed-off UserPromptSubmit context payload or cannot expose the resulting standard block before tool use, stop behavior-comparison planning and remediate the actuator or capture boundary first.
 
 ## Research Lines Under Evaluation
 
@@ -238,6 +238,7 @@ Workflow gates marked `required` are contractual gates checked by `repo_workflow
 - The Codex App/CLI task-standard spine then added product state for visible task obligations, the model's compact Work standard / Likely misses / Closure evidence block, aligned evidence refs, final closure claims, and unmatched standard items. The only new model-visible text is the structurally gated UserPromptSubmit standard-formation prompt behind `--enable-task-standard-text`; activation still requires explicit final text signoff. Existing Stop threshold text remains unchanged. Structural tests prove generic checks no longer pay down standard items when a standard exists, aligned evidence can pay down matching standard items, hidden verifier terms stay out of product state, and silent arms suppress the new text. Offline Astro replay caught 3 hidden-failing traces but also flagged 2 hidden-passing overblock risks because the old traces lacked real model-derived standards, so no behavior lift is claimed.
 - The task-standard SRE correspondence reconciliation then made the spine a first-class SRE math-to-code object instead of a Codex-only adaptor concept: `task_standard_spine` now maps to `cortex/sre/task_standard.py`, SRE packet law names task-local standard formation and maintenance as goal-continuity / verification-fit state, and the Cortex output law distinguishes prior-act self-correction from prospective identity-continuous task-set formation. This seam changed doctrine and registry correspondence only; no model-visible text changed and no live behavior lift is claimed.
 - The task-standard executive doctrine/math refinement then made the biology analogy, reference math, tracker, and registry agree: task-set formation, goal maintenance, conflict monitoring, action gating, and prediction-error recalibration are delivery-layer executive capacities rather than biological-equivalence claims; SRE §8.2 now defines `T_t = (O_t, S_t, M_t, C_t, E_t, U_t)` and `D_std(t)` as task-standard verification-fit inputs; and the next product train is split into explicit final text signoff plus structural context delivery and standard-capture proof before any integration or behavior-lift comparison. This seam changed doctrine/math/status only; no runtime behavior, selector law, model-visible text, hook configuration, product activation, or live behavior-lift claim changed.
+- The Codex App/CLI task-standard live probe seam then locked the explicitly signed-off prospective task-set text, added `--task-standard-live-gate0` and `--task-standard-live` harness modes, configured isolated subject hooks for UserPromptSubmit, PreToolUse, PostToolUse, and Stop with `--enable-task-standard-text`, and proved Gate 0 context delivery plus standard-block capture without runtime snapshots or root guardrail mutation. The live `codex exec` run remains unearned until explicit current-turn live/spend approval; behavior lift and downstream gating integration remain later claims.
 
 ## Canonical Proof
 
@@ -353,4 +354,5 @@ Workflow gates marked `required` are contractual gates checked by `repo_workflow
 - `docs/recon/cortex_codex_app_cli_task_standard_spine.md`
 - `docs/recon/cortex_task_standard_sre_correspondence_reconciliation.md`
 - `docs/recon/cortex_task_standard_executive_doctrine_math_refinement.md`
+- `docs/recon/cortex_codex_app_cli_task_standard_live_probe.md`
 - `docs/recon/claude_code_desktop_lifecycle_spine_branch_disposition.md`

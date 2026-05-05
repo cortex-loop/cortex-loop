@@ -325,13 +325,13 @@ state, read `internal/truth/cortex_status.json` directly.
 
 ### Current Train
 
-- Slug: `task-standard-executive-doctrine-math-refinement`
+- Slug: `codex-app-cli-task-standard-live-probe`
 
 ### Next Product Train
 
-- Slug: `codex-app-cli-task-standard-live-probe`
+- Slug: `codex-app-cli-task-standard-live-run`
 - Surface: `product`
-- Why now: The task-standard spine, SRE correspondence mapping, and executive doctrine/math refinement have landed structurally. The next implementation seam must first prove signed-off context delivery and model standard capture; any integration or behavior-lift comparison comes after that structural live probe.
+- Why now: The signed-off task-standard text and structural Gate 0 live-probe harness are now in place. The next step is empirical host delivery/capture evidence, not more implementation, and any integration or behavior-lift comparison comes after that live finding.
 
 ### Research Lines Under Evaluation
 
@@ -360,6 +360,7 @@ state, read `internal/truth/cortex_status.json` directly.
 - The Codex App/CLI task-standard spine then added product state for visible task obligations, the model's compact Work standard / Likely misses / Closure evidence block, aligned evidence refs, final closure claims, and unmatched standard items. The only new model-visible text is the structurally gated UserPromptSubmit standard-formation prompt behind `--enable-task-standard-text`; activation still requires explicit final text signoff. Existing Stop threshold text remains unchanged. Structural tests prove generic checks no longer pay down standard items when a standard exists, aligned evidence can pay down matching standard items, hidden verifier terms stay out of product state, and silent arms suppress the new text. Offline Astro replay caught 3 hidden-failing traces but also flagged 2 hidden-passing overblock risks because the old traces lacked real model-derived standards, so no behavior lift is claimed.
 - The task-standard SRE correspondence reconciliation then made the spine a first-class SRE math-to-code object instead of a Codex-only adaptor concept: `task_standard_spine` now maps to `cortex/sre/task_standard.py`, SRE packet law names task-local standard formation and maintenance as goal-continuity / verification-fit state, and the Cortex output law distinguishes prior-act self-correction from prospective identity-continuous task-set formation. This seam changed doctrine and registry correspondence only; no model-visible text changed and no live behavior lift is claimed.
 - The task-standard executive doctrine/math refinement then made the biology analogy, reference math, tracker, and registry agree: task-set formation, goal maintenance, conflict monitoring, action gating, and prediction-error recalibration are delivery-layer executive capacities rather than biological-equivalence claims; SRE §8.2 now defines `T_t = (O_t, S_t, M_t, C_t, E_t, U_t)` and `D_std(t)` as task-standard verification-fit inputs; and the next product train is split into explicit final text signoff plus structural context delivery and standard-capture proof before any integration or behavior-lift comparison. This seam changed doctrine/math/status only; no runtime behavior, selector law, model-visible text, hook configuration, product activation, or live behavior-lift claim changed.
+- The Codex App/CLI task-standard live probe seam then locked the explicitly signed-off prospective task-set text, added `--task-standard-live-gate0` and `--task-standard-live` harness modes, configured isolated subject hooks for UserPromptSubmit, PreToolUse, PostToolUse, and Stop with `--enable-task-standard-text`, and proved Gate 0 context delivery plus standard-block capture without runtime snapshots or root guardrail mutation. The live `codex exec` run remains unearned until explicit current-turn live/spend approval; behavior lift and downstream gating integration remain later claims.
 <!-- END GENERATED: current-state-and-strategy -->
 
 ### V2 Model-I/O Analysis
