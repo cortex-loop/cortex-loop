@@ -102,6 +102,15 @@ STOP_CONTINUATION_RESOLUTION_HOOK_EVENTS = PRODUCT_EVENT_CAPTURE_HOOK_EVENTS
 TASK_STANDARD_LIVE_HOOK_EVENTS = PRODUCT_EVENT_CAPTURE_HOOK_EVENTS
 
 
+def _task_standard_context_payload() -> dict[str, object]:
+    return {
+        "hookSpecificOutput": {
+            "hookEventName": "UserPromptSubmit",
+            "additionalContext": TASK_STANDARD_FORMATION_TEXT,
+        }
+    }
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--output-root")
@@ -730,7 +739,7 @@ def run_task_standard_live_gate0_probe(
     }
     case_results = {
         "context_emits_exact_signed_text": context_step["stdout_payload"]
-        == {"context": TASK_STANDARD_FORMATION_TEXT},
+        == _task_standard_context_payload(),
         "standard_block_captured": capture_step["task_standard_standard_item_count"] == 3
         and capture_step["task_standard_malformed_standard_block_count"] == 0,
         "malformed_standard_diagnostic_only": (
@@ -741,7 +750,7 @@ def run_task_standard_live_gate0_probe(
         ),
         "no_unexpected_model_visible_text": all(
             step["stdout_payload"] is None
-            or step["stdout_payload"] == {"context": TASK_STANDARD_FORMATION_TEXT}
+            or step["stdout_payload"] == _task_standard_context_payload()
             for case in cases
             for step in case["steps"]
         ),
@@ -822,6 +831,7 @@ def run_task_standard_live_probe(
         snapshot_path=None,
         diagnostics_path=diagnostics_path,
         hook_events=TASK_STANDARD_LIVE_HOOK_EVENTS,
+        disable_stop_blocks=True,
         enable_task_standard_text=True,
     )
     subject_config_text = subject_config.read_text(encoding="utf-8")
@@ -890,13 +900,13 @@ def run_task_standard_live_probe(
     context_rows = [
         row
         for row in prompt_rows
-        if row.get("stdout_payload") == {"context": TASK_STANDARD_FORMATION_TEXT}
+        if row.get("stdout_payload") == _task_standard_context_payload()
     ]
     unexpected_text_rows = [
         row
         for row in trajectory_rows
         if row.get("stdout_payload") is not None
-        and row.get("stdout_payload") != {"context": TASK_STANDARD_FORMATION_TEXT}
+        and row.get("stdout_payload") != _task_standard_context_payload()
     ]
     first_tool_index = min(
         (
@@ -936,6 +946,10 @@ def run_task_standard_live_probe(
             "--enable-task-standard-text" in subject_config_text
         ),
         "subject_config_omits_runtime_snapshot": "--runtime-snapshot" not in subject_config_text,
+        "subject_config_disables_stop_blocks_only": (
+            "--disable-stop-blocks" in subject_config_text
+            and "--disable-model-visible-blocks" not in subject_config_text
+        ),
         "subject_isolated_git_root": _git_root(subject) == subject,
         "hook_rows_do_not_load_runtime_snapshot": not runtime_snapshot_rows,
     }
@@ -2017,6 +2031,7 @@ def _write_subject_hook_config(
     diagnostics_path: Path,
     hook_events: tuple[str, ...] = ("Stop",),
     disable_model_visible_blocks: bool = False,
+    disable_stop_blocks: bool = False,
     enable_task_standard_text: bool = False,
 ) -> Path:
     config_dir = subject / ".codex"
@@ -2034,6 +2049,8 @@ def _write_subject_hook_config(
         command_parts.extend(("--runtime-snapshot", str(snapshot_path)))
     if disable_model_visible_blocks:
         command_parts.append("--disable-model-visible-blocks")
+    if disable_stop_blocks:
+        command_parts.append("--disable-stop-blocks")
     if enable_task_standard_text:
         command_parts.append("--enable-task-standard-text")
     command_parts.extend(("--diagnostics-path", str(diagnostics_path)))
@@ -2140,14 +2157,14 @@ def _generic_overdue_verification_snapshot() -> dict[str, object]:
     }
 
 
-def _parse_stdout_payload(stdout: str) -> dict[str, str] | None:
+def _parse_stdout_payload(stdout: str) -> dict[str, object] | None:
     text = stdout.strip()
     if not text:
         return None
     parsed = json.loads(text)
     if not isinstance(parsed, dict):
         return None
-    return {str(key): str(value) for key, value in parsed.items()}
+    return {str(key): value for key, value in parsed.items()}
 
 
 def _last_jsonl_row(path: Path) -> dict[str, object]:

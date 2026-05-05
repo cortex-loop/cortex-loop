@@ -55,6 +55,15 @@ class OpenAICodexHookHostDecision(str, Enum):
     BLOCK = "block"
 
 
+_CODEX_ADDITIONAL_CONTEXT_EVENTS = frozenset(
+    {
+        "SessionStart",
+        "UserPromptSubmit",
+        "PostToolUse",
+    }
+)
+
+
 @dataclass(frozen=True, slots=True)
 class OpenAICodexHookPayload:
     session_id: str
@@ -375,6 +384,7 @@ class OpenAICodexHookHostResponse:
     decision: OpenAICodexHookHostDecision = OpenAICodexHookHostDecision.ALLOW
     reason: str | None = None
     context: str | None = None
+    context_hook_event_name: str | None = None
 
     def __post_init__(self) -> None:
         if not isinstance(self.decision, OpenAICodexHookHostDecision):
@@ -401,13 +411,40 @@ class OpenAICodexHookHostResponse:
             raise ValueError("OpenAICodexHookHostResponse.reason is only valid for block.")
         if self.decision is OpenAICodexHookHostDecision.BLOCK and self.context is not None:
             raise ValueError("OpenAICodexHookHostResponse.context is only valid for allow.")
+        if self.context_hook_event_name is not None and not (
+            isinstance(self.context_hook_event_name, str)
+            and self.context_hook_event_name.strip()
+        ):
+            raise ValueError(
+                "OpenAICodexHookHostResponse.context_hook_event_name must be non-empty "
+                "when provided."
+            )
+        if self.context is None and self.context_hook_event_name is not None:
+            raise ValueError(
+                "OpenAICodexHookHostResponse.context_hook_event_name requires context."
+            )
+        if self.context is not None:
+            if self.context_hook_event_name is None:
+                raise ValueError(
+                    "OpenAICodexHookHostResponse.context requires context_hook_event_name."
+                )
+            if self.context_hook_event_name not in _CODEX_ADDITIONAL_CONTEXT_EVENTS:
+                raise ValueError(
+                    "OpenAICodexHookHostResponse.context_hook_event_name does not "
+                    "support additionalContext in Codex."
+                )
 
     @property
-    def stdout_payload(self) -> dict[str, str] | None:
+    def stdout_payload(self) -> dict[str, object] | None:
         if self.decision is OpenAICodexHookHostDecision.BLOCK:
             return {"decision": "block", "reason": self.reason or ""}
         if self.context is not None:
-            return {"context": self.context}
+            return {
+                "hookSpecificOutput": {
+                    "hookEventName": self.context_hook_event_name or "",
+                    "additionalContext": self.context,
+                }
+            }
         return None
 
 
@@ -429,6 +466,7 @@ class OpenAICodexHookCoordinatorResult:
                 "decision": self.host_response.decision.value,
                 "reason_present": self.host_response.reason is not None,
                 "context_present": self.host_response.context is not None,
+                "context_hook_event_name": self.host_response.context_hook_event_name,
             },
         }
 
@@ -620,7 +658,10 @@ def _host_response_for_directive(
         task_standard_text_enabled
         and hook_payload.hook_event_name is OpenAICodexLifecycleEvent.USER_PROMPT_SUBMIT
     ):
-        return OpenAICodexHookHostResponse(context=TASK_STANDARD_FORMATION_TEXT)
+        return OpenAICodexHookHostResponse(
+            context=TASK_STANDARD_FORMATION_TEXT,
+            context_hook_event_name=hook_payload.hook_event_name.value,
+        )
     return OpenAICodexHookHostResponse()
 
 
@@ -1158,7 +1199,7 @@ def _json_value_text(value: Any) -> str:
     return json.dumps(value, sort_keys=True, separators=(",", ":"))
 
 
-def _host_text_from_stdout_payload(payload: dict[str, str] | None) -> str:
+def _host_text_from_stdout_payload(payload: dict[str, object] | None) -> str:
     return json.dumps(payload) if payload is not None else ""
 
 

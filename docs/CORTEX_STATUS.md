@@ -57,7 +57,7 @@ Subsystem boundaries: Core owns commitment/provenance/dispatch truth; SRE owns r
 
 Grounding rule: any product claim, plan, or implementation seam must name identity/current truth, a code owner, a proof surface, and the model-I/O path. If the relevant code was not read, say so before taking a position.
 
-Current train: `codex-app-cli-task-standard-live-run`. Next train: `codex-app-cli-task-standard-capture-boundary-remediation`. Shipping default: `openai.codex_app_cli`. Keep Cortex truth, brain-wiring truth, conformance truth, shipping truth, and live behavior-lift claims separate; structural proof alone does not earn model-output lift.
+Current train: `codex-app-cli-hook-contract-capture-boundary-remediation`. Next train: `codex-app-cli-task-standard-context-live-rerun`. Shipping default: `openai.codex_app_cli`. Keep Cortex truth, brain-wiring truth, conformance truth, shipping truth, and live behavior-lift claims separate; structural proof alone does not earn model-output lift.
 
 ## Live Product Truth
 
@@ -67,9 +67,9 @@ Current train: `codex-app-cli-task-standard-live-run`. Next train: `codex-app-cl
 
 ## Current Focus
 
-- Current tracked train: `codex-app-cli-task-standard-live-run`
-- Active quality/risk focus: This product live-evidence seam ran the approved isolated Codex CLI task-standard probe. It earned that project hooks loaded, the signed UserPromptSubmit context payload was emitted once, no runtime snapshot loaded, root config stayed unchanged, and all four lifecycle hooks produced rows. It did not earn prework standard capture: the model skipped the Work standard / Likely misses / Closure evidence block, moved directly to tools, and existing Stop verification text fired. No behavior lift, output-quality lift, downstream task-standard gating, text change, SRE law change, parser change, selector change, hidden-verifier perception, root-hook activation, or shipping promotion is earned.
-- Next product train after the current focus: `codex-app-cli-task-standard-capture-boundary-remediation`
+- Current tracked train: `codex-app-cli-hook-contract-capture-boundary-remediation`
+- Active quality/risk focus: This product host-contract remediation replaced the flat Codex App/CLI UserPromptSubmit `context` shorthand with Codex-native `hookSpecificOutput.additionalContext`, preserved the proven Stop `decision`/`reason` block shape, added narrow `--disable-stop-blocks` isolation for capture probes, and updated product/lab proof so Gate 0 cannot pass with a host-ignored context shape. It earned structural wiring proof only: no live rerun, prework standard capture, behavior lift, output-quality lift, downstream task-standard gating, text change, SRE law change, parser change, selector change, hidden-verifier perception, root-hook activation, or shipping promotion is earned.
+- Next product train after the current focus: `codex-app-cli-task-standard-context-live-rerun`
 
 ## Bio-To-Code Matrix
 
@@ -214,13 +214,13 @@ Workflow gates marked `required` are contractual gates checked by `repo_workflow
 
 ## Next Product Train
 
-- Train: `codex-app-cli-task-standard-capture-boundary-remediation`
+- Train: `codex-app-cli-task-standard-context-live-rerun`
 - Surface: product
-- Executive benefit: Remediate the Codex CLI task-standard capture boundary after the live run showed the signed context payload was emitted but the model did not produce a prework standard block, while existing Stop verification text confounded the task-standard-only measurement.
-- Why now: The approved live task-standard run produced a fail verdict: hooks loaded, the signed context was emitted, but no prework standard was captured and existing Stop text fired. The next work must resolve the host/capture boundary before standard-driven gating or behavior comparison.
-- Primary metric: A structural or live capture-boundary probe distinguishes host context assimilation from Stop-block confounding, with exact context hash, no runtime snapshot, no root mutation, no hidden verifier perception, and no unapproved model-visible text.
-- Guardrail: Do not change the signed task-standard text, Stop text, SRE law, selector thresholds, task-standard parser, hidden-verifier boundaries, root hook configuration, or behavior-lift claims; isolate context assimilation and capture before tuning any Cortex policy.
-- Kill rule: If Codex CLI's UserPromptSubmit context channel cannot be shown to affect the model before tool use under an isolated no-Stop-block measurement, stop task-standard behavior-comparison planning and choose a different lawful host delivery path.
+- Executive benefit: Run the corrected Codex CLI task-standard context path live after the host contract was repaired to use `hookSpecificOutput.additionalContext`, while isolating existing Stop blocks with the narrow `--disable-stop-blocks` flag.
+- Why now: The host-contract remediation changed the structural blocker: the prior live run used a flat Cortex-internal `context` payload, but Gate 0 now proves Codex-native `additionalContext` serialization. The next evidence needed is a live rerun before standard-driven gating or behavior comparison.
+- Primary metric: A live task-standard rerun observes Codex-native context delivery, pre-tool standard capture ordering, exact context hash, no runtime snapshot, no root mutation, no Stop block confound, and no unapproved model-visible text.
+- Guardrail: Do not change the signed task-standard text, Stop text, SRE law, selector thresholds, task-standard parser, hidden-verifier boundaries, root hook configuration, or behavior-lift claims; this rerun measures host delivery and pre-tool standard capture only.
+- Kill rule: If Codex-native UserPromptSubmit `additionalContext` cannot be shown to affect the model before tool use under isolated Stop-block suppression, stop task-standard behavior-comparison planning and choose a different lawful host delivery path.
 
 ## Research Lines Under Evaluation
 
@@ -239,7 +239,8 @@ Workflow gates marked `required` are contractual gates checked by `repo_workflow
 - The task-standard SRE correspondence reconciliation then made the spine a first-class SRE math-to-code object instead of a Codex-only adaptor concept: `task_standard_spine` now maps to `cortex/sre/task_standard.py`, SRE packet law names task-local standard formation and maintenance as goal-continuity / verification-fit state, and the Cortex output law distinguishes prior-act self-correction from prospective identity-continuous task-set formation. This seam changed doctrine and registry correspondence only; no model-visible text changed and no live behavior lift is claimed.
 - The task-standard executive doctrine/math refinement then made the biology analogy, reference math, tracker, and registry agree: task-set formation, goal maintenance, conflict monitoring, action gating, and prediction-error recalibration are delivery-layer executive capacities rather than biological-equivalence claims; SRE §8.2 now defines `T_t = (O_t, S_t, M_t, C_t, E_t, U_t)` and `D_std(t)` as task-standard verification-fit inputs; and the next product train is split into explicit final text signoff plus structural context delivery and standard-capture proof before any integration or behavior-lift comparison. This seam changed doctrine/math/status only; no runtime behavior, selector law, model-visible text, hook configuration, product activation, or live behavior-lift claim changed.
 - The Codex App/CLI task-standard live probe seam then locked the explicitly signed-off prospective task-set text, added `--task-standard-live-gate0` and `--task-standard-live` harness modes, configured isolated subject hooks for UserPromptSubmit, PreToolUse, PostToolUse, and Stop with `--enable-task-standard-text`, and proved Gate 0 context delivery plus standard-block capture without runtime snapshots or root guardrail mutation. The live `codex exec` run remains unearned until explicit current-turn live/spend approval; behavior lift and downstream gating integration remain later claims.
-- The approved Codex App/CLI task-standard live run then produced a fail verdict, not a capture success: the isolated Codex CLI subject loaded project hooks, emitted one exact signed UserPromptSubmit context payload with hash `9021a0efef77eb6371eecf4996332d7fce31febae8462decf10b48056f6cf1a9`, recorded 7 hook rows with no runtime snapshot and unchanged root config, but the model skipped the requested Work standard / Likely misses / Closure evidence block and moved directly to tools. The first Stop row then emitted existing overdue-verification text with hash `a384c80463a98828df0de20d5aa2baafda8bb4fa023bd062c2a17e03e7fc04fc`, so no prework standard capture, behavior lift, or downstream gating integration is earned; the next product train is capture-boundary remediation rather than behavior comparison.
+- The approved Codex App/CLI task-standard live run then produced a fail verdict, not a capture success: the isolated Codex CLI subject loaded project hooks, emitted the signed UserPromptSubmit text with hash `9021a0efef77eb6371eecf4996332d7fce31febae8462decf10b48056f6cf1a9` as a flat Cortex-internal `context` payload, recorded 7 hook rows with no runtime snapshot and unchanged root config, but the model skipped the requested Work standard / Likely misses / Closure evidence block and moved directly to tools. The first Stop row then emitted existing overdue-verification text with hash `a384c80463a98828df0de20d5aa2baafda8bb4fa023bd062c2a17e03e7fc04fc`, so no prework standard capture, behavior lift, or downstream gating integration is earned; the next product train is capture-boundary remediation rather than behavior comparison.
+- The Codex App/CLI hook-contract remediation then fixed the structural host mismatch: UserPromptSubmit task-standard context now serializes as Codex-native `hookSpecificOutput.additionalContext` instead of the flat `context` shorthand, Stop blocks keep the proven `decision`/`reason` shape, diagnostics hash nested additionalContext text, and task-standard live subject configs can use `--disable-stop-blocks` to suppress Stop blocks without suppressing the signed UserPromptSubmit context. Structural Gate 0 passed with the same signed context hash, three simulated standard items captured, malformed standard blocks diagnostic-only, no runtime snapshot, and unchanged root guardrails. This earns host-contract structural proof only; no live prework standard capture or behavior lift is claimed.
 
 ## Canonical Proof
 
@@ -357,4 +358,5 @@ Workflow gates marked `required` are contractual gates checked by `repo_workflow
 - `docs/recon/cortex_task_standard_executive_doctrine_math_refinement.md`
 - `docs/recon/cortex_codex_app_cli_task_standard_live_probe.md`
 - `docs/recon/cortex_codex_app_cli_task_standard_live_run.md`
+- `docs/recon/cortex_codex_app_cli_hook_contract_capture_boundary_remediation.md`
 - `docs/recon/claude_code_desktop_lifecycle_spine_branch_disposition.md`

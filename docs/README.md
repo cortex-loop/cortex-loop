@@ -132,9 +132,13 @@ Active docs:
   structural Gate 0 evidence for signed-off task-standard context delivery and
   standard capture before an explicitly approved live run
 - [Cortex Codex App/CLI Task-Standard Live Run](recon/cortex_codex_app_cli_task_standard_live_run.md) —
-  live Codex CLI evidence that the signed context payload was emitted, but the
-  model did not produce a prework task-standard block and existing Stop
-  verification text fired
+  live Codex CLI evidence that the signed text was emitted through a flat
+  Cortex-internal context payload, but no prework task-standard block was
+  captured
+- [Cortex Codex App/CLI Hook Contract Capture Boundary Remediation](recon/cortex_codex_app_cli_hook_contract_capture_boundary_remediation.md) —
+  structural evidence that UserPromptSubmit task-standard context now uses
+  Codex-native `hookSpecificOutput.additionalContext`, with Stop blocks isolated
+  for the next live capture rerun
 - [Claude Code Desktop Lifecycle Spine Branch Disposition](recon/claude_code_desktop_lifecycle_spine_branch_disposition.md) —
   branch-hygiene disposition preserving the parked Claude lifecycle spine head
   before retiring the stale managed branch

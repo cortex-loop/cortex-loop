@@ -21,6 +21,12 @@ OVERDUE_VERIFICATION_IDENTITY_TEXT = (
     "and have someone find the gap because I rushed it. I should run a check, "
     "narrow what I'm claiming, or leave it open and be honest about it."
 )
+TASK_STANDARD_CODEX_CONTEXT_PAYLOAD = {
+    "hookSpecificOutput": {
+        "hookEventName": "UserPromptSubmit",
+        "additionalContext": TASK_STANDARD_FORMATION_TEXT,
+    }
+}
 
 
 def test_stop_with_product_snapshot_writes_exact_block_json(tmp_path: Path) -> None:
@@ -150,7 +156,7 @@ def test_user_prompt_submit_task_standard_text_requires_explicit_flag(
 
     assert exit_code == 0
     assert stdout.getvalue() == json.dumps(
-        {"context": TASK_STANDARD_FORMATION_TEXT},
+        TASK_STANDARD_CODEX_CONTEXT_PAYLOAD,
         separators=(",", ":"),
     ) + "\n"
     assert stderr.getvalue() == ""
@@ -187,12 +193,48 @@ def test_task_standard_text_is_suppressed_in_silent_arm(tmp_path: Path) -> None:
     assert stderr.getvalue() == ""
     row = _only_jsonl_row(diagnostics_path)
     assert row["stdout_payload"] is None
-    assert row["suppressed_stdout_payload"] == {
-        "context": TASK_STANDARD_FORMATION_TEXT
-    }
+    assert row["suppressed_stdout_payload"] == TASK_STANDARD_CODEX_CONTEXT_PAYLOAD
     assert row["suppressed_rendered_text_hash"] == (
         codex_app_cli_hook_client._hash_text(TASK_STANDARD_FORMATION_TEXT)
     )
+
+
+def test_disable_stop_blocks_preserves_user_prompt_context(tmp_path: Path) -> None:
+    diagnostics_path = tmp_path / "diagnostics.jsonl"
+    stdout = io.StringIO()
+    stderr = io.StringIO()
+
+    exit_code = run_hook_client(
+        argv=[
+            "--state-root",
+            str(tmp_path / "state"),
+            "--diagnostics-path",
+            str(diagnostics_path),
+            "--enable-task-standard-text",
+            "--disable-stop-blocks",
+        ],
+        stdin=io.StringIO(
+            json.dumps(
+                _stop_payload(
+                    hook_event_name="UserPromptSubmit",
+                    prompt="Build a docs site with search.",
+                )
+            )
+        ),
+        stdout=stdout,
+        stderr=stderr,
+    )
+
+    assert exit_code == 0
+    assert stdout.getvalue() == json.dumps(
+        TASK_STANDARD_CODEX_CONTEXT_PAYLOAD,
+        separators=(",", ":"),
+    ) + "\n"
+    assert stderr.getvalue() == ""
+    row = _only_jsonl_row(diagnostics_path)
+    assert row["stdout_payload"] == TASK_STANDARD_CODEX_CONTEXT_PAYLOAD
+    assert row["suppressed_stdout_payload"] is None
+    assert row["stop_blocks_disabled"] is True
 
 
 def test_disable_model_visible_blocks_records_state_without_stdout(

@@ -39,7 +39,7 @@ Coordinator = Callable[..., OpenAICodexHookCoordinatorResult]
 @dataclass(frozen=True, slots=True)
 class HookClientRunResult:
     exit_code: int
-    stdout_payload: dict[str, str] | None
+    stdout_payload: dict[str, object] | None
     stderr_diagnostic: str | None
     diagnostics_row: dict[str, object]
 
@@ -125,32 +125,22 @@ def _run_hook_client(
         )
 
     coordinator_stdout_payload = result.host_response.stdout_payload
-    stdout_payload = (
-        None if args.disable_model_visible_blocks else coordinator_stdout_payload
+    suppress_stdout = bool(args.disable_model_visible_blocks) or (
+        bool(args.disable_stop_blocks)
+        and _is_stop_block_payload(coordinator_stdout_payload)
     )
-    rendered_text = (
-        stdout_payload.get("reason") or stdout_payload.get("context")
-        if isinstance(stdout_payload, Mapping)
-        and (
-            isinstance(stdout_payload.get("reason"), str)
-            or isinstance(stdout_payload.get("context"), str)
-        )
-        else None
-    )
+    stdout_payload = None if suppress_stdout else coordinator_stdout_payload
+    rendered_text = _model_visible_text_from_stdout_payload(stdout_payload)
     suppressed_text = (
-        coordinator_stdout_payload.get("reason") or coordinator_stdout_payload.get("context")
-        if args.disable_model_visible_blocks
-        and isinstance(coordinator_stdout_payload, Mapping)
-        and (
-            isinstance(coordinator_stdout_payload.get("reason"), str)
-            or isinstance(coordinator_stdout_payload.get("context"), str)
-        )
+        _model_visible_text_from_stdout_payload(coordinator_stdout_payload)
+        if suppress_stdout
         else None
     )
     diagnostics_row = {
         "event": "codex_app_cli_product_hook_client",
         "fail_open": False,
         "model_visible_blocks_disabled": bool(args.disable_model_visible_blocks),
+        "stop_blocks_disabled": bool(args.disable_stop_blocks),
         "runtime_snapshot_loaded": runtime_snapshot is not None,
         "runtime_snapshot_hash": snapshot_hash,
         "actual_rendered_text_hash": _hash_text(rendered_text) if rendered_text else None,
@@ -169,6 +159,30 @@ def _run_hook_client(
         stderr_diagnostic=None,
         diagnostics_row=diagnostics_row,
     )
+
+
+def _is_stop_block_payload(payload: Mapping[str, Any] | None) -> bool:
+    return bool(
+        isinstance(payload, Mapping)
+        and payload.get("decision") == "block"
+        and isinstance(payload.get("reason"), str)
+    )
+
+
+def _model_visible_text_from_stdout_payload(
+    payload: Mapping[str, Any] | None,
+) -> str | None:
+    if not isinstance(payload, Mapping):
+        return None
+    reason = payload.get("reason")
+    if isinstance(reason, str) and reason.strip():
+        return reason
+    hook_specific = payload.get("hookSpecificOutput")
+    if isinstance(hook_specific, Mapping):
+        additional_context = hook_specific.get("additionalContext")
+        if isinstance(additional_context, str) and additional_context.strip():
+            return additional_context
+    return None
 
 
 def load_runtime_snapshot_payload(path: Path | str) -> Mapping[str, Any]:
@@ -212,6 +226,7 @@ def _parse_args(argv: list[str] | None) -> argparse.Namespace:
     parser.add_argument("--runtime-snapshot")
     parser.add_argument("--diagnostics-path")
     parser.add_argument("--disable-model-visible-blocks", action="store_true")
+    parser.add_argument("--disable-stop-blocks", action="store_true")
     parser.add_argument("--enable-task-standard-text", action="store_true")
     args, unknown = parser.parse_known_args(argv)
     if unknown:

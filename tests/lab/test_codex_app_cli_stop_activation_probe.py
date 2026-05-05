@@ -38,6 +38,14 @@ from lab.codex_app_cli_stop_activation_probe import (
 )
 
 
+TASK_STANDARD_CODEX_CONTEXT_PAYLOAD = {
+    "hookSpecificOutput": {
+        "hookEventName": "UserPromptSubmit",
+        "additionalContext": TASK_STANDARD_FORMATION_TEXT,
+    }
+}
+
+
 def test_gate0_probe_passes_with_isolated_product_subject_config(tmp_path: Path) -> None:
     root_config = Path(".codex/config.toml")
     root_config_before = root_config.read_text(encoding="utf-8")
@@ -320,7 +328,7 @@ def test_task_standard_live_gate0_records_context_and_standard_capture(
         for row in rows
         if row["case_id"] == "malformed_standard_stays_diagnostic_only:2"
     )
-    assert context_step["stdout_payload"] == {"context": TASK_STANDARD_FORMATION_TEXT}
+    assert context_step["stdout_payload"] == TASK_STANDARD_CODEX_CONTEXT_PAYLOAD
     assert capture_step["task_standard_standard_item_count"] == 3
     assert malformed_step["task_standard_malformed_standard_block_count"] == 1
 
@@ -482,6 +490,27 @@ def test_subject_config_can_disable_model_visible_blocks_for_silent_arm(
     assert "--disable-model-visible-blocks" in config
     assert "--runtime-snapshot" not in config
     assert "cortex_mission_reflection_stop_hook" not in config
+
+
+def test_subject_config_can_disable_only_stop_blocks_for_capture_probe(
+    tmp_path: Path,
+) -> None:
+    subject = tmp_path / "subject"
+    config_path = codex_app_cli_stop_activation_probe._write_subject_hook_config(
+        subject=subject,
+        state_root=tmp_path / "state",
+        snapshot_path=None,
+        diagnostics_path=tmp_path / "diagnostics.jsonl",
+        hook_events=TASK_STANDARD_LIVE_HOOK_EVENTS,
+        disable_stop_blocks=True,
+        enable_task_standard_text=True,
+    )
+    config = config_path.read_text(encoding="utf-8")
+
+    assert "--disable-stop-blocks" in config
+    assert "--disable-model-visible-blocks" not in config
+    assert "--enable-task-standard-text" in config
+    assert "--runtime-snapshot" not in config
 
 
 def test_live_subject_workspace_is_prepared_as_isolated_git_root(

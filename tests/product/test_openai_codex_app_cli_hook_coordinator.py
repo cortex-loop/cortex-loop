@@ -6,6 +6,7 @@ import inspect
 
 from cortex.hosts.openai import codex_app_cli_hook_coordinator
 from cortex.hosts.openai.codex_app_cli_hook_coordinator import (
+    OpenAICodexHookHostResponse,
     OpenAICodexHookHostDecision,
     OpenAICodexInMemoryStateStore,
     OpenAICodexJsonStateStore,
@@ -31,6 +32,12 @@ OVERDUE_VERIFICATION_IDENTITY_TEXT = (
     "and have someone find the gap because I rushed it. I should run a check, "
     "narrow what I'm claiming, or leave it open and be honest about it."
 )
+TASK_STANDARD_CODEX_CONTEXT_PAYLOAD = {
+    "hookSpecificOutput": {
+        "hookEventName": "UserPromptSubmit",
+        "additionalContext": TASK_STANDARD_FORMATION_TEXT,
+    }
+}
 
 
 def test_user_prompt_submit_updates_state_without_model_visible_text() -> None:
@@ -66,11 +73,24 @@ def test_user_prompt_submit_can_emit_exact_signed_off_task_standard_text() -> No
     )
 
     assert result.directive.action is OpenAICodexLifecycleDirectiveAction.ALLOW
-    assert result.host_response.stdout_payload == {
-        "context": TASK_STANDARD_FORMATION_TEXT
-    }
+    assert result.host_response.stdout_payload == TASK_STANDARD_CODEX_CONTEXT_PAYLOAD
     assert result.session_state.task_standard_spine.visible_task_obligations
     assert result.session_state.task_standard_spine.standard_items == ()
+    assert result.host_response.stdout_payload != {
+        "context": TASK_STANDARD_FORMATION_TEXT
+    }
+
+
+def test_pretool_context_payload_is_rejected_by_codex_host_contract() -> None:
+    try:
+        OpenAICodexHookHostResponse(
+            context="unsupported pretool context",
+            context_hook_event_name="PreToolUse",
+        )
+    except ValueError as exc:
+        assert "additionalContext" in str(exc)
+    else:  # pragma: no cover - explicit contract guard.
+        raise AssertionError("PreToolUse additionalContext must not serialize.")
 
 
 def test_posttool_failure_persists_private_state_without_text() -> None:
