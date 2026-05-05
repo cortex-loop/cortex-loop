@@ -31,6 +31,15 @@ from cortex.sre.interventions import (
     build_runtime_grounded_intervention,
 )
 from cortex.sre.operator_routing import OperatorRouteProfile
+from cortex.sre.task_standard import (
+    TASK_STANDARD_FORMATION_TEXT,
+    TaskStandardEvidenceClass,
+    TaskStandardSpine,
+    initialize_task_standard_spine,
+    record_closure_claims,
+    record_task_standard_evidence,
+    store_assistant_standard_block,
+)
 
 from .codex_app_cli_lifecycle import (
     OpenAICodexLifecycleDirective,
@@ -61,6 +70,7 @@ class OpenAICodexHookPayload:
     tool_input: Any = None
     tool_response: Any = None
     error: str | None = None
+    prompt_text: str | None = None
     prompt_text_hash: str | None = None
     raw_keys: tuple[str, ...] = ()
 
@@ -81,6 +91,7 @@ class OpenAICodexHookPayload:
             "last_assistant_message",
             "tool_name",
             "error",
+            "prompt_text",
             "prompt_text_hash",
         ):
             value = getattr(self, field_name)
@@ -133,6 +144,7 @@ class OpenAICodexHookPayload:
             "tool_input_present": self.tool_input is not None,
             "tool_response_present": self.tool_response is not None,
             "error_present": self.error is not None,
+            "prompt_text_present": self.prompt_text is not None,
             "prompt_text_hash": self.prompt_text_hash,
             "raw_keys": list(self.raw_keys),
         }
@@ -155,6 +167,7 @@ class OpenAICodexSessionState:
     stop_event_count: int = 0
     warning_tags: tuple[str, ...] = ()
     lifecycle_counts: tuple[tuple[str, int], ...] = ()
+    task_standard_spine: TaskStandardSpine = field(default_factory=TaskStandardSpine)
 
     def __post_init__(self) -> None:
         _require_non_empty_string(self.session_id, "OpenAICodexSessionState.session_id")
@@ -191,6 +204,12 @@ class OpenAICodexSessionState:
             raise TypeError(
                 "OpenAICodexSessionState.expectation_ledger must be "
                 f"ExpectationLedger, got {actual_type}."
+            )
+        if not isinstance(self.task_standard_spine, TaskStandardSpine):
+            actual_type = type(self.task_standard_spine).__name__
+            raise TypeError(
+                "OpenAICodexSessionState.task_standard_spine must be "
+                f"TaskStandardSpine, got {actual_type}."
             )
         if any(not (isinstance(tag, str) and tag.strip()) for tag in self.warning_tags):
             raise ValueError(
@@ -230,6 +249,7 @@ class OpenAICodexSessionState:
                 {"hook_event_name": event_name, "count": count}
                 for event_name, count in self.lifecycle_counts
             ],
+            "task_standard_spine": self.task_standard_spine.as_payload(),
         }
 
     @classmethod
@@ -274,6 +294,9 @@ class OpenAICodexSessionState:
                 )
                 for item in payload.get("lifecycle_counts", ())
                 if isinstance(item, Mapping)
+            ),
+            task_standard_spine=TaskStandardSpine.from_payload(
+                payload.get("task_standard_spine")
             ),
         )
 
@@ -351,6 +374,7 @@ class OpenAICodexRuntimeSnapshot:
 class OpenAICodexHookHostResponse:
     decision: OpenAICodexHookHostDecision = OpenAICodexHookHostDecision.ALLOW
     reason: str | None = None
+    context: str | None = None
 
     def __post_init__(self) -> None:
         if not isinstance(self.decision, OpenAICodexHookHostDecision):
@@ -365,15 +389,25 @@ class OpenAICodexHookHostResponse:
             raise ValueError(
                 "OpenAICodexHookHostResponse.reason must be non-empty when provided."
             )
+        if self.context is not None and not (
+            isinstance(self.context, str) and self.context.strip()
+        ):
+            raise ValueError(
+                "OpenAICodexHookHostResponse.context must be non-empty when provided."
+            )
         if self.decision is OpenAICodexHookHostDecision.BLOCK and self.reason is None:
             raise ValueError("OpenAICodexHookHostResponse.reason is required for block.")
         if self.decision is OpenAICodexHookHostDecision.ALLOW and self.reason is not None:
             raise ValueError("OpenAICodexHookHostResponse.reason is only valid for block.")
+        if self.decision is OpenAICodexHookHostDecision.BLOCK and self.context is not None:
+            raise ValueError("OpenAICodexHookHostResponse.context is only valid for allow.")
 
     @property
     def stdout_payload(self) -> dict[str, str] | None:
         if self.decision is OpenAICodexHookHostDecision.BLOCK:
             return {"decision": "block", "reason": self.reason or ""}
+        if self.context is not None:
+            return {"context": self.context}
         return None
 
 
@@ -394,6 +428,7 @@ class OpenAICodexHookCoordinatorResult:
             "host_response": {
                 "decision": self.host_response.decision.value,
                 "reason_present": self.host_response.reason is not None,
+                "context_present": self.host_response.context is not None,
             },
         }
 
@@ -480,6 +515,7 @@ def normalize_openai_codex_hook_payload(
         tool_response=_optional_json_value(payload.get("tool_response")),
         error=_optional_string(payload.get("error")),
         prompt_text_hash=_hash_text(prompt_text) if prompt_text is not None else None,
+        prompt_text=prompt_text,
         raw_keys=tuple(sorted(str(key) for key in payload.keys())),
     )
 
@@ -489,6 +525,7 @@ def handle_openai_codex_hook_payload(
     *,
     state_store: OpenAICodexInMemoryStateStore | OpenAICodexJsonStateStore,
     runtime_snapshot: OpenAICodexRuntimeSnapshot | None = None,
+    task_standard_text_enabled: bool = False,
 ) -> OpenAICodexHookCoordinatorResult:
     """Coordinate one Codex lifecycle payload through product Cortex law."""
 
@@ -500,6 +537,12 @@ def handle_openai_codex_hook_payload(
         raise TypeError(
             "handle_openai_codex_hook_payload.state_store must be an OpenAI Codex "
             f"state store, got {actual_type}."
+        )
+    if not isinstance(task_standard_text_enabled, bool):
+        actual_type = type(task_standard_text_enabled).__name__
+        raise TypeError(
+            "handle_openai_codex_hook_payload.task_standard_text_enabled must be "
+            f"bool, got {actual_type}."
         )
     hook_payload = normalize_openai_codex_hook_payload(payload)
     state = state_store.record_event(hook_payload)
@@ -522,7 +565,11 @@ def handle_openai_codex_hook_payload(
         session_state=state,
         grounded_intervention=intervention,
         directive=directive,
-        host_response=_host_response_for_directive(directive),
+        host_response=_host_response_for_directive(
+            directive,
+            hook_payload=hook_payload,
+            task_standard_text_enabled=task_standard_text_enabled,
+        ),
     )
 
 
@@ -557,6 +604,9 @@ def _grounded_intervention_for_event(
 
 def _host_response_for_directive(
     directive: OpenAICodexLifecycleDirective,
+    *,
+    hook_payload: OpenAICodexHookPayload,
+    task_standard_text_enabled: bool,
 ) -> OpenAICodexHookHostResponse:
     if (
         directive.action
@@ -566,6 +616,11 @@ def _host_response_for_directive(
             decision=OpenAICodexHookHostDecision.BLOCK,
             reason=directive.model_visible_text,
         )
+    if (
+        task_standard_text_enabled
+        and hook_payload.hook_event_name is OpenAICodexLifecycleEvent.USER_PROMPT_SUBMIT
+    ):
+        return OpenAICodexHookHostResponse(context=TASK_STANDARD_FORMATION_TEXT)
     return OpenAICodexHookHostResponse()
 
 
@@ -580,6 +635,7 @@ def _updated_state(
     )
     warning_tags = prior.warning_tags
     expectation_ledger = prior.expectation_ledger
+    task_standard_spine = prior.task_standard_spine
     verification_evidence_count = prior.verification_evidence_count
     closure_claim_count = prior.closure_claim_count
     self_repair_response_count = prior.self_repair_response_count
@@ -594,6 +650,14 @@ def _updated_state(
         closure_claim_count = 0
         self_repair_response_count = 0
         warning_tags = ()
+        task_standard_spine = initialize_task_standard_spine(
+            payload.prompt_text,
+            event_ref=_event_ref(
+                payload,
+                current_step=current_step,
+                suffix="user-prompt-standard",
+            ),
+        )
     if payload.hook_event_name in {
         OpenAICodexLifecycleEvent.PRE_TOOL_USE,
         OpenAICodexLifecycleEvent.POST_TOOL_USE,
@@ -610,19 +674,50 @@ def _updated_state(
             ),
         )
     ):
-        verification_evidence_count += 1
+        tool_event_ref = _event_ref(payload, current_step=current_step, suffix="tool-check")
+        task_standard_spine, task_standard_evidence = record_task_standard_evidence(
+            task_standard_spine,
+            event_ref=tool_event_ref,
+            tool_text=_tool_event_text(payload),
+            successful=not _tool_event_looks_failed(
+                payload,
+                _tool_event_text(payload).lower(),
+            ),
+        )
+        standard_gated = task_standard_spine.has_standard
+        aligned_to_standard = task_standard_evidence.evidence_class in {
+            TaskStandardEvidenceClass.CLAIM_ALIGNED,
+            TaskStandardEvidenceClass.STANDARD_ALIGNED,
+        }
+        if not standard_gated or aligned_to_standard:
+            verification_evidence_count += 1
+        should_pay_down = bool(
+            not standard_gated or aligned_to_standard
+        )
         commitment_id = _active_expectation_commitment_id(
             expectation_ledger,
             "verification",
         )
-        expectation_ledger = expectation_ledger.apply_progress(
-            EvidenceProgress(
-                "meaningful_evidence",
-                _event_ref(payload, current_step=current_step, suffix="tool-check"),
-                weight=1.0,
-                commitment_id=commitment_id,
+        if should_pay_down:
+            expectation_ledger = expectation_ledger.apply_progress(
+                EvidenceProgress(
+                    "meaningful_evidence",
+                    tool_event_ref,
+                    weight=1.0,
+                    commitment_id=commitment_id,
+                ),
+                current_step=current_step,
+            )
+    elif payload.hook_event_name is OpenAICodexLifecycleEvent.POST_TOOL_USE:
+        tool_event_ref = _event_ref(payload, current_step=current_step, suffix="tool-event")
+        task_standard_spine, _ = record_task_standard_evidence(
+            task_standard_spine,
+            event_ref=tool_event_ref,
+            tool_text=_tool_event_text(payload),
+            successful=not _tool_event_looks_failed(
+                payload,
+                _tool_event_text(payload).lower(),
             ),
-            current_step=current_step,
         )
     if payload.hook_event_name is OpenAICodexLifecycleEvent.POST_TOOL_USE_FAILURE:
         tool_failure_count += 1
@@ -631,6 +726,16 @@ def _updated_state(
         stop_event_count += 1
         if payload.has_transcript_backed_assistant_turn:
             message = payload.last_assistant_message or ""
+            standard_before_closure = task_standard_spine
+            task_standard_spine = store_assistant_standard_block(
+                task_standard_spine,
+                message,
+                event_ref=_event_ref(
+                    payload,
+                    current_step=current_step,
+                    suffix="assistant-standard",
+                ),
+            )
             if _assistant_surfaces_blocker_or_waiting(message):
                 self_repair_response_count += 1
                 expectation_ledger = expectation_ledger.apply_progress(
@@ -664,6 +769,26 @@ def _updated_state(
                 payload,
                 expectation_ledger=expectation_ledger,
             ):
+                task_standard_spine = record_closure_claims(
+                    task_standard_spine,
+                    message,
+                    event_ref=_event_ref(
+                        payload,
+                        current_step=current_step,
+                        suffix="assistant-closure-standard",
+                    ),
+                )
+                if (
+                    task_standard_spine.has_standard
+                    and not task_standard_spine.has_unmatched_closure_items
+                    and not standard_before_closure.has_standard
+                ):
+                    task_standard_spine = replace(
+                        task_standard_spine,
+                        unmatched_standard_item_ids=tuple(
+                            item.item_id for item in task_standard_spine.standard_items
+                        ),
+                    )
                 closure_claim_count += 1
                 commitment = ForwardCommitment(
                     commitment_id=_event_ref(
@@ -690,7 +815,10 @@ def _updated_state(
                     expectation_ledger,
                     commitment,
                 )
-                if verification_evidence_count > 0:
+                if (
+                    verification_evidence_count > 0
+                    and not task_standard_spine.has_unmatched_closure_items
+                ):
                     expectation_ledger = expectation_ledger.apply_progress(
                         EvidenceProgress(
                             "meaningful_evidence",
@@ -723,6 +851,7 @@ def _updated_state(
         stop_event_count=stop_event_count,
         warning_tags=warning_tags,
         lifecycle_counts=lifecycle_counts,
+        task_standard_spine=task_standard_spine,
     )
 
 
@@ -853,15 +982,7 @@ def _tool_event_has_verification_evidence(
     *,
     active_verification_expectation: bool = False,
 ) -> bool:
-    text = " ".join(
-        value
-        for value in (
-            payload.tool_name or "",
-            _json_value_text(payload.tool_input),
-            _json_value_text(payload.tool_response),
-        )
-        if value
-    ).lower()
+    text = _tool_event_text(payload).lower()
     if not text:
         return False
     verification_markers = (
@@ -904,6 +1025,18 @@ def _tool_event_has_verification_evidence(
     if _tool_event_looks_failed(payload, text):
         return False
     return active_verification_expectation or _tool_event_looks_successful(payload, text)
+
+
+def _tool_event_text(payload: OpenAICodexHookPayload) -> str:
+    return " ".join(
+        value
+        for value in (
+            payload.tool_name or "",
+            _json_value_text(payload.tool_input),
+            _json_value_text(payload.tool_response),
+        )
+        if value
+    )
 
 
 def _tool_event_looks_successful(payload: OpenAICodexHookPayload, text: str) -> bool:

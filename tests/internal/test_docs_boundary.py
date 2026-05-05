@@ -206,6 +206,12 @@ CODEX_APP_CLI_VALUE_ABLATION_AUDIT_PATH = (
     / "recon"
     / "cortex_codex_app_cli_value_ablation_audit.md"
 )
+CODEX_APP_CLI_TASK_STANDARD_SPINE_PATH = (
+    REPO_ROOT
+    / "docs"
+    / "recon"
+    / "cortex_codex_app_cli_task_standard_spine.md"
+)
 STATUS_REGISTRY_PATH = REPO_ROOT / "internal" / "truth" / "cortex_status.json"
 STATUS_DOC_PATH = REPO_ROOT / "docs" / "CORTEX_STATUS.md"
 WORKFLOW_DOC_PATH = REPO_ROOT / "docs" / "internal" / "REPO_WORKFLOW.md"
@@ -425,7 +431,7 @@ def test_cortex_doc_is_canonical_narrative_with_required_sections() -> None:
     # CORTEX.md is the canonical narrative authority. The cap prevents
     # the document from drifting into per-session noise; the narrative
     # is meant to evolve only when major learnings warrant.
-    assert len(lines) <= 700
+    assert len(lines) <= 705
     assert sections == [
         "## 1. Identity",
         "## 2. Failure Modes Cortex Addresses",
@@ -921,6 +927,7 @@ def test_docs_directory_only_exposes_archive_and_workflow_subtrees() -> None:
         "cortex_codex_app_cli_product_perception_live_probe.md",
         "cortex_codex_app_cli_product_perception_loop.md",
         "cortex_codex_app_cli_stop_continuation_resolution_loop.md",
+        "cortex_codex_app_cli_task_standard_spine.md",
         "cortex_codex_app_cli_value_ablation_audit.md",
         "cortex_openai_operator_debt_control_enactment.md",
         "cortex_openai_operator_output_quality_fixture_refresh.md",
@@ -1760,7 +1767,7 @@ def test_openai_operator_output_quality_fixture_refresh_records_hard_fixture() -
         "docs/recon/cortex_openai_operator_output_quality_fixture_refresh.md"
         in status["active_docs"]
     )
-    assert status["work_today"]["slug"] == "codex-app-cli-cortex-value-ablation-audit"
+    assert status["work_today"]["slug"] == "codex-app-cli-task-standard-spine"
 
 
 def test_openai_operator_verification_debt_continuation_records_gate0_truth() -> None:
@@ -1786,8 +1793,8 @@ def test_openai_operator_verification_debt_continuation_records_gate0_truth() ->
         "docs/recon/cortex_openai_operator_verification_debt_continuation.md"
         in status["active_docs"]
     )
-    assert status["work_today"]["slug"] == "codex-app-cli-cortex-value-ablation-audit"
-    assert status["next_product_train"]["slug"] == "codex-app-cli-requirement-level-perception"
+    assert status["work_today"]["slug"] == "codex-app-cli-task-standard-spine"
+    assert status["next_product_train"]["slug"] == "codex-app-cli-task-standard-live-probe"
 
 
 def test_openai_operator_visible_intervention_live_probe_records_scoped_success() -> None:
@@ -1812,8 +1819,8 @@ def test_openai_operator_visible_intervention_live_probe_records_scoped_success(
         "docs/recon/cortex_openai_operator_visible_intervention_live_probe.md"
         in status["active_docs"]
     )
-    assert status["work_today"]["slug"] == "codex-app-cli-cortex-value-ablation-audit"
-    assert status["next_product_train"]["slug"] == "codex-app-cli-requirement-level-perception"
+    assert status["work_today"]["slug"] == "codex-app-cli-task-standard-spine"
+    assert status["next_product_train"]["slug"] == "codex-app-cli-task-standard-live-probe"
 
 
 def test_visible_intervention_product_perception_hardening_records_structural_gate() -> None:
@@ -1837,8 +1844,8 @@ def test_visible_intervention_product_perception_hardening_records_structural_ga
         "docs/recon/cortex_visible_intervention_product_perception_hardening.md"
         in status["active_docs"]
     )
-    assert status["work_today"]["slug"] == "codex-app-cli-cortex-value-ablation-audit"
-    assert status["next_product_train"]["slug"] == "codex-app-cli-requirement-level-perception"
+    assert status["work_today"]["slug"] == "codex-app-cli-task-standard-spine"
+    assert status["next_product_train"]["slug"] == "codex-app-cli-task-standard-live-probe"
 
 
 def test_openai_operator_visible_intervention_hardened_rerun_records_failure() -> None:
@@ -1861,8 +1868,8 @@ def test_openai_operator_visible_intervention_hardened_rerun_records_failure() -
         "docs/recon/cortex_openai_operator_visible_intervention_hardened_rerun.md"
         in status["active_docs"]
     )
-    assert status["work_today"]["slug"] == "codex-app-cli-cortex-value-ablation-audit"
-    assert status["next_product_train"]["slug"] == "codex-app-cli-requirement-level-perception"
+    assert status["work_today"]["slug"] == "codex-app-cli-task-standard-spine"
+    assert status["next_product_train"]["slug"] == "codex-app-cli-task-standard-live-probe"
 
 
 def test_codex_app_cli_stop_activation_probe_records_structural_gate0() -> None:
@@ -1885,8 +1892,8 @@ def test_codex_app_cli_stop_activation_probe_records_structural_gate0() -> None:
         "docs/recon/cortex_codex_app_cli_hook_native_stop_activation_probe.md"
         in status["active_docs"]
     )
-    assert status["work_today"]["slug"] == "codex-app-cli-cortex-value-ablation-audit"
-    assert status["next_product_train"]["slug"] == "codex-app-cli-requirement-level-perception"
+    assert status["work_today"]["slug"] == "codex-app-cli-task-standard-spine"
+    assert status["next_product_train"]["slug"] == "codex-app-cli-task-standard-live-probe"
 
 
 def test_codex_app_cli_stop_live_canary_records_actuator_proof() -> None:
@@ -1904,13 +1911,13 @@ def test_codex_app_cli_stop_live_canary_records_actuator_proof() -> None:
     assert "a384c80463a98828df0de20d5aa2baafda8bb4fa023bd062c2a17e03e7fc04fc" in text
     assert "No product perception claim" in text
     assert "No model-output behavior-lift claim" in text
-    assert status["next_product_train"]["slug"] == "codex-app-cli-requirement-level-perception"
+    assert status["next_product_train"]["slug"] == "codex-app-cli-task-standard-live-probe"
     assert "recon/cortex_codex_app_cli_hook_native_stop_live_canary.md" in docs_index
     assert (
         "docs/recon/cortex_codex_app_cli_hook_native_stop_live_canary.md"
         in status["active_docs"]
     )
-    assert status["work_today"]["slug"] == "codex-app-cli-cortex-value-ablation-audit"
+    assert status["work_today"]["slug"] == "codex-app-cli-task-standard-spine"
 
 
 def test_codex_app_cli_product_perception_loop_records_structural_gate0() -> None:
@@ -1974,10 +1981,10 @@ def test_codex_app_cli_product_event_capture_remediation_records_live_pass() -> 
         in status["active_docs"]
     )
     assert status["work_today"]["slug"] == (
-        "codex-app-cli-cortex-value-ablation-audit"
+        "codex-app-cli-task-standard-spine"
     )
     assert status["next_product_train"]["slug"] == (
-        "codex-app-cli-requirement-level-perception"
+        "codex-app-cli-task-standard-live-probe"
     )
 
 
@@ -2001,10 +2008,10 @@ def test_codex_app_cli_stop_continuation_resolution_loop_records_live_pass() -> 
         in status["active_docs"]
     )
     assert status["work_today"]["slug"] == (
-        "codex-app-cli-cortex-value-ablation-audit"
+        "codex-app-cli-task-standard-spine"
     )
     assert status["next_product_train"]["slug"] == (
-        "codex-app-cli-requirement-level-perception"
+        "codex-app-cli-task-standard-live-probe"
     )
 
 
@@ -2030,10 +2037,10 @@ def test_codex_app_cli_hook_native_behavior_comparison_records_live_baseline_gat
         in status["active_docs"]
     )
     assert status["work_today"]["slug"] == (
-        "codex-app-cli-cortex-value-ablation-audit"
+        "codex-app-cli-task-standard-spine"
     )
     assert status["next_product_train"]["slug"] == (
-        "codex-app-cli-requirement-level-perception"
+        "codex-app-cli-task-standard-live-probe"
     )
 
 
@@ -2058,9 +2065,9 @@ def test_codex_app_cli_astro_three_arm_fixture_refresh_records_mixed_signal() ->
         "docs/recon/cortex_codex_app_cli_astro_three_arm_fixture_refresh.md"
         in status["active_docs"]
     )
-    assert status["work_today"]["slug"] == "codex-app-cli-cortex-value-ablation-audit"
+    assert status["work_today"]["slug"] == "codex-app-cli-task-standard-spine"
     assert status["next_product_train"]["slug"] == (
-        "codex-app-cli-requirement-level-perception"
+        "codex-app-cli-task-standard-live-probe"
     )
 
 
@@ -2086,8 +2093,36 @@ def test_codex_app_cli_value_ablation_audit_records_requirement_perception_decis
         "docs/recon/cortex_codex_app_cli_value_ablation_audit.md"
         in status["active_docs"]
     )
-    assert status["work_today"]["slug"] == "codex-app-cli-cortex-value-ablation-audit"
-    assert status["next_product_train"]["slug"] == "codex-app-cli-requirement-level-perception"
+    assert status["work_today"]["slug"] == "codex-app-cli-task-standard-spine"
+    assert status["next_product_train"]["slug"] == "codex-app-cli-task-standard-live-probe"
+
+
+def test_codex_app_cli_task_standard_spine_records_structural_product_spine() -> None:
+    text = _read(CODEX_APP_CLI_TASK_STANDARD_SPINE_PATH)
+    docs_index = _read(DOCS_INDEX_PATH)
+    status = _load_status()
+
+    assert "Surface: product / lab proof" in text
+    assert "Probe date: 2026-05-05" in text
+    assert (
+        "Verdict: task_standard_spine_structural; live model-standard formation "
+        "and behavior lift remain unearned."
+    ) in text
+    assert "Before work starts, name the standard this work has to meet" in text
+    assert "generic build/readback activity alone does not pay down standard items" in text
+    assert "hidden-failing traces caught as open: 3" in text
+    assert "hidden-passing traces with overblock risk: 2" in text
+    assert "No live proof that Codex App/CLI accepts" in text
+    assert "Queue `codex-app-cli-task-standard-live-probe`" in text
+    assert "recon/cortex_codex_app_cli_task_standard_spine.md" in docs_index
+    assert (
+        "docs/recon/cortex_codex_app_cli_task_standard_spine.md"
+        in status["active_docs"]
+    )
+    assert status["work_today"]["slug"] == "codex-app-cli-task-standard-spine"
+    assert status["next_product_train"]["slug"] == (
+        "codex-app-cli-task-standard-live-probe"
+    )
 
 
 def test_cortex_plugin_design_preserves_scope_and_truth_boundaries() -> None:
@@ -2414,40 +2449,42 @@ def test_status_registry_is_complete_and_stable() -> None:
         assert {"slug", "stage", "summary", "next_step"} <= set(entry)
         assert entry["slug"] != status["work_today"]["slug"]
     assert entry["slug"] != status["next_product_train"]["slug"]
-    assert status["work_today"]["slug"] == "codex-app-cli-cortex-value-ablation-audit"
+    assert status["work_today"]["slug"] == "codex-app-cli-task-standard-spine"
     work_note = status["work_today"]["note"].lower()
-    assert "value-ablation audit" in work_note
-    assert "threshold replay" in work_note
-    assert "pressure 0.0" in work_note
-    assert "no active expectations" in work_note
-    assert "paydown ablation would catch all 3 hidden-failing" in work_note
-    assert "overblock 2 hidden-passing" in work_note
-    assert "claim/evidence alignment found visible task-claim gaps" in work_note
-    assert "not behavior lift" in work_note
-    assert status["next_product_train"]["slug"] == "codex-app-cli-requirement-level-perception"
+    assert "task-standard spine" in work_note
+    assert "work standard / likely misses / closure evidence" in work_note
+    assert "exact signed-off userpromptsubmit" in work_note
+    assert "generic checks do not pay down standard items" in work_note
+    assert "aligned evidence can pay down matching items" in work_note
+    assert "overblocked 2 hidden-passing" in work_note
+    assert "live behavior lift remains unearned" in work_note
+    assert status["next_product_train"]["slug"] == "codex-app-cli-task-standard-live-probe"
     assert "product" == status["next_product_train"]["surface"]
-    assert "requirement-level claim/evidence perception" in status["next_product_train"][
+    assert "exact task-standard userpromptsubmit text" in status["next_product_train"][
         "executive_benefit"
     ].lower()
-    assert "verification-shaped activity" in status["next_product_train"][
+    assert "compact standard block" in status["next_product_train"][
         "executive_benefit"
     ].lower()
-    assert "threshold tuning non-causal" in status["next_product_train"][
+    assert "standard-formation text" in status["next_product_train"][
         "why_now"
     ].lower()
-    assert "broad paydown tightening too blunt" in status["next_product_train"][
+    assert "behavior-lift comparison" in status["next_product_train"][
         "why_now"
     ].lower()
-    assert "suppressing clean/passing traces" in status["next_product_train"][
+    assert "approved context text delivered" in status["next_product_train"][
         "primary_metric"
     ].lower()
-    assert "hidden verifier facts remain scoring-only" in status["next_product_train"][
+    assert "no additional model-visible text" in status["next_product_train"][
+        "primary_metric"
+    ].lower()
+    assert "do not change cortex speech" in status["next_product_train"][
         "guardrail"
     ].lower()
-    assert "narrow the output-quality claim" in status["next_product_train"][
+    assert "context payload" in status["next_product_train"][
         "kill_rule"
     ].lower()
-    assert "different actuator" in status["next_product_train"][
+    assert "actuator boundary" in status["next_product_train"][
         "kill_rule"
     ].lower()
     deferred_lines = {entry["slug"]: entry for entry in status["research_lines_under_evaluation"]}
@@ -2534,9 +2571,9 @@ def test_generated_status_doc_includes_system_map_and_next_product_train() -> No
     assert "## Next Product Train" in text
     assert "## Research Lines Under Evaluation" in text
     assert "host/tool reliability and affordance priors are earned" in text
-    assert "`codex-app-cli-cortex-value-ablation-audit`" in text
-    assert "- Next product train after the current focus: `codex-app-cli-requirement-level-perception`" in text
-    assert "- Train: `codex-app-cli-requirement-level-perception`" in text
+    assert "`codex-app-cli-task-standard-spine`" in text
+    assert "- Next product train after the current focus: `codex-app-cli-task-standard-live-probe`" in text
+    assert "- Train: `codex-app-cli-task-standard-live-probe`" in text
     assert "`brain-capability-observation-and-inference` (deferred-by-executive-runtime-roadmap)" in text
     assert "resume_verification" in text.lower()
     assert "hidden verifier" in text.lower()

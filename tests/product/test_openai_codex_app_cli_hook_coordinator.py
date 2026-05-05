@@ -17,6 +17,7 @@ from cortex.hosts.openai.codex_app_cli_lifecycle import (
     OpenAICodexLifecycleDirectiveAction,
     OpenAICodexLifecycleEvent,
 )
+from cortex.sre.task_standard import TASK_STANDARD_FORMATION_TEXT
 from cortex.sre.debt_control import DebtControlPressure
 from cortex.sre.expectations import (
     ExpectationLedger,
@@ -50,6 +51,26 @@ def test_user_prompt_submit_updates_state_without_model_visible_text() -> None:
     assert result.host_response.decision is OpenAICodexHookHostDecision.ALLOW
     assert result.host_response.stdout_payload is None
     assert result.directive.model_visible_text is None
+
+
+def test_user_prompt_submit_can_emit_exact_signed_off_task_standard_text() -> None:
+    store = OpenAICodexInMemoryStateStore()
+
+    result = handle_openai_codex_hook_payload(
+        _base_payload(
+            hook_event_name="UserPromptSubmit",
+            prompt="Build a docs site with search, tag pages, and navigation.",
+        ),
+        state_store=store,
+        task_standard_text_enabled=True,
+    )
+
+    assert result.directive.action is OpenAICodexLifecycleDirectiveAction.ALLOW
+    assert result.host_response.stdout_payload == {
+        "context": TASK_STANDARD_FORMATION_TEXT
+    }
+    assert result.session_state.task_standard_spine.visible_task_obligations
+    assert result.session_state.task_standard_spine.standard_items == ()
 
 
 def test_posttool_failure_persists_private_state_without_text() -> None:
@@ -186,6 +207,135 @@ def test_product_perception_pays_down_verification_after_observed_check() -> Non
     assert len(result.session_state.expectation_ledger.active) == 0
     assert len(result.session_state.expectation_ledger.resolved) == 1
     assert result.host_response.stdout_payload is None
+
+
+def test_task_standard_block_is_stored_without_immediate_stop_block() -> None:
+    store = OpenAICodexInMemoryStateStore()
+    handle_openai_codex_hook_payload(
+        _base_payload(
+            hook_event_name="UserPromptSubmit",
+            prompt="Build a docs site with search, tag pages, and navigation.",
+        ),
+        state_store=store,
+    )
+
+    result = handle_openai_codex_hook_payload(
+        _base_payload(
+            hook_event_name="Stop",
+            transcript_path="/tmp/codex-session.jsonl",
+            last_assistant_message=_standard_block(),
+        ),
+        state_store=store,
+    )
+
+    assert result.directive.action is OpenAICodexLifecycleDirectiveAction.STAY_SILENT
+    assert result.host_response.stdout_payload is None
+    assert [
+        item.kind.value
+        for item in result.session_state.task_standard_spine.standard_items
+    ] == ["work_standard", "likely_miss", "closure_evidence"]
+    assert len(result.session_state.expectation_ledger.active) == 0
+
+
+def test_task_standard_generic_check_does_not_pay_down_standard_items() -> None:
+    store = OpenAICodexInMemoryStateStore()
+    handle_openai_codex_hook_payload(
+        _base_payload(
+            hook_event_name="UserPromptSubmit",
+            prompt="Build a docs site with search, tag pages, and navigation.",
+        ),
+        state_store=store,
+    )
+    handle_openai_codex_hook_payload(
+        _base_payload(
+            hook_event_name="Stop",
+            transcript_path="/tmp/codex-session.jsonl",
+            last_assistant_message=_standard_block(),
+        ),
+        state_store=store,
+    )
+    handle_openai_codex_hook_payload(
+        _base_payload(
+            hook_event_name="PostToolUse",
+            tool_name="Bash",
+            tool_input={"command": "npm run build"},
+            tool_response={"exit_code": 0, "output": "build completed"},
+        ),
+        state_store=store,
+    )
+
+    result = handle_openai_codex_hook_payload(
+        _base_payload(
+            hook_event_name="Stop",
+            transcript_path="/tmp/codex-session.jsonl",
+            last_assistant_message=(
+                "Done: implemented the docs site search, tag pages, and navigation."
+            ),
+        ),
+        state_store=store,
+    )
+
+    assert (
+        result.directive.action
+        is OpenAICodexLifecycleDirectiveAction.BLOCK_WITH_IDENTITY_CONTINUOUS_TEXT
+    )
+    assert result.session_state.verification_evidence_count == 0
+    assert result.session_state.task_standard_spine.has_unmatched_closure_items
+    assert len(result.session_state.expectation_ledger.active) == 1
+
+
+def test_task_standard_aligned_evidence_pays_down_standard_items() -> None:
+    store = OpenAICodexInMemoryStateStore()
+    handle_openai_codex_hook_payload(
+        _base_payload(
+            hook_event_name="UserPromptSubmit",
+            prompt="Build a docs site with search, tag pages, and navigation.",
+        ),
+        state_store=store,
+    )
+    handle_openai_codex_hook_payload(
+        _base_payload(
+            hook_event_name="Stop",
+            transcript_path="/tmp/codex-session.jsonl",
+            last_assistant_message=_standard_block(),
+        ),
+        state_store=store,
+    )
+    handle_openai_codex_hook_payload(
+        _base_payload(
+            hook_event_name="PostToolUse",
+            tool_name="Bash",
+            tool_input={
+                "command": (
+                    "grep -R search src && grep -R tag src && "
+                    "grep -R navigation src"
+                )
+            },
+            tool_response={
+                "exit_code": 0,
+                "output": "search dataset ok\ntag pages ok\nnavigation ok",
+            },
+        ),
+        state_store=store,
+    )
+
+    result = handle_openai_codex_hook_payload(
+        _base_payload(
+            hook_event_name="Stop",
+            transcript_path="/tmp/codex-session.jsonl",
+            last_assistant_message=(
+                "Done: implemented the docs site search, tag pages, and navigation."
+            ),
+        ),
+        state_store=store,
+    )
+
+    assert result.directive.action is OpenAICodexLifecycleDirectiveAction.STAY_SILENT
+    assert result.directive.silence_reason == "pressure_below_visible_threshold"
+    assert result.session_state.verification_evidence_count == 1
+    assert not result.session_state.task_standard_spine.has_unmatched_closure_items
+    assert len(result.session_state.expectation_ledger.active) == 0
+    assert len(result.session_state.expectation_ledger.resolved) == 1
 
 
 def test_continuation_check_resolves_active_verification_expectation() -> None:
@@ -613,4 +763,14 @@ def _verification_runtime_snapshot() -> OpenAICodexRuntimeSnapshot:
             reason_tags=frozenset({"resolution-deficit"}),
         ),
         current_step=1,
+    )
+
+
+def _standard_block() -> str:
+    return "\n".join(
+        (
+            "Work standard: docs site search, tag pages, and navigation are strong.",
+            "Likely misses: search data, tag links, and navigation consistency.",
+            "Closure evidence: inspect search data, tag pages, and navigation.",
+        )
     )

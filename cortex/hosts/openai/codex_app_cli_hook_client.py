@@ -116,6 +116,7 @@ def _run_hook_client(
             payload,
             state_store=OpenAICodexJsonStateStore(state_root),
             runtime_snapshot=runtime_snapshot,
+            task_standard_text_enabled=bool(args.enable_task_standard_text),
         )
     except Exception as exc:  # fail-open hook infrastructure path
         return _fail_open(
@@ -128,16 +129,22 @@ def _run_hook_client(
         None if args.disable_model_visible_blocks else coordinator_stdout_payload
     )
     rendered_text = (
-        stdout_payload.get("reason")
+        stdout_payload.get("reason") or stdout_payload.get("context")
         if isinstance(stdout_payload, Mapping)
-        and isinstance(stdout_payload.get("reason"), str)
+        and (
+            isinstance(stdout_payload.get("reason"), str)
+            or isinstance(stdout_payload.get("context"), str)
+        )
         else None
     )
     suppressed_text = (
-        coordinator_stdout_payload.get("reason")
+        coordinator_stdout_payload.get("reason") or coordinator_stdout_payload.get("context")
         if args.disable_model_visible_blocks
         and isinstance(coordinator_stdout_payload, Mapping)
-        and isinstance(coordinator_stdout_payload.get("reason"), str)
+        and (
+            isinstance(coordinator_stdout_payload.get("reason"), str)
+            or isinstance(coordinator_stdout_payload.get("context"), str)
+        )
         else None
     )
     diagnostics_row = {
@@ -205,6 +212,7 @@ def _parse_args(argv: list[str] | None) -> argparse.Namespace:
     parser.add_argument("--runtime-snapshot")
     parser.add_argument("--diagnostics-path")
     parser.add_argument("--disable-model-visible-blocks", action="store_true")
+    parser.add_argument("--enable-task-standard-text", action="store_true")
     args, unknown = parser.parse_known_args(argv)
     if unknown:
         raise ValueError(f"unknown arguments: {' '.join(unknown)}")
