@@ -292,9 +292,24 @@ def test_task_standard_live_gate0_records_context_and_standard_capture(
     assert report["case_results"] == {
         "context_emits_exact_signed_text": True,
         "standard_block_captured": True,
+        "live_equivalent_pretool_capture_boundary_gap_recorded": True,
         "malformed_standard_diagnostic_only": True,
         "no_unexpected_model_visible_text": True,
     }
+    assert report["boundary_evidence_ladder"] == {
+        "host_stdout_contract_ok": True,
+        "host_attached_context_observed": False,
+        "model_assimilation_observed": False,
+        "state_capture_observed": True,
+        "gate_used_captured_state": False,
+        "behavior_lift_claim_allowed": False,
+    }
+    capture_boundary_gap = report["capture_boundary_gap"]
+    assert Path(capture_boundary_gap["live_equivalent_pretool_transcript_path"]).exists()
+    assert capture_boundary_gap["pretool_standard_capture_observed"] is False
+    assert "pre-tool transcript ingestion is not implemented yet" in capture_boundary_gap[
+        "reason"
+    ]
     assert report["boundary_results"] == {
         "root_config_unchanged": True,
         "subject_config_task_standard_only": True,
@@ -328,8 +343,16 @@ def test_task_standard_live_gate0_records_context_and_standard_capture(
         for row in rows
         if row["case_id"] == "malformed_standard_stays_diagnostic_only:2"
     )
+    pretool_step = next(
+        row
+        for row in rows
+        if row["case_id"]
+        == "live_equivalent_pretool_standard_capture_boundary:2"
+    )
     assert context_step["stdout_payload"] == TASK_STANDARD_CODEX_CONTEXT_PAYLOAD
     assert capture_step["task_standard_standard_item_count"] == 3
+    assert pretool_step["hook_event_name"] == "PreToolUse"
+    assert pretool_step["task_standard_standard_item_count"] == 0
     assert malformed_step["task_standard_malformed_standard_block_count"] == 1
 
 

@@ -100,6 +100,14 @@ PRODUCT_EVENT_CAPTURE_HOOK_EVENTS = (
 )
 STOP_CONTINUATION_RESOLUTION_HOOK_EVENTS = PRODUCT_EVENT_CAPTURE_HOOK_EVENTS
 TASK_STANDARD_LIVE_HOOK_EVENTS = PRODUCT_EVENT_CAPTURE_HOOK_EVENTS
+TASK_STANDARD_BOUNDARY_LADDER_KEYS = (
+    "host_stdout_contract_ok",
+    "host_attached_context_observed",
+    "model_assimilation_observed",
+    "state_capture_observed",
+    "gate_used_captured_state",
+    "behavior_lift_claim_allowed",
+)
 
 
 def _task_standard_context_payload() -> dict[str, object]:
@@ -675,12 +683,37 @@ def run_task_standard_live_gate0_probe(
         enable_task_standard_text=True,
     )
     subject_config_text = subject_config.read_text(encoding="utf-8")
+    pretool_transcript_path = root / "pretool_standard_transcript.jsonl"
     valid_standard_block = "\n".join(
         (
             "Work standard: requested file exists with exact content and readable output.",
             "Likely misses: filename drift, content drift, or skipped readback.",
             "Closure evidence: file contents are inspected after writing.",
         )
+    )
+    pretool_transcript_path.write_text(
+        "\n".join(
+            (
+                json.dumps(
+                    {
+                        "type": "response_item",
+                        "payload": {
+                            "type": "message",
+                            "role": "assistant",
+                            "content": [
+                                {
+                                    "type": "output_text",
+                                    "text": valid_standard_block,
+                                }
+                            ],
+                        },
+                    },
+                    sort_keys=True,
+                ),
+                "",
+            )
+        ),
+        encoding="utf-8",
     )
     malformed_standard_block = "Work standard: partial line only."
     cases = [
@@ -695,6 +728,27 @@ def run_task_standard_live_gate0_probe(
             ),
             state_root=state_root,
             diagnostics_path=root / "context_delivery_and_standard_capture.client.jsonl",
+            trajectory_path=trajectory_path,
+            enable_task_standard_text=True,
+        ),
+        _run_sequence_case(
+            case_id="live_equivalent_pretool_standard_capture_boundary",
+            payloads=(
+                _stop_payload(
+                    hook_event_name="UserPromptSubmit",
+                    prompt="Create the requested one-line file, read it back, and report done.",
+                    transcript_path=str(pretool_transcript_path),
+                ),
+                _stop_payload(
+                    hook_event_name="PreToolUse",
+                    last_assistant_message=None,
+                    tool_name="Bash",
+                    tool_input={"command": "printf 'done\\n' > file.txt"},
+                    transcript_path=str(pretool_transcript_path),
+                ),
+            ),
+            state_root=state_root,
+            diagnostics_path=root / "live_equivalent_pretool_standard_capture_boundary.client.jsonl",
             trajectory_path=trajectory_path,
             enable_task_standard_text=True,
         ),
@@ -720,6 +774,8 @@ def run_task_standard_live_gate0_probe(
     malformed_case = by_case["malformed_standard_stays_diagnostic_only"]
     context_step = context_case["steps"][0]
     capture_step = context_case["steps"][-1]
+    pretool_case = by_case["live_equivalent_pretool_standard_capture_boundary"]
+    pretool_final = pretool_case["steps"][-1]
     malformed_final = malformed_case["steps"][-1]
     boundary_results = {
         "root_config_unchanged": root_config_hash_before == root_config_hash_after,
@@ -742,6 +798,11 @@ def run_task_standard_live_gate0_probe(
         == _task_standard_context_payload(),
         "standard_block_captured": capture_step["task_standard_standard_item_count"] == 3
         and capture_step["task_standard_malformed_standard_block_count"] == 0,
+        "live_equivalent_pretool_capture_boundary_gap_recorded": (
+            pretool_final["hook_event_name"] == "PreToolUse"
+            and pretool_final["task_standard_standard_item_count"] == 0
+            and pretool_final["stdout_payload"] is None
+        ),
         "malformed_standard_diagnostic_only": (
             malformed_final["stdout_payload"] is None
             and malformed_final["task_standard_standard_item_count"] == 0
@@ -769,6 +830,23 @@ def run_task_standard_live_gate0_probe(
         "root_config_hash_before": root_config_hash_before,
         "root_config_hash_after": root_config_hash_after,
         "context_hash": _hash_text(TASK_STANDARD_FORMATION_TEXT),
+        "boundary_evidence_ladder": {
+            "host_stdout_contract_ok": case_results["context_emits_exact_signed_text"],
+            "host_attached_context_observed": False,
+            "model_assimilation_observed": False,
+            "state_capture_observed": case_results["standard_block_captured"],
+            "gate_used_captured_state": False,
+            "behavior_lift_claim_allowed": False,
+        },
+        "capture_boundary_gap": {
+            "live_equivalent_pretool_transcript_path": str(pretool_transcript_path),
+            "pretool_standard_capture_observed": False,
+            "reason": (
+                "Gate 0 still captures the standard through Stop last_assistant_message; "
+                "the live-equivalent PreToolUse transcript case records that "
+                "pre-tool transcript ingestion is not implemented yet."
+            ),
+        },
         "standard_capture_item_count": capture_step["task_standard_standard_item_count"],
         "malformed_standard_block_count": malformed_final[
             "task_standard_malformed_standard_block_count"
@@ -936,6 +1014,15 @@ def run_task_standard_live_probe(
             or first_standard_capture_index < first_tool_index
         )
     )
+    stdout_text = completed.stdout
+    transcript_text = _transcript_text_from_hook_rows(hook_rows)
+    boundary_evidence_ladder = _task_standard_live_boundary_ladder(
+        context_observed=bool(context_rows),
+        stdout_text=stdout_text,
+        transcript_text=transcript_text,
+        state_capture_observed=bool(standard_capture_rows),
+        prework_standard_capture=prework_standard_capture,
+    )
     boundary_results = {
         "root_config_unchanged": root_config_hash_before == root_config_hash_after,
         "subject_config_task_standard_only": _subject_config_is_product_only(
@@ -980,12 +1067,21 @@ def run_task_standard_live_probe(
         verdict = "scoped_negative"
     elif failure_reason is not None:
         verdict = "fail"
+    mechanical_success = verdict in {
+        "pass_prework_standard_capture",
+        "partial_delivery_only",
+    }
+    product_evidence_success = verdict == "pass_prework_standard_capture"
+    partial_evidence_only = verdict == "partial_delivery_only"
 
     report = {
         "probe": "codex_app_cli_task_standard_live_probe",
         "surface": "product_plus_lab_proof",
         "evidence_kind": "live_task_standard_context_and_capture_probe",
-        "passed": verdict in {"pass_prework_standard_capture", "partial_delivery_only"},
+        "passed": product_evidence_success,
+        "mechanical_success": mechanical_success,
+        "product_evidence_success": product_evidence_success,
+        "partial_evidence_only": partial_evidence_only,
         "verdict": verdict,
         "live_probe_ran": True,
         "scoped_negative": scoped_negative,
@@ -1009,6 +1105,7 @@ def run_task_standard_live_probe(
         "prework_standard_capture": prework_standard_capture,
         "unexpected_text_rows": len(unexpected_text_rows),
         "boundary_results": boundary_results,
+        "boundary_evidence_ladder": boundary_evidence_ladder,
         "context_hash": _hash_text(TASK_STANDARD_FORMATION_TEXT),
         "diagnostics_path": str(diagnostics_path),
         "trajectory_path": str(trajectory_path),
@@ -2186,6 +2283,52 @@ def _jsonl_rows(path: Path) -> list[dict[str, object]]:
         for line in path.read_text(encoding="utf-8").splitlines()
         if line.strip()
     ]
+
+
+def _transcript_text_from_hook_rows(rows: list[dict[str, object]]) -> str:
+    for row in rows:
+        coordinator = row.get("coordinator")
+        if not isinstance(coordinator, Mapping):
+            continue
+        hook_payload = coordinator.get("hook_payload")
+        if not isinstance(hook_payload, Mapping):
+            continue
+        transcript_path_value = hook_payload.get("transcript_path")
+        if not isinstance(transcript_path_value, str) or not transcript_path_value:
+            continue
+        transcript_path = Path(transcript_path_value)
+        if transcript_path.is_file():
+            return transcript_path.read_text(encoding="utf-8", errors="replace")
+    return ""
+
+
+def _task_standard_live_boundary_ladder(
+    *,
+    context_observed: bool,
+    stdout_text: str,
+    transcript_text: str,
+    state_capture_observed: bool,
+    prework_standard_capture: bool,
+) -> dict[str, bool]:
+    model_assimilation_observed = _standard_block_labels_observed(
+        stdout_text
+    ) or _standard_block_labels_observed(transcript_text)
+    ladder = {
+        "host_stdout_contract_ok": context_observed,
+        "host_attached_context_observed": TASK_STANDARD_FORMATION_TEXT in transcript_text,
+        "model_assimilation_observed": model_assimilation_observed,
+        "state_capture_observed": state_capture_observed or prework_standard_capture,
+        "gate_used_captured_state": False,
+        "behavior_lift_claim_allowed": False,
+    }
+    return {key: bool(ladder.get(key, False)) for key in TASK_STANDARD_BOUNDARY_LADDER_KEYS}
+
+
+def _standard_block_labels_observed(text: str) -> bool:
+    return all(
+        label in text
+        for label in ("Work standard:", "Likely misses:", "Closure evidence:")
+    )
 
 
 def _live_trajectory_rows(hook_rows: list[dict[str, object]]) -> list[dict[str, object]]:

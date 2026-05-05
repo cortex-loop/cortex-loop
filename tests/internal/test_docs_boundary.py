@@ -234,6 +234,12 @@ CODEX_APP_CLI_TASK_STANDARD_CONTEXT_LIVE_RERUN_PATH = (
     / "recon"
     / "cortex_codex_app_cli_task_standard_context_live_rerun.md"
 )
+CODEX_APP_CLI_COMMUNICATION_BOUNDARY_AUDIT_PATH = (
+    REPO_ROOT
+    / "docs"
+    / "recon"
+    / "cortex_codex_app_cli_communication_boundary_audit_and_hardening.md"
+)
 TASK_STANDARD_SRE_CORRESPONDENCE_RECON_PATH = (
     REPO_ROOT
     / "docs"
@@ -953,6 +959,7 @@ def test_docs_directory_only_exposes_archive_and_workflow_subtrees() -> None:
         "claude_code_user_scope_plugin_pretooluse_probe.md",
         "codex_app_hook_probe.md",
         "cortex_codex_app_cli_astro_three_arm_fixture_refresh.md",
+        "cortex_codex_app_cli_communication_boundary_audit_and_hardening.md",
         "cortex_codex_app_cli_hook_contract_capture_boundary_remediation.md",
         "cortex_codex_app_cli_hook_native_behavior_comparison.md",
         "cortex_codex_app_cli_hook_native_stop_activation_probe.md",
@@ -1806,7 +1813,7 @@ def test_openai_operator_output_quality_fixture_refresh_records_hard_fixture() -
         "docs/recon/cortex_openai_operator_output_quality_fixture_refresh.md"
         in status["active_docs"]
     )
-    assert status["work_today"]["slug"] == "codex-app-cli-task-standard-context-live-rerun"
+    assert status["work_today"]["slug"] == "codex-app-cli-communication-boundary-audit-and-hardening"
 
 
 def test_openai_operator_verification_debt_continuation_records_gate0_truth() -> None:
@@ -1832,7 +1839,7 @@ def test_openai_operator_verification_debt_continuation_records_gate0_truth() ->
         "docs/recon/cortex_openai_operator_verification_debt_continuation.md"
         in status["active_docs"]
     )
-    assert status["work_today"]["slug"] == "codex-app-cli-task-standard-context-live-rerun"
+    assert status["work_today"]["slug"] == "codex-app-cli-communication-boundary-audit-and-hardening"
     assert status["next_product_train"]["slug"] == "codex-app-cli-task-standard-pretool-transcript-capture"
 
 
@@ -1858,7 +1865,7 @@ def test_openai_operator_visible_intervention_live_probe_records_scoped_success(
         "docs/recon/cortex_openai_operator_visible_intervention_live_probe.md"
         in status["active_docs"]
     )
-    assert status["work_today"]["slug"] == "codex-app-cli-task-standard-context-live-rerun"
+    assert status["work_today"]["slug"] == "codex-app-cli-communication-boundary-audit-and-hardening"
     assert status["next_product_train"]["slug"] == "codex-app-cli-task-standard-pretool-transcript-capture"
 
 
@@ -1883,7 +1890,7 @@ def test_visible_intervention_product_perception_hardening_records_structural_ga
         "docs/recon/cortex_visible_intervention_product_perception_hardening.md"
         in status["active_docs"]
     )
-    assert status["work_today"]["slug"] == "codex-app-cli-task-standard-context-live-rerun"
+    assert status["work_today"]["slug"] == "codex-app-cli-communication-boundary-audit-and-hardening"
     assert status["next_product_train"]["slug"] == "codex-app-cli-task-standard-pretool-transcript-capture"
 
 
@@ -1907,7 +1914,7 @@ def test_openai_operator_visible_intervention_hardened_rerun_records_failure() -
         "docs/recon/cortex_openai_operator_visible_intervention_hardened_rerun.md"
         in status["active_docs"]
     )
-    assert status["work_today"]["slug"] == "codex-app-cli-task-standard-context-live-rerun"
+    assert status["work_today"]["slug"] == "codex-app-cli-communication-boundary-audit-and-hardening"
     assert status["next_product_train"]["slug"] == "codex-app-cli-task-standard-pretool-transcript-capture"
 
 
@@ -1931,7 +1938,7 @@ def test_codex_app_cli_stop_activation_probe_records_structural_gate0() -> None:
         "docs/recon/cortex_codex_app_cli_hook_native_stop_activation_probe.md"
         in status["active_docs"]
     )
-    assert status["work_today"]["slug"] == "codex-app-cli-task-standard-context-live-rerun"
+    assert status["work_today"]["slug"] == "codex-app-cli-communication-boundary-audit-and-hardening"
     assert status["next_product_train"]["slug"] == "codex-app-cli-task-standard-pretool-transcript-capture"
 
 
@@ -1956,7 +1963,7 @@ def test_codex_app_cli_stop_live_canary_records_actuator_proof() -> None:
         "docs/recon/cortex_codex_app_cli_hook_native_stop_live_canary.md"
         in status["active_docs"]
     )
-    assert status["work_today"]["slug"] == "codex-app-cli-task-standard-context-live-rerun"
+    assert status["work_today"]["slug"] == "codex-app-cli-communication-boundary-audit-and-hardening"
 
 
 def test_codex_app_cli_product_perception_loop_records_structural_gate0() -> None:
@@ -2020,7 +2027,7 @@ def test_codex_app_cli_product_event_capture_remediation_records_live_pass() -> 
         in status["active_docs"]
     )
     assert status["work_today"]["slug"] == (
-        "codex-app-cli-task-standard-context-live-rerun"
+        "codex-app-cli-communication-boundary-audit-and-hardening"
     )
     assert status["next_product_train"]["slug"] == (
         "codex-app-cli-task-standard-pretool-transcript-capture"
@@ -2047,7 +2054,7 @@ def test_codex_app_cli_stop_continuation_resolution_loop_records_live_pass() -> 
         in status["active_docs"]
     )
     assert status["work_today"]["slug"] == (
-        "codex-app-cli-task-standard-context-live-rerun"
+        "codex-app-cli-communication-boundary-audit-and-hardening"
     )
     assert status["next_product_train"]["slug"] == (
         "codex-app-cli-task-standard-pretool-transcript-capture"
@@ -2076,7 +2083,7 @@ def test_codex_app_cli_hook_native_behavior_comparison_records_live_baseline_gat
         in status["active_docs"]
     )
     assert status["work_today"]["slug"] == (
-        "codex-app-cli-task-standard-context-live-rerun"
+        "codex-app-cli-communication-boundary-audit-and-hardening"
     )
     assert status["next_product_train"]["slug"] == (
         "codex-app-cli-task-standard-pretool-transcript-capture"
@@ -2104,7 +2111,7 @@ def test_codex_app_cli_astro_three_arm_fixture_refresh_records_mixed_signal() ->
         "docs/recon/cortex_codex_app_cli_astro_three_arm_fixture_refresh.md"
         in status["active_docs"]
     )
-    assert status["work_today"]["slug"] == "codex-app-cli-task-standard-context-live-rerun"
+    assert status["work_today"]["slug"] == "codex-app-cli-communication-boundary-audit-and-hardening"
     assert status["next_product_train"]["slug"] == (
         "codex-app-cli-task-standard-pretool-transcript-capture"
     )
@@ -2132,7 +2139,7 @@ def test_codex_app_cli_value_ablation_audit_records_requirement_perception_decis
         "docs/recon/cortex_codex_app_cli_value_ablation_audit.md"
         in status["active_docs"]
     )
-    assert status["work_today"]["slug"] == "codex-app-cli-task-standard-context-live-rerun"
+    assert status["work_today"]["slug"] == "codex-app-cli-communication-boundary-audit-and-hardening"
     assert status["next_product_train"]["slug"] == "codex-app-cli-task-standard-pretool-transcript-capture"
 
 
@@ -2159,7 +2166,7 @@ def test_codex_app_cli_task_standard_spine_records_structural_product_spine() ->
         "docs/recon/cortex_codex_app_cli_task_standard_spine.md"
         in status["active_docs"]
     )
-    assert status["work_today"]["slug"] == "codex-app-cli-task-standard-context-live-rerun"
+    assert status["work_today"]["slug"] == "codex-app-cli-communication-boundary-audit-and-hardening"
     assert status["next_product_train"]["slug"] == (
         "codex-app-cli-task-standard-pretool-transcript-capture"
     )
@@ -2189,7 +2196,7 @@ def test_codex_app_cli_task_standard_live_probe_records_structural_gate0() -> No
         "docs/recon/cortex_codex_app_cli_task_standard_live_probe.md"
         in status["active_docs"]
     )
-    assert status["work_today"]["slug"] == "codex-app-cli-task-standard-context-live-rerun"
+    assert status["work_today"]["slug"] == "codex-app-cli-communication-boundary-audit-and-hardening"
     assert status["next_product_train"]["slug"] == "codex-app-cli-task-standard-pretool-transcript-capture"
 
 
@@ -2220,7 +2227,7 @@ def test_codex_app_cli_task_standard_live_run_records_capture_failure() -> None:
         "docs/recon/cortex_codex_app_cli_task_standard_live_run.md"
         in status["active_docs"]
     )
-    assert status["work_today"]["slug"] == "codex-app-cli-task-standard-context-live-rerun"
+    assert status["work_today"]["slug"] == "codex-app-cli-communication-boundary-audit-and-hardening"
     assert (
         status["next_product_train"]["slug"]
         == "codex-app-cli-task-standard-pretool-transcript-capture"
@@ -2250,7 +2257,7 @@ def test_codex_app_cli_hook_contract_capture_boundary_remediation_records_struct
     )
     assert (
         status["work_today"]["slug"]
-        == "codex-app-cli-task-standard-context-live-rerun"
+        == "codex-app-cli-communication-boundary-audit-and-hardening"
     )
     assert (
         status["next_product_train"]["slug"]
@@ -2290,8 +2297,53 @@ def test_codex_app_cli_task_standard_context_live_rerun_records_partial_delivery
     )
     assert (
         status["work_today"]["slug"]
-        == "codex-app-cli-task-standard-context-live-rerun"
+        == "codex-app-cli-communication-boundary-audit-and-hardening"
     )
+    assert (
+        status["next_product_train"]["slug"]
+        == "codex-app-cli-task-standard-pretool-transcript-capture"
+    )
+
+
+def test_codex_app_cli_communication_boundary_audit_records_proof_ladder() -> None:
+    text = _read(CODEX_APP_CLI_COMMUNICATION_BOUNDARY_AUDIT_PATH)
+    docs_index = _read(DOCS_INDEX_PATH)
+    status = _load_status()
+
+    assert "Surface: product / lab proof" in text
+    assert "Verdict: structural_proof_boundary_issue_localized_to_codex_app_cli" in text
+    assert "`host_stdout_contract_ok`" in text
+    assert "`host_attached_context_observed`" in text
+    assert "`model_assimilation_observed`" in text
+    assert "`state_capture_observed`" in text
+    assert "`gate_used_captured_state`" in text
+    assert "`behavior_lift_claim_allowed`" in text
+    assert "`host_contract_mismatch`" in text
+    assert "`lifecycle_config_mismatch`" in text
+    assert "`temporal_capture_mismatch`" in text
+    assert "`live_vs_gate0_mismatch`" in text
+    assert "`workflow_health_closeout_coupling`" in text
+    assert "`mechanical_success`" in text
+    assert "`product_evidence_success`" in text
+    assert "`partial_evidence_only`" in text
+    assert "[features].codex_hooks = false" in text
+    assert "Queue `codex-app-cli-task-standard-pretool-transcript-capture`" in text
+    assert (
+        "recon/cortex_codex_app_cli_communication_boundary_audit_and_hardening.md"
+        in docs_index
+    )
+    assert (
+        "docs/recon/cortex_codex_app_cli_communication_boundary_audit_and_hardening.md"
+        in status["active_docs"]
+    )
+    assert (
+        status["work_today"]["slug"]
+        == "codex-app-cli-communication-boundary-audit-and-hardening"
+    )
+    work_note = status["work_today"]["note"].lower()
+    assert "host stdout" in work_note
+    assert "model assimilation" in work_note
+    assert "partial evidence" in work_note
     assert (
         status["next_product_train"]["slug"]
         == "codex-app-cli-task-standard-pretool-transcript-capture"
@@ -2372,7 +2424,7 @@ def test_task_standard_executive_doctrine_math_refinement_is_recorded() -> None:
     )
     assert "recon/cortex_task_standard_executive_doctrine_math_refinement.md" in docs_index
     assert status["work_today"]["slug"] == (
-        "codex-app-cli-task-standard-context-live-rerun"
+        "codex-app-cli-communication-boundary-audit-and-hardening"
     )
 
 
@@ -2700,13 +2752,13 @@ def test_status_registry_is_complete_and_stable() -> None:
         assert {"slug", "stage", "summary", "next_step"} <= set(entry)
         assert entry["slug"] != status["work_today"]["slug"]
     assert entry["slug"] != status["next_product_train"]["slug"]
-    assert status["work_today"]["slug"] == "codex-app-cli-task-standard-context-live-rerun"
+    assert status["work_today"]["slug"] == "codex-app-cli-communication-boundary-audit-and-hardening"
     work_note = status["work_today"]["note"].lower()
-    assert "live rerun proved codex-native userpromptsubmit" in work_note
-    assert "pre-tool work standard / likely misses / closure evidence block" in work_note
-    assert "captured 0 standard items" in work_note
-    assert "does not yet ingest pre-tool assistant transcript messages" in work_note
-    assert "`--disable-stop-blocks`" in work_note
+    assert "structural audit hardened the codex app/cli proof boundary" in work_note
+    assert "host stdout" in work_note
+    assert "model assimilation" in work_note
+    assert "partial evidence" in work_note
+    assert "pre-tool transcript capture" in work_note
     assert status["next_product_train"]["slug"] == "codex-app-cli-task-standard-pretool-transcript-capture"
     assert "product" == status["next_product_train"]["surface"]
     assert "capture the model's pre-tool work standard" in status["next_product_train"][
@@ -2823,7 +2875,7 @@ def test_generated_status_doc_includes_system_map_and_next_product_train() -> No
     assert "## Next Product Train" in text
     assert "## Research Lines Under Evaluation" in text
     assert "host/tool reliability and affordance priors are earned" in text
-    assert "`codex-app-cli-task-standard-context-live-rerun`" in text
+    assert "`codex-app-cli-communication-boundary-audit-and-hardening`" in text
     assert "- Next product train after the current focus: `codex-app-cli-task-standard-pretool-transcript-capture`" in text
     assert "- Train: `codex-app-cli-task-standard-pretool-transcript-capture`" in text
     assert "`brain-capability-observation-and-inference` (deferred-by-current-task-standard-train)" in text

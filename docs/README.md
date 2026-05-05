@@ -143,6 +143,11 @@ Active docs:
   live evidence that Codex-native task-standard context reached the model and
   produced a pre-tool standard block, but Cortex did not capture it into
   `TaskStandardSpine` from hook-visible state
+- [Cortex Codex App/CLI Communication Boundary Audit And Hardening](recon/cortex_codex_app_cli_communication_boundary_audit_and_hardening.md) —
+  structural audit evidence that recent Codex App/CLI trickle failures are
+  proof-boundary failures across host contract, lifecycle config, temporal
+  capture, Gate 0/live mismatch, and workflow-health coupling, not SRE doctrine
+  failure
 - [Claude Code Desktop Lifecycle Spine Branch Disposition](recon/claude_code_desktop_lifecycle_spine_branch_disposition.md) —
   branch-hygiene disposition preserving the parked Claude lifecycle spine head
   before retiring the stale managed branch
