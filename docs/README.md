@@ -128,6 +128,9 @@ Active docs:
 - [Cortex Task-Standard Executive Doctrine Math Refinement](recon/cortex_task_standard_executive_doctrine_math_refinement.md) —
   doctrine/math evidence that task-standard formation is the task-set front
   half of Cortex's runtime executive loop before live activation
+- [Cortex Codex App/CLI Task-Standard Live Probe](recon/cortex_codex_app_cli_task_standard_live_probe.md) —
+  structural Gate 0 evidence for signed-off task-standard context delivery and
+  standard capture before an explicitly approved live run
 - [Claude Code Desktop Lifecycle Spine Branch Disposition](recon/claude_code_desktop_lifecycle_spine_branch_disposition.md) —
   branch-hygiene disposition preserving the parked Claude lifecycle spine head
   before retiring the stale managed branch

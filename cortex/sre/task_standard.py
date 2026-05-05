@@ -17,11 +17,12 @@ from typing import Any, Mapping
 
 
 TASK_STANDARD_FORMATION_TEXT = (
-    "Before work starts, name the standard this work has to meet in three "
-    "compact lines: Work standard, Likely misses, Closure evidence. What is "
-    "it really trying to become, what would make it strong, what would be "
-    "embarrassing to miss, and what evidence would make closure honest. Work "
-    "against that standard."
+    "Let me put the standard down before I start, in three compact lines "
+    "labeled Work standard, Likely misses, Closure evidence. What would "
+    "someone with deep experience in this kind of work expect at the "
+    "structural level, and what would they expect on the surface. Where do "
+    "people usually go wrong here, and what would feel embarrassing to ship. "
+    "What would they verify before calling it done."
 )
 
 
