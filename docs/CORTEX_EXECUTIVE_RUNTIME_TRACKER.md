@@ -34,9 +34,16 @@ state, never the internal executive machinery.
 When the behavioral consequence is model-visible text, it must obey the
 Model-Visible Cortex Output Law in `docs/CORTEX.md`: the text should not sound
 like an outside person, plugin, monitor, or "Cortex says" authority. It should
-make a claim/evidence/obligation/next-move constraint explicit inside the
-model's own task frame, with first-person self-check reserved for same-thread
-resumed turns that have a clear prior-act anchor.
+make a claim/evidence/obligation/task-standard/next-move constraint explicit
+inside the model's own task frame. First-person style is lawful only for
+prior-act self-correction with a clear prior-act anchor, or for explicitly
+signed-off prospective task-set formation before work begins.
+
+The missing front half of the loop is task-standard formation: the model must
+construct a task-local standard for what good work requires, Cortex must hold
+that standard across lifecycle events, and later closure or tool gates must
+compare claims and evidence against that standard rather than against generic
+verification-shaped activity.
 
 The target loop is:
 
@@ -73,7 +80,7 @@ than around host hooks, renderers, or local implementation neatness.
 | Loop stage | What Cortex must know or do | Current state | Evidence needed before stronger claim |
 | --- | --- | --- | --- |
 | `model/host event` | Receive a host-native event without flattening the host surface. | OpenAI Codex App/CLI is the product target; OpenAI API host-control is support/conformance; Claude Code hook events are recon with verified delivery for several events. | Per-host event delivery proof, plus cache/staleness/operator-split constraints documented for that host. |
-| `task-state and executive-risk understanding` | Understand claims, evidence, obligations, uncertainty, verified work, capability limits, and support priors. | The eight state families exist structurally; Claude Code communication work exposed that rendering alone is not enough. | A live expectation ledger or equivalent that measures expected versus realized uncertainty reduction. |
+| `task-state and executive-risk understanding` | Understand claims, evidence, obligations, task-local standards, uncertainty, verified work, capability limits, and support priors. | The eight state families exist structurally, and `TaskStandardSpine` is now a mapped SRE object. Live standard formation and capture remain unearned until the signed-off UserPromptSubmit probe. | A structural live probe proving signed-off task-set text delivery and standard capture, followed by an integration probe proving the captured standard shapes later gating. |
 | `intervention decision` | Decide whether action is useful: silent route, degrade, block, ask, preserve, surface blocker, or do nothing. | Route/pricing/brake law exists structurally; Claude Code recon mostly tested visible hook content, not intervention selection. | Baseline-vs-shaped tasks where the main measured lift is the chosen control mode, not just message wording. |
 | `control mode` | Apply the selected control through the host affordance: instructions, tool gating, Stop block, route downgrade, persistence, or no-op. | OpenAI has direct product control. Claude Code has verified hook surfaces, but behavior differs by event and content shape. | Per-control-mode proof that the host receives the control and the model behavior changes in the intended direction. |
 | `improved next model behavior` | The model's next output or action is more continuous, evidence-bound, scoped, truthful, or appropriately slowed. | Narrow Stop closure-pressure behavior lift exists; UserPromptSubmit/PreToolUse content delivery alone did not earn lift; PostToolUseFailure-to-Stop is mixed. | Paired live trials with baseline failure reproduced, no-overblock controls, and no hidden shipping promotion. |

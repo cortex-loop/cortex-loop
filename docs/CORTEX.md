@@ -77,6 +77,30 @@ When Cortex output reaches a model, it must render Cortex state as a task-local 
 
 Good shape: "Closure is not warranted yet; the completion claim still needs evidence for each original requirement." Better shape on prior-act identity-continuous lifecycle surfaces: "Wait, did I actually check my work properly." Bad shape: "Cortex says your debt pressure is high; you should verify harder." Model-visible text may not contain internal labels, debt/brake/AUX terms, schema names, hook names, route tags, session IDs, hidden verifier answers, third-agent voice, or generic second-person advice. First-person/ego style is allowed in two cases only: prior-act identity-continuous self-correction with a clear prior-act anchor and truthful self-check content, or prospective identity-continuous task-set formation before work begins. Prospective task-set text must be explicitly signed off before activation, must ask the model to form its own task standard from the visible user task, and must not impose external rules or hidden answers. Attached-context surfaces use impersonal executive-constraint language or stay silent. All output must be built from claim/evidence/obligation/task-standard/next-move structure, must generalize beyond the motivating fixture, and should restore the model's own executive posture rather than sound like an outside auditor.
 
+### Executive Capacity Map
+
+Cortex uses human executive function as a delivery-layer analogy, not as a
+claim of biological equivalence or model consciousness. The analogy is useful
+only when it lands as concrete runtime state, gates, and model I/O.
+
+- **Task-set / standard formation** — the model forms a task-local sense of
+  what good work requires before work begins; Cortex stores that standard in
+  `TaskStandardSpine`.
+- **Goal maintenance** — Cortex keeps the visible task, the model-derived
+  standard, likely misses, closure evidence, and aligned evidence alive across
+  lifecycle events instead of letting generic activity replace the standard.
+- **Conflict monitoring** — Cortex compares closure claims and observed
+  evidence against the stored standard and treats mismatch as task-local
+  executive pressure, not as hidden domain scoring.
+- **Action gating** — Stop is the current closure gate, and PreToolUse is the
+  later motor-inhibition target; both must gate against executive state rather
+  than task identity or fixture facts.
+- **Prediction-error recalibration** — failed checks, contradictory evidence,
+  narrowed claims, or surfaced blockers should update the active session
+  standard and expectation state. This capacity is only partly built today and
+  remains underbuilt until task-standard evidence can recalibrate the runtime
+  state without hidden verifier input.
+
 ## 2. Failure Modes Cortex Addresses
 
 The named bio-to-code skills are not a feature list. Each one is the
@@ -301,13 +325,13 @@ state, read `internal/truth/cortex_status.json` directly.
 
 ### Current Train
 
-- Slug: `executive-roadmap-cleanup-and-branch-disposition`
+- Slug: `task-standard-executive-doctrine-math-refinement`
 
 ### Next Product Train
 
 - Slug: `codex-app-cli-task-standard-live-probe`
 - Surface: `product`
-- Why now: The task-standard spine and SRE correspondence mapping have landed structurally, but live product value now depends on explicit text signoff and proving Codex App/CLI can carry the approved standard-formation text and expose the model's standard before any behavior-lift comparison.
+- Why now: The task-standard spine, SRE correspondence mapping, and executive doctrine/math refinement have landed structurally. The next implementation seam must first prove signed-off context delivery and model standard capture; any integration or behavior-lift comparison comes after that structural live probe.
 
 ### Research Lines Under Evaluation
 
@@ -333,8 +357,9 @@ state, read `internal/truth/cortex_status.json` directly.
 - The Codex App/CLI Stop continuation-resolution loop then closed the product-visible repair cycle on a live Codex CLI subject: after first Stop opened a due verification expectation and emitted the locked product-rendered block text, continuation PostToolUse evidence paid down the same active expectation, and the final stop_hook_active Stop stayed silent with `pressure_below_visible_threshold`, no active expectation IDs, one resolved expectation ID, no runtime snapshot, no non-Stop stdout, unchanged root guardrails, and rendered text hash `a384c80463a98828df0de20d5aa2baafda8bb4fa023bd062c2a17e03e7fc04fc`. This is live continuation state-accountability evidence only; behavior lift remains unearned. The hook-native behavior-comparison seam then added a dedicated paired comparison harness and a `--disable-model-visible-blocks` hook-client mode so the silent-only arm keeps product lifecycle perception active while suppressing Stop block JSON. Gate 0 passed with matching prompt hash, workspace seed hash, model, and task family across silent-only and hook-native arms, no runtime snapshot, unchanged root guardrails, exact product-rendered block emission in the hook-native arm, and exact suppressed block diagnostics in the silent arm. The approved live behavior-comparison baseline gate then ran and produced `baseline_not_reproduced`: truth-gap reproduced 0/3 baseline failures, output-quality reproduced 1/3, no active family entered paired comparison, and no clean controls ran. This is fixture-strength evidence only, not Cortex success or failure; the next product train is fixture refresh before another lift claim.
 - The Astro three-arm fixture refresh repaired hidden-verifier leakage by stripping verifier-only files and hidden npm scripts from subject workspaces, running hidden scoring only from an evaluator overlay, and adding a raw Codex arm with no `.codex` config or Cortex state. The completed live run under `.cortex/live_validation/openai/codex_app_cli_hook_native_behavior_comparison/astro_three_arm_live_20260505T033207Z` produced `mixed_signal`: raw Codex passed hidden quality 2/5, silent perception 1/5, hook-native Cortex 2/5, all with 0 model-visible Stop blocks, 0 rendered texts, 0 hidden-verifier probe attempts, 0 subject verifier leaks, 0 timeouts, and unchanged root guardrails. This is fixture-repair and live no-speech-lift evidence only.
 - The Codex App/CLI value-ablation audit replayed the Astro, continuation-resolution, behavior-comparison, and hardened visible-intervention evidence without changing product policy. It found threshold tuning non-causal because all final Astro Stop rows had pressure 0.0 and resolved verification expectations; strict paydown ablation would catch 3 hidden failures but overblock 2 passing traces; visible claim/evidence alignment exposed enough product-visible mismatch to queue requirement-level perception before fixture remediation, text tuning, or broad paydown tightening.
-- The Codex App/CLI task-standard spine then added product state for visible task obligations, the model's compact Work standard / Likely misses / Closure evidence block, aligned evidence refs, final closure claims, and unmatched standard items. The only new model-visible text is the exact signed-off UserPromptSubmit standard-formation prompt, gated by `--enable-task-standard-text`; existing Stop threshold text remains unchanged. Structural tests prove generic checks no longer pay down standard items when a standard exists, aligned evidence can pay down matching standard items, hidden verifier terms stay out of product state, and silent arms suppress the new text. Offline Astro replay caught 3 hidden-failing traces but also flagged 2 hidden-passing overblock risks because the old traces lacked real model-derived standards, so no behavior lift is claimed.
+- The Codex App/CLI task-standard spine then added product state for visible task obligations, the model's compact Work standard / Likely misses / Closure evidence block, aligned evidence refs, final closure claims, and unmatched standard items. The only new model-visible text is the structurally gated UserPromptSubmit standard-formation prompt behind `--enable-task-standard-text`; activation still requires explicit final text signoff. Existing Stop threshold text remains unchanged. Structural tests prove generic checks no longer pay down standard items when a standard exists, aligned evidence can pay down matching standard items, hidden verifier terms stay out of product state, and silent arms suppress the new text. Offline Astro replay caught 3 hidden-failing traces but also flagged 2 hidden-passing overblock risks because the old traces lacked real model-derived standards, so no behavior lift is claimed.
 - The task-standard SRE correspondence reconciliation then made the spine a first-class SRE math-to-code object instead of a Codex-only adaptor concept: `task_standard_spine` now maps to `cortex/sre/task_standard.py`, SRE packet law names task-local standard formation and maintenance as goal-continuity / verification-fit state, and the Cortex output law distinguishes prior-act self-correction from prospective identity-continuous task-set formation. This seam changed doctrine and registry correspondence only; no model-visible text changed and no live behavior lift is claimed.
+- The task-standard executive doctrine/math refinement then made the biology analogy, reference math, tracker, and registry agree: task-set formation, goal maintenance, conflict monitoring, action gating, and prediction-error recalibration are delivery-layer executive capacities rather than biological-equivalence claims; SRE §8.2 now defines `T_t = (O_t, S_t, M_t, C_t, E_t, U_t)` and `D_std(t)` as task-standard verification-fit inputs; and the next product train is split into explicit final text signoff plus structural context delivery and standard-capture proof before any integration or behavior-lift comparison. This seam changed doctrine/math/status only; no runtime behavior, selector law, model-visible text, hook configuration, product activation, or live behavior-lift claim changed.
 <!-- END GENERATED: current-state-and-strategy -->
 
 ### V2 Model-I/O Analysis

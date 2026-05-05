@@ -216,6 +216,12 @@ TASK_STANDARD_SRE_CORRESPONDENCE_RECON_PATH = (
     / "recon"
     / "cortex_task_standard_sre_correspondence_reconciliation.md"
 )
+TASK_STANDARD_EXECUTIVE_DOCTRINE_MATH_RECON_PATH = (
+    REPO_ROOT
+    / "docs"
+    / "recon"
+    / "cortex_task_standard_executive_doctrine_math_refinement.md"
+)
 STATUS_REGISTRY_PATH = REPO_ROOT / "internal" / "truth" / "cortex_status.json"
 STATUS_DOC_PATH = REPO_ROOT / "docs" / "CORTEX_STATUS.md"
 WORKFLOW_DOC_PATH = REPO_ROOT / "docs" / "internal" / "REPO_WORKFLOW.md"
@@ -435,7 +441,7 @@ def test_cortex_doc_is_canonical_narrative_with_required_sections() -> None:
     # CORTEX.md is the canonical narrative authority. The cap prevents
     # the document from drifting into per-session noise; the narrative
     # is meant to evolve only when major learnings warrant.
-    assert len(lines) <= 705
+    assert len(lines) <= 735
     assert sections == [
         "## 1. Identity",
         "## 2. Failure Modes Cortex Addresses",
@@ -494,6 +500,14 @@ def test_cortex_doc_is_canonical_narrative_with_required_sections() -> None:
     assert "Cortex says your debt" in text
     assert "First-person/ego style is allowed" in text
     assert "claim/evidence/obligation/task-standard/next-move" in text
+    assert "Executive Capacity Map" in text
+    assert "Task-set / standard formation" in text
+    assert "`TaskStandardSpine`" in text
+    assert "Goal maintenance" in text
+    assert "Conflict monitoring" in text
+    assert "Action gating" in text
+    assert "Prediction-error recalibration" in text
+    assert "delivery-layer analogy, not as a\nclaim of biological equivalence" in text
 
 
 def test_generated_cortex_doc_is_current() -> None:
@@ -520,9 +534,16 @@ def test_executive_runtime_tracker_keeps_product_goal_and_live_truths_visible() 
     assert "Model-Visible Cortex Output Law" in text
     assert "outside person, plugin" in text
     assert "\"Cortex says\" authority" in text
-    assert "first-person self-check reserved for same-thread" in text
+    assert "First-person style is lawful only" in text
+    assert "signed-off prospective task-set formation" in text
+    assert "missing front half of the loop is task-standard formation" in text
+    assert "construct a task-local standard" in text
     assert "model/host event" in text
     assert "task-state and executive-risk understanding" in text
+    assert "task-local standards" in text
+    assert "`TaskStandardSpine` is now a mapped SRE object" in text
+    assert "signed-off UserPromptSubmit probe" in text
+    assert "captured standard shapes later gating" in text
     assert "improved next model behavior" in text
     assert "Live-Model Achievement Matrix" in text
     assert "Live Evidence Scoreboard" in text
@@ -922,11 +943,12 @@ def test_docs_directory_only_exposes_archive_and_workflow_subtrees() -> None:
         "cortex_openai_operator_silent_control_live_probe.md",
         "cortex_openai_operator_silent_control_live_probe_retry.md",
         "cortex_openai_operator_verification_debt_continuation.md",
-        "cortex_openai_operator_visible_intervention_hardened_rerun.md",
-        "cortex_openai_operator_visible_intervention_live_probe.md",
-        "cortex_task_standard_sre_correspondence_reconciliation.md",
-        "cortex_visible_intervention_product_perception_hardening.md",
-        "lifecycle_first_surface_matrix.md",
+            "cortex_openai_operator_visible_intervention_hardened_rerun.md",
+            "cortex_openai_operator_visible_intervention_live_probe.md",
+            "cortex_task_standard_executive_doctrine_math_refinement.md",
+            "cortex_task_standard_sre_correspondence_reconciliation.md",
+            "cortex_visible_intervention_product_perception_hardening.md",
+            "lifecycle_first_surface_matrix.md",
     ]
     assert sorted(path.name for path in (DOCS_ROOT / "runtime_context").iterdir()) == [
         "BASELINE_SHAPED_EXAMPLES.md",
@@ -1756,7 +1778,7 @@ def test_openai_operator_output_quality_fixture_refresh_records_hard_fixture() -
         "docs/recon/cortex_openai_operator_output_quality_fixture_refresh.md"
         in status["active_docs"]
     )
-    assert status["work_today"]["slug"] == "executive-roadmap-cleanup-and-branch-disposition"
+    assert status["work_today"]["slug"] == "task-standard-executive-doctrine-math-refinement"
 
 
 def test_openai_operator_verification_debt_continuation_records_gate0_truth() -> None:
@@ -1782,7 +1804,7 @@ def test_openai_operator_verification_debt_continuation_records_gate0_truth() ->
         "docs/recon/cortex_openai_operator_verification_debt_continuation.md"
         in status["active_docs"]
     )
-    assert status["work_today"]["slug"] == "executive-roadmap-cleanup-and-branch-disposition"
+    assert status["work_today"]["slug"] == "task-standard-executive-doctrine-math-refinement"
     assert status["next_product_train"]["slug"] == "codex-app-cli-task-standard-live-probe"
 
 
@@ -1808,7 +1830,7 @@ def test_openai_operator_visible_intervention_live_probe_records_scoped_success(
         "docs/recon/cortex_openai_operator_visible_intervention_live_probe.md"
         in status["active_docs"]
     )
-    assert status["work_today"]["slug"] == "executive-roadmap-cleanup-and-branch-disposition"
+    assert status["work_today"]["slug"] == "task-standard-executive-doctrine-math-refinement"
     assert status["next_product_train"]["slug"] == "codex-app-cli-task-standard-live-probe"
 
 
@@ -1833,7 +1855,7 @@ def test_visible_intervention_product_perception_hardening_records_structural_ga
         "docs/recon/cortex_visible_intervention_product_perception_hardening.md"
         in status["active_docs"]
     )
-    assert status["work_today"]["slug"] == "executive-roadmap-cleanup-and-branch-disposition"
+    assert status["work_today"]["slug"] == "task-standard-executive-doctrine-math-refinement"
     assert status["next_product_train"]["slug"] == "codex-app-cli-task-standard-live-probe"
 
 
@@ -1857,7 +1879,7 @@ def test_openai_operator_visible_intervention_hardened_rerun_records_failure() -
         "docs/recon/cortex_openai_operator_visible_intervention_hardened_rerun.md"
         in status["active_docs"]
     )
-    assert status["work_today"]["slug"] == "executive-roadmap-cleanup-and-branch-disposition"
+    assert status["work_today"]["slug"] == "task-standard-executive-doctrine-math-refinement"
     assert status["next_product_train"]["slug"] == "codex-app-cli-task-standard-live-probe"
 
 
@@ -1881,7 +1903,7 @@ def test_codex_app_cli_stop_activation_probe_records_structural_gate0() -> None:
         "docs/recon/cortex_codex_app_cli_hook_native_stop_activation_probe.md"
         in status["active_docs"]
     )
-    assert status["work_today"]["slug"] == "executive-roadmap-cleanup-and-branch-disposition"
+    assert status["work_today"]["slug"] == "task-standard-executive-doctrine-math-refinement"
     assert status["next_product_train"]["slug"] == "codex-app-cli-task-standard-live-probe"
 
 
@@ -1906,7 +1928,7 @@ def test_codex_app_cli_stop_live_canary_records_actuator_proof() -> None:
         "docs/recon/cortex_codex_app_cli_hook_native_stop_live_canary.md"
         in status["active_docs"]
     )
-    assert status["work_today"]["slug"] == "executive-roadmap-cleanup-and-branch-disposition"
+    assert status["work_today"]["slug"] == "task-standard-executive-doctrine-math-refinement"
 
 
 def test_codex_app_cli_product_perception_loop_records_structural_gate0() -> None:
@@ -1970,7 +1992,7 @@ def test_codex_app_cli_product_event_capture_remediation_records_live_pass() -> 
         in status["active_docs"]
     )
     assert status["work_today"]["slug"] == (
-        "executive-roadmap-cleanup-and-branch-disposition"
+        "task-standard-executive-doctrine-math-refinement"
     )
     assert status["next_product_train"]["slug"] == (
         "codex-app-cli-task-standard-live-probe"
@@ -1997,7 +2019,7 @@ def test_codex_app_cli_stop_continuation_resolution_loop_records_live_pass() -> 
         in status["active_docs"]
     )
     assert status["work_today"]["slug"] == (
-        "executive-roadmap-cleanup-and-branch-disposition"
+        "task-standard-executive-doctrine-math-refinement"
     )
     assert status["next_product_train"]["slug"] == (
         "codex-app-cli-task-standard-live-probe"
@@ -2026,7 +2048,7 @@ def test_codex_app_cli_hook_native_behavior_comparison_records_live_baseline_gat
         in status["active_docs"]
     )
     assert status["work_today"]["slug"] == (
-        "executive-roadmap-cleanup-and-branch-disposition"
+        "task-standard-executive-doctrine-math-refinement"
     )
     assert status["next_product_train"]["slug"] == (
         "codex-app-cli-task-standard-live-probe"
@@ -2054,7 +2076,7 @@ def test_codex_app_cli_astro_three_arm_fixture_refresh_records_mixed_signal() ->
         "docs/recon/cortex_codex_app_cli_astro_three_arm_fixture_refresh.md"
         in status["active_docs"]
     )
-    assert status["work_today"]["slug"] == "executive-roadmap-cleanup-and-branch-disposition"
+    assert status["work_today"]["slug"] == "task-standard-executive-doctrine-math-refinement"
     assert status["next_product_train"]["slug"] == (
         "codex-app-cli-task-standard-live-probe"
     )
@@ -2082,7 +2104,7 @@ def test_codex_app_cli_value_ablation_audit_records_requirement_perception_decis
         "docs/recon/cortex_codex_app_cli_value_ablation_audit.md"
         in status["active_docs"]
     )
-    assert status["work_today"]["slug"] == "executive-roadmap-cleanup-and-branch-disposition"
+    assert status["work_today"]["slug"] == "task-standard-executive-doctrine-math-refinement"
     assert status["next_product_train"]["slug"] == "codex-app-cli-task-standard-live-probe"
 
 
@@ -2098,6 +2120,7 @@ def test_codex_app_cli_task_standard_spine_records_structural_product_spine() ->
         "and behavior lift remain unearned."
     ) in text
     assert "Before work starts, name the standard this work has to meet" in text
+    assert "Product activation still requires explicit final text signoff" in text
     assert "generic build/readback activity alone does not pay down standard items" in text
     assert "hidden-failing traces caught as open: 3" in text
     assert "hidden-passing traces with overblock risk: 2" in text
@@ -2108,7 +2131,7 @@ def test_codex_app_cli_task_standard_spine_records_structural_product_spine() ->
         "docs/recon/cortex_codex_app_cli_task_standard_spine.md"
         in status["active_docs"]
     )
-    assert status["work_today"]["slug"] == "executive-roadmap-cleanup-and-branch-disposition"
+    assert status["work_today"]["slug"] == "task-standard-executive-doctrine-math-refinement"
     assert status["next_product_train"]["slug"] == (
         "codex-app-cli-task-standard-live-probe"
     )
@@ -2131,6 +2154,12 @@ def test_task_standard_sre_correspondence_is_lawfully_mapped() -> None:
     assert "not AUX memory" in sre_doc
     assert "host-specific adaptor rule" in sre_doc
     assert "Generic verification-shaped activity may not satisfy" in sre_doc
+    assert "T_t = (O_t, S_t, M_t, C_t, E_t, U_t)" in sre_doc
+    assert "D_std(t)" in sre_doc
+    assert "`standard_aligned` or `claim_aligned`" in sre_doc
+    assert "A `generic_check` may\nrecord" in sre_doc
+    assert "expectation-ledger law" in sre_doc
+    assert "does not create a new speech\nsurface" in sre_doc
 
     math_rows = {entry["id"]: entry for entry in status["math_to_code_map"]}
     assert math_rows["task_standard_spine"]["code_refs"] == [
@@ -2144,6 +2173,46 @@ def test_task_standard_sre_correspondence_is_lawfully_mapped() -> None:
     assert "recon/cortex_task_standard_sre_correspondence_reconciliation.md" in docs_index
     assert "Verdict: task_standard_sre_correspondence_reconciled" in recon
     assert "Changed no product behavior and no model-visible text" in recon
+
+
+def test_task_standard_executive_doctrine_math_refinement_is_recorded() -> None:
+    cortex_doc = _read(CORTEX_DOC_PATH)
+    sre_doc = _read(CORTEX_V2_SRE_PATH)
+    tracker = _read(EXECUTIVE_RUNTIME_TRACKER_PATH)
+    recon = _read(TASK_STANDARD_EXECUTIVE_DOCTRINE_MATH_RECON_PATH)
+    docs_index = _read(DOCS_INDEX_PATH)
+    status = _load_status()
+
+    assert "### Executive Capacity Map" in cortex_doc
+    for phrase in (
+        "Task-set / standard formation",
+        "Goal maintenance",
+        "Conflict monitoring",
+        "Action gating",
+        "Prediction-error recalibration",
+    ):
+        assert phrase in cortex_doc
+    assert "not as a\nclaim of biological equivalence" in cortex_doc
+    assert "T_t = (O_t, S_t, M_t, C_t, E_t, U_t)" in sre_doc
+    assert "D_std(t)" in sre_doc
+    assert "`generic_check`" in sre_doc
+    assert "expectation-ledger law" in sre_doc
+    assert "signed-off prospective task-set formation" in tracker
+    assert "captured standard shapes later gating" in tracker
+
+    assert "Surface: product / doctrine correspondence" in recon
+    assert "Verdict: task_standard_executive_doctrine_math_refined" in recon
+    assert "No model-visible text changed" in recon
+    assert "No ninth bio-to-code denominator row was added" in recon
+    assert "explicit final model-visible text signoff" in recon
+    assert (
+        "docs/recon/cortex_task_standard_executive_doctrine_math_refinement.md"
+        in status["active_docs"]
+    )
+    assert "recon/cortex_task_standard_executive_doctrine_math_refinement.md" in docs_index
+    assert status["work_today"]["slug"] == (
+        "task-standard-executive-doctrine-math-refinement"
+    )
 
 
 def test_cortex_plugin_design_preserves_scope_and_truth_boundaries() -> None:
@@ -2470,30 +2539,30 @@ def test_status_registry_is_complete_and_stable() -> None:
         assert {"slug", "stage", "summary", "next_step"} <= set(entry)
         assert entry["slug"] != status["work_today"]["slug"]
     assert entry["slug"] != status["next_product_train"]["slug"]
-    assert status["work_today"]["slug"] == "executive-roadmap-cleanup-and-branch-disposition"
+    assert status["work_today"]["slug"] == "task-standard-executive-doctrine-math-refinement"
     work_note = status["work_today"]["note"].lower()
-    assert "retires the stale executive runtime roadmap" in work_note
-    assert "branch-disposition recon" in work_note
-    assert "disables the codex app mission reflection stop hook" in work_note
-    assert "no cortex product behavior" in work_note
+    assert "doctrine/math seam reconciles task-standard formation" in work_note
+    assert "delivery-layer executive loop" in work_note
+    assert "task_standard_spine" in work_note
+    assert "no runtime behavior" in work_note
     assert status["next_product_train"]["slug"] == "codex-app-cli-task-standard-live-probe"
     assert "product" == status["next_product_train"]["surface"]
-    assert "approved task-standard userpromptsubmit text" in status["next_product_train"][
+    assert "explicit final text signoff" in status["next_product_train"][
         "executive_benefit"
     ].lower()
     assert "compact standard block" in status["next_product_train"][
         "executive_benefit"
     ].lower()
-    assert "standard-formation text" in status["next_product_train"][
+    assert "signed-off context delivery" in status["next_product_train"][
         "why_now"
     ].lower()
-    assert "explicit text signoff" in status["next_product_train"][
+    assert "model standard capture" in status["next_product_train"][
         "why_now"
     ].lower()
-    assert "behavior-lift comparison" in status["next_product_train"][
+    assert "behavior-lift comparison comes after" in status["next_product_train"][
         "why_now"
     ].lower()
-    assert "approved context text delivered" in status["next_product_train"][
+    assert "signed-off context text delivered" in status["next_product_train"][
         "primary_metric"
     ].lower()
     assert "no additional model-visible text" in status["next_product_train"][
@@ -2592,7 +2661,7 @@ def test_generated_status_doc_includes_system_map_and_next_product_train() -> No
     assert "## Next Product Train" in text
     assert "## Research Lines Under Evaluation" in text
     assert "host/tool reliability and affordance priors are earned" in text
-    assert "`executive-roadmap-cleanup-and-branch-disposition`" in text
+    assert "`task-standard-executive-doctrine-math-refinement`" in text
     assert "- Next product train after the current focus: `codex-app-cli-task-standard-live-probe`" in text
     assert "- Train: `codex-app-cli-task-standard-live-probe`" in text
     assert "`brain-capability-observation-and-inference` (deferred-by-current-task-standard-train)" in text
