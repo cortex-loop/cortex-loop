@@ -73,9 +73,9 @@ model-facing translation into the product goal.
 
 ### Model-Visible Cortex Output Law
 
-When Cortex output reaches a model, it must render Cortex state as a task-local executive constraint inside the model's own working frame, not as a person, plugin, monitor, policy engine, or hidden authority commenting from outside. The strange-loop goal is epistemic integration: the model receives the content as self-monitoring over its own claim, evidence, obligation, contradiction, closure condition, or next move.
+When Cortex output reaches a model, it must render Cortex state as a task-local executive constraint inside the model's own working frame, not as a person, plugin, monitor, policy engine, or hidden authority commenting from outside. The strange-loop goal is epistemic integration: the model receives the content as self-monitoring over its own claim, evidence, obligation, contradiction, closure condition, task-set, or next move.
 
-Good shape: "Closure is not warranted yet; the completion claim still needs evidence for each original requirement." Better shape on identity-continuous lifecycle surfaces: "Wait, did I actually check my work properly." Bad shape: "Cortex says your debt pressure is high; you should verify harder." Model-visible text may not contain internal labels, debt/brake/AUX terms, schema names, hook names, route tags, session IDs, hidden verifier answers, third-agent voice, or generic second-person advice. First-person/ego style is allowed only for identity-continuous turns with a clear prior-act anchor and truthful self-check content; attached-context surfaces use impersonal executive-constraint language or stay silent. All output must be built from claim/evidence/obligation/next-move structure, must generalize beyond the motivating fixture, and should restore the model's own executive posture rather than sound like an outside auditor.
+Good shape: "Closure is not warranted yet; the completion claim still needs evidence for each original requirement." Better shape on prior-act identity-continuous lifecycle surfaces: "Wait, did I actually check my work properly." Bad shape: "Cortex says your debt pressure is high; you should verify harder." Model-visible text may not contain internal labels, debt/brake/AUX terms, schema names, hook names, route tags, session IDs, hidden verifier answers, third-agent voice, or generic second-person advice. First-person/ego style is allowed in two cases only: prior-act identity-continuous self-correction with a clear prior-act anchor and truthful self-check content, or prospective identity-continuous task-set formation before work begins. Prospective task-set text must be explicitly signed off before activation, must ask the model to form its own task standard from the visible user task, and must not impose external rules or hidden answers. Attached-context surfaces use impersonal executive-constraint language or stay silent. All output must be built from claim/evidence/obligation/task-standard/next-move structure, must generalize beyond the motivating fixture, and should restore the model's own executive posture rather than sound like an outside auditor.
 
 ## 2. Failure Modes Cortex Addresses
 
@@ -277,6 +277,7 @@ The block below is regenerated from
 | **Operator brain capability envelope** (`operator_brain_capability_envelope`) | SRE_2 §6.9 | `cortex/sre/operator_routing.py`, `cortex/runtime/operator_brain_capability.py` | `tests/product/test_brain_capability.py`, `tests/conformance/test_brain_capability_parity.py` | `implemented` |
 | **Brake tonic EMA executive modulator state** (`executive_modulator_state`) | SRE_2 §7.4, §7.5 | `cortex/sre/modulators.py`, `cortex/sre/brake.py`, `cortex/hosts/claude_code_desktop/runtime.py` | `tests/product/test_sre_uncertainty_brake.py`, `tests/conformance/test_claude_code_desktop_runtime_session_io.py` | `implemented` |
 | **Typed goal-debt and closure-pressure state** (`goal_debt_state`) | SRE_2 §8.1 | `cortex/sre/goal_debt.py`, `cortex/sre/goals.py`, `cortex/hosts/claude_code_desktop/runtime.py` | `tests/product/test_sre_goals_branching.py`, `tests/product/test_sre_goal_branch.py`, `tests/conformance/test_claude_code_desktop_runtime_session_io.py` | `implemented` |
+| **Task-local standard and evidence alignment state** (`task_standard_spine`) | SRE_2 §8.2 | `cortex/sre/task_standard.py` | `tests/product/test_sre_task_standard_spine.py`, `tests/product/test_openai_codex_app_cli_hook_coordinator.py` | `implemented` |
 | **Verified-work preservation and intervention budget** (`preservation_state`) | SRE_2 §6.7 (budget); CORE recovery firewall | `cortex/sre/preservation.py`, `cortex/hosts/claude_code_desktop/runtime.py` | `tests/product/test_preservation_state.py`, `tests/conformance/test_claude_code_desktop_runtime_session_io.py` | `implemented` |
 | **Bounded host/tool reliability prior** (`host_reliability_prior`) | AUX_2 §4 (geometry/eval support); SRE_2 score-pricing | `cortex/sre/memory_priors.py`, `cortex/aux/support_priors.py` | `tests/experimental/test_aux_support_priors.py`, `tests/experimental/test_aux_publication.py` | `implemented` |
 | **Durable AUX support-memory episode** (`support_memory_episode`) | AUX_2 §3 offline support memory | `cortex/aux/persistence.py` | `tests/experimental/test_aux_persistence.py` | `implemented` |
@@ -300,17 +301,17 @@ state, read `internal/truth/cortex_status.json` directly.
 
 ### Current Train
 
-- Slug: `codex-app-cli-task-standard-spine`
+- Slug: `executive-roadmap-cleanup-and-branch-disposition`
 
 ### Next Product Train
 
 - Slug: `codex-app-cli-task-standard-live-probe`
 - Surface: `product`
-- Why now: The task-standard spine landed structurally, but live product value now depends on proving Codex App/CLI can carry the approved standard-formation text and expose the model's standard before any behavior-lift comparison.
+- Why now: The task-standard spine and SRE correspondence mapping have landed structurally, but live product value now depends on explicit text signoff and proving Codex App/CLI can carry the approved standard-formation text and expose the model's standard before any behavior-lift comparison.
 
 ### Research Lines Under Evaluation
 
-- `brain-capability-observation-and-inference` (`deferred-by-executive-runtime-roadmap`) — This was the previous next product train: replace the static name-based brain capability registry with observed-performance accumulation. It is explicitly deferred, not erased, because the executive-runtime roadmap prioritizes runtime expectation debt and debt-drag before AUX-backed capability inference.
+- `brain-capability-observation-and-inference` (`deferred-by-current-task-standard-train`) — This was an earlier candidate train: replace the static name-based brain capability registry with observed-performance accumulation. It remains deferred, not erased, because current shipping-roadmap authority prioritizes task-standard formation, visible standard capture, and claim/evidence alignment before AUX-backed capability inference.
 
 ### Hosts and Shipping Defaults
 
@@ -333,6 +334,7 @@ state, read `internal/truth/cortex_status.json` directly.
 - The Astro three-arm fixture refresh repaired hidden-verifier leakage by stripping verifier-only files and hidden npm scripts from subject workspaces, running hidden scoring only from an evaluator overlay, and adding a raw Codex arm with no `.codex` config or Cortex state. The completed live run under `.cortex/live_validation/openai/codex_app_cli_hook_native_behavior_comparison/astro_three_arm_live_20260505T033207Z` produced `mixed_signal`: raw Codex passed hidden quality 2/5, silent perception 1/5, hook-native Cortex 2/5, all with 0 model-visible Stop blocks, 0 rendered texts, 0 hidden-verifier probe attempts, 0 subject verifier leaks, 0 timeouts, and unchanged root guardrails. This is fixture-repair and live no-speech-lift evidence only.
 - The Codex App/CLI value-ablation audit replayed the Astro, continuation-resolution, behavior-comparison, and hardened visible-intervention evidence without changing product policy. It found threshold tuning non-causal because all final Astro Stop rows had pressure 0.0 and resolved verification expectations; strict paydown ablation would catch 3 hidden failures but overblock 2 passing traces; visible claim/evidence alignment exposed enough product-visible mismatch to queue requirement-level perception before fixture remediation, text tuning, or broad paydown tightening.
 - The Codex App/CLI task-standard spine then added product state for visible task obligations, the model's compact Work standard / Likely misses / Closure evidence block, aligned evidence refs, final closure claims, and unmatched standard items. The only new model-visible text is the exact signed-off UserPromptSubmit standard-formation prompt, gated by `--enable-task-standard-text`; existing Stop threshold text remains unchanged. Structural tests prove generic checks no longer pay down standard items when a standard exists, aligned evidence can pay down matching standard items, hidden verifier terms stay out of product state, and silent arms suppress the new text. Offline Astro replay caught 3 hidden-failing traces but also flagged 2 hidden-passing overblock risks because the old traces lacked real model-derived standards, so no behavior lift is claimed.
+- The task-standard SRE correspondence reconciliation then made the spine a first-class SRE math-to-code object instead of a Codex-only adaptor concept: `task_standard_spine` now maps to `cortex/sre/task_standard.py`, SRE packet law names task-local standard formation and maintenance as goal-continuity / verification-fit state, and the Cortex output law distinguishes prior-act self-correction from prospective identity-continuous task-set formation. This seam changed doctrine and registry correspondence only; no model-visible text changed and no live behavior lift is claimed.
 <!-- END GENERATED: current-state-and-strategy -->
 
 ### V2 Model-I/O Analysis
@@ -351,7 +353,7 @@ This audit is structural evidence only. It separates Cortex's internal executive
 | Adapter | Lifecycle input | Enforcement | Proof |
 | --- | --- | --- | --- |
 | **Claude Code repo lifecycle adapter** | Stop hook reads `transcript_path` JSONL and extracts the latest assistant message. | `.claude/settings.json` runs `.claude/hooks/cortex_grid_stop_hook.py`; block decisions re-prompt Claude until the Cortex Mission Reflection graph validates; fail-open is limited to missing transcript, malformed hook input, or command crash. | `.claude/settings.json`, `.claude/hooks/cortex_grid_stop_hook.py`, `tests/internal/test_cortex_grid_stop_hook.py` |
-| **Codex App repo lifecycle adapter** | Stop hook receives `last_assistant_message` directly; project-local hooks require trusted `.codex/` config and `[features].codex_hooks = true`. | `.codex/config.toml` runs `.codex/hooks/cortex_mission_reflection_stop_hook.py`; `decision: block` asks Codex App to continue with corrective context; `codex-app-hook-health` proves structural config/script behavior, not live model-side product lift. | `.codex/config.toml`, `.codex/hooks/cortex_mission_reflection_stop_hook.py`, `tests/internal/test_codex_app_stop_hook.py` |
+| **Codex App repo lifecycle adapter** | Root Codex App Stop enforcement is disabled with `[features].codex_hooks = false`; direct hook-script validation still accepts `last_assistant_message` payloads, and current Codex App chats use explicit `grid-validate` fallback. | Disabled root config plus direct script simulation proves workflow policy and validator behavior, not live model-side product lift. | `.codex/config.toml`, `.codex/hooks/cortex_mission_reflection_stop_hook.py`, `tests/internal/test_codex_app_stop_hook.py` |
 
 ### Side A — Internal Executive Logic
 
@@ -470,7 +472,7 @@ at least three repo-grounded rows, and closeout mode requires every
 mission/reflection/evidence/decision row to be cited and at least 120
 characters. No separate closure section follows the grid.
 
-**Chat-boundary enforcement (Claude Code and Codex App).** A Stop hook at
+**Chat-boundary enforcement (Claude Code; Codex App fallback).** A Stop hook at
 `.claude/settings.json` runs `.claude/hooks/cortex_grid_stop_hook.py` on
 turn-completion. The hook reads the assistant's last message from the
 transcript, infers graph mode from the row set, runs the matching
@@ -484,19 +486,18 @@ fails open only on infrastructure failures (missing transcript, command
 crash). The hook and `grid-validate` both use
 `internal/workflow/mission_reflection.py` as the shared graph contract.
 
-Codex App for Mac has its own repo-local Stop hook because Codex exposes
-`last_assistant_message` directly rather than a Claude transcript path:
-`.codex/config.toml` enables `[features].codex_hooks = true`, and
-`.codex/hooks/cortex_mission_reflection_stop_hook.py` applies the same
-shared validator. Per the official Codex hook lifecycle, project-local
-hooks load only when the project `.codex/` layer is trusted.
-`codex-app-hook-health` simulates known-bad and valid Codex Stop
-payloads; if it fails, product work in Codex App must stop until the
-hook/config/runtime issue is fixed. This is structural lifecycle
-evidence, not live evidence that Cortex improved model output.
+Codex App for Mac has a repo-local Stop hook script because Codex exposes
+`last_assistant_message` directly rather than a Claude transcript path, but
+root `.codex/config.toml` now disables Codex hooks with
+`[features].codex_hooks = false`. The script remains available for direct
+structural validation; `codex-app-hook-health` verifies the disabled config
+policy plus known-bad and valid direct script payload behavior. Current Codex
+App chats use explicit `grid-validate` fallback so Stop repair loops do not
+hide substantive answer content before the final graph.
 
-**Codex fallback surfaces.** Codex surfaces that do not load repo-local
-hooks fall back to validator + doctrine: the agent runs
+**Codex fallback surfaces.** Codex surfaces that do not load repo-local hooks,
+including the current root Codex App config, fall back to validator + doctrine:
+the agent runs
 `python3 internal/workflow/repo_workflow.py grid-validate --mode <mode>`
 on the filled final graph, and non-no-op Codex closeouts record that pass
 in `mission_reflection_graph`. This is session-boundary evidence, not
@@ -519,10 +520,11 @@ not mission authority and not an architecture plan. Use it before making
 surface-selection claims so API control, CLI/app hooks, MCP support, and
 consumer-app gaps are not flattened into fake portability.
 `docs/recon/codex_app_hook_probe.md` is the paired empirical Codex App
-finding: on the tested Mac app version, a trusted project Stop hook loaded,
-fired, exposed `last_assistant_message`, and routed a `decision: "block"`
-reason into the model-visible continuation. That finding is Codex App only
-and must not be generalized to other surfaces without their own probes.
+finding from an earlier trusted-hook configuration: on the tested Mac app
+version, a project Stop hook loaded, fired, exposed `last_assistant_message`,
+and routed a `decision: "block"` reason into the model-visible continuation.
+That finding remains recon evidence only; current root config disables the
+repo Mission Reflection Stop hook by policy.
 `docs/recon/claude_code_desktop_pretooluse_probe.md` is the paired empirical
 Claude Code Desktop Code-tab finding: on the tested Mac app version,
 `PreToolUse` fired for Bash in the effective Claude-managed worktree and

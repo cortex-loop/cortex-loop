@@ -132,20 +132,12 @@ def test_codex_app_hook_fails_open_when_message_unavailable() -> None:
     assert "last_assistant_message" in stderr
 
 
-def test_codex_config_declares_app_stop_hook() -> None:
+def test_codex_config_disables_app_stop_hook_by_policy() -> None:
     config_path = REPO_ROOT / ".codex" / "config.toml"
     config = tomllib.loads(config_path.read_text(encoding="utf-8"))
 
-    assert config["features"]["codex_hooks"] is True
-    stop_hooks = config["hooks"]["Stop"]
-    assert stop_hooks
-    commands = [
-        hook.get("command", "")
-        for group in stop_hooks
-        for hook in group.get("hooks", [])
-        if hook.get("type") == "command"
-    ]
-    assert any("cortex_mission_reflection_stop_hook.py" in command for command in commands)
+    assert config["features"]["codex_hooks"] is False
+    assert "hooks" not in config
 
 
 def test_codex_hook_docstring_records_current_lifecycle_terms() -> None:
@@ -173,6 +165,7 @@ def test_repo_workflow_codex_app_hook_health_passes() -> None:
     )
     payload = json.loads(proc.stdout)
     assert payload["ok"] is True
-    assert payload["codex_hooks_feature_enabled"] is True
+    assert payload["codex_hooks_feature_enabled"] is False
+    assert payload["chat_boundary_enforcement"] == "disabled_by_repo_policy"
     assert payload["known_bad_blocks"] is True
     assert payload["filled_graph_allows_stop"] is True

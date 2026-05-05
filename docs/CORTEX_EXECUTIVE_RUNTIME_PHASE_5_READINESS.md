@@ -2,12 +2,11 @@
 
 Surface: product planning / evidence accounting
 
-This document is the pause-and-check gate between seams 1-4 and seam 5 in
-`docs/CORTEX_EXECUTIVE_RUNTIME_ROADMAP.md`. It does not change runtime code,
-does not run live probes, and does not revise shipping truth. Its job is to
-decide whether the structural executive-control machinery is evidence-correct
-enough to support the first live silent-control probe on the OpenAI Codex
-App/CLI wrapper-resume evidence path.
+This retained document was the pause-and-check gate between seams 1-4 and seam
+5 in the retired executive-runtime roadmap. It does not change runtime code,
+does not run live probes, and does not revise shipping truth. Current roadmap
+authority lives in `internal/truth/cortex_status.json` and the generated human
+view in `docs/CORTEX_STATUS.md`.
 
 ## Readiness Verdict
 
@@ -325,8 +324,8 @@ After this remediation merges, seam 5 can open with the probe design above.
 This readiness document earns no live behavior-lift claim and no shipping
 truth. It is structural evidence accounting only.
 
-- Cortex truth: the roadmap remains intact, and seam 5 is structurally ready
-  after this remediation merges.
+- Cortex truth: this retained readiness record remains historical evidence only;
+  current roadmap authority lives in the status registry.
 - Brain-wiring truth: unchanged.
 - Conformance truth: the readiness scenarios document current composed behavior
   and the closed remediation cases.

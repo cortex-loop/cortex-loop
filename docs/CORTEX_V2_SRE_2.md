@@ -104,6 +104,7 @@ Representative baskets include:
 - continuity / invariance preservation,
 - constraint-fit,
 - verification-fit,
+- task-standard formation and maintenance,
 - repair-without-drift,
 - and other bounded executive control families that do not presume one artifact domain.
 
@@ -766,7 +767,31 @@ The SRE must preserve the main task as an explicit control object.
 Local repair, side investigations, and branch experiments may not silently replace the main task.
 The reference executive should therefore be state-aware and closure-aware: when unresolved branch state, blocker risk, or pending-goal debt is salient, it should prefer truthful continuity and explicit closure over premature forward motion.
 
-### 8.2 Pending-goal discipline
+### 8.2 Task-local standard formation and maintenance
+
+The SRE may maintain a task-local standard as part of goal continuity and
+verification-fit. This standard is a runtime executive object: it helps the
+model form, preserve, and close against what the visible task requires for good
+work. It is not Core certification truth, it is not AUX memory, and it is not a
+host-specific adaptor rule.
+
+A lawful task-standard state may include:
+
+- visible task obligations extracted from product-visible user input,
+- the model-derived work standard,
+- likely misses named by the model,
+- closure evidence named by the model,
+- aligned evidence observed from product-visible lifecycle events,
+- final closure claims,
+- and unresolved standard items at closure.
+
+Generic verification-shaped activity may not satisfy a task standard by itself.
+Builds, tests, inspections, readbacks, or successful tool exits count as standard
+evidence only when they align to the model's own task standard or closure claim.
+Hidden verifier facts, fixture-only signals, and domain-specific scoring rules may
+not enter this state.
+
+### 8.3 Pending-goal discipline
 
 A branch-worthy subgoal must be:
 - opened explicitly,
@@ -780,7 +805,7 @@ Pending-goal discipline must remain recoverable in software, at least through:
 - pending-goal count or bounded set,
 - resume-anchor availability.
 
-### 8.3 Branch operations
+### 8.4 Branch operations
 
 The reference branch family includes:
 - `open`
@@ -796,7 +821,7 @@ A host may realize these through:
 - resumable context handles,
 - or a degraded local approximation.
 
-### 8.4 Branch budget law
+### 8.5 Branch budget law
 
 Branch expansion is never free.
 The preferred realization is an explicit branch-burden penalty based on active branch
@@ -804,7 +829,7 @@ count, resume-anchor quality, merge confidence, and pending-goal debt.
 Count and depth limits are fallback safety mechanisms when richer burden evidence is
 unavailable, not the preferred executive realization.
 
-### 8.5 Goal-branch score
+### 8.6 Goal-branch score
 
 Let `Q_t^{goalbranch}(a)` denote the family contribution associated with preserving the main goal while manipulating branches.
 A lawful SRE may estimate it using:
@@ -814,7 +839,7 @@ A lawful SRE may estimate it using:
 - merge confidence,
 - or abandon justification.
 
-### 8.6 Branch degradation law
+### 8.7 Branch degradation law
 
 If the host lacks strong branch/orchestration surfaces, branch control must degrade explicitly rather than pretending strong branch support exists.
 

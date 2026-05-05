@@ -57,7 +57,7 @@ Subsystem boundaries: Core owns commitment/provenance/dispatch truth; SRE owns r
 
 Grounding rule: any product claim, plan, or implementation seam must name identity/current truth, a code owner, a proof surface, and the model-I/O path. If the relevant code was not read, say so before taking a position.
 
-Current train: `codex-app-cli-task-standard-spine`. Next train: `codex-app-cli-task-standard-live-probe`. Shipping default: `openai.codex_app_cli`. Keep Cortex truth, brain-wiring truth, conformance truth, shipping truth, and live behavior-lift claims separate; structural proof alone does not earn model-output lift.
+Current train: `executive-roadmap-cleanup-and-branch-disposition`. Next train: `codex-app-cli-task-standard-live-probe`. Shipping default: `openai.codex_app_cli`. Keep Cortex truth, brain-wiring truth, conformance truth, shipping truth, and live behavior-lift claims separate; structural proof alone does not earn model-output lift.
 
 ## Live Product Truth
 
@@ -67,8 +67,8 @@ Current train: `codex-app-cli-task-standard-spine`. Next train: `codex-app-cli-t
 
 ## Current Focus
 
-- Current tracked train: `codex-app-cli-task-standard-spine`
-- Active quality/risk focus: The current focus implemented the Codex App/CLI task-standard spine: Cortex now stores visible task obligations, a parsed Work standard / Likely misses / Closure evidence block, aligned evidence refs, final closure claims, and unmatched standard items. The exact signed-off UserPromptSubmit standard-formation text is opt-in only; no Stop text changed. Structural tests show generic checks do not pay down standard items, aligned evidence can pay down matching items, and hidden verifier terms stay out of product state. Offline Astro replay caught 3 hidden-failing traces but overblocked 2 hidden-passing traces because those old traces lacked real model-derived standards, so live behavior lift remains unearned.
+- Current tracked train: `executive-roadmap-cleanup-and-branch-disposition`
+- Active quality/risk focus: This hygiene seam retires the stale executive runtime roadmap as an active authority, keeps roadmap truth in internal/truth/cortex_status.json plus generated docs/CORTEX_STATUS.md, records a branch-disposition recon for the parked Claude Code Desktop lifecycle spine before retiring the branch, and disables the Codex App Mission Reflection Stop hook in root .codex/config.toml because the live Codex App UI can hide substantive answer text after hook repair loops. No Cortex product behavior, task-standard speech, selector law, or live behavior-lift claim changes.
 - Next product train after the current focus: `codex-app-cli-task-standard-live-probe`
 
 ## Bio-To-Code Matrix
@@ -216,15 +216,15 @@ Workflow gates marked `required` are contractual gates checked by `repo_workflow
 
 - Train: `codex-app-cli-task-standard-live-probe`
 - Surface: product
-- Executive benefit: Prove the exact task-standard UserPromptSubmit text reaches a real Codex CLI model turn and that Cortex can store the model's compact standard block from product-visible lifecycle evidence.
-- Why now: The task-standard spine landed structurally, but live product value now depends on proving Codex App/CLI can carry the approved standard-formation text and expose the model's standard before any behavior-lift comparison.
-- Primary metric: A live isolated Codex CLI run shows the approved context text delivered, the three-line standard block captured, no hidden verifier perception, no root guardrail mutation, and no additional model-visible text.
-- Guardrail: Do not change Cortex speech, selector law, hidden-verifier boundaries, task-standard parsing, or Stop thresholds during the live probe; if Codex does not accept the context payload, record an actuator finding instead of adding a workaround.
+- Executive benefit: After explicit text signoff, prove the approved task-standard UserPromptSubmit text reaches a real Codex CLI model turn and that Cortex can store the model's compact standard block from product-visible lifecycle evidence.
+- Why now: The task-standard spine and SRE correspondence mapping have landed structurally, but live product value now depends on explicit text signoff and proving Codex App/CLI can carry the approved standard-formation text and expose the model's standard before any behavior-lift comparison.
+- Primary metric: A live isolated Codex CLI run after text signoff shows the approved context text delivered, the three-line standard block captured, no hidden verifier perception, no root guardrail mutation, and no additional model-visible text.
+- Guardrail: Do not change Cortex speech, selector law, hidden-verifier boundaries, task-standard parsing, SRE correspondence law, or Stop thresholds during the live probe; if Codex does not accept the context payload, record an actuator finding instead of adding a workaround.
 - Kill rule: If live Codex App/CLI cannot deliver the signed-off UserPromptSubmit context payload or cannot expose the resulting standard block as product-visible lifecycle evidence, stop behavior-comparison planning and remediate the actuator boundary first.
 
 ## Research Lines Under Evaluation
 
-- `brain-capability-observation-and-inference` (deferred-by-executive-runtime-roadmap): This was the previous next product train: replace the static name-based brain capability registry with observed-performance accumulation. It is explicitly deferred, not erased, because the executive-runtime roadmap prioritizes runtime expectation debt and debt-drag before AUX-backed capability inference. Next step: Reconsider after runtime expectation debt and debt-drag into brake/route land and show whether capability inference remains the highest-leverage observed-performance seam.
+- `brain-capability-observation-and-inference` (deferred-by-current-task-standard-train): This was an earlier candidate train: replace the static name-based brain capability registry with observed-performance accumulation. It remains deferred, not erased, because current shipping-roadmap authority prioritizes task-standard formation, visible standard capture, and claim/evidence alignment before AUX-backed capability inference. Next step: Reconsider only after the task-standard live probe and follow-up behavior comparison show whether task-local standard formation needs capability inference as a high-leverage support input.
 
 ## Where To Work Next
 
@@ -236,6 +236,7 @@ Workflow gates marked `required` are contractual gates checked by `repo_workflow
 - The Astro three-arm fixture refresh repaired hidden-verifier leakage by stripping verifier-only files and hidden npm scripts from subject workspaces, running hidden scoring only from an evaluator overlay, and adding a raw Codex arm with no `.codex` config or Cortex state. The completed live run under `.cortex/live_validation/openai/codex_app_cli_hook_native_behavior_comparison/astro_three_arm_live_20260505T033207Z` produced `mixed_signal`: raw Codex passed hidden quality 2/5, silent perception 1/5, hook-native Cortex 2/5, all with 0 model-visible Stop blocks, 0 rendered texts, 0 hidden-verifier probe attempts, 0 subject verifier leaks, 0 timeouts, and unchanged root guardrails. This is fixture-repair and live no-speech-lift evidence only.
 - The Codex App/CLI value-ablation audit replayed the Astro, continuation-resolution, behavior-comparison, and hardened visible-intervention evidence without changing product policy. It found threshold tuning non-causal because all final Astro Stop rows had pressure 0.0 and resolved verification expectations; strict paydown ablation would catch 3 hidden failures but overblock 2 passing traces; visible claim/evidence alignment exposed enough product-visible mismatch to queue requirement-level perception before fixture remediation, text tuning, or broad paydown tightening.
 - The Codex App/CLI task-standard spine then added product state for visible task obligations, the model's compact Work standard / Likely misses / Closure evidence block, aligned evidence refs, final closure claims, and unmatched standard items. The only new model-visible text is the exact signed-off UserPromptSubmit standard-formation prompt, gated by `--enable-task-standard-text`; existing Stop threshold text remains unchanged. Structural tests prove generic checks no longer pay down standard items when a standard exists, aligned evidence can pay down matching standard items, hidden verifier terms stay out of product state, and silent arms suppress the new text. Offline Astro replay caught 3 hidden-failing traces but also flagged 2 hidden-passing overblock risks because the old traces lacked real model-derived standards, so no behavior lift is claimed.
+- The task-standard SRE correspondence reconciliation then made the spine a first-class SRE math-to-code object instead of a Codex-only adaptor concept: `task_standard_spine` now maps to `cortex/sre/task_standard.py`, SRE packet law names task-local standard formation and maintenance as goal-continuity / verification-fit state, and the Cortex output law distinguishes prior-act self-correction from prospective identity-continuous task-set formation. This seam changed doctrine and registry correspondence only; no model-visible text changed and no live behavior lift is claimed.
 
 ## Canonical Proof
 
@@ -295,7 +296,6 @@ Workflow gates marked `required` are contractual gates checked by `repo_workflow
 - `docs/README.md`
 - `docs/CORTEX.md`
 - `docs/CORTEX_EXECUTIVE_RUNTIME_TRACKER.md`
-- `docs/CORTEX_EXECUTIVE_RUNTIME_ROADMAP.md`
 - `docs/CORTEX_EXECUTIVE_RUNTIME_PROGRAM_SPEC.md`
 - `docs/CORTEX_EXECUTIVE_RUNTIME_PHASE_5_READINESS.md`
 - `docs/CORTEX_V2_CORE_2.md`
@@ -350,3 +350,5 @@ Workflow gates marked `required` are contractual gates checked by `repo_workflow
 - `docs/recon/cortex_codex_app_cli_astro_three_arm_fixture_refresh.md`
 - `docs/recon/cortex_codex_app_cli_value_ablation_audit.md`
 - `docs/recon/cortex_codex_app_cli_task_standard_spine.md`
+- `docs/recon/cortex_task_standard_sre_correspondence_reconciliation.md`
+- `docs/recon/claude_code_desktop_lifecycle_spine_branch_disposition.md`

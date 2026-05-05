@@ -715,7 +715,8 @@ def test_hook_coordinator_does_not_activate_project_hook_config() -> None:
     )
 
     assert "codex_app_cli_hook_coordinator" not in config_text
-    assert "cortex_mission_reflection_stop_hook.py" in config_text
+    assert "codex_hooks = false" in config_text
+    assert "cortex_mission_reflection_stop_hook.py" not in config_text
 
 
 def _base_payload(**overrides):
