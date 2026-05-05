@@ -200,6 +200,12 @@ CODEX_APP_CLI_ASTRO_THREE_ARM_FIXTURE_REFRESH_PATH = (
     / "recon"
     / "cortex_codex_app_cli_astro_three_arm_fixture_refresh.md"
 )
+CODEX_APP_CLI_VALUE_ABLATION_AUDIT_PATH = (
+    REPO_ROOT
+    / "docs"
+    / "recon"
+    / "cortex_codex_app_cli_value_ablation_audit.md"
+)
 STATUS_REGISTRY_PATH = REPO_ROOT / "internal" / "truth" / "cortex_status.json"
 STATUS_DOC_PATH = REPO_ROOT / "docs" / "CORTEX_STATUS.md"
 WORKFLOW_DOC_PATH = REPO_ROOT / "docs" / "internal" / "REPO_WORKFLOW.md"
@@ -915,6 +921,7 @@ def test_docs_directory_only_exposes_archive_and_workflow_subtrees() -> None:
         "cortex_codex_app_cli_product_perception_live_probe.md",
         "cortex_codex_app_cli_product_perception_loop.md",
         "cortex_codex_app_cli_stop_continuation_resolution_loop.md",
+        "cortex_codex_app_cli_value_ablation_audit.md",
         "cortex_openai_operator_debt_control_enactment.md",
         "cortex_openai_operator_output_quality_fixture_refresh.md",
         "cortex_openai_operator_silent_control_live_probe.md",
@@ -1753,7 +1760,7 @@ def test_openai_operator_output_quality_fixture_refresh_records_hard_fixture() -
         "docs/recon/cortex_openai_operator_output_quality_fixture_refresh.md"
         in status["active_docs"]
     )
-    assert status["work_today"]["slug"] == "astro-three-arm-fixture-refresh-rerun"
+    assert status["work_today"]["slug"] == "codex-app-cli-cortex-value-ablation-audit"
 
 
 def test_openai_operator_verification_debt_continuation_records_gate0_truth() -> None:
@@ -1779,8 +1786,8 @@ def test_openai_operator_verification_debt_continuation_records_gate0_truth() ->
         "docs/recon/cortex_openai_operator_verification_debt_continuation.md"
         in status["active_docs"]
     )
-    assert status["work_today"]["slug"] == "astro-three-arm-fixture-refresh-rerun"
-    assert status["next_product_train"]["slug"] == "codex-app-cli-output-quality-perception-decision"
+    assert status["work_today"]["slug"] == "codex-app-cli-cortex-value-ablation-audit"
+    assert status["next_product_train"]["slug"] == "codex-app-cli-requirement-level-perception"
 
 
 def test_openai_operator_visible_intervention_live_probe_records_scoped_success() -> None:
@@ -1805,8 +1812,8 @@ def test_openai_operator_visible_intervention_live_probe_records_scoped_success(
         "docs/recon/cortex_openai_operator_visible_intervention_live_probe.md"
         in status["active_docs"]
     )
-    assert status["work_today"]["slug"] == "astro-three-arm-fixture-refresh-rerun"
-    assert status["next_product_train"]["slug"] == "codex-app-cli-output-quality-perception-decision"
+    assert status["work_today"]["slug"] == "codex-app-cli-cortex-value-ablation-audit"
+    assert status["next_product_train"]["slug"] == "codex-app-cli-requirement-level-perception"
 
 
 def test_visible_intervention_product_perception_hardening_records_structural_gate() -> None:
@@ -1830,8 +1837,8 @@ def test_visible_intervention_product_perception_hardening_records_structural_ga
         "docs/recon/cortex_visible_intervention_product_perception_hardening.md"
         in status["active_docs"]
     )
-    assert status["work_today"]["slug"] == "astro-three-arm-fixture-refresh-rerun"
-    assert status["next_product_train"]["slug"] == "codex-app-cli-output-quality-perception-decision"
+    assert status["work_today"]["slug"] == "codex-app-cli-cortex-value-ablation-audit"
+    assert status["next_product_train"]["slug"] == "codex-app-cli-requirement-level-perception"
 
 
 def test_openai_operator_visible_intervention_hardened_rerun_records_failure() -> None:
@@ -1854,8 +1861,8 @@ def test_openai_operator_visible_intervention_hardened_rerun_records_failure() -
         "docs/recon/cortex_openai_operator_visible_intervention_hardened_rerun.md"
         in status["active_docs"]
     )
-    assert status["work_today"]["slug"] == "astro-three-arm-fixture-refresh-rerun"
-    assert status["next_product_train"]["slug"] == "codex-app-cli-output-quality-perception-decision"
+    assert status["work_today"]["slug"] == "codex-app-cli-cortex-value-ablation-audit"
+    assert status["next_product_train"]["slug"] == "codex-app-cli-requirement-level-perception"
 
 
 def test_codex_app_cli_stop_activation_probe_records_structural_gate0() -> None:
@@ -1878,8 +1885,8 @@ def test_codex_app_cli_stop_activation_probe_records_structural_gate0() -> None:
         "docs/recon/cortex_codex_app_cli_hook_native_stop_activation_probe.md"
         in status["active_docs"]
     )
-    assert status["work_today"]["slug"] == "astro-three-arm-fixture-refresh-rerun"
-    assert status["next_product_train"]["slug"] == "codex-app-cli-output-quality-perception-decision"
+    assert status["work_today"]["slug"] == "codex-app-cli-cortex-value-ablation-audit"
+    assert status["next_product_train"]["slug"] == "codex-app-cli-requirement-level-perception"
 
 
 def test_codex_app_cli_stop_live_canary_records_actuator_proof() -> None:
@@ -1897,13 +1904,13 @@ def test_codex_app_cli_stop_live_canary_records_actuator_proof() -> None:
     assert "a384c80463a98828df0de20d5aa2baafda8bb4fa023bd062c2a17e03e7fc04fc" in text
     assert "No product perception claim" in text
     assert "No model-output behavior-lift claim" in text
-    assert status["next_product_train"]["slug"] == "codex-app-cli-output-quality-perception-decision"
+    assert status["next_product_train"]["slug"] == "codex-app-cli-requirement-level-perception"
     assert "recon/cortex_codex_app_cli_hook_native_stop_live_canary.md" in docs_index
     assert (
         "docs/recon/cortex_codex_app_cli_hook_native_stop_live_canary.md"
         in status["active_docs"]
     )
-    assert status["work_today"]["slug"] == "astro-three-arm-fixture-refresh-rerun"
+    assert status["work_today"]["slug"] == "codex-app-cli-cortex-value-ablation-audit"
 
 
 def test_codex_app_cli_product_perception_loop_records_structural_gate0() -> None:
@@ -1967,10 +1974,10 @@ def test_codex_app_cli_product_event_capture_remediation_records_live_pass() -> 
         in status["active_docs"]
     )
     assert status["work_today"]["slug"] == (
-        "astro-three-arm-fixture-refresh-rerun"
+        "codex-app-cli-cortex-value-ablation-audit"
     )
     assert status["next_product_train"]["slug"] == (
-        "codex-app-cli-output-quality-perception-decision"
+        "codex-app-cli-requirement-level-perception"
     )
 
 
@@ -1994,10 +2001,10 @@ def test_codex_app_cli_stop_continuation_resolution_loop_records_live_pass() -> 
         in status["active_docs"]
     )
     assert status["work_today"]["slug"] == (
-        "astro-three-arm-fixture-refresh-rerun"
+        "codex-app-cli-cortex-value-ablation-audit"
     )
     assert status["next_product_train"]["slug"] == (
-        "codex-app-cli-output-quality-perception-decision"
+        "codex-app-cli-requirement-level-perception"
     )
 
 
@@ -2023,10 +2030,10 @@ def test_codex_app_cli_hook_native_behavior_comparison_records_live_baseline_gat
         in status["active_docs"]
     )
     assert status["work_today"]["slug"] == (
-        "astro-three-arm-fixture-refresh-rerun"
+        "codex-app-cli-cortex-value-ablation-audit"
     )
     assert status["next_product_train"]["slug"] == (
-        "codex-app-cli-output-quality-perception-decision"
+        "codex-app-cli-requirement-level-perception"
     )
 
 
@@ -2051,10 +2058,36 @@ def test_codex_app_cli_astro_three_arm_fixture_refresh_records_mixed_signal() ->
         "docs/recon/cortex_codex_app_cli_astro_three_arm_fixture_refresh.md"
         in status["active_docs"]
     )
-    assert status["work_today"]["slug"] == "astro-three-arm-fixture-refresh-rerun"
+    assert status["work_today"]["slug"] == "codex-app-cli-cortex-value-ablation-audit"
     assert status["next_product_train"]["slug"] == (
-        "codex-app-cli-output-quality-perception-decision"
+        "codex-app-cli-requirement-level-perception"
     )
+
+
+def test_codex_app_cli_value_ablation_audit_records_requirement_perception_decision() -> None:
+    text = _read(CODEX_APP_CLI_VALUE_ABLATION_AUDIT_PATH)
+    docs_index = _read(DOCS_INDEX_PATH)
+    status = _load_status()
+
+    assert "Surface: product / lab proof" in text
+    assert "Probe date: 2026-05-05" in text
+    assert "Verdict: requirement_level_perception_needed." in text
+    assert "threshold_not_causal" in text
+    assert "thresholds tested: 0.55, 0.35, 0.15, 0.0" in text
+    assert "paydown_tightening_risky_claim_alignment_needed" in text
+    assert "visible_claim_evidence_gap_detected" in text
+    assert "caught_hidden_failures: 3" in text
+    assert "overblock_risk_count: 2" in text
+    assert "No broad behavior-lift claim" in text
+    assert "No claim that hidden verifier facts can become Cortex perception" in text
+    assert "Queue requirement-level claim/evidence perception before fixture remediation" in text
+    assert "recon/cortex_codex_app_cli_value_ablation_audit.md" in docs_index
+    assert (
+        "docs/recon/cortex_codex_app_cli_value_ablation_audit.md"
+        in status["active_docs"]
+    )
+    assert status["work_today"]["slug"] == "codex-app-cli-cortex-value-ablation-audit"
+    assert status["next_product_train"]["slug"] == "codex-app-cli-requirement-level-perception"
 
 
 def test_cortex_plugin_design_preserves_scope_and_truth_boundaries() -> None:
@@ -2381,31 +2414,40 @@ def test_status_registry_is_complete_and_stable() -> None:
         assert {"slug", "stage", "summary", "next_step"} <= set(entry)
         assert entry["slug"] != status["work_today"]["slug"]
     assert entry["slug"] != status["next_product_train"]["slug"]
-    assert status["work_today"]["slug"] == "astro-three-arm-fixture-refresh-rerun"
+    assert status["work_today"]["slug"] == "codex-app-cli-cortex-value-ablation-audit"
     work_note = status["work_today"]["note"].lower()
-    assert "fixed the astro output-quality fixture" in work_note
-    assert "verifier-only files and hidden npm scripts are absent" in work_note
-    assert "gate 0 passed" in work_note
-    assert "raw passed hidden quality 2/5" in work_note
-    assert "silent 1/5" in work_note
-    assert "full 2/5" in work_note
-    assert "cortex emitted 0 model-visible stop blocks" in work_note
+    assert "value-ablation audit" in work_note
+    assert "threshold replay" in work_note
+    assert "pressure 0.0" in work_note
+    assert "no active expectations" in work_note
+    assert "paydown ablation would catch all 3 hidden-failing" in work_note
+    assert "overblock 2 hidden-passing" in work_note
+    assert "claim/evidence alignment found visible task-claim gaps" in work_note
     assert "not behavior lift" in work_note
-    assert status["next_product_train"]["slug"] == "codex-app-cli-output-quality-perception-decision"
+    assert status["next_product_train"]["slug"] == "codex-app-cli-requirement-level-perception"
     assert "product" == status["next_product_train"]["surface"]
-    assert "output-quality failures on the codex app/cli hook-native lane" in status["next_product_train"][
+    assert "requirement-level claim/evidence perception" in status["next_product_train"][
         "executive_benefit"
     ].lower()
-    assert "zero cortex blocks" in status["next_product_train"][
+    assert "verification-shaped activity" in status["next_product_train"][
+        "executive_benefit"
+    ].lower()
+    assert "threshold tuning non-causal" in status["next_product_train"][
         "why_now"
     ].lower()
-    assert "product-visible perception anchor" in status["next_product_train"][
+    assert "broad paydown tightening too blunt" in status["next_product_train"][
+        "why_now"
+    ].lower()
+    assert "suppressing clean/passing traces" in status["next_product_train"][
         "primary_metric"
     ].lower()
     assert "hidden verifier facts remain scoring-only" in status["next_product_train"][
         "guardrail"
     ].lower()
-    assert "astro-specific remediation" in status["next_product_train"][
+    assert "narrow the output-quality claim" in status["next_product_train"][
+        "kill_rule"
+    ].lower()
+    assert "different actuator" in status["next_product_train"][
         "kill_rule"
     ].lower()
     deferred_lines = {entry["slug"]: entry for entry in status["research_lines_under_evaluation"]}
@@ -2492,9 +2534,9 @@ def test_generated_status_doc_includes_system_map_and_next_product_train() -> No
     assert "## Next Product Train" in text
     assert "## Research Lines Under Evaluation" in text
     assert "host/tool reliability and affordance priors are earned" in text
-    assert "`astro-three-arm-fixture-refresh-rerun`" in text
-    assert "- Next product train after the current focus: `codex-app-cli-output-quality-perception-decision`" in text
-    assert "- Train: `codex-app-cli-output-quality-perception-decision`" in text
+    assert "`codex-app-cli-cortex-value-ablation-audit`" in text
+    assert "- Next product train after the current focus: `codex-app-cli-requirement-level-perception`" in text
+    assert "- Train: `codex-app-cli-requirement-level-perception`" in text
     assert "`brain-capability-observation-and-inference` (deferred-by-executive-runtime-roadmap)" in text
     assert "resume_verification" in text.lower()
     assert "hidden verifier" in text.lower()
