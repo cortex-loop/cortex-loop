@@ -123,5 +123,8 @@ Active docs:
 - [Cortex Codex App/CLI Task Standard Spine](recon/cortex_codex_app_cli_task_standard_spine.md) —
   structural product evidence for task-standard formation/tracking, with the
   exact signed-off UserPromptSubmit text gated and live behavior lift unearned
+- [Cortex Task-Standard SRE Correspondence Reconciliation](recon/cortex_task_standard_sre_correspondence_reconciliation.md) —
+  doctrine correspondence evidence that `TaskStandardSpine` is host-agnostic
+  SRE law, while Codex App/CLI remains only the current product realization
 
 Historical runtime, lab, and governance material now lives under [archive/](archive/).

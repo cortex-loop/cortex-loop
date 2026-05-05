@@ -16,6 +16,7 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 AGENTS_PATH = REPO_ROOT / "AGENTS.md"
 CLAUDE_PATH = REPO_ROOT / "CLAUDE.md"
 CORTEX_DOC_PATH = REPO_ROOT / "docs" / "CORTEX.md"
+CORTEX_V2_SRE_PATH = REPO_ROOT / "docs" / "CORTEX_V2_SRE_2.md"
 EXECUTIVE_RUNTIME_TRACKER_PATH = (
     REPO_ROOT / "docs" / "CORTEX_EXECUTIVE_RUNTIME_TRACKER.md"
 )
@@ -211,6 +212,12 @@ CODEX_APP_CLI_TASK_STANDARD_SPINE_PATH = (
     / "docs"
     / "recon"
     / "cortex_codex_app_cli_task_standard_spine.md"
+)
+TASK_STANDARD_SRE_CORRESPONDENCE_RECON_PATH = (
+    REPO_ROOT
+    / "docs"
+    / "recon"
+    / "cortex_task_standard_sre_correspondence_reconciliation.md"
 )
 STATUS_REGISTRY_PATH = REPO_ROOT / "internal" / "truth" / "cortex_status.json"
 STATUS_DOC_PATH = REPO_ROOT / "docs" / "CORTEX_STATUS.md"
@@ -489,7 +496,7 @@ def test_cortex_doc_is_canonical_narrative_with_required_sections() -> None:
     assert "task-local executive constraint" in text
     assert "Cortex says your debt" in text
     assert "First-person/ego style is allowed" in text
-    assert "claim/evidence/obligation/next-move" in text
+    assert "claim/evidence/obligation/task-standard/next-move" in text
 
 
 def test_generated_cortex_doc_is_current() -> None:
@@ -661,8 +668,22 @@ def test_math_to_code_map_schema() -> None:
         "host_reliability_prior",
         "preservation_state",
         "goal_debt_state",
+        "task_standard_spine",
     }
     assert keystones <= seen_ids
+
+    task_standard = next(
+        entry for entry in math_map if entry["id"] == "task_standard_spine"
+    )
+    assert task_standard["packet_ref"] == "SRE_2 §8.2"
+    assert task_standard["code_refs"] == ["cortex/sre/task_standard.py"]
+    assert "tests/product/test_sre_task_standard_spine.py" in task_standard[
+        "proof_refs"
+    ]
+    assert (
+        "tests/product/test_openai_codex_app_cli_hook_coordinator.py"
+        in task_standard["proof_refs"]
+    )
 
 
 def test_v2_model_io_analysis_is_two_sided_and_synthesized() -> None:
@@ -936,6 +957,7 @@ def test_docs_directory_only_exposes_archive_and_workflow_subtrees() -> None:
         "cortex_openai_operator_verification_debt_continuation.md",
         "cortex_openai_operator_visible_intervention_hardened_rerun.md",
         "cortex_openai_operator_visible_intervention_live_probe.md",
+        "cortex_task_standard_sre_correspondence_reconciliation.md",
         "cortex_visible_intervention_product_perception_hardening.md",
         "lifecycle_first_surface_matrix.md",
     ]
@@ -1767,7 +1789,7 @@ def test_openai_operator_output_quality_fixture_refresh_records_hard_fixture() -
         "docs/recon/cortex_openai_operator_output_quality_fixture_refresh.md"
         in status["active_docs"]
     )
-    assert status["work_today"]["slug"] == "codex-app-cli-task-standard-spine"
+    assert status["work_today"]["slug"] == "task-standard-sre-correspondence-reconciliation"
 
 
 def test_openai_operator_verification_debt_continuation_records_gate0_truth() -> None:
@@ -1793,7 +1815,7 @@ def test_openai_operator_verification_debt_continuation_records_gate0_truth() ->
         "docs/recon/cortex_openai_operator_verification_debt_continuation.md"
         in status["active_docs"]
     )
-    assert status["work_today"]["slug"] == "codex-app-cli-task-standard-spine"
+    assert status["work_today"]["slug"] == "task-standard-sre-correspondence-reconciliation"
     assert status["next_product_train"]["slug"] == "codex-app-cli-task-standard-live-probe"
 
 
@@ -1819,7 +1841,7 @@ def test_openai_operator_visible_intervention_live_probe_records_scoped_success(
         "docs/recon/cortex_openai_operator_visible_intervention_live_probe.md"
         in status["active_docs"]
     )
-    assert status["work_today"]["slug"] == "codex-app-cli-task-standard-spine"
+    assert status["work_today"]["slug"] == "task-standard-sre-correspondence-reconciliation"
     assert status["next_product_train"]["slug"] == "codex-app-cli-task-standard-live-probe"
 
 
@@ -1844,7 +1866,7 @@ def test_visible_intervention_product_perception_hardening_records_structural_ga
         "docs/recon/cortex_visible_intervention_product_perception_hardening.md"
         in status["active_docs"]
     )
-    assert status["work_today"]["slug"] == "codex-app-cli-task-standard-spine"
+    assert status["work_today"]["slug"] == "task-standard-sre-correspondence-reconciliation"
     assert status["next_product_train"]["slug"] == "codex-app-cli-task-standard-live-probe"
 
 
@@ -1868,7 +1890,7 @@ def test_openai_operator_visible_intervention_hardened_rerun_records_failure() -
         "docs/recon/cortex_openai_operator_visible_intervention_hardened_rerun.md"
         in status["active_docs"]
     )
-    assert status["work_today"]["slug"] == "codex-app-cli-task-standard-spine"
+    assert status["work_today"]["slug"] == "task-standard-sre-correspondence-reconciliation"
     assert status["next_product_train"]["slug"] == "codex-app-cli-task-standard-live-probe"
 
 
@@ -1892,7 +1914,7 @@ def test_codex_app_cli_stop_activation_probe_records_structural_gate0() -> None:
         "docs/recon/cortex_codex_app_cli_hook_native_stop_activation_probe.md"
         in status["active_docs"]
     )
-    assert status["work_today"]["slug"] == "codex-app-cli-task-standard-spine"
+    assert status["work_today"]["slug"] == "task-standard-sre-correspondence-reconciliation"
     assert status["next_product_train"]["slug"] == "codex-app-cli-task-standard-live-probe"
 
 
@@ -1917,7 +1939,7 @@ def test_codex_app_cli_stop_live_canary_records_actuator_proof() -> None:
         "docs/recon/cortex_codex_app_cli_hook_native_stop_live_canary.md"
         in status["active_docs"]
     )
-    assert status["work_today"]["slug"] == "codex-app-cli-task-standard-spine"
+    assert status["work_today"]["slug"] == "task-standard-sre-correspondence-reconciliation"
 
 
 def test_codex_app_cli_product_perception_loop_records_structural_gate0() -> None:
@@ -1981,7 +2003,7 @@ def test_codex_app_cli_product_event_capture_remediation_records_live_pass() -> 
         in status["active_docs"]
     )
     assert status["work_today"]["slug"] == (
-        "codex-app-cli-task-standard-spine"
+        "task-standard-sre-correspondence-reconciliation"
     )
     assert status["next_product_train"]["slug"] == (
         "codex-app-cli-task-standard-live-probe"
@@ -2008,7 +2030,7 @@ def test_codex_app_cli_stop_continuation_resolution_loop_records_live_pass() -> 
         in status["active_docs"]
     )
     assert status["work_today"]["slug"] == (
-        "codex-app-cli-task-standard-spine"
+        "task-standard-sre-correspondence-reconciliation"
     )
     assert status["next_product_train"]["slug"] == (
         "codex-app-cli-task-standard-live-probe"
@@ -2037,7 +2059,7 @@ def test_codex_app_cli_hook_native_behavior_comparison_records_live_baseline_gat
         in status["active_docs"]
     )
     assert status["work_today"]["slug"] == (
-        "codex-app-cli-task-standard-spine"
+        "task-standard-sre-correspondence-reconciliation"
     )
     assert status["next_product_train"]["slug"] == (
         "codex-app-cli-task-standard-live-probe"
@@ -2065,7 +2087,7 @@ def test_codex_app_cli_astro_three_arm_fixture_refresh_records_mixed_signal() ->
         "docs/recon/cortex_codex_app_cli_astro_three_arm_fixture_refresh.md"
         in status["active_docs"]
     )
-    assert status["work_today"]["slug"] == "codex-app-cli-task-standard-spine"
+    assert status["work_today"]["slug"] == "task-standard-sre-correspondence-reconciliation"
     assert status["next_product_train"]["slug"] == (
         "codex-app-cli-task-standard-live-probe"
     )
@@ -2093,7 +2115,7 @@ def test_codex_app_cli_value_ablation_audit_records_requirement_perception_decis
         "docs/recon/cortex_codex_app_cli_value_ablation_audit.md"
         in status["active_docs"]
     )
-    assert status["work_today"]["slug"] == "codex-app-cli-task-standard-spine"
+    assert status["work_today"]["slug"] == "task-standard-sre-correspondence-reconciliation"
     assert status["next_product_train"]["slug"] == "codex-app-cli-task-standard-live-probe"
 
 
@@ -2119,10 +2141,42 @@ def test_codex_app_cli_task_standard_spine_records_structural_product_spine() ->
         "docs/recon/cortex_codex_app_cli_task_standard_spine.md"
         in status["active_docs"]
     )
-    assert status["work_today"]["slug"] == "codex-app-cli-task-standard-spine"
+    assert status["work_today"]["slug"] == "task-standard-sre-correspondence-reconciliation"
     assert status["next_product_train"]["slug"] == (
         "codex-app-cli-task-standard-live-probe"
     )
+
+
+def test_task_standard_sre_correspondence_is_lawfully_mapped() -> None:
+    cortex_doc = _read(CORTEX_DOC_PATH)
+    sre_doc = _read(CORTEX_V2_SRE_PATH)
+    recon = _read(TASK_STANDARD_SRE_CORRESPONDENCE_RECON_PATH)
+    docs_index = _read(DOCS_INDEX_PATH)
+    status = _load_status()
+
+    assert "prospective identity-continuous task-set formation" in cortex_doc
+    assert "prior-act identity-continuous self-correction" in cortex_doc
+    assert "must be explicitly signed off before activation" in cortex_doc
+    assert "must not impose external rules or hidden answers" in cortex_doc
+
+    assert "### 8.2 Task-local standard formation and maintenance" in sre_doc
+    assert "not Core certification truth" in sre_doc
+    assert "not AUX memory" in sre_doc
+    assert "host-specific adaptor rule" in sre_doc
+    assert "Generic verification-shaped activity may not satisfy" in sre_doc
+
+    math_rows = {entry["id"]: entry for entry in status["math_to_code_map"]}
+    assert math_rows["task_standard_spine"]["code_refs"] == [
+        "cortex/sre/task_standard.py"
+    ]
+    assert "Task-local standard and evidence alignment state" in cortex_doc
+    assert "`task_standard_spine`" in cortex_doc
+    assert "docs/recon/cortex_task_standard_sre_correspondence_reconciliation.md" in status[
+        "active_docs"
+    ]
+    assert "recon/cortex_task_standard_sre_correspondence_reconciliation.md" in docs_index
+    assert "Verdict: task_standard_sre_correspondence_reconciled" in recon
+    assert "Changed no product behavior and no model-visible text" in recon
 
 
 def test_cortex_plugin_design_preserves_scope_and_truth_boundaries() -> None:
@@ -2449,24 +2503,26 @@ def test_status_registry_is_complete_and_stable() -> None:
         assert {"slug", "stage", "summary", "next_step"} <= set(entry)
         assert entry["slug"] != status["work_today"]["slug"]
     assert entry["slug"] != status["next_product_train"]["slug"]
-    assert status["work_today"]["slug"] == "codex-app-cli-task-standard-spine"
+    assert status["work_today"]["slug"] == "task-standard-sre-correspondence-reconciliation"
     work_note = status["work_today"]["note"].lower()
-    assert "task-standard spine" in work_note
-    assert "work standard / likely misses / closure evidence" in work_note
-    assert "exact signed-off userpromptsubmit" in work_note
-    assert "generic checks do not pay down standard items" in work_note
-    assert "aligned evidence can pay down matching items" in work_note
-    assert "overblocked 2 hidden-passing" in work_note
+    assert "taskstandardspine" in work_note
+    assert "task_standard_spine" in work_note
+    assert "goal continuity / verification-fit" in work_note
+    assert "core certification" in work_note
+    assert "codex-only adaptor law" in work_note
     assert "live behavior lift remains unearned" in work_note
     assert status["next_product_train"]["slug"] == "codex-app-cli-task-standard-live-probe"
     assert "product" == status["next_product_train"]["surface"]
-    assert "exact task-standard userpromptsubmit text" in status["next_product_train"][
+    assert "approved task-standard userpromptsubmit text" in status["next_product_train"][
         "executive_benefit"
     ].lower()
     assert "compact standard block" in status["next_product_train"][
         "executive_benefit"
     ].lower()
     assert "standard-formation text" in status["next_product_train"][
+        "why_now"
+    ].lower()
+    assert "explicit text signoff" in status["next_product_train"][
         "why_now"
     ].lower()
     assert "behavior-lift comparison" in status["next_product_train"][
@@ -2571,7 +2627,7 @@ def test_generated_status_doc_includes_system_map_and_next_product_train() -> No
     assert "## Next Product Train" in text
     assert "## Research Lines Under Evaluation" in text
     assert "host/tool reliability and affordance priors are earned" in text
-    assert "`codex-app-cli-task-standard-spine`" in text
+    assert "`task-standard-sre-correspondence-reconciliation`" in text
     assert "- Next product train after the current focus: `codex-app-cli-task-standard-live-probe`" in text
     assert "- Train: `codex-app-cli-task-standard-live-probe`" in text
     assert "`brain-capability-observation-and-inference` (deferred-by-executive-runtime-roadmap)" in text
