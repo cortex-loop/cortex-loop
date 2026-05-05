@@ -3,7 +3,6 @@
     "docs/README.md",
     "docs/CORTEX.md",
     "docs/CORTEX_EXECUTIVE_RUNTIME_TRACKER.md",
-    "docs/CORTEX_EXECUTIVE_RUNTIME_ROADMAP.md",
     "docs/CORTEX_EXECUTIVE_RUNTIME_PROGRAM_SPEC.md",
     "docs/CORTEX_EXECUTIVE_RUNTIME_PHASE_5_READINESS.md",
     "docs/CORTEX_V2_CORE_2.md",
@@ -58,7 +57,8 @@
     "docs/recon/cortex_codex_app_cli_astro_three_arm_fixture_refresh.md",
     "docs/recon/cortex_codex_app_cli_value_ablation_audit.md",
     "docs/recon/cortex_codex_app_cli_task_standard_spine.md",
-    "docs/recon/cortex_task_standard_sre_correspondence_reconciliation.md"
+    "docs/recon/cortex_task_standard_sre_correspondence_reconciliation.md",
+    "docs/recon/claude_code_desktop_lifecycle_spine_branch_disposition.md"
   ],
   "bio_to_code_matrix": [
     {
@@ -800,13 +800,12 @@
     {
       "code_refs": [
         "internal/truth/cortex_status.json",
-        "docs/CORTEX_EXECUTIVE_RUNTIME_ROADMAP.md",
         "cortex/runtime/operator_brain_capability.py"
       ],
-      "next_step": "Reconsider after runtime expectation debt and debt-drag into brake/route land and show whether capability inference remains the highest-leverage observed-performance seam.",
+      "next_step": "Reconsider only after the task-standard live probe and follow-up behavior comparison show whether task-local standard formation needs capability inference as a high-leverage support input.",
       "slug": "brain-capability-observation-and-inference",
-      "stage": "deferred-by-executive-runtime-roadmap",
-      "summary": "This was the previous next product train: replace the static name-based brain capability registry with observed-performance accumulation. It is explicitly deferred, not erased, because the executive-runtime roadmap prioritizes runtime expectation debt and debt-drag before AUX-backed capability inference."
+      "stage": "deferred-by-current-task-standard-train",
+      "summary": "This was an earlier candidate train: replace the static name-based brain capability registry with observed-performance accumulation. It remains deferred, not erased, because current shipping-roadmap authority prioritizes task-standard formation, visible standard capture, and claim/evidence alignment before AUX-backed capability inference."
     }
   ],
   "resting_state": {
@@ -986,9 +985,9 @@
       },
       {
         "adapter": "Codex App repo lifecycle adapter",
-        "enforcement": "`.codex/config.toml` runs `.codex/hooks/cortex_mission_reflection_stop_hook.py`; `decision: block` asks Codex App to continue with corrective context; `codex-app-hook-health` proves structural config/script behavior, not live model-side product lift.",
+        "enforcement": "Disabled root config plus direct script simulation proves workflow policy and validator behavior, not live model-side product lift.",
         "id": "codex_app",
-        "lifecycle_input": "Stop hook receives `last_assistant_message` directly; project-local hooks require trusted `.codex/` config and `[features].codex_hooks = true`.",
+        "lifecycle_input": "Root Codex App Stop enforcement is disabled with `[features].codex_hooks = false`; direct hook-script validation still accepts `last_assistant_message` payloads, and current Codex App chats use explicit `grid-validate` fallback.",
         "proof_refs": [
           ".codex/config.toml",
           ".codex/hooks/cortex_mission_reflection_stop_hook.py",
@@ -1318,7 +1317,7 @@
     "The task-standard SRE correspondence reconciliation then made the spine a first-class SRE math-to-code object instead of a Codex-only adaptor concept: `task_standard_spine` now maps to `cortex/sre/task_standard.py`, SRE packet law names task-local standard formation and maintenance as goal-continuity / verification-fit state, and the Cortex output law distinguishes prior-act self-correction from prospective identity-continuous task-set formation. This seam changed doctrine and registry correspondence only; no model-visible text changed and no live behavior lift is claimed."
   ],
   "work_today": {
-    "note": "The current focus reconciled task-standard spine correspondence: `TaskStandardSpine` is now named as the SRE `task_standard_spine` math-to-code object, packet law places task-local standard formation and maintenance under goal continuity / verification-fit rather than Core certification, AUX memory, or Codex-only adaptor law, and the model-visible output law distinguishes prospective task-set formation from prior-act self-correction. No product behavior or model-visible text changed; live behavior lift remains unearned.",
-    "slug": "task-standard-sre-correspondence-reconciliation"
+    "slug": "executive-roadmap-cleanup-and-branch-disposition",
+    "note": "This hygiene seam retires the stale executive runtime roadmap as an active authority, keeps roadmap truth in internal/truth/cortex_status.json plus generated docs/CORTEX_STATUS.md, records a branch-disposition recon for the parked Claude Code Desktop lifecycle spine before retiring the branch, and disables the Codex App Mission Reflection Stop hook in root .codex/config.toml because the live Codex App UI can hide substantive answer text after hook repair loops. No Cortex product behavior, task-standard speech, selector law, or live behavior-lift claim changes."
   }
 }

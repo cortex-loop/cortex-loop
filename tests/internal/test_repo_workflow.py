@@ -930,7 +930,8 @@ def test_cleanup_report_passes_on_clean_synced_main(
         lambda: {
             "ok": True,
             "failures": [],
-            "codex_hooks_feature_enabled": True,
+            "codex_hooks_feature_enabled": False,
+            "chat_boundary_enforcement": "disabled_by_repo_policy",
             "shared_validator_ok": True,
             "known_bad_blocks": True,
             "filled_graph_allows_stop": True,

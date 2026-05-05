@@ -1811,10 +1811,10 @@ def cmd_grid_validate(
 ) -> int:
     """Validate a filled Cortex Mission Reflection graph.
 
-    This command is the shared fallback validator for Codex surfaces
-    that do not load repo-local Stop hooks. Codex App for Mac also has
-    a Stop hook path, but closeout still records validator evidence so
-    session-boundary proof remains explicit.
+    This command is the shared fallback validator for Codex surfaces that do
+    not load repo-local Stop hooks, including the current root Codex App config
+    where Stop enforcement is disabled by repo policy. Closeout still records
+    validator evidence so session-boundary proof remains explicit.
     """
     if message_file:
         text = Path(message_file).read_text(encoding="utf-8")
@@ -1972,7 +1972,7 @@ def cmd_hook_health(emit_json: bool) -> int:
 
 
 def _codex_app_stop_hook_configured() -> tuple[bool, str]:
-    """Return whether repo-local Codex App Stop hook config is present."""
+    """Return whether repo-local Codex App Stop hook config is enabled."""
 
     config_path = _root() / ".codex" / "config.toml"
     try:
@@ -1983,8 +1983,14 @@ def _codex_app_stop_hook_configured() -> tuple[bool, str]:
         return False, f".codex/config.toml is invalid TOML: {exc}"
 
     features = config.get("features")
-    if not isinstance(features, dict) or features.get("codex_hooks") is not True:
-        return False, ".codex/config.toml must set [features].codex_hooks = true"
+    if not isinstance(features, dict):
+        return False, ".codex/config.toml missing [features] table"
+    if features.get("codex_hooks") is not True:
+        return (
+            False,
+            ".codex/config.toml has [features].codex_hooks = false; "
+            "Codex App Stop hook disabled by repo policy",
+        )
 
     hooks = config.get("hooks")
     if not isinstance(hooks, dict):
@@ -2038,14 +2044,14 @@ def _run_codex_app_stop_hook_with_message(text: str | None) -> tuple[int, str, s
 
 
 def _codex_app_hook_health_payload() -> dict[str, object]:
-    """Verify repo-local Codex App Stop hook config and behavior.
+    """Verify Codex App Stop hook policy and direct hook-script behavior.
 
     This does not prove the Mac app has fired the hook in a live UI turn;
-    it proves the repo-local config is present and the hook script blocks
-    known-bad ``last_assistant_message`` payloads using the shared graph
-    validator. If a Codex App build ignores repo-local hooks, this command
-    remains necessary but not sufficient; the visible live canary is the
-    final proof.
+    it proves the repo-local config policy is understood and the hook script
+    still blocks known-bad ``last_assistant_message`` payloads when run
+    directly using the shared graph validator. The root Codex App config is
+    currently disabled so Stop repair loops do not hide substantive answer
+    content before the final Mission Reflection graph.
     """
 
     configured, config_detail = _codex_app_stop_hook_configured()
@@ -2058,8 +2064,6 @@ def _codex_app_hook_health_payload() -> dict[str, object]:
     )
 
     failures: list[str] = []
-    if not configured:
-        failures.append(config_detail)
     if not validator_result.ok:
         failures.append(
             "shared graph validator rejects filled example: "
@@ -2118,6 +2122,7 @@ def _codex_app_hook_health_payload() -> dict[str, object]:
         "failures": failures,
         "settings": config_detail,
         "codex_hooks_feature_enabled": configured,
+        "chat_boundary_enforcement": "enabled" if configured else "disabled_by_repo_policy",
         "shared_validator_ok": validator_result.ok,
         "known_bad_blocks": bad_blocks,
         "filled_graph_allows_stop": good_allows,
@@ -2130,7 +2135,13 @@ def cmd_codex_app_hook_health(emit_json: bool) -> int:
     if emit_json:
         print(json.dumps(payload, indent=2, sort_keys=True))
     elif payload["ok"]:
-        print("Cortex Mission Reflection Codex App hook health PASS")
+        if payload.get("chat_boundary_enforcement") == "disabled_by_repo_policy":
+            print(
+                "Cortex Mission Reflection Codex App hook health PASS "
+                "(disabled by repo policy; direct script validation OK)"
+            )
+        else:
+            print("Cortex Mission Reflection Codex App hook health PASS")
     else:
         print("Cortex Mission Reflection Codex App hook health FAIL")
         for failure in payload["failures"]:

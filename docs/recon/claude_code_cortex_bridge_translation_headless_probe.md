@@ -32,7 +32,7 @@ In short, it does not promote Claude Code.
 Preservation note: this recon report was preserved from the stale local branch
 `codex/20260501-142219-claude-code-bridge-translation-headless-harness`
 because the evidence remains useful, while the branch's renderer-first
-implementation is superseded by the executive-runtime roadmap and is not active
+implementation is superseded by the current status-registry product train and is not active
 product code. The tracked finding is evidence-only; it is not an instruction to
 resume that branch or land its implementation.
 

@@ -2,13 +2,12 @@
 
 Surface: product planning
 
-This program spec turns the executive-runtime roadmap into an auditable
-research and engineering program. It defines the first concrete control objects,
-state transitions, falsification tasks, and acceptance thresholds needed to
-move Cortex from a correct strategic frame to a buildable runtime executive
-layer. It is subordinate to `docs/CORTEX.md`, `internal/truth/cortex_status.json`,
-`docs/CORTEX_EXECUTIVE_RUNTIME_TRACKER.md`, and
-`docs/CORTEX_EXECUTIVE_RUNTIME_ROADMAP.md`.
+This retained program spec captured an earlier executive-runtime research and
+engineering program. It defines concrete control objects, state transitions,
+falsification tasks, and acceptance thresholds from that program, but current
+roadmap authority lives in `internal/truth/cortex_status.json` and the generated
+human view in `docs/CORTEX_STATUS.md`. It is subordinate to `docs/CORTEX.md`,
+`internal/truth/cortex_status.json`, and `docs/CORTEX_EXECUTIVE_RUNTIME_TRACKER.md`.
 
 This document is not implementation, not packet law, and not shipping truth.
 It is the spec a team of cognitive scientists, mathematicians, and senior

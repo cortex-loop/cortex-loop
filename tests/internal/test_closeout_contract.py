@@ -284,12 +284,12 @@ def test_validate_payload_requires_codex_mission_graph_validation() -> None:
         )
 
 
-def test_closeout_contract_does_not_claim_codex_has_no_stop_hook() -> None:
+def test_closeout_contract_records_codex_app_hook_disabled_policy() -> None:
     source = Path(closeout_contract.__file__).read_text(encoding="utf-8")
 
     assert "Codex has no Stop hook" not in source
-    assert "Codex App has a repo-local Stop hook" in source
-    assert "trusted `.codex/`" in source
+    assert "Codex App root Stop enforcement is currently disabled" in source
+    assert "session-boundary validator evidence" in source
 
 
 def test_validate_payload_rejects_unvalidated_codex_mission_graph() -> None:

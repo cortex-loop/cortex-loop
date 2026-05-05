@@ -161,21 +161,23 @@ assistant message from the transcript, infers the graph mode from the row set,
 runs the matching `grid --mode <mode>` command for corrective output, and
 validates the assistant message with `internal/workflow/mission_reflection.py`.
 
-Codex App uses `.codex/config.toml` and
-`.codex/hooks/cortex_mission_reflection_stop_hook.py` when the project
-`.codex/` layer is trusted. Codex supplies `last_assistant_message`; the hook
-uses the same mode-aware validator. Hook health is structural lifecycle
-evidence only; it does not prove model-output lift.
+Codex App root chat-boundary enforcement is currently disabled in
+`.codex/config.toml` with `[features].codex_hooks = false` because live Stop
+repair loops can hide substantive answer content. The hook script remains at
+`.codex/hooks/cortex_mission_reflection_stop_hook.py` for direct structural
+validation and future reactivation decisions; current Codex App chats use
+explicit `grid-validate` fallback.
 
-Both hooks fail open only on infrastructure failures: missing transcript or
-assistant message, malformed hook input, or `grid` / `reflection-check`
-command crash. Agent non-compliance with a valid graph blocks.
+Enabled hooks fail open only on infrastructure failures: missing transcript,
+malformed hook input, or `grid` / `reflection-check` command crash. Agent
+non-compliance with a valid graph blocks on enabled hook surfaces. Codex App
+currently relies on explicit fallback validation rather than Stop blocking.
 
 ## Auto-Loop Rule
 
-When a hook blocks, the agent must continue in the same chat and emit a valid
-graph. The hooks do not short-circuit on `stop_hook_active`; every stop attempt
-re-runs validation.
+When an enabled hook blocks, the agent must continue in the same chat and emit a
+valid graph. Enabled hooks do not short-circuit on `stop_hook_active`; every
+stop attempt re-runs validation.
 
 On `reflection-check` verdict `FAIL`, continue work until the gate clears.
 Do not close-session, finalize, or publish on a failed reflection check.

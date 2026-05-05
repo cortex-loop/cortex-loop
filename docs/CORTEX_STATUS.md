@@ -57,7 +57,7 @@ Subsystem boundaries: Core owns commitment/provenance/dispatch truth; SRE owns r
 
 Grounding rule: any product claim, plan, or implementation seam must name identity/current truth, a code owner, a proof surface, and the model-I/O path. If the relevant code was not read, say so before taking a position.
 
-Current train: `task-standard-sre-correspondence-reconciliation`. Next train: `codex-app-cli-task-standard-live-probe`. Shipping default: `openai.codex_app_cli`. Keep Cortex truth, brain-wiring truth, conformance truth, shipping truth, and live behavior-lift claims separate; structural proof alone does not earn model-output lift.
+Current train: `executive-roadmap-cleanup-and-branch-disposition`. Next train: `codex-app-cli-task-standard-live-probe`. Shipping default: `openai.codex_app_cli`. Keep Cortex truth, brain-wiring truth, conformance truth, shipping truth, and live behavior-lift claims separate; structural proof alone does not earn model-output lift.
 
 ## Live Product Truth
 
@@ -67,8 +67,8 @@ Current train: `task-standard-sre-correspondence-reconciliation`. Next train: `c
 
 ## Current Focus
 
-- Current tracked train: `task-standard-sre-correspondence-reconciliation`
-- Active quality/risk focus: The current focus reconciled task-standard spine correspondence: `TaskStandardSpine` is now named as the SRE `task_standard_spine` math-to-code object, packet law places task-local standard formation and maintenance under goal continuity / verification-fit rather than Core certification, AUX memory, or Codex-only adaptor law, and the model-visible output law distinguishes prospective task-set formation from prior-act self-correction. No product behavior or model-visible text changed; live behavior lift remains unearned.
+- Current tracked train: `executive-roadmap-cleanup-and-branch-disposition`
+- Active quality/risk focus: This hygiene seam retires the stale executive runtime roadmap as an active authority, keeps roadmap truth in internal/truth/cortex_status.json plus generated docs/CORTEX_STATUS.md, records a branch-disposition recon for the parked Claude Code Desktop lifecycle spine before retiring the branch, and disables the Codex App Mission Reflection Stop hook in root .codex/config.toml because the live Codex App UI can hide substantive answer text after hook repair loops. No Cortex product behavior, task-standard speech, selector law, or live behavior-lift claim changes.
 - Next product train after the current focus: `codex-app-cli-task-standard-live-probe`
 
 ## Bio-To-Code Matrix
@@ -224,7 +224,7 @@ Workflow gates marked `required` are contractual gates checked by `repo_workflow
 
 ## Research Lines Under Evaluation
 
-- `brain-capability-observation-and-inference` (deferred-by-executive-runtime-roadmap): This was the previous next product train: replace the static name-based brain capability registry with observed-performance accumulation. It is explicitly deferred, not erased, because the executive-runtime roadmap prioritizes runtime expectation debt and debt-drag before AUX-backed capability inference. Next step: Reconsider after runtime expectation debt and debt-drag into brake/route land and show whether capability inference remains the highest-leverage observed-performance seam.
+- `brain-capability-observation-and-inference` (deferred-by-current-task-standard-train): This was an earlier candidate train: replace the static name-based brain capability registry with observed-performance accumulation. It remains deferred, not erased, because current shipping-roadmap authority prioritizes task-standard formation, visible standard capture, and claim/evidence alignment before AUX-backed capability inference. Next step: Reconsider only after the task-standard live probe and follow-up behavior comparison show whether task-local standard formation needs capability inference as a high-leverage support input.
 
 ## Where To Work Next
 
@@ -296,7 +296,6 @@ Workflow gates marked `required` are contractual gates checked by `repo_workflow
 - `docs/README.md`
 - `docs/CORTEX.md`
 - `docs/CORTEX_EXECUTIVE_RUNTIME_TRACKER.md`
-- `docs/CORTEX_EXECUTIVE_RUNTIME_ROADMAP.md`
 - `docs/CORTEX_EXECUTIVE_RUNTIME_PROGRAM_SPEC.md`
 - `docs/CORTEX_EXECUTIVE_RUNTIME_PHASE_5_READINESS.md`
 - `docs/CORTEX_V2_CORE_2.md`
@@ -352,3 +351,4 @@ Workflow gates marked `required` are contractual gates checked by `repo_workflow
 - `docs/recon/cortex_codex_app_cli_value_ablation_audit.md`
 - `docs/recon/cortex_codex_app_cli_task_standard_spine.md`
 - `docs/recon/cortex_task_standard_sre_correspondence_reconciliation.md`
+- `docs/recon/claude_code_desktop_lifecycle_spine_branch_disposition.md`

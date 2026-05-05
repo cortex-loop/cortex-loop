@@ -1,14 +1,7 @@
 service_tier = "fast"
 
 [features]
-codex_hooks = true
-
-[[hooks.Stop]]
-[[hooks.Stop.hooks]]
-type = "command"
-command = 'python3 "$(git rev-parse --show-toplevel)/.codex/hooks/cortex_mission_reflection_stop_hook.py"'
-timeout = 120
-statusMessage = "Checking Cortex Mission Reflection"
+codex_hooks = false
 
 [agents]
 max_threads = 3

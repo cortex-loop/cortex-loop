@@ -301,7 +301,7 @@ state, read `internal/truth/cortex_status.json` directly.
 
 ### Current Train
 
-- Slug: `task-standard-sre-correspondence-reconciliation`
+- Slug: `executive-roadmap-cleanup-and-branch-disposition`
 
 ### Next Product Train
 
@@ -311,7 +311,7 @@ state, read `internal/truth/cortex_status.json` directly.
 
 ### Research Lines Under Evaluation
 
-- `brain-capability-observation-and-inference` (`deferred-by-executive-runtime-roadmap`) — This was the previous next product train: replace the static name-based brain capability registry with observed-performance accumulation. It is explicitly deferred, not erased, because the executive-runtime roadmap prioritizes runtime expectation debt and debt-drag before AUX-backed capability inference.
+- `brain-capability-observation-and-inference` (`deferred-by-current-task-standard-train`) — This was an earlier candidate train: replace the static name-based brain capability registry with observed-performance accumulation. It remains deferred, not erased, because current shipping-roadmap authority prioritizes task-standard formation, visible standard capture, and claim/evidence alignment before AUX-backed capability inference.
 
 ### Hosts and Shipping Defaults
 
@@ -353,7 +353,7 @@ This audit is structural evidence only. It separates Cortex's internal executive
 | Adapter | Lifecycle input | Enforcement | Proof |
 | --- | --- | --- | --- |
 | **Claude Code repo lifecycle adapter** | Stop hook reads `transcript_path` JSONL and extracts the latest assistant message. | `.claude/settings.json` runs `.claude/hooks/cortex_grid_stop_hook.py`; block decisions re-prompt Claude until the Cortex Mission Reflection graph validates; fail-open is limited to missing transcript, malformed hook input, or command crash. | `.claude/settings.json`, `.claude/hooks/cortex_grid_stop_hook.py`, `tests/internal/test_cortex_grid_stop_hook.py` |
-| **Codex App repo lifecycle adapter** | Stop hook receives `last_assistant_message` directly; project-local hooks require trusted `.codex/` config and `[features].codex_hooks = true`. | `.codex/config.toml` runs `.codex/hooks/cortex_mission_reflection_stop_hook.py`; `decision: block` asks Codex App to continue with corrective context; `codex-app-hook-health` proves structural config/script behavior, not live model-side product lift. | `.codex/config.toml`, `.codex/hooks/cortex_mission_reflection_stop_hook.py`, `tests/internal/test_codex_app_stop_hook.py` |
+| **Codex App repo lifecycle adapter** | Root Codex App Stop enforcement is disabled with `[features].codex_hooks = false`; direct hook-script validation still accepts `last_assistant_message` payloads, and current Codex App chats use explicit `grid-validate` fallback. | Disabled root config plus direct script simulation proves workflow policy and validator behavior, not live model-side product lift. | `.codex/config.toml`, `.codex/hooks/cortex_mission_reflection_stop_hook.py`, `tests/internal/test_codex_app_stop_hook.py` |
 
 ### Side A — Internal Executive Logic
 
@@ -472,7 +472,7 @@ at least three repo-grounded rows, and closeout mode requires every
 mission/reflection/evidence/decision row to be cited and at least 120
 characters. No separate closure section follows the grid.
 
-**Chat-boundary enforcement (Claude Code and Codex App).** A Stop hook at
+**Chat-boundary enforcement (Claude Code; Codex App fallback).** A Stop hook at
 `.claude/settings.json` runs `.claude/hooks/cortex_grid_stop_hook.py` on
 turn-completion. The hook reads the assistant's last message from the
 transcript, infers graph mode from the row set, runs the matching
@@ -486,19 +486,18 @@ fails open only on infrastructure failures (missing transcript, command
 crash). The hook and `grid-validate` both use
 `internal/workflow/mission_reflection.py` as the shared graph contract.
 
-Codex App for Mac has its own repo-local Stop hook because Codex exposes
-`last_assistant_message` directly rather than a Claude transcript path:
-`.codex/config.toml` enables `[features].codex_hooks = true`, and
-`.codex/hooks/cortex_mission_reflection_stop_hook.py` applies the same
-shared validator. Per the official Codex hook lifecycle, project-local
-hooks load only when the project `.codex/` layer is trusted.
-`codex-app-hook-health` simulates known-bad and valid Codex Stop
-payloads; if it fails, product work in Codex App must stop until the
-hook/config/runtime issue is fixed. This is structural lifecycle
-evidence, not live evidence that Cortex improved model output.
+Codex App for Mac has a repo-local Stop hook script because Codex exposes
+`last_assistant_message` directly rather than a Claude transcript path, but
+root `.codex/config.toml` now disables Codex hooks with
+`[features].codex_hooks = false`. The script remains available for direct
+structural validation; `codex-app-hook-health` verifies the disabled config
+policy plus known-bad and valid direct script payload behavior. Current Codex
+App chats use explicit `grid-validate` fallback so Stop repair loops do not
+hide substantive answer content before the final graph.
 
-**Codex fallback surfaces.** Codex surfaces that do not load repo-local
-hooks fall back to validator + doctrine: the agent runs
+**Codex fallback surfaces.** Codex surfaces that do not load repo-local hooks,
+including the current root Codex App config, fall back to validator + doctrine:
+the agent runs
 `python3 internal/workflow/repo_workflow.py grid-validate --mode <mode>`
 on the filled final graph, and non-no-op Codex closeouts record that pass
 in `mission_reflection_graph`. This is session-boundary evidence, not
@@ -521,10 +520,11 @@ not mission authority and not an architecture plan. Use it before making
 surface-selection claims so API control, CLI/app hooks, MCP support, and
 consumer-app gaps are not flattened into fake portability.
 `docs/recon/codex_app_hook_probe.md` is the paired empirical Codex App
-finding: on the tested Mac app version, a trusted project Stop hook loaded,
-fired, exposed `last_assistant_message`, and routed a `decision: "block"`
-reason into the model-visible continuation. That finding is Codex App only
-and must not be generalized to other surfaces without their own probes.
+finding from an earlier trusted-hook configuration: on the tested Mac app
+version, a project Stop hook loaded, fired, exposed `last_assistant_message`,
+and routed a `decision: "block"` reason into the model-visible continuation.
+That finding remains recon evidence only; current root config disables the
+repo Mission Reflection Stop hook by policy.
 `docs/recon/claude_code_desktop_pretooluse_probe.md` is the paired empirical
 Claude Code Desktop Code-tab finding: on the tested Mac app version,
 `PreToolUse` fired for Bash in the effective Claude-managed worktree and

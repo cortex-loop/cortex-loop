@@ -20,9 +20,6 @@ CORTEX_V2_SRE_PATH = REPO_ROOT / "docs" / "CORTEX_V2_SRE_2.md"
 EXECUTIVE_RUNTIME_TRACKER_PATH = (
     REPO_ROOT / "docs" / "CORTEX_EXECUTIVE_RUNTIME_TRACKER.md"
 )
-EXECUTIVE_RUNTIME_ROADMAP_PATH = (
-    REPO_ROOT / "docs" / "CORTEX_EXECUTIVE_RUNTIME_ROADMAP.md"
-)
 EXECUTIVE_RUNTIME_PROGRAM_SPEC_PATH = (
     REPO_ROOT / "docs" / "CORTEX_EXECUTIVE_RUNTIME_PROGRAM_SPEC.md"
 )
@@ -515,7 +512,8 @@ def test_executive_runtime_tracker_keeps_product_goal_and_live_truths_visible() 
     text = _read(EXECUTIVE_RUNTIME_TRACKER_PATH)
 
     assert EXECUTIVE_RUNTIME_TRACKER_PATH.exists()
-    assert "docs/CORTEX_EXECUTIVE_RUNTIME_ROADMAP.md" in text
+    assert "internal/truth/cortex_status.json" in text
+    assert "not a second roadmap or registry" in text
     assert "post-training runtime executive-function layer" in text
     assert "Cortex should shape the model's behavior at runtime" in text
     assert "Communication is only the model-visible edge of Cortex." in text
@@ -547,40 +545,8 @@ def test_executive_runtime_tracker_keeps_product_goal_and_live_truths_visible() 
     assert "If the answer starts with \"which hook can we use?\"" in text
 
 
-def test_executive_runtime_roadmap_names_path_from_now_to_goal() -> None:
-    text = _read(EXECUTIVE_RUNTIME_ROADMAP_PATH)
-
-    assert EXECUTIVE_RUNTIME_ROADMAP_PATH.exists()
-    assert "docs/CORTEX_EXECUTIVE_RUNTIME_PROGRAM_SPEC.md" in text
-    assert "Point B: Product Goal" in text
-    assert "Point A: Current State" in text
-    assert "runtime executive-function layer for models" in text
-    assert "Cortex should shape the model's behavior at runtime" in text
-    assert "Model/host event happens" in text
-    assert "Phase 1: Runtime Expectation Debt" in text
-    assert "Phase 2: Debt Drag Into Brake And Route" in text
-    assert "Phase 3: Grounded Intervention Records" in text
-    assert "Phase 4: Claude Code Host Adapter From Runtime Law" in text
-    assert "Phase 5: AUX As Hidden Executive Bias" in text
-    assert "Phase 6: Cross-Host Graduation" in text
-    assert "Twelve-Seam Execution Contract" in text
-    assert "When the user asks to \"plan the next seam from 1 to 12,\" use this list." in text
-    assert "| 12 | Shipping decision and goal audit |" in text
-    assert "Cortex demonstrably makes model behavior more continuous" in text
-    assert "The plan reaches the goal only if seam 12 passes its audit." in text
-    assert "The next seam after debt-to-route/brake coupling is seam 5" in text
-    assert "silent-control live probe on the OpenAI Codex App/CLI" in text
-    assert "resolution_deficit" in text
-    assert "expectation ledger" in text
-    assert "not a Claude hook plugin" in text
-    assert "communication is not the whole" in text
-    assert "no outside reviewer" in text
-    assert "no third-agent \"Cortex says\" voice" in text
-    assert "executive constraint explicit inside the model's own task frame" in text
-    assert "attached-context surfaces use impersonal executive-constraint" in text
-    assert "no AUX, no model-visible text" in text
-    assert "shipping truth" in text
-    assert "What baseline failure must reproduce?" in text
+def test_retired_executive_runtime_roadmap_is_not_active_authority() -> None:
+    assert not (REPO_ROOT / "docs" / "CORTEX_EXECUTIVE_RUNTIME_ROADMAP.md").exists()
 
 
 def test_executive_runtime_program_spec_defines_control_objects_and_falsification() -> None:
@@ -696,8 +662,8 @@ def test_v2_model_io_analysis_is_two_sided_and_synthesized() -> None:
     assert {"claude_code", "codex_app"} <= set(lifecycle)
     assert "transcript_path" in lifecycle["claude_code"]["lifecycle_input"]
     assert "last_assistant_message" in lifecycle["codex_app"]["lifecycle_input"]
-    assert "[features].codex_hooks = true" in lifecycle["codex_app"]["lifecycle_input"]
-    assert "trusted `.codex/`" in lifecycle["codex_app"]["lifecycle_input"]
+    assert "[features].codex_hooks = false" in lifecycle["codex_app"]["lifecycle_input"]
+    assert "explicit `grid-validate` fallback" in lifecycle["codex_app"]["lifecycle_input"]
     assert "not live model-side product lift" in lifecycle["codex_app"]["enforcement"]
 
     side_a = {entry["id"]: entry for entry in audit["side_a_internal_logic"]}
@@ -750,7 +716,7 @@ def test_public_docs_point_to_status_and_keep_archive_out_of_the_front_door() ->
     assert "docs/CORTEX.md" in readme
     assert "Current Status" in docs_index
     assert "CORTEX_EXECUTIVE_RUNTIME_TRACKER.md" in docs_index
-    assert "CORTEX_EXECUTIVE_RUNTIME_ROADMAP.md" in docs_index
+    assert "CORTEX_EXECUTIVE_RUNTIME_ROADMAP.md" not in docs_index
     assert "CORTEX_EXECUTIVE_RUNTIME_PROGRAM_SPEC.md" in docs_index
     assert "CORTEX_EXECUTIVE_RUNTIME_PHASE_5_READINESS.md" in docs_index
     assert "archive/" in docs_index
@@ -812,7 +778,7 @@ def test_public_docs_point_to_status_and_keep_archive_out_of_the_front_door() ->
     assert "BASELINE_SHAPED_EXAMPLES.md" in cortex_doc
     assert "CROSS_HOST_SKETCH.md" in cortex_doc
     assert "lifecycle-first surface reconnaissance" in cortex_doc.lower()
-    assert "trusted project Stop hook loaded" in cortex_doc
+    assert "Root Codex App Stop enforcement is disabled" in cortex_doc
     assert "PreToolUse` fired for Bash" in cortex_doc
     assert "user-scope plugin" in cortex_doc
     assert "Gate 1 failed" in cortex_doc
@@ -833,9 +799,9 @@ def test_public_docs_point_to_status_and_keep_archive_out_of_the_front_door() ->
     assert "codex-app-hook-health" in workflow
     assert ".codex/hooks/cortex_mission_reflection_stop_hook.py" in workflow
     assert "last_assistant_message" in workflow
-    assert "[features].codex_hooks = true" in workflow
-    assert "`.codex/` layer is trusted" in workflow
-    assert "structural lifecycle" in workflow
+    assert "[features].codex_hooks = false" in workflow
+    assert "disabled by repo policy" in workflow
+    assert "structural workflow" in workflow
     assert "Goals Analysis" not in workflow
     for text in (readme, docs_index, cortex_doc):
         assert "CORTEX_V2_ACTIVE_WORKSTREAM" not in text
@@ -936,6 +902,7 @@ def test_docs_directory_only_exposes_archive_and_workflow_subtrees() -> None:
         "claude_code_cortex_runtime_context_connectivity_probe.md",
         "claude_code_cortex_stop_closure_connectivity_probe.md",
         "claude_code_cortex_userpromptsubmit_verified_work_probe.md",
+        "claude_code_desktop_lifecycle_spine_branch_disposition.md",
         "claude_code_desktop_pretooluse_probe.md",
         "claude_code_user_scope_plugin_managed_worktree_probe.md",
         "claude_code_user_scope_plugin_pretooluse_probe.md",
@@ -1789,7 +1756,7 @@ def test_openai_operator_output_quality_fixture_refresh_records_hard_fixture() -
         "docs/recon/cortex_openai_operator_output_quality_fixture_refresh.md"
         in status["active_docs"]
     )
-    assert status["work_today"]["slug"] == "task-standard-sre-correspondence-reconciliation"
+    assert status["work_today"]["slug"] == "executive-roadmap-cleanup-and-branch-disposition"
 
 
 def test_openai_operator_verification_debt_continuation_records_gate0_truth() -> None:
@@ -1815,7 +1782,7 @@ def test_openai_operator_verification_debt_continuation_records_gate0_truth() ->
         "docs/recon/cortex_openai_operator_verification_debt_continuation.md"
         in status["active_docs"]
     )
-    assert status["work_today"]["slug"] == "task-standard-sre-correspondence-reconciliation"
+    assert status["work_today"]["slug"] == "executive-roadmap-cleanup-and-branch-disposition"
     assert status["next_product_train"]["slug"] == "codex-app-cli-task-standard-live-probe"
 
 
@@ -1841,7 +1808,7 @@ def test_openai_operator_visible_intervention_live_probe_records_scoped_success(
         "docs/recon/cortex_openai_operator_visible_intervention_live_probe.md"
         in status["active_docs"]
     )
-    assert status["work_today"]["slug"] == "task-standard-sre-correspondence-reconciliation"
+    assert status["work_today"]["slug"] == "executive-roadmap-cleanup-and-branch-disposition"
     assert status["next_product_train"]["slug"] == "codex-app-cli-task-standard-live-probe"
 
 
@@ -1866,7 +1833,7 @@ def test_visible_intervention_product_perception_hardening_records_structural_ga
         "docs/recon/cortex_visible_intervention_product_perception_hardening.md"
         in status["active_docs"]
     )
-    assert status["work_today"]["slug"] == "task-standard-sre-correspondence-reconciliation"
+    assert status["work_today"]["slug"] == "executive-roadmap-cleanup-and-branch-disposition"
     assert status["next_product_train"]["slug"] == "codex-app-cli-task-standard-live-probe"
 
 
@@ -1890,7 +1857,7 @@ def test_openai_operator_visible_intervention_hardened_rerun_records_failure() -
         "docs/recon/cortex_openai_operator_visible_intervention_hardened_rerun.md"
         in status["active_docs"]
     )
-    assert status["work_today"]["slug"] == "task-standard-sre-correspondence-reconciliation"
+    assert status["work_today"]["slug"] == "executive-roadmap-cleanup-and-branch-disposition"
     assert status["next_product_train"]["slug"] == "codex-app-cli-task-standard-live-probe"
 
 
@@ -1914,7 +1881,7 @@ def test_codex_app_cli_stop_activation_probe_records_structural_gate0() -> None:
         "docs/recon/cortex_codex_app_cli_hook_native_stop_activation_probe.md"
         in status["active_docs"]
     )
-    assert status["work_today"]["slug"] == "task-standard-sre-correspondence-reconciliation"
+    assert status["work_today"]["slug"] == "executive-roadmap-cleanup-and-branch-disposition"
     assert status["next_product_train"]["slug"] == "codex-app-cli-task-standard-live-probe"
 
 
@@ -1939,7 +1906,7 @@ def test_codex_app_cli_stop_live_canary_records_actuator_proof() -> None:
         "docs/recon/cortex_codex_app_cli_hook_native_stop_live_canary.md"
         in status["active_docs"]
     )
-    assert status["work_today"]["slug"] == "task-standard-sre-correspondence-reconciliation"
+    assert status["work_today"]["slug"] == "executive-roadmap-cleanup-and-branch-disposition"
 
 
 def test_codex_app_cli_product_perception_loop_records_structural_gate0() -> None:
@@ -2003,7 +1970,7 @@ def test_codex_app_cli_product_event_capture_remediation_records_live_pass() -> 
         in status["active_docs"]
     )
     assert status["work_today"]["slug"] == (
-        "task-standard-sre-correspondence-reconciliation"
+        "executive-roadmap-cleanup-and-branch-disposition"
     )
     assert status["next_product_train"]["slug"] == (
         "codex-app-cli-task-standard-live-probe"
@@ -2030,7 +1997,7 @@ def test_codex_app_cli_stop_continuation_resolution_loop_records_live_pass() -> 
         in status["active_docs"]
     )
     assert status["work_today"]["slug"] == (
-        "task-standard-sre-correspondence-reconciliation"
+        "executive-roadmap-cleanup-and-branch-disposition"
     )
     assert status["next_product_train"]["slug"] == (
         "codex-app-cli-task-standard-live-probe"
@@ -2059,7 +2026,7 @@ def test_codex_app_cli_hook_native_behavior_comparison_records_live_baseline_gat
         in status["active_docs"]
     )
     assert status["work_today"]["slug"] == (
-        "task-standard-sre-correspondence-reconciliation"
+        "executive-roadmap-cleanup-and-branch-disposition"
     )
     assert status["next_product_train"]["slug"] == (
         "codex-app-cli-task-standard-live-probe"
@@ -2087,7 +2054,7 @@ def test_codex_app_cli_astro_three_arm_fixture_refresh_records_mixed_signal() ->
         "docs/recon/cortex_codex_app_cli_astro_three_arm_fixture_refresh.md"
         in status["active_docs"]
     )
-    assert status["work_today"]["slug"] == "task-standard-sre-correspondence-reconciliation"
+    assert status["work_today"]["slug"] == "executive-roadmap-cleanup-and-branch-disposition"
     assert status["next_product_train"]["slug"] == (
         "codex-app-cli-task-standard-live-probe"
     )
@@ -2115,7 +2082,7 @@ def test_codex_app_cli_value_ablation_audit_records_requirement_perception_decis
         "docs/recon/cortex_codex_app_cli_value_ablation_audit.md"
         in status["active_docs"]
     )
-    assert status["work_today"]["slug"] == "task-standard-sre-correspondence-reconciliation"
+    assert status["work_today"]["slug"] == "executive-roadmap-cleanup-and-branch-disposition"
     assert status["next_product_train"]["slug"] == "codex-app-cli-task-standard-live-probe"
 
 
@@ -2141,7 +2108,7 @@ def test_codex_app_cli_task_standard_spine_records_structural_product_spine() ->
         "docs/recon/cortex_codex_app_cli_task_standard_spine.md"
         in status["active_docs"]
     )
-    assert status["work_today"]["slug"] == "task-standard-sre-correspondence-reconciliation"
+    assert status["work_today"]["slug"] == "executive-roadmap-cleanup-and-branch-disposition"
     assert status["next_product_train"]["slug"] == (
         "codex-app-cli-task-standard-live-probe"
     )
@@ -2503,14 +2470,12 @@ def test_status_registry_is_complete_and_stable() -> None:
         assert {"slug", "stage", "summary", "next_step"} <= set(entry)
         assert entry["slug"] != status["work_today"]["slug"]
     assert entry["slug"] != status["next_product_train"]["slug"]
-    assert status["work_today"]["slug"] == "task-standard-sre-correspondence-reconciliation"
+    assert status["work_today"]["slug"] == "executive-roadmap-cleanup-and-branch-disposition"
     work_note = status["work_today"]["note"].lower()
-    assert "taskstandardspine" in work_note
-    assert "task_standard_spine" in work_note
-    assert "goal continuity / verification-fit" in work_note
-    assert "core certification" in work_note
-    assert "codex-only adaptor law" in work_note
-    assert "live behavior lift remains unearned" in work_note
+    assert "retires the stale executive runtime roadmap" in work_note
+    assert "branch-disposition recon" in work_note
+    assert "disables the codex app mission reflection stop hook" in work_note
+    assert "no cortex product behavior" in work_note
     assert status["next_product_train"]["slug"] == "codex-app-cli-task-standard-live-probe"
     assert "product" == status["next_product_train"]["surface"]
     assert "approved task-standard userpromptsubmit text" in status["next_product_train"][
@@ -2547,7 +2512,7 @@ def test_status_registry_is_complete_and_stable() -> None:
     assert "brain-capability-observation-and-inference" in deferred_lines
     assert (
         deferred_lines["brain-capability-observation-and-inference"]["stage"]
-        == "deferred-by-executive-runtime-roadmap"
+        == "deferred-by-current-task-standard-train"
     )
     assert "openai.codex_app_cli" in status["where_to_work"][0]
     assert "codex_exec_wrapper_resume" in status["where_to_work"][0]
@@ -2627,10 +2592,10 @@ def test_generated_status_doc_includes_system_map_and_next_product_train() -> No
     assert "## Next Product Train" in text
     assert "## Research Lines Under Evaluation" in text
     assert "host/tool reliability and affordance priors are earned" in text
-    assert "`task-standard-sre-correspondence-reconciliation`" in text
+    assert "`executive-roadmap-cleanup-and-branch-disposition`" in text
     assert "- Next product train after the current focus: `codex-app-cli-task-standard-live-probe`" in text
     assert "- Train: `codex-app-cli-task-standard-live-probe`" in text
-    assert "`brain-capability-observation-and-inference` (deferred-by-executive-runtime-roadmap)" in text
+    assert "`brain-capability-observation-and-inference` (deferred-by-current-task-standard-train)" in text
     assert "resume_verification" in text.lower()
     assert "hidden verifier" in text.lower()
     assert "due product-runtime expectation record" in text.lower()

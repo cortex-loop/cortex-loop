@@ -372,8 +372,8 @@ rules into `τ`.
   {
     "id": "codex_app",
     "adapter": "Codex App repo lifecycle adapter",
-    "lifecycle_input": "Stop hook receives `last_assistant_message` directly; project-local hooks require trusted `.codex/` config and `[features].codex_hooks = true`.",
-    "enforcement": "`.codex/config.toml` runs `.codex/hooks/cortex_mission_reflection_stop_hook.py`; `decision: block` asks Codex App to continue with corrective context; `codex-app-hook-health` proves structural config/script behavior, not live model-side product lift.",
+    "lifecycle_input": "Root Codex App Stop enforcement is disabled with `[features].codex_hooks = false`; direct hook-script validation still accepts `last_assistant_message` payloads, and current Codex App chats use explicit `grid-validate` fallback.",
+    "enforcement": "Disabled root config plus direct script simulation proves workflow policy and validator behavior, not live model-side product lift.",
     "proof_refs": [
       ".codex/config.toml",
       ".codex/hooks/cortex_mission_reflection_stop_hook.py",

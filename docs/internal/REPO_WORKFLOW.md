@@ -205,28 +205,28 @@ mode is the strict legacy contract and remains required for managed session
 closure.
 
 Claude Code chat-boundary enforcement lives in `.claude/settings.json` and
-`.claude/hooks/cortex_grid_stop_hook.py`. Codex App chat-boundary enforcement
-lives in `.codex/config.toml` with `[features].codex_hooks = true` and
-`.codex/hooks/cortex_mission_reflection_stop_hook.py`; Codex supplies
-`last_assistant_message`, and repo-local hooks require a trusted `.codex/`
-project layer. In other words, the `.codex/` layer is trusted before the hook
-can act as a chat-boundary gate. Both hooks share
-`internal/workflow/mission_reflection.py` and the documentation in
-`docs/internal/MISSION_REFLECTION_CONTRACT.md`.
+`.claude/hooks/cortex_grid_stop_hook.py`. Codex App chat-boundary enforcement is
+disabled by repo policy in root `.codex/config.toml` with `[features].codex_hooks = false`
+because live Stop repair loops can hide substantive answer content before the
+final Mission Reflection graph. The Codex App hook script remains at
+`.codex/hooks/cortex_mission_reflection_stop_hook.py` for direct structural
+validation against simulated `last_assistant_message` payloads, but Codex App
+chats use explicit `grid-validate` fallback rather than repo-local Stop
+enforcement.
 
-Verify Codex App hook config and behavior with:
+Verify the disabled Codex App policy and direct hook-script behavior with:
 
 ```bash
 python internal/workflow/repo_workflow.py codex-app-hook-health
 ```
 
 If this fails, do not start Cortex product work in Codex App until the
-hook/config/runtime issue is fixed. This is structural lifecycle
-evidence only; it proves config/script behavior and simulated Stop
-payload handling, not that Cortex has improved model output.
+config/script/runtime issue is fixed. This is structural workflow evidence
+only; it proves disabled-config policy and direct simulated Stop payload
+handling, not that Cortex has improved model output.
 
-Codex fallback surfaces that do not load repo-local hooks still validate the
-filled final graph with `grid-validate` and record it in
+Codex fallback surfaces, including the current root Codex App config, validate
+the filled final graph with `grid-validate` and record it in
 `mission_reflection_graph`. This fallback is session-boundary evidence, not
 chat-boundary parity.
 
