@@ -160,6 +160,10 @@ Active docs:
   structural calibration evidence that captured task standards can block
   premature Stop closure while clean readback evidence stays silent, with the
   latest live capture replay no longer overblocking
+- [Cortex Codex App/CLI Task-Standard Stop-Gating Live Run](recon/cortex_codex_app_cli_task_standard_stop_gating_live_run.md) —
+  live Codex CLI evidence that captured task standards can drive an existing
+  Stop block, the model can run stronger aligned continuation checks, and final
+  Stop can resolve silently without claiming behavior lift
 - [Claude Code Desktop Lifecycle Spine Branch Disposition](recon/claude_code_desktop_lifecycle_spine_branch_disposition.md) —
   branch-hygiene disposition preserving the parked Claude lifecycle spine head
   before retiring the stale managed branch
