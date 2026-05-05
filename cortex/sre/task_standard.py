@@ -289,7 +289,7 @@ def initialize_task_standard_spine(
     *,
     event_ref: str,
 ) -> TaskStandardSpine:
-    """Extract visible task obligations from a UserPromptSubmit payload."""
+    """Extract visible task obligations from host-supplied prompt text."""
 
     if not isinstance(event_ref, str) or not event_ref.strip():
         raise ValueError("initialize_task_standard_spine.event_ref must be non-empty.")
@@ -456,15 +456,14 @@ def record_closure_claims(
     )
 
 
-def hidden_verifier_terms() -> tuple[str, ...]:
-    """Strings that are never semantic inputs to the product spine."""
+def external_scoring_boundary_terms() -> tuple[str, ...]:
+    """External scoring markers that are never semantic product inputs."""
 
     return (
-        "test-hidden",
         "hidden verifier",
         "hidden_quality",
+        "test-hidden",
         "verifier_only",
-        "scripts/test-hidden.mjs",
     )
 
 
@@ -535,7 +534,7 @@ def _parse_standard_block(
 def _visible_obligation_phrases(prompt_text: str | None) -> tuple[str, ...]:
     if not isinstance(prompt_text, str) or not prompt_text.strip():
         return ()
-    text = _strip_hidden_terms(prompt_text)
+    text = _strip_external_scoring_boundary_terms(prompt_text)
     text = re.sub(r"\s+", " ", text).strip()
     candidates = re.split(r"(?:[.;!?]|\n|\band\b|\bthen\b)", text)
     phrases: list[str] = []
@@ -681,7 +680,7 @@ def _normalize_label(text: str) -> str:
 
 
 def _normalize_text(text: str) -> str:
-    text = _strip_hidden_terms(text)
+    text = _strip_external_scoring_boundary_terms(text)
     text = re.sub(r"[^a-z0-9_./-]+", " ", text.lower())
     return f" {re.sub(r'\\s+', ' ', text).strip()} "
 
@@ -727,12 +726,18 @@ def _meaningful_tokens(text: str) -> tuple[str, ...]:
     return tuple(tokens)
 
 
-def _strip_hidden_terms(text: str) -> str:
+def _strip_external_scoring_boundary_terms(text: str) -> str:
     if not isinstance(text, str):
         return ""
     cleaned = text
-    for term in hidden_verifier_terms():
+    for term in external_scoring_boundary_terms():
         cleaned = re.sub(re.escape(term), "", cleaned, flags=re.IGNORECASE)
+    cleaned = re.sub(
+        r"\b[a-z0-9_./-]*(?:hidden_quality|test-hidden|verifier_only)[a-z0-9_./-]*\b",
+        "",
+        cleaned,
+        flags=re.IGNORECASE,
+    )
     return cleaned
 
 
@@ -741,7 +746,7 @@ def _compact(text: str) -> str:
 
 
 def _excerpt(text: str) -> str | None:
-    compact = _compact(_strip_hidden_terms(text))
+    compact = _compact(_strip_external_scoring_boundary_terms(text))
     return compact[:240] if compact else None
 
 
@@ -787,7 +792,7 @@ __all__ = [
     "TaskStandardItem",
     "TaskStandardItemKind",
     "TaskStandardSpine",
-    "hidden_verifier_terms",
+    "external_scoring_boundary_terms",
     "initialize_task_standard_spine",
     "record_closure_claims",
     "record_task_standard_evidence",

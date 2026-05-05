@@ -7,7 +7,7 @@ from cortex.sre.task_standard import (
     TASK_STANDARD_FORMATION_TEXT,
     TaskStandardEvidenceClass,
     TaskStandardSpine,
-    hidden_verifier_terms,
+    external_scoring_boundary_terms,
     initialize_task_standard_spine,
     record_closure_claims,
     record_task_standard_evidence,
@@ -162,7 +162,7 @@ def test_likely_miss_explicit_claim_still_requires_evidence() -> None:
     )
 
 
-def test_hidden_verifier_terms_are_stripped_from_product_state() -> None:
+def test_external_scoring_boundary_terms_are_stripped_from_product_state() -> None:
     spine = initialize_task_standard_spine(
         "Build the site and do not use scripts/test-hidden.mjs or hidden_quality facts.",
         event_ref="event:prompt",
@@ -175,5 +175,6 @@ def test_hidden_verifier_terms_are_stripped_from_product_state() -> None:
     )
     payload_text = str(spine.as_payload()) + str(evidence.as_payload())
 
-    for term in hidden_verifier_terms():
+    for term in external_scoring_boundary_terms():
         assert term not in payload_text
+    assert "scripts/test-hidden.mjs" not in payload_text
