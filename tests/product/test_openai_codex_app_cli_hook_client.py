@@ -13,6 +13,7 @@ from cortex.hosts.openai.codex_app_cli_hook_client import (
     run_hook_client,
     runtime_snapshot_from_payload,
 )
+from cortex.sre.task_standard import TASK_STANDARD_FORMATION_TEXT
 
 
 OVERDUE_VERIFICATION_IDENTITY_TEXT = (
@@ -119,6 +120,78 @@ def test_stop_without_snapshot_uses_product_perception_state(tmp_path: Path) -> 
             "perception_source"
         ]
         == "product_runtime_expectation"
+    )
+
+
+def test_user_prompt_submit_task_standard_text_requires_explicit_flag(
+    tmp_path: Path,
+) -> None:
+    state_root = tmp_path / "state"
+    stdout = io.StringIO()
+    stderr = io.StringIO()
+
+    exit_code = run_hook_client(
+        argv=[
+            "--state-root",
+            str(state_root),
+            "--enable-task-standard-text",
+        ],
+        stdin=io.StringIO(
+            json.dumps(
+                _stop_payload(
+                    hook_event_name="UserPromptSubmit",
+                    prompt="Build a docs site with search.",
+                )
+            )
+        ),
+        stdout=stdout,
+        stderr=stderr,
+    )
+
+    assert exit_code == 0
+    assert stdout.getvalue() == json.dumps(
+        {"context": TASK_STANDARD_FORMATION_TEXT},
+        separators=(",", ":"),
+    ) + "\n"
+    assert stderr.getvalue() == ""
+
+
+def test_task_standard_text_is_suppressed_in_silent_arm(tmp_path: Path) -> None:
+    diagnostics_path = tmp_path / "diagnostics.jsonl"
+    stdout = io.StringIO()
+    stderr = io.StringIO()
+
+    exit_code = run_hook_client(
+        argv=[
+            "--state-root",
+            str(tmp_path / "state"),
+            "--diagnostics-path",
+            str(diagnostics_path),
+            "--enable-task-standard-text",
+            "--disable-model-visible-blocks",
+        ],
+        stdin=io.StringIO(
+            json.dumps(
+                _stop_payload(
+                    hook_event_name="UserPromptSubmit",
+                    prompt="Build a docs site with search.",
+                )
+            )
+        ),
+        stdout=stdout,
+        stderr=stderr,
+    )
+
+    assert exit_code == 0
+    assert stdout.getvalue() == ""
+    assert stderr.getvalue() == ""
+    row = _only_jsonl_row(diagnostics_path)
+    assert row["stdout_payload"] is None
+    assert row["suppressed_stdout_payload"] == {
+        "context": TASK_STANDARD_FORMATION_TEXT
+    }
+    assert row["suppressed_rendered_text_hash"] == (
+        codex_app_cli_hook_client._hash_text(TASK_STANDARD_FORMATION_TEXT)
     )
 
 

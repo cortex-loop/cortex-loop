@@ -300,13 +300,13 @@ state, read `internal/truth/cortex_status.json` directly.
 
 ### Current Train
 
-- Slug: `codex-app-cli-cortex-value-ablation-audit`
+- Slug: `codex-app-cli-task-standard-spine`
 
 ### Next Product Train
 
-- Slug: `codex-app-cli-requirement-level-perception`
+- Slug: `codex-app-cli-task-standard-live-probe`
 - Surface: `product`
-- Why now: The value-ablation audit found threshold tuning non-causal, broad paydown tightening too blunt, and visible claim/evidence gaps detectable enough to justify requirement-level perception before fixture remediation or text tuning.
+- Why now: The task-standard spine landed structurally, but live product value now depends on proving Codex App/CLI can carry the approved standard-formation text and expose the model's standard before any behavior-lift comparison.
 
 ### Research Lines Under Evaluation
 
@@ -332,6 +332,7 @@ state, read `internal/truth/cortex_status.json` directly.
 - The Codex App/CLI Stop continuation-resolution loop then closed the product-visible repair cycle on a live Codex CLI subject: after first Stop opened a due verification expectation and emitted the locked product-rendered block text, continuation PostToolUse evidence paid down the same active expectation, and the final stop_hook_active Stop stayed silent with `pressure_below_visible_threshold`, no active expectation IDs, one resolved expectation ID, no runtime snapshot, no non-Stop stdout, unchanged root guardrails, and rendered text hash `a384c80463a98828df0de20d5aa2baafda8bb4fa023bd062c2a17e03e7fc04fc`. This is live continuation state-accountability evidence only; behavior lift remains unearned. The hook-native behavior-comparison seam then added a dedicated paired comparison harness and a `--disable-model-visible-blocks` hook-client mode so the silent-only arm keeps product lifecycle perception active while suppressing Stop block JSON. Gate 0 passed with matching prompt hash, workspace seed hash, model, and task family across silent-only and hook-native arms, no runtime snapshot, unchanged root guardrails, exact product-rendered block emission in the hook-native arm, and exact suppressed block diagnostics in the silent arm. The approved live behavior-comparison baseline gate then ran and produced `baseline_not_reproduced`: truth-gap reproduced 0/3 baseline failures, output-quality reproduced 1/3, no active family entered paired comparison, and no clean controls ran. This is fixture-strength evidence only, not Cortex success or failure; the next product train is fixture refresh before another lift claim.
 - The Astro three-arm fixture refresh repaired hidden-verifier leakage by stripping verifier-only files and hidden npm scripts from subject workspaces, running hidden scoring only from an evaluator overlay, and adding a raw Codex arm with no `.codex` config or Cortex state. The completed live run under `.cortex/live_validation/openai/codex_app_cli_hook_native_behavior_comparison/astro_three_arm_live_20260505T033207Z` produced `mixed_signal`: raw Codex passed hidden quality 2/5, silent perception 1/5, hook-native Cortex 2/5, all with 0 model-visible Stop blocks, 0 rendered texts, 0 hidden-verifier probe attempts, 0 subject verifier leaks, 0 timeouts, and unchanged root guardrails. This is fixture-repair and live no-speech-lift evidence only.
 - The Codex App/CLI value-ablation audit replayed the Astro, continuation-resolution, behavior-comparison, and hardened visible-intervention evidence without changing product policy. It found threshold tuning non-causal because all final Astro Stop rows had pressure 0.0 and resolved verification expectations; strict paydown ablation would catch 3 hidden failures but overblock 2 passing traces; visible claim/evidence alignment exposed enough product-visible mismatch to queue requirement-level perception before fixture remediation, text tuning, or broad paydown tightening.
+- The Codex App/CLI task-standard spine then added product state for visible task obligations, the model's compact Work standard / Likely misses / Closure evidence block, aligned evidence refs, final closure claims, and unmatched standard items. The only new model-visible text is the exact signed-off UserPromptSubmit standard-formation prompt, gated by `--enable-task-standard-text`; existing Stop threshold text remains unchanged. Structural tests prove generic checks no longer pay down standard items when a standard exists, aligned evidence can pay down matching standard items, hidden verifier terms stay out of product state, and silent arms suppress the new text. Offline Astro replay caught 3 hidden-failing traces but also flagged 2 hidden-passing overblock risks because the old traces lacked real model-derived standards, so no behavior lift is claimed.
 <!-- END GENERATED: current-state-and-strategy -->
 
 ### V2 Model-I/O Analysis

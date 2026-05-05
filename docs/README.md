@@ -120,5 +120,8 @@ Active docs:
   offline audit evidence that the Astro failure is not threshold-caused and
   next needs product-visible claim/evidence perception rather than fixture or
   text remediation
+- [Cortex Codex App/CLI Task Standard Spine](recon/cortex_codex_app_cli_task_standard_spine.md) —
+  structural product evidence for task-standard formation/tracking, with the
+  exact signed-off UserPromptSubmit text gated and live behavior lift unearned
 
 Historical runtime, lab, and governance material now lives under [archive/](archive/).
