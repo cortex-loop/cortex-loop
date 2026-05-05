@@ -131,6 +131,10 @@ Active docs:
 - [Cortex Codex App/CLI Task-Standard Live Probe](recon/cortex_codex_app_cli_task_standard_live_probe.md) —
   structural Gate 0 evidence for signed-off task-standard context delivery and
   standard capture before an explicitly approved live run
+- [Cortex Codex App/CLI Task-Standard Live Run](recon/cortex_codex_app_cli_task_standard_live_run.md) —
+  live Codex CLI evidence that the signed context payload was emitted, but the
+  model did not produce a prework task-standard block and existing Stop
+  verification text fired
 - [Claude Code Desktop Lifecycle Spine Branch Disposition](recon/claude_code_desktop_lifecycle_spine_branch_disposition.md) —
   branch-hygiene disposition preserving the parked Claude lifecycle spine head
   before retiring the stale managed branch
