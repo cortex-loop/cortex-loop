@@ -325,13 +325,13 @@ state, read `internal/truth/cortex_status.json` directly.
 
 ### Current Train
 
-- Slug: `codex-app-cli-task-standard-pretool-transcript-capture`
+- Slug: `codex-app-cli-task-standard-live-capture-rerun`
 
 ### Next Product Train
 
-- Slug: `codex-app-cli-task-standard-live-capture-rerun`
+- Slug: `codex-app-cli-task-standard-stop-gating-live-probe`
 - Surface: `product`
-- Why now: Gate 0 and no-spend replay prove the prior live transcript shape is now ingestible, but shipping/product truth still needs a fresh live rerun before standard-to-gating integration can be claimed or queued.
+- Why now: Fresh live evidence now proves context delivery, model assimilation, and TaskStandardSpine capture before tool evidence. The remaining product question before behavior comparison is whether that captured state can drive a model-visible closure intervention without overclaiming lift.
 
 ### Research Lines Under Evaluation
 
@@ -366,6 +366,7 @@ state, read `internal/truth/cortex_status.json` directly.
 - The Codex App/CLI task-standard context live rerun then produced `partial_delivery_only`: the isolated Codex CLI subject emitted Codex-native UserPromptSubmit `hookSpecificOutput.additionalContext` with signed context hash `9021a0efef77eb6371eecf4996332d7fce31febae8462decf10b48056f6cf1a9`, the model produced the requested Work standard / Likely misses / Closure evidence block before the first command in the Codex JSON stream and session transcript, root config stayed unchanged, no runtime snapshot loaded, and `--disable-stop-blocks` suppressed Stop stdout. Cortex still captured 0 standard items because the product coordinator only parses assistant standard text from Stop `last_assistant_message`, not from the pre-tool transcript path. This earns live context assimilation and capture-boundary evidence only; no task-standard state capture, gating integration, or behavior lift is claimed.
 - The Codex App/CLI communication-boundary audit then classified the recent trickle failures as a localized product proof-quality issue rather than SRE doctrine failure. It records five failure classes: host-contract mismatch, lifecycle-config mismatch, temporal capture mismatch, live-vs-Gate-0 mismatch, and workflow-health/closeout coupling. The task-standard evidence ladder now distinguishes host stdout, host-attached context, model assimilation, state capture, gate use, and behavior-lift permission; task-standard reports separate mechanical success from product-evidence success and mark `partial_delivery_only` as partial evidence only.
 - The Codex App/CLI task-standard PreTool transcript-capture seam then repaired the live capture boundary without changing signed text, Stop text, SRE law, selector thresholds, root hook config, or behavior claims: the OpenAI Codex coordinator now reads product-visible `transcript_path` on PreToolUse with PostToolUse fallback, extracts assistant-authored `Work standard` / `Likely misses` / `Closure evidence` blocks before the first function/tool call, ignores developer context, user text, tool calls, tool outputs, hidden verifier data, and task identity, and stores the first valid block through `TaskStandardSpine`. Gate 0 now requires live-equivalent pre-tool transcript capture before tool evidence scoring, and the no-spend replay against `.cortex/live_validation/openai/codex_app_cli_task_standard_live_probe/run_20260505T195300Z` captured three standard items with state capture observed while gate use and behavior-lift permission remain false. This earns state-capture structural/replay proof only; a fresh live capture rerun and standard-to-gating integration remain unearned.
+- The approved Codex App/CLI task-standard live capture rerun then produced `pass_prework_standard_capture`: the isolated Codex CLI subject emitted the signed UserPromptSubmit context through Codex-native additionalContext with hash `9021a0efef77eb6371eecf4996332d7fce31febae8462decf10b48056f6cf1a9`, the model wrote a Work standard / Likely misses / Closure evidence block before tool execution, and Cortex captured three assistant-authored standard items from product-visible transcript_path on the PreToolUse row before PostToolUse evidence scoring. The boundary ladder is true through state capture and false for gate use and behavior-lift permission; Stop blocks were disabled for the capture probe, root config stayed unchanged, no runtime snapshot loaded, and no unexpected model-visible text appeared.
 <!-- END GENERATED: current-state-and-strategy -->
 
 ### V2 Model-I/O Analysis

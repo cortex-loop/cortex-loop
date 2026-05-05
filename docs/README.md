@@ -152,6 +152,10 @@ Active docs:
   structural and replay evidence that assistant-authored pre-tool standard
   blocks from Codex transcripts now populate `TaskStandardSpine` before tool
   evidence is scored
+- [Cortex Codex App/CLI Task-Standard Live Capture Rerun](recon/cortex_codex_app_cli_task_standard_live_capture_rerun.md) —
+  live Codex CLI evidence that signed task-standard context reaches the model,
+  the model writes a pre-tool standard block, and Cortex captures it into
+  `TaskStandardSpine` before tool evidence scoring
 - [Claude Code Desktop Lifecycle Spine Branch Disposition](recon/claude_code_desktop_lifecycle_spine_branch_disposition.md) —
   branch-hygiene disposition preserving the parked Claude lifecycle spine head
   before retiring the stale managed branch
