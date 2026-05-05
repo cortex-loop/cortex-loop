@@ -3,12 +3,16 @@
 from __future__ import annotations
 
 import inspect
+import subprocess
 from pathlib import Path
 
 from lab import codex_app_cli_hook_native_behavior_comparison as comparison
 from lab.codex_app_cli_hook_native_behavior_comparison import (
+    ASTRO_THREE_ARM_APPROVAL_ENV,
     APPROVAL_ENV,
     EXPECTED_OVERDUE_VERIFICATION_TEXT,
+    run_astro_three_arm_gate0_probe,
+    run_astro_three_arm_live,
     run_gate0_probe,
     run_live_comparison,
 )
@@ -49,6 +53,104 @@ def test_live_comparison_refuses_without_explicit_approval(
     assert report["verdict"] == "not_run"
     assert report["live_trials_ran"] is False
     assert report["approval_env"] == APPROVAL_ENV
+
+
+def test_astro_three_arm_gate0_hides_verifier_and_keeps_raw_hookless(
+    tmp_path: Path,
+) -> None:
+    report = run_astro_three_arm_gate0_probe(output_root=tmp_path)
+
+    assert report["passed"] is True
+    assert report["boundary_results"]["subject_verifier_only_paths_absent"] is True
+    assert report["boundary_results"]["subject_package_hides_hidden_script"] is True
+    assert report["boundary_results"]["hidden_evaluator_overlays_verifier_only_paths"] is True
+    assert report["boundary_results"]["hidden_evaluator_restores_hidden_script"] is True
+    assert report["boundary_results"]["writable_dependencies"] is True
+    by_condition = {row["condition"]: row for row in report["rows"]}
+    assert by_condition["raw_codex"]["subject_config_path"] is None
+    assert by_condition["silent_only"]["subject_config_product_only"] is True
+    assert by_condition["hook_native_cortex"]["subject_config_product_only"] is True
+
+
+def test_astro_three_arm_live_refuses_without_explicit_approval(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    monkeypatch.delenv(ASTRO_THREE_ARM_APPROVAL_ENV, raising=False)
+
+    report = run_astro_three_arm_live(output_root=tmp_path)
+
+    assert report["passed"] is False
+    assert report["verdict"] == "not_run"
+    assert report["live_trials_ran"] is False
+    assert report["approval_env"] == ASTRO_THREE_ARM_APPROVAL_ENV
+
+
+def test_astro_three_arm_verdict_catches_hook_side_effect_signal() -> None:
+    rows = [
+        _astro_trial("raw_codex", 1, hidden=False),
+        _astro_trial("silent_only", 1, hidden=True),
+        _astro_trial("hook_native_cortex", 1, hidden=True),
+    ]
+
+    verdict = comparison._astro_three_arm_verdict(rows)
+
+    assert verdict["verdict"] == "lifecycle_side_effect_signal"
+    assert "hook/status/tooling side effects" in verdict["next_step"]
+
+
+def test_astro_three_arm_verdict_requires_real_full_intervention_for_lift() -> None:
+    rows = [
+        _astro_trial("raw_codex", 1, hidden=False),
+        _astro_trial("silent_only", 1, hidden=False),
+        _astro_trial("hook_native_cortex", 1, hidden=True, block_rows=1),
+    ]
+
+    verdict = comparison._astro_three_arm_verdict(rows)
+
+    assert verdict["verdict"] == "candidate_cortex_intervention_lift"
+
+
+def test_astro_three_arm_verdict_treats_timeout_as_scoped_negative() -> None:
+    rows = [
+        _astro_trial("raw_codex", 1, hidden=False, timed_out=True),
+        _astro_trial("silent_only", 1, hidden=False),
+        _astro_trial("hook_native_cortex", 1, hidden=True),
+    ]
+
+    verdict = comparison._astro_three_arm_verdict(rows)
+
+    assert verdict["verdict"] == "scoped_negative"
+    assert verdict["failure_reason"] == "codex_trial_timeout"
+
+
+def test_raw_codex_timeout_persists_artifacts(tmp_path: Path, monkeypatch) -> None:
+    workspace = tmp_path / "workspace"
+    workspace.mkdir()
+
+    def raise_timeout(*args, **kwargs):
+        raise subprocess.TimeoutExpired(
+            cmd=kwargs.get("args") or args[0],
+            timeout=600,
+            output=b'{"partial": true}\n',
+            stderr=b"still running",
+        )
+
+    monkeypatch.setattr(comparison.subprocess, "run", raise_timeout)
+
+    result = comparison._run_raw_codex_without_project_hooks(
+        workspace=workspace,
+        prompt="do work",
+        model="gpt-test",
+        trial_root=tmp_path,
+    )
+
+    assert result["timed_out"] is True
+    assert result["exit_code"] == 124
+    assert Path(result["stdout_path"]).read_text(encoding="utf-8") == '{"partial": true}\n'
+    assert "timed out after 600 seconds" in Path(result["stderr_path"]).read_text(
+        encoding="utf-8"
+    )
 
 
 def test_paired_threshold_requires_four_wins_on_two_axes() -> None:
@@ -173,4 +275,26 @@ def _trial(
         },
         "failure_reproduced": min(scores) <= 1,
         "block_rows": block_rows,
+    }
+
+
+def _astro_trial(
+    condition: str,
+    repeat_index: int,
+    *,
+    hidden: bool,
+    block_rows: int = 0,
+    timed_out: bool = False,
+) -> dict[str, object]:
+    return {
+        "trial_id": f"{condition}-{repeat_index}",
+        "repeat_index": repeat_index,
+        "condition": condition,
+        "objective_pass": True,
+        "hidden_quality_pass": hidden,
+        "block_rows": block_rows,
+        "actual_rendered_text_hashes": ["hash"] if block_rows else [],
+        "hidden_verifier_probe_attempt": False,
+        "subject_verifier_only_present_after": False,
+        "timed_out": timed_out,
     }
