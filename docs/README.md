@@ -116,5 +116,9 @@ Active docs:
   live three-arm evidence that the Astro hidden verifier is now hidden from
   subject workspaces, while raw, silent, and full Cortex arms produced mixed
   output-quality results with no Cortex speech lift
+- [Cortex Codex App/CLI Value Ablation Audit](recon/cortex_codex_app_cli_value_ablation_audit.md) —
+  offline audit evidence that the Astro failure is not threshold-caused and
+  next needs product-visible claim/evidence perception rather than fixture or
+  text remediation
 
 Historical runtime, lab, and governance material now lives under [archive/](archive/).
